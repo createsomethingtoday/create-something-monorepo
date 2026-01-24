@@ -41,34 +41,10 @@ const SEEING_LESSONS = [
 		duration: '25 min'
 	},
 	{
-		id: 'capstone-intro',
-		title: 'Capstone: Ship Your Site',
-		description: 'Your graduation project: design, build, and deploy a personal site you own.',
-		duration: '10 min'
-	},
-	{
-		id: 'capstone-design',
-		title: 'Design with AI Studio',
-		description: 'Use Google AI Studio to generate your site layout and content.',
-		duration: '30 min'
-	},
-	{
-		id: 'capstone-build',
-		title: 'Build with Gemini CLI',
-		description: 'Turn your design into code with AI assistance.',
-		duration: '45 min'
-	},
-	{
-		id: 'capstone-deploy',
-		title: 'Deploy to Cloudflare',
-		description: 'Put your site live on Cloudflare Pages with your own domain.',
-		duration: '30 min'
-	},
-	{
-		id: 'capstone-graduate',
-		title: 'Graduate',
-		description: 'Submit your site URL and move to the next level.',
-		duration: '5 min'
+		id: 'capstone',
+		title: 'Capstone: Building Simple Loom',
+		description: 'Build your first piece of automation infrastructure — a Task Tracker MCP server.',
+		duration: '60 min'
 	}
 ] as const;
 
@@ -633,7 +609,7 @@ You've learned the philosophy. Now it's time to apply it.
 
 **Next: The Capstone Project**
 
-You'll design, build, and deploy your own site—applying the Triad to every decision. When you ship it, you'll be ready to graduate.
+You'll build a Task Tracker MCP server — your first piece of automation infrastructure. Apply the Triad to every decision: What patterns can you reuse? Does each tool earn its existence? Does your server serve the agent's workflow?
 
 ---
 
@@ -652,701 +628,410 @@ The Triad applies to any technical decision:
 - Code review → Have I seen this pattern duplicated?
 - Architecture → Does this serve the whole system?
 `,
-	'capstone-intro': `
-## Your Graduation Project
+	'capstone': `
+You're about to build your first piece of automation infrastructure.
 
-You've learned to see. Now prove it.
+Not a demo. Not a tutorial exercise. A working tool that AI agents can use to manage your tasks.
 
-**The Capstone**: Design, build, and deploy a personal site that you own. Apply the Subtractive Triad to every decision.
+## What You're Building
 
-## What You'll Create
+**Simple Loom** — a Task Tracker MCP server.
 
-A personal site with:
-- **Your name and what you do** (nothing more)
-- **A way to contact you** (email, form, or link)
-- **Deployed to Cloudflare Pages** (free tier)
-- **On a domain you control** (optional but recommended)
+\`\`\`
+Your Intention                The Automation Layer              Execution
+─────────────────            ─────────────────────             ──────────
+"Add a task"         →       Your MCP Server          →        Task saved
+"What's on my list?" →       (Simple Loom)            →        Tasks returned
+"Mark it done"       →                                →        Status updated
+\`\`\`
 
-## What You Won't Create
+The MCP server sits between intention and execution. That's The Automation Layer.
 
-- No blog (unless you'll actually write)
-- No portfolio grid (unless you have work to show)
-- No "services" page (unless you're selling)
-- No animations (unless they serve purpose)
+## Why This Matters
 
-**The Triad applies**: If it doesn't earn its existence, it doesn't ship.
+This isn't just a capstone exercise. You're learning the patterns behind real systems:
 
-## The Tools
+| What You Build | Production Version |
+|----------------|-------------------|
+| Task lifecycle (\`todo\` → \`doing\` → \`done\`) | Loom's task coordination |
+| State persistence (\`~/.tasks/tasks.json\`) | Loom's SQLite + checkpoints |
+| Agent-native tools | Ground's verification system |
 
-| Tool | Purpose | Cost |
-|------|---------|------|
-| [Google AI Studio](https://aistudio.google.com/) | Design generation | Free |
-| Gemini CLI | Code assistance | Free |
-| Cloudflare Pages | Hosting | Free |
-| Domain (optional) | Your address | ~$10/year |
-
-## The Process
-
-1. **Design** — Generate layouts and content with AI Studio
-2. **Build** — Turn designs into code with Gemini CLI
-3. **Deploy** — Ship to Cloudflare Pages
-4. **Graduate** — Submit your URL
-
-## Why This Project?
-
-This isn't busy work. You're building:
-
-**Ownership** — Your site, your domain, your infrastructure. Not someone else's platform.
-
-**Skill** — CLI workflows, cloud deployment, AI-assisted development. Real skills for real work.
-
-**Proof** — A tangible demonstration that you can ship.
+When you later see Loom and Ground, you'll recognize these patterns.
 
 ---
 
-## Ready?
+## Step 1: Get the Scaffold
 
-The next lesson walks you through designing in AI Studio.
-`,
-	'capstone-design': `
-## Design with AI Studio
-
-You're going to generate your site's design using [Google AI Studio](https://aistudio.google.com/).
-
-## Step 1: Open AI Studio
-
-Go to [aistudio.google.com](https://aistudio.google.com/) and sign in with your Google account.
-
-## Step 2: Describe Your Site
-
-Start a new chat and describe what you need:
-
-\`\`\`
-I'm building a minimal personal website. I need:
-- My name as the headline
-- A one-sentence description of what I do
-- A contact email or link
-- Nothing else
-
-Generate the HTML and CSS for a single-page site with:
-- Dark background (#000000)
-- White text (#ffffff)
-- Centered content
-- Mobile-responsive
-- No JavaScript needed
-\`\`\`
-
-## Step 3: Apply the Triad
-
-Before accepting the design, audit it:
-
-### DRY Check
-- Is there repeated CSS? (Consolidate)
-- Are there redundant wrapper divs? (Remove)
-
-### Rams Check
-- Does every element earn its place?
-- Is there decorative content that doesn't serve purpose?
-- Could anything be removed while keeping function?
-
-### Heidegger Check
-- Does this serve your goal (professional presence)?
-- Does the structure fit how the site will be used?
-
-## Step 4: Iterate
-
-Ask AI Studio to simplify:
-
-\`\`\`
-This is good, but apply "less, but better":
-- Remove any decorative elements
-- Reduce to the minimum that still works
-- Show me the simplest possible version
-\`\`\`
-
-## Step 5: Save Your Design
-
-Copy the final HTML/CSS. You'll use this in the next step.
-
----
-
-## Starter Template
-
-If you want a starting point, here's the minimal structure:
-
-\`\`\`html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your Name</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #000;
-      color: #fff;
-      font-family: system-ui, sans-serif;
-    }
-    main { text-align: center; padding: 2rem; }
-    h1 { font-size: 2rem; font-weight: 400; margin-bottom: 0.5rem; }
-    p { color: #888; margin-bottom: 1rem; }
-    a { color: #fff; }
-  </style>
-</head>
-<body>
-  <main>
-    <h1>Your Name</h1>
-    <p>What you do, in one sentence.</p>
-    <a href="mailto:you@example.com">Contact</a>
-  </main>
-</body>
-</html>
-\`\`\`
-
-**This is the baseline.** Everything you add must earn its place.
-
----
-
-## What You Have Now
-
-- A design generated or refined with AI Studio
-- HTML/CSS ready to deploy
-- Every element justified through the Triad
-
-**Next**: Build it out with Gemini CLI.
-`,
-	'capstone-build': `
-## Build with Gemini CLI
-
-You have a design. Now let's build it—using your AI agent as a coding partner.
-
-**The skill we're building**: Having a conversation with your agent to write code. You'll describe what you want, evaluate the output, and iterate until it's right.
-
----
-
-## Part 1: Set Up Your Project
-
-### Ask Your Agent
-
-Open Gemini CLI and prompt:
-
-\`\`\`
-I need to create a project folder for a static HTML website.
-What's the minimal folder structure I need?
-Show me the terminal commands to set it up.
-\`\`\`
-
-**Read the response.** Your agent will give you commands like:
+Create a new project directory and set up the scaffold:
 
 \`\`\`bash
-mkdir my-site
-cd my-site
-touch index.html
+mkdir ~/my-task-tracker
+cd ~/my-task-tracker
+npm init -y
+npm install @modelcontextprotocol/sdk
+npm install -D typescript @types/node
 \`\`\`
 
-**Execute them.** You now have an empty project folder.
+Create \`tsconfig.json\`:
 
----
-
-## Part 2: Generate Your Code
-
-### Ask Your Agent
-
-Take the design concept from AI Studio and turn it into a prompt:
-
-\`\`\`
-Create a minimal personal website with:
-- Name: [Your Name]
-- Role: [What you do]
-- Contact: [Your email or link]
-
-Requirements:
-- Single HTML file with embedded CSS
-- Dark background (#000), white text (#fff)
-- Centered content
-- Mobile responsive
-- No JavaScript
-- Apply "less, but better" - nothing decorative
-
-Show me the complete HTML file.
-\`\`\`
-
-**Read the response carefully.** Look for:
-- Is the structure clean?
-- Is there anything you didn't ask for?
-- Does it match your vision?
-
-### Evaluate the Output
-
-Before copying the code, ask yourself:
-
-| Triad Question | Check |
-|----------------|-------|
-| **DRY** | Is there repeated CSS that could be consolidated? |
-| **Rams** | Is there anything decorative that doesn't earn its place? |
-| **Heidegger** | Does this serve the goal of professional presence? |
-
-If something doesn't pass, tell your agent:
-
-\`\`\`
-The code looks good, but:
-- Remove [specific element that doesn't earn its place]
-- Consolidate [repeated CSS]
-- Simplify [overly complex section]
-
-Show me the updated version.
-\`\`\`
-
-**This is the pattern**: Generate → Evaluate → Iterate
-
----
-
-## Part 3: Refine Through Conversation
-
-### Add Only What Earns Its Place
-
-Ask your agent:
-
-\`\`\`
-What meta tags should I add for:
-- Search engine visibility
-- Social media sharing (Open Graph)
-
-Only include what's truly necessary. Explain why each tag earns its place.
-\`\`\`
-
-**Read the explanation.** Understand *why* each tag is needed before adding it.
-
-### Ask for a Triad Audit
-
-\`\`\`
-Apply the Subtractive Triad to this HTML:
-
-1. DRY: Is anything repeated that could be unified?
-2. RAMS: Does every element earn its existence?
-3. HEIDEGGER: Does the structure serve the whole purpose?
-
-Be specific about what to remove or change.
-\`\`\`
-
-Your agent becomes your code reviewer.
-
----
-
-## Part 4: Create Your File
-
-Ask your agent how to save the code:
-
-\`\`\`
-How do I create and edit a file called index.html from the terminal?
-What are my options on [macOS/Windows/Linux]?
-\`\`\`
-
-Common methods your agent might suggest:
-- \`nano index.html\` (simple terminal editor)
-- \`code index.html\` (VS Code)
-- Copy/paste into your preferred editor
-
-Paste the final HTML into your \`index.html\` file.
-
----
-
-## Part 5: Test Locally
-
-### Ask Your Agent
-
-\`\`\`
-How do I preview a static HTML file locally in my browser?
-I want to see it before deploying.
-Show me the simplest method for [macOS/Windows/Linux].
-\`\`\`
-
-**Read the options.** Common methods:
-
-\`\`\`bash
-# Python (usually pre-installed on Mac/Linux)
-python -m http.server 8000
-
-# Or use npx (no install needed)
-npx serve .
-\`\`\`
-
-Open \`http://localhost:8000\` in your browser.
-
-### Verify
-
-- Does it look right?
-- Resize your browser—does it work on mobile widths?
-- Is the text readable?
-
-If something's wrong, describe the issue to your agent:
-
-\`\`\`
-The site looks good on desktop but [describe problem] on mobile.
-How do I fix this?
+\`\`\`json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "include": ["src"]
+}
 \`\`\`
 
 ---
 
-## Part 6: Final Review
-
-### Your File Structure
-
-\`\`\`
-my-site/
-└── index.html
-\`\`\`
-
-That's it. One file. If you added images:
-
-\`\`\`
-my-site/
-├── index.html
-└── images/
-    └── photo.jpg
-\`\`\`
-
-But only if the images earn their place.
-
-### The Pattern You Learned
-
-Throughout this lesson, you:
-1. **Asked** your agent for guidance
-2. **Read** and understood its output
-3. **Evaluated** against the Triad
-4. **Iterated** until satisfied
-5. **Created** the final file
-
-**This is agentic development.** You're not copying code blindly. You're having a conversation, understanding the outputs, and making decisions.
-
----
-
-## What You Have Now
-
-- A working site on your local machine
-- Code you understand (because you evaluated every piece)
-- A pattern for working with AI agents
-- Ready for deployment
-
-**Next**: Deploy to Cloudflare Pages.
-`,
-	'capstone-deploy': `
-## Deploy to Cloudflare Pages
-
-Your site is ready. Now let's put it on the internet—using your AI agent to guide you through each step.
-
-**The skill we're building**: Learning to work *with* an AI agent. You'll prompt Gemini CLI, read its outputs, and understand what it's doing. This is how modern development works.
-
----
-
-## Part 1: Create Your Cloudflare Account
-
-### Ask Your Agent
-
-Open Gemini CLI and prompt:
-
-\`\`\`
-I need to create a Cloudflare account to host a static website. 
-Walk me through the account creation process step by step.
-What information will I need? What should I watch out for?
-\`\`\`
-
-**Read the response carefully.** Your agent will explain:
-- What Cloudflare is
-- What the free tier includes
-- What information you'll need (email, password)
-- Any gotchas to avoid
-
-### Do It
-
-1. Go to [cloudflare.com/sign-up](https://dash.cloudflare.com/sign-up)
-2. Enter your email and create a password
-3. Verify your email (check spam folder)
-4. You'll land on the dashboard
-
-**Reference**: [Cloudflare Account Setup Docs](https://developers.cloudflare.com/fundamentals/setup/account/)
-
-> **Why Cloudflare?** Free tier, global CDN, no credit card required, owns the infrastructure you'll use professionally. This isn't a toy—it's production infrastructure.
-
----
-
-## Part 2: Install and Authenticate Wrangler
-
-### Ask Your Agent
-
-\`\`\`
-How do I install Cloudflare's Wrangler CLI tool?
-I'm on [macOS/Windows/Linux]. Show me the commands.
-\`\`\`
-
-**Read the response.** Note:
-- The installation command
-- Any prerequisites (Node.js version, etc.)
-- What the tool does
-
-### Do It
-
-\`\`\`bash
-npm install -g wrangler
-\`\`\`
-
-Verify it installed:
-
-\`\`\`bash
-wrangler --version
-\`\`\`
-
-### Authenticate
-
-Ask your agent:
-
-\`\`\`
-How do I authenticate Wrangler with my Cloudflare account?
-What happens when I run wrangler login?
-\`\`\`
-
-Then do it:
-
-\`\`\`bash
-wrangler login
-\`\`\`
-
-This opens your browser. Authorize the connection. Return to your terminal.
-
-**Reference**: [Wrangler CLI Docs](https://developers.cloudflare.com/workers/wrangler/install-and-update/)
-
----
-
-## Part 3: Deploy Your Site
-
-### Ask Your Agent
-
-\`\`\`
-I have a folder with an index.html file. 
-How do I deploy it to Cloudflare Pages using Wrangler?
-Show me the exact command.
-\`\`\`
-
-**Read the response.** Understand:
-- What \`wrangler pages deploy\` does
-- What the \`--project-name\` flag means
-- What URL you'll get
-
-### Do It
-
-From your project folder:
-
-\`\`\`bash
-wrangler pages deploy . --project-name=my-site
-\`\`\`
-
-**First time?** Wrangler creates the project automatically. Answer "yes" when prompted.
-
-You'll see:
-
-\`\`\`
-✨ Deployment complete!
-https://my-site.pages.dev
-\`\`\`
-
-**Open that URL.** Your site is live.
-
----
-
-## Part 4: Connect a Custom Domain (Optional)
-
-### Ask Your Agent
-
-\`\`\`
-I want to connect a custom domain to my Cloudflare Pages site.
-I [have a domain / need to buy one].
-What are my options and what are the steps?
-\`\`\`
-
-**Read the response.** Your agent will explain:
-- How to buy a domain through Cloudflare Registrar
-- How to transfer an existing domain
-- How to configure DNS
-
-### If Buying a Domain
-
-Ask:
-
-\`\`\`
-How do I buy a domain through Cloudflare Registrar?
-What's the process and typical cost?
-\`\`\`
-
-Then:
-1. In Cloudflare dashboard → **Domain Registration** → **Register Domain**
-2. Search for your desired domain
-3. Cloudflare charges at-cost (no markup), typically $10-15/year for .com
-4. Complete purchase
-
-### Connect to Your Site
-
-Ask:
-
-\`\`\`
-My Cloudflare Pages project is called "my-site".
-My domain is "example.com".
-How do I connect them using the Cloudflare dashboard or CLI?
-\`\`\`
-
-**Reference**: [Custom Domains for Pages](https://developers.cloudflare.com/pages/configuration/custom-domains/)
-
----
-
-## Part 5: Verify Everything Works
-
-### Ask Your Agent
-
-\`\`\`
-How do I verify my Cloudflare Pages deployment is working correctly?
-What should I check?
-\`\`\`
-
-**Your checklist:**
-
-| Check | How |
-|-------|-----|
-| Site loads | Visit your \`.pages.dev\` URL |
-| Mobile works | Resize browser or use phone |
-| HTTPS active | Look for lock icon in browser |
-| Custom domain (if set) | Visit your domain |
-
----
-
-## What You Just Learned
-
-This wasn't just about deploying a website. You learned:
-
-| Skill | Why It Matters |
-|-------|----------------|
-| **Prompting an agent** | You asked Gemini CLI for help at each step |
-| **Reading agent output** | You understood what it told you before acting |
-| **CLI-first workflow** | \`wrangler\` instead of clicking through dashboards |
-| **Infrastructure ownership** | Your Cloudflare account, your domain, your control |
-
-**This is the agentic development pattern:**
-1. Describe what you want to do
-2. Ask the agent for guidance
-3. Read and understand the response
-4. Execute the commands
-5. Verify the results
-
----
-
-## Troubleshooting via Agent
-
-When something breaks, ask your agent:
-
-\`\`\`
-I ran [command] and got this error:
-[paste error]
-
-What does this mean and how do I fix it?
-\`\`\`
-
-The agent can often diagnose and solve issues faster than searching documentation.
-
----
-
-## What You Have Now
-
-- A Cloudflare account (infrastructure ownership)
-- Wrangler CLI installed and authenticated
-- A live site at \`your-project.pages.dev\`
-- (Optional) A custom domain
-- **The pattern**: Ask agent → Read output → Execute → Verify
-
-**Next**: Submit your URL and graduate.
-`,
-	'capstone-graduate': `
-## Graduate
-
-You've built and deployed your site. Time to submit and move forward.
-
-## Submit Your Site
-
-Enter your deployed URL below:
-
-<div class="graduation-form">
-  <input type="url" placeholder="https://your-site.pages.dev" id="site-url" />
-  <button onclick="submitGraduation()">Submit & Graduate</button>
-</div>
-
-<script>
-function submitGraduation() {
-  const url = document.getElementById('site-url').value;
-  if (url && url.startsWith('http')) {
-    // Store completion
-    localStorage.setItem('seeing-graduated', 'true');
-    localStorage.setItem('seeing-site-url', url);
-    alert('Congratulations! You have graduated from Seeing.');
-    window.location.href = '/seeing';
+## Step 2: Create the Storage Layer
+
+Create \`src/tasks.ts\` — this handles persistence:
+
+\`\`\`typescript
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+
+export interface Task {
+  id: string;
+  title: string;
+  status: 'todo' | 'doing' | 'done';
+  createdAt: string;
+}
+
+const TASKS_DIR = path.join(os.homedir(), '.tasks');
+const TASKS_FILE = path.join(TASKS_DIR, 'tasks.json');
+
+function ensureDir() {
+  if (!fs.existsSync(TASKS_DIR)) {
+    fs.mkdirSync(TASKS_DIR, { recursive: true });
   }
 }
-</script>
+
+export function loadTasks(): Task[] {
+  ensureDir();
+  if (!fs.existsSync(TASKS_FILE)) return [];
+  return JSON.parse(fs.readFileSync(TASKS_FILE, 'utf-8'));
+}
+
+export function saveTasks(tasks: Task[]) {
+  ensureDir();
+  fs.writeFileSync(TASKS_FILE, JSON.stringify(tasks, null, 2));
+}
+
+export function addTask(title: string): Task {
+  const tasks = loadTasks();
+  const task: Task = {
+    id: Date.now().toString(36),
+    title,
+    status: 'todo',
+    createdAt: new Date().toISOString(),
+  };
+  tasks.push(task);
+  saveTasks(tasks);
+  return task;
+}
+
+export function getTasks(status?: Task['status']): Task[] {
+  const tasks = loadTasks();
+  return status ? tasks.filter(t => t.status === status) : tasks;
+}
+
+export function updateTaskStatus(id: string, status: Task['status']): Task | null {
+  const tasks = loadTasks();
+  const task = tasks.find(t => t.id === id);
+  if (!task) return null;
+  task.status = status;
+  saveTasks(tasks);
+  return task;
+}
+
+export function removeTask(id: string): boolean {
+  const tasks = loadTasks();
+  const index = tasks.findIndex(t => t.id === id);
+  if (index === -1) return false;
+  tasks.splice(index, 1);
+  saveTasks(tasks);
+  return true;
+}
+\`\`\`
+
+This demonstrates **Loom's external memory pattern** — tasks persist across sessions.
 
 ---
 
-## What You've Accomplished
+## Step 3: Define Your Tools
 
-- **Philosophy**: Learned the Subtractive Triad
-- **Tools**: Gemini CLI, AI Studio, Cloudflare
-- **Ownership**: Your site, your domain, your infrastructure
-- **Proof**: A live URL demonstrating your work
+Create \`src/index.ts\`. You need four tools:
+
+### task_add
+- **Purpose**: Add a new task
+- **Input**: \`{ title: string }\`
+- **Returns**: The created task
+
+### task_list
+- **Purpose**: List tasks
+- **Input**: \`{ status?: 'todo' | 'doing' | 'done' }\` (optional filter)
+- **Returns**: Array of tasks
+
+### task_complete
+- **Purpose**: Mark a task as done
+- **Input**: \`{ id: string }\`
+- **Returns**: The updated task (or error if not found)
+
+### task_remove
+- **Purpose**: Delete a task
+- **Input**: \`{ id: string }\`
+- **Returns**: Success/failure
+
+**Apply Rams**: Four tools is enough. Resist the urge to add \`task_archive\`, \`task_priority\`, etc. Do those earn their existence right now?
+
+---
+
+## Step 4: Implement the Server
+
+Here's the complete \`src/index.ts\`:
+
+\`\`\`typescript
+#!/usr/bin/env node
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from '@modelcontextprotocol/sdk/types.js';
+import { addTask, getTasks, updateTaskStatus, removeTask, Task } from './tasks.js';
+
+const server = new Server(
+  { name: 'task-tracker', version: '1.0.0' },
+  { capabilities: { tools: {} } }
+);
+
+// Define available tools
+server.setRequestHandler(ListToolsRequestSchema, async () => ({
+  tools: [
+    {
+      name: 'task_add',
+      description: 'Add a new task',
+      inputSchema: {
+        type: 'object',
+        properties: { title: { type: 'string', description: 'Task title' } },
+        required: ['title'],
+      },
+    },
+    {
+      name: 'task_list',
+      description: 'List tasks, optionally filtered by status',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          status: { type: 'string', enum: ['todo', 'doing', 'done'] },
+        },
+      },
+    },
+    {
+      name: 'task_complete',
+      description: 'Mark a task as done',
+      inputSchema: {
+        type: 'object',
+        properties: { id: { type: 'string', description: 'Task ID' } },
+        required: ['id'],
+      },
+    },
+    {
+      name: 'task_remove',
+      description: 'Remove a task permanently',
+      inputSchema: {
+        type: 'object',
+        properties: { id: { type: 'string', description: 'Task ID' } },
+        required: ['id'],
+      },
+    },
+  ],
+}));
+
+// Handle tool calls
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+
+  switch (name) {
+    case 'task_add': {
+      const { title } = args as { title: string };
+      const task = addTask(title);
+      return { content: [{ type: 'text', text: JSON.stringify({ task }) }] };
+    }
+
+    case 'task_list': {
+      const { status } = args as { status?: Task['status'] };
+      const tasks = getTasks(status);
+      return { content: [{ type: 'text', text: JSON.stringify({ tasks }) }] };
+    }
+
+    case 'task_complete': {
+      const { id } = args as { id: string };
+      const task = updateTaskStatus(id, 'done');
+      if (!task) {
+        return { content: [{ type: 'text', text: JSON.stringify({ error: 'Task not found' }) }] };
+      }
+      return { content: [{ type: 'text', text: JSON.stringify({ task }) }] };
+    }
+
+    case 'task_remove': {
+      const { id } = args as { id: string };
+      const success = removeTask(id);
+      return { content: [{ type: 'text', text: JSON.stringify({ success }) }] };
+    }
+
+    default:
+      return { content: [{ type: 'text', text: JSON.stringify({ error: 'Unknown tool' }) }] };
+  }
+});
+
+// Start server
+const transport = new StdioServerTransport();
+server.connect(transport);
+\`\`\`
+
+**Apply Heidegger**: The return format serves the AI agent. It needs structured data it can parse and act on.
+
+---
+
+## Step 5: Build and Test
+
+\`\`\`bash
+npx tsc
+\`\`\`
+
+Fix any TypeScript errors. Then test manually:
+
+\`\`\`bash
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | node dist/index.js
+\`\`\`
+
+You should see your four tools listed.
+
+---
+
+## Step 6: Connect to Your AI Agent
+
+Add your server to your AI agent's MCP configuration.
+
+### For Gemini CLI
+
+Add to \`~/.gemini/settings.json\`:
+
+\`\`\`json
+{
+  "mcpServers": {
+    "task-tracker": {
+      "command": "node",
+      "args": ["/Users/you/my-task-tracker/dist/index.js"]
+    }
+  }
+}
+\`\`\`
+
+### For Claude Code
+
+Add to \`.mcp.json\` in your project:
+
+\`\`\`json
+{
+  "mcpServers": {
+    "task-tracker": {
+      "command": "node",
+      "args": ["/Users/you/my-task-tracker/dist/index.js"]
+    }
+  }
+}
+\`\`\`
+
+Now you can say:
+- "Add a task: review PR #42"
+- "What's on my task list?"
+- "Mark the PR review task as done"
+
+Your automation layer is working.
+
+---
+
+## Step 7: Reflect
+
+Before marking the capstone complete, answer these:
+
+**1. What did you notice about the Triad while building?**
+
+Where did DRY guide you? What didn't earn its existence? How did you think about the agent's workflow?
+
+**2. What pattern do you see now that you didn't before?**
+
+The task lifecycle. The external memory. The tool boundaries.
+
+**3. What would you do differently next time?**
+
+This is the hermeneutic spiral — each iteration deepens understanding.
+
+---
+
+## What You Built
+
+A local automation layer. AI agents can now manage your tasks without you opening a todo app.
+
+This is **Simple Loom** — the same patterns that power production task coordination.
 
 ## What Comes Next
 
-### Dwelling (CREATE SOMETHING)
-
-You've learned to see. Now learn to dwell.
-
-Dwelling teaches deep tool mastery with Claude Code:
-- WezTerm with Canon configuration
-- Advanced CLI workflows
-- System architecture
-- Automated quality gates
-
-**Requirement**: Claude Max subscription (~$100/month)
-
-[Learn about Dwelling →](/paths)
-
-### WORKWAY
-
-Your site is static. WORKWAY makes it dynamic.
-
-- Contact forms that route to your inbox
-- Booking that syncs to your calendar
-- Updates that post to social
-- Automations that run while you sleep
-
-**Coming soon**: [learn.workway.co](https://learn.workway.co)
+You've learned to see through the Subtractive Triad. You've built automation infrastructure. When the questions become automatic, you're ready for tools that execute what you now perceive.
 
 ---
 
-## The Graduation Path
+## Going Deeper
 
-\`\`\`
-Seeing (Free)     → Perception
-    ↓
-Dwelling ($100/mo) → Execution  
-    ↓
-WORKWAY           → Automation
-\`\`\`
+**WORKWAY's Focus Workflow** does this at team scale — syncing Slack messages to Notion tasks. Same philosophy, production infrastructure.
 
-You've completed step one. The philosophy is yours now.
+**learn.createsomething.io** covers building production automation like Focus Workflow.
+
+You're not done learning. But you've started building.
+
+That's the difference between Seeing and Dwelling.
 
 ---
 
-> "You've learned to see. Now learn to dwell."
+## Resources
+
+### Model Context Protocol (MCP)
+
+- **What is MCP?**: [Anthropic Announcement](https://www.anthropic.com/news/model-context-protocol) — The official introduction to MCP as an open standard for AI integration
+- **Documentation**: [modelcontextprotocol.io](https://modelcontextprotocol.io) — Complete MCP documentation
+- **Server Development**: [Build a Server](https://modelcontextprotocol.io/docs/develop/build-server) — Step-by-step guide to creating MCP servers
+- **TypeScript SDK**: [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol) — Official SDK on GitHub
+
+### Gemini CLI
+
+- **Installation**: [geminicli.com/docs/get-started/installation](https://geminicli.com/docs/get-started/installation/)
+- **Authentication**: [geminicli.com/docs/get-started/authentication](https://geminicli.com/docs/get-started/authentication/)
+- **MCP Configuration**: [geminicli.com/docs/tools/mcp-server](https://geminicli.com/docs/tools/mcp-server/)
+
+### CREATE SOMETHING
+
+- **Setup Guide**: [/seeing/setting-up](/seeing/setting-up) — Complete environment setup
+- **WORKWAY**: [workway.co](https://workway.co) — Production automation infrastructure
+- **Learn More**: [learn.createsomething.io](https://learn.createsomething.io) — Advanced curriculum
+
+### The Subtractive Triad
+
+- **DRY**: [*The Pragmatic Programmer*](https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/)
+- **Rams**: [Ten Principles](https://rams-foundation.org/foundation/design-comprehension/theses/)
+- **Heidegger**: [Stanford Encyclopedia](https://plato.stanford.edu/entries/heidegger/)
 `
 };
 
