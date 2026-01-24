@@ -191,6 +191,26 @@ a:hover {
    Canon Utility Classes
    ========================================================================== */
 
+/* Page Title - For entity names, section headers, and page titles
+ * Uses --text-display (28-36px mobile) instead of h1's --text-display-xl (36-56px)
+ * Prevents overflow on long names like "Ludwig Mies van der Rohe"
+ * 
+ * Use for:
+ * - Master/person names on detail pages
+ * - Project titles
+ * - Section landing pages (e.g., "Masters", "Experiments")
+ * 
+ * Don't use for:
+ * - Hero marketing headlines (use default h1 or --text-display-xl)
+ */
+.page-title {
+  font-size: var(--text-display);
+  font-weight: var(--font-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-fg-primary);
+}
+
 .link-muted {
   opacity: var(--opacity-muted);
   transition: opacity var(--duration-micro) var(--ease-standard);
