@@ -1,16 +1,23 @@
 /**
- * Ink Framework - Tufte's Data-Ink Ratio for Mobile
+ * Ink Framework - Tufte's Data-Ink Ratio for All Screens
  *
  * "Above all else, show the data." - Edward Tufte
+ * "Weniger, aber besser." - Dieter Rams
  *
- * Philosophy: Golden Ratio (φ) for desktop, Tufte for mobile.
- * - Desktop: Generous spacing for visual breathing room
- * - Mobile: Maximize data-ink ratio, minimize padding
+ * Philosophy: Edward Tufte everywhere. Golden Ratio constrains the scale,
+ * Tufte constrains the application. Maximum data-ink ratio at every viewport.
  *
- * Method: Apply φ⁻¹ (0.618×) scaling from desktop to mobile.
- * This maintains golden ratio proportions while being ~40% tighter on mobile.
+ * The 4-Value Constraint (following WORKWAY):
+ *   --space-sm: 1rem      (16px) - tight relationships
+ *   --space-md: 1.618rem  (26px) - default breathing room
+ *   --space-lg: 2.618rem  (42px) - between related sections
+ *   --space-xl: 4.236rem  (68px) - major landmarks, heroes
+ *
+ * Why 4 values? Fewer options = faster decisions = consistent application.
+ * Every pixel of padding steals space from content. Be deliberate.
  *
  * @see /STANDARDS.md - Section 1.6 Responsive Design
+ * @see WORKWAY's styles.css for reference implementation
  * @packageDocumentation
  */
 
@@ -18,46 +25,55 @@ import { breakpoints, media } from './breakpoints.js';
 
 /**
  * Ink density modes - progressive disclosure based on viewport
+ *
+ * All modes prioritize data density. The difference is layout, not padding.
  */
 export const inkDensity = {
-	compact: 'compact', // Mobile: stack, hide secondary, tight spacing
-	standard: 'standard', // Tablet: side-by-side, show context
-	expanded: 'expanded' // Desktop: full detail, generous spacing
+	compact: 'compact', // Mobile: stack layout, progressive disclosure
+	standard: 'standard', // Tablet: side-by-side, full context
+	expanded: 'expanded' // Desktop: multi-column, all detail visible
 } as const;
 
 export type InkDensity = keyof typeof inkDensity;
 
 /**
- * Ink padding - Tufte-aligned responsive spacing
+ * Ink padding - Tufte-aligned spacing (all viewports)
  *
- * Principle: Padding is non-data-ink. Minimize on mobile to maximize data.
+ * Principle: Padding is non-data-ink. Minimize everywhere to maximize data.
+ * Every screen is precious. Desktop users deserve density too.
  *
- * | Context   | Desktop (φ²) | Tablet (φ¹) | Mobile (φ⁰) |
- * |-----------|--------------|-------------|-------------|
- * | Container | 42px (lg)    | 26px (md)   | 16px (sm)   |
- * | Component | 26px (md)    | 16px (sm)   | 10px (xs)   |
- * | Cell      | 8px          | 6px         | 4px         |
+ * WORKWAY alignment: Tighter than traditional "generous desktop" patterns.
+ * Desktop gets more content visible; mobile gets touch-safe density.
+ *
+ * | Context   | Desktop      | Tablet       | Mobile      |
+ * |-----------|--------------|--------------|-------------|
+ * | Container | 26px (md)    | 26px (md)    | 16px (sm)   |
+ * | Component | 16px (sm)    | 16px (sm)    | 12px        |
+ * | Cell      | 6px          | 6px          | 4px         |
  */
 export const inkPadding = {
 	// Container padding (page/section level)
+	// Desktop: md (not lg) - tighter than traditional, more like WORKWAY
 	container: {
 		compact: 'var(--space-sm)', // 16px mobile
 		standard: 'var(--space-md)', // 26px tablet
-		expanded: 'var(--space-lg)' // 42px desktop
+		expanded: 'var(--space-md)' // 26px desktop (Tufte: same as tablet)
 	},
 
 	// Component padding (cards, metrics)
+	// Desktop: sm (not md) - maximize data visibility at all sizes
 	component: {
-		compact: 'var(--space-xs)', // 10px mobile - maximize data visibility
+		compact: '0.75rem', // 12px mobile - balanced touch/density
 		standard: 'var(--space-sm)', // 16px tablet
-		expanded: 'var(--space-md)' // 26px desktop
+		expanded: 'var(--space-sm)' // 16px desktop (Tufte: tight)
 	},
 
 	// Cell padding (table cells, grid items)
+	// Minimal everywhere - data is the priority
 	cell: {
 		compact: '0.25rem', // 4px mobile (touch-safe row height)
 		standard: '0.375rem', // 6px tablet
-		expanded: '0.5rem' // 8px desktop
+		expanded: '0.375rem' // 6px desktop (Tufte: same as tablet)
 	},
 
 	// Touch target minimum (never reduce below)

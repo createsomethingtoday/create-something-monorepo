@@ -1,16 +1,24 @@
 /**
- * Ink Framework - Tufte's Data-Ink Ratio for Mobile
+ * Ink Framework - Tufte's Data-Ink Ratio for All Screens
  *
  * "Above all else, show the data." - Edward Tufte
+ * "Weniger, aber besser." - Dieter Rams
  *
- * Philosophy: Golden Ratio (φ) for desktop, Tufte for mobile.
- * - Desktop: Generous spacing for visual breathing room
- * - Mobile: Maximize data-ink ratio, minimize padding
+ * Philosophy: Edward Tufte everywhere. Maximum data-ink ratio at every viewport.
+ * Desktop gets tighter spacing than traditional patterns - more content visible.
+ * Mobile gets touch-safe density. Both prioritize data over decoration.
+ *
+ * The 4-Value Constraint (aligned with WORKWAY):
+ *   --space-sm: 1rem      (16px) - tight relationships
+ *   --space-md: 1.618rem  (26px) - default breathing room  
+ *   --space-lg: 2.618rem  (42px) - between related sections
+ *   --space-xl: 4.236rem  (68px) - major landmarks, heroes
  *
  * @usage
  *   @import '@create-something/components/styles/ink.css';
  *
  * @see packages/components/src/lib/tokens/ink.ts for TypeScript tokens
+ * @see WORKWAY's styles.css for reference implementation
  */
 
 /* ==========================================================================
@@ -20,7 +28,7 @@
 :root {
 	/* Padding - mobile defaults (Tufte: minimize non-data-ink) */
 	--ink-pad-container: var(--space-sm); /* 16px */
-	--ink-pad-component: var(--space-xs); /* 10px */
+	--ink-pad-component: 0.75rem; /* 12px - balanced touch/density */
 	--ink-pad-cell: 0.25rem; /* 4px */
 	--ink-touch-min: 44px;
 
@@ -46,12 +54,15 @@
 	}
 }
 
-/* Desktop: expanded density (golden ratio) */
+/* Desktop: Tufte density (NOT golden ratio - tighter than traditional)
+ * WORKWAY-aligned: Desktop users deserve density too.
+ * Padding stays at tablet level; only layout expands.
+ */
 @media (min-width: 1024px) {
 	:root {
-		--ink-pad-container: var(--space-lg); /* 42px */
-		--ink-pad-component: var(--space-md); /* 26px */
-		--ink-pad-cell: 0.5rem; /* 8px */
+		--ink-pad-container: var(--space-md); /* 26px (same as tablet - Tufte) */
+		--ink-pad-component: var(--space-sm); /* 16px (same as tablet - Tufte) */
+		--ink-pad-cell: 0.375rem; /* 6px (same as tablet - Tufte) */
 		--ink-sparkline-width: 48px;
 		--ink-sparkline-height: 14px;
 		--ink-grid-cols: 7;
@@ -91,10 +102,10 @@
 }
 
 /* ==========================================================================
-   Ink Padding - Tufte-Aligned Responsive Spacing
+   Ink Padding - Tufte-Aligned Spacing (All Viewports)
    
-   Principle: Padding is non-data-ink. Minimize on mobile to maximize data.
-   Method: φ⁻¹ (0.618×) scaling from desktop to mobile.
+   Principle: Padding is non-data-ink. Minimize everywhere to maximize data.
+   Desktop gets same density as tablet - only layout expands, not spacing.
    ========================================================================== */
 
 /* Container padding (pages, sections) */
@@ -112,9 +123,11 @@
 	padding: var(--ink-pad-cell);
 }
 
-/* Asymmetric padding - less horizontal (valuable), more vertical (cheap) */
+/* Asymmetric padding - less horizontal (valuable), more vertical (cheap)
+ * Desktop stays tight - same as tablet (Tufte everywhere)
+ */
 .ink-pad-asymmetric {
-	padding: var(--space-sm) var(--space-xs); /* 16px vert, 10px horiz on mobile */
+	padding: var(--space-sm) 0.75rem; /* 16px vert, 12px horiz on mobile */
 }
 
 @media (min-width: 768px) {
@@ -123,9 +136,10 @@
 	}
 }
 
+/* Desktop: same as tablet (Tufte - tight everywhere) */
 @media (min-width: 1024px) {
 	.ink-pad-asymmetric {
-		padding: var(--space-lg) var(--space-md); /* 42px vert, 26px horiz */
+		padding: var(--space-md) var(--space-sm); /* 26px vert, 16px horiz (same as tablet) */
 	}
 }
 
