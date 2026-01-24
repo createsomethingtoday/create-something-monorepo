@@ -78,11 +78,34 @@ Outcomes While You Sleep
 
 The hermeneutic circle: Philosophy informs research. Research validates practice. Practice serves clients. Client outcomes test and evolve the philosophy.
 
+### The Automotive Framework
+
+**The automation layer = the automotive layer.**
+
+The automotive layer consists of the parts of a vehicle: engine, transmission, fuel tank. Assembled together, they create motion.
+
+The automation layer consists of Cloudflare products: Workers, Durable Objects, D1. Assembled together, they create outcomes.
+
+| Vehicle Part | Cloudflare Product | Function |
+|--------------|-------------------|----------|
+| **Engine** | Workers | Where execution happens |
+| **Transmission** | Durable Objects | State coordination |
+| **Fuel Tank** | D1 | Data persistence |
+| **Turbocharger** | Workers AI | Intelligence boost |
+| **Cockpit** | Glass UI | Where the driver controls the machine |
+| **Instrument Cluster** | Analytics/Logs | At-a-glance telemetry |
+| **Ignition** | Triggers | What starts the engine |
+
+**The Cockpit Principle**: The 930's cockpit is driver-centric—tachometer center-mounted, controls angled toward you, minimal decoration. Our Glass design system follows the same philosophy: the interface recedes, and you focus on your destination. That's Zuhandenheit applied to UI.
+
+**"The Parts, Assembled"**: Every workflow is a vehicle built from precision parts. The outcome is motion toward the destination.
+
 ### Cornering the Terms
 
 CREATE SOMETHING and WORKWAY together establish ownership of:
 - **Automation Infrastructure** — the infrastructure category
 - **The Automation Layer** — the architectural concept
+- **The Automotive Framework** — the explanatory metaphor
 
 This is the life's work: building systems that work while you sleep.
 

@@ -195,6 +195,128 @@ All glass classes include automatic fallbacks:
 
 **Philosophy**: Glass metaphorically represents the automation layer—transparent, non-intrusive, allowing users to focus on outcomes rather than interfaces. This aligns with Heidegger's Zuhandenheit: the tool recedes into transparent use.
 
+### The Automotive Framework - Glass as Cockpit
+
+Glass connects to the **automotive framework**: the cockpit of the automation vehicle.
+
+> The 930's cockpit is driver-centric: tachometer center-mounted, controls angled toward you, minimal decoration. You don't admire the dashboard—you watch the road. That's Zuhandenheit. The cockpit recedes; the journey remains.
+
+The automotive layer = the automation layer. Both are built from precision parts assembled into motion toward outcomes.
+
+| Automotive | Design System | Meaning |
+|------------|---------------|---------|
+| Cockpit | Glass UI | Where the driver controls the machine |
+| Instrument Cluster | Analytics/Logs | At-a-glance telemetry |
+| Tinted glass | Semantic tints | State indication (error, success, warning) |
+| Heads-up display | Overlays | Information layer without obstruction |
+| Frosted rear window | Modal glass | Obscured background, focused content |
+| Dashboard | Analytics UI | What the driver sees |
+
+**The Parts, Assembled**: Glass is how the automation layer becomes visible—but only enough to convey transparency, never enough to demand attention.
+
+### Liquid Glass Design System - Apple-style Refraction
+
+Liquid Glass extends the standard glass system with **refraction effects**. Unlike frosted glass (blur only), liquid glass warps/refracts background content, creating the appearance of thick glass that bends light.
+
+**When to use Liquid Glass:**
+- Workflow visualization cards (`<IntegrationFlow>`)
+- Feature showcases with integration icons
+- Hero sections requiring premium feel
+- Modal dialogs needing depth
+
+**When to use Standard Glass:**
+- Navigation headers (refraction is distracting)
+- Utility UI (dropdowns, menus)
+- Dense interfaces where performance matters
+
+#### Liquid Glass Components
+
+```svelte
+import { LiquidGlass, LiquidGlassIcon, IntegrationFlow } from '@create-something/components/interactive';
+
+<!-- Full liquid glass container -->
+<LiquidGlass intensity="medium" tint="purple">
+  <h3>Enterprise Workflow</h3>
+  <p>Premium automation for teams</p>
+</LiquidGlass>
+
+<!-- Integration flow visualization -->
+<IntegrationFlow
+  integrations={[
+    { label: 'Zo', name: 'Zoom' },
+    { label: 'No', name: 'Notion' },
+    { label: 'Sl', name: 'Slack' }
+  ]}
+  description="Meeting ends → Notes created → Team notified"
+  intensity="medium"
+/>
+
+<!-- Icons on glass surface -->
+<LiquidGlass>
+  <div class="flex gap-4">
+    <LiquidGlassIcon size="md">Zo</LiquidGlassIcon>
+    <LiquidGlassIcon size="md">No</LiquidGlassIcon>
+  </div>
+</LiquidGlass>
+```
+
+#### Liquid Glass Tokens
+
+**Refraction Intensity** — SVG displacement filter scale:
+
+| Token | Value | Use Case |
+|-------|-------|----------|
+| `--liquid-glass-refraction-subtle` | 4 | Minimal distortion, dropdowns |
+| `--liquid-glass-refraction-medium` | 8 | Balanced effect, cards |
+| `--liquid-glass-refraction-strong` | 14 | Heavy refraction, hero sections |
+
+**Highlight Gradients** — Light reflection simulation:
+
+| Token | Use Case |
+|-------|----------|
+| `--liquid-glass-highlight-primary` | Standard liquid glass |
+| `--liquid-glass-highlight-subtle` | Secondary elements |
+| `--liquid-glass-highlight-strong` | Featured/hero sections |
+
+**Depth Effects**:
+
+| Token | Value | Purpose |
+|-------|-------|---------|
+| `--liquid-glass-edge-glow` | Horizontal gradient | Top edge light source |
+| `--liquid-glass-inner-shadow` | `inset 0 2px 8px` | Physical thickness |
+
+**Semantic Tints** — Functional color overlays:
+
+| Tint | Token | Semantic Purpose |
+|------|-------|------------------|
+| Purple | `--liquid-glass-tint-purple` | Enterprise, premium |
+| Blue | `--liquid-glass-tint-blue` | Partner, collaboration |
+| Emerald | `--liquid-glass-tint-emerald` | Success, growth |
+| Amber | `--liquid-glass-tint-amber` | Warning, attention |
+| Rose | `--liquid-glass-tint-rose` | Error, critical |
+| Cyan | `--liquid-glass-tint-cyan` | SDK, developer tools |
+
+#### Liquid Glass Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `intensity` | `'subtle' \| 'medium' \| 'strong'` | `'medium'` | Refraction strength |
+| `tint` | `'none' \| 'purple' \| 'blue' \| 'emerald' \| 'amber' \| 'rose' \| 'cyan'` | `'none'` | Semantic color |
+| `highlight` | `boolean` | `true` | Show light reflection layers |
+| `borderRadius` | `'sm' \| 'md' \| 'lg' \| 'xl'` | `'lg'` | Corner rounding |
+| `aspectRatio` | `'auto' \| 'video' \| 'square'` | `'auto'` | Container aspect ratio |
+
+#### Performance Considerations
+
+Liquid Glass uses SVG filters which can impact performance:
+
+1. **Mobile devices**: Refraction filter automatically disabled below 768px
+2. **Reduced motion**: `prefers-reduced-motion` disables all animations and filters
+3. **Reduced transparency**: `prefers-reduced-transparency` uses solid backgrounds
+4. **High contrast**: `prefers-contrast: more` reduces blur and increases borders
+
+**Best practice**: Use `<LiquidGlass>` for hero/feature sections, standard `.glass-*` classes for utility UI.
+
 ### Rank/Leaderboard Tokens
 For medals, badges, and leaderboard displays:
 | Rank | Canon Token | Value |
