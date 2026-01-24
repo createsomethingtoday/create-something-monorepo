@@ -1,5 +1,7 @@
 # What Is Creation?
 
+> **First time here?** If you haven't set up Gemini CLI yet, start with [Setting Up](/seeing/setting-up).
+
 ## The Paradox
 
 Most people think creation is about adding.

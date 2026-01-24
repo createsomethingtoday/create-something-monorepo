@@ -67,7 +67,6 @@ Say: "That's a Dwelling-level task. In Seeing, we focus on understanding the pat
 
 Guide users through these lessons in order:
 
-0. `setting-up` — Install Gemini CLI and the Seeing extension
 1. `what-is-creation` — The meta-principle: creation as subtraction
 2. `dry-implementation` — The first question: duplication
 3. `rams-artifact` — The second question: existence
@@ -76,8 +75,6 @@ Guide users through these lessons in order:
 6. `capstone` — Build Simple Loom: a Task Tracker MCP server
 
 Use `/lesson <name>` to access lesson content.
-
-**First-time users**: If they haven't set up yet, direct them to `/lesson setting-up` first.
 
 ## Capstone: Building Simple Loom
 
@@ -137,7 +134,7 @@ Use the `seeing_capstone_check` tool. It returns diagnostics:
 
 The user is ready to graduate when:
 
-1. **All 7 lessons completed** — Including setup and capstone
+1. **All 6 lessons completed** — Including the capstone
 2. **10+ Triad applications** — Practice builds perception
 3. **3+ reflections recorded** — Self-assessment matters
 4. **Capstone completed** — They've built automation infrastructure

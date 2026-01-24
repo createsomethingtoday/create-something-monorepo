@@ -13,11 +13,6 @@
   
   "commands": [
     {
-      "name": "setup",
-      "description": "Get help installing Gemini CLI and the Seeing extension",
-      "template": "commands/setup.md"
-    },
-    {
       "name": "triad",
       "description": "Run a Subtractive Triad audit on a file or decision",
       "template": "commands/triad.md"
