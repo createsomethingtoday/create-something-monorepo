@@ -13,7 +13,8 @@
     "GEMINI.md",
     "extension.json",
     "lessons",
-    "commands"
+    "commands",
+    "scaffold"
   ],
   "scripts": {
     "build": "tsc",
