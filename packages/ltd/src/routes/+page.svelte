@@ -205,7 +205,7 @@
 	   ========================================================================== */
 
 	h1 {
-		font-size: clamp(2.5rem, 5vw + 1rem, 4.5rem);
+		font-size: var(--text-display);
 		font-weight: var(--font-bold);
 		letter-spacing: -0.02em;
 		line-height: 1.1;
@@ -220,7 +220,7 @@
 	}
 
 	.hero-text {
-		font-size: clamp(1.25rem, 2vw, 1.5rem);
+		font-size: var(--text-h2);
 		color: var(--color-fg-secondary);
 	}
 
