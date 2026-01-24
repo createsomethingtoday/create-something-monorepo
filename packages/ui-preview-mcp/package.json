@@ -1,7 +1,7 @@
 {
   "name": "@create-something/ui-preview-mcp",
-  "version": "0.1.0",
-  "description": "MCP server for UI Preview - provides visual feedback tools for AI agents",
+  "version": "1.0.0",
+  "description": "MCP server for SvelteKit dev server management - start, stop, check status",
   "type": "module",
   "bin": {
     "ui-preview-mcp": "./dist/index.js"
@@ -18,5 +18,5 @@
     "@types/node": "^22.0.0",
     "typescript": "^5.9.3"
   },
-  "keywords": ["mcp", "ui-preview", "claude-code", "visual-feedback"]
+  "keywords": ["mcp", "sveltekit", "dev-server"]
 }
