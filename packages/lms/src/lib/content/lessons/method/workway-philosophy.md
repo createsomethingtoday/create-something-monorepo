@@ -230,6 +230,54 @@ WORKWAY practitioners are craftspeople:
 
 **Service is not just delivery—it's practice.**
 
+## The Automotive Framework
+
+WORKWAY uses an automotive parallel to explain automation infrastructure:
+
+> **The automation layer = the automotive layer.**
+>
+> The automotive layer consists of **the parts of a vehicle**: engine, transmission, fuel tank, drivetrain. Assembled together, they create motion.
+>
+> The automation layer consists of **Cloudflare products**: Workers, Durable Objects, D1, Queues. Assembled together, they create outcomes.
+
+### The Parts Mapping
+
+When building workflows for clients, think of Cloudflare products as vehicle components:
+
+| Vehicle Part | Cloudflare Product | Function |
+|--------------|-------------------|----------|
+| **Engine** | Workers | Where execution happens |
+| **Transmission** | Durable Objects | State coordination |
+| **Fuel Tank** | D1 | Data persistence |
+| **Turbocharger** | Workers AI | Intelligence boost |
+| **Ignition** | Triggers | What starts the engine |
+| **Dashboard** | Analytics | What the driver sees |
+
+### Client Communication
+
+Use automotive metaphors to explain technical concepts:
+
+```markdown
+Client: "How does the automation work?"
+
+WORKWAY: "Think of it like a vehicle. The trigger (ignition) starts the 
+engine (Workers). Data flows through the transmission (Durable Objects) 
+to the output. You see the results on the dashboard (Analytics), but 
+you don't think about the mechanics—just your destination."
+```
+
+### The Cockpit Principle
+
+The 930's cockpit is driver-centric: tachometer center-mounted, controls angled toward you, minimal decoration. You don't admire the dashboard—you watch the road. That's Zuhandenheit.
+
+WORKWAY workflows should be the same:
+- Users think about **outcomes**, not mechanics
+- The automation **recedes** into transparent use
+- The instrument cluster shows at-a-glance telemetry
+- If users mention the "engine," something broke
+
+**"The Parts, Assembled"**: Every client workflow is a vehicle built from precision parts. The outcome is motion toward their destination.
+
 ---
 
 ## Reflection
