@@ -4,8 +4,8 @@
 
 <SEO
 	title="About"
-	description="CREATE SOMETHING SPACE is a community playground for testing AI-native development ideas. Fork experiments, break things, learn in public."
-	keywords="AI experiments, community playground, fork experiments, learn in public, Claude Code, experimental development"
+	description="The experimental layer for automation infrastructure. Fork experiments, break things, learn how to build the layer that works while you sleep."
+	keywords="automation infrastructure, AI experiments, WORKWAY, the automation layer, fork experiments, learn in public, Claude Code"
 	propertyName="space"
 	breadcrumbs={[
 		{ name: 'Home', url: 'https://createsomething.space' },
@@ -25,15 +25,15 @@
 					<!-- Core Identity -->
 					<div class="core-identity">
 						<p class="lead-text">
-							<strong>What to try:</strong> Pick an experiment. Fork it. Break it. See what you learn.
+							<strong>What to try:</strong> Pick an experiment. Fork it. Break it. Learn how to build the automation layer.
 						</p>
 
 						<p>
-							This is where you test ideas before they're ready for <a href="https://createsomething.io" class="link">createsomething.io</a>. The main site tracks experiments with precise metrics. Here, you can fork those experiments, try variations, and figure out what actually works through trial and error.
+							This is where you test ideas before they're ready for <a href="https://createsomething.io" class="link">createsomething.io</a>. The experiments here explore the same infrastructure that powers <a href="https://workway.co" class="link">WORKWAY</a>—automation that recedes into transparent use. The layer that works while you sleep.
 						</p>
 
 						<p>
-							Everything you build here feeds back into the research. When you find something interesting—or break something in a useful way—that becomes part of what we collectively know about AI-native development.
+							Everything you build here feeds back into the research. When you find something interesting—or break something in a useful way—that becomes part of what we collectively know about automation infrastructure.
 						</p>
 					</div>
 
@@ -93,20 +93,20 @@
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 					{#each [
 						{
-							title: 'Browser Automation',
-							description: 'Try AI-generated browser scripts with Cloudflare Workers and Puppeteer. Good starting point if you need to scrape or automate web tasks.'
+							title: 'Automation Infrastructure',
+							description: 'Build workflows with WORKWAY patterns. The layer that handles tasks while you sleep—edge-deployed, type-safe, production-ready.'
 						},
 						{
 							title: 'API Integration',
-							description: 'Connect APIs and services using AI-assisted development. Useful for building workflows that span multiple systems.'
+							description: 'Connect APIs and services using AI-assisted development. The infrastructure that makes multi-service automations reliable.'
 						},
 						{
-							title: 'Database Patterns',
-							description: 'Test different database approaches with D1, KV, and Cloudflare services. Start here if you need to figure out data storage.'
+							title: 'Edge Patterns',
+							description: 'Test approaches with D1, KV, Workers AI, and Cloudflare services. The infrastructure that powers both WORKWAY and .agency.'
 						},
 						{
-							title: 'UI Components',
-							description: 'Build and test reusable UI components with AI assistance. Best if you want to speed up frontend work.'
+							title: 'AI-Native Development',
+							description: 'Build with Claude Code and agentic workflows. Learn how AI and automation infrastructure work together.'
 						}
 					] as topic, index}
 						<div

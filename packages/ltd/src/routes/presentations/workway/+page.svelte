@@ -30,7 +30,7 @@
 	]}
 />
 
-<Presentation title="WORKWAY" subtitle="Workflow Automation for Developers">
+<Presentation title="WORKWAY" subtitle="The Automation Layer">
 	<!-- ═══════════════════════════════════════════════════════════════════
 	     PART 1: Part → Whole (What is this?)
 	     ═══════════════════════════════════════════════════════════════════ -->
@@ -39,9 +39,9 @@
 	<Slide type="title">
 		<span class="number">01</span>
 		<h1>WORKWAY</h1>
-		<p class="subtitle">Build workflows with TypeScript.</p>
-		<p class="subtitle">Deploy to the edge.</p>
-		<p class="subtitle">Monetize in the marketplace.</p>
+		<p class="subtitle">The Automation Layer.</p>
+		<p class="subtitle">Infrastructure that recedes.</p>
+		<p class="subtitle">Outcomes while you sleep.</p>
 	</Slide>
 
 	<!-- Slide 2: The Problem -->
@@ -420,6 +420,7 @@ workway publish`}</code></pre>
 	<Slide type="title">
 		<span class="number">17</span>
 		<h1>WORKWAY</h1>
+		<p class="subtitle">Automation Infrastructure.</p>
 		<p class="subtitle">The tool should disappear.</p>
 		<p class="tagline">
 			<a href="https://workway.co" class="link">workway.co</a>

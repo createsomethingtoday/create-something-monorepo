@@ -106,9 +106,10 @@
 	}
 
 	.sticky-header.scrolled {
-		background: var(--color-bg-elevated, rgba(10, 10, 10, 0.9));
-		backdrop-filter: blur(12px);
-		-webkit-backdrop-filter: blur(12px);
+		/* Glass Design System - "The Automation Layer" */
+		background-color: var(--glass-bg-light);
+		backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+		-webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
 	}
 
 	.sticky-header.with-border.scrolled {

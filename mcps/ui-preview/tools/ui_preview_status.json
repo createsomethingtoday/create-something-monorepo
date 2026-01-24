@@ -1,0 +1,8 @@
+{
+  "name": "ui_preview_status",
+  "description": "Check if UI preview is running and get connection details. Returns JSON with running state, watched directory, viewer URL, and WebSocket endpoint.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {}
+  }
+}

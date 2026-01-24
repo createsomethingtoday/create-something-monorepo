@@ -11,7 +11,7 @@ import { fontFamily } from '../../../fonts';
 export const CloseScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { product, colors, scenes } = SPEC;
+  const { product, colors, scenes, scale } = SPEC;
   const { wireframeIn, logoEmbodiment, taglineEmbodiment, urlReveal } = scenes.close;
   
   // Wireframe entrance
@@ -59,7 +59,7 @@ export const CloseScene: React.FC = () => {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 24,
+          gap: 24 * scale,
           opacity: wireframeProgress,
         }}
       >
@@ -72,9 +72,9 @@ export const CloseScene: React.FC = () => {
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: 200,
-              height: 60,
-              borderRadius: 8,
+              width: 200 * scale,
+              height: 60 * scale,
+              borderRadius: 8 * scale,
               background: colors.wireframe,
               opacity: logoWireframeOpacity,
             }}
@@ -84,7 +84,7 @@ export const CloseScene: React.FC = () => {
           <div
             style={{
               fontFamily: fontFamily.mono,
-              fontSize: 64,
+              fontSize: 64 * scale,
               fontWeight: 400,
               color: colors.fgPrimary,
               letterSpacing: '0.15em',
@@ -96,7 +96,7 @@ export const CloseScene: React.FC = () => {
         </div>
         
         {/* Tagline area */}
-        <div style={{ position: 'relative', marginTop: 8 }}>
+        <div style={{ position: 'relative', marginTop: 8 * scale }}>
           {/* Wireframe placeholder */}
           <div
             style={{
@@ -104,9 +104,9 @@ export const CloseScene: React.FC = () => {
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: 180,
-              height: 16,
-              borderRadius: 4,
+              width: 180 * scale,
+              height: 16 * scale,
+              borderRadius: 4 * scale,
               background: colors.wireframe,
               opacity: taglineWireframeOpacity,
             }}
@@ -116,7 +116,7 @@ export const CloseScene: React.FC = () => {
           <div
             style={{
               fontFamily: fontFamily.sans,
-              fontSize: 20,
+              fontSize: 20 * scale,
               fontWeight: 400,
               color: colors.fgMuted,
               letterSpacing: '0.02em',
@@ -130,9 +130,9 @@ export const CloseScene: React.FC = () => {
         {/* URL */}
         <div
           style={{
-            marginTop: 32,
+            marginTop: 32 * scale,
             fontFamily: fontFamily.mono,
-            fontSize: 14,
+            fontSize: 14 * scale,
             color: colors.fgTertiary,
             opacity: urlProgress,
           }}

@@ -332,6 +332,51 @@
 	</div>
 </section>
 
+<!-- The Automation Layer -->
+<section class="py-16 px-6 border-t border-canon">
+	<div class="max-w-3xl mx-auto">
+		<h2 class="mb-8">The Automation Layer</h2>
+
+		<div class="space-y-6 text-lg-canon opacity-80-canon leading-relaxed">
+			<p>
+				<strong>Automation Infrastructure</strong> is infrastructure that recedes. It embodies
+				Gelassenheit—"releasement"—the tool that disappears into transparent use. You don't think
+				about the automation; you think about what you're trying to accomplish.
+			</p>
+
+			<p>
+				This is the life's work: building the layer between human intention and system execution.
+				Not automation that fills every gap (Gestell—the danger of technology as mere
+				"enframing")—but automation that enables dwelling. Systems that work while you sleep,
+				recover what you'd miss, handle what you'd forget.
+			</p>
+
+			<p>
+				<a href="https://workway.co" class="underline hover:opacity-80">WORKWAY</a> is where this
+				philosophy becomes code. An open marketplace for TypeScript workflows, running on
+				Cloudflare's edge. The SDK absorbs complexity. The marketplace curates quality. The
+				infrastructure recedes.
+			</p>
+
+			<div class="mt-12 p-8 border border-canon">
+				<pre class="text-sm-canon opacity-60-canon font-mono leading-relaxed overflow-x-auto">
+THE AUTOMATION LAYER
+
+Human Intention
+    ↓ crystallized into
+Configurable Constraints
+    ↓ executed by
+Autonomous Agents
+    ↓ running on
+Edge Infrastructure
+    ↓ producing
+Outcomes While You Sleep
+				</pre>
+			</div>
+		</div>
+	</div>
+</section>
+
 <!-- The Hermeneutic Circle -->
 <section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-3xl mx-auto">

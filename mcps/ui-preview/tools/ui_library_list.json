@@ -1,0 +1,8 @@
+{
+  "name": "ui_library_list",
+  "description": "List all saved components in the design library. Returns component metadata (id, name, description, tags, savedAt) without the full tree structure.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {}
+  }
+}

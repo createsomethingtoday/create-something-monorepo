@@ -1,0 +1,84 @@
+<style>
+.card {
+  border: 1px solid var(--color-border-default);
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-lg);
+  max-width: 440px;
+}
+.p-8 { padding: var(--space-lg); }
+.mb-4 { margin-bottom: var(--space-sm); }
+.mb-6 { margin-bottom: var(--space-md); }
+.order-index, .category {
+  font-size: var(--text-caption);
+  color: var(--color-fg-muted);
+}
+.order-index { font-family: var(--font-mono); }
+.category {
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-widest);
+  margin-left: var(--space-xs);
+}
+.title {
+  font-size: var(--text-h2);
+  font-weight: var(--font-semibold);
+  color: var(--color-fg-primary);
+  margin-bottom: var(--space-sm);
+}
+.description {
+  color: var(--color-fg-tertiary);
+  line-height: var(--leading-relaxed);
+  font-size: var(--text-body);
+  margin-bottom: var(--space-md);
+}
+.levels {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+.level {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-hover);
+  border-radius: var(--radius-md);
+  border-left: 3px solid;
+}
+.level-dry { border-color: var(--color-info); }
+.level-rams { border-color: var(--color-data-3); }
+.level-heidegger { border-color: var(--color-success); }
+.level-name {
+  font-weight: var(--font-semibold);
+  font-size: var(--text-body-sm);
+  color: var(--color-fg-primary);
+  min-width: 100px;
+}
+.level-action {
+  font-size: var(--text-caption);
+  color: var(--color-fg-muted);
+}
+</style>
+<div class="card p-8">
+  <div class="mb-4">
+    <span class="order-index">#0</span>
+    <span class="category">Meta-Principle</span>
+  </div>
+  <h4 class="title">The Subtractive Triad</h4>
+  <div class="description">
+    <p>Creation is the discipline of removing what obscures. Every decision asks three questions in order:</p>
+  </div>
+  <div class="levels">
+    <div class="level level-dry">
+      <span class="level-name">DRY</span>
+      <span class="level-action">Have I built this before? → Unify</span>
+    </div>
+    <div class="level level-rams">
+      <span class="level-name">Rams</span>
+      <span class="level-action">Does this earn its existence? → Remove</span>
+    </div>
+    <div class="level level-heidegger">
+      <span class="level-name">Heidegger</span>
+      <span class="level-action">Does this serve the whole? → Reconnect</span>
+    </div>
+  </div>
+</div>

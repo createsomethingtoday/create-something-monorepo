@@ -118,9 +118,9 @@
 </script>
 
 <SEO
-	title="Software that works while you sleep"
-	description="We build apps with agents, automate workflows, and train teams on AI. From ready-to-deploy templates to custom automation systems."
-	keywords="AI agents, workflow automation, AI consulting, team AI training, dental practice website, law firm website, business automation"
+	title="Automation Infrastructure | The Layer That Works While You Sleep"
+	description="We build automation infrastructure—the layer between human intention and system execution. Agents that recover revenue, follow up with leads, and handle what you'd forget."
+	keywords="automation infrastructure, the automation layer, AI agents, workflow automation, business automation, edge computing, WORKWAY"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -128,10 +128,10 @@
 <!-- Hero -->
 <section class="hero">
 	<div class="hero-content">
-		<p class="hero-eyebrow">Apps + Agents</p>
-		<h1 class="hero-title">We build software that keeps working after launch</h1>
+		<p class="hero-eyebrow">Automation Infrastructure</p>
+		<h1 class="hero-title">We build the layer that works while you sleep</h1>
 		<p class="hero-subtitle">
-			Not just a website. An app with automated workflows that recover missed appointments, follow up with leads, and handle the tasks you forget.
+			Not just software. Automation infrastructure—agents that recover missed appointments, follow up with leads, and handle the tasks you forget. The system works; you don't have to.
 		</p>
 
 		<form class="spec-input-container" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
@@ -202,9 +202,9 @@
 <!-- Value - Rams: state the outcome -->
 <section class="value-section">
 	<p class="value-statement">
-		You get a production-ready app in days, not months.<br />
-		Behind it, agents work around the clock—<br />
-		<strong>so you hear "Your agents recovered $3,200 this month" instead of silence.</strong>
+		You get automation infrastructure in days, not months.<br />
+		Behind it, the layer works around the clock—<br />
+		<strong>so you hear "Your system recovered $3,200 this month" instead of silence.</strong>
 	</p>
 </section>
 

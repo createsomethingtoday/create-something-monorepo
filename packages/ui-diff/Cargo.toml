@@ -1,0 +1,39 @@
+[package]
+name = "ui-diff"
+version = "0.1.0"
+edition = "2021"
+description = "AST diffing for UI components. Produces operations for animated previews."
+license = "MIT"
+repository = "https://github.com/createsomethingtoday/create-something-monorepo"
+keywords = ["ast", "diff", "ui", "svelte", "wasm"]
+categories = ["development-tools", "wasm"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# WASM bindings
+wasm-bindgen = "0.2"
+js-sys = "0.3"
+web-sys = { version = "0.3", features = ["console"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# HTML/Svelte parsing
+scraper = "0.22"
+
+# Error handling
+thiserror = "2"
+anyhow = "1"
+
+# Console logging for WASM
+console_error_panic_hook = "0.1"
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
+
+[profile.release]
+lto = true
+opt-level = "z"  # Optimize for size

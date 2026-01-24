@@ -36,6 +36,8 @@ import {
   OUTERFIELDS_COMMERCIAL_CONFIG,
   TendCommercial,
   TEND_COMMERCIAL_CONFIG,
+  TendWalkthroughCommercial,
+  TEND_WALKTHROUGH_CONFIG,
 } from './commercials';
 
 // Primitives
@@ -347,7 +349,7 @@ export const RemotionRoot: React.FC = () => {
         defaultProps={{
           ...GITHUB_HISTORY_COMMERCIAL_CONFIG.defaultProps,
           username: 'createsomethingtoday',
-          githubToken: process.env.GITHUB_TOKEN || '',
+          githubToken: '', // Set via Remotion input props if needed
         }}
       />
       
@@ -370,6 +372,17 @@ export const RemotionRoot: React.FC = () => {
         width={TEND_COMMERCIAL_CONFIG.width}
         height={TEND_COMMERCIAL_CONFIG.height}
         defaultProps={TEND_COMMERCIAL_CONFIG.defaultProps}
+      />
+      
+      {/* TEND Walkthrough - Component-by-component explainer with voiceover */}
+      <Composition
+        id="TendWalkthrough"
+        component={TendWalkthroughCommercial}
+        durationInFrames={TEND_WALKTHROUGH_CONFIG.durationInFrames}
+        fps={TEND_WALKTHROUGH_CONFIG.fps}
+        width={TEND_WALKTHROUGH_CONFIG.width}
+        height={TEND_WALKTHROUGH_CONFIG.height}
+        defaultProps={TEND_WALKTHROUGH_CONFIG.defaultProps}
       />
       
       {/* ========================================

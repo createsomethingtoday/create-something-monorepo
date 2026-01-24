@@ -7,6 +7,7 @@
 
 import type { PageServerLoad } from './$types';
 import { getTokenStatus, getNextOptimalTime, DEFAULT_PREFERRED_DAYS } from '$lib/social';
+import { getStartOfWeek } from '$lib/utils/date';
 
 interface PostRow {
 	id: string;
@@ -203,21 +204,6 @@ export const load: PageServerLoad = async ({ platform }) => {
 };
 
 // Helper functions
-
-function getStartOfWeek(date: Date, timezone: string): Date {
-	const d = new Date(date);
-	const formatter = new Intl.DateTimeFormat('en-US', {
-		timeZone: timezone,
-		weekday: 'short'
-	});
-
-	while (formatter.format(d).toLowerCase() !== 'mon') {
-		d.setDate(d.getDate() - 1);
-	}
-
-	d.setHours(0, 0, 0, 0);
-	return d;
-}
 
 function formatDateTime(date: Date, timezone: string): string {
 	return new Intl.DateTimeFormat('en-US', {

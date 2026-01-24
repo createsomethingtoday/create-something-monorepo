@@ -3,6 +3,7 @@
 	import { Card, CardHeader, CardTitle, CardContent } from './ui';
 	import StatusBadge from './StatusBadge.svelte';
 	import KineticNumber from './KineticNumber.svelte';
+	import DataFreshnessIndicator from './DataFreshnessIndicator.svelte';
 	import type { Asset } from '$lib/server/airtable';
 	import { Eye, ShoppingBag, DollarSign } from 'lucide-svelte';
 
@@ -78,7 +79,10 @@
 		<div in:fade={{ duration: 300, delay: 0 }}>
 			<Card>
 				<CardHeader>
-					<CardTitle>Performance Summary</CardTitle>
+					<div class="header-with-indicator">
+						<CardTitle>Performance Summary</CardTitle>
+						<DataFreshnessIndicator variant="inline" />
+					</div>
 				</CardHeader>
 				<CardContent>
 				<div class="performance-grid">
@@ -162,6 +166,14 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-md);
+	}
+
+	.header-with-indicator {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-sm);
+		width: 100%;
 	}
 
 	.performance-grid {

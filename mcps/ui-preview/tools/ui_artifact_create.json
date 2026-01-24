@@ -1,0 +1,22 @@
+{
+  "name": "ui_artifact_create",
+  "description": "Create a new design artifact for an AI design session. The artifact is a working copy that renders in the canvas. Each edit to the artifact animates in real-time.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "Name for the artifact (e.g., 'Hero Section', 'Pricing Card')"
+      },
+      "source": {
+        "type": "string",
+        "description": "Initial HTML/CSS source. Include <style> block for CSS and HTML elements."
+      },
+      "fromComponent": {
+        "type": "string",
+        "description": "Optional: Clone from existing component file path"
+      }
+    },
+    "required": ["name"]
+  }
+}

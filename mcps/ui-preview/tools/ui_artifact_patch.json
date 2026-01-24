@@ -1,0 +1,30 @@
+{
+  "name": "ui_artifact_patch",
+  "description": "Patch a V2 artifact with minimal changes. This is the AI-native way to edit - send only what changed, not the whole artifact. Changes render live in the canvas.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "Artifact ID (e.g., 'art-xxx-yyyy')"
+      },
+      "set": {
+        "type": "object",
+        "description": "Properties to set. Use dot notation for nested paths.",
+        "additionalProperties": true,
+        "examples": [
+          { "content.icon": "🚀" },
+          { "content.icon": { "name": "rocket", "library": "lucide" } },
+          { "style.accent": "#ec4899" },
+          { "content.title": "New Title", "style.animation": "pulse" }
+        ]
+      },
+      "delete": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Properties to delete (dot notation paths)"
+      }
+    },
+    "required": ["id", "set"]
+  }
+}

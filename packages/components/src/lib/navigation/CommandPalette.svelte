@@ -248,10 +248,13 @@
 		z-index: 51;
 		width: min(560px, 90vw);
 		max-height: 60vh;
-		background: var(--color-bg-elevated, #0a0a0a);
-		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		/* Glass Design System - "The Automation Layer" */
+		background-color: var(--glass-bg-medium);
+		backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
+		-webkit-backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
+		border: 1px solid var(--glass-border-medium);
 		border-radius: var(--radius-lg, 12px);
-		box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.3));
+		box-shadow: var(--glass-shadow-lg);
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;

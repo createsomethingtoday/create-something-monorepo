@@ -41,6 +41,13 @@ export {
   SPEC as TEND_SPEC,
 } from './tend';
 
+// TEND Walkthrough
+export {
+  TendWalkthroughCommercial,
+  TEND_WALKTHROUGH_CONFIG,
+  WALKTHROUGH_SPEC as TEND_WALKTHROUGH_SPEC,
+} from './tend-walkthrough';
+
 // Shared primitives
 export {
   KineticHeadline,

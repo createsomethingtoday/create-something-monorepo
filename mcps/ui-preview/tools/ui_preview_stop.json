@@ -1,0 +1,8 @@
+{
+  "name": "ui_preview_stop",
+  "description": "Stop the UI preview server. Terminates both the bridge (file watcher) and viewer processes.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {}
+  }
+}

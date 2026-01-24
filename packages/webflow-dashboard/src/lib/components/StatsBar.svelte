@@ -10,6 +10,7 @@
 	 */
 	import { onMount } from 'svelte';
 	import Sparkline from './Sparkline.svelte';
+	import DataFreshnessIndicator from './DataFreshnessIndicator.svelte';
 	import { LayoutGrid, Eye, ShoppingCart, DollarSign, TrendingUp } from 'lucide-svelte';
 	import type { Asset } from '$lib/server/airtable';
 
@@ -124,6 +125,7 @@
 		<ShoppingCart size={14} class="stat-icon" />
 		<span class="stat-main">{formatNumber(metrics().totalPurchases)}</span>
 		<span class="stat-label">purchases</span>
+		<DataFreshnessIndicator variant="tooltip" />
 		<span class="stat-secondary conversion">
 			{metrics().conversionRate.toFixed(1)}% conv
 		</span>
@@ -135,6 +137,7 @@
 		<DollarSign size={14} class="stat-icon" />
 		<span class="stat-main">{formatCurrency(metrics().totalRevenue)}</span>
 		<span class="stat-label">revenue</span>
+		<DataFreshnessIndicator variant="tooltip" />
 		{#if historyLoaded && revenueTrend.length >= 2}
 			<Sparkline data={revenueTrend} color="var(--color-success)" showTrend filled />
 		{/if}

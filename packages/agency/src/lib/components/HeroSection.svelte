@@ -80,8 +80,11 @@
 	}
 
 	.newsletter-cta {
-		background: var(--color-active);
-		border: 1px solid var(--color-border-emphasis);
+		/* Glass Design System - "The Automation Layer" */
+		background-color: var(--glass-bg-light);
+		backdrop-filter: blur(var(--glass-blur-sm)) var(--glass-saturate-sm);
+		-webkit-backdrop-filter: blur(var(--glass-blur-sm)) var(--glass-saturate-sm);
+		border: 1px solid var(--glass-border-light);
 		border-radius: var(--radius-full);
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);
@@ -89,8 +92,8 @@
 	}
 
 	.newsletter-cta:hover {
-		background: var(--color-border-emphasis);
-		border-color: var(--color-border-strong);
+		background-color: var(--glass-bg-medium);
+		border-color: var(--glass-border-medium);
 	}
 
 	.hero-label {

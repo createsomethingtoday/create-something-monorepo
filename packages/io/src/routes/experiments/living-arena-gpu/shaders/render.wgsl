@@ -195,7 +195,7 @@ fn vertexMain(
 
 @fragment
 fn fragmentMain(input: VertexOutput) -> @location(0) vec4<f32> {
-    // Circular shape with soft edge
+    // Circular shape with anti-aliased edge
     let dist = length(input.localPos);
     
     // Discard pixels outside circle
@@ -203,11 +203,11 @@ fn fragmentMain(input: VertexOutput) -> @location(0) vec4<f32> {
         discard;
     }
     
-    // Soft anti-aliased edge (0.6-1.0 = 40% fade for smooth appearance)
-    let alpha = input.color.a * smoothstep(1.0, 0.6, dist);
+    // Anti-aliased edge (0.7-1.0 = 30% fade)
+    let alpha = input.color.a * smoothstep(1.0, 0.7, dist);
     
     // Subtle brightness gradient for depth
-    let brightness = 1.0 + (1.0 - dist) * 0.15;
+    let brightness = 1.0 + (1.0 - dist) * 0.2;
     
     return vec4<f32>(input.color.rgb * brightness, alpha);
 }

@@ -1,0 +1,22 @@
+{
+  "name": "@create-something/ui-preview-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for UI Preview - provides visual feedback tools for AI agents",
+  "type": "module",
+  "bin": {
+    "ui-preview-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node",
+    "dev": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.3"
+  },
+  "keywords": ["mcp", "ui-preview", "claude-code", "visual-feedback"]
+}

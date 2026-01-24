@@ -24,10 +24,10 @@ export const KeyboardHint: React.FC<KeyboardHintProps> = ({
   pressProgress = 0,
   color = 'default',
 }) => {
-  const { colors } = SPEC;
+  const { colors, scale } = SPEC;
   
   // Press animation
-  const scale = interpolate(pressProgress, [0, 0.3, 1], [1, 0.9, 1], { extrapolateRight: 'clamp' });
+  const scaleAnim = interpolate(pressProgress, [0, 0.3, 1], [1, 0.9, 1], { extrapolateRight: 'clamp' });
   const glowOpacity = interpolate(pressProgress, [0, 0.3, 1], [0, 0.8, 0], { extrapolateRight: 'clamp' });
   
   // Color based on action type
@@ -44,46 +44,46 @@ export const KeyboardHint: React.FC<KeyboardHintProps> = ({
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 8,
+        gap: 8 * scale,
       }}
     >
       <div
         style={{
           position: 'relative',
-          transform: `scale(${scale})`,
+          transform: `scale(${scaleAnim})`,
         }}
       >
         {/* Glow effect */}
         <div
           style={{
             position: 'absolute',
-            inset: -4,
-            borderRadius: 10,
+            inset: -4 * scale,
+            borderRadius: 10 * scale,
             background: getGlowColor(),
             opacity: glowOpacity * 0.3,
-            filter: 'blur(8px)',
+            filter: `blur(${8 * scale}px)`,
           }}
         />
         
         {/* Key */}
         <div
           style={{
-            minWidth: 32,
-            height: 32,
-            padding: '0 10px',
-            borderRadius: 6,
+            minWidth: 32 * scale,
+            height: 32 * scale,
+            padding: `0 ${10 * scale}px`,
+            borderRadius: 6 * scale,
             background: 'rgba(255, 255, 255, 0.1)',
-            border: `1px solid ${colors.borderDefault}`,
+            border: `${scale}px solid ${colors.borderDefault}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontFamily: fontFamily.mono,
-            fontSize: 14,
+            fontSize: 14 * scale,
             fontWeight: 500,
             color: colors.fgPrimary,
             boxShadow: isPressed 
-              ? `0 0 12px ${getGlowColor()}40`
-              : '0 2px 4px rgba(0, 0, 0, 0.3)',
+              ? `0 0 ${12 * scale}px ${getGlowColor()}40`
+              : `0 ${2 * scale}px ${4 * scale}px rgba(0, 0, 0, 0.3)`,
           }}
         >
           {keyLabel}
@@ -94,7 +94,7 @@ export const KeyboardHint: React.FC<KeyboardHintProps> = ({
         <span
           style={{
             fontFamily: fontFamily.sans,
-            fontSize: 12,
+            fontSize: 12 * scale,
             color: colors.fgMuted,
           }}
         >

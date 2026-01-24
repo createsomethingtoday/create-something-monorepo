@@ -1,0 +1,21 @@
+{
+  "name": "@create-something/ui-bridge",
+  "version": "0.1.0",
+  "description": "Bridge server for UI preview system. Watches files, diffs changes, streams operations.",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts",
+    "build:wasm": "cd ../ui-diff && wasm-pack build --target web --out-dir ../ui-bridge/wasm",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "bun": ">=1.0.0"
+  }
+}

@@ -16,6 +16,7 @@
 
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { getStartOfWeek, getWeekNumber } from '$lib/utils/date';
 
 interface DayRhythm {
 	focus: string;
@@ -181,33 +182,3 @@ export const GET: RequestHandler = async ({ platform }) => {
 	});
 };
 
-// Helper functions
-
-function getStartOfWeek(date: Date, timezone: string): Date {
-	const d = new Date(date);
-	const formatter = new Intl.DateTimeFormat('en-US', {
-		timeZone: timezone,
-		weekday: 'short'
-	});
-
-	while (formatter.format(d).toLowerCase() !== 'mon') {
-		d.setDate(d.getDate() - 1);
-	}
-
-	d.setHours(0, 0, 0, 0);
-	return d;
-}
-
-function getWeekNumber(date: Date, timezone: string): string {
-	const formatter = new Intl.DateTimeFormat('en-US', {
-		timeZone: timezone,
-		year: 'numeric'
-	});
-	const year = formatter.format(date);
-
-	const startOfYear = new Date(parseInt(year), 0, 1);
-	const days = Math.floor((date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-	const weekNum = Math.ceil((days + startOfYear.getDay() + 1) / 7);
-
-	return `${year}-W${weekNum.toString().padStart(2, '0')}`;
-}

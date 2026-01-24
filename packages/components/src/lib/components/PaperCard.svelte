@@ -132,17 +132,20 @@
 </a>
 
 <style>
-	/* Card Container */
+	/* Card Container - Glass Design System "The Automation Layer" */
 	.paper-card {
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: 0;
+		background-color: var(--glass-bg-light);
+		backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+		-webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+		border: 1px solid var(--glass-border-light);
+		border-radius: var(--radius-md);
 		transition: all var(--duration-standard) var(--ease-standard);
 	}
 
 	.paper-card:hover {
-		border-color: var(--color-border-strong);
-		box-shadow: var(--shadow-xl), 0 0 30px var(--color-hover);
+		background-color: var(--glass-bg-medium);
+		border-color: var(--glass-border-medium);
+		box-shadow: var(--glass-shadow-md);
 		transform: scale(var(--scale-micro));
 	}
 

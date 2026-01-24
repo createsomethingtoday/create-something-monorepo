@@ -1,0 +1,61 @@
+{
+  "name": "ui_artifact_create_v2",
+  "description": "Create a V2 structured artifact. Uses schema-based format for AI-native editing. Renders with real Svelte components and Lucide icons.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "Name for the artifact (e.g., 'Hero Section', 'Feature Card')"
+      },
+      "type": {
+        "type": "string",
+        "enum": ["card", "hero", "button", "section"],
+        "description": "Component type"
+      },
+      "content": {
+        "type": "object",
+        "description": "Content blocks",
+        "properties": {
+          "icon": {
+            "oneOf": [
+              { "type": "string", "description": "Emoji icon" },
+              { 
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "description": "Lucide icon name (e.g., 'rocket', 'zap', 'sparkles')" },
+                  "library": { "type": "string", "enum": ["lucide"], "default": "lucide" }
+                },
+                "required": ["name"]
+              }
+            ]
+          },
+          "title": { "type": "string" },
+          "subtitle": { "type": "string" },
+          "body": { "type": "string" },
+          "badge": { "type": "string" },
+          "cta": {
+            "type": "object",
+            "properties": {
+              "label": { "type": "string" },
+              "href": { "type": "string" }
+            }
+          },
+          "items": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "style": {
+        "type": "object",
+        "description": "Style tokens",
+        "properties": {
+          "theme": { "type": "string", "enum": ["glass-dark", "glass-light", "solid-dark", "solid-light"] },
+          "accent": { "type": "string", "description": "Hex color (e.g., '#6366f1')" },
+          "radius": { "type": "string", "enum": ["sm", "md", "lg", "xl", "2xl", "3xl"] },
+          "padding": { "type": "string", "enum": ["sm", "md", "lg", "xl", "2xl"] },
+          "animation": { "type": "string", "enum": ["none", "float", "pulse", "glow"] }
+        }
+      }
+    },
+    "required": ["name"]
+  }
+}

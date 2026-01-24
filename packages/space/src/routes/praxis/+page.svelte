@@ -115,9 +115,9 @@
 </script>
 
 <SEO
-	title="Integration Praxis"
-	description="Learn WORKWAY patterns through practice. A compressed hermeneutic circle."
-	keywords="WORKWAY, integration patterns, practice, hermeneutic circle, Subtractive Triad, code exercises"
+	title="Integration Praxis | The Automation Layer"
+	description="Learn automation infrastructure patterns through practice. Build the layer that works while you sleep."
+	keywords="automation infrastructure, WORKWAY, the automation layer, integration patterns, Subtractive Triad, code exercises"
 	propertyName="space"
 	breadcrumbs={[
 		{ name: 'Home', url: 'https://createsomething.space' },

@@ -23,7 +23,8 @@
 		StatusBadge,
 		Sparkline,
 		TimelineCard,
-		AnalyticsCard
+		AnalyticsCard,
+		DataFreshnessIndicator
 	} from '$lib/components';
 	import EditAssetModal from '$lib/components/EditAssetModal.svelte';
 	import { toast } from '$lib/stores/toast';
@@ -349,15 +350,15 @@
 
 										{#if showPerformance && canShowMetrics}
 											<div class="detail-item">
-												<span class="detail-label">Unique Viewers</span>
+												<span class="detail-label">Unique Viewers <DataFreshnessIndicator variant="tooltip" /></span>
 												<span class="detail-value">{formatNumber(asset.uniqueViewers)}</span>
 											</div>
 											<div class="detail-item">
-												<span class="detail-label">Total Purchases</span>
+												<span class="detail-label">Total Purchases <DataFreshnessIndicator variant="tooltip" /></span>
 												<span class="detail-value">{formatNumber(asset.cumulativePurchases)}</span>
 											</div>
 											<div class="detail-item">
-												<span class="detail-label">Total Revenue</span>
+												<span class="detail-label">Total Revenue <DataFreshnessIndicator variant="tooltip" /></span>
 												<span class="detail-value">{formatCurrency(asset.cumulativeRevenue)}</span>
 											</div>
 										{/if}
@@ -463,6 +464,7 @@
 												<div class="stat-header">
 													<ShoppingCart size={14} class="stat-icon" />
 													<span class="stat-number">{formatNumber(asset.cumulativePurchases)}</span>
+													<DataFreshnessIndicator variant="tooltip" />
 												</div>
 												<span class="stat-label">Purchases</span>
 												{#if conversionRate() !== null}
@@ -473,6 +475,7 @@
 												<div class="stat-header">
 													<DollarSign size={14} class="stat-icon" />
 													<span class="stat-number">{formatCurrency(asset.cumulativeRevenue)}</span>
+													<DataFreshnessIndicator variant="tooltip" />
 												</div>
 												<span class="stat-label">Revenue</span>
 												{#if revenueTrend().length > 0}

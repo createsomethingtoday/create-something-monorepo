@@ -26,6 +26,10 @@
     "loom": {
       "command": "./packages/loom/target/release/loom-mcp",
       "args": ["--path", "."]
+    },
+    "ui-preview": {
+      "command": "bun",
+      "args": ["run", "./packages/ui-preview-mcp/src/index.ts"]
     }
   }
 }

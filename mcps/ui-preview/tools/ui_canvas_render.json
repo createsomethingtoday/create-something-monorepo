@@ -1,0 +1,20 @@
+{
+  "name": "ui_canvas_render",
+  "description": "Render a Svelte component file to the visual canvas. Use after editing a component to see changes with animations. The canvas must be open at http://localhost:4200/canvas",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string",
+        "description": "Path to the component file. Can be relative (e.g., 'Card.svelte') or absolute. Relative paths resolve from the watched directory."
+      }
+    },
+    "required": ["path"]
+  },
+  "annotations": {
+    "endpoint": "POST http://localhost:4201/api/render-file",
+    "body": {
+      "path": "{{path}}"
+    }
+  }
+}

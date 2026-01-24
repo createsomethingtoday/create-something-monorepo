@@ -23,7 +23,7 @@ interface ItemState {
 export const TriageScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { inboxItems, colors, scenes } = SPEC;
+  const { inboxItems, colors, scenes, scale } = SPEC;
   const { tableEmbodiment, focusFirst, keySequence } = scenes.triage;
   
   // Table embodiment
@@ -110,25 +110,25 @@ export const TriageScene: React.FC = () => {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: 80,
+          padding: 80 * scale,
         }}
       >
         {/* Table header */}
         <div
           style={{
             width: '100%',
-            maxWidth: 900,
-            marginBottom: 16,
+            maxWidth: 900 * scale,
+            marginBottom: 16 * scale,
             opacity: tableEmbodimentProgress,
           }}
         >
           <div
             style={{
               fontFamily: fontFamily.sans,
-              fontSize: 14,
+              fontSize: 14 * scale,
               fontWeight: 500,
               color: colors.fgMuted,
-              padding: '0 16px',
+              padding: `0 ${16 * scale}px`,
             }}
           >
             Priority items ({itemStates.filter(i => i.status === 'inbox').length})
@@ -139,10 +139,10 @@ export const TriageScene: React.FC = () => {
         <div
           style={{
             width: '100%',
-            maxWidth: 900,
+            maxWidth: 900 * scale,
             display: 'flex',
             flexDirection: 'column',
-            gap: 4,
+            gap: 4 * scale,
           }}
         >
           {!showEmptyState && itemStates.map((item, index) => {
@@ -191,7 +191,7 @@ export const TriageScene: React.FC = () => {
             <div
               style={{
                 textAlign: 'center',
-                padding: 60,
+                padding: 60 * scale,
                 opacity: interpolate(
                   frame,
                   [scenes.triage.emptyState.start, scenes.triage.emptyState.start + 30],
@@ -203,9 +203,9 @@ export const TriageScene: React.FC = () => {
               <div
                 style={{
                   fontFamily: fontFamily.sans,
-                  fontSize: 18,
+                  fontSize: 18 * scale,
                   color: colors.fgMuted,
-                  marginBottom: 8,
+                  marginBottom: 8 * scale,
                 }}
               >
                 Nothing urgent.
@@ -213,7 +213,7 @@ export const TriageScene: React.FC = () => {
               <div
                 style={{
                   fontFamily: fontFamily.sans,
-                  fontSize: 14,
+                  fontSize: 14 * scale,
                   color: colors.fgTertiary,
                 }}
               >
@@ -228,10 +228,10 @@ export const TriageScene: React.FC = () => {
       <div
         style={{
           position: 'absolute',
-          bottom: 60,
-          left: 80,
+          bottom: 60 * scale,
+          left: 80 * scale,
           display: 'flex',
-          gap: 24,
+          gap: 24 * scale,
           opacity: tableEmbodimentProgress,
         }}
       >

@@ -65,10 +65,11 @@
 	.glass-card {
 		position: relative;
 		overflow: hidden;
-		background: var(--color-bg-surface, rgba(255, 255, 255, 0.05));
-		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
-		backdrop-filter: blur(12px) saturate(150%);
-		-webkit-backdrop-filter: blur(12px) saturate(150%);
+		/* Glass Design System - "The Automation Layer" */
+		background-color: var(--glass-bg-light);
+		border: 1px solid var(--glass-border-light);
+		backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+		-webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
 		transition:
 			background var(--duration-micro, 200ms) var(--ease-standard),
 			border-color var(--duration-micro, 200ms) var(--ease-standard),
@@ -78,28 +79,33 @@
 
 	/* Variants */
 	.glass-card.default {
-		background: var(--color-bg-surface, rgba(255, 255, 255, 0.05));
+		background-color: var(--glass-bg-light);
 	}
 
 	.glass-card.subtle {
-		background: var(--color-bg-subtle, rgba(255, 255, 255, 0.02));
-		border-color: var(--color-border-default, rgba(255, 255, 255, 0.05));
+		background-color: var(--glass-bg-subtle);
+		border-color: var(--glass-border-subtle);
+		backdrop-filter: blur(var(--glass-blur-sm)) var(--glass-saturate-sm);
+		-webkit-backdrop-filter: blur(var(--glass-blur-sm)) var(--glass-saturate-sm);
 	}
 
 	.glass-card.elevated {
-		background: var(--color-bg-elevated, rgba(255, 255, 255, 0.08));
-		box-shadow: var(--shadow-lg, 0 10px 40px rgba(0, 0, 0, 0.3));
+		background-color: var(--glass-bg-medium);
+		box-shadow: var(--glass-shadow-md);
+		backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+		-webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
 	}
 
 	/* Hover states */
 	.glass-card:hover {
-		border-color: var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
-		box-shadow: var(--shadow-lg, 0 10px 40px rgba(0, 0, 0, 0.3));
+		background-color: var(--glass-bg-medium);
+		border-color: var(--glass-border-medium);
+		box-shadow: var(--glass-shadow-sm);
 	}
 
 	.glass-card.elevated:hover {
 		transform: translateY(-4px);
-		box-shadow: var(--shadow-xl, 0 20px 60px rgba(0, 0, 0, 0.4));
+		box-shadow: var(--glass-shadow-lg);
 	}
 
 	/* Padding */

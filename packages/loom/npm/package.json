@@ -1,27 +1,49 @@
 {
   "name": "@createsomething/loom-mcp",
   "version": "0.1.0",
-  "description": "AI-native coordination layer. External memory for agents.",
+  "description": "AI-native coordination layer. External memory for agents. Multi-agent task routing, checkpointing, and crash recovery.",
+  "author": "CREATE SOMETHING <hello@createsomething.io>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo",
+    "directory": "packages/loom"
+  },
+  "homepage": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/loom",
+  "bugs": {
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo/issues"
+  },
   "keywords": [
+    "mcp",
+    "model-context-protocol",
     "ai",
     "agents",
+    "multi-agent",
     "coordination",
     "tasks",
     "orchestration",
-    "mcp"
+    "checkpointing",
+    "crash-recovery",
+    "llm",
+    "claude",
+    "cursor",
+    "codex",
+    "gemini"
   ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/create-something/create-something-monorepo.git",
-    "directory": "packages/loom"
-  },
-  "license": "MIT",
   "bin": {
     "lm": "bin/lm",
     "loom-mcp": "bin/loom-mcp"
   },
   "scripts": {
     "postinstall": "node install.js"
+  },
+  "files": [
+    "bin",
+    "install.js",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=16"
   },
   "os": [
     "darwin",
@@ -31,8 +53,5 @@
   "cpu": [
     "x64",
     "arm64"
-  ],
-  "engines": {
-    "node": ">=16"
-  }
+  ]
 }

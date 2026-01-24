@@ -1,81 +1,162 @@
 #!/usr/bin/env node
 
+/**
+ * Loom MCP - Binary installer
+ * 
+ * Downloads the appropriate pre-built binary for the current platform.
+ */
+
 const { execSync } = require('child_process');
-const { existsSync, mkdirSync, copyFileSync, chmodSync } = require('fs');
-const { join } = require('path');
-const os = require('os');
+const fs = require('fs');
+const https = require('https');
+const path = require('path');
 
-const platform = os.platform();
-const arch = os.arch();
+const REPO = 'createsomethingtoday/create-something-monorepo';
+const VERSION = require('./package.json').version;
 
-// Map Node arch to Rust target
-const archMap = {
-  'x64': 'x86_64',
-  'arm64': 'aarch64'
+// Platform mapping
+// Note: macOS Intel uses arm64 binary via Rosetta 2
+const PLATFORMS = {
+  'darwin-arm64': 'darwin-arm64',
+  'darwin-x64': 'darwin-arm64',  // Rosetta 2 compatibility
+  'linux-arm64': 'linux-arm64',
+  'linux-x64': 'linux-x64',
+  'win32-x64': 'win32-x64',
 };
 
-const platformMap = {
-  'darwin': 'apple-darwin',
-  'linux': 'unknown-linux-gnu',
-  'win32': 'pc-windows-msvc'
-};
-
-const rustArch = archMap[arch] || arch;
-const rustPlatform = platformMap[platform] || platform;
-const target = `${rustArch}-${rustPlatform}`;
-
-const binDir = join(__dirname, 'bin');
-const ext = platform === 'win32' ? '.exe' : '';
-
-// Try to find pre-built binary
-const prebuiltPath = join(__dirname, '..', 'target', 'release', `lm${ext}`);
-const prebuiltMcpPath = join(__dirname, '..', 'target', 'release', `loom-mcp${ext}`);
-
-if (!existsSync(binDir)) {
-  mkdirSync(binDir, { recursive: true });
+function getPlatformKey() {
+  const platform = process.platform;
+  const arch = process.arch;
+  return `${platform}-${arch}`;
 }
 
-// Check for pre-built binaries
-if (existsSync(prebuiltPath)) {
-  console.log('Using pre-built loom binary');
-  copyFileSync(prebuiltPath, join(binDir, `lm${ext}`));
-  copyFileSync(prebuiltMcpPath, join(binDir, `loom-mcp${ext}`));
+function getBinaryName() {
+  const key = getPlatformKey();
+  const name = PLATFORMS[key];
   
-  if (platform !== 'win32') {
-    chmodSync(join(binDir, `lm${ext}`), 0o755);
-    chmodSync(join(binDir, `loom-mcp${ext}`), 0o755);
+  if (!name) {
+    console.error(`Unsupported platform: ${key}`);
+    console.error(`Supported platforms: ${Object.keys(PLATFORMS).join(', ')}`);
+    process.exit(1);
   }
-} else {
-  // Build from source
-  console.log('Building loom from source...');
-  console.log(`Target: ${target}`);
+  
+  return name;
+}
+
+function getDownloadUrl(binaryName) {
+  const ext = process.platform === 'win32' ? 'zip' : 'tar.gz';
+  // Tag format: loom-v0.1.0
+  return `https://github.com/${REPO}/releases/download/loom-v${VERSION}/loom-${binaryName}.${ext}`;
+}
+
+async function download(url) {
+  return new Promise((resolve, reject) => {
+    const request = (url) => {
+      https.get(url, { headers: { 'User-Agent': 'loom-mcp-installer' } }, (response) => {
+        // Handle redirects
+        if (response.statusCode === 302 || response.statusCode === 301) {
+          request(response.headers.location);
+          return;
+        }
+        
+        if (response.statusCode !== 200) {
+          reject(new Error(`Download failed: HTTP ${response.statusCode}`));
+          return;
+        }
+        
+        const chunks = [];
+        response.on('data', (chunk) => chunks.push(chunk));
+        response.on('end', () => resolve(Buffer.concat(chunks)));
+        response.on('error', reject);
+      }).on('error', reject);
+    };
+    
+    request(url);
+  });
+}
+
+async function extractTarGz(buffer, destDir) {
+  const tmpFile = path.join(destDir, 'archive.tar.gz');
+  
+  fs.writeFileSync(tmpFile, buffer);
+  execSync(`tar -xzf "${tmpFile}" -C "${destDir}"`, { stdio: 'inherit' });
+  fs.unlinkSync(tmpFile);
+}
+
+async function extractZip(buffer, destDir) {
+  // Fallback: use PowerShell on Windows
+  const tmpFile = path.join(destDir, 'archive.zip');
+  fs.writeFileSync(tmpFile, buffer);
+  execSync(`powershell -Command "Expand-Archive -Path '${tmpFile}' -DestinationPath '${destDir}' -Force"`, { stdio: 'inherit' });
+  fs.unlinkSync(tmpFile);
+}
+
+async function install() {
+  console.log('Loom MCP: Installing binary...');
+  
+  const binaryName = getBinaryName();
+  const url = getDownloadUrl(binaryName);
+  const binDir = path.join(__dirname, 'bin');
+  
+  console.log(`Platform: ${getPlatformKey()}`);
+  console.log(`Downloading: ${url}`);
   
   try {
-    // Check for Rust
-    execSync('rustc --version', { stdio: 'inherit' });
-    
-    // Build
-    execSync('cargo build --release', {
-      cwd: join(__dirname, '..'),
-      stdio: 'inherit'
-    });
-    
-    // Copy binaries
-    const builtPath = join(__dirname, '..', 'target', 'release', `lm${ext}`);
-    const builtMcpPath = join(__dirname, '..', 'target', 'release', `loom-mcp${ext}`);
-    
-    copyFileSync(builtPath, join(binDir, `lm${ext}`));
-    copyFileSync(builtMcpPath, join(binDir, `loom-mcp${ext}`));
-    
-    if (platform !== 'win32') {
-      chmodSync(join(binDir, `lm${ext}`), 0o755);
-      chmodSync(join(binDir, `loom-mcp${ext}`), 0o755);
+    // Create bin directory
+    if (!fs.existsSync(binDir)) {
+      fs.mkdirSync(binDir, { recursive: true });
     }
     
-    console.log('Loom installed successfully!');
-  } catch (e) {
-    console.error('Failed to build loom from source.');
-    console.error('Please ensure Rust is installed: https://rustup.rs');
+    // Download archive
+    const buffer = await download(url);
+    console.log(`Downloaded ${(buffer.length / 1024 / 1024).toFixed(2)} MB`);
+    
+    // Extract based on platform
+    if (process.platform === 'win32') {
+      await extractZip(buffer, binDir);
+    } else {
+      await extractTarGz(buffer, binDir);
+    }
+    
+    // Make binaries executable (Unix)
+    if (process.platform !== 'win32') {
+      const loomMcp = path.join(binDir, 'loom-mcp');
+      const lm = path.join(binDir, 'lm');
+      
+      if (fs.existsSync(loomMcp)) {
+        fs.chmodSync(loomMcp, 0o755);
+      }
+      if (fs.existsSync(lm)) {
+        fs.chmodSync(lm, 0o755);
+      }
+    }
+    
+    console.log('Loom MCP: Installation complete!');
+    console.log('');
+    console.log('Add to your .cursor/mcp.json:');
+    console.log('');
+    console.log('  {');
+    console.log('    "mcpServers": {');
+    console.log('      "loom": {');
+    console.log('        "command": "loom-mcp",');
+    console.log('        "args": ["--path", "."]');
+    console.log('      }');
+    console.log('    }');
+    console.log('  }');
+    console.log('');
+    
+  } catch (error) {
+    console.error('Loom MCP: Installation failed');
+    console.error(error.message);
+    console.error('');
+    console.error('You can manually download from:');
+    console.error(`https://github.com/${REPO}/releases`);
+    console.error('');
+    console.error('Or build from source (requires Rust):');
+    console.error('  cargo install --git https://github.com/' + REPO + ' --path packages/loom');
     process.exit(1);
   }
 }
+
+// Run installer
+install();

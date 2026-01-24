@@ -469,13 +469,19 @@
   }
 
   .card {
-    background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
+    /* Glass Design System - "The Automation Layer" */
+    background-color: var(--glass-bg-light);
+    backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+    -webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+    border: 1px solid var(--glass-border-light);
     border-radius: var(--radius-lg);
+    transition: all var(--duration-standard) var(--ease-standard);
   }
 
   .card:hover {
-    border-color: var(--color-border-emphasis);
+    background-color: var(--glass-bg-medium);
+    border-color: var(--glass-border-medium);
+    box-shadow: var(--glass-shadow-sm);
   }
 
   .card-heading {
@@ -598,8 +604,11 @@
   }
 
   .researcher-card {
-    background: var(--color-hover);
-    border: 1px solid var(--color-border-default);
+    /* Glass Design System - "The Automation Layer" */
+    background-color: var(--glass-bg-light);
+    backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+    -webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+    border: 1px solid var(--glass-border-light);
     border-radius: var(--radius-lg);
   }
 

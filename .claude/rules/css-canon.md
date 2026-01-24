@@ -81,6 +81,120 @@ For modals, dialogs, and backdrops:
 | modal overlay | `var(--color-overlay)` | rgba(0,0,0,0.5) |
 | heavy backdrop | `var(--color-overlay-heavy)` | rgba(0,0,0,0.7) |
 
+### Glass Design System - "The Automation Layer"
+
+Glass conveys CREATE SOMETHING's positioning: the transparent layer between user and outcome. The tool recedes; the outcome remains.
+
+**Philosophy: Obsidian Glass, Not Frosted Window**
+
+Heavy blur creates *textured* black glass—the element stays dark while revealing depth through blur texture, not transparency. Think volcanic glass catching light at its edges, not a bathroom window.
+
+**When to use glass:**
+- Navigation headers (`.glass-lg`)
+- Modal overlays (`.glass-elevated`)
+- Workflow/automation cards (`.glass-card`)
+- Hero sections (`.glass-2xl`)
+- Floating UI elements (`.glass-elevated`)
+
+**When NOT to use glass:**
+- Primary content areas (use solid backgrounds)
+- Dense data tables (readability suffers)
+- Every element (glass loses meaning through overuse)
+
+#### Glass Blur Tokens
+| Token | Value | Use Case |
+|-------|-------|----------|
+| `--glass-blur-sm` | 20px | Subtle texture, card backgrounds |
+| `--glass-blur-md` | 32px | Standard glass elements |
+| `--glass-blur-lg` | 48px | Navigation, elevated UI |
+| `--glass-blur-xl` | 64px | Modals, prominent overlays |
+| `--glass-blur-2xl` | 80px | Maximum texture, hero glass |
+
+#### Glass Saturation Tokens
+Saturation compensates for color loss in heavily blurred content.
+
+| Token | Value | Use Case |
+|-------|-------|----------|
+| `--glass-saturate-sm` | saturate(110%) | Subtle color boost |
+| `--glass-saturate-md` | saturate(120%) | Standard saturation |
+| `--glass-saturate-lg` | saturate(130%) | Elevated UI, navigation |
+| `--glass-saturate-xl` | saturate(140%) | Maximum richness |
+
+#### Glass Background Tokens
+**Black-tinted backgrounds** ensure glass stays dark regardless of content behind—true obsidian, not frosted window.
+
+| Token | Value | Use Case |
+|-------|-------|----------|
+| `--glass-bg-subtle` | rgba(0,0,0,0.65) | Subtle dark glass |
+| `--glass-bg-light` | rgba(0,0,0,0.72) | Standard glass cards |
+| `--glass-bg-medium` | rgba(0,0,0,0.78) | Elevated glass |
+| `--glass-bg-strong` | rgba(0,0,0,0.85) | Prominent glass panels |
+
+#### Glass Border Tokens
+Subtle white borders define edges like light catching obsidian.
+
+| Token | Value | Use Case |
+|-------|-------|----------|
+| `--glass-border-subtle` | rgba(255,255,255,0.06) | Minimal edge |
+| `--glass-border-light` | rgba(255,255,255,0.10) | Standard glass border |
+| `--glass-border-medium` | rgba(255,255,255,0.15) | Emphasized edge |
+| `--glass-border-strong` | rgba(255,255,255,0.22) | High contrast edge |
+
+#### Glass Shadow Tokens
+Deeper shadows for dramatic floating effect.
+
+| Token | Value | Use Case |
+|-------|-------|----------|
+| `--glass-shadow-sm` | 0 4px 24px rgba(0,0,0,0.4) | Subtle lift |
+| `--glass-shadow-md` | 0 8px 40px rgba(0,0,0,0.5) | Standard elevation |
+| `--glass-shadow-lg` | 0 16px 64px rgba(0,0,0,0.6) | Prominent floating |
+
+#### Glass Utility Classes
+| Class | Effect | Use Case |
+|-------|--------|----------|
+| `.glass` | Standard glass (md blur, light bg) | General purpose |
+| `.glass-sm` | Subtle glass (sm blur, subtle bg) | Background accents |
+| `.glass-lg` | Prominent glass (lg blur, medium bg) | Navigation headers |
+| `.glass-xl` | Heavy glass (xl blur, strong bg) | Modal backdrops |
+| `.glass-2xl` | Maximum glass (2xl blur, strong bg) | Hero sections |
+| `.glass-elevated` | Glass with shadow | Floating panels, dropdowns |
+| `.glass-card` | Glass with radius + hover | Workflow cards |
+
+#### Glass Accessibility
+
+All glass classes include automatic fallbacks:
+
+```css
+/* Reduced transparency: solid backgrounds */
+@media (prefers-reduced-transparency: reduce) { ... }
+
+/* High contrast: stronger borders, reduced blur */
+@media (prefers-contrast: more) { ... }
+
+/* Mobile: reduced blur for performance */
+@media (max-width: 768px) { ... }
+```
+
+#### Glass Pattern Example
+
+```svelte
+<header class="sticky top-0 z-40 glass-lg border-b border-white/10">
+  <nav class="max-w-7xl mx-auto px-4">...</nav>
+</header>
+
+<article class="glass-card p-6">
+  <h3>Workflow Automation</h3>
+  <p>Configure your automation layer...</p>
+</article>
+
+<dialog class="glass-elevated rounded-lg p-8">
+  <h2>Settings</h2>
+  ...
+</dialog>
+```
+
+**Philosophy**: Glass metaphorically represents the automation layer—transparent, non-intrusive, allowing users to focus on outcomes rather than interfaces. This aligns with Heidegger's Zuhandenheit: the tool recedes into transparent use.
+
 ### Rank/Leaderboard Tokens
 For medals, badges, and leaderboard displays:
 | Rank | Canon Token | Value |

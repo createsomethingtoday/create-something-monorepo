@@ -40,7 +40,7 @@ export const InboxItem: React.FC<InboxItemProps> = ({
   embodiment,
   exitProgress = 0,
 }) => {
-  const { colors } = SPEC;
+  const { colors, scale } = SPEC;
   const IconComponent = sourceIcons[sourceType] || FileText;
   
   // Embodiment interpolations
@@ -61,9 +61,9 @@ export const InboxItem: React.FC<InboxItemProps> = ({
   // Exit glow color
   const getExitGlow = () => {
     if (exitProgress > 0) {
-      if (status === 'approved') return `0 0 20px ${colors.successMuted}`;
+      if (status === 'approved') return `0 0 ${20 * scale}px ${colors.successMuted}`;
       if (status === 'dismissed') return 'none';
-      if (status === 'snoozed') return `0 0 20px ${colors.warningMuted}`;
+      if (status === 'snoozed') return `0 0 ${20 * scale}px ${colors.warningMuted}`;
     }
     return 'none';
   };
@@ -73,11 +73,11 @@ export const InboxItem: React.FC<InboxItemProps> = ({
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 16,
-        padding: '12px 16px',
-        borderRadius: 8,
+        gap: 16 * scale,
+        padding: `${12 * scale}px ${16 * scale}px`,
+        borderRadius: 8 * scale,
         background: isFocused ? 'rgba(255, 255, 255, 0.05)' : 'transparent',
-        border: isFocused ? `2px solid ${colors.fgPrimary}` : '2px solid transparent',
+        border: isFocused ? `${2 * scale}px solid ${colors.fgPrimary}` : `${2 * scale}px solid transparent`,
         transform: `translateX(${translateX}%)`,
         opacity,
         boxShadow: getExitGlow(),
@@ -89,18 +89,18 @@ export const InboxItem: React.FC<InboxItemProps> = ({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 16,
+          gap: 16 * scale,
           flex: 1,
           opacity: wireframeOpacity,
           position: 'absolute',
-          left: 16,
-          right: 16,
+          left: 16 * scale,
+          right: 16 * scale,
         }}
       >
-        <div style={{ width: 24, height: 24, borderRadius: 4, background: colors.wireframe }} />
-        <div style={{ flex: 1, height: 14, borderRadius: 4, background: colors.wireframe }} />
-        <div style={{ width: 40, height: 14, borderRadius: 4, background: colors.wireframe }} />
-        <div style={{ width: 24, height: 24, borderRadius: 12, background: colors.wireframe }} />
+        <div style={{ width: 24 * scale, height: 24 * scale, borderRadius: 4 * scale, background: colors.wireframe }} />
+        <div style={{ flex: 1, height: 14 * scale, borderRadius: 4 * scale, background: colors.wireframe }} />
+        <div style={{ width: 40 * scale, height: 14 * scale, borderRadius: 4 * scale, background: colors.wireframe }} />
+        <div style={{ width: 24 * scale, height: 24 * scale, borderRadius: 12 * scale, background: colors.wireframe }} />
       </div>
       
       {/* Styled content */}
@@ -108,7 +108,7 @@ export const InboxItem: React.FC<InboxItemProps> = ({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 16,
+          gap: 16 * scale,
           flex: 1,
           opacity: contentOpacity,
         }}
@@ -116,16 +116,16 @@ export const InboxItem: React.FC<InboxItemProps> = ({
         {/* Source icon */}
         <div
           style={{
-            width: 28,
-            height: 28,
-            borderRadius: 6,
+            width: 28 * scale,
+            height: 28 * scale,
+            borderRadius: 6 * scale,
             background: 'rgba(255, 255, 255, 0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <IconComponent size={14} color={colors.fgMuted} />
+          <IconComponent size={14 * scale} color={colors.fgMuted} />
         </div>
         
         {/* Title */}
@@ -133,7 +133,7 @@ export const InboxItem: React.FC<InboxItemProps> = ({
           style={{
             flex: 1,
             fontFamily: fontFamily.sans,
-            fontSize: 14,
+            fontSize: 14 * scale,
             color: colors.fgPrimary,
             whiteSpace: 'nowrap',
             overflow: 'hidden',
@@ -147,7 +147,7 @@ export const InboxItem: React.FC<InboxItemProps> = ({
         <span
           style={{
             fontFamily: fontFamily.mono,
-            fontSize: 12,
+            fontSize: 12 * scale,
             color: colors.fgMuted,
             fontVariantNumeric: 'tabular-nums',
           }}
@@ -158,15 +158,15 @@ export const InboxItem: React.FC<InboxItemProps> = ({
         {/* Score */}
         <div
           style={{
-            minWidth: 32,
-            height: 24,
-            borderRadius: 12,
+            minWidth: 32 * scale,
+            height: 24 * scale,
+            borderRadius: 12 * scale,
             background: 'rgba(255, 255, 255, 0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontFamily: fontFamily.mono,
-            fontSize: 12,
+            fontSize: 12 * scale,
             fontWeight: 600,
             color: getScoreColor(),
           }}
@@ -178,14 +178,14 @@ export const InboxItem: React.FC<InboxItemProps> = ({
         <div
           style={{
             display: 'flex',
-            gap: 4,
+            gap: 4 * scale,
             opacity: isFocused ? 1 : 0,
             transition: 'opacity 0.15s',
           }}
         >
-          <ActionButton icon={Check} color={colors.success} />
-          <ActionButton icon={X} color={colors.fgMuted} />
-          <ActionButton icon={Clock} color={colors.warning} />
+          <ActionButton icon={Check} color={colors.success} scale={scale} />
+          <ActionButton icon={X} color={colors.fgMuted} scale={scale} />
+          <ActionButton icon={Clock} color={colors.warning} scale={scale} />
         </div>
       </div>
     </div>
@@ -195,19 +195,20 @@ export const InboxItem: React.FC<InboxItemProps> = ({
 const ActionButton: React.FC<{
   icon: LucideIcon;
   color: string;
-}> = ({ icon: Icon, color }) => (
+  scale: number;
+}> = ({ icon: Icon, color, scale }) => (
   <div
     style={{
-      width: 28,
-      height: 28,
-      borderRadius: 6,
+      width: 28 * scale,
+      height: 28 * scale,
+      borderRadius: 6 * scale,
       background: 'rgba(255, 255, 255, 0.05)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
     }}
   >
-    <Icon size={14} color={color} />
+    <Icon size={14 * scale} color={color} />
   </div>
 );
 

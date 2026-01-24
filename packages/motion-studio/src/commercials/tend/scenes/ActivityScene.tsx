@@ -13,7 +13,7 @@ import { fontFamily } from '../../../fonts';
 export const ActivityScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { activities, colors, scenes } = SPEC;
+  const { activities, colors, scenes, scale } = SPEC;
   const { feedSlideIn, itemCascade, counterReveal } = scenes.activity;
   
   // Feed panel slide in
@@ -56,12 +56,12 @@ export const ActivityScene: React.FC = () => {
           style={{
             transform: `translateX(${panelTranslateX}%)`,
             opacity: panelOpacity,
-            width: 520,
+            width: 520 * scale,
             maxHeight: '80vh',
-            padding: 28,
-            borderRadius: 16,
+            padding: 28 * scale,
+            borderRadius: 16 * scale,
             background: 'rgba(255, 255, 255, 0.02)',
-            border: `1px solid ${colors.borderSubtle}`,
+            border: `${scale}px solid ${colors.borderSubtle}`,
           }}
         >
         {/* Header */}
@@ -70,20 +70,20 @@ export const ActivityScene: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginBottom: 20,
+            marginBottom: 20 * scale,
           }}
         >
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 8,
+              gap: 8 * scale,
             }}
           >
             <div
               style={{
-                width: 8,
-                height: 8,
+                width: 8 * scale,
+                height: 8 * scale,
                 borderRadius: '50%',
                 background: colors.success,
                 animation: 'pulse 2s ease-in-out infinite',
@@ -92,7 +92,7 @@ export const ActivityScene: React.FC = () => {
             <span
               style={{
                 fontFamily: fontFamily.sans,
-                fontSize: 13,
+                fontSize: 13 * scale,
                 fontWeight: 500,
                 color: colors.fgSecondary,
                 textTransform: 'uppercase',
@@ -107,7 +107,7 @@ export const ActivityScene: React.FC = () => {
           <span
             style={{
               fontFamily: fontFamily.mono,
-              fontSize: 13,
+              fontSize: 13 * scale,
               color: colors.success,
               opacity: counterProgress,
             }}

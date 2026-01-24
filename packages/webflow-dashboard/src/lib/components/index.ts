@@ -33,6 +33,9 @@ export { default as Sparkline } from './Sparkline.svelte';
 export { default as StatsBar } from './StatsBar.svelte';
 export { default as KineticNumber } from './KineticNumber.svelte';
 
+// Data freshness indicators
+export { default as DataFreshnessIndicator } from './DataFreshnessIndicator.svelte';
+
 // Validation components
 export { default as GsapValidationModal } from './GsapValidationModal.svelte';
 

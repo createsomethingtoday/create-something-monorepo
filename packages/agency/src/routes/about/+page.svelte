@@ -4,9 +4,9 @@
 </script>
 
 <SEO
-	title="About"
-	description="155 scripts became 13. 120 hours/week of research became automated. We build AI systems that run businesses—backed by 40+ production deployments."
-	keywords="agentic engineering, AI automation, autonomous systems, Cloudflare Workers, Claude Code, AI agents, background automation"
+	title="About | Automation Infrastructure"
+	description="155 scripts became 13. 120 hours/week of research became automated. We build automation infrastructure—the layer that runs businesses while you sleep."
+	keywords="automation infrastructure, the automation layer, agentic engineering, AI automation, autonomous systems, Cloudflare Workers, WORKWAY"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -23,15 +23,15 @@
 					<!-- Core Identity -->
 					<div class="space-y-6 leading-relaxed body-lg">
 						<p class="body-xl font-medium">
-							155 scripts became 13. 120 hours/week of research became automated. We build AI systems that run businesses—background automation, intelligent agents, and the infrastructure that makes them reliable.
+							155 scripts became 13. 120 hours/week of research became automated. We build <strong>automation infrastructure</strong>—the layer between human intention and system execution.
 						</p>
 
 						<p>
-							Not consulting. Engineering. Every project ships production code, tracks real metrics (time saved, costs reduced, errors prevented), and gets documented as a case study on <a href="https://createsomething.io" class="link">createsomething.io</a>.
+							Not consulting. Engineering. Every project ships production code, tracks real metrics (time saved, costs reduced, errors prevented), and gets documented as a case study on <a href="https://createsomething.io" class="link">createsomething.io</a>. The infrastructure we build runs on the same platform as <a href="https://workway.co" class="link">WORKWAY</a>—our open marketplace for TypeScript workflows.
 						</p>
 
 						<p>
-							We start with web development—fast sites on Cloudflare's edge. During the build, we find your workflow bottlenecks. Then we fix them with automation. Eventually, we build systems that make decisions while you sleep.
+							We start with web development—fast sites on Cloudflare's edge. During the build, we find your workflow bottlenecks. Then we build the automation layer—systems that make decisions, recover revenue, and handle tasks while you sleep.
 						</p>
 					</div>
 
@@ -62,11 +62,11 @@
 		<div class="max-w-4xl mx-auto">
 			<div class="space-y-6 animate-reveal" style="--delay: 2">
 				<h2 class="heading-2">
-					What We Build
+					The Automation Layer
 				</h2>
 
 				<p class="body-lg leading-relaxed">
-					Automation systems processing thousands of records daily. OAuth integrations connecting 10+ services. AI agents that run for hours without human input. All production-grade, all on Cloudflare's edge network, all with monitoring and error handling built in.
+					Automation infrastructure processing thousands of records daily. OAuth integrations connecting 10+ services. Agents that run for hours without human input. All production-grade, all on Cloudflare's edge network—the same infrastructure that powers <a href="https://workway.co" class="link">WORKWAY</a>. The layer recedes; the outcomes remain.
 				</p>
 			</div>
 		</div>

@@ -165,8 +165,11 @@
 		display: flex;
 		flex-direction: column;
 		padding: var(--space-md);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
+		/* Glass Design System - "The Automation Layer" */
+		background-color: var(--glass-bg-light);
+		backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+		-webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+		border: 1px solid var(--glass-border-light);
 		border-radius: var(--radius-lg);
 		text-decoration: none;
 		transition: all var(--duration-standard) var(--ease-standard);
@@ -174,24 +177,24 @@
 
 	/* Experiments: Zuhandenheit — Engaged practice, participatory lift */
 	.path-card.experiments {
-		border-color: var(--color-border-default);
+		border-color: var(--glass-border-light);
 	}
 
 	.path-card.experiments:hover {
-		border-color: var(--color-border-emphasis);
-		background: var(--color-hover);
+		border-color: var(--glass-border-medium);
+		background-color: var(--glass-bg-medium);
 		transform: translateY(-4px); /* Prominent lift — participatory */
-		box-shadow: var(--shadow-lg);
+		box-shadow: var(--glass-shadow-md);
 	}
 
 	/* Papers: Vorhandenheit — Detached analysis, contemplative stillness */
 	.path-card.papers {
-		border-color: var(--color-border-default);
+		border-color: var(--glass-border-light);
 	}
 
 	.path-card.papers:hover {
-		border-color: var(--color-border-default); /* Minimal change */
-		background: var(--color-bg-surface);
+		border-color: var(--glass-border-light); /* Minimal change */
+		background-color: var(--glass-bg-subtle);
 		transform: translateY(-1px); /* Subtle — observational */
 		box-shadow: none;
 	}

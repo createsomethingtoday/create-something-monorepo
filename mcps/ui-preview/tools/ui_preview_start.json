@@ -1,0 +1,13 @@
+{
+  "name": "ui_preview_start",
+  "description": "Start the UI preview server to watch component files for changes. Opens a viewer window showing live animated updates as you edit UI components. The viewer displays a component tree with FLIP animations for layout changes and pulse effects for new elements.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "watchDir": {
+        "type": "string",
+        "description": "Directory to watch for component changes. Defaults to current working directory. Examples: './src/lib/components', 'packages/components/src'"
+      }
+    }
+  }
+}

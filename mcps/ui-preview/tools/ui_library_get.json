@@ -1,0 +1,14 @@
+{
+  "name": "ui_library_get",
+  "description": "Get a saved component from the design library by ID. Returns the full component including its tree structure, which can be used as a reference for building similar components.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "The component ID (e.g., 'comp_1706012345_abc123')"
+      }
+    },
+    "required": ["id"]
+  }
+}

@@ -11,7 +11,7 @@ import { SPEC } from '../spec';
 export const MetricsScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { metrics, colors, scenes } = SPEC;
+  const { metrics, colors, scenes, scale } = SPEC;
   const { wireframeIn, embodimentCascade, countUp } = scenes.metrics;
   
   return (
@@ -23,7 +23,7 @@ export const MetricsScene: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 32,
+          gap: 32 * scale,
         }}
       >
         {metrics.map((metric, index) => {
@@ -35,7 +35,7 @@ export const MetricsScene: React.FC = () => {
             config: { damping: 18, stiffness: 90, mass: 1 },
           });
           
-          const translateY = interpolate(entranceProgress, [0, 1], [40, 0]);
+          const translateY = interpolate(entranceProgress, [0, 1], [40 * scale, 0]);
           const opacity = interpolate(entranceProgress, [0, 1], [0, 1]);
           
           // Embodiment

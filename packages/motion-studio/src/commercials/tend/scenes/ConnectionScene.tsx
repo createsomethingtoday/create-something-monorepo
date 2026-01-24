@@ -12,7 +12,7 @@ import { SPEC } from '../spec';
 export const ConnectionScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { sources, colors, scenes } = SPEC;
+  const { sources, colors, scenes, scale } = SPEC;
   const { connectCascade, rapidCascade } = scenes.connection;
   
   // Determine connection status for each source
@@ -48,9 +48,9 @@ export const ConnectionScene: React.FC = () => {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(4, 200px)',
-            gridTemplateRows: 'repeat(2, 100px)',
-            gap: 20,
+            gridTemplateColumns: `repeat(4, ${200 * scale}px)`,
+            gridTemplateRows: `repeat(2, ${100 * scale}px)`,
+            gap: 20 * scale,
           }}
         >
           {sources.map((source, index) => {

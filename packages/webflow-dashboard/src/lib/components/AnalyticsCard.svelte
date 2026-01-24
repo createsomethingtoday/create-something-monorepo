@@ -14,6 +14,7 @@
 	import { Card, CardHeader, CardTitle, CardContent } from './ui';
 	import Sparkline from './Sparkline.svelte';
 	import KineticNumber from './KineticNumber.svelte';
+	import DataFreshnessIndicator from './DataFreshnessIndicator.svelte';
 	import {
 		Users,
 		ShoppingCart,
@@ -114,7 +115,10 @@
 		<!-- Key Metrics -->
 		<Card>
 			<CardHeader>
-				<CardTitle>Performance Metrics</CardTitle>
+				<div class="header-with-indicator">
+					<CardTitle>Performance Metrics</CardTitle>
+					<DataFreshnessIndicator variant="inline" />
+				</div>
 			</CardHeader>
 			<CardContent>
 				<div class="metrics-grid">
@@ -264,6 +268,14 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-lg);
+	}
+
+	.header-with-indicator {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-sm);
+		width: 100%;
 	}
 
 	/* Metrics Grid */

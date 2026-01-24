@@ -6,7 +6,7 @@
 	 * Uses canonical CSS custom properties for all design tokens.
 	 */
 
-	type CardVariant = 'standard' | 'elevated' | 'outlined';
+	type CardVariant = 'standard' | 'elevated' | 'outlined' | 'glass';
 	type CardRadius = 'sm' | 'md' | 'lg' | 'xl';
 	type CardPadding = 'none' | 'sm' | 'md' | 'lg' | 'xl';
 
@@ -85,6 +85,20 @@
 	.card-outlined {
 		background: transparent;
 		border: 2px solid var(--color-border-emphasis);
+	}
+
+	/* Glass variant - "The Automation Layer" */
+	.card-glass {
+		background-color: var(--glass-bg-light);
+		border: 1px solid var(--glass-border-light);
+		backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+		-webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+	}
+
+	.card-glass.card-hover:hover {
+		background-color: var(--glass-bg-medium);
+		border-color: var(--glass-border-medium);
+		box-shadow: var(--glass-shadow-md);
 	}
 
 	/* Radius variants */

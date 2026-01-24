@@ -22,7 +22,7 @@ export const ActivityFeedItem: React.FC<ActivityFeedItemProps> = ({
   type,
   embodiment,
 }) => {
-  const { colors } = SPEC;
+  const { colors, scale } = SPEC;
   
   // Interpolations
   const textOpacity = interpolate(embodiment, [0.3, 1], [0, 1], { extrapolateRight: 'clamp' });
@@ -36,8 +36,8 @@ export const ActivityFeedItem: React.FC<ActivityFeedItemProps> = ({
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 12,
-        padding: '6px 0',
+        gap: 12 * scale,
+        padding: `${6 * scale}px 0`,
         position: 'relative',
       }}
     >
@@ -50,22 +50,22 @@ export const ActivityFeedItem: React.FC<ActivityFeedItemProps> = ({
           opacity: wireframeOpacity,
           display: 'flex',
           alignItems: 'center',
-          gap: 12,
+          gap: 12 * scale,
         }}
       >
         <div
           style={{
-            width: 24,
-            height: 10,
-            borderRadius: 3,
+            width: 24 * scale,
+            height: 10 * scale,
+            borderRadius: 3 * scale,
             background: colors.wireframe,
           }}
         />
         <div
           style={{
             width: `${wireframeWidth}%`,
-            height: 10,
-            borderRadius: 3,
+            height: 10 * scale,
+            borderRadius: 3 * scale,
             background: colors.wireframe,
           }}
         />
@@ -75,10 +75,10 @@ export const ActivityFeedItem: React.FC<ActivityFeedItemProps> = ({
       <span
         style={{
           fontFamily: fontFamily.mono,
-          fontSize: 12,
+          fontSize: 12 * scale,
           color: colors.fgMuted,
           fontVariantNumeric: 'tabular-nums',
-          minWidth: 24,
+          minWidth: 24 * scale,
           opacity: textOpacity,
         }}
       >
@@ -88,7 +88,7 @@ export const ActivityFeedItem: React.FC<ActivityFeedItemProps> = ({
       <span
         style={{
           fontFamily: fontFamily.sans,
-          fontSize: 13,
+          fontSize: 13 * scale,
           color: type === 'agent' ? colors.fgSecondary : colors.fgMuted,
           opacity: textOpacity,
         }}

@@ -104,14 +104,19 @@
 	}
 
 	.card-inner {
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
+		/* Glass Design System - "The Automation Layer" */
+		background-color: var(--glass-bg-light);
+		backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+		-webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+		border: 1px solid var(--glass-border-light);
+		border-radius: var(--radius-md);
 		transition: all var(--duration-standard) var(--ease-standard);
 	}
 
 	.card:hover .card-inner {
-		border-color: var(--color-border-emphasis);
-		box-shadow: 0 25px 50px -12px var(--color-active);
+		background-color: var(--glass-bg-medium);
+		border-color: var(--glass-border-medium);
+		box-shadow: var(--glass-shadow-md);
 		transform: translateY(-0.5rem);
 	}
 

@@ -43,6 +43,49 @@ The Triad removes duplication, excess, and disconnection from *artifacts*. Zero 
 
 *Provenance: Steve Yegge's VC project. The Beads integration itself exemplifies this—we adopted Beads because the problem demanded agent-native persistence, not because it was a popular framework.*
 
+## The Life's Work: Automation Infrastructure
+
+**Automation Infrastructure** is the layer between human intention and system execution. It's what makes outcomes possible while you sleep—not automation that fills every gap (Gestell), but automation that enables dwelling (Gelassenheit).
+
+### The Automation Layer
+
+```
+Human Intention
+    ↓ crystallized into
+Configurable Constraints
+    ↓ executed by
+Autonomous Agents
+    ↓ running on
+Edge Infrastructure
+    ↓ producing
+Outcomes While You Sleep
+```
+
+### WORKWAY
+
+[WORKWAY](https://workway.co) is where this philosophy becomes code. An open marketplace for TypeScript workflows, running on Cloudflare's edge. The SDK absorbs complexity. The marketplace curates quality. The infrastructure recedes.
+
+**Key principle**: Users don't want "workflow automation"—they want outcomes. Meetings that follow up on themselves. CRMs that update themselves. The tool should disappear.
+
+### How CREATE SOMETHING Supports WORKWAY
+
+| Property | Role |
+|----------|------|
+| **.ltd** | Defines the philosophical foundation (Zuhandenheit, Gelassenheit, "weniger, aber besser") |
+| **.io** | Researches automation infrastructure patterns with real data |
+| **.space** | Teaches developers how to build the automation layer |
+| **.agency** | Delivers automation infrastructure to clients using WORKWAY patterns |
+
+The hermeneutic circle: Philosophy informs research. Research validates practice. Practice serves clients. Client outcomes test and evolve the philosophy.
+
+### Cornering the Terms
+
+CREATE SOMETHING and WORKWAY together establish ownership of:
+- **Automation Infrastructure** — the infrastructure category
+- **The Automation Layer** — the architectural concept
+
+This is the life's work: building systems that work while you sleep.
+
 ## Architecture
 
 ```
@@ -179,6 +222,8 @@ Key paths (see `.claude/rules/sveltekit-conventions.md` for full patterns):
 
 **Tailwind for structure, Canon for aesthetics.** See `.claude/rules/css-canon.md` for tokens.
 
+**Glass Design System**: CREATE SOMETHING and WORKWAY share a unified Glass Design System. Glass conveys "The Automation Layer"—the transparent interface between user and outcome. Use `.glass-*` classes for navigation, modals, and workflow cards. See css-canon.md for full reference.
+
 **Migration Strategy**: New code follows Canon. Existing code migrates incrementally when touched. Priority: `packages/components/` first.
 
 ## Cloudflare Resources
@@ -190,6 +235,33 @@ D1 databases and KV namespaces per package. See `.claude/rules/cloudflare-patter
 - `motion-analysis`: Analyze CSS animations from URLs
 - `canon-maintenance`: Enforce CREATE SOMETHING design standards
 - `audit-paper`: Validate paper styling against standard template patterns (proactive + manual)
+
+## UI Preview System
+
+Visual feedback for UI component development. See live animated changes as you edit.
+
+**MCP Tools** (if ui-preview server enabled):
+```
+ui_preview_start({ watchDir: "./src/lib/components" })  # Start watching
+ui_preview_status()                                      # Check status
+ui_preview_stop()                                        # Stop
+```
+
+**CLI Commands** (always available):
+```bash
+pnpm ui:start ./src/lib/components  # Start preview
+pnpm ui:status                       # Check status (JSON)
+pnpm ui:stop                         # Stop preview
+```
+
+**Workflow**:
+1. Start preview before UI changes
+2. Edit components—changes animate in viewer
+3. Stop when done
+
+**Copy for Agent**: Users can click elements in the viewer and copy context for precise targeting.
+
+See `docs/guides/UI_PREVIEW_SYSTEM.md` for architecture details.
 
 ## Code Mode: Tools Should Recede
 

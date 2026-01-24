@@ -36,7 +36,7 @@ export const SourceCard: React.FC<SourceCardProps> = ({
   status,
   embodiment,
 }) => {
-  const { colors } = SPEC;
+  const { colors, scale } = SPEC;
   const IconComponent = iconMap[icon];
   
   // Interpolate values based on embodiment
@@ -68,12 +68,12 @@ export const SourceCard: React.FC<SourceCardProps> = ({
   return (
     <div
       style={{
-        width: 200,
-        height: 100,
-        borderRadius: 12,
-        border: `1px solid rgba(255, 255, 255, ${borderAlpha})`,
+        width: 200 * scale,
+        height: 100 * scale,
+        borderRadius: 12 * scale,
+        border: `${scale}px solid rgba(255, 255, 255, ${borderAlpha})`,
         background: `rgba(255, 255, 255, ${bgAlpha})`,
-        padding: 16,
+        padding: 16 * scale,
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -82,33 +82,33 @@ export const SourceCard: React.FC<SourceCardProps> = ({
       }}
     >
       {/* Wireframe placeholders */}
-      <div style={{ opacity: wireframeOpacity, position: 'absolute', inset: 16 }}>
+      <div style={{ opacity: wireframeOpacity, position: 'absolute', inset: 16 * scale }}>
         {/* Icon placeholder */}
         <div
           style={{
-            width: 28,
-            height: 28,
-            borderRadius: 6,
+            width: 28 * scale,
+            height: 28 * scale,
+            borderRadius: 6 * scale,
             background: colors.wireframe,
-            marginBottom: 12,
+            marginBottom: 12 * scale,
           }}
         />
         {/* Name placeholder */}
         <div
           style={{
             width: '70%',
-            height: 12,
-            borderRadius: 4,
+            height: 12 * scale,
+            borderRadius: 4 * scale,
             background: colors.wireframe,
-            marginBottom: 8,
+            marginBottom: 8 * scale,
           }}
         />
         {/* Status placeholder */}
         <div
           style={{
-            width: 50,
-            height: 18,
-            borderRadius: 9,
+            width: 50 * scale,
+            height: 18 * scale,
+            borderRadius: 9 * scale,
             background: colors.wireframe,
             position: 'absolute',
             bottom: 0,
@@ -121,16 +121,16 @@ export const SourceCard: React.FC<SourceCardProps> = ({
       <div style={{ opacity: iconOpacity }}>
         <div
           style={{
-            width: 32,
-            height: 32,
-            borderRadius: 8,
+            width: 32 * scale,
+            height: 32 * scale,
+            borderRadius: 8 * scale,
             background: 'rgba(255, 255, 255, 0.05)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <IconComponent size={18} color={colors.fgSecondary} />
+          <IconComponent size={18 * scale} color={colors.fgSecondary} />
         </div>
       </div>
       
@@ -138,7 +138,7 @@ export const SourceCard: React.FC<SourceCardProps> = ({
         <span
           style={{
             fontFamily: fontFamily.sans,
-            fontSize: 14,
+            fontSize: 14 * scale,
             fontWeight: 500,
             color: colors.fgPrimary,
             opacity: textOpacity,
@@ -153,20 +153,20 @@ export const SourceCard: React.FC<SourceCardProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            minWidth: 24,
-            height: 24,
-            padding: '4px',
-            borderRadius: 12,
+            minWidth: 24 * scale,
+            height: 24 * scale,
+            padding: 4 * scale,
+            borderRadius: 12 * scale,
             background: getStatusBgColor(),
             opacity: textOpacity,
           }}
         >
           {status === 'connected' ? (
-            <Check size={14} color={getStatusColor()} strokeWidth={2.5} />
+            <Check size={14 * scale} color={getStatusColor()} strokeWidth={2.5} />
           ) : (
             <span
               style={{
-                fontSize: 10,
+                fontSize: 10 * scale,
                 fontWeight: 600,
                 color: getStatusColor(),
                 letterSpacing: '0.02em',

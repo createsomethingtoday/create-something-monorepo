@@ -26,7 +26,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   embodiment,
   countProgress,
 }) => {
-  const { colors } = SPEC;
+  const { colors, scale } = SPEC;
   
   // Interpolations
   const contentOpacity = interpolate(embodiment, [0.3, 1], [0, 1], { extrapolateRight: 'clamp' });
@@ -44,11 +44,11 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   return (
     <div
       style={{
-        minWidth: 200,
-        padding: '32px 40px',
-        borderRadius: 16,
+        minWidth: 200 * scale,
+        padding: `${32 * scale}px ${40 * scale}px`,
+        borderRadius: 16 * scale,
         background: `rgba(255, 255, 255, ${bgAlpha})`,
-        border: `1px solid rgba(255, 255, 255, ${borderAlpha})`,
+        border: `${scale}px solid rgba(255, 255, 255, ${borderAlpha})`,
         textAlign: 'center',
         position: 'relative',
       }}
@@ -62,23 +62,23 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 12,
+          gap: 12 * scale,
           opacity: wireframeOpacity,
         }}
       >
         <div
           style={{
-            width: 80,
-            height: 40,
-            borderRadius: 8,
+            width: 80 * scale,
+            height: 40 * scale,
+            borderRadius: 8 * scale,
             background: colors.wireframe,
           }}
         />
         <div
           style={{
-            width: 100,
-            height: 12,
-            borderRadius: 4,
+            width: 100 * scale,
+            height: 12 * scale,
+            borderRadius: 4 * scale,
             background: colors.wireframe,
           }}
         />
@@ -93,12 +93,12 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         <div
           style={{
             fontFamily: fontFamily.sans,
-            fontSize: 56,
+            fontSize: 56 * scale,
             fontWeight: 700,
             color: valueColor,
             lineHeight: 1,
             fontVariantNumeric: 'tabular-nums',
-            marginBottom: 12,
+            marginBottom: 12 * scale,
           }}
         >
           {displayValue}{suffix}
@@ -107,7 +107,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         <div
           style={{
             fontFamily: fontFamily.sans,
-            fontSize: 13,
+            fontSize: 13 * scale,
             fontWeight: 500,
             color: colors.fgMuted,
             textTransform: 'uppercase',

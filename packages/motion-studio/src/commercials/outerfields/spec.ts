@@ -49,7 +49,26 @@ export const SPEC = {
   // Scene timing (in frames at 30fps)
   // Focused story: Cards → Player → Heatmap → Stats → Logo
   scenes: {
-    // Scene 1: Content cards appear
+    // Scene 0: Space opening with galaxy
+    spaceOpening: {
+      start: 0,
+      duration: 150, // 5 seconds
+      playButtonAppear: 60,
+      starfieldFadeIn: 30,
+      galaxyFormation: 45,
+    },
+
+    // Scene 1: Content discovery (enhanced cards)
+    contentDiscovery: {
+      start: 150,
+      duration: 210, // 7 seconds
+      scrollStart: 30,
+      hoverEffectStart: 150,
+      cardCascadeStart: 30,
+      cardCascadeStagger: 6,
+    },
+
+    // Scene 1 (alternative): Simple content cards
     cards: {
       start: 0,
       duration: 240, // 8 seconds
@@ -57,16 +76,34 @@ export const SPEC = {
       cardCascadeStagger: 6, // 6 frames between cards
       highlightCard: 180, // Highlight a card at 6s
     },
-    
-    // Scene 2: Video player opens
+
+    // Scene 2: Video player (enhanced with heatmap)
+    videoPlayer: {
+      start: 360,
+      duration: 270, // 9 seconds
+      progressStart: 60,
+      tooltipAppear: 150,
+      heatmapBuildStart: 90,
+      heatmapBuildDuration: 120,
+    },
+
+    // Scene 2 (alternative): Simple player
     player: {
       start: 240,
       duration: 240, // 8 seconds
       modalAppear: 0,
       progressStart: 60, // Progress starts at 2s into scene
     },
-    
-    // Scene 3: Engagement heatmap builds (HERO SCENE)
+
+    // Scene 3: Platform overview with stats
+    platformOverview: {
+      start: 630,
+      duration: 210, // 7 seconds
+      categoryRowsAppear: 30,
+      statsCountStart: 90,
+    },
+
+    // Scene 3 (alternative): Engagement heatmap (HERO SCENE)
     heatmap: {
       start: 480,
       duration: 240, // 8 seconds
@@ -74,7 +111,7 @@ export const SPEC = {
       buildDuration: 120, // 4s to build
       tooltipAppear: 180, // Tooltip at 6s into scene
     },
-    
+
     // Scene 4: Stats glimpse
     stats: {
       start: 720,
@@ -82,8 +119,16 @@ export const SPEC = {
       countStart: 15,
       countDuration: 60,
     },
-    
-    // Scene 5: Logo close
+
+    // Scene 5: Logo close (enhanced)
+    logoClose: {
+      start: 840,
+      duration: 60, // 2 seconds
+      logoRevealStart: 15,
+      glowPulseStart: 30,
+    },
+
+    // Scene 5 (alternative): Simple logo
     logo: {
       start: 840,
       duration: 60, // 2 seconds

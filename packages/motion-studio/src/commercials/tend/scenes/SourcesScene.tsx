@@ -12,7 +12,7 @@ import { SPEC } from '../spec';
 export const SourcesScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { sources, colors, scenes } = SPEC;
+  const { sources, colors, scenes, scale } = SPEC;
   const { wireframeIn, embodimentCascade } = scenes.sources;
   
   return (
@@ -29,9 +29,9 @@ export const SourcesScene: React.FC = () => {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(4, 200px)',
-            gridTemplateRows: 'repeat(2, 100px)',
-            gap: 20,
+            gridTemplateColumns: `repeat(4, ${200 * scale}px)`,
+            gridTemplateRows: `repeat(2, ${100 * scale}px)`,
+            gap: 20 * scale,
           }}
         >
           {sources.map((source, index) => {
@@ -46,7 +46,7 @@ export const SourcesScene: React.FC = () => {
               config: { damping: 18, stiffness: 80, mass: 1 },
             });
             
-            const translateY = interpolate(entranceProgress, [0, 1], [40, 0]);
+            const translateY = interpolate(entranceProgress, [0, 1], [40 * scale, 0]);
             const opacity = interpolate(entranceProgress, [0, 1], [0, 1]);
             
             // Embodiment (wireframe → styled)

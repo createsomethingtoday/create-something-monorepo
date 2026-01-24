@@ -172,7 +172,11 @@
 		right: 0;
 		width: 100%;
 		z-index: 50;
-		background: var(--color-bg-pure);
+		/* Glass Design System - "The Automation Layer" */
+		background-color: var(--glass-bg-light);
+		backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+		-webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+		border-bottom: 1px solid var(--glass-border-light);
 	}
 
 	/* Logo */

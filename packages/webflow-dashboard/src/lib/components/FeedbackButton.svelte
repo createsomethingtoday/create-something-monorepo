@@ -45,7 +45,7 @@
 					}, 300);
 				}, 1500);
 			} else {
-				const data = await response.json();
+				const data = (await response.json()) as { error?: string };
 				error = data.error || 'Failed to submit feedback';
 			}
 		} catch {

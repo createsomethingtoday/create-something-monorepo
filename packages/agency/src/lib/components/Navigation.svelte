@@ -108,8 +108,11 @@
 
 <style>
 	.nav {
-		background: var(--color-bg-pure);
-		border-bottom: 1px solid var(--color-border-default);
+		/* Glass Design System - "The Automation Layer" */
+		background-color: var(--glass-bg-light);
+		backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+		-webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+		border-bottom: 1px solid var(--glass-border-light);
 	}
 
 	.nav-list,

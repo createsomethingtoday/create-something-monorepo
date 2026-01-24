@@ -2,9 +2,9 @@
 	import { Button, Card, CardContent, Table, TableBody, TableHead, TableHeader, TableRow, TableCell } from './ui';
 	import AssetTableRow from './AssetTableRow.svelte';
 	import StatusBadge from './StatusBadge.svelte';
+	import DataFreshnessIndicator from './DataFreshnessIndicator.svelte';
 	import type { Asset } from '$lib/server/airtable';
 	import { BarChart3, Package, TrendingUp, CalendarClock, CheckCircle2, Rocket, AlertTriangle, XCircle } from 'lucide-svelte';
-	import type { Component } from 'svelte';
 
 	interface Props {
 		assets: Asset[];
@@ -28,8 +28,8 @@
 	const statusOrder = ['Scheduled', 'Published', 'Upcoming', 'Delisted', 'Rejected'];
 
 	// Status icons and colors
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const statusConfig: Record<string, { icon: Component<any>; bgClass: string }> = {
+	// Using typeof for lucide icon components (Svelte 5 compatible)
+	const statusConfig: Record<string, { icon: typeof CalendarClock; bgClass: string }> = {
 		Scheduled: { icon: CalendarClock, bgClass: 'status-scheduled' },
 		Published: { icon: CheckCircle2, bgClass: 'status-published' },
 		Upcoming: { icon: Rocket, bgClass: 'status-upcoming' },
@@ -220,9 +220,12 @@
 											</button>
 										</TableHead>
 										<TableHead class="text-center">
-											<button type="button" class="sort-btn" onclick={() => requestSort('cumulativeRevenue')}>
-												Revenue{getSortIndicator('cumulativeRevenue')}
-											</button>
+											<div class="revenue-header">
+												<button type="button" class="sort-btn" onclick={() => requestSort('cumulativeRevenue')}>
+													Revenue{getSortIndicator('cumulativeRevenue')}
+												</button>
+												<DataFreshnessIndicator variant="tooltip" />
+											</div>
 										</TableHead>
 									{/if}
 									<TableHead class="w-12"></TableHead>
@@ -304,6 +307,13 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
+	}
+
+	.revenue-header {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.25rem;
 	}
 
 	.status-info {

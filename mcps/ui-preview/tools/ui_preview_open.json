@@ -1,0 +1,8 @@
+{
+  "name": "ui_preview_open",
+  "description": "Open the UI preview viewer in the default browser. Requires the preview server to be running first.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {}
+  }
+}

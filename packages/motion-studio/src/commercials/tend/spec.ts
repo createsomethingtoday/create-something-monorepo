@@ -14,9 +14,13 @@ import { Clipboard, Phone, Shield, FileText, Star, DollarSign, Users, Image } fr
 export const SPEC = {
   // Video configuration
   fps: 30,
-  width: 1920,
-  height: 1080,
+  width: 3840,
+  height: 2160,
   durationInFrames: 1800, // 60 seconds
+  
+  // Scale factor for 4K (2x from 1080p base)
+  // Multiply all pixel values by this
+  scale: 2,
   
   // Product information
   product: {

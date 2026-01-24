@@ -32,7 +32,14 @@
     "harness": "pnpm --filter @create-something/harness harness",
     "harness:start": "pnpm --filter @create-something/harness harness start",
     "harness:status": "pnpm --filter @create-something/harness harness status",
-    "harness:resume": "pnpm --filter @create-something/harness harness resume"
+    "harness:resume": "pnpm --filter @create-something/harness harness resume",
+    "ui": "./scripts/ui-preview.sh",
+    "ui:start": "./scripts/ui-preview.sh start",
+    "ui:stop": "./scripts/ui-preview.sh stop",
+    "ui:status": "./scripts/ui-preview.sh status",
+    "ui:viewer": "pnpm --filter @create-something/ui-viewer dev",
+    "ui:bridge": "cd packages/ui-bridge && bun run dev",
+    "ui:diff:build": "cd packages/ui-diff && wasm-pack build --target web --out-dir ../ui-bridge/wasm"
   },
   "devDependencies": {
     "@iarna/toml": "^2.2.5",

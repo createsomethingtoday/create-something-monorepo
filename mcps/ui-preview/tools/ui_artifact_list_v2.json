@@ -1,0 +1,9 @@
+{
+  "name": "ui_artifact_list_v2",
+  "description": "List all V2 structured artifacts. Returns artifact IDs, names, and versions.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {},
+    "required": []
+  }
+}

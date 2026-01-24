@@ -1,0 +1,18 @@
+{
+  "name": "ui_artifact_promote",
+  "description": "Promote an artifact to production by writing it to a component file. Use after the user approves the design.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "artifactId": {
+        "type": "string",
+        "description": "The artifact ID to promote"
+      },
+      "targetPath": {
+        "type": "string",
+        "description": "Target component file path (e.g., 'Hero.svelte')"
+      }
+    },
+    "required": ["artifactId", "targetPath"]
+  }
+}

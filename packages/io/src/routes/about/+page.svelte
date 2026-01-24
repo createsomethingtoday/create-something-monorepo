@@ -37,9 +37,9 @@
 							I document what works in AI-native development—with real data.
 						</p>
 
-						<p>
-							By day, I architect systems on the <a href="https://webflow.com" class="text-link">Webflow</a> Marketplace team, building developer experiences that serve thousands of creators. By night, I'm building <a href="https://workway.co" class="text-link" target="_blank" rel="noopener noreferrer">WORKWAY</a>—an open-source marketplace for TypeScript workflows, running on Cloudflare's edge.
-						</p>
+					<p>
+						By day, I architect systems on the <a href="https://webflow.com" class="text-link">Webflow</a> Marketplace team, building developer experiences that serve thousands of creators. By night, I'm building <a href="https://workway.co" class="text-link" target="_blank" rel="noopener noreferrer">WORKWAY</a>—the automation layer. An open marketplace for TypeScript workflows, running on Cloudflare's edge. Automation infrastructure is my life's work.
+					</p>
 
 						<p>
 							I'm also co-founder of <a href="https://halfdozen.co" class="text-link" target="_blank" rel="noopener noreferrer">Half Dozen</a>, where we build operating systems for the live events industry—venues, promoters, and agencies running on clean system design.
@@ -50,7 +50,7 @@
 					<div class="philosophy-card">
 						<h3 class="card-title">What I'm testing</h3>
 						<p class="card-text">
-							Can you build production systems with AI as a development partner—not just a code generator? CREATE SOMETHING tracks the experiments: 6-hour builds vs 20-hour estimates, $18.50 API costs for full features, 92% script reduction through systematic methodology. Real data, honest failures, reproducible results.
+							Can you build production automation infrastructure with AI as a development partner? CREATE SOMETHING tracks the experiments: 6-hour builds vs 20-hour estimates, $18.50 API costs for full features, 92% script reduction through systematic methodology. The research feeds directly into <a href="https://workway.co" class="text-link">WORKWAY</a> and <a href="https://createsomething.agency" class="text-link">.agency</a>—where theory becomes the automation layer.
 						</p>
 					</div>
 
@@ -94,16 +94,16 @@
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 					{#each [
 						{
+							title: 'Automation Infrastructure',
+							description: 'Building the layer between intention and execution. What makes automation recede into transparent use—and what makes it intrusive.'
+						},
+						{
 							title: 'AI-Native Development',
 							description: 'Building with Claude Code, Cursor, and agentic workflows. Tracking what actually speeds up development—and what doesn\'t.'
 						},
 						{
 							title: 'System Architecture',
-							description: 'Cloudflare Workers, edge computing, multi-tenant platforms. Real deployments with real costs.'
-						},
-						{
-							title: 'Automation Patterns',
-							description: 'From 155 scripts to 13. When to automate, when not to, and how to measure the difference.'
+							description: 'Cloudflare Workers, edge computing, multi-tenant platforms. The infrastructure that powers WORKWAY and .agency.'
 						},
 						{
 							title: 'Methodology',

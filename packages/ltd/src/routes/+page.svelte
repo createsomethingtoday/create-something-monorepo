@@ -120,7 +120,7 @@
 <!-- Ecosystem Integration -->
 <section class="ecosystem py-24 px-6">
 	<div class="max-w-5xl mx-auto">
-		<h3 class="mb-12 text-center">Where We Apply These Principles</h3>
+		<h3 class="mb-12 text-center">The Automation Layer Across Properties</h3>
 
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-12 highlight-grid">
 			<div class="highlight-item" style="--index: 0">
@@ -129,8 +129,9 @@
 					<h4 class="property-title mt-1">Research</h4>
 				</div>
 				<p class="property-description leading-relaxed">
-					We publish papers and tools. Each one answers a specific question 
-					with measurable results you can reproduce.
+					We research automation infrastructure patterns. Each paper answers a specific 
+					question with measurable results—feeding directly into 
+					<a href="https://workway.co" class="ecosystem-link">WORKWAY</a>.
 				</p>
 			</div>
 
@@ -140,8 +141,8 @@
 					<h4 class="property-title mt-1">Practice</h4>
 				</div>
 				<p class="property-description leading-relaxed">
-					We run experiments and share what we learn. You'll find working code, 
-					honest assessments, and lessons from things that didn't work.
+					We teach how to build the automation layer. Experiments, exercises, 
+					and patterns for infrastructure that recedes into transparent use.
 				</p>
 			</div>
 
@@ -151,8 +152,8 @@
 					<h4 class="property-title mt-1">Services</h4>
 				</div>
 				<p class="property-description leading-relaxed">
-					We build software for clients. Same principles, applied to real business 
-					problems with deadlines and budgets.
+					We deliver automation infrastructure to clients. Systems that work 
+					while you sleep—built on the same platform as WORKWAY.
 				</p>
 			</div>
 		</div>
@@ -306,8 +307,11 @@
 	}
 
 	.master-card {
-		border: 1px solid var(--color-border-default);
-		background: var(--color-bg-pure);
+		/* Glass Design System - "The Automation Layer" */
+		background-color: var(--glass-bg-light);
+		backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+		-webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+		border: 1px solid var(--glass-border-light);
 		box-shadow: none;
 		transition:
 			border-color var(--duration-standard) var(--ease-standard),
@@ -329,10 +333,9 @@
 
 	.master-card:hover {
 		transform: scale(var(--scale-micro));
-		border-color: var(--color-border-emphasis);
-		background: var(--color-bg-elevated);
-		/* Subtle emphasis on hover — depth suggested through background shift */
-		box-shadow: 0 0 0 1px var(--color-border-emphasis);
+		background-color: var(--glass-bg-medium);
+		border-color: var(--glass-border-medium);
+		box-shadow: var(--glass-shadow-sm);
 	}
 
 	.master-card:active {
@@ -400,6 +403,15 @@
 		color: var(--color-fg-tertiary);
 	}
 
+	.ecosystem-link {
+		color: var(--color-fg-secondary);
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.ecosystem-link:hover {
+		color: var(--color-fg-primary);
+	}
+
 	/* ==========================================================================
 	   CRYSTALLIZATION: Featured Pattern
 	   ========================================================================== */
@@ -410,8 +422,11 @@
 
 	.crystal-card {
 		padding: var(--space-xl);
-		border: 1px solid var(--color-border-default);
-		background: var(--color-bg-surface);
+		/* Glass Design System - "The Automation Layer" */
+		background-color: var(--glass-bg-light);
+		backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+		-webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+		border: 1px solid var(--glass-border-light);
 		text-align: center;
 	}
 

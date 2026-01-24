@@ -7,7 +7,7 @@
 	let scrollProgress = $state(0);
 	let phase = $state<'reading' | 'striking' | 'fading' | 'coalescing' | 'complete'>('reading');
 
-	// The words. Simple. Declarative.
+	// The words. Simple. Declarative. Subtraction reveals.
 	const words = [
 		{ text: 'We', keep: true },
 		{ text: 'help', keep: false },
@@ -24,9 +24,9 @@
 		{ text: 'streamline', keep: false },
 		{ text: 'workflows', keep: false },
 		{ text: 'and', keep: false },
-		{ text: 'remove', keep: true },
-		{ text: 'what', keep: true },
-		{ text: 'obscures.', keep: true }
+		{ text: 'create', keep: true },
+		{ text: 'something', keep: true },
+		{ text: 'real.', keep: true }
 	];
 
 	// Derived states from scroll - no library needed

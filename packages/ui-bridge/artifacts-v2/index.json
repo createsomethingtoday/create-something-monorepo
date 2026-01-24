@@ -1,0 +1,659 @@
+{
+  "artifacts": {
+    "art-mkrlyjzw-bm45": {
+      "id": "art-mkrlyjzw-bm45",
+      "name": "WORKWAY Card",
+      "version": 6,
+      "type": "card",
+      "content": {
+        "icon": "🚀",
+        "title": "Automation Infrastructure",
+        "body": "The layer between human intention and system execution.",
+        "badge": "WORKWAY"
+      },
+      "style": {
+        "theme": "glass-dark",
+        "accent": "#ec4899",
+        "radius": "2xl",
+        "padding": "xl",
+        "animation": "float",
+        "textSize": "base",
+        "maxWidth": "440px"
+      },
+      "createdAt": "2026-01-24T01:05:27.740Z",
+      "updatedAt": "2026-01-24T01:05:54.225Z"
+    },
+    "art-mkrm2fl5-t1zj": {
+      "id": "art-mkrm2fl5-t1zj",
+      "name": "Test Card",
+      "version": 7,
+      "type": "card",
+      "content": {
+        "icon": "🚀",
+        "title": "Automation Infrastructure",
+        "body": "The layer between human intention and system execution. What makes outcomes possible while you sleep.",
+        "badge": "WORKWAY",
+        "cta": {
+          "label": "Get Started",
+          "href": "#"
+        }
+      },
+      "style": {
+        "theme": "solid-dark",
+        "accent": "#ec4899",
+        "radius": "2xl",
+        "padding": "2xl",
+        "animation": "glow",
+        "textSize": "lg",
+        "maxWidth": "440px"
+      },
+      "createdAt": "2026-01-24T01:08:28.650Z",
+      "updatedAt": "2026-01-24T01:08:47.780Z"
+    },
+    "art-mkrmayqy-uww6": {
+      "id": "art-mkrmayqy-uww6",
+      "name": "Real Svelte Card",
+      "version": 7,
+      "type": "card",
+      "content": {
+        "icon": {
+          "name": "sparkles",
+          "library": "lucide"
+        },
+        "title": "Automation Infrastructure",
+        "body": "Real Svelte rendering with Lucide icons. Pure black canvas.",
+        "badge": "WORKWAY",
+        "cta": {
+          "label": "Get Started"
+        }
+      },
+      "style": {
+        "theme": "glass-dark",
+        "accent": "#ec4899",
+        "radius": "2xl",
+        "padding": "xl",
+        "animation": "float",
+        "textSize": "base",
+        "maxWidth": "440px"
+      },
+      "createdAt": "2026-01-24T01:15:06.730Z",
+      "updatedAt": "2026-01-24T01:21:54.937Z"
+    },
+    "art-mkrmtiv2-ms36": {
+      "id": "art-mkrmtiv2-ms36",
+      "name": "MCP Test Card",
+      "version": 2,
+      "type": "card",
+      "content": {
+        "icon": {
+          "name": "sparkles",
+          "library": "lucide"
+        },
+        "title": "MCP Patched!",
+        "body": "Created via MCP tool call.",
+        "badge": "SUCCESS"
+      },
+      "style": {
+        "theme": "glass-dark",
+        "accent": "#8b5cf6",
+        "radius": "2xl",
+        "padding": "xl",
+        "animation": "float",
+        "textSize": "base",
+        "maxWidth": "440px"
+      },
+      "createdAt": "2026-01-24T01:29:32.606Z",
+      "updatedAt": "2026-01-24T01:29:38.548Z"
+    }
+  },
+  "history": {
+    "art-mkrlyjzw-bm45": [
+      {
+        "id": "art-mkrlyjzw-bm45",
+        "name": "WORKWAY Card",
+        "version": 1,
+        "type": "card",
+        "content": {
+          "icon": "⚡",
+          "title": "Automation Infrastructure",
+          "body": "The layer between human intention and system execution.",
+          "badge": "WORKWAY"
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#6366f1",
+          "radius": "2xl",
+          "padding": "xl",
+          "animation": "float",
+          "textSize": "base",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:05:27.740Z",
+        "updatedAt": "2026-01-24T01:05:27.740Z"
+      },
+      {
+        "id": "art-mkrlyjzw-bm45",
+        "name": "WORKWAY Card",
+        "version": 1,
+        "type": "card",
+        "content": {
+          "icon": "⚡",
+          "title": "Automation Infrastructure",
+          "body": "The layer between human intention and system execution.",
+          "badge": "WORKWAY"
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#6366f1",
+          "radius": "2xl",
+          "padding": "xl",
+          "animation": "float",
+          "textSize": "base",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:05:27.740Z",
+        "updatedAt": "2026-01-24T01:05:27.740Z"
+      },
+      {
+        "id": "art-mkrlyjzw-bm45",
+        "name": "WORKWAY Card",
+        "version": 2,
+        "type": "card",
+        "content": {
+          "icon": "🚀",
+          "title": "Automation Infrastructure",
+          "body": "The layer between human intention and system execution.",
+          "badge": "WORKWAY"
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#ec4899",
+          "radius": "2xl",
+          "padding": "xl",
+          "animation": "float",
+          "textSize": "base",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:05:27.740Z",
+        "updatedAt": "2026-01-24T01:05:34.157Z"
+      },
+      {
+        "id": "art-mkrlyjzw-bm45",
+        "name": "WORKWAY Card",
+        "version": 3,
+        "type": "card",
+        "content": {
+          "icon": "🚀",
+          "title": "Automation Infrastructure",
+          "body": "The layer between human intention and system execution.",
+          "badge": "WORKWAY"
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#ec4899",
+          "radius": "3xl",
+          "padding": "xl",
+          "animation": "pulse",
+          "textSize": "base",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:05:27.740Z",
+        "updatedAt": "2026-01-24T01:05:43.276Z"
+      },
+      {
+        "id": "art-mkrlyjzw-bm45",
+        "name": "WORKWAY Card",
+        "version": 4,
+        "type": "card",
+        "content": {
+          "icon": "🚀",
+          "title": "The Automation Layer",
+          "body": "The layer between human intention and system execution.",
+          "badge": "WORKWAY"
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#ec4899",
+          "radius": "3xl",
+          "padding": "xl",
+          "animation": "pulse",
+          "textSize": "base",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:05:27.740Z",
+        "updatedAt": "2026-01-24T01:05:43.341Z"
+      },
+      {
+        "id": "art-mkrlyjzw-bm45",
+        "name": "WORKWAY Card",
+        "version": 5,
+        "type": "card",
+        "content": {
+          "icon": "🚀",
+          "title": "The Automation Layer",
+          "body": "The layer between human intention and system execution.",
+          "badge": "WORKWAY",
+          "subtitle": "Outcomes while you sleep"
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#ec4899",
+          "radius": "3xl",
+          "padding": "xl",
+          "animation": "pulse",
+          "textSize": "base",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:05:27.740Z",
+        "updatedAt": "2026-01-24T01:05:43.450Z"
+      }
+    ],
+    "art-mkrm2fl5-t1zj": [
+      {
+        "id": "art-mkrm2fl5-t1zj",
+        "name": "Test Card",
+        "version": 1,
+        "type": "card",
+        "content": {
+          "icon": "✨",
+          "title": "Automation Infrastructure",
+          "body": "The layer between human intention and system execution. What makes outcomes possible while you sleep.",
+          "badge": "WORKWAY"
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#6366f1",
+          "radius": "2xl",
+          "padding": "xl",
+          "animation": "float",
+          "textSize": "base",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:08:28.650Z",
+        "updatedAt": "2026-01-24T01:08:28.650Z"
+      },
+      {
+        "id": "art-mkrm2fl5-t1zj",
+        "name": "Test Card",
+        "version": 1,
+        "type": "card",
+        "content": {
+          "icon": "✨",
+          "title": "Automation Infrastructure",
+          "body": "The layer between human intention and system execution. What makes outcomes possible while you sleep.",
+          "badge": "WORKWAY"
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#6366f1",
+          "radius": "2xl",
+          "padding": "xl",
+          "animation": "float",
+          "textSize": "base",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:08:28.650Z",
+        "updatedAt": "2026-01-24T01:08:28.650Z"
+      },
+      {
+        "id": "art-mkrm2fl5-t1zj",
+        "name": "Test Card",
+        "version": 2,
+        "type": "card",
+        "content": {
+          "icon": "✨",
+          "title": "Automation Infrastructure",
+          "body": "The layer between human intention and system execution. What makes outcomes possible while you sleep.",
+          "badge": "WORKWAY"
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#ec4899",
+          "radius": "2xl",
+          "padding": "xl",
+          "animation": "float",
+          "textSize": "base",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:08:28.650Z",
+        "updatedAt": "2026-01-24T01:08:39.805Z"
+      },
+      {
+        "id": "art-mkrm2fl5-t1zj",
+        "name": "Test Card",
+        "version": 3,
+        "type": "card",
+        "content": {
+          "icon": "✨",
+          "title": "Automation Infrastructure",
+          "body": "The layer between human intention and system execution. What makes outcomes possible while you sleep.",
+          "badge": "WORKWAY"
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#ec4899",
+          "radius": "2xl",
+          "padding": "xl",
+          "animation": "glow",
+          "textSize": "base",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:08:28.650Z",
+        "updatedAt": "2026-01-24T01:08:41.358Z"
+      },
+      {
+        "id": "art-mkrm2fl5-t1zj",
+        "name": "Test Card",
+        "version": 4,
+        "type": "card",
+        "content": {
+          "icon": "🚀",
+          "title": "Automation Infrastructure",
+          "body": "The layer between human intention and system execution. What makes outcomes possible while you sleep.",
+          "badge": "WORKWAY"
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#ec4899",
+          "radius": "2xl",
+          "padding": "xl",
+          "animation": "glow",
+          "textSize": "base",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:08:28.650Z",
+        "updatedAt": "2026-01-24T01:08:42.891Z"
+      },
+      {
+        "id": "art-mkrm2fl5-t1zj",
+        "name": "Test Card",
+        "version": 5,
+        "type": "card",
+        "content": {
+          "icon": "🚀",
+          "title": "Automation Infrastructure",
+          "body": "The layer between human intention and system execution. What makes outcomes possible while you sleep.",
+          "badge": "WORKWAY"
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#ec4899",
+          "radius": "2xl",
+          "padding": "2xl",
+          "animation": "glow",
+          "textSize": "lg",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:08:28.650Z",
+        "updatedAt": "2026-01-24T01:08:44.462Z"
+      },
+      {
+        "id": "art-mkrm2fl5-t1zj",
+        "name": "Test Card",
+        "version": 6,
+        "type": "card",
+        "content": {
+          "icon": "🚀",
+          "title": "Automation Infrastructure",
+          "body": "The layer between human intention and system execution. What makes outcomes possible while you sleep.",
+          "badge": "WORKWAY"
+        },
+        "style": {
+          "theme": "solid-dark",
+          "accent": "#ec4899",
+          "radius": "2xl",
+          "padding": "2xl",
+          "animation": "glow",
+          "textSize": "lg",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:08:28.650Z",
+        "updatedAt": "2026-01-24T01:08:46.015Z"
+      }
+    ],
+    "art-mkrmayqy-uww6": [
+      {
+        "id": "art-mkrmayqy-uww6",
+        "name": "Real Svelte Card",
+        "version": 1,
+        "type": "card",
+        "content": {
+          "icon": {
+            "name": "rocket",
+            "library": "lucide"
+          },
+          "title": "Automation Infrastructure",
+          "body": "Now rendering with REAL Svelte and REAL Lucide icons.",
+          "badge": "WORKWAY"
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#6366f1",
+          "radius": "2xl",
+          "padding": "xl",
+          "animation": "float",
+          "textSize": "base",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:15:06.730Z",
+        "updatedAt": "2026-01-24T01:15:06.730Z"
+      },
+      {
+        "id": "art-mkrmayqy-uww6",
+        "name": "Real Svelte Card",
+        "version": 1,
+        "type": "card",
+        "content": {
+          "icon": {
+            "name": "rocket",
+            "library": "lucide"
+          },
+          "title": "Automation Infrastructure",
+          "body": "Now rendering with REAL Svelte and REAL Lucide icons.",
+          "badge": "WORKWAY"
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#6366f1",
+          "radius": "2xl",
+          "padding": "xl",
+          "animation": "float",
+          "textSize": "base",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:15:06.730Z",
+        "updatedAt": "2026-01-24T01:15:06.730Z"
+      },
+      {
+        "id": "art-mkrmayqy-uww6",
+        "name": "Real Svelte Card",
+        "version": 2,
+        "type": "card",
+        "content": {
+          "icon": {
+            "name": "zap",
+            "library": "lucide"
+          },
+          "title": "Automation Infrastructure",
+          "body": "Now rendering with REAL Svelte and REAL Lucide icons.",
+          "badge": "WORKWAY"
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#eab308",
+          "radius": "2xl",
+          "padding": "xl",
+          "animation": "float",
+          "textSize": "base",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:15:06.730Z",
+        "updatedAt": "2026-01-24T01:15:17.835Z"
+      },
+      {
+        "id": "art-mkrmayqy-uww6",
+        "name": "Real Svelte Card",
+        "version": 3,
+        "type": "card",
+        "content": {
+          "icon": {
+            "name": "sparkles",
+            "library": "lucide"
+          },
+          "title": "Automation Infrastructure",
+          "body": "Now rendering with REAL Svelte and REAL Lucide icons.",
+          "badge": "WORKWAY"
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#eab308",
+          "radius": "2xl",
+          "padding": "xl",
+          "animation": "float",
+          "textSize": "base",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:15:06.730Z",
+        "updatedAt": "2026-01-24T01:15:26.331Z"
+      },
+      {
+        "id": "art-mkrmayqy-uww6",
+        "name": "Real Svelte Card",
+        "version": 4,
+        "type": "card",
+        "content": {
+          "icon": {
+            "name": "sparkles",
+            "library": "lucide"
+          },
+          "title": "Automation Infrastructure",
+          "body": "Now rendering with REAL Svelte and REAL Lucide icons.",
+          "badge": "WORKWAY"
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#ec4899",
+          "radius": "2xl",
+          "padding": "xl",
+          "animation": "pulse",
+          "textSize": "base",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:15:06.730Z",
+        "updatedAt": "2026-01-24T01:15:27.865Z"
+      },
+      {
+        "id": "art-mkrmayqy-uww6",
+        "name": "Real Svelte Card",
+        "version": 5,
+        "type": "card",
+        "content": {
+          "icon": {
+            "name": "sparkles",
+            "library": "lucide"
+          },
+          "title": "Automation Infrastructure",
+          "body": "Now rendering with REAL Svelte and REAL Lucide icons.",
+          "badge": "WORKWAY",
+          "cta": {
+            "label": "Get Started"
+          }
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#ec4899",
+          "radius": "2xl",
+          "padding": "xl",
+          "animation": "pulse",
+          "textSize": "base",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:15:06.730Z",
+        "updatedAt": "2026-01-24T01:15:29.397Z"
+      },
+      {
+        "id": "art-mkrmayqy-uww6",
+        "name": "Real Svelte Card",
+        "version": 6,
+        "type": "card",
+        "content": {
+          "icon": {
+            "name": "sparkles",
+            "library": "lucide"
+          },
+          "title": "Automation Infrastructure",
+          "body": "Real Svelte rendering with Lucide icons. Pure black canvas.",
+          "badge": "WORKWAY",
+          "cta": {
+            "label": "Get Started"
+          }
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#ec4899",
+          "radius": "2xl",
+          "padding": "xl",
+          "animation": "pulse",
+          "textSize": "base",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:15:06.730Z",
+        "updatedAt": "2026-01-24T01:19:02.227Z"
+      }
+    ],
+    "art-mkrmtiv2-ms36": [
+      {
+        "id": "art-mkrmtiv2-ms36",
+        "name": "MCP Test Card",
+        "version": 1,
+        "type": "card",
+        "content": {
+          "icon": {
+            "name": "check-circle",
+            "library": "lucide"
+          },
+          "title": "MCP Working",
+          "body": "Created via MCP tool call.",
+          "badge": "SUCCESS"
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#22c55e",
+          "radius": "2xl",
+          "padding": "xl",
+          "animation": "float",
+          "textSize": "base",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:29:32.606Z",
+        "updatedAt": "2026-01-24T01:29:32.606Z"
+      },
+      {
+        "id": "art-mkrmtiv2-ms36",
+        "name": "MCP Test Card",
+        "version": 1,
+        "type": "card",
+        "content": {
+          "icon": {
+            "name": "check-circle",
+            "library": "lucide"
+          },
+          "title": "MCP Working",
+          "body": "Created via MCP tool call.",
+          "badge": "SUCCESS"
+        },
+        "style": {
+          "theme": "glass-dark",
+          "accent": "#22c55e",
+          "radius": "2xl",
+          "padding": "xl",
+          "animation": "float",
+          "textSize": "base",
+          "maxWidth": "440px"
+        },
+        "createdAt": "2026-01-24T01:29:32.606Z",
+        "updatedAt": "2026-01-24T01:29:32.606Z"
+      }
+    ]
+  }
+}

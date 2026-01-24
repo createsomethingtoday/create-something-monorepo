@@ -1148,4 +1148,154 @@ pre code.hljs {
       transform: none;
     }
   }
+
+  /* ==========================================================================
+     Glass Utility Classes - "The Automation Layer"
+     ==========================================================================
+
+     Glass conveys CREATE SOMETHING's positioning: the transparent layer between
+     user and outcome. The tool recedes; the outcome remains.
+
+     Use sparingly: navigation, modals, workflow cards only.
+     Overuse dilutes the metaphor and impacts performance.
+
+     Usage:
+       <header class="glass-lg">Navigation</header>
+       <div class="glass-card">Workflow content</div>
+       <dialog class="glass-elevated">Modal content</dialog>
+
+     Philosophy: Glass elements suggest transparency and openness—the interface
+     becomes a window to the work, not a barrier. This reinforces Zuhandenheit:
+     the tool recedes into transparent use.
+
+     Performance note: backdrop-filter is GPU-intensive. These classes include
+     mobile optimizations and fallbacks for reduced-transparency preferences.
+     ========================================================================== */
+
+  /* Base glass effect - applies blur + saturation and sets up stacking context */
+  .glass {
+    backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+    -webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+    background-color: var(--glass-bg-light);
+    border: 1px solid var(--glass-border-light);
+  }
+
+  /* Glass variants by intensity */
+  .glass-sm {
+    backdrop-filter: blur(var(--glass-blur-sm)) var(--glass-saturate-sm);
+    -webkit-backdrop-filter: blur(var(--glass-blur-sm)) var(--glass-saturate-sm);
+    background-color: var(--glass-bg-subtle);
+    border: 1px solid var(--glass-border-subtle);
+  }
+
+  .glass-lg {
+    backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+    -webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+    background-color: var(--glass-bg-medium);
+    border: 1px solid var(--glass-border-medium);
+  }
+
+  .glass-xl {
+    backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
+    -webkit-backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
+    background-color: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border-strong);
+  }
+
+  .glass-2xl {
+    backdrop-filter: blur(var(--glass-blur-2xl)) var(--glass-saturate-xl);
+    -webkit-backdrop-filter: blur(var(--glass-blur-2xl)) var(--glass-saturate-xl);
+    background-color: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border-strong);
+  }
+
+  /* Glass with shadow - for floating elements (dropdowns, modals) */
+  .glass-elevated {
+    backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+    -webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+    background-color: var(--glass-bg-medium);
+    border: 1px solid var(--glass-border-medium);
+    box-shadow: var(--glass-shadow-md);
+  }
+
+  /* Glass card - for workflow cards, reinforces "layer" metaphor */
+  .glass-card {
+    backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+    -webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+    background-color: var(--glass-bg-light);
+    border: 1px solid var(--glass-border-light);
+    border-radius: var(--radius-lg);
+    transition: all var(--duration-standard) var(--ease-standard);
+  }
+
+  .glass-card:hover {
+    background-color: var(--glass-bg-medium);
+    border-color: var(--glass-border-medium);
+    box-shadow: var(--glass-shadow-sm);
+  }
+
+  /* ==========================================================================
+     Glass Accessibility - Respect User Preferences
+     ========================================================================== */
+
+  /* Reduced motion preference - no transition animations */
+  @media (prefers-reduced-motion: reduce) {
+    .glass-card {
+      transition: none;
+    }
+  }
+
+  /* Reduced transparency preference - fallback to solid backgrounds */
+  @media (prefers-reduced-transparency: reduce) {
+    .glass,
+    .glass-sm,
+    .glass-lg,
+    .glass-xl,
+    .glass-2xl,
+    .glass-elevated,
+    .glass-card {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background-color: var(--color-bg-surface);
+      border-color: var(--color-border-emphasis);
+    }
+  }
+
+  /* High contrast preference - stronger borders and backgrounds */
+  @media (prefers-contrast: more) {
+    .glass,
+    .glass-sm,
+    .glass-lg,
+    .glass-xl,
+    .glass-2xl,
+    .glass-elevated,
+    .glass-card {
+      backdrop-filter: blur(var(--glass-blur-sm));
+      -webkit-backdrop-filter: blur(var(--glass-blur-sm));
+      background-color: rgba(0, 0, 0, 0.90);
+      border: 2px solid var(--color-border-strong);
+    }
+  }
+
+  /* Mobile performance optimization - reduce blur intensity but keep textured feel */
+  @media (max-width: 768px) {
+    .glass,
+    .glass-sm,
+    .glass-card {
+      backdrop-filter: blur(16px) saturate(110%);
+      -webkit-backdrop-filter: blur(16px) saturate(110%);
+    }
+
+    .glass-lg,
+    .glass-elevated {
+      backdrop-filter: blur(24px) saturate(120%);
+      -webkit-backdrop-filter: blur(24px) saturate(120%);
+    }
+
+    .glass-xl,
+    .glass-2xl {
+      backdrop-filter: blur(32px) saturate(130%);
+      -webkit-backdrop-filter: blur(32px) saturate(130%);
+    }
+  }
 }
