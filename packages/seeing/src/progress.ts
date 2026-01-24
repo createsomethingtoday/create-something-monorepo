@@ -228,7 +228,7 @@ export function checkGraduationReadiness(): string {
 	const lessonsCompleted = Object.values(progress.lessons).filter(
 		(l) => l.status === 'completed'
 	).length;
-	const totalLessons = 6; // Including capstone
+	const totalLessons = 7; // Including setting-up and capstone
 	const totalTriadUses =
 		progress.triadApplications.dry +
 		progress.triadApplications.rams +

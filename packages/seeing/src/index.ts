@@ -38,6 +38,7 @@ const PACKAGE_ROOT = join(__dirname, '..');
 
 // Available lessons (in curriculum order)
 const LESSONS = [
+	'setting-up',
 	'what-is-creation',
 	'dry-implementation',
 	'rams-artifact',
@@ -351,6 +352,7 @@ async function readLesson(lessonId: LessonId): Promise<string> {
  */
 function formatLessonName(lessonId: string): string {
 	const names: Record<string, string> = {
+		'setting-up': 'Setting Up',
 		'what-is-creation': 'What Is Creation?',
 		'dry-implementation': 'DRY: The Question of Duplication',
 		'rams-artifact': 'Rams: The Question of Existence',

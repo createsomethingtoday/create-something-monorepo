@@ -68,6 +68,7 @@ In Gemini CLI:
 
 ## Lessons
 
+0. **[Setting Up](/seeing/setting-up)** — Install Gemini CLI and the Seeing extension
 1. **What Is Creation** — The meta-principle: creation as subtraction
 2. **DRY: Implementation** — The question of duplication
 3. **Rams: Artifact** — The question of existence
@@ -109,7 +110,7 @@ The capstone teaches **The Automation Layer** through building. You create a Tas
 
 To graduate, you need:
 
-- All 6 lessons completed (including capstone)
+- All 7 lessons completed (including setup and capstone)
 - 10+ Triad applications
 - 3+ reflections recorded
 - Capstone completed
@@ -134,12 +135,21 @@ The goal isn't to think about the Triad forever. It's to internalize it until it
 
 Your progress is stored locally at `~/.seeing/progress.json`. This is self-assessed learning—your reflections matter.
 
-## Links
+## External Resources
 
-- [Seeing Documentation](https://learn.createsomething.space/seeing)
-- [Dwelling (Claude Code)](https://learn.createsomething.space/dwelling)
-- [CREATE SOMETHING](https://createsomething.space)
-- [WORKWAY](https://workway.co)
+**Gemini CLI**
+- [Gemini CLI GitHub](https://github.com/google-gemini/gemini-cli) — Source code and documentation
+- [Gemini CLI Installation Guide](https://geminicli.com/docs/get-started/installation/) — Official setup instructions
+- [MCP Server Integration](https://github.com/google-gemini/gemini-cli#using-mcp-servers) — How to configure extensions
+
+**MCP (Model Context Protocol)**
+- [MCP Documentation](https://modelcontextprotocol.io/docs) — Protocol specification
+- [Build an MCP Server](https://modelcontextprotocol.io/docs/develop/build-server) — Server development guide
+
+**CREATE SOMETHING**
+- [Seeing Documentation](https://learn.createsomething.space/seeing) — Full curriculum
+- [Dwelling (Claude Code)](https://learn.createsomething.space/dwelling) — Next tier
+- [WORKWAY](https://workway.co) — Production automation platform
 
 ## License
 
