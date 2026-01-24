@@ -173,14 +173,25 @@
     line-height: var(--leading-relaxed);
   }
 
-  .lesson-content :global(ul),
+  .lesson-content :global(ul) {
+    margin-bottom: var(--space-md);
+    padding-left: var(--space-lg);
+    list-style-type: disc;
+  }
+
   .lesson-content :global(ol) {
     margin-bottom: var(--space-md);
     padding-left: var(--space-lg);
+    list-style-type: decimal;
   }
 
   .lesson-content :global(li) {
     margin-bottom: var(--space-xs);
+    padding-left: var(--space-xs);
+  }
+
+  .lesson-content :global(li)::marker {
+    color: var(--color-fg-muted);
   }
 
   .lesson-content :global(blockquote) {
