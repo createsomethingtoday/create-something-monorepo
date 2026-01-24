@@ -244,7 +244,7 @@
 }
 
 .loading-pulse {
-	animation: pulse 2s ease-in-out infinite;
+	animation: pulse var(--duration-loading) var(--ease-standard) infinite;
 }
 
 .loading-shimmer {
@@ -255,7 +255,7 @@
 		var(--color-bg-subtle) 100%
 	);
 	background-size: 1000px 100%;
-	animation: shimmer 2s linear infinite;
+	animation: shimmer var(--duration-loading) linear infinite;
 }
 
 /* Skeleton loading state */
@@ -278,7 +278,7 @@
 		rgba(255, 255, 255, 0.05),
 		transparent
 	);
-	animation: shimmer 2s linear infinite;
+	animation: shimmer var(--duration-loading) linear infinite;
 }
 
 /* ==========================================================================

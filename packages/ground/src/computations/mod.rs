@@ -95,6 +95,24 @@ pub use graph::{
     GraphDeadExport, GraphDeadExportsReport, GraphStats,
 };
 
+// Pattern analysis exports (v2.1+)
+pub use patterns::{
+    // Core analysis
+    analyze_patterns, analyze_file, PatternConfig, PatternReport, PatternEvidence,
+    PatternViolation, ViolationSeverity, FileMetrics, CategoryMetrics, HealthStatus,
+    // Pattern mining
+    mine_patterns, PatternMiningReport, DiscoveredPattern, SuggestedToken,
+    // Custom property validation (v2.2)
+    validate_custom_properties, CustomPropertyReport, DefinedProperty, PropertyUsage,
+    UndefinedUsage, PropertyHealth,
+    // Specificity analysis (v2.2)
+    analyze_specificity, SpecificityReport, SpecificityIssue,
+    // Animation analysis (v2.2)
+    analyze_animations, AnimationReport, AnimationViolation,
+    // Registry and contexts (v2.3 - AI-native)
+    PatternRegistry, FileContext,
+};
+
 use thiserror::Error;
 use std::path::PathBuf;
 

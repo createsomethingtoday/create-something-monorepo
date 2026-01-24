@@ -37,7 +37,32 @@ else
 fi
 
 # =============================================================================
-# CHECK 2: Design System Drift (Svelte files only)
+# CHECK 2: CSS Token Adoption
+# =============================================================================
+STAGED_CSS=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.css$' || true)
+
+if [ -n "$STAGED_CSS" ]; then
+  echo ""
+  echo "🎨 Checking CSS token adoption..."
+  
+  DRIFT_RESULT=$($GROUND find drift ./packages --extensions css 2>&1)
+  ADOPTION=$(echo "$DRIFT_RESULT" | grep "Overall adoption:" | awk '{print $3}' | tr -d '%')
+  
+  if [ -n "$ADOPTION" ]; then
+    # Check if adoption is below threshold (90%)
+    if [ $(echo "$ADOPTION < 90" | bc -l 2>/dev/null || echo "0") -eq 1 ]; then
+      echo "⚠️  CSS token adoption is below 90% ($ADOPTION%)"
+      echo "$DRIFT_RESULT" | grep -E "^  •" | head -5
+      echo ""
+      echo "Run 'ground find drift --extensions css' for details."
+    else
+      echo "✅ CSS token adoption: $ADOPTION%"
+    fi
+  fi
+fi
+
+# =============================================================================
+# CHECK 3: Design System Drift (Svelte files only)
 # =============================================================================
 STAGED_SVELTE=$(echo "$STAGED_FILES" | grep -E '\.svelte$' || true)
 
@@ -76,7 +101,7 @@ if [ -n "$STAGED_SVELTE" ]; then
 fi
 
 # =============================================================================
-# CHECK 3: Svelte 4 Props (export let)
+# CHECK 4: Svelte 4 Props (export let)
 # =============================================================================
 if [ -n "$STAGED_SVELTE" ]; then
   LEGACY_PROPS=0

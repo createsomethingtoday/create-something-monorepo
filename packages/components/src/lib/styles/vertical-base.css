@@ -110,7 +110,7 @@ code, pre, .font-mono {
 
 ::-webkit-scrollbar-thumb {
   background-color: var(--color-border-strong);
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   border: 2px solid var(--color-bg-pure);
 }
 
@@ -203,7 +203,7 @@ code, pre, .font-mono {
 }
 
 .page-transition {
-  animation: pageEnter 0.4s ease-out;
+  animation: pageEnter var(--duration-standard) var(--ease-decelerate);
 }
 
 @keyframes pageEnter {
@@ -477,8 +477,8 @@ p a, li a, span a {
 /* Card hover - reveals interactivity (functional, not decorative) */
 .card-interactive {
   transition:
-    transform var(--duration-fast) var(--ease-standard),
-    box-shadow var(--duration-fast) var(--ease-standard),
+    transform var(--duration-micro) var(--ease-standard),
+    box-shadow var(--duration-micro) var(--ease-standard),
     border-color var(--duration-micro) var(--ease-standard);
 }
 
@@ -498,7 +498,7 @@ p a, li a, span a {
   transition:
     transform var(--duration-micro) var(--ease-standard),
     background-color var(--duration-micro) var(--ease-standard),
-    box-shadow var(--duration-fast) var(--ease-standard);
+    box-shadow var(--duration-micro) var(--ease-standard);
 }
 
 .btn-canon:hover {

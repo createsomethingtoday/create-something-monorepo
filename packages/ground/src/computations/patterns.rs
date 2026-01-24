@@ -77,6 +77,10 @@ pub struct PatternConfig {
     
     /// Performance settings
     pub performance: PerformanceConfig,
+    
+    /// File extensions to analyze (None = all supported: svelte, tsx, ts, css)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub extensions: Option<Vec<String>>,
 }
 
 /// Token categories (colors, spacing, typography, etc.)
@@ -165,6 +169,7 @@ impl Default for PatternConfig {
             thresholds: AdoptionThresholds::default(),
             svelte_patterns: SveltePatternConfig::default(),
             performance: PerformanceConfig::default(),
+            extensions: None, // None = analyze all supported extensions
         }
     }
 }
@@ -185,8 +190,25 @@ pub struct PatternRegistry {
     /// Known drift items (acknowledged violations)
     pub known_drift: Vec<KnownDrift>,
     
+    /// File contexts with documented reasons (AI-native)
+    pub contexts: Vec<FileContext>,
+    
     /// Source file for the configuration
     pub config_source: Option<PathBuf>,
+}
+
+/// A file context declaration with documented reason
+/// Used for AI-native traceability - agents can cite these reasons
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileContext {
+    /// Context name (e.g., "video-rendering", "email-templates")
+    pub name: String,
+    
+    /// Human/agent-readable reason why this context uses hardcoded values
+    pub reason: String,
+    
+    /// Glob patterns that match files in this context
+    pub paths: Vec<String>,
 }
 
 /// A known drift item that should be tracked but not flagged
@@ -236,6 +258,21 @@ struct ThresholdsYaml {
 struct ProjectSpecificYaml {
     #[serde(default)]
     design_patterns: Option<DesignPatternsSection>,
+    
+    /// File contexts with documented reasons (AI-native)
+    #[serde(default)]
+    contexts: Option<HashMap<String, ContextYaml>>,
+}
+
+/// YAML structure for a single context
+#[derive(Debug, Deserialize)]
+struct ContextYaml {
+    /// Reason why this context uses hardcoded values
+    reason: String,
+    
+    /// Glob patterns matching files in this context
+    #[serde(default)]
+    paths: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -271,6 +308,7 @@ impl PatternRegistry {
             config: PatternConfig::default(),
             ignore_paths: Vec::new(),
             known_drift: Vec::new(),
+            contexts: Vec::new(),
             config_source: None,
         }
     }
@@ -382,6 +420,17 @@ impl PatternRegistry {
             }
         }
         
+        // Load file contexts (AI-native feature)
+        if let Some(contexts_map) = yaml.contexts {
+            for (name, ctx) in contexts_map {
+                self.contexts.push(FileContext {
+                    name,
+                    reason: ctx.reason,
+                    paths: ctx.paths,
+                });
+            }
+        }
+        
         Ok(())
     }
     
@@ -398,6 +447,57 @@ impl PatternRegistry {
         }
         
         false
+    }
+    
+    /// Get the context for a file, if any matches
+    /// Returns (context_name, reason) for AI-native traceability
+    pub fn get_file_context(&self, path: &Path) -> Option<&FileContext> {
+        let path_str = path.to_string_lossy();
+        
+        for context in &self.contexts {
+            for pattern in &context.paths {
+                // Simple glob matching - supports ** and * wildcards
+                let pattern_clean = pattern.trim_start_matches("**/");
+                if pattern_clean.ends_with("/**") {
+                    // Directory pattern: packages/motion-studio/**
+                    let dir_pattern = pattern_clean.trim_end_matches("/**");
+                    if path_str.contains(dir_pattern) {
+                        return Some(context);
+                    }
+                } else if pattern_clean.contains('*') {
+                    // Wildcard pattern: **/email/**/*.ts
+                    let parts: Vec<&str> = pattern_clean.split('*').collect();
+                    let mut matched = true;
+                    let mut remaining = path_str.as_ref();
+                    for part in &parts {
+                        if part.is_empty() {
+                            continue;
+                        }
+                        if let Some(idx) = remaining.find(part) {
+                            remaining = &remaining[idx + part.len()..];
+                        } else {
+                            matched = false;
+                            break;
+                        }
+                    }
+                    if matched {
+                        return Some(context);
+                    }
+                } else {
+                    // Exact pattern
+                    if path_str.ends_with(pattern_clean) || path_str.contains(pattern_clean) {
+                        return Some(context);
+                    }
+                }
+            }
+        }
+        
+        None
+    }
+    
+    /// Check if a file has a context (convenience method)
+    pub fn has_context(&self, path: &Path) -> bool {
+        self.get_file_context(path).is_some()
     }
     
     /// Check if a file is in the known drift list
@@ -567,7 +667,7 @@ pub fn analyze_patterns_with_registry(
     config: &PatternConfig,
     registry: Option<&PatternRegistry>,
 ) -> Result<PatternReport, PatternError> {
-    let all_files = discover_svelte_files(root)?;
+    let all_files = discover_svelte_files(root, config.extensions.as_deref())?;
     
     // Filter files using registry ignore paths
     let files: Vec<_> = if let Some(reg) = registry {
@@ -706,30 +806,36 @@ pub fn analyze_file(
 // =============================================================================
 
 /// Discover all analyzable files in a directory (.svelte, .tsx, .ts, .css)
-fn discover_svelte_files(root: &Path) -> Result<Vec<PathBuf>, PatternError> {
+/// If extensions filter is provided, only include those extensions.
+fn discover_svelte_files(root: &Path, extensions: Option<&[String]>) -> Result<Vec<PathBuf>, PatternError> {
     let mut files = Vec::new();
-    discover_files_recursive(root, &mut files)?;
+    discover_files_recursive(root, &mut files, extensions)?;
     Ok(files)
 }
 
-fn discover_files_recursive(dir: &Path, files: &mut Vec<PathBuf>) -> Result<(), PatternError> {
+fn discover_files_recursive(dir: &Path, files: &mut Vec<PathBuf>, extensions: Option<&[String]>) -> Result<(), PatternError> {
     if dir.is_dir() {
         for entry in std::fs::read_dir(dir)? {
             let entry = entry?;
             let path = entry.path();
             
-            // Skip node_modules and hidden directories
+            // Skip node_modules, build artifacts, and hidden directories
             if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                if name.starts_with('.') || name == "node_modules" || name == "dist" {
+                if name.starts_with('.') || name == "node_modules" || name == "dist" 
+                   || name == "venv" || name == "build" || name == "target" {
                     continue;
                 }
             }
             
             if path.is_dir() {
-                discover_files_recursive(&path, files)?;
+                discover_files_recursive(&path, files, extensions)?;
             } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-                // Include Svelte, TSX, TS, and CSS files
-                if matches!(ext, "svelte" | "tsx" | "ts" | "css") {
+                // Check against extension filter if provided
+                let should_include = match extensions {
+                    Some(allowed) => allowed.iter().any(|a| a == ext),
+                    None => matches!(ext, "svelte" | "tsx" | "ts" | "css"),
+                };
+                if should_include {
                     files.push(path);
                 }
             }
@@ -2111,7 +2217,7 @@ pub struct SuggestedToken {
 
 /// Mine patterns from a directory to discover implicit design tokens
 pub fn mine_patterns(root: &Path, min_occurrences: usize) -> Result<PatternMiningReport, PatternError> {
-    let all_files = discover_svelte_files(root)?;
+    let all_files = discover_svelte_files(root, None)?;
     
     // Filter using registry ignore paths
     let registry = PatternRegistry::from_directory(root).ok();
@@ -2796,6 +2902,580 @@ fn generate_recommendation(
     }
     
     parts.join(" ")
+}
+
+// =============================================================================
+// CSS CUSTOM PROPERTY VALIDATION
+// =============================================================================
+
+/// Result of custom property validation
+#[derive(Debug, Clone, Serialize)]
+pub struct CustomPropertyReport {
+    /// All defined custom properties (from tokens.css or :root)
+    pub defined_properties: Vec<DefinedProperty>,
+    
+    /// All var() usages found
+    pub usages: Vec<PropertyUsage>,
+    
+    /// Defined but never used
+    pub unused_definitions: Vec<String>,
+    
+    /// Used but not defined
+    pub undefined_usages: Vec<UndefinedUsage>,
+    
+    /// Files analyzed
+    pub files_analyzed: usize,
+    
+    /// Overall health
+    pub health: PropertyHealth,
+}
+
+/// A defined custom property
+#[derive(Debug, Clone, Serialize)]
+pub struct DefinedProperty {
+    /// Property name (e.g., "--color-fg-primary")
+    pub name: String,
+    /// Value
+    pub value: String,
+    /// File where defined
+    pub file: PathBuf,
+    /// Line number
+    pub line: usize,
+}
+
+/// A var() usage
+#[derive(Debug, Clone, Serialize)]
+pub struct PropertyUsage {
+    /// Property name referenced (e.g., "--color-fg-primary")
+    pub name: String,
+    /// File where used
+    pub file: PathBuf,
+    /// Line number
+    pub line: usize,
+    /// Full context (the CSS property using it)
+    pub context: String,
+}
+
+/// An undefined property usage
+#[derive(Debug, Clone, Serialize)]
+pub struct UndefinedUsage {
+    /// Property name that's undefined
+    pub name: String,
+    /// File where used
+    pub file: PathBuf,
+    /// Line number
+    pub line: usize,
+    /// Suggestion (nearest defined property)
+    pub suggestion: Option<String>,
+}
+
+/// Health status of custom properties
+#[derive(Debug, Clone, Serialize)]
+pub struct PropertyHealth {
+    /// Percentage of usages that have definitions
+    pub defined_usage_ratio: f64,
+    /// Percentage of definitions that are used
+    pub usage_coverage_ratio: f64,
+    /// Overall status
+    pub status: HealthStatus,
+}
+
+/// Validate CSS custom property definitions and usages
+pub fn validate_custom_properties(
+    root: &Path,
+    tokens_file: Option<&Path>,
+) -> Result<CustomPropertyReport, PatternError> {
+    let mut defined_properties: Vec<DefinedProperty> = Vec::new();
+    let mut usages: Vec<PropertyUsage> = Vec::new();
+    
+    // Find all CSS and Svelte files
+    let files = discover_svelte_files(root, None)?;
+    let files_analyzed = files.len();
+    
+    // If tokens_file provided, prioritize it for definitions
+    if let Some(tokens) = tokens_file {
+        if let Ok(content) = std::fs::read_to_string(tokens) {
+            extract_definitions(&content, tokens, &mut defined_properties);
+        }
+    }
+    
+    // Process all files for both definitions (in :root) and usages
+    for file in &files {
+        if let Ok(content) = std::fs::read_to_string(file) {
+            let css_content = if file.extension().map(|e| e == "svelte").unwrap_or(false) {
+                extract_style_block(&content)
+            } else {
+                Some(content.clone())
+            };
+            
+            if let Some(css) = css_content {
+                // Extract definitions from :root blocks
+                extract_definitions(&css, file, &mut defined_properties);
+                
+                // Extract var() usages
+                extract_var_usages(&css, file, &mut usages);
+            }
+        }
+    }
+    
+    // Deduplicate definitions (same name in same file)
+    let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
+    defined_properties.retain(|d| seen.insert(d.name.clone()));
+    
+    // Find unused definitions
+    let used_names: std::collections::HashSet<_> = usages.iter().map(|u| u.name.clone()).collect();
+    let unused_definitions: Vec<_> = defined_properties.iter()
+        .filter(|d| !used_names.contains(&d.name))
+        .map(|d| d.name.clone())
+        .collect();
+    
+    // Find undefined usages
+    let defined_names: std::collections::HashSet<_> = defined_properties.iter()
+        .map(|d| d.name.clone())
+        .collect();
+    
+    let undefined_usages: Vec<_> = usages.iter()
+        .filter(|u| !defined_names.contains(&u.name))
+        .map(|u| UndefinedUsage {
+            name: u.name.clone(),
+            file: u.file.clone(),
+            line: u.line,
+            suggestion: find_similar_property(&u.name, &defined_names),
+        })
+        .collect();
+    
+    // Calculate health
+    let total_usages = usages.len();
+    let defined_usages = usages.iter()
+        .filter(|u| defined_names.contains(&u.name))
+        .count();
+    let defined_usage_ratio = if total_usages > 0 {
+        (defined_usages as f64 / total_usages as f64) * 100.0
+    } else {
+        100.0
+    };
+    
+    let total_definitions = defined_properties.len();
+    let used_definitions = defined_properties.iter()
+        .filter(|d| used_names.contains(&d.name))
+        .count();
+    let usage_coverage_ratio = if total_definitions > 0 {
+        (used_definitions as f64 / total_definitions as f64) * 100.0
+    } else {
+        100.0
+    };
+    
+    let status = if defined_usage_ratio >= 95.0 && usage_coverage_ratio >= 80.0 {
+        HealthStatus::Healthy
+    } else if defined_usage_ratio >= 80.0 && usage_coverage_ratio >= 60.0 {
+        HealthStatus::Warning
+    } else {
+        HealthStatus::Critical
+    };
+    
+    Ok(CustomPropertyReport {
+        defined_properties,
+        usages,
+        unused_definitions,
+        undefined_usages,
+        files_analyzed,
+        health: PropertyHealth {
+            defined_usage_ratio,
+            usage_coverage_ratio,
+            status,
+        },
+    })
+}
+
+/// Extract custom property definitions from CSS content
+fn extract_definitions(css: &str, file: &Path, definitions: &mut Vec<DefinedProperty>) {
+    // Look for :root { } blocks and extract --* properties
+    let mut in_root = false;
+    let mut brace_depth = 0;
+    
+    for (line_num, line) in css.lines().enumerate() {
+        let trimmed = line.trim();
+        
+        if trimmed.contains(":root") && trimmed.contains("{") {
+            in_root = true;
+            brace_depth = 1;
+            continue;
+        }
+        
+        if in_root {
+            brace_depth += trimmed.matches('{').count() as i32;
+            brace_depth -= trimmed.matches('}').count() as i32;
+            
+            if brace_depth <= 0 {
+                in_root = false;
+                continue;
+            }
+            
+            // Look for --property: value;
+            if let Some(colon_pos) = trimmed.find(':') {
+                let property = trimmed[..colon_pos].trim();
+                if property.starts_with("--") {
+                    let value_end = trimmed.find(';').unwrap_or(trimmed.len());
+                    let value = trimmed[colon_pos + 1..value_end].trim();
+                    
+                    definitions.push(DefinedProperty {
+                        name: property.to_string(),
+                        value: value.to_string(),
+                        file: file.to_path_buf(),
+                        line: line_num + 1,
+                    });
+                }
+            }
+        }
+    }
+}
+
+/// Extract var() usages from CSS content
+fn extract_var_usages(css: &str, file: &Path, usages: &mut Vec<PropertyUsage>) {
+    let var_regex = regex_lite::Regex::new(r"var\s*\(\s*(--[a-zA-Z0-9_-]+)").unwrap();
+    
+    for (line_num, line) in css.lines().enumerate() {
+        for cap in var_regex.captures_iter(line) {
+            if let Some(prop) = cap.get(1) {
+                usages.push(PropertyUsage {
+                    name: prop.as_str().to_string(),
+                    file: file.to_path_buf(),
+                    line: line_num + 1,
+                    context: line.trim().to_string(),
+                });
+            }
+        }
+    }
+}
+
+/// Find similar property name for suggestions
+fn find_similar_property(name: &str, defined: &std::collections::HashSet<String>) -> Option<String> {
+    // Simple prefix matching for suggestions
+    let prefix = if name.len() > 8 { &name[..8] } else { name };
+    
+    defined.iter()
+        .filter(|d| d.starts_with(prefix) || name.starts_with(&d[..d.len().min(8)]))
+        .min_by_key(|d| {
+            // Simple edit distance approximation
+            let common: usize = name.chars().zip(d.chars()).filter(|(a, b)| a == b).count();
+            name.len().max(d.len()) - common
+        })
+        .cloned()
+}
+
+// =============================================================================
+// CSS SPECIFICITY ANALYSIS
+// =============================================================================
+
+/// Result of specificity analysis
+#[derive(Debug, Clone, Serialize)]
+pub struct SpecificityReport {
+    /// High specificity selectors (score > threshold)
+    pub high_specificity: Vec<SpecificityIssue>,
+    
+    /// Average specificity across all selectors
+    pub average_specificity: f64,
+    
+    /// Files analyzed
+    pub files_analyzed: usize,
+    
+    /// Total selectors analyzed
+    pub total_selectors: usize,
+}
+
+/// A high-specificity selector issue
+#[derive(Debug, Clone, Serialize)]
+pub struct SpecificityIssue {
+    /// The selector
+    pub selector: String,
+    
+    /// Specificity score (a, b, c format)
+    pub specificity: (usize, usize, usize),
+    
+    /// Numeric score for comparison
+    pub score: usize,
+    
+    /// File where found
+    pub file: PathBuf,
+    
+    /// Line number
+    pub line: usize,
+    
+    /// Suggestion for reducing specificity
+    pub suggestion: String,
+}
+
+/// Analyze CSS specificity across files
+pub fn analyze_specificity(
+    root: &Path,
+    threshold: usize,
+) -> Result<SpecificityReport, PatternError> {
+    let files = discover_svelte_files(root, None)?;
+    let files_analyzed = files.len();
+    let mut high_specificity = Vec::new();
+    let mut total_score: usize = 0;
+    let mut total_selectors: usize = 0;
+    
+    for file in &files {
+        if let Ok(content) = std::fs::read_to_string(file) {
+            let css_content = if file.extension().map(|e| e == "svelte").unwrap_or(false) {
+                extract_style_block(&content)
+            } else {
+                Some(content.clone())
+            };
+            
+            if let Some(css) = css_content {
+                for (line_num, line) in css.lines().enumerate() {
+                    // Simple selector detection (line ending with {)
+                    let trimmed = line.trim();
+                    if trimmed.ends_with('{') && !trimmed.starts_with('@') {
+                        let selector = trimmed.trim_end_matches('{').trim();
+                        if !selector.is_empty() && !selector.starts_with("/*") {
+                            let (a, b, c) = calculate_specificity(selector);
+                            let score = a * 100 + b * 10 + c;
+                            
+                            total_score += score;
+                            total_selectors += 1;
+                            
+                            if score > threshold {
+                                high_specificity.push(SpecificityIssue {
+                                    selector: selector.to_string(),
+                                    specificity: (a, b, c),
+                                    score,
+                                    file: file.clone(),
+                                    line: line_num + 1,
+                                    suggestion: suggest_specificity_fix(selector, (a, b, c)),
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    let average_specificity = if total_selectors > 0 {
+        total_score as f64 / total_selectors as f64
+    } else {
+        0.0
+    };
+    
+    Ok(SpecificityReport {
+        high_specificity,
+        average_specificity,
+        files_analyzed,
+        total_selectors,
+    })
+}
+
+/// Calculate CSS specificity (a, b, c)
+/// a = ID selectors
+/// b = class selectors, attributes, pseudo-classes
+/// c = type selectors, pseudo-elements
+fn calculate_specificity(selector: &str) -> (usize, usize, usize) {
+    let mut c = 0; // Elements, pseudo-elements
+    
+    // Count IDs (#foo)
+    let a = selector.matches('#').count();
+    
+    // Count classes (.foo), attributes ([foo]), pseudo-classes (:foo but not ::foo)
+    let mut b = selector.matches('.').count();
+    b += selector.matches('[').count();
+    // Pseudo-classes (single colon, not double)
+    for (i, ch) in selector.chars().enumerate() {
+        if ch == ':' {
+            let next = selector.chars().nth(i + 1);
+            if next != Some(':') && next.map(|c| c.is_alphabetic()).unwrap_or(false) {
+                b += 1;
+            }
+        }
+    }
+    
+    // Count elements (rough approximation)
+    // Count pseudo-elements (::before, ::after)
+    let pseudo_elements = selector.matches("::").count();
+    c += pseudo_elements;
+    
+    // Count element selectors (words not starting with . # : [ )
+    for part in selector.split_whitespace() {
+        let part = part.trim_start_matches('>').trim_start_matches('+').trim_start_matches('~');
+        if !part.is_empty() 
+            && !part.starts_with('.') 
+            && !part.starts_with('#') 
+            && !part.starts_with(':') 
+            && !part.starts_with('[')
+            && !part.starts_with('*')
+        {
+            // It's likely an element selector
+            c += 1;
+        }
+    }
+    
+    (a, b, c)
+}
+
+/// Suggest how to reduce specificity
+fn suggest_specificity_fix(selector: &str, (a, b, _c): (usize, usize, usize)) -> String {
+    if a > 0 {
+        "Consider using a class instead of ID selector for lower specificity".to_string()
+    } else if b > 2 {
+        "Consider using a single class with BEM naming (e.g., .component__element)".to_string()
+    } else if selector.contains(" ") && !selector.contains(">") {
+        "Consider using direct child selector (>) or a single class".to_string()
+    } else {
+        "Selector specificity is moderately high".to_string()
+    }
+}
+
+// =============================================================================
+// ANIMATION TOKEN COVERAGE
+// =============================================================================
+
+/// Result of animation token coverage analysis
+#[derive(Debug, Clone, Serialize)]
+pub struct AnimationReport {
+    /// Animation-related violations
+    pub violations: Vec<AnimationViolation>,
+    
+    /// Total animation properties found
+    pub total_properties: usize,
+    
+    /// Compliant animation properties
+    pub compliant_properties: usize,
+    
+    /// Adoption ratio
+    pub adoption_ratio: f64,
+    
+    /// Files analyzed
+    pub files_analyzed: usize,
+}
+
+/// An animation token violation
+#[derive(Debug, Clone, Serialize)]
+pub struct AnimationViolation {
+    /// Property (transition, animation-duration, etc.)
+    pub property: String,
+    
+    /// Hardcoded value
+    pub value: String,
+    
+    /// File
+    pub file: PathBuf,
+    
+    /// Line number
+    pub line: usize,
+    
+    /// Suggested token
+    pub suggestion: String,
+}
+
+/// Analyze animation/motion token usage
+pub fn analyze_animations(root: &Path) -> Result<AnimationReport, PatternError> {
+    let files = discover_svelte_files(root, None)?;
+    let files_analyzed = files.len();
+    let mut violations = Vec::new();
+    let mut total_properties = 0;
+    let mut compliant_properties = 0;
+    
+    // Animation-related properties to check
+    let animation_props = [
+        "transition",
+        "transition-duration",
+        "transition-delay",
+        "animation",
+        "animation-duration",
+        "animation-delay",
+    ];
+    
+    // Valid token patterns
+    let valid_patterns = [
+        "var(--duration-",
+        "var(--ease-",
+        "var(--cascade-",
+        "var(--view-transition-",
+    ];
+    
+    for file in &files {
+        if let Ok(content) = std::fs::read_to_string(file) {
+            let css_content = if file.extension().map(|e| e == "svelte").unwrap_or(false) {
+                extract_style_block(&content)
+            } else {
+                Some(content.clone())
+            };
+            
+            if let Some(css) = css_content {
+                for (line_num, line) in css.lines().enumerate() {
+                    let trimmed = line.trim();
+                    
+                    for prop in &animation_props {
+                        if trimmed.starts_with(prop) && trimmed.contains(':') {
+                            total_properties += 1;
+                            
+                            // Check if it uses tokens
+                            let is_compliant = valid_patterns.iter()
+                                .any(|p| trimmed.contains(p))
+                                || trimmed.contains("inherit")
+                                || trimmed.contains("none");
+                            
+                            if is_compliant {
+                                compliant_properties += 1;
+                            } else {
+                                // Extract the value
+                                if let Some(colon) = trimmed.find(':') {
+                                    let value = trimmed[colon + 1..].trim_end_matches(';').trim();
+                                    violations.push(AnimationViolation {
+                                        property: prop.to_string(),
+                                        value: value.to_string(),
+                                        file: file.clone(),
+                                        line: line_num + 1,
+                                        suggestion: suggest_animation_token(value),
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    let adoption_ratio = if total_properties > 0 {
+        (compliant_properties as f64 / total_properties as f64) * 100.0
+    } else {
+        100.0
+    };
+    
+    Ok(AnimationReport {
+        violations,
+        total_properties,
+        compliant_properties,
+        adoption_ratio,
+        files_analyzed,
+    })
+}
+
+/// Suggest animation token replacement
+fn suggest_animation_token(value: &str) -> String {
+    // Parse timing values and suggest tokens
+    if value.contains("100ms") || value.contains("0.1s") {
+        "Use var(--duration-instant) for 100ms".to_string()
+    } else if value.contains("200ms") || value.contains("0.2s") {
+        "Use var(--duration-micro) for 200ms".to_string()
+    } else if value.contains("300ms") || value.contains("0.3s") {
+        "Use var(--duration-standard) for 300ms".to_string()
+    } else if value.contains("500ms") || value.contains("0.5s") {
+        "Use var(--duration-complex) for 500ms".to_string()
+    } else if value.contains("700ms") || value.contains("0.7s") {
+        "Use var(--duration-slow) for 700ms".to_string()
+    } else if value.contains("ease-in-out") {
+        "Use var(--ease-standard) for ease-in-out".to_string()
+    } else if value.contains("ease-out") {
+        "Use var(--ease-decelerate) for ease-out".to_string()
+    } else if value.contains("ease-in") {
+        "Use var(--ease-accelerate) for ease-in".to_string()
+    } else {
+        "Replace timing values with Canon duration/easing tokens".to_string()
+    }
 }
 
 // =============================================================================

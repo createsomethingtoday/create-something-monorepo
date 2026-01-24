@@ -58,10 +58,13 @@
 	transform: scale(1.05);
 }
 
-/* Background Watermark Text */
+/* Background Watermark Text
+ * Uses Canon watermark typography tokens for consistency.
+ * Watermarks are intentionally oversized decorative text.
+ */
 .text-watermark {
 	position: absolute;
-	font-size: clamp(8rem, 25vw, 25rem);
+	font-size: var(--text-watermark);
 	font-weight: 900;
 	color: var(--color-fg-subtle);
 	opacity: 0.5;
@@ -74,15 +77,15 @@
 
 /* Alternative watermark sizes */
 .text-watermark-lg {
-	font-size: clamp(10rem, 30vw, 30rem);
+	font-size: var(--text-watermark-lg);
 }
 
 .text-watermark-md {
-	font-size: clamp(6rem, 20vw, 20rem);
+	font-size: var(--text-watermark-md);
 }
 
 .text-watermark-sm {
-	font-size: clamp(4rem, 15vw, 15rem);
+	font-size: var(--text-watermark-sm);
 }
 
 /* Layered Composition Helpers */
@@ -163,7 +166,7 @@
 .hero-overlay {
 	position: absolute;
 	inset: 0;
-	background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
+	background: linear-gradient(135deg, var(--color-bg-elevated) 0%, var(--color-bg-subtle) 50%, var(--color-bg-elevated) 100%);
 	opacity: 0.3;
 	z-index: 0;
 }
@@ -174,7 +177,7 @@
 	color: var(--color-fg-muted);
 	font-weight: 400;
 	letter-spacing: 0.1em;
-	font-family: var(--font-body);
+	font-family: var(--font-sans);
 }
 
 /* Section Header with Border */
@@ -190,7 +193,7 @@
 /* Responsive Adjustments */
 @media (max-width: 768px) {
 	.text-watermark {
-		font-size: clamp(4rem, 20vw, 15rem);
+		font-size: var(--text-watermark-mobile);
 	}
 
 	.offset-grid > * {

@@ -234,6 +234,10 @@ motion:
         value: "200ms"
         perception: "Fast"
         use: "Hover states, toggles"
+      - name: "--duration-fast"
+        value: "200ms"
+        perception: "Fast"
+        use: "Alias for --duration-micro (common naming expectation)"
       - name: "--duration-standard"
         value: "300ms"
         perception: "Normal"
@@ -246,6 +250,10 @@ motion:
         value: "700ms"
         perception: "Slow"
         use: "Dramatic emphasis"
+      - name: "--duration-loading"
+        value: "2000ms"
+        perception: "Continuous"
+        use: "Skeleton loaders, shimmer effects, pulse animations"
         
   cascade:
     description: "Staggered animation timing based on Gestalt proximity"

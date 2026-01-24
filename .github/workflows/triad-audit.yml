@@ -24,6 +24,35 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Setup Rust
+        uses: dtolnay/rust-action@stable
+
+      - name: Cache Ground binary
+        uses: actions/cache@v4
+        with:
+          path: packages/ground/target/release/ground
+          key: ground-${{ runner.os }}-${{ hashFiles('packages/ground/Cargo.lock') }}
+
+      - name: Build Ground
+        run: |
+          cd packages/ground
+          cargo build --release
+
+      - name: Check CSS Token Adoption
+        id: css-check
+        run: |
+          cd packages/ground
+          RESULT=$(./target/release/ground find drift ../.. --extensions css 2>&1)
+          ADOPTION=$(echo "$RESULT" | grep "Overall adoption:" | awk '{print $3}' | tr -d '%')
+          echo "adoption=$ADOPTION" >> $GITHUB_OUTPUT
+          if [ -n "$ADOPTION" ] && [ $(echo "$ADOPTION < 90" | bc -l) -eq 1 ]; then
+            echo "::warning::CSS token adoption is below 90% ($ADOPTION%)"
+            echo "status=warning" >> $GITHUB_OUTPUT
+          else
+            echo "status=pass" >> $GITHUB_OUTPUT
+          fi
+          echo "$RESULT"
+
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
 

@@ -72,6 +72,18 @@ design_patterns:
     - "**/*.test.ts"
     - "**/node_modules/**"
     
+  # CSS contexts where hardcoded values are intentional
+  ignore_contexts:
+    # High contrast mode - accessibility overrides require specific values
+    - pattern: "@media (prefers-contrast: more)"
+      reason: "Accessibility overrides - WCAG AAA compliance requires specific values"
+    # Reduced transparency fallbacks - accessibility
+    - pattern: "@media (prefers-reduced-transparency: reduce)"
+      reason: "Accessibility fallback - solid background replacement"
+    # Mobile performance optimizations
+    - pattern: "@media (max-width: 768px)"
+      reason: "Performance optimization - reduced blur values for mobile"
+    
   # Values that are intentionally NOT tokens (below design system granularity)
   allowed_values:
     spacing:
@@ -82,6 +94,7 @@ design_patterns:
       - "0.375rem" # Fine-grained spacing (xs * 0.6)
       - "0.5rem"  # Half of sm spacing
       - "0.75rem" # 3/4 of sm spacing
+      - "2px 8px" # Fine-grained padding for small badges
     typography:
       - "inherit"  # Inherit from parent
       - "100%"     # Percentage-based sizing
@@ -89,6 +102,27 @@ design_patterns:
       - "transparent"
       - "currentColor"
       - "inherit"
+      # Design system definitions (these define the tokens)
+      - "rgba(255, 255, 255, 0.06)"   # glass-border-subtle definition
+      - "rgba(255, 255, 255, 0.10)"   # glass-border-light definition
+      - "rgba(255, 255, 255, 0.15)"   # glass-border-medium definition
+      - "rgba(255, 255, 255, 0.22)"   # glass-border-strong definition
+      - "rgba(255, 255, 255, 0.25)"   # liquid-glass hover state
+      - "rgba(0, 0, 0, 0.90)"         # high-contrast glass background
+      - "color-mix(*)"                # CSS color-mix() function
+    shadows:
+      # Focus ring shadows (accessibility)
+      - "0 0 0 2px var(--color-fg-muted)"   # Focus ring
+      - "0 0 0 4px var(--color-fg-subtle)"  # Extended focus ring
+      - "0 0 0 1px var(--color-border-emphasis)"  # Selection outline
+      # Liquid glass decorative shadows (define the aesthetic)
+      - "0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+      - "0 6px 16px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15)"
+    animations:
+      # Reduced-motion accessibility patterns
+      - "0.01ms"    # Near-instant for prefers-reduced-motion
+      - "0ms"       # Instant for prefers-reduced-motion
+      - "1"         # animation-iteration-count: 1 (not a timing value)
     
   known_drift:
     critical:
@@ -131,6 +165,36 @@ design_patterns:
         adoption: "56.5%"
         priority: "skip"
         reason: "SVG visualization - uses pixel values for SVG text rendering where rem doesn't work reliably"
+
+# ─────────────────────────────────────────────────────────────────────
+# File Contexts (AI-Native)
+# ─────────────────────────────────────────────────────────────────────
+# Explicit declarations of why certain files use hardcoded values.
+# Each context has a documented reason that agents can cite.
+# Use `ground explain <file>` to query why a file is excluded.
+
+contexts:
+  video-rendering:
+    reason: "Remotion compositions render to video frames; CSS custom properties are not applicable in this context"
+    paths:
+      - "packages/motion-studio/**"
+    
+  email-templates:
+    reason: "Email clients (Gmail, Outlook, Apple Mail) do not support CSS custom properties; hardcoded values required for compatibility"
+    paths:
+      - "**/newsletter/subscribe.ts"
+      - "**/email-templates/**"
+      - "**/email/**/*.ts"
+    
+  third-party-css:
+    reason: "External CSS from third-party tools (Webflow, etc.) not under our design system control"
+    paths:
+      - "packages/bundle-scanner/webflow/**"
+      
+  polecats-snapshots:
+    reason: "Polecat snapshots are historical point-in-time copies; violations reflect state at snapshot time"
+    paths:
+      - "csm/polecats/**"
 
 report:
   format: markdown

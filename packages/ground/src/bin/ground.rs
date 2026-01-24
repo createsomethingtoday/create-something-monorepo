@@ -183,6 +183,9 @@ enum FindCommands {
         /// Only show files below this adoption threshold (0-100)
         #[arg(long)]
         below_threshold: Option<f64>,
+        /// File extensions to analyze (comma-separated, e.g., "css,svelte")
+        #[arg(long)]
+        extensions: Option<String>,
         /// Output format (text, json)
         #[arg(long, default_value = "text")]
         format: String,
@@ -210,6 +213,47 @@ enum FindCommands {
         /// Minimum occurrences to consider a pattern
         #[arg(long, default_value = "3")]
         min_occurrences: usize,
+        /// Output format (text, json)
+        #[arg(long, default_value = "text")]
+        format: String,
+    },
+    /// Validate CSS custom property definitions and usages
+    CustomProperties {
+        /// Path to analyze
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        /// Path to tokens.css file (optional - auto-detected)
+        #[arg(long)]
+        tokens: Option<PathBuf>,
+        /// Output format (text, json)
+        #[arg(long, default_value = "text")]
+        format: String,
+    },
+    /// Analyze CSS selector specificity
+    Specificity {
+        /// Path to analyze
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        /// Specificity score threshold (default: 30)
+        #[arg(long, default_value = "30")]
+        threshold: usize,
+        /// Output format (text, json)
+        #[arg(long, default_value = "text")]
+        format: String,
+    },
+    /// Analyze animation/motion token usage
+    Animations {
+        /// Path to analyze
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        /// Output format (text, json)
+        #[arg(long, default_value = "text")]
+        format: String,
+    },
+    /// Explain why a file is excluded or has a special context (AI-native traceability)
+    Explain {
+        /// File to explain
+        file: PathBuf,
         /// Output format (text, json)
         #[arg(long, default_value = "text")]
         format: String,
@@ -568,14 +612,26 @@ fn run_find(cmd: FindCommands, db: &Path) -> Result<(), Box<dyn std::error::Erro
         FindCommands::DeadExports { module, scope } => {
             find_dead_exports_cmd(&module, &scope)
         }
-        FindCommands::Drift { path, category, below_threshold, format } => {
-            find_drift(&path, &category, below_threshold, &format)
+        FindCommands::Drift { path, category, below_threshold, extensions, format } => {
+            find_drift(&path, &category, below_threshold, extensions.as_deref(), &format)
         }
         FindCommands::AdoptionRatio { path, verbose, worst, format } => {
             show_adoption_ratio(&path, verbose, worst, &format)
         }
         FindCommands::Patterns { path, min_occurrences, format } => {
             mine_patterns_cmd(&path, min_occurrences, &format)
+        }
+        FindCommands::CustomProperties { path, tokens, format } => {
+            validate_custom_properties_cmd(&path, tokens.as_deref(), &format)
+        }
+        FindCommands::Specificity { path, threshold, format } => {
+            analyze_specificity_cmd(&path, threshold, &format)
+        }
+        FindCommands::Animations { path, format } => {
+            analyze_animations_cmd(&path, &format)
+        }
+        FindCommands::Explain { file, format } => {
+            explain_file_context(&file, &format)
         }
     }
 }
@@ -982,13 +1038,22 @@ fn find_orphans(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn find_drift(path: &Path, category: &str, below_threshold: Option<f64>, format: &str) -> Result<(), Box<dyn std::error::Error>> {
+fn find_drift(path: &Path, category: &str, below_threshold: Option<f64>, extensions: Option<&str>, format: &str) -> Result<(), Box<dyn std::error::Error>> {
     use ground::computations::patterns::{analyze_patterns, PatternConfig};
     
     println!("Finding design system drift in {}", path.display());
+    if let Some(exts) = extensions {
+        println!("  Filtering to: {}", exts);
+    }
     println!();
     
-    let config = PatternConfig::default();
+    let mut config = PatternConfig::default();
+    
+    // Set extension filter if provided
+    if let Some(exts) = extensions {
+        config.extensions = Some(exts.split(',').map(|s| s.trim().to_string()).collect());
+    }
+    
     let report = analyze_patterns(path, &config)?;
     
     // Filter by category if specified
@@ -1211,6 +1276,250 @@ fn mine_patterns_cmd(path: &Path, min_occurrences: usize, format: &str) -> Resul
     if report.discovered_patterns.is_empty() {
         println!("No patterns found with {} or more occurrences.", min_occurrences);
         println!("Try lowering --min-occurrences or scanning a larger directory.");
+    }
+    
+    Ok(())
+}
+
+fn validate_custom_properties_cmd(path: &Path, tokens: Option<&Path>, format: &str) -> Result<(), Box<dyn std::error::Error>> {
+    use ground::computations::validate_custom_properties;
+    
+    println!("Validating CSS custom properties in {}...", path.display());
+    if let Some(t) = tokens {
+        println!("  Using tokens file: {}", t.display());
+    }
+    println!();
+    
+    let report = validate_custom_properties(path, tokens)?;
+    
+    if format == "json" {
+        println!("{}", serde_json::to_string_pretty(&report)?);
+        return Ok(());
+    }
+    
+    // Text output
+    println!("📊 Custom Property Analysis");
+    println!();
+    println!("  Defined properties: {}", report.defined_properties.len());
+    println!("  Total usages: {}", report.usages.len());
+    println!("  Files analyzed: {}", report.files_analyzed);
+    println!();
+    
+    // Health status
+    let status_icon = match report.health.status {
+        ground::computations::HealthStatus::Healthy => "✅",
+        ground::computations::HealthStatus::Warning => "⚠️",
+        ground::computations::HealthStatus::Critical => "❌",
+    };
+    
+    println!("{} Health Status:", status_icon);
+    println!("  Defined usage ratio: {:.1}%", report.health.defined_usage_ratio);
+    println!("  Token coverage: {:.1}%", report.health.usage_coverage_ratio);
+    println!();
+    
+    // Unused definitions
+    if !report.unused_definitions.is_empty() {
+        println!("🗑️  Unused Definitions ({}):", report.unused_definitions.len());
+        for name in report.unused_definitions.iter().take(10) {
+            println!("    {}", name);
+        }
+        if report.unused_definitions.len() > 10 {
+            println!("    ... and {} more", report.unused_definitions.len() - 10);
+        }
+        println!();
+    }
+    
+    // Undefined usages
+    if !report.undefined_usages.is_empty() {
+        println!("⚠️  Undefined Usages ({}):", report.undefined_usages.len());
+        for usage in report.undefined_usages.iter().take(10) {
+            print!("    {} ({}:{})", usage.name, usage.file.display(), usage.line);
+            if let Some(ref suggestion) = usage.suggestion {
+                print!(" → did you mean {}?", suggestion);
+            }
+            println!();
+        }
+        if report.undefined_usages.len() > 10 {
+            println!("    ... and {} more", report.undefined_usages.len() - 10);
+        }
+    }
+    
+    if report.undefined_usages.is_empty() && report.unused_definitions.is_empty() {
+        println!("✅ All custom properties are properly defined and used.");
+    }
+    
+    Ok(())
+}
+
+fn analyze_specificity_cmd(path: &Path, threshold: usize, format: &str) -> Result<(), Box<dyn std::error::Error>> {
+    use ground::computations::analyze_specificity;
+    
+    println!("Analyzing CSS specificity in {} (threshold: {})...", path.display(), threshold);
+    println!();
+    
+    let report = analyze_specificity(path, threshold)?;
+    
+    if format == "json" {
+        println!("{}", serde_json::to_string_pretty(&report)?);
+        return Ok(());
+    }
+    
+    // Text output
+    println!("📊 Specificity Analysis");
+    println!();
+    println!("  Total selectors: {}", report.total_selectors);
+    println!("  Average specificity: {:.1}", report.average_specificity);
+    println!("  Files analyzed: {}", report.files_analyzed);
+    println!();
+    
+    if !report.high_specificity.is_empty() {
+        println!("⚠️  High Specificity Selectors (score > {}):", threshold);
+        println!();
+        
+        for issue in report.high_specificity.iter().take(15) {
+            println!("  {}:{} - score: {} ({},{},{})",
+                issue.file.display(), issue.line,
+                issue.score, issue.specificity.0, issue.specificity.1, issue.specificity.2);
+            println!("    {}", issue.selector);
+            println!("    💡 {}", issue.suggestion);
+            println!();
+        }
+        
+        if report.high_specificity.len() > 15 {
+            println!("  ... and {} more high-specificity selectors", report.high_specificity.len() - 15);
+        }
+    } else {
+        println!("✅ No overly specific selectors found (threshold: {}).", threshold);
+    }
+    
+    Ok(())
+}
+
+fn analyze_animations_cmd(path: &Path, format: &str) -> Result<(), Box<dyn std::error::Error>> {
+    use ground::computations::analyze_animations;
+    
+    println!("Analyzing animation token usage in {}...", path.display());
+    println!();
+    
+    let report = analyze_animations(path)?;
+    
+    if format == "json" {
+        println!("{}", serde_json::to_string_pretty(&report)?);
+        return Ok(());
+    }
+    
+    // Text output
+    let status_icon = if report.adoption_ratio >= 90.0 {
+        "✅"
+    } else if report.adoption_ratio >= 70.0 {
+        "⚠️"
+    } else {
+        "❌"
+    };
+    
+    println!("📊 Animation Token Coverage");
+    println!();
+    println!("{} Adoption: {:.1}%", status_icon, report.adoption_ratio);
+    println!("  Total animation properties: {}", report.total_properties);
+    println!("  Using Canon tokens: {}", report.compliant_properties);
+    println!("  Files analyzed: {}", report.files_analyzed);
+    println!();
+    
+    if !report.violations.is_empty() {
+        println!("⚠️  Animation Violations ({}):", report.violations.len());
+        println!();
+        
+        for violation in report.violations.iter().take(15) {
+            println!("  {}:{} - {}: {}", 
+                violation.file.display(), violation.line,
+                violation.property, violation.value);
+            println!("    💡 {}", violation.suggestion);
+        }
+        
+        if report.violations.len() > 15 {
+            println!();
+            println!("  ... and {} more violations", report.violations.len() - 15);
+        }
+    } else {
+        println!("✅ All animation properties use Canon tokens.");
+    }
+    
+    Ok(())
+}
+
+/// Explain why a file has a special context (AI-native traceability)
+fn explain_file_context(file: &Path, format: &str) -> Result<(), Box<dyn std::error::Error>> {
+    use ground::computations::PatternRegistry;
+    
+    // Load the registry to access contexts
+    let registry = PatternRegistry::from_directory(file.parent().unwrap_or(Path::new(".")))
+        .unwrap_or_else(|_| PatternRegistry::new());
+    
+    // Check for context
+    let context = registry.get_file_context(file);
+    
+    // Check if ignored
+    let is_ignored = registry.should_ignore(file);
+    
+    // Check for known drift
+    let known_drift = registry.known_drift.iter()
+        .find(|d| file.to_string_lossy().contains(&d.file));
+    
+    if format == "json" {
+        let output = serde_json::json!({
+            "file": file.to_string_lossy(),
+            "context": context.map(|c| serde_json::json!({
+                "name": c.name,
+                "reason": c.reason,
+                "matched_paths": c.paths,
+            })),
+            "ignored": is_ignored,
+            "known_drift": known_drift.map(|d| serde_json::json!({
+                "issue": d.issue,
+                "status": d.status,
+                "priority": d.priority,
+                "reason": d.reason,
+            })),
+        });
+        println!("{}", serde_json::to_string_pretty(&output)?);
+        return Ok(());
+    }
+    
+    // Text output
+    println!("📋 File Context Explanation");
+    println!();
+    println!("File: {}", file.display());
+    println!();
+    
+    if let Some(ctx) = context {
+        println!("📌 Context: {}", ctx.name);
+        println!();
+        println!("   Reason: {}", ctx.reason);
+        println!();
+        println!("   Matched patterns:");
+        for pattern in &ctx.paths {
+            println!("     - {}", pattern);
+        }
+        println!();
+        println!("   → This file's violations are tracked but not flagged as errors.");
+    } else if is_ignored {
+        println!("🚫 Status: Ignored");
+        println!();
+        println!("   This file matches an ignore_paths pattern in .ground/project-specific.yml");
+        println!("   → Design system analysis is skipped for this file.");
+    } else if let Some(drift) = known_drift {
+        println!("📝 Status: Known Drift");
+        println!();
+        println!("   Issue: {}", drift.issue);
+        println!("   Priority: {}", drift.priority);
+        println!("   Reason: {}", drift.reason);
+        println!();
+        println!("   → This file is tracked for future cleanup.");
+    } else {
+        println!("✅ Status: Standard Analysis");
+        println!();
+        println!("   This file has no special context or exclusions.");
+        println!("   → All design system rules apply normally.");
     }
     
     Ok(())

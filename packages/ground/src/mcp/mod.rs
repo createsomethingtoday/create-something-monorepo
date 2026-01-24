@@ -422,13 +422,17 @@ pub fn list_tools() -> Vec<ToolDefinition> {
         // Pattern Analysis Tools (v2.1)
         ToolDefinition {
             name: "ground_find_drift".to_string(),
-            description: "Find design system drift (violations of Canon design tokens). Detects hardcoded colors, spacing, typography, and Svelte 4 patterns that should use design tokens.".to_string(),
+            description: "Find design system drift (violations of Canon design tokens). Detects hardcoded colors, spacing, typography, and Svelte 4 patterns that should use design tokens. Use 'extensions' to filter by file type for accurate CSS-only analysis.".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
                     "directory": {
                         "type": "string",
                         "description": "Directory to analyze (default: current directory)"
+                    },
+                    "extensions": {
+                        "type": "string",
+                        "description": "Comma-separated file extensions to analyze (e.g., 'css' or 'css,svelte'). Default: all supported types"
                     },
                     "category": {
                         "type": "string",
@@ -491,6 +495,20 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                     }
                 },
                 "required": []
+            }),
+        },
+        ToolDefinition {
+            name: "ground_explain".to_string(),
+            description: "Explain why a file has a special context (AI-native traceability). Returns context name, reason, and matched patterns for files excluded from violation checks.".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "description": "Path to the file to explain"
+                    }
+                },
+                "required": ["file"]
             }),
         },
     ]
@@ -559,6 +577,7 @@ pub fn handle_tool_call(
         "ground_adoption_ratio" => handle_adoption_ratio(args),
         "ground_suggest_pattern" => handle_suggest_pattern(args),
         "ground_mine_patterns" => handle_mine_patterns(args),
+        "ground_explain" => handle_explain(args),
         // Graph-based analysis
         "ground_build_graph" => handle_build_graph(args),
         "ground_query_dead" => handle_query_dead(args),
@@ -2928,7 +2947,13 @@ fn handle_find_drift(args: &Value) -> ToolResult {
     let below_threshold = args.get("below_threshold")
         .and_then(|v| v.as_f64());
     
-    let config = PatternConfig::default();
+    // Parse extensions filter (e.g., "css" or "css,svelte")
+    let extensions = args.get("extensions")
+        .and_then(|v| v.as_str())
+        .map(|s| s.split(',').map(|e| e.trim().to_string()).collect::<Vec<_>>());
+    
+    let mut config = PatternConfig::default();
+    config.extensions = extensions;
     
     match analyze_patterns(&directory, &config) {
         Ok(report) => {
@@ -3172,6 +3197,71 @@ fn handle_mine_patterns(args: &Value) -> ToolResult {
         }
         Err(e) => ToolResult::error(format!("Pattern mining failed: {}", e)),
     }
+}
+
+/// Handle ground_explain - AI-native context traceability
+fn handle_explain(args: &Value) -> ToolResult {
+    use crate::computations::PatternRegistry;
+    
+    let file = match args.get("file").and_then(|v| v.as_str()) {
+        Some(f) => PathBuf::from(f),
+        None => return ToolResult::error("Missing required argument: file".to_string()),
+    };
+    
+    // Load the registry to access contexts
+    let registry = PatternRegistry::from_directory(file.parent().unwrap_or(Path::new(".")))
+        .unwrap_or_else(|_| PatternRegistry::new());
+    
+    // Check for context
+    let context = registry.get_file_context(&file);
+    
+    // Check if ignored
+    let is_ignored = registry.should_ignore(&file);
+    
+    // Check for known drift
+    let known_drift = registry.known_drift.iter()
+        .find(|d| file.to_string_lossy().contains(&d.file));
+    
+    // Build response
+    let context_info = context.map(|c| json!({
+        "name": c.name,
+        "reason": c.reason,
+        "matched_paths": c.paths,
+    }));
+    
+    let drift_info = known_drift.map(|d| json!({
+        "issue": d.issue,
+        "status": d.status,
+        "priority": d.priority,
+        "reason": d.reason,
+    }));
+    
+    let status = if context.is_some() {
+        "context_excluded"
+    } else if is_ignored {
+        "path_ignored"
+    } else if known_drift.is_some() {
+        "known_drift"
+    } else {
+        "standard_analysis"
+    };
+    
+    ToolResult::success(json!({
+        "file": file.display().to_string(),
+        "status": status,
+        "context": context_info,
+        "ignored": is_ignored,
+        "known_drift": drift_info,
+        "message": match status {
+            "context_excluded" => format!("File has context '{}': {}", 
+                context.map(|c| c.name.as_str()).unwrap_or("unknown"),
+                context.map(|c| c.reason.as_str()).unwrap_or("")),
+            "path_ignored" => "File matches an ignore_paths pattern".to_string(),
+            "known_drift" => format!("File has known drift: {}", 
+                known_drift.map(|d| d.issue.as_str()).unwrap_or("")),
+            _ => "File has no special context - standard analysis applies".to_string(),
+        }
+    }))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -3454,7 +3544,7 @@ mod tests {
     #[test]
     fn test_tool_definitions() {
         let tools = list_tools();
-        assert_eq!(tools.len(), 19); // Focused AI-native tool set + pattern analysis + graph tools
+        assert_eq!(tools.len(), 20); // Focused AI-native tool set + pattern analysis + graph tools + explain
         
         let names: Vec<_> = tools.iter().map(|t| t.name.as_str()).collect();
         // Check tools
@@ -3473,6 +3563,7 @@ mod tests {
         assert!(names.contains(&"ground_adoption_ratio"));
         assert!(names.contains(&"ground_suggest_pattern"));
         assert!(names.contains(&"ground_mine_patterns"));
+        assert!(names.contains(&"ground_explain"));
         assert!(names.contains(&"ground_find_orphans"));
         assert!(names.contains(&"ground_find_dead_exports"));
         // AI-Native tools

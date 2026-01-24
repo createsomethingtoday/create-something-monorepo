@@ -180,6 +180,98 @@
   --glass-shadow-md: 0 8px 40px rgba(0, 0, 0, 0.5);
   --glass-shadow-lg: 0 16px 64px rgba(0, 0, 0, 0.6);
 
+  /* ==========================================================================
+     Liquid Glass Design System - Apple-style Refraction Effect
+     
+     Extends the Glass System with refraction, highlights, and depth layers.
+     Unlike frosted glass (blur only), liquid glass warps/refracts background.
+     Elements appear to "sit on" glass that bends light behind it.
+     
+     Philosophy: The cockpit of the automation vehicle.
+     Like the 930's driver-centric layout: minimal, focused, everything angled toward your destination.
+     This is Zuhandenheit made visual: the controls recede, the journey remains.
+     ========================================================================== */
+
+  /* Refraction intensity - SVG displacement filter scale values
+   * Higher values create more dramatic "bending" of background content.
+   *
+   * | Step   | Scale | Use Case                           |
+   * |--------|-------|-----------------------------------|
+   * | subtle | 4     | Minimal distortion, dropdowns      |
+   * | medium | 8     | Balanced effect, cards             |
+   * | strong | 14    | Heavy refraction, hero sections    |
+   */
+  --liquid-glass-refraction-subtle: 4;
+  --liquid-glass-refraction-medium: 8;
+  --liquid-glass-refraction-strong: 14;
+
+  /* Highlight gradients - simulating overhead light reflection
+   * Creates the appearance of light catching the glass surface.
+   *
+   * | Variant | Intensity | Use Case                      |
+   * |---------|-----------|------------------------------|
+   * | primary | 12%→4%    | Standard liquid glass         |
+   * | subtle  | 8%→2%     | Secondary elements            |
+   * | strong  | 18%→6%    | Hero sections, featured items |
+   */
+  --liquid-glass-highlight-primary: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.04) 30%,
+    transparent 60%
+  );
+  --liquid-glass-highlight-subtle: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.02) 40%,
+    transparent 70%
+  );
+  --liquid-glass-highlight-strong: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.18) 0%,
+    rgba(255, 255, 255, 0.06) 25%,
+    transparent 55%
+  );
+
+  /* Top edge glow - simulates overhead light source
+   * Creates a subtle bright line at the top edge of glass elements.
+   */
+  --liquid-glass-edge-glow: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+
+  /* Inner shadow - creates depth and "thickness" to the glass
+   * Makes elements feel like they have physical presence.
+   */
+  --liquid-glass-inner-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+
+  /* Semantic tint colors - functional color overlays
+   * Each tint serves a specific semantic purpose in the UI.
+   * Uses CSS color-mix() for consistent blending with glass background.
+   *
+   * | Tint    | Semantic Purpose              | Hex      |
+   * |---------|------------------------------|----------|
+   * | purple  | Enterprise, premium          | #a78bfa  |
+   * | blue    | Partner, collaboration       | #60a5fa  |
+   * | emerald | Success, growth              | #34d399  |
+   * | amber   | Warning, attention           | #fbbf24  |
+   * | rose    | Error, critical              | #fb7185  |
+   * | cyan    | SDK, developer tools         | #22d3ee  |
+   */
+  --liquid-glass-tint-purple: #a78bfa;
+  --liquid-glass-tint-blue: #60a5fa;
+  --liquid-glass-tint-emerald: #34d399;
+  --liquid-glass-tint-amber: #fbbf24;
+  --liquid-glass-tint-rose: #fb7185;
+  --liquid-glass-tint-cyan: #22d3ee;
+
+  /* Tint mix percentages - how much color to blend with glass background */
+  --liquid-glass-tint-mix-standard: 12%;
+  --liquid-glass-tint-mix-subtle: 8%;
+
   /* Data Visualization Palette */
   --color-data-1: #60a5fa; /* Blue */
   --color-data-1-muted: rgba(96, 165, 250, 0.2);
@@ -273,6 +365,23 @@
   --text-body-sm: 0.913rem;                                   /* 1/√1.2 */
   --text-caption: 0.833rem;                                   /* 1/1.2 */
   --text-overline: 0.618rem;                                  /* 1/φ */
+
+  /* Watermark typography - oversized decorative text
+   * Used for background watermarks in editorial layouts.
+   * Intentionally outside the standard scale for dramatic effect.
+   *
+   * | Step | Min    | Max    | Use Case                    |
+   * |------|--------|--------|-----------------------------|
+   * | sm   | 4rem   | 15rem  | Small watermarks            |
+   * | md   | 6rem   | 20rem  | Medium watermarks           |
+   * | base | 8rem   | 25rem  | Standard watermarks         |
+   * | lg   | 10rem  | 30rem  | Large watermarks            |
+   */
+  --text-watermark: clamp(8rem, 25vw, 25rem);
+  --text-watermark-lg: clamp(10rem, 30vw, 30rem);
+  --text-watermark-md: clamp(6rem, 20vw, 20rem);
+  --text-watermark-sm: clamp(4rem, 15vw, 15rem);
+  --text-watermark-mobile: clamp(4rem, 20vw, 15rem);  /* Responsive mobile variant */
 
   /* ==========================================================================
      Spacing - Golden Ratio (φ = 1.618)
@@ -412,6 +521,7 @@
    */
   --duration-instant: 100ms;
   --duration-micro: 200ms;
+  --duration-fast: 200ms;     /* Alias for --duration-micro (common naming expectation) */
   --duration-standard: 300ms;
   --duration-complex: 500ms;
   --duration-slow: 700ms;
@@ -432,6 +542,12 @@
    */
   --cascade-step: 50ms;
   --cascade-group: 100ms;
+
+  /* Loading animation duration - longer for continuous visual rhythm
+   * Used for skeleton loaders, shimmer effects, pulse animations.
+   * 2s is a UX best practice: visible but not distracting.
+   */
+  --duration-loading: 2000ms;
 
   /* Scale transforms - DERIVED for hover emphasis
    *
@@ -614,5 +730,46 @@
     --color-error: #ff6b6b;
     --color-warning: #ffc857;
     --color-info: #7eb8ff;
+  }
+}
+
+/* ==========================================================================
+   Mobile Typography Optimization
+   ==========================================================================
+
+   Mobile-first typography adjustments for better readability on small screens.
+   
+   Philosophy: On mobile, display text needs to scale down more aggressively
+   while body text needs to maintain minimum readable sizes.
+
+   Changes at 768px and below:
+   - Display text: Reduced minimums to prevent text overflow
+   - Caption/overline: Increased minimums for readability (WCAG recommends 14px+)
+   - Body text: Remains consistent for reading comfort
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  :root {
+    /* Display text - more aggressive scaling for mobile
+     * Reduces the clamp minimum to prevent overflow on narrow screens
+     * Original display-xl min: 4.236rem (67.8px) - too large for 375px screens
+     * Original display min: 2.618rem (41.9px) - acceptable but can be smaller
+     */
+    --text-display-xl: clamp(2.618rem, 8vw + 1rem, 4.236rem);  /* 41.9px - 67.8px */
+    --text-display: clamp(2rem, 6vw + 0.5rem, 2.618rem);        /* 32px - 41.9px */
+    
+    /* Heading text - slightly reduced for mobile hierarchy
+     * H1 needs room to breathe on mobile without overwhelming
+     */
+    --text-h1: clamp(1.5rem, 4vw + 0.5rem, 2rem);              /* 24px - 32px */
+    --text-h2: clamp(1.125rem, 2.5vw + 0.5rem, 1.5rem);        /* 18px - 24px */
+    
+    /* Small text - increased minimums for mobile readability
+     * WCAG recommends 14px+ for body text
+     * Original caption: 0.833rem (13.3px) - too small on mobile
+     * Original overline: 0.618rem (9.9px) - much too small
+     */
+    --text-caption: 0.875rem;                                   /* 14px - readable */
+    --text-overline: 0.75rem;                                   /* 12px - minimum readable */
   }
 }
