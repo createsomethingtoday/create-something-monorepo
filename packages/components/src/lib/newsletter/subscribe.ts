@@ -96,6 +96,7 @@ export function createNewsletterHandler(options: { property: PropertyDomain }) {
 
 /**
  * Generate the confirmation email HTML template (double opt-in)
+ * Uses inline styles for email client compatibility (Gmail strips <style> tags)
  */
 export function generateConfirmationEmailHtml(confirmUrl: string): string {
 	return `<!DOCTYPE html>
@@ -103,35 +104,23 @@ export function generateConfirmationEmailHtml(confirmUrl: string): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #000000; color: #ffffff; }
-    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
-    .header { margin-bottom: 40px; }
-    .logo { font-size: 14px; font-weight: 500; color: rgba(255, 255, 255, 0.5); letter-spacing: 0.1em; text-transform: uppercase; }
-    .content { line-height: 1.8; }
-    .content p { color: rgba(255, 255, 255, 0.7); margin-bottom: 20px; }
-    .quote { font-style: italic; color: #ffffff; font-size: 20px; margin: 30px 0; }
-    .cta { display: inline-block; margin-top: 20px; padding: 12px 24px; background: #ffffff; color: #000000; text-decoration: none; font-weight: 500; }
-    .footer { margin-top: 60px; padding-top: 30px; border-top: 1px solid rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.3); font-size: 13px; }
-    .footer a { color: rgba(255, 255, 255, 0.4); }
-  </style>
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">CREATE SOMETHING</div>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #000000; color: #ffffff;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+    <div style="margin-bottom: 40px;">
+      <div style="font-size: 14px; font-weight: 500; color: #808080; letter-spacing: 0.1em; text-transform: uppercase;">CREATE SOMETHING</div>
     </div>
 
-    <div class="content">
-      <p class="quote">"Weniger, aber besser."</p>
-      <p>Less, but better. This guides everything we build.</p>
-      <p>Please confirm your subscription to receive occasional updates on experiments in AI-native development—what works, what doesn't, why it matters.</p>
-      <a href="${confirmUrl}" class="cta">Confirm Subscription</a>
-      <p style="margin-top: 30px; font-size: 14px; color: rgba(255, 255, 255, 0.5);">If you didn't request this subscription, you can safely ignore this email.</p>
+    <div style="line-height: 1.8;">
+      <p style="font-style: italic; color: #ffffff; font-size: 20px; margin: 30px 0;">"Weniger, aber besser."</p>
+      <p style="color: #b3b3b3; margin-bottom: 20px;">Less, but better. This guides everything we build.</p>
+      <p style="color: #b3b3b3; margin-bottom: 20px;">Please confirm your subscription to receive occasional updates on experiments in AI-native development—what works, what doesn't, why it matters.</p>
+      <a href="${confirmUrl}" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: #ffffff; color: #000000; text-decoration: none; font-weight: 500;">Confirm Subscription</a>
+      <p style="margin-top: 30px; font-size: 14px; color: #808080;">If you didn't request this subscription, you can safely ignore this email.</p>
     </div>
 
-    <div class="footer">
-      <p>CREATE SOMETHING</p>
+    <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid #1a1a1a; color: #4d4d4d; font-size: 13px;">
+      <p style="margin: 0;">CREATE SOMETHING</p>
     </div>
   </div>
 </body>
@@ -140,6 +129,7 @@ export function generateConfirmationEmailHtml(confirmUrl: string): string {
 
 /**
  * Generate the welcome email HTML template
+ * Uses inline styles for email client compatibility (Gmail strips <style> tags)
  */
 export function generateWelcomeEmailHtml(unsubscribeToken: string, property: PropertyDomain): string {
 	const unsubscribeDomain = `createsomething.${property}`;
@@ -149,35 +139,23 @@ export function generateWelcomeEmailHtml(unsubscribeToken: string, property: Pro
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #000000; color: #ffffff; }
-    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
-    .header { margin-bottom: 40px; }
-    .logo { font-size: 14px; font-weight: 500; color: rgba(255, 255, 255, 0.5); letter-spacing: 0.1em; text-transform: uppercase; }
-    .content { line-height: 1.8; }
-    .content p { color: rgba(255, 255, 255, 0.7); margin-bottom: 20px; }
-    .quote { font-style: italic; color: #ffffff; font-size: 20px; margin: 30px 0; }
-    .cta { display: inline-block; margin-top: 20px; padding: 12px 24px; background: #ffffff; color: #000000; text-decoration: none; font-weight: 500; }
-    .footer { margin-top: 60px; padding-top: 30px; border-top: 1px solid rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.3); font-size: 13px; }
-    .footer a { color: rgba(255, 255, 255, 0.4); }
-  </style>
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">CREATE SOMETHING</div>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #000000; color: #ffffff;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+    <div style="margin-bottom: 40px;">
+      <div style="font-size: 14px; font-weight: 500; color: #808080; letter-spacing: 0.1em; text-transform: uppercase;">CREATE SOMETHING</div>
     </div>
 
-    <div class="content">
-      <p class="quote">"Weniger, aber besser."</p>
-      <p>Less, but better. This guides everything we build.</p>
-      <p>You'll receive occasional updates on experiments in AI-native development—what works, what doesn't, why it matters.</p>
-      <a href="https://createsomething.ltd/ethos" class="cta">Read the Ethos</a>
+    <div style="line-height: 1.8;">
+      <p style="font-style: italic; color: #ffffff; font-size: 20px; margin: 30px 0;">"Weniger, aber besser."</p>
+      <p style="color: #b3b3b3; margin-bottom: 20px;">Less, but better. This guides everything we build.</p>
+      <p style="color: #b3b3b3; margin-bottom: 20px;">You'll receive occasional updates on experiments in AI-native development—what works, what doesn't, why it matters.</p>
+      <a href="https://createsomething.ltd/ethos" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: #ffffff; color: #000000; text-decoration: none; font-weight: 500;">Read the Ethos</a>
     </div>
 
-    <div class="footer">
-      <p>CREATE SOMETHING</p>
-      <p><a href="https://${unsubscribeDomain}/unsubscribe?token=${unsubscribeToken}">Unsubscribe</a></p>
+    <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid #1a1a1a; color: #4d4d4d; font-size: 13px;">
+      <p style="margin: 0 0 10px 0;">CREATE SOMETHING</p>
+      <p style="margin: 0;"><a href="https://${unsubscribeDomain}/unsubscribe?token=${unsubscribeToken}" style="color: #666666;">Unsubscribe</a></p>
     </div>
   </div>
 </body>
