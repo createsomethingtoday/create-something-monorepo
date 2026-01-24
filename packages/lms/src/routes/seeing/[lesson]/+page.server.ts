@@ -17,33 +17,33 @@ const SEEING_LESSONS = [
 		duration: '10 min'
 	},
 	{
-		id: 'dry-implementation',
-		title: 'DRY: Implementation',
-		description: 'Level 1 — "Have I built this before?" Learn to see duplication.',
+		id: 'automation-layer',
+		title: 'The Automation Layer',
+		description: 'What sits between intention and execution. The infrastructure you\'re learning to build.',
 		duration: '15 min'
 	},
 	{
-		id: 'rams-artifact',
-		title: 'Rams: Artifact',
-		description: 'Level 2 — "Does this earn its existence?" Learn to see excess.',
-		duration: '15 min'
-	},
-	{
-		id: 'heidegger-system',
-		title: 'Heidegger: System',
-		description: 'Level 3 — "Does this serve the whole?" Learn to see disconnection.',
+		id: 'subtractive-triad',
+		title: 'The Subtractive Triad',
+		description: 'Three questions that guide every decision: DRY, Rams, Heidegger.',
 		duration: '20 min'
 	},
 	{
-		id: 'triad-application',
-		title: 'Applying the Triad',
-		description: 'Putting the three questions together. The framework becomes perception.',
-		duration: '25 min'
+		id: 'external-memory',
+		title: 'External Memory',
+		description: 'How automation systems remember. Persistence patterns for agents.',
+		duration: '15 min'
+	},
+	{
+		id: 'agent-native-tools',
+		title: 'Agent-Native Tools',
+		description: 'Designing tools for AI agents, not humans. Different inputs, different outputs.',
+		duration: '15 min'
 	},
 	{
 		id: 'capstone',
-		title: 'Capstone: Building Simple Loom',
-		description: 'Build your first piece of automation infrastructure — a Task Tracker MCP server.',
+		title: 'Capstone: Simple Loom',
+		description: 'Build a Task Tracker MCP server. Apply everything you\'ve learned.',
 		duration: '60 min'
 	}
 ] as const;
@@ -219,419 +219,648 @@ The sculpture was always there, hidden in the stone. Creation was the act of rev
 
 This is the foundation of everything in CREATE SOMETHING. Every principle, every practice, every pattern builds on this insight.
 
-When you write code, you're not building from nothing. You're revealing a solution that was always possible. The problem has a shape. The solution fits that shape. Your job is to remove everything that doesn't fit:
+When you write code, you're not building from nothing. You're revealing a solution that was always possible. The problem has a shape. The solution fits that shape. Your job is to remove everything that doesn't fit.
 
-- Remove duplication until the concept is clear
-- Remove excess until only the essential remains
-- Remove disconnection until the system coheres
+## Why This Matters for Automation
+
+You're learning to build **automation infrastructure** — systems that work while you sleep. The layer between human intention and system execution.
+
+Bad automation is bloated: too many features, too much configuration, too many failure modes. It obscures instead of reveals.
+
+Good automation is subtractive: it removes the friction between what you want and what happens. The automation layer *disappears* into transparent use.
+
+The philosophy you're learning isn't abstract. It's the lens that separates automation that works from automation that fails.
+
+---
 
 ## What Obscures?
 
-Three things obscure truth in code:
+Three things obscure truth in code (and automation):
 
-### 1. Duplication (Implementation Level)
-When the same concept is expressed multiple times, the concept itself becomes obscured. Which version is canonical? Which is correct? The duplication creates noise that hides the signal.
+| Obscurity | Level | Question |
+|-----------|-------|----------|
+| **Duplication** | Implementation | Have I built this before? |
+| **Excess** | Artifact | Does this earn its existence? |
+| **Disconnection** | System | Does this serve the whole? |
 
-### 2. Excess (Artifact Level)
-When a feature has more than it needs, the essential purpose becomes obscured. What does this actually do? What's the core value? The excess creates confusion that hides clarity.
-
-### 3. Disconnection (System Level)
-When parts don't relate properly to the whole, the system's purpose becomes obscured. How does this fit? What does it serve? The disconnection creates fragmentation that hides coherence.
-
-## Subtractive Creation in Practice
-
-This isn't just philosophy. It's practical guidance.
-
-**Before you add code, ask:**
-- Am I adding, or am I revealing?
-- What would I need to remove for this to be clearer?
-- Is this creation, or is this obscuring?
-
-**When you review code, ask:**
-- What's hiding here that could be revealed through removal?
-- What duplication, excess, or disconnection is obscuring the solution?
-- What's the simplest form that still works?
+These three questions form the **Subtractive Triad** — the evaluation framework you'll learn soon.
 
 ---
 
 ## Reflection
 
-Before moving on, sit with this:
+Before moving on:
 
-**What's one thing in your current codebase that's obscured by duplication, excess, or disconnection?**
+**Think of an automation you've used that felt invisible** — it just worked. Now think of one that constantly demanded your attention.
 
-Don't fix it yet. Just see it.
+What's the difference? Usually: the good one removed friction. The bad one added complexity that didn't earn its place.
 
-Seeing comes before doing. That's why we're here.
+Seeing comes before building. That's why we're here.
+`,
+	'automation-layer': `
+## What Is The Automation Layer?
+
+Every time you use an AI agent to accomplish a task, something sits between your intention and the execution.
+
+\`\`\`
+Your Intention          The Automation Layer          Execution
+──────────────         ─────────────────────         ──────────
+"Add a task"     →     [Something happens here]  →   Task saved
+"Send the email" →     [Something happens here]  →   Email sent
+"Deploy to prod" →     [Something happens here]  →   Site live
+\`\`\`
+
+That middle part — **The Automation Layer** — is what you're learning to build.
+
+## The Layer Nobody Sees
+
+When automation works, you don't notice it. You say "add a task" and a task appears. The layer is invisible.
+
+When automation fails, suddenly you notice everything: error messages, configuration files, permission issues, missing dependencies. The layer becomes very visible.
+
+**Good automation infrastructure recedes into transparent use.** You think about what you want, not how it happens.
+
+## What Lives in This Layer?
+
+| Component | Purpose | Example |
+|-----------|---------|---------|
+| **Tools** | Discrete capabilities an agent can invoke | \`task_add\`, \`send_email\`, \`deploy\` |
+| **Memory** | State that persists between sessions | Tasks stored in \`~/.tasks/tasks.json\` |
+| **Boundaries** | What each tool can and can't do | \`task_add\` creates tasks, doesn't delete them |
+| **Protocols** | How tools communicate with agents | MCP (Model Context Protocol) |
+
+## Why This Matters
+
+You're not just learning to code. You're learning to build **infrastructure that works while you sleep**.
+
+The Automation Layer is:
+- What WORKWAY provides to businesses
+- What you'll build in the capstone
+- What separates "automation that works" from "automation that breaks"
+
+## A Concrete Example
+
+You want an AI agent to manage your tasks. Here's the automation layer:
+
+\`\`\`
+┌─────────────────────────────────────────────────────────┐
+│                    YOUR AI AGENT                        │
+│            (Gemini CLI, Claude Code, etc.)              │
+└────────────────────────┬────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│               THE AUTOMATION LAYER                      │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │
+│  │  task_add   │  │  task_list  │  │task_complete│     │
+│  └─────────────┘  └─────────────┘  └─────────────┘     │
+│                         │                               │
+│              ┌──────────┴──────────┐                   │
+│              │   tasks.json        │                   │
+│              │   (persistence)     │                   │
+│              └─────────────────────┘                   │
+└─────────────────────────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│                     EXECUTION                           │
+│                Tasks saved to disk                      │
+└─────────────────────────────────────────────────────────┘
+\`\`\`
+
+**You'll build this exact layer in the capstone.**
 
 ---
 
-## Resources
+## The Pattern Behind Everything
 
-The Subtractive Triad draws from three foundational sources:
+This course teaches one thing: **how to build automation layers that work**.
 
-- **DRY**: From *The Pragmatic Programmer* by Andy Hunt and David Thomas (1999). [pragprog.com/titles/tpp20](https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/)
+- The Subtractive Triad → How to evaluate what belongs in the layer
+- External Memory → How the layer remembers
+- Agent-Native Tools → How to design tools for AI agents
+- The Capstone → How to build an actual layer
 
-- **Rams**: Dieter Rams' Ten Principles of Good Design. [rams-foundation.org](https://rams-foundation.org/foundation/design-comprehension/theses/)
+Everything connects. The philosophy serves the practice.
 
-- **Heidegger**: The concepts of Zuhandenheit (ready-to-hand) and Vorhandenheit (present-at-hand) from *Being and Time* (1927). [Stanford Encyclopedia of Philosophy](https://plato.stanford.edu/entries/heidegger/)
+---
 
-These sources inform each level of the Triad you'll learn in the following lessons.
+## Reflection
+
+**What automation do you use daily that "just works"?** Calendar invites that create video calls. Git commits that trigger deploys. Emails that create tickets.
+
+Now: **What layer makes that possible?** Someone built it. You're learning how.
 `,
-	'dry-implementation': `
-## Level 1 of the Subtractive Triad
+	'subtractive-triad': `
+## Three Questions for Every Decision
 
-**Question**: "Have I built this before?"  
-**Action**: Unify
+The Subtractive Triad is your evaluation framework. For any technical choice, ask these three questions in sequence:
 
-This is the first question because it's the fastest filter. Either the code exists or it doesn't. Either you're duplicating or you're not.
+| Level | Question | Action |
+|-------|----------|--------|
+| **DRY** | "Have I built this before?" | Unify |
+| **Rams** | "Does this earn its existence?" | Remove |
+| **Heidegger** | "Does this serve the whole?" | Reconnect |
 
-## What DRY Really Means
+---
 
-DRY stands for "Don't Repeat Yourself." The principle was formally introduced in [*The Pragmatic Programmer*](https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/) by Andy Hunt and David Thomas (1999).
+## Level 1: DRY (Implementation)
+
+**Question**: Have I built this before?
+
+DRY means "Don't Repeat Yourself" — but it's commonly misunderstood.
 
 **DRY is not**: "Never write similar code twice."  
-**DRY is**: "Every piece of knowledge must have a single, unambiguous, authoritative representation in a system."
+**DRY is**: "Every piece of knowledge must have a single, authoritative representation."
 
-The difference matters.
+### The Test
 
-### Bad DRY
+If one instance changes, must the other change too?
+- **Yes** → Unify them (DRY violation)
+- **No** → Leave them separate (not a violation)
 
-\`\`\`typescript
-// Someone read "DRY" and made this:
-const BUTTON_COLOR = '#3b82f6';
-const LINK_COLOR = '#3b82f6';  
-const HEADER_COLOR = '#3b82f6';
+### In Automation
 
-// "They're all blue, so DRY says make one constant!"
-const PRIMARY_COLOR = '#3b82f6';
-\`\`\`
-
-This is wrong. These aren't duplicated knowledge. They're three different concepts that happen to have the same value. If button color changes, link color might not.
-
-### Good DRY
+Before adding a tool to your automation layer, ask: Does this capability already exist?
 
 \`\`\`typescript
-// The design system defines blue:
-const colors = { blue: { 500: '#3b82f6' } };
+// BAD: Separate tools that duplicate knowledge
+task_add()      // Creates a task
+task_create()   // Also creates a task (???)
 
-// Components use the token:
-const buttonStyles = { bg: colors.blue[500] };
-const linkStyles = { color: colors.blue[500] };
+// GOOD: One authoritative tool per capability
+task_add()      // The only way to create tasks
 \`\`\`
 
-Now there's one authoritative representation of "blue-500". If it changes, it changes everywhere. That's DRY.
+---
 
-## The Question in Practice
+## Level 2: Rams (Artifact)
 
-When you're about to write code, ask: **"Have I built this before?"**
+**Question**: Does this earn its existence?
 
-This question has layers:
+Named for [Dieter Rams](https://rams-foundation.org/homepage/): *"Weniger, aber besser"* — Less, but better.
 
-### Layer 1: Exact Match
-Have I literally written this function before? Is there a \`formatDate()\` somewhere?
+### The Existence Test
 
-### Layer 2: Conceptual Match
-Have I built something that serves the same purpose? Different name, same concept?
+1. What happens if I don't add this?
+2. Who asked for this?
+3. When was this last needed?
+4. What's the simplest version?
 
-### Layer 3: Library Match
-Has someone else built this? Is there a well-tested solution?
+If the answers are "nothing much," "no one," "never," and "much simpler" — remove it.
 
-## When Duplication Is OK
+### In Automation
 
-Not all repetition is duplication. Sometimes similar code serves different purposes:
+Every tool in your automation layer must earn its place:
 
-- Two handlers that look similar but will evolve differently
-- Test setup that could be shared but is clearer inline
-- Validation rules that coincidentally match but serve different domains
+\`\`\`typescript
+// Proposed tools for a task tracker:
+task_add         ✓ Essential
+task_list        ✓ Essential
+task_complete    ✓ Essential
+task_remove      ✓ Essential
+task_archive     ✗ Does this earn existence? (filtering serves same need)
+task_priority    ✗ Does this earn existence? (not requested)
+task_color       ✗ Does this earn existence? (definitely not)
+\`\`\`
 
-**The test**: If one changes, must the other change? If yes, unify. If no, leave separate.
+**Four tools is enough.** Every extra tool is complexity that must be justified.
 
 ---
 
-## Reflection
+## Level 3: Heidegger (System)
 
-The DRY question becomes instinct when you ask it before writing, not after.
+**Question**: Does this serve the whole?
 
-**What would change if you asked "Have I built this before?" every time you started typing?**
+Named for [Martin Heidegger](https://plato.stanford.edu/entries/heidegger/), who observed: **You understand parts through the whole, and the whole through parts.**
 
----
+### Seeing Disconnection
 
-## Resources
+- **Orphaned code**: Tools nothing uses
+- **Fragmented boundaries**: Responsibilities split illogically
+- **Misaligned naming**: Tool says "item" when system says "task"
+- **Wrong placement**: Business logic in the transport layer
 
-- **Original Source**: [*The Pragmatic Programmer: 20th Anniversary Edition*](https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/) — Andy Hunt and David Thomas
+### In Automation
 
-- **Key Insight**: "Duplication is far cheaper than the wrong abstraction" — Sandi Metz. This nuance is critical: don't unify prematurely.
+Your automation layer serves a workflow. Does each tool serve that workflow?
 
-- **The Test**: Code duplication ≠ knowledge duplication. Two functions with identical code that serve different purposes and will evolve differently are *not* DRY violations.
-`,
-	'rams-artifact': `
-## Level 2 of the Subtractive Triad
+\`\`\`
+User's workflow: "Manage my tasks through conversation"
 
-**Question**: "Does this earn its existence?"  
-**Action**: Remove
-
-Named for [Dieter Rams](https://rams-foundation.org/homepage/), the legendary designer whose principle was:
-
-**Weniger, aber besser** — Less, but better.
-
-## The Rams Standard
-
-Rams led design at Braun for over 30 years. Every button, every line, every element had to justify itself. If it didn't serve the essential purpose, it was removed.
-
-His [Ten Principles of Good Design](https://rams-foundation.org/foundation/design-comprehension/theses/) include:
-
-1. Good design is innovative
-2. Good design makes a product useful
-3. Good design is aesthetic
-4. Good design makes a product understandable
-5. Good design is unobtrusive
-6. Good design is honest
-7. Good design is long-lasting
-8. Good design is thorough down to the last detail
-9. Good design is environmentally friendly
-10. **Good design is as little design as possible**
-
-The tenth principle encapsulates the philosophy: concentrate on essential aspects, don't burden products with non-essentials, return to purity and simplicity.
-
-This isn't minimalism for aesthetics. It's minimalism for function. Every element that doesn't earn its place actively harms the product by obscuring what matters.
-
-## The Question in Practice
-
-After you've checked for duplication (DRY), ask: **"Does this earn its existence?"**
-
-This applies to:
-
-### Features
-Does this feature serve a real need, or an imagined one?
-- "Users might want to..." → They haven't asked. Wait.
-- "It would be cool if..." → Cool isn't useful. Remove.
-- "Just in case..." → Cases that haven't happened don't need handling.
-
-### Parameters
-Does this parameter justify its complexity?
-- Props with defaults that never change → Remove the prop
-- Options that are always the same value → Make it a constant
-- Flexibility that's never exercised → Simplify
-
-### Code
-Does this code earn its lines?
-- Abstractions with one implementation → Inline them
-- Helper functions used once → Inline them
-- Comments that describe what code already says → Remove them
-
-## The Existence Test
-
-For anything you're about to add, ask:
-
-1. **What happens if I don't add this?** — If "nothing much," don't add it.
-2. **Who asked for this?** — If no one asked, why are you building it?
-3. **When was this last needed?** — If you can't remember, it's probably not needed.
-4. **What's the simplest version?** — Build that first. Add complexity only when forced.
+Does task_add serve this?     → Yes, essential to the workflow
+Does task_list serve this?    → Yes, essential to the workflow
+Does export_csv serve this?   → No, serves a different workflow
+\`\`\`
 
 ---
-
-## Reflection
-
-The Rams question challenges our instinct to add. Building feels productive. Removing feels like giving up.
-
-But removal is creation. Every feature you don't build is time for features that matter. Every line you don't write is clarity for lines that remain.
-
-**What would you remove from your current project if you had to justify every feature's existence?**
-
----
-
-## Resources
-
-- **Rams Foundation**: [rams-foundation.org](https://rams-foundation.org/homepage/) — Official foundation preserving Rams' design legacy
-
-- **Ten Principles**: [The Theses](https://rams-foundation.org/foundation/design-comprehension/theses/) — Original articulation of the principles
-
-- **Design Museum Overview**: [What Is Good Design?](https://designmuseum.org/discover-design/all-stories/what-is-good-design-a-quick-look-at-dieter-rams-ten-principles) — Accessible introduction to Rams' principles
-
-- **Digital Influence**: Jonathan Ive, Apple's former Chief Design Officer, translated Rams' principles into digital products. The iPhone calculator is a direct homage to Rams' Braun designs.
-`,
-	'heidegger-system': `
-## Level 3 of the Subtractive Triad
-
-**Question**: "Does this serve the whole?"  
-**Action**: Reconnect
-
-This is the deepest level. DRY looks at implementation. Rams looks at artifacts. Heidegger looks at systems.
-
-Named for [Martin Heidegger](https://plato.stanford.edu/entries/heidegger/), the philosopher who explored how things exist in relation to their context in *Being and Time* (1927).
-
-## The Hermeneutic Circle
-
-Heidegger's key insight: **You understand the parts through the whole, and the whole through the parts.**
-
-Reading a sentence: You understand words through the sentence's meaning, and the sentence's meaning through the words. Neither comes first. Understanding spirals between them.
-
-The same applies to systems. You understand a function through the system it serves, and the system through its functions. A component makes sense only in context. A service exists only within an architecture.
-
-## The Question in Practice
-
-After checking for duplication (DRY) and excess (Rams), ask: **"Does this serve the whole?"**
-
-This requires knowing what "the whole" is:
-
-### Identify the System
-What system does this belong to? What's the system's purpose?
-
-### Map the Connections
-How does this part connect to other parts? What does it depend on? What depends on it?
-
-### Evaluate the Fit
-Does this part strengthen or fragment the whole?
-
-## Seeing Disconnection
-
-Train yourself to notice:
-
-**Orphaned code**: Functions nothing calls, components nothing renders
-
-**Fragmented boundaries**: Imports that cross architectural lines, responsibilities split across modules
-
-**Misaligned naming**: Code that says "user" when the system says "member"
-
-**Wrong placement**: Logic in the UI that belongs in a service
-
----
-
-## Key Concepts for Developers
-
-Two Heideggerian concepts illuminate how we relate to tools:
-
-### Zuhandenheit (Ready-to-hand)
-
-When using a hammer, you don't think about the hammer—you think about the nail. The tool *withdraws* from attention and becomes an extension of your intention. Well-designed code works the same way: it recedes, letting you focus on the problem.
-
-### Vorhandenheit (Present-at-hand)
-
-When the hammer breaks, suddenly you notice it. It shifts from transparent use to explicit attention. Poorly designed code is always present-at-hand—you're constantly aware of the tool instead of the work.
-
-**The goal**: Code that stays ready-to-hand. Systems that recede into transparent use.
-
----
-
-## Reflection
-
-The Heidegger question is the hardest because it requires perspective. You have to see the whole to evaluate whether parts serve it.
-
-**What is the "whole" that your current project serves? Can you articulate it clearly?**
-
-If you can't articulate the whole, you can't evaluate whether parts serve it. Sometimes the first step is clarifying purpose.
-
----
-
-## Resources
-
-- **Stanford Encyclopedia of Philosophy**: [Heidegger](https://plato.stanford.edu/entries/heidegger/) — Comprehensive overview of Heidegger's philosophy
-
-- **Heideggerian Terminology**: [Wikipedia](https://en.wikipedia.org/wiki/Heideggerian_terminology) — Glossary of key concepts
-
-- **Primary Source**: *Being and Time* (Sein und Zeit), 1927 — Heidegger's foundational work
-`,
-	'triad-application': `
-## The Three Questions Together
-
-You've learned the three levels separately. Now you use them together.
-
-**The Subtractive Triad is a decision framework.** For any technical choice, ask three questions in sequence:
-
-1. **DRY** (Implementation) → "Have I built this before?"
-2. **Rams** (Artifact) → "Does this earn its existence?"
-3. **Heidegger** (System) → "Does this serve the whole?"
 
 ## Why This Order?
 
-**DRY is fastest** — You either have the code or you don't. Quick to check.  
-**Rams requires judgment** — You must evaluate need vs. excess. Slower.  
-**Heidegger is deepest** — You must understand the whole system. Slowest.
+**DRY is fastest** — Code exists or it doesn't. Quick to check.  
+**Rams requires judgment** — You must evaluate need vs. excess.  
+**Heidegger is deepest** — You must understand the whole system.
 
 Start shallow, spiral deeper. If DRY eliminates the decision, you don't need Rams. If Rams eliminates the feature, you don't need Heidegger.
 
+---
+
 ## A Complete Example
 
-**Scenario**: "Add a dark mode toggle to user profiles."
+**Scenario**: "Add a \`task_archive\` tool to the Task Tracker."
 
 ### Level 1: DRY
 **Ask**: Have I built this before?  
-**Finding**: Yes! There's a theme switcher in settings.  
-**Decision**: Reuse the existing \`useTheme()\` hook.
+**Finding**: \`task_complete\` marks tasks done. \`task_list\` can filter by status.  
+**Insight**: "Archive" might be filtering, not a new capability.
 
 ### Level 2: Rams
-**Ask**: Does a profile-level toggle earn its existence?  
-**Finding**: The settings toggle already serves this need.  
-**Decision**: This feature doesn't earn its existence.
+**Ask**: Does \`task_archive\` earn its existence?  
+**Finding**: The user wants to "hide completed tasks" — that's filtering.  
+**Decision**: Add a \`status\` parameter to \`task_list\` instead of a new tool.
 
-**The decision ends here.** Rams eliminated the feature.
-
-## The Spiral
-
-The triad isn't linear—it spirals. You'll revisit levels as understanding deepens.
-
-\`\`\`
-Design a feature (implementation)
-↓
-DRY: Is this duplicated? → No, continue
-↓
-Build the feature (artifact)
-↓
-Rams: Does this earn existence? → Yes, continue
-↓
-Test with users (system)
-↓
-Heidegger: Does this serve the workflow?
-↓
-Wait—users are confused by the flow!
-↓
-BACK TO RAMS: The boundaries are confusing
-↓
-Simplify the feature set
-↓
-Continue the spiral...
-\`\`\`
-
-## Mastery
-
-You've mastered the triad when:
-
-1. **The questions are unconscious** — You ask them without thinking about asking
-2. **You catch issues early** — Problems surface during design, not after testing
-3. **You spiral naturally** — Moving between levels feels fluid, not forced
-
----
-
-## The Journey Ahead
-
-You've learned the philosophy. Now it's time to apply it.
-
-**Next: The Capstone Project**
-
-You'll build a Task Tracker MCP server — your first piece of automation infrastructure. Apply the Triad to every decision: What patterns can you reuse? Does each tool earn its existence? Does your server serve the agent's workflow?
+**Decision ends here.** Rams eliminated the proposed tool.
 
 ---
 
 ## Resources
 
-### The Triad Sources
-
 - **DRY**: [*The Pragmatic Programmer*](https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/) — Hunt & Thomas
-- **Rams**: [Ten Principles of Good Design](https://rams-foundation.org/foundation/design-comprehension/theses/) — Rams Foundation
-- **Heidegger**: [Stanford Encyclopedia of Philosophy](https://plato.stanford.edu/entries/heidegger/)
+- **Rams**: [Ten Principles](https://rams-foundation.org/foundation/design-comprehension/theses/) — Rams Foundation
+- **Heidegger**: [Stanford Encyclopedia](https://plato.stanford.edu/entries/heidegger/)
+`,
+	'external-memory': `
+## Why Memory Matters
 
-### For Developers
+AI agents are stateless. Every conversation starts fresh. Without external memory, your agent forgets everything the moment the session ends.
 
-The Triad applies to any technical decision:
-- Feature requests → Does this earn its existence?
-- Code review → Have I seen this pattern duplicated?
-- Architecture → Does this serve the whole system?
+**External memory is what lets automation persist.**
+
+\`\`\`
+Session 1: "Add a task: review PR #42"
+           → Task saved to ~/.tasks/tasks.json
+
+Session 2: "What's on my task list?"
+           → Agent reads from ~/.tasks/tasks.json
+           → "You have one task: review PR #42"
+\`\`\`
+
+The agent didn't remember. The **automation layer** remembered.
+
+---
+
+## The Pattern
+
+External memory follows a simple pattern:
+
+\`\`\`typescript
+// 1. Load state from persistent storage
+const tasks = loadTasks();  // Read from disk/database
+
+// 2. Modify state
+tasks.push(newTask);
+
+// 3. Save state back to persistent storage
+saveTasks(tasks);  // Write to disk/database
+\`\`\`
+
+That's it. Load → Modify → Save.
+
+---
+
+## Storage Options
+
+| Storage | Complexity | When to Use |
+|---------|------------|-------------|
+| **JSON file** | Low | Learning, simple tools, single-user |
+| **SQLite** | Medium | Production, queries, multiple tools |
+| **Database** | High | Multi-user, cloud, scale |
+
+For your first automation layer, **JSON files are enough**. Don't over-engineer.
+
+---
+
+## The Task Tracker Pattern
+
+Here's the complete external memory implementation you'll use:
+
+\`\`\`typescript
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+
+// Where state lives
+const TASKS_DIR = path.join(os.homedir(), '.tasks');
+const TASKS_FILE = path.join(TASKS_DIR, 'tasks.json');
+
+// Ensure directory exists
+function ensureDir() {
+  if (!fs.existsSync(TASKS_DIR)) {
+    fs.mkdirSync(TASKS_DIR, { recursive: true });
+  }
+}
+
+// Load state
+export function loadTasks(): Task[] {
+  ensureDir();
+  if (!fs.existsSync(TASKS_FILE)) return [];
+  return JSON.parse(fs.readFileSync(TASKS_FILE, 'utf-8'));
+}
+
+// Save state
+export function saveTasks(tasks: Task[]) {
+  ensureDir();
+  fs.writeFileSync(TASKS_FILE, JSON.stringify(tasks, null, 2));
+}
+\`\`\`
+
+**Key decisions:**
+
+1. **Location**: \`~/.tasks/\` — User's home directory, not the project
+2. **Format**: JSON — Human-readable, easy to debug
+3. **Atomic operations**: Load all, modify, save all — Simple and safe
+
+---
+
+## What Production Systems Use
+
+Your Task Tracker uses JSON files. Here's how production systems scale up:
+
+| System | Memory Pattern |
+|--------|----------------|
+| **Loom** (task coordination) | SQLite + checkpoints |
+| **Ground** (verification) | Evidence stored as JSON per run |
+| **WORKWAY** (workflows) | Cloudflare D1 (SQLite at edge) |
+
+The pattern is the same. Only the storage backend changes.
+
+---
+
+## Common Mistakes
+
+### Mistake 1: Storing state in the agent's context
+
+\`\`\`
+❌ "Remember that I have a task called 'review PR'"
+   → Agent forgets next session
+
+✓  Use external memory
+   → Task persists forever
+\`\`\`
+
+### Mistake 2: Over-engineering storage
+
+\`\`\`
+❌ "I need PostgreSQL with proper migrations"
+   → You're building a learning project
+
+✓  Start with JSON files
+   → Migrate when you hit real limits
+\`\`\`
+
+### Mistake 3: Not handling missing files
+
+\`\`\`typescript
+// ❌ Crashes if file doesn't exist
+const tasks = JSON.parse(fs.readFileSync(TASKS_FILE, 'utf-8'));
+
+// ✓ Returns empty array if file doesn't exist
+if (!fs.existsSync(TASKS_FILE)) return [];
+return JSON.parse(fs.readFileSync(TASKS_FILE, 'utf-8'));
+\`\`\`
+
+---
+
+## The Triad Applied
+
+| Question | Application |
+|----------|-------------|
+| **DRY** | One \`loadTasks()\` function, used everywhere |
+| **Rams** | JSON file is the simplest storage that works |
+| **Heidegger** | Storage serves the workflow (task management) |
+
+---
+
+## Reflection
+
+External memory is what makes automation *useful*. Without it, every session starts from zero.
+
+**What would break in your daily workflow if your tools forgot everything between sessions?**
+
+Everything you thought of — that's what external memory prevents.
+`,
+	'agent-native-tools': `
+## Designing for Agents, Not Humans
+
+When you build a CLI tool for humans, you optimize for:
+- Helpful error messages
+- Interactive prompts
+- Flexible input formats
+- Colorful output
+
+When you build a tool for AI agents, you optimize for:
+- **Structured input** (JSON schemas)
+- **Structured output** (parseable responses)
+- **Clear affordances** (what can this tool do?)
+- **Predictable errors** (machine-readable failure modes)
+
+---
+
+## The MCP Pattern
+
+MCP (Model Context Protocol) is how AI agents discover and use tools.
+
+\`\`\`typescript
+// 1. Define what the tool does (schema)
+{
+  name: 'task_add',
+  description: 'Add a new task',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      title: { type: 'string', description: 'Task title' }
+    },
+    required: ['title']
+  }
+}
+
+// 2. Handle the tool call
+case 'task_add': {
+  const { title } = args as { title: string };
+  const task = addTask(title);
+  return { content: [{ type: 'text', text: JSON.stringify({ task }) }] };
+}
+\`\`\`
+
+**The agent reads the schema to understand what it can do.** Good schemas = good tool use.
+
+---
+
+## Input: JSON Schemas
+
+Agents need to know exactly what input is valid.
+
+### Bad Schema
+
+\`\`\`typescript
+{
+  name: 'task_add',
+  description: 'Add a task',  // Vague
+  inputSchema: { type: 'object' }  // No properties defined
+}
+\`\`\`
+
+Agent doesn't know what to pass.
+
+### Good Schema
+
+\`\`\`typescript
+{
+  name: 'task_add',
+  description: 'Add a new task to the task list',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      title: { 
+        type: 'string', 
+        description: 'The task title (required)' 
+      }
+    },
+    required: ['title']
+  }
+}
+\`\`\`
+
+Agent knows exactly what to pass.
+
+---
+
+## Output: Structured Responses
+
+Agents need to parse your responses. Always return structured data.
+
+### Bad Output
+
+\`\`\`typescript
+return { content: [{ type: 'text', text: 'Task added!' }] };
+\`\`\`
+
+Agent can't extract the task ID for follow-up operations.
+
+### Good Output
+
+\`\`\`typescript
+return { 
+  content: [{ 
+    type: 'text', 
+    text: JSON.stringify({ 
+      task: { id: 'abc123', title: 'Review PR', status: 'todo' } 
+    }) 
+  }] 
+};
+\`\`\`
+
+Agent can parse the response and use the ID.
+
+---
+
+## Error Handling for Agents
+
+Agents need to know when things fail — and why.
+
+### Bad Error
+
+\`\`\`typescript
+throw new Error('Something went wrong');
+\`\`\`
+
+Agent can't recover or explain the failure.
+
+### Good Error
+
+\`\`\`typescript
+return { 
+  content: [{ 
+    type: 'text', 
+    text: JSON.stringify({ 
+      error: 'Task not found',
+      id: requestedId,
+      suggestion: 'Use task_list to see available tasks'
+    }) 
+  }] 
+};
+\`\`\`
+
+Agent can explain the failure and suggest recovery.
+
+---
+
+## Tool Boundaries
+
+Each tool should do one thing well.
+
+### Bad Boundaries
+
+\`\`\`typescript
+// One tool that does too much
+task_manage({ action: 'add' | 'remove' | 'update' | 'list', ... })
+\`\`\`
+
+Confusing for agents. Complex schema. Hard to describe.
+
+### Good Boundaries
+
+\`\`\`typescript
+// Separate tools with clear purposes
+task_add({ title })
+task_list({ status? })
+task_complete({ id })
+task_remove({ id })
+\`\`\`
+
+Each tool has one job. Clear schemas. Easy to choose.
+
+---
+
+## The Four Task Tracker Tools
+
+| Tool | Input | Output | Purpose |
+|------|-------|--------|---------|
+| \`task_add\` | \`{ title: string }\` | \`{ task: Task }\` | Create a task |
+| \`task_list\` | \`{ status?: string }\` | \`{ tasks: Task[] }\` | List tasks |
+| \`task_complete\` | \`{ id: string }\` | \`{ task: Task }\` or \`{ error }\` | Mark done |
+| \`task_remove\` | \`{ id: string }\` | \`{ success: boolean }\` | Delete |
+
+**Notice**: Consistent patterns. Structured I/O. Clear boundaries.
+
+---
+
+## The Triad Applied
+
+| Question | Application |
+|----------|-------------|
+| **DRY** | One schema pattern used across all tools |
+| **Rams** | Four tools — no more. Each earns its existence. |
+| **Heidegger** | Tools serve the agent's workflow |
+
+---
+
+## Reflection
+
+The best agent tools are invisible. The agent doesn't struggle with input formats or parse cryptic outputs. It just uses the tool and gets structured results.
+
+**What makes a tool easy for an agent to use?** The answer is always: clarity. Clear inputs, clear outputs, clear boundaries.
 `,
 	'capstone': `
-You're about to build your first piece of automation infrastructure.
+## Apply Everything You've Learned
 
-Not a demo. Not a tutorial exercise. A working tool that AI agents can use to manage your tasks.
+You've learned:
+- **The Automation Layer** — what sits between intention and execution
+- **The Subtractive Triad** — how to evaluate what belongs
+- **External Memory** — how systems persist state
+- **Agent-Native Tools** — how to design for AI agents
+
+Now you build.
 
 ## What You're Building
 
@@ -645,19 +874,16 @@ Your Intention                The Automation Layer              Execution
 "Mark it done"       →                                →        Status updated
 \`\`\`
 
-The MCP server sits between intention and execution. That's The Automation Layer.
+This is the automation layer pattern from Lesson 3, made real.
 
 ## Why This Matters
 
-This isn't just a capstone exercise. You're learning the patterns behind real systems:
-
-| What You Build | Production Version |
-|----------------|-------------------|
-| Task lifecycle (\`todo\` → \`doing\` → \`done\`) | Loom's task coordination |
-| State persistence (\`~/.tasks/tasks.json\`) | Loom's SQLite + checkpoints |
-| Agent-native tools | Ground's verification system |
-
-When you later see Loom and Ground, you'll recognize these patterns.
+| What You Build | Lesson | Production Version |
+|----------------|--------|-------------------|
+| Task lifecycle | Automation Layer | Loom's task coordination |
+| \`tasks.json\` persistence | External Memory | Loom's SQLite + checkpoints |
+| Four MCP tools | Agent-Native Tools | Ground's verification system |
+| Tool boundaries | Subtractive Triad | Every tool earns its place |
 
 ---
 
@@ -968,17 +1194,15 @@ Your automation layer is working.
 
 Before marking the capstone complete, answer these:
 
-**1. What did you notice about the Triad while building?**
+**1. The Automation Layer** — Where does your MCP server sit in the flow from intention to execution? What does it connect?
 
-Where did DRY guide you? What didn't earn its existence? How did you think about the agent's workflow?
+**2. The Subtractive Triad** — Where did DRY guide you? What didn't earn its existence? Does your server serve the workflow?
 
-**2. What pattern do you see now that you didn't before?**
+**3. External Memory** — What would break if \`tasks.json\` didn't exist? What does persistence enable?
 
-The task lifecycle. The external memory. The tool boundaries.
+**4. Agent-Native Tools** — How did you design for the agent, not for humans? What makes your tools easy to use?
 
-**3. What would you do differently next time?**
-
-This is the hermeneutic spiral — each iteration deepens understanding.
+These aren't rhetorical questions. Write your answers. The capstone isn't complete until you've reflected.
 
 ---
 
