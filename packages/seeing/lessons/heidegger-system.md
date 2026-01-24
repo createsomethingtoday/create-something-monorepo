@@ -7,7 +7,7 @@
 
 This is the deepest level. DRY looks at implementation. Rams looks at artifacts. Heidegger looks at systems.
 
-Named for Martin Heidegger, the philosopher who explored how things exist in relation to their context.
+Named for [Martin Heidegger](https://plato.stanford.edu/entries/heidegger/), the philosopher who explored how things exist in relation to their context in *Being and Time* (1927).
 
 ## The Hermeneutic Circle
 
@@ -127,3 +127,35 @@ The Heidegger question is the hardest because it requires perspective. You have 
 **What is the "whole" that your current project serves? Can you articulate it clearly?**
 
 If you can't articulate the whole, you can't evaluate whether parts serve it. Sometimes the first step is clarifying purpose.
+
+---
+
+## Key Concepts for Developers
+
+Two Heideggerian concepts illuminate how we relate to tools:
+
+### Zuhandenheit (Ready-to-hand)
+
+When using a hammer, you don't think about the hammer—you think about the nail. The tool *withdraws* from attention and becomes an extension of your intention. Well-designed code works the same way: it recedes, letting you focus on the problem.
+
+### Vorhandenheit (Present-at-hand)
+
+When the hammer breaks, suddenly you notice it. It shifts from transparent use to explicit attention. Poorly designed code is always present-at-hand—you're constantly aware of the tool instead of the work.
+
+**The goal**: Code that stays ready-to-hand. Systems that recede into transparent use.
+
+---
+
+## Resources
+
+- **Stanford Encyclopedia of Philosophy**: [Heidegger](https://plato.stanford.edu/entries/heidegger/) — Comprehensive overview of Heidegger's philosophy
+
+- **Heideggerian Terminology**: [Wikipedia](https://en.wikipedia.org/wiki/Heideggerian_terminology) — Glossary of key concepts
+
+- **Academic Analysis**: [Heidegger's Categories in Being and Time](https://sites.pitt.edu/~rbrandom/Texts/Heideggers%20Categories%20in%20Being%20and%20Time.pdf) — Robert Brandom's scholarly analysis
+
+- **Primary Source**: *Being and Time* (Sein und Zeit), 1927 — Heidegger's foundational work
+
+## Next Steps
+
+Continue to [Applying the Triad](/seeing/triad-application) to see how the three levels work together.

@@ -9,7 +9,7 @@ This is the first question because it's the fastest filter. Either the code exis
 
 ## What DRY Really Means
 
-DRY stands for "Don't Repeat Yourself." But it's commonly misunderstood.
+DRY stands for "Don't Repeat Yourself." The principle was formally introduced in [*The Pragmatic Programmer*](https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/) by Andy Hunt and David Thomas (1999).
 
 **DRY is not**: "Never write similar code twice."
 **DRY is**: "Every piece of knowledge must have a single, unambiguous, authoritative representation in a system."
@@ -130,3 +130,17 @@ Don't fix anything yet. Just see.
 The DRY question becomes instinct when you ask it before writing, not after.
 
 **What would change if you asked "Have I built this before?" every time you started typing?**
+
+---
+
+## Resources
+
+- **Original Source**: [*The Pragmatic Programmer: 20th Anniversary Edition*](https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/) — Andy Hunt and David Thomas
+
+- **Key Insight**: "Duplication is far cheaper than the wrong abstraction" — Sandi Metz. This nuance is critical: don't unify prematurely.
+
+- **The Test**: Code duplication ≠ knowledge duplication. Two functions with identical code that serve different purposes and will evolve differently are *not* DRY violations.
+
+## Next Steps
+
+Continue to [Rams: The Question of Existence](/seeing/rams-artifact) to learn the second level of the Triad.

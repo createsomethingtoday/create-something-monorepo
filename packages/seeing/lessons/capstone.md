@@ -265,3 +265,33 @@ You've learned to see through the Subtractive Triad. You've built automation inf
 You're not done learning. But you've started building.
 
 That's the difference between Seeing and Dwelling.
+
+---
+
+## Resources
+
+### Model Context Protocol (MCP)
+
+- **What is MCP?**: [Anthropic Announcement](https://www.anthropic.com/news/model-context-protocol) — The official introduction to MCP as an open standard for AI integration
+- **Documentation**: [modelcontextprotocol.io](https://modelcontextprotocol.io) — Complete MCP documentation
+- **Server Development**: [Build a Server](https://modelcontextprotocol.io/docs/develop/build-server) — Step-by-step guide to creating MCP servers
+- **Quickstart**: [MCP Quickstart](https://modelcontextprotocol.info/docs/quickstart/quickstart/) — Build your first server tutorial
+- **TypeScript SDK**: [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol) — Official SDK on GitHub
+
+### Gemini CLI
+
+- **Installation**: [geminicli.com/docs/get-started/installation](https://geminicli.com/docs/get-started/installation/)
+- **Authentication**: [geminicli.com/docs/get-started/authentication](https://geminicli.com/docs/get-started/authentication/)
+- **Documentation**: [geminicli.com/docs](https://geminicli.com/docs/)
+
+### CREATE SOMETHING
+
+- **Setup Guide**: [/seeing/setting-up](https://learn.createsomething.space/seeing/setting-up) — Complete environment setup
+- **WORKWAY**: [workway.co](https://workway.co) — Production automation infrastructure
+- **Learn More**: [learn.createsomething.io](https://learn.createsomething.io) — Advanced curriculum
+
+### The Subtractive Triad
+
+- **DRY**: [*The Pragmatic Programmer*](https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/)
+- **Rams**: [Ten Principles](https://rams-foundation.org/foundation/design-comprehension/theses/)
+- **Heidegger**: [Stanford Encyclopedia](https://plato.stanford.edu/entries/heidegger/)

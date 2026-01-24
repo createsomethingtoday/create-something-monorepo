@@ -5,18 +5,28 @@
 **Question**: "Does this earn its existence?"
 **Action**: Remove
 
-Named for Dieter Rams, the legendary designer whose principle was:
+Named for [Dieter Rams](https://rams-foundation.org/homepage/), the legendary designer whose principle was:
 
 **Weniger, aber besser** — Less, but better.
 
 ## The Rams Standard
 
-Rams designed products for Braun that were revolutionary in their simplicity. Every button, every line, every element had to justify itself. If it didn't serve the essential purpose, it was removed.
+Rams led design at Braun for over 30 years. Every button, every line, every element had to justify itself. If it didn't serve the essential purpose, it was removed.
 
-His 10 principles of good design include:
-- Good design is as little design as possible
-- Good design is thorough down to the last detail
-- Good design is honest
+His [Ten Principles of Good Design](https://rams-foundation.org/foundation/design-comprehension/theses/) include:
+
+1. Good design is innovative
+2. Good design makes a product useful
+3. Good design is aesthetic
+4. Good design makes a product understandable
+5. Good design is unobtrusive
+6. Good design is honest
+7. Good design is long-lasting
+8. Good design is thorough down to the last detail
+9. Good design is environmentally friendly
+10. **Good design is as little design as possible**
+
+The tenth principle encapsulates the philosophy: concentrate on essential aspects, don't burden products with non-essentials, return to purity and simplicity.
 
 This isn't minimalism for aesthetics. It's minimalism for function. Every element that doesn't earn its place actively harms the product by obscuring what matters.
 
@@ -125,3 +135,19 @@ The Rams question challenges our instinct to add. Building feels productive. Rem
 But removal is creation. Every feature you don't build is time for features that matter. Every line you don't write is clarity for lines that remain.
 
 **What would you remove from your current project if you had to justify every feature's existence?**
+
+---
+
+## Resources
+
+- **Rams Foundation**: [rams-foundation.org](https://rams-foundation.org/homepage/) — Official foundation preserving Rams' design legacy
+
+- **Ten Principles**: [The Theses](https://rams-foundation.org/foundation/design-comprehension/theses/) — Original articulation of the principles
+
+- **Design Museum Overview**: [What Is Good Design?](https://designmuseum.org/discover-design/all-stories/what-is-good-design-a-quick-look-at-dieter-rams-ten-principles) — Accessible introduction to Rams' principles
+
+- **Digital Influence**: Jonathan Ive, Apple's former Chief Design Officer, translated Rams' principles into digital products. The iPhone calculator is a direct homage to Rams' Braun designs.
+
+## Next Steps
+
+Continue to [Heidegger: The Question of the Whole](/seeing/heidegger-system) to learn the third level of the Triad.

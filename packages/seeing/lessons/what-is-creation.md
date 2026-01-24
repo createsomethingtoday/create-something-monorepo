@@ -85,3 +85,21 @@ Before moving on, sit with this:
 Don't fix it yet. Just see it.
 
 Seeing comes before doing. That's why we're here.
+
+---
+
+## Getting Started
+
+If you haven't set up your environment yet, visit [/seeing/setting-up](https://learn.createsomething.space/seeing/setting-up) for step-by-step instructions on configuring Gemini CLI with this extension.
+
+## Resources
+
+The Subtractive Triad draws from three foundational sources:
+
+- **DRY**: From *The Pragmatic Programmer* by Andy Hunt and David Thomas (1999). [pragprog.com/titles/tpp20](https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/)
+
+- **Rams**: Dieter Rams' Ten Principles of Good Design. [rams-foundation.org/foundation/design-comprehension/theses](https://rams-foundation.org/foundation/design-comprehension/theses/)
+
+- **Heidegger**: The concepts of Zuhandenheit (ready-to-hand) and Vorhandenheit (present-at-hand) from *Being and Time* (1927). [Stanford Encyclopedia of Philosophy](https://plato.stanford.edu/entries/heidegger/)
+
+These sources inform each level of the Triad you'll learn in the following lessons.

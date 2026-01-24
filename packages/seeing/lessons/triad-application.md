@@ -249,3 +249,30 @@ When you look at a tool and automatically see duplication, excess, and disconnec
 **You've learned to see.**
 
 Now you're ready to build.
+
+---
+
+## Resources
+
+### The Triad Sources
+
+- **DRY**: [*The Pragmatic Programmer*](https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/) — Hunt & Thomas
+- **Rams**: [Ten Principles of Good Design](https://rams-foundation.org/foundation/design-comprehension/theses/) — Rams Foundation
+- **Heidegger**: [Stanford Encyclopedia of Philosophy](https://plato.stanford.edu/entries/heidegger/)
+
+### MCP Server Development
+
+The capstone builds on the Model Context Protocol (MCP):
+
+- **Official Announcement**: [Anthropic MCP Introduction](https://www.anthropic.com/news/model-context-protocol)
+- **Documentation**: [modelcontextprotocol.io](https://modelcontextprotocol.io)
+- **Server Development Guide**: [Build a Server](https://modelcontextprotocol.io/docs/develop/build-server)
+- **Quickstart Tutorial**: [MCP Quickstart](https://modelcontextprotocol.info/docs/quickstart/quickstart/)
+
+### Environment Setup
+
+If you haven't configured your environment yet, visit [/seeing/setting-up](https://learn.createsomething.space/seeing/setting-up) for complete setup instructions.
+
+## Next Steps
+
+Continue to [Capstone: Building Simple Loom](/seeing/capstone) to build your first piece of automation infrastructure.
