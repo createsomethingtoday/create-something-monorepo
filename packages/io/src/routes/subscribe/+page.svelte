@@ -395,8 +395,8 @@
 
 	/* Typography */
 	.page-title {
-		font-size: clamp(2.5rem, 5vw, 3.5rem);
-		font-weight: 700;
+		font-size: var(--text-h1);
+		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
 	}
 

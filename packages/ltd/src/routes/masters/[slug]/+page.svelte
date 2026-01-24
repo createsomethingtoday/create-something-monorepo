@@ -26,7 +26,7 @@
 				<p class="text-sm-canon tracking-widest uppercase opacity-60-canon mb-4">{data.master.discipline}</p>
 			{/if}
 
-			<h1 class="mb-4">{data.master.name}</h1>
+			<h1 class="page-title mb-4">{data.master.name}</h1>
 
 			{#if data.master.birth_year}
 				<p class="text-lg-canon opacity-40-canon mb-6">
@@ -183,6 +183,20 @@
 {/if}
 
 <style>
+	/* Page Title - Entity names need smaller sizing than hero headlines
+	 * Uses --text-h1 (22-28px mobile) to prevent overflow on long names
+	 * like "Ludwig Mies van der Rohe"
+	 *
+	 * Pattern: Hero headlines use --text-display, entity titles use --text-h1
+	 */
+	.page-title {
+		font-size: var(--text-h1);
+		font-weight: var(--font-bold);
+		line-height: var(--leading-tight);
+		letter-spacing: var(--tracking-tight);
+		color: var(--color-fg-primary);
+	}
+
 	/* Typography */
 	.text-xs-canon {
 		font-size: var(--text-caption);

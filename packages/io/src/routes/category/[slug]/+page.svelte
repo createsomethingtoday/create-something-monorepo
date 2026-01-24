@@ -89,9 +89,10 @@
 
 <style>
   /* Hero Section */
+  /* Entity title - uses --text-h1 for potentially long category names */
   .hero-title {
-    font-size: var(--text-display);
-    font-weight: 700;
+    font-size: var(--text-h1);
+    font-weight: var(--font-bold);
     color: var(--color-fg-primary);
   }
 

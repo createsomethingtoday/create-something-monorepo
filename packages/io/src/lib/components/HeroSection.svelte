@@ -122,7 +122,7 @@
 
 	/* Headline */
 	.headline {
-		font-size: clamp(2rem, 6vw, 3.5rem);
+		font-size: var(--text-display);
 		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
 		line-height: var(--leading-tight);

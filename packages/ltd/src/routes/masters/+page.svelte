@@ -20,7 +20,7 @@
 <section class="pt-24 pb-16 px-6 border-b border-canon">
 	<div class="max-w-7xl mx-auto">
 		<p class="text-sm-canon tracking-widest uppercase opacity-60-canon mb-4">The Canon</p>
-		<h1 class="mb-6">Masters</h1>
+		<h1 class="page-title mb-6">Masters</h1>
 		<p class="text-xl-canon opacity-70-canon max-w-3xl leading-relaxed">
 			Curated creators who proved that simplicity is the ultimate sophistication. Their principles
 			guide everything we build.
@@ -49,6 +49,18 @@
 </section>
 
 <style>
+	/* Page Title - Uses --text-h1 for page titles
+	 * Pattern: Hero headlines use --text-display, page titles use --text-h1
+	 * This ensures consistency across all properties
+	 */
+	.page-title {
+		font-size: var(--text-h1);
+		font-weight: var(--font-bold);
+		line-height: var(--leading-tight);
+		letter-spacing: var(--tracking-tight);
+		color: var(--color-fg-primary);
+	}
+
 	/* Typography */
 	.text-sm-canon {
 		font-size: var(--text-body-sm);

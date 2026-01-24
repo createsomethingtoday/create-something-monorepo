@@ -237,8 +237,9 @@
 		color: var(--color-fg-secondary);
 	}
 
+	/* Entity title - uses --text-h1 for potentially long service names */
 	.service-title {
-		font-size: var(--text-display);
+		font-size: var(--text-h1);
 		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
 		margin-bottom: var(--space-md); /* md after title */

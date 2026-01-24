@@ -401,17 +401,39 @@ For medals, badges, and leaderboard displays:
 ```
 
 ### Typography
+
+**Desktop (default):**
 ```css
---text-display-xl: clamp(3.5rem, 5vw + 2rem, 7rem)
---text-display: clamp(2.5rem, 4vw + 1.5rem, 5rem)
---text-h1: clamp(2rem, 3vw + 1rem, 3.5rem)
---text-h2: clamp(1.5rem, 2vw + 0.75rem, 2.25rem)
---text-h3: clamp(1.25rem, 1.5vw + 0.5rem, 1.75rem)
---text-body-lg: 1.125rem
+--text-display-xl: clamp(4.236rem, 6vw + 2rem, 6.854rem)  /* φ⁴ max */
+--text-display: clamp(2.618rem, 4vw + 1.5rem, 4.236rem)   /* φ³ max */
+--text-h1: clamp(1.618rem, 3vw + 1rem, 2.618rem)          /* φ² max */
+--text-h2: clamp(1.2rem, 2vw + 0.5rem, 1.618rem)          /* φ¹ max */
+--text-h3: clamp(1.02rem, 1vw + 0.5rem, 1.2rem)           /* 1.2¹ max */
+--text-body-lg: 1.095rem
 --text-body: 1rem
---text-body-sm: 0.875rem
---text-caption: 0.75rem
+--text-body-sm: 0.913rem
+--text-caption: 0.833rem
 ```
+
+**Mobile (max-width: 768px):**
+```css
+--text-display-xl: clamp(2.25rem, 7vw + 0.75rem, 3.5rem)  /* 36-56px */
+--text-display: clamp(1.75rem, 5vw + 0.5rem, 2.25rem)     /* 28-36px */
+--text-h1: clamp(1.375rem, 3.5vw + 0.5rem, 1.75rem)       /* 22-28px */
+--text-h2: clamp(1.125rem, 2.5vw + 0.5rem, 1.375rem)      /* 18-22px */
+--text-caption: 0.875rem                                   /* 14px - readable */
+--text-overline: 0.75rem                                   /* 12px - minimum */
+```
+
+### Heading Hierarchy Pattern
+
+| Context | Token | Mobile Size | Use Case |
+|---------|-------|-------------|----------|
+| **Hero headlines** | `--text-display` | 28-36px | Home page headlines, short punchy text |
+| **Page/entity titles** | `--text-h1` | 22-28px | Master names, product titles, category names |
+| **Section headings** | `--text-h2` | 18-22px | Subsection titles within pages |
+
+**Why this distinction?** Hero headlines are short and controlled (e.g., "Less, But Better"). Entity titles can be long and dynamic (e.g., "Ludwig Mies van der Rohe"). Using `--text-h1` for entity titles prevents text overflow on mobile while maintaining visual hierarchy.
 
 #### Typography Mixing
 

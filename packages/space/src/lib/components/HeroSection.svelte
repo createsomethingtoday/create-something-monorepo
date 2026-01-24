@@ -100,10 +100,10 @@
 	}
 
 	.headline {
-		font-size: var(--text-h1);
-		font-weight: 700;
+		font-size: var(--text-display);
+		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
-		line-height: 1.2;
+		line-height: var(--leading-tight);
 		text-align: center;
 	}
 

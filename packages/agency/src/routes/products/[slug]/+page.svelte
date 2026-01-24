@@ -303,8 +303,9 @@
 		background: var(--color-success-muted);
 	}
 
+	/* Entity title - uses --text-h1 for potentially long product names */
 	.product-title {
-		font-size: var(--text-display);
+		font-size: var(--text-h1);
 		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
 		line-height: var(--leading-tight);

@@ -409,9 +409,10 @@
 		font-size: var(--text-body-sm);
 	}
 
+	/* Entity title - uses --text-h1 for potentially long names */
 	.plugin-title {
-		font-size: var(--text-display);
-		font-weight: 700;
+		font-size: var(--text-h1);
+		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
 		margin-bottom: var(--space-sm);
 	}
