@@ -213,6 +213,8 @@ You have Gemini CLI. You have the Seeing extension.
 Now let's learn what creation actually is.
 `,
 	'what-is-creation': `
+> **First time here?** If you haven't set up Gemini CLI yet, start with [Setting Up](/seeing/setting-up).
+
 ## The Paradox
 
 Most people think creation is about adding.
@@ -260,6 +262,20 @@ When a feature has more than it needs, the essential purpose becomes obscured. W
 ### 3. Disconnection (System Level)
 When parts don't relate properly to the whole, the system's purpose becomes obscured. How does this fit? What does it serve? The disconnection creates fragmentation that hides coherence.
 
+## Subtractive Creation in Practice
+
+This isn't just philosophy. It's practical guidance.
+
+**Before you add code, ask:**
+- Am I adding, or am I revealing?
+- What would I need to remove for this to be clearer?
+- Is this creation, or is this obscuring?
+
+**When you review code, ask:**
+- What's hiding here that could be revealed through removal?
+- What duplication, excess, or disconnection is obscuring the solution?
+- What's the simplest form that still works?
+
 ---
 
 ## Reflection
@@ -271,6 +287,20 @@ Before moving on, sit with this:
 Don't fix it yet. Just see it.
 
 Seeing comes before doing. That's why we're here.
+
+---
+
+## Resources
+
+The Subtractive Triad draws from three foundational sources:
+
+- **DRY**: From *The Pragmatic Programmer* by Andy Hunt and David Thomas (1999). [pragprog.com/titles/tpp20](https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/)
+
+- **Rams**: Dieter Rams' Ten Principles of Good Design. [rams-foundation.org](https://rams-foundation.org/foundation/design-comprehension/theses/)
+
+- **Heidegger**: The concepts of Zuhandenheit (ready-to-hand) and Vorhandenheit (present-at-hand) from *Being and Time* (1927). [Stanford Encyclopedia of Philosophy](https://plato.stanford.edu/entries/heidegger/)
+
+These sources inform each level of the Triad you'll learn in the following lessons.
 `,
 	'dry-implementation': `
 ## Level 1 of the Subtractive Triad
@@ -282,7 +312,7 @@ This is the first question because it's the fastest filter. Either the code exis
 
 ## What DRY Really Means
 
-DRY stands for "Don't Repeat Yourself." But it's commonly misunderstood.
+DRY stands for "Don't Repeat Yourself." The principle was formally introduced in [*The Pragmatic Programmer*](https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/) by Andy Hunt and David Thomas (1999).
 
 **DRY is not**: "Never write similar code twice."  
 **DRY is**: "Every piece of knowledge must have a single, unambiguous, authoritative representation in a system."
@@ -301,7 +331,7 @@ const HEADER_COLOR = '#3b82f6';
 const PRIMARY_COLOR = '#3b82f6';
 \`\`\`
 
-This is wrong. These aren't duplicated knowledge. They're three different concepts that happen to have the same value.
+This is wrong. These aren't duplicated knowledge. They're three different concepts that happen to have the same value. If button color changes, link color might not.
 
 ### Good DRY
 
@@ -314,7 +344,7 @@ const buttonStyles = { bg: colors.blue[500] };
 const linkStyles = { color: colors.blue[500] };
 \`\`\`
 
-Now there's one authoritative representation of "blue-500". That's DRY.
+Now there's one authoritative representation of "blue-500". If it changes, it changes everywhere. That's DRY.
 
 ## The Question in Practice
 
@@ -333,7 +363,11 @@ Has someone else built this? Is there a well-tested solution?
 
 ## When Duplication Is OK
 
-Not all repetition is duplication. Sometimes similar code serves different purposes.
+Not all repetition is duplication. Sometimes similar code serves different purposes:
+
+- Two handlers that look similar but will evolve differently
+- Test setup that could be shared but is clearer inline
+- Validation rules that coincidentally match but serve different domains
 
 **The test**: If one changes, must the other change? If yes, unify. If no, leave separate.
 
@@ -344,6 +378,16 @@ Not all repetition is duplication. Sometimes similar code serves different purpo
 The DRY question becomes instinct when you ask it before writing, not after.
 
 **What would change if you asked "Have I built this before?" every time you started typing?**
+
+---
+
+## Resources
+
+- **Original Source**: [*The Pragmatic Programmer: 20th Anniversary Edition*](https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/) — Andy Hunt and David Thomas
+
+- **Key Insight**: "Duplication is far cheaper than the wrong abstraction" — Sandi Metz. This nuance is critical: don't unify prematurely.
+
+- **The Test**: Code duplication ≠ knowledge duplication. Two functions with identical code that serve different purposes and will evolve differently are *not* DRY violations.
 `,
 	'rams-artifact': `
 ## Level 2 of the Subtractive Triad
@@ -351,13 +395,28 @@ The DRY question becomes instinct when you ask it before writing, not after.
 **Question**: "Does this earn its existence?"  
 **Action**: Remove
 
-Named for Dieter Rams, the legendary designer whose principle was:
+Named for [Dieter Rams](https://rams-foundation.org/homepage/), the legendary designer whose principle was:
 
 **Weniger, aber besser** — Less, but better.
 
 ## The Rams Standard
 
-Rams designed products for Braun that were revolutionary in their simplicity. Every button, every line, every element had to justify itself. If it didn't serve the essential purpose, it was removed.
+Rams led design at Braun for over 30 years. Every button, every line, every element had to justify itself. If it didn't serve the essential purpose, it was removed.
+
+His [Ten Principles of Good Design](https://rams-foundation.org/foundation/design-comprehension/theses/) include:
+
+1. Good design is innovative
+2. Good design makes a product useful
+3. Good design is aesthetic
+4. Good design makes a product understandable
+5. Good design is unobtrusive
+6. Good design is honest
+7. Good design is long-lasting
+8. Good design is thorough down to the last detail
+9. Good design is environmentally friendly
+10. **Good design is as little design as possible**
+
+The tenth principle encapsulates the philosophy: concentrate on essential aspects, don't burden products with non-essentials, return to purity and simplicity.
 
 This isn't minimalism for aesthetics. It's minimalism for function. Every element that doesn't earn its place actively harms the product by obscuring what matters.
 
@@ -371,25 +430,28 @@ This applies to:
 Does this feature serve a real need, or an imagined one?
 - "Users might want to..." → They haven't asked. Wait.
 - "It would be cool if..." → Cool isn't useful. Remove.
+- "Just in case..." → Cases that haven't happened don't need handling.
 
 ### Parameters
 Does this parameter justify its complexity?
 - Props with defaults that never change → Remove the prop
 - Options that are always the same value → Make it a constant
+- Flexibility that's never exercised → Simplify
 
 ### Code
 Does this code earn its lines?
 - Abstractions with one implementation → Inline them
+- Helper functions used once → Inline them
 - Comments that describe what code already says → Remove them
 
 ## The Existence Test
 
 For anything you're about to add, ask:
 
-1. **What happens if I don't add this?**
-2. **Who asked for this?**
-3. **When was this last needed?**
-4. **What's the simplest version?**
+1. **What happens if I don't add this?** — If "nothing much," don't add it.
+2. **Who asked for this?** — If no one asked, why are you building it?
+3. **When was this last needed?** — If you can't remember, it's probably not needed.
+4. **What's the simplest version?** — Build that first. Add complexity only when forced.
 
 ---
 
@@ -397,9 +459,21 @@ For anything you're about to add, ask:
 
 The Rams question challenges our instinct to add. Building feels productive. Removing feels like giving up.
 
-But removal is creation. Every feature you don't build is time for features that matter.
+But removal is creation. Every feature you don't build is time for features that matter. Every line you don't write is clarity for lines that remain.
 
 **What would you remove from your current project if you had to justify every feature's existence?**
+
+---
+
+## Resources
+
+- **Rams Foundation**: [rams-foundation.org](https://rams-foundation.org/homepage/) — Official foundation preserving Rams' design legacy
+
+- **Ten Principles**: [The Theses](https://rams-foundation.org/foundation/design-comprehension/theses/) — Original articulation of the principles
+
+- **Design Museum Overview**: [What Is Good Design?](https://designmuseum.org/discover-design/all-stories/what-is-good-design-a-quick-look-at-dieter-rams-ten-principles) — Accessible introduction to Rams' principles
+
+- **Digital Influence**: Jonathan Ive, Apple's former Chief Design Officer, translated Rams' principles into digital products. The iPhone calculator is a direct homage to Rams' Braun designs.
 `,
 	'heidegger-system': `
 ## Level 3 of the Subtractive Triad
@@ -409,13 +483,15 @@ But removal is creation. Every feature you don't build is time for features that
 
 This is the deepest level. DRY looks at implementation. Rams looks at artifacts. Heidegger looks at systems.
 
+Named for [Martin Heidegger](https://plato.stanford.edu/entries/heidegger/), the philosopher who explored how things exist in relation to their context in *Being and Time* (1927).
+
 ## The Hermeneutic Circle
 
 Heidegger's key insight: **You understand the parts through the whole, and the whole through the parts.**
 
 Reading a sentence: You understand words through the sentence's meaning, and the sentence's meaning through the words. Neither comes first. Understanding spirals between them.
 
-The same applies to systems. You understand a function through the system it serves, and the system through its functions.
+The same applies to systems. You understand a function through the system it serves, and the system through its functions. A component makes sense only in context. A service exists only within an architecture.
 
 ## The Question in Practice
 
@@ -446,11 +522,39 @@ Train yourself to notice:
 
 ---
 
+## Key Concepts for Developers
+
+Two Heideggerian concepts illuminate how we relate to tools:
+
+### Zuhandenheit (Ready-to-hand)
+
+When using a hammer, you don't think about the hammer—you think about the nail. The tool *withdraws* from attention and becomes an extension of your intention. Well-designed code works the same way: it recedes, letting you focus on the problem.
+
+### Vorhandenheit (Present-at-hand)
+
+When the hammer breaks, suddenly you notice it. It shifts from transparent use to explicit attention. Poorly designed code is always present-at-hand—you're constantly aware of the tool instead of the work.
+
+**The goal**: Code that stays ready-to-hand. Systems that recede into transparent use.
+
+---
+
 ## Reflection
 
-The Heidegger question is the hardest because it requires perspective.
+The Heidegger question is the hardest because it requires perspective. You have to see the whole to evaluate whether parts serve it.
 
 **What is the "whole" that your current project serves? Can you articulate it clearly?**
+
+If you can't articulate the whole, you can't evaluate whether parts serve it. Sometimes the first step is clarifying purpose.
+
+---
+
+## Resources
+
+- **Stanford Encyclopedia of Philosophy**: [Heidegger](https://plato.stanford.edu/entries/heidegger/) — Comprehensive overview of Heidegger's philosophy
+
+- **Heideggerian Terminology**: [Wikipedia](https://en.wikipedia.org/wiki/Heideggerian_terminology) — Glossary of key concepts
+
+- **Primary Source**: *Being and Time* (Sein und Zeit), 1927 — Heidegger's foundational work
 `,
 	'triad-application': `
 ## The Three Questions Together
@@ -465,11 +569,11 @@ You've learned the three levels separately. Now you use them together.
 
 ## Why This Order?
 
-**DRY is fastest** — You either have the code or you don't.  
-**Rams requires judgment** — You must evaluate need vs. excess.  
-**Heidegger is deepest** — You must understand the whole system.
+**DRY is fastest** — You either have the code or you don't. Quick to check.  
+**Rams requires judgment** — You must evaluate need vs. excess. Slower.  
+**Heidegger is deepest** — You must understand the whole system. Slowest.
 
-Start shallow, spiral deeper.
+Start shallow, spiral deeper. If DRY eliminates the decision, you don't need Rams. If Rams eliminates the feature, you don't need Heidegger.
 
 ## A Complete Example
 
@@ -491,13 +595,35 @@ Start shallow, spiral deeper.
 
 The triad isn't linear—it spirals. You'll revisit levels as understanding deepens.
 
+\`\`\`
+Design a feature (implementation)
+↓
+DRY: Is this duplicated? → No, continue
+↓
+Build the feature (artifact)
+↓
+Rams: Does this earn existence? → Yes, continue
+↓
+Test with users (system)
+↓
+Heidegger: Does this serve the workflow?
+↓
+Wait—users are confused by the flow!
+↓
+BACK TO RAMS: The boundaries are confusing
+↓
+Simplify the feature set
+↓
+Continue the spiral...
+\`\`\`
+
 ## Mastery
 
 You've mastered the triad when:
 
-1. **The questions are unconscious** — You ask them without thinking
-2. **You catch issues early** — Problems surface during design
-3. **You spiral naturally** — Moving between levels feels fluid
+1. **The questions are unconscious** — You ask them without thinking about asking
+2. **You catch issues early** — Problems surface during design, not after testing
+3. **You spiral naturally** — Moving between levels feels fluid, not forced
 
 ---
 
@@ -508,6 +634,23 @@ You've learned the philosophy. Now it's time to apply it.
 **Next: The Capstone Project**
 
 You'll design, build, and deploy your own site—applying the Triad to every decision. When you ship it, you'll be ready to graduate.
+
+---
+
+## Resources
+
+### The Triad Sources
+
+- **DRY**: [*The Pragmatic Programmer*](https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/) — Hunt & Thomas
+- **Rams**: [Ten Principles of Good Design](https://rams-foundation.org/foundation/design-comprehension/theses/) — Rams Foundation
+- **Heidegger**: [Stanford Encyclopedia of Philosophy](https://plato.stanford.edu/entries/heidegger/)
+
+### For Developers
+
+The Triad applies to any technical decision:
+- Feature requests → Does this earn its existence?
+- Code review → Have I seen this pattern duplicated?
+- Architecture → Does this serve the whole system?
 `,
 	'capstone-intro': `
 ## Your Graduation Project
