@@ -58,7 +58,7 @@ export const services: Service[] = [
 		id: 'web-development',
 		title: 'Web Development',
 		description:
-			'3 weeks to production. Sub-100ms response. We build the infrastructure agents need to work reliably—clean APIs, typed data, observable state.',
+			'3 weeks to production. You get a SvelteKit codebase on Cloudflare edge. Sub-100ms response. Clean APIs your agents can work with. The code is yours.',
 		triadQuestion: '"Have I built this before?"',
 		triadAction: 'Unify',
 		triadLevel: 'implementation',
@@ -76,10 +76,10 @@ export const services: Service[] = [
 		],
 
 		howItWorks: [
-			'Production-proven component library',
-			'Type-safe TypeScript throughout',
-			'Cloudflare Pages (global edge, sub-100ms)',
-			'Automation audit included—we map what agents could handle next'
+			'SvelteKit codebase you own',
+			'Canon component library (the same one running our sites)',
+			'Cloudflare Pages deployment configured',
+			'Automation audit: we identify what agents can handle next'
 		],
 
 		proof: {
@@ -93,13 +93,20 @@ export const services: Service[] = [
 		timeline: '2-4 weeks',
 		icon: 'globe',
 		tier: 'commercial',
-		isProductized: false
+		isProductized: false,
+		deliverables: [
+			'SvelteKit codebase with TypeScript',
+			'Canon component library',
+			'Cloudflare Pages deployment',
+			'D1 database configured',
+			'Automation opportunity audit'
+		]
 	},
 	{
 		id: 'automation',
 		title: 'Workflow Automation',
 		description:
-			'120 hours/week of research became automated. We build systems that process data, make decisions, and talk to your tools—the foundation before agents make sense.',
+			'120 hours/week became automated. You get Cloudflare Workers running your logic, OAuth integrations to your tools, and metrics showing time saved. The foundation before agents make sense.',
 		triadQuestion: '"Does this earn its existence?"',
 		triadAction: 'Remove',
 		triadLevel: 'artifact',
@@ -118,9 +125,9 @@ export const services: Service[] = [
 
 		howItWorks: [
 			'Claude Code for automation design',
-			'Cloudflare Workers for execution',
+			'Cloudflare Workers you own',
 			'OAuth integrations for your existing tools',
-			'Metrics you can verify: time saved, errors caught, cost per run'
+			'Metrics dashboard: time saved, errors caught, cost per run'
 		],
 
 		proof: {
@@ -134,13 +141,20 @@ export const services: Service[] = [
 		timeline: '4-8 weeks',
 		icon: 'automation',
 		tier: 'commercial',
-		isProductized: false
+		isProductized: false,
+		deliverables: [
+			'Cloudflare Workers codebase',
+			'OAuth integrations configured',
+			'Metrics dashboard',
+			'Runbook documentation',
+			'Cost monitoring setup'
+		]
 	},
 	{
 		id: 'agentic-systems',
 		title: 'Accountable Agents',
 		description:
-			'155 scripts became 13. 92% cost reduction. Agents that run for hours, make decisions, recover from failures, and prove what they did. The guardrails your compliance team will approve.',
+			'155 scripts became 13. 92% cost reduction. You get Durable Objects workflows that run for hours, checkpoint on failure, and log every decision. Agents your compliance team can audit.',
 		triadQuestion: '"Does this serve the whole?"',
 		triadAction: 'Reconnect',
 		triadLevel: 'system',
@@ -158,9 +172,9 @@ export const services: Service[] = [
 		],
 
 		howItWorks: [
-			'Durable execution (hours to days)',
+			'Durable Objects in your Cloudflare account',
 			'Checkpointing—agents resume after failures',
-			'Observable decision trails for every action',
+			'Decision logs for every action',
 			'Cost control and production monitoring'
 		],
 
@@ -175,13 +189,20 @@ export const services: Service[] = [
 		timeline: '8-16 weeks',
 		icon: 'robot',
 		tier: 'commercial',
-		isProductized: false
+		isProductized: false,
+		deliverables: [
+			'Durable Objects workflow system',
+			'Checkpoint and recovery infrastructure',
+			'Decision logging and audit trails',
+			'Cost monitoring dashboard',
+			'Compliance documentation'
+		]
 	},
 	{
 		id: 'partnership',
 		title: 'Systems Partnership',
 		description:
-			'2-4 new features per month. 4-hour response. We maintain what runs, optimize what costs too much, and ship new capabilities you did not have to spec.',
+			'2-4 new features per month. 4-hour response. You get ongoing access to patterns as we evolve them. Your systems stay current without new hiring.',
 		triadQuestion: '"Does this serve the whole?"',
 		triadAction: 'Reconnect',
 		triadLevel: 'system',
@@ -202,7 +223,7 @@ export const services: Service[] = [
 			'System maintenance and monitoring',
 			'Cost and speed optimization',
 			'2-4 new features per month',
-			'Quarterly research collaboration—your systems become case studies'
+			'Early access to new patterns from our research'
 		],
 
 		proof: {
@@ -216,13 +237,20 @@ export const services: Service[] = [
 		timeline: 'Ongoing',
 		icon: 'partnership',
 		tier: 'commercial',
-		isProductized: false
+		isProductized: false,
+		deliverables: [
+			'Monthly system health reports',
+			'2-4 new features per month',
+			'4-hour response SLA',
+			'Early access to new patterns',
+			'Quarterly research collaboration'
+		]
 	},
 	{
 		id: 'transformation',
 		title: 'Team Enablement',
 		description:
-			'Your team ships an AI system in 90 days. Hands-on training, a real project in production, and a playbook you own. No vendor lock-in.',
+			'90 days. Your team owns AI infrastructure that works. You get Loom, Beads, Harness patterns, and your own CLAUDE.md. We train your team to run it. Then we leave.',
 		triadQuestion: '"Does this serve the whole?"',
 		triadAction: 'Reconnect',
 		triadLevel: 'system',
@@ -240,10 +268,11 @@ export const services: Service[] = [
 		],
 
 		howItWorks: [
-			'Current state assessment and workflow audit',
-			'Hands-on Claude Code training',
-			'Guided project: your team ships something real',
-			'Internal playbook you keep forever'
+			'Loom orchestrator configured for your workflows',
+			'Beads issue tracking with your conventions',
+			'Harness patterns for autonomous work sessions',
+			'Your CLAUDE.md with your business rules',
+			'90 days of guided implementation'
 		],
 
 		proof: {
@@ -257,13 +286,22 @@ export const services: Service[] = [
 		timeline: '12-16 weeks',
 		icon: 'academy',
 		tier: 'commercial',
-		isProductized: false
+		isProductized: false,
+		deliverables: [
+			'Loom multi-agent orchestrator',
+			'Beads agent-native issue tracking',
+			'Harness autonomous work patterns',
+			'Your CLAUDE.md with business rules',
+			'Skills and MCP integrations for your workflows',
+			'Internal playbook documenting your setup',
+			'90 days of guided implementation'
+		]
 	},
 	{
 		id: 'advisory',
 		title: 'Advisory',
 		description:
-			'Monthly office hours. Quarterly architecture reviews. 4-hour response. An outside perspective when you are too close to the problem.',
+			'Monthly office hours. Quarterly architecture reviews. 4-hour response. You get early access to patterns and research as we develop them. Outside perspective when you are too close to the problem.',
 		triadQuestion: '"Does this serve the whole?"',
 		triadAction: 'Reconnect',
 		triadLevel: 'system',
@@ -284,7 +322,7 @@ export const services: Service[] = [
 			'Quarterly planning sessions',
 			'Architecture review of your systems',
 			'Performance and cost guidance',
-			'Early access to our research'
+			'Early access to our research and patterns'
 		],
 
 		proof: {
@@ -298,7 +336,14 @@ export const services: Service[] = [
 		timeline: '6-month minimum',
 		icon: 'advisor',
 		tier: 'commercial',
-		isProductized: false
+		isProductized: false,
+		deliverables: [
+			'Monthly office hours',
+			'Quarterly architecture reviews',
+			'4-hour response SLA',
+			'Early access to research and patterns',
+			'Priority support channel'
+		]
 	}
 ];
 
@@ -492,7 +537,7 @@ export const products: Service[] = [
 			'Design choices that drift over time'
 		],
 		howItWorks: [
-			'npm install @create-something/components',
+			'npm install @create-something/canon',
 			'Import tokens.css or canon.css',
 			'Golden ratio spacing, semantic colors, motion',
 			'Works with Tailwind or plain CSS'
