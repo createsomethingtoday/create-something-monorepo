@@ -11,6 +11,24 @@
  * Uses Workers AI-compatible tool format instead of the agents package.
  */
 
+/**
+ * Create a tool executor from an executor map.
+ * Reduces duplication across tool execution functions.
+ */
+export function createToolExecutor<Env>(
+	executors: Record<string, (args: any, env: Env) => Promise<any>>,
+	toolType = ''
+) {
+	return async (name: string, args: any, env: Env): Promise<any> => {
+		const executor = executors[name];
+		if (!executor) {
+			const typeLabel = toolType ? `${toolType} ` : '';
+			return { success: false, error: `Unknown ${typeLabel}tool: ${name}` };
+		}
+		return executor(args, env);
+	};
+}
+
 export interface PMAgentEnv {
 	DB: D1Database;
 	AI: Ai;
@@ -464,10 +482,4 @@ export const toolExecutors: Record<string, (args: any, env: PMAgentEnv) => Promi
 /**
  * Execute a tool by name
  */
-export async function executeTool(name: string, args: any, env: PMAgentEnv): Promise<any> {
-	const executor = toolExecutors[name];
-	if (!executor) {
-		return { success: false, error: `Unknown tool: ${name}` };
-	}
-	return executor(args, env);
-}
+export const executeTool = createToolExecutor(toolExecutors);

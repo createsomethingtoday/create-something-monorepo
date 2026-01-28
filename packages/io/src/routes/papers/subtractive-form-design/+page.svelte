@@ -5,7 +5,7 @@
 	 * Case study applying Heidegger's hermeneutic question to form field design,
 	 * demonstrating that hiding inapplicable fields is clearer than documentation.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO

@@ -1,6 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
-import { createSessionManager } from '@create-something/components/auth';
+import { createSessionManager } from '@create-something/canon/auth';
 
 export const load: PageServerLoad = async ({ url, cookies, platform }) => {
 	// Check if already authenticated

@@ -5,10 +5,10 @@
  * Less, but better.
  *
  * This file provides Canon tokens + minimal base styles for vertical templates.
- * The single source of truth for tokens is: @create-something/components/styles/tokens.css
+ * The single source of truth for tokens is: @create-something/canon/styles/tokens.css
  *
  * Architecture:
- * - tokens.css: Pure token definitions (in @create-something/components)
+ * - tokens.css: Pure token definitions (in @create-something/canon)
  * - canon.css: Tokens + base styles for vertical templates (this file)
  *
  * @usage
@@ -20,7 +20,7 @@
  *   @import '@create-something/verticals-shared/canon.css';
  *
  * Or import tokens directly for more control:
- *   @import '@create-something/components/styles/tokens.css';
+ *   @import '@create-something/canon/styles/tokens.css';
  *
  * PHILOSOPHY
  * ----------
@@ -49,7 +49,7 @@
    Canon Design Tokens - Single Source of Truth
    ========================================================================== */
 
-@import '@create-something/components/styles/tokens.css';
+@import '@create-something/canon/styles/tokens.css';
 
 /* ==========================================================================
    Vertical-Specific Token Extensions

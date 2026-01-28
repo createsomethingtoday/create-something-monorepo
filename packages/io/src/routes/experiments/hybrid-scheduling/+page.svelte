@@ -9,7 +9,7 @@
 	 * Modal handles compute (pay-per-use). Best of both worlds.
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 
 	// Cost comparison data
 	const modalLimitations = {

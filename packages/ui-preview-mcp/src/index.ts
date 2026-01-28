@@ -29,7 +29,7 @@ const PACKAGE_CONFIG: Record<string, { name: string; port: number }> = {
   "space": { name: "@create-something/space", port: 5174 },
   "io": { name: "@create-something/io", port: 5175 },
   "ltd": { name: "@create-something/ltd", port: 5176 },
-  "components": { name: "@create-something/components", port: 5177 },
+  "components": { name: "@create-something/canon", port: 5177 },
   "webflow-dashboard": { name: "@create-something/webflow-dashboard", port: 5178 },
   "lms": { name: "@create-something/lms", port: 5179 },
 };

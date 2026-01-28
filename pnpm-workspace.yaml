@@ -2,3 +2,5 @@ packages:
   - 'packages/*'
   - 'packages/verticals/*'
   - 'packages/agency/clients/*'
+  - 'packages/webflow-apps-admin/dashboard'
+  - 'packages/webflow-apps-admin/workers/*'

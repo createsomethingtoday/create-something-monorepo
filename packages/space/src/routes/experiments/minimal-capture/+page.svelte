@@ -8,7 +8,7 @@
 	 * "Weniger, aber besser" is not a style. It's a way of seeing.
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 
 	const liveUrl = 'https://minimal-capture.pages.dev';
 	const adminUrl = 'https://minimal-capture.pages.dev/admin';

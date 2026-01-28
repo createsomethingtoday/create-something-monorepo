@@ -4,7 +4,7 @@
 	 * Grid of all case types we handle
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import { getSiteConfigFromContext } from '$lib/config/context';
 	import EthicsDisclaimer from '$lib/components/EthicsDisclaimer.svelte';
 	import { Car, Truck, Bike, PersonStanding, Skull, Stethoscope, ArrowRight } from 'lucide-svelte';

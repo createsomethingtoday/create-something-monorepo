@@ -8,7 +8,7 @@
  */
 
 import type { FeedbackPattern, AutomationSuggestion, FeedbackCategory } from '../types/feedback.js';
-import { slugify, camelCase, truncate } from '@create-something/components';
+import { slugify, camelCase, truncate } from '@create-something/canon';
 
 // =============================================================================
 // TYPES
@@ -420,7 +420,7 @@ export function generateEslintConfig(rules: GeneratedRule[]): string {
 }
 
 // =============================================================================
-// UTILITIES (imported from @create-something/components)
+// UTILITIES (imported from @create-something/canon)
 // =============================================================================
 
 function createMessage(pattern: FeedbackPattern): string {

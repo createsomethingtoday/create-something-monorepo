@@ -1,17 +1,19 @@
 /**
- * Photo Cleanup Pipeline
- * Orchestrates detection, mask generation, and inpainting
+ * Photo Cleanup Pipeline - REPLICATE INTEGRATION DISABLED
  *
- * Detection is performed by Claude Code agents using vision capabilities.
- * This module handles mask generation and Replicate inpainting.
+ * Replicate integration has been disabled due to runaway costs ($700+).
+ * Only detection and mask generation functions are available.
+ * Inpainting, refinement, and upscaling will throw errors.
+ *
+ * Disabled: 2026-01-25
  */
 
 import * as path from 'path';
 import { generateMask, createDebugVisualization } from './mask.js';
 import { inpaint, isConfigured as isReplicateConfigured } from './inpaint.js';
 import { parseDetectionResults, DETECTION_PROMPT } from './detect.js';
-import { refineWithIsaac, refineDetectionResult } from './refine.js';
-import { upscale } from './upscale.js';
+import { refineDetections, isIsaacConfigured } from './refine.js';
+import { upscale, isUpscaleConfigured } from './upscale.js';
 import type { Distraction, DetectionResult, BatchDetectionResult } from './detect.js';
 import type { InpaintModel, InpaintResult } from './inpaint.js';
 import type { UpscaleOptions } from './upscale.js';
@@ -22,8 +24,8 @@ export type { InpaintModel, InpaintResult } from './inpaint.js';
 export { parseDetectionResults, DETECTION_PROMPT, isValidDistraction } from './detect.js';
 export { generateMask, createDebugVisualization } from './mask.js';
 export { inpaint } from './inpaint.js';
-export { refineWithIsaac, refineDetectionResult } from './refine.js';
-export { upscale, upscaleBatch } from './upscale.js';
+export { refineDetections, isIsaacConfigured } from './refine.js';
+export { upscale, isUpscaleConfigured } from './upscale.js';
 export type { UpscaleOptions } from './upscale.js';
 
 /**
@@ -136,10 +138,13 @@ export async function processWithDetection(
   const outDir = outputDir || inputDir;
 
   try {
+    // NOTE: Refinement is DISABLED due to Replicate costs
     // Optionally refine detections with Isaac-01 for precise bounding boxes
     let distractions = detection.distractions;
     if (refine && distractions.length > 0) {
-      distractions = await refineWithIsaac(imagePath, distractions);
+      // Will throw an error - Replicate is disabled
+      const refined = await refineDetections(imagePath, detection);
+      distractions = refined.distractions;
     }
 
     // Save debug visualization if requested

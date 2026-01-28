@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Footer } from '@create-something/components';
+	import { Footer } from '@create-something/canon';
 
 	const quickLinks = [
 		{ label: 'Home', href: '/' },

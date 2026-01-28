@@ -1,7 +1,7 @@
 {
   "name": "@create-something/render-pipeline",
   "version": "0.1.0",
-  "description": "SVG to photorealistic render pipeline using Replicate ControlNet",
+  "description": "SVG rendering pipeline (Replicate integration DISABLED - cost control)",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,28 +14,21 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "cleanup": "tsx src/bin/cleanup-photos.ts",
     "docs": "tsx src/bin/generate-docs.ts",
-    "render-threshold": "tsx scripts/render-threshold.ts",
-    "generate-sections": "tsx scripts/generate-sections.ts",
-    "render-perspective": "tsx scripts/render-perspective.ts",
-    "render-perspective-room": "tsx scripts/render-perspective-room.ts",
-    "render-custom": "tsx scripts/render-perspective-custom.ts",
-    "prepare-training": "tsx scripts/prepare-training-data.ts",
-    "finetune-train": "tsx scripts/finetune-train.ts",
-    "finetune-generate": "tsx scripts/finetune-generate.ts",
-    "finetune-evaluate": "tsx scripts/evaluate-outputs.ts",
-    "diagram-test": "tsx scripts/diagram-test.ts"
+    "generate-sections": "tsx scripts/generate-sections.ts"
   },
   "dependencies": {
-    "@create-something/components": "workspace:^",
+    "@create-something/canon": "workspace:^",
     "@resvg/resvg-js": "^2.6.0",
     "@resvg/resvg-wasm": "^2.6.2",
     "archiver": "^7.0.0",
     "jsdom": "^25.0.0",
-    "replicate": "^1.0.0",
     "sharp": "^0.33.0",
-    "three": "^0.170.0"
+    "three": "^0.170.0",
+    "@gltf-transform/cli": "^4.0.0",
+    "@gltf-transform/core": "^4.0.0",
+    "@gltf-transform/extensions": "^4.0.0",
+    "@gltf-transform/functions": "^4.0.0"
   },
   "devDependencies": {
     "@types/archiver": "^6.0.0",
@@ -48,8 +41,6 @@
   "keywords": [
     "svg",
     "render",
-    "controlnet",
-    "replicate",
     "architecture",
     "visualization"
   ],

@@ -6,9 +6,9 @@
 	 * Force-directed graph showing assist relationships.
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
-	import ShotNetwork from '$lib/components/nba/ShotNetwork.svelte';
+	import { ShotNetwork } from '$lib/experiments/nba-live';
 	import { ArrowLeft, Clock, Radio, AlertCircle } from 'lucide-svelte';
 
 	let { data }: { data: PageData } = $props();

@@ -6,7 +6,7 @@
 	 * reveal patterns in data without manual analysis.
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import {
 		ComparativeSparklines,
 		TrendIndicator,

@@ -1,9 +1,9 @@
 /**
  * Newsletter API - LTD
  *
- * Uses shared handler from @create-something/components/newsletter
+ * Uses shared handler from @create-something/canon/newsletter
  */
 
-import { createNewsletterHandler } from '@create-something/components/newsletter';
+import { createNewsletterHandler } from '@create-something/canon/newsletter';
 
 export const POST = createNewsletterHandler({ property: 'ltd' });

@@ -8,7 +8,7 @@
 	 * "The circle closes: implementation reveals what documentation cannot."
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 
 	const workwayRepo = 'https://github.com/WORKWAYCO/WORKWAY';
 </script>

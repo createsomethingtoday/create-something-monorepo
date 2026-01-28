@@ -5,7 +5,7 @@
 	 * Renders markdown content using MDsveX.
 	 * The MarkdownLayout.svelte provides structure and PageActions.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();

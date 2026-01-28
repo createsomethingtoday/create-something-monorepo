@@ -6,8 +6,8 @@
  * Svelte components for interactive visualizations.
  */
 
-import type { FileBasedExperiment } from '@create-something/components';
-import { transformExperimentToPaper } from '@create-something/components';
+import type { FileBasedExperiment } from '@create-something/canon';
+import { transformExperimentToPaper } from '@create-something/canon';
 
 // Re-export for consumers
 export type { FileBasedExperiment };

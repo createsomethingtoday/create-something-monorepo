@@ -183,7 +183,7 @@ templates/sveltekit-cloudflare-starter/
 **Features:**
 - SvelteKit 5 configured
 - Cloudflare Pages setup
-- @create-something/components integrated
+- @create-something/canon integrated
 - @create-something/agents integrated
 - Example agent API routes
 - Example UI components

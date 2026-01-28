@@ -6,7 +6,7 @@
 	 * Clear, inviting, friction-free.
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import { siteConfig } from '$lib/config/context';
 </script>
 

@@ -6,10 +6,10 @@
 	 * Uses LayerCake for charts.
 	 */
 	
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
-	import AnalyticsNav from '$lib/components/nba/AnalyticsNav.svelte';
-	import DateNavigation from '$lib/components/nba/DateNavigation.svelte';
+	import { AnalyticsNav } from '$lib/experiments/nba-live';
+	import { DateNavigation } from '$lib/experiments/nba-live';
 	import { TrendingUp, Activity, Target, Zap } from 'lucide-svelte';
 	import { invalidate } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { PrivacyPolicyContent } from '@create-something/components';
+  import { PrivacyPolicyContent } from '@create-something/canon';
 </script>
 
 <svelte:head>

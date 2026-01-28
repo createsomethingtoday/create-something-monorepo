@@ -12,7 +12,7 @@ import {
 	EMPTY_INSIGHTS,
 	type InsightsData,
 } from '$lib/taste/insights';
-import { getTokenFromRequest, validateToken, type AuthEnv } from '@create-something/components/auth/server';
+import { getTokenFromRequest, validateToken, type AuthEnv } from '@create-something/canon/auth/server';
 
 export const load: PageServerLoad = async ({ request, platform }) => {
 	const db = platform?.env?.DB;

@@ -48,6 +48,13 @@ export {
   WALKTHROUGH_SPEC as TEND_WALKTHROUGH_SPEC,
 } from './tend-walkthrough';
 
+// Tufte Mobile Commercial
+export {
+  TufteMobileCommercial,
+  TUFTE_MOBILE_CONFIG,
+  TUFTE_MOBILE_SPEC,
+} from './tufte-mobile';
+
 // Shared primitives
 export {
   KineticHeadline,

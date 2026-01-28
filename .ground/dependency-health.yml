@@ -1,0 +1,129 @@
+# Ground Dependency Health Patterns
+# Monitors package.json health across the monorepo
+#
+# Usage: ground deps --check
+# Auto-fix: ground deps --fix
+
+version: "1"
+
+dependency_health:
+  enabled: true
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Deprecated Packages
+  # ─────────────────────────────────────────────────────────────────────────
+  
+  deprecated_packages:
+    - name: "@create-something/components"
+      replacement: "@create-something/canon"
+      severity: error
+      message: "Package is deprecated. Use @create-something/canon instead."
+      auto_fix: true
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Required Peer Dependencies
+  # ─────────────────────────────────────────────────────────────────────────
+  
+  required_peers:
+    - for: "@create-something/canon"
+      requires:
+        - "svelte"
+        - "@sveltejs/kit"
+      
+    - for: "@sveltejs/kit"
+      requires:
+        - "svelte"
+        - "vite"
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Version Consistency
+  # ─────────────────────────────────────────────────────────────────────────
+  # Ensure key packages have consistent versions across workspace
+  
+  version_consistency:
+    enabled: true
+    
+    # Packages that must have the same version everywhere
+    strict_packages:
+      - "svelte"
+      - "typescript"
+      - "@sveltejs/kit"
+      - "vite"
+    
+    # Packages where minor version differences are OK
+    flexible_packages:
+      - "tailwindcss"
+      - "eslint"
+      - "prettier"
+    
+    # Strategy for resolving inconsistencies
+    resolution_strategy: "highest"  # Use highest version found
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Duplicate Detection
+  # ─────────────────────────────────────────────────────────────────────────
+  
+  duplicate_detection:
+    enabled: true
+    
+    # Check for same package in both dependencies and devDependencies
+    cross_section: true
+    
+    # Check for literal duplicate lines
+    literal_duplicates: true
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Workspace Protocol
+  # ─────────────────────────────────────────────────────────────────────────
+  
+  workspace_protocol:
+    enabled: true
+    
+    # Internal packages that should use workspace:*
+    internal_packages:
+      - "@create-something/canon"
+      - "@create-something/cloudflare-sdk"
+    
+    # Enforce workspace:* for internal packages
+    enforce_workspace_protocol: true
+    
+    message: |
+      Internal package '{package}' should use workspace protocol.
+      
+      Bad:  "@create-something/canon": "^0.1.0"
+      Good: "@create-something/canon": "workspace:*"
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Unused Dependencies
+  # ─────────────────────────────────────────────────────────────────────────
+  
+  unused_detection:
+    enabled: true
+    
+    # Packages to ignore (commonly have side effects or are used implicitly)
+    ignore:
+      - "@sveltejs/adapter-cloudflare"  # Used in svelte.config.js
+      - "tailwindcss"                    # Used in PostCSS
+      - "autoprefixer"                   # Used in PostCSS
+      - "@tailwindcss/typography"        # Tailwind plugin
+      - "wrangler"                       # CLI tool
+    
+    # Only report, don't auto-remove
+    auto_remove: false
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Security
+  # ─────────────────────────────────────────────────────────────────────────
+  
+  security:
+    # Check for known vulnerabilities
+    audit_enabled: true
+    
+    # Severity levels to fail on
+    fail_on:
+      - "critical"
+      - "high"
+    
+    # Warn but don't fail
+    warn_on:
+      - "moderate"

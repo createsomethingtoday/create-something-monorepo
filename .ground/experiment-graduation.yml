@@ -1,0 +1,135 @@
+# Ground Experiment Graduation Patterns
+# Tracks experiment component usage and suggests graduation
+#
+# The Graduation Pattern:
+# - 1 use: stays in experiments/
+# - 2+ uses: graduates to components/ or domains/
+#
+# Usage: ground experiments --status
+# Graduate: ground experiments --graduate ComponentName
+
+version: "1"
+
+experiment_graduation:
+  enabled: true
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Paths
+  # ─────────────────────────────────────────────────────────────────────────
+  
+  experiments_path: "packages/canon/src/lib/experiments"
+  
+  graduation_targets:
+    # Default target for graduated components
+    default: "packages/canon/src/lib/components/"
+    
+    # Domain-specific targets (if component is property-specific)
+    domains:
+      ltd: "packages/canon/src/lib/domains/ltd/"
+      agency: "packages/canon/src/lib/domains/agency/"
+      space: "packages/canon/src/lib/domains/space/"
+      io: "packages/canon/src/lib/domains/io/"
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Graduation Rules
+  # ─────────────────────────────────────────────────────────────────────────
+  
+  rules:
+    # Usage threshold for graduation
+    usage_threshold: 2
+    
+    # What counts as a "use"
+    usage_types:
+      - import_statement      # import { X } from '...'
+      - dynamic_import        # import('...')
+      - component_reference   # <X /> in Svelte template
+    
+    # Paths to search for usage
+    search_paths:
+      - "packages/ltd/src/"
+      - "packages/agency/src/"
+      - "packages/space/src/"
+      - "packages/io/src/"
+    
+    # Exclude self-references (imports within the experiment itself)
+    exclude_self_references: true
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Current Experiments
+  # ─────────────────────────────────────────────────────────────────────────
+  # Document known experiments for reference
+  
+  known_experiments:
+    - name: "nba-live"
+      description: "NBA analytics visualization"
+      components: 14
+      status: "stable"
+      
+    - name: "threshold-dwelling"
+      description: "Architectural visualization"
+      components: 11
+      status: "stable"
+      
+    - name: "kinetic-typography"
+      description: "Text animation"
+      components: 1
+      status: "stable"
+      graduation_candidate: "FluidAssembly could graduate to animation/"
+      
+    - name: "living-arena"
+      description: "SVG arena simulation"
+      modules: 3
+      status: "stable"
+      
+    - name: "living-arena-gpu"
+      description: "WebGPU crowd simulation"
+      modules: 6
+      shaders: 6
+      status: "experimental"
+      
+    - name: "render-preview"
+      description: "Preview canvas"
+      components: 1
+      status: "stable"
+      
+    - name: "render-studio"
+      description: "SVG rendering workflow"
+      components: 2
+      modules: 1
+      status: "stable"
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Graduation Workflow
+  # ─────────────────────────────────────────────────────────────────────────
+  
+  graduation_workflow:
+    steps:
+      - action: "move_files"
+        description: "Move component files to graduation target"
+        
+      - action: "update_exports"
+        description: "Update index.ts exports in both locations"
+        
+      - action: "update_imports"
+        description: "Update all import statements across codebase"
+        
+      - action: "update_package_json"
+        description: "Add export path to package.json if needed"
+        
+      - action: "remove_from_experiment"
+        description: "Remove from experiment index.ts"
+    
+    # Generate PR instead of direct changes
+    generate_pr: true
+    pr_template: |
+      ## Graduate {component} from experiments/{experiment}
+      
+      **Reason**: Used in {usage_count} locations (threshold: {threshold})
+      
+      **Usages**:
+      {usage_list}
+      
+      **Changes**:
+      - [ ] Moved to {target_path}
+      - [ ] Updated {import_count} imports
+      - [ ] Updated package.json exports

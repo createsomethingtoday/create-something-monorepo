@@ -1,0 +1,139 @@
+# Ground Duplication Detection Patterns
+# Detects duplicate utilities and suggests consolidation
+#
+# Usage: ground duplicates --check
+# Report: ground duplicates --report
+
+version: "1"
+
+duplicate_detection:
+  enabled: true
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Detection Settings
+  # ─────────────────────────────────────────────────────────────────────────
+  
+  # Function body similarity threshold (0-100)
+  # 85% catches real duplicates while avoiding false positives
+  similarity_threshold: 85
+  
+  # Minimum function size to consider (avoids trivial matches)
+  min_function_lines: 5
+  
+  # Maximum function size (very large functions are usually not duplicates)
+  max_function_lines: 200
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Canonical Sources
+  # ─────────────────────────────────────────────────────────────────────────
+  # These are the "source of truth" locations - duplicates found elsewhere
+  # should be consolidated here
+  
+  canonical_sources:
+    - path: "packages/canon/src/lib/utils/"
+      description: "Shared utilities"
+      
+    - path: "packages/canon/src/lib/types/"
+      description: "Shared types"
+      
+    - path: "packages/canon/src/lib/actions/"
+      description: "Svelte actions"
+      
+    - path: "packages/canon/src/lib/transitions/"
+      description: "Svelte transitions"
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Check Paths
+  # ─────────────────────────────────────────────────────────────────────────
+  # Paths to scan for potential duplicates
+  
+  check_paths:
+    - "packages/ltd/src/lib/"
+    - "packages/agency/src/lib/"
+    - "packages/space/src/lib/"
+    - "packages/io/src/lib/"
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Known Utilities
+  # ─────────────────────────────────────────────────────────────────────────
+  # Pre-registered utilities for faster detection
+  
+  known_utilities:
+    - name: "completion utilities"
+      canonical: "@create-something/canon/utils"
+      functions:
+        - "markExperimentCompleted"
+        - "isExperimentCompleted"
+        - "clearExperimentCompletion"
+        - "validateCompletionToken"
+      
+    - name: "date utilities"
+      canonical: "@create-something/canon/utils"
+      functions:
+        - "formatDate"
+        - "formatRelativeTime"
+        - "parseISODate"
+      
+    - name: "validation utilities"
+      canonical: "@create-something/canon/validation"
+      functions:
+        - "parseBody"
+        - "validateEmail"
+        - "validateSlug"
+      
+    - name: "logging utilities"
+      canonical: "@create-something/canon/utils"
+      functions:
+        - "createLogger"
+        - "logError"
+        - "logInfo"
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Ignore Patterns
+  # ─────────────────────────────────────────────────────────────────────────
+  
+  ignore:
+    # Function names to ignore (common conventions)
+    functions:
+      - "load"              # SvelteKit page load
+      - "GET"               # API handler
+      - "POST"              # API handler
+      - "PUT"               # API handler
+      - "DELETE"            # API handler
+      - "PATCH"             # API handler
+      - "handle"            # SvelteKit hooks
+      - "handleError"       # SvelteKit hooks
+      - "init"              # Initialization functions
+      - "setup"             # Setup functions
+      - "teardown"          # Cleanup functions
+    
+    # File patterns to skip
+    files:
+      - "*.test.ts"
+      - "*.spec.ts"
+      - "*.d.ts"
+      - "index.ts"          # Re-export files
+    
+    # Directory patterns to skip
+    directories:
+      - "node_modules/"
+      - ".svelte-kit/"
+      - "dist/"
+      - "build/"
+  
+  # ─────────────────────────────────────────────────────────────────────────
+  # Reporting
+  # ─────────────────────────────────────────────────────────────────────────
+  
+  report:
+    # Group duplicates into clusters
+    clustering: true
+    
+    # Show diff between duplicate implementations
+    show_diff: true
+    
+    # Suggest consolidation target
+    suggest_target: true
+    
+    # Generate migration script
+    generate_script: true

@@ -54,9 +54,9 @@
       <Terminal size={24} />
     </div>
     <div class="practice-content">
-      <h3>Practice in Gemini CLI</h3>
+      <h3>Practice with Claude Code</h3>
       <p>Reading is the beginning. Practice develops perception.</p>
-      <code>/lesson {lesson.id}</code>
+      <p class="practice-hint">Apply these concepts in your next coding session.</p>
     </div>
   </aside>
 

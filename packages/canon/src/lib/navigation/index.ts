@@ -1,0 +1,19 @@
+/**
+ * Navigation Pattern Library
+ *
+ * Components for site navigation with Canon tokens.
+ * All patterns respect reduced motion preferences.
+ *
+ * @example
+ * import { StickyHeader, MobileDrawer, CommandPalette, UnifiedSearch, MenuButton, Tabs, MegaMenu } from '@create-something/canon/navigation';
+ */
+
+export { default as StickyHeader } from './StickyHeader.svelte';
+export { default as MobileDrawer } from './MobileDrawer.svelte';
+export { default as CommandPalette } from './CommandPalette.svelte';
+export { default as UnifiedSearch } from './UnifiedSearch.svelte';
+export { default as RelatedContent } from './RelatedContent.svelte';
+export { default as ConceptJourney } from './ConceptJourney.svelte';
+export { default as MenuButton } from './MenuButton.svelte';
+export { default as Tabs } from './Tabs.svelte';
+export { default as MegaMenu } from './MegaMenu.svelte';

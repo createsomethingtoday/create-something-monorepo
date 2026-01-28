@@ -6,9 +6,9 @@
 	 * Compares duo points per possession against league average.
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
-	import DuoChart from '$lib/components/nba/DuoChart.svelte';
+	import { DuoChart } from '$lib/experiments/nba-live';
 	import { ArrowLeft, Clock, Radio, AlertCircle } from 'lucide-svelte';
 
 	let { data }: { data: PageData } = $props();

@@ -4,7 +4,7 @@
 	 * Primary conversion page for PI leads
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import { getSiteConfigFromContext } from '$lib/config/context';
 	import PIIntakeForm from '$lib/components/PIIntakeForm.svelte';
 	import EthicsDisclaimer from '$lib/components/EthicsDisclaimer.svelte';

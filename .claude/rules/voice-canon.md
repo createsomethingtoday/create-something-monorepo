@@ -188,21 +188,78 @@ Before publishing:
 
 ---
 
-## The Lineage
+## The Two Writing Lineages
 
-Voice emerges from three traditions. You don't need to know these to write well—but they explain why the rules work.
+Voice emerges from two parallel traditions—**Clarity** and **Authenticity**—that converge on honesty from different angles.
 
-| Layer | Philosophy | Writing | Systems |
-|-------|------------|---------|---------|
-| Foundational | Heidegger | Orwell | Wiener |
-| Methodological | Gadamer | Zinsser | Meadows |
-| Applied | Rams | Fenton/Lee | Senge |
+| Layer | Clarity Lineage | Authenticity Lineage |
+|-------|-----------------|----------------------|
+| Foundational | Orwell (1946) | Montaigne (1580) |
+| Methodological | Zinsser (1976) | King + Vonnegut (2000) |
+| Applied | Fenton/Lee (2014) | Yegge (2004+) |
 
-**Orwell** (1946): Clarity is ethical. Obscure writing enables bad thinking.
+### Clarity Lineage (Structure)
+
+**Orwell**: Clarity is ethical. Obscure writing enables bad thinking.
+
+**Zinsser**: Strip every sentence to its cleanest components.
 
 **Fenton/Lee** (Nicely Said): Write for your reader, not yourself. Meet people where they are.
 
-**Rams**: Less, but better. If it doesn't earn its existence, cut it.
+### Authenticity Lineage (Voice)
+
+**Montaigne**: "I am myself the matter of my book." Confession reveals universal truth.
+
+**King**: "Un-learn what they taught you in school. Write directly from your soul."
+
+**Vonnegut**: "Write for one person. If you make love to the world, your story gets pneumonia."
+
+**Yegge**: "Your blog will suck if you maintain careful neutrality." Personality serves technical communication.
+
+### The Convergent Insight
+
+Both lineages arrive at honesty independently:
+- Orwell: Clear prose is honest prose (lies require obscurity)
+- Montaigne: Confessional prose is honest prose (vulnerability requires truth)
+
+---
+
+## The Hybrid Pattern
+
+The two lineages aren't opposites—they're **registers**. The best writing uses both.
+
+### The Pattern (for .io papers and .space tutorials)
+
+```
+1. Confessional hook (Authenticity): "I was scared to lose the client"
+2. Direct answer (Clarity): "Just be a web designer. Leave hosting to providers."
+3. Failure story (Authenticity): The 2am server crash
+4. Structured comparison (Clarity): Options table with clear trade-offs
+5. Earned opinion (Authenticity): "I'm biased. I'm a huge Stan."
+6. Call to action (Clarity): "Reach out. I will be happy to help."
+```
+
+### Register Selection by Context
+
+| Context | Primary Register | Secondary Register |
+|---------|------------------|-------------------|
+| Product pages (.agency) | Clarity | — |
+| Technical papers (.io) | Authenticity | Clarity for structure |
+| Philosophy (.ltd) | Clarity | Authenticity for examples |
+| Tutorials (.space) | Both equally | — |
+| Case studies | Authenticity | Clarity for results |
+| Social/community | Authenticity | — |
+
+### Authenticity Patterns
+
+When using the Authenticity register:
+
+- **Confessional frame**: Start with what didn't work before showing what does
+- **Extended allegory**: Use narrative to make technical points memorable
+- **One-person writing**: Pick a specific reader and write for them
+- **Purposeful verbosity**: Depth over brevity when the idea demands it
+- **Self-aware humor**: Acknowledge absurdity without abandoning rigor
+- **Earned opinion**: Declare your bias openly ("I'm a huge Stan")
 
 For the full intellectual history, see [Intellectual Genealogy](https://createsomething.io/papers/intellectual-genealogy).
 

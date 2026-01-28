@@ -6,7 +6,7 @@
 	 * a computation-constrained verification tool for AI agents.
 	 */
 
-	import { SubtractiveTriad, SEO } from '@create-something/components';
+	import { SubtractiveTriad, SEO } from '@create-something/canon';
 </script>
 
 <SEO

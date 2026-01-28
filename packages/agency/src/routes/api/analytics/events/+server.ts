@@ -4,8 +4,8 @@
 
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { processEventBatch, type EventBatch } from '@create-something/components/analytics';
-import { createLogger } from '@create-something/components/utils';
+import { processEventBatch, type EventBatch } from '@create-something/canon/analytics';
+import { createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('AnalyticsEventsAPI');
 

@@ -163,12 +163,16 @@ export class TwitterClient {
 	}
 
 	/**
-	 * Like a tweet
+	 * Perform a user action on a tweet (like, retweet, etc.)
 	 */
-	async like(tweetId: string): Promise<void> {
+	private async performTweetAction(
+		tweetId: string,
+		action: 'likes' | 'retweets',
+		actionName: string
+	): Promise<void> {
 		const userId = await this.getUserId();
 
-		const response = await fetch(`${TWITTER_API}/users/${userId}/likes`, {
+		const response = await fetch(`${TWITTER_API}/users/${userId}/${action}`, {
 			method: 'POST',
 			headers: {
 				Authorization: `Bearer ${this.accessToken}`,
@@ -179,29 +183,22 @@ export class TwitterClient {
 
 		if (!response.ok) {
 			const error = await response.text();
-			throw new Error(`Failed to like tweet: ${error}`);
+			throw new Error(`Failed to ${actionName}: ${error}`);
 		}
+	}
+
+	/**
+	 * Like a tweet
+	 */
+	async like(tweetId: string): Promise<void> {
+		return this.performTweetAction(tweetId, 'likes', 'like tweet');
 	}
 
 	/**
 	 * Retweet a tweet
 	 */
 	async retweet(tweetId: string): Promise<void> {
-		const userId = await this.getUserId();
-
-		const response = await fetch(`${TWITTER_API}/users/${userId}/retweets`, {
-			method: 'POST',
-			headers: {
-				Authorization: `Bearer ${this.accessToken}`,
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({ tweet_id: tweetId })
-		});
-
-		if (!response.ok) {
-			const error = await response.text();
-			throw new Error(`Failed to retweet: ${error}`);
-		}
+		return this.performTweetAction(tweetId, 'retweets', 'retweet');
 	}
 
 	/**

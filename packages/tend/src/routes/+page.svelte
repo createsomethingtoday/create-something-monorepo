@@ -1938,4 +1938,257 @@
 		align-items: center;
 		justify-content: center;
 	}
+
+	/* ============================================
+	   MOBILE RESPONSIVE STYLES
+	   Tufte: Reflow, don't remove. Same data, different arrangement.
+	   ============================================ */
+
+	@media (max-width: 768px) {
+		/* Toolbar: Wrap and reorder for mobile */
+		.toolbar {
+			flex-wrap: wrap;
+			gap: var(--space-xs);
+			padding: var(--space-xs) var(--space-sm);
+		}
+
+		.toolbar-left {
+			width: 100%;
+			order: 1;
+		}
+
+		.toolbar-center {
+			width: 100%;
+			max-width: none;
+			margin: 0;
+			order: 0; /* Search first on mobile */
+		}
+
+		.toolbar-right {
+			width: 100%;
+			justify-content: space-between;
+			order: 2;
+		}
+
+		/* Activity Feed: Stack vertically on mobile */
+		.activity-feed {
+			grid-template-columns: 1fr;
+			gap: var(--space-sm);
+		}
+
+		.activity-section {
+			padding-bottom: var(--space-sm);
+			border-bottom: 1px solid var(--color-border-subtle);
+		}
+
+		.activity-section:last-child {
+			border-bottom: none;
+			padding-bottom: 0;
+		}
+
+		/* Table: Transform to card layout on mobile
+		   Tufte: Use whitespace, not lines. Let data breathe. */
+		.data-table {
+			display: block;
+		}
+
+		.data-table thead {
+			display: none;
+		}
+
+		.data-table tbody {
+			display: flex;
+			flex-direction: column;
+			gap: 0;
+		}
+
+		.data-table tbody tr {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: var(--space-xs);
+			position: relative;
+			padding: var(--space-md) 0;
+			/* Tufte: single subtle rule, not box */
+			border: none !important;
+			border-bottom: 1px solid var(--color-border-subtle) !important;
+			border-radius: 0 !important;
+			background: transparent !important;
+		}
+
+		.data-table tbody tr:nth-child(odd) td,
+		.data-table tbody tr:nth-child(even) td {
+			background: transparent !important;
+		}
+
+		.data-table tbody tr:last-child {
+			border-bottom: none !important;
+		}
+
+		.data-table tbody tr:hover,
+		.data-table tbody tr:hover td {
+			background: transparent !important;
+		}
+
+		.data-table td {
+			padding: 0 !important;
+			background: transparent !important;
+		}
+
+		/* Row 1: Source (left) + Select (right) */
+		.col-select {
+			order: 2;
+			margin-left: auto;
+		}
+
+		.col-source {
+			order: 1;
+			font-size: var(--text-caption);
+		}
+
+		/* Row 2: Title spans full width */
+		.col-title {
+			order: 3;
+			width: 100%;
+			margin-top: var(--space-xs);
+		}
+
+		.title-text {
+			max-width: none;
+			white-space: normal;
+			font-size: var(--text-body);
+			line-height: var(--leading-relaxed);
+		}
+
+		/* Hide meta - it just shows a dash */
+		.col-meta {
+			display: none !important;
+		}
+
+		/* Row 3: Time · Score (left) + Actions (right) */
+		.col-time {
+			order: 4;
+			font-size: var(--text-caption);
+			color: var(--color-fg-muted);
+			margin-top: var(--space-xs);
+		}
+
+		.col-score {
+			order: 5;
+			margin-top: var(--space-xs);
+			margin-left: var(--space-sm);
+		}
+
+		.col-score::before {
+			content: '·';
+			margin-right: var(--space-sm);
+			color: var(--color-fg-muted);
+			font-weight: normal;
+		}
+
+		.col-actions {
+			order: 6;
+			margin-left: auto;
+			margin-top: var(--space-xs);
+		}
+
+		/* Actions: inline, compact */
+		.row-actions {
+			opacity: 1;
+			gap: var(--space-xs);
+		}
+
+		.action-btn {
+			width: 40px;
+			height: 40px;
+			opacity: 0.6;
+		}
+
+		.action-btn:active {
+			opacity: 1;
+			transform: scale(0.95);
+		}
+
+		/* Filter panel: Stack on mobile */
+		.filter-panel {
+			flex-direction: column;
+			gap: var(--space-sm);
+		}
+
+		/* Cards grid: Tufte-clean on mobile */
+		.cards-grid {
+			grid-template-columns: 1fr;
+			padding: var(--space-sm);
+			gap: 0; /* Use borders instead of gap */
+		}
+
+		.item-card {
+			border-radius: 0;
+			border-left: none;
+			border-right: none;
+			border-top: none;
+			/* Single rule between cards */
+			border-bottom: 1px solid var(--color-border-subtle);
+			padding: var(--space-md) 0;
+		}
+
+		.item-card:last-child {
+			border-bottom: none;
+		}
+
+		.item-card:hover {
+			border-color: var(--color-border-subtle); /* No hover change */
+		}
+
+		.card-actions {
+			border-top: none;
+			padding-top: var(--space-sm);
+		}
+
+		/* Kanban: Horizontal scroll hint */
+		.kanban-board {
+			padding: var(--space-sm);
+		}
+
+		.kanban-column {
+			flex: 0 0 85vw;
+		}
+
+		/* Keyboard help: Full width on mobile */
+		.keyboard-help {
+			max-width: 95%;
+			padding: var(--space-md);
+		}
+
+		.shortcut-grid {
+			grid-template-columns: 1fr;
+		}
+
+		/* Hide keyboard hint on touch devices */
+		.keyboard-hint {
+			display: none;
+		}
+
+		/* Expanded content: Adjust padding */
+		.expanded-content {
+			padding-left: var(--space-sm);
+		}
+	}
+
+	/* Extra small screens */
+	@media (max-width: 480px) {
+		.today-grid {
+			flex-direction: column;
+			gap: var(--space-xs);
+		}
+
+		.status-line {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+
+		.view-switcher {
+			display: none; /* Default to table/cards, hide switcher */
+		}
+	}
 </style>

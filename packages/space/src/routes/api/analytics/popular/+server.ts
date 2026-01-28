@@ -16,7 +16,7 @@
 
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { fetchPopularAnalytics } from '@create-something/components/analytics';
+import { fetchPopularAnalytics } from '@create-something/canon/analytics';
 
 export const GET: RequestHandler = async ({ url, platform, cookies }) => {
 	const db = platform?.env?.DB;

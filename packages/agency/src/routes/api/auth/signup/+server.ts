@@ -1,9 +1,9 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getDomainConfig, handleIdentityResponse } from '@create-something/components/auth';
-import { identityClient, getIdentityErrorMessage } from '@create-something/components/api';
-import { catchApiError, createLogger } from '@create-something/components/utils';
-import { signupSchema, parseBody } from '@create-something/components/validation';
+import { getDomainConfig, handleIdentityResponse } from '@create-something/canon/auth';
+import { identityClient, getIdentityErrorMessage } from '@create-something/canon/api';
+import { catchApiError, createLogger } from '@create-something/canon/utils';
+import { signupSchema, parseBody } from '@create-something/canon/validation';
 
 const logger = createLogger('SignupAPI');
 

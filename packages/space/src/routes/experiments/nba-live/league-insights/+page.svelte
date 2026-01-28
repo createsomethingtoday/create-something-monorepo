@@ -6,9 +6,9 @@
 	 * Updates every 60 seconds to capture new game completions.
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
-	import CorrelationChart from '$lib/components/nba/CorrelationChart.svelte';
+	import { CorrelationChart } from '$lib/experiments/nba-live';
 	import { invalidate } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';
 	import { ArrowLeft, TrendingUp, Users, Target, Home, AlertCircle } from 'lucide-svelte';

@@ -195,7 +195,7 @@ This is the promise of the hermeneutic triad: not AI that never errs, but AI tha
 2025-12-23T03:46 — Architecture: FAIL (6 findings, 3 critical)
 2025-12-23T03:46 — Harness paused, findings created as issues
 2025-12-23T03:52 — Agent addresses DRY violations
-2025-12-23T03:55 — Creates @create-something/components/newsletter
+2025-12-23T03:55 — Creates @create-something/canon/newsletter
 2025-12-23T03:57 — Updates io, space, agency to use shared module
 2025-12-23T03:58 — Type-check passes, commit created
 2025-12-23T03:59 — Findings closed, harness resumed

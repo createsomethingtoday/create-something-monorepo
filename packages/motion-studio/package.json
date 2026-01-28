@@ -32,7 +32,7 @@
     "typescript": "^5.3.0"
   },
   "peerDependencies": {
-    "@create-something/components": "workspace:*"
+    "@create-something/canon": "workspace:*"
   },
   "exports": {
     ".": {

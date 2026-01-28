@@ -9,7 +9,7 @@
 	 */
 
 	import type { PageData } from './$types';
-	import { ConceptJourney, SEO } from '@create-something/components';
+	import { ConceptJourney, SEO } from '@create-something/canon';
 
 	let { data }: { data: PageData } = $props();
 </script>

@@ -1,5 +1,5 @@
 import { redirect, type Handle } from '@sveltejs/kit';
-import { createSessionManager, type User } from '@create-something/components/auth';
+import { createSessionManager, type User } from '@create-something/canon/auth';
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const isProduction = event.platform?.env?.ENVIRONMENT === 'production';

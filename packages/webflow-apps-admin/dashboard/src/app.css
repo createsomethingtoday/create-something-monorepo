@@ -1,0 +1,79 @@
+/*
+  Webflow Apps Audit Dashboard
+  CREATE SOMETHING Design System
+  
+  Canon: The infrastructure recedes; intelligence emerges.
+*/
+
+/* Import Canon Design System */
+@import '@create-something/canon/styles/canon.css';
+@import '@create-something/canon/styles/components.css';
+
+/* Tailwind CSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   Dashboard-specific customizations
+   ========================================================================== */
+
+:root {
+  --view-transition-duration: 200ms;
+}
+
+/* Category color system */
+.category-integration { --category-color: var(--color-data-1); }
+.category-analytics { --category-color: var(--color-data-2); }
+.category-forms-data { --category-color: var(--color-data-3); }
+.category-ai-automation { --category-color: var(--color-data-4); }
+.category-developer-tools { --category-color: var(--color-data-5); }
+.category-ecommerce { --category-color: #22d3ee; }
+.category-marketing { --category-color: #f472b6; }
+.category-localization { --category-color: #a78bfa; }
+.category-accessibility { --category-color: #34d399; }
+.category-other { --category-color: var(--color-fg-muted); }
+
+/* Severity badges */
+.severity-high {
+  background: var(--color-error-muted);
+  color: var(--color-error);
+  border: 1px solid var(--color-error-border);
+}
+
+.severity-medium {
+  background: var(--color-warning-muted);
+  color: var(--color-warning);
+  border: 1px solid var(--color-warning-border);
+}
+
+.severity-low {
+  background: var(--color-info-muted);
+  color: var(--color-info);
+  border: 1px solid var(--color-info-border);
+}
+
+/* Progress bar animation */
+@keyframes progress-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.progress-bar {
+  animation: progress-pulse 1.5s ease-in-out infinite;
+}
+
+/* Staggered entrance animation */
+.stagger-enter {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: stagger-in var(--duration-standard) var(--ease-standard) forwards;
+  animation-delay: calc(var(--index, 0) * 50ms);
+}
+
+@keyframes stagger-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

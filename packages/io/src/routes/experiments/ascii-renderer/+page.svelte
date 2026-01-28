@@ -7,7 +7,7 @@
 	 *
 	 * @see https://alexharri.com/blog/ascii-rendering
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
 	import { onMount } from 'svelte';
 

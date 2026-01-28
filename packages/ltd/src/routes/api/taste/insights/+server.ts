@@ -11,7 +11,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { fetchTasteInsights } from '$lib/taste/insights';
-import { getTokenFromRequest, validateToken, type AuthEnv } from '@create-something/components/auth/server';
+import { getTokenFromRequest, validateToken, type AuthEnv } from '@create-something/canon/auth/server';
 
 export const GET: RequestHandler = async ({ request, platform, url }) => {
 	const db = platform?.env?.DB;

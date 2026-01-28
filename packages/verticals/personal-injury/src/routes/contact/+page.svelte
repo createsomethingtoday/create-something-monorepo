@@ -8,7 +8,7 @@
 	 * "Every project begins with a conversation."
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import ProgressiveForm from '$lib/components/ProgressiveForm.svelte';
 	import { getSiteConfigFromContext } from '$lib/config/context';
 

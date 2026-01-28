@@ -32,7 +32,7 @@ The infrastructure provides:
 ## Code Example
 
 ```typescript
-import { loadContentBySlug } from '@create-something/components/utils';
+import { loadContentBySlug } from '@create-something/canon/utils';
 
 const paper = await loadContentBySlug<PaperFrontmatter>(
   '../content/papers/*.md',

@@ -22,8 +22,8 @@ import {
 	getTokenFromRequest,
 	validateToken,
 	type AuthEnv
-} from '@create-something/components/auth/server';
-import { createLogger, validateStringField } from '@create-something/components/utils';
+} from '@create-something/canon/auth/server';
+import { createLogger, validateStringField } from '@create-something/canon/utils';
 
 const logger = createLogger('CollectionsAPI');
 

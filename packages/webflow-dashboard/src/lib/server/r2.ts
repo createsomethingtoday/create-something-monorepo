@@ -11,6 +11,8 @@ export interface UploadOptions {
 	metadata?: Record<string, string>;
 	/** Content type override (default: auto-detect from file) */
 	contentType?: string;
+	/** Request origin for constructing absolute URLs (required for Airtable compatibility) */
+	origin?: string;
 }
 
 export interface UploadResult {
@@ -85,9 +87,11 @@ export async function uploadToR2(
 		}
 	});
 
+	// Use absolute URL if origin provided (required for Airtable to fetch images)
+	const baseUrl = options.origin || '';
 	return {
 		key,
-		url: `/api/uploads/${key}`,
+		url: `${baseUrl}/api/uploads/${key}`,
 		size: arrayBuffer.byteLength
 	};
 }
@@ -106,10 +110,12 @@ export async function deleteFromR2(bucket: R2Bucket, key: string): Promise<void>
  * Get the URL for an R2 object.
  *
  * @param key - The storage key
+ * @param origin - Optional request origin for absolute URLs
  * @returns The URL to access the file
  */
-export function getR2Url(key: string): string {
-	return `/api/uploads/${key}`;
+export function getR2Url(key: string, origin?: string): string {
+	const baseUrl = origin || '';
+	return `${baseUrl}/api/uploads/${key}`;
 }
 
 /**

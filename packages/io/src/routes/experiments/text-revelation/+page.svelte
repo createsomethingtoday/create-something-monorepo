@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { QuoteBlock, SEO } from '@create-something/components';
+	import { QuoteBlock, SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();

@@ -12,7 +12,7 @@ This is where learning happens through doing. While `.io` documents theory, `.sp
 
 | Dependency | Why It Matters |
 |------------|----------------|
-| `@create-something/components` | Shared UI for consistent experience |
+| `@create-something/canon` | Shared UI for consistent experience |
 | `codemirror ^6.0` | In-browser code editing |
 | `@cloudflare/sandbox` | Secure code execution |
 | `gsap` | Smooth animations for interactions |

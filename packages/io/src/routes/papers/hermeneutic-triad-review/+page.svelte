@@ -6,7 +6,7 @@
 	 * demonstrating how parallel peer review creates a self-correcting system.
 	 */
 	import { Building2, Shield, Sparkles } from 'lucide-svelte';
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO
@@ -219,7 +219,7 @@
   packages/io/src/routes/unsubscribe/+page.svelte
   packages/space/src/routes/unsubscribe/+page.svelte
   → Only differs in propertyName prop ("io" vs "space")
-  → Recommend: Extract to @create-something/components
+  → Recommend: Extract to @create-something/canon
 
 [CRITICAL] Duplicated unsubscribe page server logic across 2 packages
   packages/io/src/routes/unsubscribe/+page.server.ts
@@ -332,7 +332,7 @@ packages/components/src/lib/newsletter/
 
 # 2. Update consumers (io, space, agency)
 packages/io/src/routes/api/newsletter/+server.ts
-  - import { processSubscription } from '@create-something/components/newsletter';
+  - import { processSubscription } from '@create-something/canon/newsletter';
   - Now 25 lines instead of 227
 
 # 3. Type-check verification
@@ -354,7 +354,7 @@ $ pnpm --filter=space exec tsc --noEmit  # ✓`}</pre>
 
 				<div class="p-4 mt-4 font-mono code-block">
 					<pre class="code-secondary">{`$ bd close csm-cisd csm-fmcw csm-bf8h \\
-    --reason "Fixed: Consolidated to @create-something/components/newsletter"
+    --reason "Fixed: Consolidated to @create-something/canon/newsletter"
 
 ✓ Closed csm-cisd: [CRITICAL] Duplicated unsubscribe UI component
 ✓ Closed csm-fmcw: [CRITICAL] Duplicated unsubscribe page server logic
@@ -812,7 +812,7 @@ export async function POST({ request }) {
 				<p class="code-warning">2025-12-23T03:46 — Architecture: FAIL (6 findings, 3 critical)</p>
 				<p class="code-secondary">2025-12-23T03:46 — Harness paused, findings created as issues</p>
 				<p class="code-secondary">2025-12-23T03:52 — Agent addresses DRY violations</p>
-				<p class="code-secondary">2025-12-23T03:55 — Creates @create-something/components/newsletter</p>
+				<p class="code-secondary">2025-12-23T03:55 — Creates @create-something/canon/newsletter</p>
 				<p class="code-secondary">2025-12-23T03:57 — Updates io, space, agency to use shared module</p>
 				<p class="code-secondary">2025-12-23T03:58 — Type-check passes, commit created</p>
 				<p class="code-success">2025-12-23T03:59 — Findings closed, harness resumed</p>
@@ -835,7 +835,7 @@ export async function POST({ request }) {
 		<div class="pt-6 paper-footer">
 			<p class="footer-text">
 				This paper documents a live incident from the CREATE SOMETHING harness, December 2025.
-				The newsletter module is available at <code class="inline-code">@create-something/components/newsletter</code>.
+				The newsletter module is available at <code class="inline-code">@create-something/canon/newsletter</code>.
 			</p>
 			<div class="flex justify-between mt-4">
 				<a href="/papers" class="footer-link">&larr; All Papers</a>

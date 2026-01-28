@@ -5,7 +5,7 @@
  * "Tend to what matters."
  */
 
-@import '@create-something/components/styles/canon.css';
+@import '@create-something/canon/styles/canon.css';
 
 /* Layout utilities from Tailwind */
 @tailwind base;
@@ -67,4 +67,34 @@ a {
 
 a:hover {
 	opacity: 0.8;
+}
+
+/* ============================================
+   MOBILE TOUCH TARGETS
+   Tufte: Information must be accessible.
+   Apple HIG: 44px minimum tap targets.
+   ============================================ */
+
+@media (max-width: 768px) {
+	button,
+	.btn,
+	[role="button"],
+	.nav-link,
+	.nav-item {
+		min-height: 44px;
+	}
+
+	/* Checkboxes need visual affordance, not just hit area */
+	input[type="checkbox"] {
+		width: 20px;
+		height: 20px;
+	}
+
+	/* Ensure adequate spacing for touch */
+	input,
+	select,
+	textarea {
+		min-height: 44px;
+		font-size: 16px; /* Prevents iOS zoom on focus */
+	}
 }

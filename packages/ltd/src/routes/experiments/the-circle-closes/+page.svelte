@@ -10,7 +10,7 @@
 	 * "The tool reveals its own concealment."
 	 */
 
-	import { TriadHealth, HermeneuticCircle, IsometricAssembly, SEO } from '@create-something/components';
+	import { TriadHealth, HermeneuticCircle, IsometricAssembly, SEO } from '@create-something/canon';
 
 	let { data } = $props();
 

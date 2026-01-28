@@ -2,7 +2,7 @@
 export default {
   content: [
     './src/**/*.{html,js,svelte,ts}',
-    '../components/src/**/*.{html,js,svelte,ts}'
+    '../canon/src/**/*.{svelte,js,ts}'
   ],
   theme: {
     extend: {

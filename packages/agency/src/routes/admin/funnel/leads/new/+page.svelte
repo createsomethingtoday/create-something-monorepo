@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import type { LeadInput, LeadSource, FunnelStage } from '$lib/funnel';
 
 	let submitting = $state(false);

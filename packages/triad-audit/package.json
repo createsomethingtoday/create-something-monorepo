@@ -24,7 +24,7 @@
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {
-    "@create-something/components": "workspace:^",
+    "@create-something/canon": "workspace:^",
     "@modelcontextprotocol/sdk": "^1.24.0",
     "fast-glob": "^3.3.2",
     "jscpd": "^4.0.5",

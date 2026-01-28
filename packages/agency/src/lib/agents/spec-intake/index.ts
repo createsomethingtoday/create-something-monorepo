@@ -149,7 +149,7 @@ We also offer consulting services for custom AI systems, automation, and transfo
 - Integrates with Claude Code
 
 **Canon CSS Starter** - Free, 5 minutes
-- npm install @create-something/components
+- npm install @create-something/canon
 - Golden ratio spacing, semantic colors
 - WCAG AA compliant, works with Tailwind
 

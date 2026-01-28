@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	// This page handles the redirect from magic link verification.
 	// The +page.server.ts does the actual work and redirects.
 </script>

@@ -1,0 +1,150 @@
+/**
+ * Canon Prose Styles
+ * 
+ * Shared typography for markdown content across properties.
+ * Import via: @import '@create-something/canon/styles/prose.css';
+ * 
+ * Apply with class="prose" on your article container.
+ * Properties can extend with .prose-{property} for customizations.
+ */
+
+.prose {
+  color: var(--color-fg-primary);
+  line-height: 1.7;
+}
+
+.prose h2 {
+  font-size: var(--text-h2);
+  font-weight: 700;
+  margin: var(--space-xl) 0 var(--space-md);
+  color: var(--color-fg-primary);
+}
+
+.prose h3 {
+  font-size: var(--text-h3);
+  font-weight: 600;
+  margin: var(--space-lg) 0 var(--space-sm);
+  color: var(--color-fg-secondary);
+}
+
+.prose h4 {
+  font-size: var(--text-h4);
+  font-weight: 600;
+  margin: var(--space-md) 0 var(--space-sm);
+  color: var(--color-fg-secondary);
+}
+
+.prose p {
+  margin: var(--space-md) 0;
+  font-size: var(--text-body);
+  color: var(--color-fg-secondary);
+  line-height: 1.8;
+}
+
+.prose ul,
+.prose ol {
+  margin: var(--space-md) 0;
+  padding-left: var(--space-lg);
+}
+
+.prose li {
+  margin: var(--space-xs) 0;
+  color: var(--color-fg-secondary);
+}
+
+.prose a {
+  color: var(--color-fg-primary);
+  text-decoration: underline;
+  text-decoration-color: var(--color-border-emphasis);
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--duration-micro) var(--ease-standard);
+}
+
+.prose a:hover {
+  text-decoration-color: var(--color-fg-primary);
+}
+
+.prose strong {
+  font-weight: 600;
+  color: var(--color-fg-primary);
+}
+
+.prose em {
+  font-style: italic;
+}
+
+.prose blockquote {
+  border-left: 2px solid var(--color-border-emphasis);
+  padding-left: var(--space-md);
+  margin: var(--space-lg) 0;
+  font-style: italic;
+  color: var(--color-fg-tertiary);
+}
+
+.prose code {
+  background: var(--color-bg-subtle);
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9em;
+  font-family: var(--font-mono);
+  color: var(--color-fg-primary);
+}
+
+.prose pre {
+  background: var(--color-bg-subtle);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  margin: var(--space-lg) 0;
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--space-lg) 0;
+  border: 1px solid var(--color-border-default);
+}
+
+.prose th {
+  background: var(--color-bg-subtle);
+  padding: var(--space-sm);
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid var(--color-border-emphasis);
+  color: var(--color-fg-primary);
+}
+
+.prose td {
+  padding: var(--space-sm);
+  border-bottom: 1px solid var(--color-border-default);
+  color: var(--color-fg-secondary);
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--color-border-default);
+  margin: var(--space-xl) 0;
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  margin: var(--space-lg) 0;
+}
+
+.prose figure {
+  margin: var(--space-lg) 0;
+}
+
+.prose figcaption {
+  font-size: var(--text-body-sm);
+  color: var(--color-fg-muted);
+  margin-top: var(--space-sm);
+  text-align: center;
+}

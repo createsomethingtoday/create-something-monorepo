@@ -18,10 +18,10 @@
 	 */
 	import { onMount } from 'svelte';
 	import { Spritz } from '@create-something/spritz';
-	import { CanonReveal } from '@create-something/components/motion';
+	import { CanonReveal } from '@create-something/canon/motion';
 	import { BookOpen, Play, RotateCcw, ChevronRight, Layers, Timer, Shield, Eye, EyeOff } from 'lucide-svelte';
-	import { isDNTEnabled, SEO } from '@create-something/components/gdpr';
-	import { SEO as SEOComponent } from '@create-something/components';
+	import { isDNTEnabled, SEO } from '@create-something/canon/gdpr';
+	import { SEO as SEOComponent } from '@create-something/canon';
 	import { canonRevealStyles, type CanonRevealStyle } from '$lib/animations/canon-reveals';
 
 	// ===========================================

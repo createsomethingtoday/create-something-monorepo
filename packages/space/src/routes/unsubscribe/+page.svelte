@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { SEO } from '@create-something/components';
-	import { UnsubscribePage } from '@create-something/components/newsletter';
+	import { SEO } from '@create-something/canon';
+	import { UnsubscribePage } from '@create-something/canon/newsletter';
 
 	interface Props {
 		data: {

@@ -9,7 +9,7 @@
 	 * - Clarity over cleverness
 	 * - Specificity over generality
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 
 	let { data } = $props();
 

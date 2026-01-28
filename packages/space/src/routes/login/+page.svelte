@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { SEO } from '@create-something/components';
-	import { LoginForm, SignupForm, MagicLinkForm } from '@create-something/components/auth';
+	import { SEO } from '@create-something/canon';
+	import { LoginForm, SignupForm, MagicLinkForm } from '@create-something/canon/auth';
 	import { goto, invalidateAll } from '$app/navigation';
 
 	interface AuthResponse {

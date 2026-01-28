@@ -2,13 +2,13 @@
   CREATE SOMETHING Design System
   Property: .ltd (Philosophy / Canon)
 
-  Imports shared Canon tokens from @create-something/components
+  Imports shared Canon tokens from @create-something/canon
   This is the canonical reference - minimal customization.
 */
 
 /* Import shared Canon Design System (must precede @tailwind) */
-@import '@create-something/components/styles/canon.css';
-@import '@create-something/components/styles/components.css';
+@import '@create-something/canon/styles/canon.css';
+@import '@create-something/canon/styles/components.css';
 
 /* Tailwind CSS directives */
 @tailwind base;

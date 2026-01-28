@@ -5,7 +5,7 @@
 	 * Testing whether Haiku 4.5 with extended thinking achieves
 	 * near-Sonnet performance at 10% of the cost.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO

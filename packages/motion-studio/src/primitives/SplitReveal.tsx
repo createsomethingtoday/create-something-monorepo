@@ -96,31 +96,19 @@ export const SplitReveal: React.FC<SplitRevealProps> = ({
   const panelHeight = isHorizontal ? height : (height - gap) / 2;
   
   // Calculate transforms based on reveal style
-  const getFirstTransform = () => {
+  // isFirst: true for first panel (slides in from negative), false for second (slides in from positive)
+  const getPanelTransform = (progress: number, isFirst: boolean) => {
+    const direction = isFirst ? -1 : 1;
+    
     switch (revealStyle) {
       case 'slide':
         return isHorizontal
-          ? `translateX(${interpolate(firstProgress, [0, 1], [-panelWidth, 0])}px)`
-          : `translateY(${interpolate(firstProgress, [0, 1], [-panelHeight, 0])}px)`;
+          ? `translateX(${interpolate(progress, [0, 1], [direction * panelWidth, 0])}px)`
+          : `translateY(${interpolate(progress, [0, 1], [direction * panelHeight, 0])}px)`;
       case 'wipe':
         return 'none';
       case 'scale':
-        return `scale(${interpolate(firstProgress, [0, 1], [0.8, 1])})`;
-      default:
-        return 'none';
-    }
-  };
-  
-  const getSecondTransform = () => {
-    switch (revealStyle) {
-      case 'slide':
-        return isHorizontal
-          ? `translateX(${interpolate(secondProgress, [0, 1], [panelWidth, 0])}px)`
-          : `translateY(${interpolate(secondProgress, [0, 1], [panelHeight, 0])}px)`;
-      case 'wipe':
-        return 'none';
-      case 'scale':
-        return `scale(${interpolate(secondProgress, [0, 1], [0.8, 1])})`;
+        return `scale(${interpolate(progress, [0, 1], [0.8, 1])})`;
       default:
         return 'none';
     }
@@ -161,7 +149,7 @@ export const SplitReveal: React.FC<SplitRevealProps> = ({
         style={{
           width: panelWidth,
           height: panelHeight,
-          transform: getFirstTransform(),
+          transform: getPanelTransform(firstProgress, true),
           opacity: interpolate(firstProgress, [0, 0.5, 1], [0, 1, 1]),
           clipPath: getClipPath(firstProgress, true),
           overflow: 'hidden',
@@ -175,7 +163,7 @@ export const SplitReveal: React.FC<SplitRevealProps> = ({
         style={{
           width: panelWidth,
           height: panelHeight,
-          transform: getSecondTransform(),
+          transform: getPanelTransform(secondProgress, false),
           opacity: interpolate(secondProgress, [0, 0.5, 1], [0, 1, 1]),
           clipPath: getClipPath(secondProgress, false),
           overflow: 'hidden',

@@ -5,7 +5,7 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { slugify } from '@create-something/components';
+import { slugify } from '@create-something/canon';
 import type { ProcessedScreenshot, DocGenOptions, DocGenResult } from './types.js';
 
 /**

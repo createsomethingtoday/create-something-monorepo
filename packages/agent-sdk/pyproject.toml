@@ -29,6 +29,9 @@ dependencies = [
 gemini = [
     "google-genai>=1.0.0",  # New unified Gemini SDK (replaces deprecated google-generativeai)
 ]
+moonshot = [
+    "openai>=1.0.0",  # OpenAI-compatible SDK for Moonshot Kimi K2 API
+]
 modal = [
     "modal>=0.66.0",  # Modal for sandboxed RLM execution
     "RestrictedPython>=7.0",  # Secure sandbox for RLM code execution
@@ -44,7 +47,7 @@ dev = [
     "mypy>=1.13.0",           # Type checking
 ]
 all = [
-    "create-something-agents[server,dev,gemini,modal]",
+    "create-something-agents[server,dev,gemini,moonshot,modal]",
 ]
 
 [project.scripts]

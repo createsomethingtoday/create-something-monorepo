@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	// This page should redirect immediately via +page.server.ts
 	// This component only shows briefly during loading
 </script>

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import BeadsGraph from '$lib/components/BeadsGraph.svelte';
-	import { SEO } from '@create-something/components';
+	import { BeadsGraph } from '@create-something/canon/domains/space';
+	import { SEO } from '@create-something/canon';
 
 	let { data } = $props();
 </script>

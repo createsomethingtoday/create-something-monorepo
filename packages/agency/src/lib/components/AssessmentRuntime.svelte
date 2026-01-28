@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import ProgressIndicator from './ProgressIndicator.svelte';
-	import AssessmentStep from './AssessmentStep.svelte';
+	import { ProgressIndicator, AssessmentStep } from '@create-something/canon/domains/agency';
 	import InsightReveal from './InsightReveal.svelte';
 	import {
 		assessmentSteps,

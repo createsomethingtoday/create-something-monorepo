@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SEO } from '@create-something/components';
+	import { SEO, Card } from '@create-something/canon';
 	import type { PageData } from './$types';
 	import { formatNumber, formatCurrency, formatPercent, getDeltaIndicator } from '$lib/funnel';
 
@@ -36,31 +36,31 @@
 	<section class="section">
 		<h2 class="section-title">Awareness</h2>
 		<div class="metrics-grid">
-			<div class="metric-card">
+			<Card variant="standard" radius="md" padding="md" class="flex flex-col gap-2">
 				<span class="metric-label">Impressions</span>
 				<span class="metric-value">{formatNumber(summary.totals.impressions)}</span>
 				<span class="metric-delta" class:positive={summary.changes.impressions_delta > 0}>
 					{getDeltaIndicator(summary.changes.impressions_delta)} vs prior
 				</span>
-			</div>
-			<div class="metric-card">
+			</Card>
+			<Card variant="standard" radius="md" padding="md" class="flex flex-col gap-2">
 				<span class="metric-label">Reach</span>
 				<span class="metric-value">{formatNumber(summary.totals.reach)}</span>
 				<span class="metric-delta" class:positive={summary.changes.reach_delta > 0}>
 					{getDeltaIndicator(summary.changes.reach_delta)} vs prior
 				</span>
-			</div>
-			<div class="metric-card">
+			</Card>
+			<Card variant="standard" radius="md" padding="md" class="flex flex-col gap-2">
 				<span class="metric-label">Engagements</span>
 				<span class="metric-value">{formatNumber(summary.totals.engagements)}</span>
 				<span class="metric-delta" class:positive={summary.changes.engagements_delta > 0}>
 					{getDeltaIndicator(summary.changes.engagements_delta)} vs prior
 				</span>
-			</div>
-			<div class="metric-card">
+			</Card>
+			<Card variant="standard" radius="md" padding="md" class="flex flex-col gap-2">
 				<span class="metric-label">Engagement Rate</span>
 				<span class="metric-value">{formatPercent(summary.conversion_rates.impression_to_engagement)}</span>
-			</div>
+			</Card>
 		</div>
 	</section>
 
@@ -68,14 +68,14 @@
 	<section class="section">
 		<h2 class="section-title">Consideration</h2>
 		<div class="metrics-grid">
-			<div class="metric-card">
+			<Card variant="standard" radius="md" padding="md" class="flex flex-col gap-2">
 				<span class="metric-label">Website Visits</span>
 				<span class="metric-value">{formatNumber(summary.totals.website_visits)}</span>
-			</div>
-			<div class="metric-card">
+			</Card>
+			<Card variant="standard" radius="md" padding="md" class="flex flex-col gap-2">
 				<span class="metric-label">Visit → Lead</span>
 				<span class="metric-value">{formatPercent(summary.conversion_rates.visit_to_lead)}</span>
-			</div>
+			</Card>
 		</div>
 	</section>
 
@@ -83,18 +83,18 @@
 	<section class="section">
 		<h2 class="section-title">Decision</h2>
 		<div class="metrics-grid">
-			<div class="metric-card">
+			<Card variant="standard" radius="md" padding="md" class="flex flex-col gap-2">
 				<span class="metric-label">Discovery Calls</span>
 				<span class="metric-value">{summary.totals.discovery_calls}</span>
-			</div>
-			<div class="metric-card">
+			</Card>
+			<Card variant="standard" radius="md" padding="md" class="flex flex-col gap-2">
 				<span class="metric-label">Proposals Sent</span>
 				<span class="metric-value">{summary.totals.proposals_sent}</span>
-			</div>
-			<div class="metric-card">
+			</Card>
+			<Card variant="standard" radius="md" padding="md" class="flex flex-col gap-2">
 				<span class="metric-label">Call → Proposal</span>
 				<span class="metric-value">{formatPercent(summary.conversion_rates.call_to_proposal)}</span>
-			</div>
+			</Card>
 		</div>
 	</section>
 
@@ -102,18 +102,18 @@
 	<section class="section">
 		<h2 class="section-title">Conversion</h2>
 		<div class="metrics-grid">
-			<div class="metric-card highlight">
+			<Card variant="glass" radius="md" padding="md" class="glass-emphasis flex flex-col gap-2">
 				<span class="metric-label">Deals Closed</span>
 				<span class="metric-value">{summary.totals.deals_closed}</span>
-			</div>
-			<div class="metric-card highlight">
+			</Card>
+			<Card variant="glass" radius="md" padding="md" class="glass-emphasis flex flex-col gap-2">
 				<span class="metric-label">Revenue</span>
 				<span class="metric-value">{formatCurrency(summary.totals.revenue)}</span>
-			</div>
-			<div class="metric-card">
+			</Card>
+			<Card variant="standard" radius="md" padding="md" class="flex flex-col gap-2">
 				<span class="metric-label">Proposal → Close</span>
 				<span class="metric-value">{formatPercent(summary.conversion_rates.proposal_to_close)}</span>
-			</div>
+			</Card>
 		</div>
 	</section>
 
@@ -176,12 +176,12 @@
 	<!-- Quick Actions -->
 	<section class="section">
 		<h2 class="section-title">Quick Actions</h2>
-		<div class="actions">
+		<Card variant="glass" radius="md" padding="md" class="glass-emphasis flex flex-wrap gap-4">
 			<a href="/admin/funnel/record" class="action-button">Record Daily Metrics</a>
 			<a href="/admin/funnel/leads/new" class="action-button">Add Lead</a>
 			<a href="/admin/social" class="action-button">Social Calendar</a>
 			<a href="/admin/community" class="action-button">Community</a>
-		</div>
+		</Card>
 	</section>
 </main>
 
@@ -222,21 +222,6 @@
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 		gap: var(--space-md);
-	}
-
-	.metric-card {
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-		padding: var(--space-md);
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-xs);
-	}
-
-	.metric-card.highlight {
-		background: var(--color-bg-surface);
-		border-color: var(--color-border-emphasis);
 	}
 
 	.metric-label {
@@ -349,11 +334,6 @@
 		text-align: center;
 		background: var(--color-bg-subtle);
 		border-radius: var(--radius-md);
-	}
-
-	.actions {
-		display: flex;
-		gap: var(--space-md);
 	}
 
 	.action-button {

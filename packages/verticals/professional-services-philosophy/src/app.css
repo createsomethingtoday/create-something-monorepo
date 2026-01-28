@@ -14,9 +14,9 @@
 
 /* ==========================================================================
    Canon Design Tokens - Single Source of Truth
-   Import from @create-something/components (MUST come before @tailwind)
+   Import from @create-something/canon (MUST come before @tailwind)
    ========================================================================== */
-@import '@create-something/components/styles/tokens.css';
+@import '@create-something/canon/styles/tokens.css';
 
 @tailwind base;
 @tailwind components;
@@ -27,7 +27,7 @@
    Import AFTER Tailwind to apply Canon base styles
    (PostCSS warning expected but styles are still processed)
    ========================================================================== */
-@import '@create-something/components/styles/vertical-base.css';
+@import '@create-something/canon/styles/vertical-base.css';
 
 /* ==========================================================================
    Template-Specific Token Overrides

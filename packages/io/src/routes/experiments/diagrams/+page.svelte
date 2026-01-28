@@ -14,7 +14,7 @@
     type PieChartData,
     type TimelineData,
     type MatrixData,
-  } from '@create-something/components';
+  } from '@create-something/canon';
 
   // Flow diagram data
   const flowData: FlowDiagramData = {

@@ -1,6 +1,6 @@
 import type { PageServerLoad } from './$types';
-import type { Paper } from '@create-something/components/types';
-import { getPlatform } from '@create-something/components/platform';
+import type { Paper } from '@create-something/canon/types';
+import { getPlatform } from '@create-something/canon/platform';
 import { getFileBasedExperiments } from '$lib/config/fileBasedExperiments';
 
 function sortByFeaturedThenDate<T extends { featured?: number; published_at?: string | null; created_at?: string }>(

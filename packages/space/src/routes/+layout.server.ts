@@ -1,5 +1,5 @@
 import type { LayoutServerLoad } from './$types';
-import { createSessionManager } from '@create-something/components/auth';
+import { createSessionManager } from '@create-something/canon/auth';
 
 export const load: LayoutServerLoad = async ({ cookies, platform }) => {
 	// Get user from session cookies (with auto-refresh)

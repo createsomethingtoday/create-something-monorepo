@@ -9,7 +9,7 @@
 	 * After: ~120 lines - components handle all visualization logic
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import { onMount } from 'svelte';
 	import { MetricCard, HighDensityTable, Sparkline, DailyGrid, FlowGrid } from '@create-something/tufte';
 
@@ -308,7 +308,7 @@
 </div>
 
 <!--
-  Styles for this dashboard are now shared via @create-something/components/styles/components.css
+  Styles for this dashboard are now shared via @create-something/canon/styles/components.css
   Classes used: page-title, page-description, section-header, section-title, section-subtitle,
                 select-field, loading-text, table-card, table-title, chart-card, chart-title,
                 chart-subtitle, chart-value, chart-label, empty-state, info-footer, footer-text,

@@ -55,7 +55,7 @@ published: true
 </div>
 </div>
 <codeblock code="{`&lt;script" lang="ts">
-  import { TextField } from '@create-something/components';
+  import { TextField } from '@create-something/canon';
 
   let name = $state('');
 
@@ -162,7 +162,7 @@ published: true
 </div>
 </div>
 <codeblock code="{`&lt;script" lang="ts">
-  import { Checkbox, CheckboxGroup } from '@create-something/components';
+  import { Checkbox, CheckboxGroup } from '@create-something/canon';
 
   let notifications = $state(['email']);
 
@@ -410,7 +410,7 @@ published: true
 </nav>
 </div>
 <codeblock code="{`&lt;script" lang="ts">
-  import { MultiStepForm, FormStep } from '@create-something/components';
+  import { MultiStepForm, FormStep } from '@create-something/canon';
 
   let currentStep = 1;
   const steps = [

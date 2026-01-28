@@ -1,0 +1,172 @@
+/**
+ * Glass Design System - "The Automation Layer"
+ * 
+ * Glass conveys CREATE SOMETHING's positioning: the transparent layer between
+ * user and outcome. The tool recedes; the outcome remains.
+ * 
+ * This file is intentionally separate for projects that want glass utilities
+ * without the full Canon system. Import via:
+ *   @import '@create-something/canon/styles/glass.css';
+ * 
+ * For the full Canon system with glass included, import:
+ *   @import '@create-something/canon/styles/canon.css';
+ */
+
+/* Glass utilities are defined in canon.css under the @layer utilities section.
+ * This file re-exports them for standalone use.
+ * 
+ * Available classes:
+ * - .glass, .glass-sm, .glass-lg, .glass-xl, .glass-2xl
+ * - .glass-elevated, .glass-card
+ * - .liquid-glass, .liquid-glass-icon
+ * - .liquid-glass-tint-{purple,blue,emerald,amber,rose,cyan}
+ * - .liquid-glass-dropdown, .liquid-glass-modal
+ * 
+ * All classes include accessibility fallbacks for:
+ * - prefers-reduced-motion
+ * - prefers-reduced-transparency
+ * - prefers-contrast: more
+ */
+
+@import './tokens.css';
+
+/* Re-export glass utilities from canon.css */
+@layer utilities {
+  /* Glass base effect */
+  .glass {
+    backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+    -webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+    background-color: var(--glass-bg-light);
+    border: 1px solid var(--glass-border-light);
+  }
+
+  .glass-sm {
+    backdrop-filter: blur(var(--glass-blur-sm)) var(--glass-saturate-sm);
+    -webkit-backdrop-filter: blur(var(--glass-blur-sm)) var(--glass-saturate-sm);
+    background-color: var(--glass-bg-subtle);
+    border: 1px solid var(--glass-border-subtle);
+  }
+
+  .glass-lg {
+    backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+    -webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+    background-color: var(--glass-bg-medium);
+    border: 1px solid var(--glass-border-medium);
+  }
+
+  .glass-xl {
+    backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
+    -webkit-backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
+    background-color: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border-strong);
+  }
+
+  .glass-elevated {
+    backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+    -webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+    background-color: var(--glass-bg-medium);
+    border: 1px solid var(--glass-border-medium);
+    box-shadow: var(--glass-shadow-md);
+  }
+
+  .glass-card {
+    backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+    -webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+    background-color: var(--glass-bg-light);
+    border: 1px solid var(--glass-border-light);
+    border-radius: var(--radius-lg);
+    transition: all var(--duration-standard) var(--ease-standard);
+  }
+
+  .glass-card:hover {
+    background-color: var(--glass-bg-medium);
+    border-color: var(--glass-border-medium);
+    box-shadow: var(--glass-shadow-sm);
+  }
+
+  /* Liquid Glass */
+  .liquid-glass {
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+    -webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+    background-color: var(--glass-bg-light);
+    border: 1px solid var(--glass-border-medium);
+  }
+
+  .liquid-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--liquid-glass-highlight-primary);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  .liquid-glass::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--liquid-glass-edge-glow);
+    pointer-events: none;
+  }
+
+  /* Liquid Glass Tints */
+  .liquid-glass-tint-purple {
+    background-color: color-mix(in srgb, var(--liquid-glass-tint-purple) 12%, var(--glass-bg-light));
+  }
+
+  .liquid-glass-tint-blue {
+    background-color: color-mix(in srgb, var(--liquid-glass-tint-blue) 12%, var(--glass-bg-light));
+  }
+
+  .liquid-glass-tint-emerald {
+    background-color: color-mix(in srgb, var(--liquid-glass-tint-emerald) 12%, var(--glass-bg-light));
+  }
+
+  .liquid-glass-tint-amber {
+    background-color: color-mix(in srgb, var(--liquid-glass-tint-amber) 10%, var(--glass-bg-light));
+  }
+
+  .liquid-glass-tint-rose {
+    background-color: color-mix(in srgb, var(--liquid-glass-tint-rose) 10%, var(--glass-bg-light));
+  }
+
+  .liquid-glass-tint-cyan {
+    background-color: color-mix(in srgb, var(--liquid-glass-tint-cyan) 12%, var(--glass-bg-light));
+  }
+
+  /* Accessibility */
+  @media (prefers-reduced-transparency: reduce) {
+    .glass,
+    .glass-sm,
+    .glass-lg,
+    .glass-xl,
+    .glass-elevated,
+    .glass-card,
+    .liquid-glass {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background-color: var(--color-bg-surface);
+      border-color: var(--color-border-emphasis);
+    }
+  }
+
+  @media (prefers-contrast: more) {
+    .glass,
+    .glass-sm,
+    .glass-lg,
+    .glass-xl,
+    .glass-elevated,
+    .glass-card,
+    .liquid-glass {
+      backdrop-filter: blur(var(--glass-blur-sm));
+      -webkit-backdrop-filter: blur(var(--glass-blur-sm));
+      background-color: rgba(0, 0, 0, 0.90);
+      border: 2px solid var(--color-border-strong);
+    }
+  }
+}

@@ -9,8 +9,8 @@
 	 * Canon: Motion and type create hierarchy without color
 	 */
 
-	import { HeroParallax } from '@create-something/components/motion';
-	import { TypographyHero } from '@create-something/components/typography';
+	import { HeroParallax } from '@create-something/canon/motion';
+	import { TypographyHero } from '@create-something/canon/typography';
 	import { siteConfig } from '$lib/config/context';
 
 	interface Props {

@@ -4,7 +4,7 @@
 	 * Overview of architecture services offered
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import { config } from '$lib/config/runtime';
 	import StructuredData from '$lib/components/StructuredData.svelte';
 </script>

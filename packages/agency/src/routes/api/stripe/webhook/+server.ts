@@ -8,7 +8,7 @@
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
 import { createStripeClient, HANDLED_WEBHOOK_EVENTS } from '$lib/services/stripe';
-import { createPersistentLogger, createLogger, type Logger } from '@create-something/components/utils';
+import { createPersistentLogger, createLogger, type Logger } from '@create-something/canon/utils';
 import type Stripe from 'stripe';
 
 export const POST: RequestHandler = async ({ request, platform }) => {

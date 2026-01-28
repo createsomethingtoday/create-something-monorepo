@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 
 	let { data }: { data: PageData } = $props();
 	const { product } = data;

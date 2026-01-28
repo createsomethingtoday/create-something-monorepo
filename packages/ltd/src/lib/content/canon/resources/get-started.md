@@ -14,7 +14,7 @@ published: true
 <p>Install the Canon components package in your SvelteKit project.</p>
 <div class="code-block">
 <div class="code-header">Terminal</div>
-<pre><code>pnpm add @create-something/components</code></pre>
+<pre><code>pnpm add @create-something/canon</code></pre>
 </div>
 <div class="note">
 <strong>Requirements:</strong> SvelteKit 2.0+ and Svelte 5.0+
@@ -31,19 +31,19 @@ published: true
 <p>Includes tokens, base styles, and utility classes.</p>
 <div class="code-block">
 <div class="code-header">src/app.css</div>
-<pre><code>{`@import '@create-something/components/styles/canon.css';`}</code></pre>
+<pre><code>{`@import '@create-something/canon/styles/canon.css';`}</code></pre>
 </div>
 <h3>Option 2: Tokens Only</h3>
 <p>Just the CSS custom properties, for custom theming.</p>
 <div class="code-block">
 <div class="code-header">src/app.css</div>
-<pre><code>{`@import '@create-something/components/styles/tokens.css';`}</code></pre>
+<pre><code>{`@import '@create-something/canon/styles/tokens.css';`}</code></pre>
 </div>
 <h3>Option 3: With Tailwind</h3>
 <p>For projects using Tailwind CSS alongside Canon.</p>
 <div class="code-block">
 <div class="code-header">src/app.css</div>
-<pre><code>{`@import '@create-something/components/styles/tokens.css';
+<pre><code>{`@import '@create-something/canon/styles/tokens.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;`}</code></pre>
@@ -56,7 +56,7 @@ published: true
 <div class="code-block">
 <div class="code-header">+page.svelte</div>
 <pre><code>{`<script lang="ts">
-  import { Button, TextField, Card } from '@create-something/components';
+  import { Button, TextField, Card } from '@create-something/canon';
 
   let email = $state('');
 </script>

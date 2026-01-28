@@ -1,8 +1,10 @@
 <script lang="ts">
   import '../app.css';
   import { page } from '$app/stores';
-  import { onNavigate } from '$app/navigation';
-  import { Navigation, Footer, ModeIndicator, SkipToContent, Analytics } from '@create-something/components';
+  import { onMount } from 'svelte';
+  import { afterNavigate, onNavigate, goto, invalidateAll } from '$app/navigation';
+  import { Navigation, Footer, ModeIndicator, SkipToContent, Analytics, LayoutSEO } from '@create-something/canon';
+  import { UnifiedSearch } from '@create-something/canon/navigation';
   import type { LayoutData } from './$types';
 
   interface Props {
@@ -11,7 +13,13 @@
   }
 
   let { children, data }: Props = $props();
-  const { user } = data;
+
+  // Handle logout
+  async function handleLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    await invalidateAll();
+    goto('/');
+  }
 
   // View Transitions API - Hermeneutic Navigation
   // .learn: Educational (300ms)
@@ -27,11 +35,55 @@
     });
   });
 
+  // Handle hash scrolling
+  function scrollToHash(hash: string) {
+    if (!hash) return;
+    const element = document.querySelector(hash);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  // Scroll to hash on mount + cross-property entry
+  onMount(() => {
+    // Cross-property entry animation
+    const transitionFrom = sessionStorage.getItem('cs-transition-from');
+    if (transitionFrom) {
+      sessionStorage.removeItem('cs-transition-from');
+      sessionStorage.removeItem('cs-transition-to');
+      sessionStorage.removeItem('cs-transition-time');
+      document.body.classList.add('transitioning-in');
+      setTimeout(() => document.body.classList.remove('transitioning-in'), 500);
+    }
+
+    if (window.location.hash) {
+      setTimeout(() => scrollToHash(window.location.hash), 100);
+    }
+  });
+
+  // Scroll to hash after navigation
+  afterNavigate(({ to }) => {
+    if (to?.url.hash) {
+      setTimeout(() => scrollToHash(to.url.hash), 100);
+    }
+  });
+
   const navLinks = [
     { label: 'Seeing', href: '/seeing' },
     { label: 'Paths', href: '/paths' },
     { label: 'Praxis', href: '/praxis' },
     { label: 'Progress', href: '/progress' }
+  ];
+
+  // Quick access items for unified search
+  const quickAccessItems = [
+    { id: 'nav-seeing', label: 'Seeing', description: 'Free entry-level course', href: '/seeing', icon: '👁️', keywords: ['free', 'start', 'learn', 'triad'] },
+    { id: 'nav-paths', label: 'Learning Paths', description: 'Structured curriculum', href: '/paths', icon: '🛤️', keywords: ['courses', 'curriculum', 'structured'] },
+    { id: 'nav-praxis', label: 'Praxis', description: 'Hands-on exercises', href: '/praxis', icon: '⚡', keywords: ['practice', 'exercises', 'apply'] },
+    { id: 'nav-progress', label: 'Progress', description: 'Track your learning', href: '/progress', icon: '📊', keywords: ['track', 'status', 'completion'] },
+    { id: 'nav-space', label: 'Go to .space', description: 'Interactive experiments', href: 'https://createsomething.space', icon: '🧪', keywords: ['explore', 'try', 'interactive'] },
+    { id: 'nav-io', label: 'Go to .io', description: 'Research papers', href: 'https://createsomething.io', icon: '📖', keywords: ['papers', 'research'] },
+    { id: 'nav-agency', label: 'Go to .agency', description: 'Professional services', href: 'https://createsomething.agency', icon: '🔨', keywords: ['services', 'hire'] },
   ];
 
   // DRY: Centralized copy for meta tags and components
@@ -44,117 +96,21 @@
 </script>
 
 <svelte:head>
-  <title>CREATE SOMETHING LMS | Learn the Ethos</title>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- Primary Meta Tags -->
-  <meta name="description" content={SITE_COPY.descriptionFull} />
-  <meta name="keywords" content="AI development education, Claude Code learning, Subtractive Triad, Canon design system, AI-native patterns, development philosophy, learn by doing, hermeneutic learning" />
-  <meta name="author" content="Micah Johnson" />
-  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-  <meta name="googlebot" content="index, follow" />
-
-  <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://learn.createsomething.space" />
-  <meta property="og:title" content="CREATE SOMETHING LMS | Learn the Ethos" />
-  <meta property="og:description" content={SITE_COPY.descriptionFull} />
-  <meta property="og:image" content="https://learn.createsomething.space/og-image.svg" />
-  <meta property="og:image:type" content="image/svg+xml" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
-  <meta property="og:site_name" content="CREATE SOMETHING LMS" />
-  <meta property="og:locale" content="en_US" />
-
-  <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:url" content="https://learn.createsomething.space" />
-  <meta name="twitter:title" content="CREATE SOMETHING LMS | Learn the Ethos" />
-  <meta name="twitter:description" content={SITE_COPY.descriptionShort} />
-  <meta name="twitter:image" content="https://learn.createsomething.space/og-image.svg" />
-  <meta name="twitter:creator" content="@micahryanjohnson" />
-
-  <!-- Additional SEO -->
-  <meta name="theme-color" content="#000000" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-
-  <!-- AEO (Answer Engine Optimization) for AI/LLM queries -->
-  <meta name="article:section" content="AI Development Education, Philosophy-Driven Learning" />
-  <meta name="article:tag" content="Subtractive Triad, Canon Design, Claude Code, AI-Native Development, Hermeneutic Learning" />
-  <meta name="citation_title" content="CREATE SOMETHING LMS: Learning the Ethos Through Practice" />
-  <meta name="citation_author" content="Micah Johnson" />
-  <meta name="citation_publication_date" content="2025" />
-
-  <!-- Links -->
-  <link rel="icon" href="/favicon.ico" sizes="any" />
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link rel="canonical" href="https://learn.createsomething.space" />
+  <!-- Fonts - Must be in head for performance -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
   <link
     href="https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@200..700&family=JetBrains+Mono:wght@400;500;600&display=swap"
     rel="stylesheet"
   />
-  <link rel="manifest" href="/manifest.json" />
-
-  <!-- Structured Data (JSON-LD) for AEO -->
-  {@html `<script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "EducationalOrganization",
-      "name": "CREATE SOMETHING LMS",
-      "alternateName": "Learn the Ethos",
-      "description": "${SITE_COPY.descriptionFull}",
-      "url": "https://learn.createsomething.space",
-      "inLanguage": "en-US",
-      "author": {
-        "@type": "Person",
-        "name": "Micah Johnson",
-        "url": "https://www.linkedin.com/in/micahryanjohnson/",
-        "jobTitle": "AI-Native Development Researcher"
-      },
-      "publisher": {
-        "@type": "Organization",
-        "name": "CREATE SOMETHING",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://learn.createsomething.space/favicon.svg"
-        }
-      },
-      "educationalCredentialAwarded": "CREATE SOMETHING Practitioner",
-      "hasCourse": [
-        {
-          "@type": "Course",
-          "name": "Foundations",
-          "description": "The Subtractive Triad - Core philosophy of subtractive creation",
-          "provider": { "@type": "Organization", "name": "CREATE SOMETHING" }
-        },
-        {
-          "@type": "Course",
-          "name": "Craft",
-          "description": "Canon CSS - The design system that recedes",
-          "provider": { "@type": "Organization", "name": "CREATE SOMETHING" }
-        },
-        {
-          "@type": "Course",
-          "name": "Infrastructure",
-          "description": "Cloudflare Mastery - Building on the edge",
-          "provider": { "@type": "Organization", "name": "CREATE SOMETHING" }
-        }
-      ],
-      "keywords": ["AI development education", "Claude Code learning", "Subtractive Triad", "Canon design system", "AI-native patterns"],
-      "isPartOf": {
-        "@type": "WebSite",
-        "name": "CREATE SOMETHING",
-        "url": "https://createsomething.io"
-      }
-    }
-  </script>`}
 </svelte:head>
 
-<Analytics property="lms" userId={user?.id} userOptedOut={user?.analytics_opt_out ?? false} />
+<LayoutSEO property="lms" />
+
+<Analytics property="lms" userId={data.user?.id} userOptedOut={false} />
+
+<!-- Unified Search - Cmd/Ctrl+K to open -->
+<UnifiedSearch currentProperty="lms" localItems={quickAccessItems} />
 
 <SkipToContent />
 
@@ -165,8 +121,13 @@
     links={navLinks}
     currentPath={$page.url.pathname}
     fixed={true}
-    ctaLabel={user ? 'Account' : 'Login'}
-    ctaHref={user ? '/account' : '/login'}
+    ctaLabel="Get Started"
+    ctaHref="/seeing"
+    user={data.user}
+    onLogout={handleLogout}
+    showLogin={true}
+    loginHref="/login"
+    accountHref="/account"
   />
 
   <main id="main-content" class="content">
@@ -178,11 +139,13 @@
     showNewsletter={false}
     aboutText={SITE_COPY.descriptionFooter}
     quickLinks={[
+      { label: 'Seeing', href: '/seeing' },
       { label: 'Paths', href: '/paths' },
       { label: 'Praxis', href: '/praxis' },
       { label: 'Progress', href: '/progress' }
     ]}
     showSocial={true}
+    isAuthenticated={!!data.user}
   />
 
   <ModeIndicator current="learn" />

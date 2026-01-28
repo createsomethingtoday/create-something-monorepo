@@ -12,7 +12,7 @@ This is where Canon design meets specific industries. Each vertical is a fully-r
 
 | Dependency | Why It Matters |
 |------------|----------------|
-| `@create-something/components` | Shared UI components (headers, cards, forms) |
+| `@create-something/canon` | Shared UI components (headers, cards, forms) |
 | `packages/templates-platform` | Multi-tenant infrastructure and routing |
 | **SvelteKit** | Framework for all templates |
 | **Tailwind CSS** | Structure utilities |

@@ -1,0 +1,1542 @@
+/*
+  CREATE SOMETHING Canon Design System
+  Shared across all properties: .io, .space, .agency, .ltd
+
+  Philosophy: "Weniger, aber besser" - Dieter Rams
+  Font Stack: Stack Sans Notch (variable weight 200-700) + JetBrains Mono (code)
+
+  This file combines Canon tokens with base styles, utilities, and components.
+  Property-specific customizations live in each app.css.
+
+  Architecture:
+  - tokens.css: Pure token definitions (import this for tokens only)
+  - canon.css: Complete system with base styles (import this for full Canon)
+*/
+
+/* ==========================================================================
+   Canon Design Tokens
+   Imported from the single source of truth
+   ========================================================================== */
+
+@import './tokens.css';
+@import './components.css';
+@import './editorial.css';
+@import './animations.css';
+
+/* ==========================================================================
+   Base Styles - Wrapped in @layer base for Tailwind compatibility
+   These styles apply AFTER Tailwind's preflight reset
+   ========================================================================== */
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    font-optical-sizing: auto;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    background: var(--color-bg-pure);
+    color: var(--color-fg-primary);
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+    letter-spacing: var(--tracking-tight);
+  }
+
+  /* Typography - Golden Ratio Implementation */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-sans);
+    font-optical-sizing: auto;
+  }
+
+  h1 {
+    font-size: var(--text-display-xl);
+    font-weight: var(--font-semibold);
+    line-height: 1.05;
+    letter-spacing: var(--tracking-tighter);
+  }
+
+  h2 {
+    font-size: var(--text-h1);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-tight);
+    letter-spacing: var(--tracking-tighter);
+  }
+
+  h3 {
+    font-size: var(--text-h2);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-snug);
+    letter-spacing: var(--tracking-tight);
+  }
+
+  h4 {
+    font-size: var(--text-h3);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-snug);
+  }
+
+  h5 {
+    font-size: var(--text-h4);
+    font-weight: var(--font-semibold);
+  }
+
+  h6 {
+    font-size: var(--text-h5);
+    font-weight: var(--font-semibold);
+  }
+
+  p {
+    font-size: var(--text-body);
+    line-height: var(--leading-relaxed);
+    letter-spacing: var(--tracking-tight);
+  }
+
+  /* Code and monospace elements */
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
+  }
+}
+
+/* ==========================================================================
+   Custom Scrollbar - Minimal
+   ========================================================================== */
+
+::-webkit-scrollbar {
+  width: 10px;
+  background-color: var(--color-bg-pure);
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--color-bg-pure);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-bg-surface);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-fg-muted);
+}
+
+/* ==========================================================================
+   Section & Content Spacing (Golden Ratio)
+   ========================================================================== */
+
+section {
+  padding-top: var(--space-2xl);
+  padding-bottom: var(--space-2xl);
+}
+
+.hero {
+  padding-top: var(--space-3xl);
+  padding-bottom: var(--space-2xl);
+}
+
+h2 + p {
+  margin-top: var(--space-lg);
+}
+
+p + p {
+  margin-top: var(--space-md);
+}
+
+/* ==========================================================================
+   Micro-interactions - Refined Transitions
+   ========================================================================== */
+
+a {
+  transition: opacity var(--duration-micro) var(--ease-standard);
+}
+
+a:hover {
+  opacity: 0.7;
+}
+
+.card {
+  transition: all var(--duration-standard) var(--ease-standard);
+}
+
+.card:hover {
+  border-color: var(--color-border-strong);
+  transform: translateX(2px);
+}
+
+/* ==========================================================================
+   Selection & Focus States
+   ========================================================================== */
+
+::selection {
+  background-color: var(--color-focus);
+  color: var(--color-fg-primary);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================================================
+   Canon Utility Classes
+   ========================================================================== */
+
+/* Page Title - For entity names, section headers, and page titles
+ * Uses --text-display (28-36px mobile) instead of h1's --text-display-xl (36-56px)
+ * Prevents overflow on long names like "Ludwig Mies van der Rohe"
+ * 
+ * Use for:
+ * - Master/person names on detail pages
+ * - Project titles
+ * - Section landing pages (e.g., "Masters", "Experiments")
+ * 
+ * Don't use for:
+ * - Hero marketing headlines (use default h1 or --text-display-xl)
+ */
+.page-title {
+  font-size: var(--text-display);
+  font-weight: var(--font-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-fg-primary);
+}
+
+.link-muted {
+  opacity: var(--opacity-muted);
+  transition: opacity var(--duration-micro) var(--ease-standard);
+}
+
+.link-muted:hover {
+  opacity: var(--opacity-full);
+}
+
+.card-gradient-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom right, var(--color-fg-subtle), transparent);
+  opacity: 0;
+  transition: opacity var(--duration-micro) var(--ease-standard);
+  pointer-events: none;
+}
+
+.group:hover .card-gradient-overlay {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   View Transitions API - Hermeneutic Navigation
+   "Navigation should feel like dwelling, not jumping"
+   ========================================================================== */
+
+::view-transition-old(root) {
+  animation: view-transition-fade-out var(--view-transition-duration) var(--ease-standard);
+}
+
+::view-transition-new(root) {
+  animation: view-transition-fade-in var(--view-transition-duration) var(--ease-standard);
+}
+
+@keyframes view-transition-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes view-transition-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+body.transitioning-out {
+  animation: cross-property-exit var(--duration-standard) var(--ease-standard) forwards;
+}
+
+@keyframes cross-property-exit {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.98); }
+}
+
+body.transitioning-in {
+  animation: cross-property-entry var(--duration-complex) var(--ease-standard);
+}
+
+@keyframes cross-property-entry {
+  from { opacity: 0; transform: scale(1.02); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  body.transitioning-out,
+  body.transitioning-in {
+    animation: none !important;
+  }
+}
+
+/* ==========================================================================
+   High Contrast Mode - Accessibility
+   ==========================================================================
+
+   Respects the prefers-contrast: more media query for users who need
+   increased contrast. All changes maintain WCAG AAA compliance (7:1 ratio)
+   where possible.
+
+   Philosophy: Same design language, increased visibility. We don't change
+   the structure, only enhance the contrast between foreground and background.
+
+   Changes:
+   - Foreground colors: Increased to full white (#fff) or near-white
+   - Background colors: Darker, more distinct separation
+   - Borders: More visible (increased opacity)
+   - Focus indicators: Stronger, more visible
+   - Semantic colors: Brighter variants for better visibility
+   ========================================================================== */
+
+@media (prefers-contrast: more) {
+  :root {
+    /* Background colors - darker, more separation */
+    --color-bg-pure: #000000;
+    --color-bg-elevated: #050505;
+    --color-bg-surface: #0a0a0a;
+    --color-bg-subtle: #121212;
+
+    /* Foreground colors - brighter, higher contrast
+       All achieve WCAG AAA (7:1+) on pure black */
+    --color-fg-primary: #ffffff;
+    --color-fg-secondary: rgba(255, 255, 255, 0.95);
+    --color-fg-tertiary: rgba(255, 255, 255, 0.85);
+    --color-fg-muted: rgba(255, 255, 255, 0.75); /* Increased from 0.46 */
+    --color-fg-subtle: rgba(255, 255, 255, 0.5); /* Increased from 0.2 */
+
+    /* Border colors - more visible */
+    --color-border-default: rgba(255, 255, 255, 0.3); /* Increased from 0.1 */
+    --color-border-emphasis: rgba(255, 255, 255, 0.5); /* Increased from 0.2 */
+    --color-border-strong: rgba(255, 255, 255, 0.7); /* Increased from 0.3 */
+
+    /* Interactive states - more prominent */
+    --color-hover: rgba(255, 255, 255, 0.15); /* Increased from 0.05 */
+    --color-active: rgba(255, 255, 255, 0.25); /* Increased from 0.1 */
+    --color-focus: rgba(255, 255, 255, 0.9); /* Increased from 0.5 */
+
+    /* Semantic colors - brighter for high contrast
+       All achieve WCAG AAA (7:1+) on pure black */
+    --color-success: #5ddb5d; /* Brighter green: 10.8:1 */
+    --color-success-muted: rgba(93, 219, 93, 0.3);
+    --color-success-border: rgba(93, 219, 93, 0.5);
+
+    --color-error: #ff6b6b; /* Brighter red: 6.77:1 */
+    --color-error-muted: rgba(255, 107, 107, 0.3);
+    --color-error-border: rgba(255, 107, 107, 0.5);
+
+    --color-warning: #ffc857; /* Brighter amber: 12.4:1 */
+    --color-warning-muted: rgba(255, 200, 87, 0.3);
+    --color-warning-border: rgba(255, 200, 87, 0.5);
+
+    --color-info: #7eb8ff; /* Brighter blue: 9.17:1 */
+    --color-info-muted: rgba(126, 184, 255, 0.3);
+    --color-info-border: rgba(126, 184, 255, 0.5);
+
+    /* Data visualization - brighter palette */
+    --color-data-1: #93c5fd; /* Brighter blue */
+    --color-data-2: #4ade80; /* Brighter green */
+    --color-data-3: #d8b4fe; /* Brighter purple */
+    --color-data-4: #fcd34d; /* Brighter amber */
+    --color-data-5: #f9a8d4; /* Brighter pink */
+    --color-data-6: #fde047; /* Brighter yellow */
+  }
+
+  /* Enhanced focus visible state for high contrast */
+  *:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 3px;
+  }
+
+  /* Enhanced selection for high contrast */
+  ::selection {
+    background-color: var(--color-focus);
+    color: var(--color-bg-pure);
+  }
+
+  /* Enhanced scrollbar visibility */
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-fg-muted);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-fg-secondary);
+  }
+
+  /* Enhanced link visibility */
+  a:hover {
+    opacity: 1;
+    text-decoration: underline;
+  }
+
+  /* Enhanced card hover state */
+  .card:hover {
+    border-color: var(--color-fg-primary);
+  }
+}
+
+/* ==========================================================================
+   Syntax Highlighting - Monochrome Theme
+   ========================================================================== */
+
+.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 1em;
+  background: var(--color-bg-subtle);
+  color: var(--color-fg-secondary);
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst {
+  color: var(--color-fg-primary);
+  font-weight: var(--font-semibold);
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag .hljs-attr {
+  color: var(--color-fg-tertiary);
+}
+
+.hljs-string,
+.hljs-doctag {
+  color: var(--color-fg-secondary);
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-selector-id {
+  color: var(--color-fg-primary);
+  font-weight: var(--font-bold);
+}
+
+.hljs-type,
+.hljs-class .hljs-title {
+  color: var(--color-fg-secondary);
+  font-weight: var(--font-semibold);
+}
+
+.hljs-tag,
+.hljs-name,
+.hljs-attribute {
+  color: var(--color-fg-primary);
+  font-weight: var(--font-regular);
+}
+
+.hljs-regexp,
+.hljs-link {
+  color: var(--color-fg-secondary);
+}
+
+.hljs-symbol,
+.hljs-bullet {
+  color: var(--color-fg-tertiary);
+}
+
+.hljs-built_in,
+.hljs-builtin-name {
+  color: var(--color-fg-secondary);
+}
+
+.hljs-meta {
+  color: var(--color-fg-muted);
+  font-weight: var(--font-semibold);
+}
+
+.hljs-deletion {
+  background: var(--color-error-muted);
+  color: var(--color-error);
+}
+
+.hljs-addition {
+  background: var(--color-success-muted);
+  color: var(--color-success);
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
+
+pre code.hljs {
+  border-radius: var(--radius-md);
+  font-size: var(--text-body-sm);
+  line-height: var(--leading-relaxed);
+}
+
+/* ==========================================================================
+   Component Layer - Shared Utilities
+   ========================================================================== */
+
+@layer components {
+  .fade-in {
+    animation: fadeIn var(--duration-complex) ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .card-lift {
+    transition: all var(--duration-standard) var(--ease-standard);
+  }
+
+  .card-lift:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-2xl);
+  }
+
+  .page-transition {
+    animation: pageEnter var(--duration-standard) var(--ease-decelerate);
+  }
+
+  @keyframes pageEnter {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+/* ==========================================================================
+   Utility Layer - Common Patterns
+   ========================================================================== */
+
+@layer utilities {
+  /* ==========================================================================
+     Canon-Compliant Wrapper Styles
+     ==========================================================================
+
+     These utility classes provide Canon-compliant alternatives to Tailwind
+     opacity variants. Use these instead of Tailwind's arbitrary opacity values.
+
+     Philosophy: "Tailwind for structure, Canon for aesthetics"
+
+     Design Decision: Tailwind opacity utilities (e.g., bg-white/5) create
+     transparent overlays. Canon uses solid semantic colors for consistency
+     across all backgrounds. On --color-bg-pure (#000), the visual effect
+     is identical while providing better predictability.
+
+     Migration guide (Tailwind → Canon class → CSS token):
+       bg-white/5    → .bg-subtle     → var(--color-bg-subtle)     // #1a1a1a - card/section backgrounds
+       bg-white/10   → .bg-surface    → var(--color-bg-surface)    // #111111 - elevated surfaces
+       bg-white/5    → .bg-hover      → var(--color-hover)         // rgba(255,255,255,0.05) - interactive hover only
+       bg-white/10   → .bg-active     → var(--color-active)        // rgba(255,255,255,0.1) - active/pressed states
+       text-white/40 → .text-muted    → var(--color-fg-muted)      // rgba(255,255,255,0.4)
+       text-white/60 → .text-tertiary → var(--color-fg-tertiary)   // rgba(255,255,255,0.6)
+       text-white/80 → .text-secondary → var(--color-fg-secondary) // rgba(255,255,255,0.8)
+       border-white/10 → .border-default → var(--color-border-default)   // rgba(255,255,255,0.1)
+       border-white/20 → .border-emphasis → var(--color-border-emphasis) // rgba(255,255,255,0.2)
+       border-white/30 → .border-strong → var(--color-border-strong)     // rgba(255,255,255,0.3)
+
+     Context guidance:
+       - For static backgrounds (cards, panels): use .bg-subtle or .bg-surface
+       - For interactive states (hover, focus): use .bg-hover or .bg-active
+       - Both achieve the same visual result on pure black backgrounds
+
+     ========================================================================== */
+
+  /* Background Opacity Wrappers
+   * Maps Tailwind bg-white/XX to Canon background tokens
+   */
+  .bg-pure { background-color: var(--color-bg-pure); }
+  .bg-elevated { background-color: var(--color-bg-elevated); }
+  .bg-surface { background-color: var(--color-bg-surface); }
+  .bg-subtle { background-color: var(--color-bg-subtle); }
+  .bg-hover { background-color: var(--color-hover); }
+  .bg-active { background-color: var(--color-active); }
+
+  /* Text Opacity Wrappers
+   * Maps Tailwind text-white/XX to Canon foreground tokens
+   */
+  .text-primary { color: var(--color-fg-primary); }
+  .text-secondary { color: var(--color-fg-secondary); }
+  .text-tertiary { color: var(--color-fg-tertiary); }
+  .text-muted { color: var(--color-fg-muted); }
+  .text-subtle { color: var(--color-fg-subtle); }
+
+  /* Border Opacity Wrappers
+   * Maps Tailwind border-white/XX to Canon border tokens
+   */
+  .border-default { border-color: var(--color-border-default); }
+  .border-emphasis { border-color: var(--color-border-emphasis); }
+  .border-strong { border-color: var(--color-border-strong); }
+
+  /* Semantic State Colors */
+  .text-success { color: var(--color-success); }
+  .text-error { color: var(--color-error); }
+  .text-warning { color: var(--color-warning); }
+  .text-info { color: var(--color-info); }
+
+  .bg-success { background-color: var(--color-success-muted); }
+  .bg-error { background-color: var(--color-error-muted); }
+  .bg-warning { background-color: var(--color-warning-muted); }
+  .bg-info { background-color: var(--color-info-muted); }
+
+  .border-success { border-color: var(--color-success-border); }
+  .border-error { border-color: var(--color-error-border); }
+  .border-warning { border-color: var(--color-warning-border); }
+  .border-info { border-color: var(--color-info-border); }
+
+  /* ==========================================================================
+     Border Radius Utilities
+     ==========================================================================
+
+     Canon-compliant alternatives to Tailwind's rounded-* utilities.
+     Use these instead of hardcoded border-radius values.
+
+     Migration guide (Tailwind → Canon):
+       rounded-sm   → .rounded-sm   → var(--radius-sm)   // 6px
+       rounded-md   → .rounded-md   → var(--radius-md)   // 8px
+       rounded-lg   → .rounded-lg   → var(--radius-lg)   // 12px
+       rounded-xl   → .rounded-xl   → var(--radius-xl)   // 16px
+       rounded-full → .rounded-full → var(--radius-full) // 9999px
+
+     Philosophy: Consistent border radii create visual harmony. These values
+     follow a subtle progression that feels natural without being mechanical.
+     ========================================================================== */
+
+  .rounded-sm { border-radius: var(--radius-sm); }
+  .rounded-md { border-radius: var(--radius-md); }
+  .rounded-lg { border-radius: var(--radius-lg); }
+  .rounded-xl { border-radius: var(--radius-xl); }
+  .rounded-full { border-radius: var(--radius-full); }
+
+  /* Shadow Utilities
+   * Canon-compliant alternatives to Tailwind's shadow-* utilities.
+   * Use these for consistent elevation and depth across the system.
+   *
+   * Migration guide (Tailwind → Canon):
+   *   shadow-sm  → .shadow-sm  → var(--shadow-sm)      // Subtle card shadow
+   *   shadow-md  → .shadow-md  → var(--shadow-md)      // Standard elevation
+   *   shadow-lg  → .shadow-lg  → var(--shadow-lg)      // Prominent elevation
+   *   shadow-xl  → .shadow-xl  → var(--shadow-xl)      // High elevation
+   *   shadow-2xl → .shadow-2xl → var(--shadow-2xl)     // Maximum elevation
+   *
+   * Special shadows for specific use cases:
+   *   .shadow-glow-sm → Subtle glow effect
+   *   .shadow-glow-md → Medium glow effect
+   *   .shadow-glow-lg → Strong glow effect
+   *
+   * Philosophy: Shadows create depth and hierarchy. Use sparingly—not every
+   * element needs elevation. Reserve higher shadows for modals and overlays.
+   */
+
+  .shadow-sm { box-shadow: var(--shadow-sm); }
+  .shadow-md { box-shadow: var(--shadow-md); }
+  .shadow-lg { box-shadow: var(--shadow-lg); }
+  .shadow-xl { box-shadow: var(--shadow-xl); }
+  .shadow-2xl { box-shadow: var(--shadow-2xl); }
+  .shadow-glow-sm { box-shadow: var(--shadow-glow-sm); }
+  .shadow-glow-md { box-shadow: var(--shadow-glow-md); }
+  .shadow-glow-lg { box-shadow: var(--shadow-glow-lg); }
+  .shadow-none { box-shadow: none; }
+
+  /* ==========================================================================
+     Hero Pattern - Unified across all properties
+     Pattern: eyebrow (context) → hero-title (assertion) → hero-subtitle/description (evidence)
+     ========================================================================== */
+
+  /* Eyebrow - Context label above headings */
+  .eyebrow {
+    font-size: var(--text-body-sm);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-widest);
+    color: var(--color-fg-tertiary);
+    margin-bottom: var(--space-md);
+  }
+
+  /* Hero Title - Primary assertion, largest display text */
+  .hero-title {
+    font-size: var(--text-display-xl);
+    font-weight: var(--font-light);
+    line-height: 1.05;
+    letter-spacing: var(--tracking-tighter);
+    margin-bottom: var(--space-md);
+  }
+
+  /* Hero Subtitle - Supporting statement */
+  .hero-subtitle {
+    font-size: var(--text-h3);
+    color: var(--color-fg-secondary);
+    line-height: var(--leading-relaxed);
+    max-width: 42rem;
+    margin: 0 auto var(--space-sm);
+  }
+
+  /* Hero Description - Additional context */
+  .hero-description {
+    font-size: var(--text-body-lg);
+    color: var(--color-fg-tertiary);
+    line-height: var(--leading-relaxed);
+    max-width: 36rem;
+    margin: 0 auto;
+  }
+
+  .text-shadow-soft {
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .bg-gradient-dark {
+    background: linear-gradient(180deg, var(--color-bg-pure) 0%, var(--color-bg-elevated) 100%);
+  }
+
+  .bg-gradient-subtle {
+    background: linear-gradient(135deg, var(--color-bg-elevated) 0%, var(--color-bg-surface) 100%);
+  }
+
+  .border-gradient {
+    border: 1px solid transparent;
+    background-image: linear-gradient(var(--color-bg-surface), var(--color-bg-surface)),
+                      linear-gradient(135deg, var(--color-border-emphasis), var(--color-border-default));
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+  }
+
+  .transition-smooth {
+    transition: all var(--duration-standard) var(--ease-standard);
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ==========================================================================
+     Accessibility Focus Utilities
+     ==========================================================================
+
+     Shared focus styles for accessible interactive elements.
+     Use these classes instead of duplicating focus styles in components.
+
+     Usage:
+       .a11y-focus       - Apply to focusable elements (buttons, links, interactive)
+       .a11y-focus-within - Apply to containers whose children receive focus
+
+     These use var(--color-focus) for consistent focus indication.
+     ========================================================================== */
+
+  /* Standard focus ring for interactive elements */
+  .a11y-focus:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  /* Focus state for containers (shows when any descendant is focused) */
+  .a11y-focus-within:focus-within {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  /* Variant with no outline offset (for tight layouts) */
+  .a11y-focus-tight:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 0;
+  }
+
+  /* Variant with inward offset (for nested elements) */
+  .a11y-focus-inset:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: -2px;
+  }
+
+  /* ==========================================================================
+     Skip to Content Link
+     ==========================================================================
+
+     Accessible skip link that allows keyboard users to bypass navigation
+     and jump directly to main content. Visually hidden until focused.
+
+     Usage:
+       <a href="#main-content" class="skip-to-content">Skip to main content</a>
+       ...
+       <main id="main-content">...</main>
+
+     WCAG 2.4.1: Bypass Blocks - Provides mechanism to skip repeated content.
+     ========================================================================== */
+
+  .skip-to-content {
+    position: absolute;
+    top: -100%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: var(--z-tooltip);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--color-bg-surface);
+    color: var(--color-fg-primary);
+    border: 1px solid var(--color-border-emphasis);
+    border-radius: var(--radius-md);
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-medium);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: top var(--duration-micro) var(--ease-standard);
+  }
+
+  .skip-to-content:focus {
+    top: var(--space-sm);
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  /* ==========================================================================
+     Highlight Grid/Flex Pattern (CalArts Pattern)
+     ==========================================================================
+
+     When hovering over a parent container, the hovered child stays at full
+     opacity while siblings dim. Creates focus and hierarchy through interaction.
+
+     Usage:
+       <div class="highlight-grid">
+         <div class="highlight-item" style="--index: 0">Item 1</div>
+         <div class="highlight-item" style="--index: 1">Item 2</div>
+         <div class="highlight-item" style="--index: 2">Item 3</div>
+       </div>
+
+     Variants:
+       .highlight-grid   - Default (0.5 opacity for non-hovered items)
+       .highlight-subtle - Subtle dimming (0.7 opacity)
+       .highlight-strong - Strong dimming (0.3 opacity)
+
+     Philosophy: The hovered item "reveals" itself while others recede.
+     This is Zuhandenheit applied to interaction—focus on the tool in use.
+     ========================================================================== */
+
+  /* Base item styles with cascade transition delay */
+  .highlight-item {
+    transition: opacity var(--duration-standard) var(--ease-standard),
+                transform var(--duration-micro) var(--ease-standard);
+    transition-delay: calc(var(--cascade-step) * var(--index, 0));
+  }
+
+  /* Default highlight: 0.5 opacity for non-hovered siblings */
+  .highlight-grid:hover .highlight-item:not(:hover),
+  .highlight-flex:hover .highlight-item:not(:hover) {
+    opacity: 0.5;
+  }
+
+  /* Subtle variant: 0.7 opacity (gentler dimming) */
+  .highlight-subtle:hover .highlight-item:not(:hover) {
+    opacity: 0.7;
+  }
+
+  /* Strong variant: 0.3 opacity (dramatic focus) */
+  .highlight-strong:hover .highlight-item:not(:hover) {
+    opacity: 0.3;
+  }
+
+  /* Hovered item: full opacity + slight scale for emphasis */
+  .highlight-item:hover {
+    opacity: 1;
+    transform: scale(var(--scale-micro));
+  }
+
+  /* Reduced motion: instant transitions, no cascade delay */
+  @media (prefers-reduced-motion: reduce) {
+    .highlight-item {
+      transition-duration: 0.01ms;
+      transition-delay: 0ms;
+    }
+  }
+
+  /* ==========================================================================
+     Cascading Entrance Pattern
+     ==========================================================================
+
+     Sequential reveal animation for list items, grid children.
+     Each item fades in with slight upward motion, staggered by index.
+
+     Usage:
+       <div class="cascade-container">
+         <div class="cascade-item" style="--index: 0">Item 1</div>
+         <div class="cascade-item" style="--index: 1">Item 2</div>
+         <div class="cascade-item" style="--index: 2">Item 3</div>
+       </div>
+
+     Philosophy: Sequential reveals create narrative rhythm. Each item
+     "arrives" in turn, guiding attention through the content hierarchy.
+     ========================================================================== */
+
+  /* Base cascade item - initially hidden, animates in */
+  .cascade-item {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: cascadeIn var(--duration-standard) var(--ease-standard) forwards;
+    animation-delay: calc(var(--cascade-step) * var(--index, 0));
+  }
+
+  @keyframes cascadeIn {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Fast cascade - for dense lists */
+  .cascade-fast .cascade-item {
+    animation-duration: var(--duration-micro);
+  }
+
+  /* Slow cascade - for hero sections */
+  .cascade-slow .cascade-item {
+    animation-duration: var(--duration-complex);
+    animation-delay: calc(var(--cascade-group) * var(--index, 0));
+  }
+
+  /* Reduced motion: no animation */
+  @media (prefers-reduced-motion: reduce) {
+    .cascade-item {
+      opacity: 1;
+      transform: none;
+      animation: none;
+    }
+  }
+
+  /* ==========================================================================
+     Underline Reveal Pattern
+     ==========================================================================
+
+     Animated underline that expands on hover. Typography-first interaction.
+
+     Usage:
+       <a href="#" class="underline-reveal">Link text</a>
+
+     Philosophy: The underline reveals intention. Motion guides attention
+     without demanding it—the link becomes "ready-to-hand" on interaction.
+     ========================================================================== */
+
+  .underline-reveal {
+    position: relative;
+    text-decoration: none;
+  }
+
+  .underline-reveal::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: currentColor;
+    transition: width var(--duration-micro) var(--ease-standard);
+  }
+
+  .underline-reveal:hover::after {
+    width: 100%;
+  }
+
+  /* Reduced motion: instant underline */
+  @media (prefers-reduced-motion: reduce) {
+    .underline-reveal::after {
+      transition-duration: 0.01ms;
+    }
+  }
+
+  /* ==========================================================================
+     Interactive Scale Pattern
+     ==========================================================================
+
+     Scale + border emphasis on hover. Common pattern for interactive cards.
+
+     Usage:
+       <div class="interactive-scale">Card content</div>
+
+     Philosophy: Subtle scale creates depth. The element "lifts" toward
+     the user, indicating interactivity without jarring motion.
+     ========================================================================== */
+
+  .interactive-scale {
+    transition: transform var(--duration-micro) var(--ease-standard),
+                border-color var(--duration-micro) var(--ease-standard);
+  }
+
+  .interactive-scale:hover {
+    transform: scale(var(--scale-micro));
+    border-color: var(--color-border-emphasis);
+  }
+
+  .interactive-scale:active {
+    transform: scale(var(--scale-subtle));
+  }
+
+  /* Reduced motion: no transform */
+  @media (prefers-reduced-motion: reduce) {
+    .interactive-scale:hover,
+    .interactive-scale:active {
+      transform: none;
+    }
+  }
+
+  /* ==========================================================================
+     Button State Utilities
+     ==========================================================================
+
+     Shared button state patterns that can be composed with btn-* classes.
+     These provide consistent disabled, loading, and pressed states.
+
+     Usage:
+       <button class="btn btn-primary btn-disabled">Disabled</button>
+       <button class="btn btn-secondary btn-loading">Loading...</button>
+
+     Philosophy: Button states communicate affordance. Disabled buttons
+     recede; loading buttons indicate work in progress; pressed buttons
+     confirm action receipt.
+     ========================================================================== */
+
+  /* Disabled state - reduced opacity, no interaction */
+  .btn-disabled,
+  .btn:disabled,
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* Loading state - subtle pulse animation */
+  .btn-loading {
+    position: relative;
+    color: transparent;
+    pointer-events: none;
+  }
+
+  .btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 1em;
+    height: 1em;
+    top: 50%;
+    left: 50%;
+    margin-top: -0.5em;
+    margin-left: -0.5em;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: var(--radius-full);
+    animation: btn-spin var(--duration-slow) linear infinite;
+  }
+
+  @keyframes btn-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Active/pressed state - scale down for tactile feedback */
+  .btn-press:active {
+    transform: scale(var(--scale-subtle));
+  }
+
+  /* Icon button - square with centered icon */
+  .btn-icon {
+    padding: var(--space-sm);
+    aspect-ratio: 1;
+  }
+
+  /* Small button variant */
+  .btn-sm {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--text-body-sm);
+  }
+
+  /* Large button variant */
+  .btn-lg {
+    padding: var(--space-md) var(--space-lg);
+    font-size: var(--text-body-lg);
+  }
+
+  /* Reduced motion: no spin animation */
+  @media (prefers-reduced-motion: reduce) {
+    .btn-loading::after {
+      animation: none;
+      border-style: dotted;
+    }
+
+    .btn-press:active {
+      transform: none;
+    }
+  }
+
+  /* ==========================================================================
+     Card Utility Patterns
+     ==========================================================================
+
+     Composable card patterns for consistent styling across properties.
+     Use with the base .card class from components.css.
+
+     Usage:
+       <div class="card card-interactive">Hover me</div>
+       <div class="card card-gradient">Gradient border</div>
+
+     Philosophy: Cards contain and elevate content. Interactive cards
+     invite exploration; static cards present information.
+     ========================================================================== */
+
+  /* Interactive card - lifts and highlights on hover */
+  .card-interactive {
+    transition: all var(--duration-standard) var(--ease-standard);
+  }
+
+  .card-interactive:hover {
+    transform: translateY(-4px);
+    border-color: var(--color-border-emphasis);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .card-interactive:active {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Subtle card - minimal border, surface background */
+  .card-subtle {
+    background: var(--color-bg-surface);
+    border-color: transparent;
+  }
+
+  .card-subtle:hover {
+    border-color: var(--color-border-default);
+  }
+
+  /* Gradient border card */
+  .card-gradient {
+    border: 1px solid transparent;
+    background-image: linear-gradient(var(--color-bg-elevated), var(--color-bg-elevated)),
+                      linear-gradient(135deg, var(--color-border-emphasis), var(--color-border-default));
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+  }
+
+  /* Glow card - soft glow on hover */
+  .card-glow:hover {
+    box-shadow: var(--shadow-glow-md);
+  }
+
+  /* Slide card - horizontal movement on hover */
+  .card-slide {
+    transition: transform var(--duration-micro) var(--ease-standard),
+                border-color var(--duration-micro) var(--ease-standard);
+  }
+
+  .card-slide:hover {
+    transform: translateX(4px);
+    border-color: var(--color-border-emphasis);
+  }
+
+  /* Reduced motion: no transforms */
+  @media (prefers-reduced-motion: reduce) {
+    .card-interactive:hover,
+    .card-interactive:active,
+    .card-slide:hover {
+      transform: none;
+    }
+  }
+
+  /* ==========================================================================
+     Glass Utility Classes - "The Automation Layer"
+     ==========================================================================
+
+     Glass conveys CREATE SOMETHING's positioning: the transparent layer between
+     user and outcome. The tool recedes; the outcome remains.
+
+     Use sparingly: navigation, modals, workflow cards only.
+     Overuse dilutes the metaphor and impacts performance.
+
+     Usage:
+       <header class="glass-lg">Navigation</header>
+       <div class="glass-card">Workflow content</div>
+       <dialog class="glass-elevated">Modal content</dialog>
+
+     Philosophy: Glass elements suggest transparency and openness—the interface
+     becomes a window to the work, not a barrier. This reinforces Zuhandenheit:
+     the tool recedes into transparent use.
+
+     Performance note: backdrop-filter is GPU-intensive. These classes include
+     mobile optimizations and fallbacks for reduced-transparency preferences.
+     ========================================================================== */
+
+  /* Base glass effect - applies blur + saturation and sets up stacking context */
+  .glass {
+    backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+    -webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+    background-color: var(--glass-bg-light);
+    border: 1px solid var(--glass-border-light);
+  }
+
+  /* Glass variants by intensity */
+  .glass-sm {
+    backdrop-filter: blur(var(--glass-blur-sm)) var(--glass-saturate-sm);
+    -webkit-backdrop-filter: blur(var(--glass-blur-sm)) var(--glass-saturate-sm);
+    background-color: var(--glass-bg-subtle);
+    border: 1px solid var(--glass-border-subtle);
+  }
+
+  .glass-lg {
+    backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+    -webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+    background-color: var(--glass-bg-medium);
+    border: 1px solid var(--glass-border-medium);
+  }
+
+  .glass-xl {
+    backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
+    -webkit-backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
+    background-color: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border-strong);
+  }
+
+  .glass-2xl {
+    backdrop-filter: blur(var(--glass-blur-2xl)) var(--glass-saturate-xl);
+    -webkit-backdrop-filter: blur(var(--glass-blur-2xl)) var(--glass-saturate-xl);
+    background-color: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border-strong);
+  }
+
+  /* Glass with shadow - for floating elements (dropdowns, modals) */
+  .glass-elevated {
+    backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+    -webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+    background-color: var(--glass-bg-medium);
+    border: 1px solid var(--glass-border-medium);
+    box-shadow: var(--glass-shadow-md);
+  }
+
+  /* Glass card - for workflow cards, reinforces "layer" metaphor */
+  .glass-card {
+    backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+    -webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+    background-color: var(--glass-bg-light);
+    border: 1px solid var(--glass-border-light);
+    border-radius: var(--radius-lg);
+    transition: all var(--duration-standard) var(--ease-standard);
+  }
+
+  .glass-card:hover {
+    background-color: var(--glass-bg-medium);
+    border-color: var(--glass-border-medium);
+    box-shadow: var(--glass-shadow-sm);
+  }
+
+  /* ==========================================================================
+     Glass Accessibility - Respect User Preferences
+     ========================================================================== */
+
+  /* Reduced motion preference - no transition animations */
+  @media (prefers-reduced-motion: reduce) {
+    .glass-card {
+      transition: none;
+    }
+  }
+
+  /* Reduced transparency preference - fallback to solid backgrounds */
+  @media (prefers-reduced-transparency: reduce) {
+    .glass,
+    .glass-sm,
+    .glass-lg,
+    .glass-xl,
+    .glass-2xl,
+    .glass-elevated,
+    .glass-card {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background-color: var(--color-bg-surface);
+      border-color: var(--color-border-emphasis);
+    }
+  }
+
+  /* High contrast preference - stronger borders and backgrounds */
+  @media (prefers-contrast: more) {
+    .glass,
+    .glass-sm,
+    .glass-lg,
+    .glass-xl,
+    .glass-2xl,
+    .glass-elevated,
+    .glass-card {
+      backdrop-filter: blur(var(--glass-blur-sm));
+      -webkit-backdrop-filter: blur(var(--glass-blur-sm));
+      background-color: rgba(0, 0, 0, 0.90);
+      border: 2px solid var(--color-border-strong);
+    }
+  }
+
+  /* Mobile performance optimization - reduce blur intensity but keep textured feel */
+  @media (max-width: 768px) {
+    .glass,
+    .glass-sm,
+    .glass-card {
+      backdrop-filter: blur(16px) saturate(110%);
+      -webkit-backdrop-filter: blur(16px) saturate(110%);
+    }
+
+    .glass-lg,
+    .glass-elevated {
+      backdrop-filter: blur(24px) saturate(120%);
+      -webkit-backdrop-filter: blur(24px) saturate(120%);
+    }
+
+    .glass-xl,
+    .glass-2xl {
+      backdrop-filter: blur(32px) saturate(130%);
+      -webkit-backdrop-filter: blur(32px) saturate(130%);
+    }
+  }
+
+  /* ==========================================================================
+     Liquid Glass Utility Classes - Apple-style Refraction Effect
+
+     Philosophy: The cockpit of the automation vehicle.
+     Like the 930's driver-centric layout: minimal, focused, controls recede.
+
+     Unlike standard glass (blur only), liquid glass adds:
+     - Refraction-like highlight layers
+     - Top edge glow simulating overhead light
+     - Inner shadow for physical depth
+
+     For full SVG-based refraction, use the <LiquidGlass> component.
+     These CSS classes provide a lightweight alternative without SVG filters.
+     ========================================================================== */
+
+  /* Liquid glass base - combines blur with highlight layers */
+  .liquid-glass {
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+    -webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+    background-color: var(--glass-bg-light);
+    border: 1px solid var(--glass-border-medium);
+  }
+
+  /* Highlight shimmer layer */
+  .liquid-glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--liquid-glass-highlight-primary);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  /* Top edge light reflection */
+  .liquid-glass::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--liquid-glass-edge-glow);
+    pointer-events: none;
+  }
+
+  /* Liquid glass icon - elements "sitting on" the glass surface */
+  .liquid-glass-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-md);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all var(--duration-standard) var(--ease-standard);
+  }
+
+  .liquid-glass-icon:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  /* Semantic tint variants */
+  .liquid-glass-tint-purple {
+    background-color: color-mix(in srgb, var(--liquid-glass-tint-purple) 12%, var(--glass-bg-light));
+  }
+
+  .liquid-glass-tint-blue {
+    background-color: color-mix(in srgb, var(--liquid-glass-tint-blue) 12%, var(--glass-bg-light));
+  }
+
+  .liquid-glass-tint-emerald {
+    background-color: color-mix(in srgb, var(--liquid-glass-tint-emerald) 12%, var(--glass-bg-light));
+  }
+
+  .liquid-glass-tint-amber {
+    background-color: color-mix(in srgb, var(--liquid-glass-tint-amber) 10%, var(--glass-bg-light));
+  }
+
+  .liquid-glass-tint-rose {
+    background-color: color-mix(in srgb, var(--liquid-glass-tint-rose) 10%, var(--glass-bg-light));
+  }
+
+  .liquid-glass-tint-cyan {
+    background-color: color-mix(in srgb, var(--liquid-glass-tint-cyan) 12%, var(--glass-bg-light));
+  }
+
+  /* Liquid glass dropdown - elevated variant for menus */
+  .liquid-glass-dropdown {
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
+    -webkit-backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
+    background-color: var(--glass-bg-medium);
+    border: 1px solid var(--glass-border-medium);
+    box-shadow: var(--glass-shadow-md);
+  }
+
+  .liquid-glass-dropdown::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--liquid-glass-highlight-subtle);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  .liquid-glass-dropdown::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--liquid-glass-edge-glow);
+    pointer-events: none;
+  }
+
+  /* Liquid glass modal - for dialog overlays */
+  .liquid-glass-modal {
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
+    -webkit-backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
+    background-color: var(--glass-bg-medium);
+    border: 1px solid var(--glass-border-strong);
+    box-shadow: var(--glass-shadow-lg), var(--liquid-glass-inner-shadow);
+  }
+
+  .liquid-glass-modal::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--liquid-glass-highlight-primary);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  .liquid-glass-modal::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--liquid-glass-edge-glow);
+    pointer-events: none;
+  }
+
+  /* Liquid Glass Accessibility */
+
+  /* Reduced motion - disable hover transforms */
+  @media (prefers-reduced-motion: reduce) {
+    .liquid-glass-icon {
+      transition: none;
+    }
+
+    .liquid-glass-icon:hover {
+      transform: none;
+    }
+  }
+
+  /* Reduced transparency - solid background fallback */
+  @media (prefers-reduced-transparency: reduce) {
+    .liquid-glass,
+    .liquid-glass-dropdown,
+    .liquid-glass-modal {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background-color: var(--color-bg-surface);
+    }
+
+    .liquid-glass::before,
+    .liquid-glass::after,
+    .liquid-glass-dropdown::before,
+    .liquid-glass-dropdown::after,
+    .liquid-glass-modal::before,
+    .liquid-glass-modal::after {
+      display: none;
+    }
+  }
+
+  /* High contrast mode */
+  @media (prefers-contrast: more) {
+    .liquid-glass,
+    .liquid-glass-dropdown,
+    .liquid-glass-modal {
+      backdrop-filter: blur(var(--glass-blur-sm));
+      -webkit-backdrop-filter: blur(var(--glass-blur-sm));
+      background-color: rgba(0, 0, 0, 0.90);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+  }
+
+  /* Mobile performance - disable complex effects */
+  @media (max-width: 768px) {
+    .liquid-glass,
+    .liquid-glass-dropdown,
+    .liquid-glass-modal {
+      backdrop-filter: blur(24px) saturate(120%);
+      -webkit-backdrop-filter: blur(24px) saturate(120%);
+    }
+
+    .liquid-glass::before,
+    .liquid-glass-dropdown::before,
+    .liquid-glass-modal::before {
+      /* Simpler highlight on mobile */
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.08) 0%,
+        transparent 50%
+      );
+    }
+  }
+}

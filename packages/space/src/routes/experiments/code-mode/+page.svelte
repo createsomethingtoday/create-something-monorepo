@@ -7,7 +7,7 @@
 	 */
 
 	import { onMount } from 'svelte';
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 
 	// Experiment state
 	let currentTask = $state(0);

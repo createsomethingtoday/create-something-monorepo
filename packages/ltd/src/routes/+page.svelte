@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SEO, NewsletterSignup } from '@create-something/components';
+	import { SEO, NewsletterSignup } from '@create-something/canon';
 </script>
 
 <SEO

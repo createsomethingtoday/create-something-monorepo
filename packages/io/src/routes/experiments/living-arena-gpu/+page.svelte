@@ -16,7 +16,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import {
 		Shield,
 		Lightbulb,
@@ -33,17 +33,18 @@
 		Users
 	} from 'lucide-svelte';
 
-	// Import simulation engine
+	// Import simulation engine from Canon experiments
 	import {
 		CrowdSimulation,
 		initWebGPU,
 		isWebGPUSupported,
-		type WebGPUContext
-	} from './crowdSimulation';
-	import type { SimulationTelemetry, AggregatedMetrics } from './telemetry';
+		type WebGPUContext,
+		type SimulationTelemetry,
+		type AggregatedMetrics
+	} from '@create-something/canon/experiments/living-arena-gpu';
 
-	// Import shared data from original experiment
-	import type { SecurityStatus, LightingMode, Incident } from '../living-arena/arenaTypes';
+	// Import shared data from living-arena experiment
+	import type { SecurityStatus, LightingMode, Incident } from '@create-something/canon/experiments/living-arena';
 	import {
 		intelligenceScenarios,
 		scenarioEffects,
@@ -52,7 +53,7 @@
 		createInitialIncidentLog,
 		scenarioMessages,
 		incidentTypes
-	} from '../living-arena/arenaData';
+	} from '@create-something/canon/experiments/living-arena';
 
 	// WebGPU state
 	let webgpuSupported = $state(false);

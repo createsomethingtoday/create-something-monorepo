@@ -8,7 +8,7 @@ import type {
 	CategoryBreakdown,
 	TopPage,
 	Property
-} from '@create-something/components/analytics';
+} from '@create-something/canon/analytics';
 
 /**
  * Property URLs for fetching analytics

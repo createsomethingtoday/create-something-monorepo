@@ -10,8 +10,8 @@
 	import { User, Mail, Shield, Calendar, Check, Loader2, LogOut, Key, Eye, EyeOff, Upload, Trash2, AlertTriangle, BarChart3 } from 'lucide-svelte';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { onMount } from 'svelte';
-	import { getConsentState, updateAnalyticsConsent, initializeConsent } from '@create-something/components/gdpr';
-	import { UserInteractionsPanel } from '@create-something/components/analytics';
+	import { getConsentState, updateAnalyticsConsent, initializeConsent } from '@create-something/canon/gdpr';
+	import { UserInteractionsPanel } from '@create-something/canon/analytics';
 
 	let { data }: { data: PageData } = $props();
 

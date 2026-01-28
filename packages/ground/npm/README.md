@@ -94,17 +94,73 @@ Then add to your tool's MCP config:
 
 ## Available Tools
 
+### Core Analysis
+
 | Tool | What it does |
 |------|--------------|
-| `ground_compare` | Compare two files for similarity |
-| `ground_count_uses` | Count symbol uses (distinguishes definitions vs actual uses) |
-| `ground_check_connections` | Check if a module is connected (understands Workers) |
-| `ground_find_duplicate_functions` | Find copied functions across files |
+| `ground_compare` | Compare two files for similarity (0.0-1.0 score) |
+| `ground_count_uses` | Count symbol uses; distinguishes runtime vs type-only usages |
+| `ground_check_connections` | Check if module is connected (understands Cloudflare Workers) |
+| `ground_find_duplicate_functions` | Find duplicates across AND within files; supports monorepos |
+
+### Verified Claims (Audit Trail)
+
+| Tool | What it does |
+|------|--------------|
+| `ground_claim_dead_code` | Claim code is dead — **blocked** until you've counted uses |
+| `ground_claim_orphan` | Claim module is orphaned — **blocked** until you've checked connections |
+
+### Discovery Tools
+
+| Tool | What it does |
+|------|--------------|
 | `ground_find_orphans` | Find modules nothing imports |
 | `ground_find_dead_exports` | Find exports never imported elsewhere |
 | `ground_check_environment` | Detect Workers/Node.js API leakage |
-| `ground_analyze` | Batch analysis: duplicates + orphans + dead exports |
-| `ground_claim_*` | Make verified claims (requires checking first) |
+| `ground_suggest_fix` | Get suggestions for fixing duplications |
+
+### Graph-Based Analysis (Fast Repo-Wide Scans)
+
+| Tool | What it does |
+|------|--------------|
+| `ground_build_graph` | Build symbol graph for repo-wide analysis |
+| `ground_query_dead` | Query graph for dead exports (filters framework conventions) |
+
+### AI-Native Tools
+
+| Tool | What it does |
+|------|--------------|
+| `ground_analyze` | Batch analysis: duplicates + dead exports + orphans + environment |
+| `ground_diff` | Incremental analysis vs git baseline (only NEW issues) |
+| `ground_verify_fix` | Verify a fix was applied correctly |
+
+## MCP Apps (Interactive UIs)
+
+Ground supports the [MCP Apps extension](https://modelcontextprotocol.io/docs/concepts/apps) for interactive visualization directly in the conversation.
+
+### Duplicate Explorer UI
+
+When you call duplicate analysis tools (`ground_find_duplicate_functions`, `ground_compare`, `ground_suggest_fix`), supported MCP clients can render an interactive duplicate explorer:
+
+- Visual similarity scores with color-coded badges
+- Expandable cards showing side-by-side file comparison
+- Adjustable similarity threshold slider
+- One-click compare and suggest fix actions
+- Real-time filtering and search
+
+**Supported Clients**: Claude.ai, VS Code (Insiders), ChatGPT, Goose
+
+The UI is served via `ui://ground/duplicate-explorer` resource and communicates with the server via postMessage.
+
+### Design System Analysis (v2.1)
+
+| Tool | What it does |
+|------|--------------|
+| `ground_find_drift` | Find design token violations (hardcoded colors, spacing, etc.) |
+| `ground_adoption_ratio` | Calculate token adoption percentage with health thresholds |
+| `ground_suggest_pattern` | Suggest tokens to replace hardcoded values |
+| `ground_mine_patterns` | Discover implicit patterns that should become tokens |
+| `ground_explain` | AI-native traceability — explain why files are excluded |
 
 ## Usage Examples
 
@@ -122,6 +178,20 @@ Check if the old-utils module is still connected to anything
 Run ground_analyze on packages/sdk to find dead code
 ```
 
+```
+What's the CSS token adoption ratio in packages/components?
+```
+
+```
+Find design drift in my CSS files only (use extensions: "css")
+```
+
+## What's New in 0.2.1
+
+- **`ground_explain`** — AI-native context traceability. Explains why files are excluded from violation checks (e.g., video-rendering contexts, third-party CSS)
+- **`ground_find_drift` extensions filter** — Analyze specific file types (e.g., `extensions: "css"` for CSS-only analysis)
+- **Context system** — Configure intentional exclusions in `.ground.yml` with full audit trail
+
 ## Philosophy
 
 Ground is based on a simple principle: **no claim without evidence**.
@@ -131,6 +201,16 @@ Ground is based on a simple principle: **no claim without evidence**.
 - **Orphans** → You have to check the connections first
 
 This prevents AI hallucination by requiring computation before synthesis.
+
+## Configuration
+
+Ground loads `.ground.yml` from your project root for:
+- Ignore patterns (functions, files, directories)
+- Known drift exceptions with documented reasons
+- Context declarations for intentional exclusions
+- Similarity thresholds
+
+See [Full Documentation](https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground) for configuration reference.
 
 ## Links
 

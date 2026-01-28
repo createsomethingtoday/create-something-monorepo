@@ -2,7 +2,7 @@
  * Canon token loader
  *
  * Loads and parses canon.json to provide machine-readable Canon tokens.
- * Single source of truth: packages/components/src/lib/styles/canon.json
+ * Single source of truth: packages/canon/src/lib/styles/canon.json
  */
 
 import { readFileSync } from 'fs';
@@ -68,12 +68,12 @@ export function loadCanon(): CanonSpec {
 
 		// Try multiple path resolutions to handle different execution contexts
 		const possiblePaths = [
-			// From dist/utils/canon-tokens.js → ../../../../components/src/lib/styles/canon.json
-			join(__dirname, '../../../../components/src/lib/styles/canon.json'),
-			// From src/utils/canon-tokens.ts → ../../../components/src/lib/styles/canon.json
-			join(__dirname, '../../../components/src/lib/styles/canon.json'),
+			// From dist/utils/canon-tokens.js → ../../../../canon/src/lib/styles/canon.json
+			join(__dirname, '../../../../canon/src/lib/styles/canon.json'),
+			// From src/utils/canon-tokens.ts → ../../../canon/src/lib/styles/canon.json
+			join(__dirname, '../../../canon/src/lib/styles/canon.json'),
 			// Absolute fallback (monorepo root detection)
-			join(__dirname, '../../../..', 'components/src/lib/styles/canon.json')
+			join(__dirname, '../../../..', 'canon/src/lib/styles/canon.json')
 		];
 
 		let canonJson: string | null = null;
@@ -103,7 +103,7 @@ export function loadCanon(): CanonSpec {
 			throw err;
 		}
 		throw new Error(
-			`Failed to load canon.json. Ensure packages/components/src/lib/styles/canon.json exists.\n${err}`
+			`Failed to load canon.json. Ensure packages/canon/src/lib/styles/canon.json exists.\n${err}`
 		);
 	}
 }

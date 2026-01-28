@@ -5,7 +5,7 @@
 	 * Case study documenting the migration from --dangerously-skip-permissions
 	 * to --allowedTools in autonomous Claude Code orchestration.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO

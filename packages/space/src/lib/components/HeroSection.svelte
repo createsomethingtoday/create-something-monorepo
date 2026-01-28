@@ -11,7 +11,7 @@
 	 *
 	 * This sequence respects cognitive temporality per Gadamer's fusion of horizons.
 	 */
-	import PaperCard from './PaperCard.svelte';
+	import { PaperCard } from '@create-something/canon';
 	import type { Paper } from '$lib/types/paper';
 
 	interface Props {

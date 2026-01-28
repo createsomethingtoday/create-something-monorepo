@@ -188,7 +188,7 @@ interface PluginProvides {
 
 ## Styling Architecture
 
-**Canon Compliance**: All design tokens via CSS custom properties from `@create-something/components/styles/canon.css`
+**Canon Compliance**: All design tokens via CSS custom properties from `@create-something/canon/styles/canon.css`
 
 | Token Type | Usage |
 |------------|-------|

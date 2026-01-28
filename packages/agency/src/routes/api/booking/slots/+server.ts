@@ -1,52 +1,13 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { createLogger } from '@create-something/components/utils';
+import { createLogger } from '@create-something/canon/utils';
+import { getLinkId, SAVVYCAL_API_BASE } from '$lib/utils/savvycal';
 
 const logger = createLogger('BookingSlotsAPI');
-const SAVVYCAL_API_BASE = 'https://api.savvycal.com/v1';
-const TARGET_LINK_SLUG = 'together'; // The slug part of the link URL
 
 interface SavvyCalSlot {
 	start_at: string;
 	end_at: string;
-}
-
-interface SavvyCalLink {
-	id: string;
-	slug: string;
-	name: string;
-}
-
-// Cache the link ID to avoid repeated lookups
-let cachedLinkId: string | null = null;
-
-async function getLinkId(apiKey: string): Promise<string | null> {
-	if (cachedLinkId) return cachedLinkId;
-
-	const response = await fetch(`${SAVVYCAL_API_BASE}/links`, {
-		headers: {
-			Authorization: `Bearer ${apiKey}`,
-			Accept: 'application/json'
-		}
-	});
-
-	if (!response.ok) {
-		logger.error('Failed to fetch SavvyCal links', { status: response.status });
-		return null;
-	}
-
-	const data = (await response.json()) as { entries?: SavvyCalLink[] };
-	const links = data.entries || [];
-	const targetLink = links.find((link) => link.slug === TARGET_LINK_SLUG);
-
-	if (targetLink) {
-		cachedLinkId = targetLink.id;
-		logger.debug('Found SavvyCal link', { linkId: cachedLinkId, slug: TARGET_LINK_SLUG });
-		return cachedLinkId;
-	}
-
-	logger.error('SavvyCal link not found', { slug: TARGET_LINK_SLUG });
-	return null;
 }
 
 export const GET: RequestHandler = async ({ url, platform }) => {

@@ -7,7 +7,7 @@
 	 * Target audience: Law firms looking for automated website solutions
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import StructuredData from '$lib/components/StructuredData.svelte';
 	import { ExternalLink, CheckCircle2, Zap, Shield, Calendar, Mail } from 'lucide-svelte';
 

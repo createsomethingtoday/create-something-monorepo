@@ -35,10 +35,9 @@ const baseStyles = `
 `;
 
 /**
- * 1. Registration Confirmation Email
- * Sent immediately after registration
+ * Wrap content in the standard email template
  */
-export function generateConfirmationEmail(name: string, webinarTitle: string): string {
+function emailTemplate(content: string, footerText = 'Building toward WORKWAY — the automation layer.'): string {
 	return `<!DOCTYPE html>
 <html>
 <head>
@@ -51,8 +50,24 @@ export function generateConfirmationEmail(name: string, webinarTitle: string): s
     <div class="header">
       <div class="logo">CREATE SOMETHING</div>
     </div>
-
     <div class="content">
+      ${content}
+    </div>
+    <div class="footer">
+      <p>CREATE SOMETHING</p>
+      <p>${footerText}</p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+/**
+ * 1. Registration Confirmation Email
+ * Sent immediately after registration
+ */
+export function generateConfirmationEmail(name: string, webinarTitle: string): string {
+	return emailTemplate(`
       <p class="title">You're in, ${name}.</p>
       <p>You're registered for <strong>${webinarTitle}</strong>.</p>
       <p>We'll send the meeting link and final details 24 hours before the workshop.</p>
@@ -65,15 +80,7 @@ export function generateConfirmationEmail(name: string, webinarTitle: string): s
       </div>
 
       <p class="muted">Questions? Reply to this email.</p>
-    </div>
-
-    <div class="footer">
-      <p>CREATE SOMETHING</p>
-      <p>Building toward WORKWAY — the automation layer.</p>
-    </div>
-  </div>
-</body>
-</html>`;
+	`);
 }
 
 /**
@@ -81,20 +88,7 @@ export function generateConfirmationEmail(name: string, webinarTitle: string): s
  * Sent 3 days before the webinar
  */
 export function generateWarmupEmail(name: string, webinarTitle: string): string {
-	return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>${baseStyles}</style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">CREATE SOMETHING</div>
-    </div>
-
-    <div class="content">
+	return emailTemplate(`
       <p class="title">Why Cloudflare?</p>
       
       <p>Hi ${name},</p>
@@ -112,15 +106,7 @@ export function generateWarmupEmail(name: string, webinarTitle: string): string 
       <p>That's what we're building toward with WORKWAY. This workshop is step one.</p>
 
       <p class="muted">See you soon.<br />— Micah</p>
-    </div>
-
-    <div class="footer">
-      <p>CREATE SOMETHING</p>
-      <p>You're registered for: ${webinarTitle}</p>
-    </div>
-  </div>
-</body>
-</html>`;
+	`, `You're registered for: ${webinarTitle}`);
 }
 
 /**
@@ -138,20 +124,7 @@ export function generateReminderEmail(
 		? `<p><a href="${calendarLink}" class="resource-link">Add to calendar</a></p>`
 		: '';
 
-	return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>${baseStyles}</style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">CREATE SOMETHING</div>
-    </div>
-
-    <div class="content">
+	return emailTemplate(`
       <p class="title">Tomorrow: ${webinarTitle}</p>
       
       <p>Hi ${name},</p>
@@ -175,14 +148,7 @@ export function generateReminderEmail(
       <a href="${meetingLink}" class="cta">Join Workshop</a>
 
       <p class="muted" style="margin-top: 30px;">Have a question you want answered? Reply to this email and I'll address it in the Q&A.</p>
-    </div>
-
-    <div class="footer">
-      <p>CREATE SOMETHING</p>
-    </div>
-  </div>
-</body>
-</html>`;
+	`);
 }
 
 /**
@@ -200,20 +166,7 @@ export function generateRecordingEmail(
 		? `<p><a href="${slidesLink}" class="resource-link">Download Slides (PDF)</a></p>`
 		: '';
 
-	return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>${baseStyles}</style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="logo">CREATE SOMETHING</div>
-    </div>
-
-    <div class="content">
+	return emailTemplate(`
       <p class="title">Recording: ${webinarTitle}</p>
       
       <p>Hi ${name},</p>
@@ -241,15 +194,7 @@ export function generateRecordingEmail(
       <a href="${surveyLink}" class="cta">Share Your Feedback</a>
 
       <p class="muted" style="margin-top: 30px;">Your feedback directly shapes our next workshop. Thank you.</p>
-    </div>
-
-    <div class="footer">
-      <p>CREATE SOMETHING</p>
-      <p>Building toward WORKWAY — the automation layer.</p>
-    </div>
-  </div>
-</body>
-</html>`;
+	`);
 }
 
 /**

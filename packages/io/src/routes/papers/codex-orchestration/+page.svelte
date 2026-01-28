@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	const metadata = {
 		title: 'Codex Orchestration: Claude Code Planning + Autonomous Execution',
 		date: '2026-01-09',

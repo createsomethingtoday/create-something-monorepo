@@ -1,11 +1,11 @@
 <script lang="ts">
 	import '../app.css';
-	import { Navigation, Footer, Analytics, ModeIndicator, SkipToContent, LayoutSEO } from '@create-something/components';
-	import { UnifiedSearch } from '@create-something/components/navigation';
+	import { Navigation, Footer, Analytics, ModeIndicator, LayoutSEO } from '@create-something/canon';
+	import { UnifiedSearch } from '@create-something/canon/navigation';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { afterNavigate, onNavigate, goto, invalidateAll } from '$app/navigation';
-	import { revokeSession } from '@create-something/components/auth';
+	import { revokeSession } from '@create-something/canon/auth';
 
 	let { children, data } = $props();
 
@@ -87,8 +87,6 @@
 <LayoutSEO property="space" />
 
 <Analytics property="space" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
-
-<SkipToContent />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
 <UnifiedSearch currentProperty="space" localItems={quickAccessItems} />

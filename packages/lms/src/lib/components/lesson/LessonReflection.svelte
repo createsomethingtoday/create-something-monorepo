@@ -5,7 +5,7 @@
 	 * Displays a question with a hidden answer that reveals on click.
 	 * Uses CanonReveal for the answer reveal.
 	 */
-	import { CanonReveal } from '@create-something/components/motion';
+	import { CanonReveal } from '@create-something/canon/motion';
 	import { ChevronDown } from 'lucide-svelte';
 
 	type RevealStyle = 'decode' | 'unconcealment' | 'typewriter' | 'threshold' | 'mask';

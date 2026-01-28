@@ -7,7 +7,7 @@
 	 * examines the convergence of empiricism and phenomenology in understanding
 	 * the Zuhandenheit moment.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO

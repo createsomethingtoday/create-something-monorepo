@@ -1,6 +1,6 @@
 <script lang="ts">
-	import MasterCard from '$lib/components/MasterCard.svelte';
-	import { SEO } from '@create-something/components';
+	import { MasterCard } from '$lib/components';
+	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();

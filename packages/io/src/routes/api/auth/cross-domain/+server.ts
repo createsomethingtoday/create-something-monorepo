@@ -1,8 +1,8 @@
 import type { RequestHandler } from './$types';
 import { json } from '@sveltejs/kit';
-import { getSessionCookies } from '@create-something/components/auth';
-import { identityClient, getIdentityErrorMessage } from '@create-something/components/api';
-import { createLogger } from '@create-something/components/utils';
+import { getSessionCookies } from '@create-something/canon/auth';
+import { identityClient, getIdentityErrorMessage } from '@create-something/canon/api';
+import { createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('CrossDomainAPI');
 

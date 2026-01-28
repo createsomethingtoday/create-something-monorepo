@@ -1,0 +1,116 @@
+# Ground Consolidation Configuration
+# 
+# Shared configuration schema for CREATE SOMETHING and WORKWAY
+# This file defines the patterns - the scripts read this configuration.
+#
+# Philosophy: "Specialize first to find pattern strength, 
+#              then generalize to strengthen others"
+
+version: "1"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Import Health
+# ─────────────────────────────────────────────────────────────────────────────
+
+imports:
+  # Deprecated package migrations
+  # When a package is deprecated, add the mapping here
+  deprecated:
+    # "@old-package": "@new-package"
+    "@create-something/components": "@create-something/canon"
+  
+  # Anti-patterns to detect
+  anti_patterns:
+    # Direct source imports bypass package boundaries
+    direct_source:
+      pattern: "from ['\"]\\.\\..*/(components|canon)/src/lib/"
+      severity: error
+      
+    # Relative cross-package imports
+    cross_package:
+      pattern: "from ['\"]\\.\\..*packages/(ltd|agency|space|io|canon)/"
+      severity: error
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Duplicate Detection
+# ─────────────────────────────────────────────────────────────────────────────
+
+duplicates:
+  # Similarity threshold (0-100)
+  # 85% catches real duplicates while avoiding false positives
+  similarity_threshold: 85
+  
+  # Minimum function size to analyze
+  min_lines: 5
+  
+  # Canonical sources - the "source of truth" locations
+  # Functions here are the authoritative versions
+  canonical_sources:
+    - packages/canon/src/lib/utils
+    - packages/canon/src/lib/types
+  
+  # Paths to check for duplicates
+  check_paths:
+    - packages/ltd/src/lib
+    - packages/agency/src/lib
+    - packages/space/src/lib
+    - packages/io/src/lib
+  
+  # Functions to ignore (framework conventions)
+  ignore_functions:
+    - load           # SvelteKit page load
+    - GET            # API handlers
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+    - handle         # SvelteKit hooks
+    - handleError
+  
+  # Files to skip
+  ignore_files:
+    - "*.test.ts"
+    - "*.spec.ts"
+    - "*.d.ts"
+    - "index.ts"     # Re-export files
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Component Locality (CREATE SOMETHING specific)
+# ─────────────────────────────────────────────────────────────────────────────
+
+component_locality:
+  enabled: true
+  
+  # Components should not live in route directories
+  forbidden_paths:
+    - "packages/*/src/routes/**/*.svelte"
+  
+  # Except SvelteKit page components
+  exceptions:
+    - "+page.svelte"
+    - "+layout.svelte"
+    - "+error.svelte"
+  
+  # Canonical locations
+  canonical_paths:
+    shared: "packages/canon/src/lib/components"
+    experiments: "packages/canon/src/lib/experiments"
+    domains: "packages/canon/src/lib/domains"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Experiment Graduation (CREATE SOMETHING specific)
+# ─────────────────────────────────────────────────────────────────────────────
+
+experiments:
+  enabled: true
+  
+  # Path to experiments
+  path: "packages/canon/src/lib/experiments"
+  
+  # Usage threshold for graduation
+  graduation_threshold: 2
+  
+  # Target paths for graduated components
+  graduation_targets:
+    shared: "packages/canon/src/lib/components"
+    domain: "packages/canon/src/lib/domains/{property}"

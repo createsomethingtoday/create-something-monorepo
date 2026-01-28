@@ -6,9 +6,9 @@
 	 * Frontmatter is exposed via $$props.
 	 */
 	import { page } from '$app/stores';
-	import { PageActions, MarkdownPreviewModal } from '@create-something/components';
-	import { RelatedContent } from '@create-something/components/navigation';
-	import type { PaperFrontmatter } from '@create-something/components/utils';
+	import { PageActions, MarkdownPreviewModal } from '@create-something/canon';
+	import { RelatedContent } from '@create-something/canon/navigation';
+	import type { PaperFrontmatter } from '@create-something/canon/utils';
 
 	// Frontmatter comes from MDsveX as props
 	interface Props {

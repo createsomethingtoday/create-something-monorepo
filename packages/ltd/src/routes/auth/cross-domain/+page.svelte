@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	// This page is a redirect target - users should never see it
 	// The +page.server.ts handles the token exchange and redirects
 </script>

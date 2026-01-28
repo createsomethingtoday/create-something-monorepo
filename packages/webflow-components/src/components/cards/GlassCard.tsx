@@ -18,6 +18,22 @@ export interface GlassCardProps {
   className?: string;
 }
 
+// Glass variant color configurations
+const GLASS_COLORS: Record<GlassVariant, { background: string; border: string }> = {
+  light: {
+    background: 'rgba(255, 255, 255, 0.1)',
+    border: 'rgba(255, 255, 255, 0.2)',
+  },
+  dark: {
+    background: 'rgba(0, 0, 0, 0.1)',
+    border: 'rgba(255, 255, 255, 0.1)',
+  },
+  colored: {
+    background: '', // Set dynamically based on brand
+    border: '',
+  },
+};
+
 export const GlassCard: React.FC<GlassCardProps> = ({
   children,
   glassVariant = 'light',
@@ -28,26 +44,14 @@ export const GlassCard: React.FC<GlassCardProps> = ({
 }) => {
   const brand = getBrandColors(brandVariant);
 
-  const getBackgroundColor = (): string => {
-    switch (glassVariant) {
-      case 'light':
-        return 'rgba(255, 255, 255, 0.1)';
-      case 'dark':
-        return 'rgba(0, 0, 0, 0.1)';
-      case 'colored':
-        return `${brand.primary}1a`; // 10% opacity
+  // Get colors based on variant, with brand override for 'colored'
+  const getGlassColor = (type: 'background' | 'border'): string => {
+    if (glassVariant === 'colored') {
+      return type === 'background'
+        ? `${brand.primary}1a` // 10% opacity
+        : `${brand.primary}33`; // 20% opacity
     }
-  };
-
-  const getBorderColor = (): string => {
-    switch (glassVariant) {
-      case 'light':
-        return 'rgba(255, 255, 255, 0.2)';
-      case 'dark':
-        return 'rgba(255, 255, 255, 0.1)';
-      case 'colored':
-        return `${brand.primary}33`; // 20% opacity
-    }
+    return GLASS_COLORS[glassVariant][type];
   };
 
   const paddingSizes = {
@@ -60,8 +64,8 @@ export const GlassCard: React.FC<GlassCardProps> = ({
     position: 'relative',
     overflow: 'hidden',
     padding: paddingSizes[padding],
-    backgroundColor: getBackgroundColor(),
-    border: `1px solid ${getBorderColor()}`,
+    backgroundColor: getGlassColor('background'),
+    border: `1px solid ${getGlassColor('border')}`,
     borderRadius: 0, // Maverick X: no border radius
     backdropFilter: 'blur(20px) saturate(150%)',
     WebkitBackdropFilter: 'blur(20px) saturate(150%)',

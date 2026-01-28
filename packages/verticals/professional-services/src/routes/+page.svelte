@@ -11,7 +11,7 @@
 	 * "Space between elements is content."
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import HeroSection from '$lib/components/HeroSection.svelte';
 	import ProjectGallery from '$lib/components/ProjectGallery.svelte';
 	import StudioSection from '$lib/components/StudioSection.svelte';

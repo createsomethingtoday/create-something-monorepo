@@ -2,8 +2,8 @@
 	import '../app.css';
 	import { onMount } from 'svelte';
 	import { afterNavigate, onNavigate, goto, invalidateAll } from '$app/navigation';
-	import { Navigation, Footer, Analytics, ModeIndicator, SkipToContent, LayoutSEO } from '@create-something/components';
-	import { UnifiedSearch } from '@create-something/components/navigation';
+	import { Navigation, Footer, Analytics, ModeIndicator, LayoutSEO } from '@create-something/canon';
+	import { UnifiedSearch } from '@create-something/canon/navigation';
 	import { page } from '$app/stores';
 
 	// View Transitions API - Hermeneutic Navigation
@@ -116,8 +116,6 @@
 <LayoutSEO property="io" />
 
 <Analytics property="io" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} debug={true} />
-
-<SkipToContent />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
 <UnifiedSearch currentProperty="io" localItems={quickAccessItems} />

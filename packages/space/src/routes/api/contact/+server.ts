@@ -1,7 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { generateCorrelationId, logError } from '@create-something/components/utils';
-import { contactSchema, parseBody } from '@create-something/components/validation';
+import { generateCorrelationId, logError } from '@create-something/canon/utils';
+import { contactSchema, parseBody } from '@create-something/canon/validation';
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {

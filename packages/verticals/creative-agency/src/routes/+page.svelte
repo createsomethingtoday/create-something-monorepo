@@ -9,7 +9,7 @@
 	 * Zuhandenheit: The portfolio recedes; the impact remains.
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import { config } from '$lib/config/runtime';
 	import { onMount } from 'svelte';
 

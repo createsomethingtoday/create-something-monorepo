@@ -4,7 +4,7 @@ export default {
 		'./src/**/*.{html,js,svelte,ts,svelte.ts,svelte.js}',
 		'./src/routes/**/*.{svelte,ts,js}',
 		'./src/lib/**/*.{svelte,ts,js}',
-		'../components/src/**/*.{svelte,js,ts}'
+		'../canon/src/**/*.{svelte,js,ts}'
 	],
 	theme: {
 		extend: {

@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { QuoteBlock, SEO } from '@create-something/components';
+	import { QuoteBlock, SEO } from '@create-something/canon';
+	import { PreviewCanvas } from '@create-something/canon/experiments/render-preview';
 	import { Sparkles, CheckCircle2, AlertCircle } from 'lucide-svelte';
 	import type { PageData } from './$types';
-	import PreviewCanvas from './PreviewCanvas.svelte';
 
 	let { data }: { data: PageData } = $props();
 	const { experiment } = data;

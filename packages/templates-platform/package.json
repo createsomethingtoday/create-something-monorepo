@@ -5,7 +5,7 @@
   "description": "CREATE SOMETHING Templates Platform - Deploy beautiful sites in seconds",
   "type": "module",
   "dependencies": {
-    "@create-something/components": "workspace:*",
+    "@create-something/canon": "workspace:*",
     "stripe": "^18.5.0"
   },
   "scripts": {

@@ -15,9 +15,9 @@
 	 * - TrendIndicator: Period-over-period change
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import { onMount } from 'svelte';
-	import TufteDashboard from '$lib/components/TufteDashboard.svelte';
+	import { TufteDashboard } from '@create-something/canon/domains/io';
 
 	let loading = true;
 	let error: string | null = null;

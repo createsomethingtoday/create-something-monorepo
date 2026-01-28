@@ -2,13 +2,13 @@
  * Unified Analytics Events Endpoint
  *
  * Receives batched analytics events from the client and stores them in D1.
- * Uses the unified schema from @create-something/components.
+ * Uses the unified schema from @create-something/canon.
  */
 
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { processEventBatch, type EventBatch } from '@create-something/components/analytics';
-import { createLogger } from '@create-something/components/utils';
+import { processEventBatch, type EventBatch } from '@create-something/canon/analytics';
+import { createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('AnalyticsEventsAPI');
 

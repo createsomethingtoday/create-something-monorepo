@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SEO } from '@create-something/components';
+	import { SEO, Card } from '@create-something/canon';
 	import type { PageData, ActionData } from './$types';
 	import { enhance } from '$app/forms';
 	
@@ -93,7 +93,7 @@
 
 	<div class="dashboard-grid">
 		<!-- Response Queue -->
-		<section class="panel queue-panel">
+		<Card variant="glass" radius="md" padding="lg" class="glass-emphasis col-span-2">
 			<h2 class="panel-title">Response Queue</h2>
 			<p class="panel-subtitle">Drafted by AI. Approve or edit.</p>
 			
@@ -165,10 +165,10 @@
 					{/each}
 				</div>
 			{/if}
-		</section>
+		</Card>
 
 		<!-- Signals -->
-		<section class="panel signals-panel">
+		<Card variant="glass" radius="md" padding="lg" class="glass-emphasis">
 			<h2 class="panel-title">Signals</h2>
 			<p class="panel-subtitle">Mentions, questions, opportunities</p>
 			
@@ -231,10 +231,10 @@
 					{/each}
 				</div>
 			{/if}
-		</section>
+		</Card>
 
 		<!-- Relationships -->
-		<section class="panel relationships-panel">
+		<Card variant="glass" radius="md" padding="lg" class="glass-emphasis">
 			<h2 class="panel-title">Warming Relationships</h2>
 			<p class="panel-subtitle">People engaging with your work</p>
 			
@@ -273,7 +273,7 @@
 					{/each}
 				</div>
 			{/if}
-		</section>
+		</Card>
 	</div>
 
 	<footer class="dashboard-footer">
@@ -345,16 +345,6 @@
 		gap: var(--space-lg);
 	}
 	
-	.panel {
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-		padding: var(--space-lg);
-	}
-	
-	.queue-panel {
-		grid-column: 1 / -1;
-	}
 	
 	.panel-title {
 		font-size: var(--text-h3);

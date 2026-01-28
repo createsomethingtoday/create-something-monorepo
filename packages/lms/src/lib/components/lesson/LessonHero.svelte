@@ -5,7 +5,7 @@
 	 * Big question that draws the reader in.
 	 * Uses decode or unconcealment reveal style.
 	 */
-	import { CanonReveal } from '@create-something/components/motion';
+	import { CanonReveal } from '@create-something/canon/motion';
 
 	type RevealStyle = 'decode' | 'unconcealment' | 'typewriter' | 'threshold' | 'mask';
 

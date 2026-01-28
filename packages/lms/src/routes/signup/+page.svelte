@@ -8,8 +8,8 @@
 	 */
 
 	import { page } from '$app/stores';
-	import { CookieConsent } from '@create-something/components/components';
-	import { hasCookieConsent, acceptCookieConsent } from '@create-something/components/gdpr';
+	import { CookieConsent } from '@create-something/canon/components';
+	import { hasCookieConsent, acceptCookieConsent } from '@create-something/canon/gdpr';
 
 	let name = $state('');
 	let email = $state('');

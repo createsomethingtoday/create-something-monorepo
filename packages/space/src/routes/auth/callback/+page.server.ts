@@ -1,8 +1,8 @@
 import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
-import { setSessionCookies } from '@create-something/components/auth';
-import { identityClient } from '@create-something/components/api';
-import { createLogger } from '@create-something/components/utils';
+import { setSessionCookies } from '@create-something/canon/auth';
+import { identityClient } from '@create-something/canon/api';
+import { createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('MagicLinkCallback');
 

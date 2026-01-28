@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types';
-import type { Paper } from '@create-something/components/types';
+import type { Paper } from '@create-something/canon/types';
 import { getFileBasedExperiments } from '$lib/config/fileBasedExperiments';
 
 export const load: PageServerLoad = async ({ platform }) => {

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { SEO } from '@create-something/components';
-	import { AccountPage } from '@create-something/components/auth/components';
+	import { SEO } from '@create-something/canon';
+	import { AccountPage } from '@create-something/canon/auth/components';
 
 	let { data } = $props();
 </script>

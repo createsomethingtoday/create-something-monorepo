@@ -1,0 +1,4905 @@
+{
+  "generated": "2026-01-26T19:37:32.848Z",
+  "summary": {
+    "total": 590,
+    "accessible": 590,
+    "noAccess": 0,
+    "errors": 0,
+    "uniqueClientIds": 572,
+    "duplicateClientIdGroups": 8
+  },
+  "duplicateClientIds": [
+    {
+      "clientId": "ca3288fbd66ce2b44c86074d10abd66ad905677f714153bd8127483f442326ff",
+      "apps": [
+        {
+          "name": "Jetboost Extensions",
+          "slug": "jetboost-extensions",
+          "workspaceId": "6310f776e067393e3a059c6f"
+        },
+        {
+          "name": "Jetboost",
+          "slug": "jetboost",
+          "workspaceId": "6310f776e067393e3a059c6f"
+        }
+      ]
+    },
+    {
+      "clientId": "19511de1ec410f9228d8dcbc9420e67916dea80d86d18f0c9a533eb475ea0f62",
+      "apps": [
+        {
+          "name": "[OLD] Designer API Playground",
+          "slug": "my-amazing-webflow-app",
+          "workspaceId": "625860a7a6c16d624927122f"
+        },
+        {
+          "name": "Designer API Playground",
+          "slug": "designer-api-playground",
+          "workspaceId": "625860a7a6c16d624927122f"
+        }
+      ]
+    },
+    {
+      "clientId": "30cf2d6e7e8cda57deaf25277e2dbd3ccf3266352f3293fb75884dd91afad12c",
+      "apps": [
+        {
+          "name": "Flowstar: Form Connectors [ARCHIVED]",
+          "slug": "flowstar-mailchimp-forms",
+          "workspaceId": "6228ff14beec0e00fe2c6dd0"
+        },
+        {
+          "name": "Flowstar: Form Connectors",
+          "slug": "flowstar-form-connectors",
+          "workspaceId": "6228ff14beec0e00fe2c6dd0"
+        }
+      ]
+    },
+    {
+      "clientId": "bf25dd81aaeb3a926deb42e1a984f19d0e9483120b440c90724d2722cea7a3d8",
+      "apps": [
+        {
+          "name": "old older Optibase - A/B testing for Webflows",
+          "slug": "optibase---a-b-testing-for-webflows",
+          "workspaceId": "633b3aa70148ed01998dd742"
+        },
+        {
+          "name": "Smartarget Whatsup Chat [ARCHIVED]",
+          "slug": "smartarget-whatsapp-contact-us",
+          "workspaceId": "642426c60c544e4a872365b6"
+        },
+        {
+          "name": "ScheduLinks [ARCHIVED]",
+          "slug": "getflowtools",
+          "workspaceId": "66ccbe9a6dfe6c3f06d6f428"
+        },
+        {
+          "name": "Velllum",
+          "slug": "velllum",
+          "workspaceId": "63114d85eaab907c83698883"
+        },
+        {
+          "name": "[ARCHIVED] Uploadcare",
+          "slug": "uploadcare",
+          "workspaceId": "66ccbe9a6dfe6c3f06d6f428"
+        },
+        {
+          "name": "[ARCHIVED] OneSync",
+          "slug": "onesync",
+          "workspaceId": "633b3aa70148ed01998dd742"
+        },
+        {
+          "name": "[ARCHIVED] Ultimo Bots",
+          "slug": "ultimo-bots",
+          "workspaceId": "682f6cdf81574b7a6f13b493"
+        },
+        {
+          "name": "ARCHIVED Accessibility Enable",
+          "slug": "accessibility-enable",
+          "workspaceId": "678f3166c03f31ca74e28ec9"
+        },
+        {
+          "name": "Signal Beam [Drafted]",
+          "slug": "singal-beam",
+          "workspaceId": "632dbe72fa6c9f001b1305ce"
+        },
+        {
+          "name": "[ARCHIVED] Concord Consent",
+          "slug": "concord-consent",
+          "workspaceId": "67ee5b1a43e807318c6fcc9b"
+        },
+        {
+          "name": "Shea Webflow Test",
+          "slug": "shea-webflow-test",
+          "workspaceId": "66ccbe9a6dfe6c3f06d6f428"
+        }
+      ]
+    },
+    {
+      "clientId": "93a7a5bafba42b0bb4a5b15af4257a0c8e0baba1ddcd9dba87a6b236cd0a6c67",
+      "apps": [
+        {
+          "name": "[Legacy Private Listing] Wes",
+          "slug": "wes-webflow-enterprise-solutions",
+          "workspaceId": "6328b5c7302aa13380f83211"
+        },
+        {
+          "name": "[FAKE] https://edgarallan.com",
+          "slug": "fake-https-edgarallan-com",
+          "workspaceId": "6328b5c7302aa13380f83211"
+        },
+        {
+          "name": "Wes",
+          "slug": "wes",
+          "workspaceId": "6328b5c7302aa13380f83211"
+        }
+      ]
+    },
+    {
+      "clientId": "48810e175b797c07e27d979f5a1611db6d68bad4497a7efacbaafd57ca8ec929",
+      "apps": [
+        {
+          "name": "old quizell - test",
+          "slug": "test",
+          "workspaceId": "65b39c23af9163997c1ac079"
+        },
+        {
+          "name": "Quizell Product Quiz",
+          "slug": "quizell-product-quiz",
+          "workspaceId": "65b39c23af9163997c1ac079"
+        }
+      ]
+    },
+    {
+      "clientId": "cf129fda269e8fbe18de95df4098bdff0b6a607aeee6699e02f0826cde4c1b82",
+      "apps": [
+        {
+          "name": "Journalist AI SEO Writer",
+          "slug": "journalist-ai",
+          "workspaceId": "65956fcc842d15ce08fb8e7b"
+        },
+        {
+          "name": "Journalist AI SEO Writer v1",
+          "slug": "journalist-ai-seo-writer",
+          "workspaceId": "65956fcc842d15ce08fb8e7b"
+        }
+      ]
+    },
+    {
+      "clientId": "8a349598d362f09be2ae960000ebfbf2ac627a92e07033ac111629cba80154ab",
+      "apps": [
+        {
+          "name": "Bookmarks Pro",
+          "slug": "bookmarks-pro",
+          "workspaceId": "63b4dea41544cd0b70abee52"
+        },
+        {
+          "name": "Bookmarks Pro (archived)",
+          "slug": "booksmarks",
+          "workspaceId": "63b4dea41544cd0b70abee52"
+        }
+      ]
+    }
+  ],
+  "allApps": [
+    {
+      "name": "Google Ads for Webflow",
+      "slug": "google-ads-for-webflow",
+      "clientId": "80ef4a2c0bbc81f645ca542483a7c0cc2678a2898c93b736a98fcbca677249b8",
+      "workspaceId": "63e421146216743f3c52476a",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/google-ads-for-webflow/edit"
+    },
+    {
+      "name": "Graphite",
+      "slug": "graphite",
+      "clientId": "de0385983bb488054a7cc14582dd9f5979b182181b42371aee5a46ec3305f04a",
+      "workspaceId": "6332213f3e84c50140e087ea",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/graphite/edit"
+    },
+    {
+      "name": "AirOps",
+      "slug": "airops",
+      "clientId": "f9fdd78651e1a6040ca78907f8447e6b4655521dfebeec3e1c2b59efe3d64404",
+      "workspaceId": "63914d99794ebb7e15975e3c",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/airops/edit"
+    },
+    {
+      "name": "accessiBe",
+      "slug": "accessibe",
+      "clientId": "0cdfa0c70b1eb645c66a8fe3abcfe6f0adef4d2adb254b424aa210d32388d1ee",
+      "workspaceId": "67b2011a1e5b44ac3a646a98",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/accessibe/edit"
+    },
+    {
+      "name": "Gumloop",
+      "slug": "gumloop",
+      "clientId": "67f3d7e674f9f19643fda07b80a22edc42b5543079fbb2bda6725dbea05e0bfd",
+      "workspaceId": "67ca0826d5c9a51216d057d1",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/gumloop/edit"
+    },
+    {
+      "name": "Frontify",
+      "slug": "frontify",
+      "clientId": "77e6c04d5404e129e26db74099d5432bcee3feca7e6e5a6e099ae420eda74ab9",
+      "workspaceId": "66d2464a5dc8a138389f39fb",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/frontify/edit"
+    },
+    {
+      "name": "LILT Connector",
+      "slug": "lilt-connector",
+      "clientId": "8435ebe078637a83e184011faa66628973a8536209238a81e99e5a407d8e03ef",
+      "workspaceId": "681d31ed913acdd1dec043f9",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/lilt-connector/edit"
+    },
+    {
+      "name": "Crowdin",
+      "slug": "crowdin",
+      "clientId": "f632ee15d358c8d53e2f84e6780ef47ce93e069c5240561bb3b443eb69ebd83b",
+      "workspaceId": "63786c208cbe813ef2dfb4c2",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/crowdin/edit"
+    },
+    {
+      "name": "Webflow MCP App",
+      "slug": "webflow-mcp-app",
+      "clientId": "dc8209c65e3ec02254d15275ca056539c89f6d15741893a0adf29ad6f381eb99",
+      "workspaceId": "68235e37a61f046bbdb8d829",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/webflow-mcp-app/edit"
+    },
+    {
+      "name": "Figma to Webflow",
+      "slug": "figma-to-webflow",
+      "clientId": "0c904de64ea005127db48e35bb9994792bcd52fa00d32e5d5e8c06a96d31a9b1",
+      "workspaceId": "63d85698e0557a811f5a9841",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/figma-to-webflow/edit"
+    },
+    {
+      "name": "Docs Site App",
+      "slug": "docs-site-app",
+      "clientId": "2ccc1b455c782fd60093590c83ee5e315b36bd6640507bb48570e5d0265c2854",
+      "workspaceId": "625860a7a6c16d624927122f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/docs-site-app/edit"
+    },
+    {
+      "name": "Finsweet Table",
+      "slug": "finsweet-table",
+      "clientId": "97eeb755b1a0806e8e9d6e6e5cb93cab2faee1b70f3788d94ca329a466da6a5e",
+      "workspaceId": "638f7017f8f3b49d78e071a0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/finsweet-table/edit"
+    },
+    {
+      "name": "Webflow CLI",
+      "slug": "webflow-cli",
+      "clientId": "fbab9abdbeeb35bb2554a1b83b8bd060d719f22eca26ff9119b87608c87c0074",
+      "workspaceId": "63e421146216743f3c52476a",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/webflow-cli/edit"
+    },
+    {
+      "name": "Webflow MCP Server",
+      "slug": "wf-mcp-server",
+      "clientId": "68a687f0cec4d6fa5d9a9a93940af02f3021c1a7856c46ca8077c268e69cba70",
+      "workspaceId": "625860a7a6c16d624927122f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/wf-mcp-server/edit"
+    },
+    {
+      "name": "Relume Site Builder Import",
+      "slug": "relume",
+      "clientId": "a6d9094f2797e081752cc00fa983e92375f29ab2de471bf4878e54fbeb3447f9",
+      "workspaceId": "63cb6c771df46cfa36ab9087",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/relume/edit"
+    },
+    {
+      "name": "Finsweet Extension",
+      "slug": "finsweet-extension",
+      "clientId": "6b05835acb745ca638d2b0d091ee578442a79330278323dfe0a1da7af17b3e69",
+      "workspaceId": "638f7017f8f3b49d78e071a0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/finsweet-extension/edit"
+    },
+    {
+      "name": "SVG Import",
+      "slug": "svg-import",
+      "clientId": "8e2b40b2e643f28293c2ad0d3b30e3e1a5bae7d0415bd1fda045900be2add698",
+      "workspaceId": "6306c9ffb4579f598fdcbcb3",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/svg-import/edit"
+    },
+    {
+      "name": "Jetboost Extensions",
+      "slug": "jetboost-extensions",
+      "clientId": "ca3288fbd66ce2b44c86074d10abd66ad905677f714153bd8127483f442326ff",
+      "workspaceId": "6310f776e067393e3a059c6f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/jetboost-extensions/edit"
+    },
+    {
+      "name": "Zapier",
+      "slug": "zapier",
+      "clientId": "eeed3dbab1cf3acfafbf0b68e3387e56f131dc45467342206c24a800355145dd",
+      "workspaceId": "66df8e0356852f1be10484e6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/zapier/edit"
+    },
+    {
+      "name": "Slater",
+      "slug": "slater",
+      "clientId": "5f14eceb5024c613c1d44fb82c50176bdf9e130bed03fd74db13abdbc8d030b3",
+      "workspaceId": "6328b5c7302aa13380f83211",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/slater/edit"
+    },
+    {
+      "name": "Webflow Cloud",
+      "slug": "webflow-cloud",
+      "clientId": "4e98f8e35a62b288d79dd0973ed7683d0886506ba6413ee1795c2805bb5dff51",
+      "workspaceId": "63d85698e0557a811f5a9841",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/webflow-cloud/edit"
+    },
+    {
+      "name": "Finsweet Components",
+      "slug": "finsweet-components",
+      "clientId": "2932d27a1c3684c43c21a445e37486e0aee228aa7c34662f7451cc4122b5661d",
+      "workspaceId": "638f7017f8f3b49d78e071a0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/finsweet-components/edit"
+    },
+    {
+      "name": "n8n Cloud",
+      "slug": "n8n-cloud",
+      "clientId": "7a70d745efb20753c9db3e2ceb633607a2acb7f7dadacc1493bba68bc2a17e15",
+      "workspaceId": "63881938fc91cc45f558ac3f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/n8n-cloud/edit"
+    },
+    {
+      "name": "HubSpot",
+      "slug": "hubspot",
+      "clientId": "c076d53a6ebbc7844f7a47525ff3bc4e40ea8603a14359a8a80677afab49057f",
+      "workspaceId": "646d501cb7f050a4493c7b6b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/hubspot/edit"
+    },
+    {
+      "name": "Unsplash",
+      "slug": "unsplash",
+      "clientId": "05238549cb97002cdf303301f32410cb4ff6c57094ae8b6df968759257c461a9",
+      "workspaceId": "648f9fc0259a699a36b3c256",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/unsplash/edit"
+    },
+    {
+      "name": "[ARCHIVED] HTML to Webflow",
+      "slug": "html-to-webflow",
+      "clientId": "22b298c0b7b05465245787b3f4c1bba7b14dd32f6098bd71b7e4d05bea71385d",
+      "workspaceId": "64d5e19191c948b22b5d8402",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/html-to-webflow/edit"
+    },
+    {
+      "name": "Flowstar: Urgency Countdown Timer Bar",
+      "slug": "flowstar-urgency-countdown-timer-bar",
+      "clientId": "2cfeb93f25965eabdf7b06cd6d495621087c33a469a22503fa2870c72f404141",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-urgency-countdown-timer-bar/edit"
+    },
+    {
+      "name": "[OLD] Designer API Playground",
+      "slug": "my-amazing-webflow-app",
+      "clientId": "19511de1ec410f9228d8dcbc9420e67916dea80d86d18f0c9a533eb475ea0f62",
+      "workspaceId": "625860a7a6c16d624927122f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/my-amazing-webflow-app/edit"
+    },
+    {
+      "name": "Flowstar: Contact Form Builder",
+      "slug": "flowstar-contact-form-builder",
+      "clientId": "c59630016940fbaf6ed6d906842e2a7fbdb97d89b6430a687ec0bdf23efc7171",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-contact-form-builder/edit"
+    },
+    {
+      "name": "Flowstar: Form Builder",
+      "slug": "flowstar-form-builder",
+      "clientId": "fddb1d9bc63c4296ac96d13fb7af5680bf6f3cbc39cbccffeae95ed387888f33",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-form-builder/edit"
+    },
+    {
+      "name": "Flowstar: Store Locator Map",
+      "slug": "flowstar-store-locator-map",
+      "clientId": "c41812767543bd74f3792b88160bb7b6d55b03e0392ab532bd17dea5799ab180",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-store-locator-map/edit"
+    },
+    {
+      "name": "Coming Soon",
+      "slug": "coming-soon",
+      "clientId": "211cadba9c95413b82536a7f8d62d48ff68d30ed687cb33e2444a767fe1babe8",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/coming-soon/edit"
+    },
+    {
+      "name": "Flowstar: Polls",
+      "slug": "flowstar-polls",
+      "clientId": "84be6fc5fcbd2ad1af11e65cd9258a99e58de5ebac2f7d2809c7d5385d1e9de4",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-polls/edit"
+    },
+    {
+      "name": "Data Goat",
+      "slug": "data-goat",
+      "clientId": "7283ef78fcad974bb468384da8e601c675b7b6e6dd340461ba9212a30f6bd41d",
+      "workspaceId": "630f38bcf8bf1d410e3b5334",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/data-goat/edit"
+    },
+    {
+      "name": "Google site tools for Webflow",
+      "slug": "google-site-tools-for-webflow",
+      "clientId": "9f7ad27b392d8b47351979eea752985642c9435c2f96871aa196a9f95725806f",
+      "workspaceId": "6618638b81a66aac6fe84812",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/google-site-tools-for-webflow/edit"
+    },
+    {
+      "name": "Social Chat Buttons",
+      "slug": "social-chat-buttons",
+      "clientId": "6b234deaeda65758c63a30dc3fdee1b07ec7026540a5240f9d908fc24494a1fc",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/social-chat-buttons/edit"
+    },
+    {
+      "name": "LottieFiles for Webflow",
+      "slug": "lottiefiles-for-webflow",
+      "clientId": "12c123c3ac8ec62376b69b9c90ed0b20128c0692fd00c9d2117580f7867f5a27",
+      "workspaceId": "637825ca02acf00f685ade9c",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/lottiefiles-for-webflow/edit"
+    },
+    {
+      "name": "Timeline",
+      "slug": "timeline",
+      "clientId": "71ea09e85cd3f6fca7ed205bbe20337af842c4df0732d8305d6c4750e78ae9ce",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/timeline/edit"
+    },
+    {
+      "name": "Flowstar: GDPR Cookie Consent",
+      "slug": "flowstar-gdpr-cookie-consent",
+      "clientId": "3c1e53bbdee2312eaf859e98c1781aef46cac217a59cca1df0208e9cc9053668",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-gdpr-cookie-consent/edit"
+    },
+    {
+      "name": "Flow Guys Toolkit",
+      "slug": "toolkit",
+      "clientId": "9e86dc90842c2e8e80fb5fb5f3c6fdb2bc16dd99f8da3d8d9c9a384b7ec0bf50",
+      "workspaceId": "631b0fc7483469e1c00877d7",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/toolkit/edit"
+    },
+    {
+      "name": "Ikonik",
+      "slug": "ikonik",
+      "clientId": "360e4f30051c8fed79cf03acbda46e67defa96184a6782e0ca73678d2329be69",
+      "workspaceId": "63876222d52e0522be01178b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/ikonik/edit"
+    },
+    {
+      "name": "Boosters",
+      "slug": "boosters",
+      "clientId": "64a6e7940d037833d631a773cbc1d63e2053a9075b9b8cae82b21c5d2a61fa9e",
+      "workspaceId": "636924a5dcaf93e673e6a2b7",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/boosters/edit"
+    },
+    {
+      "name": "Microsoft Clarity",
+      "slug": "microsoft-clarity",
+      "clientId": "d7201102b9b7b12d4b8a36c4f596d241e3d3b396f4330834627fc596f1aa3ec3",
+      "workspaceId": "652bdf2abf55b01d9650a200",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/microsoft-clarity/edit"
+    },
+    {
+      "name": "Make",
+      "slug": "make",
+      "clientId": "0e9a6ce4c02b954643ae743fbda9c7d9625b4244a1f2f98bdeabd5ef2adf3b9a",
+      "workspaceId": "625734b73e5c610181ab5372",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/make/edit"
+    },
+    {
+      "name": "Flowstar: Disable Right + Content Protection",
+      "slug": "flowstar-disable-right-content-protection",
+      "clientId": "b6129281e46d3877d5507bcbef62421b3ed12941afedacdd08abe755e372a5ad",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-disable-right-content-protection/edit"
+    },
+    {
+      "name": "Better Shadows",
+      "slug": "better-shadows",
+      "clientId": "b501375e2f8105509f127e1d0d69167fcd77ecace3c3bc5901bd177d32576897",
+      "workspaceId": "630695800280c7574df4820d",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/better-shadows/edit"
+    },
+    {
+      "name": "Flowstar: Form Connectors [ARCHIVED]",
+      "slug": "flowstar-mailchimp-forms",
+      "clientId": "30cf2d6e7e8cda57deaf25277e2dbd3ccf3266352f3293fb75884dd91afad12c",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-mailchimp-forms/edit"
+    },
+    {
+      "name": "Flowstar: PDF Viewer",
+      "slug": "flowstar-pdf-viewer",
+      "clientId": "1c7708893bace30e310dab0bef17681842662dd26f25595ed34de2d4ac9a0ec1",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-pdf-viewer/edit"
+    },
+    {
+      "name": "old older Optibase - A/B testing for Webflows",
+      "slug": "optibase---a-b-testing-for-webflows",
+      "clientId": "bf25dd81aaeb3a926deb42e1a984f19d0e9483120b440c90724d2722cea7a3d8",
+      "workspaceId": "633b3aa70148ed01998dd742",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/optibase---a-b-testing-for-webflows/edit"
+    },
+    {
+      "name": "Audio Player",
+      "slug": "audio-player",
+      "clientId": "28b78d1b8bcf0c757af99d97aafe6854a55b3c56ad008c4fb0e73703c19e4a22",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/audio-player/edit"
+    },
+    {
+      "name": "Age Verification | Age Gate 18+",
+      "slug": "flowstar-age-verification-age-gate-18",
+      "clientId": "a8bf88584bdb579c81da4f140a220db7c54ec3515824b97a407b6f6bedaa1e1d",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-age-verification-age-gate-18/edit"
+    },
+    {
+      "name": "Memberstack",
+      "slug": "memberstack",
+      "clientId": "18d2eb986a5125d419d7e560e6e07146b21aa3236fb0db48e1c0dc2e7fa69f21",
+      "workspaceId": "633217793e84c50140df3212",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/memberstack/edit"
+    },
+    {
+      "name": "Jetboost",
+      "slug": "jetboost",
+      "clientId": "ca3288fbd66ce2b44c86074d10abd66ad905677f714153bd8127483f442326ff",
+      "workspaceId": "6310f776e067393e3a059c6f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/jetboost/edit"
+    },
+    {
+      "name": "Semflow",
+      "slug": "semflow",
+      "clientId": "d7bf35418998ab4c27d1d12c57f714d7e4372f6f0568df9a2af2749199a7891b",
+      "workspaceId": "63d05ddc63592bbd40a2be61",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/semflow/edit"
+    },
+    {
+      "name": "Typeform",
+      "slug": "typeform",
+      "clientId": "e475a6f05117adb374a61068df4010b9901a469e170851974b299ac241b56d93",
+      "workspaceId": "64b7cfbf4c7f046a3e98e9ec",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/typeform/edit"
+    },
+    {
+      "name": "Fluid Builder",
+      "slug": "fluid-builder",
+      "clientId": "a288386e9622fe124146861fa026569c5e899236bffa89918ae9cd7fc2d747cd",
+      "workspaceId": "6332cf544bdcdf01092d967e",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/fluid-builder/edit"
+    },
+    {
+      "name": "Phoneflow",
+      "slug": "phoneflow",
+      "clientId": "32b0ef84a342c53b5cac9cbdcc2bca6836b669150a22cb8214a4cfe0c5b6ca6f",
+      "workspaceId": "6393607c0e21c7f965a82e11",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/phoneflow/edit"
+    },
+    {
+      "name": "Clip Path Bae",
+      "slug": "clip-path-bae",
+      "clientId": "eef8d2b6e07b72b545208b28504ae5fce90687929ff58eac2b8b557cf54e1dc7",
+      "workspaceId": "631e038956a8096204ca905f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/clip-path-bae/edit"
+    },
+    {
+      "name": "FluidSEO",
+      "slug": "fluidseo",
+      "clientId": "7fcc2bb6afd3f6ba04e7f41592391d28120351e184a2af82de2f1486529d768f",
+      "workspaceId": "63ed225ca228ee59d8fbb236",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/fluidseo/edit"
+    },
+    {
+      "name": "Webflow DE MCPServer",
+      "slug": "webflow-de-mcpserver",
+      "clientId": "4a4a9676c27e8388d10b8c6a3e13230ffd51e7fef664bbbb32f33defe73f8f7f",
+      "workspaceId": "68235e37a61f046bbdb8d829",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/webflow-de-mcpserver/edit"
+    },
+    {
+      "name": "Icon Drop",
+      "slug": "icon-drop",
+      "clientId": "d28200952c7a6d3a934fdf3534fbc3108f96f857d03de09ed9543b2c2adcccd3",
+      "workspaceId": "6305c59112a9cdb71207de27",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/icon-drop/edit"
+    },
+    {
+      "name": "Consent Pro by Finsweet",
+      "slug": "consent-pro",
+      "clientId": "ab2dc98a281a2d398936751ef2d77abd830025c24606cceeb7c3cef415812730",
+      "workspaceId": "638f7017f8f3b49d78e071a0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/consent-pro/edit"
+    },
+    {
+      "name": "Designer API Playground",
+      "slug": "designer-api-playground",
+      "clientId": "19511de1ec410f9228d8dcbc9420e67916dea80d86d18f0c9a533eb475ea0f62",
+      "workspaceId": "625860a7a6c16d624927122f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/designer-api-playground/edit"
+    },
+    {
+      "name": "Flowstar: Photo Gallery + LookBook",
+      "slug": "flowstar-photo-gallery-lookbook",
+      "clientId": "fd30b036d5e7363a6834adf015cd4895ec16280b0205012157b72b17faf76987",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-photo-gallery-lookbook/edit"
+    },
+    {
+      "name": "Cookie Consent",
+      "slug": "cookie-consent",
+      "clientId": "4d213abc22b5fa3e414c8eaa27ab8e2a071bfdf9457e99323d593a471a8ddb81",
+      "workspaceId": "6553201f5b84962b09054032",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/cookie-consent/edit"
+    },
+    {
+      "name": "HTMLtoflow",
+      "slug": "htmltoflow",
+      "clientId": "bbec83ad40b6c50cd4c83df959bb724b7c002bae4dd6f598715f31a193acc16b",
+      "workspaceId": "64d5e19191c948b22b5d8402",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/htmltoflow/edit"
+    },
+    {
+      "name": "Icons8 Graphics",
+      "slug": "icons8-graphics",
+      "clientId": "78c2550ec210aff5bcbfcb4de18ebfcf3545f00ae8383d227ae2d0085e4f9eed",
+      "workspaceId": "65c287bc91a4588b552d7be6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/icons8-graphics/edit"
+    },
+    {
+      "name": "Smootify Icons",
+      "slug": "udesly-icon-packs",
+      "clientId": "b505923337254ab59fe1d54581796cdf07f7e71b386682c74b0f6f30355d7076",
+      "workspaceId": "630e48a7aa43e93bf2c5f3ff",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/udesly-icon-packs/edit"
+    },
+    {
+      "name": "Vidzflow",
+      "slug": "vidzflow",
+      "clientId": "237218240c48caba0141906ce604a345aed101f27f4237870b51990d598ae3e2",
+      "workspaceId": "633b3aa70148ed01998dd742",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/vidzflow/edit"
+    },
+    {
+      "name": "Flowblock - Code AI",
+      "slug": "flowblock---code-ai",
+      "clientId": "c0399f56e09ab8db8400fdff91cde82152ea5ede71d9a2770d5d9b5d5d2c299c",
+      "workspaceId": "633227d64587125d3d3a1af2",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowblock---code-ai/edit"
+    },
+    {
+      "name": "Asset Bae",
+      "slug": "asset-bae",
+      "clientId": "37f73e2a0932d6480c882578a50e9373bcdd5a1a735168585d362ba38a896b54",
+      "workspaceId": "631e038956a8096204ca905f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/asset-bae/edit"
+    },
+    {
+      "name": "Elements Kit",
+      "slug": "elements-kit",
+      "clientId": "f855e3b703c7e175a499d4a2f26a808038587988b27cf87bfdc2ae3fa0ec7036",
+      "workspaceId": "6515901da5685aaeb27412e9",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/elements-kit/edit"
+    },
+    {
+      "name": "EditFlow",
+      "slug": "editflow",
+      "clientId": "06b474130cc38c23af9eadffe1d255aca1208a5d7b39635569105fc8e597d0e6",
+      "workspaceId": "639c7c7b872f316f6bd330f3",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/editflow/edit"
+    },
+    {
+      "name": "[Legacy Private Listing] Wes",
+      "slug": "wes-webflow-enterprise-solutions",
+      "clientId": "93a7a5bafba42b0bb4a5b15af4257a0c8e0baba1ddcd9dba87a6b236cd0a6c67",
+      "workspaceId": "6328b5c7302aa13380f83211",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/wes-webflow-enterprise-solutions/edit"
+    },
+    {
+      "name": "Simple Icons",
+      "slug": "simple-icons",
+      "clientId": "9ac82abf0a88fdc6574b680870e97674bb580c368cccb963ffee88776095e46e",
+      "workspaceId": "630695800280c7574df4820d",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/simple-icons/edit"
+    },
+    {
+      "name": "Axeptio",
+      "slug": "axeptio",
+      "clientId": "ad9c50974a2a4c59a4ea4efac7b9b741534cfd283356759b10b7eb5f1f808cbb",
+      "workspaceId": "654cf2720d008738a29a979a",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/axeptio/edit"
+    },
+    {
+      "name": "CutCopy",
+      "slug": "cutcopy",
+      "clientId": "a7d9d6193c367cf991d01b43772c81f97e91a61b0dd05a458f254cca058d0741",
+      "workspaceId": "6306c9ffb4579f598fdcbcb3",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/cutcopy/edit"
+    },
+    {
+      "name": "Inputflow",
+      "slug": "inputflow",
+      "clientId": "b2cb79010d96f1b04d0f134be2c4c16abb0c5609c72df689ee8527deba4901ce",
+      "workspaceId": "651794fdc867409df1229f5d",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/inputflow/edit"
+    },
+    {
+      "name": "Raycast",
+      "slug": "raycast",
+      "clientId": "f064d8bd2157f5c690a436af38a85fe627dfe89d12df1240d9ffb8f92c56c29a",
+      "workspaceId": "62e39f9327b8226802d093a2",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/raycast/edit"
+    },
+    {
+      "name": "Adobe Express",
+      "slug": "adobe-express",
+      "clientId": "188ec517916221d65b2c2ce29e5d47341c9c53bd4b52aae142c575166c99abc6",
+      "workspaceId": "66633c664c0fa3875663b775",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/adobe-express/edit"
+    },
+    {
+      "name": "Wized",
+      "slug": "wized",
+      "clientId": "e7fe9df45c83bd56354cd2b6b3c23667fde95d9b1ad13dab6c38b44f5f1e660d",
+      "workspaceId": "638f7017f8f3b49d78e071a0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/wized/edit"
+    },
+    {
+      "name": "Stripe",
+      "slug": "stripe",
+      "clientId": "45a8cb15b43befd2b057a793458dcb1194f07f7fc45aa184bcadef783799eec3",
+      "workspaceId": "633b3aa70148ed01998dd742",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/stripe/edit"
+    },
+    {
+      "name": "Nocodelytics",
+      "slug": "nocodelytics",
+      "clientId": "dbb3d6d2371e2ff24124419b0609555fae5b67c5f6c6e931bd62093d4ecc07d7",
+      "workspaceId": "632dcba2304c726c9f27347f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/nocodelytics/edit"
+    },
+    {
+      "name": "Magic Elements",
+      "slug": "magic-elements",
+      "clientId": "16f1841e8f7c00c10b92f1641c12f286197fedd6112faadd95333351525bf536",
+      "workspaceId": "630695800280c7574df4820d",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/magic-elements/edit"
+    },
+    {
+      "name": "GradientFlow",
+      "slug": "gradientflow",
+      "clientId": "79387b7a977c280fccb9914d96136983e3388e75ede470a80704c9663dce4967",
+      "workspaceId": "635bf0bab484e2b97e009b98",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/gradientflow/edit"
+    },
+    {
+      "name": "gFLUO",
+      "slug": "gfluo",
+      "clientId": "7da4264f7acd05053f2fa1abe2a40633c3dd87e9d05d5dd126bc8d2f53cd6e9c",
+      "workspaceId": "63070bb801a1e1375331fd73",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/gfluo/edit"
+    },
+    {
+      "name": "Section Divider Bae",
+      "slug": "section-divider-bae",
+      "clientId": "260eb118725e3d0e09deb8d415f0142a28b5be1a2f85e456b6c306f3895eafb3",
+      "workspaceId": "631e038956a8096204ca905f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/section-divider-bae/edit"
+    },
+    {
+      "name": "Smootify",
+      "slug": "smootify",
+      "clientId": "1f3e14c888bd91588906df7ad6bd5fb5e60dccfa4e7ce2f4e55aa515e4ff9f96",
+      "workspaceId": "630e48a7aa43e93bf2c5f3ff",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/smootify/edit"
+    },
+    {
+      "name": "Formly & Flowplay",
+      "slug": "formly-flowplay",
+      "clientId": "a6988b134dde05523465748f351de27741f8a5865d87c3b1249fac3635058a10",
+      "workspaceId": "633226b43e84c50140e12ae2",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/formly-flowplay/edit"
+    },
+    {
+      "name": "Shopyflow",
+      "slug": "shopyflow",
+      "clientId": "8298935a51fd53e915b37578f6a1ec1a638c439c496b360d90e533e331a1eba3",
+      "workspaceId": "63322ecf3e84c50140e1cc43",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/shopyflow/edit"
+    },
+    {
+      "name": "Whalesync",
+      "slug": "whalesync",
+      "clientId": "6f4b37c5b6fc02dadc9515c604ee2cdb6084116e126a91b01f12d9833915554f",
+      "workspaceId": "63586293b36de336005a39ae",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/whalesync/edit"
+    },
+    {
+      "name": "CodeBlock",
+      "slug": "codeblock",
+      "clientId": "fd72986aeaeb207074a48314e03af379920d0dea0077cd0a34a973d2095c0ca8",
+      "workspaceId": "6332cf544bdcdf01092d967e",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/codeblock/edit"
+    },
+    {
+      "name": "Style Applier",
+      "slug": "style-applier",
+      "clientId": "bd517f4548e41f21f01deb3ae043dfa37d21cb08c011f413453dbe3f65652c43",
+      "workspaceId": "633224fd3e84c50140e105d3",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/style-applier/edit"
+    },
+    {
+      "name": "Basin Forms",
+      "slug": "basin-forms",
+      "clientId": "7f3739372078f6ac0d951e66a1ccb54fed022785376c058b60d3ea3accdfd2a9",
+      "workspaceId": "67c864874a1e8d1d4b011ece",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/basin-forms/edit"
+    },
+    {
+      "name": "Clean Styles",
+      "slug": "clean-styles",
+      "clientId": "0d5e39f2a2f6f795ddc939c83842d5c1b4950b831613fcdc4a7c578a95686f6f",
+      "workspaceId": "633b10988d286201733d1bfb",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/clean-styles/edit"
+    },
+    {
+      "name": "WindFlow",
+      "slug": "windflow",
+      "clientId": "ac462385ed41859153d63a5756f42f60a8cc81d0d16d9fe494a208a6f4754e8f",
+      "workspaceId": "63227c730f29af85bd41cedb",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/windflow/edit"
+    },
+    {
+      "name": "Htflow",
+      "slug": "htflow",
+      "clientId": "e3476b9e06148444b35557b26012c4bd1b16cf0c1b8bfd51705644ea61f94220",
+      "workspaceId": "63323d9929eea90195a1a343",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/htflow/edit"
+    },
+    {
+      "name": "SVGFlow",
+      "slug": "svgflow",
+      "clientId": "d4a72c27d7e5bc33f9a46e5bdb524de4b49e95fc98fcea26200eda0c8f3c2bad",
+      "workspaceId": "63876222d52e0522be01178b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/svgflow/edit"
+    },
+    {
+      "name": "Optibase",
+      "slug": "optibase",
+      "clientId": "1d65c145b53fe3594ac2af02e7fb7fc211586091465e8c4caf073a3e9e7a1967",
+      "workspaceId": "633b3aa70148ed01998dd742",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/optibase/edit"
+    },
+    {
+      "name": "[audit]flow",
+      "slug": "audit-flow-seo-tool-for-webflow",
+      "clientId": "89110d8b39d04404ea4474c2c3cc23820471ba4ced436f7e5a5c6f31bc5fd6a2",
+      "workspaceId": "63075c534047dec6ce84d9cc",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/audit-flow-seo-tool-for-webflow/edit"
+    },
+    {
+      "name": "Attriflow",
+      "slug": "attriflow",
+      "clientId": "4bccd72bcf4ff7090256b0033fcacf9474e396bf2ed45e38788f788f01545666",
+      "workspaceId": "64d5e19191c948b22b5d8402",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/attriflow/edit"
+    },
+    {
+      "name": "xAttribute",
+      "slug": "xattribute",
+      "clientId": "9a40b845ce72fb9cd08290d474a9cc2a31ba57877c6bebc9b48fffbf5d091079",
+      "workspaceId": "62572d213e5c610181a887ec",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/xattribute/edit"
+    },
+    {
+      "name": "Osmo SVG Import",
+      "slug": "osmo-svg-import",
+      "clientId": "e4a088b7736c4f71e0ade20dc22286cd7ce44dc7a96cf11fb02f9fa200511bbf",
+      "workspaceId": "66f50e2a4133943d0cc32ea0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/osmo-svg-import/edit"
+    },
+    {
+      "name": "Dynamic Map",
+      "slug": "dynamic-map",
+      "clientId": "641831ac42ae4e58d52142f9d4b52f8a0eccdc948752aa48dd32a1f8a8b20494",
+      "workspaceId": "633217b53e84c50140df3a7b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/dynamic-map/edit"
+    },
+    {
+      "name": "Logo To Use",
+      "slug": "logo-to-use",
+      "clientId": "5fdf7e27bc133140150d2eafd6e65ba2ece46178b45678f6ba99414dcc9c30cf",
+      "workspaceId": "63876222d52e0522be01178b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/logo-to-use/edit"
+    },
+    {
+      "name": "Common Ninja - All-in-One Widget Suite",
+      "slug": "common-ninja-all-in-one-widget-suite",
+      "clientId": "99dfa988db7d75c1fe80fc9091a874408f650f5af7ddfaf1c1ca7f7b37ff9535",
+      "workspaceId": "6385f410b60309e471df2fcd",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/common-ninja-all-in-one-widget-suite/edit"
+    },
+    {
+      "name": "BlogSEO AI",
+      "slug": "blogseo-ai",
+      "clientId": "b2704fa2070064c299f51fe2c4609d5df9b67a12cd3a21e9731b6dab85b4c3c4",
+      "workspaceId": "657c131b021f733dd57fbbb9",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/blogseo-ai/edit"
+    },
+    {
+      "name": "Goat Slider",
+      "slug": "goat-slider",
+      "clientId": "c13836d49026440a6efcffe907ae5c74fd2a8d798291388e5cb695b5e1a2f14b",
+      "workspaceId": "63876222d52e0522be01178b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/goat-slider/edit"
+    },
+    {
+      "name": "Jasper",
+      "slug": "jasper",
+      "clientId": "e8f9e51536be9465819c262fc2bcabfa22663e5489999138dabc4c5476f567ed",
+      "workspaceId": "647982ff94ab1e0add72370b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/jasper/edit"
+    },
+    {
+      "name": "AI SEO Copilot",
+      "slug": "ai-seo-copilot",
+      "clientId": "8f63807ddb1b9fe61657ff27b2c440039ea31fc06763866bd0f96a598db669c7",
+      "workspaceId": "6258a9dc0cb737014b8d02b3",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/ai-seo-copilot/edit"
+    },
+    {
+      "name": "Optomate",
+      "slug": "optomate",
+      "clientId": "b095e8d12ae408b47214ac1b8829fd1abe18791cffb93ff9e68617f81b235acc",
+      "workspaceId": "63322f2c3e84c50140e1d207",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/optomate/edit"
+    },
+    {
+      "name": "Supersparks",
+      "slug": "supersparks",
+      "clientId": "a6852e3eb45db4f64c17d2b6f7e88789bfb6bf3bd317bf6c50c063457c350b68",
+      "workspaceId": "63992a65b3747a3a90afff21",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/supersparks/edit"
+    },
+    {
+      "name": "Optily - Image Optimizer",
+      "slug": "optily-webflow-image-optimizer",
+      "clientId": "ff99af3e94bdac548545207f2eeced0430444d6128d04ea4e2e68b8bc118e361",
+      "workspaceId": "636924a5dcaf93e673e6a2b7",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/optily-webflow-image-optimizer/edit"
+    },
+    {
+      "name": "Astroic",
+      "slug": "astroic",
+      "clientId": "b00254b7ab96e00cc73665bd6d88efa76d7b69dbe7f0f59715afc6bc120ac38e",
+      "workspaceId": "63696405ae2aa352b7b26038",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/astroic/edit"
+    },
+    {
+      "name": "CMS Sync",
+      "slug": "cms-sync",
+      "clientId": "cf279283f70e2e850c2c8aa4edd6a056984d774022de914038d328a5623f8250",
+      "workspaceId": "62febda7aa273618ebb611f6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/cms-sync/edit"
+    },
+    {
+      "name": "Events Calendar",
+      "slug": "events-calendar",
+      "clientId": "037d0a2b716e813dc46a1f5eb92c43d33a2b9032833e4db46b5449fec8a417c2",
+      "workspaceId": "632cf5be7b15e6001b4b4450",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/events-calendar/edit"
+    },
+    {
+      "name": "Lummi",
+      "slug": "lummi",
+      "clientId": "d1fb68455122bf890dd15749717fe0b818c3580aac2a1c79f0f9e3579567ca4e",
+      "workspaceId": "633224db3e84c50140e103ef",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/lummi/edit"
+    },
+    {
+      "name": "LiveChat",
+      "slug": "livechat",
+      "clientId": "ec13bfd301e7fdae5350c8e229fd3c1909f34dcc878a11fc3bf2afb16eb3ad22",
+      "workspaceId": "637f9c4c262248b881d06aa3",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/livechat/edit"
+    },
+    {
+      "name": "Octopus.do to Webflow",
+      "slug": "octopus-do-to-webflow",
+      "clientId": "14c8f64d46be7a5c3421b5af5c2748fdd5b42217b252693c1a1474317369619c",
+      "workspaceId": "62fb5beb21d85e92a9e1ea6b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/octopus-do-to-webflow/edit"
+    },
+    {
+      "name": "Adaptify SEO",
+      "slug": "adaptify-seo",
+      "clientId": "c4fce29b596e291e425aeef5b6f033201b677c3ce684d35f6604cb523e69b8a6",
+      "workspaceId": "64c87de6d0103e7c5fc2666c",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/adaptify-seo/edit"
+    },
+    {
+      "name": "Leadsvibe",
+      "slug": "leadsvibe",
+      "clientId": "13c50f05a1c2dd0208d2b55a13ff0cc5d64ba141613f4d9be1c639d799245c5f",
+      "workspaceId": "67197b0f248fc43238dd5e37",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/leadsvibe/edit"
+    },
+    {
+      "name": "Chatsimple AI Chatbot",
+      "slug": "chatsimple",
+      "clientId": "b9a0e744b9a425421ea7738b9f9e97d0656df2c7af912288a8a491181c812756",
+      "workspaceId": "645bbd5e36f656cb9574a05e",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/chatsimple/edit"
+    },
+    {
+      "name": "Webflow Way Validator",
+      "slug": "webflow-validation",
+      "clientId": "28685cff5fef23c426a670bb57bf383b25cd16125bc5bba2103d899b3f4a7092",
+      "workspaceId": "63221596dcbcf2eaadee2798",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/webflow-validation/edit"
+    },
+    {
+      "name": "Tely AI",
+      "slug": "tely-ai",
+      "clientId": "81af201d435c25864191af85570c9102b18f114ce1c591e11b56f9bc7cdf5b16",
+      "workspaceId": "644c6052a7eb5c8423821385",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/tely-ai/edit"
+    },
+    {
+      "name": "Schema Flow",
+      "slug": "schema-flow",
+      "clientId": "c48aca5b475109fd6e9d7047efa038c3e3f61cb94e2da48a3392935c486bd879",
+      "workspaceId": "6630db0bc569a5f73cd00825",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/schema-flow/edit"
+    },
+    {
+      "name": "Pixelflow | FB Conversions API",
+      "slug": "pixelflow-fb-conversions-api-multi-pixel",
+      "clientId": "2eceebfa926faa016553444960ffb2d1692a844dfefe73bad762c880280c21f1",
+      "workspaceId": "65a4c3340cdede4ab2ee4538",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/pixelflow-fb-conversions-api-multi-pixel/edit"
+    },
+    {
+      "name": "Monto - Apps for Ecommerce",
+      "slug": "monto",
+      "clientId": "c3d5c7a1ec77ae8811b2f8ebd18ad3e003691a40763480c26ee12aba92be1c9f",
+      "workspaceId": "635bff853f223318e00b5c04",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/monto/edit"
+    },
+    {
+      "name": "Smartarget Whatsup Chat [ARCHIVED]",
+      "slug": "smartarget-whatsapp-contact-us",
+      "clientId": "bf25dd81aaeb3a926deb42e1a984f19d0e9483120b440c90724d2722cea7a3d8",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/smartarget-whatsapp-contact-us/edit"
+    },
+    {
+      "name": "CMS Bridge",
+      "slug": "cms-bridge",
+      "clientId": "a87f0970cf846c89aa081eb4924dca72cdd4be2e78286b14b698fb446f877daf",
+      "workspaceId": "638f7017f8f3b49d78e071a0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/cms-bridge/edit"
+    },
+    {
+      "name": "Devblocks CMS Image Optimizer",
+      "slug": "devblocks-cms-image-optimizer",
+      "clientId": "5d21467e1fe5c68a60eb0441262694c191b5fe3d849261a60dde02bfe602710f",
+      "workspaceId": "63696405ae2aa352b7b26038",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/devblocks-cms-image-optimizer/edit"
+    },
+    {
+      "name": "Impulse: 40-in-One App",
+      "slug": "email-popup-spin-wheel",
+      "clientId": "e1b7a6f33b1978a408464f2f19aaf377901d4c83e8afde75d9dd6d34f6735c83",
+      "workspaceId": "623d19dca3a9ee00f7cf87c8",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/email-popup-spin-wheel/edit"
+    },
+    {
+      "name": "Asset Exporter",
+      "slug": "asset-exporter",
+      "clientId": "e0516814fe08fcb79cdc238bd0b7077d778aa752e140dbffb33fccd6a6a2a58f",
+      "workspaceId": "633224fd3e84c50140e105d3",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/asset-exporter/edit"
+    },
+    {
+      "name": "AI Image Generator",
+      "slug": "ai-image-generator",
+      "clientId": "6e71698b1c7029d1699a77a86f940a482d1bedda1b3d2bca3fbe2ba299603c7c",
+      "workspaceId": "63ed225ca228ee59d8fbb236",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/ai-image-generator/edit"
+    },
+    {
+      "name": "BulkSEO",
+      "slug": "bulkseo",
+      "clientId": "b68383f2662c19d86c62726e4c88f813124c126d332e15041ed82467ff39bca2",
+      "workspaceId": "633226b43e84c50140e12ae2",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/bulkseo/edit"
+    },
+    {
+      "name": "Uploadcare File Uploader",
+      "slug": "uploadcare-file-uploader",
+      "clientId": "d6fe97fe67e59b36de03d529192adfcbf986d0287e053cdb050c8a29f885c0e5",
+      "workspaceId": "636f2d33322eb02b5cf730c0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/uploadcare-file-uploader/edit"
+    },
+    {
+      "name": "AssetBoost",
+      "slug": "assetboost",
+      "clientId": "44042bbab40007c365ad1e51338df895aa321831c3e8a2050d11f11908e76f3c",
+      "workspaceId": "63ebf982cbdcf8a65bb4ae6b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/assetboost/edit"
+    },
+    {
+      "name": "Flowpilot",
+      "slug": "flowpilot",
+      "clientId": "ca703aefcc5335818c1c20eb9e47fce48aa256742770b4af29ce14f72f1d08da",
+      "workspaceId": "633226b43e84c50140e12ae2",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowpilot/edit"
+    },
+    {
+      "name": "Hugeicons",
+      "slug": "hugeicons",
+      "clientId": "13c1d5555732288133d707676fdbfa7947062921e037c4a9908fdedd382ca9aa",
+      "workspaceId": "68cf9e72c01ec8cccf5230e7",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/hugeicons/edit"
+    },
+    {
+      "name": "Flowdrive",
+      "slug": "flowdrive",
+      "clientId": "16c54e620e5ced5952202e89e3eae6150a26bf7d68d96df83c3ae0c59fd91fa1",
+      "workspaceId": "637881806f38019aacd10941",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowdrive/edit"
+    },
+    {
+      "name": "Outseta",
+      "slug": "outseta",
+      "clientId": "ccfba8443ff5484ffec1b2a4de02c7d5f21e39b0798e851d3255dd32c9d99367",
+      "workspaceId": "63876ff7599de17d3c3a46bf",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/outseta/edit"
+    },
+    {
+      "name": "Analyzely for GA4",
+      "slug": "analyzely-for-ga4",
+      "clientId": "81bc3eb986d721629fb5603bb6b5f2ffdb3bf6242f1b588dff801f9179988cfb",
+      "workspaceId": "63db4ccf7736b0812880f9fa",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/analyzely-for-ga4/edit"
+    },
+    {
+      "name": "Form Connector",
+      "slug": "form-connector",
+      "clientId": "db5b9b8728e3a1cfcf5286a682c8c2d6c3d44d572426b0433e189aac2e764835",
+      "workspaceId": "632d40c553aa97dc4cba7ff2",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/form-connector/edit"
+    },
+    {
+      "name": "AI Image Enhancer",
+      "slug": "ai-image-enhancer",
+      "clientId": "7bfa3ae0b3cff34a253951fed1bf74f80318c75bf7e020c3dc4a8cd663d05931",
+      "workspaceId": "67f56169bcc2853a8485ab30",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/ai-image-enhancer/edit"
+    },
+    {
+      "name": "Phrase",
+      "slug": "phrase",
+      "clientId": "385ccaad3ece68e41cdb884d18832a75f520fa401cd7d8a0dbd36cde67641ca2",
+      "workspaceId": "655ccb1dffd704afa7f02dea",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/phrase/edit"
+    },
+    {
+      "name": "Popup Notifications",
+      "slug": "popup",
+      "clientId": "f9e277a8c4b948c634e8a789b2100f4486f6ec90e4f4473e9f64e045a0433b63",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/popup/edit"
+    },
+    {
+      "name": "Xano",
+      "slug": "xano",
+      "clientId": "c6973fc1f18d2270cc556aa90d63558c4ddd69c7c8d3d7f2318c091abe3bbfa9",
+      "workspaceId": "63596179830b7f6dd42bb0eb",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/xano/edit"
+    },
+    {
+      "name": "Superflow: Annotate live websites",
+      "slug": "superflow",
+      "clientId": "c4032ec52e094489d2cd193c75c3422d1dccdc2eff7af6b181b1ef41bfdf4d6d",
+      "workspaceId": "62a916c4c3893924cf69deac",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/superflow/edit"
+    },
+    {
+      "name": "Form Payments",
+      "slug": "form-payments",
+      "clientId": "7c774c2d0b90eca51f38882ed1c2aa207b8badf273c64045d29ad05a732b6ebd",
+      "workspaceId": "633227d64587125d3d3a1af2",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/form-payments/edit"
+    },
+    {
+      "name": "Humblytics",
+      "slug": "humblytics",
+      "clientId": "d9d2c7f26c4c58379b2abbe8e8b2064ce529b5fd3b46da492d9a24b459a1ce26",
+      "workspaceId": "636c6f08f7ff94f1576b47da",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/humblytics/edit"
+    },
+    {
+      "name": "Chainlift Color",
+      "slug": "chainlift-color",
+      "clientId": "26aa7f5e2c9c30f6ea96c232cf9bca8b0cae05af60d84047763f901dc8bb4ba5",
+      "workspaceId": "6321ff79e600ab50b425a3b8",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/chainlift-color/edit"
+    },
+    {
+      "name": "HubSpot v2 (Beta)",
+      "slug": "hubspot-v2",
+      "clientId": "084cbd2a2ac7034f01cfba4202b7484fe7dbbcbd422f1d0722d0815f9669ec01",
+      "workspaceId": "646d501cb7f050a4493c7b6b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/hubspot-v2/edit"
+    },
+    {
+      "name": "Variables Utility",
+      "slug": "variables-utility",
+      "clientId": "cb9ad7179c4dd0d02a1ff8d1bd776b98d3ec5631c4897360bf85829a6e737aa2",
+      "workspaceId": "62a26b7d5ce2ea0165d37456",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/variables-utility/edit"
+    },
+    {
+      "name": "Form Fields Pro",
+      "slug": "form-fields-pro",
+      "clientId": "ff96fe00a7fa44e2dcfa168a3cca363db13bb178db9ca44e17c35b790de52fda",
+      "workspaceId": "6553201f5b84962b09054032",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/form-fields-pro/edit"
+    },
+    {
+      "name": "ConsentBit",
+      "slug": "consentbit",
+      "clientId": "189a77f9956fceafabe739357f70d8fb9314d90ca7e0e6e84a15188fd83f8ca2",
+      "workspaceId": "678976e23bf643368b7c9a07",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/consentbit/edit"
+    },
+    {
+      "name": "Sass",
+      "slug": "sass",
+      "clientId": "dbed16c329a0b89532c6440a505a8b13b5b7eeb2a7d9704082ffce206e3d3529",
+      "workspaceId": "63a5b02d8d91bb0049969ca5",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/sass/edit"
+    },
+    {
+      "name": "[FAKE] https://edgarallan.com",
+      "slug": "fake-https-edgarallan-com",
+      "clientId": "93a7a5bafba42b0bb4a5b15af4257a0c8e0baba1ddcd9dba87a6b236cd0a6c67",
+      "workspaceId": "6328b5c7302aa13380f83211",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/fake-https-edgarallan-com/edit"
+    },
+    {
+      "name": "HTML Viewer",
+      "slug": "html-viewer",
+      "clientId": "41cf490bee5a473374e8427b278e4c99fe2f039a59057296c530a6a200c767b6",
+      "workspaceId": "63172e13aa16086409dd8598",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/html-viewer/edit"
+    },
+    {
+      "name": "Remove Background",
+      "slug": "remove-background",
+      "clientId": "8d7303f1c18439f46106a3be26028e357ce06a1f0ad3d0ccd82460a869a97d32",
+      "workspaceId": "6704fbf4fc101bd24d7ffe6a",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/remove-background/edit"
+    },
+    {
+      "name": "Lever",
+      "slug": "lever",
+      "clientId": "85d04b9db40aaac41f33bd2165a5110b82ce486ce9d5555a475d04d23dacfef1",
+      "workspaceId": "6307904af3fa1b0c750bfc0c",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/lever/edit"
+    },
+    {
+      "name": "FlowBookings",
+      "slug": "flowbookings",
+      "clientId": "8e82568f5fd6e995ed17ed7e76e6765cc4a5d3e622da05583fc2a1bb3915d553",
+      "workspaceId": "670eb7290890d75b77b4dbf7",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowbookings/edit"
+    },
+    {
+      "name": "HubSpot (Legacy)",
+      "slug": "hubspot-legacy",
+      "clientId": "87af6733848177f05f39901ad72d5452171e5e0e322778385399320012f2904e",
+      "workspaceId": "646d501cb7f050a4493c7b6b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/hubspot-legacy/edit"
+    },
+    {
+      "name": "Assetflow",
+      "slug": "assetflow",
+      "clientId": "b7dd12cc097740c02ac24bd591f1da9e7243cabb883f39cf92c26cc7b072ae90",
+      "workspaceId": "64d5e19191c948b22b5d8402",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/assetflow/edit"
+    },
+    {
+      "name": "Pixie - CMS Image Optimizer",
+      "slug": "pixie-webflow-cms-optimizer",
+      "clientId": "2f6ad5181f351fe58a5e2c9e838de50787db8dc69c1d3de5cf79bd2720bbf8f9",
+      "workspaceId": "630cfe0afb560a740b31fd93",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/pixie-webflow-cms-optimizer/edit"
+    },
+    {
+      "name": "Variables Bae",
+      "slug": "variables-bae",
+      "clientId": "91ca9458da139cce9d5164aa6ebf6dcca2908c8972a07617cb7694de83beb2a3",
+      "workspaceId": "631e038956a8096204ca905f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/variables-bae/edit"
+    },
+    {
+      "name": "Wicked Assets",
+      "slug": "wicked-assets",
+      "clientId": "d017171e3b1b785757a654ffcfc8bed39ab2584e3967f60e15dea0c7be53b5c6",
+      "workspaceId": "6811905e2d3396c1ad0f8bde",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/wicked-assets/edit"
+    },
+    {
+      "name": "Hypotenuse AI",
+      "slug": "hypotenuse-ai",
+      "clientId": "74b6bba76c5d8f0a76d86596b0724304b1cad35ba1db7cb5bae8c7f2cfe16692",
+      "workspaceId": "62a2693a5ce2ea0165d2e910",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/hypotenuse-ai/edit"
+    },
+    {
+      "name": "BuildShip",
+      "slug": "buildship",
+      "clientId": "b97653be685ef40454cc1998b9f38111a1bcf226d424a1f9fdffd75338ea27aa",
+      "workspaceId": "623a601fcc7d6372f75c60e1",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/buildship/edit"
+    },
+    {
+      "name": "Lokalise",
+      "slug": "lokalise",
+      "clientId": "ef8e0e20636692ac4183eedc778116dfcb69c0cceadbf8a30920b91543e5e375",
+      "workspaceId": "6516d017f8118aa819655b2c",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/lokalise/edit"
+    },
+    {
+      "name": "old quizell - test",
+      "slug": "test",
+      "clientId": "48810e175b797c07e27d979f5a1611db6d68bad4497a7efacbaafd57ca8ec929",
+      "workspaceId": "65b39c23af9163997c1ac079",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/test/edit"
+    },
+    {
+      "name": "ActiveCampaign",
+      "slug": "activecampaign",
+      "clientId": "0965bbc173e8040e5b2ab2f877252df1f8f303325b2bfb8b4203bb7007d93aa2",
+      "workspaceId": "6848e0872a281cd8644bc0ef",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/activecampaign/edit"
+    },
+    {
+      "name": "ScheduLinks [ARCHIVED]",
+      "slug": "getflowtools",
+      "clientId": "bf25dd81aaeb3a926deb42e1a984f19d0e9483120b440c90724d2722cea7a3d8",
+      "workspaceId": "66ccbe9a6dfe6c3f06d6f428",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/getflowtools/edit"
+    },
+    {
+      "name": "Popup Forms",
+      "slug": "popup-forms",
+      "clientId": "c02ec45e64ae02ec20704a73e525b367039c2e3078bda95cf76c3b0dcccb2ffa",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/popup-forms/edit"
+    },
+    {
+      "name": "Miyagi",
+      "slug": "miyagi",
+      "clientId": "0e07057e85526bb2b1f957222014bc76211b44f5ea7e8f18f2200e970af06375",
+      "workspaceId": "633224fd3e84c50140e105d3",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/miyagi/edit"
+    },
+    {
+      "name": "WOG Open Graph Image",
+      "slug": "wog",
+      "clientId": "97a92cf43131d28300b00e39bcbe1cfbdae5889e370edada3f8aff85f82c8d65",
+      "workspaceId": "65842d049ef3e1838f880962",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/wog/edit"
+    },
+    {
+      "name": "AutoLink.ai",
+      "slug": "autolink-ai",
+      "clientId": "177ceda09ea0b916b03d0347009e3ad08b095eb503803177498450a7c88718b4",
+      "workspaceId": "633476798e6e9a1d5a10aec7",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/autolink-ai/edit"
+    },
+    {
+      "name": "SyncFlow",
+      "slug": "syncflow",
+      "clientId": "337b84cdd8ed6e814815bd535e4e17ca970cd02612b12fd132f462393061460e",
+      "workspaceId": "6378090e6f491085d3dfe737",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/syncflow/edit"
+    },
+    {
+      "name": "Leadinfo",
+      "slug": "leadinfo",
+      "clientId": "3d30ae4c846f2c38c9006f3ae3c93d0b2482839d48775b9c7cbf9c98f8418ff5",
+      "workspaceId": "6536471d1db6ef892f5cbd1a",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/leadinfo/edit"
+    },
+    {
+      "name": "Liquiflow",
+      "slug": "liquify",
+      "clientId": "14c28b943aab6a55d0933884051ffcbd6380262306b936808b084cb7b59a0f17",
+      "workspaceId": "63c82fe9a42f4ef7d76ffc52",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/liquify/edit"
+    },
+    {
+      "name": "Variable Importer",
+      "slug": "variable-importer",
+      "clientId": "7d6e8f205198e03867307180d323a3db51e0f758d25c06fd0ba94785c3ebcdfa",
+      "workspaceId": "625757053e5c610181b85104",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/variable-importer/edit"
+    },
+    {
+      "name": "Smartarget Whatsup Chat",
+      "slug": "smartarget-whatsup-chat",
+      "clientId": "e92ef06c5b0eccc568206c737ec1ef74c50119111088102725baf7eb4d14f0c0",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/smartarget-whatsup-chat/edit"
+    },
+    {
+      "name": "Pipedream",
+      "slug": "pipedream",
+      "clientId": "a24cbab249e42bfb6146a9515c2c808289cbe7b87bbf194c8c24b98d3321b007",
+      "workspaceId": "63703ec00e754118b3d341d2",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/pipedream/edit"
+    },
+    {
+      "name": "PowerImporter",
+      "slug": "powerimporter",
+      "clientId": "bac2e89e3d08d2ebb7a3a1347fa6ab638b81c8d02f581ca4ed00e1e1a01a342e",
+      "workspaceId": "62febda7aa273618ebb611f6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/powerimporter/edit"
+    },
+    {
+      "name": "Modulify – AI Website Builder",
+      "slug": "modulify",
+      "clientId": "1fb196c0f038e4b2a63730928fb705204cffc057715cd05a126f7ee3ad8f81cf",
+      "workspaceId": "63876222d52e0522be01178b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/modulify/edit"
+    },
+    {
+      "name": "Bulk Component Deleter",
+      "slug": "bulk-component-deleter",
+      "clientId": "de6417645a3a744434e5e70392f6b80708c528ddf6c9a5b612af68dad978f9af",
+      "workspaceId": "67882d39b2efcd6e86e04527",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/bulk-component-deleter/edit"
+    },
+    {
+      "name": "Vault Vision User Authentication",
+      "slug": "vault-vision-user-authentication",
+      "clientId": "b7592eb9494fcc9215b52be16b62fa42479c0a6018b5c63ec3a444783a1d7c97",
+      "workspaceId": "63993f815e36f4f943968649",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/vault-vision-user-authentication/edit"
+    },
+    {
+      "name": "Social Icons - Follow Us",
+      "slug": "social-icons---follow-us",
+      "clientId": "6f8e4b845a9a1ba33d6e869046f5d238b01d89e2b9a97b96ace8ece8df87f17a",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/social-icons---follow-us/edit"
+    },
+    {
+      "name": "Website Speedy",
+      "slug": "website-speedy",
+      "clientId": "486a8390a891a4cf288e4f09eb931913cc15d5b6fe5a319640414f8f233fa7e6",
+      "workspaceId": "666aa3f1500b3b3355235497",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/website-speedy/edit"
+    },
+    {
+      "name": "Flozi (Archive)",
+      "slug": "florzi",
+      "clientId": "c1a712c900847d535f60e9f576bb0982e141c1512aa67e569d48040e51d929f5",
+      "workspaceId": "631b2496aee50c3494aa6699",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/florzi/edit"
+    },
+    {
+      "name": "Chat Buttons by Chaty",
+      "slug": "chaty",
+      "clientId": "004f7e9253062c43fea8fd20c8b4cf42f3ef35648c0975d6c01d423a468f727b",
+      "workspaceId": "63b67c03150d75040f893e14",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/chaty/edit"
+    },
+    {
+      "name": "Journalist AI SEO Writer",
+      "slug": "journalist-ai",
+      "clientId": "cf129fda269e8fbe18de95df4098bdff0b6a607aeee6699e02f0826cde4c1b82",
+      "workspaceId": "65956fcc842d15ce08fb8e7b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/journalist-ai/edit"
+    },
+    {
+      "name": "PaneFlow & Swiper",
+      "slug": "paneflow",
+      "clientId": "cb30d1f3fbc3c47367f7cabfe7a32a4cc4a7e13626605c5c4e181d1e0d947cff",
+      "workspaceId": "636ff0a90cf22d0ce5cdc47c",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/paneflow/edit"
+    },
+    {
+      "name": "SI Instagram Feed",
+      "slug": "si-instafeed",
+      "clientId": "ded082bb0f5904872c4f678e8de2a717d25acccd05a59a5181e9328c0165f8ac",
+      "workspaceId": "686bb73691401a75cc0a0346",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/si-instafeed/edit"
+    },
+    {
+      "name": "Printful-Webflow Sync Utility",
+      "slug": "printful-webflow-sync-utility",
+      "clientId": "91c9586fe0c4cc5e742ae35278493f59f02604cac938364427364084a4e92790",
+      "workspaceId": "625860a7a6c16d624927122f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/printful-webflow-sync-utility/edit"
+    },
+    {
+      "name": "Clay",
+      "slug": "clay",
+      "clientId": "46e192fb88c0cd6ed94f0990f1c18d4be44698481e37d6ed3331f686cfd2a8c6",
+      "workspaceId": "6387854805c3641a4ade8936",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/clay/edit"
+    },
+    {
+      "name": "Create Variables",
+      "slug": "create-variables",
+      "clientId": "717d3edf10407c8d9da3caafd5ee70e3f500487ed866370db5b81d91a2661145",
+      "workspaceId": "632ceb4b11d412000e0e6df5",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/create-variables/edit"
+    },
+    {
+      "name": "Bookla",
+      "slug": "bookla",
+      "clientId": "9be1d4c4b8df4ad5c7466008b5a493cda3798177cef2c65af9c2d210e884d1b1",
+      "workspaceId": "63758355875205f29bbf6898",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/bookla/edit"
+    },
+    {
+      "name": "Image Slider & Slideshow",
+      "slug": "flowstar-image-slider-slideshow",
+      "clientId": "7e2b65a48138456c7f8c2720f7414779b34b67a55fc7a8f95772a7db8a7e59b4",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-image-slider-slideshow/edit"
+    },
+    {
+      "name": "Apex: Email Marketing Automation",
+      "slug": "apex",
+      "clientId": "eb5f6d6771042656828c513e2901c642c139c1b6ded301d9bd5db5ac304af600",
+      "workspaceId": "6616ea4de196a389a1841dfb",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/apex/edit"
+    },
+    {
+      "name": "Quilly",
+      "slug": "ghostwriter",
+      "clientId": "66340a062b84c44bf065b5be698f5ba13221ba0854be147e140ee47d3318a574",
+      "workspaceId": "62d5c6610e0bffc0466878fb",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/ghostwriter/edit"
+    },
+    {
+      "name": "Modulo",
+      "slug": "modulo",
+      "clientId": "1d795b7a6f9950072c2f40b63de6d1950a69406aae5044345dfde80a84120613",
+      "workspaceId": "63876222d52e0522be01178b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/modulo/edit"
+    },
+    {
+      "name": "ReviewsJet",
+      "slug": "reviewsjet",
+      "clientId": "acbda77912f4c7d9f91865a050f2643867d98fc72a0fbcf83082b3b94269390d",
+      "workspaceId": "638a017287c1ad33f1d5f8b2",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/reviewsjet/edit"
+    },
+    {
+      "name": "Enzuzo Data Privacy",
+      "slug": "enzuzo-data-privacy",
+      "clientId": "89953ad063577bfcb97cb2b24587bef1a8006385d6ff05a9cf08ce1e22b788d4",
+      "workspaceId": "6577bc3f0c9d6b141fd0a240",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/enzuzo-data-privacy/edit"
+    },
+    {
+      "name": "Journalist AI SEO Writer v1",
+      "slug": "journalist-ai-seo-writer",
+      "clientId": "cf129fda269e8fbe18de95df4098bdff0b6a607aeee6699e02f0826cde4c1b82",
+      "workspaceId": "65956fcc842d15ce08fb8e7b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/journalist-ai-seo-writer/edit"
+    },
+    {
+      "name": "UTM Parameters Tracker",
+      "slug": "utm-parameters-tracker",
+      "clientId": "db1d07f5a23bb177675183b6d93b132afc611a0f3fa7c1f62c460a6e28ed80fc",
+      "workspaceId": "665a02a0e11827a16d4dab93",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/utm-parameters-tracker/edit"
+    },
+    {
+      "name": "Storipress",
+      "slug": "storipress",
+      "clientId": "fb6cf3b07a5c2ddbc17e69fac0e6f3051abffa6ec1ec51ee9e59c4474ea01576",
+      "workspaceId": "6449e542256370a2b598eba6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/storipress/edit"
+    },
+    {
+      "name": "Kick Scraper",
+      "slug": "kick-scraper",
+      "clientId": "f2db4e6d3d94a659f5ba1f5d7026f1bc4ffa0742e9e966463a0277cca602e189",
+      "workspaceId": "6669d9f65a5bc8f1c0593ef6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/kick-scraper/edit"
+    },
+    {
+      "name": "Looop - Headless eComm",
+      "slug": "looop",
+      "clientId": "bc17448b9be0514ca05f7ff75d529b5df945d5be129d9ef1a86dea573763f308",
+      "workspaceId": "633227d64587125d3d3a1af2",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/looop/edit"
+    },
+    {
+      "name": "Relay.app",
+      "slug": "relay-app",
+      "clientId": "a898c97a78889393315bc3fb84d914895e7045c17f56becf14ff2e2e20aca9ed",
+      "workspaceId": "64f8a5201d0d839d4bd73f55",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/relay-app/edit"
+    },
+    {
+      "name": "Cloudpress",
+      "slug": "cloudpress",
+      "clientId": "0ff1b581c2cb41770f564a979195fe7335935785c660334ed5b222c166479348",
+      "workspaceId": "63c930b077e37405cea8d0dd",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/cloudpress/edit"
+    },
+    {
+      "name": "AltTextify Alt Text",
+      "slug": "ai-powered-alt-text",
+      "clientId": "f4cccb4b3893b4a6ad7dfb707fbbe0cb623772726158d4a2612b863168033db5",
+      "workspaceId": "683ef1e32b240b45dff0faa4",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/ai-powered-alt-text/edit"
+    },
+    {
+      "name": "Flowtrix Schema",
+      "slug": "flowtrix-schema",
+      "clientId": "000951dd8b41dcd39303fd0bcb6fc012c9399b14e265e16b1c47ca613b765762",
+      "workspaceId": "62a2aab55ce2ea0165e228d9",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowtrix-schema/edit"
+    },
+    {
+      "name": "Letterdrop",
+      "slug": "letterdrop",
+      "clientId": "ad86de295cc8fd9bff9714d300c640995a01c92e9cda3e80310388d19309f3ae",
+      "workspaceId": "6359720a3a86f11d8adf636f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/letterdrop/edit"
+    },
+    {
+      "name": "Linknavigator: Internal Linking Tool",
+      "slug": "linknavigator",
+      "clientId": "1949999bf8c3609c667aca4db0c02edc3aeb46928a5bd029ffafebbc52d631d5",
+      "workspaceId": "6645b09afe2ef7f466f91ed4",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/linknavigator/edit"
+    },
+    {
+      "name": "CartGenie",
+      "slug": "cartgenie",
+      "clientId": "984f35c3f156c2fd39914c798f25d0efe752a16e676277289c10fca74b567a1c",
+      "workspaceId": "67dd89bc57029a523f19d4fb",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/cartgenie/edit"
+    },
+    {
+      "name": "Flozi",
+      "slug": "flozi",
+      "clientId": "d4bafa01483d3c607584c322678db203b66729b5834ede5253f0662df785c629",
+      "workspaceId": "631b2496aee50c3494aa6699",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flozi/edit"
+    },
+    {
+      "name": "Social Share",
+      "slug": "social-share",
+      "clientId": "e40831f8c069b5cc3718ab215f9fecf34119727fb52f4dfdfc960aee88dd003c",
+      "workspaceId": "6553201f5b84962b09054032",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/social-share/edit"
+    },
+    {
+      "name": "Text Wizard AI",
+      "slug": "text-wizard-ai",
+      "clientId": "99465a5bb70dc537ca55bdb7d363f6fce67025d44c525ad23272a4722ab10da2",
+      "workspaceId": "63876222d52e0522be01178b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/text-wizard-ai/edit"
+    },
+    {
+      "name": "WMails - Email Auto-Responses",
+      "slug": "wmails-wms",
+      "clientId": "483e4c81d61aff6951d7d16b5145ac3733da7699dd4c30802586f6e312497f41",
+      "workspaceId": "630874129c88c00d0a2fb742",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/wmails-wms/edit"
+    },
+    {
+      "name": "Replace Flow",
+      "slug": "replace-flow",
+      "clientId": "dae98a250f119d0f266a70b8461d40135479bde8425a2d77b83e0a4a43ec6d5f",
+      "workspaceId": "67eef5a44f1a67005c45779a",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/replace-flow/edit"
+    },
+    {
+      "name": "Alt Text Generator",
+      "slug": "alttextgenerator",
+      "clientId": "b1ead2f9e806025ace2fd0e0141153b8502fe0ddee5daa69cd21cc8a0364cd77",
+      "workspaceId": "67ecba4ce8c28a6443250d2e",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/alttextgenerator/edit"
+    },
+    {
+      "name": "AI Alt Text",
+      "slug": "alt-text-lab",
+      "clientId": "57774578dc742616b68f5f2e3cf2d559c175478b6b52db186abda22a3493865b",
+      "workspaceId": "638de7c7a970470a1041f1be",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/alt-text-lab/edit"
+    },
+    {
+      "name": "TEST Whalesync Dev",
+      "slug": "test-whalesync-dev",
+      "clientId": "6c2f49f2abae3c9e79f45088e7234d342e416be0c84f923aabca11fbf4f5ba8e",
+      "workspaceId": "63586293b36de336005a39ae",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/test-whalesync-dev/edit"
+    },
+    {
+      "name": "Zoho Flow[EU]",
+      "slug": "zoho-flow-eu",
+      "clientId": "648beb86c58a69dc7e28581a7968220a8d76d27ff5ce7651ec6e2bb300ca0fd0",
+      "workspaceId": "636dd222cc4f7c485d6f026b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/zoho-flow-eu/edit"
+    },
+    {
+      "name": "CookieGuard",
+      "slug": "cookieguard",
+      "clientId": "9211da8657d3c52278f70e194a2fbf6b87d57b72e2674b7e972a91be2064b45b",
+      "workspaceId": "68258cee1ada88a48943342b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/cookieguard/edit"
+    },
+    {
+      "name": "Growform",
+      "slug": "growform",
+      "clientId": "90bb6dd0c2154ac004bb86da11bf48405a4a5a55697b352c9d030e036c258788",
+      "workspaceId": "638f32666aea054b148975d5",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/growform/edit"
+    },
+    {
+      "name": "Webflow Pack for Coda",
+      "slug": "webflow-pack-for-coda",
+      "clientId": "a78bb90c90d15dc0d39ebc2316bc5a364dab74247febd0dfa3cca3d2298df4bc",
+      "workspaceId": "62522fcc349cbe349f4d0317",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/webflow-pack-for-coda/edit"
+    },
+    {
+      "name": "TooEasy Powerups",
+      "slug": "tooeasy-powerups",
+      "clientId": "3ed7eea1252e2e65a4c2ed99ba7e033c7e3be86c0c1867c145a21dbc0325f671",
+      "workspaceId": "67809659eb0a5516b17dfa9f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/tooeasy-powerups/edit"
+    },
+    {
+      "name": "WP to Webflow",
+      "slug": "wp-to-webflow",
+      "clientId": "4339affe0f13403aa3a20448ba815862f51d92f38089dfe2884f35119952c594",
+      "workspaceId": "630e48a7aa43e93bf2c5f3ff",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/wp-to-webflow/edit"
+    },
+    {
+      "name": "Byteline",
+      "slug": "byteline",
+      "clientId": "f20aefa9b5ffbc31fe515754a9a158837f144c2e01bdf114f38858766e7d9cee",
+      "workspaceId": "6393642813966c717f1de29a",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/byteline/edit"
+    },
+    {
+      "name": "Audienceful: Email Marketing & Blogging",
+      "slug": "audienceful-blogging-newsletters",
+      "clientId": "9af1a2a08757dd73cf719617a63f64d42741093e551c176697d985dce637ff1a",
+      "workspaceId": "623d4adca3a9ee00f7d5f2e4",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/audienceful-blogging-newsletters/edit"
+    },
+    {
+      "name": "Image Management",
+      "slug": "image-management",
+      "clientId": "ae811551c724768181ee01da7d349abd2b268fdd3699668cadf9fc64f0471a80",
+      "workspaceId": "63322d753e84c50140e1b423",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/image-management/edit"
+    },
+    {
+      "name": "RevuFlow",
+      "slug": "revuflow",
+      "clientId": "0078d7836f34af8dcac257acd5c1f752ae90fb81b306dbdae28ba1e67e646d18",
+      "workspaceId": "63b5bf18e9029c93bee7dcc2",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/revuflow/edit"
+    },
+    {
+      "name": "Documentero - Generate DOCX PDF",
+      "slug": "documentero-generate-docx-pdf",
+      "clientId": "59d3c56d7dad6913f442af6f78370056dba7de7f140f969bf6b96fb9bc3478f4",
+      "workspaceId": "6524f3053c668b39ef7d1058",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/documentero-generate-docx-pdf/edit"
+    },
+    {
+      "name": "Event Calendar",
+      "slug": "event-calendar",
+      "clientId": "ca96e4cc5d39644277d9c17254eb3f12aaef0306fcf54321154442b9a0c9610e",
+      "workspaceId": "67d05b1b36605de941d3d331",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/event-calendar/edit"
+    },
+    {
+      "name": "Countdown Bar - Timer",
+      "slug": "countdown-bar---timer",
+      "clientId": "f9930fdd91711e5ec5bf2d06c455a0cada9588ee1cf8441cfdca1fa06340e463",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/countdown-bar---timer/edit"
+    },
+    {
+      "name": "LinkerFlow: Internal Link Tool",
+      "slug": "linkerflow",
+      "clientId": "450565e5bb5c49ae1295f7ebebf8fbf6c31b6a51208dec849b8eb3376b312524",
+      "workspaceId": "63a1d4ac3619da3d61796006",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/linkerflow/edit"
+    },
+    {
+      "name": "Pixcap Editable 3D Icons and Characters",
+      "slug": "pixcap---customizable-3d-icons-illustrations",
+      "clientId": "a381bd3b704125cae7ce0ff07aacf76d2b105342b4bbeee6f2f0d3a916bb5ced",
+      "workspaceId": "6343a0a604a965771a8658dd",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/pixcap---customizable-3d-icons-illustrations/edit"
+    },
+    {
+      "name": "Clawdia",
+      "slug": "clawdia",
+      "clientId": "caac589678bb8edc2119151cd1d14e3c7014b18dc6cfd1e732694b3c5ffedf7f",
+      "workspaceId": "644634c09bfaeb112198097e",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/clawdia/edit"
+    },
+    {
+      "name": "Penni Cart",
+      "slug": "penni-cart",
+      "clientId": "b3c735782d6709af53127172338909c8d41975d0a33278f9d6e3a948eea519d7",
+      "workspaceId": "63765d3b0a1d9e5bfdeee5b9",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/penni-cart/edit"
+    },
+    {
+      "name": "Breakpoint Style Mover",
+      "slug": "breakpoint-style-mover",
+      "clientId": "1da57f4de0d407b4b3ab2e528a31633c1fd6e36a6bd4cd11923583a68a4c7359",
+      "workspaceId": "636c860e27668d1f24a816dd",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/breakpoint-style-mover/edit"
+    },
+    {
+      "name": "Announcement Bar",
+      "slug": "announcement-bar",
+      "clientId": "96ac1ce0480cb4925a0f1f6fbe5d0f4a9d66749e079e902ff739ce321a4e580f",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/announcement-bar/edit"
+    },
+    {
+      "name": "Getty Images",
+      "slug": "getty-images",
+      "clientId": "a282bc3634b3e71e562d30e032e3fa6cc9535bfb5d15fd267ac6fd3520808295",
+      "workspaceId": "648f9fc0259a699a36b3c256",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/getty-images/edit"
+    },
+    {
+      "name": "iStock by Getty Images",
+      "slug": "istock-by-getty-images",
+      "clientId": "18a0232636bcab4562578b2c738b4cb61dca12da673c5ba474b6a53c7249eab6",
+      "workspaceId": "648f9fc0259a699a36b3c256",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/istock-by-getty-images/edit"
+    },
+    {
+      "name": "PageFactory",
+      "slug": "pagefactory",
+      "clientId": "d2851275c80adf69496dc409a6b93047ffe6edd844a471fe61137c0d23994ffa",
+      "workspaceId": "62f419d1df91459710248557",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/pagefactory/edit"
+    },
+    {
+      "name": "LoginID Wallet",
+      "slug": "loginid-wallet",
+      "clientId": "1e167d7fb73c84ab514d8161c724531a6173fb48e4e1103c6a4f153cf6bc7f03",
+      "workspaceId": "647768999c08582651b63147",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/loginid-wallet/edit"
+    },
+    {
+      "name": "MeldAPI",
+      "slug": "meldapi",
+      "clientId": "7cf381a0bc30a1d09d2807c5c8b2878ec41622f4c64121233e092fbba66d970b",
+      "workspaceId": "643d02d942e9e14c8b880a76",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/meldapi/edit"
+    },
+    {
+      "name": "Formester",
+      "slug": "formester",
+      "clientId": "4d73100e862afc9027f23dbf77df0ddd92a61362e7087e9eaaf7adfee40431ff",
+      "workspaceId": "655c7fa053f7f5a3afbeedff",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/formester/edit"
+    },
+    {
+      "name": "HTFlow Migration (ARCHIVED)",
+      "slug": "htflow-migration",
+      "clientId": "8335f4a958072fc6c025a4aa3e7796340df6b9b6fa0a38a073fed42611b3a38f",
+      "workspaceId": "63323d9929eea90195a1a343",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/htflow-migration/edit"
+    },
+    {
+      "name": "Integrately",
+      "slug": "integrately",
+      "clientId": "08498f8fb1f5f6693ee02b632e6857c67d7e35816852af53c33ec3196e292fe8",
+      "workspaceId": "635c1c9a05c416d63b58d4c4",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/integrately/edit"
+    },
+    {
+      "name": "YourGPT Chatbot",
+      "slug": "yourgpt-chatbot",
+      "clientId": "73f3d45a86fa65cbc92b77ab4aa71c45d6db1d2354a9124850c4ac37291834f4",
+      "workspaceId": "64dc924e37c98acfb5b1df8d",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/yourgpt-chatbot/edit"
+    },
+    {
+      "name": "Visual Electric",
+      "slug": "visual-electric",
+      "clientId": "ec9bdd7d3192e6b2e55684275844a82c653b3dfea14a00395d966af5444bc59f",
+      "workspaceId": "677d8e0b74fbcffad0acafcb",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/visual-electric/edit"
+    },
+    {
+      "name": "StoryChief - Content scheduler",
+      "slug": "storychief",
+      "clientId": "adc03810d3b04082d6f67c33ddce953c258abaea0a6593c227a3e17f80b79846",
+      "workspaceId": "635c19f413c125379ae6f92d",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/storychief/edit"
+    },
+    {
+      "name": "Bynder",
+      "slug": "bynder",
+      "clientId": "a0274b7e9d427be317d6077877ac3a15b93e98b7b89ee0f1cdf682b84f16ba6c",
+      "workspaceId": "633b3aa70148ed01998dd742",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/bynder/edit"
+    },
+    {
+      "name": "TripleChecker",
+      "slug": "triplechecker",
+      "clientId": "d7cd50cf664ee57831b8c51adc401bcc1f307b669436655b1b5a904481729fdc",
+      "workspaceId": "678289a411c030b8a6834510",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/triplechecker/edit"
+    },
+    {
+      "name": "CMS Filter",
+      "slug": "cms-filter",
+      "clientId": "4b33f8a5d555dc733aeb60c742449840de6ad8bec32e23e057a27d46c186c9c9",
+      "workspaceId": "6553201f5b84962b09054032",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/cms-filter/edit"
+    },
+    {
+      "name": "FlowScript.dev",
+      "slug": "flowscript-dev",
+      "clientId": "3f5525b03de5c8c4c23d18bc999a8ea93811d60ef0ab5f2161323f55c1448f10",
+      "workspaceId": "6378090e6f491085d3dfe737",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowscript-dev/edit"
+    },
+    {
+      "name": "Void Analytics",
+      "slug": "void-analytics",
+      "clientId": "17f3d6d19b1903f2976a73092978e3991f3d184a44812fe974f4a69e6f169de0",
+      "workspaceId": "659e7f5e2b31b7d74c14d0f0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/void-analytics/edit"
+    },
+    {
+      "name": "Tuesday Labs",
+      "slug": "tuesday-labs",
+      "clientId": "d337421872e93b588b7541124454eff9ab52c16575fd148c05122abe5ea19651",
+      "workspaceId": "6332f66e4bdcdf01093219fc",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/tuesday-labs/edit"
+    },
+    {
+      "name": "All in One Accessibility",
+      "slug": "all-in-one-accessibilty",
+      "clientId": "0907c2bf81f4012331dd47c7669adae2fda21d7a88174fd5241f852aae274339",
+      "workspaceId": "64c7a26e086d0fd7615df06b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/all-in-one-accessibilty/edit"
+    },
+    {
+      "name": "ReadMe [Internal]",
+      "slug": "readme-internal",
+      "clientId": "a82159ab7cdb8abba018709fb1bdd3cdbe2c059222e1114fc48648364168d542",
+      "workspaceId": "625860a7a6c16d624927122f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/readme-internal/edit"
+    },
+    {
+      "name": "ScheduleFlow",
+      "slug": "scheduleflow",
+      "clientId": "3b69fa3cea82b83e00b8dadb0146b1bf8c6bcc7c948bc16bdb7640632e06a32c",
+      "workspaceId": "637881806f38019aacd10941",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/scheduleflow/edit"
+    },
+    {
+      "name": "Storylane",
+      "slug": "storylane",
+      "clientId": "32a9d5397779434b4639bcab81394f179a3b76418fe842e45a29472d5e6e498d",
+      "workspaceId": "632ce95511d412000e0df429",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/storylane/edit"
+    },
+    {
+      "name": "Campaigner: Email and Marketing Automation",
+      "slug": "campaigner",
+      "clientId": "8c49f2af2a7627cce3194248c14ca8d580dd8bf47554c73f708411dacf20f947",
+      "workspaceId": "65d8cd04e306f5cbdf19c482",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/campaigner/edit"
+    },
+    {
+      "name": "Flow Form",
+      "slug": "flow-form",
+      "clientId": "f5f3fbfa03829cd31c43bcf444c3828523a4c1ae24359f74d2b39f5d89427c01",
+      "workspaceId": "637f54d408156a4beca7f046",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flow-form/edit"
+    },
+    {
+      "name": "Creattie",
+      "slug": "creattie",
+      "clientId": "8beda59b50c27874ba8efe9c437bdf9ca6a8d71787f11595e4f224efd3458fb2",
+      "workspaceId": "67cef3eb1d06a5760cd93d55",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/creattie/edit"
+    },
+    {
+      "name": "SchemaRabbit",
+      "slug": "schemarabbit",
+      "clientId": "668cf8ee004d3d870992083748804354d64341eeaacb336a1cc2e494b5f9764c",
+      "workspaceId": "6723fe4e4c35f904242856fe",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/schemarabbit/edit"
+    },
+    {
+      "name": "Zoho Flow",
+      "slug": "zoho-flow",
+      "clientId": "86efc955923815d8138b3ea547c12890ee6ddd1a3f499018518bc478cdbea38a",
+      "workspaceId": "636dd222cc4f7c485d6f026b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/zoho-flow/edit"
+    },
+    {
+      "name": "ScheduLinks",
+      "slug": "schedulinks",
+      "clientId": "6dbe5b1112586729133a8090b7589bbaa3c2911ebdc2c82176fca8010dfc8c4e",
+      "workspaceId": "63322bb33e84c50140e192dc",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/schedulinks/edit"
+    },
+    {
+      "name": "Telegram Chat - Contact Us",
+      "slug": "telegram-chat---contact-us",
+      "clientId": "c348f5431b6d54b5a63a8ea87c7e0f75a12aa17c51765da3959377b3aeb0503f",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/telegram-chat---contact-us/edit"
+    },
+    {
+      "name": "Finsweet Cookie Consent",
+      "slug": "finsweet-cookie-consent",
+      "clientId": "cc8f36f83d9427d91418c5a9aa7c52d85644ff73a265e7197d313fd71edde63b",
+      "workspaceId": "638f7017f8f3b49d78e071a0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/finsweet-cookie-consent/edit"
+    },
+    {
+      "name": "Popup Builder",
+      "slug": "popup-builder",
+      "clientId": "0643334d3ae4eb995e766fe6eb39da43b8b48a4220b5da61780febc2ff38a9ca",
+      "workspaceId": "6553201f5b84962b09054032",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/popup-builder/edit"
+    },
+    {
+      "name": "Placeholder Bae",
+      "slug": "placeholder-bae",
+      "clientId": "84c17995402a1c2eba00da5e7cf8b7ed5e30c8035e1cc27074fcad1f26fc0f59",
+      "workspaceId": "631e038956a8096204ca905f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/placeholder-bae/edit"
+    },
+    {
+      "name": "CMS Filter & Search",
+      "slug": "cms-filter-search",
+      "clientId": "2bf4b8be66186bfbe292b13b861fc8abb248c482008869fec5f848f39e039202",
+      "workspaceId": "633217b53e84c50140df3a7b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/cms-filter-search/edit"
+    },
+    {
+      "name": "Flowstar: Before & After Slider",
+      "slug": "flowstar-before-after-slider",
+      "clientId": "5d74d0ecb4bb16a4f0fa4943f3d1d766d480c5d42330eb97eb0cdfb6fd3e125f",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-before-after-slider/edit"
+    },
+    {
+      "name": "Flowstar: Customer Testimonials Slider",
+      "slug": "flowstar-customer-testimonials-slider",
+      "clientId": "c58493dc50138acd692d75a1c3392de0c3e70a0eb06c34e5dd48c5a4c3a87c0f",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-customer-testimonials-slider/edit"
+    },
+    {
+      "name": "ApiX-Drive",
+      "slug": "apix-drive",
+      "clientId": "2491b442f5fe7f46b475d70484f25c58662416da2c0073d1a8ac8f600b7f4dc4",
+      "workspaceId": "62556d4a7dc5a809a81eb7e6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/apix-drive/edit"
+    },
+    {
+      "name": "Flowstar: Form Connectors",
+      "slug": "flowstar-form-connectors",
+      "clientId": "30cf2d6e7e8cda57deaf25277e2dbd3ccf3266352f3293fb75884dd91afad12c",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-form-connectors/edit"
+    },
+    {
+      "name": "Chat Whisperer - AI Website Bot Maker",
+      "slug": "chat-whisperer---ai-website-bot-maker",
+      "clientId": "1c454816e952a344c7882ffc9f734b8c1529e41bb785cd92ff3a580d9753acf4",
+      "workspaceId": "65659242167257ac09f876a0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/chat-whisperer---ai-website-bot-maker/edit"
+    },
+    {
+      "name": "Flowstar: Social Media Icons",
+      "slug": "flowstar-smi-ssb",
+      "clientId": "f16acb495a74f466b2c3586b1efb3ddd8e6f23c01bbf2beb11994577494e089a",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-smi-ssb/edit"
+    },
+    {
+      "name": "Atmos",
+      "slug": "atmos",
+      "clientId": "007336183a40994d4b43cb70ada8b34c1a96a7fa5e669be7dfda1e58de140280",
+      "workspaceId": "633b023c8d28620173395cb8",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/atmos/edit"
+    },
+    {
+      "name": "Visual Sitemap",
+      "slug": "visual-sitemap",
+      "clientId": "192a9d4d59d9dac15099fad583fa546a71501e27caa13fab7e3c1c616b4aaea9",
+      "workspaceId": "65149830970ad6e9395c946b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/visual-sitemap/edit"
+    },
+    {
+      "name": "Webflow MCP App [SAI]",
+      "slug": "webflow-mcp-app-sai",
+      "clientId": "568f7375b9f7d5bcee5fa5ebaafcdda780f2124fb763ea77bf7909fe836ccb64",
+      "workspaceId": "68235e37a61f046bbdb8d829",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/webflow-mcp-app-sai/edit"
+    },
+    {
+      "name": "Stockpress",
+      "slug": "stockpress",
+      "clientId": "061294af97bcf94b9fc49ed1135922ba0a15bfa8987733a0c3f085af538f0c8a",
+      "workspaceId": "65afaf09fc8917fbb72a26d8",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/stockpress/edit"
+    },
+    {
+      "name": "WF Cloud",
+      "slug": "wf-cloud",
+      "clientId": "530671685bda4c7d91b2b585af9aeb3b334eda3671d2ecead5a70a3b40b9dc3b",
+      "workspaceId": "63d85698e0557a811f5a9841",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/wf-cloud/edit"
+    },
+    {
+      "name": "HelpDesk",
+      "slug": "helpdesk",
+      "clientId": "80a3f4c3e9763ca440353350ef47363349111b67fbdddab52458a5b95c778747",
+      "workspaceId": "637f9c4c262248b881d06aa3",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/helpdesk/edit"
+    },
+    {
+      "name": "Krastie AI",
+      "slug": "krastie-ai",
+      "clientId": "094155b0b51b27c629503997626448c8eac3102fda99ae08da6b4cf454618525",
+      "workspaceId": "6257358a3e5c610181aba276",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/krastie-ai/edit"
+    },
+    {
+      "name": "Wes",
+      "slug": "wes",
+      "clientId": "93a7a5bafba42b0bb4a5b15af4257a0c8e0baba1ddcd9dba87a6b236cd0a6c67",
+      "workspaceId": "6328b5c7302aa13380f83211",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/wes/edit"
+    },
+    {
+      "name": "ContentStudio",
+      "slug": "contentstudio",
+      "clientId": "db7bc767467c972118d25a731b8bf280e6378404925c1e2819ae3f0160fe0ca7",
+      "workspaceId": "635908d294e877cd4a22645f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/contentstudio/edit"
+    },
+    {
+      "name": "Click to Call",
+      "slug": "click-to-call",
+      "clientId": "f1675d1234a51588efe41df6b3bad42abcd4a9b9a6dc42708101e9b5d79a5c22",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/click-to-call/edit"
+    },
+    {
+      "name": "Streamline Icons & Elements",
+      "slug": "streamline-icons",
+      "clientId": "94a87a85185f933e750ef176be1fd676588c12fc9a30d94289c6062fb2d0bc9f",
+      "workspaceId": "68c399f140b29a2c59a04df3",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/streamline-icons/edit"
+    },
+    {
+      "name": "WooRank",
+      "slug": "woorank",
+      "clientId": "d234363976877d482a1f6e93a32cf4d3bc7a624f0a3a64ae3614e86898961203",
+      "workspaceId": "633d5f3534c30a36531f7162",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/woorank/edit"
+    },
+    {
+      "name": "Logo Showcase",
+      "slug": "logo-showcase",
+      "clientId": "2a77ea49cf17bdf309887a3313c35e2dd921622ba9edebbab734ce6baa40af26",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/logo-showcase/edit"
+    },
+    {
+      "name": "Concord Privacy",
+      "slug": "concord-privacy",
+      "clientId": "630c42839f36ab0ae56eef1910d60d1f09ee402c301a2cf7354aa8759033ef6c",
+      "workspaceId": "67ee5b1a43e807318c6fcc9b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/concord-privacy/edit"
+    },
+    {
+      "name": "PXM Forms",
+      "slug": "pxm-forms",
+      "clientId": "f6377fecd7d50fcfb59f74330ff47d5bfe723ce36d9698c89bef95bd00d790b3",
+      "workspaceId": "63105464427ea3f91c6d2c6a",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/pxm-forms/edit"
+    },
+    {
+      "name": "CompSwap - Component Converter",
+      "slug": "compswap---component-converter",
+      "clientId": "ba0606e777ede9f9d2273e13aafc112eda9c76a309f063c8e676a8a57927e086",
+      "workspaceId": "6332dcb94bdcdf01092f53b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/compswap---component-converter/edit"
+    },
+    {
+      "name": "TrustArc Cookie Consent Manager",
+      "slug": "trustarc-cookie-consent-manager",
+      "clientId": "66dbe01191ceade40e437acbf926e8af1bd3fb54b0918d113ef62bd6c16e88a1",
+      "workspaceId": "67ed55824bd25d8d3425a26d",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/trustarc-cookie-consent-manager/edit"
+    },
+    {
+      "name": "Goaffpro Affiliate Marketing",
+      "slug": "goaffpro-affiliate-marketing",
+      "clientId": "4f9e79242a6c9dd6b4fb4371426488ae78dce5b56bf3f2d08f90ff41ca9bf598",
+      "workspaceId": "63736d4d7d9fdd5582f0ae87",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/goaffpro-affiliate-marketing/edit"
+    },
+    {
+      "name": "Flowstar: Payment Button",
+      "slug": "flowstar-payment-button",
+      "clientId": "cc89d50a5f974acebf13e0f4f210323655d801a351f33112c96408f3374a4fb2",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-payment-button/edit"
+    },
+    {
+      "name": "Quizell Product Quiz",
+      "slug": "quizell-product-quiz",
+      "clientId": "48810e175b797c07e27d979f5a1611db6d68bad4497a7efacbaafd57ca8ec929",
+      "workspaceId": "65b39c23af9163997c1ac079",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/quizell-product-quiz/edit"
+    },
+    {
+      "name": "Trinity Audio – Text to Speech",
+      "slug": "trinity-audio---text-to-speech",
+      "clientId": "006fa22738f83c6871516708c01a9bd3922c235155f19cfc7c0f294c886262cc",
+      "workspaceId": "6889d5407a671786733a1308",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/trinity-audio---text-to-speech/edit"
+    },
+    {
+      "name": "Flowstar: Combo Bundle Builder",
+      "slug": "flowstar-combo-bundle-builder",
+      "clientId": "53bd5d7607c20538d84a3e1f1e9ebe480d786469aebc062ce15360f8d474ddc2",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-combo-bundle-builder/edit"
+    },
+    {
+      "name": "RankPill",
+      "slug": "rankpill",
+      "clientId": "328561ded558881f6014d733c651660f538b641b9d50832eeee6dd622a1bfaca",
+      "workspaceId": "632db839fa6c9f001b116715",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/rankpill/edit"
+    },
+    {
+      "name": "Smartarget FAQ",
+      "slug": "smartarget-faq",
+      "clientId": "de30dd941fac67e84e526f3c7eba40b15392b7917da42262fa37c8230626bb24",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/smartarget-faq/edit"
+    },
+    {
+      "name": "ShipStation",
+      "slug": "shipstation",
+      "clientId": "496895a06eb063c024247090cdd0d7b69752cd487cb1c378b3f43ce9c3601a23",
+      "workspaceId": "62a292885ce2ea0165dcaa6c",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/shipstation/edit"
+    },
+    {
+      "name": "Localazy",
+      "slug": "localazy",
+      "clientId": "7caf81dc48323920c5a7804917f980548e885126655c91d43d3139af9ea0529f",
+      "workspaceId": "66618c87a7b23ed72b7c78f5",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/localazy/edit"
+    },
+    {
+      "name": "Syncmate",
+      "slug": "syncmate",
+      "clientId": "0cf4d3435904f5496b87082b11e330b3c6c95a6b7286de5b77b4797bbc03ce17",
+      "workspaceId": "633b3aa70148ed01998dd742",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/syncmate/edit"
+    },
+    {
+      "name": "IFTTT",
+      "slug": "ifttt",
+      "clientId": "8f7bd289ce2e25be46507b6402a72d30b73fd3167435da8296c3941840f0b3a6",
+      "workspaceId": "637834de33f8d16effb3f526",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/ifttt/edit"
+    },
+    {
+      "name": "Postman Collections for Webflow",
+      "slug": "postman-collections-for-webflow",
+      "clientId": "8a74215563898066b45f4fc326d12e5230f395b93c3a8f66863367fb5b939adf",
+      "workspaceId": "625860a7a6c16d624927122f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/postman-collections-for-webflow/edit"
+    },
+    {
+      "name": "Flowstar: FAQ & HelpDesk",
+      "slug": "flowstar-faq",
+      "clientId": "d0a488aa5884654d34106a6d64d00019138b3be57a4364e7b6f19ed34c7b9ede",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-faq/edit"
+    },
+    {
+      "name": "Brandzway - Reviews, Photos & More",
+      "slug": "brandzway-reviews-photos-more",
+      "clientId": "9221bf54affd82fdf9d3855f6f36b5e00ac646899f586b2609d737ef3b4caea0",
+      "workspaceId": "651d4a77db93b98dc4d83395",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/brandzway-reviews-photos-more/edit"
+    },
+    {
+      "name": "Pressmaster.ai",
+      "slug": "pressmaster-ai",
+      "clientId": "517939eeda4b64e0f179170598d1e88f7771587199265b58b7a6c742d26a1325",
+      "workspaceId": "66435a2d3b8233ab3af25bce",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/pressmaster-ai/edit"
+    },
+    {
+      "name": "AccessBit",
+      "slug": "accessbit",
+      "clientId": "14848936ddd95f20c31196248debda24b5609db19551a44ab44547e6b7593f0a",
+      "workspaceId": "670f060513326544cf5fde80",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/accessbit/edit"
+    },
+    {
+      "name": "Simplified Workflow Integration",
+      "slug": "simplified-workflow-integration",
+      "clientId": "564c84c7d7aed207f75ec53a6ba6210c6544c49f2951652dbd5d8081c693475a",
+      "workspaceId": "62a285b25ce2ea0165d9cb9a",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/simplified-workflow-integration/edit"
+    },
+    {
+      "name": "QR Code Generator",
+      "slug": "qr-code-generator",
+      "clientId": "02ca5a798c6529852051d1ee64c663735e80a2a33b1bacbba765c55640a2bb4e",
+      "workspaceId": "62a26b7d5ce2ea0165d37456",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/qr-code-generator/edit"
+    },
+    {
+      "name": "TrustCaptcha",
+      "slug": "trustcaptcha",
+      "clientId": "f192804d0737f930be2ba688c7751c0bcaf4918ada8e5a0769f6c69982c79adb",
+      "workspaceId": "68ed1d8b570d66558f685514",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/trustcaptcha/edit"
+    },
+    {
+      "name": "Pixl Apps - Collection Admin",
+      "slug": "pixl-apps---collection-admin",
+      "clientId": "0ad945a5c2f2a6c6dbaf828edd809d6314cf651dbcffb83ce5df436a1fc52783",
+      "workspaceId": "63322d753e84c50140e1b423",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/pixl-apps---collection-admin/edit"
+    },
+    {
+      "name": "Countdown Popup",
+      "slug": "countdown-popup",
+      "clientId": "7020f57728777179b32b543cc28e0b20e59e6b64c1c6ebeaa854b22fa55d1128",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/countdown-popup/edit"
+    },
+    {
+      "name": "PromoteKit",
+      "slug": "promotekit",
+      "clientId": "f3df48e69c5f8960f262dc9ed86edc9e63296802773eb24633d63a7b0ec31b44",
+      "workspaceId": "656b836e0129678b31d0714d",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/promotekit/edit"
+    },
+    {
+      "name": "Batch",
+      "slug": "batch",
+      "clientId": "ab17013352d8a4c8a9200e1747fa786a4bf3a5f8bdd67ec8c938b4b0ec218221",
+      "workspaceId": "66a1dfa600f1c86c3db08326",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/batch/edit"
+    },
+    {
+      "name": "TEST Hubspot App",
+      "slug": "test-hubspot-app",
+      "clientId": "483ad8927c6284c5b3ebacd384ec678d25b278f5a770f42906fec87519237913",
+      "workspaceId": "646d501cb7f050a4493c7b6b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/test-hubspot-app/edit"
+    },
+    {
+      "name": "Magoquiz",
+      "slug": "magoquiz",
+      "clientId": "a5cc3843927df7b929d1a3aad157da289ab1eea21ed2874901194dd58fe31b38",
+      "workspaceId": "64bfe3474a5ac2dd32854322",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/magoquiz/edit"
+    },
+    {
+      "name": "Webflow MCP server (Staging)",
+      "slug": "webflow-mcp-server",
+      "clientId": "32de8a4d77f64b2c13aa08c66f5cdbd3317db8ec92ff9d69caba2f815294b9cb",
+      "workspaceId": "625860a7a6c16d624927122f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/webflow-mcp-server/edit"
+    },
+    {
+      "name": "Closeby",
+      "slug": "closeby",
+      "clientId": "fd5f94111f930c124844498d23495bb498a1f84819d87df8b9292ca4804645e6",
+      "workspaceId": "6672fd9f45486164bfdc6c30",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/closeby/edit"
+    },
+    {
+      "name": "KeywordMesh",
+      "slug": "keywordmesh",
+      "clientId": "bb7e9c38ca30f1525e1c2766401a5d29b0b71e648798111224d097de96709eb8",
+      "workspaceId": "67515788a60470f210643462",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/keywordmesh/edit"
+    },
+    {
+      "name": "Style Find & Replace",
+      "slug": "style-find-replace",
+      "clientId": "eacbbebe11c53aa6065730b7bb29b2b2681758070dc4fb9f91b01651fa62ce05",
+      "workspaceId": "630e0dd03f6b9c28af72af1b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/style-find-replace/edit"
+    },
+    {
+      "name": "MobileFlow",
+      "slug": "mobileflow",
+      "clientId": "b4e725c497f48e908d5ef1afbf97d2f832fb16df0335ab8b600b3555c2d9ffe8",
+      "workspaceId": "67641ee4c03047d62560de34",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/mobileflow/edit"
+    },
+    {
+      "name": "Printful",
+      "slug": "printful",
+      "clientId": "d1678c3d13112c068b7aad9db6ec3a15cc3e719ee2d4b60a341c7cc8790a9d96",
+      "workspaceId": "62a25cb35ce2ea0165d00317",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/printful/edit"
+    },
+    {
+      "name": "ConnectMagic",
+      "slug": "connectmagic",
+      "clientId": "b93d14d1d6b08e065a3f9585c102a2a84685abc6c95383b56890ebea449a4a43",
+      "workspaceId": "6694bec79e02d8f6510386cb",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/connectmagic/edit"
+    },
+    {
+      "name": "Orimon",
+      "slug": "orimon",
+      "clientId": "bc615a7ba653a51f9513c27ee36310078a15b8f5a39d705c5d99761a9b67dfc6",
+      "workspaceId": "657ae7c78f0f240b6e1b3083",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/orimon/edit"
+    },
+    {
+      "name": "Form Fields Pro - payments test",
+      "slug": "form-fields-pro---payments-test",
+      "clientId": "bb5cbfb4d85da9230baabd9a4cdf8ca0650ec30de95abf10d4cf7b9339cd8c6d",
+      "workspaceId": "6553201f5b84962b09054032",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/form-fields-pro---payments-test/edit"
+    },
+    {
+      "name": "SEO Helper",
+      "slug": "seo-helper",
+      "clientId": "87a0757ae6eab55e1c794baf2aada7071f73e6dd65ff46db31da8aca2a87150b",
+      "workspaceId": "663b292dada2e1f239f668cd",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/seo-helper/edit"
+    },
+    {
+      "name": "GlobalLink - Webflow",
+      "slug": "globallink",
+      "clientId": "9a7a8ee59b61af0a7fa98a7e9175b5c5180e17e89c2d1e902f9dc5027619dc8c",
+      "workspaceId": "67a52ea1e0f144381edad9de",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/globallink/edit"
+    },
+    {
+      "name": "Interactivity Studio",
+      "slug": "interactivity-studio",
+      "clientId": "1fc990a26771426c147e5581ccb7ca93714186c5514786b744e44ec20b7a3266",
+      "workspaceId": "67350db2ce2af0291e8849c9",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/interactivity-studio/edit"
+    },
+    {
+      "name": "Form & eComm Order Sync: Webflow to Monday.com",
+      "slug": "orm-ecomm-order-sync-webflow-to-monday-com",
+      "clientId": "2cebd9da75d0af4e304a600f05e15b65518c62d3e4bde59464bfc66f8f710448",
+      "workspaceId": "6373f90d098aa737d7e06f1f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/orm-ecomm-order-sync-webflow-to-monday-com/edit"
+    },
+    {
+      "name": "Wicked Components",
+      "slug": "wicked-components",
+      "clientId": "8996bca6d7cfb6c5080e7e7aebf2e475ef55c6372f5a2146be60ae0ad65293fa",
+      "workspaceId": "6811905e2d3396c1ad0f8bde",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/wicked-components/edit"
+    },
+    {
+      "name": "Instant AI Chatbot",
+      "slug": "instant-ai-chatbot",
+      "clientId": "611b63d852e982bd9b1d288f841192f3f9feaf0b3658dfce01e307fe1b236d37",
+      "workspaceId": "682f6cdf81574b7a6f13b493",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/instant-ai-chatbot/edit"
+    },
+    {
+      "name": "Velllum",
+      "slug": "velllum",
+      "clientId": "bf25dd81aaeb3a926deb42e1a984f19d0e9483120b440c90724d2722cea7a3d8",
+      "workspaceId": "63114d85eaab907c83698883",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/velllum/edit"
+    },
+    {
+      "name": "Back to Top",
+      "slug": "back-to-top",
+      "clientId": "f840755b7097a848c29adc6fb7e301f3415176dcaee9ebef1bc38bca6d021908",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/back-to-top/edit"
+    },
+    {
+      "name": "Flowstar: Spin Wheel & Gamification",
+      "slug": "flowstar-spin-wheel-gamification",
+      "clientId": "017ba187877915cb19aa03fd335aa6ed3a1ef6644dba79411146007de66174e6",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-spin-wheel-gamification/edit"
+    },
+    {
+      "name": "Smartarget Reviews",
+      "slug": "smartarget-reviews",
+      "clientId": "c10e43d5929f42dc61f29b0e8ee2799a569c51eadcebd32f6a1de29bfa451912",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/smartarget-reviews/edit"
+    },
+    {
+      "name": "Zoho Flow [AU]",
+      "slug": "zoho-flow-au",
+      "clientId": "a934c33cfa506edf92de804fcfeda508d155c480f0203496dba0aabb30275552",
+      "workspaceId": "636dd222cc4f7c485d6f026b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/zoho-flow-au/edit"
+    },
+    {
+      "name": "Massively.ai",
+      "slug": "massively-ai",
+      "clientId": "5d48724a0b30360cd5fac3b692b90417fcbc30d5869f201f53e28d82b116f427",
+      "workspaceId": "66f56ea11150557d74e02aab",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/massively-ai/edit"
+    },
+    {
+      "name": "daydream",
+      "slug": "daydream",
+      "clientId": "a30df99b030ab241dd51e0ad1fb8571a1e406ab91619dd2d542d3b17827ec976",
+      "workspaceId": "65384543e0c2b3545049562f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/daydream/edit"
+    },
+    {
+      "name": "Accessibility Enabler",
+      "slug": "accessibility-enabler",
+      "clientId": "e1537d26d5a97dc67adf8426c8b133c0a71d2efc7afcc09f72d420508489f78a",
+      "workspaceId": "678f3166c03f31ca74e28ec9",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/accessibility-enabler/edit"
+    },
+    {
+      "name": "Smartarget Contact Form",
+      "slug": "contact-form",
+      "clientId": "971e63aafbf94f4cb222009095f937b78af9ab1c9a369146d8a8f5e0937dae34",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/contact-form/edit"
+    },
+    {
+      "name": "Revidflow",
+      "slug": "revidflow",
+      "clientId": "b5fabc666af592787a551a1a79041ed875da8cbd7eaf1933a7e403f475a8d057",
+      "workspaceId": "63440670ba4dfa50d2c0f1c9",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/revidflow/edit"
+    },
+    {
+      "name": "HyperSEO",
+      "slug": "hyperseo",
+      "clientId": "488db22f24f1bf95fa147c81422f213cf38a2ae6fe1bc0a5180e92a14c74ec1a",
+      "workspaceId": "664514e916c7eea4c4a0a82c",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/hyperseo/edit"
+    },
+    {
+      "name": "Zeltac Slider",
+      "slug": "zeltac-slider",
+      "clientId": "75378cc674e8f9a89c5df6f618ea97adcdea0cc716e3861181ce5c6a6c0045b0",
+      "workspaceId": "68938aa88ae61ec0b87f896b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/zeltac-slider/edit"
+    },
+    {
+      "name": "Zoho Flow [IN]",
+      "slug": "zoho-flow-in",
+      "clientId": "7ab0ba35cd881062d1e1674c04a7daeae46d6a4eb15ce24e669f6a3b54fa6343",
+      "workspaceId": "636dd222cc4f7c485d6f026b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/zoho-flow-in/edit"
+    },
+    {
+      "name": "[ARCHIVED] Uploadcare",
+      "slug": "uploadcare",
+      "clientId": "bf25dd81aaeb3a926deb42e1a984f19d0e9483120b440c90724d2722cea7a3d8",
+      "workspaceId": "66ccbe9a6dfe6c3f06d6f428",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/uploadcare/edit"
+    },
+    {
+      "name": "NoBreakWeb",
+      "slug": "nobreakweb",
+      "clientId": "d56de3326f49c90745bc2cf01380a92ba274d03796f6c99bae5cc34823a0c4d1",
+      "workspaceId": "666ab278ade4b63080352698",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/nobreakweb/edit"
+    },
+    {
+      "name": "Flowstar: Coupon Offer | Pop-Up Discount Code",
+      "slug": "flowstar-coupon-offer-pop-up-discount-code",
+      "clientId": "b772bda442464949828baa62108c0228c1d3a3b7460f5e07d1b341ea56a631e8",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-coupon-offer-pop-up-discount-code/edit"
+    },
+    {
+      "name": "dotbrand",
+      "slug": "dotbrand",
+      "clientId": "e35d9468822eeb52ba780118ec72c53efc7b1aa29d51ba7ab3df0e965b5584fa",
+      "workspaceId": "6523ac71664086bd7960dd24",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/dotbrand/edit"
+    },
+    {
+      "name": "Theme Switcher",
+      "slug": "themeswitcher",
+      "clientId": "54a06798c0f6f8959eea506f62c95a29f3c86443e291a2a643a36fdb54b87633",
+      "workspaceId": "682e352764708502acca264b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/themeswitcher/edit"
+    },
+    {
+      "name": "ChatSale",
+      "slug": "chatsale",
+      "clientId": "6234195347344d6ebd0459777f614948406dd6f8749fd79a198c8137df5602b6",
+      "workspaceId": "67eb8440e1334d183eded0e0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/chatsale/edit"
+    },
+    {
+      "name": "Apico",
+      "slug": "apico",
+      "clientId": "61e4dce978eac4fd8531e15487d554850845ccfc19e82e0f1ca13a32ba6d45fa",
+      "workspaceId": "65840ce97f278b1312e58812",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/apico/edit"
+    },
+    {
+      "name": "Class Merger",
+      "slug": "class-merger",
+      "clientId": "f053b7c704946a94f9de160ce6fd4f566feaacb6e241f2c75268045607b950d3",
+      "workspaceId": "63172e13aa16086409dd8598",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/class-merger/edit"
+    },
+    {
+      "name": "Smartarget Contact Us",
+      "slug": "smartarget-contact-us",
+      "clientId": "e0be21dd519a67a1d979392c44a701c3157a1cddde4e88d332c8ccbb5350e244",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/smartarget-contact-us/edit"
+    },
+    {
+      "name": "Alloy Automation",
+      "slug": "alloy-automation",
+      "clientId": "2a2bdb63011eac4ea6f5f360ef839f858b6f318c43dc87bbf198d5bb5f1351f0",
+      "workspaceId": "635fe90dfc1744442bb84570",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/alloy-automation/edit"
+    },
+    {
+      "name": "LandingRabbit",
+      "slug": "landingrabbit",
+      "clientId": "0859111416e267175ab68d0b6925ea2ca155e186a8b27e97454241f4b65ba487",
+      "workspaceId": "67ac99a6dd310cf051d55029",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/landingrabbit/edit"
+    },
+    {
+      "name": "Wiremo - Product Reviews App",
+      "slug": "wiremo-verified-reviews",
+      "clientId": "b472b868ddc6a7a6a62e0434263b599d66addfb9216e348cc457a41f0d3f0d12",
+      "workspaceId": "62573c673e5c610181ae2da8",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/wiremo-verified-reviews/edit"
+    },
+    {
+      "name": "MeldAPI (Guest Access)",
+      "slug": "meldapi-guest-access",
+      "clientId": "9c65dd9c31a5d248f6a643b9c776777cce7bf1c59e06f247d4883214187e2b11",
+      "workspaceId": "643d02d942e9e14c8b880a76",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/meldapi-guest-access/edit"
+    },
+    {
+      "name": "LAYOUT-LAYER PANEL",
+      "slug": "layout-layer-panel",
+      "clientId": "ad521a6ead6eb18c337c32c021b10230379de40d6ddff7e280ebc0f7ce03ad29",
+      "workspaceId": "662923360809ffb33e21d927",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/layout-layer-panel/edit"
+    },
+    {
+      "name": "BlogSEO",
+      "slug": "blogseo",
+      "clientId": "98043d4fcd266f75a8c2385bdf656003d9451d6b1cd56db8e9d9ce3bec320c77",
+      "workspaceId": "68630d1d9035f2dda62ed10b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/blogseo/edit"
+    },
+    {
+      "name": "Staging - HubSpot v2 Beta",
+      "slug": "staging---v2-hubspot-app",
+      "clientId": "5513aeac9c7b16a2a4a03949dcd68ed67434d551d8195776c4cede2240cebd92",
+      "workspaceId": "646d501cb7f050a4493c7b6b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/staging---v2-hubspot-app/edit"
+    },
+    {
+      "name": "Publish Pilot",
+      "slug": "publish-pilot",
+      "clientId": "5ca2bcc2e2272fb43946899b77dc4edeed6055c5a1012a5a707445da60dfc7a4",
+      "workspaceId": "651d4a77db93b98dc4d83395",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/publish-pilot/edit"
+    },
+    {
+      "name": "Polymer Job Boards",
+      "slug": "polymer-job-boards",
+      "clientId": "22a6e73289587e0ac69298beb25da08406ff35f53c9ea91b604122d04c6080e0",
+      "workspaceId": "636d8d3acc57f9b5131fdb5a",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/polymer-job-boards/edit"
+    },
+    {
+      "name": "Flowstar: Calculator",
+      "slug": "flowstar-calculator",
+      "clientId": "7554e97443dac7f7d245b29cb223d2ecd9a7e694ee01627663f39c81ad903d5f",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-calculator/edit"
+    },
+    {
+      "name": "Foxy Inventory",
+      "slug": "foxy-inventory",
+      "clientId": "908fb3002463407b738834afd7120f11962ee46228eb0f2a9de2cbeaaa30274d",
+      "workspaceId": "63321f783e84c50140e05985",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/foxy-inventory/edit"
+    },
+    {
+      "name": "Flowstar: Banners",
+      "slug": "flowstar-banners",
+      "clientId": "52177816b39f764fd55bae45c0adb5a453ff20a6ab9cda317336f4a0673aa323",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-banners/edit"
+    },
+    {
+      "name": "Deprecated - Google site tools for Webflow Beta",
+      "slug": "google-site-tools-beta",
+      "clientId": "c096efe758c4d98e2af8f3eea74b3459f1dab3f7c03fb3877b55868b51a18eec",
+      "workspaceId": "6618638b81a66aac6fe84812",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/google-site-tools-beta/edit"
+    },
+    {
+      "name": "Lucky Wheel",
+      "slug": "lucky-wheel",
+      "clientId": "ea64b6a62c8ba4e2fb9791763939cccd2b255f92f09f62dffba44e190dac1538",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/lucky-wheel/edit"
+    },
+    {
+      "name": "Albato",
+      "slug": "albato",
+      "clientId": "30f0de43c8daad3311e59c0dd8e5c3ce24941b1c38fab6ae4814028c343d9feb",
+      "workspaceId": "646de00e933b939f7e7fd8ee",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/albato/edit"
+    },
+    {
+      "name": "aeo.press",
+      "slug": "aeo-press",
+      "clientId": "9825d8e0fd9c92362623cf14fb8d67071a91fcf2c443525cff414ac68fa7dd95",
+      "workspaceId": "6706e2a1291cd8ce089f5e7a",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/aeo-press/edit"
+    },
+    {
+      "name": "Census",
+      "slug": "census",
+      "clientId": "b990da5b137141ae60e310b4e887444483788e18b35087363cc1b2e0373f36a0",
+      "workspaceId": "640cb08faa58d35ac449a429",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/census/edit"
+    },
+    {
+      "name": "Flowmonk",
+      "slug": "flowmonk",
+      "clientId": "f1a094a380c8f3a9fe2ed7a69cf55f14a443aadb3e361db404da5c1da0fd91a6",
+      "workspaceId": "633de3ee0cb370ad83fddee0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowmonk/edit"
+    },
+    {
+      "name": "AI CMS Helper Text",
+      "slug": "ai-cms-helper-text",
+      "clientId": "2b62756b4f47b9fbc7b7d50dec4522ec647d322ef9a05ef3d4daf28bb1ba5dab",
+      "workspaceId": "64d5e19191c948b22b5d8402",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/ai-cms-helper-text/edit"
+    },
+    {
+      "name": "Flowstar: Job Posting Careers Page",
+      "slug": "flowstar-job-posting-careers-page",
+      "clientId": "a453b5959e0e7a82142479c10a167d5f73cbfd60a95115300cd0bc9fe7df3ee3",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-job-posting-careers-page/edit"
+    },
+    {
+      "name": "Owwlish",
+      "slug": "owwlish",
+      "clientId": "4fb30a1d5901aec88e4f7fcc2e6561f3e2bdbd6567eeee58e4111035075b2b75",
+      "workspaceId": "632db7a8fa6c9f001b113e42",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/owwlish/edit"
+    },
+    {
+      "name": "Glow Effect & Button",
+      "slug": "glow-effect-button",
+      "clientId": "293f2302b49dd0dc1eef160c47a0f890a2ab7acc576b231431341982c75fe467",
+      "workspaceId": "6734bb1d105804525b37585d",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/glow-effect-button/edit"
+    },
+    {
+      "name": "Superpopups",
+      "slug": "superpopups",
+      "clientId": "b3c18343e33f5e231e53373b0c9c0ebe1188ee0bca21ebc80821d5311244c11f",
+      "workspaceId": "6332f2fa4bdcdf010931c4b4",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/superpopups/edit"
+    },
+    {
+      "name": "Claritee",
+      "slug": "claritee",
+      "clientId": "1341eefd77437ee107110ecd3e338c9e8da6418b315cf881f5b9bc0f62a09c8b",
+      "workspaceId": "67c74cba0e7e0b9ad9dc696f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/claritee/edit"
+    },
+    {
+      "name": "Form.taxi",
+      "slug": "form-taxi",
+      "clientId": "2b75587596651ab719ca7cf3ca70ae068280f90cde3bb7b33d0a538d39e23118",
+      "workspaceId": "67f1614eb02360dacfb2159a",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/form-taxi/edit"
+    },
+    {
+      "name": "Theme Switcher (archived)",
+      "slug": "theme-switcher",
+      "clientId": "2ce521edbfa2c74ea21bf7ab0cbcefef1bd4158191ce78bb163b42a5b356b7e8",
+      "workspaceId": "682e352764708502acca264b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/theme-switcher/edit"
+    },
+    {
+      "name": "Gapflow.io",
+      "slug": "gapflow-io",
+      "clientId": "9dc3501e041d1978a31e95a61036c33f1a18cee3e29d99553a1764600bd1eadb",
+      "workspaceId": "630faff35f7ce62610e5a68c",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/gapflow-io/edit"
+    },
+    {
+      "name": "SynqPro",
+      "slug": "synqpro",
+      "clientId": "726c3b7b4a1f4b5d26cddcd2f707f7ea7da0fffee018bd3a3c646e40c5b56b44",
+      "workspaceId": "629cf8369384112767dc693a",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/synqpro/edit"
+    },
+    {
+      "name": "Flowstar: Tabs",
+      "slug": "flowstar-tabs",
+      "clientId": "93dc6e6243b496255f658439ee47b8aa9ca962c23c076047eb26ee77ddfc0970",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-tabs/edit"
+    },
+    {
+      "name": "involve.me",
+      "slug": "involve-me",
+      "clientId": "d00be088d388ca9d0a33c7e04528ed881f3a4901a60a4c09a01d0fd0d78963a3",
+      "workspaceId": "66f57f5044e01a6cf325c5d1",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/involve-me/edit"
+    },
+    {
+      "name": "Flowstar: QR Codes Generator",
+      "slug": "flowstar-qr-codes-generator",
+      "clientId": "437271efe7dbbfa483d46de45bb82bfd22e98a8487ec4cd8f3a5678ab2541b6a",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-qr-codes-generator/edit"
+    },
+    {
+      "name": "Readable",
+      "slug": "readable",
+      "clientId": "1863524fc53d4632de2a7de7926c4a563d3dbd7087a69f0bb23faf41d25ac084",
+      "workspaceId": "6316c346ebbfd11cda168aab",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/readable/edit"
+    },
+    {
+      "name": "Personizely",
+      "slug": "personizely",
+      "clientId": "a3c7b198064e23c6bab832c2581498f1f9b465f8dea5bf84c333df4dfab59604",
+      "workspaceId": "682daed4d4b756d2231f6809",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/personizely/edit"
+    },
+    {
+      "name": "Chat Everywhere",
+      "slug": "chat-everywhere",
+      "clientId": "6086acffd790434275af2b4abd70287e6fb6d248f7cbc4a8ebff7ffea9683ee1",
+      "workspaceId": "6316c346ebbfd11cda168aab",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/chat-everywhere/edit"
+    },
+    {
+      "name": "Amazon Fulfillment (MCF)",
+      "slug": "amazon-fulfillment-mcf",
+      "clientId": "bb65c0c121ba8ba3f0712f112f57114721a2ccd5eb5c3b6397cd5d0b5992e191",
+      "workspaceId": "6315c1703cd9d957997896e1",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/amazon-fulfillment-mcf/edit"
+    },
+    {
+      "name": "Quiz Popup",
+      "slug": "quiz-popup",
+      "clientId": "cd517e4198dc86efc7388d7bc9704fd55e8498ca8d335cdab7c9ea9b846cfa53",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/quiz-popup/edit"
+    },
+    {
+      "name": "Ordinal",
+      "slug": "assembly",
+      "clientId": "57973550a3d1c3d5836d35effc672b2804a5b3444e6ddfa150ac257ab7a39ca3",
+      "workspaceId": "65eb4c859a6a04e324cf8d48",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/assembly/edit"
+    },
+    {
+      "name": "Ruut Chat",
+      "slug": "ruut-chat",
+      "clientId": "9089fdfe104ec151afa65f041e4d52712fbf568bf1fb6d55f2e9ef1e939381c7",
+      "workspaceId": "6864476950e502a0821b35b3",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/ruut-chat/edit"
+    },
+    {
+      "name": "Sato Video Player",
+      "slug": "sato-video-player",
+      "clientId": "e8ebbc6eb5050a9432cd0c0559beb8c0990fd600a5d9cd57e85952c68aa27c82",
+      "workspaceId": "6332f85f4bdcdf0109324919",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/sato-video-player/edit"
+    },
+    {
+      "name": "Boost.space",
+      "slug": "boost-space",
+      "clientId": "2f6724ec21eff7877f1e7b286ef9a18aae2a0b83566395d1557bcf7fa6df220e",
+      "workspaceId": "636128a9c66dfb693af216f6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/boost-space/edit"
+    },
+    {
+      "name": "Engyne",
+      "slug": "engyne",
+      "clientId": "bf63551760b9857f2ee2734da12cf64a2b6c8544dc9b1dc12823a550ca07648d",
+      "workspaceId": "62572bb53e5c610181a80330",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/engyne/edit"
+    },
+    {
+      "name": "301Hero",
+      "slug": "301hero",
+      "clientId": "a40501026ff342ac235b271b88c7184caa4a6973b0151cdbcf7207bf9f45cf39",
+      "workspaceId": "6279358e612e5336249d03a4",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/301hero/edit"
+    },
+    {
+      "name": "NoQuestionYet",
+      "slug": "noquestionyet",
+      "clientId": "561cecd1a640b80568274e27c3b5fb837aede922dde23564784422749f192d6e",
+      "workspaceId": "633b38810148ed01998d4ea6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/noquestionyet/edit"
+    },
+    {
+      "name": "Promptless",
+      "slug": "promptless",
+      "clientId": "0dab540deb5c22f1c80854110efb96276aa24fc852d614e880a2504333d80f43",
+      "workspaceId": "6791655cf65a3f3fc8029479",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/promptless/edit"
+    },
+    {
+      "name": "Neo Mail",
+      "slug": "neo-mail",
+      "clientId": "463a279434ddd02bb52920789e388cca1121aa626dbd031a7df2cdcb12832b49",
+      "workspaceId": "637f48edfbc9b4ce91c37e03",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/neo-mail/edit"
+    },
+    {
+      "name": "Social Intents Live Chat",
+      "slug": "social-intents-live-chat",
+      "clientId": "da3e21756e0f4dd9f9d8f50225247cf128ab5a533d623ccefdcd0f836a2cd1c5",
+      "workspaceId": "63b4a47cfcbe52ae843252ee",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/social-intents-live-chat/edit"
+    },
+    {
+      "name": "Coefficient",
+      "slug": "coefficient",
+      "clientId": "d4903ae267b7b55720fdd0e04a1df2da9da5d9c47e401531e860872f0d74e4e3",
+      "workspaceId": "662646408330ba82bf29c769",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/coefficient/edit"
+    },
+    {
+      "name": "Smartarget Stories",
+      "slug": "smartarget-stories",
+      "clientId": "5f32cc289c65359b1006c30571fb40a4a26906e66a4baf65f2598f275baadffa",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/smartarget-stories/edit"
+    },
+    {
+      "name": "Ample Cloud",
+      "slug": "ample-cloud",
+      "clientId": "3dd578bcdbad202971621d016aaa8f670dc4b46203a70b8a439009e36b59b076",
+      "workspaceId": "625898500cb737014b86d168",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/ample-cloud/edit"
+    },
+    {
+      "name": "Bookxyz",
+      "slug": "bookxyz",
+      "clientId": "be723b1041459effb9fc834575af21bd1f3bb730743c7abab974855f798d1c50",
+      "workspaceId": "667a92944081e49f9d6e0c6e",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/bookxyz/edit"
+    },
+    {
+      "name": "Staging - WP2WF",
+      "slug": "staging---wp2wf",
+      "clientId": "cc3b82e1c628e429fea14a85b1918b45c4bcdb3a38a602055468a354acd20572",
+      "workspaceId": "6618638b81a66aac6fe84812",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/staging---wp2wf/edit"
+    },
+    {
+      "name": "Order Desk",
+      "slug": "order-desk",
+      "clientId": "9ffda26c53a70773e5f7c85fb94f7b3349319c48aa2000197702e03dda7559ab",
+      "workspaceId": "6371366872d4824f4922f1f6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/order-desk/edit"
+    },
+    {
+      "name": "Flowstar: Sales Notification",
+      "slug": "flowstar-sales-notification",
+      "clientId": "08b45930527901a3583fb612f4020bb9c81b86582cf85165579a1692109b9a01",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-sales-notification/edit"
+    },
+    {
+      "name": "Flowstar: Sticky Add to Cart",
+      "slug": "sticky-add-to-cart-by-flowstar",
+      "clientId": "7ca44fcbbdb304e87a5a283efd506577a06950bf49a0ef894fb0ccc2e46ad182",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/sticky-add-to-cart-by-flowstar/edit"
+    },
+    {
+      "name": "Taskade",
+      "slug": "taskade",
+      "clientId": "4a0edfa88b0e623d169d7e6526292317d5416985d4ae4043e1891c362fa56f3f",
+      "workspaceId": "655878829e9653f7d6f6fed2",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/taskade/edit"
+    },
+    {
+      "name": "[LEGACY] Phrase",
+      "slug": "phrase-plugin",
+      "clientId": "efa5dcfe4498b22dd5fd0b7d3635f264ed24a4826b3315fb4755c9083ec2d48a",
+      "workspaceId": "655ccb1dffd704afa7f02dea",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/phrase-plugin/edit"
+    },
+    {
+      "name": "ConnectMate",
+      "slug": "connectmate",
+      "clientId": "5b9544c3152d25c6bb8809a762c4578295ae345d889c0833cd723aea0d00ec8d",
+      "workspaceId": "6482e3820b269527afc4b07d",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/connectmate/edit"
+    },
+    {
+      "name": "Geodde",
+      "slug": "geodde",
+      "clientId": "f76f011b97d43064012a2421b7b99bb20d2fe63026259e6f306c743c993e71e1",
+      "workspaceId": "67515788a60470f210643462",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/geodde/edit"
+    },
+    {
+      "name": "FlowScribe",
+      "slug": "flowscribe",
+      "clientId": "4b6c329111ee5acc08089952dc3158ad1ddac45a0017822ea4fbdec5dcbefd7e",
+      "workspaceId": "63a1d4ac3619da3d61796006",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowscribe/edit"
+    },
+    {
+      "name": "Dapta AI Articles",
+      "slug": "dapta-ai-articles",
+      "clientId": "a4d8e5a63812fd27de69c50fa126017437004da81a8d98c4b7af542a8dfb6ea4",
+      "workspaceId": "6543a7a3b7cfd81107404087",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/dapta-ai-articles/edit"
+    },
+    {
+      "name": "Pica",
+      "slug": "pica",
+      "clientId": "d7a99198b3d24dfe54f663fff1b5b383f1a42aba043bf573a50bd4dbea435516",
+      "workspaceId": "6826cb49ea75260bc029cca1",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/pica/edit"
+    },
+    {
+      "name": "Web2Chat",
+      "slug": "web2chat",
+      "clientId": "f07a6bbcfa326cd2ca74953f02975160774475a421a866fffabdc4e6a6ec8eb9",
+      "workspaceId": "66fc24feaaba76d249327547",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/web2chat/edit"
+    },
+    {
+      "name": "Ansera Search",
+      "slug": "ansera-search",
+      "clientId": "a3884f4bbc1dfa5ecfd6c189180e3d722368e309523f2f286ce8e3fa074620ea",
+      "workspaceId": "68d5509d8cbe8b50de145b64",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/ansera-search/edit"
+    },
+    {
+      "name": "Zuko Form Analytics",
+      "slug": "zuko-form-analytics",
+      "clientId": "140fcdb426d1e2a8dbc67f24ed42991774214aeb32e3e900f1791797a82cd41b",
+      "workspaceId": "62a25ac45ce2ea0165cf9071",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/zuko-form-analytics/edit"
+    },
+    {
+      "name": "Floating Video",
+      "slug": "floating-video",
+      "clientId": "071d3eaabed2cd335eb4a1dafa128549f0454a584b67456b9f67cc07ed973863",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/floating-video/edit"
+    },
+    {
+      "name": "Zoho Flow [CA]",
+      "slug": "zoho-flow-ca",
+      "clientId": "92b57cefa4a33ebdb9336299af240d6cf3528fd002e1d109906bb7dda7b874d9",
+      "workspaceId": "636dd222cc4f7c485d6f026b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/zoho-flow-ca/edit"
+    },
+    {
+      "name": "Smart Geo Targeting Tool",
+      "slug": "smart-geo-targeting-tool",
+      "clientId": "49a181706eb3233782b815d5c660b654d8e3061b427ccba7ec4785e50d3d2c82",
+      "workspaceId": "63b4d6c7220bd6296e1ebdda",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/smart-geo-targeting-tool/edit"
+    },
+    {
+      "name": "Poper Popups Widgets",
+      "slug": "poper",
+      "clientId": "ffbe1df0274e70d5844386a8189ccb72a6ce77cc801a7d2af590808543d9ae80",
+      "workspaceId": "677cf525709a8c5f7cdfbc27",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/poper/edit"
+    },
+    {
+      "name": "Parabola: Workflow Automation",
+      "slug": "parabola",
+      "clientId": "00fc7c58071156cd8a7cc1473f2d79f35564ed500aabe83d9e6a2cb1b1c2d90a",
+      "workspaceId": "62bcc6a4301ce82aa1e5cf30",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/parabola/edit"
+    },
+    {
+      "name": "Arc Text",
+      "slug": "arc-text",
+      "clientId": "a11ec57c6cfae3c77be1e198284b896835db8b8f68cb6dd5c029b94f421ceba2",
+      "workspaceId": "633b10988d286201733d1bfb",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/arc-text/edit"
+    },
+    {
+      "name": "Flowstar: Click to Call",
+      "slug": "flowstar-click-to-call",
+      "clientId": "446a5d6e074f42e0ca1bf3caecdbf52cc9b6577557821e20645bf11375abba0b",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-click-to-call/edit"
+    },
+    {
+      "name": "Vellum",
+      "slug": "vellum",
+      "clientId": "c327ce2eb3d0e48c1e9d1ab492fa41e002cc7d2908df45f25355b522ea8db91c",
+      "workspaceId": "63114d85eaab907c83698883",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/vellum/edit"
+    },
+    {
+      "name": "Flowstar: Size Guides & Size Chart",
+      "slug": "flowstar-size-guides-size-chart",
+      "clientId": "65bdc47aee02628bb52a27678a2885ee7c4dbb34926d961a1705d2ab13fc7a32",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-size-guides-size-chart/edit"
+    },
+    {
+      "name": "FlowRunner",
+      "slug": "flowrunner",
+      "clientId": "f67c829afefe6dab0ea9bdf92d215c747ecd30fc95c69fd07ec60a8165def197",
+      "workspaceId": "6258a8660cb737014b8c8020",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowrunner/edit"
+    },
+    {
+      "name": "SVGify",
+      "slug": "svgify",
+      "clientId": "f13680fbb6a61dc33295060bd259dc81c31593f4150769e3a47a89442d68256a",
+      "workspaceId": "64be5da47b1cd77bf866e8ea",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/svgify/edit"
+    },
+    {
+      "name": "Kudobuzz Reviews",
+      "slug": "kudobuzz-reviews",
+      "clientId": "1182fef3112ab3f8d9177a6e7a5f6409232da83a1ef4cdb2e6749ed49807c253",
+      "workspaceId": "685d788e688c5fb2e7fba8f8",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/kudobuzz-reviews/edit"
+    },
+    {
+      "name": "3D Seasonal Effects",
+      "slug": "3d-seasonal-effects",
+      "clientId": "839dd3611464475c38413693cd5b4b9943b9f58825505958719a0963b1d4e5be",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/3d-seasonal-effects/edit"
+    },
+    {
+      "name": "Smartling",
+      "slug": "smartling",
+      "clientId": "76782786f4d9fb694d56e1dc5ec6528930f1d4e1d3798b9c1c93f21a4b527a96",
+      "workspaceId": "6573a534a7778a094669573f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/smartling/edit"
+    },
+    {
+      "name": "Postwhale",
+      "slug": "postwhale",
+      "clientId": "35f403230fccb8372f4ae41e8fe145e455f5fa5978153e9adc3a4da92a9db31a",
+      "workspaceId": "6784e59cada454ed0df12ba7",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/postwhale/edit"
+    },
+    {
+      "name": "Flowstar: Polls | Post Purchase Survey+NPS",
+      "slug": "flowstar-polls-post-purchase-survey-nps",
+      "clientId": "8a4b4996d0d30a6545d75fd727b81d8aaaa7c2f00b4daf559f00d17355847998",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-polls-post-purchase-survey-nps/edit"
+    },
+    {
+      "name": "Postblaster",
+      "slug": "postblaster",
+      "clientId": "12e6df7634a6f3a4fd616e0031ed845fd539109910017a29ef2377c0243952e1",
+      "workspaceId": "62d5c6610e0bffc0466878fb",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/postblaster/edit"
+    },
+    {
+      "name": "Smart Shadows",
+      "slug": "smart-shadows",
+      "clientId": "3bc6d831f2d0ebdbe89c254ee8a9c2cabc8a0ecdf9bcd83a388c68dc8a4e1ff5",
+      "workspaceId": "64be5da47b1cd77bf866e8ea",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/smart-shadows/edit"
+    },
+    {
+      "name": "Flowstar: Open Hours Widget",
+      "slug": "flowstar-open-hours-widget",
+      "clientId": "74a0cd8435182f3dd02aa5d7ff86bff87a700ef78c553d91e9d178f1390b8842",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-open-hours-widget/edit"
+    },
+    {
+      "name": "Thunderbit",
+      "slug": "thunderbit",
+      "clientId": "d414229fcc0ae3b4495b6c55bcaa7e7c1a5e87ea80b8f7610c9de45d02cec552",
+      "workspaceId": "66a760bf7b7ad214e8746039",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/thunderbit/edit"
+    },
+    {
+      "name": "Toffu AI",
+      "slug": "toffu-ai",
+      "clientId": "29018584d53d187b471664a35e38920e5d781fc76c9bc497bacb13e9ec0df56a",
+      "workspaceId": "66a233bea20df21376a9d516",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/toffu-ai/edit"
+    },
+    {
+      "name": "Futodi Chatbot",
+      "slug": "futodi-chatbot",
+      "clientId": "f52040b876c9de5ed4c1c6145426542a28cddbb745f9b66ce5570ded3ef5dd76",
+      "workspaceId": "666699516458240a066227e5",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/futodi-chatbot/edit"
+    },
+    {
+      "name": "Estimated Delivery",
+      "slug": "estimated-delivery",
+      "clientId": "ff87c8ea12dfcf85dfa2ce5c832fa9655645757f84104a4412630d31afd20e84",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/estimated-delivery/edit"
+    },
+    {
+      "name": "DataGrail Consent",
+      "slug": "datagrail-consent",
+      "clientId": "242cbf01b1165810250340e0077bc4e970dae92f16c16161b491a676dbc3dbe8",
+      "workspaceId": "66e33fa05b697e03184d30e0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/datagrail-consent/edit"
+    },
+    {
+      "name": "[Sending]flow",
+      "slug": "sending-flow",
+      "clientId": "53cbfa11ff65055771eebb9c75f81a03cd8b0a41136f92e548d11e396164d1c8",
+      "workspaceId": "63075c534047dec6ce84d9cc",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/sending-flow/edit"
+    },
+    {
+      "name": "Enablism",
+      "slug": "enablism",
+      "clientId": "ffbcd43bd778746ce2cae0aa58852182c41c5a54bc46fcb3684daa65f5ff9669",
+      "workspaceId": "68cce9ea214b0d9c6e712033",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/enablism/edit"
+    },
+    {
+      "name": "FeedbackFlow",
+      "slug": "feedbackflow",
+      "clientId": "d664075564771cc86a464fc9e04843b14112a9d6b1e01766ca7f7fdfb6d69b40",
+      "workspaceId": "67fab0a8f233a60a035fd41e",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/feedbackflow/edit"
+    },
+    {
+      "name": "PugSync",
+      "slug": "pugsync",
+      "clientId": "e0511b7308fb3018ee964640a29277c83d30470a9e72fe4bc22c6088ae725f07",
+      "workspaceId": "631791b9492be326acc9da71",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/pugsync/edit"
+    },
+    {
+      "name": "Emoji Request Feedback and Reviews",
+      "slug": "emoji-request-feedback-and-reviews",
+      "clientId": "2c24ba2cf0b2b82021c749c237449e8f3b59b4c70799c94b29a311c5df024ac1",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/emoji-request-feedback-and-reviews/edit"
+    },
+    {
+      "name": "Whalesync Dev",
+      "slug": "whalesync-dev",
+      "clientId": "265d849a944ac81d2093955d97b60ce28548edaa1bebec668cf7453efdfd69ff",
+      "workspaceId": "63586293b36de336005a39ae",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/whalesync-dev/edit"
+    },
+    {
+      "name": "Composer",
+      "slug": "composer",
+      "clientId": "70b5075a19f079ae0126db7a40d42a9c2137216fd7aa022974b139c710707713",
+      "workspaceId": "67f5b0fd9e23d5a23529a497",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/composer/edit"
+    },
+    {
+      "name": "Storepoint Locator",
+      "slug": "storepoint-locator",
+      "clientId": "4075b400886ace29c6eb9ff91e53ba8576a771095f6392f451e8d6be8fd48ed2",
+      "workspaceId": "636f710b52b8bc783d829784",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/storepoint-locator/edit"
+    },
+    {
+      "name": "HIPAAtizer - Forms",
+      "slug": "hipaatizer---forms",
+      "clientId": "072d6384c22c0acf32364907cb80c8dafcc15015c0da5cd9f91c96c1db2e562e",
+      "workspaceId": "678948d4e3f269f5ff81cd02",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/hipaatizer---forms/edit"
+    },
+    {
+      "name": "Urgency Deal",
+      "slug": "urgency-deal",
+      "clientId": "52b7b1f2ed7328d7529e03db30386743380477470ebc0410af5aea63e8034e9e",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/urgency-deal/edit"
+    },
+    {
+      "name": "Table of contents",
+      "slug": "table-of-contents",
+      "clientId": "a6aa3397709edcc873e0c576407a435c4ec6b243ac403a9d2d6233f80e059ea7",
+      "workspaceId": "6553201f5b84962b09054032",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/table-of-contents/edit"
+    },
+    {
+      "name": "Accessibility by AxOrigin",
+      "slug": "accessibility-by-axorigin",
+      "clientId": "7d09f10d1f86075410f583788043b308d94c0ebcfabe43821b379e7e5b42dfb2",
+      "workspaceId": "68d7eb416356203f9631fabd",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/accessibility-by-axorigin/edit"
+    },
+    {
+      "name": "Upbuilder",
+      "slug": "upbuilder",
+      "clientId": "e24f53654280d1a596e58f933541ef0205b6533c4a73f1b8173ccf5d23089a1d",
+      "workspaceId": "6969c5dbca6ce27a12f3e318",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/upbuilder/edit"
+    },
+    {
+      "name": "Comments Export PRO",
+      "slug": "comments-export-pro",
+      "clientId": "56f93364d55d2f39570252893c090763896ad94c2c0cb2d1f3b73fa4d8230ef4",
+      "workspaceId": "67e817d0a7693f481964028f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/comments-export-pro/edit"
+    },
+    {
+      "name": "Twise",
+      "slug": "twise",
+      "clientId": "78de0f4e377c647c28a5212d3947c20c65322f28e5dcaa895f6d02c1a4e2f3ca",
+      "workspaceId": "65fad223a15e01b3fd8f9ba4",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/twise/edit"
+    },
+    {
+      "name": "Flownalytics",
+      "slug": "flownalytics",
+      "clientId": "dbf78ce8aec2176d6e1d2b1c1b74f7b13bc746dec4a6ce957a5a61de4e6b934c",
+      "workspaceId": "6628f0992db66f8ea34931ab",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flownalytics/edit"
+    },
+    {
+      "name": "Bulk CMS Editor",
+      "slug": "bulk-cms-editor",
+      "clientId": "07ad8ea3c030939cd6097b6ea6c01c2af960e2fa4e1c01bfa3f3a823887b6bc9",
+      "workspaceId": "64be5da47b1cd77bf866e8ea",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/bulk-cms-editor/edit"
+    },
+    {
+      "name": "404 Guardian",
+      "slug": "404-guardian",
+      "clientId": "e04c336279fe92a18a20ed2a5aaff64de1b2763a9c3e62334049ed0954fbe566",
+      "workspaceId": "68dab37e4cc419bcd743c486",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/404-guardian/edit"
+    },
+    {
+      "name": "ProBackup",
+      "slug": "probackup",
+      "clientId": "5c3c0c23a89901549cf2ab91ffc59ce3a852fb2407e1a39ef1c99d40bbe33ebf",
+      "workspaceId": "6464e667433ac79fb6a6a6b5",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/probackup/edit"
+    },
+    {
+      "name": "Varly",
+      "slug": "varly",
+      "clientId": "b070bf3aad3d3a2b8b68f2bf0de06c045824400a0556a629b8922d661e2acca4",
+      "workspaceId": "661a6c37341b39d0092fef48",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/varly/edit"
+    },
+    {
+      "name": "Hipa.ai",
+      "slug": "hipa-ai",
+      "clientId": "45f6fe1409271d20b41e7db8d6d867e9c5b53fd2f2e3967c678e40f70a034bf4",
+      "workspaceId": "674eac98ab43d8216f6a2de0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/hipa-ai/edit"
+    },
+    {
+      "name": "Flatly",
+      "slug": "flatly",
+      "clientId": "ce3486be67589a9959a79beb42aac9f1f6c88f6d518a3b8e236e26d28e01675b",
+      "workspaceId": "63896bac3b3a71407e9d9726",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flatly/edit"
+    },
+    {
+      "name": "AutoBlogg",
+      "slug": "autoblogg",
+      "clientId": "25e8e8cb73884fd02b6c51053678e57efdbc0b932c4073d7e8c41fffafbde93b",
+      "workspaceId": "63321dec3e84c50140e02b48",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/autoblogg/edit"
+    },
+    {
+      "name": "Legacy - Google Designer Extension Alpha",
+      "slug": "google-designer-extension-alpha",
+      "clientId": "e2619cea9cb8dff4754cef85d13f4f92485e0d02dfe021563bd6438c128150f3",
+      "workspaceId": "6618638b81a66aac6fe84812",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/google-designer-extension-alpha/edit"
+    },
+    {
+      "name": "old optibase",
+      "slug": "optibase---a-b-testing-for-webflow",
+      "clientId": "d29ade9595e9c120c91d1c1750d852953acf229eb214aeec67c520d6aa52d8b8",
+      "workspaceId": "633b3aa70148ed01998dd742",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/optibase---a-b-testing-for-webflow/edit"
+    },
+    {
+      "name": "Knock AI",
+      "slug": "knock-ai",
+      "clientId": "3b7b61ce9b04ca6d554d0db299e7d91bf2805f64fb72b6dc8e5992c0d9a07e54",
+      "workspaceId": "66a3904db7ca7c341ff913c2",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/knock-ai/edit"
+    },
+    {
+      "name": "Adblock Detector",
+      "slug": "adblock-detector",
+      "clientId": "abe2bc64e3cc04adf962de071d667962374091c8f20e89976088addeb56c00d9",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/adblock-detector/edit"
+    },
+    {
+      "name": "Latenode",
+      "slug": "latenode",
+      "clientId": "cc7f5313f8ed8f7e8377645f4058d720e3bf21fd97af61d75e7f16d1431cce01",
+      "workspaceId": "64252231432e0549adab671a",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/latenode/edit"
+    },
+    {
+      "name": "Finsweet Slider",
+      "slug": "finsweet-slider",
+      "clientId": "e5098db3f51b5501da722ccd486631313026360742e90dcb5741c86e80c3f13e",
+      "workspaceId": "638f7017f8f3b49d78e071a0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/finsweet-slider/edit"
+    },
+    {
+      "name": "Flowstar: Restaurant Menu",
+      "slug": "flowstar-restaurant-menu",
+      "clientId": "5b64b1fc1b5a3b1429ee7cdc8a3138ad181a8b185a5e9bab3be95d0cb7d05653",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowstar-restaurant-menu/edit"
+    },
+    {
+      "name": "Corner Ribbon",
+      "slug": "corner-ribbon",
+      "clientId": "f3e8d7acdb1ca7ac3f2a08d78e6dea2736d317b617bb88ec38b2bb5013be2572",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/corner-ribbon/edit"
+    },
+    {
+      "name": "Custom Chatbot (RAG) - EdenAI",
+      "slug": "custom-chatbot-rag---edenai",
+      "clientId": "ffefdc6a9ccbc6049048ba991168edbe0d73d372c9bafb4fdbcc923a7d88f5b9",
+      "workspaceId": "632db79cfa6c9f001b113a5d",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/custom-chatbot-rag---edenai/edit"
+    },
+    {
+      "name": "Signal Beam",
+      "slug": "signal-beam",
+      "clientId": "3967dff4e8137a8c3bbb3bf3e445e035c90a744d9bfd1312f03735094c85a483",
+      "workspaceId": "632dbe72fa6c9f001b1305ce",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/signal-beam/edit"
+    },
+    {
+      "name": "Autoblogger",
+      "slug": "autoblogger",
+      "clientId": "bbb36f398d9d418d575fbf999b57c84964a9aba343a7f7a2bdef8379160cbad8",
+      "workspaceId": "636f56638524c217b1f046a3",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/autoblogger/edit"
+    },
+    {
+      "name": "Zach Test App",
+      "slug": "zach-test-app",
+      "clientId": "9e707a2d1f1c3e4f5ea81f6aa7b99d7eaaf0f03a54f640da6dc63672ca166bc3",
+      "workspaceId": "661ea2b3363a78f3d73b0661",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/zach-test-app/edit"
+    },
+    {
+      "name": "[ARCHIVED] OneSync",
+      "slug": "onesync",
+      "clientId": "bf25dd81aaeb3a926deb42e1a984f19d0e9483120b440c90724d2722cea7a3d8",
+      "workspaceId": "633b3aa70148ed01998dd742",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/onesync/edit"
+    },
+    {
+      "name": "Cometly",
+      "slug": "cometly",
+      "clientId": "9d177272fefa196017d2c7f0e145587e31da98a31493da34e2b3217982e39bd9",
+      "workspaceId": "6329aa236ae66f7f4291300c",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/cometly/edit"
+    },
+    {
+      "name": "CozyCal",
+      "slug": "cozycal",
+      "clientId": "a9a0b276963512753a431f8d8ae127adcffab565680636dd38824de3b8366562",
+      "workspaceId": "68eeda450cc537ccdfbc402b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/cozycal/edit"
+    },
+    {
+      "name": "StarMark",
+      "slug": "starmark",
+      "clientId": "0f0e36dc8486d029a5018de73cee5fbbbebc0dd33f1427140c3f999906c0afdf",
+      "workspaceId": "63322a323e84c50140e17550",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/starmark/edit"
+    },
+    {
+      "name": "Workload",
+      "slug": "workload",
+      "clientId": "fa80b588def8d2b86f5636005ca492e6739b1b0afd515fef811f0771fe2d02ed",
+      "workspaceId": "6258aa040cb737014b8d1061",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/workload/edit"
+    },
+    {
+      "name": "Changebot",
+      "slug": "changebot",
+      "clientId": "ff126aee9bf5dab7718acdbf787e5a69808d7f1ba9e2d6c37f3fc41b08303891",
+      "workspaceId": "667b151d9e520e8bc0b4f9d3",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/changebot/edit"
+    },
+    {
+      "name": "Upsells and Cross-sells",
+      "slug": "upsells-and-cross-sells",
+      "clientId": "70f0423464112c4236dcd6779b0ee0a785f2cb07ded45cd41000000843d22ecb",
+      "workspaceId": "635a92a53541625500dab04e",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/upsells-and-cross-sells/edit"
+    },
+    {
+      "name": "Social Proof Sales",
+      "slug": "social-proof-sales",
+      "clientId": "74c98c4d182b24afad51c7afbcdd5a52307099397b8c714dd824b3162c38ede6",
+      "workspaceId": "642426c60c544e4a872365b6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/social-proof-sales/edit"
+    },
+    {
+      "name": "hybrid-to-de-zachp",
+      "slug": "hybrid-to-de-zachp",
+      "clientId": "c02776e5bbd18a87b72e00175aab26547d5e8bbccdeedd42e237b11a8f6d829e",
+      "workspaceId": "661ea2b3363a78f3d73b0661",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/hybrid-to-de-zachp/edit"
+    },
+    {
+      "name": "Staging - Hubspot App",
+      "slug": "staging---hubspot-app",
+      "clientId": "833af5ac957038e09981d2c8be8bacf4ab5c5311bb4b52e5bb3f687cd9da6f9d",
+      "workspaceId": "646d501cb7f050a4493c7b6b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/staging---hubspot-app/edit"
+    },
+    {
+      "name": "Announcify Pro",
+      "slug": "announcify-pro",
+      "clientId": "238051330499095758ef298ddc94ad37ba1d65f74356afee627412360af72ee7",
+      "workspaceId": "69223fe436286c4236d25423",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/announcify-pro/edit"
+    },
+    {
+      "name": "Weavely AI Forms",
+      "slug": "weavely-ai-forms",
+      "clientId": "c3988f73e99f960ac76ec861550f53743dd497f9c7ea4afdc03776356b7e7d75",
+      "workspaceId": "62f64aec071b677a7ab696b0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/weavely-ai-forms/edit"
+    },
+    {
+      "name": "Text With Chatbots",
+      "slug": "text-with-chatbots",
+      "clientId": "ca830c9ba16b0bd05e62b587d5ba91233a0489fbd2da35fbdcd6ce211994c812",
+      "workspaceId": "67a961efe0f24cc8a404d93f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/text-with-chatbots/edit"
+    },
+    {
+      "name": "Flyo",
+      "slug": "flyo",
+      "clientId": "7700c7ca16aa05010a39235e4a3f6132b6de10910bdbc48d14ce942e5bbe087e",
+      "workspaceId": "63b4edc3b30ae2c82beedcc8",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flyo/edit"
+    },
+    {
+      "name": "Quotient AI",
+      "slug": "quotient-ai",
+      "clientId": "337bcce0b8477b027e462cf589cf917a6a4af4857374e6b69158b50299ec05a6",
+      "workspaceId": "68b0bd9b1b97d76faef63751",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/quotient-ai/edit"
+    },
+    {
+      "name": "Bloggerfy",
+      "slug": "bloggerfy",
+      "clientId": "1a3f2fc87bf73ac54891550a1e9f07930c76944db2ad5bb51daecd86dddca9a6",
+      "workspaceId": "65f4a5b6ba094aade8f70dcc",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/bloggerfy/edit"
+    },
+    {
+      "name": "[ARCHIVED] Ultimo Bots",
+      "slug": "ultimo-bots",
+      "clientId": "bf25dd81aaeb3a926deb42e1a984f19d0e9483120b440c90724d2722cea7a3d8",
+      "workspaceId": "682f6cdf81574b7a6f13b493",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/ultimo-bots/edit"
+    },
+    {
+      "name": "Salespeak",
+      "slug": "salespeak",
+      "clientId": "798ba74dc7980dec183503403b9805f2c32dab5328fa7d7c26926f0b9e51a212",
+      "workspaceId": "647e0d314306290f9c1194cf",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/salespeak/edit"
+    },
+    {
+      "name": "Webwhiz",
+      "slug": "webwhiz",
+      "clientId": "0654bb6fdbac7f4897865f785b3645593da8fe0a510ba527bde5485f66b16423",
+      "workspaceId": "687e67e2544dd26e03ef9c61",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/webwhiz/edit"
+    },
+    {
+      "name": "Newtn",
+      "slug": "newtn",
+      "clientId": "2712acf500d6f9c8e1c6c34b5f4327219467a426cad5d8447a1c4c058318857b",
+      "workspaceId": "67124696b81a83a1bd7f112c",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/newtn/edit"
+    },
+    {
+      "name": "Staging - Google site tools for Webflow",
+      "slug": "google-site-tools-for-webflow---staging",
+      "clientId": "8814d8c18f13e1b78d41ef1c84bbb96de5263521f33113b5aeb8956e930c9fac",
+      "workspaceId": "6618638b81a66aac6fe84812",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/google-site-tools-for-webflow---staging/edit"
+    },
+    {
+      "name": "SiteOptim.Pro",
+      "slug": "siteoptim-pro",
+      "clientId": "2af73d775c611de1a4f6509cbcd1e00a5bc6a450cda008c661dca707e4000235",
+      "workspaceId": "6332f80c4bdcdf01093241a1",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/siteoptim-pro/edit"
+    },
+    {
+      "name": "Sygnal Name Helper",
+      "slug": "sygnal-name-helper",
+      "clientId": "5af4363e9285fd4dbe37ec2ab8c3ebf1f7693a7768f5c5f20a64950e578dbe11",
+      "workspaceId": "63191ad6d2ddf07d639e64bf",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/sygnal-name-helper/edit"
+    },
+    {
+      "name": "ARCHIVED Accessibility Enable",
+      "slug": "accessibility-enable",
+      "clientId": "bf25dd81aaeb3a926deb42e1a984f19d0e9483120b440c90724d2722cea7a3d8",
+      "workspaceId": "678f3166c03f31ca74e28ec9",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/accessibility-enable/edit"
+    },
+    {
+      "name": "Signal Beam [Drafted]",
+      "slug": "singal-beam",
+      "clientId": "bf25dd81aaeb3a926deb42e1a984f19d0e9483120b440c90724d2722cea7a3d8",
+      "workspaceId": "632dbe72fa6c9f001b1305ce",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/singal-beam/edit"
+    },
+    {
+      "name": "Maintouch",
+      "slug": "maintouch",
+      "clientId": "9c25e863350ffa91c60ec98da2287f88d2fed75514c69fa3cc4ababf90a82cd9",
+      "workspaceId": "67d899fd3e6564ebd52da4af",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/maintouch/edit"
+    },
+    {
+      "name": "blink Flow",
+      "slug": "blink-flow",
+      "clientId": "f2b4aa65f29de376ba92ea9fb06fdba06f04b9558cb82084c291d1fe51a503ec",
+      "workspaceId": "63979077a600cc6badb6842c",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/blink-flow/edit"
+    },
+    {
+      "name": "Nocodelytics dev",
+      "slug": "nocodelytics-dev",
+      "clientId": "a0cb377169a7af00e033340d7868f054f5cb54affd00c206a2b4cbc2167e7ef7",
+      "workspaceId": "632dcba2304c726c9f27347f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/nocodelytics-dev/edit"
+    },
+    {
+      "name": "Robynn AI",
+      "slug": "robynn-ai",
+      "clientId": "e47077b4105950c866ce681d857f77a9feaab46425500291cec29ab997c5dbf8",
+      "workspaceId": "65115545328e9a1e6ac33fad",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/robynn-ai/edit"
+    },
+    {
+      "name": "Components & Variables Cleaner",
+      "slug": "components-variables-cleaner",
+      "clientId": "182db3f203e1f794d1541c4c82f4cea8d029bfbfc6eba25ebab7bdc54c2765f6",
+      "workspaceId": "64be5da47b1cd77bf866e8ea",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/components-variables-cleaner/edit"
+    },
+    {
+      "name": "Merchflows",
+      "slug": "merchflows",
+      "clientId": "e655bcaabfb82f015bc3ba77e7e2ba42bb4b8ef49e21a75861fabf549e752ac7",
+      "workspaceId": "687e67e2544dd26e03ef9c61",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/merchflows/edit"
+    },
+    {
+      "name": "Base.",
+      "slug": "base",
+      "clientId": "1d0c00de3e7a322ad30d072adbb5cc6d252efe557f923b19046c5f11cf9fee52",
+      "workspaceId": "6821a287dab458d195b363e8",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/base/edit"
+    },
+    {
+      "name": "Geo Targetly",
+      "slug": "geo-targetly",
+      "clientId": "d4e55524a3e798194908586c341f6fcf2719284ab54f9840ccfd75fdebf8e6db",
+      "workspaceId": "63b4d6c7220bd6296e1ebdda",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/geo-targetly/edit"
+    },
+    {
+      "name": "Consumable AI",
+      "slug": "consumable-ai",
+      "clientId": "20b11b2e4e01b12db5c9e8b106727f0428f62ad351daf40e09012b73e35e19dc",
+      "workspaceId": "67f01ef25b9da4dfc23dab8f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/consumable-ai/edit"
+    },
+    {
+      "name": "Blobr AI",
+      "slug": "blobr-ai",
+      "clientId": "6baebb6e491fd53361a2c4d717ff18a8613083f3dfbc2b034368b4aeeb21bb40",
+      "workspaceId": "67ab262f6992c59db6e8d547",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/blobr-ai/edit"
+    },
+    {
+      "name": "Fullsend Technology",
+      "slug": "fullsend-technology",
+      "clientId": "3cd23b01e0c43e3ad7e3d4d00083533f1a34e7bb425d8419b3683975eb9e9644",
+      "workspaceId": "67d34e1f25aae93db0779d53",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/fullsend-technology/edit"
+    },
+    {
+      "name": "Maicoro",
+      "slug": "maicoro",
+      "clientId": "eb33f88db4bd8f9a24f64add6eaaa6cf27fab73ebac8b882ed44b3498fd4dfae",
+      "workspaceId": "6833d5a324e01d2ff9195e66",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/maicoro/edit"
+    },
+    {
+      "name": "flareAI",
+      "slug": "flareai",
+      "clientId": "c224dd2cf8c7ec50df92f818095d0de767ed38dd3142aa0f339564e67c6597ce",
+      "workspaceId": "64963ed839adcad38fa46286",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flareai/edit"
+    },
+    {
+      "name": "VoidPush",
+      "slug": "voidpush",
+      "clientId": "7e3365b499ed08bed7552cd39ac3d8fbb45dfe7e22b60a62bac6b5be7c238576",
+      "workspaceId": "683d7eda9d8bdc0b5d32c4fc",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/voidpush/edit"
+    },
+    {
+      "name": "Dewey Labs",
+      "slug": "dewey-labs",
+      "clientId": "5ae93fcd9902eeab46247dc499c7096d32e0a4f1ea53a78482e21a365c4bb4b7",
+      "workspaceId": "675b1b66da6009a0fab980ac",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/dewey-labs/edit"
+    },
+    {
+      "name": "Alt Text Generator (archive)",
+      "slug": "alt-text-generator",
+      "clientId": "ac73499a75d28cf7221d892caf03fcdf0c4d14659a8a153a36422f8b77101558",
+      "workspaceId": "67ecba4ce8c28a6443250d2e",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/alt-text-generator/edit"
+    },
+    {
+      "name": "LightKit",
+      "slug": "lightkit",
+      "clientId": "9cd9fc8cc976b4cc102ddd3df6859fae76e4adc297c7869809b6bb04606b3bc7",
+      "workspaceId": "6678076e17dacc45e800e5af",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/lightkit/edit"
+    },
+    {
+      "name": "Pulpo - Link Checker",
+      "slug": "pulpo-link-checker",
+      "clientId": "b4272f089140c8d40d722d3475f8f12724d97f27d8b2e6e39e0964722a1982e4",
+      "workspaceId": "62e3f2a02248e59c8453c5fb",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/pulpo-link-checker/edit"
+    },
+    {
+      "name": "Responsive Image Advisor AI",
+      "slug": "responsive-image-advisor-ai",
+      "clientId": "bc60381ae1252143a2fd02e198f23987fe31b6ab91c4a04f97f74425881ee073",
+      "workspaceId": "682e352764708502acca264b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/responsive-image-advisor-ai/edit"
+    },
+    {
+      "name": "AI Content Generator",
+      "slug": "ai-content-generator",
+      "clientId": "9d81ce749a9dbec0ec6e86d7571bcea19b0451ee43392a87cb005c4c2092f64b",
+      "workspaceId": "67a961efe0f24cc8a404d93f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/ai-content-generator/edit"
+    },
+    {
+      "name": "[ARCHIVED] Concord Consent",
+      "slug": "concord-consent",
+      "clientId": "bf25dd81aaeb3a926deb42e1a984f19d0e9483120b440c90724d2722cea7a3d8",
+      "workspaceId": "67ee5b1a43e807318c6fcc9b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/concord-consent/edit"
+    },
+    {
+      "name": "Bookmarks Pro",
+      "slug": "bookmarks-pro",
+      "clientId": "8a349598d362f09be2ae960000ebfbf2ac627a92e07033ac111629cba80154ab",
+      "workspaceId": "63b4dea41544cd0b70abee52",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/bookmarks-pro/edit"
+    },
+    {
+      "name": "Bookmarks Pro (archived)",
+      "slug": "booksmarks",
+      "clientId": "8a349598d362f09be2ae960000ebfbf2ac627a92e07033ac111629cba80154ab",
+      "workspaceId": "63b4dea41544cd0b70abee52",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/booksmarks/edit"
+    },
+    {
+      "name": "Sonic Boom",
+      "slug": "sonic-boom",
+      "clientId": "efcd1daa95482b20fd1524e61f5db677bf5b5c73a00503ca0974782228e17722",
+      "workspaceId": "637ce77ce38d97c0f68991dc",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/sonic-boom/edit"
+    },
+    {
+      "name": "Bearsync",
+      "slug": "bearsync",
+      "clientId": "d395f864ef41a40117658c5524fa1616e1d7b424ab109d3c42ff9ac8e365cfda",
+      "workspaceId": "635b08f37c02b82b742eea4c",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/bearsync/edit"
+    },
+    {
+      "name": "Asky Integration",
+      "slug": "asky-integration",
+      "clientId": "4074b453a9f74ccc934fba61f679bdb7109999388b2d0966f9a90030385a3621",
+      "workspaceId": "6925d620260677f99ba80665",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/asky-integration/edit"
+    },
+    {
+      "name": "SEO.AI",
+      "slug": "seo-ai",
+      "clientId": "8cd85f30bcab1e774824900de18f3d2c1f4da1b9fbba5bdaa427010414854aba",
+      "workspaceId": "632d9b492a2dc6000e1fdb7e",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/seo-ai/edit"
+    },
+    {
+      "name": "Batch Image Uploader",
+      "slug": "batch-image-uploader",
+      "clientId": "374a5a99197d84083c7d16849ad90637e6c691a4e2e52b131db0e279a035df75",
+      "workspaceId": "63322d753e84c50140e1b423",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/batch-image-uploader/edit"
+    },
+    {
+      "name": "Workato",
+      "slug": "workato",
+      "clientId": "ff9e80a5a3011e8ee5c231e6620598516dae10ca89ad42da9e463f4adad5834f",
+      "workspaceId": "67cffcd9f1374ff406a0943c",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/workato/edit"
+    },
+    {
+      "name": "CookieHub",
+      "slug": "cookiehub",
+      "clientId": "fd366fd0cba9f1568338262151ca25c0dc3f1b4c3b7a52fdbbb2d2e760780506",
+      "workspaceId": "63b50907d8816f1f113428c5",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/cookiehub/edit"
+    },
+    {
+      "name": "BroadcastSync",
+      "slug": "broadcastsync",
+      "clientId": "8e75521187839cbd192c3416b2d20628f52b3c19fd0d2cd28b15e6b15ffe872b",
+      "workspaceId": "63934b9466323945c0597ade",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/broadcastsync/edit"
+    },
+    {
+      "name": "Zoho-Flow [JP]",
+      "slug": "zoho-flow-jp",
+      "clientId": "2e5ba5305124b10a172ef1284e4fff06b547e7bbb8d46cb3021e1ed75cd0cfe8",
+      "workspaceId": "636dd222cc4f7c485d6f026b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/zoho-flow-jp/edit"
+    },
+    {
+      "name": "RankYak",
+      "slug": "rankyak",
+      "clientId": "1cc8576a8488511e6cf4112d3aa2aad37ebe5e15c49f035ef9b6c4c264720331",
+      "workspaceId": "67a9c082dd4f6146ce556b38",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/rankyak/edit"
+    },
+    {
+      "name": "TixFox - Sell Tickets",
+      "slug": "tixfox---sell-ticket",
+      "clientId": "f706348eb2ee89832df02701d8752c324c7e74688d9e4f3b49126caebe2ee362",
+      "workspaceId": "67be0eef6fe7143bf7da5733",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/tixfox---sell-ticket/edit"
+    },
+    {
+      "name": "Whalesync Staging",
+      "slug": "whalesync-staging",
+      "clientId": "239c60c5895b9edf74be94b36875a90ad7159c77f5f87e2a3b29c8dd24a43654",
+      "workspaceId": "63586293b36de336005a39ae",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/whalesync-staging/edit"
+    },
+    {
+      "name": "FullContext",
+      "slug": "fullcontext",
+      "clientId": "5352aaddb645419ab0136a7c097d036d8895445ff87288c08201573ca2bfdf0c",
+      "workspaceId": "67296cdfec4cf962ce5c9ef1",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/fullcontext/edit"
+    },
+    {
+      "name": "StoryChief [Staging - Test Only]",
+      "slug": "storychief-staging---test-only",
+      "clientId": "669502098dba0c8a1a1644d62616560a63092154ee19c6b92027aeac6a1cc060",
+      "workspaceId": "635c19f413c125379ae6f92d",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/storychief-staging---test-only/edit"
+    },
+    {
+      "name": "Monkedo",
+      "slug": "monkedo",
+      "clientId": "dc3251e15c66ecf295817e72e11d27eb0ad9964a3acee0de4e240a3f565cee53",
+      "workspaceId": "642d3568eb38ddd631e5e703",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/monkedo/edit"
+    },
+    {
+      "name": "Waitlister",
+      "slug": "waitlister",
+      "clientId": "e3908dc50ba07ce7a8224d5cfd0fb0491151d9318c4dbcffde25489723c6c0d2",
+      "workspaceId": "68d508603d089f726d13bbf7",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/waitlister/edit"
+    },
+    {
+      "name": "Zoho Flow[CN]",
+      "slug": "zoho-flow-cn",
+      "clientId": "a2ea4bd0e392169ed190359dfe14efa5e55c02d9738ed6576c50fe0e7e8e0621",
+      "workspaceId": "636dd222cc4f7c485d6f026b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/zoho-flow-cn/edit"
+    },
+    {
+      "name": "Demon",
+      "slug": "demon",
+      "clientId": "4b32aa0ba5b46d7d487fc10ed2602ef22f9e9b3523bce5d17baa068081257be5",
+      "workspaceId": "67995e45d760b0c7d9d8ee09",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/demon/edit"
+    },
+    {
+      "name": "Blogmatic",
+      "slug": "blogmatic",
+      "clientId": "7951a0e3d0cc3e562f3471a024cbab2833689a53ba21097e485d7869fb736506",
+      "workspaceId": "671c7beefcbe13a7ba0e4b9c",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/blogmatic/edit"
+    },
+    {
+      "name": "Globo",
+      "slug": "globo",
+      "clientId": "e213633e44219919e5221c3a8bca3b3b821a439c1ead5aafa71913a3c4820fa0",
+      "workspaceId": "6534e3e63ca73a3760c7628d",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/globo/edit"
+    },
+    {
+      "name": "Flowbox",
+      "slug": "flowbox",
+      "clientId": "774e5e67801816d566af9a73929e5dc7757bc428f700e1ca90fc71cb1e9c16f0",
+      "workspaceId": "686d83d17b85718ef3096c26",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowbox/edit"
+    },
+    {
+      "name": "Sim AI",
+      "slug": "sim-ai",
+      "clientId": "1e6767dc4f2885648c49b259cd59296d7a158f8f3b801695fa358d61b21629a0",
+      "workspaceId": "68f96081e7018465432953b5",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/sim-ai/edit"
+    },
+    {
+      "name": "Zoho Flow [AE]",
+      "slug": "zoho-flow-ae",
+      "clientId": "3df0e85087dac35f879675b403a9f98a5f843d7064688966756333765f54a8ce",
+      "workspaceId": "636dd222cc4f7c485d6f026b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/zoho-flow-ae/edit"
+    },
+    {
+      "name": "AI Component Creator",
+      "slug": "widgetry",
+      "clientId": "ef03e2df413ef9e6286ca11b83b81f28947d2039531701ae6caa35fa577d0e37",
+      "workspaceId": "676d645d3a11a5b8cc47fd86",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/widgetry/edit"
+    },
+    {
+      "name": "Splutter AI Chatbot",
+      "slug": "splutter-ai-chatbot",
+      "clientId": "74cbb8699cbf64900c7d0a009732b5c115e7472d4e08230a63358677b6091818",
+      "workspaceId": "670c8759912574cb3d34b630",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/splutter-ai-chatbot/edit"
+    },
+    {
+      "name": "viaSocket",
+      "slug": "viasocket",
+      "clientId": "8531594ea8cba4dce60b8126b6a5e2e0834bf37c5ee87f95ee9708b59634a3f6",
+      "workspaceId": "6659bccbe26b5cca92b4860c",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/viasocket/edit"
+    },
+    {
+      "name": "CookieGo",
+      "slug": "cookiego",
+      "clientId": "0bc23226a0401892a79b057b139ac66dba069fa43e39e217c2065bb587d67eff",
+      "workspaceId": "6632b01cae5173ba906fda9f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/cookiego/edit"
+    },
+    {
+      "name": "RevuKit – Google Reviews",
+      "slug": "revukit---google-reviews",
+      "clientId": "bc69c6f996a9ed5f14269c4bdab664c4739fa1578530870c0157ceb5cf038b90",
+      "workspaceId": "696a191311487ddb564ca8b4",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/revukit---google-reviews/edit"
+    },
+    {
+      "name": "Contrast Checker",
+      "slug": "contrast-checker",
+      "clientId": "1d1cb8517afd32c9ec8d427bb9ec4e10ecd4860fd25b26730089569fcc7313c4",
+      "workspaceId": "64be5da47b1cd77bf866e8ea",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/contrast-checker/edit"
+    },
+    {
+      "name": "Shrubi Restaurant Manager",
+      "slug": "shrubi-restaurant-manager",
+      "clientId": "c82da90d9d5de949b0d25c9248083780784bd06a5ffc50ceca8caff3a703f882",
+      "workspaceId": "68953eb3503ebfd134f877c3",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/shrubi-restaurant-manager/edit"
+    },
+    {
+      "name": "Alt Text Pro",
+      "slug": "alt-text-pro",
+      "clientId": "c179e24bf11656e2cf170b8311145e0aeea35b9c7c23e702be58e42788578532",
+      "workspaceId": "63414cad43833e6076f1fa51",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/alt-text-pro/edit"
+    },
+    {
+      "name": "FlowFella SEO",
+      "slug": "flowfella-seo",
+      "clientId": "547ae62a11a44da6571451293768514ecd902fdd9372f47e6412997348e9b0d9",
+      "workspaceId": "6503c70d0bbbe2ea729679f3",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowfella-seo/edit"
+    },
+    {
+      "name": "Titanmind",
+      "slug": "titanmind",
+      "clientId": "80426bcaa9c26df50c1c07361f7cf72d20b217abea03cedf3b5651f800cd38fe",
+      "workspaceId": "676171f83c592e0b3eb0ac5e",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/titanmind/edit"
+    },
+    {
+      "name": "Alpaca Chat",
+      "slug": "alpaca-chat",
+      "clientId": "17658393c2381c0bcf46cf12830060fc7626bec9544b41753a385ae28340b90e",
+      "workspaceId": "65e5c96cf87da77dd613c455",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/alpaca-chat/edit"
+    },
+    {
+      "name": "Zoho Flow [SA]",
+      "slug": "zoho-flow-sa",
+      "clientId": "3dce9baa4748179ae2a66fa9d094c5fb274d35d02cd95f5b0e8647a3c2dc0e2e",
+      "workspaceId": "636dd222cc4f7c485d6f026b",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/zoho-flow-sa/edit"
+    },
+    {
+      "name": "Keith's Test Data Client",
+      "slug": "keiths-test-data-client",
+      "clientId": "f5ab51ef22b19acb81797aaa49604d2956e1a891af66e3a3dd7916091bf8982e",
+      "workspaceId": "66b3e57624b654212d62b3f6",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/keiths-test-data-client/edit"
+    },
+    {
+      "name": "File Upload",
+      "slug": "file-upload",
+      "clientId": "66b7d7f35545765af854eb1dfb2f81211cd46a0b2004af1e2b1d1a98fccf53e4",
+      "workspaceId": "6228ff14beec0e00fe2c6dd0",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/file-upload/edit"
+    },
+    {
+      "name": "Color Fuse AI",
+      "slug": "color-fuse-ai",
+      "clientId": "ff4bfab05d1927be19638d0035f22110dc3daf8ec382caf453a0a40a5bdddeaa",
+      "workspaceId": "674965a6539d2702b003fa93",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/color-fuse-ai/edit"
+    },
+    {
+      "name": "Virtual Tours",
+      "slug": "virtual-tours",
+      "clientId": "448e03b6f0a3c2e6054d12299cf8619ffd9d2598adc84743884e02683f845113",
+      "workspaceId": "647df6bcdb050b7ac919a0f3",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/virtual-tours/edit"
+    },
+    {
+      "name": "SimpleLocalize",
+      "slug": "simplelocalize",
+      "clientId": "24abfcfa631afac891b58ad167feaed2a50deb51c1d3d358cf920d669b80f25e",
+      "workspaceId": "63788e44a6b907843da09764",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/simplelocalize/edit"
+    },
+    {
+      "name": "Zach Test",
+      "slug": "zach-test",
+      "clientId": "09956b4d7c9c6d3ec9b1b7bba56073a418399aa54dc7c0c828ca589826a2f603",
+      "workspaceId": "67d1ee4a526779181f4c5435",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/zach-test/edit"
+    },
+    {
+      "name": "RankPeak",
+      "slug": "rankpeak",
+      "clientId": "038ae204ab6f18d5a3a45037619f54747cdd5dc014e1cb59e7834f739d395261",
+      "workspaceId": "6968b670087ee200c1bf7051",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/rankpeak/edit"
+    },
+    {
+      "name": "Video Cloud",
+      "slug": "video-cloud",
+      "clientId": "ee7f21531136e843e9899b724108998b5556eb0e6bfdbfa6098610f1e6c12b82",
+      "workspaceId": "6553201f5b84962b09054032",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/video-cloud/edit"
+    },
+    {
+      "name": "Metaflow AI",
+      "slug": "metaflow-ai",
+      "clientId": "3b87ebadaa7a09887c24db6cb6acdb59b01676b1fe24e45ecc6a20dd50775de7",
+      "workspaceId": "68527b24ad8556d1bee297d9",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/metaflow-ai/edit"
+    },
+    {
+      "name": "SmartPost for GBP",
+      "slug": "smartpost-for-gbp",
+      "clientId": "86a275465235e07f3af41f9d0012329058525e0fcf542fd6c8ec38814d0cdc17",
+      "workspaceId": "637f54d408156a4beca7f046",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/smartpost-for-gbp/edit"
+    },
+    {
+      "name": "Pablo Test App",
+      "slug": "pablo-test-app",
+      "clientId": "031f57ae25eb05f99b9f98094db654f3263b9283091cd22edcf1babcb1c5a23f",
+      "workspaceId": "63b6b6486414602434d98302",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/pablo-test-app/edit"
+    },
+    {
+      "name": "ShopSync Feeds",
+      "slug": "shopsync-feeds",
+      "clientId": "85153b579880c417f76003d72bfa6db03cfc21d021d9007f072b12c3a174eb15",
+      "workspaceId": "65714aff82dfecc9c1d2f0e2",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/shopsync-feeds/edit"
+    },
+    {
+      "name": "Emplibot",
+      "slug": "emplibot",
+      "clientId": "b4494ca650c885f679a5cc34f4692cf125c9b00b32d46bd391952910c20e47d6",
+      "workspaceId": "6847f4312074adce33e2ba6e",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/emplibot/edit"
+    },
+    {
+      "name": "App Testing",
+      "slug": "app-testing",
+      "clientId": "3710c16da8ee3709f9ed1ec3786e2e7c09554ddd82669c28bab79bf0a84b5ca3",
+      "workspaceId": "66ccbe9a6dfe6c3f06d6f428",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/app-testing/edit"
+    },
+    {
+      "name": "Sparkfive",
+      "slug": "sparkfive",
+      "clientId": "a7f272bf5a01c247020c18131cbd64b0bc7124e1536ac63b83da73d62d16839f",
+      "workspaceId": "6373f7c7098aa75da2e03db8",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/sparkfive/edit"
+    },
+    {
+      "name": "AlcPay - Fulfillment platform",
+      "slug": "alcpay---fulfillment-platform",
+      "clientId": "867eb7a27ff5d487e746514cc2e08db3ff60ce68f36f926b3f3c62d037653114",
+      "workspaceId": "683c5b2fe0b90cfb6b0ac58e",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/alcpay---fulfillment-platform/edit"
+    },
+    {
+      "name": "Strimly",
+      "slug": "strimly",
+      "clientId": "75d2de46d590bef0ff1ed061296f8df4bf33a11e03a07e353450244a48389f7f",
+      "workspaceId": "67c74cba0e7e0b9ad9dc696f",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/strimly/edit"
+    },
+    {
+      "name": "Wicked Scripter",
+      "slug": "wicked-scripter",
+      "clientId": "21a73e4161a955d03a49a53b12904398b4f627f2cb732331dcbfdb203f555336",
+      "workspaceId": "6811905e2d3396c1ad0f8bde",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/wicked-scripter/edit"
+    },
+    {
+      "name": "TEST-ScheduleFlow - app payments",
+      "slug": "test-scheduleflow---app-payments",
+      "clientId": "22d91f2fcfc0a664fa80ef1c673b446e73dfcae80db42da12995cd66318aba21",
+      "workspaceId": "6758ccfb56a7f9103cadad1e",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/test-scheduleflow---app-payments/edit"
+    },
+    {
+      "name": "SEOfabric",
+      "slug": "seofabric",
+      "clientId": "214f1649d3e24ab7c0f23d9079d74a5cc103e7ae4f045d3ded71857b64e5492d",
+      "workspaceId": "63cb5d6425cbcf978cedb8fb",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/seofabric/edit"
+    },
+    {
+      "name": "Shea Webflow Test",
+      "slug": "shea-webflow-test",
+      "clientId": "bf25dd81aaeb3a926deb42e1a984f19d0e9483120b440c90724d2722cea7a3d8",
+      "workspaceId": "66ccbe9a6dfe6c3f06d6f428",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/shea-webflow-test/edit"
+    },
+    {
+      "name": "my new app in prod",
+      "slug": "my-new-app-in-prod",
+      "clientId": "af18ef674424383b7ccaf8062001a7c381e5be5d0a65dad777f75d73d911e827",
+      "workspaceId": "64999714687d10c6c92f7b78",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/my-new-app-in-prod/edit"
+    },
+    {
+      "name": "Flowytics",
+      "slug": "flowytics",
+      "clientId": "e74b9c34a4a3112b78d785cf8a4c31c5cc08b0ac80bf3a3d4c0099b0312bd958",
+      "workspaceId": "636173fdbd169599d390d070",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/flowytics/edit"
+    },
+    {
+      "name": "Joey test",
+      "slug": "joey-test",
+      "clientId": "e65ba1bc9df3cb6033c9e6cd495e46559eb6173ab207c21b00737f4eb3883352",
+      "workspaceId": "63321ad43e84c50140dfbf66",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/joey-test/edit"
+    },
+    {
+      "name": "Datamaker",
+      "slug": "datamaker",
+      "clientId": "4ec45cdf145aa00358987a57e585c2aa449e01cada0c8a3012ff325d2c4eca9b",
+      "workspaceId": "630691e470a41834973f94c5",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/datamaker/edit"
+    },
+    {
+      "name": "Annotations + Design Feedback",
+      "slug": "punchlist",
+      "clientId": "60fdd2f89b0fd1d894b9697ae1b40004d8600ffa349f18d0eee0aab065bf6a78",
+      "workspaceId": "63322f223e84c50140e1d0ee",
+      "error": null,
+      "editUrl": "https://webflow.com/apps/detail/punchlist/edit"
+    }
+  ]
+}

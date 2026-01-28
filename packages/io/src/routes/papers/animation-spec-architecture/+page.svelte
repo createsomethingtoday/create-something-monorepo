@@ -7,9 +7,9 @@
 	 *
 	 * "The spec describes WHAT happens. The renderer decides HOW."
 	 */
-	import { CanonReveal } from '@create-something/components/motion';
+	import { CanonReveal } from '@create-something/canon/motion';
 	import { canonRevealStyles } from '$lib/animations/canon-reveals';
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import { Play, RotateCcw, ChevronRight } from 'lucide-svelte';
 
 	// Interactive demo state

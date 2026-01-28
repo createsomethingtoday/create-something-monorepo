@@ -52,7 +52,7 @@ published: true
 </div>
 </div>
 <codeblock code="{`&lt;script" lang="ts">
-  import { Skeleton } from '@create-something/components';
+  import { Skeleton } from '@create-something/canon';
 
 <!-- Text paragraph skeleton -->
 <div class="skeleton-group">
@@ -149,7 +149,7 @@ published: true
 			</div>
 </div>
 <codeblock code="{`&lt;script" lang="ts">
-  import { LoadingSkeleton } from '@create-something/components';
+  import { LoadingSkeleton } from '@create-something/canon';
 
 <!-- Pre-composed list skeleton pattern -->
 <loadingskeleton count="{3}" variant="list"></loadingskeleton>
@@ -200,7 +200,7 @@ published: true
 </div>
 </div>
 <codeblock code="{`&lt;script" lang="ts">
-  import { Spinner } from '@create-something/components';
+  import { Spinner } from '@create-something/canon';
 
 <spinner label="Loading..." size="sm"></spinner>
 <spinner label="Loading..." size="md"></spinner>
@@ -286,7 +286,7 @@ published: true
 </div>
 </div>
 <codeblock code="{`&lt;script" lang="ts">
-  import { Progress } from '@create-something/components';
+  import { Progress } from '@create-something/canon';
 
   let progress = $state(45);
 
@@ -349,7 +349,7 @@ published: true
 </div>
 </div>
 <codeblock code="{`&lt;script" lang="ts">
-  import { LoadingOverlay } from '@create-something/components';
+  import { LoadingOverlay } from '@create-something/canon';
 
   let loading = $state(true);
 

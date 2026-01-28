@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import ImageLightbox from '$lib/components/taste/ImageLightbox.svelte';
-	import ContributeBlock from '$lib/components/taste/ContributeBlock.svelte';
-	import { SEO } from '@create-something/components';
+	import { ContributeBlock } from '@create-something/canon/domains/ltd';
+	import { SEO } from '@create-something/canon';
 
 	let { data }: { data: PageData } = $props();
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 
 	// Asset definitions
 	const icons = [

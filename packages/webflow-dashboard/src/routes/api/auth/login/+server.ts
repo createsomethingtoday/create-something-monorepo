@@ -2,7 +2,6 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient, validateEmail } from '$lib/server/airtable';
 import { checkRateLimit } from '$lib/server/kv';
-import { sendVerificationEmail } from '$lib/server/email';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -10,8 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
  *
  * Initiates login by:
  * 1. Generating a verification token
- * 2. Storing it in Airtable
- * 3. Sending a branded email via Resend
+ * 2. Storing it in Airtable (triggers automation to send email)
  */
 export const POST: RequestHandler = async ({ request, platform, getClientAddress }) => {
 	const clientIp = getClientAddress();
@@ -72,25 +70,11 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 		const token = uuidv4();
 		const expirationTime = new Date(Date.now() + 60 * 60000); // 60 minutes
 
-		// Store token in Airtable
-		await airtable.setVerificationToken(user.id, token, expirationTime);
+		// Store token in Airtable and trigger automation to send email
+		// Uses two-step update: null → value transition triggers the Airtable automation
+		await airtable.triggerVerificationEmailAutomation(user.id, token, expirationTime);
 
-		// Send branded verification email via Resend
-		const emailResult = await sendVerificationEmail(platform!.env.RESEND_API_KEY, {
-			to: validatedEmail,
-			token: token,
-			expiresIn: '60 minutes'
-		});
-
-		if (!emailResult.success) {
-			console.error('Failed to send verification email:', emailResult.error);
-			// Don't fail the login - token is stored, user can request resend
-			return json({ 
-				message: 'Verification token generated. Check your email or request a new code.',
-				warning: 'Email delivery may be delayed'
-			});
-		}
-
+		console.log('[Login] Verification email triggered via Airtable automation:', { to: validatedEmail });
 		return json({ message: 'Verification email sent' });
 	} catch (error) {
 		console.error('Login error:', error);

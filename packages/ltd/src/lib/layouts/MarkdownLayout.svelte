@@ -6,7 +6,7 @@
 	 * Provides structure and PageActions integration.
 	 */
 	import { page } from '$app/stores';
-	import { PageActions, MarkdownPreviewModal } from '@create-something/components';
+	import { PageActions, MarkdownPreviewModal } from '@create-something/canon';
 
 	interface Props {
 		title?: string;

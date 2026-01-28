@@ -5,7 +5,7 @@ import {
 	createTerminalHeader,
 	createTerminalCardGrid,
 	type TerminalPaperItem
-} from '@create-something/components/ascii';
+} from '@create-something/canon/ascii';
 
 interface TerminalRequest {
 	command: string;

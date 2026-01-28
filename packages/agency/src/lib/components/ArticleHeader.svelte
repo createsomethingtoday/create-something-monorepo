@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { TrackedExperimentBadge } from '@create-something/components/interactive';
+	import { TrackedExperimentBadge } from '@create-something/canon/interactive';
 	import type { Paper } from '$lib/types/paper';
 
 	interface Props {

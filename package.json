@@ -39,7 +39,17 @@
     "ui:status": "./scripts/ui-preview.sh status",
     "ui:viewer": "pnpm --filter @create-something/ui-viewer dev",
     "ui:bridge": "cd packages/ui-bridge && bun run dev",
-    "ui:diff:build": "cd packages/ui-diff && wasm-pack build --target web --out-dir ../ui-bridge/wasm"
+    "ui:diff:build": "cd packages/ui-diff && wasm-pack build --target web --out-dir ../ui-bridge/wasm",
+    "ground:imports": "tsx scripts/ground-imports.ts",
+    "ground:imports:fix": "tsx scripts/ground-imports.ts --fix",
+    "ground:imports:json": "tsx scripts/ground-imports.ts --json",
+    "ground:components": "tsx scripts/ground-components.ts",
+    "ground:components:json": "tsx scripts/ground-components.ts --json",
+    "ground:experiments": "tsx scripts/ground-experiments.ts",
+    "ground:experiments:json": "tsx scripts/ground-experiments.ts --json",
+    "ground:duplicates": "tsx scripts/ground-duplicates.ts",
+    "ground:duplicates:json": "tsx scripts/ground-duplicates.ts --json",
+    "ground": "pnpm ground:imports && pnpm ground:components && pnpm ground:experiments && pnpm ground:duplicates"
   },
   "devDependencies": {
     "@iarna/toml": "^2.2.5",
@@ -49,7 +59,8 @@
     "prettier": "^3.7.4",
     "prettier-plugin-svelte": "^3.4.1",
     "tsx": "^4.21.0",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "yaml": "^2.8.2"
   },
   "engines": {
     "node": ">=20.0.0",

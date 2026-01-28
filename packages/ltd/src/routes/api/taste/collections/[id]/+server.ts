@@ -23,7 +23,7 @@ import {
 	getTokenFromRequest,
 	validateToken,
 	type AuthEnv,
-} from '@create-something/components/auth/server';
+} from '@create-something/canon/auth/server';
 
 export const GET: RequestHandler = async ({ params, request, platform }) => {
 	const db = platform?.env?.DB;

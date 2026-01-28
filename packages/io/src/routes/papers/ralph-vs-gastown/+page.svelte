@@ -7,7 +7,7 @@
 	 * parallel execution). Both achieve nondeterministic idempotence through different
 	 * architectural choices.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO

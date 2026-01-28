@@ -1,7 +1,7 @@
 -- Newsletter Subscribers Complete Table
 -- Creates the newsletter_subscribers table with all required columns
 -- This migration creates the full table structure needed by:
--- @create-something/components/newsletter (subscribe.ts)
+-- @create-something/canon/newsletter (subscribe.ts)
 --
 -- NOTE: This migration was manually applied to production on 2026-01-24
 -- to fix a 500 error on the /api/newsletter endpoint.

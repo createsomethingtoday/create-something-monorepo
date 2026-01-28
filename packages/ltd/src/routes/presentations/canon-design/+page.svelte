@@ -13,10 +13,10 @@
 	 * "Components can BE the documentation" — when tokens change, docs update automatically.
 	 */
 
-	import Presentation from '$lib/components/Presentation.svelte';
-	import Slide from '$lib/components/Slide.svelte';
-	import { TokenSwatch, TokenGrid } from '$lib/components/docs';
-	import { SEO } from '@create-something/components';
+	import { Presentation } from '@create-something/canon/domains/ltd';
+	import { Slide } from '@create-something/canon/domains/ltd';
+	import { TokenSwatch, TokenGrid } from '@create-something/canon/components/docs';
+	import { SEO } from '@create-something/canon';
 
 	let { data } = $props();
 </script>

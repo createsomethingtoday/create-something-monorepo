@@ -48,7 +48,7 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@create-something/components": "workspace:^",
+    "@create-something/canon": "workspace:^",
     "ajv": "^8.17.1",
     "yaml": "^2.8.2"
   }

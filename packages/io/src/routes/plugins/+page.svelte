@@ -1,5 +1,5 @@
 <script lang="ts">
-	import PluginCard from '$lib/components/plugins/PluginCard.svelte';
+	import { PluginCard } from '@create-something/canon/domains/io';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();

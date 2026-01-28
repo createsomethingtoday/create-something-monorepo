@@ -12,7 +12,7 @@ This is the philosophical foundation. When we ask "Is this good design?", `.ltd`
 
 | Dependency | Why It Matters |
 |------------|----------------|
-| `@create-something/components` | Shared UI implementing canonical principles |
+| `@create-something/canon` | Shared UI implementing canonical principles |
 | Dieter Rams' 10 Principles | Philosophical foundation for all design decisions |
 | Tailwind CSS | Utility classes for rapid canonical styling |
 | Cloudflare Pages | Edge deployment for global accessibility |

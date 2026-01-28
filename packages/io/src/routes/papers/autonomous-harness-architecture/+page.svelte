@@ -6,7 +6,7 @@
 	 * demonstrating how progress reports preserve human agency without
 	 * requiring proactive management.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO

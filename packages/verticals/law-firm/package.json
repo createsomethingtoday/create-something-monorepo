@@ -34,7 +34,7 @@
 		"wrangler": "^4.59.0"
 	},
 	"dependencies": {
-		"@create-something/components": "workspace:*",
+		"@create-something/canon": "workspace:*",
 		"@workwayco/sdk": "link:../../../../../WORKWAY/Cloudflare/packages/sdk",
 		"lucide-svelte": "^0.554.0"
 	}

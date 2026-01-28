@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { SEO } from '@create-something/components';
-	import DatePicker from '$lib/components/booking/DatePicker.svelte';
-	import TimeSlotPicker from '$lib/components/booking/TimeSlotPicker.svelte';
-	import BookingForm from '$lib/components/booking/BookingForm.svelte';
-	import BookingConfirmation from '$lib/components/booking/BookingConfirmation.svelte';
+	import { SEO } from '@create-something/canon';
+	import { DatePicker } from '@create-something/canon/domains/agency';
+	import { TimeSlotPicker } from '@create-something/canon/domains/agency';
+	import { BookingForm } from '@create-something/canon/domains/agency';
+	import { BookingConfirmation } from '@create-something/canon/domains/agency';
 
 	interface TimeSlot {
 		start_at: string;

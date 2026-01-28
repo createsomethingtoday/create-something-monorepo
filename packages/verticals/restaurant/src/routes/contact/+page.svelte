@@ -6,7 +6,7 @@
 	 * Simple contact form for inquiries.
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import { siteConfig } from '$lib/config/context';
 
 	let formState: 'idle' | 'submitting' | 'success' | 'error' = 'idle';

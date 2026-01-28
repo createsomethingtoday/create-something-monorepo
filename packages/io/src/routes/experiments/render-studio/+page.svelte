@@ -7,11 +7,14 @@
 	 * - SVG operations are explicit (no natural language interpretation)
 	 * - Conditioning image is transparent (see what the AI sees)
 	 */
-	import { QuoteBlock, SEO } from '@create-something/components';
+	import { QuoteBlock, SEO } from '@create-something/canon';
+	import {
+		PresetPicker,
+		OperationPicker,
+		applySvgOperation,
+		type SvgOperation
+	} from '@create-something/canon/experiments/render-studio';
 	import type { PageData } from './$types';
-	import PresetPicker from './PresetPicker.svelte';
-	import OperationPicker from './OperationPicker.svelte';
-	import { applySvgOperation, type SvgOperation } from './svg-operations';
 
 	let { data }: { data: PageData } = $props();
 	const { experiment } = data;

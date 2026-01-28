@@ -8,7 +8,7 @@
 	 * "Let the work speak."
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import ProjectGallery from '$lib/components/ProjectGallery.svelte';
 	import { siteConfig } from '$lib/config/context';
 </script>

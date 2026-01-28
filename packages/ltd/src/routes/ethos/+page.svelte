@@ -1,6 +1,6 @@
 <script lang="ts">
-	import SubtractiveTriadAnimation from '$lib/components/SubtractiveTriadAnimation.svelte';
-	import { SEO } from '@create-something/components';
+	import { SubtractiveTriadAnimation } from '@create-something/canon/domains/ltd';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO

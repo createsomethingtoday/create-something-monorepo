@@ -11,8 +11,8 @@
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
 import { sendMagicLinkEmail, generateToken, hashToken } from '$lib/email/magic-link';
-import { generateCorrelationId, logError } from '@create-something/components/utils';
-import { magicLinkSchema, parseBody } from '@create-something/components/validation';
+import { generateCorrelationId, logError } from '@create-something/canon/utils';
+import { magicLinkSchema, parseBody } from '@create-something/canon/validation';
 
 const MAGIC_LINK_EXPIRY_MINUTES = 15;
 const RATE_LIMIT_WINDOW_HOURS = 1;

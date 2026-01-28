@@ -1,0 +1,721 @@
+/*
+  CREATE SOMETHING Shared Component Styles
+  Property-agnostic UI patterns built on Canon tokens
+
+  Import after canon.css:
+    @import '@create-something/canon/styles/canon.css';
+    @import '@create-something/canon/styles/components.css';
+
+  Philosophy: "Weniger, aber besser" - Dieter Rams
+  DRY: Unified patterns used across properties
+*/
+
+/* ==========================================================================
+   Component Layer - Shared UI Patterns
+   ========================================================================== */
+
+@layer components {
+  /* ==========================================================================
+     Page Header Pattern
+     Usage: <h1 class="page-title">, <p class="page-subtitle">
+     ========================================================================== */
+  .page-title {
+    font-size: var(--text-display);
+    font-weight: var(--font-light);
+    margin: 0 0 var(--space-sm) 0;
+    color: var(--color-fg-primary);
+  }
+
+  .page-subtitle {
+    font-size: var(--text-body-lg);
+    color: var(--color-fg-secondary);
+    max-width: 48rem;
+    margin: 0;
+    line-height: var(--leading-relaxed);
+  }
+
+  .page-description {
+    font-size: var(--text-body-lg);
+    color: var(--color-fg-tertiary);
+    line-height: var(--leading-relaxed);
+    margin: 0;
+  }
+
+  /* ==========================================================================
+     Section Title
+     ========================================================================== */
+  .section-title {
+    font-size: var(--text-h2);
+    margin-bottom: var(--space-lg);
+  }
+
+  .section-title.center {
+    text-align: center;
+    margin-bottom: var(--space-md);
+  }
+
+  /* ==========================================================================
+     Card Patterns
+     Base card with elevated background, hover state
+     ========================================================================== */
+  .card {
+    display: block;
+    padding: var(--space-md);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    transition: border-color var(--duration-micro) var(--ease-standard);
+  }
+
+  .card:hover {
+    border-color: var(--color-border-emphasis);
+  }
+
+  .card-xl {
+    padding: var(--space-lg);
+    border-radius: var(--radius-xl);
+  }
+
+  /* Glass emphasis - subtle depth for key surfaces */
+  .glass-emphasis {
+    border-color: var(--glass-border-medium);
+    box-shadow: var(--glass-shadow-sm);
+  }
+
+  /* ==========================================================================
+     Button Patterns
+     ========================================================================== */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    font-size: var(--text-body);
+    cursor: pointer;
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
+
+  .btn-primary {
+    background: var(--color-fg-primary);
+    color: var(--color-bg-pure);
+    border: none;
+    font-weight: var(--font-medium);
+  }
+
+  .btn-primary:hover {
+    background: var(--color-fg-secondary);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--color-fg-secondary);
+    border: 1px solid var(--color-border-emphasis);
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--color-border-strong);
+    color: var(--color-fg-primary);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-fg-secondary);
+    border: 1px solid var(--color-border-default);
+  }
+
+  .btn-ghost:hover {
+    background: var(--color-hover);
+    border-color: var(--color-border-emphasis);
+    color: var(--color-fg-primary);
+  }
+
+  /* ==========================================================================
+     Eyebrow / Label Pattern
+     Small caps, muted, used for categories/metadata
+     Note: .eyebrow also exists in canon.css @layer utilities
+     This variant adds accent styling
+     ========================================================================== */
+  .eyebrow-accent {
+    font-size: var(--text-caption);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+
+  /* ==========================================================================
+     Badge Pattern
+     Small inline label
+     ========================================================================== */
+  .badge {
+    font-size: var(--text-caption);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+  }
+
+  .badge-info {
+    color: var(--color-info);
+    background: var(--color-info-muted);
+  }
+
+  .badge-success {
+    color: var(--color-success);
+    background: var(--color-success-muted);
+  }
+
+  .badge-warning {
+    color: var(--color-warning);
+    background: var(--color-warning-muted);
+  }
+
+  .badge-error {
+    color: var(--color-error);
+    background: var(--color-error-muted);
+  }
+
+  /* ==========================================================================
+     List Patterns
+     ========================================================================== */
+  .list-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .list-vertical-sm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  /* ==========================================================================
+     Progress Bar
+     ========================================================================== */
+  .progress-track {
+    height: 4px;
+    background: var(--color-bg-surface);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+  }
+
+  .progress-track-sm {
+    height: 2px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--color-fg-primary);
+    border-radius: var(--radius-full);
+    transition: width var(--duration-complex) var(--ease-standard);
+  }
+
+  /* ==========================================================================
+     Number Circle
+     Used for lesson/step numbering
+     ========================================================================== */
+  .number-circle {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-full);
+    background: var(--color-bg-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+    font-weight: var(--font-medium);
+  }
+
+  /* ==========================================================================
+     Container Pattern
+     Centered container with padding
+     ========================================================================== */
+  .container {
+    width: 100%;
+    max-width: var(--container-xl);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+
+  .container-sm {
+    max-width: var(--container-sm);
+  }
+
+  .container-md {
+    max-width: var(--container-md);
+  }
+
+  .container-lg {
+    max-width: var(--container-lg);
+  }
+
+  .container-prose {
+    max-width: var(--container-prose);
+  }
+
+  /* ==========================================================================
+     Hover State Patterns
+     Standardized interactive feedback following Canon tokens
+     Usage: Add to any interactive element for consistent behavior
+     ========================================================================== */
+
+  /* Base hover transition - apply to any interactive element */
+  .hover-transition {
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
+
+  /* Border emphasis on hover - subtle but noticeable */
+  .hover-border {
+    transition: border-color var(--duration-micro) var(--ease-standard);
+  }
+
+  .hover-border:hover {
+    border-color: var(--color-border-emphasis);
+  }
+
+  /* Strong border on hover - more prominent feedback */
+  .hover-border-strong {
+    transition: border-color var(--duration-micro) var(--ease-standard);
+  }
+
+  .hover-border-strong:hover {
+    border-color: var(--color-border-strong);
+  }
+
+  /* Background overlay on hover - for cards and panels */
+  .hover-bg {
+    transition: background-color var(--duration-micro) var(--ease-standard);
+  }
+
+  .hover-bg:hover {
+    background-color: var(--color-hover);
+  }
+
+  /* Active state background - for pressed/active states */
+  .hover-bg-active:active {
+    background-color: var(--color-active);
+  }
+
+  /* Text opacity hover - muted to full */
+  .hover-text {
+    color: var(--color-fg-muted);
+    transition: color var(--duration-micro) var(--ease-standard);
+  }
+
+  .hover-text:hover {
+    color: var(--color-fg-primary);
+  }
+
+  /* Secondary text hover - secondary to primary */
+  .hover-text-secondary {
+    color: var(--color-fg-secondary);
+    transition: color var(--duration-micro) var(--ease-standard);
+  }
+
+  .hover-text-secondary:hover {
+    color: var(--color-fg-primary);
+  }
+
+  /* Combined hover pattern - border + background */
+  .hover-interactive {
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
+
+  .hover-interactive:hover {
+    border-color: var(--color-border-emphasis);
+    background-color: var(--color-hover);
+  }
+
+  /* ==========================================================================
+     Elevation Transition Utilities
+     Smooth shadow and transform transitions for depth changes
+     ========================================================================== */
+
+  /* Base elevation transition */
+  .elevation-transition {
+    transition: box-shadow var(--duration-standard) var(--ease-standard),
+                transform var(--duration-standard) var(--ease-standard);
+  }
+
+  /* Subtle lift - minimal movement, ideal for cards */
+  .elevation-lift-sm {
+    transition: box-shadow var(--duration-standard) var(--ease-standard),
+                transform var(--duration-standard) var(--ease-standard);
+  }
+
+  .elevation-lift-sm:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Standard lift - noticeable movement, ideal for feature cards */
+  .elevation-lift {
+    transition: box-shadow var(--duration-standard) var(--ease-standard),
+                transform var(--duration-standard) var(--ease-standard);
+  }
+
+  .elevation-lift:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-xl);
+  }
+
+  /* Large lift - dramatic movement, ideal for hero cards */
+  .elevation-lift-lg {
+    transition: box-shadow var(--duration-standard) var(--ease-standard),
+                transform var(--duration-standard) var(--ease-standard);
+  }
+
+  .elevation-lift-lg:hover {
+    transform: translateY(-12px);
+    box-shadow: var(--shadow-2xl);
+  }
+
+  /* Glow elevation - adds soft glow instead of shadow */
+  .elevation-glow {
+    transition: box-shadow var(--duration-standard) var(--ease-standard);
+  }
+
+  .elevation-glow:hover {
+    box-shadow: var(--shadow-glow-md);
+  }
+
+  /* Strong glow - more prominent glow effect */
+  .elevation-glow-lg {
+    transition: box-shadow var(--duration-standard) var(--ease-standard);
+  }
+
+  .elevation-glow-lg:hover {
+    box-shadow: var(--shadow-glow-lg);
+  }
+
+  /* Shadow only - no transform, just shadow change */
+  .elevation-shadow {
+    transition: box-shadow var(--duration-standard) var(--ease-standard);
+  }
+
+  .elevation-shadow:hover {
+    box-shadow: var(--shadow-xl);
+  }
+
+  /* Combined: lift + border + background */
+  .elevation-card {
+    transition: all var(--duration-standard) var(--ease-standard);
+  }
+
+  .elevation-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--color-border-emphasis);
+  }
+
+  /* ==========================================================================
+     Responsive Table Pattern
+     Mobile: Card layout for touch-friendly data display
+     Desktop: Traditional table layout for data density
+
+     Usage:
+     <div class="responsive-table-cards">...cards...</div>
+     <div class="responsive-table-wrapper">
+       <table class="responsive-table">...</table>
+     </div>
+
+     Note: Display rules are OUTSIDE the layer (below) to ensure proper
+     specificity over Tailwind and other unlayered styles.
+     ========================================================================== */
+
+  /* Individual card styling */
+  .responsive-table-card {
+    padding: var(--space-md);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+  }
+
+  .responsive-table-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-sm);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--color-border-default);
+  }
+
+  .responsive-table-card-title {
+    font-weight: 600;
+    color: var(--color-fg-primary);
+    font-size: var(--text-body);
+  }
+
+  .responsive-table-card-badge {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+    padding: 2px 8px;
+    background: var(--color-bg-subtle);
+    border-radius: var(--radius-sm);
+  }
+
+  .responsive-table-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .responsive-table-card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .responsive-table-card-label {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .responsive-table-card-value {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-secondary);
+  }
+
+  /* Table styling */
+  .responsive-table {
+    width: 100%;
+    text-align: left;
+    border-collapse: collapse;
+  }
+
+  .responsive-table th,
+  .responsive-table td {
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--color-border-default);
+  }
+
+  .responsive-table th {
+    font-size: var(--text-body-sm);
+    font-weight: 600;
+    color: var(--color-fg-tertiary);
+  }
+
+  .responsive-table td {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-secondary);
+  }
+
+  .responsive-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* Horizontal scroll variant for tables that must remain as tables */
+  .responsive-table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Horizontal slide - subtle rightward movement */
+  .elevation-slide {
+    transition: transform var(--duration-micro) var(--ease-standard),
+                border-color var(--duration-micro) var(--ease-standard);
+  }
+
+  .elevation-slide:hover {
+    transform: translateX(4px);
+    border-color: var(--color-border-emphasis);
+  }
+
+  /* Scale up - subtle grow effect */
+  .elevation-scale {
+    transition: transform var(--duration-standard) var(--ease-standard),
+                box-shadow var(--duration-standard) var(--ease-standard);
+  }
+
+  .elevation-scale:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* ==========================================================================
+     Combined Interactive Patterns
+     Pre-composed patterns for common use cases
+     ========================================================================== */
+
+  /* Interactive card - combines elevation + border + background */
+  .interactive-card {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    transition: all var(--duration-standard) var(--ease-standard);
+  }
+
+  .interactive-card:hover {
+    border-color: var(--color-border-emphasis);
+    background: var(--color-bg-surface);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Interactive list item - horizontal slide with border */
+  .interactive-list-item {
+    border: 1px solid var(--color-border-default);
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
+
+  .interactive-list-item:hover {
+    border-color: var(--color-border-emphasis);
+    transform: translateX(4px);
+    background: var(--color-hover);
+  }
+
+  /* Interactive link block - background highlight */
+  .interactive-link {
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
+
+  .interactive-link:hover {
+    background: var(--color-hover);
+  }
+
+  .interactive-link:active {
+    background: var(--color-active);
+  }
+
+  /* ==========================================================================
+     Analytics Dashboard Patterns
+     Shared styles for admin analytics dashboards across properties
+     Used by: io/admin/analytics, space/admin/analytics
+     ========================================================================== */
+
+  /* Form Elements */
+  .select-field {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    color: var(--color-fg-primary);
+    font-size: var(--text-body-sm);
+    transition: border-color var(--duration-micro) var(--ease-standard);
+  }
+
+  .select-field:focus {
+    outline: none;
+    border-color: var(--color-border-emphasis);
+  }
+
+  /* Loading State */
+  .loading-text {
+    color: var(--color-fg-tertiary);
+  }
+
+  /* Table Card - container for HighDensityTable */
+  .table-card {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    overflow: auto; /* Allow horizontal scroll when content overflows */
+    min-width: 0; /* Allow flex child to shrink */
+  }
+
+  .table-title {
+    font-size: var(--text-body-sm);
+    font-weight: 600;
+    color: var(--color-fg-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Chart Card - container for Sparkline/DailyGrid */
+  .chart-card {
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+  }
+
+  .chart-title {
+    font-size: var(--text-h3);
+    font-weight: 600;
+  }
+
+  .chart-subtitle {
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+  }
+
+  .chart-value {
+    font-size: var(--text-h2);
+    font-weight: 700;
+  }
+
+  .chart-label {
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+  }
+
+  /* Empty State */
+  .empty-state {
+    color: var(--color-fg-muted);
+    font-size: var(--text-body-sm);
+  }
+
+  /* Section Header (with border) */
+  .section-header {
+    border-top: 1px solid var(--color-border-default);
+    padding-top: var(--space-md);
+  }
+
+  .section-subtitle {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-tertiary);
+    margin-top: var(--space-xs);
+  }
+
+  /* Info Footer */
+  .info-footer {
+    border-top: 1px solid var(--color-border-default);
+  }
+
+  .footer-text {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+  }
+
+  .footer-note {
+    font-size: var(--text-caption);
+    color: var(--color-fg-subtle);
+  }
+
+  .footer-link {
+    text-decoration: underline;
+    transition: color var(--duration-micro) var(--ease-standard);
+  }
+
+  .footer-link:hover {
+    color: var(--color-fg-secondary);
+  }
+}
+
+/* ==========================================================================
+   Responsive Table Display Rules (OUTSIDE @layer for specificity)
+   These MUST be outside the layer to override Tailwind/unlayered styles
+   ========================================================================== */
+
+/* Card container - visible on mobile, hidden on desktop */
+.responsive-table-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* Table wrapper - hidden on mobile, visible on desktop */
+.responsive-table-wrapper {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .responsive-table-cards {
+    display: none;
+  }
+
+  .responsive-table-wrapper {
+    display: block;
+  }
+}

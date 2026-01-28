@@ -12,7 +12,7 @@ This is where theory lives. When we discover something worth knowing, `.io` docu
 
 | Dependency | Why It Matters |
 |------------|----------------|
-| `@create-something/components` | Shared UI for paper display |
+| `@create-something/canon` | Shared UI for paper display |
 | `@create-something/tufte` | Visualization for experiment metrics |
 | `marked` | Markdown → HTML for paper content |
 | `highlight.js` | Code syntax highlighting in papers |
@@ -347,7 +347,7 @@ IO papers contain **interactive Svelte components** that cannot be stored in or 
 
 ```svelte
 // hermeneutic-spiral-ux/+page.svelte
-import { IsometricSpiral, IsometricArchitecture } from '@create-something/components';
+import { IsometricSpiral, IsometricArchitecture } from '@create-something/canon';
 
 const archNodes = [
   { id: 'whatsapp', label: 'WhatsApp', position: { x: -100, y: 0, z: 0 } },

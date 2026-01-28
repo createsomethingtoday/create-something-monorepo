@@ -9,7 +9,7 @@
 	 * Validates the hypothesis that effective planning enables Haiku to execute
 	 * well-defined tasks with high success rates and significant cost savings.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO

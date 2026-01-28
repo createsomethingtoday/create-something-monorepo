@@ -6,7 +6,7 @@
 	 * complex reasoning to Claude Sonnet, demonstrating 97% cost
 	 * savings on voice audit work while maintaining quality.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO

@@ -7,7 +7,7 @@
 	 * Editorial aesthetic for high-fashion boutiques
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
 	import {
 		ShoppingBag,

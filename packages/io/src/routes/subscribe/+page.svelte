@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import {
 		Bot,
 		Component,
@@ -108,7 +108,7 @@
 						</li>
 						<li class="flex items-start gap-2">
 							<Check class="w-4 h-4 icon-success mt-0.5 flex-shrink-0" />
-							<span>@create-something/components (UI primitives)</span>
+							<span>@create-something/canon (UI primitives)</span>
 						</li>
 						<li class="flex items-start gap-2">
 							<Circle class="w-4 h-4 icon-muted mt-0.5 flex-shrink-0" />

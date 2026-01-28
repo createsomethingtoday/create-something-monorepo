@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Footer, SEO } from '@create-something/components';
+	import { Footer, SEO } from '@create-something/canon';
 	import { enhance } from '$app/forms';
 
 	let name = $state('');

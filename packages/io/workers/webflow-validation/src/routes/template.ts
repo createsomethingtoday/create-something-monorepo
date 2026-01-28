@@ -29,7 +29,7 @@ import {
   isNameException,
   ValidationError,
 } from '../lib/validation';
-import { createLogger } from '@create-something/components/utils';
+import { createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('TemplateValidation');
 

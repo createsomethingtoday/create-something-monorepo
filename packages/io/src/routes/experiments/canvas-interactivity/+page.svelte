@@ -7,22 +7,17 @@
 	 * 2. TimelineEditor - Keyframe animation editor
 	 * 3. RealtimeChart - Live-updating data visualization
 	 * 4. CanvasDiagram - Exportable interactive diagrams
-	 *
-	 * Note: After building components (`pnpm build:lib`), these can be imported from:
-	 * '@create-something/components/diagrams' and '@create-something/components/interactive'
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
+	import {
+		KnowledgeGraphCanvas,
+		CanvasDiagram,
+		type GraphNode,
+		type DiagramShape
+	} from '@create-something/canon/diagrams';
+	import { TimelineEditor } from '@create-something/canon/interactive';
 	import type { PageData } from './$types';
-
-	// Direct source imports for development
-	import KnowledgeGraphCanvas from '../../../../../components/src/lib/diagrams/KnowledgeGraphCanvas.svelte';
-	import CanvasDiagram from '../../../../../components/src/lib/diagrams/CanvasDiagram.svelte';
-	import TimelineEditor from '../../../../../components/src/lib/interactive/TimelineEditor.svelte';
-	import type {
-		GraphNode,
-		DiagramShape
-	} from '../../../../../components/src/lib/diagrams/types';
 
 	let { data }: { data: PageData } = $props();
 	const { experiment } = data;

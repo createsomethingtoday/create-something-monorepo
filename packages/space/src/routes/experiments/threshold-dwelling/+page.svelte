@@ -6,16 +6,21 @@
 	 * Five views, one pattern: declarative data → SVG rendering.
 	 */
 
-	import FloorPlan from '$lib/components/FloorPlan.svelte';
-	import Section from '$lib/components/Section.svelte';
-	import Elevation from '$lib/components/Elevation.svelte';
-	import SitePlan from '$lib/components/SitePlan.svelte';
-	import RoofPlan from '$lib/components/RoofPlan.svelte';
-	import Systems from '$lib/components/Systems.svelte';
-	import LightStudy from '$lib/components/LightStudy.svelte';
-	import Circulation from '$lib/components/Circulation.svelte';
-	import MaterialPalette, { type Material } from '$lib/components/MaterialPalette.svelte';
-	import DailyRhythm, { type Activity, type DailyRhythmData } from '$lib/components/DailyRhythm.svelte';
+	import {
+		FloorPlan,
+		Section,
+		Elevation,
+		SitePlan,
+		RoofPlan,
+		Systems,
+		LightStudy,
+		Circulation,
+		MaterialPalette,
+		DailyRhythm,
+		type Material,
+		type Activity,
+		type DailyRhythmData
+	} from '@create-something/canon/experiments/threshold-dwelling';
 	import type {
 		FloorPlanData,
 		SectionData,
@@ -49,7 +54,7 @@
 		circulationPath,
 		zoneTransition
 	} from '$lib/types/architecture';
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 
 	// Fullscreen state - Heidegger: tool appears only when summoned
 	type ExpandedView = 'plan' | 'section' | 'elevation' | 'site' | 'roof' | 'systems' | 'light' | 'circulation' | 'materials' | 'rhythm' | null;

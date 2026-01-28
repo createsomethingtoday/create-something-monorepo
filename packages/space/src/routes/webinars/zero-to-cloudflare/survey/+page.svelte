@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Footer, SEO } from '@create-something/components';
+	import { Footer, SEO } from '@create-something/canon';
 
 	let selectedTrack = $state('');
 	let feedback = $state('');

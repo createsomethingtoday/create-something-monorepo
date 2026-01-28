@@ -1,6 +1,6 @@
 <script lang="ts">
-	import PrincipleCard from '$lib/components/PrincipleCard.svelte';
-	import { QuoteBlock, SEO } from '@create-something/components';
+	import { PrincipleCard } from '$lib/components';
+	import { QuoteBlock, SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();

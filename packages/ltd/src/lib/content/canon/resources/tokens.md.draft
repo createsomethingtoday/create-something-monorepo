@@ -34,12 +34,12 @@ published: true
 <div class="download-card">
 <h3>CSS Tokens</h3>
 <p>Raw CSS custom properties. Import directly into your stylesheet.</p>
-<code>@import '@create-something/components/styles/tokens.css';</code>
+<code>@import '@create-something/canon/styles/tokens.css';</code>
 </div>
 <div class="download-card">
 <h3>Full Canon</h3>
 <p>Tokens plus base styles and utility classes.</p>
-<code>@import '@create-something/components/styles/canon.css';</code>
+<code>@import '@create-something/canon/styles/canon.css';</code>
 </div>
 </div>
 

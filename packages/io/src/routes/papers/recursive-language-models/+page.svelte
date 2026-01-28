@@ -6,7 +6,7 @@
 	 * based on MIT CSAIL's research (arxiv:2512.24601). Demonstrates
 	 * processing of 157K characters to identify 165+ DRY violations.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO
@@ -601,19 +601,19 @@ print(f"Cost: \${result.cost_usd:.4f}")`}</pre>
 
 				<div class="p-4 font-mono code-block">
 					<pre class="code-primary">{`// Identity API calls
-import { identityClient } from '@create-something/components/api';
+import { identityClient } from '@create-something/canon/api';
 const result = await identityClient.login({ email, password });
 
 // API error handling
-import { catchApiError, apiError } from '@create-something/components/utils';
+import { catchApiError, apiError } from '@create-something/canon/utils';
 export const POST = catchApiError('MyAPI', async (event) => { ... });
 
 // Validation
-import { isEmpty, validateStringField } from '@create-something/components/utils';
+import { isEmpty, validateStringField } from '@create-something/canon/utils';
 if (isEmpty(records)) return apiError('Not found', 404);
 
 // Logging
-import { createLogger } from '@create-something/components/utils';
+import { createLogger } from '@create-something/canon/utils';
 const logger = createLogger('MyService');
 logger.info('Processing', { id, correlationId });`}</pre>
 				</div>
@@ -671,7 +671,7 @@ logger.info('Processing', { id, correlationId });`}</pre>
 			<p class="footer-text">
 				This research paper documents implementation work completed in January 2026. The RLM
 				module is deployed in production via Modal. The created utilities are available in
-				<code class="inline-code">@create-something/components</code>.
+				<code class="inline-code">@create-something/canon</code>.
 			</p>
 			<div class="flex justify-between mt-4">
 				<a href="/papers" class="footer-link">&larr; All Papers</a>

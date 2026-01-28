@@ -4,7 +4,7 @@
 	 * Team listing with PI focus areas
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import { getSiteConfigFromContext } from '$lib/config/context';
 	import EthicsDisclaimer from '$lib/components/EthicsDisclaimer.svelte';
 

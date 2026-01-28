@@ -1,6 +1,6 @@
 <script lang="ts">
-	import ExperimentsChart from '$lib/components/routing/ExperimentsChart.svelte';
-	import { SEO } from '@create-something/components';
+	import { ExperimentsChart } from '@create-something/canon/domains/space';
+	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();

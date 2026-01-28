@@ -9,7 +9,7 @@
 	 * crafted patterns showing growth, decline, and emergence trends.
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import {
 		ComparativeSparklines,
 		DistributionBar,

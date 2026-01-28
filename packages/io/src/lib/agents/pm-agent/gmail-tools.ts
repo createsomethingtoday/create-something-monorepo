@@ -11,7 +11,7 @@
  * Uses Workers AI-compatible tool format instead of the agents package.
  */
 
-import type { PMAgentEnv, WorkersAITool } from './tools';
+import { createToolExecutor, type PMAgentEnv, type WorkersAITool } from './tools';
 import type { GmailEnv } from './gmail';
 import {
 	listMessages,
@@ -418,10 +418,4 @@ export const gmailToolExecutors: Record<string, (args: any, env: PMAgentWithGmai
 /**
  * Execute a Gmail tool by name
  */
-export async function executeGmailTool(name: string, args: any, env: PMAgentWithGmailEnv): Promise<any> {
-	const executor = gmailToolExecutors[name];
-	if (!executor) {
-		return { success: false, error: `Unknown Gmail tool: ${name}` };
-	}
-	return executor(args, env);
-}
+export const executeGmailTool = createToolExecutor(gmailToolExecutors, 'Gmail');

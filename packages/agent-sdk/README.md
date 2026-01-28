@@ -17,6 +17,27 @@ uv pip install -e ".[all]"
 
 # Using pip
 pip install -e ".[all]"
+
+# Provider-specific installations
+pip install -e ".[gemini]"    # Google Gemini support
+pip install -e ".[moonshot]"  # Moonshot Kimi K2 support
+```
+
+## Environment Variables
+
+Configure API keys for the providers you want to use:
+
+```bash
+# Required: Anthropic Claude (primary provider)
+export ANTHROPIC_API_KEY="sk-ant-..."
+
+# Optional: Google Gemini (cost-effective for trivial tasks)
+export GOOGLE_API_KEY="..."
+# or: export GEMINI_API_KEY="..."
+
+# Optional: Moonshot Kimi K2 (5-6x cheaper than Claude for code tasks)
+export MOONSHOT_API_KEY="sk-..."
+# Get your key at: https://platform.moonshot.ai/
 ```
 
 ## Quick Start

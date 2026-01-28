@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { PaperCard } from '@create-something/components';
+  import { PaperCard } from '@create-something/canon';
   import type { PageData } from './$types';
 
   export let data: PageData;

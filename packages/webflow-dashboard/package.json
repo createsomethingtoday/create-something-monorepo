@@ -23,7 +23,7 @@
     "vite": "^6.0.0"
   },
   "dependencies": {
-    "@create-something/components": "workspace:^",
+    "@create-something/canon": "workspace:^",
     "airtable": "^0.12.2",
     "lucide-svelte": "^0.454.0",
     "resend": "^6.7.0",

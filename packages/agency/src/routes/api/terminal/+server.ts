@@ -1,12 +1,12 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import type { Paper } from '@create-something/components/types';
-import { generateCorrelationId, logError } from '@create-something/components/utils';
+import type { Paper } from '@create-something/canon/types';
+import { generateCorrelationId, logError } from '@create-something/canon/utils';
 import {
 	createTerminalHeader,
 	createTerminalCardGrid,
 	type TerminalPaperItem
-} from '@create-something/components/ascii';
+} from '@create-something/canon/ascii';
 
 interface TerminalRequest {
 	command: string;

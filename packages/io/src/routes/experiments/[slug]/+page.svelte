@@ -1,11 +1,7 @@
 <script lang="ts">
 	import type { PageData } from "./$types";
-	import ArticleHeader from "$lib/components/ArticleHeader.svelte";
-	import ArticleContent from "$lib/components/ArticleContent.svelte";
-	import { ShareButtons, SEO, RelatedArticles, PageActions, MarkdownPreviewModal } from "@create-something/components";
-	import Footer from "$lib/components/Footer.svelte";
-	import StickyCTA from "$lib/components/StickyCTA.svelte";
-	import NextExperimentCard from "$lib/components/NextExperimentCard.svelte";
+	import { ArticleHeader, ArticleContent, StickyCTA, NextExperimentCard } from "@create-something/canon/domains/io";
+	import { ShareButtons, SEO, RelatedArticles, PageActions, MarkdownPreviewModal, Footer } from "@create-something/canon";
 	import { page } from "$app/stores";
 	import confetti from "canvas-confetti";
 	import {
@@ -13,8 +9,8 @@
 		isExperimentCompleted,
 		validateCompletionToken,
 		clearExperimentCompletion,
-	} from "@create-something/components/utils";
-	import { getNextPaper } from '@create-something/components/utils';
+	} from "@create-something/canon/utils";
+	import { getNextPaper } from '@create-something/canon/utils';
 
 	let { data }: { data: PageData } = $props();
 

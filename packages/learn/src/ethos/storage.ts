@@ -200,18 +200,29 @@ export function addConstraint(
 }
 
 /**
- * Remove a constraint
+ * Generic helper to remove an item from an ethos array by ID
  */
-export function removeConstraint(id: string): boolean {
+function removeFromEthosArray(
+	arrayKey: 'constraints' | 'healthChecks',
+	id: string
+): boolean {
 	const ethos = loadEthos();
 	if (!ethos) return false;
 
-	const index = ethos.constraints.findIndex((c) => c.id === id);
+	const array = ethos[arrayKey];
+	const index = array.findIndex((item) => item.id === id);
 	if (index === -1) return false;
 
-	ethos.constraints.splice(index, 1);
+	array.splice(index, 1);
 	saveEthos(ethos);
 	return true;
+}
+
+/**
+ * Remove a constraint
+ */
+export function removeConstraint(id: string): boolean {
+	return removeFromEthosArray('constraints', id);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -250,15 +261,7 @@ export function addHealthCheck(
  * Remove a health check
  */
 export function removeHealthCheck(id: string): boolean {
-	const ethos = loadEthos();
-	if (!ethos) return false;
-
-	const index = ethos.healthChecks.findIndex((h) => h.id === id);
-	if (index === -1) return false;
-
-	ethos.healthChecks.splice(index, 1);
-	saveEthos(ethos);
-	return true;
+	return removeFromEthosArray('healthChecks', id);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

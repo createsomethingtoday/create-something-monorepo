@@ -7,9 +7,9 @@
 
 /* ==========================================================================
    Canon Design Tokens - Single Source of Truth
-   Import from @create-something/components (MUST come before @tailwind)
+   Import from @create-something/canon (MUST come before @tailwind)
    ========================================================================== */
-@import '@create-something/components/styles/tokens.css';
+@import '@create-something/canon/styles/tokens.css';
 
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';

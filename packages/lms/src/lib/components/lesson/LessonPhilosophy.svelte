@@ -7,7 +7,7 @@
 	 * - Callout card explaining the concept
 	 * - Optional concept name badge
 	 */
-	import { CanonReveal } from '@create-something/components/motion';
+	import { CanonReveal } from '@create-something/canon/motion';
 
 	type RevealStyle = 'decode' | 'unconcealment' | 'typewriter' | 'threshold' | 'mask';
 

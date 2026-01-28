@@ -6,7 +6,7 @@
 	 * that punish users for legitimate actions.
 	 */
 
-	import { KeyInsight, createInsight, createBugFixComparison, parseStatement, SEO } from '@create-something/components';
+	import { KeyInsight, createInsight, createBugFixComparison, parseStatement, SEO } from '@create-something/canon';
 
 	const insight = createInsight(
 		'cumulative-state-antipattern',

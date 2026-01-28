@@ -18,6 +18,8 @@
  * - Use conflict detection to prevent double-posting
  */
 
+import { generateId } from '@create-something/canon/utils';
+
 export type PostingMode = 'drip' | 'longform' | 'immediate';
 
 export type DayOfWeek = 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat';
@@ -239,18 +241,14 @@ export function generateSchedule(postCount: number, options: ScheduleOptions): D
  * Generate unique IDs for scheduled posts
  */
 export function generatePostId(): string {
-	const timestamp = Date.now().toString(36);
-	const random = Math.random().toString(36).substring(2, 8);
-	return `sp_${timestamp}_${random}`;
+	return generateId('sp', 6);
 }
 
 /**
  * Generate a thread ID
  */
 export function generateThreadId(): string {
-	const timestamp = Date.now().toString(36);
-	const random = Math.random().toString(36).substring(2, 6);
-	return `thread_${timestamp}_${random}`;
+	return generateId('thread');
 }
 
 /**

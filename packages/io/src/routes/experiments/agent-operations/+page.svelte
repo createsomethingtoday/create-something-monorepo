@@ -6,7 +6,7 @@
 	 * Shows agent status, recent deployments, and Beads issues being worked on.
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();

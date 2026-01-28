@@ -6,9 +6,9 @@
 	 * Compares actual shooting to expected based on shot zones.
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
-	import DefensiveHeatmap from '$lib/components/nba/DefensiveHeatmap.svelte';
+	import { DefensiveHeatmap } from '$lib/experiments/nba-live';
 	import { ArrowLeft, Clock, Radio, AlertCircle } from 'lucide-svelte';
 
 	let { data }: { data: PageData } = $props();

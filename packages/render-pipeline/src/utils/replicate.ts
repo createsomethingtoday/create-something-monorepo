@@ -1,41 +1,37 @@
 /**
- * Shared Replicate API utilities
+ * Replicate API utilities - DISABLED
  *
- * Consolidates client initialization and common helpers used across
- * render-pipeline modules (cleanup, fine-tune, rendering).
+ * Replicate integration has been disabled to prevent runaway costs.
+ * All functions throw errors to ensure no accidental API calls.
+ *
+ * Previous costs: $700+ from google/nano-banana-pro (4,339 images)
+ * Disabled: 2026-01-25
  */
-
-import Replicate from 'replicate';
-
-let replicateClient: Replicate | null = null;
 
 /**
- * Get or create Replicate client (singleton)
+ * Get Replicate client - DISABLED
+ * @throws Error always - Replicate integration is disabled
  */
-export function getClient(): Replicate {
-	if (!replicateClient) {
-		const token = process.env.REPLICATE_API_TOKEN;
-		if (!token) {
-			throw new Error(
-				'REPLICATE_API_TOKEN environment variable not set. ' +
-					'Get your token at https://replicate.com/account/api-tokens'
-			);
-		}
-		replicateClient = new Replicate({ auth: token });
-	}
-	return replicateClient;
+export function getClient(): never {
+	throw new Error(
+		'REPLICATE INTEGRATION DISABLED: ' +
+			'Replicate API has been disabled due to runaway costs ($700+). ' +
+			'Contact engineering before re-enabling.'
+	);
 }
 
 /**
- * Convert buffer to data URI for Replicate API
+ * Convert buffer to data URI
+ * This utility function is still available as it has no cost implications.
  */
 export function bufferToDataUri(buffer: Buffer, mimeType = 'image/png'): string {
 	return `data:${mimeType};base64,${buffer.toString('base64')}`;
 }
 
 /**
- * Check if Replicate API is configured
+ * Check if Replicate API is configured - ALWAYS returns false
  */
 export function isConfigured(): boolean {
-	return !!process.env.REPLICATE_API_TOKEN;
+	// Always return false to prevent any Replicate usage
+	return false;
 }

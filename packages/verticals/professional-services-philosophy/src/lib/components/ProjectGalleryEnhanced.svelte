@@ -9,7 +9,7 @@
 	 * Canon: Interaction and timing create hierarchy
 	 */
 
-	import { ScrollRevealStagger } from '@create-something/components/motion';
+	import { ScrollRevealStagger } from '@create-something/canon/motion';
 	import { siteConfig, type SiteConfig } from '$lib/config/context';
 
 	interface Props {

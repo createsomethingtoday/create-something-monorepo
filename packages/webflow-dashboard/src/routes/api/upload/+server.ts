@@ -82,15 +82,23 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 			}
 		}
 
+		// Extract origin for absolute URL construction (required for Airtable)
+		const origin = new URL(request.url).origin;
+		console.log('[Upload API] Origin for absolute URL:', origin);
+
 		// Upload to R2 using the utility function
 		const result = await uploadToR2(uploads, arrayBuffer, {
 			filename: file.name || 'upload.webp',
 			userEmail: locals.user.email,
 			contentType: 'image/webp',
+			origin,
 			metadata: {
 				uploadType
 			}
 		});
+
+		console.log('[Upload API] Upload result URL:', result.url);
+		console.log('[Upload API] Is absolute URL:', result.url.startsWith('http'));
 
 		return json({
 			url: result.url,

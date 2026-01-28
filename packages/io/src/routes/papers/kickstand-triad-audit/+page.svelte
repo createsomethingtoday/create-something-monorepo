@@ -7,7 +7,7 @@
 	 * intelligence system.
 	 */
 
-	import { SubtractiveTriad, IsometricArchitecture, SEO } from '@create-something/components';
+	import { SubtractiveTriad, IsometricArchitecture, SEO } from '@create-something/canon';
 
 	// Kickstand system hierarchy
 	const systemNodes = [

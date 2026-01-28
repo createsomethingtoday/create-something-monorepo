@@ -11,9 +11,9 @@
 	 * - Honesty over polish
 	 */
 
-	import Presentation from '$lib/components/Presentation.svelte';
-	import Slide from '$lib/components/Slide.svelte';
-	import { SEO } from '@create-something/components';
+	import { Presentation } from '@create-something/canon/domains/ltd';
+	import { Slide } from '@create-something/canon/domains/ltd';
+	import { SEO } from '@create-something/canon';
 
 	let { data } = $props();
 </script>

@@ -9,8 +9,8 @@
 	 */
 
 	import { exercises, type ValidationGrade } from '$lib/praxis/exercises';
-	import CodeEditor from '$lib/components/CodeEditor.svelte';
-	import { SEO } from '@create-something/components';
+	import { CodeEditor } from '@create-something/canon/domains/space';
+	import { SEO } from '@create-something/canon';
 
 	interface TriadFeedback {
 		level: 'dry' | 'rams' | 'heidegger';

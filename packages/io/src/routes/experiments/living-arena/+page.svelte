@@ -10,7 +10,7 @@
 	 */
 
 	import { onMount } from 'svelte';
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import {
 		Shield,
 		Lightbulb,
@@ -30,8 +30,8 @@
 		CheckCircle
 	} from 'lucide-svelte';
 
-	// Import extracted modules
-	import type { SecurityStatus, LightingMode, Particle, Incident } from './arenaTypes';
+	// Import from Canon experiments
+	import type { SecurityStatus, LightingMode, Particle, Incident } from '@create-something/canon/experiments/living-arena';
 	import {
 		intelligenceScenarios,
 		particleColors,
@@ -42,9 +42,10 @@
 		scenarioMessages,
 		createInitialHvacZones,
 		createInitialNotifications,
-		createInitialIncidentLog
-	} from './arenaData';
-	import { generateParticles, updateParticles as updateParticlePositions } from './arenaParticles';
+		createInitialIncidentLog,
+		generateParticles,
+		updateParticles as updateParticlePositions
+	} from '@create-something/canon/experiments/living-arena';
 
 	// System states - simulating real-time automation data
 	let securityStatus = $state<SecurityStatus>('monitoring');

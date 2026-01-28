@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import type { FunnelMetricsInput } from '$lib/funnel';
 
 	let date = $state(new Date().toISOString().split('T')[0]);

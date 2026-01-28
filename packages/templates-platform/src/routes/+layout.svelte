@@ -1,6 +1,6 @@
 <script lang="ts">
 	import '../app.css';
-	import { SkipToContent } from '@create-something/components';
+	import { SkipToContent } from '@create-something/canon';
 	import type { Snippet } from 'svelte';
 
 	interface Props {

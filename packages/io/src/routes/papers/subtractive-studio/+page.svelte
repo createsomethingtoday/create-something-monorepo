@@ -5,7 +5,7 @@
 	 * Positioning paper establishing CREATE SOMETHING's differentiation:
 	 * Most agencies add. CREATE SOMETHING removes what obscures.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO

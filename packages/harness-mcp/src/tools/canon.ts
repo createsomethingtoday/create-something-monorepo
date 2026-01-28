@@ -85,7 +85,7 @@ export function getQuickReference(): string {
 ## TypeScript Verification
 - In monorepo: Use \`pnpm --filter=@create-something/[pkg] exec tsc --noEmit\`
 - NOT: \`tsc\` alone (won't find dependencies)
-- Package names have hyphens: @create-something/components, not @createsomething/components
+- Package names have hyphens: @create-something/canon, not @createsomething/components
 
 ## Deployment
 - Pages: \`pnpm build && wrangler pages deploy\`

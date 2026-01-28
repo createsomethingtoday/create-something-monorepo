@@ -1,32 +1,59 @@
 <script lang="ts">
 	import '../app.css';
-	import { Database, Layers, Settings, Activity } from 'lucide-svelte';
+	import { Database, Layers, Settings, Menu, X } from 'lucide-svelte';
 	import { page } from '$app/stores';
 
 	let { children, data } = $props();
+	
+	let sidebarOpen = $state(false);
+	
+	function toggleSidebar() {
+		sidebarOpen = !sidebarOpen;
+	}
+	
+	function closeSidebar() {
+		sidebarOpen = false;
+	}
 </script>
 
 <div class="app-layout">
+	<!-- Mobile header with hamburger -->
+	<header class="mobile-header">
+		<button class="menu-toggle" onclick={toggleSidebar} aria-label="Toggle menu">
+			{#if sidebarOpen}
+				<X size={24} />
+			{:else}
+				<Menu size={24} />
+			{/if}
+		</button>
+		<span class="mobile-logo">TEND</span>
+	</header>
+
+	<!-- Overlay for mobile -->
+	{#if sidebarOpen}
+		<button class="sidebar-overlay" onclick={closeSidebar} aria-label="Close menu"></button>
+	{/if}
+
 	<!-- Minimal sidebar -->
-	<aside class="sidebar">
+	<aside class="sidebar" class:open={sidebarOpen}>
 		<div class="logo">
 		<span class="logo-text">TEND</span>
 		<span class="logo-vertical">DENTAL</span>
 		</div>
 
 		<nav class="nav">
-			<a href="/" class="nav-item" class:active={$page.url.pathname === '/'}>
+			<a href="/" class="nav-item" class:active={$page.url.pathname === '/'} onclick={closeSidebar}>
 				<Database size={18} />
 				<span>Database</span>
 			</a>
-			<a href="/sources" class="nav-item" class:active={$page.url.pathname === '/sources'}>
+			<a href="/sources" class="nav-item" class:active={$page.url.pathname === '/sources'} onclick={closeSidebar}>
 				<Layers size={18} />
 				<span>Sources</span>
 			</a>
 		</nav>
 
 		<div class="sidebar-footer">
-			<a href="/settings" class="nav-item" class:active={$page.url.pathname === '/settings'}>
+			<a href="/settings" class="nav-item" class:active={$page.url.pathname === '/settings'} onclick={closeSidebar}>
 				<Settings size={18} />
 				<span>Settings</span>
 			</a>
@@ -114,5 +141,85 @@
 		flex: 1;
 		padding: var(--space-lg);
 		overflow-y: auto;
+	}
+
+	/* Mobile header - hidden on desktop */
+	.mobile-header {
+		display: none;
+	}
+
+	/* Sidebar overlay - hidden on desktop */
+	.sidebar-overlay {
+		display: none;
+	}
+
+	/* Mobile responsive styles */
+	@media (max-width: 768px) {
+		.app-layout {
+			flex-direction: column;
+		}
+
+		.mobile-header {
+			display: flex;
+			align-items: center;
+			gap: var(--space-sm);
+			padding: var(--space-sm) var(--space-md);
+			background: var(--color-bg-elevated);
+			border-bottom: 1px solid var(--color-border-default);
+			position: sticky;
+			top: 0;
+			z-index: 50;
+		}
+
+		.menu-toggle {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 44px;
+			height: 44px;
+			background: transparent;
+			border: none;
+			color: var(--color-fg-primary);
+			cursor: pointer;
+			border-radius: var(--radius-md);
+		}
+
+		.menu-toggle:hover {
+			background: var(--color-hover);
+		}
+
+		.mobile-logo {
+			font-size: var(--text-h3);
+			font-weight: 600;
+			color: var(--color-fg-primary);
+			letter-spacing: -0.02em;
+		}
+
+		.sidebar-overlay {
+			display: block;
+			position: fixed;
+			inset: 0;
+			background: rgba(0, 0, 0, 0.5);
+			z-index: 90;
+			border: none;
+			cursor: pointer;
+		}
+
+		.sidebar {
+			position: fixed;
+			top: 0;
+			left: -100%;
+			height: 100vh;
+			z-index: 100;
+			transition: left var(--duration-standard) var(--ease-standard);
+		}
+
+		.sidebar.open {
+			left: 0;
+		}
+
+		.main-content {
+			padding: var(--space-md);
+		}
 	}
 </style>

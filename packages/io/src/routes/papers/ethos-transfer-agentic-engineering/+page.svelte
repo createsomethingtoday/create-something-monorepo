@@ -6,7 +6,7 @@
 	 * demonstrating how Claude Code in the terminal enables ethos
 	 * adoption through agentic engineering.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO

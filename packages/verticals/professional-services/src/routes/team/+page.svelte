@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import TeamGrid from '$lib/components/TeamGrid.svelte';
 	import ConsultationCTA from '$lib/components/ConsultationCTA.svelte';
 	import StructuredData from '$lib/components/StructuredData.svelte';

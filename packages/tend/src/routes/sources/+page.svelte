@@ -125,7 +125,7 @@
 
 	.sources-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+		grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
 		gap: var(--space-sm);
 		margin-bottom: var(--space-xl);
 	}
@@ -165,6 +165,7 @@
 		font-weight: 500;
 		color: var(--color-fg-primary);
 		margin-bottom: 4px;
+		white-space: nowrap;
 	}
 
 	.source-status {
@@ -250,5 +251,55 @@
 
 	.cta-button:hover {
 		opacity: 0.9;
+	}
+
+	/* Mobile responsive - Tufte principles */
+	@media (max-width: 768px) {
+		.sources-page {
+			padding: 0 var(--space-sm);
+		}
+
+		.enterprise-cta {
+			padding: var(--space-md);
+		}
+
+		.cta-button {
+			min-height: 44px;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.sources-grid {
+			grid-template-columns: 1fr;
+			gap: 0; /* Tufte: whitespace + rules, not boxes */
+		}
+
+		.source-card {
+			border-radius: 0;
+			border-left: none;
+			border-right: none;
+			border-top: none;
+			border-bottom: 1px solid var(--color-border-subtle);
+			padding: var(--space-md) 0;
+		}
+
+		.source-card:last-child,
+		.source-card.add-source {
+			border-bottom: none;
+		}
+
+		.source-card:hover {
+			border-color: var(--color-border-subtle);
+		}
+
+		.source-card.add-source {
+			margin-top: var(--space-md);
+			padding: var(--space-md);
+			border: 1px dashed var(--color-border-default);
+			border-radius: var(--radius-md);
+		}
 	}
 </style>

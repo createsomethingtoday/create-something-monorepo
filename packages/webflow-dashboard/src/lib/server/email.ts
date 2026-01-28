@@ -273,7 +273,7 @@ export async function sendVerificationEmail(
 		const resend = getResendClient(apiKey);
 		
 		const { data, error } = await resend.emails.send({
-			from: 'Webflow Dashboard <noreply@createsomething.io>',
+			from: 'Webflow Dashboard <micah@createsomething.io>',
 			to: options.to,
 			subject: `Your verification code: ${options.token}`,
 			html: verificationEmailTemplate(options.token, options.expiresIn)
@@ -304,7 +304,7 @@ export async function sendValidationEmail(
 		const statusText = options.passed ? 'Passed' : 'Needs Attention';
 		
 		const { data, error } = await resend.emails.send({
-			from: 'Webflow Dashboard <noreply@createsomething.io>',
+			from: 'Webflow Dashboard <micah@createsomething.io>',
 			to: options.to,
 			subject: `GSAP Validation ${statusText}: ${options.siteName}`,
 			html: validationCompleteTemplate(options)

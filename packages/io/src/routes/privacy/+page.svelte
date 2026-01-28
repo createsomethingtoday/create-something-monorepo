@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { SEO, PrivacyPolicyContent } from '@create-something/components';
+  import { SEO, PrivacyPolicyContent } from '@create-something/canon';
 </script>
 
 <SEO

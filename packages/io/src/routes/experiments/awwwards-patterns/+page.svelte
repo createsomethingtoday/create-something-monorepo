@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { QuoteBlock, SEO } from '@create-something/components';
+	import { QuoteBlock, SEO } from '@create-something/canon';
 
 	// Parallax tracking - relative to container
 	let parallaxContainer: HTMLElement;

@@ -14,7 +14,7 @@
 	 * 9. Footer with contact overlay
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import { siteConfig } from '$lib/config/context';
 	import StructuredData from '$lib/components/StructuredData.svelte';
 </script>

@@ -1,7 +1,6 @@
 <script lang="ts">
-  import PaperCard from '$lib/components/PaperCard.svelte';
+  import { PaperCard, SEO } from '@create-something/canon';
   import type { PageData } from './$types';
-  import { SEO } from '@create-something/components';
   // Footer is provided by layout
 
   export let data: PageData;

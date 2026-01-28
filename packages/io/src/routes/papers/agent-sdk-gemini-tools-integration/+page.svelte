@@ -6,7 +6,7 @@
 	 * into the Agent SDK's Gemini provider. Covers implementation, safety controls,
 	 * agentic loop patterns, and the impact on research paper quality.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO

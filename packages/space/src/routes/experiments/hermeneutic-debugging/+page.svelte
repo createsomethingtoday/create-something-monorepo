@@ -8,7 +8,7 @@
 	 * Based on the paper at createsomething.io/papers/hermeneutic-debugging
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 
 	// Experiment tracking
 	const PAPER_ID = 'file-hermeneutic-debugging';

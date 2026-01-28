@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SEO } from '@create-something/components';
+	import { SEO, Card } from '@create-something/canon';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -41,7 +41,12 @@
 
 	<!-- Token Status Banner -->
 	{#if data.tokenStatus}
-		<div class="banner" class:warning={data.tokenStatus.warning} class:disconnected={!data.tokenStatus.connected}>
+		<Card
+			variant="glass"
+			radius="md"
+			padding="none"
+			class={`glass-emphasis banner ${data.tokenStatus.warning ? 'warning' : ''} ${!data.tokenStatus.connected ? 'disconnected' : ''}`}
+		>
 			{#if !data.tokenStatus.connected}
 				<span class="banner-icon">⚠</span>
 				<span>LinkedIn disconnected. <a href="https://createsomething.io/api/linkedin/auth">Reconnect</a></span>
@@ -52,7 +57,7 @@
 				<span class="banner-icon">✓</span>
 				<span>LinkedIn connected ({data.tokenStatus.daysRemaining} days remaining)</span>
 			{/if}
-		</div>
+		</Card>
 	{/if}
 
 	<!-- Weekly Rhythm -->
@@ -93,13 +98,13 @@
 	<!-- Today's Focus -->
 	<section class="section">
 		<h2 class="section-title">Today's Focus</h2>
-		<div class="focus-card">
+		<Card variant="glass" radius="md" padding="none" class="glass-emphasis focus-card">
 			<div class="focus-day">{data.currentDay}</div>
 			<div class="focus-title">{data.todaysFocus}</div>
 			<div class="focus-description">
 				{rhythm?.[data.currentDay || '']?.description || 'No focus defined'}
 			</div>
-		</div>
+		</Card>
 	</section>
 
 	<!-- Stats -->
@@ -210,29 +215,26 @@
 		font-size: var(--text-body-sm);
 	}
 
-	.banner {
+	:global(.banner) {
 		display: flex;
 		align-items: center;
 		gap: var(--space-sm);
 		padding: var(--space-sm) var(--space-md);
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
 		margin-bottom: var(--space-lg);
 		font-size: var(--text-body-sm);
 	}
 
-	.banner.warning {
+	:global(.banner.warning) {
 		background: rgba(251, 191, 36, 0.1);
 		border-color: var(--color-warning);
 	}
 
-	.banner.disconnected {
+	:global(.banner.disconnected) {
 		background: rgba(239, 68, 68, 0.1);
 		border-color: var(--color-error);
 	}
 
-	.banner a {
+	:global(.banner a) {
 		color: var(--color-info);
 	}
 
@@ -318,10 +320,7 @@
 	}
 
 	/* Focus Card */
-	.focus-card {
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-emphasis);
-		border-radius: var(--radius-md);
+	:global(.focus-card) {
 		padding: var(--space-md);
 	}
 

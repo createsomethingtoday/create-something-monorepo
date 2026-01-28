@@ -2,19 +2,21 @@
  * Content Loader - .ltd Implementation
  *
  * Loads markdown content using Vite's import.meta.glob.
- * Uses shared utilities from @create-something/components.
+ * Uses shared utilities from @create-something/canon.
  */
 
 import { error } from '@sveltejs/kit';
 import type { Component } from 'svelte';
 import {
 	loadMarkdownContent,
+	loadContentBySlug,
+	getContentSlugs,
 	type BaseFrontmatter,
 	type ContentItem
-} from '@create-something/components/content';
+} from '@create-something/canon/content';
 
 // Re-export shared types and functions for convenience
-export { loadMarkdownContent, type BaseFrontmatter, type ContentItem };
+export { loadMarkdownContent, loadContentBySlug, getContentSlugs, type BaseFrontmatter, type ContentItem };
 
 /**
  * Pattern frontmatter - .ltd specific
@@ -41,24 +43,21 @@ export interface CanonFrontmatter extends BaseFrontmatter {
 	order?: number;
 }
 
-/**
- * Load a single pattern by slug
- */
-export async function loadPatternBySlug(slug: string): Promise<ContentItem<PatternFrontmatter>> {
-	const modules = import.meta.glob<{
+// Pattern modules - defined once, used by both functions
+const getPatternModules = () =>
+	import.meta.glob<{
 		default: Component;
 		metadata: PatternFrontmatter;
 	}>('./content/patterns/*.md');
 
-	const items = await loadMarkdownContent(modules, false);
-	const item = items.find((i) => i.slug === slug);
+/**
+ * Load a single pattern by slug
+ */
+export async function loadPatternBySlug(slug: string): Promise<ContentItem<PatternFrontmatter>> {
+	const item = await loadContentBySlug(getPatternModules(), slug);
 
 	if (!item) {
 		throw error(404, `Pattern not found: ${slug}`);
-	}
-
-	if (item.frontmatter.published === false || item.frontmatter.hidden === true) {
-		throw error(404, 'Pattern not available');
 	}
 
 	return item;
@@ -68,12 +67,7 @@ export async function loadPatternBySlug(slug: string): Promise<ContentItem<Patte
  * Get all pattern slugs for static generation
  */
 export async function getPatternSlugs(): Promise<string[]> {
-	const modules = import.meta.glob<{
-		default: Component;
-		metadata: PatternFrontmatter;
-	}>('./content/patterns/*.md');
-	const items = await loadMarkdownContent(modules, true);
-	return items.map((item) => item.slug);
+	return getContentSlugs(getPatternModules());
 }
 
 /**

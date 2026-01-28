@@ -47,7 +47,7 @@
 		}
 	},
 	"devDependencies": {
-		"@create-something/components": "workspace:^",
+		"@create-something/canon": "workspace:^",
 		"@sveltejs/adapter-auto": "^7.0.0",
 		"@sveltejs/kit": "^2.47.1",
 		"@sveltejs/package": "^2.5.4",

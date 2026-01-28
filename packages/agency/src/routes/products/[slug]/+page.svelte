@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import { page } from '$app/stores';
-	import EmailCaptureModal from '$lib/components/EmailCaptureModal.svelte';
+	import { EmailCaptureModal } from '@create-something/canon/domains/agency';
 
 	let { data }: { data: PageData } = $props();
 	const { product } = data;

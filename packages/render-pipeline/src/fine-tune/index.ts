@@ -1,37 +1,13 @@
 /**
- * Fine-Tune Module
- * Flux LoRA training and inference for CREATE SOMETHING Canon style
+ * Fine-Tune Module - DISABLED
  *
- * @example Training
- * ```typescript
- * import { train, createManifest } from '@create-something/render-pipeline/fine-tune';
+ * Replicate integration has been disabled due to runaway costs ($700+).
+ * All functions will throw errors.
  *
- * const result = await train({
- *   inputImages: './training-images.zip',
- *   triggerWord: 'CSMTH',
- *   loraType: 'style',
- *   steps: 1000
- * });
- * ```
- *
- * @example Generation
- * ```typescript
- * import { generate, registerModel, buildCanonPrompt } from '@create-something/render-pipeline/fine-tune';
- *
- * // Register the trained model
- * registerModel('flux-canon', {
- *   id: 'your-username/flux-canon-style:version',
- *   name: 'CREATE SOMETHING Canon Style',
- *   triggerWord: 'CSMTH'
- * });
- *
- * // Generate with Canon prompt
- * const prompt = buildCanonPrompt('the hermeneutic circle');
- * const result = await generate('flux-canon', { prompt, outputPath: './output.png' });
- * ```
+ * Disabled: 2026-01-25
  */
 
-// Types
+// Types only - functions are disabled
 export type {
   LoraType,
   TrainingConfig,
@@ -43,27 +19,14 @@ export type {
   TrainingManifest
 } from './types.js';
 
-// Training
+// Training (all throw errors)
 export {
   startTraining,
-  waitForTraining,
-  train,
-  createManifest,
-  saveManifest,
-  loadManifest,
-  checkTrainingStatus
+  checkTrainingStatus,
+  cancelTraining
 } from './train.js';
 
-// Generation
+// Generation (all throw errors)
 export {
-  registerModel,
-  getModel,
-  listModels,
-  generate,
-  generateWithModel,
-  generateDirect,
-  buildCanonPrompt,
-  generateBatch,
-  generateTestSet,
-  TEST_SUBJECTS
+  generateWithFineTune
 } from './generate.js';

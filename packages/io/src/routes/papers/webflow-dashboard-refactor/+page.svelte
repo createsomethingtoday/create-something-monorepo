@@ -6,7 +6,7 @@
 	 * features in 83 minutes, achieving 100% feature parity while migrating
 	 * from Next.js/Vercel to SvelteKit/Cloudflare.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO

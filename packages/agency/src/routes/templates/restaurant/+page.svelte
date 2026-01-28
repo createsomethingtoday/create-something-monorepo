@@ -7,7 +7,7 @@
 	 * Avant-garde aesthetic for modern dining experiences
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
 	import {
 		Utensils,

@@ -73,6 +73,7 @@ pub mod models;
 pub mod orchestrator;
 pub mod backfill;
 pub mod config;
+pub mod ui_resources;
 
 use std::path::{Path, PathBuf};
 use thiserror::Error;

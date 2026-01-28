@@ -1,0 +1,302 @@
+{
+	"name": "@create-something/canon",
+	"version": "0.1.0",
+	"description": "Canon Design System - Single source of truth for CREATE SOMETHING properties",
+	"type": "module",
+	"license": "MIT",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "svelte-kit sync && svelte-package && publint",
+		"package": "svelte-kit sync && svelte-package && publint",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"test": "vitest run",
+		"test:watch": "vitest"
+	},
+	"files": [
+		"dist",
+		"!dist/**/*.test.*",
+		"!dist/**/*.spec.*"
+	],
+	"sideEffects": [
+		"**/*.css"
+	],
+	"svelte": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"svelte": "./dist/index.js"
+		},
+		"./styles/tokens.css": "./dist/styles/tokens.css",
+		"./styles/canon.css": "./dist/styles/canon.css",
+		"./styles/components.css": "./dist/styles/components.css",
+		"./styles/editorial.css": "./dist/styles/editorial.css",
+		"./styles/animations.css": "./dist/styles/animations.css",
+		"./styles/glass.css": "./dist/styles/glass.css",
+		"./styles/prose.css": "./dist/styles/prose.css",
+		"./styles/vertical-base.css": "./dist/styles/vertical-base.css",
+		"./styles/tokens.scss": "./dist/styles/tokens.scss",
+		"./styles/tokens.dtcg.json": "./dist/styles/tokens.dtcg.json",
+		"./styles/tokens.figma.json": "./dist/styles/tokens.figma.json",
+		"./styles/canon.json": "./dist/styles/canon.json",
+		"./components": {
+			"types": "./dist/components/index.d.ts",
+			"svelte": "./dist/components/index.js"
+		},
+		"./components/form": {
+			"types": "./dist/components/form/index.d.ts",
+			"svelte": "./dist/components/form/index.js"
+		},
+		"./components/navigation": {
+			"types": "./dist/components/navigation/index.d.ts",
+			"svelte": "./dist/components/navigation/index.js"
+		},
+		"./components/feedback": {
+			"types": "./dist/components/feedback/index.d.ts",
+			"svelte": "./dist/components/feedback/index.js"
+		},
+		"./components/docs": {
+			"types": "./dist/components/docs/index.d.ts",
+			"svelte": "./dist/components/docs/index.js"
+		},
+		"./domains/ltd": {
+			"types": "./dist/domains/ltd/index.d.ts",
+			"svelte": "./dist/domains/ltd/index.js"
+		},
+		"./domains/agency": {
+			"types": "./dist/domains/agency/index.d.ts",
+			"svelte": "./dist/domains/agency/index.js"
+		},
+		"./domains/space": {
+			"types": "./dist/domains/space/index.d.ts",
+			"svelte": "./dist/domains/space/index.js"
+		},
+		"./domains/io": {
+			"types": "./dist/domains/io/index.d.ts",
+			"svelte": "./dist/domains/io/index.js"
+		},
+		"./experiments": {
+			"types": "./dist/experiments/index.d.ts",
+			"svelte": "./dist/experiments/index.js"
+		},
+		"./experiments/threshold-dwelling": {
+			"types": "./dist/experiments/threshold-dwelling/index.d.ts",
+			"svelte": "./dist/experiments/threshold-dwelling/index.js"
+		},
+		"./experiments/kinetic-typography": {
+			"types": "./dist/experiments/kinetic-typography/index.d.ts",
+			"svelte": "./dist/experiments/kinetic-typography/index.js"
+		},
+		"./experiments/living-arena": {
+			"types": "./dist/experiments/living-arena/index.d.ts",
+			"svelte": "./dist/experiments/living-arena/index.js"
+		},
+		"./experiments/living-arena-gpu": {
+			"types": "./dist/experiments/living-arena-gpu/index.d.ts",
+			"svelte": "./dist/experiments/living-arena-gpu/index.js"
+		},
+		"./experiments/render-preview": {
+			"types": "./dist/experiments/render-preview/index.d.ts",
+			"svelte": "./dist/experiments/render-preview/index.js"
+		},
+		"./experiments/render-studio": {
+			"types": "./dist/experiments/render-studio/index.d.ts",
+			"svelte": "./dist/experiments/render-studio/index.js"
+		},
+		"./utils": {
+			"types": "./dist/utils/index.d.ts",
+			"default": "./dist/utils/index.js"
+		},
+		"./types": {
+			"types": "./dist/types/index.d.ts",
+			"default": "./dist/types/index.js"
+		},
+		"./tokens": {
+			"types": "./dist/tokens/index.d.ts",
+			"default": "./dist/tokens/index.js"
+		},
+		"./tokens/*": {
+			"types": "./dist/tokens/*.d.ts",
+			"default": "./dist/tokens/*.js"
+		},
+		"./actions": {
+			"types": "./dist/actions/index.d.ts",
+			"default": "./dist/actions/index.js"
+		},
+		"./transitions": {
+			"types": "./dist/transitions/index.d.ts",
+			"default": "./dist/transitions/index.js"
+		},
+		"./analytics": {
+			"types": "./dist/analytics/index.d.ts",
+			"default": "./dist/analytics/index.js"
+		},
+		"./api": {
+			"types": "./dist/api/index.d.ts",
+			"default": "./dist/api/index.js"
+		},
+		"./auth": {
+			"types": "./dist/auth/index.d.ts",
+			"default": "./dist/auth/index.js"
+		},
+		"./auth/server": {
+			"types": "./dist/auth/server.d.ts",
+			"default": "./dist/auth/server.js"
+		},
+		"./auth/components": {
+			"types": "./dist/auth/components/index.d.ts",
+			"svelte": "./dist/auth/components/index.js"
+		},
+		"./gdpr": {
+			"types": "./dist/gdpr/index.d.ts",
+			"default": "./dist/gdpr/index.js"
+		},
+		"./newsletter": {
+			"types": "./dist/newsletter/index.d.ts",
+			"default": "./dist/newsletter/index.js"
+		},
+		"./platform": {
+			"types": "./dist/platform/index.d.ts",
+			"default": "./dist/platform/index.js"
+		},
+		"./brand": {
+			"types": "./dist/brand/index.d.ts",
+			"default": "./dist/brand/index.js"
+		},
+		"./brand/3d": {
+			"types": "./dist/brand/3d/index.d.ts",
+			"svelte": "./dist/brand/3d/index.js"
+		},
+		"./brand/icons.css": "./dist/brand/icons.css",
+		"./diagrams": {
+			"types": "./dist/diagrams/index.d.ts",
+			"svelte": "./dist/diagrams/index.js"
+		},
+		"./icons": {
+			"types": "./dist/icons/index.d.ts",
+			"svelte": "./dist/icons/index.js"
+		},
+		"./motion": {
+			"types": "./dist/motion/index.d.ts",
+			"svelte": "./dist/motion/index.js"
+		},
+		"./layout": {
+			"types": "./dist/layout/index.d.ts",
+			"svelte": "./dist/layout/index.js"
+		},
+		"./interactive": {
+			"types": "./dist/interactive/index.d.ts",
+			"svelte": "./dist/interactive/index.js"
+		},
+		"./conversion": {
+			"types": "./dist/conversion/index.d.ts",
+			"svelte": "./dist/conversion/index.js"
+		},
+		"./patterns": {
+			"types": "./dist/patterns/index.d.ts",
+			"svelte": "./dist/patterns/index.js"
+		},
+		"./forms": {
+			"types": "./dist/forms/index.d.ts",
+			"svelte": "./dist/forms/index.js"
+		},
+		"./insights": {
+			"types": "./dist/insights/index.d.ts",
+			"svelte": "./dist/insights/index.js"
+		},
+		"./visual": {
+			"types": "./dist/visual/index.d.ts",
+			"svelte": "./dist/visual/index.js"
+		},
+		"./content": {
+			"types": "./dist/content/index.d.ts",
+			"svelte": "./dist/content/index.js"
+		},
+		"./typography": {
+			"types": "./dist/typography/index.d.ts",
+			"svelte": "./dist/typography/index.js"
+		},
+		"./ascii": {
+			"types": "./dist/ascii/index.d.ts",
+			"default": "./dist/ascii/index.js"
+		},
+		"./validation": {
+			"types": "./dist/validation/index.d.ts",
+			"default": "./dist/validation/index.js"
+		},
+		"./navigation": {
+			"types": "./dist/navigation/index.d.ts",
+			"svelte": "./dist/navigation/index.js"
+		}
+	},
+	"peerDependencies": {
+		"@sveltejs/kit": "^2.0.0",
+		"better-sqlite3": "^11.0.0",
+		"html2canvas": "^1.4.0",
+		"lucide-svelte": "^0.400.0",
+		"svelte": "^5.0.0"
+	},
+	"peerDependenciesMeta": {
+		"better-sqlite3": {
+			"optional": true
+		},
+		"html2canvas": {
+			"optional": true
+		},
+		"lucide-svelte": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@types/three": "^0.170.0",
+		"@sveltejs/adapter-auto": "^7.0.0",
+		"@sveltejs/kit": "^2.47.1",
+		"@sveltejs/package": "^2.5.4",
+		"@sveltejs/vite-plugin-svelte": "^6.2.1",
+		"@types/better-sqlite3": "^7.6.12",
+		"lucide-svelte": "^0.469.0",
+		"publint": "^0.3.14",
+		"svelte": "^5.41.0",
+		"svelte-check": "^4.3.3",
+		"typescript": "^5.9.3",
+		"vite": "^7.1.10",
+		"vitest": "^4.0.16"
+	},
+	"keywords": [
+		"svelte",
+		"components",
+		"design-system",
+		"canon",
+		"create-something",
+		"dieter-rams",
+		"minimalism"
+	],
+	"dependencies": {
+		"@threlte/core": "^8.0.0",
+		"@threlte/extras": "^9.0.0",
+		"three": "^0.170.0",
+		"@codemirror/autocomplete": "^6.19.1",
+		"@codemirror/commands": "^6.10.0",
+		"@codemirror/lang-javascript": "^6.2.4",
+		"@codemirror/language": "^6.11.3",
+		"@codemirror/state": "^6.5.2",
+		"@codemirror/theme-one-dark": "^6.1.3",
+		"@codemirror/view": "^6.38.7",
+		"@create-something/tufte": "workspace:^",
+		"@types/d3-force": "^3.0.10",
+		"@types/d3-scale": "^4.0.9",
+		"@types/d3-selection": "^3.0.11",
+		"@types/d3-shape": "^3.1.8",
+		"codemirror": "^6.0.2",
+		"d3-force": "^3.0.0",
+		"d3-scale": "^4.0.2",
+		"d3-selection": "^3.0.0",
+		"d3-shape": "^3.2.0",
+		"highlight.js": "^11.11.1",
+		"marked": "^17.0.1",
+		"zod": "^4.2.1"
+	}
+}

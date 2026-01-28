@@ -9,7 +9,7 @@
 	 */
 
 	import { goto } from '$app/navigation';
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import {
 		wizardState,
 		currentStep,

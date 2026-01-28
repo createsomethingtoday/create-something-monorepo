@@ -197,13 +197,13 @@
 		white-space: pre;
 	}
 
-	/* Syntax highlighting tokens */
+	/* Syntax highlighting tokens - using Canon data colors */
 	:global(.code-block .token.property) {
-		color: #60a5fa; /* --color-data-1 */
+		color: var(--color-data-1);
 	}
 
 	:global(.code-block .token.value) {
-		color: #c084fc; /* --color-data-3 */
+		color: var(--color-data-3);
 	}
 
 	:global(.code-block .token.comment) {
@@ -212,26 +212,26 @@
 	}
 
 	:global(.code-block .token.keyword) {
-		color: #c084fc; /* --color-data-3 */
+		color: var(--color-data-3);
 	}
 
 	:global(.code-block .token.string) {
-		color: #22c55e; /* --color-data-2 */
+		color: var(--color-data-2);
 	}
 
 	:global(.code-block .token.tag) {
-		color: #f472b6; /* --color-data-5 */
+		color: var(--color-data-5);
 	}
 
 	:global(.code-block .token.attr-name) {
-		color: #60a5fa; /* --color-data-1 */
+		color: var(--color-data-1);
 	}
 
 	:global(.code-block .token.command) {
-		color: #22c55e; /* --color-data-2 */
+		color: var(--color-data-2);
 	}
 
 	:global(.code-block .token.flag) {
-		color: #fbbf24; /* --color-data-4 */
+		color: var(--color-data-4);
 	}
 </style>

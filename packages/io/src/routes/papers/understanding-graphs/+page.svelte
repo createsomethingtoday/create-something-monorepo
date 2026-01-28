@@ -8,7 +8,7 @@
 	 *
 	 * Applies Heidegger's hermeneutic circle to the problem of codebase comprehension.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO

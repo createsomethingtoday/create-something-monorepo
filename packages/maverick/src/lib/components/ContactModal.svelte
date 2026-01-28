@@ -18,7 +18,7 @@
 	 * - ESC key dismisses modal
 	 */
 
-	import { focusTrap } from '@create-something/components/actions';
+	import { focusTrap } from '@create-something/canon/actions';
 	import Icon from './Icon.svelte';
 
 	interface ContactContent {

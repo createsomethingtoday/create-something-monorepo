@@ -1,9 +1,9 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import type { Paper } from '@create-something/components/types';
-import { getPlatform } from '@create-something/components/platform';
+import type { Paper } from '@create-something/canon/types';
+import { getPlatform } from '@create-something/canon/platform';
 import { isFileBasedExperiment, getFileBasedExperiment } from '$lib/config/fileBasedExperiments';
-import { transformExperimentToPaper } from '@create-something/components';
+import { transformExperimentToPaper } from '@create-something/canon';
 
 // Cross-property experiments: experiments that live on other properties
 // Redirect to the canonical location

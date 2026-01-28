@@ -6,7 +6,7 @@
 	 * a Git-committed file that persists AI context across sessions.
 	 * Work survives restarts, context limits, even crashes.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO

@@ -17,7 +17,7 @@ import { json, type RequestEvent } from '@sveltejs/kit';
 import {
 	fetchPopularAnalytics,
 	type ContentType,
-} from '@create-something/components/analytics';
+} from '@create-something/canon/analytics';
 
 export const GET = async ({ url, platform, cookies }: RequestEvent) => {
 	const db = platform?.env?.DB;

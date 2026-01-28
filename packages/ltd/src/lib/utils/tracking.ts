@@ -7,7 +7,7 @@
  */
 
 import { browser } from '$app/environment';
-import { ltd as ltdTracking } from '@create-something/components/utils';
+import { ltd as ltdTracking } from '@create-something/canon/utils';
 
 const TRACKING_KEY_PREFIX = 'ltd_tracked_';
 

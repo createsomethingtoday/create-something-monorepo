@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '../app.css';
-	import { Navigation, Analytics, ModeIndicator, Footer, SkipToContent, LayoutSEO } from '@create-something/components';
-	import { UnifiedSearch } from '@create-something/components/navigation';
+	import { Navigation, Analytics, ModeIndicator, Footer, LayoutSEO } from '@create-something/canon';
+	import { UnifiedSearch } from '@create-something/canon/navigation';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { afterNavigate, onNavigate, goto, invalidateAll } from '$app/navigation';
@@ -92,8 +92,6 @@
 </svelte:head>
 
 <Analytics property="agency" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
-
-<SkipToContent />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
 <UnifiedSearch currentProperty="agency" localItems={quickAccessItems} />

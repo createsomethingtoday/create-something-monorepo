@@ -20,7 +20,7 @@
 // =============================================================================
 
 // Import Property from components (single source of truth)
-import type { Property } from '@create-something/components/analytics';
+import type { Property } from '@create-something/canon/analytics';
 
 // Re-export for consumers of this module
 export type { Property };

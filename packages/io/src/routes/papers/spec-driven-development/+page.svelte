@@ -7,7 +7,7 @@
 	 *
 	 * "Weniger, aber besser" — Less, but better.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO

@@ -1,0 +1,84 @@
+# Ground Import Health Patterns
+# Detects deprecated imports and suggests migrations
+#
+# Usage: ground imports --check
+# Auto-fix: ground imports --fix
+
+version: "1"
+
+deprecated_imports:
+  enabled: true
+  
+  rules:
+    # ─────────────────────────────────────────────────────────────────────────
+    # Package Deprecations
+    # ─────────────────────────────────────────────────────────────────────────
+    
+    - id: "deprecated-components-package"
+      description: "Migrate from deprecated components package to Canon"
+      pattern: "@create-something/components"
+      replacement: "@create-something/canon"
+      severity: error
+      auto_fix: true
+      
+      # Subpath mappings for auto-fix
+      fix_mapping:
+        "@create-something/components": "@create-something/canon"
+        "@create-something/components/types": "@create-something/canon/types"
+        "@create-something/components/utils": "@create-something/canon/utils"
+        "@create-something/components/diagrams": "@create-something/canon/diagrams"
+        "@create-something/components/interactive": "@create-something/canon/interactive"
+        "@create-something/components/brand": "@create-something/canon/brand"
+        "@create-something/components/auth": "@create-something/canon/auth"
+        "@create-something/components/platform": "@create-something/canon/platform"
+        "@create-something/components/newsletter": "@create-something/canon/newsletter"
+        "@create-something/components/analytics": "@create-something/canon/analytics"
+        "@create-something/components/validation": "@create-something/canon/validation"
+    
+    # ─────────────────────────────────────────────────────────────────────────
+    # Anti-Patterns
+    # ─────────────────────────────────────────────────────────────────────────
+    
+    - id: "direct-source-import"
+      description: "Direct source imports bypass package boundaries"
+      pattern: "from ['\"]\\.\\..*/(components|canon)/src/lib/"
+      severity: error
+      auto_fix: false  # Requires manual analysis
+      message: |
+        Direct source imports bypass package boundaries and break on publish.
+        Use the package import instead:
+        
+        Bad:  import X from '../../../components/src/lib/diagrams/Chart.svelte'
+        Good: import { Chart } from '@create-something/canon/diagrams'
+    
+    - id: "relative-package-import"
+      description: "Relative imports to other packages"
+      pattern: "from ['\"]\\.\\..*packages/(ltd|agency|space|io|canon)/"
+      severity: error
+      message: |
+        Cross-package imports should use the package name, not relative paths.
+        
+        Bad:  import { X } from '../../../ltd/src/lib/...'
+        Good: import { X } from '@create-something/ltd'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Import Consolidation
+# ─────────────────────────────────────────────────────────────────────────────
+
+import_consolidation:
+  enabled: true
+  
+  # Suggest consolidation when N+ imports from same module
+  threshold: 2
+  
+  # Packages to check
+  packages:
+    - "@create-something/canon"
+    - "@create-something/canon/*"
+    - "lucide-svelte"
+    - "svelte"
+  
+  # Auto-fix style preference
+  style:
+    max_line_length: 100
+    multiline_threshold: 3  # Use multiline when 3+ imports

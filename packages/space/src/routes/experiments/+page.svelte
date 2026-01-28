@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import PapersGrid from '$lib/components/PapersGrid.svelte';
-	import { SEO } from '@create-something/components';
+	import { PapersGrid, SEO } from '@create-something/canon';
 
 	let { data }: { data: PageData } = $props();
 	const { papers } = data;

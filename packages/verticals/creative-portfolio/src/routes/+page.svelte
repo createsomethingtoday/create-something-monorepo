@@ -9,7 +9,7 @@
 	 * Zuhandenheit: The interface disappears; the portfolio emerges.
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import { config } from '$lib/config/runtime';
 	import { onMount } from 'svelte';
 

@@ -191,15 +191,17 @@
 			if (JSON.stringify(secondaryThumbnails) !== JSON.stringify(asset.secondaryThumbnails || [])) changedFields.push('secondary thumbnails');
 			if (JSON.stringify(carouselImages) !== JSON.stringify(asset.carouselImages || [])) changedFields.push('carousel images');
 
-			if (changedFields.length > 0) {
-				// Create version before saving
-				const changesDescription = `Updated ${changedFields.join(', ')}`;
-				await fetch(`/api/assets/${asset.id}/versions`, {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ changes: changesDescription })
-				});
-			}
+		// Version creation is optional - fire and forget, don't block save
+		if (changedFields.length > 0) {
+			const changesDescription = `Updated ${changedFields.join(', ')}`;
+			fetch(`/api/assets/${asset.id}/versions`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ changes: changesDescription })
+			}).catch(() => {
+				// Silently ignore version creation failures
+			});
+		}
 
 			await onSave({
 				name: formData.name.trim(),

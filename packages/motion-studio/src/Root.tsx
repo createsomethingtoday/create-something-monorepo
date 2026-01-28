@@ -20,6 +20,7 @@ import { TimelineScene } from './compositions/TimelineScene';
 import { ExplainerVideo, calculateTotalDuration } from './compositions/ExplainerVideo';
 import { ToolReceding } from './compositions/lessons/ToolReceding';
 import { IDEvsTerminal } from './compositions/lessons/IDEvsTerminal';
+import { TufteMorph, TUFTE_MORPH_CONFIG } from './compositions/TufteMorph';
 
 // Commercials (v1 - slide deck style)
 import { SeeingCommercial as SeeingCommercialV1, SEEING_COMMERCIAL_DURATION } from './compositions/commercials/SeeingCommercial';
@@ -38,6 +39,8 @@ import {
   TEND_COMMERCIAL_CONFIG,
   TendWalkthroughCommercial,
   TEND_WALKTHROUGH_CONFIG,
+  TufteMobileCommercial,
+  TUFTE_MOBILE_CONFIG,
 } from './commercials';
 
 // Primitives
@@ -385,6 +388,16 @@ export const RemotionRoot: React.FC = () => {
         defaultProps={TEND_WALKTHROUGH_CONFIG.defaultProps}
       />
       
+      {/* Tufte Mobile - Wireframe → Desktop → Mobile transformation */}
+      <Composition
+        id="TufteMobileCommercial"
+        component={TufteMobileCommercial}
+        durationInFrames={TUFTE_MOBILE_CONFIG.durationInFrames}
+        fps={TUFTE_MOBILE_CONFIG.fps}
+        width={TUFTE_MOBILE_CONFIG.width}
+        height={TUFTE_MOBILE_CONFIG.height}
+      />
+      
       {/* ========================================
           COMMERCIALS (V1 - Legacy slide deck style)
           Kept for comparison
@@ -568,6 +581,16 @@ export const RemotionRoot: React.FC = () => {
         defaultProps={{
           theme: 'ltd',
         }}
+      />
+      
+      {/* Tufte Morph - Single card desktop→mobile transformation */}
+      <Composition
+        id="TufteMorph"
+        component={TufteMorph}
+        durationInFrames={TUFTE_MORPH_CONFIG.durationInFrames}
+        fps={TUFTE_MORPH_CONFIG.fps}
+        width={TUFTE_MORPH_CONFIG.width}
+        height={TUFTE_MORPH_CONFIG.height}
       />
     </>
   );

@@ -6,6 +6,11 @@
  * Understanding emerges.
  *
  * "Weniger, aber besser" — Less, but better.
+ *
+ * NOTE: Ground will detect duplicate functions (sendEmail, createCustomer, etc.)
+ * between starterCode and solution fields. This is intentional by design -
+ * exercises show before/after pairs demonstrating specific improvements.
+ * These duplicates cannot be consolidated without breaking pedagogy.
  */
 
 /**

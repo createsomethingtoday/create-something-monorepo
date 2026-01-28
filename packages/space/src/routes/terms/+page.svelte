@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { SEO, Footer } from '@create-something/components';
+  import { SEO, Footer } from '@create-something/canon';
 
   const quickLinks = [
     { label: 'Home', href: '/' },

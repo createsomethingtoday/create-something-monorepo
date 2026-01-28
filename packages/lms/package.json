@@ -14,7 +14,7 @@
     "deploy:preview": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=createsomething-lms --branch=preview"
   },
   "dependencies": {
-    "@create-something/components": "workspace:*",
+    "@create-something/canon": "workspace:*",
     "@create-something/spritz": "workspace:*",
     "@create-something/tufte": "workspace:^",
     "lucide-svelte": "^0.554.0",

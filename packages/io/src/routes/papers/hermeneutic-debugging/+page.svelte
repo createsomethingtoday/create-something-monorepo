@@ -6,7 +6,7 @@
 	 * demonstrating through the Maverick X logo animation case study
 	 * that understanding emerges through iterative interpretation.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO

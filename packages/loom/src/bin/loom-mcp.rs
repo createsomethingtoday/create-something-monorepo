@@ -6,13 +6,18 @@
 //!   loom-mcp [--path <dir>]
 //!
 //! The server communicates via stdio using JSON-RPC.
+//!
+//! ## MCP Apps Support
+//!
+//! This server supports MCP Apps extension for interactive UIs:
+//! - `ui://loom/task-board` - Kanban-style task visualization
 
 use std::io::{self, BufRead, Write};
 use std::path::PathBuf;
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use loom::{Loom, mcp};
+use loom::{Loom, mcp, ui_resources::UiRegistry};
 
 #[derive(Parser)]
 #[command(name = "loom-mcp")]
@@ -85,7 +90,10 @@ fn main() {
         }
     };
     
-    eprintln!("Loom MCP server started (path: {})", path.display());
+    // Initialize UI registry for MCP Apps
+    let ui_registry = UiRegistry::new();
+    
+    eprintln!("Loom MCP server started (path: {}, MCP Apps enabled)", path.display());
     
     let stdin = io::stdin();
     let mut stdout = io::stdout();
@@ -123,7 +131,11 @@ fn main() {
             "initialize" => Response::success(id, json!({
                 "protocolVersion": "2024-11-05",
                 "capabilities": {
-                    "tools": {}
+                    "tools": {},
+                    "resources": {
+                        "subscribe": false,
+                        "listChanged": false
+                    }
                 },
                 "serverInfo": {
                     "name": "loom",
@@ -134,12 +146,52 @@ fn main() {
             "tools/list" => {
                 let tools = mcp::list_tools();
                 Response::success(id, json!({
-                    "tools": tools.iter().map(|t| json!({
-                        "name": t.name,
-                        "description": t.description,
-                        "inputSchema": t.parameters
-                    })).collect::<Vec<_>>()
+                    "tools": tools.iter().map(|t| {
+                        let mut tool_json = json!({
+                            "name": t.name,
+                            "description": t.description,
+                            "inputSchema": t.parameters
+                        });
+                        // Add UI metadata if present
+                        if let Some(ref meta) = t.meta {
+                            tool_json["_meta"] = serde_json::to_value(meta).unwrap_or(json!(null));
+                        }
+                        tool_json
+                    }).collect::<Vec<_>>()
                 }))
+            }
+            
+            // MCP Apps: List UI resources
+            "resources/list" => {
+                let resources: Vec<Value> = ui_registry.list()
+                    .iter()
+                    .map(|r| json!({
+                        "uri": r.uri,
+                        "name": r.name,
+                        "description": r.description,
+                        "mimeType": r.mime_type
+                    }))
+                    .collect();
+                Response::success(id, json!({ "resources": resources }))
+            }
+            
+            // MCP Apps: Read a UI resource
+            "resources/read" => {
+                let uri = request.params.get("uri")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+                
+                if let Some(resource) = ui_registry.get(uri) {
+                    Response::success(id, json!({
+                        "contents": [{
+                            "uri": resource.uri,
+                            "mimeType": resource.mime_type,
+                            "text": resource.content
+                        }]
+                    }))
+                } else {
+                    Response::error(id, -32002, format!("Resource not found: {}", uri))
+                }
             }
             
             "tools/call" => {

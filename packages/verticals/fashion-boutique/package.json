@@ -25,6 +25,7 @@
 		"vite": "^6.0.0"
 	},
 	"dependencies": {
+		"@create-something/canon": "workspace:*",
 		"lucide-svelte": "^0.294.0"
 	}
 }

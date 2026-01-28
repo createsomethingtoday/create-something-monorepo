@@ -6,7 +6,7 @@
 	 * Click to animate, export to PNG, share on social.
 	 */
 
-	import { KeyInsight, createInsight, createBugFixComparison, parseStatement } from '@create-something/components';
+	import { KeyInsight, createInsight, createBugFixComparison, parseStatement } from '@create-something/canon';
 
 	const insight = createInsight(
 		'cumulative-state-antipattern',

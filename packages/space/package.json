@@ -49,7 +49,7 @@
 		"@codemirror/state": "^6.5.2",
 		"@codemirror/theme-one-dark": "^6.1.3",
 		"@codemirror/view": "^6.38.7",
-		"@create-something/components": "workspace:*",
+		"@create-something/canon": "workspace:*",
 		"@create-something/tufte": "workspace:*",
 		"@resvg/resvg-wasm": "^2.6.2",
 		"codemirror": "^6.0.2",

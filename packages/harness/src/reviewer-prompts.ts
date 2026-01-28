@@ -88,8 +88,8 @@ Every change must pass three tests:
 **This is the most important check.** Look for:
 - **Cross-file duplication**: Same pattern repeated in multiple files (e.g., identical @media queries, similar CSS classes with different names like .triad-cards/.comparison-cards/.template-cards)
 - **Inline patterns that should be shared**: If you see similar code in 2+ files, it should probably be in a shared location:
-  - CSS patterns → \`@create-something/components/styles/\`
-  - Svelte components → \`@create-something/components/\`
+  - CSS patterns → \`@create-something/canon/styles/\`
+  - Svelte components → \`@create-something/canon/\`
   - Utilities → shared \`lib/\` directories
 - **Missed abstraction opportunities**: Similar functions/components that could be unified
 - **Sequential duplication**: Multiple commits adding similar patterns to different files
@@ -142,7 +142,7 @@ Example finding (DRY violation):
   "line": 234,
   "quote": "@media (min-width: 768px) {\\n  .grid { grid-template-columns: repeat(2, 1fr); }\\n}",
   "description": "Same media query pattern appears in 3 files: papers/+page.svelte, experiments/+page.svelte, learn/+page.svelte. This violates DRY - create shared breakpoint utility.",
-  "suggestion": "Extract to @create-something/components/styles/breakpoints.css"
+  "suggestion": "Extract to @create-something/canon/styles/breakpoints.css"
 }
 
 **If you cannot quote the exact code from the diff, do not report the finding.** This is non-negotiable. Quotes prevent false positives from pattern-matching on similar-but-different code.

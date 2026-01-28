@@ -2,19 +2,69 @@
 //!
 //! Exposes Loom functionality via the Model Context Protocol.
 //! This allows any MCP-compatible agent to use Loom for task coordination.
+//!
+//! ## MCP Apps Support
+//!
+//! This server supports MCP Apps extension for interactive UIs:
+//! - `ui://loom/task-board` - Kanban-style task visualization
+//!
+//! Tools that benefit from UI rendering include `_meta.ui` metadata.
 
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::io::{BufRead, Write};
 
 use crate::{Loom, CreateTask, Status, Priority, RoutingStrategy, RoutingConstraints, SessionStatus};
+use crate::ui_resources::UiRegistry;
 
-/// Tool definition for MCP
+/// Tool UI metadata for MCP Apps
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ToolUiMeta {
+    pub resource_uri: String,
+}
+
+/// Tool metadata container
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ToolMeta {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ui: Option<ToolUiMeta>,
+}
+
+/// Tool definition for MCP with optional UI metadata
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ToolDefinition {
     pub name: String,
     pub description: String,
+    #[serde(rename = "inputSchema")]
     pub parameters: Value,
+    /// MCP Apps UI metadata - present when this tool supports interactive UI rendering
+    #[serde(rename = "_meta", skip_serializing_if = "Option::is_none", default)]
+    pub meta: Option<ToolMeta>,
+}
+
+/// Helper to create a tool definition without UI
+fn tool(name: &str, description: &str, parameters: Value) -> ToolDefinition {
+    ToolDefinition {
+        name: name.to_string(),
+        description: description.to_string(),
+        parameters,
+        meta: None,
+    }
+}
+
+/// Helper to create a tool definition with Task Board UI
+fn tool_with_task_board(name: &str, description: &str, parameters: Value) -> ToolDefinition {
+    ToolDefinition {
+        name: name.to_string(),
+        description: description.to_string(),
+        parameters,
+        meta: Some(ToolMeta {
+            ui: Some(ToolUiMeta {
+                resource_uri: "ui://loom/task-board".to_string(),
+            }),
+        }),
+    }
 }
 
 /// List all available tools
@@ -23,587 +73,304 @@ pub fn list_tools() -> Vec<ToolDefinition> {
         // ─────────────────────────────────────────────────────────────────
         // Quick Work (Single-Agent Pattern)
         // ─────────────────────────────────────────────────────────────────
-        ToolDefinition {
-            name: "loom_work".to_string(),
-            description: "Start working on something (creates and claims task atomically). Use this for single-agent work to avoid ceremony.".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "title": {
-                        "type": "string",
-                        "description": "What you're working on"
-                    },
-                    "agent": {
-                        "type": "string",
-                        "description": "Your agent ID (e.g., 'claude-code', 'cursor')"
-                    },
-                    "priority": {
-                        "type": "string",
-                        "enum": ["critical", "high", "normal", "low"],
-                        "description": "Task priority (default: normal)"
-                    },
-                    "labels": {
-                        "type": "array",
-                        "items": { "type": "string" },
-                        "description": "Optional labels for routing/filtering"
-                    }
-                },
-                "required": ["title", "agent"]
-            }),
-        },
+        tool("loom_work", "Start working on something (creates and claims task atomically). Use this for single-agent work to avoid ceremony.", json!({
+            "type": "object",
+            "properties": {
+                "title": { "type": "string", "description": "What you're working on" },
+                "agent": { "type": "string", "description": "Your agent ID (e.g., 'claude-code', 'cursor')" },
+                "priority": { "type": "string", "enum": ["critical", "high", "normal", "low"], "description": "Task priority (default: normal)" },
+                "labels": { "type": "array", "items": { "type": "string" }, "description": "Optional labels for routing/filtering" }
+            },
+            "required": ["title", "agent"]
+        })),
         // ─────────────────────────────────────────────────────────────────
         // Task Management
         // ─────────────────────────────────────────────────────────────────
-        ToolDefinition {
-            name: "loom_create".to_string(),
-            description: "Create a new task in Loom (for multi-agent coordination - use loom_work for solo work)".to_string(),
-            parameters: json!({
+        tool("loom_create",
+            "Create a new task in Loom (for multi-agent coordination - use loom_work for solo work)",
+            json!({
                 "type": "object",
                 "properties": {
-                    "title": {
-                        "type": "string",
-                        "description": "Task title"
-                    },
-                    "description": {
-                        "type": "string",
-                        "description": "Task description (optional)"
-                    },
-                    "priority": {
-                        "type": "string",
-                        "enum": ["critical", "high", "normal", "low"],
-                        "description": "Task priority (default: normal)"
-                    },
-                    "labels": {
-                        "type": "array",
-                        "items": { "type": "string" },
-                        "description": "Labels for categorization and routing"
-                    },
-                    "parent": {
-                        "type": "string",
-                        "description": "Parent task ID for sub-tasks"
-                    }
+                    "title": { "type": "string", "description": "Task title" },
+                    "description": { "type": "string", "description": "Task description (optional)" },
+                    "priority": { "type": "string", "enum": ["critical", "high", "normal", "low"], "description": "Task priority (default: normal)" },
+                    "labels": { "type": "array", "items": { "type": "string" }, "description": "Labels for categorization and routing" },
+                    "parent": { "type": "string", "description": "Parent task ID for sub-tasks" }
                 },
                 "required": ["title"]
             }),
-        },
-        ToolDefinition {
-            name: "loom_claim".to_string(),
-            description: "Claim a task for this agent to work on".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "task_id": { "type": "string" },
-                    "agent": { "type": "string", "description": "Agent ID claiming the task" }
-                },
-                "required": ["task_id", "agent"]
-            }),
-        },
-        ToolDefinition {
-            name: "loom_release".to_string(),
-            description: "Release a claimed task back to ready status".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "task_id": { "type": "string" }
-                },
-                "required": ["task_id"]
-            }),
-        },
-        ToolDefinition {
-            name: "loom_complete".to_string(),
-            description: "Mark a task as complete with optional evidence. Auto-unblocks dependent tasks.".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "task_id": { "type": "string" },
-                    "evidence": { "type": "string", "description": "Completion evidence (commit hash, URL, etc.)" },
-                    "cost_usd": { "type": "number", "description": "Actual cost in USD (for tracking)" }
-                },
-                "required": ["task_id"]
-            }),
-        },
-        ToolDefinition {
-            name: "loom_cancel".to_string(),
-            description: "Cancel a task".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "task_id": { "type": "string" }
-                },
-                "required": ["task_id"]
-            }),
-        },
-        ToolDefinition {
-            name: "loom_spawn".to_string(),
-            description: "Create a sub-task under a parent task".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "parent_id": { "type": "string" },
-                    "title": { "type": "string" }
-                },
-                "required": ["parent_id", "title"]
-            }),
-        },
+        ),
+        tool("loom_claim", "Claim a task for this agent to work on", json!({
+            "type": "object",
+            "properties": {
+                "task_id": { "type": "string" },
+                "agent": { "type": "string", "description": "Agent ID claiming the task" }
+            },
+            "required": ["task_id", "agent"]
+        })),
+        tool("loom_release", "Release a claimed task back to ready status", json!({
+            "type": "object",
+            "properties": { "task_id": { "type": "string" } },
+            "required": ["task_id"]
+        })),
+        tool("loom_complete", "Mark a task as complete with optional evidence. Auto-unblocks dependent tasks.", json!({
+            "type": "object",
+            "properties": {
+                "task_id": { "type": "string" },
+                "evidence": { "type": "string", "description": "Completion evidence (commit hash, URL, etc.)" },
+                "cost_usd": { "type": "number", "description": "Actual cost in USD (for tracking)" }
+            },
+            "required": ["task_id"]
+        })),
+        tool("loom_cancel", "Cancel a task", json!({
+            "type": "object",
+            "properties": { "task_id": { "type": "string" } },
+            "required": ["task_id"]
+        })),
+        tool("loom_spawn", "Create a sub-task under a parent task", json!({
+            "type": "object",
+            "properties": {
+                "parent_id": { "type": "string" },
+                "title": { "type": "string" }
+            },
+            "required": ["parent_id", "title"]
+        })),
         
         // ─────────────────────────────────────────────────────────────────
-        // Queries
+        // Queries (with MCP Apps UI support for task visualization)
         // ─────────────────────────────────────────────────────────────────
-        ToolDefinition {
-            name: "loom_ready".to_string(),
-            description: "Get all tasks ready to work on".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {}
-            }),
-        },
-        ToolDefinition {
-            name: "loom_mine".to_string(),
-            description: "Get tasks claimed by a specific agent".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "agent": { "type": "string" }
-                },
-                "required": ["agent"]
-            }),
-        },
-        ToolDefinition {
-            name: "loom_blocked".to_string(),
-            description: "Get all blocked tasks".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {}
-            }),
-        },
-        ToolDefinition {
-            name: "loom_get".to_string(),
-            description: "Get a task by ID".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "task_id": { "type": "string" }
-                },
-                "required": ["task_id"]
-            }),
-        },
-        ToolDefinition {
-            name: "loom_list".to_string(),
-            description: "List tasks with optional filtering".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "status": { "type": "string", "enum": ["ready", "claimed", "blocked", "done", "cancelled"] },
-                    "label": { "type": "string" },
-                    "repo": { "type": "string", "description": "Filter by repository ID" }
-                }
-            }),
-        },
-        ToolDefinition {
-            name: "loom_summary".to_string(),
-            description: "Get a summary of work status (optionally filtered by label)".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "label": {
-                        "type": "string",
-                        "description": "Filter summary by label (e.g., 'auth-feature')"
-                    }
-                }
-            }),
-        },
+        tool_with_task_board("loom_ready", "Get all tasks ready to work on", json!({
+            "type": "object",
+            "properties": {}
+        })),
+        tool_with_task_board("loom_mine", "Get tasks claimed by a specific agent", json!({
+            "type": "object",
+            "properties": { "agent": { "type": "string" } },
+            "required": ["agent"]
+        })),
+        tool_with_task_board("loom_blocked", "Get all blocked tasks", json!({
+            "type": "object",
+            "properties": {}
+        })),
+        tool("loom_get", "Get a task by ID", json!({
+            "type": "object",
+            "properties": { "task_id": { "type": "string" } },
+            "required": ["task_id"]
+        })),
+        tool_with_task_board("loom_list", "List tasks with optional filtering", json!({
+            "type": "object",
+            "properties": {
+                "status": { "type": "string", "enum": ["ready", "claimed", "blocked", "done", "cancelled"] },
+                "label": { "type": "string" },
+                "repo": { "type": "string", "description": "Filter by repository ID" }
+            }
+        })),
+        tool_with_task_board("loom_summary", "Get a summary of work status (optionally filtered by label)", json!({
+            "type": "object",
+            "properties": {
+                "label": { "type": "string", "description": "Filter summary by label (e.g., 'auth-feature')" }
+            }
+        })),
         
         // ─────────────────────────────────────────────────────────────────
         // Dependencies
         // ─────────────────────────────────────────────────────────────────
-        ToolDefinition {
-            name: "loom_block".to_string(),
-            description: "Add a dependency (task is blocked by another)".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "task_id": { "type": "string", "description": "Task that is blocked" },
-                    "blocked_by": { "type": "string", "description": "Task that blocks it" }
-                },
-                "required": ["task_id", "blocked_by"]
-            }),
-        },
-        ToolDefinition {
-            name: "loom_unblock".to_string(),
-            description: "Remove a dependency".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "task_id": { "type": "string" },
-                    "blocked_by": { "type": "string" }
-                },
-                "required": ["task_id", "blocked_by"]
-            }),
-        },
+        tool("loom_block", "Add a dependency (task is blocked by another)", json!({
+            "type": "object",
+            "properties": {
+                "task_id": { "type": "string", "description": "Task that is blocked" },
+                "blocked_by": { "type": "string", "description": "Task that blocks it" }
+            },
+            "required": ["task_id", "blocked_by"]
+        })),
+        tool("loom_unblock", "Remove a dependency", json!({
+            "type": "object",
+            "properties": {
+                "task_id": { "type": "string" },
+                "blocked_by": { "type": "string" }
+            },
+            "required": ["task_id", "blocked_by"]
+        })),
         
         // ─────────────────────────────────────────────────────────────────
         // Smart Routing
         // ─────────────────────────────────────────────────────────────────
-        ToolDefinition {
-            name: "loom_route".to_string(),
-            description: "Get routing recommendation for a task (which agent should work on it)".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "task_id": { "type": "string" },
-                    "strategy": { 
-                        "type": "string", 
-                        "enum": ["best", "cheapest", "fastest"],
-                        "default": "best"
-                    },
-                    "max_cost": { "type": "number", "description": "Maximum cost in dollars" }
-                },
-                "required": ["task_id"]
-            }),
-        },
-        ToolDefinition {
-            name: "loom_agents".to_string(),
-            description: "List all available agents and their capabilities".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {}
-            }),
-        },
+        tool("loom_route", "Get routing recommendation for a task (which agent should work on it)", json!({
+            "type": "object",
+            "properties": {
+                "task_id": { "type": "string" },
+                "strategy": { "type": "string", "enum": ["best", "cheapest", "fastest"], "default": "best" },
+                "max_cost": { "type": "number", "description": "Maximum cost in dollars" }
+            },
+            "required": ["task_id"]
+        })),
+        tool("loom_agents", "List all available agents and their capabilities", json!({
+            "type": "object",
+            "properties": {}
+        })),
         
         // ─────────────────────────────────────────────────────────────────
         // Sessions & Memory
         // ─────────────────────────────────────────────────────────────────
-        ToolDefinition {
-            name: "loom_session_start".to_string(),
-            description: "Start a work session for a task".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "task_id": { "type": "string" },
-                    "agent": { "type": "string" }
-                },
-                "required": ["task_id", "agent"]
-            }),
-        },
-        ToolDefinition {
-            name: "loom_session_end".to_string(),
-            description: "End a work session".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "session_id": { "type": "string" },
-                    "status": { "type": "string", "enum": ["completed", "failed", "cancelled"] }
-                },
-                "required": ["session_id"]
-            }),
-        },
-        ToolDefinition {
-            name: "loom_checkpoint".to_string(),
-            description: "Create a checkpoint (save progress for crash recovery)".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "session_id": { "type": "string" },
-                    "summary": { "type": "string", "description": "Summary of progress" }
-                },
-                "required": ["session_id", "summary"]
-            }),
-        },
-        ToolDefinition {
-            name: "loom_recover".to_string(),
-            description: "List sessions that can be recovered after a crash".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {}
-            }),
-        },
-        ToolDefinition {
-            name: "loom_resume".to_string(),
-            description: "Resume an interrupted session".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "session_id": { "type": "string" }
-                },
-                "required": ["session_id"]
-            }),
-        },
+        tool("loom_session_start", "Start a work session for a task", json!({
+            "type": "object",
+            "properties": {
+                "task_id": { "type": "string" },
+                "agent": { "type": "string" }
+            },
+            "required": ["task_id", "agent"]
+        })),
+        tool("loom_session_end", "End a work session", json!({
+            "type": "object",
+            "properties": {
+                "session_id": { "type": "string" },
+                "status": { "type": "string", "enum": ["completed", "failed", "cancelled"] }
+            },
+            "required": ["session_id"]
+        })),
+        tool("loom_checkpoint", "Create a checkpoint (save progress for crash recovery)", json!({
+            "type": "object",
+            "properties": {
+                "session_id": { "type": "string" },
+                "summary": { "type": "string", "description": "Summary of progress" }
+            },
+            "required": ["session_id", "summary"]
+        })),
+        tool("loom_recover", "List sessions that can be recovered after a crash", json!({
+            "type": "object",
+            "properties": {}
+        })),
+        tool("loom_resume", "Resume an interrupted session", json!({
+            "type": "object",
+            "properties": { "session_id": { "type": "string" } },
+            "required": ["session_id"]
+        })),
         
         // ─────────────────────────────────────────────────────────────────
         // Formulas
         // ─────────────────────────────────────────────────────────────────
-        ToolDefinition {
-            name: "loom_formulas".to_string(),
-            description: "List available workflow formulas".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {}
-            }),
-        },
-        ToolDefinition {
-            name: "loom_formula".to_string(),
-            description: "Get details of a specific formula".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "name": { "type": "string" }
-                },
-                "required": ["name"]
-            }),
-        },
+        tool("loom_formulas", "List available workflow formulas", json!({
+            "type": "object",
+            "properties": {}
+        })),
+        tool("loom_formula", "Get details of a specific formula", json!({
+            "type": "object",
+            "properties": { "name": { "type": "string" } },
+            "required": ["name"]
+        })),
         
         // ─────────────────────────────────────────────────────────────────
         // Learning & Feedback
         // ─────────────────────────────────────────────────────────────────
-        ToolDefinition {
-            name: "loom_record_execution".to_string(),
-            description: "Record task execution result for learning (improves future routing)".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "agent_id": { "type": "string" },
-                    "task_id": { "type": "string" },
-                    "task_type": { "type": "string", "description": "Type of task (coding, debugging, planning, etc.)" },
-                    "success": { "type": "boolean" },
-                    "duration_secs": { "type": "number" }
-                },
-                "required": ["agent_id", "task_id", "success", "duration_secs"]
-            }),
-        },
+        tool("loom_record_execution", "Record task execution result for learning (improves future routing)", json!({
+            "type": "object",
+            "properties": {
+                "agent_id": { "type": "string" },
+                "task_id": { "type": "string" },
+                "task_type": { "type": "string", "description": "Type of task (coding, debugging, planning, etc.)" },
+                "success": { "type": "boolean" },
+                "duration_secs": { "type": "number" }
+            },
+            "required": ["agent_id", "task_id", "success", "duration_secs"]
+        })),
         
         // ─────────────────────────────────────────────────────────────────
         // Multi-Repo Support
         // ─────────────────────────────────────────────────────────────────
-        ToolDefinition {
-            name: "loom_repos".to_string(),
-            description: "List configured repositories (for multi-repo coordination between projects)".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {}
-            }),
-        },
-        ToolDefinition {
-            name: "loom_switch_repo".to_string(),
-            description: "Switch the active repository context. Use this when working in a different repo than the MCP server was started in.".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "path": { 
-                        "type": "string", 
-                        "description": "Absolute path to the repository to switch to (e.g., /Users/me/Documents/Github/WORKWAY)" 
-                    }
-                },
-                "required": ["path"]
-            }),
-        },
-        ToolDefinition {
-            name: "loom_list_all".to_string(),
-            description: "List tasks from ALL configured repositories (primary + additional). Use for unified views across projects.".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "status": { "type": "string", "enum": ["ready", "claimed", "blocked", "done", "cancelled"] }
-                }
-            }),
-        },
+        tool("loom_repos", "List configured repositories (for multi-repo coordination between projects)", json!({
+            "type": "object",
+            "properties": {}
+        })),
+        tool("loom_switch_repo", "Switch the active repository context. Use this when working in a different repo than the MCP server was started in.", json!({
+            "type": "object",
+            "properties": {
+                "path": { "type": "string", "description": "Absolute path to the repository to switch to" }
+            },
+            "required": ["path"]
+        })),
+        tool_with_task_board("loom_list_all", "List tasks from ALL configured repositories (primary + additional). Use for unified views across projects.", json!({
+            "type": "object",
+            "properties": {
+                "status": { "type": "string", "enum": ["ready", "claimed", "blocked", "done", "cancelled"] }
+            }
+        })),
         
         // ─────────────────────────────────────────────────────────────────
         // Backfill & Analytics
         // ─────────────────────────────────────────────────────────────────
-        ToolDefinition {
-            name: "loom_backfill".to_string(),
-            description: "Import historical work from Git commits and Beads issues. Creates tasks and execution records for analytics.".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "repo_path": { 
-                        "type": "string", 
-                        "description": "Absolute path to repository to backfill from (e.g., /Users/me/WORKWAY). Overrides current MCP context." 
-                    },
-                    "since": { 
-                        "type": "string", 
-                        "description": "Start date (ISO 8601 or relative like '30 days ago')" 
-                    },
-                    "until": { 
-                        "type": "string", 
-                        "description": "End date (ISO 8601 or relative)" 
-                    },
-                    "author": { 
-                        "type": "string", 
-                        "description": "Filter by git author name" 
-                    },
-                    "beads_path": { 
-                        "type": "string", 
-                        "description": "Path to Beads directory (defaults to .beads in repo_path)" 
-                    },
-                    "dry_run": { 
-                        "type": "boolean", 
-                        "description": "Preview changes without writing" 
-                    }
-                }
-            }),
-        },
-        ToolDefinition {
-            name: "loom_analytics".to_string(),
-            description: "Get analytics from historical execution data (after backfill)".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "agent": { 
-                        "type": "string", 
-                        "description": "Filter by agent ID" 
-                    },
-                    "task_type": { 
-                        "type": "string", 
-                        "description": "Filter by task type (bug, feature, task, refactor)" 
-                    }
-                }
-            }),
-        },
+        tool("loom_backfill", "Import historical work from Git commits and Beads issues. Creates tasks and execution records for analytics.", json!({
+            "type": "object",
+            "properties": {
+                "repo_path": { "type": "string", "description": "Absolute path to repository to backfill from" },
+                "since": { "type": "string", "description": "Start date (ISO 8601 or relative like '30 days ago')" },
+                "until": { "type": "string", "description": "End date (ISO 8601 or relative)" },
+                "author": { "type": "string", "description": "Filter by git author name" },
+                "beads_path": { "type": "string", "description": "Path to Beads directory" },
+                "dry_run": { "type": "boolean", "description": "Preview changes without writing" }
+            }
+        })),
+        tool("loom_analytics", "Get analytics from historical execution data (after backfill)", json!({
+            "type": "object",
+            "properties": {
+                "agent": { "type": "string", "description": "Filter by agent ID" },
+                "task_type": { "type": "string", "description": "Filter by task type (bug, feature, task, refactor)" }
+            }
+        })),
         
         // ─────────────────────────────────────────────────────────────────
         // GSD-Inspired: Discuss & Verify (Pre-Planning)
         // ─────────────────────────────────────────────────────────────────
-        ToolDefinition {
-            name: "loom_discuss".to_string(),
-            description: "Capture implementation preferences before planning. Use for ambiguous features to align on visual style, API design, content structure, etc. Creates context that feeds into planning.".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "task_id": { 
-                        "type": "string", 
-                        "description": "Task to discuss preferences for" 
-                    },
-                    "category": { 
-                        "type": "string", 
-                        "enum": ["visual", "api", "content", "architecture", "performance", "other"],
-                        "description": "Category of preference being captured"
-                    },
-                    "question": { 
-                        "type": "string", 
-                        "description": "Question about implementation preference" 
-                    },
-                    "options": { 
-                        "type": "array", 
-                        "items": { "type": "string" },
-                        "description": "Available options (if multiple choice)"
-                    },
-                    "decision": { 
-                        "type": "string", 
-                        "description": "The chosen option or answer" 
-                    },
-                    "rationale": { 
-                        "type": "string", 
-                        "description": "Why this choice was made" 
+        tool("loom_discuss", "Capture implementation preferences before planning. Use for ambiguous features to align on visual style, API design, content structure, etc.", json!({
+            "type": "object",
+            "properties": {
+                "task_id": { "type": "string", "description": "Task to discuss preferences for" },
+                "category": { "type": "string", "enum": ["visual", "api", "content", "architecture", "performance", "other"], "description": "Category of preference being captured" },
+                "question": { "type": "string", "description": "Question about implementation preference" },
+                "options": { "type": "array", "items": { "type": "string" }, "description": "Available options (if multiple choice)" },
+                "decision": { "type": "string", "description": "The chosen option or answer" },
+                "rationale": { "type": "string", "description": "Why this choice was made" }
+            },
+            "required": ["task_id", "category", "question", "decision"]
+        })),
+        tool("loom_verify_plan", "Verify a plan BEFORE execution. Checks plan against task requirements, validates file paths, ensures no scope creep.", json!({
+            "type": "object",
+            "properties": {
+                "task_id": { "type": "string", "description": "Task the plan is for" },
+                "plan": { 
+                    "type": "object", 
+                    "description": "The proposed plan",
+                    "properties": {
+                        "steps": { "type": "array", "items": { "type": "object" } },
+                        "files_to_modify": { "type": "array", "items": { "type": "string" } },
+                        "files_to_create": { "type": "array", "items": { "type": "string" } },
+                        "estimated_changes": { "type": "number" }
                     }
-                },
-                "required": ["task_id", "category", "question", "decision"]
-            }),
-        },
-        ToolDefinition {
-            name: "loom_verify_plan".to_string(),
-            description: "Verify a plan BEFORE execution. Checks plan against task requirements, validates file paths, ensures no scope creep. Returns pass/fail with specific issues.".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "task_id": { 
-                        "type": "string", 
-                        "description": "Task the plan is for" 
-                    },
-                    "plan": { 
-                        "type": "object", 
-                        "description": "The proposed plan",
-                        "properties": {
-                            "steps": { 
-                                "type": "array", 
-                                "items": { 
-                                    "type": "object",
-                                    "properties": {
-                                        "action": { "type": "string" },
-                                        "target": { "type": "string", "description": "File or resource being modified" },
-                                        "description": { "type": "string" }
-                                    }
-                                }
-                            },
-                            "files_to_modify": { "type": "array", "items": { "type": "string" } },
-                            "files_to_create": { "type": "array", "items": { "type": "string" } },
-                            "estimated_changes": { "type": "number" }
-                        }
-                    }
-                },
-                "required": ["task_id", "plan"]
-            }),
-        },
+                }
+            },
+            "required": ["task_id", "plan"]
+        })),
         
         // ─────────────────────────────────────────────────────────────────
         // Enhanced Context (Harness AgentContext Parity)
         // ─────────────────────────────────────────────────────────────────
-        ToolDefinition {
-            name: "loom_update_context".to_string(),
-            description: "Update session context with rich metadata for resume/recovery. Use to track file modifications, decisions, test state, and progress.".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "session_id": { "type": "string" },
-                    "file_modified": {
-                        "type": "object",
-                        "description": "Record a file modification",
-                        "properties": {
-                            "path": { "type": "string" },
-                            "summary": { "type": "string" },
-                            "change_type": { "type": "string", "enum": ["created", "modified", "deleted", "renamed"] },
-                            "lines_added": { "type": "number" },
-                            "lines_removed": { "type": "number" }
-                        }
-                    },
-                    "decision": {
-                        "type": "object",
-                        "description": "Record a decision",
-                        "properties": {
-                            "decision": { "type": "string" },
-                            "rationale": { "type": "string" },
-                            "alternatives": { "type": "array", "items": { "type": "string" } }
-                        }
-                    },
-                    "test_state": {
-                        "type": "object",
-                        "description": "Record current test state",
-                        "properties": {
-                            "passed": { "type": "number" },
-                            "failed": { "type": "number" },
-                            "skipped": { "type": "number" },
-                            "failing_tests": { "type": "array", "items": { "type": "string" } },
-                            "duration_ms": { "type": "number" }
-                        }
-                    },
-                    "task_progress": {
-                        "type": "object",
-                        "description": "Update current task progress",
-                        "properties": {
-                            "issue_id": { "type": "string" },
-                            "issue_title": { "type": "string" },
-                            "current_step": { "type": "string" },
-                            "progress_percent": { "type": "number" },
-                            "remaining_work": { "type": "string" }
-                        }
-                    },
-                    "blocker": { "type": "string", "description": "Add a blocker" },
-                    "note": { "type": "string", "description": "Add a note" }
-                },
-                "required": ["session_id"]
-            }),
-        },
-        ToolDefinition {
-            name: "loom_get_resume_brief".to_string(),
-            description: "Get a resume brief for a session. This is a markdown summary of context that can be injected into a priming prompt for session continuity.".to_string(),
-            parameters: json!({
-                "type": "object",
-                "properties": {
-                    "session_id": { "type": "string" }
-                },
-                "required": ["session_id"]
-            }),
-        },
+        tool("loom_update_context", "Update session context with rich metadata for resume/recovery. Use to track file modifications, decisions, test state, and progress.", json!({
+            "type": "object",
+            "properties": {
+                "session_id": { "type": "string" },
+                "file_modified": { "type": "object", "description": "Record a file modification" },
+                "decision": { "type": "object", "description": "Record a decision" },
+                "test_state": { "type": "object", "description": "Record current test state" },
+                "task_progress": { "type": "object", "description": "Update current task progress" },
+                "blocker": { "type": "string", "description": "Add a blocker" },
+                "note": { "type": "string", "description": "Add a note" }
+            },
+            "required": ["session_id"]
+        })),
+        tool("loom_get_resume_brief", "Get a resume brief for a session. This is a markdown summary of context that can be injected into a priming prompt for session continuity.", json!({
+            "type": "object",
+            "properties": { "session_id": { "type": "string" } },
+            "required": ["session_id"]
+        })),
     ]
 }
 
@@ -1457,11 +1224,15 @@ pub fn call_tool(loom: &mut Loom, name: &str, args: Value) -> Result<Value, Stri
 /// MCP Server that handles JSON-RPC communication
 pub struct McpServer {
     loom: Loom,
+    ui_registry: UiRegistry,
 }
 
 impl McpServer {
     pub fn new(loom: Loom) -> Self {
-        Self { loom }
+        Self { 
+            loom,
+            ui_registry: UiRegistry::new(),
+        }
     }
     
     /// Run the MCP server on stdin/stdout
@@ -1506,11 +1277,15 @@ impl McpServer {
                 json!({
                     "protocolVersion": "2024-11-05",
                     "capabilities": {
-                        "tools": {}
+                        "tools": {},
+                        "resources": {
+                            "subscribe": false,
+                            "listChanged": false
+                        }
                     },
                     "serverInfo": {
                         "name": "loom",
-                        "version": "0.1.0"
+                        "version": "0.2.0"
                     }
                 })
             }
@@ -1532,6 +1307,42 @@ impl McpServer {
                 match call_tool(&mut self.loom, name, args) {
                     Ok(result) => json!({ "content": [{ "type": "text", "text": result.to_string() }] }),
                     Err(e) => json!({ "isError": true, "content": [{ "type": "text", "text": e }] }),
+                }
+            }
+            
+            // MCP Apps: List UI resources
+            "resources/list" => {
+                let resources: Vec<Value> = self.ui_registry.list()
+                    .iter()
+                    .map(|r| json!({
+                        "uri": r.uri,
+                        "name": r.name,
+                        "description": r.description,
+                        "mimeType": r.mime_type
+                    }))
+                    .collect();
+                json!({ "resources": resources })
+            }
+            
+            // MCP Apps: Read a UI resource
+            "resources/read" => {
+                let uri = params["uri"].as_str().unwrap_or("");
+                
+                if let Some(resource) = self.ui_registry.get(uri) {
+                    json!({
+                        "contents": [{
+                            "uri": resource.uri,
+                            "mimeType": resource.mime_type,
+                            "text": resource.content
+                        }]
+                    })
+                } else {
+                    json!({
+                        "error": {
+                            "code": -32002,
+                            "message": format!("Resource not found: {}", uri)
+                        }
+                    })
                 }
             }
             

@@ -7,7 +7,7 @@
 	 * weaves context and essence together.
 	 */
 
-	import { KeyInsight, createInsight, parseStatement } from '@create-something/components';
+	import { KeyInsight, createInsight, parseStatement } from '@create-something/canon';
 
 	const insight = createInsight(
 		'tool-betrayal',

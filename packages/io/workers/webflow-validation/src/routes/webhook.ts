@@ -11,7 +11,7 @@
 import type { Env, WebhookProxyResponse } from '../types';
 import { WEBHOOK_ROUTES } from '../types';
 import { jsonResponse } from '../lib/cors';
-import { createLogger } from '@create-something/components/utils';
+import { createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('WebhookProxy');
 

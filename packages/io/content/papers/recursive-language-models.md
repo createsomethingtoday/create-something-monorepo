@@ -367,19 +367,19 @@ print(f"Cost: ${result.cost_usd:.4f}")
 
 ```typescript
 // Identity API calls
-import { identityClient } from '@create-something/components/api';
+import { identityClient } from '@create-something/canon/api';
 const result = await identityClient.login({ email, password });
 
 // API error handling
-import { catchApiError, apiError } from '@create-something/components/utils';
+import { catchApiError, apiError } from '@create-something/canon/utils';
 export const POST = catchApiError('MyAPI', async (event) => { ... });
 
 // Validation
-import { isEmpty, validateStringField } from '@create-something/components/utils';
+import { isEmpty, validateStringField } from '@create-something/canon/utils';
 if (isEmpty(records)) return apiError('Not found', 404);
 
 // Logging
-import { createLogger } from '@create-something/components/utils';
+import { createLogger } from '@create-something/canon/utils';
 const logger = createLogger('MyService');
 logger.info('Processing', { id, correlationId });
 ```

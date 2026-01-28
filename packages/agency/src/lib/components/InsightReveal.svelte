@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { AssessmentResult } from '$lib/services/assessment';
 	import { offeringMetadata } from '$lib/services/assessment';
-	import SavvyCalButton from './SavvyCalButton.svelte';
+	import { SavvyCalButton } from '@create-something/canon/domains/agency';
 
 	interface Props {
 		result: AssessmentResult;

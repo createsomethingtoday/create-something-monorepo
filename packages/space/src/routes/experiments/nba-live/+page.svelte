@@ -6,12 +6,12 @@
 	 * A spec-driven development meta-experiment.
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
 	import type { Game } from '$lib/nba/types';
-	import GameSelector from '$lib/components/nba/GameSelector.svelte';
-	import GameHighlightCard from '$lib/components/nba/GameHighlightCard.svelte';
-	import DateNavigation from '$lib/components/nba/DateNavigation.svelte';
+	import { GameSelector } from '$lib/experiments/nba-live';
+	import { GameHighlightCard } from '$lib/experiments/nba-live';
+	import { DateNavigation } from '$lib/experiments/nba-live';
 	import { selectGameOfTheNight } from '$lib/nba/calculations';
 	import { Zap, Shield, GitBranch, ArrowRight, Clock, Radio, AlertCircle, TrendingUp } from 'lucide-svelte';
 	import { invalidate } from '$app/navigation';

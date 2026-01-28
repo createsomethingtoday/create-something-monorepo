@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types';
-import { exchangeCrossDomainToken } from '@create-something/components/auth';
+import { exchangeCrossDomainToken } from '@create-something/canon/auth';
 
 export const load: PageServerLoad = async ({ url, cookies, platform }) => {
 	const token = url.searchParams.get('token');

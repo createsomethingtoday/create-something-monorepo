@@ -4,16 +4,21 @@ Agent Router
 Intelligently routes tasks to the most cost-effective provider.
 
 Routing Strategy:
-- trivial/simple execution → Gemini Flash (10x cheaper than Haiku)
+- trivial execution → Gemini Flash (cheapest)
+- frontend/code tasks → Kimi K2 (5-6x cheaper than Sonnet, 40% cheaper than Haiku)
+- complex frontend/code → Kimi K2 Thinking (deep reasoning for code)
+- complex general → Gemini Pro (2.5x cheaper than Sonnet)
 - standard execution → Haiku with extended thinking (cost-effective implementation)
-- planning/review → Sonnet (good reasoning, reasonable cost)
+- planning/review/security → Sonnet (trusted reasoning)
 - architecture → Opus (only for high-level design decisions)
 
-Hierarchy:
-- Opus ($15/$75 per 1M) = Architecture-only (rare, high-impact decisions)
-- Sonnet ($3/$15 per 1M) = Planning + issue resolution + review
-- Haiku ($1/$5 per 1M) = Standard implementation with thinking
-- Gemini Flash (~$0.075/$0.30 per 1M) = Trivial/simple execution (10x cheaper)
+Hierarchy (by cost, low to high):
+- Gemini 2.0 Flash (~$0.075/$0.30 per 1M) = Trivial execution (cheapest)
+- Kimi K2 ($0.60/$2.50 per 1M) = Frontend/code tasks
+- Haiku ($1/$5 per 1M) = Standard implementation
+- Gemini 2.5 Pro ($1.25/$5.00 per 1M) = Complex reasoning (2.5x cheaper than Sonnet)
+- Sonnet ($3/$15 per 1M) = Planning + security + review (trusted)
+- Opus ($15/$75 per 1M) = Architecture-only (rare)
 
 The router can also handle fallback when a provider fails.
 """
@@ -61,23 +66,39 @@ class RouterConfig:
     # Enable/disable Gemini routing
     enable_gemini: bool = True
 
+    # Enable/disable Moonshot routing (Kimi K2)
+    enable_moonshot: bool = True
+
     # Complexity thresholds for Gemini usage
     gemini_max_complexity: Complexity = Complexity.SIMPLE
+
+    # Complexity thresholds for Moonshot usage (frontend/code tasks)
+    moonshot_max_complexity: Complexity = Complexity.STANDARD
 
     # Always use Claude for these task types
     claude_only_types: list[TaskType] = field(
         default_factory=lambda: [TaskType.PLAN, TaskType.REVIEW]
     )
 
-    # Fallback to Claude on Gemini failure
+    # Fallback to Claude on Gemini/Moonshot failure
     fallback_on_failure: bool = True
 
     # Keywords that force Claude Sonnet (security-critical, planning)
+    # These are tasks where we want trusted, well-tested reasoning
     claude_keywords: list[str] = field(
         default_factory=lambda: [
-            "auth", "security", "password", "token", "secret",
-            "payment", "billing", "pii", "gdpr", "hipaa",
             "design", "review", "audit", "plan", "strategy",
+        ]
+    )
+
+    # Keywords that indicate security-critical tasks (always use Sonnet)
+    security_keywords: list[str] = field(
+        default_factory=lambda: [
+            "auth", "authentication", "authorization", "security",
+            "password", "token", "secret", "credential", "api key",
+            "payment", "billing", "stripe", "checkout",
+            "pii", "gdpr", "hipaa", "compliance", "encrypt",
+            "vulnerability", "injection", "xss", "csrf",
         ]
     )
 
@@ -106,6 +127,23 @@ class RouterConfig:
         ]
     )
 
+    # Keywords that suggest frontend/UI tasks (Moonshot-friendly)
+    frontend_keywords: list[str] = field(
+        default_factory=lambda: [
+            "frontend", "ui", "component", "svelte", "react", "vue",
+            "css", "tailwind", "styling", "layout", "responsive",
+            "button", "form", "modal", "card", "page", "view",
+        ]
+    )
+
+    # Keywords that suggest code generation tasks (Moonshot-friendly)
+    code_keywords: list[str] = field(
+        default_factory=lambda: [
+            "implement", "create function", "add method", "refactor",
+            "generate", "write code", "coding", "feature",
+        ]
+    )
+
 
 class AgentRouter:
     """Routes tasks to the optimal provider based on complexity."""
@@ -115,6 +153,7 @@ class AgentRouter:
         config: RouterConfig | None = None,
         claude_provider: ClaudeProvider | None = None,
         gemini_provider: AgentProvider | None = None,
+        moonshot_provider: AgentProvider | None = None,
     ):
         self.config = config or RouterConfig()
         self.claude = claude_provider or ClaudeProvider()
@@ -131,6 +170,19 @@ class AgentRouter:
                 self.config.enable_gemini = False
         else:
             self.gemini = None
+
+        # Moonshot is optional (Kimi K2 for frontend/code tasks)
+        if moonshot_provider:
+            self.moonshot = moonshot_provider
+        elif self.config.enable_moonshot:
+            try:
+                from .moonshot import MoonshotProvider
+                self.moonshot = MoonshotProvider()
+            except (ImportError, ValueError):
+                self.moonshot = None
+                self.config.enable_moonshot = False
+        else:
+            self.moonshot = None
 
     def analyze_complexity(self, task: str, labels: list[str] | None = None) -> Complexity:
         """Analyze task to determine complexity level.
@@ -182,6 +234,11 @@ class AgentRouter:
             if keyword in task_lower:
                 return Complexity.COMPLEX
 
+        # Security keywords also indicate complex (handled separately in routing)
+        for keyword in self.config.security_keywords:
+            if keyword in task_lower:
+                return Complexity.COMPLEX
+
         # Default based on task length (rough heuristic)
         if len(task) < 100:
             return Complexity.SIMPLE
@@ -221,17 +278,71 @@ class AgentRouter:
 
         return TaskType.EXECUTE
 
+    def is_frontend_or_code_task(self, task: str, labels: list[str] | None = None) -> bool:
+        """Check if task is frontend/UI or code generation (Moonshot-friendly).
+
+        Kimi K2 excels at:
+        - Frontend/UI component development
+        - Code generation and refactoring
+        - Svelte, React, Vue components
+        - CSS/Tailwind styling
+        """
+        task_lower = task.lower()
+        labels = labels or []
+
+        # Check explicit labels
+        if any(label in ("frontend", "ui", "code", "component") for label in labels):
+            return True
+
+        # Check for frontend keywords
+        for keyword in self.config.frontend_keywords:
+            if keyword in task_lower:
+                return True
+
+        # Check for code generation keywords
+        for keyword in self.config.code_keywords:
+            if keyword in task_lower:
+                return True
+
+        return False
+
+    def is_security_critical(self, task: str, labels: list[str] | None = None) -> bool:
+        """Check if task is security-critical (always use Claude Sonnet).
+
+        Security-critical tasks require trusted, well-tested reasoning.
+        We don't route these to newer/cheaper providers.
+        """
+        task_lower = task.lower()
+        labels = labels or []
+
+        # Check explicit labels
+        if any(label in ("security", "auth", "payment", "compliance") for label in labels):
+            return True
+
+        # Check for security keywords
+        for keyword in self.config.security_keywords:
+            if keyword in task_lower:
+                return True
+
+        return False
+
     def route(self, task: str, labels: list[str] | None = None) -> RoutingDecision:
         """Determine the best provider and model for a task.
 
         Routing hierarchy:
         1. Architecture → Opus (rare, high-level design)
-        2. Planning/Review/Complex → Sonnet
-        3. Standard → Haiku with thinking
-        4. Trivial/Simple → Gemini Flash (cheapest)
+        2. Planning/Review → Sonnet (trusted reasoning)
+        3. Security-critical → Sonnet (no cost optimization on security)
+        4. Complex frontend/code → Kimi K2 Thinking (deep reasoning, cheap)
+        5. Complex general → Gemini Pro (2.5x cheaper than Sonnet)
+        6. Frontend/Code (simple-standard) → Kimi K2 (5-6x cheaper than Sonnet)
+        7. Standard → Haiku with thinking
+        8. Trivial/Simple → Gemini Flash (cheapest)
         """
         complexity = self.analyze_complexity(task, labels)
         task_type = self.detect_task_type(task, labels)
+        is_frontend_code = self.is_frontend_or_code_task(task, labels)
+        is_security = self.is_security_critical(task, labels)
 
         # Architecture-level tasks → Opus (rare)
         if complexity == Complexity.ARCHITECTURE:
@@ -243,24 +354,82 @@ class AgentRouter:
                 reason="Architecture-level decisions require Opus",
             )
 
-        # Planning and review tasks → Sonnet
+        # Planning and review tasks → Sonnet (trusted reasoning)
         if task_type in self.config.claude_only_types:
             return RoutingDecision(
                 provider="claude",
                 model="claude-sonnet-4-20250514",
                 complexity=complexity,
                 task_type=task_type,
-                reason=f"{task_type.value} tasks use Sonnet for reasoning",
+                reason=f"{task_type.value} tasks use Sonnet for trusted reasoning",
             )
 
-        # Complex/security tasks → Sonnet
+        # Security-critical tasks → Sonnet (no cost optimization on security)
+        if is_security:
+            return RoutingDecision(
+                provider="claude",
+                model="claude-sonnet-4-20250514",
+                complexity=complexity,
+                task_type=task_type,
+                reason="Security-critical tasks use Sonnet (no cost optimization)",
+            )
+
+        # Complex frontend/code → Kimi K2 Thinking (deep reasoning, 5x cheaper)
+        if (
+            complexity == Complexity.COMPLEX
+            and self.config.enable_moonshot
+            and self.moonshot
+            and is_frontend_code
+        ):
+            return RoutingDecision(
+                provider="moonshot",
+                model="kimi-k2-thinking",
+                complexity=complexity,
+                task_type=task_type,
+                reason="Kimi K2 Thinking for complex code (5x cheaper than Sonnet)",
+            )
+
+        # Complex general tasks → Gemini Pro (2.5x cheaper than Sonnet)
+        if (
+            complexity == Complexity.COMPLEX
+            and self.config.enable_gemini
+            and self.gemini
+        ):
+            return RoutingDecision(
+                provider="gemini",
+                model="gemini-2.5-pro",
+                complexity=complexity,
+                task_type=task_type,
+                reason="Gemini Pro for complex reasoning (2.5x cheaper than Sonnet)",
+            )
+
+        # Complex fallback → Sonnet (if Gemini unavailable)
         if complexity == Complexity.COMPLEX:
             return RoutingDecision(
                 provider="claude",
                 model="claude-sonnet-4-20250514",
                 complexity=complexity,
                 task_type=task_type,
-                reason="Complex tasks use Sonnet for balanced reasoning/cost",
+                reason="Complex tasks use Sonnet (Gemini Pro unavailable)",
+            )
+
+        # Frontend/Code tasks (simple-standard) → Kimi K2 (5-6x cheaper than Sonnet)
+        if (
+            self.config.enable_moonshot
+            and self.moonshot
+            and is_frontend_code
+            and complexity.value in (
+                Complexity.SIMPLE.value,
+                Complexity.STANDARD.value,
+            )
+        ):
+            model = self.moonshot.get_default_model(complexity.value)
+            return RoutingDecision(
+                provider="moonshot",
+                model=model,
+                complexity=complexity,
+                task_type=task_type,
+                reason="Kimi K2 excels at frontend/code (5-6x cheaper than Sonnet)",
             )
 
         # Standard execution → Haiku with thinking
@@ -285,7 +454,7 @@ class AgentRouter:
                 model=model,
                 complexity=complexity,
                 task_type=task_type,
-                reason=f"Gemini Flash is 10x cheaper for {complexity.value} tasks",
+                reason=f"Gemini Flash is cheapest for {complexity.value} tasks",
             )
 
         # Fallback to Haiku for trivial/simple if Gemini unavailable
@@ -314,8 +483,19 @@ class AgentRouter:
             max_tokens=max_tokens,
         )
 
-        # Get provider
-        if decision.provider == "gemini" and self.gemini:
+        # Execute with appropriate provider
+        if decision.provider == "moonshot" and self.moonshot:
+            result = await self.moonshot.execute(config)
+
+            # Fallback to Claude on failure
+            if not result.success and self.config.fallback_on_failure:
+                fallback_model = self.claude.get_default_model(decision.complexity.value)
+                config.model = fallback_model
+                result = await self.claude.execute(config)
+                if result.success:
+                    result.output = f"[Fallback from Moonshot] {result.output}"
+
+        elif decision.provider == "gemini" and self.gemini:
             result = await self.gemini.execute(config)
 
             # Fallback to Claude on failure
@@ -323,7 +503,6 @@ class AgentRouter:
                 fallback_model = self.claude.get_default_model(decision.complexity.value)
                 config.model = fallback_model
                 result = await self.claude.execute(config)
-                # Preserve original error info
                 if result.success:
                     result.output = f"[Fallback from Gemini] {result.output}"
         else:
@@ -355,7 +534,9 @@ class AgentRouter:
 
             # Estimate with routing
             decision = self.route(task, labels)
-            if decision.provider == "gemini" and self.gemini:
+            if decision.provider == "moonshot" and self.moonshot:
+                routed_cost += self.moonshot.estimate_cost(500, 1000, decision.model)
+            elif decision.provider == "gemini" and self.gemini:
                 routed_cost += self.gemini.estimate_cost(500, 1000, decision.model)
             else:
                 routed_cost += self.claude.estimate_cost(500, 1000, decision.model)

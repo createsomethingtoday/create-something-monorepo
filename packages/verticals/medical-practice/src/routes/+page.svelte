@@ -5,7 +5,7 @@
 	 * Design: Data-forward, serif headings, muted palette
 	 * Voice: Clinical precision meets human warmth
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import { siteConfig } from '$lib/config/site';
 
 	// Location image

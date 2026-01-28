@@ -9,7 +9,7 @@
 	 * After: Uses shared tufte components for consistency with io dashboard
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import { onMount } from 'svelte';
 	import { MetricCard, HighDensityTable, Sparkline, DailyGrid } from '@create-something/tufte';
 
@@ -309,7 +309,7 @@
 </div>
 
 <!--
-  Shared dashboard styles come from @create-something/components/styles/components.css
+  Shared dashboard styles come from @create-something/canon/styles/components.css
   Classes used: page-title, page-description, select-field, loading-text, table-card,
                 table-title, chart-card, chart-title, chart-subtitle, chart-value,
                 chart-label, empty-state, info-footer, footer-text, footer-note, footer-link

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { canonNavigation } from '$lib/canon/navigation.js';
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 
 	// Filter to show only main sections for quick access
 	const quickLinks = canonNavigation.slice(1, 4); // Foundations, Components, Patterns

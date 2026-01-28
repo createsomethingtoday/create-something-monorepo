@@ -7,7 +7,7 @@
 
 ## Summary
 
-The .agency property has **excellent Canon compliance**. Zero hardcoded hex colors found in all Svelte files. The app.css properly imports Canon tokens from `@create-something/components`. The property successfully avoids the most critical violation category: hardcoded color values.
+The .agency property has **excellent Canon compliance**. Zero hardcoded hex colors found in all Svelte files. The app.css properly imports Canon tokens from `@create-something/canon`. The property successfully avoids the most critical violation category: hardcoded color values.
 
 | Category | Status | Count |
 |----------|--------|-------|

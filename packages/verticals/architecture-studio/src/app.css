@@ -11,10 +11,10 @@
 
 /* ==========================================================================
    Canon Design Tokens - Single Source of Truth
-   Import from @create-something/components
+   Import from @create-something/canon
    ========================================================================== */
 
-@import '@create-something/components/styles/tokens.css';
+@import '@create-something/canon/styles/tokens.css';
 
 /* ==========================================================================
    Template-Specific Token Overrides

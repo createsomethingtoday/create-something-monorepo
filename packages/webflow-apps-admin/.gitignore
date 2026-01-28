@@ -1,0 +1,13 @@
+# Build output
+dist/
+
+# Dependencies
+node_modules/
+
+# Extension build
+extension-build/
+*.zip
+
+# Local reports (keep samples)
+reports/*.json
+!reports/webflow-apps-audit-2026-01-26.json

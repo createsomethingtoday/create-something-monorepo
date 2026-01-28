@@ -6,7 +6,7 @@
  * Canon: Departure is as clean as arrival.
  */
 
-import { handleLogout } from '@create-something/components/auth';
+import { handleLogout } from '@create-something/canon/auth';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request, cookies, platform }) => {

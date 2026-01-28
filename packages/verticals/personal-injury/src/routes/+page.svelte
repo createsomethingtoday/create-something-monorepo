@@ -7,7 +7,7 @@
 	 * 24/7 availability emphasis
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import { siteConfig } from '$lib/config/site';
 
 	// Get current year for footer

@@ -1,0 +1,428 @@
+/**
+ * Animation & Motion Patterns
+ *
+ * Purposeful motion that guides attention and reveals state.
+ * Based on Canon timing tokens and principles from css-canon.md.
+ *
+ * Philosophy: "Motion should be purposeful, not decorative."
+ * - Entrance animations reveal hierarchy
+ * - Hover states provide feedback
+ * - Scroll effects create depth
+ * - Stagger creates rhythm
+ */
+
+/* ==========================================================================
+   Entrance Animations
+   ========================================================================== */
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes slideUp {
+	from {
+		opacity: 0;
+		transform: translateY(40px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes slideDown {
+	from {
+		opacity: 0;
+		transform: translateY(-40px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes slideLeft {
+	from {
+		opacity: 0;
+		transform: translateX(40px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes slideRight {
+	from {
+		opacity: 0;
+		transform: translateX(-40px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes scaleIn {
+	from {
+		opacity: 0;
+		transform: scale(0.95);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+/* Entrance Animation Classes */
+.animate-fade-in {
+	animation: fadeIn var(--duration-complex) var(--ease-standard) forwards;
+}
+
+.animate-slide-up {
+	animation: slideUp var(--duration-complex) var(--ease-standard) forwards;
+}
+
+.animate-slide-down {
+	animation: slideDown var(--duration-complex) var(--ease-standard) forwards;
+}
+
+.animate-slide-left {
+	animation: slideLeft var(--duration-complex) var(--ease-standard) forwards;
+}
+
+.animate-slide-right {
+	animation: slideRight var(--duration-complex) var(--ease-standard) forwards;
+}
+
+.animate-scale-in {
+	animation: scaleIn var(--duration-complex) var(--ease-standard) forwards;
+}
+
+/* Initial hidden state for entrance animations */
+.animate-on-scroll {
+	opacity: 0;
+}
+
+.animate-on-scroll.visible {
+	animation: slideUp var(--duration-complex) var(--ease-standard) forwards;
+}
+
+/* ==========================================================================
+   Stagger Patterns
+   ========================================================================== */
+
+/* Cascade delay for sibling elements */
+.stagger-children > * {
+	animation-delay: calc(var(--cascade-step, 50ms) * var(--index, 0));
+}
+
+/* Quick cascade (50ms steps) */
+.stagger-quick > * {
+	--cascade-step: 50ms;
+}
+
+/* Standard cascade (100ms steps) */
+.stagger-standard > * {
+	--cascade-step: 100ms;
+}
+
+/* Slow cascade (150ms steps) */
+.stagger-slow > * {
+	--cascade-step: 150ms;
+}
+
+/* Auto-index for up to 12 children */
+.stagger-children > *:nth-child(1) { --index: 0; }
+.stagger-children > *:nth-child(2) { --index: 1; }
+.stagger-children > *:nth-child(3) { --index: 2; }
+.stagger-children > *:nth-child(4) { --index: 3; }
+.stagger-children > *:nth-child(5) { --index: 4; }
+.stagger-children > *:nth-child(6) { --index: 5; }
+.stagger-children > *:nth-child(7) { --index: 6; }
+.stagger-children > *:nth-child(8) { --index: 7; }
+.stagger-children > *:nth-child(9) { --index: 8; }
+.stagger-children > *:nth-child(10) { --index: 9; }
+.stagger-children > *:nth-child(11) { --index: 10; }
+.stagger-children > *:nth-child(12) { --index: 11; }
+
+/* ==========================================================================
+   Hover Enhancements
+   ========================================================================== */
+
+/* Lift effect (subtle elevation) */
+.hover-lift {
+	transition: transform var(--duration-standard) var(--ease-standard);
+}
+
+.hover-lift:hover {
+	transform: translateY(-8px);
+}
+
+/* Border glow effect */
+.hover-glow {
+	transition: border-color var(--duration-micro) var(--ease-standard),
+		box-shadow var(--duration-micro) var(--ease-standard);
+}
+
+.hover-glow:hover {
+	border-color: var(--color-border-emphasis);
+	box-shadow: 0 0 0 1px var(--color-border-emphasis);
+}
+
+/* Opacity fade */
+.hover-fade {
+	transition: opacity var(--duration-micro) var(--ease-standard);
+}
+
+.hover-fade:hover {
+	opacity: 0.7;
+}
+
+/* Scale + Shadow (card lift) */
+.hover-card {
+	transition: all var(--duration-standard) var(--ease-standard);
+}
+
+.hover-card:hover {
+	transform: translateY(-4px) scale(1.02);
+	box-shadow: var(--shadow-lg);
+}
+
+/* ==========================================================================
+   Scroll-Driven Effects
+   ========================================================================== */
+
+/* Parallax depth layers */
+.parallax-slow {
+	transform: translateY(calc(var(--scroll-progress, 0) * -20px));
+}
+
+.parallax-medium {
+	transform: translateY(calc(var(--scroll-progress, 0) * -50px));
+}
+
+.parallax-fast {
+	transform: translateY(calc(var(--scroll-progress, 0) * -100px));
+}
+
+/* Scroll fade (header transparency) */
+.scroll-fade {
+	transition: background var(--duration-standard) var(--ease-standard);
+}
+
+.scroll-fade.scrolled {
+	background: var(--color-bg-pure);
+	box-shadow: var(--shadow-sm);
+}
+
+/* ==========================================================================
+   Loading States
+   ========================================================================== */
+
+@keyframes pulse {
+	0%, 100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.5;
+	}
+}
+
+@keyframes shimmer {
+	0% {
+		background-position: -1000px 0;
+	}
+	100% {
+		background-position: 1000px 0;
+	}
+}
+
+.loading-pulse {
+	animation: pulse var(--duration-loading) var(--ease-standard) infinite;
+}
+
+.loading-shimmer {
+	background: linear-gradient(
+		90deg,
+		var(--color-bg-subtle) 0%,
+		var(--color-bg-surface) 50%,
+		var(--color-bg-subtle) 100%
+	);
+	background-size: 1000px 100%;
+	animation: shimmer var(--duration-loading) linear infinite;
+}
+
+/* Skeleton loading state */
+.skeleton {
+	background: var(--color-bg-subtle);
+	position: relative;
+	overflow: hidden;
+}
+
+.skeleton::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	background: linear-gradient(
+		90deg,
+		transparent,
+		rgba(255, 255, 255, 0.05),
+		transparent
+	);
+	animation: shimmer var(--duration-loading) linear infinite;
+}
+
+/* ==========================================================================
+   Page Transitions
+   ========================================================================== */
+
+@keyframes pageEnter {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes pageExit {
+	from {
+		opacity: 1;
+		transform: translateY(0);
+	}
+	to {
+		opacity: 0;
+		transform: translateY(-20px);
+	}
+}
+
+.page-enter {
+	animation: pageEnter var(--duration-complex) var(--ease-standard);
+}
+
+.page-exit {
+	animation: pageExit var(--duration-standard) var(--ease-standard);
+}
+
+/* ==========================================================================
+   Micro-Interactions
+   ========================================================================== */
+
+/* Button press effect */
+.press-effect {
+	transition: transform var(--duration-micro) var(--ease-standard);
+}
+
+.press-effect:active {
+	transform: scale(0.98);
+}
+
+/* Underline reveal */
+.underline-reveal {
+	position: relative;
+}
+
+.underline-reveal::after {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 0;
+	height: 1px;
+	background: currentColor;
+	transition: width var(--duration-standard) var(--ease-standard);
+}
+
+.underline-reveal:hover::after {
+	width: 100%;
+}
+
+/* Icon rotate on hover */
+.rotate-on-hover {
+	transition: transform var(--duration-standard) var(--ease-standard);
+}
+
+.rotate-on-hover:hover {
+	transform: rotate(90deg);
+}
+
+/* ==========================================================================
+   Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+
+	/* Disable parallax */
+	.parallax-slow,
+	.parallax-medium,
+	.parallax-fast {
+		transform: none !important;
+	}
+}
+
+/* ==========================================================================
+   View Transitions API (Progressive Enhancement)
+   ========================================================================== */
+
+@supports (view-transition-name: none) {
+	::view-transition-old(root),
+	::view-transition-new(root) {
+		animation-duration: var(--duration-standard);
+	}
+
+	::view-transition-old(root) {
+		animation-name: pageExit;
+	}
+
+	::view-transition-new(root) {
+		animation-name: pageEnter;
+	}
+}
+
+/* ==========================================================================
+   Utility Combinations
+   ========================================================================== */
+
+/* Fade in + Slide up (most common entrance) */
+.entrance-default {
+	animation: slideUp var(--duration-complex) var(--ease-standard) forwards;
+}
+
+/* Hero entrance (scale + fade) */
+.entrance-hero {
+	animation: scaleIn calc(var(--duration-complex) * 1.5) var(--ease-standard) forwards;
+}
+
+/* Quick micro-feedback */
+.feedback-quick {
+	transition: all var(--duration-micro) var(--ease-standard);
+}
+
+/* Standard interactive feedback */
+.feedback-standard {
+	transition: all var(--duration-standard) var(--ease-standard);
+}
+
+/* Complex state changes */
+.feedback-complex {
+	transition: all var(--duration-complex) var(--ease-standard);
+}

@@ -4,7 +4,7 @@
 	 * Anonymized case outcomes as trust signals
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import { getSiteConfigFromContext } from '$lib/config/context';
 	import EthicsDisclaimer from '$lib/components/EthicsDisclaimer.svelte';
 

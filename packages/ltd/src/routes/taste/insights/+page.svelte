@@ -3,7 +3,7 @@
 	import { formatTime } from '$lib/taste/insights';
 	import { Sparkline } from '@create-something/tufte';
 	import type { DataPoint } from '@create-something/tufte';
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 
 	let { data }: { data: PageData } = $props();
 

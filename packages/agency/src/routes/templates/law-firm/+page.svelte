@@ -7,7 +7,7 @@
 	 * Ethics-compliant architecture with proper disclaimers
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
 	import {
 		Scale,

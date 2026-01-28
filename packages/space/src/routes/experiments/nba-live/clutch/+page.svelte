@@ -6,11 +6,11 @@
 	 * Filters by date range and displays ice-in-veins ratings.
 	 */
 	
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
 	import type { ClutchStats } from '$lib/nba/clutch-calculator';
-	import AnalyticsNav from '$lib/components/nba/AnalyticsNav.svelte';
-	import DateNavigation from '$lib/components/nba/DateNavigation.svelte';
+	import { AnalyticsNav } from '$lib/experiments/nba-live';
+	import { DateNavigation } from '$lib/experiments/nba-live';
 	import { Zap, TrendingUp, TrendingDown, Flame } from 'lucide-svelte';
 	import { invalidate } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';

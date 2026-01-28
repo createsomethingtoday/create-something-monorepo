@@ -6,11 +6,11 @@
 	 * Identifies fatigue patterns and performance decline in extended play.
 	 */
 	
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import { Clock, TrendingDown, AlertTriangle } from 'lucide-svelte';
-	import AnalyticsNav from '$lib/components/nba/AnalyticsNav.svelte';
-	import OvertimeInsights from '$lib/components/nba/OvertimeInsights.svelte';
-	import DateNavigation from '$lib/components/nba/DateNavigation.svelte';
+	import { AnalyticsNav } from '$lib/experiments/nba-live';
+	import { OvertimeInsights } from '$lib/experiments/nba-live';
+	import { DateNavigation } from '$lib/experiments/nba-live';
 	import type { PageData } from './$types';
 	
 	let { data }: { data: PageData } = $props();

@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import type { AnalyticsEventRequest } from '@create-something/components/types';
+import type { AnalyticsEventRequest } from '@create-something/canon/types';
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	const db = platform?.env?.DB;

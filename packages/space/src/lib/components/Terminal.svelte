@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
 	import type { ExperimentCommand } from '$lib/types/paper';
-	import { keyboardClick } from '@create-something/components';
+	import { keyboardClick } from '@create-something/canon';
 
 	interface Props {
 		welcomeMessage?: string;

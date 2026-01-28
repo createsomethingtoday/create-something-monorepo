@@ -1,0 +1,153 @@
+<script lang="ts">
+	/**
+	 * Card Component
+	 *
+	 * Standardized card with variants following CREATE SOMETHING standards.
+	 * Uses canonical CSS custom properties for all design tokens.
+	 */
+
+	type CardVariant = 'standard' | 'elevated' | 'outlined' | 'glass';
+	type CardRadius = 'sm' | 'md' | 'lg' | 'xl';
+	type CardPadding = 'none' | 'sm' | 'md' | 'lg' | 'xl';
+
+	interface Props {
+		variant?: CardVariant;
+		radius?: CardRadius;
+		padding?: CardPadding;
+		hover?: boolean;
+		href?: string;
+		class?: string;
+		children?: import('svelte').Snippet;
+		onclick?: (event: MouseEvent) => void;
+	}
+
+	let {
+		variant = 'standard',
+		radius = 'lg',
+		padding = 'lg',
+		hover = false,
+		href,
+		class: className = '',
+		children,
+		onclick
+	}: Props = $props();
+
+	// Padding map using layout utilities (acceptable per CSS Architecture standard)
+	const paddingMap = {
+		none: '',
+		sm: 'p-4',
+		md: 'p-6',
+		lg: 'p-8',
+		xl: 'p-12'
+	};
+
+	const baseClasses = `card card-${variant} card-radius-${radius} ${hover ? 'card-hover' : ''} ${paddingMap[padding]} ${className}`;
+</script>
+
+{#if href}
+	<a {href} class={baseClasses} {onclick}>
+		{#if children}
+			{@render children()}
+		{/if}
+	</a>
+{:else if onclick}
+	<button type="button" class={baseClasses} {onclick}>
+		{#if children}
+			{@render children()}
+		{/if}
+	</button>
+{:else}
+	<div class={baseClasses}>
+		{#if children}
+			{@render children()}
+		{/if}
+	</div>
+{/if}
+
+<style>
+	/* Base Card */
+	.card {
+		transition: all var(--duration-standard) var(--ease-standard);
+	}
+
+	/* Variants */
+	.card-standard {
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+	}
+
+	.card-elevated {
+		background: var(--color-bg-elevated);
+		border: 1px solid var(--color-border-default);
+		box-shadow: var(--shadow-xl);
+	}
+
+	.card-outlined {
+		background: transparent;
+		border: 2px solid var(--color-border-emphasis);
+	}
+
+	/* Glass variant - "The Automation Layer" */
+	.card-glass {
+		background-color: var(--glass-bg-light);
+		border: 1px solid var(--glass-border-light);
+		backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+		-webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
+	}
+
+	.card-glass.card-hover:hover {
+		background-color: var(--glass-bg-medium);
+		border-color: var(--glass-border-medium);
+		box-shadow: var(--glass-shadow-md);
+	}
+
+	/* Radius variants */
+	.card-radius-sm {
+		border-radius: var(--radius-sm);
+	}
+
+	.card-radius-md {
+		border-radius: var(--radius-md);
+	}
+
+	.card-radius-lg {
+		border-radius: var(--radius-lg);
+	}
+
+	.card-radius-xl {
+		border-radius: var(--radius-xl);
+	}
+
+	/* Hover effect - Scale + Border Progression (Pattern 1) */
+	.card-hover {
+		cursor: pointer;
+	}
+
+	.card-hover:hover {
+		transform: scale(var(--scale-micro));
+		border-color: var(--color-border-emphasis);
+		box-shadow: var(--shadow-lg);
+	}
+
+	.card-hover:active {
+		transform: scale(var(--scale-subtle));
+	}
+
+	/* Focus states for accessibility */
+	a.card:focus-visible,
+	button.card:focus-visible,
+	div.card:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
+	}
+
+	/* Reset button styles when used as card */
+	button {
+		border: none;
+		background: none;
+		font: inherit;
+		text-align: inherit;
+		cursor: pointer;
+		width: 100%;
+	}
+</style>

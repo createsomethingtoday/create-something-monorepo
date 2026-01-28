@@ -5,7 +5,7 @@
 	 * Documents the philosophical, writing, and systems thinking foundations
 	 * of CREATE SOMETHING's methodology.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO
@@ -110,7 +110,8 @@
 							<tr>
 								<th class="text-left py-3">Layer</th>
 								<th class="text-left py-3">Philosophy</th>
-								<th class="text-left py-3">Writing</th>
+								<th class="text-left py-3">Writing: Clarity</th>
+								<th class="text-left py-3">Writing: Authenticity</th>
 								<th class="text-left py-3">Systems</th>
 							</tr>
 						</thead>
@@ -119,18 +120,21 @@
 								<td class="py-3 layer-label">Foundational</td>
 								<td class="py-3">Heidegger<br/><span class="work-title">Being and Time</span></td>
 								<td class="py-3">Orwell<br/><span class="work-title">Politics and the English Language</span></td>
+								<td class="py-3">Montaigne<br/><span class="work-title">Essays</span></td>
 								<td class="py-3">Wiener<br/><span class="work-title">Cybernetics</span></td>
 							</tr>
 							<tr>
 								<td class="py-3 layer-label">Methodological</td>
 								<td class="py-3">Gadamer<br/><span class="work-title">Truth and Method</span></td>
 								<td class="py-3">Zinsser<br/><span class="work-title">On Writing Well</span></td>
+								<td class="py-3">King + Vonnegut<br/><span class="work-title">On Writing</span></td>
 								<td class="py-3">Meadows<br/><span class="work-title">Thinking in Systems</span></td>
 							</tr>
 							<tr>
 								<td class="py-3 layer-label">Applied</td>
 								<td class="py-3">Dieter Rams<br/><span class="work-title">Ten Principles</span></td>
 								<td class="py-3">Fenton/Lee<br/><span class="work-title">Nicely Said</span></td>
+								<td class="py-3">Yegge<br/><span class="work-title">Drunken Blog Rants</span></td>
 								<td class="py-3">Senge<br/><span class="work-title">The Fifth Discipline</span></td>
 							</tr>
 						</tbody>
@@ -138,8 +142,10 @@
 				</div>
 
 				<p>
-					Each column addresses a different dimension of CREATE SOMETHING's work. Together they
-					answer: How do we understand being? How do we communicate? How do we see interconnection?
+					Each column addresses a different dimension of CREATE SOMETHING's work. The two Writing
+					columns converge on honesty from different angles: Clarity removes obstacles to understanding;
+					Authenticity builds trust through voice. Together they answer: How do we understand being?
+					How do we communicate clearly AND authentically? How do we see interconnection?
 				</p>
 			</div>
 		</section>
@@ -195,9 +201,16 @@
 			</div>
 		</section>
 
-		<!-- Writing Lineage -->
+		<!-- Writing Lineage: Clarity -->
 		<section class="space-y-6">
-			<h2 class="section-heading">IV. The Writing Lineage</h2>
+			<h2 class="section-heading">IV. The Writing Lineage: Clarity</h2>
+
+			<div class="space-y-4 leading-relaxed body-text">
+				<p>
+					The first writing lineage answers: <strong>How do we remove obstacles to understanding?</strong>
+					This is the Clarity lineage—clarity as ethics, serving the reader through transparent prose.
+				</p>
+			</div>
 
 			<div class="space-y-6 leading-relaxed body-text">
 				<div class="master-card">
@@ -247,9 +260,85 @@
 			</div>
 		</section>
 
+		<!-- Writing Lineage: Authenticity -->
+		<section class="space-y-6">
+			<h2 class="section-heading">V. The Writing Lineage: Authenticity</h2>
+
+			<div class="space-y-4 leading-relaxed body-text">
+				<p>
+					The second writing lineage answers: <strong>How do we build trust through voice?</strong>
+					This is the Authenticity lineage—confession as honesty, bringing readers where you are.
+					It runs parallel to Clarity, converging on honesty from a different angle.
+				</p>
+			</div>
+
+			<div class="space-y-6 leading-relaxed body-text">
+				<div class="master-card">
+					<div class="master-header">
+						<span class="master-layer-tag">Foundational</span>
+						<h3 class="master-name">Michel de Montaigne</h3>
+						<p class="master-work">Essays (1580)</p>
+					</div>
+					<p class="master-contribution">
+						Montaigne invented the personal essay—the confessional, digressive, exploratory form.
+						"I am myself the matter of my book." What made his work revolutionary was its
+						"complete honesty and informality," unusual for the 16th century. He established
+						that readers connect with honest struggle, not polished authority. Before him,
+						writing about oneself was vanity. After him, confession became a path to universal truth.
+						<strong>Confession reveals truth</strong>.
+					</p>
+				</div>
+
+				<div class="master-card">
+					<div class="master-header">
+						<span class="master-layer-tag">Methodological</span>
+						<h3 class="master-name">Stephen King (+ Kurt Vonnegut)</h3>
+						<p class="master-work">On Writing: A Memoir of the Craft (2000)</p>
+					</div>
+					<p class="master-contribution">
+						King made Montaigne's confessional insight teachable for modern writers. "Un-learn
+						the stuff they taught you about writing in school, and just write directly from
+						your soul." His memoir combines autobiography with craft advice, showing that
+						personal struggle and technical methodology reinforce each other. Vonnegut's
+						parallel contribution: "Write to please just one person. If you open a window
+						and make love to the world, your story will get pneumonia."
+						<strong>Voice as learnable discipline</strong>.
+					</p>
+				</div>
+
+				<div class="master-card">
+					<div class="master-header">
+						<span class="master-layer-tag">Applied</span>
+						<h3 class="master-name">Steve Yegge</h3>
+						<p class="master-work">"Stevey's Drunken Blog Rants™" (2004-present)</p>
+					</div>
+					<p class="master-contribution">
+						Yegge applied the confessional essay tradition to technical writing. "Your blog
+						will totally suck if you maintain careful neutrality, straddling the bland fence
+						of noncommittal objectivity." His essays use allegory ("Kingdom of Nouns"), humor,
+						confession, and purposeful verbosity to achieve deeper impact than neutral documentation.
+						He proved that personality serves technical communication. CREATE SOMETHING adopted
+						his Beads and Zero Framework Cognition; the Authenticity lineage now adopts his voice patterns.
+						<strong>Authentic technical voice</strong>.
+					</p>
+				</div>
+			</div>
+
+			<div class="space-y-4 leading-relaxed body-text mt-6">
+				<div class="p-6 principle-box">
+					<p class="principle-text">
+						<strong>The Convergent Insight</strong><br/>
+						Both lineages arrive at honesty independently:<br/>
+						Orwell: Clear prose is honest prose (lies require obscurity)<br/>
+						Montaigne: Confessional prose is honest prose (vulnerability requires truth)
+					</p>
+				</div>
+			</div>
+		</section>
+
 		<!-- Systems Lineage -->
 		<section class="space-y-6">
-			<h2 class="section-heading">V. The Systems Lineage</h2>
+			<h2 class="section-heading">VI. The Systems Lineage</h2>
 
 			<div class="space-y-6 leading-relaxed body-text">
 				<div class="master-card">
@@ -299,7 +388,7 @@
 
 		<!-- Why This Matters -->
 		<section class="space-y-6">
-			<h2 class="section-heading">VI. Why Genealogy Matters</h2>
+			<h2 class="section-heading">VII. Why Genealogy Matters</h2>
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
@@ -343,7 +432,7 @@
 
 		<!-- Canon Connection -->
 		<section class="space-y-6">
-			<h2 class="section-heading">VII. The Canon Connection</h2>
+			<h2 class="section-heading">VIII. The Canon Connection</h2>
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
@@ -400,13 +489,15 @@
 
 		<!-- Reading Path -->
 		<section class="space-y-6">
-			<h2 class="section-heading">VIII. The Reading Path</h2>
+			<h2 class="section-heading">IX. The Reading Path</h2>
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
 					For practitioners who want to go deeper, start with the methodological layer
 					(most accessible), then descend to foundations:
 				</p>
+
+				<h3 class="subsection-heading">Clarity, Philosophy & Systems</h3>
 
 				<div class="reading-path">
 					<div class="reading-stage">
@@ -436,12 +527,41 @@
 						</ul>
 					</div>
 				</div>
+
+				<h3 class="subsection-heading mt-8">The Authenticity Lineage</h3>
+
+				<div class="reading-path">
+					<div class="reading-stage">
+						<h4 class="stage-title">Start Here (Applied)</h4>
+						<ul class="stage-list">
+							<li><em>"You Should Write Blogs"</em> — Steve Yegge (2005, philosophy of authentic writing)</li>
+							<li><em>"Execution in the Kingdom of Nouns"</em> — Steve Yegge (2006, allegory masterclass)</li>
+							<li><em>"Blogging Theory 201: Size Does Matter"</em> — Steve Yegge (2008, defense of long-form)</li>
+						</ul>
+					</div>
+
+					<div class="reading-stage">
+						<h4 class="stage-title">Go Deeper (Methodological)</h4>
+						<ul class="stage-list">
+							<li><em>On Writing: A Memoir of the Craft</em> — Stephen King (memoir + methodology)</li>
+							<li><em>"How to Write with Style"</em> — Kurt Vonnegut (1982, 8 rules including "write for one person")</li>
+						</ul>
+					</div>
+
+					<div class="reading-stage">
+						<h4 class="stage-title">Foundations</h4>
+						<ul class="stage-list">
+							<li><em>Essays</em> — Michel de Montaigne (1580, "Of Experience" and "Of Cannibals" first)</li>
+							<li><em>Table-Talk</em> — William Hazlitt (1821-22, the Romantic familiar essay)</li>
+						</ul>
+					</div>
+				</div>
 			</div>
 		</section>
 
 		<!-- How to Apply This -->
 		<section class="space-y-6">
-			<h2 class="section-heading">IX. How to Apply This</h2>
+			<h2 class="section-heading">X. How to Apply This</h2>
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<h3 class="subsection-heading">Tracing Your Own Intellectual Genealogy</h3>
@@ -646,7 +766,7 @@ const principles = [
 
 		<!-- Conclusion -->
 		<section class="space-y-6">
-			<h2 class="section-heading">X. Conclusion</h2>
+			<h2 class="section-heading">XI. Conclusion</h2>
 
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>

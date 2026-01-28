@@ -10,7 +10,7 @@
 
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { createLogger } from '@create-something/components/utils';
+import { createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('NewsletterWebhook');
 

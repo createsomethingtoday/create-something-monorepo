@@ -12,7 +12,7 @@ This is where philosophy meets the market. Patterns validated in `.space` and do
 
 | Dependency | Why It Matters |
 |------------|----------------|
-| `@create-something/components` | Shared UI for professional presentation |
+| `@create-something/canon` | Shared UI for professional presentation |
 | View Transitions API | Platform-native animations (GSAP removed) |
 | `marked` + `highlight.js` | Case study content rendering |
 | Cloudflare Pages | Edge deployment for global client access |

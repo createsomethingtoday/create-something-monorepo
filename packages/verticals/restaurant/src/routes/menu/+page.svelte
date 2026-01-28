@@ -5,7 +5,7 @@
 	 * Showcases chef's choice and full menu in bold editorial style.
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import { siteConfig } from '$lib/config/site';
 </script>
 

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { QuoteBlock, SEO } from '@create-something/components';
+	import { QuoteBlock, SEO } from '@create-something/canon';
+	import { FluidAssembly } from '@create-something/canon/experiments/kinetic-typography';
 	import type { PageData } from './$types';
-	import FluidAssembly from './FluidAssembly.svelte';
 
 	let { data }: { data: PageData } = $props();
 	const { experiment } = data;
@@ -323,7 +323,7 @@ const weight = 400 + (600 - 400) * emphasisProgress;`}</pre>
 		</p>
 		<p>
 			This experiment earns its place. The component is ready for promotion to
-			<code>@create-something/components</code> and documentation as a paper.
+			<code>@create-something/canon</code> and documentation as a paper.
 		</p>
 		<p>
 			Next: apply the pattern to other CREATE SOMETHING properties. Test with longer

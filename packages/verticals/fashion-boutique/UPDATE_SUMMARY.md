@@ -245,7 +245,7 @@ All Stitch patterns are now available as **reusable Canon utilities**:
 <div class="offset-grid">...</div>
 ```
 
-**Import path**: Automatically included via `@import '@create-something/components/styles/canon.css';`
+**Import path**: Automatically included via `@import '@create-something/canon/styles/canon.css';`
 
 ---
 
@@ -284,7 +284,7 @@ pnpm --filter=@create-something/silhouettes dev
 
 ```svelte
 <!-- In any package's app.css -->
-@import '@create-something/components/styles/canon.css';
+@import '@create-something/canon/styles/canon.css';
 
 <!-- Now use the patterns -->
 <nav class="mix-blend-invert">

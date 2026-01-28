@@ -349,7 +349,7 @@
 	 * "Weniger, aber besser" - Dieter Rams
 	 *
 	 * Requires Canon tokens to be imported by consuming app:
-	 * @import '@create-something/components/styles/tokens.css';
+	 * @import '@create-something/canon/styles/tokens.css';
 	 */
 
 	.spritz {

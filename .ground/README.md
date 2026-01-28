@@ -6,10 +6,20 @@ This directory contains reusable Ground MCP configuration patterns organized by 
 
 ```
 .ground/
-├── sveltekit-patterns.yml    # SvelteKit framework conventions
-├── cloudflare-patterns.yml   # Cloudflare Workers/Pages patterns
-├── monorepo-patterns.yml     # General monorepo patterns
-└── project-specific.yml      # Project-specific exceptions
+├── sveltekit-patterns.yml      # SvelteKit framework conventions
+├── cloudflare-patterns.yml     # Cloudflare Workers/Pages patterns
+├── monorepo-patterns.yml       # General monorepo patterns
+├── project-specific.yml        # Project-specific exceptions
+├── design-patterns.yml         # Canon design system tokens
+│
+│   # Consolidation patterns (from Canon migration audit)
+├── import-health.yml           # Deprecated imports, direct source imports
+├── component-locality.yml      # Components in Canon, not routes
+├── experiment-graduation.yml   # Track experiment component usage
+├── duplication.yml             # Duplicate utility detection
+├── dependency-health.yml       # Package.json health checks
+│
+└── CONSOLIDATION_PATTERNS_SPEC.md  # Full spec for consolidation patterns
 ```
 
 The main `.ground.yml` extends these files using the `extends` directive.
@@ -58,6 +68,68 @@ The main `.ground.yml` extends these files using the `extends` directive.
 - Intentional duplicate pairs
 
 **When to update:** When you have project-specific architectural decisions.
+
+---
+
+## Consolidation Patterns (Canon Migration)
+
+These patterns were developed during the `@create-something/components` to `@create-something/canon` migration. They catch issues that would otherwise require manual audit.
+
+### `import-health.yml`
+**Purpose:** Detect deprecated package imports and anti-patterns.
+
+**Detects:**
+- `@create-something/components` imports (deprecated)
+- Direct source path imports (`../../../components/src/lib/...`)
+- Cross-package relative imports
+
+**CLI:** `ground imports --check` / `ground imports --fix`
+
+### `component-locality.yml`
+**Purpose:** Enforce Canon as single source of truth for components.
+
+**Detects:**
+- Svelte components in route directories (should be in Canon)
+- Components that bypass Canon structure
+
+**CLI:** `ground components --check` / `ground components --relocate`
+
+### `experiment-graduation.yml`
+**Purpose:** Track experiment component usage and suggest graduation.
+
+**The Graduation Pattern:**
+- 1 use → stays in `experiments/`
+- 2+ uses → graduates to `components/` or `domains/`
+
+**CLI:** `ground experiments --status` / `ground experiments --graduate ComponentName`
+
+### `duplication.yml`
+**Purpose:** Detect duplicate utilities across packages.
+
+**Detects:**
+- Functions with >85% body similarity
+- Known utilities duplicated from Canon
+
+**CLI:** `ground duplicates --check` / `ground duplicates --report`
+
+### `dependency-health.yml`
+**Purpose:** Monitor package.json health across the monorepo.
+
+**Detects:**
+- Deprecated dependencies
+- Duplicate dependencies
+- Version inconsistencies
+- Missing workspace protocol
+
+**CLI:** `ground deps --check` / `ground deps --fix`
+
+### Full Specification
+
+See `CONSOLIDATION_PATTERNS_SPEC.md` for:
+- Detailed detection algorithms
+- Output examples
+- Implementation plan
+- Success metrics
 
 ## Usage Workflow
 

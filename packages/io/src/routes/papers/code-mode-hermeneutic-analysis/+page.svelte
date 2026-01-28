@@ -6,7 +6,7 @@
 	 * LLM agent architecture, demonstrating why Code Mode achieves
 	 * tool-transparency while direct tool calling forces tool-attention.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO

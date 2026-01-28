@@ -1,6 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { isValidEmail, createLogger } from '@create-something/components/utils';
+import { isValidEmail, createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('ContactAPI');
 

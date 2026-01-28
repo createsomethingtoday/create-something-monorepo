@@ -6,7 +6,7 @@
 import sharp from 'sharp';
 import * as path from 'path';
 import * as fs from 'fs/promises';
-import { escapeXml } from '@create-something/components';
+import { escapeXml } from '@create-something/canon';
 import type { UIElement, GeneratedImage, HighlightStyle } from './types.js';
 import { DEFAULT_HIGHLIGHT_STYLES } from './types.js';
 import { getImageDimensions } from './crop.js';
@@ -70,7 +70,7 @@ function createLabel(
   `;
 }
 
-// escapeXml imported from @create-something/components
+// escapeXml imported from @create-something/canon
 
 /**
  * Create highlight overlay SVG for a screenshot

@@ -5,7 +5,7 @@
 	 * A collection of presentations following CREATE SOMETHING principles.
 	 * "The presentation itself demonstrates the philosophy."
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 
 	const presentations = [
 		{

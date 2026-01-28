@@ -3,7 +3,7 @@ import { json, error } from '@sveltejs/kit';
 import Stripe from 'stripe';
 import { Resend } from 'resend';
 import { generateWelcomeEmail } from '$lib/email/welcome-template';
-import { createPersistentLogger, createLogger, type Logger } from '@create-something/components/utils';
+import { createPersistentLogger, createLogger, type Logger } from '@create-something/canon/utils';
 
 /**
  * POST /api/stripe/webhook

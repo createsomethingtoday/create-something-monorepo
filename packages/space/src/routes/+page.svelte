@@ -1,9 +1,8 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import HeroSection from '$lib/components/HeroSection.svelte';
-	import RelatedResearch from '$lib/components/RelatedResearch.svelte';
-	import LearningPathsSection from '$lib/components/LearningPathsSection.svelte';
-	import { SEO } from '@create-something/components';
+	import { RelatedResearch, LearningPathsSection } from '@create-something/canon/domains/space';
+	import { SEO } from '@create-something/canon';
 
 	let { data }: { data: PageData } = $props();
 	const { papers } = data;

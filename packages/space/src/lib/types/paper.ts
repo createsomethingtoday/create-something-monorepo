@@ -1,7 +1,7 @@
 /**
  * Re-export Paper type from shared components library and extend with experiment-specific fields.
  */
-import type { Paper as BasePaper } from '@create-something/components';
+import type { Paper as BasePaper } from '@create-something/canon';
 
 export interface Paper extends BasePaper {
   // Executable experiment fields (specific to .space)

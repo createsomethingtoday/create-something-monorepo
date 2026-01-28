@@ -4,12 +4,11 @@
 	import ExperimentRuntime from '$lib/components/ExperimentRuntime.svelte';
 	import ExperimentCodeEditor from '$lib/components/ExperimentCodeEditor.svelte';
 	import RelatedPapersCard from '$lib/components/RelatedPapersCard.svelte';
-	import { RelatedArticles, PageActions, MarkdownPreviewModal, SEO } from '@create-something/components';
-	import { RelatedContent } from '@create-something/components/navigation';
-	import ShareButtons from '$lib/components/ShareButtons.svelte';
-	import NextExperimentCard from '$lib/components/NextExperimentCard.svelte';
+	import { RelatedArticles, PageActions, MarkdownPreviewModal, SEO, ShareButtons } from '@create-something/canon';
+	import { RelatedContent } from '@create-something/canon/navigation';
+	import { NextExperimentCard } from '@create-something/canon/domains/space';
 	import { isExecutable, isCodeExperiment } from '$lib/types/paper';
-	import { getNextPaper } from '@create-something/components/utils';
+	import { getNextPaper } from '@create-something/canon/utils';
 	import { page } from '$app/stores';
 	import {
 		markExperimentCompleted,

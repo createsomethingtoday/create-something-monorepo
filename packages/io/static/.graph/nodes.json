@@ -1160,7 +1160,7 @@
   },
   {
     "id": "packages/components/UNDERSTANDING.md",
-    "title": "Understanding: @create-something/components",
+    "title": "Understanding: @create-something/canon",
     "package": "components",
     "type": "understanding",
     "concepts": [],
@@ -1171,7 +1171,7 @@
   },
   {
     "id": "packages/components/README.md",
-    "title": "@create-something/components",
+    "title": "@create-something/canon",
     "package": "components",
     "type": "readme",
     "concepts": [

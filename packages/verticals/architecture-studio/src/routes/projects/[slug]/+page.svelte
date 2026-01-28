@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import { config } from '$lib/config/runtime';
 	import type { Project } from '$lib/config/site';
 

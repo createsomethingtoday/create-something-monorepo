@@ -1,9 +1,8 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import ArticleHeader from '$lib/components/ArticleHeader.svelte';
-	import ArticleContent from '$lib/components/ArticleContent.svelte';
-	import ShareButtons from '$lib/components/ShareButtons.svelte';
-	import { RelatedArticles, SEO } from '@create-something/components';
+	import { ArticleContent } from '@create-something/canon/domains/agency';
+	import { ShareButtons, RelatedArticles, SEO } from '@create-something/canon';
 
 	export let data: PageData;
 

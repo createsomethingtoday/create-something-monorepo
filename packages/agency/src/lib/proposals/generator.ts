@@ -5,14 +5,9 @@
  * Philosophy: Proposals answer "what will we remove?" not "what will we add?"
  */
 
+import { generateId } from '@create-something/canon/utils';
 import { getOfferingBySlug } from '../data/services';
 import type { Proposal, ProposalInput, TimelinePhase } from './types';
-
-function generateId(): string {
-	const timestamp = Date.now().toString(36);
-	const random = Math.random().toString(36).substring(2, 6);
-	return `prop_${timestamp}_${random}`;
-}
 
 function getValidUntilDate(daysFromNow: number = 30): string {
 	const date = new Date();
@@ -193,7 +188,7 @@ export function generateProposal(input: ProposalInput): Proposal {
 	const basePrice = input.priceOverride || parsePrice(service.pricing);
 
 	const proposal: Proposal = {
-		id: generateId(),
+		id: generateId('prop'),
 		version: '1.0',
 		createdAt: new Date().toISOString(),
 		validUntil: getValidUntilDate(30),

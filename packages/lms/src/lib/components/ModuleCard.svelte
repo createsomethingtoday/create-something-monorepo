@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CatalogCard } from '@create-something/components';
+	import { CatalogCard } from '@create-something/canon';
 	import type { Module } from '$lib/types/modules';
 
 	interface Props {

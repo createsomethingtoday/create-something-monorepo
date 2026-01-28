@@ -9,7 +9,7 @@
 	 * Based on Geoffrey Huntley's Ralph Wiggum technique, adapted for
 	 * CREATE SOMETHING's PRD-to-Ralph workflow.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 </script>
 
 <SEO

@@ -21,7 +21,7 @@ import type { Env } from './types';
 import { handleCors, createPreflightResponse, jsonResponse, errorResponse } from './lib/cors';
 import { ValidationError } from './lib/validation';
 import { AirtableError } from './lib/airtable';
-import { createLogger } from '@create-something/components/utils';
+import { createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('WebflowValidation');
 

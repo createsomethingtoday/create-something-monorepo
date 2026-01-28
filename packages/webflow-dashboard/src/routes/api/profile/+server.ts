@@ -2,7 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import Airtable from 'airtable';
 import { getAirtableClient } from '$lib/server/airtable';
-import { createLogger } from '@create-something/components/utils';
+import { createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('ProfileAPI');
 

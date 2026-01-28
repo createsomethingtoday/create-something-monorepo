@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ground Duplicate Explorer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --glass-hover: rgba(255, 255, 255, 0.1);
+      --text-primary: rgba(255, 255, 255, 0.95);
+      --text-secondary: rgba(255, 255, 255, 0.6);
+      --text-muted: rgba(255, 255, 255, 0.4);
+      --similarity-high: #22c55e;
+      --similarity-medium: #f97316;
+      --similarity-low: #6b7280;
+      --accent: #3b82f6;
+      --warning: #ef4444;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Fira Code', monospace, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header h1::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .control-group label {
+      color: var(--text-secondary);
+    }
+
+    input[type="range"] {
+      width: 100px;
+      accent-color: var(--accent);
+    }
+
+    .threshold-value {
+      font-family: 'Fira Code', monospace;
+      background: var(--glass-bg);
+      padding: 2px 8px;
+      border-radius: 4px;
+      min-width: 45px;
+      text-align: center;
+    }
+
+    .btn {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      padding: 6px 12px;
+      color: var(--text-primary);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: var(--glass-hover);
+    }
+
+    .btn-primary {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: rgba(59, 130, 246, 0.3);
+      color: #60a5fa;
+    }
+
+    .btn-primary:hover {
+      background: rgba(59, 130, 246, 0.3);
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 20px;
+      font-size: 13px;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stat-value {
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+    }
+
+    .duplicates-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .duplicate-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .duplicate-card:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .duplicate-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+    }
+
+    .duplicate-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .similarity-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .similarity-badge.high {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--similarity-high);
+    }
+
+    .similarity-badge.medium {
+      background: rgba(249, 115, 22, 0.2);
+      color: var(--similarity-medium);
+    }
+
+    .similarity-badge.low {
+      background: rgba(107, 114, 128, 0.2);
+      color: var(--similarity-low);
+    }
+
+    .function-name {
+      font-family: 'Fira Code', monospace;
+      font-size: 14px;
+    }
+
+    .file-count {
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .duplicate-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .duplicate-body {
+      display: none;
+      padding: 16px;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .duplicate-card.expanded .duplicate-body {
+      display: block;
+    }
+
+    .files-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .file-card {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .file-path {
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      word-break: break-all;
+    }
+
+    .file-lines {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .code-preview {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+      padding: 8px;
+      font-family: 'Fira Code', monospace;
+      font-size: 11px;
+      line-height: 1.5;
+      max-height: 150px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      color: var(--text-secondary);
+    }
+
+    .duplicate-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: rgba(0, 0, 0, 0.1);
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .footer-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      color: var(--text-secondary);
+    }
+
+    .loading::after {
+      content: '';
+      width: 24px;
+      height: 24px;
+      border: 2px solid var(--glass-border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 12px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+    }
+
+    .empty-state h2 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: var(--similarity-high);
+    }
+
+    .expand-icon {
+      transition: transform 0.2s ease;
+    }
+
+    .duplicate-card.expanded .expand-icon {
+      transform: rotate(180deg);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Ground Duplicate Explorer</h1>
+    <div class="controls">
+      <div class="control-group">
+        <label>Threshold:</label>
+        <input type="range" id="threshold" min="50" max="100" value="80">
+        <span class="threshold-value" id="threshold-value">80%</span>
+      </div>
+      <button class="btn btn-primary" onclick="analyze()">Analyze</button>
+      <button class="btn" onclick="refresh()">Refresh</button>
+    </div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat">
+      <span class="stat-value" id="total-duplicates">0</span>
+      <span class="stat-label">Duplicate Groups</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" id="total-files">0</span>
+      <span class="stat-label">Files Affected</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" id="avg-similarity">0%</span>
+      <span class="stat-label">Avg Similarity</span>
+    </div>
+  </div>
+
+  <div class="duplicates-list" id="duplicates-list">
+    <div class="loading">Loading duplicates</div>
+  </div>
+
+  <script type="module">
+    // MCP Apps SDK integration
+    class McpApp {
+      constructor() {
+        this.messageId = 0;
+        this.pendingRequests = new Map();
+        this.ontoolresult = null;
+        
+        window.addEventListener('message', (event) => {
+          this.handleMessage(event.data);
+        });
+      }
+
+      async connect() {
+        return new Promise((resolve) => {
+          parent.postMessage({ type: 'mcp-app-connect' }, '*');
+          resolve();
+        });
+      }
+
+      handleMessage(data) {
+        if (data.type === 'tool-result' && this.ontoolresult) {
+          this.ontoolresult(data.result);
+        }
+        
+        if (data.id && this.pendingRequests.has(data.id)) {
+          const { resolve, reject } = this.pendingRequests.get(data.id);
+          this.pendingRequests.delete(data.id);
+          
+          if (data.error) {
+            reject(new Error(data.error.message));
+          } else {
+            resolve(data.result);
+          }
+        }
+      }
+
+      async callServerTool(request) {
+        const id = ++this.messageId;
+        
+        return new Promise((resolve, reject) => {
+          this.pendingRequests.set(id, { resolve, reject });
+          
+          parent.postMessage({
+            jsonrpc: '2.0',
+            id,
+            method: 'tools/call',
+            params: {
+              name: request.name,
+              arguments: request.arguments
+            }
+          }, '*');
+        });
+      }
+
+      async updateModelContext(context) {
+        parent.postMessage({
+          type: 'update-context',
+          context
+        }, '*');
+      }
+    }
+
+    const app = new McpApp();
+    let duplicates = [];
+
+    async function init() {
+      await app.connect();
+      
+      app.ontoolresult = (result) => {
+        if (result && result.duplicates) {
+          renderDuplicates(result.duplicates);
+        }
+      };
+
+      await refresh();
+    }
+
+    window.refresh = async function() {
+      const threshold = document.getElementById('threshold').value / 100;
+      
+      try {
+        document.getElementById('duplicates-list').innerHTML = '<div class="loading">Scanning for duplicates</div>';
+        
+        const result = await app.callServerTool({
+          name: 'ground_find_duplicate_functions',
+          arguments: {
+            threshold: threshold,
+            exclude_tests: true
+          }
+        });
+        
+        // Parse the result
+        const parsed = typeof result === 'string' ? JSON.parse(result) : result;
+        const data = parsed.content?.[0]?.text ? JSON.parse(parsed.content[0].text) : parsed;
+        
+        duplicates = data.duplicates || data.groups || [];
+        renderDuplicates(duplicates);
+        updateStats();
+      } catch (error) {
+        console.error('Failed to find duplicates:', error);
+        renderDuplicates([]);
+      }
+    };
+
+    window.analyze = async function() {
+      await refresh();
+      
+      await app.updateModelContext({
+        content: [{ type: 'text', text: `User analyzed duplicates with ${document.getElementById('threshold').value}% threshold` }]
+      });
+    };
+
+    function renderDuplicates(dupes) {
+      const list = document.getElementById('duplicates-list');
+      
+      if (!dupes || dupes.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <h2>No Duplicates Found</h2>
+            <p>Your codebase is clean! No function duplicates detected above the threshold.</p>
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = dupes.map((dup, index) => {
+        const similarity = dup.similarity || dup.score || 0.8;
+        const similarityClass = similarity >= 0.9 ? 'high' : similarity >= 0.7 ? 'medium' : 'low';
+        const similarityPct = Math.round(similarity * 100);
+        const funcName = dup.function_name || dup.name || 'Unknown function';
+        const files = dup.files || dup.locations || [];
+        
+        return `
+          <div class="duplicate-card" data-index="${index}">
+            <div class="duplicate-header" onclick="toggleCard(${index})">
+              <div class="duplicate-info">
+                <span class="similarity-badge ${similarityClass}">
+                  ${similarityPct}%
+                </span>
+                <span class="function-name">${escapeHtml(funcName)}</span>
+                <span class="file-count">${files.length} files</span>
+              </div>
+              <div class="duplicate-actions">
+                <span class="expand-icon">▼</span>
+              </div>
+            </div>
+            <div class="duplicate-body">
+              <div class="files-grid">
+                ${files.slice(0, 2).map(file => `
+                  <div class="file-card">
+                    <div class="file-path">${escapeHtml(file.path || file.file || file)}</div>
+                    ${file.lines ? `<div class="file-lines">Lines ${file.lines.start}-${file.lines.end}</div>` : ''}
+                    ${file.preview ? `<div class="code-preview">${escapeHtml(file.preview)}</div>` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            <div class="duplicate-footer">
+              <span class="file-count">${files.length > 2 ? `+${files.length - 2} more files` : ''}</span>
+              <div class="footer-actions">
+                <button class="btn" onclick="compare(${index})">Compare</button>
+                <button class="btn btn-primary" onclick="getSuggestion(${index})">Suggest Fix</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.toggleCard = function(index) {
+      const card = document.querySelector(`[data-index="${index}"]`);
+      card.classList.toggle('expanded');
+    };
+
+    window.compare = async function(index) {
+      const dup = duplicates[index];
+      const files = dup.files || dup.locations || [];
+      
+      if (files.length >= 2) {
+        try {
+          await app.callServerTool({
+            name: 'ground_compare',
+            arguments: {
+              file_a: files[0].path || files[0].file || files[0],
+              file_b: files[1].path || files[1].file || files[1]
+            }
+          });
+          
+          await app.updateModelContext({
+            content: [{ type: 'text', text: `User compared files: ${files[0].path || files[0]} vs ${files[1].path || files[1]}` }]
+          });
+        } catch (error) {
+          console.error('Compare failed:', error);
+        }
+      }
+    };
+
+    window.getSuggestion = async function(index) {
+      const dup = duplicates[index];
+      const files = dup.files || dup.locations || [];
+      const similarity = dup.similarity || dup.score || 0.8;
+      
+      if (files.length >= 2) {
+        try {
+          const result = await app.callServerTool({
+            name: 'ground_suggest_fix',
+            arguments: {
+              file_a: files[0].path || files[0].file || files[0],
+              file_b: files[1].path || files[1].file || files[1],
+              similarity: similarity
+            }
+          });
+          
+          await app.updateModelContext({
+            content: [{ type: 'text', text: `User requested fix suggestion for duplicate: ${dup.function_name || dup.name}` }]
+          });
+        } catch (error) {
+          console.error('Get suggestion failed:', error);
+        }
+      }
+    };
+
+    function updateStats() {
+      const totalDuplicates = duplicates.length;
+      const totalFiles = new Set(duplicates.flatMap(d => (d.files || d.locations || []).map(f => f.path || f.file || f))).size;
+      const avgSimilarity = duplicates.length > 0 
+        ? Math.round(duplicates.reduce((sum, d) => sum + (d.similarity || d.score || 0.8), 0) / duplicates.length * 100)
+        : 0;
+
+      document.getElementById('total-duplicates').textContent = totalDuplicates;
+      document.getElementById('total-files').textContent = totalFiles;
+      document.getElementById('avg-similarity').textContent = avgSimilarity + '%';
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+    }
+
+    // Threshold slider update
+    document.getElementById('threshold').addEventListener('input', (e) => {
+      document.getElementById('threshold-value').textContent = e.target.value + '%';
+    });
+
+    // Make functions globally available
+    window.refresh = refresh;
+    window.analyze = analyze;
+
+    // Initialize on load
+    init();
+  </script>
+</body>
+</html>

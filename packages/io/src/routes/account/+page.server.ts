@@ -1,6 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
-import type { UserAnalytics } from '@create-something/components/analytics';
+import type { UserAnalytics } from '@create-something/canon/analytics';
 
 export const load: PageServerLoad = async ({ parent, fetch }) => {
 	const { user } = await parent();

@@ -5,7 +5,7 @@
 	 * Papers document what we tested, what we found, and what it means.
 	 * Each paper includes methodology, data, and conclusions you can verify.
 	 */
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 
 	let { data } = $props();
 	const papers = data.papers;

@@ -1,17 +1,17 @@
 /**
- * Canon Design Tokens - Re-export from @create-something/components
+ * Canon Design Tokens - Re-export from @create-something/canon
  *
  * This file re-exports the canonical token definitions from the components package.
- * The single source of truth is @create-something/components/styles/tokens.css
+ * The single source of truth is @create-something/canon/styles/tokens.css
  *
  * Why re-export?
  * - Vertical templates import from @create-something/vertical-shared/canon
  * - This maintains the existing import path while centralizing token definitions
  * - DRY principle: one definition, multiple access points
  *
- * @deprecated Import directly from @create-something/components/styles/tokens.css instead
+ * @deprecated Import directly from @create-something/canon/styles/tokens.css instead
  * @see packages/components/src/lib/styles/tokens.css
  */
 
 /* Re-export the canonical token definitions */
-@import '@create-something/components/styles/tokens.css';
+@import '@create-something/canon/styles/tokens.css';

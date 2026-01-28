@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { SEO } from '@create-something/components';
-	import SavvyCalButton from '$lib/components/SavvyCalButton.svelte';
+	import { SEO } from '@create-something/canon';
+	import { SavvyCalButton } from '@create-something/canon/domains/agency';
 	import { verticals, getExampleOutcomes, countAgents } from '$lib/agents';
 
 	// Offering types

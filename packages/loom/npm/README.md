@@ -93,6 +93,23 @@ Or for Claude Desktop, add to `claude_desktop_config.json`:
 - `loom_formulas` — List available workflow templates
 - `loom_formula` — Get formula details
 
+## MCP Apps (Interactive UIs)
+
+Loom supports the [MCP Apps extension](https://modelcontextprotocol.io/docs/concepts/apps) for interactive task visualization directly in the conversation.
+
+### Task Board UI
+
+When you call task visibility tools (`loom_list`, `loom_ready`, `loom_summary`, `loom_mine`, `loom_blocked`), supported MCP clients can render an interactive Kanban-style task board:
+
+- Drag-and-drop between columns (Ready, In Progress, Blocked, Done)
+- One-click claim, complete, or release tasks
+- Real-time status updates
+- Filter by status, label, or agent
+
+**Supported Clients**: Claude.ai, VS Code (Insiders), ChatGPT, Goose
+
+The UI is served via `ui://loom/task-board` resource and communicates with the server via postMessage.
+
 ## Why Loom?
 
 | Feature | Beads | Gas Town | Loom |

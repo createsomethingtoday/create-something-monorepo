@@ -22,7 +22,7 @@ import { TABLES, FIELDS } from '../types';
 import { findUserByEmail, queryRecords } from '../lib/airtable';
 import { jsonResponse } from '../lib/cors';
 import { parseJsonBody, isValidEmail, ValidationError } from '../lib/validation';
-import { createLogger } from '@create-something/components/utils';
+import { createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('LibraryValidation');
 

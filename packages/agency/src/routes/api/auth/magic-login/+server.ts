@@ -1,8 +1,8 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { identityClient, getIdentityErrorMessage } from '@create-something/components/api';
-import { catchApiError, createLogger } from '@create-something/components/utils';
-import { magicLinkSchema, parseBody } from '@create-something/components/validation';
+import { identityClient, getIdentityErrorMessage } from '@create-something/canon/api';
+import { catchApiError, createLogger } from '@create-something/canon/utils';
+import { magicLinkSchema, parseBody } from '@create-something/canon/validation';
 
 const logger = createLogger('MagicLoginAPI');
 

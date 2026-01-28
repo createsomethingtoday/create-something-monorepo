@@ -7,7 +7,7 @@
 	 * understanding accumulates—it doesn't reset.
 	 */
 
-	import { IsometricSpiral, IsometricArchitecture, SEO } from '@create-something/components';
+	import { IsometricSpiral, IsometricArchitecture, SEO } from '@create-something/canon';
 
 	// Architecture diagram nodes
 	const archNodes = [

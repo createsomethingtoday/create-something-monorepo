@@ -7,7 +7,7 @@
 	 * HIPAA-ready architecture with honest disclaimers
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
 	import {
 		Stethoscope,

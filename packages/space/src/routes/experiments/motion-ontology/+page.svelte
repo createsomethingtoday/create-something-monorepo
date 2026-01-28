@@ -15,7 +15,7 @@
 		OntologicalMode,
 		MotionJudgment
 	} from '$lib/motion-analysis';
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 
 	let { data }: { data: PageData } = $props();
 

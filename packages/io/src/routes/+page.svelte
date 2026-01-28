@@ -9,8 +9,8 @@
 	 * Featured experiments are showcased below the hero.
 	 */
 	import type { PageData } from './$types';
-	import HeroSection from '$lib/components/HeroSection.svelte';
-	import { PapersGrid, SEO, NewsletterSignup } from '@create-something/components';
+	import { HeroSection } from '@create-something/canon/domains/io';
+	import { PapersGrid, SEO, NewsletterSignup } from '@create-something/canon';
 
 	let { data }: { data: PageData } = $props();
 	const { papers } = data;

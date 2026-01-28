@@ -10,7 +10,7 @@ const TABLES = {
 	TAGS: '🏷️Tags (Free Form)',
 	CATEGORY_PERFORMANCE: 'tblDU1oUiobNfMQP9',
 	LEADERBOARD: 'tblcXLVLYobhNmrg6',
-	ASSET_VERSIONS: 'tblAssetVersionHistory'
+	ASSET_VERSIONS: 'tblHxZ2hgSFLZxsZu'
 } as const;
 
 // Airtable field IDs for authentication
@@ -213,14 +213,30 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		/**
 		 * Set verification token for user.
 		 *
-		 * CRITICAL: Uses two-step process to trigger Airtable automation:
-		 * 1. Clear old token (set to null)
-		 * 2. Set new token (transition from null → value triggers automation)
-		 *
-		 * The Airtable automation watches for this field transition to send the email.
+		 * Stores token in Airtable for verification. Email delivery is handled
+		 * by Resend in the login endpoint - this is purely for token storage.
 		 */
 		async setVerificationToken(userId: string, token: string, expirationTime: Date): Promise<void> {
-			// Step 1: Clear old token (required to trigger automation on next update)
+			await base(TABLES.USERS).update([{
+				id: userId,
+				fields: {
+					[FIELDS.VERIFICATION_TOKEN]: token,
+					[FIELDS.TOKEN_EXPIRATION]: expirationTime.toISOString()
+				}
+			}]);
+		},
+
+		/**
+		 * Trigger Airtable automation to send verification email.
+		 *
+		 * Uses two-step process to trigger Airtable automation:
+		 * 1. Clear token (set to null)
+		 * 2. Set new token (null → value transition triggers automation)
+		 *
+		 * This is used as a fallback when Resend fails (e.g., suppressed emails).
+		 */
+		async triggerVerificationEmailAutomation(userId: string, token: string, expirationTime: Date): Promise<void> {
+			// Step 1: Clear token to reset automation trigger
 			await base(TABLES.USERS).update([{
 				id: userId,
 				fields: {
@@ -229,7 +245,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				}
 			}]);
 
-			// Step 2: Set new token (this transition triggers the Airtable automation)
+			// Step 2: Set new token (triggers Airtable automation)
 			await base(TABLES.USERS).update([{
 				id: userId,
 				fields: {
@@ -446,6 +462,12 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				carouselImages?: string[];
 			}
 		): Promise<Asset | null> {
+			console.log('[Airtable] updateAssetWithImages called for id:', id);
+			console.log('[Airtable] Input data:', JSON.stringify({
+				...data,
+				thumbnailUrl: data.thumbnailUrl ? `${data.thumbnailUrl.substring(0, 80)}...` : data.thumbnailUrl
+			}));
+			
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const fields: Record<string, any> = {};
 
@@ -458,8 +480,10 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			if (data.previewUrl !== undefined) fields['🔗Preview Site URL'] = data.previewUrl;
 
 			// Image fields - Airtable expects array of { url: string }
+			// Use field IDs (not names) to match old dashboard exactly
 			if (data.thumbnailUrl !== undefined) {
-				fields['🖼️Thumbnail Image'] = data.thumbnailUrl
+				console.log('[Airtable] Setting thumbnail field fld43LxLHMZb2yF7F to:', data.thumbnailUrl ? `[{ url: "${data.thumbnailUrl.substring(0, 50)}..." }]` : '[]');
+				fields['fld43LxLHMZb2yF7F'] = data.thumbnailUrl
 					? [{ url: data.thumbnailUrl }]
 					: [];
 			}
@@ -469,19 +493,29 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					: [];
 			}
 			if (data.carouselImages !== undefined) {
-				fields['🖼️Carousel Images'] = data.carouselImages.map(url => ({ url }));
+				fields['fldneaPyoRXBAVtS1'] = data.carouselImages.map(url => ({ url }));
 			}
 
+			console.log('[Airtable] Fields to update:', Object.keys(fields));
+
 			if (Object.keys(fields).length === 0) {
+				console.log('[Airtable] No fields to update, returning null');
 				return null;
 			}
 
 			try {
+				console.log('[Airtable] Calling base.update with fields...');
 				const records = await base(TABLES.ASSETS).update([{ id, fields }]);
+				console.log('[Airtable] Update successful, record id:', records[0].id);
 				const record = records[0];
 				const rawStatus = record.fields['🚀Marketplace Status'] as string || 'Draft';
 				const cleanedStatus = cleanMarketplaceStatus(rawStatus) as Asset['status'];
 				const carouselImages = (record.fields['🖼️Carousel Images'] as { url: string }[] | undefined)?.map(img => img.url) || [];
+				
+				// Log the thumbnail field from the returned record
+				const thumbnailField = record.fields['🖼️Thumbnail Image'] as { url: string }[] | undefined;
+				console.log('[Airtable] Returned thumbnail field (🖼️Thumbnail Image):', JSON.stringify(thumbnailField));
+				console.log('[Airtable] Returned thumbnail field (fld43LxLHMZb2yF7F):', JSON.stringify(record.fields['fld43LxLHMZb2yF7F']));
 
 				return {
 					id: record.id,
@@ -499,7 +533,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					marketplaceUrl: record.fields['🔗Marketplace URL'] as string
 				};
 			} catch (err) {
-				console.error('Error updating asset with images:', err);
+				console.error('[Airtable] Error updating asset with images:', err);
+				console.error('[Airtable] Error details:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
 				return null;
 			}
 		},
@@ -1044,29 +1079,47 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		/**
 		 * Create a new version of an asset.
 		 * Captures current state as a snapshot before any changes are made.
+		 * 
+		 * Field IDs from old dashboard:
+		 * - fldemWilqCQcOCh5s: Asset link (linked record to assets table)
+		 * - fldn2ImbgwKfCdWWA: Version Number
+		 * - fldjYFJMGTerFYlol: Type (e.g., 'Meta Update')
+		 * - fldc999gbJ8LWWoTC: Changes JSON
+		 * - fldknoYakli2sqznT: Asset ID (for filtering)
 		 */
 		async createAssetVersion(
 			assetId: string,
 			createdBy: string,
 			changes: string
 		): Promise<AssetVersion | null> {
+			console.log('[Airtable] createAssetVersion called:', { assetId, createdBy, changes });
+			console.log('[Airtable] Using ASSET_VERSIONS table:', TABLES.ASSET_VERSIONS);
+			
 			try {
 				// Get current asset state
+				console.log('[Airtable] Fetching asset state...');
 				const asset = await this.getAsset(assetId);
-				if (!asset) return null;
+				if (!asset) {
+					console.log('[Airtable] Asset not found:', assetId);
+					return null;
+				}
+				console.log('[Airtable] Asset found:', asset.name);
 
-				// Get the next version number
+				// Get the next version number using the correct field ID
+				console.log('[Airtable] Querying existing versions...');
 				const existingVersions = await base(TABLES.ASSET_VERSIONS)
 					.select({
-						filterByFormula: `{Asset ID} = '${escapeAirtableString(assetId)}'`,
-						sort: [{ field: 'Version Number', direction: 'desc' }],
+						filterByFormula: `{fldknoYakli2sqznT} = '${escapeAirtableString(assetId)}'`,
+						sort: [{ field: 'fldn2ImbgwKfCdWWA', direction: 'desc' }],
 						maxRecords: 1
 					})
 					.firstPage();
+				console.log('[Airtable] Existing versions count:', existingVersions.length);
 
 				const nextVersion = existingVersions.length > 0
-					? (Number(existingVersions[0].fields['Version Number']) || 0) + 1
+					? (Number(existingVersions[0].fields['fldn2ImbgwKfCdWWA']) || 0) + 1
 					: 1;
+				console.log('[Airtable] Next version number:', nextVersion);
 
 				// Create snapshot of current state
 				const snapshot = {
@@ -1080,30 +1133,36 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					carouselImages: asset.carouselImages
 				};
 
-				// Create version record
-				const records = await base(TABLES.ASSET_VERSIONS).create([{
-					fields: {
-						'Asset ID': assetId,
-						'Version Number': nextVersion,
-						'Created By': createdBy,
-						'Changes': changes,
-						'Snapshot': JSON.stringify(snapshot),
-						'Created At': new Date().toISOString()
-					}
-				}]);
+				// Create version record using field IDs from old dashboard
+				// Matches exactly: pages/api/asset/createVersion/[id].js lines 101-107
+				console.log('[Airtable] Creating version record with fields:', {
+					'fldemWilqCQcOCh5s': [assetId],
+					'fldn2ImbgwKfCdWWA': nextVersion,
+					'fldjYFJMGTerFYlol': 'Meta Update',
+					'fldc999gbJ8LWWoTC': 'changes JSON...',
+					'fldLEIZMEjZvH5n23': ['zendesk']
+				});
+				const records = await base(TABLES.ASSET_VERSIONS).create({
+					'fldemWilqCQcOCh5s': [assetId], // Linked record to asset
+					'fldn2ImbgwKfCdWWA': nextVersion, // Version number
+					'fldjYFJMGTerFYlol': 'Meta Update', // Type
+					'fldc999gbJ8LWWoTC': JSON.stringify({ changes, snapshot, createdBy }), // Changes JSON
+					'fldLEIZMEjZvH5n23': ['zendesk'] // Source - must match existing linked record
+				});
+				console.log('[Airtable] Version record created:', records.id);
 
-				const record = records[0];
 				return {
-					id: record.id,
-					assetId: record.fields['Asset ID'] as string,
-					versionNumber: record.fields['Version Number'] as number,
-					createdAt: record.fields['Created At'] as string,
-					createdBy: record.fields['Created By'] as string,
-					changes: record.fields['Changes'] as string,
-					snapshot: JSON.parse(record.fields['Snapshot'] as string)
+					id: records.id,
+					assetId: assetId,
+					versionNumber: nextVersion,
+					createdAt: new Date().toISOString(),
+					createdBy: createdBy,
+					changes: changes,
+					snapshot: snapshot
 				};
 			} catch (err) {
-				console.error('Error creating asset version:', err);
+				console.error('[Airtable] Error creating asset version:', err);
+				console.error('[Airtable] Error details:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
 				return null;
 			}
 		},

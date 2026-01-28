@@ -12,7 +12,7 @@
 	 * - AEO: Answer "How do I create a dental practice website?"
 	 */
 
-	import { SEO } from '@create-something/components';
+	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
 	import {
 		Stethoscope,
