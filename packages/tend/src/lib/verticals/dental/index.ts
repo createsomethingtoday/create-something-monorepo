@@ -18,6 +18,13 @@ import type { DentalAutomationContext, DentalDashboardMetrics } from './types';
  * Customize per-practice during onboarding.
  */
 export const defaultDentalContext: DentalAutomationContext = {
+	// Inherited from AutomationContext
+	tenant: { id: 'demo', name: 'Demo Practice', slug: 'demo', tier: 'demo', settings: {} },
+	source: { id: 'demo-pms', tenantId: 'demo', type: 'pms', name: 'Demo PMS', status: 'demo', config: {} },
+	vipSenders: [],
+	categories: ['call', 'appointment', 'recall', 'claim', 'review'],
+	customData: {},
+
 	practice: {
 		name: 'Demo Dental Practice',
 		npi: '1234567890',

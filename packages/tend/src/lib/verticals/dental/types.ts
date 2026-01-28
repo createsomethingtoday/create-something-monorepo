@@ -5,7 +5,7 @@
  * Extends core TEND types with dental-specific metadata and sources.
  */
 
-import type { DataItem, Source, AutomationDefinition, AgentDefinition } from '../../sdk/types';
+import type { DataItem, Source, AutomationDefinition, AgentDefinition, AutomationContext } from '../../sdk/types';
 
 // =============================================================================
 // DENTAL SOURCE TYPES
@@ -211,7 +211,7 @@ export interface DentalDataItem extends Omit<DataItem, 'sourceType' | 'metadata'
 // DENTAL AUTOMATION CONTEXT
 // =============================================================================
 
-export interface DentalAutomationContext {
+export interface DentalAutomationContext extends AutomationContext {
 	practice: {
 		name: string;
 		npi: string;

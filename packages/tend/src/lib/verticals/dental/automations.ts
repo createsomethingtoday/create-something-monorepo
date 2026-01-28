@@ -39,7 +39,7 @@ export const callLogIngest = defineAutomation({
 		scoreBreakdown: {},
 	}),
 
-	score: (item, context: DentalAutomationContext) => {
+	score: (item, context) => {
 		let score = 0.3; // Base score
 		const breakdown: Record<string, number> = { base: 0.3 };
 		const meta = item.metadata as any;
@@ -116,7 +116,8 @@ export const appointmentSync = defineAutomation({
 		scoreBreakdown: {},
 	}),
 
-	score: (item, context: DentalAutomationContext) => {
+	score: (item, context) => {
+		const ctx = context as unknown as DentalAutomationContext;
 		let score = 0.4;
 		const breakdown: Record<string, number> = { base: 0.4 };
 		const meta = item.metadata as any;
@@ -134,20 +135,20 @@ export const appointmentSync = defineAutomation({
 		}
 
 		// High production
-		if (meta.estimated_production >= context.weights.high_production_threshold) {
+		if (meta.estimated_production >= ctx.weights.high_production_threshold) {
 			score += 0.2;
 			breakdown.high_production = 0.2;
 		}
 
 		// VIP patient
-		if (context.weights.vip_patients.includes(meta.patient_id)) {
+		if (ctx.weights.vip_patients.includes(meta.patient_id)) {
 			score += 0.15;
 			breakdown.vip = 0.15;
 		}
 
 		// Priority procedures
-		const hasPriority = meta.procedure_codes.some((code: string) => 
-			context.weights.priority_procedures.includes(code)
+		const hasPriority = meta.procedure_codes.some((code: string) =>
+			ctx.weights.priority_procedures.includes(code)
 		);
 		if (hasPriority) {
 			score += 0.1;
@@ -271,7 +272,8 @@ export const recallReminder = defineAutomation({
 		scoreBreakdown: {},
 	}),
 
-	score: (item, context: DentalAutomationContext) => {
+	score: (item, context) => {
+		const ctx = context as unknown as DentalAutomationContext;
 		let score = 0.3;
 		const breakdown: Record<string, number> = { base: 0.3 };
 		const meta = item.metadata as any;
@@ -284,7 +286,7 @@ export const recallReminder = defineAutomation({
 		}
 
 		// VIP patient
-		if (context.weights.vip_patients.includes(meta.patient_id)) {
+		if (ctx.weights.vip_patients.includes(meta.patient_id)) {
 			score += 0.2;
 			breakdown.vip = 0.2;
 		}

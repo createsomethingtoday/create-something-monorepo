@@ -79,7 +79,7 @@ export async function initSimulation(scenario: string = 'dental'): Promise<void>
   
   try {
     // Dynamic import of the WASM module
-    const module = await import('@create-something/simulation') as SimulationModule;
+    const module = await import('@create-something/simulation') as unknown as SimulationModule;
     await module.default();
     
     wasmModule = module;

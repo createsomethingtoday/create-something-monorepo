@@ -50,16 +50,18 @@ export const load: PageServerLoad = async ({ platform, locals }) => {
 		};
 	}
 
-	// Load real data for paying tenants
+	// Load real data for paying tenants (tenant is guaranteed non-null past isDemo guard)
+	const tenant = locals.tenant!;
+	const db = platform!.env.DB;
 	const [items, counts, sources] = await Promise.all([
-		getItems(platform.env.DB, {
-			tenantId: locals.tenant.id,
+		getItems(db, {
+			tenantId: tenant.id,
 			sortBy: 'score',
 			sortOrder: 'desc',
 			limit: 200,
 		}),
-		getItemCounts(platform.env.DB, locals.tenant.id),
-		getSourcesForTenant(platform.env.DB, locals.tenant.id),
+		getItemCounts(db, tenant.id),
+		getSourcesForTenant(db, tenant.id),
 	]);
 
 	return {

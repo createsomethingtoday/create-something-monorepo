@@ -57,7 +57,8 @@ export interface Source {
 	lastSyncAt?: Date;
 }
 
-export type SourceType = 'gmail' | 'slack' | 'quickbooks' | 'stripe' | 'notion' | 'calendar' | 'demo';
+export type SourceType = 'gmail' | 'slack' | 'quickbooks' | 'stripe' | 'notion' | 'calendar' | 'demo'
+	| 'phone' | 'pms' | 'insurance' | 'claims' | 'accounting' | 'reviews' | 'imaging' | 'patient_comms';
 export type SourceStatus = 'active' | 'paused' | 'error' | 'demo';
 
 /**

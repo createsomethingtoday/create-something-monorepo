@@ -13,7 +13,7 @@ export default defineConfig({
 					compilerOptions: {
 						customElement: false
 					}
-				})
+				}) as any
 		  ]
 		: [sveltekit()],
 	build: buildEmbed

@@ -18,7 +18,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { createStripeClient, constructWebhookEvent } from '$lib/services/stripe-connect';
-import { createPersistentLogger, createLogger, type Logger } from '@create-something/components/utils';
+import { createPersistentLogger, createLogger, type Logger } from '@create-something/canon/utils';
 import type Stripe from 'stripe';
 
 export const POST: RequestHandler = async ({ request, platform }) => {
@@ -100,25 +100,25 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			// ==========================================================================
 			case 'invoice.paid': {
 				const invoice = event.data.object as Stripe.Invoice;
-				await handleInvoicePaid(db, invoice, now);
+				await handleInvoicePaid(db, invoice, now, logger);
 				break;
 			}
 
 			case 'invoice.payment_failed': {
 				const invoice = event.data.object as Stripe.Invoice;
-				await handleInvoicePaymentFailed(db, invoice, now);
+				await handleInvoicePaymentFailed(db, invoice, now, logger);
 				break;
 			}
 
 			case 'customer.subscription.updated': {
 				const subscription = event.data.object as Stripe.Subscription;
-				await handleSubscriptionUpdated(db, subscription, now);
+				await handleSubscriptionUpdated(db, subscription, now, logger);
 				break;
 			}
 
 			case 'customer.subscription.deleted': {
 				const subscription = event.data.object as Stripe.Subscription;
-				await handleSubscriptionDeleted(db, subscription, now);
+				await handleSubscriptionDeleted(db, subscription, now, logger);
 				break;
 			}
 
@@ -127,7 +127,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			// ==========================================================================
 			case 'charge.dispute.created': {
 				const dispute = event.data.object as Stripe.Dispute;
-				await handleDisputeCreated(db, dispute, now);
+				await handleDisputeCreated(db, dispute, now, logger);
 				break;
 			}
 
@@ -415,7 +415,8 @@ async function handlePaymentFailed(
 async function handleInvoicePaid(
 	db: D1Database,
 	invoice: Stripe.Invoice,
-	now: string
+	now: string,
+	logger: Logger
 ): Promise<void> {
 	const subscriptionId =
 		typeof invoice.subscription === 'string'
@@ -441,7 +442,8 @@ async function handleInvoicePaid(
 async function handleInvoicePaymentFailed(
 	db: D1Database,
 	invoice: Stripe.Invoice,
-	now: string
+	now: string,
+	logger: Logger
 ): Promise<void> {
 	const subscriptionId =
 		typeof invoice.subscription === 'string'
@@ -467,7 +469,8 @@ async function handleInvoicePaymentFailed(
 async function handleSubscriptionUpdated(
 	db: D1Database,
 	subscription: Stripe.Subscription,
-	now: string
+	now: string,
+	logger: Logger
 ): Promise<void> {
 	const status = subscription.status;
 	const cancelAtPeriodEnd = subscription.cancel_at_period_end ? 1 : 0;
@@ -498,7 +501,8 @@ async function handleSubscriptionUpdated(
 async function handleSubscriptionDeleted(
 	db: D1Database,
 	subscription: Stripe.Subscription,
-	now: string
+	now: string,
+	logger: Logger
 ): Promise<void> {
 	await db
 		.prepare(
@@ -516,7 +520,8 @@ async function handleSubscriptionDeleted(
 async function handleDisputeCreated(
 	db: D1Database,
 	dispute: Stripe.Dispute,
-	now: string
+	now: string,
+	logger: Logger
 ): Promise<void> {
 	const paymentIntentId =
 		typeof dispute.payment_intent === 'string'
