@@ -207,6 +207,24 @@ export const NOTION_TOOLS: ToolDefinition[] = [
 			},
 			required: ['page_ids']
 		}
+	},
+	{
+		name: 'bulk_update',
+		description: 'Update multiple pages with the same property changes. Much faster than calling update_page multiple times.',
+		parameters: {
+			type: 'object',
+			properties: {
+				page_ids: {
+					type: 'string',
+					description: 'JSON array of page IDs to update. Example: ["page-id-1", "page-id-2"]'
+				},
+				properties: {
+					type: 'string',
+					description: 'JSON string of properties to update on ALL pages. Example: {"Status": {"status": {"name": "Complete"}}}'
+				}
+			},
+			required: ['page_ids', 'properties']
+		}
 	}
 ];
 
@@ -414,15 +432,38 @@ export async function executeTool(
 
 				const db = await client.getDatabase(database_id);
 				
-				// Format properties for easier consumption
+				// Format properties with options for select/status/multi_select
 				const schema = {
 					id: db.id,
 					title: db.title.map(t => t.plain_text).join(''),
-					properties: Object.entries(db.properties).map(([name, prop]) => ({
-						name,
-						type: prop.type,
-						id: prop.id
-					}))
+					properties: Object.entries(db.properties).map(([name, prop]) => {
+						const propInfo: {
+							name: string;
+							type: string;
+							id: string;
+							options?: string[];
+						} = {
+							name,
+							type: prop.type,
+							id: prop.id
+						};
+						
+						// Extract options for select/multi_select/status properties
+						const propData = prop as Record<string, unknown>;
+						if (prop.type === 'select' || prop.type === 'multi_select') {
+							const opts = propData[prop.type] as { options?: Array<{ name: string }> };
+							if (opts?.options) {
+								propInfo.options = opts.options.map(o => o.name);
+							}
+						} else if (prop.type === 'status') {
+							const status = propData.status as { options?: Array<{ name: string }> };
+							if (status?.options) {
+								propInfo.options = status.options.map(o => o.name);
+							}
+						}
+						
+						return propInfo;
+					})
 				};
 
 				return { success: true, data: schema };
@@ -481,6 +522,63 @@ export async function executeTool(
 				return {
 					success: true,
 					data: { archived, failed, results }
+				};
+			}
+
+			case 'bulk_update': {
+				const { page_ids, properties } = params;
+				const ids: string[] = JSON.parse(page_ids);
+				const parsedProps = JSON.parse(properties);
+				
+				if (ids.length === 0) {
+					return { success: true, data: { updated: 0, failed: 0, results: [] } };
+				}
+
+				// Verify all pages belong to allowed databases (check first one as sample)
+				const firstPage = await client.getPage(ids[0]);
+				if (firstPage.parent.type === 'database_id' && firstPage.parent.database_id) {
+					if (!allowedDatabases.includes(firstPage.parent.database_id)) {
+						return {
+							success: false,
+							error: `Access denied: Pages belong to database ${firstPage.parent.database_id} which is not in the allowed list`
+						};
+					}
+				}
+
+				// Update all pages concurrently (with rate limiting - 3 at a time)
+				const results: Array<{ id: string; success: boolean; error?: string }> = [];
+				const batchSize = 3;
+				
+				for (let i = 0; i < ids.length; i += batchSize) {
+					const batch = ids.slice(i, i + batchSize);
+					const batchResults = await Promise.all(
+						batch.map(async (id) => {
+							try {
+								await client.updatePage(id, parsedProps);
+								return { id, success: true };
+							} catch (error) {
+								return { 
+									id, 
+									success: false, 
+									error: error instanceof Error ? error.message : 'Unknown error' 
+								};
+							}
+						})
+					);
+					results.push(...batchResults);
+					
+					// Small delay between batches to respect rate limits
+					if (i + batchSize < ids.length) {
+						await new Promise(resolve => setTimeout(resolve, 100));
+					}
+				}
+
+				const updated = results.filter(r => r.success).length;
+				const failed = results.filter(r => !r.success).length;
+
+				return {
+					success: true,
+					data: { updated, failed, results }
 				};
 			}
 
@@ -623,9 +721,21 @@ export function formatToolResult(toolName: string, result: ToolResult): string {
 			}
 			return `Successfully archived ${result.archived} pages.`;
 		}
+		case 'bulk_update': {
+			const result = data as { updated: number; failed: number };
+			if (result.failed > 0) {
+				return `Updated ${result.updated} pages, ${result.failed} failed.`;
+			}
+			return `Successfully updated ${result.updated} pages.`;
+		}
 		case 'get_database_schema': {
-			const schema = data as { title: string; properties: Array<{ name: string; type: string }> };
-			const propList = schema.properties.map(p => `${p.name} (${p.type})`).join(', ');
+			const schema = data as { title: string; properties: Array<{ name: string; type: string; options?: string[] }> };
+			const propList = schema.properties.map(p => {
+				if (p.options && p.options.length > 0) {
+					return `${p.name} (${p.type}: ${p.options.join(', ')})`;
+				}
+				return `${p.name} (${p.type})`;
+			}).join(', ');
 			return `Database "${schema.title}" schema: ${propList}`;
 		}
 		case 'find_duplicates': {

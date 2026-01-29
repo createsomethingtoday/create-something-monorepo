@@ -10,7 +10,10 @@
 	<!-- Hero: Tufte - Let typography do the work -->
 	<section class="hero">
 		<p class="hero-eyebrow">Custom Notion Agents</p>
-		<h1 class="hero-title">Your prompt. Our infrastructure.</h1>
+		<h1 class="hero-title">
+			<span class="title-line">Your prompt.</span>
+			<span class="title-line">Our <span class="emphasis">Automation Layer</span>.</span>
+		</h1>
 		<p class="hero-subtitle">
 			Agents work while you sleep—querying databases, creating pages, archiving duplicates.
 		</p>
@@ -101,6 +104,15 @@
 		letter-spacing: -0.02em;
 		color: var(--color-fg-primary);
 		margin-bottom: var(--space-md);
+	}
+
+	.title-line {
+		display: block;
+	}
+
+	.emphasis {
+		letter-spacing: 0.02em;
+		font-weight: var(--font-bold);
 	}
 
 	.hero-subtitle {
