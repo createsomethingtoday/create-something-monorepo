@@ -1,0 +1,182 @@
+@import '@create-something/canon/styles/canon.css';
+
+/* Layout utilities from Tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Notion Agent specific styles */
+:root {
+	--notion-black: #191919;
+	--notion-gray: #787774;
+	--notion-brown: #9f6b53;
+	--notion-orange: #d9730d;
+	--notion-yellow: #cb912f;
+	--notion-green: #448361;
+	--notion-blue: #337ea9;
+	--notion-purple: #9065b0;
+	--notion-pink: #c14c8a;
+	--notion-red: #d44c47;
+}
+
+/* ==========================================================================
+   Button System (Tufte: Minimal chrome, clear hierarchy)
+   ========================================================================== */
+
+/*
+ * Primary Button - Main actions (Create, Submit, Connect)
+ * Tufte: One clear call-to-action, sufficient contrast
+ */
+.btn-primary,
+.create-btn,
+.submit-btn,
+.cta-button {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-xs);
+	padding: var(--space-sm) var(--space-md);
+	background: var(--color-fg-primary);
+	color: var(--color-bg-pure);
+	border: none;
+	border-radius: var(--radius-sm);
+	font-size: var(--text-body-sm);
+	font-weight: var(--font-medium);
+	text-decoration: none;
+	cursor: pointer;
+	transition: opacity var(--duration-micro) var(--ease-standard);
+}
+
+.btn-primary:hover,
+.create-btn:hover,
+.submit-btn:hover,
+.cta-button:hover {
+	opacity: 0.85;
+}
+
+.btn-primary:disabled,
+.create-btn:disabled,
+.submit-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+/*
+ * Secondary Button - Supporting actions (Cancel, Edit, Settings)
+ * Tufte: Recede visually, don't compete with primary
+ */
+.btn-secondary,
+.cancel-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-xs);
+	padding: var(--space-sm) var(--space-md);
+	background: transparent;
+	color: var(--color-fg-secondary);
+	border: 1px solid var(--color-border-default);
+	border-radius: var(--radius-sm);
+	font-size: var(--text-body-sm);
+	font-weight: var(--font-normal);
+	text-decoration: none;
+	cursor: pointer;
+	transition: all var(--duration-micro) var(--ease-standard);
+}
+
+.btn-secondary:hover,
+.cancel-btn:hover {
+	border-color: var(--color-fg-tertiary);
+	color: var(--color-fg-primary);
+}
+
+/*
+ * Ghost Button - Minimal actions (icon buttons, inline actions)
+ * Tufte: Near-invisible until needed
+ */
+.btn-ghost,
+.action-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-xs);
+	padding: var(--space-xs);
+	background: transparent;
+	color: var(--color-fg-muted);
+	border: none;
+	border-radius: var(--radius-sm);
+	font-size: var(--text-body-sm);
+	cursor: pointer;
+	transition: color var(--duration-micro) var(--ease-standard);
+}
+
+.btn-ghost:hover,
+.action-btn:hover {
+	color: var(--color-fg-primary);
+}
+
+/*
+ * Run Button - Special action state
+ */
+.run-btn {
+	background: var(--color-success);
+	color: var(--color-bg-pure);
+	padding: var(--space-xs) var(--space-sm);
+	border-radius: var(--radius-sm);
+}
+
+.run-btn:hover {
+	opacity: 0.85;
+	color: var(--color-bg-pure);
+}
+
+/*
+ * Delete Button - Destructive action
+ */
+.delete-btn:hover {
+	color: var(--color-error);
+}
+
+/* Glass card for agent configs */
+.agent-card {
+	background: var(--color-bg-elevated);
+	border: 1px solid var(--color-border-default);
+	border-radius: var(--radius-lg);
+	padding: var(--space-md);
+	transition: all var(--duration-micro) var(--ease-standard);
+}
+
+.agent-card:hover {
+	border-color: var(--color-fg-tertiary);
+	box-shadow: var(--shadow-md);
+}
+
+/* Status indicators */
+.status-active {
+	color: var(--color-success);
+}
+
+.status-paused {
+	color: var(--color-warning);
+}
+
+.status-error {
+	color: var(--color-error);
+}
+
+/* Execution log styling */
+.execution-log {
+	font-family: var(--font-mono);
+	font-size: var(--text-caption);
+	background: var(--color-bg-subtle);
+	border-radius: var(--radius-md);
+	padding: var(--space-sm);
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+.execution-log-entry {
+	padding: var(--space-xs) 0;
+	border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.execution-log-entry:last-child {
+	border-bottom: none;
+}

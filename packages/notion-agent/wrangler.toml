@@ -1,0 +1,35 @@
+# Notion Agent - Custom Notion Agents Platform
+# Your prompt. Our infrastructure. Works while you sleep.
+# CREATE SOMETHING
+
+name = "notion-agent"
+# Use CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a for deployment
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Pages deployment
+pages_build_output_dir = ".svelte-kit/cloudflare"
+
+# D1 Database - stores users, agents, executions
+[[d1_databases]]
+binding = "DB"
+database_name = "notion-agent-db"
+database_id = "4669408a-2475-4314-b80e-d6c91a2d13a1"
+
+# KV Namespace - OAuth state, rate limiting, audit logs
+[[kv_namespaces]]
+binding = "KV"
+id = "adaa526410fa48f5b324313b574bf09a"
+
+# Workers AI - for agent execution
+[ai]
+binding = "AI"
+
+[vars]
+ENVIRONMENT = "development"
+NOTION_API_VERSION = "2022-06-28"
+
+# Secrets (set via wrangler secret put):
+# - NOTION_CLIENT_ID
+# - NOTION_CLIENT_SECRET
+# - ENCRYPTION_KEY
