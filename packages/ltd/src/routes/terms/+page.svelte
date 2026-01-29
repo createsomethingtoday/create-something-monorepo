@@ -1,29 +1,30 @@
 <script lang="ts">
-  import { SEO, PrivacyPolicyContent } from '@create-something/canon';
+  import { SEO, TermsOfServiceContent } from '@create-something/canon';
 </script>
 
 <SEO
-  title="Privacy Policy"
-  description="How CREATE SOMETHING collects, uses, and protects your data. We use Cloudflare only—no Google, no Meta. Session data: 7 days. Analytics: 90 days. Full control over your data."
-  keywords="privacy policy, data protection, GDPR, CCPA, CREATE SOMETHING"
+  title="Terms of Service"
+  description="Terms of Service for CREATE SOMETHING LTD. The philosophical foundation—how we govern your use of the canon."
+  keywords="terms of service, legal, CREATE SOMETHING, canon"
   propertyName="ltd"
   noindex={true}
 />
 
 <section class="pt-24 pb-16 px-6">
   <div class="max-w-4xl mx-auto">
-    <p class="eyebrow mb-6">Being-as-Trust</p>
-    <h1 class="page-title mb-4">Privacy Policy</h1>
+    <p class="eyebrow mb-6">Being-as-Agreement</p>
+    <h1 class="page-title mb-4">Terms of Service</h1>
     <p class="date-text">Last updated: January 29, 2026</p>
   </div>
 </section>
 
 <section class="pb-24 px-6">
   <div class="max-w-4xl mx-auto">
-    <PrivacyPolicyContent
+    <TermsOfServiceContent
       property="ltd"
       domain="createsomething.ltd"
       lastUpdated="January 29, 2026"
+      contactEmail="legal@createsomething.io"
     />
   </div>
 </section>

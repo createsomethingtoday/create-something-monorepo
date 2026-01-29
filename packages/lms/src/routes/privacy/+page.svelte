@@ -11,13 +11,13 @@
   <section class="mb-12">
     <p class="eyebrow">Being-as-Trust</p>
     <h1 class="page-title">Privacy Policy</h1>
-    <p class="date-text">Last updated: December 22, 2025</p>
+    <p class="date-text">Last updated: January 29, 2026</p>
   </section>
 
   <PrivacyPolicyContent
     property="lms"
     domain="learn.createsomething.space"
-    lastUpdated="December 22, 2025"
+    lastUpdated="January 29, 2026"
   />
 </div>
 

@@ -22,7 +22,7 @@
         Privacy Policy
       </h1>
       <p class="date-text">
-        Last updated: December 22, 2025
+        Last updated: January 29, 2026
       </p>
     </div>
   </div>
@@ -33,7 +33,7 @@
     <PrivacyPolicyContent
       property="space"
       domain="createsomething.space"
-      lastUpdated="December 22, 2025"
+      lastUpdated="January 29, 2026"
     />
   </div>
 </section>

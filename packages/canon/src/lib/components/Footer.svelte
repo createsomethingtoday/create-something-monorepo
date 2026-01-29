@@ -426,12 +426,17 @@
 		</div>
 	</div>
 
-	<!-- Copyright -->
+	<!-- Copyright & Legal -->
 	<div class="footer-copyright py-6 px-6">
-		<div class="max-w-7xl mx-auto">
-			<p class="copyright-text text-center">
+		<div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+			<p class="copyright-text">
 				{copyrightText || defaultCopyright}
 			</p>
+			<nav class="legal-links flex items-center gap-4" aria-label="Legal">
+				<a href="/privacy" class="legal-link">Privacy</a>
+				<span class="legal-separator">·</span>
+				<a href="/terms" class="legal-link">Terms</a>
+			</nav>
 		</div>
 	</div>
 
@@ -598,7 +603,7 @@
 		margin-top: 0.25rem;
 	}
 
-	/* Copyright */
+	/* Copyright & Legal */
 	.footer-copyright {
 		border-top: 1px solid var(--color-border-default);
 	}
@@ -606,6 +611,23 @@
 	.copyright-text {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
+	}
+
+	.legal-links {
+		font-size: var(--text-caption);
+	}
+
+	.legal-link {
+		color: var(--color-fg-muted);
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.legal-link:hover {
+		color: var(--color-fg-primary);
+	}
+
+	.legal-separator {
+		color: var(--color-fg-subtle);
 	}
 
 	/* Quote */

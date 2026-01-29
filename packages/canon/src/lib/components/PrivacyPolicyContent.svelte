@@ -25,7 +25,7 @@
   let {
     property,
     domain,
-    lastUpdated = 'December 22, 2025',
+    lastUpdated = 'January 29, 2026',
     contactEmail = 'privacy@createsomething.io'
   }: Props = $props();
 

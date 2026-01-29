@@ -16,7 +16,7 @@
         Privacy Policy
       </h1>
       <p class="date-text">
-        Last updated: December 22, 2025
+        Last updated: January 29, 2026
       </p>
     </div>
   </div>
@@ -27,7 +27,7 @@
     <PrivacyPolicyContent
       property="agency"
       domain="createsomething.agency"
-      lastUpdated="December 22, 2025"
+      lastUpdated="January 29, 2026"
     />
   </div>
 </section>
