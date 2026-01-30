@@ -116,15 +116,10 @@ export const PUT: RequestHandler = async ({ params, request, locals, platform })
 		previewUrl?: string;
 		thumbnailUrl?: string | null;
 		secondaryThumbnailUrl?: string | null;
+		secondaryThumbnails?: string[];
 		carouselImages?: string[];
 	};
 	
-	console.log('[Asset PUT] Request body:', JSON.stringify({
-		...body,
-		thumbnailUrl: body.thumbnailUrl ? `${body.thumbnailUrl.substring(0, 50)}...` : null,
-		carouselImages: body.carouselImages?.length
-	}));
-
 	// Validate required fields
 	if (body.name !== undefined && typeof body.name !== 'string') {
 		throw error(400, 'Name must be a string');

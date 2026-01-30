@@ -116,8 +116,8 @@ export interface Asset {
 	type: 'Template' | 'Library' | 'App';
 	status: 'Draft' | 'Scheduled' | 'Upcoming' | 'Published' | 'Rejected' | 'Delisted';
 	thumbnailUrl?: string;
-	secondaryThumbnailUrl?: string;
-	secondaryThumbnails?: string[];
+	secondaryThumbnailUrl?: string; // First secondary thumbnail (backward compat)
+	secondaryThumbnails?: string[]; // All secondary thumbnails as array
 	carouselImages?: string[];
 	websiteUrl?: string;
 	previewUrl?: string;
@@ -367,6 +367,10 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				const rawStatus = record.fields['🚀Marketplace Status'] as string || 'Draft';
 				const cleanedStatus = cleanMarketplaceStatus(rawStatus) as Asset['status'];
 
+				// Read all secondary thumbnails from Airtable (supports multiple attachments)
+				const secondaryThumbnailImages = record.fields['🖼️Thumbnail Image (Secondary)'] as { url: string }[] | undefined;
+				const secondaryThumbnails = secondaryThumbnailImages?.map(img => img.url) || [];
+
 				return {
 					id: record.id,
 					name: record.fields['Name'] as string || '',
@@ -376,7 +380,9 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					type: record.fields['🆎Type'] as Asset['type'] || 'Template',
 					status: cleanedStatus,
 					thumbnailUrl: (record.fields['🖼️Thumbnail Image'] as { url: string }[] | undefined)?.[0]?.url,
-					secondaryThumbnailUrl: (record.fields['fldzKxNCXcgCnEwxu'] as { url: string }[] | undefined)?.[0]?.url,
+					// Return both single URL (backward compat) and full array
+					secondaryThumbnailUrl: secondaryThumbnails[0],
+					secondaryThumbnails,
 					carouselImages,
 					websiteUrl: record.fields['🔗Website URL'] as string,
 					previewUrl: record.fields['🔗Preview Site URL'] as string || record.fields['fldROrXCnuZyKNCxW'] as string,
@@ -459,6 +465,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				previewUrl?: string;
 				thumbnailUrl?: string | null;
 				secondaryThumbnailUrl?: string | null;
+				secondaryThumbnails?: string[]; // Support multiple secondary thumbnails
 				carouselImages?: string[];
 			}
 		): Promise<Asset | null> {
@@ -487,11 +494,18 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					? [{ url: data.thumbnailUrl }]
 					: [];
 			}
-			if (data.secondaryThumbnailUrl !== undefined) {
-				fields['fldzKxNCXcgCnEwxu'] = data.secondaryThumbnailUrl
-					? [{ url: data.secondaryThumbnailUrl }]
-					: [];
-			}
+		// Handle secondary thumbnails - prefer array over single URL for multiple image support
+		if (data.secondaryThumbnails !== undefined) {
+			// Use the array format - supports multiple secondary thumbnails
+			fields['fldzKxNCXcgCnEwxu'] = data.secondaryThumbnails
+				.filter(url => url) // Filter out empty strings
+				.map(url => ({ url }));
+		} else if (data.secondaryThumbnailUrl !== undefined) {
+			// Fallback to single URL for backward compatibility
+			fields['fldzKxNCXcgCnEwxu'] = data.secondaryThumbnailUrl
+				? [{ url: data.secondaryThumbnailUrl }]
+				: [];
+		}
 			if (data.carouselImages !== undefined) {
 				fields['fldneaPyoRXBAVtS1'] = data.carouselImages.map(url => ({ url }));
 			}
@@ -512,10 +526,9 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				const cleanedStatus = cleanMarketplaceStatus(rawStatus) as Asset['status'];
 				const carouselImages = (record.fields['🖼️Carousel Images'] as { url: string }[] | undefined)?.map(img => img.url) || [];
 				
-				// Log the thumbnail field from the returned record
-				const thumbnailField = record.fields['🖼️Thumbnail Image'] as { url: string }[] | undefined;
-				console.log('[Airtable] Returned thumbnail field (🖼️Thumbnail Image):', JSON.stringify(thumbnailField));
-				console.log('[Airtable] Returned thumbnail field (fld43LxLHMZb2yF7F):', JSON.stringify(record.fields['fld43LxLHMZb2yF7F']));
+				// Read all secondary thumbnails from returned record
+				const secondaryThumbnailImages = record.fields['🖼️Thumbnail Image (Secondary)'] as { url: string }[] | undefined;
+				const secondaryThumbnails = secondaryThumbnailImages?.map(img => img.url) || [];
 
 				return {
 					id: record.id,
@@ -526,7 +539,9 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					type: record.fields['🆎Type'] as Asset['type'] || 'Template',
 					status: cleanedStatus,
 					thumbnailUrl: (record.fields['🖼️Thumbnail Image'] as { url: string }[] | undefined)?.[0]?.url,
-					secondaryThumbnailUrl: (record.fields['fldzKxNCXcgCnEwxu'] as { url: string }[] | undefined)?.[0]?.url,
+					// Return both single URL (backward compat) and full array
+					secondaryThumbnailUrl: secondaryThumbnails[0],
+					secondaryThumbnails,
 					carouselImages,
 					websiteUrl: record.fields['🔗Website URL'] as string,
 					previewUrl: record.fields['🔗Preview Site URL'] as string,

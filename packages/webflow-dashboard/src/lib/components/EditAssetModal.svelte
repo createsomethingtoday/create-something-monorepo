@@ -203,17 +203,17 @@
 			});
 		}
 
-			await onSave({
-				name: formData.name.trim(),
-				descriptionShort: formData.descriptionShort,
-				descriptionLongHtml: formData.descriptionLongHtml,
-				websiteUrl: formData.websiteUrl,
-				previewUrl: formData.previewUrl,
-				thumbnailUrl,
-				secondaryThumbnailUrl: secondaryThumbnails[0] || null, // Backward compatibility
-				secondaryThumbnails,
-				carouselImages
-			});
+		await onSave({
+			name: formData.name.trim(),
+			descriptionShort: formData.descriptionShort,
+			descriptionLongHtml: formData.descriptionLongHtml,
+			websiteUrl: formData.websiteUrl,
+			previewUrl: formData.previewUrl,
+			thumbnailUrl,
+			secondaryThumbnailUrl: secondaryThumbnails[0] || null,
+			secondaryThumbnails,
+			carouselImages
+		});
 			toast.success('Asset updated successfully');
 			onClose();
 		} catch (err) {
