@@ -128,18 +128,18 @@
 					<div class="p-6 comparison-card">
 						<div class="comparison-label">Wireframe</div>
 						<div class="space-y-3 mt-4">
-							<div class="h-8 w-24 bg-white/10 rounded"></div>
-							<div class="h-3 w-16 bg-white/10 rounded"></div>
-							<div class="h-6 w-full bg-white/10 rounded mt-4"></div>
+							<div class="wireframe-block h-8 w-24"></div>
+							<div class="wireframe-block h-3 w-16"></div>
+							<div class="wireframe-block h-6 w-full mt-4"></div>
 						</div>
-						<p class="text-sm text-white/50 mt-4">Structure without decoration</p>
+						<p class="comparison-caption mt-4">Structure without decoration</p>
 					</div>
 					<div class="p-6 comparison-card">
 						<div class="comparison-label">Styled</div>
 						<div class="space-y-2 mt-4">
-							<div class="text-2xl font-semibold">$47.2K</div>
-							<div class="text-sm text-white/50">Revenue</div>
-							<div class="h-8 w-full bg-white/5 rounded mt-4 flex items-center px-2">
+							<div class="styled-value">$47.2K</div>
+							<div class="styled-label">Revenue</div>
+							<div class="sparkline-container mt-4">
 								<svg class="w-full h-6" viewBox="0 0 100 20">
 									<polyline
 										points="0,18 15,14 30,16 45,10 60,8 75,12 100,4"
@@ -150,7 +150,7 @@
 								</svg>
 							</div>
 						</div>
-						<p class="text-sm text-white/50 mt-4">Structure gains meaning</p>
+						<p class="comparison-caption mt-4">Structure gains meaning</p>
 					</div>
 				</div>
 
@@ -279,17 +279,17 @@
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-8">
 					<div class="p-6 comparison-card">
 						<div class="comparison-label">Desktop Card</div>
-						<div class="mt-4 p-4 border border-white/10 rounded-xl">
+						<div class="demo-card-desktop mt-4 p-4">
 							<div class="flex justify-between items-start">
 								<div>
-									<div class="text-2xl font-semibold">$47.2K</div>
-									<div class="text-xs text-white/50 uppercase tracking-wide mt-1">Revenue</div>
+									<div class="styled-value">$47.2K</div>
+									<div class="demo-label-upper mt-1">Revenue</div>
 								</div>
-								<div class="px-2 py-1 rounded-full bg-green-500/20 text-green-400 text-xs">
+								<div class="change-badge-positive">
 									+12.3%
 								</div>
 							</div>
-							<div class="mt-4 h-10 bg-white/5 rounded flex items-center px-2">
+							<div class="sparkline-container-lg mt-4">
 								<svg class="w-full h-8" viewBox="0 0 200 30">
 									<polyline
 										points="0,26 30,20 60,24 90,14 120,10 150,16 200,4"
@@ -300,16 +300,16 @@
 								</svg>
 							</div>
 						</div>
-						<p class="text-xs text-white/40 mt-3">280 × 160px • Decorated</p>
+						<p class="demo-dimensions mt-3">280 × 160px • Decorated</p>
 					</div>
 
 					<div class="p-6 comparison-card">
 						<div class="comparison-label">Mobile Card (Tufte)</div>
-						<div class="mt-4 p-4 border border-white/5 rounded-lg">
+						<div class="demo-card-mobile mt-4 p-4">
 							<div class="flex justify-between items-center">
 								<div class="flex items-baseline gap-2">
-									<span class="text-xl font-semibold">$47.2K</span>
-									<span class="text-xs text-white/50">Revenue</span>
+									<span class="styled-value-mobile">$47.2K</span>
+									<span class="demo-label">Revenue</span>
 								</div>
 								<div class="flex items-center gap-3">
 									<svg class="w-12 h-4" viewBox="0 0 48 16">
@@ -320,11 +320,11 @@
 											stroke-width="1.5"
 										/>
 									</svg>
-									<span class="text-xs text-green-400">+12.3%</span>
+									<span class="change-text-positive">+12.3%</span>
 								</div>
 							</div>
 						</div>
-						<p class="text-xs text-white/40 mt-3">320 × 72px • Data-forward</p>
+						<p class="demo-dimensions mt-3">320 × 72px • Data-forward</p>
 					</div>
 				</div>
 
@@ -432,18 +432,18 @@ interface DashboardCardProps &#123;
 					that didn't belong.
 				</p>
 
-				<blockquote class="border-l-2 border-white/20 pl-6 my-8 italic text-white/70">
+				<blockquote class="blockquote pl-6 my-8">
 					"Every pixel either shows data—or it doesn't belong."
-					<footer class="text-sm text-white/40 mt-2 not-italic">— Edward Tufte (paraphrased)</footer>
+					<footer class="blockquote-footer mt-2">— Edward Tufte (paraphrased)</footer>
 				</blockquote>
 			</div>
 		</section>
 
 		<!-- References -->
-		<section class="space-y-6 pt-8 border-t border-white/10">
+		<section class="space-y-6 pt-8 section-border-top">
 			<h2 class="section-heading">References</h2>
 
-			<div class="space-y-4 text-sm">
+			<div class="space-y-4 references-text">
 				<div class="reference-item">
 					<span class="reference-number">[1]</span>
 					Tufte, Edward R. (1983). <em>The Visual Display of Quantitative Information</em>.
@@ -469,8 +469,8 @@ interface DashboardCardProps &#123;
 		</section>
 
 		<!-- Footer -->
-		<footer class="pt-8 border-t border-white/10 text-center">
-			<p class="text-sm text-white/40">
+		<footer class="pt-8 section-border-top text-center">
+			<p class="footer-text">
 				Related:
 				<a href="/papers/animation-spec-architecture" class="link">Animation Spec Architecture</a>
 				•
@@ -669,5 +669,124 @@ interface DashboardCardProps &#123;
 		background: rgba(255, 255, 255, 0.05);
 		padding: 0.125rem 0.375rem;
 		border-radius: 0.25rem;
+	}
+
+	/* Wireframe blocks */
+	.wireframe-block {
+		background: var(--color-bg-surface, rgba(255, 255, 255, 0.1));
+		border-radius: var(--radius-sm, 4px);
+	}
+
+	/* Comparison caption */
+	.comparison-caption {
+		font-size: var(--text-body-sm, 0.913rem);
+		color: rgba(255, 255, 255, 0.5);
+	}
+
+	/* Styled card elements */
+	.styled-value {
+		font-size: var(--text-h2, clamp(1.2rem, 2vw + 0.5rem, 1.618rem));
+		font-weight: 600;
+	}
+
+	.styled-value-mobile {
+		font-size: var(--text-h3, clamp(1.02rem, 1vw + 0.5rem, 1.2rem));
+		font-weight: 600;
+	}
+
+	.styled-label {
+		font-size: var(--text-body-sm, 0.913rem);
+		color: rgba(255, 255, 255, 0.5);
+	}
+
+	/* Sparkline containers */
+	.sparkline-container {
+		height: 2rem;
+		width: 100%;
+		background: var(--color-bg-subtle, rgba(255, 255, 255, 0.05));
+		border-radius: var(--radius-sm, 4px);
+		display: flex;
+		align-items: center;
+		padding: 0 0.5rem;
+	}
+
+	.sparkline-container-lg {
+		height: 2.5rem;
+		background: var(--color-bg-subtle, rgba(255, 255, 255, 0.05));
+		border-radius: var(--radius-sm, 4px);
+		display: flex;
+		align-items: center;
+		padding: 0 0.5rem;
+	}
+
+	/* Demo cards */
+	.demo-card-desktop {
+		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		border-radius: var(--radius-xl, 16px);
+	}
+
+	.demo-card-mobile {
+		border: 1px solid rgba(255, 255, 255, 0.05);
+		border-radius: var(--radius-lg, 12px);
+	}
+
+	.demo-label-upper {
+		font-size: var(--text-caption, 0.833rem);
+		color: rgba(255, 255, 255, 0.5);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+
+	.demo-label {
+		font-size: var(--text-caption, 0.833rem);
+		color: rgba(255, 255, 255, 0.5);
+	}
+
+	.demo-dimensions {
+		font-size: var(--text-caption, 0.833rem);
+		color: rgba(255, 255, 255, 0.4);
+	}
+
+	/* Change badges and text */
+	.change-badge-positive {
+		padding: 0.25rem 0.5rem;
+		border-radius: var(--radius-full, 9999px);
+		background: rgba(34, 197, 94, 0.2);
+		color: rgb(74, 222, 128);
+		font-size: var(--text-caption, 0.833rem);
+	}
+
+	.change-text-positive {
+		font-size: var(--text-caption, 0.833rem);
+		color: rgb(74, 222, 128);
+	}
+
+	/* Blockquote */
+	.blockquote {
+		border-left: 2px solid var(--color-border-emphasis, rgba(255, 255, 255, 0.2));
+		font-style: italic;
+		color: rgba(255, 255, 255, 0.7);
+	}
+
+	.blockquote-footer {
+		font-size: var(--text-body-sm, 0.913rem);
+		color: rgba(255, 255, 255, 0.4);
+		font-style: normal;
+	}
+
+	/* Section borders */
+	.section-border-top {
+		border-top: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+	}
+
+	/* References */
+	.references-text {
+		font-size: var(--text-body-sm, 0.913rem);
+	}
+
+	/* Footer */
+	.footer-text {
+		font-size: var(--text-body-sm, 0.913rem);
+		color: rgba(255, 255, 255, 0.4);
 	}
 </style>
