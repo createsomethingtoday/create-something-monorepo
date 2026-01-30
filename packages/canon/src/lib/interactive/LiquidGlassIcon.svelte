@@ -60,7 +60,6 @@
 			0 4px 12px rgba(0, 0, 0, 0.4),
 			inset 0 1px 0 rgba(255, 255, 255, 0.1);
 		backdrop-filter: blur(8px);
-		-webkit-backdrop-filter: blur(8px);
 		color: white;
 		font-weight: 500;
 		transition: all var(--duration-standard, 300ms) var(--ease-standard);

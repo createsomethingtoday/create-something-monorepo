@@ -651,7 +651,6 @@
 		font-weight: 600;
 		text-decoration: none;
 		backdrop-filter: blur(12px);
-		-webkit-backdrop-filter: blur(12px);
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
@@ -670,7 +669,6 @@
 		font-weight: 600;
 		text-decoration: none;
 		backdrop-filter: blur(12px);
-		-webkit-backdrop-filter: blur(12px);
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
 

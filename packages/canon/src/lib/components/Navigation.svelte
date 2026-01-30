@@ -175,7 +175,6 @@
 		/* Glass Design System - "The Automation Layer" */
 		background-color: var(--glass-bg-light);
 		backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
-		-webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
 		border-bottom: 1px solid var(--glass-border-light);
 	}
 

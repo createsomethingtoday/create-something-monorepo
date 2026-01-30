@@ -211,7 +211,6 @@ body {
 	padding: 0.875rem 2rem;
 	background: rgba(255, 255, 255, 0.1);
 	backdrop-filter: blur(12px);
-	-webkit-backdrop-filter: blur(12px);
 	color: var(--color-fg-primary);
 	font-weight: 600;
 	border-radius: 0.5rem;
@@ -236,7 +235,6 @@ body {
 	padding: 0.875rem 2rem;
 	background: rgba(255, 255, 255, 0.05);
 	backdrop-filter: blur(12px);
-	-webkit-backdrop-filter: blur(12px);
 	color: var(--color-fg-primary);
 	font-weight: 600;
 	border-radius: 0.5rem;
@@ -425,7 +423,6 @@ body {
 	justify-content: center;
 	background: rgba(255, 255, 255, 0.15);
 	backdrop-filter: blur(8px);
-	-webkit-backdrop-filter: blur(8px);
 	border: 1px solid rgba(255, 255, 255, 0.25);
 	color: white;
 	border-radius: 50%;
@@ -458,7 +455,6 @@ body {
 	justify-content: center;
 	background: rgba(255, 255, 255, 0.15);
 	backdrop-filter: blur(8px);
-	-webkit-backdrop-filter: blur(8px);
 	border: 1px solid rgba(255, 255, 255, 0.25);
 	color: white;
 	border-radius: 50%;

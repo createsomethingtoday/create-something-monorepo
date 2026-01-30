@@ -257,7 +257,6 @@
 		color: var(--color-fg-primary);
 		border: 1px solid rgba(255, 255, 255, 0.25);
 		backdrop-filter: blur(12px);
-		-webkit-backdrop-filter: blur(12px);
 	}
 
 	.btn-primary:hover {

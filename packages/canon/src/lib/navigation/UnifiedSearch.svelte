@@ -585,7 +585,6 @@
 		/* Glass Design System - "The Automation Layer" */
 		background-color: var(--glass-bg-medium);
 		backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
-		-webkit-backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
 		border: 1px solid var(--glass-border-medium);
 		border-radius: var(--radius-lg, 12px);
 		box-shadow: var(--glass-shadow-lg);

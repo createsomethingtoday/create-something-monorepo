@@ -92,7 +92,6 @@
 		background-color: var(--glass-bg-light);
 		border: 1px solid var(--glass-border-light);
 		backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
-		-webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
 	}
 
 	.card-glass.card-hover:hover {

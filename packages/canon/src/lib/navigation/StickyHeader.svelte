@@ -109,7 +109,6 @@
 		/* Glass Design System - "The Automation Layer" */
 		background-color: var(--glass-bg-light);
 		backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
-		-webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
 	}
 
 	.sticky-header.with-border.scrolled {

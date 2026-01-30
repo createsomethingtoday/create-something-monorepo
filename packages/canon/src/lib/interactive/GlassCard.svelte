@@ -69,7 +69,6 @@
 		background-color: var(--glass-bg-light);
 		border: 1px solid var(--glass-border-light);
 		backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
-		-webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
 		transition:
 			background var(--duration-micro, 200ms) var(--ease-standard),
 			border-color var(--duration-micro, 200ms) var(--ease-standard),
@@ -86,14 +85,12 @@
 		background-color: var(--glass-bg-subtle);
 		border-color: var(--glass-border-subtle);
 		backdrop-filter: blur(var(--glass-blur-sm)) var(--glass-saturate-sm);
-		-webkit-backdrop-filter: blur(var(--glass-blur-sm)) var(--glass-saturate-sm);
 	}
 
 	.glass-card.elevated {
 		background-color: var(--glass-bg-medium);
 		box-shadow: var(--glass-shadow-md);
 		backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
-		-webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
 	}
 
 	/* Hover states */

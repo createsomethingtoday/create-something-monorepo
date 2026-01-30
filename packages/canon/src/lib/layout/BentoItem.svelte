@@ -88,7 +88,6 @@
 		background: rgba(255, 255, 255, 0.03);
 		border: 1px solid var(--color-border-default);
 		backdrop-filter: blur(20px);
-		-webkit-backdrop-filter: blur(20px);
 	}
 
 	.bento-item--glass:hover {

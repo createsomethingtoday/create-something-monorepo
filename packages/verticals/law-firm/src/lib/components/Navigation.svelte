@@ -102,7 +102,6 @@
 	.nav--scrolled {
 		background: var(--color-overlay-heavy);
 		backdrop-filter: blur(10px);
-		-webkit-backdrop-filter: blur(10px);
 	}
 
 	.nav-container {
@@ -229,7 +228,6 @@
 		padding: var(--space-lg);
 		background: color-mix(in srgb, var(--color-bg-pure) 95%, transparent);
 		backdrop-filter: blur(20px);
-		-webkit-backdrop-filter: blur(20px);
 	}
 
 	@media (min-width: 768px) {

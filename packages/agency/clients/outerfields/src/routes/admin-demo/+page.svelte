@@ -1907,7 +1907,6 @@
 		min-width: 160px;
 		background: rgba(10, 10, 10, 0.95); /* Nearly opaque dark background */
 		backdrop-filter: blur(8px); /* Glassmorphic blur */
-		-webkit-backdrop-filter: blur(8px);
 		border: 1px solid var(--color-border-default);
 		border-radius: 0.5rem;
 		padding: 0.5rem;

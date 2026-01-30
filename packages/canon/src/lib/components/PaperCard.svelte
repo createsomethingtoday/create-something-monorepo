@@ -136,7 +136,6 @@
 	.paper-card {
 		background-color: var(--glass-bg-light);
 		backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
-		-webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
 		border: 1px solid var(--glass-border-light);
 		border-radius: var(--radius-md);
 		transition: all var(--duration-standard) var(--ease-standard);

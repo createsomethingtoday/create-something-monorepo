@@ -1195,7 +1195,6 @@ pre code.hljs {
   /* Base glass effect - applies blur + saturation and sets up stacking context */
   .glass {
     backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
-    -webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
     background-color: var(--glass-bg-light);
     border: 1px solid var(--glass-border-light);
   }
@@ -1203,28 +1202,24 @@ pre code.hljs {
   /* Glass variants by intensity */
   .glass-sm {
     backdrop-filter: blur(var(--glass-blur-sm)) var(--glass-saturate-sm);
-    -webkit-backdrop-filter: blur(var(--glass-blur-sm)) var(--glass-saturate-sm);
     background-color: var(--glass-bg-subtle);
     border: 1px solid var(--glass-border-subtle);
   }
 
   .glass-lg {
     backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
-    -webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
     background-color: var(--glass-bg-medium);
     border: 1px solid var(--glass-border-medium);
   }
 
   .glass-xl {
     backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
-    -webkit-backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
     background-color: var(--glass-bg-strong);
     border: 1px solid var(--glass-border-strong);
   }
 
   .glass-2xl {
     backdrop-filter: blur(var(--glass-blur-2xl)) var(--glass-saturate-xl);
-    -webkit-backdrop-filter: blur(var(--glass-blur-2xl)) var(--glass-saturate-xl);
     background-color: var(--glass-bg-strong);
     border: 1px solid var(--glass-border-strong);
   }
@@ -1232,7 +1227,6 @@ pre code.hljs {
   /* Glass with shadow - for floating elements (dropdowns, modals) */
   .glass-elevated {
     backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
-    -webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
     background-color: var(--glass-bg-medium);
     border: 1px solid var(--glass-border-medium);
     box-shadow: var(--glass-shadow-md);
@@ -1241,7 +1235,6 @@ pre code.hljs {
   /* Glass card - for workflow cards, reinforces "layer" metaphor */
   .glass-card {
     backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
-    -webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
     background-color: var(--glass-bg-light);
     border: 1px solid var(--glass-border-light);
     border-radius: var(--radius-lg);
@@ -1275,7 +1268,6 @@ pre code.hljs {
     .glass-elevated,
     .glass-card {
       backdrop-filter: none;
-      -webkit-backdrop-filter: none;
       background-color: var(--color-bg-surface);
       border-color: var(--color-border-emphasis);
     }
@@ -1291,7 +1283,6 @@ pre code.hljs {
     .glass-elevated,
     .glass-card {
       backdrop-filter: blur(var(--glass-blur-sm));
-      -webkit-backdrop-filter: blur(var(--glass-blur-sm));
       background-color: rgba(0, 0, 0, 0.90);
       border: 2px solid var(--color-border-strong);
     }
@@ -1303,19 +1294,16 @@ pre code.hljs {
     .glass-sm,
     .glass-card {
       backdrop-filter: blur(16px) saturate(110%);
-      -webkit-backdrop-filter: blur(16px) saturate(110%);
     }
 
     .glass-lg,
     .glass-elevated {
       backdrop-filter: blur(24px) saturate(120%);
-      -webkit-backdrop-filter: blur(24px) saturate(120%);
     }
 
     .glass-xl,
     .glass-2xl {
       backdrop-filter: blur(32px) saturate(130%);
-      -webkit-backdrop-filter: blur(32px) saturate(130%);
     }
   }
 
@@ -1339,7 +1327,6 @@ pre code.hljs {
     position: relative;
     overflow: hidden;
     backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
-    -webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
     background-color: var(--glass-bg-light);
     border: 1px solid var(--glass-border-medium);
   }
@@ -1376,7 +1363,6 @@ pre code.hljs {
     border-radius: var(--radius-md);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
     transition: all var(--duration-standard) var(--ease-standard);
   }
 
@@ -1417,7 +1403,6 @@ pre code.hljs {
     position: relative;
     overflow: hidden;
     backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
-    -webkit-backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
     background-color: var(--glass-bg-medium);
     border: 1px solid var(--glass-border-medium);
     box-shadow: var(--glass-shadow-md);
@@ -1448,7 +1433,6 @@ pre code.hljs {
     position: relative;
     overflow: hidden;
     backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
-    -webkit-backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
     background-color: var(--glass-bg-medium);
     border: 1px solid var(--glass-border-strong);
     box-shadow: var(--glass-shadow-lg), var(--liquid-glass-inner-shadow);
@@ -1493,7 +1477,6 @@ pre code.hljs {
     .liquid-glass-dropdown,
     .liquid-glass-modal {
       backdrop-filter: none;
-      -webkit-backdrop-filter: none;
       background-color: var(--color-bg-surface);
     }
 
@@ -1513,7 +1496,6 @@ pre code.hljs {
     .liquid-glass-dropdown,
     .liquid-glass-modal {
       backdrop-filter: blur(var(--glass-blur-sm));
-      -webkit-backdrop-filter: blur(var(--glass-blur-sm));
       background-color: rgba(0, 0, 0, 0.90);
       border-color: rgba(255, 255, 255, 0.3);
     }
@@ -1525,7 +1507,6 @@ pre code.hljs {
     .liquid-glass-dropdown,
     .liquid-glass-modal {
       backdrop-filter: blur(24px) saturate(120%);
-      -webkit-backdrop-filter: blur(24px) saturate(120%);
     }
 
     .liquid-glass::before,

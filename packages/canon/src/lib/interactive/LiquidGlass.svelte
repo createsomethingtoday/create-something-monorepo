@@ -176,7 +176,6 @@
 		position: absolute;
 		inset: 0;
 		backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
-		-webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
 		background-color: var(--lg-bg-color);
 		border-radius: inherit;
 	}
@@ -262,7 +261,6 @@
 	@media (prefers-reduced-transparency: reduce) {
 		.refraction-layer {
 			backdrop-filter: none;
-			-webkit-backdrop-filter: none;
 			background-color: var(--color-bg-surface);
 		}
 	}
@@ -271,7 +269,6 @@
 	@media (prefers-contrast: more) {
 		.refraction-layer {
 			backdrop-filter: blur(var(--glass-blur-sm));
-			-webkit-backdrop-filter: blur(var(--glass-blur-sm));
 			background-color: rgba(0, 0, 0, 0.85);
 		}
 
@@ -284,7 +281,6 @@
 	@media (max-width: 768px) {
 		.refraction-layer {
 			backdrop-filter: blur(24px) saturate(120%);
-			-webkit-backdrop-filter: blur(24px) saturate(120%);
 			/* Disable SVG filter on mobile for performance */
 			filter: none !important;
 		}

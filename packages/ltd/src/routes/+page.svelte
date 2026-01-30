@@ -310,7 +310,6 @@
 		/* Glass Design System - "The Automation Layer" */
 		background-color: var(--glass-bg-light);
 		backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
-		-webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
 		border: 1px solid var(--glass-border-light);
 		box-shadow: none;
 		transition:
@@ -425,7 +424,6 @@
 		/* Glass Design System - "The Automation Layer" */
 		background-color: var(--glass-bg-light);
 		backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
-		-webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
 		border: 1px solid var(--glass-border-light);
 		text-align: center;
 	}

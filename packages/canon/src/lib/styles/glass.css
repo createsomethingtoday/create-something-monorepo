@@ -35,35 +35,30 @@
   /* Glass base effect */
   .glass {
     backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
-    -webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
     background-color: var(--glass-bg-light);
     border: 1px solid var(--glass-border-light);
   }
 
   .glass-sm {
     backdrop-filter: blur(var(--glass-blur-sm)) var(--glass-saturate-sm);
-    -webkit-backdrop-filter: blur(var(--glass-blur-sm)) var(--glass-saturate-sm);
     background-color: var(--glass-bg-subtle);
     border: 1px solid var(--glass-border-subtle);
   }
 
   .glass-lg {
     backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
-    -webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
     background-color: var(--glass-bg-medium);
     border: 1px solid var(--glass-border-medium);
   }
 
   .glass-xl {
     backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
-    -webkit-backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
     background-color: var(--glass-bg-strong);
     border: 1px solid var(--glass-border-strong);
   }
 
   .glass-elevated {
     backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
-    -webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
     background-color: var(--glass-bg-medium);
     border: 1px solid var(--glass-border-medium);
     box-shadow: var(--glass-shadow-md);
@@ -71,7 +66,6 @@
 
   .glass-card {
     backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
-    -webkit-backdrop-filter: blur(var(--glass-blur-md)) var(--glass-saturate-md);
     background-color: var(--glass-bg-light);
     border: 1px solid var(--glass-border-light);
     border-radius: var(--radius-lg);
@@ -89,7 +83,6 @@
     position: relative;
     overflow: hidden;
     backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
-    -webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
     background-color: var(--glass-bg-light);
     border: 1px solid var(--glass-border-medium);
   }
@@ -149,7 +142,6 @@
     .glass-card,
     .liquid-glass {
       backdrop-filter: none;
-      -webkit-backdrop-filter: none;
       background-color: var(--color-bg-surface);
       border-color: var(--color-border-emphasis);
     }
@@ -164,7 +156,6 @@
     .glass-card,
     .liquid-glass {
       backdrop-filter: blur(var(--glass-blur-sm));
-      -webkit-backdrop-filter: blur(var(--glass-blur-sm));
       background-color: rgba(0, 0, 0, 0.90);
       border: 2px solid var(--color-border-strong);
     }

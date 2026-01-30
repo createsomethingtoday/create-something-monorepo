@@ -170,7 +170,6 @@
 		border-radius: 50%;
 		color: var(--color-fg-primary);
 		backdrop-filter: blur(4px);
-		-webkit-backdrop-filter: blur(4px);
 		transition: transform var(--duration-micro) var(--ease-standard);
 	}
 
