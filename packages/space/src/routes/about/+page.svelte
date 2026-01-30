@@ -48,10 +48,10 @@
 					<!-- Background -->
 					<div class="background-section">
 						<p>
-							My Webflow career spans every layer: customer support team manager (led specialists, built internal training systems), on-screen educator (helped launch Webflow University 2.0), marketplace operations, now full-time system architecture. Texas A&M, UI/UX certification from Boulder Digital Arts. The common thread: understanding products from the user's frustration to the system's design.
+							My Webflow career started in support. I built an LMS to onboard teammates, got promoted to team manager, scaled it for APAC. Marketplace team noticed, asked me to build their template submission system. Left, got brought back as contractor for that work, then rejoined full-time. Helped launch Webflow University 2.0. Now system architecture. The pattern: building systems that solve problems.
 						</p>
 						<p>
-							Based in Kennedale, Texas. Find me on <a href="https://www.linkedin.com/in/micahryanjohnson/" class="link" target="_blank" rel="noopener noreferrer">LinkedIn</a> if you want to talk about systems.
+							Texas A&M, UI/UX certification from Boulder Digital Arts. Based in Kennedale, Texas. Find me on <a href="https://www.linkedin.com/in/micahryanjohnson/" class="link" target="_blank" rel="noopener noreferrer">LinkedIn</a> if you want to talk about systems.
 						</p>
 					</div>
 				</div>

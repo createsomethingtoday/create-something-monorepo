@@ -46,10 +46,10 @@
 					<!-- Background -->
 					<div class="space-y-4 body">
 						<p>
-							Led by Micah Johnson. 5+ years at Webflow—customer support team manager (led specialists, built internal LMS), on-screen educator (helped launch Webflow University 2.0), marketplace operations, now system architecture. I've touched every layer of the product. Texas A&M graduate. UI/UX certified (Boulder Digital Arts). Now building AI systems full-time.
+							Led by Micah Johnson. 5+ years at Webflow—started in support, built an LMS to onboard teammates, got promoted to team manager, used it to scale APAC onboarding. Marketplace team noticed, asked me to build their template submission system. Left, got brought back as contractor for that work, then rejoined full-time. Helped launch Webflow University 2.0. Now system architecture. The pattern: I keep building systems that solve problems.
 						</p>
 						<p>
-							Based in Texas. <a href="https://www.linkedin.com/in/micahryanjohnson/" class="link" target="_blank" rel="noopener noreferrer">LinkedIn</a> for complex automation projects.
+							Texas A&M. UI/UX certified (Boulder Digital Arts). Based in Texas. <a href="https://www.linkedin.com/in/micahryanjohnson/" class="link" target="_blank" rel="noopener noreferrer">LinkedIn</a> for complex automation projects.
 						</p>
 					</div>
 				</div>

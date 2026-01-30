@@ -57,7 +57,7 @@
 					<!-- Background -->
 					<div class="space-y-4 background-text">
 						<p>
-							Texas A&M. UI/UX Certification from Boulder Digital Arts. Career path at Webflow: customer support team manager (led specialists, built internal LMS) → on-screen educator (helped launch Webflow University 2.0) → marketplace operations → system architecture. I've touched every layer of the product—from user frustration to system design. The thread: automation and developer experience.
+							Texas A&M. UI/UX Certification from Boulder Digital Arts. Webflow career: started in support, built an LMS to onboard teammates, got promoted to team manager, scaled it for APAC. Marketplace team noticed, asked me to build their template submission system. Left, got brought back as contractor for that work, then rejoined full-time. Helped launch Webflow University 2.0. Now system architecture. The pattern: building systems that solve problems.
 						</p>
 						<p>
 							Based in Kennedale, Texas. Available on <a href="https://www.linkedin.com/in/micahryanjohnson/" class="text-link" target="_blank" rel="noopener noreferrer">LinkedIn</a> for collaboration.
