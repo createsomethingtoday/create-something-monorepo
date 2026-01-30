@@ -48,7 +48,7 @@
 					<!-- Background -->
 					<div class="background-section">
 						<p>
-							My Webflow career spans every layer: customer support (500+ forum posts, video walkthroughs), official Webflow University educator (Micro Lessons with 10K+ views), marketplace operations, now full-time system architecture. Texas A&M, UI/UX certification from Boulder Digital Arts. The common thread: understanding products from the user's frustration to the system's design.
+							My Webflow career spans every layer: customer support team manager (led specialists, built internal training systems), on-screen educator (helped launch Webflow University 2.0), marketplace operations, now full-time system architecture. Texas A&M, UI/UX certification from Boulder Digital Arts. The common thread: understanding products from the user's frustration to the system's design.
 						</p>
 						<p>
 							Based in Kennedale, Texas. Find me on <a href="https://www.linkedin.com/in/micahryanjohnson/" class="link" target="_blank" rel="noopener noreferrer">LinkedIn</a> if you want to talk about systems.
