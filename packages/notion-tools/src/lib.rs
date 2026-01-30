@@ -16,34 +16,56 @@ pub use processors::duplicates::find_duplicates_impl;
 pub use processors::pages::simplify_pages_impl;
 pub use processors::schema::format_schema_impl;
 
-/// Initialize WASM module
+/// Maximum input size in bytes (10MB) to prevent OOM
+const MAX_INPUT_SIZE: usize = 10 * 1024 * 1024;
+
+/// Check input size and return error if too large
+fn check_input_size(input: &str, operation: &str) -> Result<(), String> {
+    if input.len() > MAX_INPUT_SIZE {
+        return Err(format!(
+            "{} input too large: {} bytes (max: {} bytes)",
+            operation,
+            input.len(),
+            MAX_INPUT_SIZE
+        ));
+    }
+    Ok(())
+}
+
+/// Initialize WASM module with panic hook for better error messages
 #[wasm_bindgen(start)]
 pub fn init() {
-    // Initialization hook for WASM module
-    // Add console_error_panic_hook if needed for debugging
+    // Set up panic hook for better error messages in browser/Workers
+    console_error_panic_hook::set_once();
 }
 
 /// Format a Notion database schema for LLM context.
 ///
 /// Takes JSON string of database properties, returns formatted string.
+/// Max input: 10MB
 #[wasm_bindgen]
 pub fn format_schema(properties_json: &str) -> Result<String, JsValue> {
+    check_input_size(properties_json, "format_schema").map_err(|e| JsValue::from_str(&e))?;
     format_schema_impl(properties_json).map_err(|e| JsValue::from_str(&e))
 }
 
 /// Simplify Notion page results for agent processing.
 ///
 /// Extracts titles and key metadata from page objects.
+/// Max input: 10MB
 #[wasm_bindgen]
 pub fn simplify_pages(pages_json: &str) -> Result<String, JsValue> {
+    check_input_size(pages_json, "simplify_pages").map_err(|e| JsValue::from_str(&e))?;
     simplify_pages_impl(pages_json).map_err(|e| JsValue::from_str(&e))
 }
 
 /// Find duplicate pages by title.
 ///
 /// Returns JSON with page IDs to archive based on keep_strategy ("oldest" or "newest").
+/// Max input: 10MB
 #[wasm_bindgen]
 pub fn find_duplicates(pages_json: &str, keep_strategy: &str) -> Result<String, JsValue> {
+    check_input_size(pages_json, "find_duplicates").map_err(|e| JsValue::from_str(&e))?;
     find_duplicates_impl(pages_json, keep_strategy).map_err(|e| JsValue::from_str(&e))
 }
 

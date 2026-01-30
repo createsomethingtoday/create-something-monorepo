@@ -58,16 +58,51 @@ function shouldRunNow(cronExpression: string): boolean {
 }
 
 /**
- * Decrypt token (must match oauth.ts implementation)
+ * Derive a CryptoKey from a string key using PBKDF2.
+ * Must match oauth.ts implementation.
  */
-function decryptToken(encrypted: string, key: string): string {
-	const keyBytes = new TextEncoder().encode(key);
-	const encryptedBytes = Uint8Array.from(atob(encrypted), c => c.charCodeAt(0));
-	const decrypted = new Uint8Array(encryptedBytes.length);
+async function deriveKey(keyString: string): Promise<CryptoKey> {
+	const encoder = new TextEncoder();
+	const keyMaterial = await crypto.subtle.importKey(
+		'raw',
+		encoder.encode(keyString),
+		'PBKDF2',
+		false,
+		['deriveKey']
+	);
 
-	for (let i = 0; i < encryptedBytes.length; i++) {
-		decrypted[i] = encryptedBytes[i] ^ keyBytes[i % keyBytes.length];
-	}
+	const saltBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(keyString));
+	const salt = new Uint8Array(saltBuffer).slice(0, 16);
+
+	return crypto.subtle.deriveKey(
+		{
+			name: 'PBKDF2',
+			salt,
+			iterations: 100000,
+			hash: 'SHA-256'
+		},
+		keyMaterial,
+		{ name: 'AES-GCM', length: 256 },
+		false,
+		['encrypt', 'decrypt']
+	);
+}
+
+/**
+ * Decrypt token using AES-GCM (must match oauth.ts implementation)
+ */
+async function decryptToken(encrypted: string, key: string): Promise<string> {
+	const cryptoKey = await deriveKey(key);
+	const data = Uint8Array.from(atob(encrypted), c => c.charCodeAt(0));
+
+	const iv = data.slice(0, 12);
+	const ciphertext = data.slice(12);
+
+	const decrypted = await crypto.subtle.decrypt(
+		{ name: 'AES-GCM', iv },
+		cryptoKey,
+		ciphertext
+	);
 
 	return new TextDecoder().decode(decrypted);
 }
@@ -90,7 +125,7 @@ async function executeScheduledAgent(
 	`).bind(executionId, agent.id, startedAt).run();
 
 	try {
-		const accessToken = decryptToken(user.notion_access_token, env.ENCRYPTION_KEY);
+		const accessToken = await decryptToken(user.notion_access_token, env.ENCRYPTION_KEY);
 		const allowedDatabases = JSON.parse(agent.databases || '[]');
 
 		// Build system prompt
@@ -183,7 +218,7 @@ async function processPendingJobs(env: Env): Promise<void> {
 				continue;
 			}
 			
-			const accessToken = decryptToken(userResult.notion_access_token, env.ENCRYPTION_KEY);
+			const accessToken = await decryptToken(userResult.notion_access_token, env.ENCRYPTION_KEY);
 			
 			// Process based on job type
 			if (job.type === 'find_duplicates') {

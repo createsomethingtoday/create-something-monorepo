@@ -19,6 +19,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 unicode-normalization = "0.1"
 chrono = { version = "0.4", features = ["serde"] }
+console_error_panic_hook = "0.1"
 
 # MCP server dependencies (only for binary)
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

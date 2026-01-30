@@ -33,7 +33,7 @@ export const load: PageServerLoad = async ({ platform, cookies }) => {
 	// Get available databases from Notion
 	let databases: NotionDatabase[] = [];
 	try {
-		const accessToken = decryptToken(user.notion_access_token, platform.env.ENCRYPTION_KEY);
+		const accessToken = await decryptToken(user.notion_access_token, platform.env.ENCRYPTION_KEY);
 		const client = createNotionClient(accessToken);
 		databases = await client.listDatabases();
 	} catch (e) {

@@ -37,8 +37,8 @@ export const GET: RequestHandler = async ({ platform, url, cookies }) => {
 			redirectUri
 		}, code);
 
-		// Encrypt the access token before storing
-		const encryptedToken = encryptToken(
+		// Encrypt the access token before storing (AES-GCM)
+		const encryptedToken = await encryptToken(
 			tokenResponse.access_token,
 			platform.env.ENCRYPTION_KEY
 		);

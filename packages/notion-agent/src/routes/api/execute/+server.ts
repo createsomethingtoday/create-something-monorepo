@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { getAgentById, getUserById, createExecution, updateExecution, createAuditLog } from '$lib/db/queries';
 import { decryptToken } from '$lib/notion/oauth';
 import { executeAgent } from '$lib/agent/executor';
+import { checkRateLimit, RATE_LIMITS, rateLimitResponse } from '$lib/security/rate-limit';
 
 export const GET: RequestHandler = async ({ url, platform, cookies, request }) => {
 	const agentId = url.searchParams.get('agent_id');
@@ -16,8 +17,14 @@ export const GET: RequestHandler = async ({ url, platform, cookies, request }) =
 		throw error(401, 'Unauthorized');
 	}
 
-	if (!platform?.env?.DB || !platform?.env?.AI || !platform?.env?.ENCRYPTION_KEY) {
+	if (!platform?.env?.DB || !platform?.env?.AI || !platform?.env?.ENCRYPTION_KEY || !platform?.env?.KV) {
 		throw error(500, 'Missing required environment configuration');
+	}
+
+	// Rate limiting
+	const rateLimit = await checkRateLimit(platform.env.KV, userId, 'execute', RATE_LIMITS.execute);
+	if (!rateLimit.allowed) {
+		return rateLimitResponse(rateLimit);
 	}
 
 	// Get agent and verify ownership
@@ -61,8 +68,8 @@ export const GET: RequestHandler = async ({ url, platform, cookies, request }) =
 	});
 
 	try {
-		// Decrypt access token
-		const accessToken = decryptToken(user.notion_access_token, platform.env.ENCRYPTION_KEY);
+		// Decrypt access token (AES-GCM)
+		const accessToken = await decryptToken(user.notion_access_token, platform.env.ENCRYPTION_KEY);
 
 		// Execute agent
 		const result = await executeAgent(
@@ -124,7 +131,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		throw error(400, 'Missing agent_id in request body');
 	}
 
-	if (!platform?.env?.DB || !platform?.env?.AI || !platform?.env?.ENCRYPTION_KEY) {
+	if (!platform?.env?.DB || !platform?.env?.AI || !platform?.env?.ENCRYPTION_KEY || !platform?.env?.KV) {
 		throw error(500, 'Missing required environment configuration');
 	}
 
@@ -132,6 +139,12 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	const agent = await getAgentById(platform.env.DB, agentId);
 	if (!agent) {
 		throw error(404, 'Agent not found');
+	}
+
+	// Rate limiting (using agent owner's quota)
+	const rateLimit = await checkRateLimit(platform.env.KV, agent.user_id, 'execute', RATE_LIMITS.execute);
+	if (!rateLimit.allowed) {
+		return rateLimitResponse(rateLimit);
 	}
 
 	// Get user for access token
@@ -165,8 +178,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	});
 
 	try {
-		// Decrypt access token
-		const accessToken = decryptToken(user.notion_access_token, platform.env.ENCRYPTION_KEY);
+		// Decrypt access token (AES-GCM)
+		const accessToken = await decryptToken(user.notion_access_token, platform.env.ENCRYPTION_KEY);
 
 		// Execute agent
 		const result = await executeAgent(

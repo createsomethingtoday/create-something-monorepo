@@ -144,14 +144,37 @@ pub fn run_server() {
                         message: format!("Parse error: {}", e),
                     }),
                 };
-                let _ = writeln!(stdout, "{}", serde_json::to_string(&error_response).unwrap());
-                let _ = stdout.flush();
+                // Safe serialization with fallback
+                if let Ok(json) = serde_json::to_string(&error_response) {
+                    if writeln!(stdout, "{}", json).is_err() {
+                        eprintln!("Failed to write error response to stdout");
+                    }
+                    let _ = stdout.flush();
+                }
                 continue;
             }
         };
 
         let response = handle_request(request);
-        let _ = writeln!(stdout, "{}", serde_json::to_string(&response).unwrap());
+        
+        // Safe serialization with error handling
+        match serde_json::to_string(&response) {
+            Ok(json) => {
+                if writeln!(stdout, "{}", json).is_err() {
+                    eprintln!("Failed to write response to stdout");
+                }
+            }
+            Err(e) => {
+                // Serialization failed - send minimal error response
+                let fallback = format!(
+                    r#"{{"jsonrpc":"2.0","id":null,"error":{{"code":-32603,"message":"Internal error: {}"}}}}"#,
+                    e.to_string().replace('"', "'")
+                );
+                if writeln!(stdout, "{}", fallback).is_err() {
+                    eprintln!("Failed to write fallback response");
+                }
+            }
+        }
         let _ = stdout.flush();
     }
 }

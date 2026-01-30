@@ -9,7 +9,7 @@
  */
 
 import { NotionClient } from '../notion/client.js';
-import { decryptToken } from '../auth/crypto.js';
+import { decryptToken } from '../notion/oauth.js';
 
 export interface Job {
 	id: string;

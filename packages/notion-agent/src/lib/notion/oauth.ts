@@ -105,11 +105,90 @@ export async function validateOAuthState(kv: KVNamespace, state: string): Promis
 }
 
 /**
- * Simple encryption for storing tokens (use a proper KMS in production).
+ * Derive a CryptoKey from a string key using PBKDF2.
+ * Uses a fixed salt derived from the key for deterministic derivation.
  */
-export function encryptToken(token: string, key: string): string {
-	// For demo purposes, we use a simple XOR cipher
-	// In production, use Web Crypto API with AES-GCM
+async function deriveKey(keyString: string): Promise<CryptoKey> {
+	const encoder = new TextEncoder();
+	const keyMaterial = await crypto.subtle.importKey(
+		'raw',
+		encoder.encode(keyString),
+		'PBKDF2',
+		false,
+		['deriveKey']
+	);
+
+	// Use first 16 bytes of key hash as salt for deterministic derivation
+	const saltBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(keyString));
+	const salt = new Uint8Array(saltBuffer).slice(0, 16);
+
+	return crypto.subtle.deriveKey(
+		{
+			name: 'PBKDF2',
+			salt,
+			iterations: 100000,
+			hash: 'SHA-256'
+		},
+		keyMaterial,
+		{ name: 'AES-GCM', length: 256 },
+		false,
+		['encrypt', 'decrypt']
+	);
+}
+
+/**
+ * Encrypt token using AES-GCM (production-ready).
+ * Returns base64-encoded string: IV (12 bytes) + ciphertext + auth tag
+ */
+export async function encryptToken(token: string, key: string): Promise<string> {
+	const cryptoKey = await deriveKey(key);
+	const encoder = new TextEncoder();
+	const tokenBytes = encoder.encode(token);
+
+	// Generate random IV (12 bytes for AES-GCM)
+	const iv = crypto.getRandomValues(new Uint8Array(12));
+
+	const ciphertext = await crypto.subtle.encrypt(
+		{ name: 'AES-GCM', iv },
+		cryptoKey,
+		tokenBytes
+	);
+
+	// Concatenate IV + ciphertext
+	const result = new Uint8Array(iv.length + ciphertext.byteLength);
+	result.set(iv);
+	result.set(new Uint8Array(ciphertext), iv.length);
+
+	return btoa(String.fromCharCode(...result));
+}
+
+/**
+ * Decrypt token using AES-GCM.
+ * Expects base64-encoded string: IV (12 bytes) + ciphertext + auth tag
+ */
+export async function decryptToken(encrypted: string, key: string): Promise<string> {
+	const cryptoKey = await deriveKey(key);
+	const data = Uint8Array.from(atob(encrypted), c => c.charCodeAt(0));
+
+	// Extract IV (first 12 bytes) and ciphertext
+	const iv = data.slice(0, 12);
+	const ciphertext = data.slice(12);
+
+	const decrypted = await crypto.subtle.decrypt(
+		{ name: 'AES-GCM', iv },
+		cryptoKey,
+		ciphertext
+	);
+
+	return new TextDecoder().decode(decrypted);
+}
+
+/**
+ * Synchronous encryption fallback (for backwards compatibility during migration).
+ * @deprecated Use encryptToken (async) for new code
+ */
+export function encryptTokenSync(token: string, key: string): string {
+	console.warn('encryptTokenSync is deprecated. Use async encryptToken for production.');
 	const keyBytes = new TextEncoder().encode(key);
 	const tokenBytes = new TextEncoder().encode(token);
 	const encrypted = new Uint8Array(tokenBytes.length);
@@ -122,9 +201,11 @@ export function encryptToken(token: string, key: string): string {
 }
 
 /**
- * Decrypt stored token.
+ * Synchronous decryption fallback (for backwards compatibility during migration).
+ * @deprecated Use decryptToken (async) for new code
  */
-export function decryptToken(encrypted: string, key: string): string {
+export function decryptTokenSync(encrypted: string, key: string): string {
+	console.warn('decryptTokenSync is deprecated. Use async decryptToken for production.');
 	const keyBytes = new TextEncoder().encode(key);
 	const encryptedBytes = Uint8Array.from(atob(encrypted), c => c.charCodeAt(0));
 	const decrypted = new Uint8Array(encryptedBytes.length);
