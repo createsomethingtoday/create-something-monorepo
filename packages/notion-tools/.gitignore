@@ -1,0 +1,13 @@
+# Build artifacts
+/target/
+/pkg/
+/pkg-web/
+
+# Editor
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Test output
+*.profraw
