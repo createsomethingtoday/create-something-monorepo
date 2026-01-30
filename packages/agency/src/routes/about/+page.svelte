@@ -46,7 +46,7 @@
 					<!-- Background -->
 					<div class="space-y-4 body">
 						<p>
-							Led by Micah Johnson. 5+ years at Webflow—API integrations, marketplace architecture, enterprise systems. Texas A&M graduate. UI/UX certified (Boulder Digital Arts). Now building AI systems full-time.
+							Led by Micah Johnson. 5+ years at Webflow—from customer support (500+ forum posts) to creating official Webflow University content, to marketplace operations, to system architecture. I've touched every layer of the product. Texas A&M graduate. UI/UX certified (Boulder Digital Arts). Now building AI systems full-time.
 						</p>
 						<p>
 							Based in Texas. <a href="https://www.linkedin.com/in/micahryanjohnson/" class="link" target="_blank" rel="noopener noreferrer">LinkedIn</a> for complex automation projects.

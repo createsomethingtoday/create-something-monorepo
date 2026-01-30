@@ -48,7 +48,7 @@
 					<!-- Background -->
 					<div class="background-section">
 						<p>
-							I've spent my career moving from Webflow development to API integrations to marketplace architecture, now doing full-time system design at Webflow. Texas A&M, UI/UX certification from Boulder Digital Arts. The common thread: automation and developer experience.
+							My Webflow career spans every layer: customer support (500+ forum posts, video walkthroughs), official Webflow University educator (Micro Lessons with 10K+ views), marketplace operations, now full-time system architecture. Texas A&M, UI/UX certification from Boulder Digital Arts. The common thread: understanding products from the user's frustration to the system's design.
 						</p>
 						<p>
 							Based in Kennedale, Texas. Find me on <a href="https://www.linkedin.com/in/micahryanjohnson/" class="link" target="_blank" rel="noopener noreferrer">LinkedIn</a> if you want to talk about systems.

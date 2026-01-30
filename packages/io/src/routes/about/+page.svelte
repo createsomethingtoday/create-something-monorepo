@@ -57,7 +57,7 @@
 					<!-- Background -->
 					<div class="space-y-4 background-text">
 						<p>
-							Texas A&M. UI/UX Certification from Boulder Digital Arts. Career path: Webflow development → API integrations → marketplace architecture → full-time system design. The thread: automation and developer experience.
+							Texas A&M. UI/UX Certification from Boulder Digital Arts. Career path at Webflow: customer support (500+ forum posts) → official Webflow University educator → marketplace operations → system architecture. I've touched every layer of the product—from user frustration to system design. The thread: automation and developer experience.
 						</p>
 						<p>
 							Based in Kennedale, Texas. Available on <a href="https://www.linkedin.com/in/micahryanjohnson/" class="text-link" target="_blank" rel="noopener noreferrer">LinkedIn</a> for collaboration.
