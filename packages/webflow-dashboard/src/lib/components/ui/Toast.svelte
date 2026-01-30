@@ -59,25 +59,25 @@
 	}
 
 	.toast.success {
-		background: var(--color-success-muted);
+		background: var(--glass-bg-strong);
 		border: 1px solid var(--color-success-border);
 		color: var(--color-success);
 	}
 
 	.toast.error {
-		background: var(--color-error-muted);
+		background: var(--glass-bg-strong);
 		border: 1px solid var(--color-error-border);
 		color: var(--color-error);
 	}
 
 	.toast.warning {
-		background: var(--color-warning-muted);
+		background: var(--glass-bg-strong);
 		border: 1px solid var(--color-warning-border);
 		color: var(--color-warning);
 	}
 
 	.toast.info {
-		background: var(--color-info-muted);
+		background: var(--glass-bg-strong);
 		border: 1px solid var(--color-info-border);
 		color: var(--color-info);
 	}
