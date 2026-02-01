@@ -156,3 +156,6 @@ export * from './insights/index.js';
 
 // Navigation (headers, drawers, search)
 export * from './navigation/index.js';
+
+// Filtering (AI-native product filtering components)
+export * from './filtering/index.js';

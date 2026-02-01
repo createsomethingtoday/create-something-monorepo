@@ -1,0 +1,606 @@
+<script lang="ts">
+	/**
+	 * AI-Native Filtering Experiment
+	 *
+	 * Composes FilterTogglePanel, ProductGrid, and AgentPanel from @create-something/canon
+	 * with the filter agent from $lib/agents/filter-agent.
+	 */
+	import { QuoteBlock, SEO } from '@create-something/canon';
+	import {
+		FilterTogglePanel,
+		ProductGrid,
+		AgentPanel,
+		applyFilters,
+		type FilterState,
+		type AgentStep,
+		type FilterableProduct
+	} from '@create-something/canon/filtering';
+	import type { PageData } from './$types';
+
+	export let data: PageData;
+
+	// Get experiment metadata
+	const experiment = {
+		title: 'AI-Native Filtering',
+		description: 'Natural language product filtering powered by Workers AI',
+		category: 'research',
+		reading_time_minutes: 10,
+		ascii_art: data.stats.total > 0 ? `
+    ╭──────────────────────────────────────────────────────────────╮
+    │                                                              │
+    │    USER                    AGENT                   FILTERS   │
+    │                                                              │
+    │  "Show me chairs      ┌─────────────┐      ┌──────────────┐  │
+    │   under $2000"   ───▶ │  Workers AI │ ───▶ │ category:    │  │
+    │                       │             │      │   seating    │  │
+    │                       │  Reasoning  │      │ price: <2000 │  │
+    │                       │  Streaming  │      │ status: any  │  │
+    │                       └─────────────┘      └──────────────┘  │
+    │                             │                     │          │
+    │                             ▼                     ▼          │
+    │                       ╔═══════════════════════════════════╗  │
+    │                       ║    ${data.stats.total} products in catalog            ║  │
+    │                       ╚═══════════════════════════════════╝  │
+    │                                                              │
+    ╰──────────────────────────────────────────────────────────────╯
+         Ask for what you want. Skip the filter taxonomy.
+` : null
+	};
+
+	// State
+	let isLoading = false;
+	let displayedProducts: FilterableProduct[] = data.products as FilterableProduct[];
+	let filterState: FilterState = {};
+	let agentSteps: AgentStep[] = [];
+	let explanation = '';
+	let showDemo = true;
+
+	// Example queries
+	const exampleQueries = [
+		'Show me chairs under $1,800',
+		'I need a table for my living room',
+		'What wooden furniture do you have?',
+		'Show me everything in stock',
+		'Find me something with brass accents'
+	];
+
+	// Handle agent query submission
+	async function handleAgentQuery(query: string) {
+		isLoading = true;
+		agentSteps = [];
+		explanation = '';
+
+		try {
+			const eventSource = new EventSource(`/api/filter/stream?q=${encodeURIComponent(query)}`);
+
+			eventSource.addEventListener('step', (event) => {
+				const step = JSON.parse(event.data);
+				agentSteps = [...agentSteps, step];
+			});
+
+			eventSource.addEventListener('complete', (event) => {
+				const result = JSON.parse(event.data);
+				displayedProducts = result.products;
+				filterState = result.filterState;
+				explanation = result.explanation;
+				isLoading = false;
+				eventSource.close();
+			});
+
+			eventSource.addEventListener('error', () => {
+				isLoading = false;
+				eventSource.close();
+			});
+
+			eventSource.onerror = () => {
+				isLoading = false;
+				eventSource.close();
+			};
+		} catch (error) {
+			console.error('Filter error:', error);
+			isLoading = false;
+		}
+	}
+
+	// Handle manual filter changes
+	function handleManualFilter(newState: FilterState) {
+		filterState = newState;
+		displayedProducts = applyFilters(data.products as FilterableProduct[], newState);
+		agentSteps = [];
+		explanation = Object.keys(newState).length > 0 
+			? `Filtered manually: ${displayedProducts.length} products`
+			: '';
+	}
+
+	// Clear all
+	function clearAll() {
+		filterState = {};
+		displayedProducts = data.products as FilterableProduct[];
+		agentSteps = [];
+		explanation = '';
+	}
+</script>
+
+<SEO
+	title="{experiment.title} | CREATE SOMETHING"
+	description={experiment.description}
+	keywords="AI filtering, natural language, Workers AI, tool calling, product discovery"
+	propertyName="io"
+	breadcrumbs={[
+		{ name: 'Home', url: 'https://createsomething.io' },
+		{ name: 'Experiments', url: 'https://createsomething.io/experiments' },
+		{ name: 'AI-Native Filtering', url: 'https://createsomething.io/experiments/ai-native-filtering' }
+	]}
+/>
+
+<div class="page-container min-h-screen p-6">
+	<div class="max-w-6xl mx-auto space-y-12">
+		<!-- Header -->
+		<div class="header-section pb-8">
+			<div class="text-muted text-body-sm mb-2">
+				<span class="uppercase tracking-wide">{experiment.category}</span>
+				<span class="mx-2">/</span>
+				<span class="uppercase tracking-wide">{experiment.reading_time_minutes} min read</span>
+			</div>
+			<h1 class="page-title mb-3">{experiment.title}</h1>
+			<p class="text-secondary max-w-3xl">{experiment.description}</p>
+		</div>
+
+		<!-- ASCII Art -->
+		{#if experiment.ascii_art}
+			<pre class="ascii-art">{experiment.ascii_art}</pre>
+		{/if}
+
+		<!-- Abstract -->
+		<section class="abstract-section pl-6 space-y-4">
+			<h2 class="section-title">Abstract</h2>
+			<p class="text-tertiary leading-relaxed">
+				Filter UIs have a problem. They ask users to learn a taxonomy they don't care about.
+				Categories, materials, price ranges—each toggle is a decision the user must make
+				before they can find what they want.
+			</p>
+			<p class="text-tertiary leading-relaxed">
+				What if users could just say what they're looking for?
+			</p>
+			<p class="text-tertiary leading-relaxed">
+				This experiment tests whether an AI agent can interpret natural language queries
+				and apply the right filters. The user describes their intent. The agent does the clicking.
+			</p>
+		</section>
+
+		<!-- The Problem -->
+		<section class="space-y-6">
+			<h2 class="section-title">The Problem</h2>
+			<div class="space-y-4 text-tertiary leading-relaxed">
+				<p>
+					Traditional filter UIs require users to think in the system's terms. "Seating" instead
+					of "chairs." "In stock" instead of "available now." Each filter is a translation from
+					what the user wants to what the system understands.
+				</p>
+				<p>
+					This creates friction. Users must learn the vocabulary. They must understand what
+					combinations are valid. They must click through options to see what exists.
+				</p>
+			</div>
+			<QuoteBlock
+				quote="The best interface is no interface. The next best is one that speaks your language."
+				attribution="Golden Krishna, adapted"
+			/>
+		</section>
+
+		<!-- The Hypothesis -->
+		<section class="space-y-6">
+			<h2 class="section-title">Hypothesis</h2>
+			<div class="space-y-4 text-tertiary leading-relaxed">
+				<p>
+					An agent with access to filter tools can interpret natural language better than
+					a human navigating checkboxes. Not because the agent is smarter—but because it
+					removes the translation step.
+				</p>
+				<ul class="hypothesis-list">
+					<li><strong>User says:</strong> "Something for my living room under $2,000"</li>
+					<li><strong>Agent interprets:</strong> Categories: seating, tables. Max price: $2,000</li>
+					<li><strong>User gets:</strong> Relevant results without learning the taxonomy</li>
+				</ul>
+			</div>
+		</section>
+
+		<!-- Live Demo -->
+		<section class="demo-section">
+			<div class="demo-header">
+				<h2 class="section-title">Live Demo</h2>
+				<button class="toggle-demo" on:click={() => showDemo = !showDemo}>
+					{showDemo ? 'Hide' : 'Show'} Demo
+				</button>
+			</div>
+			<p class="text-tertiary leading-relaxed">
+				Try it yourself. Type a query in natural language, or use the traditional toggles.
+				Watch how the agent reasons through your request in real-time.
+			</p>
+		</section>
+
+	{#if showDemo}
+		<!-- Interactive Demo -->
+		<div class="demo-frame">
+			<div class="demo-inner">
+				<!-- Left Sidebar -->
+				<aside class="demo-controls">
+					<AgentPanel
+						onSubmit={handleAgentQuery}
+						{isLoading}
+						{agentSteps}
+						{explanation}
+						{filterState}
+						{exampleQueries}
+					/>
+					<FilterTogglePanel
+						{filterState}
+						onFilterChange={handleManualFilter}
+					/>
+					<div class="catalog-stats card">
+						<h3 class="subsection-title text-caption">Catalog</h3>
+						<div class="stats-row">
+							<div class="stat-item">
+								<span class="metric-value text-h3">{displayedProducts.length}</span>
+								<span class="text-caption text-muted">
+									{displayedProducts.length === data.stats.total ? 'products' : `of ${data.stats.total}`}
+								</span>
+							</div>
+							<div class="stat-item">
+								<span class="metric-value text-h3">${data.stats.priceRange.min.toLocaleString()}</span>
+								<span class="text-caption text-muted">min</span>
+							</div>
+							<div class="stat-item">
+								<span class="metric-value text-h3">${data.stats.priceRange.max.toLocaleString()}</span>
+								<span class="text-caption text-muted">max</span>
+							</div>
+						</div>
+					</div>
+				</aside>
+
+				<!-- Product Grid -->
+				<div class="demo-results">
+					<header class="results-header">
+						<h3 class="subsection-title">FNJI Collection</h3>
+						<p class="text-muted text-body-sm">
+							Quietly curated. Defined by natural materials and modern living.
+						</p>
+					</header>
+
+					{#if data.error}
+						<div class="card p-8 text-center">
+							<p class="text-tertiary mb-4">{data.error}</p>
+							<p class="text-caption text-muted">Run the migration and seed script to populate products.</p>
+						</div>
+					{:else}
+						<ProductGrid
+							products={displayedProducts}
+							emptyMessage="No products match your criteria."
+						>
+							<button slot="empty-action" type="button" class="action-btn-secondary" on:click={clearAll}>
+								Show all products
+							</button>
+						</ProductGrid>
+					{/if}
+				</div>
+			</div>
+		</div>
+	{/if}
+
+		<!-- Implementation -->
+		<section class="space-y-6">
+			<h2 class="section-title">Implementation</h2>
+			<div class="space-y-4 text-tertiary leading-relaxed">
+				<p>
+					The architecture separates concerns into composable packages:
+				</p>
+			</div>
+			<div class="implementation-grid">
+				<div class="impl-card">
+					<h3>@create-something/canon/filtering</h3>
+					<p>
+						UI components: FilterTogglePanel, ProductGrid, AgentPanel.
+						Headless—they render state but don't know how filtering happens.
+					</p>
+				</div>
+				<div class="impl-card">
+					<h3>Filter Agent</h3>
+					<p>
+						Workers AI with JSON Schema mode. Eight tools: filter_by_material,
+						filter_by_category, filter_by_price_range, and more.
+					</p>
+				</div>
+				<div class="impl-card">
+					<h3>SSE Streaming</h3>
+					<p>
+						Agent reasoning streams to the frontend in real-time.
+						Users see the agent think through their query.
+					</p>
+				</div>
+			</div>
+		</section>
+
+		<!-- Bidirectional Sync -->
+		<section class="space-y-6">
+			<h2 class="section-title">Bidirectional Sync</h2>
+			<div class="space-y-4 text-tertiary leading-relaxed">
+				<p>
+					The agent and manual toggles share a single source of truth. When the agent
+					applies filters, the toggles update. When users toggle manually, the agent
+					context clears. This creates a unified experience—two input methods, one outcome.
+				</p>
+			</div>
+			<QuoteBlock
+				quote="The interface recedes. The user describes intent. The system responds."
+				attribution="Heideggerian Zuhandenheit"
+			/>
+		</section>
+
+		<!-- What We Learned -->
+		<section class="space-y-6">
+			<h2 class="section-title">What We Learned</h2>
+			<ul class="learnings-list">
+				<li>
+					<strong>Natural language works for structured domains.</strong>
+					With only 16 products and 4 categories, the agent rarely misinterprets.
+					The taxonomy is small enough to fit in context.
+				</li>
+				<li>
+					<strong>Streaming builds trust.</strong>
+					Showing the agent's reasoning helps users understand what's happening.
+					Black-box results feel arbitrary; visible thinking feels collaborative.
+				</li>
+				<li>
+					<strong>Manual filters remain useful.</strong>
+					Some users want direct control. The bidirectional sync means they can
+					start with natural language and refine with toggles.
+				</li>
+			</ul>
+		</section>
+
+		<!-- Limitations -->
+		<section class="space-y-6">
+			<h2 class="section-title">Limitations</h2>
+			<div class="space-y-4 text-tertiary leading-relaxed">
+				<p>
+					This experiment has constraints worth noting:
+				</p>
+				<ul class="limitations-list">
+					<li>Small catalog (16 products) — larger catalogs may need vector search</li>
+					<li>Workers AI latency — streaming helps, but there's still a delay</li>
+					<li>English only — natural language parsing assumes English input</li>
+					<li>Structured attributes — "find something that matches my style" won't work yet</li>
+				</ul>
+			</div>
+		</section>
+
+		<!-- Conclusion -->
+		<section class="section-divider pt-8 space-y-6">
+			<h2 class="section-title">Conclusion</h2>
+			<div class="space-y-4 text-tertiary leading-relaxed">
+				<p>
+					AI-native filtering isn't about replacing UI controls. It's about giving users
+					a choice: describe what you want, or click through options. Both paths lead
+					to the same result. The system adapts to the user, not the other way around.
+				</p>
+				<p>
+					For small, structured catalogs, natural language filtering works well. The
+					agent translates intent into action. The toggles stay in sync. The user
+					finds what they're looking for without learning a taxonomy.
+				</p>
+			</div>
+		</section>
+	</div>
+</div>
+
+<style>
+	@import '$lib/styles/visualization-experiment.css';
+
+	/* ASCII Art */
+	.ascii-art {
+		font-family: var(--font-mono, monospace);
+		font-size: var(--text-caption);
+		line-height: 1.3;
+		background: var(--color-bg-inverse);
+		color: var(--color-fg-inverse);
+		padding: var(--space-lg);
+		border-radius: var(--radius-md);
+		overflow-x: auto;
+		margin: var(--space-lg) 0;
+	}
+
+	/* Demo Section */
+	.demo-section {
+		margin-bottom: var(--space-xl);
+	}
+
+	.demo-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: var(--space-md);
+	}
+
+	.demo-header h2 {
+		margin: 0;
+	}
+
+	.toggle-demo {
+		font-size: var(--text-body-sm);
+		padding: var(--space-sm) var(--space-md);
+		background: var(--color-fg-secondary);
+		color: var(--color-fg-inverse);
+		border: none;
+		border-radius: var(--radius-md);
+		cursor: pointer;
+		transition: background var(--duration-micro) var(--ease-standard);
+	}
+
+	.toggle-demo:hover {
+		background: var(--color-fg-primary);
+	}
+
+	/* Demo Frame - The embedded interactive area */
+	.demo-frame {
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		padding: var(--space-xl);
+		margin: var(--space-lg) 0;
+	}
+
+	.demo-inner {
+		display: grid;
+		grid-template-columns: 320px 1fr;
+		gap: var(--space-xl);
+	}
+
+	.demo-controls {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-md);
+	}
+
+	.demo-results {
+		min-width: 0;
+	}
+
+	.results-header {
+		margin-bottom: var(--space-lg);
+		padding-bottom: var(--space-md);
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.results-header .subsection-title {
+		margin-bottom: var(--space-xs);
+	}
+
+	/* Catalog Stats */
+	.catalog-stats {
+		padding: var(--space-md);
+	}
+
+	.catalog-stats .subsection-title {
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		margin-bottom: var(--space-md);
+	}
+
+	.stats-row {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-sm);
+		text-align: center;
+	}
+
+	.stat-item {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+	}
+
+	.text-h3 {
+		font-size: var(--text-h3);
+		font-weight: 600;
+		color: var(--color-fg-primary);
+	}
+
+	/* Implementation Grid */
+	.implementation-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+		gap: var(--space-lg);
+		margin-top: var(--space-lg);
+	}
+
+	.impl-card {
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		padding: var(--space-lg);
+	}
+
+	.impl-card h3 {
+		font-size: var(--text-body-sm);
+		font-weight: 600;
+		margin: 0 0 var(--space-sm);
+		font-family: var(--font-mono, monospace);
+		color: var(--color-fg-secondary);
+	}
+
+	.impl-card p {
+		font-size: var(--text-body-sm);
+		margin: 0;
+		color: var(--color-fg-tertiary);
+		line-height: 1.6;
+	}
+
+	/* Lists */
+	.hypothesis-list,
+	.learnings-list,
+	.limitations-list {
+		margin: var(--space-md) 0;
+		padding-left: var(--space-lg);
+	}
+
+	.hypothesis-list li,
+	.learnings-list li,
+	.limitations-list li {
+		font-size: var(--text-body);
+		line-height: 1.7;
+		margin-bottom: var(--space-sm);
+		max-width: 720px;
+		color: var(--color-fg-tertiary);
+	}
+
+	/* Action Button */
+	.action-btn-secondary {
+		padding: var(--space-sm) var(--space-md);
+		background: transparent;
+		color: var(--color-fg-muted);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		font-size: var(--text-body-sm);
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.action-btn-secondary:hover {
+		border-color: var(--color-fg-primary);
+		color: var(--color-fg-primary);
+	}
+
+	/* Utility Classes */
+	.p-8 {
+		padding: var(--space-xl);
+	}
+
+	.mb-4 {
+		margin-bottom: var(--space-md);
+	}
+
+	/* Responsive */
+	@media (max-width: 1024px) {
+		.demo-inner {
+			grid-template-columns: 1fr;
+		}
+
+		.demo-controls {
+			order: 1;
+		}
+
+		.demo-results {
+			order: 0;
+		}
+	}
+
+	@media (max-width: 640px) {
+		.ascii-art {
+			font-size: 0.5rem;
+		}
+
+		.demo-frame {
+			padding: var(--space-md);
+		}
+	}
+</style>
