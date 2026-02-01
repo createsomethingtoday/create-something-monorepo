@@ -515,7 +515,7 @@
 		padding: var(--space-xs) var(--space-sm);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xs) 0 0 var(--radius-xs);
-		font-size: 12px;
+		font-size: var(--text-body-sm);
 		background: var(--color-bg-elevated);
 		color: var(--color-fg-primary);
 		transition: border-color var(--duration-fast) var(--ease-out);
@@ -536,7 +536,7 @@
 		color: var(--color-bg-pure);
 		border: none;
 		border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
-		font-size: 11px;
+		font-size: var(--text-body-sm);
 		font-weight: 500;
 		cursor: pointer;
 		transition: opacity var(--duration-fast) var(--ease-out);
@@ -608,12 +608,12 @@
 	}
 
 	.example-label {
-		font-size: 10px;
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);
 	}
 
 	.example-link {
-		font-size: 10px;
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);
 		background: none;
 		border: none;
