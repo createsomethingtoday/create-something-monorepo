@@ -289,8 +289,8 @@
 	}
 
 	.toggle-btn {
-		font-size: 10px;
-		padding: 1px var(--space-xs);
+		font-size: var(--text-caption);
+		padding: 2px var(--space-xs);
 		background: transparent;
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xs);
@@ -307,7 +307,7 @@
 	}
 
 	.group-title {
-		font-size: 11px;
+		font-size: var(--text-body-sm);
 		font-weight: 600;
 		margin: 0 0 var(--space-xs);
 		color: var(--color-fg-secondary);
@@ -327,7 +327,7 @@
 	}
 
 	.toggle-label {
-		font-size: 11px;
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
 	}
 
@@ -391,7 +391,7 @@
 	}
 
 	.price-value {
-		font-size: 11px;
+		font-size: var(--text-body-sm);
 		font-weight: 500;
 		color: var(--color-fg-primary);
 		font-variant-numeric: tabular-nums;
@@ -472,7 +472,7 @@
 	.range-labels {
 		display: flex;
 		justify-content: space-between;
-		font-size: 9px;
+		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		margin-top: 2px;
 	}
@@ -484,7 +484,7 @@
 		background: transparent;
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xs);
-		font-size: 10px;
+		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		cursor: pointer;
 		transition: all var(--duration-micro);
