@@ -308,15 +308,14 @@
 
 	.toggle-list {
 		display: flex;
-		flex-direction: column;
-		gap: 2px;
+		flex-wrap: wrap;
+		gap: var(--space-xs) var(--space-md);
 	}
 
 	.toggle-row {
 		display: flex;
-		justify-content: space-between;
 		align-items: center;
-		padding: 1px 0;
+		gap: var(--space-xs);
 	}
 
 	.toggle-label {
