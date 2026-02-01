@@ -740,6 +740,98 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
      Watch crowds form, bottlenecks emerge, panic spread.
 `
 	},
+	{
+		id: 'file-ai-native-filtering',
+		slug: 'ai-native-filtering',
+		title: 'AI-Native Filtering: Natural Language Product Discovery',
+		description: 'Experiment demonstrating AI-native frontend filtering where users describe what they want in natural language, and an agent applies the appropriate filters.',
+		excerpt_short: 'Natural language product filtering powered by Workers AI',
+		excerpt_long: 'What if users could describe what they want instead of clicking through filter checkboxes? This experiment tests the hypothesis that an AI agent can interpret natural language queries and apply structured filters more effectively than manual UI interaction. Built with D1 for product storage, Workers AI for reasoning, and SSE for streaming agent thoughts.',
+		category: 'research',
+		tags: ['AI-Native', 'Workers AI', 'D1', 'Filtering', 'Natural Language', 'SSE', 'Tool Calling'],
+		created_at: '2026-01-31T00:00:00Z',
+		updated_at: '2026-01-31T00:00:00Z',
+		reading_time_minutes: 10,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		is_executable: 1,
+		tests_principles: [
+			'heidegger-zuhandenheit', // Interface recedes—user describes intent, not mechanics
+			'rams-principle-4', // Understandable—natural language over UI taxonomy
+			'rams-principle-2', // Useful—faster path to relevant products
+			'subtractive-triad' // Remove UI complexity, reveal user intent
+		],
+		ascii_art: `
+    ╭──────────────────────────────────────────────────────────────╮
+    │                                                              │
+    │    USER                    AGENT                   FILTERS   │
+    │                                                              │
+    │  "Show me chairs      ┌─────────────┐      ┌──────────────┐  │
+    │   under $2000"   ───▶ │  Workers AI │ ───▶ │ category:    │  │
+    │                       │             │      │   seating    │  │
+    │                       │  Reasoning  │      │ price: <2000 │  │
+    │                       │  Streaming  │      │ status: any  │  │
+    │                       └─────────────┘      └──────────────┘  │
+    │                             │                     │          │
+    │                             ▼                     ▼          │
+    │                       ╔═══════════════════════════════════╗  │
+    │                       ║    5 products match               ║  │
+    │                       ║    ┌───┐ ┌───┐ ┌───┐ ┌───┐ ┌───┐  ║  │
+    │                       ║    │   │ │   │ │   │ │   │ │   │  ║  │
+    │                       ║    └───┘ └───┘ └───┘ └───┘ └───┘  ║  │
+    │                       ╚═══════════════════════════════════╝  │
+    │                                                              │
+    ╰──────────────────────────────────────────────────────────────╯
+         Ask for what you want. Skip the filter taxonomy.
+`
+	},
+	{
+		id: 'file-webflow-plagiarism-detection',
+		slug: 'webflow-plagiarism-detection',
+		title: 'Webflow Plagiarism Detection: Agent-Native Algorithms',
+		description: 'A multi-layer plagiarism detection system combining classic CS algorithms (MinHash, LSH, PageRank, Bayesian) with AI tiers, exposed as MCP tools for team AI agents.',
+		excerpt_short: 'Classic algorithms + AI tiers, exposed as MCP tools',
+		excerpt_long: 'Agent-native design—exposing classic algorithms as MCP tools—enables team AI agents to perform sophisticated template analysis. MinHash fingerprints 9,500+ templates, LSH enables O(1) lookup, PageRank identifies originals, and Bayesian scoring combines signals into probabilities. Three-tier AI handles edge cases. 99.6% cost reduction vs manual review.',
+		category: 'research',
+		tags: ['Plagiarism', 'MinHash', 'LSH', 'PageRank', 'Bayesian', 'MCP', 'Agent-Native', 'Webflow', 'Validated'],
+		created_at: '2026-01-20T00:00:00Z',
+		updated_at: '2026-01-20T00:00:00Z',
+		reading_time_minutes: 15,
+		difficulty: 'advanced',
+		is_file_based: true,
+		tests_principles: [
+			'heidegger-zuhandenheit', // Infrastructure recedes—administrators see decisions, not algorithms
+			'rams-principle-2', // Useful—99.6% cost reduction, same quality
+			'tool-complementarity', // Algorithms compute, AI judges, humans decide
+			'subtractive-triad' // Three-tier removes work at each stage
+		],
+		ascii_art: `
+           ✓ VALIDATED │ v2.3.0 │ 41/41 tests
+        ╔═══════════════════════════════════════════════════════╗
+        ║  WEBFLOW PLAGIARISM DETECTION                         ║
+        ║                                                       ║
+        ║  ┌──────────┐   ┌──────────┐   ┌──────────┐          ║
+        ║  │ MinHash  │──▶│   LSH    │──▶│ PageRank │          ║
+        ║  │ (1997)   │   │ (1998)   │   │ (1996)   │          ║
+        ║  └──────────┘   └──────────┘   └──────────┘          ║
+        ║       │              │              │                 ║
+        ║       └──────────────┴──────────────┘                 ║
+        ║                      │                                ║
+        ║               ╔══════▼══════╗                         ║
+        ║               ║  Bayesian   ║                         ║
+        ║               ║  Confidence ║                         ║
+        ║               ╚══════╤══════╝                         ║
+        ║                      │                                ║
+        ║               ╔══════▼══════╗                         ║
+        ║               ║  MCP Tools  ║───▶ Team AI Agents      ║
+        ║               ║ (10 tools)  ║                         ║
+        ║               ╚═════════════╝                         ║
+        ║                                                       ║
+        ║  9,593 templates │ 517,850 functions │ $2.20/month    ║
+        ╚═══════════════════════════════════════════════════════╝
+              Classic algorithms. Agent-native delivery.
+`
+	},
 ];
 
 /**
