@@ -296,14 +296,24 @@
 		border-radius: var(--radius-xs);
 		cursor: pointer;
 		color: var(--color-fg-muted);
+		transition: all var(--duration-fast) var(--ease-out);
+	}
+
+	.toggle-btn:hover {
+		border-color: var(--color-border-emphasis);
+		color: var(--color-fg-tertiary);
 	}
 
 	.filter-group {
 		margin-bottom: var(--space-sm);
+		padding-bottom: var(--space-sm);
+		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.filter-group:last-of-type {
 		margin-bottom: 0;
+		padding-bottom: 0;
+		border-bottom: none;
 	}
 
 	.group-title {
@@ -351,7 +361,7 @@
 		inset: 0;
 		background-color: var(--color-bg-surface);
 		border-radius: 14px;
-		transition: background-color var(--duration-micro);
+		transition: background-color var(--duration-fast) var(--ease-out);
 	}
 
 	.toggle-slider::before {
@@ -361,9 +371,16 @@
 		width: 10px;
 		left: 2px;
 		bottom: 2px;
-		background-color: var(--color-fg-primary);
+		background-color: var(--color-fg-muted);
 		border-radius: 50%;
-		transition: transform var(--duration-micro);
+		transition: 
+			transform var(--duration-fast) cubic-bezier(0.34, 1.56, 0.64, 1),
+			background-color var(--duration-fast) var(--ease-out);
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+	}
+
+	.toggle-switch:hover .toggle-slider::before {
+		transform: scale(1.1);
 	}
 
 	.toggle-switch input:checked + .toggle-slider {
@@ -372,6 +389,11 @@
 
 	.toggle-switch input:checked + .toggle-slider::before {
 		transform: translateX(14px);
+		background-color: var(--color-fg-primary);
+	}
+
+	.toggle-switch:hover input:checked + .toggle-slider::before {
+		transform: translateX(14px) scale(1.1);
 	}
 
 	/* Price Range - Ive-inspired unified slider */
@@ -479,7 +501,7 @@
 
 	.clear-btn {
 		width: 100%;
-		padding: var(--space-xs);
+		padding: var(--space-xs) var(--space-sm);
 		margin-top: var(--space-sm);
 		background: transparent;
 		border: 1px solid var(--color-border-default);
@@ -487,11 +509,20 @@
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		cursor: pointer;
-		transition: all var(--duration-micro);
+		transition: 
+			border-color var(--duration-fast) var(--ease-out),
+			color var(--duration-fast) var(--ease-out),
+			transform var(--duration-fast) var(--ease-out);
 	}
 
 	.clear-btn:hover {
 		border-color: var(--color-fg-secondary);
 		color: var(--color-fg-secondary);
+		transform: translateY(-1px);
+	}
+
+	.clear-btn:active {
+		transform: translateY(0);
+		transition-duration: var(--duration-micro);
 	}
 </style>

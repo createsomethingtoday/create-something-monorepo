@@ -251,18 +251,28 @@
 	}
 
 	.example-chip {
-		font-size: 11px;
-		padding: 2px var(--space-xs);
+		font-size: var(--text-caption);
+		padding: 4px var(--space-sm);
 		background: var(--color-bg-elevated);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xs);
 		cursor: pointer;
 		color: var(--color-fg-secondary);
-		transition: all var(--duration-micro);
+		transition: 
+			border-color var(--duration-fast) var(--ease-out),
+			transform var(--duration-fast) var(--ease-out),
+			background var(--duration-fast) var(--ease-out);
 	}
 
 	.example-chip:hover:not(:disabled) {
 		border-color: var(--color-fg-secondary);
+		transform: translateY(-1px);
+		background: var(--color-bg-surface);
+	}
+
+	.example-chip:active:not(:disabled) {
+		transform: translateY(0);
+		transition-duration: var(--duration-micro);
 	}
 
 	.example-chip:disabled {
@@ -279,29 +289,47 @@
 	}
 
 	.toggle-btn {
-		font-size: 10px;
-		padding: 1px var(--space-xs);
+		font-size: var(--text-caption);
+		padding: 2px var(--space-xs);
 		background: transparent;
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xs);
 		cursor: pointer;
 		color: var(--color-fg-muted);
+		transition: all var(--duration-fast) var(--ease-out);
+	}
+
+	.toggle-btn:hover {
+		border-color: var(--color-border-emphasis);
+		color: var(--color-fg-tertiary);
 	}
 
 	.reasoning-steps {
 		display: flex;
 		flex-direction: column;
-		gap: 2px;
+		gap: 4px;
 	}
 
 	.step {
 		display: flex;
 		gap: var(--space-xs);
-		font-size: 11px;
-		padding: var(--space-xs);
+		font-size: var(--text-caption);
+		padding: var(--space-xs) var(--space-sm);
 		background: var(--color-bg-elevated);
 		border-radius: var(--radius-xs);
-		line-height: 1.3;
+		line-height: 1.4;
+		animation: stepFadeIn var(--duration-normal) var(--ease-out);
+	}
+
+	@keyframes stepFadeIn {
+		from {
+			opacity: 0;
+			transform: translateY(-4px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
 	}
 
 	.step-icon {
@@ -338,10 +366,22 @@
 	}
 
 	.filter-tag {
-		font-size: 10px;
-		padding: 1px var(--space-xs);
-		background: var(--color-fg-secondary);
-		color: var(--color-fg-inverse);
+		font-size: var(--text-caption);
+		padding: 4px var(--space-sm);
+		background: var(--color-fg-tertiary);
+		color: var(--color-bg-pure);
 		border-radius: var(--radius-xs);
+		animation: tagFadeIn var(--duration-fast) var(--ease-out);
+	}
+
+	@keyframes tagFadeIn {
+		from {
+			opacity: 0;
+			transform: scale(0.9);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1);
+		}
 	}
 </style>
