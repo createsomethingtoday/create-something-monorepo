@@ -184,13 +184,17 @@
 			</div>
 		</div>
 
-		<!-- Price Range -->
-		<div class="filter-group">
-			<h4 class="group-title">Price Range</h4>
-			<p class="price-display">
-				${uiFilters.priceRange[0].toLocaleString()} - ${uiFilters.priceRange[1].toLocaleString()}
-			</p>
-			<div class="price-sliders">
+		<!-- Price Range - Ive-inspired: single track, visual range -->
+		<div class="filter-group price-group">
+			<div class="price-header">
+				<h4 class="group-title">Price</h4>
+				<span class="price-value">${uiFilters.priceRange[0].toLocaleString()}–${uiFilters.priceRange[1].toLocaleString()}</span>
+			</div>
+			<div class="range-track">
+				<div 
+					class="range-fill"
+					style="left: {((uiFilters.priceRange[0] - config.priceRange.min) / (config.priceRange.max - config.priceRange.min)) * 100}%; right: {100 - ((uiFilters.priceRange[1] - config.priceRange.min) / (config.priceRange.max - config.priceRange.min)) * 100}%"
+				></div>
 				<input
 					type="range"
 					min={config.priceRange.min}
@@ -198,7 +202,7 @@
 					step={config.priceRange.step}
 					value={uiFilters.priceRange[0]}
 					on:input={(e) => updatePriceRange(e, 'min')}
-					class="price-slider"
+					class="range-input range-min"
 				/>
 				<input
 					type="range"
@@ -207,8 +211,12 @@
 					step={config.priceRange.step}
 					value={uiFilters.priceRange[1]}
 					on:input={(e) => updatePriceRange(e, 'max')}
-					class="price-slider"
+					class="range-input range-max"
 				/>
+			</div>
+			<div class="range-labels">
+				<span>${config.priceRange.min.toLocaleString()}</span>
+				<span>${config.priceRange.max.toLocaleString()}</span>
 			</div>
 		</div>
 
@@ -368,47 +376,107 @@
 		transform: translateX(14px);
 	}
 
-	/* Price Range */
-	.price-display {
+	/* Price Range - Ive-inspired unified slider */
+	.price-group {
+		max-width: 200px;
+	}
+
+	.price-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		margin-bottom: var(--space-xs);
+	}
+
+	.price-header .group-title {
+		margin: 0;
+	}
+
+	.price-value {
 		font-size: 11px;
 		font-weight: 500;
-		margin: 0 0 var(--space-xs);
-		color: var(--color-fg-secondary);
+		color: var(--color-fg-primary);
+		font-variant-numeric: tabular-nums;
 	}
 
-	.price-sliders {
+	.range-track {
+		position: relative;
+		height: 20px;
 		display: flex;
-		flex-direction: column;
-		gap: var(--space-xs);
+		align-items: center;
 	}
 
-	.price-slider {
-		-webkit-appearance: none;
-		appearance: none;
-		width: 100%;
+	.range-track::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		right: 0;
 		height: 2px;
 		background: var(--color-bg-surface);
-		border-radius: var(--radius-xs);
-		outline: none;
+		border-radius: 1px;
 	}
 
-	.price-slider::-webkit-slider-thumb {
+	.range-fill {
+		position: absolute;
+		height: 2px;
+		background: var(--color-fg-primary);
+		border-radius: 1px;
+		pointer-events: none;
+	}
+
+	.range-input {
+		position: absolute;
+		width: 100%;
+		height: 20px;
 		-webkit-appearance: none;
-		width: 10px;
-		height: 10px;
-		background: var(--color-fg-secondary);
+		appearance: none;
+		background: transparent;
+		pointer-events: none;
+		margin: 0;
+	}
+
+	.range-input::-webkit-slider-thumb {
+		-webkit-appearance: none;
+		width: 14px;
+		height: 14px;
+		background: var(--color-fg-primary);
 		border-radius: 50%;
-		cursor: pointer;
+		cursor: grab;
+		pointer-events: auto;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+		transition: transform var(--duration-micro) var(--ease-out);
+	}
+
+	.range-input::-webkit-slider-thumb:hover {
+		transform: scale(1.1);
+	}
+
+	.range-input::-webkit-slider-thumb:active {
+		cursor: grabbing;
+		transform: scale(1.15);
+	}
+
+	.range-input::-moz-range-thumb {
+		width: 14px;
+		height: 14px;
+		background: var(--color-fg-primary);
+		border-radius: 50%;
+		cursor: grab;
+		pointer-events: auto;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 		border: none;
 	}
 
-	.price-slider::-moz-range-thumb {
-		width: 10px;
-		height: 10px;
-		background: var(--color-fg-secondary);
-		border-radius: 50%;
-		cursor: pointer;
-		border: none;
+	.range-input::-moz-range-thumb:hover {
+		transform: scale(1.1);
+	}
+
+	.range-labels {
+		display: flex;
+		justify-content: space-between;
+		font-size: 9px;
+		color: var(--color-fg-muted);
+		margin-top: 2px;
 	}
 
 	.clear-btn {
