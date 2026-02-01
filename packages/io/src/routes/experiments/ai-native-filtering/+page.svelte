@@ -14,6 +14,7 @@
 		type AgentStep,
 		type FilterableProduct
 	} from '@create-something/canon/filtering';
+	import { Brain, Wrench, BarChart3, CheckCircle } from 'lucide-svelte';
 	import type { PageData } from './$types';
 
 	export let data: PageData;
@@ -305,13 +306,21 @@
 						<div class="reasoning-steps">
 							{#each agentSteps as step}
 								<div class="step step-{step.type}">
-									<span class="step-type">{step.type === 'tool_call' ? '🔧' : step.type === 'tool_result' ? '📊' : '💭'}</span>
+									<span class="step-icon">
+										{#if step.type === 'tool_call'}
+											<Wrench size={14} />
+										{:else if step.type === 'tool_result'}
+											<BarChart3 size={14} />
+										{:else}
+											<Brain size={14} />
+										{/if}
+									</span>
 									<span class="step-content">{step.content}</span>
 								</div>
 							{/each}
 							{#if explanation}
 								<div class="step step-final">
-									<span class="step-type">✓</span>
+									<span class="step-icon"><CheckCircle size={14} /></span>
 									<span class="step-content">{explanation}</span>
 								</div>
 							{/if}
@@ -717,8 +726,11 @@
 		to { opacity: 1; transform: translateY(0); }
 	}
 
-	.step-type {
+	.step-icon {
 		flex-shrink: 0;
+		display: flex;
+		align-items: center;
+		color: var(--color-fg-muted);
 	}
 
 	.step-content {
