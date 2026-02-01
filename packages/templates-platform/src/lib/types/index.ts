@@ -36,7 +36,8 @@ export type TemplateCategory =
   | 'portfolio'
   | 'ecommerce'
   | 'saas'
-  | 'legal';
+  | 'legal'
+  | 'automotive';
 
 export interface TemplatePricing {
   free: true; // All templates are free

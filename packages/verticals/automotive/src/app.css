@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	body {
+		font-family: 'Inter', sans-serif;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	/* Fade-up animation for scroll reveals */
+	.fade-up {
+		animation: fadeUp 1s ease-out forwards;
+		opacity: 0;
+		transform: translateY(20px);
+	}
+
+	@keyframes fadeUp {
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	/* Hero gradient overlay */
+	.hero-overlay {
+		background: linear-gradient(
+			180deg,
+			rgba(0, 0, 0, 0.6) 0%,
+			rgba(0, 0, 0, 0.2) 50%,
+			rgba(0, 0, 0, 0.6) 100%
+		);
+	}
+
+	/* Large watermark text for footer */
+	.text-watermark {
+		font-size: clamp(4rem, 15vw, 15rem);
+		line-height: 1;
+		font-weight: 900;
+	}
+
+	/* Smooth hover transitions for cards */
+	.card-hover {
+		@apply transition-transform duration-500;
+	}
+
+	.card-hover:hover {
+		@apply scale-[1.02];
+	}
+}
+
+@layer components {
+	/* Spec card styling */
+	.spec-card {
+		@apply bg-nio-grey p-6 rounded-2xl flex flex-col justify-center items-center text-center h-40;
+		@apply hover:bg-gray-200 transition-colors duration-300;
+	}
+
+	/* CTA button styling */
+	.btn-primary {
+		@apply inline-block px-8 py-4 bg-white text-black font-semibold rounded-full;
+		@apply hover:bg-gray-100 transition duration-300;
+	}
+
+	.btn-outline {
+		@apply px-8 py-3 border border-gray-300 text-black rounded-full;
+		@apply hover:bg-black hover:text-white transition-all duration-300;
+	}
+
+	/* Navigation link */
+	.nav-link {
+		@apply hover:text-white transition-colors;
+	}
+
+	/* Filter tab */
+	.filter-tab {
+		@apply px-6 py-2 text-gray-600 hover:text-black hover:bg-white rounded-full text-sm font-medium transition-colors;
+	}
+
+	.filter-tab-active {
+		@apply px-6 py-2 bg-black text-white rounded-full text-sm font-medium shadow-sm;
+	}
+}

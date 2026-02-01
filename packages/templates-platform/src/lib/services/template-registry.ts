@@ -556,6 +556,84 @@ export const templates: Template[] = [
     },
     createdAt: '2025-01-09',
     updatedAt: '2025-01-09'
+  },
+
+  {
+    id: 'tpl_automotive_ev',
+    slug: 'automotive',
+    name: 'Automotive EV',
+    description: 'Premium EV brand showcase with vehicle inventory, specs display, and test drive booking. NIO-inspired design with full-bleed hero, smart features gallery, and brand values section.',
+    category: 'automotive',
+    subcategories: ['ev-brand', 'electric-vehicles', 'luxury-automotive'],
+    thumbnail: '/templates/automotive/thumbnail.jpg',
+    previewUrl: 'https://automotive-demo.createsomething.space',
+    pricing: { free: true },
+    features: [
+      'Full-bleed hero with gradient overlay',
+      'Vehicle inventory with filtering',
+      'Specs grid (range, speed, 0-100, battery)',
+      'Smart cockpit / AI features showcase',
+      'Brand values section',
+      'Test drive booking form',
+      'Watermark footer effect'
+    ],
+    designPhilosophy: {
+      principle: 'The future is electric',
+      colorScheme: 'dark',
+      aesthetic: 'Premium, technology-forward'
+    },
+    configSchema: {
+      required: [
+        { key: 'brand.name', label: 'Brand Name', type: 'text', placeholder: 'NIO' },
+        { key: 'brand.tagline', label: 'Brand Tagline', type: 'text', placeholder: 'Blue Sky Coming' },
+        { key: 'hero.headline', label: 'Hero Headline', type: 'text', placeholder: 'Ready when you are.' },
+        { key: 'hero.subheadline', label: 'Hero Subheadline', type: 'textarea', placeholder: 'Discover intuitive luxury...' }
+      ],
+      optional: [
+        ...baseContactFields,
+        ...baseSocialFields,
+        {
+          key: 'vehicles',
+          label: 'Vehicle Models',
+          type: 'array',
+          description: 'Your vehicle lineup',
+          schema: [
+            { key: 'slug', label: 'URL Slug', type: 'text', placeholder: 'et7' },
+            { key: 'name', label: 'Model Name', type: 'text', placeholder: 'ET7' },
+            { key: 'modelLine', label: 'Model Line', type: 'text', placeholder: 'sedan, suv, coupe, truck' },
+            { key: 'tagline', label: 'Tagline', type: 'text', placeholder: 'The Art of Intelligence' },
+            { key: 'description', label: 'Description', type: 'textarea' },
+            { key: 'heroImage', label: 'Hero Image', type: 'image' },
+            { key: 'specs.rangeKm', label: 'Range (km)', type: 'text', placeholder: '610' },
+            { key: 'specs.topSpeedKmh', label: 'Top Speed (km/h)', type: 'text', placeholder: '200' },
+            { key: 'specs.acceleration0100', label: '0-100 km/h (seconds)', type: 'text', placeholder: '3.8' },
+            { key: 'specs.batteryKwh', label: 'Battery (kWh)', type: 'text', placeholder: '100' },
+            { key: 'price.startingFrom', label: 'Starting Price', type: 'text', placeholder: '69900' },
+            { key: 'price.currency', label: 'Currency', type: 'text', default: 'USD' }
+          ]
+        },
+        {
+          key: 'values',
+          label: 'Brand Values',
+          type: 'array',
+          description: 'Core brand pillars',
+          schema: [
+            { key: 'number', label: 'Number', type: 'text', placeholder: '01' },
+            { key: 'title', label: 'Title', type: 'text', placeholder: 'Cutting-Edge Tech' },
+            { key: 'description', label: 'Description', type: 'textarea' }
+          ]
+        },
+        {
+          key: 'workflows.testDriveWebhook',
+          label: 'Test Drive Booking Webhook',
+          type: 'url',
+          description: 'WORKWAY webhook for test drive requests',
+          placeholder: 'https://api.workway.co/webhooks/test-drive'
+        }
+      ]
+    },
+    createdAt: '2025-01-31',
+    updatedAt: '2025-01-31'
   }
 ];
 
