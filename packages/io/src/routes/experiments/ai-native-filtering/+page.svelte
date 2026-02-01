@@ -408,8 +408,8 @@
 				</div>
 				<div class="metric-card">
 					<div class="metric-header">Context Window</div>
-					<div class="metric-main">~2,400 tokens</div>
-					<div class="metric-sub">System prompt + product catalog + query</div>
+					<div class="metric-main">~820 tokens</div>
+					<div class="metric-sub">System prompt + tools + query (verified)</div>
 				</div>
 				<div class="metric-card">
 					<div class="metric-header">Avg Response</div>
@@ -455,13 +455,13 @@
 
 			<!-- Cost Analysis -->
 			<div class="engineering-block">
-				<h3 class="block-title">Cost Analysis</h3>
+				<h3 class="block-title">Cost Analysis (Verified)</h3>
 				<div class="cost-comparison">
 					<div class="cost-item">
 						<div class="cost-label">Workers AI (Llama 70B)</div>
 						<div class="cost-calc">
-							<span class="calc-formula">2,400 input + 250 output tokens</span>
-							<span class="calc-result">$0.0026 / query</span>
+							<span class="calc-formula">820 input + 250 output tokens</span>
+							<span class="calc-result">$0.00096 / query</span>
 						</div>
 						<div class="cost-note">At $0.90/M input, $0.90/M output tokens</div>
 					</div>
@@ -469,17 +469,17 @@
 						<div class="cost-label">Traditional Filter (no AI)</div>
 						<div class="cost-calc">
 							<span class="calc-formula">D1 query + client-side filter</span>
-							<span class="calc-result">$0.0000004 / query</span>
+							<span class="calc-result">~$0 / query</span>
 						</div>
-						<div class="cost-note">At $0.001/M D1 reads (essentially free)</div>
+						<div class="cost-note">First 25 billion D1 reads are FREE on Workers Paid</div>
 					</div>
 					<div class="cost-item highlight">
 						<div class="cost-label">Cost Premium</div>
 						<div class="cost-calc">
-							<span class="calc-formula">$0.0026 / $0.0000004</span>
-							<span class="calc-result">~6,500× more expensive</span>
+							<span class="calc-formula">$0.00096 / ~$0</span>
+							<span class="calc-result">∞× (but affordable)</span>
 						</div>
-						<div class="cost-note">But: 1,000 queries = $2.60. Acceptable for UX research.</div>
+						<div class="cost-note">1,000 queries = $0.96. Very acceptable for UX research.</div>
 					</div>
 				</div>
 			</div>
@@ -508,36 +508,37 @@
 
 			<!-- Token Budget -->
 			<div class="engineering-block">
-				<h3 class="block-title">Token Budget Breakdown</h3>
+				<h3 class="block-title">Token Budget Breakdown (Verified)</h3>
 				<div class="token-budget">
 					<div class="budget-row">
-						<span class="budget-label">System prompt</span>
-						<span class="budget-value">~800 tokens</span>
-						<span class="budget-pct">33%</span>
+						<span class="budget-label">System prompt (incl. instructions)</span>
+						<span class="budget-value">~400 tokens</span>
+						<span class="budget-pct">49%</span>
 					</div>
 					<div class="budget-row">
-						<span class="budget-label">Product catalog (16 items)</span>
-						<span class="budget-value">~1,200 tokens</span>
-						<span class="budget-pct">50%</span>
+						<span class="budget-label">Tool definitions (embedded)</span>
+						<span class="budget-value">~320 tokens</span>
+						<span class="budget-pct">39%</span>
 					</div>
 					<div class="budget-row">
-						<span class="budget-label">Tool definitions</span>
-						<span class="budget-value">~300 tokens</span>
-						<span class="budget-pct">12%</span>
+						<span class="budget-label">Catalog summary (16 items)</span>
+						<span class="budget-value">~80 tokens</span>
+						<span class="budget-pct">10%</span>
 					</div>
 					<div class="budget-row">
-						<span class="budget-label">User query + headroom</span>
-						<span class="budget-value">~100 tokens</span>
-						<span class="budget-pct">5%</span>
+						<span class="budget-label">User query</span>
+						<span class="budget-value">~20 tokens</span>
+						<span class="budget-pct">2%</span>
 					</div>
 					<div class="budget-total">
 						<span class="budget-label">Total context</span>
-						<span class="budget-value">~2,400 tokens</span>
+						<span class="budget-value">~820 tokens</span>
 						<span class="budget-pct">100%</span>
 					</div>
 				</div>
 				<p class="block-note">
-					At 16 products, full catalog fits in context. Above ~50 products, need RAG or summarization.
+					Catalog uses summarized metadata (categories, materials, price range), not full product details.
+					This design choice keeps context small. Full product list would add ~260 more tokens.
 				</p>
 			</div>
 
