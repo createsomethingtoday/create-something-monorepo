@@ -540,6 +540,117 @@
 					At 16 products, full catalog fits in context. Above ~50 products, need RAG or summarization.
 				</p>
 			</div>
+
+			<!-- Optimization Opportunities -->
+			<div class="engineering-block">
+				<h3 class="block-title">Optimization Opportunities</h3>
+				<p class="opt-intro">
+					Current bottleneck analysis and where Rust/caching would help at scale:
+				</p>
+				<div class="bottleneck-analysis">
+					<div class="bottleneck-row">
+						<span class="bottleneck-component">LLM Inference</span>
+						<span class="bottleneck-time">300–500ms</span>
+						<span class="bottleneck-pct bottleneck-dominant">~85%</span>
+						<span class="bottleneck-verdict">Dominant bottleneck</span>
+					</div>
+					<div class="bottleneck-row">
+						<span class="bottleneck-component">D1 Query</span>
+						<span class="bottleneck-time">~10ms</span>
+						<span class="bottleneck-pct">~2%</span>
+						<span class="bottleneck-verdict">Already fast</span>
+					</div>
+					<div class="bottleneck-row">
+						<span class="bottleneck-component">Client Filtering</span>
+						<span class="bottleneck-time">&lt;1ms</span>
+						<span class="bottleneck-pct">~0%</span>
+						<span class="bottleneck-verdict">Negligible</span>
+					</div>
+					<div class="bottleneck-row">
+						<span class="bottleneck-component">SSE Streaming</span>
+						<span class="bottleneck-time">~20ms</span>
+						<span class="bottleneck-pct">~3%</span>
+						<span class="bottleneck-verdict">Acceptable</span>
+					</div>
+				</div>
+
+				<div class="opt-section">
+					<h4 class="opt-title">Rust WASM: When It Helps</h4>
+					<div class="opt-grid">
+						<div class="opt-item not-helpful">
+							<span class="opt-label">16 products (current)</span>
+							<span class="opt-impact">No meaningful speedup</span>
+							<span class="opt-reason">Bottleneck is inference, not filtering</span>
+						</div>
+						<div class="opt-item helpful">
+							<span class="opt-label">1,000+ products</span>
+							<span class="opt-impact">~10-50ms savings</span>
+							<span class="opt-reason">Bitmap indexes, bloom filters for pre-filtering</span>
+						</div>
+						<div class="opt-item helpful">
+							<span class="opt-label">Vector similarity search</span>
+							<span class="opt-impact">~100ms savings</span>
+							<span class="opt-reason">Rust HNSW index vs JavaScript brute force</span>
+						</div>
+					</div>
+				</div>
+
+				<div class="opt-section">
+					<h4 class="opt-title">Caching Strategies</h4>
+					<div class="cache-table">
+						<div class="cache-row header">
+							<span>Strategy</span>
+							<span>Scope</span>
+							<span>Hit Rate Est.</span>
+							<span>Latency Saved</span>
+						</div>
+						<div class="cache-row">
+							<span class="cache-strategy">Query deduplication</span>
+							<span>Per-session</span>
+							<span>~5%</span>
+							<span>300-500ms</span>
+						</div>
+						<div class="cache-row">
+							<span class="cache-strategy">Tool result cache</span>
+							<span>Per-request</span>
+							<span>~20%</span>
+							<span>0ms (same request)</span>
+						</div>
+						<div class="cache-row">
+							<span class="cache-strategy">Semantic query cache (KV)</span>
+							<span>Global</span>
+							<span>~15%</span>
+							<span>300-500ms</span>
+						</div>
+						<div class="cache-row">
+							<span class="cache-strategy">Embedding cache (R2)</span>
+							<span>Global</span>
+							<span>100%</span>
+							<span>~50ms (embedding gen)</span>
+						</div>
+					</div>
+				</div>
+
+				<div class="opt-section">
+					<h4 class="opt-title">Production Architecture (Proposed)</h4>
+					<pre class="code-block"><code>{`Query → [Semantic Cache Check (KV)] 
+       ↓ miss
+       → [Rust WASM: Query Analysis]
+       → [Rust WASM: Vector Index Lookup] → Top-K products
+       → [LLM: Tool Selection on reduced context]
+       → [Cache Write (KV)]
+       → Response
+
+Estimated latency reduction: 40-60% for cache hits
+Estimated cost reduction: 80% for cache hits`}</code></pre>
+				</div>
+
+				<p class="block-note">
+					<strong>Verdict:</strong> For this experiment (16 products), optimizations are premature. 
+					The 300-500ms inference time dominates. At scale (1000+ products), Rust WASM for 
+					vector indexing and KV-based semantic caching would provide meaningful improvements.
+				</p>
+			</div>
 		</section>
 
 		<!-- Bidirectional Sync -->
@@ -1216,6 +1327,138 @@
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		text-align: right;
+	}
+
+	/* Optimization Section */
+	.opt-intro {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		margin-bottom: var(--space-sm);
+	}
+
+	.bottleneck-analysis {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		margin-bottom: var(--space-md);
+	}
+
+	.bottleneck-row {
+		display: grid;
+		grid-template-columns: 140px 100px 60px 1fr;
+		gap: var(--space-sm);
+		padding: var(--space-xs) var(--space-sm);
+		background: var(--color-bg-elevated);
+		border-radius: var(--radius-xs);
+		font-size: var(--text-caption);
+		align-items: center;
+	}
+
+	.bottleneck-component {
+		font-weight: 500;
+		color: var(--color-fg-secondary);
+	}
+
+	.bottleneck-time {
+		font-variant-numeric: tabular-nums;
+		color: var(--color-fg-primary);
+		font-weight: 500;
+	}
+
+	.bottleneck-pct {
+		color: var(--color-fg-muted);
+		text-align: right;
+	}
+
+	.bottleneck-pct.bottleneck-dominant {
+		color: var(--color-warning);
+		font-weight: 600;
+	}
+
+	.bottleneck-verdict {
+		color: var(--color-fg-muted);
+		font-style: italic;
+	}
+
+	.opt-section {
+		margin-top: var(--space-md);
+		padding-top: var(--space-md);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.opt-title {
+		font-size: var(--text-body-sm);
+		font-weight: 600;
+		color: var(--color-fg-secondary);
+		margin: 0 0 var(--space-sm);
+	}
+
+	.opt-grid {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+	}
+
+	.opt-item {
+		display: grid;
+		grid-template-columns: 180px 140px 1fr;
+		gap: var(--space-sm);
+		padding: var(--space-xs) var(--space-sm);
+		background: var(--color-bg-elevated);
+		border-radius: var(--radius-xs);
+		font-size: var(--text-caption);
+		border-left: 3px solid transparent;
+	}
+
+	.opt-item.helpful {
+		border-left-color: var(--color-success);
+	}
+
+	.opt-item.not-helpful {
+		border-left-color: var(--color-fg-muted);
+		opacity: 0.7;
+	}
+
+	.opt-label {
+		font-weight: 500;
+		color: var(--color-fg-secondary);
+	}
+
+	.opt-impact {
+		color: var(--color-fg-primary);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.opt-reason {
+		color: var(--color-fg-muted);
+	}
+
+	/* Cache Table */
+	.cache-table {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+	}
+
+	.cache-row {
+		display: grid;
+		grid-template-columns: 1fr 100px 100px 100px;
+		gap: var(--space-sm);
+		padding: var(--space-xs) var(--space-sm);
+		background: var(--color-bg-elevated);
+		border-radius: var(--radius-xs);
+		font-size: var(--text-caption);
+	}
+
+	.cache-row.header {
+		background: var(--color-bg-surface);
+		font-weight: 600;
+		color: var(--color-fg-muted);
+	}
+
+	.cache-strategy {
+		font-weight: 500;
+		color: var(--color-fg-secondary);
 	}
 
 	/* Utility Classes */
