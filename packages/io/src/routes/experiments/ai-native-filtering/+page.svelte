@@ -133,17 +133,17 @@
 	]}
 />
 
-<div class="page-container min-h-screen p-6">
-	<div class="max-w-6xl mx-auto space-y-12">
+<div class="page-container min-h-screen p-4">
+	<div class="max-w-7xl mx-auto space-y-6">
 		<!-- Header -->
-		<div class="header-section pb-8">
-			<div class="text-muted text-body-sm mb-2">
-				<span class="uppercase tracking-wide">{experiment.category}</span>
-				<span class="mx-2">/</span>
-				<span class="uppercase tracking-wide">{experiment.reading_time_minutes} min read</span>
+		<div class="header-section pb-4">
+			<div class="text-muted text-caption mb-1">
+				<span class="uppercase">{experiment.category}</span>
+				<span class="mx-1">/</span>
+				<span>{experiment.reading_time_minutes} min</span>
 			</div>
-			<h1 class="page-title mb-3">{experiment.title}</h1>
-			<p class="text-secondary max-w-3xl">{experiment.description}</p>
+			<h1 class="page-title text-2xl mb-2">{experiment.title}</h1>
+			<p class="text-secondary text-sm max-w-2xl">{experiment.description}</p>
 		</div>
 
 		<!-- ASCII Art -->
@@ -237,22 +237,18 @@
 						{filterState}
 						onFilterChange={handleManualFilter}
 					/>
-					<div class="catalog-stats card">
-						<h3 class="subsection-title text-caption">Catalog</h3>
+					<div class="catalog-stats">
 						<div class="stats-row">
 							<div class="stat-item">
-								<span class="metric-value text-h3">{displayedProducts.length}</span>
+								<span class="metric-value">{displayedProducts.length}</span>
 								<span class="text-caption text-muted">
-									{displayedProducts.length === data.stats.total ? 'products' : `of ${data.stats.total}`}
+									{displayedProducts.length === data.stats.total ? 'items' : `of ${data.stats.total}`}
 								</span>
 							</div>
 							<div class="stat-item">
-								<span class="metric-value text-h3">${data.stats.priceRange.min.toLocaleString()}</span>
-								<span class="text-caption text-muted">min</span>
-							</div>
-							<div class="stat-item">
-								<span class="metric-value text-h3">${data.stats.priceRange.max.toLocaleString()}</span>
-								<span class="text-caption text-muted">max</span>
+								<span class="metric-value">${data.stats.priceRange.min.toLocaleString()}</span>
+								<span class="text-caption text-muted">–</span>
+								<span class="metric-value">${data.stats.priceRange.max.toLocaleString()}</span>
 							</div>
 						</div>
 					</div>
@@ -262,9 +258,9 @@
 				<div class="demo-results">
 					<header class="results-header">
 						<h3 class="subsection-title">FNJI Collection</h3>
-						<p class="text-muted text-body-sm">
-							Quietly curated. Defined by natural materials and modern living.
-						</p>
+						<span class="results-count text-muted text-caption">
+							{displayedProducts.length} of {data.stats.total} items
+						</span>
 					</header>
 
 					{#if data.error}
@@ -444,21 +440,21 @@
 	.demo-frame {
 		background: var(--color-bg-subtle);
 		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-		padding: var(--space-xl);
-		margin: var(--space-lg) 0;
+		border-radius: var(--radius-sm);
+		padding: var(--space-md);
+		margin: var(--space-sm) 0;
 	}
 
 	.demo-inner {
 		display: grid;
-		grid-template-columns: 320px 1fr;
-		gap: var(--space-xl);
+		grid-template-columns: 260px 1fr;
+		gap: var(--space-md);
 	}
 
 	.demo-controls {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-md);
+		gap: var(--space-sm);
 	}
 
 	.demo-results {
@@ -466,41 +462,44 @@
 	}
 
 	.results-header {
-		margin-bottom: var(--space-lg);
-		padding-bottom: var(--space-md);
+		margin-bottom: var(--space-sm);
+		padding-bottom: var(--space-xs);
 		border-bottom: 1px solid var(--color-border-default);
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
 	}
 
 	.results-header .subsection-title {
-		margin-bottom: var(--space-xs);
+		margin-bottom: 0;
+		font-size: var(--text-body-sm);
 	}
 
-	/* Catalog Stats */
+	/* Catalog Stats - inline Tufte style */
 	.catalog-stats {
-		padding: var(--space-md);
+		padding: var(--space-xs) var(--space-sm);
+		background: var(--color-bg-elevated);
+		border-radius: var(--radius-xs);
 	}
 
 	.catalog-stats .subsection-title {
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		margin-bottom: var(--space-md);
+		display: none;
 	}
 
 	.stats-row {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-sm);
-		text-align: center;
+		display: flex;
+		gap: var(--space-md);
+		justify-content: space-between;
 	}
 
 	.stat-item {
 		display: flex;
-		flex-direction: column;
+		align-items: baseline;
 		gap: var(--space-xs);
 	}
 
-	.text-h3 {
-		font-size: var(--text-h3);
+	.metric-value {
+		font-size: var(--text-body-sm);
 		font-weight: 600;
 		color: var(--color-fg-primary);
 	}
@@ -508,47 +507,47 @@
 	/* Implementation Grid */
 	.implementation-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-		gap: var(--space-lg);
-		margin-top: var(--space-lg);
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		gap: var(--space-sm);
+		margin-top: var(--space-sm);
 	}
 
 	.impl-card {
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-		padding: var(--space-lg);
+		border-radius: var(--radius-sm);
+		padding: var(--space-sm) var(--space-md);
 	}
 
 	.impl-card h3 {
-		font-size: var(--text-body-sm);
+		font-size: 11px;
 		font-weight: 600;
-		margin: 0 0 var(--space-sm);
+		margin: 0 0 var(--space-xs);
 		font-family: var(--font-mono, monospace);
 		color: var(--color-fg-secondary);
 	}
 
 	.impl-card p {
-		font-size: var(--text-body-sm);
+		font-size: 11px;
 		margin: 0;
-		color: var(--color-fg-tertiary);
-		line-height: 1.6;
+		color: var(--color-fg-muted);
+		line-height: 1.4;
 	}
 
 	/* Lists */
 	.hypothesis-list,
 	.learnings-list,
 	.limitations-list {
-		margin: var(--space-md) 0;
-		padding-left: var(--space-lg);
+		margin: var(--space-sm) 0;
+		padding-left: var(--space-md);
 	}
 
 	.hypothesis-list li,
 	.learnings-list li,
 	.limitations-list li {
-		font-size: var(--text-body);
-		line-height: 1.7;
-		margin-bottom: var(--space-sm);
+		font-size: var(--text-body-sm);
+		line-height: 1.5;
+		margin-bottom: var(--space-xs);
 		max-width: 720px;
 		color: var(--color-fg-tertiary);
 	}
@@ -580,27 +579,42 @@
 	}
 
 	/* Responsive */
-	@media (max-width: 1024px) {
+	@media (max-width: 900px) {
 		.demo-inner {
 			grid-template-columns: 1fr;
 		}
 
 		.demo-controls {
 			order: 1;
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: var(--space-sm);
 		}
 
 		.demo-results {
 			order: 0;
 		}
+
+		.catalog-stats {
+			grid-column: span 2;
+		}
 	}
 
 	@media (max-width: 640px) {
 		.ascii-art {
-			font-size: 0.5rem;
+			font-size: 0.4rem;
 		}
 
 		.demo-frame {
-			padding: var(--space-md);
+			padding: var(--space-sm);
+		}
+
+		.demo-controls {
+			grid-template-columns: 1fr;
+		}
+
+		.catalog-stats {
+			grid-column: span 1;
 		}
 	}
 </style>

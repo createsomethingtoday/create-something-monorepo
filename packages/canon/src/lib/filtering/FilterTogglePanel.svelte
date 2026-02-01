@@ -261,38 +261,38 @@
 <style>
 	.filter-panel {
 		background: var(--color-bg-subtle);
-		padding: var(--space-lg);
-		border-radius: var(--radius-md);
+		padding: var(--space-sm) var(--space-md);
+		border-radius: var(--radius-sm);
 	}
 
 	.panel-header {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-bottom: var(--space-md);
+		margin-bottom: var(--space-xs);
 	}
 
 	.panel-title {
 		font-size: var(--text-caption);
-		font-weight: 700;
+		font-weight: 600;
 		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: var(--color-fg-tertiary);
+		letter-spacing: 0.05em;
+		color: var(--color-fg-muted);
 		margin: 0;
 	}
 
 	.toggle-btn {
-		font-size: var(--text-caption);
-		padding: var(--space-xs) var(--space-sm);
+		font-size: 10px;
+		padding: 1px var(--space-xs);
 		background: transparent;
 		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-xs);
 		cursor: pointer;
-		color: var(--color-fg-tertiary);
+		color: var(--color-fg-muted);
 	}
 
 	.filter-group {
-		margin-bottom: var(--space-lg);
+		margin-bottom: var(--space-sm);
 	}
 
 	.filter-group:last-of-type {
@@ -300,35 +300,36 @@
 	}
 
 	.group-title {
-		font-size: var(--text-body-sm);
+		font-size: 11px;
 		font-weight: 600;
-		margin: 0 0 var(--space-sm);
-		color: var(--color-fg-primary);
+		margin: 0 0 var(--space-xs);
+		color: var(--color-fg-secondary);
 	}
 
 	.toggle-list {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
+		gap: 2px;
 	}
 
 	.toggle-row {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
+		padding: 1px 0;
 	}
 
 	.toggle-label {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-primary);
+		font-size: 11px;
+		color: var(--color-fg-secondary);
 	}
 
-	/* Toggle Switch */
+	/* Toggle Switch - compact */
 	.toggle-switch {
 		position: relative;
 		display: inline-block;
-		width: 40px;
-		height: 20px;
+		width: 28px;
+		height: 14px;
 		cursor: pointer;
 	}
 
@@ -342,15 +343,15 @@
 		position: absolute;
 		inset: 0;
 		background-color: var(--color-bg-surface);
-		border-radius: 20px;
+		border-radius: 14px;
 		transition: background-color var(--duration-micro);
 	}
 
 	.toggle-slider::before {
 		content: '';
 		position: absolute;
-		height: 16px;
-		width: 16px;
+		height: 10px;
+		width: 10px;
 		left: 2px;
 		bottom: 2px;
 		background-color: var(--color-fg-primary);
@@ -363,28 +364,28 @@
 	}
 
 	.toggle-switch input:checked + .toggle-slider::before {
-		transform: translateX(20px);
+		transform: translateX(14px);
 	}
 
 	/* Price Range */
 	.price-display {
-		font-size: var(--text-body-sm);
+		font-size: 11px;
 		font-weight: 500;
-		margin: 0 0 var(--space-sm);
-		color: var(--color-fg-primary);
+		margin: 0 0 var(--space-xs);
+		color: var(--color-fg-secondary);
 	}
 
 	.price-sliders {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
+		gap: var(--space-xs);
 	}
 
 	.price-slider {
 		-webkit-appearance: none;
 		appearance: none;
 		width: 100%;
-		height: 4px;
+		height: 2px;
 		background: var(--color-bg-surface);
 		border-radius: var(--radius-xs);
 		outline: none;
@@ -392,40 +393,38 @@
 
 	.price-slider::-webkit-slider-thumb {
 		-webkit-appearance: none;
-		width: 16px;
-		height: 16px;
+		width: 10px;
+		height: 10px;
 		background: var(--color-fg-secondary);
 		border-radius: 50%;
 		cursor: pointer;
-		border: 2px solid var(--color-bg-surface);
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+		border: none;
 	}
 
 	.price-slider::-moz-range-thumb {
-		width: 16px;
-		height: 16px;
+		width: 10px;
+		height: 10px;
 		background: var(--color-fg-secondary);
 		border-radius: 50%;
 		cursor: pointer;
-		border: 2px solid var(--color-bg-surface);
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+		border: none;
 	}
 
 	.clear-btn {
 		width: 100%;
-		padding: var(--space-sm);
-		margin-top: var(--space-md);
+		padding: var(--space-xs);
+		margin-top: var(--space-sm);
 		background: transparent;
 		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
+		border-radius: var(--radius-xs);
+		font-size: 10px;
+		color: var(--color-fg-muted);
 		cursor: pointer;
 		transition: all var(--duration-micro);
 	}
 
 	.clear-btn:hover {
-		border-color: var(--color-fg-primary);
-		color: var(--color-fg-primary);
+		border-color: var(--color-fg-secondary);
+		color: var(--color-fg-secondary);
 	}
 </style>
