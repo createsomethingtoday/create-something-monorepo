@@ -516,25 +516,37 @@
 		font-size: 12px;
 		background: var(--color-bg-elevated);
 		color: var(--color-fg-primary);
+		transition: border-color var(--duration-fast) var(--ease-out);
+	}
+
+	.query-input-inline::placeholder {
+		color: var(--color-fg-muted);
 	}
 
 	.query-input-inline:focus {
 		outline: none;
-		border-color: var(--color-fg-muted);
+		border-color: var(--color-border-emphasis);
 	}
 
 	.query-submit {
 		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-fg-secondary);
-		color: var(--color-fg-inverse);
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
 		border: none;
 		border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
 		font-size: 11px;
+		font-weight: 500;
 		cursor: pointer;
+		transition: opacity var(--duration-fast) var(--ease-out);
+	}
+
+	.query-submit:hover:not(:disabled) {
+		opacity: 0.9;
 	}
 
 	.query-submit:disabled {
-		opacity: 0.5;
+		opacity: 0.4;
+		cursor: not-allowed;
 	}
 
 	/* Active filter tags */
@@ -547,8 +559,8 @@
 	.filter-tag {
 		font-size: 10px;
 		padding: 1px 6px;
-		background: var(--color-fg-secondary);
-		color: var(--color-fg-inverse);
+		background: var(--color-fg-tertiary);
+		color: var(--color-bg-pure);
 		border-radius: var(--radius-xs);
 	}
 
@@ -559,10 +571,12 @@
 		border: none;
 		cursor: pointer;
 		text-decoration: underline;
+		text-decoration-color: var(--color-border-default);
+		transition: color var(--duration-fast) var(--ease-out);
 	}
 
 	.clear-link:hover {
-		color: var(--color-fg-secondary);
+		color: var(--color-fg-tertiary);
 	}
 
 	.expand-toggle {
@@ -574,6 +588,12 @@
 		color: var(--color-fg-muted);
 		cursor: pointer;
 		white-space: nowrap;
+		transition: all var(--duration-fast) var(--ease-out);
+	}
+
+	.expand-toggle:hover {
+		border-color: var(--color-border-emphasis);
+		color: var(--color-fg-tertiary);
 	}
 
 	/* Example queries - minimal */
@@ -592,16 +612,17 @@
 
 	.example-link {
 		font-size: 10px;
-		color: var(--color-fg-tertiary);
+		color: var(--color-fg-muted);
 		background: none;
 		border: none;
 		cursor: pointer;
 		text-decoration: underline;
 		text-decoration-color: var(--color-border-default);
+		transition: color var(--duration-fast) var(--ease-out);
 	}
 
 	.example-link:hover {
-		color: var(--color-fg-secondary);
+		color: var(--color-fg-tertiary);
 	}
 
 	/* Expanded filters */
