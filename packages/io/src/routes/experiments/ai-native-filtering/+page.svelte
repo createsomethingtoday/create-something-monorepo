@@ -9,7 +9,6 @@
 	import {
 		FilterTogglePanel,
 		ProductGrid,
-		AgentPanel,
 		applyFilters,
 		type FilterState,
 		type AgentStep,
@@ -54,6 +53,8 @@
 	let agentSteps: AgentStep[] = [];
 	let explanation = '';
 	let showDemo = true;
+	let showFilters = false;
+	let query = '';
 
 	// Example queries
 	const exampleQueries = [
@@ -220,65 +221,111 @@
 		</section>
 
 	{#if showDemo}
-		<!-- Interactive Demo -->
+		<!-- Interactive Demo - Tufte: Data first, controls recede -->
 		<div class="demo-frame">
-			<div class="demo-inner">
-				<!-- Left Sidebar -->
-				<aside class="demo-controls">
-					<AgentPanel
-						onSubmit={handleAgentQuery}
-						{isLoading}
-						{agentSteps}
-						{explanation}
-						{filterState}
-						{exampleQueries}
+			<!-- Control Bar: Horizontal, minimal chrome -->
+			<div class="control-bar">
+				<form class="query-row" on:submit|preventDefault={() => handleAgentQuery(query)}>
+					<input
+						type="text"
+						bind:value={query}
+						placeholder="Describe what you're looking for..."
+						class="query-input-inline"
+						disabled={isLoading}
 					/>
+					<button type="submit" class="query-submit" disabled={isLoading || !query.trim()}>
+						{isLoading ? '...' : 'Filter'}
+					</button>
+				</form>
+
+				<!-- Active filters as tags (Tufte: show state, not options) -->
+				{#if Object.keys(filterState).length > 0}
+					<div class="active-tags">
+						{#if filterState.categories}
+							{#each filterState.categories as cat}
+								<span class="filter-tag">{cat}</span>
+							{/each}
+						{/if}
+						{#if filterState.materials}
+							{#each filterState.materials.slice(0, 2) as mat}
+								<span class="filter-tag">{mat}</span>
+							{/each}
+							{#if filterState.materials.length > 2}
+								<span class="filter-tag">+{filterState.materials.length - 2}</span>
+							{/if}
+						{/if}
+						{#if filterState.priceMax}
+							<span class="filter-tag">≤${(filterState.priceMax / 100).toLocaleString()}</span>
+						{/if}
+						<button type="button" class="clear-link" on:click={clearAll}>clear</button>
+					</div>
+				{/if}
+
+				<!-- Expand controls -->
+				<button type="button" class="expand-toggle" on:click={() => showFilters = !showFilters}>
+					{showFilters ? '− filters' : '+ filters'}
+				</button>
+			</div>
+
+			<!-- Example queries (collapsed feel) -->
+			{#if !query && exampleQueries.length > 0}
+				<div class="example-row">
+					<span class="example-label">try:</span>
+					{#each exampleQueries.slice(0, 3) as example}
+						<button type="button" class="example-link" on:click={() => { query = example; handleAgentQuery(example); }}>
+							{example}
+						</button>
+					{/each}
+				</div>
+			{/if}
+
+			<!-- Expanded Manual Filters (hidden by default) -->
+			{#if showFilters}
+				<div class="filters-expanded">
 					<FilterTogglePanel
 						{filterState}
 						onFilterChange={handleManualFilter}
+						showTitle={false}
+						collapsible={false}
 					/>
-					<div class="catalog-stats">
-						<div class="stats-row">
-							<div class="stat-item">
-								<span class="metric-value">{displayedProducts.length}</span>
-								<span class="text-caption text-muted">
-									{displayedProducts.length === data.stats.total ? 'items' : `of ${data.stats.total}`}
-								</span>
-							</div>
-							<div class="stat-item">
-								<span class="metric-value">${data.stats.priceRange.min.toLocaleString()}</span>
-								<span class="text-caption text-muted">–</span>
-								<span class="metric-value">${data.stats.priceRange.max.toLocaleString()}</span>
-							</div>
-						</div>
-					</div>
-				</aside>
+				</div>
+			{/if}
 
-				<!-- Product Grid -->
-				<div class="demo-results">
-					<header class="results-header">
-						<h3 class="subsection-title">FNJI Collection</h3>
-						<span class="results-count text-muted text-caption">
-							{displayedProducts.length} of {data.stats.total} items
-						</span>
-					</header>
-
-					{#if data.error}
-						<div class="card p-8 text-center">
-							<p class="text-tertiary mb-4">{data.error}</p>
-							<p class="text-caption text-muted">Run the migration and seed script to populate products.</p>
-						</div>
+			<!-- Agent Reasoning (inline, minimal) -->
+			{#if agentSteps.length > 0 || explanation}
+				<div class="reasoning-inline">
+					{#if explanation}
+						<span class="reasoning-text">{explanation}</span>
 					{:else}
-						<ProductGrid
-							products={displayedProducts}
-							emptyMessage="No products match your criteria."
-						>
-							<button slot="empty-action" type="button" class="action-btn-secondary" on:click={clearAll}>
-								Show all products
-							</button>
-						</ProductGrid>
+						<span class="reasoning-text thinking">Thinking: {agentSteps[agentSteps.length - 1]?.content || '...'}</span>
 					{/if}
 				</div>
+			{/if}
+
+			<!-- Results: Data-first -->
+			<div class="results-area">
+				<header class="results-header-tufte">
+					<span class="results-title">FNJI Collection</span>
+					<span class="results-meta">
+						{displayedProducts.length} of {data.stats.total} · ${data.stats.priceRange.min.toLocaleString()}–${data.stats.priceRange.max.toLocaleString()}
+					</span>
+				</header>
+
+				{#if data.error}
+					<div class="empty-notice">
+						<p>{data.error}</p>
+						<p class="hint">Run migration and seed script to populate.</p>
+					</div>
+				{:else}
+					<ProductGrid
+						products={displayedProducts}
+						emptyMessage="No products match your criteria."
+					>
+						<button slot="empty-action" type="button" class="clear-link" on:click={clearAll}>
+							Show all products
+						</button>
+					</ProductGrid>
+				{/if}
 			</div>
 		</div>
 	{/if}
@@ -424,84 +471,199 @@
 	.toggle-demo {
 		font-size: var(--text-body-sm);
 		padding: var(--space-sm) var(--space-md);
-		background: var(--color-fg-secondary);
-		color: var(--color-fg-inverse);
-		border: none;
+		background: var(--color-bg-surface);
+		color: var(--color-fg-secondary);
+		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		cursor: pointer;
-		transition: background var(--duration-micro) var(--ease-standard);
+		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.toggle-demo:hover {
-		background: var(--color-fg-primary);
+		background: var(--color-hover);
+		border-color: var(--color-border-emphasis);
 	}
 
-	/* Demo Frame - The embedded interactive area */
+	/* Demo Frame - Tufte: minimal chrome, data first */
 	.demo-frame {
 		background: var(--color-bg-subtle);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
-		padding: var(--space-md);
+		padding: var(--space-sm);
 		margin: var(--space-sm) 0;
 	}
 
-	.demo-inner {
-		display: grid;
-		grid-template-columns: 260px 1fr;
-		gap: var(--space-md);
-	}
-
-	.demo-controls {
+	/* Control Bar - horizontal, compact */
+	.control-bar {
 		display: flex;
-		flex-direction: column;
+		align-items: center;
 		gap: var(--space-sm);
+		flex-wrap: wrap;
 	}
 
-	.demo-results {
-		min-width: 0;
-	}
-
-	.results-header {
-		margin-bottom: var(--space-sm);
-		padding-bottom: var(--space-xs);
-		border-bottom: 1px solid var(--color-border-default);
+	.query-row {
 		display: flex;
-		justify-content: space-between;
-		align-items: baseline;
+		flex: 1;
+		min-width: 200px;
+		gap: 2px;
 	}
 
-	.results-header .subsection-title {
-		margin-bottom: 0;
-		font-size: var(--text-body-sm);
+	.query-input-inline {
+		flex: 1;
+		padding: var(--space-xs) var(--space-sm);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-xs) 0 0 var(--radius-xs);
+		font-size: 12px;
+		background: var(--color-bg-elevated);
+		color: var(--color-fg-primary);
 	}
 
-	/* Catalog Stats - inline Tufte style */
-	.catalog-stats {
+	.query-input-inline:focus {
+		outline: none;
+		border-color: var(--color-fg-muted);
+	}
+
+	.query-submit {
+		padding: var(--space-xs) var(--space-sm);
+		background: var(--color-fg-secondary);
+		color: var(--color-fg-inverse);
+		border: none;
+		border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
+		font-size: 11px;
+		cursor: pointer;
+	}
+
+	.query-submit:disabled {
+		opacity: 0.5;
+	}
+
+	/* Active filter tags */
+	.active-tags {
+		display: flex;
+		gap: 4px;
+		align-items: center;
+	}
+
+	.filter-tag {
+		font-size: 10px;
+		padding: 1px 6px;
+		background: var(--color-fg-secondary);
+		color: var(--color-fg-inverse);
+		border-radius: var(--radius-xs);
+	}
+
+	.clear-link {
+		font-size: 10px;
+		color: var(--color-fg-muted);
+		background: none;
+		border: none;
+		cursor: pointer;
+		text-decoration: underline;
+	}
+
+	.clear-link:hover {
+		color: var(--color-fg-secondary);
+	}
+
+	.expand-toggle {
+		font-size: 10px;
+		padding: 2px 6px;
+		background: transparent;
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-xs);
+		color: var(--color-fg-muted);
+		cursor: pointer;
+		white-space: nowrap;
+	}
+
+	/* Example queries - minimal */
+	.example-row {
+		display: flex;
+		gap: var(--space-xs);
+		align-items: center;
+		margin-top: var(--space-xs);
+		padding-left: 2px;
+	}
+
+	.example-label {
+		font-size: 10px;
+		color: var(--color-fg-muted);
+	}
+
+	.example-link {
+		font-size: 10px;
+		color: var(--color-fg-tertiary);
+		background: none;
+		border: none;
+		cursor: pointer;
+		text-decoration: underline;
+		text-decoration-color: var(--color-border-default);
+	}
+
+	.example-link:hover {
+		color: var(--color-fg-secondary);
+	}
+
+	/* Expanded filters */
+	.filters-expanded {
+		margin-top: var(--space-sm);
+		padding-top: var(--space-sm);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	/* Reasoning inline */
+	.reasoning-inline {
+		margin-top: var(--space-xs);
 		padding: var(--space-xs) var(--space-sm);
 		background: var(--color-bg-elevated);
 		border-radius: var(--radius-xs);
 	}
 
-	.catalog-stats .subsection-title {
-		display: none;
+	.reasoning-text {
+		font-size: 11px;
+		color: var(--color-fg-secondary);
 	}
 
-	.stats-row {
+	.reasoning-text.thinking {
+		color: var(--color-fg-muted);
+		font-style: italic;
+	}
+
+	/* Results area */
+	.results-area {
+		margin-top: var(--space-sm);
+	}
+
+	.results-header-tufte {
 		display: flex;
-		gap: var(--space-md);
 		justify-content: space-between;
-	}
-
-	.stat-item {
-		display: flex;
 		align-items: baseline;
-		gap: var(--space-xs);
+		margin-bottom: var(--space-xs);
+		padding-bottom: var(--space-xs);
+		border-bottom: 1px solid var(--color-border-default);
 	}
 
-	.metric-value {
-		font-size: var(--text-body-sm);
+	.results-title {
+		font-size: 13px;
 		font-weight: 600;
 		color: var(--color-fg-primary);
+	}
+
+	.results-meta {
+		font-size: 10px;
+		color: var(--color-fg-muted);
+	}
+
+	.empty-notice {
+		text-align: center;
+		padding: var(--space-md);
+		color: var(--color-fg-muted);
+		font-size: 12px;
+	}
+
+	.empty-notice .hint {
+		font-size: 10px;
+		margin-top: var(--space-xs);
 	}
 
 	/* Implementation Grid */
@@ -579,42 +741,30 @@
 	}
 
 	/* Responsive */
-	@media (max-width: 900px) {
-		.demo-inner {
-			grid-template-columns: 1fr;
-		}
-
-		.demo-controls {
-			order: 1;
-			display: grid;
-			grid-template-columns: 1fr 1fr;
-			gap: var(--space-sm);
-		}
-
-		.demo-results {
-			order: 0;
-		}
-
-		.catalog-stats {
-			grid-column: span 2;
-		}
-	}
-
 	@media (max-width: 640px) {
 		.ascii-art {
 			font-size: 0.4rem;
 		}
 
-		.demo-frame {
-			padding: var(--space-sm);
+		.control-bar {
+			flex-direction: column;
+			align-items: stretch;
 		}
 
-		.demo-controls {
-			grid-template-columns: 1fr;
+		.query-row {
+			min-width: 100%;
 		}
 
-		.catalog-stats {
-			grid-column: span 1;
+		.active-tags {
+			flex-wrap: wrap;
+		}
+
+		.expand-toggle {
+			align-self: flex-start;
+		}
+
+		.example-row {
+			flex-wrap: wrap;
 		}
 	}
 </style>
