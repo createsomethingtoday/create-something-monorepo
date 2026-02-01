@@ -75,13 +75,11 @@
 			});
 		}
 
-		// Apply price range
-		if (state.priceMin !== undefined || state.priceMax !== undefined) {
-			uiFilters.priceRange = [
-				state.priceMin ? state.priceMin / 100 : config.priceRange.min,
-				state.priceMax ? state.priceMax / 100 : config.priceRange.max
-			];
-		}
+		// Apply price range (reset to defaults if not specified)
+		uiFilters.priceRange = [
+			state.priceMin ? state.priceMin / 100 : config.priceRange.min,
+			state.priceMax ? state.priceMax / 100 : config.priceRange.max
+		];
 	}
 
 	function emitFilterChange() {
