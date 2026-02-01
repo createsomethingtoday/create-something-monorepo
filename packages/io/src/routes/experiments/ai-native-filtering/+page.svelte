@@ -54,6 +54,7 @@
 	let explanation = '';
 	let showDemo = true;
 	let showFilters = false;
+	let showReasoning = true;
 	let query = '';
 
 	// Example queries
@@ -291,13 +292,30 @@
 				</div>
 			{/if}
 
-			<!-- Agent Reasoning (inline, minimal) -->
+			<!-- Agent Reasoning (streaming steps) -->
 			{#if agentSteps.length > 0 || explanation}
-				<div class="reasoning-inline">
-					{#if explanation}
-						<span class="reasoning-text">{explanation}</span>
-					{:else}
-						<span class="reasoning-text thinking">Thinking: {agentSteps[agentSteps.length - 1]?.content || '...'}</span>
+				<div class="reasoning-panel">
+					<div class="reasoning-header">
+						<span class="reasoning-label">Agent Reasoning</span>
+						<button type="button" class="reasoning-toggle" on:click={() => showReasoning = !showReasoning}>
+							{showReasoning ? 'Hide' : 'Show'}
+						</button>
+					</div>
+					{#if showReasoning}
+						<div class="reasoning-steps">
+							{#each agentSteps as step}
+								<div class="step step-{step.type}">
+									<span class="step-type">{step.type === 'tool_call' ? '🔧' : step.type === 'tool_result' ? '📊' : '💭'}</span>
+									<span class="step-content">{step.content}</span>
+								</div>
+							{/each}
+							{#if explanation}
+								<div class="step step-final">
+									<span class="step-type">✓</span>
+									<span class="step-content">{explanation}</span>
+								</div>
+							{/if}
+						</div>
 					{/if}
 				</div>
 			{/if}
@@ -634,22 +652,95 @@
 		border-top: 1px solid var(--color-border-default);
 	}
 
-	/* Reasoning inline */
-	.reasoning-inline {
-		margin-top: var(--space-xs);
-		padding: var(--space-xs) var(--space-sm);
+	/* Reasoning panel */
+	.reasoning-panel {
+		margin-top: var(--space-sm);
 		background: var(--color-bg-elevated);
-		border-radius: var(--radius-xs);
+		border-radius: var(--radius-sm);
+		border: 1px solid var(--color-border-default);
+		overflow: hidden;
 	}
 
-	.reasoning-text {
-		font-size: 11px;
-		color: var(--color-fg-secondary);
+	.reasoning-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: var(--space-xs) var(--space-sm);
+		background: var(--color-bg-surface);
+		border-bottom: 1px solid var(--color-border-default);
 	}
 
-	.reasoning-text.thinking {
+	.reasoning-label {
+		font-size: var(--text-caption);
+		font-weight: 500;
 		color: var(--color-fg-muted);
-		font-style: italic;
+	}
+
+	.reasoning-toggle {
+		font-size: var(--text-caption);
+		padding: 2px var(--space-xs);
+		background: transparent;
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-xs);
+		color: var(--color-fg-muted);
+		cursor: pointer;
+		transition: all var(--duration-fast) var(--ease-out);
+	}
+
+	.reasoning-toggle:hover {
+		border-color: var(--color-border-emphasis);
+		color: var(--color-fg-tertiary);
+	}
+
+	.reasoning-steps {
+		padding: var(--space-xs);
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		max-height: 200px;
+		overflow-y: auto;
+	}
+
+	.step {
+		display: flex;
+		gap: var(--space-xs);
+		padding: var(--space-xs) var(--space-sm);
+		background: var(--color-bg-subtle);
+		border-radius: var(--radius-xs);
+		font-size: var(--text-caption);
+		line-height: 1.4;
+		animation: stepFadeIn var(--duration-normal) var(--ease-out);
+	}
+
+	@keyframes stepFadeIn {
+		from { opacity: 0; transform: translateY(-4px); }
+		to { opacity: 1; transform: translateY(0); }
+	}
+
+	.step-type {
+		flex-shrink: 0;
+	}
+
+	.step-content {
+		color: var(--color-fg-secondary);
+		word-break: break-word;
+	}
+
+	.step-thinking {
+		opacity: 0.7;
+	}
+
+	.step-tool_call {
+		border-left: 2px solid var(--color-fg-secondary);
+	}
+
+	.step-tool_result {
+		border-left: 2px solid var(--color-info);
+	}
+
+	.step-final {
+		border-left: 2px solid var(--color-success);
+		background: var(--color-success-muted);
 	}
 
 	/* Results area */
