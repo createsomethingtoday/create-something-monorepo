@@ -263,6 +263,7 @@
 		background: var(--color-bg-subtle);
 		padding: var(--space-sm) var(--space-md);
 		border-radius: var(--radius-sm);
+		max-width: 480px;
 	}
 
 	.panel-header {
@@ -308,12 +309,13 @@
 
 	.toggle-list {
 		display: flex;
+		flex-direction: row;
 		flex-wrap: wrap;
 		gap: var(--space-xs) var(--space-md);
 	}
 
 	.toggle-row {
-		display: flex;
+		display: inline-flex;
 		align-items: center;
 		gap: var(--space-xs);
 	}
