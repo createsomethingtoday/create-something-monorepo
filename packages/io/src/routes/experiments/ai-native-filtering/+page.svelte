@@ -449,7 +449,9 @@
 		padding: var(--space-lg);
 		border-radius: var(--radius-md);
 		overflow-x: auto;
-		margin: var(--space-lg) 0;
+		margin: var(--space-lg) auto;
+		width: fit-content;
+		max-width: 100%;
 	}
 
 	/* Demo Section */
