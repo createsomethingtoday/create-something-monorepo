@@ -23,16 +23,16 @@
 	let showTooltip = $state(false);
 	let tooltipPosition = $state({ top: 0, left: 0 });
 
-	function handleMouseEnter(e: MouseEvent) {
+	function handleClick(e: MouseEvent) {
 		const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
 		tooltipPosition = {
 			top: rect.bottom + 8,
 			left: rect.left + rect.width / 2
 		};
-		showTooltip = true;
+		showTooltip = !showTooltip;
 	}
 
-	function handleMouseLeave() {
+	function closeTooltip() {
 		showTooltip = false;
 	}
 
@@ -116,20 +116,20 @@
 		{/if}
 	</div>
 {:else if variant === 'tooltip'}
-	<span 
+	<button 
 		class="freshness-tooltip"
-		onmouseenter={handleMouseEnter}
-		onmouseleave={handleMouseLeave}
+		onclick={handleClick}
+		aria-label="Show data freshness info"
 	>
 		<Info size={14} />
-	</span>
+	</button>
 	{#if showTooltip}
-		<div class="tooltip-backdrop" onmouseenter={handleMouseLeave}></div>
+		<div class="tooltip-backdrop" onclick={closeTooltip}></div>
 		<div 
 			class="tooltip-fixed"
 			style="top: {tooltipPosition.top}px; left: {tooltipPosition.left}px;"
 		>
-			<button class="tooltip-close" onclick={() => showTooltip = false}>
+			<button class="tooltip-close" onclick={closeTooltip}>
 				<X size={12} />
 			</button>
 			<div class="tooltip-title">Weekly Snapshot</div>
@@ -185,8 +185,11 @@
 	.freshness-tooltip {
 		display: inline-flex;
 		align-items: center;
+		padding: 0;
+		background: transparent;
+		border: none;
 		color: var(--color-fg-muted);
-		cursor: help;
+		cursor: pointer;
 		transition: color 100ms var(--ease-standard);
 	}
 
