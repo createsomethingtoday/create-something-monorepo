@@ -164,7 +164,7 @@
 
 	.tooltip-content {
 		position: absolute;
-		bottom: calc(100% + 0.5rem);
+		top: calc(100% + 0.5rem);
 		left: 50%;
 		transform: translateX(-50%);
 		padding: var(--space-sm);
@@ -181,25 +181,25 @@
 		transition: opacity 100ms var(--ease-standard), visibility 100ms;
 	}
 
-	/* Arrow */
+	/* Arrow pointing up */
 	.tooltip-content::after {
 		content: '';
 		position: absolute;
-		top: 100%;
+		bottom: 100%;
 		left: 50%;
 		transform: translateX(-50%);
 		border: 6px solid transparent;
-		border-top-color: var(--color-border-default);
+		border-bottom-color: var(--color-border-default);
 	}
 
 	.tooltip-content::before {
 		content: '';
 		position: absolute;
-		top: 100%;
+		bottom: 100%;
 		left: 50%;
 		transform: translateX(-50%);
 		border: 5px solid transparent;
-		border-top-color: var(--color-bg-surface);
+		border-bottom-color: var(--color-bg-surface);
 		z-index: 1;
 	}
 
