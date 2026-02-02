@@ -2,7 +2,7 @@
 	import type { PageData } from './$types';
 	import type { Asset } from '$lib/server/airtable';
 	import { goto, invalidate } from '$app/navigation';
-	import { Header, AssetsDisplay, OverviewStats, SubmissionTracker, StatsBar } from '$lib/components';
+	import { Header, AssetsDisplay, OverviewStats, SubmissionTracker, StatsBar, DataFreshnessIndicator } from '$lib/components';
 	import { toast } from '$lib/stores/toast';
 
 	let { data }: { data: PageData } = $props();
@@ -168,6 +168,9 @@
 
 				<!-- Tufte: Single-line high-density metrics bar -->
 				<StatsBar assets={data.assets || []} />
+				
+				<!-- Data freshness indicator for cumulative metrics -->
+				<DataFreshnessIndicator variant="full" showSchedule={true} />
 
 				<!-- Detailed breakdown in compact grid -->
 				<div class="dashboard-grid">
