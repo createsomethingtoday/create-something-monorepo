@@ -99,11 +99,11 @@
 		{/if}
 	</div>
 {:else if variant === 'tooltip'}
-	<span class="freshness-tooltip">
+	<span 
+		class="freshness-tooltip" 
+		title="Weekly snapshot data. Updated {updateInfo.lastUpdate}, next update {updateInfo.nextUpdate}. Syncs every Monday 4 PM UTC."
+	>
 		<Info size={14} />
-		<span class="tooltip-content">
-			Weekly snapshot data. Updated {updateInfo.lastUpdate}, next update {updateInfo.nextUpdate}. Syncs every Monday 4 PM UTC.
-		</span>
 	</span>
 {:else}
 	<!-- inline variant -->
@@ -152,7 +152,6 @@
 	.freshness-tooltip {
 		display: inline-flex;
 		align-items: center;
-		position: relative;
 		color: var(--color-fg-muted);
 		cursor: help;
 		transition: color 100ms var(--ease-standard);
@@ -160,62 +159,6 @@
 
 	.freshness-tooltip:hover {
 		color: var(--color-fg-secondary);
-	}
-
-	.tooltip-content {
-		position: absolute;
-		top: calc(100% + 0.5rem);
-		left: 50%;
-		transform: translateX(-50%);
-		padding: var(--space-sm);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-		box-shadow: var(--shadow-md);
-		font-size: var(--text-caption);
-		color: var(--color-fg-secondary);
-		white-space: nowrap;
-		z-index: 100;
-		opacity: 0;
-		visibility: hidden;
-		transition: opacity 100ms var(--ease-standard), visibility 100ms;
-	}
-
-	/* Arrow pointing up */
-	.tooltip-content::after {
-		content: '';
-		position: absolute;
-		bottom: 100%;
-		left: 50%;
-		transform: translateX(-50%);
-		border: 6px solid transparent;
-		border-bottom-color: var(--color-border-default);
-	}
-
-	.tooltip-content::before {
-		content: '';
-		position: absolute;
-		bottom: 100%;
-		left: 50%;
-		transform: translateX(-50%);
-		border: 5px solid transparent;
-		border-bottom-color: var(--color-bg-surface);
-		z-index: 1;
-	}
-
-	.freshness-tooltip:hover .tooltip-content {
-		opacity: 1;
-		visibility: visible;
-	}
-
-	/* Mobile: wider tooltip */
-	@media (max-width: 640px) {
-		.tooltip-content {
-			white-space: normal;
-			width: max-content;
-			max-width: 250px;
-			text-align: center;
-		}
 	}
 
 	.freshness-badge {
