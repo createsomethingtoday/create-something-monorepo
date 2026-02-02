@@ -161,16 +161,13 @@
 				<div class="page-header">
 					<div class="header-text">
 						<h1 class="page-title">Welcome back</h1>
-						<p class="page-subtitle">Your Webflow templates at a glance.</p>
+						<p class="page-subtitle">Your Webflow templates at a glance. <DataFreshnessIndicator variant="tooltip" /></p>
 					</div>
 					<SubmissionTracker assets={data.assets || []} variant="compact" userEmail={data.user?.email} />
 				</div>
 
 				<!-- Tufte: Single-line high-density metrics bar -->
 				<StatsBar assets={data.assets || []} />
-				
-				<!-- Data freshness indicator for cumulative metrics -->
-				<DataFreshnessIndicator variant="full" showSchedule={true} />
 
 				<!-- Detailed breakdown in compact grid -->
 				<div class="dashboard-grid">
