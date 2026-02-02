@@ -7,10 +7,10 @@
 	 * 
 	 * Variants:
 	 * - 'inline': Compact inline badge for table headers and stat cards
-	 * - 'tooltip': Icon-only with hover tooltip
+	 * - 'tooltip': Icon-only with hover tooltip (+ click on mobile)
 	 * - 'full': Full message with icon (for page headers)
 	 */
-	import { Info, Clock } from 'lucide-svelte';
+	import { Info, Clock, X } from 'lucide-svelte';
 
 	interface Props {
 		variant?: 'inline' | 'tooltip' | 'full';
@@ -18,6 +18,22 @@
 	}
 
 	let { variant = 'inline', showSchedule = false }: Props = $props();
+	
+	// For tooltip variant: click-to-show popover
+	let showPopover = $state(false);
+	let popoverX = $state(0);
+	let popoverY = $state(0);
+	
+	function handleClick(e: MouseEvent) {
+		const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+		popoverX = rect.left + rect.width / 2;
+		popoverY = rect.bottom + 8;
+		showPopover = !showPopover;
+	}
+	
+	function closePopover() {
+		showPopover = false;
+	}
 
 	// Calculate next Monday 4 PM UTC
 	function getNextUpdateInfo(): { lastUpdate: string; nextUpdate: string; daysUntil: number } {
@@ -102,9 +118,27 @@
 	<span 
 		class="freshness-tooltip" 
 		title="Weekly snapshot data. Updated {updateInfo.lastUpdate}, next update {updateInfo.nextUpdate}. Syncs every Monday 4 PM UTC."
+		role="button"
+		tabindex="0"
+		onclick={handleClick}
+		onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(e as unknown as MouseEvent); }}
 	>
 		<Info size={14} />
 	</span>
+	
+	{#if showPopover}
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div class="popover-backdrop" onclick={closePopover} onkeydown={() => {}}></div>
+		<div class="popover-content" style="left: {popoverX}px; top: {popoverY}px;">
+			<button class="popover-close" onclick={closePopover} aria-label="Close">
+				<X size={14} />
+			</button>
+			<p class="popover-title">Weekly Snapshot</p>
+			<p class="popover-text">Updated {updateInfo.lastUpdate}</p>
+			<p class="popover-text">Next update {updateInfo.nextUpdate}</p>
+			<p class="popover-schedule">Syncs every Monday at 4 PM UTC</p>
+		</div>
+	{/if}
 {:else}
 	<!-- inline variant -->
 	<span class="freshness-badge" title="Data syncs weekly on Mondays at 4 PM UTC">
@@ -153,12 +187,70 @@
 		display: inline-flex;
 		align-items: center;
 		color: var(--color-fg-muted);
-		cursor: help;
+		cursor: pointer;
 		transition: color 100ms var(--ease-standard);
 	}
 
 	.freshness-tooltip:hover {
 		color: var(--color-fg-secondary);
+	}
+	
+	/* Fixed-position popover (escapes overflow clipping) */
+	.popover-backdrop {
+		position: fixed;
+		inset: 0;
+		z-index: 999;
+	}
+	
+	.popover-content {
+		position: fixed;
+		transform: translateX(-50%);
+		padding: var(--space-sm) var(--space-md);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		box-shadow: var(--shadow-lg);
+		z-index: 1000;
+		min-width: 200px;
+	}
+	
+	.popover-close {
+		position: absolute;
+		top: var(--space-xs);
+		right: var(--space-xs);
+		padding: 4px;
+		background: transparent;
+		border: none;
+		color: var(--color-fg-muted);
+		cursor: pointer;
+		border-radius: var(--radius-sm);
+		transition: color 100ms, background 100ms;
+	}
+	
+	.popover-close:hover {
+		color: var(--color-fg-primary);
+		background: var(--color-bg-subtle);
+	}
+	
+	.popover-title {
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin: 0 0 var(--space-xs);
+	}
+	
+	.popover-text {
+		font-size: var(--text-caption);
+		color: var(--color-fg-secondary);
+		margin: 0;
+		line-height: 1.4;
+	}
+	
+	.popover-schedule {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		margin: var(--space-xs) 0 0;
+		font-style: italic;
 	}
 
 	.freshness-badge {
