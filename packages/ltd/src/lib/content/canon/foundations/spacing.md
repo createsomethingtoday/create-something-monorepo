@@ -10,18 +10,29 @@ published: true
 
 ## Spacing Scale
 
-Built on the golden ratio (φ = 1.618). Each step creates proportional harmony.
+Built on the golden ratio (φ = 1.618). Each step is derived from φⁿ where base = 1rem.
 
-| Token | Value | Use |
-|-------|-------|-----|
-| `--space-xs` | 0.25rem (4px) | Tight gaps, inline spacing |
-| `--space-sm` | 0.5rem (8px) | Form element gaps |
-| `--space-md` | 1rem (16px) | Default spacing |
-| `--space-lg` | 1.5rem (24px) | Section padding |
-| `--space-xl` | 2rem (32px) | Card padding |
-| `--space-2xl` | 3rem (48px) | Component gaps |
-| `--space-3xl` | 4rem (64px) | Section gaps |
-| `--space-4xl` | 6rem (96px) | Major sections |
+| Token | Value | Derivation | Recommended Use |
+|-------|-------|------------|-----------------|
+| `--space-xs` | 0.618rem (~10px) | φ⁻¹ | Tight gaps, inline elements |
+| `--space-sm` | 1rem (16px) | φ⁰ (base) | Form element gaps, small padding |
+| `--space-md` | 1.618rem (~26px) | φ¹ | Default component spacing |
+| `--space-lg` | 2.618rem (~42px) | φ² | Card padding, section gaps |
+| `--space-xl` | 4.236rem (~68px) | φ³ | Large component gaps |
+| `--space-2xl` | 6.854rem (~110px) | φ⁴ | *See guidance below* |
+| `--space-3xl` | 11.09rem (~177px) | φ⁵ | *See guidance below* |
+
+## Tailwind for Structure, Canon for Aesthetics
+
+**Important**: The golden ratio produces mathematically elegant values, but `--space-2xl` (110px) and `--space-3xl` (177px) are impractical for most page-level padding.
+
+**Use Tailwind utilities for layout spacing:**
+- Page padding: `py-16`, `py-24`, `px-6`
+- Section gaps: `gap-8`, `space-y-12`
+- Nav offset: `calc(var(--header-height) + var(--space-md))`
+
+**Use Canon tokens for component internals:**
+- `--space-xs` through `--space-xl` work well for component padding, gaps, and margins
 
 ## Usage Patterns
 
@@ -29,7 +40,7 @@ Built on the golden ratio (φ = 1.618). Each step creates proportional harmony.
 
 ```css
 .button {
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-xs) var(--space-sm);
 }
 
 .card {
@@ -69,26 +80,32 @@ Built on the golden ratio (φ = 1.618). Each step creates proportional harmony.
 
 When spacing follows φ, adjacent elements feel balanced:
 
-- `--space-sm` × 1.618 ≈ `--space-md`
-- `--space-md` × 1.618 ≈ `--space-lg`
-- `--space-lg` × 1.618 ≈ `--space-xl`
+- `--space-xs` × φ = `--space-sm`
+- `--space-sm` × φ = `--space-md`
+- `--space-md` × φ = `--space-lg`
+- `--space-lg` × φ = `--space-xl`
 
 This creates rhythm without manual calculation.
 
-## Responsive Spacing
+## Page Layout (Tailwind)
 
-For larger viewports, scale proportionally:
+For page-level spacing, use Tailwind utilities which provide more practical values:
 
-```css
-@media (min-width: 768px) {
-  .section {
-    padding: var(--space-3xl) var(--space-xl);
-  }
-}
+```html
+<!-- Section padding -->
+<section class="py-16 px-6">
+  <div class="max-w-5xl mx-auto">
+    <!-- content -->
+  </div>
+</section>
 
-@media (min-width: 1024px) {
-  .section {
-    padding: var(--space-4xl) var(--space-2xl);
-  }
-}
+<!-- Hero section -->
+<section class="pt-24 pb-16 px-6">
+  <!-- content -->
+</section>
+
+<!-- Fixed nav offset -->
+<main class="pt-[calc(var(--header-height)+1.618rem)]">
+  <!-- content -->
+</main>
 ```

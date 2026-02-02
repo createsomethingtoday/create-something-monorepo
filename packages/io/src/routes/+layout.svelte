@@ -169,7 +169,7 @@
 	}
 
 	.main-content {
-		/* Navigation bar height offset */
-		padding-top: var(--space-3xl);
+		/* Navigation bar height offset: header (72px) + breathing room */
+		padding-top: calc(var(--header-height) + var(--space-md));
 	}
 </style>

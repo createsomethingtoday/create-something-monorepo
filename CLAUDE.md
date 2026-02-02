@@ -159,28 +159,30 @@ Claude Code handles the full creation-to-deployment cycle. Tools recede into tra
 
 **Canon**: The infrastructure disappears; only the work remains. Deploy directly via Bash or MCP tools. Reserve WezTerm handoff for truly interactive operations (debugging sessions, real-time log monitoring, production verification).
 
-## Task Management: Beads
+## Task Management: Loom
 
 Agent-native issue tracking that persists across sessions. The tool recedes; the work remains.
 
 ```bash
 # Session Start: Surface highest-impact work
-bv --robot-priority
+lm ready --ranked             # Robot-priority with PageRank + Critical Path
 
 # During Work
-bd create "Task"              # Capture discovered work
-bd dep add X blocks Y         # Record dependencies
-bd update X --status in-progress
+lm create "Task"              # Capture discovered work
+lm block X --by Y             # Record dependencies
+lm update X --status claimed
 
 # Session End
-bd close X                    # Mark completed
+lm done X                     # Mark completed
 ```
 
 **Labels**: `agency`, `io`, `space`, `ltd` (scope) + `feature`, `bug`, `research`, `refactor` (type)
 
-**Why Beads**: Designed for AI agents. Taskwarrior was human-first; Beads speaks machine to machine via `--robot-priority`.
+**Issue Types**: `bug`, `feature`, `task`, `epic`, `chore` (set via `lm create --type`)
 
-See `.claude/rules/beads-patterns.md` for full reference.
+**Why Loom**: Multi-agent coordination with sessions, routing, cost tracking, and crash recovery. Absorbs Beads functionality with richer analytics.
+
+See `.claude/rules/loom-patterns.md` for full reference.
 
 ## Agent Orchestration
 
@@ -194,7 +196,7 @@ Three patterns for different work scopes:
 
 **Ralph**: Iterative refinement through self-referential feedback loops. The prompt never changes—your work does. Use `/ralph-loop` for test-fix loops and refinement until criteria met.
 
-**Harness**: Autonomous work sessions with quality gates and peer review. Uses Anthropic prompt engineering best practices (prefilled responses, quote-based findings, chain-of-thought) for 99% parsing accuracy and <5% false positive rate. Reviewers: Security (Haiku), Architecture (Opus), Quality (Sonnet). Use `bd work` for single issues or `bd work --spec` for spec-driven features with checkpoints.
+**Harness**: Autonomous work sessions with quality gates and peer review. Uses Anthropic prompt engineering best practices (prefilled responses, quote-based findings, chain-of-thought) for 99% parsing accuracy and <5% false positive rate. Reviewers: Security (Haiku), Architecture (Opus), Quality (Sonnet). Use `lm work` for single issues or Harness spec-driven features with checkpoints.
 
 **Gastown**: Multi-agent orchestration via tmux. Use `gt convoy create` to batch work, `gt sling` to assign to workers, parallel execution at scale.
 
@@ -243,11 +245,20 @@ Key paths (see `.claude/rules/sveltekit-conventions.md` for full patterns):
 
 ## CSS Architecture
 
-**Tailwind for structure, Canon for aesthetics.** See `.claude/rules/css-canon.md` for tokens.
+**Tailwind for structure, Canon for aesthetics.** When doing UI/design work, use the `css-canon` skill for full token reference, Glass Design System details, and animation patterns.
 
-**Glass Design System**: CREATE SOMETHING and WORKWAY share a unified Glass Design System. Glass conveys "The Automation Layer"—the transparent interface between user and outcome. Use `.glass-*` classes for navigation, modals, and workflow cards. See css-canon.md for full reference.
+**Key Principle**: Use Tailwind for layout/structure (`flex`, `grid`, `gap-*`, `p-*`). Use Canon tokens for aesthetics (colors, typography, borders, shadows, motion).
+
+**Glass Design System**: CREATE SOMETHING and WORKWAY share a unified Glass Design System. Glass conveys "The Automation Layer"—the transparent interface between user and outcome. Use `.glass-*` classes for navigation, modals, and workflow cards. Invoke `css-canon` skill for full reference when needed.
 
 **Migration Strategy**: New code follows Canon. Existing code migrates incrementally when touched. Priority: `packages/components/` first.
+
+**Spacing Guidance**: The golden ratio scale produces impractical values at the upper end (`--space-2xl` = 110px, `--space-3xl` = 177px). Use Tailwind for layout spacing:
+- **Page padding**: Tailwind utilities (`py-16`, `py-24`, `px-6`)
+- **Section gaps**: Tailwind utilities (`gap-8`, `space-y-12`)
+- **Nav offset**: Use `calc(var(--header-height) + var(--space-md))` for fixed nav padding
+- **Component internals**: Canon tokens are acceptable (`--space-xs` through `--space-xl`)
+- **Avoid for page layout**: `--space-2xl` and `--space-3xl` are too large for most padding use cases
 
 ## Cloudflare Resources
 
@@ -255,6 +266,7 @@ D1 databases and KV namespaces per package. See `.claude/rules/cloudflare-patter
 
 ## Skills Available
 
+- `css-canon`: Canon design tokens, Glass system, animation patterns (use when doing UI/design work)
 - `motion-analysis`: Analyze CSS animations from URLs
 - `canon-maintenance`: Enforce CREATE SOMETHING design standards
 - `audit-paper`: Validate paper styling against standard template patterns (proactive + manual)

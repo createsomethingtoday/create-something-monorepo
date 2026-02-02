@@ -94,7 +94,10 @@
 	/* Layout */
 	--container-max-width: 72rem; /* 1152px - change to 80rem (1280px) for wider layout */
 
-	/* Spacing Scale (used across components) */
+	/* Spacing Scale (client-specific)
+	   Note: These values intentionally differ from Canon's golden ratio scale.
+	   Outerfields uses a more linear, practical scale for their design needs.
+	   This is acceptable for client projects under agency/clients/. */
 	--space-xs: 0.5rem;
 	--space-sm: 0.75rem;
 	--space-md: 1rem;
