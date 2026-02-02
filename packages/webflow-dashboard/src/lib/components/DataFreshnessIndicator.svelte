@@ -102,8 +102,28 @@
 	<span 
 		class="freshness-tooltip" 
 		title="Weekly snapshot data. Updated {updateInfo.lastUpdate}, next update {updateInfo.nextUpdate}. Syncs every Monday 4 PM UTC."
+		role="button"
+		tabindex="0"
+		onclick={(e) => {
+			const el = e.currentTarget as HTMLElement;
+			el.classList.toggle('show-tooltip');
+		}}
+		onkeydown={(e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				const el = e.currentTarget as HTMLElement;
+				el.classList.toggle('show-tooltip');
+			}
+		}}
+		onblur={(e) => {
+			const el = e.currentTarget as HTMLElement;
+			el.classList.remove('show-tooltip');
+		}}
 	>
 		<Info size={14} />
+		<span class="tooltip-content">
+			Weekly snapshot data. Updated {updateInfo.lastUpdate}, next update {updateInfo.nextUpdate}. Syncs every Monday 4 PM UTC.
+		</span>
 	</span>
 {:else}
 	<!-- inline variant -->
@@ -152,13 +172,70 @@
 	.freshness-tooltip {
 		display: inline-flex;
 		align-items: center;
+		position: relative;
 		color: var(--color-fg-muted);
-		cursor: help;
+		cursor: pointer;
 		transition: color var(--duration-micro) var(--ease-standard);
 	}
 
-	.freshness-tooltip:hover {
+	.freshness-tooltip:hover,
+	.freshness-tooltip:focus {
 		color: var(--color-fg-secondary);
+		outline: none;
+	}
+
+	.tooltip-content {
+		display: none;
+		position: absolute;
+		bottom: calc(100% + 0.5rem);
+		left: 50%;
+		transform: translateX(-50%);
+		padding: var(--space-sm);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		box-shadow: var(--shadow-md);
+		font-size: var(--text-caption);
+		color: var(--color-fg-secondary);
+		white-space: nowrap;
+		z-index: 100;
+	}
+
+	/* Arrow */
+	.tooltip-content::after {
+		content: '';
+		position: absolute;
+		top: 100%;
+		left: 50%;
+		transform: translateX(-50%);
+		border: 6px solid transparent;
+		border-top-color: var(--color-border-default);
+	}
+
+	.tooltip-content::before {
+		content: '';
+		position: absolute;
+		top: 100%;
+		left: 50%;
+		transform: translateX(-50%);
+		border: 5px solid transparent;
+		border-top-color: var(--color-bg-surface);
+		z-index: 1;
+	}
+
+	.freshness-tooltip.show-tooltip .tooltip-content,
+	.freshness-tooltip:hover .tooltip-content {
+		display: block;
+	}
+
+	/* Mobile: wider tooltip */
+	@media (max-width: 640px) {
+		.tooltip-content {
+			white-space: normal;
+			width: max-content;
+			max-width: 250px;
+			text-align: center;
+		}
 	}
 
 	.freshness-badge {
