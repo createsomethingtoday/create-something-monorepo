@@ -7,7 +7,7 @@
 	 * 
 	 * Variants:
 	 * - 'inline': Compact inline badge for table headers and stat cards
-	 * - 'tooltip': Icon-only with hover tooltip (+ click on mobile)
+	 * - 'tooltip': Icon-only with hover tooltip (fixed position, never clipped)
 	 * - 'full': Full message with icon (for page headers)
 	 */
 	import { Info, Clock, X } from 'lucide-svelte';
@@ -18,21 +18,22 @@
 	}
 
 	let { variant = 'inline', showSchedule = false }: Props = $props();
-	
-	// For tooltip variant: click-to-show popover
-	let showPopover = $state(false);
-	let popoverX = $state(0);
-	let popoverY = $state(0);
-	
-	function handleClick(e: MouseEvent) {
+
+	// Tooltip state for fixed-position tooltip
+	let showTooltip = $state(false);
+	let tooltipPosition = $state({ top: 0, left: 0 });
+
+	function handleMouseEnter(e: MouseEvent) {
 		const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-		popoverX = rect.left + rect.width / 2;
-		popoverY = rect.bottom + 8;
-		showPopover = !showPopover;
+		tooltipPosition = {
+			top: rect.bottom + 8,
+			left: rect.left + rect.width / 2
+		};
+		showTooltip = true;
 	}
-	
-	function closePopover() {
-		showPopover = false;
+
+	function handleMouseLeave() {
+		showTooltip = false;
 	}
 
 	// Calculate next Monday 4 PM UTC
@@ -116,27 +117,25 @@
 	</div>
 {:else if variant === 'tooltip'}
 	<span 
-		class="freshness-tooltip" 
-		title="Weekly snapshot data. Updated {updateInfo.lastUpdate}, next update {updateInfo.nextUpdate}. Syncs every Monday 4 PM UTC."
-		role="button"
-		tabindex="0"
-		onclick={handleClick}
-		onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClick(e as unknown as MouseEvent); }}
+		class="freshness-tooltip"
+		onmouseenter={handleMouseEnter}
+		onmouseleave={handleMouseLeave}
 	>
 		<Info size={14} />
 	</span>
-	
-	{#if showPopover}
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div class="popover-backdrop" onclick={closePopover} onkeydown={() => {}}></div>
-		<div class="popover-content" style="left: {popoverX}px; top: {popoverY}px;">
-			<button class="popover-close" onclick={closePopover} aria-label="Close">
-				<X size={14} />
+	{#if showTooltip}
+		<div class="tooltip-backdrop" onmouseenter={handleMouseLeave}></div>
+		<div 
+			class="tooltip-fixed"
+			style="top: {tooltipPosition.top}px; left: {tooltipPosition.left}px;"
+		>
+			<button class="tooltip-close" onclick={() => showTooltip = false}>
+				<X size={12} />
 			</button>
-			<p class="popover-title">Weekly Snapshot</p>
-			<p class="popover-text">Updated {updateInfo.lastUpdate}</p>
-			<p class="popover-text">Next update {updateInfo.nextUpdate}</p>
-			<p class="popover-schedule">Syncs every Monday at 4 PM UTC</p>
+			<div class="tooltip-title">Weekly Snapshot</div>
+			<div class="tooltip-detail">Updated {updateInfo.lastUpdate}</div>
+			<div class="tooltip-detail">Next update {updateInfo.nextUpdate}</div>
+			<div class="tooltip-schedule">Syncs every Monday at 4 PM UTC</div>
 		</div>
 	{/if}
 {:else}
@@ -187,34 +186,34 @@
 		display: inline-flex;
 		align-items: center;
 		color: var(--color-fg-muted);
-		cursor: pointer;
+		cursor: help;
 		transition: color 100ms var(--ease-standard);
 	}
 
 	.freshness-tooltip:hover {
 		color: var(--color-fg-secondary);
 	}
-	
-	/* Fixed-position popover (escapes overflow clipping) */
-	.popover-backdrop {
+
+	/* Fixed-position tooltip that won't clip */
+	.tooltip-backdrop {
 		position: fixed;
 		inset: 0;
 		z-index: 999;
 	}
-	
-	.popover-content {
+
+	.tooltip-fixed {
 		position: fixed;
 		transform: translateX(-50%);
+		z-index: 1000;
 		padding: var(--space-sm) var(--space-md);
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		box-shadow: var(--shadow-lg);
-		z-index: 1000;
 		min-width: 200px;
 	}
-	
-	.popover-close {
+
+	.tooltip-close {
 		position: absolute;
 		top: var(--space-xs);
 		right: var(--space-xs);
@@ -224,33 +223,36 @@
 		color: var(--color-fg-muted);
 		cursor: pointer;
 		border-radius: var(--radius-sm);
-		transition: color 100ms, background 100ms;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: background 100ms, color 100ms;
 	}
-	
-	.popover-close:hover {
-		color: var(--color-fg-primary);
+
+	.tooltip-close:hover {
 		background: var(--color-bg-subtle);
+		color: var(--color-fg-primary);
 	}
-	
-	.popover-title {
+
+	.tooltip-title {
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
-		margin: 0 0 var(--space-xs);
+		margin-bottom: var(--space-xs);
 	}
-	
-	.popover-text {
+
+	.tooltip-detail {
 		font-size: var(--text-caption);
 		color: var(--color-fg-secondary);
-		margin: 0;
 		line-height: 1.4;
 	}
-	
-	.popover-schedule {
+
+	.tooltip-schedule {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
-		margin: var(--space-xs) 0 0;
-		font-style: italic;
+		margin-top: var(--space-xs);
+		padding-top: var(--space-xs);
+		border-top: 1px solid var(--color-border-default);
 	}
 
 	.freshness-badge {
