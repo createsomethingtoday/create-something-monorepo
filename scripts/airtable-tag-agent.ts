@@ -102,6 +102,7 @@ interface Asset {
 	id: string;
 	name: string;
 	categoryGroups: string[];
+	descriptionShort?: string;
 }
 
 interface TagAssignment {
@@ -217,14 +218,15 @@ async function fetchAssetsMissingTags(limit?: number | null): Promise<Asset[]> {
 
 	const records = await fetchAllRecords(
 		CONFIG.ASSETS_TABLE_ID,
-		['Name', '🪣Category Group(s) Display Name'],
+		['Name', '🪣Category Group(s) Display Name', 'ℹ️Description (Short)'],
 		CONFIG.VIEW_ID
 	);
 
 	let assets = records.map((record) => ({
 		id: record.id,
 		name: (record.fields['Name'] as string) || '',
-		categoryGroups: (record.fields['🪣Category Group(s) Display Name'] as string[]) || []
+		categoryGroups: (record.fields['🪣Category Group(s) Display Name'] as string[]) || [],
+		descriptionShort: (record.fields['ℹ️Description (Short)'] as string) || ''
 	}));
 
 	if (limit && limit > 0) {
@@ -240,10 +242,13 @@ function determinePrimaryTag(
 	asset: Asset,
 	tagMap: Map<string, Tag>
 ): { tag: Tag; reason: string } | null {
-	const { name, categoryGroups } = asset;
+	const { name, categoryGroups, descriptionShort } = asset;
 
 	// Filter out null/undefined categories
 	const validCategories = categoryGroups.filter((c) => c != null && typeof c === 'string');
+
+	// Combine name and description for keyword matching
+	const searchText = `${name} ${descriptionShort || ''}`.toLowerCase();
 
 	// Strategy 1: Exact match - check if any category group exactly matches a tag
 	for (const category of validCategories) {
@@ -266,8 +271,7 @@ function determinePrimaryTag(
 		}
 	}
 
-	// Strategy 3: Name-based inference - look for keywords in asset name
-	const nameLower = name.toLowerCase();
+	// Strategy 3: Name and description-based inference - look for keywords
 	const nameKeywords: Record<string, string[]> = {
 		restaurant: ['Restaurant', 'Food', 'Cafe'],
 		cafe: ['Cafe', 'Coffee Shop', 'Food'],
@@ -344,15 +348,27 @@ function determinePrimaryTag(
 		delivery: ['Delivery', 'Logistics', 'Transport'],
 		job: ['Job Portal', 'Recruitment'],
 		career: ['Job Portal', 'Recruitment'],
-		recruitment: ['Recruitment', 'Job Portal']
+		recruitment: ['Recruitment', 'Job Portal'],
+		// Fallback generic keywords for templates without specific context
+		multipurpose: ['Multipurpose', 'Business'],
+		'multi-purpose': ['Multipurpose', 'Business'],
+		corporate: ['Corporate', 'Business'],
+		responsive: ['Multipurpose', 'Business'],
+		'any business': ['Business', 'Multipurpose'],
+		'any type': ['Multipurpose', 'Business'],
+		minimal: ['Personal', 'Portfolio', 'Creative'],
+		clean: ['Business', 'Corporate', 'Portfolio'],
+		modern: ['Business', 'Creative', 'Agency']
 	};
 
 	for (const [keyword, tagNames] of Object.entries(nameKeywords)) {
-		if (nameLower.includes(keyword)) {
+		if (searchText.includes(keyword)) {
 			for (const tagName of tagNames) {
 				const tag = tagMap.get(tagName.toLowerCase());
 				if (tag) {
-					return { tag, reason: `Name contains "${keyword}" → "${tag.name}"` };
+					const source = descriptionShort && descriptionShort.toLowerCase().includes(keyword) 
+						? 'description' : 'name';
+					return { tag, reason: `${source} contains "${keyword}" → "${tag.name}"` };
 				}
 			}
 		}
@@ -486,7 +502,10 @@ async function main() {
 		if (unassigned.length > 0 && verbose) {
 			console.log('\n⚠️  Sample unassigned assets:');
 			unassigned.slice(0, 10).forEach((asset) => {
-				console.log(`   - ${asset.name} [${asset.categoryGroups.join(', ') || 'no categories'}]`);
+				const desc = asset.descriptionShort 
+					? ` | "${asset.descriptionShort.slice(0, 60)}${asset.descriptionShort.length > 60 ? '...' : ''}"` 
+					: '';
+				console.log(`   - ${asset.name} [${asset.categoryGroups.join(', ') || 'no categories'}]${desc}`);
 			});
 		}
 
