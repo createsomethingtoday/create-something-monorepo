@@ -1,13 +1,9 @@
 <script lang="ts">
 	import '../app.css';
 	import type { Snippet } from 'svelte';
-	import { Toast, FeedbackButton } from '$lib/components';
+	import { Toast } from '$lib/components';
 
-	interface LayoutData {
-		user: { email: string } | null;
-	}
-
-	let { children, data }: { children: Snippet; data: LayoutData } = $props();
+	let { children }: { children: Snippet } = $props();
 </script>
 
 <svelte:head>
@@ -17,7 +13,3 @@
 
 {@render children()}
 <Toast />
-
-{#if data.user}
-	<FeedbackButton />
-{/if}
