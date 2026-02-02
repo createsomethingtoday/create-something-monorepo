@@ -99,27 +99,7 @@
 		{/if}
 	</div>
 {:else if variant === 'tooltip'}
-	<span 
-		class="freshness-tooltip" 
-		title="Weekly snapshot data. Updated {updateInfo.lastUpdate}, next update {updateInfo.nextUpdate}. Syncs every Monday 4 PM UTC."
-		role="button"
-		tabindex="0"
-		onclick={(e) => {
-			const el = e.currentTarget as HTMLElement;
-			el.classList.toggle('show-tooltip');
-		}}
-		onkeydown={(e) => {
-			if (e.key === 'Enter' || e.key === ' ') {
-				e.preventDefault();
-				const el = e.currentTarget as HTMLElement;
-				el.classList.toggle('show-tooltip');
-			}
-		}}
-		onblur={(e) => {
-			const el = e.currentTarget as HTMLElement;
-			el.classList.remove('show-tooltip');
-		}}
-	>
+	<span class="freshness-tooltip">
 		<Info size={14} />
 		<span class="tooltip-content">
 			Weekly snapshot data. Updated {updateInfo.lastUpdate}, next update {updateInfo.nextUpdate}. Syncs every Monday 4 PM UTC.
@@ -174,18 +154,15 @@
 		align-items: center;
 		position: relative;
 		color: var(--color-fg-muted);
-		cursor: pointer;
-		transition: color var(--duration-micro) var(--ease-standard);
+		cursor: help;
+		transition: color 100ms var(--ease-standard);
 	}
 
-	.freshness-tooltip:hover,
-	.freshness-tooltip:focus {
+	.freshness-tooltip:hover {
 		color: var(--color-fg-secondary);
-		outline: none;
 	}
 
 	.tooltip-content {
-		display: none;
 		position: absolute;
 		bottom: calc(100% + 0.5rem);
 		left: 50%;
@@ -199,6 +176,9 @@
 		color: var(--color-fg-secondary);
 		white-space: nowrap;
 		z-index: 100;
+		opacity: 0;
+		visibility: hidden;
+		transition: opacity 100ms var(--ease-standard), visibility 100ms;
 	}
 
 	/* Arrow */
@@ -223,9 +203,9 @@
 		z-index: 1;
 	}
 
-	.freshness-tooltip.show-tooltip .tooltip-content,
 	.freshness-tooltip:hover .tooltip-content {
-		display: block;
+		opacity: 1;
+		visibility: visible;
 	}
 
 	/* Mobile: wider tooltip */
