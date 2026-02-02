@@ -172,7 +172,7 @@
 <style>
 	.survey-section {
 		min-height: 100vh;
-		padding: var(--space-3xl) var(--space-lg) var(--space-2xl);
+		padding: 6rem var(--space-lg) var(--space-xl);
 	}
 
 	.survey-container {
@@ -336,7 +336,7 @@
 	/* Success State */
 	.success-message {
 		text-align: center;
-		padding: var(--space-2xl) var(--space-lg);
+		padding: var(--space-xl) var(--space-lg);
 	}
 
 	.success-icon {

@@ -267,7 +267,7 @@
 <style>
 	/* Hero Section */
 	.hero-section {
-		padding: var(--space-2xl) 0;
+		padding: 6rem 0 var(--space-xl);
 		min-height: 40vh;
 		display: flex;
 		align-items: center;
@@ -414,7 +414,7 @@
 
 	/* Services Section */
 	.services-section {
-		padding: var(--space-xl) 0 var(--space-2xl);
+		padding: var(--space-xl) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
 
@@ -591,7 +591,7 @@
 
 	/* Pricing Section */
 	.pricing-section {
-		padding: var(--space-xl) 0 var(--space-2xl);
+		padding: var(--space-xl) 0;
 	}
 
 	.pricing-qualifier {

@@ -130,7 +130,7 @@
 <style>
 	.hero-section {
 		position: relative;
-		padding: var(--space-2xl) var(--space-md) var(--space-xl);
+		padding: 6rem var(--space-md) var(--space-xl);
 	}
 
 	.hero-subtitle {

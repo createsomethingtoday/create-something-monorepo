@@ -139,7 +139,7 @@
 	.container {
 		max-width: 1400px;
 		margin: 0 auto;
-		padding: var(--space-2xl);
+		padding: var(--space-xl);
 	}
 
 	/* Page Header */
@@ -147,8 +147,8 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: flex-start;
-		margin-bottom: calc(var(--space-2xl) * 1.5);
-		padding-bottom: var(--space-2xl);
+		margin-bottom: 3rem;
+		padding-bottom: var(--space-xl);
 		border-bottom: 1px solid var(--color-border-default);
 	}
 
@@ -178,7 +178,7 @@
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 		gap: var(--space-lg);
-		margin-bottom: calc(var(--space-2xl) * 1.5);
+		margin-bottom: 3rem;
 	}
 
 	.summary-card {
@@ -211,14 +211,14 @@
 
 	/* Overtime Section */
 	.overtime-section {
-		margin-bottom: calc(var(--space-2xl) * 1.5);
+		margin-bottom: 3rem;
 	}
 
 	.section-title {
 		font-size: var(--text-h2);
 		font-weight: 600;
 		color: var(--color-fg-primary);
-		margin: 0 0 var(--space-2xl);
+		margin: 0 0 var(--space-xl);
 	}
 
 	.overtime-grid {
@@ -229,11 +229,11 @@
 
 	/* Methodology */
 	.methodology {
-		padding: var(--space-2xl);
+		padding: var(--space-xl);
 		background: var(--color-bg-surface);
 		border-left: 3px solid var(--color-border-strong);
 		border-radius: var(--radius-sm);
-		margin-top: calc(var(--space-2xl) * 1.5);
+		margin-top: 3rem;
 	}
 
 	.methodology h3 {
@@ -271,7 +271,7 @@
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
-		margin-bottom: var(--space-2xl);
+		margin-bottom: var(--space-xl);
 	}
 
 	.data-note p {
@@ -287,7 +287,7 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		padding: calc(var(--space-2xl) * 2.5) var(--space-2xl);
+		padding: 6rem var(--space-xl);
 		text-align: center;
 		color: var(--color-fg-tertiary);
 	}

@@ -173,7 +173,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: var(--space-2xl) 0;
+		padding: var(--space-xl) 0;
 	}
 
 	.contact-headline {

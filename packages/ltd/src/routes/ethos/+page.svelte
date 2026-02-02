@@ -414,7 +414,7 @@ Outcomes While You Sleep
 
 <style>
 	.header-section {
-		padding-top: var(--space-2xl);
+		padding-top: var(--space-xl);
 		padding-bottom: var(--space-xl);
 		border-bottom: 1px solid var(--color-border-default);
 	}

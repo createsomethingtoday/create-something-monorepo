@@ -95,7 +95,7 @@
 <style>
 	/* Hero Section */
 	.hero-section {
-		padding: var(--space-2xl) 0;
+		padding: 6rem 0 var(--space-xl);
 		min-height: 30vh;
 		display: flex;
 		align-items: center;
@@ -129,7 +129,7 @@
 
 	/* Products Section */
 	.products-section {
-		padding: var(--space-xl) 0 var(--space-2xl);
+		padding: var(--space-xl) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
 
@@ -233,7 +233,7 @@
 
 	/* CTA Section */
 	.cta-section {
-		padding: var(--space-xl) 0 var(--space-2xl);
+		padding: var(--space-xl) 0;
 	}
 
 	.cta-card {

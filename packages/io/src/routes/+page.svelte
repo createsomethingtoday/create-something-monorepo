@@ -86,7 +86,7 @@
 
 <style>
 	.ecosystem {
-		padding: var(--space-2xl) var(--space-lg);
+		padding: var(--space-xl) var(--space-lg);
 		border-top: 1px solid var(--color-border-default);
 	}
 

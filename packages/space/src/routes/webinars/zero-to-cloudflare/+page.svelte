@@ -317,7 +317,7 @@
 <style>
 	/* Hero Section */
 	.hero {
-		padding: var(--space-3xl) var(--space-lg) var(--space-2xl);
+		padding: 6rem var(--space-lg) var(--space-xl);
 		border-bottom: 1px solid var(--color-border-default);
 	}
 
@@ -376,7 +376,7 @@
 
 	/* Value Props */
 	.value-section {
-		padding: var(--space-2xl) var(--space-lg);
+		padding: var(--space-xl) var(--space-lg);
 	}
 
 	.value-container {
@@ -428,7 +428,7 @@
 
 	/* Learn Section */
 	.learn-section {
-		padding: var(--space-2xl) var(--space-lg);
+		padding: var(--space-xl) var(--space-lg);
 		background: var(--color-bg-elevated);
 		border-top: 1px solid var(--color-border-default);
 		border-bottom: 1px solid var(--color-border-default);
@@ -493,7 +493,7 @@
 
 	/* Path Section */
 	.path-section {
-		padding: var(--space-2xl) var(--space-lg);
+		padding: var(--space-xl) var(--space-lg);
 	}
 
 	.path-container {
@@ -606,7 +606,7 @@
 
 	/* Register Section */
 	.register-section {
-		padding: var(--space-2xl) var(--space-lg);
+		padding: var(--space-xl) var(--space-lg);
 	}
 
 	.register-container {
@@ -757,7 +757,7 @@
 
 	/* About Section */
 	.about-section {
-		padding: var(--space-2xl) var(--space-lg);
+		padding: var(--space-xl) var(--space-lg);
 		background: var(--color-bg-elevated);
 		border-top: 1px solid var(--color-border-default);
 	}

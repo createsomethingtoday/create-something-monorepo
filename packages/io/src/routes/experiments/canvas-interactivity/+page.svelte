@@ -463,8 +463,8 @@
 	}
 
 	.benefits-section {
-		margin-top: var(--space-3xl);
-		padding-top: var(--space-2xl);
+		margin-top: var(--space-xl);
+		padding-top: var(--space-xl);
 		border-top: 1px solid var(--color-border-default);
 	}
 

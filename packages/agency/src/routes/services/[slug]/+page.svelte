@@ -184,7 +184,7 @@
 	.service-page {
 		max-width: 720px;
 		margin: 0 auto;
-		padding: var(--space-2xl) var(--space-lg); /* Page-level: 2xl vertical */
+		padding: var(--space-xl) var(--space-lg);
 	}
 
 	/* Back Navigation - minimal, recedes */

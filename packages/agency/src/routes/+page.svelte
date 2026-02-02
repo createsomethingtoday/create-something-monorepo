@@ -254,7 +254,7 @@
 	
 	/* Hero - clean, focused */
 	.hero {
-		padding: var(--space-2xl) var(--space-xl);
+		padding: 6rem var(--space-xl);
 		max-width: 800px;
 		margin: 0 auto;
 	}
@@ -483,7 +483,7 @@
 
 	/* Value - Rams: statement only */
 	.value-section {
-		padding: var(--space-2xl) var(--space-xl);
+		padding: var(--space-xl) var(--space-xl);
 		text-align: center;
 		border-top: 1px solid var(--color-border-default);
 	}
@@ -504,7 +504,7 @@
 
 	/* Outcomes - Rams: data is design */
 	.outcomes-section {
-		padding: var(--space-2xl) var(--space-xl);
+		padding: var(--space-xl) var(--space-xl);
 		border-top: 1px solid var(--color-border-default);
 	}
 
@@ -620,7 +620,7 @@
 
 	/* CTA - Rams: one ask */
 	.cta-section {
-		padding: var(--space-2xl) var(--space-xl);
+		padding: var(--space-xl) var(--space-xl);
 		text-align: center;
 		border-top: 1px solid var(--color-border-default);
 	}

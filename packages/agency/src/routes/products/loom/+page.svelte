@@ -400,7 +400,7 @@
 	/* Hero */
 	.hero {
 		text-align: center;
-		padding: var(--space-2xl) 0;
+		padding: 6rem 0 var(--space-xl);
 	}
 
 	.hero-badge {
@@ -458,7 +458,7 @@
 
 	/* Install Section - Tufte: Clear hierarchy, Golden Ratio proportions */
 	.install-section {
-		padding: var(--space-2xl) 0;
+		padding: var(--space-xl) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
 
@@ -603,7 +603,7 @@
 
 	/* How Section */
 	.how-section {
-		padding: var(--space-2xl) 0;
+		padding: var(--space-xl) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
 
@@ -678,7 +678,7 @@
 
 	/* Comparison Section */
 	.comparison-section {
-		padding: var(--space-2xl) 0;
+		padding: var(--space-xl) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
 
@@ -729,7 +729,7 @@
 
 	/* Tools Section */
 	.tools-section {
-		padding: var(--space-2xl) 0;
+		padding: var(--space-xl) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
 
@@ -779,7 +779,7 @@
 
 	/* Case Study */
 	.case-study-section {
-		padding: var(--space-2xl) 0;
+		padding: var(--space-xl) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
 

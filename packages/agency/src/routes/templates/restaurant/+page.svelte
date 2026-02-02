@@ -406,7 +406,7 @@
 <style>
 	/* Hero */
 	.hero {
-		padding: var(--space-2xl) var(--space-lg);
+		padding: 6rem var(--space-lg);
 		background: var(--color-bg-pure, #000000);
 		border-bottom: 1px solid var(--color-border-default);
 	}
@@ -471,7 +471,7 @@
 
 	/* Live Preview Section */
 	.preview-section {
-		padding: var(--space-2xl) var(--space-lg);
+		padding: var(--space-xl) var(--space-lg);
 		background: var(--color-bg-subtle);
 	}
 
@@ -561,7 +561,7 @@
 
 	/* Workflows Section */
 	.workflows-section {
-		padding: var(--space-2xl) var(--space-lg);
+		padding: var(--space-xl) var(--space-lg);
 		background: var(--color-bg-pure);
 	}
 
@@ -679,7 +679,7 @@
 
 	/* Features Section */
 	.features-section {
-		padding: var(--space-2xl) var(--space-lg);
+		padding: var(--space-xl) var(--space-lg);
 		background: var(--color-bg-subtle);
 	}
 
@@ -706,7 +706,7 @@
 
 	/* Pricing Section */
 	.pricing-section {
-		padding: var(--space-2xl) var(--space-lg);
+		padding: var(--space-xl) var(--space-lg);
 		background: var(--color-bg-pure);
 	}
 
@@ -835,7 +835,7 @@
 
 	/* FAQ Section */
 	.faq-section {
-		padding: var(--space-2xl) var(--space-lg);
+		padding: var(--space-xl) var(--space-lg);
 		background: var(--color-bg-subtle);
 	}
 
@@ -903,7 +903,7 @@
 
 	/* CTA Section */
 	.cta-section {
-		padding: var(--space-2xl) var(--space-lg);
+		padding: var(--space-xl) var(--space-lg);
 		background: var(--color-bg-elevated);
 		border-top: 1px solid var(--color-border-default);
 	}

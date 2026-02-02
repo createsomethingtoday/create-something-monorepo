@@ -125,7 +125,7 @@
 
 	@media (min-width: 768px) {
 		.doc-content {
-			padding: var(--space-2xl) var(--space-xl);
+			padding: var(--space-xl) var(--space-xl);
 		}
 	}
 </style>

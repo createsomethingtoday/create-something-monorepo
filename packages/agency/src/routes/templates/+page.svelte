@@ -557,7 +557,7 @@
 <style>
 	/* Hero */
 	.hero {
-		padding: var(--space-2xl) var(--space-lg);
+		padding: 6rem var(--space-lg);
 		background: var(--color-bg-pure, #000000);
 		border-bottom: 1px solid var(--color-border-default);
 	}
@@ -626,7 +626,7 @@
 
 	/* Templates Section */
 	.templates-section {
-		padding: var(--space-2xl) var(--space-lg);
+		padding: var(--space-xl) var(--space-lg);
 		background: var(--color-bg-pure, #000000);
 	}
 
@@ -876,7 +876,7 @@
 
 	/* Value Prop */
 	.value-prop {
-		padding: var(--space-2xl) var(--space-lg);
+		padding: var(--space-xl) var(--space-lg);
 		background: var(--color-bg-pure, #000000);
 		border-top: 1px solid var(--color-border-default);
 	}
@@ -939,7 +939,7 @@
 
 	/* Pricing CTA */
 	.pricing-cta {
-		padding: var(--space-2xl) var(--space-lg);
+		padding: var(--space-xl) var(--space-lg);
 		background: var(--color-bg-elevated);
 		border-top: 1px solid var(--color-border-default);
 	}

@@ -161,9 +161,9 @@
 	/* Hero */
 	.hero {
 		text-align: center;
-		padding-bottom: var(--space-2xl);
+		padding-bottom: var(--space-xl);
 		border-bottom: 1px solid var(--color-border-default);
-		margin-bottom: var(--space-2xl);
+		margin-bottom: var(--space-xl);
 	}
 
 	.eyebrow {
@@ -193,7 +193,7 @@
 	/* Philosophy Quote */
 	.philosophy-quote {
 		padding: var(--space-xl) 0;
-		margin-bottom: var(--space-2xl);
+		margin-bottom: var(--space-xl);
 	}
 
 	.philosophy-quote blockquote {
@@ -230,7 +230,7 @@
 
 	/* Quick Access Grid */
 	.quick-access {
-		margin-bottom: var(--space-2xl);
+		margin-bottom: var(--space-xl);
 	}
 
 	.card-grid {
@@ -299,7 +299,7 @@
 
 	/* Principles */
 	.principles {
-		margin-bottom: var(--space-2xl);
+		margin-bottom: var(--space-xl);
 		padding: var(--space-xl);
 		background: var(--color-bg-surface);
 		border-radius: var(--radius-lg);

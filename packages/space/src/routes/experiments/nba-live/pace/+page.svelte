@@ -238,7 +238,7 @@
 	.container {
 		max-width: 1400px;
 		margin: 0 auto;
-		padding: var(--space-2xl) var(--space-lg);
+		padding: var(--space-xl) var(--space-lg);
 	}
 
 	.page-header {
@@ -246,7 +246,7 @@
 		justify-content: space-between;
 		align-items: flex-start;
 		gap: var(--space-lg);
-		margin-bottom: var(--space-2xl);
+		margin-bottom: var(--space-xl);
 		flex-wrap: wrap;
 	}
 
@@ -274,7 +274,7 @@
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 		gap: var(--space-lg);
-		margin-bottom: var(--space-2xl);
+		margin-bottom: var(--space-xl);
 	}
 
 	.summary-card {
@@ -322,7 +322,7 @@
 	}
 
 	.section {
-		margin-bottom: calc(var(--space-2xl) * 1.5);
+		margin-bottom: 3rem;
 	}
 
 	.section-header {
@@ -562,7 +562,7 @@
 		align-items: center;
 		justify-content: center;
 		gap: var(--space-md);
-		padding: calc(var(--space-2xl) * 2) var(--space-lg);
+		padding: 6rem var(--space-lg);
 		text-align: center;
 		color: var(--color-fg-secondary);
 	}

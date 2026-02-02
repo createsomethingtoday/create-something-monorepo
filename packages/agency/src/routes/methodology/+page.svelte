@@ -426,7 +426,7 @@
 <style>
 	/* Golden Ratio Spacing (φ = 1.618) */
 	.section-hero {
-		padding-top: var(--space-2xl);  /* φ⁴ = 6.854rem */
+		padding-top: 6rem;
 		padding-bottom: var(--space-xl); /* φ³ = 4.236rem */
 	}
 
