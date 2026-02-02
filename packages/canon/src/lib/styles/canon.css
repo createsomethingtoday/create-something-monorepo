@@ -126,17 +126,21 @@
 }
 
 /* ==========================================================================
-   Section & Content Spacing (Golden Ratio)
+   Section & Content Spacing
+   
+   Note: Use practical values for page-level padding, not the golden ratio 
+   upper scale (--space-2xl = 110px, --space-3xl = 177px are too large).
+   See CLAUDE.md "Spacing Guidance" for rationale.
    ========================================================================== */
 
 section {
-  padding-top: var(--space-2xl);
-  padding-bottom: var(--space-2xl);
+  padding-top: var(--space-xl);    /* ~68px - practical for sections */
+  padding-bottom: var(--space-xl);
 }
 
 .hero {
-  padding-top: var(--space-3xl);
-  padding-bottom: var(--space-2xl);
+  padding-top: 6rem;               /* 96px - hero emphasis without excess */
+  padding-bottom: var(--space-xl); /* ~68px */
 }
 
 h2 + p {

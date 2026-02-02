@@ -64,25 +64,27 @@
 		padding-right: var(--space-md);
 	}
 
-	/* Padding sizes (golden ratio) */
+	/* Padding sizes - practical values for page layout
+	   Note: Avoids --space-2xl (110px) and --space-3xl (177px) which are 
+	   impractical for section padding. See CLAUDE.md "Spacing Guidance". */
 	.section--sm {
-		padding-top: var(--space-lg);
+		padding-top: var(--space-lg);  /* ~42px */
 		padding-bottom: var(--space-lg);
 	}
 
 	.section--md {
-		padding-top: var(--space-xl);
+		padding-top: var(--space-xl);  /* ~68px */
 		padding-bottom: var(--space-xl);
 	}
 
 	.section--lg {
-		padding-top: var(--space-2xl);
-		padding-bottom: var(--space-2xl);
+		padding-top: 6rem;             /* 96px - equivalent to py-24 */
+		padding-bottom: 6rem;
 	}
 
 	.section--xl {
-		padding-top: calc(var(--space-2xl) * 1.618);
-		padding-bottom: calc(var(--space-2xl) * 1.618);
+		padding-top: 8rem;             /* 128px - equivalent to py-32 */
+		padding-bottom: 8rem;
 	}
 
 	/* Background variants */
