@@ -10,7 +10,8 @@
 .page-container {
 	background: var(--color-bg-pure);
 	color: var(--color-fg-primary);
-	padding-top: var(--space-xl);
+	/* Note: Page-level padding handled by Tailwind classes on elements.
+	   This container provides background/color only. */
 }
 
 /* Typography */
