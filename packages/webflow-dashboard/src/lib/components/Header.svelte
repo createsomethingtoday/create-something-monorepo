@@ -32,9 +32,8 @@
 	<div class="header-content">
 		<div class="header-left">
 			<a href="/dashboard" class="logo">
-				<svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-					<rect width="40" height="40" rx="8" fill="var(--color-fg-primary)" />
-					<path d="M28 14L20 26L12 14H28Z" fill="var(--color-bg-pure)" />
+				<svg class="webflow-logo" width="38" height="24" viewBox="0 0 1080 674" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path fill-rule="evenodd" clip-rule="evenodd" d="M1080 0L735.386 673.684H411.696L555.916 394.481H549.445C430.464 548.934 252.942 650.61 0 673.684V398.344C0 398.344 161.813 388.787 256.939 288.776H0V0.0053214H288.771V237.515L295.253 237.489L413.255 0.0053214H631.645V236.009L638.126 235.999L760.556 0H1080Z" fill="currentColor"/>
 				</svg>
 				<span class="logo-text">Asset Dashboard</span>
 			</a>
@@ -107,6 +106,11 @@
 		align-items: center;
 		gap: var(--space-sm);
 		text-decoration: none;
+		color: var(--color-fg-primary);
+	}
+
+	.webflow-logo {
+		flex-shrink: 0;
 	}
 
 	.logo-text {
