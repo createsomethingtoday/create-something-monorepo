@@ -68,7 +68,18 @@ const CATEGORY_TO_TAG_MAP: Record<string, string[]> = {
 	Music: ['Music', 'Musician', 'Band', 'Entertainment'],
 	Gaming: ['Game', 'Entertainment'],
 	Crypto: ['Finance', 'Technology'],
-	NFT: ['Technology', 'Creative', 'Marketplace']
+	NFT: ['Technology', 'Creative', 'Marketplace'],
+	// Additional mappings found from remaining unassigned items
+	'Arts & Entertainment': ['Entertainment', 'Music', 'Film', 'Event', 'Photography & Video'],
+	'HR & Hiring': ['Recruitment', 'Job Portal', 'Business'],
+	Transportation: ['Transport', 'Logistics', 'Delivery', 'Automotive'],
+	'Weddings & Events': ['Wedding', 'Event'],
+	'Food & Beverage': ['Food', 'Restaurant', 'Cafe', 'Food & Drink'],
+	'Pets & Veterinary': ['Pets', 'Veterinary'],
+	'Sports & Recreation': ['Sports', 'Fitness', 'Gym'],
+	'News & Media': ['News', 'Magazine', 'Blog'],
+	'Finance & Investment': ['Finance', 'Investment', 'Bank'],
+	'Legal Services': ['Law Firm', 'Attorney', 'Business']
 };
 
 // Types
