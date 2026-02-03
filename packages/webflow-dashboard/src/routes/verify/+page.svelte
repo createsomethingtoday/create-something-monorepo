@@ -3,6 +3,7 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { CheckCircle2, Lock, XCircle } from 'lucide-svelte';
+	import WebflowLogo from '$lib/components/WebflowLogo.svelte';
 
 	interface PageData {
 		status: 'no-token' | 'rate-limited' | 'invalid' | 'not-found' | 'expired' | 'error';
@@ -86,10 +87,7 @@
 <main class="container">
 	<div class="verify-card">
 		<div class="logo">
-			<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<rect width="40" height="40" rx="8" fill="var(--color-fg-primary)" />
-				<path d="M28 14L20 26L12 14H28Z" fill="black" />
-			</svg>
+			<WebflowLogo />
 		</div>
 
 	{#if status === 'verifying'}

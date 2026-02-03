@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import WebflowLogo from '$lib/components/WebflowLogo.svelte';
 
 	let email = $state('');
 	let loading = $state(false);
@@ -39,10 +40,7 @@
 <main class="container">
 	<div class="login-card">
 		<div class="logo">
-			<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<rect width="40" height="40" rx="8" fill="var(--color-fg-primary)" />
-				<path d="M28 14L20 26L12 14H28Z" fill="var(--color-bg-pure)" />
-			</svg>
+			<WebflowLogo />
 		</div>
 
 		<h1>Asset Dashboard</h1>
