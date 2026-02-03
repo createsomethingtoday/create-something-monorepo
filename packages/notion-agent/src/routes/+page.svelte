@@ -12,7 +12,7 @@
 		<p class="hero-eyebrow">Custom Notion Agents</p>
 		<h1 class="hero-title">
 			<span class="title-line">Your prompt.</span>
-			<span class="title-line">Our <span class="emphasis">Automation Layer</span>.</span>
+			<span class="title-line">Our <span class="emphasis">Automation&nbsp;Layer</span>.</span>
 		</h1>
 		<p class="hero-subtitle">
 			Agents work while you sleep—querying databases, creating pages, archiving duplicates.
@@ -83,7 +83,7 @@
 
 	/* Hero: Centered, focused */
 	.hero {
-		max-width: 600px;
+		max-width: 850px;
 		margin: 0 auto;
 		padding: var(--space-2xl) var(--space-xl);
 		text-align: center;
@@ -108,6 +108,7 @@
 
 	.title-line {
 		display: block;
+		white-space: nowrap;
 	}
 
 	.emphasis {

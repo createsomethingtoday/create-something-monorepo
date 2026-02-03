@@ -3,7 +3,7 @@
 	import { Card, CardHeader, CardTitle, CardContent, Badge } from './ui';
 	import Sparkline from './Sparkline.svelte';
 	import KineticNumber from './KineticNumber.svelte';
-	import { TrendingUp, TrendingDown, Minus, Trophy, Target, Zap, AlertTriangle } from 'lucide-svelte';
+	import { TrendingUp, TrendingDown, Minus, Trophy, Target, Zap, AlertTriangle, HelpCircle } from 'lucide-svelte';
 
 	interface LeaderboardEntry {
 		templateName: string;
@@ -198,8 +198,14 @@
 		<Card>
 			<CardContent>
 				<div class="stat-card" in:fly={{ y: 20, duration: 400, delay: 300 }}>
-					<span class="stat-label">Categories Tracked</span>
+					<div class="stat-header">
+						<span class="stat-label">Categories Tracked</span>
+						<span class="tooltip-trigger" title="Categories with sales activity in the 30-day window">
+							<HelpCircle size={12} />
+						</span>
+					</div>
 					<span class="stat-value"><KineticNumber value={categories.length} /></span>
+					<span class="stat-note">with recent sales</span>
 				</div>
 			</CardContent>
 		</Card>
@@ -358,7 +364,10 @@
 								<span class="stat-value">{category.totalSales30d.toLocaleString()}</span>
 							</div>
 							<div class="mobile-stat">
-								<span class="stat-label">Templates</span>
+								<span class="stat-label stat-label-with-tooltip" title="Templates with sales in 30-day window">
+									Active Templates
+									<HelpCircle size={10} />
+								</span>
 								<span class="stat-value">{category.templatesInSubcategory}</span>
 							</div>
 						</div>
@@ -382,7 +391,12 @@
 								{/if}
 							</th>
 							<th class="sortable" onclick={() => handleSort('templatesInSubcategory')}>
-								Templates
+								<span class="th-with-tooltip">
+									Active Templates
+									<span class="tooltip-trigger" title="Templates with sales in 30-day window (not total marketplace inventory)">
+										<HelpCircle size={12} />
+									</span>
+								</span>
 								{#if sortKey === 'templatesInSubcategory'}
 									<span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
 								{/if}
@@ -469,16 +483,19 @@
 							</div>
 							<span class="metric-label">avg per template</span>
 						</div>
-						<div class="category-stats">
-							<div class="stat">
-								<span class="stat-label">Sales (30d)</span>
-								<span class="stat-value">{category.totalSales30d.toLocaleString()}</span>
-							</div>
-							<div class="stat">
-								<span class="stat-label">Templates</span>
-								<span class="stat-value">{category.templatesInSubcategory}</span>
-							</div>
+					<div class="category-stats">
+						<div class="stat">
+							<span class="stat-label">Sales (30d)</span>
+							<span class="stat-value">{category.totalSales30d.toLocaleString()}</span>
 						</div>
+						<div class="stat">
+							<span class="stat-label stat-label-with-tooltip" title="Templates with sales in 30-day window">
+								Active Templates
+								<HelpCircle size={10} />
+							</span>
+							<span class="stat-value">{category.templatesInSubcategory}</span>
+						</div>
+					</div>
 						<div class="category-footer">
 							<Badge variant={competition.color === 'success' ? 'success' : competition.color === 'warning' ? 'warning' : competition.color === 'error' ? 'error' : 'info'} class="competition-badge">
 								{competition.level} Competition
@@ -576,6 +593,42 @@
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		font-style: italic;
+	}
+
+	/* Tooltip styles */
+	.tooltip-trigger {
+		display: inline-flex;
+		align-items: center;
+		cursor: help;
+		color: var(--color-fg-muted);
+		transition: color var(--duration-micro) var(--ease-standard);
+	}
+
+	.tooltip-trigger:hover {
+		color: var(--color-info);
+	}
+
+	.th-with-tooltip {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-xs);
+	}
+
+	.stat-label-with-tooltip {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		cursor: help;
+	}
+
+	.stat-label-with-tooltip :global(svg) {
+		color: var(--color-fg-muted);
+		opacity: 0.7;
+	}
+
+	.stat-label-with-tooltip:hover :global(svg) {
+		color: var(--color-info);
+		opacity: 1;
 	}
 
 	.section-title {

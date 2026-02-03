@@ -6,7 +6,7 @@
 
 **Mode of Being**: `.ltd` — Being-as-Canon
 
-This is the philosophical foundation. When we ask "Is this good design?", `.ltd` provides the answer. It documents the masters (Rams, Mies, Eames), articulates principles, and defines standards. All other properties look to `.ltd` for guidance. Patterns validated in `.space` and `.agency` return here to be canonized.
+This is the philosophical foundation. When we ask "Is this good design?", `.ltd` provides the answer. It documents the masters (Rams, Mies, Eames, Ive), articulates principles, and defines standards. All other properties look to `.ltd` for guidance. Patterns validated in `.space` and `.agency` return here to be canonized.
 
 ## Depends On (Understanding-Critical)
 
@@ -31,7 +31,7 @@ This is the philosophical foundation. When we ask "Is this good design?", `.ltd`
 ```
 src/routes/
 ├── +page.svelte        → Homepage: introduction to the canon
-├── masters/            → Profiles of design masters (Rams, Mies, Eames)
+├── masters/            → Profiles of design masters (Rams, Mies, Eames, Ive)
 │   └── [slug]/         → Individual master pages
 ├── principles/         → The 10 principles articulated
 ├── standards/          → Concrete implementation standards

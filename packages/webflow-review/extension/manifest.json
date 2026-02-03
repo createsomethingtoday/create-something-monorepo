@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "Webflow Template Review",
+  "version": "1.0.0",
+  "description": "Comprehensive template review for Webflow - SEO, links, accessibility, and more",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": [
+    "activeTab",
+    "storage",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "https://webflow.com/*",
+    "https://*.webflow.io/*",
+    "https://preview.webflow.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://webflow.com/design/*",
+        "https://preview.webflow.com/preview/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    },
+    "default_title": "Webflow Template Review"
+  },
+  "side_panel": {
+    "default_path": "panel.html"
+  },
+  "options_page": "options.html",
+  "web_accessible_resources": [
+    {
+      "resources": ["panel.html", "options.html"],
+      "matches": ["https://webflow.com/*", "https://*.webflow.io/*"]
+    }
+  ]
+}

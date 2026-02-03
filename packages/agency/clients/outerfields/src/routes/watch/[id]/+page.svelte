@@ -218,7 +218,6 @@
 						videoId={video.id}
 						currentTime={currentTime}
 						onSeek={handleTranscriptSeek}
-						isMember={isMember}
 					/>
 				</div>
 

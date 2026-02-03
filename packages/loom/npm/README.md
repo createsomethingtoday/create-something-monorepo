@@ -1,8 +1,18 @@
 # @createsomething/loom-mcp
 
-AI-native coordination layer. External memory for agents.
+**AI-native coordination layer.** External memory for agents.
 
-Multi-agent task routing, checkpointing, and crash recovery for Claude, Cursor, Codex, Gemini, and other AI coding assistants.
+Multi-agent task routing, checkpointing, and crash recovery for Claude Code, Cursor, Windsurf, VS Code Copilot, Codex, Gemini, and other AI coding assistants.
+
+## The Problem
+
+AI agents forget everything between sessions. Context windows have limits. Conversations get summarized. Work gets lost.
+
+**Loom solves this** by providing:
+- **Session checkpointing** — Save progress, resume from any point
+- **Crash recovery** — Session died? Pick up exactly where you left off
+- **Smart routing** — Route tasks to the best/cheapest/fastest agent
+- **Multi-agent coordination** — Multiple agents, one task queue
 
 ## Installation
 
@@ -134,3 +144,13 @@ See the [full documentation](https://github.com/createsomethingtoday/create-some
 ## License
 
 MIT
+
+---
+
+## Related
+
+Looking for code analysis? See [@createsomething/ground-mcp](https://www.npmjs.com/package/@createsomething/ground-mcp) — prevents AI hallucination in code analysis with verification-first patterns.
+
+## Keywords
+
+MCP server, Model Context Protocol, AI agent coordination, multi-agent orchestration, task management, task routing, checkpointing, crash recovery, session management, context persistence, external memory, LLM tools, Claude Code, Cursor IDE, Windsurf, VS Code Copilot, Codex, Gemini, Anthropic Claude, OpenAI, agentic workflow, workflow automation, Rust, TypeScript, JavaScript.

@@ -57,7 +57,7 @@ Every experiment must include these sections in order:
 - Expected challenges with mitigations
 
 ### 7. Canonical Connection
-- Master cited (Rams/Heidegger/Tufte/Eames/Mies)
+- Master cited (Rams/Heidegger/Tufte/Eames/Mies/Ive)
 - Principle quoted
 - Link to .ltd pattern
 

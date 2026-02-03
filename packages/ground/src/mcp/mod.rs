@@ -511,6 +511,21 @@ pub fn list_tools() -> Vec<ToolDefinition> {
                 "required": ["file"]
             }),
         },
+        // Desire Paths (meta-analysis)
+        ToolDefinition {
+            name: "ground_desire_paths".to_string(),
+            description: "Analyze desire paths - what tools agents tried to use that don't exist. Reveals opportunities for new tool development based on actual agent behavior patterns. Returns unknown tool attempts, failure patterns, and suggestions for new tools.".to_string(),
+            input_schema: json!({
+                "type": "object",
+                "properties": {
+                    "days": {
+                        "type": "number",
+                        "description": "Only analyze entries from the last N days (default: all time)"
+                    }
+                },
+                "required": []
+            }),
+        },
     ]
 }
 

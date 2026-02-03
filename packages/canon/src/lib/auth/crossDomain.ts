@@ -51,8 +51,10 @@ export async function exchangeCrossDomainToken(
 	const result = await identityClient.exchangeCrossDomainToken({ token });
 
 	if (!result.success) {
-		logger.warn('Token exchange failed', { propertyLabel, error: result.error });
-		const errorMsg = encodeURIComponent(result.error || 'exchange_failed');
+		// Type assertion needed for TypeScript to recognize error property
+		const errorResult = result as { success: false; error: string; status: number };
+		logger.warn('Token exchange failed', { propertyLabel, error: errorResult.error });
+		const errorMsg = encodeURIComponent(errorResult.error || 'exchange_failed');
 		throw redirect(302, `/login?error=${errorMsg}`);
 	}
 

@@ -65,6 +65,38 @@ pub enum Priority {
     Low,
 }
 
+/// Issue type (from Beads)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum IssueType {
+    /// Bug fix
+    Bug,
+    /// New feature
+    Feature,
+    /// Generic task
+    #[default]
+    Task,
+    /// Large feature grouping
+    Epic,
+    /// Maintenance/cleanup work
+    Chore,
+}
+
+/// Dependency type (from Beads)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum DependencyType {
+    /// Task A blocks Task B (B cannot start until A completes)
+    #[default]
+    Blocks,
+    /// Hierarchical grouping (epic → feature → task)
+    ParentChild,
+    /// Non-blocking relationship
+    Related,
+    /// Work extracted from checkpoints/reviews
+    DiscoveredFrom,
+}
+
 impl Status {
     pub fn as_str(&self) -> &'static str {
         match self {
@@ -109,6 +141,55 @@ impl Priority {
     }
 }
 
+impl IssueType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            IssueType::Bug => "bug",
+            IssueType::Feature => "feature",
+            IssueType::Task => "task",
+            IssueType::Epic => "epic",
+            IssueType::Chore => "chore",
+        }
+    }
+    
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s.to_lowercase().as_str() {
+            "bug" => Some(IssueType::Bug),
+            "feature" => Some(IssueType::Feature),
+            "task" => Some(IssueType::Task),
+            "epic" => Some(IssueType::Epic),
+            "chore" => Some(IssueType::Chore),
+            _ => None,
+        }
+    }
+}
+
+impl DependencyType {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            DependencyType::Blocks => "blocks",
+            DependencyType::ParentChild => "parent-child",
+            DependencyType::Related => "related",
+            DependencyType::DiscoveredFrom => "discovered-from",
+        }
+    }
+    
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s.to_lowercase().as_str() {
+            "blocks" => Some(DependencyType::Blocks),
+            "parent-child" | "parent_child" => Some(DependencyType::ParentChild),
+            "related" => Some(DependencyType::Related),
+            "discovered-from" | "discovered_from" => Some(DependencyType::DiscoveredFrom),
+            _ => None,
+        }
+    }
+    
+    /// Returns true if this dependency type blocks completion
+    pub fn is_blocking(&self) -> bool {
+        matches!(self, DependencyType::Blocks)
+    }
+}
+
 /// A task in the work store
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Task {
@@ -122,6 +203,9 @@ pub struct Task {
     pub status: Status,
     /// Task priority (Critical > High > Normal > Low)
     pub priority: Priority,
+    /// Issue type (bug, feature, task, epic, chore)
+    #[serde(default)]
+    pub issue_type: IssueType,
     /// Agent that claimed this task (if any)
     pub agent: Option<String>,
     /// Labels for routing and filtering
@@ -136,6 +220,9 @@ pub struct Task {
     /// When None, task belongs to the primary/local repository
     #[serde(default)]
     pub repo: Option<String>,
+    /// Reason for closing (when status is done or cancelled)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub close_reason: Option<String>,
     /// When the task was created
     pub created_at: DateTime<Utc>,
     /// When the task was last updated
@@ -149,6 +236,9 @@ pub struct Dependency {
     pub task_id: String,
     /// Task that blocks it
     pub depends_on: String,
+    /// Type of dependency (blocks, parent-child, related, discovered-from)
+    #[serde(default)]
+    pub dep_type: DependencyType,
     /// When the dependency was created
     pub created_at: DateTime<Utc>,
 }
@@ -159,6 +249,7 @@ pub struct CreateTask {
     pub title: String,
     pub description: Option<String>,
     pub priority: Priority,
+    pub issue_type: IssueType,
     pub labels: Vec<String>,
     pub parent: Option<String>,
     pub evidence: Option<String>,
@@ -217,7 +308,7 @@ impl WorkStore {
     
     fn init_schema(&self) -> Result<(), WorkError> {
         // Create base tables first
-        // Column order MUST match TASK_COLUMNS: id, title, description, status, priority, agent, labels, parent, evidence, actual_cost_usd, repo, created_at, updated_at
+        // Column order MUST match TASK_COLUMNS: id, title, description, status, priority, issue_type, agent, labels, parent, evidence, actual_cost_usd, repo, close_reason, created_at, updated_at
         self.conn.execute_batch(r#"
             CREATE TABLE IF NOT EXISTS tasks (
                 id TEXT PRIMARY KEY,
@@ -225,12 +316,14 @@ impl WorkStore {
                 description TEXT,
                 status TEXT NOT NULL DEFAULT 'ready',
                 priority TEXT NOT NULL DEFAULT 'normal',
+                issue_type TEXT NOT NULL DEFAULT 'task',
                 agent TEXT,
                 labels TEXT NOT NULL DEFAULT '[]',
                 parent TEXT,
                 evidence TEXT,
                 actual_cost_usd REAL,
                 repo TEXT,
+                close_reason TEXT,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             );
@@ -238,6 +331,7 @@ impl WorkStore {
             CREATE TABLE IF NOT EXISTS dependencies (
                 task_id TEXT NOT NULL,
                 depends_on TEXT NOT NULL,
+                dep_type TEXT NOT NULL DEFAULT 'blocks',
                 created_at TEXT NOT NULL,
                 PRIMARY KEY (task_id, depends_on),
                 FOREIGN KEY (task_id) REFERENCES tasks(id),
@@ -250,15 +344,20 @@ impl WorkStore {
         let _ = self.conn.execute("ALTER TABLE tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'normal'", []);
         let _ = self.conn.execute("ALTER TABLE tasks ADD COLUMN actual_cost_usd REAL", []);
         let _ = self.conn.execute("ALTER TABLE tasks ADD COLUMN repo TEXT", []);
+        let _ = self.conn.execute("ALTER TABLE tasks ADD COLUMN issue_type TEXT NOT NULL DEFAULT 'task'", []);
+        let _ = self.conn.execute("ALTER TABLE tasks ADD COLUMN close_reason TEXT", []);
+        let _ = self.conn.execute("ALTER TABLE dependencies ADD COLUMN dep_type TEXT NOT NULL DEFAULT 'blocks'", []);
         
         // Create indexes (after columns exist)
         self.conn.execute_batch(r#"
             CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
             CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority);
+            CREATE INDEX IF NOT EXISTS idx_tasks_issue_type ON tasks(issue_type);
             CREATE INDEX IF NOT EXISTS idx_tasks_agent ON tasks(agent);
             CREATE INDEX IF NOT EXISTS idx_tasks_parent ON tasks(parent);
             CREATE INDEX IF NOT EXISTS idx_deps_task ON dependencies(task_id);
             CREATE INDEX IF NOT EXISTS idx_deps_depends ON dependencies(depends_on);
+            CREATE INDEX IF NOT EXISTS idx_deps_type ON dependencies(dep_type);
         "#)?;
         
         Ok(())
@@ -285,14 +384,15 @@ impl WorkStore {
         let repo = params.repo.or_else(|| self.default_repo.clone());
         
         self.conn.execute(
-            r#"INSERT INTO tasks (id, title, description, status, priority, labels, parent, evidence, repo, created_at, updated_at)
-               VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)"#,
+            r#"INSERT INTO tasks (id, title, description, status, priority, issue_type, labels, parent, evidence, repo, created_at, updated_at)
+               VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)"#,
             params![
                 id,
                 params.title,
                 params.description,
                 "ready",
                 params.priority.as_str(),
+                params.issue_type.as_str(),
                 labels_json,
                 params.parent,
                 params.evidence,
@@ -308,12 +408,14 @@ impl WorkStore {
             description: params.description,
             status: Status::Ready,
             priority: params.priority,
+            issue_type: params.issue_type,
             agent: None,
             labels: params.labels,
             parent: params.parent,
             evidence: params.evidence,
             actual_cost_usd: None,
             repo,
+            close_reason: None,
             created_at: now,
             updated_at: now,
         })
@@ -339,10 +441,11 @@ impl WorkStore {
     }
     
     /// Helper to convert a row to a Task (reduces duplication)
+    /// Column order: id(0), title(1), description(2), status(3), priority(4), issue_type(5), agent(6), labels(7), parent(8), evidence(9), actual_cost_usd(10), repo(11), close_reason(12), created_at(13), updated_at(14)
     fn row_to_task(row: &rusqlite::Row) -> rusqlite::Result<Task> {
-        let labels_json: String = row.get(6)?;
-        let created_str: String = row.get(11)?;
-        let updated_str: String = row.get(12)?;
+        let labels_json: String = row.get(7)?;
+        let created_str: String = row.get(13)?;
+        let updated_str: String = row.get(14)?;
         
         Ok(Task {
             id: row.get(0)?,
@@ -350,12 +453,14 @@ impl WorkStore {
             description: row.get(2)?,
             status: Status::from_str(&row.get::<_, String>(3)?).unwrap_or(Status::Ready),
             priority: Priority::from_str(&row.get::<_, String>(4).unwrap_or_default()).unwrap_or_default(),
-            agent: row.get(5)?,
+            issue_type: IssueType::from_str(&row.get::<_, String>(5).unwrap_or_default()).unwrap_or_default(),
+            agent: row.get(6)?,
             labels: serde_json::from_str(&labels_json).unwrap_or_default(),
-            parent: row.get(7)?,
-            evidence: row.get(8)?,
-            actual_cost_usd: row.get(9)?,
-            repo: row.get(10)?,
+            parent: row.get(8)?,
+            evidence: row.get(9)?,
+            actual_cost_usd: row.get(10)?,
+            repo: row.get(11)?,
+            close_reason: row.get(12)?,
             created_at: DateTime::parse_from_rfc3339(&created_str)
                 .map(|dt| dt.with_timezone(&Utc))
                 .unwrap_or_else(|_| Utc::now()),
@@ -366,7 +471,8 @@ impl WorkStore {
     }
     
     /// Standard SELECT columns for tasks
-    const TASK_COLUMNS: &'static str = "id, title, description, status, priority, agent, labels, parent, evidence, actual_cost_usd, repo, created_at, updated_at";
+    /// Column order: id(0), title(1), description(2), status(3), priority(4), issue_type(5), agent(6), labels(7), parent(8), evidence(9), actual_cost_usd(10), repo(11), close_reason(12), created_at(13), updated_at(14)
+    const TASK_COLUMNS: &'static str = "id, title, description, status, priority, issue_type, agent, labels, parent, evidence, actual_cost_usd, repo, close_reason, created_at, updated_at";
     
     /// Update a task's status
     pub fn update_status(&mut self, id: &str, status: Status) -> Result<(), WorkError> {
@@ -430,10 +536,15 @@ impl WorkStore {
         Ok(())
     }
     
-    /// Complete a task with optional evidence, returns list of newly unblocked task IDs
+    /// Complete a task with optional evidence and close reason, returns list of newly unblocked task IDs
     pub fn complete(&mut self, id: &str, evidence: Option<&str>) -> Result<Vec<String>, WorkError> {
-        // Check that all dependencies are satisfied
-        let blocking = self.get_blocking_tasks(id)?;
+        self.complete_with_reason(id, evidence, None)
+    }
+    
+    /// Complete a task with optional evidence and close reason
+    pub fn complete_with_reason(&mut self, id: &str, evidence: Option<&str>, close_reason: Option<&str>) -> Result<Vec<String>, WorkError> {
+        // Check that all blocking dependencies are satisfied
+        let blocking = self.get_blocking_dependencies(id)?;
         let incomplete: Vec<_> = blocking.iter()
             .filter(|t| t.status != Status::Done && t.status != Status::Cancelled)
             .collect();
@@ -447,8 +558,8 @@ impl WorkStore {
         
         let now = Utc::now();
         self.conn.execute(
-            "UPDATE tasks SET status = 'done', evidence = COALESCE(?1, evidence), updated_at = ?2 WHERE id = ?3",
-            params![evidence, now.to_rfc3339(), id],
+            "UPDATE tasks SET status = 'done', evidence = COALESCE(?1, evidence), close_reason = COALESCE(?2, close_reason), updated_at = ?3 WHERE id = ?4",
+            params![evidence, close_reason, now.to_rfc3339(), id],
         )?;
         
         // Auto-unblock: find tasks that were blocked by this one and are now ready
@@ -463,11 +574,12 @@ impl WorkStore {
         id: &str, 
         evidence: Option<&str>,
         cost_usd: f64,
+        close_reason: Option<&str>,
     ) -> Result<Vec<String>, WorkError> {
         // Record the cost first
         self.record_cost(id, cost_usd)?;
         // Then complete
-        self.complete(id, evidence)
+        self.complete_with_reason(id, evidence, close_reason)
     }
     
     /// Record actual cost for a task
@@ -513,10 +625,15 @@ impl WorkStore {
     
     /// Cancel a task
     pub fn cancel(&mut self, id: &str) -> Result<(), WorkError> {
+        self.cancel_with_reason(id, None)
+    }
+    
+    /// Cancel a task with a reason
+    pub fn cancel_with_reason(&mut self, id: &str, close_reason: Option<&str>) -> Result<(), WorkError> {
         let now = Utc::now();
         let rows = self.conn.execute(
-            "UPDATE tasks SET status = 'cancelled', updated_at = ?1 WHERE id = ?2",
-            params![now.to_rfc3339(), id],
+            "UPDATE tasks SET status = 'cancelled', close_reason = COALESCE(?1, close_reason), updated_at = ?2 WHERE id = ?3",
+            params![close_reason, now.to_rfc3339(), id],
         )?;
         
         if rows == 0 {
@@ -533,26 +650,35 @@ impl WorkStore {
     // Dependencies
     // ─────────────────────────────────────────────────────────────────────
     
-    /// Add a dependency: task_id is blocked by depends_on
+    /// Add a dependency: task_id is blocked by depends_on (default: blocks type)
     pub fn add_dependency(&mut self, task_id: &str, depends_on: &str) -> Result<(), WorkError> {
+        self.add_dependency_typed(task_id, depends_on, DependencyType::Blocks)
+    }
+    
+    /// Add a typed dependency between tasks
+    pub fn add_dependency_typed(&mut self, task_id: &str, depends_on: &str, dep_type: DependencyType) -> Result<(), WorkError> {
         // Verify both tasks exist
         self.get(task_id)?.ok_or_else(|| WorkError::NotFound(task_id.to_string()))?;
         self.get(depends_on)?.ok_or_else(|| WorkError::NotFound(depends_on.to_string()))?;
         
-        // Check for cycles (simple check: depends_on can't depend on task_id)
-        let reverse_deps = self.get_all_dependencies(depends_on)?;
-        if reverse_deps.iter().any(|d| d.depends_on == task_id) {
-            return Err(WorkError::CycleDetected);
+        // Check for cycles only for blocking dependencies
+        if dep_type.is_blocking() {
+            let reverse_deps = self.get_all_dependencies(depends_on)?;
+            if reverse_deps.iter().any(|d| d.depends_on == task_id && d.dep_type.is_blocking()) {
+                return Err(WorkError::CycleDetected);
+            }
         }
         
         let now = Utc::now();
         self.conn.execute(
-            "INSERT OR IGNORE INTO dependencies (task_id, depends_on, created_at) VALUES (?1, ?2, ?3)",
-            params![task_id, depends_on, now.to_rfc3339()],
+            "INSERT OR REPLACE INTO dependencies (task_id, depends_on, dep_type, created_at) VALUES (?1, ?2, ?3, ?4)",
+            params![task_id, depends_on, dep_type.as_str(), now.to_rfc3339()],
         )?;
         
-        // Update blocked status
-        self.recompute_blocked_status()?;
+        // Update blocked status only if this is a blocking dependency
+        if dep_type.is_blocking() {
+            self.recompute_blocked_status()?;
+        }
         
         Ok(())
     }
@@ -568,7 +694,7 @@ impl WorkStore {
         Ok(())
     }
     
-    /// Get tasks that block a given task
+    /// Get tasks that block a given task (all dependency types)
     pub fn get_blocking_tasks(&self, task_id: &str) -> Result<Vec<Task>, WorkError> {
         let sql = format!(
             "SELECT t.{} FROM tasks t JOIN dependencies d ON t.id = d.depends_on WHERE d.task_id = ?1",
@@ -580,17 +706,30 @@ impl WorkStore {
         Ok(tasks)
     }
     
+    /// Get tasks that block a given task (only blocking dependency types)
+    pub fn get_blocking_dependencies(&self, task_id: &str) -> Result<Vec<Task>, WorkError> {
+        let sql = format!(
+            "SELECT t.{} FROM tasks t JOIN dependencies d ON t.id = d.depends_on WHERE d.task_id = ?1 AND d.dep_type = 'blocks'",
+            Self::TASK_COLUMNS.replace(", ", ", t.")
+        );
+        let mut stmt = self.conn.prepare(&sql)?;
+        let tasks = stmt.query_map(params![task_id], |row| Self::row_to_task(row))?
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(tasks)
+    }
+    
     /// Get all dependencies for a task
-    fn get_all_dependencies(&self, task_id: &str) -> Result<Vec<Dependency>, WorkError> {
+    pub fn get_all_dependencies(&self, task_id: &str) -> Result<Vec<Dependency>, WorkError> {
         let mut stmt = self.conn.prepare(
-            "SELECT task_id, depends_on, created_at FROM dependencies WHERE task_id = ?1"
+            "SELECT task_id, depends_on, dep_type, created_at FROM dependencies WHERE task_id = ?1"
         )?;
         
         let deps = stmt.query_map(params![task_id], |row| {
-            let created_str: String = row.get(2)?;
+            let created_str: String = row.get(3)?;
             Ok(Dependency {
                 task_id: row.get(0)?,
                 depends_on: row.get(1)?,
+                dep_type: DependencyType::from_str(&row.get::<_, String>(2).unwrap_or_default()).unwrap_or_default(),
                 created_at: DateTime::parse_from_rfc3339(&created_str)
                     .map(|dt| dt.with_timezone(&Utc))
                     .unwrap_or_else(|_| Utc::now()),
@@ -600,26 +739,49 @@ impl WorkStore {
         Ok(deps)
     }
     
-    /// Recompute blocked status for all tasks
+    /// Get dependencies by type for a task
+    pub fn get_dependencies_by_type(&self, task_id: &str, dep_type: DependencyType) -> Result<Vec<Dependency>, WorkError> {
+        let mut stmt = self.conn.prepare(
+            "SELECT task_id, depends_on, dep_type, created_at FROM dependencies WHERE task_id = ?1 AND dep_type = ?2"
+        )?;
+        
+        let deps = stmt.query_map(params![task_id, dep_type.as_str()], |row| {
+            let created_str: String = row.get(3)?;
+            Ok(Dependency {
+                task_id: row.get(0)?,
+                depends_on: row.get(1)?,
+                dep_type: DependencyType::from_str(&row.get::<_, String>(2).unwrap_or_default()).unwrap_or_default(),
+                created_at: DateTime::parse_from_rfc3339(&created_str)
+                    .map(|dt| dt.with_timezone(&Utc))
+                    .unwrap_or_else(|_| Utc::now()),
+            })
+        })?.collect::<Result<Vec<_>, _>>()?;
+        
+        Ok(deps)
+    }
+    
+    /// Recompute blocked status for all tasks (only considers 'blocks' type dependencies)
     fn recompute_blocked_status(&self) -> Result<(), WorkError> {
-        // Find tasks with incomplete dependencies
+        // Find tasks with incomplete blocking dependencies
         self.conn.execute_batch(r#"
-            -- Set to blocked if has incomplete dependencies
+            -- Set to blocked if has incomplete blocking dependencies
             UPDATE tasks SET status = 'blocked'
             WHERE status IN ('ready', 'blocked')
             AND id IN (
                 SELECT d.task_id FROM dependencies d
                 JOIN tasks t ON d.depends_on = t.id
-                WHERE t.status NOT IN ('done', 'cancelled')
+                WHERE d.dep_type = 'blocks'
+                AND t.status NOT IN ('done', 'cancelled')
             );
             
-            -- Set to ready if all dependencies are complete
+            -- Set to ready if all blocking dependencies are complete
             UPDATE tasks SET status = 'ready'
             WHERE status = 'blocked'
             AND id NOT IN (
                 SELECT d.task_id FROM dependencies d
                 JOIN tasks t ON d.depends_on = t.id
-                WHERE t.status NOT IN ('done', 'cancelled')
+                WHERE d.dep_type = 'blocks'
+                AND t.status NOT IN ('done', 'cancelled')
             );
         "#)?;
         Ok(())
@@ -712,9 +874,58 @@ impl WorkStore {
         Ok(tasks)
     }
     
+    /// List tasks by issue type
+    pub fn list_by_issue_type(&self, issue_type: IssueType) -> Result<Vec<Task>, WorkError> {
+        let sql = format!(
+            "SELECT {} FROM tasks WHERE issue_type = ?1 ORDER BY created_at DESC",
+            Self::TASK_COLUMNS
+        );
+        let mut stmt = self.conn.prepare(&sql)?;
+        let tasks = stmt.query_map(params![issue_type.as_str()], |row| Self::row_to_task(row))?
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(tasks)
+    }
+    
+    /// Update a task's issue type
+    pub fn update_issue_type(&mut self, id: &str, issue_type: IssueType) -> Result<(), WorkError> {
+        let now = Utc::now();
+        let rows = self.conn.execute(
+            "UPDATE tasks SET issue_type = ?1, updated_at = ?2 WHERE id = ?3",
+            params![issue_type.as_str(), now.to_rfc3339(), id],
+        )?;
+        
+        if rows == 0 {
+            return Err(WorkError::NotFound(id.to_string()));
+        }
+        Ok(())
+    }
+    
     /// Set default repo for new tasks created via this store
     pub fn set_default_repo(&mut self, repo: Option<String>) {
         self.default_repo = repo;
+    }
+    
+    /// Compact the database by removing old done/cancelled tasks
+    /// Returns the number of tasks removed
+    pub fn compact(&mut self, older_than_days: u32) -> Result<u32, WorkError> {
+        let cutoff = Utc::now() - chrono::Duration::days(older_than_days as i64);
+        let cutoff_str = cutoff.to_rfc3339();
+        
+        // First delete dependencies for tasks we're about to remove
+        self.conn.execute(
+            r#"DELETE FROM dependencies WHERE 
+               task_id IN (SELECT id FROM tasks WHERE status IN ('done', 'cancelled') AND updated_at < ?1)
+               OR depends_on IN (SELECT id FROM tasks WHERE status IN ('done', 'cancelled') AND updated_at < ?1)"#,
+            params![cutoff_str],
+        )?;
+        
+        // Then delete the tasks
+        let rows = self.conn.execute(
+            "DELETE FROM tasks WHERE status IN ('done', 'cancelled') AND updated_at < ?1",
+            params![cutoff_str],
+        )?;
+        
+        Ok(rows as u32)
     }
     
     /// Get unique repos in the store

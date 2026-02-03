@@ -23,16 +23,19 @@ interface WorkFrontmatter {
 }
 
 // Eager import all work markdown files at build time
+// Path is relative to this file: src/routes/work/[slug]/+page.ts
+// Need to go up 4 levels to reach packages/agency/, then into content/work/
 const modules = import.meta.glob<{
 	default: Component;
 	metadata: WorkFrontmatter;
-}>('/content/work/*.md', { eager: true });
+}>('../../../../content/work/*.md', { eager: true });
 
 export const load: PageLoad = async ({ params }) => {
 	const { slug } = params;
 
 	// Find the matching module
-	const path = `/content/work/${slug}.md`;
+	// Path must match the glob pattern (relative to this file's location)
+	const path = `../../../../content/work/${slug}.md`;
 	const module = modules[path];
 
 	if (!module) {

@@ -1,0 +1,11 @@
+/* Category Filter Styles - CMS Load Compatible */
+
+/* Hide items filtered by subcategory logic */
+.category-filter-hidden {
+  display: none !important;
+}
+
+/* Ensure visibility is maintained for non-hidden items */
+.tm-templates_grid_item:not(.category-filter-hidden) {
+  display: block;
+}

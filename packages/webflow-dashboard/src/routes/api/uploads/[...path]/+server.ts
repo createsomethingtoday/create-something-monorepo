@@ -4,8 +4,14 @@ import type { RequestHandler } from './$types';
 /**
  * Serve uploaded files from R2
  * GET /api/uploads/[...path]
+ * 
+ * Protected: requires authenticated user
  */
-export const GET: RequestHandler = async ({ params, platform }) => {
+export const GET: RequestHandler = async ({ params, platform, locals }) => {
+	// Require authentication
+	if (!locals.user?.email) {
+		throw error(401, 'Authentication required');
+	}
 	const uploads = platform?.env.UPLOADS;
 	if (!uploads) {
 		throw error(500, 'Storage not configured');

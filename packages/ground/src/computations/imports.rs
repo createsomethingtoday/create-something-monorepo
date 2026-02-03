@@ -3,7 +3,7 @@
 //! Uses tree-sitter for robust import/export parsing instead of string manipulation.
 //! Handles all edge cases: multi-line imports, re-exports, barrel files, Svelte files, etc.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::fs;
 use tree_sitter::{Parser, Node};
 
@@ -478,6 +478,210 @@ pub fn get_reexported_symbols(path: &Path, module_stem: &str) -> Vec<String> {
     symbols
 }
 
+/// Extract Svelte action directives from a Svelte file's template markup.
+///
+/// Svelte actions are bound via `use:actionName` or `use:actionName={options}` in templates.
+/// These create runtime connections to imported action functions that import-graph analysis
+/// cannot detect because they live in the HTML template, not the `<script>` block.
+///
+/// Returns the list of action names referenced via `use:` directives.
+pub fn extract_svelte_action_directives(path: &Path) -> Result<Vec<String>, String> {
+    let source = fs::read_to_string(path)
+        .map_err(|e| format!("Failed to read file: {}", e))?;
+
+    let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+    if ext != "svelte" {
+        return Ok(Vec::new());
+    }
+
+    Ok(extract_use_directives_from_source(&source))
+}
+
+/// Extract action names from `use:` directives in Svelte source.
+///
+/// Patterns matched:
+/// - `use:actionName`
+/// - `use:actionName={options}`
+/// - `use:actionName|transition`
+///
+/// Excludes built-in Svelte directives: `use:` is always user-defined,
+/// but we skip common false positives from template comments.
+pub(crate) fn extract_use_directives_from_source(source: &str) -> Vec<String> {
+    let mut actions = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+
+    for line in source.lines() {
+        let trimmed = line.trim();
+
+        // Skip lines inside <script> tags (those are handled by import parsing)
+        // We want the template portion only. A simple heuristic: skip lines
+        // that look like JS statements. More robust: track script tag state.
+        // For now, we scan all lines — `use:` in script blocks is syntactically
+        // invalid anyway, so matches will only come from template markup.
+
+        // Find all occurrences of `use:` on this line
+        let mut search_start = 0;
+        while let Some(pos) = trimmed[search_start..].find("use:") {
+            let abs_pos = search_start + pos;
+
+            // Verify this isn't inside a string literal or comment
+            // Quick check: if preceded by `//` or `/*` on this line, skip
+            let before = &trimmed[..abs_pos];
+            if before.contains("//") || before.contains("/*") {
+                search_start = abs_pos + 4;
+                continue;
+            }
+
+            // Extract the action name: starts after "use:", ends at whitespace,
+            // `=`, `|`, `}`, or end of token
+            let after = &trimmed[abs_pos + 4..];
+            let name_end = after.find(|c: char| {
+                c == '=' || c == '|' || c == '}' || c == ' ' || c == '\t'
+                    || c == '\n' || c == '\r' || c == '/' || c == '>'
+            }).unwrap_or(after.len());
+
+            let action_name = &after[..name_end];
+
+            // Validate: action names must be valid JS identifiers
+            if !action_name.is_empty()
+                && action_name.chars().next().map_or(false, |c| c.is_alphabetic() || c == '_' || c == '$')
+                && action_name.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '$')
+            {
+                if seen.insert(action_name.to_string()) {
+                    actions.push(action_name.to_string());
+                }
+            }
+
+            search_start = abs_pos + 4 + name_end;
+        }
+    }
+
+    actions
+}
+
+/// Extract Svelte store subscriptions from a Svelte file's template markup.
+///
+/// Svelte auto-subscribes to stores when referenced with the `$` prefix in templates:
+/// `{$toast}`, `{$wizardState.step}`, `bind:value={$count}`, etc.
+///
+/// These create runtime connections to imported store variables that import-graph
+/// analysis cannot detect because the `$` subscription syntax is compiled away
+/// by the Svelte compiler.
+///
+/// Returns the list of store variable names (without the `$` prefix).
+pub fn extract_svelte_store_subscriptions(path: &Path) -> Result<Vec<String>, String> {
+    let source = fs::read_to_string(path)
+        .map_err(|e| format!("Failed to read file: {}", e))?;
+
+    let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+    if ext != "svelte" {
+        return Ok(Vec::new());
+    }
+
+    Ok(extract_store_subscriptions_from_source(&source))
+}
+
+/// Extract store names from `$storeName` patterns in Svelte source.
+///
+/// Patterns matched:
+/// - `{$storeName}` — interpolation
+/// - `{$storeName.prop}` — property access
+/// - `bind:value={$store}` — bindings
+/// - `class:active={$isActive}` — class directives
+/// - `if ($store)` — conditionals (inside `{#if ...}`)
+///
+/// Excludes:
+/// - `$app` (SvelteKit internal)
+/// - `$page` (SvelteKit internal)
+/// - `$navigating` (SvelteKit internal)
+/// - `$enhanced` (SvelteKit internal)
+/// - Names inside `<script>` blocks (those are declaration sites, not subscriptions)
+pub(crate) fn extract_store_subscriptions_from_source(source: &str) -> Vec<String> {
+    let mut stores = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+
+    // SvelteKit built-in stores to exclude
+    let builtins: std::collections::HashSet<&str> = [
+        "app", "page", "navigating", "enhanced", "headlessState",
+    ].iter().copied().collect();
+
+    // Track whether we're inside a <script> block to skip declarations
+    let mut in_script = false;
+
+    for line in source.lines() {
+        let trimmed = line.trim();
+
+        // Simple script block tracking
+        if trimmed.contains("<script") {
+            in_script = true;
+            continue;
+        }
+        if trimmed.contains("</script>") {
+            in_script = false;
+            continue;
+        }
+
+        // Skip script block internals — $store references there are
+        // declaration/assignment sites, not auto-subscriptions
+        if in_script {
+            continue;
+        }
+
+        // Skip comments
+        if trimmed.starts_with("//") || trimmed.starts_with("/*") || trimmed.starts_with("*") {
+            continue;
+        }
+
+        // Find all `$identifier` patterns
+        let mut search_start = 0;
+        while let Some(pos) = trimmed[search_start..].find('$') {
+            let abs_pos = search_start + pos;
+
+            // Check that this `$` starts a store subscription (not inside a string)
+            // Quick heuristic: if preceded by a backslash, skip (escaped)
+            if abs_pos > 0 && trimmed.as_bytes()[abs_pos - 1] == b'\\' {
+                search_start = abs_pos + 1;
+                continue;
+            }
+
+            // Extract identifier after `$`
+            let after = &trimmed[abs_pos + 1..];
+            let name_end = after.find(|c: char| {
+                !c.is_alphanumeric() && c != '_' && c != '$'
+            }).unwrap_or(after.len());
+
+            let store_name = &after[..name_end];
+
+            // Validate: must be a valid identifier, not a builtin, not empty
+            if !store_name.is_empty()
+                && store_name.chars().next().map_or(false, |c| c.is_alphabetic() || c == '_')
+                && store_name.chars().all(|c| c.is_alphanumeric() || c == '_')
+                && !builtins.contains(store_name)
+            {
+                if seen.insert(store_name.to_string()) {
+                    stores.push(store_name.to_string());
+                }
+            }
+
+            search_start = abs_pos + 1 + name_end;
+        }
+    }
+
+    stores
+}
+
+/// Resolve a SvelteKit `$lib` path alias to a concrete path relative to the package src directory.
+///
+/// SvelteKit convention: `$lib` maps to `<package>/src/lib/`.
+/// Given a package root (directory containing `package.json`) and an import source
+/// like `$lib/utils/toast`, returns the resolved path: `<root>/src/lib/utils/toast`.
+///
+/// Returns `None` if the import doesn't use `$lib` or the package root can't be determined.
+pub fn resolve_sveltekit_lib_alias(import_source: &str, package_root: &Path) -> Option<PathBuf> {
+    let stripped = import_source.strip_prefix("$lib/")?;
+    Some(package_root.join("src").join("lib").join(stripped))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -617,5 +821,145 @@ let ready = false;
         // Should return an error for Svelte files without script
         let result = extract_imports(&file);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_extract_svelte_use_directives() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("Page.svelte");
+
+        let mut f = File::create(&file).unwrap();
+        writeln!(f, r#"<script lang="ts">"#).unwrap();
+        writeln!(f, "import {{ inview }} from '$lib/actions/inview';").unwrap();
+        writeln!(f, "import {{ parallax }} from '$lib/actions/parallax';").unwrap();
+        writeln!(f, "</script>").unwrap();
+        writeln!(f, "").unwrap();
+        writeln!(f, r#"<div use:inview={{ threshold: 0.5 }}>"#).unwrap();
+        writeln!(f, r#"  <span use:parallax={{ speed: 0.3 }}>Text</span>"#).unwrap();
+        writeln!(f, "</div>").unwrap();
+
+        let actions = extract_svelte_action_directives(&file).unwrap();
+        assert!(actions.contains(&"inview".to_string()), "Should detect use:inview");
+        assert!(actions.contains(&"parallax".to_string()), "Should detect use:parallax");
+        assert_eq!(actions.len(), 2);
+    }
+
+    #[test]
+    fn test_extract_svelte_use_directive_bare() {
+        // use:action without options
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("Page.svelte");
+
+        let mut f = File::create(&file).unwrap();
+        writeln!(f, "<script lang=\"ts\">").unwrap();
+        writeln!(f, "import {{ myAction }} from './actions';").unwrap();
+        writeln!(f, "</script>").unwrap();
+        writeln!(f, "").unwrap();
+        writeln!(f, "<button use:myAction>Click</button>").unwrap();
+
+        let actions = extract_svelte_action_directives(&file).unwrap();
+        assert!(actions.contains(&"myAction".to_string()));
+        assert_eq!(actions.len(), 1);
+    }
+
+    #[test]
+    fn test_extract_svelte_store_subscriptions() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("Dashboard.svelte");
+
+        let mut f = File::create(&file).unwrap();
+        writeln!(f, r#"<script lang="ts">"#).unwrap();
+        writeln!(f, "import {{ toast }} from '$lib/stores/toast';").unwrap();
+        writeln!(f, "import {{ wizardState }} from '$lib/stores/wizardState';").unwrap();
+        writeln!(f, "</script>").unwrap();
+        writeln!(f, "").unwrap();
+        writeln!(f, r#"<div class:visible={{$toast.visible}}>"#).unwrap();
+        writeln!(f, "  <p>Step: {{$wizardState.step}}</p>").unwrap();
+        writeln!(f, "  <p>Message: {{$toast.message}}</p>").unwrap();
+        writeln!(f, "</div>").unwrap();
+
+        let stores = extract_svelte_store_subscriptions(&file).unwrap();
+        assert!(stores.contains(&"toast".to_string()), "Should detect $toast subscription");
+        assert!(stores.contains(&"wizardState".to_string()), "Should detect $wizardState subscription");
+        assert_eq!(stores.len(), 2, "Should deduplicate repeated $toast references");
+    }
+
+    #[test]
+    fn test_extract_svelte_store_excludes_builtins() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("Page.svelte");
+
+        let mut f = File::create(&file).unwrap();
+        writeln!(f, "<script lang=\"ts\">").unwrap();
+        writeln!(f, "import {{ page }} from '$app/stores';").unwrap();
+        writeln!(f, "import {{ myStore }} from '$lib/stores/mine';").unwrap();
+        writeln!(f, "</script>").unwrap();
+        writeln!(f, "").unwrap();
+        writeln!(f, "<p>Route: {{$page.url.pathname}}</p>").unwrap();
+        writeln!(f, "<p>Value: {{$myStore}}</p>").unwrap();
+
+        let stores = extract_svelte_store_subscriptions(&file).unwrap();
+        // $page is a SvelteKit builtin — should be excluded
+        assert!(!stores.contains(&"page".to_string()), "Should exclude $page builtin");
+        // $myStore is user-defined — should be included
+        assert!(stores.contains(&"myStore".to_string()), "Should include $myStore");
+    }
+
+    #[test]
+    fn test_extract_svelte_store_skips_script_block() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("Page.svelte");
+
+        let mut f = File::create(&file).unwrap();
+        writeln!(f, "<script lang=\"ts\">").unwrap();
+        writeln!(f, "import {{ count }} from './stores';").unwrap();
+        // This $count in script is a declaration site, not a template subscription
+        writeln!(f, "const doubled = $count * 2;").unwrap();
+        writeln!(f, "</script>").unwrap();
+        writeln!(f, "").unwrap();
+        // This $count in template IS a subscription
+        writeln!(f, "<p>{{$count}}</p>").unwrap();
+
+        let stores = extract_svelte_store_subscriptions(&file).unwrap();
+        // Should find $count from template, not from script block
+        assert!(stores.contains(&"count".to_string()));
+        assert_eq!(stores.len(), 1, "Should find count exactly once (from template)");
+    }
+
+    #[test]
+    fn test_resolve_sveltekit_lib_alias() {
+        let root = std::path::PathBuf::from("/project");
+
+        // Standard $lib resolution
+        let resolved = resolve_sveltekit_lib_alias("$lib/utils/toast", &root);
+        assert_eq!(resolved, Some(std::path::PathBuf::from("/project/src/lib/utils/toast")));
+
+        // Nested path
+        let resolved = resolve_sveltekit_lib_alias("$lib/stores/wizardState", &root);
+        assert_eq!(resolved, Some(std::path::PathBuf::from("/project/src/lib/stores/wizardState")));
+
+        // Non-$lib import returns None
+        let resolved = resolve_sveltekit_lib_alias("./utils", &root);
+        assert!(resolved.is_none());
+
+        // Bare $lib (no subpath) returns None
+        let resolved = resolve_sveltekit_lib_alias("$lib", &root);
+        assert!(resolved.is_none());
+    }
+
+    #[test]
+    fn test_extract_svelte_non_svelte_file_returns_empty() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("utils.ts");
+
+        let mut f = File::create(&file).unwrap();
+        writeln!(f, "// use:something — this is just a comment").unwrap();
+        writeln!(f, "const $toast = 'not a store';").unwrap();
+
+        let actions = extract_svelte_action_directives(&file).unwrap();
+        assert!(actions.is_empty(), "Non-svelte files should return no directives");
+
+        let stores = extract_svelte_store_subscriptions(&file).unwrap();
+        assert!(stores.is_empty(), "Non-svelte files should return no store subscriptions");
     }
 }

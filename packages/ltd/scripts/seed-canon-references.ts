@@ -54,10 +54,13 @@ const EXPERIMENT_REFERENCES: ExperimentReference[] = [
 		slug: 'motion-ontology',
 		domain: 'space',
 		title: 'Motion Ontology: Phenomenological Animation Analysis',
-		tags: ['Phenomenology', 'Animation', 'Heidegger', 'Puppeteer', 'Motion Design'],
+		tags: ['Phenomenology', 'Animation', 'Heidegger', 'Puppeteer', 'Motion Design', 'Ive'],
 		principleMatches: [
 			'rams-principle-5', // Unobtrusive - animations that recede (zuhandenheit)
-			'rams-principle-10' // As little design as possible - minimal motion
+			'rams-principle-10', // As little design as possible - minimal motion
+			'ive-purposeful-motion', // Motion should be purposeful
+			'ive-physics-based', // Motion should feel physics-based
+			'ive-restraint' // Restraint in all things
 		]
 	},
 	{

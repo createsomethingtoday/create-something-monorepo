@@ -1,0 +1,57 @@
+{
+  "name": "@createsomething/canon-tokens",
+  "version": "0.1.0",
+  "description": "Canon Design Tokens - Framework-agnostic CSS custom properties for dark-mode interfaces. Golden ratio spacing, WCAG-compliant colors, glass effects.",
+  "author": "CREATE SOMETHING <hello@createsomething.io>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo",
+    "directory": "packages/canon-tokens"
+  },
+  "homepage": "https://createsomething.io/docs",
+  "bugs": {
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo/issues"
+  },
+  "keywords": [
+    "css",
+    "css-tokens",
+    "css-variables",
+    "custom-properties",
+    "design-tokens",
+    "design-system",
+    "dark-mode",
+    "dark-theme",
+    "golden-ratio",
+    "wcag",
+    "accessibility",
+    "a11y",
+    "glass",
+    "glassmorphism",
+    "typography",
+    "spacing",
+    "colors",
+    "dieter-rams",
+    "minimalism",
+    "react",
+    "vue",
+    "svelte",
+    "angular",
+    "tailwind",
+    "framework-agnostic"
+  ],
+  "main": "tokens.css",
+  "style": "tokens.css",
+  "exports": {
+    ".": "./tokens.css",
+    "./tokens.css": "./tokens.css",
+    "./tokens.scss": "./tokens.scss",
+    "./tokens.json": "./tokens.json"
+  },
+  "files": [
+    "tokens.css",
+    "tokens.scss",
+    "tokens.json",
+    "README.md"
+  ]
+}

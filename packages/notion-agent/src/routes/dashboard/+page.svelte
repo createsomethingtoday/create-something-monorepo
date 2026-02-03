@@ -12,6 +12,7 @@
 	let runningAgentId = $state<string | null>(null);
 	let executionResult = $state<{ success: boolean; response: string; steps: number; tokens_used: number } | null>(null);
 	let showResultModal = $state(false);
+	let streamingSteps = $state<Array<{ type: string; content: string; toolName?: string }>>([]);
 
 	// Form state
 	let formName = $state('');
@@ -20,16 +21,54 @@
 	let formDatabases = $state<string[]>([]);
 	let formSchedule = $state('');
 
-	// Run agent function
+	// Run agent function with streaming
 	async function runAgent(agentId: string) {
 		runningAgentId = agentId;
 		executionResult = null;
+		streamingSteps = [];
+		showResultModal = true;
 
 		try {
-			const response = await fetch(`/api/execute?agent_id=${agentId}`);
-			const result = await response.json();
-			executionResult = result;
-			showResultModal = true;
+			const eventSource = new EventSource(`/api/execute/stream?agent_id=${agentId}`);
+
+			eventSource.addEventListener('step', (event) => {
+				const step = JSON.parse(event.data);
+				streamingSteps = [...streamingSteps, step];
+			});
+
+			eventSource.addEventListener('complete', (event) => {
+				const result = JSON.parse(event.data);
+				executionResult = result;
+				runningAgentId = null;
+				eventSource.close();
+			});
+
+			eventSource.addEventListener('error', (event) => {
+				if (event instanceof MessageEvent) {
+					const error = JSON.parse(event.data);
+					executionResult = {
+						success: false,
+						response: error.message || 'Unknown error',
+						steps: streamingSteps.length,
+						tokens_used: 0
+					};
+				}
+				runningAgentId = null;
+				eventSource.close();
+			});
+
+			eventSource.onerror = () => {
+				if (!executionResult) {
+					executionResult = {
+						success: false,
+						response: 'Connection lost',
+						steps: streamingSteps.length,
+						tokens_used: 0
+					};
+				}
+				runningAgentId = null;
+				eventSource.close();
+			};
 		} catch (error) {
 			executionResult = {
 				success: false,
@@ -37,8 +76,6 @@
 				steps: 0,
 				tokens_used: 0
 			};
-			showResultModal = true;
-		} finally {
 			runningAgentId = null;
 		}
 	}
@@ -46,6 +83,7 @@
 	function closeResultModal() {
 		showResultModal = false;
 		executionResult = null;
+		streamingSteps = [];
 	}
 
 	function openCreateModal() {
@@ -301,47 +339,78 @@ Example: Every morning, summarize my incomplete tasks from the Projects database
 {/if}
 
 <!-- Execution Result Modal -->
-{#if showResultModal && executionResult}
+{#if showResultModal}
 	<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-	<div class="modal-overlay" onclick={closeResultModal}>
+	<div class="modal-overlay" onclick={executionResult ? closeResultModal : undefined}>
 		<div class="modal result-modal" onclick={(e) => e.stopPropagation()}>
 			<div class="modal-header">
-				<h2>Execution Result</h2>
-				<button class="close-btn" onclick={closeResultModal}>
-					<X size={20} />
-				</button>
+				<h2>{runningAgentId ? 'Running Agent...' : 'Execution Result'}</h2>
+				{#if executionResult}
+					<button class="close-btn" onclick={closeResultModal}>
+						<X size={20} />
+					</button>
+				{/if}
 			</div>
 
 			<div class="result-content">
-				<div class="result-status" class:success={executionResult.success} class:error={!executionResult.success}>
-					{#if executionResult.success}
-						<CheckCircle size={24} />
-						<span>Completed</span>
-					{:else}
-						<XCircle size={24} />
-						<span>Failed</span>
-					{/if}
-				</div>
-
-				<div class="result-response">
-					<p>{executionResult.response}</p>
-				</div>
-
-				<div class="result-stats">
-					<div class="stat">
-						<span class="stat-label">Steps</span>
-						<span class="stat-value">{executionResult.steps}</span>
+				<!-- Streaming steps: Tufte-style activity log -->
+				{#if streamingSteps.length > 0 || runningAgentId}
+					<div class="execution-log">
+						<div class="log-header">
+							<span class="log-title">Activity</span>
+							<span class="log-count">{streamingSteps.length} steps</span>
+						</div>
+						<ol class="log-entries">
+							{#each streamingSteps as step, i}
+								<li class="log-entry" class:muted={step.type === 'thinking'}>
+									<span class="entry-num">{i + 1}.</span>
+									<span class="entry-text">{step.content}</span>
+								</li>
+							{/each}
+							{#if runningAgentId}
+								<li class="log-entry active">
+									<span class="entry-num">—</span>
+									<span class="entry-text">Processing...</span>
+								</li>
+							{/if}
+						</ol>
 					</div>
-					<div class="stat">
-						<span class="stat-label">Tokens</span>
-						<span class="stat-value">{executionResult.tokens_used}</span>
+				{/if}
+
+				<!-- Final result -->
+				{#if executionResult}
+					<div class="result-status" class:success={executionResult.success} class:error={!executionResult.success}>
+						{#if executionResult.success}
+							<CheckCircle size={24} />
+							<span>Completed</span>
+						{:else}
+							<XCircle size={24} />
+							<span>Failed</span>
+						{/if}
 					</div>
-				</div>
+
+					<div class="result-response">
+						<p>{executionResult.response}</p>
+					</div>
+
+					<div class="result-stats">
+						<div class="stat">
+							<span class="stat-label">Steps</span>
+							<span class="stat-value">{executionResult.steps}</span>
+						</div>
+						<div class="stat">
+							<span class="stat-label">Tokens</span>
+							<span class="stat-value">{executionResult.tokens_used}</span>
+						</div>
+					</div>
+				{/if}
 			</div>
 
-			<div class="modal-actions">
-				<button class="submit-btn" onclick={closeResultModal}>Done</button>
-			</div>
+			{#if executionResult}
+				<div class="modal-actions">
+					<button class="submit-btn" onclick={closeResultModal}>Done</button>
+				</div>
+			{/if}
 		</div>
 	</div>
 {/if}
@@ -767,5 +836,70 @@ Example: Every morning, summarize my incomplete tasks from the Projects database
 		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
 		font-variant-numeric: tabular-nums;
+	}
+
+	/* Execution log: Tufte-style numbered list */
+	.execution-log {
+		margin-bottom: var(--space-md);
+	}
+
+	.log-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		margin-bottom: var(--space-xs);
+		padding-bottom: var(--space-xs);
+		border-bottom: 1px solid var(--color-fg-primary);
+	}
+
+	.log-title {
+		font-size: var(--text-caption);
+		font-weight: var(--font-medium);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--color-fg-primary);
+	}
+
+	.log-count {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.log-entries {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		max-height: 240px;
+		overflow-y: auto;
+	}
+
+	.log-entry {
+		display: flex;
+		gap: var(--space-xs);
+		padding: var(--space-xs) 0;
+		font-size: var(--text-small);
+		line-height: 1.4;
+		color: var(--color-fg-secondary);
+	}
+
+	.entry-num {
+		flex-shrink: 0;
+		width: 2ch;
+		text-align: right;
+		color: var(--color-fg-muted);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.entry-text {
+		word-break: break-word;
+	}
+
+	.log-entry.muted {
+		color: var(--color-fg-muted);
+	}
+
+	.log-entry.active {
+		color: var(--color-fg-primary);
 	}
 </style>

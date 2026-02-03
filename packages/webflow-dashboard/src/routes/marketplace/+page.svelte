@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { Header, Button } from '$lib/components';
 	import MarketplaceInsights from '$lib/components/MarketplaceInsights.svelte';
-	import { Clock, ChevronLeft, AlertCircle, BarChart3 } from 'lucide-svelte';
+	import { Clock, ChevronLeft, AlertCircle, BarChart3, Info } from 'lucide-svelte';
 	import type { PageData } from './$types';
 
 	interface LeaderboardEntry {
@@ -174,6 +174,20 @@
 							</p>
 						</div>
 					{/if}
+				</div>
+			</div>
+
+			<!-- Data Scope Notice -->
+			<div class="data-scope-notice">
+				<Info size={16} />
+				<div class="notice-content">
+					<p class="notice-title">About this data</p>
+					<p class="notice-text">
+						These insights show <strong>templates with recent sales activity</strong> in the 30-day window, 
+						not the total marketplace inventory. Template counts per category reflect active sellers only. 
+						The Webflow marketplace has 7,000+ total templates, but this view focuses on performance metrics 
+						for templates generating sales.
+					</p>
 				</div>
 			</div>
 
@@ -388,5 +402,47 @@
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
 		margin: 0 0 var(--space-sm);
+	}
+
+	.data-scope-notice {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-sm);
+		padding: var(--space-md);
+		background: var(--color-info-muted);
+		border: 1px solid var(--color-info-border);
+		border-radius: var(--radius-lg);
+		margin-bottom: var(--space-lg);
+	}
+
+	.data-scope-notice :global(svg) {
+		flex-shrink: 0;
+		color: var(--color-info);
+		margin-top: 2px;
+	}
+
+	.notice-content {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+	}
+
+	.notice-title {
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin: 0;
+	}
+
+	.notice-text {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		margin: 0;
+		line-height: 1.5;
+	}
+
+	.notice-text strong {
+		color: var(--color-fg-primary);
+		font-weight: var(--font-medium);
 	}
 </style>

@@ -74,11 +74,13 @@ pub mod orchestrator;
 pub mod backfill;
 pub mod config;
 pub mod ui_resources;
+pub mod priority;
+pub mod notion;
 
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 
-pub use work::{Task, Status, Priority, CreateTask, WorkStore, WorkSummary, WorkError};
+pub use work::{Task, Status, Priority, IssueType, DependencyType, Dependency, CreateTask, WorkStore, WorkSummary, WorkError};
 pub use dispatch::{Agent, AgentConfig, DispatchConfig, Dispatcher, DispatchError};
 pub use agents::{AgentProfile, AgentRegistry, Capabilities, CostModel, QualityMetrics, RequiredFeatures, AnalyticsSummary, ExecutionRecord};
 pub use memory::{
@@ -95,6 +97,8 @@ pub use models::{ModelsConfig, ModelConfig, ModelTier, ModelFamily};
 pub use orchestrator::{Orchestrator, OrchestratorConfig, AgentBackend, ExecutionResult, send_notification};
 pub use backfill::{Backfill, BackfillOptions, BackfillResult, BackfillError, BackfillAnalytics, CommitRecord, BeadsIssue, CorrelatedRecord};
 pub use config::{LoomConfig, RepoConfig, RepoInfo, ConfigError};
+pub use priority::{Priority as PriorityCalculator, PriorityResult, ScoringFactor, CriticalPath};
+pub use notion::{NotionClient, NotionConfig, NotionError, SyncOptions, SyncResult as NotionSyncResult, sync_tasks};
 
 /// Loom error types
 #[derive(Error, Debug)]
@@ -296,6 +300,11 @@ default = "claude"
         &self.root
     }
     
+    /// Get a reference to the work store (for priority calculations, etc.)
+    pub fn store(&self) -> &WorkStore {
+        &self.store
+    }
+    
     /// Get the configuration
     pub fn config(&self) -> &LoomConfig {
         &self.config
@@ -444,9 +453,27 @@ default = "claude"
         id: &str, 
         evidence: Option<&str>,
         cost_usd: f64,
+        close_reason: Option<&str>,
     ) -> Result<Vec<String>, LoomError> {
-        let unblocked = self.store.complete_with_cost(id, evidence, cost_usd)?;
+        let unblocked = self.store.complete_with_cost(id, evidence, cost_usd, close_reason)?;
         Ok(unblocked)
+    }
+    
+    /// Complete a task with close reason
+    pub fn complete_with_reason(
+        &mut self,
+        id: &str,
+        evidence: Option<&str>,
+        close_reason: Option<&str>,
+    ) -> Result<Vec<String>, LoomError> {
+        let unblocked = self.store.complete_with_reason(id, evidence, close_reason)?;
+        Ok(unblocked)
+    }
+    
+    /// Cancel a task with a reason
+    pub fn cancel_with_reason(&mut self, id: &str, close_reason: Option<&str>) -> Result<(), LoomError> {
+        self.store.cancel_with_reason(id, close_reason)?;
+        Ok(())
     }
     
     /// Record actual cost for a task (in USD)
@@ -528,10 +555,31 @@ default = "claude"
         Ok(())
     }
     
+    /// Add a typed dependency between tasks
+    pub fn add_dependency_typed(&mut self, task_id: &str, depends_on: &str, dep_type: DependencyType) -> Result<(), LoomError> {
+        self.store.add_dependency_typed(task_id, depends_on, dep_type)?;
+        Ok(())
+    }
+    
     /// Remove a dependency
     pub fn unblock(&mut self, task_id: &str, depends_on: &str) -> Result<(), LoomError> {
         self.store.remove_dependency(task_id, depends_on)?;
         Ok(())
+    }
+    
+    /// Get all dependencies for a task
+    pub fn get_dependencies(&self, task_id: &str) -> Result<Vec<Dependency>, LoomError> {
+        Ok(self.store.get_all_dependencies(task_id)?)
+    }
+    
+    /// Get dependencies by type for a task
+    pub fn get_dependencies_by_type(&self, task_id: &str, dep_type: DependencyType) -> Result<Vec<Dependency>, LoomError> {
+        Ok(self.store.get_dependencies_by_type(task_id, dep_type)?)
+    }
+    
+    /// Get blocking tasks (only 'blocks' type dependencies)
+    pub fn get_blocking_tasks(&self, task_id: &str) -> Result<Vec<Task>, LoomError> {
+        Ok(self.store.get_blocking_dependencies(task_id)?)
     }
     
     // ─────────────────────────────────────────────────────────────────────
@@ -581,6 +629,23 @@ default = "claude"
     /// Get summary statistics filtered by label
     pub fn summary_by_label(&self, label: &str) -> Result<WorkSummary, LoomError> {
         Ok(self.store.summary_by_label(label)?)
+    }
+    
+    /// List tasks by issue type
+    pub fn list_by_issue_type(&self, issue_type: IssueType) -> Result<Vec<Task>, LoomError> {
+        Ok(self.store.list_by_issue_type(issue_type)?)
+    }
+    
+    /// Set task issue type
+    pub fn set_issue_type(&mut self, id: &str, issue_type: IssueType) -> Result<(), LoomError> {
+        self.store.update_issue_type(id, issue_type)?;
+        Ok(())
+    }
+    
+    /// Compact the database by removing old done/cancelled tasks
+    /// Returns the number of tasks removed
+    pub fn compact(&mut self, older_than_days: u32) -> Result<u32, LoomError> {
+        Ok(self.store.compact(older_than_days)?)
     }
     
     // ─────────────────────────────────────────────────────────────────────

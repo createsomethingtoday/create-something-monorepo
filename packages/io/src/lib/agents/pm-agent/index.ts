@@ -57,7 +57,7 @@ Your responsibilities:
 - Everything documented as experiments
 - Empirical validation (not theory)
 - Honest about limitations
-- Grounded in master designers/engineers (Rams, Tufte, Mies van der Rohe)
+- Grounded in master designers/engineers (Rams, Tufte, Mies van der Rohe, Ive)
 
 ## Voice Guidelines (CRITICAL)
 

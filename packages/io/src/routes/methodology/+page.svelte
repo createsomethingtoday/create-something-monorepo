@@ -1016,7 +1016,7 @@
             </svg>
           </a>
           <p class="stat-label mt-4">
-            Dieter Rams • Mies van der Rohe • Edward Tufte
+            Dieter Rams • Mies van der Rohe • Edward Tufte • Jony Ive
           </p>
         </div>
       </div>

@@ -170,7 +170,22 @@ export function createFunctionSignature(
 // =============================================================================
 
 /**
+ * Template temporal data for directed PageRank.
+ */
+export interface TemplateDate {
+  id: string;
+  effectiveDate?: string | null; // ISO date string or null
+}
+
+/**
  * Build similarity graph from template similarity data.
+ * 
+ * If templateDates is provided, creates a DIRECTED graph where:
+ * - Edges point from NEWER template to OLDER template
+ * - This makes older templates accumulate more PageRank (more authoritative)
+ * 
+ * If templateDates is not provided, creates an UNDIRECTED graph (bidirectional edges).
+ * 
  * Returns adjacency list representation.
  */
 export function buildSimilarityGraph(
@@ -179,24 +194,50 @@ export function buildSimilarityGraph(
     template2: string;
     similarity: number;
   }>,
-  threshold: number = 0.6
+  threshold: number = 0.6,
+  templateDates?: Map<string, string | null> // Map of templateId -> effectiveDate
 ): Map<string, Map<string, number>> {
   const graph = new Map<string, Map<string, number>>();
   
   for (const { template1, template2, similarity } of similarities) {
     if (similarity < threshold) continue;
     
-    // Add edge from template1 to template2
+    // Ensure both nodes exist in the graph
     if (!graph.has(template1)) {
       graph.set(template1, new Map());
     }
-    graph.get(template1)!.set(template2, similarity);
-    
-    // Add reverse edge (undirected for initial PageRank)
     if (!graph.has(template2)) {
       graph.set(template2, new Map());
     }
-    graph.get(template2)!.set(template1, similarity);
+    
+    // Determine edge direction based on dates
+    if (templateDates) {
+      const date1 = templateDates.get(template1);
+      const date2 = templateDates.get(template2);
+      
+      if (date1 && date2) {
+        // Directed: edge from newer to older (older accumulates authority)
+        if (date1 > date2) {
+          // template1 is newer, edge points to template2 (older)
+          graph.get(template1)!.set(template2, similarity);
+        } else if (date2 > date1) {
+          // template2 is newer, edge points to template1 (older)
+          graph.get(template2)!.set(template1, similarity);
+        } else {
+          // Same date: bidirectional
+          graph.get(template1)!.set(template2, similarity);
+          graph.get(template2)!.set(template1, similarity);
+        }
+      } else {
+        // Missing date for one or both: bidirectional
+        graph.get(template1)!.set(template2, similarity);
+        graph.get(template2)!.set(template1, similarity);
+      }
+    } else {
+      // No dates provided: undirected graph (bidirectional edges)
+      graph.get(template1)!.set(template2, similarity);
+      graph.get(template2)!.set(template1, similarity);
+    }
   }
   
   return graph;
@@ -548,24 +589,51 @@ const FRAMEWORK_PATTERNS: Record<string, {
   },
   
   finsweet: {
-    detect: (js) => {
+    detect: (js, css) => {
       const features: string[] = [];
       let confidence = 0;
       
+      // Core detection
       if (/FsLibrary|fs-/i.test(js) || /finsweet/i.test(js)) {
-        confidence = 0.8;
+        confidence = 0.7;
       }
       
-      if (/fs-cmsfilter/i.test(js)) {
+      // Finsweet Attributes (data-* patterns)
+      if (/fs-cmsfilter|data-fs-cmsfilter/i.test(js)) {
         features.push('cms-filter');
+        confidence = Math.min(1, confidence + 0.1);
       }
       
-      if (/fs-cmsnest/i.test(js)) {
+      if (/fs-cmsnest|data-fs-cmsnest/i.test(js)) {
         features.push('cms-nest');
+        confidence = Math.min(1, confidence + 0.1);
       }
       
-      if (/fs-attributes/i.test(js)) {
+      if (/fs-cmsload|data-fs-cmsload/i.test(js)) {
+        features.push('cms-load');
+        confidence = Math.min(1, confidence + 0.1);
+      }
+      
+      if (/fs-cmssort|data-fs-cmssort/i.test(js)) {
+        features.push('cms-sort');
+        confidence = Math.min(1, confidence + 0.1);
+      }
+      
+      if (/fs-attributes|data-fs-/i.test(js)) {
         features.push('attributes');
+        confidence = Math.min(1, confidence + 0.1);
+      }
+      
+      // Cookie/Storage
+      if (/fs-cc|data-fs-cc/i.test(js)) {
+        features.push('cookie-consent');
+        confidence = Math.min(1, confidence + 0.1);
+      }
+      
+      // Form utilities
+      if (/fs-form|data-fs-form/i.test(js)) {
+        features.push('form-utilities');
+        confidence = Math.min(1, confidence + 0.1);
       }
       
       return { features, confidence };
@@ -681,6 +749,147 @@ const FRAMEWORK_PATTERNS: Record<string, {
       
       return { features, confidence };
     }
+  },
+  
+  // Design Systems (Webflow-specific)
+  client_first: {
+    detect: (js, css) => {
+      const features: string[] = [];
+      let confidence = 0;
+      
+      // Client-First naming conventions
+      if (css) {
+        // State classes
+        if (/\.is-[a-z-]+/i.test(css)) {
+          features.push('state-classes');
+          confidence += 0.2;
+        }
+        
+        // Component classes with cc- prefix
+        if (/\.cc-[a-z-]+/i.test(css)) {
+          features.push('component-classes');
+          confidence += 0.3;
+        }
+        
+        // Utility tokens (margin/padding)
+        if (/\.margin-[a-z]+|\.padding-[a-z]+/i.test(css)) {
+          features.push('spacing-tokens');
+          confidence += 0.2;
+        }
+        
+        // Section/container patterns
+        if (/\.section_[a-z-]+|\.container_[a-z-]+/i.test(css)) {
+          features.push('layout-components');
+          confidence += 0.2;
+        }
+        
+        // Header/footer patterns
+        if (/\.header_|\.footer_|\.navbar_/i.test(css)) {
+          features.push('navigation-components');
+          confidence += 0.1;
+        }
+      }
+      
+      return { features, confidence: Math.min(1, confidence) };
+    }
+  },
+  
+  relume: {
+    detect: (js, css) => {
+      const features: string[] = [];
+      let confidence = 0;
+      
+      if (css) {
+        // Relume-specific class patterns
+        if (/\.rl-[a-z-]+/i.test(css)) {
+          features.push('relume-classes');
+          confidence += 0.5;
+        }
+        
+        // Relume component patterns (common naming)
+        if (/\.hero-[a-z0-9]+|\.cta-[a-z0-9]+|\.testimonial-[a-z0-9]+/i.test(css)) {
+          features.push('component-library');
+          confidence += 0.2;
+        }
+        
+        // Layout grid patterns
+        if (/\.layout[0-9]+|\.grid-[a-z0-9]+/i.test(css)) {
+          features.push('layout-system');
+          confidence += 0.2;
+        }
+        
+        // CMS integration patterns
+        if (/\.cms-item|\.cms-list/i.test(css)) {
+          features.push('cms-integration');
+          confidence += 0.1;
+        }
+      }
+      
+      return { features, confidence: Math.min(1, confidence) };
+    }
+  },
+  
+  lumos: {
+    detect: (js, css) => {
+      const features: string[] = [];
+      let confidence = 0;
+      
+      if (css) {
+        // Lumos-specific patterns
+        if (/\.lumos-[a-z-]+/i.test(css)) {
+          features.push('lumos-classes');
+          confidence += 0.6;
+        }
+        
+        // Design token patterns
+        if (/--lumos-|--lm-/i.test(css)) {
+          features.push('design-tokens');
+          confidence += 0.3;
+        }
+        
+        // Component patterns
+        if (/\.lm-[a-z-]+/i.test(css)) {
+          features.push('component-system');
+          confidence += 0.1;
+        }
+      }
+      
+      return { features, confidence: Math.min(1, confidence) };
+    }
+  },
+  
+  // Webflow Cloneable Patterns (generic design systems)
+  wized: {
+    detect: (js) => {
+      const features: string[] = [];
+      let confidence = 0;
+      
+      if (/Wized|wized\.request|wized\.data/i.test(js)) {
+        features.push('data-binding');
+        confidence = 0.9;
+      }
+      
+      if (/wized-element/i.test(js)) {
+        features.push('element-binding');
+        confidence = Math.min(1, confidence + 0.1);
+      }
+      
+      return { features, confidence };
+    }
+  },
+  
+  memberstack: {
+    detect: (js) => {
+      const features: string[] = [];
+      let confidence = 0;
+      
+      if (/memberstack|ms-hide|ms-show/i.test(js)) {
+        features.push('membership');
+        confidence = 0.9;
+      }
+      
+      return { features, confidence };
+    }
   }
 };
 
@@ -764,6 +973,17 @@ export function compareFrameworkFingerprints(
 const DEFAULT_PRIOR = 0.15;
 
 /**
+ * Verdict thresholds for Bayesian confidence.
+ * Calibrated based on accuracy report (Jan 2026):
+ * - Raised from 0.3/0.5/0.75 to 0.4/0.65/0.75 to reduce false positives
+ */
+const VERDICT_THRESHOLDS = {
+  no_plagiarism: 0.4,   // Below this = no_plagiarism
+  possible: 0.65,       // Below this = possible, above = likely
+  definite: 0.75        // Above this = definite
+};
+
+/**
  * Evidence weights for Bayesian calculation.
  */
 const EVIDENCE_WEIGHTS: Record<string, { weight: number; threshold: number }> = {
@@ -819,13 +1039,13 @@ export function calculateBayesianConfidence(
   const logOdds = Math.log(prior / (1 - prior)) + 3 * (likelihood - 0.5);
   const probability = 1 / (1 + Math.exp(-logOdds));
   
-  // Determine verdict
+  // Determine verdict using calibrated thresholds
   let verdict: BayesianConfidence['verdict'];
-  if (probability < 0.3) {
+  if (probability < VERDICT_THRESHOLDS.no_plagiarism) {
     verdict = 'no_plagiarism';
-  } else if (probability < 0.5) {
+  } else if (probability < VERDICT_THRESHOLDS.possible) {
     verdict = 'possible';
-  } else if (probability < 0.75) {
+  } else if (probability < VERDICT_THRESHOLDS.definite) {
     verdict = 'likely';
   } else {
     verdict = 'definite';

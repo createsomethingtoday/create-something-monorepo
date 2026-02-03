@@ -29,7 +29,7 @@ createsomethingtoday/claude-plugins/
 - `.claude/scripts/canon-check.sh`
 - `.claude/scripts/triad-audit-pr.sh`
 - `.claude/hooks/hooks.json`
-- `.claude/rules/css-canon.md`
+- `.claude/skills/css-canon.md`
 
 ## Features
 
@@ -46,7 +46,7 @@ Extract and structure the Canon design system plugin in `plugins/canon/`.
 - Copy `.claude/agents/canon-auditor.md` to `plugins/canon/agents/canon-auditor.md`
 - Extract PostToolUse hook section from `.claude/hooks/hooks.json` to `plugins/canon/hooks/hooks.json`
 - Copy `.claude/scripts/canon-check.sh` to `plugins/canon/scripts/canon-check.sh`
-- Copy `.claude/rules/css-canon.md` to `plugins/canon/docs/tokens-reference.md`
+- Copy `.claude/skills/css-canon.md` to `plugins/canon/docs/tokens-reference.md`
 - Update any file path references to use `${CLAUDE_PLUGIN_ROOT}`
 
 ### Build Hermeneutic Review plugin

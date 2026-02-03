@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import type { Asset } from '$lib/server/airtable';
 	import { goto, invalidateAll } from '$app/navigation';
+	import DOMPurify from 'isomorphic-dompurify';
 	import {
 		Header,
 		Card,
@@ -28,6 +29,15 @@
 	} from '$lib/components';
 	import EditAssetModal from '$lib/components/EditAssetModal.svelte';
 	import { toast } from '$lib/stores/toast';
+
+	// Sanitize HTML to prevent XSS
+	function sanitizeHtml(html: string | undefined): string {
+		if (!html) return '';
+		return DOMPurify.sanitize(html, {
+			ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'code', 'pre'],
+			ALLOWED_ATTR: ['href', 'target', 'rel']
+		});
+	}
 	import {
 		ArrowLeft,
 		Eye,
@@ -130,7 +140,14 @@
 	});
 
 	function handleEditClick() {
+		// #region agent log
+		const clickTime = performance.now();
+		console.log('[DEBUG:A,E] Edit button clicked', { clickTime: clickTime.toFixed(2) });
+		// #endregion
 		showEditModal = true;
+		// #region agent log
+		console.log('[DEBUG:E] showEditModal set to true', { elapsed: (performance.now() - clickTime).toFixed(2) + 'ms' });
+		// #endregion
 	}
 
 	function handleEditClose() {
@@ -378,7 +395,7 @@
 									{#if asset.descriptionLongHtml}
 										<div class="separator"></div>
 										<div class="description-long">
-											{@html asset.descriptionLongHtml}
+											{@html sanitizeHtml(asset.descriptionLongHtml)}
 										</div>
 									{:else if asset.description}
 										<p class="description-text">{asset.description}</p>
@@ -398,7 +415,7 @@
 									<CardContent>
 										{#if asset.rejectionFeedbackHtml}
 											<div class="rejection-content">
-												{@html asset.rejectionFeedbackHtml}
+												{@html sanitizeHtml(asset.rejectionFeedbackHtml)}
 											</div>
 										{:else}
 											<p class="rejection-text">{asset.rejectionFeedback}</p>

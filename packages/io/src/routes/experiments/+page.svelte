@@ -9,7 +9,7 @@
 	let searchQuery = $state('');
 
 	// Master filter state (filter by design methodology)
-	type MasterFilter = 'all' | 'rams' | 'heidegger' | 'tufte' | 'canon';
+	type MasterFilter = 'all' | 'rams' | 'heidegger' | 'tufte' | 'ive' | 'canon';
 	let masterFilter: MasterFilter = $state('all');
 
 	// Sort state
@@ -21,6 +21,7 @@
 		rams: ['rams-principle'],
 		heidegger: ['heidegger-'],
 		tufte: ['tufte-'],
+		ive: ['ive-motion', 'ive-'],
 		canon: ['subtractive-triad', 'hermeneutic-workflow', 'being-modes']
 	};
 
@@ -185,6 +186,13 @@
 						title="Edward Tufte - Data visualization"
 					>
 						Data Viz
+					</button>
+					<button
+						onclick={() => masterFilter = 'ive'}
+						class="filter-chip {masterFilter === 'ive' ? 'active' : ''}"
+						title="Jony Ive - Purposeful motion, physics-based feedback"
+					>
+						Motion
 					</button>
 					<button
 						onclick={() => masterFilter = 'canon'}

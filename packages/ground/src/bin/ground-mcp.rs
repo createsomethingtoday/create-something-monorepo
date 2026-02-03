@@ -18,7 +18,7 @@ use std::time::Instant;
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use ground::{VerifiedTriad, mcp, ui_resources::UiRegistry};
+use ground::{VerifiedTriad, mcp, ui_resources::UiRegistry, desire_paths::DesirePathTracker};
 
 /// Log a message to stderr with timestamp
 macro_rules! log {
@@ -186,7 +186,14 @@ fn main() {
     // Initialize UI registry for MCP Apps
     let ui_registry = UiRegistry::new();
     
-    log!("MCP server started (db: {}, MCP Apps enabled)", cli.db.display());
+    // Initialize desire path tracker
+    let desire_paths_log = cli.db.parent()
+        .map(|p| p.join("desire_paths.jsonl"))
+        .unwrap_or_else(|| PathBuf::from(".ground/desire_paths.jsonl"));
+    let mut desire_tracker = DesirePathTracker::new(&desire_paths_log);
+    
+    log!("MCP server started (db: {}, MCP Apps enabled, desire paths: {})", 
+         cli.db.display(), desire_paths_log.display());
     
     let stdin = io::stdin();
     let mut stdout = io::stdout();
@@ -302,33 +309,67 @@ fn main() {
                     .cloned()
                     .unwrap_or(json!({}));
                 
-                // Log tool call with key arguments for debugging
-                let args_summary = summarize_args(tool_name, &args);
-                log!("{} starting{}", tool_name, args_summary);
-                
-                let start = Instant::now();
-                let result = mcp::handle_tool_call(&mut g, tool_name, &args);
-                let elapsed = start.elapsed();
-                
-                // Log completion with timing
-                if result.success {
-                    log!("{} completed in {:.2}s", tool_name, elapsed.as_secs_f64());
+                // Handle desire paths analysis tool specially
+                if tool_name == "ground_desire_paths" {
+                    log!("ground_desire_paths starting");
+                    let start = Instant::now();
+                    
+                    // Load and analyze desire paths
+                    if let Err(e) = desire_tracker.load_all() {
+                        log!("Warning: Could not load desire paths: {}", e);
+                    }
+                    let analysis = desire_tracker.analyze();
+                    let response: ground::desire_paths::DesirePathResponse = analysis.into();
+                    
+                    log!("ground_desire_paths completed in {:.2}s", start.elapsed().as_secs_f64());
                     Response::success(id, json!({
                         "content": [{
                             "type": "text",
-                            "text": serde_json::to_string_pretty(&result.content).unwrap()
+                            "text": serde_json::to_string_pretty(&response).unwrap()
                         }]
                     }))
                 } else {
-                    let error_msg = result.error.clone().unwrap_or_else(|| "Unknown error".to_string());
-                    log!("{} failed in {:.2}s: {}", tool_name, elapsed.as_secs_f64(), error_msg);
-                    Response::success(id, json!({
-                        "content": [{
-                            "type": "text",
-                            "text": error_msg
-                        }],
-                        "isError": true
-                    }))
+                    // Log tool call with key arguments for debugging
+                    let args_summary = summarize_args(tool_name, &args);
+                    log!("{} starting{}", tool_name, args_summary);
+                    
+                    let start = Instant::now();
+                    let result = mcp::handle_tool_call(&mut g, tool_name, &args);
+                    let elapsed = start.elapsed();
+                    
+                    // Track unknown tools for desire path analysis
+                    if !result.success {
+                        let error_msg = result.error.clone().unwrap_or_default();
+                        if error_msg.contains("Unknown tool") {
+                            desire_tracker.log_unknown_tool(tool_name, &args);
+                            log!("Desire path logged: unknown tool {}", tool_name);
+                        } else if error_msg.contains("not found") || error_msg.contains("No such file") {
+                            desire_tracker.log_path_not_found(tool_name, &args);
+                        } else if error_msg.contains("invalid") || error_msg.contains("Invalid") {
+                            desire_tracker.log_invalid_args(tool_name, &args, &error_msg);
+                        }
+                    }
+                    
+                    // Log completion with timing
+                    if result.success {
+                        log!("{} completed in {:.2}s", tool_name, elapsed.as_secs_f64());
+                        Response::success(id, json!({
+                            "content": [{
+                                "type": "text",
+                                "text": serde_json::to_string_pretty(&result.content).unwrap()
+                            }]
+                        }))
+                    } else {
+                        let error_msg = result.error.clone().unwrap_or_else(|| "Unknown error".to_string());
+                        log!("{} failed in {:.2}s: {}", tool_name, elapsed.as_secs_f64(), error_msg);
+                        Response::success(id, json!({
+                            "content": [{
+                                "type": "text",
+                                "text": error_msg
+                            }],
+                            "isError": true
+                        }))
+                    }
                 }
             }
             

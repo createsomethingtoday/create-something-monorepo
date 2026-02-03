@@ -211,15 +211,16 @@
 
 	.animate-reveal {
 		opacity: 0;
-		transform: translateY(20px);
-		animation: reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-		animation-delay: calc(var(--delay, 0) * 100ms);
+		transform: translate3d(0, 20px, 0); /* GPU-accelerated */
+		animation: reveal var(--duration-complex) var(--ease-standard) forwards;
+		animation-delay: calc(var(--delay, 0) * var(--cascade-step));
+		will-change: transform, opacity;
 	}
 
 	@keyframes reveal {
 		to {
 			opacity: 1;
-			transform: translateY(0);
+			transform: translate3d(0, 0, 0);
 		}
 	}
 

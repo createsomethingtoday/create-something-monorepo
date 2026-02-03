@@ -3,9 +3,22 @@
 [![npm version](https://img.shields.io/npm/v/@createsomething/ground-mcp.svg)](https://www.npmjs.com/package/@createsomething/ground-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Grounded claims for code. An MCP server that prevents AI hallucination in code analysis.
+**Grounded claims for code.** An MCP server that prevents AI hallucination in code analysis.
+
+Works with Claude Code, Cursor, Windsurf, VS Code Copilot, Claude Desktop, and any MCP-compatible AI coding assistant.
 
 **[View Landing Page →](https://createsomething.agency/products/ground)**
+
+## Why Ground?
+
+| Capability | Without Ground | With Ground |
+|------------|---------------|-------------|
+| Duplicate detection | "These look 95% similar" | Computed 87.3% similarity via AST + token analysis |
+| Dead code claims | "This appears unused" | Verified: 0 imports, 0 type references |
+| Orphan detection | "Nothing imports this" | Checked: not a Worker entry point, not framework-implicit |
+| Design drift | "Colors look hardcoded" | Adoption ratio: 73% tokens, 27% violations |
+
+**The difference**: Ground requires computation before claims. No hallucinated analysis.
 
 ## The Problem
 
@@ -23,18 +36,68 @@ Ground is an MCP server that:
 - Finds duplicates, dead code, and orphaned modules
 - Requires verification before claims
 - Blocks hallucinated analysis
+- Provides confidence scores with evidence
 
 ---
 
-## Quick Install
+## Installation
+
+Pick your tool. We've tested these so you don't have to discover config file locations through trial and error.
+
+### Claude Code (CLI)
+
+This is the one everyone gets wrong. Claude Code doesn't read `.claude/mcp.json`. It reads `~/.claude.json` for user-scoped servers and `.mcp.json` at project root for project-scoped servers. Two different files. Two different places. Now you know.
+
+**Option A: User scope (available everywhere)**
+
+```bash
+npm install @createsomething/ground-mcp
+claude mcp add --scope user --transport stdio ground -- npx @createsomething/ground-mcp
+```
+
+Restart Claude Code, run `/mcp`, and you should see "ground" connected.
+
+**Option B: Project scope (shared with team)**
+
+Create `.mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "ground": {
+      "command": "npx",
+      "args": ["@createsomething/ground-mcp"]
+    }
+  }
+}
+```
+
+Claude Code will prompt you to approve it on first use.
 
 ### Cursor (One-Click)
 
 [**Install in Cursor →**](cursor://anysphere.cursor-deeplink/mcp/install?name=ground&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyJAY3JlYXRlc29tZXRoaW5nL2dyb3VuZC1tY3AiXX0%3D)
 
+Or add to `.mcp.json` at your project root:
+
+```json
+{
+  "mcpServers": {
+    "ground": {
+      "command": "npx",
+      "args": ["@createsomething/ground-mcp"]
+    }
+  }
+}
+```
+
 ### Claude Desktop
 
 Add to `claude_desktop_config.json`:
+
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **Linux**: `~/.config/Claude/claude_desktop_config.json`
 
 ```json
 {
@@ -74,13 +137,13 @@ Settings → MCP → View raw config, add:
 codex mcp add ground --command "npx @createsomething/ground-mcp"
 ```
 
-### npm (Global Install)
+### Global Install (When npx Isn't Your Thing)
 
 ```bash
 npm install -g @createsomething/ground-mcp
 ```
 
-Then add to your tool's MCP config:
+Now `ground-mcp` is in your PATH. Use it in any config:
 
 ```json
 {
@@ -91,6 +154,43 @@ Then add to your tool's MCP config:
   }
 }
 ```
+
+## Troubleshooting
+
+**"Server not showing up"**
+
+Run `/mcp` in your tool. If ground isn't listed, your config file is in the wrong place or has a typo. Claude Code in particular has... opinions about where configs live.
+
+**"Connection closed" or "Download failed: HTTP 404"**
+
+The npm package downloads a platform-specific binary on install. If that failed:
+
+```bash
+# Check if the binary exists
+ls node_modules/@createsomething/ground-mcp/bin/
+
+# Re-install
+npm install @createsomething/ground-mcp
+```
+
+**"No files analyzed" or "0 results"**
+
+Ground needs to know where your code is. For project-specific analysis, run it from your project directory, or pass `--workspace`:
+
+```json
+{
+  "mcpServers": {
+    "ground": {
+      "command": "npx",
+      "args": ["@createsomething/ground-mcp", "--workspace", "/path/to/your/project"]
+    }
+  }
+}
+```
+
+**CSS/HTML analysis shows "100% adoption" or "0 drift"**
+
+Ground's sweet spot is TypeScript/JavaScript projects with design tokens (CSS variables). If you're analyzing plain HTML with inline styles and no token system defined, there's nothing to measure drift against—it's a vacuous pass. For CSS-only linting, try Stylelint.
 
 ## Available Tools
 
@@ -186,7 +286,12 @@ What's the CSS token adoption ratio in packages/components?
 Find design drift in my CSS files only (use extensions: "css")
 ```
 
-## What's New in 0.2.1
+## What's New in 0.2.2
+
+- **Fixed npm installer** — Binary downloads now work correctly across all platforms
+- **Improved documentation** — Claude Code setup instructions (because nobody should have to discover `~/.claude.json` vs `.mcp.json` the hard way)
+
+### 0.2.1
 
 - **`ground_explain`** — AI-native context traceability. Explains why files are excluded from violation checks (e.g., video-rendering contexts, third-party CSS)
 - **`ground_find_drift` extensions filter** — Analyze specific file types (e.g., `extensions: "css"` for CSS-only analysis)
@@ -221,3 +326,13 @@ See [Full Documentation](https://github.com/createsomethingtoday/create-somethin
 ## License
 
 MIT
+
+---
+
+## Related
+
+Looking for task coordination? See [@createsomething/loom-mcp](https://www.npmjs.com/package/@createsomething/loom-mcp) — multi-agent coordination with crash recovery.
+
+## Keywords
+
+MCP server, Model Context Protocol, AI code analysis, static analysis, duplicate detection, dead code detection, orphan detection, code quality, hallucination prevention, LLM tools, Claude Code, Cursor IDE, Windsurf, VS Code Copilot, Anthropic Claude, AI coding assistant, Rust, TypeScript, JavaScript, monorepo analysis, design tokens, CSS analysis, code verification.

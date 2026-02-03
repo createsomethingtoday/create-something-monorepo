@@ -6,6 +6,7 @@
 	 * Submitted → In Review → Decision → Published/Rejected
 	 */
 	import type { Asset } from '$lib/server/airtable';
+	import DOMPurify from 'isomorphic-dompurify';
 	import { Card, CardHeader, CardTitle, CardContent } from './ui';
 	import {
 		Clock,
@@ -17,6 +18,15 @@
 		Timer,
 		FileCheck
 	} from 'lucide-svelte';
+
+	// Sanitize HTML to prevent XSS
+	function sanitizeHtml(html: string | undefined): string {
+		if (!html) return '';
+		return DOMPurify.sanitize(html, {
+			ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'a'],
+			ALLOWED_ATTR: ['href', 'target', 'rel']
+		});
+	}
 
 	interface Props {
 		asset: Asset;
@@ -239,7 +249,7 @@
 			<CardContent>
 				{#if asset.rejectionFeedbackHtml}
 					<div class="rejection-content">
-						{@html asset.rejectionFeedbackHtml}
+						{@html sanitizeHtml(asset.rejectionFeedbackHtml)}
 					</div>
 				{:else}
 					<p class="rejection-text">{asset.rejectionFeedback}</p>

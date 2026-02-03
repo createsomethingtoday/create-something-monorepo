@@ -1,0 +1,20 @@
+{
+  "name": "@create-something/webflow-review-extension",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "svelte": "^4.2.0"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^3.0.0",
+    "@types/chrome": "^0.0.258",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.0"
+  }
+}

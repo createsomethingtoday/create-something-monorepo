@@ -1,0 +1,224 @@
+name: 'Ground Code Analysis'
+description: 'Prevent AI hallucination in code analysis. Find duplicates, dead code, orphans, and design drift with verification-first patterns.'
+author: 'CREATE SOMETHING'
+
+branding:
+  icon: 'check-circle'
+  color: 'gray-dark'
+
+inputs:
+  analysis:
+    description: 'Analysis types to run (comma-separated): duplicates, dead-code, orphans, drift, all'
+    required: false
+    default: 'all'
+  path:
+    description: 'Path to analyze (relative to repository root)'
+    required: false
+    default: '.'
+  similarity-threshold:
+    description: 'Minimum similarity for duplicate detection (0.0-1.0)'
+    required: false
+    default: '0.85'
+  min-lines:
+    description: 'Minimum lines for duplicate detection'
+    required: false
+    default: '10'
+  extensions:
+    description: 'File extensions to analyze (comma-separated, e.g., ts,tsx,js)'
+    required: false
+    default: ''
+  fail-on-issues:
+    description: 'Fail the workflow if issues are found'
+    required: false
+    default: 'false'
+  comment-on-pr:
+    description: 'Post results as a PR comment'
+    required: false
+    default: 'true'
+  github-token:
+    description: 'GitHub token for PR comments'
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  duplicates-count:
+    description: 'Number of duplicate functions found'
+    value: ${{ steps.analyze.outputs.duplicates_count }}
+  dead-exports-count:
+    description: 'Number of dead exports found'
+    value: ${{ steps.analyze.outputs.dead_exports_count }}
+  orphans-count:
+    description: 'Number of orphaned modules found'
+    value: ${{ steps.analyze.outputs.orphans_count }}
+  drift-adoption:
+    description: 'Design token adoption percentage'
+    value: ${{ steps.analyze.outputs.drift_adoption }}
+  has-issues:
+    description: 'Whether any issues were found'
+    value: ${{ steps.analyze.outputs.has_issues }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install Ground
+      shell: bash
+      run: npm install -g @createsomething/ground-mcp
+
+    - name: Run Analysis
+      id: analyze
+      shell: bash
+      env:
+        INPUT_ANALYSIS: ${{ inputs.analysis }}
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_SIMILARITY: ${{ inputs.similarity-threshold }}
+        INPUT_MIN_LINES: ${{ inputs.min-lines }}
+        INPUT_EXTENSIONS: ${{ inputs.extensions }}
+      run: |
+        echo "## Ground Code Analysis" > ground-report.md
+        echo "" >> ground-report.md
+        
+        DUPLICATES_COUNT=0
+        DEAD_EXPORTS_COUNT=0
+        ORPHANS_COUNT=0
+        DRIFT_ADOPTION=100
+        HAS_ISSUES=false
+        
+        # Run duplicate detection
+        if [[ "$INPUT_ANALYSIS" == *"duplicates"* ]] || [[ "$INPUT_ANALYSIS" == "all" ]]; then
+          echo "### Duplicate Functions" >> ground-report.md
+          RESULT=$(ground find-duplicate-functions "$INPUT_PATH" --threshold "$INPUT_SIMILARITY" --min-lines "$INPUT_MIN_LINES" 2>&1 || echo "")
+          DUPLICATES_COUNT=$(echo "$RESULT" | grep -c "similarity:" || echo "0")
+          if [ "$DUPLICATES_COUNT" -gt 0 ]; then
+            HAS_ISSUES=true
+            echo "" >> ground-report.md
+            echo "Found **$DUPLICATES_COUNT** duplicate function pairs:" >> ground-report.md
+            echo '```' >> ground-report.md
+            echo "$RESULT" | head -50 >> ground-report.md
+            echo '```' >> ground-report.md
+          else
+            echo "No duplicates found above ${INPUT_SIMILARITY} similarity threshold." >> ground-report.md
+          fi
+          echo "" >> ground-report.md
+        fi
+        
+        # Run dead code detection
+        if [[ "$INPUT_ANALYSIS" == *"dead-code"* ]] || [[ "$INPUT_ANALYSIS" == "all" ]]; then
+          echo "### Dead Exports" >> ground-report.md
+          RESULT=$(ground find-dead-exports "$INPUT_PATH" 2>&1 || echo "")
+          DEAD_EXPORTS_COUNT=$(echo "$RESULT" | grep -c "export" || echo "0")
+          if [ "$DEAD_EXPORTS_COUNT" -gt 0 ]; then
+            HAS_ISSUES=true
+            echo "" >> ground-report.md
+            echo "Found **$DEAD_EXPORTS_COUNT** potentially dead exports:" >> ground-report.md
+            echo '```' >> ground-report.md
+            echo "$RESULT" | head -30 >> ground-report.md
+            echo '```' >> ground-report.md
+          else
+            echo "No dead exports found." >> ground-report.md
+          fi
+          echo "" >> ground-report.md
+        fi
+        
+        # Run orphan detection
+        if [[ "$INPUT_ANALYSIS" == *"orphans"* ]] || [[ "$INPUT_ANALYSIS" == "all" ]]; then
+          echo "### Orphaned Modules" >> ground-report.md
+          RESULT=$(ground find-orphans "$INPUT_PATH" 2>&1 || echo "")
+          ORPHANS_COUNT=$(echo "$RESULT" | grep -c "\.ts\|\.js" || echo "0")
+          if [ "$ORPHANS_COUNT" -gt 0 ]; then
+            HAS_ISSUES=true
+            echo "" >> ground-report.md
+            echo "Found **$ORPHANS_COUNT** potentially orphaned modules:" >> ground-report.md
+            echo '```' >> ground-report.md
+            echo "$RESULT" | head -20 >> ground-report.md
+            echo '```' >> ground-report.md
+          else
+            echo "No orphaned modules found." >> ground-report.md
+          fi
+          echo "" >> ground-report.md
+        fi
+        
+        # Run design drift analysis
+        if [[ "$INPUT_ANALYSIS" == *"drift"* ]] || [[ "$INPUT_ANALYSIS" == "all" ]]; then
+          echo "### Design Token Adoption" >> ground-report.md
+          EXT_FLAG=""
+          if [ -n "$INPUT_EXTENSIONS" ]; then
+            EXT_FLAG="--extensions $INPUT_EXTENSIONS"
+          fi
+          RESULT=$(ground adoption-ratio "$INPUT_PATH" $EXT_FLAG 2>&1 || echo "")
+          DRIFT_ADOPTION=$(echo "$RESULT" | grep -oP '\d+(?=%)' | head -1 || echo "100")
+          echo "" >> ground-report.md
+          echo "Token adoption: **${DRIFT_ADOPTION}%**" >> ground-report.md
+          if [ "$DRIFT_ADOPTION" -lt 80 ]; then
+            HAS_ISSUES=true
+            echo "⚠️ Below 80% threshold" >> ground-report.md
+          fi
+          echo "" >> ground-report.md
+        fi
+        
+        # Summary
+        echo "---" >> ground-report.md
+        echo "" >> ground-report.md
+        echo "| Metric | Count |" >> ground-report.md
+        echo "|--------|-------|" >> ground-report.md
+        echo "| Duplicates | $DUPLICATES_COUNT |" >> ground-report.md
+        echo "| Dead Exports | $DEAD_EXPORTS_COUNT |" >> ground-report.md
+        echo "| Orphans | $ORPHANS_COUNT |" >> ground-report.md
+        echo "| Token Adoption | ${DRIFT_ADOPTION}% |" >> ground-report.md
+        echo "" >> ground-report.md
+        echo "<sub>Powered by [Ground](https://www.npmjs.com/package/@createsomething/ground-mcp) — verification-first code analysis</sub>" >> ground-report.md
+        
+        # Set outputs
+        echo "duplicates_count=$DUPLICATES_COUNT" >> $GITHUB_OUTPUT
+        echo "dead_exports_count=$DEAD_EXPORTS_COUNT" >> $GITHUB_OUTPUT
+        echo "orphans_count=$ORPHANS_COUNT" >> $GITHUB_OUTPUT
+        echo "drift_adoption=$DRIFT_ADOPTION" >> $GITHUB_OUTPUT
+        echo "has_issues=$HAS_ISSUES" >> $GITHUB_OUTPUT
+
+    - name: Post PR Comment
+      if: inputs.comment-on-pr == 'true' && github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const fs = require('fs');
+          const report = fs.readFileSync('ground-report.md', 'utf8');
+          
+          // Find existing comment
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+          
+          const existingComment = comments.find(c => 
+            c.body.includes('## Ground Code Analysis') && 
+            c.user.type === 'Bot'
+          );
+          
+          if (existingComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existingComment.id,
+              body: report
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: report
+            });
+          }
+
+    - name: Fail on Issues
+      if: inputs.fail-on-issues == 'true' && steps.analyze.outputs.has_issues == 'true'
+      shell: bash
+      run: |
+        echo "::error::Ground found code quality issues"
+        exit 1

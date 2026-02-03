@@ -123,4 +123,4 @@ Ensure all four CREATE SOMETHING properties follow the Canon design system consi
 - `.agency` and `.ltd` maintain 98%+ compliance
 - Zero Canon violations in shared components
 - Legacy aliases removed from io/src/app.css
-- Documentation updated in .claude/rules/css-canon.md
+- Documentation updated in .claude/skills/css-canon.md (skill format)

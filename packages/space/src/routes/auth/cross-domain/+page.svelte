@@ -42,12 +42,21 @@
 		border: 4px solid var(--color-border-default);
 		border-top-color: var(--color-fg-primary);
 		border-radius: var(--radius-full);
-		animation: spin 1s linear infinite;
+		animation: spin var(--duration-slow) linear infinite;
+		will-change: transform;
 	}
 
 	@keyframes spin {
 		to {
 			transform: rotate(360deg);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.spinner {
+			animation: none;
+			border-top-color: var(--color-fg-primary);
+			border-right-color: var(--color-fg-primary);
 		}
 	}
 </style>

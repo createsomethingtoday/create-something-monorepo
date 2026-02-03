@@ -356,7 +356,9 @@ describe('parseBody', () => {
 		const result = await parseBody(mockRequest, loginSchema);
 		expect(result.success).toBe(false);
 		if (!result.success) {
-			expect(result.error).toContain('email');
+			// Type assertion needed for TypeScript control flow analysis
+			const errorResult = result as { success: false; error: string };
+			expect(errorResult.error).toContain('email');
 		}
 	});
 
@@ -370,7 +372,9 @@ describe('parseBody', () => {
 		const result = await parseBody(mockRequest, loginSchema);
 		expect(result.success).toBe(false);
 		if (!result.success) {
-			expect(result.error).toBe('Invalid JSON body');
+			// Type assertion needed for TypeScript control flow analysis
+			const errorResult = result as { success: false; error: string };
+			expect(errorResult.error).toBe('Invalid JSON body');
 		}
 	});
 });

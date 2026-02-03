@@ -1,0 +1,23 @@
+{
+  "agents": {
+    "defaults": {
+      "workspace": "/root/clawd"
+    },
+    "list": [{
+      "id": "main",
+      "identity": {
+        "name": "RELAY",
+        "theme": "your bridge to the digital world",
+        "emoji": "📡"
+      }
+    }]
+  },
+  "gateway": {
+    "port": 18789,
+    "mode": "local"
+  },
+  "messages": {
+    "responsePrefix": "📡",
+    "ackReaction": "👀"
+  }
+}

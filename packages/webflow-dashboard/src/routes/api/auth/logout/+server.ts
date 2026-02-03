@@ -20,8 +20,13 @@ export const POST: RequestHandler = async ({ platform, cookies }) => {
 		}
 	}
 
-	// Clear cookie
-	cookies.delete('session_token', { path: '/' });
+	// Clear cookie with same flags used when setting
+	cookies.delete('session_token', { 
+		path: '/',
+		secure: true,
+		httpOnly: true,
+		sameSite: 'none'
+	});
 
 	return json({ message: 'Logged out successfully' });
 };

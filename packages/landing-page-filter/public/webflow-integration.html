@@ -1,0 +1,144 @@
+<!-- Category Filter with Analytics Integration -->
+<!-- Add this to your Webflow page's custom code (before </body> tag) -->
+
+<!-- Load Category Filter Analytics First -->
+<script src="https://landing-page-category-filter.vercel.app/category-filter-analytics.min.js"></script>
+
+<!-- Load Custom Nest Script -->
+<script src="https://landing-page-category-filter.vercel.app/custom-nest.min.js"></script>
+
+<!-- Load Category Filter Script -->
+<script src="https://landing-page-category-filter.vercel.app/category-filter.min.js"></script>
+
+<!-- Load SEO Enhancements Script (Full - includes Landing Page category SEO data) -->
+<script src="https://landing-page-filter.pages.dev/seo-enhancements.min.js"></script>
+
+<!-- Additional Analytics Configuration -->
+<script>
+    // Page-specific analytics initialization
+    wf_analytics.init({
+        pageView: {
+            name: "Landing Page Template Category Filter Viewed",
+            data: {
+                page_type: "template_category_listing",
+                filter_available: true,
+                total_categories: 25, // Update based on actual count
+                has_subcategories: true,
+            },
+        },
+        page: "Landing Page Templates - Category Filter",
+    });
+
+    // Track template card clicks
+    document.addEventListener("click", function (event) {
+        var target = event.target.closest(".tm-templates_grid_item");
+        if (target) {
+            var templateName =
+                target
+                    .querySelector("h3, .template-title")
+                    ?.textContent?.trim() || "Unknown Template";
+            var templateLink = target.querySelector("a")?.href || "";
+
+            wf_analytics.track("Landing Page Filter - Template Card Clicked", {
+                template_name: templateName,
+                template_url: templateLink,
+                current_category:
+                    CategoryFilterAnalytics.getContext().current_category,
+                current_subcategory:
+                    CategoryFilterAnalytics.getContext().current_subcategory,
+                filter_active:
+                    !!CategoryFilterAnalytics.getContext().current_category,
+            });
+        }
+    });
+
+    // Track filter combination usage
+    document.addEventListener("categoryFilterUpdated", function (event) {
+        var context = CategoryFilterAnalytics.getContext();
+
+        if (context.current_category && context.current_subcategory) {
+            wf_analytics.track(
+                "Landing Page Filter - Advanced Filter Combination",
+                {
+                    combination:
+                        context.current_category +
+                        " > " +
+                        context.current_subcategory,
+                },
+            );
+        }
+    });
+
+    // Free Only Toggle Tracking with retry mechanism and multiple selectors
+    function setupFreeToggleTracking() {
+        // Try multiple selectors
+        const selectors = [
+            "#Checkbox-Free-2",
+            'input[name="Checkbox-Free-2"]',
+            'input[fs-cmsfilter-field="free"]',
+            '.filter-free-wrapper input[type="checkbox"]',
+        ];
+
+        let freeOnlyToggle = null;
+        for (let selector of selectors) {
+            freeOnlyToggle = document.querySelector(selector);
+            if (freeOnlyToggle) {
+                console.log("Free toggle found with selector:", selector);
+                break;
+            }
+        }
+
+        if (freeOnlyToggle) {
+            freeOnlyToggle.addEventListener("change", function (event) {
+                const isChecked = event.target.checked;
+                const context = CategoryFilterAnalytics.getContext();
+
+                console.log("Free toggle changed:", isChecked);
+                wf_analytics.track("Landing Page Filter - Free Only Toggle", {
+                    filter_state: isChecked ? "enabled" : "disabled",
+                    filter_type: "free_only",
+                    current_category: context.current_category,
+                    current_subcategory: context.current_subcategory,
+                    has_category_filter: !!context.current_category,
+                    combined_filters: !!(context.current_category && isChecked),
+                });
+            });
+        } else {
+            console.log(
+                "Free toggle not found with any selector, retrying in 500ms",
+            );
+            setTimeout(setupFreeToggleTracking, 500);
+        }
+    }
+
+    // Start free toggle setup with multiple timing strategies
+    setTimeout(setupFreeToggleTracking, 100);
+
+    // Also try after Webflow is ready (if available)
+    if (typeof Webflow !== "undefined") {
+        Webflow.push(function () {
+            setTimeout(setupFreeToggleTracking, 200);
+        });
+    }
+
+    // Final fallback after page load
+    window.addEventListener("load", function () {
+        setTimeout(setupFreeToggleTracking, 300);
+    });
+
+    console.log(
+        "🚀 Landing Page Category Filter with Analytics loaded successfully",
+    );
+</script>
+
+<!-- Optional: Debug Mode for Development -->
+<!-- Uncomment for debugging -->
+<!--
+<script>
+  // Enable debug mode for development
+  if (window.location.hostname === 'localhost' || window.location.hostname.includes('webflow.io')) {
+    SimpleCategoryFilter.debug(true);
+    CategoryFilterAnalytics.debug(true);
+  }
+</script>
+-->

@@ -85,7 +85,7 @@ export const GET: RequestHandler = async ({ url, platform, cookies, request }) =
 
 				// Execute with streaming
 				const result = await executeAgentWithStreaming(
-					platform.env.AI,
+					platform.env!.AI,
 					{
 						userId,
 						agentId,
@@ -106,7 +106,7 @@ export const GET: RequestHandler = async ({ url, platform, cookies, request }) =
 				);
 
 				// Update execution record
-				await updateExecution(platform.env.DB, executionId, {
+				await updateExecution(platform.env!.DB, executionId, {
 					status: result.success ? 'completed' : 'failed',
 					output: JSON.stringify({
 						response: result.response,
@@ -133,7 +133,7 @@ export const GET: RequestHandler = async ({ url, platform, cookies, request }) =
 				const errorMessage = err instanceof Error ? err.message : 'Unknown error';
 
 				// Update execution as failed
-				await updateExecution(platform.env.DB, executionId, {
+				await updateExecution(platform.env!.DB, executionId, {
 					status: 'failed',
 					error: errorMessage,
 					completed_at: new Date().toISOString()

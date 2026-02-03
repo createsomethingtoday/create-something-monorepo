@@ -50,6 +50,7 @@ pub mod config;
 pub mod report;
 pub mod loom;
 pub mod ui_resources;
+pub mod desire_paths;
 
 use std::path::Path;
 use thiserror::Error;

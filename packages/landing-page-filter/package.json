@@ -1,0 +1,25 @@
+{
+  "name": "@create-something/landing-page-filter",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev public --port 8788",
+    "deploy": "wrangler pages deploy public --project-name=landing-page-filter",
+    "build:scripts": "node scripts/build.js all",
+    "build:analytics": "node scripts/build.js analytics",
+    "build:free": "node scripts/build.js free",
+    "build:featured": "node scripts/build.js featured",
+    "build:nest": "node scripts/build.js nest",
+    "build:seo": "node scripts/build.js seo",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.25.67"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241230.0",
+    "typescript": "^5.7.2",
+    "wrangler": "^3.99.0"
+  }
+}

@@ -14,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::io::{BufRead, Write};
 
-use crate::{Loom, CreateTask, Status, Priority, RoutingStrategy, RoutingConstraints, SessionStatus};
+use crate::{Loom, CreateTask, Status, Priority, IssueType, RoutingStrategy, RoutingConstraints, SessionStatus};
 use crate::ui_resources::UiRegistry;
 
 /// Tool UI metadata for MCP Apps
@@ -371,6 +371,60 @@ pub fn list_tools() -> Vec<ToolDefinition> {
             "properties": { "session_id": { "type": "string" } },
             "required": ["session_id"]
         })),
+        
+        // ─────────────────────────────────────────────────────────────────
+        // Beads Compatibility (Robot Priority, Update, Compact)
+        // ─────────────────────────────────────────────────────────────────
+        tool("loom_priority", "Get prioritized list of ready tasks with robot-optimized ranking (PageRank + Critical Path). Use this instead of loom_ready for smarter work selection.", json!({
+            "type": "object",
+            "properties": {
+                "limit": { "type": "integer", "description": "Maximum number of tasks to return (default: 10)" }
+            }
+        })),
+        tool("loom_update", "Update task fields (status, priority, issue_type). For status changes that have side effects (like done/cancelled), use complete/cancel instead.", json!({
+            "type": "object",
+            "properties": {
+                "task_id": { "type": "string" },
+                "priority": { "type": "string", "enum": ["critical", "high", "normal", "low"] },
+                "issue_type": { "type": "string", "enum": ["bug", "feature", "task", "epic", "chore"] }
+            },
+            "required": ["task_id"]
+        })),
+        tool("loom_compact", "Remove old done/cancelled tasks from the database. Use for cleanup.", json!({
+            "type": "object",
+            "properties": {
+                "older_than_days": { "type": "integer", "description": "Remove tasks older than N days (default: 30)" }
+            }
+        })),
+        tool("loom_doctor", "Health check for the loom database. Reports task statistics and potential issues.", json!({
+            "type": "object",
+            "properties": {}
+        })),
+        
+        // ─────────────────────────────────────────────────────────────────
+        // Notion Sync
+        // ─────────────────────────────────────────────────────────────────
+        tool("loom_notion_init", "Initialize Notion database for Loom work analytics. Creates a database with the proper schema in the specified parent page.", json!({
+            "type": "object",
+            "properties": {
+                "parent_page_id": { "type": "string", "description": "Notion page ID where to create the database" },
+                "token": { "type": "string", "description": "Notion OAuth access token (optional if NOTION_TOKEN env var is set)" }
+            },
+            "required": ["parent_page_id"]
+        })),
+        tool("loom_notion_sync", "Sync Loom tasks to Notion database. Creates new pages, updates changed pages, skips unchanged.", json!({
+            "type": "object",
+            "properties": {
+                "dry_run": { "type": "boolean", "description": "Preview changes without writing (default: false)" },
+                "force": { "type": "boolean", "description": "Update all pages regardless of timestamp (default: false)" },
+                "status": { "type": "string", "enum": ["ready", "claimed", "blocked", "done", "cancelled"], "description": "Only sync tasks with this status" },
+                "since": { "type": "string", "description": "Only sync tasks updated after this ISO 8601 date" }
+            }
+        })),
+        tool("loom_notion_status", "Check Notion sync configuration status.", json!({
+            "type": "object",
+            "properties": {}
+        })),
     ]
 }
 
@@ -400,6 +454,7 @@ pub fn call_tool(loom: &mut Loom, name: &str, args: Value) -> Result<Value, Stri
                 parent: None,
                 evidence: None,
                 repo: None,
+                ..Default::default()
             }).map_err(|e| e.to_string())?;
             
             // Claim it immediately
@@ -438,6 +493,7 @@ pub fn call_tool(loom: &mut Loom, name: &str, args: Value) -> Result<Value, Stri
                 parent,
                 evidence: None,
                 repo: None,
+                ..Default::default()
             }).map_err(|e| e.to_string())?;
             
             Ok(json!({
@@ -543,20 +599,32 @@ pub fn call_tool(loom: &mut Loom, name: &str, args: Value) -> Result<Value, Stri
             let task = loom.get(task_id).map_err(|e| e.to_string())?;
             
             match task {
-                Some(t) => Ok(json!({
-                    "id": t.id,
-                    "title": t.title,
-                    "description": t.description,
-                    "status": format!("{:?}", t.status).to_lowercase(),
-                    "priority": t.priority.as_str(),
-                    "agent": t.agent,
-                    "labels": t.labels,
-                    "parent": t.parent,
-                    "evidence": t.evidence,
-                    "actual_cost_usd": t.actual_cost_usd,
-                    "created_at": t.created_at.to_rfc3339(),
-                    "updated_at": t.updated_at.to_rfc3339()
-                })),
+                Some(t) => {
+                    // Get dependencies for full task view
+                    let deps = loom.get_dependencies(&t.id).map_err(|e| e.to_string())?;
+                    
+                    Ok(json!({
+                        "id": t.id,
+                        "title": t.title,
+                        "description": t.description,
+                        "status": format!("{:?}", t.status).to_lowercase(),
+                        "priority": t.priority.as_str(),
+                        "issue_type": t.issue_type.as_str(),
+                        "agent": t.agent,
+                        "labels": t.labels,
+                        "parent": t.parent,
+                        "repo": t.repo,
+                        "evidence": t.evidence,
+                        "close_reason": t.close_reason,
+                        "actual_cost_usd": t.actual_cost_usd,
+                        "dependencies": deps.iter().map(|d| json!({
+                            "depends_on": d.depends_on,
+                            "type": d.dep_type.as_str()
+                        })).collect::<Vec<_>>(),
+                        "created_at": t.created_at.to_rfc3339(),
+                        "updated_at": t.updated_at.to_rfc3339()
+                    }))
+                },
                 None => Ok(json!({ "error": "Task not found" }))
             }
         }
@@ -1214,6 +1282,213 @@ pub fn call_tool(loom: &mut Loom, name: &str, args: Value) -> Result<Value, Stri
                 "session_id": session_id,
                 "brief": brief,
                 "has_resumable_context": session.context.has_resumable_context()
+            }))
+        }
+        
+        // ─────────────────────────────────────────────────────────────────
+        // Beads Compatibility (Robot Priority, Update, Compact)
+        // ─────────────────────────────────────────────────────────────────
+        "loom_priority" => {
+            use crate::priority::Priority as PriorityCalc;
+            let limit = args["limit"].as_u64().unwrap_or(10) as usize;
+            
+            let priority = PriorityCalc::new(loom.store());
+            let results = priority.get_prioritized(limit).map_err(|e| e.to_string())?;
+            
+            Ok(json!(results.iter().map(|r| json!({
+                "id": r.task.id,
+                "title": r.task.title,
+                "score": r.score,
+                "reason": r.reason,
+                "priority": r.task.priority.as_str(),
+                "issue_type": r.task.issue_type.as_str(),
+                "labels": r.task.labels,
+                "factors": r.factors.iter().map(|f| json!({
+                    "name": f.name,
+                    "value": f.value,
+                    "weight": f.weight
+                })).collect::<Vec<_>>()
+            })).collect::<Vec<_>>()))
+        }
+        
+        "loom_update" => {
+            let task_id = args["task_id"].as_str().ok_or("Missing task_id")?;
+            let mut updates: Vec<String> = vec![];
+            
+            if let Some(priority_str) = args["priority"].as_str() {
+                let priority = Priority::from_str(priority_str)
+                    .ok_or_else(|| format!("Invalid priority: {}", priority_str))?;
+                loom.set_priority(task_id, priority).map_err(|e| e.to_string())?;
+                updates.push(format!("priority={}", priority_str));
+            }
+            
+            if let Some(type_str) = args["issue_type"].as_str() {
+                let issue_type = IssueType::from_str(type_str)
+                    .ok_or_else(|| format!("Invalid issue_type: {}", type_str))?;
+                loom.set_issue_type(task_id, issue_type).map_err(|e| e.to_string())?;
+                updates.push(format!("issue_type={}", type_str));
+            }
+            
+            if updates.is_empty() {
+                return Ok(json!({
+                    "task_id": task_id,
+                    "message": "No updates specified. Use priority and/or issue_type."
+                }));
+            }
+            
+            Ok(json!({
+                "task_id": task_id,
+                "updates": updates
+            }))
+        }
+        
+        "loom_compact" => {
+            let older_than_days = args["older_than_days"].as_u64().unwrap_or(30) as u32;
+            let removed = loom.compact(older_than_days).map_err(|e| e.to_string())?;
+            
+            Ok(json!({
+                "removed_count": removed,
+                "older_than_days": older_than_days
+            }))
+        }
+        
+        "loom_doctor" => {
+            let summary = loom.summary().map_err(|e| e.to_string())?;
+            let blocked_tasks = loom.blocked().map_err(|e| e.to_string())?;
+            
+            let mut issues: Vec<String> = vec![];
+            
+            // Check for orphaned blocked tasks
+            for task in &blocked_tasks {
+                let blockers = loom.get_blocking_tasks(&task.id).map_err(|e| e.to_string())?;
+                if blockers.is_empty() {
+                    issues.push(format!("Task {} is blocked but has no blockers", task.id));
+                }
+            }
+            
+            // Check for claimed tasks with no agent
+            let claimed_tasks = loom.list_by_status(Status::Claimed).map_err(|e| e.to_string())?;
+            for task in &claimed_tasks {
+                if task.agent.is_none() {
+                    issues.push(format!("Task {} is claimed but has no agent", task.id));
+                }
+            }
+            
+            Ok(json!({
+                "summary": {
+                    "ready": summary.ready,
+                    "claimed": summary.claimed,
+                    "blocked": summary.blocked,
+                    "done": summary.done,
+                    "cancelled": summary.cancelled,
+                    "total": summary.total(),
+                    "progress_pct": summary.progress_pct(),
+                    "total_cost_usd": summary.total_cost_usd
+                },
+                "issues": issues,
+                "healthy": issues.is_empty()
+            }))
+        }
+        
+        // ─────────────────────────────────────────────────────────────────
+        // Notion Sync
+        // ─────────────────────────────────────────────────────────────────
+        "loom_notion_init" => {
+            use crate::notion::NotionClient;
+            use crate::config::LoomConfig;
+            
+            let parent_page_id = args["parent_page_id"].as_str()
+                .ok_or("Missing parent_page_id")?;
+            
+            let token = args["token"].as_str()
+                .map(String::from)
+                .or_else(|| std::env::var("NOTION_TOKEN").ok())
+                .ok_or("Notion token required. Provide 'token' or set NOTION_TOKEN env var")?;
+            
+            let client = NotionClient::new(&token);
+            let database_id = client.create_database(parent_page_id)
+                .map_err(|e| e.to_string())?;
+            
+            // Save config
+            let root = loom.root().parent().unwrap_or(loom.root());
+            let mut config = LoomConfig::load(root).unwrap_or_default();
+            config.notion.access_token = Some(token);
+            config.notion.database_id = Some(database_id.clone());
+            config.save(root).map_err(|e| e.to_string())?;
+            
+            Ok(json!({
+                "database_id": database_id,
+                "message": "Notion database created and config saved. Use loom_notion_sync to sync tasks."
+            }))
+        }
+        
+        "loom_notion_sync" => {
+            use crate::notion::{NotionClient, SyncOptions, sync_tasks};
+            use crate::config::LoomConfig;
+            
+            let root = loom.root().parent().unwrap_or(loom.root());
+            let config = LoomConfig::load(root).map_err(|e| e.to_string())?;
+            
+            let token = config.notion.access_token
+                .or_else(|| std::env::var("NOTION_TOKEN").ok())
+                .ok_or("Notion not configured. Run loom_notion_init first")?;
+            
+            let database_id = config.notion.database_id
+                .ok_or("Notion database not configured. Run loom_notion_init first")?;
+            
+            let dry_run = args["dry_run"].as_bool().unwrap_or(false);
+            let force = args["force"].as_bool().unwrap_or(false);
+            
+            let status_filter = args["status"].as_str().and_then(|s| {
+                match s {
+                    "ready" => Some(Status::Ready),
+                    "claimed" => Some(Status::Claimed),
+                    "blocked" => Some(Status::Blocked),
+                    "done" => Some(Status::Done),
+                    "cancelled" => Some(Status::Cancelled),
+                    _ => None
+                }
+            });
+            
+            let since_filter = args["since"].as_str().and_then(|s| {
+                chrono::DateTime::parse_from_rfc3339(s)
+                    .map(|dt| dt.with_timezone(&chrono::Utc))
+                    .ok()
+            });
+            
+            let options = SyncOptions {
+                dry_run,
+                force,
+                status: status_filter,
+                since: since_filter,
+            };
+            
+            let tasks = loom.list().map_err(|e| e.to_string())?;
+            let client = NotionClient::new(&token);
+            
+            let result = sync_tasks(&client, &database_id, &tasks, &options)
+                .map_err(|e| e.to_string())?;
+            
+            Ok(json!({
+                "total": result.total,
+                "created": result.created,
+                "updated": result.updated,
+                "skipped": result.skipped,
+                "errors": result.errors,
+                "dry_run": dry_run
+            }))
+        }
+        
+        "loom_notion_status" => {
+            use crate::config::LoomConfig;
+            
+            let root = loom.root().parent().unwrap_or(loom.root());
+            let config = LoomConfig::load(root).map_err(|e| e.to_string())?;
+            
+            Ok(json!({
+                "configured": config.notion.is_configured(),
+                "database_id": config.notion.database_id,
+                "has_token": config.notion.access_token.is_some()
             }))
         }
         

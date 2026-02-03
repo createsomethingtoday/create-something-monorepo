@@ -48,7 +48,8 @@
 		border-top-color: var(--color-fg-primary);
 		border-radius: 50%;
 		margin: 0 auto;
-		animation: spin 1s linear infinite;
+		animation: spin var(--duration-slow) linear infinite;
+		will-change: transform;
 	}
 
 	@keyframes spin {

@@ -247,7 +247,7 @@ Always track:
 ```markdown
 ## Canonical Connection
 
-**Master**: [Rams/Mies/Eames/Tufte/Heidegger]
+**Master**: [Rams/Mies/Eames/Tufte/Heidegger/Ive]
 
 **Principle**: "[Exact quote from master]"
 

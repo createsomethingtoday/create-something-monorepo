@@ -48,6 +48,7 @@ use loom::{
     Loom, LoomError, CreateTask, Status,
     RoutingStrategy, RoutingConstraints, SessionStatus,
     Backfill, BackfillOptions, BackfillAnalytics,
+    PriorityCalculator,
 };
 
 /// Loom - AI-native coordination layer
@@ -66,7 +67,54 @@ enum Commands {
     Init,
     
     /// List tasks ready to work on
-    Ready,
+    Ready {
+        /// Output robot-priority ranking with scores (like bv --robot-priority)
+        #[arg(long, short)]
+        ranked: bool,
+        
+        /// Output format (text, json)
+        #[arg(long, default_value = "text")]
+        format: String,
+    },
+    
+    /// List blocked tasks and what's blocking them
+    Blocked,
+    
+    /// Update a task
+    Update {
+        /// Task ID
+        id: String,
+        
+        /// New status (ready, claimed, blocked, done, cancelled)
+        #[arg(long)]
+        status: Option<String>,
+        
+        /// New priority (critical, high, normal, low)
+        #[arg(long)]
+        priority: Option<String>,
+        
+        /// New issue type (bug, feature, task, epic, chore)
+        #[arg(long, name = "type")]
+        issue_type: Option<String>,
+        
+        /// New description
+        #[arg(long)]
+        description: Option<String>,
+    },
+    
+    /// Compact database by removing old done/cancelled tasks
+    Compact {
+        /// Remove tasks older than N days (default: 30)
+        #[arg(long, default_value = "30")]
+        older_than: u32,
+        
+        /// Preview without deleting
+        #[arg(long)]
+        dry_run: bool,
+    },
+    
+    /// Health check for the loom database
+    Doctor,
     
     /// List tasks claimed by an agent
     Mine {
@@ -288,6 +336,53 @@ enum Commands {
         #[arg(long, short)]
         agent: Option<String>,
     },
+    
+    /// Notion sync management
+    Notion {
+        #[command(subcommand)]
+        command: NotionCommands,
+    },
+}
+
+#[derive(Subcommand)]
+enum NotionCommands {
+    /// Initialize Notion database for work analytics
+    Init {
+        /// Parent page ID in Notion (where to create the database)
+        parent_page_id: String,
+        
+        /// Notion OAuth access token (or set NOTION_TOKEN env var)
+        #[arg(long, short)]
+        token: Option<String>,
+    },
+    
+    /// Set Notion OAuth token
+    Auth {
+        /// Notion OAuth access token
+        token: String,
+    },
+    
+    /// Sync tasks to Notion database
+    Sync {
+        /// Preview without writing
+        #[arg(long)]
+        dry_run: bool,
+        
+        /// Update all pages regardless of timestamp
+        #[arg(long)]
+        force: bool,
+        
+        /// Filter by status (ready, claimed, blocked, done, cancelled)
+        #[arg(long)]
+        status: Option<String>,
+        
+        /// Only sync tasks updated after this date (ISO 8601)
+        #[arg(long)]
+        since: Option<String>,
+    },
+    
+    /// Show Notion sync status
+    Status,
 }
 
 #[derive(Subcommand)]
@@ -370,16 +465,199 @@ fn run() -> Result<(), LoomError> {
             println!("Initialized Loom in {}", loom.root().display());
         }
         
-        Commands::Ready => {
+        Commands::Ready { ranked, format } => {
             let loom = Loom::open(".")?;
-            let tasks = loom.ready()?;
+            
+            if ranked {
+                // Robot-priority ranking with scores
+                let priority = PriorityCalculator::new(loom.store());
+                let results = priority.get_prioritized(20)
+                    .map_err(|e| LoomError::Work(e))?;
+                
+                if format == "json" {
+                    println!("{}", serde_json::to_string_pretty(&results).unwrap_or_default());
+                } else {
+                    if results.is_empty() {
+                        println!("No tasks ready");
+                    } else {
+                        println!("{:<10} {:<6} {:<40} {}", "ID", "SCORE", "TITLE", "REASON");
+                        for result in results {
+                            println!("{:<10} {:<6.2} {:<40} {}", 
+                                result.task.id, 
+                                result.score, 
+                                truncate(&result.task.title, 40),
+                                result.reason
+                            );
+                        }
+                    }
+                }
+            } else {
+                let tasks = loom.ready()?;
+                
+                if tasks.is_empty() {
+                    println!("No tasks ready");
+                } else {
+                    println!("{:<10} {:<40} {:?}", "ID", "TITLE", "LABELS");
+                    for task in tasks {
+                        println!("{:<10} {:<40} {:?}", task.id, truncate(&task.title, 40), task.labels);
+                    }
+                }
+            }
+        }
+        
+        Commands::Blocked => {
+            let loom = Loom::open(".")?;
+            let tasks = loom.blocked()?;
             
             if tasks.is_empty() {
-                println!("No tasks ready");
+                println!("No blocked tasks");
             } else {
-                println!("{:<10} {:<40} {:?}", "ID", "TITLE", "LABELS");
+                println!("{:<10} {:<40} {}", "ID", "TITLE", "BLOCKED BY");
                 for task in tasks {
-                    println!("{:<10} {:<40} {:?}", task.id, truncate(&task.title, 40), task.labels);
+                    let blockers = loom.get_blocking_tasks(&task.id)?;
+                    let blocker_ids: Vec<_> = blockers.iter().map(|t| t.id.as_str()).collect();
+                    println!("{:<10} {:<40} {}", 
+                        task.id, 
+                        truncate(&task.title, 40), 
+                        blocker_ids.join(", ")
+                    );
+                }
+            }
+        }
+        
+        Commands::Update { id, status, priority, issue_type, description } => {
+            let mut loom = Loom::open(".")?;
+            let mut updated = false;
+            
+            if let Some(status_str) = status {
+                let new_status = parse_status(&status_str)?;
+                // Use the store through a workaround - update via complete/cancel for done/cancelled
+                match new_status {
+                    Status::Done => {
+                        loom.complete(&id, None)?;
+                    }
+                    Status::Cancelled => {
+                        loom.cancel(&id)?;
+                    }
+                    Status::Claimed => {
+                        loom.claim(&id, &get_hostname())?;
+                    }
+                    Status::Ready => {
+                        loom.release(&id)?;
+                    }
+                    _ => {
+                        // Blocked status is managed automatically by dependencies
+                        println!("Status {:?} is managed automatically", new_status);
+                    }
+                }
+                println!("Status updated to {:?}", new_status);
+                updated = true;
+            }
+            
+            if let Some(priority_str) = priority {
+                use loom::Priority as TaskPriority;
+                let priority = TaskPriority::from_str(&priority_str)
+                    .ok_or_else(|| LoomError::Config(format!("Invalid priority: {}", priority_str)))?;
+                loom.set_priority(&id, priority)?;
+                println!("Priority updated to {:?}", priority);
+                updated = true;
+            }
+            
+            if let Some(type_str) = issue_type {
+                use loom::IssueType;
+                let issue_type = IssueType::from_str(&type_str)
+                    .ok_or_else(|| LoomError::Config(format!("Invalid issue type: {}", type_str)))?;
+                loom.set_issue_type(&id, issue_type)?;
+                println!("Issue type updated to {:?}", issue_type);
+                updated = true;
+            }
+            
+            if let Some(_desc) = description {
+                // TODO: Add update_description method
+                println!("Description update not yet implemented");
+            }
+            
+            if !updated {
+                println!("No updates specified. Use --status, --priority, --type, or --description");
+            }
+        }
+        
+        Commands::Compact { older_than, dry_run } => {
+            if dry_run {
+                // Preview mode
+                let loom = Loom::open(".")?;
+                use loom::Status;
+                let all_tasks = loom.list()?;
+                let cutoff = chrono::Utc::now() - chrono::Duration::days(older_than as i64);
+                
+                let to_remove: Vec<_> = all_tasks.iter()
+                    .filter(|t| matches!(t.status, Status::Done | Status::Cancelled))
+                    .filter(|t| t.updated_at < cutoff)
+                    .collect();
+                
+                if to_remove.is_empty() {
+                    println!("No tasks to compact (older than {} days)", older_than);
+                } else {
+                    println!("Would remove {} tasks:", to_remove.len());
+                    for task in to_remove {
+                        println!("  {} - {} ({:?})", task.id, truncate(&task.title, 40), task.status);
+                    }
+                }
+            } else {
+                let mut loom = Loom::open(".")?;
+                let removed = loom.compact(older_than)?;
+                println!("Compacted: {} tasks removed (older than {} days)", removed, older_than);
+            }
+        }
+        
+        Commands::Doctor => {
+            let loom = Loom::open(".")?;
+            let summary = loom.summary()?;
+            
+            println!("Loom Health Check");
+            println!("=================");
+            println!();
+            println!("Database: {}", loom.root().join("work.db").display());
+            println!();
+            println!("Task Summary:");
+            println!("  Ready:     {}", summary.ready);
+            println!("  Claimed:   {}", summary.claimed);
+            println!("  Blocked:   {}", summary.blocked);
+            println!("  Done:      {}", summary.done);
+            println!("  Cancelled: {}", summary.cancelled);
+            println!("  Total:     {}", summary.total());
+            println!();
+            println!("  Progress:  {}%", summary.progress_pct());
+            println!("  Total Cost: ${:.2}", summary.total_cost_usd);
+            
+            // Check for potential issues
+            let mut issues: Vec<String> = vec![];
+            
+            // Check for orphaned blocked tasks (blocked by non-existent tasks)
+            let blocked_tasks = loom.blocked()?;
+            for task in &blocked_tasks {
+                let blockers = loom.get_blocking_tasks(&task.id)?;
+                if blockers.is_empty() {
+                    issues.push(format!("Task {} is blocked but has no blockers", task.id));
+                }
+            }
+            
+            // Check for claimed tasks with no agent
+            let claimed_tasks = loom.list_by_status(Status::Claimed)?;
+            for task in &claimed_tasks {
+                if task.agent.is_none() {
+                    issues.push(format!("Task {} is claimed but has no agent", task.id));
+                }
+            }
+            
+            if issues.is_empty() {
+                println!();
+                println!("No issues found");
+            } else {
+                println!();
+                println!("Issues ({}):", issues.len());
+                for issue in issues {
+                    println!("  - {}", issue);
                 }
             }
         }
@@ -413,6 +691,7 @@ fn run() -> Result<(), LoomError> {
                 parent,
                 evidence: None,
                 repo: None,
+                ..Default::default()
             })?;
             
             println!("Created: {} - {}", task.id, task.title);
@@ -545,12 +824,27 @@ fn run() -> Result<(), LoomError> {
             println!("ID:          {}", task.id);
             println!("Title:       {}", task.title);
             println!("Status:      {:?}", task.status);
+            println!("Priority:    {:?}", task.priority);
+            println!("Type:        {:?}", task.issue_type);
             println!("Agent:       {}", task.agent.as_deref().unwrap_or("-"));
             println!("Labels:      {:?}", task.labels);
             println!("Parent:      {}", task.parent.as_deref().unwrap_or("-"));
+            println!("Repo:        {}", task.repo.as_deref().unwrap_or("-"));
             println!("Evidence:    {}", task.evidence.as_deref().unwrap_or("-"));
+            if let Some(reason) = &task.close_reason {
+                println!("Close reason: {}", reason);
+            }
             println!("Created:     {}", task.created_at);
             println!("Updated:     {}", task.updated_at);
+            
+            // Show dependencies
+            let deps = loom.get_dependencies(&task.id)?;
+            if !deps.is_empty() {
+                println!("\nDependencies:");
+                for dep in deps {
+                    println!("  {} ({:?})", dep.depends_on, dep.dep_type);
+                }
+            }
             
             if let Some(desc) = &task.description {
                 println!("\nDescription:\n{}", desc);
@@ -842,6 +1136,7 @@ fn run() -> Result<(), LoomError> {
                         parent: None,
                         evidence: None,
                         repo: None,
+                        ..Default::default()
                     })?;
                     
                     println!("Created task: {}", task.id);
@@ -924,6 +1219,122 @@ fn run() -> Result<(), LoomError> {
                     agent_profile.quality.success_rate() * 100.0,
                     agent_profile.quality.avg_duration_secs
                 );
+            }
+        }
+        
+        Commands::Notion { command } => {
+            match command {
+                NotionCommands::Init { parent_page_id, token } => {
+                    // Get token from arg, env, or config
+                    let access_token = token
+                        .or_else(|| std::env::var("NOTION_TOKEN").ok())
+                        .ok_or_else(|| LoomError::Config(
+                            "Notion token required. Use --token or set NOTION_TOKEN env var".to_string()
+                        ))?;
+                    
+                    println!("Creating Notion database...");
+                    
+                    let client = loom::NotionClient::new(&access_token);
+                    let database_id = client.create_database(&parent_page_id)
+                        .map_err(|e| LoomError::Config(e.to_string()))?;
+                    
+                    // Save config
+                    let mut config = loom::LoomConfig::load(".").unwrap_or_default();
+                    config.notion.access_token = Some(access_token);
+                    config.notion.database_id = Some(database_id.clone());
+                    config.save(".")
+                        .map_err(|e| LoomError::Config(e.to_string()))?;
+                    
+                    println!("Created database: {}", database_id);
+                    println!("Config saved to .loom/config.toml");
+                    println!();
+                    println!("Run 'lm notion sync' to sync tasks to Notion.");
+                }
+                
+                NotionCommands::Auth { token } => {
+                    let mut config = loom::LoomConfig::load(".").unwrap_or_default();
+                    config.notion.access_token = Some(token);
+                    config.save(".")
+                        .map_err(|e| LoomError::Config(e.to_string()))?;
+                    
+                    println!("Notion token saved to .loom/config.toml");
+                }
+                
+                NotionCommands::Sync { dry_run, force, status, since } => {
+                    let loom = Loom::open(".")?;
+                    let config = loom::LoomConfig::load(".")
+                        .map_err(|e| LoomError::Config(e.to_string()))?;
+                    
+                    let access_token = config.notion.access_token
+                        .or_else(|| std::env::var("NOTION_TOKEN").ok())
+                        .ok_or_else(|| LoomError::Config(
+                            "Notion not configured. Run 'lm notion init' first".to_string()
+                        ))?;
+                    
+                    let database_id = config.notion.database_id
+                        .ok_or_else(|| LoomError::Config(
+                            "Notion database not configured. Run 'lm notion init' first".to_string()
+                        ))?;
+                    
+                    let status_filter = status.as_ref().and_then(|s| parse_status(s).ok());
+                    let since_filter = since.as_ref().and_then(|s| {
+                        chrono::DateTime::parse_from_rfc3339(s)
+                            .map(|dt| dt.with_timezone(&chrono::Utc))
+                            .ok()
+                    });
+                    
+                    let sync_options = loom::SyncOptions {
+                        dry_run,
+                        force,
+                        status: status_filter,
+                        since: since_filter,
+                    };
+                    
+                    let tasks = loom.list()?;
+                    let client = loom::NotionClient::new(&access_token);
+                    
+                    if dry_run {
+                        println!("Dry run - no changes will be made");
+                    }
+                    
+                    println!("Syncing {} tasks to Notion...", tasks.len());
+                    
+                    let result = loom::sync_tasks(&client, &database_id, &tasks, &sync_options)
+                        .map_err(|e| LoomError::Config(e.to_string()))?;
+                    
+                    println!();
+                    println!("Sync complete:");
+                    println!("  Created:  {}", result.created);
+                    println!("  Updated:  {}", result.updated);
+                    println!("  Skipped:  {}", result.skipped);
+                    
+                    if !result.errors.is_empty() {
+                        println!("  Errors:   {}", result.errors.len());
+                        for error in &result.errors {
+                            println!("    - {}", error);
+                        }
+                    }
+                }
+                
+                NotionCommands::Status => {
+                    let config = loom::LoomConfig::load(".")
+                        .map_err(|e| LoomError::Config(e.to_string()))?;
+                    
+                    println!("Notion Sync Status");
+                    println!("==================");
+                    println!();
+                    
+                    if let Some(ref db_id) = config.notion.database_id {
+                        println!("Database ID: {}", db_id);
+                        println!("Token:       {}", if config.notion.access_token.is_some() { "configured" } else { "not set" });
+                        println!();
+                        println!("Run 'lm notion sync' to sync tasks.");
+                    } else {
+                        println!("Not configured.");
+                        println!();
+                        println!("Run 'lm notion init <parent_page_id>' to set up.");
+                    }
+                }
             }
         }
         

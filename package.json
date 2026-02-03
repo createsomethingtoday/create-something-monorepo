@@ -72,7 +72,8 @@
       "esbuild"
     ],
     "overrides": {
-      "undici": ">=7.18.2"
+      "undici": ">=7.18.2",
+      "@types/node": "24.10.9"
     }
   },
   "dependencies": {

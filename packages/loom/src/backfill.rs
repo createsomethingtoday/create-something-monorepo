@@ -642,6 +642,7 @@ impl Backfill {
                         parent: None,
                         evidence: Some(format!("beads:{}", issue.id)),
                         repo: None, // Will use default from config
+                        ..Default::default()
                     })?;
                     
                     created_tasks.insert(issue.id.clone(), task.id.clone());

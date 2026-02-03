@@ -240,7 +240,32 @@ That's it. You have:
 - ✓ Anthropic authentication working
 - ✓ Environment verified
 
-Now the real work begins. Let's talk about what creation actually is.
+---
+
+## Try This in Claude Code
+
+Your first conversation with Claude Code. Copy and paste this:
+
+\`\`\`
+Hello! I'm learning systems thinking with the Seeing course. 
+Can you tell me what MCP tools you currently have access to?
+\`\`\`
+
+**What you're practicing**: Getting comfortable talking to Claude Code. This is your development partner for the rest of the course.
+
+**What you should see**: Claude Code will list any MCP servers it's connected to. Right now, there probably aren't any — you'll add your own in the capstone.
+
+---
+
+## Lesson Complete
+
+You've completed the setup. Here's what you have:
+
+- ✓ **Claude Code installed** — via curl/irm
+- ✓ **Authentication working** — signed in with Claude Pro
+- ✓ **Environment verified** — \`claude doctor\` passes
+
+**The goal you achieved**: You can open a terminal, run Claude Code, and have a conversation. The tool is ready; now you learn the philosophy.
 
 ---
 
@@ -392,6 +417,32 @@ Now think of automation that constantly demands attention. Broken webhooks. Flak
 **What's the difference?** Usually: one removed friction. The other added complexity that didn't earn its place.
 
 You're learning to tell them apart. That's what seeing means.
+
+---
+
+## Try This in Claude Code
+
+Copy this prompt and paste it into Claude Code:
+
+\`\`\`
+Look at my current project. Find any functions that do similar things 
+but have different names. Show me the duplication.
+\`\`\`
+
+**What you're practicing**: The first question — "Have I built this before?" You're training Claude Code to see duplication the way you're learning to see it.
+
+**What you should see**: Claude Code will scan your codebase and show you functions with similar implementations. If it finds any, ask it: "Which one should be the single source of truth?"
+
+---
+
+## Lesson Complete
+
+You've learned:
+- ✓ Creation is removal, not addition
+- ✓ The three things that obscure code: duplication, excess, disconnection
+- ✓ Breakdown moments reveal where automation needs work
+
+**The goal you achieved**: You can now articulate *why* removing code is sometimes more creative than adding it.
 
 ---
 
@@ -551,6 +602,36 @@ Think of three automations you use daily:
 **What's different about them?** Usually: the good ones have clean layers. The bad ones have layers held together with duct tape.
 
 You're learning to build the good kind.
+
+---
+
+## Try This in Claude Code
+
+Copy this prompt and paste it into Claude Code:
+
+\`\`\`
+I want to understand the automation layer concept. Explain what sits 
+between "the user says something" and "something happens" in a typical 
+MCP server. Use the example of a task tracker with task_add, task_list, 
+and task_complete tools.
+\`\`\`
+
+**What you're practicing**: Articulating the architecture before you build it. This is the "what" before the "how."
+
+**What you should see**: Claude Code will explain the flow: user intent → agent interpretation → tool call → storage operation → result. This is the exact pattern you'll implement in the capstone.
+
+---
+
+## Lesson Complete
+
+You've learned:
+- ✓ The automation layer sits between intention and execution
+- ✓ Four components: Tools, Memory, Boundaries, Protocol
+- ✓ Context limits are a design constraint, not a bug
+
+**The goal you achieved**: You can draw a diagram of the automation layer and explain what each part does.
+
+---
 `,
 	'subtractive-triad': `
 ## The Three Questions
@@ -716,6 +797,44 @@ If you want to go deeper:
 - **DRY**: [*The Pragmatic Programmer*](https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/) — Hunt & Thomas
 - **Rams**: [Ten Principles of Good Design](https://rams-foundation.org/foundation/design-comprehension/theses/) — Rams Foundation
 - **Heidegger**: [Stanford Encyclopedia entry](https://plato.stanford.edu/entries/heidegger/) — Academic but foundational
+
+---
+
+## Try This in Claude Code
+
+Copy this prompt and paste it into Claude Code:
+
+\`\`\`
+I'm designing a simple task tracker. Someone suggested adding these tools:
+- task_add
+- task_list  
+- task_complete
+- task_remove
+- task_archive
+- task_priority
+- task_color
+
+Apply the Subtractive Triad to this list. Which tools earn their existence? 
+Which should be cut? Walk through DRY, Rams, and Heidegger for each one.
+\`\`\`
+
+**What you're practicing**: Using the Triad to make real design decisions. This is the exact exercise you'll face in the capstone.
+
+**What you should see**: Claude Code should keep the first four tools and question the last three. If it keeps all of them, push back: "Apply Rams more strictly. Who asked for task_color?"
+
+---
+
+## Lesson Complete
+
+You've learned:
+- ✓ DRY: "Have I built this before?" → Unify
+- ✓ Rams: "Does this earn its existence?" → Remove  
+- ✓ Heidegger: "Does this serve the whole?" → Reconnect
+- ✓ Ask them in order — shallow to deep
+
+**The goal you achieved**: You can evaluate any proposed feature using the three questions.
+
+---
 `,
 	'external-memory': `
 ## The Problem: AI Agents Have No Memory
@@ -966,6 +1085,42 @@ Think about what would break if your daily tools forgot everything between sessi
 - Your browser's bookmarks? Gone.
 
 Everything you thought of — that's what external memory prevents. Your automation layer needs the same thing.
+
+---
+
+## Try This in Claude Code
+
+Copy this prompt and paste it into Claude Code:
+
+\`\`\`
+Create a CLAUDE.md file for this project. Include:
+1. A brief description of what the project does
+2. The key directories and what they contain
+3. Any conventions I should know about (naming, testing, etc.)
+4. Things you should NOT modify
+
+This is spatial memory — context that persists between our sessions.
+\`\`\`
+
+**What you're practicing**: Creating external memory for Claude Code itself. Every future session starts informed instead of from zero.
+
+**What you should see**: Claude Code creates a \`CLAUDE.md\` with your project's structure and conventions. On your next session, it will automatically read this file.
+
+**Bonus**: After Claude Code creates the file, close the session and start a new one. Ask "What do you know about this project?" — it should remember.
+
+---
+
+## Lesson Complete
+
+You've learned:
+- ✓ AI agents are stateless — they forget between sessions
+- ✓ External memory: Load → Modify → Save
+- ✓ Data memory (tasks.json) vs. Spatial memory (CLAUDE.md)
+- ✓ Start with JSON files, migrate when needed
+
+**The goal you achieved**: You created a \`CLAUDE.md\` file that gives Claude Code persistent memory of your project.
+
+---
 `,
 	'agent-native-tools': `
 ## What I Wish Someone Had Told Me
@@ -1223,6 +1378,43 @@ The agent reads the schema, understands the tool, and calls it correctly. That's
 The best agent tools are invisible. The agent doesn't struggle with inputs or parse cryptic outputs. It just works.
 
 That's what you're building in the capstone.
+
+---
+
+## Try This in Claude Code
+
+Copy this prompt and paste it into Claude Code:
+
+\`\`\`
+I want to design a tool schema for a task_add function. The tool should:
+- Accept a task title (required)
+- Accept an optional priority (low, medium, high)
+- Return the created task with its ID, title, priority, status, and creation date
+
+Write the MCP tool schema (inputSchema and example output). Make it 
+agent-friendly — detailed descriptions, clear types, structured output.
+\`\`\`
+
+**What you're practicing**: Designing for agents, not humans. The schema IS the documentation.
+
+**What you should see**: Claude Code should produce a detailed JSON schema with property descriptions, an enum for priority, required fields marked, and a structured JSON output example.
+
+**Push further**: Ask "What would a bad version of this schema look like?" Compare the two.
+
+---
+
+## Lesson Complete
+
+You've learned:
+- ✓ Agents read schemas, not documentation
+- ✓ Return data (JSON), not messages ("Task added!")
+- ✓ Errors are data too — structured, recoverable
+- ✓ One tool, one job — clear boundaries
+- ✓ Your prompts are an interface too
+
+**The goal you achieved**: You can design a tool schema that an AI agent will use correctly on the first try.
+
+---
 `,
 	'capstone': `
 ## Time to Build
@@ -1658,6 +1850,58 @@ Look at what you have:
 - A system that serves one workflow well
 
 This is **Simple Loom** — the same patterns that power production task coordination.
+
+---
+
+## Capstone Complete
+
+You've built a working automation layer. Let's verify everything:
+
+### Final Checklist
+
+Run these commands to confirm your capstone is complete:
+
+\`\`\`bash
+# 1. Check your project structure
+ls ~/my-task-tracker/
+# Should show: dist/ node_modules/ src/ package.json tsconfig.json
+
+# 2. Check your compiled code
+ls ~/my-task-tracker/dist/
+# Should show: index.js tasks.js
+
+# 3. Verify tasks persist
+cat ~/.tasks/tasks.json
+# Should show your tasks in JSON format
+\`\`\`
+
+### In Claude Code, verify the tools work:
+
+\`\`\`
+Add a task called "Celebrate completing Seeing"
+\`\`\`
+
+Then:
+
+\`\`\`
+Show me all my tasks
+\`\`\`
+
+**You should see**: Your celebration task listed alongside any others you created.
+
+---
+
+## Course Complete
+
+You've learned:
+- ✓ **The Meta-Principle**: Creation is removal
+- ✓ **The Automation Layer**: What sits between intention and execution
+- ✓ **The Subtractive Triad**: DRY → Rams → Heidegger
+- ✓ **External Memory**: State that survives between sessions
+- ✓ **Agent-Native Tools**: Designing for AI, not humans
+- ✓ **The Capstone**: A working MCP server you built yourself
+
+**What you built**: An automation layer that persists tasks through conversation. The same pattern powers production systems.
 
 ---
 

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category Filter - Vanilla JS Example</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .demo-section { margin: 40px 0; padding: 20px; border: 1px solid #eee; border-radius: 8px; }
+        
+        /* Finsweet Filter Styles */
+        .filter-sort-wrapper { position: relative; display: inline-block; }
+        .filter-sort-toggle { 
+            display: flex; align-items: center; gap: 8px; padding: 12px 16px; 
+            border: 1px solid #ccc; border-radius: 4px; cursor: pointer; 
+            background: white; min-width: 200px; justify-content: space-between;
+        }
+        .filter-sort-toggle:hover { background: #f5f5f5; }
+        .filter-sort-dropdown-list { 
+            position: absolute; top: 100%; left: 0; right: 0; 
+            background: white; border: 1px solid #ccc; border-radius: 4px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000; 
+            display: none; max-height: 300px; overflow-y: auto;
+        }
+        .fs-radio_field { 
+            display: flex; align-items: center; padding: 8px 16px; 
+            cursor: pointer; 
+        }
+        .fs-radio_field:hover { background: #f5f5f5; }
+        .fs-radio_button { margin-right: 8px; }
+        .fs-dropdown-arrow { 
+            width: 12px; height: 12px; transition: transform 0.2s ease; 
+        }
+        
+        code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; }
+        pre { background: #f5f5f5; padding: 16px; border-radius: 6px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Dynamic Category Filter Examples</h1>
+        <p>This demonstrates how to use the category filter API endpoint with vanilla JavaScript.</p>
+
+        <div class="demo-section">
+            <h2>🎯 Basic Usage</h2>
+            <p>Simple category filter with default options:</p>
+            <div id="basic-filter"></div>
+            
+            <h3>Code:</h3>
+            <pre><code>&lt;div id="basic-filter">&lt;/div>
+&lt;script>
+  buildCategoryFilter('basic-filter');
+&lt;/script></code></pre>
+        </div>
+
+        <div class="demo-section">
+            <h2>⚙️ Custom Options</h2>
+            <p>Category filter with custom field name and label:</p>
+            <div id="custom-filter"></div>
+            
+            <h3>Code:</h3>
+            <pre><code>&lt;div id="custom-filter">&lt;/div>
+&lt;script>
+  buildCategoryFilter('custom-filter', {
+    fieldName: 'template-categories',
+    toggleLabel: 'Template Category'
+  });
+&lt;/script></code></pre>
+        </div>
+
+        <div class="demo-section">
+            <h2>🔗 API Endpoint</h2>
+            <p><strong>Endpoint:</strong> <code>/api/categories</code></p>
+            <p><strong>Method:</strong> GET</p>
+            <p><strong>Response Format:</strong></p>
+            <pre><code>{
+  "categories": [
+    { "id": "category-1", "name": "Business" },
+    { "id": "category-2", "name": "Portfolio" },
+    { "id": "category-3", "name": "E-commerce" }
+  ]
+}</code></pre>
+            
+            <button onclick="testAPI()">Test API Endpoint</button>
+            <div id="api-result"></div>
+        </div>
+
+        <div class="demo-section">
+            <h2>🚀 Integration Steps</h2>
+            <ol>
+                <li>Include the <code>category-filter.js</code> script in your page</li>
+                <li>Create a container element with an ID</li>
+                <li>Call <code>buildCategoryFilter('containerId')</code></li>
+                <li>The filter will automatically work with Finsweet CMS Filter</li>
+            </ol>
+            
+            <h3>For Webflow Integration:</h3>
+            <pre><code>&lt;!-- Add this to your page head or before closing body tag -->
+&lt;script src="/category-filter.js">&lt;/script>
+
+&lt;!-- Replace your existing filter dropdown with: -->
+&lt;div id="category-filter-container">&lt;/div>
+
+&lt;script>
+  // Initialize the filter
+  buildCategoryFilter('category-filter-container', {
+    fieldName: 'categories', // Must match your CMS filter field
+    toggleLabel: 'Category'
+  });
+&lt;/script></code></pre>
+        </div>
+    </div>
+
+    <script src="/category-filter.js"></script>
+    <script>
+        // Initialize the demo filters
+        buildCategoryFilter('basic-filter');
+        
+        buildCategoryFilter('custom-filter', {
+            fieldName: 'template-categories',
+            toggleLabel: 'Template Category'
+        });
+
+        // API test function
+        async function testAPI() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.innerHTML = '<p>Loading...</p>';
+            
+            try {
+                const response = await fetch('/api/categories');
+                const data = await response.json();
+                resultDiv.innerHTML = `<pre><code>${JSON.stringify(data, null, 2)}</code></pre>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

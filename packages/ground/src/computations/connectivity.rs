@@ -1027,7 +1027,7 @@ fn find_importers_recursive(
             let _ = find_importers_recursive(target, module_name, &path, importers);
         } else if path.is_file() && path != target {
             let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            if matches!(ext, "ts" | "tsx" | "js" | "jsx") {
+            if matches!(ext, "ts" | "tsx" | "js" | "jsx" | "svelte") {
                 if let Ok(content) = fs::read_to_string(&path) {
                     // Check if this file imports our target module
                     // Handle ESM-style .js imports pointing to .ts files
@@ -1101,6 +1101,18 @@ fn imports_module(content: &str, module_name: &str) -> bool {
         }
     }
     
+    // Svelte-specific: check for use: directives and $store subscriptions
+    // These create runtime connections invisible to import-statement analysis
+    let actions = super::imports::extract_use_directives_from_source(content);
+    if actions.contains(&module_name.to_string()) {
+        return true;
+    }
+
+    let stores = super::imports::extract_store_subscriptions_from_source(content);
+    if stores.contains(&module_name.to_string()) {
+        return true;
+    }
+
     false
 }
 
@@ -1557,5 +1569,72 @@ route = "api.example.com/*"
         
         // Should not match unrelated files
         assert!(!script_references_module("node other.js", "install.js", "install.js"));
+    }
+
+    #[test]
+    fn test_svelte_use_directive_creates_connection() {
+        let dir = tempdir().unwrap();
+
+        // Create package.json to mark project root
+        File::create(dir.path().join("package.json")).unwrap()
+            .write_all(b"{}").unwrap();
+
+        // Create an action module
+        let actions_dir = dir.path().join("lib");
+        std::fs::create_dir(&actions_dir).unwrap();
+        let inview = actions_dir.join("inview.ts");
+        File::create(&inview).unwrap()
+            .write_all(b"export function inview(node: HTMLElement) { return {}; }").unwrap();
+
+        // Create a Svelte component that uses the action via use: directive
+        let page = dir.path().join("Page.svelte");
+        File::create(&page).unwrap()
+            .write_all(br#"<script lang="ts">
+import { inview } from './lib/inview';
+</script>
+
+<div use:inview={{ threshold: 0.5 }}>
+  <p>Animated content</p>
+</div>"#).unwrap();
+
+        let evidence = analyze_connectivity(&inview).unwrap();
+
+        // inview.ts should be connected because Page.svelte imports it
+        // AND uses it via use:inview directive
+        assert!(evidence.is_connected, "inview.ts should be connected via Svelte use: directive");
+        assert!(evidence.incoming_connections >= 1, "Should have at least 1 importer");
+    }
+
+    #[test]
+    fn test_svelte_store_subscription_creates_connection() {
+        let dir = tempdir().unwrap();
+
+        // Create package.json
+        File::create(dir.path().join("package.json")).unwrap()
+            .write_all(b"{}").unwrap();
+
+        // Create a store module
+        let stores_dir = dir.path().join("stores");
+        std::fs::create_dir(&stores_dir).unwrap();
+        let toast = stores_dir.join("toast.ts");
+        File::create(&toast).unwrap()
+            .write_all(b"import { writable } from 'svelte/store';\nexport const toast = writable(null);").unwrap();
+
+        // Create a Svelte component that subscribes to the store
+        let dashboard = dir.path().join("Dashboard.svelte");
+        File::create(&dashboard).unwrap()
+            .write_all(br#"<script lang="ts">
+import { toast } from './stores/toast';
+</script>
+
+<div class:visible={$toast}>
+  <p>{$toast}</p>
+</div>"#).unwrap();
+
+        let evidence = analyze_connectivity(&toast).unwrap();
+
+        // toast.ts should be connected because Dashboard.svelte imports and subscribes
+        assert!(evidence.is_connected, "toast.ts should be connected via $store subscription");
+        assert!(evidence.incoming_connections >= 1, "Should have at least 1 importer (Dashboard.svelte)");
     }
 }

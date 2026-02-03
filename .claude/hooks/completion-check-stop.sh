@@ -40,20 +40,20 @@ if [[ "$UNCOMMITTED" -gt 0 ]]; then
   WARNINGS="$WARNINGS\n• Uncommitted changes: $STAGED staged, $UNSTAGED modified, $UNTRACKED untracked"
 fi
 
-# Check 2: In-progress beads issues
-IN_PROGRESS=$(bd list --status=in_progress -q 2>/dev/null | wc -l | tr -d ' ')
-if [[ "$IN_PROGRESS" -gt 0 ]]; then
-  ISSUE_IDS=$(bd list --status=in_progress --limit=3 -q 2>/dev/null | tr '\n' ', ' | sed 's/,$//')
-  WARNINGS="$WARNINGS\n• In-progress issues not closed: $ISSUE_IDS"
+# Check 2: Claimed loom tasks not completed
+CLAIMED=$(lm mine --status claimed 2>/dev/null | wc -l | tr -d ' ')
+if [[ "$CLAIMED" -gt 0 ]]; then
+  TASK_IDS=$(lm mine --status claimed --limit 3 2>/dev/null | tr '\n' ', ' | sed 's/,$//')
+  WARNINGS="$WARNINGS\n• Claimed tasks not completed: $TASK_IDS"
 fi
 
-# Check 3: Beads sync status (check if there are local changes not pushed)
-# This is a heuristic - check if beads db has recent changes
-if [[ -f "$CLAUDE_PROJECT_DIR/csm/.beads/beads.db" ]]; then
-  DB_MTIME=$(stat -f %m "$CLAUDE_PROJECT_DIR/csm/.beads/beads.db" 2>/dev/null || echo "0")
-  JSONL_MTIME=$(stat -f %m "$CLAUDE_PROJECT_DIR/csm/.beads/beads.base.jsonl" 2>/dev/null || echo "0")
+# Check 3: Loom sync status (check if there are local changes not pushed)
+# This is a heuristic - check if loom db has recent changes
+if [[ -d "$CLAUDE_PROJECT_DIR/.loom" ]]; then
+  DB_MTIME=$(stat -f %m "$CLAUDE_PROJECT_DIR/.loom/work.db" 2>/dev/null || echo "0")
+  JSONL_MTIME=$(stat -f %m "$CLAUDE_PROJECT_DIR/.loom/tasks.jsonl" 2>/dev/null || echo "0")
   if [[ "$DB_MTIME" -gt "$JSONL_MTIME" ]]; then
-    WARNINGS="$WARNINGS\n• Beads may need sync (run 'bd sync')"
+    WARNINGS="$WARNINGS\n• Loom may need sync (run 'lm sync')"
   fi
 fi
 
@@ -78,7 +78,7 @@ if [[ -n "$WARNINGS" ]]; then
 {
   "hookSpecificOutput": {
     "hookEventName": "Stop",
-    "additionalContext": "Completion check found items to address:$WARNINGS\n\nConsider: commit changes, close issues, run 'bd sync' before ending session."
+    "additionalContext": "Completion check found items to address:$WARNINGS\n\nConsider: commit changes, complete tasks, run 'lm sync' before ending session."
   }
 }
 EOF

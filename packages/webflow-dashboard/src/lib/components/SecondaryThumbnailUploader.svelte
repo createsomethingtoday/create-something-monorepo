@@ -8,7 +8,7 @@
 		disabled?: boolean;
 	}
 
-	let { value = [], onchange, maxImages = 2, disabled = false }: Props = $props();
+	let { value = [], onchange, maxImages = 1, disabled = false }: Props = $props();
 
 	function handleImageChange(index: number, url: string | null) {
 		if (url === null) {
@@ -26,11 +26,10 @@
 
 <div class="secondary-uploader">
 	<label class="uploader-label">
-		Secondary Thumbnails (Optional)
-		<span class="label-hint">({value.length}/{maxImages} uploaded)</span>
+		Secondary Thumbnail Image (Optional)
 	</label>
 	<p class="description">
-		Add up to {maxImages} promotional images with 150:199 aspect ratio (e.g., 750×995px)
+		{maxImages === 1 ? 'Add a promotional image' : `Add up to ${maxImages} promotional images`} with 150:199 aspect ratio (e.g., 750×995px)
 	</p>
 
 	<div class="thumbnail-grid">

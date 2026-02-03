@@ -97,7 +97,7 @@
 	<Slide type="image">
 		<span class="number">06</span>
 		<div class="embed">
-			<AIAnalytics forceUnlocked interactive={false} />
+			<AIAnalytics interactive={false} />
 		</div>
 		<p class="caption">AI reads your analytics and turns it into clear next actions.</p>
 	</Slide>
@@ -105,7 +105,7 @@
 	<Slide type="image">
 		<span class="number">07</span>
 		<div class="embed">
-			<AnalyticsDashboard forceUnlocked interactive={false} />
+			<AnalyticsDashboard interactive={false} />
 		</div>
 		<p class="caption">One dashboard: engagement, social metrics, and project progress.</p>
 	</Slide>

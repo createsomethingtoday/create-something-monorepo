@@ -53,7 +53,7 @@
 	<Slide type="image">
 		<span class="number">04</span>
 		<div class="embed">
-			<AIAnalytics forceUnlocked interactive={false} />
+			<AIAnalytics interactive={false} />
 		</div>
 		<p class="caption">Members can ask questions in plain English and get clear next steps.</p>
 	</Slide>
@@ -61,7 +61,7 @@
 	<Slide type="image">
 		<span class="number">05</span>
 		<div class="embed">
-			<AnalyticsDashboard forceUnlocked interactive={false} />
+			<AnalyticsDashboard interactive={false} />
 		</div>
 		<p class="caption">Members see a unified dashboard: engagement, social, and progress.</p>
 	</Slide>

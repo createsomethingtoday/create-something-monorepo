@@ -1,6 +1,6 @@
 # Agent Principles & Workflow
 
-This project uses **bd** (beads) for agent-native issue tracking. Run `bd onboard` to get started.
+This project uses **lm** (loom) for agent-native issue tracking and coordination. Run `lm init` to get started.
 
 ## Guiding Principle: The Work Must Remain Connected
 
@@ -11,11 +11,12 @@ The following workflow is designed to enforce this principle. Each step is an ac
 ## Quick Reference
 
 ```bash
-bd ready              # Find available work
-bd show <id>          # View issue details
-bd update <id> --status in_progress  # Claim work
-bd close <id>         # Complete work
-bd sync               # Sync with git
+lm ready              # Find available work
+lm ready --ranked     # Robot-priority with scores
+lm show <id>          # View issue details
+lm claim <id>         # Claim work
+lm done <id>          # Complete work
+lm sync               # Sync with git
 ```
 
 ## Session Completion: "Landing the Plane"
@@ -26,7 +27,7 @@ Ending a work session is a critical process of reconnection. The goal is to leav
 
 1.  **File issues for remaining work**
     *   **Principle:** Remove obscurity.
-    *   **Rationale:** All discovered tasks must be captured in the shared `beads` system. Ideas or follow-ups that exist only in a local context are disconnected and will be lost.
+    *   **Rationale:** All discovered tasks must be captured in the shared `loom` system. Ideas or follow-ups that exist only in a local context are disconnected and will be lost.
 
 2.  **Run quality gates**
     *   **Principle:** Serve the whole.
@@ -40,7 +41,7 @@ Ending a work session is a critical process of reconnection. The goal is to leav
 
 3.  **Update issue status**
     *   **Principle:** Remove obscurity.
-    *   **Rationale:** The `beads` system must accurately reflect the state of the work. Closing finished tasks and updating progress removes ambiguity about what has been done and what remains.
+    *   **Rationale:** The `loom` system must accurately reflect the state of the work. Closing finished tasks and updating progress removes ambiguity about what has been done and what remains.
 
 4.  **Push to remote**
     *   **Principle:** The work must remain connected.
@@ -48,7 +49,7 @@ Ending a work session is a critical process of reconnection. The goal is to leav
     *   **Workflow:**
         ```bash
         git pull --rebase
-        bd sync
+        lm sync
         git push
         git status  # MUST show "up to date with origin"
         ```
@@ -118,9 +119,9 @@ When working in this codebase, prefer these tools over manual approaches:
 | Need | CLI | MCP (if available) |
 |------|-----|-----|
 | Code verification | `ground analyze`, `ground find-duplicates` | `ground_*` tools |
-| Task coordination | `lm ready`, `lm work "title"`, `lm daemon` | `loom_*` tools |
-| Issue tracking | `bd ready`, `bd create`, `bd close` | — |
+| Task coordination | `lm ready`, `lm create`, `lm done` | `loom_*` tools |
+| Priority ranking | `lm ready --ranked` | `loom_priority` |
 
 **Use CLI or MCP** - both work. CLI is always available; MCP is convenient in IDEs that support it.
 
-**Beads vs Loom**: Beads (`bd`) tracks issues humans create. Loom (`lm`) coordinates agent work sessions. Use Beads for "what needs doing", Loom for "how agents coordinate doing it".
+**Loom replaces Beads**: Loom (`lm`) now handles both issue tracking and agent coordination. It includes robot-priority ranking, sessions, cost tracking, and crash recovery. Use `lm` for all task management.

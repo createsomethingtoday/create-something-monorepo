@@ -87,7 +87,7 @@ Each domain represents a distinct "mode of being" in the Create Something world,
 **Purpose:** The philosophical foundation for "Less, But Better"
 
 **What happens here:**
-- Curated wisdom from design masters (Rams, Heidegger, etc.)
+- Curated wisdom from design masters (Rams, Heidegger, Ive, etc.)
 - Design principles and standards
 - Philosophical ethos and manifestos
 - The canonical reference for how we build

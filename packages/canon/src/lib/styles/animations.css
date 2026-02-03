@@ -2,14 +2,95 @@
  * Animation & Motion Patterns
  *
  * Purposeful motion that guides attention and reveals state.
- * Based on Canon timing tokens and principles from css-canon.md.
+ * Based on Canon timing tokens and Ive Motion principles.
  *
- * Philosophy: "Motion should be purposeful, not decorative."
- * - Entrance animations reveal hierarchy
- * - Hover states provide feedback
- * - Scroll effects create depth
- * - Stagger creates rhythm
+ * THE AUTOMOTIVE FRAMEWORK CONNECTION:
+ * Motion is the output of precision parts assembled.
+ * 
+ * | Vehicle Part    | Canon Motion              | Principle                    |
+ * |-----------------|---------------------------|------------------------------|
+ * | Engine          | requestAnimationFrame     | Where execution happens      |
+ * | Transmission    | --ease-standard           | Smooth power transfer        |
+ * | Suspension      | will-change, translate3d  | Absorbs jank, smooth ride    |
+ * | German Eng.     | Ive motion principles     | Precision mechanism feel     |
+ *
+ * IVE MOTION PRINCIPLES:
+ * 1. Purposeful - Animation communicates state, not decoration
+ * 2. Physics-based - Lerp-like deceleration via --ease-standard
+ * 3. Restraint - Max --duration-complex (500ms), prefer --duration-micro (200ms)
+ * 4. Depth through translucency - Glass system for layered UI
+ * 5. Inevitable - Motion explains "why", not "look at me"
+ *
+ * PERFORMANCE:
+ * - All transforms use translate3d for GPU compositing
+ * - Use will-change sparingly, remove after animation
+ * - Animate only transform and opacity (never layout properties)
  */
+
+/* ==========================================================================
+   GPU Performance Utilities (Automotive Suspension)
+   
+   Like a 930's suspension: absorbs jank, delivers smooth ride.
+   Use sparingly - GPU layers have memory cost.
+   ========================================================================== */
+
+/* Prep element for animation - add before animating */
+.will-animate {
+	will-change: transform, opacity;
+}
+
+/* Remove after animation settles - clean up GPU layer */
+.animation-settled {
+	will-change: auto;
+}
+
+/* Force GPU compositing for smooth transforms */
+.gpu-accelerated {
+	transform: translate3d(0, 0, 0);
+	backface-visibility: hidden;
+}
+
+/* ==========================================================================
+   Shared Keyframes - DRY Consolidation
+   
+   These keyframes were duplicated 30+ times across properties.
+   Import from Canon instead of defining locally.
+   ========================================================================== */
+
+/* Reveal - most common entrance (previously duplicated 30+ times) */
+@keyframes reveal {
+	from {
+		opacity: 0;
+		transform: translate3d(0, 20px, 0); /* GPU-accelerated */
+	}
+	to {
+		opacity: 1;
+		transform: translate3d(0, 0, 0);
+	}
+}
+
+/* Spin - loading indicator (previously duplicated 5+ times) */
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* Reveal animation class */
+.animate-reveal {
+	animation: reveal var(--duration-standard) var(--ease-standard) forwards;
+}
+
+/* Spin animation class */
+.animate-spin {
+	animation: spin var(--duration-slow) linear infinite;
+}
+
+/* Spinner utility (common pattern) */
+.spinner {
+	animation: spin var(--duration-slow) linear infinite;
+	will-change: transform;
+}
 
 /* ==========================================================================
    Entrance Animations
@@ -27,55 +108,55 @@
 @keyframes slideUp {
 	from {
 		opacity: 0;
-		transform: translateY(40px);
+		transform: translate3d(0, 40px, 0); /* GPU-accelerated */
 	}
 	to {
 		opacity: 1;
-		transform: translateY(0);
+		transform: translate3d(0, 0, 0);
 	}
 }
 
 @keyframes slideDown {
 	from {
 		opacity: 0;
-		transform: translateY(-40px);
+		transform: translate3d(0, -40px, 0); /* GPU-accelerated */
 	}
 	to {
 		opacity: 1;
-		transform: translateY(0);
+		transform: translate3d(0, 0, 0);
 	}
 }
 
 @keyframes slideLeft {
 	from {
 		opacity: 0;
-		transform: translateX(40px);
+		transform: translate3d(40px, 0, 0); /* GPU-accelerated */
 	}
 	to {
 		opacity: 1;
-		transform: translateX(0);
+		transform: translate3d(0, 0, 0);
 	}
 }
 
 @keyframes slideRight {
 	from {
 		opacity: 0;
-		transform: translateX(-40px);
+		transform: translate3d(-40px, 0, 0); /* GPU-accelerated */
 	}
 	to {
 		opacity: 1;
-		transform: translateX(0);
+		transform: translate3d(0, 0, 0);
 	}
 }
 
 @keyframes scaleIn {
 	from {
 		opacity: 0;
-		transform: scale(0.95);
+		transform: scale3d(0.95, 0.95, 1); /* GPU-accelerated */
 	}
 	to {
 		opacity: 1;
-		transform: scale(1);
+		transform: scale3d(1, 1, 1);
 	}
 }
 
@@ -288,22 +369,22 @@
 @keyframes pageEnter {
 	from {
 		opacity: 0;
-		transform: translateY(20px);
+		transform: translate3d(0, 20px, 0); /* GPU-accelerated */
 	}
 	to {
 		opacity: 1;
-		transform: translateY(0);
+		transform: translate3d(0, 0, 0);
 	}
 }
 
 @keyframes pageExit {
 	from {
 		opacity: 1;
-		transform: translateY(0);
+		transform: translate3d(0, 0, 0);
 	}
 	to {
 		opacity: 0;
-		transform: translateY(-20px);
+		transform: translate3d(0, -20px, 0); /* GPU-accelerated */
 	}
 }
 

@@ -32,8 +32,8 @@ wrangler d1 migrations apply ltd-db --remote
 ```
 
 This applies `migrations/0002_seed_canon.sql` which creates:
-- **6 Masters**: Rams, Mies, Tufte, Eames, Heidegger, The Canon
-- **27 Principles**: 10 Rams + 5 Tufte + 5 Heidegger + 4 Mies + 4 Eames + 3 Canon
+- **7 Masters**: Rams, Mies, Tufte, Eames, Heidegger, Ive, The Canon
+- **32 Principles**: 10 Rams + 5 Tufte + 5 Heidegger + 4 Mies + 4 Eames + 5 Ive + 3 Canon
 - **25 Quotes**: 5 per master
 
 ### Verify
@@ -42,7 +42,7 @@ This applies `migrations/0002_seed_canon.sql` which creates:
 wrangler d1 execute ltd-db --remote --command "SELECT name FROM masters"
 ```
 
-Expected output: Dieter Rams, Ludwig Mies van der Rohe, Edward R. Tufte, Charles & Ray Eames, Martin Heidegger, The Canon
+Expected output: Dieter Rams, Ludwig Mies van der Rohe, Edward R. Tufte, Charles & Ray Eames, Martin Heidegger, Jony Ive, The Canon
 
 ---
 

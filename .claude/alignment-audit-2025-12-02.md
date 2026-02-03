@@ -192,7 +192,7 @@ Both `CodeEditor.svelte` and `ExperimentCodeEditor.svelte` configure CodeMirror 
 # 1. Create seed script for .ltd
 pnpm --filter=ltd exec tsx scripts/seed-canon.ts
 
-# 2. Populate masters (Rams, Mies, Eames, Tufte, Heidegger)
+# 2. Populate masters (Rams, Mies, Eames, Tufte, Heidegger, Ive)
 # 3. Populate principles (10 Rams principles + Heidegger concepts)
 # 4. Populate quotes
 # 5. Create canon_references linking experiments → principles

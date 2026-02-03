@@ -110,7 +110,7 @@ All components embody canonical design principles:
 Shared component library implementing canonical design principles. Contains SEO, Navigation, Footer, and paper-related components used across all properties.
 
 ### [@create-something/ltd](./packages/ltd)
-Design canon showcasing masters (Rams, Mies, Eames) and their principles. The philosophical foundation that informs all other properties.
+Design canon showcasing masters (Rams, Mies, Eames, Ive) and their principles. The philosophical foundation that informs all other properties.
 
 ### [@create-something/io](./packages/io)
 Research platform publishing comprehensive papers on AI-native development, edge computing, and systematic methodology.

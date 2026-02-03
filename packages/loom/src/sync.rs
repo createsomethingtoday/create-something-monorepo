@@ -129,6 +129,7 @@ impl GitSync {
                     title: task.title,
                     description: task.description,
                     priority: task.priority,
+                    issue_type: task.issue_type,
                     labels: task.labels,
                     parent: task.parent,
                     evidence: task.evidence,

@@ -9,7 +9,7 @@
 	let searchQuery = $state('');
 
 	// Master filter state (hermeneutic filtering by philosophical lineage)
-	type MasterFilter = 'all' | 'rams' | 'heidegger' | 'tufte' | 'canon';
+	type MasterFilter = 'all' | 'rams' | 'heidegger' | 'tufte' | 'ive' | 'canon';
 	let masterFilter: MasterFilter = $state('all');
 
 	// Sort state
@@ -21,6 +21,7 @@
 		rams: ['rams-principle'],
 		heidegger: ['heidegger-'],
 		tufte: ['tufte-'],
+		ive: ['ive-motion', 'ive-'],
 		canon: ['subtractive-triad', 'hermeneutic-workflow', 'being-modes']
 	};
 
@@ -188,6 +189,13 @@
 						title="Tufte's data visualization principles"
 					>
 						Tufte
+					</button>
+					<button
+						onclick={() => masterFilter = 'ive'}
+						class="filter-chip {masterFilter === 'ive' ? 'filter-chip-active' : ''}"
+						title="Jony Ive - Purposeful motion, physics-based feedback"
+					>
+						Ive
 					</button>
 					<button
 						onclick={() => masterFilter = 'canon'}

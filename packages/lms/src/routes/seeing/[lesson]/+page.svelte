@@ -1,5 +1,7 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { ArrowLeft, ArrowRight, Terminal, Eye } from 'lucide-svelte';
+  import TerminalDemo from '$lib/components/TerminalDemo.svelte';
   import type { PageData } from './$types';
 
   interface Props {
@@ -15,6 +17,112 @@
   const next = $derived(data.next);
   const lessonIndex = $derived(data.lessonIndex);
   const totalLessons = $derived(data.totalLessons);
+
+  let contentEl: HTMLDivElement;
+
+  // Add copy buttons to "Try This" code blocks after content renders
+  onMount(() => {
+    addCopyButtons();
+  });
+
+  // Re-add copy buttons when content changes (navigation)
+  $effect(() => {
+    // Track content changes
+    content;
+    // Wait for DOM update
+    setTimeout(addCopyButtons, 0);
+  });
+
+  function addCopyButtons() {
+    if (!contentEl) return;
+
+    // Find all h2 elements that contain "Try This"
+    const tryThisHeadings = contentEl.querySelectorAll('h2');
+    
+    tryThisHeadings.forEach(h2 => {
+      if (!h2.textContent?.includes('Try This')) return;
+      
+      // Find the next code block after this heading
+      let sibling = h2.nextElementSibling;
+      while (sibling) {
+        if (sibling.tagName === 'PRE') {
+          // Check if we already added a wrapper
+          if (sibling.parentElement?.classList.contains('try-this-prompt')) return;
+          
+          const codeEl = sibling.querySelector('code');
+          const codeText = codeEl?.textContent || '';
+          
+          // Wrap the pre in a container with copy button
+          const wrapper = document.createElement('div');
+          wrapper.className = 'try-this-prompt';
+          
+          const buttonContainer = document.createElement('div');
+          buttonContainer.className = 'prompt-header';
+          buttonContainer.innerHTML = `
+            <span class="prompt-label">Copy this prompt:</span>
+            <button class="copy-prompt-btn" aria-label="Copy to clipboard">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              <span>Copy</span>
+            </button>
+          `;
+          
+          sibling.parentNode?.insertBefore(wrapper, sibling);
+          wrapper.appendChild(buttonContainer);
+          wrapper.appendChild(sibling);
+          
+          // Add click handler
+          const btn = buttonContainer.querySelector('.copy-prompt-btn');
+          btn?.addEventListener('click', async () => {
+            try {
+              await navigator.clipboard.writeText(codeText);
+              btn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>Copied!</span>
+              `;
+              btn.classList.add('copied');
+              setTimeout(() => {
+                btn.innerHTML = `
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                  <span>Copy</span>
+                `;
+                btn.classList.remove('copied');
+              }, 2000);
+            } catch (err) {
+              console.error('Failed to copy:', err);
+            }
+          });
+          
+          break; // Only process the first code block after the heading
+        }
+        // Stop if we hit another h2
+        if (sibling.tagName === 'H2') break;
+        sibling = sibling.nextElementSibling;
+      }
+    });
+  }
+
+  // Terminal demos for setting-up lesson
+  const INSTALL_DEMO = [
+    {
+      input: 'curl -fsSL https://claude.ai/install.sh | bash',
+      output: ['Downloading Claude Code...', 'Installing...', '✓ Claude Code installed!']
+    },
+    {
+      input: 'claude --version',
+      output: ['claude 1.0.16']
+    },
+    {
+      input: 'claude doctor',
+      output: ['✓ Authentication valid', '✓ Network connection OK', '✓ Version up to date']
+    }
+  ];
+
+  const NAVIGATION_DEMO = [
+    { input: 'pwd', output: ['/Users/you/projects'] },
+    { input: 'ls', output: ['my-app/  notes.txt  README.md'] },
+    { input: 'cd my-app', output: [] },
+    { input: 'ls', output: ['src/  package.json  tsconfig.json'] }
+  ];
 </script>
 
 <svelte:head>
@@ -43,8 +151,35 @@
     <p class="lesson-description">{lesson.description}</p>
   </header>
 
+  <!-- Terminal Demos for Setting Up lesson -->
+  {#if lesson.id === 'setting-up'}
+    <div class="lesson-demos">
+      <div class="demo-section">
+        <h2 class="demo-title">What Installation Looks Like</h2>
+        <p class="demo-intro">Three commands. Here's what you'll see:</p>
+        <TerminalDemo 
+          commands={INSTALL_DEMO} 
+          title="Installing Claude Code"
+          typingSpeed={40}
+          pauseBetweenCommands={2000}
+        />
+      </div>
+      
+      <div class="demo-section">
+        <h2 class="demo-title">Terminal Basics</h2>
+        <p class="demo-intro">New to the terminal? Here's how navigation works:</p>
+        <TerminalDemo 
+          commands={NAVIGATION_DEMO} 
+          title="Basic Navigation"
+          typingSpeed={60}
+          pauseBetweenCommands={1500}
+        />
+      </div>
+    </div>
+  {/if}
+
   <!-- Content -->
-  <div class="prose lesson-content">
+  <div class="prose lesson-content" bind:this={contentEl}>
     {@html content}
   </div>
 
@@ -262,14 +397,6 @@
     margin-bottom: var(--space-sm);
   }
 
-  .practice-content code {
-    display: inline-block;
-    padding: var(--space-xs) var(--space-sm);
-    background: var(--color-bg-subtle);
-    border-radius: var(--radius-md);
-    font-family: var(--font-mono);
-    font-size: var(--text-body-sm);
-  }
 
   /* Navigation */
   .lesson-nav {
@@ -323,5 +450,129 @@
   .graduation {
     background: var(--color-accent-subtle);
     border-color: var(--color-accent-emphasis);
+  }
+
+  /* Terminal Demo Sections */
+  .lesson-demos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+    padding: var(--space-lg);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-xl);
+  }
+
+  .demo-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .demo-title {
+    font-size: var(--text-body-lg);
+    font-weight: var(--font-semibold);
+    margin: 0;
+  }
+
+  .demo-intro {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-tertiary);
+    margin: 0;
+  }
+
+  .practice-hint {
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+    margin: 0;
+  }
+
+  /* Table styles for lesson content */
+  .lesson-content :global(table) {
+    width: 100%;
+    margin: var(--space-md) 0;
+    border-collapse: collapse;
+    font-size: var(--text-body-sm);
+  }
+
+  .lesson-content :global(th),
+  .lesson-content :global(td) {
+    padding: var(--space-sm);
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-default);
+  }
+
+  .lesson-content :global(th) {
+    font-weight: var(--font-semibold);
+    color: var(--color-fg-secondary);
+    background: var(--color-bg-elevated);
+  }
+
+  .lesson-content :global(td) {
+    color: var(--color-fg-tertiary);
+  }
+
+  /* Try This Prompt with Copy Button */
+  .lesson-content :global(.try-this-prompt) {
+    margin: var(--space-md) 0;
+    border: 1px solid var(--color-accent-emphasis);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--color-bg-elevated);
+  }
+
+  .lesson-content :global(.prompt-header) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--color-accent-subtle);
+    border-bottom: 1px solid var(--color-accent-emphasis);
+  }
+
+  .lesson-content :global(.prompt-label) {
+    font-size: var(--text-caption);
+    font-weight: var(--font-medium);
+    color: var(--color-fg-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .lesson-content :global(.copy-prompt-btn) {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--color-bg-pure);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+    font-size: var(--text-caption);
+    font-weight: var(--font-medium);
+    color: var(--color-fg-secondary);
+    cursor: pointer;
+    transition: all var(--duration-micro) var(--ease-standard);
+  }
+
+  .lesson-content :global(.copy-prompt-btn:hover) {
+    background: var(--color-bg-elevated);
+    border-color: var(--color-border-emphasis);
+    color: var(--color-fg-primary);
+  }
+
+  .lesson-content :global(.copy-prompt-btn:active) {
+    transform: scale(0.98);
+  }
+
+  .lesson-content :global(.copy-prompt-btn.copied) {
+    background: var(--color-success-subtle);
+    border-color: var(--color-success-emphasis);
+    color: var(--color-success-emphasis);
+  }
+
+  .lesson-content :global(.try-this-prompt pre) {
+    margin: 0;
+    border-radius: 0;
+    border: none;
   }
 </style>

@@ -5,6 +5,12 @@
 	import SecondaryThumbnailUploader from './SecondaryThumbnailUploader.svelte';
 	import type { Asset } from '$lib/server/airtable';
 	import { toast } from '$lib/stores/toast';
+	import { onMount } from 'svelte';
+	
+	// #region agent log
+	const scriptInitTime = performance.now();
+	console.log('[DEBUG:A] EditAssetModal script init', { scriptInitTime: scriptInitTime.toFixed(2) });
+	// #endregion
 
 	interface Props {
 		asset: Asset;
@@ -258,6 +264,27 @@
 			}
 		};
 	});
+	
+	// #region agent log
+	onMount(() => {
+		const mountTime = performance.now();
+		console.log('[DEBUG:A,C] EditAssetModal mounted', { 
+			mountTime: mountTime.toFixed(2),
+			elapsedFromScriptInit: (mountTime - scriptInitTime).toFixed(2) + 'ms',
+			hasExistingImages: { thumbnail: !!asset.thumbnailUrl, carousel: asset.carouselImages?.length || 0, secondary: asset.secondaryThumbnails?.length || 0 }
+		});
+		
+		// Check when modal is visually rendered
+		requestAnimationFrame(() => {
+			const paintTime = performance.now();
+			console.log('[DEBUG:B] EditAssetModal first paint', { 
+				paintTime: paintTime.toFixed(2),
+				elapsedFromMount: (paintTime - mountTime).toFixed(2) + 'ms',
+				elapsedFromScriptInit: (paintTime - scriptInitTime).toFixed(2) + 'ms'
+			});
+		});
+	});
+	// #endregion
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -366,14 +393,14 @@
 							/>
 						</div>
 
-						<div class="secondary-field">
-							<SecondaryThumbnailUploader
-								value={secondaryThumbnails}
-								onchange={handleSecondaryThumbnailsChange}
-								maxImages={2}
-								disabled={isLoading}
-							/>
-						</div>
+					<div class="secondary-field">
+						<SecondaryThumbnailUploader
+							value={secondaryThumbnails}
+							onchange={handleSecondaryThumbnailsChange}
+							maxImages={1}
+							disabled={isLoading}
+						/>
+					</div>
 					</div>
 				</form>
 			</CardContent>

@@ -56,6 +56,9 @@ regex = "1"
 # Home directory expansion
 dirs = "5"
 
+# HTTP client for Notion API
+ureq = { version = "2", features = ["json"] }
+
 [dev-dependencies]
 tempfile = "3"
 

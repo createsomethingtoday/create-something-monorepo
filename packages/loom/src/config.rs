@@ -33,6 +33,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+use crate::notion::NotionConfig;
 
 #[derive(Error, Debug)]
 pub enum ConfigError {
@@ -80,6 +81,10 @@ pub struct LoomConfig {
     /// Sync configuration
     #[serde(default)]
     pub sync: SyncConfig,
+    
+    /// Notion sync configuration
+    #[serde(default)]
+    pub notion: NotionConfig,
 }
 
 fn default_issue_prefix() -> String {
@@ -96,6 +101,7 @@ impl Default for LoomConfig {
             agents: HashMap::new(),
             backfill: BackfillConfig::default(),
             sync: SyncConfig::default(),
+            notion: NotionConfig::default(),
         }
     }
 }
@@ -253,6 +259,7 @@ impl LoomConfig {
             agents: HashMap::new(),
             backfill: BackfillConfig::default(),
             sync: SyncConfig::default(),
+            notion: NotionConfig::default(),
         }
     }
     
@@ -307,6 +314,14 @@ primary = "."
 # sync-branch = "loom-sync"
 # Auto-sync on task completion
 # auto-sync = false
+
+# Notion sync configuration
+# Use 'lm notion init <parent_page_id>' to set up
+[notion]
+# OAuth access token (set via 'lm notion auth' or manually)
+# access-token = "secret_xxx"
+# Database ID (auto-set after 'lm notion init')
+# database-id = "xxx-xxx-xxx"
 "#;
         
         std::fs::write(&config_path, default_config)?;
