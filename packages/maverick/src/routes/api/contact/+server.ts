@@ -123,7 +123,7 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
-				from: 'Maverick X <noreply@workway.co>',
+				from: 'Maverick X <noreply@createsomething.io>',
 				to: data.email,
 				subject: 'Thank you for contacting Maverick X',
 				html: `<!DOCTYPE html>
@@ -168,7 +168,7 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 				'Content-Type': 'application/json'
 			},
 			body: JSON.stringify({
-				from: 'Maverick X Contact Form <noreply@workway.co>',
+				from: 'Maverick X Contact Form <noreply@createsomething.io>',
 				to: 'micah@createsomething.io', // Test email - will change to calvin@maverickmetals.com
 				replyTo: data.email,
 				subject: `Maverick X Inquiry: ${data.category || 'General'} from ${data.name}`,
