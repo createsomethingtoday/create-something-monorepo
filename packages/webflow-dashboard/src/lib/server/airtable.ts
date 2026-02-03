@@ -1120,21 +1120,17 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				}
 				console.log('[Airtable] Asset found:', asset.name);
 
-				// Get the next version number using the correct field ID
-				console.log('[Airtable] Querying existing versions...');
-				const existingVersions = await base(TABLES.ASSET_VERSIONS)
-					.select({
-						filterByFormula: `{fldknoYakli2sqznT} = '${escapeAirtableString(assetId)}'`,
-						sort: [{ field: 'fldn2ImbgwKfCdWWA', direction: 'desc' }],
-						maxRecords: 1
-					})
-					.firstPage();
-				console.log('[Airtable] Existing versions count:', existingVersions.length);
-
-				const nextVersion = existingVersions.length > 0
-					? (Number(existingVersions[0].fields['fldn2ImbgwKfCdWWA']) || 0) + 1
-					: 1;
-				console.log('[Airtable] Next version number:', nextVersion);
+			// Get the next version number by counting existing versions
+			// Matches v1 logic exactly: pages/api/asset/createVersion/[id].js lines 62-64
+			console.log('[Airtable] Querying existing versions...');
+			const existingVersions = await base(TABLES.ASSET_VERSIONS)
+				.select({
+					filterByFormula: `{fldknoYakli2sqznT} = '${escapeAirtableString(assetId)}'`
+				})
+				.all();
+			
+			const nextVersion = existingVersions.length + 1;
+			console.log('[Airtable] Existing versions count:', existingVersions.length, '-> Next version:', nextVersion);
 
 				// Create snapshot of current state
 				const snapshot = {
