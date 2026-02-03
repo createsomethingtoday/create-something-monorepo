@@ -1,7 +1,6 @@
 /*
-  # Allow iframe embedding (no X-Frame-Options restriction)
-  # Content-Security-Policy frame-ancestors is more flexible than X-Frame-Options
-  Content-Security-Policy: frame-ancestors 'self' https://*.createsomething.io https://*.webflow.io https://webflow.com https://*.webflow.com;
+  # Allow iframe embedding on Webflow marketplace and createsomething domains
+  Content-Security-Policy: frame-ancestors 'self' https://webflow.com https://*.webflow.com https://*.webflow.io https://*.createsomething.io;
   
   # Security headers
   X-Content-Type-Options: nosniff
