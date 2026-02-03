@@ -854,13 +854,17 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		 * Update creator profile.
 		 * Uses the same field names as the original Next.js implementation.
 		 */
-		async updateCreator(id: string, data: Partial<Pick<Creator, 'name' | 'biography' | 'legalName'>>): Promise<Creator | null> {
-			const fields: Record<string, string> = {};
+		async updateCreator(id: string, data: Partial<Pick<Creator, 'name' | 'biography' | 'legalName' | 'avatarUrl'>>): Promise<Creator | null> {
+			const fields: Record<string, unknown> = {};
 
 			// Match original Next.js field names
 			if (data.name !== undefined) fields['Name'] = data.name;
 			if (data.biography !== undefined) fields['ℹ️Biography'] = data.biography;
 			if (data.legalName !== undefined) fields['ℹ️Legal Name'] = data.legalName;
+			// Airtable attachment fields require array of {url} objects
+			if (data.avatarUrl !== undefined) {
+				fields['🖼️Avatar (Primary)'] = data.avatarUrl ? [{ url: data.avatarUrl }] : [];
+			}
 
 			if (Object.keys(fields).length === 0) {
 				return null;

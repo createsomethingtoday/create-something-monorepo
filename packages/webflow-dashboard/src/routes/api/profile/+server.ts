@@ -80,6 +80,7 @@ interface ProfileUpdateData {
 	name?: string;
 	biography?: string;
 	legalName?: string;
+	avatarUrl?: string | null;
 }
 
 export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
@@ -108,11 +109,12 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 			throw error(404, 'Profile not found');
 		}
 
-		// Update profile
+		// Update profile (supports name, biography, legalName, and avatarUrl)
 		const updated = await airtable.updateCreator(creator.id, {
 			name: data.name,
 			biography: data.biography,
-			legalName: data.legalName
+			legalName: data.legalName,
+			avatarUrl: data.avatarUrl
 		});
 
 		if (!updated) {

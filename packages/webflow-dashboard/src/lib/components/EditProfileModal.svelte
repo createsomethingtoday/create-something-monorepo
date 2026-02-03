@@ -93,11 +93,12 @@
 		successMessage = null;
 
 		try {
-			// Only send the editable fields, not avatarUrl (which is read-only in current API)
+			// Send all editable fields including avatarUrl
 			const updateData = {
 				name: formData.name,
 				legalName: formData.legalName,
-				biography: formData.biography
+				biography: formData.biography,
+				avatarUrl: formData.avatarUrl
 			};
 
 			const response = await fetch('/api/profile', {
