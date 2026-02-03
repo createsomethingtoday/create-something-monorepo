@@ -48,12 +48,19 @@ export const handle: Handle = async ({ event, resolve }) => {
 		});
 	}
 
-	const response = await resolve(event);
+	const response = await resolve(event, {
+		filterSerializedResponseHeaders(name) {
+			// Allow all headers except X-Frame-Options
+			return name.toLowerCase() !== 'x-frame-options';
+		}
+	});
 
-	// Remove X-Frame-Options to allow iframe embedding (we use CSP frame-ancestors instead)
-	// CSP frame-ancestors is set in static/_headers
+	// Create new response with modified headers for iframe embedding
 	const newHeaders = new Headers(response.headers);
+	newHeaders.delete('x-frame-options');
 	newHeaders.delete('X-Frame-Options');
+	// Set our own frame-ancestors CSP to allow embedding
+	newHeaders.set('Content-Security-Policy', "frame-ancestors 'self' https://webflow.com https://*.webflow.com https://*.webflow.io https://*.createsomething.io");
 
 	return new Response(response.body, {
 		status: response.status,
