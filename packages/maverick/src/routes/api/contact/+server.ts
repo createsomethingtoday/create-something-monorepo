@@ -169,7 +169,7 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 			},
 			body: JSON.stringify({
 				from: 'Maverick X Contact Form <noreply@createsomething.io>',
-				to: 'micah@createsomething.io', // Test email - will change to calvin@maverickmetals.com
+				to: 'calvin@maverickmetals.com',
 				replyTo: data.email,
 				subject: `Maverick X Inquiry: ${data.category || 'General'} from ${data.name}`,
 				html: `<!DOCTYPE html>
