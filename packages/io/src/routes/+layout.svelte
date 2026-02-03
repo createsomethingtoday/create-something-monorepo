@@ -115,7 +115,7 @@
 
 <LayoutSEO property="io" />
 
-<Analytics property="io" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} debug={true} />
+<Analytics property="io" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
 <UnifiedSearch currentProperty="io" localItems={quickAccessItems} />
