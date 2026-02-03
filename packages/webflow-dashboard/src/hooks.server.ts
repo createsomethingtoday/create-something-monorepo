@@ -48,5 +48,16 @@ export const handle: Handle = async ({ event, resolve }) => {
 		});
 	}
 
-	return resolve(event);
+	const response = await resolve(event);
+
+	// Remove X-Frame-Options to allow iframe embedding (we use CSP frame-ancestors instead)
+	// CSP frame-ancestors is set in static/_headers
+	const newHeaders = new Headers(response.headers);
+	newHeaders.delete('X-Frame-Options');
+
+	return new Response(response.body, {
+		status: response.status,
+		statusText: response.statusText,
+		headers: newHeaders
+	});
 };
