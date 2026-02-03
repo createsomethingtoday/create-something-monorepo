@@ -90,43 +90,135 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 			throw error(500, 'Failed to save submission');
 		}
 
-		// Send notification email to sales team
+		// Send emails via Resend
+		const resendKey = platform?.env?.RESEND_API_KEY;
+		if (!resendKey) {
+			console.warn('RESEND_API_KEY not configured - skipping email notifications');
+			return json({
+				success: true,
+				message: 'Thank you for your inquiry. We will be in touch soon.'
+			});
+		}
+
+		// Format the submission details for email
+		const submissionDetails = `
+<div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <p><strong>Name:</strong> ${data.name}</p>
+  <p><strong>Email:</strong> ${data.email}</p>
+  <p><strong>Company:</strong> ${data.company || 'Not provided'}</p>
+  <p><strong>Phone:</strong> ${data.phone || 'Not provided'}</p>
+  ${data.category ? `<p><strong>Category:</strong> ${data.category}</p>` : ''}
+  ${data.products?.length ? `<p><strong>Products:</strong> ${data.products.join(', ')}</p>` : ''}
+  ${data.applications?.length ? `<p><strong>Applications:</strong> ${data.applications.join(', ')}</p>` : ''}
+  ${data.comment ? `<p><strong>Message:</strong><br>${data.comment.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</p>` : ''}
+  <p style="color: #666; font-size: 14px; margin-top: 20px;"><strong>Submitted:</strong> ${new Date().toUTCString()}</p>
+</div>
+		`.trim();
+
+		// Send auto-response to customer
+		const autoResponsePromise = fetch('https://api.resend.com/emails', {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${resendKey}`,
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				from: 'Maverick X <noreply@workway.co>',
+				to: data.email,
+				subject: 'Thank you for contacting Maverick X',
+				html: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #000000; color: #ffffff; }
+    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+    .logo { font-size: 20px; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 32px; }
+    .content { line-height: 1.8; }
+    .message-box { background-color: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 20px; margin: 30px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">MAVERICK X</div>
+    <div class="content">
+      <h1 style="font-size: 24px; margin: 0 0 24px 0;">Thanks for reaching out</h1>
+      <p>Hi ${firstName},</p>
+      <p>We've received your inquiry${data.category ? ` about ${data.category}` : ''} and will get back to you within 24 hours to discuss your needs.</p>
+      ${data.comment ? `
+      <div class="message-box">
+        <p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Your Message:</p>
+        <p style="color: rgba(255, 255, 255, 0.9);">${data.comment.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</p>
+      </div>
+      ` : ''}
+      <p>If you have any immediate questions, feel free to reply to this email.</p>
+      <p>— Maverick X Team</p>
+    </div>
+  </div>
+</body>
+</html>`
+			})
+		});
+
+		// Send notification to sales team
+		const notificationPromise = fetch('https://api.resend.com/emails', {
+			method: 'POST',
+			headers: {
+				Authorization: `Bearer ${resendKey}`,
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				from: 'Maverick X Contact Form <noreply@workway.co>',
+				to: 'micah@createsomething.io', // Test email - will change to calvin@maverickmetals.com
+				replyTo: data.email,
+				subject: `Maverick X Inquiry: ${data.category || 'General'} from ${data.name}`,
+				html: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #000; color: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+    .content { background: #f5f5f5; padding: 20px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>New Maverick X Contact Form Submission</h2>
+  </div>
+  ${submissionDetails}
+</body>
+</html>`
+			})
+		});
+
+		// Wait for both emails to send
 		try {
-			const emailBody = `
-New Contact Form Submission from Maverick X Website
+			const [autoResponse, notification] = await Promise.all([
+				autoResponsePromise,
+				notificationPromise
+			]);
 
-Name: ${data.name}
-Email: ${data.email}
-Company: ${data.company || 'Not provided'}
-Phone: ${data.phone || 'Not provided'}
+			if (!autoResponse.ok) {
+				const errorData = await autoResponse.json();
+				console.error('Failed to send auto-response email:', errorData);
+				// Don't fail the submission if auto-response fails
+			}
 
-Category: ${data.category || 'Not specified'}
-Products: ${data.products?.join(', ') || 'None selected'}
-Applications: ${data.applications?.join(', ') || 'None selected'}
+			if (!notification.ok) {
+				const errorData = await notification.json();
+				console.error('Failed to send notification email:', errorData);
+				// Don't fail the submission if notification fails
+			}
 
-Message:
-${data.comment || 'No message provided'}
-
----
-IP Address: ${ipAddress || 'Unknown'}
-User Agent: ${userAgent || 'Unknown'}
-Submitted: ${new Date().toISOString()}
-			`.trim();
-
-			// Send email to sales team
-			// Using mailto for now - can be upgraded to Resend/SendGrid later
-			console.log('📧 New Contact Submission:', {
-				from: data.email,
+			console.log('📧 Contact submission processed:', {
 				name: data.name,
+				email: data.email,
 				category: data.category
 			});
-
-			// TODO: Integrate with email service (Resend, SendGrid, or Cloudflare Email)
-			// For now, log the submission so it's captured in Cloudflare logs
-			console.log(emailBody);
 		} catch (emailError) {
 			// Log but don't fail the submission if email fails
-			console.error('Failed to send notification email:', emailError);
+			console.error('Email sending error:', emailError);
 		}
 
 		return json({

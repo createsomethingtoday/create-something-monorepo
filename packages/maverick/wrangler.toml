@@ -28,3 +28,6 @@ bucket_name = "maverick-x-assets"
 # Environment variables
 [vars]
 SITE_NAME = "Maverick X"
+
+# Secrets (set via: wrangler secret put RESEND_API_KEY)
+# RESEND_API_KEY - Resend API key for transactional emails
