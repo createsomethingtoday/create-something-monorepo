@@ -7,16 +7,14 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 interface ContactSubmission {
-	firstName: string;
-	lastName: string;
+	name: string;
 	email: string;
 	company?: string;
 	phone?: string;
-	categoryId: string;
-	productId?: string;
-	applicationId?: string;
-	metals?: string[];
-	message?: string;
+	category?: string;
+	products?: string[];
+	applications?: string[];
+	comment?: string;
 }
 
 // Validate email format
@@ -30,20 +28,14 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 		const data: ContactSubmission = await request.json();
 
 		// Validate required fields
-		if (!data.firstName?.trim()) {
-			throw error(400, 'First name is required');
-		}
-		if (!data.lastName?.trim()) {
-			throw error(400, 'Last name is required');
+		if (!data.name?.trim()) {
+			throw error(400, 'Name is required');
 		}
 		if (!data.email?.trim()) {
 			throw error(400, 'Email is required');
 		}
 		if (!isValidEmail(data.email)) {
 			throw error(400, 'Invalid email format');
-		}
-		if (!data.categoryId) {
-			throw error(400, 'Category is required');
 		}
 
 		const db = platform?.env?.DB;
@@ -56,6 +48,11 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 			});
 		}
 
+		// Parse name into first/last (simple split on first space)
+		const nameParts = data.name.trim().split(' ');
+		const firstName = nameParts[0];
+		const lastName = nameParts.slice(1).join(' ') || nameParts[0]; // Use firstName if no last name
+
 		// Get client info for logging
 		let ipAddress: string | null = null;
 		try {
@@ -65,7 +62,7 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 		}
 		const userAgent = request.headers.get('user-agent');
 
-		// Insert into database
+		// Insert into database (matching schema: first_name, last_name, category_id, message, etc.)
 		const result = await db
 			.prepare(
 				`INSERT INTO contact_submissions
@@ -73,16 +70,16 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 			)
 			.bind(
-				data.firstName.trim(),
-				data.lastName.trim(),
+				firstName,
+				lastName,
 				data.email.trim().toLowerCase(),
 				data.company?.trim() || null,
 				data.phone?.trim() || null,
-				data.categoryId,
-				data.productId || null,
-				data.applicationId || null,
-				data.metals ? JSON.stringify(data.metals) : null,
-				data.message?.trim() || null,
+				data.category || 'general', // Use 'general' as default category_id
+				data.products?.[0] || null, // First selected product as product_id
+				data.applications?.[0] || null, // First selected application as application_id
+				data.products ? JSON.stringify(data.products) : null, // Store all as JSON in metals field
+				data.comment?.trim() || null,
 				ipAddress,
 				userAgent
 			)
@@ -93,8 +90,44 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 			throw error(500, 'Failed to save submission');
 		}
 
-		// TODO: Send notification email to sales team
-		// This would integrate with Resend or similar
+		// Send notification email to sales team
+		try {
+			const emailBody = `
+New Contact Form Submission from Maverick X Website
+
+Name: ${data.name}
+Email: ${data.email}
+Company: ${data.company || 'Not provided'}
+Phone: ${data.phone || 'Not provided'}
+
+Category: ${data.category || 'Not specified'}
+Products: ${data.products?.join(', ') || 'None selected'}
+Applications: ${data.applications?.join(', ') || 'None selected'}
+
+Message:
+${data.comment || 'No message provided'}
+
+---
+IP Address: ${ipAddress || 'Unknown'}
+User Agent: ${userAgent || 'Unknown'}
+Submitted: ${new Date().toISOString()}
+			`.trim();
+
+			// Send email to sales team
+			// Using mailto for now - can be upgraded to Resend/SendGrid later
+			console.log('📧 New Contact Submission:', {
+				from: data.email,
+				name: data.name,
+				category: data.category
+			});
+
+			// TODO: Integrate with email service (Resend, SendGrid, or Cloudflare Email)
+			// For now, log the submission so it's captured in Cloudflare logs
+			console.log(emailBody);
+		} catch (emailError) {
+			// Log but don't fail the submission if email fails
+			console.error('Failed to send notification email:', emailError);
+		}
 
 		return json({
 			success: true,
