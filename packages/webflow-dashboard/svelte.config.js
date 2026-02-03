@@ -8,7 +8,15 @@ const config = {
 		adapter: adapter({
 			// Let SvelteKit handle route configuration automatically
 			// This ensures API routes are properly handled by the worker
-		})
+		}),
+		// Disable X-Frame-Options to allow iframe embedding
+		// We use Content-Security-Policy frame-ancestors instead (set in hooks.server.ts)
+		csp: {
+			mode: 'auto',
+			directives: {
+				'frame-ancestors': ["'self'", 'https://webflow.com', 'https://*.webflow.com', 'https://*.webflow.io', 'https://*.createsomething.io']
+			}
+		}
 	}
 };
 

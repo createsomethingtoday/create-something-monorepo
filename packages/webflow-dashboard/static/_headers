@@ -1,6 +1,9 @@
 /*
+  # Remove X-Frame-Options to allow iframe embedding (use CSP frame-ancestors instead)
+  ! X-Frame-Options
+  
   # Allow iframe embedding on Webflow marketplace and createsomething domains
-  Content-Security-Policy: frame-ancestors 'self' https://webflow.com https://*.webflow.com https://*.webflow.io https://*.createsomething.io;
+  Content-Security-Policy: frame-ancestors 'self' https://webflow.com https://*.webflow.com https://*.webflow.io https://*.createsomething.io
   
   # Security headers
   X-Content-Type-Options: nosniff
