@@ -446,6 +446,43 @@ See [Gastown Patterns](./gastown-patterns.md) for distributed work.
 
 ---
 
+---
+
+## Atlas Task Relations (Human-in-Loop Mapping)
+
+Harness workflows can be informed by the [AI Interaction Atlas](https://github.com/quietloudlab/ai-interaction-atlas) task taxonomy, created by Brandon Harwood at [quietloudlab](https://quietloudlab.com). The Atlas provides `human_oversight` levels that map to Harness quality gates:
+
+| Atlas `human_oversight` | Harness Pattern | Example |
+|-------------------------|-----------------|---------|
+| `required` | Always add human review gate | Security-critical auth code |
+| `recommended` | Add confidence threshold gate | Document extraction, generation |
+| `optional` | Quality gate available | Classification, retrieval |
+| `none` | Fully automated | Logging, caching, format conversion |
+
+### Task Relations for Workflow Sequencing
+
+Atlas task relations inform what should follow what:
+
+| Relation Type | Harness Application |
+|---------------|---------------------|
+| `commonly_followed_by` | Auto-suggest next step (e.g., `extract` → `verify`) |
+| `requires_input_from` | Dependency ordering in spec files |
+| `incompatible_with` | Constraint violations to flag |
+| `triggers` | Event-driven workflow steps |
+| `monitored_by` | Feedback loops to reviewers |
+
+### Mapping to Reviewer Types
+
+| Atlas Task Category | Harness Reviewer | Model |
+|---------------------|------------------|-------|
+| `task_verify` (safety-critical) | Security | Haiku → Opus |
+| `task_plan`, `system_orchestrate` | Architecture | Opus |
+| `task_generate`, `task_transform` | Quality | Sonnet |
+
+This taxonomy comes from the Atlas's operationalization of [Gelassenheit](/canon/concepts/gelassenheit)—the question of when automation should yield to human judgment.
+
+---
+
 ## Related
 
 - [Ralph Patterns](./ralph-patterns.md) - Iterative refinement loops (complements harness for test-fix scenarios)

@@ -205,6 +205,54 @@ published: true
 </ul>
 
 
+<h2>Operationalizing Gelassenheit</h2>
+<p>
+		The question Gelassenheit poses—"when should automation yield to human judgment?"—requires 
+		a practical framework for answering. The 
+		<a href="https://github.com/quietloudlab/ai-interaction-atlas">AI Interaction Atlas</a> 
+		provides this framework through its <code>human_oversight</code> taxonomy.
+	</p>
+<div class="manifestation-grid">
+<div class="manifestation">
+<h3>Required</h3>
+<p>
+				<strong>Gestell boundary.</strong> These are the gaps that must not be filled. 
+				Irreversible actions, safety-critical decisions, situations where automation would 
+				"fill every gap" and consume human agency.
+			</p>
+</div>
+<div class="manifestation">
+<h3>Recommended</h3>
+<p>
+				<strong>Verification gates.</strong> The craftsman checks the work. High-stakes 
+				outputs where confidence thresholds determine routing—if uncertain, the human 
+				reviews; if confident, automation proceeds.
+			</p>
+</div>
+<div class="manifestation">
+<h3>Optional</h3>
+<p>
+				<strong>Quality assurance.</strong> Automation is acceptable with appropriate 
+				monitoring. Human review available but not required. The double gesture of 
+				"yes and no" in equilibrium.
+			</p>
+</div>
+<div class="manifestation">
+<h3>None</h3>
+<p>
+				<strong>Zuhandenheit achieved.</strong> The tool disappears in use. Infrastructure 
+				that should be invisible—logging, caching, format conversion. Full automation 
+				serves human purposes without requiring attention.
+			</p>
+</div>
+</div>
+<p>
+		This taxonomy answers Gelassenheit's central question not through abstract principle but 
+		through operational decision: for each task, what level of human engagement serves both 
+		full use and full freedom?
+	</p>
+
+
 <section class="concept-section references">
 <h2>References</h2>
 <ul class="reference-list">
@@ -213,6 +261,10 @@ published: true
 		</li>
 <li>
 			Heidegger, Martin. "The Question Concerning Technology." <em>The Question Concerning Technology and Other Essays</em>. Trans. William Lovitt. New York: Harper &amp; Row, 1977.
+		</li>
+<li>
+			Harwood, Brandon. <a href="https://github.com/quietloudlab/ai-interaction-atlas">AI Interaction Atlas</a>. quietloudlab, 2025. 
+			<em>A shared language for designing AI experiences—provides the <code>human_oversight</code> taxonomy for operationalizing Gelassenheit.</em>
 		</li>
 <li>
 <a href="/canon/concepts/gestell">Canon Concept: Gestell</a>
