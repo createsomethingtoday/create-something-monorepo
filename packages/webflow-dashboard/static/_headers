@@ -1,0 +1,9 @@
+/*
+  # Allow iframe embedding (no X-Frame-Options restriction)
+  # Content-Security-Policy frame-ancestors is more flexible than X-Frame-Options
+  Content-Security-Policy: frame-ancestors 'self' https://*.createsomething.io https://*.webflow.io https://webflow.com https://*.webflow.com;
+  
+  # Security headers
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
