@@ -126,7 +126,7 @@
 <SEO
 	title="Custom MCP Development | Connect Your Systems with Agents"
 	description="We build custom MCP servers that connect your systems with Agents. Production-ready infrastructure, expertly crafted."
-	keywords="MCP development, custom MCP server, Model Context Protocol, AI integration, automation infrastructure, Claude, Cursor, Codex"
+	keywords="MCP development, custom MCP server, Model Context Protocol, Agent integration, automation infrastructure, Claude, Cursor, Codex"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	{services}
