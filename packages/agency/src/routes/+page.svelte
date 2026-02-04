@@ -99,6 +99,30 @@
 	</svg>
 {/snippet}
 
+{#snippet dropboxIcon()}
+	<svg viewBox="0 0 24 24" fill="currentColor">
+		<path d="M6 2L0 6l6 4-6 4 6 4 6-4-6-4 6-4-6-4zm12 0l-6 4 6 4-6 4 6 4 6-4-6-4 6-4-6-4zM6 18l6-4 6 4-6 4-6-4z"/>
+	</svg>
+{/snippet}
+
+{#snippet airtableIcon()}
+	<svg viewBox="0 0 24 24" fill="currentColor">
+		<path d="M11.992 1.966L2.292 5.633c-.27.1-.27.467 0 .567l9.7 3.667c.27.1.567.1.833 0l9.7-3.667c.27-.1.27-.467 0-.567l-9.7-3.667c-.266-.1-.566-.1-.833 0zM2 8.667v7.4c0 .3.2.567.5.633l9 3.333c.167.067.333.067.5 0l9-3.333c.3-.067.5-.333.5-.633v-7.4l-9.5 3.567c-.333.133-.667.133-1 0L2 8.667z"/>
+	</svg>
+{/snippet}
+
+{#snippet twilioIcon()}
+	<svg viewBox="0 0 24 24" fill="currentColor">
+		<path d="M12 0C5.381 0 0 5.381 0 12s5.381 12 12 12 12-5.381 12-12S18.619 0 12 0zm0 20.4c-4.639 0-8.4-3.761-8.4-8.4S7.361 3.6 12 3.6s8.4 3.761 8.4 8.4-3.761 8.4-8.4 8.4zm3.6-11.4c0 .994-.806 1.8-1.8 1.8s-1.8-.806-1.8-1.8.806-1.8 1.8-1.8 1.8.806 1.8 1.8zm-4.8 0c0 .994-.806 1.8-1.8 1.8S7.2 9.994 7.2 9s.806-1.8 1.8-1.8S12 8.006 12 9zm3.6 4.8c0 .994-.806 1.8-1.8 1.8s-1.8-.806-1.8-1.8.806-1.8 1.8-1.8 1.8.806 1.8 1.8zm-4.8 0c0 .994-.806 1.8-1.8 1.8s-1.8-.806-1.8-1.8.806-1.8 1.8-1.8 1.8.806 1.8 1.8z"/>
+	</svg>
+{/snippet}
+
+{#snippet mailchimpIcon()}
+	<svg viewBox="0 0 24 24" fill="currentColor">
+		<path d="M18.875 9.5c-.333-.458-.792-.708-1.333-.708-.292 0-.583.083-.833.208-.125-.333-.333-.625-.625-.833.208-.292.333-.625.333-1 0-.917-.75-1.667-1.667-1.667-.292 0-.583.083-.833.208-.5-.792-1.375-1.333-2.375-1.333-1.542 0-2.792 1.25-2.792 2.792 0 .208.042.417.083.625-.125-.042-.25-.042-.375-.042-1.083 0-1.958.875-1.958 1.958 0 .417.125.792.333 1.125-.417.292-.708.75-.708 1.292 0 .875.708 1.583 1.583 1.583.125 0 .208 0 .333-.042-.042.167-.083.333-.083.5 0 1.083.875 1.958 1.958 1.958.417 0 .792-.125 1.125-.333.292.625.917 1.042 1.625 1.042.583 0 1.125-.292 1.458-.708.333.167.708.25 1.083.25 1.375 0 2.5-1.125 2.5-2.5 0-.292-.042-.583-.125-.833.708-.333 1.208-1.042 1.208-1.875 0-.708-.375-1.375-.917-1.667z"/>
+	</svg>
+{/snippet}
+
 <SEO
 	title="Custom MCP Development | Connect Your Tools to AI"
 	description="We build custom MCP servers that connect your existing tools to AI. Production-ready infrastructure, expertly crafted."
@@ -160,28 +184,34 @@
 					/>
 					
 					<div class="orbital-container">
-						<!-- FAR BACK LAYER - small, slow, blurred (z = -2) -->
+						<!-- FAR BACK LAYER - small, slow, blurred (4 icons) -->
 						<div class="orbit-layer layer-far">
-							<OrbitingCircles radius={145} duration={50} startAngle={30}>
+							<OrbitingCircles radius={145} duration={50} startAngle={0}>
 								<div class="orbit-item orbit-far">
 									{@render githubIcon()}
 								</div>
 							</OrbitingCircles>
 							
-							<OrbitingCircles radius={145} duration={50} startAngle={150}>
+							<OrbitingCircles radius={145} duration={50} startAngle={90}>
 								<div class="orbit-item orbit-far">
 									{@render figmaIcon()}
 								</div>
 							</OrbitingCircles>
 							
-							<OrbitingCircles radius={145} duration={50} startAngle={270}>
+							<OrbitingCircles radius={145} duration={50} startAngle={180}>
 								<div class="orbit-item orbit-far">
 									{@render stripeIcon()}
 								</div>
 							</OrbitingCircles>
+							
+							<OrbitingCircles radius={145} duration={50} startAngle={270}>
+								<div class="orbit-item orbit-far">
+									{@render dropboxIcon()}
+								</div>
+							</OrbitingCircles>
 						</div>
 						
-						<!-- MAIN LAYER - clear, medium speed (z = 0) -->
+						<!-- MAIN LAYER - clear, medium speed (4 icons) -->
 						<div class="orbit-layer layer-main">
 							<OrbitingCircles radius={110} duration={30} startAngle={0}>
 								<div class="orbit-item">
@@ -208,7 +238,7 @@
 							</OrbitingCircles>
 						</div>
 						
-						<!-- CLOSE LAYER - larger, faster, slight blur (z = +1) -->
+						<!-- CLOSE LAYER - larger, faster, slight blur (4 icons) -->
 						<div class="orbit-layer layer-close">
 							<OrbitingCircles radius={75} duration={18} startAngle={45} reverse>
 								<div class="orbit-item orbit-close">
@@ -216,15 +246,21 @@
 								</div>
 							</OrbitingCircles>
 							
-							<OrbitingCircles radius={75} duration={18} startAngle={165} reverse>
+							<OrbitingCircles radius={75} duration={18} startAngle={135} reverse>
 								<div class="orbit-item orbit-close">
 									{@render zapierIcon()}
 								</div>
 							</OrbitingCircles>
 							
-							<OrbitingCircles radius={75} duration={18} startAngle={285} reverse>
+							<OrbitingCircles radius={75} duration={18} startAngle={225} reverse>
 								<div class="orbit-item orbit-close">
 									{@render googleIcon()}
+								</div>
+							</OrbitingCircles>
+							
+							<OrbitingCircles radius={75} duration={18} startAngle={315} reverse>
+								<div class="orbit-item orbit-close">
+									{@render airtableIcon()}
 								</div>
 							</OrbitingCircles>
 						</div>
@@ -474,7 +510,7 @@
 		grid-template-columns: 1fr 1fr;
 		gap: var(--space-8, 3rem);
 		align-items: center;
-		max-width: var(--content-width-full);
+		max-width: var(--content-width-xl);
 		margin: 0 auto;
 	}
 	

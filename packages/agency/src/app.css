@@ -83,8 +83,7 @@
   --container-padding: var(--space-5);     /* 24px - horizontal container padding */
   
   /* Content Width Scale - DRY max-widths */
-  --content-width-full: 80rem;             /* 1280px - Nav, footer, full-bleed */
-  --content-width-xl: 1100px;              /* Hero, wide two-column layouts */
+  --content-width-xl: 1100px;              /* Nav, footer, hero, wide layouts */
   --content-width-lg: 900px;               /* Standard section containers */
   --content-width-md: 600px;               /* Pricing grids, diagrams */
   --content-width-sm: 540px;               /* Prose, intro text */
@@ -162,7 +161,7 @@ h4 {
 
 /* Override Tailwind max-w-7xl to use token */
 .nav-container > div {
-  max-width: var(--content-width-full);
+  max-width: var(--content-width-xl);
 }
 
 /* ==========================================================================
