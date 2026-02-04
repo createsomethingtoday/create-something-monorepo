@@ -423,7 +423,7 @@
 <style>
 	/* Section containers */
 	.section-container {
-		max-width: 900px;
+		max-width: var(--content-width-lg);
 		margin: 0 auto;
 		padding: 0 var(--container-padding, 1.5rem);
 	}
@@ -441,7 +441,7 @@
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-secondary);
 		text-align: center;
-		max-width: 540px;
+		max-width: var(--content-width-sm);
 		margin: 0 auto var(--space-8, 3rem);
 		line-height: var(--leading-relaxed);
 	}
@@ -474,7 +474,7 @@
 		grid-template-columns: 1fr 1fr;
 		gap: var(--space-8, 3rem);
 		align-items: center;
-		max-width: 1100px;
+		max-width: var(--content-width-xl);
 		margin: 0 auto;
 	}
 	
@@ -505,7 +505,7 @@
 		color: var(--color-fg-secondary);
 		margin-bottom: var(--space-8, 3rem);
 		line-height: var(--leading-relaxed);
-		max-width: 420px;
+		max-width: var(--content-width-sm);
 	}
 	
 	.hero-cta {
@@ -689,7 +689,7 @@
 	}
 	
 	.layers-diagram {
-		max-width: 560px;
+		max-width: var(--content-width-md);
 		margin: 0 auto var(--space-6, 2rem);
 	}
 	
@@ -847,7 +847,7 @@
 		grid-template-columns: repeat(2, 1fr);
 		gap: var(--space-4, 1rem);
 		align-items: stretch;
-		max-width: 600px;
+		max-width: var(--content-width-md);
 		margin: 0 auto;
 	}
 	

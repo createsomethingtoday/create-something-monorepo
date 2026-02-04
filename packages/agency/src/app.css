@@ -82,6 +82,12 @@
   --section-gap: var(--layout-3);          /* 64px - between sections */
   --container-padding: var(--space-5);     /* 24px - horizontal container padding */
   
+  /* Content Width Scale - DRY max-widths */
+  --content-width-xl: 1100px;              /* Hero, wide two-column layouts */
+  --content-width-lg: 900px;               /* Standard section containers */
+  --content-width-md: 600px;               /* Pricing grids, diagrams */
+  --content-width-sm: 540px;               /* Prose, intro text */
+  
   /* ==========================================================================
      WORKWAY Typography Overrides
      
