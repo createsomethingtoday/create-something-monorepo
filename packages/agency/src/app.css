@@ -3,8 +3,16 @@
   Property: .agency (Services)
 
   Imports shared Canon tokens from @create-something/canon
-  Only property-specific customizations defined here.
+  Property-specific customizations defined here.
+
+  Aligned with WORKWAY design system for visual consistency.
+  Bridge property: CREATE SOMETHING ↔ WORKWAY
 */
+
+/* Import Google Fonts */
+/* Stack Sans Notch: Headings only */
+/* JetBrains Mono: Body text, buttons, UI, everything else */
+@import url('https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 /* Import shared Canon Design System (must precede @tailwind) */
 @import '@create-something/canon/styles/canon.css';
@@ -18,28 +26,891 @@
 /* ==========================================================================
    .agency Property Customizations
    View Transitions: Efficient (200ms) - Direct service delivery
+   
+   WORKWAY Alignment: This file adds WORKWAY-specific enhancements that
+   extend the Canon base system. Reference: WORKWAY/workway-platform/apps/web/src/styles.css
    ========================================================================== */
 
 :root {
   --view-transition-duration: 200ms;
+  
+  /* ==========================================================================
+     Font Stack - Two-family system
+     
+     Display (--font-display): Stack Sans Notch - headings only
+     Body (--font-sans): JetBrains Mono - body text, buttons, UI, everything else
+     ========================================================================== */
+  --font-display: 'Stack Sans Notch', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-sans: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  
+  /* ==========================================================================
+     Bouncy Easing - Apple-style overshoot for fluid interactions
+     ========================================================================== */
+  --ease-bounce: cubic-bezier(0.175, 0.885, 0.32, 2.2);
+  --duration-bounce: 400ms;
+  
+  /* ==========================================================================
+     TWO-SCALE SPACING SYSTEM (WORKWAY-aligned, Carbon-inspired)
+     
+     Component Scale: Internal padding, gaps, micro-spacing
+     Layout Scale: Section padding, page structure, macro-spacing
+     ========================================================================== */
+  
+  /* Component Spacing Scale - for internal component use */
+  --space-1: 0.25rem;      /* 4px  - tight gaps, icon spacing */
+  --space-2: 0.5rem;       /* 8px  - compact padding, small gaps */
+  --space-3: 0.75rem;      /* 12px - button padding, input gaps */
+  --space-4: 1rem;         /* 16px - standard component padding */
+  --space-5: 1.5rem;       /* 24px - generous component padding */
+  --space-6: 2rem;         /* 32px - large component spacing */
+  --space-7: 2.5rem;       /* 40px - card internal sections */
+  --space-8: 3rem;         /* 48px - maximum component spacing */
+  
+  /* Layout Spacing Scale - for page structure */
+  --layout-1: 2rem;        /* 32px  - minimum section gap */
+  --layout-2: 3rem;        /* 48px  - tight sections */
+  --layout-3: 4rem;        /* 64px  - standard section padding */
+  --layout-4: 6rem;        /* 96px  - generous sections (recommended) */
+  --layout-5: 8rem;        /* 128px - hero-level breathing room */
+  --layout-6: 10rem;       /* 160px - maximum separation */
+  
+  /* Semantic Layout Tokens - explicit purpose */
+  --section-padding: var(--layout-4);      /* 96px - default section padding */
+  --section-padding-sm: var(--layout-3);   /* 64px - compact sections */
+  --section-padding-lg: var(--layout-5);   /* 128px - hero sections */
+  --section-gap: var(--layout-3);          /* 64px - between sections */
+  --container-padding: var(--space-5);     /* 24px - horizontal container padding */
+  
+  /* ==========================================================================
+     WORKWAY Typography Overrides
+     
+     Enterprise-aligned fluid type scale (Linear/Vercel style)
+     Larger display text for landing pages
+     ========================================================================== */
+  
+  --text-display-xl: clamp(3.5rem, 5vw + 2rem, 7rem);   /* 56px → 112px */
+  --text-display: clamp(2.5rem, 4vw + 1.5rem, 5rem);    /* 40px → 80px */
+  --text-h1: clamp(2rem, 3vw + 1rem, 3.5rem);           /* 32px → 56px */
+  --text-h2: clamp(1.5rem, 2vw + 0.75rem, 2.25rem);     /* 24px → 36px */
+  --text-h3: clamp(1.25rem, 1.5vw + 0.5rem, 1.75rem);   /* 20px → 28px */
+  --text-h4: clamp(1.125rem, 1vw + 0.5rem, 1.5rem);     /* 18px → 24px */
+  
+  /* Reveal animation duration */
+  --duration-reveal: 400ms;
 }
 
-/* Button styles specific to .agency (service-oriented CTAs) */
+/* ==========================================================================
+   WORKWAY Typography Base Styles
+   Comprehensive heading styles with font-feature-settings
+   ========================================================================== */
+
+h1 {
+  font-size: var(--text-display-xl);
+  font-weight: var(--font-semibold);
+  line-height: 1.05;
+  letter-spacing: var(--tracking-tighter);
+  max-width: 20ch;
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "ss01" 1;
+}
+
+h2 {
+  font-size: var(--text-h1);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tighter);
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "ss01" 1;
+}
+
+h3 {
+  font-size: var(--text-h2);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "ss01" 1;
+}
+
+h4 {
+  font-size: var(--text-h3);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-snug);
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "ss01" 1;
+}
+
+/* ==========================================================================
+   Navigation Logo - Stack Sans Notch
+   ========================================================================== */
+
+.nav-logo {
+  font-family: var(--font-display);
+}
+
+/* ==========================================================================
+   Section & Hero Spacing - WORKWAY-aligned
+   Uses the two-scale layout system
+   ========================================================================== */
+
+section {
+  padding-top: var(--section-padding);
+  padding-bottom: var(--section-padding);
+}
+
+.hero {
+  padding-top: var(--section-padding-lg);
+  padding-bottom: var(--section-padding);
+  margin: 0 auto;
+}
+
+/* Landing page hero headline - larger than standard h1 */
+.hero-headline {
+  font-size: clamp(3rem, 8vw, 7rem) !important; /* 48px → 112px */
+  font-weight: var(--font-semibold);
+  line-height: 1.05;
+  letter-spacing: var(--tracking-tighter);
+}
+
+/* Small text refinement */
+.text-sm {
+  letter-spacing: 0.005em;
+}
+
+/* ==========================================================================
+   Global Base Styles - WORKWAY-aligned
+   Comprehensive typography and interaction defaults
+   ========================================================================== */
+
+/* Links - Canonical CREATE SOMETHING micro-interactions */
+a {
+  transition: opacity var(--duration-micro) var(--ease-standard);
+}
+
+a:hover {
+  opacity: 0.7;
+}
+
+/* Custom focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: 0px;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ==========================================================================
+   Body Typography Polish - WORKWAY-aligned
+   Tighter letter-spacing for modern, refined appearance
+   ========================================================================== */
+body {
+  letter-spacing: var(--tracking-tight, -0.015em);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================================================
+   Button System - WORKWAY-aligned
+   Primary: White on black (high contrast CTA)
+   Secondary: Glass effect with border
+   ========================================================================== */
+
 .button-primary {
-  transition: all var(--duration-standard) var(--ease-standard);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--color-fg-primary);
+  color: var(--color-bg-pure);
+  font-weight: var(--font-semibold);
+  border-radius: var(--radius-lg);
+  transition: 
+    background-color var(--duration-standard) var(--ease-standard),
+    transform var(--duration-bounce) var(--ease-bounce),
+    box-shadow var(--duration-standard) var(--ease-standard);
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 .button-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-glow-lg);
+  background-color: var(--color-fg-secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+}
+
+.button-primary:active {
+  transform: scale(0.97) translateY(0);
+  transition-duration: 100ms;
 }
 
 .button-secondary {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background-color: transparent;
+  border: 1px solid var(--color-border-emphasis);
+  color: var(--color-fg-primary);
+  font-weight: var(--font-semibold);
+  border-radius: var(--radius-lg);
   transition: all var(--duration-standard) var(--ease-standard);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Glass blur layer for secondary button */
+.button-secondary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-color: var(--glass-bg-light);
+  backdrop-filter: blur(16px) saturate(120%);
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 .button-secondary:hover {
-  background: var(--color-fg-primary);
-  color: var(--color-bg-pure);
-  border-color: var(--color-fg-primary);
+  border-color: var(--color-border-strong);
+}
+
+.button-secondary:hover::before {
+  background-color: var(--glass-bg-medium);
+}
+
+/* ==========================================================================
+   Card Patterns - WORKWAY-aligned
+   Subtle transitions for list items and cards
+   ========================================================================== */
+
+.card {
+  transition: all var(--duration-standard) var(--ease-standard);
+}
+
+.card:hover {
+  border-color: var(--color-border-strong);
+  transform: translateX(2px);
+}
+
+/* ==========================================================================
+   Shine Card System - CSS-only premium card effects
+   Box-shadow based shine (more performant than gradients)
+   ========================================================================== */
+
+/* Liquid glass shine tokens */
+:root {
+  --glass-shine-soft: 
+    inset 1px 1px 2px 0 rgba(255, 255, 255, 0.08),
+    inset -1px -1px 1px 0 rgba(255, 255, 255, 0.04);
+  --glass-shine-standard: 
+    inset 2px 2px 1px 0 rgba(255, 255, 255, 0.1),
+    inset -1px -1px 1px 1px rgba(255, 255, 255, 0.06);
+  --glass-shine-strong: 
+    inset 3px 3px 2px 0 rgba(255, 255, 255, 0.15),
+    inset -2px -2px 2px 1px rgba(255, 255, 255, 0.08);
+  --glass-outer-sm: 0 6px 6px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 0, 0, 0.1);
+  --glass-outer-md: 0 8px 16px rgba(0, 0, 0, 0.25), 0 0 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Shine card - adds premium glass-like shine effect */
+.shine-card {
+  position: relative;
+  border-radius: var(--radius-lg, 12px);
+  border: 1px solid var(--color-border-default);
+  background: var(--color-bg-pure);
+  box-shadow: var(--glass-shine-soft);
+  transition: 
+    border-color var(--duration-standard) var(--ease-standard),
+    box-shadow var(--duration-standard) var(--ease-standard),
+    transform var(--duration-bounce) var(--ease-bounce);
+}
+
+.shine-card:hover {
+  border-color: var(--color-border-emphasis);
+  box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
+  transform: translateY(-2px);
+}
+
+/* Featured shine card - with accent glow */
+.shine-card-featured {
+  position: relative;
+  border-radius: var(--radius-lg, 12px);
+  border: 1px solid rgba(96, 165, 250, 0.3);
+  background: linear-gradient(
+    135deg,
+    rgba(96, 165, 250, 0.03) 0%,
+    rgba(167, 139, 250, 0.03) 100%
+  );
+  box-shadow: 
+    var(--glass-shine-standard),
+    0 0 0 1px rgba(96, 165, 250, 0.1);
+  transition: 
+    border-color var(--duration-standard) var(--ease-standard),
+    box-shadow var(--duration-standard) var(--ease-standard),
+    transform var(--duration-bounce) var(--ease-bounce);
+}
+
+.shine-card-featured:hover {
+  border-color: rgba(96, 165, 250, 0.5);
+  box-shadow: 
+    var(--glass-shine-strong),
+    0 0 0 1px rgba(96, 165, 250, 0.2),
+    0 8px 32px rgba(96, 165, 250, 0.15),
+    0 0 60px rgba(96, 165, 250, 0.08);
+  transform: translateY(-3px);
+}
+
+/* Animated border shimmer for featured cards */
+@keyframes border-shimmer {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.shine-card-featured::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(96, 165, 250, 0.4) 0%,
+    rgba(167, 139, 250, 0.4) 50%,
+    rgba(96, 165, 250, 0.4) 100%
+  );
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  animation: border-shimmer 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Animation Utilities - WORKWAY-aligned
+   Replace Framer Motion with CSS animations
+   ========================================================================== */
+
+/* Fade in with slight upward motion */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Utility classes for common animations */
+.animate-fade-in-up {
+  animation: fadeInUp var(--duration-standard) var(--ease-standard) forwards;
+}
+
+.animate-delay-100 {
+  animation-delay: 0.1s;
+  opacity: 0;
+}
+
+.animate-delay-200 {
+  animation-delay: 0.2s;
+  opacity: 0;
+}
+
+.animate-delay-300 {
+  animation-delay: 0.3s;
+  opacity: 0;
+}
+
+/* ==========================================================================
+   Glass Utility Classes - WORKWAY-aligned
+   "The Automation Layer" - Dark textured obsidian glass.
+   Use sparingly: navigation, modals, workflow cards only.
+   ========================================================================== */
+
+/* Base glass effect - applies blur and sets up stacking context */
+.glass {
+  backdrop-filter: blur(var(--glass-blur-md)) saturate(120%);
+  background-color: var(--glass-bg-light);
+  border: 1px solid var(--glass-border-light);
+}
+
+/* Glass variants by intensity */
+.glass-sm {
+  backdrop-filter: blur(var(--glass-blur-sm)) saturate(110%);
+  background-color: var(--glass-bg-subtle);
+  border: 1px solid var(--glass-border-subtle);
+}
+
+/* glass-lg uses ::before for blur to allow nested glass children */
+.glass-lg {
+  background-color: transparent;
+  border: 1px solid var(--glass-border-medium);
+}
+
+.glass-lg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-color: var(--glass-bg-medium);
+  backdrop-filter: blur(var(--glass-blur-lg)) saturate(130%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.glass-xl {
+  backdrop-filter: blur(var(--glass-blur-xl)) saturate(140%);
+  background-color: var(--glass-bg-strong);
+  border: 1px solid var(--glass-border-strong);
+}
+
+/* Glass with shadow - for floating elements (dropdowns, modals) */
+.glass-elevated {
+  backdrop-filter: blur(var(--glass-blur-lg)) saturate(130%);
+  background-color: var(--glass-bg-medium);
+  border: 1px solid var(--glass-border-medium);
+  box-shadow: var(--glass-shadow-md);
+}
+
+/* Precision glass - Porsche-grade engineering aesthetic */
+.glass-precision {
+  backdrop-filter: blur(64px) saturate(180%);
+  background-color: rgba(15, 15, 20, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 16px 64px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Glass card - for workflow cards */
+.glass-card {
+  backdrop-filter: blur(var(--glass-blur-md)) saturate(120%);
+  background-color: var(--glass-bg-light);
+  border: 1px solid var(--glass-border-light);
+  border-radius: var(--radius-lg);
+  transition: all var(--duration-standard) var(--ease-standard);
+}
+
+.glass-card:hover {
+  background-color: var(--glass-bg-medium);
+  border-color: var(--glass-border-medium);
+  box-shadow: var(--glass-shadow-sm);
+}
+
+/* ==========================================================================
+   Liquid Glass - Apple-style Refraction Effect
+   Combines refraction with highlight layers for "sitting on glass" effect.
+   ========================================================================== */
+
+/* Liquid glass base */
+.liquid-glass {
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(var(--glass-blur-lg)) saturate(130%);
+  background-color: var(--glass-bg-light);
+  border: 1px solid var(--glass-border-medium);
+}
+
+/* Highlight shimmer layer */
+.liquid-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.04) 30%,
+    transparent 60%
+  );
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Top edge light reflection */
+.liquid-glass::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  pointer-events: none;
+}
+
+/* Liquid glass icon */
+.liquid-glass-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  transition: all var(--duration-standard) var(--ease-standard);
+}
+
+.liquid-glass-icon:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Tinted variants */
+.liquid-glass-tint-purple {
+  background-color: color-mix(in srgb, #a78bfa 10%, var(--glass-bg-light));
+}
+
+.liquid-glass-tint-blue {
+  background-color: color-mix(in srgb, #60a5fa 10%, var(--glass-bg-light));
+}
+
+.liquid-glass-tint-green {
+  background-color: color-mix(in srgb, #4ade80 10%, var(--glass-bg-light));
+}
+
+/* ==========================================================================
+   Infrastructure Grid Background - WORKWAY-aligned
+   Reinforces "Automation Infrastructure" positioning - blueprint aesthetic.
+   ========================================================================== */
+
+.bg-grid {
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-attachment: fixed;
+}
+
+/* Grid with vertical fade - fades to black at bottom (hero sections) */
+.bg-grid-fade {
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: linear-gradient(to bottom, black 30%, transparent 85%);
+  -webkit-mask-image: linear-gradient(to bottom, black 30%, transparent 85%);
+}
+
+/* Grid with radial vignette */
+.bg-grid-vignette {
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-attachment: fixed;
+  mask-image: radial-gradient(circle at center, black 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(circle at center, black 0%, transparent 70%);
+}
+
+/* Subtle variant - lighter for secondary pages */
+.bg-grid-subtle {
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-attachment: fixed;
+}
+
+/* ==========================================================================
+   Interactive States - WORKWAY-aligned
+   Micro-interactions: 150ms - feels instantaneous
+   ========================================================================== */
+
+.interactive {
+  transition: 
+    opacity var(--duration-micro) var(--ease-standard),
+    transform var(--duration-micro) var(--ease-standard);
+  will-change: opacity, transform;
+}
+
+.interactive:hover {
+  opacity: 0.85;
+}
+
+.interactive:active {
+  transform: scale(0.98);
+}
+
+/* Pressable button - tactile feedback */
+.pressable {
+  transition: 
+    transform var(--duration-micro) var(--ease-standard),
+    box-shadow var(--duration-micro) var(--ease-standard);
+}
+
+.pressable:active {
+  transform: scale(0.97);
+}
+
+/* Hover lift - subtle elevation change */
+.hover-lift {
+  transition: transform var(--duration-micro) var(--ease-standard);
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   Scroll Reveal - WORKWAY-aligned
+   Content appears: 400ms with ease-out
+   ========================================================================== */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: 
+    opacity var(--duration-reveal) ease-out,
+    transform var(--duration-reveal) ease-out;
+  will-change: opacity, transform;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger delays */
+.reveal-delay-1 { transition-delay: 50ms; }
+.reveal-delay-2 { transition-delay: 100ms; }
+.reveal-delay-3 { transition-delay: 150ms; }
+.reveal-delay-4 { transition-delay: 200ms; }
+.reveal-delay-5 { transition-delay: 250ms; }
+
+/* ==========================================================================
+   Dim Siblings Pattern - WORKWAY-aligned
+   Container dims all children, hovered child stays bright
+   ========================================================================== */
+
+.dim-siblings-on-hover > * {
+  transition: opacity var(--duration-standard) var(--ease-standard),
+              transform var(--duration-standard) var(--ease-standard);
+}
+
+.dim-siblings-on-hover:hover > * {
+  opacity: 0.4;
+}
+
+.dim-siblings-on-hover:hover > *:hover {
+  opacity: 1;
+  transform: translateX(4px);
+}
+
+/* ==========================================================================
+   Continuous Animations - WORKWAY-aligned
+   For status indicators - use sparingly
+   ========================================================================== */
+
+/* Skeleton loading shimmer */
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-subtle) 0%,
+    var(--color-bg-surface) 50%,
+    var(--color-bg-subtle) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+/* Spin for loading indicators */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* ==========================================================================
+   MagicUI Animation Keyframes - WORKWAY-aligned
+   Premium effects for signature UI elements
+   ========================================================================== */
+
+/* Border Beam - animated border glow */
+@keyframes border-beam {
+  100% {
+    offset-distance: 100%;
+  }
+}
+
+.animate-border-beam {
+  animation: border-beam calc(var(--duration, 15) * 1s) infinite linear;
+}
+
+/* Shimmer Slide - for shimmer buttons */
+@keyframes shimmer-slide {
+  to {
+    transform: translate(calc(100cqw - 100%), 0);
+  }
+}
+
+.animate-shimmer-slide {
+  animation: shimmer-slide var(--speed, 3s) ease-in-out infinite alternate;
+}
+
+/* Spin Around - for shimmer spark effect */
+@keyframes spin-around {
+  0% {
+    transform: translateZ(0) rotate(0);
+  }
+  15%, 35% {
+    transform: translateZ(0) rotate(90deg);
+  }
+  65%, 85% {
+    transform: translateZ(0) rotate(270deg);
+  }
+  100% {
+    transform: translateZ(0) rotate(360deg);
+  }
+}
+
+.animate-spin-around {
+  animation: spin-around calc(var(--speed, 3s) * 2) infinite linear;
+}
+
+/* Shiny Text - shimmer across text */
+@keyframes shiny-text {
+  0%, 90%, 100% {
+    background-position: calc(-100% - var(--shiny-width, 100px)) 0;
+  }
+  30%, 60% {
+    background-position: calc(100% + var(--shiny-width, 100px)) 0;
+  }
+}
+
+.animate-shiny-text {
+  animation: shiny-text 8s infinite;
+}
+
+/* Blur Fade - entrance with blur */
+@keyframes blur-fade-in {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0px);
+    transform: translateY(0);
+  }
+}
+
+.animate-blur-fade {
+  animation: blur-fade-in 0.4s ease-out forwards;
+}
+
+.animate-blur-fade-delay-1 { animation-delay: 0.1s; opacity: 0; }
+.animate-blur-fade-delay-2 { animation-delay: 0.2s; opacity: 0; }
+.animate-blur-fade-delay-3 { animation-delay: 0.3s; opacity: 0; }
+.animate-blur-fade-delay-4 { animation-delay: 0.4s; opacity: 0; }
+
+/* Shine effect - for buttons and cards */
+@keyframes shine {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
+}
+
+.animate-shine {
+  animation: shine var(--duration, 3s) infinite linear;
+}
+
+/* Aurora Text - flowing gradient */
+@keyframes aurora-text {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.animate-aurora-text {
+  animation: aurora-text 8s ease infinite;
+}
+
+/* Marquee - infinite scroll */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-100% - var(--gap, 1rem))); }
+}
+
+.animate-marquee {
+  animation: marquee var(--duration, 30s) linear infinite;
+}
+
+/* Blink - cursor effect */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* ==========================================================================
+   Accessibility - Respect User Preferences
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .interactive,
+  .pressable,
+  .hover-lift,
+  .dim-siblings-on-hover > * {
+    transition: none !important;
+    animation: none !important;
+  }
+  
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Touch devices - disable hover animations */
+@media (hover: none) and (pointer: coarse) {
+  .interactive:hover {
+    opacity: 1;
+  }
+  
+  .hover-lift:hover {
+    transform: none;
+  }
+  
+  .dim-siblings-on-hover:hover > * {
+    opacity: 1;
+  }
 }

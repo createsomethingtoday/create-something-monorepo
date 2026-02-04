@@ -8,10 +8,10 @@
 	const services = [
 		{
 			name: 'Custom MCP Server Development',
-			description: 'We build MCP servers that connect your existing tools to AI. Starter includes 2 tools + 1 agent for $500. See AI work across your systems.',
+			description: 'We build MCP servers that connect your existing tools to AI. Per-tool pricing: $250 per integration, $250 per agent configuration.',
 			type: 'MCP Server Development',
-			price: '500',
-			priceDescription: 'Starting price for Starter tier'
+			price: '250',
+			priceDescription: 'Per integration/tool pricing'
 		}
 	];
 	
@@ -286,63 +286,88 @@
 <section class="services-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="section-heading">Simple Pricing</h2>
+			<h2 class="section-heading">Per-Tool Pricing</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="section-intro">
-				Fixed prices. No hourly billing. You know what you're paying before we start.
+				Transparent pricing. Pay for what you need. Scale linearly.
 			</p>
 		</BlurFade>
 		
-		<div class="services-grid">
-			<BlurFade delay={0.2}>
-				<div class="service-card">
-					<h3>Starter</h3>
-					<div class="service-price">$500</div>
-					<p class="service-description">
-						See AI work across your systems. Two tools connected, one agent configured.
-					</p>
-					<ul class="service-includes">
-						<li>Two API integrations</li>
-						<li>One configured agent</li>
-						<li>Deployment package</li>
-						<li>3–5 day turnaround</li>
-					</ul>
+		<!-- Core Pricing -->
+		<BlurFade delay={0.2}>
+			<div class="pricing-section">
+				<h4 class="pricing-section-label">Core</h4>
+				<div class="pricing-row">
+					<div class="pricing-card featured">
+						<div class="pricing-label">Integration</div>
+						<div class="pricing-amount">$250</div>
+						<div class="pricing-unit">per tool</div>
+						<p class="pricing-description">
+							Salesforce, HubSpot, Notion, Slack, or your internal systems.
+						</p>
+					</div>
+					
+					<div class="pricing-card featured">
+						<div class="pricing-label">Agent</div>
+						<div class="pricing-amount">$250</div>
+						<div class="pricing-unit">per agent</div>
+						<p class="pricing-description">
+							Claude, Cursor, Codex, Workers AI, or Cloudflare Workflows.
+						</p>
+					</div>
 				</div>
-			</BlurFade>
-			
-			<BlurFade delay={0.3}>
-				<div class="service-card featured">
-					<h3>Pro</h3>
-					<div class="service-price">$2,500</div>
-					<p class="service-description">
-						Scale your MCP infrastructure. More tools, complex auth, data transforms.
-					</p>
-					<ul class="service-includes">
-						<li>5+ API integrations</li>
-						<li>OAuth 2.0 / complex auth</li>
-						<li>Two configured agents</li>
-						<li>1–2 week turnaround</li>
-					</ul>
+			</div>
+		</BlurFade>
+		
+		<!-- Add-ons -->
+		<BlurFade delay={0.3}>
+			<div class="pricing-section">
+				<h4 class="pricing-section-label">Add-ons</h4>
+				<div class="pricing-row">
+					<div class="pricing-card">
+						<div class="pricing-label">Complex Auth</div>
+						<div class="pricing-amount">$250</div>
+						<div class="pricing-unit">one-time</div>
+						<p class="pricing-description">
+							OAuth 2.0, refresh tokens, multi-tenant, or custom auth flows.
+						</p>
+					</div>
+					
+					<div class="pricing-card">
+						<div class="pricing-label">Automation</div>
+						<div class="pricing-amount">$500</div>
+						<div class="pricing-unit">one-time</div>
+						<p class="pricing-description">
+							Triggers, scheduled workflows, observability, orchestration.
+						</p>
+					</div>
 				</div>
-			</BlurFade>
-			
-			<BlurFade delay={0.4}>
-				<div class="service-card">
-					<h3>Intelligence</h3>
-					<div class="service-price">$5,000+</div>
-					<p class="service-description">
-						Automation that runs while you sleep. Triggers, observability, orchestration.
-					</p>
-					<ul class="service-includes">
-						<li>3+ configured agents</li>
-						<li>Automated triggers</li>
-						<li>Observability dashboard</li>
-						<li>30 days support</li>
-					</ul>
+			</div>
+		</BlurFade>
+		
+		<BlurFade delay={0.6}>
+			<div class="pricing-examples">
+				<h4>Example builds</h4>
+				<div class="examples-grid">
+					<div class="example-item">
+						<span class="example-name">Quick start</span>
+						<span class="example-calc">2 tools + 1 agent</span>
+						<span class="example-price">$750</span>
+					</div>
+					<div class="example-item">
+						<span class="example-name">Team setup</span>
+						<span class="example-calc">5 tools + 2 agents + auth</span>
+						<span class="example-price">$2,000</span>
+					</div>
+					<div class="example-item">
+						<span class="example-name">Full stack</span>
+						<span class="example-calc">8 tools + 3 agents + both</span>
+						<span class="example-price">$3,500</span>
+					</div>
 				</div>
-			</BlurFade>
-		</div>
+			</div>
+		</BlurFade>
 	</div>
 </section>
 
@@ -356,22 +381,22 @@
 		<div class="audience-grid">
 			<BlurFade delay={0.1}>
 				<div class="audience-card">
-					<h3>Teams with existing tools</h3>
-					<p>You have Procore, Salesforce, HubSpot, or internal systems. You want AI to work with them, not replace them.</p>
+					<h3>Existing tools</h3>
+					<p>You have Procore, Salesforce, or internal systems. You want AI to work with them.</p>
 				</div>
 			</BlurFade>
 			
 			<BlurFade delay={0.2}>
 				<div class="audience-card">
-					<h3>Companies ready for AI integration</h3>
-					<p>You've experimented with ChatGPT and Copilot. Now you need AI that connects to your actual workflows.</p>
+					<h3>Ready for AI</h3>
+					<p>You've used ChatGPT and Copilot. Now you need AI connected to your workflows.</p>
 				</div>
 			</BlurFade>
 			
 			<BlurFade delay={0.3}>
 				<div class="audience-card">
-					<h3>Technical teams without MCP expertise</h3>
-					<p>You can build software. MCP protocol, auth patterns, and deployment packaging aren't your focus.</p>
+					<h3>No MCP expertise</h3>
+					<p>You build software. MCP protocol and deployment packaging aren't your focus.</p>
 				</div>
 			</BlurFade>
 		</div>
@@ -803,6 +828,145 @@
 		font-size: var(--text-caption);
 	}
 	
+	/* Per-Tool Pricing Sections */
+	.pricing-section {
+		margin-bottom: var(--space-6, 2rem);
+	}
+	
+	.pricing-section-label {
+		font-size: var(--text-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.15em;
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-3, 0.75rem);
+		text-align: center;
+	}
+	
+	.pricing-row {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: var(--space-4, 1rem);
+		align-items: stretch;
+		max-width: 600px;
+		margin: 0 auto;
+	}
+	
+	.pricing-card {
+		padding: var(--space-5, 1.5rem);
+		border-radius: var(--radius-lg, 12px);
+		border: 1px solid var(--color-border-default);
+		background: var(--color-bg-pure);
+		text-align: center;
+		display: flex;
+		flex-direction: column;
+		transition: 
+			border-color 200ms ease,
+			transform 200ms ease;
+	}
+	
+	.pricing-card:hover {
+		border-color: var(--color-border-emphasis);
+		transform: translateY(-2px);
+	}
+	
+	.pricing-card.featured {
+		border-color: rgba(96, 165, 250, 0.4);
+		background: linear-gradient(
+			135deg,
+			rgba(96, 165, 250, 0.05) 0%,
+			rgba(167, 139, 250, 0.05) 100%
+		);
+	}
+	
+	.pricing-label {
+		font-size: var(--text-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-3, 0.75rem);
+	}
+	
+	.pricing-amount {
+		font-size: var(--text-h1);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		line-height: 1;
+		font-family: var(--font-display);
+	}
+	
+	.pricing-unit {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		margin-bottom: var(--space-4, 1rem);
+	}
+	
+	.pricing-description {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+		margin-top: auto;
+	}
+	
+	/* Example Builds */
+	.pricing-examples {
+		border-top: 1px solid var(--color-border-default);
+		padding-top: var(--space-6, 2rem);
+	}
+	
+	.pricing-examples h4 {
+		font-size: var(--text-body-sm);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-4, 1rem);
+		text-align: center;
+	}
+	
+	.examples-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-4, 1rem);
+	}
+	
+	.example-item {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding: var(--space-4, 1rem);
+		border-radius: var(--radius-md, 8px);
+		background: var(--color-bg-elevated);
+	}
+	
+	.example-name {
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-1, 0.25rem);
+	}
+	
+	.example-calc {
+		font-size: var(--text-caption);
+		color: var(--color-fg-tertiary);
+		margin-bottom: var(--space-2, 0.5rem);
+	}
+	
+	.example-price {
+		font-size: var(--text-h3);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		font-family: var(--font-display);
+	}
+	
+	@media (max-width: 640px) {
+		.pricing-row {
+			grid-template-columns: 1fr;
+		}
+		
+		.examples-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+	
 	/* Audience / Who This Is For */
 	.audience-section {
 		padding: var(--section-padding, 6rem) 0;
@@ -813,6 +977,7 @@
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
 		gap: var(--space-4, 1rem);
+		align-items: stretch;
 	}
 	
 	.audience-card {
@@ -820,6 +985,8 @@
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg, 12px);
 		transition: border-color var(--duration-micro, 200ms) var(--ease-standard);
+		display: flex;
+		flex-direction: column;
 	}
 	
 	.audience-card:hover {
