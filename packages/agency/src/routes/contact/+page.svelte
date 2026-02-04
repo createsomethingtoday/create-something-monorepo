@@ -1,23 +1,25 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
-	import { page } from '$app/stores';
-	// Footer is provided by layout
-
-	// Service mapping for display names
-	const serviceNames: Record<string, string> = {
-		'web-development': 'Web Development',
-		automation: 'AI Automation Systems',
-		'agentic-systems': 'Agentic Systems Engineering',
-		partnership: 'Ongoing Systems Partnership',
-		transformation: 'AI-Native Transformation',
-		advisory: 'Strategic Advisory'
-	};
-
-	// Get service and assessment from URL query params
-	let serviceParam = $derived($page.url.searchParams.get('service'));
-	let assessmentId = $derived($page.url.searchParams.get('assessment'));
-	let serviceName = $derived(serviceParam ? serviceNames[serviceParam] || serviceParam : null);
-	let hasAssessment = $derived(!!assessmentId);
+	import { SavvyCalButton } from '@create-something/canon/domains/agency';
+	import { onMount } from 'svelte';
+	
+	// Scroll reveal observer
+	onMount(() => {
+		const observer = new IntersectionObserver(
+			(entries) => {
+				entries.forEach((entry) => {
+					if (entry.isIntersecting) {
+						entry.target.classList.add('visible');
+					}
+				});
+			},
+			{ threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+		);
+		
+		document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+		
+		return () => observer.disconnect();
+	});
 
 	let submitting = $state(false);
 	let submitMessage = $state('');
@@ -40,9 +42,7 @@
 				body: JSON.stringify({
 					name: formData.get('name'),
 					email: formData.get('email'),
-					message: formData.get('message'),
-					service: serviceParam || undefined,
-					assessment_id: assessmentId || undefined
+					message: formData.get('message')
 				})
 			});
 
@@ -66,288 +66,329 @@
 </script>
 
 <SEO
-	title="Contact"
-	description="Start a conversation about your project. We build AI systems that work while you sleep."
-	keywords="contact, agentic systems, AI automation, autonomous systems"
+	title="Contact | Custom MCP Development"
+	description="Get in touch about your MCP project. Book a discovery call or send us a message."
+	keywords="contact, MCP development, custom MCP server"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
 
+<!-- Hero -->
+<section class="hero">
+	<div class="hero-grid"></div>
+	<div class="hero-content">
+		<p class="hero-eyebrow reveal">Contact</p>
+		<h1 class="hero-title reveal">Let's talk</h1>
+		<p class="hero-detail reveal">
+			Book a discovery call or send us a message about your project.
+		</p>
+	</div>
+</section>
+
+<!-- Contact Options -->
 <section class="contact-section">
-	<div class="max-w-2xl mx-auto px-6">
-		{#if hasAssessment && serviceName}
-			<div class="assessment-context">
-				<span class="context-label">Based on your assessment</span>
-				<span class="context-value">We recommend {serviceName}</span>
+	<div class="contact-container">
+		
+		<!-- Book a Call -->
+		<div class="contact-option reveal">
+			<h2>Book a call</h2>
+			<p>30-minute discovery call. We'll discuss your tools, goals, and scope your project.</p>
+			<div class="cal-button">
+				<SavvyCalButton variant="primary" size="lg" />
 			</div>
-		{:else if serviceName}
-			<div class="service-context">
-				<span class="service-label">Interested in</span>
-				<span class="service-name">{serviceName}</span>
-			</div>
-		{/if}
+		</div>
+		
+		<!-- Send a Message -->
+		<div class="contact-option reveal">
+			<h2>Send a message</h2>
+			<p>Not ready for a call? Send us details about your project.</p>
+			
+			<form class="contact-form" onsubmit={handleSubmit}>
+				<div class="form-field">
+					<label for="name" class="form-label">Name</label>
+					<input
+						type="text"
+						id="name"
+						name="name"
+						required
+						class="form-input"
+						autocomplete="name"
+					/>
+				</div>
 
-		<h1 class="contact-headline">
-			{hasAssessment
-				? 'Tell us more about your situation.'
-				: serviceName
-					? 'Tell us about your situation.'
-					: "Tell us what you're building."}
-		</h1>
+				<div class="form-field">
+					<label for="email" class="form-label">Email</label>
+					<input
+						type="email"
+						id="email"
+						name="email"
+						required
+						class="form-input"
+						autocomplete="email"
+					/>
+				</div>
 
-		<form class="contact-form" onsubmit={handleSubmit}>
-			<div class="form-field">
-				<label for="name" class="form-label">Name <span class="required-indicator" aria-hidden="true">*</span></label>
-				<input
-					type="text"
-					id="name"
-					name="name"
-					required
-					aria-required="true"
-					aria-invalid={!submitSuccess && !!submitMessage}
-					aria-describedby={submitMessage && !submitSuccess ? 'contact-message' : undefined}
-					class="form-input"
-					autocomplete="name"
-				/>
-			</div>
+				<div class="form-field">
+					<label for="message" class="form-label">What tools do you want to connect?</label>
+					<textarea
+						id="message"
+						name="message"
+						required
+						rows="4"
+						class="form-input form-textarea"
+						placeholder="e.g., We use Procore for project management and want to connect it to Claude..."
+					></textarea>
+				</div>
 
-			<div class="form-field">
-				<label for="email" class="form-label">Email <span class="required-indicator" aria-hidden="true">*</span></label>
-				<input
-					type="email"
-					id="email"
-					name="email"
-					required
-					aria-required="true"
-					aria-invalid={!submitSuccess && !!submitMessage}
-					aria-describedby={submitMessage && !submitSuccess ? 'contact-message' : undefined}
-					class="form-input"
-					autocomplete="email"
-				/>
-			</div>
-
-			<div class="form-field">
-				<label for="message" class="form-label">What are you working on? <span class="required-indicator" aria-hidden="true">*</span></label>
-				<textarea
-					id="message"
-					name="message"
-					required
-					aria-required="true"
-					aria-invalid={!submitSuccess && !!submitMessage}
-					rows="5"
-					class="form-input form-textarea"
-				></textarea>
-			</div>
-
-			<button
-				type="submit"
-				disabled={submitting}
-				class="form-submit"
-			>
-				{submitting ? 'Sending...' : 'Send'}
-			</button>
-
-			{#if submitMessage}
-				<p
-					id="contact-message"
-					class="form-message"
-					class:success={submitSuccess}
-					class:error={!submitSuccess}
-					role="alert"
-					aria-live="polite"
+				<button
+					type="submit"
+					disabled={submitting}
+					class="form-submit"
 				>
-					{submitMessage}
-				</p>
-			{/if}
-		</form>
+					{submitting ? 'Sending...' : 'Send'}
+				</button>
 
-		<p class="contact-alt">
-			Or email directly: <a href="mailto:micah@createsomething.io" class="contact-link">micah@createsomething.io</a>
+				{#if submitMessage}
+					<p
+						class="form-message"
+						class:success={submitSuccess}
+						class:error={!submitSuccess}
+						role="alert"
+					>
+						{submitMessage}
+					</p>
+				{/if}
+			</form>
+		</div>
+		
+	</div>
+</section>
+
+<!-- Direct Email -->
+<section class="email-section">
+	<div class="section-container">
+		<p class="email-text reveal">
+			Or email directly: <a href="mailto:micah@createsomething.agency" class="email-link">micah@createsomething.agency</a>
 		</p>
 	</div>
 </section>
 
 <style>
-	.contact-section {
-		min-height: 80vh;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: var(--space-xl) 0;
+	/* Section containers */
+	.section-container {
+		max-width: 900px;
+		margin: 0 auto;
+		padding: 0 var(--container-padding, 1.5rem);
 	}
-
-	.contact-headline {
+	
+	/* Hero with grid background */
+	.hero {
+		position: relative;
+		padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem) var(--section-padding, 6rem);
+		overflow: hidden;
+	}
+	
+	.hero-grid {
+		position: absolute;
+		inset: 0;
+		background-image: 
+			linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+			linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+		background-size: 60px 60px;
+		mask-image: linear-gradient(to bottom, black 0%, transparent 80%);
+		-webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 80%);
+		pointer-events: none;
+	}
+	
+	.hero-content {
+		position: relative;
+		text-align: center;
+		max-width: 600px;
+		margin: 0 auto;
+	}
+	
+	.hero-eyebrow {
+		font-size: var(--text-body-sm);
+		text-transform: uppercase;
+		letter-spacing: 0.15em;
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-5, 1.5rem);
+	}
+	
+	.hero-title {
 		font-size: var(--text-display);
-		font-weight: var(--font-bold);
+		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
-		letter-spacing: var(--tracking-tight);
-		line-height: var(--leading-tight);
-		margin-bottom: var(--space-xl);
+		margin-bottom: var(--space-5, 1.5rem);
+		line-height: 1.1;
+		letter-spacing: var(--tracking-tighter, -0.025em);
 	}
-
+	
+	.hero-detail {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+	}
+	
+	/* Contact Section */
+	.contact-section {
+		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
+		border-top: 1px solid var(--color-border-default);
+	}
+	
+	.contact-container {
+		max-width: 900px;
+		margin: 0 auto;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--space-8, 3rem);
+	}
+	
+	.contact-option {
+		padding: var(--space-6, 2rem);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg, 12px);
+	}
+	
+	.contact-option h2 {
+		font-size: var(--text-h3);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-3, 0.75rem);
+	}
+	
+	.contact-option > p {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+		margin-bottom: var(--space-5, 1.5rem);
+	}
+	
+	.cal-button {
+		display: flex;
+	}
+	
+	/* Contact Form */
 	.contact-form {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-md);
+		gap: var(--space-4, 1rem);
 	}
-
+	
 	.form-field {
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
 	}
-
+	
 	.form-label {
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-medium);
 		color: var(--color-fg-muted);
-		text-transform: uppercase;
-		letter-spacing: var(--tracking-wider);
 	}
-
+	
 	.form-input {
-		padding: 1rem;
+		padding: 0.75rem 1rem;
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
+		border-radius: var(--radius-md, 8px);
 		color: var(--color-fg-primary);
 		font-size: var(--text-body);
-		transition: border-color var(--duration-micro) var(--ease-standard);
+		transition: border-color var(--duration-micro, 200ms) var(--ease-standard);
 	}
-
+	
 	.form-input::placeholder {
 		color: var(--color-fg-muted);
 	}
-
+	
 	.form-input:focus {
 		outline: 2px solid var(--color-focus);
 		outline-offset: 2px;
 		border-color: var(--color-fg-primary);
 	}
-
+	
 	.form-textarea {
 		resize: none;
-		min-height: 140px;
+		min-height: 100px;
 	}
-
+	
 	.form-submit {
-		margin-top: var(--space-sm);
-		padding: 1rem 2rem;
+		padding: 0.75rem 1.5rem;
 		background: var(--color-fg-primary);
 		color: var(--color-bg-pure);
 		font-size: var(--text-body);
 		font-weight: var(--font-semibold);
-		border-radius: var(--radius-full);
+		border-radius: var(--radius-lg, 12px);
 		border: none;
 		cursor: pointer;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		transition: opacity var(--duration-micro, 200ms) var(--ease-standard);
 	}
-
+	
 	.form-submit:hover:not(:disabled) {
 		opacity: 0.9;
 	}
-
+	
 	.form-submit:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
 	}
-
-	.form-submit:focus-visible {
-		outline: 2px solid var(--color-focus);
-		outline-offset: 2px;
-	}
-
+	
 	.form-message {
-		padding: 1rem;
-		border-radius: var(--radius-md);
+		padding: 0.75rem;
+		border-radius: var(--radius-md, 8px);
 		font-size: var(--text-body-sm);
 		text-align: center;
 	}
-
+	
 	.form-message.success {
 		background: var(--color-success-muted);
 		color: var(--color-success);
-		border: 1px solid var(--color-success);
+		border: 1px solid var(--color-success-border);
 	}
-
+	
 	.form-message.error {
 		background: var(--color-error-muted);
 		color: var(--color-error);
-		border: 1px solid var(--color-error);
+		border: 1px solid var(--color-error-border);
 	}
-
-	.required-indicator {
-		color: var(--color-error);
-		margin-left: 0.25em;
-	}
-
-	.contact-alt {
-		margin-top: var(--space-xl);
-		padding-top: var(--space-lg);
+	
+	/* Email Section */
+	.email-section {
+		padding: var(--space-8, 3rem) 0;
 		border-top: 1px solid var(--color-border-default);
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
 		text-align: center;
 	}
-
-	.contact-link {
-		color: var(--color-fg-primary);
-		transition: opacity var(--duration-micro) var(--ease-standard);
-	}
-
-	.contact-link:hover {
-		opacity: 0.8;
-	}
-
-	/* Service context */
-	.service-context {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 0.25rem;
-		margin-bottom: var(--space-lg);
-		padding: var(--space-md);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-	}
-
-	.service-label {
-		font-size: var(--text-caption);
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
+	
+	.email-text {
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);
 	}
-
-	.service-name {
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-semibold);
+	
+	.email-link {
 		color: var(--color-fg-primary);
+		transition: opacity var(--duration-micro, 200ms) var(--ease-standard);
 	}
-
-	/* Assessment context - emphasized version */
-	.assessment-context {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 0.25rem;
-		margin-bottom: var(--space-lg);
-		padding: var(--space-md);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-emphasis);
-		border-radius: var(--radius-lg);
+	
+	.email-link:hover {
+		opacity: 0.7;
 	}
-
-	.context-label {
-		font-size: var(--text-caption);
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: var(--color-fg-tertiary);
-	}
-
-	.context-value {
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
+	
+	/* Responsive */
+	@media (max-width: 768px) {
+		.hero {
+			padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
+		}
+		
+		.hero-title {
+			font-size: var(--text-h1);
+		}
+		
+		.contact-container {
+			grid-template-columns: 1fr;
+		}
+		
+		.contact-section {
+			padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
+		}
 	}
 </style>

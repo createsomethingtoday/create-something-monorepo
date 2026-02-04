@@ -159,3 +159,6 @@ export * from './navigation/index.js';
 
 // Filtering (AI-native product filtering components)
 export * from './filtering/index.js';
+
+// MagicUI (premium UI effects - use sparingly)
+export * from './magicui/index.js';

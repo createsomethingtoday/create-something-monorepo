@@ -3,7 +3,6 @@
  * Displays scan history from IndexedDB
  */
 
-import React from 'react';
 import type { ScanHistoryEntry, ScanReport } from '../types';
 import { VerdictBadge } from './VerdictBadge';
 
@@ -18,7 +17,6 @@ export function HistoryPanel({
   history,
   onSelectReport,
   onClearHistory,
-  accentColor = '#6366f1'
 }: HistoryPanelProps) {
   if (history.length === 0) {
     return (

@@ -3,7 +3,7 @@
  * Matches original IC implementation
  */
 
-import type { Finding, ScanReport, Verdict, FileEntry, Ruleset, ScanConfig, ScanRule } from '../types';
+import type { Finding, ScanReport, Verdict, FileEntry, Ruleset, ScanConfig } from '../types';
 
 /**
  * Generate a scan report from findings
@@ -32,14 +32,15 @@ export function generateReport(
       }
     }
     
-    if (findingsByRule[finding.ruleId]) {
-      findingsByRule[finding.ruleId].count++;
-      findingsByRule[finding.ruleId].items.push(finding);
+    const entry = findingsByRule[finding.ruleId];
+    if (entry) {
+      entry.count++;
+      entry.items.push(finding);
     }
   }
   
   // Calculate verdict
-  const { verdict, reasons } = determineVerdict(findingsByRule, ruleset);
+  const { verdict, reasons } = determineVerdict(findingsByRule);
   
   // Calculate bundle summary
   const totalBytes = inventory.reduce((sum, f) => sum + f.sizeBytes, 0);
@@ -67,14 +68,13 @@ export function generateReport(
 }
 
 function determineVerdict(
-  findingsByRule: ScanReport['findings'],
-  ruleset: Ruleset
+  findingsByRule: ScanReport['findings']
 ): { verdict: Verdict; reasons: string[] } {
   const reasons: string[] = [];
   let hasBlocker = false;
   let hasActionRequired = false;
   
-  for (const [ruleId, data] of Object.entries(findingsByRule)) {
+  for (const [, data] of Object.entries(findingsByRule)) {
     const rule = data.rule;
     
     if (rule.disposition === 'REJECTED' || rule.severity === 'BLOCKER') {

@@ -3,7 +3,7 @@
  * Displays individual scan findings with remediation info
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { Finding, ScanRule, RemediationInfo } from '../types';
 
 interface FindingCardProps {

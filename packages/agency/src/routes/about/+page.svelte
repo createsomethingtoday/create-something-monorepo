@@ -1,209 +1,225 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
-	// Footer is provided by layout
+	import { onMount } from 'svelte';
+	
+	// Scroll reveal observer
+	onMount(() => {
+		const observer = new IntersectionObserver(
+			(entries) => {
+				entries.forEach((entry) => {
+					if (entry.isIntersecting) {
+						entry.target.classList.add('visible');
+					}
+				});
+			},
+			{ threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+		);
+		
+		document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+		
+		return () => observer.disconnect();
+	});
 </script>
 
 <SEO
-	title="About | Automation Infrastructure"
-	description="155 scripts became 13. 120 hours/week of research became automated. We build automation infrastructure—the layer that runs businesses while you sleep."
-	keywords="automation infrastructure, the automation layer, agentic engineering, AI automation, autonomous systems, Cloudflare Workers, WORKWAY"
+	title="About | Custom MCP Development"
+	description="We build custom MCP servers that connect your tools to AI. Based in Texas. Fast turnaround, fixed pricing."
+	keywords="MCP development, custom MCP server, about, Micah Johnson"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
 
-<!-- Hero Section -->
-	<section class="relative pt-32 pb-16 px-6">
-		<div class="max-w-4xl mx-auto">
-			<div class="space-y-8 animate-reveal">
-				<h1 class="hero-title mb-8">
-					40+ Production Systems. Real Metrics.
-				</h1>
+<!-- Hero -->
+<section class="hero">
+	<div class="hero-grid"></div>
+	<div class="hero-content">
+		<p class="hero-eyebrow reveal">About</p>
+		<h1 class="hero-title reveal">We build MCP servers</h1>
+		<p class="hero-detail reveal">
+			Custom integrations that connect your existing tools to AI. 
+			Fast turnaround. Fixed pricing. You own the code.
+		</p>
+	</div>
+</section>
 
-				<div class="space-y-8">
-					<!-- Core Identity -->
-					<div class="space-y-6 leading-relaxed body-lg">
-						<p class="body-xl font-medium">
-							155 scripts became 13. 120 hours/week of research became automated. We build <strong>automation infrastructure</strong>—the layer between human intention and system execution.
-						</p>
-
-						<p>
-							Not consulting. Engineering. Every project ships production code, tracks real metrics (time saved, costs reduced, errors prevented), and gets documented as a case study on <a href="https://createsomething.io" class="link">createsomething.io</a>. The infrastructure we build runs on the same platform as <a href="https://workway.co" class="link">WORKWAY</a>—our open marketplace for TypeScript workflows.
-						</p>
-
-						<p>
-							We start with web development—fast sites on Cloudflare's edge. During the build, we find your workflow bottlenecks. Then we build the automation layer—systems that make decisions, recover revenue, and handle tasks while you sleep.
-						</p>
-					</div>
-
-					<!-- What You Get -->
-					<div class="card-surface space-y-4">
-						<h3 class="heading-3">What You Get</h3>
-						<p class="body-secondary leading-relaxed">
-							Real metrics from your project: time saved, costs reduced, errors prevented. A case study documenting what worked (and what didn't). And ongoing access to insights from our entire client base—patterns that worked for one client often work for others.
-						</p>
-					</div>
-
-					<!-- Background -->
-					<div class="space-y-4 body">
-						<p>
-							Led by Micah Johnson. 5+ years at Webflow—started in support, built an LMS to onboard teammates, got promoted to team manager, used it to scale APAC onboarding. Marketplace team noticed, asked me to build their template submission system. Left, got brought back as contractor for that work, then rejoined full-time. Helped launch Webflow University 2.0. Now system architecture. The pattern: I keep building systems that solve problems.
-						</p>
-						<p>
-							Texas A&M. UI/UX certified (Boulder Digital Arts). Based in Texas. <a href="https://www.linkedin.com/in/micahryanjohnson/" class="link" target="_blank" rel="noopener noreferrer">LinkedIn</a> for complex automation projects.
-						</p>
-					</div>
-				</div>
-			</div>
+<!-- The Work -->
+<section class="about-section">
+	<div class="section-container">
+		<div class="about-content reveal">
+			<h2>The work</h2>
+			<p>
+				MCP (Model Context Protocol) is how AI assistants connect to external tools. 
+				We build the servers that make those connections possible—auth, data mapping, 
+				error handling, deployment packaging.
+			</p>
+			<p>
+				Every project ships working code. You get the source, the deployment package, 
+				and documentation. No lock-in.
+			</p>
 		</div>
-	</section>
+	</div>
+</section>
 
-	<!-- Mission Section -->
-	<section class="py-16 px-6 section-border">
-		<div class="max-w-4xl mx-auto">
-			<div class="space-y-6 animate-reveal" style="--delay: 2">
-				<h2 class="heading-2">
-					The Automation Layer
-				</h2>
-
-				<p class="body-lg leading-relaxed">
-					Automation infrastructure processing thousands of records daily. OAuth integrations connecting 10+ services. Agents that run for hours without human input. All production-grade, all on Cloudflare's edge network—the same infrastructure that powers <a href="https://workway.co" class="link">WORKWAY</a>. The layer recedes; the outcomes remain.
-				</p>
-			</div>
+<!-- Background -->
+<section class="about-section">
+	<div class="section-container">
+		<div class="about-content reveal">
+			<h2>Background</h2>
+			<p>
+				Led by Micah Johnson. 5+ years at Webflow building internal tools, 
+				onboarding systems, and template infrastructure. Now focused on 
+				MCP development and AI integration.
+			</p>
+			<p>
+				Based in Texas. <a href="https://www.linkedin.com/in/micahryanjohnson/" class="link" target="_blank" rel="noopener noreferrer">LinkedIn</a> · <a href="mailto:micah@createsomething.agency" class="link">Email</a>
+			</p>
 		</div>
-	</section>
+	</div>
+</section>
 
-	<!-- Topics Section -->
-	<section class="py-16 px-6 section-border">
-		<div class="max-w-4xl mx-auto">
-			<div class="space-y-8">
-				<h2 class="heading-2">
-					What We Do
-				</h2>
-
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-					{#each [
-						{
-							title: 'Web Development',
-							description: '3 weeks to production. Sub-100ms response times. Edge-deployed sites that ship fast.'
-						},
-						{
-							title: 'Workflow Automation',
-							description: '60-70% time savings on manual work. Systems that process data and talk to your tools.'
-						},
-						{
-							title: 'Agentic Systems',
-							description: '155 scripts became 13. AI that makes decisions while you sleep.'
-						},
-						{
-							title: 'Ongoing Partnership',
-							description: '2-4 new features per month. 4-hour response time. We maintain what we build.'
-						}
-					] as topic, index}
-						<div
-							class="card-elevated animate-reveal"
-							style="--delay: {index + 3}"
-						>
-							<h3 class="heading-3 mb-2">
-								{topic.title}
-							</h3>
-							<p class="body-tertiary">
-								{topic.description}
-							</p>
-						</div>
-					{/each}
-				</div>
-			</div>
-		</div>
-	</section>
+<!-- CTA -->
+<section class="cta-section">
+	<div class="section-container">
+		<h2 class="cta-heading reveal">Let's talk about your integration</h2>
+		<p class="cta-subtext reveal">30-minute discovery call. We'll scope your project.</p>
+		<a href="/contact" class="cta-link reveal">Get in touch →</a>
+	</div>
+</section>
 
 <style>
+	/* Section containers */
+	.section-container {
+		max-width: 640px;
+		margin: 0 auto;
+		padding: 0 var(--container-padding, 1.5rem);
+	}
+	
+	/* Hero with grid background */
+	.hero {
+		position: relative;
+		padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem) var(--section-padding, 6rem);
+		overflow: hidden;
+	}
+	
+	.hero-grid {
+		position: absolute;
+		inset: 0;
+		background-image: 
+			linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+			linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+		background-size: 60px 60px;
+		mask-image: linear-gradient(to bottom, black 0%, transparent 80%);
+		-webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 80%);
+		pointer-events: none;
+	}
+	
+	.hero-content {
+		position: relative;
+		text-align: center;
+		max-width: 600px;
+		margin: 0 auto;
+	}
+	
+	.hero-eyebrow {
+		font-size: var(--text-body-sm);
+		text-transform: uppercase;
+		letter-spacing: 0.15em;
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-5, 1.5rem);
+	}
+	
 	.hero-title {
-		font-size: var(--text-h1);
-		font-weight: bold;
+		font-size: var(--text-display);
+		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
+		margin-bottom: var(--space-5, 1.5rem);
+		line-height: 1.1;
+		letter-spacing: var(--tracking-tighter, -0.025em);
 	}
-
-	.heading-2 {
-		font-size: var(--text-h2);
-		font-weight: bold;
-		color: var(--color-fg-primary);
+	
+	.hero-detail {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
 	}
-
-	.heading-3 {
+	
+	/* About Sections */
+	.about-section {
+		padding: var(--section-padding, 6rem) 0;
+		border-top: 1px solid var(--color-border-default);
+	}
+	
+	.about-content h2 {
 		font-size: var(--text-h3);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
+		margin-bottom: var(--space-4, 1rem);
 	}
-
-	.body-xl {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
-	}
-
-	.body-lg {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
-	}
-
-	.body {
+	
+	.about-content p {
 		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
-	}
-
-	.body-secondary {
 		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+		margin-bottom: var(--space-4, 1rem);
 	}
-
-	.body-tertiary {
-		color: var(--color-fg-tertiary);
+	
+	.about-content p:last-child {
+		margin-bottom: 0;
 	}
-
+	
 	.link {
 		color: var(--color-fg-primary);
+		transition: opacity var(--duration-micro, 200ms) var(--ease-standard);
 	}
-
+	
 	.link:hover {
-		text-decoration: underline;
+		opacity: 0.7;
 	}
-
-	.card-surface {
-		padding: var(--space-md);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-	}
-
-	.card-elevated {
-		padding: var(--space-md);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-	}
-
-	.section-border {
+	
+	/* CTA */
+	.cta-section {
+		padding: var(--section-padding, 6rem) 0;
 		border-top: 1px solid var(--color-border-default);
+		text-align: center;
 	}
-
-	.animate-reveal {
-		opacity: 0;
-		transform: translate3d(0, 20px, 0); /* GPU-accelerated */
-		animation: reveal var(--duration-complex) var(--ease-standard) forwards;
-		animation-delay: calc(var(--delay, 0) * var(--cascade-step));
-		will-change: transform, opacity;
+	
+	.cta-heading {
+		font-size: var(--text-h1);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-3, 0.75rem);
 	}
-
-	@keyframes reveal {
-		to {
-			opacity: 1;
-			transform: translate3d(0, 0, 0);
+	
+	.cta-subtext {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-5, 1.5rem);
+	}
+	
+	.cta-link {
+		font-size: var(--text-body);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-secondary);
+		transition: color var(--duration-micro, 200ms) var(--ease-standard);
+	}
+	
+	.cta-link:hover {
+		color: var(--color-fg-primary);
+	}
+	
+	/* Responsive */
+	@media (max-width: 768px) {
+		.hero {
+			padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
 		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.animate-reveal {
-			animation: none;
-			opacity: 1;
-			transform: none;
+		
+		.hero-title {
+			font-size: var(--text-h1);
+		}
+		
+		.about-section,
+		.cta-section {
+			padding: var(--layout-3, 4rem) 0;
 		}
 	}
 </style>

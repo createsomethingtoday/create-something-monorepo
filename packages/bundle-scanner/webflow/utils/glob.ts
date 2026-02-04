@@ -8,11 +8,11 @@
  */
 function expandBraces(pattern: string): string[] {
   const braceMatch = pattern.match(/\{([^}]+)\}/);
-  if (!braceMatch) return [pattern];
+  if (!braceMatch || braceMatch[1] === undefined || braceMatch.index === undefined) return [pattern];
   
   const alternatives = braceMatch[1].split(',');
   const prefix = pattern.substring(0, braceMatch.index);
-  const suffix = pattern.substring(braceMatch.index! + braceMatch[0].length);
+  const suffix = pattern.substring(braceMatch.index + braceMatch[0].length);
   
   const expanded: string[] = [];
   for (const alt of alternatives) {

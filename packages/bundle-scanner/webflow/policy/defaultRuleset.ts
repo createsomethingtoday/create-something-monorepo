@@ -267,6 +267,163 @@ const defaultRuleset: Ruleset = {
       matchers: [
         { id: 'window-open', type: 'regex', pattern: 'window\\.open\\s*\\(', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['window.open'], confidence: 'MEDIUM', notes: 'Allowed only for user-initiated docs/auth with _blank.' }
       ]
+    },
+    // ============================================================
+    // NEW RULES FROM CORTEX v4.0
+    // ============================================================
+    // 19. CUSTOM CODE INJECTION (consolidates SEC-UNSAFE-HTML + SEC-SCRIPT-INJECTION)
+    {
+      ruleId: 'SEC-CUSTOM-CODE-INJECTION',
+      name: 'Custom Code Injection',
+      category: 'SECURITY',
+      reviewBucket: 'AUTO_REJECT',
+      severity: 'BLOCKER',
+      disposition: 'REJECTED',
+      description: 'Detects remote script loaders, innerHTML with script content, and custom_code:write patterns.',
+      matchers: [
+        { id: 'doc-write', type: 'regex', pattern: 'document\\.write(ln)?\\s*\\(', flags: 'gi', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['document.write'], confidence: 'HIGH' },
+        { id: 'innerHTML-script', type: 'regex', pattern: '\\.innerHTML\\s*=\\s*[\'"`].*<script', flags: 'gis', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['innerHTML', '<script'], confidence: 'HIGH' },
+        { id: 'outerHTML-script', type: 'regex', pattern: '\\.outerHTML\\s*=\\s*[\'"`].*<script', flags: 'gis', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['outerHTML', '<script'], confidence: 'HIGH' },
+        { id: 'insertAdjacentHTML', type: 'regex', pattern: '\\.insertAdjacentHTML\\s*\\(', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['insertAdjacentHTML'], confidence: 'MEDIUM' },
+        { id: 'script-src-assignment', type: 'regex', pattern: 'createElement\\([\'"]script[\'"]\\).*?\\.src\\s*=', flags: 'gs', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['createElement'], confidence: 'MEDIUM' },
+        { id: 'script-tag-literal', type: 'regex', pattern: '<script[^>]+src=[\'"]https?:\\/\\/', flags: 'gi', fileGlobs: ['**/*.{js,ts,jsx,tsx,html,mjs,cjs}'], triggerTokens: ['<script'], confidence: 'MEDIUM' }
+      ]
+    },
+    // 20. PROTOTYPE POLLUTION
+    {
+      ruleId: 'SEC-PROTO-POLLUTION',
+      name: 'Prototype Pollution Prevention',
+      category: 'SECURITY',
+      reviewBucket: 'ACTION_REQUIRED',
+      severity: 'HIGH',
+      disposition: 'ACTION_REQUIRED',
+      description: 'Detects prototype pollution patterns that modify Object.prototype, Array.prototype, or other built-ins.',
+      matchers: [
+        { id: 'proto-assignment', type: 'regex', pattern: '__proto__\\s*=', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['__proto__'], confidence: 'HIGH' },
+        { id: 'object-prototype-mod', type: 'regex', pattern: 'Object\\.prototype\\s*\\[', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['Object.prototype'], confidence: 'HIGH' },
+        { id: 'array-prototype-mod', type: 'regex', pattern: 'Array\\.prototype\\s*\\[', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['Array.prototype'], confidence: 'HIGH' },
+        { id: 'function-prototype-mod', type: 'regex', pattern: 'Function\\.prototype\\s*\\[', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['Function.prototype'], confidence: 'HIGH' },
+        { id: 'setPrototypeOf', type: 'regex', pattern: 'Object\\.setPrototypeOf\\s*\\(', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['setPrototypeOf'], confidence: 'MEDIUM' },
+        { id: 'defineProperty-prototype', type: 'regex', pattern: 'Object\\.defineProperty\\s*\\([^,]+\\.prototype', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['defineProperty', 'prototype'], confidence: 'MEDIUM' },
+        { id: 'constructor-prototype', type: 'regex', pattern: '\\.constructor\\.prototype\\s*=', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['constructor.prototype'], confidence: 'HIGH' }
+      ]
+    },
+    // 21. ADVANCED EVASION
+    {
+      ruleId: 'SEC-ADVANCED-EVASION',
+      name: 'Advanced Evasion Detection',
+      category: 'SECURITY',
+      reviewBucket: 'AUTO_REJECT',
+      severity: 'BLOCKER',
+      disposition: 'REJECTED',
+      description: 'Detects WASM, steganography, advanced anti-debugging, and evasion techniques.',
+      matchers: [
+        { id: 'wasm-instantiate', type: 'regex', pattern: 'WebAssembly\\.(instantiate|compile|Module|Instance)', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['WebAssembly'], confidence: 'HIGH' },
+        { id: 'wasm-file', type: 'regex', pattern: '\\.wasm[\'"`]', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['.wasm'], confidence: 'HIGH' },
+        { id: 'devtools-detection-size', type: 'regex', pattern: 'window\\.(outerWidth|outerHeight)\\s*-\\s*window\\.(innerWidth|innerHeight)', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['outerWidth', 'outerHeight'], confidence: 'HIGH' },
+        { id: 'proxy-console', type: 'regex', pattern: 'new\\s+Proxy\\s*\\(\\s*(console|window|document)', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['new Proxy', 'console'], confidence: 'MEDIUM' },
+        { id: 'stego-pixel-manipulation', type: 'regex', pattern: 'getImageData\\s*\\([^)]*\\).*putImageData', flags: 'gs', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['getImageData', 'putImageData'], confidence: 'MEDIUM' },
+        { id: 'timing-attack', type: 'regex', pattern: 'performance\\.now\\s*\\(\\s*\\)\\s*-\\s*', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['performance.now'], confidence: 'LOW', notes: 'May be benign performance measurement.' }
+      ]
+    },
+    // 22. OAUTH BROWSER SECURITY
+    {
+      ruleId: 'OAUTH-BROWSER-SECURITY',
+      name: 'OAuth Browser Security',
+      category: 'SECURITY',
+      reviewBucket: 'ACTION_REQUIRED',
+      severity: 'HIGH',
+      disposition: 'ACTION_REQUIRED',
+      description: 'Detects OAuth issues: missing state parameter, token exposure in URLs/logs, insecure postMessage.',
+      matchers: [
+        { id: 'postmessage-wildcard', type: 'regex', pattern: '\\.postMessage\\s*\\([^,]+,\\s*[\'"`]\\*[\'"`]', flags: 'gs', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['postMessage', '*'], confidence: 'HIGH' },
+        { id: 'oauth-missing-state', type: 'regex', pattern: '\\/authorize\\?[^&]*client_id=[^&]+(?![\\s\\S]*state=)', flags: 'gi', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['/authorize', 'client_id'], confidence: 'MEDIUM' },
+        { id: 'token-in-url', type: 'regex', pattern: '[?&](access_token|token|auth_token)=', flags: 'gi', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['access_token', 'auth_token'], confidence: 'HIGH' },
+        { id: 'token-logged', type: 'regex', pattern: 'console\\.(log|info|debug)\\s*\\([^)]*(?:token|auth|access_token)', flags: 'gi', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['console.log', 'token'], confidence: 'MEDIUM' },
+        { id: 'location-hash-token', type: 'regex', pattern: 'location\\.hash.*(?:token|access_token)', flags: 'gi', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['location.hash', 'token'], confidence: 'MEDIUM' },
+        { id: 'message-handler', type: 'regex', pattern: 'addEventListener\\s*\\(\\s*[\'"`]message[\'"`]', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['addEventListener', 'message'], confidence: 'LOW', notes: 'Verify origin is checked in handler.' }
+      ]
+    },
+    // 23. SERVICE WORKER
+    {
+      ruleId: 'SEC-SERVICE-WORKER',
+      name: 'Service Worker Registration',
+      category: 'SECURITY',
+      reviewBucket: 'ACTION_REQUIRED',
+      severity: 'HIGH',
+      disposition: 'ACTION_REQUIRED',
+      description: 'Detects service worker registration which can intercept network requests.',
+      matchers: [
+        { id: 'sw-register', type: 'regex', pattern: 'navigator\\.serviceWorker\\.register\\s*\\(', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['serviceWorker.register'], confidence: 'HIGH' },
+        { id: 'sw-unregister', type: 'regex', pattern: 'navigator\\.serviceWorker\\.unregister\\s*\\(', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['serviceWorker.unregister'], confidence: 'MEDIUM' },
+        { id: 'sw-file-reference', type: 'regex', pattern: '(sw\\.js|service[-_]?worker\\.js)', flags: 'gi', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['sw.js', 'service-worker'], confidence: 'MEDIUM' },
+        { id: 'sw-libraries', type: 'regex', pattern: '\\b(workbox|sw-precache|sw-toolbox)\\b', flags: 'gi', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs,json}'], triggerTokens: ['workbox', 'sw-precache'], confidence: 'MEDIUM' }
+      ]
+    },
+    // 24. STORAGE INJECTION
+    {
+      ruleId: 'PRIV-STORAGE-INJECTION',
+      name: 'Storage Injection Prevention',
+      category: 'SECURITY',
+      reviewBucket: 'ACTION_REQUIRED',
+      severity: 'HIGH',
+      disposition: 'ACTION_REQUIRED',
+      description: 'Detects storage injection patterns that could lead to data leakage.',
+      matchers: [
+        { id: 'dynamic-storage-key', type: 'regex', pattern: '(localStorage|sessionStorage)\\.setItem\\s*\\(\\s*[^\'"`]', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['setItem'], confidence: 'MEDIUM', notes: 'Dynamic keys may allow user-controlled storage manipulation.' }
+      ]
+    },
+    // 25. KEYBOARD SHORTCUT HIJACKING
+    {
+      ruleId: 'UX-NO-SHORTCUT-HIJACK',
+      name: 'No Keyboard Shortcut Hijacking',
+      category: 'UX',
+      reviewBucket: 'NEEDS_EXPLANATION',
+      severity: 'MEDIUM',
+      disposition: 'INFO',
+      description: 'Detects keyboard shortcut hijacking that conflicts with Designer shortcuts.',
+      matchers: [
+        { id: 'keydown-listener', type: 'regex', pattern: 'addEventListener\\s*\\(\\s*[\'"`]keydown[\'"`]', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['addEventListener', 'keydown'], confidence: 'LOW' },
+        { id: 'keyup-listener', type: 'regex', pattern: 'addEventListener\\s*\\(\\s*[\'"`]keyup[\'"`]', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['addEventListener', 'keyup'], confidence: 'LOW' },
+        { id: 'onkeydown-handler', type: 'regex', pattern: '\\.onkeydown\\s*=', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['onkeydown'], confidence: 'MEDIUM' },
+        { id: 'hotkey-libraries', type: 'regex', pattern: '\\b(mousetrap|hotkeys-js|tinykeys|keymaster)\\b', flags: 'gi', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs,json}'], triggerTokens: ['mousetrap', 'hotkeys-js'], confidence: 'MEDIUM' },
+        { id: 'prevent-default-key', type: 'regex', pattern: '(keydown|keyup|keypress).*\\.preventDefault\\s*\\(', flags: 'gs', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['keydown', 'preventDefault'], confidence: 'MEDIUM' }
+      ]
+    },
+    // 26. DATA CLIENT SECURITY
+    {
+      ruleId: 'APP-DATA-CLIENT-SECURITY',
+      name: 'Data Client Security Patterns',
+      category: 'SECURITY',
+      reviewBucket: 'NEEDS_EXPLANATION',
+      severity: 'MEDIUM',
+      disposition: 'INFO',
+      description: 'Validates proper Data Client API usage patterns and security configurations.',
+      matchers: [
+        { id: 'webflow-getIdToken', type: 'regex', pattern: 'webflow\\.getIdToken\\s*\\(', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['getIdToken'], confidence: 'LOW', notes: 'Verify token is used securely.' },
+        { id: 'direct-api-call', type: 'regex', pattern: 'fetch\\s*\\([\'"`][^\'"`]*(api\\.webflow\\.com|webflow\\.com\\/api)', flags: 'gi', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['fetch', 'api.webflow.com'], confidence: 'MEDIUM', notes: 'Should use SDK instead of direct API calls.' },
+        { id: 'data-client-ops', type: 'regex', pattern: 'webflow\\.(createItems|updateItems|deleteItems|getItems)\\s*\\(', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['createItems', 'updateItems', 'deleteItems', 'getItems'], confidence: 'LOW' },
+        { id: 'webflow-token-storage', type: 'regex', pattern: '(localStorage|sessionStorage)\\.setItem\\s*\\([\'"`][^\'"]*(?:webflow|idtoken|id_token)', flags: 'gi', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['setItem', 'webflow', 'idtoken'], confidence: 'MEDIUM' },
+        { id: 'sdk-import', type: 'regex', pattern: '@webflow\\/(sdk|designer-extension-sdk)', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['@webflow/sdk'], confidence: 'LOW', notes: 'SDK usage is recommended.' }
+      ]
+    },
+    // 27. HYBRID APP SECURITY
+    {
+      ruleId: 'APP-HYBRID-SECURITY',
+      name: 'Hybrid App Security Patterns',
+      category: 'SECURITY',
+      reviewBucket: 'NEEDS_EXPLANATION',
+      severity: 'MEDIUM',
+      disposition: 'INFO',
+      description: 'Validates proper Hybrid App ID token patterns and authentication flows.',
+      matchers: [
+        { id: 'get-current-user', type: 'regex', pattern: 'webflow\\.getCurrentUser\\s*\\(', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['getCurrentUser'], confidence: 'LOW' },
+        { id: 'hybrid-id-token', type: 'regex', pattern: 'webflow\\.getIdToken\\s*\\(', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['getIdToken'], confidence: 'LOW' },
+        { id: 'jwt-library', type: 'regex', pattern: '(from|require)\\s*[\'"`](jose|jsonwebtoken|jwt-decode)[\'"`]', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['jose', 'jsonwebtoken', 'jwt-decode'], confidence: 'LOW' },
+        { id: 'user-idtoken-access', type: 'regex', pattern: '\\buser\\.idToken\\b', flags: 'g', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['user.idToken'], confidence: 'MEDIUM' },
+        { id: 'bearer-token-header', type: 'regex', pattern: 'Authorization:\\s*[\'"`]Bearer', flags: 'gi', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['Authorization', 'Bearer'], confidence: 'LOW' },
+        { id: 'webflow-user-token-header', type: 'regex', pattern: 'x-webflow-user-token', flags: 'gi', fileGlobs: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'], triggerTokens: ['x-webflow-user-token'], confidence: 'MEDIUM' }
+      ]
     }
   ]
 };

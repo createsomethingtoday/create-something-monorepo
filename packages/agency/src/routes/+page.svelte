@@ -634,21 +634,22 @@
 	/* Central hub - always on top and sharp */
 	.orbital-center {
 		position: relative;
-		z-index: 10;
+		z-index: 20;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 	}
 	
 	.center-icon {
-		width: 72px;
-		height: 72px;
+		width: 96px;
+		height: 96px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: rgba(255, 255, 255, 0.08);
-		border: 1px solid rgba(255, 255, 255, 0.15);
-		border-radius: 16px;
+		background: #0a0a0f;
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		border-radius: 20px;
+		box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
 		color: white;
 		box-shadow: 
 			0 8px 32px rgba(0, 0, 0, 0.4),
@@ -656,8 +657,8 @@
 	}
 	
 	.center-icon :global(svg) {
-		width: 36px;
-		height: 36px;
+		width: 52px;
+		height: 52px;
 	}
 	
 	/* Base orbiting items */

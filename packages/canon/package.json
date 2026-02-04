@@ -234,6 +234,10 @@
 		"./navigation": {
 			"types": "./dist/navigation/index.d.ts",
 			"svelte": "./dist/navigation/index.js"
+		},
+		"./magicui": {
+			"types": "./dist/magicui/index.d.ts",
+			"svelte": "./dist/magicui/index.js"
 		}
 	},
 	"peerDependencies": {

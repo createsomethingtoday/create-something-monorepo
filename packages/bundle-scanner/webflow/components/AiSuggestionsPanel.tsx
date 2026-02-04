@@ -3,7 +3,7 @@
  * Displays AI analysis results from Gemini
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { AiAnalysisResult } from '../types';
 
 interface AiSuggestionsPanelProps {
@@ -11,7 +11,7 @@ interface AiSuggestionsPanelProps {
   accentColor?: string;
 }
 
-export function AiSuggestionsPanel({ analysis, accentColor = '#6366f1' }: AiSuggestionsPanelProps) {
+export function AiSuggestionsPanel({ analysis }: AiSuggestionsPanelProps) {
   const [expandedSection, setExpandedSection] = useState<string | null>('missedRisks');
   
   const toggleSection = (section: string) => {
@@ -48,7 +48,6 @@ export function AiSuggestionsPanel({ analysis, accentColor = '#6366f1' }: AiSugg
             title={`Potential Missed Risks (${analysis.missedRisks.length})`}
             isExpanded={expandedSection === 'missedRisks'}
             onToggle={() => toggleSection('missedRisks')}
-            accentColor={accentColor}
           >
             <div className="space-y-3">
               {analysis.missedRisks.map((risk, i) => (
@@ -85,7 +84,6 @@ export function AiSuggestionsPanel({ analysis, accentColor = '#6366f1' }: AiSugg
             title={`Suggested New Rules (${analysis.suggestedRuleAdditions.length})`}
             isExpanded={expandedSection === 'ruleAdditions'}
             onToggle={() => toggleSection('ruleAdditions')}
-            accentColor={accentColor}
           >
             <div className="space-y-3">
               {analysis.suggestedRuleAdditions.map((rule, i) => (
@@ -126,7 +124,6 @@ export function AiSuggestionsPanel({ analysis, accentColor = '#6366f1' }: AiSugg
             title={`Noise Reduction (${analysis.suggestedNoiseReductions.length})`}
             isExpanded={expandedSection === 'noiseReduction'}
             onToggle={() => toggleSection('noiseReduction')}
-            accentColor={accentColor}
           >
             <div className="space-y-3">
               {analysis.suggestedNoiseReductions.map((suggestion, i) => (
@@ -152,7 +149,6 @@ export function AiSuggestionsPanel({ analysis, accentColor = '#6366f1' }: AiSugg
             title={`Questions for Reviewer (${analysis.questionsForReviewer.length})`}
             isExpanded={expandedSection === 'questions'}
             onToggle={() => toggleSection('questions')}
-            accentColor={accentColor}
           >
             <ul className="space-y-2">
               {analysis.questionsForReviewer.map((question, i) => (
@@ -173,11 +169,10 @@ interface SectionProps {
   title: string;
   isExpanded: boolean;
   onToggle: () => void;
-  accentColor: string;
   children: React.ReactNode;
 }
 
-function Section({ title, isExpanded, onToggle, accentColor, children }: SectionProps) {
+function Section({ title, isExpanded, onToggle, children }: SectionProps) {
   return (
     <div>
       <button

@@ -1,304 +1,266 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
-	import { products } from '$lib/data/services';
-
-	// Group products by pricing tier
-	const freeProducts = products.filter((p) => p.pricing === 'Free');
-	const paidProducts = products.filter((p) => p.pricing !== 'Free');
+	import { onMount } from 'svelte';
+	
+	// Scroll reveal observer
+	onMount(() => {
+		const observer = new IntersectionObserver(
+			(entries) => {
+				entries.forEach((entry) => {
+					if (entry.isIntersecting) {
+						entry.target.classList.add('visible');
+					}
+				});
+			},
+			{ threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+		);
+		
+		document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+		
+		return () => observer.disconnect();
+	});
+	
+	const products = [
+		{
+			id: 'loom',
+			name: 'Loom',
+			tagline: 'Memory and coordination for AI agents',
+			description: 'Shared memory, smart task routing, crash recovery. Multi-agent coordination for Claude, Cursor, Codex.',
+			badge: 'Free & Open Source'
+		},
+		{
+			id: 'ground',
+			name: 'Ground',
+			tagline: 'Code analysis that checks before it claims',
+			description: 'Stop hallucinated duplicates. Ground requires verification before claims—no more false positives.',
+			badge: 'Free & Open Source'
+		}
+	];
 </script>
 
 <SEO
-	title="Products"
-	description="Self-serve tools to apply subtractive thinking. From free templates to complete AI development environments."
-	keywords="AI tools, automation templates, subtractive design, Canon CSS, vertical templates"
+	title="Open Source MCPs | Ground & Loom"
+	description="Free, open source MCP servers. Loom for multi-agent coordination. Ground for verified code analysis. Install in 2 minutes."
+	keywords="MCP, Model Context Protocol, open source, Loom, Ground, multi-agent, code analysis, Claude, Cursor"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
 
-<!-- Hero Section -->
-<section class="hero-section">
-	<div class="max-w-4xl mx-auto px-6 text-center">
-		<p class="eyebrow">Tools that teach</p>
-		<h1 class="hero-title">Products</h1>
-		<p class="hero-subtitle">
-			Self-serve tools to apply subtractive thinking. Start free, go deeper when ready.
+<!-- Hero -->
+<section class="hero">
+	<div class="hero-grid"></div>
+	<div class="hero-content">
+		<p class="hero-eyebrow reveal">Open Source</p>
+		<h1 class="hero-title reveal">MCPs We've Built</h1>
+		<p class="hero-subtitle reveal">
+			Free tools. Install in 2 minutes. Used by the same AI assistants we build custom MCPs for.
 		</p>
 	</div>
 </section>
 
-<!-- Free Products -->
+<!-- Products Grid -->
 <section class="products-section">
-	<div class="max-w-5xl mx-auto px-6">
-		<h2 class="section-title">Free Tools</h2>
-		<p class="section-subtitle">Start here. No commitment required.</p>
-
-		<div class="products-grid">
-			{#each freeProducts as product, index}
-				<a
-					href="/products/{product.id}"
-					class="product-card animate-reveal"
-					style="--delay: {index}"
-				>
-					<div class="product-header">
-						<h3 class="product-title">{product.title}</h3>
-						<span class="product-price free">Free</span>
-					</div>
-					<p class="product-description">{product.description}</p>
-					<span class="product-cta">Get started →</span>
-				</a>
-			{/each}
-		</div>
+	<div class="products-container">
+		{#each products as product, index}
+			<a href="/products/{product.id}" class="product-card reveal" style="--delay: {index * 100}ms">
+				<div class="product-badge">{product.badge}</div>
+				<h2 class="product-name">{product.name}</h2>
+				<p class="product-tagline">{product.tagline}</p>
+				<p class="product-description">{product.description}</p>
+				<span class="product-cta">Install →</span>
+			</a>
+		{/each}
 	</div>
 </section>
 
-<!-- Paid Products -->
-<section class="products-section paid">
-	<div class="max-w-5xl mx-auto px-6">
-		<h2 class="section-title">Premium Tools</h2>
-		<p class="section-subtitle">Production-ready solutions with support.</p>
-
-		<div class="products-grid">
-			{#each paidProducts as product, index}
-				<a
-					href="/products/{product.id}"
-					class="product-card animate-reveal"
-					style="--delay: {index}"
-				>
-					<div class="product-header">
-						<h3 class="product-title">{product.title}</h3>
-						<span class="product-price">{product.pricing}</span>
-					</div>
-					<p class="product-description">{product.description}</p>
-					<div class="product-meta">
-						<span class="product-timeline">{product.timeline}</span>
-					</div>
-					<span class="product-cta">Learn more →</span>
-				</a>
-			{/each}
-		</div>
-	</div>
-</section>
-
-<!-- Consulting CTA -->
+<!-- CTA -->
 <section class="cta-section">
-	<div class="max-w-3xl mx-auto px-6 text-center">
-		<div class="cta-card">
-			<h3 class="cta-title">Need deeper partnership?</h3>
-			<p class="cta-text">
-				Products teach you to fish. Consulting catches the big ones together.
-			</p>
-			<a href="/services" class="cta-button">View consulting services →</a>
-		</div>
+	<div class="section-container">
+		<h2 class="cta-heading reveal">Need something custom?</h2>
+		<p class="cta-subtext reveal">We build MCPs for your specific tools and workflows.</p>
+		<a href="/services" class="cta-link reveal">View services →</a>
 	</div>
 </section>
 
 <style>
-	/* Hero Section */
-	.hero-section {
-		padding: 6rem 0 var(--space-xl);
-		min-height: 30vh;
-		display: flex;
-		align-items: center;
-		justify-content: center;
+	/* Section containers */
+	.section-container {
+		max-width: 900px;
+		margin: 0 auto;
+		padding: 0 var(--container-padding, 1.5rem);
 	}
-
-	.eyebrow {
-		font-size: var(--text-body-sm);
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: var(--color-fg-muted);
-		font-style: italic;
-		margin-bottom: var(--space-sm);
+	
+	/* Hero with grid background */
+	.hero {
+		position: relative;
+		padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem) var(--section-padding, 6rem);
+		overflow: hidden;
 	}
-
-	.hero-title {
-		font-size: var(--text-display);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
-		line-height: var(--leading-tight);
-		margin-bottom: var(--space-md);
+	
+	.hero-grid {
+		position: absolute;
+		inset: 0;
+		background-image: 
+			linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+			linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+		background-size: 60px 60px;
+		mask-image: linear-gradient(to bottom, black 0%, transparent 80%);
+		-webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 80%);
+		pointer-events: none;
 	}
-
-	.hero-subtitle {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-tertiary);
-		line-height: 1.7;
-		max-width: 42rem;
+	
+	.hero-content {
+		position: relative;
+		text-align: center;
+		max-width: 700px;
 		margin: 0 auto;
 	}
-
+	
+	.hero-eyebrow {
+		font-size: var(--text-body-sm);
+		text-transform: uppercase;
+		letter-spacing: 0.15em;
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-5, 1.5rem);
+	}
+	
+	.hero-title {
+		font-size: var(--text-display);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-5, 1.5rem);
+		line-height: 1.1;
+		letter-spacing: var(--tracking-tighter, -0.025em);
+	}
+	
+	.hero-subtitle {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+		max-width: 480px;
+		margin: 0 auto;
+		line-height: var(--leading-relaxed);
+	}
+	
 	/* Products Section */
 	.products-section {
-		padding: var(--space-xl) 0;
+		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
 		border-top: 1px solid var(--color-border-default);
 	}
-
-	.products-section.paid {
-		background: var(--color-bg-elevated);
-	}
-
-	.section-title {
-		font-size: var(--text-h2);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
-	}
-
-	.section-subtitle {
-		font-size: var(--text-body);
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-lg);
-	}
-
-	.products-grid {
+	
+	.products-container {
+		max-width: 800px;
+		margin: 0 auto;
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-		gap: var(--space-lg);
+		grid-template-columns: repeat(2, 1fr);
+		gap: var(--space-4, 1rem);
 	}
-
-	/* Product Card */
+	
 	.product-card {
+		padding: var(--space-6, 2rem);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg, 12px);
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-		padding: var(--space-lg);
-		transition:
-			border-color var(--duration-standard) var(--ease-standard),
-			background var(--duration-standard) var(--ease-standard);
+		transition: 
+			border-color var(--duration-micro, 200ms) var(--ease-standard),
+			transform var(--duration-micro, 200ms) var(--ease-standard);
 	}
-
+	
 	.product-card:hover {
 		border-color: var(--color-border-emphasis);
-		background: var(--color-bg-elevated);
+		transform: translateY(-2px);
 	}
-
-	.product-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-start;
-		gap: var(--space-sm);
-	}
-
-	.product-title {
-		font-size: var(--text-h3);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
-	}
-
-	.product-price {
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-secondary);
-		background: var(--color-bg-subtle);
-		padding: 0.25rem 0.75rem;
-		border-radius: var(--radius-full);
-		white-space: nowrap;
-	}
-
-	.product-price.free {
+	
+	.product-badge {
+		font-size: var(--text-caption);
 		color: var(--color-success);
 		background: var(--color-success-muted);
+		padding: 0.25rem 0.75rem;
+		border-radius: var(--radius-full, 9999px);
+		width: fit-content;
+		margin-bottom: var(--space-4, 1rem);
 	}
-
-	.product-description {
+	
+	.product-name {
+		font-size: var(--text-h2);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-2, 0.5rem);
+	}
+	
+	.product-tagline {
 		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
-		line-height: 1.6;
-		flex-grow: 1;
+		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-3, 0.75rem);
 	}
-
-	.product-meta {
-		display: flex;
-		gap: var(--space-sm);
-	}
-
-	.product-timeline {
+	
+	.product-description {
 		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+		color: var(--color-fg-tertiary);
+		line-height: var(--leading-relaxed);
+		flex: 1;
+		margin-bottom: var(--space-4, 1rem);
 	}
-
+	
 	.product-cta {
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-secondary);
-		transition: color var(--duration-micro) var(--ease-standard);
+		transition: color var(--duration-micro, 200ms) var(--ease-standard);
 	}
-
+	
 	.product-card:hover .product-cta {
 		color: var(--color-fg-primary);
 	}
-
-	/* CTA Section */
+	
+	/* CTA */
 	.cta-section {
-		padding: var(--space-xl) 0;
+		padding: var(--section-padding, 6rem) 0;
+		border-top: 1px solid var(--color-border-default);
+		text-align: center;
 	}
-
-	.cta-card {
-		padding: var(--space-lg);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-	}
-
-	.cta-title {
-		font-size: var(--text-h3);
+	
+	.cta-heading {
+		font-size: var(--text-h1);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-3, 0.75rem);
 	}
-
-	.cta-text {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
-		margin-bottom: var(--space-md);
+	
+	.cta-subtext {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-5, 1.5rem);
 	}
-
-	.cta-button {
-		display: inline-block;
+	
+	.cta-link {
 		font-size: var(--text-body);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-secondary);
-		transition: color var(--duration-micro) var(--ease-standard);
+		transition: color var(--duration-micro, 200ms) var(--ease-standard);
 	}
-
-	.cta-button:hover {
+	
+	.cta-link:hover {
 		color: var(--color-fg-primary);
 	}
-
-	/* Animation */
-	.animate-reveal {
-		opacity: 0;
-		transform: translateY(20px);
-		animation: reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-		animation-delay: calc(var(--delay, 0) * 80ms);
-	}
-
-	@keyframes reveal {
-		to {
-			opacity: 1;
-			transform: translateY(0);
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.animate-reveal {
-			animation: none;
-			opacity: 1;
-			transform: none;
-		}
-	}
-
+	
 	/* Responsive */
 	@media (max-width: 768px) {
+		.hero {
+			padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
+		}
+		
 		.hero-title {
 			font-size: var(--text-h1);
 		}
-
-		.products-grid {
+		
+		.products-container {
 			grid-template-columns: 1fr;
+		}
+		
+		.products-section,
+		.cta-section {
+			padding: var(--layout-3, 4rem) 0;
 		}
 	}
 </style>

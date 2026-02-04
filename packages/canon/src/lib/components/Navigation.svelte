@@ -173,9 +173,15 @@
 		width: 100%;
 		z-index: 50;
 		/* Glass Design System - "The Automation Layer" */
-		background-color: var(--glass-bg-light);
-		backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
-		border-bottom: 1px solid var(--glass-border-light);
+		background-color: rgba(0, 0, 0, 0.72);
+		backdrop-filter: blur(16px) saturate(130%);
+		-webkit-backdrop-filter: blur(16px) saturate(130%);
+		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+		/* Liquid glass shine - box-shadow based for premium look */
+		box-shadow: 
+			inset 1px 1px 2px 0 rgba(255, 255, 255, 0.08),
+			inset -1px -1px 1px 0 rgba(255, 255, 255, 0.04),
+			0 4px 24px rgba(0, 0, 0, 0.4);
 	}
 
 	/* Logo */
@@ -250,7 +256,15 @@
 
 	/* Mobile Menu */
 	.nav-mobile-menu {
-		border-top: 1px solid var(--color-border-default);
+		border-top: 1px solid rgba(255, 255, 255, 0.1);
+		/* Glass effect for mobile menu */
+		background-color: rgba(0, 0, 0, 0.65);
+		backdrop-filter: blur(12px) saturate(120%);
+		-webkit-backdrop-filter: blur(12px) saturate(120%);
+		margin-left: -1.5rem;
+		margin-right: -1.5rem;
+		padding-left: 1.5rem;
+		padding-right: 1.5rem;
 	}
 
 	/* Slide down animation for mobile menu */

@@ -3,7 +3,7 @@
  * Allows viewing and uploading custom rulesets and configs
  */
 
-import React, { useRef } from 'react';
+import { useRef, type ChangeEvent } from 'react';
 import type { Ruleset, ScanConfig } from '../types';
 
 interface PolicyPackPanelProps {
@@ -21,12 +21,11 @@ export function PolicyPackPanel({
   onRulesetChange,
   onConfigChange,
   onReset,
-  accentColor = '#6366f1'
 }: PolicyPackPanelProps) {
   const rulesetInputRef = useRef<HTMLInputElement>(null);
   const configInputRef = useRef<HTMLInputElement>(null);
   
-  const handleRulesetUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRulesetUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -50,7 +49,7 @@ export function PolicyPackPanel({
     }
   };
   
-  const handleConfigUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleConfigUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     

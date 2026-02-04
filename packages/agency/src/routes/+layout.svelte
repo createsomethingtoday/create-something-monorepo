@@ -1,7 +1,8 @@
 <script lang="ts">
 	import '../app.css';
-	import { Navigation, Analytics, ModeIndicator, Footer, LayoutSEO } from '@create-something/canon';
+	import { Navigation, Analytics, ModeIndicator, LayoutSEO } from '@create-something/canon';
 	import { UnifiedSearch } from '@create-something/canon/navigation';
+	import AgencyFooter from '$lib/components/AgencyFooter.svelte';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { afterNavigate, onNavigate, goto, invalidateAll } from '$app/navigation';
@@ -32,20 +33,17 @@
 	const navLinks = [
 		{ label: 'Services', href: '/services' },
 		{ label: 'Products', href: '/products' },
-		{ label: 'Discover', href: '/discover' },
-		{ label: 'Work', href: '/work' },
 		{ label: 'About', href: '/about' }
 	];
 
 	// Quick access items for unified search
 	const quickAccessItems = [
-		{ id: 'nav-services', label: 'Services', description: 'Professional AI-native development', href: '/services', icon: '🔨', keywords: ['hire', 'consulting', 'build'] },
-		{ id: 'nav-products', label: 'Products', description: 'Ready-to-use solutions', href: '/products', icon: '📦', keywords: ['buy', 'solutions', 'tools'] },
-		{ id: 'nav-work', label: 'Our Work', description: 'Case studies and portfolio', href: '/work', icon: '💼', keywords: ['portfolio', 'examples', 'clients'] },
-		{ id: 'nav-contact', label: 'Get Started', description: 'Start your project', href: '/contact', icon: '✉️', keywords: ['contact', 'hire', 'start'] },
-		{ id: 'nav-space', label: 'Go to .space', description: 'Interactive experiments', href: 'https://createsomething.space', icon: '🧪', keywords: ['explore', 'try', 'interactive'] },
-		{ id: 'nav-io', label: 'Go to .io', description: 'Research papers and analysis', href: 'https://createsomething.io', icon: '📖', keywords: ['papers', 'research', 'learn'] },
-		{ id: 'nav-ltd', label: 'Go to .ltd', description: 'Canon principles and patterns', href: 'https://createsomething.ltd', icon: '📜', keywords: ['canon', 'principles', 'foundation'] },
+		{ id: 'nav-services', label: 'Services', description: 'Custom MCP development', href: '/services', icon: '🔨', keywords: ['hire', 'consulting', 'mcp', 'build'] },
+		{ id: 'nav-products', label: 'Products', description: 'Tools for builders', href: '/products', icon: '📦', keywords: ['buy', 'solutions', 'tools'] },
+		{ id: 'nav-contact', label: 'Get Started', description: 'Book a discovery call', href: '/contact', icon: '✉️', keywords: ['contact', 'hire', 'start', 'book'] },
+		{ id: 'nav-space', label: 'Go to .space', description: 'MCP experiments', href: 'https://createsomething.space', icon: '🧪', keywords: ['explore', 'try', 'interactive'] },
+		{ id: 'nav-io', label: 'Go to .io', description: 'MCP patterns for builders', href: 'https://createsomething.io', icon: '📖', keywords: ['papers', 'research', 'learn'] },
+		{ id: 'nav-ltd', label: 'Go to .ltd', description: 'Philosophy of automation', href: 'https://createsomething.ltd', icon: '📜', keywords: ['canon', 'principles', 'foundation'] },
 	];
 
 	// Handle hash scrolling
@@ -116,21 +114,7 @@
 		{@render children()}
 	</main>
 
-	<Footer
-		mode="agency"
-		showNewsletter={false}
-		aboutText="Professional AI-native development services. Research-backed consulting, implementation, and training."
-		quickLinks={[
-			{ label: 'Services', href: '/services' },
-			{ label: 'Products', href: '/products' },
-			{ label: 'Discover', href: '/discover' },
-			{ label: 'Work', href: '/work' },
-			{ label: 'About', href: '/about' },
-			{ label: 'Contact', href: '/contact' }
-		]}
-		showSocial={true}
-		isAuthenticated={!!data.user}
-	/>
+	<AgencyFooter />
 
 	<ModeIndicator current="agency" />
 </div>

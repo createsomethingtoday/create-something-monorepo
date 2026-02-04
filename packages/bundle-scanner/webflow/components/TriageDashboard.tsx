@@ -3,7 +3,6 @@
  * Displays scan summary with verdict and statistics
  */
 
-import React from 'react';
 import type { ScanReport } from '../types';
 import { VerdictBadge } from './VerdictBadge';
 
@@ -12,7 +11,7 @@ interface TriageDashboardProps {
   accentColor?: string;
 }
 
-export function TriageDashboard({ report, accentColor = '#6366f1' }: TriageDashboardProps) {
+export function TriageDashboard({ report }: TriageDashboardProps) {
   const totalFindings = Object.values(report.findings).reduce((acc, f) => acc + f.count, 0);
   const blockerCount = Object.values(report.findings).filter(f => f.rule.severity === 'BLOCKER').reduce((acc, f) => acc + f.count, 0);
   const highCount = Object.values(report.findings).filter(f => f.rule.severity === 'HIGH').reduce((acc, f) => acc + f.count, 0);

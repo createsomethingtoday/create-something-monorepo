@@ -316,7 +316,26 @@ Key paths (see `.claude/rules/sveltekit-conventions.md` for full patterns):
 
 **Glass Design System**: CREATE SOMETHING and WORKWAY share a unified Glass Design System. Glass conveys "The Automation Layer"—the transparent interface between user and outcome. Use `.glass-*` classes for navigation, modals, and workflow cards. Invoke `css-canon` skill for full reference when needed.
 
-**Migration Strategy**: New code follows Canon. Existing code migrates incrementally when touched. Priority: `packages/components/` first.
+### WORKWAY Alignment (v1.1.0)
+
+**WORKWAY is the reference implementation.** The WORKWAY platform (`workway-platform/apps/web/src/styles.css`) has advanced the shared Canon system with:
+
+- **Tailwind v4** with `@theme` CSS-first configuration
+- **shadcn/ui components** (Button, Card with variant system via class-variance-authority)
+- **MagicUI animations** (border-beam, marquee, animated-shiny-text)
+- **Infrastructure grid backgrounds** (`.bg-grid`, `.bg-grid-fade`)
+- **Automotive motion framework** (GPU-accelerated, scroll reveal, interactive states)
+
+**Current status by property:**
+| Property | Status | Notes |
+|----------|--------|-------|
+| WORKWAY | ✅ Reference | Tailwind v4, shadcn, MagicUI |
+| .agency | ✅ Aligned | WORKWAY utilities added (Feb 2026) |
+| .io | 🔄 Pending | Needs migration |
+| .space | 🔄 Pending | Needs migration |
+| .ltd | 🔄 Pending | Needs migration |
+
+**Migration Strategy**: New code follows Canon + WORKWAY patterns. Existing code migrates incrementally when touched. Priority: `packages/components/` first, then individual properties.
 
 **Spacing Guidance**: The golden ratio scale produces impractical values at the upper end (`--space-2xl` = 110px, `--space-3xl` = 177px). Use Tailwind for layout spacing:
 - **Page padding**: Tailwind utilities (`py-16`, `py-24`, `px-6`)

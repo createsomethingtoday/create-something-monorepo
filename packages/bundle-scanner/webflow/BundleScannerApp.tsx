@@ -9,7 +9,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './globals.css';
 
 // Types
-import type { ScanReport, Ruleset, ScanConfig, ScanHistoryEntry, AiAnalysisResult } from './types';
+import type { ScanReport, Ruleset, ScanConfig, ScanHistoryEntry, AiAnalysisResult, VerifyFindingsRequest, VerifyFindingsResponse, Finding } from './types';
 
 // Policy (ruleset & config)
 import defaultRuleset from './policy/defaultRuleset';
@@ -30,7 +30,6 @@ import { analyzeReportWithAi } from './utils/ai';
 import { REMEDIATION_REGISTRY } from './data/remediationRegistry';
 
 // UI Components
-import { VerdictBadge } from './components/VerdictBadge';
 import { TriageDashboard } from './components/TriageDashboard';
 import { FindingCard } from './components/FindingCard';
 import { PolicyPackPanel } from './components/PolicyPackPanel';
@@ -44,6 +43,48 @@ import { HistoryPanel } from './components/HistoryPanel';
 export interface BundleScannerAppProps {
   accentColor?: string;
   geminiApiKey?: string;
+  /** Optional Scanner API endpoint (Cloudflare Worker) for P3-memory + P4-judge verification */
+  apiEndpoint?: string;
+}
+
+// ============================================================================
+// API INTEGRATION
+// ============================================================================
+
+/**
+ * Call the Scanner Worker API to verify findings with P3-memory and P4-judge
+ */
+async function verifyFindingsWithAPI(
+  apiEndpoint: string,
+  findings: Finding[],
+  context: { filesScanned: number; appType?: string }
+): Promise<VerifyFindingsResponse> {
+  const request: VerifyFindingsRequest = {
+    findings,
+    context: {
+      filesScanned: context.filesScanned,
+      appType: context.appType as 'designer_extension' | 'data_client' | 'hybrid_app' | undefined,
+    },
+    options: {
+      enableMemory: true,
+      enableAI: true,
+      maxFindings: 100,
+    },
+  };
+
+  const response = await fetch(`${apiEndpoint}/v1/scan/verify`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
 }
 
 // ============================================================================
@@ -52,7 +93,8 @@ export interface BundleScannerAppProps {
 
 export function BundleScannerApp({ 
   accentColor = '#6366f1', 
-  geminiApiKey = '' 
+  geminiApiKey = '',
+  apiEndpoint = ''
 }: BundleScannerAppProps) {
   // State
   const [activeTab, setActiveTab] = useState<'scan' | 'history'>('scan');
@@ -65,6 +107,7 @@ export function BundleScannerApp({
   const [aiError, setAiError] = useState<string | null>(null);
   const [ruleset, setRuleset] = useState<Ruleset>(defaultRuleset);
   const [config, setConfig] = useState<ScanConfig>(defaultConfig);
+  const [apiVerificationResult, setApiVerificationResult] = useState<VerifyFindingsResponse | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -90,25 +133,104 @@ export function BundleScannerApp({
     setReport(null);
     setAiAnalysis(null);
     setAiError(null);
+    setApiVerificationResult(null);
     
     try {
-      // Step 1: Process ZIP
-      setScanProgress('Extracting bundle...');
-      const { entries, totalBytes } = await processZipFile(file, config);
+      // Step 1: Process ZIP (P1-filter)
+      setScanProgress('P1: Extracting bundle...');
+      const { entries } = await processZipFile(file, config);
       
       // Step 2: Build inventory
-      setScanProgress(`Building inventory (${entries.length} files)...`);
+      setScanProgress(`P1: Building inventory (${entries.length} files)...`);
       const inventory = buildInventory(entries, config);
       
-      // Step 3: Run scan
-      setScanProgress('Scanning for issues...');
+      // Step 3: Run scan (P2-hunter)
+      setScanProgress('P2: Scanning for issues...');
       const findings = runScan(inventory, ruleset, config);
       
-      // Step 4: Generate report
+      // Step 4: Generate initial report
       setScanProgress('Generating report...');
-      const scanReport = generateReport(findings, inventory, ruleset, config);
+      let scanReport = generateReport(findings, inventory, ruleset, config);
       
-      // Step 5: Save to history
+      // Step 5: Optional API verification (P3-memory + P4-judge)
+      if (apiEndpoint && findings.length > 0) {
+        try {
+          setScanProgress('P3+P4: AI verification...');
+          const verifyResult = await verifyFindingsWithAPI(
+            apiEndpoint,
+            findings,
+            { filesScanned: inventory.filter(f => !f.isIgnored).length }
+          );
+          setApiVerificationResult(verifyResult);
+          
+          // Merge verified findings back into report
+          if (verifyResult.findings.length > 0) {
+            const verifiedMap = new Map(
+              verifyResult.findings.map(f => [f.fingerprint || `${f.ruleId}:${f.filePath}:${f.line}`, f])
+            );
+            
+            // Update findings with AI verdicts
+            const updatedFindings: Record<string, typeof scanReport.findings[string]> = {};
+            for (const [ruleId, data] of Object.entries(scanReport.findings)) {
+              const updatedItems = data.items.map(item => {
+                const key = item.fingerprint || `${item.ruleId}:${item.filePath}:${item.line}`;
+                const verified = verifiedMap.get(key);
+                if (verified) {
+                  return {
+                    ...item,
+                    verdict: verified.verdict,
+                    reasoning: verified.reasoning,
+                    phase: verified.phase,
+                    confidenceScore: verified.confidenceScore,
+                  };
+                }
+                return item;
+              });
+              
+              // Filter out PASS verdicts from blockers
+              const filteredItems = updatedItems.filter(item => 
+                item.verdict !== 'PASS' || data.rule.severity !== 'BLOCKER'
+              );
+              
+              if (filteredItems.length > 0) {
+                updatedFindings[ruleId] = {
+                  ...data,
+                  items: filteredItems,
+                  count: filteredItems.length,
+                };
+              }
+            }
+            
+            // Recalculate verdict based on verified findings
+            const hasBlockers = Object.values(updatedFindings).some(
+              f => f.rule.severity === 'BLOCKER' && f.items.some(i => i.verdict !== 'PASS')
+            );
+            const hasActionRequired = Object.values(updatedFindings).some(
+              f => f.rule.reviewBucket === 'ACTION_REQUIRED' && f.items.some(i => i.verdict !== 'PASS')
+            );
+            
+            scanReport = {
+              ...scanReport,
+              findings: updatedFindings,
+              verdict: hasBlockers ? 'REJECTED' : hasActionRequired ? 'ACTION_REQUIRED' : 'PASS',
+              verdictReasons: [
+                ...(hasBlockers ? ['Blocker findings detected'] : []),
+                ...(verifyResult.summary.resolvedByMemory > 0 
+                  ? [`${verifyResult.summary.resolvedByMemory} findings resolved by memory`] 
+                  : []),
+                ...(verifyResult.summary.verifiedByAI > 0 
+                  ? [`${verifyResult.summary.verifiedByAI} findings verified by AI`] 
+                  : []),
+              ],
+            };
+          }
+        } catch (apiErr) {
+          console.warn('API verification failed, using P2 results:', apiErr);
+          // Continue with P2 results only
+        }
+      }
+      
+      // Step 6: Save to history
       await saveScanToHistory(scanReport);
       
       setReport(scanReport);
@@ -309,6 +431,34 @@ export function BundleScannerApp({
                   {/* Dashboard */}
                   <TriageDashboard report={report} accentColor={accentColor} />
                   
+                  {/* API Verification Stats */}
+                  {apiVerificationResult && (
+                    <div className="bg-gray-800/50 rounded-lg border border-gray-700 p-4">
+                      <h3 className="text-sm font-semibold text-white mb-3">AI Verification (P3+P4)</h3>
+                      <div className="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                          <div className="text-2xl font-bold text-green-400">
+                            {apiVerificationResult.summary.resolvedByMemory}
+                          </div>
+                          <div className="text-xs text-gray-400">Resolved by Memory</div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-blue-400">
+                            {apiVerificationResult.summary.verifiedByAI}
+                          </div>
+                          <div className="text-xs text-gray-400">Verified by AI</div>
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-gray-400">
+                            {(apiVerificationResult.phases?.p3Memory?.timeMs || 0) + 
+                             (apiVerificationResult.phases?.p4Judge?.timeMs || 0)}ms
+                          </div>
+                          <div className="text-xs text-gray-400">Total Time</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
                   {/* AI Analysis Results */}
                   {aiAnalysis && (
                     <AiSuggestionsPanel analysis={aiAnalysis} accentColor={accentColor} />
@@ -323,8 +473,8 @@ export function BundleScannerApp({
                       <div className="space-y-2">
                         {Object.entries(report.findings)
                           .sort(([, a], [, b]) => {
-                            const severityOrder = { BLOCKER: 0, HIGH: 1, MEDIUM: 2, LOW: 3, INFO: 4 };
-                            return (severityOrder[a.rule.severity] || 4) - (severityOrder[b.rule.severity] || 4);
+                            const severityOrder: Record<string, number> = { CRITICAL: 0, BLOCKER: 1, HIGH: 2, MEDIUM: 3, LOW: 4, INFO: 5 };
+                            return (severityOrder[a.rule.severity] ?? 5) - (severityOrder[b.rule.severity] ?? 5);
                           })
                           .map(([ruleId, data]) =>
                             data.items.slice(0, 10).map((finding, i) => (

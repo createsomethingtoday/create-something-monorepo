@@ -1,0 +1,27 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "scanner-worker"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "development"
+
+# D1 Database for findings cache / memory
+[[d1_databases]]
+binding = "DB"
+database_name = "scanner-findings-db"
+database_id = "ee50b689-dc1f-4ecf-b26b-b21e1120a4d1"
+
+# KV for rate limiting
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "93779bc9d6184126b82acc13553af612"
+
+# Workers AI binding (optional - for P4-judge)
+[ai]
+binding = "AI"
+
+# Production environment overrides
+[env.production]
+vars = { ENVIRONMENT = "production" }

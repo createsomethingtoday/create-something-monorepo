@@ -1,660 +1,614 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
-	import type { PageData } from './$types';
-	import {
-		services,
-		products,
-		allOfferings,
-		getServiceSchemaData
-	} from '$lib/data/services';
-
-	let { data }: { data: PageData } = $props();
-
-	// Context from assessment (if user came from assessment flow)
-	const hasAssessmentContext = $derived(!!data.recommendedService || !!data.assessmentId);
-	const recommendedService = $derived(data.recommendedService);
-
-	// Find recommended offering (could be product or service)
-	const recommendedOffering = $derived(
-		recommendedService ? allOfferings.find((o) => o.id === recommendedService) : null
-	);
-
-	// Service schema data for SEO
-	const serviceSchemaData = getServiceSchemaData();
-
-	// Display services with recommended first if applicable
-	let displayServices = $derived.by(() => {
-		if (!recommendedService) return services;
-
-		const targetIndex = services.findIndex((s) => s.id === recommendedService);
-		if (targetIndex === -1) return services;
-
-		// Move recommended to front
-		const reordered = [...services];
-		const [target] = reordered.splice(targetIndex, 1);
-		return [target, ...reordered];
+	import { SavvyCalButton } from '@create-something/canon/domains/agency';
+	import { onMount } from 'svelte';
+	
+	// Scroll reveal observer
+	onMount(() => {
+		const observer = new IntersectionObserver(
+			(entries) => {
+				entries.forEach((entry) => {
+					if (entry.isIntersecting) {
+						entry.target.classList.add('visible');
+					}
+				});
+			},
+			{ threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+		);
+		
+		document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
+		
+		return () => observer.disconnect();
 	});
-
-	// Display products with recommended first if applicable
-	let displayProducts = $derived.by(() => {
-		if (!recommendedService) return products;
-
-		const targetIndex = products.findIndex((p) => p.id === recommendedService);
-		if (targetIndex === -1) return products;
-
-		// Move recommended to front
-		const reordered = [...products];
-		const [target] = reordered.splice(targetIndex, 1);
-		return [target, ...reordered];
-	});
-
-	// Triad level display names
-	const triadLevelNames: Record<string, string> = {
-		implementation: 'implementation level',
-		artifact: 'artifact level',
-		system: 'system level'
-	};
-
-	// Product icons
-	const productIcons: Record<string, string> = {
-		compass: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
-		checklist:
-			'M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z',
-		palette:
-			'M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.23-1.2-.64-1.67-.08-.1-.13-.21-.13-.33 0-.28.22-.5.5-.5H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9zm5.5 11c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm-3-4c-.83 0-1.5-.67-1.5-1.5S13.67 6 14.5 6s1.5.67 1.5 1.5S15.33 9 14.5 9zM5 11.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5S7.33 13 6.5 13 5 12.33 5 11.5zm6-4c0 .83-.67 1.5-1.5 1.5S8 8.33 8 7.5 8.67 6 9.5 6s1.5.67 1.5 1.5z',
-		template:
-			'M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z',
-		cookbook:
-			'M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z',
-		box: 'M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z'
-	};
+	
+	// Structured data for SEO/AEO
+	const services = [
+		{
+			name: 'Starter MCP Development',
+			description: 'Connect two tools to AI plus one agent. See AI work across your systems. Standard auth, deployment package included. 3-5 day turnaround.',
+			type: 'MCP Server Development',
+			price: '500',
+			priceDescription: 'Fixed price, no hourly billing'
+		},
+		{
+			name: 'Pro MCP Development',
+			description: 'Scale your MCP infrastructure. 5+ API integrations, OAuth 2.0, data mapping, 2 configured agents. 1-2 week turnaround.',
+			type: 'MCP Server Development',
+			price: '2500',
+			priceDescription: 'Fixed price, no hourly billing'
+		},
+		{
+			name: 'Intelligence Layer',
+			description: 'Automation that runs while you sleep. 3+ agents, automated triggers, observability dashboard, workflow orchestration.',
+			type: 'AI Automation',
+			price: '5000',
+			priceDescription: 'Starting price, scales with complexity'
+		}
+	];
+	
+	const faqItems = [
+		{
+			question: "What is an MCP server?",
+			answer: "MCP (Model Context Protocol) connects AI to external tools. An MCP server lets Claude, Cursor, or Codex access your systems with controlled permissions."
+		},
+		{
+			question: "What tools can you connect to AI?",
+			answer: "Anything with an API. Procore, Salesforce, HubSpot, Notion, internal databases, REST APIs, GraphQL."
+		},
+		{
+			question: "What if my project is more complex?",
+			answer: "We'll scope it on the discovery call. Complex integrations (multiple systems, custom auth, webhooks) get a custom quote."
+		},
+		{
+			question: "Do you offer ongoing support?",
+			answer: "Yes. After the initial build, retainer options are available for updates and maintenance."
+		}
+	];
 </script>
 
 <SEO
-	title="Services"
-	description="155 scripts became 13. 120 hours/week became automated. We meet you where you are and build toward agents that actually work."
-	keywords="accountable agents, workflow automation, web development, AI systems, Claude Code"
+	title="Services | Custom MCP Development"
+	description="Fixed pricing for MCP development. Starter $500, Pro $2,500, Intelligence $5,000+. Fast turnaround, no hourly billing."
+	keywords="MCP development, custom MCP server, Model Context Protocol, AI integration, automation infrastructure, MCP pricing"
 	ogImage="/og-image.svg"
 	propertyName="agency"
-	services={serviceSchemaData}
+	{services}
+	{faqItems}
 />
 
-<!-- Hero Section -->
-<section class="hero-section">
-	<div class="max-w-4xl mx-auto px-6 text-center">
-		{#if hasAssessmentContext && recommendedOffering}
-			<p class="eyebrow">Based on your assessment</p>
-			<h1 class="hero-title">Here's where we'd start.</h1>
-			<p class="hero-subtitle">
-				{#if data.triadLevel}
-					You identified accumulation at the {triadLevelNames[data.triadLevel] || data.triadLevel}.
-				{/if}
-				We recommend <strong>{recommendedOffering.title}</strong> as your entry point.
-				{#if recommendedOffering.isProductized}
-					<span class="recommended-tier">Self-serve product — start immediately.</span>
-				{/if}
-			</p>
-		{:else}
-			<p class="eyebrow">What we do</p>
-			<h1 class="hero-title">We meet you where you are.</h1>
-			<p class="hero-subtitle">
-				155 scripts became 13. 120 hours/week of research became automated. 
-				Every business is somewhere on the path to agents. We build the infrastructure that makes them trustworthy—starting wherever you are today.
-			</p>
-		{/if}
+<!-- Hero -->
+<section class="hero">
+	<div class="hero-grid"></div>
+	<div class="hero-content">
+		<p class="hero-eyebrow reveal">Services</p>
+		<h1 class="hero-title reveal">Custom MCP Development</h1>
+		<p class="hero-subtitle reveal">
+			Fixed pricing. Fast turnaround. You know what you're paying before we start.
+		</p>
 	</div>
 </section>
 
-<!-- Products Section (Accessible Tier) -->
-<section class="products-section">
-	<div class="max-w-5xl mx-auto px-6">
-		<div class="section-header">
-			<h2 class="section-title">Start here</h2>
-			<p class="section-subtitle">No calls, no proposals. Tools you can use today.</p>
-		</div>
-		<div class="products-grid">
-			{#each displayProducts as product, index}
-				{@const isRecommended = recommendedService === product.id}
-				<a
-					href="/services/{product.id}"
-					class="product-card animate-reveal"
-					class:recommended={isRecommended}
-					style="--delay: {index}"
-				>
-					{#if isRecommended}
-						<div class="recommended-badge">Recommended for you</div>
-					{/if}
-					<div class="product-icon">
-						<svg fill="currentColor" viewBox="0 0 24 24">
-							<path d={productIcons[product.icon] || productIcons.box} />
-						</svg>
-					</div>
-					<h3 class="product-title">{product.title}</h3>
-					<p class="product-description">{product.description}</p>
-					<div class="product-footer">
-						<span class="product-pricing">{product.pricing}</span>
-						<span class="product-timeline">{product.timeline}</span>
-					</div>
-				</a>
-			{/each}
-		</div>
-	</div>
-</section>
-
-<!-- Services Section (Commercial Tier) -->
-<section class="services-section">
-	<div class="max-w-5xl mx-auto px-6">
-		<div class="section-header">
-			<h2 class="section-title">When you need more</h2>
-			<p class="section-subtitle">Hands-on work, not just tools. 40+ production systems shipped.</p>
-		</div>
-		<div class="services-grid">
-			{#each displayServices as service, index}
-				{@const isRecommended = recommendedService === service.id}
-				<a
-					href="/services/{service.id}"
-					class="service-card animate-reveal"
-					class:recommended={isRecommended}
-					style="--delay: {index}"
-				>
-					{#if isRecommended}
-						<div class="recommended-badge">Recommended for you</div>
-					{/if}
-
-					<!-- Header -->
-					<div class="service-header">
-						<div class="service-icon">
-							{#if service.icon === 'globe'}
-								<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-									/>
-								</svg>
-							{:else if service.icon === 'automation'}
-								<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										d="M13 10V3L4 14h7v7l9-11h-7z"
-									/>
-								</svg>
-							{:else if service.icon === 'robot'}
-								<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
-									/>
-								</svg>
-							{:else if service.icon === 'partnership'}
-								<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-									/>
-								</svg>
-							{:else if service.icon === 'academy'}
-								<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-									/>
-								</svg>
-							{:else if service.icon === 'advisor'}
-								<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-									/>
-								</svg>
-							{/if}
-						</div>
-						<div class="service-title-block">
-							<h2 class="service-title">{service.title}</h2>
-						</div>
-					</div>
-
-					<!-- What This Removes -->
-					<div class="service-section">
-						<h3 class="section-label">What this removes</h3>
-						<ul class="removal-list">
-							{#each service.whatThisRemoves as item}
-								<li>{item}</li>
-							{/each}
-						</ul>
-					</div>
-
-					<!-- Footer Preview -->
-					<div class="service-footer">
-						<div class="pricing-row">
-							<span class="pricing">{service.pricing}</span>
-							<span class="timeline">{service.timeline}</span>
-						</div>
-						<span class="view-details">
-							View details
-							<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-								<path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-							</svg>
-						</span>
-					</div>
-				</a>
-			{/each}
-		</div>
-	</div>
-</section>
-
-<!-- Pricing Philosophy -->
+<!-- Pricing -->
 <section class="pricing-section">
-	<div class="max-w-3xl mx-auto px-6 text-center">
-		<div class="pricing-qualifier">
-			<h3 class="qualifier-title">What it costs</h3>
-			<p class="qualifier-text">
-				Products start free. Consulting ranges from $5,000 to $50,000+ depending on scope.
-				Most projects land between $15K-$25K and ship in 4-8 weeks.
-			</p>
-			<p class="qualifier-note">
-				30-minute call is free. We'll tell you if we're the right fit—and if not, where else to look.
-			</p>
+	<div class="pricing-container">
+		
+		<!-- Starter -->
+		<div class="pricing-card reveal">
+			<div class="pricing-header">
+				<h2 class="pricing-name">Starter</h2>
+				<div class="pricing-price">$500</div>
+				<p class="pricing-tagline">See AI work across your systems</p>
+			</div>
+			
+			<div class="pricing-body">
+				<ul class="pricing-features">
+					<li>Two API integrations</li>
+					<li>One configured agent</li>
+					<li>Standard auth (API keys, basic OAuth)</li>
+					<li>Deployment package</li>
+					<li>Source code included</li>
+				</ul>
+			</div>
+			
+			<div class="pricing-footer">
+				<div class="pricing-timeline">3–5 day turnaround</div>
+			</div>
+		</div>
+		
+		<!-- Pro -->
+		<div class="pricing-card featured reveal">
+			<div class="pricing-header">
+				<h2 class="pricing-name">Pro</h2>
+				<div class="pricing-price">$2,500</div>
+				<p class="pricing-tagline">Scale your MCP infrastructure</p>
+			</div>
+			
+			<div class="pricing-body">
+				<ul class="pricing-features">
+					<li>5+ API integrations</li>
+					<li>OAuth 2.0 / complex auth</li>
+					<li>Data mapping & transforms</li>
+					<li>Two configured agents</li>
+					<li>Deployment package + docs</li>
+					<li>14 days support included</li>
+				</ul>
+			</div>
+			
+			<div class="pricing-footer">
+				<div class="pricing-timeline">1–2 week turnaround</div>
+			</div>
+		</div>
+		
+		<!-- Intelligence -->
+		<div class="pricing-card reveal">
+			<div class="pricing-header">
+				<h2 class="pricing-name">Intelligence</h2>
+				<div class="pricing-price">$5,000<span class="price-modifier">+</span></div>
+				<p class="pricing-tagline">Runs while you sleep</p>
+			</div>
+			
+			<div class="pricing-body">
+				<ul class="pricing-features">
+					<li>3+ configured agents</li>
+					<li>Automated triggers (schedule, webhook)</li>
+					<li>Observability dashboard</li>
+					<li>Workflow orchestration</li>
+					<li>30 days support included</li>
+				</ul>
+			</div>
+			
+			<div class="pricing-footer">
+				<div class="pricing-timeline">Scales with complexity</div>
+			</div>
+		</div>
+		
+	</div>
+</section>
+
+<!-- What's Included -->
+<section class="included-section">
+	<div class="section-container">
+		<h2 class="section-heading reveal">Every Project Includes</h2>
+		
+		<div class="included-grid">
+			<div class="included-item reveal">
+				<h3>Source code</h3>
+				<p>You own everything we build. Full source code, no lock-in.</p>
+			</div>
+			
+			<div class="included-item reveal">
+				<h3>Deployment package</h3>
+				<p>.mcpb file for easy installation in Claude Desktop, Cursor, or Codex.</p>
+			</div>
+			
+			<div class="included-item reveal">
+				<h3>Documentation</h3>
+				<p>Setup guide, API reference, and deployment instructions.</p>
+			</div>
+			
+			<div class="included-item reveal">
+				<h3>Bug fixes</h3>
+				<p>14 days of bug fixes included. Optional ongoing support available.</p>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- How We Work -->
+<section class="process-section">
+	<div class="section-container">
+		<h2 class="section-heading reveal">How We Work</h2>
+		
+		<div class="process-grid">
+			<div class="process-step reveal">
+				<div class="step-number">1</div>
+				<h3>Discovery Call</h3>
+				<p>30 minutes. We learn about your tools and goals.</p>
+			</div>
+			
+			<div class="process-step reveal">
+				<div class="step-number">2</div>
+				<h3>Scope & Quote</h3>
+				<p>Fixed price based on complexity. No hourly billing.</p>
+			</div>
+			
+			<div class="process-step reveal">
+				<div class="step-number">3</div>
+				<h3>Build</h3>
+				<p>We build, you review. Async updates as we go.</p>
+			</div>
+			
+			<div class="process-step reveal">
+				<div class="step-number">4</div>
+				<h3>Ship</h3>
+				<p>Deployment package delivered. You're live.</p>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- FAQ -->
+<section class="faq-section">
+	<div class="section-container">
+		<h2 class="section-heading reveal">Questions</h2>
+		
+		<div class="faq-grid">
+			<div class="faq-item reveal">
+				<h3>What's an MCP server?</h3>
+				<p>MCP (Model Context Protocol) connects AI to external tools. An MCP server lets Claude, Cursor, or Codex access your systems with controlled permissions.</p>
+			</div>
+			
+			<div class="faq-item reveal">
+				<h3>What tools can you connect?</h3>
+				<p>Anything with an API. Procore, Salesforce, HubSpot, Notion, internal databases, REST APIs, GraphQL.</p>
+			</div>
+			
+			<div class="faq-item reveal">
+				<h3>What if my project is more complex?</h3>
+				<p>We'll scope it on the discovery call. Complex integrations (multiple systems, custom auth, webhooks) get a custom quote.</p>
+			</div>
+			
+			<div class="faq-item reveal">
+				<h3>Do you offer ongoing support?</h3>
+				<p>Yes. After the initial build, retainer options are available for updates and maintenance.</p>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+	<div class="section-container">
+		<h2 class="cta-heading reveal">Let's talk about your integration</h2>
+		<p class="cta-subtext reveal">30-minute discovery call. We'll scope your project and quote a fixed price.</p>
+		<div class="reveal">
+			<SavvyCalButton variant="primary" size="lg" />
 		</div>
 	</div>
 </section>
 
 <style>
-	/* Hero Section */
-	.hero-section {
-		padding: 6rem 0 var(--space-xl);
-		min-height: 40vh;
-		display: flex;
-		align-items: center;
-		justify-content: center;
+	/* Section containers */
+	.section-container {
+		max-width: 900px;
+		margin: 0 auto;
+		padding: 0 var(--container-padding, 1.5rem);
 	}
-
-	.eyebrow {
-		font-size: var(--text-body-sm);
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: var(--color-fg-muted);
-		font-style: italic;
-		margin-bottom: var(--space-sm);
-	}
-
-	.hero-title {
-		font-size: var(--text-display);
-		font-weight: var(--font-bold);
+	
+	.section-heading {
+		font-size: var(--text-h1);
+		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
-		line-height: var(--leading-tight);
-		margin-bottom: var(--space-md);
+		text-align: center;
+		margin-bottom: var(--space-8, 3rem);
+		letter-spacing: var(--tracking-tight, -0.015em);
 	}
-
-	.hero-subtitle {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-tertiary);
-		line-height: 1.7;
-		max-width: 42rem;
+	
+	/* Hero with grid background */
+	.hero {
+		position: relative;
+		padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem) var(--section-padding, 6rem);
+		overflow: hidden;
+	}
+	
+	.hero-grid {
+		position: absolute;
+		inset: 0;
+		background-image: 
+			linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+			linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+		background-size: 60px 60px;
+		mask-image: linear-gradient(to bottom, black 0%, transparent 80%);
+		-webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 80%);
+		pointer-events: none;
+	}
+	
+	.hero-content {
+		position: relative;
+		text-align: center;
+		max-width: 700px;
 		margin: 0 auto;
 	}
-
-	.hero-subtitle strong {
-		color: var(--color-fg-primary);
-	}
-
-	/* Recommended tier indicator */
-	.recommended-tier {
-		display: block;
-		margin-top: var(--space-xs);
+	
+	.hero-eyebrow {
 		font-size: var(--text-body-sm);
+		text-transform: uppercase;
+		letter-spacing: 0.15em;
 		color: var(--color-fg-muted);
+		margin-bottom: var(--space-5, 1.5rem);
 	}
-
-	/* Section Headers */
-	.section-header {
-		margin-bottom: var(--space-lg);
-	}
-
-	.section-title {
-		font-size: var(--text-h2);
-		font-weight: var(--font-bold);
+	
+	.hero-title {
+		font-size: var(--text-display);
+		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
+		margin-bottom: var(--space-5, 1.5rem);
+		line-height: 1.1;
+		letter-spacing: var(--tracking-tighter, -0.025em);
 	}
-
-	.section-subtitle {
-		font-size: var(--text-body);
-		color: var(--color-fg-muted);
+	
+	.hero-subtitle {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+		max-width: 480px;
+		margin: 0 auto;
+		line-height: var(--leading-relaxed);
 	}
-
-	/* Products Section */
-	.products-section {
-		padding: var(--space-xl) 0;
+	
+	/* Pricing Section */
+	.pricing-section {
+		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
 		border-top: 1px solid var(--color-border-default);
 	}
-
-	.products-grid {
+	
+	.pricing-container {
+		max-width: 1000px;
+		margin: 0 auto;
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-		gap: var(--space-md);
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-4, 1rem);
 	}
-
-	.product-card {
+	
+	.pricing-card {
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg, 12px);
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-		padding: var(--space-md);
-		position: relative;
-		transition:
-			border-color var(--duration-standard) var(--ease-standard),
-			background var(--duration-standard) var(--ease-standard);
+		transition: 
+			border-color var(--duration-micro, 200ms) var(--ease-standard),
+			transform var(--duration-micro, 200ms) var(--ease-standard);
 	}
-
-	.product-card:hover {
+	
+	.pricing-card:hover {
 		border-color: var(--color-border-emphasis);
+		transform: translateY(-2px);
+	}
+	
+	.pricing-card.featured {
+		border-color: var(--color-border-emphasis);
+		background: var(--color-bg-surface);
+	}
+	
+	.pricing-header {
+		padding: var(--space-6, 2rem);
+		text-align: center;
+		border-bottom: 1px solid var(--color-border-default);
+	}
+	
+	.pricing-name {
+		font-size: var(--text-h3);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-2, 0.5rem);
+	}
+	
+	.pricing-price {
+		font-size: var(--text-display);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		letter-spacing: var(--tracking-tight, -0.015em);
+		margin-bottom: var(--space-3, 0.75rem);
+	}
+	
+	.price-modifier {
+		font-size: var(--text-h2);
+		color: var(--color-fg-muted);
+	}
+	
+	.pricing-tagline {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+	}
+	
+	.pricing-body {
+		padding: var(--space-5, 1.5rem);
+		flex: 1;
+	}
+	
+	.pricing-features {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+	}
+	
+	.pricing-features li {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		padding: var(--space-2, 0.5rem) 0;
+		border-bottom: 1px solid var(--color-border-default);
+	}
+	
+	.pricing-features li:last-child {
+		border-bottom: none;
+	}
+	
+	.pricing-footer {
+		padding: var(--space-4, 1rem) var(--space-5, 1.5rem);
+		background: var(--color-bg-surface);
+		border-top: 1px solid var(--color-border-default);
+		border-radius: 0 0 var(--radius-lg, 12px) var(--radius-lg, 12px);
+	}
+	
+	.pricing-card.featured .pricing-footer {
 		background: var(--color-bg-elevated);
 	}
-
-	.product-card.recommended {
-		border-color: var(--color-border-strong);
-		background: var(--color-bg-elevated);
+	
+	.pricing-timeline {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		font-family: var(--font-mono, monospace);
+		text-align: center;
 	}
-
-	.product-icon {
+	
+	/* What's Included */
+	.included-section {
+		padding: var(--section-padding, 6rem) 0;
+		border-top: 1px solid var(--color-border-default);
+	}
+	
+	.included-grid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: var(--space-4, 1rem);
+	}
+	
+	.included-item {
+		padding: var(--space-5, 1.5rem);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg, 12px);
+	}
+	
+	.included-item h3 {
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-2, 0.5rem);
+	}
+	
+	.included-item p {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+	}
+	
+	/* Process Section */
+	.process-section {
+		padding: var(--section-padding, 6rem) 0;
+		border-top: 1px solid var(--color-border-default);
+	}
+	
+	.process-grid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: var(--space-5, 1.5rem);
+	}
+	
+	.process-step {
+		text-align: center;
+	}
+	
+	.step-number {
 		width: 2.5rem;
 		height: 2.5rem;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-md);
-	}
-
-	.product-icon svg {
-		width: 1.25rem;
-		height: 1.25rem;
+		margin: 0 auto var(--space-4, 1rem);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-full, 9999px);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-semibold);
 		color: var(--color-fg-secondary);
 	}
-
-	.product-title {
+	
+	.process-step h3 {
 		font-size: var(--text-body-lg);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
+		margin-bottom: var(--space-2, 0.5rem);
 	}
-
-	.product-description {
+	
+	.process-step p {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
-		line-height: 1.5;
-		flex: 1;
+		line-height: var(--leading-relaxed);
 	}
-
-	.product-footer {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding-top: var(--space-sm);
+	
+	/* FAQ Section */
+	.faq-section {
+		padding: var(--section-padding, 6rem) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
-
-	.product-pricing {
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-	}
-
-	.product-timeline {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-	}
-
-	/* Services Section */
-	.services-section {
-		padding: var(--space-xl) 0;
-		border-top: 1px solid var(--color-border-default);
-	}
-
-	.services-grid {
+	
+	.faq-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-		gap: var(--space-lg);
+		grid-template-columns: repeat(2, 1fr);
+		gap: var(--space-4, 1rem);
 	}
-
-	/* Service Card - now a link */
-	.service-card {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-md);
-		background: var(--color-bg-surface);
+	
+	.faq-item {
+		padding: var(--space-5, 1.5rem);
 		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-		padding: var(--space-lg);
-		position: relative;
-		transition:
-			border-color var(--duration-standard) var(--ease-standard),
-			background var(--duration-standard) var(--ease-standard);
+		border-radius: var(--radius-lg, 12px);
 	}
-
-	.service-card:hover {
-		border-color: var(--color-border-emphasis);
-		background: var(--color-bg-elevated);
-	}
-
-	.service-card.recommended {
-		border-color: var(--color-border-strong);
-		background: var(--color-bg-elevated);
-	}
-
-	.recommended-badge {
-		position: absolute;
-		top: calc(-1 * var(--space-xs));
-		left: var(--space-md);
-		padding: 0.25rem 0.75rem;
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
-		font-size: var(--text-caption);
+	
+	.faq-item h3 {
+		font-size: var(--text-body-lg);
 		font-weight: var(--font-semibold);
-		border-radius: var(--radius-sm);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	/* Service Header */
-	.service-header {
-		display: flex;
-		gap: var(--space-md);
-		align-items: center;
-	}
-
-	.service-icon {
-		width: 3rem;
-		height: 3rem;
-		flex-shrink: 0;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-md);
-	}
-
-	.service-icon svg {
-		width: 1.5rem;
-		height: 1.5rem;
-		color: var(--color-fg-secondary);
-	}
-
-	.service-title-block {
-		flex: 1;
-	}
-
-	.service-title {
-		font-size: var(--text-h3);
-		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
+		margin-bottom: var(--space-3, 0.75rem);
 	}
-
-	/* Service Sections */
-	.service-section {
-		padding-top: var(--space-sm);
-	}
-
-	.section-label {
-		font-size: var(--text-caption);
-		font-weight: var(--font-semibold);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-xs);
-	}
-
-	.removal-list {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.375rem;
-	}
-
-	.removal-list li {
+	
+	.faq-item p {
 		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		padding-left: 1rem;
-		position: relative;
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
 	}
-
-	.removal-list li::before {
-		content: '−';
-		position: absolute;
-		left: 0;
-		color: var(--color-fg-muted);
-	}
-
-	/* Service Footer */
-	.service-footer {
-		margin-top: auto;
-		padding-top: var(--space-md);
+	
+	/* CTA */
+	.cta-section {
+		padding: var(--section-padding, 6rem) 0;
 		border-top: 1px solid var(--color-border-default);
+		text-align: center;
 	}
-
-	.pricing-row {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: var(--space-sm);
-	}
-
-	.pricing {
-		font-size: var(--text-body);
+	
+	.cta-heading {
+		font-size: var(--text-h1);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
+		margin-bottom: var(--space-3, 0.75rem);
 	}
-
-	.timeline {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-	}
-
-	.view-details {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: var(--space-xs);
-		width: 100%;
-		padding: var(--space-sm) var(--space-md);
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-semibold);
+	
+	.cta-subtext {
+		font-size: var(--text-body-lg);
 		color: var(--color-fg-secondary);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-full);
-		transition: all var(--duration-micro) var(--ease-standard);
+		margin-bottom: var(--space-6, 2rem);
 	}
-
-	.service-card:hover .view-details {
-		border-color: var(--color-border-emphasis);
-		color: var(--color-fg-primary);
-	}
-
-	.view-details svg {
-		width: 1rem;
-		height: 1rem;
-		transition: transform var(--duration-micro) var(--ease-standard);
-	}
-
-	.service-card:hover .view-details svg {
-		transform: translateX(4px);
-	}
-
-	/* Pricing Section */
-	.pricing-section {
-		padding: var(--space-xl) 0;
-	}
-
-	.pricing-qualifier {
-		padding: var(--space-lg);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-	}
-
-	.qualifier-title {
-		font-size: var(--text-h3);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-sm);
-	}
-
-	.qualifier-text {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
-		margin-bottom: var(--space-sm);
-	}
-
-	.qualifier-note {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-	}
-
+	
 	/* Responsive */
+	@media (max-width: 1024px) {
+		.pricing-container {
+			grid-template-columns: 1fr;
+			max-width: 400px;
+		}
+		
+		.included-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+		
+		.process-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+	
 	@media (max-width: 768px) {
+		.hero {
+			padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
+		}
+		
 		.hero-title {
 			font-size: var(--text-h1);
 		}
-
-		.services-grid {
+		
+		.included-grid {
 			grid-template-columns: 1fr;
 		}
-
-		.service-header {
-			flex-direction: column;
-			gap: var(--space-sm);
+		
+		.process-grid {
+			grid-template-columns: 1fr;
 		}
-	}
-
-	/* Animation */
-	.animate-reveal {
-		opacity: 0;
-		transform: translateY(20px);
-		animation: reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-		animation-delay: calc(var(--delay, 0) * 80ms);
-	}
-
-	@keyframes reveal {
-		to {
-			opacity: 1;
-			transform: translateY(0);
+		
+		.faq-grid {
+			grid-template-columns: 1fr;
 		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.animate-reveal {
-			animation: none;
-			opacity: 1;
-			transform: none;
+		
+		/* Mobile section padding */
+		.pricing-section,
+		.included-section,
+		.process-section,
+		.faq-section,
+		.cta-section {
+			padding: var(--layout-3, 4rem) 0;
 		}
 	}
 </style>

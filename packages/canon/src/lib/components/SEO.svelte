@@ -54,7 +54,7 @@
     agency: {
       domain: 'https://createsomething.agency',
       name: 'CREATE SOMETHING Agency',
-      tagline: 'Agentic Systems Engineering - AI automation workflows and autonomous systems that run businesses',
+      tagline: 'Custom MCP Development - Connect your tools to AI with fast turnaround and fixed pricing',
       color: '#000000',
     },
     ltd: {
@@ -84,7 +84,7 @@
       'https://github.com/createsomethingtoday'
     ],
     description: propertyName === 'agency'
-      ? 'Agentic systems engineering consultancy building AI automation workflows and autonomous systems for businesses'
+      ? 'Custom MCP server development connecting your existing tools to AI. Fast turnaround, fixed pricing, production-ready deployment.'
       : propertyName === 'io'
       ? 'Research papers on AI-native development with tracked experiments and rigorous methodology'
       : propertyName === 'space'
@@ -93,17 +93,20 @@
     founder: {
       '@type': 'Person',
       name: 'Micah Johnson',
-      jobTitle: 'Systems Architect',
+      jobTitle: 'MCP Developer',
       sameAs: 'https://www.linkedin.com/in/micahryanjohnson/'
     },
     knowsAbout: [
-      'Agentic Systems Engineering',
-      'AI-Native Development',
-      'Claude Code',
+      'Model Context Protocol (MCP)',
+      'MCP Server Development',
+      'AI Integration',
+      'Claude Desktop',
+      'Cursor IDE',
+      'API Integration',
+      'OAuth Authentication',
       'Cloudflare Workers',
-      'Automation Systems',
-      'Autonomous AI Agents',
-      'Systems Thinking'
+      'TypeScript',
+      'AI Automation'
     ],
     areaServed: {
       '@type': 'Place',

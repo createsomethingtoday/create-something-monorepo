@@ -138,6 +138,31 @@ Glass conveys "The Automation Layer" — the transparent interface between user 
 <article class="glass-card">Workflow content</article>
 ```
 
+## WORKWAY Alignment
+
+Canon is shared between CREATE SOMETHING properties and [WORKWAY](https://workway.co) (the construction vertical). **WORKWAY serves as the reference implementation** with the most advanced patterns:
+
+| Feature | Canon (SvelteKit) | WORKWAY (React) |
+|---------|-------------------|-----------------|
+| **Framework** | Tailwind v3 | Tailwind v4 |
+| **Components** | Svelte components | shadcn/ui + MagicUI |
+| **Glass System** | CSS utilities | CSS + React components |
+| **Animations** | CSS keyframes | CSS + Framer Motion |
+
+**Reference file**: `WORKWAY/workway-platform/apps/web/src/styles.css`
+
+New Canon features are first implemented in WORKWAY, then backported to the shared Canon package. This ensures the design system evolves through production use rather than theoretical additions.
+
+### Shared Utilities (v1.1.0+)
+
+These utilities are now synchronized between Canon and WORKWAY:
+
+- Infrastructure grid backgrounds (`.bg-grid`, `.bg-grid-fade`)
+- Interactive state patterns (`.interactive`, `.pressable`, `.hover-lift`)
+- Scroll reveal animations (`.reveal`, `.reveal-delay-*`)
+- Dim siblings pattern (`.dim-siblings-on-hover`)
+- Skeleton loading animations
+
 ## Accessibility
 
 All components and styles include fallbacks for:

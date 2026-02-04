@@ -3,7 +3,6 @@
  * Displays scan verdict with appropriate styling
  */
 
-import React from 'react';
 import type { Verdict } from '../types';
 
 interface VerdictBadgeProps {
@@ -17,6 +16,18 @@ const verdictConfig: Record<Verdict, { label: string; bgClass: string; textClass
     bgClass: 'bg-green-500/20',
     textClass: 'text-green-400',
     icon: '✓'
+  },
+  FAIL: {
+    label: 'FAIL',
+    bgClass: 'bg-red-500/20',
+    textClass: 'text-red-400',
+    icon: '✕'
+  },
+  INVESTIGATE: {
+    label: 'INVESTIGATE',
+    bgClass: 'bg-blue-500/20',
+    textClass: 'text-blue-400',
+    icon: '?'
   },
   ACTION_REQUIRED: {
     label: 'ACTION REQUIRED',

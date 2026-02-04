@@ -5,15 +5,76 @@ title: "Changelog"
 description: "Version history and release notes for the Canon Design System"
 lead: "A record of all notable changes to the Canon Design System.
 			Following semantic versioning."
-publishedAt: "2026-01-08"
+publishedAt: "2026-02-04"
 published: true
 ---
 
 <section class="release">
 <div class="release-header">
+<h2>v1.1.0</h2>
+<time datetime="2026-02-04">February 4, 2026</time>
+<span class="badge badge--new">Latest</span>
+</div>
+<p class="release-summary">
+			WORKWAY alignment release. The Canon Design System is now synchronized with 
+			WORKWAY's implementation, establishing a shared visual language across all 
+			CREATE SOMETHING properties and the WORKWAY vertical.
+		</p>
+<h3>WORKWAY Alignment</h3>
+<ul class="change-list">
+<li class="change change--added">
+<span class="change-type">Added</span>
+				Infrastructure grid backgrounds (.bg-grid, .bg-grid-fade, .bg-grid-vignette)
+			</li>
+<li class="change change--added">
+<span class="change-type">Added</span>
+				WORKWAY-aligned button system with glass effects
+			</li>
+<li class="change change--added">
+<span class="change-type">Added</span>
+				Interactive state utilities (.interactive, .pressable, .hover-lift)
+			</li>
+<li class="change change--added">
+<span class="change-type">Added</span>
+				Scroll reveal animations (.reveal, .reveal-delay-*)
+			</li>
+<li class="change change--added">
+<span class="change-type">Added</span>
+				Dim siblings pattern (.dim-siblings-on-hover)
+			</li>
+<li class="change change--added">
+<span class="change-type">Added</span>
+				Skeleton loading animations
+			</li>
+</ul>
+<h3>Glass Design System</h3>
+<ul class="change-list">
+<li class="change change--changed">
+<span class="change-type">Changed</span>
+				Glass utilities now match WORKWAY's Liquid Glass implementation
+			</li>
+<li class="change change--added">
+<span class="change-type">Added</span>
+				Glass blur layer technique for button secondary variant
+			</li>
+</ul>
+<h3>Notes</h3>
+<p class="release-note">
+			WORKWAY (the construction vertical) has advanced the shared Canon system with 
+			Tailwind v4, shadcn/ui components, and MagicUI animations. This release begins 
+			aligning CREATE SOMETHING properties (.agency first) with these updates. 
+			Properties .io, .space, and .ltd will be migrated incrementally.
+		</p>
+<p class="release-note">
+			<strong>Reference implementation:</strong> WORKWAY's <code>workway-platform/apps/web/src/styles.css</code>
+			serves as the canonical source for new utility classes and patterns.
+		</p>
+</section>
+
+<section class="release">
+<div class="release-header">
 <h2>v1.0.0</h2>
 <time datetime="2024-12-27">December 27, 2024</time>
-<span class="badge badge--new">Latest</span>
 </div>
 <p class="release-summary">
 			Initial release of the Canon Design System. Foundations, components,
