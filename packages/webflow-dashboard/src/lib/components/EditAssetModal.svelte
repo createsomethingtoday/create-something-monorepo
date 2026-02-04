@@ -6,6 +6,7 @@
 	import type { Asset } from '$lib/server/airtable';
 	import { toast } from '$lib/stores/toast';
 	import { onMount } from 'svelte';
+	import { trackEvent } from '$lib/utils/analytics';
 	
 	// #region agent log
 	const scriptInitTime = performance.now();
@@ -265,6 +266,16 @@
 			});
 		}
 
+		// Track asset update started - security paper trail
+		trackEvent('asset_update_started', {
+			asset_id: asset.id,
+			asset_name: asset.name,
+			fields_changed: changedFields,
+			has_thumbnail_change: thumbnailUrl !== asset.thumbnailUrl,
+			has_secondary_change: JSON.stringify(secondaryThumbnails) !== JSON.stringify(asset.secondaryThumbnails || []),
+			has_carousel_change: JSON.stringify(carouselImages) !== JSON.stringify(asset.carouselImages || [])
+		});
+
 		await onSave({
 			name: formData.name.trim(),
 			descriptionShort: formData.descriptionShort,
@@ -276,12 +287,26 @@
 			secondaryThumbnails,
 			carouselImages
 		});
+
+			// Track successful update - security paper trail
+			trackEvent('asset_update_completed', {
+				asset_id: asset.id,
+				asset_name: asset.name,
+				fields_changed: changedFields
+			});
+
 			toast.success('Asset updated successfully');
 			onClose();
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Failed to save changes';
 			error = message;
 			toast.error(message);
+
+			// Track failed update - security paper trail
+			trackEvent('asset_update_failed', {
+				asset_id: asset.id,
+				error_message: message
+			});
 		} finally {
 			isLoading = false;
 		}
@@ -295,11 +320,24 @@
 			return;
 		}
 
+		// Track archive initiated - security paper trail
+		trackEvent('asset_archive_initiated', {
+			asset_id: asset.id,
+			asset_name: asset.name
+		});
+
 		isArchiving = true;
 		error = null;
 
 		try {
 			await onArchive();
+
+			// Track successful archive - security paper trail
+			trackEvent('asset_archived', {
+				asset_id: asset.id,
+				asset_name: asset.name
+			});
+
 			toast.success('Asset archived successfully');
 			onClose();
 		} catch (err) {

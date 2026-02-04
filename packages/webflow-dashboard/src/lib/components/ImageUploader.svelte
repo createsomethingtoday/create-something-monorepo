@@ -10,6 +10,7 @@
 		THUMBNAIL_ASPECT_RATIO
 	} from '$lib/utils/upload-validation';
 	import { Upload, Loader2 } from 'lucide-svelte';
+	import { trackEvent } from '$lib/utils/analytics';
 
 	interface Props {
 		value?: string | null;
@@ -96,11 +97,24 @@
 	async function uploadFile(file: File) {
 		error = null;
 
+		// Track upload attempt - security paper trail
+		trackEvent('image_upload_attempted', {
+			image_type: uploadType,
+			file_type: file.type,
+			file_size_kb: Math.round(file.size / 1024)
+		});
+
 		// Client-side validation
 		const validationError = await validateFile(file);
 		if (validationError) {
 			error = validationError;
 			toast.error(validationError);
+
+			// Track validation failure - security paper trail
+			trackEvent('image_validation_failed', {
+				image_type: uploadType,
+				failure_reason: validationError
+			});
 			return;
 		}
 
@@ -143,11 +157,24 @@
 			const data = (await response.json()) as { url: string; key: string; size: number };
 			uploadProgress = 100;
 			onchange?.(data.url);
+
+			// Track successful upload - security paper trail
+			trackEvent('image_upload_success', {
+				image_type: uploadType,
+				file_size_kb: Math.round(file.size / 1024)
+			});
+
 			toast.success('Image uploaded successfully');
 		} catch (err) {
 			const message = err instanceof Error ? err.message : 'Upload failed';
 			error = message;
 			toast.error(message);
+
+			// Track upload failure - security paper trail
+			trackEvent('image_upload_failed', {
+				image_type: uploadType,
+				error_message: message
+			});
 		} finally {
 			isUploading = false;
 			uploadProgress = 0;

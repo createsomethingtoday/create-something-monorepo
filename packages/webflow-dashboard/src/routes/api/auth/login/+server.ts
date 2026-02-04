@@ -3,6 +3,27 @@ import type { RequestHandler } from './$types';
 import { getAirtableClient, validateEmail } from '$lib/server/airtable';
 import { checkRateLimit } from '$lib/server/kv';
 import { v4 as uuidv4 } from 'uuid';
+import { hashString } from '$lib/utils/hash';
+
+// Server-side analytics tracking for security paper trail
+async function trackServerEvent(
+	db: D1Database | undefined,
+	eventName: string,
+	properties: Record<string, unknown> = {}
+) {
+	if (!db) return;
+	try {
+		await db
+			.prepare(
+				`INSERT INTO analytics_events (event_name, user_hash, page_path, properties)
+				 VALUES (?, ?, ?, ?)`
+			)
+			.bind(eventName, 'server', '/api/auth/login', JSON.stringify(properties))
+			.run();
+	} catch (error) {
+		console.debug('Server analytics tracking failed:', error);
+	}
+}
 
 /**
  * POST /api/auth/login
@@ -13,6 +34,7 @@ import { v4 as uuidv4 } from 'uuid';
  */
 export const POST: RequestHandler = async ({ request, platform, getClientAddress }) => {
 	const clientIp = getClientAddress();
+	const db = platform?.env?.DB;
 
 	// Rate limiting: 5 attempts per 15 minutes
 	const rateLimitResult = await checkRateLimit(
@@ -23,6 +45,11 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 	);
 
 	if (!rateLimitResult.allowed) {
+		// Track rate limit hit - security paper trail
+		await trackServerEvent(db, 'auth_login_rate_limited', {
+			retry_after_seconds: rateLimitResult.retryAfter
+		});
+
 		return json(
 			{
 				error: 'Too many login attempts. Please try again later.',
@@ -63,6 +90,13 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 		const user = await airtable.findUserByEmail(validatedEmail);
 
 		if (!user) {
+			// Track email not found - security paper trail
+			const emailHash = await hashString(validatedEmail);
+			await trackServerEvent(db, 'auth_login_email_not_found', {
+				email_hash: emailHash,
+				email_domain: validatedEmail.split('@')[1] || 'unknown'
+			});
+
 			return json({ error: 'Email not found' }, { status: 404 });
 		}
 
@@ -74,10 +108,23 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 		// Uses two-step update: null → value transition triggers the Airtable automation
 		await airtable.triggerVerificationEmailAutomation(user.id, token, expirationTime);
 
+		// Track successful login initiation - security paper trail
+		const emailHash = await hashString(validatedEmail);
+		await trackServerEvent(db, 'auth_login_token_generated', {
+			email_hash: emailHash,
+			email_domain: validatedEmail.split('@')[1] || 'unknown'
+		});
+
 		console.log('[Login] Verification email triggered via Airtable automation:', { to: validatedEmail });
 		return json({ message: 'Verification email sent' });
 	} catch (error) {
 		console.error('Login error:', error);
+
+		// Track login error - security paper trail
+		await trackServerEvent(db, 'auth_login_error', {
+			error_message: error instanceof Error ? error.message : 'Unknown error'
+		});
+
 		return json({ error: 'An error occurred during the login process' }, { status: 500 });
 	}
 };
