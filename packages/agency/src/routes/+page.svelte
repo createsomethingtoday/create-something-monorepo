@@ -8,7 +8,7 @@
 	const services = [
 		{
 			name: 'Custom MCP Server Development',
-			description: 'We build MCP servers that connect your existing tools to AI. Per-tool pricing: $250 per integration, $250 per agent configuration.',
+			description: 'We build MCP servers that connect your existing tools to agents. Per-tool pricing: $250 per integration, $250 per agent configuration.',
 			type: 'MCP Server Development',
 			price: '250',
 			priceDescription: 'Per integration/tool pricing'
@@ -124,8 +124,8 @@
 {/snippet}
 
 <SEO
-	title="Custom MCP Development | Connect Your Tools to AI"
-	description="We build custom MCP servers that connect your existing tools to AI. Production-ready infrastructure, expertly crafted."
+	title="Custom MCP Development | Connect Your Tools to Agents"
+	description="We build custom MCP servers that connect your existing tools to agents. Production-ready infrastructure, expertly crafted."
 	keywords="MCP development, custom MCP server, Model Context Protocol, AI integration, automation infrastructure, Claude, Cursor, Codex"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -152,7 +152,7 @@
 				<p class="hero-eyebrow">Custom MCP Development</p>
 			</BlurFade>
 			<BlurFade delay={0.1}>
-				<h1 class="hero-title">Connect your tools to&nbsp;AI</h1>
+				<h1 class="hero-title">Connect your tools to&nbsp;agents</h1>
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
@@ -304,7 +304,7 @@
 					<div class="layer-label">Automation Layer</div>
 					<div class="layer-content">
 						<p class="layer-what">Custom MCP Servers</p>
-						<p class="layer-examples">Connect your tools to AI with trust boundaries</p>
+						<p class="layer-examples">Connect your tools to agents with trust boundaries</p>
 					</div>
 				</div>
 			</div>
