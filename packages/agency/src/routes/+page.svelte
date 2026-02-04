@@ -474,7 +474,7 @@
 		grid-template-columns: 1fr 1fr;
 		gap: var(--space-8, 3rem);
 		align-items: center;
-		max-width: var(--content-width-xl);
+		max-width: var(--content-width-full);
 		margin: 0 auto;
 	}
 	
