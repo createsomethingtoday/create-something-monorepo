@@ -1,11 +1,15 @@
 <script lang="ts">
 	/**
-	 * LiquidGlass - Apple-style glass with refraction effect
+	 * LiquidGlass - Apple-style glass with optional refraction effect
 	 *
-	 * Unlike standard frosted glass (blur only), Liquid Glass:
-	 * 1. Refracts/warps background via SVG displacement filter
-	 * 2. Adds highlight layers simulating light reflection
-	 * 3. Creates depth with inner shadows and edge glow
+	 * Three modes:
+	 * - solid: Clean solid background (matches ShimmerButton style)
+	 * - smooth: Frosted glass with blur only - no texture
+	 * - refraction: Adds SVG displacement filter for organic warping
+	 *
+	 * All modes include:
+	 * - Highlight layers simulating light reflection
+	 * - Depth with inner shadows and edge glow
 	 *
 	 * Philosophy: The cockpit of the automation vehicle.
 	 * Like the 930's driver-centric layout: minimal, focused, everything angled toward your destination.
@@ -14,25 +18,43 @@
 	 * @see https://css-tricks.com/getting-clarity-on-apples-liquid-glass/
 	 *
 	 * @example
-	 * <LiquidGlass intensity="medium" tint="purple">
+	 * // Solid mode - clean dark background, matches button style
+	 * <LiquidGlass mode="solid">
 	 *   <h3>Workflow Card</h3>
-	 *   <p>Your automation runs here</p>
+	 * </LiquidGlass>
+	 *
+	 * @example
+	 * // Smooth glass - frosted blur effect
+	 * <LiquidGlass mode="smooth" tint="purple">
+	 *   <h3>Workflow Card</h3>
+	 * </LiquidGlass>
+	 *
+	 * @example
+	 * // Refraction glass - organic warping texture
+	 * <LiquidGlass mode="refraction" intensity="medium">
+	 *   <h3>Hero Element</h3>
 	 * </LiquidGlass>
 	 */
 	import { browser } from '$app/environment';
+	import AnimatedGridPattern from '../magicui/AnimatedGridPattern.svelte';
 
+	type Mode = 'smooth' | 'refraction' | 'solid';
 	type Intensity = 'subtle' | 'medium' | 'strong';
 	type Tint = 'none' | 'purple' | 'blue' | 'emerald' | 'amber' | 'rose' | 'cyan';
 	type BorderRadius = 'sm' | 'md' | 'lg' | 'xl';
 	type AspectRatio = 'auto' | 'video' | 'square';
 
 	interface Props {
-		/** Refraction intensity - how much the background warps */
+		/** Glass mode: 'solid' (clean dark bg), 'smooth' (blur), or 'refraction' (warping) */
+		mode?: Mode;
+		/** Refraction intensity - only applies when mode='refraction' */
 		intensity?: Intensity;
 		/** Semantic color tint */
 		tint?: Tint;
 		/** Show highlight reflection layers */
 		highlight?: boolean;
+		/** Show animated grid pattern background (works best with solid mode) */
+		showGrid?: boolean;
 		/** Border radius size */
 		borderRadius?: BorderRadius;
 		/** Aspect ratio constraint */
@@ -46,9 +68,11 @@
 	}
 
 	let {
+		mode = 'smooth',
 		intensity = 'medium',
 		tint = 'none',
 		highlight = true,
+		showGrid = false,
 		borderRadius = 'lg',
 		aspectRatio = 'auto',
 		padding = 'var(--space-lg)',
@@ -70,6 +94,9 @@
 	const prefersReducedMotion = browser
 		? window.matchMedia('(prefers-reduced-motion: reduce)').matches
 		: false;
+
+	// Determine if we should use refraction
+	const useRefraction = $derived(mode === 'refraction' && browser && !prefersReducedMotion);
 
 	// Tint color mapping
 	const tintColors: Record<Exclude<Tint, 'none'>, string> = {
@@ -98,12 +125,15 @@
 
 <div
 	class="liquid-glass radius-{borderRadius} aspect-{aspectRatio} {className}"
+	class:mode-solid={mode === 'solid'}
+	class:mode-smooth={mode === 'smooth'}
+	class:mode-refraction={mode === 'refraction'}
 	style:--lg-bg-color={bgColor}
 	style:--lg-border-color={borderColor}
 	style:--lg-padding={padding}
 >
-	<!-- SVG Filter Definition -->
-	{#if browser && !prefersReducedMotion}
+	<!-- SVG Filter Definition (only for refraction mode) -->
+	{#if useRefraction}
 		<svg class="filter-defs" aria-hidden="true">
 			<defs>
 				<filter id="refraction-{filterId}" x="-20%" y="-20%" width="140%" height="140%">
@@ -128,13 +158,24 @@
 		</svg>
 	{/if}
 
-	<!-- Background layer with refraction -->
+	<!-- Background layer with optional refraction -->
 	<div
-		class="refraction-layer"
-		class:has-refraction={browser && !prefersReducedMotion}
-		style:filter={browser && !prefersReducedMotion ? `url(#refraction-${filterId})` : 'none'}
+		class="glass-layer"
+		class:has-refraction={useRefraction}
+		style:filter={useRefraction ? `url(#refraction-${filterId})` : 'none'}
 		aria-hidden="true"
 	></div>
+
+	<!-- Animated grid pattern (optional) -->
+	{#if showGrid}
+		<AnimatedGridPattern
+			numSquares={30}
+			maxOpacity={0.08}
+			duration={4}
+			repeatDelay={1}
+			class="grid-pattern"
+		/>
+	{/if}
 
 	<!-- Glass border -->
 	<div class="border-layer" aria-hidden="true"></div>
@@ -171,13 +212,28 @@
 		pointer-events: none;
 	}
 
-	/* Background layer with glass effect */
-	.refraction-layer {
+	/* Glass layer - main backdrop blur effect */
+	.glass-layer {
 		position: absolute;
 		inset: 0;
-		backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
 		background-color: var(--lg-bg-color);
 		border-radius: inherit;
+	}
+
+	/* Solid mode - clean dark background (matches ShimmerButton) */
+	.liquid-glass.mode-solid .glass-layer {
+		background-color: rgba(0, 0, 0, 0.95);
+		backdrop-filter: none;
+	}
+
+	/* Smooth mode - clean blur without texture */
+	.liquid-glass.mode-smooth .glass-layer {
+		backdrop-filter: blur(var(--glass-blur-lg, 48px)) saturate(130%);
+	}
+
+	/* Refraction mode - blur with SVG displacement */
+	.liquid-glass.mode-refraction .glass-layer {
+		backdrop-filter: blur(var(--glass-blur-lg, 48px)) var(--glass-saturate-lg, saturate(120%));
 	}
 
 	/* Border layer */
@@ -252,14 +308,14 @@
 
 	/* Reduced motion - disable refraction filter */
 	@media (prefers-reduced-motion: reduce) {
-		.refraction-layer {
+		.glass-layer {
 			filter: none !important;
 		}
 	}
 
 	/* Reduced transparency - solid background fallback */
 	@media (prefers-reduced-transparency: reduce) {
-		.refraction-layer {
+		.glass-layer {
 			backdrop-filter: none;
 			background-color: var(--color-bg-surface);
 		}
@@ -267,7 +323,7 @@
 
 	/* High contrast mode */
 	@media (prefers-contrast: more) {
-		.refraction-layer {
+		.glass-layer {
 			backdrop-filter: blur(var(--glass-blur-sm));
 			background-color: rgba(0, 0, 0, 0.85);
 		}
@@ -279,7 +335,7 @@
 
 	/* Mobile performance optimization */
 	@media (max-width: 768px) {
-		.refraction-layer {
+		.glass-layer {
 			backdrop-filter: blur(24px) saturate(120%);
 			/* Disable SVG filter on mobile for performance */
 			filter: none !important;

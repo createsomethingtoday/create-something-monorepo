@@ -1,655 +1,909 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import { SEO } from '@create-something/canon';
 	import { SavvyCalButton } from '@create-something/canon/domains/agency';
-	import { verticals, getExampleOutcomes, countAgents } from '$lib/agents';
-
-	// Offering types
-	type OfferingType = 'template' | 'service' | 'product';
-
-	interface MatchedOffering {
-		type: OfferingType;
-		name: string;
-		reason: string;
-		redirect: string;
-	}
-
-	// Spec intake state
-	let specInput = $state('');
-	let isLoading = $state(false);
-	let errorMessage = $state('');
-	let clarifyingQuestions = $state<string[]>([]);
-	let matchedOffering = $state<MatchedOffering | null>(null);
-
-	// Handle spec submission
-	async function handleSubmit() {
-		if (!specInput.trim() || isLoading) return;
-
-		isLoading = true;
-		errorMessage = '';
-		clarifyingQuestions = [];
-		matchedOffering = null;
-
-		try {
-			const response = await fetch('/api/spec-intake', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ spec: specInput }),
-			});
-
-			console.log('[frontend] Response status:', response.status);
-
-			if (!response.ok) {
-				const data = (await response.json()) as { message?: string };
-				throw new Error(data.message || 'Failed to process request');
-			}
-
-			const result = (await response.json()) as {
-				action: 'show_offering' | 'clarify' | 'consultation';
-				offering_type?: OfferingType;
-				offering_name?: string;
-				reason?: string;
-				redirect?: string;
-				questions?: string[];
-			};
-
-			console.log('[frontend] Result:', result);
-
-			switch (result.action) {
-				case 'show_offering':
-					console.log('[frontend] Setting matchedOffering');
-					matchedOffering = {
-						type: result.offering_type || 'template',
-						name: result.offering_name || '',
-						reason: result.reason || '',
-						redirect: result.redirect || '',
-					};
-					console.log('[frontend] matchedOffering:', matchedOffering);
-					// No auto-redirect - let user click to proceed
-					break;
-
-				case 'clarify':
-					clarifyingQuestions = result.questions || [];
-					break;
-
-				case 'consultation':
-					goto(`/book?context=${encodeURIComponent(specInput.slice(0, 200))}`);
-					break;
-
-				default:
-					console.log('[frontend] Unknown action:', result.action);
-			}
-		} catch (err) {
-			console.error('[frontend] Error:', err);
-			errorMessage = err instanceof Error ? err.message : 'Something went wrong';
-		} finally {
-			isLoading = false;
+	import { LiquidGlassIcon } from '@create-something/canon/interactive';
+	import { AnimatedGridPattern, BlurFade, BorderBeam, OrbitingCircles, ShimmerButton } from '@create-something/canon/magicui';
+	
+	// Structured data for SEO/AEO
+	const services = [
+		{
+			name: 'Custom MCP Server Development',
+			description: 'We build MCP servers that connect your existing tools to AI. Starter includes 2 tools + 1 agent for $500. See AI work across your systems.',
+			type: 'MCP Server Development',
+			price: '500',
+			priceDescription: 'Starting price for Starter tier'
 		}
-	}
-
-	function useExample(prompt: string) {
-		specInput = prompt;
-	}
-
-	// Get CTA text based on offering type
-	function getCtaText(type: OfferingType): string {
-		switch (type) {
-			case 'service':
-				return 'Learn more →';
-			case 'product':
-				return 'See details →';
-			case 'template':
-			default:
-				return 'View template →';
-		}
-	}
-
-	// Examples as data - Tufte: let the content speak
-	// Covers templates, consulting, and products
-	const examples = [
-		{ prompt: 'Dental practice with online booking', result: 'dental-practice', type: 'template' },
-		{ prompt: 'Automate our 10+ hours/week of manual data entry', result: 'automation', type: 'consulting' },
-		{ prompt: 'Law firm with client intake', result: 'law-firm', type: 'template' },
-		{ prompt: 'Train my team to build AI systems', result: 'transformation', type: 'consulting' },
 	];
-
-	const outcomes = getExampleOutcomes();
-	const totalAgents = countAgents();
+	
 </script>
 
+<!-- SVG Icon Snippets -->
+{#snippet salesforceIcon()}
+	<svg viewBox="0 0 24 24" fill="currentColor">
+		<path d="M12 4C8.5 4 5.4 6.1 4.1 9.1c-2.1.5-3.6 2.4-3.6 4.6 0 2.6 2.1 4.8 4.8 4.8h13.4c2.1 0 3.8-1.7 3.8-3.8 0-1.9-1.4-3.5-3.2-3.8C18.8 7.1 15.7 4 12 4z"/>
+	</svg>
+{/snippet}
+
+{#snippet createSomethingLogo()}
+	<!-- CREATE SOMETHING Isometric Cube Mark -->
+	<svg viewBox="0 0 32 32" fill="none">
+		<!-- Top face (brightest) -->
+		<path d="M 16 4 L 26.39 10 L 16 16 L 5.61 10 Z" fill="currentColor" fill-opacity="1"/>
+		<!-- Left face (medium) -->
+		<path d="M 5.61 10 L 16 16 L 16 28 L 5.61 22 Z" fill="currentColor" fill-opacity="0.6"/>
+		<!-- Right face (darkest) -->
+		<path d="M 16 16 L 26.39 10 L 26.39 22 L 16 28 Z" fill="currentColor" fill-opacity="0.3"/>
+	</svg>
+{/snippet}
+
+{#snippet aiIcon()}
+	<svg viewBox="0 0 24 24" fill="currentColor">
+		<path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5L12 2z"/>
+	</svg>
+{/snippet}
+
+{#snippet slackIcon()}
+	<svg viewBox="0 0 24 24" fill="currentColor">
+		<path d="M6 15a2 2 0 0 1-2 2 2 2 0 0 1-2-2 2 2 0 0 1 2-2h2v2zM7 15a2 2 0 0 1 2-2 2 2 0 0 1 2 2v5a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-5zM9 6a2 2 0 0 1-2-2 2 2 0 0 1 2-2 2 2 0 0 1 2 2v2H9zM9 7a2 2 0 0 1 2 2 2 2 0 0 1-2 2H4a2 2 0 0 1-2-2 2 2 0 0 1 2-2h5zM18 9a2 2 0 0 1 2-2 2 2 0 0 1 2 2 2 2 0 0 1-2 2h-2V9zM17 9a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2 2 2 0 0 1 2 2v5zM15 18a2 2 0 0 1 2 2 2 2 0 0 1-2 2 2 2 0 0 1-2-2v-2h2zM15 17a2 2 0 0 1-2-2 2 2 0 0 1 2-2h5a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-5z"/>
+	</svg>
+{/snippet}
+
+{#snippet notionIcon()}
+	<svg viewBox="0 0 24 24" fill="currentColor">
+		<path d="M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.046-.326L17.86 1.968c-.42-.326-.98-.7-2.055-.607L3.01 2.295c-.466.046-.56.28-.374.466zm.793 3.08v13.904c0 .747.373 1.027 1.214.98l14.523-.84c.84-.046.933-.56.933-1.167V6.354c0-.606-.233-.933-.746-.886l-15.177.887c-.56.046-.747.326-.747.933zm14.337.745c.093.42 0 .84-.42.888l-.7.14v10.264c-.608.327-1.168.514-1.635.514-.746 0-.933-.234-1.495-.933l-4.577-7.186v6.952l1.449.327s0 .84-1.168.84l-3.22.186c-.093-.186 0-.653.327-.746l.84-.233V9.854L7.822 9.76c-.094-.42.14-1.026.793-1.073l3.456-.233 4.764 7.279v-6.44l-1.215-.14c-.093-.514.28-.886.747-.933zM2.718 1.321l13.496-.933c1.635-.14 2.055-.047 3.08.7l4.296 2.986c.7.513.933.653.933 1.213v16.378c0 1.026-.373 1.634-1.68 1.726l-15.458.933c-.98.047-1.448-.093-1.962-.747l-3.127-4.06c-.56-.746-.793-1.306-.793-1.958V2.948c0-.84.373-1.54 1.215-1.627z"/>
+	</svg>
+{/snippet}
+
+{#snippet githubIcon()}
+	<svg viewBox="0 0 24 24" fill="currentColor">
+		<path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+	</svg>
+{/snippet}
+
+{#snippet hubspotIcon()}
+	<svg viewBox="0 0 24 24" fill="currentColor">
+		<path d="M18.164 7.93V5.084a2.198 2.198 0 001.267-1.978V3.07A2.182 2.182 0 0017.25.89h-.036a2.182 2.182 0 00-2.181 2.18v.036c0 .859.503 1.598 1.227 1.955v2.868a5.637 5.637 0 00-2.465 1.168l-6.57-5.084a2.489 2.489 0 00.07-.576 2.478 2.478 0 10-2.477 2.478c.391 0 .756-.102 1.082-.27l6.427 4.974a5.635 5.635 0 00-.636 2.598c0 .974.253 1.888.69 2.69l-2.076 2.077a1.927 1.927 0 00-.593-.102 1.96 1.96 0 101.96 1.96c0-.21-.04-.408-.103-.593l2.026-2.026a5.668 5.668 0 103.569-10.313zm-.95 8.477a2.92 2.92 0 110-5.84 2.92 2.92 0 010 5.84z"/>
+	</svg>
+{/snippet}
+
+{#snippet zapierIcon()}
+	<svg viewBox="0 0 24 24" fill="currentColor">
+		<path d="M15.477 12.89l2.648-4.588a.691.691 0 00-.598-1.036h-5.296a.691.691 0 00-.598 1.036l2.648 4.588-2.648 4.588a.691.691 0 00.598 1.036h5.296a.691.691 0 00.598-1.036l-2.648-4.588zM8.523 12.89l2.648-4.588a.691.691 0 00-.598-1.036H5.277a.691.691 0 00-.598 1.036L7.327 12.89l-2.648 4.588a.691.691 0 00.598 1.036h5.296a.691.691 0 00.598-1.036L8.523 12.89z"/>
+	</svg>
+{/snippet}
+
+{#snippet googleIcon()}
+	<svg viewBox="0 0 24 24" fill="currentColor">
+		<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+		<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+		<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+		<path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+	</svg>
+{/snippet}
+
+{#snippet figmaIcon()}
+	<svg viewBox="0 0 24 24" fill="currentColor">
+		<path d="M15.852 8.981h-4.588V0h4.588c2.476 0 4.49 2.014 4.49 4.49s-2.014 4.491-4.49 4.491zM12.735 7.51h3.117c1.665 0 3.019-1.355 3.019-3.019s-1.355-3.019-3.019-3.019h-3.117V7.51zM8.148 24c-2.476 0-4.49-2.014-4.49-4.49s2.014-4.49 4.49-4.49h4.588v4.49c0 2.476-2.014 4.49-4.588 4.49zm0-7.51h3.117v3.019c0 1.665-1.355 3.019-3.019 3.019s-3.019-1.355-3.019-3.019 1.354-3.019 3.019-3.019h-.098zM8.148 8.981c-2.476 0-4.49-2.014-4.49-4.49S5.672 0 8.148 0h4.588v8.981H8.148zm0-7.51c-1.665 0-3.019 1.355-3.019 3.019s1.355 3.019 3.019 3.019h3.117V1.471H8.148zM8.148 15.02c-2.476 0-4.49-2.014-4.49-4.49s2.014-4.49 4.49-4.49h4.588v8.981H8.148v-.001zm0-7.51c-1.665 0-3.019 1.355-3.019 3.019s1.355 3.019 3.019 3.019h3.117V7.51H8.148zM15.852 15.02h-4.588V6.039h4.588c2.476 0 4.49 2.014 4.49 4.49s-2.014 4.491-4.49 4.491zm-3.117-1.471h3.117c1.665 0 3.019-1.355 3.019-3.019s-1.355-3.019-3.019-3.019h-3.117v6.038z"/>
+	</svg>
+{/snippet}
+
+{#snippet linearIcon()}
+	<svg viewBox="0 0 24 24" fill="currentColor">
+		<path d="M3.357 2.357a12.19 12.19 0 000 17.286 12.19 12.19 0 0017.286 0 12.19 12.19 0 000-17.286 12.19 12.19 0 00-17.286 0zm15.07 2.216a9.698 9.698 0 010 13.714l-13.714-13.714a9.698 9.698 0 0113.714 0z"/>
+	</svg>
+{/snippet}
+
+{#snippet stripeIcon()}
+	<svg viewBox="0 0 24 24" fill="currentColor">
+		<path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/>
+	</svg>
+{/snippet}
+
 <SEO
-	title="Custom MCP Development | The Connectivity Layer Between Your Tools and AI"
-	description="We build custom MCP servers—the connectivity layer between your tools and AI. MCP consumption is commoditized. MCP creation is not. We create."
-	keywords="MCP development, custom MCP server, Model Context Protocol, automation infrastructure, AI integration, MCP creation, connectivity layer"
+	title="Custom MCP Development | Connect Your Tools to AI"
+	description="We build custom MCP servers that connect your existing tools to AI. Production-ready infrastructure, expertly crafted."
+	keywords="MCP development, custom MCP server, Model Context Protocol, AI integration, automation infrastructure, Claude, Cursor, Codex"
 	ogImage="/og-image.svg"
 	propertyName="agency"
+	{services}
 />
 
-<!-- Hero -->
+<!-- Hero with animated grid background -->
 <section class="hero">
-	<div class="hero-content">
-		<p class="hero-eyebrow">Custom MCP Development</p>
-		<h1 class="hero-title">We build the connectivity layer between your tools and AI</h1>
-		<p class="hero-subtitle">
-			MCP consumption is commoditized. MCP creation is not. We build custom MCP servers that connect your existing tools to AI—the automation infrastructure that works while you sleep.
-		</p>
-
-		<form class="spec-input-container" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-			<label class="input-label" for="spec-input">What do you need built?</label>
-			<textarea
-				id="spec-input"
-				class="spec-input"
-				placeholder="A dental practice website... Automate our manual workflows... Train my team on AI..."
-				rows="2"
-				bind:value={specInput}
-				disabled={isLoading}
-				onkeydown={(e) => {
-					if (e.key === 'Enter' && !e.shiftKey) {
-						e.preventDefault();
-						if (specInput.trim() && !isLoading) handleSubmit();
-					}
-				}}
-			></textarea>
-			<div class="input-footer">
-				<span class="examples-hint">Try: Dental practice · Automate manual work · Train my team</span>
-				<div class="submit-group">
-					<button class="build-button" type="submit" disabled={isLoading || !specInput.trim()}>
-						{#if isLoading}
-							<span class="button-spinner"></span>
-						{:else}
-							Find a match
-						{/if}
-					</button>
-					<span class="keyboard-hint">↵ Enter</span>
-				</div>
-			</div>
-		</form>
-
-		{#if errorMessage}
-			<p class="error-message">{errorMessage}</p>
-		{/if}
-
-		{#if matchedOffering}
-			<div class="match-result" data-type={matchedOffering.type}>
-				<p class="match-text">
-					{#if matchedOffering.type === 'service'}
-						Recommended: <strong>{matchedOffering.name}</strong>
-					{:else if matchedOffering.type === 'product'}
-						Try: <strong>{matchedOffering.name}</strong>
-					{:else}
-						Found: <strong>{matchedOffering.name}</strong>
-					{/if}
+	<!-- Animated grid pattern (like WORKWAY) -->
+	<div class="hero-grid-container">
+		<AnimatedGridPattern
+			numSquares={25}
+			maxOpacity={0.08}
+			duration={4}
+			repeatDelay={2}
+			width={60}
+			height={60}
+			class="hero-animated-grid"
+		/>
+	</div>
+	<div class="hero-container">
+		<div class="hero-content">
+			<BlurFade delay={0}>
+				<p class="hero-eyebrow">Custom MCP Development</p>
+			</BlurFade>
+			<BlurFade delay={0.1}>
+				<h1 class="hero-title">Connect your tools to&nbsp;AI</h1>
+			</BlurFade>
+			<BlurFade delay={0.2}>
+				<p class="hero-detail">
+					We build custom MCP servers that integrate your existing systems with AI. 
+					Production-ready. Expertly crafted.
 				</p>
-				<p class="match-reason">{matchedOffering.reason}</p>
-				<a href={matchedOffering.redirect} class="match-link">{getCtaText(matchedOffering.type)}</a>
-			</div>
-		{/if}
-
-		{#if clarifyingQuestions.length > 0}
-			<div class="clarify-container">
-				<p class="clarify-heading">A few questions:</p>
-				<ul class="clarify-questions">
-					{#each clarifyingQuestions as question}
-						<li>{question}</li>
-					{/each}
-				</ul>
-				<p class="clarify-hint">Or <a href="/book">talk to us directly</a>.</p>
-			</div>
-		{/if}
-	</div>
-</section>
-
-<!-- Value - Rams: state the outcome -->
-<section class="value-section">
-	<p class="value-statement">
-		You get automation infrastructure in days, not months.<br />
-		Behind it, the layer works around the clock—<br />
-		<strong>so you hear "Your system recovered $3,200 this month" instead of silence.</strong>
-	</p>
-</section>
-
-<!-- Outcomes - Rams: the data is the design -->
-<section class="outcomes-section">
-	<h2 class="outcomes-heading">What agents actually do</h2>
-	<div class="outcomes-list">
-		{#each outcomes as outcome}
-			<div class="outcome-item">
-				<span class="outcome-what">{outcome.agent}</span>
-				{#if outcome.metric}
-					<span class="outcome-value">{outcome.metric}</span>
-				{/if}
-			</div>
-		{/each}
-	</div>
-</section>
-
-<!-- Templates - Rams: just show them -->
-<section class="templates-section">
-	<header class="section-header">
-		<h2 class="section-heading">Pick your industry, we'll handle the rest</h2>
-		<a href="/templates" class="section-link">See all templates →</a>
-	</header>
-
-	<div class="templates-grid">
-		{#each verticals.slice(0, 6) as vertical}
-			<a href="/templates/{vertical.slug}" class="template-card">
-				<div class="template-header">
-					<span class="template-name">{vertical.name}</span>
-					<span class="template-agents">{vertical.agents.length} agents</span>
+			</BlurFade>
+			<BlurFade delay={0.3}>
+				<div class="hero-cta">
+					<ShimmerButton href="https://savvycal.com/create-something/discovery">
+						Book Discovery Call
+					</ShimmerButton>
+					<a href="/use-cases/business" class="hero-link">See use cases →</a>
 				</div>
-				<p class="template-tagline">{vertical.tagline}</p>
-			</a>
-		{/each}
+			</BlurFade>
+		</div>
+		<BlurFade delay={0.4} class="hero-visual-wrapper">
+			<div class="hero-visual-frame">
+				<!-- Glow effect behind the frame -->
+				<div class="hero-visual-glow" aria-hidden="true"></div>
+				
+				<!-- Bordered container with beam -->
+				<div class="hero-visual-container">
+					<BorderBeam 
+						size={250}
+						duration={12}
+						colorFrom="rgba(96, 165, 250, 0.8)"
+						colorTo="rgba(167, 139, 250, 0.6)"
+					/>
+					
+					<div class="orbital-container">
+						<!-- FAR BACK LAYER - small, slow, blurred (z = -2) -->
+						<div class="orbit-layer layer-far">
+							<OrbitingCircles radius={145} duration={50} startAngle={30}>
+								<div class="orbit-item orbit-far">
+									{@render githubIcon()}
+								</div>
+							</OrbitingCircles>
+							
+							<OrbitingCircles radius={145} duration={50} startAngle={150}>
+								<div class="orbit-item orbit-far">
+									{@render figmaIcon()}
+								</div>
+							</OrbitingCircles>
+							
+							<OrbitingCircles radius={145} duration={50} startAngle={270}>
+								<div class="orbit-item orbit-far">
+									{@render stripeIcon()}
+								</div>
+							</OrbitingCircles>
+						</div>
+						
+						<!-- MAIN LAYER - clear, medium speed (z = 0) -->
+						<div class="orbit-layer layer-main">
+							<OrbitingCircles radius={110} duration={30} startAngle={0}>
+								<div class="orbit-item">
+									{@render salesforceIcon()}
+								</div>
+							</OrbitingCircles>
+							
+							<OrbitingCircles radius={110} duration={30} startAngle={90}>
+								<div class="orbit-item">
+									{@render aiIcon()}
+								</div>
+							</OrbitingCircles>
+							
+							<OrbitingCircles radius={110} duration={30} startAngle={180}>
+								<div class="orbit-item">
+									{@render slackIcon()}
+								</div>
+							</OrbitingCircles>
+							
+							<OrbitingCircles radius={110} duration={30} startAngle={270}>
+								<div class="orbit-item">
+									{@render notionIcon()}
+								</div>
+							</OrbitingCircles>
+						</div>
+						
+						<!-- CLOSE LAYER - larger, faster, slight blur (z = +1) -->
+						<div class="orbit-layer layer-close">
+							<OrbitingCircles radius={75} duration={18} startAngle={45} reverse>
+								<div class="orbit-item orbit-close">
+									{@render hubspotIcon()}
+								</div>
+							</OrbitingCircles>
+							
+							<OrbitingCircles radius={75} duration={18} startAngle={165} reverse>
+								<div class="orbit-item orbit-close">
+									{@render zapierIcon()}
+								</div>
+							</OrbitingCircles>
+							
+							<OrbitingCircles radius={75} duration={18} startAngle={285} reverse>
+								<div class="orbit-item orbit-close">
+									{@render googleIcon()}
+								</div>
+							</OrbitingCircles>
+						</div>
+						
+						<!-- Central hub - Create Something logo (always sharp, on top) -->
+						<div class="orbital-center">
+							<div class="center-icon">
+								{@render createSomethingLogo()}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</BlurFade>
 	</div>
 </section>
 
-<!-- CTA - Rams: one ask, Nicely Said: warm -->
+<!-- How It Works -->
+<section class="model-section">
+	<div class="section-container">
+		<BlurFade>
+			<h2 class="section-heading">How It Works</h2>
+		</BlurFade>
+		<BlurFade delay={0.1}>
+			<p class="section-intro">
+				MCP servers are the connectivity layer—the infrastructure that lets AI 
+				access your tools with proper permissions.
+			</p>
+		</BlurFade>
+		
+		<BlurFade delay={0.2}>
+			<div class="layers-diagram">
+				<div class="layer intelligence">
+					<div class="layer-label">Intelligence Layer</div>
+					<div class="layer-content">
+						<p class="layer-what">Skills, Agents, Automations</p>
+						<p class="layer-examples">"Draft this RFI" · "Summarize daily logs" · "Flag compliance issues"</p>
+					</div>
+				</div>
+				<div class="layer automation">
+					<div class="layer-label">Automation Layer</div>
+					<div class="layer-content">
+						<p class="layer-what">Custom MCP Servers</p>
+						<p class="layer-examples">Connect your tools to AI with trust boundaries</p>
+					</div>
+				</div>
+			</div>
+		</BlurFade>
+		
+		<BlurFade delay={0.3}>
+			<p class="model-caption">
+				MCP servers establish trust. Skills provide capabilities. Together, they produce outcomes.
+			</p>
+		</BlurFade>
+	</div>
+</section>
+
+<!-- Pricing -->
+<section class="services-section">
+	<div class="section-container">
+		<BlurFade>
+			<h2 class="section-heading">Simple Pricing</h2>
+		</BlurFade>
+		<BlurFade delay={0.1}>
+			<p class="section-intro">
+				Fixed prices. No hourly billing. You know what you're paying before we start.
+			</p>
+		</BlurFade>
+		
+		<div class="services-grid">
+			<BlurFade delay={0.2}>
+				<div class="service-card">
+					<h3>Starter</h3>
+					<div class="service-price">$500</div>
+					<p class="service-description">
+						See AI work across your systems. Two tools connected, one agent configured.
+					</p>
+					<ul class="service-includes">
+						<li>Two API integrations</li>
+						<li>One configured agent</li>
+						<li>Deployment package</li>
+						<li>3–5 day turnaround</li>
+					</ul>
+				</div>
+			</BlurFade>
+			
+			<BlurFade delay={0.3}>
+				<div class="service-card featured">
+					<h3>Pro</h3>
+					<div class="service-price">$2,500</div>
+					<p class="service-description">
+						Scale your MCP infrastructure. More tools, complex auth, data transforms.
+					</p>
+					<ul class="service-includes">
+						<li>5+ API integrations</li>
+						<li>OAuth 2.0 / complex auth</li>
+						<li>Two configured agents</li>
+						<li>1–2 week turnaround</li>
+					</ul>
+				</div>
+			</BlurFade>
+			
+			<BlurFade delay={0.4}>
+				<div class="service-card">
+					<h3>Intelligence</h3>
+					<div class="service-price">$5,000+</div>
+					<p class="service-description">
+						Automation that runs while you sleep. Triggers, observability, orchestration.
+					</p>
+					<ul class="service-includes">
+						<li>3+ configured agents</li>
+						<li>Automated triggers</li>
+						<li>Observability dashboard</li>
+						<li>30 days support</li>
+					</ul>
+				</div>
+			</BlurFade>
+		</div>
+	</div>
+</section>
+
+<!-- Who This Is For -->
+<section class="audience-section">
+	<div class="section-container">
+		<BlurFade>
+			<h2 class="section-heading">Built For</h2>
+		</BlurFade>
+		
+		<div class="audience-grid">
+			<BlurFade delay={0.1}>
+				<div class="audience-card">
+					<h3>Teams with existing tools</h3>
+					<p>You have Procore, Salesforce, HubSpot, or internal systems. You want AI to work with them, not replace them.</p>
+				</div>
+			</BlurFade>
+			
+			<BlurFade delay={0.2}>
+				<div class="audience-card">
+					<h3>Companies ready for AI integration</h3>
+					<p>You've experimented with ChatGPT and Copilot. Now you need AI that connects to your actual workflows.</p>
+				</div>
+			</BlurFade>
+			
+			<BlurFade delay={0.3}>
+				<div class="audience-card">
+					<h3>Technical teams without MCP expertise</h3>
+					<p>You can build software. MCP protocol, auth patterns, and deployment packaging aren't your focus.</p>
+				</div>
+			</BlurFade>
+		</div>
+	</div>
+</section>
+
+<!-- CTA -->
 <section class="cta-section">
-	<h2 class="cta-heading">Ready when you are.</h2>
-	<SavvyCalButton variant="primary" size="lg" />
+	<div class="section-container">
+		<BlurFade>
+			<h2 class="cta-heading">Let's talk about your integration</h2>
+		</BlurFade>
+		<BlurFade delay={0.1}>
+			<p class="cta-subtext">30-minute discovery call. We'll map out what's possible.</p>
+		</BlurFade>
+		<BlurFade delay={0.2}>
+			<ShimmerButton href="https://savvycal.com/create-something/discovery">
+				Book Discovery Call
+			</ShimmerButton>
+		</BlurFade>
+	</div>
 </section>
 
 <style>
-	/* Tufte: Let typography and whitespace do the work */
+	/* Section containers */
+	.section-container {
+		max-width: 900px;
+		margin: 0 auto;
+		padding: 0 var(--container-padding, 1.5rem);
+	}
 	
-	/* Hero - clean, focused */
+	.section-heading {
+		font-size: var(--text-h1);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		text-align: center;
+		margin-bottom: var(--space-4, 1rem);
+		letter-spacing: var(--tracking-tight, -0.015em);
+	}
+	
+	.section-intro {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+		text-align: center;
+		max-width: 540px;
+		margin: 0 auto var(--space-8, 3rem);
+		line-height: var(--leading-relaxed);
+	}
+	
+	/* Hero with grid background - two column layout */
 	.hero {
-		padding: 6rem var(--space-xl);
-		max-width: 800px;
+		position: relative;
+		padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem) var(--section-padding, 6rem);
+		max-width: 100%;
+		overflow: hidden;
+	}
+	
+	/* Animated grid background container */
+	.hero-grid-container {
+		position: absolute;
+		inset: 0;
+		overflow: hidden;
+		pointer-events: none;
+	}
+	
+	/* Radial fade mask for the animated grid */
+	:global(.hero-animated-grid) {
+		mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
+		-webkit-mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
+	}
+	
+	.hero-container {
+		position: relative;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--space-8, 3rem);
+		align-items: center;
+		max-width: 1100px;
 		margin: 0 auto;
 	}
-
+	
 	.hero-content {
-		text-align: center;
+		text-align: left;
 	}
-
+	
 	.hero-eyebrow {
 		font-size: var(--text-body-sm);
 		text-transform: uppercase;
-		letter-spacing: 0.1em;
+		letter-spacing: 0.15em;
 		color: var(--color-fg-muted);
-		margin-bottom: var(--space-sm);
+		margin-bottom: var(--space-5, 1.5rem);
 	}
-
+	
+	/* Hero title uses display-xl for maximum impact */
 	.hero-title {
-		font-size: var(--text-display);
-		font-weight: var(--font-bold);
+		font-size: var(--text-display-xl);
+		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-md);
-		line-height: var(--leading-tight);
-		letter-spacing: -0.02em;
+		margin-bottom: var(--space-6, 2rem);
+		line-height: 1.0;
+		letter-spacing: var(--tracking-tighter, -0.025em);
 	}
-
-	.hero-subtitle {
+	
+	.hero-detail {
 		font-size: var(--text-body-lg);
-		color: var(--color-fg-tertiary);
-		margin-bottom: var(--space-lg);
+		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-8, 3rem);
 		line-height: var(--leading-relaxed);
-		max-width: 42rem;
-		margin-left: auto;
-		margin-right: auto;
+		max-width: 420px;
 	}
-
-	/* Input - functional, not decorative */
-	.spec-input-container {
-		margin-bottom: var(--space-lg);
-		text-align: left;
-	}
-
-	.input-label {
-		display: block;
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		margin-bottom: var(--space-xs);
-	}
-
-	.spec-input {
-		width: 100%;
-		padding: var(--space-sm);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-sm);
-		color: var(--color-fg-primary);
-		font-size: var(--text-body);
-		font-family: inherit;
-		resize: none;
-		outline: none;
-		transition: border-color var(--duration-micro) var(--ease-standard);
-	}
-
-	.spec-input:focus {
-		border-color: var(--color-fg-secondary);
-	}
-
-	.spec-input::placeholder {
-		color: var(--color-fg-muted);
-	}
-
-	.input-footer {
+	
+	.hero-cta {
 		display: flex;
-		justify-content: space-between;
 		align-items: center;
-		margin-top: var(--space-sm);
-		gap: var(--space-md);
+		gap: var(--space-4, 1rem);
 	}
-
-	.examples-hint {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		flex: 1;
-		min-width: 0;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.build-button {
-		padding: var(--space-sm) var(--space-md);
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
-		border: none;
-		border-radius: var(--radius-sm);
+	
+	.hero-link {
 		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
-		cursor: pointer;
-		transition: opacity var(--duration-micro) var(--ease-standard);
-		display: inline-flex;
-		align-items: center;
-		gap: 0.375rem;
-		white-space: nowrap;
+		color: var(--color-fg-secondary);
+		text-decoration: none;
+		transition: color var(--duration-micro, 200ms) var(--ease-standard);
 	}
-
-	.build-button:hover:not(:disabled) {
+	
+	.hero-link:hover {
+		color: var(--color-fg-primary);
+	}
+	
+	/* Hero visual frame - contains glow + bordered container */
+	.hero-visual-frame {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	
+	/* Glow effect behind the visual */
+	.hero-visual-glow {
+		position: absolute;
+		width: 100%;
+		height: 100%;
+		background: radial-gradient(
+			ellipse at center,
+			rgba(96, 165, 250, 0.15) 0%,
+			rgba(167, 139, 250, 0.08) 40%,
+			transparent 70%
+		);
+		filter: blur(40px);
+		pointer-events: none;
+	}
+	
+	/* Bordered container with beam effect */
+	.hero-visual-container {
+		position: relative;
+		padding: var(--space-6, 2rem);
+		border-radius: var(--radius-xl, 16px);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		background: rgba(255, 255, 255, 0.02);
+	}
+	
+	/* Orbital container */
+	.orbital-container {
+		position: relative;
+		width: 300px;
+		height: 300px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	
+	/* Orbit depth layers */
+	.orbit-layer {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	
+	/* FAR layer - behind, blurred, smaller */
+	.orbit-layer.layer-far {
+		z-index: 1;
+		filter: blur(2px);
+		opacity: 0.5;
+	}
+	
+	/* MAIN layer - in focus */
+	.orbit-layer.layer-main {
+		z-index: 5;
+	}
+	
+	/* CLOSE layer - in front, slight blur for motion */
+	.orbit-layer.layer-close {
+		z-index: 8;
+		filter: blur(0.5px);
 		opacity: 0.85;
 	}
-
-	.build-button:disabled {
-		opacity: 0.4;
-		cursor: not-allowed;
-	}
-
-	.submit-group {
+	
+	/* Central hub - always on top and sharp */
+	.orbital-center {
+		position: relative;
+		z-index: 10;
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
+		justify-content: center;
 	}
-
-	.keyboard-hint {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		opacity: 0.6;
+	
+	.center-icon {
+		width: 72px;
+		height: 72px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(255, 255, 255, 0.08);
+		border: 1px solid rgba(255, 255, 255, 0.15);
+		border-radius: 16px;
+		color: white;
+		box-shadow: 
+			0 8px 32px rgba(0, 0, 0, 0.4),
+			inset 0 1px 0 rgba(255, 255, 255, 0.1);
 	}
-
-	@media (max-width: 768px) {
-		.keyboard-hint {
-			display: none;
+	
+	.center-icon :global(svg) {
+		width: 36px;
+		height: 36px;
+	}
+	
+	/* Base orbiting items */
+	.orbit-item {
+		width: 44px;
+		height: 44px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(255, 255, 255, 0.06);
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		border-radius: 12px;
+		color: white;
+		box-shadow: 
+			0 4px 16px rgba(0, 0, 0, 0.3),
+			inset 0 1px 0 rgba(255, 255, 255, 0.08);
+		transition: all 0.3s ease;
+	}
+	
+	.orbit-item :global(svg) {
+		width: 22px;
+		height: 22px;
+	}
+	
+	/* FAR items - smaller, dimmer */
+	.orbit-item.orbit-far {
+		width: 32px;
+		height: 32px;
+		background: rgba(255, 255, 255, 0.04);
+		border-color: rgba(255, 255, 255, 0.08);
+	}
+	
+	.orbit-item.orbit-far :global(svg) {
+		width: 16px;
+		height: 16px;
+	}
+	
+	/* CLOSE items - larger, brighter */
+	.orbit-item.orbit-close {
+		width: 38px;
+		height: 38px;
+		background: rgba(255, 255, 255, 0.08);
+		border-color: rgba(255, 255, 255, 0.15);
+	}
+	
+	.orbit-item.orbit-close :global(svg) {
+		width: 18px;
+		height: 18px;
+	}
+	
+	:global(.hero-visual-wrapper) {
+		display: none;
+	}
+	
+	@media (min-width: 901px) {
+		:global(.hero-visual-wrapper) {
+			display: block;
 		}
 	}
-
-	.button-spinner {
-		width: 14px;
-		height: 14px;
-		border: 2px solid currentColor;
-		border-top-color: transparent;
-		border-radius: var(--radius-full);
-		animation: spin var(--duration-standard) linear infinite;
-	}
-
-	@keyframes spin {
-		to { transform: rotate(360deg); }
-	}
-
-	/* Feedback states */
-	.error-message {
-		color: var(--color-error);
-		font-size: var(--text-body-sm);
-		margin-top: var(--space-sm);
-	}
-
-	.match-result {
-		margin-top: var(--space-md);
-		padding: var(--space-sm);
-		background: var(--color-success-muted);
-		border-left: 2px solid var(--color-success);
-	}
-
-	.match-text {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-primary);
-		text-transform: capitalize;
-	}
-
-	.match-reason {
-		font-size: var(--text-caption);
-		color: var(--color-fg-secondary);
-		margin-top: var(--space-xs);
-	}
-
-	.match-link {
-		display: inline-block;
-		margin-top: var(--space-sm);
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
-		color: var(--color-success);
-	}
-
-	.match-link:hover {
-		text-decoration: underline;
-	}
-
-	.clarify-container {
-		margin-top: var(--space-md);
-		padding: var(--space-sm);
-		border-left: 2px solid var(--color-border-emphasis);
-	}
-
-	.clarify-heading {
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
-	}
-
-	.clarify-questions {
-		list-style: none;
-		padding: 0;
-		margin: 0 0 var(--space-xs);
-	}
-
-	.clarify-questions li {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		padding-left: 1em;
-		position: relative;
-	}
-
-	.clarify-questions li::before {
-		content: '·';
-		position: absolute;
-		left: 0;
-	}
-
-	.clarify-hint {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-	}
-
-	.clarify-hint a {
-		color: var(--color-fg-secondary);
-	}
-
-	/* Value - Rams: statement only */
-	.value-section {
-		padding: var(--space-xl) var(--space-xl);
-		text-align: center;
+	
+	/* Two-Layer Model */
+	.model-section {
+		padding: var(--section-padding, 6rem) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
-
-	.value-statement {
-		font-size: var(--text-h2);
-		color: var(--color-fg-secondary);
-		line-height: 1.6;
-		max-width: 600px;
-		margin: 0 auto;
+	
+	.layers-diagram {
+		max-width: 560px;
+		margin: 0 auto var(--space-6, 2rem);
 	}
-
-	.value-statement strong {
-		color: var(--color-fg-primary);
-		display: block;
-		margin-top: var(--space-sm);
+	
+	.layer {
+		padding: var(--space-5, 1.5rem);
+		border: 1px solid var(--color-border-default);
 	}
-
-	/* Outcomes - Rams: data is design */
-	.outcomes-section {
-		padding: var(--space-xl) var(--space-xl);
-		border-top: 1px solid var(--color-border-default);
-	}
-
-	.outcomes-heading {
-		font-size: var(--text-h1);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
-		text-align: center;
-		margin-bottom: var(--space-xl);
-	}
-
-	.outcomes-list {
-		max-width: 600px;
-		margin: 0 auto;
-	}
-
-	.outcome-item {
-		display: flex;
-		justify-content: space-between;
-		align-items: baseline;
-		padding: var(--space-sm) 0;
-		border-bottom: 1px solid var(--color-border-default);
-	}
-
-	.outcome-item:last-child {
+	
+	.layer.intelligence {
 		border-bottom: none;
+		background: var(--color-bg-elevated);
+		border-radius: var(--radius-lg, 12px) var(--radius-lg, 12px) 0 0;
 	}
-
-	.outcome-what {
+	
+	.layer.automation {
+		background: var(--color-bg-surface);
+		border-radius: 0 0 var(--radius-lg, 12px) var(--radius-lg, 12px);
+	}
+	
+	.layer-label {
+		font-size: var(--text-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-3, 0.75rem);
+	}
+	
+	.layer-content {
+		/* Content container */
+	}
+	
+	.layer-what {
 		font-size: var(--text-body-lg);
+		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
+		margin-bottom: var(--space-2, 0.5rem);
 	}
-
-	.outcome-value {
-		font-size: var(--text-body);
-		font-family: var(--font-mono, monospace);
-		color: var(--color-fg-secondary);
+	
+	.layer-examples {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
 	}
-
-	/* Section header (for templates) */
-	.section-header {
-		max-width: 900px;
-		margin: 0 auto var(--space-xl);
+	
+	.model-caption {
 		text-align: center;
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
 	}
-
-	.section-heading {
-		font-size: var(--text-h1);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
-	}
-
-	.section-link {
-		display: inline-block;
-		margin-top: var(--space-sm);
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-	}
-
-	.section-link:hover {
-		color: var(--color-fg-primary);
-	}
-
-	/* Templates - compact grid */
-	.templates-section {
-		padding: var(--space-xl) var(--space-xl);
+	
+	/* Pricing Section */
+	.services-section {
+		padding: var(--section-padding, 6rem) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
-
-	.templates-grid {
-		max-width: 900px;
-		margin: 0 auto;
+	
+	.services-grid {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
-		gap: 1px;
-		background: var(--color-border-default);
+		gap: var(--space-4, 1rem);
 	}
-
-	.template-card {
-		padding: var(--space-md);
-		background: var(--color-bg-pure);
-		transition: background var(--duration-micro) var(--ease-standard);
-	}
-
-	.template-card:hover {
-		background: var(--color-bg-surface);
-	}
-
-	.template-header {
+	
+	.service-card {
+		padding: var(--space-6, 2rem);
 		display: flex;
-		justify-content: space-between;
-		align-items: baseline;
-		margin-bottom: var(--space-xs);
+		flex-direction: column;
+		height: 100%;
+		border-radius: var(--radius-lg, 12px);
+		border: 1px solid var(--color-border-default);
+		background: var(--color-bg-pure);
+		transition: 
+			border-color 200ms ease,
+			transform 200ms ease,
+			box-shadow 200ms ease;
 	}
-
-	.template-name {
+	
+	.service-card:hover {
+		border-color: var(--color-border-emphasis);
+		transform: translateY(-2px);
+	}
+	
+	.service-card.featured {
+		border-color: rgba(96, 165, 250, 0.4);
+		background: linear-gradient(
+			135deg,
+			rgba(96, 165, 250, 0.05) 0%,
+			rgba(167, 139, 250, 0.05) 100%
+		);
+	}
+	
+	.service-card.featured:hover {
+		border-color: rgba(96, 165, 250, 0.6);
+		box-shadow: 
+			0 8px 32px rgba(96, 165, 250, 0.15),
+			0 0 0 1px rgba(96, 165, 250, 0.1);
+	}
+	
+	.service-card h3 {
 		font-size: var(--text-h3);
-		font-weight: var(--font-medium);
+		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
+		margin-bottom: var(--space-2, 0.5rem);
 	}
-
-	.template-agents {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
+	
+	.service-price {
+		font-size: var(--text-h1);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-4, 1rem);
+		letter-spacing: var(--tracking-tight, -0.015em);
 	}
-
-	.template-tagline {
+	
+	.service-description {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
-		line-height: 1.5;
+		line-height: var(--leading-relaxed);
+		margin-bottom: var(--space-5, 1.5rem);
 	}
-
-	/* CTA - Rams: one ask */
-	.cta-section {
-		padding: var(--space-xl) var(--space-xl);
-		text-align: center;
+	
+	.service-includes {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		margin-top: auto;
+	}
+	
+	.service-includes li {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		padding: var(--space-2, 0.5rem) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
-
+	
+	.service-includes li:last-child {
+		color: var(--color-fg-muted);
+		font-family: var(--font-mono, monospace);
+		font-size: var(--text-caption);
+	}
+	
+	/* Audience / Who This Is For */
+	.audience-section {
+		padding: var(--section-padding, 6rem) 0;
+		border-top: 1px solid var(--color-border-default);
+	}
+	
+	.audience-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-4, 1rem);
+	}
+	
+	.audience-card {
+		padding: var(--space-5, 1.5rem);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg, 12px);
+		transition: border-color var(--duration-micro, 200ms) var(--ease-standard);
+	}
+	
+	.audience-card:hover {
+		border-color: var(--color-border-emphasis);
+	}
+	
+	.audience-card h3 {
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-3, 0.75rem);
+	}
+	
+	.audience-card p {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+	}
+	
+	/* CTA */
+	.cta-section {
+		padding: var(--section-padding, 6rem) 0;
+		border-top: 1px solid var(--color-border-default);
+		text-align: center;
+	}
+	
 	.cta-heading {
 		font-size: var(--text-h1);
 		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-lg);
+		margin-bottom: var(--space-3, 0.75rem);
 	}
-
+	
+	.cta-subtext {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-6, 2rem);
+	}
+	
 	/* Responsive */
+	@media (max-width: 900px) {
+		.hero-container {
+			grid-template-columns: 1fr;
+			text-align: center;
+		}
+		
+		.hero-content {
+			text-align: center;
+		}
+		
+		.hero-detail {
+			margin-left: auto;
+			margin-right: auto;
+		}
+		
+		.hero-cta {
+			justify-content: center;
+			flex-wrap: wrap;
+		}
+	}
+	
 	@media (max-width: 768px) {
 		.hero {
-			padding: var(--space-xl) var(--space-lg);
+			padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
 		}
-
-		.value-statement {
-			font-size: var(--text-h3);
+		
+		.hero-title {
+			font-size: clamp(2.5rem, 8vw, 4rem);
 		}
-
-		.outcome-item {
-			flex-direction: column;
-			gap: var(--space-xs);
-			align-items: flex-start;
-		}
-
-		.templates-grid {
+		
+		.services-grid {
 			grid-template-columns: 1fr;
+		}
+		
+		.audience-grid {
+			grid-template-columns: 1fr;
+		}
+		
+		/* Mobile section padding */
+		.model-section,
+		.services-section,
+		.audience-section,
+		.cta-section {
+			padding: var(--layout-3, 4rem) 0;
 		}
 	}
 </style>
