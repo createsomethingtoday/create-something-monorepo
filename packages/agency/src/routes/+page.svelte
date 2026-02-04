@@ -8,7 +8,7 @@
 	const services = [
 		{
 			name: 'Custom MCP Server Development',
-			description: 'We build MCP servers that connect your systems with AI. Per-tool pricing: $250 per integration, $250 per agent configuration.',
+			description: 'We build MCP servers that connect your systems with Agents. Per-tool pricing: $250 per integration, $250 per agent configuration.',
 			type: 'MCP Server Development',
 			price: '250',
 			priceDescription: 'Per integration/tool pricing'
@@ -124,8 +124,8 @@
 {/snippet}
 
 <SEO
-	title="Custom MCP Development | Connect Your Systems with AI"
-	description="We build custom MCP servers that connect your systems with AI. Production-ready infrastructure, expertly crafted."
+	title="Custom MCP Development | Connect Your Systems with Agents"
+	description="We build custom MCP servers that connect your systems with Agents. Production-ready infrastructure, expertly crafted."
 	keywords="MCP development, custom MCP server, Model Context Protocol, AI integration, automation infrastructure, Claude, Cursor, Codex"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -152,11 +152,11 @@
 				<p class="hero-eyebrow">Custom MCP Development</p>
 			</BlurFade>
 			<BlurFade delay={0.1}>
-				<h1 class="hero-title">Connect your systems with&nbsp;AI</h1>
+				<h1 class="hero-title">Connect your systems with&nbsp;Agents</h1>
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					We build custom MCP servers that integrate your existing systems with AI. 
+					We build custom MCP servers that integrate your existing systems with Agents. 
 					Production-ready. Expertly crafted.
 				</p>
 			</BlurFade>
@@ -304,7 +304,7 @@
 					<div class="layer-label">Automation Layer</div>
 					<div class="layer-content">
 						<p class="layer-what">Custom MCP Servers</p>
-						<p class="layer-examples">Connect your systems with AI using trust boundaries</p>
+						<p class="layer-examples">Connect your systems with Agents using trust boundaries</p>
 					</div>
 				</div>
 			</div>
