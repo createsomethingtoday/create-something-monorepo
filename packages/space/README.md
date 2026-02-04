@@ -1,38 +1,93 @@
-# sv
+# CREATE SOMETHING Space
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+**createsomething.space** — MCP Integration Experiments
 
-## Creating a project
+Practice and experimentation with MCP patterns. Where ideas become working code.
 
-If you're seeing this, you've probably already done this step. Congrats!
+---
 
-```sh
-# create a new project in the current directory
-npx sv create
+## The Pivot
 
-# create a new project in my-app
-npx sv create my-app
+**Old focus**: Template tutorials, learning paths for frameworks
+**New focus**: MCP integration experiments, pattern validation
+
+Templates are commoditized. The value is in understanding *how* to integrate MCP servers with real systems—the messy parts that tutorials skip.
+
+---
+
+## Experiment Areas
+
+### Integration Patterns
+
+- Connecting MCP servers to existing APIs
+- Auth flow integration (OAuth dance, token refresh)
+- Data mapping between schemas
+- Error recovery and retry logic
+
+### Edge Deployment
+
+- MCP servers on Cloudflare Workers
+- Durable Objects for stateful MCP
+- D1 for MCP server persistence
+
+### Multi-Agent Coordination
+
+- MCP servers communicating with each other
+- Skill composition patterns
+- Agent orchestration experiments
+
+---
+
+## What This Is Not
+
+- **Not template tutorials** — Those are everywhere now
+- **Not "getting started" content** — That's scaffolding tools' job
+- **Not consumption guides** — `.io` covers usage patterns
+
+`.space` is for experiments that might fail, patterns that need validation, and integration approaches that push boundaries.
+
+---
+
+## Hermeneutic Position
+
+`.space` experiments before patterns become documented:
+
+```
+.ltd (Philosophy) → provides principles →
+.io (Research) → documents validated patterns →
+.space (Practice) → experiments with new approaches ← YOU ARE HERE
+.agency (Services) → applies proven patterns →
+.ltd (Philosophy) → refined by what works
 ```
 
-## Developing
+---
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Development
 
-```sh
-npm run dev
+```bash
+# Start dev server
+pnpm dev --filter=space
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+# Type check
+pnpm --filter=space exec tsc --noEmit
+
+# Deploy
+pnpm --filter=space build && wrangler pages deploy packages/space/.svelte-kit/cloudflare --project-name=create-something-space
 ```
 
-## Building
+---
 
-To create a production version of your app:
+## Experiments Index
 
-```sh
-npm run build
-```
+See `/experiments` routes for current work:
+- `/experiments/code-mode` — Code execution patterns
+- `/experiments/motion-ontology` — Animation as philosophy
+- `/experiments/nba-live` — Real-time data integration
 
-You can preview the production build with `npm run preview`.
+---
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## Related
+
+- [The MCP-First Thesis](../../docs/MCP_FIRST_THESIS.md) — Strategic context
+- [CLAUDE.md](../../CLAUDE.md) — Monorepo standards
+- [packages/io](../io) — Where validated patterns get documented

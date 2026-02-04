@@ -2,6 +2,23 @@
 
 This project uses **lm** (loom) for agent-native issue tracking and coordination. Run `lm init` to get started.
 
+## Strategic Context: The Creation Moat
+
+**MCP consumption is commoditized. MCP creation is not.**
+
+CREATE SOMETHING builds the connectivity layer between tools and AI. All properties serve this thesis:
+
+| Property | Focus |
+|----------|-------|
+| **.ltd** | Philosophy of automation infrastructure |
+| **.io** | MCP patterns for builders |
+| **.space** | MCP integration experiments |
+| **.agency** | Custom MCP development for clients |
+
+See `docs/MCP_FIRST_THESIS.md` for full strategic context.
+
+---
+
 ## Guiding Principle: The Work Must Remain Connected
 
 The central discipline of our agent workflow is ensuring that all work remains connected to the whole. Stranded local changes, untracked tasks, and un-pushed commits represent a disconnection from the project's shared reality. They obscure the true state of the work.

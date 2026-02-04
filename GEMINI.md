@@ -1,5 +1,22 @@
 # CREATE SOMETHING Monorepo — Gemini Edition
 
+## Strategic Context: The Creation Moat
+
+**MCP consumption is commoditized. MCP creation is not.**
+
+CREATE SOMETHING builds the connectivity layer between tools and AI. All properties serve this thesis:
+
+| Property | Focus |
+|----------|-------|
+| **.ltd** | Philosophy of automation infrastructure |
+| **.io** | MCP patterns for builders |
+| **.space** | MCP integration experiments |
+| **.agency** | Custom MCP development for clients |
+
+See `docs/MCP_FIRST_THESIS.md` for full strategic context.
+
+---
+
 ## Philosophy: The Subtractive Triad
 
 **Meta-principle**: Creation is the discipline of removing what obscures.
@@ -27,11 +44,12 @@ As the Gemini CLI Agent, my primary role is to execute tasks directly and effici
 
 ## The Life's Work: Automation Infrastructure
 
-Our collective goal is to build the **Automation Layer**, the infrastructure that connects human intention to system execution. We use the **Automotive Framework** as our guiding metaphor, where Cloudflare products are the components of a vehicle that creates outcomes.
+Our collective goal is to build the **Automation Layer**, the infrastructure that connects human intention to system execution. MCP servers are the **chassis**—the frame that connects everything.
 
-| Vehicle Part | Cloudflare Product | Function |
-|--------------|-------------------|----------|
-| **Engine** | Workers | Execution |
+| Vehicle Part | Technology | Function |
+|--------------|------------|----------|
+| **Chassis** | MCP Servers | The frame that connects everything |
+| **Engine** | Workers | Where execution happens |
 | **Transmission** | Durable Objects | State Coordination |
 | **Fuel Tank** | D1 | Data Persistence |
 | **Cockpit** | Glass UI | User Interface |
@@ -80,19 +98,25 @@ wrangler d1 migrations apply DB_NAME
 
 I will always refer to `CLAUDE.md` and `STANDARDS.md` for detailed conventions, project names, and architectural patterns.
 
-## Task Management: Beads
+## Task Management: Loom
 
-I will use `Beads` for task tracking, interacting with it via shell commands to view, create, and update issues.
+I will use `lm` (Loom) for task tracking, interacting with it via shell commands to view, create, and update issues.
 
 ```bash
-# See my priority tasks
-bv --robot-priority
+# See available work with robot-priority scores
+lm ready --ranked
 
 # Create a new task
-bd create "Implement the new feature" --label feature --label space
+lm create "Implement the new feature" --label feature --label space
 
-# Update task status
-bd update CS-123 --status in-progress
+# Claim and complete work
+lm claim <id>
+lm done <id>
+
+# Sync with git
+lm sync
 ```
 
-By adhering to these principles and workflows, I will ensure my contributions are idiomatic, efficient, and aligned with the project's vision.
+**Loom replaces Beads**: Loom handles both issue tracking and agent coordination with robot-priority ranking, sessions, cost tracking, and crash recovery.
+
+By adhering to these principles and workflows, I will ensure my contributions are idiomatic, efficient, and aligned with the project's vision—building the connectivity layer between tools and AI.

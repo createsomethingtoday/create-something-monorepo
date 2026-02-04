@@ -120,40 +120,42 @@
 <!-- Ecosystem Integration -->
 <section class="ecosystem py-24 px-6">
 	<div class="max-w-5xl mx-auto">
-		<h3 class="mb-12 text-center">The Automation Layer Across Properties</h3>
+		<h3 class="mb-12 text-center">The Creation Moat</h3>
+		<p class="ecosystem-thesis text-center mb-12 max-w-2xl mx-auto">
+			MCP consumption is commoditized. MCP creation is not. We build the connectivity layer between your tools and AI.
+		</p>
 
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-12 highlight-grid">
 			<div class="highlight-item" style="--index: 0">
 				<div class="mb-4">
 					<span class="property-label">.io</span>
-					<h4 class="property-title mt-1">Research</h4>
+					<h4 class="property-title mt-1">MCP Patterns</h4>
 				</div>
 				<p class="property-description leading-relaxed">
-					We research automation infrastructure patterns. Each paper answers a specific 
-					question with measurable results—feeding directly into 
-					<a href="https://workway.co" class="ecosystem-link">WORKWAY</a>.
+					Reference implementations and patterns for MCP server development. 
+					Research that helps builders create, not just consume.
 				</p>
 			</div>
 
 			<div class="highlight-item" style="--index: 1">
 				<div class="mb-4">
 					<span class="property-label">.space</span>
-					<h4 class="property-title mt-1">Practice</h4>
+					<h4 class="property-title mt-1">MCP Experiments</h4>
 				</div>
 				<p class="property-description leading-relaxed">
-					We teach how to build the automation layer. Experiments, exercises, 
-					and patterns for infrastructure that recedes into transparent use.
+					Integration experiments and pattern validation. Where MCP ideas 
+					become working code before they become documented patterns.
 				</p>
 			</div>
 
 			<div class="highlight-item" style="--index: 2">
 				<div class="mb-4">
 					<span class="property-label">.agency</span>
-					<h4 class="property-title mt-1">Services</h4>
+					<h4 class="property-title mt-1">Custom MCP Dev</h4>
 				</div>
 				<p class="property-description leading-relaxed">
-					We deliver automation infrastructure to clients. Systems that work 
-					while you sleep—built on the same platform as WORKWAY.
+					We build custom MCP servers for clients. The creation moat applied to 
+					your business—connectivity that works while you sleep.
 				</p>
 			</div>
 		</div>
@@ -386,6 +388,12 @@
 		border-top: 1px solid var(--color-border-default);
 	}
 
+	.ecosystem-thesis {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+	}
+
 	.property-label {
 		font-size: var(--text-caption);
 		font-family: monospace;
@@ -400,15 +408,6 @@
 	.property-description {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
-	}
-
-	.ecosystem-link {
-		color: var(--color-fg-secondary);
-		transition: color var(--duration-micro) var(--ease-standard);
-	}
-
-	.ecosystem-link:hover {
-		color: var(--color-fg-primary);
 	}
 
 	/* ==========================================================================

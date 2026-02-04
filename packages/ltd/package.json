@@ -1,5 +1,6 @@
 {
 	"name": "@create-something/ltd",
+	"description": "The Philosophy of Automation Infrastructure — where we articulate why creation > consumption",
 	"private": true,
 	"version": "1.0.0",
 	"type": "module",

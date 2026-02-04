@@ -49,29 +49,29 @@
 <!-- Ecosystem Navigation -->
 <section class="ecosystem">
 	<div class="ecosystem-container">
-		<p class="ecosystem-label">The CREATE SOMETHING Ecosystem</p>
-		<h2 class="ecosystem-heading">Research flows into practice</h2>
+		<p class="ecosystem-label">The Creation Moat</p>
+		<h2 class="ecosystem-heading">MCP patterns for builders</h2>
 		<p class="ecosystem-description">
-			.io documents what works. .space teaches it. .agency applies it to client work.
+			.io documents MCP patterns. .space experiments with them. .agency builds custom MCPs for clients.
 		</p>
 
 		<div class="ecosystem-grid highlight-grid">
 			<a href="https://createsomething.space" class="ecosystem-card highlight-item" style="--index: 0" target="_blank" rel="noopener">
 				<span class="property-tag">.space</span>
-				<h3 class="property-name">Learn</h3>
-				<p class="property-desc">Step-by-step tutorials. Build what we've researched.</p>
+				<h3 class="property-name">Experiment</h3>
+				<p class="property-desc">MCP integration experiments. Where patterns get validated before documentation.</p>
 			</a>
 
 			<a href="https://createsomething.agency" class="ecosystem-card highlight-item" style="--index: 1" target="_blank" rel="noopener">
 				<span class="property-tag">.agency</span>
-				<h3 class="property-name">Apply</h3>
-				<p class="property-desc">Client projects using these methods. Real results, real timelines.</p>
+				<h3 class="property-name">Build</h3>
+				<p class="property-desc">Custom MCP development. The creation moat applied to your business.</p>
 			</a>
 
 			<a href="https://createsomething.ltd/patterns/crystallization" class="ecosystem-card highlight-item" style="--index: 2" target="_blank" rel="noopener">
 				<span class="property-tag">.ltd</span>
-				<h3 class="property-name">Why</h3>
-				<p class="property-desc">The principles behind the methodology. Design philosophy made explicit.</p>
+				<h3 class="property-name">Philosophy</h3>
+				<p class="property-desc">Why creation matters more than consumption. The thesis behind the moat.</p>
 			</a>
 		</div>
 	</div>

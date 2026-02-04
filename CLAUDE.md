@@ -87,18 +87,43 @@ This inverts the common assumption that you build an AI agent first, then add in
 
 **Key principle**: Users don't want "workflow automation"—they want outcomes. RFIs that draft themselves. Daily logs that synthesize themselves. The tool should disappear.
 
+### The Creation Moat
+
+**MCP consumption is commoditized. MCP creation is not.**
+
+Templates and scaffolding tools (`create-mcp-server`, `mcp-forge`, `mcptools`) have lowered the barrier to *starting* an MCP server. Desktop Extensions (`.mcpb`) have simplified *installation*. But neither Claude Desktop, Claude Cowork, nor Codex can *create* MCP servers from within the app.
+
+**The moat is in creation:**
+- Understanding *what* MCP to build (domain expertise)
+- Building custom MCPs for specific workflows (technical expertise)
+- Integrating MCPs with existing systems (auth, data mapping, security)
+- The Intelligence Layer on top (Skills, Agents—the margin)
+
+This is where CREATE SOMETHING operates.
+
 ### How CREATE SOMETHING Supports WORKWAY
 
-| Property | Role |
-|----------|------|
-| **.ltd** | Defines the MCP-first thesis and philosophical foundation |
-| **.io** | Researches MCP patterns, publishes reference implementations |
-| **.space** | Teaches developers how to build MCP servers and Skills |
-| **.agency** | Delivers MCP-based automation to clients |
+| Property | Old Focus | New Focus (MCP-First) |
+|----------|-----------|----------------------|
+| **.ltd** | Philosophy of creation | Philosophy of *automation infrastructure*—MCP as chassis |
+| **.io** | Research, tools, docs | MCP patterns, reference implementations, SDK research |
+| **.space** | Practice, experiments | MCP server experiments, integration patterns, *not* template tutorials |
+| **.agency** | Client services (templates) | **Custom MCP development**—the creation moat applied to client work |
 
 The hermeneutic circle: Philosophy informs research. Research validates practice. Practice serves clients. Client outcomes test and evolve the philosophy.
 
 **CREATE SOMETHING stays horizontal** (the MCP-first thesis applies to any vertical). **WORKWAY goes vertical** (construction via Procore).
+
+### .agency Service Offerings (Post-Pivot)
+
+| Service | Description | Value |
+|---------|-------------|-------|
+| **MCP Audit** | What MCPs would unlock value for your business? | Strategic clarity |
+| **Custom MCP Development** | Build the server, package as `.mcpb` | The creation moat |
+| **Intelligence Layer** | Skills and Agents on top of your MCPs | The margin |
+| **Ongoing Support** | Auth updates, API changes, new capabilities | Recurring relationship |
+
+**Positioning shift**: From "We build websites/apps with modern templates" to "We build the connectivity layer between your tools and AI."
 
 ### Shared Vocabulary: AI Interaction Atlas
 

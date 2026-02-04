@@ -35,29 +35,29 @@
 <!-- Ecosystem Navigation -->
 <section class="ecosystem">
 	<div class="ecosystem-container">
-		<p class="ecosystem-label">The Hermeneutic Circle</p>
-		<h2 class="ecosystem-heading">Practice becomes application</h2>
+		<p class="ecosystem-label">The Creation Moat</p>
+		<h2 class="ecosystem-heading">MCP integration experiments</h2>
 		<p class="ecosystem-description">
-			.space teaches through doing. .io provides the research. .agency applies it professionally. .ltd defines the standards.
+			.space validates MCP patterns through experimentation. .io documents them. .agency builds custom MCPs for clients.
 		</p>
 
 		<div class="ecosystem-grid highlight-grid">
 			<a href="https://createsomething.io" class="ecosystem-card highlight-item" style="--index: 0" target="_blank" rel="noopener">
 				<span class="property-tag">.io</span>
-				<h3 class="property-name">Research</h3>
-				<p class="property-desc">Papers and experiments. The theory behind what you're learning.</p>
+				<h3 class="property-name">Patterns</h3>
+				<p class="property-desc">MCP reference implementations. Validated patterns for builders.</p>
 			</a>
 
 			<a href="https://createsomething.agency" class="ecosystem-card highlight-item" style="--index: 1" target="_blank" rel="noopener">
 				<span class="property-tag">.agency</span>
-				<h3 class="property-name">Apply</h3>
-				<p class="property-desc">See these patterns in production. Client work at the highest standard.</p>
+				<h3 class="property-name">Build</h3>
+				<p class="property-desc">Custom MCP development. The creation moat applied to your business.</p>
 			</a>
 
-			<a href="https://createsomething.ltd/patterns/crystallization" class="ecosystem-card highlight-item" style="--index: 2" target="_blank" rel="noopener">
+			<a href="https://createsomething.ltd" class="ecosystem-card highlight-item" style="--index: 2" target="_blank" rel="noopener">
 				<span class="property-tag">.ltd</span>
-				<h3 class="property-name">Canon</h3>
-				<p class="property-desc">The philosophy of crystallization. Human judgment encoded for AI execution.</p>
+				<h3 class="property-name">Philosophy</h3>
+				<p class="property-desc">Why creation matters more than consumption. MCP as the chassis.</p>
 			</a>
 		</div>
 	</div>

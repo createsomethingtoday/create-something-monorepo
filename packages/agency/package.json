@@ -1,5 +1,6 @@
 {
 	"name": "@create-something/agency",
+	"description": "Custom MCP Development — we build the connectivity layer between your tools and AI",
 	"private": true,
 	"version": "1.0.0",
 	"type": "module",

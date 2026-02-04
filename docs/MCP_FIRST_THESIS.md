@@ -1,6 +1,7 @@
 # The MCP-First Thesis
 
 > Research conducted: February 4, 2026
+> Updated: February 4, 2026 (Creation Moat pivot)
 > Context: Strategic pivot for WORKWAY and CREATE SOMETHING
 
 ## Executive Summary
@@ -14,6 +15,51 @@ MCP (Model Context Protocol) has emerged as the universal connector layer for AI
 3. **Agents produce outcomes** (the monetizable layer)
 
 This inverts the common assumption that you build an AI agent first, then add integrations.
+
+---
+
+## The Creation Moat
+
+**MCP consumption is commoditized. MCP creation is not.**
+
+### What's Commoditized (Low Value)
+
+| Capability | Tools Available | Barrier |
+|------------|-----------------|---------|
+| **Installing** MCP servers | Desktop Extensions (`.mcpb`), one-click install | None |
+| **Using** MCP servers | Claude Desktop, Codex, Cursor, VS Code | None |
+| **Scaffolding** MCP projects | `create-mcp-server`, `mcp-forge`, `mcptools`, `mcp-generator-cli` | Low |
+| **Templates** | Hundreds of reference implementations | Low |
+
+### What's Not Commoditized (High Value)
+
+| Capability | Why It's Hard | Who Can Do It |
+|------------|---------------|---------------|
+| **Understanding** *what* MCP to build | Requires domain expertise + MCP knowledge | Few |
+| **Custom MCP development** | Protocol knowledge, auth integration, error handling | Developers |
+| **Integration** with existing systems | Data mapping, security boundaries, API quirks | Experienced teams |
+| **Intelligence Layer** (Skills/Agents) | Prompt engineering, workflow design, testing | Specialists |
+
+### The Key Insight
+
+Neither Claude Desktop, Claude Cowork, nor Codex can **create** MCP servers from within the app. Users can *use* MCPs, *install* MCPs, but not *build* them without leaving the AI interface and entering a development environment.
+
+**This is the moat.**
+
+Templates and scaffolding tools have *started* to lower the barrier, but they still require:
+- CLI/terminal proficiency
+- TypeScript or Python knowledge
+- Understanding of MCP protocol (JSON-RPC 2.0, stdio/SSE transports)
+- Packaging knowledge for distribution
+
+### Strategic Implication
+
+The value is not in **templates** (commoditized) but in **creation expertise** applied to specific domains. CREATE SOMETHING pivots all properties toward this:
+
+```
+OLD: Templates → Learning → Services (templates as entry point)
+NEW: MCP Servers → Connectivity → Intelligence Layer (creation as entry point)
+```
 
 ---
 
@@ -147,23 +193,36 @@ The Atlas provides vocabulary for reasoning about AI systems "beyond 'User → M
 CREATE SOMETHING stays **horizontal** (the MCP-first thesis applies to any vertical).
 WORKWAY goes **vertical** (construction via Procore).
 
-### Property Roles
+### Property Roles (Post-Pivot)
 
-| Property | Current State | MCP-First Role |
-|----------|---------------|----------------|
-| **.ltd** | Philosophy, canon | Articulate the MCP-first thesis |
-| **.io** | Research, tools | MCP patterns, reference implementations |
-| **.space** | Practice, learning | Teach MCP server + Skills development |
-| **.agency** | Client services | Deliver MCP-based automation |
+Templates are no longer the entry point. **MCP creation expertise** is.
+
+| Property | Old Focus | New Focus (Creation Moat) |
+|----------|-----------|---------------------------|
+| **.ltd** | Philosophy of creation | Philosophy of *automation infrastructure*—articulate why creation > consumption |
+| **.io** | Research, tools, docs | MCP patterns, SDK research, reference implementations for *builders* |
+| **.space** | Practice via templates | MCP server experiments, integration patterns—*not* template tutorials |
+| **.agency** | Client services (templates) | **Custom MCP development**—the creation moat as a service |
+
+### .agency Service Offerings
+
+| Service | Description | Value |
+|---------|-------------|-------|
+| **MCP Audit** | What MCPs would unlock value for your business? | Strategic clarity |
+| **Custom MCP Development** | Build the server, package as `.mcpb` | The creation moat |
+| **Intelligence Layer** | Skills and Agents on top of your MCPs | The margin |
+| **Ongoing Support** | Auth updates, API changes, new capabilities | Recurring relationship |
+
+**Positioning shift**: From "We build websites/apps with modern templates" to "We build the connectivity layer between your tools and AI."
 
 ### The Hermeneutic Circle
 
 ```
-.ltd (Philosophy) → defines "The Automation Layer" as MCP-first →
+.ltd (Philosophy) → articulates "creation > consumption" →
 .io (Research) → validates with real MCP server development →
-.space (Practice) → teaches developers how to build MCP servers →
-.agency (Services) → delivers MCP-based automation to clients →
-.ltd (Philosophy) → refined by what actually works
+.space (Practice) → experiments with MCP patterns (not template tutorials) →
+.agency (Services) → delivers custom MCPs to clients →
+.ltd (Philosophy) → refined by what creation work actually reveals
 ```
 
 ---
@@ -188,10 +247,23 @@ MCP is the **chassis**—the structural frame that holds everything together.
 
 ## Competitive Landscape
 
+### MCP Creation Tools (Commoditizing Layer)
+
+| Tool | Language | What It Does |
+|------|----------|--------------|
+| **mcptools** (`mcp` CLI) | TypeScript | Swiss Army Knife: scaffold, test, mock, manage configs |
+| **create-mcp-server** | TypeScript | Official scaffolding fork |
+| **mcp-forge** | Python | Full Python project scaffolding |
+| **mcp-generator-cli** | Any | Scans existing APIs → generates MCP server |
+| **generator-mcp** (Yeoman) | TypeScript | VS Code debugging included |
+| **Desktop Extensions** (`.mcpb`) | Any | One-click installation packaging |
+
+**Implication**: Scaffolding is table stakes. The moat is not *starting* an MCP server—it's *understanding what to build* and *integrating deeply*.
+
 ### Horizontal Players (MCP Infrastructure)
-- WORKWAY/CREATE SOMETHING (potential)
+- WORKWAY/CREATE SOMETHING (creation expertise + vertical depth)
 - viaSocket, Appy Pie (low-depth integrations)
-- LangChain Agent Builder
+- LangChain Agent Builder (framework, not creation services)
 
 ### Vertical Players (Deep Domain Agents)
 - **Auctor** — Enterprise implementations (YC S25)
@@ -200,7 +272,12 @@ MCP is the **chassis**—the structural frame that holds everything together.
 
 ### The Opportunity
 
-The existing Procore MCP servers are shallow—data retrieval only. A deep, construction-workflow-aware MCP server + Intelligence Layer is unoccupied territory.
+1. **Scaffolding tools lower the floor** but don't raise the ceiling
+2. **Existing Procore MCP servers are shallow**—data retrieval only
+3. **No-code MCP builders don't exist** in Claude Desktop, Cowork, or Codex
+4. **Creation expertise + domain knowledge** is the defensible position
+
+The gap: Deep, workflow-aware MCP servers + Intelligence Layer, built by teams who understand both MCP protocol *and* the domain.
 
 ---
 
@@ -210,17 +287,40 @@ The existing Procore MCP servers are shallow—data retrieval only. A deep, cons
 > "The Automation Layer for Construction. Connect Procore to AI. Get outcomes while you sleep."
 
 **CREATE SOMETHING**:
-> "The philosophy, research, and practice of The Automation Layer."
+> "We build the connectivity layer between your tools and AI."
+
+**The Creation Moat** (internal):
+> "MCP consumption is commoditized. MCP creation is not. We create."
+
+### Property Taglines (Updated)
+
+| Property | Old | New |
+|----------|-----|-----|
+| **.ltd** | Philosophy of creation | The philosophy of automation infrastructure |
+| **.io** | Research and tools | MCP patterns for builders |
+| **.space** | Practice and experiments | MCP integration experiments |
+| **.agency** | Client services | Custom MCP development |
 
 ---
 
 ## Next Steps
 
+### WORKWAY (Vertical)
 1. [ ] Build deep Procore MCP server (beyond data retrieval)
 2. [ ] Develop construction-specific Skills
-3. [ ] Update .io content roadmap for MCP documentation
-4. [ ] Update .space learning paths for MCP development
-5. [ ] Identify pilot construction companies for validation
+3. [ ] Identify pilot construction companies for validation
+
+### CREATE SOMETHING (Horizontal - Creation Moat)
+1. [ ] Update .io content: focus on MCP *creation* patterns, not consumption
+2. [ ] Deprecate .space template tutorials; replace with MCP integration experiments
+3. [ ] Define .agency service packages: MCP Audit, Custom MCP Dev, Intelligence Layer
+4. [ ] Build reference MCPs for common integration patterns (CRM, project management, etc.)
+5. [ ] Document the creation moat thesis on .ltd
+
+### Positioning
+1. [ ] Update all property taglines to reflect "creation > consumption"
+2. [ ] Create case studies around custom MCP development (when available)
+3. [ ] Explore partnership with quietloudlab (Atlas vocabulary + our implementation)
 
 ---
 

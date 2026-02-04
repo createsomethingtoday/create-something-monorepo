@@ -1,38 +1,89 @@
-# sv
+# CREATE SOMETHING IO
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+**createsomething.io** — MCP Patterns for Builders
 
-## Creating a project
+Research, reference implementations, and documentation for developers building MCP servers and Skills.
 
-If you're seeing this, you've probably already done this step. Congrats!
+---
 
-```sh
-# create a new project in the current directory
-npx sv create
+## The Creation Moat
 
-# create a new project in my-app
-npx sv create my-app
+Templates and scaffolding tools have commoditized *starting* an MCP server. The value is in:
+
+- **Understanding what to build** — Domain expertise + MCP knowledge
+- **Deep integration patterns** — Auth, data mapping, security boundaries
+- **Production-grade implementations** — Error handling, logging, testing
+
+`.io` publishes the patterns that make the difference.
+
+---
+
+## Focus Areas
+
+### MCP Server Patterns
+
+- Transport patterns (stdio vs SSE vs Streamable HTTP)
+- Authentication integration (OAuth 2.0, API keys)
+- Error handling and recovery
+- Logging and observability
+- Testing strategies
+
+### Skills Development
+
+- Agent Skills specification compliance
+- Portable capability design
+- Cross-platform compatibility (Claude, Codex, Cursor)
+
+### Reference Implementations
+
+- Procore MCP Server (WORKWAY)
+- Common integration patterns (CRM, project management)
+- Edge deployment with Cloudflare Workers
+
+---
+
+## Hermeneutic Position
+
+`.io` validates patterns through real implementation:
+
+```
+.ltd (Philosophy) → provides principles →
+.io (Research) → validates with real MCP development ← YOU ARE HERE
+.space (Practice) → experiments with patterns →
+.agency (Services) → delivers to clients →
+.ltd (Philosophy) → refined by outcomes
 ```
 
-## Developing
+---
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Content Principles
 
-```sh
-npm run dev
+1. **Show, don't scaffold** — Reference implementations over templates
+2. **Production focus** — Patterns that survive real deployment
+3. **Creation over consumption** — How to build, not just how to use
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+---
+
+## Development
+
+```bash
+# Start dev server
+pnpm dev --filter=io
+
+# Type check
+pnpm --filter=io exec tsc --noEmit
+
+# Lint
+pnpm --filter=io lint
+
+# Deploy
+pnpm --filter=io build && wrangler pages deploy packages/io/.svelte-kit/cloudflare --project-name=create-something-io
 ```
 
-## Building
+---
 
-To create a production version of your app:
+## Related
 
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+- [The MCP-First Thesis](../../docs/MCP_FIRST_THESIS.md) — Strategic context
+- [CLAUDE.md](../../CLAUDE.md) — Monorepo standards
+- [packages/webflow-mcp](../webflow-mcp) — Example MCP implementation

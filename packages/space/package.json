@@ -1,5 +1,6 @@
 {
 	"name": "@create-something/space",
+	"description": "MCP Integration Experiments — practice and experimentation with MCP patterns",
 	"private": true,
 	"version": "1.0.0",
 	"type": "module",

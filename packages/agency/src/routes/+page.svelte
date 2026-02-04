@@ -118,9 +118,9 @@
 </script>
 
 <SEO
-	title="Automation Infrastructure | The Layer That Works While You Sleep"
-	description="We build automation infrastructure—the layer between human intention and system execution. Agents that recover revenue, follow up with leads, and handle what you'd forget."
-	keywords="automation infrastructure, the automation layer, AI agents, workflow automation, business automation, edge computing, WORKWAY"
+	title="Custom MCP Development | The Connectivity Layer Between Your Tools and AI"
+	description="We build custom MCP servers—the connectivity layer between your tools and AI. MCP consumption is commoditized. MCP creation is not. We create."
+	keywords="MCP development, custom MCP server, Model Context Protocol, automation infrastructure, AI integration, MCP creation, connectivity layer"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -128,10 +128,10 @@
 <!-- Hero -->
 <section class="hero">
 	<div class="hero-content">
-		<p class="hero-eyebrow">Automation Infrastructure</p>
-		<h1 class="hero-title">We build the layer that works while you sleep</h1>
+		<p class="hero-eyebrow">Custom MCP Development</p>
+		<h1 class="hero-title">We build the connectivity layer between your tools and AI</h1>
 		<p class="hero-subtitle">
-			Not just software. Automation infrastructure—agents that recover missed appointments, follow up with leads, and handle the tasks you forget. The system works; you don't have to.
+			MCP consumption is commoditized. MCP creation is not. We build custom MCP servers that connect your existing tools to AI—the automation infrastructure that works while you sleep.
 		</p>
 
 		<form class="spec-input-container" onsubmit={(e) => { e.preventDefault(); handleSubmit(); }}>

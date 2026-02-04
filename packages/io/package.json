@@ -1,5 +1,6 @@
 {
 	"name": "@create-something/io",
+	"description": "MCP Patterns for Builders — research, reference implementations, and documentation",
 	"private": true,
 	"version": "1.0.0",
 	"type": "module",
