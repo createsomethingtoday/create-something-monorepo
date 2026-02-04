@@ -855,7 +855,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		 * Uses the same field names as the original Next.js implementation.
 		 */
 		async updateCreator(id: string, data: Partial<Pick<Creator, 'name' | 'biography' | 'legalName' | 'avatarUrl'>>): Promise<Creator | null> {
-			const fields: Record<string, unknown> = {};
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const fields: Record<string, any> = {};
 
 			// Match original Next.js field names
 			if (data.name !== undefined) fields['Name'] = data.name;
@@ -871,7 +872,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			}
 
 			try {
-				const records = await base(TABLES.CREATORS).update([{ id, fields }]);
+				const records = await base(TABLES.CREATORS).update([{ id, fields }]) as Airtable.Records<Airtable.FieldSet>;
 				const record = records[0];
 				return {
 					id: record.id,

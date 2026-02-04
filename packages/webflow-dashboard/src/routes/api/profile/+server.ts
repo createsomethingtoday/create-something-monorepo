@@ -114,7 +114,8 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 			name: data.name,
 			biography: data.biography,
 			legalName: data.legalName,
-			avatarUrl: data.avatarUrl
+			// Convert null to undefined for Airtable compatibility
+			avatarUrl: data.avatarUrl ?? undefined
 		});
 
 		if (!updated) {

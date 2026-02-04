@@ -5,13 +5,11 @@ import type { RequestHandler } from './$types';
  * Serve uploaded files from R2
  * GET /api/uploads/[...path]
  * 
- * Protected: requires authenticated user
+ * Public endpoint - no authentication required.
+ * Airtable needs to fetch images to store them as attachments.
+ * Images are stored with unique, unguessable keys for security.
  */
-export const GET: RequestHandler = async ({ params, platform, locals }) => {
-	// Require authentication
-	if (!locals.user?.email) {
-		throw error(401, 'Authentication required');
-	}
+export const GET: RequestHandler = async ({ params, platform }) => {
 	const uploads = platform?.env.UPLOADS;
 	if (!uploads) {
 		throw error(500, 'Storage not configured');
