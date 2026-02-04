@@ -160,7 +160,11 @@ h4 {
 }
 
 /* Override Tailwind max-w-7xl to use token */
-.nav-container > div {
+.nav-container > div.max-w-7xl {
+  max-width: var(--content-width-xl);
+}
+
+nav.nav-container > div {
   max-width: var(--content-width-xl);
 }
 
