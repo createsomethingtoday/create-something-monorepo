@@ -389,7 +389,7 @@
 			<BlurFade delay={0.2}>
 				<div class="audience-card">
 					<h3>Ready for AI</h3>
-					<p>You've used ChatGPT and Copilot. Now you need AI connected to your workflows.</p>
+					<p>You've used ChatGPT and Claude. Now you need AI connected to your workflows.</p>
 				</div>
 			</BlurFade>
 			

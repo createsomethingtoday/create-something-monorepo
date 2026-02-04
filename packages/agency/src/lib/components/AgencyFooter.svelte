@@ -215,7 +215,7 @@
 		position: relative;
 		width: 100%;
 		overflow: hidden;
-		margin-top: 3rem;
+		margin-top: 0;
 		height: 140px;
 	}
 
