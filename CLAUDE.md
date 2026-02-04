@@ -47,36 +47,73 @@ The Triad removes duplication, excess, and disconnection from *artifacts*. Zero 
 
 **Automation Infrastructure** is the layer between human intention and system execution. It's what makes outcomes possible while you sleep—not automation that fills every gap (Gestell), but automation that enables dwelling (Gelassenheit).
 
-### The Automation Layer
+### The Two-Layer Model
 
 ```
-Human Intention
-    ↓ crystallized into
-Configurable Constraints
-    ↓ executed by
-Autonomous Agents
-    ↓ running on
-Edge Infrastructure
-    ↓ producing
-Outcomes While You Sleep
+┌─────────────────────────────────────────────────────────────┐
+│                   INTELLIGENCE LAYER                        │
+│        Skills, Agents, Automations (the upsell)            │
+│   "Draft this RFI" · "Summarize daily logs" · "Flag risk"  │
+├─────────────────────────────────────────────────────────────┤
+│                    AUTOMATION LAYER                         │
+│              MCP Servers (the entry point)                  │
+│        Connect your tools to AI with trust boundaries       │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+                   Edge Infrastructure
+                  (Cloudflare Workers)
+                            ↓
+                 Outcomes While You Sleep
 ```
+
+**The MCP-First Thesis**: The entry point to automation is *connectivity*, not intelligence. Users grant folder/API access to an MCP server first. Trust is established. Then intelligence layers on top.
+
+This inverts the common assumption that you build an AI agent first, then add integrations. The pattern emerging from Claude Cowork, Codex App, and industry adoption (100M+ monthly MCP downloads) is:
+
+1. **MCP servers establish trust** (controlled, permissioned access)
+2. **Skills provide capabilities** (reusable, portable across platforms)
+3. **Agents produce outcomes** (the monetizable layer)
 
 ### WORKWAY
 
-[WORKWAY](https://workway.co) is where this philosophy becomes code. An open marketplace for TypeScript workflows, running on Cloudflare's edge. The SDK absorbs complexity. The marketplace curates quality. The infrastructure recedes.
+[WORKWAY](https://workway.co) is where this philosophy becomes code—**The Automation Layer for Construction**.
 
-**Key principle**: Users don't want "workflow automation"—they want outcomes. Meetings that follow up on themselves. CRMs that update themselves. The tool should disappear.
+| Layer | What It Is | WORKWAY Implementation |
+|-------|------------|------------------------|
+| **Automation Layer** | MCP servers that connect tools to AI | Open-source Procore MCP Server |
+| **Intelligence Layer** | Skills + Agents that produce outcomes | Premium construction Skills (RFI drafting, daily log synthesis, compliance checks) |
+
+**Why Construction**: 98% of projects face delays/overruns. 35% of worker time lost to non-productive tasks. $30-40B annual US inefficiency. Only 4% of construction companies use AI. The pain is massive, the adoption is early, and Procore is the dominant platform.
+
+**Key principle**: Users don't want "workflow automation"—they want outcomes. RFIs that draft themselves. Daily logs that synthesize themselves. The tool should disappear.
 
 ### How CREATE SOMETHING Supports WORKWAY
 
 | Property | Role |
 |----------|------|
-| **.ltd** | Defines the philosophical foundation (Zuhandenheit, Gelassenheit, "weniger, aber besser") |
-| **.io** | Researches automation infrastructure patterns with real data |
-| **.space** | Teaches developers how to build the automation layer |
-| **.agency** | Delivers automation infrastructure to clients using WORKWAY patterns |
+| **.ltd** | Defines the MCP-first thesis and philosophical foundation |
+| **.io** | Researches MCP patterns, publishes reference implementations |
+| **.space** | Teaches developers how to build MCP servers and Skills |
+| **.agency** | Delivers MCP-based automation to clients |
 
 The hermeneutic circle: Philosophy informs research. Research validates practice. Practice serves clients. Client outcomes test and evolve the philosophy.
+
+**CREATE SOMETHING stays horizontal** (the MCP-first thesis applies to any vertical). **WORKWAY goes vertical** (construction via Procore).
+
+### Shared Vocabulary: AI Interaction Atlas
+
+We adopt the [AI Interaction Atlas](https://github.com/quietloudlab/ai-interaction-atlas) from [quietloudlab](https://quietloudlab.com/) as shared vocabulary for AI interaction design. The Atlas provides six dimensions that map to our architecture:
+
+| Atlas Dimension | Our Implementation |
+|-----------------|-------------------|
+| **Touchpoints** | MCP Servers |
+| **System Tasks** | Cloudflare Workers infrastructure |
+| **AI Tasks** | Skills |
+| **Human Tasks** | Intelligence Layer oversight |
+| **Data Artifacts** | What flows through MCP |
+| **Constraints** | Trust boundaries, permissions |
+
+See `docs/MCP_FIRST_THESIS.md` for full strategic context and partnership opportunity.
 
 ### The Automotive Framework
 
@@ -84,17 +121,20 @@ The hermeneutic circle: Philosophy informs research. Research validates practice
 
 The automotive layer consists of the parts of a vehicle: engine, transmission, fuel tank. Assembled together, they create motion.
 
-The automation layer consists of Cloudflare products: Workers, Durable Objects, D1. Assembled together, they create outcomes.
+The automation layer consists of Cloudflare products + MCP: Workers, Durable Objects, D1, MCP servers. Assembled together, they create outcomes.
 
-| Vehicle Part | Cloudflare Product | Function |
-|--------------|-------------------|----------|
+| Vehicle Part | Technology | Function |
+|--------------|------------|----------|
+| **Chassis** | MCP Servers | The frame that connects everything—tools, data, AI |
 | **Engine** | Workers | Where execution happens |
 | **Transmission** | Durable Objects | State coordination |
 | **Fuel Tank** | D1 | Data persistence |
-| **Turbocharger** | Workers AI | Intelligence boost |
+| **Turbocharger** | Workers AI / LLMs | Intelligence boost |
 | **Cockpit** | Glass UI | Where the driver controls the machine |
 | **Instrument Cluster** | Analytics/Logs | At-a-glance telemetry |
 | **Ignition** | Triggers | What starts the engine |
+
+**The Chassis Principle**: MCP is the chassis—the structural frame that holds everything together. Without the chassis, you have a pile of parts. Without MCP, you have disconnected tools. The chassis is invisible when driving, but essential. That's MCP: the connectivity layer that recedes into transparent use.
 
 **The Cockpit Principle**: The 930's cockpit is driver-centric—tachometer center-mounted, controls angled toward you, minimal decoration. Our Glass design system follows the same philosophy: the interface recedes, and you focus on your destination. That's Zuhandenheit applied to UI.
 
@@ -103,9 +143,9 @@ The automation layer consists of Cloudflare products: Workers, Durable Objects, 
 ### Cornering the Terms
 
 CREATE SOMETHING and WORKWAY together establish ownership of:
-- **Automation Infrastructure** — the infrastructure category
-- **The Automation Layer** — the architectural concept
-- **The Automotive Framework** — the explanatory metaphor
+- **The Automation Layer** — MCP servers that connect tools to AI
+- **The Intelligence Layer** — Skills and Agents that produce outcomes
+- **The Automotive Framework** — the explanatory metaphor (MCP as chassis)
 
 This is the life's work: building systems that work while you sleep.
 
