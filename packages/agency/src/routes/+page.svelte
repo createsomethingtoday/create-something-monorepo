@@ -646,10 +646,12 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: #0a0a0f;
-		border: 1px solid rgba(255, 255, 255, 0.2);
+		background: rgba(10, 10, 15, 0.9);
+		backdrop-filter: blur(20px) saturate(120%);
+		-webkit-backdrop-filter: blur(20px) saturate(120%);
+		border: 1px solid rgba(255, 255, 255, 0.15);
 		border-radius: 20px;
-		box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+		box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
 		color: white;
 		box-shadow: 
 			0 8px 32px rgba(0, 0, 0, 0.4),
