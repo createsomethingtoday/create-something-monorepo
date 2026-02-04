@@ -83,6 +83,7 @@
   --container-padding: var(--space-5);     /* 24px - horizontal container padding */
   
   /* Content Width Scale - DRY max-widths */
+  --content-width-full: 80rem;             /* 1280px - Nav, footer, full-bleed */
   --content-width-xl: 1100px;              /* Hero, wide two-column layouts */
   --content-width-lg: 900px;               /* Standard section containers */
   --content-width-md: 600px;               /* Pricing grids, diagrams */
@@ -152,11 +153,16 @@ h4 {
 }
 
 /* ==========================================================================
-   Navigation Logo - Stack Sans Notch
+   Navigation - Stack Sans Notch logo, consistent max-width
    ========================================================================== */
 
 .nav-logo {
   font-family: var(--font-display);
+}
+
+/* Override Tailwind max-w-7xl to use token */
+.nav-container > div {
+  max-width: var(--content-width-full);
 }
 
 /* ==========================================================================

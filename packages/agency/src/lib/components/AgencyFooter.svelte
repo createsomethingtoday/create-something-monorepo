@@ -113,7 +113,7 @@
 
 	.footer-container {
 		position: relative;
-		max-width: 80rem;
+		max-width: var(--content-width-full);
 		margin: 0 auto;
 		width: 100%;
 	}
