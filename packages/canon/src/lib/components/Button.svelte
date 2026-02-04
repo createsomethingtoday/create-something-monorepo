@@ -48,7 +48,7 @@
 <style>
 	/* Base Button */
 	.btn {
-		border-radius: var(--radius-full);
+		border-radius: var(--radius-lg);
 		font-weight: var(--font-semibold);
 		transition: all var(--duration-micro) var(--ease-standard);
 		-webkit-tap-highlight-color: transparent;
