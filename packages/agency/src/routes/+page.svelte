@@ -286,7 +286,7 @@
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="section-intro">
-				MCP servers are the connectivity layer—the infrastructure that lets AI 
+				MCP servers are the connectivity layer—the infrastructure that lets Agents 
 				access your tools with proper permissions.
 			</p>
 		</BlurFade>
