@@ -64,21 +64,21 @@
 
 		<!-- Architecture Overview -->
 		<section class="grid grid-cols-1 md:grid-cols-3 gap-4">
-			<div class="p-4 metric-card">
-				<div class="metric-value">Layer 1</div>
-				<div class="metric-label">Cloudflare Infrastructure</div>
-				<p class="mt-2 text-sm text-[var(--color-fg-muted)]">Workers, D1, KV, R2 operations</p>
-			</div>
-			<div class="p-4 metric-card">
-				<div class="metric-value">Layer 2</div>
-				<div class="metric-label">Langfuse LLM Tracing</div>
-				<p class="mt-2 text-sm text-[var(--color-fg-muted)]">Generations, tokens, costs</p>
-			</div>
-			<div class="p-4 metric-card">
-				<div class="metric-value">Layer 3</div>
-				<div class="metric-label">Loom Coordination</div>
-				<p class="mt-2 text-sm text-[var(--color-fg-muted)]">Sessions, issues, routing</p>
-			</div>
+		<div class="p-4 metric-card">
+			<div class="metric-value">Layer 1</div>
+			<div class="metric-label">Cloudflare Infrastructure</div>
+			<p class="mt-2 metric-description">Workers, D1, KV, R2 operations</p>
+		</div>
+		<div class="p-4 metric-card">
+			<div class="metric-value">Layer 2</div>
+			<div class="metric-label">Langfuse LLM Tracing</div>
+			<p class="mt-2 metric-description">Generations, tokens, costs</p>
+		</div>
+		<div class="p-4 metric-card">
+			<div class="metric-value">Layer 3</div>
+			<div class="metric-label">Loom Coordination</div>
+			<p class="mt-2 metric-description">Sessions, issues, routing</p>
+		</div>
 		</section>
 
 		<!-- The Problem -->
@@ -677,6 +677,11 @@ gen.end(response, { input: 150, output: 500 });`}</code></pre>
 		color: var(--color-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
+	}
+
+	.metric-description {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
 	}
 
 	.metric-table {
