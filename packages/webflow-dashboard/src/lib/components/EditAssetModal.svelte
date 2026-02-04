@@ -198,12 +198,68 @@
 			if (JSON.stringify(carouselImages) !== JSON.stringify(asset.carouselImages || [])) changedFields.push('carousel images');
 
 		// Version creation is optional - fire and forget, don't block save
+		// Build structured changes object matching original v1 format for Airtable automation
 		if (changedFields.length > 0) {
-			const changesDescription = `Updated ${changedFields.join(', ')}`;
+			// Helper to check if URL is a new upload (from our R2 storage)
+			const isNewUploadUrl = (url: string) => url.includes('/api/uploads/');
+			
+			// Build changes object with field IDs matching original format
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const structuredChanges: Record<string, any> = {};
+			
+			// Thumbnail changes - field ID: fld43LxLHMZb2yF7F
+			if (thumbnailUrl !== asset.thumbnailUrl) {
+				const oldUrls = asset.thumbnailUrl ? [{ url: asset.thumbnailUrl }] : [];
+				const newUrls = thumbnailUrl ? [{ url: thumbnailUrl }] : [];
+				const addedImages = newUrls.filter(img => isNewUploadUrl(img.url));
+				structuredChanges['fld43LxLHMZb2yF7F'] = {
+					added: addedImages,
+					removed: oldUrls.length > 0 && newUrls.length === 0 ? 1 : 0
+				};
+			}
+			
+			// Secondary thumbnail changes - field ID: fldzKxNCXcgCnEwxu
+			if (JSON.stringify(secondaryThumbnails) !== JSON.stringify(asset.secondaryThumbnails || [])) {
+				const oldUrls = (asset.secondaryThumbnails || []).map(url => ({ url }));
+				const newUrls = secondaryThumbnails.map(url => ({ url }));
+				const addedImages = newUrls.filter(img => isNewUploadUrl(img.url));
+				structuredChanges['fldzKxNCXcgCnEwxu'] = {
+					added: addedImages,
+					removed: Math.max(0, oldUrls.length - newUrls.length)
+				};
+			}
+			
+			// Carousel images changes - field ID: fldneaPyoRXBAVtS1
+			if (JSON.stringify(carouselImages) !== JSON.stringify(asset.carouselImages || [])) {
+				const oldUrls = (asset.carouselImages || []).map(url => ({ url }));
+				const newUrls = carouselImages.map(url => ({ url }));
+				const addedImages = newUrls.filter(img => isNewUploadUrl(img.url));
+				structuredChanges['fldneaPyoRXBAVtS1'] = {
+					added: addedImages,
+					removed: Math.max(0, oldUrls.length - newUrls.length)
+				};
+			}
+			
+			// Short description changes
+			if (formData.descriptionShort !== (asset.descriptionShort || '')) {
+				structuredChanges['ℹ️Description (Short)'] = {
+					from: asset.descriptionShort || '',
+					to: formData.descriptionShort
+				};
+			}
+			
+			// Long description changes
+			if (formData.descriptionLongHtml !== (asset.descriptionLongHtml || asset.description || '')) {
+				structuredChanges['ℹ️Description (Long).html'] = {
+					from: asset.descriptionLongHtml || asset.description || '',
+					to: formData.descriptionLongHtml
+				};
+			}
+			
 			fetch(`/api/assets/${asset.id}/versions`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ changes: changesDescription })
+				body: JSON.stringify({ changes: structuredChanges })
 			}).catch(() => {
 				// Silently ignore version creation failures
 			});

@@ -1110,9 +1110,9 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		async createAssetVersion(
 			assetId: string,
 			createdBy: string,
-			changes: string
+			changes: Record<string, unknown> | string
 		): Promise<AssetVersion | null> {
-			console.log('[Airtable] createAssetVersion called:', { assetId, createdBy, changes });
+			console.log('[Airtable] createAssetVersion called:', { assetId, createdBy, changesType: typeof changes });
 			console.log('[Airtable] Using ASSET_VERSIONS table:', TABLES.ASSET_VERSIONS);
 			
 			try {
@@ -1124,6 +1124,14 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					return null;
 				}
 				console.log('[Airtable] Asset found:', asset.name);
+
+				// Check if asset is "Upcoming" - don't create versions for upcoming assets
+				// Matches v1 logic: pages/api/asset/createVersion/[id].js lines 50-57
+				const cleanStatus = asset.status.replace(/^\d️⃣/u, '').replace(/🆕|🚀/gu, '').trim();
+				if (cleanStatus === 'Upcoming') {
+					console.log('[Airtable] Asset is Upcoming, skipping version creation');
+					return null;
+				}
 
 			// Get the next version number by counting existing versions
 			// Matches v1 logic exactly: pages/api/asset/createVersion/[id].js lines 62-64
@@ -1149,31 +1157,53 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					carouselImages: asset.carouselImages
 				};
 
+				// For structured changes, check if there are significant changes
+				// Matches v1 logic: pages/api/asset/createVersion/[id].js lines 90-98
+				if (typeof changes === 'object') {
+					const hasSignificantChanges = Object.keys(changes).some(key => 
+						key === 'ℹ️Description (Short)' || 
+						(key === 'fld43LxLHMZb2yF7F' && (changes[key] as { added?: unknown[] })?.added?.length) ||
+						(key === 'fldzKxNCXcgCnEwxu' && (changes[key] as { added?: unknown[] })?.added?.length)
+					);
+					
+					if (!hasSignificantChanges) {
+						console.log('[Airtable] No significant changes detected, skipping version creation');
+						return null;
+					}
+				}
+
 				// Create version record using field IDs from old dashboard
 				// Matches exactly: pages/api/asset/createVersion/[id].js lines 101-107
+				// IMPORTANT: Store changes in same format as v1 - just the structured changes object
+				// The Airtable automation expects: {"fld43LxLHMZb2yF7F":{"added":[...],"removed":0},...}
+				const changesJson = typeof changes === 'string' 
+					? JSON.stringify({ changes, snapshot, createdBy })  // Legacy format for string changes
+					: JSON.stringify(changes);  // V1 format - just the structured changes
+				
 				console.log('[Airtable] Creating version record with fields:', {
 					'fldemWilqCQcOCh5s': [assetId],
 					'fldn2ImbgwKfCdWWA': nextVersion,
 					'fldjYFJMGTerFYlol': 'Meta Update',
-					'fldc999gbJ8LWWoTC': 'changes JSON...',
+					'fldc999gbJ8LWWoTC': changesJson.substring(0, 100) + '...',
 					'fldLEIZMEjZvH5n23': ['zendesk']
 				});
 				const records = await base(TABLES.ASSET_VERSIONS).create({
 					'fldemWilqCQcOCh5s': [assetId], // Linked record to asset
 					'fldn2ImbgwKfCdWWA': nextVersion, // Version number
 					'fldjYFJMGTerFYlol': 'Meta Update', // Type
-					'fldc999gbJ8LWWoTC': JSON.stringify({ changes, snapshot, createdBy }), // Changes JSON
+					'fldc999gbJ8LWWoTC': changesJson, // Changes JSON - matches v1 format
 					'fldLEIZMEjZvH5n23': ['zendesk'] // Source - must match existing linked record
 				});
 				console.log('[Airtable] Version record created:', records.id);
 
+				const changesStr = typeof changes === 'string' ? changes : JSON.stringify(changes);
 				return {
 					id: records.id,
 					assetId: assetId,
 					versionNumber: nextVersion,
 					createdAt: new Date().toISOString(),
 					createdBy: createdBy,
-					changes: changes,
+					changes: changesStr,
 					snapshot: snapshot
 				};
 			} catch (err) {

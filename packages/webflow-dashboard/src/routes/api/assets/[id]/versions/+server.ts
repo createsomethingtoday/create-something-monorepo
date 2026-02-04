@@ -51,21 +51,26 @@ export const POST: RequestHandler = async ({ params, request, locals, platform }
 	console.log('[Versions API] Ownership verified');
 
 	const body = (await request.json()) as {
-		changes: string;
+		changes: Record<string, unknown> | string;
 	};
 	console.log('[Versions API] Request body:', JSON.stringify(body));
 
-	if (!body.changes || typeof body.changes !== 'string') {
-		console.log('[Versions API] Invalid changes description');
-		throw error(400, 'Changes description is required');
+	if (!body.changes) {
+		console.log('[Versions API] Invalid changes');
+		throw error(400, 'Changes are required');
 	}
 
-	console.log('[Versions API] Creating version with changes:', body.changes);
+	// Support both structured changes (new format) and string description (legacy)
+	const changes = typeof body.changes === 'string' 
+		? body.changes 
+		: body.changes;
+
+	console.log('[Versions API] Creating version with changes:', JSON.stringify(changes).substring(0, 200));
 	try {
 		const version = await airtable.createAssetVersion(
 			params.id,
 			locals.user.email,
-			body.changes
+			changes
 		);
 
 		if (!version) {
