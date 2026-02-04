@@ -27,7 +27,7 @@
 		class: className = '',
 		shimmerColor = '#ffffff',
 		shimmerSize = '0.05em',
-		borderRadius = '100px',
+		borderRadius = '10px',
 		shimmerDuration = '3s',
 		background = 'rgba(0, 0, 0, 1)',
 		children,
@@ -177,7 +177,7 @@
 		inset: 0;
 		width: 100%;
 		height: 100%;
-		border-radius: 1rem;
+		border-radius: var(--radius);
 		padding: 0.375rem 1rem;
 		box-shadow: inset 0 -8px 10px rgba(255, 255, 255, 0.12);
 		transform: translateZ(0);
