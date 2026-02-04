@@ -20,10 +20,121 @@ import type {
   BeadsIssue
 } from './types';
 
+// Langfuse observability types (inline to avoid worker bundling issues)
+interface LangfuseTrace {
+  id: string;
+  generation: (opts: any) => LangfuseGeneration;
+  span: (opts: any) => LangfuseSpan;
+}
+
+interface LangfuseGeneration {
+  end: (opts: any) => void;
+}
+
+interface LangfuseSpan {
+  end: (opts?: any) => void;
+}
+
+// Simple Langfuse client for Workers (fetch-based)
+class WorkerLangfuse {
+  private publicKey: string;
+  private secretKey: string;
+  private baseUrl: string;
+
+  constructor(env: Env) {
+    this.publicKey = (env as any).LANGFUSE_PUBLIC_KEY || '';
+    this.secretKey = (env as any).LANGFUSE_SECRET_KEY || '';
+    this.baseUrl = (env as any).LANGFUSE_BASE_URL || 'https://us.cloud.langfuse.com';
+  }
+
+  isEnabled(): boolean {
+    return !!(this.publicKey && this.secretKey);
+  }
+
+  async sendEvent(body: any): Promise<void> {
+    if (!this.isEnabled()) return;
+
+    try {
+      await fetch(`${this.baseUrl}/api/public/ingestion`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Basic ${btoa(`${this.publicKey}:${this.secretKey}`)}`
+        },
+        body: JSON.stringify({ batch: [body] })
+      });
+    } catch (err) {
+      console.error('Langfuse ingestion error:', err);
+    }
+  }
+
+  createTrace(opts: { name: string; metadata?: any; sessionId?: string }): string {
+    const traceId = crypto.randomUUID();
+    
+    this.sendEvent({
+      type: 'trace-create',
+      body: {
+        id: traceId,
+        name: opts.name,
+        metadata: opts.metadata,
+        sessionId: opts.sessionId,
+        timestamp: new Date().toISOString()
+      }
+    });
+
+    return traceId;
+  }
+
+  createGeneration(traceId: string, opts: {
+    name: string;
+    model: string;
+    input: any;
+    metadata?: any;
+  }): string {
+    const generationId = crypto.randomUUID();
+
+    this.sendEvent({
+      type: 'generation-create',
+      body: {
+        id: generationId,
+        traceId,
+        name: opts.name,
+        model: opts.model,
+        input: opts.input,
+        metadata: opts.metadata,
+        startTime: new Date().toISOString()
+      }
+    });
+
+    return generationId;
+  }
+
+  endGeneration(generationId: string, opts: {
+    output: any;
+    usage?: { input?: number; output?: number; total?: number };
+    level?: string;
+    statusMessage?: string;
+  }): void {
+    this.sendEvent({
+      type: 'generation-update',
+      body: {
+        id: generationId,
+        output: opts.output,
+        usage: opts.usage,
+        level: opts.level,
+        statusMessage: opts.statusMessage,
+        endTime: new Date().toISOString()
+      }
+    });
+  }
+}
+
 export class AgenticSession {
   private state: DurableObjectState;
   private env: Env;
   private anthropic: Anthropic;
+  private langfuse: WorkerLangfuse;
+  private traceId: string | null = null;
 
   // Session state (persisted)
   private conversationHistory: Message[] = [];
@@ -49,6 +160,9 @@ export class AgenticSession {
     console.log('Durable Object constructor', { hasApiKey, apiKeyPreview });
 
     this.anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+    
+    // Initialize Langfuse for observability
+    this.langfuse = new WorkerLangfuse(env);
 
     // Initialize hooks
     this.budgetHook = new BudgetEnforcementHook();
@@ -163,6 +277,24 @@ export class AgenticSession {
 
     // Track session start in DB
     await this.trackSessionStart();
+
+    // Create Langfuse trace for observability
+    if (this.langfuse.isEnabled()) {
+      this.traceId = this.langfuse.createTrace({
+        name: `agentic-session:${task.issueId}`,
+        sessionId: this.state.id.toString(),
+        metadata: {
+          touchpoint: 'agentic-executor',
+          aiTasks: ['execute', 'reason', 'generate'],
+          systemTasks: ['orchestrate', 'persist', 'validate'],
+          dataArtifacts: ['code', 'test_results', 'deployment'],
+          constraints: { budget: task.budget, maxIterations: 50 },
+          issueId: task.issueId,
+          epicId: task.epicId,
+          convoyId: task.convoyId
+        }
+      });
+    }
 
     // Schedule execution loop via alarm (fires immediately)
     // This is the correct pattern for Durable Objects - alarms trigger background work
@@ -326,6 +458,25 @@ export class AgenticSession {
     const budget = this.getBudgetStatus();
     const systemPrompt = this.buildSystemPrompt(budget);
 
+    // Create Langfuse generation for this LLM call
+    let generationId: string | null = null;
+    if (this.langfuse.isEnabled() && this.traceId) {
+      generationId = this.langfuse.createGeneration(this.traceId, {
+        name: `iteration-${this.context.iteration}`,
+        model: 'claude-sonnet-4-5-20250929',
+        input: {
+          system: systemPrompt,
+          messages: this.conversationHistory.slice(-5), // Last 5 for context
+          messageCount: this.conversationHistory.length
+        },
+        metadata: {
+          iteration: this.context.iteration,
+          budgetRemaining: budget.remaining,
+          budgetPercent: budget.percentUsed
+        }
+      });
+    }
+
     // Make API call with full conversation history + Extended Thinking
     const response = await this.anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
@@ -344,6 +495,18 @@ export class AgenticSession {
     const actualCost = this.calculateCost(response.usage!);
     this.context.costConsumed += actualCost;
     this.context.iterationCosts.push(actualCost);
+
+    // End Langfuse generation with results
+    if (this.langfuse.isEnabled() && generationId) {
+      this.langfuse.endGeneration(generationId, {
+        output: response.content,
+        usage: {
+          input: response.usage?.input_tokens,
+          output: response.usage?.output_tokens,
+          total: (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0)
+        }
+      });
+    }
 
     // Track cost in DB immediately (real-time visibility)
     await this.trackIterationCost(actualCost, response.usage!);

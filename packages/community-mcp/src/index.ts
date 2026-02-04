@@ -13,7 +13,12 @@ import {
 	CallToolRequestSchema,
 	ListToolsRequestSchema
 } from '@modelcontextprotocol/sdk/types.js';
+import { initObservability, createTrace, createSpan } from '@create-something/observability';
+import { mcpToolMetadata } from '@create-something/observability/atlas';
 import * as community from './tools/community.js';
+
+// Initialize Langfuse tracing
+initObservability();
 
 const server = new Server(
 	{
@@ -324,6 +329,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
 	const { name, arguments: args } = request.params;
 
+	// Create trace for tool call
+	const trace = createTrace({
+		name: `community-mcp:${name}`,
+		metadata: mcpToolMetadata('community-mcp', name, 'generate')
+	});
+
+	const span = createSpan(trace, {
+		name: `tool:${name}`,
+		input: args
+	});
+
 	try {
 		let result: unknown;
 
@@ -361,12 +377,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 			case 'community_batch_review':
 				result = await community.batchReview(toolArgs as community.BatchReviewParams);
 				break;
-			default:
-				return {
-					content: [{ type: 'text', text: `Unknown tool: ${name}` }],
-					isError: true
-				};
+		default:
+			span.end({ 
+				output: { error: `Unknown tool: ${name}` },
+				level: 'ERROR'
+			});
+			return {
+				content: [{ type: 'text', text: `Unknown tool: ${name}` }],
+				isError: true
+			};
 		}
+
+		span.end({ output: result });
 
 		return {
 			content: [
@@ -377,11 +399,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 			]
 		};
 	} catch (error) {
+		const message = error instanceof Error ? error.message : String(error);
+		
+		span.end({ 
+			output: { error: message },
+			level: 'ERROR',
+			statusMessage: message
+		});
+
 		return {
 			content: [
 				{
 					type: 'text',
-					text: `Error: ${error instanceof Error ? error.message : String(error)}`
+					text: `Error: ${message}`
 				}
 			],
 			isError: true

@@ -14,8 +14,13 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { initObservability, createTrace, createSpan } from '@create-something/observability';
+import { mcpToolMetadata } from '@create-something/observability/atlas';
 
 import * as plagiarism from './tools/plagiarism.js';
+
+// Initialize Langfuse tracing
+initObservability();
 
 const server = new Server(
   {
@@ -201,6 +206,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
+  // Create trace for tool call
+  const trace = createTrace({
+    name: `webflow-mcp:${name}`,
+    metadata: mcpToolMetadata('webflow-mcp', name, 'classify')
+  });
+
+  const span = createSpan(trace, {
+    name: `tool:${name}`,
+    input: args
+  });
+
   try {
     const safeArgs = args as Record<string, unknown> || {};
     let result: unknown;
@@ -274,6 +290,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         throw new Error(`Unknown tool: ${name}`);
     }
 
+    span.end({ output: result });
+
     return {
       content: [
         {
@@ -285,6 +303,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
+    
+    span.end({ 
+      output: { error: message },
+      level: 'ERROR',
+      statusMessage: message
+    });
+
     return {
       content: [
         {

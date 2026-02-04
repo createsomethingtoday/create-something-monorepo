@@ -3,12 +3,17 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { initObservability, createTrace, createSpan } from '@create-something/observability';
+import { mcpToolMetadata } from '@create-something/observability/atlas';
 
 import * as beads from './tools/beads.js';
 import * as qualityGates from './tools/quality-gates.js';
 import * as git from './tools/git.js';
 import * as checkpoint from './tools/checkpoint.js';
 import * as canon from './tools/canon.js';
+
+// Initialize Langfuse tracing
+initObservability();
 
 const server = new Server(
   {
@@ -274,6 +279,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
+  // Create trace for tool call
+  const trace = createTrace({
+    name: `harness-mcp:${name}`,
+    metadata: mcpToolMetadata('harness-mcp', name, 'orchestrate')
+  });
+
+  const span = createSpan(trace, {
+    name: `tool:${name}`,
+    input: args
+  });
+
   try {
     let result: any;
 
@@ -367,6 +383,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         throw new Error(`Unknown tool: ${name}`);
     }
 
+    span.end({ output: result });
+
     return {
       content: [
         {
@@ -377,6 +395,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     };
 
   } catch (error: any) {
+    span.end({ 
+      output: { error: error.message },
+      level: 'ERROR',
+      statusMessage: error.message
+    });
+
     return {
       content: [
         {

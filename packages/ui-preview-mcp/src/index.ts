@@ -16,10 +16,15 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { initObservability, createTrace, createSpan } from "@create-something/observability";
+import { mcpToolMetadata } from "@create-something/observability/atlas";
 import { spawn, spawnSync } from "child_process";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { join, resolve } from "path";
 import { homedir } from "os";
+
+// Initialize Langfuse tracing
+initObservability();
 
 const DEV_SERVERS_FILE = join(homedir(), ".ui-dev-servers.json");
 
@@ -136,6 +141,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 // Handle tool calls
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
+
+  // Create trace for tool call
+  const trace = createTrace({
+    name: `ui-preview-mcp:${name}`,
+    metadata: mcpToolMetadata('ui-preview-mcp', name, 'orchestrate')
+  });
+
+  const span = createSpan(trace, {
+    name: `tool:${name}`,
+    input: args
+  });
 
   switch (name) {
     case "ui_dev": {
@@ -269,13 +285,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         }
       }
       
+      const result = {
+        running: status,
+        available: Object.keys(PACKAGE_CONFIG),
+      };
+      span.end({ output: result });
       return {
         content: [{
           type: "text",
-          text: JSON.stringify({
-            running: status,
-            available: Object.keys(PACKAGE_CONFIG),
-          }),
+          text: JSON.stringify(result),
         }],
       };
     }
@@ -313,19 +331,25 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       delete devServers[pkg];
       writeDevServers(devServers);
       
+      const result = {
+        success: true,
+        package: pkg,
+        message: `Stopped ${pkg} dev server`,
+      };
+      span.end({ output: result });
       return {
         content: [{
           type: "text",
-          text: JSON.stringify({
-            success: true,
-            package: pkg,
-            message: `Stopped ${pkg} dev server`,
-          }),
+          text: JSON.stringify(result),
         }],
       };
     }
 
     default:
+      span.end({ 
+        output: { error: `Unknown tool: ${name}` },
+        level: 'ERROR'
+      });
       return {
         content: [{
           type: "text",
