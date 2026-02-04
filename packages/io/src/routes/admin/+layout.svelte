@@ -4,6 +4,7 @@
 
 	const navItems = [
 		{ href: '/admin', label: 'Dashboard', icon: 'chart' },
+		{ href: '/admin/observability', label: 'Observability', icon: 'pulse' },
 		{ href: '/admin/experiments', label: 'Experiments', icon: 'beaker' },
 		{ href: '/admin/submissions', label: 'Submissions', icon: 'inbox' },
 		{ href: '/admin/subscribers', label: 'Subscribers', icon: 'users' },

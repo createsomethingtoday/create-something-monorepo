@@ -1,0 +1,181 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://createsomething.io/schemas/atlas-metadata.json",
+  "title": "AI Interaction Atlas Metadata Schema",
+  "description": "Schema for AI Interaction Atlas dimensions used in agent observability. Based on quietloudlab's AI Interaction Atlas taxonomy.",
+  "type": "object",
+  "properties": {
+    "touchpoint": {
+      "type": "object",
+      "description": "Where the interaction happens",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["mcp_server", "api", "cli", "ui", "notification", "webhook", "queue", "worker"],
+          "description": "Type of touchpoint"
+        },
+        "mcp_server": {
+          "type": "string",
+          "description": "Name of the MCP server (if touchpoint.type is mcp_server)"
+        },
+        "api_endpoint": {
+          "type": "string",
+          "description": "API endpoint path (if touchpoint.type is api)"
+        },
+        "worker_name": {
+          "type": "string",
+          "description": "Worker name (if touchpoint.type is worker)"
+        }
+      }
+    },
+    "ai_task": {
+      "type": "object",
+      "description": "What capabilities AI provides",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "generate",
+            "classify",
+            "verify",
+            "transform",
+            "summarize",
+            "extract",
+            "compare",
+            "recommend",
+            "predict",
+            "explain",
+            "translate",
+            "rewrite",
+            "analyze",
+            "route",
+            "orchestrate"
+          ],
+          "description": "Type of AI task"
+        },
+        "model": {
+          "type": "string",
+          "description": "Model identifier (e.g., claude-sonnet-4-20250514)"
+        },
+        "skill": {
+          "type": "string",
+          "description": "Skill or tool name"
+        }
+      }
+    },
+    "human_task": {
+      "type": "object",
+      "description": "What people do in the loop",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "review",
+            "approve",
+            "edit",
+            "compare",
+            "provide_input",
+            "escalate",
+            "override",
+            "annotate",
+            "verify",
+            "select"
+          ],
+          "description": "Type of human task"
+        },
+        "oversight_level": {
+          "type": "string",
+          "enum": ["required", "recommended", "optional", "none"],
+          "description": "Level of human oversight required"
+        }
+      }
+    },
+    "system_task": {
+      "type": "object",
+      "description": "What infrastructure handles",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "routing",
+            "logging",
+            "state_management",
+            "caching",
+            "rate_limiting",
+            "authentication",
+            "authorization",
+            "transformation",
+            "validation",
+            "notification",
+            "scheduling",
+            "retry",
+            "aggregation"
+          ],
+          "description": "Type of system task"
+        },
+        "worker": {
+          "type": "string",
+          "description": "Worker handling the task"
+        }
+      }
+    },
+    "data_artifact": {
+      "type": "object",
+      "description": "What information flows between tasks",
+      "properties": {
+        "category": {
+          "type": "string",
+          "enum": [
+            "prompt",
+            "completion",
+            "context",
+            "feedback",
+            "configuration",
+            "state",
+            "reference",
+            "result"
+          ],
+          "description": "Category of data artifact"
+        },
+        "schema": {
+          "type": "string",
+          "description": "Schema identifier (e.g., rfi, daily_log, submittal)"
+        }
+      }
+    },
+    "constraint": {
+      "type": "object",
+      "description": "What boundaries shape the design",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "latency",
+            "cost",
+            "accuracy",
+            "privacy",
+            "compliance",
+            "availability",
+            "throughput",
+            "context",
+            "permission"
+          ],
+          "description": "Type of constraint"
+        },
+        "budget_usd": {
+          "type": "number",
+          "description": "Budget constraint in USD"
+        },
+        "latency_ms": {
+          "type": "number",
+          "description": "Latency constraint in milliseconds"
+        },
+        "context_tokens": {
+          "type": "integer",
+          "description": "Context window token limit"
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

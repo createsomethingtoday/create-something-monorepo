@@ -1,0 +1,6 @@
+# Langfuse Configuration
+# Copy this to .dev.vars and fill in your keys from https://us.cloud.langfuse.com
+
+LANGFUSE_SECRET_KEY=sk-lf-xxx
+LANGFUSE_PUBLIC_KEY=pk-lf-xxx
+LANGFUSE_BASE_URL=https://us.cloud.langfuse.com
