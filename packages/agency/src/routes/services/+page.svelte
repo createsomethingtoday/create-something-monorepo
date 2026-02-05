@@ -333,7 +333,7 @@
 <style>
 	/* Section containers */
 	.section-container {
-		max-width: 900px;
+		max-width: var(--content-width-lg);
 		margin: 0 auto;
 		padding: 0 var(--container-padding, 1.5rem);
 	}
@@ -369,7 +369,7 @@
 	.hero-content {
 		position: relative;
 		text-align: center;
-		max-width: 700px;
+		max-width: var(--content-width-lg);
 		margin: 0 auto;
 	}
 	
@@ -393,7 +393,7 @@
 	.hero-subtitle {
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-secondary);
-		max-width: 480px;
+		max-width: var(--content-width-lg);
 		margin: 0 auto;
 		line-height: var(--leading-relaxed);
 	}
@@ -422,7 +422,7 @@
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
 		gap: var(--space-4, 1rem);
-		max-width: 700px;
+		max-width: var(--content-width-lg);
 		margin: 0 auto;
 	}
 	
@@ -513,33 +513,73 @@
 	
 	.examples-grid {
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 		gap: var(--space-4, 1rem);
-		max-width: 800px;
+		max-width: var(--content-width-lg);
 		margin: 0 auto;
+		align-items: stretch;
 	}
 	
 	.example-card {
+		position: relative;
 		padding: var(--space-5, 1.5rem);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg, 12px);
 		text-align: center;
-		background: var(--color-bg-surface);
+		background: var(--color-bg-pure);
+		box-shadow: var(--glass-shine-soft);
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2, 0.5rem);
+		transition:
+			border-color var(--duration-standard) var(--ease-standard),
+			box-shadow var(--duration-standard) var(--ease-standard),
+			transform var(--duration-bounce) var(--ease-bounce);
+	}
+
+	.example-card::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 12%;
+		right: 12%;
+		height: 1px;
+		background: linear-gradient(
+			90deg,
+			transparent,
+			rgba(255, 255, 255, 0.2),
+			transparent
+		);
+		opacity: 0.6;
+	}
+
+	.example-card:hover {
+		border-color: var(--color-border-emphasis);
+		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
+		transform: translateY(-2px);
 	}
 	
 	.example-name {
 		display: block;
-		font-size: var(--text-body);
+		font-size: var(--text-body-sm);
 		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-1, 0.25rem);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--color-fg-muted);
 	}
 	
 	.example-calc {
-		display: block;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.35rem;
 		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-3, 0.75rem);
+		color: var(--color-fg-tertiary);
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-full, 9999px);
+		padding: 0.25rem 0.6rem;
+		font-family: var(--font-mono, monospace);
 	}
 	
 	.example-price {
@@ -548,6 +588,7 @@
 		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
 		letter-spacing: var(--tracking-tight, -0.015em);
+		margin-top: auto;
 	}
 	
 	/* What's Included */
@@ -758,7 +799,7 @@
 		
 		.examples-grid {
 			grid-template-columns: 1fr;
-			max-width: 300px;
+			max-width: var(--content-width-lg);
 		}
 	}
 	
@@ -773,7 +814,7 @@
 		
 		.pricing-row {
 			grid-template-columns: 1fr;
-			max-width: 350px;
+			max-width: var(--content-width-lg);
 		}
 		
 		.included-grid {

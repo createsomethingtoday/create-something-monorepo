@@ -271,7 +271,7 @@
 
 <style>
 	.ground-page {
-		max-width: 900px;
+		max-width: var(--content-width-lg);
 		margin: 0 auto;
 		padding: var(--space-xl) var(--space-lg);
 	}
@@ -311,7 +311,7 @@
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-tertiary);
 		line-height: 1.7;
-		max-width: 600px;
+		max-width: var(--content-width-lg);
 		margin: 0 auto;
 	}
 
@@ -346,7 +346,7 @@
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
 		gap: var(--space-md);
-		max-width: 600px;
+		max-width: var(--content-width-lg);
 		margin: 0 auto;
 	}
 
@@ -577,7 +577,7 @@
 	.case-study-description {
 		font-size: var(--text-body);
 		color: var(--color-fg-tertiary);
-		max-width: 600px;
+		max-width: var(--content-width-lg);
 		margin: 0 auto var(--space-lg);
 	}
 

@@ -209,7 +209,7 @@
 
 <style>
 	.page {
-		max-width: 800px;
+		max-width: var(--content-width-lg);
 		margin: 0 auto;
 		padding: var(--space-lg);
 	}

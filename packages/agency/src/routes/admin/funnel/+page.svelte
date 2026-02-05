@@ -187,7 +187,7 @@
 
 <style>
 	.dashboard {
-		max-width: 1200px;
+		max-width: var(--content-width-lg);
 		margin: 0 auto;
 		padding: var(--space-lg);
 	}

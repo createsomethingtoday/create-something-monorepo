@@ -93,7 +93,7 @@
 <style>
 	/* Section containers */
 	.section-container {
-		max-width: 640px;
+		max-width: var(--content-width-lg);
 		margin: 0 auto;
 		padding: 0 var(--container-padding, 1.5rem);
 	}
@@ -120,7 +120,7 @@
 	.hero-content {
 		position: relative;
 		text-align: center;
-		max-width: 600px;
+		max-width: var(--content-width-lg);
 		margin: 0 auto;
 	}
 	

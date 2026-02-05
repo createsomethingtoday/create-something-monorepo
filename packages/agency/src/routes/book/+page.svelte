@@ -276,7 +276,7 @@
 
 <style>
 	.booking-page {
-		max-width: 480px;
+		max-width: var(--content-width-lg);
 		margin: 0 auto;
 		padding: var(--space-xl) var(--space-md);
 		min-height: 100vh;

@@ -51,7 +51,7 @@
 <div class="min-h-screen page-wrapper">
 	<!-- Navigation -->
 	<nav class="fixed top-0 left-0 right-0 z-50 nav-bar">
-		<div class="max-w-7xl mx-auto px-6">
+		<div class="max-w-[var(--content-width-lg)] mx-auto px-6">
 			<div class="flex items-center justify-between py-4">
 				<a href="/" class="flex items-center">
 					<div class="heading-2 font-bold hover:body-secondary transition-colors">
@@ -94,7 +94,7 @@
 
 	<!-- Hero Section -->
 	<section class="relative pt-32 pb-12 px-6">
-		<div class="max-w-7xl mx-auto">
+		<div class="max-w-[var(--content-width-lg)] mx-auto">
 			<div class="text-center space-y-4">
 				<h1 class="hero-title font-bold">All Experiments</h1>
 				<p class="body-lg body-tertiary">
@@ -133,7 +133,7 @@
 
 	<!-- Footer -->
 	<footer class="py-6 px-6 page-footer">
-		<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+		<div class="max-w-[var(--content-width-lg)] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
 			<p class="body-muted body-sm">
 				© {new Date().getFullYear()} Micah Johnson. All rights reserved.
 			</p>

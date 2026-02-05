@@ -63,7 +63,7 @@
 </script>
 
 <nav class="nav-container" class:nav-fixed={fixed} aria-label="Primary">
-	<div class="max-w-7xl mx-auto px-6 py-4">
+	<div class="nav-inner mx-auto px-6 py-4">
 		<div class="flex items-center justify-between">
 			<!-- Logo / Home -->
 			<a href={logoHref} class="nav-logo">
@@ -163,6 +163,10 @@
 	.nav-container {
 		border-bottom: 1px solid var(--color-border-default);
 		background: var(--color-bg-pure);
+	}
+
+	.nav-inner {
+		max-width: var(--content-width-lg, 80rem);
 	}
 
 	.nav-fixed {

@@ -16,7 +16,7 @@
 
 <!-- Hero Section -->
   <section class="section-hero relative px-6">
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-[var(--content-width-lg)] mx-auto">
       <div class="content-stack animate-reveal">
         <h1 class="hero-title font-bold section-heading-sm">
           Research Methodology
@@ -39,7 +39,7 @@
 
   <!-- The Process Visual -->
   <section class="section-content px-6 section-border">
-    <div class="max-w-6xl mx-auto">
+    <div class="max-w-[var(--content-width-lg)] mx-auto">
       <div>
         <h2 class="heading-2 font-bold section-heading text-center">
           How We Work
@@ -113,7 +113,7 @@
 
   <!-- What We Track -->
   <section class="section-content px-6 section-border">
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-[var(--content-width-lg)] mx-auto">
       <div class="content-stack">
         <h2 class="heading-2 font-bold section-heading-sm">
           Every Experiment Tracked With
@@ -174,7 +174,7 @@
 
   <!-- Three Tracking Modes -->
   <section class="section-content px-6 section-border">
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-[var(--content-width-lg)] mx-auto">
       <div class="content-stack">
         <h2 class="heading-2 font-bold section-heading-sm">
           Three Tracking Modes
@@ -238,7 +238,7 @@
 
   <!-- Why This Matters -->
   <section class="section-content px-6 section-border">
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-[var(--content-width-lg)] mx-auto">
       <div class="content-stack">
         <h2 class="heading-2 font-bold section-heading-sm">
           Why This Matters
@@ -299,7 +299,7 @@
 
   <!-- For Researchers -->
   <section class="section-content px-6 section-border">
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-[var(--content-width-lg)] mx-auto">
       <div class="content-stack">
         <h2 class="heading-2 font-bold section-heading-sm">
           For Researchers: Use This Methodology
@@ -368,7 +368,7 @@
 
   <!-- Example from Experiment #1 -->
   <section class="section-content px-6 section-border">
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-[var(--content-width-lg)] mx-auto">
       <div class="content-stack">
         <h2 class="heading-2 font-bold section-heading-sm">
           Methodology in Action
