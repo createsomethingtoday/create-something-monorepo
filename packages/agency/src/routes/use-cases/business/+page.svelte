@@ -244,15 +244,21 @@
 <!-- How It Works -->
 <section class="steps-section">
 	<div class="section-container">
-		<h2 class="section-heading reveal">How it works</h2>
-		<p class="section-intro reveal">Four steps from discovery to deployment</p>
+		<BlurFade>
+			<h2 class="section-heading">How it works</h2>
+		</BlurFade>
+		<BlurFade delay={0.1}>
+			<p class="section-intro">Four steps from discovery to deployment</p>
+		</BlurFade>
 		<div class="steps-grid">
 			{#each steps as step, i}
-				<div class="step-card reveal" style="--delay: {i * 0.1}s">
-					<div class="step-num">{step.num}</div>
-					<h3 class="step-title">{step.title}</h3>
-					<p class="step-desc">{step.description}</p>
-				</div>
+				<BlurFade delay={0.2 + i * 0.1}>
+					<div class="step-card">
+						<div class="step-num">{step.num}</div>
+						<h3 class="step-title">{step.title}</h3>
+						<p class="step-desc">{step.description}</p>
+					</div>
+				</BlurFade>
 			{/each}
 		</div>
 	</div>
@@ -261,15 +267,21 @@
 <!-- Workflows -->
 <section class="workflows-section">
 	<div class="section-container">
-		<h2 class="section-heading reveal">What this looks like</h2>
-		<p class="section-intro reveal">When your tools talk to Agents</p>
+		<BlurFade>
+			<h2 class="section-heading">What this looks like</h2>
+		</BlurFade>
+		<BlurFade delay={0.1}>
+			<p class="section-intro">When your tools talk to Agents</p>
+		</BlurFade>
 		<div class="workflows-grid">
 			{#each workflows as wf, i}
-				<div class="workflow-card reveal" style="--delay: {i * 0.1}s">
-					<h3 class="workflow-title">{wf.title}</h3>
-					<p class="workflow-tagline">{wf.tagline}</p>
-					<p class="workflow-desc">{wf.description}</p>
-				</div>
+				<BlurFade delay={0.2 + i * 0.1}>
+					<div class="workflow-card">
+						<h3 class="workflow-title">{wf.title}</h3>
+						<p class="workflow-tagline">{wf.tagline}</p>
+						<p class="workflow-desc">{wf.description}</p>
+					</div>
+				</BlurFade>
 			{/each}
 		</div>
 	</div>
