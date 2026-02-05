@@ -95,7 +95,7 @@
 		<!-- Response Queue -->
 		<Card variant="glass" radius="md" padding="lg" class="glass-emphasis col-span-2">
 			<h2 class="panel-title">Response Queue</h2>
-			<p class="panel-subtitle">Drafted by AI. Approve or edit.</p>
+			<p class="panel-subtitle">Drafted by an agent. Approve or edit.</p>
 			
 			{#if data.queue.length === 0}
 				<div class="empty-state">

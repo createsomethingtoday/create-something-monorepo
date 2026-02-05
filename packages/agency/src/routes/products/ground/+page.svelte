@@ -1,9 +1,5 @@
 <script lang="ts">
-	import type { PageData } from './$types';
 	import { SEO } from '@create-something/canon';
-
-	let { data }: { data: PageData } = $props();
-	const { product } = data;
 
 	// Copy states
 	let copiedNpm = $state(false);
@@ -20,8 +16,8 @@
 
 <SEO
 	title="Ground MCP | Grounded AI Code Analysis"
-	description="Stop AI hallucination in code analysis. An MCP server that requires verification before claims. Find duplicates, dead code, and orphans with evidence."
-	keywords="MCP, Model Context Protocol, AI code analysis, duplicate detection, dead code, Claude, Cursor, VS Code, Copilot"
+	description="Stop AI agent hallucinations in code analysis. An MCP server that requires verification before claims. Find duplicates, dead code, and orphans with evidence."
+	keywords="MCP, Model Context Protocol, agent code analysis, AI agents, duplicate detection, dead code, Claude, Cursor, VS Code, Copilot"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -33,15 +29,15 @@
 		<h1 class="hero-title">Ground</h1>
 		<p class="hero-tagline">Code analysis that checks before it claims</p>
 		<p class="hero-description">
-			AI assistants will tell you files are "95% similar" without actually comparing them.
-			Ground fixes this. It requires your AI to <strong>verify before claiming</strong>—no more hallucinated duplicates or false positives.
+			AI agents will tell you files are "95% similar" without actually comparing them.
+			Ground fixes this. It requires your agents to <strong>verify before claiming</strong>—no more hallucinated duplicates or false positives.
 		</p>
 	</section>
 
 	<!-- Install Section -->
 	<section class="install-section">
 		<h2 class="section-title">Install in 2 minutes</h2>
-		<p class="section-subtitle">Copy the config for your AI tool</p>
+		<p class="section-subtitle">Copy the config for your agent client</p>
 
 		<!-- 2x2 grid -->
 		<div class="install-grid">
@@ -137,7 +133,7 @@
 			<div class="how-step">
 				<span class="step-number">1</span>
 				<h3 class="step-title">Check first</h3>
-				<p class="step-description">Your AI runs a verification command to actually compare files or count uses</p>
+				<p class="step-description">Your agent runs a verification command to actually compare files or count uses</p>
 			</div>
 			<div class="how-step">
 				<span class="step-number">2</span>

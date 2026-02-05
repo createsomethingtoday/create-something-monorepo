@@ -97,7 +97,7 @@
 
 <SEO
 	title="MCP for Business | Connect Your Tools to Agents"
-	description="Custom MCP development for SMB and mid-market. Connect HubSpot, Notion, Slack to Claude, Cursor, Codex. Fixed pricing from $750."
+		description="Custom MCP development for SMB and mid-market. Connect HubSpot, Notion, Slack to Claude, Cursor, Codex. Fixed pricing from $750 with managed runtime available."
 	keywords="MCP business, SaaS integration, HubSpot Claude, Notion agents, business automation"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -127,7 +127,7 @@
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
 					HubSpot, Notion, Slack, Google—connected to Claude, Cursor, or Codex. 
-					Agents work across your actual systems.
+					AI agents work across your actual systems, with optional managed runtime.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
@@ -291,7 +291,7 @@
 <section class="pricing-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="section-heading">Per-Tool Pricing</h2>
+			<h2 class="section-heading">Per-Integration Pricing</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="section-intro">
@@ -307,7 +307,7 @@
 					<div class="pricing-card featured">
 						<div class="pricing-label">Integration</div>
 						<div class="pricing-amount">$250</div>
-						<div class="pricing-unit">per tool</div>
+						<div class="pricing-unit">per integration</div>
 						<p class="pricing-description">
 							HubSpot, Notion, Slack, Google, or your internal systems.
 						</p>
@@ -357,17 +357,17 @@
 				<div class="examples-grid">
 					<div class="example-item">
 						<span class="example-name">Quick start</span>
-						<span class="example-calc">2 tools + 1 agent</span>
+						<span class="example-calc">2 integrations + 1 agent</span>
 						<span class="example-price">$750</span>
 					</div>
 					<div class="example-item">
 						<span class="example-name">Team setup</span>
-						<span class="example-calc">5 tools + 2 agents + auth</span>
+						<span class="example-calc">5 integrations + 2 agents + auth</span>
 						<span class="example-price">$2,000</span>
 					</div>
 					<div class="example-item">
 						<span class="example-name">Full stack</span>
-						<span class="example-calc">8 tools + 3 agents + both</span>
+						<span class="example-calc">8 integrations + 3 agents + both</span>
 						<span class="example-price">$3,500</span>
 					</div>
 				</div>
@@ -383,7 +383,7 @@
 			<h2 class="cta-heading">Let's map your integration</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
-			<p class="cta-subtext">30-minute call. We'll scope what's possible.</p>
+			<p class="cta-subtext">30-minute call. We'll scope build + operate options.</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<ShimmerButton href="https://savvycal.com/create-something/discovery">

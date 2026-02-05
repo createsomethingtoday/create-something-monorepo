@@ -1,7 +1,7 @@
 /**
  * Community Response Queue API
  * 
- * AI-drafted responses awaiting your 5-minute review.
+ * Agent-drafted responses awaiting your 5-minute review.
  * Approve, edit, or dismiss — then back to deep work.
  */
 import { json } from '@sveltejs/kit';
@@ -82,7 +82,7 @@ interface QueuePostBody {
 /**
  * POST /api/community/queue
  * 
- * Add a drafted response to the queue (typically called by AI)
+ * Add a drafted response to the queue (typically called by an agent)
  */
 export const POST: RequestHandler = async ({ platform, request }) => {
 	const db = platform!.env.DB;

@@ -1,9 +1,5 @@
 <script lang="ts">
-	import type { PageData } from './$types';
 	import { SEO } from '@create-something/canon';
-
-	let { data }: { data: PageData } = $props();
-	const { product } = data;
 
 	// Cursor deep link - base64 encoded config for npx @createsomething/loom-mcp
 	const cursorDeepLink = 'cursor://anysphere.cursor-deeplink/mcp/install?name=loom&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyJAY3JlYXRlc29tZXRoaW5nL2xvb20tbWNwIl19';
@@ -24,7 +20,7 @@
 <SEO
 	title="Loom MCP | Multi-Agent Coordination"
 	description="External memory for AI agents. Route tasks to the right agent, checkpoint progress, recover from crashes. Multi-agent coordination for Claude, Cursor, Codex, and Gemini."
-	keywords="MCP, Model Context Protocol, multi-agent, AI coordination, task management, Claude, Cursor, VS Code, Copilot, crash recovery"
+	keywords="MCP, Model Context Protocol, multi-agent, agent coordination, task management, Claude, Cursor, VS Code, Copilot, crash recovery"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -36,7 +32,7 @@
 		<h1 class="hero-title">Loom</h1>
 		<p class="hero-tagline">Memory and coordination for AI agents</p>
 		<p class="hero-description">
-			AI agents lose their context when a session ends. When you have multiple agents, they can't see what the others are doing.
+			Agents lose their context when a session ends. When you have multiple agents, they can't see what the others are doing.
 			Loom gives them <strong>shared memory, smart task routing, and the ability to pick up where they left off</strong>.
 		</p>
 	</section>
@@ -44,7 +40,7 @@
 	<!-- Install Section -->
 	<section class="install-section">
 		<h2 class="section-title">Install in 2 minutes</h2>
-		<p class="section-subtitle">One-click for your AI tool of choice</p>
+		<p class="section-subtitle">One-click for your agent platform of choice</p>
 
 		<!-- Featured: One-click install (Tufte: primary action gets visual prominence) -->
 		<div class="install-featured">

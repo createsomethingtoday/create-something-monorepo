@@ -5,8 +5,8 @@
 
 <SEO
 	title="Research Methodology"
-	description="How CREATE SOMETHING produces credible knowledge about AI-native development through rigorous experiment tracking, real-time logging, and reproducible results."
-	keywords="research methodology, experiment tracking, AI-native development, reproducible research, scientific method, Claude Code, systems thinking"
+	description="How CREATE SOMETHING produces credible knowledge about automation infrastructure and MCP systems through rigorous experiment tracking, real-time logging, and reproducible results."
+	keywords="research methodology, experiment tracking, automation infrastructure, MCP systems, reproducible research, scientific method, Claude Code, systems thinking"
 	propertyName="agency"
 	breadcrumbs={[
 		{ name: 'Home', url: '/' },
@@ -23,11 +23,15 @@
         </h1>
 
         <p class="heading-3 body-xl leading-relaxed">
-          What makes CREATE SOMETHING different from AI blogs: we don't just document results—we document the <strong>process</strong> of building with AI agents.
+          What makes CREATE SOMETHING different from automation blogs: we don't just document results—we document the <strong>process</strong> of building and operating with agents.
         </p>
 
         <p class="body-lg body-secondary leading-relaxed">
           Every experiment is tracked with automated logging, real costs from APIs, precise time measurements, and intervention documentation. This transforms anecdotes into reproducible experiments.
+        </p>
+
+        <p class="body-lg body-secondary leading-relaxed">
+          We use this methodology to validate MCP servers, agent workflows, and managed runtimes before they reach production.
         </p>
       </div>
     </div>
@@ -47,7 +51,7 @@
             {
               step: '1. Build',
               title: 'Claude Code',
-              description: 'Work with AI agents as development partners',
+              description: 'Work with agents as development partners',
               icon: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'
             },
             {
@@ -134,7 +138,7 @@
             },
             {
               metric: 'Interventions',
-              description: 'When AI needed human help, and why',
+              description: 'When agents needed human help, and why',
               example: '12 manual fixes documented'
             },
             {
@@ -247,10 +251,10 @@
             </h3>
             <ul class="space-y-3 body-tertiary">
               {#each [
-                '"I built X with AI" (anecdote)',
+                '"I built X with agents" (anecdote)',
                 'No reproducibility',
                 "Can't verify claims",
-                'Just another AI blog'
+                'Just another automation blog'
               ] as item}
                 <li class="flex items-start gap-3">
                   <svg class="w-5 h-5 body-muted flex-shrink-0 mt-0.5" stroke-width="1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -302,7 +306,7 @@
         </h2>
 
         <p class="body-lg body-secondary leading-relaxed">
-          Want to adopt this approach for your own AI-native development research? The experiment tracking system is available as a Claude Code Skill.
+          Want to adopt this approach for your own agent-native development research? The experiment tracking system is available as a Claude Code Skill.
         </p>
 
         <div class="grid grid-cols-1 md:grid-cols-3 cards-grid">

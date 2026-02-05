@@ -1,7 +1,7 @@
 /**
  * Community Draft API
  * 
- * AI generates response drafts based on signals and methodology.
+ * Agents generate response drafts based on signals and methodology.
  * The Canon speaks through the drafts.
  */
 import { json } from '@sveltejs/kit';
@@ -47,7 +47,7 @@ interface Signal {
  * POST /api/community/draft
  * 
  * Generate a response draft for a signal
- * This is called by the AI agent, which will use its own intelligence
+ * This is called by the agent, which will use its own intelligence
  * to craft the actual response. This endpoint provides context and structure.
  */
 interface DraftBody {
@@ -91,7 +91,7 @@ export const POST: RequestHandler = async ({ platform, request }) => {
 			LIMIT 5
 		`).bind(signal.author_handle, signal.platform).all() : null;
 		
-		// Build context for AI
+		// Build context for the agent
 		const context = {
 			signal: {
 				type: signal.signal_type,
@@ -115,13 +115,13 @@ export const POST: RequestHandler = async ({ platform, request }) => {
 				voice: 'Substantive, thoughtful, never salesy',
 				key_offerings: [
 					'Vertical web templates',
-					'AI development tools (Ground, Plagiarism Agent)',
+					'Agent development tools (Ground, Plagiarism Agent)',
 					'Agency services for complex web projects'
 				]
 			}
 		};
 		
-		// The AI will use this context to generate the actual draft
+		// The agent will use this context to generate the actual draft
 		// For now, return the context and a placeholder
 		return json({
 			signal_id,

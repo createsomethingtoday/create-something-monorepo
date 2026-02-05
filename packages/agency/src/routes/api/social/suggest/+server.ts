@@ -1,7 +1,7 @@
 /**
  * GET /api/social/suggest
  *
- * AI-powered content suggestions based on CREATE SOMETHING methodology.
+ * Agent-powered content suggestions based on CREATE SOMETHING methodology.
  * Analyzes patterns, gaps, and available content to suggest what to post.
  *
  * Considers:
@@ -43,8 +43,8 @@ const CONTENT_CATEGORIES = {
 		weight: 0.7
 	},
 	ai_native: {
-		name: 'AI Native',
-		description: 'AI agent development, MCP tools, automation',
+		name: 'Agent Native',
+		description: 'Agent development, MCP tools, automation',
 		keywords: ['agent', 'ai', 'mcp', 'automation', 'claude', 'llm'],
 		weight: 0.85
 	}
@@ -55,7 +55,7 @@ const KNOWN_CONTENT_FILES = [
 	{ filename: 'linkedin-triad.md', title: 'The Subtractive Triad', category: 'methodology' },
 	{ filename: 'linkedin-kickstand.md', title: 'Kickstand Case Study', category: 'case_study' },
 	{ filename: 'linkedin-arc.md', title: 'Arc Case Study', category: 'case_study' },
-	{ filename: 'linkedin-ai-patterns.md', title: 'AI Agent Patterns', category: 'ai_native' },
+	{ filename: 'linkedin-ai-patterns.md', title: 'Agent Patterns', category: 'ai_native' },
 	{ filename: 'linkedin-discovery-sprint.md', title: 'Two-Week Discovery Sprint', category: 'methodology' },
 	{ filename: 'linkedin-year-reflection.md', title: 'Year-End Reflection', category: 'engagement' },
 	{ filename: 'linkedin-workway-first-post.md', title: 'WORKWAY Introduction', category: 'ai_native' },

@@ -45,14 +45,14 @@ const SERVICES: ContentItem[] = [
 	},
 	{
 		slug: 'automation',
-		title: 'AI Automation Systems',
+		title: 'Agent Automation Systems',
 		description: '60-70% time savings on manual work. Systems that process data, make decisions, and talk to your tools.',
 		category: 'service'
 	},
 	{
 		slug: 'transformation',
 		title: 'Digital Transformation',
-		description: 'Strategic advisory for organizations ready to embrace AI-native development.',
+		description: 'Strategic advisory for organizations ready to embrace agent-native development.',
 		category: 'service'
 	}
 ];
@@ -65,7 +65,7 @@ const WORK: ContentItem[] = [
 	{
 		slug: 'arc-for-gmail',
 		title: 'Arc for Gmail',
-		description: 'AI-powered email assistant with Gmail integration',
+		description: 'Agent-powered email assistant with Gmail integration',
 		category: 'case-study'
 	},
 	{

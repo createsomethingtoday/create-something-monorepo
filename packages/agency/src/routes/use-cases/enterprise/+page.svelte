@@ -9,7 +9,7 @@
 		{ label: 'PC', name: 'Procore' },
 		{ label: 'SF', name: 'Salesforce' },
 		{ label: 'MCP', name: 'MCP Orchestrator' },
-		{ label: 'AI', name: 'Claude' }
+		{ label: 'AG', name: 'Claude' }
 	];
 	
 	const capabilities = [
@@ -39,8 +39,8 @@
 			icon: '🛡️'
 		},
 		{
-			title: '30-Day Support',
-			description: 'Optimization, troubleshooting, and iteration included. We stay until it works.',
+			title: 'Managed MCP Runtime',
+			description: 'Hosting, monitoring, and API change handling to keep production workflows running.',
 			icon: '🤝'
 		}
 	];
@@ -48,7 +48,7 @@
 	const useCases = [
 		{
 			industry: 'Construction',
-			workflow: 'RFI → AI Analysis → Stakeholder Notification',
+			workflow: 'RFI → Agent Review → Stakeholder Notification',
 			tools: 'Procore, Slack, Email',
 			outcome: 'RFIs processed in minutes, not days'
 		},
@@ -70,14 +70,14 @@
 		{ num: '1', title: 'Architecture Review', description: 'Map your systems and requirements' },
 		{ num: '2', title: 'Infrastructure Build', description: 'MCP servers, auth, data pipelines' },
 		{ num: '3', title: 'Agent Configuration', description: 'Triggers, orchestration, observability' },
-		{ num: '4', title: 'Production Deployment', description: 'Your infrastructure, monitored and optimized' }
+		{ num: '4', title: 'Operate & Optimize', description: 'Monitoring, incident response, and API change handling' }
 	];
 </script>
 
 <SEO
-	title="Enterprise MCP | AI Automation That Runs While You Sleep"
-	description="Enterprise-grade MCP infrastructure. Automated triggers, observability, workflow orchestration. Production AI that operates 24/7. Starting at $5,000."
-	keywords="enterprise MCP, AI automation enterprise, production AI agents, workflow orchestration, Claude enterprise"
+	title="Enterprise MCP | Agents That Run While You Sleep"
+	description="Enterprise-grade MCP infrastructure. Automated triggers, observability, workflow orchestration, and managed runtime. Production AI agents that operate 24/7. Starting at $5,000."
+	keywords="enterprise MCP, agent automation enterprise, AI agents, workflow orchestration, Claude enterprise"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -91,12 +91,12 @@
 				<p class="hero-eyebrow">Enterprise</p>
 			</BlurFade>
 			<BlurFade delay={0.1}>
-				<h1 class="hero-title">AI that runs while you sleep.</h1>
+				<h1 class="hero-title">Agents that run while you sleep.</h1>
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
 					Automated triggers. Observability. Workflow orchestration. 
-					Production-grade AI infrastructure that operates 24/7.
+					Production-grade AI agent infrastructure with managed runtime.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
@@ -193,7 +193,7 @@
 				</BlurFade>
 				<BlurFade delay={0.1}>
 					<p class="pricing-lead">
-						Full production deployment with ongoing support and optimization.
+						Full production deployment with managed runtime and ongoing optimization.
 					</p>
 				</BlurFade>
 				<ul class="pricing-includes">
@@ -201,7 +201,7 @@
 					<BlurFade delay={0.2}><li>Automated triggers (schedule, webhook, event)</li></BlurFade>
 					<BlurFade delay={0.25}><li>Observability dashboard</li></BlurFade>
 					<BlurFade delay={0.3}><li>Workflow orchestration</li></BlurFade>
-					<BlurFade delay={0.35}><li>30 days support included</li></BlurFade>
+					<BlurFade delay={0.35}><li>Managed runtime & operational support</li></BlurFade>
 				</ul>
 			</div>
 			<BlurFade delay={0.3}>
@@ -225,13 +225,13 @@
 <!-- Comparison -->
 <section class="comparison-section">
 	<div class="section-container">
-		<h2 class="section-heading reveal">Not ready for Intelligence?</h2>
-		<p class="section-intro reveal">Start smaller and scale up</p>
+		<h2 class="section-heading reveal">Not ready for the full runtime?</h2>
+		<p class="section-intro reveal">Start with a fixed-scope build and scale up</p>
 		<div class="comparison-grid">
 			<a href="/use-cases/business" class="comparison-card reveal">
-				<div class="comparison-tier">Starter / Pro</div>
+				<div class="comparison-tier">Build tier</div>
 				<div class="comparison-price">$500 – $2,500</div>
-				<p class="comparison-desc">Connect tools to AI. See the power. Scale when ready.</p>
+				<p class="comparison-desc">Connect key systems and deploy. Add managed runtime when ready.</p>
 				<span class="comparison-link">Learn more →</span>
 			</a>
 		</div>

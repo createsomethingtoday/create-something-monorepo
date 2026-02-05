@@ -22,8 +22,8 @@
 	};
 
 	// Type-safe accessors
-	const rhythm = data.rhythm as Record<string, { focus: string; description: string; status: string; date: string; post?: { id: string; preview: string } }> | undefined;
-	const stats = data.stats as Record<string, number> | undefined;
+	const rhythm = $derived.by(() => data.rhythm as Record<string, { focus: string; description: string; status: string; date: string; post?: { id: string; preview: string } }> | undefined);
+	const stats = $derived.by(() => data.stats as Record<string, number> | undefined);
 </script>
 
 <SEO
@@ -36,7 +36,7 @@
 <main class="dashboard">
 	<header class="header">
 		<h1>Social Calendar</h1>
-		<p class="subtitle">AI-native content scheduling with full observability</p>
+		<p class="subtitle">Agent-native content scheduling with full observability</p>
 	</header>
 
 	<!-- Token Status Banner -->

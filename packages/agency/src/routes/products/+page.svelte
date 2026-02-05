@@ -53,7 +53,7 @@
 		<p class="hero-eyebrow reveal">Open Source</p>
 		<h1 class="hero-title reveal">MCPs We've Built</h1>
 		<p class="hero-subtitle reveal">
-			Free tools. Install in 2 minutes. Used by the same AI assistants we build custom MCPs for.
+			Free tools. Install in 2 minutes. Used by the same agents we build custom MCPs for.
 		</p>
 	</div>
 </section>

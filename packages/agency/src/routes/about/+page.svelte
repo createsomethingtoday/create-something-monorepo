@@ -23,7 +23,7 @@
 
 <SEO
 	title="About | Custom MCP Development"
-	description="We build custom MCP servers that connect your tools to AI. Based in Texas. Fast turnaround, fixed pricing."
+	description="We build and operate custom MCP servers that connect your tools to agents. Based in Texas. Fast turnaround, fixed pricing."
 	keywords="MCP development, custom MCP server, about, Micah Johnson"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -34,10 +34,10 @@
 	<div class="hero-grid"></div>
 	<div class="hero-content">
 		<p class="hero-eyebrow reveal">About</p>
-		<h1 class="hero-title reveal">We build MCP servers</h1>
+		<h1 class="hero-title reveal">We build and operate MCP servers</h1>
 		<p class="hero-detail reveal">
-			Custom integrations that connect your existing tools to AI. 
-			Fast turnaround. Fixed pricing. You own the code.
+			Custom integrations that connect your existing tools to agents. 
+			Fast turnaround. Fixed pricing. Managed runtime or handoff.
 		</p>
 	</div>
 </section>
@@ -48,9 +48,13 @@
 		<div class="about-content reveal">
 			<h2>The work</h2>
 			<p>
-				MCP (Model Context Protocol) is how AI assistants connect to external tools. 
+				MCP (Model Context Protocol) is how AI agents connect to external tools. 
 				We build the servers that make those connections possible—auth, data mapping, 
 				error handling, deployment packaging.
+			</p>
+			<p>
+				We can also operate your MCP servers on a managed runtime (Cloudflare-native), 
+				with monitoring, alerts, and API change handling.
 			</p>
 			<p>
 				Every project ships working code. You get the source, the deployment package, 
@@ -68,7 +72,7 @@
 			<p>
 				Led by Micah Johnson. 5+ years at Webflow building internal tools, 
 				onboarding systems, and template infrastructure. Now focused on 
-				MCP development and AI integration.
+				MCP development and agent integration.
 			</p>
 			<p>
 				Based in Texas. <a href="https://www.linkedin.com/in/micahryanjohnson/" class="link" target="_blank" rel="noopener noreferrer">LinkedIn</a> · <a href="mailto:micah@createsomething.agency" class="link">Email</a>
@@ -81,7 +85,7 @@
 <section class="cta-section">
 	<div class="section-container">
 		<h2 class="cta-heading reveal">Let's talk about your integration</h2>
-		<p class="cta-subtext reveal">30-minute discovery call. We'll scope your project.</p>
+		<p class="cta-subtext reveal">30-minute discovery call. We'll scope build + operate options.</p>
 		<a href="/contact" class="cta-link reveal">Get in touch →</a>
 	</div>
 </section>

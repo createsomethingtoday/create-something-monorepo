@@ -8,10 +8,10 @@
 	const services = [
 		{
 			name: 'Custom MCP Server Development',
-			description: 'We build MCP servers that connect your systems with Agents. Per-tool pricing: $250 per integration, $250 per agent configuration.',
+			description: 'We build MCP servers that connect your systems with AI agents. Per-integration pricing: $250 per integration, $250 per agent configuration.',
 			type: 'MCP Server Development',
 			price: '250',
-			priceDescription: 'Per integration/tool pricing'
+			priceDescription: 'Per integration pricing'
 		}
 	];
 	
@@ -124,8 +124,8 @@
 {/snippet}
 
 <SEO
-	title="Custom MCP Development | Connect Your Systems with Agents"
-	description="We build custom MCP servers that connect your systems with Agents. Production-ready infrastructure, expertly crafted."
+	title="Custom MCP Development | Build + Operate MCP Infrastructure"
+	description="We build and operate custom MCP servers that connect your systems with AI agents. Production-ready infrastructure, managed end-to-end."
 	keywords="MCP development, custom MCP server, Model Context Protocol, Agent integration, automation infrastructure, Claude, Cursor, Codex"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -156,8 +156,8 @@
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					We build custom MCP servers that integrate your existing systems with Agents. 
-					Production-ready. Expertly crafted.
+					We build and operate custom MCP servers that integrate your existing systems with AI agents. 
+					Production-ready, Cloudflare-native, and built to run.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
@@ -322,11 +322,11 @@
 <section class="services-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="section-heading">Per-Tool Pricing</h2>
+				<h2 class="section-heading">Per-Integration Pricing</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="section-intro">
-				Transparent pricing. Pay for what you need. Scale linearly.
+				Clear scope. Predictable investment. Delivered.
 			</p>
 		</BlurFade>
 		
@@ -338,7 +338,7 @@
 					<div class="pricing-card featured">
 						<div class="pricing-label">Integration</div>
 						<div class="pricing-amount">$250</div>
-						<div class="pricing-unit">per tool</div>
+						<div class="pricing-unit">per integration</div>
 						<p class="pricing-description">
 							Salesforce, HubSpot, Notion, Slack, or your internal systems.
 						</p>
@@ -388,22 +388,57 @@
 				<div class="examples-grid">
 					<div class="example-item">
 						<span class="example-name">Quick start</span>
-						<span class="example-calc">2 tools + 1 agent</span>
+						<span class="example-calc">2 integrations + 1 agent</span>
 						<span class="example-price">$750</span>
 					</div>
 					<div class="example-item">
 						<span class="example-name">Team setup</span>
-						<span class="example-calc">5 tools + 2 agents + auth</span>
+						<span class="example-calc">5 integrations + 2 agents + auth</span>
 						<span class="example-price">$2,000</span>
 					</div>
 					<div class="example-item">
 						<span class="example-name">Full stack</span>
-						<span class="example-calc">8 tools + 3 agents + both</span>
+						<span class="example-calc">8 integrations + 3 agents + both</span>
 						<span class="example-price">$3,500</span>
 					</div>
 				</div>
 			</div>
 		</BlurFade>
+	</div>
+</section>
+
+<!-- Managed Runtime -->
+<section class="runtime-section">
+	<div class="section-container">
+		<BlurFade>
+			<h2 class="section-heading">Managed MCP Runtime</h2>
+		</BlurFade>
+		<BlurFade delay={0.1}>
+			<p class="section-intro">
+				Build is step one. We can also host and operate your MCP servers on Cloudflare, 
+				or hand off a deployment package for self-hosting.
+			</p>
+		</BlurFade>
+		<div class="runtime-grid">
+			<BlurFade delay={0.2}>
+				<div class="runtime-card">
+					<h3>Managed Hosting</h3>
+					<p>Cloudflare-native deployment with secure auth, environments, and access controls.</p>
+				</div>
+			</BlurFade>
+			<BlurFade delay={0.25}>
+				<div class="runtime-card">
+					<h3>Monitoring & Alerts</h3>
+					<p>Run visibility, error tracking, and performance monitoring built into the runtime.</p>
+				</div>
+			</BlurFade>
+			<BlurFade delay={0.3}>
+				<div class="runtime-card">
+					<h3>API Change Handling</h3>
+					<p>We update integrations as APIs evolve so your workflows keep running.</p>
+				</div>
+			</BlurFade>
+		</div>
 	</div>
 </section>
 
@@ -418,7 +453,7 @@
 			<BlurFade delay={0.1}>
 				<div class="audience-card">
 					<h3>Existing tools</h3>
-					<p>You have Procore, Salesforce, or internal systems. You want AI to work with them.</p>
+					<p>You have Procore, Salesforce, or internal systems. You want Agents to work with them.</p>
 				</div>
 			</BlurFade>
 			
@@ -432,7 +467,7 @@
 			<BlurFade delay={0.3}>
 				<div class="audience-card">
 					<h3>No MCP expertise</h3>
-					<p>You build software. MCP protocol and deployment packaging aren't your focus.</p>
+					<p>You build software. MCP protocol, deployment, and operations aren’t your focus.</p>
 				</div>
 			</BlurFade>
 		</div>
@@ -756,9 +791,6 @@
 		margin-bottom: var(--space-3, 0.75rem);
 	}
 	
-	.layer-content {
-		/* Content container */
-	}
 	
 	.layer-what {
 		font-size: var(--text-body-lg);
@@ -784,90 +816,8 @@
 		border-top: 1px solid var(--color-border-default);
 	}
 	
-	.services-grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-4, 1rem);
-	}
 	
-	.service-card {
-		padding: var(--space-6, 2rem);
-		display: flex;
-		flex-direction: column;
-		height: 100%;
-		border-radius: var(--radius-lg, 12px);
-		border: 1px solid var(--color-border-default);
-		background: var(--color-bg-pure);
-		transition: 
-			border-color 200ms ease,
-			transform 200ms ease,
-			box-shadow 200ms ease;
-	}
-	
-	.service-card:hover {
-		border-color: var(--color-border-emphasis);
-		transform: translateY(-2px);
-	}
-	
-	.service-card.featured {
-		border-color: rgba(96, 165, 250, 0.4);
-		background: linear-gradient(
-			135deg,
-			rgba(96, 165, 250, 0.05) 0%,
-			rgba(167, 139, 250, 0.05) 100%
-		);
-	}
-	
-	.service-card.featured:hover {
-		border-color: rgba(96, 165, 250, 0.6);
-		box-shadow: 
-			0 8px 32px rgba(96, 165, 250, 0.15),
-			0 0 0 1px rgba(96, 165, 250, 0.1);
-	}
-	
-	.service-card h3 {
-		font-size: var(--text-h3);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-2, 0.5rem);
-	}
-	
-	.service-price {
-		font-size: var(--text-h1);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-4, 1rem);
-		letter-spacing: var(--tracking-tight, -0.015em);
-	}
-	
-	.service-description {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		line-height: var(--leading-relaxed);
-		margin-bottom: var(--space-5, 1.5rem);
-	}
-	
-	.service-includes {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		margin-top: auto;
-	}
-	
-	.service-includes li {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		padding: var(--space-2, 0.5rem) 0;
-		border-top: 1px solid var(--color-border-default);
-	}
-	
-	.service-includes li:last-child {
-		color: var(--color-fg-muted);
-		font-family: var(--font-mono, monospace);
-		font-size: var(--text-caption);
-	}
-	
-	/* Per-Tool Pricing Sections */
+	/* Per-Integration Pricing Sections */
 	.pricing-section {
 		margin-bottom: var(--space-6, 2rem);
 	}
@@ -1044,6 +994,45 @@
 		color: var(--color-fg-secondary);
 		line-height: var(--leading-relaxed);
 	}
+
+	/* Managed Runtime */
+	.runtime-section {
+		padding: var(--section-padding, 6rem) 0;
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.runtime-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-4, 1rem);
+		align-items: stretch;
+	}
+
+	.runtime-card {
+		padding: var(--space-5, 1.5rem);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg, 12px);
+		transition: border-color var(--duration-micro, 200ms) var(--ease-standard);
+		display: flex;
+		flex-direction: column;
+	}
+
+	.runtime-card:hover {
+		border-color: var(--color-border-emphasis);
+	}
+
+	.runtime-card h3 {
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-3, 0.75rem);
+	}
+
+	.runtime-card p {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+	}
 	
 	/* CTA */
 	.cta-section {
@@ -1096,17 +1085,18 @@
 			font-size: clamp(2.5rem, 8vw, 4rem);
 		}
 		
-		.services-grid {
+		.audience-grid {
 			grid-template-columns: 1fr;
 		}
-		
-		.audience-grid {
+
+		.runtime-grid {
 			grid-template-columns: 1fr;
 		}
 		
 		/* Mobile section padding */
 		.model-section,
 		.services-section,
+		.runtime-section,
 		.audience-section,
 		.cta-section {
 			padding: var(--layout-3, 4rem) 0;

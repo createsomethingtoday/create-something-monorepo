@@ -88,7 +88,7 @@
 				service_interest = '';
 				notes = '';
 			} else {
-				const err = await res.json();
+				const err = (await res.json()) as { message?: string };
 				message = { type: 'error', text: err.message || 'Failed to create lead' };
 			}
 		} catch (err) {
@@ -185,7 +185,7 @@
 				</div>
 				<div class="field full-width">
 					<label for="interest">Service Interest</label>
-					<input type="text" id="interest" bind:value={service_interest} placeholder="e.g., AI Integration, Web Development" />
+					<input type="text" id="interest" bind:value={service_interest} placeholder="e.g., Agent Integration, Web Development" />
 				</div>
 			</div>
 		</section>

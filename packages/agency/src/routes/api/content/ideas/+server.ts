@@ -1,7 +1,7 @@
 /**
  * Content Ideas Pipeline API
  * 
- * AI-native idea management:
+ * Agent-native idea management:
  * - Agents discover ideas from research/signals
  * - Ideas flow through: discovered → researched → drafted → scheduled
  * - Human reviews at key gates
