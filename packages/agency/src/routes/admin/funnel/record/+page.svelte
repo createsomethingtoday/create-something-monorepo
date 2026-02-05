@@ -63,7 +63,7 @@
 			if (res.ok) {
 				message = { type: 'success', text: `Metrics recorded for ${date}` };
 			} else {
-				const err = await res.json();
+				const err = (await res.json()) as { message?: string };
 				message = { type: 'error', text: err.message || 'Failed to record metrics' };
 			}
 		} catch (err) {
@@ -198,7 +198,7 @@
 
 <style>
 	.page {
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin: 0 auto;
 		padding: var(--space-lg);
 	}

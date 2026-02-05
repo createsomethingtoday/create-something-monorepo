@@ -51,7 +51,7 @@
 	}
 
 	.error-container {
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		width: 100%;
 		text-align: center;
 	}
@@ -73,7 +73,7 @@
 	.error-description {
 		color: var(--color-fg-tertiary);
 		margin-bottom: var(--space-xl);
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin-left: auto;
 		margin-right: auto;
 	}

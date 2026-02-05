@@ -258,7 +258,7 @@
 <style>
 	/* Section containers */
 	.section-container {
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin: 0 auto;
 		padding: 0 var(--container-padding, 1.5rem);
 	}
@@ -276,7 +276,7 @@
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-secondary);
 		text-align: center;
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin: 0 auto var(--space-8, 3rem);
 		line-height: var(--leading-relaxed);
 	}
@@ -306,7 +306,7 @@
 		grid-template-columns: 1fr 1fr;
 		gap: var(--space-8, 3rem);
 		align-items: center;
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin: 0 auto;
 	}
 	
@@ -336,7 +336,7 @@
 		color: var(--color-fg-secondary);
 		margin-bottom: var(--space-6, 2rem);
 		line-height: var(--leading-relaxed);
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 	}
 	
 	.hero-cta {
@@ -566,7 +566,7 @@
 		border-radius: var(--radius-lg, 12px);
 		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-pure);
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		width: 100%;
 		box-shadow: var(--glass-shine-soft);
 		transition: 
@@ -664,7 +664,7 @@
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg, 12px);
 		text-decoration: none;
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		text-align: center;
 		transition: border-color var(--duration-micro, 200ms) var(--ease-standard);
 	}

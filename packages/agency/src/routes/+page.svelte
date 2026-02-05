@@ -512,7 +512,7 @@
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-secondary);
 		text-align: center;
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-sm);
 		margin: 0 auto var(--space-8, 3rem);
 		line-height: var(--leading-relaxed);
 	}
@@ -521,7 +521,7 @@
 	.hero {
 		position: relative;
 		padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem) var(--section-padding, 6rem);
-		max-width: var(--content-width-lg);
+		max-width: 100%;
 		overflow: hidden;
 	}
 	
@@ -545,7 +545,7 @@
 		grid-template-columns: 1fr 1fr;
 		gap: var(--space-8, 3rem);
 		align-items: center;
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin: 0 auto;
 	}
 	
@@ -576,7 +576,7 @@
 		color: var(--color-fg-secondary);
 		margin-bottom: var(--space-8, 3rem);
 		line-height: var(--leading-relaxed);
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-sm);
 	}
 	
 	.hero-cta {
@@ -763,7 +763,7 @@
 	}
 	
 	.layers-diagram {
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-md);
 		margin: 0 auto var(--space-6, 2rem);
 	}
 	
@@ -836,7 +836,7 @@
 		grid-template-columns: repeat(2, 1fr);
 		gap: var(--space-4, 1rem);
 		align-items: stretch;
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-md);
 		margin: 0 auto;
 	}
 	

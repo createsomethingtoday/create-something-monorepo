@@ -71,7 +71,7 @@
 				throw new Error('Failed to fetch available times');
 			}
 
-			const data = await response.json();
+			const data = (await response.json()) as { slots: TimeSlot[] };
 			slots = data.slots;
 
 			// Build set of available dates
@@ -149,11 +149,11 @@
 			});
 
 			if (!response.ok) {
-				const errorData = await response.json().catch(() => ({}));
+				const errorData = (await response.json().catch(() => ({}))) as { message?: string };
 				throw new Error(errorData.message || 'Failed to create booking');
 			}
 
-			const result = await response.json();
+			const result = (await response.json()) as { event: BookingEvent };
 			confirmedEvent = result.event;
 			step = 'confirm';
 		} catch (err) {
@@ -276,7 +276,7 @@
 
 <style>
 	.booking-page {
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin: 0 auto;
 		padding: var(--space-xl) var(--space-md);
 		min-height: 100vh;

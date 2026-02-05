@@ -2,8 +2,8 @@
 	import { SEO } from '@create-something/canon';
 
 	let { data } = $props();
-
-	const { metrics, user } = data;
+	const metrics = $derived.by(() => data.metrics);
+	const user = $derived.by(() => data.user);
 
 	// Format currency
 	function formatCurrency(amount: number): string {
@@ -181,7 +181,7 @@
 
 <style>
 	.dashboard {
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin: 0 auto;
 		padding: var(--space-xl);
 	}

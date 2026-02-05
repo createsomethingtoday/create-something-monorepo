@@ -388,7 +388,7 @@
 
 <style>
 	.loom-page {
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin: 0 auto;
 		padding: var(--space-xl) var(--space-lg);
 	}
@@ -428,7 +428,7 @@
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-tertiary);
 		line-height: 1.7;
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin: 0 auto;
 	}
 
@@ -460,7 +460,7 @@
 
 	/* Featured card container - Golden Ratio: ~61.8% width centered */
 	.install-featured {
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin: 0 auto var(--space-lg);
 	}
 
@@ -805,7 +805,7 @@
 	.case-study-description {
 		font-size: var(--text-body);
 		color: var(--color-fg-tertiary);
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin: 0 auto var(--space-lg);
 	}
 
@@ -929,7 +929,7 @@
 		}
 
 		.install-featured {
-			max-width: var(--content-width-lg);
+			max-width: 100%;
 		}
 	}
 </style>

@@ -46,7 +46,7 @@
 				})
 			});
 
-			const result = await response.json();
+			const result = (await response.json()) as { success?: boolean; message?: string };
 
 			if (response.ok && result.success) {
 				submitSuccess = true;
@@ -176,7 +176,7 @@
 <style>
 	/* Section containers */
 	.section-container {
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin: 0 auto;
 		padding: 0 var(--container-padding, 1.5rem);
 	}
@@ -203,7 +203,7 @@
 	.hero-content {
 		position: relative;
 		text-align: center;
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin: 0 auto;
 	}
 	
@@ -237,7 +237,7 @@
 	}
 	
 	.contact-container {
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin: 0 auto;
 		display: grid;
 		grid-template-columns: 1fr 1fr;

@@ -333,7 +333,7 @@
 <style>
 	/* Section containers */
 	.section-container {
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin: 0 auto;
 		padding: 0 var(--container-padding, 1.5rem);
 	}
@@ -369,7 +369,7 @@
 	.hero-content {
 		position: relative;
 		text-align: center;
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin: 0 auto;
 	}
 	
@@ -393,7 +393,7 @@
 	.hero-subtitle {
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-secondary);
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin: 0 auto;
 		line-height: var(--leading-relaxed);
 	}
@@ -422,7 +422,7 @@
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
 		gap: var(--space-4, 1rem);
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin: 0 auto;
 	}
 	
@@ -515,7 +515,7 @@
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 		gap: var(--space-4, 1rem);
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin: 0 auto;
 		align-items: stretch;
 	}
@@ -799,7 +799,7 @@
 		
 		.examples-grid {
 			grid-template-columns: 1fr;
-			max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		}
 	}
 	
@@ -814,7 +814,7 @@
 		
 		.pricing-row {
 			grid-template-columns: 1fr;
-			max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		}
 		
 		.included-grid {

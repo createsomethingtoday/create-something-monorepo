@@ -5,7 +5,8 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const { summary, leads } = data;
+	const summary = $derived.by(() => data.summary);
+	const leads = $derived.by(() => data.leads);
 
 	// Stage colors
 	const stageColors: Record<string, string> = {
@@ -187,7 +188,7 @@
 
 <style>
 	.dashboard {
-		max-width: var(--content-width-lg);
+		max-width: var(--content-width-xl);
 		margin: 0 auto;
 		padding: var(--space-lg);
 	}
