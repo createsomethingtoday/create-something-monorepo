@@ -5,6 +5,31 @@ import { getPlatform } from '@create-something/canon/platform';
 import { isFileBasedExperiment, getFileBasedExperiment } from '$lib/config/fileBasedExperiments';
 import { transformExperimentToPaper } from '@create-something/canon';
 
+// Load all experiment content markdown files at build time
+const contentFiles = import.meta.glob('/content/experiments/*.md', { eager: true, query: '?raw', import: 'default' }) as Record<string, string>;
+
+/**
+ * Strip YAML frontmatter from markdown content.
+ * Frontmatter is delimited by --- at the start of the file.
+ */
+function stripFrontmatter(raw: string): string {
+	const trimmed = raw.trimStart();
+	if (!trimmed.startsWith('---')) return trimmed;
+	const endIndex = trimmed.indexOf('---', 3);
+	if (endIndex === -1) return trimmed;
+	return trimmed.slice(endIndex + 3).trimStart();
+}
+
+/**
+ * Get markdown content for a file-based experiment by slug.
+ */
+function getExperimentContent(slug: string): string | null {
+	const key = `/content/experiments/${slug}.md`;
+	const raw = contentFiles[key];
+	if (!raw) return null;
+	return stripFrontmatter(raw);
+}
+
 // Cross-property experiments: experiments that live on other properties
 // Redirect to the canonical location
 const CROSS_PROPERTY_REDIRECTS: Record<string, string> = {
@@ -50,8 +75,9 @@ export const load: PageServerLoad = async ({ params, platform }) => {
 		}
 
 		const paper = transformExperimentToPaper(experiment);
+		const content = getExperimentContent(slug);
 		return {
-			paper,
+			paper: content ? { ...paper, content } : paper,
 			relatedPapers: [] // File-based experiments don't have DB-based related papers
 		};
 	}
