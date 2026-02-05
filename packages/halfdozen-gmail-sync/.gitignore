@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment
+.env
+.env.local
+
+# OAuth tokens (sensitive!)
+.gmail-tokens.json
+client_secret*.json
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store

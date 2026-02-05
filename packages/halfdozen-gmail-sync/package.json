@@ -1,0 +1,43 @@
+{
+  "name": "@create-something/halfdozen-gmail-sync",
+  "version": "1.0.0",
+  "description": "Gmail to Notion sync for Half Dozen - Interactions and Contacts linking",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "hd-gmail-sync": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "auth": "npx tsx src/index.ts auth",
+    "sync": "npx tsx src/index.ts sync",
+    "search": "npx tsx src/index.ts search",
+    "test:connection": "npx tsx src/index.ts test",
+    "mcp": "npx tsx src/mcp/server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@notionhq/client": "^2.2.15",
+    "dotenv": "^16.4.5",
+    "googleapis": "^144.0.0",
+    "open": "^10.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "gmail",
+    "notion",
+    "sync",
+    "interactions",
+    "contacts",
+    "half-dozen"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT"
+}

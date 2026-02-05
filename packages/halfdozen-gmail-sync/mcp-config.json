@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "halfdozen-gmail-sync": {
+      "command": "npx",
+      "args": ["tsx", "src/mcp/server.ts"],
+      "cwd": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/halfdozen-gmail-sync",
+      "env": {}
+    }
+  }
+}

@@ -1,0 +1,35 @@
+name = "halfdozen-gmail-sync-mcp"
+main = "index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "5c3e9cf4d55ce171b844fad0931607f9"  # Half Dozen
+
+# Durable Object for MCP sessions
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "GmailSyncMCPv2"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["GmailSyncMCP"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["GmailSyncMCPv2"]
+
+# KV for storing per-user Gmail tokens
+[[kv_namespaces]]
+binding = "GMAIL_TOKENS"
+id = "772f9433b9674d54935ea39ccd1288f1"
+
+# Secrets (set via `wrangler secret put`)
+# GOOGLE_CLIENT_ID
+# GOOGLE_CLIENT_SECRET  
+# NOTION_API_KEY
+# NOTION_INTERACTIONS_DB_ID
+# NOTION_CONTACTS_DB_ID
+# TEAM_EMAILS
+# Note: Per-user Gmail tokens are stored in KV (no default account)
+
+[vars]
+# Non-sensitive config can go here
