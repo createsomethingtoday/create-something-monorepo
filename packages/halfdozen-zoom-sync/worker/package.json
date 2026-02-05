@@ -1,0 +1,17 @@
+{
+  "name": "@create-something/zoom-clips-trigger",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker to trigger Zoom Clips sync via Modal",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:production": "wrangler deploy --env production"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "typescript": "^5.6.3",
+    "wrangler": "^4.0.0"
+  }
+}

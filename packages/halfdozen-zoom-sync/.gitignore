@@ -1,0 +1,34 @@
+# Sensitive auth/session data
+session-context.json
+cookies.json
+*.pass
+
+# Build output
+dist/
+build/
+
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+
+# Generated data/output
+transcript-analysis.json
+transcript-screenshot.png
+ui-analysis.json
+ui-discoveries.json
+dom-analysis.json
+clips-list.json
+extracted-transcript.txt
+full-transcript.txt
+extracted-transcripts/
+extracted-clips/
+batch-extract-results/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

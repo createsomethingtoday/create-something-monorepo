@@ -1,0 +1,51 @@
+{
+  "name": "@create-something/zoom-clips-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for scraping Zoom Clips with human-in-the-loop browser sessions, syncing to Notion",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "zoom-clips-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "cron": "npx tsx cron-service.ts",
+    "cron:now": "npx tsx cron-service.ts --now",
+    "sync": "npx tsx batch-extract.ts --sync"
+  },
+  "dependencies": {
+    "@create-something/observability": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "@notionhq/client": "^2.2.15",
+    "dotenv": "^16.4.5",
+    "node-cron": "^3.0.3",
+    "puppeteer-core": "^23.0.0",
+    "resend": "^4.0.0",
+    "steel-sdk": "^0.16.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/node-cron": "^3.0.11",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "mcp",
+    "zoom",
+    "clips",
+    "notion",
+    "browser-automation",
+    "steel",
+    "human-in-the-loop"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/zoom-clips-mcp"
+  }
+}
