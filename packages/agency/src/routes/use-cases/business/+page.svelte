@@ -3,35 +3,35 @@
 	import { AnimatedGridPattern, BlurFade, BorderBeam, OrbitingCircles, ShimmerButton } from '@create-something/canon/magicui';
 	
 	const painPoints = [
-		{ problem: 'Copy-pasting between tools', solution: 'AI pulls from CRM, updates docs automatically' },
-		{ problem: 'Context switching kills focus', solution: 'One interface to access all your systems' },
-		{ problem: 'AI can\'t see your data', solution: 'MCP connects AI to your actual tools' },
-		{ problem: '"AI integration" sounds expensive', solution: 'Fixed pricing from $750. Know the cost upfront.' }
+		{ problem: 'Copy-pasting between tools', solution: 'Agents pull from your CRM, update docs automatically' },
+		{ problem: 'Context switching kills focus', solution: 'One place to access everything' },
+		{ problem: 'Agents can\'t see your data', solution: 'MCP connects them to your actual tools' },
+		{ problem: 'This sounds expensive', solution: '$750 to start. You know the cost upfront.' }
 	];
 	
 	const workflows = [
 		{
-			title: 'CRM → Docs Sync',
+			title: 'CRM → Docs',
 			tagline: 'Deals that document themselves',
-			description: 'New deal closed in HubSpot. Meeting notes, contract terms, and project docs created in Notion automatically.'
+			description: 'Close a deal in HubSpot. Project docs appear in Notion. No copy-pasting.'
 		},
 		{
-			title: 'Support Intelligence',
-			tagline: 'Tickets that get smarter',
-			description: 'Customer emails analyzed. Priority assigned. Relevant context pulled from your knowledge base. Response drafted.'
+			title: 'Support Triage',
+			tagline: 'Tickets sorted before you see them',
+			description: 'Emails analyzed, priority assigned, relevant context attached. You review and respond.'
 		},
 		{
-			title: 'Report Generator',
-			tagline: 'Reports that write themselves',
-			description: 'Weekly metrics pulled from your tools. Summary generated. Sent to Slack or email. No manual aggregation.'
+			title: 'Weekly Reports',
+			tagline: 'Numbers that show up on time',
+			description: 'Metrics pulled from your tools every Monday. Summary in Slack. No spreadsheets.'
 		}
 	];
 	
 	const steps = [
-		{ num: '1', title: 'Discovery Call', description: 'Map your tools and workflows' },
-		{ num: '2', title: 'We Build', description: 'MCP servers + agent configuration' },
-		{ num: '3', title: 'You Deploy', description: 'Your infrastructure, your keys' },
-		{ num: '4', title: 'AI Works', description: 'Connected to your actual systems' }
+		{ num: '1', title: 'Discovery', description: 'We map your tools' },
+		{ num: '2', title: 'Build', description: 'We create the connections' },
+		{ num: '3', title: 'Deploy', description: 'Your infrastructure, your keys' },
+		{ num: '4', title: 'Work', description: 'Agents access your systems' }
 	];
 </script>
 
@@ -96,9 +96,9 @@
 {/snippet}
 
 <SEO
-	title="MCP for Business | Connect Your SaaS Tools to AI"
-	description="Custom MCP development for SMB and mid-market. Connect HubSpot, Salesforce, Notion to AI. Fixed pricing from $500. Fast turnaround."
-	keywords="MCP business, SaaS integration AI, HubSpot AI, Salesforce Claude, small business automation"
+	title="MCP for Business | Connect Your Tools to Agents"
+	description="Custom MCP development for SMB and mid-market. Connect HubSpot, Notion, Slack to Claude, Cursor, Codex. Fixed pricing from $750."
+	keywords="MCP business, SaaS integration, HubSpot Claude, Notion agents, business automation"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -122,12 +122,12 @@
 				<p class="hero-eyebrow">MCP for Business</p>
 			</BlurFade>
 			<BlurFade delay={0.1}>
-				<h1 class="hero-title">Your tools, connected to&nbsp;AI</h1>
+				<h1 class="hero-title">Your tools, connected to&nbsp;Agents</h1>
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
 					HubSpot, Notion, Slack, Google—connected to Claude, Cursor, or Codex. 
-					See AI work across your actual systems.
+					Agents work across your actual systems.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
@@ -261,8 +261,8 @@
 <!-- Workflows -->
 <section class="workflows-section">
 	<div class="section-container">
-		<h2 class="section-heading reveal">Example workflows</h2>
-		<p class="section-intro reveal">What becomes possible when your tools talk to AI</p>
+		<h2 class="section-heading reveal">What this looks like</h2>
+		<p class="section-intro reveal">When your tools talk to Agents</p>
 		<div class="workflows-grid">
 			{#each workflows as wf, i}
 				<div class="workflow-card reveal" style="--delay: {i * 0.1}s">
@@ -306,7 +306,7 @@
 						<div class="pricing-amount">$250</div>
 						<div class="pricing-unit">per agent</div>
 						<p class="pricing-description">
-							Claude, Cursor, Codex, or Workers AI configuration.
+							Claude, Cursor, Codex, or Cloudflare Workers configuration.
 						</p>
 					</div>
 				</div>
