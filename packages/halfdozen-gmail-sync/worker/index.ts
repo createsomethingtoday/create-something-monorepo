@@ -318,6 +318,11 @@ function decodeBase64Url(data: string): string {
   return atob(data.replace(/-/g, '+').replace(/_/g, '/'));
 }
 
+/** Shorten a Gmail ID for display in Notion titles (8 chars + ellipsis). */
+function shortenGmailId(gmailId: string): string {
+  return gmailId.length > 8 ? gmailId.substring(0, 8) : gmailId;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // OAuth helpers
 // ═══════════════════════════════════════════════════════════════
@@ -588,9 +593,10 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
           const { plain: body } = extractBodyFromPayload(msg.payload);
 
           // Check if already synced
+          const shortId = shortenGmailId(email_id);
           const existing = await notionQueryDatabase(this.env, this.env.NOTION_INTERACTIONS_DB_ID, {
             property: 'Interaction',
-            title: { contains: `[${email_id}]` },
+            title: { contains: `[${shortId}` },
           }, 1);
 
           if (existing.results.length > 0) {
@@ -634,7 +640,7 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
 
           // Create interaction
           const properties: Record<string, unknown> = {
-            Interaction: { title: [{ text: { content: `${subject} [${email_id}]`.substring(0, 2000) } }] },
+            Interaction: { title: [{ text: { content: `${subject} [${shortId}...]`.substring(0, 2000) } }] },
             Date: { date: { start: date.split('T')[0] } },
             Type: { select: { name: 'Email' } },
           };
@@ -969,9 +975,10 @@ async function handleApiRoute(pathname: string, request: Request, env: Env): Pro
         const gmailId = body.gmail_id as string;
         if (!gmailId) return json({ error: 'gmail_id required' }, 400);
 
+        const checkShortId = shortenGmailId(gmailId);
         const existing = await notionQueryDatabase(env, env.NOTION_INTERACTIONS_DB_ID, {
           property: 'Interaction',
-          title: { contains: `[${gmailId}]` },
+          title: { contains: `[${checkShortId}` },
         }, 1);
 
         const exists = existing.results.length > 0;
@@ -997,9 +1004,10 @@ async function handleApiRoute(pathname: string, request: Request, env: Env): Pro
         }
 
         // Dedup check
+        const syncShortId = shortenGmailId(gmailId);
         const existing = await notionQueryDatabase(env, env.NOTION_INTERACTIONS_DB_ID, {
           property: 'Interaction',
-          title: { contains: `[${gmailId}]` },
+          title: { contains: `[${syncShortId}` },
         }, 1);
 
         if (existing.results.length > 0) {
@@ -1046,7 +1054,7 @@ async function handleApiRoute(pathname: string, request: Request, env: Env): Pro
 
         // Create interaction
         const properties: Record<string, unknown> = {
-          Interaction: { title: [{ text: { content: `${subject} [${gmailId}]`.substring(0, 2000) } }] },
+          Interaction: { title: [{ text: { content: `${subject} [${syncShortId}...]`.substring(0, 2000) } }] },
           Date: { date: { start: (date || new Date().toISOString()).split('T')[0] } },
           Type: { select: { name: 'Email' } },
         };

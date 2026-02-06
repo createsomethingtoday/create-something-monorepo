@@ -64,10 +64,9 @@ function onSyncClick(e) {
   var parsedFrom = parseFromHeader(message.getFrom());
   var direction = detectDirection(parsedFrom.email);
 
-  // Get recipients
-  var toRaw = message.getTo() || '';
-  var toEmails = toRaw.split(',').map(function(t) {
-    return parseFromHeader(t.trim()).email;
+  // Get recipients (preserve full addresses, don't re-parse)
+  var toEmails = (message.getTo() || '').split(',').map(function(t) {
+    return t.trim();
   }).filter(Boolean);
 
   // Get plain text body
@@ -105,6 +104,69 @@ function onSyncClick(e) {
       .setNavigation(CardService.newNavigation().updateCard(card))
       .build();
   }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// THREAD SYNC
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Syncs all messages in the current thread to Notion.
+ * Dedup ensures already-synced messages are skipped.
+ *
+ * @param {Object} e - Action event with parameters
+ * @returns {CardService.ActionResponse}
+ */
+function onSyncThreadClick(e) {
+  var messageId = e.parameters.message_id;
+  var accessToken = e.gmail.accessToken;
+  GmailApp.setCurrentMessageAccessToken(accessToken);
+
+  var message = GmailApp.getMessageById(messageId);
+  var thread = message.getThread();
+  var messages = thread.getMessages();
+
+  var synced = 0;
+  var skipped = 0;
+  var failed = 0;
+  var lastResult = null;
+
+  for (var i = 0; i < messages.length; i++) {
+    var msg = messages[i];
+    var parsedFrom = parseFromHeader(msg.getFrom());
+    var direction = detectDirection(parsedFrom.email);
+
+    var toEmails = (msg.getTo() || '').split(',').map(function(t) {
+      return t.trim();
+    }).filter(Boolean);
+
+    var payload = {
+      subject: msg.getSubject(),
+      from: parsedFrom,
+      to: toEmails,
+      date: msg.getDate().toISOString(),
+      body: msg.getPlainBody() || '',
+      gmail_id: msg.getId(),
+      direction: direction,
+    };
+
+    try {
+      var result = workerFetch('/api/sync', payload);
+      if (result.skipped) {
+        skipped++;
+      } else {
+        synced++;
+        lastResult = result;
+      }
+    } catch (err) {
+      failed++;
+    }
+  }
+
+  var card = buildThreadSummaryCard(messages.length, synced, skipped, failed, lastResult);
+  return CardService.newActionResponseBuilder()
+    .setNavigation(CardService.newNavigation().updateCard(card))
+    .build();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -336,6 +398,15 @@ function buildSyncCard(messageId, subject, parsedFrom, direction, date) {
             .setFunctionName('onSyncClick')
             .setParameters({ message_id: messageId })
         )
+    )
+    .addWidget(
+      CardService.newTextButton()
+        .setText('Sync Entire Thread')
+        .setOnClickAction(
+          CardService.newAction()
+            .setFunctionName('onSyncThreadClick')
+            .setParameters({ message_id: messageId })
+        )
     );
 
   return CardService.newCardBuilder()
@@ -436,6 +507,57 @@ function buildSuccessCard(result, parsedFrom, subject) {
     )
     .addSection(contactSection)
     .addSection(actionsSection)
+    .build();
+}
+
+/**
+ * Build a summary card after syncing an entire thread.
+ */
+function buildThreadSummaryCard(total, synced, skipped, failed, lastResult) {
+  var section = CardService.newCardSection();
+
+  section.addWidget(
+    CardService.newDecoratedText()
+      .setTopLabel('Messages in thread')
+      .setText(String(total))
+  );
+  section.addWidget(
+    CardService.newDecoratedText()
+      .setTopLabel('Synced')
+      .setText(String(synced))
+  );
+
+  if (skipped > 0) {
+    section.addWidget(
+      CardService.newDecoratedText()
+        .setTopLabel('Already synced')
+        .setText(String(skipped))
+    );
+  }
+
+  if (failed > 0) {
+    section.addWidget(
+      CardService.newDecoratedText()
+        .setTopLabel('Failed')
+        .setText(String(failed))
+    );
+  }
+
+  if (lastResult && lastResult.page_url) {
+    section.addWidget(
+      CardService.newTextButton()
+        .setText('Open Latest in Notion')
+        .setOpenLink(CardService.newOpenLink().setUrl(lastResult.page_url))
+    );
+  }
+
+  return CardService.newCardBuilder()
+    .setHeader(
+      CardService.newCardHeader()
+        .setTitle('Thread Synced')
+        .setSubtitle(synced + ' of ' + total + ' messages synced')
+    )
+    .addSection(section)
     .build();
 }
 

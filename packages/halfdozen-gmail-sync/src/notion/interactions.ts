@@ -179,16 +179,26 @@ export class InteractionsClient {
   }
 
   /**
-   * Check if email already exists by searching title for Gmail ID.
-   * Gmail ID is stored in title as: "Subject [gmailId]"
+   * Shorten a Gmail ID for display in titles.
+   * Keeps first 8 chars for uniqueness while keeping titles clean.
+   * Dedup queries use `contains` so short prefix matches both old and new formats.
+   */
+  private shortenGmailId(gmailId: string): string {
+    return gmailId.length > 8 ? gmailId.substring(0, 8) : gmailId;
+  }
+
+  /**
+   * Check if email already exists by searching title for Gmail ID prefix.
+   * Gmail ID is stored in title as: "Subject [shortId...]"
    */
   private async emailExists(gmailId: string): Promise<boolean> {
+    const shortId = this.shortenGmailId(gmailId);
     try {
       const response = await this.client.databases.query({
         database_id: this.databaseId,
         filter: {
           property: this.mapping.title,
-          title: { contains: `[${gmailId}]` },
+          title: { contains: `[${shortId}` },
         },
         page_size: 1,
       });
@@ -211,9 +221,9 @@ export class InteractionsClient {
     const m = this.mapping;
     const properties: Record<string, unknown> = {};
 
-    // Title (Interaction) - include subject, sender, and Gmail ID for dedup
-    // Gmail ID at end allows searching: "19c29992b1ae2df8"
-    const titleContent = `${interaction.subject} [${interaction.gmailId}]`;
+    // Title (Interaction) - include subject and shortened Gmail ID for dedup
+    const shortId = this.shortenGmailId(interaction.gmailId);
+    const titleContent = `${interaction.subject} [${shortId}...]`;
     properties[m.title] = {
       title: [{ text: { content: titleContent.substring(0, 2000) } }],
     };

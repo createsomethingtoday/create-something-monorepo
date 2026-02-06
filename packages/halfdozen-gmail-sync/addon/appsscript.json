@@ -11,8 +11,7 @@
   "addOns": {
     "common": {
       "name": "Half Dozen Gmail Sync",
-      "logoUrl": "https://www.gstatic.com/images/branding/product/2x/gmail_2020q4_48dp.png",
-      "useLocaleFromApp": true
+      "logoUrl": "https://www.gstatic.com/images/branding/product/2x/gmail_2020q4_48dp.png"
     },
     "gmail": {
       "contextualTriggers": [
