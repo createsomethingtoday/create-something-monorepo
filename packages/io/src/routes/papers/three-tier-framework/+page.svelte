@@ -40,7 +40,7 @@
 				<span>Advanced</span>
 			</div>
 			<div class="flex gap-2 mt-3 paper-meta">
-				<span>With contributions from Joey (Senior System Architect, Anthropic)</span>
+				<span>With contributions from Joey (Senior System Architect, Webflow)</span>
 			</div>
 		</div>
 
@@ -1010,7 +1010,7 @@
 		<!-- Footer -->
 		<div class="pt-6 paper-footer">
 			<p class="footer-text">
-				Version 1.3 — February 2026. With contributions from Joey (Senior System Architect, Anthropic).
+				Version 1.3 — February 2026. With contributions from Joey (Senior System Architect, Webflow).
 				WORKWAY · CREATE SOMETHING · Half Dozen Solutions.
 			</p>
 			<div class="flex justify-between mt-4">
