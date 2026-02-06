@@ -191,6 +191,9 @@
 					<span class="stat-value">
 						{summary.userBestRank ? `#${summary.userBestRank}` : '-'}
 					</span>
+					<span class="stat-note">
+						{summary.userBestRank ? 'out of top 50 templates' : 'not in top 50 this period'}
+					</span>
 				</div>
 			</CardContent>
 		</Card>
@@ -200,6 +203,7 @@
 				<div class="stat-card" in:fly={{ y: 20, duration: 400, delay: 200 }}>
 					<span class="stat-label">Your Templates in Top 50</span>
 					<span class="stat-value"><KineticNumber value={userTemplates.length} /></span>
+					<span class="stat-note">in the 30-day leaderboard</span>
 				</div>
 			</CardContent>
 		</Card>
@@ -550,6 +554,8 @@
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		transition: all var(--duration-micro) var(--ease-standard);
+		display: flex;
+		flex-direction: column;
 	}
 
 	.summary-grid :global(.card):hover {
@@ -562,6 +568,7 @@
 		flex-direction: column;
 		gap: var(--space-xs);
 		padding: var(--space-xs) 0;
+		flex: 1;
 	}
 
 	.stat-header {
@@ -602,6 +609,7 @@
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		font-style: italic;
+		margin-top: auto;
 	}
 
 	/* Tooltip styles */
