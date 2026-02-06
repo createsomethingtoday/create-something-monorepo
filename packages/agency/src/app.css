@@ -104,6 +104,38 @@
   
   /* Reveal animation duration */
   --duration-reveal: 400ms;
+  
+  /* ==========================================================================
+     Accent Color System
+     
+     Derived from Canon liquid glass tints. Used for featured cards, links,
+     glows, and gradient accents across all .agency pages.
+     
+     Base: --liquid-glass-tint-blue (#60a5fa) = rgb(96, 165, 250)
+     Alt:  --liquid-glass-tint-purple (#a78bfa) = rgb(167, 139, 250)
+     ========================================================================== */
+  --accent-blue: var(--liquid-glass-tint-blue);
+  --accent-purple: var(--liquid-glass-tint-purple);
+  
+  /* Accent opacity variants */
+  --accent-blue-strong: rgba(96, 165, 250, 0.9);
+  --accent-blue-medium: rgba(96, 165, 250, 0.5);
+  --accent-blue-subtle: rgba(96, 165, 250, 0.2);
+  --accent-blue-faint: rgba(96, 165, 250, 0.04);
+  --accent-purple-faint: rgba(167, 139, 250, 0.04);
+  
+  /* Glow gradients */
+  --accent-glow: radial-gradient(
+    ellipse at center,
+    rgba(96, 165, 250, 0.15) 0%,
+    rgba(167, 139, 250, 0.08) 40%,
+    transparent 70%
+  );
+  --accent-gradient-subtle: linear-gradient(
+    135deg,
+    rgba(96, 165, 250, 0.04) 0%,
+    rgba(167, 139, 250, 0.04) 100%
+  );
 }
 
 /* ==========================================================================

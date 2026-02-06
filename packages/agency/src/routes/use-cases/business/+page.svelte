@@ -2,36 +2,33 @@
 	import { SEO } from '@create-something/canon';
 	import { AnimatedGridPattern, BlurFade, BorderBeam, OrbitingCircles, ShimmerButton } from '@create-something/canon/magicui';
 	
-	const painPoints = [
-		{ problem: 'Copy-pasting between tools', solution: 'Agents pull from your CRM, update docs automatically' },
-		{ problem: 'Context switching kills focus', solution: 'One place to access everything' },
-		{ problem: 'Agents can\'t see your data', solution: 'MCP connects them to your actual tools' },
-		{ problem: 'This sounds expensive', solution: 'From $750. You know the total before we start.' }
-	];
-	
-	const workflows = [
+	const beforeAfter = [
 		{
-			title: 'CRM → Docs',
-			tagline: 'Deals that document themselves',
-			description: 'Close a deal in HubSpot. Project docs appear in Notion. No copy-pasting.'
+			before: 'You close a deal in HubSpot, then manually create a project folder in Google Drive, copy the client details into Notion, and message the team on Slack. 20 minutes of busywork, every single time.',
+			after: 'You close the deal. The project folder, client doc, and team notification happen automatically. You move on to the next deal.'
 		},
 		{
-			title: 'Support Triage',
-			tagline: 'Tickets sorted before you see them',
-			description: 'Emails analyzed, priority assigned, relevant context attached. You review and respond.'
+			before: 'Support emails pile up. You read each one, check the CRM for context, decide the priority, then assign it. Half your morning is triage.',
+			after: 'Emails arrive pre-sorted with priority, CRM context attached, and a draft response ready. You review and send.'
 		},
 		{
-			title: 'Weekly Reports',
-			tagline: 'Numbers that show up on time',
-			description: 'Metrics pulled from your tools every Monday. Summary in Slack. No spreadsheets.'
+			before: 'Every Monday you pull numbers from three different dashboards, paste them into a spreadsheet, format it, and drop it in Slack. An hour of work nobody thanks you for.',
+			after: 'Monday morning, the summary is already in Slack. The numbers are pulled, formatted, and posted before you open your laptop.'
 		}
 	];
 	
+	const whoThisIsFor = [
+		'Teams of 3–50 who live in tools like HubSpot, Notion, Slack, and Google',
+		'Ops leads tired of being the human glue between systems',
+		'Founders who\'d rather sell than administrate',
+		'Teams already using AI (Claude, Cursor, Codex) but can\'t connect it to their actual data'
+	];
+	
 	const steps = [
-		{ num: '1', title: 'Discovery', description: 'We map your tools' },
-		{ num: '2', title: 'Build', description: 'We create the connections' },
-		{ num: '3', title: 'Deploy', description: 'Your infrastructure, your keys' },
-		{ num: '4', title: 'Work', description: 'Agents access your systems' }
+		{ num: '1', title: 'Tell us your tools', description: 'A 30-minute call. You walk us through your stack and where you lose time.' },
+		{ num: '2', title: 'We scope and price it', description: 'You get a fixed quote before we start. No surprises, no hourly billing.' },
+		{ num: '3', title: 'We build the connections', description: 'Secure integrations deployed to your infrastructure. Your keys, your data.' },
+		{ num: '4', title: 'Your team works differently', description: 'AI agents access your actual systems. The busywork disappears.' }
 	];
 </script>
 
@@ -96,14 +93,14 @@
 {/snippet}
 
 <SEO
-	title="For Business | Connect Your Tools to AI Agents"
-	description="Connect HubSpot, Notion, Slack, and Google to AI agents like Claude and Cursor. Predictable pricing from $750. Ongoing support available."
-	keywords="connect tools to AI, business automation, HubSpot Claude, Notion AI, Slack integration, MCP development"
+	title="For Business | Stop Being the Human Glue Between Your Tools"
+	description="Your team loses hours every week copy-pasting between HubSpot, Notion, Slack, and Google. We connect them to AI agents so the busywork disappears. Fixed pricing from $750."
+	keywords="business automation, connect tools to AI, stop copy pasting, HubSpot automation, Notion AI, Slack integration, small business AI"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
 
-<!-- Hero with animated grid background (matching landing page) -->
+<!-- Hero — lead with the problem -->
 <section class="hero">
 	<div class="hero-grid-container">
 		<AnimatedGridPattern
@@ -119,15 +116,17 @@
 	<div class="hero-container">
 		<div class="hero-content">
 			<BlurFade delay={0}>
-				<p class="hero-eyebrow">MCP for Business</p>
+				<p class="hero-eyebrow">The business use case</p>
 			</BlurFade>
 			<BlurFade delay={0.1}>
-				<h1 class="hero-title">Your tools, connected to&nbsp;Agents</h1>
+				<h1 class="hero-title">You're the human glue between your&nbsp;tools.</h1>
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					HubSpot, Notion, Slack, Google—connected to Claude, Cursor, or Codex. 
-					AI agents work across your actual systems, with ongoing support available.
+					Every day, your team copies data between HubSpot and Notion, 
+					formats reports nobody asked to format, and messages Slack channels 
+					with updates they assembled by hand. The tools don't talk to each other, 
+					so you do. That's the problem we solve.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
@@ -141,10 +140,7 @@
 		</div>
 		<BlurFade delay={0.4} class="hero-visual-wrapper">
 			<div class="hero-visual-frame">
-				<!-- Glow effect behind the frame -->
 				<div class="hero-visual-glow" aria-hidden="true"></div>
-				
-				<!-- Bordered container with beam -->
 				<div class="hero-visual-container">
 					<BorderBeam 
 						size={250}
@@ -152,63 +148,51 @@
 						colorFrom="rgba(96, 165, 250, 0.8)"
 						colorTo="rgba(167, 139, 250, 0.6)"
 					/>
-					
 					<div class="orbital-container">
-						<!-- MAIN LAYER - business tools -->
 						<div class="orbit-layer layer-main">
 							<OrbitingCircles radius={110} duration={30} startAngle={0}>
 								<div class="orbit-item">
 									{@render hubspotIcon()}
 								</div>
 							</OrbitingCircles>
-							
 							<OrbitingCircles radius={110} duration={30} startAngle={90}>
 								<div class="orbit-item">
 									{@render notionIcon()}
 								</div>
 							</OrbitingCircles>
-							
 							<OrbitingCircles radius={110} duration={30} startAngle={180}>
 								<div class="orbit-item">
 									{@render slackIcon()}
 								</div>
 							</OrbitingCircles>
-							
 							<OrbitingCircles radius={110} duration={30} startAngle={270}>
 								<div class="orbit-item">
 									{@render aiIcon()}
 								</div>
 							</OrbitingCircles>
 						</div>
-						
-						<!-- CLOSE LAYER - more tools -->
 						<div class="orbit-layer layer-close">
 							<OrbitingCircles radius={75} duration={18} startAngle={45} reverse>
 								<div class="orbit-item orbit-close">
 									{@render googleIcon()}
 								</div>
 							</OrbitingCircles>
-							
 							<OrbitingCircles radius={75} duration={18} startAngle={135} reverse>
 								<div class="orbit-item orbit-close">
 									{@render airtableIcon()}
 								</div>
 							</OrbitingCircles>
-							
 							<OrbitingCircles radius={75} duration={18} startAngle={225} reverse>
 								<div class="orbit-item orbit-close">
 									{@render zapierIcon()}
 								</div>
 							</OrbitingCircles>
-							
 							<OrbitingCircles radius={75} duration={18} startAngle={315} reverse>
 								<div class="orbit-item orbit-close">
 									{@render stripeIcon()}
 								</div>
 							</OrbitingCircles>
 						</div>
-						
-						<!-- Central hub - Create Something logo -->
 						<div class="orbital-center">
 							<div class="center-icon">
 								{@render createSomethingLogo()}
@@ -221,19 +205,30 @@
 	</div>
 </section>
 
-<!-- Pain Points -->
-<section class="pain-section">
+<!-- Before / After — concrete scenarios -->
+<section class="before-after-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="section-heading">Problems, solved</h2>
+			<h2 class="section-heading">What changes</h2>
 		</BlurFade>
-		<div class="pain-grid">
-			{#each painPoints as item, i}
-				<BlurFade delay={i * 0.1}>
-					<div class="pain-card">
-						<div class="pain-problem">{item.problem}</div>
-						<div class="pain-arrow">→</div>
-						<div class="pain-solution">{item.solution}</div>
+		<BlurFade delay={0.1}>
+			<p class="section-intro">Real workflows. Before and after.</p>
+		</BlurFade>
+		<div class="before-after-list">
+			{#each beforeAfter as scenario, i}
+				<BlurFade delay={0.2 + i * 0.15}>
+					<div class="scenario-card">
+						<div class="scenario-side scenario-before">
+							<span class="scenario-label">Before</span>
+							<p class="scenario-text">{scenario.before}</p>
+						</div>
+						<div class="scenario-divider" aria-hidden="true">
+							<span class="scenario-arrow">→</span>
+						</div>
+						<div class="scenario-side scenario-after">
+							<span class="scenario-label">After</span>
+							<p class="scenario-text">{scenario.after}</p>
+						</div>
 					</div>
 				</BlurFade>
 			{/each}
@@ -241,18 +236,34 @@
 	</div>
 </section>
 
-<!-- How It Works -->
+<!-- Who this is for -->
+<section class="who-section">
+	<div class="section-container">
+		<BlurFade>
+			<h2 class="section-heading">Is this you?</h2>
+		</BlurFade>
+		<div class="who-grid">
+			{#each whoThisIsFor as item, i}
+				<BlurFade delay={0.1 + i * 0.1}>
+					<div class="who-card">
+						<span class="who-check">&#10003;</span>
+						<p class="who-text">{item}</p>
+					</div>
+				</BlurFade>
+			{/each}
+		</div>
+	</div>
+</section>
+
+<!-- How It Works — grounded in the conversation -->
 <section class="steps-section">
 	<div class="section-container">
 		<BlurFade>
 			<h2 class="section-heading">How it works</h2>
 		</BlurFade>
-		<BlurFade delay={0.1}>
-			<p class="section-intro">Four steps from discovery to deployment</p>
-		</BlurFade>
 		<div class="steps-grid">
 			{#each steps as step, i}
-				<BlurFade delay={0.2 + i * 0.1}>
+				<BlurFade delay={0.1 + i * 0.1}>
 					<div class="step-card">
 						<div class="step-num">{step.num}</div>
 						<h3 class="step-title">{step.title}</h3>
@@ -264,93 +275,18 @@
 	</div>
 </section>
 
-<!-- Workflows -->
-<section class="workflows-section">
+<!-- Value anchor — no full pricing table, link to /services -->
+<section class="value-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="section-heading">What this looks like</h2>
-		</BlurFade>
-		<BlurFade delay={0.1}>
-			<p class="section-intro">When your tools talk to Agents</p>
-		</BlurFade>
-		<div class="workflows-grid">
-			{#each workflows as wf, i}
-				<BlurFade delay={0.2 + i * 0.1}>
-					<div class="workflow-card">
-						<h3 class="workflow-title">{wf.title}</h3>
-						<p class="workflow-tagline">{wf.tagline}</p>
-						<p class="workflow-desc">{wf.description}</p>
-					</div>
-				</BlurFade>
-			{/each}
-		</div>
-	</div>
-</section>
-
-<!-- Pricing (matching landing page structure) -->
-<section class="pricing-section">
-	<div class="section-container">
-		<BlurFade>
-			<h2 class="section-heading">Simple, predictable pricing</h2>
-		</BlurFade>
-		<BlurFade delay={0.1}>
-			<p class="section-intro">
-				You pick the tools. We connect them to AI. You know the cost before we start.
-			</p>
-		</BlurFade>
-		
-		<!-- Scenario examples -->
-		<BlurFade delay={0.2}>
-			<div class="pricing-examples">
-				<h4>Example projects</h4>
-				<div class="examples-grid">
-					<div class="example-item">
-						<span class="example-name">CRM + Docs</span>
-						<span class="example-calc">HubSpot + Notion + Claude</span>
-						<span class="example-price">$750</span>
-					</div>
-					<div class="example-item">
-						<span class="example-name">Team workflows</span>
-						<span class="example-calc">Salesforce + Slack + Google + secure login</span>
-						<span class="example-price">$1,500</span>
-					</div>
-					<div class="example-item">
-						<span class="example-name">Full automation</span>
-						<span class="example-calc">8 tools + 3 AI platforms + scheduled tasks</span>
-						<span class="example-price">$3,500</span>
-					</div>
-				</div>
+			<div class="value-card">
+				<h2 class="value-heading">Fixed pricing. No surprises.</h2>
+				<p class="value-text">
+					Most projects land between <strong>$750 and $2,500</strong> depending on how many tools 
+					you need connected. You know the total before we start. No hourly billing.
+				</p>
+				<a href="/services" class="value-link">See full pricing breakdown →</a>
 			</div>
-		</BlurFade>
-		
-		<!-- How we price it -->
-		<BlurFade delay={0.3}>
-			<div class="pricing-tier">
-				<h4 class="pricing-tier-label">How we price it</h4>
-				<div class="pricing-row">
-					<div class="pricing-card featured">
-						<div class="pricing-label">Tool</div>
-						<div class="pricing-amount">$250</div>
-						<div class="pricing-unit">per tool connected</div>
-						<p class="pricing-description">
-							HubSpot, Notion, Slack, Google, or your internal systems.
-						</p>
-					</div>
-					
-					<div class="pricing-card featured">
-						<div class="pricing-label">AI Platform</div>
-						<div class="pricing-amount">$250</div>
-						<div class="pricing-unit">per platform configured</div>
-						<p class="pricing-description">
-							We set up Claude, Cursor, or Codex to work with your tools.
-						</p>
-					</div>
-				</div>
-			</div>
-		</BlurFade>
-		
-		<BlurFade delay={0.4}>
-			<p class="value-anchor">Custom development typically costs $15k–$50k. Our per-tool model makes it predictable.</p>
 		</BlurFade>
 	</div>
 </section>
@@ -359,10 +295,13 @@
 <section class="cta-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="cta-heading">Let's map your integration</h2>
+			<h2 class="cta-heading">Stop being the middleware.</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
-			<p class="cta-subtext">30-minute call. We'll scope build + operate options.</p>
+			<p class="cta-subtext">
+				30-minute discovery call. Tell us your tools and where you lose time. 
+				We'll tell you what it costs to fix.
+			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<ShimmerButton href="https://savvycal.com/create-something/discovery">
@@ -398,7 +337,7 @@
 		line-height: var(--leading-relaxed);
 	}
 	
-	/* Hero with grid background - matching landing page */
+	/* Hero with grid background */
 	.hero {
 		position: relative;
 		padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem) var(--section-padding, 6rem);
@@ -406,7 +345,6 @@
 		overflow: hidden;
 	}
 	
-	/* Animated grid background container */
 	.hero-grid-container {
 		position: absolute;
 		inset: 0;
@@ -414,7 +352,6 @@
 		pointer-events: none;
 	}
 	
-	/* Radial fade mask for the animated grid */
 	:global(.hero-animated-grid) {
 		mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
 		-webkit-mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
@@ -447,7 +384,7 @@
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 		margin-bottom: var(--space-6, 2rem);
-		line-height: 1.0;
+		line-height: 1.05;
 		letter-spacing: var(--tracking-tighter, -0.025em);
 	}
 	
@@ -476,7 +413,7 @@
 		color: var(--color-fg-primary);
 	}
 	
-	/* Hero visual frame - contains glow + bordered container */
+	/* Hero visual */
 	.hero-visual-frame {
 		position: relative;
 		display: flex;
@@ -484,31 +421,23 @@
 		justify-content: center;
 	}
 	
-	/* Glow effect behind the visual */
 	.hero-visual-glow {
 		position: absolute;
 		width: 100%;
 		height: 100%;
-		background: radial-gradient(
-			ellipse at center,
-			rgba(96, 165, 250, 0.15) 0%,
-			rgba(167, 139, 250, 0.08) 40%,
-			transparent 70%
-		);
+		background: var(--accent-glow);
 		filter: blur(40px);
 		pointer-events: none;
 	}
 	
-	/* Bordered container with beam effect */
 	.hero-visual-container {
 		position: relative;
 		padding: var(--space-6, 2rem);
 		border-radius: var(--radius-xl, 16px);
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		border: 1px solid var(--glass-border-light);
 		background: rgba(255, 255, 255, 0.02);
 	}
 	
-	/* Orbital container */
 	.orbital-container {
 		position: relative;
 		width: 300px;
@@ -518,7 +447,6 @@
 		justify-content: center;
 	}
 	
-	/* Orbit depth layers */
 	.orbit-layer {
 		position: absolute;
 		inset: 0;
@@ -527,19 +455,14 @@
 		justify-content: center;
 	}
 	
-	/* MAIN layer - in focus */
-	.orbit-layer.layer-main {
-		z-index: 5;
-	}
+	.orbit-layer.layer-main { z-index: 5; }
 	
-	/* CLOSE layer - in front, slight blur for motion */
 	.orbit-layer.layer-close {
 		z-index: 8;
 		filter: blur(0.5px);
 		opacity: 0.85;
 	}
 	
-	/* Central hub - always on top and sharp */
 	.orbital-center {
 		position: relative;
 		z-index: 20;
@@ -554,14 +477,14 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: rgba(10, 10, 15, 0.9);
+		background: var(--glass-bg-strong);
 		backdrop-filter: blur(20px) saturate(120%);
 		-webkit-backdrop-filter: blur(20px) saturate(120%);
-		border: 1px solid rgba(255, 255, 255, 0.15);
+		border: 1px solid var(--glass-border-medium);
 		border-radius: 20px;
 		box-shadow: 
 			0 8px 32px rgba(0, 0, 0, 0.4),
-			inset 0 1px 0 rgba(255, 255, 255, 0.1);
+			inset 0 1px 0 var(--glass-border-light);
 		color: white;
 	}
 	
@@ -570,21 +493,20 @@
 		height: 52px;
 	}
 	
-	/* Base orbiting items */
 	.orbit-item {
 		width: 44px;
 		height: 44px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: rgba(255, 255, 255, 0.06);
-		border: 1px solid rgba(255, 255, 255, 0.12);
+		background: var(--glass-border-subtle);
+		border: 1px solid var(--glass-border-light);
 		border-radius: 12px;
 		color: white;
 		box-shadow: 
 			0 4px 16px rgba(0, 0, 0, 0.3),
-			inset 0 1px 0 rgba(255, 255, 255, 0.08);
-		transition: all 0.3s ease;
+			inset 0 1px 0 var(--glass-border-subtle);
+		transition: all var(--duration-standard) var(--ease-standard);
 	}
 	
 	.orbit-item :global(svg) {
@@ -592,12 +514,11 @@
 		height: 22px;
 	}
 	
-	/* CLOSE items - larger, brighter */
 	.orbit-item.orbit-close {
 		width: 38px;
 		height: 38px;
-		background: rgba(255, 255, 255, 0.08);
-		border-color: rgba(255, 255, 255, 0.15);
+		background: var(--glass-border-subtle);
+		border-color: var(--glass-border-medium);
 	}
 	
 	.orbit-item.orbit-close :global(svg) {
@@ -615,23 +536,24 @@
 		}
 	}
 	
-	/* Pain Points */
-	.pain-section {
+	/* Before / After section */
+	.before-after-section {
 		padding: var(--section-padding, 6rem) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
 	
-	.pain-grid {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: var(--space-4, 1rem);
+	.before-after-list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-5, 1.5rem);
 	}
 	
-	.pain-card {
-		padding: var(--space-5, 1.5rem);
-		display: flex;
-		align-items: flex-start;
+	.scenario-card {
+		display: grid;
+		grid-template-columns: 1fr auto 1fr;
 		gap: var(--space-4, 1rem);
+		align-items: stretch;
+		padding: var(--space-5, 1.5rem);
 		border-radius: var(--radius-lg, 12px);
 		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-pure);
@@ -642,29 +564,99 @@
 			transform var(--duration-bounce) var(--ease-bounce);
 	}
 	
-	.pain-card:hover {
+	.scenario-card:hover {
 		border-color: var(--color-border-emphasis);
 		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
 		transform: translateY(-2px);
 	}
 	
-	.pain-problem {
-		font-size: var(--text-body);
+	.scenario-side {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2, 0.5rem);
+	}
+	
+	.scenario-label {
+		font-size: var(--text-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
 		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		flex: 1;
 	}
 	
-	.pain-arrow {
+	.scenario-before .scenario-label {
 		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
-		flex-shrink: 0;
 	}
 	
-	.pain-solution {
+	.scenario-after .scenario-label {
+		color: var(--accent-blue-strong);
+	}
+	
+	.scenario-text {
+		font-size: var(--text-body-sm);
+		line-height: var(--leading-relaxed);
+	}
+	
+	.scenario-before .scenario-text {
+		color: var(--color-fg-tertiary);
+	}
+	
+	.scenario-after .scenario-text {
+		color: var(--color-fg-secondary);
+	}
+	
+	.scenario-divider {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0 var(--space-2, 0.5rem);
+	}
+	
+	.scenario-arrow {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-muted);
+		opacity: 0.5;
+	}
+	
+	/* Who this is for */
+	.who-section {
+		padding: var(--section-padding, 6rem) 0;
+		border-top: 1px solid var(--color-border-default);
+	}
+	
+	.who-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: var(--space-4, 1rem);
+		max-width: var(--content-width-md);
+		margin: 0 auto;
+	}
+	
+	.who-card {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-3, 0.75rem);
+		padding: var(--space-4, 1rem) var(--space-5, 1.5rem);
+		border-radius: var(--radius-lg, 12px);
+		border: 1px solid var(--color-border-default);
+		background: var(--color-bg-pure);
+		transition: border-color var(--duration-micro, 200ms) var(--ease-standard);
+	}
+	
+	.who-card:hover {
+		border-color: var(--color-border-emphasis);
+	}
+	
+	.who-check {
+		color: var(--accent-blue-strong);
+		font-weight: var(--font-bold);
+		flex-shrink: 0;
+		margin-top: 2px;
+	}
+	
+	.who-text {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
-		flex: 1;
+		line-height: var(--leading-relaxed);
 	}
 	
 	/* Steps */
@@ -706,231 +698,55 @@
 	.step-desc {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
-	}
-	
-	/* Workflows */
-	.workflows-section {
-		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
-	}
-	
-	.workflows-grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-4, 1rem);
-	}
-	
-	.workflow-card {
-		padding: var(--space-5, 1.5rem);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg, 12px);
-		transition: border-color var(--duration-micro, 200ms) var(--ease-standard);
-	}
-	
-	.workflow-card:hover {
-		border-color: var(--color-border-emphasis);
-	}
-	
-	.workflow-title {
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-1, 0.25rem);
-	}
-	
-	.workflow-tagline {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-3, 0.75rem);
-	}
-	
-	.workflow-desc {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
 		line-height: var(--leading-relaxed);
 	}
 	
-	/* Pricing Section (matching landing page) */
-	.pricing-section {
+	/* Value anchor */
+	.value-section {
 		padding: var(--section-padding, 6rem) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
 	
-	.pricing-tier {
-		margin-bottom: var(--space-6, 2rem);
-	}
-	
-	.pricing-tier-label {
-		font-size: var(--text-caption);
-		text-transform: uppercase;
-		letter-spacing: 0.15em;
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-3, 0.75rem);
+	.value-card {
 		text-align: center;
-	}
-	
-	.pricing-row {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: var(--space-4, 1rem);
-		align-items: stretch;
-		max-width: var(--content-width-md);
+		max-width: var(--content-width-sm);
 		margin: 0 auto;
+		padding: var(--space-8, 3rem) var(--space-6, 2rem);
+		border-radius: var(--radius-xl, 16px);
+		border: 1px solid var(--accent-blue-subtle);
+		background: var(--accent-gradient-subtle);
+		box-shadow: var(--glass-shine-soft);
 	}
 	
-	.pricing-card {
-		padding: var(--space-5, 1.5rem);
-		border-radius: var(--radius-lg, 12px);
-		border: 1px solid var(--color-border-default);
-		background: var(--color-bg-pure);
-		text-align: center;
-		display: flex;
-		flex-direction: column;
-		transition: 
-			border-color 200ms ease,
-			transform 200ms ease;
-	}
-	
-	.pricing-card:hover {
-		border-color: var(--color-border-emphasis);
-		transform: translateY(-2px);
-	}
-	
-	.pricing-card.featured {
-		border-color: rgba(96, 165, 250, 0.4);
-		background: linear-gradient(
-			135deg,
-			rgba(96, 165, 250, 0.05) 0%,
-			rgba(167, 139, 250, 0.05) 100%
-		);
-	}
-	
-	.pricing-label {
-		font-size: var(--text-caption);
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-3, 0.75rem);
-	}
-	
-	.pricing-amount {
-		font-size: var(--text-h1);
+	.value-heading {
+		font-size: var(--text-h2);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
-		line-height: 1;
-		font-family: var(--font-display);
-	}
-	
-	.pricing-unit {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
 		margin-bottom: var(--space-4, 1rem);
+		letter-spacing: var(--tracking-tight, -0.015em);
 	}
 	
-	.pricing-description {
-		font-size: var(--text-body-sm);
+	.value-text {
+		font-size: var(--text-body);
 		color: var(--color-fg-secondary);
 		line-height: var(--leading-relaxed);
-		margin-top: auto;
+		margin-bottom: var(--space-5, 1.5rem);
 	}
 	
-	/* Example Builds */
-	.pricing-examples {
-		border-top: 1px solid var(--color-border-default);
-		padding-top: var(--space-6, 2rem);
-	}
-	
-	.pricing-examples h4 {
-		font-size: var(--text-body-sm);
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-4, 1rem);
-		text-align: center;
-	}
-	
-	.examples-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-		gap: var(--space-4, 1rem);
-		align-items: stretch;
-	}
-	
-	.example-item {
-		position: relative;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: var(--space-2, 0.5rem);
-		padding: var(--space-5, 1.5rem);
-		border-radius: var(--radius-lg, 12px);
-		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
-		box-shadow: var(--glass-shine-soft);
-		transition:
-			border-color var(--duration-standard) var(--ease-standard),
-			box-shadow var(--duration-standard) var(--ease-standard),
-			transform var(--duration-bounce) var(--ease-bounce);
-	}
-
-	.example-item::before {
-		content: '';
-		position: absolute;
-		top: 0;
-		left: 12%;
-		right: 12%;
-		height: 1px;
-		background: linear-gradient(
-			90deg,
-			transparent,
-			rgba(255, 255, 255, 0.2),
-			transparent
-		);
-		opacity: 0.6;
-	}
-
-	.example-item:hover {
-		border-color: var(--color-border-emphasis);
-		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
-		transform: translateY(-2px);
-	}
-	
-	.example-name {
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-semibold);
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		color: var(--color-fg-muted);
-	}
-	
-	.example-calc {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: 0.35rem;
-		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-full, 9999px);
-		padding: 0.25rem 0.6rem;
-		font-family: var(--font-mono, monospace);
-	}
-	
-	.example-price {
-		font-size: var(--text-h3);
-		font-weight: var(--font-semibold);
+	.value-text strong {
 		color: var(--color-fg-primary);
-		font-family: var(--font-display);
-		margin-top: auto;
+		font-weight: var(--font-semibold);
 	}
 	
-	.value-anchor {
-		text-align: center;
+	.value-link {
 		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		margin-top: var(--space-6, 2rem);
-		font-style: italic;
+		color: var(--accent-blue-strong);
+		text-decoration: none;
+		transition: color var(--duration-micro, 200ms) var(--ease-standard);
+	}
+	
+	.value-link:hover {
+		color: var(--accent-blue);
 	}
 
 	/* CTA */
@@ -951,9 +767,13 @@
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-secondary);
 		margin-bottom: var(--space-6, 2rem);
+		max-width: var(--content-width-sm);
+		margin-left: auto;
+		margin-right: auto;
+		line-height: var(--leading-relaxed);
 	}
 	
-/* Responsive */
+	/* Responsive */
 	@media (max-width: 900px) {
 		.hero-container {
 			grid-template-columns: 1fr;
@@ -981,10 +801,23 @@
 		}
 		
 		.hero-title {
-			font-size: clamp(2.5rem, 8vw, 4rem);
+			font-size: clamp(2rem, 7vw, 3.5rem);
 		}
 		
-		.pain-grid {
+		.scenario-card {
+			grid-template-columns: 1fr;
+			gap: var(--space-3, 0.75rem);
+		}
+		
+		.scenario-divider {
+			padding: 0;
+		}
+		
+		.scenario-arrow {
+			transform: rotate(90deg);
+		}
+		
+		.who-grid {
 			grid-template-columns: 1fr;
 		}
 		
@@ -992,23 +825,10 @@
 			grid-template-columns: repeat(2, 1fr);
 		}
 		
-		.workflows-grid {
-			grid-template-columns: 1fr;
-		}
-		
-		.pricing-row {
-			grid-template-columns: 1fr;
-		}
-		
-		.examples-grid {
-			grid-template-columns: 1fr;
-		}
-		
-		/* Mobile section padding */
-		.pain-section,
+		.before-after-section,
+		.who-section,
 		.steps-section,
-		.workflows-section,
-		.pricing-section,
+		.value-section,
 		.cta-section {
 			padding: var(--layout-3, 4rem) 0;
 		}
