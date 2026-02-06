@@ -21,19 +21,33 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 		throw error(401, 'Unauthorized');
 	}
 
-	const userEmail = locals.user.email;
+	const userEmail = locals.user.email.toLowerCase();
 
 	try {
 		const airtable = getAirtableClient(platform?.env);
 
-		// Fetch leaderboard data from Airtable
-		// The table ID tblcXLVLYobhNmrg6 contains Top Templates by Sales / 30 Days
-		const records = await airtable.getLeaderboard();
+		// Fetch leaderboard data and creator profile in parallel
+		const [records, creator] = await Promise.all([
+			airtable.getLeaderboard(),
+			airtable.getCreatorByEmail(userEmail)
+		]);
+
+		// Collect all known emails for this user (login email + creator record emails)
+		// The leaderboard CREATOR_EMAIL comes from Snowflake (workspace owner email)
+		// which may differ from the dashboard login email. Creators often have multiple
+		// emails across 📧Email, 📧WF Account Email, and 📧Emails fields.
+		const userEmails = new Set<string>([userEmail]);
+		if (creator?.email) userEmails.add(creator.email.toLowerCase());
+		if (creator?.emails) {
+			for (const e of creator.emails) {
+				if (e) userEmails.add(e.toLowerCase());
+			}
+		}
 
 		// Transform records and apply security redaction
 		const leaderboard = records.map((record) => {
 			const creatorEmail = record.creatorEmail || '';
-			const isUserTemplate = creatorEmail.toLowerCase() === userEmail.toLowerCase();
+			const isUserTemplate = userEmails.has(creatorEmail.toLowerCase());
 
 			return {
 				templateName: record.templateName || '',
