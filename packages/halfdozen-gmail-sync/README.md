@@ -227,6 +227,65 @@ For clients that don't support remote MCP natively:
 }
 ```
 
+## Gmail Add-on (Sidebar)
+
+Sync emails to Notion directly from Gmail without leaving your inbox.
+
+### How It Works
+
+1. Open any email in Gmail
+2. The Half Dozen Sync sidebar appears with sender info and direction
+3. Click **Sync to Notion** -- the email is synced with contact auto-creation
+4. If the contact was auto-created but is actually an existing client, click **Link to Existing Contact Instead** to search by name, re-link, and save the alias
+
+### Setup
+
+#### 1. Set the add-on secret on the worker
+
+```bash
+cd worker
+wrangler secret put ADDON_SECRET
+# Enter a strong random string (this authenticates the add-on)
+```
+
+#### 2. Create the Apps Script project
+
+1. Go to [script.google.com](https://script.google.com) (logged into your Half Dozen Google Workspace account)
+2. Click **New project**
+3. Replace the default `Code.gs` with the contents of `addon/Code.gs`
+4. Create a new file `Config.gs` and paste the contents of `addon/Config.gs`
+5. Open **Project Settings** (gear icon):
+   - Under **General settings**, check **Show "appsscript.json" manifest file in editor**
+   - Go back to the editor and replace `appsscript.json` with the contents of `addon/appsscript.json`
+6. In **Project Settings > Script Properties**, add:
+   - `ADDON_SECRET` -- the same value you set in the worker
+   - `TEAM_EMAILS` -- comma-separated team emails (e.g., `alice@halfdozen.com,bob@halfdozen.com`)
+
+#### 3. Install the add-on
+
+1. Click **Deploy > Test deployments**
+2. Click **Install**
+3. Open Gmail, open any email -- the sidebar should appear
+
+#### 4. Share with the team
+
+- Share the Apps Script project with team members (editor access)
+- Each person: **Deploy > Test deployments > Install**
+
+Or private publish to the Half Dozen Marketplace for self-service install (no Google review required).
+
+### Contact Matching
+
+When syncing, contacts are matched in this order:
+
+1. **Primary Email** -- exact match (highest confidence)
+2. **Secondary Email** -- exact match (catches clients using alternate addresses)
+3. **Name** -- exact match
+4. **First Name** -- partial match (lowest confidence)
+5. **Auto-create** -- new contact created from sender info
+
+If a contact was auto-created but should have been linked to an existing one, use the **Link to Existing Contact** flow to re-link, save the alias to Secondary Email (if available), and archive the duplicate.
+
 ## Troubleshooting
 
 ### "No Gmail tokens found"
@@ -241,11 +300,6 @@ Your refresh token may have expired. Run `pnpm auth` again.
 
 Add your Notion database IDs to the `.env` file.
 
-### Contact not found
+### "ADDON_SECRET not set"
 
-The linker searches by:
-1. Exact email match (highest confidence)
-2. Exact name match
-3. First name match (lowest confidence)
-
-Use `--create-contacts` to auto-create missing contacts.
+In the Apps Script editor, go to Project Settings > Script Properties and add `ADDON_SECRET`.

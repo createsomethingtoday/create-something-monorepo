@@ -1,0 +1,29 @@
+{
+  "timeZone": "America/Chicago",
+  "dependencies": {},
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/gmail.addons.execute",
+    "https://www.googleapis.com/auth/gmail.addons.current.message.readonly",
+    "https://www.googleapis.com/auth/script.external_request"
+  ],
+  "addOns": {
+    "common": {
+      "name": "Half Dozen Gmail Sync",
+      "logoUrl": "https://www.gstatic.com/images/branding/product/2x/gmail_2020q4_48dp.png",
+      "useLocaleFromApp": true
+    },
+    "gmail": {
+      "contextualTriggers": [
+        {
+          "unconditional": {},
+          "onTriggerFunction": "onGmailMessageOpen"
+        }
+      ]
+    }
+  },
+  "urlFetchWhitelist": [
+    "https://halfdozen-gmail-sync-mcp.half-dozen.workers.dev/"
+  ]
+}
