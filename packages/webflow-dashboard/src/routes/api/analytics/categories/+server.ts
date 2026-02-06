@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient } from '$lib/server/airtable';
+import { getSyncMetadata } from '$lib/utils/sync-schedule';
 
 /**
  * API endpoint to fetch category performance data
@@ -64,16 +65,35 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 			});
 		}
 
+		// Get actual sync schedule metadata (not current time)
+		const syncMetadata = getSyncMetadata();
+
+		// Calculate total marketplace revenue across all categories
+		const totalRevenue = categories.reduce((sum, c) => {
+			// avgRevenuePerTemplate * templatesInSubcategory approximates total revenue
+			// but we also have totalSales30d. Use available aggregate data.
+			return sum + (c.totalRevenue30d || 0);
+		}, 0);
+
+		// Total templates across all categories
+		const totalTemplates = categories.reduce((sum, c) => sum + c.templatesInSubcategory, 0);
+
 		return json({
 			categories,
 			topCategories,
 			insights,
 			summary: {
 				totalCategories: categories.length,
+				totalTemplates,
 				totalSales,
+				totalRevenue,
 				avgRevenue: Math.round(avgRevenue),
 				lowestCompetition,
-				lastUpdated: new Date().toISOString()
+				lastUpdated: syncMetadata.lastSyncTime,
+				nextUpdate: syncMetadata.nextSyncTime,
+				syncSchedule: syncMetadata.syncSchedule,
+				dataWindow: syncMetadata.dataWindow,
+				timeUntilNextSync: syncMetadata.timeUntilNextSync
 			}
 		});
 	} catch (err) {

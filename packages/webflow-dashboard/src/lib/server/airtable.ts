@@ -1074,6 +1074,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			subcategory: string;
 			templatesInSubcategory: number;
 			totalSales30d: number;
+			totalRevenue30d: number;
 			avgRevenuePerTemplate: number;
 			revenueRank: number;
 		}>> {
@@ -1089,6 +1090,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				subcategory: record.fields['SUBCATEGORY'] as string || '',
 				templatesInSubcategory: Number(record.fields['TEMPLATES_IN_SUBCATEGORY']) || 0,
 				totalSales30d: Number(record.fields['TOTAL_SALES_30D']) || 0,
+				totalRevenue30d: Number(record.fields['TOTAL_REVENUE_30D']) || 0,
 				avgRevenuePerTemplate: Number(record.fields['AVG_REVENUE_PER_TEMPLATE']) || 0,
 				revenueRank: Number(record.fields['REVENUE_RANK']) || 0
 			}));

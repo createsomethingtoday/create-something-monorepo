@@ -20,6 +20,7 @@
 		subcategory: string;
 		templatesInSubcategory: number;
 		totalSales30d: number;
+		totalRevenue30d: number;
 		avgRevenuePerTemplate: number;
 		revenueRank: number;
 	}
@@ -37,12 +38,27 @@
 			userBestRank: number | null;
 			lastUpdated: string;
 			nextUpdateDate?: string;
+			syncSchedule?: string;
+			dataWindow?: string;
+			timeUntilNextSync?: string;
 		};
 	}
 
 	interface CategoriesResponse {
 		categories: CategoryEntry[];
 		insights: Insight[];
+		summary: {
+			totalCategories: number;
+			totalTemplates: number;
+			totalSales: number;
+			totalRevenue: number;
+			avgRevenue: number;
+			lastUpdated: string;
+			nextUpdate: string;
+			syncSchedule: string;
+			dataWindow: string;
+			timeUntilNextSync: string;
+		};
 	}
 
 	let { data }: { data: PageData } = $props();
@@ -115,9 +131,16 @@
 
 			leaderboard = leaderboardData.leaderboard;
 			userTemplates = leaderboardData.userTemplates;
-			summary = leaderboardData.summary;
 			categories = categoriesData.categories;
 			insights = categoriesData.insights;
+
+			// Use categories-based total sales (all marketplace) instead of
+			// leaderboard total (top 50 only). This matches v1 behavior and gives
+			// a more accurate marketplace-wide picture.
+			summary = {
+				...leaderboardData.summary,
+				totalMarketplaceSales: categoriesData.summary?.totalSales ?? leaderboardData.summary.totalMarketplaceSales
+			};
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load data';
 		} finally {

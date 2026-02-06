@@ -22,6 +22,7 @@
 		subcategory: string;
 		templatesInSubcategory: number;
 		totalSales30d: number;
+		totalRevenue30d: number;
 		avgRevenuePerTemplate: number;
 		revenueRank: number;
 		/** Trend direction: positive, negative, or neutral */
@@ -47,6 +48,9 @@
 			userBestRank: number | null;
 			lastUpdated: string;
 			nextUpdateDate?: string;
+			syncSchedule?: string;
+			dataWindow?: string;
+			timeUntilNextSync?: string;
 		};
 	}
 
@@ -167,10 +171,15 @@
 				<div class="stat-card" in:fly={{ y: 20, duration: 400, delay: 0 }}>
 					<div class="stat-header">
 						<span class="stat-label">Total Sales (30d)</span>
-						<span class="stat-badge">Weekly Snapshot</span>
+						<span class="stat-badge" title={summary.syncSchedule || 'Data refreshes weekly on Mondays at 4 PM UTC'}>Weekly Snapshot</span>
 					</div>
 					<span class="stat-value"><KineticNumber value={summary.totalMarketplaceSales} /></span>
-					<span class="stat-note">across all categories</span>
+					<span class="stat-note">
+						across all categories
+						{#if summary.timeUntilNextSync}
+							· next update {summary.timeUntilNextSync}
+						{/if}
+					</span>
 				</div>
 			</CardContent>
 		</Card>
