@@ -346,8 +346,8 @@
 			<BlurFade delay={0.35}>
 				<div class="example-item">
 					<span class="example-name">Full automation</span>
-					<p class="example-outcome">8 tools connected with scheduled tasks, alerts, and automated workflows.</p>
-					<span class="example-calc">8 tools + 3 AI platforms + automation</span>
+					<p class="example-outcome">8 tools connected with scheduled tasks and automated workflows.</p>
+					<span class="example-calc">8 tools + 3 platforms + automation</span>
 					<span class="example-price">$3,500</span>
 				</div>
 			</BlurFade>
@@ -911,6 +911,12 @@
 		gap: var(--space-5, 1.5rem);
 		align-items: stretch;
 	}
+
+	/* BlurFade wrappers must stretch so grid equalizes row height */
+	.examples-grid > :global(*) {
+		display: flex;
+		flex-direction: column;
+	}
 	
 	.example-item {
 		position: relative;
@@ -924,6 +930,7 @@
 		background: var(--color-bg-pure);
 		border: 1px solid var(--color-border-default);
 		box-shadow: var(--glass-shine-soft);
+		flex: 1;
 		transition:
 			border-color var(--duration-standard) var(--ease-standard),
 			box-shadow var(--duration-standard) var(--ease-standard),
@@ -1011,7 +1018,6 @@
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
 		line-height: var(--leading-relaxed);
-		min-height: 2.8em;
 	}
 	
 	.example-calc {
