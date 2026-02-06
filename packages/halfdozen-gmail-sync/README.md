@@ -180,7 +180,7 @@ Add to your Cursor MCP settings (`~/.cursor/mcp.json`):
 
 ## Remote MCP Server (Cloudflare Worker)
 
-For remote access without local setup, deploy the Streamable HTTP version:
+For remote access without local setup, deploy the Streamable HTTP version. The worker supports **multi-user OAuth** — each team member authorizes their own Gmail account.
 
 ```bash
 cd worker
@@ -193,12 +193,24 @@ pnpm deploy
 ```bash
 wrangler secret put GOOGLE_CLIENT_ID
 wrangler secret put GOOGLE_CLIENT_SECRET
-wrangler secret put GOOGLE_REFRESH_TOKEN
 wrangler secret put NOTION_API_KEY
 wrangler secret put NOTION_INTERACTIONS_DB_ID
 wrangler secret put NOTION_CONTACTS_DB_ID
 wrangler secret put TEAM_EMAILS
+wrangler secret put ADMIN_SECRET        # Optional: protects /users endpoint and list_authorized_users tool
 ```
+
+> **Note**: The worker uses per-user OAuth tokens stored in KV, not a single `GOOGLE_REFRESH_TOKEN`. Each team member authorizes individually via the `/auth` endpoint.
+
+### Authorize Team Members
+
+Each team member must authorize their Gmail account:
+
+```
+https://halfdozen-gmail-sync-mcp.<your-subdomain>.workers.dev/auth?email=user@example.com
+```
+
+This opens a Google OAuth consent screen. After authorization, the refresh token is stored in KV and the user's Gmail is accessible via the MCP tools.
 
 ### Connect via mcp-remote
 

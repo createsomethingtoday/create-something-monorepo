@@ -83,6 +83,12 @@ async function gmailFetch(env: Env, path: string, params?: Record<string, string
   const response = await fetch(url.toString(), {
     headers: { Authorization: `Bearer ${token}` },
   });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Gmail API error (${response.status}): ${errorText}`);
+  }
+
   return response.json();
 }
 
@@ -147,6 +153,168 @@ async function notionCreatePage(env: Env, databaseId: string, properties: Record
 
 async function notionAppendBlocks(env: Env, blockId: string, children: unknown[]) {
   return notionFetch(env, `/blocks/${blockId}/children`, 'PATCH', { children });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Text chunking helpers (Notion API limits)
+// ═══════════════════════════════════════════════════════════════
+
+/** Maximum characters per rich text object (Notion limit: 2000, with buffer) */
+const CHUNK_SIZE = 1900;
+
+/** Maximum blocks per array in a single request (Notion limit: 100) */
+const MAX_BLOCKS_PER_REQUEST = 100;
+
+/**
+ * Chunk text at sentence boundaries, respecting Notion's 2000-char rich_text limit.
+ */
+function chunkText(text: string, maxLength: number = CHUNK_SIZE): string[] {
+  const chunks: string[] = [];
+  let remaining = text.trim();
+
+  while (remaining.length > 0) {
+    if (remaining.length <= maxLength) {
+      chunks.push(remaining);
+      break;
+    }
+
+    // Find sentence boundary
+    const sentenceEnd = remaining.lastIndexOf('. ', maxLength);
+    const splitAt = sentenceEnd > maxLength * 0.5
+      ? sentenceEnd + 2
+      : maxLength;
+
+    chunks.push(remaining.substring(0, splitAt).trim());
+    remaining = remaining.substring(splitAt).trim();
+  }
+
+  return chunks;
+}
+
+/**
+ * Build chunked paragraph blocks for email body, appended inside a toggle.
+ * Returns the toggle block and any overflow paragraphs that need separate append calls.
+ */
+function buildBodyBlocks(body: string): {
+  toggleBlock: unknown;
+  overflowBatches: unknown[][];
+} {
+  const chunks = chunkText(body);
+
+  if (chunks.length === 0) {
+    return {
+      toggleBlock: {
+        type: 'toggle',
+        toggle: {
+          rich_text: [{ type: 'text', text: { content: 'Email Body' } }],
+          children: [{ type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: '(empty)' } }] } }],
+        },
+      },
+      overflowBatches: [],
+    };
+  }
+
+  const paragraphs = chunks.map(chunk => ({
+    type: 'paragraph',
+    paragraph: {
+      rich_text: [{ type: 'text', text: { content: chunk } }],
+    },
+  }));
+
+  // First batch goes inside the toggle (leave room for the toggle itself)
+  const firstBatchSize = Math.min(paragraphs.length, MAX_BLOCKS_PER_REQUEST - 1);
+  const firstBatch = paragraphs.slice(0, firstBatchSize);
+
+  const toggleBlock = {
+    type: 'toggle',
+    toggle: {
+      rich_text: [{ type: 'text', text: { content: 'Email Body' } }],
+      children: firstBatch,
+    },
+  };
+
+  // Remaining paragraphs need to be appended to the toggle block after creation
+  const overflowBatches: unknown[][] = [];
+  for (let i = firstBatchSize; i < paragraphs.length; i += MAX_BLOCKS_PER_REQUEST) {
+    overflowBatches.push(paragraphs.slice(i, i + MAX_BLOCKS_PER_REQUEST));
+  }
+
+  return { toggleBlock, overflowBatches };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Email body extraction (recursive multipart)
+// ═══════════════════════════════════════════════════════════════
+
+interface MessagePart {
+  mimeType?: string;
+  body?: { data?: string };
+  parts?: MessagePart[];
+}
+
+/**
+ * Recursively extract plain text and HTML from a Gmail message payload.
+ * Handles nested multipart structures (multipart/mixed > multipart/alternative).
+ */
+function extractBodyFromPayload(payload?: MessagePart): { plain: string; html: string } {
+  if (!payload) return { plain: '', html: '' };
+
+  let plain = '';
+  let html = '';
+
+  const processPart = (part: MessagePart) => {
+    if (part.mimeType === 'text/plain' && part.body?.data && !plain) {
+      plain = decodeBase64Url(part.body.data);
+    } else if (part.mimeType === 'text/html' && part.body?.data && !html) {
+      html = decodeBase64Url(part.body.data);
+    }
+
+    // Recurse into nested parts
+    if (part.parts) {
+      for (const subPart of part.parts) {
+        processPart(subPart);
+      }
+    }
+  };
+
+  // Handle single-part messages
+  if (payload.body?.data) {
+    const decoded = decodeBase64Url(payload.body.data);
+    if (payload.mimeType === 'text/plain') {
+      plain = decoded;
+    } else if (payload.mimeType === 'text/html') {
+      html = decoded;
+    }
+  }
+
+  // Handle multipart messages
+  if (payload.parts) {
+    for (const part of payload.parts) {
+      processPart(part);
+    }
+  }
+
+  // Fallback: strip HTML tags if no plain text
+  if (!plain && html) {
+    plain = html
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  return { plain, html };
+}
+
+/** Decode base64url-encoded string (Gmail API uses URL-safe base64). */
+function decodeBase64Url(data: string): string {
+  return atob(data.replace(/-/g, '+').replace(/_/g, '/'));
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -404,10 +572,8 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
         try {
           // Fetch email from Gmail
           const msg = await gmailFetch(this.env, `/messages/${email_id}`, { format: 'full' }, user_email) as {
-            payload?: {
+            payload?: MessagePart & {
               headers?: Array<{ name: string; value: string }>;
-              body?: { data?: string };
-              parts?: Array<{ mimeType: string; body?: { data?: string } }>;
             };
           };
 
@@ -418,19 +584,8 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
           const subject = getHeader('Subject') || '(No Subject)';
           const date = new Date(getHeader('Date')).toISOString();
 
-          // Extract body
-          let body = '';
-          if (msg.payload?.body?.data) {
-            body = atob(msg.payload.body.data.replace(/-/g, '+').replace(/_/g, '/'));
-          }
-          if (msg.payload?.parts) {
-            for (const part of msg.payload.parts) {
-              if (part.mimeType === 'text/plain' && part.body?.data) {
-                body = atob(part.body.data.replace(/-/g, '+').replace(/_/g, '/'));
-                break;
-              }
-            }
-          }
+          // Extract body (recursive multipart traversal)
+          const { plain: body } = extractBodyFromPayload(msg.payload);
 
           // Check if already synced
           const existing = await notionQueryDatabase(this.env, this.env.NOTION_INTERACTIONS_DB_ID, {
@@ -468,7 +623,7 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
 
           // Create interaction
           const properties: Record<string, unknown> = {
-            Interaction: { title: [{ text: { content: `${subject} [${email_id}]` } }] },
+            Interaction: { title: [{ text: { content: `${subject} [${email_id}]`.substring(0, 2000) } }] },
             Date: { date: { start: date.split('T')[0] } },
             Type: { select: { name: 'Email' } },
           };
@@ -478,23 +633,28 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
 
           const page = await notionCreatePage(this.env, this.env.NOTION_INTERACTIONS_DB_ID, properties);
 
-          // Add email content as blocks
-          await notionAppendBlocks(this.env, page.id, [
-            {
-              type: 'callout',
-              callout: {
-                icon: { emoji: '📧' },
-                rich_text: [{ type: 'text', text: { content: `From: ${from.email}\nDirection: ${direction}\nSynced by: ${user_email}` } }],
-              },
+          // Add email content as blocks (with proper chunking)
+          const calloutBlock = {
+            type: 'callout',
+            callout: {
+              icon: { emoji: '📧' },
+              rich_text: [{ type: 'text', text: { content: `From: ${from.email}\nDirection: ${direction}\nSynced by: ${user_email}` } }],
             },
-            {
-              type: 'toggle',
-              toggle: {
-                rich_text: [{ type: 'text', text: { content: 'Email Body' } }],
-                children: [{ type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: body.substring(0, 1900) } }] } }],
-              },
-            },
-          ]);
+          };
+
+          const { toggleBlock, overflowBatches } = buildBodyBlocks(body);
+
+          const appendResult = await notionAppendBlocks(this.env, page.id, [calloutBlock, toggleBlock]) as {
+            results: Array<{ id: string }>;
+          };
+
+          // Append overflow body chunks to the toggle block
+          if (overflowBatches.length > 0) {
+            const toggleId = appendResult.results[1].id;
+            for (const batch of overflowBatches) {
+              await notionAppendBlocks(this.env, toggleId, batch);
+            }
+          }
 
           return {
             content: [{ type: 'text', text: JSON.stringify({ success: true, interactionId: page.id, contactId, contactCreated, syncedBy: user_email }, null, 2) }],
@@ -583,11 +743,19 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
       }
     );
 
-    // Tool: List Authorized Users
+    // Tool: List Authorized Users (requires admin_secret)
     this.server.tool(
       'list_authorized_users',
-      {},
-      async () => {
+      {
+        admin_secret: z.string().describe('Admin secret (must match ADMIN_SECRET env var)'),
+      },
+      async ({ admin_secret }) => {
+        if (!this.env.ADMIN_SECRET) {
+          return { content: [{ type: 'text', text: JSON.stringify({ error: 'Admin endpoint not configured' }) }] };
+        }
+        if (admin_secret !== this.env.ADMIN_SECRET) {
+          return { content: [{ type: 'text', text: JSON.stringify({ error: 'Unauthorized: invalid admin_secret' }) }] };
+        }
         const list = await this.env.GMAIL_TOKENS.list();
         const users = list.keys.map(k => k.name);
         return { content: [{ type: 'text', text: JSON.stringify({ count: users.length, users }, null, 2) }] };
@@ -653,10 +821,8 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
             id: string;
             threadId?: string;
             snippet?: string;
-            payload?: {
+            payload?: MessagePart & {
               headers?: Array<{ name: string; value: string }>;
-              body?: { data?: string };
-              parts?: Array<{ mimeType: string; body?: { data?: string } }>;
             };
           };
 
@@ -668,19 +834,8 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
           const to = getHeader('To');
           const date = getHeader('Date');
 
-          let body = '';
-          if (msg.payload?.body?.data) {
-            body = atob(msg.payload.body.data.replace(/-/g, '+').replace(/_/g, '/'));
-          }
-          if (msg.payload?.parts) {
-            for (const part of msg.payload.parts) {
-              if (part.mimeType === 'text/plain' && part.body?.data) {
-                body = atob(part.body.data.replace(/-/g, '+').replace(/_/g, '/'));
-                break;
-              }
-            }
-          }
-
+          // Extract body (recursive multipart traversal)
+          const { plain: body } = extractBodyFromPayload(msg.payload);
           const cleanText = body.replace(/<[^>]*>/g, '').trim();
 
           return {

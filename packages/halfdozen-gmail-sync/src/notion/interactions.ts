@@ -148,27 +148,12 @@ export class InteractionsClient {
     let failed = 0;
     let skipped = 0;
 
-    // Check for existing Gmail IDs in batch
-    const gmailIds = interactions.map(i => i.gmailId);
-    const existingIds = await this.batchCheckExists(gmailIds);
-
-    console.log(`\n📬 Processing ${interactions.length} email(s)...`);
-    if (existingIds.size > 0) {
-      console.log(`   (${existingIds.size} already synced, will skip)\n`);
-    }
+    console.log(`\n📬 Processing ${interactions.length} email(s)...\n`);
 
     for (let i = 0; i < interactions.length; i++) {
       const interaction = interactions[i];
       
       console.log(`[${i + 1}/${interactions.length}] ${interaction.subject.substring(0, 50)}...`);
-
-      // Skip if already exists
-      if (existingIds.has(interaction.gmailId)) {
-        skipped++;
-        results.push({ success: true, error: 'Skipped: already synced' });
-        console.log(`   → Skipped (already synced)`);
-        continue;
-      }
 
       const result = await this.syncEmail(interaction, {
         createContactIfMissing: options.createContactsIfMissing,
@@ -216,16 +201,6 @@ export class InteractionsClient {
   }
 
   /**
-   * Batch check which Gmail IDs already exist.
-   * Searches page content for Gmail IDs stored there.
-   */
-  private async batchCheckExists(gmailIds: string[]): Promise<Set<string>> {
-    // For now, skip batch checking - we'll check individually during sync
-    // This avoids issues with databases that don't have a Gmail ID property
-    return new Set<string>();
-  }
-
-  /**
    * Build Notion properties from InteractionData.
    * Only includes properties that exist in the database.
    */
@@ -247,6 +222,28 @@ export class InteractionsClient {
     properties[m.date] = {
       date: { start: interaction.date.split('T')[0] },
     };
+
+    // From (email property)
+    if (m.from && interaction.from.email) {
+      properties[m.from] = {
+        email: interaction.from.email,
+      };
+    }
+
+    // To (rich text - comma-separated list)
+    if (m.to && interaction.to.length > 0) {
+      const toText = interaction.to.map(t => t.email).join(', ');
+      properties[m.to] = {
+        rich_text: [{ text: { content: toText.substring(0, 2000) } }],
+      };
+    }
+
+    // Direction (select - Inbound/Outbound)
+    if (m.direction) {
+      properties[m.direction] = {
+        select: { name: interaction.direction },
+      };
+    }
 
     // Contact relation (if found)
     if (contactId && m.contact) {
