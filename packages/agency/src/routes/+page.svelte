@@ -325,27 +325,33 @@
 		</BlurFade>
 		
 		<!-- Scenario-based examples (lead with outcomes) -->
-		<BlurFade delay={0.2}>
-			<div class="pricing-examples">
-				<div class="examples-grid">
-					<div class="example-item">
-						<span class="example-name">CRM + Docs</span>
-						<span class="example-calc">HubSpot + Notion + Claude</span>
-						<span class="example-price">$750</span>
-					</div>
-					<div class="example-item">
-						<span class="example-name">Team workflows</span>
-						<span class="example-calc">Salesforce + Slack + Google + secure login</span>
-						<span class="example-price">$2,000</span>
-					</div>
-					<div class="example-item">
-						<span class="example-name">Full automation</span>
-						<span class="example-calc">8 tools + 3 AI platforms + scheduled tasks</span>
-						<span class="example-price">$3,500</span>
-					</div>
+		<div class="examples-grid">
+			<BlurFade delay={0.15}>
+				<div class="example-item">
+					<span class="example-name">CRM + Docs</span>
+					<p class="example-outcome">HubSpot deals auto-create project docs in Notion via Claude.</p>
+					<span class="example-calc">2 tools + 1 AI platform</span>
+					<span class="example-price">$750</span>
 				</div>
-			</div>
-		</BlurFade>
+			</BlurFade>
+			<BlurFade delay={0.25}>
+				<div class="example-item popular">
+					<span class="example-badge">Most common</span>
+					<span class="example-name">Team workflows</span>
+					<p class="example-outcome">Salesforce, Slack, and Google connected with secure team login.</p>
+					<span class="example-calc">3 tools + 2 AI platforms + login</span>
+					<span class="example-price">$1,500</span>
+				</div>
+			</BlurFade>
+			<BlurFade delay={0.35}>
+				<div class="example-item">
+					<span class="example-name">Full automation</span>
+					<p class="example-outcome">8 tools connected with scheduled tasks, alerts, and automated workflows.</p>
+					<span class="example-calc">8 tools + 3 AI platforms + automation</span>
+					<span class="example-price">$3,500</span>
+				</div>
+			</BlurFade>
+		</div>
 
 		<!-- How we price it -->
 		<BlurFade delay={0.3}>
@@ -899,14 +905,10 @@
 	}
 
 	/* Example Builds */
-	.pricing-examples {
-		padding-top: var(--space-2, 0.5rem);
-	}
-	
 	.examples-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-		gap: var(--space-4, 1rem);
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-5, 1.5rem);
 		align-items: stretch;
 	}
 	
@@ -915,9 +917,10 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: var(--space-2, 0.5rem);
-		padding: var(--space-5, 1.5rem);
-		border-radius: var(--radius-lg, 12px);
+		text-align: center;
+		gap: var(--space-3, 0.75rem);
+		padding: var(--space-7, 2.5rem) var(--space-5, 1.5rem);
+		border-radius: var(--radius-xl, 16px);
 		background: var(--color-bg-pure);
 		border: 1px solid var(--color-border-default);
 		box-shadow: var(--glass-shine-soft);
@@ -931,30 +934,84 @@
 		content: '';
 		position: absolute;
 		top: 0;
-		left: 12%;
-		right: 12%;
+		left: 10%;
+		right: 10%;
 		height: 1px;
 		background: linear-gradient(
 			90deg,
 			transparent,
-			rgba(255, 255, 255, 0.2),
+			rgba(255, 255, 255, 0.15),
 			transparent
 		);
-		opacity: 0.6;
 	}
 
 	.example-item:hover {
 		border-color: var(--color-border-emphasis);
 		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
-		transform: translateY(-2px);
+		transform: translateY(-3px);
+	}
+
+	/* Popular / recommended card */
+	.example-item.popular {
+		border-color: rgba(96, 165, 250, 0.3);
+		background: linear-gradient(
+			180deg,
+			rgba(96, 165, 250, 0.04) 0%,
+			var(--color-bg-pure) 100%
+		);
+		box-shadow:
+			var(--glass-shine-standard),
+			0 0 0 1px rgba(96, 165, 250, 0.08);
+	}
+
+	.example-item.popular:hover {
+		border-color: rgba(96, 165, 250, 0.5);
+		box-shadow:
+			var(--glass-shine-strong),
+			0 0 0 1px rgba(96, 165, 250, 0.15),
+			0 8px 32px rgba(96, 165, 250, 0.1);
+		transform: translateY(-4px);
+	}
+
+	.example-item.popular::before {
+		background: linear-gradient(
+			90deg,
+			transparent,
+			rgba(96, 165, 250, 0.4),
+			transparent
+		);
+	}
+
+	.example-badge {
+		position: absolute;
+		top: -10px;
+		left: 50%;
+		transform: translateX(-50%);
+		font-size: 0.65rem;
+		font-weight: var(--font-semibold);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: rgba(96, 165, 250, 1);
+		background: rgba(96, 165, 250, 0.1);
+		border: 1px solid rgba(96, 165, 250, 0.25);
+		border-radius: var(--radius-full, 9999px);
+		padding: 0.2rem 0.75rem;
+		white-space: nowrap;
 	}
 	
 	.example-name {
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-semibold);
+		font-size: var(--text-body);
+		font-weight: var(--font-bold);
 		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		color: var(--color-fg-muted);
+		letter-spacing: 0.06em;
+		color: var(--color-fg-primary);
+	}
+
+	.example-outcome {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+		min-height: 2.8em;
 	}
 	
 	.example-calc {
@@ -967,24 +1024,22 @@
 		background: var(--color-bg-subtle);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-full, 9999px);
-		padding: 0.25rem 0.6rem;
+		padding: 0.25rem 0.75rem;
 		font-family: var(--font-mono, monospace);
 	}
 	
 	.example-price {
-		font-size: var(--text-h3);
-		font-weight: var(--font-semibold);
+		font-size: var(--text-display);
+		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
 		font-family: var(--font-display);
+		letter-spacing: var(--tracking-tighter, -0.025em);
 		margin-top: auto;
+		line-height: 1;
 	}
 	
 	@media (max-width: 640px) {
 		.pricing-row {
-			grid-template-columns: 1fr;
-		}
-		
-		.examples-grid {
 			grid-template-columns: 1fr;
 		}
 	}
@@ -1120,6 +1175,20 @@
 
 		.steps-row {
 			grid-template-columns: 1fr;
+		}
+
+		.examples-grid {
+			grid-template-columns: 1fr;
+			max-width: 400px;
+			margin: 0 auto;
+		}
+
+		.example-item.popular {
+			order: -1;
+		}
+
+		.example-price {
+			font-size: var(--text-h1);
 		}
 		
 		.audience-grid {
