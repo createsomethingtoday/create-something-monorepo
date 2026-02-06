@@ -3,12 +3,12 @@
  * 
  * Cloudflare Worker with Streamable HTTP transport for remote MCP access.
  * Supports multiple team members, each with their own Gmail authorization.
+ * Uses direct fetch for both Gmail and Notion APIs (no SDK — Workers compatible).
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { z } from 'zod';
-import { Client } from '@notionhq/client';
 
 // Types
 interface Env {
@@ -19,7 +19,7 @@ interface Env {
   NOTION_CONTACTS_DB_ID: string;
   TEAM_EMAILS: string;
   ADMIN_SECRET?: string;
-  GMAIL_TOKENS: KVNamespace; // Per-user token storage
+  GMAIL_TOKENS: KVNamespace;
   MCP_OBJECT: DurableObjectNamespace;
 }
 
@@ -29,7 +29,9 @@ interface StoredToken {
   authorized_at: string;
 }
 
+// ═══════════════════════════════════════════════════════════════
 // Gmail API helpers
+// ═══════════════════════════════════════════════════════════════
 const GMAIL_API = 'https://gmail.googleapis.com/gmail/v1/users/me';
 const OAUTH_SCOPES = [
   'https://www.googleapis.com/auth/gmail.readonly',
@@ -46,33 +48,37 @@ async function getAccessToken(env: Env, userEmail?: string): Promise<string> {
     throw new Error(`No Gmail authorization found for ${userEmail}. They need to visit: https://halfdozen-gmail-sync-mcp.half-dozen.workers.dev/auth?email=${encodeURIComponent(userEmail)}`);
   }
 
-  const refreshToken = stored.refresh_token;
-
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       client_id: env.GOOGLE_CLIENT_ID,
       client_secret: env.GOOGLE_CLIENT_SECRET,
-      refresh_token: refreshToken,
+      refresh_token: stored.refresh_token,
       grant_type: 'refresh_token',
     }),
   });
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`Failed to refresh token: ${error}`);
+    throw new Error(`Failed to refresh token for ${userEmail}: ${error}`);
   }
 
   const data = await response.json() as { access_token: string };
   return data.access_token;
 }
 
-async function gmailFetch(env: Env, path: string, params?: Record<string, string>, userEmail?: string) {
+async function gmailFetch(env: Env, path: string, params?: Record<string, string | string[]>, userEmail?: string) {
   const token = await getAccessToken(env, userEmail);
   const url = new URL(`${GMAIL_API}${path}`);
   if (params) {
-    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+    Object.entries(params).forEach(([k, v]) => {
+      if (Array.isArray(v)) {
+        v.forEach(val => url.searchParams.append(k, val));
+      } else {
+        url.searchParams.set(k, v);
+      }
+    });
   }
   const response = await fetch(url.toString(), {
     headers: { Authorization: `Bearer ${token}` },
@@ -92,14 +98,66 @@ function getTeamEmails(env: Env): string[] {
   return (env.TEAM_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
 }
 
+function getDefaultUser(env: Env): string {
+  const team = getTeamEmails(env);
+  if (team.length === 0) {
+    throw new Error('No TEAM_EMAILS configured. Set TEAM_EMAILS env var with at least one authorized email.');
+  }
+  return team[0];
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Notion API helpers (direct fetch, no SDK)
+// ═══════════════════════════════════════════════════════════════
+const NOTION_API = 'https://api.notion.com/v1';
+const NOTION_VERSION = '2022-06-28';
+
+async function notionFetch(env: Env, path: string, method: string = 'GET', body?: unknown) {
+  const response = await fetch(`${NOTION_API}${path}`, {
+    method,
+    headers: {
+      'Authorization': `Bearer ${env.NOTION_API_KEY}`,
+      'Notion-Version': NOTION_VERSION,
+      'Content-Type': 'application/json',
+    },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Notion API error (${response.status}): ${error}`);
+  }
+
+  return response.json();
+}
+
+async function notionQueryDatabase(env: Env, databaseId: string, filter: unknown, pageSize: number = 10) {
+  return notionFetch(env, `/databases/${databaseId}/query`, 'POST', {
+    filter,
+    page_size: pageSize,
+  }) as Promise<{ results: Array<{ id: string; properties: Record<string, any> }> }>;
+}
+
+async function notionCreatePage(env: Env, databaseId: string, properties: Record<string, unknown>) {
+  return notionFetch(env, '/pages', 'POST', {
+    parent: { database_id: databaseId },
+    properties,
+  }) as Promise<{ id: string }>;
+}
+
+async function notionAppendBlocks(env: Env, blockId: string, children: unknown[]) {
+  return notionFetch(env, `/blocks/${blockId}/children`, 'PATCH', { children });
+}
+
+// ═══════════════════════════════════════════════════════════════
 // OAuth helpers
+// ═══════════════════════════════════════════════════════════════
 
 function getRedirectUri(request: Request): string {
   const url = new URL(request.url);
   return `${url.origin}/callback`;
 }
 
-/** Sign OAuth state with HMAC-SHA256 to prevent forgery. */
 async function signState(payload: string, secret: string): Promise<string> {
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
@@ -114,7 +172,6 @@ async function signState(payload: string, secret: string): Promise<string> {
   return `${btoa(payload)}.${sigHex}`;
 }
 
-/** Verify HMAC-signed state. Returns parsed payload or null if invalid. */
 async function verifyState(state: string, secret: string): Promise<{ email: string } | null> {
   const dotIndex = state.lastIndexOf('.');
   if (dotIndex === -1) return null;
@@ -189,7 +246,6 @@ async function handleOAuthCallback(request: Request, env: Env): Promise<Response
     return new Response('Invalid or tampered state parameter', { status: 400 });
   }
 
-  // Exchange code for tokens
   const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -216,7 +272,6 @@ async function handleOAuthCallback(request: Request, env: Env): Promise<Response
     return new Response('No refresh token received. Try revoking access at https://myaccount.google.com/permissions and trying again.', { status: 400 });
   }
 
-  // Verify the email matches by fetching user info
   const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
     headers: { Authorization: `Bearer ${tokens.access_token}` },
   });
@@ -227,7 +282,6 @@ async function handleOAuthCallback(request: Request, env: Env): Promise<Response
     return new Response('Could not verify email from Google', { status: 500 });
   }
 
-  // Store token in KV
   const storedToken: StoredToken = {
     refresh_token: tokens.refresh_token,
     email: authorizedEmail,
@@ -236,7 +290,6 @@ async function handleOAuthCallback(request: Request, env: Env): Promise<Response
 
   await env.GMAIL_TOKENS.put(authorizedEmail, JSON.stringify(storedToken));
 
-  // Also store under requested email if different (alias support)
   if (stateData.email !== authorizedEmail) {
     await env.GMAIL_TOKENS.put(stateData.email, JSON.stringify(storedToken));
   }
@@ -261,7 +314,6 @@ async function handleOAuthCallback(request: Request, env: Env): Promise<Response
 }
 
 async function handleListUsers(request: Request, env: Env): Promise<Response> {
-  // Require ADMIN_SECRET via Bearer token
   if (!env.ADMIN_SECRET) {
     return new Response('Admin endpoint not configured', { status: 404 });
   }
@@ -279,6 +331,10 @@ async function handleListUsers(request: Request, env: Env): Promise<Response> {
   });
 }
 
+// ═══════════════════════════════════════════════════════════════
+// MCP Agent
+// ═══════════════════════════════════════════════════════════════
+
 // Legacy class - needed for migration
 export class GmailSyncMCP extends McpAgent<Env> {
   server = new McpServer({ name: 'legacy', version: '1.0.0' });
@@ -289,7 +345,7 @@ export class GmailSyncMCP extends McpAgent<Env> {
 export class GmailSyncMCPv2 extends McpAgent<Env> {
   server = new McpServer({
     name: 'halfdozen-gmail-sync',
-    version: '2.0.0',
+    version: '2.2.0',
   });
 
   async init() {
@@ -314,7 +370,7 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
           for (const { id } of messageIds.slice(0, limit)) {
             const msg = await gmailFetch(this.env, `/messages/${id}`, {
               format: 'metadata',
-              metadataHeaders: 'From,Subject,Date',
+              metadataHeaders: ['From', 'Subject', 'Date'],
             }, user_email) as { payload?: { headers?: Array<{ name: string; value: string }> }; snippet?: string };
 
             const headers = msg.payload?.headers || [];
@@ -329,14 +385,14 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
             });
           }
 
-          return { content: [{ type: 'text', text: JSON.stringify({ count: emails.length, emails, user: user_email || 'default' }, null, 2) }] };
+          return { content: [{ type: 'text', text: JSON.stringify({ count: emails.length, emails, user: user_email }, null, 2) }] };
         } catch (error) {
           return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
         }
       }
     );
 
-    // Tool: Sync Email
+    // Tool: Sync Email to Notion
     this.server.tool(
       'sync_email',
       {
@@ -346,9 +402,7 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
       },
       async ({ email_id, create_contact = false, user_email }) => {
         try {
-          const notion = new Client({ auth: this.env.NOTION_API_KEY });
-
-          // Fetch email
+          // Fetch email from Gmail
           const msg = await gmailFetch(this.env, `/messages/${email_id}`, { format: 'full' }, user_email) as {
             payload?: {
               headers?: Array<{ name: string; value: string }>;
@@ -379,11 +433,10 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
           }
 
           // Check if already synced
-          const existing = await notion.databases.query({
-            database_id: this.env.NOTION_INTERACTIONS_DB_ID,
-            filter: { property: 'Interaction', title: { contains: `[${email_id}]` } },
-            page_size: 1,
-          });
+          const existing = await notionQueryDatabase(this.env, this.env.NOTION_INTERACTIONS_DB_ID, {
+            property: 'Interaction',
+            title: { contains: `[${email_id}]` },
+          }, 1);
 
           if (existing.results.length > 0) {
             return { content: [{ type: 'text', text: JSON.stringify({ skipped: true, reason: 'Already synced' }) }] };
@@ -393,21 +446,17 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
           let contactId: string | undefined;
           let contactCreated = false;
 
-          const contactSearch = await notion.databases.query({
-            database_id: this.env.NOTION_CONTACTS_DB_ID,
-            filter: { property: 'Email', email: { equals: from.email } },
-            page_size: 1,
-          });
+          const contactSearch = await notionQueryDatabase(this.env, this.env.NOTION_CONTACTS_DB_ID, {
+            property: 'Email',
+            email: { equals: from.email },
+          }, 1);
 
           if (contactSearch.results.length > 0) {
             contactId = contactSearch.results[0].id;
           } else if (create_contact) {
-            const newContact = await notion.pages.create({
-              parent: { database_id: this.env.NOTION_CONTACTS_DB_ID },
-              properties: {
-                Name: { title: [{ text: { content: from.name || from.email.split('@')[0] } }] },
-                Email: { email: from.email },
-              } as Parameters<typeof notion.pages.create>[0]['properties'],
+            const newContact = await notionCreatePage(this.env, this.env.NOTION_CONTACTS_DB_ID, {
+              Name: { title: [{ text: { content: from.name || from.email.split('@')[0] } }] },
+              Email: { email: from.email },
             });
             contactId = newContact.id;
             contactCreated = true;
@@ -427,34 +476,28 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
             properties.Contacts = { relation: [{ id: contactId }] };
           }
 
-          const page = await notion.pages.create({
-            parent: { database_id: this.env.NOTION_INTERACTIONS_DB_ID },
-            properties: properties as Parameters<typeof notion.pages.create>[0]['properties'],
-          });
+          const page = await notionCreatePage(this.env, this.env.NOTION_INTERACTIONS_DB_ID, properties);
 
-          // Add content
-          await notion.blocks.children.append({
-            block_id: page.id,
-            children: [
-              {
-                type: 'callout',
-                callout: {
-                  icon: { emoji: '📧' },
-                  rich_text: [{ type: 'text', text: { content: `From: ${from.email}\nDirection: ${direction}\nSynced by: ${user_email || 'default'}` } }],
-                },
+          // Add email content as blocks
+          await notionAppendBlocks(this.env, page.id, [
+            {
+              type: 'callout',
+              callout: {
+                icon: { emoji: '📧' },
+                rich_text: [{ type: 'text', text: { content: `From: ${from.email}\nDirection: ${direction}\nSynced by: ${user_email}` } }],
               },
-              {
-                type: 'toggle',
-                toggle: {
-                  rich_text: [{ type: 'text', text: { content: 'Email Body' } }],
-                  children: [{ type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: body.substring(0, 1900) } }] } }],
-                },
+            },
+            {
+              type: 'toggle',
+              toggle: {
+                rich_text: [{ type: 'text', text: { content: 'Email Body' } }],
+                children: [{ type: 'paragraph', paragraph: { rich_text: [{ type: 'text', text: { content: body.substring(0, 1900) } }] } }],
               },
-            ],
-          });
+            },
+          ]);
 
           return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, interactionId: page.id, contactId, contactCreated, syncedBy: user_email || 'default' }, null, 2) }],
+            content: [{ type: 'text', text: JSON.stringify({ success: true, interactionId: page.id, contactId, contactCreated, syncedBy: user_email }, null, 2) }],
           };
         } catch (error) {
           return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
@@ -470,31 +513,29 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
         name: z.string().optional().describe('Name to search'),
       },
       async ({ email, name }) => {
-        const notion = new Client({ auth: this.env.NOTION_API_KEY });
+        try {
+          let filter: unknown;
+          if (email) {
+            filter = { property: 'Email', email: { equals: email } };
+          } else if (name) {
+            filter = { property: 'Name', title: { contains: name } };
+          } else {
+            return { content: [{ type: 'text', text: JSON.stringify({ error: 'Provide email or name' }) }] };
+          }
 
-        let filter: Parameters<typeof notion.databases.query>[0]['filter'];
-        if (email) {
-          filter = { property: 'Email', email: { equals: email } };
-        } else if (name) {
-          filter = { property: 'Name', title: { contains: name } };
-        } else {
-          return { content: [{ type: 'text', text: JSON.stringify({ error: 'Provide email or name' }) }] };
+          const response = await notionQueryDatabase(this.env, this.env.NOTION_CONTACTS_DB_ID, filter, 5);
+
+          const contacts = response.results.map((page: any) => ({
+            id: page.id,
+            name: page.properties.Name?.title?.[0]?.plain_text || 'Unknown',
+            email: page.properties.Email?.email,
+            url: `https://notion.so/${page.id.replace(/-/g, '')}`,
+          }));
+
+          return { content: [{ type: 'text', text: JSON.stringify({ found: contacts.length > 0, contacts }, null, 2) }] };
+        } catch (error) {
+          return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
         }
-
-        const response = await notion.databases.query({
-          database_id: this.env.NOTION_CONTACTS_DB_ID,
-          filter,
-          page_size: 5,
-        });
-
-        const contacts = response.results.map((page: any) => ({
-          id: page.id,
-          name: page.properties.Name?.title?.[0]?.plain_text || 'Unknown',
-          email: page.properties.Email?.email,
-          url: `https://notion.so/${page.id.replace(/-/g, '')}`,
-        }));
-
-        return { content: [{ type: 'text', text: JSON.stringify({ found: contacts.length > 0, contacts }, null, 2) }] };
       }
     );
 
@@ -507,22 +548,21 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
         company: z.string().optional().describe('Company name'),
       },
       async ({ name, email, company }) => {
-        const notion = new Client({ auth: this.env.NOTION_API_KEY });
+        try {
+          const properties: Record<string, unknown> = {
+            Name: { title: [{ text: { content: name } }] },
+          };
+          if (email) properties.Email = { email };
+          if (company) properties.Company = { rich_text: [{ text: { content: company } }] };
 
-        const properties: Record<string, unknown> = {
-          Name: { title: [{ text: { content: name } }] },
-        };
-        if (email) properties.Email = { email };
-        if (company) properties.Company = { rich_text: [{ text: { content: company } }] };
+          const page = await notionCreatePage(this.env, this.env.NOTION_CONTACTS_DB_ID, properties);
 
-        const page = await notion.pages.create({
-          parent: { database_id: this.env.NOTION_CONTACTS_DB_ID },
-          properties: properties as Parameters<typeof notion.pages.create>[0]['properties'],
-        });
-
-        return {
-          content: [{ type: 'text', text: JSON.stringify({ created: true, id: page.id, name, email, url: `https://notion.so/${page.id.replace(/-/g, '')}` }, null, 2) }],
-        };
+          return {
+            content: [{ type: 'text', text: JSON.stringify({ created: true, id: page.id, name, email, url: `https://notion.so/${page.id.replace(/-/g, '')}` }, null, 2) }],
+          };
+        } catch (error) {
+          return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
+        }
       }
     );
 
@@ -536,7 +576,7 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
         try {
           const response = await gmailFetch(this.env, '/labels', undefined, user_email) as { labels?: Array<{ id: string; name: string }> };
           const labels = (response.labels || []).filter(l => l.id && l.name).map(l => ({ id: l.id, name: l.name }));
-          return { content: [{ type: 'text', text: JSON.stringify({ count: labels.length, labels, user: user_email || 'default' }, null, 2) }] };
+          return { content: [{ type: 'text', text: JSON.stringify({ count: labels.length, labels, user: user_email }, null, 2) }] };
         } catch (error) {
           return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
         }
@@ -553,15 +593,123 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
         return { content: [{ type: 'text', text: JSON.stringify({ count: users.length, users }, null, 2) }] };
       }
     );
+
+    // ═══════════════════════════════════════════════════════════════
+    // ChatGPT Connector Tools
+    // ═══════════════════════════════════════════════════════════════
+
+    this.server.tool(
+      'search',
+      {
+        query: z.string().describe('Search query for Gmail emails (supports Gmail syntax: from:, to:, subject:, label:, after:, before:)'),
+        user_email: z.string().optional().describe('Team member email (defaults to first TEAM_EMAILS entry)'),
+      },
+      async ({ query, user_email }) => {
+        try {
+          const effectiveUser = user_email || getDefaultUser(this.env);
+
+          const listData = await gmailFetch(this.env, '/messages', {
+            q: query,
+            maxResults: '10',
+          }, effectiveUser) as { messages?: Array<{ id: string }> };
+
+          const messageIds = listData.messages || [];
+          const results: Array<{ id: string; title: string; url: string }> = [];
+
+          for (const { id } of messageIds.slice(0, 10)) {
+            const msg = await gmailFetch(this.env, `/messages/${id}`, {
+              format: 'metadata',
+              metadataHeaders: ['From', 'Subject', 'Date'],
+            }, effectiveUser) as { payload?: { headers?: Array<{ name: string; value: string }> }; snippet?: string };
+
+            const headers = msg.payload?.headers || [];
+            const getHeader = (name: string) => headers.find(h => h.name?.toLowerCase() === name.toLowerCase())?.value || '';
+
+            results.push({
+              id,
+              title: `${getHeader('Subject') || '(No Subject)'} — from ${getHeader('From')} (${getHeader('Date')})`,
+              url: `https://mail.google.com/mail/u/0/#inbox/${id}`,
+            });
+          }
+
+          return { content: [{ type: 'text', text: JSON.stringify({ results }, null, 2) }] };
+        } catch (error) {
+          return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
+        }
+      }
+    );
+
+    this.server.tool(
+      'fetch',
+      {
+        id: z.string().describe('Gmail message ID (from search results)'),
+        user_email: z.string().optional().describe('Team member email (defaults to first TEAM_EMAILS entry)'),
+      },
+      async ({ id, user_email }) => {
+        try {
+          const effectiveUser = user_email || getDefaultUser(this.env);
+
+          const msg = await gmailFetch(this.env, `/messages/${id}`, { format: 'full' }, effectiveUser) as {
+            id: string;
+            threadId?: string;
+            snippet?: string;
+            payload?: {
+              headers?: Array<{ name: string; value: string }>;
+              body?: { data?: string };
+              parts?: Array<{ mimeType: string; body?: { data?: string } }>;
+            };
+          };
+
+          const headers = msg.payload?.headers || [];
+          const getHeader = (name: string) => headers.find(h => h.name?.toLowerCase() === name.toLowerCase())?.value || '';
+
+          const subject = getHeader('Subject') || '(No Subject)';
+          const from = getHeader('From');
+          const to = getHeader('To');
+          const date = getHeader('Date');
+
+          let body = '';
+          if (msg.payload?.body?.data) {
+            body = atob(msg.payload.body.data.replace(/-/g, '+').replace(/_/g, '/'));
+          }
+          if (msg.payload?.parts) {
+            for (const part of msg.payload.parts) {
+              if (part.mimeType === 'text/plain' && part.body?.data) {
+                body = atob(part.body.data.replace(/-/g, '+').replace(/_/g, '/'));
+                break;
+              }
+            }
+          }
+
+          const cleanText = body.replace(/<[^>]*>/g, '').trim();
+
+          return {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                id: msg.id,
+                title: subject,
+                text: `From: ${from}\nTo: ${to}\nDate: ${date}\nSubject: ${subject}\n\n${cleanText}`,
+                url: `https://mail.google.com/mail/u/0/#inbox/${msg.id}`,
+                metadata: { from, to, date, subject, threadId: msg.threadId, snippet: msg.snippet },
+              }, null, 2),
+            }],
+          };
+        } catch (error) {
+          return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
+        }
+      }
+    );
   }
 }
 
+// ═══════════════════════════════════════════════════════════════
 // Worker entry point
+// ═══════════════════════════════════════════════════════════════
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
 
-    // OAuth endpoints
     if (url.pathname === '/auth') {
       return handleAuthStart(request, env);
     }
@@ -570,26 +718,28 @@ export default {
       return handleOAuthCallback(request, env);
     }
 
-    // Admin endpoint (requires ADMIN_SECRET bearer token)
     if (url.pathname === '/users') {
       return handleListUsers(request, env);
     }
 
-    // MCP endpoint
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
       return GmailSyncMCPv2.serve('/mcp').fetch(request, env, ctx);
     }
 
-    // Health check
+    if (url.pathname === '/sse' || url.pathname.startsWith('/sse/')) {
+      return GmailSyncMCPv2.serve('/sse').fetch(request, env, ctx);
+    }
+
     if (url.pathname === '/') {
       return new Response(JSON.stringify({
         name: 'halfdozen-gmail-sync-mcp',
-        version: '2.0.0',
-        features: ['multi-user'],
+        version: '2.2.0',
+        features: ['multi-user', 'chatgpt-connector'],
         endpoints: {
           mcp: '/mcp',
+          sse: '/sse',
           auth: '/auth?email=you@example.com',
-          users: '/users',
+          users: '/users (requires ADMIN_SECRET)',
         },
       }, null, 2), {
         headers: { 'Content-Type': 'application/json' },
