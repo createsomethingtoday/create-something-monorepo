@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment
+.env
+
+# Output files
+extracted-videos/
+*.txt
+!README.md
+
+# Session data
+session-context.json
+cookies.json
