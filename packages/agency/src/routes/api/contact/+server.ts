@@ -68,7 +68,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
   <meta charset="UTF-8">
   <style>
     body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #000000; color: #ffffff; }
-    .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
     .content { line-height: 1.8; }
     .message-box { background-color: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; padding: 20px; margin: 30px 0; }
   </style>
@@ -109,7 +109,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 <head>
   <meta charset="UTF-8">
   <style>
-    body { font-family: sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; }
+    body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
     .header { background: #000; color: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
     .content { background: #f5f5f5; padding: 20px; border-radius: 8px; }
   </style>
