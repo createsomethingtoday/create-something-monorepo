@@ -1,4 +1,4 @@
-import { json, error } from '@sveltejs/kit';
+import { json, error, isHttpError } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import Airtable from 'airtable';
 import { getAirtableClient } from '$lib/server/airtable';
@@ -100,6 +100,14 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 		}
 
 		const data = (await request.json()) as ProfileUpdateData;
+		logger.debug('PATCH: Received update data', {
+			hasName: data.name !== undefined,
+			hasBio: data.biography !== undefined,
+			hasLegalName: data.legalName !== undefined,
+			hasAvatar: data.avatarUrl !== undefined,
+			avatarIsNull: data.avatarUrl === null
+		});
+
 		const airtable = getAirtableClient(platform.env);
 
 		// Get creator first to verify they exist and get their ID
@@ -119,7 +127,11 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 		});
 
 		if (!updated) {
-			logger.error('PATCH: Failed to update creator', { creatorId: creator.id });
+			logger.error('PATCH: Failed to update creator — Airtable returned null', {
+				creatorId: creator.id,
+				email: locals.user.email,
+				hadAvatar: data.avatarUrl !== undefined
+			});
 			throw error(500, 'Failed to update profile');
 		}
 
@@ -137,7 +149,7 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 			{ headers: noCacheHeaders }
 		);
 	} catch (err) {
-		if (err instanceof Error && 'status' in err) {
+		if (isHttpError(err)) {
 			throw err; // Re-throw SvelteKit errors
 		}
 		logger.error('PATCH: Unexpected error', { error: err });

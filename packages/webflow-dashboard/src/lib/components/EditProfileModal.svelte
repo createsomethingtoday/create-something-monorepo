@@ -34,6 +34,9 @@
 		avatarUrl: null as string | null
 	});
 
+	/** Track initial avatar to detect changes — avoids re-submitting unchanged Airtable URLs */
+	let initialAvatarUrl: string | null = null;
+
 	let successMessage = $state<string | null>(null);
 
 	let modalRef: HTMLDivElement | undefined = $state();
@@ -62,11 +65,13 @@
 				throw new Error('Failed to load profile');
 			}
 			const profile = (await response.json()) as ProfileData;
+			const loadedAvatarUrl = profile.avatarUrl || null;
+			initialAvatarUrl = loadedAvatarUrl;
 			formData = {
 				name: profile.name || '',
 				legalName: profile.legalName || '',
 				biography: profile.biography || '',
-				avatarUrl: profile.avatarUrl || null
+				avatarUrl: loadedAvatarUrl
 			};
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load profile';
@@ -93,13 +98,16 @@
 		successMessage = null;
 
 		try {
-			// Send all editable fields including avatarUrl
-			const updateData = {
+			// Only include avatarUrl when it actually changed — avoids re-submitting
+			// Airtable's temporary CDN URLs or forcing unnecessary attachment re-processing
+			const updateData: Record<string, unknown> = {
 				name: formData.name,
 				legalName: formData.legalName,
-				biography: formData.biography,
-				avatarUrl: formData.avatarUrl
+				biography: formData.biography
 			};
+			if (formData.avatarUrl !== initialAvatarUrl) {
+				updateData.avatarUrl = formData.avatarUrl;
+			}
 
 			const response = await fetch('/api/profile', {
 				method: 'PATCH',
@@ -117,11 +125,13 @@
 
 			// Update local state with response
 			const updated = (await response.json()) as ProfileData;
+			const savedAvatarUrl = updated.avatarUrl || null;
+			initialAvatarUrl = savedAvatarUrl;
 			formData = {
 				name: updated.name || '',
 				legalName: updated.legalName || '',
 				biography: updated.biography || '',
-				avatarUrl: updated.avatarUrl || null
+				avatarUrl: savedAvatarUrl
 			};
 
 			successMessage = 'Profile saved successfully';

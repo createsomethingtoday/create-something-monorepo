@@ -863,17 +863,27 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			if (data.biography !== undefined) fields['ℹ️Biography'] = data.biography;
 			if (data.legalName !== undefined) fields['ℹ️Legal Name'] = data.legalName;
 			// Airtable attachment fields require array of {url} objects
+			// Use field ID (fldyddTon9Lu8BR8G) to match original Next.js dashboard exactly
 			if (data.avatarUrl !== undefined) {
-				fields['🖼️Avatar (Primary)'] = data.avatarUrl ? [{ url: data.avatarUrl }] : [];
+				fields['fldyddTon9Lu8BR8G'] = data.avatarUrl ? [{ url: data.avatarUrl }] : [];
 			}
 
 			if (Object.keys(fields).length === 0) {
+				console.log('[Airtable] updateCreator: No fields to update');
 				return null;
 			}
+
+			console.log('[Airtable] updateCreator called:', {
+				creatorId: id,
+				fieldKeys: Object.keys(fields),
+				hasAvatar: 'fldyddTon9Lu8BR8G' in fields,
+				avatarUrl: data.avatarUrl ? `${data.avatarUrl.substring(0, 80)}...` : data.avatarUrl
+			});
 
 			try {
 				const records = await base(TABLES.CREATORS).update([{ id, fields }]) as Airtable.Records<Airtable.FieldSet>;
 				const record = records[0];
+				console.log('[Airtable] updateCreator success:', { creatorId: record.id });
 				return {
 					id: record.id,
 					name: (record.fields['Name'] as string) || '', // Match original field name
@@ -885,6 +895,15 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				};
 			} catch (err) {
 				console.error('[Airtable] Error updating creator:', err);
+				console.error('[Airtable] updateCreator error details:', {
+					creatorId: id,
+					fieldKeys: Object.keys(fields),
+					errorMessage: err instanceof Error ? err.message : String(err),
+					errorType: err?.constructor?.name,
+					// Airtable errors often have statusCode and error properties
+					statusCode: (err as { statusCode?: number })?.statusCode,
+					airtableError: (err as { error?: string })?.error
+				});
 				return null;
 			}
 		},
