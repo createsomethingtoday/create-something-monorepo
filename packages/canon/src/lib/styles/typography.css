@@ -48,7 +48,6 @@ h1 {
   font-weight: var(--font-semibold);
   line-height: 1.05;
   letter-spacing: var(--tracking-tighter);
-  max-width: 20ch;
   font-family: var(--font-display, var(--font-sans));
   font-optical-sizing: auto;
   font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "ss01" 1;
