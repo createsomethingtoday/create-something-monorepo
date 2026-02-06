@@ -66,9 +66,9 @@
 </script>
 
 <SEO
-	title="Contact | Custom MCP Development"
-	description="Get in touch about your MCP project. Book a discovery call or send us a message."
-	keywords="contact, MCP development, custom MCP server"
+	title="Get Started | Connect Your Tools to AI"
+	description="Book a discovery call or send us a message. We'll map your tools, scope your project, and give you a clear price."
+	keywords="contact, connect tools to AI, MCP development, discovery call, get started"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -130,13 +130,14 @@
 
 				<div class="form-field">
 					<label for="message" class="form-label">What tools do you want to connect?</label>
+					<p class="form-helper">Don't worry if you're not sure—we'll figure it out on the call.</p>
 					<textarea
 						id="message"
 						name="message"
 						required
 						rows="4"
 						class="form-input form-textarea"
-						placeholder="e.g., We use Procore for project management and want to connect it to Claude..."
+						placeholder="e.g., We use HubSpot for sales and Notion for docs, and want Claude to work with both..."
 					></textarea>
 				</div>
 
@@ -285,6 +286,12 @@
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-medium);
 		color: var(--color-fg-muted);
+	}
+
+	.form-helper {
+		font-size: var(--text-caption);
+		color: var(--color-fg-tertiary);
+		margin-top: var(--space-1, 0.25rem);
 	}
 	
 	.form-input {

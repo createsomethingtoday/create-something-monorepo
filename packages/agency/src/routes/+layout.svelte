@@ -31,14 +31,14 @@
 	});
 
 	const navLinks = [
-		{ label: 'Services', href: '/services' },
+		{ label: 'Pricing', href: '/services' },
 		{ label: 'Products', href: '/products' },
 		{ label: 'About', href: '/about' }
 	];
 
 	// Quick access items for unified search
 	const quickAccessItems = [
-		{ id: 'nav-services', label: 'Services', description: 'Custom MCP development', href: '/services', icon: '🔨', keywords: ['hire', 'consulting', 'mcp', 'build'] },
+		{ id: 'nav-services', label: 'Pricing', description: 'Predictable pricing for your project', href: '/services', icon: '🔨', keywords: ['hire', 'consulting', 'mcp', 'build', 'pricing', 'cost'] },
 		{ id: 'nav-products', label: 'Products', description: 'Tools for builders', href: '/products', icon: '📦', keywords: ['buy', 'solutions', 'tools'] },
 		{ id: 'nav-contact', label: 'Get Started', description: 'Book a discovery call', href: '/contact', icon: '✉️', keywords: ['contact', 'hire', 'start', 'book'] },
 		{ id: 'nav-space', label: 'Go to .space', description: 'MCP experiments', href: 'https://createsomething.space', icon: '🧪', keywords: ['explore', 'try', 'interactive'] },

@@ -22,9 +22,9 @@
 </script>
 
 <SEO
-	title="About | Custom MCP Development"
-	description="We build and operate custom MCP servers that connect your tools to agents. Based in Texas. Fast turnaround, fixed pricing."
-	keywords="MCP development, custom MCP server, about, Micah Johnson"
+	title="About | We Connect Your Tools to AI"
+	description="We connect your existing tools to AI agents. Based in Texas. Fast turnaround, predictable pricing, managed runtime available."
+	keywords="about, connect tools to AI, MCP development, Micah Johnson, automation infrastructure"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -34,10 +34,10 @@
 	<div class="hero-grid"></div>
 	<div class="hero-content">
 		<p class="hero-eyebrow reveal">About</p>
-		<h1 class="hero-title reveal">We build and operate MCP servers</h1>
+		<h1 class="hero-title reveal">We connect your tools to AI</h1>
 		<p class="hero-detail reveal">
-			Custom integrations that connect your existing tools to agents. 
-			Fast turnaround. Fixed pricing. Managed runtime or handoff.
+			You have tools you rely on every day. You want AI agents to work with them. 
+			We make that connection—and keep it running. Fast turnaround. Predictable pricing.
 		</p>
 	</div>
 </section>
@@ -48,16 +48,21 @@
 		<div class="about-content reveal">
 			<h2>The work</h2>
 			<p>
-				MCP (Model Context Protocol) is how AI agents connect to external tools. 
-				We build the servers that make those connections possible—auth, data mapping, 
-				error handling, deployment packaging.
+				We build the infrastructure that lets AI agents like Claude, Cursor, and Codex 
+				access your existing tools—CRM, docs, chat, email, internal systems—securely 
+				and with the permissions you set.
 			</p>
 			<p>
-				We can also operate your MCP servers on a managed runtime (Cloudflare-native), 
-				with monitoring, alerts, and API change handling.
+				The technology is called MCP (Model Context Protocol). It's how AI agents connect 
+				to external systems. We handle the technical side: authentication, data mapping, 
+				error handling, and deployment.
 			</p>
 			<p>
-				Every project ships working code. You get the source, the deployment package, 
+				We can also operate your connections on a managed runtime with monitoring, 
+				alerts, and updates—so everything keeps running after launch. Starts at $99/mo.
+			</p>
+			<p>
+				Every project ships working code. You own the source, the deployment package, 
 				and documentation. No lock-in.
 			</p>
 		</div>
@@ -72,7 +77,7 @@
 			<p>
 				Led by Micah Johnson. 5+ years at Webflow building internal tools, 
 				onboarding systems, and template infrastructure. Now focused on 
-				MCP development and agent integration.
+				connecting tools to AI agents.
 			</p>
 			<p>
 				Based in Texas. <a href="https://www.linkedin.com/in/micahryanjohnson/" class="link" target="_blank" rel="noopener noreferrer">LinkedIn</a> · <a href="mailto:micah@createsomething.agency" class="link">Email</a>
@@ -84,8 +89,8 @@
 <!-- CTA -->
 <section class="cta-section">
 	<div class="section-container">
-		<h2 class="cta-heading reveal">Let's talk about your integration</h2>
-		<p class="cta-subtext reveal">30-minute discovery call. We'll scope build + operate options.</p>
+		<h2 class="cta-heading reveal">Let's talk about your project</h2>
+		<p class="cta-subtext reveal">30-minute discovery call. We'll map your tools and give you a clear price.</p>
 		<a href="/contact" class="cta-link reveal">Get in touch →</a>
 	</div>
 </section>

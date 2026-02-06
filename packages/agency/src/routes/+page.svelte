@@ -7,11 +7,11 @@
 	// Structured data for SEO/AEO
 	const services = [
 		{
-			name: 'Custom MCP Server Development',
-			description: 'We build MCP servers that connect your systems with AI agents. Per-integration pricing: $250 per integration, $250 per agent configuration.',
-			type: 'MCP Server Development',
+			name: 'Connect Your Tools to AI Agents',
+			description: 'We connect your existing tools to AI agents like Claude, Cursor, and Codex. Predictable per-tool pricing from $250.',
+			type: 'Integration Development',
 			price: '250',
-			priceDescription: 'Per integration pricing'
+			priceDescription: 'Per tool connected'
 		}
 	];
 	
@@ -124,9 +124,9 @@
 {/snippet}
 
 <SEO
-	title="Custom MCP Development | Build + Operate MCP Infrastructure"
-	description="We build and operate custom MCP servers that connect your systems with AI agents. Production-ready infrastructure, managed end-to-end."
-	keywords="MCP development, custom MCP server, Model Context Protocol, Agent integration, automation infrastructure, Claude, Cursor, Codex"
+	title="Connect Your Tools to AI Agents | Custom MCP Development"
+	description="We connect your existing tools to AI agents. Predictable per-tool pricing from $250. Managed runtime from $99/mo. No hourly billing."
+	keywords="connect tools to AI, MCP development, custom MCP server, AI agent integration, automation infrastructure, Claude, Cursor, Codex"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	{services}
@@ -154,12 +154,12 @@
 			<BlurFade delay={0.1}>
 				<h1 class="hero-title">Connect your systems with&nbsp;Agents</h1>
 			</BlurFade>
-			<BlurFade delay={0.2}>
-				<p class="hero-detail">
-					We build and operate custom MCP servers that integrate your existing systems with AI agents. 
-					Production-ready, Cloudflare-native, and built to run.
-				</p>
-			</BlurFade>
+		<BlurFade delay={0.2}>
+			<p class="hero-detail">
+				We build and operate custom connections between your existing tools and AI agents. 
+				Production-ready and built to run.
+			</p>
+		</BlurFade>
 			<BlurFade delay={0.3}>
 				<div class="hero-cta">
 					<ShimmerButton href="https://savvycal.com/create-something/discovery">
@@ -286,34 +286,28 @@
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="section-intro">
-				MCP servers are the connectivity layer—the infrastructure that lets Agents 
-				access your tools with proper permissions.
+				Three steps from discovery call to working automation.
 			</p>
 		</BlurFade>
 		
 		<BlurFade delay={0.2}>
-			<div class="layers-diagram">
-				<div class="layer intelligence">
-					<div class="layer-label">Intelligence Layer</div>
-					<div class="layer-content">
-						<p class="layer-what">Skills, Agents, Automations</p>
-						<p class="layer-examples">"Draft this RFI" · "Summarize daily logs" · "Flag compliance issues"</p>
-					</div>
+			<div class="steps-row">
+				<div class="how-step">
+					<div class="how-step-num">1</div>
+					<h3>Tell us your tools</h3>
+					<p>HubSpot, Salesforce, Notion, Slack—whatever you use. We map out the connections.</p>
 				</div>
-				<div class="layer automation">
-					<div class="layer-label">Automation Layer</div>
-					<div class="layer-content">
-						<p class="layer-what">Custom MCP Servers</p>
-						<p class="layer-examples">Connect your systems with Agents using trust boundaries</p>
-					</div>
+				<div class="how-step">
+					<div class="how-step-num">2</div>
+					<h3>We connect them to AI</h3>
+					<p>We build the infrastructure that lets Claude, Cursor, or Codex access your systems securely.</p>
+				</div>
+				<div class="how-step">
+					<div class="how-step-num">3</div>
+					<h3>Your agents go to work</h3>
+					<p>Deals update docs. Reports write themselves. Tickets get triaged before you wake up.</p>
 				</div>
 			</div>
-		</BlurFade>
-		
-		<BlurFade delay={0.3}>
-			<p class="model-caption">
-				MCP servers establish trust. Skills provide capabilities. Together, they produce outcomes.
-			</p>
 		</BlurFade>
 	</div>
 </section>
@@ -322,51 +316,67 @@
 <section class="services-section">
 	<div class="section-container">
 		<BlurFade>
-				<h2 class="section-heading">Per-Integration Pricing</h2>
+				<h2 class="section-heading">Simple, predictable pricing</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="section-intro">
-				Clear scope. Predictable investment. Delivered.
+				You pick the tools. We connect them to AI. You know the cost before we start.
 			</p>
 		</BlurFade>
 		
-		<!-- Core Pricing -->
+		<!-- Scenario-based examples (lead with outcomes) -->
 		<BlurFade delay={0.2}>
-			<div class="pricing-section">
-				<h4 class="pricing-section-label">Core</h4>
-				<div class="pricing-row">
-					<div class="pricing-card featured">
-						<div class="pricing-label">Integration</div>
-						<div class="pricing-amount">$250</div>
-						<div class="pricing-unit">per integration</div>
-						<p class="pricing-description">
-							Salesforce, HubSpot, Notion, Slack, or your internal systems.
-						</p>
+			<div class="pricing-examples">
+				<div class="examples-grid">
+					<div class="example-item">
+						<span class="example-name">CRM + Docs</span>
+						<span class="example-calc">HubSpot + Notion + Claude</span>
+						<span class="example-price">$750</span>
 					</div>
-					
-					<div class="pricing-card featured">
-						<div class="pricing-label">Agent</div>
-						<div class="pricing-amount">$250</div>
-						<div class="pricing-unit">per agent</div>
-						<p class="pricing-description">
-							Claude, Cursor, Codex, Workers AI, or Cloudflare Workflows.
-						</p>
+					<div class="example-item">
+						<span class="example-name">Team workflows</span>
+						<span class="example-calc">Salesforce + Slack + Google + secure login</span>
+						<span class="example-price">$2,000</span>
+					</div>
+					<div class="example-item">
+						<span class="example-name">Full automation</span>
+						<span class="example-calc">8 tools + 3 AI platforms + scheduled tasks</span>
+						<span class="example-price">$3,500</span>
 					</div>
 				</div>
 			</div>
 		</BlurFade>
-		
-		<!-- Add-ons -->
+
+		<!-- How we price it -->
 		<BlurFade delay={0.3}>
-			<div class="pricing-section">
-				<h4 class="pricing-section-label">Add-ons</h4>
+			<div class="pricing-math">
+				<h4 class="pricing-section-label">How we price it</h4>
 				<div class="pricing-row">
+					<div class="pricing-card featured">
+						<div class="pricing-label">Tool</div>
+						<div class="pricing-amount">$250</div>
+						<div class="pricing-unit">per tool connected</div>
+						<p class="pricing-description">
+							Any tool with an API — CRM, docs, chat, email, internal systems.
+						</p>
+					</div>
+					
+					<div class="pricing-card featured">
+						<div class="pricing-label">AI Platform</div>
+						<div class="pricing-amount">$250</div>
+						<div class="pricing-unit">per platform configured</div>
+						<p class="pricing-description">
+							We set up Claude, Cursor, or Codex to work with your tools.
+						</p>
+					</div>
+				</div>
+				<div class="pricing-row" style="margin-top: var(--space-4, 1rem);">
 					<div class="pricing-card">
-						<div class="pricing-label">Complex Auth</div>
+						<div class="pricing-label">Secure Team Login</div>
 						<div class="pricing-amount">$250</div>
 						<div class="pricing-unit">one-time</div>
 						<p class="pricing-description">
-							OAuth 2.0, refresh tokens, multi-tenant, or custom auth flows.
+							Multi-user access with enterprise-grade authentication.
 						</p>
 					</div>
 					
@@ -375,33 +385,11 @@
 						<div class="pricing-amount">$500</div>
 						<div class="pricing-unit">one-time</div>
 						<p class="pricing-description">
-							Triggers, scheduled workflows, observability, orchestration.
+							Scheduled tasks, alerts, and automated workflows.
 						</p>
 					</div>
 				</div>
-			</div>
-		</BlurFade>
-		
-		<BlurFade delay={0.6}>
-			<div class="pricing-examples">
-				<h4>Example builds</h4>
-				<div class="examples-grid">
-					<div class="example-item">
-						<span class="example-name">Quick start</span>
-						<span class="example-calc">2 integrations + 1 agent</span>
-						<span class="example-price">$750</span>
-					</div>
-					<div class="example-item">
-						<span class="example-name">Team setup</span>
-						<span class="example-calc">5 integrations + 2 agents + auth</span>
-						<span class="example-price">$2,000</span>
-					</div>
-					<div class="example-item">
-						<span class="example-name">Full stack</span>
-						<span class="example-calc">8 integrations + 3 agents + both</span>
-						<span class="example-price">$3,500</span>
-					</div>
-				</div>
+				<p class="value-anchor">Custom development typically costs $15k–$50k. Our per-tool model makes it predictable.</p>
 			</div>
 		</BlurFade>
 	</div>
@@ -415,8 +403,8 @@
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="section-intro">
-				Build is step one. We can also host and operate your MCP servers on Cloudflare, 
-				or hand off a deployment package for self-hosting.
+				Build is step one. We can also host and operate your connections—monitoring, updates, 
+				and support so everything keeps running. Starts at $99/mo.
 			</p>
 		</BlurFade>
 		<div class="runtime-grid">
@@ -453,7 +441,7 @@
 			<BlurFade delay={0.1}>
 				<div class="audience-card">
 					<h3>Existing tools</h3>
-					<p>You have Procore, Salesforce, or internal systems. You want Agents to work with them.</p>
+					<p>You have tools you rely on every day. You want AI to work with them—not replace them.</p>
 				</div>
 			</BlurFade>
 			
@@ -756,58 +744,62 @@
 		}
 	}
 	
-	/* Two-Layer Model */
+	/* How It Works - 3 steps */
 	.model-section {
 		padding: var(--section-padding, 6rem) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
 	
-	.layers-diagram {
-		max-width: var(--content-width-md);
-		margin: 0 auto var(--space-6, 2rem);
+	.steps-row {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-4, 1rem);
 	}
 	
-	.layer {
+	.how-step {
+		text-align: center;
 		padding: var(--space-5, 1.5rem);
 		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg, 12px);
+		background: var(--color-bg-pure);
+		box-shadow: var(--glass-shine-soft);
+		transition: 
+			border-color var(--duration-standard) var(--ease-standard),
+			box-shadow var(--duration-standard) var(--ease-standard),
+			transform var(--duration-bounce) var(--ease-bounce);
 	}
 	
-	.layer.intelligence {
-		border-bottom: none;
-		background: var(--color-bg-elevated);
-		border-radius: var(--radius-lg, 12px) var(--radius-lg, 12px) 0 0;
+	.how-step:hover {
+		border-color: var(--color-border-emphasis);
+		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
+		transform: translateY(-2px);
 	}
 	
-	.layer.automation {
-		background: var(--color-bg-surface);
-		border-radius: 0 0 var(--radius-lg, 12px) var(--radius-lg, 12px);
+	.how-step-num {
+		width: 2.5rem;
+		height: 2.5rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin: 0 auto var(--space-4, 1rem);
+		border: 1px solid var(--color-border-emphasis);
+		border-radius: var(--radius-full, 9999px);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-secondary);
 	}
 	
-	.layer-label {
-		font-size: var(--text-caption);
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-3, 0.75rem);
-	}
-	
-	
-	.layer-what {
+	.how-step h3 {
 		font-size: var(--text-body-lg);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 		margin-bottom: var(--space-2, 0.5rem);
 	}
 	
-	.layer-examples {
+	.how-step p {
 		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-	}
-	
-	.model-caption {
-		text-align: center;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
 	}
 	
 	/* Pricing Section */
@@ -816,11 +808,6 @@
 		border-top: 1px solid var(--color-border-default);
 	}
 	
-	
-	/* Per-Integration Pricing Sections */
-	.pricing-section {
-		margin-bottom: var(--space-6, 2rem);
-	}
 	
 	.pricing-section-label {
 		font-size: var(--text-caption);
@@ -896,19 +883,24 @@
 		margin-top: auto;
 	}
 	
+	/* Value Anchor */
+	.value-anchor {
+		text-align: center;
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		margin-top: var(--space-6, 2rem);
+		font-style: italic;
+	}
+
+	.pricing-math {
+		margin-top: var(--space-8, 3rem);
+		padding-top: var(--space-6, 2rem);
+		border-top: 1px solid var(--color-border-default);
+	}
+
 	/* Example Builds */
 	.pricing-examples {
-		border-top: 1px solid var(--color-border-default);
-		padding-top: var(--space-6, 2rem);
-	}
-	
-	.pricing-examples h4 {
-		font-size: var(--text-body-sm);
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-4, 1rem);
-		text-align: center;
+		padding-top: var(--space-2, 0.5rem);
 	}
 	
 	.examples-grid {
@@ -1124,6 +1116,10 @@
 		
 		.hero-title {
 			font-size: clamp(2.5rem, 8vw, 4rem);
+		}
+
+		.steps-row {
+			grid-template-columns: 1fr;
 		}
 		
 		.audience-grid {

@@ -2,52 +2,52 @@
 	import { SEO } from '@create-something/canon';
 	import { BlurFade, ShimmerButton } from '@create-something/canon/magicui';
 	
-	// Structured data for SEO/AEO - Per-tool pricing model
+	// Structured data for SEO/AEO
 	const services = [
 		{
-			name: 'MCP Integration',
-			description: 'Connect any tool with an API to your AI agents. Salesforce, HubSpot, Notion, Slack, or your internal systems.',
-			type: 'MCP Server Development',
+			name: 'Tool Connection',
+			description: 'Connect any tool with an API to AI agents. Salesforce, HubSpot, Notion, Slack, or your internal systems.',
+			type: 'Integration Development',
 			price: '250',
-			priceDescription: 'Per integration'
+			priceDescription: 'Per tool connected'
 		},
 		{
-			name: 'Agent Configuration',
-			description: 'Configure an agent to work with your MCP servers. Claude, Cursor, Codex, Workers AI, or Cloudflare Workflows.',
-			type: 'Agent Setup',
+			name: 'AI Platform Setup',
+			description: 'Configure Claude, Cursor, Codex, or other AI platforms to work with your connected tools.',
+			type: 'Platform Configuration',
 			price: '250',
-			priceDescription: 'Per agent'
+			priceDescription: 'Per AI platform'
 		}
 	];
 	
 	const faqItems = [
 		{
-			question: "What is an MCP server?",
-			answer: "MCP (Model Context Protocol) connects AI agents to external tools. An MCP server lets Claude, Cursor, or Codex access your systems with controlled permissions."
+			question: "What are you actually building?",
+			answer: "A secure connection between your tools and AI agents. When it's done, Claude, Cursor, or Codex can access your systems—read data, take actions, run workflows—with the permissions you set."
 		},
 		{
 			question: "What tools can you connect?",
-			answer: "Anything with an API. Procore, Salesforce, HubSpot, Notion, internal databases, REST APIs, GraphQL."
+			answer: "Anything with an API. Salesforce, HubSpot, Notion, Slack, Procore, Google Workspace, internal databases—if it has an API, we can connect it."
 		},
 		{
-			question: "How does the pricing work?",
-			answer: "You pay per integration ($250/integration) and per agent ($250/agent). Add-ons like complex auth or automation are one-time fees. No hourly billing."
+			question: "How does pricing work?",
+			answer: "You pay per tool connected ($250) and per AI platform configured ($250). Add-ons like secure team login or automation are one-time fees. No hourly billing."
 		},
 		{
-			question: "What is the Managed MCP Runtime?",
-			answer: "An optional hosted runtime on Cloudflare that includes monitoring, alerts, and API change handling. We operate the infrastructure so your workflows keep running."
+			question: "Can you keep it running after launch?",
+			answer: "Yes. Our managed runtime includes hosting, monitoring, and updates starting at $99/mo. Or we hand off a deployment package for self-hosting."
 		},
 		{
-			question: "Do you offer ongoing support?",
-			answer: "Yes. Managed runtime and ongoing maintenance are available after the initial build."
+			question: "What if I'm not sure what I need?",
+			answer: "That's what the discovery call is for. Tell us your tools and goals—we'll map out the connections and give you a total before starting."
 		}
 	];
 </script>
 
 <SEO
-	title="Services | Per-Integration MCP Pricing"
-	description="Per-integration MCP development pricing. $250 per integration, $250 per agent. Complex auth and automation add-ons available. No hourly billing."
-	keywords="MCP development, custom MCP server, Model Context Protocol, agent integration, automation infrastructure, MCP pricing"
+	title="Pricing | Connect Your Tools to AI Agents"
+	description="Predictable pricing to connect your tools to AI agents. $250 per tool, $250 per AI platform. No hourly billing. Managed runtime from $99/mo."
+	keywords="MCP development, custom MCP server, Model Context Protocol, agent integration, automation infrastructure, MCP pricing, connect tools to AI"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	{services}
@@ -59,57 +59,101 @@
 	<div class="hero-grid"></div>
 	<div class="hero-content">
 		<BlurFade delay={0}>
-			<p class="hero-eyebrow">Services</p>
+			<p class="hero-eyebrow">Pricing</p>
 		</BlurFade>
 		<BlurFade delay={0.1}>
-			<h1 class="hero-title">Per-Integration Pricing</h1>
+			<h1 class="hero-title">What does it cost?</h1>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<p class="hero-subtitle">
-				Clear scope. Predictable investment. Delivered for AI agents.
+				You pick the tools. We connect them to AI. You know the price before we start.
 			</p>
 		</BlurFade>
 	</div>
 </section>
 
-<!-- Core Pricing -->
+<!-- Scenario-Based Examples (FIRST) -->
+<section class="scenarios-section">
+	<div class="section-container">
+		<BlurFade delay={0.1}>
+			<h2 class="section-heading">Example projects</h2>
+		</BlurFade>
+		<BlurFade delay={0.15}>
+			<p class="section-subhead">Real tool combinations. Fixed prices. No surprises.</p>
+		</BlurFade>
+		<BlurFade delay={0.2}>
+			<div class="examples-grid">
+				<div class="example-card">
+					<div class="example-name">CRM + Docs</div>
+					<div class="example-scenario">HubSpot deals auto-create Notion project docs via Claude</div>
+					<div class="example-calc">2 tools + 1 AI platform</div>
+					<div class="example-price">$750</div>
+				</div>
+				<div class="example-card">
+					<div class="example-name">Team workflows</div>
+					<div class="example-scenario">Salesforce, Slack, and Google connected with secure team login</div>
+					<div class="example-calc">3 tools + 2 AI platforms + login</div>
+					<div class="example-price">$1,500</div>
+				</div>
+				<div class="example-card">
+					<div class="example-name">Full automation</div>
+					<div class="example-scenario">8 tools connected with scheduled tasks, alerts, and automated workflows</div>
+					<div class="example-calc">8 tools + 3 AI platforms + automation</div>
+					<div class="example-price">$3,500</div>
+				</div>
+			</div>
+		</BlurFade>
+		<BlurFade delay={0.3}>
+			<p class="value-anchor">Custom development typically costs $15k–$50k. Our per-tool model makes it predictable.</p>
+		</BlurFade>
+	</div>
+</section>
+
+<!-- How We Price It (SECOND) -->
 <section class="pricing-section">
 	<div class="section-container">
 		<BlurFade delay={0.1}>
+			<h2 class="section-heading">How we price it</h2>
+		</BlurFade>
+		<BlurFade delay={0.15}>
+			<p class="section-subhead">Count your tools, pick your AI platforms, add what you need. That's your total.</p>
+		</BlurFade>
+
+		<BlurFade delay={0.2}>
 			<div class="pricing-group">
 				<h3 class="pricing-group-label">Core</h3>
 				<div class="pricing-row">
 					<div class="pricing-card featured">
-						<div class="pricing-label">Integration</div>
+						<div class="pricing-label">Tool</div>
 						<div class="pricing-amount">$250</div>
-						<div class="pricing-unit">per integration</div>
+						<div class="pricing-unit">per tool connected</div>
 						<p class="pricing-description">
-							Salesforce, HubSpot, Notion, Slack, or your internal systems.
+							Any tool with an API — CRM, docs, chat, email, internal systems.
 						</p>
 					</div>
 					
 					<div class="pricing-card featured">
-						<div class="pricing-label">Agent</div>
+						<div class="pricing-label">AI Platform</div>
 						<div class="pricing-amount">$250</div>
-						<div class="pricing-unit">per agent</div>
+						<div class="pricing-unit">per platform configured</div>
 						<p class="pricing-description">
-							Claude, Cursor, Codex, Workers AI, or Cloudflare Workflows.
+							We set up Claude, Cursor, or Codex to work with your tools.
 						</p>
 					</div>
 				</div>
 			</div>
 		</BlurFade>
 		
-		<BlurFade delay={0.2}>
+		<BlurFade delay={0.3}>
 			<div class="pricing-group">
 				<h3 class="pricing-group-label">Add-ons</h3>
 				<div class="pricing-row">
 					<div class="pricing-card">
-						<div class="pricing-label">Complex Auth</div>
+						<div class="pricing-label">Secure Team Login</div>
 						<div class="pricing-amount">$250</div>
 						<div class="pricing-unit">one-time</div>
 						<p class="pricing-description">
-							OAuth 2.0, refresh tokens, multi-tenant, or custom auth flows.
+							Multi-user access with enterprise-grade authentication.
 						</p>
 					</div>
 					
@@ -118,31 +162,8 @@
 						<div class="pricing-amount">$500</div>
 						<div class="pricing-unit">one-time</div>
 						<p class="pricing-description">
-							Triggers, scheduled workflows, observability, orchestration.
+							Scheduled tasks, alerts, and automated workflows.
 						</p>
-					</div>
-				</div>
-			</div>
-		</BlurFade>
-		
-		<BlurFade delay={0.3}>
-			<div class="examples-section">
-				<h3 class="examples-label">Example Builds</h3>
-				<div class="examples-grid">
-					<div class="example-card">
-						<div class="example-name">Quick start</div>
-						<div class="example-calc">2 integrations + 1 agent</div>
-						<div class="example-price">$750</div>
-					</div>
-					<div class="example-card">
-						<div class="example-name">Team setup</div>
-						<div class="example-calc">5 integrations + 2 agents + auth</div>
-						<div class="example-price">$2,000</div>
-					</div>
-					<div class="example-card">
-						<div class="example-name">Full stack</div>
-						<div class="example-calc">8 integrations + 3 agents + both</div>
-						<div class="example-price">$3,500</div>
 					</div>
 				</div>
 			</div>
@@ -158,8 +179,8 @@
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="section-intro">
-				Build is step one. We can also host and operate your MCP servers on Cloudflare,
-				with monitoring, updates, and operational support.
+				Build is step one. We can also host and operate your connections—monitoring, updates,
+				and support so everything keeps running. Starts at $99/mo.
 			</p>
 		</BlurFade>
 		<div class="runtime-grid">
@@ -277,36 +298,36 @@
 		<div class="faq-grid">
 			<BlurFade delay={0.1}>
 				<div class="faq-item">
-					<h3>What's an MCP server?</h3>
-					<p>MCP (Model Context Protocol) connects AI agents to external tools. An MCP server lets Claude, Cursor, or Codex access your systems with controlled permissions.</p>
+					<h3>What are you actually building?</h3>
+					<p>A secure connection between your tools and AI agents. When it's done, Claude, Cursor, or Codex can access your systems—read data, take actions, run workflows—with the permissions you set.</p>
 				</div>
 			</BlurFade>
 			
 			<BlurFade delay={0.15}>
 				<div class="faq-item">
 					<h3>What tools can you connect?</h3>
-					<p>Anything with an API. Procore, Salesforce, HubSpot, Notion, internal databases, REST APIs, GraphQL.</p>
+					<p>Anything with an API. Salesforce, HubSpot, Notion, Slack, Procore, Google Workspace, internal databases—if it has an API, we can connect it.</p>
 				</div>
 			</BlurFade>
 			
 			<BlurFade delay={0.2}>
 				<div class="faq-item">
 					<h3>How does pricing work?</h3>
-					<p>You pay per integration ($250/integration) and per agent ($250/agent). Add-ons like complex auth or automation are one-time fees. No hourly billing.</p>
+					<p>You pay per tool connected ($250) and per AI platform configured ($250). Add-ons like secure team login or automation are one-time fees. No hourly billing.</p>
 				</div>
 			</BlurFade>
 			
 			<BlurFade delay={0.25}>
 				<div class="faq-item">
-					<h3>What is the Managed MCP Runtime?</h3>
-					<p>An optional hosted runtime on Cloudflare that includes monitoring, alerts, and API change handling.</p>
+					<h3>Can you keep it running after launch?</h3>
+					<p>Yes. Our managed runtime includes hosting, monitoring, and updates starting at $99/mo. Or we hand off a deployment package for self-hosting.</p>
 				</div>
 			</BlurFade>
 			
 			<BlurFade delay={0.3}>
 				<div class="faq-item">
-					<h3>Do you offer ongoing support?</h3>
-					<p>Yes. Managed runtime and ongoing maintenance are available after the initial build.</p>
+					<h3>What if I'm not sure what I need?</h3>
+					<p>That's what the discovery call is for. Tell us your tools and goals—we'll map out the connections and give you a total before starting.</p>
 				</div>
 			</BlurFade>
 		</div>
@@ -398,6 +419,34 @@
 		line-height: var(--leading-relaxed);
 	}
 	
+	/* Scenarios Section */
+	.scenarios-section {
+		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.section-subhead {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+		text-align: center;
+		margin-bottom: var(--space-8, 3rem);
+	}
+
+	.example-scenario {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+		margin-bottom: var(--space-2, 0.5rem);
+	}
+
+	.value-anchor {
+		text-align: center;
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		margin-top: var(--space-6, 2rem);
+		font-style: italic;
+	}
+
 	/* Pricing Section */
 	.pricing-section {
 		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
@@ -494,21 +543,6 @@
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
 		line-height: var(--leading-relaxed);
-	}
-	
-	/* Examples Section */
-	.examples-section {
-		margin-top: var(--space-8, 3rem);
-	}
-	
-	.examples-label {
-		font-size: var(--text-caption);
-		font-weight: var(--font-semibold);
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: var(--color-fg-muted);
-		text-align: center;
-		margin-bottom: var(--space-5, 1.5rem);
 	}
 	
 	.examples-grid {
@@ -830,6 +864,7 @@
 		}
 		
 		/* Mobile section padding */
+		.scenarios-section,
 		.pricing-section,
 		.runtime-section,
 		.included-section,

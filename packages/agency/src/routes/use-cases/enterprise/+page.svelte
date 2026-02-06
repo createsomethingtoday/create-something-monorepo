@@ -75,9 +75,9 @@
 </script>
 
 <SEO
-	title="Enterprise MCP | Agents That Run While You Sleep"
-	description="Enterprise-grade MCP infrastructure. Automated triggers, observability, workflow orchestration, and managed runtime. Production AI agents that operate 24/7. Starting at $5,000."
-	keywords="enterprise MCP, agent automation enterprise, AI agents, workflow orchestration, Claude enterprise"
+	title="Enterprise | AI Agents That Run While You Sleep"
+	description="Production-grade AI agent infrastructure. Automated triggers, observability, workflow orchestration, and managed runtime. Starting at $5,000."
+	keywords="enterprise AI agents, agent automation, workflow orchestration, MCP enterprise, production AI infrastructure"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -189,11 +189,12 @@
 		<div class="pricing-layout">
 			<div class="pricing-copy">
 				<BlurFade>
-					<h2 class="section-heading">Intelligence tier</h2>
+					<h2 class="section-heading">Production tier</h2>
 				</BlurFade>
 				<BlurFade delay={0.1}>
 					<p class="pricing-lead">
-						Full production deployment with managed runtime and ongoing optimization.
+						Full production deployment with managed runtime and ongoing optimization. 
+						Starts with the same per-tool pricing, plus automation, orchestration, and managed operations.
 					</p>
 				</BlurFade>
 				<ul class="pricing-includes">
@@ -207,7 +208,7 @@
 			<BlurFade delay={0.3}>
 				<div class="pricing-card-outer">
 					<div class="pricing-card featured">
-						<div class="pricing-name">Intelligence</div>
+						<div class="pricing-name">Production</div>
 						<div class="pricing-price">$5,000<span class="pricing-plus">+</span></div>
 						<p class="pricing-desc">Scales with complexity. Custom scoping on discovery call.</p>
 						<div class="pricing-cta">
@@ -231,7 +232,7 @@
 			<a href="/use-cases/business" class="comparison-card reveal">
 				<div class="comparison-tier">Build tier</div>
 				<div class="comparison-price">$500 – $2,500</div>
-				<p class="comparison-desc">Connect key systems and deploy. Add managed runtime when ready.</p>
+				<p class="comparison-desc">Start with per-tool pricing. Connect key systems and deploy. Add managed runtime when you're ready.</p>
 				<span class="comparison-link">Learn more →</span>
 			</a>
 		</div>

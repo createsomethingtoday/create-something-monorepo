@@ -6,7 +6,7 @@
 		{ problem: 'Copy-pasting between tools', solution: 'Agents pull from your CRM, update docs automatically' },
 		{ problem: 'Context switching kills focus', solution: 'One place to access everything' },
 		{ problem: 'Agents can\'t see your data', solution: 'MCP connects them to your actual tools' },
-		{ problem: 'This sounds expensive', solution: '$750 to start. You know the cost upfront.' }
+		{ problem: 'This sounds expensive', solution: 'From $750. You know the total before we start.' }
 	];
 	
 	const workflows = [
@@ -96,9 +96,9 @@
 {/snippet}
 
 <SEO
-	title="MCP for Business | Connect Your Tools to Agents"
-		description="Custom MCP development for SMB and mid-market. Connect HubSpot, Notion, Slack to Claude, Cursor, Codex. Fixed pricing from $750 with managed runtime available."
-	keywords="MCP business, SaaS integration, HubSpot Claude, Notion agents, business automation"
+	title="For Business | Connect Your Tools to AI Agents"
+	description="Connect HubSpot, Notion, Slack, and Google to AI agents like Claude and Cursor. Predictable pricing from $750. Ongoing support available."
+	keywords="connect tools to AI, business automation, HubSpot Claude, Notion AI, Slack integration, MCP development"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -127,7 +127,7 @@
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
 					HubSpot, Notion, Slack, Google—connected to Claude, Cursor, or Codex. 
-					AI agents work across your actual systems, with optional managed runtime.
+					AI agents work across your actual systems, with ongoing support available.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
@@ -291,60 +291,58 @@
 <section class="pricing-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="section-heading">Per-Integration Pricing</h2>
+			<h2 class="section-heading">Simple, predictable pricing</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="section-intro">
-				Clear scope. Predictable investment. Delivered.
+				You pick the tools. We connect them to AI. You know the cost before we start.
 			</p>
 		</BlurFade>
 		
-		<!-- Core Pricing -->
+		<!-- Scenario examples -->
 		<BlurFade delay={0.2}>
+			<div class="pricing-examples">
+				<h4>Example projects</h4>
+				<div class="examples-grid">
+					<div class="example-item">
+						<span class="example-name">CRM + Docs</span>
+						<span class="example-calc">HubSpot + Notion + Claude</span>
+						<span class="example-price">$750</span>
+					</div>
+					<div class="example-item">
+						<span class="example-name">Team workflows</span>
+						<span class="example-calc">Salesforce + Slack + Google + secure login</span>
+						<span class="example-price">$1,500</span>
+					</div>
+					<div class="example-item">
+						<span class="example-name">Full automation</span>
+						<span class="example-calc">8 tools + 3 AI platforms + scheduled tasks</span>
+						<span class="example-price">$3,500</span>
+					</div>
+				</div>
+			</div>
+		</BlurFade>
+		
+		<!-- How we price it -->
+		<BlurFade delay={0.3}>
 			<div class="pricing-tier">
-				<h4 class="pricing-tier-label">Core</h4>
+				<h4 class="pricing-tier-label">How we price it</h4>
 				<div class="pricing-row">
 					<div class="pricing-card featured">
-						<div class="pricing-label">Integration</div>
+						<div class="pricing-label">Tool</div>
 						<div class="pricing-amount">$250</div>
-						<div class="pricing-unit">per integration</div>
+						<div class="pricing-unit">per tool connected</div>
 						<p class="pricing-description">
 							HubSpot, Notion, Slack, Google, or your internal systems.
 						</p>
 					</div>
 					
 					<div class="pricing-card featured">
-						<div class="pricing-label">Agent</div>
+						<div class="pricing-label">AI Platform</div>
 						<div class="pricing-amount">$250</div>
-						<div class="pricing-unit">per agent</div>
+						<div class="pricing-unit">per platform configured</div>
 						<p class="pricing-description">
-							Claude, Cursor, Codex, or Cloudflare Workers configuration.
-						</p>
-					</div>
-				</div>
-			</div>
-		</BlurFade>
-		
-		<!-- Add-ons -->
-		<BlurFade delay={0.3}>
-			<div class="pricing-tier">
-				<h4 class="pricing-tier-label">Add-ons</h4>
-				<div class="pricing-row">
-					<div class="pricing-card">
-						<div class="pricing-label">Complex Auth</div>
-						<div class="pricing-amount">$250</div>
-						<div class="pricing-unit">one-time</div>
-						<p class="pricing-description">
-							OAuth 2.0, refresh tokens, multi-tenant flows.
-						</p>
-					</div>
-					
-					<div class="pricing-card">
-						<div class="pricing-label">Automation</div>
-						<div class="pricing-amount">$500</div>
-						<div class="pricing-unit">one-time</div>
-						<p class="pricing-description">
-							Triggers, scheduled workflows, orchestration.
+							We set up Claude, Cursor, or Codex to work with your tools.
 						</p>
 					</div>
 				</div>
@@ -352,26 +350,7 @@
 		</BlurFade>
 		
 		<BlurFade delay={0.4}>
-			<div class="pricing-examples">
-				<h4>Example builds</h4>
-				<div class="examples-grid">
-					<div class="example-item">
-						<span class="example-name">Quick start</span>
-						<span class="example-calc">2 integrations + 1 agent</span>
-						<span class="example-price">$750</span>
-					</div>
-					<div class="example-item">
-						<span class="example-name">Team setup</span>
-						<span class="example-calc">5 integrations + 2 agents + auth</span>
-						<span class="example-price">$2,000</span>
-					</div>
-					<div class="example-item">
-						<span class="example-name">Full stack</span>
-						<span class="example-calc">8 integrations + 3 agents + both</span>
-						<span class="example-price">$3,500</span>
-					</div>
-				</div>
-			</div>
+			<p class="value-anchor">Custom development typically costs $15k–$50k. Our per-tool model makes it predictable.</p>
 		</BlurFade>
 	</div>
 </section>
@@ -946,6 +925,14 @@
 		margin-top: auto;
 	}
 	
+	.value-anchor {
+		text-align: center;
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		margin-top: var(--space-6, 2rem);
+		font-style: italic;
+	}
+
 	/* CTA */
 	.cta-section {
 		padding: var(--section-padding, 6rem) 0;
