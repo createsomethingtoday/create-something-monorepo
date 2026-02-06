@@ -71,7 +71,8 @@ Examples:
 
 Options (for sync/search):
   --limit=N           Maximum emails to process (default: 10)
-  --create-contacts   Create new Contacts for unknown senders
+
+Note: Contacts are automatically created for unknown senders during sync.
 
 Environment Variables (.env file):
   GOOGLE_CLIENT_ID        Google OAuth Client ID
@@ -135,7 +136,6 @@ async function runSync(args: string[]) {
   const maxResults = parseInt(
     args.find(a => a.startsWith('--limit='))?.split('=')[1] || '10'
   );
-  const createContacts = args.includes('--create-contacts');
 
   // Validate environment
   if (!process.env.NOTION_INTERACTIONS_DB_ID || !process.env.NOTION_CONTACTS_DB_ID) {
@@ -147,8 +147,7 @@ async function runSync(args: string[]) {
   }
 
   console.log(`\n🔍 Gmail Query: ${query}`);
-  console.log(`   Max results: ${maxResults}`);
-  console.log(`   Create contacts: ${createContacts}\n`);
+  console.log(`   Max results: ${maxResults}\n`);
 
   // Search Gmail
   console.log('Searching Gmail...');
@@ -187,9 +186,7 @@ async function runSync(args: string[]) {
     contactsDatabaseId: process.env.NOTION_CONTACTS_DB_ID,
   });
 
-  const result = await notionClient.syncEmails(interactions, {
-    createContactsIfMissing: createContacts,
-  });
+  const result = await notionClient.syncEmails(interactions);
 
   // Summary
   console.log('\n' + '═'.repeat(50));

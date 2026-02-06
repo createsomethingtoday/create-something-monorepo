@@ -85,7 +85,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'sync_email',
-      description: 'Sync a Gmail email to the Notion Interactions database. Automatically links to existing contacts by email match.',
+      description: 'Sync a Gmail email to the Notion Interactions database. Automatically links to existing contacts by email or secondary email match. Creates a new contact if the sender is not found.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -93,18 +93,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
             type: 'string',
             description: 'Gmail message ID to sync',
           },
-          create_contact: {
-            type: 'boolean',
-            description: 'Create a new contact if sender not found (default: false)',
-            default: false,
-          },
         },
         required: ['email_id'],
       },
     },
     {
       name: 'sync_emails_by_query',
-      description: 'Search Gmail and sync all matching emails to Notion Interactions. Good for bulk syncing.',
+      description: 'Search Gmail and sync all matching emails to Notion Interactions. Automatically creates contacts for unknown senders. Good for bulk syncing.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -116,11 +111,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
             type: 'number',
             description: 'Maximum emails to sync (default: 10)',
             default: 10,
-          },
-          create_contacts: {
-            type: 'boolean',
-            description: 'Create contacts for unknown senders (default: false)',
-            default: false,
           },
         },
         required: ['query'],
@@ -163,6 +153,32 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           },
         },
         required: ['name'],
+      },
+    },
+    {
+      name: 'link_contact',
+      description: 'Re-link an Interaction to a different Contact. Use when an email was synced and auto-created a contact, but the sender is actually an existing contact using a different email. Optionally saves the sender email as a Secondary Email alias and archives the auto-created contact.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          interaction_id: {
+            type: 'string',
+            description: 'Notion page ID of the Interaction to re-link',
+          },
+          contact_id: {
+            type: 'string',
+            description: 'Notion page ID of the correct Contact to link to',
+          },
+          sender_email: {
+            type: 'string',
+            description: 'Email address to save as Secondary Email alias on the contact (optional)',
+          },
+          delete_auto_created_contact_id: {
+            type: 'string',
+            description: 'Notion page ID of the auto-created contact to archive (optional)',
+          },
+        },
+        required: ['interaction_id', 'contact_id'],
       },
     },
     {
@@ -209,10 +225,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'sync_email': {
-        const { email_id, create_contact = false } = args as { 
-          email_id: string; 
-          create_contact?: boolean;
-        };
+        const { email_id } = args as { email_id: string };
 
         // Fetch the full email
         const email = await gmail.getEmail(email_id);
@@ -236,10 +249,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           direction: teamEmails.includes(email.from.email.toLowerCase()) ? 'Outbound' : 'Inbound',
         };
 
-        // Sync to Notion
-        const result = await interactions.syncEmail(interaction, {
-          createContactIfMissing: create_contact,
-        });
+        // Sync to Notion (always creates contact if not found)
+        const result = await interactions.syncEmail(interaction);
 
         return {
           content: [{
@@ -257,10 +268,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'sync_emails_by_query': {
-        const { query, limit = 10, create_contacts = false } = args as {
+        const { query, limit = 10 } = args as {
           query: string;
           limit?: number;
-          create_contacts?: boolean;
         };
 
         // Search and fetch emails
@@ -290,10 +300,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           direction: teamEmails.includes(email.from.email.toLowerCase()) ? 'Outbound' : 'Inbound',
         }));
 
-        // Sync all
-        const result = await interactions.syncEmails(interactionsList, {
-          createContactsIfMissing: create_contacts,
-        });
+        // Sync all (always creates contacts if not found)
+        const result = await interactions.syncEmails(interactionsList);
 
         return {
           content: [{
@@ -364,6 +372,66 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 company: contact.company,
                 notionUrl: `https://notion.so/${contact.notionPageId.replace(/-/g, '')}`,
               },
+            }, null, 2),
+          }],
+        };
+      }
+
+      case 'link_contact': {
+        const { interaction_id, contact_id, sender_email, delete_auto_created_contact_id } = args as {
+          interaction_id: string;
+          contact_id: string;
+          sender_email?: string;
+          delete_auto_created_contact_id?: string;
+        };
+
+        // 1. Update the Interaction's Contacts relation
+        await notion.pages.update({
+          page_id: interaction_id,
+          properties: {
+            Contacts: { relation: [{ id: contact_id }] },
+          } as Parameters<typeof notion.pages.update>[0]['properties'],
+        });
+
+        // 2. Try to save sender email as Secondary Email alias
+        let aliasSaved = false;
+        let aliasNote: string | undefined;
+
+        if (sender_email) {
+          const contactPage = await notion.pages.retrieve({ page_id: contact_id });
+          const props = (contactPage as { properties: Record<string, unknown> }).properties;
+          const secondaryEmail = (props['Secondary Email'] as { email?: string })?.email;
+
+          if (!secondaryEmail) {
+            await notion.pages.update({
+              page_id: contact_id,
+              properties: {
+                'Secondary Email': { email: sender_email },
+              } as Parameters<typeof notion.pages.update>[0]['properties'],
+            });
+            aliasSaved = true;
+          } else {
+            aliasNote = 'Both email fields in use — alias not saved';
+          }
+        }
+
+        // 3. Archive the auto-created contact if requested
+        if (delete_auto_created_contact_id) {
+          await notion.pages.update({
+            page_id: delete_auto_created_contact_id,
+            archived: true,
+          });
+        }
+
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              linked: true,
+              contact_id,
+              alias_saved: aliasSaved,
+              alias_note: aliasNote,
+              auto_created_archived: !!delete_auto_created_contact_id,
             }, null, 2),
           }],
         };

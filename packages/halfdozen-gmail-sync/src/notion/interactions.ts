@@ -70,7 +70,7 @@ export class InteractionsClient {
     interaction: InteractionData,
     options: { createContactIfMissing?: boolean } = {}
   ): Promise<SyncResult> {
-    const { createContactIfMissing = false } = options;
+    const { createContactIfMissing = true } = options;
 
     try {
       // 1. Check if already synced (by Gmail ID)
@@ -141,7 +141,7 @@ export class InteractionsClient {
    */
   async syncEmails(
     interactions: InteractionData[],
-    options: { createContactsIfMissing?: boolean } = {}
+    options: { createContactsIfMissing?: boolean } = { createContactsIfMissing: true }
   ): Promise<BatchSyncResult> {
     const results: SyncResult[] = [];
     let successful = 0;

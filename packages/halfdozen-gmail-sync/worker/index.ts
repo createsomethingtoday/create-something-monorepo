@@ -19,6 +19,7 @@ interface Env {
   NOTION_CONTACTS_DB_ID: string;
   TEAM_EMAILS: string;
   ADMIN_SECRET?: string;
+  ADDON_SECRET?: string;
   GMAIL_TOKENS: KVNamespace;
   MCP_OBJECT: DurableObjectNamespace;
 }
@@ -565,10 +566,9 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
       'sync_email',
       {
         email_id: z.string().describe('Gmail message ID'),
-        create_contact: z.boolean().optional().describe('Create contact if not found'),
         user_email: z.string().describe('Email of team member (must be authorized)'),
       },
-      async ({ email_id, create_contact = false, user_email }) => {
+      async ({ email_id, user_email }) => {
         try {
           // Fetch email from Gmail
           const msg = await gmailFetch(this.env, `/messages/${email_id}`, { format: 'full' }, user_email) as {
@@ -597,7 +597,7 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
             return { content: [{ type: 'text', text: JSON.stringify({ skipped: true, reason: 'Already synced' }) }] };
           }
 
-          // Find contact
+          // Find contact: primary email -> secondary email -> auto-create
           let contactId: string | undefined;
           let contactCreated = false;
 
@@ -608,13 +608,24 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
 
           if (contactSearch.results.length > 0) {
             contactId = contactSearch.results[0].id;
-          } else if (create_contact) {
-            const newContact = await notionCreatePage(this.env, this.env.NOTION_CONTACTS_DB_ID, {
-              Name: { title: [{ text: { content: from.name || from.email.split('@')[0] } }] },
-              Email: { email: from.email },
-            });
-            contactId = newContact.id;
-            contactCreated = true;
+          } else {
+            // Try secondary email
+            const secondarySearch = await notionQueryDatabase(this.env, this.env.NOTION_CONTACTS_DB_ID, {
+              property: 'Secondary Email',
+              email: { equals: from.email },
+            }, 1);
+
+            if (secondarySearch.results.length > 0) {
+              contactId = secondarySearch.results[0].id;
+            } else {
+              // Auto-create contact
+              const newContact = await notionCreatePage(this.env, this.env.NOTION_CONTACTS_DB_ID, {
+                Name: { title: [{ text: { content: from.name || from.email.split('@')[0] } }] },
+                Email: { email: from.email },
+              });
+              contactId = newContact.id;
+              contactCreated = true;
+            }
           }
 
           // Direction
@@ -762,6 +773,72 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
       }
     );
 
+    // Tool: Link Contact (re-link interaction to a different contact + save alias)
+    this.server.tool(
+      'link_contact',
+      {
+        interaction_id: z.string().describe('Notion page ID of the Interaction to re-link'),
+        contact_id: z.string().describe('Notion page ID of the correct Contact to link to'),
+        sender_email: z.string().optional().describe('Email address to save as alias on the contact'),
+        delete_auto_created_contact_id: z.string().optional().describe('Notion page ID of an auto-created contact to archive'),
+      },
+      async ({ interaction_id, contact_id, sender_email, delete_auto_created_contact_id }) => {
+        try {
+          // 1. Update the Interaction's Contacts relation
+          await notionFetch(this.env, `/pages/${interaction_id}`, 'PATCH', {
+            properties: {
+              Contacts: { relation: [{ id: contact_id }] },
+            },
+          });
+
+          // 2. Try to save sender email as Secondary Email alias
+          let aliasSaved = false;
+          let aliasNote: string | undefined;
+
+          if (sender_email) {
+            const contact = await notionFetch(this.env, `/pages/${contact_id}`, 'GET') as {
+              properties: Record<string, any>;
+            };
+
+            const secondaryEmail = contact.properties['Secondary Email']?.email;
+
+            if (!secondaryEmail) {
+              await notionFetch(this.env, `/pages/${contact_id}`, 'PATCH', {
+                properties: {
+                  'Secondary Email': { email: sender_email },
+                },
+              });
+              aliasSaved = true;
+            } else {
+              aliasNote = 'Both email fields in use — alias not saved';
+            }
+          }
+
+          // 3. Archive the auto-created contact if requested
+          if (delete_auto_created_contact_id) {
+            await notionFetch(this.env, `/pages/${delete_auto_created_contact_id}`, 'PATCH', {
+              archived: true,
+            });
+          }
+
+          return {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                linked: true,
+                contact_id,
+                alias_saved: aliasSaved,
+                alias_note: aliasNote,
+                auto_created_archived: !!delete_auto_created_contact_id,
+              }, null, 2),
+            }],
+          };
+        } catch (error) {
+          return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
+        }
+      }
+    );
+
     // ═══════════════════════════════════════════════════════════════
     // ChatGPT Connector Tools
     // ═══════════════════════════════════════════════════════════════
@@ -859,6 +936,241 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// REST API endpoints (for Gmail Add-on)
+// ═══════════════════════════════════════════════════════════════
+
+async function handleApiRoute(pathname: string, request: Request, env: Env): Promise<Response> {
+  // Authenticate via ADDON_SECRET
+  const auth = request.headers.get('Authorization');
+  if (!env.ADDON_SECRET || auth !== `Bearer ${env.ADDON_SECRET}`) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  const body = await request.json() as Record<string, unknown>;
+  const json = (data: unknown, status = 200) =>
+    new Response(JSON.stringify(data, null, 2), {
+      status,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+  try {
+    switch (pathname) {
+      case '/api/check': {
+        const gmailId = body.gmail_id as string;
+        if (!gmailId) return json({ error: 'gmail_id required' }, 400);
+
+        const existing = await notionQueryDatabase(env, env.NOTION_INTERACTIONS_DB_ID, {
+          property: 'Interaction',
+          title: { contains: `[${gmailId}]` },
+        }, 1);
+
+        const exists = existing.results.length > 0;
+        const pageId = exists ? existing.results[0].id : undefined;
+
+        return json({
+          exists,
+          page_url: pageId ? `https://notion.so/${pageId.replace(/-/g, '')}` : undefined,
+        });
+      }
+
+      case '/api/sync': {
+        const subject = body.subject as string;
+        const from = body.from as { name?: string; email: string };
+        const to = body.to as string[];
+        const date = body.date as string;
+        const emailBody = body.body as string || '';
+        const gmailId = body.gmail_id as string;
+        const direction = body.direction as 'Inbound' | 'Outbound';
+
+        if (!gmailId || !from?.email || !subject) {
+          return json({ error: 'gmail_id, from.email, and subject are required' }, 400);
+        }
+
+        // Dedup check
+        const existing = await notionQueryDatabase(env, env.NOTION_INTERACTIONS_DB_ID, {
+          property: 'Interaction',
+          title: { contains: `[${gmailId}]` },
+        }, 1);
+
+        if (existing.results.length > 0) {
+          return json({
+            success: true,
+            skipped: true,
+            page_url: `https://notion.so/${existing.results[0].id.replace(/-/g, '')}`,
+          });
+        }
+
+        // Find contact: primary -> secondary -> auto-create
+        let contactId: string | undefined;
+        let contactCreated = false;
+        let contactName: string | undefined;
+
+        const primarySearch = await notionQueryDatabase(env, env.NOTION_CONTACTS_DB_ID, {
+          property: 'Email',
+          email: { equals: from.email },
+        }, 1);
+
+        if (primarySearch.results.length > 0) {
+          contactId = primarySearch.results[0].id;
+          contactName = primarySearch.results[0].properties.Name?.title?.[0]?.plain_text;
+        } else {
+          const secondarySearch = await notionQueryDatabase(env, env.NOTION_CONTACTS_DB_ID, {
+            property: 'Secondary Email',
+            email: { equals: from.email },
+          }, 1);
+
+          if (secondarySearch.results.length > 0) {
+            contactId = secondarySearch.results[0].id;
+            contactName = secondarySearch.results[0].properties.Name?.title?.[0]?.plain_text;
+          } else {
+            const name = from.name || from.email.split('@')[0];
+            const newContact = await notionCreatePage(env, env.NOTION_CONTACTS_DB_ID, {
+              Name: { title: [{ text: { content: name } }] },
+              Email: { email: from.email },
+            });
+            contactId = newContact.id;
+            contactName = name;
+            contactCreated = true;
+          }
+        }
+
+        // Create interaction
+        const properties: Record<string, unknown> = {
+          Interaction: { title: [{ text: { content: `${subject} [${gmailId}]`.substring(0, 2000) } }] },
+          Date: { date: { start: (date || new Date().toISOString()).split('T')[0] } },
+          Type: { select: { name: 'Email' } },
+        };
+        if (contactId) {
+          properties.Contacts = { relation: [{ id: contactId }] };
+        }
+
+        const page = await notionCreatePage(env, env.NOTION_INTERACTIONS_DB_ID, properties);
+
+        // Add email content blocks
+        const calloutBlock = {
+          type: 'callout',
+          callout: {
+            icon: { emoji: '📧' },
+            rich_text: [{ type: 'text', text: { content: `From: ${from.email}\nTo: ${(to || []).join(', ')}\nDirection: ${direction || 'Inbound'}` } }],
+          },
+        };
+        const { toggleBlock, overflowBatches } = buildBodyBlocks(emailBody);
+
+        const appendResult = await notionAppendBlocks(env, page.id, [calloutBlock, toggleBlock]) as {
+          results: Array<{ id: string }>;
+        };
+
+        if (overflowBatches.length > 0) {
+          const toggleId = appendResult.results[1].id;
+          for (const batch of overflowBatches) {
+            await notionAppendBlocks(env, toggleId, batch);
+          }
+        }
+
+        return json({
+          success: true,
+          page_url: `https://notion.so/${page.id.replace(/-/g, '')}`,
+          contact_id: contactId,
+          contact_name: contactName,
+          contact_created: contactCreated,
+        });
+      }
+
+      case '/api/contact/find': {
+        const email = body.email as string | undefined;
+        const name = body.name as string | undefined;
+
+        if (!email && !name) return json({ error: 'email or name required' }, 400);
+
+        let filter: unknown;
+        if (email) {
+          filter = { property: 'Email', email: { equals: email } };
+        } else {
+          filter = { property: 'Name', title: { contains: name } };
+        }
+
+        const response = await notionQueryDatabase(env, env.NOTION_CONTACTS_DB_ID, filter, 5);
+        const contacts = response.results.map((page: any) => ({
+          id: page.id,
+          name: page.properties.Name?.title?.[0]?.plain_text || 'Unknown',
+          email: page.properties.Email?.email,
+          secondary_email: page.properties['Secondary Email']?.email,
+          url: `https://notion.so/${page.id.replace(/-/g, '')}`,
+        }));
+
+        return json({ found: contacts.length > 0, contacts });
+      }
+
+      case '/api/link-contact': {
+        const interactionId = body.interaction_id as string;
+        const contactId = body.contact_id as string;
+        const senderEmail = body.sender_email as string | undefined;
+        const deleteId = body.delete_auto_created_contact_id as string | undefined;
+
+        if (!interactionId || !contactId) {
+          return json({ error: 'interaction_id and contact_id required' }, 400);
+        }
+
+        // Update Interaction's Contacts relation
+        await notionFetch(env, `/pages/${interactionId}`, 'PATCH', {
+          properties: {
+            Contacts: { relation: [{ id: contactId }] },
+          },
+        });
+
+        // Try to save alias
+        let aliasSaved = false;
+        let aliasNote: string | undefined;
+
+        if (senderEmail) {
+          const contact = await notionFetch(env, `/pages/${contactId}`, 'GET') as {
+            properties: Record<string, any>;
+          };
+          const secondaryEmail = contact.properties['Secondary Email']?.email;
+
+          if (!secondaryEmail) {
+            await notionFetch(env, `/pages/${contactId}`, 'PATCH', {
+              properties: { 'Secondary Email': { email: senderEmail } },
+            });
+            aliasSaved = true;
+          } else {
+            aliasNote = 'Both email fields in use — alias not saved';
+          }
+        }
+
+        // Archive auto-created contact
+        if (deleteId) {
+          await notionFetch(env, `/pages/${deleteId}`, 'PATCH', { archived: true });
+        }
+
+        return json({
+          linked: true,
+          contact_id: contactId,
+          alias_saved: aliasSaved,
+          alias_note: aliasNote,
+          auto_created_archived: !!deleteId,
+        });
+      }
+
+      default:
+        return json({ error: 'Not found' }, 404);
+    }
+  } catch (error) {
+    return json({ error: String(error) }, 500);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Worker entry point
 // ═══════════════════════════════════════════════════════════════
 export default {
@@ -875,6 +1187,11 @@ export default {
 
     if (url.pathname === '/users') {
       return handleListUsers(request, env);
+    }
+
+    // REST API endpoints (for Gmail Add-on and external integrations)
+    if (url.pathname.startsWith('/api/')) {
+      return handleApiRoute(url.pathname, request, env);
     }
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {

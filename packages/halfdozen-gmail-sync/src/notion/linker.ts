@@ -11,6 +11,7 @@ import type { ContactData, ContactMatch, ContactsPropertyMapping } from '../type
 const DEFAULT_MAPPING: ContactsPropertyMapping = {
   name: 'Name',
   email: 'Email',
+  secondaryEmail: 'Secondary Email',
   company: 'Company',
 };
 
@@ -48,12 +49,21 @@ export class ContactLinker {
       }
     }
 
-    // Try email match first (highest confidence)
+    // Try primary email match (highest confidence)
     if (email) {
       const emailMatch = await this.queryByEmail(email);
       if (emailMatch) {
         this.cache.set(email.toLowerCase(), emailMatch);
         return { contact: emailMatch, confidence: 'exact_email' };
+      }
+    }
+
+    // Try secondary email match
+    if (email && this.mapping.secondaryEmail) {
+      const secondaryMatch = await this.queryBySecondaryEmail(email);
+      if (secondaryMatch) {
+        this.cache.set(email.toLowerCase(), secondaryMatch);
+        return { contact: secondaryMatch, confidence: 'secondary_email' };
       }
     }
 
@@ -150,6 +160,29 @@ export class ContactLinker {
   }
 
   /**
+   * Query Contacts database by secondary email.
+   */
+  private async queryBySecondaryEmail(email: string): Promise<ContactData | null> {
+    if (!this.mapping.secondaryEmail) return null;
+    try {
+      const response = await this.client.databases.query({
+        database_id: this.databaseId,
+        filter: {
+          property: this.mapping.secondaryEmail,
+          email: { equals: email },
+        },
+        page_size: 1,
+      });
+
+      if (response.results.length === 0) return null;
+      return this.parseContact(response.results[0]);
+    } catch (error) {
+      console.warn(`Warning: Could not query contacts by secondary email: ${error}`);
+      return null;
+    }
+  }
+
+  /**
    * Query Contacts database by name.
    */
   private async queryByName(
@@ -196,6 +229,12 @@ export class ContactLinker {
       return prop?.email;
     };
 
+    const getSecondaryEmail = (): string | undefined => {
+      if (!this.mapping.secondaryEmail) return undefined;
+      const prop = p.properties[this.mapping.secondaryEmail] as { email?: string };
+      return prop?.email;
+    };
+
     const getCompany = (): string | undefined => {
       if (!this.mapping.company) return undefined;
       const prop = p.properties[this.mapping.company] as { 
@@ -208,6 +247,7 @@ export class ContactLinker {
       id: p.id,
       name: getName(),
       email: getEmail(),
+      secondaryEmail: getSecondaryEmail(),
       company: getCompany(),
       notionPageId: p.id,
     };

@@ -65,13 +65,14 @@ export interface ContactData {
   id: string;
   name: string;
   email?: string;
+  secondaryEmail?: string;
   company?: string;
   notionPageId: string;
 }
 
 export interface ContactMatch {
   contact: ContactData;
-  confidence: 'exact_email' | 'exact_name' | 'partial_name';
+  confidence: 'exact_email' | 'secondary_email' | 'exact_name' | 'partial_name';
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -93,6 +94,7 @@ export interface InteractionsPropertyMapping {
 export interface ContactsPropertyMapping {
   name: string;            // "Name" - title
   email: string;           // "Email" - email property
+  secondaryEmail?: string; // "Secondary Email" - email property (alias)
   company?: string;        // "Company" - text
   interactions?: string;   // "Interactions" - relation (rollup from Interactions)
 }
