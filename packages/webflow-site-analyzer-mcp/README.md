@@ -1,0 +1,877 @@
+# Webflow Site Analyzer MCP
+
+MCP server for analyzing Webflow sites with a **self-improving intelligence layer**. The system observes its own performance and can modify its automation layer based on feedback.
+
+## Framework Tier
+
+This MCP server operates at the following tiers of the [Three-Tier Framework](../../docs/THREE_TIER_FRAMEWORK.md):
+
+| Tier | Role in This Server |
+|------|---------------------|
+| **Database** | Web pages (URLs) as the source of truth — site structure, SEO metadata, touchpoints, images, performance data, and Webflow Designer metadata (pages, CSS classes, components, CMS collections, assets) |
+| **Automation** | Versioned extraction scripts executed via browser automation (`analyze_touchpoints`, `extract_seo`, `get_page_structure`, `analyze_images`, `get_performance`, `capture_screenshot`, `extract_designer_metadata`); Steel.dev and Browserless browser providers; Temporal workflows for durable execution |
+| **Judgment** | Self-improving intelligence layer — feedback collection (`record_feedback`), pattern analysis (`run_analysis_cycle`), script version comparison (`compare_versions`), autonomous improvement proposals, and A/B testing of extraction scripts (`promote_version`, `create_script_version`) |
+
+**Primary tier**: Automation — the server's core value is its suite of versioned browser-based extraction tools, though its Judgment tier (self-improvement loop) is a distinguishing architectural feature.
+
+## Architecture: Three Layers
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ INTELLIGENCE LAYER                                              │
+│ Observability, feedback, pattern analysis, self-improvement     │
+│ Tools: record_feedback, run_analysis_cycle, compare_versions    │
+├─────────────────────────────────────────────────────────────────┤
+│ AUTOMATION LAYER                                                │
+│ Versioned scripts, browser providers, MCP tools                 │
+│ Tools: analyze_touchpoints, extract_seo, get_page_structure     │
+├─────────────────────────────────────────────────────────────────┤
+│ DATABASE LAYER                                                  │
+│ URL - The web pages are the source of truth                     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Features
+
+### Automation Layer
+- **Touchpoint Analysis**: Extract all interactive elements (links, buttons, forms, Webflow interactions)
+- **SEO Extraction**: Meta tags, headings, links, images, structured data with scoring
+- **Page Structure**: Hierarchical section mapping including navbar, footer, hero detection
+- **Image Analysis**: Format detection, optimization scoring, accessibility checks
+- **Performance Metrics**: Load times, paint timings, resource breakdown
+- **Screenshot Capture**: Full-page or viewport screenshots
+- **Designer Metadata**: Extract template metadata from Webflow preview URLs:
+  - Pages list (static, CMS templates, ecommerce, utility)
+  - CSS classes (global HTML tags, custom Webflow classes)
+  - Components with usage counts (detect unused components)
+  - Interactions/animations (Page load triggers, element triggers)
+  - CMS collections with item counts
+  - Assets inventory (images, SVGs, videos)
+  - Site plan and breakpoints
+
+### Intelligence Layer (Self-Improvement)
+- **Script Versioning**: All extraction scripts are versioned with semantic versioning
+- **A/B Testing**: Test new script versions against production with automatic comparison
+- **Feedback Collection**: Record extraction quality ratings and specific issues
+- **Pattern Analysis**: Identify common failure patterns and problematic URLs
+- **Autonomous Proposals**: Generate modification proposals based on feedback
+- **Metrics Tracking**: Success rate, duration, items extracted per version
+
+## Installation
+
+```bash
+pnpm add @create-something/webflow-site-analyzer-mcp
+```
+
+## Configuration
+
+### Browser Providers
+
+The analyzer supports multiple browser automation providers:
+
+| Provider | Best For | Session Duration | Cost |
+|----------|----------|------------------|------|
+| **Steel** (recommended) | Production, complex extractions | 24 hours | $0.10/hr, 100 free hrs/mo |
+| **Browserless** | Local development, testing | Variable | $0.29/hr |
+
+### Environment Variables
+
+```bash
+# Recommended: Steel.dev (production)
+STEEL_API_KEY=your-steel-api-key
+
+# Alternative: Browserless (local dev)
+BROWSERLESS_TOKEN=your-browserless-token
+
+# Optional: Custom Browserless endpoint
+BROWSERLESS_ENDPOINT=wss://chrome.browserless.io
+
+# Optional: Langfuse for observability
+LANGFUSE_PUBLIC_KEY=your-public-key
+LANGFUSE_SECRET_KEY=your-secret-key
+```
+
+### Provider Selection
+
+The system automatically selects the provider based on available credentials:
+1. If `STEEL_API_KEY` is set → Uses Steel (recommended)
+2. If only `BROWSERLESS_TOKEN` is set → Uses Browserless
+3. You can also explicitly choose via the ProviderManager API
+
+### MCP Configuration
+
+Add to your `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "webflow-site-analyzer": {
+      "command": "node",
+      "args": ["./packages/webflow-site-analyzer-mcp/dist/index.js"],
+      "env": {
+        "BROWSERLESS_TOKEN": "${BROWSERLESS_TOKEN}"
+      }
+    }
+  }
+}
+```
+
+Or with npx:
+
+```json
+{
+  "mcpServers": {
+    "webflow-site-analyzer": {
+      "command": "npx",
+      "args": ["@create-something/webflow-site-analyzer-mcp"],
+      "env": {
+        "BROWSERLESS_TOKEN": "${BROWSERLESS_TOKEN}"
+      }
+    }
+  }
+}
+```
+
+## Tools
+
+### `analyze_touchpoints`
+
+Extract all interactive elements from a Webflow page.
+
+```typescript
+// Input
+{
+  url: "https://example.webflow.io",
+  waitForSelector?: ".hero-section",  // Optional selector to wait for
+  timeout?: 60000,                    // Timeout in ms
+  includeHidden?: false               // Include hidden elements
+}
+
+// Output
+{
+  url: string,
+  timestamp: string,
+  totalCount: number,
+  byType: {
+    link: number,
+    button: number,
+    form: number,
+    input: number,
+    cta: number,
+    navigation: number,
+    interactive: number
+  },
+  touchpoints: [{
+    id: string,
+    type: string,
+    tag: string,
+    selector: string,
+    text: string,
+    href?: string,
+    position: { x, y, width, height },
+    attributes: Record<string, string>,
+    isVisible: boolean,
+    isAboveFold: boolean,
+    webflowClass?: string,
+    webflowInteraction?: string
+  }],
+  warnings: string[]
+}
+```
+
+### `extract_seo`
+
+Extract SEO data with scoring and recommendations.
+
+```typescript
+// Input
+{
+  url: "https://example.webflow.io",
+  checkLinks?: false,  // Check for broken links
+  timeout?: 60000
+}
+
+// Output
+{
+  url: string,
+  timestamp: string,
+  title: string,
+  description: string,
+  canonical?: string,
+  metaTags: [{ name?, property?, content }],
+  openGraph: Record<string, string>,
+  twitterCard: Record<string, string>,
+  headings: [{ tag, text, level, order }],
+  h1Count: number,
+  internalLinks: number,
+  externalLinks: number,
+  brokenLinks: string[],
+  imagesWithAlt: number,
+  imagesWithoutAlt: number,
+  hasRobotsMeta: boolean,
+  isIndexable: boolean,
+  hasStructuredData: boolean,
+  structuredDataTypes: string[],
+  score: number,           // 0-100
+  issues: [{ severity, code, message, element? }],
+  recommendations: string[]
+}
+```
+
+### `get_page_structure`
+
+Extract hierarchical page structure.
+
+```typescript
+// Input
+{
+  url: "https://example.webflow.io",
+  depth?: 3,      // Max traversal depth
+  timeout?: 60000
+}
+
+// Output
+{
+  url: string,
+  timestamp: string,
+  viewport: { width, height },
+  documentHeight: number,
+  sections: [{
+    id: string,
+    tag: string,
+    className: string,
+    position: { x, y, width, height },
+    depth: number,
+    children: Section[],
+    isNavbar?: boolean,
+    isFooter?: boolean,
+    isHero?: boolean,
+    webflowSymbol?: string
+  }],
+  navbar?: Section,
+  footer?: Section,
+  mainContent?: Section
+}
+```
+
+### `analyze_images`
+
+Analyze images for optimization opportunities.
+
+```typescript
+// Input
+{
+  url: "https://example.webflow.io",
+  checkFileSizes?: false,  // Fetch actual sizes (slower)
+  timeout?: 60000
+}
+
+// Output
+{
+  url: string,
+  timestamp: string,
+  totalImages: number,
+  images: [{
+    src: string,
+    alt: string,
+    width: number,
+    height: number,
+    naturalWidth: number,
+    naturalHeight: number,
+    loading: 'lazy' | 'eager' | 'auto',
+    format: string,
+    fileSize?: number,
+    isOptimized: boolean,
+    issues: string[]
+  }],
+  byFormat: Record<string, number>,
+  totalEstimatedSize: number,
+  optimizationScore: number,  // 0-100
+  recommendations: string[]
+}
+```
+
+### `get_performance`
+
+Get performance metrics for a page.
+
+```typescript
+// Input
+{
+  url: "https://example.webflow.io",
+  timeout?: 60000
+}
+
+// Output
+{
+  url: string,
+  timestamp: string,
+  loadTime: number,
+  domContentLoaded: number,
+  firstPaint?: number,
+  firstContentfulPaint?: number,
+  largestContentfulPaint?: number,
+  totalRequests: number,
+  totalTransferSize: number,
+  resourcesByType: Record<string, { count, size }>,
+  webflowScriptSize: number,
+  interactionsScriptSize: number,
+  customCodeSize: number
+}
+```
+
+### `capture_screenshot`
+
+Capture a screenshot of a page.
+
+```typescript
+// Input
+{
+  url: "https://example.webflow.io",
+  fullPage?: true,
+  viewport?: { width: 1920, height: 1080 },
+  format?: 'png',  // 'png' | 'jpeg' | 'webp'
+  quality?: 80     // For jpeg/webp
+}
+
+// Output
+{
+  screenshot: string,  // Base64 encoded
+  format: string
+}
+```
+
+### `extract_designer_metadata`
+
+Extract template metadata from Webflow Designer Preview URL. This tool navigates through the Designer's panels to gather comprehensive template information.
+
+**Note**: Only works with Webflow preview URLs (`preview.webflow.com/preview/...`).
+
+```typescript
+// Input
+{
+  url: "https://preview.webflow.com/preview/template-name?preview=...",
+  timeout?: 120000  // Extended timeout for panel navigation
+}
+
+// Output
+{
+  url: string,
+  timestamp: string,
+  siteName: string,         // "Nurturing"
+  sitePlan: string,         // "Starter", "Basic", "CMS", "Business", "Enterprise"
+  
+  // Pages (from P key panel)
+  pages: [{
+    name: string,           // "About Us"
+    type: string,           // "static" | "cms-template" | "ecommerce" | "utility"
+    category?: string       // "Innerpages", "CMS collection pages", etc.
+  }],
+  totalPages: number,
+  
+  // CSS Classes (from Style Selectors - G key)
+  styleClasses: [{
+    name: string,           // "Nav / Toggle Block"
+    isGlobal: boolean       // true for "All H1 Headings", false for custom
+  }],
+  totalClasses: number,
+  globalClasses: number,    // HTML tag styles (H1, H2, etc.)
+  customClasses: number,    // Custom Webflow classes
+  
+  // Components (from Shift+A panel)
+  components: [{
+    name: string,           // "Button / Primary"
+    instanceCount: number,  // 7
+    isUnused: boolean       // true if instanceCount === 0
+  }],
+  totalComponents: number,
+  unusedComponents: number, // Components with 0 instances
+  
+  // Interactions (from H key panel)
+  interactions: [{
+    trigger: string,        // "Page load"
+    targetElement: string,  // "Hero / Left Top / Image 2"
+    type: string            // "page-load", "element-trigger", etc.
+  }],
+  totalInteractions: number,
+  
+  // CMS Collections (from CMS tab)
+  cmsCollections: [{
+    name: string,           // "Blog'Categories"
+    itemCount: number       // 4
+  }],
+  totalCMSItems: number,    // Sum of all collection items
+  
+  // Assets (from J key panel)
+  assets: [{
+    filename: string,       // "hero-image.jpg"
+    type: string            // "image" | "svg" | "video" | "other"
+  }],
+  totalAssets: number,
+  
+  // Responsive Breakpoints
+  breakpoints: string[]     // ["Desktop: Base breakpoint", "Tablet: 991px and down", ...]
+}
+```
+
+**Use cases**:
+- Template auditing (unused components, class naming conventions)
+- Documentation generation (auto-document pages, classes, components)
+- Quality assurance (verify all CMS collections have items)
+- Asset inventory (count images, SVGs, videos)
+
+### `get_provider_status`
+
+Check browser provider health and session metrics.
+
+```typescript
+// Input
+{}
+
+// Output
+{
+  provider: string,
+  isHealthy: boolean,
+  metrics: [{
+    provider: string,
+    isHealthy: boolean,
+    successRate: number,
+    averageLatencyMs: number,
+    failureCount: number
+  }],
+  sessionMetrics: {
+    sessionsCreated: number,
+    sessionsClosed: number,
+    sessionErrors: number,
+    totalDurationMs: number,
+    averageDurationMs: number,
+    pageLoadsCompleted: number,
+    pageLoadErrors: number
+  }
+}
+```
+
+## Intelligence Layer Tools
+
+### `list_script_versions`
+
+List all versions of an extraction script.
+
+```typescript
+// Input
+{ scriptName: "touchpoints" | "seo" | "structure" | "images" | "performance" }
+
+// Output
+{
+  scriptName: string,
+  activeVersion: string,      // Currently in production
+  testingVersion: string | null,  // A/B testing if set
+  versions: [{
+    id: string,               // e.g., "touchpoints-v1.2.0"
+    version: string,
+    status: "draft" | "testing" | "active" | "deprecated",
+    createdAt: string,
+    createdBy: "human" | "agent",
+    changelog: string
+  }]
+}
+```
+
+### `get_version_metrics`
+
+Get performance metrics for a specific script version.
+
+```typescript
+// Input
+{ versionId: "touchpoints-v1.2.0" }
+
+// Output
+{
+  versionId: string,
+  metrics: {
+    executionCount: number,
+    successCount: number,
+    failureCount: number,
+    averageDurationMs: number,
+    averageItemsExtracted: number,
+    errorRate: number,
+    userFeedbackScore?: number  // 1-5 average rating
+  }
+}
+```
+
+### `record_feedback`
+
+Record feedback about an extraction to improve future versions.
+
+```typescript
+// Input
+{
+  versionId: "touchpoints-v1.0.0",
+  url: "https://example.webflow.io",
+  rating: 1 | 2 | 3 | 4 | 5,
+  issues?: [{
+    type: "missing" | "incorrect" | "extra" | "timeout" | "error",
+    description: "Button in hero section not detected",
+    selector?: ".hero-cta"
+  }],
+  notes?: "CTAs using custom Webflow interactions not captured",
+  extractedData?: {...},  // What was extracted
+  expectedData?: {...}    // What should have been
+}
+
+// Output
+{ success: true, feedbackId: "feedback-..." }
+```
+
+### `run_analysis_cycle`
+
+Analyze feedback patterns and generate improvement recommendations.
+
+```typescript
+// Input
+{ scriptName: "touchpoints" }
+
+// Output
+{
+  scriptName: string,
+  timestamp: string,
+  issuePatterns: [{
+    type: "missing",
+    description: "Webflow IX2 interactions not detected",
+    occurrences: 15,
+    urls: [...],
+    selectors: [...]
+  }],
+  problematicUrls: [{
+    domain: "client-site.webflow.io",
+    lowRatingRate: 0.45,
+    commonIssues: [...]
+  }],
+  proposals: [{
+    targetScript: "touchpoints",
+    proposedChanges: [{
+      type: "add_selector",
+      description: "Add selector for IX2 interactions",
+      codeChange: { search: "...", replace: "..." }
+    }],
+    rationale: "Pattern detected 15 times",
+    evidence: [...]
+  }],
+  abTestAnalysis: {
+    recommendation: "Promote v1.2.0 - 12% better success rate"
+  },
+  recommendedActions: [{
+    type: "promote_version",
+    priority: "high",
+    description: "..."
+  }]
+}
+```
+
+### `compare_versions`
+
+Compare metrics between two versions to evaluate improvements.
+
+```typescript
+// Input
+{
+  baseVersionId: "touchpoints-v1.0.0",
+  compareVersionId: "touchpoints-v1.1.0"
+}
+
+// Output
+{
+  comparison: {
+    baseVersion: string,
+    compareVersion: string,
+    metrics: { base: {...}, compare: {...} },
+    improvement: {
+      successRate: 12.5,    // % improvement
+      duration: -8.3,       // % faster (negative = good)
+      itemsExtracted: 15.2  // % more items
+    },
+    recommendation: "promote" | "keep_testing" | "rollback" | "deprecate"
+  }
+}
+```
+
+### `promote_version`
+
+Promote a version to testing (A/B) or active (production).
+
+```typescript
+// Input
+{
+  versionId: "touchpoints-v1.2.0",
+  to: "testing" | "active"
+}
+
+// Output
+{ success: true }
+```
+
+### `create_script_version`
+
+Create a new version of an extraction script (agent-driven improvement).
+
+```typescript
+// Input
+{
+  scriptName: "touchpoints",
+  code: "(() => { ... })()",  // New script code
+  changelog: "Added detection for Webflow IX2 interactions"
+}
+
+// Output
+{ versionId: "touchpoints-v1.3.0" }
+```
+
+## Self-Improvement Loop
+
+The intelligence layer enables autonomous improvement:
+
+```
+1. ANALYZE: Run analysis tools against URLs
+   └─ Tool returns data + _version field
+
+2. OBSERVE: Record feedback on extraction quality  
+   └─ record_feedback with rating and issues
+
+3. ANALYZE: Run intelligence analysis cycle
+   └─ run_analysis_cycle identifies patterns
+
+4. PROPOSE: Review generated proposals
+   └─ Proposals include code changes + evidence
+
+5. TEST: Create new version and A/B test
+   └─ create_script_version + promote_version to "testing"
+
+6. EVALUATE: Compare version metrics
+   └─ compare_versions shows improvement
+
+7. DEPLOY: Promote winner to active
+   └─ promote_version to "active"
+```
+
+## Observability
+
+This package integrates with `@create-something/observability` for tracing and metrics:
+
+### Metrics Tracked
+
+| Metric | Description |
+|--------|-------------|
+| `analysis_duration_ms` | Time taken for each analysis |
+| `estimated_cost_usd` | Browser time cost estimate |
+| `items_extracted` | Count of items found |
+| `seo_score` | SEO health score (0-100) |
+| `image_optimization_score` | Image optimization score (0-100) |
+| `touchpoint_count` | Number of interactive elements |
+
+### Events Logged
+
+- `analysis_completed` / `analysis_failed`
+- `analysis_error` with stack trace
+- `analysis_timeout`
+- `provider_health_check`
+- `session_metrics`
+
+### Atlas Metadata
+
+Uses AI Interaction Atlas vocabulary:
+
+```typescript
+{
+  'touchpoint.type': 'mcp_server',
+  'touchpoint.mcp_server': 'webflow-site-analyzer-mcp',
+  'ai_task.type': 'extract',
+  'ai_task.skill': 'analyze_touchpoints',
+  'browser.provider': 'browserless',
+  'webflow.url': 'https://...'
+}
+```
+
+## Cost Tracking
+
+Browser time is tracked and cost estimated based on Browserless pricing (~$0.09/hour):
+
+```typescript
+const costPerMinute = 0.0015; // USD
+const estimatedCost = browserMinutes * costPerMinute;
+```
+
+## Development
+
+```bash
+# Build
+pnpm build
+
+# Watch mode
+pnpm dev
+
+# Type check
+pnpm typecheck
+```
+
+## Durable Execution with Temporal
+
+For long-running or crash-resilient extraction workflows, this package includes **Temporal** integration. Each extraction step becomes a resumable activity—if the worker crashes, it resumes from the last completed step, not from scratch.
+
+### Why Temporal?
+
+| Without Temporal | With Temporal |
+|------------------|---------------|
+| Crash = restart from beginning | Crash = resume from last activity |
+| No visibility into progress | Full UI showing each step |
+| Manual retry logic | Automatic retries with backoff |
+| Lost work on failure | Work persisted to Temporal server |
+
+### Quick Start
+
+**1. Start Temporal Server** (local development):
+
+```bash
+# Install Temporal CLI if needed
+brew install temporal
+
+# Start local server
+pnpm temporal:server
+# Opens UI at http://localhost:8233
+```
+
+**2. Start the Worker**:
+
+```bash
+# In a separate terminal
+pnpm temporal:worker
+```
+
+**3. Trigger a Workflow**:
+
+```bash
+pnpm temporal:trigger "https://preview.webflow.com/preview/your-template?..."
+```
+
+### Workflow Steps
+
+The extraction workflow runs 10 sequential activities:
+
+1. `createSession` - Create Steel browser session
+2. `extractSiteInfo` - Get site name and breakpoints
+3. `extractPages` - Navigate Pages panel (P key)
+4. `extractStyleClasses` - Navigate Styles panel (G key)
+5. `extractComponents` - Navigate Components panel (Shift+A)
+6. `extractInteractions` - Navigate Interactions panel (H key)
+7. `extractCMSCollections` - Check CMS tab
+8. `extractAssets` - Navigate Assets panel (J key)
+9. `extractSitePlan` - Check Settings for plan type
+10. `closeSession` - Clean up session
+
+If the worker crashes at step 7, it resumes at step 7—steps 1-6 return cached results instantly.
+
+### Testing Resume Capability
+
+```bash
+# Start a workflow
+pnpm temporal:trigger "https://preview.webflow.com/..."
+
+# While it's running, kill the worker (Ctrl+C)
+# Then restart the worker:
+pnpm temporal:worker
+
+# The workflow automatically resumes where it left off
+```
+
+### Architecture
+
+```
+src/temporal/
+├── activities.ts   # I/O operations (Steel, Puppeteer)
+├── workflows.ts    # Deterministic orchestration
+├── worker.ts       # Runs workflows + activities
+└── trigger.ts      # Client to start workflows
+```
+
+**Key Principle**: Workflows contain NO I/O. All non-deterministic operations (browser sessions, page evaluation, network requests) happen in activities. This is what makes replay possible.
+
+### Connecting to Temporal Cloud (Production)
+
+For production, use [Temporal Cloud](https://temporal.io/cloud):
+
+```bash
+export TEMPORAL_ADDRESS=your-namespace.tmprl.cloud:7233
+export TEMPORAL_TLS_CERT=/path/to/client.pem
+export TEMPORAL_TLS_KEY=/path/to/client.key
+
+pnpm temporal:worker
+```
+
+### Integration with Cloudflare Workers
+
+Cloudflare Workers can trigger Temporal workflows via the HTTP API:
+
+```typescript
+// In a Cloudflare Worker
+const response = await fetch('http://temporal-server:7243/api/v1/namespaces/default/workflows', {
+  method: 'POST',
+  body: JSON.stringify({
+    workflowId: `extraction-${Date.now()}`,
+    workflowType: 'webflowExtractionWorkflow',
+    taskQueue: 'webflow-extraction',
+    input: [url]
+  })
+});
+```
+
+Start Temporal with the HTTP API port:
+
+```bash
+temporal server start-dev --http-port 7243
+```
+
+## Architecture
+
+```
+src/
+├── index.ts             # MCP server entry point
+├── types.ts             # Type definitions
+├── observability.ts     # Tracing and metrics
+├── providers/
+│   ├── index.ts         # Provider manager
+│   └── browserless.ts   # Browserless implementation (includes Designer extraction)
+├── scripts/
+│   ├── index.ts         # Script exports
+│   ├── touchpoints.ts   # Touchpoint extraction
+│   ├── seo.ts           # SEO extraction
+│   ├── structure.ts     # Page structure extraction
+│   ├── images.ts        # Image analysis
+│   ├── performance.ts   # Performance metrics
+│   └── designer-metadata.ts  # Designer panel extraction scripts
+└── versioning/
+    ├── types.ts         # Versioning types
+    ├── registry.ts      # Version registry manager
+    └── intelligence.ts  # Analysis and proposal generation
+```
+
+## Browser Provider
+
+Currently uses **Browserless.io** as the primary browser automation provider:
+
+- WebSocket-based Puppeteer connection
+- No timeout limits (unlike Cloudflare's 60s)
+- Persistent sessions support
+- Self-hosted option available
+
+### Why Not Cloudflare Browser Rendering?
+
+Cloudflare Browser Rendering has a 60-second timeout limit which can be problematic for:
+- Complex SPAs with heavy JavaScript
+- Pages with many lazy-loaded elements
+- Full-page screenshot capture
+
+Browserless provides more flexibility for production use cases.
+
+## License
+
+MIT © CREATE SOMETHING

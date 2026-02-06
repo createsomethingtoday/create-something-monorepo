@@ -1,0 +1,39 @@
+{
+  "name": "Webflow Designer - Captured Sessions",
+  "description": "Actions captured from teaching sessions",
+  "sessions": [
+    {
+      "capturedAt": "2026-02-04T21:52:00Z",
+      "discoveries": {
+        "pages_icon": { "x": 19, "y": 132, "opens": "Pages" }
+      }
+    },
+    {
+      "capturedAt": "2026-02-04T21:57:00Z",
+      "discoveries": {
+        "components_icon": { "x": 21, "y": 207, "opens": "Components" },
+        "variables_icon": { "x": 17, "y": 237, "opens": "Variables" }
+      }
+    }
+  ],
+  "left_toolbar_map": {
+    "x": 19,
+    "icons": [
+      { "name": "Pages", "y": 132, "confirmed": true },
+      { "name": "Components", "y": 207, "confirmed": true },
+      { "name": "Variables", "y": 237, "confirmed": true }
+    ]
+  },
+  "data_automation_id_pattern": {
+    "page_seo_title": "PageSettingsForm-{slug}-page-seo-title-field-input",
+    "examples": [
+      "PageSettingsForm-about-us-page-seo-title-field-input",
+      "PageSettingsForm-shop-page-seo-title-field-input"
+    ]
+  },
+  "key_insights": [
+    "Left toolbar is at x≈17-21",
+    "Icons stacked vertically: Pages (y=132), Components (y=207), Variables (y=237)",
+    "Webflow uses predictable data-automation-id patterns for form fields"
+  ]
+}

@@ -1,0 +1,155 @@
+{
+  "name": "Webflow Designer Panel Access",
+  "description": "Known methods to access all Webflow Designer panels",
+  "version": "1.0.0",
+  "panels": {
+    "pages": {
+      "name": "Pages Panel",
+      "methods": [
+        { "type": "keyboard", "key": "p", "description": "Press P key" },
+        { "type": "keyboard", "key": "P", "modifiers": ["Shift"], "description": "Shift+P also works" },
+        { "type": "click", "coordinates": { "x": 19, "y": 132 }, "description": "Left toolbar icon (confirmed)" }
+      ],
+      "data_available": ["page_name", "page_type", "page_slug", "seo_title", "seo_description"],
+      "selectors": {
+        "seo_title_input": "[data-automation-id=\"PageSettingsForm--page-seo-title-field-input\"]"
+      }
+    },
+    "style_selectors": {
+      "name": "Style Selectors Panel",
+      "methods": [
+        { "type": "keyboard", "key": "g", "description": "Press G key" }
+      ],
+      "prerequisite": "Must click Design tab first if in CMS/Insights mode",
+      "data_available": ["class_names", "global_styles", "custom_classes"]
+    },
+    "components": {
+      "name": "Components Panel",
+      "methods": [
+        { "type": "keyboard", "key": "a", "modifiers": ["Shift"], "description": "Shift+A" },
+        { "type": "click", "coordinates": { "x": 21, "y": 207 }, "description": "Left toolbar icon (confirmed)" }
+      ],
+      "data_available": ["component_name", "instance_count", "is_unused"]
+    },
+    "assets": {
+      "name": "Assets Panel",
+      "methods": [
+        { "type": "keyboard", "key": "j", "modifiers": ["Shift"], "description": "Shift+J" }
+      ],
+      "data_available": ["filename", "file_type", "dimensions"]
+    },
+    "interactions": {
+      "name": "Interactions Panel",
+      "methods": [
+        { "type": "keyboard", "key": "x", "description": "Press X key" },
+        { "type": "keyboard", "key": "h", "description": "Press H key (legacy)" }
+      ],
+      "data_available": ["trigger_type", "target_element", "animation_name"]
+    },
+    "navigator": {
+      "name": "Navigator Panel",
+      "methods": [
+        { "type": "keyboard", "key": "z", "description": "Press Z key" },
+        { "type": "keyboard", "key": "e", "description": "Press E key (legacy)" }
+      ],
+      "data_available": ["element_tree", "element_classes", "element_tags"]
+    },
+    "variables": {
+      "name": "Variables Panel",
+      "methods": [
+        { "type": "keyboard", "key": "v", "description": "Press V key" },
+        { "type": "click", "coordinates": { "x": 17, "y": 237 }, "description": "Left toolbar icon (confirmed)" }
+      ],
+      "data_available": ["variable_name", "variable_value", "variable_type"]
+    },
+    "libraries": {
+      "name": "Libraries Panel",
+      "methods": [
+        { "type": "keyboard", "key": "l", "modifiers": ["Shift"], "description": "Shift+L" }
+      ],
+      "data_available": ["library_name", "components_list"]
+    },
+    "audits": {
+      "name": "Audits Panel",
+      "methods": [
+        { "type": "keyboard", "key": "u", "description": "Press U key" }
+      ],
+      "data_available": ["accessibility_issues", "seo_issues", "performance_issues"]
+    },
+    "cms": {
+      "name": "CMS Collections Panel",
+      "methods": [
+        { "type": "click", "selector": "button:contains('CMS')", "description": "Click CMS tab" },
+        { "type": "click", "coordinates": { "x": 118, "y": 44 }, "description": "Click @ top tabs" }
+      ],
+      "data_available": ["collection_name", "item_count", "fields"]
+    },
+    "insights": {
+      "name": "Insights/Analytics Panel",
+      "methods": [
+        { "type": "click", "selector": "button:contains('Insights')", "description": "Click Insights tab" },
+        { "type": "click", "coordinates": { "x": 187, "y": 44 }, "description": "Click @ top tabs" }
+      ],
+      "data_available": ["page_views", "top_pages", "top_events", "bounce_rate"]
+    }
+  },
+  "top_bar": {
+    "tabs": [
+      { "name": "Design", "x": 38, "y": 44 },
+      { "name": "CMS", "x": 118, "y": 44 },
+      { "name": "Insights", "x": 187, "y": 44 }
+    ],
+    "actions": [
+      { "name": "Home", "x": 935, "y": 43 },
+      { "name": "Share", "x": 1787, "y": 44 },
+      { "name": "Publish", "x": 1842, "y": 44 }
+    ],
+    "breakpoints": [
+      { "name": "Desktop", "x": 1776, "y": 80, "description": "Base breakpoint" },
+      { "name": "Tablet", "x": 1804, "y": 80, "description": "991px and down" },
+      { "name": "Mobile (L)", "x": 1832, "y": 80, "description": "767px and down" },
+      { "name": "Mobile", "x": 1860, "y": 80, "description": "479px and down" }
+    ]
+  },
+  "keyboard_shortcuts_summary": {
+    "P": "Pages",
+    "G": "Style Selectors",
+    "V": "Variables",
+    "U": "Audits",
+    "X": "Interactions",
+    "Z": "Navigator",
+    "Shift+A": "Components",
+    "Shift+J": "Assets",
+    "Shift+L": "Libraries",
+    "Escape": "Close current panel"
+  },
+  "left_toolbar": {
+    "description": "Vertical icon toolbar on left edge of Designer",
+    "x_position": 19,
+    "confirmed_icons": [
+      { "name": "Pages", "y": 132, "confirmed": true },
+      { "name": "Components", "y": 207, "confirmed": true },
+      { "name": "Variables", "y": 237, "confirmed": true }
+    ],
+    "note": "Icons are stacked vertically at x≈17-21, spacing varies"
+  },
+  "data_automation_ids": {
+    "description": "Webflow uses data-automation-id attributes for testability",
+    "pattern": "PageSettingsForm-{page-slug}-page-seo-{field}-field-input",
+    "known_ids": [
+      "PageSettingsForm--page-seo-title-field-input",
+      "PageSettingsForm--page-seo-description-field-input",
+      "PageSettingsForm-about-us-page-seo-title-field-input",
+      "PageSettingsForm-shop-page-seo-title-field-input"
+    ],
+    "note": "Pattern: PageSettingsForm-{slug}-page-seo-title-field-input where {slug} is the page slug"
+  },
+  "notes": [
+    "Some shortcuts (D, S, E, H, N) require an element to be selected first",
+    "Keyboard shortcuts work in Design mode only",
+    "CMS and Insights are accessible via top tab clicks only",
+    "Press Escape to close any open panel before opening another",
+    "Left toolbar icons are at x=19, stacked vertically from y=132",
+    "Look for data-automation-id attributes for reliable selectors"
+  ]
+}
