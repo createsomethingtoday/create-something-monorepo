@@ -187,7 +187,10 @@
 		<Card>
 			<CardContent>
 				<div class="stat-card" in:fly={{ y: 20, duration: 400, delay: 100 }}>
-					<span class="stat-label">Your Best Rank</span>
+					<div class="stat-header">
+						<span class="stat-label">Your Best Rank</span>
+						<span class="stat-badge stat-badge-muted">By Revenue</span>
+					</div>
 					<span class="stat-value">
 						{summary.userBestRank ? `#${summary.userBestRank}` : '-'}
 					</span>
@@ -201,9 +204,12 @@
 		<Card>
 			<CardContent>
 				<div class="stat-card" in:fly={{ y: 20, duration: 400, delay: 200 }}>
-					<span class="stat-label">Your Templates in Top 50</span>
+					<div class="stat-header">
+						<span class="stat-label">Your Templates in Top 50</span>
+						<span class="stat-badge stat-badge-muted">30-Day</span>
+					</div>
 					<span class="stat-value"><KineticNumber value={userTemplates.length} /></span>
-					<span class="stat-note">in the 30-day leaderboard</span>
+					<span class="stat-note">in the leaderboard</span>
 				</div>
 			</CardContent>
 		</Card>
@@ -213,9 +219,7 @@
 				<div class="stat-card" in:fly={{ y: 20, duration: 400, delay: 300 }}>
 					<div class="stat-header">
 						<span class="stat-label">Categories Tracked</span>
-						<span class="tooltip-trigger" title="Categories with sales activity in the 30-day window">
-							<HelpCircle size={12} />
-						</span>
+						<span class="stat-badge stat-badge-muted">Active</span>
 					</div>
 					<span class="stat-value"><KineticNumber value={categories.length} /></span>
 					<span class="stat-note">with recent sales</span>
@@ -601,6 +605,11 @@
 		font-weight: var(--font-medium);
 		text-transform: uppercase;
 		letter-spacing: 0.03em;
+	}
+
+	.stat-badge-muted {
+		background: var(--color-bg-subtle);
+		color: var(--color-fg-muted);
 	}
 
 	.stat-card .stat-value {
