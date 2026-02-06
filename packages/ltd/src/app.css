@@ -2,13 +2,19 @@
   CREATE SOMETHING Design System
   Property: .ltd (Philosophy / Canon)
 
-  Imports shared Canon tokens from @create-something/canon
-  This is the canonical reference - minimal customization.
+  Imports shared Canon tokens and enhancement modules.
+  This is the canonical reference - contemplative, minimal.
 */
 
 /* Import shared Canon Design System (must precede @tailwind) */
 @import '@create-something/canon/styles/canon.css';
 @import '@create-something/canon/styles/components.css';
+
+/* Import shared enhancement modules */
+@import '@create-something/canon/styles/spacing.css';
+@import '@create-something/canon/styles/typography.css';
+@import '@create-something/canon/styles/buttons.css';
+@import '@create-something/canon/styles/interactions.css';
 
 /* Tailwind CSS directives */
 @tailwind base;
@@ -18,8 +24,14 @@
 /* ==========================================================================
    .ltd Property Customizations
    View Transitions: Contemplative (500ms) - Philosophical dwelling
+   
+   Philosophy: "Gelassenheit" - letting things be.
+   Minimal customization. The Canon defaults speak for themselves.
    ========================================================================== */
 
 :root {
   --view-transition-duration: 500ms;
+
+  /* Display font matches Canon default - explicit for typography.css compatibility */
+  --font-display: 'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
