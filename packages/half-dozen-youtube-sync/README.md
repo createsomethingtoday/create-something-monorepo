@@ -28,36 +28,73 @@ This MCP server operates at all three tiers of the [Three-Tier Framework](../../
 
 ## Quick Start
 
-### 1. Initial Setup
+### 1. Install and Configure
 
 ```bash
 # Install dependencies
 pnpm install
 
-# Copy and configure environment
+# Copy environment template and add your API keys
 cp .env.example .env
-# Edit .env with your API keys
 ```
 
-### 2. CLI Usage
+Edit `.env` with your keys:
 
 ```bash
-# Sync a playlist to Notion
-npx tsx batch-sync.ts --playlist "https://youtube.com/playlist?list=PL02AA8F4D1484BBC8" --sync
-
-# Extract first 5 videos only
-npx tsx batch-sync.ts --playlist "https://youtube.com/playlist?list=..." --limit 5
-
-# Extract single video transcript
-npx tsx batch-sync.ts --video "https://youtube.com/watch?v=..." --sync
-
-# Verify Notion database connection
-npx tsx batch-sync.ts --check-db
+NOTION_API_KEY=ntn_xxx         # Required — https://notion.so/my-integrations
+NOTION_DATABASE_ID=xxx         # Required — copy from Notion database URL
+STEEL_API_KEY=ste-xxx          # Optional — enables browser automation (https://steel.dev)
+RESEND_API_KEY=re_xxx          # Optional — enables email notifications
 ```
 
-### 3. MCP Server (Stdio)
+### 2. Verify Setup
 
-Add to your MCP config:
+```bash
+pnpm test:connection
+```
+
+This checks every service in one pass:
+
+```
+  Half Dozen YouTube Sync — Connection Test
+
+  ● Notion API Key       Authenticated as "WORKWAY" (bot)
+  ● Notion Database      "Internal LLM [HD]" — all required properties found
+  ● Steel API Key        Authenticated successfully
+  ● YouTube API          YouTube reachable, captions API available
+  ● Resend (Email)       Authenticated — email notifications enabled
+
+  5 passed  0 failed  0 skipped
+```
+
+### 3. Connect Your MCP Client
+
+Choose **one** of the three options below based on how you want to use it.
+
+#### Option A: Stdio Server (local, full features)
+
+Best for: Claude Desktop, Cursor — runs locally with all 11 tools including browser automation.
+
+**Claude Desktop** (`~/.config/claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "half-dozen-youtube-sync": {
+      "command": "npx",
+      "args": ["tsx", "/path/to/create-something-monorepo/packages/half-dozen-youtube-sync/src/index.ts"],
+      "env": {
+        "STEEL_API_KEY": "ste-xxx",
+        "NOTION_API_KEY": "ntn_xxx",
+        "NOTION_DATABASE_ID": "your-db-id",
+        "RESEND_API_KEY": "re_xxx"
+      }
+    }
+  }
+}
+```
+
+**Cursor** (`.cursor/mcp.json` in your project or `~/.cursor/mcp.json` globally):
 
 ```json
 {
@@ -66,36 +103,97 @@ Add to your MCP config:
       "command": "npx",
       "args": ["tsx", "packages/half-dozen-youtube-sync/src/index.ts"],
       "env": {
-        "STEEL_API_KEY": "your-key",
-        "NOTION_API_KEY": "your-key",
-        "NOTION_DATABASE_ID": "your-db-id"
+        "STEEL_API_KEY": "ste-xxx",
+        "NOTION_API_KEY": "ntn_xxx",
+        "NOTION_DATABASE_ID": "your-db-id",
+        "RESEND_API_KEY": "re_xxx"
       }
     }
   }
 }
 ```
 
-### 4. MCP Server (Worker - Remote)
+#### Option B: Worker Server (remote, API-only)
 
-Deploy to Cloudflare Workers for remote access:
+Best for: Remote access, ChatGPT, shared team use — no browser automation, but transcripts and Notion sync work via API.
+
+The Worker is already deployed at:
+
+```
+https://halfdozen-youtube-sync-mcp.half-dozen.workers.dev
+```
+
+**Claude Desktop** (remote MCP):
+
+```json
+{
+  "mcpServers": {
+    "half-dozen-youtube-sync": {
+      "type": "sse",
+      "url": "https://halfdozen-youtube-sync-mcp.half-dozen.workers.dev/sse"
+    }
+  }
+}
+```
+
+**Cursor** (remote MCP):
+
+```json
+{
+  "mcpServers": {
+    "half-dozen-youtube-sync": {
+      "type": "sse",
+      "url": "https://halfdozen-youtube-sync-mcp.half-dozen.workers.dev/sse"
+    }
+  }
+}
+```
+
+**Self-deploy** (your own Worker):
 
 ```bash
 cd worker
-pnpm install
+npm install
 wrangler secret put NOTION_API_KEY
 wrangler secret put NOTION_DATABASE_ID
 wrangler deploy
 ```
 
-Connect via:
-- **HTTP**: `https://halfdozen-youtube-sync-mcp.half-dozen.workers.dev/mcp`
-- **SSE**: `https://halfdozen-youtube-sync-mcp.half-dozen.workers.dev/sse`
+#### Option C: CLI (batch operations)
+
+Best for: One-off syncs, scripting, cron jobs — no MCP client needed.
+
+```bash
+# Sync a playlist to Notion
+npx tsx batch-sync.ts --playlist "https://youtube.com/playlist?list=PL02AA8F4D1484BBC8" --sync
+
+# Extract first 5 videos only
+npx tsx batch-sync.ts --playlist "https://youtube.com/playlist?list=..." --limit 5
+
+# Single video transcript
+npx tsx batch-sync.ts --video "https://youtube.com/watch?v=..." --sync
+
+# Verify Notion database
+npx tsx batch-sync.ts --check-db
+```
+
+### 4. First Sync
+
+Once your MCP client is connected, just ask:
+
+> "Sync this YouTube playlist to Notion: https://youtube.com/playlist?list=..."
+
+The agent will use the `sync_playlist` tool automatically. You'll get:
+- A JSON summary in the conversation with extraction and sync stats
+- An email notification at your configured address (if Resend is set up)
+- New pages in your Notion database with video titles, URLs, and transcripts
 
 ### 5. Running Tests
 
 ```bash
-pnpm test         # Run all tests once
-pnpm test:watch   # Watch mode
+pnpm test              # Unit tests (65 tests)
+pnpm test:watch        # Watch mode
+pnpm test:connection   # Service connectivity check
 ```
 
 ## Architecture
@@ -339,6 +437,7 @@ packages/half-dozen-youtube-sync/
 │   ├── wrangler.toml             # Cloudflare config
 │   └── tsconfig.json             # Worker TypeScript config
 ├── batch-sync.ts                 # CLI batch sync tool
+├── test-connection.ts            # Service connectivity checker
 ├── package.json                  # Main package
 ├── tsconfig.json                 # TypeScript config
 ├── vitest.config.ts              # Test config
