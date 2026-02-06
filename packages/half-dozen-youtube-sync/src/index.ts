@@ -37,6 +37,7 @@ import { getYouTubeProvider, resetProvider } from './providers/steel.js';
 import { getNotionClient, resetNotionClient } from './notion/client.js';
 import { extractPlaylistId, isPlaylistUrl, isVideoUrl, extractVideoId } from './youtube/playlist.js';
 import { extractTranscript } from './youtube/transcript.js';
+import { sendSyncNotification, sendFailureNotification } from './notifications.js';
 import {
   initYouTubeSyncObservability,
   createSessionTrace,
@@ -340,7 +341,7 @@ async function syncPlaylist(input: SyncPlaylistInput) {
 
     trace.end({ success: true });
 
-    return {
+    const resultData = {
       success: true,
       playlist: {
         id: playlist.playlistId,
@@ -366,9 +367,35 @@ async function syncPlaylist(input: SyncPlaylistInput) {
       }
     };
 
+    // Send email notification (fire-and-forget, don't block return)
+    sendSyncNotification({
+      playlist: {
+        title: playlist.title,
+        videoCount: playlist.videoCount,
+        url: input.playlistUrl
+      },
+      extraction: resultData.extraction,
+      sync: resultData.sync,
+      session: {
+        durationMs: recording.durationMs,
+        recordingUrl: recording.recordingUrl
+      },
+      databaseId: input.databaseId
+    }).catch(err => console.error('Email notification failed:', err));
+
+    return resultData;
+
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     trace.end({ success: false, error: message });
+
+    // Send failure notification (fire-and-forget)
+    sendFailureNotification({
+      tool: 'sync_playlist',
+      error: message,
+      context: { playlistUrl: input.playlistUrl }
+    }).catch(err => console.error('Failure email notification failed:', err));
+
     throw error;
   }
 }
