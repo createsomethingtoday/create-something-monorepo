@@ -20,7 +20,6 @@ import os
 import json
 import re
 from datetime import datetime, timedelta
-from typing import Optional
 
 import modal
 
@@ -96,6 +95,10 @@ def send_email(subject: str, html: str):
 
 
 def send_success_email(stats: dict):
+    failed_line = ""
+    if stats.get("failed", 0) > 0:
+        failed_line = f"<li><strong>Failed:</strong> {stats['failed']}</li>"
+    
     send_email(
         "Zoom Clips Sync Complete",
         f"""
@@ -104,6 +107,7 @@ def send_success_email(stats: dict):
             <li><strong>Processed:</strong> {stats['processed']} clips</li>
             <li><strong>Synced:</strong> {stats['synced']} new</li>
             <li><strong>Skipped:</strong> {stats['skipped']} duplicates</li>
+            {failed_line}
         </ul>
         <p><small>Sync completed at {datetime.utcnow().isoformat()}Z</small></p>
         """
@@ -406,7 +410,7 @@ def sync_clips():
     print(f"✅ Steel session: {session.id}")
     print(f"🖥️  Live View: {getattr(session, 'session_viewer_url', 'N/A')}")
     
-    stats = {"processed": 0, "synced": 0, "skipped": 0}
+    stats = {"processed": 0, "synced": 0, "skipped": 0, "failed": 0}
     extracted_clips = []
     
     try:
@@ -526,19 +530,27 @@ def sync_clips():
     # Sync to Notion
     if extracted_clips:
         clips_with_transcript = [c for c in extracted_clips if c.get("transcript")]
-        print(f"\n📤 Syncing {len(clips_with_transcript)} clips to Notion...")
+        clips_without_transcript = len(extracted_clips) - len(clips_with_transcript)
+        
+        if clips_without_transcript > 0:
+            print(f"\n   Note: {clips_without_transcript} clip(s) had no transcript and will be skipped")
+        
+        print(f"\n   Syncing {len(clips_with_transcript)} clips to Notion...")
         
         notion_stats = sync_to_notion(clips_with_transcript)
         stats["synced"] = notion_stats["synced"]
         stats["skipped"] = notion_stats["skipped"]
+        stats["failed"] = notion_stats.get("failed", 0)
     
     # Summary
     print("\n" + "=" * 60)
-    print("📊 SYNC COMPLETE")
+    print("SYNC COMPLETE")
     print("=" * 60)
     print(f"   Processed: {stats['processed']}")
     print(f"   Synced: {stats['synced']}")
     print(f"   Skipped: {stats['skipped']}")
+    if stats.get("failed", 0) > 0:
+        print(f"   Failed: {stats['failed']}")
     
     # Send success email
     send_success_email(stats)
