@@ -558,6 +558,12 @@
 		flex-direction: column;
 	}
 
+	.summary-grid :global(.card-content) {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+	}
+
 	.summary-grid :global(.card):hover {
 		border-color: var(--color-border-emphasis);
 		box-shadow: var(--shadow-sm);
