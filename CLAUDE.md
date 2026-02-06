@@ -66,6 +66,28 @@ The Triad removes duplication, excess, and disconnection from *artifacts*. Zero 
                  Outcomes While You Sleep
 ```
 
+### The Three-Tier Framework
+
+The structural model underlying all CREATE SOMETHING agent systems. Three tiers map to MCP's three primitives via their control models:
+
+| Tier | Definition | MCP Primitive | Control Model |
+|------|-----------|---------------|---------------|
+| **Database** | What exists (state, content, record) | Resources | Application-controlled |
+| **Automation** | What happens (tools, skills, harness) | Tools | Model-controlled |
+| **Judgment** | What should happen (policy, oversight) | Prompts | User-controlled |
+
+Four cross-cutting concerns span all tiers: **Touchpoints** (interaction surface), **Artifacts** (typed boundary contracts), **Orchestration** (procedural flow), **Insight** (observability/audit).
+
+**The recursive property**: MCP's sampling mechanism allows Automation to request Judgment, creating a feedback loop. Tools can encounter the world and ask for judgment—mirroring embodied cognition.
+
+**Policy as artifact**: Constraints and behavioral rules are not external scaffolding but data flowing through the tiers—stored in Database, transformed by Automation, evaluated by Judgment. This enables versioned constraints, context-driven policy selection, and reflexive self-modification under human oversight.
+
+**The Two-Layer Model** (above) is the *go-to-market* view: MCP as entry point, Intelligence as upsell. **The Three-Tier Framework** is the *architectural* view: how the system actually works. Both are valid at different altitudes.
+
+**Debugging heuristic**: When a system fails, check tiers in order: (1) Database—is data there? (2) Automation—did execution work? (3) Judgment—was policy correct?
+
+See `docs/THREE_TIER_FRAMEWORK.md` for full treatment including sampling feedback loops, policy-as-artifact implications, and the embodied cognition parallel.
+
 **The MCP-First Thesis**: The entry point to automation is *connectivity*, not intelligence. Users grant folder/API access to an MCP server first. Trust is established. Then intelligence layers on top.
 
 This inverts the common assumption that you build an AI agent first, then add integrations. The pattern emerging from Claude Cowork, Codex App, and industry adoption (100M+ monthly MCP downloads) is:
@@ -148,16 +170,16 @@ The automotive layer consists of the parts of a vehicle: engine, transmission, f
 
 The automation layer consists of Cloudflare products + MCP: Workers, Durable Objects, D1, MCP servers. Assembled together, they create outcomes.
 
-| Vehicle Part | Technology | Function |
-|--------------|------------|----------|
-| **Chassis** | MCP Servers | The frame that connects everything—tools, data, AI |
-| **Engine** | Workers | Where execution happens |
-| **Transmission** | Durable Objects | State coordination |
-| **Fuel Tank** | D1 | Data persistence |
-| **Turbocharger** | Workers AI / LLMs | Intelligence boost |
-| **Cockpit** | Glass UI | Where the driver controls the machine |
-| **Instrument Cluster** | Analytics/Logs | At-a-glance telemetry |
-| **Ignition** | Triggers | What starts the engine |
+| Vehicle Part | Technology | Function | Framework Tier |
+|--------------|------------|----------|----------------|
+| **Chassis** | MCP Servers | The frame that connects everything | Touchpoints (cross-cutting) |
+| **Engine** | Workers | Where execution happens | Automation |
+| **Transmission** | Durable Objects | State coordination | Orchestration (cross-cutting) |
+| **Fuel Tank** | D1 | Data persistence | Database |
+| **Turbocharger** | Workers AI / LLMs | Intelligence boost | Judgment |
+| **Cockpit** | Glass UI | Where the driver controls the machine | Judgment (user-controlled) |
+| **Instrument Cluster** | Analytics/Logs | At-a-glance telemetry | Insight (cross-cutting) |
+| **Ignition** | Triggers | What starts the engine | Orchestration (cross-cutting) |
 
 **The Chassis Principle**: MCP is the chassis—the structural frame that holds everything together. Without the chassis, you have a pile of parts. Without MCP, you have disconnected tools. The chassis is invisible when driving, but essential. That's MCP: the connectivity layer that recedes into transparent use.
 
@@ -168,6 +190,7 @@ The automation layer consists of Cloudflare products + MCP: Workers, Durable Obj
 ### Cornering the Terms
 
 CREATE SOMETHING and WORKWAY together establish ownership of:
+- **The Three-Tier Framework** — Database, Automation, Judgment as structural model for agent systems
 - **The Automation Layer** — MCP servers that connect tools to AI
 - **The Intelligence Layer** — Skills and Agents that produce outcomes
 - **The Automotive Framework** — the explanatory metaphor (MCP as chassis)
@@ -182,9 +205,20 @@ packages/
   io/       → createsomething.io     (Research: tools, documentation)
   agency/   → createsomething.agency (Services: client work)
   ltd/      → createsomething.ltd    (Philosophy: canon, ethos)
+  three-tier-framework-mcp/  → The framework as MCP server (all 3 primitives)
 ```
 
 All packages use **SvelteKit** with **Cloudflare Pages** deployment. Shared D1 databases, KV namespaces, and Workers per package.
+
+### Three-Tier Framework MCP Server
+
+The framework itself as an MCP server — first in the repo to use all three primitives:
+
+- **Resources** (Database): `framework://definitions`, `framework://mappings/*`, `framework://full`
+- **Tools** (Automation): `classify_component`, `debug_system`, `analyze_mcp_server`, `identify_policy_artifacts`, `map_to_automotive`
+- **Prompts** (Judgment): `architecture_review`, `tier_analysis`, `policy_audit`, `mcp_design`, `debugging_session`
+
+Zero external dependencies. Pure framework knowledge served through protocol. See `packages/three-tier-framework-mcp/README.md`.
 
 ## Languages
 

@@ -1,0 +1,42 @@
+{
+  "name": "@create-something/three-tier-framework-mcp",
+  "version": "1.0.0",
+  "description": "The Three-Tier Framework (Database, Automation, Judgment) as an MCP server — the first to use all three MCP primitives (Resources, Tools, Prompts)",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "three-tier-framework": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "mcp",
+    "three-tier-framework",
+    "database",
+    "automation",
+    "judgment",
+    "agent-systems",
+    "model-context-protocol",
+    "resources",
+    "tools",
+    "prompts"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/three-tier-framework-mcp"
+  }
+}

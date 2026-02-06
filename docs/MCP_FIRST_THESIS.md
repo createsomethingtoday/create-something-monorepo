@@ -392,6 +392,28 @@ Client outcome
 - DFW-based AI infrastructure partnership
 - quietloudlab strategy → CREATE SOMETHING implementation pipeline
 
+## The Three-Tier Framework
+
+The MCP-First Thesis describes the *go-to-market* model: MCP servers as entry point (trust), Intelligence Layer as upsell (outcomes). The **Three-Tier Framework** provides the *architectural* depth underlying this thesis.
+
+The framework identifies three tiers that map directly to MCP's primitives:
+
+| Tier | MCP Primitive | Control Model | Role |
+|------|---------------|---------------|------|
+| **Database** | Resources | Application-controlled | What exists — state, content, record |
+| **Automation** | Tools | Model-controlled | What happens — agent execution, skills |
+| **Judgment** | Prompts | User-controlled | What should happen — policy, oversight |
+
+**Key insight**: MCP's control model distinctions (application/model/user-controlled) naturally produce the tier separations. The *who decides* and the *what kind of work* converge.
+
+**The recursive property**: MCP's sampling mechanism allows Tools to request LLM access back through the Client. Automation can invoke Judgment, creating a feedback loop that mirrors embodied cognition.
+
+**Policy as artifact**: System prompts, constraints, and behavioral rules are not external scaffolding — they are artifacts that flow through the tiers, enabling versioned constraints, context-driven policy selection, and reflexive self-modification under human oversight.
+
+The Two-Layer Model remains valid as a go-to-market abstraction. The Three-Tier Framework reveals the structural model underneath.
+
+See `docs/THREE_TIER_FRAMEWORK.md` for the full treatment (v1.3, February 2026).
+
 ---
 
 ## Sources

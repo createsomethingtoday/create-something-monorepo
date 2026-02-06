@@ -17,6 +17,25 @@ CREATE SOMETHING builds the connectivity layer between tools and AI. All propert
 
 See `docs/MCP_FIRST_THESIS.md` for full strategic context.
 
+### Framework Alignment: The Three-Tier Model
+
+All work in this codebase maps to the Three-Tier Framework (Database, Automation, Judgment). When building or modifying systems, identify which tier each component serves:
+
+| Tier | MCP Primitive | Control Model | Examples in This Repo |
+|------|---------------|---------------|-----------------------|
+| **Database** | Resources | Application-controlled | D1 databases, KV stores, Procore data, R2 storage |
+| **Automation** | Tools | Model-controlled | MCP server tools, Workers, Skills |
+| **Judgment** | Prompts | User-controlled | System prompts, CLAUDE.md policy, skill constraints |
+
+**When debugging agent systems**, follow the causality heuristic:
+1. **Database** — Is the data available and correct?
+2. **Automation** — Did execution complete successfully?
+3. **Judgment** — Was the right policy applied?
+
+**When coordinating agents**, remember that policy is an artifact. Pass policy artifacts alongside task artifacts — agents share not just what to do, but how to behave.
+
+See `docs/THREE_TIER_FRAMEWORK.md` for the full framework including sampling feedback loops and policy-as-artifact implications.
+
 ---
 
 ## Guiding Principle: The Work Must Remain Connected
