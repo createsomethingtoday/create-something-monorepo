@@ -999,11 +999,14 @@
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
 		color: rgba(96, 165, 250, 1);
-		background: rgba(96, 165, 250, 0.1);
-		border: 1px solid rgba(96, 165, 250, 0.25);
+		background: rgba(10, 14, 20, 0.85);
+		backdrop-filter: blur(12px) saturate(120%);
+		-webkit-backdrop-filter: blur(12px) saturate(120%);
+		border: 1px solid rgba(96, 165, 250, 0.3);
 		border-radius: var(--radius-full, 9999px);
 		padding: 0.2rem 0.75rem;
 		white-space: nowrap;
+		z-index: 1;
 	}
 	
 	.example-name {
