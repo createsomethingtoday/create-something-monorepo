@@ -743,6 +743,71 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
       }
     );
 
+    // Tool: Enrich Contact (append research notes to contact page)
+    this.server.tool(
+      'enrich_contact',
+      {
+        contact_id: z.string().describe('Notion page ID of the contact to enrich'),
+        notes: z.string().describe('Research notes to append (plain text, can be multi-paragraph)'),
+        source: z.string().optional().describe('Source of the information (e.g., "LinkedIn", "Perplexity", "Company website")'),
+      },
+      async ({ contact_id, notes, source }) => {
+        try {
+          const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+
+          // Build blocks: heading + optional source callout + chunked paragraphs
+          const blocks: unknown[] = [
+            {
+              type: 'heading_2',
+              heading_2: {
+                rich_text: [{ type: 'text', text: { content: `Research Notes \u2014 ${date}` } }],
+              },
+            },
+          ];
+
+          if (source) {
+            blocks.push({
+              type: 'callout',
+              callout: {
+                icon: { emoji: '\uD83D\uDD0D' },
+                rich_text: [{ type: 'text', text: { content: `Source: ${source}` } }],
+              },
+            });
+          }
+
+          // Chunk notes into paragraphs respecting Notion's 2000-char limit
+          const chunks = chunkText(notes);
+          for (const chunk of chunks) {
+            blocks.push({
+              type: 'paragraph',
+              paragraph: {
+                rich_text: [{ type: 'text', text: { content: chunk } }],
+              },
+            });
+          }
+
+          // Add a divider at the end
+          blocks.push({ type: 'divider', divider: {} });
+
+          await notionAppendBlocks(this.env, contact_id, blocks);
+
+          return {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                success: true,
+                contact_id,
+                blocks_added: blocks.length,
+                url: `https://notion.so/${contact_id.replace(/-/g, '')}`,
+              }, null, 2),
+            }],
+          };
+        } catch (error) {
+          return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
+        }
+      }
+    );
+
     // Tool: Get Labels
     this.server.tool(
       'get_email_labels',
@@ -1167,6 +1232,58 @@ async function handleApiRoute(pathname: string, request: Request, env: Env): Pro
           alias_saved: aliasSaved,
           alias_note: aliasNote,
           auto_created_archived: !!deleteId,
+        });
+      }
+
+      case '/api/enrich-contact': {
+        const contactId = body.contact_id as string;
+        const notes = body.notes as string;
+        const source = body.source as string | undefined;
+
+        if (!contactId || !notes) {
+          return json({ error: 'contact_id and notes are required' }, 400);
+        }
+
+        const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+
+        const blocks: unknown[] = [
+          {
+            type: 'heading_2',
+            heading_2: {
+              rich_text: [{ type: 'text', text: { content: `Research Notes \u2014 ${date}` } }],
+            },
+          },
+        ];
+
+        if (source) {
+          blocks.push({
+            type: 'callout',
+            callout: {
+              icon: { emoji: '\uD83D\uDD0D' },
+              rich_text: [{ type: 'text', text: { content: `Source: ${source}` } }],
+            },
+          });
+        }
+
+        const enrichChunks = chunkText(notes);
+        for (const chunk of enrichChunks) {
+          blocks.push({
+            type: 'paragraph',
+            paragraph: {
+              rich_text: [{ type: 'text', text: { content: chunk } }],
+            },
+          });
+        }
+
+        blocks.push({ type: 'divider', divider: {} });
+
+        await notionAppendBlocks(env, contactId, blocks);
+
+        return json({
+          success: true,
+          contact_id: contactId,
+          blocks_added: blocks.length,
+          url: `https://notion.so/${contactId.replace(/-/g, '')}`,
         });
       }
 

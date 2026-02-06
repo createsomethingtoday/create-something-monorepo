@@ -156,6 +156,28 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       },
     },
     {
+      name: 'enrich_contact',
+      description: 'Append research notes to a contact page in Notion. Use after researching a contact via browser/Perplexity to add background info, LinkedIn summary, company details, meeting notes, etc. Notes are appended as dated sections so the page builds a research log over time. Notion AI can later promote patterns into properties.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          contact_id: {
+            type: 'string',
+            description: 'Notion page ID of the contact to enrich',
+          },
+          notes: {
+            type: 'string',
+            description: 'Research notes to append (plain text, can be multi-paragraph)',
+          },
+          source: {
+            type: 'string',
+            description: 'Source of the information (e.g., "LinkedIn", "Perplexity", "Company website")',
+          },
+        },
+        required: ['contact_id', 'notes'],
+      },
+    },
+    {
       name: 'link_contact',
       description: 'Re-link an Interaction to a different Contact. Use when an email was synced and auto-created a contact, but the sender is actually an existing contact using a different email. Optionally saves the sender email as a Secondary Email alias and archives the auto-created contact.',
       inputSchema: {
@@ -372,6 +394,78 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 company: contact.company,
                 notionUrl: `https://notion.so/${contact.notionPageId.replace(/-/g, '')}`,
               },
+            }, null, 2),
+          }],
+        };
+      }
+
+      case 'enrich_contact': {
+        const { contact_id, notes, source } = args as {
+          contact_id: string;
+          notes: string;
+          source?: string;
+        };
+
+        const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+
+        // Build blocks: heading + optional source callout + chunked paragraphs + divider
+        const blocks: Parameters<typeof notion.blocks.children.append>[0]['children'] = [
+          {
+            type: 'heading_2' as const,
+            heading_2: {
+              rich_text: [{ type: 'text' as const, text: { content: `Research Notes \u2014 ${date}` } }],
+            },
+          },
+        ];
+
+        if (source) {
+          blocks.push({
+            type: 'callout' as const,
+            callout: {
+              icon: { emoji: '\uD83D\uDD0D' as const },
+              rich_text: [{ type: 'text' as const, text: { content: `Source: ${source}` } }],
+            },
+          });
+        }
+
+        // Chunk notes respecting Notion's 2000-char rich_text limit
+        const noteChunks: string[] = [];
+        let remaining = notes.trim();
+        while (remaining.length > 0) {
+          if (remaining.length <= 1900) {
+            noteChunks.push(remaining);
+            break;
+          }
+          const sentenceEnd = remaining.lastIndexOf('. ', 1900);
+          const splitAt = sentenceEnd > 950 ? sentenceEnd + 2 : 1900;
+          noteChunks.push(remaining.substring(0, splitAt).trim());
+          remaining = remaining.substring(splitAt).trim();
+        }
+
+        for (const chunk of noteChunks) {
+          blocks.push({
+            type: 'paragraph' as const,
+            paragraph: {
+              rich_text: [{ type: 'text' as const, text: { content: chunk } }],
+            },
+          });
+        }
+
+        blocks.push({ type: 'divider' as const, divider: {} });
+
+        await notion.blocks.children.append({
+          block_id: contact_id,
+          children: blocks,
+        });
+
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              success: true,
+              contact_id,
+              blocks_added: blocks.length,
+              url: `https://notion.so/${contact_id.replace(/-/g, '')}`,
             }, null, 2),
           }],
         };
