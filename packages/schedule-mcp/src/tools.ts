@@ -23,7 +23,10 @@ import {
   getEvent,
   getCalendar,
   getCalendarEvents,
+  listCalendars,
   listEvents,
+  listMembers,
+  listUnits,
   bulkCreateEvents,
   createUnit,
   createMember,
@@ -35,6 +38,7 @@ import {
   deleteCalendar,
   shareCalendar,
   unshareCalendar,
+  getCalendarShares,
   getTemplate,
   createTemplate,
   createTemplateSlot,
@@ -110,6 +114,162 @@ export function registerTools(
   getDb: () => D1Database,
   requestSampling?: SamplingFn | null,
 ): void {
+  // =========================================================================
+  // Diagnostics
+  // =========================================================================
+
+  server.tool(
+    'get_status',
+    'Get system status: counts of all entities and D1 connectivity check',
+    {},
+    async () => {
+      return tracedTool('get_status', {}, async () => {
+        try {
+          const db = getDb();
+
+          // Query all table counts in parallel
+          const [members, calendars, events, units, templates] = await Promise.all([
+            db.prepare('SELECT COUNT(*) as count FROM members').first<{ count: number }>(),
+            db.prepare('SELECT COUNT(*) as count FROM calendars').first<{ count: number }>(),
+            db.prepare('SELECT COUNT(*) as count FROM events').first<{ count: number }>(),
+            db.prepare('SELECT COUNT(*) as count FROM units').first<{ count: number }>(),
+            db.prepare('SELECT COUNT(*) as count FROM templates').first<{ count: number }>(),
+          ]);
+
+          return jsonContent({
+            status: 'connected',
+            d1_database: 'schedule-mcp-db',
+            counts: {
+              members: members?.count ?? 0,
+              calendars: calendars?.count ?? 0,
+              events: events?.count ?? 0,
+              units: units?.count ?? 0,
+              templates: templates?.count ?? 0,
+            },
+            timestamp: new Date().toISOString(),
+          });
+        } catch (err) {
+          return errorContent(`D1 connectivity failed: ${(err as Error).message}`);
+        }
+      });
+    },
+  );
+
+  // =========================================================================
+  // List / Read Operations
+  // =========================================================================
+
+  server.tool(
+    'list_members',
+    'List all members in the system',
+    {},
+    async () => {
+      return tracedTool('list_members', {}, async () => {
+        try {
+          const db = getDb();
+          const members = await listMembers(db);
+          return jsonContent(members);
+        } catch (err) {
+          return errorContent(`Failed to list members: ${(err as Error).message}`);
+        }
+      });
+    },
+  );
+
+  server.tool(
+    'list_calendars',
+    'List all calendars in the system',
+    {},
+    async () => {
+      return tracedTool('list_calendars', {}, async () => {
+        try {
+          const db = getDb();
+          const calendars = await listCalendars(db);
+          return jsonContent(calendars);
+        } catch (err) {
+          return errorContent(`Failed to list calendars: ${(err as Error).message}`);
+        }
+      });
+    },
+  );
+
+  server.tool(
+    'list_units',
+    'List all units/groups in the system',
+    {},
+    async () => {
+      return tracedTool('list_units', {}, async () => {
+        try {
+          const db = getDb();
+          const units = await listUnits(db);
+          return jsonContent(units);
+        } catch (err) {
+          return errorContent(`Failed to list units: ${(err as Error).message}`);
+        }
+      });
+    },
+  );
+
+  server.tool(
+    'list_events',
+    'List events with optional filters (date range, calendar)',
+    {
+      calendar_id: z.string().optional(),
+      start: z.string().optional().describe('ISO 8601 date — filter events ending after this'),
+      end: z.string().optional().describe('ISO 8601 date — filter events starting before this'),
+    },
+    async (params) => {
+      return tracedTool('list_events', params as Record<string, unknown>, async () => {
+        try {
+          const db = getDb();
+          const events = await listEvents(db, {
+            calendarId: params.calendar_id,
+            start: params.start ? isoToUnix(params.start) : undefined,
+            end: params.end ? isoToUnix(params.end) : undefined,
+          });
+          return jsonContent(events);
+        } catch (err) {
+          return errorContent(`Failed to list events: ${(err as Error).message}`);
+        }
+      });
+    },
+  );
+
+  server.tool(
+    'get_calendar_details',
+    'Get a calendar with its sharing permissions and upcoming events',
+    {
+      calendar_id: z.string(),
+      include_events: z.boolean().optional().describe('Include events (default true)'),
+    },
+    async (params) => {
+      return tracedTool('get_calendar_details', params as Record<string, unknown>, async () => {
+        try {
+          const db = getDb();
+          const calendar = await getCalendar(db, params.calendar_id);
+          if (!calendar) {
+            return errorContent(`Calendar not found: ${params.calendar_id}`);
+          }
+
+          const shares = await getCalendarShares(db, params.calendar_id);
+          const includeEvents = params.include_events !== false;
+          const events = includeEvents
+            ? await getCalendarEvents(db, params.calendar_id)
+            : [];
+
+          return jsonContent({
+            ...calendar,
+            shares,
+            events: includeEvents ? events : undefined,
+            event_count: events.length,
+          });
+        } catch (err) {
+          return errorContent(`Failed to get calendar: ${(err as Error).message}`);
+        }
+      });
+    },
+  );
+
   // =========================================================================
   // CRUD Operations
   // =========================================================================
