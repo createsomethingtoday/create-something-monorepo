@@ -4,6 +4,7 @@ config({ path: resolve(import.meta.dirname, "../.env") });
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import express from "express";
 
@@ -65,6 +66,8 @@ async function startServer(): Promise<void> {
 
   if (transport === "http") {
     await runHTTP(server);
+  } else if (transport === "sse") {
+    await runHTTP(server, true);
   } else {
     await runStdio(server);
   }
@@ -78,12 +81,13 @@ async function runStdio(server: McpServer): Promise<void> {
   logger.info("QuickBooks → Notion MCP server running on stdio");
 }
 
-// ── Transport: Streamable HTTP ──────────────────────────────────────
+// ── Transport: HTTP (Streamable HTTP + SSE) ─────────────────────────
 
-async function runHTTP(server: McpServer): Promise<void> {
+async function runHTTP(server: McpServer, sseOnly = false): Promise<void> {
   const app = express();
   app.use(express.json());
 
+  // Health check
   app.get("/health", (_req, res) => {
     res.json({
       status: "ok",
@@ -92,18 +96,68 @@ async function runHTTP(server: McpServer): Promise<void> {
     });
   });
 
-  app.post("/mcp", async (req, res) => {
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: undefined,
-      enableJsonResponse: true,
+  // ── Streamable HTTP endpoint ────────────────────────────────────
+  if (!sseOnly) {
+    app.post("/mcp", async (req, res) => {
+      const transport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: undefined,
+        enableJsonResponse: true,
+      });
+      res.on("close", () => transport.close());
+      await server.connect(transport);
+      await transport.handleRequest(req, res, req.body);
     });
-    res.on("close", () => transport.close());
+  }
+
+  // ── SSE endpoint (for ChatGPT, OpenAI API) ─────────────────────
+  const sseTransports: Record<string, SSEServerTransport> = {};
+
+  // GET /sse — establish SSE stream
+  app.get("/sse", async (req, res) => {
+    logger.info("SSE connection established");
+    const transport = new SSEServerTransport("/messages", res);
+    const sessionId = transport.sessionId;
+    sseTransports[sessionId] = transport;
+
+    transport.onclose = () => {
+      logger.info("SSE transport closed", { sessionId });
+      delete sseTransports[sessionId];
+    };
+
     await server.connect(transport);
-    await transport.handleRequest(req, res, req.body);
+  });
+
+  // POST /messages — receive client JSON-RPC messages
+  app.post("/messages", async (req, res) => {
+    const sessionId = req.query.sessionId as string;
+    if (!sessionId) {
+      res.status(400).send("Missing sessionId parameter");
+      return;
+    }
+
+    const transport = sseTransports[sessionId];
+    if (!transport) {
+      res.status(404).send("Session not found");
+      return;
+    }
+
+    await transport.handlePostMessage(req, res, req.body);
   });
 
   const port = parseInt(process.env.PORT || "3000");
   app.listen(port, () => {
-    logger.info("QuickBooks → Notion MCP server running on HTTP", { port, endpoint: "/mcp" });
+    const endpoints = sseOnly
+      ? { sse: "/sse", messages: "/messages" }
+      : { mcp: "/mcp", sse: "/sse", messages: "/messages" };
+    logger.info("QuickBooks → Notion MCP server running on HTTP", { port, ...endpoints });
+  });
+
+  // Cleanup on shutdown
+  process.on("SIGINT", async () => {
+    for (const sessionId in sseTransports) {
+      await sseTransports[sessionId].close();
+      delete sseTransports[sessionId];
+    }
+    process.exit(0);
   });
 }
