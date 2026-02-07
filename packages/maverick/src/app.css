@@ -83,6 +83,21 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
 
+  /* Glass - Industrial range (8-32px blur) */
+  --glass-blur-sm: 8px;
+  --glass-blur-md: 16px;
+  --glass-blur-lg: 24px;
+  --glass-blur-xl: 32px;
+  --glass-saturate-sm: saturate(110%);
+  --glass-saturate-md: saturate(120%);
+  --glass-bg-subtle: rgba(0, 0, 0, 0.40);
+  --glass-bg-medium: rgba(0, 0, 0, 0.65);
+  --glass-bg-strong: rgba(0, 0, 0, 0.80);
+  --glass-bg-opaque: rgba(0, 0, 0, 0.95);
+  --glass-border-subtle: rgba(255, 255, 255, 0.10);
+  --glass-border-medium: rgba(255, 255, 255, 0.20);
+  --glass-border-strong: rgba(255, 255, 255, 0.30);
+
   /* Animation */
   --ease-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
   --ease-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1);
@@ -122,6 +137,42 @@
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Glass accessibility: solid fallbacks when transparency is reduced */
+  @media (prefers-reduced-transparency: reduce) {
+    :root {
+      --glass-blur-sm: 0;
+      --glass-blur-md: 0;
+      --glass-blur-lg: 0;
+      --glass-blur-xl: 0;
+      --glass-bg-subtle: rgba(0, 0, 0, 0.85);
+      --glass-bg-medium: rgba(0, 0, 0, 0.92);
+      --glass-bg-strong: rgba(0, 0, 0, 0.96);
+      --glass-bg-opaque: rgba(0, 0, 0, 1);
+    }
+  }
+
+  /* Glass accessibility: stronger borders and near-opaque backgrounds for high contrast */
+  @media (prefers-contrast: more) {
+    :root {
+      --glass-border-subtle: rgba(255, 255, 255, 0.30);
+      --glass-border-medium: rgba(255, 255, 255, 0.50);
+      --glass-border-strong: rgba(255, 255, 255, 0.70);
+      --glass-bg-subtle: rgba(0, 0, 0, 0.80);
+      --glass-bg-medium: rgba(0, 0, 0, 0.90);
+      --glass-bg-strong: rgba(0, 0, 0, 0.95);
+    }
+  }
+
+  /* Glass mobile: halve blur values for GPU performance */
+  @media (max-width: 767px) {
+    :root {
+      --glass-blur-sm: 4px;
+      --glass-blur-md: 8px;
+      --glass-blur-lg: 12px;
+      --glass-blur-xl: 16px;
     }
   }
 }

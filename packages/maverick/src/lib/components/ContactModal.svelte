@@ -724,8 +724,8 @@
 	.modal-backdrop {
 		position: fixed;
 		inset: 0;
-		background: rgba(0, 0, 0, 0.95);
-		backdrop-filter: blur(4px);
+		background: var(--glass-bg-opaque);
+		backdrop-filter: blur(var(--glass-blur-md));
 	}
 
 	/* Modal Container */

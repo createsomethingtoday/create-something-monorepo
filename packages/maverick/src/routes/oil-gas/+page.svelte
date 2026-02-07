@@ -76,11 +76,6 @@
 			"@type": "AggregateOffer",
 			"availability": "https://schema.org/InStock",
 			"priceCurrency": "USD"
-		},
-		"aggregateRating": {
-			"@type": "AggregateRating",
-			"ratingValue": "4.9",
-			"reviewCount": "47"
 		}
 	};
 </script>
@@ -285,16 +280,16 @@
 		padding: 1rem;  /* p-4 */
 		aspect-ratio: 1 / 1;  /* aspect-square */
 		justify-content: center;
-		background: rgba(0, 0, 0, 0.4);  /* bg-black/40 */
-		backdrop-filter: blur(4px);  /* backdrop-blur-sm */
-		border: 1px solid rgba(255, 255, 255, 0.2);  /* border-white/20 */
+		background: var(--glass-bg-subtle);
+		backdrop-filter: blur(var(--glass-blur-sm)) var(--glass-saturate-sm);
+		border: 1px solid var(--glass-border-medium);
 		border-radius: 0;  /* Sharp corners - React has all radius = 0 */
-		transition: all 0.3s ease;
+		transition: all var(--duration-standard) var(--ease-standard);
 	}
 
 	.why-card:hover {
-		background: rgba(0, 0, 0, 0.5);
-		border-color: rgba(255, 255, 255, 0.3);
+		background: var(--glass-bg-medium);
+		border-color: var(--glass-border-strong);
 	}
 
 	.why-icon-wrapper {

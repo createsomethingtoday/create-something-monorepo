@@ -887,7 +887,8 @@
 		position: fixed;
 		inset: 0;
 		z-index: 9999;
-		background: rgba(0, 0, 0, 0.95);
+		background: var(--glass-bg-opaque);
+		backdrop-filter: blur(var(--glass-blur-md));
 		display: flex;
 		align-items: center;
 		justify-content: center;

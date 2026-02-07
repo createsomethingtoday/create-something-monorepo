@@ -193,8 +193,8 @@
 		position: fixed;
 		inset: 0;
 		z-index: 40;
-		background: rgba(0, 0, 0, 0.8);
-		backdrop-filter: blur(4px);
+		background: var(--glass-bg-strong);
+		backdrop-filter: blur(var(--glass-blur-sm));
 	}
 
 	@media (min-width: 1024px) {
