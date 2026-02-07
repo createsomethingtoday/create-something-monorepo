@@ -27,6 +27,21 @@ import {
   truncateWithWarning,
 } from "../services/formatting.js";
 
+/**
+ * Sanitize search terms for QBO query LIKE clauses.
+ * Escapes special characters and enforces length limit.
+ */
+function sanitizeSearchTerm(term: string): string {
+  const MAX_LENGTH = 256;
+  const truncated = term.slice(0, MAX_LENGTH);
+  // Escape QBO query special characters
+  return truncated
+    .replace(/\\/g, "\\\\")  // backslash first
+    .replace(/'/g, "\\'")    // single quote
+    .replace(/%/g, "\\%")    // percent (LIKE wildcard)
+    .replace(/_/g, "\\_");   // underscore (LIKE wildcard)
+}
+
 export function registerQuickBooksTools(
   server: McpServer,
   qbo: QuickBooksClient
@@ -371,7 +386,7 @@ Examples:
           ? "Name"
           : "DisplayName";
 
-        const where = `${nameField} LIKE '%${params.search_term.replace(/'/g, "\\'")}%'`;
+        const where = `${nameField} LIKE '%${sanitizeSearchTerm(params.search_term)}%'`;
 
         const { items, totalCount } = await qbo.list(params.entity, {
           where,

@@ -1,4 +1,7 @@
 import { NOTION_API_BASE, NOTION_VERSION } from "../constants.js";
+import { fetchWithRetry } from "./retry.js";
+import { throttleNotionRequest } from "./retry.js";
+import { logger } from "./logger.js";
 import type { NotionConfig, NotionPage } from "../types.js";
 
 /**
@@ -38,7 +41,7 @@ export class NotionClient {
     if (sorts) body.sorts = sorts;
     if (startCursor) body.start_cursor = startCursor;
 
-    const response = await fetch(
+    const response = await fetchWithRetry(
       `${NOTION_API_BASE}/databases/${databaseId}/query`,
       {
         method: "POST",
@@ -67,7 +70,7 @@ export class NotionClient {
     databaseId: string,
     properties: Record<string, unknown>
   ): Promise<NotionPage> {
-    const response = await fetch(`${NOTION_API_BASE}/pages`, {
+    const response = await fetchWithRetry(`${NOTION_API_BASE}/pages`, {
       method: "POST",
       headers: this.headers,
       body: JSON.stringify({
@@ -91,7 +94,7 @@ export class NotionClient {
     pageId: string,
     properties: Record<string, unknown>
   ): Promise<NotionPage> {
-    const response = await fetch(`${NOTION_API_BASE}/pages/${pageId}`, {
+    const response = await fetchWithRetry(`${NOTION_API_BASE}/pages/${pageId}`, {
       method: "PATCH",
       headers: this.headers,
       body: JSON.stringify({ properties }),
@@ -111,7 +114,7 @@ export class NotionClient {
   async getDatabase(
     databaseId: string
   ): Promise<Record<string, unknown>> {
-    const response = await fetch(
+    const response = await fetchWithRetry(
       `${NOTION_API_BASE}/databases/${databaseId}`,
       {
         method: "GET",
@@ -137,7 +140,7 @@ export class NotionClient {
     const body: Record<string, unknown> = { query };
     if (filter) body.filter = filter;
 
-    const response = await fetch(`${NOTION_API_BASE}/search`, {
+    const response = await fetchWithRetry(`${NOTION_API_BASE}/search`, {
       method: "POST",
       headers: this.headers,
       body: JSON.stringify(body),
@@ -151,6 +154,22 @@ export class NotionClient {
     return (await response.json()) as {
       results: Array<Record<string, unknown>>;
     };
+  }
+
+  /**
+   * Find a Notion page by QBO ID property.
+   * Used for deduplication during sync.
+   */
+  async findPageByQBOId(
+    databaseId: string,
+    qboId: string
+  ): Promise<NotionPage | null> {
+    await throttleNotionRequest();
+    const result = await this.queryDatabase(databaseId, {
+      property: "QBO ID",
+      rich_text: { equals: qboId },
+    });
+    return result.results[0] ?? null;
   }
 }
 

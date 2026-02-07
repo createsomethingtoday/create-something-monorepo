@@ -3,6 +3,7 @@ import type { Token } from "quickbooks-api";
 import { readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { logger } from "./logger.js";
 
 // ── Token Provider Interface ────────────────────────────────────────
 
@@ -67,7 +68,7 @@ export class QBOAuthManager implements TokenProvider {
     // Persist tokens whenever they're refreshed
     this.authProvider.onRefresh(async (refreshedToken: Token) => {
       await this.persistToken(refreshedToken);
-      console.error("[QBO Auth] Token auto-refreshed and persisted.");
+      logger.info("Token auto-refreshed and persisted");
     });
   }
 
@@ -104,8 +105,26 @@ export class QBOAuthManager implements TokenProvider {
       );
     }
 
-    const token = await this.authProvider.getToken();
-    return token.accessToken;
+    try {
+      const token = await this.authProvider.getToken();
+      return token.accessToken;
+    } catch (error) {
+      // Detect refresh token expiration
+      const msg = error instanceof Error ? error.message : String(error);
+      if (
+        msg.includes("refresh") ||
+        msg.includes("token") ||
+        msg.includes("expired") ||
+        msg.includes("invalid_grant")
+      ) {
+        throw new Error(
+          "QuickBooks refresh token has expired or is invalid. " +
+            "Run `pnpm auth` to re-authorize. " +
+            `(Original error: ${msg})`
+        );
+      }
+      throw error;
+    }
   }
 
   /**
@@ -150,10 +169,7 @@ export class QBOAuthManager implements TokenProvider {
         await writeFile(this.tokenPath, serialized, "utf-8");
       }
     } catch (error) {
-      console.error(
-        "[QBO Auth] Failed to persist token:",
-        error instanceof Error ? error.message : error
-      );
+      logger.error("Failed to persist token", { error: error instanceof Error ? error.message : String(error) });
     }
   }
 
@@ -166,13 +182,10 @@ export class QBOAuthManager implements TokenProvider {
     try {
       const serialized = await readFile(this.tokenPath, "utf-8");
       await this.authProvider.deserializeToken(serialized, this.encryptionKey);
-      console.error("[QBO Auth] Loaded persisted tokens successfully.");
+      logger.info("Loaded persisted tokens successfully");
       return true;
     } catch (error) {
-      console.error(
-        "[QBO Auth] Failed to load persisted token:",
-        error instanceof Error ? error.message : error
-      );
+      logger.error("Failed to load persisted token", { error: error instanceof Error ? error.message : String(error) });
       return false;
     }
   }

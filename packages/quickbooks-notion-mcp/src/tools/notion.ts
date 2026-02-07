@@ -247,21 +247,39 @@ Examples:
 
         for (const record of items) {
           const rec = record as Record<string, unknown>;
+          const qboId = String(rec.Id ?? "?");
+          const name = String(
+            rec.DisplayName ?? rec.Name ?? rec.DocNumber ?? `#${rec.Id}`
+          );
+
           try {
             const properties = mapQBOToNotionProperties(params.entity, rec);
-            const page = await notion.createPage(params.database_id, properties);
+
+            // Deduplication: check if page with this QBO ID already exists
+            const existing = await notion.findPageByQBOId(params.database_id, qboId);
+
+            let page;
+            let status: "created" | "updated";
+
+            if (existing) {
+              // Update existing page
+              page = await notion.updatePage(existing.id, properties);
+              status = "updated";
+            } else {
+              // Create new page
+              page = await notion.createPage(params.database_id, properties);
+              status = "created";
+            }
 
             results.push({
-              qboId: String(rec.Id ?? "?"),
-              name: String(
-                rec.DisplayName ?? rec.Name ?? rec.DocNumber ?? `#${rec.Id}`
-              ),
+              qboId,
+              name,
               notionUrl: page.url,
-              status: "created",
+              status,
             });
           } catch (err: unknown) {
             errors.push(
-              `Failed to sync ${params.entity} #${rec.Id}: ${err instanceof Error ? err.message : String(err)}`
+              `Failed to sync ${params.entity} #${qboId}: ${err instanceof Error ? err.message : String(err)}`
             );
           }
         }
@@ -275,10 +293,20 @@ Examples:
 
         if (results.length > 0) {
           lines.push("");
-          for (const r of results) {
-            lines.push(
-              `- ✅ **${r.name}** (QBO #${r.qboId}) → [Notion page](${r.notionUrl})`
-            );
+          const created = results.filter(r => r.status === "created");
+          const updated = results.filter(r => r.status === "updated");
+
+          if (created.length > 0) {
+            lines.push(`**Created** (${created.length}):`);
+            for (const r of created) {
+              lines.push(`- + **${r.name}** (QBO #${r.qboId}) → [Notion page](${r.notionUrl})`);
+            }
+          }
+          if (updated.length > 0) {
+            lines.push(`**Updated** (${updated.length}):`);
+            for (const r of updated) {
+              lines.push(`- ~ **${r.name}** (QBO #${r.qboId}) → [Notion page](${r.notionUrl})`);
+            }
           }
         }
 

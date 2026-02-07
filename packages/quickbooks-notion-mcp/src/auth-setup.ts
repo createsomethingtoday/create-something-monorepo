@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import { URL } from "node:url";
 import { createAuthManagerFromEnv } from "./services/auth.js";
+import { logger } from "./services/logger.js";
 
 const CALLBACK_PORT = 3000;
 const CALLBACK_PATH = "/api/callback";
@@ -15,31 +16,20 @@ const CALLBACK_PATH = "/api/callback";
  * 5. Persist tokens and exit
  */
 export async function runAuthSetup(): Promise<void> {
-  console.error("═══════════════════════════════════════════════════");
-  console.error("  QuickBooks OAuth Setup");
-  console.error("  One-time authorization to connect your QBO account");
-  console.error("═══════════════════════════════════════════════════");
-  console.error("");
+  logger.info("QuickBooks OAuth Setup — one-time authorization");
 
   const authManager = createAuthManagerFromEnv();
   const authProvider = authManager.getAuthProvider();
 
   // Check if tokens already exist
   if (authManager.hasPersistedTokens()) {
-    console.error("⚠️  Existing tokens found. Re-authorizing will replace them.");
-    console.error("");
+    logger.warn("Existing tokens found — re-authorizing will replace them");
   }
 
   // Generate auth URL
   const authUrl = authProvider.generateAuthUrl();
-  console.error("1. Open this URL in your browser:");
-  console.error("");
-  console.error(`   ${authUrl.toString()}`);
-  console.error("");
-  console.error(`2. Sign in to QuickBooks and authorize the app.`);
-  console.error(`3. You'll be redirected back here automatically.`);
-  console.error("");
-  console.error("Waiting for authorization...");
+  logger.info("Open this URL in your browser to authorize", { url: authUrl.toString() });
+  console.error(`\n1. Open this URL in your browser:\n\n   ${authUrl.toString()}\n\n2. Sign in to QuickBooks and authorize the app.\n3. You'll be redirected back here automatically.\n\nWaiting for authorization...`);
 
   // Start callback server
   return new Promise<void>((resolve, reject) => {
@@ -65,7 +55,7 @@ export async function runAuthSetup(): Promise<void> {
       if (error) {
         res.writeHead(400, { "Content-Type": "text/html" });
         res.end(`
-          <html><body style="font-family: system-ui; padding: 40px; text-align: center;">
+          <html><head><meta charset="UTF-8"></head><body style="font-family: system-ui; padding: 40px; text-align: center;">
             <h1>Authorization Failed</h1>
             <p>Error: ${error}</p>
             <p>You can close this tab.</p>
@@ -79,7 +69,7 @@ export async function runAuthSetup(): Promise<void> {
       if (!code || !realmId) {
         res.writeHead(400, { "Content-Type": "text/html" });
         res.end(`
-          <html><body style="font-family: system-ui; padding: 40px; text-align: center;">
+          <html><head><meta charset="UTF-8"></head><body style="font-family: system-ui; padding: 40px; text-align: center;">
             <h1>Missing Parameters</h1>
             <p>Expected 'code' and 'realmId' in callback.</p>
             <p>You can close this tab.</p>
@@ -90,23 +80,16 @@ export async function runAuthSetup(): Promise<void> {
 
       try {
         // Exchange code for tokens
-        console.error("");
-        console.error("Authorization received! Exchanging code for tokens...");
+        logger.info("Authorization received, exchanging code for tokens");
 
         const token = await authProvider.exchangeCode(code, realmId);
         await authManager.setToken(token);
 
-        console.error("");
-        console.error("✅ Authorization successful!");
-        console.error(`   Realm ID: ${token.realmId}`);
-        console.error(`   Access token expires: ${token.accessTokenExpiryDate}`);
-        console.error(`   Refresh token expires: ${token.refreshTokenExpiryDate}`);
-        console.error("");
-        console.error("Tokens have been securely persisted. You can now start the MCP server.");
+        logger.info("Authorization successful", { realmId: token.realmId, accessTokenExpires: String(token.accessTokenExpiryDate), refreshTokenExpires: String(token.refreshTokenExpiryDate) });
 
         res.writeHead(200, { "Content-Type": "text/html" });
         res.end(`
-          <html><body style="font-family: system-ui; padding: 40px; text-align: center;">
+          <html><head><meta charset="UTF-8"></head><body style="font-family: system-ui; padding: 40px; text-align: center;">
             <h1 style="color: #22c55e;">✅ Connected!</h1>
             <p>QuickBooks account successfully connected.</p>
             <p>Realm ID: <code>${token.realmId}</code></p>
@@ -117,11 +100,11 @@ export async function runAuthSetup(): Promise<void> {
         server.close();
         resolve();
       } catch (err) {
-        console.error("❌ Token exchange failed:", err);
+        logger.error("Token exchange failed", { error: err instanceof Error ? err.message : String(err) });
 
         res.writeHead(500, { "Content-Type": "text/html" });
         res.end(`
-          <html><body style="font-family: system-ui; padding: 40px; text-align: center;">
+          <html><head><meta charset="UTF-8"></head><body style="font-family: system-ui; padding: 40px; text-align: center;">
             <h1 style="color: #ef4444;">Token Exchange Failed</h1>
             <p>${err instanceof Error ? err.message : String(err)}</p>
             <p>You can close this tab and try again.</p>
@@ -134,12 +117,12 @@ export async function runAuthSetup(): Promise<void> {
     });
 
     server.listen(CALLBACK_PORT, () => {
-      console.error(`Callback server listening on http://localhost:${CALLBACK_PORT}/callback`);
+      logger.info("Callback server listening", { port: CALLBACK_PORT, path: CALLBACK_PATH });
     });
 
     server.on("error", (err) => {
       if ((err as NodeJS.ErrnoException).code === "EADDRINUSE") {
-        console.error(`❌ Port ${CALLBACK_PORT} is already in use. Close the other process and try again.`);
+        logger.error("Port already in use", { port: CALLBACK_PORT });
       }
       reject(err);
     });

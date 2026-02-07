@@ -1,6 +1,8 @@
 import { QBO_API_BASE, QBO_SANDBOX_API_BASE } from "../constants.js";
 import type { QBOQueryResponse } from "../types.js";
 import type { TokenProvider } from "./auth.js";
+import { fetchWithRetry } from "./retry.js";
+import { logger } from "./logger.js";
 
 /**
  * QuickBooks Online API client.
@@ -51,7 +53,7 @@ export class QuickBooksClient {
 
     const url = `${this.companyUrl}/query?query=${encodeURIComponent(sql)}`;
     const headers = await this.getHeaders();
-    const response = await fetch(url, {
+    const response = await fetchWithRetry(url, {
       method: "GET",
       headers,
     });
@@ -73,7 +75,7 @@ export class QuickBooksClient {
   ): Promise<T> {
     const url = `${this.companyUrl}/${entity.toLowerCase()}/${id}`;
     const headers = await this.getHeaders();
-    const response = await fetch(url, {
+    const response = await fetchWithRetry(url, {
       method: "GET",
       headers,
     });
@@ -132,7 +134,7 @@ export class QuickBooksClient {
   async getCompanyInfo<T = Record<string, unknown>>(): Promise<T> {
     const url = `${this.companyUrl}/companyinfo/${this.realmId}`;
     const headers = await this.getHeaders();
-    const response = await fetch(url, {
+    const response = await fetchWithRetry(url, {
       method: "GET",
       headers,
     });
@@ -156,7 +158,7 @@ export class QuickBooksClient {
     const searchParams = new URLSearchParams(params);
     const url = `${this.companyUrl}/reports/${reportName}?${searchParams.toString()}`;
     const headers = await this.getHeaders();
-    const response = await fetch(url, {
+    const response = await fetchWithRetry(url, {
       method: "GET",
       headers,
     });

@@ -1,3 +1,7 @@
+import { config } from "dotenv";
+import { resolve } from "node:path";
+config({ path: resolve(import.meta.dirname, "../.env") });
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -9,6 +13,7 @@ import { createNotionClientFromEnv } from "./services/notion.js";
 import { registerQuickBooksTools } from "./tools/quickbooks.js";
 import { registerNotionTools } from "./tools/notion.js";
 import { runAuthSetup } from "./auth-setup.js";
+import { logger } from "./services/logger.js";
 
 // ── CLI: Auth Setup ─────────────────────────────────────────────────
 
@@ -17,14 +22,14 @@ if (command === "auth") {
   runAuthSetup()
     .then(() => process.exit(0))
     .catch((error) => {
-      console.error("Auth setup failed:", error);
+      logger.error("Auth setup failed", { error: String(error) });
       process.exit(1);
     });
 } else {
   // ── MCP Server ──────────────────────────────────────────────────
 
   startServer().catch((error) => {
-    console.error("Server error:", error);
+    logger.error("Server error", { error: String(error) });
     process.exit(1);
   });
 }
@@ -35,14 +40,7 @@ async function startServer(): Promise<void> {
   const initialized = await authManager.initialize();
 
   if (!initialized) {
-    console.error("═══════════════════════════════════════════════════");
-    console.error("  No QuickBooks tokens found.");
-    console.error("  Run the auth setup first:");
-    console.error("");
-    console.error("    pnpm auth");
-    console.error("");
-    console.error("  This will open your browser to authorize access.");
-    console.error("═══════════════════════════════════════════════════");
+    logger.error("No QuickBooks tokens found. Run: pnpm auth");
     process.exit(1);
   }
 
@@ -77,7 +75,7 @@ async function startServer(): Promise<void> {
 async function runStdio(server: McpServer): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("QuickBooks → Notion MCP server running on stdio");
+  logger.info("QuickBooks → Notion MCP server running on stdio");
 }
 
 // ── Transport: Streamable HTTP ──────────────────────────────────────
@@ -106,8 +104,6 @@ async function runHTTP(server: McpServer): Promise<void> {
 
   const port = parseInt(process.env.PORT || "3000");
   app.listen(port, () => {
-    console.error(
-      `QuickBooks → Notion MCP server running on http://localhost:${port}/mcp`
-    );
+    logger.info("QuickBooks → Notion MCP server running on HTTP", { port, endpoint: "/mcp" });
   });
 }
