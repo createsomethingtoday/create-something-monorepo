@@ -1,0 +1,21 @@
+name = "schedule-mcp"
+main = "index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[observability]
+enabled = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "schedule-mcp-db"
+database_id = "79f21c22-94e8-4a6e-85fe-baae307c5364"
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "ScheduleMCP"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ScheduleMCP"]
