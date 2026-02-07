@@ -124,12 +124,19 @@
 		border-radius: 1rem;
 		padding: 2rem 1.5rem;
 		text-align: center;
-		transition: border-color 0.3s var(--ease-stack), background-color 0.3s var(--ease-stack);
+		transition:
+			border-color var(--duration-hover) var(--ease-hover),
+			background-color var(--duration-hover) var(--ease-hover),
+			transform 0.4s var(--ease-reveal),
+			box-shadow 0.4s var(--ease-reveal);
+		will-change: transform;
 	}
 
 	.founding-card:hover {
 		border-color: var(--green);
 		background: rgba(150, 110, 68, 0.08);
+		transform: translateY(-3px);
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 	}
 
 	.tier-label {

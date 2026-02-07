@@ -28,30 +28,46 @@
 	let videoWall: HTMLElement;
 
 	onMount(() => {
-		const handleScroll = () => {
+		let targetScale = 0.5;
+		let currentScale = 0.5;
+		let rafId: number;
+		const SMOOTHING = 0.06; // Lower = smoother, more cinematic
+
+		function lerp(a: number, b: number, t: number): number {
+			return a + (b - a) * t;
+		}
+
+		function handleScroll() {
 			if (!videoWall) return;
 
 			const rect = videoWall.getBoundingClientRect();
 			const viewportHeight = window.innerHeight;
-
-			// Video should reach scale(1) when the bottom of video_wall
-			// reaches the bottom of the viewport (when next section appears)
-			// Account for the -100vh margin-bottom by ending animation earlier
-			const effectiveBottom = rect.bottom + viewportHeight; // Adjust for negative margin
-			const scrollRange = viewportHeight * 2; // Animation happens over ~2 viewport heights
-
-			// Progress: 0 when video_wall top is at viewport top, 1 when bottom reaches viewport bottom
+			const scrollRange = viewportHeight * 2;
 			const progress = Math.max(0, Math.min(1, (viewportHeight - rect.top) / scrollRange));
 
-			// Scale from 0.5 to 1
-			scale = 0.5 + (progress * 0.5);
-		};
+			targetScale = 0.5 + (progress * 0.5);
+		}
+
+		function animate() {
+			currentScale = lerp(currentScale, targetScale, SMOOTHING);
+
+			// Sub-pixel precision threshold
+			if (Math.abs(currentScale - targetScale) > 0.0005) {
+				scale = currentScale;
+			} else {
+				scale = targetScale;
+			}
+
+			rafId = requestAnimationFrame(animate);
+		}
 
 		window.addEventListener('scroll', handleScroll, { passive: true });
-		handleScroll(); // Initial call
+		handleScroll();
+		rafId = requestAnimationFrame(animate);
 
 		return () => {
 			window.removeEventListener('scroll', handleScroll);
+			cancelAnimationFrame(rafId);
 		};
 	});
 </script>
@@ -61,7 +77,7 @@
 	<div class="container-large">
 		<div class="flex-center">
 			<div class="max-width-700">
-				<h1 class="heading-style-h1">{title}</h1>
+				<h1 class="heading-style-h1">Indoor Pickleball<br />for All</h1>
 			</div>
 		</div>
 	</div>
@@ -104,7 +120,7 @@
 <style>
 	.section.is-video {
 		margin-top: var(--nav-height);
-		padding-top: 5vh;
+		padding-top: 8vh;
 		padding-bottom: 0;
 		background-color: var(--white);
 	}

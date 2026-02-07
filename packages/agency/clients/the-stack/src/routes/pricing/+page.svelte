@@ -75,38 +75,39 @@
 			</div>
 		</div>
 
-		<div class="membership-benefits reveal-element">
-			<h3 class="heading-style-h4 margin-bottom-24">Monthly Member Includes</h3>
-			<ul class="benefits-list">
-				{#each MEMBERSHIP_BENEFITS as benefit}
-					<li class="benefit-item">
-						<svg class="benefit-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-							<polyline points="20 6 9 17 4 12"></polyline>
-						</svg>
-						{benefit}
-					</li>
-				{/each}
-			</ul>
-			<p class="benefits-note">
-				Guests of members pay regular walk-in pricing · Additional court time subject to availability
-			</p>
-		</div>
-
-		<!-- Member Add-Ons -->
-		<div class="addons-section reveal-element">
-			<h3 class="heading-style-h4 margin-bottom-16">Optional Member Add-Ons</h3>
-			<p class="text-size-eyebrow text-color-darkgrey margin-bottom-24">Same day · Based on availability</p>
-			<div class="addons-grid">
-				<div class="addon-item">
-					<span class="addon-price">{formatPrice(addOns.openPlaySession)}</span>
-					<span class="addon-label">Additional open play session</span>
-				</div>
-				<div class="addon-item">
-					<span class="addon-price">{formatPrice(addOns.courtRebooking)}</span>
-					<span class="addon-label">Additional court rebooking (per reservation)</span>
-				</div>
+		<!-- Benefits + Add-Ons: two-column layout aligned with pricing grid -->
+		<div class="membership-details reveal-element">
+			<div class="membership-col">
+				<h3 class="heading-style-h4 membership-col-title">Member Benefits</h3>
+				<ul class="benefits-list-compact">
+					{#each MEMBERSHIP_BENEFITS as benefit}
+						<li class="benefit-item-compact">
+							<svg class="benefit-check-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<polyline points="20 6 9 17 4 12"></polyline>
+							</svg>
+							{benefit}
+						</li>
+					{/each}
+				</ul>
+				<p class="benefits-note">
+					Guests pay regular walk-in pricing · Additional court time subject to availability
+				</p>
 			</div>
-			<p class="benefits-note">{addOns.advanceBookingDays}-day advanced reservations available with membership</p>
+			<div class="membership-col">
+				<h3 class="heading-style-h4 membership-col-title">Optional Add-Ons</h3>
+				<p class="text-size-eyebrow text-color-darkgrey" style="margin-bottom: 1rem;">Same day · Based on availability</p>
+				<div class="addons-list">
+					<div class="addon-row">
+						<span class="addon-price">{formatPrice(addOns.openPlaySession)}</span>
+						<span class="addon-label">Additional open play session</span>
+					</div>
+					<div class="addon-row">
+						<span class="addon-price">{formatPrice(addOns.courtRebooking)}</span>
+						<span class="addon-label">Additional court rebooking (per reservation)</span>
+					</div>
+				</div>
+				<p class="benefits-note">{addOns.advanceBookingDays}-day advanced reservations available with membership</p>
+			</div>
 		</div>
 	</div>
 </section>
@@ -522,29 +523,61 @@
 		margin-top: 1.5rem;
 	}
 
-	/* Membership Benefits Box */
-	.membership-benefits {
-		background: rgba(150, 110, 68, 0.05);
-		border: 1px solid rgba(150, 110, 68, 0.2);
-		border-radius: 1rem;
-		padding: 2rem;
-		margin-bottom: 3rem;
+	/* Membership Details: two-column layout */
+	.membership-details {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 3rem;
+		max-width: 56rem;
+		margin: 0 auto;
+		padding-top: 1rem;
+		border-top: 1px solid var(--light-grey);
 	}
 
-	/* Add-Ons Section */
-	.addons-section {
-		text-align: center;
-	}
-
-	.addons-grid {
+	.membership-col {
 		display: flex;
-		flex-wrap: wrap;
-		justify-content: center;
-		gap: 2rem;
+		flex-direction: column;
+	}
+
+	.membership-col-title {
+		margin-bottom: 1.25rem;
+	}
+
+	.benefits-list-compact {
+		list-style: none;
+		padding: 0;
+		margin: 0 0 1rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.625rem;
+	}
+
+	.benefit-item-compact {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.625rem;
+		font-family: var(--font-satoshi);
+		font-size: 0.9375rem;
+		color: var(--black);
+		line-height: 1.5;
+	}
+
+	.benefit-check-sm {
+		width: 1.125rem;
+		height: 1.125rem;
+		color: var(--green);
+		flex-shrink: 0;
+		margin-top: 0.125rem;
+	}
+
+	.addons-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
 		margin-bottom: 1rem;
 	}
 
-	.addon-item {
+	.addon-row {
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
@@ -552,13 +585,14 @@
 
 	.addon-price {
 		font-family: var(--font-coolvetica);
-		font-size: 1.5rem;
+		font-size: 1.375rem;
 		color: var(--green);
+		flex-shrink: 0;
 	}
 
 	.addon-label {
 		font-family: var(--font-satoshi);
-		font-size: 1rem;
+		font-size: 0.9375rem;
 		color: var(--dark-grey);
 	}
 
@@ -675,6 +709,11 @@
 		.two-column-layout {
 			grid-template-columns: 1fr;
 			gap: 4rem;
+		}
+
+		.membership-details {
+			grid-template-columns: 1fr;
+			gap: 2.5rem;
 		}
 	}
 

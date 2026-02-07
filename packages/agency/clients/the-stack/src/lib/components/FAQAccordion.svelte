@@ -61,6 +61,9 @@
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
+		position: sticky;
+		top: calc(var(--nav-height) + 2rem);
+		align-self: flex-start;
 	}
 
 	.faqs_list {
@@ -72,6 +75,10 @@
 		.faqs_wrap {
 			flex-direction: column;
 			gap: 2rem;
+		}
+
+		.faq-header {
+			position: static;
 		}
 	}
 </style>

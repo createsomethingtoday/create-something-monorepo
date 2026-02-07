@@ -74,11 +74,15 @@
   --text-body: 1rem;
   --text-eyebrow: 0.875rem;
 
-  /* Animation Timing */
-  --ease-stack: cubic-bezier(.215, .61, .355, 1);
-  --duration-bg: 0.45s;
+  /* Animation Timing — Ive-calibrated curves */
+  --ease-stack: cubic-bezier(.215, .61, .355, 1);        /* General purpose (easeOutCubic) */
+  --ease-reveal: cubic-bezier(.16, 1, .3, 1);            /* Reveal: fast out, gentle settle */
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);        /* Spring: subtle overshoot */
+  --ease-hover: cubic-bezier(.25, .46, .45, .94);         /* Hover: precise, no overshoot */
+  --duration-bg: 0.35s;
   --duration-color: 0.2s;
-  --duration-reveal: 0.6s;
+  --duration-reveal: 0.7s;
+  --duration-hover: 0.25s;
 
   /* Layout */
   --nav-height: 6.75rem;
@@ -91,7 +95,7 @@
   :root {
     --text-h1: 7rem;
     --text-h2: 3rem;
-    --nav-height: 4.5rem;
+    --nav-height: 5rem;
     --section-padding: 5rem;
   }
 }
@@ -107,6 +111,7 @@
   :root {
     --text-h1: 3.5rem;
     --text-h2: 2rem;
+    --nav-height: 4.5rem;
     --text-h3: 1.75rem;
   }
 }
@@ -353,15 +358,27 @@ img {
   padding: 1rem 2rem;
   position: relative;
   overflow: hidden;
-  transition: background-color var(--duration-bg) var(--ease-stack);
+  transition:
+    background-color var(--duration-hover) var(--ease-hover),
+    transform var(--duration-hover) var(--ease-hover),
+    box-shadow var(--duration-hover) var(--ease-hover);
   border: none;
   cursor: pointer;
   font-family: var(--font-satoshi);
   font-size: 1rem;
+  will-change: transform;
 }
 
 .button:hover {
   background-color: #b3e940;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.button:active {
+  transform: translateY(0);
+  box-shadow: none;
+  transition-duration: 0.08s;
 }
 
 /* Secondary button - light background (default) */
@@ -372,8 +389,10 @@ img {
 }
 
 .button.is-secondary:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(0, 0, 0, 0.04);
   border-color: var(--black);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 /* Secondary button - dark background (contextual) */
@@ -511,7 +530,7 @@ img {
   background: currentColor;
   transform: scaleX(0);
   transform-origin: right;
-  transition: transform 0.3s var(--ease-stack);
+  transition: transform 0.4s var(--ease-reveal);
 }
 
 a:hover .link_line,
@@ -524,38 +543,44 @@ button:hover .link_line {
    Animation Utilities
    ========================================================================== */
 
-/* Word-by-word reveal animation */
+/* Word-by-word reveal animation — GPU-composited */
 .is-word {
   display: inline-block;
   opacity: 0;
-  transform: translateY(0.5em);
-  transition: opacity var(--duration-reveal) var(--ease-stack), transform var(--duration-reveal) var(--ease-stack);
+  transform: translate3d(0, 1.2em, 0);
+  transition:
+    opacity var(--duration-reveal) var(--ease-reveal),
+    transform var(--duration-reveal) var(--ease-reveal);
+  will-change: opacity, transform;
 }
 
 .is-word.is-visible,
 .is-visible .is-word {
   opacity: 1;
-  transform: translateY(0);
+  transform: translate3d(0, 0, 0);
 }
 
-/* Staggered delays */
+/* Staggered delays — organic rhythm (not mechanical 0.1s intervals) */
 .is-word.is-1 { transition-delay: 0s; }
-.is-word.is-2 { transition-delay: 0.1s; }
-.is-word.is-3 { transition-delay: 0.2s; }
-.is-word.is-4 { transition-delay: 0.3s; }
-.is-word.is-5 { transition-delay: 0.4s; }
+.is-word.is-2 { transition-delay: 0.08s; }
+.is-word.is-3 { transition-delay: 0.18s; }
+.is-word.is-4 { transition-delay: 0.26s; }
+.is-word.is-5 { transition-delay: 0.35s; }
 
-/* General reveal animation */
+/* General reveal animation — GPU-composited */
 .reveal-element {
   opacity: 0;
-  transform: translateY(0.5em);
-  transition: opacity var(--duration-reveal) var(--ease-stack), transform var(--duration-reveal) var(--ease-stack);
+  transform: translate3d(0, 1.5rem, 0);
+  transition:
+    opacity var(--duration-reveal) var(--ease-reveal),
+    transform var(--duration-reveal) var(--ease-reveal);
+  will-change: opacity, transform;
 }
 
 .reveal-element.is-visible,
 .is-visible .reveal-element {
   opacity: 1;
-  transform: translateY(0);
+  transform: translate3d(0, 0, 0);
 }
 
 /* ==========================================================================

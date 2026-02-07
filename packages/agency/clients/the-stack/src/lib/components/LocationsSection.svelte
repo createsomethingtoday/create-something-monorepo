@@ -61,10 +61,10 @@
 			<!-- Right: Google Map -->
 			<div class="location-map">
 				<iframe
-					src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d107064.25498988564!2d-97.38!3d32.54!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x864e624e1e1cfa03%3A0x39582c7e3d4e0e97!2sBurleson%2C%20TX!5e0!3m2!1sen!2sus!4v1700000000000!5m2!1sen!2sus"
+					src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d26766.06!2d-97.3308!3d32.5421!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x864e624e1e1cfa03%3A0x39582c7e3d4e0e97!2sBurleson%2C%20TX!5e0!3m2!1sen!2sus!4v1700000000000!5m2!1sen!2sus"
 					width="100%"
 					height="100%"
-					style="border:0; border-radius: 1.5rem;"
+					style="border:0;"
 					allowfullscreen
 					loading="lazy"
 					referrerpolicy="no-referrer-when-downgrade"
@@ -114,7 +114,7 @@
 		z-index: 2;
 		display: flex;
 		justify-content: flex-start;
-		align-items: center;
+		align-items: stretch;
 		gap: 4.75rem;
 		position: relative;
 	}
@@ -123,6 +123,8 @@
 		display: flex;
 		flex-direction: column;
 		align-items: flex-start;
+		justify-content: center;
+		flex-shrink: 0;
 	}
 
 	.location-details {
@@ -159,26 +161,38 @@
 
 	.location-map {
 		flex: 1;
-		min-height: 24rem;
+		min-height: 22rem;
+		height: 22rem;
 		border-radius: 1.5rem;
 		overflow: hidden;
-		box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+		box-shadow:
+			0 25px 50px -12px rgba(0, 0, 0, 0.5),
+			0 0 0 1px rgba(255, 255, 255, 0.1);
+	}
+
+	.location-map iframe {
+		display: block;
+		width: 100%;
+		height: 100%;
 	}
 
 	@media (max-width: 991px) {
 		.locations_wrap {
 			flex-direction: column;
+			align-items: stretch;
 			gap: 3rem;
 		}
 
 		.location-map {
 			width: 100%;
+			height: 20rem;
 			min-height: 20rem;
 		}
 	}
 
 	@media (max-width: 767px) {
 		.location-map {
+			height: 16rem;
 			min-height: 16rem;
 		}
 	}

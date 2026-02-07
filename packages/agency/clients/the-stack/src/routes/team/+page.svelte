@@ -2,9 +2,9 @@
 	/**
 	 * Team Page - The Stack Indoor Pickleball
 	 *
-	 * Simplified page:
+	 * Refined layout:
 	 * 1. Video hero - "Family Owned and Operated"
-	 * 2. Two photo placeholders (portrait + landscape) with names
+	 * 2. Intro text + staggered photo composition with names
 	 * 3. CTA
 	 */
 
@@ -43,31 +43,33 @@
 	</div>
 </section>
 
-<!-- Photos Section -->
-<section class="section background-color-white">
+<!-- Story Section -->
+<section class="section is-story background-color-white">
 	<div class="container-large">
-		<div class="photos-grid" use:inview>
-			<!-- Portrait Photo -->
-			<div class="photo-frame is-portrait reveal-element">
-				<div class="photo-placeholder">
-					<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-						<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
-						<circle cx="9" cy="9" r="2"/>
-						<path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-					</svg>
-				</div>
+		<!-- Intro -->
+		<div class="story-intro" use:inview>
+			<p class="text-size-eyebrow story-eyebrow reveal-element">Burleson, Texas</p>
+			<h2 class="heading-style-h2 story-heading">
+				<span class="is-word is-1">Built by family,</span>
+				<span class="is-word is-2">for the community.</span>
+			</h2>
+			<p class="text-size-medium story-body reveal-element">
+				The Stack isn't just a pickleball facility — it's a gathering place. We built this
+				space because we believe in what the sport brings out in people: connection, healthy
+				competition, and joy at every skill level.
+			</p>
+		</div>
+
+		<!-- Photo Composition -->
+		<div class="story-photos" use:inview>
+			<div class="photo-portrait reveal-element">
+				<img src="/images/team-portrait.jpg" alt="Ernie, owner of The Stack" class="img-cover" loading="lazy" />
 			</div>
-			<!-- Landscape Photo -->
-			<div class="photo-frame is-landscape reveal-element">
-				<div class="photo-placeholder">
-					<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
-						<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
-						<circle cx="9" cy="9" r="2"/>
-						<path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-					</svg>
-				</div>
-				<div class="photo-names">
-					<p class="heading-style-h3">Ernie &amp; Family</p>
+			<div class="photo-landscape reveal-element">
+				<img src="/images/team-landscape.jpg" alt="Family playing pickleball at The Stack" class="img-cover" loading="lazy" />
+				<div class="photo-caption">
+					<p class="caption-name">Ernie &amp; Family</p>
+					<p class="caption-role">Founders</p>
 				</div>
 			</div>
 		</div>
@@ -77,6 +79,7 @@
 <BottomCTA />
 
 <style>
+	/* Hero */
 	.section.is-video-hero {
 		margin-top: var(--nav-height);
 		padding: 0;
@@ -88,7 +91,8 @@
 		position: relative;
 		height: 100%;
 		display: flex;
-		align-items: center;
+		align-items: flex-end;
+		padding-bottom: 4rem;
 	}
 
 	.video-hero_bg {
@@ -105,7 +109,7 @@
 
 	.video_bg_overlay {
 		z-index: 2;
-		background-image: linear-gradient(0deg, rgba(0, 0, 0, 0.5), transparent);
+		background-image: linear-gradient(0deg, rgba(0, 0, 0, 0.6), transparent 60%);
 		position: absolute;
 		inset: 0;
 	}
@@ -115,58 +119,132 @@
 		z-index: 3;
 	}
 
-	/* Photos Grid */
-	.photos-grid {
-		display: grid;
-		grid-template-columns: 1fr 1.5fr;
-		gap: 2rem;
-		max-width: 56rem;
-		margin: 0 auto;
-		align-items: end;
+	/* Story Section */
+	.section.is-story {
+		padding-top: 5rem;
+		padding-bottom: 2rem;
 	}
 
-	.photo-frame {
+	/* Intro */
+	.story-intro {
+		max-width: 36rem;
+		margin-bottom: 4rem;
+	}
+
+	.story-eyebrow {
+		color: var(--green);
+		margin-bottom: 1.25rem;
+	}
+
+	.story-heading {
+		line-height: 1.08;
+		margin-bottom: 1.5rem;
+	}
+
+	.story-body {
+		color: var(--dark-grey);
+		line-height: 1.7;
+	}
+
+	/* Photo Composition: overlapping stagger */
+	.story-photos {
+		display: grid;
+		grid-template-columns: 5fr 7fr;
+		gap: 2rem;
+		max-width: 64rem;
+		margin: 0 auto;
+		align-items: start;
+	}
+
+	.photo-portrait {
+		aspect-ratio: 3 / 4;
 		border-radius: var(--player-radius);
 		overflow: hidden;
 		position: relative;
+		margin-top: 3rem;
+		will-change: transform;
+		transform: translate3d(0, 0, 0);
+		transition: transform 0.8s var(--ease-reveal);
 	}
 
-	.photo-frame.is-portrait {
-		aspect-ratio: 3 / 4;
+	.photo-portrait:hover {
+		transform: translate3d(0, -4px, 0);
 	}
 
-	.photo-frame.is-landscape {
+	.photo-landscape {
 		aspect-ratio: 4 / 3;
+		border-radius: var(--player-radius);
+		overflow: hidden;
+		position: relative;
+		will-change: transform;
+		transform: translate3d(0, 0, 0);
+		transition: transform 0.8s var(--ease-reveal);
 	}
 
-	.photo-placeholder {
-		width: 100%;
-		height: 100%;
-		background-color: #f0ece6;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		color: var(--dark-grey);
+	.photo-landscape:hover {
+		transform: translate3d(0, -4px, 0);
 	}
 
-	.photo-names {
+	/* Staggered reveal delays */
+	.story-photos .photo-portrait {
+		transition-delay: 0s;
+	}
+
+	.story-photos .photo-landscape {
+		transition-delay: 0.12s;
+	}
+
+	/* Caption overlay */
+	.photo-caption {
 		position: absolute;
 		bottom: 0;
 		left: 0;
 		right: 0;
-		padding: 1.5rem;
-		background: linear-gradient(0deg, rgba(0,0,0,0.6), transparent);
+		padding: 2rem;
+		background: linear-gradient(0deg, rgba(0, 0, 0, 0.65), transparent);
 		color: var(--white);
 	}
 
-	@media (max-width: 767px) {
-		.photos-grid {
-			grid-template-columns: 1fr;
-			max-width: 24rem;
+	.caption-name {
+		font-family: var(--font-coolvetica);
+		font-size: var(--text-h3);
+		text-transform: uppercase;
+		letter-spacing: 0.02em;
+		line-height: 1;
+		margin-bottom: 0.25rem;
+	}
+
+	.caption-role {
+		font-family: var(--font-satoshi);
+		font-size: var(--text-eyebrow);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--green);
+	}
+
+	/* Responsive */
+	@media (max-width: 991px) {
+		.story-intro {
+			max-width: 100%;
 		}
 
-		.photo-frame.is-portrait {
+		.photo-portrait {
+			margin-top: 0;
+		}
+	}
+
+	@media (max-width: 767px) {
+		.story-photos {
+			grid-template-columns: 1fr;
+			max-width: 28rem;
+		}
+
+		.photo-portrait {
 			aspect-ratio: 1;
+		}
+
+		.section.is-story {
+			padding-top: 3.5rem;
 		}
 	}
 </style>

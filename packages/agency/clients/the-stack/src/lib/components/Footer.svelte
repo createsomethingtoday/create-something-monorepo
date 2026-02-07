@@ -2,12 +2,10 @@
 	/**
 	 * Footer Component
 	 *
-	 * Contains:
-	 * - Company info
-	 * - Navigation links
-	 * - Newsletter form
-	 * - Social links
-	 * - Copyright
+	 * Balanced three-row layout:
+	 * 1. Top: Logo/brand + nav links + contact info (3 columns)
+	 * 2. Middle: Newsletter (full width, compact)
+	 * 3. Bottom: Copyright + social links
 	 */
 
 	import NewsletterForm from './NewsletterForm.svelte';
@@ -16,50 +14,31 @@
 	const currentYear = new Date().getFullYear();
 
 	const footerLinks = [
-		{ href: '/locations', label: 'book a court' },
+		{ href: '/book', label: 'book a court' },
+		{ href: '/pricing', label: 'pricing' },
 		{ href: '/team', label: 'meet our team' },
-		{ href: '/about', label: 'become a member' },
-		{ href: '/contact', label: 'Contact' }
+		{ href: '/contact', label: 'contact' }
 	];
 </script>
 
 <footer class="section is-footer">
 	<div class="container-large">
-		<!-- Top Section -->
-		<div class="margin-bottom-64">
-			<div class="wrap_flex is-align-top">
-					<!-- Company Info -->
-				<div class="max-width-250">
-					<div class="margin-bottom-8">
-						<p class="heading-style-h5">The stack: indoor pickleball</p>
-					</div>
-					<div class="footer-contact-info">
-						<p class="text-size-medium text-weight-medium">Ernie</p>
-						<p class="text-size-medium">
-							<a href="tel:8172524555" class="footer-contact-link">(817) 252-4555</a>
-						</p>
-						<p class="text-size-medium">
-							<a href="mailto:ernie.thestack@gmail.com" class="footer-contact-link">ernie.thestack@gmail.com</a>
-						</p>
-						<p class="text-size-medium" style="margin-top: 0.5rem;">Burleson, Texas</p>
-					</div>
-					<p class="text-size-medium" style="margin-top: 1rem;">
-						BE PART OF THE STACK TEAM.
-						<a
-							href="https://docs.google.com/forms/d/e/1FAIpQLScfJoqV-z1-VsVFZsBBvcK1Er8yt43aUqxFZjL5-hdAocY4WA/viewform?usp=dialog"
-							target="_blank"
-							rel="noopener"
-						>
-							Apply Here
-						</a>
-					</p>
-				</div>
+		<!-- Top Section: 3 Columns -->
+		<div class="footer-top">
+			<!-- Column 1: Brand -->
+			<div class="footer-col">
+				<p class="footer-brand">The Stack</p>
+				<p class="footer-tagline">Indoor Pickleball</p>
+				<p class="footer-location">Burleson, Texas</p>
+			</div>
 
-				<!-- Footer Links -->
-				<ul class="footer_links">
+			<!-- Column 2: Navigation -->
+			<div class="footer-col">
+				<p class="footer-col-label">Navigate</p>
+				<ul class="footer-nav">
 					{#each footerLinks as link}
-						<li class="footer_link-item">
-							<a href={link.href} class="footer_link">
+						<li>
+							<a href={link.href} class="footer-nav-link">
 								<span class="z-index-2">{link.label}</span>
 								<div class="link_line"></div>
 							</a>
@@ -67,29 +46,53 @@
 					{/each}
 				</ul>
 			</div>
-		</div>
 
-		<!-- Newsletter Section -->
-		<div class="margin-bottom-64">
-			<div class="wrap_flex is-align-top">
-				<div class="max-width-440">
-					<div class="margin-bottom-8">
-						<p class="heading-style-h2">Join our newsletter</p>
-					</div>
-					<p class="text-size-medium">
-						Join our newsletter to stay up to date on tournaments, events, camps, and special deals.
+			<!-- Column 3: Contact -->
+			<div class="footer-col">
+				<p class="footer-col-label">Contact</p>
+				<div class="footer-contact">
+					<p class="text-weight-medium">Ernie</p>
+					<p>
+						<a href="tel:8172524555" class="footer-contact-link">(817) 252-4555</a>
+					</p>
+					<p>
+						<a href="mailto:ernie.thestack@gmail.com" class="footer-contact-link">ernie.thestack@gmail.com</a>
 					</p>
 				</div>
-				<NewsletterForm variant="default" />
+				<div class="footer-apply">
+					<a
+						href="https://docs.google.com/forms/d/e/1FAIpQLScfJoqV-z1-VsVFZsBBvcK1Er8yt43aUqxFZjL5-hdAocY4WA/viewform?usp=dialog"
+						target="_blank"
+						rel="noopener"
+						class="footer-apply-link"
+					>
+						Join our team &rarr;
+					</a>
+				</div>
 			</div>
 		</div>
 
+		<!-- Divider -->
+		<div class="footer-divider"></div>
+
+		<!-- Newsletter Section -->
+		<div class="footer-newsletter">
+			<div class="footer-newsletter-text">
+				<p class="heading-style-h4">Join our newsletter</p>
+				<p class="text-size-regular footer-newsletter-desc">
+					Stay up to date on tournaments, events, and special deals.
+				</p>
+			</div>
+			<NewsletterForm variant="default" />
+		</div>
+
+		<!-- Divider -->
+		<div class="footer-divider"></div>
+
 		<!-- Copyright Section -->
-		<div class="footer_copyright">
+		<div class="footer-bottom">
 			<div class="opacity-60">
-				<div class="footer_copyright-inner">
-					<p class="text-size-regular">© {currentYear} The Stack Indoor Pickleball. All rights reserved.</p>
-				</div>
+				<p class="text-size-regular">© {currentYear} The Stack Indoor Pickleball. All rights reserved.</p>
 			</div>
 			<SocialLinks />
 		</div>
@@ -97,60 +100,81 @@
 </footer>
 
 <style>
-	.footer_links {
-		display: flex;
+	/* Top Section: 3 Columns */
+	.footer-top {
+		display: grid;
+		grid-template-columns: 1.2fr 1fr 1.2fr;
 		gap: 3rem;
-		margin-right: -0.5rem;
+		padding-bottom: 3rem;
 	}
 
-	.footer_link {
+	.footer-col {
+		display: flex;
+		flex-direction: column;
+	}
+
+	/* Brand Column */
+	.footer-brand {
+		font-family: var(--font-coolvetica);
+		font-size: 1.75rem;
+		text-transform: uppercase;
+		letter-spacing: 0.02em;
+		line-height: 1;
+		margin-bottom: 0.25rem;
+	}
+
+	.footer-tagline {
+		font-family: var(--font-satoshi);
+		font-size: var(--text-eyebrow);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--dark-grey);
+		margin-bottom: 1.25rem;
+	}
+
+	.footer-location {
+		font-family: var(--font-satoshi);
+		font-size: var(--text-body);
+		color: var(--dark-grey);
+	}
+
+	/* Column Labels */
+	.footer-col-label {
+		font-family: var(--font-coolvetica);
+		font-size: var(--text-eyebrow);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--green);
+		margin-bottom: 1.25rem;
+	}
+
+	/* Navigation Column */
+	.footer-nav {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		list-style: none;
+		padding: 0;
+		margin: 0;
+	}
+
+	.footer-nav-link {
 		position: relative;
 		text-decoration: none;
 		text-transform: lowercase;
 		font-family: var(--font-coolvetica);
 		font-size: 1.125rem;
 		letter-spacing: 0.04em;
+		color: var(--black);
 	}
 
-	.footer_copyright {
-		border-top: 1px solid var(--dark-grey);
-		justify-content: space-between;
-		align-items: center;
-		width: 100%;
-		padding-top: 2rem;
-		display: flex;
-	}
-
-	.footer_copyright-inner {
-		display: flex;
-		align-items: center;
-		gap: 2rem;
-	}
-
-	@media (max-width: 991px) {
-		.footer_links {
-			flex-direction: column;
-			gap: 1rem;
-		}
-	}
-
-	@media (max-width: 767px) {
-		.footer_copyright {
-			flex-direction: column;
-			gap: 1.5rem;
-			text-align: center;
-		}
-
-		.footer_copyright-inner {
-			flex-direction: column;
-			gap: 0.5rem;
-		}
-	}
-
-	.footer-contact-info {
+	/* Contact Column */
+	.footer-contact {
 		display: flex;
 		flex-direction: column;
-		gap: 0.125rem;
+		gap: 0.25rem;
+		font-family: var(--font-satoshi);
+		font-size: var(--text-body);
 	}
 
 	.footer-contact-link {
@@ -161,5 +185,92 @@
 
 	.footer-contact-link:hover {
 		color: var(--green);
+	}
+
+	.footer-apply {
+		margin-top: 1.25rem;
+	}
+
+	.footer-apply-link {
+		font-family: var(--font-satoshi);
+		font-size: var(--text-eyebrow);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--dark-grey);
+		text-decoration: none;
+		transition: color 0.2s ease;
+	}
+
+	.footer-apply-link:hover {
+		color: var(--green);
+	}
+
+	/* Divider */
+	.footer-divider {
+		height: 1px;
+		background-color: var(--light-grey);
+	}
+
+	/* Newsletter Section */
+	.footer-newsletter {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 3rem;
+		padding: 2.5rem 0;
+	}
+
+	.footer-newsletter-text {
+		flex-shrink: 0;
+	}
+
+	.footer-newsletter-desc {
+		color: var(--dark-grey);
+		margin-top: 0.375rem;
+	}
+
+	/* Copyright */
+	.footer-bottom {
+		justify-content: space-between;
+		align-items: center;
+		width: 100%;
+		padding-top: 2rem;
+		display: flex;
+	}
+
+	/* Responsive: Tablet */
+	@media (max-width: 991px) {
+		.footer-top {
+			grid-template-columns: 1fr 1fr;
+			gap: 2.5rem;
+		}
+
+		.footer-top .footer-col:first-child {
+			grid-column: 1 / -1;
+		}
+
+		.footer-newsletter {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 1.5rem;
+		}
+	}
+
+	/* Responsive: Mobile */
+	@media (max-width: 767px) {
+		.footer-top {
+			grid-template-columns: 1fr;
+			gap: 2rem;
+		}
+
+		.footer-top .footer-col:first-child {
+			grid-column: auto;
+		}
+
+		.footer-bottom {
+			flex-direction: column;
+			gap: 1.5rem;
+			text-align: center;
+		}
 	}
 </style>

@@ -61,12 +61,12 @@
 		position: relative;
 		overflow: hidden;
 		will-change: transform;
-		transform: scale(1);
-		transition: transform 0.6s var(--ease-stack);
+		transform: translate3d(0, 0, 0) scale(1);
+		transition: transform 0.8s var(--ease-reveal);
 	}
 
 	.player_item:hover .player_visual {
-		transform: scale(1.03);
+		transform: translate3d(0, -4px, 0) scale(1.02);
 	}
 
 	.w-layout-vflex {

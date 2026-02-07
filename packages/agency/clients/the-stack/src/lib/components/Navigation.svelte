@@ -37,7 +37,7 @@
 </script>
 
 {#if isVisible}
-	<div class="nav_wrapper" transition:fly={{ y: -100, duration: 600 }}>
+	<div class="nav_wrapper" transition:fly={{ y: -40, duration: 400, easing: (t) => 1 - Math.pow(1 - t, 3) }}>
 		<nav class="navbar">
 			<div class="nav_wrap">
 				<!-- Center Logo (absolute positioned) -->
@@ -130,7 +130,7 @@
 		padding: 0 2rem;
 	}
 
-	/* Logo absolutely positioned in center, shifted down slightly */
+	/* Logo positioned lower — top has breathing room, seal can overlap divider */
 	.nav_brand {
 		z-index: 100;
 		width: 10.5625rem; /* Exact Webflow width */
@@ -138,7 +138,7 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		top: 0.375rem; /* Shift logo down for breathing room */
+		top: 1.5rem;
 	}
 
 	.nav_logo {
@@ -170,17 +170,22 @@
 		justify-content: flex-end;
 	}
 
-	/* Nav links - exact Webflow pattern */
+	/* Nav links */
 	.nav_link {
 		position: relative;
 		text-decoration: none;
 		text-transform: uppercase;
 		font-family: var(--font-coolvetica);
-		font-size: 1.125rem; /* Exact Webflow size */
+		font-size: 1.125rem;
 		letter-spacing: 0.04em;
 		color: var(--black);
 		padding: 0.5rem 0;
 		white-space: nowrap;
+		transition: opacity var(--duration-hover) var(--ease-hover);
+	}
+
+	.nav_link:hover {
+		opacity: 0.7;
 	}
 
 	.link_line {
@@ -192,7 +197,7 @@
 		background-color: var(--black);
 		transform: scaleX(0);
 		transform-origin: right;
-		transition: transform 0.3s var(--ease-stack);
+		transition: transform 0.4s var(--ease-reveal);
 	}
 
 	.nav_link:hover .link_line {
@@ -271,12 +276,12 @@
 	/* Tablet Breakpoint */
 	@media (max-width: 991px) {
 		.navbar {
-			height: 4.5rem;
+			height: 5rem;
 		}
 
 		.nav_wrap {
 			justify-content: center;
-			padding: 0.75rem 1rem;
+			padding: 0.5rem 1rem;
 			position: relative;
 		}
 
@@ -290,7 +295,19 @@
 
 		.nav_brand {
 			position: relative;
+			top: 1rem;
 			margin: 0 auto;
+			width: 7.5rem;
+		}
+	}
+
+	@media (max-width: 479px) {
+		.navbar {
+			height: 4.5rem;
+		}
+
+		.nav_brand {
+			width: 6.5rem;
 		}
 	}
 </style>

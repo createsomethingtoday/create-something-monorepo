@@ -27,32 +27,52 @@
 	let ctaBox: HTMLElement;
 
 	onMount(() => {
-		const handleScroll = () => {
+		let targetScale = 0.85;
+		let currentScale = 0.85;
+		let rafId: number;
+		const SMOOTHING = 0.065;
+
+		function lerp(a: number, b: number, t: number): number {
+			return a + (b - a) * t;
+		}
+
+		function handleScroll() {
 			if (!ctaBox) return;
 
 			const rect = ctaBox.getBoundingClientRect();
 			const viewportHeight = window.innerHeight;
-
-			// Scale from 0.85 to 1 as element comes into view
-			// Start scaling when element is 80% down the viewport
 			const startPoint = viewportHeight * 0.8;
 			const endPoint = viewportHeight * 0.3;
 
 			if (rect.top > startPoint) {
-				scale = 0.85;
+				targetScale = 0.85;
 			} else if (rect.top < endPoint) {
-				scale = 1;
+				targetScale = 1;
 			} else {
 				const progress = (startPoint - rect.top) / (startPoint - endPoint);
-				scale = 0.85 + (progress * 0.15);
+				targetScale = 0.85 + (progress * 0.15);
 			}
-		};
+		}
+
+		function animate() {
+			currentScale = lerp(currentScale, targetScale, SMOOTHING);
+
+			if (Math.abs(currentScale - targetScale) > 0.0005) {
+				scale = currentScale;
+			} else {
+				scale = targetScale;
+			}
+
+			rafId = requestAnimationFrame(animate);
+		}
 
 		window.addEventListener('scroll', handleScroll, { passive: true });
 		handleScroll();
+		rafId = requestAnimationFrame(animate);
 
 		return () => {
 			window.removeEventListener('scroll', handleScroll);
+			cancelAnimationFrame(rafId);
 		};
 	});
 </script>
