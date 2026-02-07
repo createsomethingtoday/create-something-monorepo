@@ -27,8 +27,14 @@ import {
   bulkCreateEvents,
   createUnit,
   createMember,
+  updateMember,
+  deleteMember,
   addMemberToUnit,
+  removeMemberFromUnit,
+  deleteUnit,
+  deleteCalendar,
   shareCalendar,
+  unshareCalendar,
   getTemplate,
   createTemplate,
   createTemplateSlot,
@@ -330,6 +336,167 @@ export function registerTools(
           });
         } catch (err) {
           return errorContent(`Failed to share calendar: ${(err as Error).message}`);
+        }
+      });
+    },
+  );
+
+  // --- update_member -------------------------------------------------------
+
+  server.tool(
+    'update_member',
+    'Update a member\'s details (name, email, timezone)',
+    {
+      id: z.string(),
+      name: z.string().optional(),
+      email: z.string().optional(),
+      timezone: z.string().optional(),
+    },
+    async (params) => {
+      return tracedTool('update_member', params as Record<string, unknown>, async () => {
+        try {
+          const db = getDb();
+          const { id, ...updates } = params;
+          const member = await updateMember(db, id, updates);
+          if (!member) {
+            return errorContent(`Member not found: ${id}`);
+          }
+          return jsonContent(member);
+        } catch (err) {
+          return errorContent(`Failed to update member: ${(err as Error).message}`);
+        }
+      });
+    },
+  );
+
+  // --- delete_member -------------------------------------------------------
+
+  server.tool(
+    'delete_member',
+    'Delete a member (removes them from all units and event participants)',
+    {
+      id: z.string(),
+    },
+    async (params) => {
+      return tracedTool('delete_member', params as Record<string, unknown>, async () => {
+        try {
+          const db = getDb();
+          const deleted = await deleteMember(db, params.id);
+          if (!deleted) {
+            return errorContent(`Failed to delete member: ${params.id}`);
+          }
+          return jsonContent({ deleted: true, member_id: params.id });
+        } catch (err) {
+          return errorContent(`Failed to delete member: ${(err as Error).message}`);
+        }
+      });
+    },
+  );
+
+  // --- remove_member_from_unit ---------------------------------------------
+
+  server.tool(
+    'remove_member_from_unit',
+    'Remove a member from a unit (does not delete the member)',
+    {
+      unit_id: z.string(),
+      member_id: z.string(),
+    },
+    async (params) => {
+      return tracedTool('remove_member_from_unit', params as Record<string, unknown>, async () => {
+        try {
+          const db = getDb();
+          const removed = await removeMemberFromUnit(db, params.unit_id, params.member_id);
+          if (!removed) {
+            return errorContent(`Failed to remove member from unit`);
+          }
+          return jsonContent({ removed: true, unit_id: params.unit_id, member_id: params.member_id });
+        } catch (err) {
+          return errorContent(`Failed to remove member from unit: ${(err as Error).message}`);
+        }
+      });
+    },
+  );
+
+  // --- delete_unit ---------------------------------------------------------
+
+  server.tool(
+    'delete_unit',
+    'Delete a unit/group (does not delete members)',
+    {
+      id: z.string(),
+    },
+    async (params) => {
+      return tracedTool('delete_unit', params as Record<string, unknown>, async () => {
+        try {
+          const db = getDb();
+          const deleted = await deleteUnit(db, params.id);
+          if (!deleted) {
+            return errorContent(`Failed to delete unit: ${params.id}`);
+          }
+          return jsonContent({ deleted: true, unit_id: params.id });
+        } catch (err) {
+          return errorContent(`Failed to delete unit: ${(err as Error).message}`);
+        }
+      });
+    },
+  );
+
+  // --- delete_calendar -----------------------------------------------------
+
+  server.tool(
+    'delete_calendar',
+    'Delete a calendar and all its events',
+    {
+      id: z.string(),
+    },
+    async (params) => {
+      return tracedTool('delete_calendar', params as Record<string, unknown>, async () => {
+        try {
+          const db = getDb();
+          const deleted = await deleteCalendar(db, params.id);
+          if (!deleted) {
+            return errorContent(`Failed to delete calendar: ${params.id}`);
+          }
+          return jsonContent({ deleted: true, calendar_id: params.id });
+        } catch (err) {
+          return errorContent(`Failed to delete calendar: ${(err as Error).message}`);
+        }
+      });
+    },
+  );
+
+  // --- unshare_calendar ----------------------------------------------------
+
+  server.tool(
+    'unshare_calendar',
+    'Remove sharing permission from a calendar for a member or unit',
+    {
+      calendar_id: z.string(),
+      shared_with_type: z.enum(['member', 'unit']),
+      shared_with_id: z.string(),
+    },
+    async (params) => {
+      return tracedTool('unshare_calendar', params as Record<string, unknown>, async () => {
+        try {
+          const db = getDb();
+          const removed = await unshareCalendar(
+            db,
+            params.calendar_id,
+            params.shared_with_type,
+            params.shared_with_id,
+          );
+          if (!removed) {
+            return errorContent(`Failed to unshare calendar`);
+          }
+          return jsonContent({
+            unshared: true,
+            calendar_id: params.calendar_id,
+            shared_with_type: params.shared_with_type,
+            shared_with_id: params.shared_with_id,
+          });
+        } catch (err) {
+          return errorContent(`Failed to unshare calendar: ${(err as Error).message}`);
         }
       });
     },

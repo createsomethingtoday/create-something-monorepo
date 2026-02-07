@@ -468,6 +468,49 @@ export async function createMember(
   return member;
 }
 
+export async function updateMember(
+  db: D1Database,
+  id: string,
+  updates: Partial<Omit<Member, 'id' | 'created_at'>>,
+): Promise<Member | null> {
+  const existing = await getMember(db, id);
+  if (!existing) return null;
+
+  const fields: string[] = [];
+  const values: unknown[] = [];
+
+  const allowedKeys: (keyof typeof updates)[] = ['name', 'email', 'timezone'];
+
+  for (const key of allowedKeys) {
+    if (key in updates) {
+      fields.push(`${key} = ?`);
+      values.push(updates[key] ?? null);
+    }
+  }
+
+  if (fields.length === 0) return existing;
+
+  values.push(id);
+
+  await db
+    .prepare(`UPDATE members SET ${fields.join(', ')} WHERE id = ?`)
+    .bind(...values)
+    .run();
+
+  return getMember(db, id);
+}
+
+export async function deleteMember(
+  db: D1Database,
+  id: string,
+): Promise<boolean> {
+  const result = await db
+    .prepare('DELETE FROM members WHERE id = ?')
+    .bind(id)
+    .run();
+  return result.success;
+}
+
 // =========================================================================
 // Units
 // =========================================================================
@@ -548,6 +591,55 @@ export async function addMemberToUnit(
     )
     .bind(unitId, memberId, role ?? 'member')
     .run();
+}
+
+export async function removeMemberFromUnit(
+  db: D1Database,
+  unitId: string,
+  memberId: string,
+): Promise<boolean> {
+  const result = await db
+    .prepare('DELETE FROM unit_members WHERE unit_id = ? AND member_id = ?')
+    .bind(unitId, memberId)
+    .run();
+  return result.success;
+}
+
+export async function deleteUnit(
+  db: D1Database,
+  id: string,
+): Promise<boolean> {
+  const result = await db
+    .prepare('DELETE FROM units WHERE id = ?')
+    .bind(id)
+    .run();
+  return result.success;
+}
+
+export async function deleteCalendar(
+  db: D1Database,
+  id: string,
+): Promise<boolean> {
+  const result = await db
+    .prepare('DELETE FROM calendars WHERE id = ?')
+    .bind(id)
+    .run();
+  return result.success;
+}
+
+export async function unshareCalendar(
+  db: D1Database,
+  calendarId: string,
+  sharedWithType: CalendarShareType,
+  sharedWithId: string,
+): Promise<boolean> {
+  const result = await db
+    .prepare(
+      'DELETE FROM calendar_shares WHERE calendar_id = ? AND shared_with_type = ? AND shared_with_id = ?',
+    )
+    .bind(calendarId, sharedWithType, sharedWithId)
+    .run();
+  return result.success;
 }
 
 export async function getUnitMembers(
