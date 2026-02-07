@@ -20,7 +20,6 @@ export const PRICING = {
 		family: 209,
 		perks: [
 			'Pricing locked in as long as you remain a member',
-			'Available in any combination',
 			'STACK Bag Tag',
 			'Name in prize drawings'
 		]
@@ -62,14 +61,16 @@ export const PRICING = {
 		advanceBookingDays: 7 // for members with add-on
 	},
 	sponsorship: {
-		annual: 3000,
-		monthlyPlan: 3250, // 12 monthly payments
+		annual: 2750,
+		monthlyPlan: 250, // per month
 		monthlyPayments: 12,
+		monthlyTotal: 3000,
 		bannersAvailable: 8,
 		benefits: [
-			'Your banner on 1 of 8 courts',
+			'Company banner on court',
 			'Logo on website',
-			'Business shout out on our social media platforms'
+			'Initial social media recognition',
+			'Banners provided by business to The Stack specifications'
 		]
 	}
 } as const;
@@ -160,7 +161,7 @@ export const FAQS = [
 	},
 	{
 		question: 'Are there sponsorship opportunities?',
-		answer: `Yes! We offer court banner sponsorships for $${PRICING.sponsorship.annual.toLocaleString()}/year (${PRICING.sponsorship.bannersAvailable} available). You can pay in full or $${PRICING.sponsorship.monthlyPlan.toLocaleString()} in ${PRICING.sponsorship.monthlyPayments} monthly payments. Benefits include: ${PRICING.sponsorship.benefits.join(', ').toLowerCase()}.`
+		answer: `Yes! We offer court banner sponsorships for $${PRICING.sponsorship.annual.toLocaleString()}/year paid in full, or $${PRICING.sponsorship.monthlyPlan}/month ($${PRICING.sponsorship.monthlyTotal.toLocaleString()} total for a one-year commitment). Benefits include: ${PRICING.sponsorship.benefits.join(', ').toLowerCase()}.`
 	}
 ] as const;
 

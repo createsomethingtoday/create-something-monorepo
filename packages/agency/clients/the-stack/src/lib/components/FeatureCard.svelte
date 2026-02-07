@@ -17,9 +17,10 @@
 		description: string;
 		href?: string;
 		ctaText?: string;
+		showCta?: boolean;
 	}
 
-	let { image, eyebrow, title, description, href = '/about', ctaText = 'Learn More' }: Props = $props();
+	let { image, eyebrow, title, description, href = '/about', ctaText = 'Learn More', showCta = true }: Props = $props();
 </script>
 
 <li class="player_item">
@@ -39,9 +40,11 @@
 			<div class="margin-bottom-24">
 				<p class="text-size-medium">{description}</p>
 			</div>
-			<a href={href} class="button is-secondary">
-				<p>{ctaText}</p>
-			</a>
+			{#if showCta}
+				<a href={href} class="button is-secondary">
+					<p>{ctaText}</p>
+				</a>
+			{/if}
 		</div>
 	</div>
 </li>

@@ -28,13 +28,22 @@
 		<!-- Top Section -->
 		<div class="margin-bottom-64">
 			<div class="wrap_flex is-align-top">
-				<!-- Company Info -->
+					<!-- Company Info -->
 				<div class="max-width-250">
 					<div class="margin-bottom-8">
 						<p class="heading-style-h5">The stack: indoor pickleball</p>
 					</div>
-					<p class="text-size-medium">Contact us at 817-980-9374 or ernie.thestack@gmail.com</p>
-					<p class="text-size-medium">
+					<div class="footer-contact-info">
+						<p class="text-size-medium text-weight-medium">Ernie</p>
+						<p class="text-size-medium">
+							<a href="tel:8172524555" class="footer-contact-link">(817) 252-4555</a>
+						</p>
+						<p class="text-size-medium">
+							<a href="mailto:ernie.thestack@gmail.com" class="footer-contact-link">ernie.thestack@gmail.com</a>
+						</p>
+						<p class="text-size-medium" style="margin-top: 0.5rem;">Burleson, Texas</p>
+					</div>
+					<p class="text-size-medium" style="margin-top: 1rem;">
 						BE PART OF THE STACK TEAM.
 						<a
 							href="https://docs.google.com/forms/d/e/1FAIpQLScfJoqV-z1-VsVFZsBBvcK1Er8yt43aUqxFZjL5-hdAocY4WA/viewform?usp=dialog"
@@ -44,7 +53,6 @@
 							Apply Here
 						</a>
 					</p>
-					<p class="text-size-medium"><em>ADDRESS</em></p>
 				</div>
 
 				<!-- Footer Links -->
@@ -137,5 +145,21 @@
 			flex-direction: column;
 			gap: 0.5rem;
 		}
+	}
+
+	.footer-contact-info {
+		display: flex;
+		flex-direction: column;
+		gap: 0.125rem;
+	}
+
+	.footer-contact-link {
+		color: inherit;
+		text-decoration: none;
+		transition: color 0.2s ease;
+	}
+
+	.footer-contact-link:hover {
+		color: var(--green);
 	}
 </style>

@@ -13,9 +13,9 @@
 	const { founding } = PRICING;
 
 	const tiers = [
-		{ label: 'Single', price: founding.single },
-		{ label: 'Couple', price: founding.couples },
-		{ label: 'Family', price: founding.family }
+		{ label: 'Single', price: founding.single, futurePrice: PRICING.memberships.monthly.individual },
+		{ label: 'Couple', price: founding.couples, futurePrice: PRICING.memberships.monthly.couple },
+		{ label: 'Family', price: founding.family, futurePrice: PRICING.memberships.monthly.family }
 	];
 </script>
 
@@ -30,9 +30,6 @@
 				<span class="is-word is-1">Founding Members</span>
 				<span class="is-word is-2 founding-badge">— First {founding.limit} Only —</span>
 			</h2>
-			<p class="founding-subtitle reveal-element">
-				Available in any combination · Pricing locked in as long as you remain a member
-			</p>
 		</div>
 
 		<!-- Pricing Cards -->
@@ -42,6 +39,9 @@
 					<p class="tier-label">{tier.label}</p>
 					<p class="tier-price">
 						<span class="price-currency">$</span>{tier.price}<span class="price-period">/month</span>
+					</p>
+					<p class="tier-future-price">
+						<s>${tier.futurePrice}/mo after</s>
 					</p>
 				</div>
 			{/each}
@@ -109,14 +109,6 @@
 		margin-top: 0.5rem;
 	}
 
-	.founding-subtitle {
-		font-family: var(--font-satoshi);
-		font-size: var(--text-body-lg);
-		color: var(--light-grey);
-		max-width: 32rem;
-		margin: 0 auto;
-	}
-
 	/* Pricing Grid */
 	.founding-grid {
 		display: grid;
@@ -167,6 +159,17 @@
 		font-size: 0.35em;
 		color: var(--light-grey);
 		margin-left: 0.25rem;
+	}
+
+	.tier-future-price {
+		font-family: var(--font-satoshi);
+		font-size: 0.875rem;
+		color: var(--dark-grey);
+		margin-top: 0.5rem;
+	}
+
+	.tier-future-price s {
+		text-decoration: line-through;
 	}
 
 	/* Benefits List */

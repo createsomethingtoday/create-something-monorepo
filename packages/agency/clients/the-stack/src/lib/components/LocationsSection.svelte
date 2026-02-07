@@ -2,51 +2,15 @@
 	/**
 	 * LocationsSection Component
 	 *
-	 * Section with:
+	 * Single location view with:
 	 * - Parallax background image
-	 * - Left text column
-	 * - Right grid of location cards
+	 * - Left: address and contact info
+	 * - Right: embedded Google Map
 	 */
 
 	import { parallax } from '$lib/actions/parallax';
 	import { inview } from '$lib/actions/inview';
-	import LocationCard from './LocationCard.svelte';
 	import Button from './Button.svelte';
-
-	interface Location {
-		image: string;
-		name: string;
-		address: string;
-	}
-
-	interface Props {
-		locations?: Location[];
-	}
-
-	let {
-		locations = [
-			{
-				image: '/images/tennis-location-022x_2tennis-location-02@2x.avif',
-				name: 'Grandview Park Tennis Center',
-				address: '123 Maplewood Drive, Riverton'
-			},
-			{
-				image: '/images/tennis-location-032x_2tennis-location-03@2x.avif',
-				name: 'Oakridge Sports Complex',
-				address: '456 Oakridge Lane, Brookfield'
-			},
-			{
-				image: '/images/tennis-location-032x_1tennis-location-03@2x.avif',
-				name: 'Riverview Tennis Academy',
-				address: '789 Pinecrest Avenue, Hillside'
-			},
-			{
-				image: '/images/tennis-image-082x_1tennis-image-08@2x.avif',
-				name: 'Pinecrest Court Club',
-				address: '101 Grandview Road, Lakeshore'
-			}
-		]
-	}: Props = $props();
 </script>
 
 <section class="section is-location">
@@ -64,32 +28,49 @@
 
 	<div class="container-large">
 		<div class="locations_wrap" use:inview>
-			<!-- Left Text Column -->
+			<!-- Left: Address & Contact -->
 			<div class="location-text max-width-440">
 				<div class="margin-bottom-16">
 					<h2>
 						<span class="is-word is-1">Our</span>
-						<span class="is-word is-2">Locations</span>
+						<span class="is-word is-2">Location</span>
 					</h2>
 				</div>
-				<div class="text-color-lightgrey">
-					<p class="text-size-medium reveal-element">
-						Ready to take your tennis game to the next level? Experience world-class coaching,
-						state-of-the-art facilities, and a vibrant tennis community. Enroll today and become
-						part of a legacy of excellence.
-					</p>
+				<div class="text-color-lightgrey location-details">
+					<div class="location-info-block">
+						<p class="text-size-medium location-address-text">
+							Burleson, Texas
+						</p>
+					</div>
+					<div class="location-info-block">
+						<p class="text-size-eyebrow location-info-label">Contact</p>
+						<p class="text-size-medium">Ernie</p>
+						<p class="text-size-medium">
+							<a href="tel:8172524555" class="location-link">(817) 252-4555</a>
+						</p>
+						<p class="text-size-medium">
+							<a href="mailto:ernie.thestack@gmail.com" class="location-link">ernie.thestack@gmail.com</a>
+						</p>
+					</div>
 				</div>
 				<div class="margin-top-32">
 					<Button href="/contact" variant="primary" showArrow>become a member</Button>
 				</div>
 			</div>
 
-			<!-- Right Location Grid -->
-			<ul class="locations_list">
-				{#each locations as location}
-					<LocationCard image={location.image} name={location.name} address={location.address} />
-				{/each}
-			</ul>
+			<!-- Right: Google Map -->
+			<div class="location-map">
+				<iframe
+					src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d107064.25498988564!2d-97.38!3d32.54!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x864e624e1e1cfa03%3A0x39582c7e3d4e0e97!2sBurleson%2C%20TX!5e0!3m2!1sen!2sus!4v1700000000000!5m2!1sen!2sus"
+					width="100%"
+					height="100%"
+					style="border:0; border-radius: 1.5rem;"
+					allowfullscreen
+					loading="lazy"
+					referrerpolicy="no-referrer-when-downgrade"
+					title="The Stack Indoor Pickleball Location"
+				></iframe>
+			</div>
 		</div>
 	</div>
 </section>
@@ -144,11 +125,44 @@
 		align-items: flex-start;
 	}
 
-	.locations_list {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: 1.5rem 2rem;
+	.location-details {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+		margin-top: 1rem;
+	}
+
+	.location-info-block {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.location-info-label {
+		margin-bottom: 0.25rem;
+		color: var(--green);
+	}
+
+	.location-address-text {
+		font-size: 1.25rem;
+	}
+
+	.location-link {
+		color: var(--light-grey);
+		text-decoration: none;
+		transition: color 0.2s ease;
+	}
+
+	.location-link:hover {
+		color: var(--white);
+	}
+
+	.location-map {
 		flex: 1;
+		min-height: 24rem;
+		border-radius: 1.5rem;
+		overflow: hidden;
+		box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 	}
 
 	@media (max-width: 991px) {
@@ -157,14 +171,15 @@
 			gap: 3rem;
 		}
 
-		.locations_list {
+		.location-map {
 			width: 100%;
+			min-height: 20rem;
 		}
 	}
 
 	@media (max-width: 767px) {
-		.locations_list {
-			grid-template-columns: 1fr;
+		.location-map {
+			min-height: 16rem;
 		}
 	}
 </style>

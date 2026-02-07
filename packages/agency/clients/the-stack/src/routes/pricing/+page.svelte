@@ -261,15 +261,15 @@
 			<div class="sponsorship-pricing">
 				<div class="sponsorship-option">
 					<p class="sponsorship-price">{formatPrice(sponsorship.annual)}</p>
-					<p class="sponsorship-term">1 Year Court Banner</p>
-					<p class="sponsorship-note">{sponsorship.bannersAvailable} available · Paid in full</p>
+					<p class="sponsorship-term">Paid in Full</p>
+					<p class="sponsorship-note">{sponsorship.bannersAvailable} available</p>
 				</div>
 				<div class="sponsorship-divider">
 					<span>or</span>
 				</div>
 				<div class="sponsorship-option">
-					<p class="sponsorship-price">{formatPrice(sponsorship.monthlyPlan)}</p>
-					<p class="sponsorship-term">in {sponsorship.monthlyPayments} monthly payments</p>
+					<p class="sponsorship-price">{formatPrice(sponsorship.monthlyPlan)}<span class="price-period">/mo</span></p>
+					<p class="sponsorship-term">{formatPrice(sponsorship.monthlyTotal)} total for a one-year commitment</p>
 				</div>
 			</div>
 

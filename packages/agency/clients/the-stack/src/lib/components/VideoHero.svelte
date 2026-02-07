@@ -18,8 +18,8 @@
 	}
 
 	let {
-		title = 'premiere pickleball',
-		ctaText = 'Win a free month of membership',
+		title = 'Indoor Pickleball for All',
+		ctaText = 'Become a Founding Member',
 		ctaHref = '#intro'
 	}: Props = $props();
 
@@ -79,11 +79,12 @@
 						</div>
 					</a>
 
-					<!-- Gold title at bottom -->
+				<!-- Gold title at bottom -->
 					<div class="video_title" style="transform: translateX(-50%) scale({innerScale});">
 						<h2 class="heading-style-h2 is-title">
-							become a member - <em>limited availability</em>
+							Become a Founding Member
 						</h2>
+						<p class="video_title-sub"><em>Limited Availability</em></p>
 					</div>
 
 					<!-- Video Background -->
@@ -102,7 +103,7 @@
 
 <style>
 	.section.is-video {
-		margin-top: 6rem;
+		margin-top: var(--nav-height);
 		padding-top: 5vh;
 		padding-bottom: 0;
 		background-color: var(--white);
@@ -237,6 +238,19 @@
 		width: 100%;
 		text-align: center;
 		padding: 0 2rem;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.video_title-sub {
+		font-family: var(--font-satoshi);
+		font-size: clamp(0.875rem, 2vw, 1.25rem);
+		color: var(--green);
+		margin-top: 0.5rem;
+		font-style: italic;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
 	}
 
 	.heading-style-h2.is-title {
@@ -245,10 +259,6 @@
 		text-transform: uppercase;
 		letter-spacing: 0.02em;
 		margin: 0;
-	}
-
-	.heading-style-h2.is-title em {
-		font-style: italic;
 	}
 
 	/* Video Background */

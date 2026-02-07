@@ -17,7 +17,7 @@
 	const leftLinks = [
 		{ href: '/book', label: 'book a court' },
 		{ href: '/pricing', label: 'pricing' },
-		{ href: '/locations', label: 'locations' }
+		{ href: '/locations', label: 'location' }
 	];
 
 	const rightLinks = [
@@ -114,7 +114,7 @@
 
 	.navbar {
 		width: 100%;
-		height: 6rem; /* Exact Webflow height */
+		height: 6.75rem; /* Increased height for logo breathing room */
 	}
 
 	/* Webflow .nav_wrap pattern */
@@ -130,7 +130,7 @@
 		padding: 0 2rem;
 	}
 
-	/* Logo absolutely positioned in center */
+	/* Logo absolutely positioned in center, shifted down slightly */
 	.nav_brand {
 		z-index: 100;
 		width: 10.5625rem; /* Exact Webflow width */
@@ -138,6 +138,7 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
+		top: 0.375rem; /* Shift logo down for breathing room */
 	}
 
 	.nav_logo {

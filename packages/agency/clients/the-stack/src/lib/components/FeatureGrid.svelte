@@ -13,6 +13,9 @@
 		eyebrow: string;
 		title: string;
 		description: string;
+		showCta?: boolean;
+		ctaText?: string;
+		href?: string;
 	}
 
 	interface Props {
@@ -30,28 +33,31 @@
 				eyebrow: 'for large groups',
 				title: 'events',
 				description:
-					'With 18 years of coaching under her belt, Sarah is known for her ability to develop young talent, guiding players to reach their full potential on the court.'
+					'The Stack is quickly becoming the go-to venue for private events. We already have a waiting list of groups wanting to host at our facility. Call Ernie at (817) 252-4555 to learn more about hosting your next event.',
+				showCta: false
 			},
 			{
 				image: '/images/Paddle.jpeg',
 				eyebrow: 'For the competitors',
 				title: 'Tournaments',
 				description:
-					'Jessica brings 22 years of experience to the table, specializing in refining advanced techniques and mental toughness in competitive players.'
+					'The Stack will be offering regular tournaments for all age and skill levels. Our events are designed to improve community and foster healthy competition among players.',
+				showCta: false
 			},
 			{
 				image: '/images/Paddle.jpeg',
 				eyebrow: 'Indirect lighting and PPA qualified spacing',
 				title: 'designed for optimal play',
 				description:
-					'A former collegiate athlete with 15 years of coaching experience, Martina is praised for her dynamic coaching style and her success in training elite junior players.'
+					'All courts feature PPA-qualified spacing for tournament-level play. Our new indirect lighting system dramatically reduces glare and shadows, providing optimal visibility for every match.'
 			},
 			{
 				image: '/images/Paddle.jpeg',
-				eyebrow: 'Chicago, IL',
+				eyebrow: 'Off the grid',
 				title: 'committed to sustainability',
 				description:
-					"With 20 years of experience, Kevin's passion for tennis has made him a favorite among players seeking to improve both their technical skills and strategic thinking."
+					'Our facility is fully supported by solar panels and battery backup, keeping The Stack operational even during power outages. We are committed to sustainable energy and reducing our environmental footprint.',
+				showCta: false
 			}
 		]
 	}: Props = $props();
@@ -73,6 +79,9 @@
 					eyebrow={feature.eyebrow}
 					title={feature.title}
 					description={feature.description}
+					showCta={feature.showCta}
+					ctaText={feature.ctaText}
+					href={feature.href}
 				/>
 			{/each}
 		</ul>

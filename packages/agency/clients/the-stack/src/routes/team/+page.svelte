@@ -2,50 +2,21 @@
 	/**
 	 * Team Page - The Stack Indoor Pickleball
 	 *
-	 * Sections:
-	 * 1. Video hero
-	 * 2. Team intro
-	 * 3. Team members grid
-	 * 4. CTA
+	 * Simplified page:
+	 * 1. Video hero - "Family Owned and Operated"
+	 * 2. Two photo placeholders (portrait + landscape) with names
+	 * 3. CTA
 	 */
 
 	import { inview } from '$lib/actions/inview';
-	import Button from '$lib/components/Button.svelte';
 	import BottomCTA from '$lib/components/BottomCTA.svelte';
-
-	const teamMembers = [
-		{
-			name: 'Sarah Mitchell',
-			role: 'Head Coach',
-			bio: 'With 18 years of coaching under her belt, Sarah is known for her ability to develop young talent.',
-			image: '/images/tennis-square-01_1tennis-square-01.avif'
-		},
-		{
-			name: 'Jessica Chen',
-			role: 'Senior Coach',
-			bio: 'Jessica brings 22 years of experience, specializing in advanced techniques and mental toughness.',
-			image: '/images/tennis-square-02_1tennis-square-02.avif'
-		},
-		{
-			name: 'Martina Lopez',
-			role: 'Junior Program Director',
-			bio: 'A former collegiate athlete with 15 years of experience, praised for her dynamic coaching style.',
-			image: '/images/tennis-square-03_1tennis-square-03.avif'
-		},
-		{
-			name: 'Kevin Williams',
-			role: 'Strategy Coach',
-			bio: "With 20 years of experience, Kevin's passion for tennis has made him a favorite among players.",
-			image: '/images/tennis-square-04_1tennis-square-04.avif'
-		}
-	];
 </script>
 
 <svelte:head>
-	<title>Meet Our Team - The Stack Indoor Pickleball</title>
+	<title>Family Owned and Operated - The Stack Indoor Pickleball</title>
 	<meta
 		name="description"
-		content="Meet the experienced coaching staff at The Stack Indoor Pickleball."
+		content="The Stack Indoor Pickleball is family owned and operated in Burleson, Texas."
 	/>
 </svelte:head>
 
@@ -62,52 +33,44 @@
 		<div class="container-large">
 			<div class="video-hero_content" use:inview>
 				<h1 class="heading-style-h1 text-color-white">
-					<span class="is-word is-1">Meet</span>
-					<span class="is-word is-2">Our</span>
-					<span class="is-word is-3">Team</span>
+					<span class="is-word is-1">Family</span>
+					<span class="is-word is-2">Owned</span>
+					<span class="is-word is-3">and</span>
+					<span class="is-word is-4">Operated</span>
 				</h1>
 			</div>
 		</div>
 	</div>
 </section>
 
-<!-- Team Intro -->
+<!-- Photos Section -->
 <section class="section background-color-white">
 	<div class="container-large">
-		<div class="team-intro" use:inview>
-			<div class="max-width-700">
-				<h2 class="heading-style-h2 reveal-element">
-					World-class coaching from professionals who care about your game.
-				</h2>
-				<div class="margin-top-24">
-					<p class="text-size-medium reveal-element">
-						Our team of certified coaches brings decades of combined experience in competitive
-						pickleball. From beginners to tournament players, we have the expertise to help you
-						reach your goals.
-					</p>
+		<div class="photos-grid" use:inview>
+			<!-- Portrait Photo -->
+			<div class="photo-frame is-portrait reveal-element">
+				<div class="photo-placeholder">
+					<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+						<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+						<circle cx="9" cy="9" r="2"/>
+						<path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+					</svg>
+				</div>
+			</div>
+			<!-- Landscape Photo -->
+			<div class="photo-frame is-landscape reveal-element">
+				<div class="photo-placeholder">
+					<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+						<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+						<circle cx="9" cy="9" r="2"/>
+						<path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+					</svg>
+				</div>
+				<div class="photo-names">
+					<p class="heading-style-h3">Ernie &amp; Family</p>
 				</div>
 			</div>
 		</div>
-	</div>
-</section>
-
-<!-- Team Grid -->
-<section class="section background-color-white" style="padding-top: 0;">
-	<div class="container-large">
-		<ul class="team_list" use:inview>
-			{#each teamMembers as member}
-				<li class="team_item reveal-element">
-					<div class="team_visual">
-						<img src={member.image} alt={member.name} class="img-cover" loading="lazy" />
-					</div>
-					<div class="team_content">
-						<p class="text-size-eyebrow text-color-darkgrey">{member.role}</p>
-						<h3 class="heading-style-h3">{member.name}</h3>
-						<p class="text-size-medium">{member.bio}</p>
-					</div>
-				</li>
-			{/each}
-		</ul>
 	</div>
 </section>
 
@@ -152,40 +115,58 @@
 		z-index: 3;
 	}
 
-	.team-intro {
-		text-align: center;
-		display: flex;
-		justify-content: center;
-	}
-
-	.team_list {
+	/* Photos Grid */
+	.photos-grid {
 		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: 4rem;
+		grid-template-columns: 1fr 1.5fr;
+		gap: 2rem;
+		max-width: 56rem;
+		margin: 0 auto;
+		align-items: end;
 	}
 
-	.team_item {
-		display: flex;
-		flex-direction: column;
-		gap: 1.5rem;
-	}
-
-	.team_visual {
-		aspect-ratio: 1;
+	.photo-frame {
 		border-radius: var(--player-radius);
 		overflow: hidden;
 		position: relative;
 	}
 
-	.team_content {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
+	.photo-frame.is-portrait {
+		aspect-ratio: 3 / 4;
 	}
 
-	@media (max-width: 991px) {
-		.team_list {
+	.photo-frame.is-landscape {
+		aspect-ratio: 4 / 3;
+	}
+
+	.photo-placeholder {
+		width: 100%;
+		height: 100%;
+		background-color: #f0ece6;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		color: var(--dark-grey);
+	}
+
+	.photo-names {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		padding: 1.5rem;
+		background: linear-gradient(0deg, rgba(0,0,0,0.6), transparent);
+		color: var(--white);
+	}
+
+	@media (max-width: 767px) {
+		.photos-grid {
 			grid-template-columns: 1fr;
+			max-width: 24rem;
+		}
+
+		.photo-frame.is-portrait {
+			aspect-ratio: 1;
 		}
 	}
 </style>

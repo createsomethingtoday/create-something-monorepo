@@ -22,7 +22,7 @@
 </script>
 
 <svelte:head>
-	<title>The Stack - Premiere Indoor Pickleball</title>
+	<title>The Stack - Indoor Pickleball for All</title>
 	<meta
 		name="description"
 		content="The Stack is a family owned and operated indoor pickleball facility. Book a court, join tournaments, and become a member today."
