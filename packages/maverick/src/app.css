@@ -101,6 +101,10 @@
     scroll-padding-top: 5rem;
   }
 
+  h2 {
+    line-height: 1.2;
+  }
+
   /* Global focus indicator using Canon token */
   *:focus-visible {
     outline: 2px solid var(--color-focus);
