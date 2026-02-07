@@ -19,6 +19,13 @@ export interface QBOAuthConfig {
   redirectUri: string;
   environment: "sandbox" | "production";
   tokenPath?: string;
+  kvStore?: KVNamespace;
+}
+
+// KV namespace type (Cloudflare Workers)
+interface KVNamespace {
+  get(key: string): Promise<string | null>;
+  put(key: string, value: string): Promise<void>;
 }
 
 // ── Token Types ─────────────────────────────────────────────────────
@@ -58,6 +65,7 @@ export class QBOAuthManager implements TokenProvider {
   private readonly clientSecret: string;
   private readonly redirectUri: string;
   private readonly tokenPath: string;
+  private readonly kvStore?: KVNamespace;
   private token: QBOToken | null = null;
   private initialized = false;
 
@@ -66,6 +74,7 @@ export class QBOAuthManager implements TokenProvider {
     this.clientSecret = config.clientSecret;
     this.redirectUri = config.redirectUri || DEFAULT_REDIRECT_URI;
     this.tokenPath = config.tokenPath ?? DEFAULT_TOKEN_PATH;
+    this.kvStore = config.kvStore;
   }
 
   // ── OAuth URL Generation ────────────────────────────────────────
@@ -281,11 +290,12 @@ export class QBOAuthManager implements TokenProvider {
     if (!this.token) return;
 
     try {
-      await writeFile(
-        this.tokenPath,
-        JSON.stringify(this.token, null, 2),
-        "utf-8"
-      );
+      const serialized = JSON.stringify(this.token, null, 2);
+      if (this.kvStore) {
+        await this.kvStore.put("qbo-token", serialized);
+      } else {
+        await writeFile(this.tokenPath, serialized, "utf-8");
+      }
     } catch (error) {
       logger.error("Failed to persist token", {
         error: error instanceof Error ? error.message : String(error),
@@ -297,10 +307,17 @@ export class QBOAuthManager implements TokenProvider {
    * Load token from disk.
    */
   private async loadPersistedToken(): Promise<boolean> {
-    if (!this.hasPersistedTokens()) return false;
-
     try {
-      const raw = await readFile(this.tokenPath, "utf-8");
+      let raw: string | null = null;
+
+      if (this.kvStore) {
+        raw = await this.kvStore.get("qbo-token");
+      } else if (this.hasPersistedTokens()) {
+        raw = await readFile(this.tokenPath, "utf-8");
+      }
+
+      if (!raw) return false;
+
       this.token = JSON.parse(raw) as QBOToken;
       logger.info("Loaded persisted tokens successfully");
       return true;

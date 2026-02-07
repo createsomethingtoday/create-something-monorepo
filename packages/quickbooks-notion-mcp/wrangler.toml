@@ -1,0 +1,12 @@
+name = "quickbooks-notion-mcp"
+main = "dist/worker.js"
+account_id = "5c3e9cf4d55ce171b844fad0931607f9"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+QBO_ENVIRONMENT = "sandbox"
+
+[[kv_namespaces]]
+binding = "QBO_TOKENS"
+id = "6e50625dddb94fe38067b986154f8696"
