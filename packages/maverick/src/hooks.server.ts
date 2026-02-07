@@ -17,10 +17,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// The Content-Security-Policy frame-ancestors is the modern replacement
 	newHeaders.delete('X-Frame-Options');
 
-	// Set frame-ancestors to allow Webflow CMS
+	// Set frame-ancestors to allow only the specific Webflow CMS domain
 	newHeaders.set(
 		'Content-Security-Policy',
-		"frame-ancestors 'self' https://maverick-x-cms.webflow.io https://*.webflow.io https://webflow.com https://*.webflow.com"
+		"frame-ancestors 'self' https://maverick-x-cms.webflow.io"
 	);
 
 	return new Response(response.body, {

@@ -150,13 +150,6 @@
 				</div>
 			</div>
 
-			<!-- Navigation Dots -->
-			<div class="dots-container">
-				<div class="dots">
-					<div class="dot active"></div>
-					<div class="dot"></div>
-				</div>
-			</div>
 		</div>
 	</section>
 {/if}
@@ -308,41 +301,6 @@
 		font-size: 1rem;  /* text-body */
 		line-height: 1.625;
 		color: rgba(255, 255, 255, 0.8);  /* text-white/80 */
-	}
-
-	/* Navigation Dots */
-	.dots-container {
-		display: flex;
-		justify-content: center;
-		margin-top: 2.5rem;  /* mt-10 */
-	}
-
-	@media (max-width: 1179px) {
-		.dots-container {
-			margin-top: 2rem;  /* xl:mt-8 */
-		}
-	}
-
-	@media (max-width: 767px) {
-		.dots-container {
-			margin-top: 1.5rem;  /* md:mt-6 */
-		}
-	}
-
-	.dots {
-		display: flex;
-		gap: 0.5rem;  /* space-x-2 */
-	}
-
-	.dot {
-		width: 0.5rem;  /* w-2 */
-		height: 0.5rem;  /* h-2 */
-		border-radius: 50%;  /* rounded-full */
-		background: rgba(255, 255, 255, 0.3);  /* bg-white/30 */
-	}
-
-	.dot.active {
-		background: #ffffff;  /* bg-white */
 	}
 
 	/* News Grid Section - matches React py-20 bg-white xl:py-16 */

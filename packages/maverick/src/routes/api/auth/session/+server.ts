@@ -5,20 +5,32 @@
 
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { validateSession } from '$lib/server/auth';
 
-export const GET: RequestHandler = async ({ cookies }) => {
+export const GET: RequestHandler = async ({ cookies, platform }) => {
 	const sessionToken = cookies.get('maverick_session');
 
 	if (!sessionToken) {
 		return json({ authenticated: false });
 	}
 
-	// For now, any valid session token means authenticated
-	// In production, validate against a session store
+	const sessions = platform?.env?.SESSIONS;
+	if (!sessions) {
+		return json({ authenticated: false });
+	}
+
+	const session = await validateSession(sessionToken, sessions);
+
+	if (!session) {
+		// Invalid session — clear the stale cookie
+		cookies.delete('maverick_session', { path: '/' });
+		return json({ authenticated: false });
+	}
+
 	return json({
 		authenticated: true,
 		user: {
-			email: 'admin@maverickx.com',
+			email: session.email,
 			name: 'Admin'
 		}
 	});

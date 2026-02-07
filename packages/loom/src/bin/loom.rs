@@ -572,9 +572,11 @@ fn run() -> Result<(), LoomError> {
                 updated = true;
             }
             
-            if let Some(_desc) = description {
-                // TODO: Add update_description method
-                println!("Description update not yet implemented");
+            if let Some(desc) = description {
+                let desc_val = if desc.is_empty() { None } else { Some(desc.as_str()) };
+                loom.set_description(&id, desc_val)?;
+                println!("Description updated");
+                updated = true;
             }
             
             if !updated {
@@ -1161,9 +1163,9 @@ fn run() -> Result<(), LoomError> {
         }
         
         Commands::Sync | Commands::Push | Commands::Pull => {
-            // These require git to be available
-            println!("Git sync not yet fully implemented");
-            println!("Use 'lm list --format json' to export tasks manually");
+            eprintln!("Error: Git sync is not yet implemented.");
+            eprintln!("Use 'lm list --format json' to export tasks manually.");
+            std::process::exit(1);
         }
         
         Commands::Backfill { since, until, author, beads, dry_run } => {
@@ -1187,14 +1189,23 @@ fn run() -> Result<(), LoomError> {
             println!("{}", BackfillAnalytics::format_result(&result));
         }
         
-        Commands::Analytics { since: _since, agent } => {
+        Commands::Analytics { since, agent } => {
             let loom = Loom::open(".")?;
-            
+
+            let since_dt = since.as_ref().map(|s| {
+                Backfill::parse_date(s).map_err(|_| {
+                    LoomError::Config(format!("Invalid --since date: '{}'. Use ISO 8601, YYYY-MM-DD, or 'N days ago'.", s))
+                })
+            }).transpose()?;
+
             // Get summary statistics
             let summary = loom.summary()?;
-            
+
             println!("Work Analytics");
             println!("==============");
+            if let Some(ref dt) = since_dt {
+                println!("(since {})", dt.format("%Y-%m-%d"));
+            }
             println!();
             println!("Overall Summary:");
             println!("  Total tasks:    {}", summary.total());
@@ -1202,10 +1213,10 @@ fn run() -> Result<(), LoomError> {
             println!("  Active:         {}", summary.active());
             println!("  Total cost:     ${:.2}", summary.total_cost_usd);
             println!();
-            
+
             // Get agent profiles with their stats
             let agents = loom.agents()?;
-            
+
             println!("Agent Performance:");
             for agent_profile in agents {
                 if let Some(ref filter) = agent {
@@ -1213,12 +1224,18 @@ fn run() -> Result<(), LoomError> {
                         continue;
                     }
                 }
-                
+
                 println!("  {:<13} → success rate: {:.0}%, avg duration: {:.0}s",
                     agent_profile.id,
                     agent_profile.quality.success_rate() * 100.0,
                     agent_profile.quality.avg_duration_secs
                 );
+            }
+
+            if since_dt.is_some() {
+                println!();
+                println!("Note: --since filter applies to backfill analytics.");
+                println!("Run 'lm backfill' first to populate historical execution data.");
             }
         }
         
@@ -1396,10 +1413,11 @@ fn parse_status(s: &str) -> Result<Status, LoomError> {
 }
 
 fn truncate(s: &str, max: usize) -> String {
-    if s.len() <= max {
+    if s.chars().count() <= max {
         s.to_string()
     } else {
-        format!("{}...", &s[..max - 3])
+        let truncated: String = s.chars().take(max.saturating_sub(3)).collect();
+        format!("{}...", truncated)
     }
 }
 

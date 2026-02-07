@@ -13,10 +13,10 @@
 //! }
 //! ```
 
-use crate::work::{Task, Status, WorkStore, WorkError, DependencyType};
+use crate::work::{Task, Status, WorkStore, WorkError, Dependency, DependencyType};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 /// Result of priority calculation for a single task
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -65,30 +65,39 @@ impl<'a> Priority<'a> {
     pub fn get_prioritized(&self, limit: usize) -> Result<Vec<PriorityResult>, WorkError> {
         // Get all ready tasks
         let ready = self.store.ready()?;
-        
+
         if ready.is_empty() {
             return Ok(vec![]);
         }
-        
+
+        // Pre-fetch all tasks and dependencies once to avoid O(n^2) DB queries
+        let graph = DependencyGraph::build(self.store)?;
+
         // Calculate scores for each task
         let mut scored: Vec<PriorityResult> = Vec::new();
-        
+
         for task in ready {
-            let result = self.calculate_score(&task)?;
+            let result = self.calculate_score_with_graph(&task, &graph)?;
             scored.push(result);
         }
-        
+
         // Sort by score descending
         scored.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
-        
+
         Ok(scored.into_iter().take(limit).collect())
     }
     
-    /// Calculate priority score for a single task
+    /// Calculate priority score for a single task (public API, fetches deps on demand)
     /// Higher score = should be worked on first
     pub fn calculate_score(&self, task: &Task) -> Result<PriorityResult, WorkError> {
+        let graph = DependencyGraph::build(self.store)?;
+        self.calculate_score_with_graph(task, &graph)
+    }
+
+    /// Calculate priority score using a pre-built dependency graph (O(1) lookups)
+    fn calculate_score_with_graph(&self, task: &Task, graph: &DependencyGraph) -> Result<PriorityResult, WorkError> {
         let mut factors: Vec<ScoringFactor> = Vec::new();
-        
+
         // 1. Priority level (Critical=highest, Low=lowest)
         // Weight: 0.30
         let priority_value = match task.priority {
@@ -102,34 +111,34 @@ impl<'a> Priority<'a> {
             value: priority_value,
             weight: 0.30,
         });
-        
+
         // 2. Impact: How many issues does this unblock?
         // Weight: 0.35
-        let impact_value = self.calculate_impact(&task.id)?;
+        let impact_value = graph.calculate_impact(&task.id);
         factors.push(ScoringFactor {
             name: "impact".to_string(),
             value: impact_value,
             weight: 0.35,
         });
-        
+
         // 3. Age: Older tasks get slight boost to prevent starvation
         // Weight: 0.10
-        let age_value = self.calculate_age_score(task.created_at);
+        let age_value = Self::calculate_age_score(task.created_at);
         factors.push(ScoringFactor {
             name: "age".to_string(),
             value: age_value,
             weight: 0.10,
         });
-        
+
         // 4. Connectivity: Is this a hub task? (many connections)
         // Weight: 0.15
-        let connectivity_value = self.calculate_connectivity(&task.id)?;
+        let connectivity_value = graph.calculate_connectivity(&task.id);
         factors.push(ScoringFactor {
             name: "connectivity".to_string(),
             value: connectivity_value,
             weight: 0.15,
         });
-        
+
         // 5. Issue type bonus: Bugs get slight priority over features
         // Weight: 0.10
         let type_value = match task.issue_type {
@@ -144,26 +153,26 @@ impl<'a> Priority<'a> {
             value: type_value,
             weight: 0.10,
         });
-        
+
         // Calculate weighted score
         let total_score: f64 = factors.iter()
             .map(|f| f.value * f.weight)
             .sum();
-        
+
         // Build reason string from top factors
         let mut top_factors: Vec<_> = factors.iter()
             .filter(|f| f.value > 0.3)
             .map(|f| (f.name.clone(), f.value * f.weight))
             .collect();
         top_factors.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-        
+
         let reason = if !top_factors.is_empty() {
             let names: Vec<_> = top_factors.iter().take(2).map(|(n, _)| n.as_str()).collect();
             format!("High {}", names.join(", "))
         } else {
             "Default priority".to_string()
         };
-        
+
         Ok(PriorityResult {
             task: task.clone(),
             score: (total_score * 100.0).round() / 100.0,
@@ -171,72 +180,16 @@ impl<'a> Priority<'a> {
             factors,
         })
     }
-    
-    /// Calculate impact score: How many tasks does completing this unblock?
-    /// Uses recursive count of dependent tasks (only blocking dependencies)
-    fn calculate_impact(&self, task_id: &str) -> Result<f64, WorkError> {
-        let blocked_count = self.count_blocked_tasks(task_id, &mut HashSet::new())?;
-        // Normalize: 0 blocked = 0, 5+ blocked = 1
-        Ok((blocked_count as f64 / 5.0).min(1.0))
-    }
-    
-    fn count_blocked_tasks(&self, task_id: &str, visited: &mut HashSet<String>) -> Result<usize, WorkError> {
-        if visited.contains(task_id) {
-            return Ok(0);
-        }
-        visited.insert(task_id.to_string());
-        
-        // Find tasks that are blocked by this task
-        let all_tasks = self.store.list_all()?;
-        let mut count = 0;
-        
-        for task in &all_tasks {
-            if task.status != Status::Ready && task.status != Status::Blocked {
-                continue;
-            }
-            
-            // Check if this task blocks the other task
-            let deps = self.store.get_all_dependencies(&task.id)?;
-            for dep in deps {
-                if dep.depends_on == task_id && dep.dep_type == DependencyType::Blocks {
-                    count += 1;
-                    // Recursively count transitively blocked tasks
-                    count += self.count_blocked_tasks(&task.id, visited)?;
-                }
-            }
-        }
-        
-        Ok(count)
-    }
-    
+
     /// Calculate age score: Older tasks get slight priority boost
     /// Prevents task starvation
-    fn calculate_age_score(&self, created_at: DateTime<Utc>) -> f64 {
+    fn calculate_age_score(created_at: DateTime<Utc>) -> f64 {
         let now = Utc::now();
         let age_seconds = (now - created_at).num_seconds() as f64;
         let age_days = age_seconds / (24.0 * 60.0 * 60.0);
-        
+
         // Score increases with age, maxes out at 7 days
         (age_days / 7.0).min(1.0)
-    }
-    
-    /// Calculate connectivity score: How connected is this task in the graph?
-    /// Hub tasks (many connections) are often important
-    fn calculate_connectivity(&self, task_id: &str) -> Result<f64, WorkError> {
-        let deps = self.store.get_all_dependencies(task_id)?;
-        let mut connection_count = deps.len();
-        
-        // Also count tasks that depend on this one
-        let all_tasks = self.store.list_all()?;
-        for task in &all_tasks {
-            let their_deps = self.store.get_all_dependencies(&task.id)?;
-            if their_deps.iter().any(|d| d.depends_on == task_id) {
-                connection_count += 1;
-            }
-        }
-        
-        // Normalize: 0 connections = 0, 10+ connections = 1
-        Ok((connection_count as f64 / 10.0).min(1.0))
     }
     
     /// Get the critical path: sequence of tasks that, if delayed, delay everything
@@ -320,23 +273,23 @@ impl<'a> Priority<'a> {
     
     /// Get bottleneck tasks: tasks blocking the most other work
     pub fn get_bottlenecks(&self, limit: usize) -> Result<Vec<PriorityResult>, WorkError> {
-        let all_tasks = self.store.list_all()?;
-        let active_tasks: Vec<_> = all_tasks.iter()
+        let graph = DependencyGraph::build(self.store)?;
+        let active_tasks: Vec<_> = graph.all_tasks.iter()
             .filter(|t| matches!(t.status, Status::Ready | Status::Claimed))
             .collect();
-        
+
         let mut bottlenecks: Vec<(Task, usize)> = Vec::new();
-        
+
         for task in active_tasks {
-            let blocked_count = self.count_blocked_tasks(&task.id, &mut HashSet::new())?;
+            let blocked_count = graph.count_blocked_tasks(&task.id, &mut HashSet::new());
             if blocked_count > 0 {
                 bottlenecks.push((task.clone(), blocked_count));
             }
         }
-        
+
         // Sort by blocked count descending
         bottlenecks.sort_by(|a, b| b.1.cmp(&a.1));
-        
+
         Ok(bottlenecks.into_iter()
             .take(limit)
             .map(|(task, blocked_count)| PriorityResult {
@@ -346,6 +299,78 @@ impl<'a> Priority<'a> {
                 factors: vec![],
             })
             .collect())
+    }
+}
+
+/// Pre-computed dependency graph for O(1) lookups during scoring.
+/// Built once from the database, then used for all scoring operations.
+struct DependencyGraph {
+    all_tasks: Vec<Task>,
+    /// Dependencies keyed by task_id (task_id -> deps where this task is the dependent)
+    deps_by_task: HashMap<String, Vec<Dependency>>,
+    /// Reverse index: depends_on -> tasks that depend on it (via Blocks)
+    blocked_by: HashMap<String, Vec<String>>,
+}
+
+impl DependencyGraph {
+    /// Build the graph with two DB queries (all tasks + all dependencies)
+    fn build(store: &WorkStore) -> Result<Self, WorkError> {
+        let all_tasks = store.list_all()?;
+        let mut deps_by_task: HashMap<String, Vec<Dependency>> = HashMap::new();
+        let mut blocked_by: HashMap<String, Vec<String>> = HashMap::new();
+
+        for task in &all_tasks {
+            let deps = store.get_all_dependencies(&task.id)?;
+            for dep in &deps {
+                if dep.dep_type == DependencyType::Blocks {
+                    blocked_by.entry(dep.depends_on.clone())
+                        .or_default()
+                        .push(task.id.clone());
+                }
+            }
+            deps_by_task.insert(task.id.clone(), deps);
+        }
+
+        Ok(Self { all_tasks, deps_by_task, blocked_by })
+    }
+
+    /// Calculate impact score: How many tasks does completing this unblock?
+    fn calculate_impact(&self, task_id: &str) -> f64 {
+        let blocked_count = self.count_blocked_tasks(task_id, &mut HashSet::new());
+        // Normalize: 0 blocked = 0, 5+ blocked = 1
+        (blocked_count as f64 / 5.0).min(1.0)
+    }
+
+    fn count_blocked_tasks(&self, task_id: &str, visited: &mut HashSet<String>) -> usize {
+        if visited.contains(task_id) {
+            return 0;
+        }
+        visited.insert(task_id.to_string());
+
+        let mut count = 0;
+        if let Some(dependents) = self.blocked_by.get(task_id) {
+            for dependent_id in dependents {
+                // Only count active tasks
+                if let Some(task) = self.all_tasks.iter().find(|t| t.id == *dependent_id) {
+                    if task.status == Status::Ready || task.status == Status::Blocked {
+                        count += 1;
+                        count += self.count_blocked_tasks(dependent_id, visited);
+                    }
+                }
+            }
+        }
+        count
+    }
+
+    /// Calculate connectivity score: How connected is this task in the graph?
+    fn calculate_connectivity(&self, task_id: &str) -> f64 {
+        // Outgoing deps (things this task depends on)
+        let outgoing = self.deps_by_task.get(task_id).map(|d| d.len()).unwrap_or(0);
+        // Incoming deps (things that depend on this task)
+        let incoming = self.blocked_by.get(task_id).map(|d| d.len()).unwrap_or(0);
+
+        // Normalize: 0 connections = 0, 10+ connections = 1
+        ((outgoing + incoming) as f64 / 10.0).min(1.0)
     }
 }
 

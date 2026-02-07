@@ -80,8 +80,8 @@
 
 	function updateValue(path: string[], value: JsonValue) {
 		if (!content) return;
-		const updated = JSON.parse(JSON.stringify(content));
-		let current: any = updated;
+		const updated = structuredClone(content);
+		let current: Record<string, JsonValue> = updated;
 		for (let i = 0; i < path.length - 1; i++) {
 			current = current[path[i]];
 		}
@@ -179,7 +179,7 @@
 
 	function addArrayItem(section: string) {
 		if (!content) return;
-		const updated = JSON.parse(JSON.stringify(content));
+		const updated = structuredClone(content);
 		const arr = updated[section];
 		if (!Array.isArray(arr)) return;
 
@@ -204,7 +204,7 @@
 
 	function removeArrayItem(section: string, index: number) {
 		if (!content) return;
-		const updated = JSON.parse(JSON.stringify(content));
+		const updated = structuredClone(content);
 		const arr = updated[section];
 		if (!Array.isArray(arr)) return;
 		arr.splice(index, 1);

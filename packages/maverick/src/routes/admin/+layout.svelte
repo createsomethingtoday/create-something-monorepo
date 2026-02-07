@@ -20,7 +20,6 @@
 
 	// Check if embedded mode (via query param)
 	const isEmbedded = $derived($page.url.searchParams.get('embed') === 'true');
-	const embedToken = $derived($page.url.searchParams.get('token'));
 
 	// Navigation items
 	const navigation = [{ name: 'Edit Pages', href: '/admin/content', icon: 'file-text' }];
@@ -163,29 +162,6 @@
 	.admin-shell {
 		min-height: 100vh;
 		background: var(--color-bg-pure, #000);
-	}
-
-	.admin-loading {
-		min-height: 100vh;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: var(--color-bg-pure, #000);
-	}
-
-	.admin-spinner {
-		width: 2rem;
-		height: 2rem;
-		border: 2px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
-		border-top-color: var(--color-fg-muted, rgba(255, 255, 255, 0.4));
-		border-radius: 50%;
-		animation: spin 1s linear infinite;
-	}
-
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
 	}
 
 	/* Sidebar */

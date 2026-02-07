@@ -52,76 +52,34 @@ pub struct Capabilities {
 }
 
 impl Capabilities {
-    /// Claude Code profile
-    pub fn claude_code() -> Self {
-        Self {
-            planning: 0.95,
-            coding: 0.90,
-            debugging: 0.85,
-            ui: 0.80,
-            docs: 0.90,
-            refactor: 0.90,
-            testing: 0.85,
-            mcp: true,
-            checkpoints: true,  // /rewind support
-            git_aware: true,
-            sub_agents: true,
-            max_context: 200_000,
-        }
+    /// Load capabilities from default_models.toml by model ID.
+    /// Falls back to sensible defaults if the key is missing.
+    fn from_default_models(model_id: &str) -> Self {
+        use crate::models::ModelsConfig;
+        ModelsConfig::defaults()
+            .get(model_id)
+            .map(|p| p.capabilities)
+            .unwrap_or_default()
     }
-    
+
+    /// Claude Code profile (uses claude-sonnet as default model)
+    pub fn claude_code() -> Self {
+        Self::from_default_models("claude-sonnet")
+    }
+
     /// Cursor profile
     pub fn cursor() -> Self {
-        Self {
-            planning: 0.80,
-            coding: 0.85,
-            debugging: 0.80,
-            ui: 0.90,  // IDE integration helps with UI
-            docs: 0.75,
-            refactor: 0.85,
-            testing: 0.80,
-            mcp: true,
-            checkpoints: false,
-            git_aware: true,
-            sub_agents: false,
-            max_context: 128_000,
-        }
+        Self::from_default_models("cursor")
     }
-    
+
     /// Codex CLI profile
     pub fn codex() -> Self {
-        Self {
-            planning: 0.75,
-            coding: 0.85,
-            debugging: 0.75,
-            ui: 0.70,
-            docs: 0.80,
-            refactor: 0.80,
-            testing: 0.85,
-            mcp: true,
-            checkpoints: false,
-            git_aware: true,
-            sub_agents: false,
-            max_context: 128_000,
-        }
+        Self::from_default_models("codex")
     }
-    
+
     /// Gemini CLI profile
     pub fn gemini() -> Self {
-        Self {
-            planning: 0.85,
-            coding: 0.80,
-            debugging: 0.80,
-            ui: 0.75,
-            docs: 0.85,
-            refactor: 0.80,
-            testing: 0.75,
-            mcp: true,
-            checkpoints: false,
-            git_aware: false,
-            sub_agents: false,
-            max_context: 1_000_000,  // 1M context is Gemini's strength
-        }
+        Self::from_default_models("gemini-1-5-pro")
     }
     
     /// Score for a specific task type
@@ -242,68 +200,51 @@ pub struct AgentProfile {
 }
 
 impl AgentProfile {
-    /// Create a Claude Code profile
-    pub fn claude_code() -> Self {
-        Self {
-            id: "claude-code".to_string(),
-            name: "Claude Code".to_string(),
-            cli_path: "claude".to_string(),
-            capabilities: Capabilities::claude_code(),
-            cost: CostModel::claude_opus(),
-            quality: QualityMetrics::default(),
-            max_concurrent: 5,
-            active: 0,
-            available: true,
-            last_used: None,
-        }
+    /// Load a profile from default_models.toml by model ID.
+    fn from_default_models(model_id: &str) -> Self {
+        use crate::models::ModelsConfig;
+        ModelsConfig::defaults()
+            .get(model_id)
+            .unwrap_or_else(|| Self {
+                id: model_id.to_string(),
+                name: model_id.to_string(),
+                cli_path: model_id.to_string(),
+                capabilities: Capabilities::default(),
+                cost: CostModel::default(),
+                quality: QualityMetrics::default(),
+                max_concurrent: 3,
+                active: 0,
+                available: true,
+                last_used: None,
+            })
     }
-    
+
+    /// Create a Claude Code profile (uses claude-sonnet as default model)
+    pub fn claude_code() -> Self {
+        let mut p = Self::from_default_models("claude-sonnet");
+        p.id = "claude-code".to_string();
+        p.name = "Claude Code".to_string();
+        p.cli_path = "claude".to_string();
+        p
+    }
+
     /// Create a Cursor profile
     pub fn cursor() -> Self {
-        Self {
-            id: "cursor".to_string(),
-            name: "Cursor".to_string(),
-            cli_path: "cursor".to_string(),
-            capabilities: Capabilities::cursor(),
-            cost: CostModel::claude_sonnet(), // Cursor uses various models
-            quality: QualityMetrics::default(),
-            max_concurrent: 2,
-            active: 0,
-            available: true,
-            last_used: None,
-        }
+        Self::from_default_models("cursor")
     }
-    
+
     /// Create a Codex profile
     pub fn codex() -> Self {
-        Self {
-            id: "codex".to_string(),
-            name: "Codex CLI".to_string(),
-            cli_path: "codex".to_string(),
-            capabilities: Capabilities::codex(),
-            cost: CostModel::gpt4(),
-            quality: QualityMetrics::default(),
-            max_concurrent: 3,
-            active: 0,
-            available: true,
-            last_used: None,
-        }
+        Self::from_default_models("codex")
     }
-    
+
     /// Create a Gemini profile
     pub fn gemini() -> Self {
-        Self {
-            id: "gemini".to_string(),
-            name: "Gemini CLI".to_string(),
-            cli_path: "gemini".to_string(),
-            capabilities: Capabilities::gemini(),
-            cost: CostModel::gemini_pro(),
-            quality: QualityMetrics::default(),
-            max_concurrent: 3,
-            active: 0,
-            available: true,
-            last_used: None,
-        }
+        let mut p = Self::from_default_models("gemini-1-5-pro");
+        p.id = "gemini".to_string();
+        p.name = "Gemini CLI".to_string();
+        p.cli_path = "gemini".to_string();
+        p
     }
     
     /// Check if agent has capacity
@@ -619,76 +560,97 @@ impl AgentRegistry {
     
     /// Get analytics summary for all agents
     pub fn get_analytics(&self, since: Option<DateTime<Utc>>) -> Result<AnalyticsSummary, AgentError> {
-        let since_clause = since.map(|dt| format!("AND timestamp >= '{}'", dt.to_rfc3339())).unwrap_or_default();
-        
+        let since_str = since.map(|dt| dt.to_rfc3339());
+
         // Total executions by agent
         let executions_by_agent: HashMap<String, u32> = {
-            let mut stmt = self.conn.prepare(&format!(
-                "SELECT agent_id, COUNT(*) FROM agent_history WHERE 1=1 {} GROUP BY agent_id",
-                since_clause
-            ))?;
-            
             let mut map = HashMap::new();
-            let rows = stmt.query_map([], |row| {
-                Ok((row.get::<_, String>(0)?, row.get::<_, u32>(1)?))
-            })?;
-            
-            for row in rows.flatten() {
-                map.insert(row.0, row.1);
+            if let Some(ref s) = since_str {
+                let mut stmt = self.conn.prepare(
+                    "SELECT agent_id, COUNT(*) FROM agent_history WHERE timestamp >= ?1 GROUP BY agent_id"
+                )?;
+                for row in stmt.query_map(rusqlite::params![s], |row| {
+                    Ok((row.get::<_, String>(0)?, row.get::<_, u32>(1)?))
+                })?.flatten() {
+                    map.insert(row.0, row.1);
+                }
+            } else {
+                let mut stmt = self.conn.prepare(
+                    "SELECT agent_id, COUNT(*) FROM agent_history GROUP BY agent_id"
+                )?;
+                for row in stmt.query_map([], |row| {
+                    Ok((row.get::<_, String>(0)?, row.get::<_, u32>(1)?))
+                })?.flatten() {
+                    map.insert(row.0, row.1);
+                }
             }
             map
         };
-        
+
         // Success rate by agent
         let success_by_agent: HashMap<String, (u32, u32)> = {
-            let mut stmt = self.conn.prepare(&format!(
-                "SELECT agent_id, SUM(success), COUNT(*) FROM agent_history WHERE 1=1 {} GROUP BY agent_id",
-                since_clause
-            ))?;
-            
             let mut map = HashMap::new();
-            let rows = stmt.query_map([], |row| {
-                Ok((
-                    row.get::<_, String>(0)?,
-                    row.get::<_, u32>(1)?,
-                    row.get::<_, u32>(2)?
-                ))
-            })?;
-            
-            for row in rows.flatten() {
-                map.insert(row.0, (row.1, row.2));
+            if let Some(ref s) = since_str {
+                let mut stmt = self.conn.prepare(
+                    "SELECT agent_id, SUM(success), COUNT(*) FROM agent_history WHERE timestamp >= ?1 GROUP BY agent_id"
+                )?;
+                for row in stmt.query_map(rusqlite::params![s], |row| {
+                    Ok((row.get::<_, String>(0)?, row.get::<_, u32>(1)?, row.get::<_, u32>(2)?))
+                })?.flatten() {
+                    map.insert(row.0, (row.1, row.2));
+                }
+            } else {
+                let mut stmt = self.conn.prepare(
+                    "SELECT agent_id, SUM(success), COUNT(*) FROM agent_history GROUP BY agent_id"
+                )?;
+                for row in stmt.query_map([], |row| {
+                    Ok((row.get::<_, String>(0)?, row.get::<_, u32>(1)?, row.get::<_, u32>(2)?))
+                })?.flatten() {
+                    map.insert(row.0, (row.1, row.2));
+                }
             }
             map
         };
-        
+
         // Average duration by task type
         let duration_by_type: HashMap<String, (f64, u32)> = {
-            let mut stmt = self.conn.prepare(&format!(
-                "SELECT task_type, AVG(duration_secs), COUNT(*) FROM agent_history WHERE task_type IS NOT NULL {} GROUP BY task_type",
-                since_clause
-            ))?;
-            
             let mut map = HashMap::new();
-            let rows = stmt.query_map([], |row| {
-                Ok((
-                    row.get::<_, String>(0)?,
-                    row.get::<_, f64>(1)?,
-                    row.get::<_, u32>(2)?
-                ))
-            })?;
-            
-            for row in rows.flatten() {
-                map.insert(row.0, (row.1, row.2));
+            if let Some(ref s) = since_str {
+                let mut stmt = self.conn.prepare(
+                    "SELECT task_type, AVG(duration_secs), COUNT(*) FROM agent_history WHERE task_type IS NOT NULL AND timestamp >= ?1 GROUP BY task_type"
+                )?;
+                for row in stmt.query_map(rusqlite::params![s], |row| {
+                    Ok((row.get::<_, String>(0)?, row.get::<_, f64>(1)?, row.get::<_, u32>(2)?))
+                })?.flatten() {
+                    map.insert(row.0, (row.1, row.2));
+                }
+            } else {
+                let mut stmt = self.conn.prepare(
+                    "SELECT task_type, AVG(duration_secs), COUNT(*) FROM agent_history WHERE task_type IS NOT NULL GROUP BY task_type"
+                )?;
+                for row in stmt.query_map([], |row| {
+                    Ok((row.get::<_, String>(0)?, row.get::<_, f64>(1)?, row.get::<_, u32>(2)?))
+                })?.flatten() {
+                    map.insert(row.0, (row.1, row.2));
+                }
             }
             map
         };
-        
+
         // Total cost
-        let total_cost: Option<f64> = self.conn.query_row(
-            &format!("SELECT SUM(cost) FROM agent_history WHERE cost IS NOT NULL {}", since_clause),
-            [],
-            |row| row.get(0)
-        ).ok();
+        let total_cost: Option<f64> = if let Some(ref s) = since_str {
+            self.conn.query_row(
+                "SELECT SUM(cost) FROM agent_history WHERE cost IS NOT NULL AND timestamp >= ?1",
+                rusqlite::params![s],
+                |row| row.get(0)
+            ).ok()
+        } else {
+            self.conn.query_row(
+                "SELECT SUM(cost) FROM agent_history WHERE cost IS NOT NULL",
+                [],
+                |row| row.get(0)
+            ).ok()
+        };
         
         Ok(AnalyticsSummary {
             executions_by_agent,

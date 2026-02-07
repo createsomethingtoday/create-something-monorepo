@@ -3,6 +3,7 @@
  */
 
 import type { PageServerLoad } from './$types';
+import { fetchPageContent } from '$lib/server/content';
 
 export interface DmeContent {
 	hero?: {
@@ -20,16 +21,6 @@ export interface DmeContent {
 }
 
 export const load: PageServerLoad = async ({ platform }) => {
-	// In development without Cloudflare bindings, return null to use fallbacks
-	if (!platform?.env?.CONTENT) {
-		return { content: null };
-	}
-
-	try {
-		const content = await platform.env.CONTENT.get('content:dme', { type: 'json' }) as DmeContent | null;
-		return { content };
-	} catch (error) {
-		console.error('Failed to fetch dme content from KV:', error);
-		return { content: null };
-	}
+	const content = await fetchPageContent<DmeContent>(platform, 'dme');
+	return { content };
 };

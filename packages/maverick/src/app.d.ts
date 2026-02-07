@@ -9,6 +9,7 @@ declare global {
 				CONTENT: KVNamespace;
 				MEDIA_BUCKET: R2Bucket;
 				RESEND_API_KEY: string;
+				ADMIN_PASSWORD_HASH: string;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;

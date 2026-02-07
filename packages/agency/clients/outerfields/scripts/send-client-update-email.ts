@@ -73,6 +73,23 @@ const PRESETS: Record<string, UpdateData> = {
 </ul>`,
 		ctaUrl: 'https://thestack.createsomething.agency',
 		ctaLabel: 'View The Stack Website'
+	},
+	'stack-action-list': {
+		title: 'The Stack — Website Updates Complete',
+		summary: 'All 34 items from your action list have been implemented and deployed. Here\'s a summary of everything that was updated.',
+		imageUrl: 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev/email/stack-action-list-update-1770429251885.png',
+		imageAlt: 'The Stack Indoor Pickleball website showing the updated homepage with new editorial feature layout',
+		features: `<ul style="margin: 0; padding-left: 20px; color: rgba(255, 255, 255, 0.8);">
+<li style="margin-bottom: 10px;"><strong style="color:#fff;">Hero & Navigation.</strong> Title updated to "Indoor Pickleball for All." CTA redesigned as two-line "Become a Founding Member / Limited Availability." Logo positioning refined. "Locations" renamed to "Location."</li>
+<li style="margin-bottom: 10px;"><strong style="color:#fff;">Founding Members.</strong> Future regular prices now shown as crossed-out values below founding rates so members can see their savings. "Available in any combination" removed per request.</li>
+<li style="margin-bottom: 10px;"><strong style="color:#fff;">Events, Tournaments & Sustainability.</strong> All copy updated — events section now mentions the waiting list, tournaments highlight all ages and skill levels, sustainability section references solar panels and battery backup. "Learn More" buttons removed from three sections.</li>
+<li style="margin-bottom: 10px;"><strong style="color:#fff;">Our Location.</strong> Redesigned from multi-location grid to single location view with embedded Google Map, address, and Ernie's contact info. Updated on both homepage and <a href="https://thestack.createsomething.agency/locations" style="color:#966E44;">/locations</a> page.</li>
+<li style="margin-bottom: 10px;"><strong style="color:#fff;">Pricing & Sponsorships.</strong> Sponsorship updated to $2,750 paid in full or $250/month ($3,000 total). Benefits list revised. All other pricing sections left as-is.</li>
+<li style="margin-bottom: 10px;"><strong style="color:#fff;">Meet Our Team.</strong> Retitled "Family Owned and Operated" with two photo frames (portrait + landscape) and names. Page is shorter and more focused.</li>
+<li style="margin-bottom: 10px;"><strong style="color:#fff;">Footer.</strong> Ernie's name, phone (817) 252-4555, email, and Burleson, Texas address now visible on every page.</li>
+</ul>`,
+		ctaUrl: 'https://thestack.createsomething.agency',
+		ctaLabel: 'View The Stack Website'
 	}
 };
 

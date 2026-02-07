@@ -16,7 +16,7 @@
 		ogImage?: string;
 		ogType?: 'website' | 'article' | 'product';
 		twitterCard?: 'summary' | 'summary_large_image';
-		jsonLd?: Record<string, any>;
+		jsonLd?: Record<string, unknown>;
 	}
 
 	let {

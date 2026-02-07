@@ -641,6 +641,12 @@ default = "claude"
         self.store.update_issue_type(id, issue_type)?;
         Ok(())
     }
+
+    /// Set task description
+    pub fn set_description(&mut self, id: &str, description: Option<&str>) -> Result<(), LoomError> {
+        self.store.update_description(id, description)?;
+        Ok(())
+    }
     
     /// Compact the database by removing old done/cancelled tasks
     /// Returns the number of tasks removed

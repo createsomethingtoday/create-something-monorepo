@@ -252,20 +252,19 @@ impl Orchestrator {
         
         match result {
             Ok(output) => {
-                // Check if output indicates success
-                let success = output.to_lowercase().contains("success") 
-                    || !output.to_lowercase().contains("fail");
-                
+                // Process exited with code 0 — treat as success.
+                // The run_claude_code/run_gemini methods return Err on non-zero exit,
+                // so reaching Ok means the process succeeded.
+                let success = true;
+
                 // End session
-                let status = if success { SessionStatus::Completed } else { SessionStatus::Failed };
-                let _ = loom.end_session(&session.id, status);
-                
+                let _ = loom.end_session(&session.id, SessionStatus::Completed);
+
                 // Send notification
                 if self.config.notifications {
-                    let title = if success { "Task Completed" } else { "Task Failed" };
-                    let _ = send_notification(title, &task.title);
+                    let _ = send_notification("Task Completed", &task.title);
                 }
-                
+
                 Ok(ExecutionResult {
                     task_id: task.id.clone(),
                     backend: actual_backend,

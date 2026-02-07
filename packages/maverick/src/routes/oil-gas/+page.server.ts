@@ -3,6 +3,7 @@
  */
 
 import type { PageServerLoad } from './$types';
+import { fetchPageContent } from '$lib/server/content';
 
 export interface PetroxContent {
 	hero?: {
@@ -28,16 +29,6 @@ export interface PetroxContent {
 }
 
 export const load: PageServerLoad = async ({ platform }) => {
-	// In development without Cloudflare bindings, return null to use fallbacks
-	if (!platform?.env?.CONTENT) {
-		return { content: null };
-	}
-
-	try {
-		const content = await platform.env.CONTENT.get('content:petrox', { type: 'json' }) as PetroxContent | null;
-		return { content };
-	} catch (error) {
-		console.error('Failed to fetch petrox content from KV:', error);
-		return { content: null };
-	}
+	const content = await fetchPageContent<PetroxContent>(platform, 'petrox');
+	return { content };
 };

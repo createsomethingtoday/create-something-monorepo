@@ -281,13 +281,6 @@ pub fn list_tools() -> Vec<ToolDefinition> {
             "type": "object",
             "properties": {}
         })),
-        tool("loom_switch_repo", "Switch the active repository context. Use this when working in a different repo than the MCP server was started in.", json!({
-            "type": "object",
-            "properties": {
-                "path": { "type": "string", "description": "Absolute path to the repository to switch to" }
-            },
-            "required": ["path"]
-        })),
         tool_with_task_board("loom_list_all", "List tasks from ALL configured repositories (primary + additional). Use for unified views across projects.", json!({
             "type": "object",
             "properties": {
@@ -893,49 +886,6 @@ pub fn call_tool(loom: &mut Loom, name: &str, args: Value) -> Result<Value, Stri
                     "available": r.available
                 })).collect::<Vec<_>>(),
                 "repos_in_database": db_repos
-            }))
-        }
-        
-        "loom_switch_repo" => {
-            use std::path::PathBuf;
-            
-            let path_str = args["path"].as_str()
-                .ok_or("path parameter is required")?;
-            let path = PathBuf::from(path_str);
-            
-            // Verify the path exists and has .loom
-            if !path.exists() {
-                return Err(format!("Path does not exist: {}", path.display()));
-            }
-            
-            let loom_dir = path.join(".loom");
-            if !loom_dir.exists() {
-                return Err(format!("No .loom directory found at {}. Run 'lm init' in that directory first.", path.display()));
-            }
-            
-            // Try to open the repo to get its info
-            let target_loom = crate::Loom::open(&path)
-                .map_err(|e| format!("Failed to open repo: {}", e))?;
-            
-            let repo_id = target_loom.repo_id();
-            let config = target_loom.config();
-            
-            Ok(json!({
-                "status": "validated",
-                "repo_id": repo_id,
-                "repo_name": config.repo_name,
-                "path": path.to_string_lossy(),
-                "note": "MCP server context cannot be switched at runtime. Use the 'repo_path' parameter in loom_backfill to specify which repository to operate on.",
-                "usage": {
-                    "backfill": format!("loom_backfill with repo_path=\"{}\"", path.display()),
-                    "example": json!({
-                        "tool": "loom_backfill",
-                        "args": {
-                            "repo_path": path.to_string_lossy(),
-                            "since": "30 days ago"
-                        }
-                    })
-                }
             }))
         }
         
@@ -1560,7 +1510,7 @@ impl McpServer {
                     },
                     "serverInfo": {
                         "name": "loom",
-                        "version": "0.2.0"
+                        "version": env!("CARGO_PKG_VERSION")
                     }
                 })
             }

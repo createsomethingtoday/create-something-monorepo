@@ -28,7 +28,7 @@ export function inview(node: HTMLElement, options: InViewOptions = {}) {
 		return { destroy() {} };
 	}
 
-	const observer = new IntersectionObserver(
+	let observer = new IntersectionObserver(
 		(entries) => {
 			entries.forEach((entry) => {
 				if (entry.isIntersecting && (!once || !triggered)) {
@@ -55,19 +55,19 @@ export function inview(node: HTMLElement, options: InViewOptions = {}) {
 		update(newOptions: InViewOptions) {
 			observer.disconnect();
 			const { threshold: t = 0.2, rootMargin: r = '0px 0px -80px 0px' } = newOptions;
-			const newObserver = new IntersectionObserver(
+			observer = new IntersectionObserver(
 				(entries) => {
 					entries.forEach((entry) => {
 						if (entry.isIntersecting && (!once || !triggered)) {
 							triggered = true;
 							node.dispatchEvent(new CustomEvent('inview', { detail: entry }));
-							if (once) newObserver.unobserve(node);
+							if (once) observer.unobserve(node);
 						}
 					});
 				},
 				{ threshold: t, rootMargin: r }
 			);
-			newObserver.observe(node);
+			observer.observe(node);
 		}
 	};
 }

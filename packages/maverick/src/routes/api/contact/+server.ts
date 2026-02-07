@@ -5,6 +5,7 @@
 
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { validateSession, escapeHtml } from '$lib/server/auth';
 
 interface ContactSubmission {
 	name: string;
@@ -100,17 +101,26 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 			});
 		}
 
-		// Format the submission details for email
+		// Format the submission details for email (all user input escaped)
+		const safeName = escapeHtml(data.name);
+		const safeEmail = escapeHtml(data.email);
+		const safeCompany = data.company ? escapeHtml(data.company) : 'Not provided';
+		const safePhone = data.phone ? escapeHtml(data.phone) : 'Not provided';
+		const safeCategory = data.category ? escapeHtml(data.category) : '';
+		const safeProducts = data.products?.length ? data.products.map(escapeHtml).join(', ') : '';
+		const safeApplications = data.applications?.length ? data.applications.map(escapeHtml).join(', ') : '';
+		const safeComment = data.comment ? escapeHtml(data.comment).replace(/\n/g, '<br>') : '';
+
 		const submissionDetails = `
 <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-  <p><strong>Name:</strong> ${data.name}</p>
-  <p><strong>Email:</strong> ${data.email}</p>
-  <p><strong>Company:</strong> ${data.company || 'Not provided'}</p>
-  <p><strong>Phone:</strong> ${data.phone || 'Not provided'}</p>
-  ${data.category ? `<p><strong>Category:</strong> ${data.category}</p>` : ''}
-  ${data.products?.length ? `<p><strong>Products:</strong> ${data.products.join(', ')}</p>` : ''}
-  ${data.applications?.length ? `<p><strong>Applications:</strong> ${data.applications.join(', ')}</p>` : ''}
-  ${data.comment ? `<p><strong>Message:</strong><br>${data.comment.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</p>` : ''}
+  <p><strong>Name:</strong> ${safeName}</p>
+  <p><strong>Email:</strong> ${safeEmail}</p>
+  <p><strong>Company:</strong> ${safeCompany}</p>
+  <p><strong>Phone:</strong> ${safePhone}</p>
+  ${safeCategory ? `<p><strong>Category:</strong> ${safeCategory}</p>` : ''}
+  ${safeProducts ? `<p><strong>Products:</strong> ${safeProducts}</p>` : ''}
+  ${safeApplications ? `<p><strong>Applications:</strong> ${safeApplications}</p>` : ''}
+  ${safeComment ? `<p><strong>Message:</strong><br>${safeComment}</p>` : ''}
   <p style="color: #666; font-size: 14px; margin-top: 20px;"><strong>Submitted:</strong> ${new Date().toUTCString()}</p>
 </div>
 		`.trim();
@@ -143,12 +153,12 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
     <div class="logo">MAVERICK X</div>
     <div class="content">
       <h1 style="font-size: 24px; margin: 0 0 24px 0;">Thanks for reaching out</h1>
-      <p>Hi ${firstName},</p>
-      <p>We've received your inquiry${data.category ? ` about ${data.category}` : ''} and will get back to you within 24 hours to discuss your needs.</p>
-      ${data.comment ? `
+      <p>Hi ${escapeHtml(firstName)},</p>
+      <p>We've received your inquiry${safeCategory ? ` about ${safeCategory}` : ''} and will get back to you within 24 hours to discuss your needs.</p>
+      ${safeComment ? `
       <div class="message-box">
         <p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Your Message:</p>
-        <p style="color: rgba(255, 255, 255, 0.9);">${data.comment.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</p>
+        <p style="color: rgba(255, 255, 255, 0.9);">${safeComment}</p>
       </div>
       ` : ''}
       <p>If you have any immediate questions, feel free to reply to this email.</p>
@@ -171,7 +181,7 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 				from: 'Maverick X Contact Form <noreply@createsomething.io>',
 				to: 'calvin@maverickmetals.com',
 				replyTo: data.email,
-				subject: `Maverick X Inquiry: ${data.category || 'General'} from ${data.name}`,
+				subject: `Maverick X Inquiry: ${safeCategory || 'General'} from ${safeName}`,
 				html: `<!DOCTYPE html>
 <html>
 <head>
@@ -234,8 +244,24 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 	}
 };
 
-// GET endpoint to list submissions (admin only - add auth later)
-export const GET: RequestHandler = async ({ platform, url }) => {
+// GET endpoint to list submissions (admin only)
+export const GET: RequestHandler = async ({ platform, url, cookies }) => {
+	// Require authentication
+	const sessionId = cookies.get('maverick_session');
+	if (!sessionId) {
+		throw error(401, 'Authentication required');
+	}
+
+	const sessions = platform?.env?.SESSIONS;
+	if (!sessions) {
+		throw error(500, 'Sessions not available');
+	}
+
+	const session = await validateSession(sessionId, sessions);
+	if (!session) {
+		throw error(401, 'Invalid or expired session');
+	}
+
 	const db = platform?.env?.DB;
 	if (!db) {
 		throw error(500, 'Database not available');

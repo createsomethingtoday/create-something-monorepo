@@ -5,42 +5,61 @@
 
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { timingSafeEqual } from '$lib/server/auth';
 
-// Simple password check - in production use proper auth
-const ADMIN_PASSWORD = '***REMOVED***';
-
-export const POST: RequestHandler = async ({ request, cookies }) => {
+export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 	try {
 		const body = await request.json() as { email?: string; password?: string };
-		const { email, password } = body;
+		const { password } = body;
 
-		if (!email || !password) {
-			throw error(400, 'Email and password required');
+		if (!password) {
+			throw error(400, 'Password required');
 		}
 
-		// Simple auth check
-		if (password !== ADMIN_PASSWORD) {
+		const adminPasswordHash = platform?.env?.ADMIN_PASSWORD_HASH;
+		if (!adminPasswordHash) {
+			console.error('ADMIN_PASSWORD_HASH not configured');
+			throw error(500, 'Auth not configured');
+		}
+
+		// Constant-time comparison to prevent timing attacks
+		if (!timingSafeEqual(password, adminPasswordHash)) {
 			throw error(401, 'Invalid credentials');
 		}
 
-		// Set session cookie
+		// Generate session and store in KV
 		const sessionToken = crypto.randomUUID();
+		const sessionData = JSON.stringify({
+			email: 'admin@maverickx.com',
+			createdAt: Date.now()
+		});
+
+		const sessions = platform?.env?.SESSIONS;
+		if (sessions) {
+			await sessions.put(sessionToken, sessionData, {
+				expirationTtl: 86400 // 24 hours
+			});
+		}
+
 		cookies.set('maverick_session', sessionToken, {
 			path: '/',
 			httpOnly: true,
 			secure: true,
 			sameSite: 'lax',
-			maxAge: 60 * 60 * 24 * 7 // 1 week
+			maxAge: 86400 // 24 hours
 		});
 
 		return json({
 			success: true,
 			user: {
-				email,
+				email: 'admin@maverickx.com',
 				name: 'Admin'
 			}
 		});
 	} catch (e) {
+		if ((e as { status?: number }).status) {
+			throw e;
+		}
 		console.error('Login error:', e);
 		throw error(401, 'Invalid credentials');
 	}

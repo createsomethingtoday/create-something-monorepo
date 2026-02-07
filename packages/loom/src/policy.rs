@@ -7,142 +7,34 @@
 //! - Multi-agent with Claude Code as primary
 
 use crate::work::Task;
-use crate::agents::{AgentProfile, Capabilities, CostModel, QualityMetrics};
+use crate::agents::AgentProfile;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Create Something Agent Profiles
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Claude Code is our primary agent - best for complex, multi-step work
+/// Claude Code is our primary agent - best for complex, multi-step work.
+/// Single source of truth: default_models.toml (via AgentProfile::claude_code())
 pub fn claude_code_profile() -> AgentProfile {
-    AgentProfile {
-        id: "claude-code".to_string(),
-        name: "Claude Code".to_string(),
-        cli_path: "claude".to_string(),
-        capabilities: Capabilities {
-            planning: 0.98,      // Exceptional at architecture
-            coding: 0.95,        // Strong implementation
-            debugging: 0.92,     // Good at diagnosis
-            ui: 0.85,            // Decent but not specialist
-            docs: 0.95,          // Excellent documentation
-            refactor: 0.95,      // Strong at DRY improvements
-            testing: 0.90,       // Good test writing
-            mcp: true,           // Full MCP support
-            checkpoints: true,   // /rewind support
-            git_aware: true,     // Understands git
-            sub_agents: true,    // Can spawn work
-            max_context: 200_000,
-        },
-        cost: CostModel {
-            input_per_1k: 0.015,
-            output_per_1k: 0.075,
-            output_ratio: 3.0,
-        },
-        quality: QualityMetrics::default(),
-        max_concurrent: 5,
-        active: 0,
-        available: true,
-        last_used: None,
-    }
+    AgentProfile::claude_code()
 }
 
-/// Cursor is best for UI work - IDE integration helps with Svelte
+/// Cursor is best for UI work - IDE integration helps with Svelte.
+/// Single source of truth: default_models.toml (via AgentProfile::cursor())
 pub fn cursor_profile() -> AgentProfile {
-    AgentProfile {
-        id: "cursor".to_string(),
-        name: "Cursor".to_string(),
-        cli_path: "cursor".to_string(),
-        capabilities: Capabilities {
-            planning: 0.75,      // Less strong at planning
-            coding: 0.88,        // Good implementation
-            debugging: 0.85,     // Good with IDE tools
-            ui: 0.95,            // EXCELLENT - IDE preview helps
-            docs: 0.70,          // Basic docs
-            refactor: 0.80,      // Decent refactoring
-            testing: 0.75,       // Basic testing
-            mcp: true,
-            checkpoints: false,
-            git_aware: true,
-            sub_agents: false,
-            max_context: 128_000,
-        },
-        cost: CostModel {
-            input_per_1k: 0.003,   // Uses Sonnet by default
-            output_per_1k: 0.015,
-            output_ratio: 2.5,
-        },
-        quality: QualityMetrics::default(),
-        max_concurrent: 2,  // IDE-bound
-        active: 0,
-        available: true,
-        last_used: None,
-    }
+    AgentProfile::cursor()
 }
 
-/// Codex is good for API work and testing
+/// Codex is good for API work and testing.
+/// Single source of truth: default_models.toml (via AgentProfile::codex())
 pub fn codex_profile() -> AgentProfile {
-    AgentProfile {
-        id: "codex".to_string(),
-        name: "Codex CLI".to_string(),
-        cli_path: "codex".to_string(),
-        capabilities: Capabilities {
-            planning: 0.70,
-            coding: 0.85,
-            debugging: 0.80,
-            ui: 0.65,            // Not great at UI
-            docs: 0.75,
-            refactor: 0.75,
-            testing: 0.90,       // Strong at testing
-            mcp: true,
-            checkpoints: false,
-            git_aware: true,
-            sub_agents: false,
-            max_context: 128_000,
-        },
-        cost: CostModel {
-            input_per_1k: 0.005,
-            output_per_1k: 0.015,
-            output_ratio: 2.0,
-        },
-        quality: QualityMetrics::default(),
-        max_concurrent: 3,
-        active: 0,
-        available: true,
-        last_used: None,
-    }
+    AgentProfile::codex()
 }
 
-/// Gemini excels at large context - good for analysis across many files
+/// Gemini excels at large context - good for analysis across many files.
+/// Single source of truth: default_models.toml (via AgentProfile::gemini())
 pub fn gemini_profile() -> AgentProfile {
-    AgentProfile {
-        id: "gemini".to_string(),
-        name: "Gemini CLI".to_string(),
-        cli_path: "gemini".to_string(),
-        capabilities: Capabilities {
-            planning: 0.80,
-            coding: 0.78,        // Weaker at implementation
-            debugging: 0.75,
-            ui: 0.70,
-            docs: 0.85,          // Good documentation
-            refactor: 0.75,
-            testing: 0.72,
-            mcp: true,
-            checkpoints: false,
-            git_aware: false,    // Less git-aware
-            sub_agents: false,
-            max_context: 1_000_000,  // 1M is the killer feature
-        },
-        cost: CostModel {
-            input_per_1k: 0.00125,  // Very cheap
-            output_per_1k: 0.005,
-            output_ratio: 2.0,
-        },
-        quality: QualityMetrics::default(),
-        max_concurrent: 3,
-        active: 0,
-        available: true,
-        last_used: None,
-    }
+    AgentProfile::gemini()
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

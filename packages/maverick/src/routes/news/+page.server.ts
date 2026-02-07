@@ -3,6 +3,7 @@
  */
 
 import type { PageServerLoad } from './$types';
+import { fetchPageContent } from '$lib/server/content';
 
 export interface NewsArticle {
 	id: string;
@@ -21,16 +22,6 @@ export interface NewsContent {
 }
 
 export const load: PageServerLoad = async ({ platform }) => {
-	// In development without Cloudflare bindings, return null to use fallbacks
-	if (!platform?.env?.CONTENT) {
-		return { content: null };
-	}
-
-	try {
-		const content = await platform.env.CONTENT.get('content:news', { type: 'json' }) as NewsContent | null;
-		return { content };
-	} catch (error) {
-		console.error('Failed to fetch news content from KV:', error);
-		return { content: null };
-	}
+	const content = await fetchPageContent<NewsContent>(platform, 'news');
+	return { content };
 };

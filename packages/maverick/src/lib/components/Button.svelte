@@ -28,55 +28,34 @@
 	const buttonClasses = $derived(`${baseClasses} ${light ? lightClasses : darkClasses} ${className}`);
 </script>
 
+{#snippet buttonContent()}
+	<span class="shine-effect"></span>
+	<span class="relative z-10 mr-auto">{title}</span>
+	{#if arrow}
+		<span
+			class="relative z-10 flex items-center justify-center w-8 h-8 ml-6 -mr-3 transition-all duration-slow transform group-hover:scale-110 {light
+				? 'bg-g-500 group-hover:bg-white'
+				: 'bg-white group-hover:bg-g-500'}"
+		>
+			<span class="animate-bounce-x">
+				<Icon
+					name="arrow-right"
+					class="!w-5 !h-5 transition-all duration-slow transform group-hover:translate-x-0.5 {light
+						? 'text-white group-hover:text-g-500'
+						: 'text-g-500 group-hover:text-white'}"
+				/>
+			</span>
+		</span>
+	{/if}
+{/snippet}
+
 {#if href}
 	<a {href} class={buttonClasses} {onclick}>
-		<!-- Shine effect on hover -->
-		<span class="shine-effect"></span>
-
-		<!-- Button content -->
-		<span class="relative z-10 mr-auto">{title}</span>
-
-		{#if arrow}
-			<span
-				class="relative z-10 flex items-center justify-center w-8 h-8 ml-6 -mr-3 transition-all duration-slow transform group-hover:scale-110 {light
-					? 'bg-g-500 group-hover:bg-white'
-					: 'bg-white group-hover:bg-g-500'}"
-			>
-				<span class="animate-bounce-x">
-					<Icon
-						name="arrow-right"
-						class="!w-5 !h-5 transition-all duration-slow transform group-hover:translate-x-0.5 {light
-							? 'text-white group-hover:text-g-500'
-							: 'text-g-500 group-hover:text-white'}"
-					/>
-				</span>
-			</span>
-		{/if}
+		{@render buttonContent()}
 	</a>
 {:else}
 	<button type="button" class={buttonClasses} {onclick}>
-		<!-- Shine effect on hover -->
-		<span class="shine-effect"></span>
-
-		<!-- Button content -->
-		<span class="relative z-10 mr-auto">{title}</span>
-
-		{#if arrow}
-			<span
-				class="relative z-10 flex items-center justify-center w-8 h-8 ml-6 -mr-3 transition-all duration-slow transform group-hover:scale-110 {light
-					? 'bg-g-500 group-hover:bg-white'
-					: 'bg-white group-hover:bg-g-500'}"
-			>
-				<span class="animate-bounce-x">
-					<Icon
-						name="arrow-right"
-						class="!w-5 !h-5 transition-all duration-slow transform group-hover:translate-x-0.5 {light
-							? 'text-white group-hover:text-g-500'
-							: 'text-g-500 group-hover:text-white'}"
-					/>
-				</span>
-			</span>
-		{/if}
+		{@render buttonContent()}
 	</button>
 {/if}
 

@@ -366,7 +366,8 @@ impl WorkStore {
     /// Generate a new task ID
     fn generate_id(&self) -> String {
         let uuid = Uuid::new_v4();
-        let short = &uuid.to_string()[..4];
+        let hex = uuid.to_string().replace('-', "");
+        let short = &hex[..8];
         format!("{}-{}", self.prefix, short)
     }
     
@@ -502,6 +503,20 @@ impl WorkStore {
         Ok(())
     }
     
+    /// Update a task's description
+    pub fn update_description(&mut self, id: &str, description: Option<&str>) -> Result<(), WorkError> {
+        let now = Utc::now();
+        let rows = self.conn.execute(
+            "UPDATE tasks SET description = ?1, updated_at = ?2 WHERE id = ?3",
+            params![description, now.to_rfc3339(), id],
+        )?;
+
+        if rows == 0 {
+            return Err(WorkError::NotFound(id.to_string()));
+        }
+        Ok(())
+    }
+
     /// Claim a task for an agent
     pub fn claim(&mut self, id: &str, agent: &str) -> Result<Task, WorkError> {
         let task = self.get(id)?.ok_or_else(|| WorkError::NotFound(id.to_string()))?;
@@ -839,7 +854,7 @@ impl WorkStore {
     
     /// List tasks by label
     pub fn list_by_label(&self, label: &str) -> Result<Vec<Task>, WorkError> {
-        let pattern = format!("%\"{}%", label);
+        let pattern = format!("%\"{}\"%" , label);
         let sql = format!(
             "SELECT {} FROM tasks WHERE labels LIKE ?1 ORDER BY created_at DESC",
             Self::TASK_COLUMNS

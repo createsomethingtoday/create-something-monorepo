@@ -97,7 +97,9 @@
 	}
 
 	function openContactModal() {
-		window.dispatchEvent(new CustomEvent('openContactModal', { detail: { categoryId: 'water' } }));
+		if (typeof window !== 'undefined') {
+			window.dispatchEvent(new CustomEvent('openContactModal', { detail: { categoryId: 'water' } }));
+		}
 	}
 </script>
 
