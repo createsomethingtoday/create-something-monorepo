@@ -25,7 +25,7 @@ export interface QBOAuthConfig {
 // ── Default paths ───────────────────────────────────────────────────
 
 const DEFAULT_TOKEN_PATH = resolve(process.cwd(), ".qbo-tokens.json");
-const DEFAULT_REDIRECT_URI = "http://localhost:3847/callback";
+const DEFAULT_REDIRECT_URI = "http://localhost:3000/api/callback";
 const DEFAULT_ENCRYPTION_KEY = "quickbooks-notion-mcp-local-dev-key!!";
 
 // ── QBO Auth Manager ────────────────────────────────────────────────

@@ -2,7 +2,8 @@ import { createServer } from "node:http";
 import { URL } from "node:url";
 import { createAuthManagerFromEnv } from "./services/auth.js";
 
-const CALLBACK_PORT = 3847;
+const CALLBACK_PORT = 3000;
+const CALLBACK_PATH = "/api/callback";
 
 /**
  * Run the one-time OAuth setup flow.
@@ -51,7 +52,7 @@ export async function runAuthSetup(): Promise<void> {
 
       const url = new URL(req.url, `http://localhost:${CALLBACK_PORT}`);
 
-      if (url.pathname !== "/callback") {
+      if (url.pathname !== CALLBACK_PATH) {
         res.writeHead(404);
         res.end("Not found");
         return;
