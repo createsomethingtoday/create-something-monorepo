@@ -9,8 +9,8 @@
 	import KineticHero from '$lib/components/KineticHero.svelte';
 	import TabbedSolutions from '$lib/components/TabbedSolutions.svelte';
 	import OperationsHotspot from '$lib/components/OperationsHotspot.svelte';
+	import WhySection from '$lib/components/WhySection.svelte';
 	import SEO from '$lib/components/SEO.svelte';
-	import { inview } from '$lib/actions/inview';
 	import {
 		petroxSolutions,
 		petroxSolutionsHeader,
@@ -59,8 +59,6 @@
 		features: solution.features,
 		stats: solution.stats
 	}));
-
-	let whyVisible = $state(false);
 
 	const jsonLd = {
 		"@context": "https://schema.org",
