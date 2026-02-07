@@ -5,21 +5,21 @@ name = "maverick-admin"
 compatibility_date = "2024-12-01"
 compatibility_flags = ["nodejs_compat"]
 
-# D1 Database
+# D1 Database - shared with maverick package
 [[d1_databases]]
 binding = "DB"
-database_name = "maverick-db"
-database_id = ""  # Will be populated after creation
+database_name = "maverick-x-db"
+database_id = "2554c248-8ceb-4ee2-8a4d-965b39eb5f53"
 
-# R2 Bucket for media
+# R2 Bucket for media - shared with maverick package
 [[r2_buckets]]
 binding = "MEDIA"
-bucket_name = "maverick-media"
+bucket_name = "maverick-x-assets"
 
-# KV for sessions
+# KV for sessions - shared with maverick package
 [[kv_namespaces]]
 binding = "SESSIONS"
-id = ""  # Will be populated after creation
+id = "07177a78d36b406191b9655492a40cef"
 
 # Environment variables (set via dashboard)
 # AUTH_SECRET - Session signing key

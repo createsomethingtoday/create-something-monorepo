@@ -6,6 +6,7 @@
 	 */
 
 	import { inview } from '$lib/actions/inview';
+	import { focusTrap } from '@create-something/canon/actions';
 	import Button from './Button.svelte';
 
 	interface Solution {
@@ -52,6 +53,14 @@
 	function closeVideoModal() {
 		videoModalOpen = false;
 	}
+
+	$effect(() => {
+		if (videoModalOpen) {
+			document.body.style.overflow = 'hidden';
+		} else {
+			document.body.style.overflow = '';
+		}
+	});
 
 	function handleTabChange(id: string) {
 		contentVisible = false;
@@ -335,12 +344,16 @@
 	<div
 		class="video-modal-backdrop"
 		onclick={closeVideoModal}
-		onkeydown={(e) => e.key === 'Escape' && closeVideoModal()}
-		role="button"
-		tabindex="0"
-		aria-label="Close video"
+		role="presentation"
 	>
-		<div class="video-modal-content" onclick={(e) => e.stopPropagation()}>
+		<div
+			class="video-modal-content"
+			onclick={(e) => e.stopPropagation()}
+			role="dialog"
+			aria-modal="true"
+			aria-label="{productPrefix} {activeSolution.name} video"
+			use:focusTrap={{ active: videoModalOpen, onEscape: closeVideoModal }}
+		>
 			<button
 				type="button"
 				class="video-modal-close"

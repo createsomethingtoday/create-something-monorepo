@@ -207,17 +207,13 @@
 		}
 	}
 
-	.step-row.step-reverse {
-		direction: rtl;
-	}
-
-	.step-row.step-reverse > * {
-		direction: ltr;
+	.step-row.step-reverse > :first-child {
+		order: 2;
 	}
 
 	@media (max-width: 1023px) {
-		.step-row.step-reverse {
-			direction: ltr;
+		.step-row.step-reverse > :first-child {
+			order: unset;
 		}
 	}
 

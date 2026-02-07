@@ -11,11 +11,6 @@
 	const navItems = [
 		{ href: '/dashboard', label: 'Overview', icon: 'home' },
 		{ href: '/dashboard/solutions', label: 'Solutions', icon: 'beaker' },
-		{ href: '/dashboard/news', label: 'News', icon: 'newspaper' },
-		{ href: '/dashboard/testimonials', label: 'Testimonials', icon: 'quote' },
-		{ href: '/dashboard/contacts', label: 'Contacts', icon: 'users' },
-		{ href: '/dashboard/media', label: 'Media', icon: 'image' },
-		{ href: '/dashboard/settings', label: 'Settings', icon: 'cog' },
 	];
 
 	function isActive(href: string, pathname: string): boolean {
