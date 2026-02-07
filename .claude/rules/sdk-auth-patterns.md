@@ -7,9 +7,12 @@ The auth pattern depends on **where the code runs**. This is the first question 
 | Runtime | Auth Pattern | Rationale |
 |---------|-------------|-----------|
 | **Cloudflare Workers** (V8 isolates) | Own auth via shared client | Most vendor SDKs require Node.js stdlib. Workers have bundle size limits. Shared infrastructure (BaseAPIClient) already handles OAuth. |
-| **Node.js** (standalone MCP servers) | Vendor SDK for auth, custom for ops | Full stdlib available. No shared auth infrastructure. SDK encodes vendor-specific edge cases. |
+| **Edge-deployable MCP servers** | Own auth with raw fetch | MCP servers should be deployable anywhere. Standard OAuth 2.0 is ~200 lines of fetch. No SDK needed. |
+| **Node.js only** (never deployed to edge) | Vendor SDK for auth acceptable | Full stdlib available. SDK encodes vendor-specific edge cases. But ask: will this ever move to Workers? |
 
 **Zero Framework Cognition**: Neither pattern is universally correct. The deployment target determines which is pragmatic. Choosing "always vendor SDK" or "always own auth" without examining the constraint is framework imprisonment.
+
+**Lesson learned**: Ask "where will this deploy?" *before* writing any auth code. The `quickbooks-notion-mcp` server was initially built with a vendor SDK (Pattern B), then had to be rewritten to own auth (Pattern A) when the deployment target turned out to be Cloudflare Workers. The `TokenProvider` interface meant only one file changed — but the SDK was unnecessary work. Standard OAuth 2.0 authorization code flow is simple enough to own from the start.
 
 ---
 
@@ -172,7 +175,7 @@ When adding a new vendor integration, ask in order:
 |---------|---------|---------|---------------|-------------|
 | WORKWAY integrations | Workers | A | `BaseAPIClient` + `TokenRefreshHandler` | `BaseAPIClient` |
 | `halfdozen-gmail-sync` | Node.js | B | `googleapis` OAuth2Client | Custom + Notion SDK |
-| `quickbooks-notion-mcp` | Node.js | B | `quickbooks-api` AuthProvider | Custom `QuickBooksClient` |
+| `quickbooks-notion-mcp` | Workers-ready | A | Own OAuth with raw fetch | Custom `QuickBooksClient` |
 
 ## Three-Tier Framework Alignment
 

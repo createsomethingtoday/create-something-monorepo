@@ -1,8 +1,7 @@
-import { AuthProvider, AuthScopes, Environment } from "quickbooks-api";
-import type { Token } from "quickbooks-api";
 import { readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { randomUUID } from "node:crypto";
 import { logger } from "./logger.js";
 
 // ── Token Provider Interface ────────────────────────────────────────
@@ -20,68 +19,207 @@ export interface QBOAuthConfig {
   redirectUri: string;
   environment: "sandbox" | "production";
   tokenPath?: string;
-  encryptionKey?: string;
 }
 
-// ── Default paths ───────────────────────────────────────────────────
+// ── Token Types ─────────────────────────────────────────────────────
+
+export interface QBOToken {
+  accessToken: string;
+  refreshToken: string;
+  accessTokenExpiresAt: string; // ISO date
+  refreshTokenExpiresAt: string; // ISO date
+  realmId: string;
+  tokenType: string;
+}
+
+// ── Constants ───────────────────────────────────────────────────────
+
+const INTUIT_AUTH_URL = "https://appcenter.intuit.com/connect/oauth2";
+const INTUIT_TOKEN_URL = "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer";
+const QBO_SCOPE = "com.intuit.quickbooks.accounting";
 
 const DEFAULT_TOKEN_PATH = resolve(process.cwd(), ".qbo-tokens.json");
 const DEFAULT_REDIRECT_URI = "http://localhost:3000/api/callback";
-const DEFAULT_ENCRYPTION_KEY = "quickbooks-notion-mcp-local-dev-key!!";
+
+// Access tokens expire in ~60 minutes; refresh 5 min early
+const ACCESS_TOKEN_BUFFER_MS = 5 * 60 * 1000;
 
 // ── QBO Auth Manager ────────────────────────────────────────────────
 
 /**
- * Manages QuickBooks OAuth tokens using the quickbooks-api SDK.
- * 
- * Implements the SDK Auth Pattern:
- * - SDK handles token lifecycle (refresh, serialize, validate)
- * - We handle persistence (file storage) and MCP integration
+ * Manages QuickBooks OAuth tokens with raw fetch calls.
+ *
+ * Pattern A: Own auth — no vendor SDK.
+ * Standard OAuth 2.0 authorization code flow with token refresh.
+ * Workers-ready: only uses fetch, no Node.js-specific HTTP libraries.
  */
 export class QBOAuthManager implements TokenProvider {
-  private authProvider: AuthProvider;
+  private readonly clientId: string;
+  private readonly clientSecret: string;
+  private readonly redirectUri: string;
   private readonly tokenPath: string;
-  private readonly encryptionKey: string;
+  private token: QBOToken | null = null;
   private initialized = false;
 
   constructor(config: QBOAuthConfig) {
-    const env =
-      config.environment === "sandbox"
-        ? Environment.Sandbox
-        : Environment.Production;
-
+    this.clientId = config.clientId;
+    this.clientSecret = config.clientSecret;
+    this.redirectUri = config.redirectUri || DEFAULT_REDIRECT_URI;
     this.tokenPath = config.tokenPath ?? DEFAULT_TOKEN_PATH;
-    this.encryptionKey = config.encryptionKey ?? DEFAULT_ENCRYPTION_KEY;
-
-    this.authProvider = new AuthProvider(
-      config.clientId,
-      config.clientSecret,
-      config.redirectUri || DEFAULT_REDIRECT_URI,
-      [AuthScopes.Accounting],
-      undefined,
-      env
-    );
-
-    // Enable auto-refresh so the SDK refreshes expired tokens automatically
-    this.authProvider.enableAutoRefresh();
-
-    // Persist tokens whenever they're refreshed
-    this.authProvider.onRefresh(async (refreshedToken: Token) => {
-      await this.persistToken(refreshedToken);
-      logger.info("Token auto-refreshed and persisted");
-    });
   }
+
+  // ── OAuth URL Generation ────────────────────────────────────────
 
   /**
-   * Get the underlying AuthProvider (for OAuth setup flow).
+   * Generate the OAuth authorization URL for the consent screen.
    */
-  getAuthProvider(): AuthProvider {
-    return this.authProvider;
+  generateAuthUrl(state?: string): string {
+    const params = new URLSearchParams({
+      client_id: this.clientId,
+      scope: QBO_SCOPE,
+      redirect_uri: this.redirectUri,
+      response_type: "code",
+      state: state ?? randomUUID(),
+    });
+    return `${INTUIT_AUTH_URL}?${params.toString()}`;
   }
+
+  // ── Token Exchange ──────────────────────────────────────────────
+
+  /**
+   * Exchange an authorization code for access + refresh tokens.
+   */
+  async exchangeCode(code: string, realmId: string): Promise<QBOToken> {
+    const body = new URLSearchParams({
+      grant_type: "authorization_code",
+      code,
+      redirect_uri: this.redirectUri,
+    });
+
+    const response = await fetch(INTUIT_TOKEN_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${this.basicAuthHeader()}`,
+        Accept: "application/json",
+      },
+      body: body.toString(),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(
+        `Token exchange failed (${response.status}): ${errorBody}`
+      );
+    }
+
+    const data = (await response.json()) as {
+      access_token: string;
+      refresh_token: string;
+      expires_in: number;
+      x_refresh_token_expires_in: number;
+      token_type: string;
+    };
+
+    const now = Date.now();
+    const token: QBOToken = {
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      accessTokenExpiresAt: new Date(
+        now + data.expires_in * 1000
+      ).toISOString(),
+      refreshTokenExpiresAt: new Date(
+        now + data.x_refresh_token_expires_in * 1000
+      ).toISOString(),
+      realmId,
+      tokenType: data.token_type,
+    };
+
+    this.token = token;
+    this.initialized = true;
+    await this.persistToken();
+
+    return token;
+  }
+
+  // ── Token Refresh ───────────────────────────────────────────────
+
+  /**
+   * Refresh the access token using the refresh token.
+   */
+  private async refreshAccessToken(): Promise<void> {
+    if (!this.token) {
+      throw new Error("No token to refresh. Run `pnpm auth` first.");
+    }
+
+    // Check if refresh token itself is expired
+    if (new Date(this.token.refreshTokenExpiresAt) <= new Date()) {
+      throw new Error(
+        "QuickBooks refresh token has expired (100-day limit). " +
+          "Run `pnpm auth` to re-authorize."
+      );
+    }
+
+    const body = new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: this.token.refreshToken,
+    });
+
+    const response = await fetch(INTUIT_TOKEN_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${this.basicAuthHeader()}`,
+        Accept: "application/json",
+      },
+      body: body.toString(),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+
+      if (response.status === 401 || response.status === 400) {
+        throw new Error(
+          "QuickBooks refresh token is invalid or revoked. " +
+            "Run `pnpm auth` to re-authorize. " +
+            `(${response.status}: ${errorBody})`
+        );
+      }
+
+      throw new Error(
+        `Token refresh failed (${response.status}): ${errorBody}`
+      );
+    }
+
+    const data = (await response.json()) as {
+      access_token: string;
+      refresh_token: string;
+      expires_in: number;
+      x_refresh_token_expires_in: number;
+      token_type: string;
+    };
+
+    const now = Date.now();
+    this.token = {
+      ...this.token,
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token,
+      accessTokenExpiresAt: new Date(
+        now + data.expires_in * 1000
+      ).toISOString(),
+      refreshTokenExpiresAt: new Date(
+        now + data.x_refresh_token_expires_in * 1000
+      ).toISOString(),
+    };
+
+    await this.persistToken();
+    logger.info("Token refreshed and persisted");
+  }
+
+  // ── TokenProvider Interface ─────────────────────────────────────
 
   /**
    * Initialize from persisted tokens.
-   * Must be called before getAccessToken().
    */
   async initialize(): Promise<boolean> {
     if (this.initialized) return true;
@@ -99,56 +237,35 @@ export class QBOAuthManager implements TokenProvider {
    * Get a valid access token. Refreshes automatically if expired.
    */
   async getAccessToken(): Promise<string> {
-    if (!this.initialized) {
+    if (!this.initialized || !this.token) {
       throw new Error(
-        "QBOAuthManager not initialized. Call initialize() first or run the auth setup."
+        "QBOAuthManager not initialized. Call initialize() first or run `pnpm auth`."
       );
     }
 
-    try {
-      const token = await this.authProvider.getToken();
-      return token.accessToken;
-    } catch (error) {
-      // Detect refresh token expiration
-      const msg = error instanceof Error ? error.message : String(error);
-      if (
-        msg.includes("refresh") ||
-        msg.includes("token") ||
-        msg.includes("expired") ||
-        msg.includes("invalid_grant")
-      ) {
-        throw new Error(
-          "QuickBooks refresh token has expired or is invalid. " +
-            "Run `pnpm auth` to re-authorize. " +
-            `(Original error: ${msg})`
-        );
-      }
-      throw error;
+    // Check if access token needs refresh
+    const expiresAt = new Date(this.token.accessTokenExpiresAt).getTime();
+    if (Date.now() >= expiresAt - ACCESS_TOKEN_BUFFER_MS) {
+      logger.info("Access token expiring soon, refreshing");
+      await this.refreshAccessToken();
     }
+
+    return this.token!.accessToken;
   }
 
   /**
-   * Get the realm ID (company ID) from the stored token.
+   * Get the realm ID (company ID).
    */
   async getRealmId(): Promise<string> {
-    if (!this.initialized) {
+    if (!this.initialized || !this.token) {
       throw new Error(
-        "QBOAuthManager not initialized. Call initialize() first or run the auth setup."
+        "QBOAuthManager not initialized. Call initialize() first or run `pnpm auth`."
       );
     }
-
-    const token = await this.authProvider.getToken();
-    return token.realmId;
+    return this.token.realmId;
   }
 
-  /**
-   * Set token after OAuth exchange and persist.
-   */
-  async setToken(token: Token): Promise<void> {
-    await this.authProvider.setToken(token);
-    await this.persistToken(token);
-    this.initialized = true;
-  }
+  // ── Token Persistence (file-based, swappable for KV) ────────────
 
   /**
    * Check if tokens exist on disk.
@@ -158,36 +275,52 @@ export class QBOAuthManager implements TokenProvider {
   }
 
   /**
-   * Persist encrypted token to disk.
+   * Persist token to disk as JSON.
    */
-  private async persistToken(token?: Token): Promise<void> {
+  private async persistToken(): Promise<void> {
+    if (!this.token) return;
+
     try {
-      const serialized = await this.authProvider.serializeToken(
-        this.encryptionKey
+      await writeFile(
+        this.tokenPath,
+        JSON.stringify(this.token, null, 2),
+        "utf-8"
       );
-      if (serialized) {
-        await writeFile(this.tokenPath, serialized, "utf-8");
-      }
     } catch (error) {
-      logger.error("Failed to persist token", { error: error instanceof Error ? error.message : String(error) });
+      logger.error("Failed to persist token", {
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
   /**
-   * Load encrypted token from disk.
+   * Load token from disk.
    */
   private async loadPersistedToken(): Promise<boolean> {
     if (!this.hasPersistedTokens()) return false;
 
     try {
-      const serialized = await readFile(this.tokenPath, "utf-8");
-      await this.authProvider.deserializeToken(serialized, this.encryptionKey);
+      const raw = await readFile(this.tokenPath, "utf-8");
+      this.token = JSON.parse(raw) as QBOToken;
       logger.info("Loaded persisted tokens successfully");
       return true;
     } catch (error) {
-      logger.error("Failed to load persisted token", { error: error instanceof Error ? error.message : String(error) });
+      logger.error("Failed to load persisted token", {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return false;
     }
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────────
+
+  /**
+   * Base64-encoded client_id:client_secret for Intuit token endpoint.
+   */
+  private basicAuthHeader(): string {
+    return Buffer.from(`${this.clientId}:${this.clientSecret}`).toString(
+      "base64"
+    );
   }
 }
 
@@ -199,10 +332,10 @@ export class QBOAuthManager implements TokenProvider {
 export function createAuthManagerFromEnv(): QBOAuthManager {
   const clientId = process.env.QBO_CLIENT_ID;
   const clientSecret = process.env.QBO_CLIENT_SECRET;
-  const environment = process.env.QBO_ENVIRONMENT === "sandbox" ? "sandbox" : "production";
+  const environment =
+    process.env.QBO_ENVIRONMENT === "sandbox" ? "sandbox" : "production";
   const redirectUri = process.env.QBO_REDIRECT_URI || DEFAULT_REDIRECT_URI;
   const tokenPath = process.env.QBO_TOKEN_PATH || DEFAULT_TOKEN_PATH;
-  const encryptionKey = process.env.QBO_ENCRYPTION_KEY || DEFAULT_ENCRYPTION_KEY;
 
   if (!clientId) {
     throw new Error(
@@ -223,6 +356,5 @@ export function createAuthManagerFromEnv(): QBOAuthManager {
     redirectUri,
     environment,
     tokenPath,
-    encryptionKey,
   });
 }

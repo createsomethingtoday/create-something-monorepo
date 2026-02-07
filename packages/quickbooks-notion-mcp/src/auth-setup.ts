@@ -8,7 +8,7 @@ const CALLBACK_PATH = "/api/callback";
 
 /**
  * Run the one-time OAuth setup flow.
- * 
+ *
  * 1. Start local HTTP server for callback
  * 2. Generate auth URL and print it
  * 3. Wait for user to authorize in browser
@@ -19,7 +19,6 @@ export async function runAuthSetup(): Promise<void> {
   logger.info("QuickBooks OAuth Setup — one-time authorization");
 
   const authManager = createAuthManagerFromEnv();
-  const authProvider = authManager.getAuthProvider();
 
   // Check if tokens already exist
   if (authManager.hasPersistedTokens()) {
@@ -27,9 +26,13 @@ export async function runAuthSetup(): Promise<void> {
   }
 
   // Generate auth URL
-  const authUrl = authProvider.generateAuthUrl();
-  logger.info("Open this URL in your browser to authorize", { url: authUrl.toString() });
-  console.error(`\n1. Open this URL in your browser:\n\n   ${authUrl.toString()}\n\n2. Sign in to QuickBooks and authorize the app.\n3. You'll be redirected back here automatically.\n\nWaiting for authorization...`);
+  const authUrl = authManager.generateAuthUrl();
+  logger.info("Open this URL in your browser to authorize", {
+    url: authUrl,
+  });
+  console.error(
+    `\n1. Open this URL in your browser:\n\n   ${authUrl}\n\n2. Sign in to QuickBooks and authorize the app.\n3. You'll be redirected back here automatically.\n\nWaiting for authorization...`
+  );
 
   // Start callback server
   return new Promise<void>((resolve, reject) => {
@@ -53,7 +56,7 @@ export async function runAuthSetup(): Promise<void> {
       const error = url.searchParams.get("error");
 
       if (error) {
-        res.writeHead(400, { "Content-Type": "text/html" });
+        res.writeHead(400, { "Content-Type": "text/html; charset=utf-8" });
         res.end(`
           <html><head><meta charset="UTF-8"></head><body style="font-family: system-ui; padding: 40px; text-align: center;">
             <h1>Authorization Failed</h1>
@@ -67,7 +70,7 @@ export async function runAuthSetup(): Promise<void> {
       }
 
       if (!code || !realmId) {
-        res.writeHead(400, { "Content-Type": "text/html" });
+        res.writeHead(400, { "Content-Type": "text/html; charset=utf-8" });
         res.end(`
           <html><head><meta charset="UTF-8"></head><body style="font-family: system-ui; padding: 40px; text-align: center;">
             <h1>Missing Parameters</h1>
@@ -79,18 +82,20 @@ export async function runAuthSetup(): Promise<void> {
       }
 
       try {
-        // Exchange code for tokens
         logger.info("Authorization received, exchanging code for tokens");
 
-        const token = await authProvider.exchangeCode(code, realmId);
-        await authManager.setToken(token);
+        const token = await authManager.exchangeCode(code, realmId);
 
-        logger.info("Authorization successful", { realmId: token.realmId, accessTokenExpires: String(token.accessTokenExpiryDate), refreshTokenExpires: String(token.refreshTokenExpiryDate) });
+        logger.info("Authorization successful", {
+          realmId: token.realmId,
+          accessTokenExpiresAt: token.accessTokenExpiresAt,
+          refreshTokenExpiresAt: token.refreshTokenExpiresAt,
+        });
 
-        res.writeHead(200, { "Content-Type": "text/html" });
+        res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
         res.end(`
           <html><head><meta charset="UTF-8"></head><body style="font-family: system-ui; padding: 40px; text-align: center;">
-            <h1 style="color: #22c55e;">✅ Connected!</h1>
+            <h1 style="color: #22c55e;">&#x2705; Connected!</h1>
             <p>QuickBooks account successfully connected.</p>
             <p>Realm ID: <code>${token.realmId}</code></p>
             <p>You can close this tab and return to the terminal.</p>
@@ -100,9 +105,11 @@ export async function runAuthSetup(): Promise<void> {
         server.close();
         resolve();
       } catch (err) {
-        logger.error("Token exchange failed", { error: err instanceof Error ? err.message : String(err) });
+        logger.error("Token exchange failed", {
+          error: err instanceof Error ? err.message : String(err),
+        });
 
-        res.writeHead(500, { "Content-Type": "text/html" });
+        res.writeHead(500, { "Content-Type": "text/html; charset=utf-8" });
         res.end(`
           <html><head><meta charset="UTF-8"></head><body style="font-family: system-ui; padding: 40px; text-align: center;">
             <h1 style="color: #ef4444;">Token Exchange Failed</h1>
@@ -117,7 +124,10 @@ export async function runAuthSetup(): Promise<void> {
     });
 
     server.listen(CALLBACK_PORT, () => {
-      logger.info("Callback server listening", { port: CALLBACK_PORT, path: CALLBACK_PATH });
+      logger.info("Callback server listening", {
+        port: CALLBACK_PORT,
+        path: CALLBACK_PATH,
+      });
     });
 
     server.on("error", (err) => {
