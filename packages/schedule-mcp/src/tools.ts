@@ -43,6 +43,11 @@ import {
   createTemplate,
   createTemplateSlot,
   getSharedCalendars,
+  getNotificationPreferences,
+  setNotificationPreferences,
+  createNotificationLog,
+  listNotificationLog,
+  getEventParticipants,
 } from './db/queries.js';
 
 import { generateBackfillEvents } from './scheduling/backfill.js';
@@ -321,6 +326,8 @@ export function registerTools(
         try {
           const db = getDb();
           const event = await createEvent(db, params);
+          // Notify participants of the new event
+          await notifyEventChange(db, event.id, event.title, 'created');
           return jsonContent(event);
         } catch (err) {
           return errorContent(`Failed to create event: ${(err as Error).message}`);
@@ -352,6 +359,8 @@ export function registerTools(
           if (!event) {
             return errorContent(`Event not found: ${id}`);
           }
+          // Notify participants of the change
+          await notifyEventChange(db, event.id, event.title, 'updated');
           return jsonContent(event);
         } catch (err) {
           return errorContent(`Failed to update event: ${(err as Error).message}`);
@@ -374,23 +383,31 @@ export function registerTools(
         try {
           const db = getDb();
 
+          // Capture event title before deleting (for notification)
+          const eventForNotify = await getEvent(db, params.id);
+
           // If delete_series requested, check for recurrence_id and delete siblings
           if (params.delete_series) {
-            const event = await getEvent(db, params.id);
-            if (!event) {
+            if (!eventForNotify) {
               return errorContent(`Event not found: ${params.id}`);
             }
 
-            if (event.recurrence_id) {
-              // Delete all events sharing the same recurrence_id
+            // Notify before deleting
+            await notifyEventChange(db, eventForNotify.id, eventForNotify.title, 'cancelled');
+
+            if (eventForNotify.recurrence_id) {
               await db
                 .prepare('DELETE FROM events WHERE recurrence_id = ?')
-                .bind(event.recurrence_id)
+                .bind(eventForNotify.recurrence_id)
                 .run();
-              // Also delete the target event if it wasn't caught by recurrence_id
               await deleteEvent(db, params.id);
-              return jsonContent({ deleted: true, series: true, recurrence_id: event.recurrence_id });
+              return jsonContent({ deleted: true, series: true, recurrence_id: eventForNotify.recurrence_id });
             }
+          }
+
+          // Notify before deleting
+          if (eventForNotify) {
+            await notifyEventChange(db, eventForNotify.id, eventForNotify.title, 'cancelled');
           }
 
           const deleted = await deleteEvent(db, params.id);
@@ -435,6 +452,7 @@ export function registerTools(
     {
       name: z.string(),
       email: z.string().optional(),
+      phone: z.string().optional().describe('E.164 format phone number, e.g. +15551234567'),
       timezone: z.string().optional(),
       unit_id: z.string().optional(),
       role: z.string().optional(),
@@ -505,11 +523,12 @@ export function registerTools(
 
   server.tool(
     'update_member',
-    'Update a member\'s details (name, email, timezone)',
+    'Update a member\'s details (name, email, phone, timezone)',
     {
       id: z.string(),
       name: z.string().optional(),
       email: z.string().optional(),
+      phone: z.string().optional().describe('E.164 format phone number, e.g. +15551234567'),
       timezone: z.string().optional(),
     },
     async (params) => {
@@ -1118,4 +1137,185 @@ export function registerTools(
       });
     },
   );
+
+  // =========================================================================
+  // Notification Tools
+  // =========================================================================
+
+  server.tool(
+    'set_notification_preferences',
+    'Set SMS notification preferences for a member (reminders, changes, conflicts)',
+    {
+      member_id: z.string(),
+      reminders_enabled: z.boolean().optional(),
+      changes_enabled: z.boolean().optional(),
+      conflicts_enabled: z.boolean().optional(),
+      reminder_minutes_1: z.number().optional().describe('First reminder: minutes before event (default 15)'),
+      reminder_minutes_2: z.number().optional().describe('Second reminder: minutes before event (default 60, 0=disabled)'),
+      reminder_minutes_3: z.number().optional().describe('Third reminder: minutes before event (default 1440=1day, 0=disabled)'),
+      sms_enabled: z.boolean().optional(),
+    },
+    async (params) => {
+      return tracedTool('set_notification_preferences', params as Record<string, unknown>, async () => {
+        try {
+          const db = getDb();
+          const prefs = await setNotificationPreferences(db, params.member_id, {
+            reminders_enabled: params.reminders_enabled !== undefined ? (params.reminders_enabled ? 1 : 0) : undefined,
+            changes_enabled: params.changes_enabled !== undefined ? (params.changes_enabled ? 1 : 0) : undefined,
+            conflicts_enabled: params.conflicts_enabled !== undefined ? (params.conflicts_enabled ? 1 : 0) : undefined,
+            reminder_minutes_1: params.reminder_minutes_1,
+            reminder_minutes_2: params.reminder_minutes_2,
+            reminder_minutes_3: params.reminder_minutes_3,
+            sms_enabled: params.sms_enabled !== undefined ? (params.sms_enabled ? 1 : 0) : undefined,
+          });
+          return jsonContent(prefs);
+        } catch (err) {
+          return errorContent(`Failed to set preferences: ${(err as Error).message}`);
+        }
+      });
+    },
+  );
+
+  server.tool(
+    'get_notification_preferences',
+    'Get SMS notification preferences for a member',
+    {
+      member_id: z.string(),
+    },
+    async (params) => {
+      return tracedTool('get_notification_preferences', params as Record<string, unknown>, async () => {
+        try {
+          const db = getDb();
+          const prefs = await getNotificationPreferences(db, params.member_id);
+          if (!prefs) {
+            return jsonContent({ member_id: params.member_id, configured: false, message: 'No preferences set. Use set_notification_preferences to enable notifications.' });
+          }
+          return jsonContent({ ...prefs, configured: true });
+        } catch (err) {
+          return errorContent(`Failed to get preferences: ${(err as Error).message}`);
+        }
+      });
+    },
+  );
+
+  server.tool(
+    'send_notification',
+    'Send an immediate SMS notification to a member (agent-triggered)',
+    {
+      member_id: z.string(),
+      message: z.string().describe('SMS message body (max 160 chars recommended)'),
+      event_id: z.string().optional().describe('Related event ID if applicable'),
+    },
+    async (params) => {
+      return tracedTool('send_notification', params as Record<string, unknown>, async () => {
+        try {
+          const db = getDb();
+          const member = await (await import('./db/queries.js')).getMember(db, params.member_id);
+          if (!member) {
+            return errorContent(`Member not found: ${params.member_id}`);
+          }
+          if (!member.phone) {
+            return errorContent(`Member ${member.name} has no phone number. Use update_member to add one.`);
+          }
+
+          const entry = await createNotificationLog(db, {
+            member_id: params.member_id,
+            event_id: params.event_id,
+            trigger_type: 'manual',
+            phone: member.phone,
+            message: params.message,
+            status: 'pending',
+          });
+
+          return jsonContent({
+            notification_id: entry.id,
+            member: member.name,
+            phone: member.phone,
+            message: params.message,
+            status: 'pending',
+            note: 'SMS will be sent within 5 minutes by the notifier worker.',
+          });
+        } catch (err) {
+          return errorContent(`Failed to send notification: ${(err as Error).message}`);
+        }
+      });
+    },
+  );
+
+  server.tool(
+    'list_notification_log',
+    'View recent SMS notification history (Insight)',
+    {
+      member_id: z.string().optional(),
+      trigger_type: z.enum(['reminder', 'change', 'conflict', 'manual']).optional(),
+      limit: z.number().optional().describe('Max results (default 50)'),
+    },
+    async (params) => {
+      return tracedTool('list_notification_log', params as Record<string, unknown>, async () => {
+        try {
+          const db = getDb();
+          const log = await listNotificationLog(db, {
+            member_id: params.member_id,
+            trigger_type: params.trigger_type,
+            limit: params.limit,
+          });
+          return jsonContent(log);
+        } catch (err) {
+          return errorContent(`Failed to list notification log: ${(err as Error).message}`);
+        }
+      });
+    },
+  );
+}
+
+// =============================================================================
+// Notification Change Hooks (called by CRUD tools)
+// =============================================================================
+
+/**
+ * Enqueue change notifications for event participants.
+ *
+ * Called by create_event, update_event, delete_event when the event changes.
+ * Writes 'pending' entries to notification_log. The notifier worker picks
+ * them up within 5 minutes and sends SMS via Twilio.
+ *
+ * This avoids coupling the MCP Durable Object to the Queue producer binding.
+ * The MCP writes intent to D1; the notifier worker reads and sends.
+ */
+export async function notifyEventChange(
+  db: D1Database,
+  eventId: string,
+  eventTitle: string,
+  changeType: 'created' | 'updated' | 'cancelled',
+): Promise<void> {
+  try {
+    // Get participants for this event
+    const participants = await getEventParticipants(db, eventId);
+
+    for (const participant of participants) {
+      // Check if member has changes notifications enabled and a phone number
+      const prefs = await getNotificationPreferences(db, participant.member_id);
+      if (!prefs || !prefs.changes_enabled || !prefs.sms_enabled) continue;
+
+      // Get member phone
+      const member = await (await import('./db/queries.js')).getMember(db, participant.member_id);
+      if (!member?.phone) continue;
+
+      const dedupKey = `change:${eventId}:${changeType}:${participant.member_id}`;
+      const message = `Schedule ${changeType}: "${eventTitle}"`;
+
+      await createNotificationLog(db, {
+        member_id: participant.member_id,
+        event_id: eventId,
+        trigger_type: 'change',
+        phone: member.phone,
+        message,
+        status: 'pending',
+        dedup_key: dedupKey,
+      });
+    }
+  } catch {
+    // Notification failures should not block the main operation
+    console.error(`[insight] Failed to enqueue change notification for event ${eventId}`);
+  }
 }

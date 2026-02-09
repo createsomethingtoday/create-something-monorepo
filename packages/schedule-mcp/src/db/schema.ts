@@ -25,6 +25,7 @@ export type Member = {
   id: string;
   name: string;
   email: string | null;
+  phone: string | null;
   timezone: string;
   created_at: number;
 };
@@ -157,4 +158,44 @@ export type UnitWithMembers = Unit & {
 
 export type UnitWithCount = Unit & {
   member_count: number;
+};
+
+// ---------------------------------------------------------------------------
+// Notification Preferences
+// ---------------------------------------------------------------------------
+
+export type NotificationPreferences = {
+  id: string;
+  member_id: string;
+  reminders_enabled: number; // 0 | 1
+  changes_enabled: number;   // 0 | 1
+  conflicts_enabled: number; // 0 | 1
+  reminder_minutes_1: number;
+  reminder_minutes_2: number;
+  reminder_minutes_3: number;
+  sms_enabled: number; // 0 | 1
+  created_at: number;
+  updated_at: number;
+};
+
+// ---------------------------------------------------------------------------
+// Notification Log
+// ---------------------------------------------------------------------------
+
+export type NotificationTriggerType = 'reminder' | 'change' | 'conflict' | 'manual';
+export type NotificationStatus = 'pending' | 'queued' | 'sent' | 'failed';
+
+export type NotificationLogEntry = {
+  id: string;
+  member_id: string;
+  event_id: string | null;
+  trigger_type: NotificationTriggerType;
+  phone: string;
+  message: string;
+  status: NotificationStatus;
+  error_message: string | null;
+  dedup_key: string | null;
+  scheduled_for: number | null;
+  sent_at: number | null;
+  created_at: number;
 };

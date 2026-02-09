@@ -169,7 +169,7 @@ export default {
         },
         capabilities: {
           resources: '5 URIs (Database tier — calendars, members, units, templates, events-this-week)',
-          tools: '26 tools (Automation tier — diagnostics, list/read, full CRUD, scheduling, interop)',
+          tools: '30 tools (Automation tier — diagnostics, list/read, full CRUD, scheduling, interop, notifications)',
           prompts: '3 prompts (Judgment tier — analysis, conflict resolution, optimization)',
           sampling: '3 tools use sampling (Recursive property — find_conflicts, apply_template, export_ical)',
         },

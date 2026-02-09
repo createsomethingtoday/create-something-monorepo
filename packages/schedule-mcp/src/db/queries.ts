@@ -18,6 +18,10 @@ import type {
   EventParticipantWithMember,
   EventStatus,
   Member,
+  NotificationLogEntry,
+  NotificationPreferences,
+  NotificationStatus,
+  NotificationTriggerType,
   Template,
   TemplateSlot,
   TemplateWithSlots,
@@ -445,7 +449,7 @@ export async function getMember(
 
 export async function createMember(
   db: D1Database,
-  input: { name: string; email?: string; timezone?: string },
+  input: { name: string; email?: string; phone?: string; timezone?: string },
 ): Promise<Member> {
   const id = generateId();
   const ts = now();
@@ -453,16 +457,17 @@ export async function createMember(
     id,
     name: input.name,
     email: input.email ?? null,
+    phone: input.phone ?? null,
     timezone: input.timezone ?? 'UTC',
     created_at: ts,
   };
 
   await db
     .prepare(
-      `INSERT INTO members (id, name, email, timezone, created_at)
-       VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO members (id, name, email, phone, timezone, created_at)
+       VALUES (?, ?, ?, ?, ?, ?)`,
     )
-    .bind(member.id, member.name, member.email, member.timezone, member.created_at)
+    .bind(member.id, member.name, member.email, member.phone, member.timezone, member.created_at)
     .run();
 
   return member;
@@ -479,7 +484,7 @@ export async function updateMember(
   const fields: string[] = [];
   const values: unknown[] = [];
 
-  const allowedKeys: (keyof typeof updates)[] = ['name', 'email', 'timezone'];
+  const allowedKeys: (keyof typeof updates)[] = ['name', 'email', 'phone', 'timezone'];
 
   for (const key of allowedKeys) {
     if (key in updates) {
@@ -842,5 +847,229 @@ export async function getTemplateSlots(
     )
     .bind(templateId)
     .all<TemplateSlot>();
+  return result.results;
+}
+
+// =========================================================================
+// Notification Preferences
+// =========================================================================
+
+export async function getNotificationPreferences(
+  db: D1Database,
+  memberId: string,
+): Promise<NotificationPreferences | null> {
+  return db
+    .prepare('SELECT * FROM notification_preferences WHERE member_id = ?')
+    .bind(memberId)
+    .first<NotificationPreferences>();
+}
+
+export async function setNotificationPreferences(
+  db: D1Database,
+  memberId: string,
+  prefs: Partial<Omit<NotificationPreferences, 'id' | 'member_id' | 'created_at' | 'updated_at'>>,
+): Promise<NotificationPreferences> {
+  const existing = await getNotificationPreferences(db, memberId);
+  const ts = now();
+
+  if (existing) {
+    // Update existing
+    const fields: string[] = [];
+    const values: unknown[] = [];
+
+    const allowedKeys = [
+      'reminders_enabled', 'changes_enabled', 'conflicts_enabled',
+      'reminder_minutes_1', 'reminder_minutes_2', 'reminder_minutes_3',
+      'sms_enabled',
+    ] as const;
+
+    for (const key of allowedKeys) {
+      if (key in prefs) {
+        fields.push(`${key} = ?`);
+        values.push(prefs[key]);
+      }
+    }
+
+    if (fields.length > 0) {
+      fields.push('updated_at = ?');
+      values.push(ts);
+      values.push(memberId);
+
+      await db
+        .prepare(`UPDATE notification_preferences SET ${fields.join(', ')} WHERE member_id = ?`)
+        .bind(...values)
+        .run();
+    }
+
+    return (await getNotificationPreferences(db, memberId))!;
+  } else {
+    // Create new with defaults
+    const id = generateId();
+    await db
+      .prepare(
+        `INSERT INTO notification_preferences
+           (id, member_id, reminders_enabled, changes_enabled, conflicts_enabled,
+            reminder_minutes_1, reminder_minutes_2, reminder_minutes_3, sms_enabled,
+            created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        id,
+        memberId,
+        prefs.reminders_enabled ?? 1,
+        prefs.changes_enabled ?? 1,
+        prefs.conflicts_enabled ?? 1,
+        prefs.reminder_minutes_1 ?? 15,
+        prefs.reminder_minutes_2 ?? 60,
+        prefs.reminder_minutes_3 ?? 1440,
+        prefs.sms_enabled ?? 1,
+        ts,
+        ts,
+      )
+      .run();
+
+    return (await getNotificationPreferences(db, memberId))!;
+  }
+}
+
+// =========================================================================
+// Notification Log
+// =========================================================================
+
+export async function createNotificationLog(
+  db: D1Database,
+  input: {
+    member_id: string;
+    event_id?: string;
+    trigger_type: NotificationTriggerType;
+    phone: string;
+    message: string;
+    status?: NotificationStatus;
+    dedup_key?: string;
+    scheduled_for?: number;
+  },
+): Promise<NotificationLogEntry> {
+  const id = generateId();
+  const ts = now();
+
+  await db
+    .prepare(
+      `INSERT INTO notification_log
+         (id, member_id, event_id, trigger_type, phone, message, status, dedup_key, scheduled_for, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(
+      id,
+      input.member_id,
+      input.event_id ?? null,
+      input.trigger_type,
+      input.phone,
+      input.message,
+      input.status ?? 'pending',
+      input.dedup_key ?? null,
+      input.scheduled_for ?? null,
+      ts,
+    )
+    .run();
+
+  return {
+    id,
+    member_id: input.member_id,
+    event_id: input.event_id ?? null,
+    trigger_type: input.trigger_type,
+    phone: input.phone,
+    message: input.message,
+    status: input.status ?? 'pending',
+    error_message: null,
+    dedup_key: input.dedup_key ?? null,
+    scheduled_for: input.scheduled_for ?? null,
+    sent_at: null,
+    created_at: ts,
+  };
+}
+
+export async function getPendingNotifications(
+  db: D1Database,
+  limit = 50,
+): Promise<NotificationLogEntry[]> {
+  const result = await db
+    .prepare(
+      `SELECT * FROM notification_log
+       WHERE status = 'pending'
+       ORDER BY scheduled_for ASC, created_at ASC
+       LIMIT ?`,
+    )
+    .bind(limit)
+    .all<NotificationLogEntry>();
+  return result.results;
+}
+
+export async function updateNotificationStatus(
+  db: D1Database,
+  id: string,
+  status: NotificationStatus,
+  errorMessage?: string,
+): Promise<void> {
+  const ts = now();
+  await db
+    .prepare(
+      `UPDATE notification_log
+       SET status = ?, error_message = ?, sent_at = ?
+       WHERE id = ?`,
+    )
+    .bind(status, errorMessage ?? null, status === 'sent' ? ts : null, id)
+    .run();
+}
+
+export async function checkDedupKey(
+  db: D1Database,
+  dedupKey: string,
+): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT id FROM notification_log WHERE dedup_key = ? AND status != 'failed' LIMIT 1`,
+    )
+    .bind(dedupKey)
+    .first<{ id: string }>();
+  return row !== null;
+}
+
+export async function listNotificationLog(
+  db: D1Database,
+  filters?: { member_id?: string; trigger_type?: string; limit?: number },
+): Promise<NotificationLogEntry[]> {
+  let query = 'SELECT * FROM notification_log WHERE 1=1';
+  const params: unknown[] = [];
+
+  if (filters?.member_id) {
+    query += ' AND member_id = ?';
+    params.push(filters.member_id);
+  }
+  if (filters?.trigger_type) {
+    query += ' AND trigger_type = ?';
+    params.push(filters.trigger_type);
+  }
+
+  query += ' ORDER BY created_at DESC LIMIT ?';
+  params.push(filters?.limit ?? 50);
+
+  const result = await db
+    .prepare(query)
+    .bind(...params)
+    .all<NotificationLogEntry>();
+  return result.results;
+}
+
+export async function getMembersWithRemindersEnabled(
+  db: D1Database,
+): Promise<Array<Member & { reminder_minutes_1: number; reminder_minutes_2: number; reminder_minutes_3: number }>> {
+  const result = await db
+    .prepare(
+      `SELECT m.*, np.reminder_minutes_1, np.reminder_minutes_2, np.reminder_minutes_3
+       FROM members m
+       JOIN notification_preferences np ON np.member_id = m.id
+       WHERE np.reminders_enabled = 1 AND np.sms_enabled = 1 AND m.phone IS NOT NULL`,
+    )
+    .all<Member & { reminder_minutes_1: number; reminder_minutes_2: number; reminder_minutes_3: number }>();
   return result.results;
 }
