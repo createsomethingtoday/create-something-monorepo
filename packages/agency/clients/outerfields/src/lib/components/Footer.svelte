@@ -17,7 +17,9 @@
 		<div class="footer-grid">
 			<!-- Brand column -->
 			<div class="footer-brand">
-				<h2 class="brand-name">OUTERFIELDS</h2>
+				<a href="/" class="footer-logo-link">
+					<img src="/logo-outerfields.png" alt="OUTERFIELDS" class="footer-logo" />
+				</a>
 				<p class="brand-description">
 					We build Private Content Networks for creators and brands. Full-service platform creation starting at $19,999.
 				</p>
@@ -107,13 +109,21 @@
 		gap: 1rem;
 	}
 
-	.brand-name {
-		font-size: 1.75rem;
-		font-weight: 800;
-		color: var(--color-fg-primary);
-		text-transform: uppercase;
-		letter-spacing: -0.02em;
-		margin: 0;
+	.footer-logo-link {
+		display: inline-block;
+		text-decoration: none;
+	}
+
+	.footer-logo {
+		height: 2rem;
+		width: auto;
+		display: block;
+		opacity: 0.9;
+		transition: opacity var(--duration-micro) var(--ease-standard);
+	}
+
+	.footer-logo-link:hover .footer-logo {
+		opacity: 1;
 	}
 
 	.brand-description {
