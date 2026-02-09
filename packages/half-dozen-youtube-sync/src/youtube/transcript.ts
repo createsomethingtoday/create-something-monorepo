@@ -54,17 +54,23 @@ export async function extractTranscriptBrowser(
   const transcriptOpened = await openTranscriptPanel(page);
   if (!transcriptOpened) return null;
 
-  // Wait for segments to load (YouTube lazy-loads them — can take 15-30s)
-  const segmentLoaded = await Promise.race([
-    page.waitForSelector('ytd-transcript-segment-renderer', { timeout: 30000 }).then(() => true),
-    page.waitForSelector('.segment-text', { timeout: 30000 }).then(() => true),
-    new Promise<boolean>(r => setTimeout(() => r(false), 30000)),
-  ]);
+  // Wait for segments to load — poll every 3s for up to 60s
+  // YouTube lazy-loads transcript content; with Profile auth it can take 30-60s
+  let segmentLoaded = false;
+  for (let elapsed = 0; elapsed < 60000; elapsed += 3000) {
+    const count = await page.evaluate(() =>
+      document.querySelectorAll('ytd-transcript-segment-renderer, .segment-text').length
+    );
+    if (count > 0) {
+      segmentLoaded = true;
+      // Give extra time for all segments to finish rendering
+      await page.evaluate(() => new Promise(r => setTimeout(r, 2000)));
+      break;
+    }
+    await page.evaluate(() => new Promise(r => setTimeout(r, 3000)));
+  }
 
   if (!segmentLoaded) return null;
-
-  // Extra time for all segments to render
-  await page.evaluate(() => new Promise(r => setTimeout(r, 3000)));
 
   // Extract segments from DOM
   return extractSegmentsFromDOM(page);
