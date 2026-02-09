@@ -14,6 +14,7 @@ interface Env {
   DB: D1Database;
   NOTIFICATION_QUEUE: Queue;
   RESEND_API_KEY: string;
+  // Twilio removed — Resend handles all notification delivery
 }
 
 interface NotificationMessage {

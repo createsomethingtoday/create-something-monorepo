@@ -1144,7 +1144,7 @@ export function registerTools(
 
   server.tool(
     'set_notification_preferences',
-    'Set SMS notification preferences for a member (reminders, changes, conflicts)',
+    'Set notification preferences for a member (reminders, changes, conflicts)',
     {
       member_id: z.string(),
       reminders_enabled: z.boolean().optional(),
@@ -1178,7 +1178,7 @@ export function registerTools(
 
   server.tool(
     'get_notification_preferences',
-    'Get SMS notification preferences for a member',
+    'Get notification preferences for a member',
     {
       member_id: z.string(),
     },
@@ -1200,10 +1200,10 @@ export function registerTools(
 
   server.tool(
     'send_notification',
-    'Send an immediate SMS notification to a member (agent-triggered)',
+    'Send an immediate email notification to a member (agent-triggered)',
     {
       member_id: z.string(),
-      message: z.string().describe('SMS message body (max 160 chars recommended)'),
+      message: z.string().describe('Notification message body'),
       event_id: z.string().optional().describe('Related event ID if applicable'),
     },
     async (params) => {
@@ -1233,7 +1233,7 @@ export function registerTools(
             phone: member.phone,
             message: params.message,
             status: 'pending',
-            note: 'SMS will be sent within 5 minutes by the notifier worker.',
+            note: 'Email will be sent within 5 minutes by the notifier worker.',
           });
         } catch (err) {
           return errorContent(`Failed to send notification: ${(err as Error).message}`);
@@ -1244,7 +1244,7 @@ export function registerTools(
 
   server.tool(
     'list_notification_log',
-    'View recent SMS notification history (Insight)',
+    'View recent notification history (Insight)',
     {
       member_id: z.string().optional(),
       trigger_type: z.enum(['reminder', 'change', 'conflict', 'manual']).optional(),
@@ -1277,7 +1277,7 @@ export function registerTools(
  *
  * Called by create_event, update_event, delete_event when the event changes.
  * Writes 'pending' entries to notification_log. The notifier worker picks
- * them up within 5 minutes and sends SMS via Twilio.
+ * them up within 5 minutes and sends email via Resend.
  *
  * This avoids coupling the MCP Durable Object to the Queue producer binding.
  * The MCP writes intent to D1; the notifier worker reads and sends.
