@@ -96,10 +96,20 @@ export class YouTubeSteelProvider {
         console.error('Steel session created without auth context — run "pnpm capture:session" to authenticate');
       }
 
-      // Connect Puppeteer to the Steel session
-      const browser = await puppeteer.connect({
-        browserWSEndpoint: this.getWebSocketUrl(session.id)
-      });
+      // Connect Puppeteer to the Steel session (retry — context injection may delay readiness)
+      let browser: Browser;
+      const wsUrl = this.getWebSocketUrl(session.id);
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          browser = await puppeteer.connect({ browserWSEndpoint: wsUrl });
+          break;
+        } catch (err) {
+          if (attempt === 2) throw err;
+          console.error(`Puppeteer connect attempt ${attempt + 1} failed, retrying in 2s...`);
+          await new Promise(r => setTimeout(r, 2000));
+        }
+      }
+      browser = browser!;
 
       const now = new Date();
       const steelSession: SteelSession = {

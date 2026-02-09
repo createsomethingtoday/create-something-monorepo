@@ -14,5 +14,3 @@ extracted-videos/
 
 # Session data (contains auth tokens — never commit)
 session-context.json
-session-cookies.json
-cookies.json
