@@ -8,6 +8,7 @@
  * both ScopedMcpServer (stdio) and McpServer (Worker/McpAgent).
  */
 
+import { z } from 'zod';
 import type { D1Exec, R2Store } from '../services/executor.js';
 import { generateStorageKey } from '../services/r2.js';
 import * as db from '../services/d1.js';
@@ -83,6 +84,34 @@ export function registerTools(
   async function withDb<T>(fn: (e: D1Exec) => Promise<T>): Promise<T> {
     const e = getD1(); await db.ensureInitialized(e); return fn(e);
   }
+
+  // ─── Discovery (read-only) ────────────────────────────────────────
+  // These let the agent navigate the data independently.
+  // Without them, the agent has no way to find workspace/table IDs.
+
+  server.tool('list_workspaces',
+    'List all workspaces with IDs, names, descriptions.',
+    {},
+    async () => { try { return ok({ workspaces: await withDb(e => db.listWorkspaces(e)) }); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } },
+    { readOnly: true });
+
+  server.tool('list_tables',
+    'List tables in a workspace with IDs, names, column schemas.',
+    { workspace_id: z.string().min(1) } as Record<string, unknown>,
+    async (p: unknown) => { const i = p as { workspace_id: string }; try { return ok({ tables: await withDb(e => db.listTables(e, i.workspace_id)) }); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } },
+    { readOnly: true });
+
+  server.tool('get_record',
+    'Get a single record by ID.',
+    { record_id: z.string().min(1) } as Record<string, unknown>,
+    async (p: unknown) => { const i = p as { record_id: string }; try { const rec = await withDb(e => db.getRecord(e, i.record_id)); return rec ? ok({ record: rec }) : fail('Record not found'); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } },
+    { readOnly: true });
+
+  server.tool('get_relations',
+    'Get all relations for a record.',
+    { record_id: z.string().min(1) } as Record<string, unknown>,
+    async (p: unknown) => { const i = p as { record_id: string }; try { const rels = await withDb(e => db.getRelationsForRecord(e, i.record_id)); return ok({ relations: rels, count: rels.length }); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } },
+    { readOnly: true });
 
   // ─── Workspace ───────────────────────────────────────────────────
 
