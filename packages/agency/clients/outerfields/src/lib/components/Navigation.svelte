@@ -5,7 +5,7 @@
 	 * Fixed navigation with logo, links, and auth buttons
 	 * Mobile hamburger menu for touch devices
 	 */
-	import { Infinity, LogOut, User, Menu, X } from 'lucide-svelte';
+	import { LogOut, User, Menu, X } from 'lucide-svelte';
 	import { page } from '$app/stores';
 	import { NAV_LINKS } from '$lib/constants/navigation';
 
@@ -43,10 +43,7 @@
 		<div class="nav-left">
 			<!-- Logo -->
 			<a href="/" class="logo-link" onclick={closeMobileMenu}>
-				<div class="logo-icon">
-					<Infinity size={32} />
-				</div>
-				<span class="logo-text">OUTERFIELDS</span>
+				<img src="/logo-outerfields.png" alt="OUTERFIELDS" class="logo-img" />
 			</a>
 
 			<!-- Desktop Nav Links -->
@@ -176,22 +173,13 @@
 	}
 
 	.logo-link:hover {
-		color: var(--color-primary);
+		opacity: 0.9;
 	}
 
-	.logo-icon {
-		width: 2rem;
+	.logo-img {
 		height: 2rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: var(--color-primary);
-	}
-
-	.logo-text {
-		font-size: 1.25rem;
-		font-weight: 700;
-		letter-spacing: -0.02em;
+		width: auto;
+		display: block;
 	}
 
 	.nav-links {

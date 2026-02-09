@@ -119,7 +119,7 @@
 			name: 'OUTERFIELDS',
 			logo: {
 				'@type': 'ImageObject',
-				url: 'https://outerfields.createsomething.agency/logo.svg'
+				url: 'https://outerfields.createsomething.agency/logo-outerfields.png'
 			}
 		}
 	} : null);

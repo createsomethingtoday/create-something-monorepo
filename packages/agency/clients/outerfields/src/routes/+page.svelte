@@ -34,7 +34,7 @@
 		'@type': 'Organization',
 		name: 'OUTERFIELDS',
 		url: seo.url,
-		logo: `${seo.url}/logo.svg`,
+		logo: `${seo.url}/logo-outerfields.png`,
 		description: 'Premium content network platform for creators and businesses',
 		sameAs: [
 			'https://twitter.com/outerfields',
