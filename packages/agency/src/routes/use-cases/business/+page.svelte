@@ -131,7 +131,7 @@
 			</BlurFade>
 			<BlurFade delay={0.3}>
 				<div class="hero-cta">
-					<ShimmerButton href="https://savvycal.com/createsomething/together">
+					<ShimmerButton href="https://createsomething.agency/book">
 						Book Discovery Call
 					</ShimmerButton>
 					<a href="/" class="hero-link">← Back to home</a>
@@ -304,7 +304,7 @@
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
-			<ShimmerButton href="https://savvycal.com/createsomething/together">
+			<ShimmerButton href="https://createsomething.agency/book">
 				Book Discovery Call
 			</ShimmerButton>
 		</BlurFade>

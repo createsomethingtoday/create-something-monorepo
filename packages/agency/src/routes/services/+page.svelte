@@ -349,7 +349,7 @@
 			<p class="cta-subtext">30-minute discovery call. We'll count your integrations and map build + operate.</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
-			<ShimmerButton href="https://savvycal.com/createsomething/together">
+			<ShimmerButton href="https://createsomething.agency/book">
 				Book Discovery Call
 			</ShimmerButton>
 		</BlurFade>

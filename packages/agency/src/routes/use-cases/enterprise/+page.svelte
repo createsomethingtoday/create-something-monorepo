@@ -101,7 +101,7 @@
 			</BlurFade>
 			<BlurFade delay={0.3}>
 				<div class="hero-cta">
-					<ShimmerButton href="https://savvycal.com/createsomething/together">
+					<ShimmerButton href="https://createsomething.agency/book">
 						Book Discovery Call
 					</ShimmerButton>
 					<a href="/services" class="hero-link">View pricing →</a>
@@ -212,7 +212,7 @@
 						<div class="pricing-price">$5,000<span class="pricing-plus">+</span></div>
 						<p class="pricing-desc">Scales with complexity. Custom scoping on discovery call.</p>
 						<div class="pricing-cta">
-							<ShimmerButton href="https://savvycal.com/createsomething/together">
+							<ShimmerButton href="https://createsomething.agency/book">
 								Book Discovery Call
 							</ShimmerButton>
 						</div>
@@ -249,7 +249,7 @@
 			<p class="cta-subtext">Architecture review. Custom scoping. Let's build your automation layer.</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
-			<ShimmerButton href="https://savvycal.com/createsomething/together">
+			<ShimmerButton href="https://createsomething.agency/book">
 				Book Discovery Call
 			</ShimmerButton>
 		</BlurFade>
