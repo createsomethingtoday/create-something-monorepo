@@ -31,6 +31,11 @@ export function createSubstrateServer(config: SubstrateServerConfig): ScopedMcpS
   const server = createScopedServer({
     name: 'substrate-mcp',
     version: '0.1.0',
+    icons: [{
+      src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI2IiBmaWxsPSIjMDAwMDAwIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNCw0KSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSI+PHBhdGggZD0ibTEyLjgzIDIuMThhMiAyIDAgMCAwLTEuNjYgMEwyLjYgNi4wOGExIDEgMCAwIDAgMCAxLjgzbDguNTggMy45MWEyIDIgMCAwIDAgMS42NiAwbDguNTgtMy45YTEgMSAwIDAgMCAwLTEuODRaIi8+PHBhdGggZD0ibTIyIDE3LjY1LTkuMTcgNC4xNmEyIDIgMCAwIDEtMS42NiAwTDIgMTcuNjUiLz48cGF0aCBkPSJtMjIgMTIuNjUtOS4xNyA0LjE2YTIgMiAwIDAgMS0xLjY2IDBMMiAxMi42NSIvPjwvZz48L3N2Zz4=',
+      mimeType: 'image/svg+xml',
+      sizes: ['any'],
+    }],
     authProvider: config.authProvider,
     insight: config.insight,
   });

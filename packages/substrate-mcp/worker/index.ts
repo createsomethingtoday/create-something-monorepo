@@ -25,6 +25,7 @@ import { registerPrompts } from '../src/prompts/index.js';
 
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
+  READER_OBJECT: DurableObjectNamespace;
   DB: D1Database;
   FILES: R2Bucket;
 }
@@ -37,6 +38,11 @@ export class SubstrateMCP extends McpAgent<Env> {
   server = new McpServer({
     name: 'substrate-mcp',
     version: '0.1.0',
+    icons: [{
+      src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI2IiBmaWxsPSIjMDAwMDAwIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNCw0KSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSI+PHBhdGggZD0ibTEyLjgzIDIuMThhMiAyIDAgMCAwLTEuNjYgMEwyLjYgNi4wOGExIDEgMCAwIDAgMCAxLjgzbDguNTggMy45MWEyIDIgMCAwIDAgMS42NiAwbDguNTgtMy45YTEgMSAwIDAgMCAwLTEuODRaIi8+PHBhdGggZD0ibTIyIDE3LjY1LTkuMTcgNC4xNmEyIDIgMCAwIDEtMS42NiAwTDIgMTcuNjUiLz48cGF0aCBkPSJtMjIgMTIuNjUtOS4xNyA0LjE2YTIgMiAwIDAgMS0xLjY2IDBMMiAxMi42NSIvPjwvZz48L3N2Zz4=',
+      mimeType: 'image/svg+xml',
+      sizes: ['any'],
+    }],
   });
 
   async init() {
@@ -52,6 +58,121 @@ export class SubstrateMCP extends McpAgent<Env> {
     registerTools(this.server, () => d1, () => r2, () => 'agent');
     registerResources(this.server, () => d1);
     registerPrompts(this.server, () => d1);
+  }
+}
+
+// =============================================================================
+// Reader MCP — restricted Durable Object (read + upvote only)
+// =============================================================================
+
+export class ReaderMCP extends McpAgent<Env> {
+  server = new McpServer({
+    name: 'substrate-reader',
+    version: '0.1.0',
+  });
+
+  async init() {
+    const d1 = bindingExecutor(this.env.DB);
+    await ensureInitialized(d1);
+    const { z } = await import('zod');
+
+    // ─── Read-only tools (4 tools) ─────────────────────────────────
+
+    this.server.tool('find_records',
+      'Query or search by workspace + table name.',
+      {
+        workspace_name: z.string().min(1),
+        table_name: z.string().min(1),
+        filters: z.array(z.object({ column: z.string(), operator: z.string(), value: z.unknown() })).optional(),
+        search: z.string().optional(),
+        limit: z.number().int().min(1).max(100).default(25),
+      },
+      async (params: Record<string, unknown>) => {
+        const { getWorkspaceByName, getTableByName, listTables, searchRecords, queryRecords } = await import('../src/services/d1.js');
+        const wsName = params.workspace_name as string;
+        const tblName = params.table_name as string;
+        const ws = await getWorkspaceByName(d1, wsName);
+        if (!ws) return { content: [{ type: 'text' as const, text: JSON.stringify({ error: `Workspace '${wsName}' not found` }) }] };
+        const tbl = await getTableByName(d1, ws.id, tblName);
+        if (!tbl) {
+          const tables = await listTables(d1, ws.id);
+          return { content: [{ type: 'text' as const, text: JSON.stringify({ error: `Table '${tblName}' not found. Available: ${tables.map((t: any) => t.name).join(', ')}` }) }] };
+        }
+        if (params.search) {
+          const recs = await searchRecords(d1, tbl.id, params.search as string, (params.limit as number) ?? 25);
+          return { content: [{ type: 'text' as const, text: JSON.stringify({ table: tbl.name, records: recs, count: recs.length }) }] };
+        }
+        const result = await queryRecords(d1, {
+          table_id: tbl.id,
+          filters: params.filters as any,
+          limit: params.limit as number,
+          offset: 0,
+        });
+        return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] };
+      },
+    );
+
+    this.server.tool('list_workspaces',
+      'List all workspaces with tables and schemas.',
+      {},
+      async () => {
+        const { listWorkspaces, listTables } = await import('../src/services/d1.js');
+        const workspaces = await listWorkspaces(d1);
+        const result = [];
+        for (const ws of workspaces) {
+          const tables = await listTables(d1, ws.id);
+          result.push({ ...ws, tables: tables.map((t: any) => ({ id: t.id, name: t.name, description: t.description, columns: t.columns })) });
+        }
+        return { content: [{ type: 'text' as const, text: JSON.stringify({ workspaces: result }) }] };
+      },
+    );
+
+    this.server.tool('get_record',
+      'Get record by ID with relations.',
+      { record_id: z.string().min(1) },
+      async (params: Record<string, unknown>) => {
+        const { getRecord, getRelationsForRecord } = await import('../src/services/d1.js');
+        const rec = await getRecord(d1, params.record_id as string);
+        if (!rec) return { content: [{ type: 'text' as const, text: JSON.stringify({ error: 'Record not found' }) }] };
+        const relations = await getRelationsForRecord(d1, params.record_id as string);
+        return { content: [{ type: 'text' as const, text: JSON.stringify({ record: rec, relations }) }] };
+      },
+    );
+
+    // ─── Upvote tool (the one write action readers get) ────────────
+
+    this.server.tool('upvote_content',
+      'Upvote a content piece. Adds your vote to the record.',
+      {
+        record_id: z.string().min(1),
+        voter: z.string().min(1).describe('Your name or identifier'),
+      },
+      async (params: Record<string, unknown>) => {
+        const { getRecord } = await import('../src/services/d1.js');
+        const rid = params.record_id as string;
+        const voter = params.voter as string;
+
+        const rec = await getRecord(d1, rid);
+        if (!rec) return { content: [{ type: 'text' as const, text: JSON.stringify({ error: 'Record not found' }) }], isError: true as const };
+
+        const data = rec.data as Record<string, unknown>;
+        const upvotes = Array.isArray(data.upvotes) ? data.upvotes as string[] : [];
+
+        if (upvotes.includes(voter)) {
+          return { content: [{ type: 'text' as const, text: JSON.stringify({ already_voted: true, upvotes: upvotes.length, voters: upvotes }) }] };
+        }
+
+        upvotes.push(voter);
+        data.upvotes = upvotes;
+
+        // Direct D1 update
+        await this.env.DB.prepare("UPDATE records SET data=?, updated_at=datetime('now') WHERE id=?")
+          .bind(JSON.stringify(data), rid)
+          .run();
+
+        return { content: [{ type: 'text' as const, text: JSON.stringify({ success: true, upvotes: upvotes.length, voters: upvotes, title: data.title }) }] };
+      },
+    );
   }
 }
 
@@ -208,6 +329,27 @@ export default {
     // SSE fallback transport (OpenAI, ChatGPT, Cursor)
     if (url.pathname === '/sse' || url.pathname.startsWith('/sse/')) {
       return SubstrateMCP.serve('/sse').fetch(request, env, ctx);
+    }
+
+    // Reader — restricted access (read + upvote only)
+    if (url.pathname === '/reader/mcp' || url.pathname.startsWith('/reader/mcp/')) {
+      return ReaderMCP.serve('/reader/mcp').fetch(request, env, ctx);
+    }
+    if (url.pathname === '/reader/sse' || url.pathname.startsWith('/reader/sse/')) {
+      return ReaderMCP.serve('/reader/sse').fetch(request, env, ctx);
+    }
+    if (url.pathname === '/reader') {
+      return new Response(JSON.stringify({
+        name: 'substrate-reader',
+        version: '0.1.0',
+        description: 'Read-only access to Substrate with upvote capability. 4 tools: find_records, list_workspaces, get_record, upvote_content.',
+        endpoints: {
+          mcp: '/reader/mcp',
+          sse: '/reader/sse',
+        },
+      }, null, 2), {
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      });
     }
 
     // Dashboard — read-only human view of workspace data

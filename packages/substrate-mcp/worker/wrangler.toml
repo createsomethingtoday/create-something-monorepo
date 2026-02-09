@@ -22,11 +22,19 @@ database_id = "89486bf0-aa79-460e-aa78-fc1b68015e69"
 binding = "FILES"
 bucket_name = "substrate-files"
 
-# Durable Object — MCP session state for SSE + Streamable HTTP
+# Durable Objects — MCP session state for SSE + Streamable HTTP
 [[durable_objects.bindings]]
 name = "MCP_OBJECT"
 class_name = "SubstrateMCP"
 
+[[durable_objects.bindings]]
+name = "READER_OBJECT"
+class_name = "ReaderMCP"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["SubstrateMCP"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["ReaderMCP"]
