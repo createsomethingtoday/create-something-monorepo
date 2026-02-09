@@ -27,7 +27,6 @@
     "puppeteer-core": "^23.0.0",
     "resend": "^4.0.0",
     "steel-sdk": "^0.16.0",
-    "youtube-transcript": "^1.2.1",
     "zod": "^3.23.0"
   },
   "devDependencies": {

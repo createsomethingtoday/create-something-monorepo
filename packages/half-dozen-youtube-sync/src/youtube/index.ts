@@ -13,7 +13,6 @@ export {
 } from './playlist.js';
 
 export {
-  extractTranscriptApi,
   extractTranscriptBrowser,
   extractTranscript,
   extractVideoMetadata,

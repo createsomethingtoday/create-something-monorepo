@@ -267,7 +267,7 @@ export class YouTubeSteelProvider {
         transcript: transcriptResult?.transcript,
         transcriptSegments: transcriptResult?.segments,
         scrapedAt: new Date().toISOString(),
-        extractionMethod: transcriptResult?.method === 'api' ? 'youtube-transcript-api' : 'steel'
+        extractionMethod: 'steel'
       };
 
       this.metrics.videosExtracted++;
@@ -305,13 +305,13 @@ export class YouTubeSteelProvider {
     const videos: VideoData[] = [];
     const errors: Array<{ url: string; error: string }> = [];
 
-    // Extract each video
+    // Extract each video — browser-first (server-side APIs blocked as of 2026)
     for (const video of playlist.videos) {
       try {
         console.log(`Extracting: ${video.title}`);
         
-        // Try transcript API first (doesn't need navigation)
-        const transcriptResult = await extractTranscript(video.videoId);
+        // Use Steel browser directly (only reliable method)
+        const transcriptResult = await extractTranscript(video.url, page);
 
         const videoData: VideoData = {
           videoId: video.videoId,
@@ -323,23 +323,15 @@ export class YouTubeSteelProvider {
           transcript: transcriptResult?.transcript,
           transcriptSegments: transcriptResult?.segments,
           scrapedAt: new Date().toISOString(),
-          extractionMethod: transcriptResult?.method === 'api' ? 'youtube-transcript-api' : 'steel',
+          extractionMethod: 'steel',
           playlistId: playlist.playlistId,
           playlistTitle: playlist.title
         };
 
-        // If transcript API failed, try browser method
-        if (!transcriptResult) {
-          console.log(`  API failed, trying browser extraction...`);
-          await page.goto(video.url, { waitUntil: 'networkidle2', timeout: 60000 });
-          await this.wait(page, 2000);
-          
-          const browserResult = await extractTranscript(video.url, page);
-          if (browserResult) {
-            videoData.transcript = browserResult.transcript;
-            videoData.transcriptSegments = browserResult.segments;
-            videoData.extractionMethod = 'steel';
-          }
+        if (transcriptResult) {
+          console.log(`  Transcript: ${transcriptResult.transcript.length} chars`);
+        } else {
+          console.log(`  No transcript available`);
         }
 
         videos.push(videoData);

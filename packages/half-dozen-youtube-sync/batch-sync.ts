@@ -162,55 +162,83 @@ async function extractSingleVideo(videoUrl: string, syncToNotion: boolean, datab
   console.log('\n📺 Extracting single video transcript...\n');
   console.log(`URL: ${videoUrl}`);
 
-  // Try API method first (no browser needed)
-  const transcriptResult = await extractTranscript(videoUrl);
+  // Create Steel session for browser-based extraction
+  const client = new Steel({ steelAPIKey: process.env.STEEL_API_KEY! });
+  console.log('\n🚀 Creating Steel session...');
 
-  if (transcriptResult) {
-    console.log(`\n✅ Transcript extracted via ${transcriptResult.method}`);
-    console.log(`   Length: ${transcriptResult.transcript.length} characters`);
-    console.log(`   Segments: ${transcriptResult.segments.length}`);
+  const session = await client.sessions.create({
+    timeout: 5 * 60 * 1000,
+    solveCaptcha: true
+  });
 
-    // Save transcript
-    if (!fs.existsSync(OUTPUT_DIR)) {
-      fs.mkdirSync(OUTPUT_DIR, { recursive: true });
-    }
+  console.log(`✅ Session: ${session.id}`);
+  console.log(`🖥️  Live View: ${(session as { sessionViewerUrl?: string }).sessionViewerUrl}`);
 
-    const videoId = videoUrl.match(/v=([a-zA-Z0-9_-]+)/)?.[1] || 'unknown';
-    const filename = `${OUTPUT_DIR}/${videoId}_transcript.txt`;
-    fs.writeFileSync(filename, transcriptResult.transcript);
-    console.log(`   Saved to: ${filename}`);
+  const wsUrl = `wss://connect.steel.dev?apiKey=${process.env.STEEL_API_KEY}&sessionId=${session.id}`;
+  const browser = await puppeteer.connect({ browserWSEndpoint: wsUrl });
+  const pages = await browser.pages();
+  const page = pages[0] || await browser.newPage();
 
-    // Sync to Notion if requested
-    if (syncToNotion) {
-      console.log('\n🔗 Syncing to Notion...');
-      
-      const video: VideoData = {
-        videoId,
-        url: videoUrl,
-        title: `Video ${videoId}`,  // Would need browser to get actual title
-        transcript: transcriptResult.transcript,
-        transcriptSegments: transcriptResult.segments,
-        scrapedAt: new Date().toISOString(),
-        extractionMethod: transcriptResult.method === 'api' ? 'youtube-transcript-api' : 'steel'
-      };
+  try {
+    const transcriptResult = await extractTranscript(videoUrl, page);
 
-      const notionClient = new YouTubeNotionClient({
-        defaultDatabaseId: databaseId,
-        propertyMapping: NOTION_PROPERTY_MAPPING,
-        selectDefaults: NOTION_SELECT_DEFAULTS
+    if (transcriptResult) {
+      console.log(`\n✅ Transcript extracted via Steel browser`);
+      console.log(`   Length: ${transcriptResult.transcript.length} characters`);
+      console.log(`   Segments: ${transcriptResult.segments.length}`);
+
+      // Save transcript
+      if (!fs.existsSync(OUTPUT_DIR)) {
+        fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+      }
+
+      const videoId = videoUrl.match(/v=([a-zA-Z0-9_-]+)/)?.[1] || 'unknown';
+      const filename = `${OUTPUT_DIR}/${videoId}_transcript.txt`;
+      fs.writeFileSync(filename, transcriptResult.transcript);
+      console.log(`   Saved to: ${filename}`);
+
+      // Get video title from browser
+      const title = await page.evaluate(() => {
+        const el = document.querySelector('#title h1 yt-formatted-string') ||
+                   document.querySelector('meta[property="og:title"]');
+        return el?.textContent?.trim() || el?.getAttribute('content') || 'Untitled';
       });
 
-      const result = await notionClient.syncVideo(video);
+      // Sync to Notion if requested
+      if (syncToNotion) {
+        console.log('\n🔗 Syncing to Notion...');
+        
+        const video: VideoData = {
+          videoId: videoUrl.match(/v=([a-zA-Z0-9_-]+)/)?.[1] || '',
+          url: videoUrl,
+          title,
+          transcript: transcriptResult.transcript,
+          transcriptSegments: transcriptResult.segments,
+          scrapedAt: new Date().toISOString(),
+          extractionMethod: 'steel'
+        };
 
-      if (result.success) {
-        console.log(`✅ Synced to Notion: ${result.pageUrl}`);
-      } else {
-        console.log(`❌ Sync failed: ${result.error}`);
+        const notionClient = new YouTubeNotionClient({
+          defaultDatabaseId: databaseId,
+          propertyMapping: NOTION_PROPERTY_MAPPING,
+          selectDefaults: NOTION_SELECT_DEFAULTS
+        });
+
+        const result = await notionClient.syncVideo(video);
+
+        if (result.success) {
+          console.log(`✅ Synced to Notion: ${result.pageUrl}`);
+        } else {
+          console.log(`❌ Sync failed: ${result.error}`);
+        }
       }
+    } else {
+      console.log('\n❌ Could not extract transcript');
+      console.log('   Video may not have captions available');
     }
-  } else {
-    console.log('\n❌ Could not extract transcript');
-    console.log('   Video may not have captions available');
+  } finally {
+    console.log('\n🔓 Releasing session...');
+    await client.sessions.release(session.id);
   }
 }
 
@@ -277,8 +305,9 @@ async function extractPlaylistVideos(
       console.log(`📍 ${video.title}`);
 
       try {
-        // Try API method first (faster)
-        const transcriptResult = await extractTranscript(video.videoId);
+        // Browser-first transcript extraction (server-side APIs blocked as of 2026)
+        console.log(`   Extracting via Steel browser...`);
+        const transcriptResult = await extractTranscript(video.url, page);
 
         const videoData: VideoData = {
           videoId: video.videoId,
@@ -290,24 +319,10 @@ async function extractPlaylistVideos(
           transcript: transcriptResult?.transcript,
           transcriptSegments: transcriptResult?.segments,
           scrapedAt: new Date().toISOString(),
-          extractionMethod: transcriptResult?.method === 'api' ? 'youtube-transcript-api' : 'steel',
+          extractionMethod: 'steel',
           playlistId: playlist.playlistId,
           playlistTitle: playlist.title
         };
-
-        // If API failed, try browser method
-        if (!transcriptResult) {
-          console.log(`   API failed, trying browser...`);
-          await page.goto(video.url, { waitUntil: 'networkidle2', timeout: 60000 });
-          await sleep(2000);
-          
-          const browserResult = await extractTranscript(video.url, page);
-          if (browserResult) {
-            videoData.transcript = browserResult.transcript;
-            videoData.transcriptSegments = browserResult.segments;
-            videoData.extractionMethod = 'steel';
-          }
-        }
 
         if (videoData.transcript) {
           console.log(`   ✅ Transcript: ${videoData.transcript.length} chars`);

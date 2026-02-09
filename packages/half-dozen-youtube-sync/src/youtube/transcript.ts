@@ -1,79 +1,26 @@
 /**
  * YouTube Transcript Extraction
  * 
- * Extracts transcripts from YouTube videos using two methods:
- * 1. youtube-transcript npm package (fast, no browser needed) — primary
- * 2. Steel.dev browser automation (fallback for restricted videos)
+ * Extracts transcripts from YouTube videos using Steel.dev browser automation.
+ * Browser-first approach — YouTube has blocked all server-side transcript APIs
+ * (timedtext XML, innertube get_transcript, npm packages) from server IPs as of 2026.
+ * 
+ * The browser method opens the transcript panel in YouTube's UI and extracts
+ * the timestamped segments from the DOM, which is reliable because it uses
+ * the same path a human viewer would.
  */
 
-import { YoutubeTranscript } from 'youtube-transcript';
 import type { Page } from 'puppeteer-core';
 import type { TranscriptSegment, VideoData } from '../types.js';
 import { extractVideoId, buildVideoUrl } from './playlist.js';
-import { withYouTubeRetry } from '../utils/retry.js';
 
 // =============================================================================
-// Primary Method: youtube-transcript package
-// =============================================================================
-
-/**
- * Extract transcript using youtube-transcript npm package.
- * This is the fastest method and doesn't require browser automation.
- * 
- * @param videoIdOrUrl - YouTube video ID or full URL
- * @returns Transcript text and segments, or null if unavailable
- */
-export async function extractTranscriptApi(
-  videoIdOrUrl: string
-): Promise<{ transcript: string; segments: TranscriptSegment[] } | null> {
-  const videoId = videoIdOrUrl.includes('youtube.com') || videoIdOrUrl.includes('youtu.be')
-    ? extractVideoId(videoIdOrUrl)
-    : videoIdOrUrl;
-
-  if (!videoId) {
-    throw new Error(`Invalid video ID or URL: ${videoIdOrUrl}`);
-  }
-
-  try {
-    const transcriptData = await withYouTubeRetry(() =>
-      YoutubeTranscript.fetchTranscript(videoId)
-    );
-    
-    if (!transcriptData || transcriptData.length === 0) {
-      return null;
-    }
-
-    // Convert to our segment format
-    const segments: TranscriptSegment[] = transcriptData.map(item => ({
-      text: item.text,
-      start: item.offset / 1000, // Convert ms to seconds
-      duration: item.duration / 1000
-    }));
-
-    // Build full transcript text
-    const transcript = segments.map(s => s.text).join(' ');
-
-    return { transcript, segments };
-  } catch (error) {
-    // Transcript not available (disabled, private, etc.)
-    const message = error instanceof Error ? error.message : String(error);
-    
-    // Common reasons for failure:
-    // - Transcript disabled by video owner
-    // - Video is private or age-restricted
-    // - Video doesn't exist
-    console.warn(`Transcript API failed for ${videoId}: ${message}`);
-    return null;
-  }
-}
-
-// =============================================================================
-// Fallback Method: Steel.dev Browser Automation
+// Primary Method: Steel.dev Browser Automation
 // =============================================================================
 
 /**
  * Extract transcript using Steel.dev browser automation.
- * Use this as a fallback when the API method fails.
+ * This is the primary (and only reliable) method as of 2026.
  * 
  * @param page - Puppeteer page connected to Steel session
  * @param videoUrl - YouTube video URL
@@ -94,8 +41,8 @@ export async function extractTranscriptBrowser(
   // Wait for video player to load
   await page.waitForSelector('#movie_player', { timeout: 15000 }).catch(() => {});
 
-  // Wait a bit for dynamic content
-  await page.evaluate(() => new Promise(r => setTimeout(r, 2000)));
+  // Wait for dynamic content
+  await page.evaluate(() => new Promise(r => setTimeout(r, 3000)));
 
   // Try to open transcript panel
   const transcriptOpened = await openTranscriptPanel(page);
@@ -105,13 +52,13 @@ export async function extractTranscriptBrowser(
   }
 
   // Wait for transcript content to load
-  await page.evaluate(() => new Promise(r => setTimeout(r, 2000)));
+  await page.evaluate(() => new Promise(r => setTimeout(r, 3000)));
 
   // Extract transcript segments from the side panel
   const result = await page.evaluate(() => {
     const segments: Array<{ text: string; start: number; duration: number }> = [];
     
-    // YouTube 2024/2025 transcript panel selectors
+    // YouTube 2025/2026 transcript panel selectors
     const segmentSelectors = [
       'ytd-transcript-segment-renderer',
       'ytd-transcript-segment-list-renderer ytd-transcript-segment-renderer',
@@ -139,7 +86,6 @@ export async function extractTranscriptBrowser(
       );
       
       if (panel) {
-        // Get all clickable transcript items
         segmentElements = Array.from(panel.querySelectorAll('[class*="segment"], [role="button"]'));
       }
     }
@@ -232,143 +178,196 @@ export async function extractTranscriptBrowser(
 }
 
 /**
- * Try to open the transcript panel in YouTube's UI
- * YouTube 2024/2025 UI: Transcript is accessed via "...more" in description or "..." menu
+ * Try to open the transcript panel in YouTube's UI.
+ * YouTube 2025/2026 UI: Transcript is accessed via "...more" in description or "..." menu.
  */
 async function openTranscriptPanel(page: Page): Promise<boolean> {
   const wait = (ms: number) => page.evaluate(`new Promise(r => setTimeout(r, ${ms}))`);
+  const log = (msg: string) => console.error(`  [transcript] ${msg}`);
   
-  // First, scroll down slightly to ensure description is visible
-  await page.evaluate(() => window.scrollBy(0, 300));
-  await wait(1000);
-
-  // Method 1: Expand description and look for "Show transcript" button
-  const expandedDesc = await page.evaluate(() => {
-    const moreButtons = Array.from(document.querySelectorAll(
-      '#description-inline-expander #expand, ' +
-      '#description tp-yt-paper-button, ' +
-      'ytd-text-inline-expander #expand, ' +
-      '[class*="more-button"], ' +
-      'button'
-    ));
-    
-    for (const btn of moreButtons) {
+  // Dismiss any consent/cookie banners first
+  await page.evaluate(() => {
+    const rejectButtons = Array.from(document.querySelectorAll('button'));
+    for (const btn of rejectButtons) {
       const text = btn.textContent?.toLowerCase() || '';
-      if (text.includes('more') && !text.includes('show more replies')) {
+      if (text.includes('reject all') || text.includes('accept all')) {
         (btn as HTMLElement).click();
-        return true;
+        break;
       }
     }
-    return false;
+  });
+  await wait(1000);
+
+  // Scroll down to ensure description area is visible
+  await page.evaluate(() => window.scrollBy(0, 400));
+  await wait(1500);
+
+  // Method 1: Expand description and look for "Show transcript"
+  log('Method 1: expanding description...');
+  const expandedDesc = await page.evaluate(() => {
+    // Try the "...more" expander
+    const expander = document.querySelector('#description-inline-expander #expand') ||
+                     document.querySelector('tp-yt-paper-button#expand');
+    if (expander) {
+      (expander as HTMLElement).click();
+      return 'expander';
+    }
+    
+    // Try all buttons with "more" text
+    const moreButtons = Array.from(document.querySelectorAll('button, tp-yt-paper-button, ytd-button-renderer'));
+    for (const btn of moreButtons) {
+      const text = btn.textContent?.trim().toLowerCase() || '';
+      if ((text === 'more' || text === '...more') && !text.includes('replies')) {
+        (btn as HTMLElement).click();
+        return text;
+      }
+    }
+    return null;
   });
   
   if (expandedDesc) {
-    await wait(1000);
+    log(`  Expanded desc via: "${expandedDesc}"`);
+    await wait(1500);
+  } else {
+    log('  No expander found');
   }
 
-  // Now look for "Show transcript" button in expanded description
+  // Look for "Show transcript" button
+  log('Looking for transcript button...');
   const transcriptBtn = await page.evaluate(() => {
-    const buttons = Array.from(document.querySelectorAll(
-      'ytd-video-description-transcript-section-renderer button, ' +
-      '#description button, ' +
-      '#description-inline-expander button, ' +
-      'button, ' +
-      'ytd-button-renderer'
-    ));
-    
-    for (const btn of buttons) {
-      const text = btn.textContent?.toLowerCase() || '';
-      const ariaLabel = btn.getAttribute('aria-label')?.toLowerCase() || '';
-      if (text.includes('show transcript') || ariaLabel.includes('transcript')) {
-        (btn as HTMLElement).click();
-        return true;
+    // Specific transcript section selector first
+    const transcriptSection = document.querySelector('ytd-video-description-transcript-section-renderer');
+    if (transcriptSection) {
+      const btn = transcriptSection.querySelector('button');
+      if (btn) {
+        btn.click();
+        return 'transcript-section-button';
       }
     }
-    return false;
+    
+    // Search all buttons
+    const buttons = Array.from(document.querySelectorAll('button, ytd-button-renderer'));
+    for (const btn of buttons) {
+      const text = btn.textContent?.trim().toLowerCase() || '';
+      const ariaLabel = btn.getAttribute('aria-label')?.toLowerCase() || '';
+      if (text.includes('show transcript') || ariaLabel.includes('show transcript')) {
+        (btn as HTMLElement).click();
+        return `button: "${text.substring(0, 40)}"`;
+      }
+    }
+    return null;
   });
 
   if (transcriptBtn) {
-    await wait(2000);
+    log(`  Clicked: ${transcriptBtn}`);
+    await wait(2500);
     return true;
   }
+  log('  No transcript button found in description');
 
-  // Method 2: Click the "..." (more actions) menu below the video
+  // Method 2: Three-dot menu → "Show transcript"
+  log('Method 2: three-dot menu...');
   const menuOpened = await page.evaluate(() => {
-    const menuButtons = Array.from(document.querySelectorAll(
-      '#top-level-buttons-computed ytd-menu-renderer button, ' +
-      '#menu-container button, ' +
-      'ytd-menu-renderer yt-icon-button, ' +
-      '#actions ytd-menu-renderer button, ' +
+    // Find the three-dot menu button near the video actions
+    const candidates = Array.from(document.querySelectorAll(
       'button[aria-label="More actions"], ' +
-      'button[aria-label="More"]'
+      '#top-level-buttons-computed ytd-menu-renderer button, ' +
+      'ytd-menu-renderer yt-icon-button button, ' +
+      '#actions ytd-menu-renderer button'
     ));
     
-    for (const btn of menuButtons) {
-      const ariaLabel = btn.getAttribute('aria-label')?.toLowerCase() || '';
-      if (ariaLabel.includes('more') || btn.querySelector('yt-icon')) {
+    // Prefer the one with "More actions" aria-label
+    for (const btn of candidates) {
+      const ariaLabel = btn.getAttribute('aria-label') || '';
+      if (ariaLabel.toLowerCase().includes('more actions')) {
         (btn as HTMLElement).click();
-        return true;
+        return ariaLabel;
       }
     }
     
-    const fallbackBtn = document.querySelector('ytd-menu-renderer button');
-    if (fallbackBtn) {
-      (fallbackBtn as HTMLElement).click();
-      return true;
+    // Fallback: any menu button
+    if (candidates.length > 0) {
+      (candidates[candidates.length - 1] as HTMLElement).click();
+      return 'fallback-menu';
     }
     
-    return false;
+    return null;
   });
 
   if (menuOpened) {
-    await wait(1000);
+    log(`  Menu opened via: "${menuOpened}"`);
+    await wait(1500);
     
     const transcriptClicked = await page.evaluate(() => {
       const menuItems = Array.from(document.querySelectorAll(
         'ytd-menu-service-item-renderer, ' +
         'tp-yt-paper-item, ' +
-        'ytd-menu-popup-renderer tp-yt-paper-listbox > *, ' +
         '[role="menuitem"], ' +
         'yt-list-item-view-model'
       ));
       
       for (const item of menuItems) {
-        const text = item.textContent?.toLowerCase() || '';
-        if (text.includes('transcript')) {
+        const text = item.textContent?.trim().toLowerCase() || '';
+        if (text.includes('show transcript') || text === 'transcript') {
           (item as HTMLElement).click();
-          return true;
+          return text;
         }
       }
-      return false;
+      
+      // Return all menu item texts for debugging
+      return menuItems.map(i => i.textContent?.trim().substring(0, 40)).filter(Boolean).join(' | ');
     });
 
-    if (transcriptClicked) {
-      await wait(2000);
+    if (transcriptClicked && !transcriptClicked.includes('|')) {
+      log(`  Clicked menu item: "${transcriptClicked}"`);
+      await wait(2500);
       return true;
     }
     
+    log(`  Menu items found: ${transcriptClicked || 'none'}`);
     await page.keyboard.press('Escape');
+    await wait(500);
+  } else {
+    log('  No menu button found');
   }
 
-  // Method 3: Try clicking directly on any visible transcript button
+  // Method 3: Direct scan for any "transcript" text
+  log('Method 3: direct text scan...');
   const directClick = await page.evaluate(() => {
-    const allElements = Array.from(document.querySelectorAll('*'));
-    for (const el of allElements) {
-      if (el.children.length === 0) {
-        const text = el.textContent?.toLowerCase() || '';
-        if (text === 'show transcript' || text === 'transcript') {
-          (el as HTMLElement).click();
-          return true;
-        }
+    // Look for elements containing "transcript" that are clickable
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT);
+    let node;
+    while ((node = walker.nextNode())) {
+      const el = node as HTMLElement;
+      const text = el.textContent?.trim().toLowerCase() || '';
+      if ((text === 'show transcript' || text === 'transcript') && el.children.length === 0) {
+        el.click();
+        return `clicked: "${text}"`;
       }
     }
-    return false;
+    return null;
   });
 
   if (directClick) {
-    await wait(2000);
+    log(`  ${directClick}`);
+    await wait(2500);
     return true;
   }
+  log('  No transcript text found');
+
+  // Debug: log what's on the page
+  const debugInfo = await page.evaluate(() => {
+    return {
+      url: window.location.href,
+      title: document.title,
+      hasPlayer: !!document.querySelector('#movie_player'),
+      hasDescription: !!document.querySelector('#description'),
+      hasActions: !!document.querySelector('#actions'),
+      hasEngagementPanels: document.querySelectorAll('ytd-engagement-panel-section-list-renderer').length,
+      pageText: document.body.innerText?.substring(0, 200),
+    };
+  });
+  log(`Debug: ${JSON.stringify(debugInfo, null, 2)}`);
 
   return false;
 }
@@ -378,36 +377,31 @@ async function openTranscriptPanel(page: Page): Promise<boolean> {
 // =============================================================================
 
 /**
- * Extract transcript using the best available method.
- * Priority order:
- * 1. youtube-transcript API (fast, no dependencies)
- * 2. Browser automation (last resort, requires Steel session)
+ * Extract transcript — browser-first approach.
+ * 
+ * If a Puppeteer page is provided, uses Steel browser automation (primary).
+ * Without a page, returns null (server-side APIs are blocked as of 2026).
  * 
  * @param videoIdOrUrl - YouTube video ID or URL
- * @param page - Optional Puppeteer page for browser fallback
+ * @param page - Puppeteer page connected to Steel session (required for extraction)
  */
 export async function extractTranscript(
   videoIdOrUrl: string,
   page?: Page
-): Promise<{ transcript: string; segments: TranscriptSegment[]; method: 'api' | 'browser' } | null> {
-  // Try API method first (fast, no browser needed)
-  const apiResult = await extractTranscriptApi(videoIdOrUrl);
-  
-  if (apiResult) {
-    return { ...apiResult, method: 'api' };
+): Promise<{ transcript: string; segments: TranscriptSegment[]; method: 'browser' } | null> {
+  if (!page) {
+    // No browser session — can't extract transcripts server-side
+    return null;
   }
 
-  // Fall back to browser method if page is provided
-  if (page) {
-    const videoUrl = videoIdOrUrl.includes('youtube.com') || videoIdOrUrl.includes('youtu.be')
-      ? videoIdOrUrl
-      : buildVideoUrl(videoIdOrUrl);
-    
-    const browserResult = await extractTranscriptBrowser(page, videoUrl);
-    
-    if (browserResult) {
-      return { ...browserResult, method: 'browser' };
-    }
+  const videoUrl = videoIdOrUrl.includes('youtube.com') || videoIdOrUrl.includes('youtu.be')
+    ? videoIdOrUrl
+    : buildVideoUrl(videoIdOrUrl);
+  
+  const browserResult = await extractTranscriptBrowser(page, videoUrl);
+  
+  if (browserResult) {
+    return { ...browserResult, method: 'browser' };
   }
 
   return null;

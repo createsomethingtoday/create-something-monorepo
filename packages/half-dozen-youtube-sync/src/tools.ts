@@ -248,23 +248,50 @@ export function registerTools(server: McpServer): void {
 
   server.tool(
     'extract_transcript',
-    'Extract transcript from a YouTube video using the API (no browser needed). Fast and preferred for single videos.',
+    'Extract transcript from a YouTube video. Requires an active Steel session (creates one if needed). Use scrape_video for full metadata + transcript.',
     {
       videoUrl: z.string().describe('YouTube video URL'),
+      sessionId: z.string().optional().describe('Steel session ID (creates new if not provided)'),
     },
-    async ({ videoUrl }) => {
-      const result = await extractTranscript(videoUrl);
+    async ({ videoUrl, sessionId: inputSessionId }) => {
+      const provider = getYouTubeProvider();
 
-      if (!result) {
-        return jsonContent({ success: false, error: 'Transcript not available for this video' });
+      try {
+        // Get or create a session
+        let sessionId = inputSessionId;
+        let createdSession = false;
+        if (!sessionId) {
+          const session = await provider.createSession(videoUrl);
+          sessionId = session.id;
+          createdSession = true;
+        }
+
+        const sessionData = await provider.getSession(sessionId);
+        if (!sessionData) {
+          return errorContent(`Session ${sessionId} not found`, 'extract_transcript');
+        }
+
+        const result = await extractTranscript(videoUrl, sessionData.page);
+
+        // Close session if we created it
+        if (createdSession) {
+          await provider.closeSession(sessionId).catch(() => {});
+        }
+
+        if (!result) {
+          return jsonContent({ success: false, error: 'Transcript not available for this video' });
+        }
+
+        return jsonContent({
+          success: true,
+          transcript: result.transcript,
+          segmentCount: result.segments.length,
+          method: result.method,
+        });
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        return errorContent(msg, 'extract_transcript');
       }
-
-      return jsonContent({
-        success: true,
-        transcript: result.transcript,
-        segmentCount: result.segments.length,
-        method: result.method,
-      });
     },
   );
 
