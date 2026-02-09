@@ -455,11 +455,19 @@ export class YouTubeSyncMCP extends McpAgent<Env> {
     );
 
     // ── Prompts ────────────────────────────────────────────────────────
-    this.server.prompt('sync_playlist',
-      { playlistUrl: z.string().describe('YouTube playlist URL'), databaseId: z.string().optional().describe('Notion database ID') },
-      ({ playlistUrl, databaseId }) => ({
+
+    this.server.prompt('get_started', {},
+      () => ({
         messages: [{ role: 'user' as const, content: { type: 'text' as const,
-          text: `Sync this YouTube playlist to Notion:\n\nPlaylist: ${playlistUrl}\nDatabase: ${databaseId || 'default'}\n\nUse the sync_playlist tool.` } }],
+          text: `Paste a YouTube playlist or video URL and I'll extract the transcripts and sync them to your Notion database.\n\nJust say: sync <URL>` } }],
+      })
+    );
+
+    this.server.prompt('sync_playlist',
+      { url: z.string().describe('YouTube playlist or video URL') },
+      ({ url }) => ({
+        messages: [{ role: 'user' as const, content: { type: 'text' as const,
+          text: `Sync this to Notion: ${url}\n\nUse the sync tool.` } }],
       })
     );
 
@@ -471,17 +479,48 @@ export class YouTubeSyncMCP extends McpAgent<Env> {
       })
     );
 
-    // ── Tool: sync_playlist (main workflow) ────────────────────────────
-    this.server.tool('sync_playlist',
-      'Full workflow: extract playlist videos, get transcripts, sync to Notion with dedup. This is the main tool.',
+    // ── Tool: sync (primary — accepts any YouTube URL) ─────────────────
+    this.server.tool('sync',
+      'Sync a YouTube playlist or video to Notion. Just paste the URL. Extracts transcripts and creates Notion pages with dedup.',
       {
-        playlistUrl: z.string().describe('YouTube playlist URL'),
-        databaseId: z.string().optional().describe('Notion database ID (uses default if omitted)'),
+        url: z.string().describe('YouTube playlist URL, video URL, or video ID'),
       },
-      async ({ playlistUrl, databaseId }) => {
+      async ({ url }) => {
         try {
-          const result = await syncPlaylistPipeline(this.env, playlistUrl, databaseId);
-          return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+          // Auto-detect: playlist or single video
+          const playlistId = extractPlaylistId(url);
+
+          if (playlistId) {
+            // Playlist sync
+            const result = await syncPlaylistPipeline(this.env, url);
+            return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+          }
+
+          // Single video sync
+          const videoId = extractVideoId(url);
+          if (!videoId) return { content: [{ type: 'text', text: JSON.stringify({ error: `Not a valid YouTube URL: ${url}` }) }] };
+
+          const transcript = await fetchTranscript(videoId);
+
+          // Get video title from visitor data page fetch
+          const pageResp = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+            headers: { 'User-Agent': WEB_USER_AGENT },
+          });
+          const html = await pageResp.text();
+          const titleMatch = html.match(/<title>([^<]+)<\/title>/);
+          const title = titleMatch?.[1]?.replace(' - YouTube', '').trim() || `Video ${videoId}`;
+
+          const syncResult = await syncVideosToNotion(this.env, [{
+            videoId,
+            url: `https://www.youtube.com/watch?v=${videoId}`,
+            title,
+            transcript: transcript?.transcript,
+          }]);
+
+          return { content: [{ type: 'text', text: JSON.stringify({
+            video: { videoId, title, hasTranscript: !!transcript, transcriptLength: transcript?.transcript.length || 0 },
+            sync: syncResult,
+          }, null, 2) }] };
         } catch (error) {
           return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
         }
@@ -490,7 +529,7 @@ export class YouTubeSyncMCP extends McpAgent<Env> {
 
     // ── Tool: extract_transcript ───────────────────────────────────────
     this.server.tool('extract_transcript',
-      'Get transcript from a YouTube video. Fast, API-only, no browser needed.',
+      'Get transcript from a YouTube video. Returns text and timestamps.',
       { videoUrl: z.string().describe('YouTube video URL or video ID') },
       async ({ videoUrl }) => {
         try {
@@ -507,7 +546,7 @@ export class YouTubeSyncMCP extends McpAgent<Env> {
 
     // ── Tool: list_playlist ────────────────────────────────────────────
     this.server.tool('list_playlist',
-      'List videos in a YouTube playlist without syncing. Returns video IDs, titles, and metadata.',
+      'Preview videos in a YouTube playlist without syncing.',
       { playlistUrl: z.string().describe('YouTube playlist URL') },
       async ({ playlistUrl }) => {
         try {
@@ -523,7 +562,7 @@ export class YouTubeSyncMCP extends McpAgent<Env> {
 
     // ── Tool: sync_to_notion ───────────────────────────────────────────
     this.server.tool('sync_to_notion',
-      'Sync video data to Notion. Creates pages with dedup (skips existing URLs).',
+      'Sync a custom video data array to Notion with dedup.',
       {
         videos: z.array(z.object({
           videoId: z.string().optional(), url: z.string(), title: z.string(),
@@ -544,7 +583,7 @@ export class YouTubeSyncMCP extends McpAgent<Env> {
 
     // ── Tool: get_database_schema ──────────────────────────────────────
     this.server.tool('get_database_schema',
-      'Get Notion database properties and schema.',
+      'Inspect the Notion database schema.',
       { databaseId: z.string().optional().describe('Notion database ID') },
       async ({ databaseId }) => {
         try {
@@ -560,9 +599,9 @@ export class YouTubeSyncMCP extends McpAgent<Env> {
       }
     );
 
-    // ── Tool: search (ChatGPT connector) ───────────────────────────────
+    // ── Tool: search ───────────────────────────────────────────────────
     this.server.tool('search',
-      'Search synced videos in Notion by title.',
+      'Search synced videos by title.',
       { query: z.string().describe('Search query') },
       async ({ query }) => {
         try {
@@ -581,9 +620,9 @@ export class YouTubeSyncMCP extends McpAgent<Env> {
       }
     );
 
-    // ── Tool: fetch (ChatGPT connector) ────────────────────────────────
+    // ── Tool: fetch ────────────────────────────────────────────────────
     this.server.tool('fetch',
-      'Get full video details from Notion including transcript.',
+      'Get full video details and transcript from Notion.',
       { id: z.string().describe('Notion page ID') },
       async ({ id }) => {
         try {
@@ -630,10 +669,11 @@ export default {
     if (url.pathname === '/') {
       return new Response(JSON.stringify({
         name: SERVER_NAME, version: SERVER_VERSION,
+        usage: 'Connect via /mcp or /sse, then say: sync <YouTube URL>',
         endpoints: { mcp: '/mcp', sse: '/sse' },
-        tools: ['sync_playlist', 'extract_transcript', 'list_playlist', 'sync_to_notion', 'get_database_schema', 'search', 'fetch'],
+        tools: ['sync', 'extract_transcript', 'list_playlist', 'sync_to_notion', 'get_database_schema', 'search', 'fetch'],
         resources: ['youtube://status'],
-        prompts: ['sync_playlist', 'transcript_analysis'],
+        prompts: ['get_started', 'sync_playlist', 'transcript_analysis'],
       }, null, 2), { headers: { 'Content-Type': 'application/json' } });
     }
 
