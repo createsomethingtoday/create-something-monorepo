@@ -178,7 +178,7 @@ async function fetchPlaylistVideos(playlistId: string): Promise<{
   title: string;
   videos: PlaylistVideo[];
 }> {
-  // Fetch playlist page for visitorData
+  // Fetch playlist page (also extracts videos as fallback)
   const pageResp = await fetch(`https://www.youtube.com/playlist?list=${playlistId}`, {
     headers: { 'User-Agent': WEB_USER_AGENT, 'Accept-Language': 'en-US,en;q=0.9' },
   });
@@ -204,20 +204,26 @@ async function fetchPlaylistVideos(playlistId: string): Promise<{
   if (!resp.ok) throw new Error(`Browse API error: ${resp.status}`);
   const json = await resp.json() as any;
 
-  // Extract playlist title
+  // Extract playlist title (multiple possible paths)
   const title = json?.header?.playlistHeaderRenderer?.title?.simpleText ||
+                json?.header?.pageHeaderRenderer?.pageTitle ||
                 json?.metadata?.playlistMetadataRenderer?.title || 'Untitled Playlist';
 
-  // Extract videos from tabs → sectionList → playlistVideoList
+  // Extract videos — check multiple response format paths
   const videos: PlaylistVideo[] = [];
 
   const tabs = json?.contents?.singleColumnBrowseResultsRenderer?.tabs ||
                json?.contents?.twoColumnBrowseResultsRenderer?.tabs || [];
 
   for (const tab of tabs) {
-    const contents = tab?.tabRenderer?.content?.sectionListRenderer?.contents || [];
-    for (const section of contents) {
-      const items = section?.itemSectionRenderer?.contents?.[0]?.playlistVideoListRenderer?.contents || [];
+    const sections = tab?.tabRenderer?.content?.sectionListRenderer?.contents || [];
+    for (const section of sections) {
+      // ANDROID format: playlistVideoListRenderer directly in section
+      const directList = section?.playlistVideoListRenderer?.contents;
+      // WEB format: inside itemSectionRenderer
+      const nestedList = section?.itemSectionRenderer?.contents?.[0]?.playlistVideoListRenderer?.contents;
+
+      const items = directList || nestedList || [];
       for (const item of items) {
         const renderer = item?.playlistVideoRenderer;
         if (!renderer?.videoId) continue;
@@ -229,6 +235,25 @@ async function fetchPlaylistVideos(playlistId: string): Promise<{
           channelName: renderer.shortBylineText?.runs?.[0]?.text || '',
           duration: renderer.lengthText?.simpleText || '',
           thumbnailUrl: renderer.thumbnail?.thumbnails?.slice(-1)?.[0]?.url,
+        });
+      }
+    }
+  }
+
+  // Fallback: extract video IDs from the playlist page HTML
+  if (videos.length === 0) {
+    const videoIdMatches = [...html.matchAll(/"videoId":"([a-zA-Z0-9_-]{11})"/g)];
+    const seen = new Set<string>();
+    for (const m of videoIdMatches) {
+      if (!seen.has(m[1])) {
+        seen.add(m[1]);
+        // Try to get title from HTML too
+        const titlePattern = new RegExp(`"videoId":"${m[1]}"[^}]*"title":\\{[^}]*"runs":\\[\\{"text":"([^"]+)"`, 'g');
+        const titleMatch = titlePattern.exec(html);
+        videos.push({
+          videoId: m[1],
+          title: titleMatch?.[1] || `Video ${m[1]}`,
+          url: `https://www.youtube.com/watch?v=${m[1]}`,
         });
       }
     }
