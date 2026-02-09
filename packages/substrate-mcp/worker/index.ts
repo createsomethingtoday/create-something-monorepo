@@ -14,6 +14,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 
 import { bindingExecutor, bindingR2Store } from '../src/services/executor.js';
+import { ensureInitialized } from '../src/services/d1.js';
 import { registerTools } from '../src/tools/index.js';
 import { registerResources } from '../src/resources/index.js';
 import { registerPrompts } from '../src/prompts/index.js';
@@ -43,6 +44,9 @@ export class SubstrateMCP extends McpAgent<Env> {
     const d1 = bindingExecutor(this.env.DB);
     // R2 via binding — no S3 signing overhead
     const r2 = bindingR2Store(this.env.FILES);
+
+    // One-time schema init (runs once per DO lifecycle, not per tool call)
+    await ensureInitialized(d1);
 
     // Register all three tiers with binding-backed accessors
     registerTools(this.server, () => d1, () => r2, () => 'agent');

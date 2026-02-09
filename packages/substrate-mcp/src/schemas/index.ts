@@ -1,7 +1,6 @@
 /**
- * Zod validation schemas for Substrate MCP tool inputs.
- *
- * Three-Tier Framework: Artifact contracts at the Automation tier boundary.
+ * Zod schemas for Substrate MCP tool inputs.
+ * Descriptions kept minimal — every character is a token.
  */
 
 import { z } from 'zod';
@@ -9,155 +8,151 @@ import {
   ColumnType, FilterOperator, SortDirection,
   MAX_COLUMNS_PER_TABLE, MAX_RECORDS_PER_QUERY, MAX_BULK_OPERATIONS,
   MAX_TABLE_NAME_LENGTH, MAX_COLUMN_NAME_LENGTH, MAX_WORKSPACE_NAME_LENGTH,
-  MAX_FILE_SIZE_BYTES,
 } from '../constants.js';
 
-// ─── Column Definition ───────────────────────────────────────────────
+// ─── Column ──────────────────────────────────────────────────────────
 
 export const ColumnDefinitionSchema = z.object({
-  name: z.string().min(1).max(MAX_COLUMN_NAME_LENGTH).describe('Column name'),
-  type: z.nativeEnum(ColumnType).describe('Data type'),
-  required: z.boolean().default(false).describe('Whether required when creating records'),
-  description: z.string().optional().describe('What this column stores'),
-  default_value: z.unknown().optional().describe('Default value'),
-  options: z.array(z.string()).optional().describe('For select/multi_select — allowed values'),
-  relation_table_id: z.string().optional().describe('For relation — target table ID'),
+  name: z.string().min(1).max(MAX_COLUMN_NAME_LENGTH),
+  type: z.nativeEnum(ColumnType),
+  required: z.boolean().default(false),
+  description: z.string().optional(),
+  default_value: z.unknown().optional(),
+  options: z.array(z.string()).optional().describe('select/multi_select options'),
+  relation_table_id: z.string().optional().describe('relation target table'),
 });
 
 // ─── Workspace ───────────────────────────────────────────────────────
 
 export const CreateWorkspaceSchema = z.object({
-  name: z.string().min(1).max(MAX_WORKSPACE_NAME_LENGTH).describe('Workspace name (unique)'),
-  description: z.string().default('').describe('What this workspace is for'),
+  name: z.string().min(1).max(MAX_WORKSPACE_NAME_LENGTH),
+  description: z.string().default(''),
 });
 
 export const UpdateWorkspaceSchema = z.object({
-  workspace_id: z.string().min(1).describe('Workspace ID'),
-  name: z.string().min(1).max(MAX_WORKSPACE_NAME_LENGTH).optional().describe('New name'),
-  description: z.string().optional().describe('New description'),
+  workspace_id: z.string().min(1),
+  name: z.string().min(1).max(MAX_WORKSPACE_NAME_LENGTH).optional(),
+  description: z.string().optional(),
 });
 
 export const DeleteWorkspaceSchema = z.object({
-  workspace_id: z.string().min(1).describe('Workspace ID — deletes ALL contents'),
+  workspace_id: z.string().min(1),
 });
 
 // ─── Table ───────────────────────────────────────────────────────────
 
 export const DefineTableSchema = z.object({
-  workspace_id: z.string().min(1).describe('Workspace ID'),
-  name: z.string().min(1).max(MAX_TABLE_NAME_LENGTH).describe('Table name (unique in workspace)'),
-  description: z.string().default('').describe('What this table stores'),
-  columns: z.array(ColumnDefinitionSchema).max(MAX_COLUMNS_PER_TABLE).describe('Column definitions'),
+  workspace_id: z.string().min(1),
+  name: z.string().min(1).max(MAX_TABLE_NAME_LENGTH),
+  description: z.string().default(''),
+  columns: z.array(ColumnDefinitionSchema).max(MAX_COLUMNS_PER_TABLE),
 });
 
 export const UpdateTableSchema = z.object({
-  table_id: z.string().min(1).describe('Table ID'),
-  name: z.string().min(1).max(MAX_TABLE_NAME_LENGTH).optional().describe('New name'),
-  description: z.string().optional().describe('New description'),
-  columns: z.array(ColumnDefinitionSchema).max(MAX_COLUMNS_PER_TABLE).optional()
-    .describe('Full column list (replaces all)'),
+  table_id: z.string().min(1),
+  name: z.string().min(1).max(MAX_TABLE_NAME_LENGTH).optional(),
+  description: z.string().optional(),
+  columns: z.array(ColumnDefinitionSchema).max(MAX_COLUMNS_PER_TABLE).optional(),
 });
 
 export const DeleteTableSchema = z.object({
-  table_id: z.string().min(1).describe('Table ID — deletes ALL records and relations'),
+  table_id: z.string().min(1),
 });
 
 // ─── Record ──────────────────────────────────────────────────────────
 
 export const CreateRecordSchema = z.object({
-  table_id: z.string().min(1).describe('Table ID'),
-  data: z.record(z.unknown()).describe('Key-value pairs matching table columns'),
+  table_id: z.string().min(1),
+  data: z.record(z.unknown()).describe('column:value pairs'),
 });
 
 export const UpdateRecordSchema = z.object({
-  record_id: z.string().min(1).describe('Record ID'),
-  data: z.record(z.unknown()).describe('Fields to update (merged with existing)'),
+  record_id: z.string().min(1),
+  data: z.record(z.unknown()).describe('fields to merge'),
 });
 
 export const DeleteRecordSchema = z.object({
-  record_id: z.string().min(1).describe('Record ID'),
+  record_id: z.string().min(1),
 });
 
 // ─── Query ───────────────────────────────────────────────────────────
 
 export const FilterSchema = z.object({
-  column: z.string().min(1).describe('Column name'),
-  operator: z.nativeEnum(FilterOperator).describe('Operator'),
-  value: z.unknown().describe('Compare value'),
+  column: z.string().min(1),
+  operator: z.nativeEnum(FilterOperator),
+  value: z.unknown(),
 });
 
 export const SortSchema = z.object({
-  column: z.string().min(1).describe('Column name'),
-  direction: z.nativeEnum(SortDirection).default(SortDirection.ASC).describe('asc or desc'),
+  column: z.string().min(1),
+  direction: z.nativeEnum(SortDirection).default(SortDirection.ASC),
 });
 
 export const QueryRecordsSchema = z.object({
-  table_id: z.string().min(1).describe('Table ID'),
-  filters: z.array(FilterSchema).optional().describe('Filter conditions (AND logic)'),
-  sorts: z.array(SortSchema).optional().describe('Sort order'),
-  limit: z.number().int().min(1).max(MAX_RECORDS_PER_QUERY).default(25).describe('Max results'),
-  offset: z.number().int().min(0).default(0).describe('Skip count (pagination)'),
-  columns: z.array(z.string()).optional().describe('Column projection'),
+  table_id: z.string().min(1),
+  filters: z.array(FilterSchema).optional(),
+  sorts: z.array(SortSchema).optional(),
+  limit: z.number().int().min(1).max(MAX_RECORDS_PER_QUERY).default(25),
+  offset: z.number().int().min(0).default(0),
+  columns: z.array(z.string()).optional().describe('projection'),
 });
 
 export const SearchRecordsSchema = z.object({
-  table_id: z.string().min(1).describe('Table ID'),
-  query: z.string().min(1).describe('Search text'),
-  limit: z.number().int().min(1).max(MAX_RECORDS_PER_QUERY).default(25).describe('Max results'),
+  table_id: z.string().min(1),
+  query: z.string().min(1),
+  limit: z.number().int().min(1).max(MAX_RECORDS_PER_QUERY).default(25),
 });
 
 // ─── Relation ────────────────────────────────────────────────────────
 
 export const CreateRelationSchema = z.object({
-  source_table_id: z.string().min(1).describe('Source table ID'),
-  source_record_id: z.string().min(1).describe('Source record ID'),
-  target_table_id: z.string().min(1).describe('Target table ID'),
-  target_record_id: z.string().min(1).describe('Target record ID'),
-  relation_name: z.string().default('').describe('Relationship name (e.g. "assigned_to")'),
+  source_table_id: z.string().min(1),
+  source_record_id: z.string().min(1),
+  target_table_id: z.string().min(1),
+  target_record_id: z.string().min(1),
+  relation_name: z.string().default(''),
 });
 
 export const DeleteRelationSchema = z.object({
-  relation_id: z.string().min(1).describe('Relation ID'),
+  relation_id: z.string().min(1),
 });
 
 // ─── Bulk ────────────────────────────────────────────────────────────
 
 export const BulkCreateRecordsSchema = z.object({
-  table_id: z.string().min(1).describe('Table ID'),
-  records: z.array(z.record(z.unknown())).min(1).max(MAX_BULK_OPERATIONS)
-    .describe(`Array of record data (max ${MAX_BULK_OPERATIONS})`),
+  table_id: z.string().min(1),
+  records: z.array(z.record(z.unknown())).min(1).max(MAX_BULK_OPERATIONS),
 });
 
 export const BulkDeleteRecordsSchema = z.object({
-  record_ids: z.array(z.string()).min(1).max(MAX_BULK_OPERATIONS)
-    .describe(`Record IDs to delete (max ${MAX_BULK_OPERATIONS})`),
+  record_ids: z.array(z.string()).min(1).max(MAX_BULK_OPERATIONS),
 });
 
-// ─── File Operations ─────────────────────────────────────────────────
+// ─── File ────────────────────────────────────────────────────────────
 
 export const UploadFileSchema = z.object({
-  workspace_id: z.string().min(1).describe('Workspace to upload into'),
-  filename: z.string().min(1).describe('Original filename (e.g. "report.pdf")'),
-  content_type: z.string().min(1).describe('MIME type (e.g. "application/pdf", "image/png")'),
-  content_base64: z.string().min(1).describe('File content as base64-encoded string'),
-  record_id: z.string().optional().describe('Optional: attach file to a specific record'),
-  description: z.string().default('').describe('Optional description of the file'),
+  workspace_id: z.string().min(1),
+  filename: z.string().min(1),
+  content_type: z.string().min(1).describe('MIME type'),
+  content_base64: z.string().min(1),
+  record_id: z.string().optional().describe('attach to record'),
+  description: z.string().default(''),
 });
 
 export const DownloadFileSchema = z.object({
-  file_id: z.string().min(1).describe('File ID to download'),
+  file_id: z.string().min(1),
 });
 
 export const DeleteFileSchema = z.object({
-  file_id: z.string().min(1).describe('File ID to delete (removes from both D1 and R2)'),
+  file_id: z.string().min(1),
 });
 
 export const ListFilesSchema = z.object({
-  workspace_id: z.string().min(1).describe('Workspace ID'),
-  record_id: z.string().optional().describe('Optional: filter to files attached to a specific record'),
+  workspace_id: z.string().min(1),
+  record_id: z.string().optional().describe('filter by record'),
 });
 
-// ─── Type Exports ────────────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────────────
 
 export type CreateWorkspaceInput = z.infer<typeof CreateWorkspaceSchema>;
 export type UpdateWorkspaceInput = z.infer<typeof UpdateWorkspaceSchema>;

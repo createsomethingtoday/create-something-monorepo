@@ -43,7 +43,7 @@ interface AnyMcpServer {
 // ─── Response helpers (work in both modes) ───────────────────────────
 
 function ok(data: unknown) {
-  return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] };
+  return { content: [{ type: 'text' as const, text: JSON.stringify(data) }] };
 }
 function fail(msg: string) {
   return { content: [{ type: 'text' as const, text: JSON.stringify({ error: msg }) }], isError: true as const };
@@ -87,41 +87,41 @@ export function registerTools(
   // ─── Workspace ───────────────────────────────────────────────────
 
   server.tool('create_workspace',
-    'Create a new workspace — the top-level container. Names must be unique.',
+    'Create a workspace. Names must be unique.',
     CreateWorkspaceSchema.shape,
     async (p: unknown) => { const i = p as CreateWorkspaceInput; try { return ok({ success: true, workspace: await withDb(e => db.createWorkspace(e, i.name, i.description)) }); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   server.tool('update_workspace',
-    'Update a workspace name or description.',
+    'Update workspace name or description.',
     UpdateWorkspaceSchema.shape,
     async (p: unknown) => { const i = p as UpdateWorkspaceInput; try { const w = await withDb(e => db.updateWorkspace(e, i.workspace_id, { name: i.name, description: i.description })); return w ? ok({ success: true, workspace: w }) : fail(`Workspace '${i.workspace_id}' not found`); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   server.tool('delete_workspace',
-    'Delete a workspace and ALL its tables, records, relations, files. Irreversible.',
+    'Delete workspace and all contents. Irreversible.',
     DeleteWorkspaceSchema.shape,
     async (p: unknown) => { const i = p as DeleteWorkspaceInput; try { return (await withDb(e => db.deleteWorkspace(e, i.workspace_id))) ? ok({ success: true }) : fail(`Workspace '${i.workspace_id}' not found`); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   // ─── Table ───────────────────────────────────────────────────────
 
   server.tool('define_table',
-    'Define a new table within a workspace. Column types: text, number, boolean, date, datetime, select, multi_select, url, email, json, relation.',
+    'Define a table with typed columns in a workspace.',
     DefineTableSchema.shape,
     async (p: unknown) => { const i = p as DefineTableInput; try { return ok({ success: true, table: await withDb(e => db.createTable(e, i.workspace_id, i.name, i.description, i.columns)) }); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   server.tool('update_table',
-    'Update table name, description, or columns. When updating columns provide the FULL list.',
+    'Update table schema. Columns list replaces existing.',
     UpdateTableSchema.shape,
     async (p: unknown) => { const i = p as UpdateTableInput; try { const t = await withDb(e => db.updateTable(e, i.table_id, { name: i.name, description: i.description, columns: i.columns })); return t ? ok({ success: true, table: t }) : fail(`Table '${i.table_id}' not found`); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   server.tool('delete_table',
-    'Delete a table and ALL its records and relations. Irreversible.',
+    'Delete table and all records. Irreversible.',
     DeleteTableSchema.shape,
     async (p: unknown) => { const i = p as DeleteTableInput; try { return (await withDb(e => db.deleteTable(e, i.table_id))) ? ok({ success: true }) : fail(`Table '${i.table_id}' not found`); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   // ─── Record ──────────────────────────────────────────────────────
 
   server.tool('create_record',
-    'Create a record in a table. Data is validated against the schema.',
+    'Create a record. Validated against table schema.',
     CreateRecordSchema.shape,
     async (p: unknown) => { const i = p as CreateRecordInput; try {
       return ok({ success: true, record: await withDb(async e => {
@@ -133,7 +133,7 @@ export function registerTools(
       }) }); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   server.tool('update_record',
-    'Partial update — provided fields are merged with existing data.',
+    'Update record fields. Merges with existing data.',
     UpdateRecordSchema.shape,
     async (p: unknown) => { const i = p as UpdateRecordInput; try {
       return ok({ success: true, record: await withDb(async e => {
@@ -145,7 +145,7 @@ export function registerTools(
       }) }); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   server.tool('delete_record',
-    'Delete a record and all its relations. Irreversible.',
+    'Delete a record. Irreversible.',
     DeleteRecordSchema.shape,
     async (p: unknown) => { const i = p as DeleteRecordInput; try {
       const deleted = await withDb(async e => {
@@ -161,13 +161,13 @@ export function registerTools(
   // ─── Query ───────────────────────────────────────────────────────
 
   server.tool('query_records',
-    'Query with filters (eq, neq, gt, gte, lt, lte, contains, starts_with, in, is_empty…), sorting, pagination.',
+    'Query records with filters, sorting, and pagination.',
     QueryRecordsSchema.shape,
     async (p: unknown) => { const i = p as QueryRecordsInput; try { return ok(await withDb(e => db.queryRecords(e, { table_id: i.table_id, filters: i.filters, sorts: i.sorts, limit: i.limit, offset: i.offset, columns: i.columns }))); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } },
     { readOnly: true });
 
   server.tool('search_records',
-    'Full-text search across all fields in a table.',
+    'Search records by text across all fields.',
     SearchRecordsSchema.shape,
     async (p: unknown) => { const i = p as SearchRecordsInput; try { const recs = await withDb(e => db.searchRecords(e, i.table_id, i.query, i.limit)); return ok({ records: recs, count: recs.length }); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } },
     { readOnly: true });
@@ -175,19 +175,19 @@ export function registerTools(
   // ─── Relation ────────────────────────────────────────────────────
 
   server.tool('create_relation',
-    'Link two records. Relations are bidirectional. Use relation_name to describe.',
+    'Link two records bidirectionally.',
     CreateRelationSchema.shape,
     async (p: unknown) => { const i = p as CreateRelationInput; try { return ok({ success: true, relation: await withDb(e => db.createRelation(e, i.source_table_id, i.source_record_id, i.target_table_id, i.target_record_id, i.relation_name)) }); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   server.tool('delete_relation',
-    'Remove a relation between two records.',
+    'Remove a relation.',
     DeleteRelationSchema.shape,
     async (p: unknown) => { const i = p as DeleteRelationInput; try { return (await withDb(e => db.deleteRelation(e, i.relation_id))) ? ok({ success: true }) : fail(`Relation '${i.relation_id}' not found`); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   // ─── Bulk ────────────────────────────────────────────────────────
 
   server.tool('bulk_create_records',
-    'Create up to 50 records at once. Each is validated against the table schema.',
+    'Create multiple records (max 50). Validated against schema.',
     BulkCreateRecordsSchema.shape,
     async (p: unknown) => { const i = p as BulkCreateRecordsInput; try {
       const recs = await withDb(async e => {
@@ -201,14 +201,14 @@ export function registerTools(
     } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   server.tool('bulk_delete_records',
-    'Delete up to 50 records at once.',
+    'Delete multiple records (max 50).',
     BulkDeleteRecordsSchema.shape,
     async (p: unknown) => { const i = p as BulkDeleteRecordsInput; try { return ok({ success: true, deleted_count: await withDb(e => db.bulkDeleteRecords(e, i.record_ids)) }); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   // ─── File Operations ─────────────────────────────────────────────
 
   server.tool('upload_file',
-    `Upload a file (base64 content) to a workspace. Stored in R2, metadata in D1. Max: ${MAX_FILE_SIZE_BYTES / 1024 / 1024}MB. Optionally attach to a record.`,
+    `Upload a file (base64). Max ${MAX_FILE_SIZE_BYTES / 1024 / 1024}MB. Optionally attach to a record.`,
     UploadFileSchema.shape,
     async (p: unknown) => {
       const i = p as UploadFileInput;
@@ -240,7 +240,7 @@ export function registerTools(
     });
 
   server.tool('download_file',
-    'Download a file by ID. Returns base64 content + metadata.',
+    'Download file as base64.',
     DownloadFileSchema.shape,
     async (p: unknown) => {
       const i = p as DownloadFileInput;
@@ -262,7 +262,7 @@ export function registerTools(
     { readOnly: true });
 
   server.tool('delete_file',
-    'Delete a file from R2 storage and D1 metadata. Irreversible.',
+    'Delete a file. Irreversible.',
     DeleteFileSchema.shape,
     async (p: unknown) => {
       const i = p as DeleteFileInput;
@@ -285,7 +285,7 @@ export function registerTools(
     });
 
   server.tool('list_files',
-    'List files in a workspace. Returns metadata only (not content).',
+    'List file metadata in a workspace.',
     ListFilesSchema.shape,
     async (p: unknown) => {
       const i = p as ListFilesInput;

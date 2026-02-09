@@ -13,7 +13,7 @@ interface AnyMcpServer {
 type ResourceResult = { contents: Array<{ uri: string; mimeType: string; text: string }> };
 
 function json(uri: string, data: unknown): ResourceResult {
-  return { contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(data, null, 2) }] };
+  return { contents: [{ uri, mimeType: 'application/json', text: JSON.stringify(data) }] };
 }
 function err(uri: string, e: unknown): ResourceResult {
   return { contents: [{ uri, mimeType: 'application/json', text: JSON.stringify({ error: e instanceof Error ? e.message : String(e) }) }] };
