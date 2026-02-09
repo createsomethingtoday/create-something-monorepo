@@ -230,23 +230,23 @@ pnpm test:connection   # Service connectivity check
 
 ## MCP Primitives
 
-### Tools (Stdio: 11 | Worker: 5)
+### Tools (Worker: 7 | Stdio: 11)
 
-| Tool | Stdio | Worker | Description |
-|------|:-----:|:------:|-------------|
-| `sync_playlist` | x | | **Main workflow** - Extract playlist, get transcripts, sync to Notion |
-| `scrape_playlist` | x | | Extract video list from a playlist URL |
-| `scrape_video` | x | | Extract single video with transcript (browser) |
-| `extract_transcript` | x | x | Get transcript via API (no browser needed) |
-| `sync_to_notion` | x | x | Sync video data to Notion |
-| `create_session` | x | | Create Steel browser session |
-| `session_status` | x | | Check session status |
-| `navigate` | x | | Navigate browser to URL |
-| `close_session` | x | | Close session and get recording |
-| `get_database_schema` | x | x | Get Notion database properties |
-| `get_provider_status` | x | | Steel provider metrics |
-| `search` | | x | ChatGPT connector: search synced videos |
-| `fetch` | | x | ChatGPT connector: get video details |
+**Worker (recommended for Codex/Claude Desktop):**
+
+| Tool | Description |
+|------|-------------|
+| `sync_playlist` | **Main workflow** — extract playlist, get transcripts, sync to Notion with dedup |
+| `extract_transcript` | Get transcript for a single video (API-only, fast) |
+| `list_playlist` | List videos in a playlist without syncing |
+| `sync_to_notion` | Sync video data array to Notion with dedup |
+| `get_database_schema` | Inspect Notion database properties |
+| `search` | ChatGPT connector: search synced videos |
+| `fetch` | ChatGPT connector: get full video details |
+
+**Stdio (local, includes browser automation via Steel):**
+
+All Worker tools plus: `scrape_playlist`, `scrape_video`, `create_session`, `session_status`, `navigate`, `close_session`, `get_provider_status`
 
 ### Resources
 

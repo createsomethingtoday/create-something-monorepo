@@ -13,9 +13,16 @@ class_name = "YouTubeSyncMCP"
 tag = "v1"
 new_sqlite_classes = ["YouTubeSyncMCP"]
 
+# Cron: daily playlist sync (6 AM UTC)
+[triggers]
+crons = ["0 6 * * *"]
+
 # Secrets (set via `wrangler secret put`)
 # NOTION_API_KEY
 # NOTION_DATABASE_ID
+# RESEND_API_KEY          (optional — email notifications)
+# SYNC_PLAYLIST_URLS      (optional — comma-separated playlist URLs for cron)
+# ALERT_EMAIL             (optional — defaults to micah@createsomething.io)
 
 [vars]
 # Non-sensitive config can go here
