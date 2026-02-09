@@ -12,10 +12,11 @@ import { z } from 'zod';
 import type { D1Exec, R2Store } from '../services/executor.js';
 import { generateStorageKey } from '../services/r2.js';
 import * as db from '../services/d1.js';
-import { ColumnType, MAX_FILE_SIZE_BYTES } from '../constants.js';
+import { ColumnType, MAX_FILE_SIZE_BYTES, MAX_RECORDS_PER_QUERY } from '../constants.js';
 import type { ColumnDefinition } from '../types.js';
 
 import {
+  FilterSchema, SortSchema,
   CreateWorkspaceSchema, UpdateWorkspaceSchema, DeleteWorkspaceSchema,
   DefineTableSchema, UpdateTableSchema, DeleteTableSchema,
   CreateRecordSchema, UpdateRecordSchema, DeleteRecordSchema,
@@ -111,6 +112,45 @@ export function registerTools(
     'Get all relations for a record.',
     { record_id: z.string().min(1) } as Record<string, unknown>,
     async (p: unknown) => { const i = p as { record_id: string }; try { const rels = await withDb(e => db.getRelationsForRecord(e, i.record_id)); return ok({ relations: rels, count: rels.length }); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } },
+    { readOnly: true });
+
+  // ─── High-Level Query (reduces 3 tool calls to 1) ────────────────
+
+  server.tool('find_records',
+    'Query by workspace name + table name + filters. One call instead of list_workspaces → list_tables → query_records. Use this for most queries.',
+    {
+      workspace_name: z.string().min(1).describe('workspace name'),
+      table_name: z.string().min(1).describe('table name'),
+      filters: z.array(FilterSchema).optional(),
+      sorts: z.array(SortSchema).optional(),
+      limit: z.number().int().min(1).max(MAX_RECORDS_PER_QUERY).default(25),
+      offset: z.number().int().min(0).default(0),
+      search: z.string().optional().describe('text search (instead of filters)'),
+    } as Record<string, unknown>,
+    async (p: unknown) => {
+      const i = p as { workspace_name: string; table_name: string; filters?: unknown[]; sorts?: unknown[]; limit?: number; offset?: number; search?: string };
+      try {
+        return ok(await withDb(async e => {
+          const ws = await db.getWorkspaceByName(e, i.workspace_name);
+          if (!ws) return { error: `Workspace '${i.workspace_name}' not found. Use list_workspaces to see available.` };
+          const tbl = await db.getTableByName(e, ws.id, i.table_name);
+          if (!tbl) {
+            const tables = await db.listTables(e, ws.id);
+            return { error: `Table '${i.table_name}' not found in '${i.workspace_name}'. Available: ${tables.map(t => t.name).join(', ')}` };
+          }
+          if (i.search) {
+            const recs = await db.searchRecords(e, tbl.id, i.search, i.limit ?? 25);
+            return { table: tbl.name, records: recs, count: recs.length };
+          }
+          return await db.queryRecords(e, {
+            table_id: tbl.id,
+            filters: i.filters as import('../types.js').QueryFilter[] | undefined,
+            sorts: i.sorts as import('../types.js').QuerySort[] | undefined,
+            limit: i.limit, offset: i.offset,
+          });
+        }));
+      } catch (e) { return fail(e instanceof Error ? e.message : String(e)); }
+    },
     { readOnly: true });
 
   // ─── Workspace ───────────────────────────────────────────────────
