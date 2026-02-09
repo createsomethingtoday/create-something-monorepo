@@ -153,7 +153,35 @@ export function registerTools(
     },
     { readOnly: true });
 
-  // ─── Workspace ───────────────────────────────────────────────────
+  // ─── High-Level Write (reduces 3 tool calls to 1) ─────────────────
+
+  server.tool('add_record',
+    'Create a record by workspace name + table name. One call instead of list_workspaces → list_tables → create_record. Use this for most creates.',
+    {
+      workspace_name: z.string().min(1),
+      table_name: z.string().min(1),
+      data: z.record(z.unknown()).describe('column:value pairs'),
+    } as Record<string, unknown>,
+    async (p: unknown) => {
+      const i = p as { workspace_name: string; table_name: string; data: globalThis.Record<string, unknown> };
+      try {
+        return ok(await withDb(async e => {
+          const ws = await db.getWorkspaceByName(e, i.workspace_name);
+          if (!ws) return { error: `Workspace '${i.workspace_name}' not found. Use list_workspaces to see available.` };
+          const tbl = await db.getTableByName(e, ws.id, i.table_name);
+          if (!tbl) {
+            const tables = await db.listTables(e, ws.id);
+            return { error: `Table '${i.table_name}' not found. Available: ${tables.map(t => t.name).join(', ')}` };
+          }
+          validateRecordData(tbl.columns, i.data);
+          const rec = await db.createRecord(e, tbl.id, i.data);
+          await db.createAuditEntry(e, { workspace_id: ws.id, table_id: tbl.id, record_id: rec.id, action: 'create', actor: getActor(), changes: { data: i.data } });
+          return { success: true, record: rec };
+        }));
+      } catch (e) { return fail(e instanceof Error ? e.message : String(e)); }
+    });
+
+  // ─── Workspace (admin — use for initial setup) ──────────────────
 
   server.tool('create_workspace',
     'Create a workspace. Names must be unique.',
@@ -190,7 +218,7 @@ export function registerTools(
   // ─── Record ──────────────────────────────────────────────────────
 
   server.tool('create_record',
-    'Create a record. Validated against table schema.',
+    'Create record by table ID. Prefer add_record (by name) unless you have the ID.',
     CreateRecordSchema.shape,
     async (p: unknown) => { const i = p as CreateRecordInput; try {
       return ok({ success: true, record: await withDb(async e => {
@@ -230,13 +258,13 @@ export function registerTools(
   // ─── Query ───────────────────────────────────────────────────────
 
   server.tool('query_records',
-    'Query records with filters, sorting, and pagination.',
+    'Query by table ID. Prefer find_records (by name) unless you have the ID.',
     QueryRecordsSchema.shape,
     async (p: unknown) => { const i = p as QueryRecordsInput; try { return ok(await withDb(e => db.queryRecords(e, { table_id: i.table_id, filters: i.filters, sorts: i.sorts, limit: i.limit, offset: i.offset, columns: i.columns }))); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } },
     { readOnly: true });
 
   server.tool('search_records',
-    'Search records by text across all fields.',
+    'Search by table ID. Prefer find_records with search param (by name).',
     SearchRecordsSchema.shape,
     async (p: unknown) => { const i = p as SearchRecordsInput; try { const recs = await withDb(e => db.searchRecords(e, i.table_id, i.query, i.limit)); return ok({ records: recs, count: recs.length }); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } },
     { readOnly: true });
