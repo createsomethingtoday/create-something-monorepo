@@ -1,11 +1,10 @@
 /**
  * Type definitions for Substrate — the agent-native data layer.
  *
- * Three-Tier Framework: These are Artifacts — typed boundary contracts
- * that flow between Database, Automation, and Judgment tiers.
+ * Three-Tier Framework: Artifacts — typed boundary contracts between tiers.
  */
 
-import type { ColumnType, FilterOperator, SortDirection } from './constants.js';
+import type { ColumnType, FilterOperator, SortDirection, Role } from './constants.js';
 
 // ─── Workspace ───────────────────────────────────────────────────────
 
@@ -13,6 +12,7 @@ export interface Workspace {
   id: string;
   name: string;
   description: string;
+  archived_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -25,6 +25,7 @@ export interface TableDefinition {
   name: string;
   description: string;
   columns: ColumnDefinition[];
+  archived_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -37,6 +38,8 @@ export interface ColumnDefinition {
   default_value?: unknown;
   options?: string[];
   relation_table_id?: string;
+  /** If true, values are redacted in normal reads. Use read_sensitive to access. */
+  sensitive?: boolean;
 }
 
 // ─── Record ──────────────────────────────────────────────────────────
@@ -45,6 +48,7 @@ export interface Record {
   id: string;
   table_id: string;
   data: { [column: string]: unknown };
+  archived_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -62,26 +66,30 @@ export interface Relation {
 }
 
 // ─── Files ───────────────────────────────────────────────────────────
-// Files live in R2, metadata lives in D1. The agent manages both.
 
 export interface FileMetadata {
   id: string;
   workspace_id: string;
-  /** Optional association: attach a file to a specific record */
   record_id: string | null;
-  /** Original filename */
   filename: string;
-  /** MIME type */
   content_type: string;
-  /** Size in bytes */
   size_bytes: number;
-  /** R2 object key */
   storage_key: string;
-  /** Who uploaded it */
   uploaded_by: string;
-  /** Optional description */
   description: string;
   created_at: string;
+}
+
+// ─── Access Tokens ───────────────────────────────────────────────────
+
+export interface AccessToken {
+  id: string;
+  token_hash: string;
+  label: string;
+  role: Role;
+  workspace_ids: string[];   // ["*"] = all workspaces
+  created_at: string;
+  expires_at: string | null;
 }
 
 // ─── Query ───────────────────────────────────────────────────────────
@@ -104,6 +112,7 @@ export interface QueryParams {
   limit?: number;
   offset?: number;
   columns?: string[];
+  include_archived?: boolean;
 }
 
 export interface QueryResult {
@@ -121,7 +130,8 @@ export interface AuditEntry {
   workspace_id: string;
   table_id: string;
   record_id: string | null;
-  action: 'create' | 'update' | 'delete' | 'upload' | 'delete_file';
+  action: 'create' | 'update' | 'delete' | 'upload' | 'delete_file'
+    | 'archive' | 'restore' | 'read_sensitive' | 'token_created' | 'token_revoked';
   actor: string;
   changes: unknown;
   timestamp: string;

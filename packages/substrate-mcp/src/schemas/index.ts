@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 import {
-  ColumnType, FilterOperator, SortDirection,
+  ColumnType, FilterOperator, SortDirection, Role,
   MAX_COLUMNS_PER_TABLE, MAX_RECORDS_PER_QUERY, MAX_BULK_OPERATIONS,
   MAX_TABLE_NAME_LENGTH, MAX_COLUMN_NAME_LENGTH, MAX_WORKSPACE_NAME_LENGTH,
 } from '../constants.js';
@@ -20,6 +20,7 @@ export const ColumnDefinitionSchema = z.object({
   default_value: z.unknown().optional(),
   options: z.array(z.string()).optional().describe('select/multi_select options'),
   relation_table_id: z.string().optional().describe('relation target table'),
+  sensitive: z.boolean().optional().describe('if true, value is redacted in reads'),
 });
 
 // ─── Workspace ───────────────────────────────────────────────────────
@@ -35,8 +36,13 @@ export const UpdateWorkspaceSchema = z.object({
   description: z.string().optional(),
 });
 
-export const DeleteWorkspaceSchema = z.object({
+export const ArchiveWorkspaceSchema = z.object({
   workspace_id: z.string().min(1),
+});
+
+export const PurgeWorkspaceSchema = z.object({
+  workspace_id: z.string().min(1),
+  confirm: z.boolean().describe('must be true to hard-delete'),
 });
 
 // ─── Table ───────────────────────────────────────────────────────────
@@ -55,23 +61,22 @@ export const UpdateTableSchema = z.object({
   columns: z.array(ColumnDefinitionSchema).max(MAX_COLUMNS_PER_TABLE).optional(),
 });
 
-export const DeleteTableSchema = z.object({
+export const ArchiveTableSchema = z.object({
   table_id: z.string().min(1),
 });
 
 // ─── Record ──────────────────────────────────────────────────────────
-
-export const CreateRecordSchema = z.object({
-  table_id: z.string().min(1),
-  data: z.record(z.unknown()).describe('column:value pairs'),
-});
 
 export const UpdateRecordSchema = z.object({
   record_id: z.string().min(1),
   data: z.record(z.unknown()).describe('fields to merge'),
 });
 
-export const DeleteRecordSchema = z.object({
+export const ArchiveRecordSchema = z.object({
+  record_id: z.string().min(1),
+});
+
+export const RestoreRecordSchema = z.object({
   record_id: z.string().min(1),
 });
 
@@ -86,21 +91,6 @@ export const FilterSchema = z.object({
 export const SortSchema = z.object({
   column: z.string().min(1),
   direction: z.nativeEnum(SortDirection).default(SortDirection.ASC),
-});
-
-export const QueryRecordsSchema = z.object({
-  table_id: z.string().min(1),
-  filters: z.array(FilterSchema).optional(),
-  sorts: z.array(SortSchema).optional(),
-  limit: z.number().int().min(1).max(MAX_RECORDS_PER_QUERY).default(25),
-  offset: z.number().int().min(0).default(0),
-  columns: z.array(z.string()).optional().describe('projection'),
-});
-
-export const SearchRecordsSchema = z.object({
-  table_id: z.string().min(1),
-  query: z.string().min(1),
-  limit: z.number().int().min(1).max(MAX_RECORDS_PER_QUERY).default(25),
 });
 
 // ─── Relation ────────────────────────────────────────────────────────
@@ -152,19 +142,37 @@ export const ListFilesSchema = z.object({
   record_id: z.string().optional().describe('filter by record'),
 });
 
+// ─── Sensitive ───────────────────────────────────────────────────────
+
+export const ReadSensitiveSchema = z.object({
+  record_id: z.string().min(1),
+  column_name: z.string().min(1),
+});
+
+// ─── Token Management (admin only) ──────────────────────────────────
+
+export const CreateTokenSchema = z.object({
+  label: z.string().min(1).describe('human-readable label'),
+  role: z.nativeEnum(Role).default(Role.EDITOR),
+  workspace_ids: z.array(z.string()).default(['*']).describe('["*"]=all, or specific IDs'),
+});
+
+export const RevokeTokenSchema = z.object({
+  token_id: z.string().min(1),
+});
+
 // ─── Types ───────────────────────────────────────────────────────────
 
 export type CreateWorkspaceInput = z.infer<typeof CreateWorkspaceSchema>;
 export type UpdateWorkspaceInput = z.infer<typeof UpdateWorkspaceSchema>;
-export type DeleteWorkspaceInput = z.infer<typeof DeleteWorkspaceSchema>;
+export type ArchiveWorkspaceInput = z.infer<typeof ArchiveWorkspaceSchema>;
+export type PurgeWorkspaceInput = z.infer<typeof PurgeWorkspaceSchema>;
 export type DefineTableInput = z.infer<typeof DefineTableSchema>;
 export type UpdateTableInput = z.infer<typeof UpdateTableSchema>;
-export type DeleteTableInput = z.infer<typeof DeleteTableSchema>;
-export type CreateRecordInput = z.infer<typeof CreateRecordSchema>;
+export type ArchiveTableInput = z.infer<typeof ArchiveTableSchema>;
 export type UpdateRecordInput = z.infer<typeof UpdateRecordSchema>;
-export type DeleteRecordInput = z.infer<typeof DeleteRecordSchema>;
-export type QueryRecordsInput = z.infer<typeof QueryRecordsSchema>;
-export type SearchRecordsInput = z.infer<typeof SearchRecordsSchema>;
+export type ArchiveRecordInput = z.infer<typeof ArchiveRecordSchema>;
+export type RestoreRecordInput = z.infer<typeof RestoreRecordSchema>;
 export type CreateRelationInput = z.infer<typeof CreateRelationSchema>;
 export type DeleteRelationInput = z.infer<typeof DeleteRelationSchema>;
 export type BulkCreateRecordsInput = z.infer<typeof BulkCreateRecordsSchema>;
@@ -173,3 +181,6 @@ export type UploadFileInput = z.infer<typeof UploadFileSchema>;
 export type DownloadFileInput = z.infer<typeof DownloadFileSchema>;
 export type DeleteFileInput = z.infer<typeof DeleteFileSchema>;
 export type ListFilesInput = z.infer<typeof ListFilesSchema>;
+export type ReadSensitiveInput = z.infer<typeof ReadSensitiveSchema>;
+export type CreateTokenInput = z.infer<typeof CreateTokenSchema>;
+export type RevokeTokenInput = z.infer<typeof RevokeTokenSchema>;

@@ -1,13 +1,17 @@
 /**
  * Shared constants for Substrate — the agent-native data layer.
- *
- * Three-Tier Framework: These are Artifacts — typed boundary contracts
- * that flow between tiers. Enums define the vocabulary; constants define
- * the operational constraints.
  */
 
 // Cloudflare API
 export const CF_API_BASE = 'https://api.cloudflare.com/client/v4';
+
+// ─── Roles ───────────────────────────────────────────────────────────
+
+export enum Role {
+  ADMIN = 'admin',     // Full access + token management + purge
+  EDITOR = 'editor',   // CRUD, files, relations
+  READER = 'reader',   // Read + upvote only
+}
 
 // ─── Column Types ────────────────────────────────────────────────────
 
@@ -59,5 +63,5 @@ export const MAX_COLUMN_NAME_LENGTH = 64;
 export const MAX_WORKSPACE_NAME_LENGTH = 100;
 
 // File limits
-export const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024; // 100 MB
-export const MAX_BASE64_PAYLOAD = 134 * 1024 * 1024;  // ~100 MB decoded → ~134 MB base64
+export const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024;
+export const MAX_BASE64_PAYLOAD = 134 * 1024 * 1024;

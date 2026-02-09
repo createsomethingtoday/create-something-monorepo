@@ -1,38 +1,36 @@
 /**
  * MCP Tool handlers — the Automation tier.
  *
- * 20 tools, organized to minimize tool calls per user intent.
- * Primary tools (find_records, add_record) work by name — 1 call.
- * ID-based tools exist for follow-up operations.
- *
- * Token budget: ~20 tools × ~200 tokens each = ~4,000 tokens.
- * Per Anthropic engineering: code execution can reduce this further.
+ * Security-hardened: soft-delete (archive), sensitive field redaction,
+ * token management (admin-only), purge with confirmation.
  */
 
 import { z } from 'zod';
 import type { D1Exec, R2Store } from '../services/executor.js';
 import { generateStorageKey } from '../services/r2.js';
 import * as db from '../services/d1.js';
-import { ColumnType, MAX_FILE_SIZE_BYTES, MAX_RECORDS_PER_QUERY, MAX_BULK_OPERATIONS } from '../constants.js';
+import { ColumnType, MAX_FILE_SIZE_BYTES, MAX_RECORDS_PER_QUERY, MAX_BULK_OPERATIONS, Role } from '../constants.js';
 import type { ColumnDefinition } from '../types.js';
 
 import {
   FilterSchema, SortSchema, ColumnDefinitionSchema,
-  UpdateWorkspaceSchema, DeleteWorkspaceSchema,
-  DefineTableSchema, UpdateTableSchema, DeleteTableSchema,
-  UpdateRecordSchema, DeleteRecordSchema,
+  UpdateWorkspaceSchema, ArchiveWorkspaceSchema, PurgeWorkspaceSchema,
+  DefineTableSchema, UpdateTableSchema, ArchiveTableSchema,
+  UpdateRecordSchema, ArchiveRecordSchema, RestoreRecordSchema,
   CreateRelationSchema, DeleteRelationSchema,
   BulkCreateRecordsSchema, BulkDeleteRecordsSchema,
   UploadFileSchema, DownloadFileSchema, DeleteFileSchema, ListFilesSchema,
+  ReadSensitiveSchema, CreateTokenSchema, RevokeTokenSchema,
 } from '../schemas/index.js';
 
 import type {
-  UpdateWorkspaceInput, DeleteWorkspaceInput,
-  UpdateTableInput, DeleteTableInput,
-  UpdateRecordInput, DeleteRecordInput,
+  UpdateWorkspaceInput, ArchiveWorkspaceInput, PurgeWorkspaceInput,
+  UpdateTableInput, ArchiveTableInput,
+  UpdateRecordInput, ArchiveRecordInput, RestoreRecordInput,
   CreateRelationInput, DeleteRelationInput,
   BulkCreateRecordsInput, BulkDeleteRecordsInput,
   UploadFileInput, DownloadFileInput, DeleteFileInput, ListFilesInput,
+  ReadSensitiveInput, CreateTokenInput, RevokeTokenInput,
 } from '../schemas/index.js';
 
 interface AnyMcpServer {
@@ -79,12 +77,19 @@ export function registerTools(
     const e = getD1(); await db.ensureInitialized(e); return fn(e);
   }
 
+  /** Get table and redact sensitive fields from a record's data */
+  async function redactRecord(e: D1Exec, rec: import('../types.js').Record): Promise<import('../types.js').Record> {
+    const tbl = await db.getTable(e, rec.table_id);
+    if (tbl) rec.data = db.redactSensitiveFields(rec.data, tbl.columns);
+    return rec;
+  }
+
   // ═══════════════════════════════════════════════════════════════════
-  // PRIMARY — by name, single-call. Use these first.
+  // PRIMARY — by name, single-call
   // ═══════════════════════════════════════════════════════════════════
 
   server.tool('find_records',
-    'Query or search by workspace + table name. Supports filters, sorting, pagination, text search.',
+    'Query or search by workspace + table name. Sensitive fields are redacted.',
     {
       workspace_name: z.string().min(1),
       table_name: z.string().min(1),
@@ -93,9 +98,10 @@ export function registerTools(
       limit: z.number().int().min(1).max(MAX_RECORDS_PER_QUERY).default(25),
       offset: z.number().int().min(0).default(0),
       search: z.string().optional().describe('text search instead of filters'),
+      include_archived: z.boolean().optional(),
     } as Record<string, unknown>,
     async (p: unknown) => {
-      const i = p as { workspace_name: string; table_name: string; filters?: unknown[]; sorts?: unknown[]; limit?: number; offset?: number; search?: string };
+      const i = p as { workspace_name: string; table_name: string; filters?: unknown[]; sorts?: unknown[]; limit?: number; offset?: number; search?: string; include_archived?: boolean };
       try {
         return ok(await withDb(async e => {
           const ws = await db.getWorkspaceByName(e, i.workspace_name);
@@ -107,21 +113,25 @@ export function registerTools(
           }
           if (i.search) {
             const recs = await db.searchRecords(e, tbl.id, i.search, i.limit ?? 25);
+            recs.forEach(r => { r.data = db.redactSensitiveFields(r.data, tbl.columns); });
             return { table: tbl.name, records: recs, count: recs.length };
           }
-          return await db.queryRecords(e, {
+          const result = await db.queryRecords(e, {
             table_id: tbl.id,
             filters: i.filters as import('../types.js').QueryFilter[] | undefined,
             sorts: i.sorts as import('../types.js').QuerySort[] | undefined,
             limit: i.limit, offset: i.offset,
+            include_archived: i.include_archived,
           });
+          result.records.forEach(r => { r.data = db.redactSensitiveFields(r.data, tbl.columns); });
+          return result;
         }));
       } catch (e) { return fail(e instanceof Error ? e.message : String(e)); }
     },
     { readOnly: true });
 
   server.tool('add_record',
-    'Create record by workspace + table name. Data validated against schema.',
+    'Create record by workspace + table name. Validated against schema.',
     {
       workspace_name: z.string().min(1),
       table_name: z.string().min(1),
@@ -147,7 +157,7 @@ export function registerTools(
     });
 
   server.tool('list_workspaces',
-    'List all workspaces with their tables and column schemas. Start here.',
+    'List all workspaces with tables and column schemas. Start here.',
     {},
     async () => {
       try {
@@ -168,11 +178,11 @@ export function registerTools(
     { readOnly: true });
 
   // ═══════════════════════════════════════════════════════════════════
-  // ID-BASED — for follow-up operations when you have IDs
+  // ID-BASED — follow-up operations
   // ═══════════════════════════════════════════════════════════════════
 
   server.tool('get_record',
-    'Get record by ID with its relations.',
+    'Get record by ID with relations. Sensitive fields redacted.',
     { record_id: z.string().min(1) } as Record<string, unknown>,
     async (p: unknown) => {
       const i = p as { record_id: string };
@@ -180,6 +190,7 @@ export function registerTools(
         return ok(await withDb(async e => {
           const rec = await db.getRecord(e, i.record_id);
           if (!rec) return { error: 'Record not found' };
+          await redactRecord(e, rec);
           const relations = await db.getRelationsForRecord(e, i.record_id);
           return { record: rec, relations };
         }));
@@ -199,19 +210,61 @@ export function registerTools(
         return rec;
       }) }); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
-  server.tool('delete_record',
-    'Delete record by ID. Irreversible.',
-    DeleteRecordSchema.shape,
-    async (p: unknown) => { const i = p as DeleteRecordInput; try {
-      const deleted = await withDb(async e => {
+  server.tool('archive_record',
+    'Archive a record (soft-delete). Can be restored later.',
+    ArchiveRecordSchema.shape,
+    async (p: unknown) => { const i = p as ArchiveRecordInput; try {
+      const archived = await withDb(async e => {
         const old = await db.getRecord(e, i.record_id); if (!old) return false;
         const tbl = await db.getTable(e, old.table_id);
-        const success = await db.deleteRecord(e, i.record_id);
-        if (success && tbl) await db.createAuditEntry(e, { workspace_id: tbl.workspace_id, table_id: old.table_id, record_id: i.record_id, action: 'delete', actor: getActor(), changes: { data: old.data } });
+        const success = await db.archiveRecord(e, i.record_id);
+        if (success && tbl) await db.createAuditEntry(e, { workspace_id: tbl.workspace_id, table_id: old.table_id, record_id: i.record_id, action: 'archive', actor: getActor(), changes: { data: old.data } });
         return success;
       });
-      return deleted ? ok({ success: true }) : fail('Record not found');
+      return archived ? ok({ success: true, archived: true }) : fail('Record not found');
     } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
+
+  server.tool('restore_record',
+    'Restore an archived record.',
+    RestoreRecordSchema.shape,
+    async (p: unknown) => { const i = p as RestoreRecordInput; try {
+      const restored = await withDb(async e => {
+        const success = await db.restoreRecord(e, i.record_id);
+        if (success) {
+          const rec = await db.getRecord(e, i.record_id);
+          if (rec) {
+            const tbl = await db.getTable(e, rec.table_id);
+            if (tbl) await db.createAuditEntry(e, { workspace_id: tbl.workspace_id, table_id: rec.table_id, record_id: i.record_id, action: 'restore', actor: getActor(), changes: {} });
+          }
+        }
+        return success;
+      });
+      return restored ? ok({ success: true, restored: true }) : fail('Record not found or not archived');
+    } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // SENSITIVE FIELD ACCESS
+  // ═══════════════════════════════════════════════════════════════════
+
+  server.tool('read_sensitive',
+    'Read the actual value of a sensitive (redacted) field. Logged in audit trail.',
+    ReadSensitiveSchema.shape,
+    async (p: unknown) => { const i = p as ReadSensitiveInput; try {
+      return ok(await withDb(async e => {
+        const rec = await db.getRecord(e, i.record_id);
+        if (!rec) return { error: 'Record not found' };
+        const tbl = await db.getTable(e, rec.table_id);
+        if (!tbl) return { error: 'Table not found' };
+        const col = tbl.columns.find(c => c.name === i.column_name);
+        if (!col) return { error: `Column '${i.column_name}' not found` };
+        if (!col.sensitive) return { error: `Column '${i.column_name}' is not marked sensitive` };
+        const value = rec.data[i.column_name];
+        // Audit the access
+        await db.createAuditEntry(e, { workspace_id: tbl.workspace_id, table_id: tbl.id, record_id: i.record_id, action: 'read_sensitive', actor: getActor(), changes: { column: i.column_name } });
+        return { record_id: i.record_id, column: i.column_name, value };
+      }));
+    } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } },
+    { readOnly: true });
 
   // ═══════════════════════════════════════════════════════════════════
   // RELATIONS
@@ -228,7 +281,7 @@ export function registerTools(
     async (p: unknown) => { const i = p as DeleteRelationInput; try { return (await withDb(e => db.deleteRelation(e, i.relation_id))) ? ok({ success: true }) : fail('Relation not found'); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   // ═══════════════════════════════════════════════════════════════════
-  // ADMIN — workspace + table schema management
+  // ADMIN — workspace + table management
   // ═══════════════════════════════════════════════════════════════════
 
   server.tool('create_workspace',
@@ -241,13 +294,28 @@ export function registerTools(
     UpdateWorkspaceSchema.shape,
     async (p: unknown) => { const i = p as UpdateWorkspaceInput; try { const w = await withDb(e => db.updateWorkspace(e, i.workspace_id, { name: i.name, description: i.description })); return w ? ok({ success: true, workspace: w }) : fail('Workspace not found'); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
-  server.tool('delete_workspace',
-    'Delete workspace and all contents. Irreversible.',
-    DeleteWorkspaceSchema.shape,
-    async (p: unknown) => { const i = p as DeleteWorkspaceInput; try { return (await withDb(e => db.deleteWorkspace(e, i.workspace_id))) ? ok({ success: true }) : fail('Workspace not found'); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
+  server.tool('archive_workspace',
+    'Archive workspace (soft-delete). All contents hidden but preserved.',
+    ArchiveWorkspaceSchema.shape,
+    async (p: unknown) => { const i = p as ArchiveWorkspaceInput; try {
+      const archived = await withDb(async e => {
+        const success = await db.archiveWorkspace(e, i.workspace_id);
+        if (success) await db.createAuditEntry(e, { workspace_id: i.workspace_id, table_id: '__workspace__', record_id: null, action: 'archive', actor: getActor(), changes: {} });
+        return success;
+      });
+      return archived ? ok({ success: true, archived: true }) : fail('Workspace not found');
+    } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
+
+  server.tool('purge_workspace',
+    'Permanently delete workspace. Requires confirm:true. Cannot be undone.',
+    PurgeWorkspaceSchema.shape,
+    async (p: unknown) => { const i = p as PurgeWorkspaceInput; try {
+      if (!i.confirm) return fail('Set confirm:true to permanently delete. This cannot be undone.');
+      return (await withDb(e => db.purgeWorkspace(e, i.workspace_id))) ? ok({ success: true, purged: true }) : fail('Workspace not found');
+    } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   server.tool('define_table',
-    'Define a table with typed columns in a workspace.',
+    'Define a table with typed columns. Use sensitive:true on columns to redact values.',
     DefineTableSchema.shape,
     async (p: unknown) => { const i = p as import('../schemas/index.js').DefineTableInput; try { return ok({ success: true, table: await withDb(e => db.createTable(e, i.workspace_id, i.name, i.description, i.columns)) }); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
@@ -256,10 +324,10 @@ export function registerTools(
     UpdateTableSchema.shape,
     async (p: unknown) => { const i = p as UpdateTableInput; try { const t = await withDb(e => db.updateTable(e, i.table_id, { name: i.name, description: i.description, columns: i.columns })); return t ? ok({ success: true, table: t }) : fail('Table not found'); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
-  server.tool('delete_table',
-    'Delete table and all records. Irreversible.',
-    DeleteTableSchema.shape,
-    async (p: unknown) => { const i = p as DeleteTableInput; try { return (await withDb(e => db.deleteTable(e, i.table_id))) ? ok({ success: true }) : fail('Table not found'); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
+  server.tool('archive_table',
+    'Archive table (soft-delete). Records preserved.',
+    ArchiveTableSchema.shape,
+    async (p: unknown) => { const i = p as ArchiveTableInput; try { return (await withDb(e => db.archiveTable(e, i.table_id))) ? ok({ success: true, archived: true }) : fail('Table not found'); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   // ═══════════════════════════════════════════════════════════════════
   // BULK
@@ -279,10 +347,10 @@ export function registerTools(
       return ok({ success: true, records: recs, count: recs.length });
     } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
-  server.tool('bulk_delete_records',
-    `Delete multiple records (max ${MAX_BULK_OPERATIONS}).`,
+  server.tool('bulk_archive_records',
+    `Archive multiple records (max ${MAX_BULK_OPERATIONS}).`,
     BulkDeleteRecordsSchema.shape,
-    async (p: unknown) => { const i = p as BulkDeleteRecordsInput; try { return ok({ success: true, deleted_count: await withDb(e => db.bulkDeleteRecords(e, i.record_ids)) }); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
+    async (p: unknown) => { const i = p as BulkDeleteRecordsInput; try { return ok({ success: true, archived_count: await withDb(e => db.bulkDeleteRecords(e, i.record_ids)) }); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   // ═══════════════════════════════════════════════════════════════════
   // FILES
@@ -323,7 +391,7 @@ export function registerTools(
     { readOnly: true });
 
   server.tool('delete_file',
-    'Delete file. Irreversible.',
+    'Delete file permanently.',
     DeleteFileSchema.shape,
     async (p: unknown) => {
       const i = p as DeleteFileInput;
@@ -346,4 +414,27 @@ export function registerTools(
       catch (e) { return fail(e instanceof Error ? e.message : String(e)); }
     },
     { readOnly: true });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // TOKEN MANAGEMENT (admin-only in production)
+  // ═══════════════════════════════════════════════════════════════════
+
+  server.tool('create_token',
+    'Create an access token. Returns the raw token (shown once). Admin only.',
+    CreateTokenSchema.shape,
+    async (p: unknown) => { const i = p as CreateTokenInput; try {
+      const rawToken = crypto.randomUUID() + '-' + crypto.randomUUID();
+      const token = await withDb(e => db.createAccessToken(e, rawToken, i.label, i.role, i.workspace_ids));
+      await withDb(e => db.createAuditEntry(e, { workspace_id: '__system__', table_id: '__tokens__', record_id: token.id, action: 'token_created', actor: getActor(), changes: { label: i.label, role: i.role } }));
+      return ok({ success: true, token: rawToken, id: token.id, label: token.label, role: token.role, workspace_ids: token.workspace_ids, warning: 'Save this token — it will not be shown again.' });
+    } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
+
+  server.tool('revoke_token',
+    'Revoke an access token by ID. Admin only.',
+    RevokeTokenSchema.shape,
+    async (p: unknown) => { const i = p as RevokeTokenInput; try {
+      const revoked = await withDb(e => db.revokeToken(e, i.token_id));
+      if (revoked) await withDb(e => db.createAuditEntry(e, { workspace_id: '__system__', table_id: '__tokens__', record_id: i.token_id, action: 'token_revoked', actor: getActor(), changes: {} }));
+      return revoked ? ok({ success: true }) : fail('Token not found');
+    } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 }
