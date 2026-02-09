@@ -16,6 +16,7 @@ interface Env {
   TWILIO_ACCOUNT_SID: string;
   TWILIO_AUTH_TOKEN: string;
   TWILIO_FROM_NUMBER: string;
+  TWILIO_MESSAGING_SERVICE_SID: string;
 }
 
 interface NotificationMessage {
@@ -259,17 +260,22 @@ async function handleQueue(
  * Send SMS via Twilio REST API.
  */
 async function sendSMS(env: Env, to: string, body: string): Promise<void> {
-  if (!env.TWILIO_ACCOUNT_SID || !env.TWILIO_AUTH_TOKEN || !env.TWILIO_FROM_NUMBER) {
+  if (!env.TWILIO_ACCOUNT_SID || !env.TWILIO_AUTH_TOKEN) {
     throw new Error('Twilio credentials not configured');
   }
 
   const auth = btoa(`${env.TWILIO_ACCOUNT_SID}:${env.TWILIO_AUTH_TOKEN}`);
 
-  const formData = new URLSearchParams({
-    To: to,
-    From: env.TWILIO_FROM_NUMBER,
-    Body: body,
-  });
+  // Use Messaging Service SID if available (routes through the "SCHEDULE" service),
+  // fall back to raw From number
+  const formData = new URLSearchParams({ To: to, Body: body });
+  if (env.TWILIO_MESSAGING_SERVICE_SID) {
+    formData.set('MessagingServiceSid', env.TWILIO_MESSAGING_SERVICE_SID);
+  } else if (env.TWILIO_FROM_NUMBER) {
+    formData.set('From', env.TWILIO_FROM_NUMBER);
+  } else {
+    throw new Error('Neither TWILIO_MESSAGING_SERVICE_SID nor TWILIO_FROM_NUMBER configured');
+  }
 
   const response = await fetch(
     `https://api.twilio.com/2010-04-01/Accounts/${env.TWILIO_ACCOUNT_SID}/Messages.json`,
