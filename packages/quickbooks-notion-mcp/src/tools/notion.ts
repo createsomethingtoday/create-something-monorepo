@@ -15,14 +15,22 @@ import {
   NotionSyncEntitySchema,
   NotionListDatabasesSchema,
   NotionGetDatabaseSchema,
+  NotionCreateDatabaseSchema,
+  NotionUpsertPageSchema,
 } from "../schemas/index.js";
 import type {
   NotionSyncEntityInput,
   NotionListDatabasesInput,
   NotionGetDatabaseInput,
+  NotionCreateDatabaseInput,
+  NotionUpsertPageInput,
 } from "../schemas/index.js";
 import { toolResponse, truncateWithWarning } from "../services/formatting.js";
 import type { QBOEntity } from "../constants.js";
+import { getNotionSchemaForEntity, getPropertyNamesForEntity } from "../schemas/notion-presets.js";
+import { logger } from "../services/logger.js";
+
+// ── Property Mapping ────────────────────────────────────────────────
 
 /**
  * Map a QuickBooks entity record to Notion properties.
@@ -167,7 +175,6 @@ function mapQBOToNotionProperties(
     }
 
     default: {
-      // Generic: sync any common fields
       if (record.TxnDate)
         props["Date"] = notionDate(record.TxnDate as string);
       if (typeof record.TotalAmt === "number")
@@ -188,125 +195,254 @@ function mapQBOToNotionProperties(
   return props;
 }
 
+// ── Upsert Helper (shared by notion_upsert_page and notion_sync_qbo) ──
+
+async function upsertQBORecord(
+  notion: NotionClient,
+  databaseId: string,
+  entity: QBOEntity,
+  record: Record<string, unknown>
+): Promise<{ qboId: string; name: string; notionUrl: string; status: "created" | "updated" }> {
+  const qboId = String(record.Id ?? "?");
+  const name = String(
+    record.DisplayName ?? record.Name ?? record.DocNumber ?? `#${record.Id}`
+  );
+
+  const properties = mapQBOToNotionProperties(entity, record);
+  const existing = await notion.findPageByQBOId(databaseId, qboId);
+
+  let page;
+  let status: "created" | "updated";
+
+  if (existing) {
+    page = await notion.updatePage(existing.id, properties);
+    status = "updated";
+  } else {
+    page = await notion.createPage(databaseId, properties);
+    status = "created";
+  }
+
+  return { qboId, name, notionUrl: page.url, status };
+}
+
+// ── Tool Registration ───────────────────────────────────────────────
+
 export function registerNotionTools(
   server: McpServer,
   qbo: QuickBooksClient,
   notion: NotionClient
 ): void {
-  // ── notion_sync_qbo ─────────────────────────────────────────────
+
+  // ── notion_create_database ──────────────────────────────────────
   server.registerTool(
-    "notion_sync_qbo",
+    "notion_create_database",
     {
-      title: "Sync QuickBooks to Notion",
-      description: `Sync QuickBooks Online entities into a Notion database. Creates a new Notion page for each QuickBooks record.
+      title: "Create Notion Database for QBO Data",
+      description: `Use when the user wants to set up a new Notion database to track QuickBooks data. Creates a database with the right columns for the specified entity type.
 
-This tool reads data from QuickBooks (read-only) and writes it to Notion. It automatically maps QBO fields to Notion properties based on entity type.
+For example: "Set up a database to track my invoices" or "Create a customer CRM in Notion."
 
-Required Notion database properties (created automatically if missing — ensure your database has at minimum a "Name" title property):
-  - Name (title): Entity name/display name
-  - QBO ID (rich_text): QuickBooks record ID
-  - Additional properties vary by entity type (Total, Balance, Date, Customer, Vendor, etc.)
+Automatically configures columns based on entity type:
+- Customer/Vendor/Employee: Name, Email, Phone, Balance, Active
+- Invoice/Estimate: Customer, Doc Number, Date, Due Date, Total, Balance
+- Bill/PurchaseOrder: Vendor, Doc Number, Date, Due Date, Total, Balance
+- Account: Account Type, Classification, Balance, Active
+- Item: Description, Type, Unit Price, Active
 
-Args:
-  - entity (string): QBO entity type to sync
-  - database_id (string): Target Notion database ID
-  - where (string, optional): WHERE clause to filter QBO records
-  - limit (number): Max records per batch (1-50, default: 10)
+After creating the database, use notion_sync_qbo to populate it with QuickBooks data.
 
-Returns: Summary of synced records with links to created Notion pages.
-
-Examples:
-  - Sync customers: entity="Customer", database_id="abc123"
-  - Sync unpaid invoices: entity="Invoice", where="Balance > 0", database_id="abc123"
-  - Sync active vendors: entity="Vendor", where="Active = true", database_id="abc123"`,
-      inputSchema: NotionSyncEntitySchema,
+Requires a Notion page ID as the parent — use notion_list_databases to find existing pages, or ask the user for the page URL.`,
+      inputSchema: NotionCreateDatabaseSchema,
       annotations: {
-        readOnlyHint: false, // Writes to Notion
+        readOnlyHint: false,
         destructiveHint: false,
         idempotentHint: false,
         openWorldHint: true,
       },
     },
+    async (params: NotionCreateDatabaseInput) => {
+      try {
+        const title = params.title ?? `${params.entity} Tracker`;
+        const schema = getNotionSchemaForEntity(params.entity);
+
+        const db = await notion.createDatabase(
+          params.parent_page_id,
+          title,
+          schema
+        );
+
+        const dbId = db.id as string;
+        const dbUrl = db.url as string;
+        const propNames = getPropertyNamesForEntity(params.entity);
+
+        return toolResponse(
+          `## Database Created: ${title}\n\n` +
+          `**ID**: \`${dbId}\`\n` +
+          `**URL**: ${dbUrl}\n` +
+          `**Properties**: ${propNames.join(", ")}\n\n` +
+          `Ready to sync. Use notion_sync_qbo with database_id="${dbId}" and entity="${params.entity}" to populate it.`
+        );
+      } catch (error: unknown) {
+        return toolResponse(
+          `Error: ${error instanceof Error ? error.message : String(error)}`,
+          true
+        );
+      }
+    }
+  );
+
+  // ── notion_upsert_page ──────────────────────────────────────────
+  server.registerTool(
+    "notion_upsert_page",
+    {
+      title: "Create or Update a Notion Page from QBO Record",
+      description: `Use when you need to sync a single QuickBooks record into Notion. Creates the page if it doesn't exist, or updates it if a page with the same QBO ID already exists (deduplication).
+
+This is a composable primitive — use it in loops when you need custom filtering or transformation that notion_sync_qbo doesn't support.
+
+Typical workflow:
+1. Use qbo_get or qbo_list to fetch the record(s)
+2. Use this tool to upsert each record into the Notion database
+
+The 'record' parameter should be the raw QBO record object as returned by qbo_list or qbo_get (JSON format). It must include an 'Id' field.`,
+      inputSchema: NotionUpsertPageSchema,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
+    },
+    async (params: NotionUpsertPageInput) => {
+      try {
+        const result = await upsertQBORecord(
+          notion,
+          params.database_id,
+          params.entity,
+          params.record
+        );
+
+        const verb = result.status === "created" ? "Created" : "Updated";
+        return toolResponse(
+          `${verb}: **${result.name}** (QBO #${result.qboId}) → [Notion page](${result.notionUrl})`
+        );
+      } catch (error: unknown) {
+        return toolResponse(
+          `Error: ${error instanceof Error ? error.message : String(error)}`,
+          true
+        );
+      }
+    }
+  );
+
+  // ── notion_sync_qbo ─────────────────────────────────────────────
+  server.registerTool(
+    "notion_sync_qbo",
+    {
+      title: "Sync QuickBooks Data to Notion",
+      description: `Use when the user wants to bulk sync QuickBooks records into a Notion database. This is the high-level convenience tool — it fetches from QuickBooks and syncs to Notion in one step.
+
+Handles deduplication automatically: records already in Notion (matched by QBO ID) are updated, new records are created.
+
+Set limit=0 to sync ALL records (auto-paginates). Otherwise, syncs up to the specified limit.
+
+Typical workflow:
+1. First, ensure a Notion database exists (use notion_create_database or notion_list_databases to find one)
+2. Then call this tool with the entity type and database ID
+
+Examples:
+- "Sync all customers to Notion": entity="Customer", limit=0
+- "Sync unpaid invoices": entity="Invoice", where="Balance > 0"
+- "Sync active vendors": entity="Vendor", where="Active = true"`,
+      inputSchema: NotionSyncEntitySchema,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
+    },
     async (params: NotionSyncEntityInput) => {
       try {
-        // 1. Fetch from QuickBooks
-        const { items, totalCount } = await qbo.list(params.entity, {
-          where: params.where,
-          limit: params.limit,
-        });
+        const syncAll = params.limit === 0;
+        const batchSize = syncAll ? 50 : params.limit;
+        let offset = 0;
+        let totalSynced = 0;
+        const results: Array<{ qboId: string; name: string; notionUrl: string; status: string }> = [];
+        const errors: string[] = [];
+        let qboTotalCount = 0;
 
-        if (items.length === 0) {
+        // Paginated fetch + sync loop
+        do {
+          const { items, totalCount } = await qbo.list(params.entity, {
+            where: params.where,
+            limit: batchSize,
+            offset,
+          });
+
+          qboTotalCount = totalCount;
+
+          if (items.length === 0) break;
+
+          for (const record of items) {
+            const rec = record as Record<string, unknown>;
+            try {
+              const result = await upsertQBORecord(
+                notion,
+                params.database_id,
+                params.entity,
+                rec
+              );
+              results.push(result);
+            } catch (err: unknown) {
+              const qboId = String(rec.Id ?? "?");
+              errors.push(
+                `Failed to sync ${params.entity} #${qboId}: ${err instanceof Error ? err.message : String(err)}`
+              );
+            }
+          }
+
+          offset += items.length;
+          totalSynced += items.length;
+
+          // If not syncing all, stop after one batch
+          if (!syncAll) break;
+
+          logger.info("Sync progress", {
+            entity: params.entity,
+            synced: totalSynced,
+            total: totalCount,
+          });
+        } while (offset < qboTotalCount);
+
+        if (results.length === 0 && errors.length === 0) {
           return toolResponse(
             `No ${params.entity} records found in QuickBooks${params.where ? ` matching: ${params.where}` : ""}.`
           );
         }
 
-        // 2. Sync each record to Notion
-        const results: Array<{ qboId: string; name: string; notionUrl: string; status: string }> = [];
-        const errors: string[] = [];
+        // Build response
+        const created = results.filter(r => r.status === "created");
+        const updated = results.filter(r => r.status === "updated");
 
-        for (const record of items) {
-          const rec = record as Record<string, unknown>;
-          const qboId = String(rec.Id ?? "?");
-          const name = String(
-            rec.DisplayName ?? rec.Name ?? rec.DocNumber ?? `#${rec.Id}`
-          );
-
-          try {
-            const properties = mapQBOToNotionProperties(params.entity, rec);
-
-            // Deduplication: check if page with this QBO ID already exists
-            const existing = await notion.findPageByQBOId(params.database_id, qboId);
-
-            let page;
-            let status: "created" | "updated";
-
-            if (existing) {
-              // Update existing page
-              page = await notion.updatePage(existing.id, properties);
-              status = "updated";
-            } else {
-              // Create new page
-              page = await notion.createPage(params.database_id, properties);
-              status = "created";
-            }
-
-            results.push({
-              qboId,
-              name,
-              notionUrl: page.url,
-              status,
-            });
-          } catch (err: unknown) {
-            errors.push(
-              `Failed to sync ${params.entity} #${qboId}: ${err instanceof Error ? err.message : String(err)}`
-            );
-          }
-        }
-
-        // 3. Build response
         const lines: string[] = [
           `## Sync Complete: ${params.entity}`,
           "",
-          `**Synced**: ${results.length} of ${items.length} records (${totalCount} total in QuickBooks)`,
+          `**Synced**: ${results.length} of ${qboTotalCount} total records`,
         ];
 
-        if (results.length > 0) {
+        if (created.length > 0) {
           lines.push("");
-          const created = results.filter(r => r.status === "created");
-          const updated = results.filter(r => r.status === "updated");
-
-          if (created.length > 0) {
-            lines.push(`**Created** (${created.length}):`);
-            for (const r of created) {
-              lines.push(`- + **${r.name}** (QBO #${r.qboId}) → [Notion page](${r.notionUrl})`);
-            }
+          lines.push(`**Created** (${created.length}):`);
+          for (const r of created) {
+            lines.push(`- + **${r.name}** (QBO #${r.qboId}) → [Notion page](${r.notionUrl})`);
           }
-          if (updated.length > 0) {
-            lines.push(`**Updated** (${updated.length}):`);
-            for (const r of updated) {
-              lines.push(`- ~ **${r.name}** (QBO #${r.qboId}) → [Notion page](${r.notionUrl})`);
-            }
+        }
+        if (updated.length > 0) {
+          lines.push("");
+          lines.push(`**Updated** (${updated.length}):`);
+          for (const r of updated) {
+            lines.push(`- ~ **${r.name}** (QBO #${r.qboId}) → [Notion page](${r.notionUrl})`);
           }
         }
 
@@ -314,15 +450,8 @@ Examples:
           lines.push("");
           lines.push(`**Errors** (${errors.length}):`);
           for (const e of errors) {
-            lines.push(`- ❌ ${e}`);
+            lines.push(`- ${e}`);
           }
-        }
-
-        if (totalCount > params.limit) {
-          lines.push("");
-          lines.push(
-            `_${totalCount - params.limit} more records available. Increase limit or run again with a WHERE filter._`
-          );
         }
 
         return toolResponse(lines.join("\n"));
@@ -339,13 +468,12 @@ Examples:
   server.registerTool(
     "notion_list_databases",
     {
-      title: "List Notion Databases",
-      description: `Search for Notion databases in your workspace. Useful for finding the right database_id to sync QuickBooks data into.
+      title: "Find Notion Databases",
+      description: `Use when you need to find a Notion database to sync QuickBooks data into. Searches the user's Notion workspace by name.
 
-Args:
-  - search_term (string, optional): Filter databases by name
+Call this first when the user says "sync to Notion" but hasn't specified which database. Shows database names, IDs, and existing properties so you can pick the right one.
 
-Returns: List of databases with IDs, names, and property schemas.`,
+If no databases exist yet, suggest using notion_create_database to create one.`,
       inputSchema: NotionListDatabasesSchema,
       annotations: {
         readOnlyHint: true,
@@ -365,8 +493,8 @@ Returns: List of databases with IDs, names, and property schemas.`,
         if (databases.length === 0) {
           return toolResponse(
             params.search_term
-              ? `No databases found matching "${params.search_term}".`
-              : "No databases found. Ensure your Notion integration has access to at least one database."
+              ? `No databases found matching "${params.search_term}". Use notion_create_database to create one.`
+              : "No databases found. Ensure the Notion integration has access to at least one database, or use notion_create_database to create one."
           );
         }
 
@@ -404,13 +532,10 @@ Returns: List of databases with IDs, names, and property schemas.`,
   server.registerTool(
     "notion_get_database",
     {
-      title: "Get Notion Database Schema",
-      description: `Inspect a Notion database's schema (properties, types, options). Useful for understanding what properties exist before syncing data.
+      title: "Inspect Notion Database Schema",
+      description: `Use when you need to check what properties a Notion database has before syncing. Shows the full property schema including types and options.
 
-Args:
-  - database_id (string): Notion database ID
-
-Returns: Database name and complete property schema.`,
+Useful for verifying that a database has the right columns for the entity type you want to sync. If properties are missing or wrong types, suggest using notion_create_database to create a properly configured database instead.`,
       inputSchema: NotionGetDatabaseSchema,
       annotations: {
         readOnlyHint: true,

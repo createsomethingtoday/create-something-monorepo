@@ -157,6 +157,34 @@ export class NotionClient {
   }
 
   /**
+   * Create a new Notion database with specified properties.
+   */
+  async createDatabase(
+    parentPageId: string,
+    title: string,
+    properties: Record<string, Record<string, unknown>>
+  ): Promise<Record<string, unknown>> {
+    await throttleNotionRequest();
+
+    const response = await fetchWithRetry(`${NOTION_API_BASE}/databases`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify({
+        parent: { type: "page_id", page_id: parentPageId },
+        title: [{ type: "text", text: { content: title } }],
+        properties,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new NotionApiError(response.status, errorBody);
+    }
+
+    return (await response.json()) as Record<string, unknown>;
+  }
+
+  /**
    * Find a Notion page by QBO ID property.
    * Used for deduplication during sync.
    */

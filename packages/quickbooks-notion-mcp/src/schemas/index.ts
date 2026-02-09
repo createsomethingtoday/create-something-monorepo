@@ -140,10 +140,10 @@ export const NotionSyncEntitySchema = z
     limit: z
       .number()
       .int()
-      .min(1)
+      .min(0)
       .max(50)
-      .default(10)
-      .describe("Max records to sync in one batch (1-50, default: 10)"),
+      .default(20)
+      .describe("Max records per batch (0 = sync all, default: 20)"),
   })
   .strict();
 
@@ -165,6 +165,37 @@ export const NotionGetDatabaseSchema = z
   })
   .strict();
 
+export const NotionCreateDatabaseSchema = z
+  .object({
+    parent_page_id: z
+      .string()
+      .min(1)
+      .describe("Notion page ID where the database will be created. The Notion integration must have access to this page."),
+    entity: z
+      .enum(QBO_ENTITIES)
+      .describe("QBO entity type — determines the database columns (e.g., Customer gets Name, Email, Phone, Balance; Invoice gets Doc Number, Date, Total, Balance)"),
+    title: z
+      .string()
+      .optional()
+      .describe("Database title. Defaults to '{Entity} Tracker' (e.g., 'Invoice Tracker')"),
+  })
+  .strict();
+
+export const NotionUpsertPageSchema = z
+  .object({
+    entity: z
+      .enum(QBO_ENTITIES)
+      .describe("QBO entity type — determines how record fields map to Notion properties"),
+    database_id: z
+      .string()
+      .min(1)
+      .describe("Target Notion database ID"),
+    record: z
+      .record(z.unknown())
+      .describe("Raw QBO record object (as returned by qbo_list or qbo_get). Must include an 'Id' field."),
+  })
+  .strict();
+
 // ── Type exports ────────────────────────────────────────────────────
 
 export type QBOQueryInput = z.infer<typeof QBOQuerySchema>;
@@ -176,3 +207,5 @@ export type QBOSearchInput = z.infer<typeof QBOSearchSchema>;
 export type NotionSyncEntityInput = z.infer<typeof NotionSyncEntitySchema>;
 export type NotionListDatabasesInput = z.infer<typeof NotionListDatabasesSchema>;
 export type NotionGetDatabaseInput = z.infer<typeof NotionGetDatabaseSchema>;
+export type NotionCreateDatabaseInput = z.infer<typeof NotionCreateDatabaseSchema>;
+export type NotionUpsertPageInput = z.infer<typeof NotionUpsertPageSchema>;

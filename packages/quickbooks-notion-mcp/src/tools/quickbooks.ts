@@ -51,25 +51,13 @@ export function registerQuickBooksTools(
     "qbo_query",
     {
       title: "Query QuickBooks",
-      description: `Execute a read-only SQL query against QuickBooks Online data.
+      description: `Use when you need precise control over QuickBooks data retrieval. This is the power-user tool — it accepts raw QBO SQL queries.
 
-Only SELECT queries are allowed. Supports standard QBO query syntax including WHERE, ORDERBY, STARTPOSITION, and MAXRESULTS clauses.
+Prefer qbo_list or qbo_search for common operations. Use this when you need custom SELECT fields, complex WHERE clauses, or specific ordering that other tools don't support.
 
-Args:
-  - query (string): QuickBooks SQL query. Example: "SELECT * FROM Invoice WHERE Balance > 0 ORDERBY TxnDate DESC MAXRESULTS 10"
-  - response_format ('markdown' | 'json'): Output format (default: 'markdown')
+Only SELECT queries are allowed (read-only). Use response_format="json" when you need to process the results programmatically.
 
-Returns: Query results formatted as markdown table or raw JSON.
-
-Examples:
-  - "SELECT * FROM Customer WHERE Active = true"
-  - "SELECT * FROM Invoice WHERE DueDate < '2025-01-01' AND Balance > 0"
-  - "SELECT * FROM Bill WHERE VendorRef = '123'"
-  - "SELECT TotalAmt, CustomerRef FROM Payment WHERE TxnDate > '2025-01-01'"
-
-Error Handling:
-  - Non-SELECT queries will be rejected
-  - Returns QBO API errors with actionable suggestions`,
+Examples: "SELECT * FROM Invoice WHERE Balance > 0 ORDERBY TxnDate DESC MAXRESULTS 10"`,
       inputSchema: QBOQuerySchema,
       annotations: {
         readOnlyHint: true,
@@ -101,24 +89,17 @@ Error Handling:
     "qbo_list",
     {
       title: "List QuickBooks Entities",
-      description: `List entities from QuickBooks Online with optional filtering and pagination.
+      description: `Use when the user wants to see a list of QuickBooks records. This is the most common data retrieval tool.
 
-Supported entities: Account, Bill, BillPayment, CompanyInfo, CreditMemo, Customer, Deposit, Employee, Estimate, Invoice, Item, JournalEntry, Payment, PaymentMethod, Purchase, PurchaseOrder, RefundReceipt, SalesReceipt, TaxCode, TaxRate, Term, TimeActivity, Transfer, Vendor, VendorCredit.
+Supports all 25 entity types. Use 'where' for filtering and 'order_by' for sorting. Results include pagination — use offset to get more pages.
 
-Args:
-  - entity (string): Entity type to list
-  - where (string, optional): WHERE clause filter
-  - order_by (string, optional): ORDER BY clause
-  - limit (number): Max results (1-100, default: 20)
-  - offset (number): Pagination offset (default: 0)
-  - response_format ('markdown' | 'json'): Output format
+Use response_format="json" when you need structured data for processing (e.g., before syncing to Notion with notion_upsert_page).
 
-Returns: Paginated list with total count and has_more indicator.
-
-Examples:
-  - List active customers: entity="Customer", where="Active = true"
-  - Unpaid invoices: entity="Invoice", where="Balance > 0"
-  - Recent bills: entity="Bill", order_by="MetaData.LastUpdatedTime DESC"`,
+Common patterns:
+- "Show me customers": entity="Customer"
+- "Unpaid invoices": entity="Invoice", where="Balance > 0"
+- "Recent bills": entity="Bill", order_by="MetaData.LastUpdatedTime DESC"
+- "Active vendors": entity="Vendor", where="Active = true"`,
       inputSchema: QBOListEntitySchema,
       annotations: {
         readOnlyHint: true,
@@ -189,14 +170,9 @@ Examples:
     "qbo_get",
     {
       title: "Get QuickBooks Entity",
-      description: `Get a single QuickBooks entity by its ID. Returns the complete entity record.
+      description: `Use when the user asks about a specific record by ID, or when you need the full details of a record found via qbo_list or qbo_search.
 
-Args:
-  - entity (string): Entity type (e.g., "Invoice", "Customer")
-  - id (string): Entity ID
-  - response_format ('markdown' | 'json'): Output format
-
-Returns: Full entity details.`,
+Returns the complete record with all fields. Use response_format="json" when you need to pass the record to notion_upsert_page.`,
       inputSchema: QBOGetEntitySchema,
       annotations: {
         readOnlyHint: true,
@@ -233,12 +209,9 @@ Returns: Full entity details.`,
     "qbo_company_info",
     {
       title: "Get Company Info",
-      description: `Get QuickBooks company information including name, address, contact details, and fiscal year settings.
+      description: `Use first to verify which QuickBooks company is connected. Shows company name, address, contact details, and fiscal year settings.
 
-Args:
-  - response_format ('markdown' | 'json'): Output format
-
-Returns: Company name, legal name, address, phone, email, fiscal year start, etc.`,
+Good starting point when the user asks "what's connected?" or "show me my company info."`,
       inputSchema: QBOCompanyInfoSchema,
       annotations: {
         readOnlyHint: true,
@@ -289,23 +262,17 @@ Returns: Company name, legal name, address, phone, email, fiscal year start, etc
     "qbo_report",
     {
       title: "Run QuickBooks Report",
-      description: `Run a financial report from QuickBooks Online.
+      description: `Use when the user asks for financial reports or summaries. Runs standard accounting reports directly from QuickBooks.
 
-Available reports: ProfitAndLoss, BalanceSheet, CashFlow, CustomerIncome, AgedReceivableDetail, AgedPayableDetail, TrialBalance, GeneralLedger, VendorExpenses.
+Available: ProfitAndLoss, BalanceSheet, CashFlow, CustomerIncome, AgedReceivableDetail, AgedPayableDetail, TrialBalance, GeneralLedger, VendorExpenses.
 
-Args:
-  - report (string): Report type
-  - start_date (string, optional): Start date (YYYY-MM-DD)
-  - end_date (string, optional): End date (YYYY-MM-DD)
-  - accounting_method ('Accrual' | 'Cash', optional): Accounting method
-  - response_format ('markdown' | 'json'): Output format
+Common requests:
+- "How's the business doing?" → ProfitAndLoss
+- "What do we own and owe?" → BalanceSheet
+- "Who owes us money?" → AgedReceivableDetail
+- "Cash position?" → CashFlow
 
-Returns: Report data. JSON format returns raw QBO report structure.
-
-Examples:
-  - Monthly P&L: report="ProfitAndLoss", start_date="2025-01-01", end_date="2025-01-31"
-  - Current balance sheet: report="BalanceSheet"
-  - Aged receivables: report="AgedReceivableDetail"`,
+Dates are optional — omit for current period. Use accounting_method for Accrual vs Cash basis.`,
       inputSchema: QBOReportSchema,
       annotations: {
         readOnlyHint: true,
@@ -355,20 +322,11 @@ Examples:
     "qbo_search",
     {
       title: "Search QuickBooks",
-      description: `Search QuickBooks entities by name or display name. Useful for finding specific customers, vendors, items, etc. by partial name match.
+      description: `Use when the user mentions a specific customer, vendor, or item by name. Searches by partial name match.
 
-Args:
-  - entity (string): Entity type to search
-  - search_term (string): Text to search for (matches against DisplayName or Name)
-  - limit (number): Max results (1-100, default: 20)
-  - offset (number): Pagination offset
-  - response_format ('markdown' | 'json'): Output format
+Prefer this over qbo_list when the user says things like "find the customer named Acme" or "look up vendor Office Depot."
 
-Returns: Matching entities with pagination metadata.
-
-Examples:
-  - Find customer "Acme": entity="Customer", search_term="Acme"
-  - Search vendors: entity="Vendor", search_term="Office"`,
+Returns matching records with pagination. Use response_format="json" for structured results.`,
       inputSchema: QBOSearchSchema,
       annotations: {
         readOnlyHint: true,
