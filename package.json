@@ -49,7 +49,8 @@
     "ground:experiments:json": "tsx scripts/ground-experiments.ts --json",
     "ground:duplicates": "tsx scripts/ground-duplicates.ts",
     "ground:duplicates:json": "tsx scripts/ground-duplicates.ts --json",
-    "ground": "pnpm ground:imports && pnpm ground:components && pnpm ground:experiments && pnpm ground:duplicates"
+    "ground": "pnpm ground:imports && pnpm ground:components && pnpm ground:experiments && pnpm ground:duplicates",
+    "create-mcp": "tsx scripts/create-mcp.ts"
   },
   "devDependencies": {
     "@iarna/toml": "^2.2.5",

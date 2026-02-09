@@ -1,0 +1,17 @@
+name = "notion-sync-mcp-worker"
+main = "index.ts"
+compatibility_date = "2024-12-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "notion-sync"
+database_id = "<your-d1-database-id>"
+
+[triggers]
+crons = ["*/15 * * * *"]
+
+[vars]
+# Set these in the Cloudflare dashboard or via `wrangler secret put`
+# CF_ACCOUNT_ID = ""
+# CF_API_TOKEN = ""
+# CF_D1_DATABASE_ID = ""

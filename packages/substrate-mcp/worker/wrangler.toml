@@ -1,0 +1,32 @@
+# Substrate MCP Server — Cloudflare Worker
+# D1 for structured data + file metadata. R2 for file bytes.
+# Durable Object for MCP session state (SSE + Streamable HTTP).
+
+name = "substrate-mcp"
+main = "index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[observability]
+enabled = true
+
+# D1 Database — structured data, schemas, metadata, audit
+[[d1_databases]]
+binding = "DB"
+database_name = "substrate-mcp-db"
+database_id = "89486bf0-aa79-460e-aa78-fc1b68015e69"
+
+# R2 Bucket — file storage
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "substrate-files"
+
+# Durable Object — MCP session state for SSE + Streamable HTTP
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "SubstrateMCP"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["SubstrateMCP"]

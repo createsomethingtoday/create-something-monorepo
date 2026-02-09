@@ -1,0 +1,36 @@
+/**
+ * {{NAME}} MCP Server — Cloudflare Worker entry point
+ *
+ * Multi-account: resolves AccountContext per-request from headers/session.
+ * Uses handleRequest() which creates a scoped server per request.
+ */
+
+import { createServer } from '../src/server.js';
+
+// TODO: Define your Worker Env bindings
+interface Env {
+  // TOKENS: KVNamespace;
+  // DB: D1Database;
+}
+
+const server = createServer();
+
+export default {
+  async fetch(request: Request, _env: Env): Promise<Response> {
+    const url = new URL(request.url);
+
+    // Health check
+    if (url.pathname === '/health') {
+      return new Response(JSON.stringify({ status: 'ok' }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // MCP endpoint
+    if (url.pathname === '/mcp' || url.pathname === '/') {
+      return server.handleRequest(request);
+    }
+
+    return new Response('Not Found', { status: 404 });
+  },
+};

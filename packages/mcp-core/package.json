@@ -1,0 +1,54 @@
+{
+  "name": "@create-something/mcp-core",
+  "version": "0.1.0",
+  "description": "Multi-account MCP abstractions — AccountContext, AuthProvider, InsightEmitter. The primitive is always relative.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./providers/*": {
+      "types": "./dist/providers/*.d.ts",
+      "default": "./dist/providers/*.js"
+    },
+    "./stores/*": {
+      "types": "./dist/stores/*.d.ts",
+      "default": "./dist/stores/*.js"
+    },
+    "./insight/*": {
+      "types": "./dist/insight/*.d.ts",
+      "default": "./dist/insight/*.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "keywords": [
+    "mcp",
+    "multi-account",
+    "three-tier-framework",
+    "account-context",
+    "auth-provider",
+    "model-context-protocol"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/mcp-core"
+  }
+}

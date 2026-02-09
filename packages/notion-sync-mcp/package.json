@@ -1,0 +1,46 @@
+{
+  "name": "@create-something/notion-sync-mcp",
+  "version": "0.2.0",
+  "description": "Two-way Notion database sync MCP server — built on mcp-core with all three primitives (Resources, Tools, Prompts) aligned to the Three-Tier Framework.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "notion-sync-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx --watch src/index.ts",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@create-something/mcp-core": "workspace:*",
+    "@notionhq/client": "^2.2.15",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240620.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "mcp",
+    "notion",
+    "sync",
+    "three-tier-framework",
+    "cloudflare-d1",
+    "model-context-protocol"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/notion-sync-mcp"
+  }
+}
