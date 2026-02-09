@@ -4,19 +4,7 @@
 	 * PCN Creation Services - Starting at $19,999
 	 * CTA: Get Your Custom Quote → Discovery Call (Calendly)
 	 */
-	import { Check, Zap } from 'lucide-svelte';
-
-	// Ordered for visual balance: multi-line items paired, single-line items paired
-	const deliverables = [
-		'Custom Private Content Network platform',
-		'Subscription & payment integration',
-		'Comprehensive analytics dashboard',
-		'Ongoing support & development',
-		'Professional video production',
-		'Content strategy & organization',
-		'Multi-platform marketing setup',
-		'AI-powered chatbot assistant'
-	];
+	import { Zap } from 'lucide-svelte';
 
 	function bookDiscoveryCall() {
 		window.open('https://calendly.com/outerfields/discovery-call', '_blank');
@@ -48,32 +36,20 @@
 					</div>
 				</div>
 
-				<p class="pricing-tagline">
-					Full-service PCN creation. Production, platform, and ongoing support included.
-				</p>
+			<p class="pricing-tagline">
+				Start partnering with us for as little as $19,999.
+			</p>
 
-				<p class="pricing-note">
-					Final pricing based on content scope, features, and integration requirements.
-				</p>
-			</div>
+			<p class="pricing-note">
+				Final pricing based on content scope, features, and integration requirements.
+			</p>
 
-			<!-- Right: Deliverables + CTA -->
-			<div class="pricing-right">
-				<h3 class="deliverables-title">What's Included</h3>
-				<ul class="deliverables-grid">
-					{#each deliverables as item}
-						<li class="deliverable-item">
-							<Check size={16} />
-							<span>{item}</span>
-						</li>
-					{/each}
-				</ul>
-
-				<button class="cta-button" onclick={bookDiscoveryCall}>
-					Get Your Custom Quote
-				</button>
-
-				<p class="cta-note">Free discovery call · No commitment required</p>
+				<div class="pricing-cta">
+					<button class="cta-button" onclick={bookDiscoveryCall}>
+						Book Your Discovery Call
+					</button>
+					<p class="cta-subtext">Receive a Free Audit</p>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -128,10 +104,10 @@
 	}
 
 	.pricing-card {
-		display: grid;
-		grid-template-columns: 1fr 1.5fr;
-		gap: 3rem;
-		align-items: start;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: 1rem;
@@ -166,6 +142,7 @@
 	.price-row {
 		display: flex;
 		align-items: flex-start;
+		justify-content: center;
 		gap: 0.25rem;
 	}
 
@@ -198,46 +175,19 @@
 		line-height: 1.5;
 	}
 
-	/* Right column - Deliverables + CTA */
-	.pricing-right {
+	.pricing-cta {
+		margin-top: 2rem;
 		display: flex;
 		flex-direction: column;
-		gap: 1.5rem;
-		border-left: 1px solid var(--color-border-default);
-		padding-left: 3rem;
-	}
-
-	.deliverables-title {
-		font-size: 0.875rem;
-		font-weight: 600;
-		color: var(--color-slate);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		margin: 0;
-	}
-
-	.deliverables-grid {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 1rem 2rem;
-	}
-
-	.deliverable-item {
-		display: flex;
-		align-items: flex-start;
+		align-items: center;
 		gap: 0.75rem;
-		font-size: 0.9375rem;
-		color: var(--color-fg-secondary);
-		line-height: 1.4;
 	}
 
-	.deliverable-item :global(svg) {
+	.cta-subtext {
+		font-size: 0.875rem;
 		color: var(--color-sun);
-		flex-shrink: 0;
-		margin-top: 0.125rem;
+		font-weight: 500;
+		margin: 0;
 	}
 
 	.cta-button {
@@ -262,45 +212,18 @@
 		transform: scale(1.02);
 	}
 
-	.cta-note {
-		font-size: 0.8125rem;
-		color: var(--color-slate);
-		text-align: center;
-		margin: 0;
-	}
-
 	/* Responsive */
-	@media (max-width: 900px) {
-		.deliverables-grid {
-			grid-template-columns: 1fr;
-		}
-	}
-
 	@media (max-width: 768px) {
 		.pricing-section {
 			padding: 4rem 1rem;
 		}
 
 		.pricing-card {
-			grid-template-columns: 1fr;
-			gap: 2rem;
 			padding: 2rem;
-		}
-
-		.pricing-right {
-			border-left: none;
-			border-top: 1px solid var(--color-border-default);
-			padding-left: 0;
-			padding-top: 2rem;
 		}
 
 		.price-amount {
 			font-size: 4rem;
-		}
-
-		.deliverables-grid {
-			grid-template-columns: 1fr;
-			gap: 0.875rem;
 		}
 	}
 </style>

@@ -4,14 +4,14 @@
 	 *
 	 * Showcase of tools included in every PCN - no gating
 	 */
-	import { MessageSquare, Play, BarChart3, Activity, Maximize2, Volume2, Settings, Eye } from 'lucide-svelte';
+	import { MessageSquare, Play, BarChart3, Activity, Maximize2, Volume2, Settings, Eye, Film, Users } from 'lucide-svelte';
 
 	interface Tool {
 		id: string;
 		name: string;
 		description: string;
 		icon: typeof MessageSquare;
-		type: 'chatbot' | 'video' | 'heatmap' | 'analytics';
+		type: 'chatbot' | 'video' | 'heatmap' | 'analytics' | 'content' | 'community';
 		previewImage?: string;
 	}
 
@@ -43,6 +43,20 @@
 			description: 'High-contrast data visualization dashboard with real-time metrics and status indicators.',
 			icon: BarChart3,
 			type: 'analytics'
+		},
+		{
+			id: 'content-dev',
+			name: 'Exclusive Content Development',
+			description: 'End-to-end content creation—from concept and scripting to professional production and post.',
+			icon: Film,
+			type: 'content' as const
+		},
+		{
+			id: 'community',
+			name: 'Community Experience',
+			description: 'Platform-native, Reddit-style interaction with threaded discussions, upvoting, and member engagement.',
+			icon: Users,
+			type: 'community' as const
 		}
 	];
 
@@ -153,29 +167,98 @@
 									</div>
 								</div>
 							</div>
-						{:else if tool.type === 'analytics'}
-							<div class="preview-analytics">
-								<div class="analytics-mock">
-									<div class="metric-row">
-										<div class="metric-card">
-											<div class="metric-label"></div>
-											<div class="metric-value"></div>
-										</div>
-										<div class="metric-card">
-											<div class="metric-label"></div>
-											<div class="metric-value"></div>
-										</div>
+					{:else if tool.type === 'analytics'}
+						<div class="preview-analytics">
+							<div class="analytics-mock">
+								<div class="metric-row">
+									<div class="metric-card">
+										<div class="metric-label"></div>
+										<div class="metric-value"></div>
 									</div>
-									<div class="chart-area">
-										<div class="chart-bar" style="--height: 40%"></div>
-										<div class="chart-bar" style="--height: 70%"></div>
-										<div class="chart-bar" style="--height: 55%"></div>
-										<div class="chart-bar" style="--height: 85%"></div>
-										<div class="chart-bar" style="--height: 60%"></div>
+									<div class="metric-card">
+										<div class="metric-label"></div>
+										<div class="metric-value"></div>
+									</div>
+								</div>
+								<div class="chart-area">
+									<div class="chart-bar" style="--height: 40%"></div>
+									<div class="chart-bar" style="--height: 70%"></div>
+									<div class="chart-bar" style="--height: 55%"></div>
+									<div class="chart-bar" style="--height: 85%"></div>
+									<div class="chart-bar" style="--height: 60%"></div>
+								</div>
+							</div>
+						</div>
+					{:else if tool.type === 'content'}
+						<div class="preview-content">
+							<div class="content-mock">
+								<div class="storyboard-row">
+									<div class="storyboard-frame">
+										<div class="frame-number">01</div>
+										<div class="frame-placeholder"></div>
+										<div class="frame-label"></div>
+									</div>
+									<div class="storyboard-frame">
+										<div class="frame-number">02</div>
+										<div class="frame-placeholder"></div>
+										<div class="frame-label"></div>
+									</div>
+									<div class="storyboard-frame">
+										<div class="frame-number">03</div>
+										<div class="frame-placeholder"></div>
+										<div class="frame-label"></div>
+									</div>
+								</div>
+								<div class="content-timeline">
+									<div class="timeline-phase active">Concept</div>
+									<div class="timeline-connector"></div>
+									<div class="timeline-phase">Script</div>
+									<div class="timeline-connector"></div>
+									<div class="timeline-phase">Production</div>
+									<div class="timeline-connector"></div>
+									<div class="timeline-phase">Post</div>
+								</div>
+							</div>
+						</div>
+					{:else if tool.type === 'community'}
+						<div class="preview-community">
+							<div class="community-mock">
+								<div class="thread-item">
+									<div class="thread-votes">
+										<div class="vote-arrow up">▲</div>
+										<div class="vote-count">24</div>
+										<div class="vote-arrow">▽</div>
+									</div>
+									<div class="thread-content">
+										<div class="thread-title-text">Best training drills for close quarters?</div>
+										<div class="thread-meta">12 replies · 2h ago</div>
+									</div>
+								</div>
+								<div class="thread-item">
+									<div class="thread-votes">
+										<div class="vote-arrow up">▲</div>
+										<div class="vote-count">18</div>
+										<div class="vote-arrow">▽</div>
+									</div>
+									<div class="thread-content">
+										<div class="thread-title-text">New episode breakdown — Crew Call S2E4</div>
+										<div class="thread-meta">8 replies · 5h ago</div>
+									</div>
+								</div>
+								<div class="thread-item">
+									<div class="thread-votes">
+										<div class="vote-arrow up">▲</div>
+										<div class="vote-count">31</div>
+										<div class="vote-arrow">▽</div>
+									</div>
+									<div class="thread-content">
+										<div class="thread-title-text">Gear recommendations thread</div>
+										<div class="thread-meta">22 replies · 1d ago</div>
 									</div>
 								</div>
 							</div>
-						{/if}
+						</div>
+					{/if}
 					</div>
 
 					<div class="card-footer">
@@ -219,7 +302,7 @@
 
 	.tools-grid {
 		display: grid;
-		grid-template-columns: repeat(2, 1fr);
+		grid-template-columns: repeat(3, 1fr);
 		gap: var(--space-lg);
 	}
 
@@ -681,9 +764,174 @@
 		border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 	}
 
+	/* Content Development Preview */
+	.preview-content {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: var(--space-md);
+		background: radial-gradient(ellipse at center, rgba(244, 81, 38, 0.08), transparent);
+	}
+
+	.content-mock {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-md);
+	}
+
+	.storyboard-row {
+		flex: 1;
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-sm);
+	}
+
+	.storyboard-frame {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.frame-number {
+		font-size: 0.625rem;
+		font-family: var(--font-mono, monospace);
+		color: var(--color-fg-muted);
+		font-weight: 600;
+	}
+
+	.frame-placeholder {
+		flex: 1;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-sm);
+		min-height: 3rem;
+	}
+
+	.frame-label {
+		width: 70%;
+		height: 0.375rem;
+		background: rgba(255, 255, 255, 0.2);
+		border-radius: var(--radius-sm);
+	}
+
+	.content-timeline {
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+		padding: var(--space-xs) var(--space-sm);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+	}
+
+	.timeline-phase {
+		font-size: 0.625rem;
+		font-weight: 600;
+		color: var(--color-fg-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+		padding: 0.125rem 0.375rem;
+		border-radius: var(--radius-sm);
+	}
+
+	.timeline-phase.active {
+		background: rgba(255, 255, 255, 0.1);
+		color: var(--color-fg-primary);
+	}
+
+	.timeline-connector {
+		flex: 1;
+		height: 1px;
+		background: var(--color-border-default);
+	}
+
+	/* Community Preview */
+	.preview-community {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: var(--space-md);
+	}
+
+	.community-mock {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+	}
+
+	.thread-item {
+		display: flex;
+		gap: var(--space-sm);
+		padding: var(--space-sm);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		transition: border-color var(--duration-micro) var(--ease-standard);
+	}
+
+	.thread-item:hover {
+		border-color: var(--color-border-strong);
+	}
+
+	.thread-votes {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.125rem;
+		min-width: 1.75rem;
+	}
+
+	.vote-arrow {
+		font-size: 0.625rem;
+		color: var(--color-fg-muted);
+		cursor: pointer;
+		line-height: 1;
+	}
+
+	.vote-arrow.up {
+		color: var(--color-fg-secondary);
+	}
+
+	.vote-count {
+		font-size: 0.6875rem;
+		font-weight: 700;
+		color: var(--color-fg-primary);
+		font-family: var(--font-mono, monospace);
+	}
+
+	.thread-content {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		min-width: 0;
+	}
+
+	.thread-title-text {
+		font-size: var(--text-body-sm);
+		font-weight: 600;
+		color: var(--color-fg-secondary);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.thread-meta {
+		font-size: 0.625rem;
+		color: var(--color-fg-muted);
+	}
+
 	@media (max-width: 1024px) {
 		.tools-grid {
-			grid-template-columns: 1fr;
+			grid-template-columns: repeat(2, 1fr);
 		}
 	}
 

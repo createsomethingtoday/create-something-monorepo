@@ -53,7 +53,7 @@
 	<div class="hero-container">
 		<div class="hero-content">
 			<!-- Main Title -->
-			<h1 class="hero-title">Outerfields</h1>
+			<h1 class="hero-title">Welcome to the <span class="title-accent">Outerfields</span> Network</h1>
 
 			<!-- Subheadline -->
 			<p class="hero-subheadline">We Build Private Content Networks</p>
@@ -174,15 +174,19 @@
 		margin-top: 15vh;
 	}
 
-	/* Main Title - Space Grotesk Bold, 72px equivalent */
+	/* Main Title - Space Grotesk Bold, increased size for visual prominence */
 	.hero-title {
-		font-size: clamp(3rem, 8vw, 4.5rem);
+		font-size: clamp(3.5rem, 10vw, 6rem);
 		font-weight: 700;
 		color: var(--color-fg-primary);
-		line-height: 1;
+		line-height: 1.05;
 		letter-spacing: -0.02em;
 		text-shadow: 0 4px 40px rgba(0, 0, 0, 0.5);
 		margin: 0;
+	}
+
+	.title-accent {
+		color: var(--color-sun);
 	}
 
 	/* Subheadline - Space Grotesk Regular, 24px */
@@ -251,7 +255,7 @@
 		}
 
 		.hero-title {
-			font-size: clamp(2.5rem, 10vw, 3.5rem);
+			font-size: clamp(2.5rem, 10vw, 4rem);
 		}
 
 		.hero-subheadline {
@@ -280,7 +284,7 @@
 		}
 
 		.hero-title {
-			font-size: clamp(2rem, 12vw, 2.5rem);
+			font-size: clamp(2rem, 12vw, 3rem);
 		}
 
 		.hero-subheadline {

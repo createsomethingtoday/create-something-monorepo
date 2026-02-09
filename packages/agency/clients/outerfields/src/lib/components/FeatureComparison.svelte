@@ -75,6 +75,19 @@
 		}
 	];
 
+	const capabilities = [
+		'Strategy & consulting',
+		'Channel-specific paid media specialists',
+		'Dedicated account managers',
+		'Tracking & attribution specialists',
+		'In-house creative production',
+		'In-house developers',
+		'Conversion rate optimization (CRO)',
+		'Automation & CRM',
+		'24/7 coverage',
+		'Partnership / Positive-Sum Opportunities'
+	];
+
 	function bookDiscoveryCall() {
 		window.open('https://calendly.com/outerfields/discovery-call', '_blank');
 	}
@@ -84,7 +97,7 @@
 	<div class="comparison-container">
 		<div class="section-header">
 			<span class="section-badge">Why Choose Us</span>
-			<h2 class="section-title">Better Than the Competition</h2>
+			<h2 class="section-title">Stop Renting<span class="accent-punct">.</span> Start Owning<span class="accent-punct">.</span></h2>
 			<p class="section-description">
 				See how OUTERFIELDS stacks up against Uscreen, YouTube, Patreon, and Substack.
 			</p>
@@ -185,6 +198,18 @@
 			</table>
 		</div>
 
+		<div class="capabilities-section">
+			<h3 class="capabilities-title">What You Get With OUTERFIELDS</h3>
+			<div class="capabilities-grid">
+				{#each capabilities as cap}
+					<div class="capability-item">
+						<CheckCircle size={18} />
+						<span>{cap}</span>
+					</div>
+				{/each}
+			</div>
+		</div>
+
 		<div class="comparison-cta">
 			<p class="cta-text">Ready to build your Private Content Network?</p>
 			<button class="btn-primary" onclick={bookDiscoveryCall}>
@@ -230,6 +255,10 @@
 		font-weight: 700;
 		color: var(--color-fg-primary);
 		margin: 0 0 1rem;
+	}
+
+	.accent-punct {
+		color: var(--color-sun);
 	}
 
 	.section-description {
@@ -388,6 +417,47 @@
 	.btn-primary:hover {
 		background: var(--color-primary-hover);
 		transform: scale(1.02);
+	}
+
+	.capabilities-section {
+		margin-top: 3rem;
+		padding: 2rem;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: 1rem;
+	}
+
+	.capabilities-title {
+		font-size: 1.25rem;
+		font-weight: 700;
+		color: var(--color-fg-primary);
+		margin: 0 0 1.5rem;
+		text-align: center;
+	}
+
+	.capabilities-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 1rem 2rem;
+	}
+
+	.capability-item {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		font-size: 0.9375rem;
+		color: var(--color-fg-secondary);
+	}
+
+	.capability-item :global(svg) {
+		color: var(--color-sun);
+		flex-shrink: 0;
+	}
+
+	@media (max-width: 640px) {
+		.capabilities-grid {
+			grid-template-columns: 1fr;
+		}
 	}
 
 	@media (max-width: 640px) {

@@ -12,18 +12,21 @@
 		name: string;
 		description: string;
 		logo?: string;
+		comingSoon?: boolean;
 	}
 
 	const partners: Partner[] = [
 		{
 			id: 'shiv-works',
 			name: 'SHIV Works',
-			description: 'Elite tactical training and combatives instruction'
+			description: 'Elite tactical training and combatives instruction',
+			comingSoon: true
 		},
 		{
 			id: 'velocity-health',
 			name: 'Velocity Health Clinic',
-			description: 'Performance medicine and wellness optimization'
+			description: 'Performance medicine and wellness optimization',
+			comingSoon: true
 		},
 		{
 			id: 'good-life',
@@ -63,8 +66,11 @@
 						{/if}
 					</div>
 					<h3 class="partner-name">{partner.name}</h3>
-					<p class="partner-description">{partner.description}</p>
-				</div>
+				<p class="partner-description">{partner.description}</p>
+				{#if partner.comingSoon}
+					<span class="coming-soon-badge">Coming Soon</span>
+				{/if}
+			</div>
 			{/each}
 		</div>
 
@@ -183,6 +189,20 @@
 		color: var(--color-slate);
 		line-height: 1.5;
 		margin: 0;
+	}
+
+	.coming-soon-badge {
+		display: inline-block;
+		margin-top: 0.75rem;
+		padding: 0.25rem 0.75rem;
+		background: var(--color-primary-muted);
+		border: 1px solid rgba(244, 81, 38, 0.3);
+		border-radius: 9999px;
+		font-size: 0.6875rem;
+		font-weight: 600;
+		color: var(--color-sun);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
 	}
 
 	.partners-cta {

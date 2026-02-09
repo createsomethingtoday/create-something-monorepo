@@ -18,15 +18,15 @@
 			into one subscriber experience.
 		</p>
 
-		<div class="pillars-grid">
+		<div class="pillars-row">
 			<div class="pillar-card">
 				<div class="pillar-icon" aria-hidden="true">
 					<Code2 size={44} />
 				</div>
 				<h3 class="pillar-title">Code</h3>
-				<p class="pillar-description">Data-driven actions, building scripts, and platform development</p>
+				<p class="pillar-description">Data-driven actions, building strategies, and platform development</p>
 			</div>
-
+			<span class="plus-sign" aria-hidden="true">+</span>
 			<div class="pillar-card">
 				<div class="pillar-icon" aria-hidden="true">
 					<Clapperboard size={44} />
@@ -34,7 +34,7 @@
 				<h3 class="pillar-title">Media</h3>
 				<p class="pillar-description">Creating actual content that resonates and engages</p>
 			</div>
-
+			<span class="plus-sign" aria-hidden="true">+</span>
 			<div class="pillar-card">
 				<div class="pillar-icon" aria-hidden="true">
 					<HardHat size={44} />
@@ -42,7 +42,7 @@
 				<h3 class="pillar-title">Build</h3>
 				<p class="pillar-description">Systems, workflows, and infrastructure that scale</p>
 			</div>
-
+			<span class="plus-sign" aria-hidden="true">+</span>
 			<div class="pillar-card">
 				<div class="pillar-icon" aria-hidden="true">
 					<TrendingUp size={44} />
@@ -51,6 +51,7 @@
 				<p class="pillar-description">Marketing the networks and driving real growth</p>
 			</div>
 		</div>
+		<p class="formula-result"><span class="formula-equals">=</span> <strong>Unstoppable</strong></p>
 	</div>
 </section>
 
@@ -84,13 +85,47 @@
 		text-align: center;
 	}
 
-	.pillars-grid {
-		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		gap: var(--space-lg);
+	.pillars-row {
+		display: flex;
+		align-items: stretch;
+		justify-content: center;
+		flex-wrap: wrap;
+		gap: var(--space-md);
+	}
+
+	.plus-sign {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 2.5rem;
+		font-weight: 700;
+		color: var(--color-sun);
+		line-height: 1;
+		flex-shrink: 0;
+		user-select: none;
+	}
+
+	.formula-result {
+		text-align: center;
+		font-size: 1.5rem;
+		font-weight: 500;
+		color: var(--color-fg-secondary);
+		margin: var(--space-lg) 0 0;
+	}
+
+	.formula-result strong {
+		color: var(--color-sun);
+		font-weight: 700;
+	}
+
+	.formula-equals {
+		color: var(--color-fg-secondary);
 	}
 
 	.pillar-card {
+		flex: 1;
+		min-width: 180px;
+		max-width: 260px;
 		padding: var(--space-xl);
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
@@ -125,36 +160,49 @@
 		margin: 0;
 	}
 
-	/* Tablet: 2 columns */
+	/* Tablet: 2 per row, hide plus signs between wrapped rows */
 	@media (max-width: 768px) {
 		.journey-section {
 			padding: var(--space-xl) var(--space-md);
 		}
 
-		.pillars-grid {
-			grid-template-columns: repeat(2, 1fr);
-			gap: var(--space-md);
+		.pillars-row {
+			gap: var(--space-sm);
 		}
 
 		.pillar-card {
+			flex: 1 1 calc(50% - 3rem);
+			min-width: 160px;
+			max-width: none;
 			padding: var(--space-lg);
 		}
 
-		/* icon sizing handled by component props */
+		/* Hide the plus sign between the 2nd and 3rd card (the wrap point) */
+		.plus-sign:nth-of-type(2) {
+			display: none;
+		}
 	}
 
-	/* Mobile: 1 column */
+	/* Mobile: 1 column, hide all plus signs */
 	@media (max-width: 480px) {
 		.journey-section {
 			padding: var(--space-lg) var(--space-sm);
 		}
 
-		.pillars-grid {
-			grid-template-columns: 1fr;
+		.pillars-row {
+			flex-direction: column;
+			align-items: stretch;
 			gap: var(--space-sm);
 		}
 
+		.plus-sign {
+			display: none;
+		}
+
 		.pillar-card {
+			flex: none;
+			min-width: unset;
+			max-width: none;
 			padding: var(--space-md);
 		}
 
@@ -168,6 +216,10 @@
 
 		.journey-intro {
 			font-size: var(--text-body);
+		}
+
+		.formula-result {
+			font-size: 1.25rem;
 		}
 	}
 </style>

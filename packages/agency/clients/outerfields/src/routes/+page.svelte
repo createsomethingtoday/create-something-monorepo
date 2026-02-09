@@ -7,12 +7,9 @@
 	 */
 	import HeroSection from '$lib/components/HeroSection.svelte';
 	import JourneySection from '$lib/components/JourneySection.svelte';
-	import FeaturedVideos from '$lib/components/FeaturedVideos.svelte';
 	import ContentCategories from '$lib/components/ContentCategories.svelte';
-	import AnalyticsDashboard from '$lib/components/AnalyticsDashboard.svelte';
+	import InsightsAnalytics from '$lib/components/InsightsAnalytics.svelte';
 	import ComponentLab from '$lib/components/ComponentLab.svelte';
-	import PlatformComponents from '$lib/components/PlatformComponents.svelte';
-	import AIAnalytics from '$lib/components/AIAnalytics.svelte';
 	import PCNPartners from '$lib/components/PCNPartners.svelte';
 	import FeatureComparison from '$lib/components/FeatureComparison.svelte';
 	import Pricing from '$lib/components/Pricing.svelte';
@@ -193,29 +190,25 @@
 	<!-- 1. Hero Section - Cinematic opening -->
 	<HeroSection />
 
-	<!-- 2. Journey Section - Where we've been, where we're going -->
+	<!-- 2. How Outerfields Works - Code + Media + Build + Sell = Unstoppable -->
 	<JourneySection />
 
-	<!-- 3. Analytics Dashboard - Preview with gated overlay (BEFORE content per client spec) -->
-	<AnalyticsDashboard />
-
-	<!-- 4. Content Categories - Netflix-style browsing (includes Editor's Choice after Crew Call) -->
+	<!-- 3. The Outerfields Network - Content showcase -->
 	<ContentCategories />
 
-	<FeaturedVideos />
+	<!-- 4. Comprehensive Insights - Merged analytics dashboard + AI chat -->
+	<InsightsAnalytics forceUnlocked />
 
-	<!-- 6. Component Lab / Digital Tools - Preview for all, full access for members -->
+	<!-- 5. What's Included - Platform tools and features -->
 	<ComponentLab />
-	<PlatformComponents />
 
-	<!-- 7. AI Analytics Chatbot -->
-	<AIAnalytics forceUnlocked />
-
-	<!-- 8. PCN Partners - Social proof -->
+	<!-- 6. PCN Partners - Social proof -->
 	<PCNPartners />
 
-	<!-- 9. Comparison & Pricing -->
+	<!-- 7. Stop Renting. Start Owning. - Competitive comparison -->
 	<FeatureComparison />
+
+	<!-- 8. Investment - Pricing & CTA -->
 	<Pricing />
 </main>
 

@@ -190,7 +190,7 @@
 	<div class="section-header">
 		<h2 class="section-title">
 			{#if activeFilter === 'all'}
-				What We Create
+				The Outerfields Network
 			{:else}
 				{FILTER_LABELS[activeFilter]}
 			{/if}
