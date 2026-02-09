@@ -1,27 +1,25 @@
 /**
  * Schedule Notifier Worker
  *
- * Cron-triggered reminder scanner + Queue-based SMS delivery via Twilio.
+ * Cron-triggered reminder scanner + Queue-based email delivery via Resend.
  * Reads from the same D1 database as the Schedule MCP server.
  *
  * Three-Tier Framework:
  *   Orchestration (cross-cutting) — cron scans, queue processes
- *   Automation (Tools tier) — Twilio SMS delivery
+ *   Automation (Tools tier) — Resend email delivery
  *   Insight (cross-cutting) — notification_log audit trail
  */
 
 interface Env {
   DB: D1Database;
   NOTIFICATION_QUEUE: Queue;
-  TWILIO_ACCOUNT_SID: string;
-  TWILIO_AUTH_TOKEN: string;
-  TWILIO_FROM_NUMBER: string;
-  TWILIO_MESSAGING_SERVICE_SID: string;
+  RESEND_API_KEY: string;
 }
 
 interface NotificationMessage {
   notification_id: string;
-  phone: string;
+  phone: string;  // kept for log compatibility — delivery goes to email
+  email: string;
   message: string;
   member_id: string;
   trigger_type: string;
@@ -34,11 +32,11 @@ interface NotificationMessage {
 async function handleFetch(request: Request, env: Env): Promise<Response> {
   return new Response(JSON.stringify({
     name: 'schedule-notifier',
-    version: '1.0.0',
-    description: 'SMS notification worker for Schedule MCP',
+    version: '1.1.0',
+    description: 'Email notification worker for Schedule MCP (via Resend)',
     triggers: {
       cron: '*/5 * * * * (reminder scanner)',
-      queue: 'schedule-notifications (SMS delivery)',
+      queue: 'schedule-notifications (email delivery via Resend)',
     },
   }, null, 2), {
     headers: { 'Content-Type': 'application/json' },
@@ -66,10 +64,12 @@ async function handleScheduled(env: Env): Promise<void> {
 async function processPendingNotifications(env: Env, nowSeconds: number): Promise<void> {
   const pending = await env.DB
     .prepare(
-      `SELECT * FROM notification_log
-       WHERE status = 'pending'
-         AND (scheduled_for IS NULL OR scheduled_for <= ?)
-       ORDER BY created_at ASC
+      `SELECT nl.*, m.email as member_email
+       FROM notification_log nl
+       JOIN members m ON m.id = nl.member_id
+       WHERE nl.status = 'pending'
+         AND (nl.scheduled_for IS NULL OR nl.scheduled_for <= ?)
+       ORDER BY nl.created_at ASC
        LIMIT 50`,
     )
     .bind(nowSeconds)
@@ -77,6 +77,7 @@ async function processPendingNotifications(env: Env, nowSeconds: number): Promis
       id: string;
       member_id: string;
       phone: string;
+      member_email: string | null;
       message: string;
       trigger_type: string;
     }>();
@@ -86,10 +87,16 @@ async function processPendingNotifications(env: Env, nowSeconds: number): Promis
   const messages: MessageSendRequest<NotificationMessage>[] = [];
 
   for (const row of pending.results) {
+    if (!row.member_email) {
+      console.warn(`[notifier] Skipping ${row.id}: member ${row.member_id} has no email`);
+      continue;
+    }
+
     messages.push({
       body: {
         notification_id: row.id,
         phone: row.phone,
+        email: row.member_email,
         message: row.message,
         member_id: row.member_id,
         trigger_type: row.trigger_type,
@@ -114,18 +121,19 @@ async function processPendingNotifications(env: Env, nowSeconds: number): Promis
  * For each member with reminders enabled, check their reminder windows.
  */
 async function scanForReminders(env: Env, nowSeconds: number): Promise<void> {
-  // Get all members with reminders enabled, phone set, and SMS on
+  // Get all members with reminders enabled and email set
   const members = await env.DB
     .prepare(
-      `SELECT m.id, m.name, m.phone, np.reminder_minutes_1, np.reminder_minutes_2, np.reminder_minutes_3
+      `SELECT m.id, m.name, m.email, m.phone, np.reminder_minutes_1, np.reminder_minutes_2, np.reminder_minutes_3
        FROM members m
        JOIN notification_preferences np ON np.member_id = m.id
-       WHERE np.reminders_enabled = 1 AND np.sms_enabled = 1 AND m.phone IS NOT NULL`,
+       WHERE np.reminders_enabled = 1 AND np.sms_enabled = 1 AND m.email IS NOT NULL`,
     )
     .all<{
       id: string;
       name: string;
-      phone: string;
+      email: string;
+      phone: string | null;
       reminder_minutes_1: number;
       reminder_minutes_2: number;
       reminder_minutes_3: number;
@@ -193,13 +201,14 @@ async function scanForReminders(env: Env, nowSeconds: number): Promise<void> {
                (id, member_id, event_id, trigger_type, phone, message, status, dedup_key, created_at)
              VALUES (?, ?, ?, 'reminder', ?, ?, 'queued', ?, ?)`,
           )
-          .bind(notifId, member.id, event.id, member.phone, message, dedupKey, nowSeconds)
+          .bind(notifId, member.id, event.id, member.phone ?? '', message, dedupKey, nowSeconds)
           .run();
 
-        // Enqueue for SMS delivery
+        // Enqueue for email delivery
         await env.NOTIFICATION_QUEUE.send({
           notification_id: notifId,
-          phone: member.phone,
+          phone: member.phone ?? '',
+          email: member.email,
           message,
           member_id: member.id,
           trigger_type: 'reminder',
@@ -218,10 +227,10 @@ async function handleQueue(
   env: Env,
 ): Promise<void> {
   for (const msg of batch.messages) {
-    const { notification_id, phone, message } = msg.body;
+    const { notification_id, email, message } = msg.body;
 
     try {
-      await sendSMS(env, phone, message);
+      await sendNotificationEmail(env, email, message);
 
       // Mark as sent
       await env.DB
@@ -232,7 +241,7 @@ async function handleQueue(
         .run();
 
       msg.ack();
-      console.log(`[notifier] SMS sent to ${phone.slice(0, 6)}*** (${notification_id})`);
+      console.log(`[notifier] Email sent to ${email} (${notification_id})`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
 
@@ -257,41 +266,56 @@ async function handleQueue(
 }
 
 /**
- * Send SMS via Twilio REST API.
+ * Send notification email via Resend API.
+ * Uses the same pattern as identity-worker/src/services/email.ts.
  */
-async function sendSMS(env: Env, to: string, body: string): Promise<void> {
-  if (!env.TWILIO_ACCOUNT_SID || !env.TWILIO_AUTH_TOKEN) {
-    throw new Error('Twilio credentials not configured');
+async function sendNotificationEmail(env: Env, to: string, body: string): Promise<void> {
+  if (!env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY not configured');
   }
 
-  const auth = btoa(`${env.TWILIO_ACCOUNT_SID}:${env.TWILIO_AUTH_TOKEN}`);
+  // Extract a subject from the body (first line or first 60 chars)
+  const subject = body.length > 60 ? body.slice(0, 57) + '...' : body;
 
-  // Use Messaging Service SID if available (routes through the "SCHEDULE" service),
-  // fall back to raw From number
-  const formData = new URLSearchParams({ To: to, Body: body });
-  if (env.TWILIO_MESSAGING_SERVICE_SID) {
-    formData.set('MessagingServiceSid', env.TWILIO_MESSAGING_SERVICE_SID);
-  } else if (env.TWILIO_FROM_NUMBER) {
-    formData.set('From', env.TWILIO_FROM_NUMBER);
-  } else {
-    throw new Error('Neither TWILIO_MESSAGING_SERVICE_SID nor TWILIO_FROM_NUMBER configured');
-  }
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #000000; color: #ffffff; }
+    .container { max-width: 560px; margin: 0 auto; padding: 32px 24px; }
+    .logo { font-size: 12px; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.4); margin-bottom: 24px; }
+    .message { font-size: 18px; line-height: 1.5; color: #ffffff; margin: 0; }
+    .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.1); font-size: 13px; color: rgba(255, 255, 255, 0.3); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">SCHEDULE</div>
+    <p class="message">${body}</p>
+    <div class="footer">Johnson Family Calendar</div>
+  </div>
+</body>
+</html>`;
 
-  const response = await fetch(
-    `https://api.twilio.com/2010-04-01/Accounts/${env.TWILIO_ACCOUNT_SID}/Messages.json`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Basic ${auth}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: formData,
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
     },
-  );
+    body: JSON.stringify({
+      from: 'Schedule <noreply@createsomething.io>',
+      to,
+      subject: `📅 ${subject}`,
+      html,
+    }),
+  });
 
   if (!response.ok) {
     const errorBody = await response.text();
-    throw new Error(`Twilio API error (${response.status}): ${errorBody}`);
+    throw new Error(`Resend API error (${response.status}): ${errorBody}`);
   }
 }
 
