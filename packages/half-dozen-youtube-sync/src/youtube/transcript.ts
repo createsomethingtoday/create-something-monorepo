@@ -51,8 +51,38 @@ export async function extractTranscriptBrowser(
     return null;
   }
 
-  // Wait for transcript content to load
-  await page.evaluate(() => new Promise(r => setTimeout(r, 3000)));
+  // Wait for transcript content to load (YouTube lazy-loads segments)
+  await page.evaluate(() => new Promise(r => setTimeout(r, 5000)));
+
+  // Diagnostic: what's inside the transcript panel?
+  const panelDiag = await page.evaluate(() => {
+    const panel = document.querySelector(
+      'ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-searchable-transcript"]'
+    );
+    if (!panel) return 'No transcript panel found';
+
+    const allTags: Record<string, number> = {};
+    panel.querySelectorAll('*').forEach(el => {
+      allTags[el.tagName.toLowerCase()] = (allTags[el.tagName.toLowerCase()] || 0) + 1;
+    });
+
+    // Look for any elements with timestamps (0:00 format)
+    const timestampEls: string[] = [];
+    panel.querySelectorAll('*').forEach(el => {
+      const text = el.textContent?.trim() || '';
+      if (text.match(/^\d+:\d{2}$/) && el.children.length === 0) {
+        timestampEls.push(`${el.tagName}.${el.className?.toString().split(' ')[0] || 'no-class'}: "${text}"`);
+      }
+    });
+
+    return JSON.stringify({
+      tags: Object.entries(allTags).sort((a, b) => b[1] - a[1]).slice(0, 20),
+      timestampElements: timestampEls.slice(0, 5),
+      totalElements: panel.querySelectorAll('*').length,
+      innerTextPreview: panel.textContent?.replace(/\s+/g, ' ').trim().substring(0, 300),
+    }, null, 2);
+  });
+  console.error(`  [transcript] Panel DOM: ${panelDiag}`);
 
   // Extract transcript segments from the side panel
   const result = await page.evaluate(() => {
@@ -65,7 +95,10 @@ export async function extractTranscriptBrowser(
       '#segments-container ytd-transcript-segment-renderer',
       'ytd-engagement-panel-section-list-renderer ytd-transcript-segment-renderer',
       '[class*="transcript"] [class*="segment"]',
-      '.ytd-transcript-segment-renderer'
+      '.ytd-transcript-segment-renderer',
+      // 2026: YouTube may use new component names
+      'ytd-transcript-renderer [role="button"]',
+      'ytd-transcript-body-renderer [role="button"]',
     ];
     
     let segmentElements: Element[] = [];
@@ -80,13 +113,32 @@ export async function extractTranscriptBrowser(
     // If still no segments, try to find any timestamped content in the panel
     if (segmentElements.length === 0) {
       const panel = document.querySelector(
-        'ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-searchable-transcript"], ' +
-        '#panels ytd-engagement-panel-section-list-renderer, ' +
-        '[class*="transcript-panel"]'
+        'ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-searchable-transcript"]'
       );
       
       if (panel) {
-        segmentElements = Array.from(panel.querySelectorAll('[class*="segment"], [role="button"]'));
+        // Try: any element with a sibling that contains timestamp text
+        const allEls = Array.from(panel.querySelectorAll('*'));
+        const timestampPattern = /^\d+:\d{2}$/;
+        
+        for (const el of allEls) {
+          const text = el.textContent?.trim() || '';
+          // If this element IS a timestamp, its sibling or parent should have the text
+          if (timestampPattern.test(text) && el.children.length === 0) {
+            const parent = el.parentElement;
+            if (parent) {
+              segmentElements.push(parent);
+            }
+          }
+        }
+        
+        // Deduplicate
+        segmentElements = [...new Set(segmentElements)];
+        
+        // Fallback: any role="button" or clickable segments
+        if (segmentElements.length === 0) {
+          segmentElements = Array.from(panel.querySelectorAll('[role="button"], [class*="segment"]'));
+        }
       }
     }
 

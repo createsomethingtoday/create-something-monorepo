@@ -15,6 +15,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:connection": "npx tsx test-connection.ts",
+    "capture:session": "npx tsx capture-session.ts",
     "sync": "npx tsx batch-sync.ts --sync",
     "sync:playlist": "npx tsx batch-sync.ts --sync --playlist"
   },

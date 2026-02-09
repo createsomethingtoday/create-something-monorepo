@@ -12,6 +12,7 @@ extracted-videos/
 *.txt
 !README.md
 
-# Session data
+# Session data (contains auth tokens — never commit)
 session-context.json
+session-cookies.json
 cookies.json

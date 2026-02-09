@@ -10,6 +10,8 @@
 
 import Steel from 'steel-sdk';
 import puppeteer, { type Browser, type Page } from 'puppeteer-core';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import type {
   SteelSession,
   SessionStatus,
@@ -78,11 +80,21 @@ export class YouTubeSteelProvider {
     try {
       this.metrics.sessionsCreated++;
 
-      // Create Steel session with CAPTCHA solving enabled
+      // Load saved session context (authenticated YouTube/Google state)
+      const sessionContext = this.loadSessionContext();
+
+      // Create Steel session with auth context + CAPTCHA solving
       const session = await this.client.sessions.create({
         timeout: sessionTimeout,
-        solveCaptcha: true  // Enable automatic CAPTCHA solving for YouTube bot detection
+        solveCaptcha: true,
+        ...(sessionContext ? { sessionContext } : {}),
       });
+
+      if (sessionContext) {
+        console.error('Steel session created with saved YouTube auth context');
+      } else {
+        console.error('Steel session created without auth context — run "pnpm capture:session" to authenticate');
+      }
 
       // Connect Puppeteer to the Steel session
       const browser = await puppeteer.connect({
@@ -103,7 +115,8 @@ export class YouTubeSteelProvider {
 
       // Navigate to initial URL if provided
       if (initialUrl) {
-        const page = await browser.newPage();
+        const pages = await browser.pages();
+        const page = pages.length > 0 ? pages[0] : await browser.newPage();
         await page.setViewport({ width: 1920, height: 1080 });
         await page.goto(initialUrl, { 
           waitUntil: 'networkidle2',
@@ -467,6 +480,41 @@ export class YouTubeSteelProvider {
    */
   private async wait(page: Page, ms: number): Promise<void> {
     await page.evaluate(`new Promise(r => setTimeout(r, ${ms}))`);
+  }
+
+  /**
+   * Load saved session context from file or env var.
+   * Created by running `pnpm capture:session` (capture-session.ts).
+   * Contains authenticated YouTube/Google browser state (cookies, localStorage).
+   */
+  private loadSessionContext(): Record<string, unknown> | null {
+    // Try env var first (JSON string)
+    const envContext = process.env.YOUTUBE_SESSION_CONTEXT;
+    if (envContext) {
+      try {
+        return JSON.parse(envContext);
+      } catch {
+        console.error('Failed to parse YOUTUBE_SESSION_CONTEXT env var');
+      }
+    }
+
+    // Fall back to session-context.json file
+    const paths = [
+      resolve(process.cwd(), 'session-context.json'),
+      resolve(process.cwd(), 'packages/half-dozen-youtube-sync/session-context.json'),
+    ];
+
+    for (const p of paths) {
+      try {
+        const raw = readFileSync(p, 'utf-8');
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object') return parsed;
+      } catch {
+        // Try next path
+      }
+    }
+
+    return null;
   }
 }
 

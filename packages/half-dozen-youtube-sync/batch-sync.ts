@@ -52,6 +52,33 @@ const NOTION_SELECT_DEFAULTS = {
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+/**
+ * Load saved session context from session-context.json.
+ * Created by running `pnpm capture:session`.
+ */
+function loadSessionContext(): Record<string, unknown> | null {
+  const paths = [
+    new URL('./session-context.json', import.meta.url),
+    new URL('../session-context.json', import.meta.url),
+  ];
+
+  for (const p of paths) {
+    try {
+      const raw = fs.readFileSync(p, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        console.log('🔑 Loaded YouTube session context (authenticated)');
+        return parsed;
+      }
+    } catch {
+      // Try next path
+    }
+  }
+
+  console.log('⚠️  No session context found — run "pnpm capture:session" to authenticate');
+  return null;
+}
+
 interface ParsedArgs {
   playlistUrl?: string;
   videoUrl?: string;
@@ -162,13 +189,15 @@ async function extractSingleVideo(videoUrl: string, syncToNotion: boolean, datab
   console.log('\n📺 Extracting single video transcript...\n');
   console.log(`URL: ${videoUrl}`);
 
-  // Create Steel session for browser-based extraction
+  // Create Steel session with auth context for browser-based extraction
   const client = new Steel({ steelAPIKey: process.env.STEEL_API_KEY! });
+  const sessionContext = loadSessionContext();
   console.log('\n🚀 Creating Steel session...');
 
   const session = await client.sessions.create({
     timeout: 5 * 60 * 1000,
-    solveCaptcha: true
+    solveCaptcha: true,
+    ...(sessionContext ? { sessionContext } : {}),
   });
 
   console.log(`✅ Session: ${session.id}`);
@@ -268,14 +297,16 @@ async function extractPlaylistVideos(
     fs.mkdirSync(OUTPUT_DIR, { recursive: true });
   }
 
-  // Initialize Steel client
+  // Initialize Steel client with auth context
   const client = new Steel({ steelAPIKey: process.env.STEEL_API_KEY! });
+  const sessionContext = loadSessionContext();
 
   console.log('\n🚀 Creating Steel session...');
   
   const session = await client.sessions.create({
-    timeout: 30 * 60 * 1000, // 30 minutes
-    solveCaptcha: true  // Enable automatic CAPTCHA solving for YouTube bot detection
+    timeout: 30 * 60 * 1000,
+    solveCaptcha: true,
+    ...(sessionContext ? { sessionContext } : {}),
   });
 
   console.log(`✅ Session created: ${session.id}`);
