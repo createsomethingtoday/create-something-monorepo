@@ -239,6 +239,8 @@ async function renderDashboard(env: Env): Promise<Response> {
   .tag { display: inline-block; padding: 0.125rem 0.375rem; border-radius: 4px; font-size: 0.6875rem; background: #262626; color: #a3a3a3; margin-right: 0.25rem; }
   .meta-item { font-size: 0.8125rem; color: #a3a3a3; }
   .agent-label { font-size: 0.75rem; color: #f59e0b; }
+  .upvote { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; color: #f472b6; background: #f472b620; padding: 0.125rem 0.5rem; border-radius: 9999px; }
+  .upvote-voters { font-size: 0.6875rem; color: #a3a3a3; margin-left: 0.25rem; }
   .body-preview { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #262626; font-size: 0.8125rem; color: #a3a3a3; line-height: 1.5; max-height: 4.5em; overflow: hidden; }
   .empty { color: #525252; font-style: italic; padding: 1rem 0; }
   a { color: #60a5fa; text-decoration: none; }
@@ -273,6 +275,7 @@ ${Object.entries(byTable).map(([tableName, recs]) => `
     const agent = d.assigned_agent ? String(d.assigned_agent) : '';
     const tags = Array.isArray(d.tags) ? d.tags as string[] : [];
     const body = d.body ? String(d.body).slice(0, 200) : '';
+    const upvotes = Array.isArray(d.upvotes) ? d.upvotes as string[] : [];
     return `<div class="card">
       <div class="card-title">${esc(title)}</div>
       <div class="card-meta">
@@ -280,6 +283,7 @@ ${Object.entries(byTable).map(([tableName, recs]) => `
         ${property ? `<span class="meta-item">${esc(property)}</span>` : ''}
         ${date ? `<span class="meta-item">${esc(date)}</span>` : ''}
         ${agent ? `<span class="agent-label">${esc(agent)}</span>` : ''}
+        ${upvotes.length ? `<span class="upvote">\u25B2 ${upvotes.length}<span class="upvote-voters">${upvotes.map(v => esc(v)).join(', ')}</span></span>` : ''}
       </div>
       ${tags.length ? `<div style="margin-top:0.5rem">${tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
       ${body ? `<div class="body-preview">${esc(body)}...</div>` : ''}
