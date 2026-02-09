@@ -42,13 +42,6 @@
 		<div class="hero-gradient"></div>
 	</div>
 
-	<!-- Centered play button overlay -->
-	<button class="play-overlay" onclick={playOverview} aria-label="Play overview video">
-		<div class="play-button-pulse">
-			<Play size={32} />
-		</div>
-	</button>
-
 	<!-- Container for alignment -->
 	<div class="hero-container">
 		<div class="hero-content">
@@ -63,8 +56,14 @@
 				Full-service PCN creation for creators and brands ready to own their platform
 			</p>
 
-			<!-- CTA Button -->
+			<!-- Play Overview + CTA -->
 			<div class="hero-actions">
+				<button class="play-button-inline" onclick={playOverview} aria-label="Play overview video">
+					<div class="play-icon-pulse">
+						<Play size={24} />
+					</div>
+					<span>Watch Overview</span>
+				</button>
 				<button class="btn-cta" onclick={bookDiscoveryCall}>
 					Book a Discovery Call
 				</button>
@@ -122,46 +121,44 @@
 		);
 	}
 
-	/* Centered pulsing play button */
-	.play-overlay {
-		position: absolute;
-		top: 40%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		z-index: 15;
-		background: transparent;
-		border: none;
+	/* Inline play button (in content flow) */
+	.play-button-inline {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 0.875rem 2rem;
+		background: rgba(255, 255, 255, 0.08);
+		backdrop-filter: blur(12px);
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		border-radius: var(--radius-md);
+		color: white;
+		font-size: 1rem;
+		font-weight: 600;
 		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+		min-width: 180px;
 	}
 
-	.play-button-pulse {
-		width: 5rem;
-		height: 5rem;
+	.play-button-inline:hover {
+		background: rgba(255, 255, 255, 0.15);
+		border-color: rgba(255, 255, 255, 0.35);
+		transform: scale(1.02);
+	}
+
+	.play-button-inline:active {
+		transform: scale(0.98);
+	}
+
+	.play-icon-pulse {
+		width: 2.25rem;
+		height: 2.25rem;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		background: rgba(255, 255, 255, 0.1);
-		border: 2px solid rgba(255, 255, 255, 0.3);
+		border: 1px solid rgba(255, 255, 255, 0.25);
 		border-radius: 50%;
-		color: white;
-		backdrop-filter: blur(8px);
-		animation: pulse-scale 2s ease-in-out infinite;
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.play-button-pulse:hover {
-		background: rgba(244, 81, 38, 0.2);
-		border-color: var(--color-sun);
-		transform: scale(1.1);
-	}
-
-	@keyframes pulse-scale {
-		0%, 100% {
-			transform: scale(1);
-		}
-		50% {
-			transform: scale(1.05);
-		}
+		flex-shrink: 0;
 	}
 
 	.hero-content {
@@ -207,9 +204,14 @@
 		margin: 0;
 	}
 
-	/* CTA Button - Sun color */
+	/* CTA Buttons row */
 	.hero-actions {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
 		margin-top: var(--space-lg);
+		flex-wrap: wrap;
+		justify-content: center;
 	}
 
 	.btn-cta {
@@ -249,9 +251,15 @@
 			margin-top: 20vh;
 		}
 
-		.play-button-pulse {
-			width: 4rem;
-			height: 4rem;
+		.hero-actions {
+			flex-direction: column;
+		}
+
+		.play-button-inline,
+		.btn-cta {
+			width: 100%;
+			max-width: 300px;
+			justify-content: center;
 		}
 
 		.hero-title {
@@ -265,11 +273,6 @@
 		.hero-supporting {
 			font-size: 1rem;
 			padding: 0 1rem;
-		}
-
-		.btn-cta {
-			width: 100%;
-			max-width: 300px;
 		}
 	}
 
