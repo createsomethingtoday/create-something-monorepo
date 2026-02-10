@@ -58,7 +58,7 @@
 	<div class="section-inner">
 		<div class="section-header reveal">
 			<h2 class="section-eyebrow">Flagship Tools</h2>
-			<p class="section-desc">Install in 2 minutes. Used by the same agents we build custom MCPs for.</p>
+			<p class="section-desc">Install in 2 minutes. Powering the same agents we build for clients.</p>
 		</div>
 		<div class="featured-grid">
 			{#each featured as product, index}
@@ -84,7 +84,7 @@
 	<div class="section-inner">
 		<div class="section-header reveal">
 			<h2 class="section-eyebrow">Developer Tools</h2>
-			<p class="section-desc">The Subtractive Triad — audit, learn, and see — packaged for your editor.</p>
+			<p class="section-desc">The Subtractive Triad — audit, learn, see — packaged for your editor.</p>
 		</div>
 		<div class="category-grid">
 			{#each devTools as product, index}
@@ -116,7 +116,7 @@
 	<div class="section-inner">
 		<div class="section-header reveal">
 			<h2 class="section-eyebrow">Framework & Infrastructure</h2>
-			<p class="section-desc">Structural components for agent systems. The frame that holds everything together.</p>
+			<p class="section-desc">Structural components for agent systems. The frame that holds everything.</p>
 		</div>
 		<div class="category-grid">
 			{#each framework as product, index}
@@ -143,7 +143,7 @@
 	<div class="section-inner">
 		<div class="section-header reveal">
 			<h2 class="section-eyebrow">Integration MCPs</h2>
-			<p class="section-desc">Bridges between the platforms you already use and the agents that serve you.</p>
+			<p class="section-desc">Bridges between your platforms and the agents that serve you.</p>
 		</div>
 		<div class="category-grid">
 			{#each integrations as product, index}
@@ -289,6 +289,7 @@
 		color: var(--color-fg-tertiary);
 		line-height: var(--leading-relaxed);
 		max-width: 36rem;
+		text-wrap: balance;
 	}
 
 	/* Products Section */
