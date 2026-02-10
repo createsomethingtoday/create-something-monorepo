@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { Header, Button, Card } from '$lib/components';
+	import { Header, Button, Card, WebflowWayCard } from '$lib/components';
 	import type { PageData } from './$types';
-	import { ChevronLeft, CheckCircle2, Check, Clock, Info } from 'lucide-svelte';
+	import { ChevronLeft, CheckCircle2, Check, Info } from 'lucide-svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -96,19 +96,8 @@
 					</div>
 				</Card>
 
-				<!-- Coming Soon Card -->
-				<Card class="tool-card coming-soon">
-					<div class="tool-header">
-						<div class="tool-icon placeholder">
-							<Clock size={24} />
-						</div>
-						<h3 class="tool-title">More Tools Coming</h3>
-					</div>
-					<p class="tool-description">
-						Additional validation tools are in development to help ensure your templates meet all marketplace requirements.
-					</p>
-					<div class="coming-soon-badge">Coming Soon</div>
-				</Card>
+			<!-- Webflow Way Validator Card -->
+			<WebflowWayCard userEmail={data.user?.email} />
 				</div>
 			</div>
 
@@ -223,10 +212,6 @@
 		padding: var(--space-md);
 	}
 
-	:global(.tool-card.coming-soon) {
-		opacity: 0.7;
-	}
-
 	.tool-header {
 		display: flex;
 		align-items: center;
@@ -245,11 +230,6 @@
 	.tool-icon.gsap {
 		background: var(--color-success-muted);
 		color: var(--color-success);
-	}
-
-	.tool-icon.placeholder {
-		background: var(--color-bg-surface);
-		color: var(--color-fg-muted);
 	}
 
 	.tool-title {
@@ -312,18 +292,6 @@
 
 	.playground-link:hover {
 		color: var(--color-fg-primary);
-	}
-
-	.coming-soon-badge {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		margin-top: auto;
 	}
 
 	:global(.info-card) {
