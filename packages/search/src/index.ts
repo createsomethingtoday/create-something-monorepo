@@ -72,12 +72,13 @@ async function generateQueryEmbedding(query: string, ai: Ai): Promise<number[]> 
     text: [query],
   });
 
-  // Workers AI returns { data: number[][] }
-  if (!response.data || !response.data[0]) {
+  // Workers AI returns { data: number[][] } at runtime
+  const result = response as unknown as { data: number[][] };
+  if (!result.data || !result.data[0]) {
     throw new Error('Failed to generate embedding');
   }
 
-  return response.data[0];
+  return result.data[0];
 }
 
 // =============================================================================
@@ -133,7 +134,7 @@ async function handleSearch(request: Request, env: Env): Promise<Response> {
 
     // 3. Filter and transform results
     let results: SearchResult[] = vectorResults.matches
-      .map((match) => {
+      .map((match): SearchResult | null => {
         const meta = match.metadata as unknown as VectorMetadata;
         if (!meta) return null;
 
@@ -146,7 +147,7 @@ async function handleSearch(request: Request, env: Env): Promise<Response> {
         }
 
         const property = meta.property as Property;
-        const concepts = meta.concepts ? JSON.parse(meta.concepts) : [];
+        const concepts: string[] = meta.concepts ? JSON.parse(meta.concepts) : [];
 
         return {
           id: match.id,
@@ -158,8 +159,8 @@ async function handleSearch(request: Request, env: Env): Promise<Response> {
           path: meta.path,
           score: match.score,
           concepts,
-          related: includeRelated ? [] : undefined, // Populated separately if needed
-        } satisfies SearchResult;
+          related: includeRelated ? [] : undefined,
+        };
       })
       .filter((r): r is SearchResult => r !== null)
       .slice(0, limit);
@@ -471,18 +472,11 @@ export default {
     ctx: ExecutionContext
   ): Promise<void> {
     console.log('[Scheduled] Starting automated content re-indexing...');
-    
+
     ctx.waitUntil(
       (async () => {
         try {
-          const result = await indexAllContent(
-            env.AI,
-            env.VECTORIZE,
-            env.DB_SPACE,
-            env.DB_IO,
-            env.DB_LTD,
-            env.DB_AGENCY
-          );
+          const result = await indexAllContent(env);
           
           console.log(`[Scheduled] Indexing complete: ${result.indexed} items, ${result.failed} failed`);
           console.log(`[Scheduled] By property:`, JSON.stringify(result.byProperty));

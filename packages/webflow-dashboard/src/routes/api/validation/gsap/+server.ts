@@ -11,6 +11,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type {
 	WorkerResponse,
+	WorkerPageResult,
 	ValidationResult,
 	PageResult,
 	CommonIssue,
@@ -23,6 +24,53 @@ interface ValidationRequest {
 }
 
 const WORKER_URL = 'https://gsap-validation-worker.createsomething.workers.dev/crawlWebsite';
+
+/**
+ * Patterns that identify Webflow's built-in platform scripts.
+ * These are injected by Webflow into every page and are NOT custom code
+ * from the template author. Flagging them produces false positives.
+ */
+const WEBFLOW_PLATFORM_PATTERNS = [
+	// Webflow's modernizr/feature detection script (w-mod-js, w-mod-touch)
+	'w-mod-',
+	// Webflow's runtime loader
+	'Webflow.require',
+	// Webflow's IX2 (interactions) engine - part of the platform
+	'w-ix-',
+];
+
+/**
+ * Check if a flagged code entry is a Webflow platform script (not author code).
+ */
+function isWebflowPlatformScript(flaggedEntry: FlaggedCode): boolean {
+	return flaggedEntry.flaggedCode.some((code) =>
+		WEBFLOW_PLATFORM_PATTERNS.some((pattern) => code.includes(pattern))
+	);
+}
+
+/**
+ * Filter out Webflow's built-in platform scripts from flagged code results.
+ * These are false positives — the template author has no control over them.
+ */
+function filterPlatformScripts(
+	pageResults: WorkerPageResult[]
+): WorkerPageResult[] {
+	return pageResults.map((page) => {
+		const originalFlagged = page.details?.flaggedCode || [];
+		const filtered = originalFlagged.filter((entry) => !isWebflowPlatformScript(entry));
+		const removedCount = originalFlagged.length - filtered.length;
+
+		return {
+			...page,
+			flaggedCodeCount: Math.max(0, (page.flaggedCodeCount || 0) - removedCount),
+			passed: filtered.length === 0 && (page.summary?.securityRiskCount || 0) === 0,
+			details: {
+				...page.details,
+				flaggedCode: filtered
+			}
+		};
+	});
+}
 
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.user?.email) {
@@ -76,40 +124,42 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 
 		const workerData = (await response.json()) as WorkerResponse;
 
+		// Filter out Webflow's built-in platform scripts (false positives)
+		const filteredPageResults = filterPlatformScripts(workerData.pageResults || []);
+		const passedCount = filteredPageResults.filter((p) => p.passed).length;
+		const failedCount = filteredPageResults.filter((p) => !p.passed).length;
+		const totalPages = filteredPageResults.length;
+		const allPassed = failedCount === 0 && totalPages > 0;
+
 		// Process and format the validation results
 		const result: ValidationResult = {
 			url: workerData.url,
 			success: workerData.success,
-			passed: workerData.passed,
+			passed: allPassed,
 			timestamp: new Date().toISOString(),
 			summary: {
-				totalPages: workerData.siteResults?.pageCount || 0,
-				analyzedPages: workerData.siteResults?.analyzedCount || 0,
-				passedPages: workerData.siteResults?.passedCount || 0,
-				failedPages: workerData.siteResults?.failedCount || 0,
-				passRate: workerData.siteResults?.pageCount
-					? Math.round(
-							(workerData.siteResults.passedCount / workerData.siteResults.pageCount) * 100
-						)
-					: 0
+				totalPages,
+				analyzedPages: totalPages,
+				passedPages: passedCount,
+				failedPages: failedCount,
+				passRate: totalPages > 0 ? Math.round((passedCount / totalPages) * 100) : 0
 			},
 			issues: {
 				totalFlaggedCode:
-					workerData.pageResults?.reduce((total, page) => total + (page.flaggedCodeCount || 0), 0) ||
-					0,
+					filteredPageResults.reduce((total, page) => total + (page.flaggedCodeCount || 0), 0),
 				totalSecurityRisks:
-					workerData.pageResults?.reduce(
+					filteredPageResults.reduce(
 						(total, page) => total + (page.summary?.securityRiskCount || 0),
 						0
-					) || 0,
+					),
 				totalValidGsap:
-					workerData.pageResults?.reduce(
+					filteredPageResults.reduce(
 						(total, page) => total + (page.summary?.validGsapCount || 0),
 						0
-					) || 0,
-				commonIssues: extractCommonIssues(workerData.pageResults || [])
+					),
+				commonIssues: extractCommonIssues(filteredPageResults)
 			},
-			pageResults: (workerData.pageResults || []).map(
+			pageResults: filteredPageResults.map(
 				(page): PageResult => ({
 					url: page.url,
 					title: page.title,
@@ -126,7 +176,16 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 				})
 			),
 			crawlStats: workerData.crawlStats,
-			recommendations: generateRecommendations(workerData)
+			recommendations: generateRecommendations({
+				...workerData,
+				passed: allPassed,
+				pageResults: filteredPageResults,
+				siteResults: {
+					...workerData.siteResults,
+					passedCount,
+					failedCount
+				}
+			})
 		};
 
 		console.log(`[Validation] Completed for ${url}. Pass rate: ${result.summary.passRate}%`);

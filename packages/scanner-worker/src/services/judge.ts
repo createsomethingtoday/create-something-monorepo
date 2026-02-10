@@ -195,17 +195,18 @@ function applyVerdict(finding: Finding, verdict: AIVerdict): Finding {
  */
 async function callWorkersAI(ai: Ai, persona: string, context: string): Promise<AIVerdict | null> {
   try {
-    const response = await ai.run('@cf/meta/llama-3.1-8b-instruct', {
+    const response = await ai.run('@cf/meta/llama-3.1-8b-instruct' as Parameters<Ai['run']>[0], {
       messages: [
         { role: 'system', content: persona },
         { role: 'user', content: context },
       ],
       max_tokens: 200,
       temperature: 0,
-    });
+    } as Record<string, unknown>);
 
-    if ('response' in response && typeof response.response === 'string') {
-      return parseAIResponse(response.response);
+    const result = response as Record<string, unknown>;
+    if ('response' in result && typeof result.response === 'string') {
+      return parseAIResponse(result.response);
     }
     return null;
   } catch (err) {

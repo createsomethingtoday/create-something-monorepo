@@ -47,10 +47,12 @@ async function generateEmbeddings(
         text: texts,
       });
 
-      if (response.data) {
+      // Workers AI returns { data: number[][] } at runtime
+      const result = response as unknown as { data: number[][] };
+      if (result.data) {
         for (let j = 0; j < batch.length; j++) {
-          if (response.data[j]) {
-            embeddings.set(batch[j].id, response.data[j]);
+          if (result.data[j]) {
+            embeddings.set(batch[j].id, result.data[j]);
           }
         }
       }

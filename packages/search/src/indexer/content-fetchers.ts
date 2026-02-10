@@ -6,14 +6,22 @@
  */
 
 import type { IndexableContent, Property, ContentType } from '../types';
-import { createHash } from 'node:crypto';
-
 // =============================================================================
 // HASH UTILITY
 // =============================================================================
 
+/**
+ * Simple FNV-1a hash for change detection (not security).
+ * Workers don't have node:crypto — Web Crypto is async which
+ * doesn't work inline in object literals.
+ */
 function hashContent(content: string): string {
-  return createHash('sha256').update(content).digest('hex').slice(0, 16);
+  let hash = 0x811c9dc5; // FNV offset basis
+  for (let i = 0; i < content.length; i++) {
+    hash ^= content.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193); // FNV prime
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
 }
 
 // =============================================================================
