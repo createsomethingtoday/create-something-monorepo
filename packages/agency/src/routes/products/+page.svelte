@@ -289,7 +289,7 @@
 	}
 
 	.section-title {
-		font-size: var(--text-h1);
+		font-size: var(--text-h3, 1.25rem);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 		margin-bottom: var(--space-3, 0.75rem);
