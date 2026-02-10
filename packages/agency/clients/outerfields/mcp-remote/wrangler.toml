@@ -1,6 +1,11 @@
 name = "outerfields-pcn-mcp"
 main = "src/index.ts"
-compatibility_date = "2024-01-01"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
 account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 
-# Workers (not Pages)
+# Production URL: https://outerfields.mcp.createsomething.agency
+# Secondary: mcp.outerfields.io (configured via Cloudflare Dashboard)
+[[routes]]
+pattern = "outerfields.mcp.createsomething.agency"
+custom_domain = true

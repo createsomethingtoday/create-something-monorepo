@@ -120,15 +120,15 @@ export function registerTools(
   requestSampling?: SamplingFn | null,
 ): void {
   // =========================================================================
-  // Diagnostics
+  // schedule_status — Diagnostics
   // =========================================================================
 
   server.tool(
-    'get_status',
+    'schedule_status',
     'Get system status: counts of all entities and D1 connectivity check',
     {},
     async () => {
-      return tracedTool('get_status', {}, async () => {
+      return tracedTool('schedule_status', {}, async () => {
         try {
           const db = getDb();
 
@@ -161,15 +161,15 @@ export function registerTools(
   );
 
   // =========================================================================
-  // List / Read Operations
+  // schedule_list_* / schedule_get_* — List / Read Operations
   // =========================================================================
 
   server.tool(
-    'list_members',
-    'List all members in the system',
+    'schedule_list_members',
+    'List all members in the scheduling system. Use when the user asks who is available, wants to see team members, or needs member IDs for creating events or units.',
     {},
     async () => {
-      return tracedTool('list_members', {}, async () => {
+      return tracedTool('schedule_list_members', {}, async () => {
         try {
           const db = getDb();
           const members = await listMembers(db);
@@ -182,11 +182,11 @@ export function registerTools(
   );
 
   server.tool(
-    'list_calendars',
-    'List all calendars in the system',
+    'schedule_list_calendars',
+    'List all calendars in the scheduling system. Use when the user wants to see available calendars, needs a calendar_id for other operations, or asks about their schedules.',
     {},
     async () => {
-      return tracedTool('list_calendars', {}, async () => {
+      return tracedTool('schedule_list_calendars', {}, async () => {
         try {
           const db = getDb();
           const calendars = await listCalendars(db);
@@ -199,11 +199,11 @@ export function registerTools(
   );
 
   server.tool(
-    'list_units',
-    'List all units/groups in the system',
+    'schedule_list_units',
+    'List all organizational units/groups (e.g., teams, departments, crews). Use when the user asks about team structure or needs a unit_id for member management.',
     {},
     async () => {
-      return tracedTool('list_units', {}, async () => {
+      return tracedTool('schedule_list_units', {}, async () => {
         try {
           const db = getDb();
           const units = await listUnits(db);
@@ -216,15 +216,15 @@ export function registerTools(
   );
 
   server.tool(
-    'list_events',
-    'List events with optional filters (date range, calendar)',
+    'schedule_list_events',
+    'List scheduled events with optional filters. Use when the user asks "what\'s happening this week?", wants to see upcoming events, or needs to review a calendar\'s schedule. Filter by date range and/or calendar.',
     {
       calendar_id: z.string().optional(),
       start: z.string().optional().describe('ISO 8601 date — filter events ending after this'),
       end: z.string().optional().describe('ISO 8601 date — filter events starting before this'),
     },
     async (params) => {
-      return tracedTool('list_events', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_list_events', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const events = await listEvents(db, {
@@ -241,14 +241,14 @@ export function registerTools(
   );
 
   server.tool(
-    'get_calendar_details',
+    'schedule_get_calendar',
     'Get a calendar with its sharing permissions and upcoming events',
     {
       calendar_id: z.string(),
       include_events: z.boolean().optional().describe('Include events (default true)'),
     },
     async (params) => {
-      return tracedTool('get_calendar_details', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_get_calendar', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const calendar = await getCalendar(db, params.calendar_id);
@@ -276,13 +276,13 @@ export function registerTools(
   );
 
   // =========================================================================
-  // CRUD Operations
+  // schedule_create_* / schedule_delete_* / schedule_update_* — CRUD Operations
   // =========================================================================
 
-  // --- create_calendar -----------------------------------------------------
+  // --- schedule_create_calendar ----------------------------------------------
 
   server.tool(
-    'create_calendar',
+    'schedule_create_calendar',
     'Create a new calendar',
     {
       name: z.string(),
@@ -292,7 +292,7 @@ export function registerTools(
       timezone: z.string().optional(),
     },
     async (params) => {
-      return tracedTool('create_calendar', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_create_calendar', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const calendar = await createCalendar(db, params);
@@ -304,10 +304,10 @@ export function registerTools(
     },
   );
 
-  // --- create_event --------------------------------------------------------
+  // --- schedule_create_event -------------------------------------------------
 
   server.tool(
-    'create_event',
+    'schedule_create_event',
     'Create a calendar event',
     {
       calendar_id: z.string(),
@@ -322,7 +322,7 @@ export function registerTools(
       created_by: z.string().optional(),
     },
     async (params) => {
-      return tracedTool('create_event', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_create_event', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const event = await createEvent(db, params);
@@ -336,10 +336,10 @@ export function registerTools(
     },
   );
 
-  // --- update_event --------------------------------------------------------
+  // --- schedule_update_event -------------------------------------------------
 
   server.tool(
-    'update_event',
+    'schedule_update_event',
     'Update an existing event',
     {
       id: z.string(),
@@ -351,7 +351,7 @@ export function registerTools(
       status: z.enum(['confirmed', 'tentative', 'cancelled']).optional(),
     },
     async (params) => {
-      return tracedTool('update_event', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_update_event', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const { id, ...updates } = params;
@@ -369,17 +369,17 @@ export function registerTools(
     },
   );
 
-  // --- delete_event --------------------------------------------------------
+  // --- schedule_delete_event -------------------------------------------------
 
   server.tool(
-    'delete_event',
+    'schedule_delete_event',
     'Delete an event',
     {
       id: z.string(),
       delete_series: z.boolean().optional().describe('Delete all events in the recurrence series'),
     },
     async (params) => {
-      return tracedTool('delete_event', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_delete_event', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
 
@@ -422,17 +422,17 @@ export function registerTools(
     },
   );
 
-  // --- create_unit ---------------------------------------------------------
+  // --- schedule_create_unit --------------------------------------------------
 
   server.tool(
-    'create_unit',
+    'schedule_create_unit',
     'Create a team/family group',
     {
       name: z.string(),
       description: z.string().optional(),
     },
     async (params) => {
-      return tracedTool('create_unit', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_create_unit', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const unit = await createUnit(db, params);
@@ -444,10 +444,10 @@ export function registerTools(
     },
   );
 
-  // --- add_member ----------------------------------------------------------
+  // --- schedule_add_member ---------------------------------------------------
 
   server.tool(
-    'add_member',
+    'schedule_add_member',
     'Add a member (create if needed) and optionally add to unit',
     {
       name: z.string(),
@@ -458,7 +458,7 @@ export function registerTools(
       role: z.string().optional(),
     },
     async (params) => {
-      return tracedTool('add_member', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_add_member', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const member = await createMember(db, {
@@ -483,10 +483,10 @@ export function registerTools(
     },
   );
 
-  // --- share_calendar ------------------------------------------------------
+  // --- schedule_share_calendar -----------------------------------------------
 
   server.tool(
-    'share_calendar',
+    'schedule_share_calendar',
     'Share a calendar with a member or unit',
     {
       calendar_id: z.string(),
@@ -495,7 +495,7 @@ export function registerTools(
       permission: z.enum(['read', 'write', 'admin']).optional(),
     },
     async (params) => {
-      return tracedTool('share_calendar', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_share_calendar', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           await shareCalendar(
@@ -519,10 +519,10 @@ export function registerTools(
     },
   );
 
-  // --- update_member -------------------------------------------------------
+  // --- schedule_update_member ------------------------------------------------
 
   server.tool(
-    'update_member',
+    'schedule_update_member',
     'Update a member\'s details (name, email, phone, timezone)',
     {
       id: z.string(),
@@ -532,7 +532,7 @@ export function registerTools(
       timezone: z.string().optional(),
     },
     async (params) => {
-      return tracedTool('update_member', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_update_member', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const { id, ...updates } = params;
@@ -548,16 +548,16 @@ export function registerTools(
     },
   );
 
-  // --- delete_member -------------------------------------------------------
+  // --- schedule_delete_member ------------------------------------------------
 
   server.tool(
-    'delete_member',
+    'schedule_delete_member',
     'Delete a member (removes them from all units and event participants)',
     {
       id: z.string(),
     },
     async (params) => {
-      return tracedTool('delete_member', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_delete_member', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const deleted = await deleteMember(db, params.id);
@@ -572,17 +572,17 @@ export function registerTools(
     },
   );
 
-  // --- remove_member_from_unit ---------------------------------------------
+  // --- schedule_remove_member_from_unit --------------------------------------
 
   server.tool(
-    'remove_member_from_unit',
+    'schedule_remove_member_from_unit',
     'Remove a member from a unit (does not delete the member)',
     {
       unit_id: z.string(),
       member_id: z.string(),
     },
     async (params) => {
-      return tracedTool('remove_member_from_unit', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_remove_member_from_unit', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const removed = await removeMemberFromUnit(db, params.unit_id, params.member_id);
@@ -597,16 +597,16 @@ export function registerTools(
     },
   );
 
-  // --- delete_unit ---------------------------------------------------------
+  // --- schedule_delete_unit --------------------------------------------------
 
   server.tool(
-    'delete_unit',
+    'schedule_delete_unit',
     'Delete a unit/group (does not delete members)',
     {
       id: z.string(),
     },
     async (params) => {
-      return tracedTool('delete_unit', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_delete_unit', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const deleted = await deleteUnit(db, params.id);
@@ -621,16 +621,16 @@ export function registerTools(
     },
   );
 
-  // --- delete_calendar -----------------------------------------------------
+  // --- schedule_delete_calendar ----------------------------------------------
 
   server.tool(
-    'delete_calendar',
+    'schedule_delete_calendar',
     'Delete a calendar and all its events',
     {
       id: z.string(),
     },
     async (params) => {
-      return tracedTool('delete_calendar', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_delete_calendar', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const deleted = await deleteCalendar(db, params.id);
@@ -645,10 +645,10 @@ export function registerTools(
     },
   );
 
-  // --- unshare_calendar ----------------------------------------------------
+  // --- schedule_unshare_calendar ---------------------------------------------
 
   server.tool(
-    'unshare_calendar',
+    'schedule_unshare_calendar',
     'Remove sharing permission from a calendar for a member or unit',
     {
       calendar_id: z.string(),
@@ -656,7 +656,7 @@ export function registerTools(
       shared_with_id: z.string(),
     },
     async (params) => {
-      return tracedTool('unshare_calendar', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_unshare_calendar', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const removed = await unshareCalendar(
@@ -682,13 +682,13 @@ export function registerTools(
   );
 
   // =========================================================================
-  // Scheduling Intelligence
+  // schedule_backfill / schedule_forecast / schedule_find_* — Scheduling Intelligence
   // =========================================================================
 
-  // --- backfill ------------------------------------------------------------
+  // --- schedule_backfill -----------------------------------------------------
 
   server.tool(
-    'backfill',
+    'schedule_backfill',
     'Generate past events from a template',
     {
       template_id: z.string(),
@@ -697,7 +697,7 @@ export function registerTools(
       range_end: z.string().describe('ISO 8601 date'),
     },
     async (params) => {
-      return tracedTool('backfill', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_backfill', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const template = await getTemplate(db, params.template_id);
@@ -730,10 +730,10 @@ export function registerTools(
     },
   );
 
-  // --- forecast ------------------------------------------------------------
+  // --- schedule_forecast -----------------------------------------------------
 
   server.tool(
-    'forecast',
+    'schedule_forecast',
     'Project future events from a template',
     {
       template_id: z.string(),
@@ -742,7 +742,7 @@ export function registerTools(
       range_end: z.string().describe('ISO 8601 date'),
     },
     async (params) => {
-      return tracedTool('forecast', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_forecast', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const template = await getTemplate(db, params.template_id);
@@ -775,10 +775,10 @@ export function registerTools(
     },
   );
 
-  // --- find_conflicts ------------------------------------------------------
+  // --- schedule_find_conflicts -----------------------------------------------
 
   server.tool(
-    'find_conflicts',
+    'schedule_find_conflicts',
     'Detect scheduling conflicts',
     {
       calendar_ids: z.array(z.string()).optional(),
@@ -787,7 +787,7 @@ export function registerTools(
       end: z.string().describe('ISO 8601 date'),
     },
     async (params) => {
-      return tracedTool('find_conflicts', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_find_conflicts', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const rangeStart = isoToUnix(params.start);
@@ -848,7 +848,7 @@ export function registerTools(
           let assessment: { validated: boolean; refinement: string } | null = null;
           if (requestSampling && conflicts.length > 0) {
             assessment = await requestSampling(
-              'find_conflicts',
+              'schedule_find_conflicts',
               `Assess these ${conflicts.length} scheduling conflicts and rank by severity`,
               conflicts
             );
@@ -866,10 +866,10 @@ export function registerTools(
     },
   );
 
-  // --- find_availability ---------------------------------------------------
+  // --- schedule_find_availability --------------------------------------------
 
   server.tool(
-    'find_availability',
+    'schedule_find_availability',
     'Find free time slots',
     {
       member_ids: z.array(z.string()),
@@ -878,7 +878,7 @@ export function registerTools(
       min_duration_minutes: z.number().optional(),
     },
     async (params) => {
-      return tracedTool('find_availability', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_find_availability', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const rangeStart = isoToUnix(params.start);
@@ -930,10 +930,10 @@ export function registerTools(
     },
   );
 
-  // --- apply_template ------------------------------------------------------
+  // --- schedule_apply_template -----------------------------------------------
 
   server.tool(
-    'apply_template',
+    'schedule_apply_template',
     'Apply a template to a calendar (backfill + forecast in one operation)',
     {
       template_id: z.string(),
@@ -942,7 +942,7 @@ export function registerTools(
       forecast_end: z.string().describe('ISO 8601 date').optional(),
     },
     async (params) => {
-      return tracedTool('apply_template', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_apply_template', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const template = await getTemplate(db, params.template_id);
@@ -985,7 +985,7 @@ export function registerTools(
           let review: { validated: boolean; refinement: string } | null = null;
           if (requestSampling && created.length > 0) {
             review = await requestSampling(
-              'apply_template',
+              'schedule_apply_template',
               `Review this template application: ${template.name} generated ${created.length} events. Are there obvious issues with the schedule density or coverage?`,
               {
                 template: template.name,
@@ -1018,13 +1018,13 @@ export function registerTools(
   );
 
   // =========================================================================
-  // Interop
+  // schedule_export_ical — Interop
   // =========================================================================
 
-  // --- export_ical ---------------------------------------------------------
+  // --- schedule_export_ical --------------------------------------------------
 
   server.tool(
-    'export_ical',
+    'schedule_export_ical',
     'Export calendar as iCalendar format',
     {
       calendar_id: z.string(),
@@ -1032,7 +1032,7 @@ export function registerTools(
       end: z.string().optional(),
     },
     async (params) => {
-      return tracedTool('export_ical', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_export_ical', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const calendar = await getCalendar(db, params.calendar_id);
@@ -1059,7 +1059,7 @@ export function registerTools(
           let validation: { validated: boolean; refinement: string } | null = null;
           if (requestSampling && events.length > 0) {
             validation = await requestSampling(
-              'export_ical',
+              'schedule_export_ical',
               `Validate this iCal export of ${events.length} events from "${calendar.name}". Check for any issues with the event data.`,
               { calendar_name: calendar.name, event_count: events.length }
             );
@@ -1080,10 +1080,10 @@ export function registerTools(
     },
   );
 
-  // --- create_template -----------------------------------------------------
+  // --- schedule_create_template ----------------------------------------------
 
   server.tool(
-    'create_template',
+    'schedule_create_template',
     'Create a reusable schedule template',
     {
       name: z.string(),
@@ -1101,7 +1101,7 @@ export function registerTools(
       ),
     },
     async (params) => {
-      return tracedTool('create_template', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_create_template', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
 
@@ -1139,11 +1139,11 @@ export function registerTools(
   );
 
   // =========================================================================
-  // Notification Tools
+  // schedule_set_notification_prefs / schedule_get_notification_prefs / schedule_send_notification / schedule_list_notifications — Notification Tools
   // =========================================================================
 
   server.tool(
-    'set_notification_preferences',
+    'schedule_set_notification_prefs',
     'Set notification preferences for a member (reminders, changes, conflicts)',
     {
       member_id: z.string(),
@@ -1156,7 +1156,7 @@ export function registerTools(
       sms_enabled: z.boolean().optional(),
     },
     async (params) => {
-      return tracedTool('set_notification_preferences', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_set_notification_prefs', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const prefs = await setNotificationPreferences(db, params.member_id, {
@@ -1177,18 +1177,18 @@ export function registerTools(
   );
 
   server.tool(
-    'get_notification_preferences',
+    'schedule_get_notification_prefs',
     'Get notification preferences for a member',
     {
       member_id: z.string(),
     },
     async (params) => {
-      return tracedTool('get_notification_preferences', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_get_notification_prefs', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const prefs = await getNotificationPreferences(db, params.member_id);
           if (!prefs) {
-            return jsonContent({ member_id: params.member_id, configured: false, message: 'No preferences set. Use set_notification_preferences to enable notifications.' });
+            return jsonContent({ member_id: params.member_id, configured: false, message: 'No preferences set. Use schedule_set_notification_prefs to enable notifications.' });
           }
           return jsonContent({ ...prefs, configured: true });
         } catch (err) {
@@ -1199,7 +1199,7 @@ export function registerTools(
   );
 
   server.tool(
-    'send_notification',
+    'schedule_send_notification',
     'Send an immediate email notification to a member (agent-triggered)',
     {
       member_id: z.string(),
@@ -1207,7 +1207,7 @@ export function registerTools(
       event_id: z.string().optional().describe('Related event ID if applicable'),
     },
     async (params) => {
-      return tracedTool('send_notification', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_send_notification', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const member = await (await import('./db/queries.js')).getMember(db, params.member_id);
@@ -1215,7 +1215,7 @@ export function registerTools(
             return errorContent(`Member not found: ${params.member_id}`);
           }
           if (!member.phone) {
-            return errorContent(`Member ${member.name} has no phone number. Use update_member to add one.`);
+            return errorContent(`Member ${member.name} has no phone number. Use schedule_update_member to add one.`);
           }
 
           const entry = await createNotificationLog(db, {
@@ -1243,7 +1243,7 @@ export function registerTools(
   );
 
   server.tool(
-    'list_notification_log',
+    'schedule_list_notifications',
     'View recent notification history (Insight)',
     {
       member_id: z.string().optional(),
@@ -1251,7 +1251,7 @@ export function registerTools(
       limit: z.number().optional().describe('Max results (default 50)'),
     },
     async (params) => {
-      return tracedTool('list_notification_log', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_list_notifications', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
           const log = await listNotificationLog(db, {

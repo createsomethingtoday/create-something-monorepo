@@ -4,9 +4,9 @@ config({ path: resolve(import.meta.dirname, "../.env") });
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import express from "express";
+import { createServer as createHttpServer } from "node:http";
+import { z } from "zod";
 
 import { createAuthManagerFromEnv } from "./services/auth.js";
 import { createQBOClient } from "./services/quickbooks.js";
@@ -35,6 +35,112 @@ if (command === "auth") {
   });
 }
 
+/**
+ * Create and configure the MCP server with all tools.
+ * Factory pattern: returns a new instance per request for HTTP mode (MCP SDK 1.26+ requirement).
+ */
+function createMcpServer(
+  authManager: Awaited<ReturnType<typeof createAuthManagerFromEnv>>,
+  realmId: string,
+  sandbox: boolean,
+) {
+  const server = new McpServer({
+    name: "quickbooks-notion-mcp-server",
+    version: "2.0.0",
+    icons: [{
+      src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI2IiBmaWxsPSIjMDAwMDAwIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNCw0KSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSI+PHBhdGggZD0iTTEyIDd2MTQiLz48cGF0aCBkPSJNMyAxOGExIDEgMCAwIDEtMS0xVjRhMSAxIDAgMCAxIDEtMWg1YTQgNCAwIDAgMSA0IDQgNCA0IDAgMCAxIDQtNGg1YTEgMSAwIDAgMSAxIDF2MTNhMSAxIDAgMCAxLTEgMWgtNmEzIDMgMCAwIDAtMyAzIDMgMyAwIDAgMC0zLTN6Ii8+PC9nPjwvc3ZnPg==',
+      mimeType: 'image/svg+xml',
+      sizes: ['any'],
+    }],
+  });
+
+  const qbo = createQBOClient(authManager, realmId, sandbox);
+  const notion = createNotionClientFromEnv();
+
+  registerQuickBooksTools(server, qbo);
+  registerNotionTools(server, qbo, notion);
+
+  // ── Database Tier — Resources (read-only data) ──────────────────
+
+  server.resource(
+    'qbo-company-info',
+    'qbo://company',
+    { description: 'QuickBooks Online company information and configuration', mimeType: 'application/json' },
+    async () => {
+      try {
+        const info = await qbo.getCompanyInfo();
+        return {
+          contents: [{
+            uri: 'qbo://company',
+            mimeType: 'application/json',
+            text: JSON.stringify(info, null, 2),
+          }],
+        };
+      } catch {
+        return {
+          contents: [{
+            uri: 'qbo://company',
+            mimeType: 'application/json',
+            text: JSON.stringify({ error: 'Failed to fetch company info. Check QuickBooks OAuth tokens.' }),
+          }],
+        };
+      }
+    },
+  );
+
+  server.resource(
+    'server-capabilities',
+    'server://capabilities',
+    { description: 'Available tools, their descriptions, and supported QuickBooks entities', mimeType: 'application/json' },
+    async () => ({
+      contents: [{
+        uri: 'server://capabilities',
+        mimeType: 'application/json',
+        text: JSON.stringify({
+          mode: 'read-only',
+          quickbooks_entities: ['Customer', 'Invoice', 'Payment', 'Estimate', 'Bill', 'Vendor', 'Item', 'Account', 'Employee', 'PurchaseOrder'],
+          reports: ['ProfitAndLoss', 'BalanceSheet', 'CashFlow', 'CustomerBalance', 'VendorBalance', 'AgedReceivables', 'AgedPayables'],
+          notion_integration: true,
+        }, null, 2),
+      }],
+    }),
+  );
+
+  // ── Judgment Tier — Prompts (reusable interaction templates) ─────
+
+  server.prompt(
+    'financial_review',
+    'Review QuickBooks financial data for a specific period. Analyzes P&L, balance sheet, and cash flow.',
+    { period: z.string().describe('Time period to review (e.g., "Q4 2025", "January 2026", "last 90 days")') },
+    async ({ period }) => ({
+      messages: [{
+        role: 'user',
+        content: {
+          type: 'text',
+          text: `Run a financial review for ${period}. Pull the Profit & Loss, Balance Sheet, and Cash Flow reports. Summarize key metrics: revenue, expenses, net income, cash position, and any notable changes or concerns.`,
+        },
+      }],
+    }),
+  );
+
+  server.prompt(
+    'sync_to_notion',
+    'Sync QuickBooks data to Notion databases for the team to review.',
+    { entity_type: z.string().describe('What to sync (e.g., "invoices", "customers", "payments")') },
+    async ({ entity_type }) => ({
+      messages: [{
+        role: 'user',
+        content: {
+          type: 'text',
+          text: `Sync ${entity_type} from QuickBooks to the corresponding Notion database. List what was found, sync the data, and report on any issues or mismatches.`,
+        },
+      }],
+    }),
+  );
+
+  return server;
+}
+
 async function startServer(): Promise<void> {
   // Initialize OAuth
   const authManager = createAuthManagerFromEnv();
@@ -45,124 +151,100 @@ async function startServer(): Promise<void> {
     process.exit(1);
   }
 
-  // Create server
-  const server = new McpServer({
-    name: "quickbooks-notion-mcp-server",
-    version: "1.0.0",
-    icons: [{
-      src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI2IiBmaWxsPSIjMDAwMDAwIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNCw0KSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSI+PHBhdGggZD0iTTEyIDd2MTQiLz48cGF0aCBkPSJNMyAxOGExIDEgMCAwIDEtMS0xVjRhMSAxIDAgMCAxIDEtMWg1YTQgNCAwIDAgMSA0IDQgNCA0IDAgMCAxIDQtNGg1YTEgMSAwIDAgMSAxIDF2MTNhMSAxIDAgMCAxLTEgMWgtNmEzIDMgMCAwIDAtMyAzIDMgMyAwIDAgMC0zLTN6Ii8+PC9nPjwvc3ZnPg==',
-      mimeType: 'image/svg+xml',
-      sizes: ['any'],
-    }],
-  });
-
-  // Initialize API clients
   const realmId = await authManager.getRealmId();
   const sandbox = process.env.QBO_ENVIRONMENT === "sandbox";
-  const qbo = createQBOClient(authManager, realmId, sandbox);
-  const notion = createNotionClientFromEnv();
-
-  // Register all tools
-  registerQuickBooksTools(server, qbo);
-  registerNotionTools(server, qbo, notion);
 
   // Start transport
   const transport = process.env.TRANSPORT || "stdio";
 
   if (transport === "http") {
-    await runHTTP(server);
-  } else if (transport === "sse") {
-    await runHTTP(server, true);
+    await runHTTP(authManager, realmId, sandbox);
   } else {
-    await runStdio(server);
+    await runStdio(authManager, realmId, sandbox);
   }
 }
 
 // ── Transport: stdio ────────────────────────────────────────────────
 
-async function runStdio(server: McpServer): Promise<void> {
+async function runStdio(
+  authManager: Awaited<ReturnType<typeof createAuthManagerFromEnv>>,
+  realmId: string,
+  sandbox: boolean,
+): Promise<void> {
+  const server = createMcpServer(authManager, realmId, sandbox);
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  logger.info("QuickBooks → Notion MCP server running on stdio");
+  logger.info("QuickBooks → Notion MCP server v2.0.0 running on stdio");
 }
 
-// ── Transport: HTTP (Streamable HTTP + SSE) ─────────────────────────
+// ── Transport: Streamable HTTP (replaces Express + SSE) ─────────────
 
-async function runHTTP(server: McpServer, sseOnly = false): Promise<void> {
-  const app = express();
-  app.use(express.json());
+async function runHTTP(
+  authManager: Awaited<ReturnType<typeof createAuthManagerFromEnv>>,
+  realmId: string,
+  sandbox: boolean,
+): Promise<void> {
+  const port = parseInt(process.env.PORT || "3000");
 
-  // Health check
-  app.get("/health", (_req, res) => {
-    res.json({
-      status: "ok",
-      server: "quickbooks-notion-mcp-server",
-      version: "1.0.0",
-    });
-  });
+  const httpServer = createHttpServer(async (req, res) => {
+    const url = new URL(req.url || "/", `http://localhost:${port}`);
 
-  // ── Streamable HTTP endpoint ────────────────────────────────────
-  if (!sseOnly) {
-    app.post("/mcp", async (req, res) => {
+    // CORS headers
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Key, Accept");
+
+    // CORS preflight
+    if (req.method === "OPTIONS") {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+
+    // Health check
+    if (url.pathname === "/health" || url.pathname === "/") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({
+        status: "ok",
+        server: "quickbooks-notion-mcp-server",
+        version: "2.0.0",
+        transport: "streamable-http",
+        endpoint: "/mcp",
+      }));
+      return;
+    }
+
+    // MCP Streamable HTTP endpoint
+    if (url.pathname === "/mcp") {
+      // Create new server instance per request (MCP SDK 1.26+ requirement)
+      const server = createMcpServer(authManager, realmId, sandbox);
+
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: undefined,
         enableJsonResponse: true,
       });
+
       res.on("close", () => transport.close());
       await server.connect(transport);
-      await transport.handleRequest(req, res, req.body);
+      await transport.handleRequest(req, res);
+      return;
+    }
+
+    // 404
+    res.writeHead(404, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Not found. MCP endpoint is at /mcp" }));
+  });
+
+  httpServer.listen(port, () => {
+    logger.info("QuickBooks → Notion MCP server v2.0.0 running on Streamable HTTP", {
+      port,
+      endpoint: "/mcp",
     });
-  }
-
-  // ── SSE endpoint (for ChatGPT, OpenAI API) ─────────────────────
-  const sseTransports: Record<string, SSEServerTransport> = {};
-
-  // GET /sse — establish SSE stream
-  app.get("/sse", async (req, res) => {
-    logger.info("SSE connection established");
-    const transport = new SSEServerTransport("/messages", res);
-    const sessionId = transport.sessionId;
-    sseTransports[sessionId] = transport;
-
-    transport.onclose = () => {
-      logger.info("SSE transport closed", { sessionId });
-      delete sseTransports[sessionId];
-    };
-
-    await server.connect(transport);
-  });
-
-  // POST /messages — receive client JSON-RPC messages
-  app.post("/messages", async (req, res) => {
-    const sessionId = req.query.sessionId as string;
-    if (!sessionId) {
-      res.status(400).send("Missing sessionId parameter");
-      return;
-    }
-
-    const transport = sseTransports[sessionId];
-    if (!transport) {
-      res.status(404).send("Session not found");
-      return;
-    }
-
-    await transport.handlePostMessage(req, res, req.body);
-  });
-
-  const port = parseInt(process.env.PORT || "3000");
-  app.listen(port, () => {
-    const endpoints = sseOnly
-      ? { sse: "/sse", messages: "/messages" }
-      : { mcp: "/mcp", sse: "/sse", messages: "/messages" };
-    logger.info("QuickBooks → Notion MCP server running on HTTP", { port, ...endpoints });
   });
 
   // Cleanup on shutdown
-  process.on("SIGINT", async () => {
-    for (const sessionId in sseTransports) {
-      await sseTransports[sessionId].close();
-      delete sseTransports[sessionId];
-    }
+  process.on("SIGINT", () => {
+    httpServer.close();
     process.exit(0);
   });
 }

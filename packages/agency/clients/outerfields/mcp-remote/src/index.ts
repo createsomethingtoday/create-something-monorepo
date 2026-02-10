@@ -1,405 +1,320 @@
 /**
  * OUTERFIELDS Premium Content Network (PCN) - Remote MCP Server
  *
- * Hosted on Cloudflare Workers, accessible via HTTPS.
- * Provides AI-native platform exploration directly in Claude Desktop.
+ * Stateless MCP server on Cloudflare Workers using createMcpHandler
+ * and the official @modelcontextprotocol/sdk. Replaces manual JSON-RPC
+ * with SDK-based Streamable HTTP transport.
+ *
+ * Architecture (Three-Tier Framework):
+ *   Database tier (Resources)   — Platform architecture, component docs
+ *   Automation tier (Tools)     — Component exploration, pattern explanation, extension guides
+ *   Judgment tier (Prompts)     — Architecture review, platform onboarding
  *
  * @example
  * # In Claude Desktop settings:
  * {
  *   "mcpServers": {
  *     "outerfields-pcn": {
- *       "url": "https://mcp.outerfields.io"
+ *       "url": "https://outerfields.mcp.createsomething.agency/mcp"
  *     }
  *   }
  * }
  */
 
-const SERVER_NAME = 'outerfields-pcn-remote';
-const SERVER_VERSION = '1.0.0';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { z } from 'zod';
 
-// Import inline documentation (keeping it simple for Workers)
+// Documentation content
 import { COMPONENT_DOCS, PATTERN_DOCS, EXTENSION_GUIDES, DEPLOYMENT_DOCS, ARCHITECTURE_DOC } from './docs.js';
 
-interface MCPRequest {
-	jsonrpc: '2.0';
-	id: number | string;
-	method: string;
-	params?: any;
-}
+// =============================================================================
+// Constants
+// =============================================================================
 
-interface MCPResponse {
-	jsonrpc: '2.0';
-	id: number | string;
-	result?: any;
-	error?: {
-		code: number;
-		message: string;
-		data?: any;
-	};
-}
+const SERVER_NAME = 'outerfields-pcn';
+const SERVER_VERSION = '2.0.0';
 
-interface Tool {
-	name: string;
-	description: string;
-	inputSchema: {
-		type: string;
-		properties: Record<string, any>;
-		required?: string[];
-	};
-}
+// =============================================================================
+// Server Factory — creates a new McpServer instance per request
+// (Required by MCP SDK 1.26+ to prevent cross-client data leaks)
+// =============================================================================
 
-const TOOLS: Tool[] = [
-	{
-		name: 'pcn_explore_component',
-		description: `Understand how a specific component works in your PCN platform.
+function createServer(): McpServer {
+	const server = new McpServer({
+		name: SERVER_NAME,
+		version: SERVER_VERSION,
+		icons: [{
+			src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI2IiBmaWxsPSIjMDAwMDAwIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNCw0KSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSI2Ii8+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMiIvPjwvZz48L3N2Zz4=',
+			mimeType: 'image/svg+xml',
+			sizes: ['any'],
+		}],
+	});
 
-Available components:
-- VideoModal: Cinematic video player with engagement tracking
-- Heatmap: Visual replay pattern analysis
-- MetricsDashboard: Real-time analytics display
-- ComponentLab: Live component preview system
-- Navigation: Fixed header with auth state
+	// =========================================================================
+	// Database Tier — Resources (read-only data, no side effects)
+	// =========================================================================
 
-Returns: Component purpose, key features, implementation details, and usage examples.`,
-		inputSchema: {
-			type: 'object',
-			properties: {
-				component: {
-					type: 'string',
-					enum: ['VideoModal', 'Heatmap', 'MetricsDashboard', 'ComponentLab', 'Navigation'],
-					description: 'The component to explore'
-				}
-			},
-			required: ['component']
-		}
-	},
-	{
-		name: 'pcn_explain_pattern',
-		description: `Explain architectural patterns used in your PCN platform.
+	server.resource(
+		'platform-architecture',
+		'pcn://architecture',
+		{ description: 'OUTERFIELDS PCN platform architecture overview', mimeType: 'text/markdown' },
+		async () => ({
+			contents: [{
+				uri: 'pcn://architecture',
+				mimeType: 'text/markdown',
+				text: ARCHITECTURE_DOC,
+			}],
+		}),
+	);
 
-Available patterns:
-- engagement-tracking: How video engagement is tracked and stored
-- analytics-pipeline: Real-time metrics collection and display
-- cloudflare-integration: D1, KV, R2 usage patterns
-- authentication: Auth flow and protected routes
-- deployment: Build and deploy process
+	server.resource(
+		'available-components',
+		'pcn://components',
+		{ description: 'List of all PCN platform components with summaries', mimeType: 'application/json' },
+		async () => ({
+			contents: [{
+				uri: 'pcn://components',
+				mimeType: 'application/json',
+				text: JSON.stringify({
+					components: Object.keys(COMPONENT_DOCS).map(name => ({
+						name,
+						hasDocumentation: true,
+					})),
+					patterns: Object.keys(PATTERN_DOCS),
+					extensions: Object.keys(EXTENSION_GUIDES),
+					deploymentTopics: Object.keys(DEPLOYMENT_DOCS),
+				}, null, 2),
+			}],
+		}),
+	);
 
-Returns: Pattern explanation, code examples, and best practices.`,
-		inputSchema: {
-			type: 'object',
-			properties: {
-				pattern: {
-					type: 'string',
-					enum: [
-						'engagement-tracking',
-						'analytics-pipeline',
-						'cloudflare-integration',
-						'authentication',
-						'deployment'
-					],
-					description: 'The architectural pattern to explain'
-				}
-			},
-			required: ['pattern']
-		}
-	},
-	{
-		name: 'pcn_guide_extension',
-		description: `Get step-by-step guidance for extending your PCN platform.
+	// =========================================================================
+	// Automation Tier — Tools (actions the agent can take)
+	// =========================================================================
 
-Common extensions:
-- add-metric: Add a new analytics metric to the dashboard
-- new-video-feature: Add functionality to the video player
-- custom-heatmap: Create custom heatmap visualizations
-- api-endpoint: Create new API endpoints
-- admin-feature: Add admin-only functionality
+	server.tool(
+		'pcn_explore_component',
+		`Explore a PCN platform component's implementation details, features, and usage examples. Use when the user asks about how a specific UI component works, its props, or how to use it.`,
+		{
+			component: z.enum(['VideoModal', 'Heatmap', 'MetricsDashboard', 'ComponentLab', 'Navigation'])
+				.describe('The component to explore'),
+		},
+		async ({ component }) => {
+			const doc = COMPONENT_DOCS[component];
+			if (!doc) {
+				return {
+					content: [{ type: 'text', text: `Component "${component}" not found. Available components: ${Object.keys(COMPONENT_DOCS).join(', ')}. Try one of those instead.` }],
+					isError: true,
+				};
+			}
+			return { content: [{ type: 'text', text: doc }] };
+		},
+	);
 
-Returns: Implementation steps, code examples, files to modify, and testing guidance.`,
-		inputSchema: {
-			type: 'object',
-			properties: {
-				extension: {
-					type: 'string',
-					enum: [
-						'add-metric',
-						'new-video-feature',
-						'custom-heatmap',
-						'api-endpoint',
-						'admin-feature'
-					],
-					description: 'The type of extension you want to add'
+	server.tool(
+		'pcn_explain_pattern',
+		`Explain an architectural pattern used in the PCN platform. Use when the user asks about how a system feature works end-to-end (e.g., "how does engagement tracking work?", "how is the analytics pipeline structured?").`,
+		{
+			pattern: z.enum(['engagement-tracking', 'analytics-pipeline', 'cloudflare-integration', 'authentication', 'deployment'])
+				.describe('The architectural pattern to explain'),
+		},
+		async ({ pattern }) => {
+			const doc = PATTERN_DOCS[pattern];
+			if (!doc) {
+				return {
+					content: [{ type: 'text', text: `Pattern "${pattern}" not found. Available patterns: ${Object.keys(PATTERN_DOCS).join(', ')}. Try one of those instead.` }],
+					isError: true,
+				};
+			}
+			return { content: [{ type: 'text', text: doc }] };
+		},
+	);
+
+	server.tool(
+		'pcn_guide_extension',
+		`Get step-by-step implementation guidance for extending the PCN platform. Use when the user wants to add a new feature, metric, component, API endpoint, or admin functionality.`,
+		{
+			extension: z.enum(['add-metric', 'new-video-feature', 'custom-heatmap', 'api-endpoint', 'admin-feature'])
+				.describe('The type of extension to implement'),
+			details: z.string().optional()
+				.describe('Specific details about what to build (e.g., "add a playback speed selector")'),
+		},
+		async ({ extension, details }) => {
+			let doc = EXTENSION_GUIDES[extension];
+			if (!doc) {
+				return {
+					content: [{ type: 'text', text: `Extension guide "${extension}" not found. Available guides: ${Object.keys(EXTENSION_GUIDES).join(', ')}. Try one of those instead.` }],
+					isError: true,
+				};
+			}
+			if (details) {
+				doc = `**Your Goal**: ${details}\n\n${doc}`;
+			}
+			return { content: [{ type: 'text', text: doc }] };
+		},
+	);
+
+	server.tool(
+		'pcn_deployment',
+		`Get deployment and maintenance guidance for the PCN platform. Use when the user asks about building, deploying, configuring environment variables, troubleshooting, database migrations, or monitoring.`,
+		{
+			topic: z.enum(['build-deploy', 'environment-vars', 'troubleshooting', 'database-migrations', 'monitoring'])
+				.describe('The deployment topic'),
+		},
+		async ({ topic }) => {
+			const doc = DEPLOYMENT_DOCS[topic];
+			if (!doc) {
+				return {
+					content: [{ type: 'text', text: `Deployment topic "${topic}" not found. Available topics: ${Object.keys(DEPLOYMENT_DOCS).join(', ')}. Try one of those instead.` }],
+					isError: true,
+				};
+			}
+			return { content: [{ type: 'text', text: doc }] };
+		},
+	);
+
+	// =========================================================================
+	// Judgment Tier — Prompts (reusable interaction templates)
+	// =========================================================================
+
+	server.prompt(
+		'platform_onboarding',
+		'Introduction to the OUTERFIELDS PCN platform for new developers. Use to get oriented with the architecture, components, and development workflow.',
+		{},
+		async () => ({
+			messages: [{
+				role: 'user',
+				content: {
+					type: 'text',
+					text: `I'm new to the OUTERFIELDS PCN platform. Give me a comprehensive orientation covering:
+1. The platform architecture and technology stack
+2. Key components and how they interact
+3. The engagement tracking data flow
+4. Development and deployment workflow
+5. Where to start for common tasks
+
+Use the pcn_explore_component, pcn_explain_pattern, and pcn_deployment tools to gather information, then synthesize a clear onboarding guide.`,
 				},
-				details: {
-					type: 'string',
-					description: 'Optional: Specific details about what you want to build'
-				}
-			},
-			required: ['extension']
-		}
-	},
-	{
-		name: 'pcn_deployment',
-		description: `Get deployment and maintenance guidance for your PCN platform.
+			}],
+		}),
+	);
 
-Topics:
-- build-deploy: Build process and Cloudflare Pages deployment
-- environment-vars: Required environment variables and bindings
-- troubleshooting: Common deployment issues and solutions
-- database-migrations: D1 database schema updates
-- monitoring: Analytics and error tracking
+	server.prompt(
+		'architecture_review',
+		'Review the PCN platform architecture for a specific concern (performance, security, scalability, etc.).',
+		{
+			concern: z.string().describe('The architectural concern to review (e.g., "performance", "security", "scalability")'),
+		},
+		async ({ concern }) => ({
+			messages: [{
+				role: 'user',
+				content: {
+					type: 'text',
+					text: `Review the OUTERFIELDS PCN platform architecture with a focus on ${concern}. Use the available tools to examine the architecture, relevant patterns, and components. Provide:
+1. Current state assessment
+2. Strengths
+3. Areas for improvement
+4. Specific recommendations with code examples where helpful`,
+				},
+			}],
+		}),
+	);
 
-Returns: Deployment commands, configuration details, and best practices.`,
-		inputSchema: {
-			type: 'object',
-			properties: {
-				topic: {
-					type: 'string',
-					enum: [
-						'build-deploy',
-						'environment-vars',
-						'troubleshooting',
-						'database-migrations',
-						'monitoring'
-					],
-					description: 'The deployment topic'
-				}
-			},
-			required: ['topic']
-		}
-	},
-	{
-		name: 'pcn_architecture',
-		description: `Get a high-level overview of your PCN platform architecture.
-
-Shows:
-- System architecture diagram
-- Key components and their relationships
-- Data flow (video upload → storage → analytics → display)
-- Cloudflare resources (D1, KV, R2, Pages)
-- Technology stack (SvelteKit, TypeScript, Tailwind + Canon)
-
-Returns: Comprehensive platform overview with visual diagrams.`,
-		inputSchema: {
-			type: 'object',
-			properties: {}
-		}
-	}
-];
-
-function handleMCPRequest(request: MCPRequest): MCPResponse {
-	const { id, method, params } = request;
-
-	try {
-		// Handle tools/list
-		if (method === 'tools/list') {
-			return {
-				jsonrpc: '2.0',
-				id,
-				result: { tools: TOOLS }
-			};
-		}
-
-		// Handle tools/call
-		if (method === 'tools/call') {
-			const { name, arguments: args } = params;
-
-			let content: string;
-
-			switch (name) {
-				case 'pcn_explore_component':
-					content = COMPONENT_DOCS[args.component] || 'Component documentation not found.';
-					break;
-
-				case 'pcn_explain_pattern':
-					content = PATTERN_DOCS[args.pattern] || 'Pattern documentation not found.';
-					break;
-
-				case 'pcn_guide_extension':
-					content = EXTENSION_GUIDES[args.extension] || 'Extension guide not found.';
-					// Inject user's specific details if provided
-					if (args.details) {
-						content = content.replace('${details ? ', `**Your Goal**: ${args.details}\n\n`);
-					}
-					break;
-
-				case 'pcn_deployment':
-					content = DEPLOYMENT_DOCS[args.topic] || 'Deployment topic not found.';
-					break;
-
-				case 'pcn_architecture':
-					content = ARCHITECTURE_DOC;
-					break;
-
-				default:
-					throw new Error(`Unknown tool: ${name}`);
-			}
-
-			return {
-				jsonrpc: '2.0',
-				id,
-				result: {
-					content: [
-						{
-							type: 'text',
-							text: content
-						}
-					]
-				}
-			};
-		}
-
-		// Handle initialize
-		if (method === 'initialize') {
-			return {
-				jsonrpc: '2.0',
-				id,
-				result: {
-					protocolVersion: '2024-11-05',
-					serverInfo: {
-						name: SERVER_NAME,
-						version: SERVER_VERSION,
-						// OUTERFIELDS favicon (black rounded square with white circle and dot)
-						icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8IS0tIEJhY2tncm91bmQgLS0+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iIzAwMDAwMCIvPgoKICA8IS0tIE91dGVyIHJpbmcgLS0+CiAgPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiLz4KCiAgPCEtLSBJbm5lciBkb3QgLS0+CiAgPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iNCIgZmlsbD0iI2ZmZmZmZiIvPgo8L3N2Zz4K'
-					},
-					capabilities: {
-						tools: {}
-					}
-				}
-			};
-		}
-
-		// Unknown method
-		return {
-			jsonrpc: '2.0',
-			id,
-			error: {
-				code: -32601,
-				message: `Method not found: ${method}`
-			}
-		};
-	} catch (error) {
-		return {
-			jsonrpc: '2.0',
-			id,
-			error: {
-				code: -32603,
-				message: error instanceof Error ? error.message : String(error)
-			}
-		};
-	}
+	return server;
 }
 
-// Cloudflare Workers export
-export default {
-	async fetch(request: Request): Promise<Response> {
-		const url = new URL(request.url);
+// =============================================================================
+// Worker Entry Point — Streamable HTTP via SDK
+// =============================================================================
 
-		// CORS headers for Claude Desktop
-		const corsHeaders = {
-			'Access-Control-Allow-Origin': '*',
-			'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-			'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept',
-			'Access-Control-Max-Age': '86400'
-		};
+// =============================================================================
+// Authentication Middleware
+// =============================================================================
 
-		// Handle CORS preflight
-		if (request.method === 'OPTIONS') {
-			return new Response(null, { headers: corsHeaders });
-		}
+interface McpEnv {
+	/** Optional API key for authenticating remote MCP clients */
+	MCP_API_KEY?: string;
+}
 
-		// Health check endpoint
-		if (url.pathname === '/' || url.pathname === '/health') {
-			return new Response(
-				JSON.stringify({
-					status: 'healthy',
-					server: SERVER_NAME,
-					version: SERVER_VERSION,
-					tools: TOOLS.length,
-					timestamp: new Date().toISOString()
-				}),
-				{
-					headers: {
-						...corsHeaders,
-						'Content-Type': 'application/json'
-					}
-				}
-			);
-		}
+/**
+ * Validate API key from Bearer token or X-API-Key header.
+ * Returns null if auth passes, or an error Response if it fails.
+ * When MCP_API_KEY is not set, auth is bypassed (development mode).
+ */
+function validateApiKey(request: Request, env: McpEnv): Response | null {
+	if (!env.MCP_API_KEY) return null;
 
-		// SSE endpoint - handles both GET (SSE) and POST (JSON-RPC)
-		if (url.pathname === '/sse') {
-			// GET request - SSE streaming for server-to-client messages
-			if (request.method === 'GET') {
-				// Return SSE stream (keep-alive)
-				const stream = new ReadableStream({
-					start(controller) {
-						// Send initial comment to establish connection
-						controller.enqueue(new TextEncoder().encode(': connected\n\n'));
+	const authHeader = request.headers.get('Authorization');
+	const apiKeyHeader = request.headers.get('X-API-Key');
 
-						// Keep connection alive with periodic pings
-						const keepAlive = setInterval(() => {
-							controller.enqueue(new TextEncoder().encode(': ping\n\n'));
-						}, 15000);
+	const token = authHeader?.startsWith('Bearer ')
+		? authHeader.slice(7)
+		: apiKeyHeader;
 
-						// Store cleanup function
-						(controller as any).cleanup = () => clearInterval(keepAlive);
-					},
-					cancel(controller) {
-						if ((controller as any).cleanup) {
-							(controller as any).cleanup();
-						}
-					}
-				});
-
-				return new Response(stream, {
-					headers: {
-						...corsHeaders,
-						'Content-Type': 'text/event-stream',
-						'Cache-Control': 'no-cache',
-						'Connection': 'keep-alive'
-					}
-				});
-			}
-
-			// POST request - JSON-RPC message
-			if (request.method === 'POST') {
-				try {
-					const mcpRequest = (await request.json()) as MCPRequest;
-					const mcpResponse = handleMCPRequest(mcpRequest);
-
-					return new Response(JSON.stringify(mcpResponse), {
-						headers: {
-							...corsHeaders,
-							'Content-Type': 'application/json'
-						}
-					});
-				} catch (error) {
-					return new Response(
-						JSON.stringify({
-							jsonrpc: '2.0',
-							id: null,
-							error: {
-								code: -32700,
-								message: 'Parse error'
-							}
-						}),
-						{
-							status: 400,
-							headers: {
-								...corsHeaders,
-								'Content-Type': 'application/json'
-							}
-						}
-					);
-				}
-			}
-		}
-
-		// 404 for unknown paths
-		return new Response('Not Found', {
-			status: 404,
-			headers: corsHeaders
+	if (!token || token !== env.MCP_API_KEY) {
+		return new Response(JSON.stringify({
+			error: 'Unauthorized',
+			message: 'Valid API key required. Set Bearer token or X-API-Key header.',
+		}), {
+			status: 401,
+			headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
 		});
 	}
+
+	return null;
+}
+
+export default {
+	async fetch(request: Request, env: McpEnv, ctx: ExecutionContext): Promise<Response> {
+		const url = new URL(request.url);
+
+		// Health / info endpoint
+		if (url.pathname === '/' || url.pathname === '/health') {
+			return new Response(JSON.stringify({
+				name: SERVER_NAME,
+				version: SERVER_VERSION,
+				status: 'healthy',
+				transport: 'streamable-http',
+				endpoint: '/mcp',
+				capabilities: {
+					resources: '2 (platform architecture, component catalog)',
+					tools: '4 (explore component, explain pattern, guide extension, deployment)',
+					prompts: '2 (platform onboarding, architecture review)',
+				},
+				timestamp: new Date().toISOString(),
+			}, null, 2), {
+				headers: {
+					'Content-Type': 'application/json',
+					'Access-Control-Allow-Origin': '*',
+				},
+			});
+		}
+
+		// CORS preflight
+		if (request.method === 'OPTIONS') {
+			return new Response(null, {
+				headers: {
+					'Access-Control-Allow-Origin': '*',
+					'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+					'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key, Accept',
+					'Access-Control-Max-Age': '86400',
+				},
+			});
+		}
+
+		// MCP endpoint — Streamable HTTP transport
+		if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
+			const authError = validateApiKey(request, env);
+			if (authError) return authError;
+
+			const { createMcpHandler } = await import('agents/mcp');
+			const server = createServer();
+			return createMcpHandler(server)(request, env, ctx);
+		}
+
+		return new Response('Not found. MCP endpoint is at /mcp', {
+			status: 404,
+			headers: { 'Access-Control-Allow-Origin': '*' },
+		});
+	},
 };

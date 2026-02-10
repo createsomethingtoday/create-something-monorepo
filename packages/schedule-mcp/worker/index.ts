@@ -52,16 +52,64 @@ import {
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   DB: D1Database;
+  /** Optional API key for authenticating remote MCP clients */
+  MCP_API_KEY?: string;
+}
+
+// =============================================================================
+// Authentication Middleware
+// =============================================================================
+
+/**
+ * Validate API key from Bearer token or X-API-Key header.
+ * Returns null if auth passes, or an error Response if it fails.
+ * When MCP_API_KEY is not set, auth is bypassed (development mode).
+ */
+function validateApiKey(request: Request, env: Env): Response | null {
+  if (!env.MCP_API_KEY) return null; // No key configured — open access (dev mode)
+
+  const authHeader = request.headers.get('Authorization');
+  const apiKeyHeader = request.headers.get('X-API-Key');
+
+  const token = authHeader?.startsWith('Bearer ')
+    ? authHeader.slice(7)
+    : apiKeyHeader;
+
+  if (!token || token !== env.MCP_API_KEY) {
+    return new Response(JSON.stringify({
+      error: 'Unauthorized',
+      message: 'Valid API key required. Set Bearer token or X-API-Key header.',
+    }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    });
+  }
+
+  return null;
 }
 
 // =============================================================================
 // MCP Agent — Durable Object with all three primitives + sampling
+//
+// Architecture Decision: McpAgent (stateful DO) is intentionally retained
+// over createMcpHandler (stateless). Reason: Sampling (the recursive property)
+// requires a persistent session between the MCP server and client to call
+// createMessage(). createMcpHandler is stateless per-request and cannot
+// maintain the transport session needed for sampling round-trips.
+//
+// If sampling is removed in the future, migrate to createMcpHandler for
+// reduced cost and latency. See MCP Best Practices Audit (Feb 2026).
 // =============================================================================
 
 export class ScheduleMCP extends McpAgent<Env> {
   server = new McpServer({
     name: 'schedule-mcp',
     version: '1.0.0',
+    icons: [{
+      src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI2IiBmaWxsPSIjMDAwMDAwIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNCw0KSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSI+PHBhdGggZD0iTTggMnY0Ii8+PHBhdGggZD0iTTE2IDJ2NCIvPjxyZWN0IHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgeD0iMyIgeT0iNCIgcng9IjIiLz48cGF0aCBkPSJNMyAxMGgxOCIvPjwvZz48L3N2Zz4=',
+      mimeType: 'image/svg+xml',
+      sizes: ['any'],
+    }],
   });
 
   async init() {
@@ -146,6 +194,25 @@ export class ScheduleMCP extends McpAgent<Env> {
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
+
+    // CORS preflight — allow before auth check
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key, Accept',
+          'Access-Control-Max-Age': '86400',
+        },
+      });
+    }
+
+    // Authenticate MCP endpoints
+    if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/') ||
+        url.pathname === '/sse' || url.pathname.startsWith('/sse/')) {
+      const authError = validateApiKey(request, env);
+      if (authError) return authError;
+    }
 
     // Streamable HTTP transport (Claude Code, Codex)
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {

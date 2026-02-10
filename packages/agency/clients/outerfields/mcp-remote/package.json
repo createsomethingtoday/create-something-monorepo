@@ -1,29 +1,30 @@
 {
   "name": "@outerfields/pcn-mcp-remote",
-  "version": "1.0.0",
-  "description": "Remote MCP server for OUTERFIELDS Premium Content Network - hosted on Cloudflare Workers",
+  "version": "2.0.0",
+  "description": "Remote MCP server for OUTERFIELDS Premium Content Network - stateless Streamable HTTP on Cloudflare Workers",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "src/index.ts",
   "scripts": {
     "dev": "wrangler dev --config wrangler.toml",
-    "deploy": "wrangler deploy --config wrangler.toml",
-    "build": "esbuild src/index.ts --bundle --format=esm --outfile=dist/index.js --platform=node --target=esnext"
+    "deploy": "wrangler deploy --config wrangler.toml"
   },
   "keywords": [
     "mcp",
     "outerfields",
     "pcn",
     "cloudflare-workers",
-    "remote-mcp"
+    "remote-mcp",
+    "streamable-http"
   ],
   "author": "CREATE SOMETHING",
   "license": "UNLICENSED",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.1"
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "agents": "^0.0.98",
+    "zod": "^3.23.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250106.0",
-    "esbuild": "^0.24.2",
-    "wrangler": "^4.59.0"
+    "wrangler": "^4.64.0"
   }
 }

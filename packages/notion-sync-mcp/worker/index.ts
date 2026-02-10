@@ -30,6 +30,40 @@ export interface Env {
   CF_ACCOUNT_ID: string;
   CF_API_TOKEN: string;
   CF_D1_DATABASE_ID: string;
+  /** Optional API key for authenticating remote MCP clients */
+  MCP_API_KEY?: string;
+}
+
+// =============================================================================
+// Authentication Middleware
+// =============================================================================
+
+/**
+ * Validate API key from Bearer token or X-API-Key header.
+ * Returns null if auth passes, or an error Response if it fails.
+ * When MCP_API_KEY is not set, auth is bypassed (development mode).
+ */
+function validateApiKey(request: Request, env: Env): Response | null {
+  if (!env.MCP_API_KEY) return null; // No key configured — open access (dev mode)
+
+  const authHeader = request.headers.get('Authorization');
+  const apiKeyHeader = request.headers.get('X-API-Key');
+
+  const token = authHeader?.startsWith('Bearer ')
+    ? authHeader.slice(7)
+    : apiKeyHeader;
+
+  if (!token || token !== env.MCP_API_KEY) {
+    return new Response(JSON.stringify({
+      error: 'Unauthorized',
+      message: 'Valid API key required. Set Bearer token or X-API-Key header.',
+    }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  return null;
 }
 
 // =============================================================================
@@ -319,7 +353,9 @@ export default {
     }
 
     // MCP endpoint — create server with env-based auth
-    if (url.pathname === '/mcp') {
+    if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
+      const authError = validateApiKey(request, env);
+      if (authError) return authError;
       const d1Config: D1Config = {
         accountId: env.CF_ACCOUNT_ID,
         apiToken: env.CF_API_TOKEN,
