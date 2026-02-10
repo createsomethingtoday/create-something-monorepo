@@ -1,0 +1,23 @@
+name = "create-something-mcp"
+main = "index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+# Production URL: https://mcp.createsomething.ltd
+[[routes]]
+pattern = "mcp.createsomething.ltd"
+custom_domain = true
+
+# Durable Object for MCP session state
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "CreateSomethingMCP"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["CreateSomethingMCP"]
+
+# No KV, no secrets, no env vars.
+# Pure content knowledge embedded in source.
+# Zero external dependencies at runtime.

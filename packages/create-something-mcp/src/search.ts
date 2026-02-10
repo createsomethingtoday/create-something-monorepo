@@ -1,0 +1,298 @@
+/**
+ * Search — Simple full-text search across all content domains.
+ * Builds an inverted index at module load time for fast lookups.
+ */
+
+import type { ContentItem } from './content/types.js';
+import { PAPERS } from './content/generated/papers.js';
+import { CANON_PAGES } from './content/generated/canon.js';
+import { PATTERNS } from './content/generated/patterns.js';
+import { GRAPH_NODES, GRAPH_EDGES } from './content/generated/graph.js';
+import { MASTERS } from './content/masters.js';
+import { PRAXIS_EXERCISES } from './content/praxis.js';
+import { PRODUCTS } from './content/products.js';
+import { HOST_PLAYBOOKS } from './content/playbooks.js';
+import {
+  TIERS,
+  CROSS_CUTTING_CONCERNS,
+  MCP_MAPPINGS,
+  AUTOMOTIVE_MAPPINGS,
+  SAMPLING_EXPLANATION,
+  POLICY_AS_ARTIFACT
+} from './content/framework.js';
+
+// ============================================================================
+// Build content index
+// ============================================================================
+
+function buildContentIndex(): ContentItem[] {
+  const items: ContentItem[] = [];
+
+  // Papers
+  for (const p of PAPERS) {
+    items.push({
+      id: `paper:${p.slug}`,
+      type: 'paper',
+      title: p.title,
+      description: p.description || p.subtitle || '',
+      content: p.content,
+      property: 'io',
+      uri: `papers://${p.slug}`
+    });
+  }
+
+  // Canon
+  for (const c of CANON_PAGES) {
+    items.push({
+      id: `canon:${c.slug}`,
+      type: 'canon',
+      title: c.title,
+      description: c.description,
+      content: c.content,
+      property: 'ltd',
+      uri: `canon://${c.slug}`
+    });
+  }
+
+  // Patterns
+  for (const p of PATTERNS) {
+    items.push({
+      id: `pattern:${p.slug}`,
+      type: 'pattern',
+      title: p.title,
+      description: p.subtitle || '',
+      content: p.content,
+      property: 'ltd',
+      uri: `patterns://${p.slug}`
+    });
+  }
+
+  // Masters
+  for (const m of MASTERS) {
+    items.push({
+      id: `master:${m.slug}`,
+      type: 'master',
+      title: m.name,
+      description: m.philosophy,
+      content: `${m.philosophy}\n\nPrinciples:\n${m.principles.join('\n')}\n\nInfluence on CREATE SOMETHING:\n${m.influence}`,
+      property: 'ltd',
+      uri: `masters://${m.slug}`
+    });
+  }
+
+  // Praxis
+  for (const e of PRAXIS_EXERCISES) {
+    items.push({
+      id: `praxis:${e.id}`,
+      type: 'praxis',
+      title: e.title,
+      description: e.context.situation,
+      content: `${e.context.situation}\n${e.context.task}\n${e.pattern}\n${e.whyItMatters}`,
+      property: 'space',
+      uri: `praxis://exercises`
+    });
+  }
+
+  // Products
+  for (const p of PRODUCTS) {
+    items.push({
+      id: `product:${p.id}`,
+      type: 'product',
+      title: p.title,
+      description: p.description,
+      content: p.description,
+      property: 'agency',
+      uri: `products://list`
+    });
+  }
+
+  // Host Playbooks
+  for (const p of HOST_PLAYBOOKS) {
+    items.push({
+      id: `playbook:${p.slug}`,
+      type: 'playbook',
+      title: `${p.name} Host Playbook`,
+      description: p.description,
+      content: `${p.mentalModel}\n\nStrengths: ${p.strengths.join(', ')}\nBest for: ${p.bestFor.join(', ')}\nAnti-patterns: ${p.antiPatterns.join(', ')}\nWorkflow patterns: ${p.workflowPatterns.map(wp => wp.name).join(', ')}`,
+      property: 'space',
+      uri: `playbooks://hosts/${p.slug}`
+    });
+  }
+
+  // Framework
+  for (const [key, tier] of Object.entries(TIERS)) {
+    items.push({
+      id: `framework:tier:${key}`,
+      type: 'framework',
+      title: `${tier.name} Tier`,
+      description: tier.definition,
+      content: `${tier.description}\nExamples: ${tier.examples.join(', ')}\nFailure mode: ${tier.failureMode}`,
+      property: 'framework',
+      uri: `framework://definitions/${key}`
+    });
+  }
+
+  return items;
+}
+
+// ============================================================================
+// Search index
+// ============================================================================
+
+let _contentIndex: ContentItem[] | null = null;
+let _invertedIndex: Map<string, Set<number>> | null = null;
+
+function getContentIndex(): ContentItem[] {
+  if (!_contentIndex) {
+    _contentIndex = buildContentIndex();
+  }
+  return _contentIndex;
+}
+
+function getInvertedIndex(): Map<string, Set<number>> {
+  if (!_invertedIndex) {
+    _invertedIndex = new Map();
+    const index = getContentIndex();
+    for (let i = 0; i < index.length; i++) {
+      const item = index[i];
+      const text = `${item.title} ${item.description} ${item.content}`.toLowerCase();
+      const tokens = text.split(/\W+/).filter(t => t.length > 2);
+      for (const token of tokens) {
+        if (!_invertedIndex.has(token)) {
+          _invertedIndex.set(token, new Set());
+        }
+        _invertedIndex.get(token)!.add(i);
+      }
+    }
+  }
+  return _invertedIndex;
+}
+
+// ============================================================================
+// Search function
+// ============================================================================
+
+export interface SearchResult {
+  item: ContentItem;
+  score: number;
+  matches: string[];
+}
+
+export function search(
+  query: string,
+  options?: {
+    type?: string;
+    property?: string;
+    limit?: number;
+  }
+): SearchResult[] {
+  const index = getContentIndex();
+  const invertedIndex = getInvertedIndex();
+  const queryTokens = query.toLowerCase().split(/\W+/).filter(t => t.length > 2);
+
+  if (queryTokens.length === 0) return [];
+
+  // Score each item based on term frequency
+  const scores = new Map<number, { score: number; matches: string[] }>();
+
+  for (const token of queryTokens) {
+    const matchingItems = invertedIndex.get(token);
+    if (!matchingItems) continue;
+
+    for (const idx of matchingItems) {
+      const current = scores.get(idx) || { score: 0, matches: [] };
+      current.score += 1;
+      if (!current.matches.includes(token)) current.matches.push(token);
+      scores.set(idx, current);
+    }
+  }
+
+  // Boost exact phrase matches in title
+  const queryLower = query.toLowerCase();
+  for (const [idx, data] of scores) {
+    const item = index[idx];
+    if (item.title.toLowerCase().includes(queryLower)) {
+      data.score += 10;
+    }
+    if (item.description.toLowerCase().includes(queryLower)) {
+      data.score += 5;
+    }
+  }
+
+  // Build results with filters
+  let results: SearchResult[] = [];
+  for (const [idx, data] of scores) {
+    const item = index[idx];
+
+    // Apply filters
+    if (options?.type && item.type !== options.type) continue;
+    if (options?.property && item.property !== options.property) continue;
+
+    results.push({ item, score: data.score, matches: data.matches });
+  }
+
+  // Sort by score descending
+  results.sort((a, b) => b.score - a.score);
+
+  // Apply limit
+  const limit = options?.limit || 10;
+  return results.slice(0, limit);
+}
+
+// ============================================================================
+// Graph traversal
+// ============================================================================
+
+export function findRelated(concept: string, depth = 1): {
+  nodes: { id: string; title: string; type: string; concepts: string[] }[];
+  edges: { source: string; target: string; type: string; reason?: string }[];
+} {
+  const conceptLower = concept.toLowerCase();
+
+  // Find nodes that match the concept
+  const matchingNodes = GRAPH_NODES.filter(n =>
+    n.id.toLowerCase().includes(conceptLower) ||
+    n.title.toLowerCase().includes(conceptLower) ||
+    n.concepts.some(c => c.toLowerCase().includes(conceptLower))
+  );
+
+  if (matchingNodes.length === 0) {
+    return { nodes: [], edges: [] };
+  }
+
+  const nodeIds = new Set(matchingNodes.map(n => n.id));
+  const resultEdges: typeof GRAPH_EDGES = [];
+
+  // BFS for connected nodes up to depth
+  for (let d = 0; d < depth; d++) {
+    const currentIds = new Set(nodeIds);
+    for (const edge of GRAPH_EDGES) {
+      if (currentIds.has(edge.source) && !nodeIds.has(edge.target)) {
+        nodeIds.add(edge.target);
+        resultEdges.push(edge);
+      }
+      if (currentIds.has(edge.target) && !nodeIds.has(edge.source)) {
+        nodeIds.add(edge.source);
+        resultEdges.push(edge);
+      }
+    }
+  }
+
+  // Also include edges between already-found nodes
+  for (const edge of GRAPH_EDGES) {
+    if (nodeIds.has(edge.source) && nodeIds.has(edge.target)) {
+      if (!resultEdges.includes(edge)) {
+        resultEdges.push(edge);
+      }
+    }
+  }
+
+  const resultNodes = GRAPH_NODES
+    .filter(n => nodeIds.has(n.id))
+    .map(n => ({ id: n.id, title: n.title, type: n.type, concepts: n.concepts }));
+
+  return {
+    nodes: resultNodes.slice(0, 50),
+    edges: resultEdges.slice(0, 100)
+  };
+}
