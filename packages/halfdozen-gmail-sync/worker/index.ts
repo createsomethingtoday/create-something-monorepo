@@ -9,6 +9,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { z } from 'zod';
+import { registerFeedbackTool, D1FeedbackStore } from '@create-something/mcp-core';
 
 // Types
 interface Env {
@@ -20,6 +21,7 @@ interface Env {
   TEAM_EMAILS: string;
   ADMIN_SECRET?: string;
   ADDON_SECRET?: string;
+  FEEDBACK_DB: any;  // D1Database — shared feedback across Half Dozen MCPs
   GMAIL_TOKENS: KVNamespace;
   MCP_OBJECT: DurableObjectNamespace;
 }
@@ -28,6 +30,42 @@ interface StoredToken {
   refresh_token: string;
   email: string;
   authorized_at: string;
+}
+
+interface SyncResult {
+  success: boolean;
+  skipped?: boolean;
+  reason?: string;
+  interactionId?: string;
+  contactId?: string;
+  contactCreated?: boolean;
+  error?: string;
+}
+
+interface AutomationRun {
+  id: string;
+  started_at: string;
+  completed_at: string;
+  status: 'success' | 'error' | 'partial';
+  emails_found: number;
+  emails_synced: number;
+  emails_skipped: number;
+  error?: string;
+  summary: string;
+}
+
+interface Automation {
+  id: string;
+  user_email: string;
+  name: string;
+  gmail_query: string;
+  frequency_minutes: number;
+  max_results: number;
+  status: 'active' | 'paused';
+  created_at: string;
+  updated_at: string;
+  last_run_at?: string;
+  runs: AutomationRun[];
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -324,6 +362,224 @@ function shortenGmailId(gmailId: string): string {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// Reusable sync logic
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Sync a single Gmail email to Notion. Handles dedup, contact matching,
+ * interaction creation, and body chunking.
+ * Used by both the manual sync_email tool and automated background sync.
+ */
+async function syncSingleEmail(
+  env: Env,
+  emailId: string,
+  userEmail: string,
+  syncedBy?: string,
+): Promise<SyncResult> {
+  // Fetch email from Gmail
+  const msg = await gmailFetch(env, `/messages/${emailId}`, { format: 'full' }, userEmail) as {
+    payload?: MessagePart & {
+      headers?: Array<{ name: string; value: string }>;
+    };
+  };
+
+  const headers = msg.payload?.headers || [];
+  const getHeader = (name: string) => headers.find(h => h.name?.toLowerCase() === name.toLowerCase())?.value || '';
+
+  const from = parseEmailAddress(getHeader('From'));
+  const subject = getHeader('Subject') || '(No Subject)';
+  const date = new Date(getHeader('Date')).toISOString();
+
+  // Extract body (recursive multipart traversal)
+  const { plain: body } = extractBodyFromPayload(msg.payload);
+
+  // Check if already synced (dedup via Gmail ID in title)
+  const shortId = shortenGmailId(emailId);
+  const existing = await notionQueryDatabase(env, env.NOTION_INTERACTIONS_DB_ID, {
+    property: 'Interaction',
+    title: { contains: `[${shortId}` },
+  }, 1);
+
+  if (existing.results.length > 0) {
+    return { success: true, skipped: true, reason: 'Already synced' };
+  }
+
+  // Find contact: primary email -> secondary email -> auto-create
+  let contactId: string | undefined;
+  let contactCreated = false;
+
+  const contactSearch = await notionQueryDatabase(env, env.NOTION_CONTACTS_DB_ID, {
+    property: 'Email',
+    email: { equals: from.email },
+  }, 1);
+
+  if (contactSearch.results.length > 0) {
+    contactId = contactSearch.results[0].id;
+  } else {
+    const secondarySearch = await notionQueryDatabase(env, env.NOTION_CONTACTS_DB_ID, {
+      property: 'Secondary Email',
+      email: { equals: from.email },
+    }, 1);
+
+    if (secondarySearch.results.length > 0) {
+      contactId = secondarySearch.results[0].id;
+    } else {
+      const newContact = await notionCreatePage(env, env.NOTION_CONTACTS_DB_ID, {
+        Name: { title: [{ text: { content: from.name || from.email.split('@')[0] } }] },
+        Email: { email: from.email },
+      });
+      contactId = newContact.id;
+      contactCreated = true;
+    }
+  }
+
+  // Direction
+  const teamEmails = getTeamEmails(env);
+  const direction = teamEmails.includes(from.email.toLowerCase()) ? 'Outbound' : 'Inbound';
+
+  // Create interaction page
+  const properties: Record<string, unknown> = {
+    Interaction: { title: [{ text: { content: `${subject} [${shortId}...]`.substring(0, 2000) } }] },
+    Date: { date: { start: date.split('T')[0] } },
+    Type: { select: { name: 'Email' } },
+  };
+  if (contactId) {
+    properties.Contacts = { relation: [{ id: contactId }] };
+  }
+
+  const page = await notionCreatePage(env, env.NOTION_INTERACTIONS_DB_ID, properties);
+
+  // Add email content blocks (callout + toggle with chunked body)
+  const calloutBlock = {
+    type: 'callout',
+    callout: {
+      icon: { emoji: '📧' },
+      rich_text: [{ type: 'text', text: { content: `From: ${from.email}\nDirection: ${direction}\nSynced by: ${syncedBy || userEmail}` } }],
+    },
+  };
+
+  const { toggleBlock, overflowBatches } = buildBodyBlocks(body);
+
+  const appendResult = await notionAppendBlocks(env, page.id, [calloutBlock, toggleBlock]) as {
+    results: Array<{ id: string }>;
+  };
+
+  // Append overflow body chunks to the toggle block
+  if (overflowBatches.length > 0) {
+    const toggleId = appendResult.results[1].id;
+    for (const batch of overflowBatches) {
+      await notionAppendBlocks(env, toggleId, batch);
+    }
+  }
+
+  return {
+    success: true,
+    interactionId: page.id,
+    contactId,
+    contactCreated,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Automation helpers (KV-backed)
+// ═══════════════════════════════════════════════════════════════
+
+const AUTOMATION_PREFIX = 'automation:';
+const MAX_RUNS_HISTORY = 20;
+
+async function getAutomationById(kv: KVNamespace, id: string): Promise<Automation | null> {
+  return kv.get<Automation>(`${AUTOMATION_PREFIX}${id}`, 'json');
+}
+
+async function putAutomation(kv: KVNamespace, automation: Automation): Promise<void> {
+  await kv.put(`${AUTOMATION_PREFIX}${automation.id}`, JSON.stringify(automation));
+}
+
+async function deleteAutomationFromKV(kv: KVNamespace, id: string): Promise<void> {
+  await kv.delete(`${AUTOMATION_PREFIX}${id}`);
+}
+
+async function listAllAutomations(kv: KVNamespace): Promise<Automation[]> {
+  const keys = await kv.list({ prefix: AUTOMATION_PREFIX });
+  const automations: Automation[] = [];
+  for (const key of keys.keys) {
+    const automation = await kv.get<Automation>(key.name, 'json');
+    if (automation) automations.push(automation);
+  }
+  return automations;
+}
+
+/**
+ * Execute a single automation: search Gmail, sync matching emails to Notion,
+ * record run history. Called from the Worker's scheduled() handler.
+ */
+async function executeAutomationJob(env: Env, automation: Automation): Promise<void> {
+  const runId = crypto.randomUUID();
+  const startedAt = new Date().toISOString();
+  let emailsFound = 0;
+  let emailsSynced = 0;
+  let emailsSkipped = 0;
+  let runError: string | undefined;
+
+  try {
+    // Search Gmail with the automation's query
+    const listData = await gmailFetch(env, '/messages', {
+      q: automation.gmail_query,
+      maxResults: String(automation.max_results),
+    }, automation.user_email) as { messages?: Array<{ id: string }> };
+
+    const messageIds = listData.messages || [];
+    emailsFound = messageIds.length;
+
+    // Sync each email (sequential with rate limiting)
+    for (const { id } of messageIds) {
+      try {
+        const result = await syncSingleEmail(
+          env, id, automation.user_email,
+          `Automation: ${automation.name}`,
+        );
+        if (result.skipped) {
+          emailsSkipped++;
+        } else if (result.success) {
+          emailsSynced++;
+        }
+      } catch (err) {
+        console.error(`Automation ${automation.id}: failed to sync email ${id}:`, err);
+        // Continue with remaining emails
+      }
+
+      // Rate limit: 350ms between syncs to respect Notion API limits
+      await new Promise(resolve => setTimeout(resolve, 350));
+    }
+  } catch (err) {
+    runError = String(err);
+    console.error(`Automation ${automation.id} (${automation.name}) failed:`, err);
+  }
+
+  // Record the run in history
+  const run: AutomationRun = {
+    id: runId,
+    started_at: startedAt,
+    completed_at: new Date().toISOString(),
+    status: runError ? 'error' : 'success',
+    emails_found: emailsFound,
+    emails_synced: emailsSynced,
+    emails_skipped: emailsSkipped,
+    error: runError,
+    summary: runError
+      ? `Failed: ${runError}`
+      : `Found ${emailsFound} emails, synced ${emailsSynced}, skipped ${emailsSkipped} (already in Notion)`,
+  };
+
+  // Update automation with run history (keep last N runs)
+  automation.last_run_at = new Date().toISOString();
+  automation.runs = [...automation.runs.slice(-(MAX_RUNS_HISTORY - 1)), run];
+  automation.updated_at = new Date().toISOString();
+
+  await putAutomation(env.GMAIL_TOKENS, automation);
+}
+
+// ═══════════════════════════════════════════════════════════════
 // OAuth helpers
 // ═══════════════════════════════════════════════════════════════
 
@@ -519,7 +775,12 @@ export class GmailSyncMCP extends McpAgent<Env> {
 export class GmailSyncMCPv2 extends McpAgent<Env> {
   server = new McpServer({
     name: 'halfdozen-gmail-sync',
-    version: '2.2.0',
+    version: '3.0.0',
+    icons: [{
+      src: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHJ4PSI2IiBmaWxsPSIjMDAwMDAwIi8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNCw0KSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgZmlsbD0ibm9uZSI+PHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjE2IiB4PSIyIiB5PSI0IiByeD0iMiIvPjxwYXRoIGQ9Im0yMiA3LTguOTcgNS43YTEuOTQgMS45NCAwIDAgMS0yLjA2IDBMMiA3Ii8+PC9nPjwvc3ZnPg==',
+      mimeType: 'image/svg+xml',
+      sizes: ['any'],
+    }],
   });
 
   async init() {
@@ -575,106 +836,9 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
       },
       async ({ email_id, user_email }) => {
         try {
-          // Fetch email from Gmail
-          const msg = await gmailFetch(this.env, `/messages/${email_id}`, { format: 'full' }, user_email) as {
-            payload?: MessagePart & {
-              headers?: Array<{ name: string; value: string }>;
-            };
-          };
-
-          const headers = msg.payload?.headers || [];
-          const getHeader = (name: string) => headers.find(h => h.name?.toLowerCase() === name.toLowerCase())?.value || '';
-
-          const from = parseEmailAddress(getHeader('From'));
-          const subject = getHeader('Subject') || '(No Subject)';
-          const date = new Date(getHeader('Date')).toISOString();
-
-          // Extract body (recursive multipart traversal)
-          const { plain: body } = extractBodyFromPayload(msg.payload);
-
-          // Check if already synced
-          const shortId = shortenGmailId(email_id);
-          const existing = await notionQueryDatabase(this.env, this.env.NOTION_INTERACTIONS_DB_ID, {
-            property: 'Interaction',
-            title: { contains: `[${shortId}` },
-          }, 1);
-
-          if (existing.results.length > 0) {
-            return { content: [{ type: 'text', text: JSON.stringify({ skipped: true, reason: 'Already synced' }) }] };
-          }
-
-          // Find contact: primary email -> secondary email -> auto-create
-          let contactId: string | undefined;
-          let contactCreated = false;
-
-          const contactSearch = await notionQueryDatabase(this.env, this.env.NOTION_CONTACTS_DB_ID, {
-            property: 'Email',
-            email: { equals: from.email },
-          }, 1);
-
-          if (contactSearch.results.length > 0) {
-            contactId = contactSearch.results[0].id;
-          } else {
-            // Try secondary email
-            const secondarySearch = await notionQueryDatabase(this.env, this.env.NOTION_CONTACTS_DB_ID, {
-              property: 'Secondary Email',
-              email: { equals: from.email },
-            }, 1);
-
-            if (secondarySearch.results.length > 0) {
-              contactId = secondarySearch.results[0].id;
-            } else {
-              // Auto-create contact
-              const newContact = await notionCreatePage(this.env, this.env.NOTION_CONTACTS_DB_ID, {
-                Name: { title: [{ text: { content: from.name || from.email.split('@')[0] } }] },
-                Email: { email: from.email },
-              });
-              contactId = newContact.id;
-              contactCreated = true;
-            }
-          }
-
-          // Direction
-          const teamEmails = getTeamEmails(this.env);
-          const direction = teamEmails.includes(from.email.toLowerCase()) ? 'Outbound' : 'Inbound';
-
-          // Create interaction
-          const properties: Record<string, unknown> = {
-            Interaction: { title: [{ text: { content: `${subject} [${shortId}...]`.substring(0, 2000) } }] },
-            Date: { date: { start: date.split('T')[0] } },
-            Type: { select: { name: 'Email' } },
-          };
-          if (contactId) {
-            properties.Contacts = { relation: [{ id: contactId }] };
-          }
-
-          const page = await notionCreatePage(this.env, this.env.NOTION_INTERACTIONS_DB_ID, properties);
-
-          // Add email content as blocks (with proper chunking)
-          const calloutBlock = {
-            type: 'callout',
-            callout: {
-              icon: { emoji: '📧' },
-              rich_text: [{ type: 'text', text: { content: `From: ${from.email}\nDirection: ${direction}\nSynced by: ${user_email}` } }],
-            },
-          };
-
-          const { toggleBlock, overflowBatches } = buildBodyBlocks(body);
-
-          const appendResult = await notionAppendBlocks(this.env, page.id, [calloutBlock, toggleBlock]) as {
-            results: Array<{ id: string }>;
-          };
-
-          // Append overflow body chunks to the toggle block
-          if (overflowBatches.length > 0) {
-            const toggleId = appendResult.results[1].id;
-            for (const batch of overflowBatches) {
-              await notionAppendBlocks(this.env, toggleId, batch);
-            }
-          }
-
+          const result = await syncSingleEmail(this.env, email_id, user_email);
           return {
-            content: [{ type: 'text', text: JSON.stringify({ success: true, interactionId: page.id, contactId, contactCreated, syncedBy: user_email }, null, 2) }],
+            content: [{ type: 'text', text: JSON.stringify({ ...result, syncedBy: user_email }, null, 2) }],
           };
         } catch (error) {
           return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
@@ -911,6 +1075,327 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
     );
 
     // ═══════════════════════════════════════════════════════════════
+    // Automation Management Tools
+    // ═══════════════════════════════════════════════════════════════
+
+    // Tool: Preview Automation (dry run)
+    this.server.tool(
+      'preview_automation',
+      {
+        gmail_query: z.string().describe('Gmail search query to preview (from:, to:, subject:, label:, etc.)'),
+        user_email: z.string().describe('Email of team member whose Gmail to search'),
+        limit: z.number().optional().describe('Max emails to preview (default: 10)'),
+      },
+      async ({ gmail_query, user_email, limit = 10 }) => {
+        try {
+          const listData = await gmailFetch(this.env, '/messages', {
+            q: gmail_query,
+            maxResults: String(limit),
+          }, user_email) as { messages?: Array<{ id: string }> };
+
+          const messageIds = listData.messages || [];
+          const previews: Array<{
+            id: string;
+            subject: string;
+            from: string;
+            date: string;
+            already_synced: boolean;
+          }> = [];
+
+          for (const { id } of messageIds.slice(0, limit)) {
+            const msg = await gmailFetch(this.env, `/messages/${id}`, {
+              format: 'metadata',
+              metadataHeaders: ['From', 'Subject', 'Date'],
+            }, user_email) as { payload?: { headers?: Array<{ name: string; value: string }> } };
+
+            const headers = msg.payload?.headers || [];
+            const getHeader = (name: string) => headers.find(h => h.name?.toLowerCase() === name.toLowerCase())?.value || '';
+
+            // Check if already synced to Notion
+            const shortId = shortenGmailId(id);
+            const existing = await notionQueryDatabase(this.env, this.env.NOTION_INTERACTIONS_DB_ID, {
+              property: 'Interaction',
+              title: { contains: `[${shortId}` },
+            }, 1);
+
+            previews.push({
+              id,
+              subject: getHeader('Subject') || '(No Subject)',
+              from: getHeader('From'),
+              date: getHeader('Date'),
+              already_synced: existing.results.length > 0,
+            });
+          }
+
+          const newCount = previews.filter(p => !p.already_synced).length;
+          const syncedCount = previews.filter(p => p.already_synced).length;
+
+          return {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                query: gmail_query,
+                total_matches: messageIds.length,
+                previewed: previews.length,
+                new_emails: newCount,
+                already_synced: syncedCount,
+                emails: previews,
+              }, null, 2),
+            }],
+          };
+        } catch (error) {
+          return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
+        }
+      }
+    );
+
+    // Tool: Create Automation
+    this.server.tool(
+      'create_automation',
+      {
+        name: z.string().describe('Human-readable name (e.g., "Sync client emails daily")'),
+        user_email: z.string().describe('Email of team member whose Gmail to sync'),
+        gmail_query: z.string().describe('Gmail search query (from:, to:, subject:, label:, etc.)'),
+        frequency_minutes: z.number().describe('How often to run: 60=hourly, 360=every 6 hours, 1440=daily'),
+        max_results: z.number().optional().describe('Max emails to sync per run (default: 20)'),
+      },
+      async ({ name, user_email, gmail_query, frequency_minutes, max_results = 20 }) => {
+        try {
+          // Validate user is authorized
+          const stored = await this.env.GMAIL_TOKENS.get<StoredToken>(user_email.toLowerCase(), 'json');
+          if (!stored?.refresh_token) {
+            return { content: [{ type: 'text', text: JSON.stringify({ error: `No Gmail authorization found for ${user_email}. They need to authorize at /auth?email=${encodeURIComponent(user_email)} first.` }) }] };
+          }
+
+          // Validate frequency (minimum 5 minutes)
+          if (frequency_minutes < 5) {
+            return { content: [{ type: 'text', text: JSON.stringify({ error: 'Minimum frequency is 5 minutes.' }) }] };
+          }
+
+          // Preview what the query currently matches
+          const listData = await gmailFetch(this.env, '/messages', {
+            q: gmail_query,
+            maxResults: '5',
+          }, user_email) as { messages?: Array<{ id: string }> };
+          const previewCount = listData.messages?.length || 0;
+
+          // Create automation
+          const automation: Automation = {
+            id: crypto.randomUUID(),
+            user_email: user_email.toLowerCase(),
+            name,
+            gmail_query,
+            frequency_minutes,
+            max_results,
+            status: 'active',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            runs: [],
+          };
+
+          await putAutomation(this.env.GMAIL_TOKENS, automation);
+
+          return {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                created: true,
+                automation: {
+                  id: automation.id,
+                  name: automation.name,
+                  gmail_query: automation.gmail_query,
+                  frequency_minutes: automation.frequency_minutes,
+                  max_results: automation.max_results,
+                  status: automation.status,
+                },
+                preview: {
+                  matching_emails_now: previewCount,
+                  note: previewCount > 0
+                    ? `Found ${previewCount}+ matching emails. The automation will sync up to ${max_results} per run every ${frequency_minutes} minutes.`
+                    : 'No matching emails found right now. The automation will check on its schedule.',
+                },
+              }, null, 2),
+            }],
+          };
+        } catch (error) {
+          return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
+        }
+      }
+    );
+
+    // Tool: List Automations
+    this.server.tool(
+      'list_automations',
+      {
+        user_email: z.string().optional().describe('Filter by user email (omit to list all)'),
+      },
+      async ({ user_email }) => {
+        try {
+          let automations = await listAllAutomations(this.env.GMAIL_TOKENS);
+
+          if (user_email) {
+            automations = automations.filter(a => a.user_email === user_email.toLowerCase());
+          }
+
+          const summary = automations.map(a => ({
+            id: a.id,
+            name: a.name,
+            user_email: a.user_email,
+            gmail_query: a.gmail_query,
+            frequency_minutes: a.frequency_minutes,
+            max_results: a.max_results,
+            status: a.status,
+            last_run_at: a.last_run_at || 'never',
+            total_runs: a.runs.length,
+            last_run_summary: a.runs.length > 0 ? a.runs[a.runs.length - 1].summary : 'n/a',
+          }));
+
+          return {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({ count: automations.length, automations: summary }, null, 2),
+            }],
+          };
+        } catch (error) {
+          return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
+        }
+      }
+    );
+
+    // Tool: Pause Automation
+    this.server.tool(
+      'pause_automation',
+      {
+        automation_id: z.string().describe('ID of the automation to pause'),
+      },
+      async ({ automation_id }) => {
+        try {
+          const automation = await getAutomationById(this.env.GMAIL_TOKENS, automation_id);
+          if (!automation) {
+            return { content: [{ type: 'text', text: JSON.stringify({ error: 'Automation not found' }) }] };
+          }
+
+          if (automation.status === 'paused') {
+            return { content: [{ type: 'text', text: JSON.stringify({ already_paused: true, name: automation.name }) }] };
+          }
+
+          automation.status = 'paused';
+          automation.updated_at = new Date().toISOString();
+          await putAutomation(this.env.GMAIL_TOKENS, automation);
+
+          return {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({ paused: true, id: automation.id, name: automation.name }, null, 2),
+            }],
+          };
+        } catch (error) {
+          return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
+        }
+      }
+    );
+
+    // Tool: Resume Automation
+    this.server.tool(
+      'resume_automation',
+      {
+        automation_id: z.string().describe('ID of the automation to resume'),
+      },
+      async ({ automation_id }) => {
+        try {
+          const automation = await getAutomationById(this.env.GMAIL_TOKENS, automation_id);
+          if (!automation) {
+            return { content: [{ type: 'text', text: JSON.stringify({ error: 'Automation not found' }) }] };
+          }
+
+          if (automation.status === 'active') {
+            return { content: [{ type: 'text', text: JSON.stringify({ already_active: true, name: automation.name }) }] };
+          }
+
+          automation.status = 'active';
+          automation.updated_at = new Date().toISOString();
+          await putAutomation(this.env.GMAIL_TOKENS, automation);
+
+          return {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({ resumed: true, id: automation.id, name: automation.name, frequency_minutes: automation.frequency_minutes }, null, 2),
+            }],
+          };
+        } catch (error) {
+          return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
+        }
+      }
+    );
+
+    // Tool: Delete Automation
+    this.server.tool(
+      'delete_automation',
+      {
+        automation_id: z.string().describe('ID of the automation to delete permanently'),
+      },
+      async ({ automation_id }) => {
+        try {
+          const automation = await getAutomationById(this.env.GMAIL_TOKENS, automation_id);
+          if (!automation) {
+            return { content: [{ type: 'text', text: JSON.stringify({ error: 'Automation not found' }) }] };
+          }
+
+          await deleteAutomationFromKV(this.env.GMAIL_TOKENS, automation_id);
+
+          return {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({ deleted: true, id: automation_id, name: automation.name }, null, 2),
+            }],
+          };
+        } catch (error) {
+          return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
+        }
+      }
+    );
+
+    // Tool: Get Automation History
+    this.server.tool(
+      'get_automation_history',
+      {
+        automation_id: z.string().describe('ID of the automation to get history for'),
+        limit: z.number().optional().describe('Number of recent runs to return (default: 10)'),
+      },
+      async ({ automation_id, limit = 10 }) => {
+        try {
+          const automation = await getAutomationById(this.env.GMAIL_TOKENS, automation_id);
+          if (!automation) {
+            return { content: [{ type: 'text', text: JSON.stringify({ error: 'Automation not found' }) }] };
+          }
+
+          const recentRuns = automation.runs.slice(-limit).reverse(); // Most recent first
+
+          return {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                automation: {
+                  id: automation.id,
+                  name: automation.name,
+                  status: automation.status,
+                  gmail_query: automation.gmail_query,
+                  frequency_minutes: automation.frequency_minutes,
+                  last_run_at: automation.last_run_at || 'never',
+                },
+                total_runs: automation.runs.length,
+                showing: recentRuns.length,
+                runs: recentRuns,
+              }, null, 2),
+            }],
+          };
+        } catch (error) {
+          return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
+        }
+      }
+    );
+
+    // ═══════════════════════════════════════════════════════════════
     // ChatGPT Connector Tools
     // ═══════════════════════════════════════════════════════════════
 
@@ -1003,6 +1488,115 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
         }
       }
     );
+
+    // ═══════════════════════════════════════════════════════════════
+    // MCP Prompts (Judgment tier — user-controlled)
+    // ═══════════════════════════════════════════════════════════════
+
+    // Prompt: What can this MCP do?
+    this.server.prompt(
+      'capabilities',
+      'Explains what this Gmail-Notion MCP can do and how to use it',
+      () => ({
+        messages: [{
+          role: 'user',
+          content: {
+            type: 'text',
+            text: `You are connected to the Half Dozen Gmail Sync MCP. Here's what you can help the user with:
+
+## Email Search & Sync
+- **Search emails** using Gmail query syntax (from:, to:, subject:, label:, after:, before:)
+- **Sync individual emails** to the Notion Interactions database with automatic contact matching
+- **Labels**: List all Gmail labels to help build queries
+
+## Contact Management
+- **Find contacts** by email or name in the Notion Contacts database
+- **Create contacts** with name, email, and company
+- **Enrich contacts** by appending research notes to their Notion page
+- **Re-link contacts** when an auto-created contact should be merged with an existing one
+
+## Background Automations
+- **Preview an automation** — dry-run a Gmail query to see what would be synced before committing
+- **Create automations** — set up recurring sync rules (e.g., "sync all emails from label:clients every 6 hours")
+- **List automations** — see all configured automations and their status
+- **Pause/Resume automations** — temporarily stop or restart without deleting
+- **Delete automations** — permanently remove an automation
+- **Review automation history** — see what each automation has done (emails synced, errors, timing)
+
+## How Automations Work
+1. You help the user define a Gmail query and frequency
+2. Use \`preview_automation\` to verify the query matches the right emails
+3. Use \`create_automation\` to activate it
+4. Every 5 minutes, the system checks if any automations are due and runs them automatically
+5. Use \`get_automation_history\` to review results and adjust if needed
+
+## Tips
+- Gmail queries support: \`from:\`, \`to:\`, \`subject:\`, \`label:\`, \`after:\`, \`before:\`, \`has:attachment\`, \`is:unread\`
+- Each team member must authorize their Gmail separately at the /auth endpoint
+- Already-synced emails are automatically skipped (deduplication by Gmail ID)
+- Contacts are auto-created if no match is found, and can be re-linked later`,
+          },
+        }],
+      })
+    );
+
+    // Prompt: Set up an automation (guided workflow)
+    this.server.prompt(
+      'setup_automation',
+      'Step-by-step guide to help the user create a background email sync automation',
+      () => ({
+        messages: [{
+          role: 'user',
+          content: {
+            type: 'text',
+            text: `Help me set up a background automation to sync emails to Notion. Walk me through it step by step:
+
+1. **Ask what I want to sync** — which emails? From a specific person, label, or topic?
+2. **Build the Gmail query** — translate my intent into Gmail search syntax
+3. **Preview the results** — use \`preview_automation\` to show me what matches and whether any are already synced
+4. **Let me adjust** — if the matches don't look right, refine the query and preview again
+5. **Choose frequency** — ask how often I want it to run (hourly, every 6 hours, daily, etc.)
+6. **Create it** — use \`create_automation\` to activate
+7. **Confirm** — show me the automation details and explain what will happen next
+
+Important: Don't skip the preview step. I want to see what will be synced before committing.`,
+          },
+        }],
+      })
+    );
+
+    // Prompt: Review automations health
+    this.server.prompt(
+      'review_automations',
+      'Check on all running automations — are they healthy? Any errors? Anything to adjust?',
+      () => ({
+        messages: [{
+          role: 'user',
+          content: {
+            type: 'text',
+            text: `Review all my email sync automations and give me a health report:
+
+1. Use \`list_automations\` to see all automations
+2. For each active automation, use \`get_automation_history\` to check recent runs
+3. Flag any issues:
+   - Automations with errors in recent runs
+   - Automations that haven't run recently (might be stale)
+   - Automations syncing 0 emails consistently (query might need updating)
+   - Paused automations I might have forgotten about
+4. Give me a clear summary and recommendations
+
+Format the report so it's easy to scan.`,
+          },
+        }],
+      })
+    );
+
+    // ═══════════════════════════════════════════════════════════════
+    // Feedback (cross-cutting — support ticket pathway)
+    // ═══════════════════════════════════════════════════════════════
+    if (this.env.FEEDBACK_DB) {
+      registerFeedbackTool(this.server, new D1FeedbackStore(this.env.FEEDBACK_DB), 'halfdozen-gmail-sync');
+    }
   }
 }
 
@@ -1299,6 +1893,41 @@ async function handleApiRoute(pathname: string, request: Request, env: Env): Pro
 // Worker entry point
 // ═══════════════════════════════════════════════════════════════
 export default {
+  /**
+   * Scheduled handler: runs on cron trigger to execute due automations.
+   * Each automation's frequency is checked against its last run time.
+   */
+  async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext) {
+    const automations = await listAllAutomations(env.GMAIL_TOKENS);
+    const now = Date.now();
+    let executed = 0;
+    let skipped = 0;
+
+    for (const automation of automations) {
+      if (automation.status !== 'active') {
+        skipped++;
+        continue;
+      }
+
+      const lastRun = automation.last_run_at ? new Date(automation.last_run_at).getTime() : 0;
+      const intervalMs = automation.frequency_minutes * 60 * 1000;
+
+      if (now - lastRun < intervalMs) {
+        skipped++;
+        continue;
+      }
+
+      try {
+        await executeAutomationJob(env, automation);
+        executed++;
+      } catch (error) {
+        console.error(`Scheduled: automation ${automation.id} (${automation.name}) failed:`, error);
+      }
+    }
+
+    console.log(`Scheduled run complete: ${executed} executed, ${skipped} skipped, ${automations.length} total`);
+  },
+
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
 
@@ -1330,8 +1959,8 @@ export default {
     if (url.pathname === '/') {
       return new Response(JSON.stringify({
         name: 'halfdozen-gmail-sync-mcp',
-        version: '2.2.0',
-        features: ['multi-user', 'chatgpt-connector'],
+        version: '3.0.0',
+        features: ['multi-user', 'chatgpt-connector', 'background-automations'],
         endpoints: {
           mcp: '/mcp',
           sse: '/sse',

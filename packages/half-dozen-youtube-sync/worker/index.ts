@@ -19,6 +19,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { z } from 'zod';
+import { registerFeedbackTool, D1FeedbackStore } from '@create-something/mcp-core';
 
 // =============================================================================
 // Types
@@ -30,6 +31,7 @@ interface Env {
   RESEND_API_KEY?: string;
   SYNC_PLAYLIST_URLS?: string;  // Comma-separated playlist URLs for cron
   ALERT_EMAIL?: string;
+  FEEDBACK_DB: any;  // D1Database — shared feedback across Half Dozen MCPs
   MCP_OBJECT: DurableObjectNamespace;
 }
 
@@ -675,6 +677,11 @@ export class YouTubeSyncMCP extends McpAgent<Env> {
         }
       }
     );
+
+    // ── Feedback (cross-cutting — support ticket pathway) ────────────
+    if (this.env.FEEDBACK_DB) {
+      registerFeedbackTool(this.server, new D1FeedbackStore(this.env.FEEDBACK_DB), SERVER_NAME);
+    }
   }
 }
 

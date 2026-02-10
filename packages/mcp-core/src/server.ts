@@ -36,7 +36,7 @@ import type { AccountContext } from './context.js';
 import type { AuthProvider } from './auth.js';
 import type { InsightEmitter, InsightEvent } from './insight.js';
 import type { FeedbackStore } from './feedback.js';
-import { FEEDBACK_TOOL_SCHEMA, createFeedbackToolHandler } from './feedback.js';
+import { registerFeedbackTool } from './feedback.js';
 
 // =============================================================================
 // Re-export SDK result types for convenience
@@ -355,55 +355,7 @@ export class ScopedMcpServer<TEnv = unknown> {
 
     // --- Feedback (Insight — cross-cutting) ---
     if (this.config.feedbackStore) {
-      const feedbackHandler = createFeedbackToolHandler(
-        this.config.feedbackStore,
-        this.config.name,
-        ctx.accountId,
-      );
-
-      server.tool(
-        'submit_feedback',
-        `Report an issue, correction, or suggestion about ${this.config.name}. Your feedback helps improve this MCP server's content and behavior.`,
-        FEEDBACK_TOOL_SCHEMA,
-        async (params: Record<string, unknown>) => {
-          const start = Date.now();
-          try {
-            const result = await feedbackHandler(params);
-            insight.emit({
-              accountId: ctx.accountId,
-              tier: 'automation',
-              action: 'tool:submit_feedback',
-              success: true,
-              durationMs: Date.now() - start,
-              timestamp: start,
-              metadata: {
-                feedbackType: params.feedback_type,
-                section: params.section,
-              },
-            });
-            return result;
-          } catch (error) {
-            insight.emit({
-              accountId: ctx.accountId,
-              tier: 'automation',
-              action: 'tool:submit_feedback',
-              success: false,
-              durationMs: Date.now() - start,
-              timestamp: start,
-              metadata: {
-                error: error instanceof Error ? error.message : String(error),
-              },
-            });
-            return {
-              content: [{
-                type: 'text' as const,
-                text: JSON.stringify({ error: 'Failed to submit feedback. Please try again.' }),
-              }],
-              isError: true,
-            };
-          }
-        },
-      );
+      registerFeedbackTool(server, this.config.feedbackStore, this.config.name, ctx.accountId);
     }
 
     return server;

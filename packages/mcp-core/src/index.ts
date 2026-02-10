@@ -99,7 +99,7 @@ export { scopedInsight, withInsight } from './insight.js';
 // =============================================================================
 
 export type { FeedbackStore, FeedbackEntry } from './feedback.js';
-export { FEEDBACK_TOOL_SCHEMA, createFeedbackToolHandler } from './feedback.js';
+export { FEEDBACK_TOOL_SCHEMA, createFeedbackToolHandler, registerFeedbackTool } from './feedback.js';
 
 // =============================================================================
 // Auth Providers

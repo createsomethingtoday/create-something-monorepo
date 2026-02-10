@@ -20,6 +20,7 @@
     "sync:playlist": "npx tsx batch-sync.ts --sync --playlist"
   },
   "dependencies": {
+    "@create-something/mcp-core": "workspace:*",
     "@create-something/observability": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "@notionhq/client": "^2.2.15",

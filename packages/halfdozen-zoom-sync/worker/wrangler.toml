@@ -32,6 +32,12 @@ class_name = "ZoomClipsMCP"
 tag = "v1"
 new_sqlite_classes = ["ZoomClipsMCP"]
 
+# Shared feedback database (all Half Dozen MCPs)
+[[d1_databases]]
+binding = "FEEDBACK_DB"
+database_name = "halfdozen-feedback"
+database_id = "4eb35a0f-6ee2-4d0c-8c0a-9a2ab4049b97"
+
 # Secrets (set via `wrangler secret put`)
 # STEEL_API_KEY
 # NOTION_API_KEY

@@ -22,6 +22,7 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
+import { registerFeedbackTool, D1FeedbackStore } from '@create-something/mcp-core';
 
 import { registerSyncTools } from '../src/tools/sync.js';
 import { registerSearchTools } from '../src/tools/search.js';
@@ -42,6 +43,9 @@ interface Env {
 
   // D1 database
   DB: D1Database;
+
+  // Shared feedback database (all Half Dozen MCPs)
+  FEEDBACK_DB: any;
 
   // KV namespace for session context
   ZOOM_SESSION_CONTEXT: KVNamespace;
@@ -134,6 +138,11 @@ export class ZoomClipsMCP extends McpAgent<Env> {
 
     // Judgment tier (Prompts)
     registerPrompts(this.server);
+
+    // Feedback (cross-cutting — support ticket pathway)
+    if (this.env.FEEDBACK_DB) {
+      registerFeedbackTool(this.server, new D1FeedbackStore(this.env.FEEDBACK_DB), 'halfdozen-zoom-sync');
+    }
   }
 }
 

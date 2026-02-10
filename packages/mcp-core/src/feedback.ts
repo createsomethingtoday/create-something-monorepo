@@ -17,6 +17,7 @@
  */
 
 import { z } from 'zod';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 // =============================================================================
@@ -150,4 +151,65 @@ export function createFeedbackToolHandler(
       }],
     };
   };
+}
+
+// =============================================================================
+// Standalone Registration — works with ANY McpServer
+// =============================================================================
+
+/**
+ * Register the `submit_feedback` tool on any McpServer instance.
+ *
+ * This is the universal integration point. Works with:
+ *   - McpAgent-based workers (Half Dozen, client MCPs)
+ *   - ScopedMcpServer (mcp-core managed servers)
+ *   - Raw McpServer instances (any MCP)
+ *
+ * Usage in a McpAgent worker:
+ * ```typescript
+ * import { registerFeedbackTool, D1FeedbackStore } from '@create-something/mcp-core';
+ *
+ * export class MyMCP extends McpAgent<Env> {
+ *   server = new McpServer({ name: 'my-mcp', version: '1.0.0' });
+ *   async init() {
+ *     // ... register your tools, resources, prompts ...
+ *     registerFeedbackTool(this.server, new D1FeedbackStore(this.env.FEEDBACK_DB), 'my-mcp');
+ *   }
+ * }
+ * ```
+ *
+ * @param server     - Any McpServer instance
+ * @param store      - FeedbackStore implementation (D1FeedbackStore for Workers)
+ * @param serverName - Name of the MCP server (stored with each feedback entry)
+ * @param accountId  - Optional account ID (defaults to 'anonymous')
+ */
+export function registerFeedbackTool(
+  server: McpServer,
+  store: FeedbackStore,
+  serverName: string,
+  accountId: string = 'anonymous',
+): void {
+  const handler = createFeedbackToolHandler(store, serverName, accountId);
+
+  server.tool(
+    'submit_feedback',
+    `Report an issue, correction, or suggestion about ${serverName}. Your feedback creates a support ticket that helps us improve this tool.`,
+    FEEDBACK_TOOL_SCHEMA,
+    async (params: Record<string, unknown>) => {
+      try {
+        return await handler(params);
+      } catch (error) {
+        return {
+          content: [{
+            type: 'text' as const,
+            text: JSON.stringify({
+              error: 'Failed to submit feedback. Please try again.',
+              details: error instanceof Error ? error.message : String(error),
+            }),
+          }],
+          isError: true,
+        };
+      }
+    },
+  );
 }
