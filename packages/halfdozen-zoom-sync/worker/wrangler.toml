@@ -16,12 +16,12 @@ enabled = true
 [[d1_databases]]
 binding = "DB"
 database_name = "halfdozen-zoom-sync-db"
-database_id = "00000000-0000-0000-0000-000000000000"  # Replace after `wrangler d1 create halfdozen-zoom-sync-db`
+database_id = "328ac846-0573-4e8c-a4a4-098f239f8b91"
 
 # KV namespace for session context (cookies)
 [[kv_namespaces]]
 binding = "ZOOM_SESSION_CONTEXT"
-id = "00000000000000000000000000000000"  # Replace after `wrangler kv namespace create ZOOM_SESSION_CONTEXT`
+id = "f315a206553a459989191844c42dd27d"
 
 # Durable Object for MCP sessions
 [[durable_objects.bindings]]
