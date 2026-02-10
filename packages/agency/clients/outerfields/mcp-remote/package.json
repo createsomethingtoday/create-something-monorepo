@@ -20,7 +20,6 @@
   "license": "UNLICENSED",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.3",
-    "agents": "^0.0.98",
     "zod": "^3.23.0"
   },
   "devDependencies": {

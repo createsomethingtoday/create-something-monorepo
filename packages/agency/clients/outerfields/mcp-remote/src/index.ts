@@ -22,6 +22,7 @@
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { z } from 'zod';
 
 // Documentation content
@@ -307,9 +308,13 @@ export default {
 			const authError = validateApiKey(request, env);
 			if (authError) return authError;
 
-			const { createMcpHandler } = await import('agents/mcp');
 			const server = createServer();
-			return createMcpHandler(server)(request, env, ctx);
+			const transport = new WebStandardStreamableHTTPServerTransport({
+				sessionIdGenerator: undefined,
+				enableJsonResponse: true,
+			});
+			await server.connect(transport);
+			return transport.handleRequest(request);
 		}
 
 		return new Response('Not found. MCP endpoint is at /mcp', {
