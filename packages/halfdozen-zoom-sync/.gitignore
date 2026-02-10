@@ -14,7 +14,12 @@ node_modules/
 .env
 .env.local
 
+# Python artifacts (legacy modal_sync.py)
+__pycache__/
+*.pyc
+
 # Generated data/output
+extracted-clips.json
 transcript-analysis.json
 transcript-screenshot.png
 ui-analysis.json

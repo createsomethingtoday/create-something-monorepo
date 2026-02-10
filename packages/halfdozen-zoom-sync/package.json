@@ -1,21 +1,47 @@
 {
   "name": "@create-something/halfdozen-zoom-sync",
-  "version": "1.0.0",
-  "description": "Daily Zoom Clips to Notion sync for Half Dozen. Runs on Modal.com with Steel.dev browser automation.",
-  "private": true,
+  "version": "2.0.0",
+  "description": "Zoom Clips to Notion MCP Server for Half Dozen. Three-Tier: Resources (clips), Tools (sync/extract), Prompts (analysis). Deployed as Cloudflare Worker with Steel.dev browser automation.",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "hd-zoom-sync": "dist/index.js"
+  },
   "scripts": {
-    "deploy": "modal deploy modal_sync.py",
-    "sync": "modal run modal_sync.py",
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
     "watch-session": "npx tsx watch-session.ts"
   },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "dotenv": "^16.4.5",
+    "puppeteer-core": "^24.0.0",
+    "steel-sdk": "^0.15.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  },
   "keywords": [
+    "mcp",
     "zoom",
     "clips",
     "notion",
-    "browser-automation",
+    "sync",
     "steel",
-    "modal"
+    "browser-automation",
+    "half-dozen",
+    "model-context-protocol"
   ],
   "author": "CREATE SOMETHING <hello@createsomething.agency>",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/halfdozen-zoom-sync"
+  }
 }

@@ -1,0 +1,38 @@
+name = "halfdozen-zoom-sync-mcp"
+main = "index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "5c3e9cf4d55ce171b844fad0931607f9"  # WORKWAY
+
+# Production URL: https://zoom.mcp.workway.co
+[[routes]]
+pattern = "zoom.mcp.workway.co"
+custom_domain = true
+
+[observability]
+enabled = true
+
+# D1 database for sync runs, clips cache, session state
+[[d1_databases]]
+binding = "DB"
+database_name = "halfdozen-zoom-sync-db"
+database_id = "00000000-0000-0000-0000-000000000000"  # Replace after `wrangler d1 create halfdozen-zoom-sync-db`
+
+# KV namespace for session context (cookies)
+[[kv_namespaces]]
+binding = "ZOOM_SESSION_CONTEXT"
+id = "00000000000000000000000000000000"  # Replace after `wrangler kv namespace create ZOOM_SESSION_CONTEXT`
+
+# Durable Object for MCP sessions
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "ZoomClipsMCP"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ZoomClipsMCP"]
+
+# Secrets (set via `wrangler secret put`)
+# STEEL_API_KEY
+# NOTION_API_KEY
+# NOTION_DATABASE_ID
