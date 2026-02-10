@@ -18,6 +18,7 @@ class_name = "CreateSomethingMCP"
 tag = "v1"
 new_sqlite_classes = ["CreateSomethingMCP"]
 
-# No KV, no secrets, no env vars.
+# No KV, no D1, no secrets.
 # Pure content knowledge embedded in source.
 # Zero external dependencies at runtime.
+# Feedback collection lives in mcp-core (cross-cutting Insight concern).

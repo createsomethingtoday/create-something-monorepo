@@ -95,6 +95,13 @@ export type { InsightEmitter, InsightEvent } from './insight.js';
 export { scopedInsight, withInsight } from './insight.js';
 
 // =============================================================================
+// Feedback (cross-cutting — Insight applied to content quality)
+// =============================================================================
+
+export type { FeedbackStore, FeedbackEntry } from './feedback.js';
+export { FEEDBACK_TOOL_SCHEMA, createFeedbackToolHandler } from './feedback.js';
+
+// =============================================================================
 // Auth Providers
 // =============================================================================
 
@@ -116,6 +123,7 @@ export { KVTokenStore } from './stores/kv.js';
 export type { KVNamespace } from './stores/kv.js';
 export { D1TokenStore } from './stores/d1.js';
 export type { D1Database, D1PreparedStatement } from './stores/d1.js';
+export { D1FeedbackStore } from './stores/d1-feedback.js';
 
 // =============================================================================
 // Insight Adapters

@@ -35,6 +35,8 @@ import type { ZodRawShape } from 'zod';
 import type { AccountContext } from './context.js';
 import type { AuthProvider } from './auth.js';
 import type { InsightEmitter, InsightEvent } from './insight.js';
+import type { FeedbackStore } from './feedback.js';
+import { FEEDBACK_TOOL_SCHEMA, createFeedbackToolHandler } from './feedback.js';
 
 // =============================================================================
 // Re-export SDK result types for convenience
@@ -115,11 +117,27 @@ export interface ScopedServerConfig<TEnv = unknown> {
   /** Server version */
   version: string;
 
+  /** Optional icons for visual identification in client UIs (SEP-973) */
+  icons?: Array<{ src: string; mimeType?: string; sizes?: string[]; theme?: 'light' | 'dark' }>;
+
   /** Resolves requests to AccountContext */
   authProvider: AuthProvider<TEnv>;
 
   /** Optional insight emitter for observability */
   insight?: InsightEmitter;
+
+  /**
+   * Optional feedback store for user-reported issues.
+   *
+   * When provided, a `submit_feedback` tool is automatically registered
+   * on every server built from this config. Users can report corrections,
+   * suggestions, errors, or praise — the perceptual membrane applied to
+   * content quality.
+   *
+   * All MCPs sharing a database get a unified feedback view.
+   * The server name is captured automatically to distinguish sources.
+   */
+  feedbackStore?: FeedbackStore;
 }
 
 // =============================================================================
@@ -248,6 +266,7 @@ export class ScopedMcpServer<TEnv = unknown> {
     const server = new McpServer({
       name: this.config.name,
       version: this.config.version,
+      ...(this.config.icons && { icons: this.config.icons }),
     });
 
     const insight = this.insight;
@@ -332,6 +351,59 @@ export class ScopedMcpServer<TEnv = unknown> {
           },
         );
       }
+    }
+
+    // --- Feedback (Insight — cross-cutting) ---
+    if (this.config.feedbackStore) {
+      const feedbackHandler = createFeedbackToolHandler(
+        this.config.feedbackStore,
+        this.config.name,
+        ctx.accountId,
+      );
+
+      server.tool(
+        'submit_feedback',
+        `Report an issue, correction, or suggestion about ${this.config.name}. Your feedback helps improve this MCP server's content and behavior.`,
+        FEEDBACK_TOOL_SCHEMA,
+        async (params: Record<string, unknown>) => {
+          const start = Date.now();
+          try {
+            const result = await feedbackHandler(params);
+            insight.emit({
+              accountId: ctx.accountId,
+              tier: 'automation',
+              action: 'tool:submit_feedback',
+              success: true,
+              durationMs: Date.now() - start,
+              timestamp: start,
+              metadata: {
+                feedbackType: params.feedback_type,
+                section: params.section,
+              },
+            });
+            return result;
+          } catch (error) {
+            insight.emit({
+              accountId: ctx.accountId,
+              tier: 'automation',
+              action: 'tool:submit_feedback',
+              success: false,
+              durationMs: Date.now() - start,
+              timestamp: start,
+              metadata: {
+                error: error instanceof Error ? error.message : String(error),
+              },
+            });
+            return {
+              content: [{
+                type: 'text' as const,
+                text: JSON.stringify({ error: 'Failed to submit feedback. Please try again.' }),
+              }],
+              isError: true,
+            };
+          }
+        },
+      );
     }
 
     return server;
