@@ -162,16 +162,12 @@ export function registerTools(
     async () => {
       try {
         return ok(await withDb(async e => {
-          const workspaces = await db.listWorkspaces(e);
-          const result = [];
-          for (const ws of workspaces) {
-            const tables = await db.listTables(e, ws.id);
-            result.push({
-              ...ws,
-              tables: tables.map(t => ({ id: t.id, name: t.name, description: t.description, columns: t.columns })),
-            });
-          }
-          return { workspaces: result };
+          // 2 queries instead of N+1
+          const workspaces = await db.listWorkspacesWithTables(e);
+          return { workspaces: workspaces.map(ws => ({
+            ...ws,
+            tables: ws.tables.map(t => ({ id: t.id, name: t.name, description: t.description, columns: t.columns })),
+          })) };
         }));
       } catch (e) { return fail(e instanceof Error ? e.message : String(e)); }
     },

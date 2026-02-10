@@ -8,6 +8,11 @@ compatibility_date = "2024-12-01"
 compatibility_flags = ["nodejs_compat"]
 account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 
+# Production URL: https://substrate.mcp.createsomething.agency
+[[routes]]
+pattern = "substrate.mcp.createsomething.agency"
+custom_domain = true
+
 [observability]
 enabled = true
 

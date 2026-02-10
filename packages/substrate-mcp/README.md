@@ -62,7 +62,23 @@ pnpm --filter=substrate-mcp build
 pnpm --filter=substrate-mcp start
 ```
 
-### 4. Connect from Claude Desktop
+### 4. Connect Your MCP Client
+
+#### Remote (Production)
+
+**URL**: `https://substrate.mcp.createsomething.agency`
+
+```json
+{
+  "mcpServers": {
+    "substrate": {
+      "url": "https://substrate.mcp.createsomething.agency/mcp"
+    }
+  }
+}
+```
+
+#### Local (stdio)
 
 ```json
 {

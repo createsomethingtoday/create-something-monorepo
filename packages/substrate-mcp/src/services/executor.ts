@@ -21,6 +21,43 @@ export interface QueryResult {
 /** Execute a SQL query against D1. Both modes produce the same shape. */
 export type D1Exec = (sql: string, params?: unknown[]) => Promise<QueryResult>;
 
+// ═══════════════════════════════════════════════════════════════════
+// Observability — lightweight query metrics
+// ═══════════════════════════════════════════════════════════════════
+
+export interface QueryMetrics {
+  totalQueries: number;
+  totalErrors: number;
+  totalDurationMs: number;
+  slowQueries: Array<{ sql: string; durationMs: number; timestamp: number }>;
+}
+
+/** Tracks query metrics per executor instance (per DO session). */
+export class QueryTracker {
+  private metrics: QueryMetrics = { totalQueries: 0, totalErrors: 0, totalDurationMs: 0, slowQueries: [] };
+  private static SLOW_THRESHOLD_MS = 100;
+  private static MAX_SLOW_QUERIES = 10;
+
+  record(sql: string, durationMs: number, isError: boolean) {
+    this.metrics.totalQueries++;
+    this.metrics.totalDurationMs += durationMs;
+    if (isError) this.metrics.totalErrors++;
+    if (durationMs > QueryTracker.SLOW_THRESHOLD_MS) {
+      this.metrics.slowQueries.push({ sql: sql.slice(0, 80), durationMs, timestamp: Date.now() });
+      if (this.metrics.slowQueries.length > QueryTracker.MAX_SLOW_QUERIES) {
+        this.metrics.slowQueries.shift();
+      }
+    }
+  }
+
+  getMetrics(): QueryMetrics & { avgDurationMs: number } {
+    return {
+      ...this.metrics,
+      avgDurationMs: this.metrics.totalQueries > 0 ? Math.round(this.metrics.totalDurationMs / this.metrics.totalQueries) : 0,
+    };
+  }
+}
+
 /**
  * Create a D1Exec from Cloudflare REST API (stdio mode).
  * Uses CF_API_TOKEN + D1 database ID to call the HTTP endpoint.
@@ -48,15 +85,37 @@ export function restExecutor(config: D1Config): D1Exec {
 /**
  * Create a D1Exec from a D1Database Worker binding.
  * Uses env.DB directly — no REST API overhead.
+ * Includes retry logic for transient D1 errors and observability.
  */
-export function bindingExecutor(db: D1Database): D1Exec {
+export function bindingExecutor(db: D1Database, tracker?: QueryTracker): D1Exec {
   return async (sql: string, params: unknown[] = []): Promise<QueryResult> => {
-    const stmt = db.prepare(sql).bind(...params);
-    const result = await stmt.all();
-    return {
-      results: result.results as Record<string, unknown>[],
-      meta: { changes: result.meta?.changes ?? 0 },
-    };
+    const MAX_RETRIES = 2;
+    const start = Date.now();
+    let lastError: unknown;
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const stmt = db.prepare(sql).bind(...params);
+        const result = await stmt.all();
+        tracker?.record(sql, Date.now() - start, false);
+        return {
+          results: result.results as Record<string, unknown>[],
+          meta: { changes: result.meta?.changes ?? 0 },
+        };
+      } catch (err) {
+        lastError = err;
+        // Only retry on transient errors, not schema/constraint violations
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg.includes('SQLITE_BUSY') || msg.includes('database is locked')) {
+          // Exponential backoff: 50ms, 150ms
+          await new Promise(r => setTimeout(r, 50 * (attempt + 1)));
+          continue;
+        }
+        tracker?.record(sql, Date.now() - start, true);
+        throw err; // Non-transient — fail immediately
+      }
+    }
+    tracker?.record(sql, Date.now() - start, true);
+    throw lastError;
   };
 }
 

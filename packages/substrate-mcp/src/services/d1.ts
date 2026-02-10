@@ -87,6 +87,9 @@ async function initSchema(e: D1Exec): Promise<void> {
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       expires_at TEXT DEFAULT NULL)`,
 
+    // FTS5 — full-text search over record data
+    `CREATE VIRTUAL TABLE IF NOT EXISTS records_fts USING fts5(record_id UNINDEXED, table_id UNINDEXED, content, content_rowid='rowid')`,
+
     // Indexes
     `CREATE INDEX IF NOT EXISTS idx_tables_ws ON table_definitions(workspace_id)`,
     `CREATE INDEX IF NOT EXISTS idx_records_tbl ON records(table_id)`,
@@ -116,10 +119,18 @@ async function migrateSchema(e: D1Exec): Promise<void> {
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       expires_at TEXT DEFAULT NULL)`,
     'CREATE INDEX IF NOT EXISTS idx_tokens_hash ON access_tokens(token_hash)',
+    // FTS5 for full-text search (v0.1.1)
+    `CREATE VIRTUAL TABLE IF NOT EXISTS records_fts USING fts5(record_id UNINDEXED, table_id UNINDEXED, content, content_rowid='rowid')`,
   ];
   for (const sql of migrations) {
     try { await e(sql); } catch { /* column/table already exists */ }
   }
+  // Backfill FTS for any records not yet indexed
+  try {
+    await e(`INSERT OR IGNORE INTO records_fts(record_id, table_id, content)
+      SELECT id, table_id, data FROM records WHERE archived_at IS NULL
+      AND id NOT IN (SELECT record_id FROM records_fts)`);
+  } catch { /* FTS backfill — best effort */ }
 }
 
 // ─── Sensitive Field Redaction ───────────────────────────────────────
@@ -180,6 +191,28 @@ export async function purgeWorkspace(e: D1Exec, wid: string): Promise<boolean> {
 // Keep deleteWorkspace for backward compat (archive alias)
 export const deleteWorkspace = archiveWorkspace;
 
+/**
+ * List workspaces with their tables in 2 queries (not N+1).
+ * Replaces the pattern: listWorkspaces → for each ws → listTables(ws.id)
+ */
+export async function listWorkspacesWithTables(e: D1Exec, includeArchived = false): Promise<Array<Workspace & { tables: TableDefinition[] }>> {
+  const wsFilter = includeArchived ? '' : 'WHERE archived_at IS NULL';
+  const tblFilter = includeArchived ? '' : 'WHERE archived_at IS NULL';
+  const [wsResult, tblResult] = await Promise.all([
+    e(`SELECT * FROM workspaces ${wsFilter} ORDER BY name`),
+    e(`SELECT * FROM table_definitions ${tblFilter} ORDER BY workspace_id, name`),
+  ]);
+  const workspaces = rows(wsResult) as unknown as Workspace[];
+  const allTables = (rows(tblResult) as unknown as TableDefinition[]).map(t => { t.columns = parseJson(t.columns); return t; });
+  // Group tables by workspace
+  const tablesByWs: globalThis.Record<string, TableDefinition[]> = {};
+  for (const t of allTables) {
+    if (!tablesByWs[t.workspace_id]) tablesByWs[t.workspace_id] = [];
+    tablesByWs[t.workspace_id].push(t);
+  }
+  return workspaces.map(ws => ({ ...ws, tables: tablesByWs[ws.id] || [] }));
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // TABLE DEFINITION CRUD
 // ═══════════════════════════════════════════════════════════════════
@@ -225,8 +258,13 @@ export const deleteTable = archiveTable;
 // ═══════════════════════════════════════════════════════════════════
 
 export async function createRecord(e: D1Exec, tableId: string, data: globalThis.Record<string, unknown>): Promise<Record> {
-  const r = first(await e('INSERT INTO records (id,table_id,data) VALUES (?,?,?) RETURNING *', [uid(), tableId, JSON.stringify(data)])) as unknown as Record;
-  r.data = parseJson(r.data); return r;
+  const id = uid();
+  const json = JSON.stringify(data);
+  const r = first(await e('INSERT INTO records (id,table_id,data) VALUES (?,?,?) RETURNING *', [id, tableId, json])) as unknown as Record;
+  r.data = parseJson(r.data);
+  // Sync FTS index
+  try { await e('INSERT INTO records_fts(record_id, table_id, content) VALUES (?,?,?)', [id, tableId, json]); } catch { /* FTS sync best-effort */ }
+  return r;
 }
 
 export async function getRecord(e: D1Exec, rid: string): Promise<Record | null> {
@@ -234,12 +272,31 @@ export async function getRecord(e: D1Exec, rid: string): Promise<Record | null> 
   if (r) r.data = parseJson(r.data); return r;
 }
 
-export async function updateRecord(e: D1Exec, rid: string, data: globalThis.Record<string, unknown>): Promise<Record | null> {
+/**
+ * Update record with optimistic locking.
+ * The optional `expected_updated_at` param enables conflict detection:
+ * if the record was modified since the caller last read it, the update fails
+ * with a clear error instead of silently overwriting concurrent changes.
+ */
+export async function updateRecord(e: D1Exec, rid: string, data: globalThis.Record<string, unknown>, expectedUpdatedAt?: string): Promise<Record | null> {
   const existing = await getRecord(e, rid);
   if (!existing) return null;
+  // Optimistic lock check
+  if (expectedUpdatedAt && existing.updated_at !== expectedUpdatedAt) {
+    throw new Error(`Conflict: record was modified at ${existing.updated_at} (expected ${expectedUpdatedAt}). Re-read and retry.`);
+  }
   const merged = { ...existing.data, ...data };
-  const r = first(await e("UPDATE records SET data=?, updated_at=datetime('now') WHERE id=? AND archived_at IS NULL RETURNING *", [JSON.stringify(merged), rid])) as unknown as Record | null;
-  if (r) r.data = parseJson(r.data); return r;
+  const json = JSON.stringify(merged);
+  const r = first(await e("UPDATE records SET data=?, updated_at=datetime('now') WHERE id=? AND archived_at IS NULL RETURNING *", [json, rid])) as unknown as Record | null;
+  if (r) {
+    r.data = parseJson(r.data);
+    // Sync FTS index
+    try {
+      await e('DELETE FROM records_fts WHERE record_id=?', [rid]);
+      await e('INSERT INTO records_fts(record_id, table_id, content) VALUES (?,?,?)', [rid, r.table_id, json]);
+    } catch { /* FTS sync best-effort */ }
+  }
+  return r;
 }
 
 export async function archiveRecord(e: D1Exec, rid: string): Promise<boolean> {
@@ -277,8 +334,13 @@ export async function queryRecords(e: D1Exec, q: QueryParams): Promise<QueryResu
     order = 'ORDER BY ' + q.sorts.map(s => `json_extract(data,'$.${esc(s.column)}') ${s.direction === 'asc' ? 'ASC' : 'DESC'}`).join(',');
   }
 
-  const total = ((first(await e(`SELECT COUNT(*) as count FROM records WHERE ${wc}`, wp)) as { count: number })?.count) ?? 0;
-  const recs = (rows(await e(`SELECT * FROM records WHERE ${wc} ${order} LIMIT ? OFFSET ?`, [...wp, limit, offset])) as unknown as Record[]).map(r => { r.data = parseJson(r.data); return r; });
+  // Single query with COUNT(*) OVER() window function — avoids a separate round-trip
+  const recs = (rows(await e(`SELECT *, COUNT(*) OVER() as _total_count FROM records WHERE ${wc} ${order} LIMIT ? OFFSET ?`, [...wp, limit, offset])) as unknown as (Record & { _total_count: number })[]);
+  const total = recs.length > 0 ? (recs[0] as unknown as { _total_count: number })._total_count : 0;
+  for (const r of recs) {
+    r.data = parseJson(r.data);
+    delete (r as unknown as globalThis.Record<string, unknown>)._total_count;
+  }
 
   if (q.columns?.length) {
     for (const r of recs) {
@@ -292,7 +354,24 @@ export async function queryRecords(e: D1Exec, q: QueryParams): Promise<QueryResu
 }
 
 export async function searchRecords(e: D1Exec, tableId: string, term: string, limit = DEFAULT_QUERY_LIMIT): Promise<Record[]> {
-  return (rows(await e('SELECT * FROM records WHERE table_id=? AND archived_at IS NULL AND data LIKE ? ORDER BY updated_at DESC LIMIT ?', [tableId, `%${term}%`, Math.min(limit, MAX_RECORDS_PER_QUERY)])) as unknown as Record[]).map(r => { r.data = parseJson(r.data); return r; });
+  const cap = Math.min(limit, MAX_RECORDS_PER_QUERY);
+  try {
+    // FTS5 search — indexed, fast
+    const ftsResults = rows(await e(
+      `SELECT r.* FROM records r
+       INNER JOIN records_fts f ON f.record_id = r.id
+       WHERE f.table_id=? AND f.content MATCH ? AND r.archived_at IS NULL
+       ORDER BY rank LIMIT ?`,
+      [tableId, term, cap],
+    )) as unknown as Record[];
+    return ftsResults.map(r => { r.data = parseJson(r.data); return r; });
+  } catch {
+    // Fallback to LIKE if FTS table doesn't exist yet (pre-migration)
+    return (rows(await e(
+      'SELECT * FROM records WHERE table_id=? AND archived_at IS NULL AND data LIKE ? ORDER BY updated_at DESC LIMIT ?',
+      [tableId, `%${term}%`, cap],
+    )) as unknown as Record[]).map(r => { r.data = parseJson(r.data); return r; });
+  }
 }
 
 function esc(col: string) { return col.replace(/['"\\]/g, ''); }
@@ -348,9 +427,10 @@ export async function getFileMetadata(e: D1Exec, fid: string): Promise<FileMetad
   return first(await e('SELECT * FROM file_metadata WHERE id=?', [fid])) as unknown as FileMetadata | null;
 }
 
-export async function listFiles(e: D1Exec, wsId: string, recordId?: string): Promise<FileMetadata[]> {
-  if (recordId) return rows(await e('SELECT * FROM file_metadata WHERE workspace_id=? AND record_id=? ORDER BY created_at DESC', [wsId, recordId])) as unknown as FileMetadata[];
-  return rows(await e('SELECT * FROM file_metadata WHERE workspace_id=? ORDER BY created_at DESC', [wsId])) as unknown as FileMetadata[];
+export async function listFiles(e: D1Exec, wsId: string, recordId?: string, limit = 100): Promise<FileMetadata[]> {
+  const cap = Math.min(limit, MAX_RECORDS_PER_QUERY);
+  if (recordId) return rows(await e('SELECT * FROM file_metadata WHERE workspace_id=? AND record_id=? ORDER BY created_at DESC LIMIT ?', [wsId, recordId, cap])) as unknown as FileMetadata[];
+  return rows(await e('SELECT * FROM file_metadata WHERE workspace_id=? ORDER BY created_at DESC LIMIT ?', [wsId, cap])) as unknown as FileMetadata[];
 }
 
 export async function deleteFileMetadata(e: D1Exec, fid: string): Promise<FileMetadata | null> {
@@ -453,14 +533,48 @@ export async function getWorkspaceStats(e: D1Exec, wsId: string): Promise<Worksp
 // BULK OPS
 // ═══════════════════════════════════════════════════════════════════
 
+/**
+ * Bulk create records — batches inserts for reduced round-trips.
+ * Groups into chunks of 10 to stay within D1 parameter limits.
+ */
 export async function bulkCreateRecords(e: D1Exec, tableId: string, recs: globalThis.Record<string, unknown>[]): Promise<Record[]> {
+  const CHUNK = 10;
   const out: Record[] = [];
-  for (const d of recs) out.push(await createRecord(e, tableId, d));
+  for (let i = 0; i < recs.length; i += CHUNK) {
+    const chunk = recs.slice(i, i + CHUNK);
+    const values = chunk.map(() => '(?,?,?)').join(',');
+    const params: unknown[] = [];
+    const ftsRows: Array<{ id: string; json: string }> = [];
+    for (const d of chunk) {
+      const id = uid(); const json = JSON.stringify(d);
+      params.push(id, tableId, json);
+      ftsRows.push({ id, json });
+    }
+    const created = (rows(await e(`INSERT INTO records (id,table_id,data) VALUES ${values} RETURNING *`, params)) as unknown as Record[]);
+    for (const r of created) { r.data = parseJson(r.data); out.push(r); }
+    // Sync FTS for the chunk
+    try {
+      const ftsValues = ftsRows.map(() => '(?,?,?)').join(',');
+      const ftsParams: unknown[] = [];
+      for (const fr of ftsRows) { ftsParams.push(fr.id, tableId, fr.json); }
+      await e(`INSERT INTO records_fts(record_id, table_id, content) VALUES ${ftsValues}`, ftsParams);
+    } catch { /* FTS sync best-effort */ }
+  }
   return out;
 }
 
+/**
+ * Bulk archive records — batches updates for reduced round-trips.
+ */
 export async function bulkDeleteRecords(e: D1Exec, ids: string[]): Promise<number> {
-  let n = 0;
-  for (const rid of ids) if (await archiveRecord(e, rid)) n++;
-  return n;
+  if (!ids.length) return 0;
+  const CHUNK = 20;
+  let total = 0;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const chunk = ids.slice(i, i + CHUNK);
+    const ph = chunk.map(() => '?').join(',');
+    const r = await e(`UPDATE records SET archived_at=datetime('now') WHERE id IN (${ph}) AND archived_at IS NULL`, chunk);
+    total += r.meta.changes;
+  }
+  return total;
 }

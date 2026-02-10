@@ -13,7 +13,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 
-import { bindingExecutor, bindingR2Store } from '../src/services/executor.js';
+import { bindingExecutor, bindingR2Store, QueryTracker } from '../src/services/executor.js';
 import { ensureInitialized } from '../src/services/d1.js';
 import { registerTools } from '../src/tools/index.js';
 import { registerResources } from '../src/resources/index.js';
@@ -31,6 +31,30 @@ interface Env {
 }
 
 // =============================================================================
+// Rate Limiter — token bucket per session (DO is single-threaded, no mutex needed)
+// =============================================================================
+
+class RateLimiter {
+  private tokens: number;
+  private lastRefill: number;
+  constructor(private maxTokens: number, private refillPerSecond: number) {
+    this.tokens = maxTokens;
+    this.lastRefill = Date.now();
+  }
+  consume(cost = 1): boolean {
+    this.refill();
+    if (this.tokens >= cost) { this.tokens -= cost; return true; }
+    return false;
+  }
+  private refill() {
+    const now = Date.now();
+    const elapsed = (now - this.lastRefill) / 1000;
+    this.tokens = Math.min(this.maxTokens, this.tokens + elapsed * this.refillPerSecond);
+    this.lastRefill = now;
+  }
+}
+
+// =============================================================================
 // MCP Agent — Durable Object with all three primitives
 // =============================================================================
 
@@ -45,18 +69,34 @@ export class SubstrateMCP extends McpAgent<Env> {
     }],
   });
 
+  // Rate limit: 120 queries/min burst, 10/sec refill.
+  // Each tool call uses 3-6 queries, so this allows ~20-40 tool calls/min sustained.
+  private limiter = new RateLimiter(120, 10);
+  private tracker = new QueryTracker();
+
   async init() {
-    // D1 via binding — no REST API overhead
-    const d1 = bindingExecutor(this.env.DB);
+    // D1 via binding — with observability tracking
+    const d1 = bindingExecutor(this.env.DB, this.tracker);
     // R2 via binding — no S3 signing overhead
     const r2 = bindingR2Store(this.env.FILES);
 
     // One-time schema init (runs once per DO lifecycle, not per tool call)
     await ensureInitialized(d1);
 
-    // Register all three tiers with binding-backed accessors
-    registerTools(this.server, () => d1, () => r2, () => 'agent');
-    registerResources(this.server, () => d1);
+    // Rate-limited D1 — checks token bucket per query, budget allows multi-query tools
+    const limiter = this.limiter;
+    const rateLimitedD1 = (): typeof d1 => {
+      return ((sql: string, params?: unknown[]) => {
+        if (!limiter.consume()) {
+          return Promise.reject(new Error('Rate limited: too many requests. Wait a moment and retry.'));
+        }
+        return d1(sql, params);
+      }) as typeof d1;
+    };
+
+    // Register all three tiers with rate-limited accessors
+    registerTools(this.server, rateLimitedD1, () => r2, () => 'agent');
+    registerResources(this.server, () => d1); // Resources are read-only, no rate limit
     registerPrompts(this.server, () => d1);
   }
 }
@@ -148,7 +188,7 @@ export class ReaderMCP extends McpAgent<Env> {
         voter: z.string().min(1).describe('Your name or identifier'),
       },
       async (params: Record<string, unknown>) => {
-        const { getRecord } = await import('../src/services/d1.js');
+        const { getRecord, updateRecord } = await import('../src/services/d1.js');
         const rid = params.record_id as string;
         const voter = params.voter as string;
 
@@ -163,12 +203,9 @@ export class ReaderMCP extends McpAgent<Env> {
         }
 
         upvotes.push(voter);
-        data.upvotes = upvotes;
 
-        // Direct D1 update
-        await this.env.DB.prepare("UPDATE records SET data=?, updated_at=datetime('now') WHERE id=?")
-          .bind(JSON.stringify(data), rid)
-          .run();
+        // Use shared executor with optimistic lock — not raw this.env.DB
+        await updateRecord(d1, rid, { upvotes }, rec.updated_at);
 
         return { content: [{ type: 'text' as const, text: JSON.stringify({ success: true, upvotes: upvotes.length, voters: upvotes, title: data.title }) }] };
       },
@@ -180,22 +217,43 @@ export class ReaderMCP extends McpAgent<Env> {
 // Dashboard — read-only human view (the trust layer)
 // =============================================================================
 
+/** Strip YAML frontmatter (---...---) from markdown body and return prose */
+function stripFrontmatter(body: string): string {
+  const trimmed = body.trim();
+  if (!trimmed.startsWith('---')) return trimmed;
+  const endIdx = trimmed.indexOf('---', 3);
+  if (endIdx === -1) return trimmed;
+  return trimmed.slice(endIdx + 3).trim();
+}
+
+/** Get a clean preview: strip frontmatter from body, or fall back to summary */
+function getPreview(data: Record<string, unknown>, maxLen = 200): string {
+  const body = data.body ? String(data.body) : '';
+  const stripped = body ? stripFrontmatter(body) : '';
+  // Use first meaningful line of prose (skip headings)
+  if (stripped) {
+    const lines = stripped.split('\n').filter(l => l.trim() && !l.trim().startsWith('#'));
+    const prose = lines.join(' ').replace(/\*+/g, '').replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+    return prose.slice(0, maxLen);
+  }
+  // Fallback to summary field
+  const summary = data.summary ? String(data.summary) : '';
+  return summary.slice(0, maxLen);
+}
+
 async function renderDashboard(env: Env): Promise<Response> {
   const db = env.DB;
 
-  // Fetch workspaces
-  const workspaces = await db.prepare('SELECT * FROM workspaces ORDER BY name').all();
-
-  // Fetch all tables with columns
-  const tables = await db.prepare('SELECT * FROM table_definitions ORDER BY workspace_id, name').all();
-
-  // Fetch all records ordered by most recently updated
-  const records = await db.prepare('SELECT r.*, t.name as table_name, t.workspace_id FROM records r JOIN table_definitions t ON r.table_id = t.id ORDER BY r.updated_at DESC LIMIT 100').all();
-
-  // Fetch stats
-  const recordCount = await db.prepare('SELECT COUNT(*) as cnt FROM records').first<{ cnt: number }>();
-  const fileCount = await db.prepare('SELECT COUNT(*) as cnt, COALESCE(SUM(size_bytes),0) as sz FROM file_metadata').first<{ cnt: number; sz: number }>();
-  const auditCount = await db.prepare("SELECT COUNT(*) as cnt FROM audit_log WHERE timestamp > datetime('now','-1 day')").first<{ cnt: number }>();
+  // Parallel queries — batch independent reads for latency
+  const [workspaces, tables, records, recordCount, fileCount, auditCount, recentAudit] = await Promise.all([
+    db.prepare('SELECT * FROM workspaces ORDER BY name').all(),
+    db.prepare('SELECT * FROM table_definitions ORDER BY workspace_id, name').all(),
+    db.prepare('SELECT r.*, t.name as table_name, t.workspace_id FROM records r JOIN table_definitions t ON r.table_id = t.id ORDER BY r.updated_at DESC LIMIT 100').all(),
+    db.prepare('SELECT COUNT(*) as cnt FROM records').first<{ cnt: number }>(),
+    db.prepare('SELECT COUNT(*) as cnt, COALESCE(SUM(size_bytes),0) as sz FROM file_metadata').first<{ cnt: number; sz: number }>(),
+    db.prepare("SELECT COUNT(*) as cnt FROM audit_log WHERE timestamp > datetime('now','-1 day')").first<{ cnt: number }>(),
+    db.prepare("SELECT action, record_id, actor, timestamp, changes FROM audit_log ORDER BY timestamp DESC LIMIT 5").all(),
+  ]);
 
   // Build status color map
   const statusColors: Record<string, string> = {
@@ -215,11 +273,56 @@ async function renderDashboard(env: Env): Promise<Response> {
     });
   }
 
+  // Sort Content records by publish_date (ascending) for calendar view
+  if (byTable['Content']) {
+    byTable['Content'].sort((a, b) => {
+      const da = String((a.data as Record<string, unknown>).publish_date || '9999');
+      const db2 = String((b.data as Record<string, unknown>).publish_date || '9999');
+      return da.localeCompare(db2);
+    });
+  }
+
+  // Compute pipeline stats for Content table
+  const contentRecs = byTable['Content'] || [];
+  const pipeline: Record<string, number> = {};
+  const propertyCount: Record<string, number> = {};
+  const timelineDates: Record<string, { title: string; status: string; property: string }> = {};
+  for (const r of contentRecs) {
+    const d = r.data as Record<string, unknown>;
+    const st = String(d.status || 'unknown');
+    const prop = String(d.property || '');
+    const pubDate = String(d.publish_date || '');
+    pipeline[st] = (pipeline[st] || 0) + 1;
+    if (prop) propertyCount[prop] = (propertyCount[prop] || 0) + 1;
+    if (pubDate) timelineDates[pubDate] = { title: String(d.title || ''), status: st, property: prop };
+  }
+
+  // Build timeline: next 8 days from earliest publish_date
+  const dates = Object.keys(timelineDates).sort();
+  let timelineStart = dates.length ? dates[0] : new Date().toISOString().slice(0, 10);
+  const timelineDays: Array<{ date: string; day: string; content: { title: string; status: string; property: string } | null }> = [];
+  const startDate = new Date(timelineStart + 'T00:00:00Z');
+  for (let i = 0; i < 8; i++) {
+    const d = new Date(startDate.getTime() + i * 86400000);
+    const iso = d.toISOString().slice(0, 10);
+    const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getUTCDay()];
+    timelineDays.push({ date: iso, day: dayName, content: timelineDates[iso] || null });
+  }
+
+  // Format recent audit entries
+  const auditEntries = recentAudit.results.map((a: any) => {
+    const changes = a.changes ? JSON.parse(a.changes) : {};
+    const title = changes?.after?.title || changes?.before?.title || (a.record_id ? a.record_id.slice(0, 8) : 'record');
+    const ts = String(a.timestamp || '').slice(11, 16); // HH:MM
+    return { action: a.action, actor: a.actor || 'agent', title, time: ts };
+  });
+
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="60">
 <title>Substrate — Dashboard</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -232,21 +335,41 @@ async function renderDashboard(env: Env): Promise<Response> {
   .stat-label { font-size: 0.75rem; color: #737373; margin-top: 0.25rem; }
   .section { margin-bottom: 2rem; }
   .section-title { font-size: 0.875rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #737373; margin-bottom: 0.75rem; }
+  .section-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+  .pipeline-item { font-size: 0.6875rem; padding: 0.125rem 0.5rem; border-radius: 9999px; }
+  .property-item { font-size: 0.6875rem; padding: 0.125rem 0.375rem; border-radius: 4px; background: #1a1a2e; color: #818cf8; }
+  .timeline { display: flex; gap: 0.25rem; margin-bottom: 1.25rem; overflow-x: auto; }
+  .tl-day { flex: 1; min-width: 90px; background: #171717; border: 1px solid #262626; border-radius: 6px; padding: 0.5rem; text-align: center; }
+  .tl-day.has-content { border-color: #10b981; }
+  .tl-day.is-gap { border-style: dashed; border-color: #dc2626; }
+  .tl-date { font-size: 0.6875rem; color: #525252; }
+  .tl-dayname { font-size: 0.75rem; font-weight: 500; color: #a3a3a3; margin-bottom: 0.25rem; }
+  .tl-title { font-size: 0.625rem; color: #d4d4d4; line-height: 1.3; }
+  .tl-empty { font-size: 0.625rem; color: #dc2626; font-style: italic; }
+  .tl-prop { font-size: 0.5625rem; margin-top: 0.125rem; }
   .card { background: #171717; border: 1px solid #262626; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 0.5rem; }
+  .card.needs-writer { border-style: dashed; border-color: #f59e0b; }
   .card-title { font-weight: 500; margin-bottom: 0.5rem; }
   .card-meta { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
   .badge { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+  .needs-writer-badge { font-size: 0.6875rem; color: #f59e0b; background: #f59e0b20; padding: 0.125rem 0.5rem; border-radius: 9999px; }
   .tag { display: inline-block; padding: 0.125rem 0.375rem; border-radius: 4px; font-size: 0.6875rem; background: #262626; color: #a3a3a3; margin-right: 0.25rem; }
   .meta-item { font-size: 0.8125rem; color: #a3a3a3; }
   .agent-label { font-size: 0.75rem; color: #f59e0b; }
   .upvote { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; color: #f472b6; background: #f472b620; padding: 0.125rem 0.5rem; border-radius: 9999px; }
   .upvote-voters { font-size: 0.6875rem; color: #a3a3a3; margin-left: 0.25rem; }
   .body-preview { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #262626; font-size: 0.8125rem; color: #a3a3a3; line-height: 1.5; max-height: 4.5em; overflow: hidden; }
+  .summary-preview { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #262626; font-size: 0.8125rem; color: #737373; font-style: italic; line-height: 1.5; max-height: 4.5em; overflow: hidden; }
   .empty { color: #525252; font-style: italic; padding: 1rem 0; }
   a { color: #60a5fa; text-decoration: none; }
   a:hover { text-decoration: underline; }
+  .audit { margin-bottom: 2rem; }
+  .audit-entry { font-size: 0.75rem; color: #737373; padding: 0.25rem 0; border-bottom: 1px solid #1a1a1a; display: flex; gap: 0.5rem; }
+  .audit-time { color: #525252; min-width: 3rem; font-family: monospace; }
+  .audit-action { color: #a3a3a3; }
+  .audit-actor { color: #f59e0b; }
   .footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #262626; color: #525252; font-size: 0.75rem; }
-  .endpoints { display: flex; gap: 1rem; margin-top: 0.5rem; }
+  .endpoints { display: flex; gap: 1rem; margin-top: 0.5rem; flex-wrap: wrap; }
   .endpoint { background: #171717; border: 1px solid #262626; border-radius: 4px; padding: 0.25rem 0.5rem; font-family: monospace; font-size: 0.75rem; }
 </style>
 </head>
@@ -262,10 +385,33 @@ async function renderDashboard(env: Env): Promise<Response> {
   <div class="stat"><div class="stat-value">${auditCount?.cnt ?? 0}</div><div class="stat-label">Changes (24h)</div></div>
 </div>
 
-${Object.entries(byTable).map(([tableName, recs]) => `
+${contentRecs.length ? `
 <div class="section">
-  <div class="section-title">${esc(tableName)} (${recs.length})</div>
-  ${recs.map(r => {
+  <div class="section-title">Content (${contentRecs.length})</div>
+  <div class="section-meta">
+    ${Object.entries(pipeline).map(([st, cnt]) => {
+      const c = statusColors[st] || '#6b7280';
+      return `<span class="pipeline-item" style="background:${c}20;color:${c}">${esc(st)}: ${cnt}</span>`;
+    }).join('')}
+    ${Object.entries(propertyCount).map(([p, cnt]) =>
+      `<span class="property-item">${esc(p)}: ${cnt}</span>`
+    ).join('')}
+  </div>
+  <div class="timeline">
+    ${timelineDays.map(td => {
+      const hasContent = !!td.content;
+      const cls = hasContent ? 'tl-day has-content' : 'tl-day is-gap';
+      const stColor = hasContent ? (statusColors[td.content!.status] || '#6b7280') : '';
+      return `<div class="${cls}">
+        <div class="tl-dayname">${esc(td.day)}</div>
+        <div class="tl-date">${esc(td.date.slice(5))}</div>
+        ${hasContent
+          ? `<div class="tl-title" style="color:${stColor}">${esc(td.content!.title.length > 30 ? td.content!.title.slice(0, 28) + '…' : td.content!.title)}</div><div class="tl-prop">${esc(td.content!.property)}</div>`
+          : `<div class="tl-empty">gap</div>`}
+      </div>`;
+    }).join('')}
+  </div>
+  ${contentRecs.map(r => {
     const d = r.data as Record<string, unknown>;
     const status = String(d.status || '');
     const color = statusColors[status] || '#6b7280';
@@ -274,19 +420,45 @@ ${Object.entries(byTable).map(([tableName, recs]) => `
     const date = d.publish_date ? String(d.publish_date) : '';
     const agent = d.assigned_agent ? String(d.assigned_agent) : '';
     const tags = Array.isArray(d.tags) ? d.tags as string[] : [];
-    const body = d.body ? String(d.body).slice(0, 200) : '';
+    const preview = getPreview(d);
     const upvotes = Array.isArray(d.upvotes) ? d.upvotes as string[] : [];
-    return `<div class="card">
+    const needsWriter = status === 'draft' && !agent;
+    const hasBody = !!(d.body && String(d.body).trim());
+    return `<div class="card${needsWriter ? ' needs-writer' : ''}">
       <div class="card-title">${esc(title)}</div>
       <div class="card-meta">
         ${status ? `<span class="badge" style="background:${color}20;color:${color}">${esc(status)}</span>` : ''}
         ${property ? `<span class="meta-item">${esc(property)}</span>` : ''}
         ${date ? `<span class="meta-item">${esc(date)}</span>` : ''}
         ${agent ? `<span class="agent-label">${esc(agent)}</span>` : ''}
+        ${needsWriter ? `<span class="needs-writer-badge">needs writer</span>` : ''}
         ${upvotes.length ? `<span class="upvote">\u25B2 ${upvotes.length}<span class="upvote-voters">${upvotes.map(v => esc(v)).join(', ')}</span></span>` : ''}
       </div>
       ${tags.length ? `<div style="margin-top:0.5rem">${tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>` : ''}
-      ${body ? `<div class="body-preview">${esc(body)}...</div>` : ''}
+      ${preview ? `<div class="${hasBody ? 'body-preview' : 'summary-preview'}">${esc(preview)}${preview.length >= 200 ? '…' : ''}</div>` : ''}
+    </div>`;
+  }).join('')}
+</div>
+` : ''}
+
+${Object.entries(byTable).filter(([name]) => name !== 'Content').map(([tableName, recs]) => `
+<div class="section">
+  <div class="section-title">${esc(tableName)} (${recs.length})</div>
+  ${recs.map(r => {
+    const d = r.data as Record<string, unknown>;
+    const status = String(d.status || '');
+    const color = statusColors[status] || '#6b7280';
+    const title = String(d.title || d.name || r.id);
+    const property = d.property ? String(d.property) : '';
+    const tags = Array.isArray(d.tags) ? d.tags as string[] : [];
+    const description = d.description ? String(d.description) : '';
+    return `<div class="card">
+      <div class="card-title">${esc(title)}</div>
+      <div class="card-meta">
+        ${status ? `<span class="badge" style="background:${color}20;color:${color}">${esc(status)}</span>` : ''}
+        ${property ? `<span class="meta-item">${esc(property)}</span>` : ''}
+      </div>
+      ${description ? `<div class="body-preview">${esc(description.slice(0, 200))}</div>` : ''}
     </div>`;
   }).join('')}
 </div>
@@ -294,11 +466,25 @@ ${Object.entries(byTable).map(([tableName, recs]) => `
 
 ${Object.keys(byTable).length === 0 ? '<p class="empty">No records yet. Connect an agent and start creating.</p>' : ''}
 
+${auditEntries.length ? `
+<div class="audit">
+  <div class="section-title">Recent Activity</div>
+  ${auditEntries.map((a: any) => `
+    <div class="audit-entry">
+      <span class="audit-time">${esc(a.time)}</span>
+      <span class="audit-actor">${esc(a.actor)}</span>
+      <span class="audit-action">${esc(a.action)} "${esc(String(a.title).slice(0, 50))}"</span>
+    </div>
+  `).join('')}
+</div>
+` : ''}
+
 <div class="footer">
   <div>Substrate v0.1.0 — the UI is optional, the data is real.</div>
   <div class="endpoints">
     <span class="endpoint">/mcp</span> Streamable HTTP
     <span class="endpoint">/sse</span> SSE
+    <span class="endpoint">/reader/mcp</span> Reader (read + upvote)
     <span class="endpoint">/dashboard</span> This view
   </div>
 </div>
@@ -308,7 +494,7 @@ ${Object.keys(byTable).length === 0 ? '<p class="empty">No records yet. Connect 
   return new Response(html, {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
-      'Cache-Control': 'no-cache',
+      'Cache-Control': 'public, max-age=30',
     },
   });
 }
