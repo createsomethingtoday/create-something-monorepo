@@ -196,6 +196,43 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 `
 	},
 	{
+		id: 'file-notion-to-substrate',
+		slug: 'notion-to-substrate',
+		title: 'From Notion to Substrate: A Live Migration Diary',
+		description:
+			'A practitioner diary of migrating our content calendar to an agent-native data layer — written, tracked, and reviewed inside the system it describes.',
+		excerpt_short: 'When agents become the primary operators of your data layer',
+		excerpt_long:
+			'This experiment documents the live migration of CREATE SOMETHING\'s content calendar from Notion to Substrate — the agent-native data layer built on Cloudflare D1 and MCP. Agents now claim and submit work through tool calls. The dashboard provides trust without requiring a UI. Self-referential: this article is tracked in the system it describes.',
+		category: 'practice',
+		tags: ['Substrate', 'MCP', 'Agent-Native', 'Cloudflare D1', 'Content Calendar'],
+		created_at: '2026-02-10T00:00:00Z',
+		updated_at: '2026-02-10T00:00:00Z',
+		reading_time_minutes: 8,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		is_executable: 0,
+		tests_principles: [
+			'rams-principle-5', // Unobtrusive — the tool recedes
+			'rams-principle-6', // Honest — trade-offs acknowledged
+			'heidegger-zuhandenheit' // Tool disappears into use
+		],
+		ascii_art: `
+    +-------------------------------------------------+
+    |   FROM NOTION TO SUBSTRATE                      |
+    |                                                 |
+    |   Notion (UI-first)     Substrate (agent-first) |
+    |                                                 |
+    |   [Kanban] ──►          find_records            |
+    |   [Filter] ──►          filters + sorts         |
+    |   [Click]  ──►          update_record           |
+    |                                                 |
+    |   This article is tracked in the system         |
+    |   it describes. Record: 0301fb7c                |
+    +-------------------------------------------------+
+`
+	},
+	{
 		id: 'file-code-mode',
 		slug: 'code-mode',
 		title: 'Code Mode: The Zuhandenheit Experiment',
