@@ -57,9 +57,8 @@
 <section class="products-section">
 	<div class="section-inner">
 		<div class="section-header reveal">
-			<p class="section-eyebrow">Flagship Tools</p>
-			<h2 class="section-title">Start here</h2>
-			<p class="section-subtitle">Install in 2 minutes. Used by the same agents we build custom MCPs for.</p>
+			<h2 class="section-eyebrow">Flagship Tools</h2>
+			<p class="section-desc">Install in 2 minutes. Used by the same agents we build custom MCPs for.</p>
 		</div>
 		<div class="featured-grid">
 			{#each featured as product, index}
@@ -84,9 +83,8 @@
 <section class="products-section">
 	<div class="section-inner">
 		<div class="section-header reveal">
-			<p class="section-eyebrow">Developer Tools</p>
-			<h2 class="section-title">Methodology as code</h2>
-			<p class="section-subtitle">The Subtractive Triad — audit, learn, and see — packaged for your editor.</p>
+			<h2 class="section-eyebrow">Developer Tools</h2>
+			<p class="section-desc">The Subtractive Triad — audit, learn, and see — packaged for your editor.</p>
 		</div>
 		<div class="category-grid">
 			{#each devTools as product, index}
@@ -117,9 +115,8 @@
 <section class="products-section">
 	<div class="section-inner">
 		<div class="section-header reveal">
-			<p class="section-eyebrow">Framework & Infrastructure</p>
-			<h2 class="section-title">The chassis</h2>
-			<p class="section-subtitle">Structural components for agent systems. The frame that holds everything together.</p>
+			<h2 class="section-eyebrow">Framework & Infrastructure</h2>
+			<p class="section-desc">Structural components for agent systems. The frame that holds everything together.</p>
 		</div>
 		<div class="category-grid">
 			{#each framework as product, index}
@@ -145,9 +142,8 @@
 <section class="products-section">
 	<div class="section-inner">
 		<div class="section-header reveal">
-			<p class="section-eyebrow">Integration MCPs</p>
-			<h2 class="section-title">Connect your tools</h2>
-			<p class="section-subtitle">Bridges between the platforms you already use and the agents that serve you.</p>
+			<h2 class="section-eyebrow">Integration MCPs</h2>
+			<p class="section-desc">Bridges between the platforms you already use and the agents that serve you.</p>
 		</div>
 		<div class="category-grid">
 			{#each integrations as product, index}
@@ -170,12 +166,11 @@
 </section>
 
 <!-- Client Portfolio -->
-<section class="products-section client-section">
+<section class="products-section">
 	<div class="section-inner">
 		<div class="section-header reveal">
-			<p class="section-eyebrow">Client Portfolio</p>
-			<h2 class="section-title">Custom builds</h2>
-			<p class="section-subtitle">MCPs we've built for specific clients and workflows. This is what "custom MCP development" looks like.</p>
+			<h2 class="section-eyebrow">Client Portfolio</h2>
+			<p class="section-desc">MCPs we've built for specific clients and workflows.</p>
 		</div>
 		<div class="client-grid">
 			{#each clientWork as product, index}
@@ -205,7 +200,7 @@
 <!-- CTA -->
 <section class="cta-section">
 	<div class="section-container">
-		<h2 class="cta-heading reveal">Need something custom?</h2>
+		<p class="cta-heading reveal">Need something custom?</p>
 		<p class="cta-subtext reveal">We build MCPs for your specific tools and workflows.</p>
 		<a href="/services" class="cta-link reveal">View services →</a>
 	</div>
@@ -227,7 +222,7 @@
 	/* Hero with grid background */
 	.hero {
 		position: relative;
-		padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem) var(--section-padding, 6rem);
+		padding: 5rem var(--container-padding, 1.5rem) 3rem;
 		overflow: hidden;
 	}
 
@@ -251,18 +246,18 @@
 	}
 
 	.hero-eyebrow {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-caption);
 		text-transform: uppercase;
 		letter-spacing: 0.15em;
 		color: var(--color-fg-muted);
-		margin-bottom: var(--space-5, 1.5rem);
+		margin-bottom: var(--space-3, 0.75rem);
 	}
 
 	.hero-title {
-		font-size: var(--text-display);
+		font-size: var(--text-h1);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-5, 1.5rem);
+		margin-bottom: var(--space-3, 0.75rem);
 		line-height: 1.1;
 		letter-spacing: var(--tracking-tighter, -0.025em);
 	}
@@ -275,37 +270,30 @@
 		line-height: var(--leading-relaxed);
 	}
 
-	/* Section Headers */
+	/* Section Headers — compact: eyebrow + one-line description */
 	.section-header {
-		margin-bottom: var(--space-8, 3rem);
+		margin-bottom: var(--space-5, 1.5rem);
 	}
 
 	.section-eyebrow {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-caption);
 		text-transform: uppercase;
 		letter-spacing: 0.15em;
 		color: var(--color-fg-muted);
-		margin-bottom: var(--space-3, 0.75rem);
-	}
-
-	.section-title {
-		font-size: var(--text-h3, 1.25rem);
 		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-3, 0.75rem);
-		letter-spacing: var(--tracking-tight, -0.015em);
+		margin-bottom: var(--space-2, 0.5rem);
 	}
 
-	.section-subtitle {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
+	.section-desc {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
 		line-height: var(--leading-relaxed);
-		max-width: 40rem;
+		max-width: 36rem;
 	}
 
 	/* Products Section */
 	.products-section {
-		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
+		padding: 3rem var(--container-padding, 1.5rem);
 		border-top: 1px solid var(--color-border-default);
 	}
 
@@ -332,7 +320,7 @@
 
 	/* Product Card — shared base */
 	.product-card {
-		padding: var(--space-6, 2rem);
+		padding: 1.25rem 1.5rem;
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg, 12px);
 		display: flex;
@@ -350,17 +338,17 @@
 
 	/* Featured cards — slightly larger type */
 	.featured-card .product-name {
-		font-size: var(--text-h2);
+		font-size: var(--text-h3, 1.25rem);
 	}
 
 	/* Category cards — compact */
 	.category-card .product-name {
-		font-size: var(--text-h3, 1.25rem);
+		font-size: var(--text-body);
 	}
 
 	/* Client Card — distinct treatment */
 	.client-card {
-		padding: var(--space-6, 2rem);
+		padding: 1.25rem 1.5rem;
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg, 12px);
 		display: flex;
@@ -384,10 +372,10 @@
 	/* Badges */
 	.product-badge {
 		font-size: var(--text-caption);
-		padding: 0.25rem 0.75rem;
+		padding: 0.2rem 0.6rem;
 		border-radius: var(--radius-full, 9999px);
 		width: fit-content;
-		margin-bottom: var(--space-4, 1rem);
+		margin-bottom: var(--space-3, 0.75rem);
 	}
 
 	.client-card-header .product-badge {
@@ -411,24 +399,29 @@
 
 	/* Product content */
 	.product-name {
-		font-size: var(--text-h2);
+		font-size: var(--text-h3, 1.25rem);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-2, 0.5rem);
+		margin-bottom: var(--space-1, 0.25rem);
 	}
 
 	.product-tagline {
-		font-size: var(--text-body);
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-3, 0.75rem);
+		margin-bottom: var(--space-2, 0.5rem);
 	}
 
 	.product-description {
-		font-size: var(--text-body-sm);
+		font-size: var(--text-caption);
 		color: var(--color-fg-tertiary);
 		line-height: var(--leading-relaxed);
 		flex: 1;
-		margin-bottom: var(--space-4, 1rem);
+		margin-bottom: var(--space-3, 0.75rem);
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
 	}
 
 	.product-footer {
@@ -478,22 +471,22 @@
 
 	/* CTA */
 	.cta-section {
-		padding: var(--section-padding, 6rem) 0;
+		padding: 3rem 0;
 		border-top: 1px solid var(--color-border-default);
 		text-align: center;
 	}
 
 	.cta-heading {
-		font-size: var(--text-h1);
+		font-size: var(--text-h3, 1.25rem);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-3, 0.75rem);
+		margin-bottom: var(--space-2, 0.5rem);
 	}
 
 	.cta-subtext {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-5, 1.5rem);
+		margin-bottom: var(--space-4, 1rem);
 	}
 
 	.cta-link {
@@ -530,11 +523,11 @@
 
 	@media (max-width: 768px) {
 		.hero {
-			padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
+			padding: 3rem var(--container-padding, 1.5rem) 2rem;
 		}
 
 		.hero-title {
-			font-size: var(--text-h1);
+			font-size: var(--text-h2);
 		}
 
 		.featured-grid,
@@ -544,11 +537,11 @@
 		}
 
 		.products-section {
-			padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
+			padding: 2rem var(--container-padding, 1.5rem);
 		}
 
 		.cta-section {
-			padding: var(--layout-3, 4rem) 0;
+			padding: 2rem 0;
 		}
 
 		.product-footer {
