@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
 	import { onMount } from 'svelte';
-	
+	import { products } from '$lib/data/services';
+
 	// Scroll reveal observer
 	onMount(() => {
 		const observer = new IntersectionObserver(
@@ -14,34 +15,28 @@
 			},
 			{ threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
 		);
-		
+
 		document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
-		
+
 		return () => observer.disconnect();
 	});
-	
-	const products = [
-		{
-			id: 'loom',
-			name: 'Loom',
-			tagline: 'Memory and coordination for AI agents',
-			description: 'Shared memory, smart task routing, crash recovery. Multi-agent coordination for Claude, Cursor, Codex.',
-			badge: 'Free & Open Source'
-		},
-		{
-			id: 'ground',
-			name: 'Ground',
-			tagline: 'Code analysis that checks before it claims',
-			description: 'Stop hallucinated duplicates. Ground requires verification before claims—no more false positives.',
-			badge: 'Free & Open Source'
-		}
-	];
+
+	// Group products by category
+	const featured = products.filter((p) => p.category === 'featured');
+	const devTools = products.filter((p) => p.category === 'developer-tools');
+	const framework = products.filter((p) => p.category === 'framework');
+	const integrations = products.filter((p) => p.category === 'integration');
+	const clientWork = products.filter((p) => p.category === 'client');
+
+	function isExternal(href: string | undefined): boolean {
+		return !!href && href.startsWith('http');
+	}
 </script>
 
 <SEO
-	title="Open Source MCPs | Ground & Loom"
-	description="Free, open source MCP servers. Loom for multi-agent coordination. Ground for verified code analysis. Install in 2 minutes."
-	keywords="MCP, Model Context Protocol, open source, Loom, Ground, multi-agent, code analysis, Claude, Cursor"
+	title="MCP Portfolio | 16+ Open Source MCPs"
+	description="Open source MCP servers for agent coordination, code analysis, scheduling, Notion sync, Webflow, and more. Plus custom MCP development for your tools."
+	keywords="MCP, Model Context Protocol, open source, Loom, Ground, Triad Audit, Notion sync, Webflow, QuickBooks, scheduling, agent coordination, Claude, Cursor"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -50,26 +45,160 @@
 <section class="hero">
 	<div class="hero-grid"></div>
 	<div class="hero-content">
-		<p class="hero-eyebrow reveal">Open Source</p>
+		<p class="hero-eyebrow reveal">Open Source + Custom</p>
 		<h1 class="hero-title reveal">MCPs We've Built</h1>
 		<p class="hero-subtitle reveal">
-			Free tools. Install in 2 minutes. Used by the same agents we build custom MCPs for.
+			{products.length} MCP servers — open source tools, integration bridges, and custom builds for clients.
 		</p>
 	</div>
 </section>
 
-<!-- Products Grid -->
+<!-- Featured Products -->
 <section class="products-section">
-	<div class="products-container">
-		{#each products as product, index}
-			<a href="/products/{product.id}" class="product-card reveal" style="--delay: {index * 100}ms">
-				<div class="product-badge">{product.badge}</div>
-				<h2 class="product-name">{product.name}</h2>
-				<p class="product-tagline">{product.tagline}</p>
-				<p class="product-description">{product.description}</p>
-				<span class="product-cta">Install →</span>
-			</a>
-		{/each}
+	<div class="section-inner">
+		<div class="section-header reveal">
+			<p class="section-eyebrow">Flagship Tools</p>
+			<h2 class="section-title">Start here</h2>
+			<p class="section-subtitle">Install in 2 minutes. Used by the same agents we build custom MCPs for.</p>
+		</div>
+		<div class="featured-grid">
+			{#each featured as product, index}
+				<a href={product.href} class="product-card featured-card reveal" style="--delay: {index * 100}ms">
+					<div class="product-badge badge-oss">{product.badge}</div>
+					<h3 class="product-name">{product.title}</h3>
+					<p class="product-tagline">{product.tagline}</p>
+					<p class="product-description">{product.description}</p>
+					<div class="product-footer">
+						{#if product.npmPackage}
+							<code class="product-npm">{product.npmPackage}</code>
+						{/if}
+						<span class="product-cta">Install →</span>
+					</div>
+				</a>
+			{/each}
+		</div>
+	</div>
+</section>
+
+<!-- Developer Tools -->
+<section class="products-section">
+	<div class="section-inner">
+		<div class="section-header reveal">
+			<p class="section-eyebrow">Developer Tools</p>
+			<h2 class="section-title">Methodology as code</h2>
+			<p class="section-subtitle">The Subtractive Triad — audit, learn, and see — packaged for your editor.</p>
+		</div>
+		<div class="category-grid">
+			{#each devTools as product, index}
+				<a
+					href={product.href}
+					class="product-card category-card reveal"
+					style="--delay: {index * 100}ms"
+					target={isExternal(product.href) ? '_blank' : undefined}
+					rel={isExternal(product.href) ? 'noopener noreferrer' : undefined}
+				>
+					<div class="product-badge badge-oss">{product.badge}</div>
+					<h3 class="product-name">{product.title}</h3>
+					<p class="product-tagline">{product.tagline}</p>
+					<p class="product-description">{product.description}</p>
+					<div class="product-footer">
+						{#if product.npmPackage}
+							<code class="product-npm">{product.npmPackage}</code>
+						{/if}
+						<span class="product-cta">View on GitHub →</span>
+					</div>
+				</a>
+			{/each}
+		</div>
+	</div>
+</section>
+
+<!-- Framework & Infrastructure -->
+<section class="products-section">
+	<div class="section-inner">
+		<div class="section-header reveal">
+			<p class="section-eyebrow">Framework & Infrastructure</p>
+			<h2 class="section-title">The chassis</h2>
+			<p class="section-subtitle">Structural components for agent systems. The frame that holds everything together.</p>
+		</div>
+		<div class="category-grid">
+			{#each framework as product, index}
+				<a
+					href={product.href}
+					class="product-card category-card reveal"
+					style="--delay: {index * 100}ms"
+					target={isExternal(product.href) ? '_blank' : undefined}
+					rel={isExternal(product.href) ? 'noopener noreferrer' : undefined}
+				>
+					<div class="product-badge badge-neutral">{product.badge}</div>
+					<h3 class="product-name">{product.title}</h3>
+					<p class="product-tagline">{product.tagline}</p>
+					<p class="product-description">{product.description}</p>
+					<span class="product-cta">View on GitHub →</span>
+				</a>
+			{/each}
+		</div>
+	</div>
+</section>
+
+<!-- Integration MCPs -->
+<section class="products-section">
+	<div class="section-inner">
+		<div class="section-header reveal">
+			<p class="section-eyebrow">Integration MCPs</p>
+			<h2 class="section-title">Connect your tools</h2>
+			<p class="section-subtitle">Bridges between the platforms you already use and the agents that serve you.</p>
+		</div>
+		<div class="category-grid">
+			{#each integrations as product, index}
+				<a
+					href={product.href}
+					class="product-card category-card reveal"
+					style="--delay: {index * 100}ms"
+					target={isExternal(product.href) ? '_blank' : undefined}
+					rel={isExternal(product.href) ? 'noopener noreferrer' : undefined}
+				>
+					<div class="product-badge badge-neutral">{product.badge}</div>
+					<h3 class="product-name">{product.title}</h3>
+					<p class="product-tagline">{product.tagline}</p>
+					<p class="product-description">{product.description}</p>
+					<span class="product-cta">View on GitHub →</span>
+				</a>
+			{/each}
+		</div>
+	</div>
+</section>
+
+<!-- Client Portfolio -->
+<section class="products-section client-section">
+	<div class="section-inner">
+		<div class="section-header reveal">
+			<p class="section-eyebrow">Client Portfolio</p>
+			<h2 class="section-title">Custom builds</h2>
+			<p class="section-subtitle">MCPs we've built for specific clients and workflows. This is what "custom MCP development" looks like.</p>
+		</div>
+		<div class="client-grid">
+			{#each clientWork as product, index}
+				<div class="client-card reveal" style="--delay: {index * 100}ms">
+					<div class="client-card-header">
+						<div class="product-badge badge-accent">{product.badge}</div>
+						{#if product.client}
+							<span class="client-name">for {product.client}</span>
+						{/if}
+					</div>
+					<h3 class="product-name">{product.title}</h3>
+					<p class="product-tagline">{product.tagline}</p>
+					<p class="product-description">{product.description}</p>
+					{#if product.integrations && product.integrations.length > 0}
+						<div class="integration-tags">
+							{#each product.integrations as integration}
+								<span class="integration-tag">{integration}</span>
+							{/each}
+						</div>
+					{/if}
+				</div>
+			{/each}
+		</div>
 	</div>
 </section>
 
@@ -89,18 +218,23 @@
 		margin: 0 auto;
 		padding: 0 var(--container-padding, 1.5rem);
 	}
-	
+
+	.section-inner {
+		max-width: var(--content-width-xl);
+		margin: 0 auto;
+	}
+
 	/* Hero with grid background */
 	.hero {
 		position: relative;
 		padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem) var(--section-padding, 6rem);
 		overflow: hidden;
 	}
-	
+
 	.hero-grid {
 		position: absolute;
 		inset: 0;
-		background-image: 
+		background-image:
 			linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
 			linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 		background-size: 60px 60px;
@@ -108,14 +242,14 @@
 		-webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 80%);
 		pointer-events: none;
 	}
-	
+
 	.hero-content {
 		position: relative;
 		text-align: center;
 		max-width: var(--content-width-xl);
 		margin: 0 auto;
 	}
-	
+
 	.hero-eyebrow {
 		font-size: var(--text-body-sm);
 		text-transform: uppercase;
@@ -123,7 +257,7 @@
 		color: var(--color-fg-muted);
 		margin-bottom: var(--space-5, 1.5rem);
 	}
-	
+
 	.hero-title {
 		font-size: var(--text-display);
 		font-weight: var(--font-semibold);
@@ -132,7 +266,7 @@
 		line-height: 1.1;
 		letter-spacing: var(--tracking-tighter, -0.025em);
 	}
-	
+
 	.hero-subtitle {
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-secondary);
@@ -140,60 +274,155 @@
 		margin: 0 auto;
 		line-height: var(--leading-relaxed);
 	}
-	
+
+	/* Section Headers */
+	.section-header {
+		margin-bottom: var(--space-8, 3rem);
+	}
+
+	.section-eyebrow {
+		font-size: var(--text-body-sm);
+		text-transform: uppercase;
+		letter-spacing: 0.15em;
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-3, 0.75rem);
+	}
+
+	.section-title {
+		font-size: var(--text-h1);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-3, 0.75rem);
+		letter-spacing: var(--tracking-tight, -0.015em);
+	}
+
+	.section-subtitle {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+		max-width: 40rem;
+	}
+
 	/* Products Section */
 	.products-section {
 		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
 		border-top: 1px solid var(--color-border-default);
 	}
-	
-	.products-container {
-		max-width: var(--content-width-xl);
-		margin: 0 auto;
+
+	/* Featured Grid — 2 col, larger cards */
+	.featured-grid {
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
 		gap: var(--space-4, 1rem);
 	}
-	
+
+	/* Category Grid — 3 col for smaller cards */
+	.category-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-4, 1rem);
+	}
+
+	/* Client Grid — 2 col */
+	.client-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: var(--space-4, 1rem);
+	}
+
+	/* Product Card — shared base */
 	.product-card {
 		padding: var(--space-6, 2rem);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg, 12px);
 		display: flex;
 		flex-direction: column;
-		transition: 
+		transition:
 			border-color var(--duration-micro, 200ms) var(--ease-standard),
 			transform var(--duration-micro, 200ms) var(--ease-standard);
+		text-decoration: none;
 	}
-	
+
 	.product-card:hover {
 		border-color: var(--color-border-emphasis);
 		transform: translateY(-2px);
 	}
-	
+
+	/* Featured cards — slightly larger type */
+	.featured-card .product-name {
+		font-size: var(--text-h2);
+	}
+
+	/* Category cards — compact */
+	.category-card .product-name {
+		font-size: var(--text-h3, 1.25rem);
+	}
+
+	/* Client Card — distinct treatment */
+	.client-card {
+		padding: var(--space-6, 2rem);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg, 12px);
+		display: flex;
+		flex-direction: column;
+		background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.02) 100%);
+	}
+
+	.client-card-header {
+		display: flex;
+		align-items: center;
+		gap: var(--space-3, 0.75rem);
+		margin-bottom: var(--space-4, 1rem);
+	}
+
+	.client-name {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+		font-style: italic;
+	}
+
+	/* Badges */
 	.product-badge {
 		font-size: var(--text-caption);
-		color: var(--color-success);
-		background: var(--color-success-muted);
 		padding: 0.25rem 0.75rem;
 		border-radius: var(--radius-full, 9999px);
 		width: fit-content;
 		margin-bottom: var(--space-4, 1rem);
 	}
-	
+
+	.client-card-header .product-badge {
+		margin-bottom: 0;
+	}
+
+	.badge-oss {
+		color: var(--color-success);
+		background: var(--color-success-muted);
+	}
+
+	.badge-neutral {
+		color: var(--color-fg-secondary);
+		background: rgba(255, 255, 255, 0.06);
+	}
+
+	.badge-accent {
+		color: var(--color-accent, #a78bfa);
+		background: rgba(167, 139, 250, 0.1);
+	}
+
+	/* Product content */
 	.product-name {
 		font-size: var(--text-h2);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 		margin-bottom: var(--space-2, 0.5rem);
 	}
-	
+
 	.product-tagline {
 		font-size: var(--text-body);
 		color: var(--color-fg-secondary);
 		margin-bottom: var(--space-3, 0.75rem);
 	}
-	
+
 	.product-description {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
@@ -201,66 +430,134 @@
 		flex: 1;
 		margin-bottom: var(--space-4, 1rem);
 	}
-	
+
+	.product-footer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-3, 0.75rem);
+	}
+
+	.product-npm {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		background: rgba(255, 255, 255, 0.04);
+		padding: 0.2rem 0.5rem;
+		border-radius: var(--radius-sm, 4px);
+		font-family: var(--font-mono, monospace);
+	}
+
 	.product-cta {
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-secondary);
 		transition: color var(--duration-micro, 200ms) var(--ease-standard);
+		margin-left: auto;
 	}
-	
+
 	.product-card:hover .product-cta {
 		color: var(--color-fg-primary);
 	}
-	
+
+	/* Integration tags */
+	.integration-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2, 0.5rem);
+		margin-top: auto;
+	}
+
+	.integration-tag {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		background: rgba(255, 255, 255, 0.04);
+		padding: 0.2rem 0.6rem;
+		border-radius: var(--radius-sm, 4px);
+		border: 1px solid var(--color-border-default);
+	}
+
 	/* CTA */
 	.cta-section {
 		padding: var(--section-padding, 6rem) 0;
 		border-top: 1px solid var(--color-border-default);
 		text-align: center;
 	}
-	
+
 	.cta-heading {
 		font-size: var(--text-h1);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 		margin-bottom: var(--space-3, 0.75rem);
 	}
-	
+
 	.cta-subtext {
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-secondary);
 		margin-bottom: var(--space-5, 1.5rem);
 	}
-	
+
 	.cta-link {
 		font-size: var(--text-body);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-secondary);
 		transition: color var(--duration-micro, 200ms) var(--ease-standard);
 	}
-	
+
 	.cta-link:hover {
 		color: var(--color-fg-primary);
 	}
-	
+
+	/* Scroll reveal animation */
+	:global(.reveal) {
+		opacity: 0;
+		transform: translateY(16px);
+		transition:
+			opacity var(--duration-standard, 400ms) var(--ease-standard) var(--delay, 0ms),
+			transform var(--duration-standard, 400ms) var(--ease-standard) var(--delay, 0ms);
+	}
+
+	:global(.reveal.visible) {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
 	/* Responsive */
+	@media (max-width: 1024px) {
+		.category-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+
 	@media (max-width: 768px) {
 		.hero {
 			padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
 		}
-		
+
 		.hero-title {
 			font-size: var(--text-h1);
 		}
-		
-		.products-container {
+
+		.featured-grid,
+		.category-grid,
+		.client-grid {
 			grid-template-columns: 1fr;
 		}
-		
-		.products-section,
+
+		.products-section {
+			padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
+		}
+
 		.cta-section {
 			padding: var(--layout-3, 4rem) 0;
+		}
+
+		.product-footer {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+
+		.product-cta {
+			margin-left: 0;
 		}
 	}
 </style>
