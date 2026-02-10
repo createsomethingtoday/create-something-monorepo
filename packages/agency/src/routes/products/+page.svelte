@@ -272,6 +272,8 @@
 
 	/* Section Headers — compact: eyebrow + one-line description */
 	.section-header {
+		display: flex;
+		flex-direction: column;
 		margin-bottom: var(--space-5, 1.5rem);
 	}
 
@@ -288,7 +290,6 @@
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
 		line-height: var(--leading-relaxed);
-		max-width: 36rem;
 		text-wrap: balance;
 	}
 
