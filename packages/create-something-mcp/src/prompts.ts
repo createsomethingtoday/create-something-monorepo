@@ -307,90 +307,83 @@ Synthesize findings into:
       const selectedDomain = domain || 'general';
       const autoDetect = !host || host === 'auto';
 
-      // Build host context based on selection or auto-detect guidance
-      let hostContext: string;
+      // Build host-specific or auto-detect content
+      let hostSection: string;
+
       if (autoDetect) {
-        hostContext = `The user hasn't specified which host they're using. Determine this from context:
-- If you're running inside an IDE with file editing capabilities, they're likely in **Cursor**.
-- If you're running with access to a project folder and git, they're likely in **Codex**.
-- If you're in a conversation thread with no file system access, they're likely in **Claude Desktop**.
+        // Auto mode: brief summaries only, instruct model to read the right resource
+        const summaries = HOST_PLAYBOOKS.map(p =>
+          `- **${p.name}**: ${p.description} Best for: ${p.bestFor.slice(0, 2).join(', ')}.`
+        ).join('\n');
 
-Once you determine the host, use the appropriate playbook below.`;
+        hostSection = `The user hasn't specified which host they're using. Determine from context:
+- IDE with file editing → **Cursor**
+- Project folder with git → **Codex**
+- Conversation thread → **Claude Desktop**
+
+Available hosts:
+${summaries}
+
+Once you determine the host, read \`playbooks://hosts/{slug}\` for the full playbook (e.g., \`playbooks://hosts/codex\`).`;
       } else {
+        // Specific host: embed only that host's playbook
         const playbook = HOST_PLAYBOOKS.find(p => p.slug === host);
-        hostContext = playbook
-          ? `The user is working in **${playbook.name}**.\n\n${playbook.mentalModel}`
-          : `Host: ${host}`;
-      }
+        if (playbook) {
+          const relevantPatterns = playbook.workflowPatterns
+            .filter(wp => !wp.domain || wp.domain === selectedDomain || wp.domain === 'general')
+            .map(wp => `  - **${wp.name}**: ${wp.description}`)
+            .join('\n');
 
-      // Build the full playbook reference
-      const playbookReference = HOST_PLAYBOOKS.map(p => {
-        const relevantPatterns = p.workflowPatterns
-          .filter(wp => !wp.domain || wp.domain === selectedDomain || wp.domain === 'general')
-          .map(wp => `  - **${wp.name}**: ${wp.description}`)
-          .join('\n');
+          hostSection = `The user is working in **${playbook.name}**.
 
-        return `### ${p.name}
-**Mental Model:** ${p.mentalModel}
+**Mental Model:** ${playbook.mentalModel}
 
-**Best for:** ${p.bestFor.join(', ')}
+**Best for:** ${playbook.bestFor.join(', ')}
 
 **Anti-patterns to avoid:**
-${p.antiPatterns.map(a => `- ${a}`).join('\n')}
+${playbook.antiPatterns.map(a => `- ${a}`).join('\n')}
 
-**Relevant workflow patterns:**
+**Workflow patterns:**
 ${relevantPatterns}
 
-${p.folderTemplate ? `**Recommended folder structure:**
+${playbook.folderTemplate ? `**Folder structure:**
 \`\`\`
-${p.folderTemplate.structure}
-\`\`\`` : ''}`;
-      }).join('\n\n---\n\n');
+${playbook.folderTemplate.structure}
+\`\`\`
 
-      // Build the graduation path reference
-      const graduationRef = GRADUATION_PATH.stages.map(s =>
-        `**Stage ${s.stage} — ${s.host}:** ${s.trigger}. Graduate when: ${s.graduationSignal}`
-      ).join('\n');
+**Key files:**
+${playbook.folderTemplate.keyFiles.map(f => `- \`${f.path}\`: ${f.purpose}`).join('\n')}` : ''}`;
+        } else {
+          hostSection = `Host: ${host}`;
+        }
+      }
 
       return {
         messages: [{
           role: 'user' as const,
           content: {
             type: 'text' as const,
-            text: `You are a workflow advisor helping a user set up their AI-assisted work environment. Your goal is to move them from just "asking questions" (Database tier) to producing real outcomes (Automation/Judgment tiers).
+            text: `You are a workflow advisor helping a user set up their AI-assisted work environment. Your goal is to move them from just "asking questions" to producing real outcomes.
 
-${hostContext}
-
-**User's domain:** ${selectedDomain}
+**Domain:** ${selectedDomain}
 
 ---
 
-## Host Playbooks Reference
-
-${playbookReference}
-
----
-
-## The Graduation Path
-
-${graduationRef}
+${hostSection}
 
 ---
 
 ## Your Task
 
-Based on the user's host and domain, provide a personalized workflow setup guide:
+Provide a personalized workflow setup guide:
 
 1. **Confirm their host** — verify or detect which environment they're in
-2. **Assess their current usage** — are they mostly asking questions (Database tier) or producing outcomes?
-3. **Recommend a workflow** — pick the most relevant workflow pattern for their domain
-4. **Set up their structure** — provide the folder structure, config files, and key files they need
-5. **Identify anti-patterns** — warn them about the most common mistakes for their host
-6. **Suggest next steps** — what should they do first? What's the 5-minute quick win?
+2. **Recommend a workflow** — pick the most relevant pattern for their domain
+3. **Set up their structure** — folder structure, config files, and key files
+4. **Identify anti-patterns** — the most common mistakes for their host
+5. **Suggest next steps** — the 5-minute quick win to start getting value
 
-Be specific and actionable. Use plain language — the user may not be technical. Avoid jargon. Focus on outcomes, not technology.
-
-If they're in Claude Desktop and their needs suggest Codex would serve them better, gently suggest the graduation path — but don't push. Meet them where they are.`
+Be specific and actionable. Plain language — the user may not be technical.`
           }
         }]
       };
@@ -412,70 +405,47 @@ If they're in Claude Desktop and their needs suggest Codex would serve them bett
       const selectedType = task_type || 'general';
       const comparison = HOST_COMPARISONS.find(c => c.taskType === selectedType);
 
-      // Build the comparison matrix for all task types
-      const fullMatrix = HOST_COMPARISONS.map(c => {
-        const recs = c.recommendations
-          .map(r => `  - **${r.host}** (${r.fit}): ${r.reason}`)
-          .join('\n');
-        return `### ${c.taskType}\n${recs}`;
-      }).join('\n\n');
-
-      // Build MCP patterns reference
-      const mcpPatterns = MCP_HOST_PATTERNS.patterns.map(p =>
-        `### ${p.aspect}\n- **Codex:** ${p.codex}\n- **Cursor:** ${p.cursor}\n- **Claude Desktop:** ${p.claudeDesktop}`
-      ).join('\n\n');
-
-      // Highlighted comparison for the requested type
+      // Only send the focused comparison for the requested task type
       const focusedComparison = comparison
         ? comparison.recommendations
             .map(r => `- **${r.host}** [${r.fit.toUpperCase()}]: ${r.reason}`)
             .join('\n')
-        : 'No specific comparison available for this task type.';
+        : 'No specific comparison available. Read `playbooks://comparison` for the full matrix.';
+
+      // Brief MCP patterns (one line each, not full paragraphs)
+      const mcpBrief = MCP_HOST_PATTERNS.patterns.map(p =>
+        `- **${p.aspect}**: Codex (autonomous), Cursor (visible), Claude Desktop (conversational)`
+      ).join('\n');
 
       return {
         messages: [{
           role: 'user' as const,
           content: {
             type: 'text' as const,
-            text: `You are helping a user choose the right MCP host for their work. Provide clear, opinionated guidance — not "it depends" but "here's what I'd recommend and why."
+            text: `You are helping a user choose the right MCP host. Be direct and opinionated.
 
-**Task type in focus:** ${selectedType}
+**Task type:** ${selectedType}
 
-## Recommendation for ${selectedType}
+## Recommendations
 
 ${focusedComparison}
 
----
+## MCP behavior by host
+${mcpBrief}
 
-## Full Comparison Matrix
+## Graduation path
+${GRADUATION_PATH.stages.map(s => `Stage ${s.stage}: **${s.host}** — ${s.trigger}`).join('\n')}
 
-${fullMatrix}
-
----
-
-## How MCP Usage Differs by Host
-
-${mcpPatterns}
-
----
-
-## The Graduation Path
-
-${GRADUATION_PATH.description}
-
-${GRADUATION_PATH.stages.map(s => `**Stage ${s.stage} — ${s.host}:** ${s.trigger}`).join('\n')}
-
----
+For other task types, read \`playbooks://comparison\`.
 
 ## Your Task
 
-1. **Lead with a clear recommendation** for ${selectedType} — which host and why
-2. **Acknowledge trade-offs** — what the recommended host is less good at
-3. **Explain the MCP difference** — how MCP servers behave differently in each host for this task type
-4. **Provide a quick-start** — what should they do right now to get started with the recommended host?
-5. **Mention the graduation path** if relevant — are they in a host that's limiting them?
+1. **Lead with a clear recommendation** — which host and why
+2. **Acknowledge trade-offs** briefly
+3. **Provide a quick-start** — what to do right now
+4. **Mention graduation** if they're in a host that's limiting them
 
-Be direct and opinionated. Users need clarity, not a feature comparison table. If one host is clearly better for their task, say so.`
+Be direct. Users need clarity, not a feature table.`
           }
         }]
       };
@@ -505,154 +475,61 @@ Be direct and opinionated. Users need clarity, not a feature comparison table. I
       const playbook = HOST_PLAYBOOKS.find(p => p.slug === selectedHost);
       const folderTemplate = playbook?.folderTemplate;
 
-      // Build domain-specific additions
+      // Only include the selected domain's additions
       const domainAdditions: Record<string, string> = {
-        construction: `
-### Construction-Specific Additions
-
-For construction project management, add these to your structure:
-
-- \`rfis/\` — RFI tracking: \`rfis/open/\`, \`rfis/responded/\`, \`rfis/closed/\`
-- \`daily-logs/\` — Daily field reports organized by date
-- \`submittals/\` — Submittal tracking and review status
-- \`safety/\` — Safety reports, incident logs, toolbox talks
-- \`photos/\` — Site photos organized by date or area
-- \`contacts/\` — Subcontractor and stakeholder contact sheets
-
-**Template suggestions for AGENTS.md / .cursor/rules:**
-- Include your company's RFI response standards
-- Define your daily log format and required fields
-- Specify which Procore data to pull via MCP
-- Set tone and formality level for client-facing documents`,
-        legal: `
-### Legal Practice Additions
-
-For legal work, add these to your structure:
-
-- \`cases/\` — One folder per case or matter
-- \`research/\` — Legal research memos and case law
-- \`correspondence/\` — Client and opposing counsel correspondence
-- \`filings/\` — Court filings organized by case
-- \`templates/\` — Standard legal document templates (motions, briefs, letters)
-- \`deadlines/\` — Tracking file for court dates and filing deadlines
-
-**Template suggestions for AGENTS.md / .cursor/rules:**
-- Include your jurisdiction's formatting requirements
-- Define citation style preferences
-- Set confidentiality reminders for client data
-- Specify document naming conventions`,
-        agency: `
-### Agency / Client Services Additions
-
-For agency work, add these to your structure:
-
-- \`clients/\` — One folder per client
-- \`proposals/\` — Proposal drafts and templates
-- \`deliverables/\` — Active deliverable tracking
-- \`brand-guidelines/\` — Client brand guides and assets
-- \`analytics/\` — Performance reports and metrics
-- \`invoicing/\` — Invoice tracking and templates
-
-**Template suggestions for AGENTS.md / .cursor/rules:**
-- Include your agency's voice and style guide
-- Define deliverable review process
-- Specify MCP servers per client (QuickBooks for invoicing, etc.)`,
-        general: `
-### General Workspace
-
-The default structure works well for most use cases. Customize by adding domain-specific folders as your workflow develops.`
+        construction: `Add: \`rfis/\` (open/responded/closed), \`daily-logs/\`, \`submittals/\`, \`safety/\`, \`photos/\`, \`contacts/\`. In instructions: RFI response standards, daily log format, Procore MCP data, client-facing tone.`,
+        legal: `Add: \`cases/\` (per matter), \`research/\`, \`correspondence/\`, \`filings/\`, \`templates/\`, \`deadlines/\`. In instructions: jurisdiction formatting, citation style, confidentiality reminders.`,
+        agency: `Add: \`clients/\` (per client), \`proposals/\`, \`deliverables/\`, \`brand-guidelines/\`, \`analytics/\`, \`invoicing/\`. In instructions: voice/style guide, deliverable review process, MCP servers per client.`,
+        general: `Customize by adding domain-specific folders as your workflow develops.`
       };
 
-      // Team size adjustments
-      const teamAdjustments: Record<string, string> = {
-        solo: 'As a solo user, keep the structure simple. You are both the operator and the reviewer. Focus on clear naming and consistent organization.',
-        'small-team': `With a small team, add coordination layers:
-- \`shared/\` — Files that multiple team members reference
-- \`handoffs/\` — Documents in transition between team members
-- Use clear naming conventions so team members can find files without asking
-- In AGENTS.md, document who is responsible for what`,
-        organization: `For organizational use, add governance:
-- \`standards/\` — Organizational standards and SOPs
-- \`reviews/\` — Documents pending review with clear ownership
-- \`approved/\` — Only documents that have passed review
-- \`archive/\` — Completed and retired documents with dates
-- In AGENTS.md, encode approval workflows and role-based access patterns
-- Consider separate project folders per department or team`
+      // Only the selected team size
+      const teamNote: Record<string, string> = {
+        solo: 'Solo: keep it simple. Focus on clear naming and consistent organization.',
+        'small-team': 'Small team: add `shared/` and `handoffs/`. Clear naming so team members find files without asking.',
+        organization: 'Organization: add `standards/`, `reviews/`, `approved/`, `archive/`. Encode approval workflows in instructions.'
       };
+
+      const instructionFile = selectedHost === 'codex' ? 'AGENTS.md' : '.cursor/rules/';
 
       return {
         messages: [{
           role: 'user' as const,
           content: {
             type: 'text' as const,
-            text: `You are helping a user design their project folder structure for AI-assisted work. This is one of the most impactful decisions they'll make — folder structure IS context architecture. How they organize files determines how well the AI understands their work.
+            text: `Help the user design their project folder structure for AI-assisted work. Folder structure IS context architecture.
 
-**Host:** ${selectedHost === 'codex' ? 'Codex (autonomous, folder-native)' : 'Cursor (IDE, file-aware)'}
+**Host:** ${selectedHost === 'codex' ? 'Codex (autonomous)' : 'Cursor (IDE)'}
 **Domain:** ${selectedDomain}
-**Team size:** ${selectedTeam}
+**Team:** ${selectedTeam}
 
----
+> Your folder structure is your context window. Well-organized = AI understands your work from session one.
 
-## Key Principle
+## Base Template
 
-> Your folder structure is your context window. The AI reads your files to understand your world. A well-organized project folder means the AI starts every session already understanding your work. A messy folder means re-explaining everything every time.
-
----
-
-## Base Template for ${playbook?.name || selectedHost}
-
-${folderTemplate ? `${folderTemplate.description}
-
-\`\`\`
+${folderTemplate ? `\`\`\`
 ${folderTemplate.structure}
 \`\`\`
+${folderTemplate.keyFiles.map(f => `- \`${f.path}\`: ${f.purpose}`).join('\n')}` : 'Use a clear hierarchy with descriptive names.'}
 
-### Key Files
-${folderTemplate.keyFiles.map(f => `- **\`${f.path}\`**: ${f.purpose}`).join('\n')}` : 'Use a clear hierarchical structure with descriptive folder names.'}
-
----
-
+## Domain: ${selectedDomain}
 ${domainAdditions[selectedDomain] || domainAdditions.general}
 
----
+## Team: ${selectedTeam}
+${teamNote[selectedTeam]}
 
-## Team Size: ${selectedTeam}
+## ${instructionFile}
+${selectedHost === 'codex'
+  ? 'AGENTS.md is the most important file. Include: who you are, how you work, what MCPs are available, what to do, what NOT to do. Write it like onboarding a team member.'
+  : '.cursor/rules/ holds .mdc files: style-guide, templates, data-sources, review-process, domain-knowledge. Auto-included when relevant.'}
 
-${teamAdjustments[selectedTeam]}
+## Task
+1. Generate the complete folder structure for their domain and team
+2. Write the key instruction file content
+3. Provide a 5-minute quick start
+4. Suggest what to add later as workflow matures
 
----
-
-## ${selectedHost === 'codex' ? 'AGENTS.md' : '.cursor/rules/'} Guidance
-
-${selectedHost === 'codex' ? `The AGENTS.md file is the single most important file in your project. It tells the AI:
-
-1. **Who you are** — your role, your organization, your responsibilities
-2. **How you work** — your standards, preferred formats, tone and formality
-3. **What's available** — which MCP servers are connected and what they provide
-4. **What to do** — recurring tasks, default behaviors, quality standards
-5. **What NOT to do** — boundaries, confidentiality rules, things that require human approval
-
-Write AGENTS.md as if you're onboarding a new team member. The more specific you are, the better the output. In monorepos, place additional AGENTS.md files in subdirectories — the closest file to the working directory takes precedence.` : `The .cursor/rules/ directory holds .mdc files — each one teaches the AI about a specific aspect of your work:
-
-1. **style-guide.mdc** — writing tone, formality, terminology
-2. **templates.mdc** — how to use your document templates
-3. **data-sources.mdc** — which MCP servers to use for what data
-4. **review-process.mdc** — how documents should be reviewed and approved
-5. **domain-knowledge.mdc** — industry-specific knowledge the AI should know
-
-Each rule file is automatically included when relevant. Think of them as institutional knowledge that compounds over time.`}
-
----
-
-## Your Task
-
-1. **Generate the complete folder structure** — tailored to their domain and team size
-2. **Write the key instruction file** — AGENTS.md or .cursor/rules/ content that's immediately useful
-3. **Explain WHY each folder exists** — help them understand the architecture, not just copy the structure
-4. **Provide a 5-minute quick start** — what's the minimum they need to create right now to start getting value?
-5. **Suggest what to add later** — as their workflow matures, what folders and rules should they add?
-
-Be specific. Use their domain language. If they're in construction, mention RFIs and daily logs. If they're in legal, mention cases and filings. Make it feel tailored to them, not generic.`
+Be specific. Use their domain language.`
           }
         }]
       };

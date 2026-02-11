@@ -96,7 +96,7 @@ export function registerTools(server: McpServer) {
       depth: z.number().min(1).max(3).optional().describe('How many hops to traverse (default: 1)')
     },
     async ({ concept, depth }) => {
-      const result = findRelated(concept, depth || 1);
+      const result = await findRelated(concept, depth || 1);
 
       if (result.nodes.length === 0) {
         return {

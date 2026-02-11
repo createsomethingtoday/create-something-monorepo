@@ -7,7 +7,8 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { PAPERS } from './content/generated/papers.js';
 import { CANON_PAGES } from './content/generated/canon.js';
 import { PATTERNS } from './content/generated/patterns.js';
-import { GRAPH_NODES, GRAPH_EDGES } from './content/generated/graph.js';
+import { GRAPH_NODES } from './content/generated/graph.js';
+// GRAPH_EDGES (800 KB) lazy-loaded only when graph://edges is requested
 import { MASTERS } from './content/masters.js';
 import { PRAXIS_EXERCISES } from './content/praxis.js';
 import { PRODUCTS } from './content/products.js';
@@ -278,19 +279,23 @@ export function registerResources(server: McpServer) {
   server.resource(
     'graph-edges',
     'graph://edges',
-    { description: `Knowledge graph: ${GRAPH_EDGES.length} relationships between concepts`, mimeType: 'application/json' },
-    async (uri) => ({
-      contents: [{
-        uri: uri.href,
-        mimeType: 'application/json',
-        text: JSON.stringify(GRAPH_EDGES.slice(0, 200).map(e => ({
-          source: e.source,
-          target: e.target,
-          type: e.type,
-          reason: e.reason
-        })), null, 2)
-      }]
-    })
+    { description: 'Knowledge graph: relationships between concepts (lazy-loaded on request)', mimeType: 'application/json' },
+    async (uri) => {
+      // Lazy-load: 800 KB of edges only loaded when explicitly requested
+      const { GRAPH_EDGES } = await import('./content/generated/graph.js');
+      return {
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(GRAPH_EDGES.slice(0, 200).map(e => ({
+            source: e.source,
+            target: e.target,
+            type: e.type,
+            reason: e.reason
+          })), null, 2)
+        }]
+      };
+    }
   );
 
   // ==========================================================================

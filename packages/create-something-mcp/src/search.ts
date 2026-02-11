@@ -7,7 +7,8 @@ import type { ContentItem } from './content/types.js';
 import { PAPERS } from './content/generated/papers.js';
 import { CANON_PAGES } from './content/generated/canon.js';
 import { PATTERNS } from './content/generated/patterns.js';
-import { GRAPH_NODES, GRAPH_EDGES } from './content/generated/graph.js';
+import { GRAPH_NODES } from './content/generated/graph.js';
+// GRAPH_EDGES (800 KB) lazy-loaded only when findRelated() is called
 import { MASTERS } from './content/masters.js';
 import { PRAXIS_EXERCISES } from './content/praxis.js';
 import { PRODUCTS } from './content/products.js';
@@ -243,10 +244,21 @@ export function search(
 // Graph traversal
 // ============================================================================
 
-export function findRelated(concept: string, depth = 1): {
+// Cache for lazy-loaded edges
+let _graphEdges: typeof GRAPH_NODES extends Array<infer _> ? any[] : never;
+
+async function getGraphEdges() {
+  if (!_graphEdges) {
+    const mod = await import('./content/generated/graph.js');
+    _graphEdges = mod.GRAPH_EDGES;
+  }
+  return _graphEdges;
+}
+
+export async function findRelated(concept: string, depth = 1): Promise<{
   nodes: { id: string; title: string; type: string; concepts: string[] }[];
   edges: { source: string; target: string; type: string; reason?: string }[];
-} {
+}> {
   const conceptLower = concept.toLowerCase();
 
   // Find nodes that match the concept
@@ -259,6 +271,9 @@ export function findRelated(concept: string, depth = 1): {
   if (matchingNodes.length === 0) {
     return { nodes: [], edges: [] };
   }
+
+  // Lazy-load edges only when graph traversal is needed
+  const GRAPH_EDGES = await getGraphEdges();
 
   const nodeIds = new Set(matchingNodes.map(n => n.id));
   const resultEdges: typeof GRAPH_EDGES = [];
