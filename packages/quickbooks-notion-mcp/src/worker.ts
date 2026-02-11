@@ -17,6 +17,7 @@ export interface Env {
   QBO_ENVIRONMENT: string;
   QBO_REDIRECT_URI: string;
   NOTION_API_KEY: string;
+  COMPOSIO_API_KEY: string;
   QBO_TOKENS: {
     get(key: string): Promise<string | null>;
     put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
@@ -205,6 +206,122 @@ export default {
       }
     }
 
+    // ── Composio Seed: pull tokens from Composio + realmId ────────
+    if (url.pathname === "/auth/composio-seed" && request.method === "POST") {
+      try {
+        const authHeader = request.headers.get("Authorization");
+        if (!authHeader || authHeader !== `Bearer ${env.QBO_CLIENT_SECRET}`) {
+          return Response.json(
+            { error: "Unauthorized" },
+            { status: 401 }
+          );
+        }
+
+        const body = await request.json() as {
+          composio_user_id: string;
+          realm_id: string;
+        };
+
+        if (!body.composio_user_id || !body.realm_id) {
+          return Response.json(
+            { error: "Missing required fields: composio_user_id, realm_id" },
+            { status: 400 }
+          );
+        }
+
+        if (!env.COMPOSIO_API_KEY) {
+          return Response.json(
+            { error: "COMPOSIO_API_KEY not configured on Worker" },
+            { status: 503 }
+          );
+        }
+
+        // Fetch connected accounts from Composio for this user
+        const composioResp = await fetch(
+          `https://backend.composio.dev/api/v1/connectedAccounts?user_uuid=${encodeURIComponent(body.composio_user_id)}&showActiveOnly=true`,
+          { headers: { "x-api-key": env.COMPOSIO_API_KEY } }
+        );
+
+        if (!composioResp.ok) {
+          return Response.json(
+            { error: `Composio API error: ${composioResp.status}` },
+            { status: 502 }
+          );
+        }
+
+        const composioData = await composioResp.json() as {
+          items: Array<{
+            id: string;
+            appUniqueId: string;
+            status: string;
+            connectionParams: {
+              access_token: string;
+              refresh_token: string;
+              token_type?: string;
+              x_refresh_token_expires_in?: number;
+            };
+          }>;
+        };
+
+        // Find the QuickBooks connection
+        const qboConnection = composioData.items.find(
+          item => item.appUniqueId === "quickbooks" && item.status === "ACTIVE"
+        );
+
+        if (!qboConnection) {
+          return Response.json(
+            { error: `No active QuickBooks connection found for Composio user "${body.composio_user_id}". Has the user completed the OAuth flow?` },
+            { status: 404 }
+          );
+        }
+
+        const params = qboConnection.connectionParams;
+        const token = {
+          accessToken: params.access_token,
+          refreshToken: params.refresh_token,
+          accessTokenExpiresAt: new Date(Date.now() + 3600 * 1000).toISOString(),
+          refreshTokenExpiresAt: new Date(Date.now() + (params.x_refresh_token_expires_in || 8726400) * 1000).toISOString(),
+          realmId: body.realm_id,
+          tokenType: params.token_type || "bearer",
+        };
+
+        // Fetch company info for metadata
+        let companyName = "Unknown Company";
+        let email: string | undefined;
+        try {
+          const tempClient = new QuickBooksClient(
+            { getAccessToken: async () => token.accessToken, getRealmId: async () => token.realmId },
+            token.realmId,
+            env.QBO_ENVIRONMENT === "sandbox"
+          );
+          const info = await tempClient.getCompanyInfo<QBOCompanyInfo>();
+          companyName = info.CompanyName || companyName;
+          email = info.Email?.Address;
+        } catch {
+          // Best effort
+        }
+
+        await connManager.addConnection(token, { companyName, email });
+
+        return Response.json({
+          status: "ok",
+          message: `Connection seeded from Composio: ${companyName} (${body.realm_id})`,
+          realmId: body.realm_id,
+          companyName,
+          email,
+          composioAccountId: qboConnection.id,
+        });
+      } catch (error) {
+        logger.error("Composio seed failed", {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return Response.json(
+          { error: `Composio seed failed: ${error instanceof Error ? error.message : String(error)}` },
+          { status: 500 }
+        );
+      }
+    }
+
     // ── MCP endpoint ───────────────────────────────────────────────
     if (url.pathname === "/mcp") {
       try {
@@ -233,7 +350,12 @@ export default {
         // Register tools
         registerQuickBooksTools(server, getClient);
         registerNotionTools(server, getClient, notion);
-        registerConnectionTools(server, connManager, baseUrl);
+        registerConnectionTools(server, connManager, {
+          composioApiKey: env.COMPOSIO_API_KEY,
+          composioAuthConfigId: "fa213136-0e16-4325-9090-355dd0ba2864",
+          qboClientSecret: env.QBO_CLIENT_SECRET,
+          workerBaseUrl: baseUrl,
+        });
 
         // Create web-standard transport (Workers-native)
         const transport = new WebStandardStreamableHTTPServerTransport({
