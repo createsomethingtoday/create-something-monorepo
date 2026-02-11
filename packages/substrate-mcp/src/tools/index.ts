@@ -37,6 +37,16 @@ interface AnyMcpServer {
   tool(name: string, description: string, schema: Record<string, unknown>, handler: (...args: unknown[]) => unknown, opts?: { readOnly?: boolean }): void;
 }
 
+/**
+ * AuthGate — optional authorization context for Worker mode.
+ * In stdio mode this is undefined (single-user, no enforcement).
+ * In Worker mode this provides the authenticated token's role and workspace scope.
+ */
+export interface AuthGate {
+  getRole: () => string;
+  getWorkspaceIds: () => string[];
+}
+
 function ok(data: unknown) {
   return { content: [{ type: 'text' as const, text: JSON.stringify(data) }] };
 }
@@ -71,10 +81,30 @@ export function registerTools(
   getD1: () => D1Exec,
   getR2: () => R2Store,
   getActor: () => string,
+  authGate?: AuthGate,
 ): void {
 
   async function withDb<T>(fn: (e: D1Exec) => Promise<T>): Promise<T> {
     const e = getD1(); await db.ensureInitialized(e); return fn(e);
+  }
+
+  /** Check workspace access against token scope. Returns error string or null. */
+  function checkWorkspaceAccess(wsId: string): string | null {
+    if (!authGate) return null; // stdio mode — no enforcement
+    const wsIds = authGate.getWorkspaceIds();
+    if (wsIds.includes('*')) return null; // wildcard — full access
+    if (wsIds.includes(wsId)) return null; // explicit grant
+    return `Access denied: workspace not in token scope`;
+  }
+
+  /** Check if the current role meets the minimum required role. */
+  function requireRole(minRole: string): string | null {
+    if (!authGate) return null; // stdio mode — no enforcement
+    const hierarchy: Record<string, number> = { reader: 1, editor: 2, admin: 3 };
+    const current = hierarchy[authGate.getRole()] ?? 0;
+    const required = hierarchy[minRole] ?? 0;
+    if (current >= required) return null;
+    return `Requires ${minRole} role (current: ${authGate.getRole()})`;
   }
 
   /** Get table and redact sensitive fields from a record's data */
@@ -288,12 +318,18 @@ export function registerTools(
   server.tool('update_workspace',
     'Update workspace name or description.',
     UpdateWorkspaceSchema.shape,
-    async (p: unknown) => { const i = p as UpdateWorkspaceInput; try { const w = await withDb(e => db.updateWorkspace(e, i.workspace_id, { name: i.name, description: i.description })); return w ? ok({ success: true, workspace: w }) : fail('Workspace not found'); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
+    async (p: unknown) => { const i = p as UpdateWorkspaceInput; try {
+      const wsErr = checkWorkspaceAccess(i.workspace_id);
+      if (wsErr) return fail(wsErr);
+      const w = await withDb(e => db.updateWorkspace(e, i.workspace_id, { name: i.name, description: i.description })); return w ? ok({ success: true, workspace: w }) : fail('Workspace not found');
+    } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   server.tool('archive_workspace',
     'Archive workspace (soft-delete). All contents hidden but preserved.',
     ArchiveWorkspaceSchema.shape,
     async (p: unknown) => { const i = p as ArchiveWorkspaceInput; try {
+      const wsErr = checkWorkspaceAccess(i.workspace_id);
+      if (wsErr) return fail(wsErr);
       const archived = await withDb(async e => {
         const success = await db.archiveWorkspace(e, i.workspace_id);
         if (success) await db.createAuditEntry(e, { workspace_id: i.workspace_id, table_id: '__workspace__', record_id: null, action: 'archive', actor: getActor(), changes: {} });
@@ -306,6 +342,10 @@ export function registerTools(
     'Permanently delete workspace. Requires confirm:true. Cannot be undone.',
     PurgeWorkspaceSchema.shape,
     async (p: unknown) => { const i = p as PurgeWorkspaceInput; try {
+      const wsErr = checkWorkspaceAccess(i.workspace_id);
+      if (wsErr) return fail(wsErr);
+      const roleErr = requireRole(Role.ADMIN);
+      if (roleErr) return fail(roleErr);
       if (!i.confirm) return fail('Set confirm:true to permanently delete. This cannot be undone.');
       return (await withDb(e => db.purgeWorkspace(e, i.workspace_id))) ? ok({ success: true, purged: true }) : fail('Workspace not found');
     } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
@@ -419,6 +459,8 @@ export function registerTools(
     'Create an access token. Returns the raw token (shown once). Admin only.',
     CreateTokenSchema.shape,
     async (p: unknown) => { const i = p as CreateTokenInput; try {
+      const roleErr = requireRole(Role.ADMIN);
+      if (roleErr) return fail(roleErr);
       const rawToken = crypto.randomUUID() + '-' + crypto.randomUUID();
       const token = await withDb(e => db.createAccessToken(e, rawToken, i.label, i.role, i.workspace_ids));
       await withDb(e => db.createAuditEntry(e, { workspace_id: '__system__', table_id: '__tokens__', record_id: token.id, action: 'token_created', actor: getActor(), changes: { label: i.label, role: i.role } }));
@@ -429,8 +471,21 @@ export function registerTools(
     'Revoke an access token by ID. Admin only.',
     RevokeTokenSchema.shape,
     async (p: unknown) => { const i = p as RevokeTokenInput; try {
+      const roleErr = requireRole(Role.ADMIN);
+      if (roleErr) return fail(roleErr);
       const revoked = await withDb(e => db.revokeToken(e, i.token_id));
       if (revoked) await withDb(e => db.createAuditEntry(e, { workspace_id: '__system__', table_id: '__tokens__', record_id: i.token_id, action: 'token_revoked', actor: getActor(), changes: {} }));
       return revoked ? ok({ success: true }) : fail('Token not found');
     } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
+
+  server.tool('list_tokens',
+    'List all access tokens (hashes hidden). Admin only.',
+    {},
+    async () => { try {
+      const roleErr = requireRole(Role.ADMIN);
+      if (roleErr) return fail(roleErr);
+      const tokens = await withDb(e => db.listTokens(e));
+      return ok({ tokens, count: tokens.length });
+    } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } },
+    { readOnly: true });
 }

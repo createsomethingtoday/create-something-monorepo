@@ -4,20 +4,29 @@
  * The agent-native data layer, deployed with a public URL.
  * D1 for structured data, R2 for files, McpAgent for dual transport.
  *
+ * Authentication: Bearer token auth validated at the Worker boundary.
+ * Tokens are SHA-256 hashed and stored in D1 access_tokens table.
+ * Bootstrap mode: if no tokens exist, unauthenticated admin access is granted
+ * so the first token can be created via MCP.
+ *
  * Endpoints:
- *   /mcp  — Streamable HTTP transport (Claude Code, Codex)
- *   /sse  — SSE fallback transport (OpenAI, ChatGPT, Cursor)
- *   /     — Health/info JSON
+ *   /mcp  — Streamable HTTP transport (Claude Code, Codex) [auth required]
+ *   /sse  — SSE fallback transport (OpenAI, ChatGPT, Cursor) [auth required]
+ *   /reader/mcp — Read-only MCP (reader role forced) [auth required]
+ *   /reader/sse — Read-only SSE (reader role forced) [auth required]
+ *   /dashboard  — Human-readable dashboard [public]
+ *   /     — Health/info JSON [public]
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 
 import { bindingExecutor, bindingR2Store, QueryTracker } from '../src/services/executor.js';
-import { ensureInitialized } from '../src/services/d1.js';
+import { ensureInitialized, hashToken } from '../src/services/d1.js';
 import { registerTools } from '../src/tools/index.js';
 import { registerResources } from '../src/resources/index.js';
 import { registerPrompts } from '../src/prompts/index.js';
+import type { AccessToken } from '../src/types.js';
 
 // =============================================================================
 // Types
@@ -28,6 +37,130 @@ interface Env {
   READER_OBJECT: DurableObjectNamespace;
   DB: D1Database;
   FILES: R2Bucket;
+}
+
+/** Auth context serialized into X-Substrate-Auth header for DO consumption. */
+interface AuthContext {
+  actor: string;        // token label (for audit trail)
+  role: string;         // admin | editor | reader
+  workspaceIds: string[]; // ['*'] or specific workspace IDs
+  tokenId: string;      // token ID (for audit / revocation checks)
+}
+
+// =============================================================================
+// Authentication — Bearer token validation at Worker boundary
+// =============================================================================
+
+/**
+ * Validate Bearer token from Authorization header against D1.
+ *
+ * Bootstrap mode: if no access_tokens exist in D1 at all, returns a virtual
+ * admin token so the first real token can be created via MCP tools.
+ * Once any token exists, all requests require valid Bearer auth.
+ */
+async function authenticateRequest(request: Request, db: D1Database): Promise<AccessToken | Response> {
+  const authHeader = request.headers.get('Authorization');
+
+  // Check bootstrap mode — no tokens in system yet
+  try {
+    const count = await db.prepare('SELECT COUNT(*) as cnt FROM access_tokens').first<{ cnt: number }>();
+    if (!count || count.cnt === 0) {
+      // Bootstrap: allow unauthenticated admin access for initial token creation
+      return {
+        id: '__bootstrap__',
+        token_hash: '',
+        label: 'bootstrap-admin',
+        role: 'admin',
+        workspace_ids: ['*'],
+        created_at: new Date().toISOString(),
+        expires_at: null,
+      } as unknown as AccessToken;
+    }
+  } catch {
+    // access_tokens table may not exist yet — treat as bootstrap
+    return {
+      id: '__bootstrap__',
+      token_hash: '',
+      label: 'bootstrap-admin',
+      role: 'admin',
+      workspace_ids: ['*'],
+      created_at: new Date().toISOString(),
+      expires_at: null,
+    } as unknown as AccessToken;
+  }
+
+  // Tokens exist — require Bearer auth
+  if (!authHeader?.startsWith('Bearer ')) {
+    return new Response(JSON.stringify({
+      error: 'Unauthorized',
+      hint: 'Provide Authorization: Bearer <token>. Create tokens via create_token tool.',
+    }), {
+      status: 401,
+      headers: {
+        'Content-Type': 'application/json',
+        'WWW-Authenticate': 'Bearer realm="substrate-mcp"',
+      },
+    });
+  }
+
+  const rawToken = authHeader.substring(7);
+  const hash = await hashToken(rawToken);
+
+  try {
+    const row = await db
+      .prepare('SELECT * FROM access_tokens WHERE token_hash = ?')
+      .bind(hash)
+      .first();
+
+    if (!row) {
+      return new Response(JSON.stringify({ error: 'Invalid or expired token' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Check expiry
+    if (row.expires_at && new Date(row.expires_at as string) < new Date()) {
+      return new Response(JSON.stringify({ error: 'Token expired' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Parse workspace_ids
+    const workspaceIds = typeof row.workspace_ids === 'string'
+      ? JSON.parse(row.workspace_ids) : row.workspace_ids;
+
+    return {
+      id: row.id,
+      token_hash: row.token_hash,
+      label: row.label,
+      role: row.role,
+      workspace_ids: workspaceIds,
+      created_at: row.created_at,
+      expires_at: row.expires_at,
+    } as unknown as AccessToken;
+  } catch {
+    return new Response(JSON.stringify({
+      error: 'Auth system error. Ensure database is initialized.',
+    }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
+
+/** Create a new Request with the auth context in a trusted internal header. */
+function injectAuthContext(request: Request, token: AccessToken): Request {
+  const ctx: AuthContext = {
+    actor: token.label,
+    role: token.role as string,
+    workspaceIds: token.workspace_ids as string[],
+    tokenId: token.id as string,
+  };
+  const headers = new Headers(request.headers);
+  headers.set('X-Substrate-Auth', JSON.stringify(ctx));
+  return new Request(request, { headers });
 }
 
 // =============================================================================
@@ -59,6 +192,18 @@ class RateLimiter {
 // =============================================================================
 
 export class SubstrateMCP extends McpAgent<Env> {
+  // Auth context — populated from X-Substrate-Auth header (set by Worker after token validation)
+  private _auth: AuthContext = { actor: 'agent', role: 'admin', workspaceIds: ['*'], tokenId: '' };
+
+  // Intercept fetch to capture auth context before MCP processing
+  async fetch(request: Request): Promise<Response> {
+    const authJson = request.headers.get('X-Substrate-Auth');
+    if (authJson) {
+      try { this._auth = JSON.parse(authJson); } catch { /* keep default */ }
+    }
+    return super.fetch(request);
+  }
+
   server = new McpServer({
     name: 'substrate-mcp',
     version: '0.1.0',
@@ -94,8 +239,13 @@ export class SubstrateMCP extends McpAgent<Env> {
       }) as typeof d1;
     };
 
-    // Register all three tiers with rate-limited accessors
-    registerTools(this.server, rateLimitedD1, () => r2, () => 'agent');
+    // Register all three tiers with auth-aware accessors
+    // Closures read from this._auth which is updated on every fetch() before MCP processing
+    registerTools(
+      this.server, rateLimitedD1, () => r2,
+      () => this._auth.actor,
+      { getRole: () => this._auth.role, getWorkspaceIds: () => this._auth.workspaceIds },
+    );
     registerResources(this.server, () => d1); // Resources are read-only, no rate limit
     registerPrompts(this.server, () => d1);
   }
@@ -106,6 +256,17 @@ export class SubstrateMCP extends McpAgent<Env> {
 // =============================================================================
 
 export class ReaderMCP extends McpAgent<Env> {
+  // Auth context for reader sessions
+  private _auth: AuthContext = { actor: 'reader', role: 'reader', workspaceIds: ['*'], tokenId: '' };
+
+  async fetch(request: Request): Promise<Response> {
+    const authJson = request.headers.get('X-Substrate-Auth');
+    if (authJson) {
+      try { this._auth = JSON.parse(authJson); } catch { /* keep default */ }
+    }
+    return super.fetch(request);
+  }
+
   server = new McpServer({
     name: 'substrate-reader',
     version: '0.1.0',
@@ -241,19 +402,44 @@ function getPreview(data: Record<string, unknown>, maxLen = 200): string {
   return summary.slice(0, maxLen);
 }
 
-async function renderDashboard(env: Env): Promise<Response> {
+async function renderDashboard(env: Env, workspaceId?: string): Promise<Response> {
   const db = env.DB;
 
-  // Parallel queries — batch independent reads for latency
-  const [workspaces, tables, records, recordCount, fileCount, auditCount, recentAudit] = await Promise.all([
-    db.prepare('SELECT * FROM workspaces ORDER BY name').all(),
-    db.prepare('SELECT * FROM table_definitions ORDER BY workspace_id, name').all(),
-    db.prepare('SELECT r.*, t.name as table_name, t.workspace_id FROM records r JOIN table_definitions t ON r.table_id = t.id ORDER BY r.updated_at DESC LIMIT 100').all(),
-    db.prepare('SELECT COUNT(*) as cnt FROM records').first<{ cnt: number }>(),
-    db.prepare('SELECT COUNT(*) as cnt, COALESCE(SUM(size_bytes),0) as sz FROM file_metadata').first<{ cnt: number; sz: number }>(),
-    db.prepare("SELECT COUNT(*) as cnt FROM audit_log WHERE timestamp > datetime('now','-1 day')").first<{ cnt: number }>(),
-    db.prepare("SELECT action, record_id, actor, timestamp, changes FROM audit_log ORDER BY timestamp DESC LIMIT 5").all(),
-  ]);
+  // If workspace-scoped, verify it exists
+  let wsName = '';
+  let wsDescription = '';
+  if (workspaceId) {
+    const ws = await db.prepare('SELECT * FROM workspaces WHERE id = ?').bind(workspaceId).first<{ id: string; name: string; description: string }>();
+    if (!ws) {
+      return new Response(JSON.stringify({ error: 'Workspace not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    wsName = ws.name;
+    wsDescription = ws.description;
+  }
+
+  // Parallel queries — scoped to workspace when provided
+  const [workspaces, tables, records, recordCount, fileCount, auditCount, recentAudit] = workspaceId
+    ? await Promise.all([
+        db.prepare('SELECT * FROM workspaces WHERE id = ?').bind(workspaceId).all(),
+        db.prepare('SELECT * FROM table_definitions WHERE workspace_id = ? ORDER BY name').bind(workspaceId).all(),
+        db.prepare('SELECT r.*, t.name as table_name, t.workspace_id FROM records r JOIN table_definitions t ON r.table_id = t.id WHERE t.workspace_id = ? ORDER BY r.updated_at DESC LIMIT 100').bind(workspaceId).all(),
+        db.prepare('SELECT COUNT(*) as cnt FROM records r JOIN table_definitions t ON r.table_id = t.id WHERE t.workspace_id = ?').bind(workspaceId).first<{ cnt: number }>(),
+        db.prepare('SELECT COUNT(*) as cnt, COALESCE(SUM(size_bytes),0) as sz FROM file_metadata WHERE workspace_id = ?').bind(workspaceId).first<{ cnt: number; sz: number }>(),
+        db.prepare("SELECT COUNT(*) as cnt FROM audit_log WHERE workspace_id = ? AND timestamp > datetime('now','-1 day')").bind(workspaceId).first<{ cnt: number }>(),
+        db.prepare("SELECT action, record_id, actor, timestamp, changes FROM audit_log WHERE workspace_id = ? ORDER BY timestamp DESC LIMIT 10").bind(workspaceId).all(),
+      ])
+    : await Promise.all([
+        db.prepare('SELECT * FROM workspaces ORDER BY name').all(),
+        db.prepare('SELECT * FROM table_definitions ORDER BY workspace_id, name').all(),
+        db.prepare('SELECT r.*, t.name as table_name, t.workspace_id FROM records r JOIN table_definitions t ON r.table_id = t.id ORDER BY r.updated_at DESC LIMIT 100').all(),
+        db.prepare('SELECT COUNT(*) as cnt FROM records').first<{ cnt: number }>(),
+        db.prepare('SELECT COUNT(*) as cnt, COALESCE(SUM(size_bytes),0) as sz FROM file_metadata').first<{ cnt: number; sz: number }>(),
+        db.prepare("SELECT COUNT(*) as cnt FROM audit_log WHERE timestamp > datetime('now','-1 day')").first<{ cnt: number }>(),
+        db.prepare("SELECT action, record_id, actor, timestamp, changes FROM audit_log ORDER BY timestamp DESC LIMIT 5").all(),
+      ]);
 
   // Build status color map
   const statusColors: Record<string, string> = {
@@ -323,7 +509,7 @@ async function renderDashboard(env: Env): Promise<Response> {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="refresh" content="60">
-<title>Substrate — Dashboard</title>
+<title>${workspaceId ? `${esc(wsName)} — Substrate` : 'Substrate — Dashboard'}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; padding: 2rem; max-width: 1200px; margin: 0 auto; }
@@ -374,8 +560,11 @@ async function renderDashboard(env: Env): Promise<Response> {
 </style>
 </head>
 <body>
-<h1>Substrate</h1>
-<p class="subtitle">Agent-native data layer — read-only dashboard. Agents manage the data; this view builds trust.</p>
+${workspaceId
+  ? `<h1>${esc(wsName)}</h1>
+<p class="subtitle">${wsDescription ? esc(wsDescription) + ' — ' : ''}Read-only workspace view. <a href="/dashboard">All workspaces</a></p>`
+  : `<h1>Substrate</h1>
+<p class="subtitle">Agent-native data layer — read-only dashboard. Agents manage the data; this view builds trust.</p>`}
 
 <div class="stats">
   <div class="stat"><div class="stat-value">${workspaces.results.length}</div><div class="stat-label">Workspaces</div></div>
@@ -464,6 +653,12 @@ ${Object.entries(byTable).filter(([name]) => name !== 'Content').map(([tableName
 </div>
 `).join('')}
 
+${!workspaceId && workspaces.results.length > 1 ? `
+<div class="section">
+  <div class="section-title">Workspaces</div>
+  ${workspaces.results.map((ws: any) => `<a href="/dashboard/${esc(ws.id)}" style="display:inline-block;margin:0.25rem 0.5rem 0.25rem 0;padding:0.25rem 0.75rem;background:#171717;border:1px solid #262626;border-radius:6px;font-size:0.8125rem;color:#e5e5e5;text-decoration:none;">${esc(ws.name)}</a>`).join('')}
+</div>` : ''}
+
 ${Object.keys(byTable).length === 0 ? '<p class="empty">No records yet. Connect an agent and start creating.</p>' : ''}
 
 ${auditEntries.length ? `
@@ -481,12 +676,14 @@ ${auditEntries.length ? `
 
 <div class="footer">
   <div>Substrate v0.1.0 — the UI is optional, the data is real.</div>
-  <div class="endpoints">
+  ${workspaceId
+    ? `<div style="margin-top:0.5rem;color:#737373;font-size:0.75rem;">Share this link: <span class="endpoint">/dashboard/${esc(workspaceId)}</span></div>`
+    : `<div class="endpoints">
     <span class="endpoint">/mcp</span> Streamable HTTP
     <span class="endpoint">/sse</span> SSE
     <span class="endpoint">/reader/mcp</span> Reader (read + upvote)
     <span class="endpoint">/dashboard</span> This view
-  </div>
+  </div>`}
 </div>
 </body>
 </html>`;
@@ -511,28 +708,64 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
 
-    // Streamable HTTP transport (Claude Code, Codex)
-    if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
-      return SubstrateMCP.serve('/mcp').fetch(request, env, ctx);
+    // ─── CORS preflight ────────────────────────────────────────────
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, Mcp-Session-Id',
+          'Access-Control-Max-Age': '86400',
+        },
+      });
     }
 
-    // SSE fallback transport (OpenAI, ChatGPT, Cursor)
-    if (url.pathname === '/sse' || url.pathname.startsWith('/sse/')) {
-      return SubstrateMCP.serve('/sse').fetch(request, env, ctx);
+    // ─── Public endpoints (no auth) ────────────────────────────────
+
+    // Health / info endpoint
+    if (url.pathname === '/') {
+      return new Response(JSON.stringify({
+        name: 'substrate-mcp',
+        version: '0.1.0',
+        description: 'Substrate — the agent-native data layer. D1 for structured data, R2 for files.',
+        auth: 'Bearer token required. Bootstrap: first connection without tokens creates admin access.',
+        endpoints: {
+          mcp: '/mcp (Streamable HTTP — auth required)',
+          sse: '/sse (SSE — auth required)',
+          reader_mcp: '/reader/mcp (Read-only — auth required)',
+          reader_sse: '/reader/sse (Read-only — auth required)',
+          dashboard: '/dashboard (Human-readable — public)',
+        },
+        capabilities: {
+          tools: '22 tools, 8 resources, 4 prompts',
+        },
+      }, null, 2), {
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
     }
 
-    // Reader — restricted access (read + upvote only)
-    if (url.pathname === '/reader/mcp' || url.pathname.startsWith('/reader/mcp/')) {
-      return ReaderMCP.serve('/reader/mcp').fetch(request, env, ctx);
+    // Dashboard — read-only human view (public trust layer)
+    if (url.pathname === '/dashboard') {
+      return renderDashboard(env);
     }
-    if (url.pathname === '/reader/sse' || url.pathname.startsWith('/reader/sse/')) {
-      return ReaderMCP.serve('/reader/sse').fetch(request, env, ctx);
+
+    // Workspace-scoped dashboard — shareable link per workspace
+    const dashMatch = url.pathname.match(/^\/dashboard\/([a-f0-9-]+)$/i);
+    if (dashMatch) {
+      return renderDashboard(env, dashMatch[1]);
     }
+
+    // Reader info endpoint (public)
     if (url.pathname === '/reader') {
       return new Response(JSON.stringify({
         name: 'substrate-reader',
         version: '0.1.0',
         description: 'Read-only access to Substrate with upvote capability. 4 tools: find_records, list_workspaces, get_record, upvote_content.',
+        auth: 'Bearer token required (any role).',
         endpoints: {
           mcp: '/reader/mcp',
           sse: '/reader/sse',
@@ -542,31 +775,49 @@ export default {
       });
     }
 
-    // Dashboard — read-only human view of workspace data
-    if (url.pathname === '/dashboard') {
-      return renderDashboard(env);
-    }
+    // ─── Authenticated MCP endpoints ───────────────────────────────
 
-    // Health / info endpoint
-    if (url.pathname === '/') {
-      return new Response(JSON.stringify({
-        name: 'substrate-mcp',
-        version: '0.1.0',
-        description: 'Substrate — the agent-native data layer. D1 for structured data, R2 for files.',
-        endpoints: {
-          mcp: '/mcp (Streamable HTTP — Claude Code, Codex)',
-          sse: '/sse (SSE — OpenAI, ChatGPT, Cursor)',
-          dashboard: '/dashboard (Human-readable content calendar)',
-        },
-        capabilities: {
-          tools: '20 tools, 8 resources, 4 prompts',
-        },
-      }, null, 2), {
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-        },
-      });
+    const isMcpEndpoint =
+      url.pathname === '/mcp' || url.pathname.startsWith('/mcp/') ||
+      url.pathname === '/sse' || url.pathname.startsWith('/sse/') ||
+      url.pathname.startsWith('/reader/mcp') || url.pathname.startsWith('/reader/sse');
+
+    if (isMcpEndpoint) {
+      // Validate Bearer token
+      const tokenOrError = await authenticateRequest(request, env.DB);
+      if (tokenOrError instanceof Response) return tokenOrError;
+
+      const token = tokenOrError;
+      const authedRequest = injectAuthContext(request, token);
+
+      // Route based on endpoint + role enforcement
+      const isReaderEndpoint = url.pathname.startsWith('/reader/');
+
+      if (isReaderEndpoint) {
+        // Reader endpoints — any role can access (readers get read-only tools)
+        if (url.pathname === '/reader/mcp' || url.pathname.startsWith('/reader/mcp/')) {
+          return ReaderMCP.serve('/reader/mcp').fetch(authedRequest, env, ctx);
+        }
+        if (url.pathname === '/reader/sse' || url.pathname.startsWith('/reader/sse/')) {
+          return ReaderMCP.serve('/reader/sse').fetch(authedRequest, env, ctx);
+        }
+      }
+
+      // Full MCP endpoints — reader tokens get routed to ReaderMCP for safety
+      const role = token.role as string;
+      if (role === 'reader') {
+        // Reader tokens hitting /mcp or /sse get redirected to reader DO
+        const readerPath = url.pathname.startsWith('/sse') ? '/reader/sse' : '/reader/mcp';
+        return ReaderMCP.serve(readerPath).fetch(authedRequest, env, ctx);
+      }
+
+      // Admin/Editor tokens — full access
+      if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
+        return SubstrateMCP.serve('/mcp').fetch(authedRequest, env, ctx);
+      }
+      if (url.pathname === '/sse' || url.pathname.startsWith('/sse/')) {
+        return SubstrateMCP.serve('/sse').fetch(authedRequest, env, ctx);
+      }
     }
 
     return new Response('Not found', { status: 404 });

@@ -30,6 +30,141 @@ Team Member → Agent (Claude) → substrate-mcp → D1 (data) + R2 (files)
 - **Relations** — Bidirectional links between records
 - **Files** — Documents, images, attachments (R2 storage, D1 metadata)
 - **Audit Log** — Every mutation tracked for trust
+- **Dashboard** — Read-only HTML views for trust and verification
+
+## Dashboard (Trust Layer)
+
+The agent manages the data; the dashboard proves it. Read-only HTML views that auto-refresh every 60 seconds.
+
+| URL | What It Shows |
+|-----|---------------|
+| `/dashboard` | All workspaces, tables, records, audit log (admin overview / demo) |
+| `/dashboard/{workspace_id}` | Single workspace view (shareable with clients / team members) |
+
+### Share Links
+
+Every workspace gets a dashboard URL the moment it's created. No extra setup:
+
+```
+https://substrate.mcp.createsomething.agency/dashboard/ws-abc-123-def
+```
+
+Hand this to a client or stakeholder. They see exactly what's in their workspace -- tables, records, recent activity -- without needing an agent or a token. The workspace ID is a UUID, so the link is unguessable.
+
+### When to Use the Dashboard vs. the Agent
+
+| Need | Use |
+|------|-----|
+| Day-to-day work (create, query, update) | Agent via MCP |
+| Verify what the agent stored | Dashboard share link |
+| Client status check | Dashboard share link |
+| System overview / demo | `/dashboard` (all workspaces) |
+
+The dashboard is the instrument cluster -- you don't drive by staring at it, but you glance at it to know the engine is doing what you expect.
+
+## Authentication
+
+Substrate uses **Bearer token auth** for all remote MCP endpoints. Tokens are SHA-256 hashed and stored in D1 with role-based access control and workspace scoping.
+
+### Roles
+
+| Role | Permissions |
+|------|------------|
+| **admin** | Full access + token management (`create_token`, `revoke_token`, `list_tokens`) + `purge_workspace` |
+| **editor** | CRUD on workspaces, tables, records, files, relations. No token management. |
+| **reader** | Read-only: `find_records`, `list_workspaces`, `get_record`, `upvote_content` |
+
+### Bootstrap (First-Time Setup)
+
+On first deploy with no tokens in the database, Substrate enters **bootstrap mode**: unauthenticated admin access is granted so you can create the first token.
+
+1. Connect your MCP client to the remote URL (no auth header needed)
+2. Use the `create_token` tool to create an admin token:
+   ```
+   create_token({ label: "my-admin", role: "admin" })
+   ```
+3. Save the returned token — it is shown only once
+4. From now on, all connections require `Authorization: Bearer <token>`
+
+### Connecting with Auth
+
+#### Remote (Production)
+
+**URL**: `https://substrate.mcp.createsomething.agency`
+
+```json
+{
+  "mcpServers": {
+    "substrate": {
+      "url": "https://substrate.mcp.createsomething.agency/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN_HERE"
+      }
+    }
+  }
+}
+```
+
+#### Reader-Only Access
+
+```json
+{
+  "mcpServers": {
+    "substrate-reader": {
+      "url": "https://substrate.mcp.createsomething.agency/reader/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_READER_TOKEN"
+      }
+    }
+  }
+}
+```
+
+#### Local (stdio — no auth)
+
+Stdio mode is single-user and does not require tokens:
+
+```json
+{
+  "mcpServers": {
+    "substrate": {
+      "command": "node",
+      "args": ["/path/to/packages/substrate-mcp/dist/index.js"],
+      "env": {
+        "CF_ACCOUNT_ID": "...",
+        "CF_API_TOKEN": "...",
+        "CF_D1_DATABASE_ID": "...",
+        "R2_ACCESS_KEY_ID": "...",
+        "R2_SECRET_ACCESS_KEY": "...",
+        "R2_BUCKET_NAME": "substrate-files"
+      }
+    }
+  }
+}
+```
+
+### Workspace Scoping
+
+Tokens can be scoped to specific workspaces:
+
+```
+create_token({ label: "project-a-editor", role: "editor", workspace_ids: ["ws-id-1", "ws-id-2"] })
+```
+
+- `["*"]` (default) — access all workspaces
+- `["ws-123", "ws-456"]` — restrict to listed workspace IDs only
+
+Workspace-scoped tokens can only read/write data in their allowed workspaces. Operations on other workspaces return "Access denied."
+
+### Token Management (Admin Only)
+
+| Tool | Description |
+|------|-------------|
+| `create_token` | Create a new access token with role and workspace scope |
+| `revoke_token` | Revoke a token by ID |
+| `list_tokens` | List all tokens (hashes hidden) |
+
+All token operations are logged in the audit trail.
 
 ## Quick Start
 
@@ -62,68 +197,38 @@ pnpm --filter=substrate-mcp build
 pnpm --filter=substrate-mcp start
 ```
 
-### 4. Connect Your MCP Client
-
-#### Remote (Production)
-
-**URL**: `https://substrate.mcp.createsomething.agency`
-
-```json
-{
-  "mcpServers": {
-    "substrate": {
-      "url": "https://substrate.mcp.createsomething.agency/mcp"
-    }
-  }
-}
-```
-
-#### Local (stdio)
-
-```json
-{
-  "mcpServers": {
-    "substrate": {
-      "command": "node",
-      "args": ["/path/to/packages/substrate-mcp/dist/index.js"],
-      "env": {
-        "CF_ACCOUNT_ID": "...",
-        "CF_API_TOKEN": "...",
-        "CF_D1_DATABASE_ID": "...",
-        "R2_ACCESS_KEY_ID": "...",
-        "R2_SECRET_ACCESS_KEY": "...",
-        "R2_BUCKET_NAME": "substrate-files"
-      }
-    }
-  }
-}
-```
-
 ## MCP Primitives
 
-### Tools (Automation Tier) — 19 tools
+### Tools (Automation Tier) — 22 tools
 
-| Category | Tool | Description |
-|----------|------|-------------|
-| Workspace | `create_workspace` | Create a workspace |
-| | `update_workspace` | Update name/description |
-| | `delete_workspace` | Delete workspace + all contents |
-| Table | `define_table` | Create table with typed columns |
-| | `update_table` | Update schema |
-| | `delete_table` | Delete table + records |
-| Record | `create_record` | Create (validated against schema) |
-| | `update_record` | Partial update (merge) |
-| | `delete_record` | Delete record |
-| Query | `query_records` | Filter, sort, paginate |
-| | `search_records` | Full-text search |
-| Relation | `create_relation` | Link two records |
-| | `delete_relation` | Remove link |
-| Bulk | `bulk_create_records` | Create up to 50 records |
-| | `bulk_delete_records` | Delete up to 50 records |
-| File | `upload_file` | Upload file (base64) to R2 |
-| | `download_file` | Download file as base64 |
-| | `delete_file` | Delete from R2 + D1 |
-| | `list_files` | List files (metadata only) |
+| Category | Tool | Description | Min Role |
+|----------|------|-------------|----------|
+| Workspace | `create_workspace` | Create a workspace | editor |
+| | `update_workspace` | Update name/description | editor |
+| | `archive_workspace` | Soft-delete workspace | editor |
+| | `purge_workspace` | Permanently delete (requires confirm) | **admin** |
+| Table | `define_table` | Create table with typed columns | editor |
+| | `update_table` | Update schema | editor |
+| | `archive_table` | Soft-delete table | editor |
+| Record | `add_record` | Create (validated against schema) | editor |
+| | `update_record` | Partial update (merge) | editor |
+| | `archive_record` | Soft-delete record | editor |
+| | `restore_record` | Restore archived record | editor |
+| Query | `find_records` | Filter, sort, search by name | reader |
+| | `get_record` | Get by ID with relations | reader |
+| | `list_workspaces` | List all with schemas | reader |
+| | `read_sensitive` | Read redacted field (audited) | editor |
+| Relation | `create_relation` | Link two records | editor |
+| | `delete_relation` | Remove link | editor |
+| Bulk | `bulk_create_records` | Create up to 50 records | editor |
+| | `bulk_archive_records` | Archive up to 50 records | editor |
+| File | `upload_file` | Upload file (base64) to R2 | editor |
+| | `download_file` | Download file as base64 | reader |
+| | `delete_file` | Delete from R2 + D1 | editor |
+| | `list_files` | List files (metadata only) | reader |
+| Auth | `create_token` | Create access token | **admin** |
+| | `revoke_token` | Revoke token by ID | **admin** |
+| | `list_tokens` | List all tokens (hashes hidden) | **admin** |
 
 ### Resources (Database Tier) — 8 resources
 
@@ -171,7 +276,7 @@ Agent: "Download the latest site plan."
 This server is a reference implementation of the [Three-Tier Framework](../../docs/THREE_TIER_FRAMEWORK.md):
 
 - **Database** (Resources): D1 for schemas/records/relations/metadata, R2 for file bytes
-- **Automation** (Tools): 19 tools for full CRUD lifecycle including file operations
+- **Automation** (Tools): 22 tools for full CRUD lifecycle including file operations and auth management
 - **Judgment** (Prompts): 4 prompts for dynamic, role-based perspectives
 - **Insight** (cross-cutting): Every operation emits structured events
 - **Artifacts**: Workspace, TableDefinition, Record, Relation, FileMetadata, AuditEntry
