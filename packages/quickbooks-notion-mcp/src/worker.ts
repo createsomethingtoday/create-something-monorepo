@@ -18,6 +18,7 @@ export interface Env {
   QBO_REDIRECT_URI: string;
   NOTION_API_KEY: string;
   COMPOSIO_API_KEY: string;
+  MCP_API_KEY: string;
   QBO_TOKENS: {
     get(key: string): Promise<string | null>;
     put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
@@ -42,14 +43,12 @@ export default {
     // Ensure legacy tokens are migrated
     await connManager.ensureMigrated();
 
-    // ── Health check ───────────────────────────────────────────────
+    // ── Health check (no sensitive data) ──────────────────────────
     if (url.pathname === "/health" && request.method === "GET") {
-      const connections = await connManager.listConnections();
       return Response.json({
         status: "ok",
         server: "quickbooks-notion-mcp-server",
         version: "2.1.0",
-        connections: connections.length,
       });
     }
 
@@ -322,8 +321,21 @@ export default {
       }
     }
 
-    // ── MCP endpoint ───────────────────────────────────────────────
+    // ── MCP endpoint (API key required) ──────────────────────────
     if (url.pathname === "/mcp") {
+      // Validate API key
+      if (env.MCP_API_KEY) {
+        const authHeader = request.headers.get("Authorization");
+        const apiKey = request.headers.get("X-API-Key");
+        const validKey = authHeader === `Bearer ${env.MCP_API_KEY}` || apiKey === env.MCP_API_KEY;
+        if (!validKey) {
+          return Response.json(
+            { error: "Unauthorized. Provide Authorization: Bearer <MCP_API_KEY> or X-API-Key header." },
+            { status: 401 }
+          );
+        }
+      }
+
       try {
         // Create client getter that resolves connections at call time
         const getClient: QBOClientGetter = async (connectionId?: string) => {
