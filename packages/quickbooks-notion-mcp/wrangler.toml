@@ -10,7 +10,7 @@ pattern = "quickbooks.mcp.workway.co"
 custom_domain = true
 
 [vars]
-QBO_ENVIRONMENT = "sandbox"
+QBO_ENVIRONMENT = "production"
 QBO_REDIRECT_URI = "https://quickbooks.mcp.workway.co/auth/callback"
 
 [[kv_namespaces]]

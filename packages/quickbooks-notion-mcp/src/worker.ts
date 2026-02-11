@@ -130,6 +130,81 @@ export default {
       }
     }
 
+    // ── Token Seed: upload tokens from local pnpm auth ───────────
+    if (url.pathname === "/auth/seed" && request.method === "POST") {
+      try {
+        // Require admin secret to prevent unauthorized token uploads
+        const authHeader = request.headers.get("Authorization");
+        const expectedSecret = env.QBO_CLIENT_SECRET;
+        if (!authHeader || authHeader !== `Bearer ${expectedSecret}`) {
+          return Response.json(
+            { error: "Unauthorized. Provide Authorization: Bearer <QBO_CLIENT_SECRET>" },
+            { status: 401 }
+          );
+        }
+
+        const body = await request.json() as {
+          accessToken?: string;
+          refreshToken?: string;
+          accessTokenExpiresAt?: string;
+          refreshTokenExpiresAt?: string;
+          realmId?: string;
+          tokenType?: string;
+        };
+
+        // Validate required fields
+        if (!body.accessToken || !body.refreshToken || !body.realmId) {
+          return Response.json(
+            { error: "Missing required fields: accessToken, refreshToken, realmId" },
+            { status: 400 }
+          );
+        }
+
+        const token = {
+          accessToken: body.accessToken,
+          refreshToken: body.refreshToken,
+          accessTokenExpiresAt: body.accessTokenExpiresAt || new Date(Date.now() + 3600 * 1000).toISOString(),
+          refreshTokenExpiresAt: body.refreshTokenExpiresAt || new Date(Date.now() + 100 * 86400 * 1000).toISOString(),
+          realmId: body.realmId,
+          tokenType: body.tokenType || "bearer",
+        };
+
+        // Fetch company info for metadata
+        let companyName = "Unknown Company";
+        let email: string | undefined;
+        try {
+          const tempClient = new QuickBooksClient(
+            { getAccessToken: async () => token.accessToken, getRealmId: async () => token.realmId },
+            token.realmId,
+            env.QBO_ENVIRONMENT === "sandbox"
+          );
+          const info = await tempClient.getCompanyInfo<QBOCompanyInfo>();
+          companyName = info.CompanyName || companyName;
+          email = info.Email?.Address;
+        } catch {
+          // Best effort
+        }
+
+        await connManager.addConnection(token, { companyName, email });
+
+        return Response.json({
+          status: "ok",
+          message: `Connection seeded: ${companyName} (${token.realmId})`,
+          realmId: token.realmId,
+          companyName,
+          email,
+        });
+      } catch (error) {
+        logger.error("Token seed failed", {
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return Response.json(
+          { error: `Seed failed: ${error instanceof Error ? error.message : String(error)}` },
+          { status: 500 }
+        );
+      }
+    }
+
     // ── MCP endpoint ───────────────────────────────────────────────
     if (url.pathname === "/mcp") {
       try {

@@ -111,13 +111,13 @@ const WORKWAY_MCPS: McpCatalogEntry[] = [
     authType: 'oauth',
     setupNotes: `**Multi-connection**: Multiple QuickBooks companies can be connected simultaneously. Each user authenticates independently — no need to disconnect others.
 
-**First-time setup**:
-1. Add the MCP server to your host config (URL: \`https://quickbooks.mcp.workway.co/mcp\`)
-2. In your AI session, call \`qbo_connect\` — the agent will provide an OAuth link
-3. Click the link, authorize with your QuickBooks account in the browser
-4. Return to your AI session and verify with \`qbo_company_info\`
+**First-time setup** (2 steps):
+1. **Authorize**: The agent provides an OAuth link. Click it, sign in to QuickBooks, and authorize the WORKWAY app.
+2. **Provide your Company ID**: In QuickBooks Online, press \`Ctrl+Alt+?\` (Windows) or \`Control+Option+?\` (Mac). A dialog shows "Your Company ID is XXXX XXXX XXXX XXXX" with a Copy button. Paste it back to the agent. Alternatively: Gear icon > Account and Settings > Billing & Subscription — Company ID is at the top.
 
-**Switching connections**: Pass \`connection="{realmId}"\` to any QBO tool to query a specific company. Use \`qbo_list_connections\` to see all connected companies.
+The agent handles the rest — your connection is stored and all QBO tools work immediately.
+
+**Switching connections**: Pass \`connection="{companyId}"\` to any QBO tool to query a specific company. Use \`qbo_list_connections\` to see all connected companies.
 
 **Disconnecting**: Use \`qbo_disconnect\` to remove a connection. Also revoke the app in your Intuit account settings.`,
   },

@@ -1,10 +1,14 @@
 import { createServer } from "node:http";
 import { URL } from "node:url";
 import { createAuthManagerFromEnv } from "./services/auth.js";
+import type { QBOToken } from "./services/auth.js";
 import { logger } from "./services/logger.js";
 
 const CALLBACK_PORT = 3000;
 const CALLBACK_PATH = "/api/callback";
+
+/** Remote Worker URL for seeding tokens. Set via WORKER_URL env var. */
+const WORKER_URL = process.env.WORKER_URL || "https://quickbooks.mcp.workway.co";
 
 /**
  * Run the one-time OAuth setup flow.
@@ -92,12 +96,20 @@ export async function runAuthSetup(): Promise<void> {
           refreshTokenExpiresAt: token.refreshTokenExpiresAt,
         });
 
+        // Auto-upload tokens to remote Worker
+        const seedResult = await seedTokensToWorker(token);
+
+        const seedMessage = seedResult.ok
+          ? `<p style="color: #22c55e;">&#x2705; Tokens synced to remote Worker: ${seedResult.companyName || token.realmId}</p>`
+          : `<p style="color: #f59e0b;">&#x26A0; Local tokens saved. Remote sync skipped: ${seedResult.error}</p>`;
+
         res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
         res.end(`
           <html><head><meta charset="UTF-8"></head><body style="font-family: system-ui; padding: 40px; text-align: center;">
             <h1 style="color: #22c55e;">&#x2705; Connected!</h1>
             <p>QuickBooks account successfully connected.</p>
             <p>Realm ID: <code>${token.realmId}</code></p>
+            ${seedMessage}
             <p>You can close this tab and return to the terminal.</p>
           </body></html>
         `);
@@ -137,4 +149,49 @@ export async function runAuthSetup(): Promise<void> {
       reject(err);
     });
   });
+}
+
+// ── Remote Token Seeding ─────────────────────────────────────────────
+
+/**
+ * Upload tokens to the remote Worker's /auth/seed endpoint.
+ * Uses QBO_CLIENT_SECRET as the Bearer token for auth.
+ */
+async function seedTokensToWorker(token: QBOToken): Promise<{ ok: boolean; companyName?: string; error?: string }> {
+  const clientSecret = process.env.QBO_CLIENT_SECRET;
+  if (!clientSecret) {
+    return { ok: false, error: "QBO_CLIENT_SECRET not set — skipping remote sync" };
+  }
+
+  try {
+    const response = await fetch(`${WORKER_URL}/auth/seed`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${clientSecret}`,
+      },
+      body: JSON.stringify({
+        accessToken: token.accessToken,
+        refreshToken: token.refreshToken,
+        realmId: token.realmId,
+        accessTokenExpiresAt: token.accessTokenExpiresAt,
+        refreshTokenExpiresAt: token.refreshTokenExpiresAt,
+        tokenType: token.tokenType,
+      }),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      return { ok: false, error: `HTTP ${response.status}: ${text}` };
+    }
+
+    const result = await response.json() as { companyName?: string };
+    logger.info("Tokens synced to remote Worker", { workerUrl: WORKER_URL });
+    return { ok: true, companyName: result.companyName };
+  } catch (error) {
+    return {
+      ok: false,
+      error: `Failed to reach Worker: ${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
 }
