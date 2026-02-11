@@ -3,18 +3,32 @@
 	import { SavvyCalButton } from '@create-something/canon/domains/agency';
 	import { LiquidGlassIcon } from '@create-something/canon/interactive';
 	import { AnimatedGridPattern, BlurFade, BorderBeam, OrbitingCircles, ShimmerButton } from '@create-something/canon/magicui';
-	
+
 	// Structured data for SEO/AEO
 	const services = [
 		{
-			name: 'Connect Your Tools to AI Agents',
-			description: 'We connect your existing tools to AI agents like Claude, Cursor, and Codex. Predictable per-tool pricing from $250.',
-			type: 'Integration Development',
-			price: '250',
-			priceDescription: 'Per tool connected'
+			name: 'Custom MCP Server Development',
+			description: 'We build custom MCP servers that connect your business tools to AI agents like Claude, Cursor, and Codex. Production-ready, documented, yours to own. From $2,000.',
+			type: 'Consulting',
+			price: '2000',
+			priceDescription: 'Starting engagement'
+		},
+		{
+			name: 'Subtractive Triad Audit',
+			description: 'Strategic audit that maps duplication, excess, and disconnection across your entire tool stack. ROI-prioritized roadmap included. From $5,000.',
+			type: 'Consulting',
+			price: '5000',
+			priceDescription: 'Full audit'
+		},
+		{
+			name: 'Judgment Layer Managed Service',
+			description: 'Ongoing prompt optimization, agent orchestration, policy management, and performance tuning. Your automation gets smarter every month. From $1,500/mo.',
+			type: 'Subscription',
+			price: '1500',
+			priceDescription: 'Monthly managed service'
 		}
 	];
-	
+
 </script>
 
 <!-- SVG Icon Snippets -->
@@ -124,9 +138,9 @@
 {/snippet}
 
 <SEO
-	title="Connect Your Tools to AI Agents | Custom MCP Development"
-	description="We connect your existing tools to AI agents. Predictable per-tool pricing from $250. Managed runtime from $99/mo. No hourly billing."
-	keywords="connect tools to AI, MCP development, custom MCP server, AI agent integration, automation infrastructure, Claude, Cursor, Codex"
+	title="Custom MCP Development | Connect Your Tools to AI | CREATE SOMETHING .agency"
+	description="We build custom MCP servers that connect your business tools to AI agents like Claude, Cursor, and Codex. Then we make them intelligent. Custom MCP from $2,000. Managed intelligence from $1,500/mo."
+	keywords="custom MCP development, MCP server, AI integration, automation infrastructure, Claude MCP, Cursor MCP, tool connectivity, AI agents, intelligent automation"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	{services}
@@ -134,7 +148,7 @@
 
 <!-- Hero with animated grid background -->
 <section class="hero">
-	<!-- Animated grid pattern (like WORKWAY) -->
+	<!-- Animated grid pattern -->
 	<div class="hero-grid-container">
 		<AnimatedGridPattern
 			numSquares={25}
@@ -152,20 +166,19 @@
 				<p class="hero-eyebrow">Custom MCP Development</p>
 			</BlurFade>
 			<BlurFade delay={0.1}>
-				<h1 class="hero-title">Connect your systems with&nbsp;Agents</h1>
+				<h1 class="hero-title">Connect your tools to&nbsp;AI. Then make it intelligent.</h1>
 			</BlurFade>
-		<BlurFade delay={0.2}>
-			<p class="hero-detail">
-				We build and operate custom connections between your existing tools and AI agents. 
-				Production-ready and built to run.
-			</p>
-		</BlurFade>
+			<BlurFade delay={0.2}>
+				<p class="hero-detail">
+					We build custom MCP servers that connect your business tools to AI agents like Claude, Cursor, and Codex. That's the starting line. The real value is what comes next — the intelligence layer that turns connections into outcomes.
+				</p>
+			</BlurFade>
 			<BlurFade delay={0.3}>
 				<div class="hero-cta">
-					<ShimmerButton href="https://createsomething.agency/book">
-						Book Discovery Call
+					<ShimmerButton href="/services">
+						Get Your First MCP
 					</ShimmerButton>
-					<a href="/use-cases/business" class="hero-link">See use cases →</a>
+					<a href="#process" class="hero-link">How it works →</a>
 				</div>
 			</BlurFade>
 		</div>
@@ -278,165 +291,181 @@
 	</div>
 </section>
 
-<!-- How It Works -->
-<section class="model-section">
+<!-- How It Works — the funnel -->
+<section id="process" class="process-section">
 	<div class="section-container">
 		<BlurFade>
 			<h2 class="section-heading">How It Works</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="section-intro">
-				Three steps from discovery call to working automation.
+				Start with one connection. See the value. Then decide what's next.
 			</p>
 		</BlurFade>
 		
-		<BlurFade delay={0.2}>
-			<div class="steps-row">
-				<div class="how-step">
-					<div class="how-step-num">1</div>
-					<h3>Tell us your tools</h3>
-					<p>HubSpot, Salesforce, Notion, Slack—whatever you use. We map out the connections.</p>
-				</div>
-				<div class="how-step">
-					<div class="how-step-num">2</div>
-					<h3>We connect them to AI</h3>
-					<p>We build the infrastructure that lets Claude, Cursor, or Codex access your systems securely.</p>
-				</div>
-				<div class="how-step">
-					<div class="how-step-num">3</div>
-					<h3>Your agents go to work</h3>
-					<p>Deals update docs. Reports write themselves. Tickets get triaged before you wake up.</p>
-				</div>
-			</div>
-		</BlurFade>
-	</div>
-</section>
-
-<!-- Pricing -->
-<section class="services-section">
-	<div class="section-container">
-		<BlurFade>
-				<h2 class="section-heading">Simple, predictable pricing</h2>
-		</BlurFade>
-		<BlurFade delay={0.1}>
-			<p class="section-intro">
-				You pick the tools. We connect them to AI. You know the cost before we start.
-			</p>
-		</BlurFade>
-		
-		<!-- Scenario-based examples (lead with outcomes) -->
-		<div class="examples-grid">
+		<div class="funnel-steps">
 			<BlurFade delay={0.15}>
-				<div class="example-item">
-					<span class="example-name">CRM + Docs</span>
-					<p class="example-outcome">HubSpot deals auto-create project docs in Notion via Claude.</p>
-					<span class="example-calc">2 tools + 1 AI platform</span>
-					<span class="example-price">$750</span>
+				<div class="funnel-step">
+					<div class="funnel-step-indicator">
+						<div class="funnel-step-num">1</div>
+						<div class="funnel-step-line"></div>
+					</div>
+					<div class="funnel-step-content">
+						<span class="funnel-step-label">Land</span>
+						<h3>Connect</h3>
+						<p>We build a custom MCP server that connects your most important tool to AI. Deployed, documented, yours.</p>
+						<span class="funnel-price">From $2,000</span>
+					</div>
 				</div>
 			</BlurFade>
+			
 			<BlurFade delay={0.25}>
-				<div class="example-item popular">
-					<span class="example-badge">Most common</span>
-					<span class="example-name">Team workflows</span>
-					<p class="example-outcome">Salesforce, Slack, and Google connected with secure team login.</p>
-					<span class="example-calc">3 tools + 2 AI platforms + login</span>
-					<span class="example-price">$1,500</span>
+				<div class="funnel-step">
+					<div class="funnel-step-indicator">
+						<div class="funnel-step-num">2</div>
+						<div class="funnel-step-line"></div>
+					</div>
+					<div class="funnel-step-content">
+						<span class="funnel-step-label">Expand</span>
+						<h3>Map</h3>
+						<p>See what one connection does? Now let's map the whole picture. Our Subtractive Triad audit finds duplication, excess, and disconnection across your entire stack.</p>
+						<span class="funnel-price">From $5,000</span>
+					</div>
 				</div>
 			</BlurFade>
+			
 			<BlurFade delay={0.35}>
-				<div class="example-item">
-					<span class="example-name">Full automation</span>
-					<p class="example-outcome">8 tools connected with scheduled tasks and automated workflows.</p>
-					<span class="example-calc">8 tools + 3 platforms + automation</span>
-					<span class="example-price">$3,500</span>
+				<div class="funnel-step">
+					<div class="funnel-step-indicator">
+						<div class="funnel-step-num">3</div>
+					</div>
+					<div class="funnel-step-content">
+						<span class="funnel-step-label">Retain</span>
+						<h3>Operate</h3>
+						<p>Connections without intelligence are just pipes. The Judgment Layer — prompt optimization, agent orchestration, policy management, ongoing tuning — turns your automation into outcomes.</p>
+						<span class="funnel-price">From $1,500/mo</span>
+					</div>
 				</div>
 			</BlurFade>
 		</div>
+	</div>
+</section>
 
-		<!-- How we price it -->
-		<BlurFade delay={0.3}>
-			<div class="pricing-math">
-				<h4 class="pricing-section-label">How we price it</h4>
-				<div class="pricing-row">
-					<div class="pricing-card featured">
-						<div class="pricing-label">Tool</div>
-						<div class="pricing-amount">$250</div>
-						<div class="pricing-unit">per tool connected</div>
-						<p class="pricing-description">
-							Any tool with an API — CRM, docs, chat, email, internal systems.
-						</p>
+<!-- What You Get -->
+<section class="offerings-section">
+	<div class="section-container">
+		<BlurFade>
+			<h2 class="section-heading">What You Get</h2>
+		</BlurFade>
+		<BlurFade delay={0.1}>
+			<p class="section-intro">
+				Tangible deliverables at every stage. You own everything we build.
+			</p>
+		</BlurFade>
+		
+		<div class="offerings-grid">
+			<BlurFade delay={0.15}>
+				<div class="offering-card">
+					<div class="offering-header">
+						<span class="offering-label">The Entry Point</span>
+						<h3 class="offering-name">Your First MCP</h3>
+						<div class="offering-price">$2,000–$5,000</div>
+						<div class="offering-timeline">2–4 weeks</div>
 					</div>
-					
-					<div class="pricing-card featured">
-						<div class="pricing-label">AI Platform</div>
-						<div class="pricing-amount">$250</div>
-						<div class="pricing-unit">per platform configured</div>
-						<p class="pricing-description">
-							We set up Claude, Cursor, or Codex to work with your tools.
+					<div class="offering-body">
+						<p class="offering-description">
+							Production MCP server connecting your tool to AI agents. Source code, documentation, deployment package. You own everything.
 						</p>
-					</div>
-				</div>
-				<div class="pricing-row" style="margin-top: var(--space-4, 1rem);">
-					<div class="pricing-card">
-						<div class="pricing-label">Secure Team Login</div>
-						<div class="pricing-amount">$250</div>
-						<div class="pricing-unit">one-time</div>
-						<p class="pricing-description">
-							Multi-user access with enterprise-grade authentication.
-						</p>
-					</div>
-					
-					<div class="pricing-card">
-						<div class="pricing-label">Automation</div>
-						<div class="pricing-amount">$500</div>
-						<div class="pricing-unit">one-time</div>
-						<p class="pricing-description">
-							Scheduled tasks, alerts, and automated workflows.
-						</p>
+						<div class="offering-deliverables">
+							<span class="deliverables-label">Deliverables</span>
+							<ul>
+								<li>Custom MCP server, built &amp; deployed</li>
+								<li>Full source code — it's yours</li>
+								<li>Documentation &amp; deployment guide</li>
+								<li>30-day support window</li>
+							</ul>
+						</div>
 					</div>
 				</div>
-				<p class="value-anchor">Custom development typically costs $15k–$50k. Our per-tool model makes it predictable.</p>
+			</BlurFade>
+			
+			<BlurFade delay={0.25}>
+				<div class="offering-card offering-featured">
+					<span class="offering-badge">Where it gets real</span>
+					<div class="offering-header">
+						<span class="offering-label">The Full Picture</span>
+						<h3 class="offering-name">Subtractive Triad Audit</h3>
+						<div class="offering-price">$5,000–$10,000</div>
+						<div class="offering-timeline">2–3 weeks</div>
+					</div>
+					<div class="offering-body">
+						<p class="offering-description">
+							Where's the waste? What should connect? What should go? Strategic report with ROI-prioritized roadmap for your entire tool stack.
+						</p>
+						<div class="offering-deliverables">
+							<span class="deliverables-label">Deliverables</span>
+							<ul>
+								<li>Full systems audit — every tool mapped</li>
+								<li>Duplication, excess &amp; disconnection report</li>
+								<li>ROI-prioritized automation roadmap</li>
+								<li>Architecture recommendations</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</BlurFade>
+			
+			<BlurFade delay={0.35}>
+				<div class="offering-card">
+					<div class="offering-header">
+						<span class="offering-label">The Real Product</span>
+						<h3 class="offering-name">Intelligent Automation</h3>
+						<div class="offering-price">$1,500–$3,500/mo</div>
+						<div class="offering-timeline">Ongoing</div>
+					</div>
+					<div class="offering-body">
+						<p class="offering-description">
+							The Judgment Layer: monthly prompt optimization, agent tuning, workflow evolution, performance monitoring. Your automation gets smarter every month.
+						</p>
+						<div class="offering-deliverables">
+							<span class="deliverables-label">Includes</span>
+							<ul>
+								<li>Prompt optimization &amp; agent tuning</li>
+								<li>Workflow evolution &amp; new automations</li>
+								<li>Performance monitoring &amp; alerts</li>
+								<li>Quarterly business reviews</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</BlurFade>
+		</div>
+	</div>
+</section>
+
+<!-- The Problem We Solve -->
+<section class="problem-section">
+	<div class="section-container">
+		<BlurFade>
+			<h2 class="section-heading">The Problem</h2>
+		</BlurFade>
+		<BlurFade delay={0.1}>
+			<div class="problem-statements">
+				<p class="problem-text">
+					Your tools don't talk to each other. You're the integration layer — copying data, formatting reports, posting updates that should happen automatically.
+				</p>
+				<p class="problem-text">
+					AI agents like Claude are powerful. But without connections to your actual systems, they're just chat windows.
+				</p>
+				<p class="problem-punchline">
+					We build the connections. Then we build the intelligence.
+				</p>
 			</div>
 		</BlurFade>
 	</div>
 </section>
 
-<!-- Managed Runtime -->
-<section class="runtime-section">
-	<div class="section-container">
-		<BlurFade>
-			<h2 class="section-heading">Managed MCP Runtime</h2>
-		</BlurFade>
-		<BlurFade delay={0.1}>
-			<p class="section-intro">
-				Build is step one. We can also host and operate your connections—monitoring, updates, 
-				and support so everything keeps running. Starts at $99/mo.
-			</p>
-		</BlurFade>
-		<div class="runtime-grid">
-			<BlurFade delay={0.2}>
-				<div class="runtime-card">
-					<h3>Managed Hosting</h3>
-					<p>Cloudflare-native deployment with secure auth, environments, and access controls.</p>
-				</div>
-			</BlurFade>
-			<BlurFade delay={0.25}>
-				<div class="runtime-card">
-					<h3>Monitoring & Alerts</h3>
-					<p>Run visibility, error tracking, and performance monitoring built into the runtime.</p>
-				</div>
-			</BlurFade>
-			<BlurFade delay={0.3}>
-				<div class="runtime-card">
-					<h3>API Change Handling</h3>
-					<p>We update integrations as APIs evolve so your workflows keep running.</p>
-				</div>
-			</BlurFade>
-		</div>
-	</div>
-</section>
-
-<!-- Who This Is For -->
+<!-- Built For -->
 <section class="audience-section">
 	<div class="section-container">
 		<BlurFade>
@@ -446,22 +475,22 @@
 		<div class="audience-grid">
 			<BlurFade delay={0.1}>
 				<div class="audience-card">
-					<h3>Existing tools</h3>
-					<p>You have tools you rely on every day. You want AI to work with them—not replace them.</p>
+					<h3>Teams Using 5+ SaaS Tools</h3>
+					<p>You have HubSpot, Notion, Slack, Google, and a dozen more. None of them talk to each other natively with AI. You need connections, not another dashboard.</p>
 				</div>
 			</BlurFade>
 			
 			<BlurFade delay={0.2}>
 				<div class="audience-card">
-					<h3>Ready for Agents</h3>
-					<p>You've used ChatGPT and Claude. Now you need Agents connected to your workflows.</p>
+					<h3>Already Using AI</h3>
+					<p>You've tried ChatGPT or Claude. You know it's powerful. You need it connected to your actual data and workflows — not copying and pasting between tabs.</p>
 				</div>
 			</BlurFade>
 			
 			<BlurFade delay={0.3}>
 				<div class="audience-card">
-					<h3>No MCP expertise</h3>
-					<p>You build software. MCP protocol, deployment, and operations aren’t your focus.</p>
+					<h3>Ready for Outcomes</h3>
+					<p>You want automation that runs while you work, not a proof of concept that collects dust. You want things built and deployed, not a strategy deck.</p>
 				</div>
 			</BlurFade>
 		</div>
@@ -472,15 +501,22 @@
 <section class="cta-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="cta-heading">Let's talk about your integration</h2>
+			<h2 class="cta-heading">Start with one connection.</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
-			<p class="cta-subtext">30-minute discovery call. We'll map out what's possible.</p>
+			<p class="cta-subtext">
+				Most clients start with a single MCP. See the value. Then decide what's next.
+			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
-			<ShimmerButton href="https://createsomething.agency/book">
-				Book Discovery Call
-			</ShimmerButton>
+			<div class="cta-buttons">
+				<ShimmerButton href="/services">
+					Get Your First MCP
+				</ShimmerButton>
+				<a href="https://createsomething.agency/book" class="cta-book-link">
+					Have questions? Book a call →
+				</a>
+			</div>
 		</BlurFade>
 	</div>
 </section>
@@ -680,7 +716,6 @@
 		-webkit-backdrop-filter: blur(20px) saturate(120%);
 		border: 1px solid rgba(255, 255, 255, 0.15);
 		border-radius: 20px;
-		box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
 		color: white;
 		box-shadow: 
 			0 8px 32px rgba(0, 0, 0, 0.4),
@@ -749,187 +784,121 @@
 			display: block;
 		}
 	}
-	
-	/* How It Works - 3 steps */
-	.model-section {
+
+	/* How It Works — Funnel Steps */
+	.process-section {
 		padding: var(--section-padding, 6rem) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
-	
-	.steps-row {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-4, 1rem);
+
+	.funnel-steps {
+		max-width: 640px;
+		margin: 0 auto;
+		display: flex;
+		flex-direction: column;
+		gap: 0;
 	}
-	
-	.how-step {
-		text-align: center;
-		padding: var(--space-5, 1.5rem);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg, 12px);
-		background: var(--color-bg-pure);
-		box-shadow: var(--glass-shine-soft);
-		transition: 
-			border-color var(--duration-standard) var(--ease-standard),
-			box-shadow var(--duration-standard) var(--ease-standard),
-			transform var(--duration-bounce) var(--ease-bounce);
+
+	.funnel-step {
+		display: flex;
+		gap: var(--space-5, 1.5rem);
+		align-items: flex-start;
 	}
-	
-	.how-step:hover {
-		border-color: var(--color-border-emphasis);
-		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
-		transform: translateY(-2px);
+
+	.funnel-step-indicator {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		flex-shrink: 0;
 	}
-	
-	.how-step-num {
+
+	.funnel-step-num {
 		width: 2.5rem;
 		height: 2.5rem;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		margin: 0 auto var(--space-4, 1rem);
 		border: 1px solid var(--color-border-emphasis);
 		border-radius: var(--radius-full, 9999px);
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-secondary);
+		background: var(--color-bg-pure);
+		position: relative;
+		z-index: 1;
 	}
-	
-	.how-step h3 {
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-semibold);
+
+	.funnel-step-line {
+		width: 1px;
+		height: 100%;
+		min-height: 2rem;
+		background: var(--color-border-default);
+		flex: 1;
+	}
+
+	.funnel-step-content {
+		padding-bottom: var(--space-8, 3rem);
+	}
+
+	.funnel-step-label {
+		font-size: var(--text-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
+		color: var(--color-fg-muted);
+		display: block;
+		margin-bottom: var(--space-1, 0.25rem);
+	}
+
+	.funnel-step-content h3 {
+		font-size: var(--text-h2);
+		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-2, 0.5rem);
+		margin-bottom: var(--space-3, 0.75rem);
 	}
-	
-	.how-step p {
-		font-size: var(--text-body-sm);
+
+	.funnel-step-content p {
+		font-size: var(--text-body);
 		color: var(--color-fg-secondary);
 		line-height: var(--leading-relaxed);
+		margin-bottom: var(--space-3, 0.75rem);
 	}
-	
-	/* Pricing Section */
-	.services-section {
+
+	.funnel-price {
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-semibold);
+		color: rgba(96, 165, 250, 0.9);
+	}
+
+	/* What You Get — Offerings */
+	.offerings-section {
 		padding: var(--section-padding, 6rem) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
-	
-	
-	.pricing-section-label {
-		font-size: var(--text-caption);
-		text-transform: uppercase;
-		letter-spacing: 0.15em;
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-3, 0.75rem);
-		text-align: center;
-	}
-	
-	.pricing-row {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: var(--space-4, 1rem);
-		align-items: stretch;
-		max-width: var(--content-width-md);
-		margin: 0 auto;
-	}
-	
-	.pricing-card {
-		padding: var(--space-5, 1.5rem);
-		border-radius: var(--radius-lg, 12px);
-		border: 1px solid var(--color-border-default);
-		background: var(--color-bg-pure);
-		text-align: center;
-		display: flex;
-		flex-direction: column;
-		transition: 
-			border-color 200ms ease,
-			transform 200ms ease;
-	}
-	
-	.pricing-card:hover {
-		border-color: var(--color-border-emphasis);
-		transform: translateY(-2px);
-	}
-	
-	.pricing-card.featured {
-		border-color: rgba(96, 165, 250, 0.4);
-		background: linear-gradient(
-			135deg,
-			rgba(96, 165, 250, 0.05) 0%,
-			rgba(167, 139, 250, 0.05) 100%
-		);
-	}
-	
-	.pricing-label {
-		font-size: var(--text-caption);
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-3, 0.75rem);
-	}
-	
-	.pricing-amount {
-		font-size: var(--text-h1);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		line-height: 1;
-		font-family: var(--font-display);
-	}
-	
-	.pricing-unit {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		margin-bottom: var(--space-4, 1rem);
-	}
-	
-	.pricing-description {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		line-height: var(--leading-relaxed);
-		margin-top: auto;
-	}
-	
-	/* Value Anchor */
-	.value-anchor {
-		text-align: center;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		margin-top: var(--space-6, 2rem);
-		font-style: italic;
-	}
 
-	.pricing-math {
-		margin-top: var(--space-8, 3rem);
-		padding-top: var(--space-6, 2rem);
-		border-top: 1px solid var(--color-border-default);
-	}
-
-	/* Example Builds */
-	.examples-grid {
+	.offerings-grid {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
 		gap: var(--space-5, 1.5rem);
 		align-items: stretch;
+		overflow: visible;
 	}
 
 	/* BlurFade wrappers must stretch so grid equalizes row height */
-	.examples-grid > :global(*) {
+	.offerings-grid > :global(*) {
 		display: flex;
 		flex-direction: column;
+		overflow: visible;
 	}
-	
-	.example-item {
+
+	.offering-card {
 		position: relative;
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		text-align: center;
-		gap: var(--space-3, 0.75rem);
-		padding: var(--space-7, 2.5rem) var(--space-5, 1.5rem);
 		border-radius: var(--radius-xl, 16px);
 		background: var(--color-bg-pure);
 		border: 1px solid var(--color-border-default);
 		box-shadow: var(--glass-shine-soft);
+		overflow: visible;
 		flex: 1;
 		transition:
 			border-color var(--duration-standard) var(--ease-standard),
@@ -937,7 +906,7 @@
 			transform var(--duration-bounce) var(--ease-bounce);
 	}
 
-	.example-item::before {
+	.offering-card::before {
 		content: '';
 		position: absolute;
 		top: 0;
@@ -952,14 +921,15 @@
 		);
 	}
 
-	.example-item:hover {
+	.offering-card:hover {
 		border-color: var(--color-border-emphasis);
 		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
 		transform: translateY(-3px);
 	}
 
-	/* Popular / recommended card */
-	.example-item.popular {
+	/* Featured offering — elevated z-index so badge is visible above siblings */
+	.offering-card.offering-featured {
+		z-index: 1;
 		border-color: rgba(96, 165, 250, 0.3);
 		background: linear-gradient(
 			180deg,
@@ -971,7 +941,7 @@
 			0 0 0 1px rgba(96, 165, 250, 0.08);
 	}
 
-	.example-item.popular:hover {
+	.offering-card.offering-featured:hover {
 		border-color: rgba(96, 165, 250, 0.5);
 		box-shadow:
 			var(--glass-shine-strong),
@@ -980,7 +950,7 @@
 		transform: translateY(-4px);
 	}
 
-	.example-item.popular::before {
+	.offering-card.offering-featured::before {
 		background: linear-gradient(
 			90deg,
 			transparent,
@@ -989,7 +959,7 @@
 		);
 	}
 
-	.example-badge {
+	.offering-badge {
 		position: absolute;
 		top: -10px;
 		left: 50%;
@@ -999,61 +969,135 @@
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
 		color: rgba(96, 165, 250, 1);
-		background: rgba(10, 14, 20, 0.85);
+		background: rgba(10, 14, 20, 0.95);
 		backdrop-filter: blur(12px) saturate(120%);
 		-webkit-backdrop-filter: blur(12px) saturate(120%);
 		border: 1px solid rgba(96, 165, 250, 0.3);
 		border-radius: var(--radius-full, 9999px);
 		padding: 0.2rem 0.75rem;
 		white-space: nowrap;
-		z-index: 1;
-	}
-	
-	.example-name {
-		font-size: var(--text-body);
-		font-weight: var(--font-bold);
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-		color: var(--color-fg-primary);
+		z-index: 10;
 	}
 
-	.example-outcome {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		line-height: var(--leading-relaxed);
+	.offering-header {
+		padding: var(--space-6, 2rem) var(--space-5, 1.5rem) var(--space-4, 1rem);
+		text-align: center;
 	}
-	
-	.example-calc {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: 0.35rem;
+
+	.offering-label {
 		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-full, 9999px);
-		padding: 0.25rem 0.75rem;
-		font-family: var(--font-mono, monospace);
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
+		color: var(--color-fg-muted);
 	}
-	
-	.example-price {
+
+	.offering-name {
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-bold);
+		color: var(--color-fg-primary);
+		margin-top: var(--space-2, 0.5rem);
+	}
+
+	.offering-price {
 		font-size: var(--text-display);
 		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
 		font-family: var(--font-display);
 		letter-spacing: var(--tracking-tighter, -0.025em);
-		margin-top: auto;
 		line-height: 1;
+		margin-top: var(--space-3, 0.75rem);
+	}
+
+	.offering-timeline {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		margin-top: var(--space-1, 0.25rem);
+	}
+
+	.offering-body {
+		padding: 0 var(--space-5, 1.5rem) var(--space-6, 2rem);
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.offering-description {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+		padding-top: var(--space-4, 1rem);
+		margin-bottom: var(--space-5, 1.5rem);
+	}
+
+	.offering-deliverables {
+		margin-top: auto;
+	}
+
+	.deliverables-label {
+		font-size: var(--text-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--color-fg-muted);
+		display: block;
+		margin-bottom: var(--space-2, 0.5rem);
+	}
+
+	.offering-deliverables ul {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2, 0.5rem);
+	}
+
+	.offering-deliverables li {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		padding-left: 1.25rem;
+		position: relative;
+	}
+
+	.offering-deliverables li::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		top: 0.55em;
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: rgba(96, 165, 250, 0.6);
+	}
+
+	/* Problem Section */
+	.problem-section {
+		padding: var(--section-padding, 6rem) 0;
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.problem-statements {
+		max-width: var(--content-width-sm);
+		margin: 0 auto;
+		text-align: center;
+	}
+
+	.problem-text {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+		margin-bottom: var(--space-6, 2rem);
+	}
+
+	.problem-punchline {
+		font-size: var(--text-h2);
+		font-weight: var(--font-bold);
+		color: var(--color-fg-primary);
+		line-height: 1.2;
+		letter-spacing: var(--tracking-tight, -0.015em);
 	}
 	
-	@media (max-width: 640px) {
-		.pricing-row {
-			grid-template-columns: 1fr;
-		}
-	}
-	
-	/* Audience / Who This Is For */
+	/* Audience / Built For */
 	.audience-section {
 		padding: var(--section-padding, 6rem) 0;
 		border-top: 1px solid var(--color-border-default);
@@ -1065,18 +1109,32 @@
 		gap: var(--space-4, 1rem);
 		align-items: stretch;
 	}
-	
-	.audience-card {
-		padding: var(--space-5, 1.5rem);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg, 12px);
-		transition: border-color var(--duration-micro, 200ms) var(--ease-standard);
+
+	/* BlurFade wrappers stretch for equal height */
+	.audience-grid > :global(*) {
 		display: flex;
 		flex-direction: column;
 	}
 	
+	.audience-card {
+		padding: var(--space-6, 2rem) var(--space-5, 1.5rem);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg, 12px);
+		background: var(--color-bg-pure);
+		box-shadow: var(--glass-shine-soft);
+		transition: 
+			border-color var(--duration-standard) var(--ease-standard),
+			box-shadow var(--duration-standard) var(--ease-standard),
+			transform var(--duration-bounce) var(--ease-bounce);
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+	}
+	
 	.audience-card:hover {
 		border-color: var(--color-border-emphasis);
+		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
+		transform: translateY(-2px);
 	}
 	
 	.audience-card h3 {
@@ -1087,45 +1145,6 @@
 	}
 	
 	.audience-card p {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		line-height: var(--leading-relaxed);
-	}
-
-	/* Managed Runtime */
-	.runtime-section {
-		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
-	}
-
-	.runtime-grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-4, 1rem);
-		align-items: stretch;
-	}
-
-	.runtime-card {
-		padding: var(--space-5, 1.5rem);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg, 12px);
-		transition: border-color var(--duration-micro, 200ms) var(--ease-standard);
-		display: flex;
-		flex-direction: column;
-	}
-
-	.runtime-card:hover {
-		border-color: var(--color-border-emphasis);
-	}
-
-	.runtime-card h3 {
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-3, 0.75rem);
-	}
-
-	.runtime-card p {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
 		line-height: var(--leading-relaxed);
@@ -1149,6 +1168,28 @@
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-secondary);
 		margin-bottom: var(--space-6, 2rem);
+		max-width: var(--content-width-sm);
+		margin-left: auto;
+		margin-right: auto;
+		line-height: var(--leading-relaxed);
+	}
+
+	.cta-buttons {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--space-4, 1rem);
+	}
+
+	.cta-book-link {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		text-decoration: none;
+		transition: color var(--duration-micro, 200ms) var(--ease-standard);
+	}
+
+	.cta-book-link:hover {
+		color: var(--color-fg-primary);
 	}
 	
 	/* Responsive */
@@ -1182,36 +1223,25 @@
 			font-size: clamp(2.5rem, 8vw, 4rem);
 		}
 
-		.steps-row {
+		.offerings-grid {
 			grid-template-columns: 1fr;
+			max-width: 480px;
+			margin-left: auto;
+			margin-right: auto;
 		}
 
-		.examples-grid {
-			grid-template-columns: 1fr;
-			max-width: 400px;
-			margin: 0 auto;
-		}
-
-		.example-item.popular {
+		.offering-card.offering-featured {
 			order: -1;
-		}
-
-		.example-price {
-			font-size: var(--text-h1);
 		}
 		
 		.audience-grid {
 			grid-template-columns: 1fr;
 		}
-
-		.runtime-grid {
-			grid-template-columns: 1fr;
-		}
 		
 		/* Mobile section padding */
-		.model-section,
-		.services-section,
-		.runtime-section,
+		.process-section,
+		.offerings-section,
+		.problem-section,
 		.audience-section,
 		.cta-section {
 			padding: var(--layout-3, 4rem) 0;

@@ -1,12 +1,93 @@
 <script lang="ts">
-  import { SEO } from '@create-something/canon';
-  // Footer is provided by layout
+	import { SEO } from '@create-something/canon';
+	import { BlurFade, ShimmerButton } from '@create-something/canon/magicui';
+
+	const disciplines = [
+		{
+			level: 1,
+			name: 'DRY',
+			domain: 'Implementation',
+			question: 'Have we built this before?',
+			action: 'Unify',
+			description:
+				'We audit your systems for redundant tools, duplicate workflows, and repeated data entry. If three teams use three different project management tools, that\'s duplication. If the same customer data lives in four systems, that\'s duplication. We map it, measure the cost, and design the unified architecture.',
+			outcome: 'Fewer systems, clearer data, lower costs.'
+		},
+		{
+			level: 2,
+			name: 'Rams',
+			domain: 'Artifact',
+			question: 'Does this earn its existence?',
+			action: 'Remove',
+			description:
+				'Named for Dieter Rams — "Weniger, aber besser" (Less, but better). Every tool, every workflow, every automation must justify its existence. We challenge each component: Does it produce outcomes? Is it used? Would anyone notice if it disappeared? The tools that survive this audit are the ones worth investing in.',
+			outcome: 'A leaner stack where every tool earns its place.'
+		},
+		{
+			level: 3,
+			name: 'Heidegger',
+			domain: 'System',
+			question: 'Does this serve the whole?',
+			action: 'Reconnect',
+			description:
+				'Named for the hermeneutic circle — the principle that every part must serve the whole, and the whole gives meaning to every part. Surviving tools must connect into a coherent system. Data flows between them. Automations bridge them. The architecture becomes a living whole, not a collection of islands.',
+			outcome: 'A connected system where every component serves the mission.'
+		}
+	];
+
+	const phases = [
+		{
+			weeks: 'Week 1–2',
+			name: 'DRY Audit',
+			description: 'Map all systems, identify duplication, measure waste.'
+		},
+		{
+			weeks: 'Week 3–4',
+			name: 'Rams Review',
+			description: 'Challenge each component, score value vs. cost.'
+		},
+		{
+			weeks: 'Week 5–6',
+			name: 'Heidegger Design',
+			description: 'Reconnect surviving systems into coherent architecture.'
+		},
+		{
+			weeks: 'Week 7–8',
+			name: 'Blueprint Delivery',
+			description: 'Complete architecture + implementation roadmap.'
+		}
+	];
+
+	const tiers = [
+		{
+			name: 'Database',
+			subtitle: 'What exists',
+			items: ['State', 'Content', 'Records'],
+			description:
+				'The foundation — where your data lives, how it\'s structured, and whether the right information is available to the right systems.'
+		},
+		{
+			name: 'Automation',
+			subtitle: 'What happens',
+			items: ['Tools', 'Integrations', 'Workflows'],
+			description:
+				'The engine — how systems connect, how data moves, and how actions get triggered without manual intervention.'
+		},
+		{
+			name: 'Judgment',
+			subtitle: 'What should happen',
+			items: ['Policies', 'Oversight', 'Decisions'],
+			description:
+				'The intelligence — where human insight meets automated execution. Knowing when to act, what to escalate, and which decisions require a person.'
+		}
+	];
 </script>
 
 <SEO
-	title="Research Methodology"
-	description="How CREATE SOMETHING produces credible knowledge about automation infrastructure and MCP systems through rigorous experiment tracking, real-time logging, and reproducible results."
-	keywords="research methodology, experiment tracking, automation infrastructure, MCP systems, reproducible research, scientific method, Claude Code, systems thinking"
+	title="The Subtractive Triad | Methodology"
+	description="Creation is the discipline of removing what obscures. The Subtractive Triad applies three levels of subtraction — eliminating duplication, excess, and disconnection — to reveal the automation architecture your organization actually needs."
+	keywords="automation methodology, subtractive design, automation architecture, systems design, DRY principle, Dieter Rams, hermeneutic circle, automation audit, connected systems"
+	ogImage="/og-image.svg"
 	propertyName="agency"
 	breadcrumbs={[
 		{ name: 'Home', url: '/' },
@@ -14,626 +95,812 @@
 	]}
 />
 
-<!-- Hero Section -->
-  <section class="section-hero relative px-6">
-    <div class="max-w-4xl mx-auto">
-      <div class="content-stack animate-reveal">
-        <h1 class="hero-title font-bold section-heading-sm">
-          Research Methodology
-        </h1>
+<!-- Hero -->
+<section class="hero">
+	<div class="hero-grid"></div>
+	<div class="hero-content">
+		<BlurFade delay={0}>
+			<p class="hero-eyebrow">Methodology</p>
+		</BlurFade>
+		<BlurFade delay={0.1}>
+			<h1 class="hero-title">The Subtractive Triad</h1>
+		</BlurFade>
+		<BlurFade delay={0.2}>
+			<p class="hero-subtitle">
+				Creation is the discipline of removing what obscures. We apply three levels of
+				subtraction to reveal the automation architecture your organization actually needs.
+			</p>
+		</BlurFade>
+	</div>
+</section>
 
-        <p class="heading-3 body-xl leading-relaxed">
-          What makes CREATE SOMETHING different from automation blogs: we don't just document results—we document the <strong>process</strong> of building and operating with agents.
-        </p>
+<!-- The Core Principle -->
+<section class="principle-section">
+	<div class="section-container">
+		<BlurFade delay={0.1}>
+			<div class="principle-card">
+				<h2 class="principle-heading">The Core Principle</h2>
+				<p class="principle-body">
+					Most automation strategies fail because they <em>add</em> — more tools, more workflows,
+					more connections. The Subtractive Triad inverts this. We start by removing what
+					doesn't belong. What remains is the architecture.
+				</p>
+			</div>
+		</BlurFade>
+	</div>
+</section>
 
-        <p class="body-lg body-secondary leading-relaxed">
-          Every experiment is tracked with automated logging, real costs from APIs, precise time measurements, and intervention documentation. This transforms anecdotes into reproducible experiments.
-        </p>
+<!-- The Three Disciplines -->
+<section class="disciplines-section">
+	<div class="section-container">
+		<BlurFade delay={0.1}>
+			<h2 class="section-heading">The Three Disciplines</h2>
+		</BlurFade>
+		<BlurFade delay={0.15}>
+			<p class="section-subhead">
+				One principle — subtractive revelation — applied at three scales.
+			</p>
+		</BlurFade>
 
-        <p class="body-lg body-secondary leading-relaxed">
-          We use this methodology to validate MCP servers, agent workflows, and managed runtimes before they reach production.
-        </p>
-      </div>
-    </div>
-  </section>
+		<div class="disciplines-stack">
+			{#each disciplines as discipline, i}
+				<BlurFade delay={0.2 + i * 0.1}>
+					<div class="discipline-card">
+						<div class="discipline-header">
+							<div class="discipline-level">
+								<span class="level-number">Level {discipline.level}</span>
+								<span class="level-domain">{discipline.domain}</span>
+							</div>
+							<div class="discipline-meta">
+								<h3 class="discipline-name">{discipline.name}</h3>
+								<div class="discipline-action">
+									<span class="action-label">Action:</span>
+									<span class="action-value">{discipline.action}</span>
+								</div>
+							</div>
+						</div>
 
-  <!-- The Process Visual -->
-  <section class="section-content px-6 section-border">
-    <div class="max-w-6xl mx-auto">
-      <div>
-        <h2 class="heading-2 font-bold section-heading text-center">
-          How We Work
-        </h2>
+						<div class="discipline-question">
+							<span class="question-mark">"</span>
+							{discipline.question}
+							<span class="question-mark">"</span>
+						</div>
 
-        <!-- Pipeline Visual -->
-        <div class="grid grid-cols-1 md:grid-cols-4 cards-grid section-heading">
-          {#each [
-            {
-              step: '1. Build',
-              title: 'Claude Code',
-              description: 'Work with agents as development partners',
-              icon: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'
-            },
-            {
-              step: '2. Track',
-              title: 'Auto-Log',
-              description: 'Hooks capture every prompt, error, intervention',
-              icon: 'M22 12h-4l-3 9L9 3l-3 9H2'
-            },
-            {
-              step: '3. Analyze',
-              title: 'Real Data',
-              description: 'Actual costs, time, errors from APIs',
-              icon: 'M22 7l-8.5 8.5-5-5L1 18'
-            },
-            {
-              step: '4. Publish',
-              title: 'Honest Results',
-              description: "What worked, what didn't, and why",
-              icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM4 2v20M20 8h-6V2'
-            }
-          ] as item, index}
-            <div
-              class="relative p-6 bg-elevated card-border rounded animate-reveal"
-              style="--delay: {index + 1}"
-            >
-              <div class="mb-4 body-secondary">
-                <svg class="w-10 h-10" stroke-width="1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d={item.icon} stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </div>
-              <div class="body-sm body-muted mb-2">{item.step}</div>
-              <h3 class="heading-3 font-semibold mb-2">
-                {item.title}
-              </h3>
-              <p class="body-tertiary body-sm">
-                {item.description}
-              </p>
+						<div class="discipline-body">
+							<p class="discipline-description">{discipline.description}</p>
+							<div class="discipline-outcome">
+								<span class="outcome-label">Outcome</span>
+								<p class="outcome-text">{discipline.outcome}</p>
+							</div>
+						</div>
+					</div>
+				</BlurFade>
+			{/each}
+		</div>
+	</div>
+</section>
 
-              <!-- Arrow -->
-              {#if index < 3}
-                <div class="hidden md:block absolute -right-3 top-1/2 transform -translate-y-1/2/20">
-                  <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
-                </div>
-              {/if}
-            </div>
-          {/each}
-        </div>
+<!-- The Process Applied -->
+<section class="process-section">
+	<div class="section-container">
+		<BlurFade delay={0.1}>
+			<h2 class="section-heading">The Process Applied</h2>
+		</BlurFade>
+		<BlurFade delay={0.15}>
+			<p class="section-subhead">
+				How the Triad maps to an engagement — eight weeks from audit to architecture.
+			</p>
+		</BlurFade>
 
-        <div class="text-center">
-          <p class="heading-3 body-secondary font-medium">
-            This is research, not blogging.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
+		<div class="phases-grid">
+			{#each phases as phase, i}
+				<BlurFade delay={0.2 + i * 0.08}>
+					<div class="phase-card">
+						<div class="phase-weeks">{phase.weeks}</div>
+						<h3 class="phase-name">{phase.name}</h3>
+						<p class="phase-description">{phase.description}</p>
+						{#if i < phases.length - 1}
+							<div class="phase-connector">
+								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+									<path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
+								</svg>
+							</div>
+						{/if}
+					</div>
+				</BlurFade>
+			{/each}
+		</div>
+	</div>
+</section>
 
-  <!-- What We Track -->
-  <section class="section-content px-6 section-border">
-    <div class="max-w-4xl mx-auto">
-      <div class="content-stack">
-        <h2 class="heading-2 font-bold section-heading-sm">
-          Every Experiment Tracked With
-        </h2>
+<!-- Why Three Levels -->
+<section class="why-section">
+	<div class="section-container">
+		<BlurFade delay={0.1}>
+			<div class="why-card">
+				<h2 class="why-heading">Why Three Levels</h2>
+				<div class="why-body">
+					<p>
+						The triad is coherent because it's one principle — <strong>subtractive revelation</strong>
+						— applied at three scales.
+					</p>
+					<p>
+						Most automation reviews stop at Level 1: finding duplicates. That's useful, but
+						incomplete. Deduplication alone leaves you with a tighter stack that still contains
+						tools nobody uses and systems that don't talk to each other.
+					</p>
+					<p>
+						We go deeper. Removing excess (Level 2) strips the stack to only what produces
+						outcomes. Reconnecting what remains (Level 3) transforms isolated tools into a
+						system that serves the whole.
+					</p>
+					<p>
+						This is what produces architectures that last — not because they're complex, but
+						because everything that doesn't belong has been removed.
+					</p>
+				</div>
+			</div>
+		</BlurFade>
+	</div>
+</section>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 cards-grid">
-          {#each [
-            {
-              metric: 'Prompts',
-              description: 'Real-time logging via Claude Code hooks',
-              example: '47 iterations logged'
-            },
-            {
-              metric: 'Errors',
-              description: 'Precise counts & resolution times',
-              example: '23 errors, avg fix: 8 min'
-            },
-            {
-              metric: 'Costs',
-              description: 'Token usage + infrastructure from APIs',
-              example: '$18.50 Claude + $8.30 Cloudflare'
-            },
-            {
-              metric: 'Interventions',
-              description: 'When agents needed human help, and why',
-              example: '12 manual fixes documented'
-            },
-            {
-              metric: 'Time',
-              description: 'Session duration, not guesswork',
-              example: '26 hours actual vs 120 estimated'
-            },
-            {
-              metric: 'Architecture',
-              description: 'Decisions made, alternatives considered',
-              example: 'Workflows over Workers (why)'
-            }
-          ] as item, index}
-            <div
-              class="p-6 bg-elevated card-border rounded animate-reveal"
-              style="--delay: {index + 1}"
-            >
-              <h3 class="heading-3 font-semibold mb-2">
-                {item.metric}
-              </h3>
-              <p class="body-tertiary body-sm mb-3">
-                {item.description}
-              </p>
-              <code class="body-xs body-muted bg-surface px-2 py-1 rounded">
-                {item.example}
-              </code>
-            </div>
-          {/each}
-        </div>
-      </div>
-    </div>
-  </section>
+<!-- The Three-Tier Framework -->
+<section class="framework-section">
+	<div class="section-container">
+		<BlurFade delay={0.1}>
+			<h2 class="section-heading">The Three-Tier Framework</h2>
+		</BlurFade>
+		<BlurFade delay={0.15}>
+			<p class="section-subhead">
+				The structural model we use to classify every component in your automation stack.
+			</p>
+		</BlurFade>
 
-  <!-- Three Tracking Modes -->
-  <section class="section-content px-6 section-border">
-    <div class="max-w-4xl mx-auto">
-      <div class="content-stack">
-        <h2 class="heading-2 font-bold section-heading-sm">
-          Three Tracking Modes
-        </h2>
+		<div class="tiers-grid">
+			{#each tiers as tier, i}
+				<BlurFade delay={0.2 + i * 0.1}>
+					<div class="tier-card">
+						<div class="tier-header">
+							<h3 class="tier-name">{tier.name}</h3>
+							<span class="tier-subtitle">{tier.subtitle}</span>
+						</div>
+						<div class="tier-items">
+							{#each tier.items as item}
+								<span class="tier-item">{item}</span>
+							{/each}
+						</div>
+						<p class="tier-description">{tier.description}</p>
+					</div>
+				</BlurFade>
+			{/each}
+		</div>
 
-        <div class="cards-stack">
-          {#each [
-            {
-              mode: 'Real-Time Tracking',
-              tag: 'Ideal',
-              description: 'Start tracking from day one. Get complete data on every iteration, error, and decision.',
-              dataQuality: 'High confidence, precise metrics',
-              useCase: 'New experiments starting from scratch'
-            },
-            {
-              mode: 'Mid-Flight Tracking',
-              tag: 'Practical',
-              description: 'Start tracking on an in-progress project. Combine real-time data with git history reconstruction.',
-              dataQuality: 'Mixed: estimates for past work, precise for future',
-              useCase: 'Active projects you realize are experiment-worthy'
-            },
-            {
-              mode: 'Retroactive Documentation',
-              tag: 'Still Valuable',
-              description: 'Document already-deployed projects. Reconstruct from git, APIs, and memory.',
-              dataQuality: 'Lower confidence, acknowledged limitations',
-              useCase: 'Completed projects with production data'
-            }
-          ] as item, index}
-            <div
-              class="p-6 bg-elevated card-border rounded animate-reveal"
-              style="--delay: {index + 1}"
-            >
-              <div class="flex items-start justify-between mb-3">
-                <h3 class="heading-3 font-semibold">
-                  {item.mode}
-                </h3>
-                <span class="body-xs px-2 py-1 bg-subtle body-tertiary rounded">
-                  {item.tag}
-                </span>
-              </div>
-              <p class="body-secondary mb-4">
-                {item.description}
-              </p>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 body-sm">
-                <div>
-                  <span class="body-muted">Data Quality:</span>
-                  <p class="body-tertiary">{item.dataQuality}</p>
-                </div>
-                <div>
-                  <span class="body-muted">Use Case:</span>
-                  <p class="body-tertiary">{item.useCase}</p>
-                </div>
-              </div>
-            </div>
-          {/each}
-        </div>
-      </div>
-    </div>
-  </section>
+		<BlurFade delay={0.5}>
+			<div class="framework-insight">
+				<p>
+					Every component in your automation stack maps to one of these tiers. When tiers are
+					misaligned — when automation makes decisions that should be judgment, or when records
+					aren't available to the systems that need them — the architecture fails. The Three-Tier
+					Framework reveals these misalignments before they become expensive.
+				</p>
+			</div>
+		</BlurFade>
+	</div>
+</section>
 
-  <!-- Why This Matters -->
-  <section class="section-content px-6 section-border">
-    <div class="max-w-4xl mx-auto">
-      <div class="content-stack">
-        <h2 class="heading-2 font-bold section-heading-sm">
-          Why This Matters
-        </h2>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 content-gap">
-          <div class="space-y-4">
-            <h3 class="heading-3 font-semibold">
-              Without Tracking
-            </h3>
-            <ul class="space-y-3 body-tertiary">
-              {#each [
-                '"I built X with agents" (anecdote)',
-                'No reproducibility',
-                "Can't verify claims",
-                'Just another automation blog'
-              ] as item}
-                <li class="flex items-start gap-3">
-                  <svg class="w-5 h-5 body-muted flex-shrink-0 mt-0.5" stroke-width="1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
-                  <span>{item}</span>
-                </li>
-              {/each}
-            </ul>
-          </div>
-
-          <div class="space-y-4">
-            <h3 class="heading-3 font-semibold">
-              With Tracking
-            </h3>
-            <ul class="space-y-3 body-tertiary">
-              {#each [
-                '"I built X: 26 hrs, $27, 78% savings" (data)',
-                'Others can replicate experiments',
-                'Transparent methodology',
-                'Scientific research platform'
-              ] as item}
-                <li class="flex items-start gap-3">
-                  <svg class="w-5 h-5 body-muted flex-shrink-0 mt-0.5" stroke-width="1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
-                  <span>{item}</span>
-                </li>
-              {/each}
-            </ul>
-          </div>
-        </div>
-
-        <div class="p-6 bg-surface card-border rounded callout-margin">
-          <p class="body-lg body-secondary leading-relaxed">
-            The tracking methodology transforms "prompting and hoping" into <strong>systematic evaluation with reproducible results</strong>. This is what separates research from blogging.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- For Researchers -->
-  <section class="section-content px-6 section-border">
-    <div class="max-w-4xl mx-auto">
-      <div class="content-stack">
-        <h2 class="heading-2 font-bold section-heading-sm">
-          For Researchers: Use This Methodology
-        </h2>
-
-        <p class="body-lg body-secondary leading-relaxed">
-          Want to adopt this approach for your own agent-native development research? The experiment tracking system is available as a Claude Code Skill.
-        </p>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 cards-grid">
-          {#each [
-            {
-              step: '1',
-              title: 'Install the Skill',
-              description: 'Add experiment tracking to your Claude Code setup'
-            },
-            {
-              step: '2',
-              title: 'Build & Track',
-              description: 'Work with Claude Code while automatic logging captures everything'
-            },
-            {
-              step: '3',
-              title: 'Generate Papers',
-              description: 'Transform tracked data into reproducible research'
-            }
-          ] as item, index}
-            <div
-              class="p-6 bg-elevated card-border rounded text-center animate-reveal"
-              style="--delay: {index + 1}"
-            >
-              <div class="heading-2 font-bold/20 mb-3">{item.step}</div>
-              <h3 class="body-lg font-semibold mb-2">
-                {item.title}
-              </h3>
-              <p class="body-tertiary body-sm">
-                {item.description}
-              </p>
-            </div>
-          {/each}
-        </div>
-
-        <div class="flex flex-col sm:flex-row justify-center cta-group">
-          <a
-            href="https://github.com/createsomethingtoday/create-something-experiments"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex items-center justify-center gap-2 px-6 py-3 cta-button-primary"
-          >
-            <span>View on GitHub</span>
-            <svg class="w-4 h-4" stroke-width="2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </a>
-
-          <a
-            href="/experiments/zoom-transcript-automation-experiment"
-            class="inline-flex items-center justify-center gap-2 px-6 py-3 cta-button"
-          >
-            <span>See Example Experiment</span>
-          </a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Example from Experiment #1 -->
-  <section class="section-content px-6 section-border">
-    <div class="max-w-4xl mx-auto">
-      <div class="content-stack">
-        <h2 class="heading-2 font-bold section-heading-sm">
-          Methodology in Action
-        </h2>
-
-        <p class="body-lg body-secondary leading-relaxed">
-          Example from <a href="/experiments/zoom-transcript-automation-experiment" class="hover:underline">Experiment #1: Zoom Transcript Automation</a>
-        </p>
-
-        <div class="p-6 bg-elevated card-border rounded">
-          <div class="space-y-4">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div class="p-4 bg-surface rounded">
-                <div class="heading-2 font-bold">26</div>
-                <div class="body-xs body-muted">Hours</div>
-              </div>
-              <div class="p-4 bg-surface rounded">
-                <div class="heading-2 font-bold">47</div>
-                <div class="body-xs body-muted">Errors</div>
-              </div>
-              <div class="p-4 bg-surface rounded">
-                <div class="heading-2 font-bold">12</div>
-                <div class="body-xs body-muted">Interventions</div>
-              </div>
-              <div class="p-4 bg-surface rounded">
-                <div class="heading-2 font-bold">78%</div>
-                <div class="body-xs body-muted">Time Savings</div>
-              </div>
-            </div>
-
-            <div class="pt-4 section-border">
-              <p class="body-sm body-tertiary">
-                <strong class="strong-text">Data sources:</strong> Real-time prompt logging via hooks, Claude Code Analytics API, Cloudflare billing API, git commit history
-              </p>
-            </div>
-
-            <div class="pt-2">
-              <p class="body-sm body-tertiary">
-                <strong class="strong-text">Reproducibility:</strong> Starting prompt, tracking logs, and architecture decisions documented
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div class="text-center">
-          <a
-            href="/experiments/zoom-transcript-automation-experiment"
-            class="inline-flex items-center gap-2 hover:underline"
-          >
-            Read the full experiment
-            <svg class="w-4 h-4" stroke-width="2" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </a>
-        </div>
-      </div>
-    
+<!-- CTA -->
+<section class="cta-section">
+	<div class="section-container">
+		<BlurFade delay={0}>
+			<h2 class="cta-heading">This is how we work</h2>
+		</BlurFade>
+		<BlurFade delay={0.1}>
+			<p class="cta-subtext">
+				Every engagement starts with the Subtractive Triad — whether it's a single MCP build
+				or a full audit of your systems. The methodology ensures we build what matters and remove what doesn't.
+			</p>
+		</BlurFade>
+		<BlurFade delay={0.2}>
+			<div class="cta-buttons">
+				<ShimmerButton href="/services">
+					Get Your First MCP
+				</ShimmerButton>
+				<a href="https://createsomething.agency/book" class="cta-secondary">
+					Have questions? Book a call
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
+					</svg>
+				</a>
+			</div>
+		</BlurFade>
+	</div>
+</section>
 
 <style>
-	/* Golden Ratio Spacing (φ = 1.618) */
-	.section-hero {
-		padding-top: 6rem;
-		padding-bottom: var(--space-xl); /* φ³ = 4.236rem */
-	}
-
-	.section-content {
-		padding-top: var(--space-xl);    /* φ³ = 4.236rem */
-		padding-bottom: var(--space-xl);
+	/* ─── Layout ─── */
+	.section-container {
+		max-width: var(--content-width-xl);
+		margin: 0 auto;
+		padding: 0 var(--container-padding, 1.5rem);
 	}
 
 	.section-heading {
-		margin-bottom: var(--space-lg);  /* φ² = 2.618rem */
-	}
-
-	.section-heading-sm {
-		margin-bottom: var(--space-md);  /* φ = 1.618rem */
-	}
-
-	.content-stack {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-lg);            /* φ² = 2.618rem */
-	}
-
-	.cards-grid {
-		gap: var(--space-md);            /* φ = 1.618rem */
-	}
-
-	.cards-stack {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-md);            /* φ = 1.618rem */
-	}
-
-	.content-gap {
-		gap: var(--space-lg);            /* φ² = 2.618rem */
-	}
-
-	.cta-group {
-		gap: var(--space-sm);            /* 1rem base */
-		margin-top: var(--space-lg);     /* φ² = 2.618rem */
-	}
-
-	.callout-margin {
-		margin-top: var(--space-lg);     /* φ² = 2.618rem */
-	}
-
-	/* Primary CTA button */
-	.cta-button-primary {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
+		font-size: var(--text-h1);
 		font-weight: var(--font-semibold);
-		border-radius: var(--radius-full);
-		transition: all var(--duration-standard) var(--ease-standard);
-	}
-
-	.cta-button-primary:hover {
-		background: var(--color-fg-secondary);
-	}
-
-	/* Secondary CTA button */
-	.cta-button {
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-emphasis);
 		color: var(--color-fg-primary);
-		font-weight: var(--font-semibold);
-		border-radius: var(--radius-full);
-		transition: all var(--duration-standard) var(--ease-standard);
+		text-align: center;
+		margin-bottom: var(--space-3, 0.75rem);
+		letter-spacing: var(--tracking-tight, -0.015em);
 	}
 
-	.cta-button:hover {
-		background: var(--color-active);
-		border-color: var(--color-border-strong);
+	.section-subhead {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+		text-align: center;
+		margin-bottom: var(--space-8, 3rem);
+		max-width: 40rem;
+		margin-left: auto;
+		margin-right: auto;
+		line-height: var(--leading-relaxed);
 	}
 
-	/* Strong text */
-	.strong-text {
-		color: var(--color-fg-primary);
+	/* ─── Hero ─── */
+	.hero {
+		position: relative;
+		padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem) var(--section-padding, 6rem);
+		overflow: hidden;
+	}
+
+	.hero-grid {
+		position: absolute;
+		inset: 0;
+		background-image:
+			linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+			linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+		background-size: 60px 60px;
+		mask-image: linear-gradient(to bottom, black 0%, transparent 80%);
+		-webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 80%);
+		pointer-events: none;
+	}
+
+	.hero-content {
+		position: relative;
+		text-align: center;
+		max-width: var(--content-width-xl);
+		margin: 0 auto;
+	}
+
+	.hero-eyebrow {
+		font-size: var(--text-body-sm);
+		text-transform: uppercase;
+		letter-spacing: 0.15em;
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-5, 1.5rem);
 	}
 
 	.hero-title {
-		font-size: var(--text-h1);
-		font-weight: bold;
-		color: var(--color-fg-primary);
-	}
-
-	.heading-2 {
-		font-size: var(--text-h2);
-		font-weight: bold;
-		color: var(--color-fg-primary);
-	}
-
-	.heading-3 {
-		font-size: var(--text-h3);
+		font-size: var(--text-display);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
+		margin-bottom: var(--space-5, 1.5rem);
+		line-height: 1.1;
+		letter-spacing: var(--tracking-tighter, -0.025em);
 	}
 
-	.body-xl {
+	.hero-subtitle {
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-secondary);
+		max-width: 42rem;
+		margin: 0 auto;
+		line-height: var(--leading-relaxed);
 	}
 
-	.body-lg {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
-	}
-
-	.body {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-	}
-
-	.body-sm {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-	}
-
-	.body-xs {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-	}
-
-	.body-secondary {
-		color: var(--color-fg-secondary);
-	}
-
-	.body-tertiary {
-		color: var(--color-fg-tertiary);
-	}
-
-	.body-muted {
-		color: var(--color-fg-muted);
-	}
-
-	.link {
-		color: var(--color-fg-primary);
-	}
-
-	.link:hover {
-		text-decoration: underline;
-	}
-
-	.card-surface {
-		padding: var(--space-md);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-	}
-
-	.card-elevated {
-		padding: var(--space-md);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-	}
-
-	.section-border {
+	/* ─── Core Principle ─── */
+	.principle-section {
+		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
 		border-top: 1px solid var(--color-border-default);
 	}
 
-	.btn-primary {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
-		font-weight: var(--font-semibold);
-		border-radius: var(--radius-full);
-	}
-
-	.btn-primary:hover {
-		background: var(--color-fg-secondary);
-	}
-
-	.input {
-		background: var(--color-bg-surface);
+	.principle-card {
+		max-width: 44rem;
+		margin: 0 auto;
+		padding: var(--space-8, 3rem) var(--space-7, 2.5rem);
 		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-xl, 16px);
+		background: var(--color-bg-pure);
+		box-shadow: var(--glass-shine-soft);
+		text-align: center;
+	}
+
+	.principle-heading {
+		font-size: var(--text-h2);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-5, 1.5rem);
+		letter-spacing: var(--tracking-tight, -0.015em);
+	}
+
+	.principle-body {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+	}
+
+	.principle-body em {
+		font-style: italic;
 		color: var(--color-fg-primary);
 	}
 
-	.input:focus {
+	/* ─── Three Disciplines ─── */
+	.disciplines-section {
+		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.disciplines-stack {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-5, 1.5rem);
+		max-width: 52rem;
+		margin: 0 auto;
+	}
+
+	.discipline-card {
+		position: relative;
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-xl, 16px);
+		background: var(--color-bg-pure);
+		box-shadow: var(--glass-shine-soft);
+		overflow: hidden;
+		transition:
+			border-color var(--duration-standard) var(--ease-standard),
+			box-shadow var(--duration-standard) var(--ease-standard),
+			transform var(--duration-bounce) var(--ease-bounce);
+	}
+
+	.discipline-card:hover {
 		border-color: var(--color-border-emphasis);
+		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
+		transform: translateY(-2px);
 	}
 
-	.animate-reveal {
-		opacity: 0;
-		transform: translateY(20px);
-		animation: reveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-		animation-delay: calc(var(--delay, 0) * 100ms);
+	.discipline-card::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: 10%;
+		right: 10%;
+		height: 1px;
+		background: linear-gradient(
+			90deg,
+			transparent,
+			rgba(255, 255, 255, 0.12),
+			transparent
+		);
 	}
 
-	@keyframes reveal {
-		to {
-			opacity: 1;
-			transform: translateY(0);
+	.discipline-header {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-5, 1.5rem);
+		padding: var(--space-6, 2rem) var(--space-6, 2rem) 0;
+	}
+
+	.discipline-level {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--space-1, 0.25rem);
+		flex-shrink: 0;
+		min-width: 4.5rem;
+	}
+
+	.level-number {
+		font-size: var(--text-caption);
+		font-weight: var(--font-semibold);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--color-fg-muted);
+	}
+
+	.level-domain {
+		font-size: var(--text-caption);
+		color: var(--color-fg-tertiary);
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+	}
+
+	.discipline-meta {
+		flex: 1;
+	}
+
+	.discipline-name {
+		font-size: var(--text-h2);
+		font-weight: var(--font-bold);
+		color: var(--color-fg-primary);
+		letter-spacing: var(--tracking-tight, -0.015em);
+		margin-bottom: var(--space-1, 0.25rem);
+	}
+
+	.discipline-action {
+		font-size: var(--text-body-sm);
+	}
+
+	.action-label {
+		color: var(--color-fg-muted);
+		margin-right: 0.35rem;
+	}
+
+	.action-value {
+		color: var(--color-fg-secondary);
+		font-weight: var(--font-semibold);
+	}
+
+	.discipline-question {
+		padding: var(--space-5, 1.5rem) var(--space-6, 2rem);
+		font-size: var(--text-body-lg);
+		font-style: italic;
+		color: var(--color-fg-primary);
+		border-top: 1px solid var(--color-border-default);
+		border-bottom: 1px solid var(--color-border-default);
+		margin: var(--space-5, 1.5rem) 0 0;
+		background: var(--color-bg-subtle);
+	}
+
+	.question-mark {
+		color: var(--color-fg-muted);
+		font-style: normal;
+	}
+
+	.discipline-body {
+		padding: var(--space-5, 1.5rem) var(--space-6, 2rem) var(--space-6, 2rem);
+	}
+
+	.discipline-description {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+		margin-bottom: var(--space-5, 1.5rem);
+	}
+
+	.discipline-outcome {
+		padding: var(--space-4, 1rem) var(--space-5, 1.5rem);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg, 12px);
+		background: var(--color-bg-surface);
+	}
+
+	.outcome-label {
+		font-size: var(--text-caption);
+		font-weight: var(--font-semibold);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--color-fg-muted);
+		display: block;
+		margin-bottom: var(--space-1, 0.25rem);
+	}
+
+	.outcome-text {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-primary);
+		font-weight: var(--font-medium);
+	}
+
+	/* ─── Process ─── */
+	.process-section {
+		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.phases-grid {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: var(--space-4, 1rem);
+		max-width: var(--content-width-xl);
+		margin: 0 auto;
+	}
+
+	.phase-card {
+		position: relative;
+		padding: var(--space-6, 2rem) var(--space-5, 1.5rem);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg, 12px);
+		background: var(--color-bg-pure);
+		box-shadow: var(--glass-shine-soft);
+		text-align: center;
+		transition:
+			border-color var(--duration-standard) var(--ease-standard),
+			box-shadow var(--duration-standard) var(--ease-standard),
+			transform var(--duration-bounce) var(--ease-bounce);
+	}
+
+	.phase-card:hover {
+		border-color: var(--color-border-emphasis);
+		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
+		transform: translateY(-2px);
+	}
+
+	.phase-weeks {
+		font-size: var(--text-caption);
+		font-weight: var(--font-semibold);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-3, 0.75rem);
+	}
+
+	.phase-name {
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-2, 0.5rem);
+	}
+
+	.phase-description {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+	}
+
+	.phase-connector {
+		display: none;
+		position: absolute;
+		right: -18px;
+		top: 50%;
+		transform: translateY(-50%);
+		color: var(--color-fg-muted);
+		z-index: 1;
+	}
+
+	@media (min-width: 769px) {
+		.phase-connector {
+			display: block;
 		}
 	}
 
-	@media (prefers-reduced-motion: reduce) {
-		.animate-reveal {
-			animation: none;
-			opacity: 1;
-			transform: none;
+	/* ─── Why Three Levels ─── */
+	.why-section {
+		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.why-card {
+		max-width: 44rem;
+		margin: 0 auto;
+		padding: var(--space-8, 3rem) var(--space-7, 2.5rem);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-xl, 16px);
+		background: var(--color-bg-pure);
+		box-shadow: var(--glass-shine-soft);
+	}
+
+	.why-heading {
+		font-size: var(--text-h2);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-6, 2rem);
+		text-align: center;
+		letter-spacing: var(--tracking-tight, -0.015em);
+	}
+
+	.why-body {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-4, 1rem);
+	}
+
+	.why-body p {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+	}
+
+	.why-body strong {
+		color: var(--color-fg-primary);
+		font-weight: var(--font-semibold);
+	}
+
+	/* ─── Three-Tier Framework ─── */
+	.framework-section {
+		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.tiers-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-4, 1rem);
+		max-width: var(--content-width-xl);
+		margin: 0 auto var(--space-6, 2rem);
+		align-items: stretch;
+	}
+
+	/* BlurFade wrappers must stretch so grid equalizes row height */
+	.tiers-grid > :global(*) {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.tier-card {
+		flex: 1;
+		padding: var(--space-6, 2rem) var(--space-5, 1.5rem);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-xl, 16px);
+		background: var(--color-bg-pure);
+		box-shadow: var(--glass-shine-soft);
+		display: flex;
+		flex-direction: column;
+		transition:
+			border-color var(--duration-standard) var(--ease-standard),
+			box-shadow var(--duration-standard) var(--ease-standard),
+			transform var(--duration-bounce) var(--ease-bounce);
+	}
+
+	.tier-card:hover {
+		border-color: var(--color-border-emphasis);
+		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
+		transform: translateY(-2px);
+	}
+
+	.tier-header {
+		text-align: center;
+		margin-bottom: var(--space-4, 1rem);
+	}
+
+	.tier-name {
+		font-size: var(--text-h2);
+		font-weight: var(--font-bold);
+		color: var(--color-fg-primary);
+		letter-spacing: var(--tracking-tight, -0.015em);
+	}
+
+	.tier-subtitle {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+		font-style: italic;
+	}
+
+	.tier-items {
+		display: flex;
+		justify-content: center;
+		gap: var(--space-2, 0.5rem);
+		margin-bottom: var(--space-4, 1rem);
+		flex-wrap: wrap;
+	}
+
+	.tier-item {
+		font-size: var(--text-caption);
+		color: var(--color-fg-tertiary);
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-full, 9999px);
+		padding: 0.2rem 0.75rem;
+		font-family: var(--font-mono, monospace);
+	}
+
+	.tier-description {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+		text-align: center;
+	}
+
+	.framework-insight {
+		max-width: 44rem;
+		margin: 0 auto;
+		padding: var(--space-6, 2rem) var(--space-7, 2.5rem);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg, 12px);
+		background: var(--color-bg-surface);
+	}
+
+	.framework-insight p {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+		text-align: center;
+	}
+
+	/* ─── CTA ─── */
+	.cta-section {
+		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
+		border-top: 1px solid var(--color-border-default);
+		text-align: center;
+	}
+
+	.cta-heading {
+		font-size: var(--text-h1);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-3, 0.75rem);
+		letter-spacing: var(--tracking-tight, -0.015em);
+	}
+
+	.cta-subtext {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+		margin-bottom: var(--space-6, 2rem);
+		max-width: 36rem;
+		margin-left: auto;
+		margin-right: auto;
+		line-height: var(--leading-relaxed);
+	}
+
+	.cta-buttons {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--space-4, 1rem);
+	}
+
+	.cta-secondary {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-secondary);
+		transition: color var(--duration-standard) var(--ease-standard);
+	}
+
+	.cta-secondary:hover {
+		color: var(--color-fg-primary);
+	}
+
+	/* ─── Responsive ─── */
+	@media (max-width: 1024px) {
+		.phases-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+
+		.tiers-grid {
+			grid-template-columns: 1fr;
+			max-width: 28rem;
+		}
+	}
+
+	@media (max-width: 768px) {
+		.hero {
+			padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
+		}
+
+		.hero-title {
+			font-size: var(--text-h1);
+		}
+
+		.phases-grid {
+			grid-template-columns: 1fr;
+			max-width: 24rem;
+			margin: 0 auto;
+		}
+
+		.discipline-header {
+			flex-direction: column;
+			gap: var(--space-2, 0.5rem);
+		}
+
+		.discipline-level {
+			flex-direction: row;
+			gap: var(--space-2, 0.5rem);
+		}
+
+		.principle-card,
+		.why-card {
+			padding: var(--space-6, 2rem) var(--space-5, 1.5rem);
+		}
+
+		.framework-insight {
+			padding: var(--space-5, 1.5rem);
+		}
+
+		/* Mobile section padding */
+		.principle-section,
+		.disciplines-section,
+		.process-section,
+		.why-section,
+		.framework-section,
+		.cta-section {
+			padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
 		}
 	}
 </style>
-
-</div>
-  </section>

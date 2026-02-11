@@ -1,53 +1,64 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
 	import { BlurFade, ShimmerButton } from '@create-something/canon/magicui';
-	
+
 	// Structured data for SEO/AEO
 	const services = [
 		{
-			name: 'Tool Connection',
-			description: 'Connect any tool with an API to AI agents. Salesforce, HubSpot, Notion, Slack, or your internal systems.',
-			type: 'Integration Development',
-			price: '250',
-			priceDescription: 'Per tool connected'
+			name: 'Custom MCP Server',
+			description: 'We build a custom MCP server that connects your tool to AI agents. Requirements discovery, development, auth setup, testing, deployment, documentation, and source code ownership included.',
+			type: 'MCP Development',
+			price: '2000',
+			priceDescription: 'Starting at $2,000'
 		},
 		{
-			name: 'AI Platform Setup',
-			description: 'Configure Claude, Cursor, Codex, or other AI platforms to work with your connected tools.',
-			type: 'Platform Configuration',
-			price: '250',
-			priceDescription: 'Per AI platform'
+			name: 'Subtractive Triad Audit',
+			description: 'Complete systems inventory, workflow mapping, and Subtractive Triad analysis. Find duplication, excess, and disconnection across your stack. ROI-scored prioritized roadmap.',
+			type: 'Strategic Audit',
+			price: '5000',
+			priceDescription: 'Starting at $5,000'
+		},
+		{
+			name: 'The Judgment Layer',
+			description: 'Managed automation intelligence. Prompt optimization, workflow evolution, policy management, performance monitoring, and quarterly business reviews.',
+			type: 'Managed Services',
+			price: '1500',
+			priceDescription: 'Starting at $1,500/month'
 		}
 	];
-	
+
 	const faqItems = [
 		{
-			question: "What are you actually building?",
-			answer: "A secure connection between your tools and AI agents. When it's done, Claude, Cursor, or Codex can access your systems—read data, take actions, run workflows—with the permissions you set."
+			question: "Can I just buy an MCP without the audit or managed services?",
+			answer: "Absolutely. Most clients start with a single MCP. No commitment beyond that. If you want to expand later, we're here."
+		},
+		{
+			question: "What's a Judgment Layer?",
+			answer: "It's what makes automation intelligent. Your MCP connects tools to AI. The Judgment Layer decides how that connection is used — what the agent does, when it escalates, how it improves. Think of it as the difference between having a phone line and having someone smart answering it."
+		},
+		{
+			question: "How is this different from Zapier?",
+			answer: "Zapier connects tools to tools. We connect tools to AI agents. Your MCP lets Claude or Cursor read your CRM, draft responses, update records, and make decisions — not just move data between apps."
+		},
+		{
+			question: "Do I own the code?",
+			answer: "Yes. Every MCP we build, you own the source code, the deployment package, and the documentation. No lock-in."
 		},
 		{
 			question: "What tools can you connect?",
-			answer: "Anything with an API. Salesforce, HubSpot, Notion, Slack, Procore, Google Workspace, internal databases—if it has an API, we can connect it."
+			answer: "Anything with an API. Salesforce, HubSpot, Notion, Slack, Google Workspace, Procore, QuickBooks, internal databases, custom systems. If it has an API, we can connect it."
 		},
 		{
-			question: "How does pricing work?",
-			answer: "You pay per tool connected ($250) and per AI platform configured ($250). Add-ons like secure team login or automation are one-time fees. No hourly billing."
-		},
-		{
-			question: "Can you keep it running after launch?",
-			answer: "Yes. Our managed runtime includes hosting, monitoring, and updates starting at $99/mo. Or we hand off a deployment package for self-hosting."
-		},
-		{
-			question: "What if I'm not sure what I need?",
-			answer: "That's what the discovery call is for. Tell us your tools and goals—we'll map out the connections and give you a total before starting."
+			question: "How fast can you build an MCP?",
+			answer: "Simple integrations: 2 weeks. Complex integrations: 3–4 weeks. We'll give you a timeline before starting."
 		}
 	];
 </script>
 
 <SEO
-	title="Pricing | Connect Your Tools to AI Agents"
-	description="Predictable pricing to connect your tools to AI agents. $250 per tool, $250 per AI platform. No hourly billing. Managed runtime from $99/mo."
-	keywords="MCP development, custom MCP server, Model Context Protocol, agent integration, automation infrastructure, MCP pricing, connect tools to AI"
+	title="Services | Custom MCP Servers & Managed Automation"
+	description="Custom MCP servers from $2,000. Connect your tools to AI agents — Claude, Cursor, Codex. Managed automation intelligence from $1,500/mo. You own the code."
+	keywords="custom MCP server, MCP development, connect tools to AI, AI agent integration, automation consulting, managed MCP, Claude integration, Cursor integration, Codex integration, MCP-compatible"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	{services}
@@ -59,237 +70,288 @@
 	<div class="hero-grid"></div>
 	<div class="hero-content">
 		<BlurFade delay={0}>
-			<p class="hero-eyebrow">Pricing</p>
+			<p class="hero-eyebrow">Services</p>
 		</BlurFade>
 		<BlurFade delay={0.1}>
-			<h1 class="hero-title">What does it cost?</h1>
+			<h1 class="hero-title">Connect Your Tools to AI</h1>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<p class="hero-subtitle">
-				You pick the tools. We connect them to AI. You know the price before we start.
+				We build custom MCP servers that let AI agents work with your existing tools.
+				Start with one connection. Expand when you're ready.
 			</p>
 		</BlurFade>
 	</div>
 </section>
 
-<!-- Scenario-Based Examples (FIRST) -->
-<section class="scenarios-section">
-	<div class="section-container">
-		<BlurFade delay={0.1}>
-			<h2 class="section-heading">Example projects</h2>
-		</BlurFade>
-		<BlurFade delay={0.15}>
-			<p class="section-subhead">Real tool combinations. Fixed prices. No surprises.</p>
-		</BlurFade>
-		<div class="examples-grid">
-			<BlurFade delay={0.15}>
-				<div class="example-card">
-					<div class="example-name">CRM + Docs</div>
-					<p class="example-scenario">HubSpot deals auto-create project docs in Notion via Claude.</p>
-					<div class="example-calc">2 tools + 1 AI platform</div>
-					<div class="example-price">$750</div>
-				</div>
-			</BlurFade>
-			<BlurFade delay={0.25}>
-				<div class="example-card popular">
-					<span class="example-badge">Most common</span>
-					<div class="example-name">Team workflows</div>
-					<p class="example-scenario">Salesforce, Slack, and Google connected with secure team login.</p>
-					<div class="example-calc">3 tools + 2 AI platforms + login</div>
-					<div class="example-price">$1,500</div>
-				</div>
-			</BlurFade>
-			<BlurFade delay={0.35}>
-				<div class="example-card">
-					<div class="example-name">Full automation</div>
-					<p class="example-scenario">8 tools connected with scheduled tasks and automated workflows.</p>
-					<div class="example-calc">8 tools + 3 platforms + automation</div>
-					<div class="example-price">$3,500</div>
-				</div>
-			</BlurFade>
-		</div>
-		<BlurFade delay={0.3}>
-			<p class="value-anchor">Custom development typically costs $15k–$50k. Our per-tool model makes it predictable.</p>
-		</BlurFade>
-	</div>
-</section>
-
-<!-- How We Price It (SECOND) -->
-<section class="pricing-section">
-	<div class="section-container">
-		<BlurFade delay={0.1}>
-			<h2 class="section-heading">How we price it</h2>
-		</BlurFade>
-		<BlurFade delay={0.15}>
-			<p class="section-subhead">Count your tools, pick your AI platforms, add what you need. That's your total.</p>
-		</BlurFade>
-
-		<BlurFade delay={0.2}>
-			<div class="pricing-group">
-				<h3 class="pricing-group-label">Core</h3>
-				<div class="pricing-row">
-					<div class="pricing-card featured">
-						<div class="pricing-label">Tool</div>
-						<div class="pricing-amount">$250</div>
-						<div class="pricing-unit">per tool connected</div>
-						<p class="pricing-description">
-							Any tool with an API — CRM, docs, chat, email, internal systems.
-						</p>
-					</div>
-					
-					<div class="pricing-card featured">
-						<div class="pricing-label">AI Platform</div>
-						<div class="pricing-amount">$250</div>
-						<div class="pricing-unit">per platform configured</div>
-						<p class="pricing-description">
-							We set up Claude, Cursor, or Codex to work with your tools.
-						</p>
-					</div>
-				</div>
-			</div>
-		</BlurFade>
-		
-		<BlurFade delay={0.3}>
-			<div class="pricing-group">
-				<h3 class="pricing-group-label">Add-ons</h3>
-				<div class="pricing-row">
-					<div class="pricing-card">
-						<div class="pricing-label">Secure Team Login</div>
-						<div class="pricing-amount">$250</div>
-						<div class="pricing-unit">one-time</div>
-						<p class="pricing-description">
-							Multi-user access with enterprise-grade authentication.
-						</p>
-					</div>
-					
-					<div class="pricing-card">
-						<div class="pricing-label">Automation</div>
-						<div class="pricing-amount">$500</div>
-						<div class="pricing-unit">one-time</div>
-						<p class="pricing-description">
-							Scheduled tasks, alerts, and automated workflows.
-						</p>
-					</div>
-				</div>
-			</div>
-		</BlurFade>
-	</div>
-</section>
-
-<!-- Managed Runtime -->
-<section class="runtime-section">
+<!-- Tier 1: Custom MCP Server -->
+<section class="tier-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="section-heading">Managed MCP Runtime</h2>
-		</BlurFade>
-		<BlurFade delay={0.1}>
-			<p class="section-intro">
-				Build is step one. We can also host and operate your connections—monitoring, updates,
-				and support so everything keeps running. Starts at $99/mo.
+			<div class="tier-eyebrow-row">
+				<span class="tier-number">01</span>
+				<span class="tier-label-text">The Entry Point</span>
+			</div>
+			<h2 class="section-heading">Custom MCP Server</h2>
+			<p class="section-subhead">
+				We build a custom MCP server that connects your tool to AI agents.
 			</p>
 		</BlurFade>
-		<div class="runtime-grid">
+
+		<BlurFade delay={0.1}>
+			<div class="tier-card">
+				<div class="tier-header">
+					<div class="tier-pricing">
+						<div class="tier-price">$2,000 – $5,000</div>
+						<div class="tier-duration">2–4 weeks</div>
+					</div>
+					<p class="tier-pricing-note">
+						Simple integrations (single API, standard auth) start at $2,000.
+						Complex integrations (multiple endpoints, OAuth, custom logic) up to $5,000.
+					</p>
+				</div>
+				<div class="tier-body">
+					<div class="tier-columns">
+						<div class="tier-detail">
+							<h3>What's Included</h3>
+							<ul class="tier-list">
+								<li>Requirements discovery</li>
+								<li>MCP server development</li>
+								<li>Authentication setup</li>
+								<li>Error handling</li>
+								<li>Testing</li>
+								<li>Deployment</li>
+								<li>Documentation</li>
+								<li>Source code — you own it</li>
+								<li>14 days of bug fixes</li>
+							</ul>
+						</div>
+						<div class="tier-detail">
+							<h3>What You Can Connect</h3>
+							<p>
+								Any tool with an API — CRM, docs, chat, email, project management,
+								internal databases, custom systems.
+							</p>
+							<h3 class="mt">AI Platforms</h3>
+							<p>
+								Claude, Cursor, Codex — or any MCP-compatible client.
+							</p>
+						</div>
+					</div>
+					<div class="tier-cta">
+						<ShimmerButton href="/contact">Get Started</ShimmerButton>
+					</div>
+				</div>
+			</div>
+		</BlurFade>
+	</div>
+</section>
+
+<!-- Tier 2: Subtractive Triad Audit -->
+<section class="tier-section">
+	<div class="section-container">
+		<BlurFade>
+			<div class="tier-eyebrow-row">
+				<span class="tier-number">02</span>
+				<span class="tier-label-text">The Expansion</span>
+			</div>
+			<h2 class="section-heading">Subtractive Triad Audit</h2>
+			<p class="section-subhead">
+				See what one MCP does? Now let's map the whole picture.
+			</p>
+		</BlurFade>
+
+		<BlurFade delay={0.1}>
+			<div class="tier-card">
+				<div class="tier-header">
+					<div class="tier-pricing">
+						<div class="tier-price">$5,000 – $10,000</div>
+						<div class="tier-duration">2–3 weeks</div>
+					</div>
+				</div>
+				<div class="tier-body">
+					<div class="tier-columns">
+						<div class="tier-detail">
+							<h3>What's Included</h3>
+							<ul class="tier-list">
+								<li>Complete systems inventory</li>
+								<li>Workflow mapping</li>
+								<li>Subtractive Triad analysis — find duplication, excess, disconnection</li>
+								<li>Three-Tier Framework classification (Database / Automation / Judgment)</li>
+								<li>ROI scoring for every automation opportunity</li>
+								<li>Prioritized roadmap</li>
+							</ul>
+						</div>
+						<div class="tier-detail">
+							<h3>Deliverable</h3>
+							<p>Strategic report + implementation roadmap.</p>
+							<div class="tier-note">
+								<p>
+									The audit is standalone — no commitment to build. Most clients use it
+									to decide what to build next.
+								</p>
+							</div>
+							<div class="tier-note">
+								<p>
+									Already bought an MCP from us? The audit builds on what we learned.
+									You don't pay for discovery twice.
+								</p>
+							</div>
+						</div>
+					</div>
+					<div class="tier-cta">
+						<ShimmerButton href="/book">Book Audit</ShimmerButton>
+					</div>
+				</div>
+			</div>
+		</BlurFade>
+	</div>
+</section>
+
+<!-- Tier 3: The Judgment Layer (FEATURED) -->
+<section class="tier-section tier-section-featured">
+	<div class="section-container">
+		<BlurFade>
+			<div class="tier-eyebrow-row">
+				<span class="tier-number featured-number">03</span>
+				<span class="tier-label-text">The Retained Relationship</span>
+			</div>
+			<h2 class="section-heading">The Judgment Layer</h2>
+			<p class="section-subhead">
+				Connections without intelligence are just pipes.
+				The Judgment Layer makes your automation smart.
+			</p>
+		</BlurFade>
+
+		<BlurFade delay={0.1}>
+			<div class="tier-card featured">
+				<span class="tier-badge">Recommended</span>
+				<div class="tier-header">
+					<div class="tier-pricing">
+						<div class="tier-price">$1,500 – $3,500<span class="price-unit">/mo</span></div>
+					</div>
+					<div class="pricing-tiers-breakdown">
+						<div class="pricing-tier-item">
+							<span class="pricing-tier-agents">1–2 agents/MCPs</span>
+							<span class="pricing-tier-cost">$1,500/mo</span>
+						</div>
+						<div class="pricing-tier-item">
+							<span class="pricing-tier-agents">3–5 agents/MCPs</span>
+							<span class="pricing-tier-cost">$2,500/mo</span>
+						</div>
+						<div class="pricing-tier-item">
+							<span class="pricing-tier-agents">5+ agents/MCPs</span>
+							<span class="pricing-tier-cost">$3,500/mo</span>
+						</div>
+						<p class="pricing-custom">Custom pricing for complex environments.</p>
+					</div>
+				</div>
+				<div class="tier-body">
+					<div class="tier-columns">
+						<div class="tier-detail">
+							<h3>What's Included Monthly</h3>
+							<ul class="tier-list">
+								<li>
+									<strong>Prompt optimization & agent tuning</strong> — weekly review of
+									agent performance, systematic prompt refinement
+								</li>
+								<li>
+									<strong>Workflow evolution</strong> — adapt automations as your
+									business changes
+								</li>
+								<li>
+									<strong>Policy management</strong> — decision rules, escalation paths,
+									edge case handling
+								</li>
+								<li>
+									<strong>Performance monitoring</strong> — uptime, accuracy, cost tracking
+								</li>
+								<li>
+									<strong>Quarterly business review</strong> — expansion opportunities,
+									ROI measurement, roadmap update
+								</li>
+							</ul>
+						</div>
+						<div class="tier-detail">
+							<h3>Why Clients Start Here</h3>
+							<div class="tier-note">
+								<p>
+									Most clients start here after their first MCP is running. You see
+									the value of the connection — now make it intelligent.
+								</p>
+							</div>
+						</div>
+					</div>
+					<div class="tier-cta">
+						<ShimmerButton href="/book">Start Managed Services</ShimmerButton>
+					</div>
+				</div>
+			</div>
+		</BlurFade>
+	</div>
+</section>
+
+<!-- The Pathway -->
+<section class="pathway-section">
+	<div class="section-container">
+		<BlurFade>
+			<h2 class="section-heading">The Pathway</h2>
+		</BlurFade>
+
+		<div class="pathway-visual">
+			<BlurFade delay={0.1}>
+				<div class="pathway-step">
+					<div class="pathway-icon">
+						<span class="pathway-num">1</span>
+					</div>
+					<h3>Connect</h3>
+					<p>One MCP server.<br />$2k–$5k.</p>
+				</div>
+			</BlurFade>
+
+			<BlurFade delay={0.15}>
+				<div class="pathway-arrow" aria-hidden="true">
+					<svg width="32" height="16" viewBox="0 0 32 16" fill="none">
+						<path d="M0 8h28m0 0l-6-6m6 6l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
+				</div>
+			</BlurFade>
+
 			<BlurFade delay={0.2}>
-				<div class="runtime-card">
-					<h3>Managed Hosting</h3>
-					<p>Cloudflare-native deployment with secure auth, environments, and access controls.</p>
+				<div class="pathway-step">
+					<div class="pathway-icon">
+						<span class="pathway-num">2</span>
+					</div>
+					<h3>Map</h3>
+					<p>Audit your full stack.<br />$5k–$10k.</p>
 				</div>
 			</BlurFade>
+
 			<BlurFade delay={0.25}>
-				<div class="runtime-card">
-					<h3>Monitoring & Alerts</h3>
-					<p>Run visibility, error tracking, and performance monitoring built into the runtime.</p>
+				<div class="pathway-arrow" aria-hidden="true">
+					<svg width="32" height="16" viewBox="0 0 32 16" fill="none">
+						<path d="M0 8h28m0 0l-6-6m6 6l-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
 				</div>
 			</BlurFade>
+
 			<BlurFade delay={0.3}>
-				<div class="runtime-card">
-					<h3>API Change Handling</h3>
-					<p>We update integrations as APIs evolve so your workflows keep running.</p>
+				<div class="pathway-step">
+					<div class="pathway-icon pathway-icon-featured">
+						<span class="pathway-num">3</span>
+					</div>
+					<h3>Operate</h3>
+					<p>Intelligence layer.<br />$1.5k–$3.5k/mo.</p>
 				</div>
 			</BlurFade>
 		</div>
-	</div>
-</section>
 
-<!-- What's Included -->
-<section class="included-section">
-	<div class="section-container">
-		<BlurFade>
-			<h2 class="section-heading">Every Project Includes</h2>
+		<BlurFade delay={0.35}>
+			<p class="pathway-summary">
+				Most clients follow this path. Start with one MCP. See the value. Audit your
+				full stack. Then let us run the intelligence layer. Each step builds on the last.
+			</p>
 		</BlurFade>
-		
-		<div class="included-grid">
-			<BlurFade delay={0.1}>
-				<div class="included-item">
-					<h3>Source code</h3>
-					<p>You own everything we build. Full source code, no lock-in.</p>
-				</div>
-			</BlurFade>
-			
-			<BlurFade delay={0.15}>
-				<div class="included-item">
-					<h3>Deployment package</h3>
-					<p>.mcpb file for self-hosting or managed deployment in Claude Desktop, Cursor, or Codex.</p>
-				</div>
-			</BlurFade>
-			
-			<BlurFade delay={0.2}>
-				<div class="included-item">
-					<h3>Documentation</h3>
-					<p>Setup guide, API reference, and deployment instructions.</p>
-				</div>
-			</BlurFade>
-			
-			<BlurFade delay={0.25}>
-				<div class="included-item">
-					<h3>Bug fixes</h3>
-					<p>14 days of bug fixes included. Managed runtime available after launch.</p>
-				</div>
-			</BlurFade>
-		</div>
-	</div>
-</section>
-
-<!-- How We Work -->
-<section class="process-section">
-	<div class="section-container">
-		<BlurFade>
-			<h2 class="section-heading">How We Work</h2>
-		</BlurFade>
-		
-		<div class="process-grid">
-			<BlurFade delay={0.1}>
-				<div class="process-step">
-					<div class="step-number">1</div>
-					<h3>Discovery Call</h3>
-					<p>30 minutes. We learn about your tools and goals.</p>
-				</div>
-			</BlurFade>
-			
-			<BlurFade delay={0.15}>
-				<div class="process-step">
-					<div class="step-number">2</div>
-					<h3>Scope & Quote</h3>
-					<p>Count integrations, agents, add-ons. Total = your price.</p>
-				</div>
-			</BlurFade>
-			
-			<BlurFade delay={0.2}>
-				<div class="process-step">
-					<div class="step-number">3</div>
-					<h3>Build</h3>
-					<p>We build, you review. Async updates as we go.</p>
-				</div>
-			</BlurFade>
-			
-			<BlurFade delay={0.25}>
-				<div class="process-step">
-					<div class="step-number">4</div>
-					<h3>Deploy & Operate</h3>
-					<p>Deployment package delivered or hosted runtime managed by us.</p>
-				</div>
-			</BlurFade>
-		</div>
 	</div>
 </section>
 
@@ -299,40 +361,69 @@
 		<BlurFade>
 			<h2 class="section-heading">Questions</h2>
 		</BlurFade>
-		
+
 		<div class="faq-grid">
 			<BlurFade delay={0.1}>
 				<div class="faq-item">
-					<h3>What are you actually building?</h3>
-					<p>A secure connection between your tools and AI agents. When it's done, Claude, Cursor, or Codex can access your systems—read data, take actions, run workflows—with the permissions you set.</p>
+					<h3>Can I just buy an MCP without the audit or managed services?</h3>
+					<p>
+						Absolutely. Most clients start with a single MCP. No commitment beyond
+						that. If you want to expand later, we're here.
+					</p>
 				</div>
 			</BlurFade>
-			
+
 			<BlurFade delay={0.15}>
 				<div class="faq-item">
-					<h3>What tools can you connect?</h3>
-					<p>Anything with an API. Salesforce, HubSpot, Notion, Slack, Procore, Google Workspace, internal databases—if it has an API, we can connect it.</p>
+					<h3>What's a Judgment Layer?</h3>
+					<p>
+						It's what makes automation intelligent. Your MCP connects tools to AI. The
+						Judgment Layer decides how that connection is used — what the agent does,
+						when it escalates, how it improves. Think of it as the difference between
+						having a phone line and having someone smart answering it.
+					</p>
 				</div>
 			</BlurFade>
-			
+
 			<BlurFade delay={0.2}>
 				<div class="faq-item">
-					<h3>How does pricing work?</h3>
-					<p>You pay per tool connected ($250) and per AI platform configured ($250). Add-ons like secure team login or automation are one-time fees. No hourly billing.</p>
+					<h3>How is this different from Zapier?</h3>
+					<p>
+						Zapier connects tools to tools. We connect tools to AI agents. Your MCP
+						lets Claude or Cursor read your CRM, draft responses, update records, and
+						make decisions — not just move data between apps.
+					</p>
 				</div>
 			</BlurFade>
-			
+
 			<BlurFade delay={0.25}>
 				<div class="faq-item">
-					<h3>Can you keep it running after launch?</h3>
-					<p>Yes. Our managed runtime includes hosting, monitoring, and updates starting at $99/mo. Or we hand off a deployment package for self-hosting.</p>
+					<h3>Do I own the code?</h3>
+					<p>
+						Yes. Every MCP we build, you own the source code, the deployment package,
+						and the documentation. No lock-in.
+					</p>
 				</div>
 			</BlurFade>
-			
+
 			<BlurFade delay={0.3}>
 				<div class="faq-item">
-					<h3>What if I'm not sure what I need?</h3>
-					<p>That's what the discovery call is for. Tell us your tools and goals—we'll map out the connections and give you a total before starting.</p>
+					<h3>What tools can you connect?</h3>
+					<p>
+						Anything with an API. Salesforce, HubSpot, Notion, Slack, Google Workspace,
+						Procore, QuickBooks, internal databases, custom systems. If it has an API,
+						we can connect it.
+					</p>
+				</div>
+			</BlurFade>
+
+			<BlurFade delay={0.35}>
+				<div class="faq-item">
+					<h3>How fast can you build an MCP?</h3>
+					<p>
+						Simple integrations: 2 weeks. Complex integrations: 3–4 weeks. We'll give
+						you a timeline before starting.
+					</p>
 				</div>
 			</BlurFade>
 		</div>
@@ -343,15 +434,13 @@
 <section class="cta-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="cta-heading">Let's scope your project</h2>
+			<h2 class="cta-heading">Start with one connection.</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
-			<p class="cta-subtext">30-minute discovery call. We'll count your integrations and map build + operate.</p>
-		</BlurFade>
-		<BlurFade delay={0.2}>
-			<ShimmerButton href="https://createsomething.agency/book">
-				Book Discovery Call
-			</ShimmerButton>
+			<div class="cta-buttons">
+				<ShimmerButton href="/contact">Get Your First MCP</ShimmerButton>
+				<a href="/book" class="cta-secondary">Have questions? Book a call</a>
+			</div>
 		</BlurFade>
 	</div>
 </section>
@@ -363,27 +452,36 @@
 		margin: 0 auto;
 		padding: 0 var(--container-padding, 1.5rem);
 	}
-	
+
 	.section-heading {
 		font-size: var(--text-h1);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 		text-align: center;
-		margin-bottom: var(--space-8, 3rem);
+		margin-bottom: var(--space-3, 0.75rem);
 		letter-spacing: var(--tracking-tight, -0.015em);
 	}
-	
+
+	.section-subhead {
+		font-size: var(--text-body-lg);
+		color: var(--color-fg-secondary);
+		text-align: center;
+		max-width: 640px;
+		margin: 0 auto var(--space-8, 3rem);
+		line-height: var(--leading-relaxed);
+	}
+
 	/* Hero with grid background */
 	.hero {
 		position: relative;
 		padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem) var(--section-padding, 6rem);
 		overflow: hidden;
 	}
-	
+
 	.hero-grid {
 		position: absolute;
 		inset: 0;
-		background-image: 
+		background-image:
 			linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
 			linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 		background-size: 60px 60px;
@@ -391,14 +489,14 @@
 		-webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 80%);
 		pointer-events: none;
 	}
-	
+
 	.hero-content {
 		position: relative;
 		text-align: center;
 		max-width: var(--content-width-xl);
 		margin: 0 auto;
 	}
-	
+
 	.hero-eyebrow {
 		font-size: var(--text-body-sm);
 		text-transform: uppercase;
@@ -406,7 +504,7 @@
 		color: var(--color-fg-muted);
 		margin-bottom: var(--space-5, 1.5rem);
 	}
-	
+
 	.hero-title {
 		font-size: var(--text-display);
 		font-weight: var(--font-semibold);
@@ -415,176 +513,80 @@
 		line-height: 1.1;
 		letter-spacing: var(--tracking-tighter, -0.025em);
 	}
-	
+
 	.hero-subtitle {
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-secondary);
-		max-width: var(--content-width-xl);
+		max-width: 600px;
 		margin: 0 auto;
 		line-height: var(--leading-relaxed);
 	}
-	
-	/* Scenarios Section */
-	.scenarios-section {
+
+	/* Tier Sections */
+	.tier-section {
 		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
 		border-top: 1px solid var(--color-border-default);
 	}
 
-	.section-subhead {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-		text-align: center;
-		margin-bottom: var(--space-8, 3rem);
-	}
-
-	.example-scenario {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		line-height: var(--leading-relaxed);
-		margin-bottom: var(--space-2, 0.5rem);
-	}
-
-	.value-anchor {
-		text-align: center;
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		margin-top: var(--space-6, 2rem);
-		font-style: italic;
-	}
-
-	/* Pricing Section */
-	.pricing-section {
-		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
-		border-top: 1px solid var(--color-border-default);
-	}
-	
-	.pricing-group {
-		margin-bottom: var(--space-8, 3rem);
-	}
-	
-	.pricing-group-label {
-		font-size: var(--text-caption);
-		font-weight: var(--font-semibold);
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: var(--color-fg-muted);
-		text-align: center;
-		margin-bottom: var(--space-5, 1.5rem);
-	}
-	
-	.pricing-row {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: var(--space-4, 1rem);
-		max-width: var(--content-width-xl);
-		margin: 0 auto;
-	}
-	
-	.pricing-card {
-		position: relative;
-		padding: var(--space-6, 2rem);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg, 12px);
-		text-align: center;
-		background: var(--color-bg-pure);
-		box-shadow: var(--glass-shine-soft);
-		transition: 
-			border-color var(--duration-standard) var(--ease-standard),
-			box-shadow var(--duration-standard) var(--ease-standard),
-			transform var(--duration-bounce) var(--ease-bounce);
-	}
-	
-	.pricing-card:hover {
-		border-color: var(--color-border-emphasis);
-		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
-		transform: translateY(-2px);
-	}
-	
-	.pricing-card.featured {
-		border-color: rgba(96, 165, 250, 0.3);
+	.tier-section-featured {
 		background: linear-gradient(
-			135deg,
-			rgba(96, 165, 250, 0.03) 0%,
-			rgba(167, 139, 250, 0.03) 100%
+			180deg,
+			rgba(96, 165, 250, 0.02) 0%,
+			transparent 100%
 		);
-		box-shadow: 
-			var(--glass-shine-standard),
-			0 0 0 1px rgba(96, 165, 250, 0.1);
 	}
-	
-	.pricing-card.featured:hover {
-		border-color: rgba(96, 165, 250, 0.5);
-		box-shadow: 
-			var(--glass-shine-strong),
-			0 0 0 1px rgba(96, 165, 250, 0.2),
-			0 8px 32px rgba(96, 165, 250, 0.15);
-		transform: translateY(-3px);
-	}
-	
-	.pricing-label {
-		font-size: var(--text-caption);
-		font-weight: var(--font-semibold);
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-3, 0.75rem);
-	}
-	
-	.pricing-amount {
-		font-size: var(--text-display);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
-		letter-spacing: var(--tracking-tighter, -0.025em);
-		line-height: 1;
-	}
-	
-	.pricing-unit {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+
+	.tier-eyebrow-row {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: var(--space-3, 0.75rem);
 		margin-bottom: var(--space-4, 1rem);
 	}
-	
-	.pricing-description {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		line-height: var(--leading-relaxed);
-	}
-	
-	.examples-grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-5, 1.5rem);
-		max-width: var(--content-width-xl);
-		margin: 0 auto;
-		align-items: stretch;
+
+	.tier-number {
+		font-size: var(--text-caption);
+		font-weight: var(--font-bold);
+		color: var(--color-fg-muted);
+		width: 1.75rem;
+		height: 1.75rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-full, 9999px);
 	}
 
-	/* BlurFade wrappers must stretch so grid equalizes row height */
-	.examples-grid > :global(*) {
-		display: flex;
-		flex-direction: column;
+	.tier-number.featured-number {
+		border-color: rgba(96, 165, 250, 0.4);
+		color: rgba(96, 165, 250, 1);
 	}
-	
-	.example-card {
+
+	.tier-label-text {
+		font-size: var(--text-caption);
+		font-weight: var(--font-semibold);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--color-fg-muted);
+	}
+
+	/* Tier Cards */
+	.tier-card {
 		position: relative;
-		padding: var(--space-7, 2.5rem) var(--space-5, 1.5rem);
+		max-width: 800px;
+		margin: 0 auto;
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xl, 16px);
-		text-align: center;
 		background: var(--color-bg-pure);
 		box-shadow: var(--glass-shine-soft);
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: var(--space-3, 0.75rem);
-		flex: 1;
+		overflow: hidden;
 		transition:
 			border-color var(--duration-standard) var(--ease-standard),
 			box-shadow var(--duration-standard) var(--ease-standard),
 			transform var(--duration-bounce) var(--ease-bounce);
 	}
 
-	.example-card::before {
+	.tier-card::before {
 		content: '';
 		position: absolute;
 		top: 0;
@@ -599,14 +601,14 @@
 		);
 	}
 
-	.example-card:hover {
+	.tier-card:hover {
 		border-color: var(--color-border-emphasis);
 		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
-		transform: translateY(-3px);
+		transform: translateY(-2px);
 	}
 
-	/* Popular / recommended card */
-	.example-card.popular {
+	/* Featured tier */
+	.tier-card.featured {
 		border-color: rgba(96, 165, 250, 0.3);
 		background: linear-gradient(
 			180deg,
@@ -618,16 +620,16 @@
 			0 0 0 1px rgba(96, 165, 250, 0.08);
 	}
 
-	.example-card.popular:hover {
+	.tier-card.featured:hover {
 		border-color: rgba(96, 165, 250, 0.5);
 		box-shadow:
 			var(--glass-shine-strong),
 			0 0 0 1px rgba(96, 165, 250, 0.15),
 			0 8px 32px rgba(96, 165, 250, 0.1);
-		transform: translateY(-4px);
+		transform: translateY(-3px);
 	}
 
-	.example-card.popular::before {
+	.tier-card.featured::before {
 		background: linear-gradient(
 			90deg,
 			transparent,
@@ -636,7 +638,7 @@
 		);
 	}
 
-	.example-badge {
+	.tier-badge {
 		position: absolute;
 		top: -10px;
 		left: 50%;
@@ -655,297 +657,365 @@
 		white-space: nowrap;
 		z-index: 1;
 	}
-	
-	.example-name {
-		display: block;
-		font-size: var(--text-body);
-		font-weight: var(--font-bold);
-		text-transform: uppercase;
-		letter-spacing: 0.06em;
-		color: var(--color-fg-primary);
+
+	.tier-header {
+		padding: var(--space-6, 2rem) var(--space-5, 1.5rem);
+		border-bottom: 1px solid var(--color-border-default);
 	}
-	
-	.example-calc {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: 0.35rem;
-		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-full, 9999px);
-		padding: 0.25rem 0.75rem;
-		font-family: var(--font-mono, monospace);
+
+	.tier-pricing {
+		text-align: center;
 	}
-	
-	.example-price {
-		display: block;
+
+	.tier-price {
 		font-size: var(--text-display);
 		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
-		font-family: var(--font-display);
 		letter-spacing: var(--tracking-tighter, -0.025em);
-		margin-top: auto;
 		line-height: 1;
 	}
-	
-	/* What's Included */
-	.included-section {
-		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
+
+	.price-unit {
+		font-size: var(--text-h2);
+		font-weight: var(--font-normal, 400);
+		color: var(--color-fg-tertiary);
 	}
-	
-	.included-grid {
-		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		gap: var(--space-4, 1rem);
-	}
-	
-	.included-item {
-		padding: var(--space-5, 1.5rem);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg, 12px);
-		background: var(--color-bg-pure);
-		box-shadow: var(--glass-shine-soft);
-		transition: 
-			border-color var(--duration-standard) var(--ease-standard),
-			box-shadow var(--duration-standard) var(--ease-standard),
-			transform var(--duration-bounce) var(--ease-bounce);
-	}
-	
-	.included-item:hover {
-		border-color: var(--color-border-emphasis);
-		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
-		transform: translateY(-2px);
-	}
-	
-	.included-item h3 {
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-2, 0.5rem);
-	}
-	
-	.included-item p {
+
+	.tier-duration {
 		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		line-height: var(--leading-relaxed);
-	}
-
-	/* Managed Runtime */
-	.runtime-section {
-		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
-	}
-
-	.runtime-grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-4, 1rem);
-		align-items: stretch;
-	}
-
-	.runtime-card {
-		padding: var(--space-5, 1.5rem);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg, 12px);
-		background: var(--color-bg-pure);
-		box-shadow: var(--glass-shine-soft);
-		transition: 
-			border-color var(--duration-standard) var(--ease-standard),
-			box-shadow var(--duration-standard) var(--ease-standard),
-			transform var(--duration-bounce) var(--ease-bounce);
-	}
-
-	.runtime-card:hover {
-		border-color: var(--color-border-emphasis);
-		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
-		transform: translateY(-2px);
-	}
-
-	.runtime-card h3 {
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-2, 0.5rem);
-	}
-
-	.runtime-card p {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		line-height: var(--leading-relaxed);
-	}
-	
-	/* Process Section */
-	.process-section {
-		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
-	}
-	
-	.process-grid {
-		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		gap: var(--space-5, 1.5rem);
-	}
-	
-	.process-step {
+		color: var(--color-fg-tertiary);
+		margin-top: var(--space-1, 0.25rem);
 		text-align: center;
 	}
-	
-	.step-number {
-		width: 2.5rem;
-		height: 2.5rem;
+
+	.tier-pricing-note {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		text-align: center;
+		max-width: 520px;
+		margin: var(--space-3, 0.75rem) auto 0;
+		line-height: var(--leading-relaxed);
+	}
+
+	/* Pricing breakdown for Judgment Layer */
+	.pricing-tiers-breakdown {
+		margin-top: var(--space-4, 1rem);
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2, 0.5rem);
+		max-width: 320px;
+		margin-left: auto;
+		margin-right: auto;
+	}
+
+	.pricing-tier-item {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md, 8px);
+		background: rgba(255, 255, 255, 0.02);
+	}
+
+	.pricing-tier-agents {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+	}
+
+	.pricing-tier-cost {
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+	}
+
+	.pricing-custom {
+		font-size: var(--text-caption);
+		color: var(--color-fg-tertiary);
+		text-align: center;
+		margin-top: var(--space-1, 0.25rem);
+	}
+
+	.tier-body {
+		padding: var(--space-5, 1.5rem);
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-5, 1.5rem);
+	}
+
+	.tier-columns {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--space-5, 1.5rem);
+	}
+
+	.tier-detail h3 {
+		font-size: var(--text-caption);
+		font-weight: var(--font-semibold);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-2, 0.5rem);
+	}
+
+	.tier-detail h3.mt {
+		margin-top: var(--space-4, 1rem);
+	}
+
+	.tier-detail p {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+	}
+
+	.tier-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2, 0.5rem);
+	}
+
+	.tier-list li {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+		padding-left: 1.25rem;
+		position: relative;
+	}
+
+	.tier-list li::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		top: 0.55em;
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: var(--color-border-emphasis);
+	}
+
+	.tier-note {
+		margin-top: var(--space-3, 0.75rem);
+		padding: var(--space-3, 0.75rem);
+		border-left: 2px solid var(--color-border-emphasis);
+		background: rgba(255, 255, 255, 0.02);
+		border-radius: 0 var(--radius-sm, 4px) var(--radius-sm, 4px) 0;
+	}
+
+	.tier-note p {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		line-height: var(--leading-relaxed);
+		font-style: italic;
+	}
+
+	.tier-cta {
+		display: flex;
+		justify-content: center;
+		padding-top: var(--space-3, 0.75rem);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	/* Pathway Section */
+	.pathway-section {
+		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
+		border-top: 1px solid var(--color-border-default);
+	}
+
+	.pathway-visual {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		margin: 0 auto var(--space-4, 1rem);
+		gap: var(--space-4, 1rem);
+		margin: var(--space-6, 2rem) auto;
+		max-width: 640px;
+	}
+
+	.pathway-step {
+		text-align: center;
+		flex: 1;
+	}
+
+	.pathway-icon {
+		width: 3rem;
+		height: 3rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin: 0 auto var(--space-3, 0.75rem);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-full, 9999px);
-		font-size: var(--text-body-sm);
+		background: var(--color-bg-pure);
+		transition:
+			border-color var(--duration-standard) var(--ease-standard),
+			box-shadow var(--duration-standard) var(--ease-standard);
+	}
+
+	.pathway-icon-featured {
+		border-color: rgba(96, 165, 250, 0.4);
+		box-shadow: 0 0 12px rgba(96, 165, 250, 0.15);
+	}
+
+	.pathway-num {
+		font-size: var(--text-body);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-secondary);
 	}
-	
-	.process-step h3 {
+
+	.pathway-icon-featured .pathway-num {
+		color: rgba(96, 165, 250, 1);
+	}
+
+	.pathway-step h3 {
 		font-size: var(--text-body-lg);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-2, 0.5rem);
+		margin-bottom: var(--space-1, 0.25rem);
 	}
-	
-	.process-step p {
+
+	.pathway-step p {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
 		line-height: var(--leading-relaxed);
 	}
-	
+
+	.pathway-arrow {
+		color: var(--color-fg-muted);
+		flex-shrink: 0;
+		margin-bottom: 2rem;
+	}
+
+	.pathway-summary {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+		text-align: center;
+		max-width: 600px;
+		margin: 0 auto;
+		line-height: var(--leading-relaxed);
+	}
+
 	/* FAQ Section */
 	.faq-section {
 		padding: var(--section-padding, 6rem) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
-	
+
 	.faq-grid {
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
 		gap: var(--space-4, 1rem);
 	}
-	
+
 	.faq-item {
 		padding: var(--space-5, 1.5rem);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg, 12px);
 		background: var(--color-bg-pure);
 		box-shadow: var(--glass-shine-soft);
-		transition: 
+		transition:
 			border-color var(--duration-standard) var(--ease-standard),
 			box-shadow var(--duration-standard) var(--ease-standard),
 			transform var(--duration-bounce) var(--ease-bounce);
 	}
-	
+
 	.faq-item:hover {
 		border-color: var(--color-border-emphasis);
 		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
 		transform: translateY(-2px);
 	}
-	
+
 	.faq-item h3 {
 		font-size: var(--text-body-lg);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 		margin-bottom: var(--space-3, 0.75rem);
 	}
-	
+
 	.faq-item p {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
 		line-height: var(--leading-relaxed);
 	}
-	
+
 	/* CTA */
 	.cta-section {
 		padding: var(--section-padding, 6rem) 0;
 		border-top: 1px solid var(--color-border-default);
 		text-align: center;
 	}
-	
+
 	.cta-heading {
 		font-size: var(--text-h1);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-3, 0.75rem);
-	}
-	
-	.cta-subtext {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
 		margin-bottom: var(--space-6, 2rem);
 	}
-	
+
+	.cta-buttons {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--space-4, 1rem);
+	}
+
+	.cta-secondary {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		text-decoration: none;
+		border-bottom: 1px solid var(--color-border-default);
+		padding-bottom: 2px;
+		transition:
+			color var(--duration-standard) var(--ease-standard),
+			border-color var(--duration-standard) var(--ease-standard);
+	}
+
+	.cta-secondary:hover {
+		color: var(--color-fg-secondary);
+		border-color: var(--color-fg-secondary);
+	}
+
 	/* Responsive */
 	@media (max-width: 1024px) {
-		.runtime-grid {
+		.tier-columns {
 			grid-template-columns: 1fr;
-		}
-		.included-grid {
-			grid-template-columns: repeat(2, 1fr);
-		}
-		
-		.process-grid {
-			grid-template-columns: repeat(2, 1fr);
-		}
-		
-		.examples-grid {
-			grid-template-columns: 1fr;
-			max-width: 400px;
-			margin: 0 auto;
-		}
-
-		.example-card.popular {
-			order: -1;
-		}
-
-		.example-price {
-			font-size: var(--text-h1);
 		}
 	}
-	
+
 	@media (max-width: 768px) {
 		.hero {
 			padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
 		}
-		
+
 		.hero-title {
 			font-size: var(--text-h1);
 		}
-		
-		.pricing-row {
-			grid-template-columns: 1fr;
-		max-width: var(--content-width-xl);
-		}
-		
-		.included-grid {
-			grid-template-columns: 1fr;
-		}
-		
-		.process-grid {
-			grid-template-columns: 1fr;
-		}
-		
+
 		.faq-grid {
 			grid-template-columns: 1fr;
 		}
-		
+
+		.pathway-visual {
+			flex-direction: column;
+			gap: var(--space-3, 0.75rem);
+		}
+
+		.pathway-arrow {
+			transform: rotate(90deg);
+			margin-bottom: 0;
+		}
+
 		/* Mobile section padding */
-		.scenarios-section,
-		.pricing-section,
-		.runtime-section,
-		.included-section,
-		.process-section,
+		.tier-section,
+		.pathway-section,
 		.faq-section,
 		.cta-section {
-			padding: var(--layout-3, 4rem) 0;
+			padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
+		}
+
+		.tier-price {
+			font-size: var(--text-h1);
 		}
 	}
 </style>

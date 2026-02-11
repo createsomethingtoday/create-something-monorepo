@@ -3,81 +3,147 @@
 	import { SavvyCalButton } from '@create-something/canon/domains/agency';
 	import { IntegrationFlow } from '@create-something/canon/interactive';
 	import { BlurFade, ShimmerButton } from '@create-something/canon/magicui';
-	
-	// Integration flow example - enterprise scale
+
+	// Integration flow — judgment layer architecture
 	const integrations = [
-		{ label: 'PC', name: 'Procore' },
-		{ label: 'SF', name: 'Salesforce' },
-		{ label: 'MCP', name: 'MCP Orchestrator' },
-		{ label: 'AG', name: 'Claude' }
+		{ label: 'DB', name: 'Database Layer' },
+		{ label: 'AT', name: 'Automation Layer' },
+		{ label: 'JG', name: 'Judgment Layer' },
+		{ label: 'OC', name: 'Orchestrator' }
 	];
-	
-	const capabilities = [
+
+	const failureModes = [
 		{
-			title: 'Automated Triggers',
-			description: 'Schedule, webhook, and event-based triggers. Your agents run on schedules or react to system events.',
-			icon: '⚡'
+			title: 'Prompt Drift',
+			description: 'Agent performance degrades over time as data changes, edge cases accumulate, and prompts go untuned. What worked at launch stops working at month three.',
+			icon: '01'
 		},
 		{
-			title: 'Observability Dashboard',
-			description: 'Track runs, costs, success rates, and latency. See what your agents are doing and what they cost.',
-			icon: '📊'
+			title: 'Policy Gaps',
+			description: 'No clear rules for when agents should escalate, what they can\'t do, how to handle ambiguity. The agent makes a bad call. Trust breaks.',
+			icon: '02'
 		},
 		{
-			title: 'Workflow Orchestration',
-			description: 'Agents that call other agents. Chain complex operations across multiple systems.',
-			icon: '🔄'
-		},
-		{
-			title: 'Multi-System Integration',
-			description: 'Connect 5, 10, 20+ tools. Complex auth, data transforms, webhook handlers.',
-			icon: '🔗'
-		},
-		{
-			title: 'Error Handling & Recovery',
-			description: 'Automatic retries, fallback paths, and alerting. Production-grade reliability.',
-			icon: '🛡️'
-		},
-		{
-			title: 'Managed MCP Runtime',
-			description: 'Hosting, monitoring, and API change handling to keep production workflows running.',
-			icon: '🤝'
+			title: 'Orphaned Connections',
+			description: 'MCPs deployed and forgotten. APIs change, tokens expire, workflows evolve. The automation silently stops working — and nobody notices until damage is done.',
+			icon: '03'
 		}
 	];
-	
-	const useCases = [
+
+	const services = [
 		{
-			industry: 'Construction',
-			workflow: 'RFI → Agent Review → Stakeholder Notification',
-			tools: 'Procore, Slack, Email',
-			outcome: 'RFIs processed in minutes, not days'
+			name: 'Prompt Optimization',
+			cadence: 'Weekly',
+			description: 'Systematic review of agent outputs. A/B testing prompt variations. Improving accuracy, tone, and consistency.',
+			result: 'Your agents get better every week.'
 		},
 		{
-			industry: 'Financial Services',
-			workflow: 'Report Generation → Compliance Check → Distribution',
-			tools: 'Internal systems, Slack, Email',
-			outcome: 'Weekly reports generated automatically'
+			name: 'Agent Orchestration',
+			cadence: 'Ongoing',
+			description: 'Coordinating multiple agents across systems. Ensuring they don\'t conflict, duplicate work, or miss handoffs.',
+			result: 'The conductor for your automation orchestra.'
 		},
 		{
-			industry: 'Operations',
-			workflow: 'System Monitoring → Issue Detection → Ticket Creation',
-			tools: 'APIs, Jira, PagerDuty',
-			outcome: 'Issues triaged before humans wake up'
+			name: 'Policy Management',
+			cadence: 'Ongoing',
+			description: 'Decision rules, escalation paths, boundary conditions. What the agent can do, can\'t do, and when to involve a human.',
+			result: 'Guardrails that protect your business.'
+		},
+		{
+			name: 'Performance Monitoring',
+			cadence: 'Continuous',
+			description: 'Uptime, accuracy rates, cost per operation, response times. Alerts when something degrades.',
+			result: 'You know it\'s working. We prove it monthly.'
+		},
+		{
+			name: 'Quarterly Business Review',
+			cadence: 'Quarterly',
+			description: 'ROI measurement, expansion opportunities, roadmap updates.',
+			result: 'Every quarter, we show you the numbers and plan what\'s next.'
 		}
 	];
-	
-	const steps = [
-		{ num: '1', title: 'Architecture Review', description: 'Map your systems and requirements' },
-		{ num: '2', title: 'Infrastructure Build', description: 'MCP servers, auth, data pipelines' },
-		{ num: '3', title: 'Agent Configuration', description: 'Triggers, orchestration, observability' },
-		{ num: '4', title: 'Operate & Optimize', description: 'Monitoring, incident response, and API change handling' }
+
+	const tiers = [
+		{
+			name: 'Database',
+			label: 'What your systems know',
+			description: 'Data, records, content — the information layer. This is what exists.',
+			accent: 'tier-database',
+			active: false
+		},
+		{
+			name: 'Automation',
+			label: 'What your MCPs do',
+			description: 'Connect, execute, transform — the action layer. This is what happens.',
+			accent: 'tier-automation',
+			active: false
+		},
+		{
+			name: 'Judgment',
+			label: 'What should happen',
+			description: 'Policies, oversight, intelligence — the decision layer. This is where we operate.',
+			accent: 'tier-judgment',
+			active: true
+		}
+	];
+
+	const plans = [
+		{
+			name: 'Foundation',
+			price: '$1,500',
+			period: '/mo',
+			scope: '1–2 managed agents/MCPs',
+			features: [
+				'Weekly prompt optimization',
+				'Monthly performance reporting',
+				'Drift detection & correction',
+				'Email support'
+			],
+			featured: false
+		},
+		{
+			name: 'Professional',
+			price: '$2,500',
+			period: '/mo',
+			scope: '3–5 managed agents/MCPs',
+			features: [
+				'Everything in Foundation',
+				'Agent orchestration',
+				'Policy management',
+				'Escalation path design',
+				'Bi-weekly optimization calls'
+			],
+			featured: true
+		},
+		{
+			name: 'Enterprise',
+			price: '$3,500',
+			period: '/mo',
+			scope: '5+ managed agents/MCPs',
+			features: [
+				'Everything in Professional',
+				'Dedicated account manager',
+				'Quarterly business review',
+				'Priority support',
+				'Custom reporting dashboards',
+				'Expansion roadmapping'
+			],
+			featured: false
+		}
+	];
+
+	const audiences = [
+		'Organizations with 1+ MCP connections already running or being built',
+		'Teams that deployed AI automation and need ongoing tuning',
+		'Regulated industries needing governance and audit trails',
+		'Anyone who\'s seen automation break silently and wants to prevent it'
 	];
 </script>
 
 <SEO
-	title="Enterprise | AI Agents That Run While You Sleep"
-	description="Production-grade AI agent infrastructure. Automated triggers, observability, workflow orchestration, and managed runtime. Starting at $5,000."
-	keywords="enterprise AI agents, agent automation, workflow orchestration, MCP enterprise, production AI infrastructure"
+	title="The Judgment Layer — Managed AI Intelligence | CREATE SOMETHING .agency"
+	description="Connections without intelligence are just pipes. We manage the Judgment Layer — prompt optimization, agent orchestration, policy management, and performance monitoring for your AI automation."
+	keywords="managed AI services, prompt optimization, agent orchestration, policy management, MCP management, judgment layer, AI governance"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -88,23 +154,25 @@
 	<div class="hero-container">
 		<div class="hero-content">
 			<BlurFade delay={0}>
-				<p class="hero-eyebrow">Enterprise</p>
+				<p class="hero-eyebrow">The Judgment Layer</p>
 			</BlurFade>
 			<BlurFade delay={0.1}>
-				<h1 class="hero-title">Agents that run while you sleep.</h1>
+				<h1 class="hero-title">Connections without intelligence are just&nbsp;pipes.</h1>
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					Automated triggers. Observability. Workflow orchestration. 
-					Production-grade AI agent infrastructure with managed runtime.
+					You've connected your tools to AI. Now the hard part: making it smart. 
+					Prompt optimization. Agent orchestration. Policy management. Decision oversight. 
+					That's the Judgment Layer — and it's what separates automation that works 
+					from automation that breaks.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
 				<div class="hero-cta">
 					<ShimmerButton href="https://createsomething.agency/book">
-						Book Discovery Call
+						Start Managed Services
 					</ShimmerButton>
-					<a href="/services" class="hero-link">View pricing →</a>
+					<a href="/services" class="hero-link">View all services →</a>
 				</div>
 			</BlurFade>
 		</div>
@@ -112,7 +180,7 @@
 			<div class="hero-visual">
 				<IntegrationFlow 
 					{integrations}
-					description="Event triggers → Agents process → Systems update → Teams notified"
+					description="Database → Automation → Judgment → Outcomes"
 					intensity="medium"
 					tint="none"
 				/>
@@ -121,24 +189,55 @@
 	</div>
 </section>
 
-<!-- Capabilities -->
-<section class="capabilities-section">
+<!-- The Problem -->
+<section class="problem-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="section-heading">Intelligence Layer</h2>
+			<p class="problem-stat">Most AI automation fails after deployment, not&nbsp;during&nbsp;it.</p>
+		</BlurFade>
+
+		<div class="failure-grid">
+			{#each failureModes as mode, i}
+				<BlurFade delay={i * 0.08 + 0.15}>
+					<div class="failure-card">
+						<div class="failure-num">{mode.icon}</div>
+						<h3 class="failure-title">{mode.title}</h3>
+						<p class="failure-desc">{mode.description}</p>
+					</div>
+				</BlurFade>
+			{/each}
+		</div>
+
+		<BlurFade delay={0.5}>
+			<p class="problem-conclusion">
+				These aren't connection problems. They're judgment problems.
+			</p>
+		</BlurFade>
+	</div>
+</section>
+
+<!-- What the Judgment Layer Includes -->
+<section class="services-section">
+	<div class="section-container">
+		<BlurFade>
+			<h2 class="section-heading">What the Judgment Layer Includes</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="section-intro">
-				Beyond connectivity—automation that thinks, acts, and reports.
+				Managed intelligence for every stage of your automation lifecycle.
 			</p>
 		</BlurFade>
-		<div class="capabilities-grid">
-			{#each capabilities as cap, i}
-				<BlurFade delay={i * 0.05 + 0.2}>
-					<div class="capability-card">
-						<div class="capability-icon">{cap.icon}</div>
-						<h3 class="capability-title">{cap.title}</h3>
-						<p class="capability-desc">{cap.description}</p>
+
+		<div class="services-grid">
+			{#each services as service, i}
+				<BlurFade delay={i * 0.08 + 0.2}>
+					<div class="service-card">
+						<div class="service-header">
+							<h3 class="service-name">{service.name}</h3>
+							<span class="service-cadence">{service.cadence}</span>
+						</div>
+						<p class="service-desc">{service.description}</p>
+						<p class="service-result">{service.result}</p>
 					</div>
 				</BlurFade>
 			{/each}
@@ -146,95 +245,104 @@
 	</div>
 </section>
 
-<!-- How It Works -->
-<section class="steps-section">
+<!-- The Three-Tier Framework -->
+<section class="framework-section">
 	<div class="section-container">
-		<h2 class="section-heading reveal">Implementation</h2>
-		<p class="section-intro reveal">From architecture to production</p>
-		<div class="steps-grid">
-			{#each steps as step, i}
-				<div class="step-card reveal" style="--delay: {i * 0.1}s">
-					<div class="step-num">{step.num}</div>
-					<h3 class="step-title">{step.title}</h3>
-					<p class="step-desc">{step.description}</p>
-				</div>
-			{/each}
-		</div>
-	</div>
-</section>
+		<BlurFade>
+			<h2 class="section-heading">The Three-Tier Framework</h2>
+		</BlurFade>
+		<BlurFade delay={0.1}>
+			<p class="section-intro">
+				Every automation system has three layers. Most fail because the third is an afterthought.
+			</p>
+		</BlurFade>
 
-<!-- Use Cases -->
-<section class="usecases-section">
-	<div class="section-container">
-		<h2 class="section-heading reveal">Example deployments</h2>
-		<p class="section-intro reveal">Production automation across industries</p>
-		<div class="usecases-grid">
-			{#each useCases as uc, i}
-				<div class="usecase-card reveal" style="--delay: {i * 0.1}s">
-					<div class="usecase-industry">{uc.industry}</div>
-					<div class="usecase-workflow">{uc.workflow}</div>
-					<div class="usecase-tools">
-						<span class="tools-label">Tools:</span> {uc.tools}
+		<div class="tier-grid">
+			{#each tiers as tier, i}
+				<BlurFade delay={i * 0.1 + 0.2}>
+					<div class="tier-card {tier.accent}" class:tier-active={tier.active}>
+						<div class="tier-header">
+							<h3 class="tier-name">{tier.name}</h3>
+							<span class="tier-label">{tier.label}</span>
+						</div>
+						<p class="tier-desc">{tier.description}</p>
+						{#if tier.active}
+							<p class="tier-badge">← This is where we operate.</p>
+						{/if}
 					</div>
-					<div class="usecase-outcome">{uc.outcome}</div>
-				</div>
+				</BlurFade>
 			{/each}
 		</div>
+
+		<BlurFade delay={0.6}>
+			<p class="framework-conclusion">
+				Most automation fails because Judgment is an afterthought. We make it the focus.
+			</p>
+		</BlurFade>
 	</div>
 </section>
 
 <!-- Pricing -->
 <section class="pricing-section">
 	<div class="section-container">
-		<div class="pricing-layout">
-			<div class="pricing-copy">
-				<BlurFade>
-					<h2 class="section-heading">Production tier</h2>
-				</BlurFade>
-				<BlurFade delay={0.1}>
-					<p class="pricing-lead">
-						Full production deployment with managed runtime and ongoing optimization. 
-						Starts with the same per-tool pricing, plus automation, orchestration, and managed operations.
-					</p>
-				</BlurFade>
-				<ul class="pricing-includes">
-					<BlurFade delay={0.15}><li>3+ configured agents</li></BlurFade>
-					<BlurFade delay={0.2}><li>Automated triggers (schedule, webhook, event)</li></BlurFade>
-					<BlurFade delay={0.25}><li>Observability dashboard</li></BlurFade>
-					<BlurFade delay={0.3}><li>Workflow orchestration</li></BlurFade>
-					<BlurFade delay={0.35}><li>Managed runtime & operational support</li></BlurFade>
-				</ul>
-			</div>
-			<BlurFade delay={0.3}>
-				<div class="pricing-card-outer">
-					<div class="pricing-card featured">
-						<div class="pricing-name">Production</div>
-						<div class="pricing-price">$5,000<span class="pricing-plus">+</span></div>
-						<p class="pricing-desc">Scales with complexity. Custom scoping on discovery call.</p>
-						<div class="pricing-cta">
-							<ShimmerButton href="https://createsomething.agency/book">
-								Book Discovery Call
-							</ShimmerButton>
+		<BlurFade>
+			<h2 class="section-heading">Managed Services Pricing</h2>
+		</BlurFade>
+		<BlurFade delay={0.1}>
+			<p class="section-intro">
+				Ongoing intelligence management, scaled to your automation footprint.
+			</p>
+		</BlurFade>
+
+		<div class="pricing-grid">
+			{#each plans as plan, i}
+				<BlurFade delay={i * 0.1 + 0.2}>
+					<div class="pricing-card" class:featured={plan.featured}>
+						<div class="pricing-card-inner">
+							<div class="pricing-name">{plan.name}</div>
+							<div class="pricing-price">
+								{plan.price}<span class="pricing-period">{plan.period}</span>
+							</div>
+							<p class="pricing-scope">{plan.scope}</p>
+							<ul class="pricing-features">
+								{#each plan.features as feature}
+									<li>{feature}</li>
+								{/each}
+							</ul>
+							<div class="pricing-cta">
+								<ShimmerButton href="https://createsomething.agency/book">
+									Start Managed Services
+								</ShimmerButton>
+							</div>
 						</div>
 					</div>
-				</div>
-			</BlurFade>
+				</BlurFade>
+			{/each}
 		</div>
+
+		<BlurFade delay={0.6}>
+			<p class="pricing-footer">
+				Custom pricing for complex environments. <a href="https://createsomething.agency/book" class="pricing-link">Let's talk.</a>
+			</p>
+		</BlurFade>
 	</div>
 </section>
 
-<!-- Comparison -->
-<section class="comparison-section">
+<!-- Who This Is For -->
+<section class="audience-section">
 	<div class="section-container">
-		<h2 class="section-heading reveal">Not ready for the full runtime?</h2>
-		<p class="section-intro reveal">Start with a fixed-scope build and scale up</p>
-		<div class="comparison-grid">
-			<a href="/use-cases/business" class="comparison-card reveal">
-				<div class="comparison-tier">Build tier</div>
-				<div class="comparison-price">$500 – $2,500</div>
-				<p class="comparison-desc">Start with per-tool pricing. Connect key systems and deploy. Add managed runtime when you're ready.</p>
-				<span class="comparison-link">Learn more →</span>
-			</a>
+		<BlurFade>
+			<h2 class="section-heading">Who This Is For</h2>
+		</BlurFade>
+
+		<div class="audience-grid">
+			{#each audiences as audience, i}
+				<BlurFade delay={i * 0.08 + 0.15}>
+					<div class="audience-card">
+						<p class="audience-text">{audience}</p>
+					</div>
+				</BlurFade>
+			{/each}
 		</div>
 	</div>
 </section>
@@ -243,15 +351,20 @@
 <section class="cta-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="cta-heading">Outcomes while you sleep.</h2>
+			<h2 class="cta-heading">Your connections deserve intelligence.</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
-			<p class="cta-subtext">Architecture review. Custom scoping. Let's build your automation layer.</p>
+			<p class="cta-subtext">
+				Stop hoping your automation keeps working. Start managing it.
+			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
-			<ShimmerButton href="https://createsomething.agency/book">
-				Book Discovery Call
-			</ShimmerButton>
+			<div class="cta-buttons">
+				<ShimmerButton href="https://createsomething.agency/book">
+					Start Managed Services
+				</ShimmerButton>
+				<a href="/services" class="cta-secondary">Need connections first? Start with an MCP →</a>
+			</div>
 		</BlurFade>
 	</div>
 </section>
@@ -319,8 +432,9 @@
 		font-size: var(--text-body-sm);
 		text-transform: uppercase;
 		letter-spacing: 0.15em;
-		color: var(--color-fg-muted);
+		color: rgba(251, 191, 36, 0.8);
 		margin-bottom: var(--space-4, 1rem);
+		font-weight: var(--font-semibold);
 	}
 	
 	.hero-title {
@@ -367,19 +481,160 @@
 		}
 	}
 	
-	/* Capabilities */
-	.capabilities-section {
+	/* The Problem */
+	.problem-section {
+		padding: var(--section-padding, 6rem) 0;
+		border-top: 1px solid var(--color-border-default);
+		text-align: center;
+	}
+	
+	.problem-stat {
+		font-size: var(--text-h2);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		max-width: 720px;
+		margin: 0 auto var(--space-8, 3rem);
+		line-height: 1.2;
+		letter-spacing: var(--tracking-tight, -0.015em);
+	}
+	
+	.failure-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-4, 1rem);
+		margin-bottom: var(--space-8, 3rem);
+	}
+	
+	.failure-card {
+		padding: var(--space-5, 1.5rem);
+		border-radius: var(--radius-lg, 12px);
+		border: 1px solid var(--color-border-default);
+		background: var(--color-bg-pure);
+		box-shadow: var(--glass-shine-soft);
+		text-align: left;
+		transition: 
+			border-color var(--duration-standard) var(--ease-standard),
+			box-shadow var(--duration-standard) var(--ease-standard),
+			transform var(--duration-bounce) var(--ease-bounce);
+	}
+	
+	.failure-card:hover {
+		border-color: var(--color-border-emphasis);
+		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
+		transform: translateY(-2px);
+	}
+	
+	.failure-num {
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-3, 0.75rem);
+		font-variant-numeric: tabular-nums;
+	}
+	
+	.failure-title {
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-2, 0.5rem);
+	}
+	
+	.failure-desc {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+	}
+	
+	.problem-conclusion {
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		font-style: italic;
+	}
+	
+	/* Services — What the Judgment Layer Includes */
+	.services-section {
 		padding: var(--section-padding, 6rem) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
 	
-	.capabilities-grid {
+	.services-grid {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
 		gap: var(--space-4, 1rem);
 	}
 	
-	.capability-card {
+	.service-card {
+		padding: var(--space-5, 1.5rem);
+		border-radius: var(--radius-lg, 12px);
+		border: 1px solid var(--color-border-default);
+		background: var(--color-bg-pure);
+		box-shadow: var(--glass-shine-soft);
+		display: flex;
+		flex-direction: column;
+		transition: 
+			border-color var(--duration-standard) var(--ease-standard),
+			box-shadow var(--duration-standard) var(--ease-standard),
+			transform var(--duration-bounce) var(--ease-bounce);
+	}
+	
+	.service-card:hover {
+		border-color: var(--color-border-emphasis);
+		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
+		transform: translateY(-2px);
+	}
+	
+	.service-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		margin-bottom: var(--space-3, 0.75rem);
+	}
+	
+	.service-name {
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+	}
+	
+	.service-cadence {
+		font-size: var(--text-body-xs, 0.75rem);
+		color: var(--color-fg-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+	}
+	
+	.service-desc {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+		margin-bottom: var(--space-3, 0.75rem);
+		flex: 1;
+	}
+	
+	.service-result {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-primary);
+		font-style: italic;
+		border-top: 1px solid var(--color-border-default);
+		padding-top: var(--space-3, 0.75rem);
+		margin: 0;
+	}
+	
+	/* Three-Tier Framework */
+	.framework-section {
+		padding: var(--section-padding, 6rem) 0;
+		border-top: 1px solid var(--color-border-default);
+	}
+	
+	.tier-grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-4, 1rem);
+		margin-bottom: var(--space-8, 3rem);
+	}
+	
+	.tier-card {
 		padding: var(--space-5, 1.5rem);
 		border-radius: var(--radius-lg, 12px);
 		border: 1px solid var(--color-border-default);
@@ -391,124 +646,84 @@
 			transform var(--duration-bounce) var(--ease-bounce);
 	}
 	
-	.capability-card:hover {
+	.tier-card:hover {
 		border-color: var(--color-border-emphasis);
 		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
 		transform: translateY(-2px);
 	}
 	
-	.capability-icon {
-		font-size: 1.5rem;
+	.tier-card.tier-database {
+		border-top: 2px solid rgba(96, 165, 250, 0.5);
+	}
+	
+	.tier-card.tier-automation {
+		border-top: 2px solid rgba(167, 139, 250, 0.5);
+	}
+	
+	.tier-card.tier-judgment {
+		border-top: 2px solid rgba(251, 191, 36, 0.5);
+	}
+	
+	.tier-card.tier-active {
+		border-color: rgba(251, 191, 36, 0.3);
+		background: linear-gradient(
+			135deg,
+			rgba(251, 191, 36, 0.04) 0%,
+			rgba(251, 191, 36, 0.01) 100%
+		);
+		box-shadow: 
+			var(--glass-shine-standard),
+			0 0 0 1px rgba(251, 191, 36, 0.1);
+	}
+	
+	.tier-card.tier-active:hover {
+		border-color: rgba(251, 191, 36, 0.5);
+		box-shadow: 
+			var(--glass-shine-strong),
+			0 0 0 1px rgba(251, 191, 36, 0.2),
+			0 8px 32px rgba(251, 191, 36, 0.1);
+		transform: translateY(-3px);
+	}
+	
+	.tier-header {
+		display: flex;
+		align-items: baseline;
+		gap: var(--space-3, 0.75rem);
 		margin-bottom: var(--space-3, 0.75rem);
 	}
 	
-	.capability-title {
+	.tier-name {
 		font-size: var(--text-body-lg);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-2, 0.5rem);
 	}
 	
-	.capability-desc {
+	.tier-label {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+		font-style: italic;
+	}
+	
+	.tier-desc {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
 		line-height: var(--leading-relaxed);
 	}
 	
-	/* Steps */
-	.steps-section {
-		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
-	}
-	
-	.steps-grid {
-		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		gap: var(--space-4, 1rem);
-	}
-	
-	.step-card {
-		text-align: center;
-	}
-	
-	.step-num {
-		width: 48px;
-		height: 48px;
-		border-radius: 50%;
-		border: 1px solid var(--color-border-emphasis);
-		display: flex;
-		align-items: center;
-		justify-content: center;
+	.tier-badge {
+		font-size: var(--text-body-xs, 0.75rem);
+		color: rgba(251, 191, 36, 0.8);
 		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin: 0 auto var(--space-4, 1rem);
+		margin-top: var(--space-3, 0.75rem);
+		margin-bottom: 0;
 	}
 	
-	.step-title {
+	.framework-conclusion {
 		font-size: var(--text-body-lg);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-2, 0.5rem);
-	}
-	
-	.step-desc {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-	}
-	
-	/* Use Cases */
-	.usecases-section {
-		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
-	}
-	
-	.usecases-grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: var(--space-4, 1rem);
-	}
-	
-	.usecase-card {
-		padding: var(--space-5, 1.5rem);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg, 12px);
-		transition: border-color var(--duration-micro, 200ms) var(--ease-standard);
-	}
-	
-	.usecase-card:hover {
-		border-color: var(--color-border-emphasis);
-	}
-	
-	.usecase-industry {
-		font-size: var(--text-body-sm);
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-3, 0.75rem);
-	}
-	
-	.usecase-workflow {
-		font-size: var(--text-body);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-3, 0.75rem);
-	}
-	
-	.usecase-tools {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		margin-bottom: var(--space-3, 0.75rem);
-	}
-	
-	.tools-label {
-		color: var(--color-fg-muted);
-	}
-	
-	.usecase-outcome {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		padding-top: var(--space-3, 0.75rem);
-		border-top: 1px solid var(--color-border-default);
+		text-align: center;
+		font-style: italic;
 	}
 	
 	/* Pricing */
@@ -517,84 +732,51 @@
 		border-top: 1px solid var(--color-border-default);
 	}
 	
-	.pricing-layout {
+	.pricing-grid {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: var(--space-8, 3rem);
-		align-items: center;
-	}
-	
-	.pricing-copy .section-heading {
-		text-align: left;
-		margin-bottom: var(--space-4, 1rem);
-	}
-	
-	.pricing-lead {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-5, 1.5rem);
 		margin-bottom: var(--space-6, 2rem);
-	}
-	
-	.pricing-includes {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-	}
-	
-	.pricing-includes li {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-		padding: var(--space-2, 0.5rem) 0;
-		display: flex;
-		align-items: center;
-		gap: var(--space-3, 0.75rem);
-	}
-	
-	.pricing-includes li::before {
-		content: '✓';
-		color: var(--color-success, #22c55e);
-	}
-	
-	.pricing-card-outer {
-		display: flex;
-		justify-content: center;
 	}
 	
 	.pricing-card {
 		position: relative;
-		padding: var(--space-6, 2rem);
-		text-align: center;
 		border-radius: var(--radius-lg, 12px);
 		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-pure);
-		max-width: var(--content-width-xl);
-		width: 100%;
 		box-shadow: var(--glass-shine-soft);
+		overflow: hidden;
 		transition: 
 			border-color var(--duration-standard) var(--ease-standard),
 			box-shadow var(--duration-standard) var(--ease-standard),
 			transform var(--duration-bounce) var(--ease-bounce);
 	}
 	
+	.pricing-card:hover {
+		border-color: var(--color-border-emphasis);
+		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
+		transform: translateY(-2px);
+	}
+	
 	.pricing-card.featured {
-		border-color: rgba(167, 139, 250, 0.3);
+		border-color: rgba(251, 191, 36, 0.3);
 		background: linear-gradient(
 			135deg,
-			rgba(167, 139, 250, 0.03) 0%,
-			rgba(96, 165, 250, 0.03) 100%
+			rgba(251, 191, 36, 0.03) 0%,
+			rgba(251, 191, 36, 0.01) 100%
 		);
 		box-shadow: 
 			var(--glass-shine-standard),
-			0 0 0 1px rgba(167, 139, 250, 0.1);
+			0 0 0 1px rgba(251, 191, 36, 0.1);
 	}
 	
 	.pricing-card.featured:hover {
-		border-color: rgba(167, 139, 250, 0.5);
+		border-color: rgba(251, 191, 36, 0.5);
 		box-shadow: 
 			var(--glass-shine-strong),
-			0 0 0 1px rgba(167, 139, 250, 0.2),
-			0 8px 32px rgba(167, 139, 250, 0.15),
-			0 0 60px rgba(167, 139, 250, 0.08);
+			0 0 0 1px rgba(251, 191, 36, 0.2),
+			0 8px 32px rgba(251, 191, 36, 0.15),
+			0 0 60px rgba(251, 191, 36, 0.08);
 		transform: translateY(-3px);
 	}
 	
@@ -606,9 +788,9 @@
 		padding: 1px;
 		background: linear-gradient(
 			135deg,
-			rgba(167, 139, 250, 0.4) 0%,
-			rgba(96, 165, 250, 0.4) 50%,
-			rgba(167, 139, 250, 0.4) 100%
+			rgba(251, 191, 36, 0.4) 0%,
+			rgba(251, 191, 36, 0.15) 50%,
+			rgba(251, 191, 36, 0.4) 100%
 		);
 		mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
 		mask-composite: exclude;
@@ -623,6 +805,10 @@
 		50% { opacity: 0.6; }
 	}
 	
+	.pricing-card-inner {
+		padding: var(--space-6, 2rem);
+	}
+	
 	.pricing-name {
 		font-size: var(--text-body-sm);
 		text-transform: uppercase;
@@ -635,69 +821,91 @@
 		font-size: var(--text-display);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-3, 0.75rem);
+		margin-bottom: var(--space-1, 0.25rem);
 	}
 	
-	.pricing-plus {
-		font-size: var(--text-h2);
+	.pricing-period {
+		font-size: var(--text-h3);
+		font-weight: var(--font-normal);
 		color: var(--color-fg-muted);
 	}
 	
-	.pricing-desc {
+	.pricing-scope {
 		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		color: var(--color-fg-muted);
 		margin-bottom: var(--space-5, 1.5rem);
+		padding-bottom: var(--space-4, 1rem);
+		border-bottom: 1px solid var(--color-border-default);
 	}
 	
-	/* Comparison */
-	.comparison-section {
+	.pricing-features {
+		list-style: none;
+		padding: 0;
+		margin: 0 0 var(--space-5, 1.5rem);
+	}
+	
+	.pricing-features li {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		padding: var(--space-1, 0.25rem) 0;
+		display: flex;
+		align-items: center;
+		gap: var(--space-3, 0.75rem);
+	}
+	
+	.pricing-features li::before {
+		content: '✓';
+		color: var(--color-success, #22c55e);
+		flex-shrink: 0;
+	}
+	
+	.pricing-footer {
+		text-align: center;
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+	}
+	
+	.pricing-link {
+		color: var(--color-fg-secondary);
+		text-decoration: underline;
+		text-underline-offset: 2px;
+		transition: color var(--duration-micro, 200ms) var(--ease-standard);
+	}
+	
+	.pricing-link:hover {
+		color: var(--color-fg-primary);
+	}
+	
+	/* Who This Is For */
+	.audience-section {
 		padding: var(--section-padding, 6rem) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
 	
-	.comparison-grid {
-		display: flex;
-		justify-content: center;
+	.audience-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: var(--space-4, 1rem);
+		max-width: 800px;
+		margin: var(--space-8, 3rem) auto 0;
 	}
 	
-	.comparison-card {
+	.audience-card {
 		padding: var(--space-5, 1.5rem);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg, 12px);
-		text-decoration: none;
-		max-width: var(--content-width-xl);
-		text-align: center;
 		transition: border-color var(--duration-micro, 200ms) var(--ease-standard);
 	}
 	
-	.comparison-card:hover {
+	.audience-card:hover {
 		border-color: var(--color-border-emphasis);
 	}
 	
-	.comparison-tier {
-		font-size: var(--text-body-sm);
-		text-transform: uppercase;
-		letter-spacing: 0.1em;
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-2, 0.5rem);
-	}
-	
-	.comparison-price {
-		font-size: var(--text-h2);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-3, 0.75rem);
-	}
-	
-	.comparison-desc {
+	.audience-text {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-3, 0.75rem);
-	}
-	
-	.comparison-link {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		line-height: var(--leading-relaxed);
+		margin: 0;
 	}
 	
 	/* CTA */
@@ -720,7 +928,25 @@
 		margin-bottom: var(--space-6, 2rem);
 	}
 	
-/* Responsive */
+	.cta-buttons {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--space-4, 1rem);
+	}
+	
+	.cta-secondary {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+		text-decoration: none;
+		transition: color var(--duration-micro, 200ms) var(--ease-standard);
+	}
+	
+	.cta-secondary:hover {
+		color: var(--color-fg-primary);
+	}
+	
+	/* Responsive */
 	@media (max-width: 900px) {
 		.hero-container {
 			grid-template-columns: 1fr;
@@ -740,29 +966,32 @@
 			justify-content: center;
 		}
 		
-		.pricing-layout {
+		.pricing-grid {
 			grid-template-columns: 1fr;
+			max-width: 480px;
+			margin-left: auto;
+			margin-right: auto;
 		}
 		
-		.pricing-copy .section-heading {
-			text-align: center;
-		}
-		
-		.pricing-lead {
-			text-align: center;
+		.services-grid {
+			grid-template-columns: repeat(2, 1fr);
 		}
 	}
 	
 	@media (max-width: 768px) {
-		.capabilities-grid {
+		.failure-grid {
 			grid-template-columns: 1fr;
 		}
 		
-		.steps-grid {
-			grid-template-columns: repeat(2, 1fr);
+		.tier-grid {
+			grid-template-columns: 1fr;
 		}
 		
-		.usecases-grid {
+		.services-grid {
+			grid-template-columns: 1fr;
+		}
+		
+		.audience-grid {
 			grid-template-columns: 1fr;
 		}
 	}

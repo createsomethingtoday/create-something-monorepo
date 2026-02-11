@@ -1,34 +1,60 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
 	import { AnimatedGridPattern, BlurFade, BorderBeam, OrbitingCircles, ShimmerButton } from '@create-something/canon/magicui';
-	
-	const beforeAfter = [
+
+	const chapters = [
 		{
-			before: 'You close a deal in HubSpot, then manually create a project folder in Google Drive, copy the client details into Notion, and message the team on Slack. 20 minutes of busywork, every single time.',
-			after: 'You close the deal. The project folder, client doc, and team notification happen automatically. You move on to the next deal.'
+			number: '01',
+			title: 'Start with one connection',
+			paragraphs: [
+				'Pick your biggest pain point. The report you build every Monday. The data you copy between systems. The emails you sort by hand.',
+				'We build a custom MCP server that connects that tool to Claude (or Cursor, or Codex). 2\u20134 weeks. $2,000\u2013$5,000. You own the code.',
+				'Now your AI agent can read your CRM, update your project tracker, draft your emails \u2014 using your actual data, not generic responses.'
+			]
 		},
 		{
-			before: 'Support emails pile up. You read each one, check the CRM for context, decide the priority, then assign it. Half your morning is triage.',
-			after: 'Emails arrive pre-sorted with priority, CRM context attached, and a draft response ready. You review and send.'
+			number: '02',
+			title: 'See the value, then map the whole picture',
+			paragraphs: [
+				'One connection shows you what\u2019s possible. The Subtractive Triad audit shows you the full opportunity.',
+				'We map every tool, every workflow, every data flow. We find the duplication (three teams using three project trackers), the excess (tools nobody uses but everyone pays for), and the disconnection (data that exists but can\u2019t be reached).',
+				'You get a strategic report with a prioritized roadmap. No commitment to build. $5,000\u2013$10,000.'
+			]
 		},
 		{
-			before: 'Every Monday you pull numbers from three different dashboards, paste them into a spreadsheet, format it, and drop it in Slack. An hour of work nobody thanks you for.',
-			after: 'Monday morning, the summary is already in Slack. The numbers are pulled, formatted, and posted before you open your laptop.'
+			number: '03',
+			title: 'Make it intelligent',
+			paragraphs: [
+				'Connections are pipes. Intelligence is what flows through them.',
+				'The Judgment Layer: we tune your agents monthly. Optimize prompts. Update policies as your business changes. Monitor performance. Catch edge cases before they become problems.',
+				'Your automation gets smarter every month. $1,500\u2013$3,500/mo.'
+			]
 		}
 	];
-	
-	const whoThisIsFor = [
-		'Teams of 3–50 who live in tools like HubSpot, Notion, Slack, and Google',
-		'Ops leads tired of being the human glue between systems',
-		'Founders who\'d rather sell than administrate',
-		'Teams already using AI (Claude, Cursor, Codex) but can\'t connect it to their actual data'
+
+	const timeline = [
+		{
+			label: 'Month 1',
+			detail: 'Built MCP connecting HubSpot to Claude ($3,000). Agents now draft follow-up emails from CRM data.',
+			result: 'Saves 5 hrs/week.'
+		},
+		{
+			label: 'Month 3',
+			detail: 'Audit revealed 3 disconnected systems and 20 hrs/week of manual data movement.',
+			result: '$7,500 audit.'
+		},
+		{
+			label: 'Month 4',
+			detail: 'Second MCP connecting Notion project tracker. Judgment Layer managing both agents.',
+			result: '$2,500/mo.'
+		}
 	];
-	
-	const steps = [
-		{ num: '1', title: 'Tell us your tools', description: 'A 30-minute call. You walk us through your stack and where you lose time.' },
-		{ num: '2', title: 'We scope and price it', description: 'You get a fixed quote before we start. No surprises, no hourly billing.' },
-		{ num: '3', title: 'We build the connections', description: 'Secure integrations deployed to your infrastructure. Your keys, your data.' },
-		{ num: '4', title: 'Your team works differently', description: 'AI agents access your actual systems. The busywork disappears.' }
+
+	const whoThisIsFor = [
+		'Teams tired of being the integration layer between their tools',
+		'Organizations already using AI but can\u2019t connect it to their actual data',
+		'Founders who\u2019d rather sell than administrate',
+		'Teams that tried Zapier/Make and hit the complexity wall'
 	];
 </script>
 
@@ -93,14 +119,14 @@
 {/snippet}
 
 <SEO
-	title="For Business | Stop Being the Human Glue Between Your Tools"
-	description="Your team loses hours every week copy-pasting between HubSpot, Notion, Slack, and Google. We connect them to AI agents so the busywork disappears. Fixed pricing from $750."
-	keywords="business automation, connect tools to AI, stop copy pasting, HubSpot automation, Notion AI, Slack integration, small business AI"
+	title="Your tools don't talk to each other. We fix that. | CREATE SOMETHING"
+	description="Every day you copy data between systems, format reports nobody asked for, and post updates you assembled by hand. We build custom MCP servers that connect your tools to AI agents — so your automation runs while you sleep."
+	keywords="MCP server, small business automation, AI integration, tool connectivity, HubSpot automation, Notion integration, Claude MCP, ops automation, SMB AI"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
 
-<!-- Hero — lead with the problem -->
+<!-- Hero — the SMB entry point -->
 <section class="hero">
 	<div class="hero-grid-container">
 		<AnimatedGridPattern
@@ -116,25 +142,24 @@
 	<div class="hero-container">
 		<div class="hero-content">
 			<BlurFade delay={0}>
-				<p class="hero-eyebrow">The business use case</p>
+				<p class="hero-eyebrow">For teams of 5–50</p>
 			</BlurFade>
 			<BlurFade delay={0.1}>
-				<h1 class="hero-title">You're the human glue between your&nbsp;tools.</h1>
+				<h1 class="hero-title">Your tools don't talk to each&nbsp;other. You fill the&nbsp;gap.</h1>
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					Every day, your team copies data between HubSpot and Notion, 
-					formats reports nobody asked to format, and messages Slack channels 
-					with updates they assembled by hand. The tools don't talk to each other, 
-					so you do. That's the problem we solve.
+					Every day you copy data between HubSpot and Notion, format reports nobody asked for, 
+					and post Slack updates you assembled by hand. AI agents like Claude could do this — if they 
+					could access your systems. That's what we&nbsp;build.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
 				<div class="hero-cta">
-					<ShimmerButton href="https://createsomething.agency/book">
-						Book Discovery Call
+					<ShimmerButton href="/services">
+						Get Your First MCP
 					</ShimmerButton>
-					<a href="/" class="hero-link">← Back to home</a>
+					<a href="/" class="hero-link">&larr; Back to home</a>
 				</div>
 			</BlurFade>
 		</div>
@@ -205,30 +230,39 @@
 	</div>
 </section>
 
-<!-- Before / After — concrete scenarios -->
-<section class="before-after-section">
+<!-- The Story — three chapters of natural progression -->
+<section class="story-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="section-heading">What changes</h2>
+			<h2 class="section-heading">The story</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
-			<p class="section-intro">Real workflows. Before and after.</p>
+			<p class="section-intro">
+				You don't need to transform everything at once. You need one thing to stop hurting.
+			</p>
 		</BlurFade>
-		<div class="before-after-list">
-			{#each beforeAfter as scenario, i}
+		<div class="story-track">
+			{#each chapters as chapter, i}
 				<BlurFade delay={0.2 + i * 0.15}>
-					<div class="scenario-card">
-						<div class="scenario-side scenario-before">
-							<span class="scenario-label">Before</span>
-							<p class="scenario-text">{scenario.before}</p>
+					<div class="story-chapter" class:story-chapter-first={i === 0}>
+						<div class="chapter-header">
+							<span class="chapter-number">{chapter.number}</span>
+							<h3 class="chapter-title">{chapter.title}</h3>
 						</div>
-						<div class="scenario-divider" aria-hidden="true">
-							<span class="scenario-arrow">→</span>
+						<div class="chapter-body">
+							{#each chapter.paragraphs as paragraph, j}
+								<p class="chapter-text" class:chapter-text-highlight={j === chapter.paragraphs.length - 1}>
+									{paragraph}
+								</p>
+							{/each}
 						</div>
-						<div class="scenario-side scenario-after">
-							<span class="scenario-label">After</span>
-							<p class="scenario-text">{scenario.after}</p>
-						</div>
+						{#if i < chapters.length - 1}
+							<div class="chapter-connector" aria-hidden="true">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+									<path d="M12 5v14M19 12l-7 7-7-7"/>
+								</svg>
+							</div>
+						{/if}
 					</div>
 				</BlurFade>
 			{/each}
@@ -236,11 +270,60 @@
 	</div>
 </section>
 
-<!-- Who this is for -->
+<!-- Real Example — concrete numbers from a real engagement -->
+<section class="example-section">
+	<div class="section-container">
+		<BlurFade>
+			<h2 class="section-heading">Real numbers</h2>
+		</BlurFade>
+		<BlurFade delay={0.1}>
+			<p class="section-intro">
+				A 15-person professional services firm.
+			</p>
+		</BlurFade>
+		<BlurFade delay={0.2}>
+			<div class="example-card">
+				<div class="example-timeline">
+					{#each timeline as entry, i}
+						<div class="timeline-entry">
+							<div class="timeline-marker">
+								<span class="timeline-dot"></span>
+								{#if i < timeline.length - 1}
+									<span class="timeline-line" aria-hidden="true"></span>
+								{/if}
+							</div>
+							<div class="timeline-content">
+								<p class="timeline-label">{entry.label}</p>
+								<p class="timeline-detail">{entry.detail}</p>
+								<p class="timeline-result">{entry.result}</p>
+							</div>
+						</div>
+					{/each}
+				</div>
+				<div class="example-outcome">
+					<div class="outcome-stat">
+						<span class="outcome-value">15 hrs/week</span>
+						<span class="outcome-label">automated</span>
+					</div>
+					<div class="outcome-stat">
+						<span class="outcome-value">$39k/year</span>
+						<span class="outcome-label">recovered</span>
+					</div>
+					<div class="outcome-stat">
+						<span class="outcome-value">$13k + $2.5k/mo</span>
+						<span class="outcome-label">total investment</span>
+					</div>
+				</div>
+			</div>
+		</BlurFade>
+	</div>
+</section>
+
+<!-- Who This Is For -->
 <section class="who-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="section-heading">Is this you?</h2>
+			<h2 class="section-heading">Who this is for</h2>
 		</BlurFade>
 		<div class="who-grid">
 			{#each whoThisIsFor as item, i}
@@ -255,58 +338,26 @@
 	</div>
 </section>
 
-<!-- How It Works — grounded in the conversation -->
-<section class="steps-section">
-	<div class="section-container">
-		<BlurFade>
-			<h2 class="section-heading">How it works</h2>
-		</BlurFade>
-		<div class="steps-grid">
-			{#each steps as step, i}
-				<BlurFade delay={0.1 + i * 0.1}>
-					<div class="step-card">
-						<div class="step-num">{step.num}</div>
-						<h3 class="step-title">{step.title}</h3>
-						<p class="step-desc">{step.description}</p>
-					</div>
-				</BlurFade>
-			{/each}
-		</div>
-	</div>
-</section>
-
-<!-- Value anchor — no full pricing table, link to /services -->
-<section class="value-section">
-	<div class="section-container">
-		<BlurFade>
-			<div class="value-card">
-				<h2 class="value-heading">Fixed pricing. No surprises.</h2>
-				<p class="value-text">
-					Most projects land between <strong>$750 and $2,500</strong> depending on how many tools 
-					you need connected. You know the total before we start. No hourly billing.
-				</p>
-				<a href="/services" class="value-link">See full pricing breakdown →</a>
-			</div>
-		</BlurFade>
-	</div>
-</section>
-
 <!-- CTA -->
 <section class="cta-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="cta-heading">Stop being the middleware.</h2>
+			<h2 class="cta-heading">Start with one&nbsp;connection.</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
-				30-minute discovery call. Tell us your tools and where you lose time. 
-				We'll tell you what it costs to fix.
+				Pick the workflow that wastes the most time. We'll connect it to your AI agent 
+				in 2–4&nbsp;weeks. You own the code. You see the&nbsp;value. Then you decide what's&nbsp;next.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
-			<ShimmerButton href="https://createsomething.agency/book">
-				Book Discovery Call
-			</ShimmerButton>
+			<div class="cta-actions">
+				<ShimmerButton href="/services">
+					Get Your First MCP
+				</ShimmerButton>
+				<a href="/services" class="cta-link">See all services &rarr;</a>
+				<a href="/book" class="cta-link cta-link-secondary">Have questions? Book a call</a>
+			</div>
 		</BlurFade>
 	</div>
 </section>
@@ -536,24 +587,23 @@
 		}
 	}
 	
-	/* Before / After section */
-	.before-after-section {
+	/* The Story — chapter-based progression */
+	.story-section {
 		padding: var(--section-padding, 6rem) 0;
 		border-top: 1px solid var(--color-border-default);
 	}
 	
-	.before-after-list {
+	.story-track {
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-5, 1.5rem);
+		max-width: var(--content-width-md);
+		margin: 0 auto;
 	}
 	
-	.scenario-card {
-		display: grid;
-		grid-template-columns: 1fr auto 1fr;
-		gap: var(--space-4, 1rem);
-		align-items: stretch;
-		padding: var(--space-5, 1.5rem);
+	.story-chapter {
+		position: relative;
+		padding: var(--space-7, 2.5rem) var(--space-6, 2rem);
 		border-radius: var(--radius-lg, 12px);
 		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-pure);
@@ -564,57 +614,191 @@
 			transform var(--duration-bounce) var(--ease-bounce);
 	}
 	
-	.scenario-card:hover {
+	.story-chapter:hover {
 		border-color: var(--color-border-emphasis);
 		box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
 		transform: translateY(-2px);
 	}
 	
-	.scenario-side {
+	.story-chapter-first {
+		border-color: var(--accent-blue-subtle);
+		background: var(--accent-gradient-subtle);
+	}
+	
+	.chapter-header {
+		display: flex;
+		align-items: baseline;
+		gap: var(--space-4, 1rem);
+		margin-bottom: var(--space-5, 1.5rem);
+	}
+	
+	.chapter-number {
+		font-size: var(--text-h2);
+		font-weight: var(--font-bold);
+		color: var(--color-fg-muted);
+		opacity: 0.35;
+		letter-spacing: -0.02em;
+		line-height: 1;
+		flex-shrink: 0;
+	}
+	
+	.story-chapter-first .chapter-number {
+		color: var(--accent-blue-strong);
+		opacity: 0.6;
+	}
+	
+	.chapter-title {
+		font-size: var(--text-body-lg);
+		font-weight: var(--font-semibold);
+		color: var(--color-fg-primary);
+		letter-spacing: var(--tracking-tight, -0.015em);
+		line-height: 1.3;
+	}
+	
+	.chapter-body {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-2, 0.5rem);
+		gap: var(--space-4, 1rem);
 	}
 	
-	.scenario-label {
-		font-size: var(--text-caption);
-		text-transform: uppercase;
-		letter-spacing: 0.12em;
-		font-weight: var(--font-semibold);
-	}
-	
-	.scenario-before .scenario-label {
-		color: var(--color-fg-muted);
-	}
-	
-	.scenario-after .scenario-label {
-		color: var(--accent-blue-strong);
-	}
-	
-	.scenario-text {
-		font-size: var(--text-body-sm);
+	.chapter-text {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
 		line-height: var(--leading-relaxed);
 	}
 	
-	.scenario-before .scenario-text {
-		color: var(--color-fg-tertiary);
+	.chapter-text-highlight {
+		color: var(--color-fg-primary);
+		font-weight: var(--font-medium, 500);
 	}
 	
-	.scenario-after .scenario-text {
-		color: var(--color-fg-secondary);
-	}
-	
-	.scenario-divider {
+	.chapter-connector {
 		display: flex;
-		align-items: center;
 		justify-content: center;
-		padding: 0 var(--space-2, 0.5rem);
+		margin-top: var(--space-5, 1.5rem);
+		color: var(--color-fg-muted);
+		opacity: 0.4;
 	}
 	
-	.scenario-arrow {
+	.chapter-connector svg {
+		width: 20px;
+		height: 20px;
+	}
+	
+	/* Real Example — timeline card */
+	.example-section {
+		padding: var(--section-padding, 6rem) 0;
+		border-top: 1px solid var(--color-border-default);
+	}
+	
+	.example-card {
+		max-width: var(--content-width-md);
+		margin: 0 auto;
+		padding: var(--space-8, 3rem) var(--space-6, 2rem);
+		border-radius: var(--radius-xl, 16px);
+		border: 1px solid var(--color-border-default);
+		background: var(--color-bg-pure);
+		box-shadow: var(--glass-shine-soft);
+	}
+	
+	.example-timeline {
+		display: flex;
+		flex-direction: column;
+		gap: 0;
+		margin-bottom: var(--space-8, 3rem);
+	}
+	
+	.timeline-entry {
+		display: flex;
+		gap: var(--space-4, 1rem);
+		position: relative;
+	}
+	
+	.timeline-marker {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		flex-shrink: 0;
+		width: 20px;
+		padding-top: 4px;
+	}
+	
+	.timeline-dot {
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		background: var(--accent-blue-strong);
+		border: 2px solid var(--color-bg-pure);
+		box-shadow: 0 0 0 2px var(--accent-blue-subtle);
+		flex-shrink: 0;
+	}
+	
+	.timeline-line {
+		width: 2px;
+		flex: 1;
+		background: var(--color-border-default);
+		margin-top: var(--space-1, 0.25rem);
+		margin-bottom: 0;
+	}
+	
+	.timeline-content {
+		padding-bottom: var(--space-6, 2rem);
+	}
+	
+	.timeline-label {
+		font-size: var(--text-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
+		color: var(--accent-blue-strong);
+		font-weight: var(--font-semibold);
+		margin-bottom: var(--space-2, 0.5rem);
+	}
+	
+	.timeline-detail {
+		font-size: var(--text-body);
+		color: var(--color-fg-secondary);
+		line-height: var(--leading-relaxed);
+		margin-bottom: var(--space-1, 0.25rem);
+	}
+	
+	.timeline-result {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-primary);
+		font-weight: var(--font-semibold);
+	}
+	
+	.example-outcome {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: var(--space-4, 1rem);
+		padding-top: var(--space-6, 2rem);
+		border-top: 1px solid var(--color-border-default);
+	}
+	
+	.outcome-stat {
+		text-align: center;
+		padding: var(--space-4, 1rem);
+		border-radius: var(--radius-lg, 12px);
+		border: 1px solid var(--accent-blue-subtle);
+		background: var(--accent-gradient-subtle);
+	}
+	
+	.outcome-value {
+		display: block;
 		font-size: var(--text-body-lg);
+		font-weight: var(--font-bold);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-1, 0.25rem);
+		letter-spacing: var(--tracking-tight, -0.015em);
+	}
+	
+	.outcome-label {
+		display: block;
+		font-size: var(--text-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
 		color: var(--color-fg-muted);
-		opacity: 0.5;
+		font-weight: var(--font-semibold);
 	}
 	
 	/* Who this is for */
@@ -658,96 +842,6 @@
 		color: var(--color-fg-secondary);
 		line-height: var(--leading-relaxed);
 	}
-	
-	/* Steps */
-	.steps-section {
-		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
-	}
-	
-	.steps-grid {
-		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		gap: var(--space-4, 1rem);
-	}
-	
-	.step-card {
-		text-align: center;
-	}
-	
-	.step-num {
-		width: 48px;
-		height: 48px;
-		border-radius: 50%;
-		border: 1px solid var(--color-border-emphasis);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin: 0 auto var(--space-4, 1rem);
-	}
-	
-	.step-title {
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-2, 0.5rem);
-	}
-	
-	.step-desc {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		line-height: var(--leading-relaxed);
-	}
-	
-	/* Value anchor */
-	.value-section {
-		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
-	}
-	
-	.value-card {
-		text-align: center;
-		max-width: var(--content-width-sm);
-		margin: 0 auto;
-		padding: var(--space-8, 3rem) var(--space-6, 2rem);
-		border-radius: var(--radius-xl, 16px);
-		border: 1px solid var(--accent-blue-subtle);
-		background: var(--accent-gradient-subtle);
-		box-shadow: var(--glass-shine-soft);
-	}
-	
-	.value-heading {
-		font-size: var(--text-h2);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-4, 1rem);
-		letter-spacing: var(--tracking-tight, -0.015em);
-	}
-	
-	.value-text {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-		line-height: var(--leading-relaxed);
-		margin-bottom: var(--space-5, 1.5rem);
-	}
-	
-	.value-text strong {
-		color: var(--color-fg-primary);
-		font-weight: var(--font-semibold);
-	}
-	
-	.value-link {
-		font-size: var(--text-body-sm);
-		color: var(--accent-blue-strong);
-		text-decoration: none;
-		transition: color var(--duration-micro, 200ms) var(--ease-standard);
-	}
-	
-	.value-link:hover {
-		color: var(--accent-blue);
-	}
 
 	/* CTA */
 	.cta-section {
@@ -761,6 +855,10 @@
 		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
 		margin-bottom: var(--space-3, 0.75rem);
+		max-width: var(--content-width-md);
+		margin-left: auto;
+		margin-right: auto;
+		letter-spacing: var(--tracking-tight, -0.015em);
 	}
 	
 	.cta-subtext {
@@ -771,6 +869,33 @@
 		margin-left: auto;
 		margin-right: auto;
 		line-height: var(--leading-relaxed);
+	}
+	
+	.cta-actions {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: var(--space-5, 1.5rem);
+		flex-wrap: wrap;
+	}
+	
+	.cta-link {
+		font-size: var(--text-body-sm);
+		color: var(--accent-blue-strong);
+		text-decoration: none;
+		transition: color var(--duration-micro, 200ms) var(--ease-standard);
+	}
+	
+	.cta-link:hover {
+		color: var(--accent-blue);
+	}
+	
+	.cta-link-secondary {
+		color: var(--color-fg-secondary);
+	}
+	
+	.cta-link-secondary:hover {
+		color: var(--color-fg-primary);
 	}
 	
 	/* Responsive */
@@ -793,6 +918,15 @@
 			justify-content: center;
 			flex-wrap: wrap;
 		}
+		
+		.who-grid {
+			grid-template-columns: 1fr;
+		}
+		
+		.example-outcome {
+			grid-template-columns: 1fr;
+			gap: var(--space-3, 0.75rem);
+		}
 	}
 	
 	@media (max-width: 768px) {
@@ -804,33 +938,20 @@
 			font-size: clamp(2rem, 7vw, 3.5rem);
 		}
 		
-		.scenario-card {
-			grid-template-columns: 1fr;
-			gap: var(--space-3, 0.75rem);
-		}
-		
-		.scenario-divider {
-			padding: 0;
-		}
-		
-		.scenario-arrow {
-			transform: rotate(90deg);
-		}
-		
 		.who-grid {
 			grid-template-columns: 1fr;
 		}
 		
-		.steps-grid {
-			grid-template-columns: repeat(2, 1fr);
-		}
-		
-		.before-after-section,
+		.story-section,
+		.example-section,
 		.who-section,
-		.steps-section,
-		.value-section,
 		.cta-section {
 			padding: var(--layout-3, 4rem) 0;
+		}
+		
+		.chapter-header {
+			flex-direction: column;
+			gap: var(--space-2, 0.5rem);
 		}
 	}
 </style>
