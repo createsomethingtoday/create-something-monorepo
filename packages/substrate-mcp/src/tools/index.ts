@@ -119,7 +119,7 @@ export function registerTools(
   // ═══════════════════════════════════════════════════════════════════
 
   server.tool('find_records',
-    'Query or search by workspace + table name. Sensitive fields are redacted.',
+    'Query or search records. Use list_workspaces first to discover workspace and table names. Sensitive fields are redacted.',
     {
       workspace_name: z.string().min(1),
       table_name: z.string().min(1),
@@ -161,7 +161,7 @@ export function registerTools(
     { readOnly: true });
 
   server.tool('add_record',
-    'Create record by workspace + table name. Validated against schema.',
+    'Create record by workspace + table name. Check column schema via list_workspaces first. Validated against schema.',
     {
       workspace_name: z.string().min(1),
       table_name: z.string().min(1),
@@ -187,7 +187,7 @@ export function registerTools(
     });
 
   server.tool('list_workspaces',
-    'List all workspaces with tables and column schemas. Start here.',
+    'START HERE. List all workspaces with tables and column schemas. Call this first to discover available data before using find_records or add_record.',
     {},
     async () => {
       try {
@@ -208,7 +208,7 @@ export function registerTools(
   // ═══════════════════════════════════════════════════════════════════
 
   server.tool('get_record',
-    'Get record by ID with relations. Sensitive fields redacted.',
+    'Get a single record by ID with its relations. Use find_records to discover record IDs first. Sensitive fields redacted.',
     { record_id: z.string().min(1) } as Record<string, unknown>,
     async (p: unknown) => {
       const i = p as { record_id: string };
@@ -297,7 +297,7 @@ export function registerTools(
   // ═══════════════════════════════════════════════════════════════════
 
   server.tool('create_relation',
-    'Link two records bidirectionally.',
+    'Link two records bidirectionally. Requires source and target table/record IDs. Use find_records to get IDs.',
     CreateRelationSchema.shape,
     async (p: unknown) => { const i = p as CreateRelationInput; try { return ok({ success: true, relation: await withDb(e => db.createRelation(e, i.source_table_id, i.source_record_id, i.target_table_id, i.target_record_id, i.relation_name)) }); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
@@ -311,7 +311,7 @@ export function registerTools(
   // ═══════════════════════════════════════════════════════════════════
 
   server.tool('create_workspace',
-    'Create a workspace. Names must be unique.',
+    'Create a workspace (top-level container). After creating, use define_table to add tables, then add_record to populate data.',
     { name: z.string().min(1), description: z.string().default('') } as Record<string, unknown>,
     async (p: unknown) => { const i = p as { name: string; description: string }; try { return ok({ success: true, workspace: await withDb(e => db.createWorkspace(e, i.name, i.description)) }); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
@@ -351,7 +351,7 @@ export function registerTools(
     } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   server.tool('define_table',
-    'Define a table with typed columns. Use sensitive:true on columns to redact values.',
+    'Define a table with typed columns in an existing workspace. Create workspace first if needed. Use sensitive:true on columns to redact values in reads.',
     DefineTableSchema.shape,
     async (p: unknown) => { const i = p as import('../schemas/index.js').DefineTableInput; try { return ok({ success: true, table: await withDb(e => db.createTable(e, i.workspace_id, i.name, i.description, i.columns)) }); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
@@ -393,7 +393,7 @@ export function registerTools(
   // ═══════════════════════════════════════════════════════════════════
 
   server.tool('upload_file',
-    `Upload file (base64). Max ${MAX_FILE_SIZE_BYTES / 1024 / 1024}MB. Attach to record optionally.`,
+    `Upload file (base64) to a workspace. Requires workspace_id. Optionally attach to a record via record_id. Max ${MAX_FILE_SIZE_BYTES / 1024 / 1024}MB.`,
     UploadFileSchema.shape,
     async (p: unknown) => {
       const i = p as UploadFileInput;
