@@ -14,6 +14,8 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ConnectionManager } from "../services/connections.js";
+import { QuickBooksClient } from "../services/quickbooks.js";
+import type { QBOCompanyInfo } from "../types.js";
 import { toolResponse } from "../services/formatting.js";
 
 interface ConnectionToolsConfig {
@@ -21,6 +23,7 @@ interface ConnectionToolsConfig {
   composioAuthConfigId: string;
   qboClientSecret: string;
   workerBaseUrl: string;
+  qboEnvironment: string;
 }
 
 export function registerConnectionTools(
@@ -108,11 +111,11 @@ Multiple QuickBooks companies can be connected simultaneously. Each gets its own
           `After you authorize, come back here for Step 2.\n\n` +
           `---\n\n` +
           `**Step 2**: Once authorized, I'll need your **QuickBooks Company ID**.\n\n` +
-          `To find it:\n` +
-          `- **Keyboard shortcut**: Press \`Ctrl+Alt+?\` (Windows) or \`Control+Option+?\` (Mac) anywhere in QuickBooks Online\n` +
-          `- A dialog appears showing **"Your Company ID is XXXX XXXX XXXX XXXX"** with a Copy button\n` +
-          `- Paste it back here\n\n` +
-          `_Alternatively: Gear icon (⚙️) > Account and Settings > Billing & Subscription — Company ID is at the top._`
+          `Open [QuickBooks Online](https://app.qbo.intuit.com) and find your Company ID:\n` +
+          `- **Keyboard shortcut** (fastest): Press \`Ctrl+Alt+?\` (Windows) or \`Control+Option+?\` (Mac) anywhere in QuickBooks\n` +
+          `- A dialog appears showing **"Your Company ID is XXXX XXXX XXXX XXXX"** with a **Copy** button\n` +
+          `- Copy it and paste it back here\n\n` +
+          `_Alternative: Gear icon (⚙️) > Account and Settings > Billing & Subscription — Company ID is at the top._`
         );
       } catch (error: unknown) {
         return toolResponse(
@@ -150,39 +153,83 @@ The company_id should be the number the user copied from QuickBooks (e.g., "9341
         // Strip spaces from company ID (QBO shows it as "XXXX XXXX XXXX XXXX")
         const realmId = params.company_id.replace(/\s+/g, "");
 
-        // Call our own composio-seed endpoint
-        const seedResp = await fetch(`${config.workerBaseUrl}/auth/composio-seed`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${config.qboClientSecret}`,
-          },
-          body: JSON.stringify({
-            composio_user_id: params.user_id,
-            realm_id: realmId,
-          }),
-        });
+        if (!config.composioApiKey) {
+          return toolResponse("Composio API key not configured.", true);
+        }
 
-        if (!seedResp.ok) {
-          const errorData = await seedResp.json() as { error?: string };
+        // Fetch connected accounts from Composio for this user (in-process, no HTTP loopback)
+        const composioResp = await fetch(
+          `https://backend.composio.dev/api/v1/connectedAccounts?user_uuid=${encodeURIComponent(params.user_id)}&showActiveOnly=true`,
+          { headers: { "x-api-key": config.composioApiKey } }
+        );
+
+        if (!composioResp.ok) {
           return toolResponse(
-            `Connection failed: ${errorData.error || `HTTP ${seedResp.status}`}\n\n` +
-            `Make sure the user completed the authorization in Step 1 (qbo_connect) before calling this.`,
+            `Failed to fetch from Composio: ${composioResp.status}. Make sure the user completed Step 1 (qbo_connect).`,
             true
           );
         }
 
-        const result = await seedResp.json() as {
-          companyName?: string;
-          realmId?: string;
-          email?: string;
+        const composioData = await composioResp.json() as {
+          items: Array<{
+            id: string;
+            appUniqueId: string;
+            status: string;
+            connectionParams: {
+              access_token: string;
+              refresh_token: string;
+              token_type?: string;
+              x_refresh_token_expires_in?: number;
+            };
+          }>;
         };
+
+        const qboConn = composioData.items.find(
+          item => item.appUniqueId === "quickbooks" && item.status === "ACTIVE"
+        );
+
+        if (!qboConn) {
+          return toolResponse(
+            `No active QuickBooks connection found for user "${params.user_id}".\n\n` +
+            `Make sure the user completed Step 1 (clicked the authorization link from \`qbo_connect\`).`,
+            true
+          );
+        }
+
+        const cParams = qboConn.connectionParams;
+        const token = {
+          accessToken: cParams.access_token,
+          refreshToken: cParams.refresh_token,
+          accessTokenExpiresAt: new Date(Date.now() + 3600 * 1000).toISOString(),
+          refreshTokenExpiresAt: new Date(Date.now() + (cParams.x_refresh_token_expires_in || 8726400) * 1000).toISOString(),
+          realmId,
+          tokenType: cParams.token_type || "bearer",
+        };
+
+        // Fetch company info for metadata
+        let companyName = "Unknown Company";
+        let email: string | undefined;
+        try {
+          const tempClient = new QuickBooksClient(
+            { getAccessToken: async () => token.accessToken, getRealmId: async () => realmId },
+            realmId,
+            config.qboEnvironment === "sandbox"
+          );
+          const info = await tempClient.getCompanyInfo<QBOCompanyInfo>();
+          companyName = info.CompanyName || companyName;
+          email = info.Email?.Address;
+        } catch {
+          // Best effort — company info fetch may fail for new accounts
+        }
+
+        // Store connection directly via ConnectionManager (no HTTP loopback)
+        await connManager.addConnection(token, { companyName, email });
 
         return toolResponse(
           `## QuickBooks Connected!\n\n` +
-          `**Company**: ${result.companyName || "Unknown"}\n` +
-          `**Company ID**: \`${result.realmId}\`\n` +
-          (result.email ? `**Email**: ${result.email}\n` : "") +
+          `**Company**: ${companyName}\n` +
+          `**Company ID**: \`${realmId}\`\n` +
+          (email ? `**Email**: ${email}\n` : "") +
           `\nAll QuickBooks tools are now ready. Try \`qbo_company_info\` to verify, or ask any question about your QuickBooks data.`
         );
       } catch (error: unknown) {

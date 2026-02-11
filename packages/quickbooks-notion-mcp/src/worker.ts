@@ -355,6 +355,7 @@ export default {
           composioAuthConfigId: "fa213136-0e16-4325-9090-355dd0ba2864",
           qboClientSecret: env.QBO_CLIENT_SECRET,
           workerBaseUrl: baseUrl,
+          qboEnvironment: env.QBO_ENVIRONMENT,
         });
 
         // Create web-standard transport (Workers-native)
