@@ -61,7 +61,7 @@ Multiple QuickBooks companies can be connected simultaneously. Each gets its own
           );
         }
 
-        // Generate Composio connect link via API
+        // Generate Composio connect link via API (v3 format)
         const response = await fetch("https://backend.composio.dev/api/v1/connectedAccounts", {
           method: "POST",
           headers: {
@@ -70,7 +70,9 @@ Multiple QuickBooks companies can be connected simultaneously. Each gets its own
           },
           body: JSON.stringify({
             integrationId: config.composioAuthConfigId,
-            userUuid: params.user_id,
+            data: {
+              userUuid: params.user_id,
+            },
           }),
         });
 
