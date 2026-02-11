@@ -20,12 +20,16 @@ export interface QBOAuthConfig {
   environment: "sandbox" | "production";
   tokenPath?: string;
   kvStore?: KVNamespace;
+  /** KV key for token storage. Default: "qbo-token". Use "qbo-conn:{realmId}" for multi-connection. */
+  kvKey?: string;
 }
 
 // KV namespace type (Cloudflare Workers)
-interface KVNamespace {
+export interface KVNamespace {
   get(key: string): Promise<string | null>;
-  put(key: string, value: string): Promise<void>;
+  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
+  delete(key: string): Promise<void>;
+  list(options?: { prefix?: string }): Promise<{ keys: { name: string }[] }>;
 }
 
 // ── Token Types ─────────────────────────────────────────────────────
@@ -66,6 +70,7 @@ export class QBOAuthManager implements TokenProvider {
   private readonly redirectUri: string;
   private readonly tokenPath: string;
   private readonly kvStore?: KVNamespace;
+  private readonly kvKey: string;
   private token: QBOToken | null = null;
   private initialized = false;
 
@@ -75,6 +80,18 @@ export class QBOAuthManager implements TokenProvider {
     this.redirectUri = config.redirectUri || DEFAULT_REDIRECT_URI;
     this.tokenPath = config.tokenPath ?? DEFAULT_TOKEN_PATH;
     this.kvStore = config.kvStore;
+    this.kvKey = config.kvKey ?? "qbo-token";
+  }
+
+  // ── Direct Token Loading ───────────────────────────────────────
+
+  /**
+   * Initialize with a token directly (bypasses persistence load).
+   * Used by ConnectionManager to load connection-specific tokens.
+   */
+  initializeWithToken(token: QBOToken): void {
+    this.token = token;
+    this.initialized = true;
   }
 
   // ── OAuth URL Generation ────────────────────────────────────────
@@ -292,7 +309,7 @@ export class QBOAuthManager implements TokenProvider {
     try {
       const serialized = JSON.stringify(this.token, null, 2);
       if (this.kvStore) {
-        await this.kvStore.put("qbo-token", serialized);
+        await this.kvStore.put(this.kvKey, serialized);
       } else {
         await writeFile(this.tokenPath, serialized, "utf-8");
       }
@@ -311,7 +328,7 @@ export class QBOAuthManager implements TokenProvider {
       let raw: string | null = null;
 
       if (this.kvStore) {
-        raw = await this.kvStore.get("qbo-token");
+        raw = await this.kvStore.get(this.kvKey);
       } else if (this.hasPersistedTokens()) {
         raw = await readFile(this.tokenPath, "utf-8");
       }

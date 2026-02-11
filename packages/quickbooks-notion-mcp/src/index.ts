@@ -57,8 +57,10 @@ function createMcpServer(
   const qbo = createQBOClient(authManager, realmId, sandbox);
   const notion = createNotionClientFromEnv();
 
-  registerQuickBooksTools(server, qbo);
-  registerNotionTools(server, qbo, notion);
+  // Wrap single-user client in getClient closure (local mode — no multi-connection)
+  const getClient = async () => qbo;
+  registerQuickBooksTools(server, getClient);
+  registerNotionTools(server, getClient, notion);
 
   // ── Database Tier — Resources (read-only data) ──────────────────
 

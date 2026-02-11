@@ -24,6 +24,16 @@ export const PaginationSchema = z.object({
     .describe("Number of results to skip for pagination"),
 });
 
+/** Optional connection selector for multi-tenant QBO access. */
+export const ConnectionSchema = z.object({
+  connection: z
+    .string()
+    .optional()
+    .describe(
+      "QuickBooks connection ID (realmId). Omit to use the default connection. Use qbo_list_connections to see available connections."
+    ),
+});
+
 // ── QuickBooks tool schemas ─────────────────────────────────────────
 
 export const QBOQuerySchema = z
@@ -36,6 +46,7 @@ export const QBOQuerySchema = z
       ),
     response_format: ResponseFormatSchema,
   })
+  .merge(ConnectionSchema)
   .strict();
 
 export const QBOListEntitySchema = z
@@ -56,6 +67,7 @@ export const QBOListEntitySchema = z
     response_format: ResponseFormatSchema,
   })
   .merge(PaginationSchema)
+  .merge(ConnectionSchema)
   .strict();
 
 export const QBOGetEntitySchema = z
@@ -69,12 +81,14 @@ export const QBOGetEntitySchema = z
       .describe("Entity ID in QuickBooks"),
     response_format: ResponseFormatSchema,
   })
+  .merge(ConnectionSchema)
   .strict();
 
 export const QBOCompanyInfoSchema = z
   .object({
     response_format: ResponseFormatSchema,
   })
+  .merge(ConnectionSchema)
   .strict();
 
 export const QBOReportSchema = z
@@ -106,6 +120,7 @@ export const QBOReportSchema = z
       .describe("Accounting method for the report"),
     response_format: ResponseFormatSchema,
   })
+  .merge(ConnectionSchema)
   .strict();
 
 export const QBOSearchSchema = z
@@ -120,6 +135,7 @@ export const QBOSearchSchema = z
     response_format: ResponseFormatSchema,
   })
   .merge(PaginationSchema)
+  .merge(ConnectionSchema)
   .strict();
 
 // ── Notion tool schemas ─────────────────────────────────────────────
@@ -145,6 +161,7 @@ export const NotionSyncEntitySchema = z
       .default(20)
       .describe("Max records per batch (0 = sync all, default: 20)"),
   })
+  .merge(ConnectionSchema)
   .strict();
 
 export const NotionListDatabasesSchema = z
@@ -194,6 +211,7 @@ export const NotionUpsertPageSchema = z
       .record(z.unknown())
       .describe("Raw QBO record object (as returned by qbo_list or qbo_get). Must include an 'Id' field."),
   })
+  .merge(ConnectionSchema)
   .strict();
 
 // ── Type exports ────────────────────────────────────────────────────

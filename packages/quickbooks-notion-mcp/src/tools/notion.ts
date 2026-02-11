@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { QuickBooksClient } from "../services/quickbooks.js";
+import type { QBOClientGetter } from "./quickbooks.js";
 import type { NotionClient } from "../services/notion.js";
 import {
   notionTitle,
@@ -229,7 +229,7 @@ async function upsertQBORecord(
 
 export function registerNotionTools(
   server: McpServer,
-  qbo: QuickBooksClient,
+  getClient: QBOClientGetter,
   notion: NotionClient
 ): void {
 
@@ -364,6 +364,7 @@ Examples:
     },
     async (params: NotionSyncEntityInput) => {
       try {
+        const qbo = await getClient(params.connection);
         const syncAll = params.limit === 0;
         const batchSize = syncAll ? 50 : params.limit;
         let offset = 0;

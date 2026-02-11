@@ -28,6 +28,13 @@ import {
 } from "../services/formatting.js";
 
 /**
+ * Client resolver: returns a QuickBooksClient for the given connection.
+ * In single-user mode, ignores connectionId and returns the fixed client.
+ * In multi-connection mode, resolves from ConnectionManager.
+ */
+export type QBOClientGetter = (connectionId?: string) => Promise<QuickBooksClient>;
+
+/**
  * Sanitize search terms for QBO query LIKE clauses.
  * Escapes special characters and enforces length limit.
  */
@@ -44,7 +51,7 @@ function sanitizeSearchTerm(term: string): string {
 
 export function registerQuickBooksTools(
   server: McpServer,
-  qbo: QuickBooksClient
+  getClient: QBOClientGetter
 ): void {
   // ── qbo_query ───────────────────────────────────────────────────
   server.registerTool(
@@ -68,6 +75,7 @@ Examples: "SELECT * FROM Invoice WHERE Balance > 0 ORDERBY TxnDate DESC MAXRESUL
     },
     async (params: QBOQueryInput) => {
       try {
+        const qbo = await getClient(params.connection);
         const result = await qbo.query(params.query);
         if (params.response_format === "json") {
           return toolResponse(JSON.stringify(result, null, 2));
@@ -110,6 +118,7 @@ Common patterns:
     },
     async (params: QBOListEntityInput) => {
       try {
+        const qbo = await getClient(params.connection);
         const { items, totalCount } = await qbo.list(params.entity, {
           where: params.where,
           orderBy: params.order_by,
@@ -183,6 +192,7 @@ Returns the complete record with all fields. Use response_format="json" when you
     },
     async (params: QBOGetEntityInput) => {
       try {
+        const qbo = await getClient(params.connection);
         const entity = await qbo.getById(params.entity, params.id);
 
         if (params.response_format === "json") {
@@ -222,6 +232,7 @@ Good starting point when the user asks "what's connected?" or "show me my compan
     },
     async (params: QBOCompanyInfoInput) => {
       try {
+        const qbo = await getClient(params.connection);
         const info = await qbo.getCompanyInfo<QBOCompanyInfo>();
 
         if (params.response_format === "json") {
@@ -283,6 +294,7 @@ Dates are optional — omit for current period. Use accounting_method for Accrua
     },
     async (params: QBOReportInput) => {
       try {
+        const qbo = await getClient(params.connection);
         const reportParams: Record<string, string> = {};
         if (params.start_date) reportParams.start_date = params.start_date;
         if (params.end_date) reportParams.end_date = params.end_date;
@@ -337,6 +349,7 @@ Returns matching records with pagination. Use response_format="json" for structu
     },
     async (params: QBOSearchInput) => {
       try {
+        const qbo = await getClient(params.connection);
         // Build LIKE clause based on entity type
         const nameField = ["Account", "Item", "TaxCode", "TaxRate", "Term", "PaymentMethod"].includes(
           params.entity

@@ -104,10 +104,22 @@ const WORKWAY_MCPS: McpCatalogEntry[] = [
     name: 'QuickBooks Notion Sync',
     slug: 'quickbooks-notion',
     url: 'https://quickbooks.mcp.workway.co',
-    description: 'Read-only MCP server connecting QuickBooks Online data to Notion databases. Financial data access for AI agents.',
+    description: 'Read-only MCP server connecting QuickBooks Online data to Notion databases. Financial data access for AI agents. Supports multiple QuickBooks companies simultaneously.',
     category: 'workway',
     transports: ['http', 'sse'],
     requiresAuth: true,
+    authType: 'oauth',
+    setupNotes: `**Multi-connection**: Multiple QuickBooks companies can be connected simultaneously. Each user authenticates independently — no need to disconnect others.
+
+**First-time setup**:
+1. Add the MCP server to your host config (URL: \`https://quickbooks.mcp.workway.co/mcp\`)
+2. In your AI session, call \`qbo_connect\` — the agent will provide an OAuth link
+3. Click the link, authorize with your QuickBooks account in the browser
+4. Return to your AI session and verify with \`qbo_company_info\`
+
+**Switching connections**: Pass \`connection="{realmId}"\` to any QBO tool to query a specific company. Use \`qbo_list_connections\` to see all connected companies.
+
+**Disconnecting**: Use \`qbo_disconnect\` to remove a connection. Also revoke the app in your Intuit account settings.`,
   },
   {
     name: 'YouTube Sync',

@@ -8,9 +8,19 @@ This server gives AI agents (Claude, Cursor, Codex) secure, read-only access to 
 
 **Read-only by design**: This server never modifies your QuickBooks data. It only reads from QBO and writes to Notion.
 
-**OAuth with auto-refresh**: Uses the `quickbooks-api` SDK for production-ready OAuth 2.0 with automatic token refresh. No more manually rotating access tokens every 60 minutes.
+**Multi-connection**: Multiple QuickBooks companies can be connected simultaneously. Each user authenticates independently — no need to disconnect others.
+
+**OAuth with auto-refresh**: Standard OAuth 2.0 with automatic token refresh. No more manually rotating access tokens every 60 minutes.
 
 ## Tools
+
+### Connection Management
+
+| Tool | Description |
+|------|-------------|
+| `qbo_connect` | Generate an OAuth URL to connect a new QuickBooks account |
+| `qbo_list_connections` | List all connected QBO companies with realmId, name, email |
+| `qbo_disconnect` | Remove a QuickBooks connection by realmId |
 
 ### QuickBooks (Read-Only)
 
@@ -22,6 +32,8 @@ This server gives AI agents (Claude, Cursor, Codex) secure, read-only access to 
 | `qbo_search` | Search entities by name |
 | `qbo_company_info` | Get company name, address, fiscal year settings |
 | `qbo_report` | Run financial reports (P&L, Balance Sheet, Cash Flow, etc.) |
+
+All QuickBooks tools accept an optional `connection` parameter (realmId) to specify which company to query. Omit it to use the default connection.
 
 ### Notion (Sync)
 
@@ -41,27 +53,43 @@ ProfitAndLoss, BalanceSheet, CashFlow, CustomerIncome, AgedReceivableDetail, Age
 
 ## Setup
 
-### 1. Prerequisites
+### Remote (Recommended) — Agent-Driven OAuth
+
+The production deployment at `https://quickbooks.mcp.workway.co` supports multi-connection OAuth. Users connect their QuickBooks accounts through the agent:
+
+1. Add the MCP server to your host config (see [Client Configuration](#client-configuration) below)
+2. In your AI session, ask the agent to connect your QuickBooks
+3. The agent calls `qbo_connect` and gives you an authorization link
+4. Click the link, authorize with your QuickBooks account in the browser
+5. Return to your AI session and verify with `qbo_company_info`
+
+**Multiple users**: Each person connects their own QuickBooks account independently. All connections are stored and available via the `connection` parameter.
+
+### Local Development
+
+#### 1. Prerequisites
 
 - Node.js 18+
 - A QuickBooks Online app ([Intuit Developer Portal](https://developer.intuit.com))
 - A Notion integration ([My Integrations](https://www.notion.so/my-integrations))
 
-### 2. Create a QuickBooks App
+#### 2. Create a QuickBooks App
 
 1. Go to [Intuit Developer Portal](https://developer.intuit.com)
 2. Create an app with **QuickBooks Online and Payments** scope
 3. Under **Keys and credentials**, copy your **Client ID** and **Client Secret**
-4. Under **Settings > Redirect URIs**, add: `http://localhost:3847/callback`
+4. Under **Settings > Redirect URIs**, add:
+   - `http://localhost:3847/callback` (local dev)
+   - `https://quickbooks.mcp.workway.co/auth/callback` (production)
 
-### 3. Create a Notion Integration
+#### 3. Create a Notion Integration
 
 1. Go to [My Integrations](https://www.notion.so/my-integrations)
 2. Create a new integration
 3. Copy the **Internal Integration Secret**
 4. Share your target databases with the integration
 
-### 4. Environment Variables
+#### 4. Environment Variables
 
 Create a `.env` file (or set env vars):
 
@@ -76,19 +104,18 @@ NOTION_API_KEY=your_notion_integration_token
 
 # Optional
 QBO_REDIRECT_URI=http://localhost:3847/callback
-QBO_ENCRYPTION_KEY=your-secure-encryption-key-min-32-chars
 TRANSPORT=stdio
 PORT=3000
 ```
 
-### 5. Install & Build
+#### 5. Install & Build
 
 ```bash
 pnpm install
 pnpm --filter @create-something/quickbooks-notion-mcp build
 ```
 
-### 6. Authorize QuickBooks (One-Time)
+#### 6. Authorize QuickBooks (One-Time, Local Only)
 
 ```bash
 pnpm --filter @create-something/quickbooks-notion-mcp auth
@@ -98,11 +125,11 @@ This will:
 1. Print an authorization URL
 2. Open your browser to the Intuit consent screen
 3. After you authorize, exchange the code for tokens
-4. Persist encrypted tokens to `.qbo-tokens.json`
+4. Persist tokens to `.qbo-tokens.json`
 
 Tokens auto-refresh after this. You only need to re-run `pnpm auth` if the refresh token expires (100 days) or you want to connect a different company.
 
-### 7. Run
+#### 7. Run
 
 **stdio (for Claude Desktop, Cursor, etc.):**
 ```bash
@@ -114,7 +141,23 @@ pnpm --filter @create-something/quickbooks-notion-mcp start
 TRANSPORT=http pnpm --filter @create-something/quickbooks-notion-mcp start
 ```
 
-## Claude Desktop Configuration
+## Client Configuration
+
+### Remote (Production)
+
+**URL**: `https://quickbooks.mcp.workway.co`
+
+```json
+{
+  "mcpServers": {
+    "quickbooks-notion": {
+      "url": "https://quickbooks.mcp.workway.co/mcp"
+    }
+  }
+}
+```
+
+### Local (stdio)
 
 Add to your `claude_desktop_config.json`:
 
@@ -139,6 +182,8 @@ Add to your `claude_desktop_config.json`:
 
 ## Example Agent Prompts
 
+- "Connect my QuickBooks account"
+- "What QuickBooks accounts are connected?"
 - "Show me all unpaid invoices over $1,000"
 - "List my top 10 customers by balance"
 - "Run a P&L report for Q1 2025"
@@ -146,24 +191,34 @@ Add to your `claude_desktop_config.json`:
 - "Find the vendor named 'Office Depot' and show their bills"
 - "What's my current balance sheet?"
 - "Sync unpaid invoices into my Notion tracker"
+- "Show company info for connection 1234567890" (specific company)
 
 ## Architecture
 
 ```
 ┌─────────────┐     ┌─────────────────────────────┐     ┌──────────────┐
-│  AI Agent    │────▶│  MCP Server                 │────▶│  QuickBooks  │
-│  (Claude,    │◀────│  (stdio or HTTP)            │     │  Online API  │
-│   Cursor)    │     │                             │     └──────────────┘
-└─────────────┘     │  Auth: quickbooks-api SDK    │
-                    │  (auto token refresh)        │     ┌──────────────┐
-                    │                             │────▶│  Notion API  │
-                    │  Tools:                     │     └──────────────┘
-                    │  - qbo_query / list / get   │
-                    │  - qbo_report / search      │     ┌──────────────┐
-                    │  - notion_sync_qbo          │────▶│  Token Store  │
-                    │  - notion_list_databases    │     │  (.json file) │
+│  AI Agent    │────▶│  MCP Server (Worker)        │────▶│  QuickBooks  │
+│  (Claude,    │◀────│  Cloudflare Workers          │     │  Online API  │
+│   Cursor,    │     │                             │     └──────────────┘
+│   Codex)     │     │  ConnectionManager:         │
+└─────────────┘     │  - Multi-tenant OAuth       │     ┌──────────────┐
+                    │  - Auto token refresh       │────▶│  Notion API  │
+      ┌────────┐   │                             │     └──────────────┘
+      │  User  │──▶│  Routes:                    │
+      │Browser │   │  /mcp        (MCP endpoint) │     ┌──────────────┐
+      └────────┘   │  /auth/connect (OAuth start)│────▶│  KV Store    │
+                    │  /auth/callback (OAuth end) │     │  (per-conn)  │
                     └─────────────────────────────┘     └──────────────┘
 ```
+
+### Multi-Connection Flow
+
+1. Agent calls `qbo_connect` → server returns OAuth URL
+2. User clicks URL → authorizes in Intuit → redirected to `/auth/callback`
+3. Server exchanges code for tokens → stores in KV as `qbo-conn:{realmId}`
+4. Server fetches company info → stores metadata in connections index
+5. Agent uses `qbo_company_info` to verify → all tools work with new connection
+6. Multiple connections coexist — use `connection` param to select which company
 
 ## Three-Tier Framework Mapping
 

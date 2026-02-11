@@ -1,11 +1,17 @@
 name = "quickbooks-notion-mcp"
 main = "dist/worker.js"
-account_id = "5c3e9cf4d55ce171b844fad0931607f9"
+account_id = "5c3e9cf4d55ce171b844fad0931607f9"  # WORKWAY
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Production URL: https://quickbooks.mcp.workway.co
+[[routes]]
+pattern = "quickbooks.mcp.workway.co"
+custom_domain = true
+
 [vars]
 QBO_ENVIRONMENT = "sandbox"
+QBO_REDIRECT_URI = "https://quickbooks.mcp.workway.co/auth/callback"
 
 [[kv_namespaces]]
 binding = "QBO_TOKENS"
