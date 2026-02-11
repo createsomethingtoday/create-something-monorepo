@@ -181,10 +181,10 @@ export class ConnectionManager {
     };
 
     if (existing >= 0) {
-      connections[existing] = connectionMeta;
-    } else {
-      connections.push(connectionMeta);
+      connections.splice(existing, 1);
     }
+    // Most recently added/updated connection becomes the default (first in list)
+    connections.unshift(connectionMeta);
 
     await this.kvStore.put("qbo-connections", JSON.stringify(connections, null, 2));
 
