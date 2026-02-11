@@ -157,41 +157,44 @@ The company_id should be the number the user copied from QuickBooks (e.g., "9341
           return toolResponse("Composio API key not configured.", true);
         }
 
-        // Fetch connected accounts from Composio for this user (in-process, no HTTP loopback)
-        const composioResp = await fetch(
-          `https://backend.composio.dev/api/v1/connectedAccounts?user_uuid=${encodeURIComponent(params.user_id)}&showActiveOnly=true`,
-          { headers: { "x-api-key": config.composioApiKey } }
-        );
+        // Fetch connected accounts from Composio — try user_id first, then fall back to broader search
+        const userIds = [params.user_id, "default"];
+        let qboConn: {
+          id: string;
+          appUniqueId: string;
+          status: string;
+          connectionParams: {
+            access_token: string;
+            refresh_token: string;
+            token_type?: string;
+            x_refresh_token_expires_in?: number;
+          };
+        } | undefined;
 
-        if (!composioResp.ok) {
-          return toolResponse(
-            `Failed to fetch from Composio: ${composioResp.status}. Make sure the user completed Step 1 (qbo_connect).`,
-            true
+        for (const uid of userIds) {
+          const composioResp = await fetch(
+            `https://backend.composio.dev/api/v1/connectedAccounts?user_uuid=${encodeURIComponent(uid)}&showActiveOnly=true`,
+            { headers: { "x-api-key": config.composioApiKey } }
           );
+
+          if (!composioResp.ok) continue;
+
+          const composioData = await composioResp.json() as {
+            items: Array<typeof qboConn & {}>;
+          };
+
+          // Find most recent active QuickBooks connection
+          qboConn = composioData.items
+            .filter(item => item.appUniqueId === "quickbooks" && item.status === "ACTIVE")
+            .sort((a, b) => (b.id > a.id ? 1 : -1))[0] as typeof qboConn;
+
+          if (qboConn) break;
         }
-
-        const composioData = await composioResp.json() as {
-          items: Array<{
-            id: string;
-            appUniqueId: string;
-            status: string;
-            connectionParams: {
-              access_token: string;
-              refresh_token: string;
-              token_type?: string;
-              x_refresh_token_expires_in?: number;
-            };
-          }>;
-        };
-
-        const qboConn = composioData.items.find(
-          item => item.appUniqueId === "quickbooks" && item.status === "ACTIVE"
-        );
 
         if (!qboConn) {
           return toolResponse(
-            `No active QuickBooks connection found for user "${params.user_id}".\n\n` +
-            `Make sure the user completed Step 1 (clicked the authorization link from \`qbo_connect\`).`,
+            `No active QuickBooks connection found.\n\n` +
+            `Make sure the user completed Step 1 (clicked the authorization link from \`qbo_connect\` and authorized in the browser).`,
             true
           );
         }
