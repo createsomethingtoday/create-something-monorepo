@@ -1,0 +1,29 @@
+name = "playbook-mcp"
+main = "index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+# Production URL: https://playbook.mcp.createsomething.ltd
+[[routes]]
+pattern = "playbook.mcp.createsomething.ltd"
+custom_domain = true
+
+# Durable Object for MCP session state
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "PlaybookMCP"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["PlaybookMCP"]
+
+# Feedback database (shared across CREATE SOMETHING MCPs)
+# TODO: Create D1 on CREATE SOMETHING account when ready
+# [[d1_databases]]
+# binding = "FEEDBACK_DB"
+# database_name = "cs-feedback"
+# database_id = "placeholder"
+
+# Zero external dependencies. Pure workflow knowledge.
+# Lightweight by design — ships alongside client MCPs for onboarding.
