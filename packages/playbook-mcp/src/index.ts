@@ -18,6 +18,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 
 import { registerResources } from './resources.js';
+import { registerTools } from './tools.js';
 import { registerPrompts } from './prompts.js';
 import { HOST_PLAYBOOKS } from './playbooks.js';
 
@@ -27,6 +28,7 @@ const server = new McpServer({
 });
 
 registerResources(server);
+registerTools(server);
 registerPrompts(server);
 
 process.on('SIGINT', () => process.exit(0));
@@ -36,4 +38,4 @@ const transport = new StdioServerTransport();
 await server.connect(transport);
 
 console.error('Playbook MCP running on stdio');
-console.error(`Content: ${HOST_PLAYBOOKS.length} host playbooks, 3 prompts, 6 resources`);
+console.error(`Content: ${HOST_PLAYBOOKS.length} host playbooks, 3 tools, 3 prompts, 6 resources`);

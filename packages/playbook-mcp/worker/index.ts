@@ -14,6 +14,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 
 import { registerResources } from '../src/resources.js';
+import { registerTools } from '../src/tools.js';
 import { registerPrompts } from '../src/prompts.js';
 import { HOST_PLAYBOOKS } from '../src/playbooks.js';
 
@@ -38,6 +39,7 @@ export class PlaybookMCP extends McpAgent<Env> {
 
   async init() {
     registerResources(this.server);
+    registerTools(this.server);
     registerPrompts(this.server);
 
     // TODO: enable when FEEDBACK_DB is bound
@@ -68,6 +70,7 @@ export default {
         description: 'Host workflow playbooks for MCP onboarding',
         hosts: HOST_PLAYBOOKS.map(p => p.name),
         endpoints: { mcp: '/mcp', sse: '/sse' },
+        tools: ['get_playbook', 'compare_hosts', 'get_folder_structure'],
         resources: 6,
         prompts: ['workflow_setup', 'host_comparison', 'project_structure'],
       }, null, 2), {
