@@ -115,7 +115,8 @@ Multiple QuickBooks companies can be connected simultaneously. Each gets its own
           `- **Keyboard shortcut** (fastest): Press \`Ctrl+Alt+?\` (Windows) or \`Control+Option+?\` (Mac) anywhere in QuickBooks\n` +
           `- A dialog appears showing **"Your Company ID is XXXX XXXX XXXX XXXX"** with a **Copy** button\n` +
           `- Copy it and paste it back here\n\n` +
-          `_Alternative: Gear icon (⚙️) > Account and Settings > Billing & Subscription — Company ID is at the top._`
+          `_Alternative: Gear icon (⚙️) > Account and Settings > Billing & Subscription — Company ID is at the top._\n\n` +
+          `**[Watch the video walkthrough](https://share.descript.com/view/67jew4dxSbU)** if you need a visual guide.`
         );
       } catch (error: unknown) {
         return toolResponse(
