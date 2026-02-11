@@ -579,7 +579,7 @@
 		border-radius: var(--radius-xl, 16px);
 		background: var(--color-bg-pure);
 		box-shadow: var(--glass-shine-soft);
-		overflow: hidden;
+		overflow: visible;
 		transition:
 			border-color var(--duration-standard) var(--ease-standard),
 			box-shadow var(--duration-standard) var(--ease-standard),
@@ -648,14 +648,14 @@
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
 		color: rgba(96, 165, 250, 1);
-		background: rgba(10, 14, 20, 0.85);
+		background: rgba(10, 14, 20, 0.95);
 		backdrop-filter: blur(12px) saturate(120%);
 		-webkit-backdrop-filter: blur(12px) saturate(120%);
 		border: 1px solid rgba(96, 165, 250, 0.3);
 		border-radius: var(--radius-full, 9999px);
 		padding: 0.2rem 0.75rem;
 		white-space: nowrap;
-		z-index: 1;
+		z-index: 10;
 	}
 
 	.tier-header {
