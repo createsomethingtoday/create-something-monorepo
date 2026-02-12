@@ -113,43 +113,15 @@ export interface Product {
 }
 
 // ============================================================================
-// Host Playbooks (.space — workflow intelligence)
+// Host Playbooks — re-exported from @create-something/playbook-mcp (canonical)
 // ============================================================================
 
-export interface HostPlaybook {
-  slug: string;
-  name: string;
-  description: string;
-  mentalModel: string;
-  strengths: string[];
-  antiPatterns: string[];
-  bestFor: string[];
-  configLocation: string;
-  workflowPatterns: WorkflowPattern[];
-  folderTemplate?: FolderTemplate;
-}
-
-export interface WorkflowPattern {
-  name: string;
-  description: string;
-  domain?: string;
-  steps: string[];
-}
-
-export interface FolderTemplate {
-  description: string;
-  structure: string;
-  keyFiles: { path: string; purpose: string }[];
-}
-
-export interface HostComparison {
-  taskType: string;
-  recommendations: {
-    host: string;
-    fit: 'best' | 'good' | 'adequate' | 'poor';
-    reason: string;
-  }[];
-}
+export type {
+  HostPlaybook,
+  WorkflowPattern,
+  FolderTemplate,
+  HostComparison,
+} from '@create-something/playbook-mcp/playbooks';
 
 // ============================================================================
 // Content Index — unified searchable item

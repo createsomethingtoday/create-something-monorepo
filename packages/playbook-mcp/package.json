@@ -4,6 +4,11 @@
   "description": "Host workflow playbooks for MCP onboarding — teaches non-technical users how to work effectively in Codex, Cursor, and Claude Desktop",
   "type": "module",
   "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./playbooks": "./dist/playbooks.js",
+    "./catalog": "./dist/catalog.js"
+  },
   "bin": {
     "playbook-mcp": "dist/index.js"
   },

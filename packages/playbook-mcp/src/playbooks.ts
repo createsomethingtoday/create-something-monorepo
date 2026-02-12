@@ -323,6 +323,175 @@ export const HOST_PLAYBOOKS: HostPlaybook[] = [
         ]
       }
     ]
+  },
+
+  // --------------------------------------------------------------------------
+  // Claude Code
+  // --------------------------------------------------------------------------
+  {
+    slug: 'claude-code',
+    name: 'Claude Code',
+    description: 'Terminal-native AI coding agent with full filesystem access, git integration, and MCP support. Runs in your terminal as a CLI. Best for developers who live in the terminal and want an autonomous agent that can read, write, and execute code directly.',
+    mentalModel: 'Claude Code is your senior developer pair-programming in the terminal. It sees your entire project, can run commands, edit files, and use MCP tools — all from the command line. It supports project-scoped config (.mcp.json in the project root) and user-scoped config (~/.claude.json). Use CLAUDE.md at the project root for persistent instructions, similar to AGENTS.md in Codex.',
+    strengths: [
+      'Full filesystem access — reads, writes, and executes from your terminal',
+      'Git-native: understands branches, diffs, commits',
+      'Project-scoped MCP via .mcp.json — different servers per project',
+      'User-scoped MCP via ~/.claude.json — global servers across all projects',
+      'CLAUDE.md for persistent project instructions',
+      'CLI-first: claude mcp add/remove/list for managing servers',
+      'Can import MCP servers from Claude Desktop config',
+      'Supports HTTP and stdio transports natively'
+    ],
+    antiPatterns: [
+      'Not using .mcp.json for project-specific servers — everything goes global',
+      'No CLAUDE.md file — the agent has no project context between sessions',
+      'Manually editing ~/.claude.json when claude mcp add is simpler',
+      'Using Claude Code for tasks that need a visual interface (use Cursor instead)',
+      'Not reviewing diffs before committing agent-generated changes',
+      'Ignoring the /mcp command to verify server connections'
+    ],
+    bestFor: [
+      'Terminal-native development workflows',
+      'Autonomous code generation and refactoring',
+      'Multi-file edits with full project context',
+      'Git operations — branching, committing, reviewing',
+      'Running tests and debugging from the terminal',
+      'Developers who prefer CLI over GUI'
+    ],
+    configLocation: '~/.claude.json (user) or .mcp.json (project)',
+    workflowPatterns: [
+      {
+        name: 'Project Bootstrap',
+        description: 'Use Claude Code to scaffold a new project with MCP servers configured from the start.',
+        domain: 'general',
+        steps: [
+          'Create CLAUDE.md with project context, standards, and instructions',
+          'Add project-specific MCP servers: claude mcp add --transport http <name> <url>',
+          'Verify servers: claude then /mcp to check connections',
+          'Start working: "Set up the project structure following CLAUDE.md"',
+          'Review changes in git before committing'
+        ]
+      },
+      {
+        name: 'Code Review',
+        description: 'Claude Code reviews your changes, runs tests, and suggests improvements.',
+        domain: 'general',
+        steps: [
+          'Stage your changes: git add .',
+          'Ask Claude Code: "Review the staged changes for bugs, style issues, and test coverage"',
+          'Claude reads diffs, checks test results, and provides feedback',
+          'Iterate on suggestions',
+          'Commit when satisfied'
+        ]
+      }
+    ]
+  },
+
+  // --------------------------------------------------------------------------
+  // Windsurf
+  // --------------------------------------------------------------------------
+  {
+    slug: 'windsurf',
+    name: 'Windsurf',
+    description: 'AI-powered IDE with Cascade, an agentic assistant that can use MCP tools. Built on the Codeium platform. Supports stdio, Streamable HTTP, and SSE transports with OAuth. Good for teams that want a managed IDE experience with built-in MCP discovery.',
+    mentalModel: 'Windsurf is your AI-augmented workshop with a built-in plugin marketplace for MCP servers. Cascade (the AI assistant) uses MCP tools when relevant to your queries. The key difference from Cursor: Windsurf has a built-in MCP server browser with one-click install for official servers. For custom servers, edit the mcp_config.json directly.',
+    strengths: [
+      'Built-in MCP server marketplace with one-click install',
+      'Official servers show a verified checkmark',
+      'Cascade AI automatically uses relevant MCP tools',
+      'Supports stdio, Streamable HTTP, and SSE transports',
+      'OAuth support for authenticated servers',
+      'Environment variable interpolation in config',
+      'Visual plugin management UI'
+    ],
+    antiPatterns: [
+      'Only using the marketplace — many useful servers require manual config',
+      'Global-only config — Windsurf lacks project-level MCP config (all servers are shared across projects)',
+      'Not checking View Raw Config to understand what is actually configured',
+      'Ignoring the Refresh button after config changes',
+      'Using Windsurf for tasks that need autonomous execution (use Codex instead)'
+    ],
+    bestFor: [
+      'Teams wanting managed MCP discovery and installation',
+      'Developers who prefer a visual plugin management experience',
+      'Projects that use popular, well-supported MCP servers',
+      'Coding workflows with Cascade AI assistance',
+      'Quick prototyping with connected data sources'
+    ],
+    configLocation: '~/.codeium/windsurf/mcp_config.json',
+    workflowPatterns: [
+      {
+        name: 'Marketplace Setup',
+        description: 'Browse and install MCP servers from Windsurf\'s built-in marketplace.',
+        domain: 'general',
+        steps: [
+          'Open Windsurf and click the Plugins icon in the sidebar',
+          'Browse available MCP servers (look for the blue verified checkmark)',
+          'Click Install on the server you want',
+          'Enter your API key or authentication credentials',
+          'Click Save — Cascade can now use the server\'s tools'
+        ]
+      },
+      {
+        name: 'Manual Server Config',
+        description: 'Add custom or self-hosted MCP servers via the raw config file.',
+        domain: 'general',
+        steps: [
+          'In Windsurf chat, click the MCP servers button (hammer icon)',
+          'Click Configure → Manage Plugins → View Raw Config',
+          'Add your server entry to mcp_config.json',
+          'For remote HTTP: use serverUrl field with /mcp endpoint',
+          'Click Refresh to load the new server'
+        ]
+      }
+    ]
+  },
+
+  // --------------------------------------------------------------------------
+  // VS Code (Copilot)
+  // --------------------------------------------------------------------------
+  {
+    slug: 'vscode',
+    name: 'VS Code (Copilot)',
+    description: 'The most widely-used code editor with GitHub Copilot agent mode supporting MCP. MCP servers connect through VS Code settings or .vscode/mcp.json. Massive ecosystem reach — if you can make it work in VS Code, you reach the largest developer audience.',
+    mentalModel: 'VS Code with Copilot is the mainstream gateway to MCP. Copilot\'s agent mode can invoke MCP tools during conversations. Config is through VS Code settings (settings.json) or a dedicated .vscode/mcp.json file. The key advantage: VS Code has the largest installed base of any editor, so supporting it means maximum reach.',
+    strengths: [
+      'Largest installed base of any code editor',
+      'Copilot agent mode integrates MCP tool calls into chat',
+      'Project-level config via .vscode/mcp.json',
+      'User-level config via VS Code settings.json',
+      'Massive extension ecosystem that complements MCP',
+      'Familiar interface for most developers'
+    ],
+    antiPatterns: [
+      'Confusing Copilot completions with Copilot agent mode — MCP only works in agent mode',
+      'Adding too many MCP servers — causes token bloat and degrades Copilot performance',
+      'Not using .vscode/mcp.json for project-specific config (putting everything in user settings)',
+      'Expecting the same level of agentic capability as Cursor or Claude Code'
+    ],
+    bestFor: [
+      'Developers already in the VS Code ecosystem',
+      'Teams with standardized VS Code configurations',
+      'Projects that need maximum editor compatibility',
+      'Supplementing Copilot with domain-specific data sources',
+      'Gradual MCP adoption without switching editors'
+    ],
+    configLocation: '.vscode/mcp.json (project) or VS Code settings.json (user)',
+    workflowPatterns: [
+      {
+        name: 'Copilot Agent Setup',
+        description: 'Configure MCP servers for use with Copilot agent mode.',
+        domain: 'general',
+        steps: [
+          'Open VS Code Settings (Cmd+,)',
+          'Search for "MCP" in settings',
+          'Add server entries under the MCP configuration section',
+          'Alternatively, create .vscode/mcp.json in your project root',
+          'Open Copilot chat and switch to Agent mode to use MCP tools'
+        ]
+      }
+    ]
   }
 ];
 
@@ -412,6 +581,36 @@ export const HOST_COMPARISONS: HostComparison[] = [
     ]
   },
   {
+    taskType: 'coding',
+    recommendations: [
+      {
+        host: 'Cursor',
+        fit: 'best',
+        reason: 'Purpose-built AI IDE with the deepest MCP integration, real-time diff review, and .cursor/rules/ for persistent coding guidance. The gold standard for AI-assisted development with visual feedback.'
+      },
+      {
+        host: 'Claude Code',
+        fit: 'best',
+        reason: 'Terminal-native with full filesystem access and git integration. Best for developers who live in the terminal. CLAUDE.md and .mcp.json provide persistent project context. Autonomous multi-file edits.'
+      },
+      {
+        host: 'Windsurf',
+        fit: 'good',
+        reason: 'Strong alternative to Cursor with Cascade AI and built-in MCP marketplace. Good for teams wanting managed plugin discovery. Lacks project-level MCP config (global only).'
+      },
+      {
+        host: 'VS Code (Copilot)',
+        fit: 'good',
+        reason: 'Largest editor ecosystem. Copilot agent mode supports MCP, but agentic capabilities are less mature than Cursor or Claude Code. Best for teams already standardized on VS Code.'
+      },
+      {
+        host: 'Codex',
+        fit: 'good',
+        reason: 'Excellent for autonomous coding tasks — multi-file refactoring, test generation, code review. Works while you\'re away. Less suited for interactive development.'
+      }
+    ]
+  },
+  {
     taskType: 'general',
     recommendations: [
       {
@@ -428,6 +627,21 @@ export const HOST_COMPARISONS: HostComparison[] = [
         host: 'Codex',
         fit: 'good',
         reason: 'Graduate to Codex when you have repeatable workflows and want autonomous execution. The setup takes more thought (folder structure, AGENTS.md), but the compounding returns are the highest.'
+      },
+      {
+        host: 'Claude Code',
+        fit: 'good',
+        reason: 'For developers comfortable in the terminal. Full project context, git-native, and supports both project-scoped and global MCP config.'
+      },
+      {
+        host: 'Windsurf',
+        fit: 'good',
+        reason: 'Good all-around IDE with managed MCP discovery. Lower learning curve than Cursor for MCP setup thanks to the built-in marketplace.'
+      },
+      {
+        host: 'VS Code (Copilot)',
+        fit: 'adequate',
+        reason: 'Familiar editor with growing MCP support via Copilot agent mode. Best for teams already invested in the VS Code ecosystem.'
       }
     ]
   }

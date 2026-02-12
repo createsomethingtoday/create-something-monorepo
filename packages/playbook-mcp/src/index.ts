@@ -21,10 +21,11 @@ import { registerResources } from './resources.js';
 import { registerTools } from './tools.js';
 import { registerPrompts } from './prompts.js';
 import { HOST_PLAYBOOKS } from './playbooks.js';
+import { MCP_CATALOG } from './catalog.js';
 
 const server = new McpServer({
   name: 'playbook',
-  version: '1.0.0',
+  version: '1.1.0',
 });
 
 registerResources(server);
@@ -38,4 +39,4 @@ const transport = new StdioServerTransport();
 await server.connect(transport);
 
 console.error('Playbook MCP running on stdio');
-console.error(`Content: ${HOST_PLAYBOOKS.length} host playbooks, 3 tools, 3 prompts, 6 resources`);
+console.error(`Content: ${HOST_PLAYBOOKS.length} host playbooks, ${MCP_CATALOG.length} catalog entries, 8 tools, 3 prompts, 6 resources`);

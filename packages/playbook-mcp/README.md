@@ -1,0 +1,189 @@
+# Playbook MCP
+
+Host workflow playbooks for MCP onboarding. Teaches non-technical users how to work effectively in Codex, Cursor, and Claude Desktop.
+
+Lightweight by design — ships alongside client MCPs for onboarding. No philosophy, no papers, no design system. Just workflow guidance.
+
+## Framework Tier
+
+| Tier | MCP Primitive | Role in This Server |
+|------|---------------|---------------------|
+| **Database** | Resources | 6 playbook resources: host-specific guidance, comparison matrix, graduation path |
+| **Automation** | Tools | 8 tools: playbook content (3) + installation guidance (5) |
+| **Judgment** | Prompts | 3 prompts: workflow setup, host comparison, project structure guidance |
+
+## Resources (Database Tier)
+
+Application-controlled playbook content.
+
+| URI | Description |
+|-----|-------------|
+| `playbooks://list` | All host playbooks with slugs, names, and best-for summaries |
+| `playbooks://hosts/codex` | Codex workflow playbook: mental model, patterns, folder structure |
+| `playbooks://hosts/cursor` | Cursor workflow playbook: mental model, patterns, folder structure |
+| `playbooks://hosts/claude-desktop` | Claude Desktop workflow playbook: mental model, patterns |
+| `playbooks://comparison` | Host comparison matrix by task type + MCP usage patterns |
+| `playbooks://graduation-path` | The Graduation Path: Claude Desktop -> Cursor -> Codex |
+
+## Tools (Automation Tier)
+
+### Playbook Tools
+
+Model-controlled functions. These mirror Resources for hosts that only support tools (Codex, ChatGPT).
+
+| Tool | Purpose |
+|------|---------|
+| `get_playbook` | Get the workflow playbook for a specific host. Supports domain filtering (construction, legal, agency, general). |
+| `compare_hosts` | Compare Codex, Cursor, and Claude Desktop for a task type (project-management, research, document-drafting, data-analysis, general). |
+| `get_folder_structure` | Get the recommended folder structure for AI-assisted work in Codex or Cursor. |
+
+### Installation Tools
+
+Generation-only tools that return config content, file manifests, and instructions. The agent's native file capabilities handle actual writes. Works from both the deployed Worker and local stdio.
+
+| Tool | Purpose |
+|------|---------|
+| `detect_host` | Detect which MCP host the user is in. Returns config path, format, and capabilities. First step for guided installation. |
+| `list_available_mcps` | List MCP servers available for installation from CREATE SOMETHING, WORKWAY, and third-party catalogs. |
+| `generate_mcp_config` | Generate the exact config entry (JSON or TOML) to install an MCP server into a specific host. |
+| `scaffold_project` | Generate a complete folder/file manifest for a new AI-assisted project. Domain and team-size aware. |
+| `verify_mcp_connection` | Ping an MCP server URL to check if it's reachable and responding. |
+
+## Prompts (Judgment Tier)
+
+User-controlled workflow guidance templates.
+
+| Prompt | Purpose |
+|--------|---------|
+| `workflow_setup` | Personalized workflow guide — the entry point for non-technical users. Detects host, recommends patterns, sets up structure. |
+| `host_comparison` | Direct, opinionated host recommendation for a task type. |
+| `project_structure` | Generate a recommended folder structure for AI-assisted work. Supports host, domain, and team size parameters. |
+
+## The Graduation Path
+
+The opinionated progression encoded in this server:
+
+1. **Claude Desktop** — Start here. Lowest barrier to entry. Graduate when you find yourself re-explaining context or doing the same task repeatedly.
+2. **Cursor** — See and control file changes in real-time. Graduate when you have repeatable workflows you want automated.
+3. **Codex** — Autonomous execution and compounding institutional knowledge. The destination.
+
+## Remote Server (Production)
+
+Deployed as a Cloudflare Worker with Streamable HTTP transport:
+
+**URL**: `https://playbook.mcp.createsomething.ltd`
+
+No installation, no API keys, no setup. Point any MCP client at the URL.
+
+### Claude Code
+
+```bash
+claude mcp add playbook --transport http https://playbook.mcp.createsomething.ltd/mcp
+```
+
+### Claude Desktop
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "playbook": {
+      "url": "https://playbook.mcp.createsomething.ltd/mcp"
+    }
+  }
+}
+```
+
+### OpenAI Codex
+
+Add to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers."playbook"]
+url = "https://playbook.mcp.createsomething.ltd/mcp"
+```
+
+### Cursor
+
+Add to `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "playbook": {
+      "url": "https://playbook.mcp.createsomething.ltd/mcp"
+    }
+  }
+}
+```
+
+## Local Development (stdio)
+
+For local development, the stdio transport server is also available:
+
+```bash
+# Build
+pnpm --filter=@create-something/playbook-mcp build
+
+# Run locally
+node packages/playbook-mcp/dist/index.js
+
+# Add to Claude Code (local)
+claude mcp add playbook-local -- node "$(pwd)/packages/playbook-mcp/dist/index.js"
+```
+
+## Worker Development
+
+```bash
+cd packages/playbook-mcp/worker
+
+# Install worker dependencies
+npm install
+
+# Local dev server
+npm run dev
+
+# Deploy to production
+npm run deploy
+
+# Tail production logs
+npm run tail
+```
+
+## Architecture
+
+Two transports, one codebase:
+
+| Transport | URL | Use Case |
+|-----------|-----|----------|
+| **Streamable HTTP** | `.../mcp` | Claude Code, Codex, remote clients |
+| **SSE** | `.../sse` | Legacy clients (deprecated in MCP spec 2025-03-26) |
+| **stdio** | `dist/index.js` | Local development |
+
+Zero external data dependencies. Playbook content and MCP catalog are embedded in source. The Worker runs on Cloudflare's edge network. Pure workflow knowledge served through protocol.
+
+## MCP Catalog
+
+The server includes a built-in catalog of 15 MCP servers across three categories:
+
+- **CREATE SOMETHING** (6): Playbook, Three-Tier Framework, Content, Schedule, Substrate, Outerfields
+- **WORKWAY** (4): QuickBooks, YouTube Sync, Gmail Sync, Zoom Sync
+- **Third-Party** (5): Cloudflare Docs, Cloudflare Bindings, Cloudflare Agents, Webflow, Stripe
+
+Use `list_available_mcps` to browse and `generate_mcp_config` to install.
+
+## Verification
+
+After configuring, verify the server is working:
+
+- "Read the playbooks://list resource" (tests Resources / Database tier)
+- "Use the get_playbook tool for cursor" (tests Tools / Automation tier)
+- "Use the workflow_setup prompt" (tests Prompts / Judgment tier)
+
+### Installation flow test
+
+1. "Use detect_host to figure out what I'm running" (host detection)
+2. "List available MCP servers" (catalog)
+3. "Generate the config to install the three-tier-framework MCP in Cursor" (config generation)
+4. "Verify the playbook MCP is reachable" (connection check)

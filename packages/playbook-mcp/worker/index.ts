@@ -17,6 +17,7 @@ import { registerResources } from '../src/resources.js';
 import { registerTools } from '../src/tools.js';
 import { registerPrompts } from '../src/prompts.js';
 import { HOST_PLAYBOOKS } from '../src/playbooks.js';
+import { MCP_CATALOG } from '../src/catalog.js';
 
 // =============================================================================
 // Types
@@ -34,7 +35,7 @@ interface Env {
 export class PlaybookMCP extends McpAgent<Env> {
   server = new McpServer({
     name: 'playbook',
-    version: '1.0.0',
+    version: '1.1.0',
   });
 
   async init() {
@@ -66,11 +67,16 @@ export default {
     if (url.pathname === '/' || url.pathname === '/health') {
       return new Response(JSON.stringify({
         name: 'playbook',
-        version: '1.0.0',
-        description: 'Host workflow playbooks for MCP onboarding',
+        version: '1.1.0',
+        description: 'Host workflow playbooks and installation guidance for MCP onboarding',
         hosts: HOST_PLAYBOOKS.map(p => p.name),
+        catalogEntries: MCP_CATALOG.length,
         endpoints: { mcp: '/mcp', sse: '/sse' },
-        tools: ['get_playbook', 'compare_hosts', 'get_folder_structure'],
+        tools: [
+          'get_playbook', 'compare_hosts', 'get_folder_structure',
+          'detect_host', 'list_available_mcps', 'generate_mcp_config',
+          'scaffold_project', 'verify_mcp_connection',
+        ],
         resources: 6,
         prompts: ['workflow_setup', 'host_comparison', 'project_structure'],
       }, null, 2), {
