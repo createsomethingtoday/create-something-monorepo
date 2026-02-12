@@ -58,14 +58,14 @@ User-controlled templates that shape how agents reason.
 
 The framework is deployed as a Cloudflare Worker with Streamable HTTP transport:
 
-**URL**: `https://three-tier-framework-mcp.createsomething.workers.dev`
+**URL**: `https://framework.mcp.createsomething.agency`
 
 No installation, no API keys, no setup. Point any MCP client at the URL.
 
 ### Claude Code
 
 ```bash
-claude mcp add three-tier-framework --transport http https://three-tier-framework-mcp.createsomething.workers.dev/mcp
+claude mcp add three-tier-framework --transport http https://framework.mcp.createsomething.agency/mcp
 ```
 
 ### Claude Desktop
@@ -76,7 +76,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "three-tier-framework": {
-      "url": "https://three-tier-framework-mcp.createsomething.workers.dev/mcp"
+      "url": "https://framework.mcp.createsomething.agency/mcp"
     }
   }
 }
@@ -88,7 +88,7 @@ Add to `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers."three-tier-framework"]
-url = "https://three-tier-framework-mcp.createsomething.workers.dev/mcp"
+url = "https://framework.mcp.createsomething.agency/mcp"
 ```
 
 ### Cursor
@@ -96,7 +96,7 @@ url = "https://three-tier-framework-mcp.createsomething.workers.dev/mcp"
 Add as SSE MCP server with URL:
 
 ```
-https://three-tier-framework-mcp.createsomething.workers.dev/sse
+https://framework.mcp.createsomething.agency/sse
 ```
 
 ## Local Development (stdio)

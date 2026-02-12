@@ -1,8 +1,13 @@
 name = "three-tier-framework-mcp"
 main = "index.ts"
-compatibility_date = "2024-12-01"
+compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+# Production URL: https://framework.mcp.createsomething.agency
+[[routes]]
+pattern = "framework.mcp.createsomething.agency"
+custom_domain = true
 
 # Durable Object for MCP session state
 [[durable_objects.bindings]]

@@ -73,7 +73,19 @@ pnpm deploy
 {
   "mcpServers": {
     "schedule": {
-      "url": "https://schedule-mcp.<account>.workers.dev/sse"
+      "url": "https://schedule.mcp.createsomething.agency/mcp"
+    }
+  }
+}
+```
+
+### Cursor
+
+```json
+{
+  "mcpServers": {
+    "schedule": {
+      "url": "https://schedule.mcp.createsomething.agency/sse"
     }
   }
 }
@@ -85,7 +97,7 @@ pnpm deploy
 {
   "mcpServers": {
     "schedule": {
-      "url": "https://schedule-mcp.<account>.workers.dev/mcp"
+      "url": "https://schedule.mcp.createsomething.agency/mcp"
     }
   }
 }
