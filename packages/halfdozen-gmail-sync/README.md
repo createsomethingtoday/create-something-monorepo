@@ -207,7 +207,7 @@ wrangler secret put ADMIN_SECRET        # Optional: protects /users endpoint and
 Each team member must authorize their Gmail account:
 
 ```
-https://halfdozen-gmail-sync-mcp.<your-subdomain>.workers.dev/auth?email=user@example.com
+https://gmail.mcp.workway.co/auth?email=user@example.com
 ```
 
 This opens a Google OAuth consent screen. After authorization, the refresh token is stored in KV and the user's Gmail is accessible via the MCP tools.
@@ -221,7 +221,7 @@ For clients that don't support remote MCP natively:
   "mcpServers": {
     "halfdozen-gmail-sync": {
       "command": "npx",
-      "args": ["mcp-remote", "https://halfdozen-gmail-sync-mcp.<your-subdomain>.workers.dev/mcp"]
+      "args": ["mcp-remote", "https://gmail.mcp.workway.co/mcp"]
     }
   }
 }

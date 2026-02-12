@@ -35,7 +35,7 @@
     "typescript": "^5.9.3",
     "vite": "^6.0.0",
     "vitest": "^4.0.18",
-    "wrangler": "^4.50.0"
+    "wrangler": "^4.64.0"
   },
   "author": "",
   "license": "MIT",

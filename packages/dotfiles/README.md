@@ -37,6 +37,13 @@ Email client configuration with:
 - Multi-account support (Google Workspace)
 - Folder hooks and signatures
 
+### zen/
+
+Zen Browser (Firefox-based) configuration:
+- Glass Design System applied to browser chrome
+- Performance, privacy, and memory tuning (based on Better Zen)
+- Dark treatment for internal browser pages
+
 ### nvim/
 
 Neovim configuration (Canon-aligned).

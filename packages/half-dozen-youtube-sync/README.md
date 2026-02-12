@@ -120,7 +120,7 @@ Best for: Remote access, ChatGPT, shared team use — no browser automation, but
 The Worker is already deployed at:
 
 ```
-https://halfdozen-youtube-sync-mcp.half-dozen.workers.dev
+https://youtube.mcp.workway.co
 ```
 
 **Claude Desktop** (remote MCP):
@@ -129,8 +129,7 @@ https://halfdozen-youtube-sync-mcp.half-dozen.workers.dev
 {
   "mcpServers": {
     "half-dozen-youtube-sync": {
-      "type": "sse",
-      "url": "https://halfdozen-youtube-sync-mcp.half-dozen.workers.dev/sse"
+      "url": "https://youtube.mcp.workway.co/mcp"
     }
   }
 }
@@ -143,7 +142,7 @@ https://halfdozen-youtube-sync-mcp.half-dozen.workers.dev
   "mcpServers": {
     "half-dozen-youtube-sync": {
       "type": "sse",
-      "url": "https://halfdozen-youtube-sync-mcp.half-dozen.workers.dev/sse"
+      "url": "https://youtube.mcp.workway.co/sse"
     }
   }
 }
