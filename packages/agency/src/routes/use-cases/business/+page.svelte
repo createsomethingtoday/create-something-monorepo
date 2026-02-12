@@ -410,15 +410,17 @@
 	
 	.hero-container {
 		position: relative;
+		width: 100%;
+		max-width: min(var(--content-width-xl), calc(100vw - 2 * var(--container-padding)));
 		display: grid;
-		grid-template-columns: 1fr 1fr;
+		grid-template-columns: 1fr minmax(380px, 1fr);
 		gap: var(--space-8, 3rem);
 		align-items: center;
-		max-width: var(--content-width-xl);
 		margin: 0 auto;
 	}
 	
 	.hero-content {
+		min-width: 0;
 		text-align: left;
 	}
 	
@@ -584,6 +586,7 @@
 	@media (min-width: 901px) {
 		:global(.hero-visual-wrapper) {
 			display: block;
+			min-width: 0;
 		}
 	}
 	
