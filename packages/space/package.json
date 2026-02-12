@@ -1,6 +1,6 @@
 {
 	"name": "@create-something/space",
-	"description": "MCP Integration Experiments — practice and experimentation with MCP patterns",
+	"description": "The Workbench — live tools for building, testing, and analyzing automation infrastructure",
 	"private": true,
 	"version": "1.0.0",
 	"type": "module",
@@ -39,7 +39,7 @@
 		"vite": "^7.1.10",
 		"vite-plugin-top-level-await": "^1.6.0",
 		"vite-plugin-wasm": "^3.5.0",
-		"wrangler": "^4.59.0"
+		"wrangler": "^4.64.0"
 	},
 	"dependencies": {
 		"@cloudflare/sandbox": "^0.4.18",

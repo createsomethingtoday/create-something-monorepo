@@ -247,7 +247,7 @@
 				<a href="https://github.com/WORKWAYCO/WORKWAY" class="btn-primary" target="_blank"
 					>Read DEVELOPERS.md</a
 				>
-				<a href="/experiments" class="btn-secondary">Browse Experiments</a>
+				<a href="/" class="btn-secondary">Back to Workbench</a>
 			</div>
 		</footer>
 	{/if}

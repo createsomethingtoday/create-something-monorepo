@@ -1,62 +1,77 @@
 # CREATE SOMETHING Space
 
-**createsomething.space** — MCP Integration Experiments
+**createsomething.space** — The Workbench
 
-Practice and experimentation with MCP patterns. Where ideas become working code.
-
----
-
-## The Pivot
-
-**Old focus**: Template tutorials, learning paths for frameworks
-**New focus**: MCP integration experiments, pattern validation
-
-Templates are commoditized. The value is in understanding *how* to integrate MCP servers with real systems—the messy parts that tutorials skip.
+Live tools for building, testing, and analyzing automation infrastructure. Every tool runs on Cloudflare Workers.
 
 ---
 
-## Experiment Areas
+## The Thesis
 
-### Integration Patterns
+`.io` is where you **read** (papers, patterns, documentation). `.space` is where you **do** (tools, playgrounds, live analysis). The distinction is functional, not academic.
 
-- Connecting MCP servers to existing APIs
-- Auth flow integration (OAuth dance, token refresh)
-- Data mapping between schemas
-- Error recovery and retry logic
+---
 
-### Edge Deployment
+## Tools
 
-- MCP servers on Cloudflare Workers
-- Durable Objects for stateful MCP
-- D1 for MCP server persistence
+### Code Playground (`/playground`)
 
-### Multi-Agent Coordination
+Execute JavaScript directly in the Cloudflare Workers runtime. Console output, async/await, ES2022.
 
-- MCP servers communicating with each other
-- Skill composition patterns
-- Agent orchestration experiments
+- **API**: `/api/code/run` — Native Workers runtime execution
+- **API**: `/api/code/execute` — Safe KV-scoped analysis
+
+### Praxis (`/praxis`)
+
+Learn integration patterns through graded code challenges. Subtractive Triad validation — DRY, Rams, Heidegger.
+
+- **API**: `/api/praxis/run` — Pattern validation with graded feedback
+
+### Motion Lab (`/motion`)
+
+Analyze CSS animations from any URL. Puppeteer-based extraction with timing, easing, and property analysis.
+
+- **API**: `/api/motion/analyze` — Full analysis with AI interpretation
+- **API**: `/api/motion/extract` — Technical extraction only
+- **Worker**: `workers/motion-extractor` — Cloudflare Puppeteer automation
+
+### Data Studio (`/data`)
+
+Live data dashboards with real-time updates, caching, and historical snapshots.
+
+- **NBA Live** (`/data/nba`) — Game data, shot networks, pace analysis, clutch performance
+- **Worker**: `workers/nba-proxy` — Rate-limited proxy with KV caching and D1 snapshots
+
+### Terminal (`/terminal`)
+
+Browse and explore content via a simulated terminal interface. Command parsing, search, and navigation.
+
+- **API**: `/api/terminal` — Command execution and content browsing
+
+### Concept Explorer (`/discover`)
+
+Cross-property concept mapping and hermeneutic spiral visualization.
 
 ---
 
 ## What This Is Not
 
-- **Not template tutorials** — Those are everywhere now
-- **Not "getting started" content** — That's scaffolding tools' job
-- **Not consumption guides** — `.io` covers usage patterns
+- **Not articles** — That's `.io`
+- **Not tutorials** — That's `.io`
+- **Not a newsletter** — That's `.io`
+- **Not client services** — That's `.agency`
 
-`.space` is for experiments that might fail, patterns that need validation, and integration approaches that push boundaries.
+Every route is something you **do**, not something you **read**.
 
 ---
 
 ## Hermeneutic Position
 
-`.space` experiments before patterns become documented:
-
 ```
 .ltd (Philosophy) → provides principles →
 .io (Research) → documents validated patterns →
-.space (Practice) → experiments with new approaches ← YOU ARE HERE
-.agency (Services) → applies proven patterns →
+.space (Workbench) → tools for building and testing ← YOU ARE HERE
+.agency (Services) → delivers to clients →
 .ltd (Philosophy) → refined by what works
 ```
 
@@ -77,17 +92,8 @@ pnpm --filter=space build && wrangler pages deploy packages/space/.svelte-kit/cl
 
 ---
 
-## Experiments Index
-
-See `/experiments` routes for current work:
-- `/experiments/code-mode` — Code execution patterns
-- `/experiments/motion-ontology` — Animation as philosophy
-- `/experiments/nba-live` — Real-time data integration
-
----
-
 ## Related
 
 - [The MCP-First Thesis](../../docs/MCP_FIRST_THESIS.md) — Strategic context
 - [CLAUDE.md](../../CLAUDE.md) — Monorepo standards
-- [packages/io](../io) — Where validated patterns get documented
+- [packages/io](../io) — Where papers and documentation live

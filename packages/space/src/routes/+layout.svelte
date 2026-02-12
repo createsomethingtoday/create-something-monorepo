@@ -4,19 +4,9 @@
 	import { UnifiedSearch } from '@create-something/canon/navigation';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { afterNavigate, onNavigate, goto, invalidateAll } from '$app/navigation';
-	import { revokeSession } from '@create-something/canon/auth';
+	import { afterNavigate, onNavigate } from '$app/navigation';
 
-	let { children, data } = $props();
-
-	// Handle logout
-	async function handleLogout() {
-		// Clear session on server
-		await fetch('/api/auth/logout', { method: 'POST' });
-		// Refresh to clear user state
-		await invalidateAll();
-		goto('/');
-	}
+	let { children } = $props();
 
 	// View Transitions API - Hermeneutic Navigation
 	// .space: Experimental (300ms)
@@ -33,20 +23,21 @@
 	});
 
 	const navLinks = [
-		{ label: 'Experiments', href: '/experiments' },
+		{ label: 'Playground', href: '/playground' },
 		{ label: 'Praxis', href: '/praxis' },
-		{ label: 'Methodology', href: '/methodology' },
-		{ label: 'About', href: '/about' }
+		{ label: 'Motion', href: '/motion' },
+		{ label: 'Data', href: '/data' }
 	];
 
 	// Quick access items for unified search
 	const quickAccessItems = [
-		{ id: 'nav-experiments', label: 'Experiments', description: 'Browse interactive experiments', href: '/experiments', icon: '🧪', keywords: ['explore', 'try', 'learn'] },
-		{ id: 'nav-praxis', label: 'Praxis', description: 'Applied methodology', href: '/praxis', icon: '⚡', keywords: ['practice', 'apply'] },
-		{ id: 'nav-methodology', label: 'Methodology', description: 'How we build and learn', href: '/methodology', icon: '📐', keywords: ['process', 'approach'] },
-		{ id: 'nav-io', label: 'Go to .io', description: 'Research papers and analysis', href: 'https://createsomething.io', icon: '📖', keywords: ['papers', 'research', 'learn'] },
-		{ id: 'nav-agency', label: 'Go to .agency', description: 'Professional services', href: 'https://createsomething.agency', icon: '🔨', keywords: ['services', 'hire', 'work'] },
-		{ id: 'nav-ltd', label: 'Go to .ltd', description: 'Canon principles and patterns', href: 'https://createsomething.ltd', icon: '📜', keywords: ['canon', 'principles', 'foundation'] },
+		{ id: 'nav-playground', label: 'Code Playground', description: 'Execute JavaScript in Workers runtime', href: '/playground', icon: '>', keywords: ['code', 'run', 'execute', 'javascript'] },
+		{ id: 'nav-praxis', label: 'Praxis', description: 'Learn integration patterns through code', href: '/praxis', icon: '>', keywords: ['practice', 'learn', 'patterns'] },
+		{ id: 'nav-motion', label: 'Motion Lab', description: 'Analyze CSS animations from any URL', href: '/motion', icon: '>', keywords: ['animation', 'css', 'motion', 'analyze'] },
+		{ id: 'nav-data', label: 'Data Studio', description: 'Live data dashboards and analysis', href: '/data', icon: '>', keywords: ['data', 'dashboard', 'nba', 'live'] },
+		{ id: 'nav-terminal', label: 'Terminal', description: 'Browse and explore via terminal', href: '/terminal', icon: '>', keywords: ['terminal', 'cli', 'command'] },
+		{ id: 'nav-io', label: 'Go to .io', description: 'Research papers and documentation', href: 'https://createsomething.io', icon: '>', keywords: ['papers', 'research', 'read'] },
+		{ id: 'nav-agency', label: 'Go to .agency', description: 'Custom MCP development', href: 'https://createsomething.agency', icon: '>', keywords: ['services', 'hire', 'build'] },
 	];
 
 	// Handle hash scrolling
@@ -86,7 +77,7 @@
 
 <LayoutSEO property="space" />
 
-<Analytics property="space" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
+<Analytics property="space" />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
 <UnifiedSearch currentProperty="space" localItems={quickAccessItems} />
@@ -98,13 +89,9 @@
 		links={navLinks}
 		currentPath={$page.url.pathname}
 		fixed={true}
-		ctaLabel="Contact"
-		ctaHref="/contact"
-		user={data.user}
-		onLogout={handleLogout}
-		showLogin={true}
-		loginHref="/login"
-		accountHref="/account"
+		ctaLabel=".io"
+		ctaHref="https://createsomething.io"
+		showLogin={false}
 	/>
 
 	<main id="main-content" class="content">
@@ -113,19 +100,15 @@
 
 	<Footer
 		mode="space"
-		showNewsletter={true}
-		turnstileSiteKey={data.turnstileSiteKey}
-		newsletterTitle="Join the experimental layer"
-		newsletterDescription="Get notified when new experiments are added. Fork, break, learn in public."
-		aboutText="Community playground for AI-native development experiments. Every experiment feeds back into the research at createsomething.io."
+		showNewsletter={false}
+		aboutText="The workbench for automation infrastructure. Build, test, and analyze with live tools powered by Cloudflare Workers."
 		quickLinks={[
-			{ label: 'Experiments', href: '/experiments' },
-			{ label: 'Methodology', href: '/methodology' },
-			{ label: 'About', href: '/about' },
-			{ label: 'Contact', href: '/contact' }
+			{ label: 'Playground', href: '/playground' },
+			{ label: 'Praxis', href: '/praxis' },
+			{ label: 'Motion Lab', href: '/motion' },
+			{ label: 'Data Studio', href: '/data' }
 		]}
 		showSocial={true}
-		isAuthenticated={!!data.user}
 	/>
 
 	<ModeIndicator current="space" />
