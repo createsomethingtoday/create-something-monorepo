@@ -60,7 +60,8 @@
 			'lincoln-manufacturing': 'Lincoln Manufacturing',
 			'guns-out-tv': 'Guns Out TV',
 			films: 'Films',
-			'coming-soon': 'Coming Soon'
+			'coming-soon': 'Coming Soon',
+			lmc: 'LMC'
 		};
 		return map[categoryId] || categoryId;
 	}

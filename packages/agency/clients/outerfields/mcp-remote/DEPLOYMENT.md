@@ -54,7 +54,7 @@ For now, we'll use the default `.workers.dev` subdomain and set up custom domain
 pnpm run deploy
 ```
 
-This deploys to `outerfields-pcn-mcp.{your-account}.workers.dev`
+This deploys to `outerfields-pcn-mcp.{your-account}.workers.dev` (with custom domain: `outerfields.mcp.createsomething.agency`)
 
 ### Production Deploy
 
@@ -178,7 +178,7 @@ This sync commit triggers the normal Cloudflare deploy for OUTERFIELDS.
 
 Clients should install the existing MCP server via a Custom Connector URL that includes the token:
 
-- `https://outerfields-pcn-mcp.createsomething.workers.dev/sse?token=<ADMIN_TOKEN>`
+- `https://outerfields.mcp.createsomething.agency/sse?token=<ADMIN_TOKEN>`
 
 This ensures **write tools are only usable** by people who have the token.
 

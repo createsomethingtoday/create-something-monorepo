@@ -28,11 +28,13 @@ Open your Claude Desktop settings and add this to your MCP servers configuration
 {
   "mcpServers": {
     "outerfields-pcn": {
-      "url": "https://mcp.outerfields.io"
+      "url": "https://outerfields.mcp.createsomething.agency"
     }
   }
 }
 ```
+
+> **Alias**: `https://mcp.outerfields.io` also works (client-facing domain).
 
 ### 2. Restart Claude Desktop
 
