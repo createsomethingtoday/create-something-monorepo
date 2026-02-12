@@ -5,60 +5,64 @@
 	// Structured data for SEO/AEO
 	const services = [
 		{
-			name: 'Custom MCP Server',
-			description: 'We build a custom MCP server that connects your tool to AI agents. Requirements discovery, development, auth setup, testing, deployment, documentation, and source code ownership included.',
+			name: 'Connect',
+			description: 'One custom MCP server that connects your tool to your AI agents. Requirements discovery, development, auth setup, testing, deployment, documentation, and source code ownership included. Ongoing maintenance and updates.',
 			type: 'MCP Development',
-			price: '2000',
-			priceDescription: 'Starting at $2,000'
+			price: '2500',
+			priceDescription: '$2,500 setup + $150/mo'
 		},
 		{
-			name: 'Subtractive Triad Audit',
-			description: 'Complete systems inventory, workflow mapping, and Subtractive Triad analysis. Find duplication, excess, and disconnection across your stack. ROI-scored prioritized roadmap.',
-			type: 'Strategic Audit',
-			price: '5000',
-			priceDescription: 'Starting at $5,000'
+			name: 'Automate',
+			description: 'Full-stack automation bundle: 3–5 custom MCP servers plus a Playbook MCP catalog so your agents discover and use every tool. Workflow mapping, priority sequencing, and unified agent connectivity.',
+			type: 'Automation Bundle',
+			price: '7500',
+			priceDescription: '$7,500 setup + $350/mo'
 		},
 		{
-			name: 'The Judgment Layer',
-			description: 'Managed automation intelligence. Prompt optimization, workflow evolution, policy management, performance monitoring, and quarterly business reviews.',
-			type: 'Managed Services',
-			price: '1500',
-			priceDescription: 'Starting at $1,500/month'
+			name: 'Orchestrate',
+			description: 'Domain-specific playbooks that encode your business expertise as MCP Prompts. Decision frameworks, priority rules, workflow sequences, and quality gates — refined monthly from real agent usage data.',
+			type: 'Judgment Layer',
+			price: '750',
+			priceDescription: '$750/month'
 		}
 	];
 
 	const faqItems = [
 		{
-			question: "Can I just buy an MCP without the audit or managed services?",
-			answer: "Absolutely. Most clients start with a single MCP. No commitment beyond that. If you want to expand later, we're here."
+			question: "Our team already uses Claude/Cursor/Codex. What do we need you for?",
+			answer: "Your agents are ready — your tools aren't. Claude can't read your CRM, Cursor can't query your database, and Codex can't update your project management tool. We build the MCP infrastructure that connects your tools to the agents your team already uses."
+		},
+		{
+			question: "What's the Playbook MCP?",
+			answer: "It's a discovery catalog for your agents. Instead of memorizing which MCP does what, your agents query the Playbook and it tells them: here's what's available, here's when to use it, here's the workflow. Think of it as a table of contents for your automation."
 		},
 		{
 			question: "What's a Judgment Layer?",
-			answer: "It's what makes automation intelligent. Your MCP connects tools to AI. The Judgment Layer decides how that connection is used — what the agent does, when it escalates, how it improves. Think of it as the difference between having a phone line and having someone smart answering it."
+			answer: "Playbooks that encode your domain expertise as MCP Prompts — decision frameworks, priority rules, workflow sequences, quality gates. It's the difference between your agent having access to tools and your agent knowing how to use them intelligently. Refined monthly from real usage data."
 		},
 		{
-			question: "How is this different from Zapier?",
-			answer: "Zapier connects tools to tools. We connect tools to AI agents. Your MCP lets Claude or Cursor read your CRM, draft responses, update records, and make decisions — not just move data between apps."
+			question: "How is this different from Zapier or Make?",
+			answer: "Zapier connects tools to tools with fixed workflows. We connect tools to AI agents with judgment. Your MCP lets Claude read your CRM, draft responses, and make decisions — not just move data between apps on a trigger."
 		},
 		{
 			question: "Do I own the code?",
-			answer: "Yes. Every MCP we build, you own the source code, the deployment package, and the documentation. No lock-in."
+			answer: "Yes. Every MCP we build, you own the source code, the deployment, and the documentation. No lock-in. The monthly covers maintenance, updates, and monitoring."
 		},
 		{
 			question: "What tools can you connect?",
-			answer: "Anything with an API. Salesforce, HubSpot, Notion, Slack, Google Workspace, Procore, QuickBooks, internal databases, custom systems. If it has an API, we can connect it."
+			answer: "Anything with an API. Salesforce, HubSpot, Notion, Slack, Google Workspace, Procore, QuickBooks, internal databases, custom systems. For commodity integrations we use bridge tooling. For deep or client-specific work, we build custom."
 		},
 		{
-			question: "How fast can you build an MCP?",
-			answer: "Simple integrations: 2 weeks. Complex integrations: 3–4 weeks. We'll give you a timeline before starting."
+			question: "Can I start with just one MCP?",
+			answer: "That's how most clients start. Connect tier: one MCP, $2,500 setup, $150/mo. See the value. Expand when you're ready."
 		}
 	];
 </script>
 
 <SEO
-	title="Services | Custom MCP Servers & Managed Automation"
-	description="Custom MCP servers from $2,000. Connect your tools to AI agents — Claude, Cursor, Codex. Managed automation intelligence from $1,500/mo. You own the code."
-	keywords="custom MCP server, MCP development, connect tools to AI, AI agent integration, automation consulting, managed MCP, Claude integration, Cursor integration, Codex integration, MCP-compatible"
+	title="Services | MCP Infrastructure for Your AI Agents"
+	description="Your team uses Claude, Cursor, or Codex. We build the MCP infrastructure they connect to. Connect ($2,500 + $150/mo), Automate ($7,500 + $350/mo), or Orchestrate ($750/mo). You own the code."
+	keywords="MCP infrastructure, MCP servers for AI agents, connect tools to Claude, Cursor MCP integration, Codex MCP, automation infrastructure, Playbook MCP, Judgment Layer, MCP development agency"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	{services}
@@ -73,18 +77,18 @@
 			<p class="hero-eyebrow">Services</p>
 		</BlurFade>
 		<BlurFade delay={0.1}>
-			<h1 class="hero-title">Connect Your Tools to AI</h1>
+			<h1 class="hero-title">MCP Infrastructure for Your Agents</h1>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<p class="hero-subtitle">
-				We build custom MCP servers that let AI agents work with your existing tools.
-				Start with one connection. Expand when you're ready.
+				Your team uses Claude, Cursor, or Codex. We build the MCP servers they connect to.
+				Start with one tool. Scale to full orchestration.
 			</p>
 		</BlurFade>
 	</div>
 </section>
 
-<!-- Tier 1: Custom MCP Server -->
+<!-- Tier 1: Connect -->
 <section class="tier-section">
 	<div class="section-container">
 		<BlurFade>
@@ -92,9 +96,9 @@
 				<span class="tier-number">01</span>
 				<span class="tier-label-text">The Entry Point</span>
 			</div>
-			<h2 class="section-heading">Custom MCP Server</h2>
+			<h2 class="section-heading">Connect</h2>
 			<p class="section-subhead">
-				We build a custom MCP server that connects your tool to AI agents.
+				One custom MCP server. Your agents can reach one more tool.
 			</p>
 		</BlurFade>
 
@@ -102,12 +106,12 @@
 			<div class="tier-card">
 				<div class="tier-header">
 					<div class="tier-pricing">
-						<div class="tier-price">$2,000 – $5,000</div>
-						<div class="tier-duration">2–4 weeks</div>
+						<div class="tier-price">$2,500</div>
+						<div class="tier-duration">setup + $150/mo maintenance</div>
 					</div>
 					<p class="tier-pricing-note">
-						Simple integrations (single API, standard auth) start at $2,000.
-						Complex integrations (multiple endpoints, OAuth, custom logic) up to $5,000.
+						One MCP server connecting one tool to your agents.
+						2–3 week delivery. You own the code.
 					</p>
 				</div>
 				<div class="tier-body">
@@ -116,14 +120,18 @@
 							<h3>What's Included</h3>
 							<ul class="tier-list">
 								<li>Requirements discovery</li>
-								<li>MCP server development</li>
-								<li>Authentication setup</li>
-								<li>Error handling</li>
-								<li>Testing</li>
-								<li>Deployment</li>
+								<li>Custom MCP server development</li>
+								<li>Authentication setup (OAuth, API key, etc.)</li>
+								<li>Testing and deployment</li>
 								<li>Documentation</li>
 								<li>Source code — you own it</li>
-								<li>14 days of bug fixes</li>
+							</ul>
+							<h3 class="mt">Monthly ($150/mo)</h3>
+							<ul class="tier-list">
+								<li>Uptime monitoring</li>
+								<li>API version updates</li>
+								<li>Bug fixes</li>
+								<li>Slack support</li>
 							</ul>
 						</div>
 						<div class="tier-detail">
@@ -132,9 +140,9 @@
 								Any tool with an API — CRM, docs, chat, email, project management,
 								internal databases, custom systems.
 							</p>
-							<h3 class="mt">AI Platforms</h3>
+							<h3 class="mt">Your Agents</h3>
 							<p>
-								Claude, Cursor, Codex — or any MCP-compatible client.
+								Claude Desktop, Cursor, Codex, Claude Code — or any MCP-compatible client your team already uses.
 							</p>
 						</div>
 					</div>
@@ -147,60 +155,76 @@
 	</div>
 </section>
 
-<!-- Tier 2: Subtractive Triad Audit -->
-<section class="tier-section">
+<!-- Tier 2: Automate (FEATURED) -->
+<section class="tier-section tier-section-featured">
 	<div class="section-container">
 		<BlurFade>
 			<div class="tier-eyebrow-row">
-				<span class="tier-number">02</span>
-				<span class="tier-label-text">The Expansion</span>
+				<span class="tier-number featured-number">02</span>
+				<span class="tier-label-text">Most Popular</span>
 			</div>
-			<h2 class="section-heading">Subtractive Triad Audit</h2>
+			<h2 class="section-heading">Automate</h2>
 			<p class="section-subhead">
-				See what one MCP does? Now let's map the whole picture.
+				See what one MCP does? Now connect your full stack.
 			</p>
 		</BlurFade>
 
 		<BlurFade delay={0.1}>
-			<div class="tier-card">
+			<div class="tier-card featured">
+				<span class="tier-badge">Most Popular</span>
 				<div class="tier-header">
 					<div class="tier-pricing">
-						<div class="tier-price">$5,000 – $10,000</div>
-						<div class="tier-duration">2–3 weeks</div>
+						<div class="tier-price">$7,500</div>
+						<div class="tier-duration">setup + $350/mo maintenance</div>
 					</div>
+					<p class="tier-pricing-note">
+						3–5 custom MCP servers + Playbook MCP catalog. 4–6 week delivery.
+					</p>
 				</div>
 				<div class="tier-body">
 					<div class="tier-columns">
 						<div class="tier-detail">
 							<h3>What's Included</h3>
 							<ul class="tier-list">
-								<li>Complete systems inventory</li>
-								<li>Workflow mapping</li>
-								<li>Subtractive Triad analysis — find duplication, excess, disconnection</li>
-								<li>Three-Tier Framework classification (Database / Automation / Judgment)</li>
-								<li>ROI scoring for every automation opportunity</li>
-								<li>Prioritized roadmap</li>
+								<li>Workflow mapping across your tool stack</li>
+								<li>3–5 custom MCP servers built and deployed</li>
+								<li>Playbook MCP — agent discovery catalog</li>
+								<li>Priority sequencing (what to automate first)</li>
+								<li>Unified auth and deployment</li>
+								<li>Source code — you own it all</li>
+							</ul>
+							<h3 class="mt">Monthly ($350/mo)</h3>
+							<ul class="tier-list">
+								<li>Monitoring across all MCPs</li>
+								<li>API updates and version management</li>
+								<li>Playbook catalog maintenance</li>
+								<li>Priority support</li>
 							</ul>
 						</div>
 						<div class="tier-detail">
-							<h3>Deliverable</h3>
-							<p>Strategic report + implementation roadmap.</p>
+							<h3>The Playbook MCP</h3>
+							<p>
+								Your agents query the Playbook to discover what tools are available,
+								when to use them, and in what order. It's the table of contents
+								for your automation infrastructure.
+							</p>
 							<div class="tier-note">
 								<p>
-									The audit is standalone — no commitment to build. Most clients use it
-									to decide what to build next.
+									Already bought a Connect MCP from us? Automate builds on what
+									we learned. You don't pay for discovery twice.
 								</p>
 							</div>
 							<div class="tier-note">
 								<p>
-									Already bought an MCP from us? The audit builds on what we learned.
-									You don't pay for discovery twice.
+									Commodity integrations (Slack, Calendar, etc.) use bridge tooling
+									at near-zero cost. Custom MCPs for deep, client-specific work.
+									Both appear identically in the Playbook.
 								</p>
 							</div>
 						</div>
 					</div>
 					<div class="tier-cta">
-						<ShimmerButton href="/book">Book Audit</ShimmerButton>
+						<ShimmerButton href="/contact">Start Automating</ShimmerButton>
 					</div>
 				</div>
 			</div>
@@ -208,43 +232,31 @@
 	</div>
 </section>
 
-<!-- Tier 3: The Judgment Layer (FEATURED) -->
-<section class="tier-section tier-section-featured">
+<!-- Tier 3: Orchestrate (Judgment Layer) -->
+<section class="tier-section">
 	<div class="section-container">
 		<BlurFade>
 			<div class="tier-eyebrow-row">
-				<span class="tier-number featured-number">03</span>
-				<span class="tier-label-text">The Retained Relationship</span>
+				<span class="tier-number">03</span>
+				<span class="tier-label-text">The Intelligence</span>
 			</div>
-			<h2 class="section-heading">The Judgment Layer</h2>
+			<h2 class="section-heading">Orchestrate</h2>
 			<p class="section-subhead">
-				Connections without intelligence are just pipes.
-				The Judgment Layer makes your automation smart.
+				Connections without judgment are just pipes.
+				Playbooks make your agents intelligent.
 			</p>
 		</BlurFade>
 
 		<BlurFade delay={0.1}>
-			<div class="tier-card featured">
-				<span class="tier-badge">Recommended</span>
+			<div class="tier-card">
 				<div class="tier-header">
 					<div class="tier-pricing">
-						<div class="tier-price">$1,500 – $3,500<span class="price-unit">/mo</span></div>
+						<div class="tier-price">$750<span class="price-unit">/mo</span></div>
 					</div>
-					<div class="pricing-tiers-breakdown">
-						<div class="pricing-tier-item">
-							<span class="pricing-tier-agents">1–2 agents/MCPs</span>
-							<span class="pricing-tier-cost">$1,500/mo</span>
-						</div>
-						<div class="pricing-tier-item">
-							<span class="pricing-tier-agents">3–5 agents/MCPs</span>
-							<span class="pricing-tier-cost">$2,500/mo</span>
-						</div>
-						<div class="pricing-tier-item">
-							<span class="pricing-tier-agents">5+ agents/MCPs</span>
-							<span class="pricing-tier-cost">$3,500/mo</span>
-						</div>
-						<p class="pricing-custom">Custom pricing for complex environments.</p>
-					</div>
+					<p class="tier-pricing-note">
+						Domain-specific playbooks refined monthly from real agent usage data.
+						Available standalone or as an add-on to any tier.
+					</p>
 				</div>
 				<div class="tier-body">
 					<div class="tier-columns">
@@ -252,38 +264,43 @@
 							<h3>What's Included Monthly</h3>
 							<ul class="tier-list">
 								<li>
-									<strong>Prompt optimization & agent tuning</strong> — weekly review of
-									agent performance, systematic prompt refinement
+									<strong>Decision frameworks</strong> — "When X, do Y because Z" encoded as MCP Prompts
 								</li>
 								<li>
-									<strong>Workflow evolution</strong> — adapt automations as your
-									business changes
+									<strong>Priority rules</strong> — which contacts, projects, or tasks matter most
 								</li>
 								<li>
-									<strong>Policy management</strong> — decision rules, escalation paths,
-									edge case handling
+									<strong>Workflow sequences</strong> — "After sync, summarize, then flag"
 								</li>
 								<li>
-									<strong>Performance monitoring</strong> — uptime, accuracy, cost tracking
+									<strong>Quality gates</strong> — "Before creating, verify these criteria"
 								</li>
 								<li>
-									<strong>Quarterly business review</strong> — expansion opportunities,
-									ROI measurement, roadmap update
+									<strong>Domain glossary</strong> — teach your agents your business language
+								</li>
+								<li>
+									<strong>Monthly refinement</strong> — usage data reveals gaps, we write prompts, agents get smarter
 								</li>
 							</ul>
 						</div>
 						<div class="tier-detail">
-							<h3>Why Clients Start Here</h3>
+							<h3>The Feedback Loop</h3>
+							<p>
+								Every agent interaction generates feedback. That feedback reveals
+								gaps in judgment. We write prompts to close those gaps. Your agents
+								get smarter every month — without you changing anything.
+							</p>
 							<div class="tier-note">
 								<p>
-									Most clients start here after their first MCP is running. You see
-									the value of the connection — now make it intelligent.
+									Clients with existing MCPs (from us or elsewhere) can add
+									Orchestrate standalone. Your agents already have hands — now give
+									them expertise.
 								</p>
 							</div>
 						</div>
 					</div>
 					<div class="tier-cta">
-						<ShimmerButton href="/book">Start Managed Services</ShimmerButton>
+						<ShimmerButton href="/contact">Add Intelligence</ShimmerButton>
 					</div>
 				</div>
 			</div>
@@ -305,7 +322,7 @@
 						<span class="pathway-num">1</span>
 					</div>
 					<h3>Connect</h3>
-					<p>One MCP server.<br />$2k–$5k.</p>
+					<p>One MCP server.<br />$2,500 + $150/mo.</p>
 				</div>
 			</BlurFade>
 
@@ -319,11 +336,11 @@
 
 			<BlurFade delay={0.2}>
 				<div class="pathway-step">
-					<div class="pathway-icon">
+					<div class="pathway-icon pathway-icon-featured">
 						<span class="pathway-num">2</span>
 					</div>
-					<h3>Map</h3>
-					<p>Audit your full stack.<br />$5k–$10k.</p>
+					<h3>Automate</h3>
+					<p>Full stack + Playbook.<br />$7,500 + $350/mo.</p>
 				</div>
 			</BlurFade>
 
@@ -337,19 +354,20 @@
 
 			<BlurFade delay={0.3}>
 				<div class="pathway-step">
-					<div class="pathway-icon pathway-icon-featured">
+					<div class="pathway-icon">
 						<span class="pathway-num">3</span>
 					</div>
-					<h3>Operate</h3>
-					<p>Intelligence layer.<br />$1.5k–$3.5k/mo.</p>
+					<h3>Orchestrate</h3>
+					<p>Judgment Layer.<br />$750/mo.</p>
 				</div>
 			</BlurFade>
 		</div>
 
 		<BlurFade delay={0.35}>
 			<p class="pathway-summary">
-				Most clients follow this path. Start with one MCP. See the value. Audit your
-				full stack. Then let us run the intelligence layer. Each step builds on the last.
+				Most clients follow this path. Start with one MCP — see what your agents can do.
+				Connect your full stack with a Playbook catalog. Then add the Judgment Layer
+				so your agents know what to do, not just how to do it.
 			</p>
 		</BlurFade>
 	</div>
@@ -365,64 +383,82 @@
 		<div class="faq-grid">
 			<BlurFade delay={0.1}>
 				<div class="faq-item">
-					<h3>Can I just buy an MCP without the audit or managed services?</h3>
+					<h3>Our team already uses Claude/Cursor/Codex. What do we need you for?</h3>
 					<p>
-						Absolutely. Most clients start with a single MCP. No commitment beyond
-						that. If you want to expand later, we're here.
+						Your agents are ready — your tools aren't. Claude can't read your CRM,
+						Cursor can't query your database, and Codex can't update your project
+						management tool. We build the MCP infrastructure that connects your
+						tools to the agents your team already uses.
 					</p>
 				</div>
 			</BlurFade>
 
 			<BlurFade delay={0.15}>
 				<div class="faq-item">
-					<h3>What's a Judgment Layer?</h3>
+					<h3>What's the Playbook MCP?</h3>
 					<p>
-						It's what makes automation intelligent. Your MCP connects tools to AI. The
-						Judgment Layer decides how that connection is used — what the agent does,
-						when it escalates, how it improves. Think of it as the difference between
-						having a phone line and having someone smart answering it.
+						A discovery catalog for your agents. Instead of memorizing which MCP
+						does what, your agents query the Playbook and it tells them: here's
+						what's available, here's when to use it, here's the workflow. Think
+						of it as a table of contents for your automation.
 					</p>
 				</div>
 			</BlurFade>
 
 			<BlurFade delay={0.2}>
 				<div class="faq-item">
-					<h3>How is this different from Zapier?</h3>
+					<h3>What's a Judgment Layer?</h3>
 					<p>
-						Zapier connects tools to tools. We connect tools to AI agents. Your MCP
-						lets Claude or Cursor read your CRM, draft responses, update records, and
-						make decisions — not just move data between apps.
+						Playbooks that encode your domain expertise as MCP Prompts — decision
+						frameworks, priority rules, workflow sequences, quality gates. It's
+						the difference between your agent having access to tools and your agent
+						knowing how to use them intelligently. Refined monthly from real
+						usage data.
 					</p>
 				</div>
 			</BlurFade>
 
 			<BlurFade delay={0.25}>
 				<div class="faq-item">
-					<h3>Do I own the code?</h3>
+					<h3>How is this different from Zapier or Make?</h3>
 					<p>
-						Yes. Every MCP we build, you own the source code, the deployment package,
-						and the documentation. No lock-in.
+						Zapier connects tools to tools with fixed workflows. We connect tools
+						to AI agents with judgment. Your MCP lets Claude read your CRM, draft
+						responses, and make decisions — not just move data between apps on
+						a trigger.
 					</p>
 				</div>
 			</BlurFade>
 
 			<BlurFade delay={0.3}>
 				<div class="faq-item">
-					<h3>What tools can you connect?</h3>
+					<h3>Do I own the code?</h3>
 					<p>
-						Anything with an API. Salesforce, HubSpot, Notion, Slack, Google Workspace,
-						Procore, QuickBooks, internal databases, custom systems. If it has an API,
-						we can connect it.
+						Yes. Every MCP we build, you own the source code, the deployment,
+						and the documentation. No lock-in. The monthly covers maintenance,
+						updates, and monitoring.
 					</p>
 				</div>
 			</BlurFade>
 
 			<BlurFade delay={0.35}>
 				<div class="faq-item">
-					<h3>How fast can you build an MCP?</h3>
+					<h3>What tools can you connect?</h3>
 					<p>
-						Simple integrations: 2 weeks. Complex integrations: 3–4 weeks. We'll give
-						you a timeline before starting.
+						Anything with an API. Salesforce, HubSpot, Notion, Slack, Google
+						Workspace, Procore, QuickBooks, internal databases, custom systems.
+						For commodity integrations we use bridge tooling. For deep or
+						client-specific work, we build custom.
+					</p>
+				</div>
+			</BlurFade>
+
+			<BlurFade delay={0.38}>
+				<div class="faq-item">
+					<h3>Can I start with just one MCP?</h3>
+					<p>
+						That's how most clients start. Connect tier: one MCP, $2,500 setup,
+						$150/mo. See the value. Expand when you're ready.
 					</p>
 				</div>
 			</BlurFade>
@@ -434,11 +470,11 @@
 <section class="cta-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="cta-heading">Start with one connection.</h2>
+			<h2 class="cta-heading">Your agents are waiting.</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<div class="cta-buttons">
-				<ShimmerButton href="/contact">Get Your First MCP</ShimmerButton>
+				<ShimmerButton href="/contact">Connect Your First Tool</ShimmerButton>
 				<a href="/book" class="cta-secondary">Have questions? Book a call</a>
 			</div>
 		</BlurFade>

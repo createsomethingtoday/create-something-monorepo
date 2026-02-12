@@ -61,6 +61,12 @@ for pkg in $PACKAGES_TO_CHECK; do
   PKG_DIR="$CLAUDE_PROJECT_DIR/packages/$pkg"
 
   if [[ -d "$PKG_DIR" ]]; then
+    # Skip packages without typescript installed
+    if ! (cd "$PKG_DIR" && pnpm exec tsc --version >/dev/null 2>&1); then
+      log_msg "Skipping $pkg - tsc not available"
+      continue
+    fi
+
     # Run tsc --noEmit and capture errors
     TSC_OUTPUT=$(cd "$PKG_DIR" && pnpm exec tsc --noEmit 2>&1) || {
       ERRORS="$ERRORS\n\n=== $pkg ===\n$TSC_OUTPUT"
