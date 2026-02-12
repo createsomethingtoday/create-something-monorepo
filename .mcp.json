@@ -8,28 +8,9 @@
       "command": "npx",
       "args": ["-y", "@mizchi/lsmcp", "mcp"]
     },
-    "perplexity": {
-      "command": "npx",
-      "args": ["-y", "@perplexity-ai/mcp-server"],
-      "env": {
-        "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}"
-      }
-    },
-    "ground": {
-      "command": "./packages/ground/target/release/ground-mcp",
-      "args": ["--db", ".ground/registry.db", "--workspace", "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"]
-    },
     "webflow": {
       "command": "node",
       "args": ["./packages/webflow-mcp/dist/index.js"]
-    },
-    "loom": {
-      "command": "./packages/loom/target/release/loom-mcp",
-      "args": ["--path", "."]
-    },
-    "ui-preview": {
-      "command": "bun",
-      "args": ["run", "./packages/ui-preview-mcp/src/index.ts"]
     },
     "half-dozen-youtube-sync": {
       "type": "http",
