@@ -94,6 +94,8 @@ This MCP has **two independent auth surfaces**. They are not shared: authenticat
 
 **Future pattern:** Other MCPs may mix “scrape” (session/cookies/Steel) and “API” (Composio or direct OAuth) the same way. The health endpoint exposes `auth_surfaces` so clients know which tools require which setup.
 
+**Operational model:** Create Something maintains this MCP for Half Dozen (custom engagement). Zoom Clips auth is operator-managed — we hold the Zoom login and maintain the Steel.dev session; Half Dozen's users just use the MCP. Zoom API (Composio), if enabled, can be connected separately.
+
 ### How the agent navigates auth
 
 The agent discovers auth needs by **surface** and uses dedicated tools to check status and fix gaps.
@@ -132,7 +134,18 @@ wrangler kv namespace create ZOOM_SESSION_CONTEXT
 # Copy the id to worker/wrangler.toml
 ```
 
-### 3. Set secrets
+### 3. Apply D1 migrations
+
+The worker needs `sync_runs`, `clips_cache`, and `session_state` tables. Apply migrations from the worker directory:
+
+```bash
+cd worker
+wrangler d1 migrations apply halfdozen-zoom-sync-db --remote
+```
+
+If you see `no such table` errors from the MCP, the database was never migrated — run this step and redeploy.
+
+### 4. Set secrets
 
 ```bash
 cd worker
@@ -145,7 +158,7 @@ wrangler secret put COMPOSIO_API_KEY
 wrangler secret put COMPOSIO_ZOOM_AUTH_CONFIG_ID
 ```
 
-### 4. Capture Zoom session cookies (Clips surface)
+### 5. Capture Zoom session cookies (Clips surface)
 
 Zoom Clips has no API — we use browser automation with cookies for auth.
 
@@ -155,11 +168,11 @@ npx tsx watch-session.ts
 # Upload via the upload_session_context MCP tool
 ```
 
-### 5. (Optional) Connect Zoom in Composio (Zoom API surface)
+### 6. (Optional) Connect Zoom in Composio (Zoom API surface)
 
 If you set `COMPOSIO_API_KEY`, create a Composio auth config for Zoom and connect an account for entity ID `default`. The `zoom_api_*` tools will then use that account. See [Authentication](#authentication).
 
-### 6. Deploy
+### 7. Deploy
 
 ```bash
 cd worker
