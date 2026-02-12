@@ -184,10 +184,17 @@ The agent handles the rest — your connection is stored and all QBO tools work 
     name: 'Zoom Sync',
     slug: 'zoom-sync',
     url: 'https://zoom.mcp.workway.co',
-    description: 'Zoom Clips to Notion sync with browser automation. Meeting recordings and clips accessible to AI agents.',
+    description: 'Zoom Clips to Notion sync (browser automation) plus optional Zoom API tools (meetings, recordings, webinars via Composio). Two auth surfaces: Clips = session context; Zoom API = Composio connect. Codex-ready (Streamable HTTP /mcp).',
     category: 'workway',
     transports: ['http', 'sse'],
     requiresAuth: true,
+    setupNotes: `**Two auth surfaces** (independent):
+
+1. **Zoom Clips** (sync_clips, extract_clip, search_clips): Use \`get_session_status\`; if not connected, run \`npx tsx watch-session.ts\` locally, log into Zoom in Steel Live View, then \`upload_session_context\` with the captured JSON.
+
+2. **Zoom API** (zoom_api_* tools, when server has Composio configured): Use \`zoom_api_connection_status\`; if not connected, call \`zoom_api_get_connect_link\` and present the URL to the user.
+
+Health: \`GET /\` returns \`auth_surfaces\` with tools per surface.`,
   },
 ];
 
