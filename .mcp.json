@@ -30,6 +30,10 @@
     "ui-preview": {
       "command": "bun",
       "args": ["run", "./packages/ui-preview-mcp/src/index.ts"]
+    },
+    "half-dozen-youtube-sync": {
+      "type": "http",
+      "url": "https://youtube.mcp.workway.co/mcp"
     }
   }
 }

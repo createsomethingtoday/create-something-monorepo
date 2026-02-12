@@ -17,9 +17,11 @@ build
 .DS_Store
 Thumbs.db
 
-# IDE
+# IDE / agent config (local)
 .vscode/
 .idea/
+.codex/
+.cursor/
 *.swp
 *.swo
 *~

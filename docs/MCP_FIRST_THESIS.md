@@ -201,7 +201,7 @@ Templates are no longer the entry point. **MCP creation expertise** is.
 |----------|-----------|---------------------------|
 | **.ltd** | Philosophy of creation | Philosophy of *automation infrastructure*—articulate why creation > consumption |
 | **.io** | Research, tools, docs | MCP patterns, SDK research, reference implementations for *builders* |
-| **.space** | Practice via templates | MCP server experiments, integration patterns—*not* template tutorials |
+| **.space** | Practice via templates | **The Workbench**—live tools for code execution, motion analysis, data dashboards |
 | **.agency** | Client services (templates) | **Custom MCP development**—the creation moat as a service |
 
 ### .agency Service Offerings
@@ -219,8 +219,8 @@ Templates are no longer the entry point. **MCP creation expertise** is.
 
 ```
 .ltd (Philosophy) → articulates "creation > consumption" →
-.io (Research) → validates with real MCP server development →
-.space (Practice) → experiments with MCP patterns (not template tutorials) →
+.io (Research) → documents validated patterns for builders →
+.space (Workbench) → live tools for building and testing →
 .agency (Services) → delivers custom MCPs to clients →
 .ltd (Philosophy) → refined by what creation work actually reveals
 ```
@@ -281,6 +281,71 @@ The gap: Deep, workflow-aware MCP servers + Intelligence Layer, built by teams w
 
 ---
 
+## Supplier Strategy: Build vs. Delegate
+
+> Updated: February 2026 (Composio evaluation)
+
+Not every integration justifies custom development. The creation moat is in *deep* integrations and the Intelligence Layer — commodity CRUD integrations can be delegated to managed platforms as invisible infrastructure.
+
+### The Decision Matrix
+
+| Client Ask | Build Strategy | Rationale |
+|-----------|---------------|-----------|
+| Deep domain workflow (QuickBooks GL mapping, scheduling with conflict detection) | **Custom** | Domain logic, Three-Tier alignment, the moat |
+| Standard CRUD integration (Slack notifications, HubSpot contacts, Jira tickets) | **Composio** | Managed auth + tool calling, ~90% margin at $29/mo |
+| Two-way data synchronization (Notion ↔ HubSpot sync) | **Nango** | Bidirectional sync, webhooks, API unification at $500/mo |
+| Vertical-specific (Procore, construction) | **Custom** | Deep vertical = creation moat |
+
+### Classification Heuristic
+
+Ask in order:
+
+1. Does it need **domain-specific logic** beyond CRUD? → **Custom**
+2. Does it need **Three-Tier alignment** (Resources + Prompts, not just Tools)? → **Custom**
+3. Does it need **two-way data sync** between systems? → **Nango**
+4. Is it standard CRUD with managed OAuth? → **Composio**
+
+### The Wrap Pattern
+
+Composio and Nango are **invisible infrastructure**. Clients see CREATE SOMETHING MCP servers. The supplier is plumbing underneath.
+
+```
+Client Request → CREATE SOMETHING MCP Server (mcp-core)
+                    ├── Intelligence Layer (Skills, Agents) ← Our code, our margin
+                    ├── Three-Tier alignment ← Our framework
+                    └── Composio/Nango SDK (internal) ← Swappable plumbing
+```
+
+**Invariants**:
+- Client never knows the supplier exists
+- mcp-core is always the server framework
+- Intelligence Layer is always custom
+- Supplier is swappable (MIT-licensed SDK, wrapper pattern = contained blast radius)
+
+### Supplier Comparison
+
+| Dimension | Composio ($29-229/mo) | Nango ($50-500/mo) | Custom ($0 vendor) |
+|-----------|-----------------------|--------------------|--------------------|
+| **Use case** | AI agent tool calling | Data synchronization | Deep domain workflows |
+| **Auth** | Managed OAuth for 500+ apps | Managed OAuth + sync | Own OAuth patterns |
+| **MCP primitives** | Tools only | Tools + sync layer | All three (Resources, Tools, Prompts) |
+| **Depth** | Shallow CRUD | Medium (sync logic) | Deep (domain logic) |
+| **Edge deployment** | Workers-compatible (TBD) | Cloud-hosted | Native Workers |
+| **Margin impact** | ~90% on standard integrations | ~80% on sync integrations | ~60-70% but higher absolute |
+
+### Red Lines
+
+- **Never** list suppliers as partners on .agency site
+- **Never** expose supplier SDK directly to clients
+- **Never** use suppliers for core moat integrations (QuickBooks, scheduling, substrate, Procore)
+- **Never** depend on supplier uptime for client SLAs on critical paths
+
+### Implementation
+
+The `@create-something/composio-bridge` package provides the wrap pattern adapter. See `docs/internal/COMPOSIO_EVALUATION.md` for the full vendor evaluation and `packages/composio-bridge/` for the implementation.
+
+---
+
 ## Positioning Statements
 
 **WORKWAY**:
@@ -298,7 +363,7 @@ The gap: Deep, workflow-aware MCP servers + Intelligence Layer, built by teams w
 |----------|-----|-----|
 | **.ltd** | Philosophy of creation | The philosophy of automation infrastructure |
 | **.io** | Research and tools | MCP patterns for builders |
-| **.space** | Practice and experiments | MCP integration experiments |
+| **.space** | Practice and experiments | The Workbench — live tools |
 | **.agency** | Client services | Custom MCP development |
 
 ---
@@ -312,7 +377,7 @@ The gap: Deep, workflow-aware MCP servers + Intelligence Layer, built by teams w
 
 ### CREATE SOMETHING (Horizontal - Creation Moat)
 1. [ ] Update .io content: focus on MCP *creation* patterns, not consumption
-2. [ ] Deprecate .space template tutorials; replace with MCP integration experiments
+2. [x] Redefine .space as The Workbench — live tools, not articles
 3. [ ] Define .agency service packages: MCP Audit, Custom MCP Dev, Intelligence Layer
 4. [ ] Build reference MCPs for common integration patterns (CRM, project management, etc.)
 5. [ ] Document the creation moat thesis on .ltd

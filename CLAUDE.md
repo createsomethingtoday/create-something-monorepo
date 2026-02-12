@@ -129,7 +129,7 @@ This is where CREATE SOMETHING operates.
 |----------|-----------|----------------------|
 | **.ltd** | Philosophy of creation | Philosophy of *automation infrastructure*—MCP as chassis |
 | **.io** | Research, tools, docs | MCP patterns, reference implementations, SDK research |
-| **.space** | Practice, experiments | MCP server experiments, integration patterns, *not* template tutorials |
+| **.space** | Practice, experiments | **The Workbench**—live tools for code execution, motion analysis, data dashboards |
 | **.agency** | Client services (templates) | **Custom MCP development**—the creation moat applied to client work |
 
 The hermeneutic circle: Philosophy informs research. Research validates practice. Practice serves clients. Client outcomes test and evolve the philosophy.
@@ -201,7 +201,7 @@ This is the life's work: building systems that work while you sleep.
 
 ```
 packages/
-  space/    → createsomething.space  (Practice: experiments, learning)
+  space/    → createsomething.space  (Workbench: live tools, sandboxes)
   io/       → createsomething.io     (Research: tools, documentation)
   agency/   → createsomething.agency (Services: client work)
   ltd/      → createsomething.ltd    (Philosophy: canon, ethos)
@@ -493,11 +493,11 @@ const url = await cf.pages.deploy('project', './dist');
 CREATE SOMETHING operates as an interconnected system where each property serves the whole:
 
 ```
-.ltd (Philosophy) → provides criteria for →
-.io (Research)    → validates →
-.space (Practice) → applies to →
-.agency (Services) → tests and evolves →
+.ltd (Philosophy)  → provides principles →
+.io (Research)     → documents validated patterns →
+.space (Workbench) → tools for building and testing →
+.agency (Services) → delivers to clients →
 .ltd (Philosophy)
 ```
 
-Your contributions enter this circle. Code changes on .space eventually influence the philosophical foundation on .ltd. This is the Subtractive Triad's third level—Heidegger—applied to the organization itself: every property must serve the whole, or be reconnected until it does.
+Your contributions enter this circle. Tools built on .space validate patterns documented on .io, which inform the philosophy on .ltd. This is the Subtractive Triad's third level—Heidegger—applied to the organization itself: every property must serve the whole, or be reconnected until it does.
