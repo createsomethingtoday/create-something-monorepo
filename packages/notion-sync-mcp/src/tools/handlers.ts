@@ -16,7 +16,7 @@
 import type { AccountContext } from '@create-something/mcp-core';
 import { jsonContent, errorContent } from '@create-something/mcp-core';
 import type { ToolResult } from '@create-something/mcp-core';
-import { getD1Config } from '../auth.js';
+import { getD1Executor } from '../auth.js';
 import {
   ensureInitialized,
   createClientMapping,
@@ -34,6 +34,7 @@ import {
   ConflictStrategy,
 } from "../constants.js";
 import type {
+  InspectDatabasesInput,
   RegisterClientInput,
   UpdateClientInput,
   SyncIssuesInput,
@@ -45,13 +46,131 @@ function generateId(): string {
   return crypto.randomUUID();
 }
 
+// Syncable property types (must match notion.ts buildPropertyPayload)
+const SYNCABLE_TYPES = new Set([
+  'title', 'rich_text', 'number', 'select', 'multi_select',
+  'date', 'checkbox', 'url', 'email', 'phone_number', 'status',
+]);
+
+// ─── Inspect Databases ──────────────────────────────────────────────
+
+export async function handleInspectDatabases(
+  params: InspectDatabasesInput,
+  _ctx: AccountContext
+): Promise<ToolResult> {
+  try {
+    // Fetch both schemas
+    let masterSchema: Record<string, { type: string }>;
+    try {
+      masterSchema = await getDatabaseSchema(
+        params.notion_token_master,
+        params.master_database_id
+      ) as unknown as Record<string, { type: string }>;
+    } catch {
+      return errorContent(
+        "Cannot access master database. Check the database ID and that the integration is connected (Database > ••• > Connections)."
+      );
+    }
+
+    let clientSchema: Record<string, { type: string }>;
+    try {
+      clientSchema = await getDatabaseSchema(
+        params.notion_token_client,
+        params.client_database_id
+      ) as unknown as Record<string, { type: string }>;
+    } catch {
+      return errorContent(
+        "Cannot access client database. Check the database ID and that the integration is connected (Database > ••• > Connections)."
+      );
+    }
+
+    // Categorize properties
+    const masterProps = Object.entries(masterSchema).map(([name, prop]) => ({
+      name,
+      type: prop.type,
+      syncable: SYNCABLE_TYPES.has(prop.type),
+    }));
+
+    const clientProps = Object.entries(clientSchema).map(([name, prop]) => ({
+      name,
+      type: prop.type,
+      syncable: SYNCABLE_TYPES.has(prop.type),
+    }));
+
+    // Find matching properties (same name, both syncable)
+    const clientPropMap = new Map(clientProps.map((p) => [p.name, p]));
+    const recommended: string[] = [];
+    const matchingButUnsyncable: Array<{ name: string; masterType: string; clientType: string }> = [];
+    const masterOnly: string[] = [];
+
+    for (const mp of masterProps) {
+      const cp = clientPropMap.get(mp.name);
+      if (cp) {
+        if (mp.syncable && cp.syncable) {
+          recommended.push(mp.name);
+        } else {
+          matchingButUnsyncable.push({
+            name: mp.name,
+            masterType: mp.type,
+            clientType: cp.type,
+          });
+        }
+      } else if (mp.syncable) {
+        masterOnly.push(mp.name);
+      }
+    }
+
+    const clientOnly = clientProps
+      .filter((cp) => !masterProps.some((mp) => mp.name === cp.name) && cp.syncable)
+      .map((cp) => cp.name);
+
+    // Detect likely filter properties (select/multi_select that could tag clients)
+    const possibleFilterProps = masterProps
+      .filter((p) => p.type === 'select' || p.type === 'multi_select')
+      .map((p) => p.name);
+
+    return jsonContent({
+      master_database: {
+        id: params.master_database_id,
+        total_properties: masterProps.length,
+        syncable_properties: masterProps.filter((p) => p.syncable).map((p) => ({ name: p.name, type: p.type })),
+      },
+      client_database: {
+        id: params.client_database_id,
+        total_properties: clientProps.length,
+        syncable_properties: clientProps.filter((p) => p.syncable).map((p) => ({ name: p.name, type: p.type })),
+      },
+      recommended_sync_properties: recommended,
+      possible_filter_properties: possibleFilterProps,
+      notes: {
+        master_only: masterOnly.length > 0
+          ? `These properties exist in your database but not the client's: ${masterOnly.join(', ')}`
+          : 'All syncable master properties have matches in the client database.',
+        client_only: clientOnly.length > 0
+          ? `These properties exist in the client's database but not yours: ${clientOnly.join(', ')}`
+          : 'All syncable client properties have matches in your database.',
+        unsyncable_matches: matchingButUnsyncable.length > 0
+          ? `These properties match by name but have unsyncable types: ${matchingButUnsyncable.map((p) => `${p.name} (${p.masterType}/${p.clientType})`).join(', ')}`
+          : null,
+      },
+      next_step: recommended.length > 0
+        ? `I recommend syncing these ${recommended.length} properties: ${recommended.join(', ')}. Want to proceed with these, or add/remove any?`
+        : 'No matching syncable properties found. The databases may need matching property names to sync.',
+    });
+  } catch (error) {
+    return errorContent(
+      `Error inspecting databases: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+}
+
 // ─── Register Client ────────────────────────────────────────────────
 
 export async function handleRegisterClient(
   params: RegisterClientInput,
   ctx: AccountContext
 ): Promise<ToolResult> {
-  const d1 = getD1Config(ctx);
+  const d1 = getD1Executor(ctx);
 
   try {
     await ensureInitialized(d1);
@@ -126,7 +245,7 @@ export async function handleUpdateClient(
   params: UpdateClientInput,
   ctx: AccountContext
 ): Promise<ToolResult> {
-  const d1 = getD1Config(ctx);
+  const d1 = getD1Executor(ctx);
 
   try {
     await ensureInitialized(d1);
@@ -176,7 +295,7 @@ export async function handleSyncIssues(
   params: SyncIssuesInput,
   ctx: AccountContext
 ): Promise<ToolResult> {
-  const d1 = getD1Config(ctx);
+  const d1 = getD1Executor(ctx);
 
   try {
     await ensureInitialized(d1);
@@ -210,7 +329,7 @@ export async function handleRemoveClient(
   params: RemoveClientInput,
   ctx: AccountContext
 ): Promise<ToolResult> {
-  const d1 = getD1Config(ctx);
+  const d1 = getD1Executor(ctx);
 
   try {
     await ensureInitialized(d1);
@@ -245,7 +364,7 @@ export async function handleResolveConflicts(
   params: ResolveConflictsInput,
   ctx: AccountContext
 ): Promise<ToolResult> {
-  const d1 = getD1Config(ctx);
+  const d1 = getD1Executor(ctx);
 
   try {
     await ensureInitialized(d1);

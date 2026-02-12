@@ -15,6 +15,31 @@ import {
   SyncDirection,
 } from "../constants.js";
 
+// ─── Inspect Databases ──────────────────────────────────────────────
+
+export const InspectDatabasesSchema = z
+  .object({
+    master_database_id: z
+      .string()
+      .min(1)
+      .describe("Notion database ID of the master (consultant's) Issues database"),
+    notion_token_master: z
+      .string()
+      .min(1)
+      .describe("Notion integration token for the master workspace"),
+    client_database_id: z
+      .string()
+      .min(1)
+      .describe("Notion database ID of the client's Issues database"),
+    notion_token_client: z
+      .string()
+      .min(1)
+      .describe("Notion integration token for the client workspace"),
+  })
+  .strict();
+
+export type InspectDatabasesInput = z.infer<typeof InspectDatabasesSchema>;
+
 // ─── Register Client ────────────────────────────────────────────────
 
 export const RegisterClientSchema = z

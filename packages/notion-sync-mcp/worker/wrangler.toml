@@ -1,17 +1,26 @@
 name = "notion-sync-mcp-worker"
 main = "index.ts"
-compatibility_date = "2024-12-01"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+# Production URL: https://notion-sync.mcp.createsomething.agency
+# Enable custom domain after initial deployment verification
+# [[routes]]
+# pattern = "notion-sync.mcp.createsomething.agency"
+# custom_domain = true
 
 [[d1_databases]]
 binding = "DB"
 database_name = "notion-sync"
-database_id = "<your-d1-database-id>"
+database_id = "3b897645-ea00-4a1a-9894-7b91604b6f3d"
 
 [triggers]
 crons = ["*/15 * * * *"]
 
-[vars]
-# Set these in the Cloudflare dashboard or via `wrangler secret put`
-# CF_ACCOUNT_ID = ""
-# CF_API_TOKEN = ""
-# CF_D1_DATABASE_ID = ""
+# Secrets (set via `wrangler secret put`):
+#   CF_ACCOUNT_ID         - Cloudflare account ID (for REST API fallback)
+#   CF_API_TOKEN          - Cloudflare API token with D1 access
+#   CF_D1_DATABASE_ID     - D1 database ID (for REST API fallback)
+#   MCP_API_KEY           - API key for authenticating remote MCP/sync clients
+#   TOKEN_ENCRYPTION_KEY  - AES-GCM encryption key for Notion tokens at rest

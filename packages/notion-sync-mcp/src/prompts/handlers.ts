@@ -14,7 +14,7 @@
  */
 
 import type { AccountContext, PromptResult } from '@create-something/mcp-core';
-import { getD1Config } from '../auth.js';
+import { getD1Executor } from '../auth.js';
 import {
   ensureInitialized,
   getClientMappingByName,
@@ -37,7 +37,7 @@ export async function handleSyncStrategy(
   params: Record<string, unknown>,
   ctx: AccountContext
 ): Promise<PromptResult> {
-  const d1 = getD1Config(ctx);
+  const d1 = getD1Executor(ctx);
   await ensureInitialized(d1);
   const clientName = params.client_name as string | undefined;
 
@@ -142,7 +142,7 @@ export async function handleConflictResolution(
   params: Record<string, unknown>,
   ctx: AccountContext
 ): Promise<PromptResult> {
-  const d1 = getD1Config(ctx);
+  const d1 = getD1Executor(ctx);
   await ensureInitialized(d1);
   const clientName = params.client_name as string | undefined;
 
@@ -230,31 +230,65 @@ export async function handleClientOnboarding(
   params: Record<string, unknown>,
   ctx: AccountContext
 ): Promise<PromptResult> {
-  const d1 = getD1Config(ctx);
+  const d1 = getD1Executor(ctx);
   await ensureInitialized(d1);
 
   const messages: PromptResult['messages'] = [];
 
-  let systemContent = `You are helping set up a new client for two-way Notion database synchronization.
+  let systemContent = `You are helping a consultant set up two-way Notion issue tracking with one of their clients.
 
-To register a client, you need to collect the following information:
+**Context**: The user is a consultant (or agency/freelancer) who works across multiple client Notion workspaces. They keep a central Issues database in their own workspace where they track all work across all clients. Each client has their own Issues database in their own workspace. This tool keeps them in sync — the consultant creates an issue tagged for a client, it appears in that client's database; the client updates a status, it flows back to the consultant's central view.
 
-1. **Client name** — A human-readable name (e.g., "Acme Corp")
-2. **Master database ID** — The Notion database ID of the master Issues database
-3. **Client database ID** — The Notion database ID of the client's Issues database
-4. **Filter property** — Property name in the master DB used to filter (e.g., "Client")
-5. **Filter value** — Value to match in the filter property (e.g., "Acme Corp")
-6. **Master workspace token** — Notion integration token for the master workspace
-7. **Client workspace token** — Notion integration token for the client workspace
-8. **Properties to sync** — List of property names to sync (e.g., Title, Status, Priority)
-9. **Conflict strategy** — How to handle conflicts: master_wins (default), client_wins, latest_wins, or manual
+Walk them through setup step by step, asking for one piece of information at a time. Be conversational — they may not know their database IDs off the top of their head, so explain where to find things.
+
+**Step 1 — Client name**
+Ask: "Which client are we connecting? Give me their name as you'd refer to them (e.g., 'Acme Corp')."
+
+**Step 2 — Your central database**
+Ask for their master Issues database — the one in their own workspace where they track everything.
+- Database ID: the 32-character string in the Notion URL (notion.so/{workspace}/**{database_id}**?v=...)
+- Their Notion integration token for this workspace (starts with "ntn_")
+- If this is their first client, they'll need to provide these. If they've already registered a client, their master database info is likely the same — confirm and reuse.
+
+**Step 3 — Client tag**
+Ask which property in their central database identifies which client an issue belongs to. Common patterns:
+- A "Client" Select property with values like "Acme Corp", "Vibe Records", etc.
+- A "Project" property that maps to client names
+Ask for the property name and the value that matches this specific client.
+
+**Step 4 — Client's database**
+Ask for the database in the client's workspace.
+- Database ID from their client's Notion workspace
+- A Notion integration token that has access to the client's workspace. This could be:
+  - The same integration if the consultant is a member of the client's workspace
+  - A separate integration created in the client's workspace (the client would need to create it or add the consultant's integration via Database > ••• > Connections)
+
+**Step 5 — Inspect databases (agent does the heavy lifting)**
+Once you have both database IDs and tokens, call **notion_sync_inspect_databases** immediately. This reads both database schemas and returns:
+- All properties in each database
+- Which ones are syncable and match by name
+- A recommended list of properties to sync
+- Possible filter properties (for Step 3 if not already answered)
+
+Present the recommendation to the user in plain language, e.g.: "I found 6 matching properties between your databases: Title, Status, Priority, Assignee, Due Date, and Description. Want to sync all of these, or skip any?"
+
+Do NOT ask the user to type property names or JSON arrays. Show them the list and let them confirm or adjust.
+
+**Step 6 — Conflict strategy**
+Ask how they want conflicts handled (when both sides edit the same issue between syncs):
+- **master_wins** (recommended) — their central database is the source of truth
+- **client_wins** — the client's edits take precedence
+- **manual** — conflicts are flagged for them to review
+
+**Step 7 — Confirm and register**
+Summarize everything clearly, then call notion_sync_register_client. After registration, immediately run notion_sync_issues with dry_run: true to show them what would sync. If the preview looks right, offer to run the real sync.
 
 **Important notes:**
-- Both Notion integrations must have access to their respective databases
-- The filter property in the master DB is used to scope which issues belong to this client
-- Tokens should be Notion internal integration tokens (start with "ntn_" or "secret_")
+- Both integrations must be connected to their respective databases (Database > ••• > Connections)
 - Supported property types: title, rich_text, number, select, multi_select, date, checkbox, url, email, phone_number, status
-- Relations, rollups, and formulas cannot be synced`;
+- Relations, rollups, and formulas cannot be synced
+- Tokens are encrypted at rest — safe to provide directly
+- After setup, sync runs automatically every 15 minutes — no manual action needed`;
 
   // Add context about existing clients
   try {

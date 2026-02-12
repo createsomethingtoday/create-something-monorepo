@@ -10,7 +10,7 @@
  * 1. PUSH (master → client): Query master DB for client's issues, compare with mappings,
  *    create/update pages in client DB.
  * 2. PULL (client → master): Query client DB for changes, compare with mappings,
- *    update master DB.
+ *    update master DB. Includes conflict detection even for pull-only direction.
  * 3. CONFLICT RESOLUTION: When both sides changed since last sync, apply strategy.
  */
 
@@ -40,9 +40,8 @@ import type {
   SyncResult,
   DryRunResult,
   ConflictRecord,
-  SyncError,
   NotionPage,
-  D1Config,
+  D1Executor,
 } from "../types.js";
 
 function generateId(): string {
@@ -56,7 +55,7 @@ function nowISO(): string {
 // ─── Main Sync Orchestrator ─────────────────────────────────────────
 
 export async function syncClient(
-  d1Config: D1Config,
+  executor: D1Executor,
   mapping: ClientMapping,
   direction: SyncDirection = SyncDirection.BIDIRECTIONAL
 ): Promise<SyncResult> {
@@ -83,7 +82,7 @@ export async function syncClient(
       direction === SyncDirection.PUSH ||
       direction === SyncDirection.BIDIRECTIONAL
     ) {
-      await pushMasterToClient(d1Config, mapping, syncProperties, result);
+      await pushMasterToClient(executor, mapping, syncProperties, result);
     }
 
     // Phase 2: PULL (client → master)
@@ -91,7 +90,7 @@ export async function syncClient(
       direction === SyncDirection.PULL ||
       direction === SyncDirection.BIDIRECTIONAL
     ) {
-      await pullClientToMaster(d1Config, mapping, syncProperties, result);
+      await pullClientToMaster(executor, mapping, syncProperties, result, direction);
     }
   } catch (error) {
     result.errors.push({
@@ -106,7 +105,7 @@ export async function syncClient(
   result.duration_ms = Date.now() - startTime;
 
   // Log the sync
-  await createSyncLog(d1Config, {
+  await createSyncLog(executor, {
     id: generateId(),
     client_mapping_id: mapping.id,
     direction,
@@ -130,7 +129,7 @@ export async function syncClient(
  * counts of what would be pushed, pulled, created, and conflicted.
  */
 export async function dryRunSync(
-  d1Config: D1Config,
+  executor: D1Executor,
   mapping: ClientMapping,
   direction: SyncDirection = SyncDirection.BIDIRECTIONAL
 ): Promise<DryRunResult> {
@@ -166,7 +165,7 @@ export async function dryRunSync(
         );
 
   // Load existing mappings
-  const existingMappings = await listPageMappings(d1Config, mapping.id);
+  const existingMappings = await listPageMappings(executor, mapping.id);
   const byMasterId = new Map(existingMappings.map((m) => [m.master_page_id, m]));
   const byClientId = new Map(existingMappings.map((m) => [m.client_page_id, m]));
 
@@ -232,7 +231,7 @@ export async function dryRunSync(
 // ─── PUSH: Master → Client ──────────────────────────────────────────
 
 async function pushMasterToClient(
-  d1Config: D1Config,
+  executor: D1Executor,
   mapping: ClientMapping,
   syncProperties: string[],
   result: SyncResult
@@ -248,7 +247,7 @@ async function pushMasterToClient(
   for (const masterPage of masterPages) {
     try {
       const existing = await getPageMappingByMasterId(
-        d1Config,
+        executor,
         mapping.id,
         masterPage.id
       );
@@ -262,7 +261,7 @@ async function pushMasterToClient(
           properties
         );
 
-        await upsertPageMapping(d1Config, {
+        await upsertPageMapping(executor, {
           id: generateId(),
           client_mapping_id: mapping.id,
           master_page_id: masterPage.id,
@@ -304,38 +303,44 @@ async function pushMasterToClient(
               result.conflicts.push(...resolved);
 
               // Apply resolution
-              await applyConflictResolution(
+              const updatedPage = await applyConflictResolution(
                 mapping,
                 masterPage,
                 clientPage,
                 resolved,
                 syncProperties
               );
+
+              // Update mapping with latest timestamps
+              await upsertPageMapping(executor, {
+                ...existing,
+                master_last_edited: masterPage.last_edited_time,
+                client_last_edited: updatedPage?.last_edited_time ?? clientPage.last_edited_time,
+                sync_status: resolved.some((c) => !c.resolved)
+                  ? SyncStatus.CONFLICT
+                  : SyncStatus.SYNCED,
+                last_synced_at: nowISO(),
+              });
             }
           } else {
             // Only master changed — push to client
             const properties = buildSyncProperties(masterPage, syncProperties);
-            await updatePage(
+            const updatedClientPage = await updatePage(
               mapping.notion_token_client,
               existing.client_page_id,
               properties
             );
             result.pages_pushed++;
-          }
 
-          // Update mapping
-          await upsertPageMapping(d1Config, {
-            ...existing,
-            master_last_edited: masterPage.last_edited_time,
-            client_last_edited: (
-              await getPage(
-                mapping.notion_token_client,
-                existing.client_page_id
-              )
-            ).last_edited_time,
-            sync_status: SyncStatus.SYNCED,
-            last_synced_at: nowISO(),
-          });
+            // Use the response from updatePage — no extra API call needed
+            await upsertPageMapping(executor, {
+              ...existing,
+              master_last_edited: masterPage.last_edited_time,
+              client_last_edited: updatedClientPage.last_edited_time,
+              sync_status: SyncStatus.SYNCED,
+              last_synced_at: nowISO(),
+            });
+          }
         }
       }
     } catch (error) {
@@ -353,10 +358,11 @@ async function pushMasterToClient(
 // ─── PULL: Client → Master ──────────────────────────────────────────
 
 async function pullClientToMaster(
-  d1Config: D1Config,
+  executor: D1Executor,
   mapping: ClientMapping,
   syncProperties: string[],
-  result: SyncResult
+  result: SyncResult,
+  direction: SyncDirection
 ): Promise<void> {
   // Get all client pages
   const clientPages = await queryAllPages(
@@ -367,7 +373,7 @@ async function pullClientToMaster(
   for (const clientPage of clientPages) {
     try {
       const existing = await getPageMappingByClientId(
-        d1Config,
+        executor,
         mapping.id,
         clientPage.id
       );
@@ -388,7 +394,7 @@ async function pullClientToMaster(
           properties
         );
 
-        await upsertPageMapping(d1Config, {
+        await upsertPageMapping(executor, {
           id: generateId(),
           client_mapping_id: mapping.id,
           master_page_id: masterPage.id,
@@ -406,24 +412,66 @@ async function pullClientToMaster(
           clientPage.last_edited_time > existing.client_last_edited;
 
         if (clientChanged) {
-          // Already handled conflicts in push phase for bidirectional
-          // For pull-only, just update master
+          // For pull-only direction, check if master also changed (conflict detection)
+          if (direction === SyncDirection.PULL) {
+            const masterPage = await getPage(
+              mapping.notion_token_master,
+              existing.master_page_id
+            );
+            const masterAlsoChanged =
+              masterPage.last_edited_time > existing.master_last_edited;
+
+            if (masterAlsoChanged) {
+              // CONFLICT in pull-only mode
+              const conflicts = detectPropertyConflicts(
+                masterPage,
+                clientPage,
+                syncProperties
+              );
+
+              if (conflicts.length > 0) {
+                const resolved = resolveConflicts(
+                  conflicts,
+                  mapping.conflict_strategy as ConflictStrategy
+                );
+                result.conflicts.push(...resolved);
+
+                // Apply resolution
+                const updatedPage = await applyConflictResolution(
+                  mapping,
+                  masterPage,
+                  clientPage,
+                  resolved,
+                  syncProperties
+                );
+
+                await upsertPageMapping(executor, {
+                  ...existing,
+                  master_last_edited: updatedPage?.last_edited_time ?? masterPage.last_edited_time,
+                  client_last_edited: clientPage.last_edited_time,
+                  sync_status: resolved.some((c) => !c.resolved)
+                    ? SyncStatus.CONFLICT
+                    : SyncStatus.SYNCED,
+                  last_synced_at: nowISO(),
+                });
+                continue;
+              }
+            }
+          }
+
+          // No conflict (or bidirectional already handled in push phase) — update master
           const properties = buildSyncProperties(clientPage, syncProperties);
-          await updatePage(
+          const updatedMasterPage = await updatePage(
             mapping.notion_token_master,
             existing.master_page_id,
             properties
           );
           result.pages_pulled++;
 
-          await upsertPageMapping(d1Config, {
+          // Use the response from updatePage — no extra API call needed
+          await upsertPageMapping(executor, {
             ...existing,
-            master_last_edited: (
-              await getPage(
-                mapping.notion_token_master,
-                existing.master_page_id
-              )
-            ).last_edited_time,
+            master_last_edited: updatedMasterPage.last_edited_time,
             client_last_edited: clientPage.last_edited_time,
             sync_status: SyncStatus.SYNCED,
             last_synced_at: nowISO(),
@@ -510,22 +558,27 @@ function resolveConflicts(
   });
 }
 
+/**
+ * Apply conflict resolution and return the updated page (if any update was made).
+ * Returns the updated NotionPage so callers can use its last_edited_time
+ * without an extra API call.
+ */
 async function applyConflictResolution(
   mapping: ClientMapping,
   masterPage: NotionPage,
   clientPage: NotionPage,
   conflicts: ConflictRecord[],
   syncProperties: string[]
-): Promise<void> {
+): Promise<NotionPage | null> {
   const strategy = mapping.conflict_strategy as ConflictStrategy;
 
   if (strategy === ConflictStrategy.MANUAL) {
     // Don't auto-resolve — mark as conflict in DB
-    return;
+    return null;
   }
 
   // Check if any conflicts are unresolved
-  if (conflicts.every((c) => !c.resolved)) return;
+  if (conflicts.every((c) => !c.resolved)) return null;
 
   // For resolved conflicts, determine which direction to apply
   if (
@@ -534,7 +587,7 @@ async function applyConflictResolution(
   ) {
     // Push master values to client
     const properties = buildSyncProperties(masterPage, syncProperties);
-    await updatePage(
+    return await updatePage(
       mapping.notion_token_client,
       clientPage.id,
       properties
@@ -542,12 +595,14 @@ async function applyConflictResolution(
   } else if (strategy === ConflictStrategy.CLIENT_WINS) {
     // Pull client values to master
     const properties = buildSyncProperties(clientPage, syncProperties);
-    await updatePage(
+    return await updatePage(
       mapping.notion_token_master,
       masterPage.id,
       properties
     );
   }
+
+  return null;
 }
 
 // ─── Property Building ──────────────────────────────────────────────

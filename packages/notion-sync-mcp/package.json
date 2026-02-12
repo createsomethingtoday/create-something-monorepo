@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@create-something/mcp-core": "workspace:*",
-    "@notionhq/client": "^2.2.15",
+    "@notionhq/client": "^5.9.0",
     "zod": "^3.23.0"
   },
   "devDependencies": {

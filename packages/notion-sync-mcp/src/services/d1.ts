@@ -3,77 +3,115 @@
  *
  * Three-Tier Framework alignment:
  *   - Database tier: This IS the Database tier — persistence of sync state
- *   - Artifact: D1Config flows from AccountContext.metadata into every operation
+ *   - Artifact: D1Executor flows from AccountContext.metadata into every operation
  *
- * Refactored from the reference to accept D1Config explicitly instead of
- * reading from process.env globals. This makes the service context-scoped.
+ * Supports two access patterns via D1Executor abstraction:
+ *   - REST API (stdio mode): createRestExecutor(config)
+ *   - D1 Binding (Worker mode): createBindingExecutor(db)
  */
 
 import type {
   ClientMapping,
   PageIdMapping,
   SyncLogEntry,
-  D1Response,
+  D1QueryResult,
+  D1RestResponse,
   D1Config,
+  D1Executor,
+  D1DatabaseBinding,
 } from "../types.js";
 import { CF_API_BASE } from "../constants.js";
+import { encryptToken, decryptToken } from "./crypto.js";
 
-// ─── D1 Query Helper ────────────────────────────────────────────────
+// ─── D1 Executor Implementations ────────────────────────────────────
 
-function getD1Url(config: D1Config): string {
-  return `${CF_API_BASE}/accounts/${config.accountId}/d1/database/${config.databaseId}/query`;
+/**
+ * Create a D1Executor that uses the Cloudflare REST API.
+ * Used in stdio mode where there's no D1 binding available.
+ */
+export function createRestExecutor(config: D1Config, encryptionKey?: string): D1Executor {
+  const url = `${CF_API_BASE}/accounts/${config.accountId}/d1/database/${config.databaseId}/query`;
+
+  return {
+    encryptionKey,
+    async execute(sql: string, params: unknown[] = []): Promise<D1QueryResult> {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${config.apiToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ sql, params }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`D1 query failed (${response.status}): ${text}`);
+      }
+
+      const data = (await response.json()) as D1RestResponse;
+      return {
+        results: data.result[0].results,
+        meta: { changes: data.result[0].meta.changes },
+      };
+    },
+  };
 }
 
-async function executeQuery(
-  config: D1Config,
-  sql: string,
-  params: unknown[] = []
-): Promise<D1Response> {
-  const response = await fetch(getD1Url(config), {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${config.apiToken}`,
-      "Content-Type": "application/json",
+/**
+ * Create a D1Executor that uses Cloudflare's D1 binding directly.
+ * Used in Worker mode where env.DB is available — faster, no REST overhead.
+ */
+export function createBindingExecutor(db: D1DatabaseBinding, encryptionKey?: string): D1Executor {
+  return {
+    encryptionKey,
+    async execute(sql: string, params: unknown[] = []): Promise<D1QueryResult> {
+      const stmt = db.prepare(sql);
+      const bound = params.length > 0 ? stmt.bind(...params) : stmt;
+      const result = await bound.all();
+
+      return {
+        results: (result.results ?? []) as Record<string, unknown>[],
+        meta: { changes: result.meta?.changes ?? 0 },
+      };
     },
-    body: JSON.stringify({ sql, params }),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`D1 query failed (${response.status}): ${text}`);
-  }
-
-  return (await response.json()) as D1Response;
+  };
 }
 
 // ─── Auto-Initialization ────────────────────────────────────────────
 
-let _initialized = false;
+/**
+ * Track initialization per executor identity (keyed by a stringified
+ * reference). In Workers, module-level state persists per isolate, so
+ * we use a Map keyed by the executor reference to handle multi-tenant
+ * scenarios and avoid repeated schema checks.
+ */
+const _initializedExecutors = new WeakSet<D1Executor>();
 
 /**
  * Ensure D1 tables exist, creating them if needed.
  *
- * Uses a module-level flag to avoid repeated checks within the same
- * process lifetime. On first call, attempts a lightweight query; if
- * the table doesn't exist, runs full schema initialization.
+ * Uses a WeakSet keyed by executor instance to avoid repeated checks
+ * within the same isolate lifetime while correctly handling different
+ * executor instances.
  */
-export async function ensureInitialized(config: D1Config): Promise<void> {
-  if (_initialized) return;
+export async function ensureInitialized(executor: D1Executor): Promise<void> {
+  if (_initializedExecutors.has(executor)) return;
 
   try {
     // Lightweight probe — if this succeeds, tables exist
-    await executeQuery(config, "SELECT 1 FROM client_mappings LIMIT 1");
-    _initialized = true;
+    await executor.execute("SELECT 1 FROM client_mappings LIMIT 1");
+    _initializedExecutors.add(executor);
   } catch {
     // Table doesn't exist — initialize schema
-    await initializeSchema(config);
-    _initialized = true;
+    await initializeSchema(executor);
+    _initializedExecutors.add(executor);
   }
 }
 
 // ─── Schema Initialization ──────────────────────────────────────────
 
-export async function initializeSchema(config: D1Config): Promise<void> {
+export async function initializeSchema(executor: D1Executor): Promise<void> {
   const statements = [
     `CREATE TABLE IF NOT EXISTS client_mappings (
       id TEXT PRIMARY KEY,
@@ -124,16 +162,47 @@ export async function initializeSchema(config: D1Config): Promise<void> {
   ];
 
   for (const sql of statements) {
-    await executeQuery(config, sql);
+    await executor.execute(sql);
   }
+}
+
+// ─── Token Encryption Helpers ────────────────────────────────────────
+
+/**
+ * Decrypt Notion tokens in a ClientMapping row.
+ * Handles migration from plaintext gracefully.
+ */
+async function decryptMappingTokens(
+  mapping: ClientMapping,
+  encryptionKey: string | undefined
+): Promise<ClientMapping> {
+  return {
+    ...mapping,
+    notion_token_master: await decryptToken(mapping.notion_token_master, encryptionKey),
+    notion_token_client: await decryptToken(mapping.notion_token_client, encryptionKey),
+  };
+}
+
+/**
+ * Decrypt tokens for an array of client mappings.
+ */
+async function decryptAllMappingTokens(
+  mappings: ClientMapping[],
+  encryptionKey: string | undefined
+): Promise<ClientMapping[]> {
+  return Promise.all(mappings.map((m) => decryptMappingTokens(m, encryptionKey)));
 }
 
 // ─── Client Mapping CRUD ────────────────────────────────────────────
 
 export async function createClientMapping(
-  config: D1Config,
+  executor: D1Executor,
   mapping: Omit<ClientMapping, "created_at" | "updated_at">
 ): Promise<ClientMapping> {
+  // Encrypt tokens before storing
+  const encryptedMaster = await encryptToken(mapping.notion_token_master, executor.encryptionKey);
+  const encryptedClient = await encryptToken(mapping.notion_token_client, executor.encryptionKey);
+
   const sql = `INSERT INTO client_mappings
     (id, client_name, master_database_id, client_database_id,
      client_filter_property, client_filter_value,
@@ -142,60 +211,68 @@ export async function createClientMapping(
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     RETURNING *`;
 
-  const result = await executeQuery(config, sql, [
+  const result = await executor.execute(sql, [
     mapping.id,
     mapping.client_name,
     mapping.master_database_id,
     mapping.client_database_id,
     mapping.client_filter_property,
     mapping.client_filter_value,
-    mapping.notion_token_master,
-    mapping.notion_token_client,
+    encryptedMaster,
+    encryptedClient,
     JSON.stringify(mapping.sync_properties),
     mapping.conflict_strategy,
   ]);
 
-  return result.result[0].results[0] as unknown as ClientMapping;
+  // Return with decrypted tokens (caller expects plaintext)
+  const row = result.results[0] as unknown as ClientMapping;
+  return decryptMappingTokens(row, executor.encryptionKey);
 }
 
 export async function getClientMapping(
-  config: D1Config,
+  executor: D1Executor,
   id: string
 ): Promise<ClientMapping | null> {
-  const result = await executeQuery(
-    config,
+  const result = await executor.execute(
     "SELECT * FROM client_mappings WHERE id = ?",
     [id]
   );
-  const rows = result.result[0].results;
-  return rows.length > 0 ? (rows[0] as unknown as ClientMapping) : null;
+  if (result.results.length === 0) return null;
+  return decryptMappingTokens(
+    result.results[0] as unknown as ClientMapping,
+    executor.encryptionKey
+  );
 }
 
 export async function getClientMappingByName(
-  config: D1Config,
+  executor: D1Executor,
   name: string
 ): Promise<ClientMapping | null> {
-  const result = await executeQuery(
-    config,
+  const result = await executor.execute(
     "SELECT * FROM client_mappings WHERE client_name = ?",
     [name]
   );
-  const rows = result.result[0].results;
-  return rows.length > 0 ? (rows[0] as unknown as ClientMapping) : null;
+  if (result.results.length === 0) return null;
+  return decryptMappingTokens(
+    result.results[0] as unknown as ClientMapping,
+    executor.encryptionKey
+  );
 }
 
 export async function listClientMappings(
-  config: D1Config
+  executor: D1Executor
 ): Promise<ClientMapping[]> {
-  const result = await executeQuery(
-    config,
+  const result = await executor.execute(
     "SELECT * FROM client_mappings ORDER BY client_name"
   );
-  return result.result[0].results as unknown as ClientMapping[];
+  return decryptAllMappingTokens(
+    result.results as unknown as ClientMapping[],
+    executor.encryptionKey
+  );
 }
 
 export async function updateClientMapping(
-  config: D1Config,
+  executor: D1Executor,
   id: string,
   updates: { sync_properties?: string[]; conflict_strategy?: string }
 ): Promise<ClientMapping | null> {
@@ -212,44 +289,44 @@ export async function updateClientMapping(
     params.push(updates.conflict_strategy);
   }
 
-  if (setParts.length === 0) return getClientMapping(config, id);
+  if (setParts.length === 0) return getClientMapping(executor, id);
 
   setParts.push("updated_at = datetime('now')");
   params.push(id);
 
   const sql = `UPDATE client_mappings SET ${setParts.join(", ")} WHERE id = ? RETURNING *`;
-  const result = await executeQuery(config, sql, params);
-  const rows = result.result[0].results;
-  return rows.length > 0 ? (rows[0] as unknown as ClientMapping) : null;
+  const result = await executor.execute(sql, params);
+  if (result.results.length === 0) return null;
+  return decryptMappingTokens(
+    result.results[0] as unknown as ClientMapping,
+    executor.encryptionKey
+  );
 }
 
 export async function deleteClientMapping(
-  config: D1Config,
+  executor: D1Executor,
   id: string
 ): Promise<boolean> {
   // Delete page mappings first
-  await executeQuery(
-    config,
+  await executor.execute(
     "DELETE FROM page_id_mappings WHERE client_mapping_id = ?",
     [id]
   );
-  await executeQuery(
-    config,
+  await executor.execute(
     "DELETE FROM sync_logs WHERE client_mapping_id = ?",
     [id]
   );
-  const result = await executeQuery(
-    config,
+  const result = await executor.execute(
     "DELETE FROM client_mappings WHERE id = ?",
     [id]
   );
-  return result.result[0].meta.changes > 0;
+  return result.meta.changes > 0;
 }
 
 // ─── Page ID Mapping CRUD ───────────────────────────────────────────
 
 export async function upsertPageMapping(
-  config: D1Config,
+  executor: D1Executor,
   mapping: Omit<PageIdMapping, "created_at">
 ): Promise<void> {
   const sql = `INSERT INTO page_id_mappings
@@ -262,7 +339,7 @@ export async function upsertPageMapping(
       sync_status = excluded.sync_status,
       last_synced_at = excluded.last_synced_at`;
 
-  await executeQuery(config, sql, [
+  await executor.execute(sql, [
     mapping.id,
     mapping.client_mapping_id,
     mapping.master_page_id,
@@ -275,37 +352,37 @@ export async function upsertPageMapping(
 }
 
 export async function getPageMappingByMasterId(
-  config: D1Config,
+  executor: D1Executor,
   clientMappingId: string,
   masterPageId: string
 ): Promise<PageIdMapping | null> {
-  const result = await executeQuery(
-    config,
+  const result = await executor.execute(
     `SELECT * FROM page_id_mappings
      WHERE client_mapping_id = ? AND master_page_id = ?`,
     [clientMappingId, masterPageId]
   );
-  const rows = result.result[0].results;
-  return rows.length > 0 ? (rows[0] as unknown as PageIdMapping) : null;
+  return result.results.length > 0
+    ? (result.results[0] as unknown as PageIdMapping)
+    : null;
 }
 
 export async function getPageMappingByClientId(
-  config: D1Config,
+  executor: D1Executor,
   clientMappingId: string,
   clientPageId: string
 ): Promise<PageIdMapping | null> {
-  const result = await executeQuery(
-    config,
+  const result = await executor.execute(
     `SELECT * FROM page_id_mappings
      WHERE client_mapping_id = ? AND client_page_id = ?`,
     [clientMappingId, clientPageId]
   );
-  const rows = result.result[0].results;
-  return rows.length > 0 ? (rows[0] as unknown as PageIdMapping) : null;
+  return result.results.length > 0
+    ? (result.results[0] as unknown as PageIdMapping)
+    : null;
 }
 
 export async function listPageMappings(
-  config: D1Config,
+  executor: D1Executor,
   clientMappingId: string,
   statusFilter?: string
 ): Promise<PageIdMapping[]> {
@@ -317,12 +394,12 @@ export async function listPageMappings(
     params.push(statusFilter);
   }
 
-  const result = await executeQuery(config, sql, params);
-  return result.result[0].results as unknown as PageIdMapping[];
+  const result = await executor.execute(sql, params);
+  return result.results as unknown as PageIdMapping[];
 }
 
 export async function updatePageMappingStatus(
-  config: D1Config,
+  executor: D1Executor,
   id: string,
   status: string,
   lastSyncedAt?: string
@@ -332,17 +409,16 @@ export async function updatePageMappingStatus(
     : "UPDATE page_id_mappings SET sync_status = ? WHERE id = ?";
 
   const params = lastSyncedAt ? [status, lastSyncedAt, id] : [status, id];
-  await executeQuery(config, sql, params);
+  await executor.execute(sql, params);
 }
 
 // ─── Sync Logs ──────────────────────────────────────────────────────
 
 export async function createSyncLog(
-  config: D1Config,
+  executor: D1Executor,
   log: Omit<SyncLogEntry, "completed_at">
 ): Promise<void> {
-  await executeQuery(
-    config,
+  await executor.execute(
     `INSERT INTO sync_logs
      (id, client_mapping_id, direction, pages_pushed, pages_pulled,
       pages_created, conflicts_count, errors_count, duration_ms, started_at, completed_at)
@@ -363,54 +439,44 @@ export async function createSyncLog(
 }
 
 export async function getRecentSyncLogs(
-  config: D1Config,
+  executor: D1Executor,
   clientMappingId: string,
   limit = 10
 ): Promise<SyncLogEntry[]> {
-  const result = await executeQuery(
-    config,
+  const result = await executor.execute(
     `SELECT * FROM sync_logs
      WHERE client_mapping_id = ?
      ORDER BY started_at DESC LIMIT ?`,
     [clientMappingId, limit]
   );
-  return result.result[0].results as unknown as SyncLogEntry[];
+  return result.results as unknown as SyncLogEntry[];
 }
 
 // ─── Stats ──────────────────────────────────────────────────────────
 
-export async function getSyncStats(config: D1Config): Promise<{
+export async function getSyncStats(executor: D1Executor): Promise<{
   total_clients: number;
   total_page_mappings: number;
   pending_syncs: number;
   conflicts: number;
 }> {
-  const clientsResult = await executeQuery(
-    config,
+  const clientsResult = await executor.execute(
     "SELECT COUNT(*) as count FROM client_mappings"
   );
-  const mappingsResult = await executeQuery(
-    config,
+  const mappingsResult = await executor.execute(
     "SELECT COUNT(*) as count FROM page_id_mappings"
   );
-  const pendingResult = await executeQuery(
-    config,
+  const pendingResult = await executor.execute(
     "SELECT COUNT(*) as count FROM page_id_mappings WHERE sync_status IN ('pending_push', 'pending_pull')"
   );
-  const conflictsResult = await executeQuery(
-    config,
+  const conflictsResult = await executor.execute(
     "SELECT COUNT(*) as count FROM page_id_mappings WHERE sync_status = 'conflict'"
   );
 
   return {
-    total_clients: (clientsResult.result[0].results[0] as { count: number })
-      .count,
-    total_page_mappings: (
-      mappingsResult.result[0].results[0] as { count: number }
-    ).count,
-    pending_syncs: (pendingResult.result[0].results[0] as { count: number })
-      .count,
-    conflicts: (conflictsResult.result[0].results[0] as { count: number })
-      .count,
+    total_clients: (clientsResult.results[0] as { count: number }).count,
+    total_page_mappings: (mappingsResult.results[0] as { count: number }).count,
+    pending_syncs: (pendingResult.results[0] as { count: number }).count,
+    conflicts: (conflictsResult.results[0] as { count: number }).count,
   };
 }

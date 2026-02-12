@@ -109,19 +109,42 @@ export interface NotionDatabaseQueryResponse {
 
 // ─── Cloudflare D1 Types ────────────────────────────────────────────
 
+/**
+ * Normalized query result returned by D1Executor.
+ * Both REST API and D1 binding responses are normalized to this shape.
+ */
 export interface D1QueryResult {
-  success: boolean;
   results: Record<string, unknown>[];
   meta: {
     changes: number;
-    duration: number;
   };
 }
 
-export interface D1Response {
+/**
+ * Raw REST API response shape (Cloudflare D1 HTTP API).
+ * Only used internally by RestD1Executor.
+ */
+export interface D1RestResponse {
   success: boolean;
   errors: Array<{ code: number; message: string }>;
-  result: D1QueryResult[];
+  result: Array<{
+    success: boolean;
+    results: Record<string, unknown>[];
+    meta: { changes: number; duration: number };
+  }>;
+}
+
+/**
+ * Abstraction over D1 access — supports both REST API (stdio) and
+ * D1 binding (Worker) access patterns.
+ *
+ * This is the key interface that enables the shared sync engine to
+ * work in both stdio and Cloudflare Worker contexts.
+ */
+export interface D1Executor {
+  execute(sql: string, params?: unknown[]): Promise<D1QueryResult>;
+  /** Optional encryption key for Notion tokens at rest. When set, tokens are AES-GCM encrypted in D1. */
+  encryptionKey?: string;
 }
 
 // ─── Sync Log ───────────────────────────────────────────────────────
@@ -140,10 +163,28 @@ export interface SyncLogEntry {
   completed_at: string;
 }
 
-// ─── D1 Configuration (extracted from AccountContext.metadata) ─────
+// ─── D1 Configuration (for REST API access) ─────────────────────────
 
 export interface D1Config {
   accountId: string;
   apiToken: string;
   databaseId: string;
+}
+
+// ─── Minimal D1 Binding Types ───────────────────────────────────────
+// Defined here to avoid importing @cloudflare/workers-types into the
+// src build. These match the subset of the D1 binding API we use.
+
+export interface D1DatabaseBinding {
+  prepare(sql: string): D1PreparedStatementBinding;
+}
+
+export interface D1PreparedStatementBinding {
+  bind(...values: unknown[]): D1PreparedStatementBinding;
+  all(): Promise<D1AllResult>;
+}
+
+export interface D1AllResult {
+  results?: Record<string, unknown>[];
+  meta?: { changes?: number };
 }

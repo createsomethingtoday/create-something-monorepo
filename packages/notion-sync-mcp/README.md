@@ -42,6 +42,77 @@ Cross-cutting concerns:
 - **Dry-run preflight** -- `notion_sync_issues` accepts `dry_run: true` to preview changes before executing.
 - **Update without re-register** -- `notion_sync_update_client` modifies config in-place.
 
+## Client Configuration
+
+### Production URL
+
+```
+https://notion-sync-mcp-worker.createsomething.workers.dev/mcp
+```
+
+### OpenAI Codex
+
+Add to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers."notion-sync"]
+url = "https://notion-sync-mcp-worker.createsomething.workers.dev/mcp"
+```
+
+### Claude Code
+
+```bash
+claude mcp add notion-sync \
+  --transport http \
+  https://notion-sync-mcp-worker.createsomething.workers.dev/mcp
+```
+
+### Claude Desktop
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "notion-sync": {
+      "url": "https://notion-sync-mcp-worker.createsomething.workers.dev/mcp"
+    }
+  }
+}
+```
+
+### Cursor
+
+Add to `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "notion-sync": {
+      "url": "https://notion-sync-mcp-worker.createsomething.workers.dev/mcp"
+    }
+  }
+}
+```
+
+### Local Development (stdio)
+
+```json
+{
+  "mcpServers": {
+    "notion-sync": {
+      "command": "node",
+      "args": ["packages/notion-sync-mcp/dist/index.js"],
+      "env": {
+        "CF_ACCOUNT_ID": "your-account-id",
+        "CF_API_TOKEN": "your-api-token",
+        "CF_D1_DATABASE_ID": "your-database-id"
+      }
+    }
+  }
+}
+```
+
 ## Quick Start
 
 ### 1. Prerequisites
@@ -130,9 +201,10 @@ src/
   prompts/
     handlers.ts         Prompt handlers (3 judgment guides)
   services/
-    notion.ts           Notion API client (rate-limited, multi-token)
-    d1.ts               Cloudflare D1 operations (auto-init, context-scoped)
+    notion.ts           Notion API client (rate-limited, retry, multi-token)
+    d1.ts               Cloudflare D1 operations (auto-init, dual executor)
     sync-engine.ts      Bidirectional sync + dry-run preview
+    crypto.ts           AES-GCM token encryption at rest
 worker/
   index.ts              Cloudflare Worker (MCP HTTP + CRON sync)
   wrangler.toml         Worker config with D1 binding
@@ -140,35 +212,15 @@ worker/
 
 ### Key Design Decisions
 
-**AccountContext scoping**: All D1 operations receive `D1Config` extracted from `AccountContext.metadata`. This means the server could support multiple Cloudflare accounts (multi-tenancy) with different auth providers.
+**D1 Executor abstraction**: All D1 operations go through a `D1Executor` interface with two implementations: `createRestExecutor` (for stdio via REST API) and `createBindingExecutor` (for Worker via D1 binding). This enables the shared sync engine to work in both contexts.
 
-**Dual D1 access**: The stdio entry point uses D1 REST API (through `CF_API_TOKEN`). The Cloudflare Worker uses D1 bindings directly for CRON sync. Same schema, different access patterns.
+**Token encryption**: Notion integration tokens are encrypted at rest in D1 using AES-GCM. The encryption key is a Worker secret (`TOKEN_ENCRYPTION_KEY`). Decryption handles plaintext migration gracefully.
 
-**Notion tokens per-client**: Notion integration tokens are stored in D1 as part of client registration. Each sync operation uses the appropriate token for master vs. client workspace.
+**Retry with backoff**: All Notion API calls use exponential backoff (3 retries) for 429/5xx/network errors. Rate limiting (~3 req/s) prevents hitting Notion's limits proactively.
 
-**Auto-initialization**: The `ensureInitialized()` function probes for tables on first use and creates them if missing. No separate init step needed.
+**Auto-initialization**: The `ensureInitialized()` function probes for tables on first use and creates them if missing. Uses a `WeakSet` keyed by executor instance to avoid redundant checks per isolate.
 
-**Dry-run sync**: The `dryRunSync()` function queries both Notion databases and computes what would change without writing anything. Returns page counts and detected conflicts.
-
-## Claude Desktop Configuration
-
-Add to your Claude Desktop config (`claude_desktop_config.json`):
-
-```json
-{
-  "mcpServers": {
-    "notion-sync": {
-      "command": "node",
-      "args": ["packages/notion-sync-mcp/dist/index.js"],
-      "env": {
-        "CF_ACCOUNT_ID": "your-account-id",
-        "CF_API_TOKEN": "your-api-token",
-        "CF_D1_DATABASE_ID": "your-database-id"
-      }
-    }
-  }
-}
-```
+**Dry-run sync**: The `dryRunSync()` function queries both Notion databases and computes what would change without writing anything.
 
 ## Cloudflare Worker Deployment
 
@@ -176,18 +228,17 @@ Add to your Claude Desktop config (`claude_desktop_config.json`):
 cd packages/notion-sync-mcp/worker
 
 # Set secrets
-wrangler secret put CF_ACCOUNT_ID
-wrangler secret put CF_API_TOKEN
-wrangler secret put CF_D1_DATABASE_ID
+wrangler secret put MCP_API_KEY           # API key for client authentication
+wrangler secret put TOKEN_ENCRYPTION_KEY  # AES-GCM key for token encryption
 
 # Deploy
 wrangler deploy
 ```
 
 The Worker provides:
-- `GET /health` -- Health check
-- `POST /sync` -- Manual sync trigger
-- `POST /mcp` -- MCP HTTP transport
+- `GET /health` -- Health check + endpoint discovery
+- `POST /sync` -- Manual sync trigger (requires auth)
+- `POST /mcp` -- MCP Streamable HTTP transport (requires auth)
 - CRON every 15 minutes -- Automatic background sync
 
 ## Conflict Resolution
@@ -207,9 +258,15 @@ title, rich_text, number, select, multi_select, date, checkbox, url, email, phon
 
 Not supported: relations, rollups, formulas, created_by, last_edited_by, files
 
+## Security
+
+- **API key auth**: All `/mcp` and `/sync` endpoints require a valid API key (Bearer token or X-API-Key header). Set via `MCP_API_KEY` Worker secret.
+- **Token encryption**: Notion tokens encrypted at rest with AES-GCM. Set key via `TOKEN_ENCRYPTION_KEY` Worker secret.
+- **CORS**: Full CORS support for browser-based and remote MCP clients.
+- **No token exposure**: Resources mask Notion tokens in all output.
+
 ## Limitations
 
-- Notion rate limits: ~3 req/s (handled with built-in rate limiting)
+- Notion rate limits: ~3 req/s (handled with built-in rate limiting + retry)
 - Cross-workspace: Each workspace needs its own integration token
-- No real-time sync: Triggered via MCP tools or CRON schedule
-- Token storage: Notion tokens stored in D1 (consider encryption for production)
+- No real-time sync: Triggered via MCP tools or CRON schedule (every 15 min)

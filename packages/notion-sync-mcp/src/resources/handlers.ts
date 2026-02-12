@@ -16,7 +16,7 @@
  */
 
 import type { AccountContext, ResourceResult } from '@create-something/mcp-core';
-import { getD1Config } from '../auth.js';
+import { getD1Executor } from '../auth.js';
 import {
   ensureInitialized,
   listClientMappings,
@@ -36,7 +36,7 @@ export async function handleClientsResource(
   _uri: URL,
   ctx: AccountContext
 ): Promise<ResourceResult> {
-  const d1 = getD1Config(ctx);
+  const d1 = getD1Executor(ctx);
 
   try {
     await ensureInitialized(d1);
@@ -94,7 +94,7 @@ export async function handleStatusResource(
   _uri: URL,
   ctx: AccountContext
 ): Promise<ResourceResult> {
-  const d1 = getD1Config(ctx);
+  const d1 = getD1Executor(ctx);
 
   try {
     await ensureInitialized(d1);
@@ -134,7 +134,7 @@ export async function handleClientResource(
   uri: URL,
   ctx: AccountContext
 ): Promise<ResourceResult> {
-  const d1 = getD1Config(ctx);
+  const d1 = getD1Executor(ctx);
 
   const clientName = decodeURIComponent(uri.pathname.replace(/^\/+/, ''));
   const resourceUri = `sync://client/${encodeURIComponent(clientName)}`;
@@ -252,7 +252,7 @@ export async function handleHistoryResource(
   uri: URL,
   ctx: AccountContext
 ): Promise<ResourceResult> {
-  const d1 = getD1Config(ctx);
+  const d1 = getD1Executor(ctx);
 
   const clientName = decodeURIComponent(uri.pathname.replace(/^\/+/, ''));
   const resourceUri = `sync://history/${encodeURIComponent(clientName)}`;

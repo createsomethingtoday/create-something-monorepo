@@ -23,6 +23,7 @@ import { z } from 'zod';
 
 // Schemas
 import {
+  InspectDatabasesSchema,
   RegisterClientSchema,
   UpdateClientSchema,
   SyncIssuesSchema,
@@ -31,6 +32,7 @@ import {
 } from './schemas/tools.js';
 
 import type {
+  InspectDatabasesInput,
   RegisterClientInput,
   UpdateClientInput,
   SyncIssuesInput,
@@ -40,6 +42,7 @@ import type {
 
 // Tool handlers
 import {
+  handleInspectDatabases,
   handleRegisterClient,
   handleUpdateClient,
   handleSyncIssues,
@@ -89,6 +92,19 @@ export function createNotionSyncServer(
 
   // ─── Tools (Automation Tier) ────────────────────────────────────────
   // Only action tools — read-only queries are Resources
+
+  server.tool(
+    'notion_sync_inspect_databases',
+    `Inspect both databases before registration. Reads the schema of the consultant's master database and the client's database, then returns:
+- All properties in each database with their types
+- Which properties are syncable (matching names + compatible types)
+- A recommended sync_properties list (the intersection)
+- Possible filter properties (select/multi_select columns that could tag clients)
+
+Use this BEFORE registering a client. The user provides database IDs and tokens, this tool does the heavy lifting of figuring out what to sync. The user just confirms the recommendation.`,
+    InspectDatabasesSchema.shape,
+    async (params, ctx) => handleInspectDatabases(params as unknown as InspectDatabasesInput, ctx),
+  );
 
   server.tool(
     'notion_sync_register_client',
@@ -213,7 +229,7 @@ Returns the number of conflicts resolved and the sync result.`,
 
   server.prompt(
     'client_onboarding',
-    'Step-by-step guide for registering a new client for Notion sync. Walks through all required information.',
+    'Connect a new client for two-way Notion issue tracking. Walks a consultant through linking their central Issues database to a client\'s workspace — step by step, one question at a time.',
     undefined,
     handleClientOnboarding,
   );

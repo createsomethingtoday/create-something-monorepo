@@ -7,9 +7,11 @@
  *
  * Supports multiple tokens for cross-workspace operations.
  * Token is passed per-call (already context-scoped by design).
+ *
+ * Includes exponential backoff retry for transient failures (429, 5xx).
  */
 
-import { Client } from "@notionhq/client";
+import { Client, APIResponseError } from "@notionhq/client";
 import {
   NOTION_RATE_LIMIT_MS,
   DEFAULT_SYNC_BATCH_SIZE,
@@ -19,6 +21,99 @@ import type {
   NotionDatabaseQueryResponse,
   NotionPropertyValue,
 } from "../types.js";
+
+// ─── Retry Configuration ────────────────────────────────────────────
+
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 1000;
+const MAX_DELAY_MS = 30000;
+
+/**
+ * Retry a Notion API call with exponential backoff.
+ * Retries on:
+ *   - 429 (Rate Limited) — uses Retry-After header if available
+ *   - 5xx (Server Error) — transient failures
+ *   - Network errors (fetch failures)
+ */
+async function withRetry<T>(fn: () => Promise<T>, label: string): Promise<T> {
+  let lastError: Error | undefined;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+
+      // Don't retry on non-retryable errors
+      if (!isRetryable(error)) {
+        throw lastError;
+      }
+
+      if (attempt === MAX_RETRIES) {
+        throw new Error(
+          `${label} failed after ${MAX_RETRIES + 1} attempts: ${lastError.message}`
+        );
+      }
+
+      // Calculate delay with exponential backoff + jitter
+      let delay = Math.min(BASE_DELAY_MS * Math.pow(2, attempt), MAX_DELAY_MS);
+
+      // Use Retry-After header if available (429 responses)
+      if (error instanceof APIResponseError && error.status === 429) {
+        const retryAfter = getRetryAfterMs(error);
+        if (retryAfter) delay = retryAfter;
+      }
+
+      // Add jitter (±25%)
+      delay = delay * (0.75 + Math.random() * 0.5);
+
+      console.warn(
+        `[notion] ${label} attempt ${attempt + 1}/${MAX_RETRIES + 1} failed, retrying in ${Math.round(delay)}ms: ${lastError.message}`
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+
+  // TypeScript needs this, though it's unreachable
+  throw lastError;
+}
+
+/**
+ * Check if an error is retryable.
+ */
+function isRetryable(error: unknown): boolean {
+  if (error instanceof APIResponseError) {
+    // 429: Rate limited — always retry
+    if (error.status === 429) return true;
+    // 5xx: Server errors — retry
+    if (error.status >= 500) return true;
+    // 409: Conflict — retry (eventual consistency)
+    if (error.status === 409) return true;
+    // Other 4xx: Don't retry (client error)
+    return false;
+  }
+
+  // Network errors (fetch failures) — retry
+  if (error instanceof TypeError && error.message.includes('fetch')) return true;
+
+  return false;
+}
+
+/**
+ * Extract Retry-After delay from a 429 response.
+ */
+function getRetryAfterMs(error: APIResponseError): number | null {
+  // The Notion SDK wraps the response — try to extract Retry-After from headers
+  // The SDK doesn't expose headers directly, so we use a reasonable default
+  // for 429s: 1 second (Notion's typical rate limit window)
+  if (error.status === 429) {
+    return 1000;
+  }
+  return null;
+}
+
+// ─── Rate Limiter ───────────────────────────────────────────────────
 
 // Rate limiter: simple token bucket for ~3 req/s
 let lastRequestTime = 0;
@@ -44,7 +139,7 @@ function createNotionClient(token: string): Client {
 
 /**
  * Query all pages from a Notion database, with optional filter.
- * Handles pagination automatically.
+ * Handles pagination automatically. Each page request is retried on failure.
  */
 export async function queryAllPages(
   token: string,
@@ -59,17 +154,22 @@ export async function queryAllPages(
   while (hasMore) {
     await rateLimitWait();
 
+    // v5 SDK: databases.query moved to dataSources.query
     const queryParams: Record<string, unknown> = {
-      database_id: databaseId,
+      data_source_id: databaseId,
       page_size: DEFAULT_SYNC_BATCH_SIZE,
     };
 
     if (filter) queryParams.filter = filter;
     if (startCursor) queryParams.start_cursor = startCursor;
 
-    const response = (await client.databases.query(
-      queryParams as Parameters<typeof client.databases.query>[0]
-    )) as unknown as NotionDatabaseQueryResponse;
+    const response = await withRetry(
+      async () =>
+        (await client.dataSources.query(
+          queryParams as Parameters<typeof client.dataSources.query>[0]
+        )) as unknown as NotionDatabaseQueryResponse,
+      `queryAllPages(${databaseId})`
+    );
 
     allPages.push(...response.results);
     hasMore = response.has_more;
@@ -114,8 +214,13 @@ export async function getPage(
 ): Promise<NotionPage> {
   const client = createNotionClient(token);
   await rateLimitWait();
-  const page = await client.pages.retrieve({ page_id: pageId });
-  return page as unknown as NotionPage;
+  return withRetry(
+    async () => {
+      const page = await client.pages.retrieve({ page_id: pageId });
+      return page as unknown as NotionPage;
+    },
+    `getPage(${pageId})`
+  );
 }
 
 /**
@@ -129,14 +234,18 @@ export async function createPage(
   const client = createNotionClient(token);
   await rateLimitWait();
 
-  const page = await client.pages.create({
-    parent: { database_id: databaseId },
-    properties: properties as Parameters<
-      typeof client.pages.create
-    >[0]["properties"],
-  });
-
-  return page as unknown as NotionPage;
+  return withRetry(
+    async () => {
+      const page = await client.pages.create({
+        parent: { database_id: databaseId },
+        properties: properties as Parameters<
+          typeof client.pages.create
+        >[0]["properties"],
+      });
+      return page as unknown as NotionPage;
+    },
+    `createPage(${databaseId})`
+  );
 }
 
 /**
@@ -150,14 +259,18 @@ export async function updatePage(
   const client = createNotionClient(token);
   await rateLimitWait();
 
-  const page = await client.pages.update({
-    page_id: pageId,
-    properties: properties as Parameters<
-      typeof client.pages.update
-    >[0]["properties"],
-  });
-
-  return page as unknown as NotionPage;
+  return withRetry(
+    async () => {
+      const page = await client.pages.update({
+        page_id: pageId,
+        properties: properties as Parameters<
+          typeof client.pages.update
+        >[0]["properties"],
+      });
+      return page as unknown as NotionPage;
+    },
+    `updatePage(${pageId})`
+  );
 }
 
 /**
@@ -170,9 +283,14 @@ export async function getDatabaseSchema(
   const client = createNotionClient(token);
   await rateLimitWait();
 
-  const db = await client.databases.retrieve({ database_id: databaseId });
-  return (db as unknown as { properties: Record<string, NotionPropertyValue> })
-    .properties;
+  return withRetry(
+    async () => {
+      const db = await client.databases.retrieve({ database_id: databaseId });
+      return (db as unknown as { properties: Record<string, NotionPropertyValue> })
+        .properties;
+    },
+    `getDatabaseSchema(${databaseId})`
+  );
 }
 
 // ─── Property Extraction Helpers ────────────────────────────────────
