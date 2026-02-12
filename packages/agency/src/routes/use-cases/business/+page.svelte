@@ -421,6 +421,7 @@
 	
 	.hero-content {
 		min-width: 0;
+		max-width: 32em;
 		text-align: left;
 	}
 	
@@ -433,11 +434,11 @@
 	}
 	
 	.hero-title {
-		font-size: var(--text-display-xl);
+		font-size: clamp(2.25rem, 4vw + 1.5rem, 4rem);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 		margin-bottom: var(--space-6, 2rem);
-		line-height: 1.05;
+		line-height: 1.15;
 		letter-spacing: var(--tracking-tighter, -0.025em);
 	}
 	
