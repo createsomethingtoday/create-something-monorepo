@@ -35,10 +35,12 @@ fi
 # For now, check all packages with modified files
 PACKAGES_TO_CHECK=""
 
-# Check if any .ts or .svelte files were modified recently
-if git diff --name-only HEAD 2>/dev/null | grep -qE '\.(ts|svelte)$'; then
-  # Get the packages with modifications
-  MODIFIED_PACKAGES=$(git diff --name-only HEAD 2>/dev/null | grep -E '^packages/' | cut -d'/' -f2 | sort -u)
+# Only check packages where .ts or .svelte files were modified
+# Compare against HEAD to find uncommitted changes to TypeScript/Svelte files
+MODIFIED_TS_FILES=$(git diff --name-only HEAD 2>/dev/null | grep -E '\.(ts|svelte)$' || true)
+if [[ -n "$MODIFIED_TS_FILES" ]]; then
+  # Extract package names from modified .ts/.svelte file paths only
+  MODIFIED_PACKAGES=$(echo "$MODIFIED_TS_FILES" | grep -E '^packages/' | cut -d'/' -f2 | sort -u)
 
   for pkg in $MODIFIED_PACKAGES; do
     if [[ -f "$CLAUDE_PROJECT_DIR/packages/$pkg/tsconfig.json" ]]; then
@@ -61,6 +63,12 @@ for pkg in $PACKAGES_TO_CHECK; do
   PKG_DIR="$CLAUDE_PROJECT_DIR/packages/$pkg"
 
   if [[ -d "$PKG_DIR" ]]; then
+    # Skip packages without dependencies installed
+    if [[ ! -d "$PKG_DIR/node_modules" ]]; then
+      log_msg "Skipping $pkg - node_modules not installed"
+      continue
+    fi
+
     # Skip packages without typescript installed
     if ! (cd "$PKG_DIR" && pnpm exec tsc --version >/dev/null 2>&1); then
       log_msg "Skipping $pkg - tsc not available"
