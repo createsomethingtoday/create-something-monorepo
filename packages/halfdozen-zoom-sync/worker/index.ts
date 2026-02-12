@@ -24,9 +24,11 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { registerFeedbackTool, D1FeedbackStore } from '@create-something/mcp-core';
 
+import { ComposioToolFactory } from '@create-something/composio-bridge';
 import { registerSyncTools } from '../src/tools/sync.js';
 import { registerSearchTools } from '../src/tools/search.js';
 import { registerSessionTools } from '../src/tools/session.js';
+import { registerZoomApiAuthTools } from '../src/tools/zoom-api-auth.js';
 import { registerClipsResources } from '../src/resources/clips.js';
 import { registerStatusResources } from '../src/resources/status.js';
 import { registerPrompts } from '../src/prompts/analysis.js';
@@ -54,6 +56,11 @@ interface Env {
   STEEL_API_KEY: string;
   NOTION_API_KEY: string;
   NOTION_DATABASE_ID: string;
+
+  // Optional: Composio API key to expose Zoom API tools (meetings, recordings, etc.) alongside Zoom Clips tools
+  COMPOSIO_API_KEY?: string;
+  // Optional: Composio Zoom auth config ID (from Composio dashboard) so zoom_api_get_connect_link can return a connect URL
+  COMPOSIO_ZOOM_AUTH_CONFIG_ID?: string;
 }
 
 // Session context KV key
@@ -139,6 +146,29 @@ export class ZoomClipsMCP extends McpAgent<Env> {
     // Judgment tier (Prompts)
     registerPrompts(this.server);
 
+    // Composio Zoom API tools (meetings, recordings, webinars) and auth navigation when key is set
+    if (this.env.COMPOSIO_API_KEY) {
+      const composioFactory = new ComposioToolFactory({
+        apiKey: this.env.COMPOSIO_API_KEY,
+        apps: [{ app: 'ZOOM', prefix: 'zoom_api' }],
+      });
+      const composioCount = await composioFactory.registerToolsOnMcpServer(
+        this.server as import('@create-something/composio-bridge').McpServerLike,
+        'default',
+      );
+      registerZoomApiAuthTools(this.server, {
+        composioClient: composioFactory.getClient(),
+        composioApiKey: this.env.COMPOSIO_API_KEY,
+        zoomAuthConfigId: this.env.COMPOSIO_ZOOM_AUTH_CONFIG_ID,
+        entityId: 'default',
+      });
+      if (composioCount > 0) {
+        console.info(
+          `Registered ${composioCount} Composio Zoom API tools (zoom_api_*) and auth tools (zoom_api_connection_status, zoom_api_get_connect_link)`,
+        );
+      }
+    }
+
     // Feedback (cross-cutting — support ticket pathway)
     if (this.env.FEEDBACK_DB) {
       registerFeedbackTool(this.server, new D1FeedbackStore(this.env.FEEDBACK_DB), 'halfdozen-zoom-sync');
@@ -163,23 +193,54 @@ export default {
       return ZoomClipsMCP.serve('/sse').fetch(request, env, ctx);
     }
 
-    // Health / info
+    // Health / info — self-describes auth surfaces so clients know which tools need which setup
     if (url.pathname === '/') {
+      const composioEnabled = Boolean(env.COMPOSIO_API_KEY);
+      const automationClips = [
+        'sync_clips',
+        'extract_clip',
+        'search_clips',
+        'get_session_status',
+        'upload_session_context',
+      ];
+      const automationApi = composioEnabled
+        ? ['zoom_api_connection_status', 'zoom_api_get_connect_link', 'zoom_api_* (Composio Zoom toolkit)']
+        : [];
+
       return new Response(
-        JSON.stringify({
-          name: 'halfdozen-zoom-sync',
-          version: '2.0.0',
-          description: 'Zoom Clips to Notion MCP Server',
-          framework: {
-            database: ['clips://library', 'clips://status', 'clips://session', 'clips://clip/{id}'],
-            automation: ['sync_clips', 'extract_clip', 'search_clips', 'get_session_status', 'upload_session_context'],
-            judgment: ['transcript_analysis', 'clip_summarization', 'sync_strategy'],
+        JSON.stringify(
+          {
+            name: 'halfdozen-zoom-sync',
+            version: '2.0.0',
+            description: 'Zoom Clips to Notion MCP Server',
+            auth_surfaces: {
+              zoom_clips: {
+                method: 'session_context',
+                description: 'Steel.dev browser session; upload cookies via upload_session_context',
+                tools: automationClips,
+              },
+              zoom_api: {
+                method: 'composio',
+                description: 'Composio connected account (entity: default). Use zoom_api_connection_status and zoom_api_get_connect_link to navigate auth.',
+                tools: composioEnabled
+                  ? ['zoom_api_connection_status', 'zoom_api_get_connect_link', 'zoom_api_*']
+                  : [],
+                enabled: composioEnabled,
+              },
+            },
+            framework: {
+              database: ['clips://library', 'clips://status', 'clips://session', 'clips://clip/{id}'],
+              automation: [...automationClips, ...automationApi],
+              judgment: ['transcript_analysis', 'clip_summarization', 'sync_strategy'],
+            },
+            endpoints: {
+              mcp: '/mcp',
+              sse: '/sse',
+            },
           },
-          endpoints: {
-            mcp: '/mcp',
-            sse: '/sse',
-          },
-        }, null, 2),
+          null,
+          2,
+        ),
         {
           headers: { 'Content-Type': 'application/json' },
         },

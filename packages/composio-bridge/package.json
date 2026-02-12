@@ -1,0 +1,49 @@
+{
+  "name": "@create-something/composio-bridge",
+  "version": "0.1.0",
+  "description": "Thin adapter between Composio SDK and mcp-core — invisible plumbing for commodity integrations.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "eval:workers": "npx tsx eval/workers-compat.ts",
+    "eval:latency": "npx tsx eval/latency-bench.ts",
+    "eval:quality": "npx tsx eval/tool-quality.ts",
+    "eval:auth": "npx tsx eval/auth-flow.ts",
+    "eval:report": "npx tsx eval/report.ts",
+    "eval:all": "npx tsx eval/report.ts"
+  },
+  "dependencies": {
+    "@create-something/mcp-core": "workspace:*",
+    "@composio/core": "^0.6.3",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.7.0"
+  },
+  "keywords": [
+    "mcp",
+    "composio",
+    "bridge",
+    "wrap-pattern",
+    "commodity-integrations"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/composio-bridge"
+  }
+}
