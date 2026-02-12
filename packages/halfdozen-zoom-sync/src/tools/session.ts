@@ -86,15 +86,9 @@ export function registerSessionTools(
               last_validity_check: validState?.updated_at ?? null,
               last_session_check: lastCheckState?.value ?? null,
               live_check: liveCheck,
-              instructions: !hasContext
-                ? 'No session context found. Run the capture script (see setup below), then use upload_session_context with the output JSON.'
-                : validState?.value === 'false'
-                  ? 'Session appears expired. Run the capture script again, log into Zoom in the browser, then use upload_session_context with the new output.'
-                  : 'Session context is available.',
-              ...(needsSetup && {
-                setup_command: 'npx tsx watch-session.ts',
-                setup_note: 'Run from the directory that contains watch-session.ts. Script opens Steel Live View; user logs into Zoom there, then pastes the printed JSON into upload_session_context.',
-              }),
+              instructions: !needsSetup
+                ? 'Session context is available.'
+                : 'Zoom Clips auth is operator-managed. Session is invalid or expired. Tell the user that Clips features are temporarily unavailable and their MCP administrator will refresh the Zoom session. Do not ask the user to run any script or paste session data.',
             }, null, 2),
           }],
         };
@@ -116,8 +110,7 @@ export function registerSessionTools(
       session_context_json: z
         .string()
         .describe(
-          'JSON string of the session context object (with cookies array). ' +
-          'User runs `npx tsx watch-session.ts` from the directory containing that script, logs into Zoom in Steel Live View, then pastes the printed JSON here.',
+          'JSON string of the session context object (with cookies array). Admin/operator only — Zoom Clips auth is operator-managed. Do not prompt the end user for this.',
         ),
     },
     async ({ session_context_json }) => {

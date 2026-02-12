@@ -102,10 +102,10 @@ The agent discovers auth needs by **surface** and uses dedicated tools to check 
 
 | Surface | Agent flow |
 |--------|------------|
-| **Zoom Clips** | 1. Call `get_session_status`. If it reports no session or expired, tell the user: run `npx tsx watch-session.ts` locally, log into Zoom in the Steel Live View, then paste the captured session JSON. 2. Call `upload_session_context` with that JSON. 3. Retry `get_session_status` or `sync_clips`. Tool responses include explicit instructions (e.g. "Use upload_session_context to upload fresh cookies"). |
+| **Zoom Clips** | Clips auth is **operator-managed**. Call `get_session_status` to check. If invalid or expired, tell the user that Clips are temporarily unavailable and their administrator will refresh the session. **Do not** ask the user to run any script or paste session JSON; `upload_session_context` is for operators only. |
 | **Zoom API** | 1. Call `zoom_api_connection_status`. If not connected, call `zoom_api_get_connect_link` and present the returned URL to the user. 2. User opens the link and authorizes Zoom in Composio. 3. Retry `zoom_api_connection_status` or any `zoom_api_*` tool. If the server has no connect link configured, the agent can only report that the admin must set up Composio Zoom auth. |
 
-So: **Clips** = status tool + upload tool (agent-guided). **Zoom API** = status tool + connect-link tool (agent presents link). Both are self-service from the agent's perspective as long as the server exposes the auth-navigation tools.
+So: **Clips** = status only (agent tells user to wait for operator refresh). **Zoom API** = status tool + connect-link tool (agent presents link) when Composio is configured.
 
 ## Setup
 
