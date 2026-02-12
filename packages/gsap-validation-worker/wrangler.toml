@@ -1,0 +1,17 @@
+# GSAP Validation Worker
+# Validates Webflow template GSAP usage via site crawling and code analysis.
+#
+# Canon: The tool recedes; validation just works.
+
+name = "gsap-validation-worker"
+main = "src/worker.js"
+compatibility_date = "2025-02-27"
+
+[vars]
+ALLOWED_ORIGINS = "https://wf-form-validation-with-airtable-databa.webflow.io,https://webflow.com,https://www.webflow.com,https://wf.createsomething.io"
+
+# Workflow binding for async validation
+[[workflows]]
+name = "gsap-validation-workflow"
+binding = "GSAP_WORKFLOW"
+class_name = "GsapValidationWorkflow"
