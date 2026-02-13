@@ -50,12 +50,14 @@
     "ground:duplicates": "tsx scripts/ground-duplicates.ts",
     "ground:duplicates:json": "tsx scripts/ground-duplicates.ts --json",
     "ground": "pnpm ground:imports && pnpm ground:components && pnpm ground:experiments && pnpm ground:duplicates",
-    "create-mcp": "tsx scripts/create-mcp.ts"
+    "create-mcp": "tsx scripts/create-mcp.ts",
+    "deploy:halfdozen-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy"
   },
   "devDependencies": {
     "@iarna/toml": "^2.2.5",
     "@mizchi/lsmcp": "^0.10.0",
     "@typescript-eslint/parser": "^8.50.1",
+    "esbuild": "^0.24.2",
     "glob": "^13.0.0",
     "prettier": "^3.7.4",
     "prettier-plugin-svelte": "^3.4.1",

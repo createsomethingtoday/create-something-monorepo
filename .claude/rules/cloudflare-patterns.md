@@ -156,6 +156,14 @@ MCP servers use a two-tier subdomain convention: `{service}.mcp.{property-domain
 | `halfdozen-gmail-sync-mcp` | `gmail.mcp.workway.co` | `packages/halfdozen-gmail-sync/` |
 | `halfdozen-youtube-sync-mcp` | `youtube.mcp.workway.co` | `packages/half-dozen-youtube-sync/` |
 | `quickbooks-notion-mcp` | `quickbooks.mcp.workway.co` | `packages/quickbooks-notion-mcp/` |
+| `halfdozen-notion-mcp` | `notion.mcp.workway.co` | `packages/halfdozen-notion-mcp/` — Half Dozen ↔ CREATE SOMETHING client Notion |
+
+**Half Dozen MCP URL pattern** (use for new Half Dozen MCPs):
+
+- **Base URL:** `https://{service}.mcp.workway.co`
+- **Service subdomain:** Short, lowercase name (e.g. `notion`, `gmail`, `youtube`, `zoom`, `quickbooks`). Omit the `halfdozen-` prefix.
+- **MCP endpoint:** `https://{service}.mcp.workway.co/mcp` (Streamable HTTP). Optional: `/sse` (SSE), `/` (health JSON).
+- In `wrangler.toml`: `pattern = "{service}.mcp.workway.co"` with `custom_domain = true`.
 
 ### Adding a New MCP Server
 

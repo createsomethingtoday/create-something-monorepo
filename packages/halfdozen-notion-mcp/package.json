@@ -1,0 +1,36 @@
+{
+  "name": "@create-something/halfdozen-notion-mcp",
+  "version": "1.0.0",
+  "description": "Notion Half Dozen X CREATE SOMETHING — one operator, two workspaces (Half Dozen + client), full Notion tools. No Composio; two operator-managed tokens.",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@create-something/mcp-core": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "@notionhq/client": "^5.9.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.3"
+  },
+  "keywords": [
+    "mcp",
+    "notion",
+    "half-dozen",
+    "create-something",
+    "model-context-protocol"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/halfdozen-notion-mcp"
+  }
+}

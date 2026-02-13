@@ -1,0 +1,102 @@
+# Notion Half Dozen X CREATE SOMETHING
+
+**Official name:** Notion Half Dozen X CREATE SOMETHING.
+
+This MCP gives **Half Dozen** access to both its own internal Notion and its **CREATE SOMETHING (agency) client’s** Notion workspace from one place. One operator can act in either workspace using the full set of Notion tools. No Composio; two operator-managed Notion integration tokens.
+
+## Workspaces
+
+| Workspace   | Secret                 | Use case |
+|------------|------------------------|----------|
+| **halfdozen** | `NOTION_API_KEY`       | Half Dozen internal: Meeting Capture, meeting transcripts (e.g. Danny meeting). |
+| **client**    | `NOTION_CLIENT_API_KEY`| **CREATE SOMETHING agency client’s** Notion — work Half Dozen does for that client. |
+
+Every tool call includes `workspace: "halfdozen"` or `workspace: "client"` so the right workspace is targeted.
+
+## Setup
+
+1. **Two Notion integrations**
+   - Create an internal integration in the **Half Dozen** Notion workspace; copy the secret → `NOTION_API_KEY`.
+   - Create an internal integration in the **client's** Notion workspace; copy the secret → `NOTION_CLIENT_API_KEY`.
+   - In each workspace, share the relevant pages/databases with the integration (via the integration's Access tab or by inviting the integration on each page).
+
+2. **Worker secrets** (from `packages/halfdozen-notion-mcp/worker/`)
+
+   ```bash
+   wrangler secret put NOTION_API_KEY
+   wrangler secret put NOTION_CLIENT_API_KEY
+   ```
+
+3. **Run locally**
+
+   ```bash
+   pnpm install
+   cd packages/halfdozen-notion-mcp/worker && pnpm dev
+   ```
+
+   MCP endpoint: `http://localhost:8787/mcp` (Streamable HTTP).
+
+## Production
+
+- **URL:** `https://notion.mcp.workway.co/mcp` (after deploy and custom domain).
+- **Deploy** (requires `wrangler login` or `CLOUDFLARE_API_TOKEN`):
+
+  ```bash
+  # From repo root (after pnpm install so worker has node_modules)
+  pnpm run deploy:halfdozen-notion-mcp
+  ```
+
+  Or from the worker directory: `cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy`.
+
+  The worker package is in the pnpm workspace so dependencies resolve when bundling.
+
+## Client config
+
+**Cursor / Claude Desktop** — add MCP server (HTTP):
+
+```json
+{
+  "mcpServers": {
+    "notion-halfdozen-create-something": {
+      "url": "https://notion.mcp.workway.co/mcp"
+    }
+  }
+}
+```
+
+**OpenAI Codex** — add to `~/.codex/config.toml` (or project `.codex/config.toml`):
+
+```toml
+[mcp_servers."notion-halfdozen-create-something"]
+url = "https://notion.mcp.workway.co/mcp"
+```
+
+Use the Streamable HTTP URL (`/mcp`). In Codex you can then use all Notion tools; pass `workspace: "halfdozen"` or `workspace: "client"` on each call.
+
+## Notion API 2025-09-03
+
+This MCP uses **Notion API version 2025-09-03** and **@notionhq/client v5**. The API uses **data sources** (tables) rather than the legacy "database" endpoint. Use **data source IDs** from Notion: open the database as a full page → **Database settings** → **Manage Data Sources** → (⋯) → **Copy data source ID**.
+
+## Tools
+
+All tools accept `workspace: "halfdozen" | "client"`.
+
+- `notion_search` — Search workspace (pages or data sources). `filter_type`: `page` or `data_source`.
+- `notion_list_databases` — List data sources the integration can access (returns `data_sources` with id, title, url).
+- `notion_get_database` — Get data source schema (property names and types). Use `data_source_id`. Call first before query/update/create.
+- `notion_query_database` — Query a data source with filter/sort. Use `data_source_id`.
+- `notion_get_page` — Get a page by ID.
+- `notion_create_page` — Create a page in a data source. Use `data_source_id` in parent.
+- `notion_update_page` — Update page properties.
+- `notion_append_blocks` — Append blocks to a page.
+- `notion_archive_page` — Archive (trash) a page.
+- `notion_bulk_update` — Update multiple pages with the same properties.
+- `notion_bulk_archive` — Archive multiple pages.
+
+## Resource
+
+- `notion://workspaces` — Lists the two workspaces with labels (Half Dozen vs Client) for context.
+
+## Prompt
+
+- `task_workflow` — Guidance on when to use which workspace, schema-first usage, and the pattern: read from Half Dozen → create/update in client workspace.

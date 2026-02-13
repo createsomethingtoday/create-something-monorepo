@@ -4,3 +4,5 @@ packages:
   - 'packages/agency/clients/*'
   - 'packages/webflow-apps-admin/dashboard'
   - 'packages/webflow-apps-admin/workers/*'
+  # Worker with own package.json so wrangler deploy resolves node_modules
+  - 'packages/halfdozen-notion-mcp/worker'
