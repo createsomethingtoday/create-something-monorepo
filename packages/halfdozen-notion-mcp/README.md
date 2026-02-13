@@ -50,6 +50,19 @@ Every tool call includes `workspace: "halfdozen"` or `workspace: "client"` so th
 
   The worker package is in the pnpm workspace so dependencies resolve when bundling.
 
+### Second instance: Half Dozen × System Studio
+
+Same codebase, different Worker and URL. Workspaces: **halfdozen** = Half Dozen (HD key), **client** = System Studio (System Studio key). `wrangler.system-studio.toml` sets `[vars]` so the MCP resource and root response show "Half Dozen" and "System Studio".
+
+```bash
+cd packages/halfdozen-notion-mcp/worker
+wrangler secret put NOTION_API_KEY --config wrangler.system-studio.toml       # HD (Half Dozen) key → halfdozen
+wrangler secret put NOTION_CLIENT_API_KEY --config wrangler.system-studio.toml # System Studio key → client
+pnpm run deploy:system-studio-notion-mcp   # from repo root
+```
+
+**URL:** `https://system-studio-notion.mcp.workway.co/mcp`
+
 ## Client config
 
 **Cursor / Claude Desktop** — add MCP server (HTTP):

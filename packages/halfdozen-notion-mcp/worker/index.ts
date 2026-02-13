@@ -13,6 +13,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { registerFeedbackTool, D1FeedbackStore } from '@create-something/mcp-core';
+import { getWorkspaceConfig } from '../src/config.js';
 import { getNotionClients } from '../src/lib/notion.js';
 import { registerNotionTools } from '../src/tools/index.js';
 import { registerWorkspacesResource } from '../src/resources.js';
@@ -27,10 +28,15 @@ interface Env {
   FEEDBACK_DB: D1Database;
   NOTION_API_KEY?: string;
   NOTION_CLIENT_API_KEY?: string;
+  WORKSPACE_HALFDOZEN_LABEL?: string;
+  WORKSPACE_HALFDOZEN_DESCRIPTION?: string;
+  WORKSPACE_CLIENT_LABEL?: string;
+  WORKSPACE_CLIENT_DESCRIPTION?: string;
+  MCP_DISPLAY_NAME?: string;
+  MCP_DESCRIPTION?: string;
 }
 
 const SERVER_NAME = 'notion-halfdozen-create-something';
-const DISPLAY_NAME = 'Notion Half Dozen X CREATE SOMETHING';
 
 // =============================================================================
 // MCP Agent
@@ -44,6 +50,7 @@ export class NotionHalfDozenMcp extends McpAgent<Env> {
 
   async init() {
     const clients = getNotionClients(this.env);
+    const config = getWorkspaceConfig(this.env);
 
     if (!clients.halfdozen && !clients.client) {
       console.warn('Neither NOTION_API_KEY nor NOTION_CLIENT_API_KEY is set; no Notion tools will be available.');
@@ -51,8 +58,8 @@ export class NotionHalfDozenMcp extends McpAgent<Env> {
       registerNotionTools(this.server, clients);
     }
 
-    registerWorkspacesResource(this.server);
-    registerTaskWorkflowPrompt(this.server);
+    registerWorkspacesResource(this.server, config);
+    registerTaskWorkflowPrompt(this.server, config);
 
     if (this.env.FEEDBACK_DB) {
       registerFeedbackTool(this.server, new D1FeedbackStore(this.env.FEEDBACK_DB), SERVER_NAME);
@@ -77,16 +84,17 @@ export default {
     }
 
     if (url.pathname === '/') {
+      const config = getWorkspaceConfig(env);
       return new Response(
         JSON.stringify(
           {
             name: SERVER_NAME,
-            display_name: DISPLAY_NAME,
+            display_name: config.displayName,
             version: '1.0.0',
-            description: 'Half Dozen access to its own Notion and its CREATE SOMETHING (agency) client\'s Notion. Full Notion tools; no Composio.',
+            description: config.description,
             auth: {
-              halfdozen: 'NOTION_API_KEY — Half Dozen internal (Meeting Capture, transcripts)',
-              client: 'NOTION_CLIENT_API_KEY — CREATE SOMETHING client workspace',
+              halfdozen: `NOTION_API_KEY — ${config.halfdozen.label}`,
+              client: `NOTION_CLIENT_API_KEY — ${config.client.label}`,
             },
             endpoints: { mcp: '/mcp', sse: '/sse' },
           },
