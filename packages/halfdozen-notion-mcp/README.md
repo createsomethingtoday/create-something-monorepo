@@ -38,7 +38,7 @@ Every tool call includes `workspace: "halfdozen"` or `workspace: "client"` so th
 
 ## Production
 
-- **URL:** `https://notion.mcp.workway.co/mcp` (after deploy and custom domain).
+- **URL:** `https://createsomething-notion.mcp.workway.co/mcp` (after deploy and custom domain).
 - **Deploy** (requires `wrangler login` or `CLOUDFLARE_API_TOKEN`):
 
   ```bash
@@ -58,7 +58,7 @@ Every tool call includes `workspace: "halfdozen"` or `workspace: "client"` so th
 {
   "mcpServers": {
     "notion-halfdozen-create-something": {
-      "url": "https://notion.mcp.workway.co/mcp"
+      "url": "https://createsomething-notion.mcp.workway.co/mcp"
     }
   }
 }
@@ -68,7 +68,7 @@ Every tool call includes `workspace: "halfdozen"` or `workspace: "client"` so th
 
 ```toml
 [mcp_servers."notion-halfdozen-create-something"]
-url = "https://notion.mcp.workway.co/mcp"
+url = "https://createsomething-notion.mcp.workway.co/mcp"
 ```
 
 Use the Streamable HTTP URL (`/mcp`). In Codex you can then use all Notion tools; pass `workspace: "halfdozen"` or `workspace: "client"` on each call.

@@ -156,7 +156,7 @@ MCP servers use a two-tier subdomain convention: `{service}.mcp.{property-domain
 | `halfdozen-gmail-sync-mcp` | `gmail.mcp.workway.co` | `packages/halfdozen-gmail-sync/` |
 | `halfdozen-youtube-sync-mcp` | `youtube.mcp.workway.co` | `packages/half-dozen-youtube-sync/` |
 | `quickbooks-notion-mcp` | `quickbooks.mcp.workway.co` | `packages/quickbooks-notion-mcp/` |
-| `halfdozen-notion-mcp` | `notion.mcp.workway.co` | `packages/halfdozen-notion-mcp/` — Half Dozen ↔ CREATE SOMETHING client Notion |
+| `halfdozen-notion-mcp` | `createsomething-notion.mcp.workway.co` | `packages/halfdozen-notion-mcp/` — Half Dozen ↔ CREATE SOMETHING client Notion |
 
 **Half Dozen MCP URL pattern** (use for new Half Dozen MCPs):
 
