@@ -163,8 +163,6 @@
 	.nav-container {
 		border-bottom: 1px solid var(--color-border-default);
 		background: var(--color-bg-pure);
-		padding-left: var(--container-padding, 1.5rem);
-		padding-right: var(--container-padding, 1.5rem);
 	}
 
 	.nav-inner {
@@ -183,8 +181,6 @@
 		right: 0;
 		width: 100%;
 		z-index: 50;
-		padding-left: var(--container-padding, 1.5rem);
-		padding-right: var(--container-padding, 1.5rem);
 		/* Glass Design System - "The Automation Layer" */
 		background-color: rgba(0, 0, 0, 0.72);
 		backdrop-filter: blur(16px) saturate(130%);
@@ -274,10 +270,6 @@
 		background-color: rgba(0, 0, 0, 0.65);
 		backdrop-filter: blur(12px) saturate(120%);
 		-webkit-backdrop-filter: blur(12px) saturate(120%);
-		margin-left: calc(-1 * var(--container-padding, 1.5rem));
-		margin-right: calc(-1 * var(--container-padding, 1.5rem));
-		padding-left: var(--container-padding, 1.5rem);
-		padding-right: var(--container-padding, 1.5rem);
 	}
 
 	/* Slide down animation for mobile menu */
