@@ -55,13 +55,14 @@
 
 /* ==========================================================================
    Heading Font Override
-   typography.css applies --font-display to h1-h4 only.
-   Since agency overrides --font-sans to JetBrains Mono (monospace),
-   h5/h6 would otherwise render in mono. Ensure all headings use
-   Stack Sans Notch via --font-display.
+   canon.css @layer base sets all headings to var(--font-sans), which in
+   agency resolves to JetBrains Mono. typography.css sets h1-h4 to
+   var(--font-display) but the build pipeline's layer resolution lets
+   canon.css win. This unlayered override after all imports ensures
+   Stack Sans Notch on every heading.
    ========================================================================== */
 
-h5, h6 {
+h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display, var(--font-sans));
 }
 
