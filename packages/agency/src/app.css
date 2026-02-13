@@ -54,6 +54,18 @@
 }
 
 /* ==========================================================================
+   Heading Font Override
+   typography.css applies --font-display to h1-h4 only.
+   Since agency overrides --font-sans to JetBrains Mono (monospace),
+   h5/h6 would otherwise render in mono. Ensure all headings use
+   Stack Sans Notch via --font-display.
+   ========================================================================== */
+
+h5, h6 {
+  font-family: var(--font-display, var(--font-sans));
+}
+
+/* ==========================================================================
    Navigation - Stack Sans Notch logo, consistent max-width
    ========================================================================== */
 

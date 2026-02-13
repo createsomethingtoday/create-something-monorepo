@@ -165,7 +165,7 @@ ${metrics && metrics.length ? `### Key Metrics\n${metrics.map(m => `- ${m}`).joi
 		background: var(--color-bg-subtle);
 		padding: 0.2em 0.4em;
 		border-radius: var(--radius-sm);
-		font-family: 'Stack Sans Mono', monospace;
+		font-family: var(--font-mono);
 		font-size: 0.9em;
 		color: var(--color-fg-primary);
 	}
