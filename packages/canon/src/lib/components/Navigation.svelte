@@ -63,7 +63,7 @@
 </script>
 
 <nav class="nav-container" class:nav-fixed={fixed} aria-label="Primary">
-	<div class="max-w-7xl mx-auto px-6 py-4">
+	<div class="nav-inner">
 		<div class="flex items-center justify-between">
 			<!-- Logo / Home -->
 			<a href={logoHref} class="nav-logo">
@@ -163,6 +163,17 @@
 	.nav-container {
 		border-bottom: 1px solid var(--color-border-default);
 		background: var(--color-bg-pure);
+		padding-left: var(--container-padding, 1.5rem);
+		padding-right: var(--container-padding, 1.5rem);
+	}
+
+	.nav-inner {
+		max-width: var(--content-width-xl, 80rem);
+		margin: 0 auto;
+		padding-top: 1rem;
+		padding-bottom: 1rem;
+		display: flex;
+		flex-direction: column;
 	}
 
 	.nav-fixed {
@@ -172,6 +183,8 @@
 		right: 0;
 		width: 100%;
 		z-index: 50;
+		padding-left: var(--container-padding, 1.5rem);
+		padding-right: var(--container-padding, 1.5rem);
 		/* Glass Design System - "The Automation Layer" */
 		background-color: rgba(0, 0, 0, 0.72);
 		backdrop-filter: blur(16px) saturate(130%);
@@ -261,10 +274,10 @@
 		background-color: rgba(0, 0, 0, 0.65);
 		backdrop-filter: blur(12px) saturate(120%);
 		-webkit-backdrop-filter: blur(12px) saturate(120%);
-		margin-left: -1.5rem;
-		margin-right: -1.5rem;
-		padding-left: 1.5rem;
-		padding-right: 1.5rem;
+		margin-left: calc(-1 * var(--container-padding, 1.5rem));
+		margin-right: calc(-1 * var(--container-padding, 1.5rem));
+		padding-left: var(--container-padding, 1.5rem);
+		padding-right: var(--container-padding, 1.5rem);
 	}
 
 	/* Slide down animation for mobile menu */
