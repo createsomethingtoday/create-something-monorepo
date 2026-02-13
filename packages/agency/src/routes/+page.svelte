@@ -7,22 +7,22 @@
 	// Structured data for SEO/AEO
 	const services = [
 		{
-			name: 'Connect — Your First MCP',
-			description: 'We build a custom MCP server that connects your most important tool to your AI agents — Claude, Cursor, Codex, or whatever you use. Deployed, documented, yours. From $2,500.',
+			name: 'Connect — Your First Tool',
+			description: 'We connect your most important business tool to Claude, Cursor, Codex, or whatever AI your team uses. Deployed, documented, yours. From $2,500.',
 			type: 'Consulting',
 			price: '2500',
 			priceDescription: 'Setup + $150/mo'
 		},
 		{
-			name: 'Automate — Workflow Bundle',
-			description: '3–5 custom MCP servers covering your full workflow, unified through a Playbook MCP your agents use to discover and orchestrate every tool. From $7,500.',
+			name: 'Automate — Full Workflow',
+			description: '3–5 of your business tools connected into a unified system your AI can access. CRM, project management, email, docs — all working together. From $7,500.',
 			type: 'Consulting',
 			price: '7500',
 			priceDescription: 'Setup + $350/mo'
 		},
 		{
-			name: 'Orchestrate — The Judgment Layer',
-			description: 'Domain-specific playbooks that teach your agents how your business works. Decision frameworks, priority rules, workflow sequences — refined monthly from real usage data. From $750/mo.',
+			name: 'Orchestrate — Business Intelligence',
+			description: 'We teach your AI how your business actually works. Priority rules, escalation logic, quality standards — refined monthly from real usage data. From $750/mo.',
 			type: 'Subscription',
 			price: '750',
 			priceDescription: 'Monthly managed intelligence'
@@ -138,9 +138,9 @@
 {/snippet}
 
 <SEO
-	title="MCP Infrastructure for Your AI Agents | CREATE SOMETHING .agency"
-	description="Your team already uses Claude, Cursor, or Codex. We build the MCP infrastructure your agents connect to — then add the Judgment Layer that teaches them how your business works. From $2,500."
-	keywords="custom MCP development, MCP server, AI integration, automation infrastructure, Claude MCP, Cursor MCP, Codex MCP, tool connectivity, AI agents, Judgment Layer, playbooks"
+	title="Connect Your Business Tools to AI | CREATE SOMETHING .agency"
+	description="Claude can't see your CRM. Cursor can't access your project data. We build the connections that give your AI tools access to your business — then teach them how your business actually works. From $2,500."
+	keywords="connect AI to business tools, AI automation, Claude integration, Cursor integration, AI for business, connect CRM to AI, business tool automation, AI consulting"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	{services}
@@ -163,20 +163,23 @@
 	<div class="hero-container">
 		<div class="hero-content">
 			<BlurFade delay={0}>
-				<p class="hero-eyebrow">MCP Infrastructure + Judgment Layer</p>
+				<p class="hero-eyebrow">AI that works with your tools</p>
 			</BlurFade>
 			<BlurFade delay={0.1}>
-				<h1 class="hero-title">Your agents are ready. Your&nbsp;tools&nbsp;aren't.</h1>
+				<h1 class="hero-title">Claude can't see your&nbsp;CRM. We&nbsp;fix&nbsp;that.</h1>
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					Your team already uses Claude, Cursor, or Codex. We build the MCP infrastructure they connect to — giving your agents access to your tools, your data, and your workflows. Then we add the Judgment Layer: playbooks that teach your agents how <em>your</em> business works.
+					Your team already uses Claude, Cursor, or Codex. But they can't access your actual systems — your CRM, your project data, your financial tools. We build the connections that change that. Then we teach your AI how <em>your</em> business actually works.
 				</p>
+			</BlurFade>
+			<BlurFade delay={0.25}>
+				<p class="hero-proof">16+ production integrations built. Clients recovering 15+ hours per week.</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
 				<div class="hero-cta">
 					<ShimmerButton href="/services">
-						Get Your First MCP
+						Connect Your First Tool
 					</ShimmerButton>
 					<a href="#process" class="hero-link">How it works →</a>
 				</div>
@@ -313,7 +316,7 @@
 					<div class="funnel-step-content">
 						<span class="funnel-step-label">Start</span>
 						<h3>Connect</h3>
-						<p>One custom MCP server connecting your most important tool to your agents. They can immediately search, sync, and act on your data.</p>
+						<p>We connect your most important business tool — Salesforce, Notion, HubSpot, whatever you use — to Claude, Cursor, or Codex. Your AI can immediately search, read, and act on your real data.</p>
 						<span class="funnel-price">From $2,500 + $150/mo</span>
 					</div>
 				</div>
@@ -328,7 +331,7 @@
 					<div class="funnel-step-content">
 						<span class="funnel-step-label">Expand</span>
 						<h3>Automate</h3>
-						<p>3–5 MCP servers covering your full workflow, unified through a Playbook MCP — the cockpit your agents use to discover and orchestrate every connected tool.</p>
+						<p>We connect 3–5 of your tools into a unified system. Your AI sees everything — CRM, project management, email, docs — and knows how they relate to each other.</p>
 						<span class="funnel-price">From $7,500 + $350/mo</span>
 					</div>
 				</div>
@@ -342,7 +345,7 @@
 					<div class="funnel-step-content">
 						<span class="funnel-step-label">Compound</span>
 						<h3>Orchestrate</h3>
-						<p>The Judgment Layer: domain-specific playbooks that teach your agents how your business works. Decision frameworks, priority rules, quality gates — refined monthly from real usage data. Your agents get smarter every month.</p>
+						<p>We teach your AI how your business actually works — which clients are priority, when to escalate, what your quality standards are. Business rules that get smarter every month from real usage data.</p>
 						<span class="funnel-price">From $750/mo</span>
 					</div>
 				</div>
@@ -374,15 +377,15 @@
 					</div>
 					<div class="offering-body">
 						<p class="offering-description">
-							One custom MCP server connecting your tool to your AI agents. Your Claude, Cursor, or Codex can immediately access your data and take action.
+							One connection between your most important tool and your AI. Claude, Cursor, or Codex can immediately access your data and take action.
 						</p>
 						<div class="offering-deliverables">
 							<span class="deliverables-label">Deliverables</span>
 							<ul>
-								<li>Custom MCP server, deployed to edge</li>
-								<li>Auth setup (OAuth, API keys, or managed)</li>
-								<li>Playbook entry for agent discovery</li>
-								<li>Full source code — it's yours</li>
+								<li>Custom integration, deployed and managed</li>
+								<li>Secure authentication setup</li>
+								<li>Works with Claude, Cursor, Codex</li>
+								<li>Full source code — you own everything</li>
 							</ul>
 						</div>
 					</div>
@@ -400,15 +403,15 @@
 					</div>
 					<div class="offering-body">
 						<p class="offering-description">
-							3–5 MCP servers covering your workflow, unified through a Playbook MCP — the single interface your agents use to discover and orchestrate every connected tool.
+							3–5 of your tools connected into one unified system. Your AI sees your CRM, project management, email, and docs — and knows how they relate.
 						</p>
 						<div class="offering-deliverables">
 							<span class="deliverables-label">Deliverables</span>
 							<ul>
-								<li>3–5 custom MCP servers, deployed</li>
-								<li>Playbook MCP (agent discovery catalog)</li>
-								<li>Shared telemetry &amp; feedback system</li>
-								<li>Ongoing auth &amp; API drift management</li>
+								<li>3–5 custom integrations, deployed</li>
+								<li>Unified discovery — AI knows what's available</li>
+								<li>Usage tracking &amp; feedback system</li>
+								<li>Ongoing maintenance as your tools change</li>
 							</ul>
 						</div>
 					</div>
@@ -425,15 +428,15 @@
 					</div>
 					<div class="offering-body">
 						<p class="offering-description">
-							The Judgment Layer: domain-specific playbooks that teach your agents how your business works. We analyze what your agents do, find gaps, and write the prompts that close them.
+							We teach your AI how your business actually works. Which clients are priority. When to escalate. What your quality standards are. It gets smarter every month.
 						</p>
 						<div class="offering-deliverables">
 							<span class="deliverables-label">Includes</span>
 							<ul>
-								<li>Decision frameworks &amp; priority rules</li>
-								<li>Workflow sequences &amp; quality gates</li>
-								<li>Monthly refinement from usage data</li>
-								<li>New playbooks as your needs evolve</li>
+								<li>Business rules your AI follows</li>
+								<li>When AI isn't sure, it asks instead of guessing</li>
+								<li>Monthly refinement from real usage data</li>
+								<li>New capabilities as your needs evolve</li>
 							</ul>
 						</div>
 					</div>
@@ -452,13 +455,13 @@
 		<BlurFade delay={0.1}>
 			<div class="problem-statements">
 				<p class="problem-text">
-					Your team already uses AI. Claude drafts emails. Cursor writes code. Codex reviews PRs. But your agents can't access your actual systems — your CRM, your project management, your financial data.
+					Your team already uses AI. Claude drafts emails. Cursor writes code. Codex reviews PRs. But none of them can access your actual systems — your CRM, your project management, your financial data.
 				</p>
 				<p class="problem-text">
-					Without MCP infrastructure, your agents are powerful but disconnected. With it, they become part of your workflow.
+					Right now, your AI is powerful but disconnected. You're copying and pasting between tools, re-explaining context every conversation, losing hours to work AI should handle.
 				</p>
 				<p class="problem-punchline">
-					We build the infrastructure. Your agents drive it.
+					We build the bridge. Your AI crosses it.
 				</p>
 			</div>
 		</BlurFade>
@@ -475,22 +478,22 @@
 		<div class="audience-grid">
 			<BlurFade delay={0.1}>
 				<div class="audience-card">
-					<h3>Teams With AI Agents</h3>
-					<p>You already use Claude Desktop, Cursor, Codex, or Claude Code. Your agents are powerful — they just can't reach your tools yet. We build the roads they drive on.</p>
+					<h3>Teams Already Using AI</h3>
+					<p>You use Claude, Cursor, Codex, or ChatGPT daily. They're powerful — but they can't see your business data. We give them access to the systems you actually use.</p>
 				</div>
 			</BlurFade>
 
 			<BlurFade delay={0.2}>
 				<div class="audience-card">
-					<h3>Teams With Tool Sprawl</h3>
-					<p>Gmail, Notion, Zoom, QuickBooks, Slack — none of them talk to your agents natively. You need MCP infrastructure, not another integration platform.</p>
+					<h3>Teams Drowning in Tools</h3>
+					<p>Gmail, Notion, Zoom, QuickBooks, Slack — none of them talk to your AI. You spend hours copying data between systems. We make your tools work together through AI.</p>
 				</div>
 			</BlurFade>
 
 			<BlurFade delay={0.3}>
 				<div class="audience-card">
-					<h3>Teams Ready for Judgment</h3>
-					<p>Connections are step one. You want your agents to know which emails matter, when to escalate, and how your business actually works. That's the Judgment Layer.</p>
+					<h3>Teams Ready to Go Further</h3>
+					<p>Connections are step one. You want your AI to know which emails matter, when to escalate, and how your business actually works. We build that intelligence.</p>
 				</div>
 			</BlurFade>
 		</div>
@@ -501,17 +504,17 @@
 <section class="cta-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="cta-heading">Your agents are waiting.</h2>
+			<h2 class="cta-heading">Start with one tool. See what happens.</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
-				Most teams start with one MCP — connect your most important tool, see what your agents can do with it. Then decide what's next.
+				Most teams start by connecting their most important tool — CRM, project management, whatever runs your day. You'll see the value in the first week. Then decide what's next.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<div class="cta-buttons">
 				<ShimmerButton href="/services">
-					Get Your First MCP
+					Connect Your First Tool
 				</ShimmerButton>
 				<a href="https://createsomething.agency/book" class="cta-book-link">
 					Have questions? Book a call →
@@ -607,9 +610,16 @@
 	.hero-detail {
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-8, 3rem);
+		margin-bottom: var(--space-4, 1rem);
 		line-height: var(--leading-relaxed);
 		max-width: var(--content-width-sm);
+	}
+	
+	.hero-proof {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-6, 2rem);
+		letter-spacing: 0.01em;
 	}
 	
 	.hero-cta {

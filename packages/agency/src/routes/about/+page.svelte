@@ -22,9 +22,9 @@
 </script>
 
 <SEO
-	title="About | Custom MCP Development + Managed AI Services"
-	description="We build custom MCP servers and manage the intelligence layer on top. 16+ production deployments connecting business tools to AI agents. Based in Texas."
-	keywords="custom MCP development, managed AI services, MCP servers, automation intelligence, Subtractive Triad, Micah Johnson, AI agent infrastructure"
+	title="About | Connect Business Tools to AI"
+	description="We connect business tools to AI and teach the AI how your business works. 16+ production integrations across Salesforce, HubSpot, Notion, Procore, and more. Based in Texas."
+	keywords="AI integration consulting, business tool automation, AI services, Micah Johnson, connect tools to AI, AI consulting Texas"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -36,10 +36,10 @@
 		<p class="hero-eyebrow reveal">About</p>
 		<h1 class="hero-title reveal">We build connections. Then we build intelligence.</h1>
 		<p class="hero-detail reveal">
-			We started by building custom MCP servers — the infrastructure that connects
-			business tools to AI agents. We've built 16+ in production. That experience
-			taught us something: the connection is the easy part. The intelligence — knowing
-			what to automate, how to tune it, when to escalate — is what makes it work.
+			We started by connecting business tools to AI — Salesforce, HubSpot, Notion,
+			Procore, custom systems. We've built 16+ production integrations. That experience
+			taught us something: the connection is the easy part. The intelligence — teaching
+			AI how your business actually works — is what makes it valuable.
 		</p>
 	</div>
 </section>
@@ -50,10 +50,10 @@
 		<div class="about-content reveal">
 			<h2>The approach</h2>
 			<p>
-				CREATE SOMETHING builds custom MCP servers and manages the intelligence layer
-				on top. We connect your tools to AI agents, then make those connections smart
-				— through prompt optimization, agent orchestration, policy management, and
-				ongoing tuning.
+				CREATE SOMETHING connects your business tools to AI, then builds the intelligence
+				on top. We give Claude, Cursor, and Codex access to your actual systems, then teach
+				them how your business works — through business rules, workflow logic, and
+				ongoing refinement.
 			</p>
 			<p>
 				Our methodology is the Subtractive Triad: before building anything new, we
@@ -76,10 +76,10 @@
 				custom MCP servers and managed AI services for businesses across the US.
 			</p>
 			<p>
-				We've deployed 16+ production MCP servers connecting tools like Salesforce,
-				HubSpot, Notion, Slack, Procore, and custom internal systems to AI agents.
-				That building experience is what makes our Judgment Layer services credible —
-				we know what breaks because we've built it.
+				We've deployed 16+ production integrations connecting tools like Salesforce,
+				HubSpot, Notion, Slack, Procore, and custom internal systems to AI. That
+				building experience is what makes our intelligence services credible — we know
+				what breaks because we've built it.
 			</p>
 			<p>
 				Based in Texas. Working with organizations across the US.
@@ -95,13 +95,13 @@
 <section class="about-section">
 	<div class="section-container">
 		<div class="about-content reveal">
-			<h2>The hermeneutic circle</h2>
-			<p>CREATE SOMETHING operates as a connected system:</p>
+			<h2>The system behind the work</h2>
+			<p>CREATE SOMETHING operates as a connected system — each part informs the others:</p>
 			<ul class="circle-list">
-				<li><a href="https://createsomething.ltd" class="link" target="_blank" rel="noopener noreferrer"><strong>.ltd</strong></a> — The philosophy of automation infrastructure</li>
+				<li><a href="https://createsomething.ltd" class="link" target="_blank" rel="noopener noreferrer"><strong>.ltd</strong></a> — Our philosophy and principles</li>
 				<li><a href="https://createsomething.io" class="link" target="_blank" rel="noopener noreferrer"><strong>.io</strong></a> — Research and validated patterns</li>
 				<li><a href="https://createsomething.space" class="link" target="_blank" rel="noopener noreferrer"><strong>.space</strong></a> — Tools and experiments</li>
-				<li><strong>.agency</strong> — Custom MCP development + managed intelligence <span class="muted">(you are here)</span></li>
+				<li><strong>.agency</strong> — Custom AI integrations + managed intelligence <span class="muted">(you are here)</span></li>
 			</ul>
 			<p>
 				Client work informs our research. Research refines our methodology. The methodology
@@ -117,7 +117,7 @@
 		<div class="about-content reveal">
 			<h2>Also building</h2>
 			<p>
-				We're also building <a href="https://workway.co" class="link" target="_blank" rel="noopener noreferrer">WORKWAY</a> — the automation layer for construction, built on Procore. It's our methodology applied to a specific vertical. What we learn from WORKWAY strengthens what we bring to every engagement.
+				We're also building <a href="https://workway.co" class="link" target="_blank" rel="noopener noreferrer">WORKWAY</a> — AI automation for construction, built on Procore. What we learn building for construction strengthens what we bring to every client engagement.
 			</p>
 		</div>
 	</div>
@@ -128,7 +128,7 @@
 	<div class="section-container">
 		<h2 class="cta-heading reveal">Start with one connection.</h2>
 		<div class="cta-actions reveal">
-			<a href="/services" class="cta-link-primary">Get Your First MCP →</a>
+			<a href="/services" class="cta-link-primary">Connect Your First Tool →</a>
 			<a href="/book" class="cta-link-secondary">Have questions? Book a call →</a>
 		</div>
 	</div>

@@ -84,14 +84,14 @@
 </script>
 
 <SEO
-	title="The Subtractive Triad | Methodology"
-	description="Creation is the discipline of removing what obscures. The Subtractive Triad applies three levels of subtraction — eliminating duplication, excess, and disconnection — to reveal the automation architecture your organization actually needs."
-	keywords="automation methodology, subtractive design, automation architecture, systems design, DRY principle, Dieter Rams, hermeneutic circle, automation audit, connected systems"
+	title="How We Work | Methodology"
+	description="Most automation fails because it adds complexity. Our methodology does the opposite: we remove duplication, strip excess, and reconnect what remains into a system that actually works. Here's the framework behind every engagement."
+	keywords="AI automation methodology, systems design, automation audit, workflow optimization, tool consolidation, connected systems"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	breadcrumbs={[
 		{ name: 'Home', url: '/' },
-		{ name: 'Methodology', url: '/methodology' }
+		{ name: 'How We Work', url: '/methodology' }
 	]}
 />
 
@@ -100,15 +100,16 @@
 	<div class="hero-grid"></div>
 	<div class="hero-content">
 		<BlurFade delay={0}>
-			<p class="hero-eyebrow">Methodology</p>
+			<p class="hero-eyebrow">How We Work</p>
 		</BlurFade>
 		<BlurFade delay={0.1}>
-			<h1 class="hero-title">The Subtractive Triad</h1>
+			<h1 class="hero-title">Build Less. Connect What Matters.</h1>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<p class="hero-subtitle">
-				Creation is the discipline of removing what obscures. We apply three levels of
-				subtraction to reveal the automation architecture your organization actually needs.
+				Most automation projects fail because they add complexity — more tools, more workflows,
+				more moving parts. We do the opposite. We find what's redundant, strip what doesn't work,
+				and connect what remains into a system that actually serves your business.
 			</p>
 		</BlurFade>
 	</div>
@@ -252,7 +253,7 @@
 		</BlurFade>
 		<BlurFade delay={0.15}>
 			<p class="section-subhead">
-				The structural model we use to classify every component in your automation stack.
+				Every part of your system does one of three things. Understanding which is the key to building automation that works.
 			</p>
 		</BlurFade>
 
@@ -292,18 +293,18 @@
 <section class="cta-section">
 	<div class="section-container">
 		<BlurFade delay={0}>
-			<h2 class="cta-heading">This is how we work</h2>
+			<h2 class="cta-heading">Ready to simplify?</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
-				Every engagement starts with the Subtractive Triad — whether it's a single MCP build
-				or a full audit of your systems. The methodology ensures we build what matters and remove what doesn't.
+				Every engagement starts with this methodology — whether it's connecting one tool
+				or auditing your full system. We build what matters and remove what doesn't.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<div class="cta-buttons">
 				<ShimmerButton href="/services">
-					Get Your First MCP
+					See Services & Pricing
 				</ShimmerButton>
 				<a href="https://createsomething.agency/book" class="cta-secondary">
 					Have questions? Book a call

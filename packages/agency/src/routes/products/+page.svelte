@@ -34,9 +34,9 @@
 </script>
 
 <SEO
-	title="MCP Portfolio | 16+ Open Source MCPs"
-	description="Open source MCP servers for agent coordination, code analysis, scheduling, Notion sync, Webflow, and more. Plus custom MCP development for your tools."
-	keywords="MCP, Model Context Protocol, open source, Loom, Ground, Triad Audit, Notion sync, Webflow, QuickBooks, scheduling, agent coordination, Claude, Cursor"
+	title="What We've Built | 16+ Production Integrations"
+	description="Open source tools and custom integrations connecting business tools to AI. Notion, Gmail, Zoom, Salesforce, HubSpot, Procore, and more. See what we build for clients."
+	keywords="AI integrations, business tool automation, Notion AI, Gmail AI, Zoom AI, Salesforce AI, custom AI development, MCP servers"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -46,9 +46,9 @@
 	<div class="hero-grid"></div>
 	<div class="hero-content">
 		<p class="hero-eyebrow reveal">Open Source + Custom</p>
-		<h1 class="hero-title reveal">MCPs We've Built</h1>
+		<h1 class="hero-title reveal">What We've Built</h1>
 		<p class="hero-subtitle reveal">
-			{products.length} MCP servers — open source tools, integration bridges, and custom builds for clients.
+			{products.length} integrations — open source tools, platform connectors, and custom builds for clients.
 		</p>
 	</div>
 </section>
@@ -201,7 +201,7 @@
 <section class="cta-section">
 	<div class="section-container">
 		<p class="cta-heading reveal">Need something custom?</p>
-		<p class="cta-subtext reveal">We build MCPs for your specific tools and workflows.</p>
+		<p class="cta-subtext reveal">We build integrations for your specific tools and workflows.</p>
 		<a href="/services" class="cta-link reveal">View services →</a>
 	</div>
 </section>

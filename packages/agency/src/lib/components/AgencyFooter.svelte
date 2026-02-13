@@ -31,7 +31,7 @@
 				<ul class="footer-links">
 					<li><a href="https://createsomething.io" target="_blank" rel="noopener">MCP Patterns</a></li>
 					<li><a href="https://createsomething.space" target="_blank" rel="noopener">Experiments</a></li>
-					<li><a href="/methodology">Methodology</a></li>
+					<li><a href="/methodology">How We Work</a></li>
 				</ul>
 			</div>
 
