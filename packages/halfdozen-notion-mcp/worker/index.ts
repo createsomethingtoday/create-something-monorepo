@@ -16,7 +16,7 @@ import { registerFeedbackTool, D1FeedbackStore } from '@create-something/mcp-cor
 import { getWorkspaceConfig } from '../src/config.js';
 import { getNotionClients } from '../src/lib/notion.js';
 import { registerNotionTools } from '../src/tools/index.js';
-import { registerWorkspacesResource } from '../src/resources.js';
+import { NOTION_TOOLS, registerWorkspacesResource, registerToolsResource } from '../src/resources.js';
 import { registerTaskWorkflowPrompt } from '../src/prompts.js';
 
 // =============================================================================
@@ -59,6 +59,7 @@ export class NotionHalfDozenMcp extends McpAgent<Env> {
     }
 
     registerWorkspacesResource(this.server, config);
+    registerToolsResource(this.server);
     registerTaskWorkflowPrompt(this.server, config);
 
     if (this.env.FEEDBACK_DB) {
@@ -92,6 +93,7 @@ export default {
             display_name: config.displayName,
             version: '1.0.0',
             description: config.description,
+            tools: NOTION_TOOLS.map((t) => t.name),
             auth: {
               halfdozen: `NOTION_API_KEY — ${config.halfdozen.label}`,
               client: `NOTION_CLIENT_API_KEY — ${config.client.label}`,

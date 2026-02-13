@@ -92,7 +92,7 @@ This MCP uses **Notion API version 2025-09-03** and **@notionhq/client v5**. The
 
 ## Tools
 
-All tools accept `workspace: "halfdozen" | "client"`.
+This MCP exposes **12 tools** (search, list databases, get/query database, get/create/update page, append blocks, archive page/block, bulk update/archive). All accept `workspace: "halfdozen" | "client"`. The root endpoint `GET /` and the `notion://tools` resource return the full list so clients can verify they see all tools.
 
 - `notion_search` — Search workspace (pages or data sources). `filter_type`: `page` or `data_source`.
 - `notion_list_databases` — List data sources the integration can access (returns `data_sources` with id, title, url).
@@ -107,9 +107,10 @@ All tools accept `workspace: "halfdozen" | "client"`.
 - `notion_bulk_update` — Update multiple pages with the same properties.
 - `notion_bulk_archive` — Archive multiple pages.
 
-## Resource
+## Resources
 
 - `notion://workspaces` — Lists the two workspaces with labels (Half Dozen vs Client) for context.
+- `notion://tools` — Lists all 12 Notion tools this MCP exposes. If your client only shows one tool, read this resource or `GET /` to see the full list; reconnect MCP or use a client that lists all tools (e.g. Cursor).
 
 ## Prompt
 
