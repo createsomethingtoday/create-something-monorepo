@@ -257,8 +257,8 @@
 
 			<BlurFade delay={0.3}>
 				<div class="audience-card">
-					<h3>5+ Years Building Tools</h3>
-					<p>Previously at Webflow building internal tools, onboarding systems, and template infrastructure serving millions. Now applying that to AI automation.</p>
+					<h3>System Architect at Webflow</h3>
+					<p>Currently a System Architect on the Marketplace Team at Webflow — building internal tools, onboarding systems, and template infrastructure serving millions. Applying that same rigor to AI automation.</p>
 				</div>
 			</BlurFade>
 		</div>

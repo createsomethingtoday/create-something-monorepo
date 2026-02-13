@@ -23,7 +23,7 @@
 
 <SEO
 	title="About | Micah Johnson — Your AI Person"
-	description="I connect business tools to AI and teach the AI how your business works. 16+ production integrations. 5+ years building tools at Webflow. Based in Texas."
+	description="I connect business tools to AI and teach the AI how your business works. 16+ production integrations. System Architect at Webflow. Based in Texas."
 	keywords="Micah Johnson, AI integration, fractional AI architect, business tool automation, AI consulting Texas"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -71,9 +71,10 @@
 		<div class="about-content reveal">
 			<h2>Background</h2>
 			<p>
-				Micah Johnson. 5+ years at Webflow building internal tools, onboarding
-				systems, and template infrastructure serving millions of users. Now building
-				custom integrations and managed AI services for businesses across the US.
+				Micah Johnson. System Architect on the Marketplace Team at Webflow — building
+				internal tools, onboarding systems, and template infrastructure serving millions
+				of users. Also building custom AI integrations and managed intelligence services
+				for businesses across the US.
 			</p>
 			<p>
 				I've deployed 16+ production integrations connecting tools like Salesforce,
