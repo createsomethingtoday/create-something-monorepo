@@ -240,3 +240,18 @@ export async function handleNotionBulkArchive(
     content: [{ type: 'text', text: JSON.stringify({ results }, null, 2) }],
   };
 }
+
+// -----------------------------------------------------------------------------
+// Archive block (move to trash; enables reverting appended content)
+// -----------------------------------------------------------------------------
+export async function handleNotionArchiveBlock(
+  clients: NotionClients,
+  params: { workspace: 'halfdozen' | 'client'; block_id: string }
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  const client = getClient(clients, params.workspace) as Client;
+  const block = await client.blocks.delete({ block_id: params.block_id });
+  const archived = (block as { archived?: boolean }).archived ?? true;
+  return {
+    content: [{ type: 'text', text: JSON.stringify({ id: block.id, archived }, null, 2) }],
+  };
+}

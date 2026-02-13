@@ -6,7 +6,7 @@
 import { z } from 'zod';
 
 export const workspaceSchema = z.enum(['halfdozen', 'client']).describe(
-  "Use 'halfdozen' for internal Half Dozen data (Meeting Capture, meeting transcripts). Use 'client' for the client's Notion database you're doing work for."
+  "Pass 'halfdozen' or 'client'. See notion://workspaces resource for which workspace is which."
 );
 
 // Shared for tools that need only workspace + one or two params
@@ -74,4 +74,9 @@ export const notionBulkUpdateSchema = z.object({
 export const notionBulkArchiveSchema = z.object({
   workspace: workspaceSchema,
   page_ids: z.array(z.string()).min(1).max(100).describe('Page IDs to archive'),
+});
+
+export const notionArchiveBlockSchema = z.object({
+  workspace: workspaceSchema,
+  block_id: z.string().describe('The ID of the block to archive (move to trash). Returned from notion_append_blocks or from block children.'),
 });

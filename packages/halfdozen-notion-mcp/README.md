@@ -103,6 +103,7 @@ All tools accept `workspace: "halfdozen" | "client"`.
 - `notion_update_page` — Update page properties.
 - `notion_append_blocks` — Append blocks to a page.
 - `notion_archive_page` — Archive (trash) a page.
+- `notion_archive_block` — Archive a block (move to trash). Use to revert appended content; `block_id` from append results or block children.
 - `notion_bulk_update` — Update multiple pages with the same properties.
 - `notion_bulk_archive` — Archive multiple pages.
 

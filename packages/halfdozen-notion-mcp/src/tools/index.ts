@@ -15,6 +15,7 @@ import {
   notionUpdatePageSchema,
   notionAppendBlocksSchema,
   notionArchivePageSchema,
+  notionArchiveBlockSchema,
   notionBulkUpdateSchema,
   notionBulkArchiveSchema,
 } from '../schemas.js';
@@ -28,12 +29,12 @@ import {
   handleNotionUpdatePage,
   handleNotionAppendBlocks,
   handleNotionArchivePage,
+  handleNotionArchiveBlock,
   handleNotionBulkUpdate,
   handleNotionBulkArchive,
 } from './handlers.js';
 
-const WORKSPACE_HINT =
-  "Use workspace: 'halfdozen' for internal Half Dozen data (Meeting Capture, meeting transcripts). Use workspace: 'client' for the client's Notion database you're doing work for.";
+const WORKSPACE_HINT = "Pass workspace: 'halfdozen' or 'client'. See notion://workspaces resource for which workspace is which.";
 
 export function registerNotionTools(server: McpServer, clients: NotionClients): void {
   server.tool(
@@ -97,6 +98,13 @@ export function registerNotionTools(server: McpServer, clients: NotionClients): 
     `Archive (move to trash) a page. ${WORKSPACE_HINT}`,
     notionArchivePageSchema.shape,
     (params) => handleNotionArchivePage(clients, params as { workspace: 'halfdozen' | 'client'; page_id: string })
+  );
+
+  server.tool(
+    'notion_archive_block',
+    `Archive a block (move to trash). Use to revert appended content; block_id comes from notion_append_blocks results or block children. ${WORKSPACE_HINT}`,
+    notionArchiveBlockSchema.shape,
+    (params) => handleNotionArchiveBlock(clients, params as { workspace: 'halfdozen' | 'client'; block_id: string })
   );
 
   server.tool(
