@@ -9,8 +9,8 @@
 			domain: 'Implementation',
 			question: 'Have we built this before?',
 			action: 'Unify',
-			description:
-				'We audit your systems for redundant tools, duplicate workflows, and repeated data entry. If three teams use three different project management tools, that\'s duplication. If the same customer data lives in four systems, that\'s duplication. We map it, measure the cost, and design the unified architecture.',
+	description:
+			'I audit your systems for redundant tools, duplicate workflows, and repeated data entry. If three teams use three different project management tools, that\'s duplication. If the same customer data lives in four systems, that\'s duplication. I map it, measure the cost, and design the unified architecture.',
 			outcome: 'Fewer systems, clearer data, lower costs.'
 		},
 		{
@@ -19,8 +19,8 @@
 			domain: 'Artifact',
 			question: 'Does this earn its existence?',
 			action: 'Remove',
-			description:
-				'Named for Dieter Rams — "Weniger, aber besser" (Less, but better). Every tool, every workflow, every automation must justify its existence. We challenge each component: Does it produce outcomes? Is it used? Would anyone notice if it disappeared? The tools that survive this audit are the ones worth investing in.',
+	description:
+			'Named for Dieter Rams — "Weniger, aber besser" (Less, but better). Every tool, every workflow, every automation must justify its existence. I challenge each component: Does it produce outcomes? Is it used? Would anyone notice if it disappeared? The tools that survive this audit are the ones worth investing in.',
 			outcome: 'A leaner stack where every tool earns its place.'
 		},
 		{
@@ -84,14 +84,14 @@
 </script>
 
 <SEO
-	title="How We Work | Methodology"
-	description="Most automation fails because it adds complexity. Our methodology does the opposite: we remove duplication, strip excess, and reconnect what remains into a system that actually works. Here's the framework behind every engagement."
+	title="Methodology | How I Think About Automation"
+	description="Most automation fails because it adds complexity. My methodology does the opposite: remove duplication, strip excess, reconnect what remains. Here's the framework behind every engagement."
 	keywords="AI automation methodology, systems design, automation audit, workflow optimization, tool consolidation, connected systems"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	breadcrumbs={[
 		{ name: 'Home', url: '/' },
-		{ name: 'How We Work', url: '/methodology' }
+		{ name: 'Methodology', url: '/methodology' }
 	]}
 />
 
@@ -100,7 +100,7 @@
 	<div class="hero-grid"></div>
 	<div class="hero-content">
 		<BlurFade delay={0}>
-			<p class="hero-eyebrow">How We Work</p>
+			<p class="hero-eyebrow">Methodology</p>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<h1 class="hero-title">Build Less. Connect What Matters.</h1>
@@ -108,7 +108,7 @@
 		<BlurFade delay={0.2}>
 			<p class="hero-subtitle">
 				Most automation projects fail because they add complexity — more tools, more workflows,
-				more moving parts. We do the opposite. We find what's redundant, strip what doesn't work,
+				more moving parts. I do the opposite. Find what's redundant, strip what doesn't work,
 				and connect what remains into a system that actually serves your business.
 			</p>
 		</BlurFade>
@@ -121,11 +121,11 @@
 		<BlurFade delay={0.1}>
 			<div class="principle-card">
 				<h2 class="principle-heading">The Core Principle</h2>
-				<p class="principle-body">
-					Most automation strategies fail because they <em>add</em> — more tools, more workflows,
-					more connections. The Subtractive Triad inverts this. We start by removing what
-					doesn't belong. What remains is the architecture.
-				</p>
+			<p class="principle-body">
+				Most automation strategies fail because they <em>add</em> — more tools, more workflows,
+				more connections. The Subtractive Triad inverts this. I start by removing what
+				doesn't belong. What remains is the architecture.
+			</p>
 			</div>
 		</BlurFade>
 	</div>
@@ -297,20 +297,16 @@
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
-				Every engagement starts with this methodology — whether it's connecting one tool
-				or auditing your full system. We build what matters and remove what doesn't.
+				Every engagement starts with this methodology. I look at your tools, find what doesn't belong, and build what matters.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<div class="cta-buttons">
-				<ShimmerButton href="/services">
-					See Services & Pricing
+				<ShimmerButton href="/book">
+					Book a Call
 				</ShimmerButton>
-				<a href="https://createsomething.agency/book" class="cta-secondary">
-					Have questions? Book a call
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<path d="M5 12h14M12 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
-					</svg>
+				<a href="/services" class="cta-secondary">
+					How I work →
 				</a>
 			</div>
 		</BlurFade>

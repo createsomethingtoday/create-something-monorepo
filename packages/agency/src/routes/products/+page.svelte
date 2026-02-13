@@ -34,8 +34,8 @@
 </script>
 
 <SEO
-	title="What We've Built | 16+ Production Integrations"
-	description="Open source tools and custom integrations connecting business tools to AI. Notion, Gmail, Zoom, Salesforce, HubSpot, Procore, and more. See what we build for clients."
+	title="What I've Built | 16+ Production Integrations"
+	description="Open source tools and custom integrations connecting business tools to AI. Notion, Gmail, Zoom, Salesforce, HubSpot, Procore, and more."
 	keywords="AI integrations, business tool automation, Notion AI, Gmail AI, Zoom AI, Salesforce AI, custom AI development, MCP servers"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -46,7 +46,7 @@
 	<div class="hero-grid"></div>
 	<div class="hero-content">
 		<p class="hero-eyebrow reveal">Open Source + Custom</p>
-		<h1 class="hero-title reveal">What We've Built</h1>
+		<h1 class="hero-title reveal">What I've Built</h1>
 		<p class="hero-subtitle reveal">
 			{products.length} integrations — open source tools, platform connectors, and custom builds for clients.
 		</p>
@@ -201,8 +201,8 @@
 <section class="cta-section">
 	<div class="section-container">
 		<p class="cta-heading reveal">Need something custom?</p>
-		<p class="cta-subtext reveal">We build integrations for your specific tools and workflows.</p>
-		<a href="/services" class="cta-link reveal">View services →</a>
+		<p class="cta-subtext reveal">I build integrations for your specific tools and workflows.</p>
+		<a href="/book" class="cta-link reveal">Book a call →</a>
 	</div>
 </section>
 

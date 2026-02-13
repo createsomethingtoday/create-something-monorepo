@@ -31,16 +31,16 @@
 	});
 
 	const navLinks = [
-		{ label: 'Pricing', href: '/services' },
-		{ label: 'Products', href: '/products' },
+		{ label: 'How I Work', href: '/services' },
+		{ label: 'What I\'ve Built', href: '/products' },
 		{ label: 'About', href: '/about' }
 	];
 
 	// Quick access items for unified search
 	const quickAccessItems = [
-		{ id: 'nav-services', label: 'Pricing', description: 'Predictable pricing for your project', href: '/services', icon: '🔨', keywords: ['hire', 'consulting', 'mcp', 'build', 'pricing', 'cost'] },
-		{ id: 'nav-products', label: 'Products', description: 'Tools for builders', href: '/products', icon: '📦', keywords: ['buy', 'solutions', 'tools'] },
-		{ id: 'nav-contact', label: 'Get Started', description: 'Book a discovery call', href: '/contact', icon: '✉️', keywords: ['contact', 'hire', 'start', 'book'] },
+		{ id: 'nav-services', label: 'How I Work', description: 'Retainer model, what\'s included', href: '/services', icon: '🔨', keywords: ['hire', 'consulting', 'pricing', 'cost', 'retainer'] },
+		{ id: 'nav-products', label: 'What I\'ve Built', description: '16+ production integrations', href: '/products', icon: '📦', keywords: ['portfolio', 'tools', 'integrations'] },
+		{ id: 'nav-book', label: 'Book a Call', description: 'See if there\'s a fit', href: '/book', icon: '📞', keywords: ['contact', 'hire', 'start', 'book', 'call'] },
 		{ id: 'nav-space', label: 'Go to .space', description: 'MCP experiments', href: 'https://createsomething.space', icon: '🧪', keywords: ['explore', 'try', 'interactive'] },
 		{ id: 'nav-io', label: 'Go to .io', description: 'MCP patterns for builders', href: 'https://createsomething.io', icon: '📖', keywords: ['papers', 'research', 'learn'] },
 		{ id: 'nav-ltd', label: 'Go to .ltd', description: 'Philosophy of automation', href: 'https://createsomething.ltd', icon: '📜', keywords: ['canon', 'principles', 'foundation'] },
@@ -101,8 +101,8 @@
 		links={navLinks}
 		currentPath={$page.url.pathname}
 		fixed={true}
-		ctaLabel="Get Started"
-		ctaHref="/contact"
+		ctaLabel="Book a Call"
+		ctaHref="/book"
 		user={data.user}
 		onLogout={handleLogout}
 		showLogin={true}

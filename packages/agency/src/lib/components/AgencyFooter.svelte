@@ -14,34 +14,33 @@
 	<div class="footer-container">
 		<!-- Link Columns -->
 		<div class="footer-columns">
-			<!-- Services Column -->
+			<!-- Work With Me Column -->
 			<div class="footer-column">
-				<h6 class="footer-heading">Services</h6>
+				<h6 class="footer-heading">Work With Me</h6>
 				<ul class="footer-links">
-					<li><a href="/services">Pricing</a></li>
-					<li><a href="/use-cases/business">For Business</a></li>
-					<li><a href="/use-cases/enterprise">Enterprise</a></li>
-					<li><a href="/contact">Get Started</a></li>
+					<li><a href="/services">How I Work</a></li>
+					<li><a href="/products">What I've Built</a></li>
+					<li><a href="/book">Book a Call</a></li>
 				</ul>
 			</div>
 
-			<!-- Resources Column -->
+			<!-- Learn Column -->
 			<div class="footer-column">
-				<h6 class="footer-heading">Resources</h6>
+				<h6 class="footer-heading">Learn</h6>
 				<ul class="footer-links">
-					<li><a href="https://createsomething.io" target="_blank" rel="noopener">MCP Patterns</a></li>
-					<li><a href="https://createsomething.space" target="_blank" rel="noopener">Experiments</a></li>
-					<li><a href="/methodology">How We Work</a></li>
+					<li><a href="/methodology">Methodology</a></li>
+					<li><a href="https://createsomething.io" target="_blank" rel="noopener">Research</a></li>
+					<li><a href="https://createsomething.space" target="_blank" rel="noopener">Tools</a></li>
 				</ul>
 			</div>
 
-			<!-- Company Column -->
+			<!-- About Column -->
 			<div class="footer-column">
-				<h6 class="footer-heading">Company</h6>
+				<h6 class="footer-heading">About</h6>
 				<ul class="footer-links">
-					<li><a href="/about">About</a></li>
+					<li><a href="/about">About Me</a></li>
 					<li><a href="https://createsomething.ltd" target="_blank" rel="noopener">Philosophy</a></li>
-					<li><a href="/contact">Contact</a></li>
+					<li><a href="mailto:micah@createsomething.agency">Email</a></li>
 				</ul>
 			</div>
 
@@ -57,9 +56,9 @@
 
 		<!-- Bottom Bar -->
 		<div class="footer-bottom">
-			<p class="footer-copyright">
-				© 2026 CREATE SOMETHING. We connect your tools to AI.
-			</p>
+		<p class="footer-copyright">
+			© 2026 CREATE SOMETHING. Your AI person.
+		</p>
 			<div class="footer-social">
 				<a href="https://github.com/create-something" target="_blank" rel="noopener">GitHub</a>
 			</div>

@@ -22,9 +22,9 @@
 </script>
 
 <SEO
-	title="About | Connect Business Tools to AI"
-	description="We connect business tools to AI and teach the AI how your business works. 16+ production integrations across Salesforce, HubSpot, Notion, Procore, and more. Based in Texas."
-	keywords="AI integration consulting, business tool automation, AI services, Micah Johnson, connect tools to AI, AI consulting Texas"
+	title="About | Micah Johnson — Your AI Person"
+	description="I connect business tools to AI and teach the AI how your business works. 16+ production integrations. 5+ years building tools at Webflow. Based in Texas."
+	keywords="Micah Johnson, AI integration, fractional AI architect, business tool automation, AI consulting Texas"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -34,11 +34,11 @@
 	<div class="hero-grid"></div>
 	<div class="hero-content">
 		<p class="hero-eyebrow reveal">About</p>
-		<h1 class="hero-title reveal">We build connections. Then we build intelligence.</h1>
+		<h1 class="hero-title reveal">I build connections. Then I build intelligence.</h1>
 		<p class="hero-detail reveal">
-			We started by connecting business tools to AI — Salesforce, HubSpot, Notion,
-			Procore, custom systems. We've built 16+ production integrations. That experience
-			taught us something: the connection is the easy part. The intelligence — teaching
+			I started by connecting business tools to AI — Salesforce, HubSpot, Notion,
+			Procore, custom systems. I've built 16+ production integrations. That experience
+			taught me something: the connection is the easy part. The intelligence — teaching
 			AI how your business actually works — is what makes it valuable.
 		</p>
 	</div>
@@ -50,16 +50,16 @@
 		<div class="about-content reveal">
 			<h2>The approach</h2>
 			<p>
-				CREATE SOMETHING connects your business tools to AI, then builds the intelligence
-				on top. We give Claude, Cursor, and Codex access to your actual systems, then teach
+				I connect your business tools to AI, then build the intelligence
+				on top. I give Claude, Cursor, and Codex access to your actual systems, then teach
 				them how your business works — through business rules, workflow logic, and
 				ongoing refinement.
 			</p>
 			<p>
-				Our methodology is the Subtractive Triad: before building anything new, we
+				My methodology is the Subtractive Triad: before building anything new, I
 				audit your systems to find what should be removed — duplication, excess,
-				disconnection. What remains is what's worth connecting. This is why our
-				implementations work: we don't just add connections. We design the system first.
+				disconnection. What remains is what's worth connecting. This is why my
+				implementations work: I don't just add connections. I design the system first.
 			</p>
 		</div>
 	</div>
@@ -71,18 +71,18 @@
 		<div class="about-content reveal">
 			<h2>Background</h2>
 			<p>
-				Led by Micah Johnson. 5+ years at Webflow building internal tools, onboarding
+				Micah Johnson. 5+ years at Webflow building internal tools, onboarding
 				systems, and template infrastructure serving millions of users. Now building
-				custom MCP servers and managed AI services for businesses across the US.
+				custom integrations and managed AI services for businesses across the US.
 			</p>
 			<p>
-				We've deployed 16+ production integrations connecting tools like Salesforce,
+				I've deployed 16+ production integrations connecting tools like Salesforce,
 				HubSpot, Notion, Slack, Procore, and custom internal systems to AI. That
-				building experience is what makes our intelligence services credible — we know
-				what breaks because we've built it.
+				building experience is what makes the intelligence work credible — I know
+				what breaks because I've built it.
 			</p>
 			<p>
-				Based in Texas. Working with organizations across the US.
+				Based in Texas. Working with businesses across the US.
 			</p>
 			<p>
 				<a href="https://www.linkedin.com/in/micahryanjohnson/" class="link" target="_blank" rel="noopener noreferrer">LinkedIn</a> · <a href="mailto:micah@createsomething.agency" class="link">Email</a>
@@ -91,21 +91,21 @@
 	</div>
 </section>
 
-<!-- The Hermeneutic Circle -->
+<!-- The System -->
 <section class="about-section">
 	<div class="section-container">
 		<div class="about-content reveal">
 			<h2>The system behind the work</h2>
 			<p>CREATE SOMETHING operates as a connected system — each part informs the others:</p>
 			<ul class="circle-list">
-				<li><a href="https://createsomething.ltd" class="link" target="_blank" rel="noopener noreferrer"><strong>.ltd</strong></a> — Our philosophy and principles</li>
+				<li><a href="https://createsomething.ltd" class="link" target="_blank" rel="noopener noreferrer"><strong>.ltd</strong></a> — Philosophy and principles</li>
 				<li><a href="https://createsomething.io" class="link" target="_blank" rel="noopener noreferrer"><strong>.io</strong></a> — Research and validated patterns</li>
 				<li><a href="https://createsomething.space" class="link" target="_blank" rel="noopener noreferrer"><strong>.space</strong></a> — Tools and experiments</li>
-				<li><strong>.agency</strong> — Custom AI integrations + managed intelligence <span class="muted">(you are here)</span></li>
+				<li><strong>.agency</strong> — Your AI person <span class="muted">(you are here)</span></li>
 			</ul>
 			<p>
-				Client work informs our research. Research refines our methodology. The methodology
-				improves our client work. Every part serves the whole.
+				Client work informs the research. Research refines the methodology. The methodology
+				improves the client work. Every part serves the whole.
 			</p>
 		</div>
 	</div>
@@ -117,7 +117,7 @@
 		<div class="about-content reveal">
 			<h2>Also building</h2>
 			<p>
-				We're also building <a href="https://workway.co" class="link" target="_blank" rel="noopener noreferrer">WORKWAY</a> — AI automation for construction, built on Procore. What we learn building for construction strengthens what we bring to every client engagement.
+				I'm also building <a href="https://workway.co" class="link" target="_blank" rel="noopener noreferrer">WORKWAY</a> — AI automation for construction, built on Procore. What I learn building for construction strengthens what I bring to every client engagement.
 			</p>
 		</div>
 	</div>
@@ -126,10 +126,10 @@
 <!-- CTA -->
 <section class="cta-section">
 	<div class="section-container">
-		<h2 class="cta-heading reveal">Start with one connection.</h2>
+		<h2 class="cta-heading reveal">Limited roster. Let's see if there's a fit.</h2>
 		<div class="cta-actions reveal">
-			<a href="/services" class="cta-link-primary">Connect Your First Tool →</a>
-			<a href="/book" class="cta-link-secondary">Have questions? Book a call →</a>
+			<a href="/book" class="cta-link-primary">Book a Call →</a>
+			<a href="/services" class="cta-link-secondary">How I work →</a>
 		</div>
 	</div>
 </section>
