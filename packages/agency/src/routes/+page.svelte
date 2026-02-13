@@ -225,6 +225,9 @@
 				<p class="problem-text">
 					Monthly retainer, $1,500–$3,000 depending on scope. First month is the heavy build. After that, effort shifts to refinement — closing gaps, adding capabilities, making your AI smarter. The system compounds.
 				</p>
+				<p class="problem-text">
+					Every engagement builds the intelligence layer — the business rules, decision logic, and workflow patterns that teach AI how to work. Those patterns compound across clients. The limited roster today is how the product gets built for tomorrow.
+				</p>
 				<p class="problem-punchline">
 					You own everything. I build it, I maintain it, I refine it.
 				</p>

@@ -40,7 +40,7 @@
 		},
 		{
 			question: "Why only 3–5 clients?",
-			answer: "Because this work requires understanding your business deeply enough to teach AI how it runs. I can't do that at scale. The constraint is real: there's one of me, and quality requires focus."
+			answer: "Because this work requires understanding your business deeply enough to teach AI how it runs. I can't do that at scale — yet. Every engagement builds the intelligence patterns and tooling that will eventually let me scale this with agents. The limited roster today is how the product gets built for tomorrow."
 		},
 		{
 			question: "What tools can you connect?",
@@ -156,7 +156,7 @@
 				<div class="timeline-card">
 					<span class="timeline-label">Month 4+</span>
 					<h3>The Compound</h3>
-					<p>The system gets smarter on its own. My effort shifts to refinement — new capabilities, better rules, adapting as your business evolves. Less building, more tuning. The value compounds every month without you doing anything.</p>
+					<p>The system gets smarter on its own. My effort shifts to refinement — new capabilities, better rules, adapting as your business evolves. The intelligence patterns I build for you also feed the tooling I'm building to scale this work with agents. Your business rules become part of a growing system.</p>
 				</div>
 			</BlurFade>
 		</div>
