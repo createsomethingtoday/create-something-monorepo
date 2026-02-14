@@ -69,7 +69,7 @@ export const products: Product[] = [
 			'DRY (duplication), Rams (excess), Heidegger (disconnection). Three-level audit with actions: Unify, Remove, Reconnect.',
 		badge: 'Free & Open Source',
 		category: 'developer-tools',
-		href: 'https://github.com/createsomething/create-something-monorepo/tree/main/packages/triad-audit',
+		href: 'https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/triad-audit',
 		npmPackage: '@createsomething/triad-audit',
 		pricing: 'Free',
 		timeline: 'Instant setup'
@@ -82,7 +82,7 @@ export const products: Product[] = [
 			'Interactive MCP server for learning the CREATE SOMETHING methodology — authentication, lessons, praxis exercises, and reflection.',
 		badge: 'Free & Open Source',
 		category: 'developer-tools',
-		href: 'https://github.com/createsomething/create-something-monorepo/tree/main/packages/learn',
+		href: 'https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/learn',
 		npmPackage: '@createsomething/learn',
 		pricing: 'Free',
 		timeline: 'Instant setup'
@@ -95,7 +95,7 @@ export const products: Product[] = [
 			'Perceive duplication, excess, and disconnection before dwelling in code. A Gemini extension for learning to see.',
 		badge: 'Free & Open Source',
 		category: 'developer-tools',
-		href: 'https://github.com/createsomething/create-something-monorepo/tree/main/packages/seeing',
+		href: 'https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/seeing',
 		npmPackage: '@createsomething/seeing',
 		pricing: 'Free',
 		timeline: 'Instant setup'
@@ -110,7 +110,7 @@ export const products: Product[] = [
 			'The framework itself as an MCP server — Resources, Tools, and Prompts. Architecture review, debugging, and design guidance.',
 		badge: 'Open Source',
 		category: 'framework',
-		href: 'https://github.com/createsomething/create-something-monorepo/tree/main/packages/three-tier-framework-mcp',
+		href: 'https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/three-tier-framework-mcp',
 		pricing: 'Free',
 		timeline: 'Instant setup'
 	},
@@ -122,7 +122,7 @@ export const products: Product[] = [
 			'MCP-managed workspaces with D1 and R2. Teams interact through agents instead of a UI — structured data, files, and connectivity.',
 		badge: 'Open Source',
 		category: 'framework',
-		href: 'https://github.com/createsomething/create-something-monorepo/tree/main/packages/substrate-mcp',
+		href: 'https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/substrate-mcp',
 		pricing: 'Free',
 		timeline: 'Requires Cloudflare setup'
 	},
@@ -136,7 +136,7 @@ export const products: Product[] = [
 			'Bidirectional sync between a master Issues database and client-specific Notion databases with conflict handling.',
 		badge: 'Open Source',
 		category: 'integration',
-		href: 'https://github.com/createsomething/create-something-monorepo/tree/main/packages/notion-sync-mcp',
+		href: 'https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/notion-sync-mcp',
 		pricing: 'Free',
 		timeline: 'Requires Notion integration'
 	},
@@ -148,7 +148,7 @@ export const products: Product[] = [
 			'CRUD, backfill, forecast, and conflict detection. Deployable as a Cloudflare Worker with SSE transport for AI clients.',
 		badge: 'Open Source',
 		category: 'integration',
-		href: 'https://github.com/createsomething/create-something-monorepo/tree/main/packages/schedule-mcp',
+		href: 'https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/schedule-mcp',
 		pricing: 'Free',
 		timeline: 'Requires Cloudflare setup'
 	},
@@ -160,7 +160,7 @@ export const products: Product[] = [
 			'Read-only MCP server giving AI agents secure access to QuickBooks data, synced into Notion databases with OAuth auto-refresh.',
 		badge: 'Open Source',
 		category: 'integration',
-		href: 'https://github.com/createsomething/create-something-monorepo/tree/main/packages/quickbooks-notion-mcp',
+		href: 'https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/quickbooks-notion-mcp',
 		pricing: 'Free',
 		timeline: 'Requires Intuit + Notion setup'
 	},
@@ -172,7 +172,7 @@ export const products: Product[] = [
 			'Analyze Webflow sites with a self-improving intelligence layer: touchpoints, SEO, structure, performance, and Designer metadata.',
 		badge: 'Open Source',
 		category: 'integration',
-		href: 'https://github.com/createsomething/create-something-monorepo/tree/main/packages/webflow-site-analyzer-mcp',
+		href: 'https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/webflow-site-analyzer-mcp',
 		pricing: 'Free',
 		timeline: 'Requires Webflow access'
 	},
@@ -184,7 +184,7 @@ export const products: Product[] = [
 			'MCP server for the Webflow Marketplace with plagiarism detection (MinHash, LSH, PageRank), marketplace asset analysis, and framework detection.',
 		badge: 'Open Source',
 		category: 'integration',
-		href: 'https://github.com/createsomething/create-something-monorepo/tree/main/packages/webflow-mcp',
+		href: 'https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/webflow-mcp',
 		pricing: 'Free',
 		timeline: 'Requires Webflow access'
 	},
@@ -196,7 +196,7 @@ export const products: Product[] = [
 			'Monitor platforms, draft responses, and queue them for human review. Community engagement with minimal daily effort.',
 		badge: 'Open Source',
 		category: 'integration',
-		href: 'https://github.com/createsomething/create-something-monorepo/tree/main/packages/community-mcp',
+		href: 'https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/community-mcp',
 		pricing: 'Free',
 		timeline: 'Instant setup'
 	},
@@ -208,7 +208,7 @@ export const products: Product[] = [
 			'AI-native social calendar management. Schedule, observe, and optimize LinkedIn content through MCP.',
 		badge: 'Open Source',
 		category: 'integration',
-		href: 'https://github.com/createsomething/create-something-monorepo/tree/main/packages/social-mcp',
+		href: 'https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/social-mcp',
 		pricing: 'Free',
 		timeline: 'Instant setup'
 	},
