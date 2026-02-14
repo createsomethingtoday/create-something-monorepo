@@ -139,6 +139,10 @@
 		margin: 0;
 	}
 
+	.article-prose :global(li > p:first-child:last-child) {
+		display: inline;
+	}
+
 	.article-prose :global(pre) {
 		background: var(--color-bg-elevated);
 		border: 1px solid var(--color-border-default);

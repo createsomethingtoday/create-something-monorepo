@@ -63,8 +63,7 @@ Following Rams's tenth principle ("As little design as possible") and the Subtra
 - Action item extraction— AI hallucination risk exceeds value
 - Calendar integration— Meeting detection handles this
 - Team sharing— Personal tool; single user
-- Web dashboard—curlsuffices for queries
-
+- Web dashboard— curl suffices for queries
 - Auto-detect meetings— Zoom, Google Meet, Teams via NSWorkspace + AppleScript
 - Record microphone— AVFoundation; system audio requires kernel extension
 - Upload on stop— Multipart form to Cloudflare Worker
@@ -121,4 +120,3 @@ However, the manual stop requirement and microphone-only capture represent failu
 Less, but better. The discipline of removal produced a functional tool in ~600 LOC
 					across two components. Whether "better" depends on use case: for personal meeting
 					notes, this suffices. For team collaboration, the removed features become necessary.
-

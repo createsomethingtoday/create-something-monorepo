@@ -144,6 +144,10 @@
 		margin: 0;
 	}
 
+	.article-content :global(li > p:first-child:last-child) {
+		display: inline;
+	}
+
 	.article-content :global(pre) {
 		background: var(--color-bg-subtle);
 		border: 1px solid var(--color-border-default);
