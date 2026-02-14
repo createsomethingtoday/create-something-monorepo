@@ -88,7 +88,7 @@
 					<div
 						class="legend-indicator w-4 h-1"
 						style="background-color: {series.color};"
-					/>
+					></div>
 					<span class="legend-label">{series.label}</span>
 				</div>
 			{/each}

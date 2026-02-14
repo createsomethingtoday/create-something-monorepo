@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { PrivacyPolicyContent } from '@create-something/canon';
+  import PrivacyPolicyContent from '$canon/components/PrivacyPolicyContent.svelte';
 </script>
 
 <svelte:head>

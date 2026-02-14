@@ -81,7 +81,7 @@
 						class="legend-indicator w-4 h-4"
 						style="background-color: {segment.color ||
 							defaultColors[i % defaultColors.length]};"
-					/>
+					></div>
 					<span class="legend-label">{segment.label}</span>
 					<span class="legend-value">
 						{formatNumber(segment.count)}

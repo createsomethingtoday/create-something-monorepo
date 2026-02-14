@@ -65,7 +65,7 @@
 				{#if hour % 6 === 0}
 					<div class="flex-1 text-center">{hour}</div>
 				{:else}
-					<div class="flex-1" />
+					<div class="flex-1"></div>
 				{/if}
 			{/each}
 		</div>
@@ -88,7 +88,7 @@
 						class="cell flex-1 aspect-square"
 						style="opacity: {getOpacity(hourData.intensity)}"
 						title="{formatDate(day.date, 'short')} {hourData.hour}:00 - {hourData.count} views"
-					/>
+					></div>
 				{/each}
 			</div>
 		{/each}
@@ -103,7 +103,7 @@
 					<div
 						class="legend-cell w-4 h-4"
 						style="opacity: {getOpacity(intensity)}"
-					/>
+					></div>
 				{/each}
 			</div>
 			<span>More</span>

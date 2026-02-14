@@ -130,7 +130,7 @@
         </div>
       </a>
     {:else}
-      <div class="nav-spacer"></div>
+      <div aria-hidden="true"></div>
     {/if}
 
     <!-- Back to Path -->
@@ -148,7 +148,7 @@
         <div class="nav-arrow"><ChevronRight size={24} /></div>
       </a>
     {:else}
-      <div class="nav-spacer"></div>
+      <div aria-hidden="true"></div>
     {/if}
   </div>
 
@@ -419,10 +419,6 @@
 
   .nav-button.center {
     justify-content: center;
-  }
-
-  .nav-spacer {
-    /* Empty spacer for grid alignment */
   }
 
   .nav-arrow {

@@ -14,7 +14,8 @@ const config = {
     alias: {
       $components: 'src/lib/components',
       $content: 'src/lib/content',
-      $progress: 'src/lib/progress'
+      $progress: 'src/lib/progress',
+      $canon: '../canon/src/lib'
     }
   }
 };

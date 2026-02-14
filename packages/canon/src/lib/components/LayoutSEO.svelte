@@ -54,10 +54,10 @@
     }
   };
 
-  const config = propertyConfig[property];
+  const config = $derived(propertyConfig[property]);
 
   // Schema.org Organization
-  const organizationSchema = {
+  const organizationSchema = $derived({
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'CREATE SOMETHING',
@@ -88,10 +88,10 @@
       '@type': 'Place',
       name: 'Worldwide'
     }
-  };
+  });
 
   // Schema.org WebSite
-  const websiteSchema = {
+  const websiteSchema = $derived({
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: config.name,
@@ -99,11 +99,11 @@
     description: config.tagline,
     publisher: organizationSchema,
     inLanguage: 'en-US'
-  };
+  });
 
   // Pre-stringify for {@html} rendering
-  const orgSchemaJson = JSON.stringify(organizationSchema);
-  const webSchemaJson = JSON.stringify(websiteSchema);
+  const orgSchemaJson = $derived(JSON.stringify(organizationSchema));
+  const webSchemaJson = $derived(JSON.stringify(websiteSchema));
 </script>
 
 <svelte:head>

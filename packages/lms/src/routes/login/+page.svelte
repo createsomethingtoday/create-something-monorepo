@@ -8,7 +8,7 @@
 	 */
 
 	import { page } from '$app/stores';
-	import { CookieConsent } from '@create-something/canon/components';
+	import CookieConsent from '$canon/components/CookieConsent.svelte';
 	import { hasCookieConsent, acceptCookieConsent } from '@create-something/canon/gdpr';
 
 	let email = $state('');

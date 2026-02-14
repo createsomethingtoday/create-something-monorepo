@@ -11,11 +11,12 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { getConsentState, updateAnalyticsConsent, initializeConsent } from '@create-something/canon/gdpr';
-	import { UserInteractionsPanel } from '@create-something/canon/analytics';
+	import UserInteractionsPanel from '$canon/analytics/UserInteractionsPanel.svelte';
 
 	let { data }: { data: PageData } = $props();
+	const profile = $derived(data.profile);
 
-	let name = $state(data.profile?.name || '');
+	let name = $state('');
 	let saving = $state(false);
 	let saveMessage = $state<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -39,7 +40,7 @@
 	let avatarPreview = $state<string | null>(null);
 	let uploadingAvatar = $state(false);
 	let avatarMessage = $state<{ type: 'success' | 'error'; text: string } | null>(null);
-	let fileInput: HTMLInputElement;
+	let fileInput = $state<HTMLInputElement | null>(null);
 
 	// Delete account state
 	let showDeleteConfirm = $state(false);
@@ -49,16 +50,21 @@
 	let deleteMessage = $state<{ type: 'error'; text: string } | null>(null);
 
 	// Privacy settings state
-	let analyticsEnabled = $state(data.profile?.analytics_opt_out === false);
+	let analyticsEnabled = $state(false);
 	let savingPrivacy = $state(false);
 	let privacyMessage = $state<{ type: 'success' | 'error'; text: string } | null>(null);
 
+	$effect(() => {
+		name = profile?.name || '';
+		analyticsEnabled = profile?.analytics_opt_out === false;
+	});
+
 	// Initialize consent state from server on mount
 	onMount(() => {
-		if (data.profile) {
+		if (profile) {
 			// Sync local consent with server preference
-			initializeConsent(data.profile.analytics_opt_out);
-			analyticsEnabled = !data.profile.analytics_opt_out;
+			initializeConsent(profile.analytics_opt_out);
+			analyticsEnabled = !profile.analytics_opt_out;
 		}
 	});
 

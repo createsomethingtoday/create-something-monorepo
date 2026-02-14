@@ -25,6 +25,10 @@ export interface LearningEventResponse {
 	error?: string;
 }
 
+interface TrackEventApiResponse {
+	eventId?: string;
+}
+
 const LMS_API_URL = 'https://learn.createsomething.space/api/events';
 
 /**
@@ -65,7 +69,7 @@ export async function trackLearningEvent(event: LearningEvent): Promise<Learning
 			};
 		}
 
-		const data = await response.json();
+		const data: TrackEventApiResponse = await response.json();
 		return {
 			success: true,
 			eventId: data.eventId,

@@ -3,8 +3,13 @@
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
   import { afterNavigate, onNavigate, goto, invalidateAll } from '$app/navigation';
-  import { Navigation, Footer, ModeIndicator, SkipToContent, Analytics, LayoutSEO } from '@create-something/canon';
-  import { UnifiedSearch } from '@create-something/canon/navigation';
+  import Navigation from '$canon/components/Navigation.svelte';
+  import Footer from '$canon/components/Footer.svelte';
+  import ModeIndicator from '$canon/components/ModeIndicator.svelte';
+  import SkipToContent from '$canon/components/SkipToContent.svelte';
+  import Analytics from '$canon/components/Analytics.svelte';
+  import LayoutSEO from '$canon/components/LayoutSEO.svelte';
+  import UnifiedSearch from '$canon/navigation/UnifiedSearch.svelte';
   import type { LayoutData } from './$types';
 
   interface Props {

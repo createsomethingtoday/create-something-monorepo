@@ -507,7 +507,7 @@
 						<div class="palette-group">
 							<div class="palette-group-header">
 								<span class="palette-group-icon">
-									<svelte:component this={propertyInfo.icon} size={14} strokeWidth={2} />
+									<propertyInfo.icon size={14} strokeWidth={2} />
 								</span>
 								<span class="palette-group-name">{propertyInfo.name}</span>
 								<span class="palette-group-verb">{propertyInfo.verb}</span>
@@ -555,9 +555,10 @@
 				</button>
 			{/if}
 			{#if currentProperty}
+				{@const currentPropertyInfo = PROPERTY_INFO[currentProperty]}
 				<span class="palette-current">
-					<svelte:component this={PROPERTY_INFO[currentProperty].icon} size={12} strokeWidth={2} />
-					{PROPERTY_INFO[currentProperty].name}
+					<currentPropertyInfo.icon size={12} strokeWidth={2} />
+					{currentPropertyInfo.name}
 				</span>
 			{/if}
 		</div>

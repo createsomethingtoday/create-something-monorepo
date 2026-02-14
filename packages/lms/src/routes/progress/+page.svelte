@@ -12,7 +12,7 @@
   import { onMount } from 'svelte';
 
   let { data }: { data: PageData } = $props();
-  const { user } = data;
+  const user = $derived(data.user);
 
   // Use store for reactive progress data
   onMount(() => {

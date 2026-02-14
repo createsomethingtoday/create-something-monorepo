@@ -37,7 +37,7 @@
     lms: 'learn.createsomething.space (Learning)'
   };
 
-  const propertyLabel = propertyLabels[property] || domain;
+  const propertyLabel = $derived(propertyLabels[property] || domain);
 </script>
 
 <article class="terms-content">

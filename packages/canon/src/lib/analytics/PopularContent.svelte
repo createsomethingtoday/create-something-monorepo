@@ -54,6 +54,12 @@
 		totalTimeSpent: number;
 	}
 
+	interface PopularContentResponse {
+		popular?: ContentItem[];
+		trending?: ContentItem[];
+		userHistory?: UserHistoryItem[];
+	}
+
 	let popular = $state<ContentItem[]>([]);
 	let trending = $state<ContentItem[]>([]);
 	let userHistory = $state<UserHistoryItem[]>([]);
@@ -71,7 +77,7 @@
 			const response = await fetch(`/api/analytics/popular?${params}`);
 			if (!response.ok) throw new Error('Failed to fetch');
 
-			const data = await response.json();
+			const data: PopularContentResponse = await response.json();
 			popular = data.popular || [];
 			trending = data.trending || [];
 			userHistory = data.userHistory || [];

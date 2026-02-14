@@ -3,7 +3,7 @@
   import { ChevronRight } from 'lucide-svelte';
 
   let { data }: { data: PageData } = $props();
-  const { path } = data;
+  const path = $derived(data.path);
 </script>
 
 <svelte:head>
