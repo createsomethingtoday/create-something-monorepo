@@ -88,8 +88,7 @@
 </script>
 
 <section
-	use:inview
-	oninview={() => (visible = true)}
+	use:inview={{ onInView: () => (visible = true) }}
 	class="showcase-section"
 >
 	<div class="showcase-grid">

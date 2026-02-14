@@ -13,7 +13,12 @@
 	breadcrumbs={[
 		{ name: 'Home', url: 'https://createsomething.ltd' },
 		{ name: 'Masters', url: 'https://createsomething.ltd/masters' },
-		{ name: data.master?.name || 'Not Found', url: `https://createsomething.ltd/masters/${data.slug}` }
+		{
+			name: data.master?.name || 'Not Found',
+			url: data.master
+				? `https://createsomething.ltd/masters/${data.master.slug}`
+				: 'https://createsomething.ltd/masters'
+		}
 	]}
 />
 

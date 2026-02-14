@@ -17,10 +17,15 @@ const lessonFiles = import.meta.glob('/src/lib/content/lessons/**/*.md', {
 }) as Record<string, string>;
 
 // Import all interactive lesson JSON files
+interface InteractiveLessonPayload {
+  interactive?: boolean;
+  sections: any[];
+}
+
 const interactiveFiles = import.meta.glob('/src/lib/content/lessons/**/*.json', {
   import: 'default',
   eager: true
-}) as Record<string, unknown>;
+}) as Record<string, InteractiveLessonPayload>;
 
 /**
  * Strip YAML frontmatter from markdown content.
@@ -49,7 +54,7 @@ export const load: PageServerLoad = async ({ params }) => {
 
   // Check for interactive lesson JSON first
   const interactiveKey = `/src/lib/content/lessons/${params.id}/${params.lesson}.json`;
-  const interactiveData = interactiveFiles[interactiveKey] as { interactive?: boolean; sections?: unknown[] } | undefined;
+  const interactiveData = interactiveFiles[interactiveKey];
 
   // Load markdown content from pre-imported files
   let content = '';
@@ -72,6 +77,8 @@ export const load: PageServerLoad = async ({ params }) => {
     content,
     // Include interactive data if available
     interactive: interactiveData?.interactive ?? false,
-    interactiveData: interactiveData ?? null
+    interactiveData: interactiveData
+      ? { sections: interactiveData.sections }
+      : null
   };
 };

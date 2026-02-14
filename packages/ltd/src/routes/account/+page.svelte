@@ -14,7 +14,7 @@
 />
 
 <AccountPage
-	user={data.user}
+	user={data.user as { email?: string; name?: string; tier?: string } | null}
 	pageTitle="Account | CREATE SOMETHING"
 	currentProperty="ltd"
 >

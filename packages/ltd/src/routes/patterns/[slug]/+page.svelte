@@ -21,7 +21,7 @@
 	breadcrumbs={[
 		{ name: 'Home', url: 'https://createsomething.ltd' },
 		{ name: 'Patterns', url: 'https://createsomething.ltd/patterns' },
-		{ name: pattern.frontmatter.title, url: `https://createsomething.ltd/patterns/${data.slug}` }
+		{ name: pattern.frontmatter.title, url: `https://createsomething.ltd/patterns/${pattern.slug}` }
 	]}
 />
 

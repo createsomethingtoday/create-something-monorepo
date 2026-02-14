@@ -11,14 +11,12 @@
 		messages,
 		wpm = 250,
 		showControls = true,
-		class: className = '',
-		onComplete
+		class: className = ''
 	}: {
 		messages: string[] | { label?: string; text: string }[];
 		wpm?: number;
 		showControls?: boolean;
 		class?: string;
-		onComplete?: () => void;
 	} = $props();
 
 	// Normalize messages to content format
@@ -45,7 +43,6 @@
 			{showControls}
 			showProgress
 			showWpmControl
-			on:complete={onComplete}
 		/>
 	</div>
 	

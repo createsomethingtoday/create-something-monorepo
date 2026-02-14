@@ -16,6 +16,13 @@
 	let error = $state('');
 	let loading = $state(false);
 
+	interface LoginResponse {
+		message?: string;
+		access_token?: string;
+		refresh_token?: string;
+		expires_in?: number;
+	}
+
 	const redirectTo = $derived($page.url.searchParams.get('redirect') || '/paths');
 
 	async function handleSubmit(e: SubmitEvent) {
@@ -30,14 +37,19 @@
 				body: JSON.stringify({ email, password }),
 			});
 
-			const data = await response.json();
+				const data = (await response.json()) as LoginResponse;
 
-			if (!response.ok) {
-				error = data.message || 'Login failed';
-				return;
-			}
+				if (!response.ok) {
+					error = data.message || 'Login failed';
+					return;
+				}
 
-			// Check cookie consent before setting session cookies
+				if (!data.access_token || !data.refresh_token || typeof data.expires_in !== 'number') {
+					error = 'Authentication response was incomplete. Please try again.';
+					return;
+				}
+
+				// Check cookie consent before setting session cookies
 			// If not already consented, accept implicitly on login (user is actively authenticating)
 			if (!hasCookieConsent()) {
 				acceptCookieConsent();

@@ -133,7 +133,7 @@
 	const colors = accentColors[accentColor];
 </script>
 
-<section use:inview oninview={() => (visible = true)} class="solutions-section">
+<section use:inview={{ onInView: () => (visible = true) }} class="solutions-section">
 	<div class="container">
 		<!-- Header -->
 		<div class="scroll-reveal" class:scroll-reveal-hidden={!visible}>

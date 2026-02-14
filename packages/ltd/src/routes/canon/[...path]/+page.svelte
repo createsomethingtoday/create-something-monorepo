@@ -21,7 +21,10 @@
 	breadcrumbs={[
 		{ name: 'Home', url: 'https://createsomething.ltd' },
 		{ name: 'Canon', url: 'https://createsomething.ltd/canon' },
-		{ name: canonPage.frontmatter.title, url: `https://createsomething.ltd/canon/${data.path}` }
+		{
+			name: canonPage.frontmatter.title,
+			url: `https://createsomething.ltd/canon/${data.pathParts.join('/')}`
+		}
 	]}
 />
 

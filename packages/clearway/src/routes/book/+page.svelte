@@ -2,6 +2,37 @@
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 
+	interface AvailabilitySlot {
+		startTime: string;
+		endTime: string;
+		priceCents?: number;
+	}
+
+	interface AvailabilityCourt {
+		id: string;
+		name: string;
+		slots?: AvailabilitySlot[];
+	}
+
+	interface AvailabilityResponse {
+		facility?: {
+			name?: string;
+		};
+		courts?: AvailabilityCourt[];
+	}
+
+	interface ApiErrorResponse {
+		message?: string;
+	}
+
+	interface ReservationResponse {
+		id: string;
+	}
+
+	interface CheckoutResponse {
+		checkoutUrl?: string;
+	}
+
 	// Get booking params from URL
 	const facility = $page.url.searchParams.get('facility') || '';
 	const courtId = $page.url.searchParams.get('court') || '';
@@ -51,18 +82,18 @@
 				throw new Error('Failed to load court details');
 			}
 
-			const data = await response.json();
+			const data = (await response.json()) as AvailabilityResponse;
 			facilityName = data.facility?.name || facility;
 
 			// Find the court
-			const court = data.courts?.find((c: any) => c.id === courtId);
+			const court = data.courts?.find((c) => c.id === courtId);
 			if (!court) {
 				throw new Error('Court not found');
 			}
 			courtName = court.name;
 
 			// Find the slot
-			const slot = court.slots?.find((s: any) => s.startTime === startTime);
+			const slot = court.slots?.find((s) => s.startTime === startTime);
 			if (!slot) {
 				throw new Error('Time slot not found');
 			}
@@ -102,11 +133,14 @@
 			});
 
 			if (!reservationResponse.ok) {
-				const errData = await reservationResponse.json();
+				const errData = (await reservationResponse.json()) as ApiErrorResponse;
 				throw new Error(errData.message || 'Failed to create reservation');
 			}
 
-			const reservation = await reservationResponse.json();
+			const reservation = (await reservationResponse.json()) as ReservationResponse;
+			if (!reservation.id) {
+				throw new Error('Reservation response missing id');
+			}
 
 			// Redirect to Stripe checkout
 			const checkoutResponse = await fetch('/api/stripe/checkout', {
@@ -118,11 +152,11 @@
 			});
 
 			if (!checkoutResponse.ok) {
-				const errData = await checkoutResponse.json();
+				const errData = (await checkoutResponse.json()) as ApiErrorResponse;
 				throw new Error(errData.message || 'Failed to create checkout session');
 			}
 
-			const checkout = await checkoutResponse.json();
+			const checkout = (await checkoutResponse.json()) as CheckoutResponse;
 
 			// Redirect to Stripe
 			if (checkout.checkoutUrl) {

@@ -225,7 +225,7 @@
       
       <div class="summary-card stagger-enter" style="--index: 1">
         <div class="summary-label">Categories</div>
-        <div class="summary-value">{Object.keys(report.categoryCounts).filter(k => report.categoryCounts[k] > 0).length}</div>
+        <div class="summary-value">{Object.keys(report?.categoryCounts ?? {}).filter(k => (report?.categoryCounts?.[k] ?? 0) > 0).length}</div>
         <div class="summary-meta">distinct types</div>
       </div>
       

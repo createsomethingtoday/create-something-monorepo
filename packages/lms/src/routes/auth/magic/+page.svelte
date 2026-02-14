@@ -16,6 +16,12 @@
 	let errorMessage = $state('');
 	let retrying = $state(false);
 
+	interface MagicLinkVerifyResponse {
+		message?: string;
+		accessToken?: string;
+		refreshToken?: string;
+	}
+
 	const token = $derived($page.url.searchParams.get('token'));
 	const sessionId = $derived($page.url.searchParams.get('session'));
 	const redirectTo = $derived($page.url.searchParams.get('redirect') || '/paths');
@@ -35,11 +41,11 @@
 				body: JSON.stringify({ token, sessionId }),
 			});
 
-			const data = await response.json();
+				const data = (await response.json()) as MagicLinkVerifyResponse;
 
-			if (!response.ok) {
-				// Determine error type from message
-				const msg = data.message || '';
+				if (!response.ok) {
+					// Determine error type from message
+					const msg = data.message || '';
 				if (msg.includes('expired')) {
 					errorType = 'expired';
 				} else if (msg.includes('already used')) {
@@ -49,11 +55,18 @@
 				}
 				errorMessage = msg;
 				status = 'error';
-				return;
-			}
+					return;
+				}
 
-			// Set cookies with cross-subdomain scope for unified identity
-			document.cookie = `cs_access_token=${data.accessToken}; path=/; domain=.createsomething.space; max-age=900; secure; samesite=lax`;
+				if (!data.accessToken || !data.refreshToken) {
+					status = 'error';
+					errorType = 'invalid';
+					errorMessage = 'Authentication response was incomplete. Please request a new link.';
+					return;
+				}
+
+				// Set cookies with cross-subdomain scope for unified identity
+				document.cookie = `cs_access_token=${data.accessToken}; path=/; domain=.createsomething.space; max-age=900; secure; samesite=lax`;
 			document.cookie = `cs_refresh_token=${data.refreshToken}; path=/; domain=.createsomething.space; max-age=604800; secure; samesite=lax`;
 
 			status = 'success';

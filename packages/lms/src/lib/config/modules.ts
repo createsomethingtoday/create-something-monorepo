@@ -14,7 +14,7 @@ export interface Module {
   tags: string[];                  // Searchable tags (e.g., "advanced", "sveltekit")
   features: string[];              // Bullet-point learning outcomes
   duration?: string;               // Total time (e.g., "4 hours")
-  difficulty?: string;             // beginner | intermediate | advanced
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
   version?: string;                // Semantic version
   lastUpdated?: string;            // ISO date string
   relatedModules?: string[];       // Array of related module slugs

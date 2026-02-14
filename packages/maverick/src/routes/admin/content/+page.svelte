@@ -10,6 +10,10 @@
 
 	type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
+	function isJsonRecord(value: JsonValue): value is Record<string, JsonValue> {
+		return typeof value === 'object' && value !== null && !Array.isArray(value);
+	}
+
 	const PAGES = [
 		{ id: 'home', label: 'Home' },
 		{ id: 'petrox', label: 'Oil & Gas' },
@@ -83,7 +87,9 @@
 		const updated = structuredClone(content);
 		let current: Record<string, JsonValue> = updated;
 		for (let i = 0; i < path.length - 1; i++) {
-			current = current[path[i]];
+			const next = current[path[i]];
+			if (!isJsonRecord(next)) return;
+			current = next;
 		}
 		current[path[path.length - 1]] = value;
 		content = updated;

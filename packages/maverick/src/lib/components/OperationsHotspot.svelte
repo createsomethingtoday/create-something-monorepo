@@ -55,8 +55,7 @@
 <svelte:window onclick={handleClickOutside} />
 
 <section
-	use:inview
-	oninview={() => (visible = true)}
+	use:inview={{ onInView: () => (visible = true) }}
 	class="operations-section"
 >
 	{#if headline}

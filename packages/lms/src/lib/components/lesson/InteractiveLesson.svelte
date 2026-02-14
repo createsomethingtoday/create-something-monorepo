@@ -188,17 +188,13 @@
 						answer={section.answer}
 						reveal={section.reveal}
 					/>
-				{:else if section.type === 'remotion'}
-					<LessonRemotion
-						compositionId={section.compositionId}
-						caption={section.caption}
-						width={section.width}
-						height={section.height}
-						fps={section.fps}
-						durationInFrames={section.durationInFrames}
-					/>
-				{/if}
-			</div>
+					{:else if section.type === 'remotion'}
+						<LessonRemotion
+							compositionId={section.compositionId}
+							caption={section.caption}
+						/>
+					{/if}
+				</div>
 		{/each}
 	</div>
 </div>

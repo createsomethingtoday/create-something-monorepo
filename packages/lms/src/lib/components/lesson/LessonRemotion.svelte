@@ -67,12 +67,12 @@
 		}
 	});
 
+	// Use explicit progress value, defaulting to 0 for start state
+	const p = $derived(hasInitialized ? $progress : 0);
+
 	// Phase and reveal from spec
 	const currentPhase = $derived(spec ? getCurrentPhase(spec, p) : null);
 	const revealOpacity = $derived(spec ? getRevealOpacity(spec, p) : 0);
-
-	// Use explicit progress value, defaulting to 0 for start state
-	const p = $derived(hasInitialized ? $progress : 0);
 
 	// ============================================
 	// TOOL RECEDING ANIMATION

@@ -38,8 +38,7 @@
 </script>
 
 <section
-	use:inview
-	oninview={() => (visible = true)}
+	use:inview={{ onInView: () => (visible = true) }}
 	class="process-section"
 >
 	<div class="container">
@@ -57,8 +56,7 @@
 				{@const imagePosition = getImagePosition(index, step)}
 				{@const isLeft = imagePosition === 'left'}
 				<div
-					use:inview={{ threshold: 0.2 }}
-					oninview={() => (stepVisibility[index] = true)}
+					use:inview={{ threshold: 0.2, onInView: () => (stepVisibility[index] = true) }}
 					class="step-row"
 					class:step-reverse={!isLeft}
 				>

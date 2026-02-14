@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
+	import type { PageData } from './$types';
+	import type { ItemStatus } from '$lib/sdk/types';
 	import {
 		Check,
 		X,
@@ -29,10 +31,23 @@
 		Clipboard
 	} from 'lucide-svelte';
 
-	let { data } = $props();
+	type LocalItem = {
+		id: string;
+		title: string;
+		body?: string;
+		sourceType: string;
+		sourceItemId?: string;
+		sourceTimestamp?: string | Date;
+		ingestedAt: string | Date;
+		metadata: Record<string, unknown>;
+		score: number;
+		status: ItemStatus;
+	};
+
+	let { data }: { data: PageData } = $props();
 
 	// LOCAL STATE: Items we can modify client-side (demo mode)
-	let localItems = $state([...data.items]);
+	let localItems = $state([...data.items] as LocalItem[]);
 	let localActivityLog = $state([...(data.activityLog || [])]);
 	let actionsToday = $state(data.metrics?.humanActions?.today || 0);
 	
@@ -61,8 +76,8 @@
 		const item = localItems.find(i => i.id === itemId);
 		if (!item) return;
 
-		const statusMap = { approve: 'approved', dismiss: 'dismissed', snooze: 'snoozed' };
-		const newStatus = statusMap[action];
+		const statusMap = { approve: 'approved', dismiss: 'dismissed', snooze: 'snoozed' } as const;
+		const newStatus: LocalItem['status'] = statusMap[action];
 		
 		// Update item status
 		localItems = localItems.map(i => 
@@ -86,6 +101,16 @@
 		
 		// Clear from selection
 		selectedIds = new Set([...selectedIds].filter(id => id !== itemId));
+	}
+
+	function getMetadataText(item: LocalItem, keys: string[], fallback = ''): string {
+		for (const key of keys) {
+			const value = item.metadata[key];
+			if (value !== undefined && value !== null && value !== '') {
+				return String(value);
+			}
+		}
+		return fallback;
 	}
 
 	// View state
@@ -238,13 +263,13 @@
 		// Search
 		if (searchQuery) {
 			const q = searchQuery.toLowerCase();
-			items = items.filter(
-				(item) =>
-					item.title.toLowerCase().includes(q) ||
-					item.body?.toLowerCase().includes(q) ||
-					item.metadata?.from?.toString().toLowerCase().includes(q)
-			);
-		}
+				items = items.filter(
+					(item) =>
+						item.title.toLowerCase().includes(q) ||
+						item.body?.toLowerCase().includes(q) ||
+						getMetadataText(item, ['from']).toLowerCase().includes(q)
+				);
+			}
 
 		// Status filter
 		if (statusFilter.length > 0) {
@@ -714,11 +739,11 @@
 								{/if}
 							</button>
 							</td>
-							<td class="col-meta">
-								<span class="meta-text">
-									{item.metadata?.from || item.metadata?.channel || '—'}
-								</span>
-							</td>
+								<td class="col-meta">
+									<span class="meta-text">
+										{getMetadataText(item, ['from', 'channel'], '—')}
+									</span>
+								</td>
 							<td class="col-time">
 								<span class="time-text">
 									{formatRelativeTime(item.sourceTimestamp || item.ingestedAt)}
@@ -792,10 +817,10 @@
 						<p class="card-body">{item.body}</p>
 					{/if}
 
-					<div class="card-meta">
-						<span>{item.metadata?.from || item.metadata?.channel || ''}</span>
-						<span>{formatRelativeTime(item.sourceTimestamp || item.ingestedAt)}</span>
-					</div>
+						<div class="card-meta">
+							<span>{getMetadataText(item, ['from', 'channel'])}</span>
+							<span>{formatRelativeTime(item.sourceTimestamp || item.ingestedAt)}</span>
+						</div>
 
 					<div class="card-actions">
 						<button class="action-btn approve" title="Done" onclick={() => itemAction(item.id, 'approve')}>

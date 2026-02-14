@@ -9,6 +9,19 @@
 	import type { PageData } from './$types';
 	import { invalidateAll } from '$app/navigation';
 
+	type SeedResult =
+		| {
+				success: true;
+				results: {
+					membersCreated: number;
+					reservationsCreated: number;
+				};
+		  }
+		| {
+				success: false;
+				message?: string;
+		  };
+
 	let { data }: { data: PageData } = $props();
 	let seeding = $state(false);
 	let seedMessage = $state<string | null>(null);
@@ -22,7 +35,7 @@
 				method: 'POST'
 			});
 
-			const result = await response.json();
+			const result = (await response.json()) as SeedResult;
 
 			if (result.success) {
 				seedMessage = `Created ${result.results.membersCreated} members, ${result.results.reservationsCreated} bookings`;

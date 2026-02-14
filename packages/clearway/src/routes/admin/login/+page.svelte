@@ -10,6 +10,13 @@
 
 	import { page } from '$app/stores';
 
+	interface LoginResponse {
+		access_token?: string;
+		refresh_token?: string;
+		expires_in?: number;
+		message?: string;
+	}
+
 	let email = $state('');
 	let password = $state('');
 	let error = $state('');
@@ -29,7 +36,7 @@
 				body: JSON.stringify({ email, password })
 			});
 
-			const data = await response.json();
+			const data = (await response.json()) as LoginResponse;
 
 			if (!response.ok) {
 				error = data.message || 'Login failed';
@@ -44,6 +51,11 @@
 				: undefined;
 
 			const domainAttr = domain ? `; domain=${domain}` : '';
+
+			if (!data.access_token || !data.refresh_token || !data.expires_in) {
+				error = 'Login response missing token data';
+				return;
+			}
 
 			document.cookie = `cs_access_token=${data.access_token}; path=/${domainAttr}; max-age=${data.expires_in}; secure; samesite=lax`;
 			document.cookie = `cs_refresh_token=${data.refresh_token}; path=/${domainAttr}; max-age=604800; secure; samesite=lax`;

@@ -118,8 +118,7 @@
 
 <!-- Statistics Section - matches React (headline + CTA only, no stat cards) -->
 <section
-	use:inview
-	oninview={() => statisticsVisible = true}
+	use:inview={{ onInView: () => (statisticsVisible = true) }}
 	class="statistics-section"
 >
 	<div class="container">
@@ -146,8 +145,7 @@
 
 <!-- Metals of Interest Section -->
 <section
-	use:inview
-	oninview={() => metalsVisible = true}
+	use:inview={{ onInView: () => (metalsVisible = true) }}
 	class="metals-section"
 >
 	<div class="container">

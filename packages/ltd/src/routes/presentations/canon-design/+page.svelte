@@ -275,7 +275,7 @@ Is the value dynamic/computed at runtime?
 		<ul>
 			<li><strong>Tailwind</strong> for composition: <code>flex items-center gap-4 p-6</code></li>
 			<li><strong>Canon</strong> for design: <code>background: var(--color-bg-surface)</code></li>
-			<li><strong>Inline styles</strong> for dynamic values: <code>style="--delay: {index * 100}ms"</code></li>
+			<li><strong>Inline styles</strong> for dynamic values: <code>style="--delay: &#123;index * 100&#125;ms"</code></li>
 		</ul>
 		<p class="muted">
 			Structure, aesthetics, and dynamics in harmony.

@@ -23,9 +23,12 @@
 	}
 
 	// Format date for display
-	function formatDate(dateStr: string | null): string {
-		if (!dateStr) return 'Never';
-		const date = new Date(dateStr);
+	function formatDate(dateValue: string | number | null): string {
+		if (dateValue === null) return 'Never';
+		const date =
+			typeof dateValue === 'number'
+				? new Date(dateValue < 1_000_000_000_000 ? dateValue * 1000 : dateValue)
+				: new Date(dateValue);
 		return date.toLocaleDateString('en-US', {
 			month: 'short',
 			day: 'numeric',

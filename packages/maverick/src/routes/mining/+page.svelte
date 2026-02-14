@@ -22,6 +22,11 @@
 		data: PageData;
 	}
 
+	type LithxFeature = {
+		icon: string;
+		title: string;
+	};
+
 	let { data }: Props = $props();
 	const content = data.content;
 
@@ -91,7 +96,7 @@
 />
 
 <!-- Features: Advanced Chelation Technology Section -->
-{#snippet lithxIcons(feature)}
+{#snippet lithxIcons(feature: LithxFeature)}
 	{#if feature.icon === 'beaker'}
 		<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="why-icon">
 			<path d="M4.5 3h15"></path>
@@ -131,4 +136,3 @@
 	numbered={false}
 	accentColor="lithx"
 />
-

@@ -58,8 +58,7 @@
 </script>
 
 <section
-	use:inview
-	oninview={() => (visible = true)}
+	use:inview={{ onInView: () => (visible = true) }}
 	class="explainer-section"
 >
 	<div class="container">

@@ -100,8 +100,7 @@
 
 <!-- Main Section -->
 <section
-	use:inview
-	oninview={() => mainVisible = true}
+	use:inview={{ onInView: () => (mainVisible = true) }}
 	class="main-section"
 >
 	<div class="container">
@@ -117,8 +116,7 @@
 <!-- Featured Article Section -->
 {#if featuredArticle}
 	<section
-		use:inview
-		oninview={() => featuredVisible = true}
+		use:inview={{ onInView: () => (featuredVisible = true) }}
 		class="featured-section"
 	>
 		<div class="container">
@@ -157,8 +155,7 @@
 <!-- News Grid Section -->
 {#if regularArticles.length > 0}
 	<section
-		use:inview
-		oninview={() => gridVisible = true}
+		use:inview={{ onInView: () => (gridVisible = true) }}
 		class="grid-section"
 	>
 		<div class="container">

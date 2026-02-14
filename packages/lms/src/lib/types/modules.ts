@@ -12,7 +12,7 @@ export interface Module {
   tags: string[];
   features: string[];
   duration?: string;
-  difficulty?: string;
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
   version?: string;
   lastUpdated?: string;
   relatedModules?: string[];

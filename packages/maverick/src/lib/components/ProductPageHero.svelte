@@ -47,8 +47,7 @@
 </script>
 
 <div
-	use:inview
-	oninview={() => (visible = true)}
+	use:inview={{ onInView: () => (visible = true) }}
 >
 	<!-- Hero Section -->
 	<section class="hero-section hero-{productId}">

@@ -28,9 +28,9 @@
   let showCursor = $state(true);
   let isTyping = $state(false);
   
-  let animationFrame: number;
-  let timeoutId: ReturnType<typeof setTimeout>;
-  let cursorInterval: ReturnType<typeof setInterval>;
+  let animationFrame: number | undefined;
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  let cursorInterval: ReturnType<typeof setInterval> | undefined;
 
   onMount(() => {
     // Blink cursor
