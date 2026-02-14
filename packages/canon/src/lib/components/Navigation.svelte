@@ -63,7 +63,7 @@
 </script>
 
 <nav class="nav-container" class:nav-fixed={fixed} aria-label="Primary">
-	<div class="nav-inner">
+	<div class="nav-inner shell-inner">
 		<div class="flex items-center justify-between">
 			<!-- Logo / Home -->
 			<a href={logoHref} class="nav-logo">
@@ -166,8 +166,6 @@
 	}
 
 	.nav-inner {
-		max-width: var(--content-width-xl, 80rem);
-		margin: 0 auto;
 		padding-top: 1rem;
 		padding-bottom: 1rem;
 		display: flex;

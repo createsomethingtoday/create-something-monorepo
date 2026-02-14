@@ -55,20 +55,11 @@
 }
 
 /* ==========================================================================
-   Navigation - Stack Sans Notch logo, consistent max-width
+   Navigation - Stack Sans Notch logo
    ========================================================================== */
 
 .nav-logo {
   font-family: var(--font-display);
-}
-
-/* Override Tailwind max-w-7xl to use token */
-.nav-container > div.max-w-7xl {
-  max-width: var(--content-width-xl);
-}
-
-nav.nav-container > div {
-  max-width: var(--content-width-xl);
 }
 
 /* ==========================================================================

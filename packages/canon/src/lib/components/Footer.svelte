@@ -285,7 +285,7 @@
 
 	<!-- Footer Links -->
 	<div class="footer-links py-12 px-6" class:with-newsletter={showNewsletter}>
-		<div class="footer-inner">
+		<div class="footer-inner shell-inner">
 			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
 				<!-- About / Brand Column -->
 				<div>
@@ -433,7 +433,7 @@
 
 	<!-- Copyright & Legal -->
 	<div class="footer-copyright py-6 px-6">
-		<div class="footer-inner flex flex-col sm:flex-row items-center justify-between gap-4">
+		<div class="footer-inner shell-inner flex flex-col sm:flex-row items-center justify-between gap-4">
 			<p class="copyright-text">
 				{copyrightText || defaultCopyright}
 			</p>
@@ -448,7 +448,7 @@
 	<!-- Standards (Optional) -->
 	{#if showRamsQuote}
 		<div class="footer-quote py-8 px-6">
-			<div class="footer-inner text-center">
+			<div class="footer-inner shell-inner text-center">
 				<p class="quote-text leading-relaxed">
 					Less, but better. · Weniger, aber besser. · — Dieter Rams
 				</p>
@@ -540,11 +540,6 @@
 	/* Footer Links Section */
 	.footer-links.with-newsletter {
 		border-top: 1px solid var(--color-border-default);
-	}
-
-	.footer-inner {
-		max-width: var(--content-width-xl, 80rem);
-		margin: 0 auto;
 	}
 
 	/* Brand */

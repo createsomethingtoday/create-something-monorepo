@@ -11,7 +11,7 @@
 	<!-- Grid background overlay -->
 	<div class="footer-grid-bg"></div>
 	
-	<div class="footer-container">
+	<div class="footer-container shell-inner">
 		<!-- Link Columns -->
 		<div class="footer-columns">
 			<!-- Work With Me Column -->
@@ -112,8 +112,6 @@
 
 	.footer-container {
 		position: relative;
-		max-width: var(--content-width-xl);
-		margin: 0 auto;
 		width: 100%;
 	}
 
