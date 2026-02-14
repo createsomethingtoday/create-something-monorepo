@@ -63,7 +63,7 @@ Run \`learn_authenticate\` with your email to start.`
 		} else if (stats.pathsCompleted === stats.totalPaths) {
 			recommendation = 'All paths completed! Consider revisiting for deeper understanding.';
 		} else {
-			recommendation = 'Start with the **foundations** path';
+			recommendation = 'Start with the **codex-mcp** path';
 		}
 
 		const timeSpentMinutes = Math.floor(stats.totalTimeSpent / 60);

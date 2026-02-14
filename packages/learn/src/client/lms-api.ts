@@ -9,9 +9,7 @@ import type {
 	AuthTokens,
 	LessonContent,
 	MagicLinkPollResponse,
-	ProgressOverview,
-	PraxisAttempt,
-	PraxisExerciseResponse
+	ProgressOverview
 } from '../types.js';
 
 const LMS_BASE_URL = 'https://learn.createsomething.space';
@@ -102,20 +100,6 @@ export class LMSClient {
 	}
 
 	// ─────────────────────────────────────────────────────────────────────────
-	// Praxis Exercises
-	// ─────────────────────────────────────────────────────────────────────────
-
-	async getPraxisExercise(praxisId: string): Promise<PraxisExerciseResponse> {
-		const response = await fetch(`${LMS_BASE_URL}/api/praxis/${praxisId}`);
-
-		if (!response.ok) {
-			throw new Error(`Praxis exercise not found: ${praxisId}`);
-		}
-
-		return response.json() as Promise<PraxisExerciseResponse>;
-	}
-
-	// ─────────────────────────────────────────────────────────────────────────
 	// Progress
 	// ─────────────────────────────────────────────────────────────────────────
 
@@ -153,59 +137,5 @@ export class LMSClient {
 
 		const data = await response.json() as { pathCompleted?: boolean };
 		return { pathCompleted: data.pathCompleted ?? false };
-	}
-
-	// ─────────────────────────────────────────────────────────────────────────
-	// Praxis
-	// ─────────────────────────────────────────────────────────────────────────
-
-	async startPraxis(praxisId: string): Promise<{ attemptId: number }> {
-		const response = await this.fetch('/api/progress/praxis', {
-			method: 'POST',
-			body: JSON.stringify({ praxisId, action: 'start' })
-		});
-
-		if (!response.ok) {
-			throw new Error('Failed to start praxis');
-		}
-
-		return response.json() as Promise<{ attemptId: number }>;
-	}
-
-	async submitPraxis(
-		praxisId: string,
-		submission: unknown,
-		feedback: string,
-		score: number,
-		passed: boolean
-	): Promise<{ attemptId: number; passed: boolean }> {
-		const response = await this.fetch('/api/progress/praxis', {
-			method: 'POST',
-			body: JSON.stringify({
-				praxisId,
-				action: 'submit',
-				submission,
-				feedback,
-				score,
-				passed
-			})
-		});
-
-		if (!response.ok) {
-			throw new Error('Failed to submit praxis');
-		}
-
-		return response.json() as Promise<{ attemptId: number; passed: boolean }>;
-	}
-
-	async getPraxisAttempts(praxisId: string): Promise<PraxisAttempt[]> {
-		const response = await this.fetch(`/api/progress/praxis?praxisId=${praxisId}`);
-
-		if (!response.ok) {
-			throw new Error('Failed to fetch praxis attempts');
-		}
-
-		const data = await response.json() as { attempts: PraxisAttempt[] };
-		return data.attempts;
 	}
 }

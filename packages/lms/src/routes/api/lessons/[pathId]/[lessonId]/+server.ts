@@ -66,8 +66,7 @@ export const GET: RequestHandler = async ({ params, request }) => {
 				id: lessonMeta.id,
 				title: lessonMeta.title,
 				description: lessonMeta.description,
-				duration: lessonMeta.duration,
-				praxis: lessonMeta.praxis || null
+				duration: lessonMeta.duration
 			},
 			content: {
 				markdown: content,

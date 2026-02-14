@@ -1,7 +1,7 @@
 {
   "name": "@createsomething/learn",
-  "version": "0.3.1",
-  "description": "CREATE SOMETHING Learning MCP Server - Learn the Subtractive Triad through Claude Code",
+  "version": "0.4.0",
+  "description": "CREATE SOMETHING Learning MCP Server - Learn Codex by building an MCP",
   "type": "module",
   "bin": {
     "learn": "./dist/cli.js",
@@ -16,8 +16,7 @@
     }
   },
   "files": [
-    "dist",
-    "templates"
+    "dist"
   ],
   "scripts": {
     "build": "tsc",
@@ -36,9 +35,9 @@
   "keywords": [
     "create-something",
     "mcp",
-    "claude-code",
+    "codex",
     "learning",
-    "subtractive-triad"
+    "codex-mcp"
   ],
   "author": "Micah Johnson <micah@createsomething.io>",
   "license": "MIT",

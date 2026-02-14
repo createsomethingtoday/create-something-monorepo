@@ -1,18 +1,14 @@
 /**
  * Learning Paths Configuration
  *
- * Nine interconnected paths teaching the CREATE SOMETHING ethos.
- * Each path follows the hermeneutic spiral: Read → Practice → Reflect → Repeat
- *
- * Start with "Getting Started" to install your environment, then progress through Foundations.
+ * Learn Codex by building one MCP server end to end.
  */
 
 export interface Lesson {
   id: string;
   title: string;
   description: string;
-  duration: string;  // "15 min", "30 min", etc.
-  praxis?: string;   // ID of associated praxis exercise
+  duration: string;
 }
 
 export interface Path {
@@ -20,406 +16,58 @@ export interface Path {
   title: string;
   subtitle: string;
   description: string;
-  principle: string;
   color: string;
   lessons: Lesson[];
-  prerequisites?: string[];  // Path IDs
+  prerequisites?: string[];
 }
 
 export const PATHS: Path[] = [
   {
-    id: 'getting-started',
-    title: 'Getting Started',
-    subtitle: 'Environment Setup',
-    description: 'Install WezTerm, then Claude Code, then configure everything else using Claude Code. The bootstrap sequence that enables everything.',
-    principle: 'The hammer disappears when hammering.',
-    color: 'path-getting-started',
-    lessons: [
-      {
-        id: 'terminal-as-creative-space',
-        title: 'Your Terminal as Creative Space',
-        description: 'Why terminal-first development creates conditions for focused creation.',
-        duration: '15 min',
-        praxis: 'terminal-canon-setup',
-      },
-      {
-        id: 'install-claude-code',
-        title: 'Install Claude Code CLI',
-        description: 'Your AI development partner, installed in WezTerm.',
-        duration: '15 min',
-        praxis: 'claude-code-first-session',
-      },
-      {
-        id: 'configure-wezterm',
-        title: 'Configure WezTerm',
-        description: 'Use Claude Code to apply Canon config.',
-        duration: '20 min',
-        praxis: 'wezterm-setup',
-      },
-      {
-        id: 'install-beads',
-        title: 'Install Beads',
-        description: 'Agent-native task tracking via Claude Code.',
-        duration: '15 min',
-        praxis: 'beads-setup',
-      },
-      {
-        id: 'configure-neomutt',
-        title: 'Configure Neomutt',
-        description: 'Terminal email via Claude Code.',
-        duration: '25 min',
-        praxis: 'neomutt-setup',
-      },
-    ],
-  },
-  {
-    id: 'foundations',
-    title: 'Foundations',
-    subtitle: 'The Subtractive Triad',
-    description: 'The philosophical core of CREATE SOMETHING. Learn the three-level discipline of subtractive revelation.',
-    principle: 'Creation is the discipline of removing what obscures.',
-    color: 'path-foundations',
-    lessons: [
-      {
-        id: 'what-is-creation',
-        title: 'What is Creation?',
-        description: 'Understanding creation as subtraction, not addition.',
-        duration: '15 min',
-      },
-      {
-        id: 'dry-implementation',
-        title: 'DRY: Implementation Level',
-        description: 'Have I built this before? The discipline of unifying.',
-        duration: '20 min',
-        praxis: 'identify-duplication',
-      },
-      {
-        id: 'rams-artifact',
-        title: 'Rams: Artifact Level',
-        description: 'Does this earn its existence? The discipline of removing.',
-        duration: '25 min',
-        praxis: 'audit-artifact',
-      },
-      {
-        id: 'heidegger-system',
-        title: 'Heidegger: System Level',
-        description: 'Does this serve the whole? The discipline of reconnecting.',
-        duration: '30 min',
-        praxis: 'trace-connections',
-      },
-      {
-        id: 'triad-application',
-        title: 'Applying the Triad',
-        description: 'Using all three levels together in real decisions.',
-        duration: '45 min',
-        praxis: 'triad-audit',
-      },
-    ],
-  },
-  {
-    id: 'craft',
-    title: 'Craft',
-    subtitle: 'SvelteKit + Canon CSS',
-    description: 'Building interfaces the CREATE SOMETHING way. Tailwind for structure, Canon for aesthetics.',
-    principle: 'The interface disappears; the content remains.',
-    color: 'path-craft',
-    prerequisites: ['foundations'],
-    lessons: [
-      {
-        id: 'sveltekit-philosophy',
-        title: 'SvelteKit Philosophy',
-        description: 'Why SvelteKit aligns with subtractive design.',
-        duration: '20 min',
-      },
-      {
-        id: 'canon-tokens',
-        title: 'Canon Design Tokens',
-        description: 'The semantic token system for consistent aesthetics.',
-        duration: '25 min',
-        praxis: 'token-migration',
-      },
-      {
-        id: 'component-patterns',
-        title: 'Component Patterns',
-        description: 'Building components that recede into use.',
-        duration: '30 min',
-        praxis: 'build-component',
-      },
-      {
-        id: 'layout-architecture',
-        title: 'Layout Architecture',
-        description: 'Route structures that serve the content.',
-        duration: '25 min',
-      },
-      {
-        id: 'animation-restraint',
-        title: 'Animation with Restraint',
-        description: 'Motion that reveals, not distracts.',
-        duration: '20 min',
-        praxis: 'motion-audit',
-      },
-    ],
-  },
-  {
-    id: 'infrastructure',
-    title: 'Infrastructure',
-    subtitle: 'Cloudflare Workers/D1/KV',
-    description: 'Edge-first architecture where infrastructure disappears into capability.',
-    principle: 'The infrastructure disappears; only the work remains.',
-    color: 'path-infrastructure',
-    prerequisites: ['foundations'],
-    lessons: [
-      {
-        id: 'edge-philosophy',
-        title: 'Edge Philosophy',
-        description: 'Why edge-first matters for subtractive design.',
-        duration: '15 min',
-      },
-      {
-        id: 'd1-patterns',
-        title: 'D1 Database Patterns',
-        description: 'SQLite at the edge—simplicity as feature.',
-        duration: '30 min',
-        praxis: 'd1-migration',
-      },
-      {
-        id: 'kv-caching',
-        title: 'KV Caching Strategies',
-        description: 'When and how to cache at the edge.',
-        duration: '25 min',
-      },
-      {
-        id: 'workers-composition',
-        title: 'Workers Composition',
-        description: 'Building services that compose cleanly.',
-        duration: '35 min',
-        praxis: 'worker-service',
-      },
-      {
-        id: 'deployment-patterns',
-        title: 'Deployment Patterns',
-        description: 'Making deployment invisible.',
-        duration: '20 min',
-      },
-    ],
-  },
-  {
-    id: 'agents',
-    title: 'Agents',
-    subtitle: 'Coordination + Claude Code',
-    description: 'Multi-agent systems that reason together. The tool recedes; the swarm works.',
-    principle: 'The tool recedes; the swarm reasons.',
-    color: 'path-agents',
-    prerequisites: ['foundations', 'infrastructure'],
-    lessons: [
-      {
-        id: 'agent-philosophy',
-        title: 'Agent Philosophy',
-        description: 'Zuhandenheit for AI—tools that disappear into use.',
-        duration: '20 min',
-      },
-      {
-        id: 'coordination-primitives',
-        title: 'Coordination Primitives',
-        description: 'Issues, claims, dependencies—the graph of work.',
-        duration: '30 min',
-        praxis: 'coordination-setup',
-      },
-      {
-        id: 'priority-algorithms',
-        title: 'Priority Algorithms',
-        description: 'PageRank, Critical Path, and impact scoring.',
-        duration: '25 min',
-      },
-      {
-        id: 'ethos-layer',
-        title: 'The Ethos Layer',
-        description: 'Health monitoring and self-correction.',
-        duration: '30 min',
-        praxis: 'ethos-config',
-      },
-      {
-        id: 'hierarchical-telos',
-        title: 'Hierarchical Telos',
-        description: 'Ethos, projects, and issues—the three levels.',
-        duration: '35 min',
-      },
-    ],
-  },
-  {
-    id: 'method',
-    title: 'Method',
-    subtitle: 'WORKWAY Professional Services',
-    description: 'Delivering value through the CREATE SOMETHING methodology. Being-as-Service.',
-    principle: 'Value emerges through disciplined practice.',
-    color: 'path-method',
-    prerequisites: ['foundations', 'craft'],
-    lessons: [
-      {
-        id: 'workway-philosophy',
-        title: 'WORKWAY Philosophy',
-        description: 'Service as craft—the professional ethos.',
-        duration: '20 min',
-      },
-      {
-        id: 'automotive-framework',
-        title: 'The Automotive Framework',
-        description: 'Using automotive metaphors to explain automation infrastructure to clients.',
-        duration: '25 min',
-        praxis: 'automotive-translation',
-      },
-      {
-        id: 'discovery-patterns',
-        title: 'Discovery Patterns',
-        description: 'Understanding client needs through the hermeneutic lens.',
-        duration: '30 min',
-        praxis: 'discovery-session',
-      },
-      {
-        id: 'scoping-discipline',
-        title: 'Scoping Discipline',
-        description: 'Subtractive scoping—less, but better.',
-        duration: '25 min',
-      },
-      {
-        id: 'delivery-rhythm',
-        title: 'Delivery Rhythm',
-        description: 'Sustainable pace and continuous value.',
-        duration: '20 min',
-      },
-      {
-        id: 'client-education',
-        title: 'Client Education',
-        description: 'Teaching the principles while delivering work.',
-        duration: '25 min',
-      },
-    ],
-  },
-  {
-    id: 'systems',
-    title: 'Systems',
-    subtitle: 'Templates + Automations',
-    description: 'Building systems that multiply capability while maintaining simplicity.',
-    principle: 'Weniger, aber besser.',
-    color: 'path-systems',
-    prerequisites: ['craft', 'infrastructure'],
-    lessons: [
-      {
-        id: 'template-philosophy',
-        title: 'Template Philosophy',
-        description: 'Templates as compressed understanding.',
-        duration: '20 min',
-      },
-      {
-        id: 'template-architecture',
-        title: 'Template Architecture',
-        description: 'Building templates that adapt without complexity.',
-        duration: '35 min',
-        praxis: 'template-vertical',
-      },
-      {
-        id: 'automation-patterns',
-        title: 'Automation Patterns',
-        description: 'Automating without creating fragility.',
-        duration: '30 min',
-      },
-      {
-        id: 'platform-integration',
-        title: 'Platform Integration',
-        description: 'Connecting systems that complement, not complicate.',
-        duration: '25 min',
-      },
-      {
-        id: 'holistic-systems',
-        title: 'Holistic Systems',
-        description: 'The hermeneutic circle of interconnected properties.',
-        duration: '40 min',
-        praxis: 'system-audit',
-      },
-    ],
-  },
-  {
-    id: 'partnership',
-    title: 'Partnership',
-    subtitle: 'Terminal + Claude Code',
-    description: 'Learning to work alongside AI agents. The craftsman uses the hammer; the hammer does not use him.',
-    principle: 'Gelassenheit—full engagement without capture.',
-    color: 'path-partnership',
-    prerequisites: ['foundations', 'agents'],
-    lessons: [
-      {
-        id: 'terminal-philosophy',
-        title: 'Terminal Philosophy',
-        description: 'The command line as dwelling place for creation.',
-        duration: '20 min',
-      },
-      {
-        id: 'claude-code-partnership',
-        title: 'Claude Code Partnership',
-        description: 'Human-agent complementarity—what each does best.',
-        duration: '30 min',
-        praxis: 'partnership-audit',
-      },
-      {
-        id: 'tool-configuration',
-        title: 'Tool Configuration',
-        description: 'MCP servers, skills, hooks, and slash commands.',
-        duration: '35 min',
-        praxis: 'mcp-setup',
-      },
-      {
-        id: 'using-learn-mcp',
-        title: 'Using Learn MCP',
-        description: 'The recursive tool that teaches itself—usage directions and expected results.',
-        duration: '25 min',
-        praxis: 'learn-mcp-setup',
-      },
-      {
-        id: 'wezterm-workflow',
-        title: 'WezTerm Workflow',
-        description: 'Terminal as creative environment.',
-        duration: '25 min',
-      },
-      {
-        id: 'system-philosophy',
-        title: 'System Philosophy',
-        description: 'Gelassenheit and the craft of human-agent partnership.',
-        duration: '30 min',
-      },
-    ],
-  },
-  {
-    id: 'advanced',
-    title: 'Advanced',
-    subtitle: 'MCP + Hooks + Orchestration',
-    description: 'Deep-dive into custom MCP servers, hook automation, and multi-agent patterns. Tools that recede into transparent use.',
-    principle: 'The tool disappears; only the work remains.',
+    id: 'codex-mcp',
+    title: 'Codex MCP Course',
+    subtitle: 'Learn Codex by Building an MCP',
+    description:
+      'One practical path: build a working MCP server, connect it to Codex, test it, and ship it.',
     color: 'path-advanced',
-    prerequisites: ['partnership', 'agents'],
     lessons: [
       {
-        id: 'mcp-server-development',
-        title: 'MCP Server Development',
-        description: 'Creating custom MCP servers for composed operations.',
-        duration: '45 min',
-        praxis: 'build-mcp-server',
+        id: 'what-is-codex-and-mcp',
+        title: 'What Codex + MCP Actually Do',
+        description: 'Understand the core model: Codex drives work, MCP exposes tools and context.',
+        duration: '10 min'
       },
       {
-        id: 'custom-hooks',
-        title: 'Custom Hooks',
-        description: 'Implementing Claude Code hooks for automation as dwelling.',
-        duration: '40 min',
-        praxis: 'hook-suite',
+        id: 'scaffold-an-mcp-server',
+        title: 'Scaffold an MCP Server',
+        description: 'Create a minimal TypeScript MCP server with one clean entry point.',
+        duration: '20 min'
       },
       {
-        id: 'agent-orchestration',
-        title: 'Agent Orchestration',
-        description: 'Multi-agent patterns and coordination mechanisms.',
-        duration: '50 min',
-        praxis: 'multi-agent-system',
+        id: 'add-your-first-tool',
+        title: 'Add Your First Tool',
+        description: 'Implement one useful tool with strict input validation and clear output.',
+        duration: '25 min'
       },
-    ],
-  },
+      {
+        id: 'connect-to-codex',
+        title: 'Connect the Server to Codex',
+        description: 'Register the MCP server in your Codex setup and invoke the tool from chat.',
+        duration: '15 min'
+      },
+      {
+        id: 'test-debug-and-iterate',
+        title: 'Test, Debug, Iterate',
+        description: 'Add fast feedback loops so your MCP behaves reliably under real prompts.',
+        duration: '25 min'
+      },
+      {
+        id: 'ship-and-next-steps',
+        title: 'Ship and Extend',
+        description: 'Package your server, document usage, and define the next tools to add.',
+        duration: '10 min'
+      }
+    ]
+  }
 ];
 
 /**

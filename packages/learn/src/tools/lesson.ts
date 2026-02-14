@@ -16,13 +16,13 @@ export const lessonTool: Tool = {
 Returns the lesson markdown content, metadata, and table of contents.
 Also marks the lesson as started for progress tracking.
 
-Paths: foundations, craft, infrastructure, agents, method, systems, partnership, advanced`,
+Path: codex-mcp`,
 	inputSchema: {
 		type: 'object' as const,
 		properties: {
 			pathId: {
 				type: 'string',
-				description: 'The learning path ID (e.g., "foundations", "craft")'
+				description: 'The learning path ID ("codex-mcp")'
 			},
 			lessonId: {
 				type: 'string',
@@ -97,7 +97,6 @@ Run \`learn_authenticate\` with your email to start.`
 
 **Path**: ${lesson.path.title} (${lesson.path.subtitle})
 **Duration**: ${lesson.lesson.duration}
-${lesson.lesson.praxis ? `**Praxis**: ${lesson.lesson.praxis}` : ''}
 
 ## Contents
 ${toc}
@@ -108,8 +107,7 @@ ${lesson.content.markdown}
 
 ---
 
-When you've finished reading, use \`learn_complete\` to mark this lesson done.
-${lesson.lesson.praxis ? `\nThis lesson has a praxis exercise: \`learn_praxis\` with id "${lesson.lesson.praxis}"` : ''}`
+When you've finished reading, use \`learn_complete\` to mark this lesson done.`
 			}
 		];
 	} catch (error) {

@@ -2,7 +2,6 @@
  * Complete Tool
  *
  * Marks a lesson as complete with required reflection.
- * Canon: Completion requires reflection—understanding, not just reading.
  */
 
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
@@ -18,9 +17,7 @@ export const completeTool: Tool = {
 Requires a reflection to ensure understanding. Reflections should capture:
 - What you learned
 - How it connects to your work
-- Questions that remain
-
-The hermeneutic circle: practice → reflection → understanding → practice.`,
+- Questions that remain.`,
 	inputSchema: {
 		type: 'object' as const,
 		properties: {
@@ -97,7 +94,7 @@ A good reflection captures:
 - **Questions**: What remains unclear or worth exploring
 
 Example:
-"I learned that the Subtractive Triad operates at three levels, each with its own question. The DRY level asks 'Have I built this before?' which directly applies to the duplicate constants I noticed in my auth code. I'm still uncertain about how to recognize Heidegger-level disconnection in practice."`
+"I learned how the lesson's MCP pattern works and where it fits in my codebase. I can apply this to my current service, but I still need to test edge cases around tool input validation."`
 			}
 		];
 	}
@@ -117,10 +114,6 @@ You've completed all lessons in **${pathId}**.
 
 ## Your Reflection
 ${reflection}
-
-## The Hermeneutic Spiral
-
-This isn't the end—it's a turn in the spiral. Understanding deepens with each return. Consider revisiting these lessons as your practice evolves.
 
 Use \`learn_status\` to see your next path.`
 				}

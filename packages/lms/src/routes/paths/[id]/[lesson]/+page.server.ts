@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getPath, getLesson } from '$lib/content/paths';
+import { loadLesson, extractFrontmatter } from '$lib/content/lessons';
 import { marked } from 'marked';
 
 // Configure marked for clean output
@@ -8,33 +9,6 @@ marked.setOptions({
   gfm: true,
   breaks: false
 });
-
-// Import all lesson markdown files at build time using Vite's glob import
-const lessonFiles = import.meta.glob('/src/lib/content/lessons/**/*.md', {
-  query: '?raw',
-  import: 'default',
-  eager: true
-}) as Record<string, string>;
-
-// Import all interactive lesson JSON files
-interface InteractiveLessonPayload {
-  interactive?: boolean;
-  sections: any[];
-}
-
-const interactiveFiles = import.meta.glob('/src/lib/content/lessons/**/*.json', {
-  import: 'default',
-  eager: true
-}) as Record<string, InteractiveLessonPayload>;
-
-/**
- * Strip YAML frontmatter from markdown content.
- * Frontmatter is delimited by --- at the start of the file.
- */
-function stripFrontmatter(markdown: string): string {
-  const frontmatterRegex = /^---\r?\n[\s\S]*?\r?\n---\r?\n/;
-  return markdown.replace(frontmatterRegex, '');
-}
 
 export const load: PageServerLoad = async ({ params }) => {
   const pathData = getPath(params.id);
@@ -52,19 +26,13 @@ export const load: PageServerLoad = async ({ params }) => {
   const nextLesson =
     currentIndex < pathData.lessons.length - 1 ? pathData.lessons[currentIndex + 1] : null;
 
-  // Check for interactive lesson JSON first
-  const interactiveKey = `/src/lib/content/lessons/${params.id}/${params.lesson}.json`;
-  const interactiveData = interactiveFiles[interactiveKey];
-
-  // Load markdown content from pre-imported files
   let content = '';
-  const contentKey = `/src/lib/content/lessons/${params.id}/${params.lesson}.md`;
-  const markdown = lessonFiles[contentKey];
-
-  if (markdown) {
-    // Strip YAML frontmatter before parsing
-    const markdownContent = stripFrontmatter(markdown);
-    content = await marked.parse(markdownContent);
+  try {
+    const markdown = await loadLesson(params.id, params.lesson);
+    const parsed = extractFrontmatter(markdown);
+    content = await marked.parse(parsed.content);
+  } catch (err) {
+    console.error(`Failed to load lesson content: ${params.id}/${params.lesson}`, err);
   }
 
   return {
@@ -74,11 +42,6 @@ export const load: PageServerLoad = async ({ params }) => {
     totalLessons: pathData.lessons.length,
     previousLesson,
     nextLesson,
-    content,
-    // Include interactive data if available
-    interactive: interactiveData?.interactive ?? false,
-    interactiveData: interactiveData
-      ? { sections: interactiveData.sections }
-      : null
+    content
   };
 };

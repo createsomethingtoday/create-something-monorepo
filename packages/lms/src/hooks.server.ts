@@ -12,6 +12,13 @@ import { redirect } from '@sveltejs/kit';
 
 const IDENTITY_WORKER = 'https://id.createsomething.space';
 const ISSUER = 'https://id.createsomething.space';
+const COURSE_REPLACEMENT_PATH = '/paths/codex-mcp/what-is-codex-and-mcp';
+const RETIRED_PAGE_PATTERN = /^\/(?:modules|praxis)(?:\/|$)/;
+const RETIRED_API_PATTERNS = [
+	/^\/api\/(?:mod(?:ules))(?:\/|$)/,
+	/^\/api\/(?:pra(?:xis))(?:\/|$)/,
+	/^\/api\/progress\/(?:pra(?:xis))(?:\/|$)/
+];
 
 // Cache JWKS for 5 minutes
 let jwksCache: { keys: JWK[]; fetchedAt: number } | null = null;
@@ -39,6 +46,33 @@ interface JWTPayload {
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
+	const pathname = event.url.pathname;
+
+	// Hard-retired surfaces: return 410 Gone with replacement guidance.
+	if (RETIRED_PAGE_PATTERN.test(pathname)) {
+		return new Response(
+			`410 Gone\nCourse moved to "${COURSE_REPLACEMENT_PATH}".`,
+			{
+				status: 410,
+				headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+			}
+		);
+	}
+
+	if (RETIRED_API_PATTERNS.some((pattern) => pattern.test(pathname))) {
+		return new Response(
+			JSON.stringify({
+				error: 'gone',
+				message: `This endpoint has been retired. Course moved to "${COURSE_REPLACEMENT_PATH}".`,
+				replacement: COURSE_REPLACEMENT_PATH
+			}),
+			{
+				status: 410,
+				headers: { 'Content-Type': 'application/json; charset=utf-8' }
+			}
+		);
+	}
+
 	const accessToken = event.cookies.get('cs_access_token');
 	const refreshToken = event.cookies.get('cs_refresh_token');
 

@@ -2,11 +2,10 @@
 /**
  * CREATE SOMETHING Learn MCP Server
  *
- * Exposes learning tools to Claude Code for methodology education.
- * Canon: The tool recedes; learning emerges through use.
+ * Exposes learning tools for the Codex MCP course.
  *
  * @example
- * # In Claude Code settings, add:
+ * # In Codex settings, add:
  * {
  *   "mcpServers": {
  *     "learn": {
@@ -32,23 +31,11 @@ import {
 	lessonTool,
 	handleLesson,
 	completeTool,
-	handleComplete,
-	praxisTool,
-	handlePraxis,
-	ethosTool,
-	handleEthos,
-	analyzeTool,
-	handleAnalyze,
-	recommendTool,
-	handleRecommend,
-	coachTool,
-	handleCoach,
-	digestTool,
-	handleDigest
+	handleComplete
 } from './tools/index.js';
 
 const SERVER_NAME = 'create-something-learn';
-const SERVER_VERSION = '0.2.0';
+const SERVER_VERSION = '0.4.0';
 
 /**
  * Main MCP server for CREATE SOMETHING learning.
@@ -58,12 +45,6 @@ const SERVER_VERSION = '0.2.0';
  * - learn_status: Progress overview
  * - learn_lesson: Fetch lesson content
  * - learn_complete: Mark lesson complete with reflection
- * - learn_praxis: Execute praxis exercises
- * - learn_ethos: Manage personal principles derived from the Subtractive Triad
- * - learn_analyze_reflection: Analyze reflection text for depth and Triad alignment
- * - learn_recommend: Recommend lessons based on Triad audit scores
- * - learn_coach: Provide real-time Triad-aligned coaching
- * - learn_digest: Generate weekly audit summary with trends
  */
 async function main() {
 	const server = new Server(
@@ -85,13 +66,7 @@ async function main() {
 				authenticateTool,
 				statusTool,
 				lessonTool,
-				completeTool,
-				praxisTool,
-				ethosTool,
-				analyzeTool,
-				recommendTool,
-				coachTool,
-				digestTool
+				completeTool
 			]
 		};
 	});
@@ -113,24 +88,6 @@ async function main() {
 
 				case 'learn_complete':
 					return { content: await handleComplete(args) };
-
-				case 'learn_praxis':
-					return { content: await handlePraxis(args) };
-
-				case 'learn_ethos':
-					return { content: await handleEthos(args as Record<string, unknown>) };
-
-				case 'learn_analyze_reflection':
-					return { content: await handleAnalyze(args as Record<string, unknown>) };
-
-				case 'learn_recommend':
-					return { content: await handleRecommend(args as Record<string, unknown>) };
-
-				case 'learn_coach':
-					return { content: await handleCoach(args as Record<string, unknown>) };
-
-				case 'learn_digest':
-					return { content: await handleDigest(args as Record<string, unknown>) };
 
 				default:
 					return {

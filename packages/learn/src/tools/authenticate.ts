@@ -83,10 +83,8 @@ You are now authenticated as **${result.user?.email}**.
 ## Next Steps
 
 1. Run \`learn_status\` to see your progress
-2. Run \`learn_lesson\` to start learning
-3. Complete lessons and praxis exercises to track your understanding
-
-The Subtractive Triad awaits. Let's begin with Foundations.`
+2. Run \`learn_lesson pathId="codex-mcp" lessonId="what-is-codex-and-mcp"\` to start
+3. Use \`learn_complete\` after each lesson`
 			}
 		];
 	}

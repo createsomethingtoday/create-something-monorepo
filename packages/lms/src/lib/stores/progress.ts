@@ -177,99 +177,6 @@ async function completeLesson(
 	}
 }
 
-/**
- * Start a praxis exercise.
- */
-async function startPraxis(praxisId: string): Promise<number> {
-	if (!browser) return -1;
-
-	try {
-		const response = await fetch('/api/progress/praxis', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			credentials: 'include',
-			body: JSON.stringify({ praxisId, action: 'start' })
-		});
-
-		if (!response.ok) {
-			throw new Error(`Failed to start praxis: ${response.statusText}`);
-		}
-
-		const data = (await response.json()) as { attemptId: number };
-		return data.attemptId;
-	} catch (err) {
-		console.error('Error starting praxis:', err);
-		throw err;
-	}
-}
-
-/**
- * Submit a praxis exercise.
- */
-async function submitPraxis(
-	praxisId: string,
-	submission: unknown,
-	score: number,
-	passed: boolean,
-	feedback?: string
-): Promise<{ passed: boolean; score: number; feedback?: string }> {
-	if (!browser) return { passed: false, score: 0 };
-
-	try {
-		const response = await fetch('/api/progress/praxis', {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			credentials: 'include',
-			body: JSON.stringify({ praxisId, action: 'submit', submission, score, passed, feedback })
-		});
-
-		if (!response.ok) {
-			throw new Error(`Failed to submit praxis: ${response.statusText}`);
-		}
-
-		const data = (await response.json()) as {
-			passed: boolean;
-			score: number;
-			feedback?: string;
-		};
-
-		// Refresh progress
-		await fetchProgress();
-
-		return {
-			passed: data.passed,
-			score: data.score,
-			feedback: data.feedback
-		};
-	} catch (err) {
-		console.error('Error submitting praxis:', err);
-		throw err;
-	}
-}
-
-/**
- * Get praxis attempts for a specific exercise.
- */
-async function getPraxisAttempts(praxisId: string) {
-	if (!browser) return [];
-
-	try {
-		const response = await fetch(`/api/progress/praxis?praxisId=${encodeURIComponent(praxisId)}`, {
-			credentials: 'include'
-		});
-
-		if (!response.ok) {
-			throw new Error(`Failed to fetch praxis attempts: ${response.statusText}`);
-		}
-
-		const data = (await response.json()) as { attempts: unknown[] };
-		return data.attempts || [];
-	} catch (err) {
-		console.error('Error fetching praxis attempts:', err);
-		return [];
-	}
-}
-
 // ───────────────────────────────────────────────────────────────────────────
 // Derived Stores
 // ───────────────────────────────────────────────────────────────────────────
@@ -308,8 +215,5 @@ export const progress = {
 	subscribe: progressStore.subscribe,
 	fetch: fetchProgress,
 	startLesson,
-	completeLesson,
-	startPraxis,
-	submitPraxis,
-	getPraxisAttempts
+	completeLesson
 };

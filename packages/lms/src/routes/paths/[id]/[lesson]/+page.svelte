@@ -2,7 +2,6 @@
   import type { PageData } from './$types';
   import { ChevronLeft, ChevronRight, CheckCircle } from 'lucide-svelte';
   import { progress, getLessonProgress } from '$lib/stores/progress';
-  import { InteractiveLesson } from '$lib/components/lesson';
 
   let { data }: { data: PageData } = $props();
 
@@ -14,8 +13,6 @@
   let previousLesson = $derived(data.previousLesson);
   let nextLesson = $derived(data.nextLesson);
   let content = $derived(data.content);
-  let isInteractive = $derived(data.interactive);
-  let interactiveData = $derived(data.interactiveData);
 
   // Track time spent on this lesson
   let startTime = $state(0);
@@ -24,15 +21,11 @@
   // Get progress for this lesson - needs to be derived to react to lesson changes
   let lessonProgress = $derived(getLessonProgress(path.id, lesson.id));
 
-  // Track section views for analytics
-  let viewedSections = $state<Set<number>>(new Set());
-
   // Track lesson start when lesson changes
   $effect(() => {
     // Reset state for new lesson
     startTime = Date.now();
     isCompleting = false;
-    viewedSections = new Set();
 
     // Mark lesson as started
     progress.startLesson(path.id, lesson.id).catch((err) => {
@@ -42,38 +35,6 @@
     // Fetch full progress
     progress.fetch();
   });
-
-  // Handle section view for engagement tracking
-  function handleSectionView(index: number, type: string) {
-    if (!viewedSections.has(index)) {
-      viewedSections.add(index);
-      viewedSections = new Set(viewedSections);
-      
-      // Track section view event
-      if (typeof window !== 'undefined' && (window as unknown as { trackEvent?: (name: string, props: Record<string, unknown>) => void }).trackEvent) {
-        (window as unknown as { trackEvent: (name: string, props: Record<string, unknown>) => void }).trackEvent('lesson_section_view', {
-          path_id: path.id,
-          lesson_id: lesson.id,
-          section_index: index,
-          section_type: type,
-          sections_viewed: viewedSections.size
-        });
-      }
-    }
-  }
-
-  // Handle interactive lesson completion
-  function handleInteractiveComplete() {
-    // Track completion event
-    if (typeof window !== 'undefined' && (window as unknown as { trackEvent?: (name: string, props: Record<string, unknown>) => void }).trackEvent) {
-      (window as unknown as { trackEvent: (name: string, props: Record<string, unknown>) => void }).trackEvent('lesson_interactive_complete', {
-        path_id: path.id,
-        lesson_id: lesson.id,
-        sections_viewed: viewedSections.size,
-        time_spent: Math.floor((Date.now() - startTime) / 1000)
-      });
-    }
-  }
 
   async function handleCompleteLesson() {
     if (isCompleting) return;
@@ -138,34 +99,11 @@
   </div>
 
   <!-- Lesson Content -->
-  <article class="lesson-content" class:interactive-mode={isInteractive}>
-    {#if isInteractive && interactiveData}
-      <!-- Interactive lesson mode -->
-      <InteractiveLesson 
-        data={interactiveData}
-        onSectionView={handleSectionView}
-        onComplete={handleInteractiveComplete}
-      />
-      
-      {#if lesson.praxis}
-        <div class="praxis-callout">
-          <h3>Praxis Exercise</h3>
-          <p>This lesson includes a hands-on exercise: <strong>{lesson.praxis}</strong></p>
-          <a href="/praxis/{lesson.praxis}" class="praxis-link">Start Exercise →</a>
-        </div>
-      {/if}
-    {:else if content}
+  <article class="lesson-content">
+    {#if content}
       <div class="prose">
         {@html content}
       </div>
-
-      {#if lesson.praxis}
-        <div class="praxis-callout">
-          <h3>Praxis Exercise</h3>
-          <p>This lesson includes a hands-on exercise: <strong>{lesson.praxis}</strong></p>
-          <a href="/praxis/{lesson.praxis}" class="praxis-link">Start Exercise →</a>
-        </div>
-      {/if}
     {:else}
       <div class="placeholder-content">
         <h2>Coming Soon</h2>
@@ -176,14 +114,6 @@
 
         <h3>What you'll learn:</h3>
         <p>{lesson.description}</p>
-
-        {#if lesson.praxis}
-          <div class="praxis-callout">
-            <h3>Praxis Exercise</h3>
-            <p>This lesson includes a hands-on exercise: <strong>{lesson.praxis}</strong></p>
-            <p>Complete the exercise to deepen your understanding through practice.</p>
-          </div>
-        {/if}
       </div>
     {/if}
   </article>
@@ -316,14 +246,6 @@
 
   .lesson-content {
     margin-bottom: var(--space-2xl);
-  }
-
-  .lesson-content.interactive-mode {
-    /* Full-width for interactive lessons */
-    max-width: none;
-    margin-left: calc(-1 * var(--space-lg));
-    margin-right: calc(-1 * var(--space-lg));
-    padding: 0;
   }
 
   .placeholder-content {
@@ -468,33 +390,6 @@
   }
 
   .prose :global(a:hover) {
-    color: var(--color-fg-primary);
-  }
-
-  .praxis-callout {
-    margin-top: var(--space-lg);
-    padding: var(--space-md);
-    border-radius: var(--radius-md);
-    background: var(--color-info-muted);
-    border: 1px solid var(--color-info-border);
-  }
-
-  .praxis-callout h3 {
-    color: var(--color-data-1);
-    margin-top: 0;
-    font-size: var(--text-h3);
-    margin-bottom: var(--space-sm);
-  }
-
-  .praxis-link {
-    display: inline-block;
-    margin-top: var(--space-sm);
-    color: var(--color-data-1);
-    font-weight: var(--font-medium);
-    transition: color var(--duration-micro) var(--ease-standard);
-  }
-
-  .praxis-link:hover {
     color: var(--color-fg-primary);
   }
 

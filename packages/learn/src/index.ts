@@ -1,11 +1,10 @@
 /**
  * @createsomething/learn
  *
- * MCP server for CREATE SOMETHING methodology learning.
- * Integrates with Claude Code for distributed education.
+ * MCP server for the CREATE SOMETHING Codex MCP course.
  *
  * @example
- * // In Claude Code settings:
+ * // In Codex settings:
  * {
  *   "mcpServers": {
  *     "learn": {
@@ -27,15 +26,8 @@ export type {
 	Path,
 	LessonContent,
 	ProgressOverview,
-	PraxisAttempt,
 	OfflineQueue,
-	CacheManifest,
-	// Ethos types
-	UserEthos,
-	EthosPrinciple,
-	EthosConstraint,
-	EthosHealthCheck,
-	EthosAction
+	CacheManifest
 } from './types.js';
 
 // Auth
@@ -54,24 +46,6 @@ export {
 	getLessonWithCache
 } from './cache/lessons.js';
 
-// Ethos
-export {
-	loadEthos,
-	saveEthos,
-	getOrCreateEthos,
-	hasEthos,
-	clearEthos,
-	addPrinciple,
-	addConstraint,
-	addHealthCheck,
-	removePrinciple,
-	removeConstraint,
-	removeHealthCheck,
-	exportEthos,
-	importEthos,
-	getEthosPath
-} from './ethos/storage.js';
-
 // Tools (for programmatic use)
 export {
 	authenticateTool,
@@ -81,9 +55,5 @@ export {
 	lessonTool,
 	handleLesson,
 	completeTool,
-	handleComplete,
-	praxisTool,
-	handlePraxis,
-	ethosTool,
-	handleEthos
+	handleComplete
 } from './tools/index.js';

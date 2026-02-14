@@ -1,11 +1,4 @@
 <script lang="ts">
-  /**
-   * Error Page
-   *
-   * Canon-styled error states.
-   * Philosophy: Even errors should embody the ethos—minimal, clear, guiding.
-   */
-
   import { page } from '$app/stores';
   import { Home, ArrowLeft, BookOpen } from 'lucide-svelte';
 
@@ -74,12 +67,6 @@
         <span>Browse Paths</span>
       </a>
     </div>
-
-    <!-- Philosophy Quote -->
-    <div class="philosophy-quote">
-      <p>"Every detour deepens understanding."</p>
-      <span>The Hermeneutic Spiral</span>
-    </div>
   </div>
 </main>
 
@@ -130,7 +117,7 @@
     flex-wrap: wrap;
     justify-content: center;
     gap: var(--space-sm);
-    margin-bottom: var(--space-2xl);
+    margin-top: var(--space-xl);
   }
 
   .action-btn {
@@ -165,21 +152,5 @@
   .action-btn.secondary:hover {
     border-color: var(--color-border-emphasis);
     color: var(--color-fg-primary);
-  }
-
-  .philosophy-quote {
-    padding-top: var(--space-xl);
-    border-top: 1px solid var(--color-border-default);
-  }
-
-  .philosophy-quote p {
-    color: var(--color-fg-tertiary);
-    font-style: italic;
-    margin-bottom: var(--space-xs);
-  }
-
-  .philosophy-quote span {
-    color: var(--color-fg-muted);
-    font-size: var(--text-caption);
   }
 </style>
