@@ -8,8 +8,8 @@
 	
 	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
-	import { AnalyticsNav } from '$lib/data/nba';
-	import { DateNavigation } from '$lib/data/nba';
+	import { AnalyticsNav } from '$lib/experiments/nba-live';
+	import { DateNavigation } from '$lib/experiments/nba-live';
 	import { TrendingUp, Activity, Target, Zap } from 'lucide-svelte';
 	import { invalidate } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';

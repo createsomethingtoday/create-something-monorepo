@@ -8,9 +8,9 @@
 	
 	import { SEO } from '@create-something/canon';
 	import { Clock, TrendingDown, AlertTriangle } from 'lucide-svelte';
-	import { AnalyticsNav } from '$lib/data/nba';
-	import { OvertimeInsights } from '$lib/data/nba';
-	import { DateNavigation } from '$lib/data/nba';
+	import { AnalyticsNav } from '$lib/experiments/nba-live';
+	import { OvertimeInsights } from '$lib/experiments/nba-live';
+	import { DateNavigation } from '$lib/experiments/nba-live';
 	import type { PageData } from './$types';
 	
 	let { data }: { data: PageData } = $props();

@@ -372,7 +372,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       // Canon rules
       case 'get_canon_rules':
-        result = canon.getCanonRules(safeArgs.category as 'css' | 'voice' | 'code' | 'templates' | 'all' | undefined);
+        result = canon.getCanonRules(safeArgs.category as 'css' | 'voice' | 'code' | 'all' | undefined);
         break;
 
       case 'get_quick_reference':

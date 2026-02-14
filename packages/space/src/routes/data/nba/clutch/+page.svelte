@@ -9,8 +9,8 @@
 	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
 	import type { ClutchStats } from '$lib/nba/clutch-calculator';
-	import { AnalyticsNav } from '$lib/data/nba';
-	import { DateNavigation } from '$lib/data/nba';
+	import { AnalyticsNav } from '$lib/experiments/nba-live';
+	import { DateNavigation } from '$lib/experiments/nba-live';
 	import { Zap, TrendingUp, TrendingDown, Flame } from 'lucide-svelte';
 	import { invalidate } from '$app/navigation';
 	import { onMount, onDestroy } from 'svelte';

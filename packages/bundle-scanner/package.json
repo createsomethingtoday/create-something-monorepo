@@ -9,7 +9,6 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --ext .ts,.tsx",
     "test": "vitest",
     "webflow:share": "npx webflow library share",
     "webflow:dev": "npx webflow devlink"

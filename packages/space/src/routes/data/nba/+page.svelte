@@ -9,9 +9,9 @@
 	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
 	import type { Game } from '$lib/nba/types';
-	import { GameSelector } from '$lib/data/nba';
-	import { GameHighlightCard } from '$lib/data/nba';
-	import { DateNavigation } from '$lib/data/nba';
+	import { GameSelector } from '$lib/experiments/nba-live';
+	import { GameHighlightCard } from '$lib/experiments/nba-live';
+	import { DateNavigation } from '$lib/experiments/nba-live';
 	import { selectGameOfTheNight } from '$lib/nba/calculations';
 	import { Zap, Shield, GitBranch, ArrowRight, Clock, Radio, AlertCircle, TrendingUp } from 'lucide-svelte';
 	import { invalidate } from '$app/navigation';

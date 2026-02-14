@@ -8,7 +8,7 @@
 
 	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
-	import { ShotNetwork } from '$lib/data/nba';
+	import { ShotNetwork } from '$lib/experiments/nba-live';
 	import { ArrowLeft, Clock, Radio, AlertCircle } from 'lucide-svelte';
 
 	let { data }: { data: PageData } = $props();
