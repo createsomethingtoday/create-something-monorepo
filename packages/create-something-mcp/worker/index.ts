@@ -17,6 +17,7 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
+import { enableTelemetry } from '@create-something/mcp-core';
 
 import { registerResources } from '../src/resources.js';
 import { registerTools } from '../src/tools.js';
@@ -37,6 +38,7 @@ import { PRODUCTS } from '../src/content/products.js';
 
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
+  TELEMETRY_DB?: D1Database;
 }
 
 // =============================================================================
@@ -50,6 +52,11 @@ export class CreateSomethingMCP extends McpAgent<Env> {
   });
 
   async init() {
+    // Telemetry: meter all tool calls + register health/usage resources
+    if (this.env.TELEMETRY_DB) {
+      enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'create-something');
+    }
+
     registerResources(this.server);
     registerTools(this.server);
     registerPrompts(this.server);

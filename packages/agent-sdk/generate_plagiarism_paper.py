@@ -9,8 +9,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from create_something_agents import AgentConfig, CreateSomethingAgent
 
-# Load API keys from python-test .env
-load_dotenv("../templates-platform/workers/plagiarism-agent/python-test/.env")
+# Load API keys from local env file
+load_dotenv(".env")
 
 SYSTEM_PROMPT = open("agents/paper_agent.py").read().split('SYSTEM_PROMPT = """')[1].split('"""')[0]
 
@@ -39,15 +39,15 @@ Generate a CREATE SOMETHING paper from this research.
 
 ### Step 1: Search with bash tool (REQUIRED)
 Call the bash tool with these commands:
-- grep -ri "plagiarism" packages/templates-platform/workers/plagiarism-agent/ --include="*.ts" | head -30
-- ls -la packages/templates-platform/workers/plagiarism-agent/python-test/
-- grep -ri "vision" packages/templates-platform/workers/plagiarism-agent/src/ --include="*.ts" | head -20
+- grep -ri "plagiarism" packages/webflow-site-analyzer-mcp/src/ --include="*.ts" | head -30
+- ls -la packages/webflow-site-analyzer-mcp/
+- grep -ri "vision" packages/webflow-site-analyzer-mcp/src/ --include="*.ts" | head -20
 
 ### Step 2: Read files with file_read tool (REQUIRED)
 After searching, read the relevant files you found:
-- file_read(path="packages/templates-platform/workers/plagiarism-agent/src/index.ts")
-- file_read(path="packages/templates-platform/workers/plagiarism-agent/python-test/agent_enhanced.py")
-- file_read(path="packages/templates-platform/workers/plagiarism-agent/python-test/README.md")
+- file_read(path="packages/webflow-site-analyzer-mcp/src/index.ts")
+- file_read(path="packages/webflow-site-analyzer-mcp/src/temporal/activities.ts")
+- file_read(path="packages/webflow-site-analyzer-mcp/README.md")
 
 ### Step 3: Extract facts from what you read
 From the actual file contents:
@@ -57,7 +57,7 @@ From the actual file contents:
 
 ### Step 4: Write paper citing your sources
 Every claim must reference a file you read:
-- "In packages/templates-platform/workers/plagiarism-agent/src/index.ts:XXX..."
+- "In packages/webflow-site-analyzer-mcp/src/index.ts:XXX..."
 - "The Python SDK test results show..."
 
 **If you skip Steps 1-2 and write without tool calls, your paper will be rejected.**

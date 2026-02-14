@@ -4,7 +4,7 @@
  *
  * Tools expose model-controlled operations — CRUD on calendars/events/members,
  * scheduling intelligence (backfill, forecast, conflict detection, availability),
- * and interop (iCal export, template management).
+ * and interop (iCal export, schedule plan management).
  *
  * Each tool returns structured content via the MCP content format.
  * Errors are returned as content messages rather than thrown.
@@ -689,9 +689,9 @@ export function registerTools(
 
   server.tool(
     'schedule_backfill',
-    'Generate past events from a template',
+    'Generate past events from a schedule plan',
     {
-      template_id: z.string(),
+      plan_id: z.string(),
       calendar_id: z.string(),
       range_start: z.string().describe('ISO 8601 date'),
       range_end: z.string().describe('ISO 8601 date'),
@@ -700,9 +700,9 @@ export function registerTools(
       return tracedTool('schedule_backfill', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
-          const template = await getTemplate(db, params.template_id);
+          const template = await getTemplate(db, params.plan_id);
           if (!template) {
-            return errorContent(`Template not found: ${params.template_id}`);
+            return errorContent(`Plan not found: ${params.plan_id}`);
           }
 
           const rangeStart = isoToUnix(params.range_start);
@@ -721,7 +721,7 @@ export function registerTools(
           return jsonContent({
             events_created: created.length,
             range: { start: params.range_start, end: params.range_end },
-            template: template.name,
+            plan: template.name,
           });
         } catch (err) {
           return errorContent(`Backfill failed: ${(err as Error).message}`);
@@ -734,9 +734,9 @@ export function registerTools(
 
   server.tool(
     'schedule_forecast',
-    'Project future events from a template',
+    'Project future events from a schedule plan',
     {
-      template_id: z.string(),
+      plan_id: z.string(),
       calendar_id: z.string(),
       range_start: z.string().describe('ISO 8601 date'),
       range_end: z.string().describe('ISO 8601 date'),
@@ -745,9 +745,9 @@ export function registerTools(
       return tracedTool('schedule_forecast', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
-          const template = await getTemplate(db, params.template_id);
+          const template = await getTemplate(db, params.plan_id);
           if (!template) {
-            return errorContent(`Template not found: ${params.template_id}`);
+            return errorContent(`Plan not found: ${params.plan_id}`);
           }
 
           const rangeStart = isoToUnix(params.range_start);
@@ -766,7 +766,7 @@ export function registerTools(
           return jsonContent({
             events_created: created.length,
             range: { start: params.range_start, end: params.range_end },
-            template: template.name,
+            plan: template.name,
           });
         } catch (err) {
           return errorContent(`Forecast failed: ${(err as Error).message}`);
@@ -930,24 +930,24 @@ export function registerTools(
     },
   );
 
-  // --- schedule_apply_template -----------------------------------------------
+  // --- schedule_apply_plan -----------------------------------------------
 
   server.tool(
-    'schedule_apply_template',
-    'Apply a template to a calendar (backfill + forecast in one operation)',
+    'schedule_apply_plan',
+    'Apply a schedule plan to a calendar (backfill + forecast in one operation)',
     {
-      template_id: z.string(),
+      plan_id: z.string(),
       calendar_id: z.string(),
       backfill_start: z.string().describe('ISO 8601 date').optional(),
       forecast_end: z.string().describe('ISO 8601 date').optional(),
     },
     async (params) => {
-      return tracedTool('schedule_apply_template', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_apply_plan', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
-          const template = await getTemplate(db, params.template_id);
+          const template = await getTemplate(db, params.plan_id);
           if (!template) {
-            return errorContent(`Template not found: ${params.template_id}`);
+            return errorContent(`Plan not found: ${params.plan_id}`);
           }
 
           const nowSeconds = Math.floor(Date.now() / 1000);
@@ -985,10 +985,10 @@ export function registerTools(
           let review: { validated: boolean; refinement: string } | null = null;
           if (requestSampling && created.length > 0) {
             review = await requestSampling(
-              'schedule_apply_template',
-              `Review this template application: ${template.name} generated ${created.length} events. Are there obvious issues with the schedule density or coverage?`,
+              'schedule_apply_plan',
+              `Review this schedule plan application: ${template.name} generated ${created.length} events. Are there obvious issues with the schedule density or coverage?`,
               {
-                template: template.name,
+                plan: template.name,
                 cycle_days: template.cycle_days,
                 events_created: created.length,
                 backfill_count: backfillEvents.length,
@@ -998,7 +998,7 @@ export function registerTools(
           }
 
           return jsonContent({
-            template: template.name,
+            plan: template.name,
             calendar_id: params.calendar_id,
             backfill_events: backfillEvents.length,
             forecast_events: forecastEvents.length,
@@ -1011,7 +1011,7 @@ export function registerTools(
             ...(review ? { judgment: review } : {}),
           });
         } catch (err) {
-          return errorContent(`Apply template failed: ${(err as Error).message}`);
+          return errorContent(`Apply plan failed: ${(err as Error).message}`);
         }
       });
     },
@@ -1080,11 +1080,11 @@ export function registerTools(
     },
   );
 
-  // --- schedule_create_template ----------------------------------------------
+  // --- schedule_create_plan ----------------------------------------------
 
   server.tool(
-    'schedule_create_template',
-    'Create a reusable schedule template',
+    'schedule_create_plan',
+    'Create a reusable schedule plan',
     {
       name: z.string(),
       description: z.string().optional(),
@@ -1101,7 +1101,7 @@ export function registerTools(
       ),
     },
     async (params) => {
-      return tracedTool('schedule_create_template', params as Record<string, unknown>, async () => {
+      return tracedTool('schedule_create_plan', params as Record<string, unknown>, async () => {
         try {
           const db = getDb();
 
@@ -1132,7 +1132,7 @@ export function registerTools(
             slots: createdSlots,
           });
         } catch (err) {
-          return errorContent(`Failed to create template: ${(err as Error).message}`);
+          return errorContent(`Failed to create plan: ${(err as Error).message}`);
         }
       });
     },

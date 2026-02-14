@@ -12,7 +12,7 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
-import { registerFeedbackTool, D1FeedbackStore } from '@create-something/mcp-core';
+import { registerFeedbackTool, D1FeedbackStore, enableTelemetry } from '@create-something/mcp-core';
 import { getWorkspaceConfig } from '../src/config.js';
 import { getNotionClients } from '../src/lib/notion.js';
 import { registerNotionTools } from '../src/tools/index.js';
@@ -49,6 +49,11 @@ export class NotionHalfDozenMcp extends McpAgent<Env> {
   });
 
   async init() {
+    // Telemetry: meter all tool calls + register health/usage resources
+    if (this.env.FEEDBACK_DB) {
+      enableTelemetry(this.server, this.env.FEEDBACK_DB, SERVER_NAME);
+    }
+
     const clients = getNotionClients(this.env);
     const config = getWorkspaceConfig(this.env);
 

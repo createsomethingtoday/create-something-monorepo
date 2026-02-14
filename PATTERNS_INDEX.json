@@ -173,29 +173,6 @@
       "status": "stable"
     },
     {
-      "id": "super-minhash-v1",
-      "name": "SuperMinHash Sketch",
-      "category": "SimilaritySketching",
-      "description": "Streams sets for Jaccard similarity estimation with O(n) complexity. Use for code/log dedup, plagiarism detection, near-duplicate clustering.",
-      "priority_score": 37,
-      "file": "packages/templates-platform/workers/plagiarism-agent/src/minhash.ts",
-      "package": "@create-something/templates-platform",
-      "language": "typescript",
-      "dependencies": [],
-      "exports": [
-        "SuperMinHash",
-        "computeMinHashSignature",
-        "estimateJaccard"
-      ],
-      "example_usage": "const sig1 = computeMinHashSignature(tokens1, 128);\nconst sig2 = computeMinHashSignature(tokens2, 128);\nconst similarity = estimateJaccard(sig1, sig2);",
-      "llm_prompt": "Use super-minhash-v1 for near-duplicate detection. Generate signatures with 128 hashes, compare with estimateJaccard. Use LSH banding for large-scale search.",
-      "inspired_by": [
-        "Ertl SuperMinHash paper (arxiv:1706.05698)"
-      ],
-      "status": "stable",
-      "pre_existing": true
-    },
-    {
       "id": "ast-similarity-v1",
       "name": "AST Similarity",
       "category": "SimilaritySketching",
@@ -230,11 +207,11 @@
   "queries": {
     "by_category": {
       "ResilientWorkflow": ["circuit-breaker-v1", "saga-v1", "outbox-v1"],
-      "SimilaritySketching": ["hyperloglog-v1", "bloom-filter-v1", "super-minhash-v1", "ast-similarity-v1"],
+      "SimilaritySketching": ["hyperloglog-v1", "bloom-filter-v1", "ast-similarity-v1"],
       "AgenticOrchestration": ["chain-of-verification-v1"]
     },
     "by_language": {
-      "typescript": ["circuit-breaker-v1", "saga-v1", "outbox-v1", "super-minhash-v1"],
+      "typescript": ["circuit-breaker-v1", "saga-v1", "outbox-v1"],
       "rust": ["hyperloglog-v1", "bloom-filter-v1", "ast-similarity-v1"],
       "python": ["chain-of-verification-v1"]
     },

@@ -4,7 +4,6 @@ import { redirect, type Handle } from '@sveltejs/kit';
  * Redirects for deprecated routes (post-MCP pivot)
  */
 const deprecatedRedirects: Record<string, string> = {
-	'/templates': '/services',
 	'/categories': '/services',
 	'/category': '/services',
 	'/work': '/',

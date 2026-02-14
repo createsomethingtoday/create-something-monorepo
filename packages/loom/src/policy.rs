@@ -552,7 +552,7 @@ pub fn cs_worker_formula() -> Formula {
                 name: "package".to_string(),
                 description: "Parent package".to_string(),
                 required: false,
-                default: Some("templates-platform".to_string()),
+                default: Some("agency".to_string()),
             },
         ],
         steps: vec![

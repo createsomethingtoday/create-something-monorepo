@@ -289,10 +289,10 @@ python3 test_production.py "..." "..." "MAJOR"
 ### **1. Deploy Worker with New Endpoint**
 
 ```bash
-cd packages/templates-platform/workers/plagiarism-agent
+cd packages/webflow-site-analyzer-mcp
 
 # Deploy
-npx wrangler deploy
+pnpm exec wrangler deploy
 
 # Test endpoint
 curl -X POST https://plagiarism-agent.workers.dev/api/compare \

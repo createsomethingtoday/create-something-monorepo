@@ -350,7 +350,7 @@ Compare to AWS: $50-100/month for equivalent
 
 | Level | Question | Answer |
 |-------|----------|--------|
-| **DRY** | Have I built this before? | Yes - combines patterns from createsomething.io (API), templates-platform (multi-tenant), and harness (quality gates) |
+| **DRY** | Have I built this before? | Yes - combines patterns from createsomething.io (API), webflow-site-analyzer-mcp (multi-tenant), and harness (quality gates) |
 | **Rams** | Does this earn existence? | Yes - solves real Webflow pain point (broken links, SEO) while demonstrating Cloudflare's full stack |
 | **Heidegger** | Does this serve the whole? | Yes - serves .agency (client tool), .io (research validation), and Cloudflare partnership |
 
@@ -362,4 +362,4 @@ Compare to AWS: $50-100/month for equivalent
 
 - [Cloudflare Patterns](../../.claude/rules/cloudflare-patterns.md)
 - [Error Handling Patterns](../../.claude/rules/error-handling-patterns.md)
-- [Template Deployment Patterns](../../.claude/rules/template-deployment-patterns.md)
+- [MCP First Thesis](../../docs/MCP_FIRST_THESIS.md)

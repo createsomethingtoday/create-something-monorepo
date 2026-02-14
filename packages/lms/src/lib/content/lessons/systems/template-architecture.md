@@ -406,4 +406,4 @@ Before moving on:
 >
 > **Canon Reference**: Template extension points embody [Principled Defaults](https://createsomething.ltd/patterns/principled-defaults)—structure that enables without dictating.
 >
-> **Practice**: Study the professional-services vertical (`packages/verticals/professional-services/`) for real template architecture patterns.
+> **Practice**: Study `packages/agency/clients/outerfields/` for real multi-tenant style architecture patterns.

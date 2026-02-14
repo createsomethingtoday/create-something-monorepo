@@ -171,7 +171,7 @@ Top adopters:
 |---------|-----------|--------|
 | `packages/space/` | 193+ | High adoption |
 | `packages/io/` | 86+ | Medium adoption |
-| `packages/verticals/*` | 53-76 each | Template adoption |
+| `packages/agency/clients/*` | 40+ each | Client-specific adoption |
 
 #### Loom/Ground Distribution
 

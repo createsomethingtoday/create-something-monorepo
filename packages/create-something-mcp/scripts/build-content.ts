@@ -223,17 +223,26 @@ ${entries.join(',\n')}
 // ============================================================================
 
 async function buildGraph(): Promise<string> {
-  const graphDir = join(ROOT, 'packages', 'io', 'static', '.graph');
+  const preferredGraphDir = join(ROOT, '.graph');
+  const legacyGraphDir = join(ROOT, 'packages', 'io', 'static', '.graph');
 
   let nodesRaw: string;
   let edgesRaw: string;
+  let graphDir = preferredGraphDir;
   try {
     nodesRaw = await readFile(join(graphDir, 'nodes.json'), 'utf-8');
     edgesRaw = await readFile(join(graphDir, 'edges.json'), 'utf-8');
   } catch {
-    console.error('Warning: Could not read graph files, generating empty graph.');
-    nodesRaw = '[]';
-    edgesRaw = '[]';
+    // Fallback to legacy location used by older graph build workflows.
+    graphDir = legacyGraphDir;
+    try {
+      nodesRaw = await readFile(join(graphDir, 'nodes.json'), 'utf-8');
+      edgesRaw = await readFile(join(graphDir, 'edges.json'), 'utf-8');
+    } catch {
+      console.error('Warning: Could not read graph files, generating empty graph.');
+      nodesRaw = '[]';
+      edgesRaw = '[]';
+    }
   }
 
   const rawNodes = JSON.parse(nodesRaw);
@@ -261,7 +270,7 @@ async function buildGraph(): Promise<string> {
   return `/**
  * Generated knowledge graph — DO NOT EDIT MANUALLY.
  * Run: npm run build:content
- * Source: packages/io/static/.graph/
+ * Source: .graph/ (fallback: packages/io/static/.graph/)
  */
 
 import type { GraphNode, GraphEdge } from '../types.js';

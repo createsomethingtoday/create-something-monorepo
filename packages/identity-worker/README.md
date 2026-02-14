@@ -4,7 +4,7 @@ Centralized authentication service for CREATE SOMETHING properties.
 
 ## Purpose
 
-Single identity across all properties: .space, .io, .agency, .ltd, .learn, and templates platform.
+Single identity across all properties: .space, .io, .agency, .ltd, and .learn.
 
 ## Features
 
@@ -59,4 +59,3 @@ Properties verify tokens by:
 ## Related
 
 - `packages/lms` - Primary consumer
-- `packages/templates-platform` - Template authentication

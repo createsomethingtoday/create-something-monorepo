@@ -80,3 +80,20 @@ export const notionArchiveBlockSchema = z.object({
   workspace: workspaceSchema,
   block_id: z.string().describe('The ID of the block to archive (move to trash). Returned from notion_append_blocks or from block children.'),
 });
+
+export const notionCreateDatabaseSchema = z.object({
+  workspace: workspaceSchema,
+  parent_page_id: z.string().describe('The page ID to create the database under (as a child).'),
+  title: z.string().describe('Database title (plain text).'),
+  properties: z.record(z.unknown()).describe('Property schema for the initial data source. E.g. { "Name": { "title": {} }, "Status": { "select": { "options": [{ "name": "To Do" }, { "name": "Done" }] } } }'),
+  is_inline: z.boolean().optional().default(false).describe('If true, database renders inline in the parent page (like an embedded table). Default false.'),
+});
+
+export const notionUpdateDatabaseSchema = z.object({
+  workspace: workspaceSchema,
+  database_id: z.string().describe('The database ID to update.'),
+  title: z.string().optional().describe('New database title (plain text). Omit to leave unchanged.'),
+  description: z.string().optional().describe('New database description (plain text). Omit to leave unchanged.'),
+  data_source_id: z.string().optional().describe('Data source ID for property updates. Omit to auto-resolve from the first data source in the database.'),
+  properties: z.record(z.unknown()).optional().describe('Updated property schema for the data source. E.g. { "Status": { "select": { "options": [{ "name": "To Do" }, { "name": "Done" }] } } }. Pass null for a property name to delete it. Returns updated schema.'),
+});

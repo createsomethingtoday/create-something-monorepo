@@ -50,7 +50,7 @@
 
   /* Typography - Golden Ratio Implementation */
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-sans);
+    font-family: var(--font-heading, var(--font-display, var(--font-sans)));
     font-optical-sizing: auto;
   }
 

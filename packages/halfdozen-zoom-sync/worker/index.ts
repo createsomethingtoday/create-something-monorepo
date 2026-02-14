@@ -22,7 +22,7 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
-import { registerFeedbackTool, D1FeedbackStore } from '@create-something/mcp-core';
+import { registerFeedbackTool, D1FeedbackStore, enableTelemetry } from '@create-something/mcp-core';
 
 import { ComposioToolFactory } from '@create-something/composio-bridge';
 import { registerSyncTools } from '../src/tools/sync.js';
@@ -63,8 +63,10 @@ interface Env {
   COMPOSIO_ZOOM_AUTH_CONFIG_ID?: string;
 }
 
-// Session context KV key
+// Session context KV key (cookie blob; used when no profile is set)
 const SESSION_CONTEXT_KEY = 'zoom-session-context';
+// Steel Profile ID (preferred over session context when set — one-time login, reuse until 30-day expiry)
+const CLIPS_PROFILE_ID_KEY = 'zoom-clips-profile-id';
 
 // =============================================================================
 // MCP Agent — Durable Object with all three primitives
@@ -84,6 +86,11 @@ export class ZoomClipsMCP extends McpAgent<Env> {
   private schemaInitialized = false;
 
   async init() {
+    // Telemetry: meter all tool calls + register health/usage resources
+    if (this.env.FEEDBACK_DB) {
+      enableTelemetry(this.server, this.env.FEEDBACK_DB, 'halfdozen-zoom-sync');
+    }
+
     const getDb = () => this.env.DB as unknown as D1Database;
 
     // Initialize schema on first use
@@ -120,6 +127,14 @@ export class ZoomClipsMCP extends McpAgent<Env> {
       );
     };
 
+    const getClipsProfileId = async (): Promise<string | null> => {
+      return await this.env.ZOOM_SESSION_CONTEXT.get(CLIPS_PROFILE_ID_KEY);
+    };
+
+    const setClipsProfileId = async (profileId: string): Promise<void> => {
+      await this.env.ZOOM_SESSION_CONTEXT.put(CLIPS_PROFILE_ID_KEY, profileId);
+    };
+
     // -----------------------------------------------------------------------
     // Register all three tiers
     // -----------------------------------------------------------------------
@@ -130,6 +145,7 @@ export class ZoomClipsMCP extends McpAgent<Env> {
       notionConfig,
       getDb,
       getSessionContext,
+      getClipsProfileId,
     });
     registerSearchTools(this.server, notionConfig);
     registerSessionTools(this.server, {
@@ -137,11 +153,13 @@ export class ZoomClipsMCP extends McpAgent<Env> {
       getDb,
       getSessionContext,
       setSessionContext,
+      getClipsProfileId,
+      setClipsProfileId,
     });
 
     // Database tier (Resources)
     registerClipsResources(this.server, getDb, notionConfig);
-    registerStatusResources(this.server, getDb, getSessionContext);
+    registerStatusResources(this.server, getDb, getSessionContext, getClipsProfileId);
 
     // Judgment tier (Prompts)
     registerPrompts(this.server);
@@ -202,6 +220,7 @@ export default {
         'search_clips',
         'get_session_status',
         'upload_session_context',
+        'set_clips_profile',
       ];
       const automationApi = composioEnabled
         ? ['zoom_api_connection_status', 'zoom_api_get_connect_link', 'zoom_api_* (Composio Zoom toolkit)']
@@ -215,8 +234,8 @@ export default {
             description: 'Zoom Clips to Notion MCP Server',
             auth_surfaces: {
               zoom_clips: {
-                method: 'session_context',
-                description: 'Steel.dev browser session; upload cookies via upload_session_context',
+                method: 'profile_or_session_context',
+                description: 'Steel profile (set_clips_profile, one-time) or session cookies (upload_session_context). Prefer profile for agent auth.',
                 tools: automationClips,
               },
               zoom_api: {

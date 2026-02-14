@@ -12,6 +12,7 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
+import { enableTelemetry } from '@create-something/mcp-core';
 
 import { registerResources } from '../src/resources.js';
 import { registerTools } from '../src/tools.js';
@@ -25,7 +26,7 @@ import { MCP_CATALOG } from '../src/catalog.js';
 
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
-  // FEEDBACK_DB: D1Database;  // TODO: enable when CS feedback D1 is created
+  TELEMETRY_DB?: D1Database;
 }
 
 // =============================================================================
@@ -39,15 +40,14 @@ export class PlaybookMCP extends McpAgent<Env> {
   });
 
   async init() {
+    // Telemetry: meter all tool calls + register health/usage resources
+    if (this.env.TELEMETRY_DB) {
+      enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'playbook');
+    }
+
     registerResources(this.server);
     registerTools(this.server);
     registerPrompts(this.server);
-
-    // TODO: enable when FEEDBACK_DB is bound
-    // if (this.env.FEEDBACK_DB) {
-    //   const { registerFeedbackTool, D1FeedbackStore } = await import('@create-something/mcp-core');
-    //   registerFeedbackTool(this.server, new D1FeedbackStore(this.env.FEEDBACK_DB), 'playbook');
-    // }
   }
 }
 

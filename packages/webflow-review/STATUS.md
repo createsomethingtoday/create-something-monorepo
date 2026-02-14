@@ -359,7 +359,7 @@ Start with:
 
 | Level | Question | Answer |
 |-------|----------|--------|
-| **DRY** | Have I built this before? | Yes - API patterns from createsomething.io, queue patterns from templates-platform |
+| **DRY** | Have I built this before? | Yes - API patterns from createsomething.io, queue patterns from webflow-site-analyzer-mcp |
 | **Rams** | Does this earn existence? | Yes - solves real Webflow pain (broken links, SEO) while demonstrating Cloudflare partnership |
 | **Heidegger** | Does this serve the whole? | Yes - serves .agency (client tool), .io (research validation), and Cloudflare ecosystem |
 

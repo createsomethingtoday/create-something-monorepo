@@ -158,6 +158,7 @@ export interface SyncToolDeps {
   notionConfig: NotionConfig;
   getDb: () => D1Database;
   getSessionContext: () => Promise<SteelSessionContext | null>;
+  getClipsProfileId: () => Promise<string | null>;
 }
 
 export function registerSyncTools(
@@ -179,28 +180,28 @@ export function registerSyncTools(
       const runId = await createSyncRun(db);
 
       try {
-        // Load session context
+        const steel = new SteelClient(deps.steelApiKey);
+        const profileId = await deps.getClipsProfileId();
         const sessionContext = await deps.getSessionContext();
-        if (!sessionContext) {
+
+        if (!profileId && !sessionContext) {
           await completeSyncRun(db, runId, 'failed', {
-            error: 'No session context found. Upload cookies via upload_session_context tool.',
+            error: 'No Clips auth. Set a Steel profile via set_clips_profile (one-time) or upload cookies via upload_session_context.',
           });
           return {
             content: [{
               type: 'text',
               text: JSON.stringify({
-                error: 'No session context available. Use the upload_session_context tool to provide Zoom cookies.',
+                error: 'No Clips auth. Use set_clips_profile with a Steel profile ID (one-time setup), or upload_session_context to provide Zoom cookies.',
                 run_id: runId,
               }),
             }],
           };
         }
 
-        // Create Steel session
-        const steel = new SteelClient(deps.steelApiKey);
         const session = await steel.createSession({
           timeout: 15 * 60 * 1000,
-          sessionContext,
+          ...(profileId ? { profileId } : { sessionContext: sessionContext! }),
         });
 
         let cdp: CdpClient | null = null;
@@ -226,7 +227,7 @@ export function registerSyncTools(
               content: [{
                 type: 'text',
                 text: JSON.stringify({
-                  error: 'SESSION EXPIRED: Zoom cookies are no longer valid. Use upload_session_context to refresh.',
+                  error: 'SESSION EXPIRED: Zoom auth no longer valid. Refresh the Steel profile (set_clips_profile after re-login) or upload_session_context to refresh cookies.',
                   run_id: runId,
                   session_viewer: session.sessionViewerUrl,
                 }),
@@ -333,24 +334,24 @@ export function registerSyncTools(
     },
     async ({ clip_url }) => {
       try {
-        // Load session context
+        const steel = new SteelClient(deps.steelApiKey);
+        const profileId = await deps.getClipsProfileId();
         const sessionContext = await deps.getSessionContext();
-        if (!sessionContext) {
+
+        if (!profileId && !sessionContext) {
           return {
             content: [{
               type: 'text',
               text: JSON.stringify({
-                error: 'No session context available. Use upload_session_context to provide Zoom cookies.',
+                error: 'No Clips auth. Use set_clips_profile (Steel profile ID) or upload_session_context to provide Zoom cookies.',
               }),
             }],
           };
         }
 
-        // Create Steel session
-        const steel = new SteelClient(deps.steelApiKey);
         const session = await steel.createSession({
           timeout: 5 * 60 * 1000,
-          sessionContext,
+          ...(profileId ? { profileId } : { sessionContext: sessionContext! }),
         });
 
         let cdp: CdpClient | null = null;

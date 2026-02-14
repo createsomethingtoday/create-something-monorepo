@@ -84,12 +84,6 @@ Make `packages/ltd/src/routes/ethos/+page.svelte` and `packages/ltd/src/routes/s
 - Values and principles remain clear at all sizes
 - Maintain typographic hierarchy on mobile
 
-### Update templates-platform admin analytics table
-Make `packages/templates-platform/src/routes/admin/analytics/+page.svelte` mobile responsive.
-- Template performance table uses card layout
-- Metrics stack vertically on mobile
-- Sort controls remain accessible
-
 ### Update tufte HighDensityTable component
 Enhance `packages/tufte/src/lib/components/HighDensityTable.svelte` for mobile.
 - Already compact but ensure no horizontal overflow

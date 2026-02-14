@@ -121,12 +121,10 @@ const users = await cf.d1.query('my-db', 'SELECT * FROM users');
 | agency | `create-something-agency` | createsomething.agency | `create-something-*` |
 | ltd | `createsomething-ltd` | createsomething.ltd | `createsomething-*` |
 | lms | `createsomething-lms` | learn.createsomething.space | `createsomething-*` |
-| templates-platform | `templates-platform` | templates.createsomething.space | standalone |
 
 **Pattern Notes**:
 - `space`, `io`, `agency` use `create-something-*` (with hyphen between words)
 - `ltd`, `lms` use `createsomething*` (no hyphen between words)
-- `templates-platform` is standalone (no prefix)
 
 **DO NOT** rename these projects in Cloudflare as it would break production deployments.
 
@@ -157,6 +155,7 @@ MCP servers use a two-tier subdomain convention: `{service}.mcp.{property-domain
 | `halfdozen-youtube-sync-mcp` | `youtube.mcp.workway.co` | `packages/half-dozen-youtube-sync/` |
 | `quickbooks-notion-mcp` | `quickbooks.mcp.workway.co` | `packages/quickbooks-notion-mcp/` |
 | `halfdozen-notion-mcp` | `createsomething-notion.mcp.workway.co` | `packages/halfdozen-notion-mcp/` — Half Dozen ↔ CREATE SOMETHING client Notion |
+| `system-studio-notion-mcp` | `system-studio-notion.mcp.workway.co` | same package, `wrangler.system-studio.toml` — System Studio ↔ HD Client Notion |
 
 **Half Dozen MCP URL pattern** (use for new Half Dozen MCPs):
 

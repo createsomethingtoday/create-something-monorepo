@@ -326,4 +326,4 @@ Before moving on:
 >
 > **Canon Reference**: The constraint philosophy embodies [Constraint as Liberation](https://createsomething.ltd/patterns/constraint-as-liberation)—boundaries that free rather than limit.
 >
-> **Practice**: Study the templates-platform (`packages/templates-platform/`) and verticals (`packages/verticals/`) for real template implementations.
+> **Practice**: Study `packages/webflow-site-analyzer-mcp/` and `packages/agency/clients/` for real deployment and composition implementations.

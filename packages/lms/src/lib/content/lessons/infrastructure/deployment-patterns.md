@@ -426,6 +426,5 @@ Before moving on:
 
 ## See Also
 
-- [Template Deployment Patterns](/.claude/rules/template-deployment-patterns.md) — Troubleshooting gotchas for multi-tenant template deployments
 - [Cloudflare Patterns](/.claude/rules/cloudflare-patterns.md) — D1, KV, R2 usage and project naming conventions
-- [Templates Platform](/.claude/rules/templates-platform.md) — Router worker architecture for *.createsomething.space
+- [MCP First Thesis](/docs/MCP_FIRST_THESIS.md) — Strategic framing for platform deployment priorities

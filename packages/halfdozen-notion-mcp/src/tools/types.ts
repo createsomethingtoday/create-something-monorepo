@@ -45,3 +45,20 @@ export interface NotionBulkUpdateInput {
   page_ids: string[];
   properties: Record<string, unknown>;
 }
+
+export interface NotionCreateDatabaseInput {
+  workspace: Workspace;
+  parent_page_id: string;
+  title: string;
+  properties: Record<string, unknown>;
+  is_inline?: boolean;
+}
+
+export interface NotionUpdateDatabaseInput {
+  workspace: Workspace;
+  database_id: string;
+  title?: string;
+  description?: string;
+  data_source_id?: string;
+  properties?: Record<string, unknown>;
+}

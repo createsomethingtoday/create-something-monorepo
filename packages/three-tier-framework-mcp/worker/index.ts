@@ -20,6 +20,7 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
+import { enableTelemetry } from '@create-something/mcp-core';
 import { z } from 'zod';
 
 // Framework data (embedded in source — zero external dependencies)
@@ -48,6 +49,7 @@ import { CASE_STUDIES, CASE_STUDY_LIST } from '../src/framework/examples.js';
 
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
+  TELEMETRY_DB?: D1Database;
 }
 
 // =============================================================================
@@ -115,6 +117,11 @@ export class ThreeTierFrameworkMCP extends McpAgent<Env> {
   });
 
   async init() {
+    // Telemetry: meter all tool calls + register health/usage resources
+    if (this.env.TELEMETRY_DB) {
+      enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'three-tier-framework');
+    }
+
     // =========================================================================
     // DATABASE TIER — Resources (application-controlled)
     // =========================================================================

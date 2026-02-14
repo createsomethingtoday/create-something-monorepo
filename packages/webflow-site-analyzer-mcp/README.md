@@ -98,6 +98,26 @@ The system automatically selects the provider based on available credentials:
 2. If only `BROWSERLESS_TOKEN` is set → Uses Browserless
 3. You can also explicitly choose via the ProviderManager API
 
+### Integration test (opt-in)
+
+An integration test runs real Steel + Webflow preview extraction and asserts on tool output shape. It is **opt-in**: without credentials it skips and exits 0 (CI-friendly).
+
+```bash
+# Skip (no credentials)
+pnpm test:integration
+# → "Integration test skipped: STEEL_API_KEY not set"
+
+# Run against Steel + Webflow preview
+STEEL_API_KEY=your-key pnpm test:integration
+# Optional: override preview URL (default: public Woven Wear template)
+STEEL_API_KEY=your-key WEBFLOW_PREVIEW_URL=https://preview.webflow.com/preview/... pnpm test:integration
+
+# Also test the Designer metadata agent (Flow B: panel navigation P, G, A, H, J). Slower (~1–3 min).
+RUN_DESIGNER_METADATA_TEST=1 STEEL_API_KEY=your-key pnpm test:integration
+```
+
+In CI, set `STEEL_API_KEY` (and optionally `WEBFLOW_PREVIEW_URL`) as secrets to run the test. Set `RUN_DESIGNER_METADATA_TEST=1` to also exercise the Designer metadata extraction agent.
+
 ### MCP Configuration
 
 Add to your `.mcp.json`:
@@ -344,6 +364,8 @@ Capture a screenshot of a page.
 ### `extract_designer_metadata`
 
 Extract template metadata from Webflow Designer Preview URL. This tool navigates through the Designer's panels to gather comprehensive template information.
+
+**Codified steps:** See [docs/WEBFLOW_PREVIEW_STEPS.md](docs/WEBFLOW_PREVIEW_STEPS.md) for the exact agent steps (iframe handling for page extraction; panel shortcuts P, G, A, H, J for Designer metadata).
 
 **Note**: Only works with Webflow preview URLs (`preview.webflow.com/preview/...`).
 

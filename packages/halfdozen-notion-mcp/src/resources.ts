@@ -20,6 +20,8 @@ export const NOTION_TOOLS = [
   { name: 'notion_archive_block', description: 'Archive a block (revert appends)' },
   { name: 'notion_bulk_update', description: 'Update multiple pages with same properties' },
   { name: 'notion_bulk_archive', description: 'Archive multiple pages' },
+  { name: 'notion_create_database', description: 'Create a new database under a page with property schema' },
+  { name: 'notion_update_database', description: 'Update database title/description and data source properties' },
 ] as const;
 
 export function registerToolsResource(server: McpServer): void {
@@ -38,7 +40,7 @@ export function registerToolsResource(server: McpServer): void {
           text: JSON.stringify(
             {
               tools: NOTION_TOOLS,
-              hint: 'This MCP exposes 12 tools. If your client only shows one, reconnect MCP or use a client that lists all tools (e.g. Cursor).',
+              hint: 'This MCP exposes 14 tools. If your client only shows one, reconnect MCP or use a client that lists all tools (e.g. Cursor).',
             },
             null,
             2

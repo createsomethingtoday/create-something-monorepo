@@ -36,7 +36,7 @@ A system that only fixes accumulates the same breakdowns. A system that repairs
 
 | What Broke | The Fix | The Repair |
 |---|---|---|
-| Route pattern missing /* | Add /* to wrangler.toml | Document in template-deployment-patterns.md |
+| Route pattern missing /* | Add /* to wrangler.toml | Document in cloudflare-patterns.md |
 | Fallback overwrites index | Rename to 200.html | Add to deployment checklist |
 | DNS conflicts with worker | Remove wildcard record | Explain why in Canon Reflection section |
 

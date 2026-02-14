@@ -1,8 +1,17 @@
 packages:
   - 'packages/*'
-  - 'packages/verticals/*'
   - 'packages/agency/clients/*'
   - 'packages/webflow-apps-admin/dashboard'
   - 'packages/webflow-apps-admin/workers/*'
-  # Worker with own package.json so wrangler deploy resolves node_modules
+  # Workers with own package.json so wrangler deploy resolves node_modules
+  # WORKWAY account (Half Dozen)
   - 'packages/halfdozen-notion-mcp/worker'
+  - 'packages/halfdozen-gmail-sync/worker'
+  - 'packages/halfdozen-telemetry-mcp/worker'
+  # CREATE SOMETHING account
+  - 'packages/schedule-mcp/worker'
+  - 'packages/substrate-mcp/worker'
+  - 'packages/create-something-mcp/worker'
+  - 'packages/three-tier-framework-mcp/worker'
+  - 'packages/playbook-mcp/worker'
+  - 'packages/cs-telemetry-mcp/worker'

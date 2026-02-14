@@ -6,14 +6,13 @@ export interface CanonRules {
   css?: string;
   voice?: string;
   code?: string;
-  templates?: string;
   claude?: string;
 }
 
 /**
  * Get Canon rules from .claude/rules/*.md files
  */
-export function getCanonRules(category?: 'css' | 'voice' | 'code' | 'templates' | 'all'): CanonRules {
+export function getCanonRules(category?: 'css' | 'voice' | 'code' | 'all'): CanonRules {
   const root = findMonorepoRoot();
   const rulesDir = join(root, '.claude', 'rules');
   const rules: CanonRules = {};
@@ -22,7 +21,6 @@ export function getCanonRules(category?: 'css' | 'voice' | 'code' | 'templates' 
     css: 'css-canon.md',
     voice: 'voice-canon.md',
     code: 'sveltekit-conventions.md',
-    templates: 'template-deployment-patterns.md',
     claude: '../CLAUDE.md'
   };
 

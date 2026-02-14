@@ -18,12 +18,8 @@ class_name = "PlaybookMCP"
 tag = "v1"
 new_sqlite_classes = ["PlaybookMCP"]
 
-# Feedback database (shared across CREATE SOMETHING MCPs)
-# TODO: Create D1 on CREATE SOMETHING account when ready
-# [[d1_databases]]
-# binding = "FEEDBACK_DB"
-# database_name = "cs-feedback"
-# database_id = "placeholder"
-
-# Zero external dependencies. Pure workflow knowledge.
-# Lightweight by design — ships alongside client MCPs for onboarding.
+# Shared telemetry (fleet observability)
+[[d1_databases]]
+binding = "TELEMETRY_DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"

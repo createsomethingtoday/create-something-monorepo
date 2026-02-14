@@ -18,6 +18,8 @@ import {
   notionArchiveBlockSchema,
   notionBulkUpdateSchema,
   notionBulkArchiveSchema,
+  notionCreateDatabaseSchema,
+  notionUpdateDatabaseSchema,
 } from '../schemas.js';
 import {
   handleNotionSearch,
@@ -32,6 +34,8 @@ import {
   handleNotionArchiveBlock,
   handleNotionBulkUpdate,
   handleNotionBulkArchive,
+  handleNotionCreateDatabase,
+  handleNotionUpdateDatabase,
 } from './handlers.js';
 
 const WORKSPACE_HINT = "Pass workspace: 'halfdozen' or 'client'. See notion://workspaces resource for which workspace is which.";
@@ -119,5 +123,19 @@ export function registerNotionTools(server: McpServer, clients: NotionClients): 
     `Archive multiple pages in one go (e.g. after finding duplicates or cleaning up). ${WORKSPACE_HINT}`,
     notionBulkArchiveSchema.shape,
     (params) => handleNotionBulkArchive(clients, params as { workspace: 'halfdozen' | 'client'; page_ids: string[] })
+  );
+
+  server.tool(
+    'notion_create_database',
+    `Create a new database (with initial data source and property schema) as a child of a page. Returns database_id, data_source_id, and the actual schema. Note: "status" type properties are auto-converted to "select" (Notion API limitation). ${WORKSPACE_HINT}`,
+    notionCreateDatabaseSchema.shape,
+    (params) => handleNotionCreateDatabase(clients, params as Parameters<typeof handleNotionCreateDatabase>[1])
+  );
+
+  server.tool(
+    'notion_update_database',
+    `Update a database's title/description and/or modify its property schema (add, rename, or delete columns). data_source_id is auto-resolved if omitted. "status" type auto-converts to "select". Returns updated schema. ${WORKSPACE_HINT}`,
+    notionUpdateDatabaseSchema.shape,
+    (params) => handleNotionUpdateDatabase(clients, params as Parameters<typeof handleNotionUpdateDatabase>[1])
   );
 }

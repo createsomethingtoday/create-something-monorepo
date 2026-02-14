@@ -231,7 +231,7 @@ The discrepancy is **expected and informative**:
 
 **Deployment:**
 ```bash
-cd packages/templates-platform/workers/plagiarism-agent
+cd packages/webflow-site-analyzer-mcp
 wrangler d1 migrations apply plagiarism-db --local
 wrangler deploy
 ```

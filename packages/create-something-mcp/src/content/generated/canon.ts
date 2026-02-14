@@ -843,7 +843,7 @@ export const CANON_PAGES: CanonPage[] = [
 <h3>.space</h3>
 <p class="property-mode">Being-as-Experience</p>
 <p>
-				Practice. Experiments, templates, learning.
+				Practice. Experiments, systems, learning.
 				Where patterns become products at scale.
 			</p>
 </div>
@@ -866,9 +866,9 @@ export const CANON_PAGES: CanonPage[] = [
 
 
 
-<h2>Templates Platform Example</h2>
+<h2>Automation Platform Example</h2>
 <p>
-		The Templates Platform demonstrates the hermeneutic circle in infrastructure:
+		The Automation Platform demonstrates the hermeneutic circle in infrastructure:
 	</p>
 <div class="example-flow">
 <div class="flow-step">
@@ -886,16 +886,16 @@ export const CANON_PAGES: CanonPage[] = [
 			</p>
 </div>
 <div class="flow-step">
-<h3>3. Practice builds templates</h3>
+<h3>3. Practice builds systems</h3>
 <p>
-				.space creates vertical templates embodying the patterns.
-				Templates Platform routes requests, injects config, serves sites.
+				.space creates vertical systems embodying the patterns.
+				The platform routes requests, injects config, and serves outcomes.
 			</p>
 </div>
 <div class="flow-step">
 <h3>4. Services tests with clients</h3>
 <p>
-				.agency sells template customizations. Client feedback reveals
+				.agency delivers custom MCP systems. Client feedback reveals
 				what works and what doesn't in commercial reality.
 			</p>
 </div>

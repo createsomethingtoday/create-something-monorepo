@@ -130,13 +130,13 @@ export function registerResources(
     },
   );
 
-  // --- Templates -----------------------------------------------------------
+  // --- Plans -----------------------------------------------------------
   server.resource(
-    'templates',
-    'schedule://templates',
-    { description: 'Lists all templates', mimeType: 'application/json' },
+    'plans',
+    'schedule://plans',
+    { description: 'Lists all schedule plans', mimeType: 'application/json' },
     async (uri: URL) => {
-      traceResourceRead('templates', uri.href);
+      traceResourceRead('plans', uri.href);
       const db = getDb();
       const templates = await listTemplates(db);
       return {

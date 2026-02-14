@@ -127,13 +127,7 @@ git add packages/clearway/package.json packages/create-something-mcp/package.jso
   packages/io/package.json packages/landing-page-filter/package.json packages/ltd/package.json \
   packages/maverick-admin/package.json packages/maverick/package.json packages/meetings/package.json \
   packages/notion-agent/package.json packages/relay/package.json packages/scanner-worker/package.json \
-  packages/search/package.json packages/templates-platform/package.json packages/tend/package.json \
-  packages/verticals/architecture-studio/package.json packages/verticals/creative-agency/package.json \
-  packages/verticals/creative-portfolio/package.json packages/verticals/dental-practice/package.json \
-  packages/verticals/law-firm/package.json packages/verticals/medical-practice/package.json \
-  packages/verticals/personal-injury/package.json \
-  packages/verticals/professional-services-philosophy/package.json \
-  packages/verticals/professional-services/package.json packages/verticals/restaurant/package.json \
+  packages/search/package.json packages/tend/package.json \
   packages/webflow-apps-admin/dashboard/package.json \
   packages/webflow-apps-admin/workers/audit-agent/package.json packages/wf-search-category/package.json
 git commit -m "chore(deps): package.json and README/wrangler bumps across packages"

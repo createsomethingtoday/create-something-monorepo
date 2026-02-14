@@ -27,6 +27,8 @@ All work in this codebase maps to the Three-Tier Framework (Database, Automation
 | **Automation** | Tools | Model-controlled | MCP server tools, Workers, Skills |
 | **Judgment** | Prompts | User-controlled | System prompts, CLAUDE.md policy, skill constraints |
 
+**Integration connectivity**: For MCPs that need app connectivity (Gmail, Notion, Slack, etc.), prefer Composio via `@create-something/composio-bridge` unless the integration is deep or client-specific. See `docs/COMPOSIO_PATTERNS.md`.
+
 **When debugging agent systems**, follow the causality heuristic:
 1. **Database** — Is the data available and correct?
 2. **Automation** — Did execution complete successfully?

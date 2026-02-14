@@ -22,13 +22,11 @@ This index catalogs all domain-specific rules that agents should apply during de
 | [orchestration-patterns](#orchestration-patterns) | Multi-session work | Workflow |
 | [harness-patterns](#harness-patterns) | Single-session work | Workflow |
 | [hipaa-compliance](#hipaa-compliance) | Medical/dental packages | Compliance |
-| [templates-platform](#templates-platform) | Vertical templates | Platform |
 
 ### P2 — Contextual (Apply When Relevant)
 
 | Rule | Triggers | Domain |
 |------|----------|--------|
-| [template-deployment-patterns](#template-deployment-patterns) | Template deploys | Deployment |
 | [gastown-patterns](#gastown-patterns) | Multi-agent coordination | Legacy |
 | [ralph-patterns](#ralph-patterns) | Autonomous loop work | Workflow |
 | [model-routing-optimization](#model-routing-optimization) | Agent model selection | Performance |
@@ -179,22 +177,6 @@ This index catalogs all domain-specific rules that agents should apply during de
 
 ---
 
-### Platform & Templates
-
-#### templates-platform
-- **File**: `rules/templates-platform.md`
-- **Priority**: P1
-- **Triggers**: `packages/verticals/*`, template creation
-- **Summary**: Vertical template architecture and conventions
-
-#### template-deployment-patterns
-- **File**: `rules/template-deployment-patterns.md`
-- **Priority**: P2
-- **Triggers**: Template deployment, Cloudflare Pages
-- **Summary**: Deployment patterns for vertical templates
-
----
-
 ### Domain-Specific
 
 #### hipaa-compliance
@@ -210,7 +192,7 @@ This index catalogs all domain-specific rules that agents should apply during de
 #### dental-api-integration
 - **File**: `rules/dental-api-integration.md`
 - **Priority**: P2
-- **Triggers**: `packages/verticals/dental-practice`
+- **Triggers**: `packages/tend/src/lib/verticals/dental/**`
 - **Summary**: Integration patterns for dental practice management APIs
 
 #### dental-scheduling
@@ -263,7 +245,7 @@ Rules activate based on file patterns and contexts:
 | `+page.server.ts` | sveltekit-conventions, error-handling-patterns |
 | `+server.ts` | sveltekit-conventions, cloudflare-patterns, error-handling-patterns |
 | `packages/io/src/routes/papers/**` | paper-content-requirements, voice-canon |
-| `packages/verticals/dental-*/**` | hipaa-compliance, dental-api-integration |
+| `packages/tend/src/lib/verticals/dental/**` | hipaa-compliance, dental-api-integration |
 | `packages/dotfiles/**` | dotfiles-conventions |
 
 ### Context-Based Triggers
@@ -273,7 +255,7 @@ Rules activate based on file patterns and contexts:
 | Creating issue | beads-patterns |
 | Long-running work (>2h) | orchestration-patterns |
 | Single-session work | harness-patterns |
-| Deployment | cloudflare-patterns, template-deployment-patterns |
+| Deployment | cloudflare-patterns |
 | Social posting | social-patterns, voice-canon |
 | Design decisions | css-canon, taste-reference |
 

@@ -12,7 +12,10 @@
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "watch-session": "npx tsx watch-session.ts"
+    "watch-session": "npx tsx watch-session.ts",
+    "test:notion": "npx tsx scripts/test-notion.ts",
+    "fetch-session-context": "npx tsx scripts/fetch-session-context.ts",
+    "create-clips-profile": "npx tsx scripts/create-clips-profile.ts"
   },
   "dependencies": {
     "@create-something/composio-bridge": "workspace:*",

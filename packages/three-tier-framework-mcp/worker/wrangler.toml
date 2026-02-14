@@ -18,5 +18,8 @@ class_name = "ThreeTierFrameworkMCP"
 tag = "v1"
 new_sqlite_classes = ["ThreeTierFrameworkMCP"]
 
-# No KV, no secrets, no env vars.
-# Pure framework knowledge embedded in source.
+# Shared telemetry (fleet observability)
+[[d1_databases]]
+binding = "TELEMETRY_DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"

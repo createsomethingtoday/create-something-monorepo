@@ -102,6 +102,28 @@ export type { FeedbackStore, FeedbackEntry } from './feedback.js';
 export { FEEDBACK_TOOL_SCHEMA, createFeedbackToolHandler, registerFeedbackTool } from './feedback.js';
 
 // =============================================================================
+// Telemetry (cross-cutting — run metering, health, activity)
+// =============================================================================
+
+export {
+  enableTelemetry,
+  recordInvocation,
+  getUsage,
+  getHealth,
+  getActivity,
+  cleanupOldInvocations,
+  TELEMETRY_MIGRATION,
+} from './telemetry.js';
+
+export type {
+  UsageResult,
+  HealthResult,
+  ActivityResult,
+  RunCountRow,
+  ToolInvocationRow,
+} from './telemetry.js';
+
+// =============================================================================
 // Auth Providers
 // =============================================================================
 

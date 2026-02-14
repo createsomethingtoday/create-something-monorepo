@@ -33,18 +33,81 @@ binding = "FEEDBACK_DB"
 database_name = "halfdozen-feedback"
 database_id = "4eb35a0f-6ee2-4d0c-8c0a-9a2ab4049b97"
 
-# Secrets (set via `wrangler secret put`)
+# Secrets (set via `wrangler secret put`):
 # GOOGLE_CLIENT_ID
-# GOOGLE_CLIENT_SECRET  
+# GOOGLE_CLIENT_SECRET
 # NOTION_API_KEY
 # NOTION_INTERACTIONS_DB_ID
 # NOTION_CONTACTS_DB_ID
-# TEAM_EMAILS
-# Note: Per-user Gmail tokens are stored in KV (no default account)
+# AUTHORIZED_EMAIL        — the single user this instance serves
+# TEAM_EMAILS             — optional, full team list for direction detection
 
 # Cron trigger for background automations (every 5 minutes)
 [triggers]
 crons = ["*/5 * * * *"]
 
 [vars]
-# Non-sensitive config can go here
+# Base instance = Danny
+AUTHORIZED_EMAIL = "dm@halfdozen.co"
+
+# ─── Per-User Environments ───────────────────────────────────
+# Deploy with: wrangler deploy --env <name>
+# Set secrets per-env: wrangler secret put SECRET_NAME --env <name>
+
+# --- Fillip ---
+[env.fillip]
+name = "halfdozen-gmail-fillip"
+routes = [{ pattern = "fillip-gmail.mcp.workway.co", custom_domain = true }]
+
+[env.fillip.vars]
+AUTHORIZED_EMAIL = "fillip@halfdozen.co"
+
+[[env.fillip.durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "GmailSyncMCPv2"
+
+[[env.fillip.kv_namespaces]]
+binding = "GMAIL_TOKENS"
+id = "772f9433b9674d54935ea39ccd1288f1"
+
+[[env.fillip.d1_databases]]
+binding = "FEEDBACK_DB"
+database_name = "halfdozen-feedback"
+database_id = "4eb35a0f-6ee2-4d0c-8c0a-9a2ab4049b97"
+
+[[env.fillip.migrations]]
+tag = "v1"
+new_classes = ["GmailSyncMCP"]
+
+[[env.fillip.migrations]]
+tag = "v2"
+new_sqlite_classes = ["GmailSyncMCPv2"]
+
+# --- Leah ---
+[env.leah]
+name = "halfdozen-gmail-leah"
+routes = [{ pattern = "leah-gmail.mcp.workway.co", custom_domain = true }]
+
+[env.leah.vars]
+AUTHORIZED_EMAIL = "leah@halfdozen.co"
+
+[[env.leah.durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "GmailSyncMCPv2"
+
+[[env.leah.kv_namespaces]]
+binding = "GMAIL_TOKENS"
+id = "772f9433b9674d54935ea39ccd1288f1"
+
+[[env.leah.d1_databases]]
+binding = "FEEDBACK_DB"
+database_name = "halfdozen-feedback"
+database_id = "4eb35a0f-6ee2-4d0c-8c0a-9a2ab4049b97"
+
+[[env.leah.migrations]]
+tag = "v1"
+new_classes = ["GmailSyncMCP"]
+
+[[env.leah.migrations]]
+tag = "v2"
+new_sqlite_classes = ["GmailSyncMCPv2"]

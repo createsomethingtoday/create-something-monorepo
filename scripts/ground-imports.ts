@@ -37,8 +37,6 @@ const SCAN_PATHS = [
   'packages/agency/src',
   'packages/space/src',
   'packages/io/src',
-  'packages/verticals/src',
-  'packages/templates-platform/src',
 ];
 
 const EXTENSIONS = ['.ts', '.svelte', '.js'];

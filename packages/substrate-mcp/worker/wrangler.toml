@@ -22,6 +22,12 @@ binding = "DB"
 database_name = "substrate-mcp-db"
 database_id = "89486bf0-aa79-460e-aa78-fc1b68015e69"
 
+# Shared telemetry (fleet observability)
+[[d1_databases]]
+binding = "TELEMETRY_DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
+
 # R2 Bucket — file storage
 [[r2_buckets]]
 binding = "FILES"

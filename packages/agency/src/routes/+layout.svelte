@@ -5,16 +5,9 @@
 	import AgencyFooter from '$lib/components/AgencyFooter.svelte';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { afterNavigate, onNavigate, goto, invalidateAll } from '$app/navigation';
+	import { afterNavigate, onNavigate } from '$app/navigation';
 
 	let { children, data } = $props();
-
-	// Handle logout
-	async function handleLogout() {
-		await fetch('/api/auth/logout', { method: 'POST' });
-		await invalidateAll();
-		goto('/');
-	}
 
 	// View Transitions API - Hermeneutic Navigation
 	// .agency: Efficient (200ms)
@@ -103,11 +96,7 @@
 		fixed={true}
 		ctaLabel="Book a Call"
 		ctaHref="/book"
-		user={data.user}
-		onLogout={handleLogout}
-		showLogin={true}
-		loginHref="/login"
-		accountHref="/account"
+		showLogin={false}
 	/>
 
 	<main id="main-content" class="pt-[72px]">

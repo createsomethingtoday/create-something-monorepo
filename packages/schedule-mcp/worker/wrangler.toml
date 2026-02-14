@@ -17,6 +17,12 @@ binding = "DB"
 database_name = "schedule-mcp-db"
 database_id = "79f21c22-94e8-4a6e-85fe-baae307c5364"
 
+# Shared telemetry (fleet observability)
+[[d1_databases]]
+binding = "TELEMETRY_DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
+
 [[durable_objects.bindings]]
 name = "MCP_OBJECT"
 class_name = "ScheduleMCP"

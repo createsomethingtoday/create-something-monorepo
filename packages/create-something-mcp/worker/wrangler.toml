@@ -18,7 +18,8 @@ class_name = "CreateSomethingMCP"
 tag = "v1"
 new_sqlite_classes = ["CreateSomethingMCP"]
 
-# No KV, no D1, no secrets.
-# Pure content knowledge embedded in source.
-# Zero external dependencies at runtime.
-# Feedback collection lives in mcp-core (cross-cutting Insight concern).
+# Shared telemetry (fleet observability)
+[[d1_databases]]
+binding = "TELEMETRY_DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"

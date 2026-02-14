@@ -11,24 +11,25 @@
  *   /     — Health/info JSON
  *
  * Architecture (Three-Tier Framework):
- *   Database tier (Resources)   — Calendars, events, members, units, templates
+ *   Database tier (Resources)   — Calendars, events, members, units, plans
  *   Automation tier (Tools)     — CRUD, backfill, forecast, conflicts, iCal + sampling feedback
  *   Judgment tier (Prompts)     — Schedule analysis, conflict resolution, optimization
  *
  * Cross-Cutting Concerns:
  *   Touchpoints  — /mcp, /sse, / endpoints
- *   Artifacts    — Events, calendars, templates as typed payloads
+ *   Artifacts    — Events, calendars, plans as typed payloads
  *   Insight      — tracedTool wrappers, sampling traces, structured telemetry
- *   Orchestration — apply_template (backfill + forecast composition)
+ *   Orchestration — apply_plan (backfill + forecast composition)
  *
  * Recursive Property (Sampling):
- *   Tools with heuristic outputs (find_conflicts, apply_template, export_ical)
+ *   Tools with heuristic outputs (find_conflicts, apply_plan, export_ical)
  *   can request LLM judgment via MCP sampling — Automation requesting Judgment.
  *   Gracefully degrades when clients don't support sampling.
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
+import { enableTelemetry } from '@create-something/mcp-core';
 import { z } from 'zod';
 
 // MCP primitive registration functions
@@ -52,6 +53,7 @@ import {
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   DB: D1Database;
+  TELEMETRY_DB?: D1Database;
   /** Optional API key for authenticating remote MCP clients */
   MCP_API_KEY?: string;
 }
@@ -113,6 +115,11 @@ export class ScheduleMCP extends McpAgent<Env> {
   });
 
   async init() {
+    // Telemetry: meter all tool calls + register health/usage resources
+    if (this.env.TELEMETRY_DB) {
+      enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'schedule-mcp');
+    }
+
     // Configure Insight for Worker mode (logs to console → wrangler tail)
     configureInsight({
       enabled: true,
@@ -235,22 +242,22 @@ export default {
           sse: '/sse (SSE — Cursor, ChatGPT, Claude Desktop)',
         },
         capabilities: {
-          resources: '5 URIs (Database tier — calendars, members, units, templates, events-this-week)',
+          resources: '5 URIs (Database tier — calendars, members, units, plans, events-this-week)',
           tools: '30 tools (Automation tier — diagnostics, list/read, full CRUD, scheduling, interop, notifications)',
           prompts: '3 prompts (Judgment tier — analysis, conflict resolution, optimization)',
-          sampling: '3 tools use sampling (Recursive property — find_conflicts, apply_template, export_ical)',
+          sampling: '3 tools use sampling (Recursive property — find_conflicts, apply_plan, export_ical)',
         },
         framework: {
-          database: 'D1-backed persistence for schedules, events, members, units, templates',
-          automation: 'Template-based backfill/forecast, RFC 5545 RRULE, conflict detection',
+          database: 'D1-backed persistence for schedules, events, members, units, plans',
+          automation: 'Plan-based backfill/forecast, RFC 5545 RRULE, conflict detection',
           judgment: 'Schedule analysis, conflict resolution, optimization prompts',
           recursive_property: 'Tools request LLM judgment via MCP sampling — Automation requesting Judgment',
           insight: 'Structured telemetry: tool traces, resource reads, sampling events',
         },
         cross_cutting: {
           touchpoints: '/mcp, /sse, / — MCP server surface',
-          artifacts: 'Events, calendars, templates, conflicts, availability slots (Zod-validated)',
-          orchestration: 'apply_template composes backfill + forecast; cron triggers planned',
+          artifacts: 'Events, calendars, plans, conflicts, availability slots (Zod-validated)',
+          orchestration: 'apply_plan composes backfill + forecast; cron triggers planned',
           insight: 'tracedTool wrappers, sampling request/response traces, event buffer',
         },
       }, null, 2), {

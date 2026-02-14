@@ -179,9 +179,9 @@ export const products: Product[] = [
 	{
 		id: 'webflow-marketplace',
 		title: 'Webflow Marketplace',
-		tagline: 'Plagiarism detection and template analysis',
+		tagline: 'Plagiarism detection and marketplace analysis',
 		description:
-			'MCP server for the Webflow Marketplace with plagiarism detection (MinHash, LSH, PageRank), template analysis, and framework detection.',
+			'MCP server for the Webflow Marketplace with plagiarism detection (MinHash, LSH, PageRank), marketplace asset analysis, and framework detection.',
 		badge: 'Open Source',
 		category: 'integration',
 		href: 'https://github.com/createsomething/create-something-monorepo/tree/main/packages/webflow-mcp',

@@ -72,7 +72,7 @@
 			<h2>Background</h2>
 			<p>
 				Micah Johnson. System Architect on the Marketplace Team at Webflow — building
-				internal tools, onboarding systems, and template infrastructure serving millions
+				internal tools, onboarding systems, and platform infrastructure serving millions
 				of users. Also building custom AI integrations and managed intelligence services
 				for businesses across the US.
 			</p>

@@ -403,4 +403,4 @@ Before the praxis:
 >
 > **Canon Reference**: The "start combined, split when needed" approach follows [Iterative Reduction](https://createsomething.ltd/patterns/iterative-reduction)—simplicity first, complexity only when earned.
 >
-> **Practice**: Study the templates-platform Workers (`packages/templates-platform/workers/`) for real composition patterns.
+> **Practice**: Study the MCP workers in `packages/*/worker/` for real composition patterns.

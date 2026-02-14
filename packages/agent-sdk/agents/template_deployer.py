@@ -27,9 +27,9 @@ Your task is to deploy vertical templates to Cloudflare Pages with proper:
 
 ## Deployment Steps
 
-1. **Build the template**
+1. **Build the target package**
    ```bash
-   cd packages/verticals/{template}/
+   cd packages/agency/clients/{client}/
    pnpm install
    pnpm build
    ```
@@ -89,7 +89,6 @@ Version: {version}
         skills=[
             "sveltekit-conventions",
             "cloudflare-patterns",
-            "template-deployment-patterns",
         ],
         stop_hooks=[
             RalphStopHook(

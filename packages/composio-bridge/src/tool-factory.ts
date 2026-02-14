@@ -288,6 +288,60 @@ export class ComposioToolFactory {
     return registered;
   }
 
+  /**
+   * Register Composio-backed tools with a per-request entityId resolver.
+   *
+   * Use this for multi-user Workers: pass a getter that returns the current
+   * request's account/entity id (e.g. from a header set in the DO's fetch()).
+   *
+   * @param server      - Any server with .tool(name, description, schema, handler)
+   * @param getEntityId - Called when each tool runs; return Composio entity ID for this request
+   * @param onToolCall  - Optional; called after each tool execution (e.g. for metering)
+   * @returns Number of tools registered
+   */
+  async registerToolsOnMcpServerWithResolver(
+    server: McpServerLike,
+    getEntityId: () => string | Promise<string>,
+    onToolCall?: (entityId: string, toolName: string) => void | Promise<void>,
+  ): Promise<number> {
+    const toolsByApp = await this.fetchTools();
+    let registered = 0;
+
+    for (const appConfig of this.appConfigs) {
+      const tools = toolsByApp.get(appConfig.app.toUpperCase()) ?? [];
+
+      for (const tool of tools) {
+        if (appConfig.actions && !appConfig.actions.includes(tool.slug)) {
+          continue;
+        }
+
+        const toolName = normalizeToolName(tool.slug, tool.app, appConfig.prefix);
+        const zodShape = jsonSchemaToZodShape(tool.parameters);
+        const description = tool.description || `${tool.name} via Composio`;
+
+        server.tool(
+          toolName,
+          description,
+          zodShape,
+          async (params) => {
+            const entityId = await getEntityId();
+            const result = await this.client.executeTool(tool.slug, params, entityId);
+            if (onToolCall) {
+              await onToolCall(entityId, toolName);
+            }
+            return {
+              content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
+            };
+          },
+        );
+
+        registered++;
+      }
+    }
+
+    return registered;
+  }
+
   // ===========================================================================
   // Tool Discovery
   // ===========================================================================

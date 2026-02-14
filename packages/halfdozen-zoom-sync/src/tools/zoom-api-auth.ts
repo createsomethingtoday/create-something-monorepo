@@ -31,6 +31,7 @@ export function registerZoomApiAuthTools(
   // --- zoom_api_connection_status ---------------------------------------------------
   server.tool(
     'zoom_api_connection_status',
+    'Check whether Zoom API (meetings, recordings, webinars) is connected for this user. If not connected, call zoom_api_get_connect_link and present the returned URL to the user so they can authorize Zoom.',
     {},
     async () => {
       try {
@@ -71,6 +72,7 @@ export function registerZoomApiAuthTools(
   // --- zoom_api_get_connect_link ----------------------------------------------------
   server.tool(
     'zoom_api_get_connect_link',
+    'Get a one-time OAuth URL for the user to authorize Zoom. Present the link in your reply; after the user completes authorization, call zoom_api_connection_status to confirm.',
     {},
     async () => {
       if (!deps.zoomAuthConfigId) {

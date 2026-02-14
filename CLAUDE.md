@@ -130,7 +130,7 @@ This is where CREATE SOMETHING operates.
 | **.ltd** | Philosophy of creation | Philosophy of *automation infrastructure*—MCP as chassis |
 | **.io** | Research, tools, docs | MCP patterns, reference implementations, SDK research |
 | **.space** | Practice, experiments | **The Workbench**—live tools for code execution, motion analysis, data dashboards |
-| **.agency** | Client services (templates) | **Custom MCP development**—the creation moat applied to client work |
+| **.agency** | Client services | **Custom MCP development**—the creation moat applied to client work |
 
 The hermeneutic circle: Philosophy informs research. Research validates practice. Practice serves clients. Client outcomes test and evolve the philosophy.
 
@@ -145,7 +145,7 @@ The hermeneutic circle: Philosophy informs research. Research validates practice
 | **Intelligence Layer** | Skills and Agents on top of your MCPs | The margin |
 | **Ongoing Support** | Auth updates, API changes, new capabilities | Recurring relationship |
 
-**Positioning shift**: From "We build websites/apps with modern templates" to "We build the connectivity layer between your tools and AI."
+**Positioning shift**: From "We build websites/apps with modern stacks" to "We build the connectivity layer between your tools and AI."
 
 ### Shared Vocabulary: AI Interaction Atlas
 
@@ -219,6 +219,10 @@ The framework itself as an MCP server — first in the repo to use all three pri
 - **Prompts** (Judgment): `architecture_review`, `tier_analysis`, `policy_audit`, `mcp_design`, `debugging_session`
 
 Zero external dependencies. Pure framework knowledge served through protocol. See `packages/three-tier-framework-mcp/README.md`.
+
+### Integration connectivity (Composio)
+
+For **commodity app connectivity** (Gmail, Notion, Slack, etc.), prefer [Composio](https://composio.dev) via `@create-something/composio-bridge`: managed auth, tool discovery, and execution with the client seeing our MCP. Use **custom** OAuth and APIs when the integration is deep or client-specific (e.g. Half Dozen Gmail Sync). See `docs/COMPOSIO_PATTERNS.md` for when-to-use, wrap pattern, and SDK pointers; `docs/internal/COMPOSIO_EVALUATION.md` for the evaluation.
 
 ## Languages
 
@@ -387,7 +391,7 @@ D1 databases and KV namespaces per package. See `.claude/rules/cloudflare-patter
 - `css-canon`: Canon design tokens, Glass system, animation patterns (use when doing UI/design work)
 - `motion-analysis`: Analyze CSS animations from URLs
 - `canon-maintenance`: Enforce CREATE SOMETHING design standards
-- `audit-paper`: Validate paper styling against standard template patterns (proactive + manual)
+- `audit-paper`: Validate paper styling against standard paper patterns (proactive + manual)
 
 ## UI Preview System
 

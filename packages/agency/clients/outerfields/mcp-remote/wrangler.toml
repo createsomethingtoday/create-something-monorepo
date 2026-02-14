@@ -9,3 +9,9 @@ account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 [[routes]]
 pattern = "outerfields.mcp.createsomething.agency"
 custom_domain = true
+
+# Shared telemetry (fleet observability)
+[[d1_databases]]
+binding = "TELEMETRY_DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"

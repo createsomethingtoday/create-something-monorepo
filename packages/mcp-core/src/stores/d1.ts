@@ -28,6 +28,7 @@ export interface D1Database {
 export interface D1PreparedStatement {
   bind(...values: unknown[]): D1PreparedStatement;
   first<T = unknown>(column?: string): Promise<T | null>;
+  all<T = unknown>(): Promise<{ results: T[] }>;
   run(): Promise<{ success: boolean }>;
 }
 

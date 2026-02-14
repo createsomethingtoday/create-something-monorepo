@@ -114,12 +114,6 @@ async function handleCheckoutComplete(
 		amountTotal: session.amount_total
 	});
 
-	// Handle Vertical Templates provisioning
-	if (productId === 'vertical-templates' && pendingId) {
-		await provisionVerticalTemplate(session, platform, logger);
-		return;
-	}
-
 	// Handle Agent-in-a-Box provisioning
 	if (productId === 'agent-in-a-box') {
 		await provisionAgentInABox(session, tier, platform, logger);
@@ -166,138 +160,6 @@ async function handleCheckoutComplete(
 }
 
 /**
- * Provision a Vertical Template site after successful payment
- */
-async function provisionVerticalTemplate(
-	session: Stripe.Checkout.Session,
-	platform: App.Platform | undefined,
-	logger: Logger
-) {
-	const pendingId = session.metadata?.pending_id;
-	const subdomain = session.metadata?.subdomain;
-	const customerEmail = session.customer_email || session.customer_details?.email;
-
-	if (!pendingId) {
-		// Note: This is logged as error but we don't have logger context here
-		// The calling function should log this case
-		return;
-	}
-
-	const templatesApiUrl =
-		platform?.env?.TEMPLATES_PLATFORM_API_URL || 'https://templates.createsomething.space';
-	const templatesApiSecret = platform?.env?.TEMPLATES_PLATFORM_API_SECRET;
-
-	if (!templatesApiSecret) {
-		// Note: This is logged as error but we don't have logger context here
-		// The calling function should log this case
-		return;
-	}
-
-	try {
-		// Call provision API
-		const response = await fetch(`${templatesApiUrl}/api/sites/provision`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'x-api-secret': templatesApiSecret
-			},
-			body: JSON.stringify({
-				pendingId,
-				stripeSubscriptionId: session.subscription as string,
-				stripeCustomerId: session.customer as string
-			})
-		});
-
-		const data = await response.json() as { success: boolean; tenant?: { id: string; subdomain: string; url: string } };
-
-		if (!response.ok || !data.success) {
-			logger.error('Provision API failed', { data });
-			return;
-		}
-
-		logger.info('Vertical template provisioned', {
-			tenantId: data.tenant?.id,
-			subdomain: data.tenant?.subdomain,
-			url: data.tenant?.url
-		});
-
-		// Send welcome email with site URL
-		if (customerEmail && subdomain) {
-			await sendVerticalTemplateWelcomeEmail(
-				customerEmail,
-				subdomain,
-				`https://${subdomain}.createsomething.space`,
-				platform,
-				logger
-			);
-		}
-	} catch (err) {
-		logger.error('Error provisioning vertical template', { error: err });
-	}
-}
-
-/**
- * Send welcome email for Vertical Templates
- */
-async function sendVerticalTemplateWelcomeEmail(
-	email: string,
-	subdomain: string,
-	siteUrl: string,
-	platform: App.Platform | undefined,
-	logger: Logger
-) {
-	const resendApiKey = platform?.env?.RESEND_API_KEY;
-	const emailFromSites = platform?.env?.EMAIL_FROM_SITES ?? 'CREATE SOMETHING <sites@createsomething.agency>';
-
-	if (resendApiKey) {
-		try {
-			const response = await fetch('https://api.resend.com/emails', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${resendApiKey}`
-				},
-				body: JSON.stringify({
-					from: emailFromSites,
-					to: email,
-					subject: `Your site ${subdomain}.createsomething.space is live!`,
-					html: `
-						<h1>Your site is live!</h1>
-						<p>Great news—your site is now active and ready for the world.</p>
-						<p><strong>Your site URL:</strong></p>
-						<p><a href="${siteUrl}" style="display: inline-block; padding: 12px 24px; background: #000; color: #fff; text-decoration: none; border-radius: 6px;">Visit ${subdomain}.createsomething.space</a></p>
-						<h2>What's next?</h2>
-						<ul>
-							<li>Share your new site with clients and colleagues</li>
-							<li>Content management dashboard coming soon</li>
-							<li>Custom domain support available on Team tier</li>
-						</ul>
-						<p style="color: #666; font-size: 14px;">Questions? Reply to this email and we'll help you out.</p>
-						<hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
-						<p style="color: #999; font-size: 12px;">CREATE SOMETHING<br/>createsomething.agency</p>
-					`
-				})
-			});
-
-			if (response.ok) {
-				logger.info('Welcome email sent', { email, subdomain });
-			} else {
-				const errorText = await response.text();
-				logger.error('Failed to send welcome email via Resend', { error: errorText });
-			}
-		} catch (err) {
-			logger.error('Error sending welcome email', { error: err });
-		}
-	} else {
-		logger.warn('Welcome email needed (no Resend configured)', {
-			to: email,
-			subdomain,
-			siteUrl
-		});
-	}
-}
-
-/**
  * Send fulfillment email with download link
  */
 async function sendFulfillmentEmail(
@@ -312,7 +174,6 @@ async function sendFulfillmentEmail(
 	// Product names for email
 	const productNames: Record<string, string> = {
 		'automation-patterns': 'Automation Patterns Pack',
-		'vertical-templates': 'Vertical Templates',
 		'agent-in-a-box': 'Agent-in-a-Box Kit'
 	};
 
@@ -429,45 +290,6 @@ async function handleSubscriptionCanceled(
 		);
 	}
 
-	// Suspend vertical template site if applicable
-	await suspendVerticalTemplateSite(subscription, platform, logger);
-}
-
-/**
- * Suspend a Vertical Template site when subscription is canceled
- */
-async function suspendVerticalTemplateSite(
-	subscription: Stripe.Subscription,
-	platform: App.Platform | undefined,
-	logger: Logger
-) {
-	const templatesApiUrl =
-		platform?.env?.TEMPLATES_PLATFORM_API_URL || 'https://templates.createsomething.space';
-	const templatesApiSecret = platform?.env?.TEMPLATES_PLATFORM_API_SECRET;
-
-	if (!templatesApiSecret) {
-		return; // Not configured for vertical templates
-	}
-
-	try {
-		const response = await fetch(`${templatesApiUrl}/api/subscriptions/update`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'x-api-secret': templatesApiSecret
-			},
-			body: JSON.stringify({
-				stripeSubscriptionId: subscription.id,
-				status: 'canceled'
-			})
-		});
-
-		if (response.ok) {
-			logger.info('Vertical template site suspended', { subscriptionId: subscription.id });
-		}
-	} catch (err) {
-		logger.error('Error suspending vertical template site', { error: err });
-	}
 }
 
 /**
@@ -646,10 +468,10 @@ async function sendAgentKitEmail(
 						<h3>What's included:</h3>
 						<ul>
 							<li>Pre-configured WezTerm with Canon color scheme</li>
-							<li>Claude Code settings and skill templates</li>
+							<li>Claude Code settings and skill packs</li>
 							<li>Beads agent-native task management</li>
-							<li>6 MCP server templates (Slack, Linear, Stripe, GitHub, Notion, Cloudflare)</li>
-							<li>Harness specification templates for autonomous work</li>
+							<li>6 MCP server starters (Slack, Linear, Stripe, GitHub, Notion, Cloudflare)</li>
+							<li>Harness specifications for autonomous work</li>
 						</ul>
 
 						<p style="color: #666; font-size: 14px; margin-top: 24px;">

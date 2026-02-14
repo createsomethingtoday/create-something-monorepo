@@ -348,9 +348,9 @@ page.screenshot(path=output_path, full_page=True)`}
   <footer class="paper-footer">
     <p><strong>Research based on analysis of:</strong></p>
     <ul>
-      <li><code>../templates-platform/workers/plagiarism-agent/src/index.ts</code></li>
-      <li><code>../templates-platform/workers/plagiarism-agent/python-test/agent_enhanced.py</code></li>
-      <li><code>../templates-platform/workers/plagiarism-agent/python-test/fluora_plagiarism_analysis.json</code></li>
+      <li><code>../webflow-site-analyzer-mcp/src/index.ts</code></li>
+      <li><code>../webflow-site-analyzer-mcp/src/temporal/activities.ts</code></li>
+      <li><code>../webflow-site-analyzer-mcp/integration-test.ts</code></li>
     </ul>
   </footer>
 </article>

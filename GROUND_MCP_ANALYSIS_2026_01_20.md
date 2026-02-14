@@ -91,7 +91,7 @@ These are legitimate entry points, not orphans:
 6. Other packages:
    - `packages/harness/src/test-patterns.ts`
    - `packages/harness-mcp/tokens.ts`
-   - `packages/verticals/dental-practice/src/lib/config/site.ts`
+   - `packages/tend/src/lib/verticals/dental/index.ts`
    - `packages/agency/clients/outerfields/mcp-remote/src/github.ts`
 
 **Action:** Created comprehensive beads issue `csm-ux7tk` for systematic review.

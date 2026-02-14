@@ -17,8 +17,9 @@
     "temporal:server": "temporal server start-dev --http-port 7243",
     "teach": "npx tsx teach-mode.ts",
     "replay": "npx tsx replay-recipe.ts",
-    "review": "npx tsx review-mode.ts"
-  },
+"review": "npx tsx review-mode.ts",
+    "test:integration": "npx tsx integration-test.ts"
+},
   "dependencies": {
     "@create-something/observability": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.3",

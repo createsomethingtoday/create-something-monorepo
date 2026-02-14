@@ -21,6 +21,30 @@ export type FileBasedPaper = FileBasedExperiment;
  */
 export const fileBasedPapers: FileBasedPaper[] = [
 	{
+		id: 'paper-andon-protocol',
+		slug: 'andon-protocol',
+		title: 'The Andon Protocol',
+		description: 'AI-native structured escalation for agent harnesses and multi-agent systems. v3.1 adds Silent Running Detection, cost-parameter defaults and worked examples, Resolution Surface design for batch review, and a three-phase implementation plan. The canonical boundary between Automation and Judgment in the Three-Tier Framework.',
+		excerpt_short: 'When to pull the cord: obligation-based escalation, with a concrete path to deployment',
+		excerpt_long: 'Agent systems handle uncertainty badly—they either ask constantly or guess silently. v3.1 extends the protocol with five AI-native capabilities (Jidoka, Multi-Agent Topology, Dynamic Thresholds, Harness Evolution, Semantic Precedent) and operational design: Silent Running Detection (post-hoc audit of unraised uncertainty), cost defaults and resolution equation worked examples, Resolution Surface (triage, batch, precedent visibility), and phased rollout (Foundation → Intelligence → Evolution).',
+		category: 'Research',
+		tags: ['Andon', 'Three-Tier Framework', 'Judgment', 'Automation', 'HITL', 'Kaizen'],
+		created_at: '2026-02-01T00:00:00Z',
+		updated_at: '2026-02-12T00:00:00Z',
+		reading_time_minutes: 18,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: ['rams-principle-2', 'subtractive-triad'],
+		ascii_art: `
+        ╭───────────────────────────────────────╮
+       ╱   First pull     Line stop              ╲
+      │   Alert only  →  Halt workflow            │
+      │   Obligation to pull. Not silence.        │
+      ╰───────────────────────────────────────────╯
+           Less, but better.
+`
+	},
+	{
 		id: 'paper-ground-case-study',
 		slug: 'ground-case-study',
 		title: 'Ground: Verification-First Code Analysis',

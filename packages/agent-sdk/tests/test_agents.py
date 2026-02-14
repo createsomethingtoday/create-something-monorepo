@@ -30,7 +30,6 @@ class TestTemplateDeployer:
         agent = create_template_deployer(task="Deploy")
 
         assert "cloudflare-patterns" in agent.config.skills
-        assert "template-deployment-patterns" in agent.config.skills
 
 
 class TestContentAgent:

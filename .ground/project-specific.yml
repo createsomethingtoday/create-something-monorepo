@@ -61,7 +61,6 @@ design_patterns:
   
   ignore_paths:
     - "packages/maverick/**"           # Client project (uses Tailwind)
-    - "packages/verticals/**"          # Client verticals (external styles)
     - "packages/clearway/src/embed/**" # Isolated widget (standalone CSS)
     - "packages/agency/clients/**"     # Client-specific sites (custom styling)
     - "**/dist/**"                     # Build artifacts (generated from src)

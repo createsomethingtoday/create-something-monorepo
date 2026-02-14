@@ -29,7 +29,7 @@ This inverts the common assumption that you build an AI agent first, then add in
 | **Installing** MCP servers | Desktop Extensions (`.mcpb`), one-click install | None |
 | **Using** MCP servers | Claude Desktop, Codex, Cursor, VS Code | None |
 | **Scaffolding** MCP projects | `create-mcp-server`, `mcp-forge`, `mcptools`, `mcp-generator-cli` | Low |
-| **Templates** | Hundreds of reference implementations | Low |
+| **Reference kits** | Hundreds of reference implementations | Low |
 
 ### What's Not Commoditized (High Value)
 
@@ -46,7 +46,7 @@ Neither Claude Desktop, Claude Cowork, nor Codex can **create** MCP servers from
 
 **This is the moat.**
 
-Templates and scaffolding tools have *started* to lower the barrier, but they still require:
+Scaffolding tools have *started* to lower the barrier, but they still require:
 - CLI/terminal proficiency
 - TypeScript or Python knowledge
 - Understanding of MCP protocol (JSON-RPC 2.0, stdio/SSE transports)
@@ -54,10 +54,10 @@ Templates and scaffolding tools have *started* to lower the barrier, but they st
 
 ### Strategic Implication
 
-The value is not in **templates** (commoditized) but in **creation expertise** applied to specific domains. CREATE SOMETHING pivots all properties toward this:
+The value is not in **commodity scaffolds** but in **creation expertise** applied to specific domains. CREATE SOMETHING pivots all properties toward this:
 
 ```
-OLD: Templates → Learning → Services (templates as entry point)
+OLD: Scaffolds → Learning → Services (scaffolds as entry point)
 NEW: MCP Servers → Connectivity → Intelligence Layer (creation as entry point)
 ```
 
@@ -201,8 +201,8 @@ Templates are no longer the entry point. **MCP creation expertise** is.
 |----------|-----------|---------------------------|
 | **.ltd** | Philosophy of creation | Philosophy of *automation infrastructure*—articulate why creation > consumption |
 | **.io** | Research, tools, docs | MCP patterns, SDK research, reference implementations for *builders* |
-| **.space** | Practice via templates | **The Workbench**—live tools for code execution, motion analysis, data dashboards |
-| **.agency** | Client services (templates) | **Custom MCP development**—the creation moat as a service |
+| **.space** | Practice via experiments | **The Workbench**—live tools for code execution, motion analysis, data dashboards |
+| **.agency** | Client services | **Custom MCP development**—the creation moat as a service |
 
 ### .agency Service Offerings
 
@@ -213,7 +213,7 @@ Templates are no longer the entry point. **MCP creation expertise** is.
 | **Intelligence Layer** | Skills and Agents on top of your MCPs | The margin |
 | **Ongoing Support** | Auth updates, API changes, new capabilities | Recurring relationship |
 
-**Positioning shift**: From "We build websites/apps with modern templates" to "We build the connectivity layer between your tools and AI."
+**Positioning shift**: From "We build websites/apps with modern stacks" to "We build the connectivity layer between your tools and AI."
 
 ### The Hermeneutic Circle
 

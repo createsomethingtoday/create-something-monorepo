@@ -7,7 +7,7 @@
  * Endpoints used:
  *   POST /v1/sessions        — Create a browser session
  *   GET  /v1/sessions/:id    — Get session info
- *   POST /v1/sessions/:id/context — Get session context (cookies)
+ *   GET  /v1/sessions/:id/context — Get session context (cookies)
  *   DELETE /v1/sessions/:id  — Release a session
  */
 
@@ -22,6 +22,8 @@ export interface SteelSession {
   sessionViewerUrl: string;
   createdAt: string;
   timeout: number;
+  /** Present when session was created with persistProfile: true (Steel Profiles API) */
+  profileId?: string;
 }
 
 export interface SteelSessionContext {
@@ -43,6 +45,10 @@ export interface CreateSessionOptions {
   timeout?: number;
   /** Session context (cookies, localStorage) to inject */
   sessionContext?: SteelSessionContext;
+  /** Steel Profile ID to load a persisted browser profile (cookies, auth). Prefer over sessionContext when set. */
+  profileId?: string;
+  /** If true, persist this session as a profile after release; response will include profileId. */
+  persistProfile?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -62,8 +68,14 @@ export class SteelClient {
       timeout: options.timeout ?? 15 * 60 * 1000, // 15 minutes
     };
 
+    if (options.profileId) {
+      body.profileId = options.profileId;
+    }
     if (options.sessionContext) {
       body.sessionContext = options.sessionContext;
+    }
+    if (options.persistProfile === true) {
+      body.persistProfile = true;
     }
 
     const response = await fetch(`${STEEL_API_BASE}/sessions`, {

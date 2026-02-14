@@ -861,7 +861,6 @@ PACKAGE_TO_PROJECT = {
     "packages/agency": "create-something-agency",
     "packages/ltd": "createsomething-ltd",
     "packages/lms": "createsomething-lms",
-    "packages/templates-platform": "templates-platform",
 }
 
 # Package path to pnpm package name mapping
@@ -871,7 +870,6 @@ PACKAGE_TO_NAME = {
     "packages/agency": "@create-something/agency",
     "packages/ltd": "@create-something/ltd",
     "packages/lms": "@create-something/lms",
-    "packages/templates-platform": "@create-something/templates-platform",
 }
 
 CLOUDFLARE_ACCOUNT_ID = "9645bd52e640b8a4f40a3a55ff1dd75a"

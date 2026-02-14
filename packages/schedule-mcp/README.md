@@ -8,7 +8,7 @@ Shared scheduling MCP server with backfill, forecast, and conflict detection. De
 
 | Tier | MCP Primitive | Implementation |
 |------|---------------|----------------|
-| **Database** | Resources | Calendars, members, units, templates |
+| **Database** | Resources | Calendars, members, units, plans |
 | **Automation** | Tools | CRUD, backfill, forecast, conflicts, iCal |
 | **Judgment** | Prompts | Schedule analysis, conflict resolution, optimization |
 
@@ -24,13 +24,13 @@ Shared scheduling MCP server with backfill, forecast, and conflict detection. De
 
 **CRUD:** `create_calendar`, `create_event`, `update_event`, `delete_event`, `create_unit`, `add_member`, `share_calendar`
 
-**Scheduling:** `backfill`, `forecast`, `find_conflicts`, `find_availability`, `apply_template`
+**Scheduling:** `backfill`, `forecast`, `find_conflicts`, `find_availability`, `apply_plan`
 
-**Interop:** `export_ical`, `create_template`
+**Interop:** `export_ical`, `create_plan`
 
 ## Resources (4)
 
-`schedule://calendars`, `schedule://members`, `schedule://units`, `schedule://templates`
+`schedule://calendars`, `schedule://members`, `schedule://units`, `schedule://plans`
 
 ## Prompts (3)
 

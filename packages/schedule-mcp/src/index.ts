@@ -13,7 +13,7 @@
  * functionality, use the Cloudflare Worker deployment (worker/index.ts).
  *
  * Architecture (Three-Tier Framework):
- *   Database tier (Resources)   — Calendars, events, members, units, templates
+ *   Database tier (Resources)   — Calendars, events, members, units, plans
  *   Automation tier (Tools)     — CRUD, backfill, forecast, conflicts, iCal
  *   Judgment tier (Prompts)     — Schedule analysis, conflict resolution, optimization
  */

@@ -5,9 +5,12 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "secrets": "echo 'Run: wrangler secret put <NAME>' && echo 'Required: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN, NOTION_API_KEY, NOTION_INTERACTIONS_DB_ID, NOTION_CONTACTS_DB_ID, TEAM_EMAILS'"
+    "deploy:base": "wrangler deploy --env=\"\"",
+    "deploy:team": "./scripts/deploy-team.sh",
+    "secrets": "echo 'Run: wrangler secret put <NAME>' && echo 'Required: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, NOTION_API_KEY, NOTION_INTERACTIONS_DB_ID, NOTION_CONTACTS_DB_ID' && echo 'Set in wrangler.toml [vars]: AUTHORIZED_EMAIL'"
   },
   "dependencies": {
+    "@create-something/mcp-core": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.2",
     "@notionhq/client": "^2.2.15",
     "agents": "^0.3.10",

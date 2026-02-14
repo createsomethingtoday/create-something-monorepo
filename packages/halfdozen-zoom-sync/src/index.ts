@@ -218,6 +218,12 @@ async function main(): Promise<void> {
     sessionContextStore = ctx;
   };
 
+  let clipsProfileIdStore: string | null = null;
+  const getClipsProfileId = async (): Promise<string | null> => clipsProfileIdStore;
+  const setClipsProfileId = async (profileId: string): Promise<void> => {
+    clipsProfileIdStore = profileId;
+  };
+
   // Create server
   const server = new McpServer({
     name: 'halfdozen-zoom-sync',
@@ -230,6 +236,7 @@ async function main(): Promise<void> {
     notionConfig,
     getDb,
     getSessionContext,
+    getClipsProfileId,
   });
   registerSearchTools(server, notionConfig);
   registerSessionTools(server, {
@@ -237,9 +244,11 @@ async function main(): Promise<void> {
     getDb,
     getSessionContext,
     setSessionContext,
+    getClipsProfileId,
+    setClipsProfileId,
   });
   registerClipsResources(server, getDb, notionConfig);
-  registerStatusResources(server, getDb, getSessionContext);
+  registerStatusResources(server, getDb, getSessionContext, getClipsProfileId);
   registerPrompts(server);
 
   // Connect via stdio

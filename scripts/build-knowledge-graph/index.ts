@@ -34,6 +34,7 @@ import { createSemanticEdges, deduplicateSemanticEdges } from './embeddings/simi
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const LEGACY_OUTPUT_DIR = resolve(__dirname, '../../packages/io/static/.graph');
 
 // =============================================================================
 // Configuration
@@ -49,6 +50,10 @@ const DEFAULT_CONFIG: BuildConfig = {
     '**/.svelte-kit/**',
     '**/dist/**',
     '**/build/**',
+    '**/.archive/**',
+    '**/.beads/**',
+    '**/csm/.beads/**',
+    '**/.claude/experiments/**',
     '**/*.test.md',
     '**/CHANGELOG.md',
   ],
@@ -236,29 +241,28 @@ function writeOutput(output: GraphOutput, config: BuildConfig, dryRun: boolean):
     return;
   }
 
-  // Create output directory
-  try {
-    mkdir(config.outputDir, { recursive: true }, (err) => {
-      if (err) throw err;
-    });
-  } catch (error) {
-    // Directory might already exist, that's fine
+  const outputDirs = [config.outputDir, LEGACY_OUTPUT_DIR];
+  for (const outputDir of outputDirs) {
+    try {
+      mkdir(outputDir, { recursive: true }, (err) => {
+        if (err) throw err;
+      });
+    } catch (error) {
+      // Directory might already exist, that's fine
+    }
+
+    const nodesPath = resolve(outputDir, 'nodes.json');
+    writeFileSync(nodesPath, JSON.stringify(output.nodes, null, 2), 'utf-8');
+    console.log(`✓ Wrote ${nodesPath}`);
+
+    const edgesPath = resolve(outputDir, 'edges.json');
+    writeFileSync(edgesPath, JSON.stringify(output.edges, null, 2), 'utf-8');
+    console.log(`✓ Wrote ${edgesPath}`);
+
+    const metadataPath = resolve(outputDir, 'metadata.json');
+    writeFileSync(metadataPath, JSON.stringify(output.metadata, null, 2), 'utf-8');
+    console.log(`✓ Wrote ${metadataPath}`);
   }
-
-  // Write nodes.json
-  const nodesPath = resolve(config.outputDir, 'nodes.json');
-  writeFileSync(nodesPath, JSON.stringify(output.nodes, null, 2), 'utf-8');
-  console.log(`✓ Wrote ${nodesPath}`);
-
-  // Write edges.json
-  const edgesPath = resolve(config.outputDir, 'edges.json');
-  writeFileSync(edgesPath, JSON.stringify(output.edges, null, 2), 'utf-8');
-  console.log(`✓ Wrote ${edgesPath}`);
-
-  // Write metadata.json
-  const metadataPath = resolve(config.outputDir, 'metadata.json');
-  writeFileSync(metadataPath, JSON.stringify(output.metadata, null, 2), 'utf-8');
-  console.log(`✓ Wrote ${metadataPath}`);
 
   console.log('\n✅ Knowledge graph build complete!');
   console.log(`   ${output.nodes.length} nodes, ${output.edges.length} edges`);

@@ -20,6 +20,10 @@ export const DEFAULT_EXCLUDE_PATTERNS = [
   '**/.svelte-kit/**',
   '**/dist/**',
   '**/build/**',
+  '**/.archive/**',
+  '**/.beads/**',
+  '**/csm/.beads/**',
+  '**/.claude/experiments/**',
   '**/*.test.md',
   '**/CHANGELOG.md',
 ];
@@ -34,7 +38,7 @@ export function extractPackage(relativePath: string): PackageName {
     const pkg = parts[1];
     const validPackages: PackageName[] = [
       'io', 'space', 'agency', 'ltd', 'lms', 'components',
-      'harness', 'dotfiles', 'templates-platform', 'verticals', 'cloudflare-sdk'
+      'harness', 'dotfiles', 'cloudflare-sdk'
     ];
     return validPackages.includes(pkg as PackageName) ? pkg as PackageName : null;
   }

@@ -52,13 +52,13 @@ In MCP terms, this is the **Tools** primitive—functions that agents can invoke
 
 Human judgment and algorithmic evaluation occupy the same functional role here. Both are asking: given this input, what is the right output? Policy defines the boundaries; the Insight concern (cross-cutting) makes the application of that policy legible.
 
-**Control model: User-controlled.** The human explicitly selects templates, constraints, and guidance. This is not automatic—it requires intentional choice about how the system should behave.
+**Control model: User-controlled.** The human explicitly selects guidance artifacts, constraints, and policy language. This is not automatic—it requires intentional choice about how the system should behave.
 
-In MCP terms, this is the **Prompts** primitive—templates and constraints that shape how agents reason and respond.
+In MCP terms, this is the **Prompts** primitive—guidance and constraints that shape how agents reason and respond.
 
 ### Artifacts
 
-**What flows between layers.** Typed payloads that move through the system: RFI objects, submittal payloads, log summaries, decision records. Artifacts are the boundary contracts between tiers—they can be versioned, validated at transitions, and observed in flight.
+**What flows between layers.** Typed payloads that move through the system: Andon objects (escalation records), submittal payloads, log summaries, decision records. Artifacts are the boundary contracts between tiers—they can be versioned, validated at transitions, and observed in flight.
 
 ### Touchpoints
 
@@ -90,7 +90,7 @@ The Model Context Protocol defines three server primitives, each with a distinct
 |---------------|---------------|-------------|
 | **Resources** | Application-controlled | The client application decides when to fetch and inject data into context |
 | **Tools** | Model-controlled | The LLM decides when to invoke functions during reasoning |
-| **Prompts** | User-controlled | The human explicitly selects templates to guide interaction |
+| **Prompts** | User-controlled | The human explicitly selects guidance artifacts to steer interaction |
 
 MCP also defines **Sampling**—a mechanism that allows Tools to request LLM access back through the Client. This creates the feedback loop where Automation can invoke Judgment.
 
@@ -276,6 +276,16 @@ Mitigations:
 
 The framework doesn't solve this risk—it names it and provides the vocabulary to reason about it.
 
+### The Andon Protocol: Boundary Between Automation and Judgment
+
+When Automation encounters ambiguity, conflicting data, or a situation outside its authority, it must escalate to Judgment. The **Andon Protocol** is the pattern for that handoff—grounded in Toyota's Andon (pull, two-pull semantics, obligation to escalate, Kaizen) and German/aerospace Deviation and Concession (permission before acting vs. disposition after the fact).
+
+The agent *pulls* rather than guessing or asking constantly: it creates an **Andon object** (type: alert | stop | deviation | concession; question, context, proposed action, confidence) that flows to the Judgment layer. Resolutions are persisted and reused as precedent (Kaizen), so the harness improves over time.
+
+The protocol provides: obligation to pull, two-pull semantics, deviation/concession distinction, resolution authority hierarchy (L0–L4), Automated Jidoka (machine detection alongside agent self-assessment), dynamic thresholds (cost-based resolution equation), Harness Evolution (Kaizen that modifies constraints), and Semantic Precedent (vector-based resolution matching). v3.0 is designed for non-deterministic, multi-agent, self-modifying systems. MCP tools include `andon_pull`, `andon_deviate`, `andon_concede`, `andon_resolve`, `andon_batch`, `andon_precedent`, `andon_metrics`, `andon_propose_kaizen`. Cloudflare: D1, Vectorize, Queues, Workers.
+
+**Reference**: [The Andon Protocol](https://createsomething.io/papers/andon-protocol) (CREATE SOMETHING paper—AI-native structured escalation, v3.1; includes Silent Running Detection, Resolution Surface design, implementation phasing).
+
 ---
 
 ## Properties
@@ -351,7 +361,7 @@ NIST's taxonomy focuses on human-AI activities from a usability perspective. Thi
 - Orchestration: Workflow triggers, webhook handlers, notification dispatchers
 - Insight: Execution traces, approval audit logs, confidence scores
 - Touchpoints: MCP server endpoints for Procore, Slack, email
-- Artifacts: RFI objects, summary reports, compliance flags
+- Artifacts: Andon objects (escalation), construction RFIs (Procore), summary reports, compliance flags
 
 ### Custom MCP Development (CREATE SOMETHING)
 

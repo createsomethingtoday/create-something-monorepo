@@ -20,6 +20,7 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
+import { enableTelemetry } from '@create-something/mcp-core';
 
 import { bindingExecutor, bindingR2Store, QueryTracker } from '../src/services/executor.js';
 import { ensureInitialized, hashToken } from '../src/services/d1.js';
@@ -36,6 +37,7 @@ interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   READER_OBJECT: DurableObjectNamespace;
   DB: D1Database;
+  TELEMETRY_DB?: D1Database;
   FILES: R2Bucket;
 }
 
@@ -220,6 +222,11 @@ export class SubstrateMCP extends McpAgent<Env> {
   private tracker = new QueryTracker();
 
   async init() {
+    // Telemetry: meter all tool calls + register health/usage resources
+    if (this.env.TELEMETRY_DB) {
+      enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'substrate-mcp');
+    }
+
     // D1 via binding — with observability tracking
     const d1 = bindingExecutor(this.env.DB, this.tracker);
     // R2 via binding — no S3 signing overhead

@@ -1,15 +1,16 @@
 /**
- * Half Dozen Gmail Sync - MCP Worker (Multi-User)
+ * Half Dozen Gmail Sync - MCP Worker (Single-User Isolated)
  * 
  * Cloudflare Worker with Streamable HTTP transport for remote MCP access.
- * Supports multiple team members, each with their own Gmail authorization.
+ * Each instance serves a single team member (set via AUTHORIZED_EMAIL env var).
+ * Deploy separate instances per user via wrangler environments for inbox isolation.
  * Uses direct fetch for both Gmail and Notion APIs (no SDK — Workers compatible).
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { z } from 'zod';
-import { registerFeedbackTool, D1FeedbackStore } from '@create-something/mcp-core';
+import { registerFeedbackTool, D1FeedbackStore, enableTelemetry } from '@create-something/mcp-core';
 
 // Types
 interface Env {
@@ -18,7 +19,8 @@ interface Env {
   NOTION_API_KEY: string;
   NOTION_INTERACTIONS_DB_ID: string;
   NOTION_CONTACTS_DB_ID: string;
-  TEAM_EMAILS: string;
+  AUTHORIZED_EMAIL: string;        // The single user this instance serves
+  TEAM_EMAILS?: string;            // Optional: full team list for direction detection
   ADMIN_SECRET?: string;
   ADDON_SECRET?: string;
   FEEDBACK_DB: any;  // D1Database — shared feedback across Half Dozen MCPs
@@ -79,7 +81,7 @@ const OAUTH_SCOPES = [
 
 async function getAccessToken(env: Env, userEmail?: string): Promise<string> {
   if (!userEmail) {
-    throw new Error('user_email is required. Each team member must authorize their own Gmail at /auth?email=their@email.com');
+    throw new Error('user_email is required. Authorize Gmail at /auth?email=your@email.com');
   }
 
   const stored = await env.GMAIL_TOKENS.get<StoredToken>(userEmail.toLowerCase(), 'json');
@@ -139,16 +141,20 @@ function parseEmailAddress(raw: string): { name?: string; email: string } {
   return { email: raw.trim() };
 }
 
-function getTeamEmails(env: Env): string[] {
-  return (env.TEAM_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+/** The single authorized email for this instance. */
+function getAuthorizedEmail(env: Env): string {
+  if (!env.AUTHORIZED_EMAIL?.trim()) {
+    throw new Error('AUTHORIZED_EMAIL not configured. Set it to the email this instance serves.');
+  }
+  return env.AUTHORIZED_EMAIL.trim().toLowerCase();
 }
 
-function getDefaultUser(env: Env): string {
-  const team = getTeamEmails(env);
-  if (team.length === 0) {
-    throw new Error('No TEAM_EMAILS configured. Set TEAM_EMAILS env var with at least one authorized email.');
-  }
-  return team[0];
+/** Team emails for direction detection (inbound vs outbound). Always includes AUTHORIZED_EMAIL. */
+function getTeamEmails(env: Env): string[] {
+  const team = (env.TEAM_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+  const authorized = getAuthorizedEmail(env);
+  if (!team.includes(authorized)) team.push(authorized);
+  return team;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -487,20 +493,28 @@ async function syncSingleEmail(
 const AUTOMATION_PREFIX = 'automation:';
 const MAX_RUNS_HISTORY = 20;
 
-async function getAutomationById(kv: KVNamespace, id: string): Promise<Automation | null> {
-  return kv.get<Automation>(`${AUTOMATION_PREFIX}${id}`, 'json');
+function automationPrefixForUser(userEmail: string): string {
+  return `${AUTOMATION_PREFIX}${userEmail.toLowerCase()}:`;
+}
+
+function automationKeyForUser(userEmail: string, id: string): string {
+  return `${automationPrefixForUser(userEmail)}${id}`;
+}
+
+async function getAutomationById(kv: KVNamespace, userEmail: string, id: string): Promise<Automation | null> {
+  return kv.get<Automation>(automationKeyForUser(userEmail, id), 'json');
 }
 
 async function putAutomation(kv: KVNamespace, automation: Automation): Promise<void> {
-  await kv.put(`${AUTOMATION_PREFIX}${automation.id}`, JSON.stringify(automation));
+  await kv.put(automationKeyForUser(automation.user_email, automation.id), JSON.stringify(automation));
 }
 
-async function deleteAutomationFromKV(kv: KVNamespace, id: string): Promise<void> {
-  await kv.delete(`${AUTOMATION_PREFIX}${id}`);
+async function deleteAutomationFromKV(kv: KVNamespace, userEmail: string, id: string): Promise<void> {
+  await kv.delete(automationKeyForUser(userEmail, id));
 }
 
-async function listAllAutomations(kv: KVNamespace): Promise<Automation[]> {
-  const keys = await kv.list({ prefix: AUTOMATION_PREFIX });
+async function listAutomationsByUser(kv: KVNamespace, userEmail: string): Promise<Automation[]> {
+  const keys = await kv.list({ prefix: automationPrefixForUser(userEmail) });
   const automations: Automation[] = [];
   for (const key of keys.keys) {
     const automation = await kv.get<Automation>(key.name, 'json');
@@ -644,6 +658,15 @@ async function handleAuthStart(request: Request, env: Env): Promise<Response> {
     return new Response('Missing email parameter. Usage: /auth?email=you@example.com', { status: 400 });
   }
 
+  // Only allow the configured user to authorize on this instance
+  const authorized = getAuthorizedEmail(env);
+  if (email.trim().toLowerCase() !== authorized) {
+    return new Response(
+      `This instance is configured for ${authorized}. You cannot authorize as ${email} here.`,
+      { status: 403 },
+    );
+  }
+
   const state = await signState(JSON.stringify({ email: email.toLowerCase() }), env.GOOGLE_CLIENT_SECRET);
   const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
   authUrl.searchParams.set('client_id', env.GOOGLE_CLIENT_ID);
@@ -743,24 +766,6 @@ async function handleOAuthCallback(request: Request, env: Env): Promise<Response
   });
 }
 
-async function handleListUsers(request: Request, env: Env): Promise<Response> {
-  if (!env.ADMIN_SECRET) {
-    return new Response('Admin endpoint not configured', { status: 404 });
-  }
-
-  const authHeader = request.headers.get('Authorization');
-  if (authHeader !== `Bearer ${env.ADMIN_SECRET}`) {
-    return new Response('Unauthorized', { status: 401 });
-  }
-
-  const list = await env.GMAIL_TOKENS.list();
-  const users = list.keys.map(k => k.name);
-
-  return new Response(JSON.stringify({ authorized_users: users }, null, 2), {
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
-
 // ═══════════════════════════════════════════════════════════════
 // MCP Agent
 // ═══════════════════════════════════════════════════════════════
@@ -784,20 +789,25 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
   });
 
   async init() {
+    // Telemetry: meter all tool calls + register health/usage resources
+    if (this.env.FEEDBACK_DB) {
+      enableTelemetry(this.server, this.env.FEEDBACK_DB, 'halfdozen-gmail-sync');
+    }
+
     // Tool: Search Emails
     this.server.tool(
       'search_emails',
       {
         query: z.string().describe('Gmail search query (from:, to:, subject:, label:, etc.)'),
         limit: z.number().optional().describe('Max results (default: 10)'),
-        user_email: z.string().describe('Email of team member (must be authorized)'),
       },
-      async ({ query, limit = 10, user_email }) => {
+      async ({ query, limit = 10 }) => {
         try {
+          const userEmail = getAuthorizedEmail(this.env);
           const listData = await gmailFetch(this.env, '/messages', {
             q: query,
             maxResults: String(limit),
-          }, user_email) as { messages?: Array<{ id: string }> };
+          }, userEmail) as { messages?: Array<{ id: string }> };
 
           const messageIds = listData.messages || [];
           const emails: Array<{ id: string; subject: string; from: string; date: string; snippet: string }> = [];
@@ -806,7 +816,7 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
             const msg = await gmailFetch(this.env, `/messages/${id}`, {
               format: 'metadata',
               metadataHeaders: ['From', 'Subject', 'Date'],
-            }, user_email) as { payload?: { headers?: Array<{ name: string; value: string }> }; snippet?: string };
+            }, userEmail) as { payload?: { headers?: Array<{ name: string; value: string }> }; snippet?: string };
 
             const headers = msg.payload?.headers || [];
             const getHeader = (name: string) => headers.find(h => h.name?.toLowerCase() === name.toLowerCase())?.value || '';
@@ -820,7 +830,7 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
             });
           }
 
-          return { content: [{ type: 'text', text: JSON.stringify({ count: emails.length, emails, user: user_email }, null, 2) }] };
+          return { content: [{ type: 'text', text: JSON.stringify({ count: emails.length, emails, user: userEmail }, null, 2) }] };
         } catch (error) {
           return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
         }
@@ -832,13 +842,13 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
       'sync_email',
       {
         email_id: z.string().describe('Gmail message ID'),
-        user_email: z.string().describe('Email of team member (must be authorized)'),
       },
-      async ({ email_id, user_email }) => {
+      async ({ email_id }) => {
         try {
-          const result = await syncSingleEmail(this.env, email_id, user_email);
+          const userEmail = getAuthorizedEmail(this.env);
+          const result = await syncSingleEmail(this.env, email_id, userEmail);
           return {
-            content: [{ type: 'text', text: JSON.stringify({ ...result, syncedBy: user_email }, null, 2) }],
+            content: [{ type: 'text', text: JSON.stringify({ ...result, syncedBy: userEmail }, null, 2) }],
           };
         } catch (error) {
           return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
@@ -975,36 +985,16 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
     // Tool: Get Labels
     this.server.tool(
       'get_email_labels',
-      {
-        user_email: z.string().describe('Email of team member (must be authorized)'),
-      },
-      async ({ user_email }) => {
+      {},
+      async () => {
         try {
-          const response = await gmailFetch(this.env, '/labels', undefined, user_email) as { labels?: Array<{ id: string; name: string }> };
+          const userEmail = getAuthorizedEmail(this.env);
+          const response = await gmailFetch(this.env, '/labels', undefined, userEmail) as { labels?: Array<{ id: string; name: string }> };
           const labels = (response.labels || []).filter(l => l.id && l.name).map(l => ({ id: l.id, name: l.name }));
-          return { content: [{ type: 'text', text: JSON.stringify({ count: labels.length, labels, user: user_email }, null, 2) }] };
+          return { content: [{ type: 'text', text: JSON.stringify({ count: labels.length, labels, user: userEmail }, null, 2) }] };
         } catch (error) {
           return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
         }
-      }
-    );
-
-    // Tool: List Authorized Users (requires admin_secret)
-    this.server.tool(
-      'list_authorized_users',
-      {
-        admin_secret: z.string().describe('Admin secret (must match ADMIN_SECRET env var)'),
-      },
-      async ({ admin_secret }) => {
-        if (!this.env.ADMIN_SECRET) {
-          return { content: [{ type: 'text', text: JSON.stringify({ error: 'Admin endpoint not configured' }) }] };
-        }
-        if (admin_secret !== this.env.ADMIN_SECRET) {
-          return { content: [{ type: 'text', text: JSON.stringify({ error: 'Unauthorized: invalid admin_secret' }) }] };
-        }
-        const list = await this.env.GMAIL_TOKENS.list();
-        const users = list.keys.map(k => k.name);
-        return { content: [{ type: 'text', text: JSON.stringify({ count: users.length, users }, null, 2) }] };
       }
     );
 
@@ -1083,11 +1073,11 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
       'preview_automation',
       {
         gmail_query: z.string().describe('Gmail search query to preview (from:, to:, subject:, label:, etc.)'),
-        user_email: z.string().describe('Email of team member whose Gmail to search'),
         limit: z.number().optional().describe('Max emails to preview (default: 10)'),
       },
-      async ({ gmail_query, user_email, limit = 10 }) => {
+      async ({ gmail_query, limit = 10 }) => {
         try {
+          const user_email = getAuthorizedEmail(this.env);
           const listData = await gmailFetch(this.env, '/messages', {
             q: gmail_query,
             maxResults: String(limit),
@@ -1154,17 +1144,18 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
       'create_automation',
       {
         name: z.string().describe('Human-readable name (e.g., "Sync client emails daily")'),
-        user_email: z.string().describe('Email of team member whose Gmail to sync'),
         gmail_query: z.string().describe('Gmail search query (from:, to:, subject:, label:, etc.)'),
         frequency_minutes: z.number().describe('How often to run: 60=hourly, 360=every 6 hours, 1440=daily'),
         max_results: z.number().optional().describe('Max emails to sync per run (default: 20)'),
       },
-      async ({ name, user_email, gmail_query, frequency_minutes, max_results = 20 }) => {
+      async ({ name, gmail_query, frequency_minutes, max_results = 20 }) => {
         try {
+          const user_email = getAuthorizedEmail(this.env);
+
           // Validate user is authorized
-          const stored = await this.env.GMAIL_TOKENS.get<StoredToken>(user_email.toLowerCase(), 'json');
+          const stored = await this.env.GMAIL_TOKENS.get<StoredToken>(user_email, 'json');
           if (!stored?.refresh_token) {
-            return { content: [{ type: 'text', text: JSON.stringify({ error: `No Gmail authorization found for ${user_email}. They need to authorize at /auth?email=${encodeURIComponent(user_email)} first.` }) }] };
+            return { content: [{ type: 'text', text: JSON.stringify({ error: `No Gmail authorization found. Visit /auth?email=${encodeURIComponent(user_email)} to authorize first.` }) }] };
           }
 
           // Validate frequency (minimum 5 minutes)
@@ -1182,7 +1173,7 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
           // Create automation
           const automation: Automation = {
             id: crypto.randomUUID(),
-            user_email: user_email.toLowerCase(),
+            user_email,
             name,
             gmail_query,
             frequency_minutes,
@@ -1226,16 +1217,11 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
     // Tool: List Automations
     this.server.tool(
       'list_automations',
-      {
-        user_email: z.string().optional().describe('Filter by user email (omit to list all)'),
-      },
-      async ({ user_email }) => {
+      {},
+      async () => {
         try {
-          let automations = await listAllAutomations(this.env.GMAIL_TOKENS);
-
-          if (user_email) {
-            automations = automations.filter(a => a.user_email === user_email.toLowerCase());
-          }
+          const userEmail = getAuthorizedEmail(this.env);
+          const automations = await listAutomationsByUser(this.env.GMAIL_TOKENS, userEmail);
 
           const summary = automations.map(a => ({
             id: a.id,
@@ -1270,7 +1256,8 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
       },
       async ({ automation_id }) => {
         try {
-          const automation = await getAutomationById(this.env.GMAIL_TOKENS, automation_id);
+          const userEmail = getAuthorizedEmail(this.env);
+          const automation = await getAutomationById(this.env.GMAIL_TOKENS, userEmail, automation_id);
           if (!automation) {
             return { content: [{ type: 'text', text: JSON.stringify({ error: 'Automation not found' }) }] };
           }
@@ -1303,7 +1290,8 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
       },
       async ({ automation_id }) => {
         try {
-          const automation = await getAutomationById(this.env.GMAIL_TOKENS, automation_id);
+          const userEmail = getAuthorizedEmail(this.env);
+          const automation = await getAutomationById(this.env.GMAIL_TOKENS, userEmail, automation_id);
           if (!automation) {
             return { content: [{ type: 'text', text: JSON.stringify({ error: 'Automation not found' }) }] };
           }
@@ -1336,12 +1324,13 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
       },
       async ({ automation_id }) => {
         try {
-          const automation = await getAutomationById(this.env.GMAIL_TOKENS, automation_id);
+          const userEmail = getAuthorizedEmail(this.env);
+          const automation = await getAutomationById(this.env.GMAIL_TOKENS, userEmail, automation_id);
           if (!automation) {
             return { content: [{ type: 'text', text: JSON.stringify({ error: 'Automation not found' }) }] };
           }
 
-          await deleteAutomationFromKV(this.env.GMAIL_TOKENS, automation_id);
+          await deleteAutomationFromKV(this.env.GMAIL_TOKENS, userEmail, automation_id);
 
           return {
             content: [{
@@ -1364,7 +1353,8 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
       },
       async ({ automation_id, limit = 10 }) => {
         try {
-          const automation = await getAutomationById(this.env.GMAIL_TOKENS, automation_id);
+          const userEmail = getAuthorizedEmail(this.env);
+          const automation = await getAutomationById(this.env.GMAIL_TOKENS, userEmail, automation_id);
           if (!automation) {
             return { content: [{ type: 'text', text: JSON.stringify({ error: 'Automation not found' }) }] };
           }
@@ -1403,16 +1393,15 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
       'search',
       {
         query: z.string().describe('Search query for Gmail emails (supports Gmail syntax: from:, to:, subject:, label:, after:, before:)'),
-        user_email: z.string().optional().describe('Team member email (defaults to first TEAM_EMAILS entry)'),
       },
-      async ({ query, user_email }) => {
+      async ({ query }) => {
         try {
-          const effectiveUser = user_email || getDefaultUser(this.env);
+          const userEmail = getAuthorizedEmail(this.env);
 
           const listData = await gmailFetch(this.env, '/messages', {
             q: query,
             maxResults: '10',
-          }, effectiveUser) as { messages?: Array<{ id: string }> };
+          }, userEmail) as { messages?: Array<{ id: string }> };
 
           const messageIds = listData.messages || [];
           const results: Array<{ id: string; title: string; url: string }> = [];
@@ -1421,7 +1410,7 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
             const msg = await gmailFetch(this.env, `/messages/${id}`, {
               format: 'metadata',
               metadataHeaders: ['From', 'Subject', 'Date'],
-            }, effectiveUser) as { payload?: { headers?: Array<{ name: string; value: string }> }; snippet?: string };
+            }, userEmail) as { payload?: { headers?: Array<{ name: string; value: string }> }; snippet?: string };
 
             const headers = msg.payload?.headers || [];
             const getHeader = (name: string) => headers.find(h => h.name?.toLowerCase() === name.toLowerCase())?.value || '';
@@ -1444,13 +1433,12 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
       'fetch',
       {
         id: z.string().describe('Gmail message ID (from search results)'),
-        user_email: z.string().optional().describe('Team member email (defaults to first TEAM_EMAILS entry)'),
       },
-      async ({ id, user_email }) => {
+      async ({ id }) => {
         try {
-          const effectiveUser = user_email || getDefaultUser(this.env);
+          const userEmail = getAuthorizedEmail(this.env);
 
-          const msg = await gmailFetch(this.env, `/messages/${id}`, { format: 'full' }, effectiveUser) as {
+          const msg = await gmailFetch(this.env, `/messages/${id}`, { format: 'full' }, userEmail) as {
             id: string;
             threadId?: string;
             snippet?: string;
@@ -1532,7 +1520,7 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
 
 ## Tips
 - Gmail queries support: \`from:\`, \`to:\`, \`subject:\`, \`label:\`, \`after:\`, \`before:\`, \`has:attachment\`, \`is:unread\`
-- Each team member must authorize their Gmail separately at the /auth endpoint
+- This instance is connected to a single Gmail account (authorize at /auth if needed)
 - Already-synced emails are automatically skipped (deduplication by Gmail ID)
 - Contacts are auto-created if no match is found, and can be re-linked later`,
           },
@@ -1898,7 +1886,8 @@ export default {
    * Each automation's frequency is checked against its last run time.
    */
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext) {
-    const automations = await listAllAutomations(env.GMAIL_TOKENS);
+    const userEmail = getAuthorizedEmail(env);
+    const automations = await listAutomationsByUser(env.GMAIL_TOKENS, userEmail);
     const now = Date.now();
     let executed = 0;
     let skipped = 0;
@@ -1940,7 +1929,7 @@ export default {
     }
 
     if (url.pathname === '/users') {
-      return handleListUsers(request, env);
+      return new Response('Not found', { status: 404 });
     }
 
     // REST API endpoints (for Gmail Add-on and external integrations)
@@ -1957,15 +1946,16 @@ export default {
     }
 
     if (url.pathname === '/') {
+      const authorizedEmail = env.AUTHORIZED_EMAIL?.trim() || '(not configured)';
       return new Response(JSON.stringify({
         name: 'halfdozen-gmail-sync-mcp',
-        version: '3.0.0',
-        features: ['multi-user', 'chatgpt-connector', 'background-automations'],
+        version: '4.0.0',
+        features: ['single-user-isolation', 'chatgpt-connector', 'background-automations'],
+        authorized_email: authorizedEmail,
         endpoints: {
           mcp: '/mcp',
           sse: '/sse',
-          auth: '/auth?email=you@example.com',
-          users: '/users (requires ADMIN_SECRET)',
+          auth: `/auth?email=${encodeURIComponent(authorizedEmail)}`,
         },
       }, null, 2), {
         headers: { 'Content-Type': 'application/json' },

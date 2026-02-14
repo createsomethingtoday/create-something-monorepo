@@ -88,7 +88,7 @@ Load context from `.claude/rules/` or `.claude/skills/`:
 ```python
 agent = CreateSomethingAgent(AgentConfig(
     task="Deploy the template",
-    skills=["cloudflare-patterns", "template-deployment-patterns"],
+    skills=["cloudflare-patterns"],
 ))
 ```
 

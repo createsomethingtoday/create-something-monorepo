@@ -17,7 +17,6 @@ Cloudflare Pages project names in this monorepo are **inconsistent** due to hist
 | `packages/agency` | `create-something-agency` | createsomething.agency | Hyphenated prefix |
 | `packages/ltd` | `createsomething-ltd` | createsomething.ltd | **No hyphen** in prefix |
 | `packages/lms` | `createsomething-lms` | learn.createsomething.space | **No hyphen** in prefix |
-| `packages/templates-platform` | `templates-platform` | templates.createsomething.space | Standalone name |
 
 ## Naming Patterns
 
@@ -35,14 +34,6 @@ Used by: `ltd`, `lms`
 Example:
 ```bash
 wrangler pages deploy .svelte-kit/cloudflare --project-name=createsomething-ltd
-```
-
-### Pattern 3: Standalone
-Used by: `templates-platform`
-
-Example:
-```bash
-wrangler pages deploy .svelte-kit/cloudflare --project-name=templates-platform
 ```
 
 ## How to Use
@@ -112,7 +103,7 @@ Incorrect project names cause:
 The inconsistency exists because:
 - `space`, `io`, `agency` were created first with `create-something-*` pattern
 - `ltd` was created later using `createsomething-*` (no hyphen) pattern
-- `lms` and `templates-platform` followed later conventions
+- `lms` followed later conventions
 
 Rather than rename (which would break production), we document the truth.
 

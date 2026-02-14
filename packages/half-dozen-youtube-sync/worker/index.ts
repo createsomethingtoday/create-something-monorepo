@@ -19,7 +19,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { z } from 'zod';
-import { registerFeedbackTool, D1FeedbackStore } from '@create-something/mcp-core';
+import { registerFeedbackTool, D1FeedbackStore, enableTelemetry } from '@create-something/mcp-core';
 
 // =============================================================================
 // Types
@@ -472,6 +472,11 @@ export class YouTubeSyncMCP extends McpAgent<Env> {
   });
 
   async init() {
+    // Telemetry: meter all tool calls + register health/usage resources
+    if (this.env.FEEDBACK_DB) {
+      enableTelemetry(this.server, this.env.FEEDBACK_DB, SERVER_NAME);
+    }
+
     // ── Resources ──────────────────────────────────────────────────────
     this.server.resource('server-status', 'youtube://status',
       { description: 'Server status', mimeType: 'application/json' },
