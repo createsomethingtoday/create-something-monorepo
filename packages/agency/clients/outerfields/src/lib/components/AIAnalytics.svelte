@@ -141,7 +141,7 @@
 			<div class="demo-header">
 				<span class="demo-badge">
 					<Brain size={12} />
-					Live Example
+					Included Feature
 				</span>
 				<h3 class="demo-title">Ask Anything About Your Analytics</h3>
 			</div>
@@ -225,11 +225,8 @@
 
 			<div class="demo-cta">
 				<p class="demo-cta-text">
-					This is already built into every video's analytics. No extra cost, no setup—just click and ask.
+					This capability is built into every PCN with no extra setup.
 				</p>
-				<a href="/admin-demo" class="btn-secondary">
-					Try It Now
-				</a>
 			</div>
 		</div>
 	</div>
@@ -597,27 +594,6 @@
 		font-size: 0.875rem;
 		color: var(--color-fg-muted);
 		margin: 0 0 1rem;
-	}
-
-	.btn-secondary {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.75rem 1.5rem;
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-emphasis);
-		border-radius: 0.5rem;
-		font-size: 0.875rem;
-		font-weight: 600;
-		color: var(--color-fg-primary);
-		text-decoration: none;
-		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.btn-secondary:hover {
-		background: var(--color-hover);
-		border-color: var(--color-fg-primary);
 	}
 
 	@media (max-width: 1024px) {
