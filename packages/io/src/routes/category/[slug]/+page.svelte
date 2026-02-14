@@ -1,9 +1,11 @@
 <script lang="ts">
   import { PaperCard } from '@create-something/canon';
   import type { PageData } from './$types';
+  import type { Paper } from '@create-something/canon/types';
 
   export let data: PageData;
-  const { papers, category } = data;
+  const papers = data.papers as Paper[];
+  const { category } = data;
 
   const categoryDescriptions: Record<string, string> = {
     automation: 'Learn about automation systems, workflow integrations, and productivity tools. Discover how to build efficient automated solutions.',

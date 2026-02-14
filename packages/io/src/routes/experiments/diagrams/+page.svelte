@@ -96,20 +96,25 @@
 
   // Matrix data
   const matrixData: MatrixData = {
-    rows: ['Feature A', 'Feature B', 'Feature C'],
-    columns: ['Basic', 'Pro', 'Enterprise'],
+    rowHeaders: ['Feature A', 'Feature B', 'Feature C'],
+    columnHeaders: ['Basic', 'Pro', 'Enterprise'],
     cells: [
-      { row: 0, col: 0, value: '✓', highlight: true },
-      { row: 0, col: 1, value: '✓', highlight: true },
-      { row: 0, col: 2, value: '✓', highlight: true },
-      { row: 1, col: 0, value: '—' },
-      { row: 1, col: 1, value: '✓', highlight: true },
-      { row: 1, col: 2, value: '✓', highlight: true },
-      { row: 2, col: 0, value: '—' },
-      { row: 2, col: 1, value: '—' },
-      { row: 2, col: 2, value: '✓', highlight: true },
-    ],
-    showLabels: true,
+      [
+        { value: '✓', highlight: true },
+        { value: '✓', highlight: true },
+        { value: '✓', highlight: true }
+      ],
+      [
+        { value: '—' },
+        { value: '✓', highlight: true },
+        { value: '✓', highlight: true }
+      ],
+      [
+        { value: '—' },
+        { value: '—' },
+        { value: '✓', highlight: true }
+      ]
+    ]
   };
 
   let currentDiagram: SVGElement | null = null;

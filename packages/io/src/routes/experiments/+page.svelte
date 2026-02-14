@@ -1,9 +1,16 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { PapersGrid, SEO } from '@create-something/canon';
+	import type { Paper } from '@create-something/canon/types';
 
 	let { data }: { data: PageData } = $props();
 	const { papers } = data;
+
+	function getTestsPrinciples(experiment: unknown): string[] {
+		if (typeof experiment !== 'object' || experiment === null) return [];
+		const principles = (experiment as { tests_principles?: unknown }).tests_principles;
+		return Array.isArray(principles) ? principles.filter((p): p is string => typeof p === 'string') : [];
+	}
 
 	// Search state
 	let searchQuery = $state('');
@@ -29,11 +36,11 @@
 	function matchesMasterFilter(experiment: typeof papers[0]): boolean {
 		if (masterFilter === 'all') return true;
 
-		const principles = experiment.tests_principles || [];
+		const principles = getTestsPrinciples(experiment);
 		const prefixes = masterPrefixes[masterFilter];
 
-		return principles.some(p =>
-			prefixes.some(prefix => p.startsWith(prefix))
+		return principles.some((principle: string) =>
+			prefixes.some((prefix) => principle.startsWith(prefix))
 		);
 	}
 
@@ -58,7 +65,7 @@
 	// Combined filter, search, and sort
 	const filteredAndSortedPapers = $derived.by(() => {
 		// First filter
-		const filtered = papers.filter(p => matchesMasterFilter(p) && matchesSearch(p));
+		const filtered = papers.filter((p: typeof papers[number]) => matchesMasterFilter(p) && matchesSearch(p));
 
 		// Then sort
 		switch (sortBy) {
@@ -86,7 +93,7 @@
 			default:
 				return filtered;
 		}
-	});
+	}) as Paper[];
 
 	// Result count for display
 	const resultCount = $derived(filteredAndSortedPapers.length);

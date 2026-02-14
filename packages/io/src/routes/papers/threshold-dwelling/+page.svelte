@@ -16,10 +16,7 @@
 		LightStudy,
 		Circulation,
 		MaterialPalette,
-		DailyRhythm,
-		type Material,
-		type Activity,
-		type DailyRhythmData
+		DailyRhythm
 	} from '@create-something/canon/experiments/threshold-dwelling';
 	import type {
 		FloorPlanData,
@@ -55,6 +52,29 @@
 		zoneTransition
 	} from '$lib/types/architecture';
 	import { SEO } from '@create-something/canon';
+
+	interface Material {
+		name: string;
+		category: 'structure' | 'envelope' | 'interior' | 'exterior';
+		color: string;
+		location: string;
+		notes: string;
+	}
+
+	interface Activity {
+		name: string;
+		space: string;
+		startHour: number;
+		endHour: number;
+		person?: string;
+		intensity?: 'low' | 'medium' | 'high';
+	}
+
+	interface DailyRhythmData {
+		name: string;
+		spaces: string[];
+		activities: Activity[];
+	}
 
 	// Fullscreen state - Heidegger: tool appears only when summoned
 	type ExpandedView = 'plan' | 'section' | 'elevation' | 'site' | 'roof' | 'systems' | 'light' | 'circulation' | 'materials' | 'rhythm' | null;

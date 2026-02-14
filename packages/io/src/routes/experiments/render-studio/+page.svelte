@@ -19,6 +19,18 @@
 	let { data }: { data: PageData } = $props();
 	const { experiment } = data;
 
+	interface RenderSubmitResponse {
+		predictionId?: string;
+		output?: string;
+		error?: string;
+	}
+
+	interface RenderStatusResponse {
+		status?: string;
+		output?: string;
+		error?: string;
+	}
+
 	// SVG State
 	let originalSvg = $state('');
 	let workingSvg = $state('');
@@ -265,11 +277,11 @@
 			renderProgress = 30;
 
 			if (!response.ok) {
-				const data = await response.json();
+				const data = (await response.json()) as { error?: string };
 				throw new Error(data.error || 'Render submission failed');
 			}
 
-			const result = await response.json();
+			const result = (await response.json()) as RenderSubmitResponse;
 			renderProgress = 50;
 
 			// Poll for completion
@@ -277,7 +289,7 @@
 				await pollRenderStatus(result.predictionId);
 			} else if (result.output) {
 				// Direct result (demo mode)
-				renderedImage = result.output;
+				renderedImage = result.output ?? null;
 				renderProgress = 100;
 			}
 		} catch (e) {
@@ -300,12 +312,12 @@
 				throw new Error('Failed to check render status');
 			}
 
-			const status = await response.json();
+			const status = (await response.json()) as RenderStatusResponse;
 			renderProgress = Math.min(90, 50 + attempts * 2);
 
 			if (status.status === 'succeeded') {
 				// Output is already extracted as a string by the status endpoint
-				renderedImage = status.output;
+				renderedImage = status.output ?? null;
 				renderProgress = 100;
 				return;
 			} else if (status.status === 'failed') {

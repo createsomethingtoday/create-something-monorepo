@@ -4,7 +4,27 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 
-	let experiment: any = null;
+	interface TagRecord {
+		id: string;
+		name: string;
+		slug: string;
+	}
+
+	interface ExperimentRecord {
+		id: string;
+		slug?: string;
+		title?: string;
+		description?: string;
+		excerpt?: string;
+		content?: string;
+		category?: string;
+		featured?: boolean | number;
+		published?: boolean | number;
+		created_at?: string;
+		updated_at?: string;
+	}
+
+	let experiment: ExperimentRecord | null = null;
 	let loading = true;
 	let saving = false;
 
@@ -17,7 +37,7 @@
 	let published = true;
 
 	// Tags
-	let allTags: any[] = [];
+	let allTags: TagRecord[] = [];
 	let selectedTagIds: string[] = [];
 
 	onMount(async () => {
@@ -28,7 +48,7 @@
 		try {
 			const response = await fetch('/api/admin/tags');
 			if (response.ok) {
-				allTags = await response.json();
+				allTags = (await response.json()) as TagRecord[];
 			}
 		} catch (error) {
 			console.error('Failed to load tags:', error);
@@ -40,8 +60,8 @@
 		try {
 			const response = await fetch('/api/admin/experiments');
 			if (response.ok) {
-				const experiments = await response.json();
-				experiment = experiments.find((e: any) => e.id === $page.params.id);
+				const experiments = (await response.json()) as ExperimentRecord[];
+				experiment = experiments.find((e) => e.id === $page.params.id) ?? null;
 
 				if (experiment) {
 					title = experiment.title || '';
@@ -58,8 +78,8 @@
 						body: JSON.stringify({ paper_id: experiment.id })
 					});
 					if (tagsResponse.ok) {
-						const experimentTags = await tagsResponse.json();
-						selectedTagIds = experimentTags.map((t: any) => t.id);
+						const experimentTags = (await tagsResponse.json()) as TagRecord[];
+						selectedTagIds = experimentTags.map((t) => t.id);
 					}
 				}
 			}

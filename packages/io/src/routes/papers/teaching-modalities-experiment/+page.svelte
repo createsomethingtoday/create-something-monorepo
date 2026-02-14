@@ -20,8 +20,8 @@
 	import { Spritz } from '@create-something/spritz';
 	import { CanonReveal } from '@create-something/canon/motion';
 	import { BookOpen, Play, RotateCcw, ChevronRight, Layers, Timer, Shield, Eye, EyeOff } from 'lucide-svelte';
-	import { isDNTEnabled, SEO } from '@create-something/canon/gdpr';
-	import { SEO as SEOComponent } from '@create-something/canon';
+	import { isDNTEnabled } from '@create-something/canon/gdpr';
+	import { SEO } from '@create-something/canon';
 	import { canonRevealStyles, type CanonRevealStyle } from '$lib/animations/canon-reveals';
 
 	// ===========================================
@@ -272,7 +272,7 @@
 	}
 </script>
 
-<SEOComponent
+<SEO
 	title="Teaching Modalities Experiment"
 	description="Interactive experiment comparing Spritz, Motion Graphics, and Learn Platform for teaching CREATE SOMETHING."
 	keywords="teaching modalities, Spritz, motion graphics, learn platform, interactive learning, CREATE SOMETHING"
@@ -413,8 +413,6 @@
 					showProgress
 					showWpmControl
 					class="spritz-embed"
-					on:play={onSpritzStart}
-					on:complete={onSpritzComplete}
 				/>
 			</div>
 

@@ -3,6 +3,7 @@
 	import { ArticleHeader, ArticleContent, StickyCTA, NextExperimentCard } from "@create-something/canon/domains/io";
 	import { ShareButtons, SEO, RelatedArticles, PageActions, MarkdownPreviewModal, Footer } from "@create-something/canon";
 	import { page } from "$app/stores";
+	import type { Paper } from '@create-something/canon/types';
 	import confetti from "canvas-confetti";
 	import {
 		markExperimentCompleted,
@@ -13,10 +14,11 @@
 	import { getNextPaper } from '@create-something/canon/utils';
 
 	let { data }: { data: PageData } = $props();
+	type ExperimentPaper = Paper & { is_file_based?: boolean; tests_principles?: string[]; route?: string };
 
 	// Use $derived to ensure reactivity on client-side navigation
-	const paper = $derived(data.paper);
-	const relatedPapers = $derived(data.relatedPapers);
+	const paper = $derived(data.paper as ExperimentPaper);
+	const relatedPapers = $derived((data.relatedPapers as Paper[]) || []);
 
 	// Generate full URL for sharing (must also be derived)
 	const fullUrl = $derived(`https://createsomething.io/experiments/${paper.slug}`);
@@ -137,7 +139,7 @@ ${hasInteractive ? `
 						metadata={{
 							category: paper.category,
 							sourceUrl: fullUrl,
-							keywords: paper.focus_keywords?.split(',').map(k => k.trim())
+							keywords: paper.focus_keywords?.split(',').map((k: string) => k.trim())
 						}}
 						claudePrompt="Help me understand this experiment and how to apply it."
 						onpreview={handlePreview}

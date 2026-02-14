@@ -2,6 +2,12 @@
 	import { SEO } from '@create-something/canon';
 	import { goto } from '$app/navigation';
 
+	interface TagRecord {
+		id: string;
+		name: string;
+		slug: string;
+	}
+
 	let title = '';
 	let description = '';
 	let content = '';
@@ -10,7 +16,7 @@
 	let featured = false;
 	let published = true;
 	let selectedTagIds: string[] = [];
-	let allTags: any[] = [];
+	let allTags: TagRecord[] = [];
 	let loading = false;
 	let error = '';
 
@@ -18,7 +24,7 @@
 		try {
 			const response = await fetch('/api/admin/tags');
 			if (response.ok) {
-				allTags = await response.json();
+				allTags = (await response.json()) as TagRecord[];
 			}
 		} catch (err) {
 			console.error('Failed to load tags:', err);
@@ -64,7 +70,10 @@
 				throw new Error('Failed to create experiment');
 			}
 
-			const { id } = await createResponse.json();
+			const created = (await createResponse.json()) as { id?: string };
+			if (!created.id) {
+				throw new Error('Failed to create experiment');
+			}
 
 			// Update tags if any selected
 			if (selectedTagIds.length > 0) {
@@ -72,7 +81,7 @@
 					method: 'PATCH',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({
-						paper_id: id,
+						paper_id: created.id,
 						tag_ids: selectedTagIds
 					})
 				});

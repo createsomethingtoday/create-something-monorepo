@@ -23,11 +23,10 @@
 			});
 
 			if (response.ok) {
-				const result = await response.json();
 				// Redirect to admin dashboard
 				window.location.href = '/admin';
 			} else {
-				const result = await response.json();
+				const result = (await response.json()) as { error?: string };
 				error = result.error || 'Invalid credentials';
 			}
 		} catch (err) {

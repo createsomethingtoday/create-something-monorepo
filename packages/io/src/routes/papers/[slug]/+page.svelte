@@ -2,13 +2,14 @@
 	import type { PageData } from "./$types";
 	import { ArticleHeader, ArticleContent } from "@create-something/canon/domains/io";
 	import { ShareButtons, SEO, RelatedArticles, PageActions, MarkdownPreviewModal, Footer } from "@create-something/canon";
+	import type { Paper } from '@create-something/canon/types';
 	import { getNextPaper } from '@create-something/canon/utils';
 
 	let { data }: { data: PageData } = $props();
 
 	// Use $derived to ensure reactivity on client-side navigation
-	const paper = $derived(data.paper);
-	const relatedPapers = $derived(data.relatedPapers);
+	const paper = $derived(data.paper as unknown as Paper);
+	const relatedPapers = $derived((data.relatedPapers as Paper[]) || []);
 
 	// Generate full URL for sharing
 	const fullUrl = $derived(`https://createsomething.io/papers/${paper.slug}`);

@@ -11,19 +11,24 @@
 	import type { PageData } from './$types';
 	import { HeroSection } from '@create-something/canon/domains/io';
 	import { PapersGrid, SEO, NewsletterSignup } from '@create-something/canon';
+	import type { Paper } from '@create-something/canon/types';
 
 	let { data }: { data: PageData } = $props();
 	const { papers } = data;
 
+	function isFileBasedPaper(paper: unknown): boolean {
+		return typeof paper === 'object' && paper !== null && (paper as { is_file_based?: boolean }).is_file_based === true;
+	}
+
 	// Featured experiments sorted by newest first
 	const featuredExperiments = papers
-		.filter((p) => p.featured || p.is_file_based)
+		.filter((p) => p.featured || isFileBasedPaper(p))
 		.sort((a, b) => {
 			const aDate = new Date(a.published_at || a.created_at || 0).getTime();
 			const bDate = new Date(b.published_at || b.created_at || 0).getTime();
 			return bDate - aDate;
 		})
-		.slice(0, 6);
+		.slice(0, 6) as Paper[];
 </script>
 
 <SEO

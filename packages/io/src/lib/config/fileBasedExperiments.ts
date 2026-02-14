@@ -7,10 +7,16 @@
  */
 
 import type { FileBasedExperiment } from '@create-something/canon';
+import type { Paper } from '@create-something/canon/types';
 import { transformExperimentToPaper } from '@create-something/canon';
 
 // Re-export for consumers
 export type { FileBasedExperiment };
+export type FileBasedExperimentPaper = Paper & {
+	is_file_based?: boolean;
+	tests_principles?: string[];
+	route?: string;
+};
 
 export const fileBasedExperiments: FileBasedExperiment[] = [
 	{
@@ -837,8 +843,10 @@ export const fileBasedExperiments: FileBasedExperiment[] = [
 /**
  * Get all file-based experiments, transformed to match Paper interface
  */
-export function getFileBasedExperiments() {
-	return fileBasedExperiments.map(transformExperimentToPaper);
+export function getFileBasedExperiments(): FileBasedExperimentPaper[] {
+	return fileBasedExperiments.map((experiment) =>
+		transformExperimentToPaper(experiment) as unknown as FileBasedExperimentPaper
+	);
 }
 
 /**

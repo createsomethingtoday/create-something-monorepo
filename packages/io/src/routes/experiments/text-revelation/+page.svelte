@@ -286,7 +286,7 @@
 			{/each}
 		</div>
 		<p class="principles">
-			Tests: {experiment.tests_principles.join(', ')}
+			Tests: {experiment.tests_principles?.join(', ') ?? 'N/A'}
 		</p>
 	</footer>
 </article>

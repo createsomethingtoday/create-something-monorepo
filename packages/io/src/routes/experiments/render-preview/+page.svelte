@@ -7,6 +7,20 @@
 	let { data }: { data: PageData } = $props();
 	const { experiment } = data;
 
+	interface RenderSubmitResponse {
+		demo?: boolean;
+		output?: string;
+		status?: string;
+		predictionId?: string;
+		error?: string;
+	}
+
+	interface RenderStatusResponse {
+		status?: string;
+		output?: string;
+		error?: string;
+	}
+
 	// State
 	let svgContent = $state('');
 	let canonSvg = $state('');
@@ -199,13 +213,13 @@
 				throw new Error(`Failed to submit render request: ${response.status}`);
 			}
 
-			const result = await response.json();
+			const result = (await response.json()) as RenderSubmitResponse;
 			renderProgress = 20;
 
 			// Check if demo mode
 			if (result.demo) {
 				isDemoMode = true;
-				renderResult = result.output;
+				renderResult = result.output ?? null;
 				renderProgress = 100;
 				renderDuration = Math.round((Date.now() - renderStartTime) / 1000);
 				return;
@@ -215,7 +229,7 @@
 
 			// If already succeeded
 			if (result.status === 'succeeded' && result.output) {
-				renderResult = result.output;
+				renderResult = result.output ?? null;
 				renderProgress = 100;
 				renderDuration = Math.round((Date.now() - renderStartTime) / 1000);
 				return;
@@ -248,11 +262,11 @@
 				throw new Error(`Failed to check render status: ${response.status}`);
 			}
 
-			const status = await response.json();
+			const status = (await response.json()) as RenderStatusResponse;
 			renderProgress = Math.min(20 + attempts * 1.3, 95);
 
 			if (status.status === 'succeeded') {
-				renderResult = status.output;
+				renderResult = status.output ?? null;
 				renderProgress = 100;
 				renderDuration = Math.round((Date.now() - renderStartTime) / 1000);
 				return;

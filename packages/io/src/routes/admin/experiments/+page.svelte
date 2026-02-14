@@ -40,7 +40,7 @@
 			});
 
 			if (response.ok) {
-				const result = await response.json();
+				const result = (await response.json()) as { message?: string };
 				alert(result.message);
 				await loadExperiments();
 			} else {

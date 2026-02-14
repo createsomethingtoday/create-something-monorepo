@@ -33,16 +33,38 @@
 		status: string;
 	}
 
-	interface ContactWithDraft {
-		contact: ContactSubmission;
-		draft?: Draft;
-		escalation?: any;
-	}
+interface ContactWithDraft {
+	contact: ContactSubmission;
+	draft?: Draft;
+	escalation?: any;
+}
+
+interface AgentReviewsResponse {
+	success: boolean;
+	contacts?: ContactWithDraft[];
+	error?: string;
+}
+
+interface AgentMetrics {
+	approval_rate: number;
+	total_decisions: number;
+	escalation_rate: number;
+}
+
+interface AgentMetricsResponse {
+	success: boolean;
+	metrics?: AgentMetrics;
+}
+
+interface AgentActionResponse {
+	success: boolean;
+	error?: string;
+}
 
 	let contacts: ContactWithDraft[] = [];
 	let loading = true;
 	let error = '';
-	let metrics = {
+	let metrics: AgentMetrics = {
 		approval_rate: 0,
 		total_decisions: 0,
 		escalation_rate: 0
@@ -60,10 +82,10 @@
 		try {
 			// Get all contacts that need review (in_progress or escalated)
 			const response = await fetch('/api/admin/agent-reviews');
-			const data = await response.json();
+			const data = (await response.json()) as AgentReviewsResponse;
 
 			if (data.success) {
-				contacts = data.contacts;
+				contacts = data.contacts ?? [];
 			} else {
 				error = data.error || 'Failed to load reviews';
 			}
@@ -77,9 +99,9 @@
 	async function loadMetrics() {
 		try {
 			const response = await fetch('/api/admin/agent-metrics');
-			const data = await response.json();
+			const data = (await response.json()) as AgentMetricsResponse;
 
-			if (data.success) {
+			if (data.success && data.metrics) {
 				metrics = data.metrics;
 			}
 		} catch (err) {
@@ -99,7 +121,7 @@
 				})
 			});
 
-			const data = await response.json();
+			const data = (await response.json()) as AgentActionResponse;
 
 			if (data.success) {
 				alert('Draft approved! Remember to actually send the email.');
@@ -125,7 +147,7 @@
 				})
 			});
 
-			const data = await response.json();
+			const data = (await response.json()) as AgentActionResponse;
 
 			if (data.success) {
 				alert('Draft rejected. You can manually respond to this contact.');
@@ -150,7 +172,7 @@
 				body: JSON.stringify({ action: 'triage' })
 			});
 
-			const data = await response.json();
+			const data = (await response.json()) as AgentActionResponse;
 
 			if (data.success) {
 				alert('Triage completed! Check results below.');
