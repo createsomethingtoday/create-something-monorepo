@@ -9,6 +9,7 @@
 
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { getAirtableClient } from '$lib/server/airtable';
 
 export interface AnalyticsSnapshot {
 	captured_at: string;
@@ -35,7 +36,18 @@ export const GET: RequestHandler = async ({ params, url, locals, platform }) => 
 		throw error(400, 'Asset ID required');
 	}
 
-	const db = platform?.env?.DB;
+	if (!platform?.env) {
+		throw error(500, 'Platform environment not available');
+	}
+
+	// Enforce ownership before exposing per-asset analytics history
+	const airtable = getAirtableClient(platform.env);
+	const isOwner = await airtable.verifyAssetOwnership(id, locals.user.email);
+	if (!isOwner) {
+		throw error(403, 'You do not have permission to view this asset');
+	}
+
+	const db = platform.env.DB;
 	if (!db) {
 		// Return empty history if DB not configured (graceful degradation)
 		return json({

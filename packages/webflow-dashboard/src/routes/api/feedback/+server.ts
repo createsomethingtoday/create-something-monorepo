@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { hasAdminAccess } from '$lib/server/security';
 
 export const POST: RequestHandler = async ({ request, platform, locals }) => {
 	if (!locals.user) {
@@ -52,6 +53,15 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 export const GET: RequestHandler = async ({ platform, locals, url }) => {
 	if (!locals.user) {
 		return json({ error: 'Unauthorized' }, { status: 401 });
+	}
+
+	if (
+		!hasAdminAccess(locals.user.email, {
+			adminEmailsCsv: platform?.env?.ADMIN_EMAILS,
+			environment: platform?.env?.ENVIRONMENT
+		})
+	) {
+		return json({ error: 'Forbidden' }, { status: 403 });
 	}
 
 	const db = platform?.env?.DB;

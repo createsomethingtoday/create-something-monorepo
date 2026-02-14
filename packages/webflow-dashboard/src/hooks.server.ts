@@ -1,5 +1,6 @@
 import type { Handle } from '@sveltejs/kit';
 import { getSession } from '$lib/server/kv';
+import { isTrustedRequestOrigin } from '$lib/server/security';
 
 // No-cache headers for API responses to prevent browser caching issues
 const noCacheHeaders = {
@@ -26,6 +27,29 @@ export const handle: Handle = async ({ event, resolve }) => {
 			}
 		} catch (error) {
 			console.error('Session validation error in hooks:', error);
+		}
+	}
+
+	// CSRF/origin protection for cookie-authenticated API mutations.
+	// SameSite=None is required for Webflow iframe embedding, so we enforce
+	// trusted request origins server-side before state-changing API calls.
+	const isMutatingMethod = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(event.request.method);
+	const isApiRoute = event.url.pathname.startsWith('/api/');
+	const isCronRoute = event.url.pathname.startsWith('/api/cron/');
+	const hasSessionCookie = Boolean(sessionToken);
+
+	if (isMutatingMethod && isApiRoute && !isCronRoute && hasSessionCookie) {
+		const isTrusted = isTrustedRequestOrigin(
+			event.request,
+			event.url.origin,
+			event.platform?.env.CSRF_TRUSTED_ORIGINS
+		);
+
+		if (!isTrusted) {
+			return new Response(JSON.stringify({ error: 'Forbidden', message: 'Invalid request origin' }), {
+				status: 403,
+				headers: noCacheHeaders
+			});
 		}
 	}
 

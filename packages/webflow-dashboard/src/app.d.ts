@@ -11,6 +11,9 @@ declare global {
 				AIRTABLE_BASE_ID: string;
 				RESEND_API_KEY: string;
 				CRON_SECRET?: string;
+				ADMIN_EMAILS?: string;
+				CSRF_TRUSTED_ORIGINS?: string;
+				ENVIRONMENT?: string;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;

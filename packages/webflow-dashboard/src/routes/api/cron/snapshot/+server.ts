@@ -6,26 +6,26 @@
  * 
  * Schedule: Run daily at midnight UTC via Cloudflare Cron Trigger
  * Trigger URL: /api/cron/snapshot
- * 
- * Can also be triggered manually with CRON_SECRET for testing:
+ *
+ * Trigger with CRON_SECRET:
  * curl -H "Authorization: Bearer YOUR_CRON_SECRET" https://webflow-dashboard.pages.dev/api/cron/snapshot
  */
 
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient } from '$lib/server/airtable';
+import { isAuthorizedCronRequest } from '$lib/server/security';
 
 export const GET: RequestHandler = async ({ request, platform }) => {
-	// Verify cron secret for manual triggers (Cloudflare cron bypasses this)
-	const authHeader = request.headers.get('Authorization');
-	const cronSecret = platform?.env?.CRON_SECRET;
-	
-	// Allow if: no secret configured, or valid bearer token, or Cloudflare cron (no auth header needed)
-	const isCloudfareCron = request.headers.get('CF-Worker') !== null;
-	if (cronSecret && !isCloudfareCron) {
-		if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
-			throw error(401, 'Unauthorized');
-		}
+	// Require explicit authorization in production to avoid spoofable-header bypasses.
+	if (
+		!isAuthorizedCronRequest(
+			request,
+			platform?.env?.CRON_SECRET,
+			platform?.env?.ENVIRONMENT
+		)
+	) {
+		throw error(401, 'Unauthorized');
 	}
 
 	const db = platform?.env?.DB;

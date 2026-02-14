@@ -4,10 +4,11 @@
  * Deletes R2 images older than 24 hours.
  * Triggered by Cloudflare cron: "0 0 * * *" (daily at midnight UTC)
  *
- * Security: Only accepts requests from Cloudflare's cron or with valid secret.
+ * Security: Requires CRON_SECRET in production (Authorization: Bearer or x-cron-secret).
  */
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { isAuthorizedCronRequest } from '$lib/server/security';
 
 interface R2Object {
 	key: string;
@@ -18,15 +19,13 @@ interface R2Object {
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 export const GET: RequestHandler = async ({ platform, request }) => {
-	// Verify cron trigger or secret header
-	const isCronTrigger = request.headers.get('cf-cron') === 'true';
-	const cronSecret = request.headers.get('x-cron-secret');
-	const envSecret = platform?.env?.CRON_SECRET;
-
-	// Allow if: cron trigger, matching secret, or no secret configured (dev)
-	const isAuthorized = isCronTrigger || (envSecret && cronSecret === envSecret) || !envSecret;
-
-	if (!isAuthorized) {
+	if (
+		!isAuthorizedCronRequest(
+			request,
+			platform?.env?.CRON_SECRET,
+			platform?.env?.ENVIRONMENT
+		)
+	) {
 		throw error(401, 'Unauthorized');
 	}
 
