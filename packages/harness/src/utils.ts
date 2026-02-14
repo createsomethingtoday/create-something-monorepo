@@ -2,8 +2,14 @@
  * @create-something/harness
  *
  * Shared utilities for spec parsing.
- * Re-exports common utilities from @create-something/canon.
  */
 
-// Re-export slugify from shared components
-export { slugify } from '@create-something/canon';
+/**
+ * Convert a string to a URL-safe slug.
+ */
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}

@@ -4,7 +4,7 @@
  * Queries agentic_sessions, agentic_iterations, and agentic_events tables
  * in io's D1 database (create-something-db).
  *
- * All timestamps are Unix integers (seconds since epoch).
+ * Supports mixed Unix timestamp units (seconds and milliseconds).
  */
 
 import { json } from '@sveltejs/kit';
@@ -57,6 +57,17 @@ interface ObservabilityData {
 const DEFAULT_DAYS = 7;
 const MAX_DAYS = 90;
 const RECENT_ACTIVITY_LIMIT = 20;
+const TIMESTAMP_MILLISECONDS_THRESHOLD = 10_000_000_000;
+
+function toUnixSecondsSql(column: string): string {
+	return `CASE WHEN ${column} > ${TIMESTAMP_MILLISECONDS_THRESHOLD} THEN ${column} / 1000.0 ELSE ${column} END`;
+}
+
+function normalizeUnixTimestampToMillis(value: unknown): number {
+	const parsed = toSafeNumber(value);
+	if (parsed <= 0) return 0;
+	return parsed > TIMESTAMP_MILLISECONDS_THRESHOLD ? parsed : parsed * 1000;
+}
 
 function toSafeNumber(value: unknown): number {
 	if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -137,21 +148,22 @@ async function getTaskSummary(db: D1Database | undefined, days: number): Promise
 
 	try {
 		const cutoff = Math.floor(Date.now() / 1000) - days * 86400;
+		const startedAtSeconds = toUnixSecondsSql('started_at');
 		const result = await db
 			.prepare(
 				`
-			SELECT
-				SUM(CASE WHEN status IN ('pending', 'queued') THEN 1 ELSE 0 END) as ready,
+				SELECT
+					SUM(CASE WHEN status IN ('pending', 'queued') THEN 1 ELSE 0 END) as ready,
 				SUM(CASE WHEN status = 'running' THEN 1 ELSE 0 END) as claimed,
 				SUM(CASE WHEN status IN ('blocked', 'paused') THEN 1 ELSE 0 END) as blocked,
-				SUM(CASE WHEN status = 'complete' THEN 1 ELSE 0 END) as done,
-				SUM(CASE WHEN status IN ('error', 'budget_exhausted', 'cancelled') THEN 1 ELSE 0 END) as cancelled,
-				COALESCE(SUM(cost_consumed), 0) as totalCost
-			FROM agentic_sessions
-			WHERE started_at >= ?
-		`
-			)
-			.bind(cutoff)
+					SUM(CASE WHEN status = 'complete' THEN 1 ELSE 0 END) as done,
+					SUM(CASE WHEN status IN ('error', 'budget_exhausted', 'cancelled') THEN 1 ELSE 0 END) as cancelled,
+					COALESCE(SUM(cost_consumed), 0) as totalCost
+				FROM agentic_sessions
+				WHERE ${startedAtSeconds} >= ?
+			`
+				)
+				.bind(cutoff)
 			.first<{
 				ready: number | string | null;
 				claimed: number | string | null;
@@ -183,20 +195,22 @@ async function getAgentSummary(
 
 	try {
 		const cutoff = Math.floor(Date.now() / 1000) - days * 86400;
+		const startedAtSeconds = toUnixSecondsSql('started_at');
+		const completedAtSeconds = toUnixSecondsSql('completed_at');
 		const result = await db
 			.prepare(
 				`
-			SELECT
-				COUNT(*) as executions,
-				SUM(CASE WHEN status = 'complete' THEN 1 ELSE 0 END) as successfulExecutions,
-				SUM(CASE WHEN status IN ('complete', 'error', 'budget_exhausted', 'cancelled') THEN 1 ELSE 0 END) as terminalExecutions,
-				AVG(CASE WHEN completed_at IS NOT NULL THEN completed_at - started_at END) as avgDuration,
-				COALESCE(SUM(cost_consumed), 0) as totalCost
-			FROM agentic_sessions
-			WHERE started_at >= ?
-		`
-			)
-			.bind(cutoff)
+				SELECT
+					COUNT(*) as executions,
+					SUM(CASE WHEN status = 'complete' THEN 1 ELSE 0 END) as successfulExecutions,
+					SUM(CASE WHEN status IN ('complete', 'error', 'budget_exhausted', 'cancelled') THEN 1 ELSE 0 END) as terminalExecutions,
+					AVG(CASE WHEN completed_at IS NOT NULL THEN ${completedAtSeconds} - ${startedAtSeconds} END) as avgDuration,
+					COALESCE(SUM(cost_consumed), 0) as totalCost
+				FROM agentic_sessions
+				WHERE ${startedAtSeconds} >= ?
+			`
+				)
+				.bind(cutoff)
 			.first<{
 				executions: number | string | null;
 				successfulExecutions: number | string | null;
@@ -244,18 +258,19 @@ async function getTraceSummary(
 
 	try {
 		const cutoff = Math.floor(Date.now() / 1000) - days * 86400;
+		const createdAtSeconds = toUnixSecondsSql('created_at');
 
 		const [iterationTotals, errorTotals, toolResults, eventBreakdown] = await Promise.all([
 			db
 				.prepare(
 					`
-				SELECT
-					COUNT(*) as total,
-					AVG(COALESCE(input_tokens + output_tokens, 0)) as avgTokens
-				FROM agentic_iterations
-				WHERE created_at >= ?
-			`
-				)
+					SELECT
+						COUNT(*) as total,
+						AVG(COALESCE(input_tokens + output_tokens, 0)) as avgTokens
+					FROM agentic_iterations
+					WHERE ${createdAtSeconds} >= ?
+				`
+					)
 				.bind(cutoff)
 				.first<{
 					total: number | string | null;
@@ -264,22 +279,22 @@ async function getTraceSummary(
 			db
 				.prepare(
 					`
-				SELECT COUNT(*) as errors
-				FROM agentic_events
-				WHERE event_type IN ('quality_gate_failed', 'budget_exhausted', 'completion_rejected', 'session_error')
-				AND created_at >= ?
-			`
-				)
+					SELECT COUNT(*) as errors
+					FROM agentic_events
+					WHERE event_type IN ('quality_gate_failed', 'budget_exhausted', 'completion_rejected', 'session_error')
+					AND ${createdAtSeconds} >= ?
+				`
+					)
 				.bind(cutoff)
 				.first<{ errors: number | string | null }>(),
 			db
 				.prepare(
 					`
-				SELECT tools_used, COUNT(*) as count
-				FROM agentic_iterations
-				WHERE created_at >= ?
-				AND tools_used IS NOT NULL
-				AND trim(tools_used) != ''
+					SELECT tools_used, COUNT(*) as count
+					FROM agentic_iterations
+					WHERE ${createdAtSeconds} >= ?
+					AND tools_used IS NOT NULL
+					AND trim(tools_used) != ''
 				GROUP BY tools_used
 				ORDER BY count DESC
 				LIMIT 50
@@ -290,11 +305,11 @@ async function getTraceSummary(
 			db
 				.prepare(
 					`
-				SELECT event_type, COUNT(*) as count
-				FROM agentic_events
-				WHERE created_at >= ?
-				GROUP BY event_type
-				ORDER BY count DESC
+					SELECT event_type, COUNT(*) as count
+					FROM agentic_events
+					WHERE ${createdAtSeconds} >= ?
+					GROUP BY event_type
+					ORDER BY count DESC
 				LIMIT 10
 			`
 				)
@@ -340,21 +355,23 @@ async function getRecentActivity(db: D1Database | undefined, days: number, limit
 
 	try {
 		const cutoff = Math.floor(Date.now() / 1000) - days * 86400;
+		const startedAtSeconds = toUnixSecondsSql('started_at');
+		const createdAtSeconds = toUnixSecondsSql('created_at');
 		const [sessions, events] = await Promise.all([
 			db
 				.prepare(
 					`
 				SELECT
 					id,
-					status,
-					cost_consumed,
-					started_at
-				FROM agentic_sessions
-				WHERE started_at >= ?
-				ORDER BY started_at DESC
-				LIMIT ?
-			`
-				)
+						status,
+						cost_consumed,
+						started_at
+					FROM agentic_sessions
+					WHERE ${startedAtSeconds} >= ?
+					ORDER BY ${startedAtSeconds} DESC
+					LIMIT ?
+				`
+					)
 				.bind(cutoff, limit)
 				.all<{
 					id: string;
@@ -367,39 +384,39 @@ async function getRecentActivity(db: D1Database | undefined, days: number, limit
 					`
 				SELECT
 					id,
-					event_type,
-					created_at
-				FROM agentic_events
-				WHERE created_at >= ?
-				ORDER BY created_at DESC
-				LIMIT ?
-			`
-				)
+						event_type,
+						created_at
+					FROM agentic_events
+					WHERE ${createdAtSeconds} >= ?
+					ORDER BY ${createdAtSeconds} DESC
+					LIMIT ?
+				`
+					)
 				.bind(cutoff, limit)
 				.all<{
 					id: number | string;
 					event_type: string;
 					created_at: number | string;
 				}>()
-		]);
+			]);
 
-		for (const session of sessions.results ?? []) {
-			const timestamp = toSafeNumber(session.started_at) * 1000;
-			activity.push({
-				id: session.id,
-				type: 'session',
+			for (const session of sessions.results ?? []) {
+				const timestamp = normalizeUnixTimestampToMillis(session.started_at);
+				activity.push({
+					id: session.id,
+					type: 'session',
 				name: `Session ${session.id.slice(0, 8)}`,
 				status: session.status || 'unknown',
 				timestamp: new Date(timestamp).toISOString(),
 				cost: toSafeNumber(session.cost_consumed)
 			});
-		}
+			}
 
-		for (const event of events.results ?? []) {
-			const timestamp = toSafeNumber(event.created_at) * 1000;
-			const isErrorEvent =
-				event.event_type.includes('error') ||
-				event.event_type.includes('failed') ||
+			for (const event of events.results ?? []) {
+				const timestamp = normalizeUnixTimestampToMillis(event.created_at);
+				const isErrorEvent =
+					event.event_type.includes('error') ||
+					event.event_type.includes('failed') ||
 				event.event_type.includes('exhausted');
 			activity.push({
 				id: `event-${event.id}`,
@@ -425,17 +442,18 @@ async function getCostTrend(db: D1Database | undefined, days: number) {
 
 	try {
 		const cutoff = Math.floor(Date.now() / 1000) - days * 86400;
+		const createdAtSeconds = toUnixSecondsSql('created_at');
 		const results = await db
 			.prepare(
 				`
-			SELECT
-				date(created_at, 'unixepoch') as date,
-				COALESCE(SUM(cost), 0) as cost
-			FROM agentic_iterations
-			WHERE created_at >= ?
-			GROUP BY date(created_at, 'unixepoch')
-			ORDER BY date ASC
-		`
+				SELECT
+					date(${createdAtSeconds}, 'unixepoch') as date,
+					COALESCE(SUM(cost), 0) as cost
+				FROM agentic_iterations
+				WHERE ${createdAtSeconds} >= ?
+				GROUP BY date(${createdAtSeconds}, 'unixepoch')
+				ORDER BY date ASC
+			`
 			)
 			.bind(cutoff)
 			.all<{ date: string; cost: number | string | null }>();
