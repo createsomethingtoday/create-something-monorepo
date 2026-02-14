@@ -1,0 +1,22 @@
+{
+  "name": "@create-something/gmail-notion-mcp",
+  "version": "0.1.0",
+  "description": "Gmail to Notion MCP (Composio-backed). Tools, prompts, and resources for flexible email-to-Notion workflows.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "typecheck": "pnpm --dir worker exec tsc --noEmit",
+    "check": "pnpm typecheck",
+    "dev": "pnpm --dir worker dev",
+    "deploy": "pnpm --dir worker deploy"
+  },
+  "keywords": [
+    "mcp",
+    "gmail",
+    "notion",
+    "composio",
+    "model-context-protocol"
+  ],
+  "author": "CREATE SOMETHING",
+  "license": "MIT"
+}

@@ -1,0 +1,23 @@
+{
+  "name": "gmail-notion-mcp-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply gmail-notion-mcp-runs --remote",
+    "db:migrate:local": "wrangler d1 migrations apply gmail-notion-mcp-runs --local"
+  },
+  "dependencies": {
+    "@create-something/composio-bridge": "workspace:*",
+    "@create-something/mcp-core": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.25.2",
+    "agents": "^0.3.10",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260205.0",
+    "typescript": "^5.3.0",
+    "wrangler": "^4.62.0"
+  }
+}

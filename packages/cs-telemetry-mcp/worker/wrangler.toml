@@ -1,0 +1,23 @@
+name = "cs-telemetry-mcp"
+main = "index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[observability]
+enabled = true
+
+# Durable Object for MCP sessions
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "CSTelemetryMCP"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["CSTelemetryMCP"]
+
+# Shared telemetry database (all CS-account MCPs write here)
+[[d1_databases]]
+binding = "DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"

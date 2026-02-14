@@ -1,0 +1,33 @@
+name = "gmail-notion-mcp"
+main = "index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Optional: set account_id and routes for production
+# account_id = "..."
+# [[routes]]
+# pattern = "gmail-notion.mcp.example.com"
+# custom_domain = true
+
+[observability]
+enabled = true
+
+# D1 for run metering (100 free runs, then 1¢/run). Create DB: wrangler d1 create gmail-notion-mcp-runs
+[[d1_databases]]
+binding = "RUNS_DB"
+database_name = "gmail-notion-mcp-runs"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "GmailNotionMCP"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["GmailNotionMCP"]
+
+# Secrets (set via wrangler secret put):
+# COMPOSIO_API_KEY — required for Composio tools
+# COMPOSIO_GMAIL_AUTH_CONFIG_ID — optional; for gmail_get_connect_link
+# COMPOSIO_NOTION_AUTH_CONFIG_ID — optional; for notion_get_connect_link

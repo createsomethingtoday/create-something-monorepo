@@ -1,0 +1,38 @@
+# Composio patterns (global)
+
+When to use Composio for app connectivity, how we wrap it, and where the SDK surfaces fit. For package-level API details see `packages/composio-bridge/` and [DOCS_REFERENCE.md](packages/composio-bridge/DOCS_REFERENCE.md). For evaluation see [internal/COMPOSIO_EVALUATION.md](internal/COMPOSIO_EVALUATION.md).
+
+## When to use Composio vs custom
+
+| Use Composio | Use custom |
+|--------------|------------|
+| Commodity app connectivity (Gmail, Notion, Slack, HubSpot, etc.) | Deep or client-specific integrations (e.g. Half Dozen Gmail Sync: custom OAuth, Notion schema, automations) |
+| You want managed auth (OAuth, connect links) and standard CRUD tools | You need full control over tokens, lifecycle, or an app not on Composio |
+| New MCP for "most users" or multi-tenant with generic app actions | Single-client MCP with fixed schema and custom workflows |
+
+**Default**: For new MCPs that need "connect to Gmail/Notion/Slack/…", consider Composio first via `@create-something/composio-bridge`. Use custom when the integration is strategic or client-specific.
+
+## Wrap pattern
+
+Clients see a CREATE SOMETHING MCP server; Composio is plumbing. We do not expose Composio as a product name.
+
+- **Bridge**: `packages/composio-bridge` — `ComposioToolFactory` fetches tool definitions from Composio and registers them as MCP tools; `ComposioClient.executeTool()` delegates execution. Supports both `ScopedMcpServer` (with AccountContext) and raw `McpServer` via `registerToolsOnMcpServer(server, entityId)`.
+- **Example in repo**: [packages/halfdozen-zoom-sync](packages/halfdozen-zoom-sync) — Zoom Clips are custom (Steel.dev); Zoom API tools (meetings, recordings) are optional and come from Composio via the bridge. See worker `index.ts` (ComposioToolFactory + registerToolsOnMcpServer) and [src/tools/zoom-api-auth.ts](packages/halfdozen-zoom-sync/src/tools/zoom-api-auth.ts) for connect-link flow.
+
+## SDK surfaces (reference)
+
+| Surface | Purpose | Our usage |
+|---------|---------|-----------|
+| **Tools** | Discovery (`getRawComposioTools`, `getRawComposioToolBySlug`), execution (`execute`), custom tools (`createCustomTool`) | Bridge uses getRawComposioTools + execute. Custom tools can extend value-add; execute() dispatches by slug. |
+| **Toolkits** | `authorize(userId, toolkitSlug, authConfigId?)` for connect links; `get(slug)`, `listCategories()` for metadata | Use for programmatic "Connect Gmail/Notion" flows and optional resources. |
+| **AuthConfigs** | create, list, get, update, disable, delete auth configs per toolkit | When you need an `authConfigId` for authorize() or for Composio-hosted MCP configs. |
+| **MCP** | `create(name, mcpConfig)` (toolkits + allowedTools + authConfigIds), `generate(userId, mcpConfigId)` for per-user MCP URLs | Optional: Composio can host the MCP endpoint (tools-only; no prompts/resources). We usually run our own server for full value-add. |
+
+Official reference: [Composio TypeScript SDK](https://docs.composio.dev/reference/sdk-reference/typescript).
+
+## Related
+
+- **CLAUDE.md** — Architecture § Integration connectivity (Composio)
+- **AGENTS.md** — Framework alignment § Integration connectivity
+- **packages/composio-bridge/** — Implementation and DOCS_REFERENCE
+- **docs/internal/COMPOSIO_EVALUATION.md** — Vendor evaluation and wrap-pattern rationale
