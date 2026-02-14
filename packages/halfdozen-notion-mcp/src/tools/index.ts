@@ -11,6 +11,7 @@ import {
   notionGetDatabaseSchema,
   notionQueryDatabaseSchema,
   notionGetPageSchema,
+  notionListBlockChildrenSchema,
   notionCreatePageSchema,
   notionUpdatePageSchema,
   notionAppendBlocksSchema,
@@ -27,6 +28,7 @@ import {
   handleNotionGetDatabase,
   handleNotionQueryDatabase,
   handleNotionGetPage,
+  handleNotionListBlockChildren,
   handleNotionCreatePage,
   handleNotionUpdatePage,
   handleNotionAppendBlocks,
@@ -50,9 +52,9 @@ export function registerNotionTools(server: McpServer, clients: NotionClients): 
 
   server.tool(
     'notion_list_databases',
-    `List all data sources the integration can access (Notion API 2025-09-03). Returns data_sources with id, title, url. ${WORKSPACE_HINT}`,
+    `List data sources the integration can access (Notion API 2025-09-03). Supports pagination via page_size/start_cursor and returns has_more/next_cursor. ${WORKSPACE_HINT}`,
     notionListDatabasesSchema.shape,
-    (params) => handleNotionListDatabases(clients, params as { workspace: 'halfdozen' | 'client' })
+    (params) => handleNotionListDatabases(clients, params as Parameters<typeof handleNotionListDatabases>[1])
   );
 
   server.tool(
@@ -74,6 +76,13 @@ export function registerNotionTools(server: McpServer, clients: NotionClients): 
     `Get a page by ID (properties and metadata). ${WORKSPACE_HINT}`,
     notionGetPageSchema.shape,
     (params) => handleNotionGetPage(clients, params as { workspace: 'halfdozen' | 'client'; page_id: string })
+  );
+
+  server.tool(
+    'notion_list_block_children',
+    `List child blocks for a page/block (read page body content). Supports pagination via page_size/start_cursor. ${WORKSPACE_HINT}`,
+    notionListBlockChildrenSchema.shape,
+    (params) => handleNotionListBlockChildren(clients, params as Parameters<typeof handleNotionListBlockChildren>[1])
   );
 
   server.tool(

@@ -8,7 +8,9 @@ import type { NotionClients } from '../lib/notion.js';
 import { getClient } from '../lib/notion.js';
 import type {
   NotionSearchInput,
+  NotionListDatabasesInput,
   NotionQueryDatabaseInput,
+  NotionListBlockChildrenInput,
   NotionCreatePageInput,
   NotionUpdatePageInput,
   NotionAppendBlocksInput,
@@ -45,12 +47,13 @@ export async function handleNotionSearch(
 // -----------------------------------------------------------------------------
 export async function handleNotionListDatabases(
   clients: NotionClients,
-  params: { workspace: 'halfdozen' | 'client' }
+  params: NotionListDatabasesInput
 ): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
   const client = getClient(clients, params.workspace) as Client;
   const result = await client.search({
     filter: { property: 'object', value: 'data_source' },
-    page_size: 100,
+    page_size: params.page_size ?? 100,
+    ...(params.start_cursor ? { start_cursor: params.start_cursor } : {}),
   });
   const list = result.results
     .filter((r) => (r as { object?: string }).object === 'data_source')
@@ -63,7 +66,7 @@ export async function handleNotionListDatabases(
       };
     });
   return {
-    content: [{ type: 'text', text: JSON.stringify({ data_sources: list }, null, 2) }],
+    content: [{ type: 'text', text: JSON.stringify({ data_sources: list, has_more: result.has_more, next_cursor: result.next_cursor }, null, 2) }],
   };
 }
 
@@ -121,6 +124,24 @@ export async function handleNotionGetPage(
   const page = await client.pages.retrieve({ page_id: params.page_id });
   return {
     content: [{ type: 'text', text: JSON.stringify(page, null, 2) }],
+  };
+}
+
+// -----------------------------------------------------------------------------
+// List block children (page body/content blocks)
+// -----------------------------------------------------------------------------
+export async function handleNotionListBlockChildren(
+  clients: NotionClients,
+  params: NotionListBlockChildrenInput
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  const client = getClient(clients, params.workspace) as Client;
+  const result = await client.blocks.children.list({
+    block_id: params.block_id,
+    page_size: params.page_size ?? 100,
+    ...(params.start_cursor ? { start_cursor: params.start_cursor } : {}),
+  });
+  return {
+    content: [{ type: 'text', text: JSON.stringify({ results: result.results, has_more: result.has_more, next_cursor: result.next_cursor }, null, 2) }],
   };
 }
 

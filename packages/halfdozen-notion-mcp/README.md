@@ -92,13 +92,14 @@ This MCP uses **Notion API version 2025-09-03** and **@notionhq/client v5**. The
 
 ## Tools
 
-This MCP exposes **12 tools** (search, list databases, get/query database, get/create/update page, append blocks, archive page/block, bulk update/archive). All accept `workspace: "halfdozen" | "client"`. The root endpoint `GET /` and the `notion://tools` resource return the full list so clients can verify they see all tools.
+This MCP exposes a full Notion toolset (search, list/get/query data sources, read/create/update pages, list/append/archive blocks, bulk update/archive, create/update databases). All accept `workspace: "halfdozen" | "client"`. The root endpoint `GET /` and the `notion://tools` resource return the full list so clients can verify they see all tools.
 
 - `notion_search` — Search workspace (pages or data sources). `filter_type`: `page` or `data_source`.
-- `notion_list_databases` — List data sources the integration can access (returns `data_sources` with id, title, url).
+- `notion_list_databases` — List data sources the integration can access. Supports pagination with `page_size` and `start_cursor`; returns `data_sources`, `has_more`, and `next_cursor`.
 - `notion_get_database` — Get data source schema (property names and types). Use `data_source_id`. Call first before query/update/create.
 - `notion_query_database` — Query a data source with filter/sort. Use `data_source_id`.
 - `notion_get_page` — Get a page by ID.
+- `notion_list_block_children` — List child blocks for a page/block (read page body content). Supports pagination with `page_size` and `start_cursor`.
 - `notion_create_page` — Create a page in a data source. Use `data_source_id` in parent.
 - `notion_update_page` — Update page properties.
 - `notion_append_blocks` — Append blocks to a page.
@@ -106,11 +107,13 @@ This MCP exposes **12 tools** (search, list databases, get/query database, get/c
 - `notion_archive_block` — Archive a block (move to trash). Use to revert appended content; `block_id` from append results or block children.
 - `notion_bulk_update` — Update multiple pages with the same properties.
 - `notion_bulk_archive` — Archive multiple pages.
+- `notion_create_database` — Create a database under a page with initial property schema.
+- `notion_update_database` — Update database title/description and/or data source property schema.
 
 ## Resources
 
 - `notion://workspaces` — Lists the two workspaces with labels (Half Dozen vs Client) for context.
-- `notion://tools` — Lists all 12 Notion tools this MCP exposes. If your client only shows one tool, read this resource or `GET /` to see the full list; reconnect MCP or use a client that lists all tools (e.g. Cursor).
+- `notion://tools` — Lists all Notion tools this MCP exposes. If your client only shows one tool, read this resource or `GET /` to see the full list; reconnect MCP or use a client that lists all tools (e.g. Cursor).
 
 ## Prompt
 

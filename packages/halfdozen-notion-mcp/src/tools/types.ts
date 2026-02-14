@@ -11,6 +11,12 @@ export interface NotionSearchInput {
   page_size?: number;
 }
 
+export interface NotionListDatabasesInput {
+  workspace: Workspace;
+  page_size?: number;
+  start_cursor?: string;
+}
+
 export interface NotionQueryDatabaseInput {
   workspace: Workspace;
   data_source_id: string;
@@ -26,6 +32,13 @@ export interface NotionCreatePageInput {
   data_source_id: string;
   properties: Record<string, unknown>;
   content?: Array<Record<string, unknown>>;
+}
+
+export interface NotionListBlockChildrenInput {
+  workspace: Workspace;
+  block_id: string;
+  page_size?: number;
+  start_cursor?: string;
 }
 
 export interface NotionUpdatePageInput {

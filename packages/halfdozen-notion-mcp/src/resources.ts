@@ -13,6 +13,7 @@ export const NOTION_TOOLS = [
   { name: 'notion_get_database', description: 'Get data source schema (property names and types)' },
   { name: 'notion_query_database', description: 'Query a data source with filter/sort' },
   { name: 'notion_get_page', description: 'Get a page by ID' },
+  { name: 'notion_list_block_children', description: 'List child blocks for a page or block' },
   { name: 'notion_create_page', description: 'Create a new page in a data source' },
   { name: 'notion_update_page', description: "Update a page's properties" },
   { name: 'notion_append_blocks', description: 'Append blocks to a page' },
@@ -40,7 +41,7 @@ export function registerToolsResource(server: McpServer): void {
           text: JSON.stringify(
             {
               tools: NOTION_TOOLS,
-              hint: 'This MCP exposes 14 tools. If your client only shows one, reconnect MCP or use a client that lists all tools (e.g. Cursor).',
+              hint: `This MCP exposes ${NOTION_TOOLS.length} tools. If your client only shows one, reconnect MCP or use a client that lists all tools (e.g. Cursor).`,
             },
             null,
             2

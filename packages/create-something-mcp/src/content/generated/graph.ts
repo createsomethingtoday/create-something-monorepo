@@ -1,9 +1,9 @@
-// @ts-nocheck — Generated file exceeds TS union complexity limits (TS2590)
 /**
  * Generated knowledge graph — DO NOT EDIT MANUALLY.
  * Run: npm run build:content
  * Source: .graph/ (fallback: packages/io/static/.graph/)
  */
+// @ts-nocheck
 
 import type { GraphNode, GraphEdge } from '../types.js';
 

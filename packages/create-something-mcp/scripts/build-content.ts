@@ -272,6 +272,7 @@ async function buildGraph(): Promise<string> {
  * Run: npm run build:content
  * Source: .graph/ (fallback: packages/io/static/.graph/)
  */
+// @ts-nocheck
 
 import type { GraphNode, GraphEdge } from '../types.js';
 

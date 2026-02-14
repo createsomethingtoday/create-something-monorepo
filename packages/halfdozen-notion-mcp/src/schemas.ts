@@ -19,6 +19,8 @@ export const notionSearchSchema = z.object({
 
 export const notionListDatabasesSchema = z.object({
   workspace: workspaceSchema,
+  page_size: z.number().min(1).max(100).default(100).describe('Maximum results per page (default 100)'),
+  start_cursor: z.string().optional().describe('Pagination cursor from previous response'),
 });
 
 export const notionGetDatabaseSchema = z.object({
@@ -39,6 +41,13 @@ export const notionQueryDatabaseSchema = z.object({
 export const notionGetPageSchema = z.object({
   workspace: workspaceSchema,
   page_id: z.string().describe('The ID of the page to retrieve'),
+});
+
+export const notionListBlockChildrenSchema = z.object({
+  workspace: workspaceSchema,
+  block_id: z.string().describe('The ID of the block (or page) whose children to list'),
+  page_size: z.number().min(1).max(100).default(100).describe('Maximum child blocks to return (default 100)'),
+  start_cursor: z.string().optional().describe('Pagination cursor from previous response'),
 });
 
 export const notionCreatePageSchema = z.object({
