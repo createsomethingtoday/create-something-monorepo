@@ -14,7 +14,7 @@
 		baseUrl?: string;
 	}
 
-	let { currentDate, baseUrl = '/experiments/nba-live' }: Props = $props();
+	let { currentDate, baseUrl = '/data/nba' }: Props = $props();
 
 	function formatDate(dateStr: string): string {
 		const date = new Date(dateStr + 'T00:00:00');

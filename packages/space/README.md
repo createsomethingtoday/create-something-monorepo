@@ -42,12 +42,6 @@ Live data dashboards with real-time updates, caching, and historical snapshots.
 - **NBA Live** (`/data/nba`) — Game data, shot networks, pace analysis, clutch performance
 - **Worker**: `workers/nba-proxy` — Rate-limited proxy with KV caching and D1 snapshots
 
-### Terminal (`/terminal`)
-
-Browse and explore content via a simulated terminal interface. Command parsing, search, and navigation.
-
-- **API**: `/api/terminal` — Command execution and content browsing
-
 ### Concept Explorer (`/discover`)
 
 Cross-property concept mapping and hermeneutic spiral visualization.

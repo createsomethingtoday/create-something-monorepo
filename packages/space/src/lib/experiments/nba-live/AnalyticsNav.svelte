@@ -18,25 +18,25 @@
 	
 	const navItems: NavItem[] = [
 		{
-			href: '/experiments/nba-live',
+			href: '/data/nba',
 			label: 'Overview',
 			icon: Activity,
 			description: 'Game selector and analysis'
 		},
 		{
-			href: '/experiments/nba-live/clutch',
+			href: '/data/nba/clutch',
 			label: 'Clutch',
 			icon: Zap,
 			description: 'Pressure performers'
 		},
 		{
-			href: '/experiments/nba-live/pace',
+			href: '/data/nba/pace',
 			label: 'Pace',
 			icon: TrendingUp,
 			description: 'Tempo analysis'
 		},
 		{
-			href: '/experiments/nba-live/overtime',
+			href: '/data/nba/overtime',
 			label: 'Overtime',
 			icon: Clock,
 			description: 'Fatigue patterns'

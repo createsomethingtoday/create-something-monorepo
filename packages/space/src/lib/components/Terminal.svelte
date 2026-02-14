@@ -64,30 +64,7 @@
 		const [command, ...args] = input.trim().split(' ');
 		const arg = args.join(' ');
 
-		// Call API endpoint to process command
-		try {
-			const response = await fetch('/api/terminal', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ command, args: arg, path: currentPath })
-			});
-
-			if (!response.ok) {
-				throw new Error(`Command failed: ${response.statusText}`);
-			}
-
-			const result = await response.json() as CommandResponse;
-
-			// Handle special commands that affect terminal state
-			if (command === 'cd' && result.newPath) {
-				currentPath = result.newPath;
-			}
-
-			return result;
-		} catch (error) {
-			// Fallback for client-side commands
-			return processClientCommand(command, arg);
-		}
+		return processClientCommand(command, arg);
 	}
 
 	function processClientCommand(command: string, arg: string): CommandResponse {
@@ -101,17 +78,11 @@ Available commands:
   ls [path]         List directory contents
   cd <path>         Change directory
   pwd               Show current directory
-  papers            List all technical papers
-  read <id>         Read a paper by ID
-  search <query>    Search papers
-  save <id>         Save paper to collection
-  saved             View saved papers
   about             About Create Something
   contact           Contact information
-  theme <dark|light> Change terminal theme
-					`.trim(),
-					type: 'info'
-				};
+						`.trim(),
+						type: 'info'
+					};
 
 			case 'clear':
 				return {
@@ -126,21 +97,63 @@ Available commands:
 					type: 'success'
 				};
 
+			case 'ls':
+				if (currentPath === '/' || !currentPath) {
+					return {
+						output: `/
+├── experiments/
+├── docs/
+└── help/`,
+						type: 'success'
+					};
+				}
+
+				return {
+					output: `Directory not found: ${currentPath}`,
+					type: 'error'
+				};
+
+			case 'cd': {
+				if (!arg || arg === '~' || arg === '/') {
+					return {
+						output: '',
+						type: 'success',
+						newPath: '/'
+					};
+				}
+
+				if (arg === '..') {
+					const parentPath = currentPath.split('/').slice(0, -1).join('/') || '/';
+					return {
+						output: '',
+						type: 'success',
+						newPath: parentPath
+					};
+				}
+
+				const newPath = arg.startsWith('/')
+					? arg
+					: currentPath === '/'
+					? `/${arg}`
+					: `${currentPath}/${arg}`;
+
+				return {
+					output: '',
+					type: 'success',
+					newPath
+				};
+			}
+
 			case 'about':
 				return {
 					output: `
 Create Something Terminal v2.0
 ───────────────────────────────
-Built with:
-• SvelteKit - Type-safe, edge-native framework
-• Cloudflare Workers - Global edge computing
-• D1 Database - Distributed SQLite
-• KV Store - Session management
-• R2 Storage - Object storage
+Local terminal simulation for guided experiments.
 
-© 2024 Create Something Agency
-					`.trim(),
-					type: 'info'
+The public /terminal route and API were retired.
+						`.trim(),
+						type: 'info'
 				};
 
 			case 'contact':
@@ -149,9 +162,8 @@ Built with:
 Contact Create Something:
 • Email: hello@createsomething.agency
 • GitHub: github.com/createsomethingtoday
-• Twitter: @createsomething
-					`.trim(),
-					type: 'info'
+						`.trim(),
+						type: 'info'
 				};
 
 			case '':
@@ -185,6 +197,9 @@ Contact Create Something:
 
 		// Process command
 		const result = await processCommand(currentInput);
+		if (result.newPath) {
+			currentPath = result.newPath;
+		}
 
 		// NEW: Notify parent of command execution
 		if (onCommandExecuted) {

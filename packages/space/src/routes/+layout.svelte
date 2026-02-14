@@ -35,7 +35,7 @@
 		{ id: 'nav-praxis', label: 'Praxis', description: 'Learn integration patterns through code', href: '/praxis', icon: '>', keywords: ['practice', 'learn', 'patterns'] },
 		{ id: 'nav-motion', label: 'Motion Lab', description: 'Analyze CSS animations from any URL', href: '/motion', icon: '>', keywords: ['animation', 'css', 'motion', 'analyze'] },
 		{ id: 'nav-data', label: 'Data Studio', description: 'Live data dashboards and analysis', href: '/data', icon: '>', keywords: ['data', 'dashboard', 'nba', 'live'] },
-		{ id: 'nav-terminal', label: 'Terminal', description: 'Browse and explore via terminal', href: '/terminal', icon: '>', keywords: ['terminal', 'cli', 'command'] },
+		{ id: 'nav-discover', label: 'Discover Concepts', description: 'Explore concepts across CREATE SOMETHING properties', href: '/discover', icon: '>', keywords: ['discover', 'concepts', 'hermeneutic', 'map'] },
 		{ id: 'nav-io', label: 'Go to .io', description: 'Research papers and documentation', href: 'https://createsomething.io', icon: '>', keywords: ['papers', 'research', 'read'] },
 		{ id: 'nav-agency', label: 'Go to .agency', description: 'Custom MCP development', href: 'https://createsomething.agency', icon: '>', keywords: ['services', 'hire', 'build'] },
 	];
