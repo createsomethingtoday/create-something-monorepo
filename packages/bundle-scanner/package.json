@@ -9,7 +9,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "vitest",
+    "test": "vitest --run --passWithNoTests",
     "webflow:share": "npx webflow library share",
     "webflow:dev": "npx webflow devlink"
   },

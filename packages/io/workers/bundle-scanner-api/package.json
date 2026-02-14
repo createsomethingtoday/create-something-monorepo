@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "test": "vitest"
+    "test": "vitest --run --passWithNoTests"
   },
   "dependencies": {
     "@create-something/bundle-scanner-core": "workspace:*"

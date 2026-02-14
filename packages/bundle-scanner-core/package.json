@@ -27,7 +27,7 @@
     "build": "tsup src/index.ts --format esm --dts --clean",
     "dev": "tsup src/index.ts --format esm --dts --watch",
     "typecheck": "tsc --noEmit",
-    "test": "vitest",
+    "test": "vitest --run --passWithNoTests",
     "test:coverage": "vitest --coverage"
   },
   "dependencies": {

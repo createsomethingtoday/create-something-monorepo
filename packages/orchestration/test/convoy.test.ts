@@ -78,8 +78,8 @@ describe('Phase 2: Convoy Support', () => {
     expect(convoysEpic1).toHaveLength(2);
     expect(convoysEpic2).toHaveLength(1);
 
-    expect(convoysEpic1.map((c) => c.name)).toContain('Convoy A');
-    expect(convoysEpic1.map((c) => c.name)).toContain('Convoy B');
+    expect(convoysEpic1.map((c) => c.convoy.name)).toContain('Convoy A');
+    expect(convoysEpic1.map((c) => c.convoy.name)).toContain('Convoy B');
   });
 
   it('should get convoy status', async () => {

@@ -657,7 +657,12 @@ fn journey_to_log_entry(rng: &mut Rng, journey: &PatientJourney) -> Option<SimLo
         ),
         JourneyStage::PaymentReceived => (
             "payment",
-            format!("Posted {} ${} for {}", payer, amount - rng.next_range(200) as u32, name),
+            format!(
+                "Posted {} ${} for {}",
+                payer,
+                amount.saturating_sub(rng.next_range(200) as u32),
+                name
+            ),
             12 + rng.next_range(60) as i64,
         ),
         JourneyStage::RecallDue => (
