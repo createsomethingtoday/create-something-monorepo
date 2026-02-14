@@ -149,7 +149,7 @@ impl GitSync {
     /// Push changes to remote
     pub fn push(&mut self) -> Result<(), SyncError> {
         // Add changes
-        self.git(&["add", ".loom/tasks.jsonl"])?;
+        self.git(&["add", "-f", ".loom/tasks.jsonl"])?;
         
         // Check if there are changes to commit
         let status = self.git(&["status", "--porcelain", ".loom/tasks.jsonl"])?;
@@ -206,11 +206,12 @@ impl GitSync {
     pub fn sync(&mut self, store: &mut WorkStore) -> Result<SyncResult, SyncError> {
         let pulled = self.pull(store)?;
         self.export(store)?;
+        let exported = self.state.pending_exports;
         self.push()?;
         
         Ok(SyncResult {
             imported: pulled,
-            exported: self.state.pending_exports,
+            exported,
         })
     }
     

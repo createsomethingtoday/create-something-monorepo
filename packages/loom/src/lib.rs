@@ -304,6 +304,11 @@ default = "claude"
     pub fn store(&self) -> &WorkStore {
         &self.store
     }
+
+    /// Get a mutable reference to the work store
+    pub fn store_mut(&mut self) -> &mut WorkStore {
+        &mut self.store
+    }
     
     /// Get the configuration
     pub fn config(&self) -> &LoomConfig {

@@ -50,6 +50,8 @@ use loom::{
     Backfill, BackfillOptions, BackfillAnalytics,
     PriorityCalculator,
 };
+use std::path::Path;
+use std::process::Command;
 
 /// Loom - AI-native coordination layer
 #[derive(Parser)]
@@ -1162,10 +1164,42 @@ fn run() -> Result<(), LoomError> {
             }
         }
         
-        Commands::Sync | Commands::Push | Commands::Pull => {
-            eprintln!("Error: Git sync is not yet implemented.");
-            eprintln!("Use 'lm list --format json' to export tasks manually.");
-            std::process::exit(1);
+        Commands::Sync => {
+            let mut loom = Loom::open(".")?;
+            let repo_root = loom.root().parent().unwrap_or(loom.root()).to_path_buf();
+            let branch = resolve_sync_branch(&loom, &repo_root);
+            let mut sync = loom::GitSync::new(&repo_root, &branch)?;
+            let result = sync.sync(loom.store_mut())?;
+            
+            println!("Sync complete");
+            println!("Branch:    {}", branch);
+            println!("Imported:  {}", result.imported);
+            println!("Exported:  {}", result.exported);
+        }
+        
+        Commands::Push => {
+            let loom = Loom::open(".")?;
+            let repo_root = loom.root().parent().unwrap_or(loom.root()).to_path_buf();
+            let branch = resolve_sync_branch(&loom, &repo_root);
+            let mut sync = loom::GitSync::new(&repo_root, &branch)?;
+            let export_path = sync.export(loom.store())?;
+            sync.push()?;
+            
+            println!("Push complete");
+            println!("Branch:      {}", branch);
+            println!("Export file: {}", export_path.display());
+        }
+        
+        Commands::Pull => {
+            let mut loom = Loom::open(".")?;
+            let repo_root = loom.root().parent().unwrap_or(loom.root()).to_path_buf();
+            let branch = resolve_sync_branch(&loom, &repo_root);
+            let mut sync = loom::GitSync::new(&repo_root, &branch)?;
+            let imported = sync.pull(loom.store_mut())?;
+            
+            println!("Pull complete");
+            println!("Branch:    {}", branch);
+            println!("Imported:  {}", imported);
         }
         
         Commands::Backfill { since, until, author, beads, dry_run } => {
@@ -1425,4 +1459,32 @@ fn get_hostname() -> String {
     hostname::get()
         .map(|h| h.to_string_lossy().to_string())
         .unwrap_or_else(|_| "unknown".to_string())
+}
+
+fn resolve_sync_branch(loom: &Loom, repo_root: &Path) -> String {
+    loom.config()
+        .sync
+        .sync_branch
+        .clone()
+        .or_else(|| current_git_branch(repo_root))
+        .unwrap_or_else(|| "main".to_string())
+}
+
+fn current_git_branch(repo_root: &Path) -> Option<String> {
+    let output = Command::new("git")
+        .args(["rev-parse", "--abbrev-ref", "HEAD"])
+        .current_dir(repo_root)
+        .output()
+        .ok()?;
+
+    if !output.status.success() {
+        return None;
+    }
+
+    let branch = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if branch.is_empty() {
+        None
+    } else {
+        Some(branch)
+    }
 }
