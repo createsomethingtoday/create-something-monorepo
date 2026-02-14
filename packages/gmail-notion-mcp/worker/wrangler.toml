@@ -16,7 +16,7 @@ enabled = true
 [[d1_databases]]
 binding = "RUNS_DB"
 database_name = "gmail-notion-mcp-runs"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "6791208a-0fc4-4815-8965-6b6584c9af42"
 migrations_dir = "migrations"
 
 [[durable_objects.bindings]]
