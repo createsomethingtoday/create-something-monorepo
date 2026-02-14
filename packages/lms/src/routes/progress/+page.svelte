@@ -2,8 +2,7 @@
   /**
    * Progress Page
    *
-   * Shows the learner's journey through the hermeneutic spiral.
-   * Canon: Progress is not linear—each return deepens understanding.
+   * Shows lesson completion and time spent for the Codex MCP course.
    */
 
   import type { PageData } from './$types';
@@ -61,7 +60,7 @@
       </button>
     </div>
     <p class="page-subtitle">
-      Welcome back{user?.name ? `, ${user.name}` : ''}. Continue your journey.
+      Welcome back{user?.name ? `, ${user.name}` : ''}. Continue the Codex MCP course.
     </p>
   </header>
 
@@ -94,7 +93,7 @@
 
   <!-- Path Progress -->
   <section class="paths-section">
-    <h2 class="section-title">Learning Paths</h2>
+    <h2 class="section-title">Course Progress</h2>
 
     <div class="paths-list">
       {#each $progress.pathProgress as pathProg}
@@ -166,8 +165,9 @@
       <div class="empty-icon"><BookOpen size={48} strokeWidth={1} /></div>
       <h3>Begin Your Journey</h3>
       <p>
-        Start with <a href="/paths/foundations">Foundations</a> to learn the Subtractive Triad—the
-        philosophical core of CREATE SOMETHING.
+        Start with
+        <a href="/paths/codex-mcp/what-is-codex-and-mcp">Lesson 1</a>
+        to begin building your MCP server with Codex.
       </p>
     </section>
   {/if}

@@ -69,29 +69,44 @@
   });
 
   const navLinks = [
-    { label: 'Seeing', href: '/seeing' },
-    { label: 'Paths', href: '/paths' },
-    { label: 'Praxis', href: '/praxis' },
+    { label: 'Course', href: '/paths' },
     { label: 'Progress', href: '/progress' }
   ];
 
   // Quick access items for unified search
   const quickAccessItems = [
-    { id: 'nav-seeing', label: 'Seeing', description: 'Free entry-level course', href: '/seeing', icon: '👁️', keywords: ['free', 'start', 'learn', 'triad'] },
-    { id: 'nav-paths', label: 'Learning Paths', description: 'Structured curriculum', href: '/paths', icon: '🛤️', keywords: ['courses', 'curriculum', 'structured'] },
-    { id: 'nav-praxis', label: 'Praxis', description: 'Hands-on exercises', href: '/praxis', icon: '⚡', keywords: ['practice', 'exercises', 'apply'] },
-    { id: 'nav-progress', label: 'Progress', description: 'Track your learning', href: '/progress', icon: '📊', keywords: ['track', 'status', 'completion'] },
-    { id: 'nav-space', label: 'Go to .space', description: 'Interactive experiments', href: 'https://createsomething.space', icon: '🧪', keywords: ['explore', 'try', 'interactive'] },
-    { id: 'nav-io', label: 'Go to .io', description: 'Research papers', href: 'https://createsomething.io', icon: '📖', keywords: ['papers', 'research'] },
-    { id: 'nav-agency', label: 'Go to .agency', description: 'Professional services', href: 'https://createsomething.agency', icon: '🔨', keywords: ['services', 'hire'] },
+    {
+      id: 'nav-course',
+      label: 'Codex MCP Course',
+      description: 'Learn Codex by building one MCP server',
+      href: '/paths/codex-mcp',
+      icon: '🧩',
+      keywords: ['codex', 'mcp', 'course', 'server']
+    },
+    {
+      id: 'nav-paths',
+      label: 'Course Overview',
+      description: 'See all lessons in order',
+      href: '/paths',
+      icon: '🛤️',
+      keywords: ['lessons', 'curriculum', 'overview']
+    },
+    {
+      id: 'nav-progress',
+      label: 'Progress',
+      description: 'Track completed lessons',
+      href: '/progress',
+      icon: '📊',
+      keywords: ['track', 'completion', 'status']
+    }
   ];
 
   // DRY: Centralized copy for meta tags and components
   const SITE_COPY = {
-    tagline: 'Learn the Ethos',
-    descriptionFull: 'Learn the CREATE SOMETHING ethos through practice. Eight learning paths teaching the Subtractive Triad, Canon design system, and AI-native development patterns.',
-    descriptionShort: 'Learn the CREATE SOMETHING ethos through practice. Eight paths, one philosophy.',
-    descriptionFooter: 'Learn the CREATE SOMETHING ethos through practice. Eight paths, one philosophy. Understanding through disciplined removal.'
+    tagline: 'Learn Codex Through MCP',
+    descriptionFull: 'A straightforward course for learning Codex by building and shipping a real MCP server.',
+    descriptionShort: 'Learn Codex by building a real MCP server.',
+    descriptionFooter: 'A straightforward course for learning Codex by building and shipping a real MCP server.'
   } as const;
 </script>
 
@@ -122,7 +137,7 @@
     currentPath={$page.url.pathname}
     fixed={true}
     ctaLabel="Get Started"
-    ctaHref="/seeing"
+    ctaHref="/paths/codex-mcp/what-is-codex-and-mcp"
     user={data.user}
     onLogout={handleLogout}
     showLogin={true}
@@ -139,10 +154,10 @@
     showNewsletter={false}
     aboutText={SITE_COPY.descriptionFooter}
     quickLinks={[
-      { label: 'Seeing', href: '/seeing' },
-      { label: 'Paths', href: '/paths' },
-      { label: 'Praxis', href: '/praxis' },
-      { label: 'Progress', href: '/progress' }
+      { label: 'Course', href: '/paths' },
+      { label: 'Start', href: '/paths/codex-mcp/what-is-codex-and-mcp' },
+      { label: 'Progress', href: '/progress' },
+      { label: 'Privacy', href: '/privacy' }
     ]}
     showSocial={true}
     isAuthenticated={!!data.user}
