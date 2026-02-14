@@ -1,11 +1,10 @@
 /**
  * Agent Observability API
- * 
- * Aggregates data from multiple sources:
- * - Cloudflare traces (via API)
- * - Langfuse traces (via API)
- * - Loom task data (via SQLite/D1)
- * - Agentic Executor sessions (via D1)
+ *
+ * Queries agentic_sessions, agentic_iterations, and agentic_events tables
+ * in io's D1 database (create-something-db).
+ *
+ * All timestamps are Unix integers (seconds since epoch).
  */
 
 import { json, error } from '@sveltejs/kit';
@@ -31,7 +30,7 @@ interface TaskSummary {
 interface TraceSummary {
 	total: number;
 	errors: number;
-	avgLatency: number;
+	avgTokens: number;
 	byTouchpoint: Record<string, number>;
 	byAiTask: Record<string, number>;
 }
@@ -52,25 +51,31 @@ interface ObservabilityData {
 		date: string;
 		cost: number;
 	}>;
+	hasData: boolean;
 }
 
 export const GET: RequestHandler = async ({ platform, url }) => {
-	const days = parseInt(url.searchParams.get('days') || '7');
-	
+	const rawDays = parseInt(url.searchParams.get('days') || '7');
+	const days = Number.isNaN(rawDays) ? 7 : Math.max(1, Math.min(90, rawDays));
+
 	try {
 		const db = platform?.env?.DB;
-		
-		// Mock data structure - in production, these would be real queries
-		// to D1 (Agentic Executor), Loom SQLite, and Langfuse API
-		
+
 		const data: ObservabilityData = {
-			tasks: await getTaskSummary(db),
-			agents: await getAgentSummary(db),
+			tasks: await getTaskSummary(db, days),
+			agents: await getAgentSummary(db, days),
 			traces: await getTraceSummary(db, days),
 			recentActivity: await getRecentActivity(db, 20),
-			costTrend: await getCostTrend(db, days)
+			costTrend: await getCostTrend(db, days),
+			hasData: false
 		};
-		
+
+		// Determine if any real data exists
+		data.hasData =
+			data.tasks.ready + data.tasks.claimed + data.tasks.done + data.tasks.cancelled > 0 ||
+			data.traces.total > 0 ||
+			data.recentActivity.length > 0;
+
 		return json(data);
 	} catch (err) {
 		console.error('Observability API error:', err);
@@ -78,39 +83,42 @@ export const GET: RequestHandler = async ({ platform, url }) => {
 	}
 };
 
-async function getTaskSummary(db: D1Database | undefined): Promise<TaskSummary> {
-	// In production: query Loom work.db or replicated D1 data
-	// For now, return structure that dashboard can render
-	
-	if (!db) {
-		return {
-			ready: 0,
-			claimed: 0,
-			blocked: 0,
-			done: 0,
-			cancelled: 0,
-			totalCost: 0
-		};
-	}
-	
+const emptySummary: TaskSummary = {
+	ready: 0,
+	claimed: 0,
+	blocked: 0,
+	done: 0,
+	cancelled: 0,
+	totalCost: 0
+};
+
+async function getTaskSummary(db: D1Database | undefined, days: number): Promise<TaskSummary> {
+	if (!db) return emptySummary;
+
 	try {
-		// Try to query agentic sessions as a proxy for task data
-		const result = await db.prepare(`
-			SELECT 
+		const cutoff = Math.floor(Date.now() / 1000) - days * 86400;
+		const result = await db
+			.prepare(
+				`
+			SELECT
 				SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as ready,
 				SUM(CASE WHEN status = 'running' THEN 1 ELSE 0 END) as claimed,
-				SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as done,
-				SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as cancelled,
+				SUM(CASE WHEN status = 'complete' THEN 1 ELSE 0 END) as done,
+				SUM(CASE WHEN status IN ('error', 'budget_exhausted') THEN 1 ELSE 0 END) as cancelled,
 				COALESCE(SUM(cost_consumed), 0) as totalCost
 			FROM agentic_sessions
-		`).first<{
-			ready: number;
-			claimed: number;
-			done: number;
-			cancelled: number;
-			totalCost: number;
-		}>();
-		
+			WHERE started_at > ?
+		`
+			)
+			.bind(cutoff)
+			.first<{
+				ready: number;
+				claimed: number;
+				done: number;
+				cancelled: number;
+				totalCost: number;
+			}>();
+
 		return {
 			ready: result?.ready || 0,
 			claimed: result?.claimed || 0,
@@ -120,104 +128,128 @@ async function getTaskSummary(db: D1Database | undefined): Promise<TaskSummary> 
 			totalCost: result?.totalCost || 0
 		};
 	} catch {
-		// Table might not exist
-		return {
-			ready: 0,
-			claimed: 0,
-			blocked: 0,
-			done: 0,
-			cancelled: 0,
-			totalCost: 0
-		};
+		return emptySummary;
 	}
 }
 
-async function getAgentSummary(db: D1Database | undefined): Promise<AgentSummary[]> {
-	// In production: query Loom agents.db
-	// Return agent performance metrics
-	
-	// Default agents based on CLAUDE.md
-	const defaultAgents: AgentSummary[] = [
-		{ name: 'claude-code', executions: 0, successRate: 0, avgDuration: 0, totalCost: 0 },
-		{ name: 'cursor', executions: 0, successRate: 0, avgDuration: 0, totalCost: 0 },
-		{ name: 'gemini', executions: 0, successRate: 0, avgDuration: 0, totalCost: 0 }
-	];
-	
-	if (!db) {
-		return defaultAgents;
-	}
-	
+async function getAgentSummary(
+	db: D1Database | undefined,
+	days: number
+): Promise<AgentSummary[]> {
+	if (!db) return [];
+
 	try {
-		// Query agentic sessions for agent metrics
-		const results = await db.prepare(`
-			SELECT 
-				'agentic-executor' as name,
+		const cutoff = Math.floor(Date.now() / 1000) - days * 86400;
+		const result = await db
+			.prepare(
+				`
+			SELECT
 				COUNT(*) as executions,
-				AVG(CASE WHEN status = 'completed' THEN 100.0 ELSE 0.0 END) as successRate,
-				AVG(CASE WHEN completed_at IS NOT NULL 
-					THEN (julianday(completed_at) - julianday(created_at)) * 86400 
+				AVG(CASE WHEN status = 'complete' THEN 100.0 ELSE 0.0 END) as successRate,
+				AVG(CASE WHEN completed_at IS NOT NULL
+					THEN completed_at - started_at
 					ELSE 0 END) as avgDuration,
 				COALESCE(SUM(cost_consumed), 0) as totalCost
 			FROM agentic_sessions
-			WHERE created_at > datetime('now', '-30 days')
-		`).first<AgentSummary>();
-		
-		if (results && results.executions > 0) {
-			return [results];
+			WHERE started_at > ?
+		`
+			)
+			.bind(cutoff)
+			.first<{
+				executions: number;
+				successRate: number;
+				avgDuration: number;
+				totalCost: number;
+			}>();
+
+		if (result && result.executions > 0) {
+			return [
+				{
+					name: 'agentic-executor',
+					executions: result.executions,
+					successRate: result.successRate,
+					avgDuration: result.avgDuration,
+					totalCost: result.totalCost
+				}
+			];
 		}
-		return defaultAgents;
+		return [];
 	} catch {
-		return defaultAgents;
+		return [];
 	}
 }
 
-async function getTraceSummary(db: D1Database | undefined, days: number): Promise<TraceSummary> {
-	// In production: query Langfuse API or replicated trace data
-	// For now, return structure
-	
+async function getTraceSummary(
+	db: D1Database | undefined,
+	days: number
+): Promise<TraceSummary> {
 	const summary: TraceSummary = {
 		total: 0,
 		errors: 0,
-		avgLatency: 0,
+		avgTokens: 0,
 		byTouchpoint: {},
 		byAiTask: {}
 	};
-	
-	if (!db) {
-		return summary;
-	}
-	
+
+	if (!db) return summary;
+
 	try {
-		// Query agentic iterations as trace proxy
-		const result = await db.prepare(`
-			SELECT 
+		const cutoff = Math.floor(Date.now() / 1000) - days * 86400;
+
+		// Count iterations and aggregate tokens
+		const result = await db
+			.prepare(
+				`
+			SELECT
 				COUNT(*) as total,
-				SUM(CASE WHEN tools_used LIKE '%error%' THEN 1 ELSE 0 END) as errors,
 				AVG(COALESCE(input_tokens + output_tokens, 0)) as avgTokens
 			FROM agentic_iterations
-			WHERE created_at > datetime('now', '-' || ? || ' days')
-		`).bind(days).first<{
-			total: number;
-			errors: number;
-			avgTokens: number;
-		}>();
-		
+			WHERE created_at > ?
+		`
+			)
+			.bind(cutoff)
+			.first<{
+				total: number;
+				avgTokens: number;
+			}>();
+
 		if (result) {
 			summary.total = result.total;
-			summary.errors = result.errors;
-			summary.avgLatency = result.avgTokens; // Using tokens as proxy
+			summary.avgTokens = result.avgTokens || 0;
 		}
-		
+
+		// Count errors from agentic_events
+		const errorResult = await db
+			.prepare(
+				`
+			SELECT COUNT(*) as errors
+			FROM agentic_events
+			WHERE event_type IN ('quality_gate_failed', 'budget_exhausted', 'completion_rejected')
+			AND created_at > ?
+		`
+			)
+			.bind(cutoff)
+			.first<{ errors: number }>();
+
+		if (errorResult) {
+			summary.errors = errorResult.errors;
+		}
+
 		// Aggregate by tool type (touchpoint proxy)
-		const toolResults = await db.prepare(`
+		const toolResults = await db
+			.prepare(
+				`
 			SELECT tools_used, COUNT(*) as count
 			FROM agentic_iterations
-			WHERE created_at > datetime('now', '-' || ? || ' days')
+			WHERE created_at > ?
 			AND tools_used IS NOT NULL
 			GROUP BY tools_used
 			LIMIT 10
-		`).bind(days).all<{ tools_used: string; count: number }>();
-		
+		`
+			)
+			.bind(cutoff)
+			.all<{ tools_used: string; count: number }>();
+
 		if (toolResults.results) {
 			for (const row of toolResults.results) {
 				if (row.tools_used) {
@@ -226,37 +258,39 @@ async function getTraceSummary(db: D1Database | undefined, days: number): Promis
 			}
 		}
 	} catch {
-		// Tables might not exist
+		// Tables might not exist yet
 	}
-	
+
 	return summary;
 }
 
 async function getRecentActivity(db: D1Database | undefined, limit: number) {
 	const activity: ObservabilityData['recentActivity'] = [];
-	
-	if (!db) {
-		return activity;
-	}
-	
+
+	if (!db) return activity;
+
 	try {
-		// Get recent agentic sessions
-		const sessions = await db.prepare(`
-			SELECT 
+		const sessions = await db
+			.prepare(
+				`
+			SELECT
 				id,
 				status,
 				cost_consumed,
-				created_at
+				started_at
 			FROM agentic_sessions
-			ORDER BY created_at DESC
+			ORDER BY started_at DESC
 			LIMIT ?
-		`).bind(limit).all<{
-			id: string;
-			status: string;
-			cost_consumed: number;
-			created_at: string;
-		}>();
-		
+		`
+			)
+			.bind(limit)
+			.all<{
+				id: string;
+				status: string;
+				cost_consumed: number;
+				started_at: number;
+			}>();
+
 		if (sessions.results) {
 			for (const session of sessions.results) {
 				activity.push({
@@ -264,36 +298,40 @@ async function getRecentActivity(db: D1Database | undefined, limit: number) {
 					type: 'session',
 					name: `Session ${session.id.slice(0, 8)}`,
 					status: session.status,
-					timestamp: session.created_at,
+					timestamp: new Date(session.started_at * 1000).toISOString(),
 					cost: session.cost_consumed
 				});
 			}
 		}
 	} catch {
-		// Table might not exist
+		// Table might not exist yet
 	}
-	
+
 	return activity;
 }
 
 async function getCostTrend(db: D1Database | undefined, days: number) {
 	const trend: ObservabilityData['costTrend'] = [];
-	
-	if (!db) {
-		return trend;
-	}
-	
+
+	if (!db) return trend;
+
 	try {
-		const results = await db.prepare(`
-			SELECT 
-				date(created_at) as date,
+		const cutoff = Math.floor(Date.now() / 1000) - days * 86400;
+		const results = await db
+			.prepare(
+				`
+			SELECT
+				date(created_at, 'unixepoch') as date,
 				SUM(cost) as cost
 			FROM agentic_iterations
-			WHERE created_at > datetime('now', '-' || ? || ' days')
-			GROUP BY date(created_at)
+			WHERE created_at > ?
+			GROUP BY date(created_at, 'unixepoch')
 			ORDER BY date ASC
-		`).bind(days).all<{ date: string; cost: number }>();
-		
+		`
+			)
+			.bind(cutoff)
+			.all<{ date: string; cost: number }>();
+
 		if (results.results) {
 			for (const row of results.results) {
 				trend.push({
@@ -303,8 +341,8 @@ async function getCostTrend(db: D1Database | undefined, days: number) {
 			}
 		}
 	} catch {
-		// Table might not exist
+		// Table might not exist yet
 	}
-	
+
 	return trend;
 }

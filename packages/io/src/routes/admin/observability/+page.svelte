@@ -6,14 +6,11 @@
 	 * Applies AI Interaction Atlas vocabulary for consistent categorization.
 	 *
 	 * Data sources:
-	 * - Loom: Task status, agent performance, cost tracking
 	 * - Agentic Executor: Session costs, iteration details
-	 * - Langfuse: LLM traces, MCP tool calls
-	 * - Cloudflare: Infrastructure spans
+	 * - Agentic Events: Error tracking, quality gate outcomes
 	 */
 
 	import { SEO } from '@create-something/canon';
-	import { onMount } from 'svelte';
 
 	interface TaskSummary {
 		ready: number;
@@ -35,7 +32,7 @@
 	interface TraceSummary {
 		total: number;
 		errors: number;
-		avgLatency: number;
+		avgTokens: number;
 		byTouchpoint: Record<string, number>;
 		byAiTask: Record<string, number>;
 	}
@@ -55,16 +52,17 @@
 		traces: TraceSummary;
 		recentActivity: Activity[];
 		costTrend: Array<{ date: string; cost: number }>;
+		hasData: boolean;
 	}
 
-	let loading = true;
-	let error: string | null = null;
-	let data: ObservabilityData | null = null;
-	let days = 7;
+	let loading = $state(true);
+	let errorMsg = $state<string | null>(null);
+	let data = $state<ObservabilityData | null>(null);
+	let days = $state(7);
 
 	async function loadDashboard() {
 		loading = true;
-		error = null;
+		errorMsg = null;
 		try {
 			const response = await fetch(`/api/admin/observability?days=${days}`);
 			if (!response.ok) {
@@ -72,20 +70,18 @@
 			}
 			data = await response.json();
 		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to load dashboard';
+			errorMsg = err instanceof Error ? err.message : 'Failed to load dashboard';
 			console.error('Dashboard error:', err);
 		} finally {
 			loading = false;
 		}
 	}
 
-	onMount(() => {
+	$effect(() => {
+		// Tracks `days` — fires on mount and whenever `days` changes
+		void days;
 		loadDashboard();
 	});
-
-	$: if (days) {
-		loadDashboard();
-	}
 
 	function formatCost(cost: number): string {
 		return `$${cost.toFixed(4)}`;
@@ -110,10 +106,11 @@
 			case 'running':
 				return 'var(--color-accent)';
 			case 'done':
-			case 'completed':
+			case 'complete':
 				return 'var(--color-success)';
 			case 'blocked':
-			case 'failed':
+			case 'error':
+			case 'budget_exhausted':
 				return 'var(--color-error)';
 			default:
 				return 'var(--color-fg-muted)';
@@ -138,8 +135,7 @@
 		<div>
 			<h1 class="page-title mb-2">Agent Observability</h1>
 			<p class="page-description max-w-xl">
-				Unified view of agent operations across Loom, Agentic Executor, and Langfuse.
-				Organized by AI Interaction Atlas dimensions.
+				Unified view of agent sessions, costs, and events.
 			</p>
 		</div>
 
@@ -152,7 +148,7 @@
 			</select>
 
 			<button
-				on:click={loadDashboard}
+				onclick={loadDashboard}
 				disabled={loading}
 				class="btn-secondary px-4 py-2"
 			>
@@ -165,12 +161,22 @@
 		<div class="loading-state">
 			<p>Loading observability data...</p>
 		</div>
-	{:else if error}
+	{:else if errorMsg}
 		<div class="error-state">
-			<p class="error-message">{error}</p>
-			<button on:click={loadDashboard} class="btn-secondary mt-4 px-4 py-2">
+			<p class="error-message">{errorMsg}</p>
+			<button onclick={loadDashboard} class="btn-secondary mt-4 px-4 py-2">
 				Try Again
 			</button>
+		</div>
+	{:else if data && !data.hasData}
+		<!-- Empty state: tables exist but no data yet -->
+		<div class="empty-state">
+			<div class="empty-icon">&#9678;</div>
+			<h2 class="empty-title">No agent sessions recorded yet</h2>
+			<p class="empty-description">
+				Data will appear here once agentic work runs against this database.
+				Sessions, iterations, and events are tracked automatically by the Agentic Executor.
+			</p>
 		</div>
 	{:else if data}
 		<!-- Summary Metrics -->
@@ -178,29 +184,29 @@
 			<!-- Tasks Summary -->
 			<div class="metric-card">
 				<div class="metric-header">
-					<span class="metric-label">Tasks</span>
+					<span class="metric-label">Sessions</span>
 					<span class="metric-value">{totalTasks(data.tasks)}</span>
 				</div>
 				<div class="metric-breakdown">
 					<div class="breakdown-item">
 						<span class="breakdown-dot" style="background: var(--color-fg-tertiary)"></span>
-						<span class="breakdown-label">Ready</span>
+						<span class="breakdown-label">Pending</span>
 						<span class="breakdown-value">{data.tasks.ready}</span>
 					</div>
 					<div class="breakdown-item">
 						<span class="breakdown-dot" style="background: var(--color-accent)"></span>
-						<span class="breakdown-label">In Progress</span>
+						<span class="breakdown-label">Running</span>
 						<span class="breakdown-value">{data.tasks.claimed}</span>
 					</div>
 					<div class="breakdown-item">
-						<span class="breakdown-dot" style="background: var(--color-warning)"></span>
-						<span class="breakdown-label">Blocked</span>
-						<span class="breakdown-value">{data.tasks.blocked}</span>
+						<span class="breakdown-dot" style="background: var(--color-success)"></span>
+						<span class="breakdown-label">Complete</span>
+						<span class="breakdown-value">{data.tasks.done}</span>
 					</div>
 					<div class="breakdown-item">
-						<span class="breakdown-dot" style="background: var(--color-success)"></span>
-						<span class="breakdown-label">Done</span>
-						<span class="breakdown-value">{data.tasks.done}</span>
+						<span class="breakdown-dot" style="background: var(--color-error)"></span>
+						<span class="breakdown-label">Errors</span>
+						<span class="breakdown-value">{data.tasks.cancelled}</span>
 					</div>
 				</div>
 			</div>
@@ -208,21 +214,19 @@
 			<!-- Traces Summary -->
 			<div class="metric-card">
 				<div class="metric-header">
-					<span class="metric-label">Traces</span>
+					<span class="metric-label">Iterations</span>
 					<span class="metric-value">{data.traces.total}</span>
 				</div>
 				<div class="metric-breakdown">
 					<div class="breakdown-item">
 						<span class="breakdown-dot" style="background: var(--color-error)"></span>
-						<span class="breakdown-label">Errors</span>
+						<span class="breakdown-label">Events (errors)</span>
 						<span class="breakdown-value">{data.traces.errors}</span>
 					</div>
 					<div class="breakdown-item">
-						<span class="breakdown-label">Error Rate</span>
+						<span class="breakdown-label">Avg Tokens</span>
 						<span class="breakdown-value">
-							{data.traces.total > 0
-								? formatPercent((data.traces.errors / data.traces.total) * 100)
-								: '0%'}
+							{Math.round(data.traces.avgTokens).toLocaleString()}
 						</span>
 					</div>
 				</div>
@@ -236,7 +240,7 @@
 				</div>
 				<div class="metric-breakdown">
 					<div class="breakdown-item">
-						<span class="breakdown-label">Avg/Task</span>
+						<span class="breakdown-label">Avg/Session</span>
 						<span class="breakdown-value">
 							{totalTasks(data.tasks) > 0
 								? formatCost(data.tasks.totalCost / totalTasks(data.tasks))
@@ -248,39 +252,36 @@
 		</div>
 
 		<!-- Agents Section -->
-		<div class="section">
-			<h2 class="section-title">Agent Performance</h2>
-			<div class="agents-table">
-				<div class="table-header">
-					<span class="col-agent">Agent</span>
-					<span class="col-executions">Executions</span>
-					<span class="col-success">Success Rate</span>
-					<span class="col-duration">Avg Duration</span>
-					<span class="col-cost">Cost</span>
-				</div>
-				{#each data.agents as agent}
-					<div class="table-row">
-						<span class="col-agent font-mono">{agent.name}</span>
-						<span class="col-executions">{agent.executions}</span>
-						<span class="col-success">
-							<span
-								class="success-badge"
-								style="--progress: {agent.successRate}%"
-							>
-								{formatPercent(agent.successRate)}
+		{#if data.agents.length > 0}
+			<div class="section">
+				<h2 class="section-title">Agent Performance</h2>
+				<div class="agents-table">
+					<div class="table-header">
+						<span class="col-agent">Agent</span>
+						<span class="col-executions">Executions</span>
+						<span class="col-success">Success Rate</span>
+						<span class="col-duration">Avg Duration</span>
+						<span class="col-cost">Cost</span>
+					</div>
+					{#each data.agents as agent}
+						<div class="table-row">
+							<span class="col-agent font-mono">{agent.name}</span>
+							<span class="col-executions">{agent.executions}</span>
+							<span class="col-success">
+								<span
+									class="success-badge"
+									style="--progress: {agent.successRate}%"
+								>
+									{formatPercent(agent.successRate)}
+								</span>
 							</span>
-						</span>
-						<span class="col-duration">{formatDuration(agent.avgDuration)}</span>
-						<span class="col-cost">{formatCost(agent.totalCost)}</span>
-					</div>
-				{/each}
-				{#if data.agents.length === 0}
-					<div class="table-empty">
-						No agent data available
-					</div>
-				{/if}
+							<span class="col-duration">{formatDuration(agent.avgDuration)}</span>
+							<span class="col-cost">{formatCost(agent.totalCost)}</span>
+						</div>
+					{/each}
+				</div>
 			</div>
-		</div>
+		{/if}
 
 		<!-- Atlas Breakdown -->
 		{#if Object.keys(data.traces.byTouchpoint).length > 0}
@@ -350,7 +351,7 @@
 					class="config-link"
 				>
 					<span class="config-link-label">Langfuse Dashboard</span>
-					<span class="config-link-arrow">↗</span>
+					<span class="config-link-arrow">&nearr;</span>
 				</a>
 				<a
 					href="https://dash.cloudflare.com"
@@ -359,7 +360,7 @@
 					class="config-link"
 				>
 					<span class="config-link-label">Cloudflare Dashboard</span>
-					<span class="config-link-arrow">↗</span>
+					<span class="config-link-arrow">&nearr;</span>
 				</a>
 			</div>
 		</div>
@@ -368,7 +369,7 @@
 	<!-- Footer -->
 	<div class="footer-section pt-6">
 		<p class="footer-text">
-			Powered by <span class="footer-highlight">Loom</span> +
+			Powered by <span class="footer-highlight">Agentic Executor</span> +
 			<span class="footer-highlight">Langfuse</span> +
 			<span class="footer-highlight">Cloudflare Tracing</span>
 		</p>
@@ -418,7 +419,7 @@
 		opacity: 0.5;
 	}
 
-	/* Loading & Error States */
+	/* Loading & Error & Empty States */
 	.loading-state,
 	.error-state {
 		padding: var(--space-xl);
@@ -428,6 +429,35 @@
 
 	.error-message {
 		color: var(--color-error);
+	}
+
+	.empty-state {
+		padding: 48px var(--space-xl);
+		text-align: center;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+	}
+
+	.empty-icon {
+		font-size: 48px;
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-md);
+		opacity: 0.4;
+	}
+
+	.empty-title {
+		font-size: var(--text-h3);
+		font-weight: 600;
+		margin-bottom: var(--space-sm);
+	}
+
+	.empty-description {
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-sm);
+		max-width: 480px;
+		margin: 0 auto;
+		line-height: 1.6;
 	}
 
 	/* Metrics Grid */
@@ -541,12 +571,6 @@
 
 	.table-row:last-child {
 		border-bottom: none;
-	}
-
-	.table-empty {
-		padding: var(--space-md);
-		text-align: center;
-		color: var(--color-fg-muted);
 	}
 
 	.success-badge {
