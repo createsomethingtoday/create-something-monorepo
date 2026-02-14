@@ -10,6 +10,11 @@
 /* Import shared Canon Design System (must precede @tailwind) */
 @import '@create-something/canon/styles/canon.css';
 @import '@create-something/canon/styles/components.css';
+@import '@create-something/canon/styles/spacing.css';
+@import '@create-something/canon/styles/typography.css';
+@import '@create-something/canon/styles/buttons.css';
+@import '@create-something/canon/styles/cards.css';
+@import '@create-something/canon/styles/interactions.css';
 
 /* Tailwind CSS directives */
 @tailwind base;

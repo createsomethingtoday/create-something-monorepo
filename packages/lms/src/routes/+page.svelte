@@ -35,7 +35,7 @@
   />
 </svelte:head>
 
-<div class="max-w-5xl mx-auto px-6 py-16">
+<div class="learn-home-shell">
   <section class="hero">
     <p class="eyebrow">Simple. Practical. Build-first.</p>
     <h1 class="hero-title">Learn Codex by Building an MCP</h1>
@@ -92,8 +92,14 @@
 </div>
 
 <style>
+  .learn-home-shell {
+    width: min(100%, var(--content-width-xl));
+    margin: 0 auto;
+    padding: var(--section-padding-sm) var(--container-padding);
+  }
+
   .hero {
-    margin-bottom: var(--space-2xl);
+    margin-bottom: var(--section-gap);
   }
 
   .hero-title {
@@ -121,7 +127,7 @@
   }
 
   .course-overview {
-    margin-bottom: var(--space-2xl);
+    margin-bottom: var(--section-gap);
   }
 
   .section-title {
