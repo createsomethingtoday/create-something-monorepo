@@ -113,10 +113,11 @@
 
 	.article-prose :global(ul),
 	.article-prose :global(ol) {
-		list-style-position: inside;
+		list-style-position: outside;
 		color: var(--color-fg-secondary);
 		margin-bottom: 1.5rem;
-		margin-left: 1rem;
+		margin-left: 0;
+		padding-left: 1.5rem;
 	}
 
 	.article-prose :global(ul) {
@@ -130,6 +131,10 @@
 	.article-prose :global(li) {
 		line-height: 1.75;
 		margin-bottom: 0.5rem;
+	}
+
+	.article-prose :global(li > p) {
+		margin: 0;
 	}
 
 	.article-prose :global(pre) {

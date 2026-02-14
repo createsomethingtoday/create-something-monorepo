@@ -114,10 +114,11 @@
 
 	.article-content :global(ul),
 	.article-content :global(ol) {
-		list-style-position: inside;
+		list-style-position: outside;
 		color: var(--color-fg-secondary);
 		margin-bottom: 1.5rem;
-		margin-left: 1rem;
+		margin-left: 0;
+		padding-left: 1.5rem;
 	}
 
 	.article-content :global(ul) {
@@ -137,6 +138,10 @@
 
 	.article-content :global(li) {
 		line-height: 1.6;
+	}
+
+	.article-content :global(li > p) {
+		margin: 0;
 	}
 
 	.article-content :global(pre) {
