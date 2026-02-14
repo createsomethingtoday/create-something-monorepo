@@ -1,3 +1,5 @@
+import type { Paper } from './paper.js';
+
 /**
  * File-Based Experiment Type
  *
@@ -43,28 +45,32 @@ export interface FileBasedExperiment {
 	route?: string;
 }
 
+export type FileBasedExperimentPaper = Paper & {
+	is_file_based: true;
+	tests_principles?: string[];
+	route: string;
+};
+
 /**
  * Transform a FileBasedExperiment to match Paper interface fields
  */
-export function transformExperimentToPaper(exp: FileBasedExperiment): Omit<FileBasedExperiment, 'reading_time_minutes' | 'difficulty'> & {
-	reading_time: number;
-	published_at: string;
-	difficulty_level: 'beginner' | 'intermediate' | 'advanced';
-	published: number;
-	is_hidden: number;
-	archived: number;
-	featured: number;
-	route: string;
-} {
+export function transformExperimentToPaper(exp: FileBasedExperiment): FileBasedExperimentPaper {
+	const { reading_time_minutes, difficulty, tags, ...rest } = exp;
+
 	return {
-		...exp,
-		reading_time: exp.reading_time_minutes,
+		...rest,
+		reading_time: reading_time_minutes,
 		published_at: exp.created_at,
-		difficulty_level: exp.difficulty,
+		difficulty_level: difficulty,
 		published: 1,
 		is_hidden: 0,
 		archived: 0,
 		featured: exp.featured || 0,
+		tags: tags.map((tag) => ({
+			id: tag.toLowerCase().replace(/\s+/g, '-'),
+			name: tag,
+			slug: tag.toLowerCase().replace(/\s+/g, '-')
+		})),
 		// Route override: use exp.route if set, otherwise default to /experiments/{slug}
 		route: exp.route || `/experiments/${exp.slug}`
 	};

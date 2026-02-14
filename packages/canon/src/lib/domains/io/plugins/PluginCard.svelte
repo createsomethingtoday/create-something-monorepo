@@ -1,6 +1,13 @@
 <script lang="ts">
-	import { CatalogCard } from '@create-something/canon';
-	import type { Plugin } from '$lib/config/plugins';
+	import CatalogCard from '$lib/components/CatalogCard.svelte';
+
+	interface Plugin {
+		slug: string;
+		name: string;
+		description: string;
+		category: string;
+		tags?: string[];
+	}
 
 	interface Props {
 		plugin: Plugin;

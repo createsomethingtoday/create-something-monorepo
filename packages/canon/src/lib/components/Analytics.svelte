@@ -85,7 +85,7 @@
 			const cleanup = createInteractionTracker(client, {
 				rageClick: trackRageClicks ? {} : false,
 				forms: trackForms ? {} : false,
-				cta: true, // Always track CTAs
+				cta: {}, // Always track CTAs
 				errors: trackErrors ? {} : false,
 			});
 			cleanupFns.push(cleanup);

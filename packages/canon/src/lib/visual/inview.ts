@@ -18,13 +18,23 @@ export type InViewOptions = {
 	rootMargin?: string;
 	/** Only trigger once (default: true) */
 	once?: boolean;
+	/** Optional callback when entering viewport */
+	onInView?: (entry: IntersectionObserverEntry) => void;
+	/** Optional callback when leaving viewport (only when once is false) */
+	onOutView?: (entry: IntersectionObserverEntry) => void;
 };
 
 /**
  * Svelte action for intersection observer
  */
 export function inview(node: HTMLElement, options: InViewOptions = {}) {
-	const { threshold = 0.2, rootMargin = '0px', once = true } = options;
+	const {
+		threshold = 0.2,
+		rootMargin = '0px',
+		once = true,
+		onInView,
+		onOutView
+	} = options;
 
 	let triggered = false;
 
@@ -34,12 +44,14 @@ export function inview(node: HTMLElement, options: InViewOptions = {}) {
 				if (entry.isIntersecting && (!once || !triggered)) {
 					triggered = true;
 					node.dispatchEvent(new CustomEvent('inview', { detail: entry }));
+					onInView?.(entry);
 
 					if (once) {
 						observer.unobserve(node);
 					}
 				} else if (!entry.isIntersecting && !once) {
 					node.dispatchEvent(new CustomEvent('outview', { detail: entry }));
+					onOutView?.(entry);
 				}
 			});
 		},
@@ -55,13 +67,22 @@ export function inview(node: HTMLElement, options: InViewOptions = {}) {
 		update(newOptions: InViewOptions) {
 			// Reconnect with new options if needed
 			observer.disconnect();
-			const { threshold: t = 0.2, rootMargin: r = '0px' } = newOptions;
+			const {
+				threshold: t = 0.2,
+				rootMargin: r = '0px',
+				onInView: nextOnInView,
+				onOutView: nextOnOutView
+			} = newOptions;
 			const newObserver = new IntersectionObserver(
 				(entries) => {
 					entries.forEach((entry) => {
 						if (entry.isIntersecting && (!once || !triggered)) {
 							triggered = true;
 							node.dispatchEvent(new CustomEvent('inview', { detail: entry }));
+							nextOnInView?.(entry);
+						} else if (!entry.isIntersecting && !once) {
+							node.dispatchEvent(new CustomEvent('outview', { detail: entry }));
+							nextOnOutView?.(entry);
 						}
 					});
 				},

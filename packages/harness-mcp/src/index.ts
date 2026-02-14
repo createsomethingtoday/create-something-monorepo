@@ -258,7 +258,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         properties: {
           category: {
             type: 'string',
-            enum: ['css', 'voice', 'code', 'templates', 'all'],
+            enum: ['css', 'voice', 'code', 'all'],
             description: 'Which category of rules to retrieve (default: all)'
           }
         }

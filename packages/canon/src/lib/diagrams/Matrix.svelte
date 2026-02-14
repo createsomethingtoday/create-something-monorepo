@@ -17,7 +17,8 @@
     branded = false,
   } = config;
 
-  const { rows, columns, cells, showLabels = true } = data;
+  const { rowHeaders, columnHeaders, cells, caption } = data;
+  const showLabels = true;
 
   const PADDING = 42;
   const HEADER_HEIGHT = 40;
@@ -29,18 +30,15 @@
   const tableWidth = width - PADDING * 2 - ROW_LABEL_WIDTH;
   const tableHeight = height - tableTop - PADDING - 20;
 
-  const colWidth = tableWidth / columns.length;
-  const rowHeight = (tableHeight - HEADER_HEIGHT) / rows.length;
+  const colWidth = tableWidth / columnHeaders.length;
+  const rowHeight = (tableHeight - HEADER_HEIGHT) / rowHeaders.length;
 
-  // Get cell value
-  function getCellValue(row: number, col: number): string | undefined {
-    const cell = cells.find((c) => c.row === row && c.col === col);
-    return cell?.value;
+  function getCellValue(row: number, col: number): string | number | boolean | undefined {
+    return cells[row]?.[col]?.value;
   }
 
   function getCellHighlight(row: number, col: number): boolean {
-    const cell = cells.find((c) => c.row === row && c.col === col);
-    return cell?.highlight ?? false;
+    return cells[row]?.[col]?.highlight ?? false;
   }
 </script>
 
@@ -64,7 +62,7 @@
   {/if}
 
   <!-- Column Headers -->
-  {#each columns as col, i}
+  {#each columnHeaders as col, i}
     <text
       x={tableLeft + i * colWidth + colWidth / 2}
       y={tableTop + HEADER_HEIGHT / 2}
@@ -86,7 +84,7 @@
   />
 
   <!-- Rows -->
-  {#each rows as row, ri}
+  {#each rowHeaders as row, ri}
     {@const y = tableTop + HEADER_HEIGHT + ri * rowHeight}
 
     <!-- Row label -->
@@ -101,7 +99,7 @@
     </text>
 
     <!-- Cells -->
-    {#each columns as _, ci}
+    {#each columnHeaders as _, ci}
       {@const value = getCellValue(ri, ci)}
       {@const highlight = getCellHighlight(ri, ci)}
 
@@ -130,7 +128,7 @@
     {/each}
 
     <!-- Row separator -->
-    {#if ri < rows.length - 1}
+    {#if ri < rowHeaders.length - 1}
       <line
         x1={tableLeft}
         y1={y + rowHeight}
@@ -145,6 +143,12 @@
   {#if branded}
     <text x={width - PADDING} y={height - 12} class="branding" text-anchor="end">
       createsomething.{property}
+    </text>
+  {/if}
+
+  {#if caption}
+    <text x={PADDING} y={height - 12} class="caption" text-anchor="start">
+      {caption}
     </text>
   {/if}
 </svg>
@@ -217,6 +221,11 @@
 
   .branding {
     fill: var(--color-fg-subtle, rgba(255, 255, 255, 0.2));
+    font-size: var(--text-caption, 0.75rem);
+  }
+
+  .caption {
+    fill: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
     font-size: var(--text-caption, 0.75rem);
   }
 </style>

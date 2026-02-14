@@ -221,6 +221,62 @@ Use the pcn_explore_component, pcn_explain_pattern, and pcn_deployment tools to 
 		}),
 	);
 
+	server.prompt(
+		'feature_design_session',
+		'Guided session for designing a new PCN platform feature. Explores relevant docs, guides DOM integration, and suggests analytics events.',
+		{
+			feature_description: z.string().describe('Description of the feature to design (e.g., "add a playback speed selector to the video modal")'),
+		},
+		async ({ feature_description }) => ({
+			messages: [{
+				role: 'user',
+				content: {
+					type: 'text',
+					text: `You are leading a feature design session for the OUTERFIELDS PCN platform. The feature request is:
+
+"${feature_description}"
+
+Follow this structured design process:
+
+## Step 1: Context Gathering
+Use the available tools to understand the current platform state:
+- Use pcn_explore_component to examine components this feature will touch or extend.
+- Use pcn_explain_pattern to understand relevant architectural patterns (engagement tracking, analytics pipeline, etc.).
+- Read the platform architecture resource for overall system context.
+
+## Step 2: Component Design
+Based on the context, design the feature:
+- **Which existing components** are affected? What changes are needed?
+- **New components** required? Define their props, events, and slot interface.
+- **DOM integration**: Where does this feature attach in the page hierarchy? What CSS/layout considerations apply?
+- **State management**: What state does this feature need? Local component state vs shared store?
+
+## Step 3: Data Flow
+Map how data flows through the feature:
+- **User interaction** → What DOM events fire?
+- **State updates** → What changes in response?
+- **API calls** → Does this need new Cloudflare Worker endpoints?
+- **Persistence** → What gets stored in D1/KV?
+
+## Step 4: Analytics Events
+Every user-facing feature needs engagement tracking. Design the analytics:
+- **Event names**: Follow the existing naming convention (e.g., \`video_speed_changed\`, \`heatmap_region_clicked\`).
+- **Event properties**: What data accompanies each event? (component, action, value, timestamp).
+- **Aggregation**: How should these events appear in the metrics dashboard?
+
+## Step 5: Implementation Plan
+Produce a concrete implementation plan:
+1. Files to create or modify (with paths).
+2. Implementation order (dependencies first).
+3. Testing approach (unit tests, manual verification).
+4. Deployment considerations (database migrations, feature flags).
+
+Use pcn_guide_extension to get step-by-step guidance for the closest extension type, then adapt it to this specific feature.`,
+				},
+			}],
+		}),
+	);
+
 	return server;
 }
 

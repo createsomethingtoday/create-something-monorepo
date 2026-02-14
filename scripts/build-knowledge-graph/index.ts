@@ -11,7 +11,7 @@
  *   pnpm graph:build --dry-run    # Preview without API calls
  */
 
-import { mkdir, writeFileSync } from 'fs';
+import { mkdirSync, writeFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import type { BuildConfig, BuildMetadata, GraphEdge, GraphNode, GraphOutput } from './types.js';
@@ -243,13 +243,7 @@ function writeOutput(output: GraphOutput, config: BuildConfig, dryRun: boolean):
 
   const outputDirs = [config.outputDir, LEGACY_OUTPUT_DIR];
   for (const outputDir of outputDirs) {
-    try {
-      mkdir(outputDir, { recursive: true }, (err) => {
-        if (err) throw err;
-      });
-    } catch (error) {
-      // Directory might already exist, that's fine
-    }
+    mkdirSync(outputDir, { recursive: true });
 
     const nodesPath = resolve(outputDir, 'nodes.json');
     writeFileSync(nodesPath, JSON.stringify(output.nodes, null, 2), 'utf-8');

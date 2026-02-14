@@ -122,11 +122,12 @@
 	const displayValue = $derived(() => {
 		if (!value) return '';
 
-		const options: Intl.DateTimeFormatOptions = {
+		const optionsByFormat = {
 			short: { month: 'numeric', day: 'numeric', year: '2-digit' },
 			medium: { month: 'short', day: 'numeric', year: 'numeric' },
 			long: { month: 'long', day: 'numeric', year: 'numeric' }
-		}[format];
+		} as const satisfies Record<NonNullable<Props['format']>, Intl.DateTimeFormatOptions>;
+		const options = optionsByFormat[format];
 
 		return value.toLocaleDateString('en-US', options);
 	});

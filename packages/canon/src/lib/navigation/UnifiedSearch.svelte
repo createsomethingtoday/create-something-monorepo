@@ -191,7 +191,6 @@
 			label: result.title,
 			description: result.description,
 			href: result.url,
-			icon: PROPERTY_INFO[result.property]?.icon || '📄',
 			property: result.property,
 			type: result.type,
 		}));

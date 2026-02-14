@@ -7,7 +7,7 @@
  * All timestamps are Unix integers (seconds since epoch).
  */
 
-import { json, error } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 interface AgentSummary {
@@ -54,32 +54,72 @@ interface ObservabilityData {
 	hasData: boolean;
 }
 
-export const GET: RequestHandler = async ({ platform, url }) => {
-	const rawDays = parseInt(url.searchParams.get('days') || '7');
-	const days = Number.isNaN(rawDays) ? 7 : Math.max(1, Math.min(90, rawDays));
+const DEFAULT_DAYS = 7;
+const MAX_DAYS = 90;
+const RECENT_ACTIVITY_LIMIT = 20;
+
+function toSafeNumber(value: unknown): number {
+	if (typeof value === 'number' && Number.isFinite(value)) return value;
+	if (typeof value === 'string') {
+		const parsed = Number(value);
+		if (Number.isFinite(parsed)) return parsed;
+	}
+	return 0;
+}
+
+function parseDays(value: string | null): number {
+	const parsed = Number.parseInt(value ?? String(DEFAULT_DAYS), 10);
+	if (Number.isNaN(parsed)) return DEFAULT_DAYS;
+	return Math.max(1, Math.min(MAX_DAYS, parsed));
+}
+
+export const GET: RequestHandler = async ({ platform, url, locals }) => {
+	if (locals.user?.role !== 'admin') {
+		return json({ error: 'Forbidden' }, { status: 403 });
+	}
+
+	const db = platform?.env?.DB;
+	if (!db) {
+		return json({ error: 'Database not available' }, { status: 500 });
+	}
+
+	const days = parseDays(url.searchParams.get('days'));
 
 	try {
-		const db = platform?.env?.DB;
+		const [tasks, agents, traces, recentActivity, costTrend] = await Promise.all([
+			getTaskSummary(db, days),
+			getAgentSummary(db, days),
+			getTraceSummary(db, days),
+			getRecentActivity(db, days, RECENT_ACTIVITY_LIMIT),
+			getCostTrend(db, days)
+		]);
+
+		const totalSessions = tasks.ready + tasks.claimed + tasks.blocked + tasks.done + tasks.cancelled;
 
 		const data: ObservabilityData = {
-			tasks: await getTaskSummary(db, days),
-			agents: await getAgentSummary(db, days),
-			traces: await getTraceSummary(db, days),
-			recentActivity: await getRecentActivity(db, 20),
-			costTrend: await getCostTrend(db, days),
+			tasks,
+			agents,
+			traces,
+			recentActivity,
+			costTrend,
 			hasData: false
 		};
 
 		// Determine if any real data exists
 		data.hasData =
-			data.tasks.ready + data.tasks.claimed + data.tasks.done + data.tasks.cancelled > 0 ||
+			totalSessions > 0 ||
+			data.tasks.totalCost > 0 ||
 			data.traces.total > 0 ||
 			data.recentActivity.length > 0;
 
-		return json(data);
+		return json(data, {
+			headers: {
+				'Cache-Control': 'no-store'
+			}
+		});
 	} catch (err) {
 		console.error('Observability API error:', err);
-		throw error(500, 'Failed to fetch observability data');
+		return json({ error: 'Failed to fetch observability data' }, { status: 500 });
 	}
 };
 
@@ -101,33 +141,36 @@ async function getTaskSummary(db: D1Database | undefined, days: number): Promise
 			.prepare(
 				`
 			SELECT
-				SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as ready,
+				SUM(CASE WHEN status IN ('pending', 'queued') THEN 1 ELSE 0 END) as ready,
 				SUM(CASE WHEN status = 'running' THEN 1 ELSE 0 END) as claimed,
+				SUM(CASE WHEN status IN ('blocked', 'paused') THEN 1 ELSE 0 END) as blocked,
 				SUM(CASE WHEN status = 'complete' THEN 1 ELSE 0 END) as done,
-				SUM(CASE WHEN status IN ('error', 'budget_exhausted') THEN 1 ELSE 0 END) as cancelled,
+				SUM(CASE WHEN status IN ('error', 'budget_exhausted', 'cancelled') THEN 1 ELSE 0 END) as cancelled,
 				COALESCE(SUM(cost_consumed), 0) as totalCost
 			FROM agentic_sessions
-			WHERE started_at > ?
+			WHERE started_at >= ?
 		`
 			)
 			.bind(cutoff)
 			.first<{
-				ready: number;
-				claimed: number;
-				done: number;
-				cancelled: number;
-				totalCost: number;
+				ready: number | string | null;
+				claimed: number | string | null;
+				blocked: number | string | null;
+				done: number | string | null;
+				cancelled: number | string | null;
+				totalCost: number | string | null;
 			}>();
 
 		return {
-			ready: result?.ready || 0,
-			claimed: result?.claimed || 0,
-			blocked: 0,
-			done: result?.done || 0,
-			cancelled: result?.cancelled || 0,
-			totalCost: result?.totalCost || 0
+			ready: toSafeNumber(result?.ready),
+			claimed: toSafeNumber(result?.claimed),
+			blocked: toSafeNumber(result?.blocked),
+			done: toSafeNumber(result?.done),
+			cancelled: toSafeNumber(result?.cancelled),
+			totalCost: toSafeNumber(result?.totalCost)
 		};
-	} catch {
+	} catch (err) {
+		console.error('Failed to query task summary:', err);
 		return emptySummary;
 	}
 }
@@ -145,36 +188,42 @@ async function getAgentSummary(
 				`
 			SELECT
 				COUNT(*) as executions,
-				AVG(CASE WHEN status = 'complete' THEN 100.0 ELSE 0.0 END) as successRate,
-				AVG(CASE WHEN completed_at IS NOT NULL
-					THEN completed_at - started_at
-					ELSE 0 END) as avgDuration,
+				SUM(CASE WHEN status = 'complete' THEN 1 ELSE 0 END) as successfulExecutions,
+				SUM(CASE WHEN status IN ('complete', 'error', 'budget_exhausted', 'cancelled') THEN 1 ELSE 0 END) as terminalExecutions,
+				AVG(CASE WHEN completed_at IS NOT NULL THEN completed_at - started_at END) as avgDuration,
 				COALESCE(SUM(cost_consumed), 0) as totalCost
 			FROM agentic_sessions
-			WHERE started_at > ?
+			WHERE started_at >= ?
 		`
 			)
 			.bind(cutoff)
 			.first<{
-				executions: number;
-				successRate: number;
-				avgDuration: number;
-				totalCost: number;
+				executions: number | string | null;
+				successfulExecutions: number | string | null;
+				terminalExecutions: number | string | null;
+				avgDuration: number | string | null;
+				totalCost: number | string | null;
 			}>();
 
-		if (result && result.executions > 0) {
+		const executions = toSafeNumber(result?.executions);
+		const successfulExecutions = toSafeNumber(result?.successfulExecutions);
+		const terminalExecutions = toSafeNumber(result?.terminalExecutions);
+		const successRate = terminalExecutions > 0 ? (successfulExecutions / terminalExecutions) * 100 : 0;
+
+		if (executions > 0) {
 			return [
 				{
 					name: 'agentic-executor',
-					executions: result.executions,
-					successRate: result.successRate,
-					avgDuration: result.avgDuration,
-					totalCost: result.totalCost
+					executions,
+					successRate,
+					avgDuration: toSafeNumber(result?.avgDuration),
+					totalCost: toSafeNumber(result?.totalCost)
 				}
 			];
 		}
 		return [];
-	} catch {
+	} catch (err) {
+		console.error('Failed to query agent summary:', err);
 		return [];
 	}
 }
@@ -196,118 +245,177 @@ async function getTraceSummary(
 	try {
 		const cutoff = Math.floor(Date.now() / 1000) - days * 86400;
 
-		// Count iterations and aggregate tokens
-		const result = await db
-			.prepare(
-				`
-			SELECT
-				COUNT(*) as total,
-				AVG(COALESCE(input_tokens + output_tokens, 0)) as avgTokens
-			FROM agentic_iterations
-			WHERE created_at > ?
-		`
-			)
-			.bind(cutoff)
-			.first<{
-				total: number;
-				avgTokens: number;
-			}>();
+		const [iterationTotals, errorTotals, toolResults, eventBreakdown] = await Promise.all([
+			db
+				.prepare(
+					`
+				SELECT
+					COUNT(*) as total,
+					AVG(COALESCE(input_tokens + output_tokens, 0)) as avgTokens
+				FROM agentic_iterations
+				WHERE created_at >= ?
+			`
+				)
+				.bind(cutoff)
+				.first<{
+					total: number | string | null;
+					avgTokens: number | string | null;
+				}>(),
+			db
+				.prepare(
+					`
+				SELECT COUNT(*) as errors
+				FROM agentic_events
+				WHERE event_type IN ('quality_gate_failed', 'budget_exhausted', 'completion_rejected', 'session_error')
+				AND created_at >= ?
+			`
+				)
+				.bind(cutoff)
+				.first<{ errors: number | string | null }>(),
+			db
+				.prepare(
+					`
+				SELECT tools_used, COUNT(*) as count
+				FROM agentic_iterations
+				WHERE created_at >= ?
+				AND tools_used IS NOT NULL
+				AND trim(tools_used) != ''
+				GROUP BY tools_used
+				ORDER BY count DESC
+				LIMIT 50
+			`
+				)
+				.bind(cutoff)
+				.all<{ tools_used: string; count: number | string }>(),
+			db
+				.prepare(
+					`
+				SELECT event_type, COUNT(*) as count
+				FROM agentic_events
+				WHERE created_at >= ?
+				GROUP BY event_type
+				ORDER BY count DESC
+				LIMIT 10
+			`
+				)
+				.bind(cutoff)
+				.all<{ event_type: string; count: number | string }>()
+		]);
 
-		if (result) {
-			summary.total = result.total;
-			summary.avgTokens = result.avgTokens || 0;
-		}
+		summary.total = toSafeNumber(iterationTotals?.total);
+		summary.avgTokens = toSafeNumber(iterationTotals?.avgTokens);
+		summary.errors = toSafeNumber(errorTotals?.errors);
 
-		// Count errors from agentic_events
-		const errorResult = await db
-			.prepare(
-				`
-			SELECT COUNT(*) as errors
-			FROM agentic_events
-			WHERE event_type IN ('quality_gate_failed', 'budget_exhausted', 'completion_rejected')
-			AND created_at > ?
-		`
-			)
-			.bind(cutoff)
-			.first<{ errors: number }>();
-
-		if (errorResult) {
-			summary.errors = errorResult.errors;
-		}
-
-		// Aggregate by tool type (touchpoint proxy)
-		const toolResults = await db
-			.prepare(
-				`
-			SELECT tools_used, COUNT(*) as count
-			FROM agentic_iterations
-			WHERE created_at > ?
-			AND tools_used IS NOT NULL
-			GROUP BY tools_used
-			LIMIT 10
-		`
-			)
-			.bind(cutoff)
-			.all<{ tools_used: string; count: number }>();
-
-		if (toolResults.results) {
-			for (const row of toolResults.results) {
-				if (row.tools_used) {
-					summary.byTouchpoint[row.tools_used] = row.count;
-				}
+		const touchpointCounts: Record<string, number> = {};
+		for (const row of toolResults.results ?? []) {
+			const count = toSafeNumber(row.count);
+			for (const tool of row.tools_used.split(',').map((token) => token.trim())) {
+				if (!tool) continue;
+				touchpointCounts[tool] = (touchpointCounts[tool] || 0) + count;
 			}
 		}
-	} catch {
+
+		for (const [touchpoint, count] of Object.entries(touchpointCounts)
+			.sort((a, b) => b[1] - a[1])
+			.slice(0, 10)) {
+			summary.byTouchpoint[touchpoint] = count;
+		}
+
+		for (const row of eventBreakdown.results ?? []) {
+			if (!row.event_type) continue;
+			summary.byAiTask[row.event_type] = toSafeNumber(row.count);
+		}
+	} catch (err) {
+		console.error('Failed to query trace summary:', err);
 		// Tables might not exist yet
 	}
 
 	return summary;
 }
 
-async function getRecentActivity(db: D1Database | undefined, limit: number) {
+async function getRecentActivity(db: D1Database | undefined, days: number, limit: number) {
 	const activity: ObservabilityData['recentActivity'] = [];
 
 	if (!db) return activity;
 
 	try {
-		const sessions = await db
-			.prepare(
-				`
-			SELECT
-				id,
-				status,
-				cost_consumed,
-				started_at
-			FROM agentic_sessions
-			ORDER BY started_at DESC
-			LIMIT ?
-		`
-			)
-			.bind(limit)
-			.all<{
-				id: string;
-				status: string;
-				cost_consumed: number;
-				started_at: number;
-			}>();
+		const cutoff = Math.floor(Date.now() / 1000) - days * 86400;
+		const [sessions, events] = await Promise.all([
+			db
+				.prepare(
+					`
+				SELECT
+					id,
+					status,
+					cost_consumed,
+					started_at
+				FROM agentic_sessions
+				WHERE started_at >= ?
+				ORDER BY started_at DESC
+				LIMIT ?
+			`
+				)
+				.bind(cutoff, limit)
+				.all<{
+					id: string;
+					status: string;
+					cost_consumed: number | string | null;
+					started_at: number | string;
+				}>(),
+			db
+				.prepare(
+					`
+				SELECT
+					id,
+					event_type,
+					created_at
+				FROM agentic_events
+				WHERE created_at >= ?
+				ORDER BY created_at DESC
+				LIMIT ?
+			`
+				)
+				.bind(cutoff, limit)
+				.all<{
+					id: number | string;
+					event_type: string;
+					created_at: number | string;
+				}>()
+		]);
 
-		if (sessions.results) {
-			for (const session of sessions.results) {
-				activity.push({
-					id: session.id,
-					type: 'session',
-					name: `Session ${session.id.slice(0, 8)}`,
-					status: session.status,
-					timestamp: new Date(session.started_at * 1000).toISOString(),
-					cost: session.cost_consumed
-				});
-			}
+		for (const session of sessions.results ?? []) {
+			const timestamp = toSafeNumber(session.started_at) * 1000;
+			activity.push({
+				id: session.id,
+				type: 'session',
+				name: `Session ${session.id.slice(0, 8)}`,
+				status: session.status || 'unknown',
+				timestamp: new Date(timestamp).toISOString(),
+				cost: toSafeNumber(session.cost_consumed)
+			});
 		}
-	} catch {
+
+		for (const event of events.results ?? []) {
+			const timestamp = toSafeNumber(event.created_at) * 1000;
+			const isErrorEvent =
+				event.event_type.includes('error') ||
+				event.event_type.includes('failed') ||
+				event.event_type.includes('exhausted');
+			activity.push({
+				id: `event-${event.id}`,
+				type: 'task',
+				name: event.event_type.replaceAll('_', ' '),
+				status: isErrorEvent ? 'error' : 'complete',
+				timestamp: new Date(timestamp).toISOString()
+			});
+		}
+	} catch (err) {
+		console.error('Failed to query recent activity:', err);
 		// Table might not exist yet
 	}
 
-	return activity;
+	activity.sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp));
+	return activity.slice(0, limit);
 }
 
 async function getCostTrend(db: D1Database | undefined, days: number) {
@@ -322,25 +430,26 @@ async function getCostTrend(db: D1Database | undefined, days: number) {
 				`
 			SELECT
 				date(created_at, 'unixepoch') as date,
-				SUM(cost) as cost
+				COALESCE(SUM(cost), 0) as cost
 			FROM agentic_iterations
-			WHERE created_at > ?
+			WHERE created_at >= ?
 			GROUP BY date(created_at, 'unixepoch')
 			ORDER BY date ASC
 		`
 			)
 			.bind(cutoff)
-			.all<{ date: string; cost: number }>();
+			.all<{ date: string; cost: number | string | null }>();
 
 		if (results.results) {
 			for (const row of results.results) {
 				trend.push({
 					date: row.date,
-					cost: row.cost || 0
+					cost: toSafeNumber(row.cost)
 				});
 			}
 		}
-	} catch {
+	} catch (err) {
+		console.error('Failed to query cost trend:', err);
 		// Table might not exist yet
 	}
 

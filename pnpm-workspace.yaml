@@ -7,6 +7,7 @@ packages:
   # WORKWAY account (Half Dozen)
   - 'packages/halfdozen-notion-mcp/worker'
   - 'packages/halfdozen-gmail-sync/worker'
+  - 'packages/gmail-notion-mcp/worker'
   - 'packages/halfdozen-telemetry-mcp/worker'
   # CREATE SOMETHING account
   - 'packages/schedule-mcp/worker'

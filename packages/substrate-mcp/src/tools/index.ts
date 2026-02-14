@@ -38,6 +38,18 @@ interface AnyMcpServer {
 }
 
 /**
+ * SamplingCapable — inner Server object from McpServer that can issue sampling/createMessage requests.
+ * Used for validation of destructive operations. Optional: graceful degradation when not available.
+ */
+export interface SamplingCapable {
+  createMessage(params: {
+    messages: Array<{ role: string; content: { type: string; text: string } }>;
+    maxTokens: number;
+    systemPrompt?: string;
+  }): Promise<{ content: { type: string; text?: string }; model?: string; stopReason?: string }>;
+}
+
+/**
  * AuthGate — optional authorization context for Worker mode.
  * In stdio mode this is undefined (single-user, no enforcement).
  * In Worker mode this provides the authenticated token's role and workspace scope.
@@ -82,10 +94,36 @@ export function registerTools(
   getR2: () => R2Store,
   getActor: () => string,
   authGate?: AuthGate,
+  samplingServer?: SamplingCapable,
 ): void {
 
   async function withDb<T>(fn: (e: D1Exec) => Promise<T>): Promise<T> {
     const e = getD1(); await db.ensureInitialized(e); return fn(e);
+  }
+
+  /**
+   * Request LLM validation for destructive operations via MCP sampling.
+   * Returns true if validated (or if client doesn't support sampling — graceful degradation).
+   * Returns false only if the LLM explicitly rejects the operation.
+   */
+  async function requestValidation(prompt: string): Promise<{ validated: boolean; reason?: string }> {
+    if (!samplingServer) return { validated: true, reason: 'Sampling not available — proceeding without validation.' };
+    try {
+      const result = await samplingServer.createMessage({
+        messages: [{
+          role: 'user',
+          content: { type: 'text', text: prompt },
+        }],
+        maxTokens: 200,
+        systemPrompt: 'You are a safety validator for database operations. Respond with EXACTLY "APPROVED" if the operation should proceed, or "DENIED: <reason>" if it should not. Be conservative — deny if the scope seems too large or risky.',
+      });
+      const text = (result.content?.type === 'text' && result.content.text) || '';
+      if (text.trim().startsWith('APPROVED')) return { validated: true };
+      return { validated: false, reason: text.trim() || 'Validation denied by reviewer.' };
+    } catch {
+      // Client doesn't support sampling — graceful degradation
+      return { validated: true, reason: 'Sampling not supported by client — proceeding without validation.' };
+    }
   }
 
   /** Check workspace access against token scope. Returns error string or null. */
@@ -339,14 +377,20 @@ export function registerTools(
     } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   server.tool('purge_workspace',
-    'Permanently delete workspace. Requires confirm:true. Cannot be undone.',
-    PurgeWorkspaceSchema.shape,
-    async (p: unknown) => { const i = p as PurgeWorkspaceInput; try {
+    'Permanently delete workspace. Requires confirm:true. Cannot be undone. Set validate:true for LLM safety review before execution.',
+    { ...PurgeWorkspaceSchema.shape, validate: z.boolean().optional().describe('Request LLM validation before executing this destructive operation') },
+    async (p: unknown) => { const i = p as PurgeWorkspaceInput & { validate?: boolean }; try {
       const wsErr = checkWorkspaceAccess(i.workspace_id);
       if (wsErr) return fail(wsErr);
       const roleErr = requireRole(Role.ADMIN);
       if (roleErr) return fail(roleErr);
       if (!i.confirm) return fail('Set confirm:true to permanently delete. This cannot be undone.');
+      if (i.validate) {
+        let wsInfo = '';
+        try { const ws = await withDb(e => db.getWorkspace(e, i.workspace_id)); const tables = ws ? await withDb(e => db.listTables(e, i.workspace_id)) : []; wsInfo = ws ? `Workspace "${ws.name}" has ${tables.length} table(s).` : `Workspace ${i.workspace_id} (details unavailable).`; } catch { wsInfo = `Workspace ${i.workspace_id}.`; }
+        const v = await requestValidation(`CRITICAL: Permanent deletion requested. ${wsInfo} This will destroy all tables, records, files, and relations. Proceed?`);
+        if (!v.validated) return fail(`Validation denied: ${v.reason}`);
+      }
       return (await withDb(e => db.purgeWorkspace(e, i.workspace_id))) ? ok({ success: true, purged: true }) : fail('Workspace not found');
     } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
@@ -384,9 +428,15 @@ export function registerTools(
     } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   server.tool('bulk_archive_records',
-    `Archive multiple records (max ${MAX_BULK_OPERATIONS}).`,
-    BulkDeleteRecordsSchema.shape,
-    async (p: unknown) => { const i = p as BulkDeleteRecordsInput; try { return ok({ success: true, archived_count: await withDb(e => db.bulkDeleteRecords(e, i.record_ids)) }); } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
+    `Archive multiple records (max ${MAX_BULK_OPERATIONS}). Set validate:true for LLM safety review before execution.`,
+    { ...BulkDeleteRecordsSchema.shape, validate: z.boolean().optional().describe('Request LLM validation before executing this bulk operation') },
+    async (p: unknown) => { const i = p as BulkDeleteRecordsInput & { validate?: boolean }; try {
+      if (i.validate) {
+        const v = await requestValidation(`Bulk archive requested for ${i.record_ids.length} record(s). IDs: ${i.record_ids.slice(0, 5).join(', ')}${i.record_ids.length > 5 ? ` ... and ${i.record_ids.length - 5} more` : ''}. Proceed?`);
+        if (!v.validated) return fail(`Validation denied: ${v.reason}`);
+      }
+      return ok({ success: true, archived_count: await withDb(e => db.bulkDeleteRecords(e, i.record_ids)) });
+    } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   // ═══════════════════════════════════════════════════════════════════
   // FILES
@@ -427,12 +477,18 @@ export function registerTools(
     { readOnly: true });
 
   server.tool('delete_file',
-    'Delete file permanently.',
-    DeleteFileSchema.shape,
+    'Delete file permanently. Set validate:true for LLM safety review before execution.',
+    { ...DeleteFileSchema.shape, validate: z.boolean().optional().describe('Request LLM validation before executing this destructive operation') },
     async (p: unknown) => {
-      const i = p as DeleteFileInput;
+      const i = p as DeleteFileInput & { validate?: boolean };
       try {
         const e = getD1(); const r2 = getR2(); await db.ensureInitialized(e);
+        if (i.validate) {
+          let fileInfo = '';
+          try { const meta = await db.getFileMetadata(e, i.file_id); fileInfo = meta ? `File "${meta.filename}" (${meta.size_bytes} bytes) in workspace ${meta.workspace_id}.` : `File ${i.file_id}.`; } catch { fileInfo = `File ${i.file_id}.`; }
+          const v = await requestValidation(`Permanent file deletion requested. ${fileInfo} Proceed?`);
+          if (!v.validated) return fail(`Validation denied: ${v.reason}`);
+        }
         const meta = await db.deleteFileMetadata(e, i.file_id);
         if (!meta) return fail('File not found');
         await r2.delete(meta.storage_key);
@@ -468,11 +524,15 @@ export function registerTools(
     } catch (e) { return fail(e instanceof Error ? e.message : String(e)); } });
 
   server.tool('revoke_token',
-    'Revoke an access token by ID. Admin only.',
-    RevokeTokenSchema.shape,
-    async (p: unknown) => { const i = p as RevokeTokenInput; try {
+    'Revoke an access token by ID. Admin only. Set validate:true for LLM safety review before execution.',
+    { ...RevokeTokenSchema.shape, validate: z.boolean().optional().describe('Request LLM validation before executing this operation') },
+    async (p: unknown) => { const i = p as RevokeTokenInput & { validate?: boolean }; try {
       const roleErr = requireRole(Role.ADMIN);
       if (roleErr) return fail(roleErr);
+      if (i.validate) {
+        const v = await requestValidation(`Token revocation requested for token ID: ${i.token_id}. This will immediately deny access for any client using this token. Proceed?`);
+        if (!v.validated) return fail(`Validation denied: ${v.reason}`);
+      }
       const revoked = await withDb(e => db.revokeToken(e, i.token_id));
       if (revoked) await withDb(e => db.createAuditEntry(e, { workspace_id: '__system__', table_id: '__tokens__', record_id: i.token_id, action: 'token_revoked', actor: getActor(), changes: {} }));
       return revoked ? ok({ success: true }) : fail('Token not found');

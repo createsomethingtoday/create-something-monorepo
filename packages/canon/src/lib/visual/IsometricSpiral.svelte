@@ -100,8 +100,7 @@
 
 <div
 	class="isometric-spiral {className}"
-	use:inview={{ threshold: 0.3 }}
-	oninview={() => (isInView = true)}
+	use:inview={{ threshold: 0.3, onInView: () => (isInView = true) }}
 >
 	<svg viewBox={viewBox} class="spiral-svg">
 		<defs>

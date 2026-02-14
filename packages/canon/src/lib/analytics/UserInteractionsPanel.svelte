@@ -61,7 +61,7 @@
 
 	// Transform daily activity for Sparkline
 	function getSparklineData(activity: DailyActivityPoint[]) {
-		return activity.map((d) => ({ value: d.count }));
+		return activity.map((d) => ({ count: d.count }));
 	}
 
 	// Reactive computations (Svelte 5 runes)

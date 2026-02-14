@@ -16,6 +16,8 @@
 	export let showCaption: boolean = true;
 	export let interactive: boolean = true;
 
+	type MaterialLineItem = NonNullable<FloorPlanData['materials']>['lineItems'][number];
+
 	// Threshold zone colors - using design tokens
 	// Tufte: minimize non-data ink while maintaining information
 	const zoneColors: Record<string, string> = {
@@ -69,14 +71,18 @@
 	}
 
 	// Group line items by category
-	$: groupedCosts = plan.materials?.lineItems.reduce(
+	$: groupedCosts = (plan.materials?.lineItems ?? []).reduce<Record<string, MaterialLineItem[]>>(
 		(acc, item) => {
 			if (!acc[item.category]) acc[item.category] = [];
 			acc[item.category].push(item);
 			return acc;
 		},
-		{} as Record<string, typeof plan.materials.lineItems>
+		{}
 	);
+
+	function getGroupedCostEntries(grouped: Record<string, MaterialLineItem[]>) {
+		return Object.entries(grouped) as Array<[string, MaterialLineItem[]]>;
+	}
 
 	// Caption
 	$: caption = [
@@ -326,9 +332,9 @@
 				<span class="cost-per-sf">{formatCurrency(plan.materials.costPerSF)}/SF</span>
 			</div>
 
-			{#if groupedCosts}
+			{#if Object.keys(groupedCosts).length > 0}
 				<div class="cost-categories">
-					{#each Object.entries(groupedCosts) as [category, items]}
+					{#each getGroupedCostEntries(groupedCosts) as [category, items]}
 						<div class="cost-category">
 							<h4 class="category-name">{category}</h4>
 							{#each items as item}

@@ -140,6 +140,212 @@ function createMcpServer(
     }),
   );
 
+  // ── Domain-Expertise Prompts (Judgment tier — encode CFO/controller workflows) ──
+
+  server.prompt(
+    'month_end_close',
+    'CFO month-end close workflow: P&L + Balance Sheet + AR Aging bundled with interpretation guidance. Encodes the sequence a controller runs every close cycle.',
+    { period: z.string().describe('Accounting period to close (e.g., "January 2026", "Q4 2025")') },
+    async ({ period }) => ({
+      messages: [{
+        role: 'user',
+        content: {
+          type: 'text',
+          text: `Run a month-end close review for ${period}. Execute this sequence:
+
+1. **Pull reports** (use qbo_report for each):
+   - Profit & Loss for ${period}
+   - Balance Sheet as of period end
+   - Aged Receivables Detail
+   - Aged Payables Detail
+
+2. **Analyze P&L**:
+   - Revenue vs prior period (growth/decline %)
+   - Top 5 expense categories and any anomalies (>20% change)
+   - Net income margin
+
+3. **Analyze Balance Sheet**:
+   - Cash position and trend
+   - Total AR vs AP (working capital health)
+   - Any large liability changes
+
+4. **Receivables health**:
+   - Total outstanding AR
+   - Amount >30 days, >60 days, >90 days overdue
+   - Top 3 overdue customers by amount
+
+5. **Payables check**:
+   - Any bills approaching due date
+   - Vendor concentration risk
+
+6. **Close summary**: One paragraph executive summary suitable for a board update, highlighting the 2-3 most important things.
+
+Flag anything that looks unusual — this is the controller's safety net.`,
+        },
+      }],
+    }),
+  );
+
+  server.prompt(
+    'customer_payment_analysis',
+    'Revenue investigation: analyze a customer\'s invoice and payment history to answer "why is revenue from this customer down?" or "what\'s their payment pattern?"',
+    { customer_name: z.string().describe('Customer name to investigate') },
+    async ({ customer_name }) => ({
+      messages: [{
+        role: 'user',
+        content: {
+          type: 'text',
+          text: `Investigate the financial relationship with customer "${customer_name}". Run this analysis:
+
+1. **Find the customer** (use qbo_search with entity Customer, name "${customer_name}")
+
+2. **Pull their invoices** (use qbo_list with entity Invoice, filter by CustomerRef)
+   - List all invoices: date, amount, status (paid/open/overdue)
+   - Calculate total invoiced (all time and last 12 months)
+
+3. **Pull their payments** (use qbo_list with entity Payment, filter by CustomerRef)
+   - Match payments to invoices
+   - Calculate average days-to-pay (invoice date → payment date)
+
+4. **Pull their credit memos** if any (use qbo_list with entity CreditMemo)
+
+5. **Revenue trend**: Compare last 3 months vs prior 3 months
+   - Is revenue up, down, or flat?
+   - Any gaps in ordering?
+
+6. **Payment behavior**:
+   - Average days to pay
+   - Any late payments (>30 days)?
+   - Outstanding balance right now
+
+7. **Assessment**: One paragraph summary — is this customer healthy, at risk, or growing? What action should we take?`,
+        },
+      }],
+    }),
+  );
+
+  server.prompt(
+    'sync_decision_tree',
+    'Guide Notion database schema decisions before syncing QuickBooks data. Helps decide which properties to create, which relations to set up, and what the target structure should look like.',
+    { entity_type: z.string().describe('QuickBooks entity type to sync (e.g., "Invoice", "Customer", "Payment", "Vendor")') },
+    async ({ entity_type }) => ({
+      messages: [{
+        role: 'user',
+        content: {
+          type: 'text',
+          text: `Help me set up a Notion database to sync ${entity_type} data from QuickBooks. Walk through these decisions:
+
+1. **Discover the data shape** (use qbo_list for ${entity_type}, limit 3):
+   - What fields does this entity have?
+   - Which fields carry the most signal for a team reviewing in Notion?
+
+2. **Recommend Notion properties** for each important field:
+   - Title property (what should be the row name?)
+   - Which fields → Select/Multi-select (finite options)?
+   - Which fields → Number (amounts, quantities)?
+   - Which fields → Date (dates, deadlines)?
+   - Which fields → Rich text (descriptions, notes)?
+   - Which fields to skip (internal IDs, metadata noise)?
+
+3. **Relation recommendations**:
+   - If syncing Invoices: should we link to a Customers database?
+   - If syncing Payments: should we link to Invoices?
+   - What relations make the Notion view most useful?
+
+4. **View recommendations**:
+   - What Notion views would help the team? (e.g., "Overdue" filter, "By Customer" group, calendar by due date)
+
+5. **Output**: Provide the exact notion_sync_qbo parameters to use, including property mapping. Make it copy-pasteable.
+
+The goal is a Notion database that a non-financial team member can use to understand the business — not a raw data dump.`,
+        },
+      }],
+    }),
+  );
+
+  // ── Additional Resources (Database tier — agent discovery) ──────────
+
+  server.resource(
+    'qbo-companies',
+    'qbo://companies',
+    { description: 'Connected QuickBooks companies with realm IDs', mimeType: 'application/json' },
+    async () => {
+      try {
+        const info = await qbo.getCompanyInfo();
+        return {
+          contents: [{
+            uri: 'qbo://companies',
+            mimeType: 'application/json',
+            text: JSON.stringify({
+              companies: [{
+                realm_id: realmId,
+                name: info?.CompanyName ?? 'Unknown',
+                country: info?.Country ?? 'Unknown',
+                fiscal_year_start: info?.FiscalYearStartMonth ?? 'January',
+                environment: sandbox ? 'sandbox' : 'production',
+              }],
+            }, null, 2),
+          }],
+        };
+      } catch {
+        return {
+          contents: [{
+            uri: 'qbo://companies',
+            mimeType: 'application/json',
+            text: JSON.stringify({ companies: [], error: 'Failed to fetch. Check OAuth tokens.' }),
+          }],
+        };
+      }
+    },
+  );
+
+  server.resource(
+    'qbo-sync-status',
+    'qbo://sync-status',
+    { description: 'Last sync timestamps and status per entity type', mimeType: 'application/json' },
+    async () => ({
+      contents: [{
+        uri: 'qbo://sync-status',
+        mimeType: 'application/json',
+        text: JSON.stringify({
+          note: 'Sync status tracking not yet implemented. Use qbo_list to check current data.',
+          realm_id: realmId,
+          environment: sandbox ? 'sandbox' : 'production',
+          entities: ['Customer', 'Invoice', 'Payment', 'Vendor', 'Item', 'Bill', 'Estimate'],
+        }, null, 2),
+      }],
+    }),
+  );
+
+  server.resource(
+    'qbo-schema',
+    'qbo://schema/{entity}',
+    { description: 'Available fields for a QuickBooks entity type', mimeType: 'application/json' },
+    async (uri) => {
+      const entity = uri.pathname.split('/').pop() || 'Customer';
+      const schemas: Record<string, object> = {
+        Customer: { key_fields: ['DisplayName', 'PrimaryEmailAddr', 'PrimaryPhone', 'Balance', 'Active'], filterable: ['Active', 'Balance', 'MetaData.CreateTime'], sortable: ['DisplayName', 'Balance'] },
+        Invoice: { key_fields: ['DocNumber', 'CustomerRef', 'TxnDate', 'DueDate', 'TotalAmt', 'Balance', 'Line'], filterable: ['TxnDate', 'DueDate', 'CustomerRef', 'Balance'], sortable: ['TxnDate', 'DueDate', 'TotalAmt'] },
+        Payment: { key_fields: ['TxnDate', 'CustomerRef', 'TotalAmt', 'Line'], filterable: ['TxnDate', 'CustomerRef'], sortable: ['TxnDate', 'TotalAmt'] },
+        Vendor: { key_fields: ['DisplayName', 'PrimaryEmailAddr', 'Balance', 'Active'], filterable: ['Active', 'Balance'], sortable: ['DisplayName', 'Balance'] },
+        Bill: { key_fields: ['DocNumber', 'VendorRef', 'TxnDate', 'DueDate', 'TotalAmt', 'Balance'], filterable: ['TxnDate', 'DueDate', 'VendorRef'], sortable: ['TxnDate', 'DueDate'] },
+        Item: { key_fields: ['Name', 'Type', 'UnitPrice', 'Active', 'Description'], filterable: ['Type', 'Active'], sortable: ['Name'] },
+        Estimate: { key_fields: ['DocNumber', 'CustomerRef', 'TxnDate', 'ExpirationDate', 'TotalAmt'], filterable: ['TxnDate', 'CustomerRef'], sortable: ['TxnDate', 'TotalAmt'] },
+        Account: { key_fields: ['Name', 'AccountType', 'AccountSubType', 'CurrentBalance', 'Active'], filterable: ['AccountType', 'Active'], sortable: ['Name'] },
+      };
+      return {
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify({
+            entity,
+            schema: schemas[entity] ?? { error: `Unknown entity. Available: ${Object.keys(schemas).join(', ')}` },
+          }, null, 2),
+        }],
+      };
+    },
+  );
+
   return server;
 }
 

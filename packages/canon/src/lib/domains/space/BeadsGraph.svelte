@@ -118,26 +118,6 @@
 			.style('pointer-events', 'none')
 			.text((d) => d.id);
 
-		// Drag behavior
-		const drag = d3Force
-			.forceDrag<any, Node>()
-			.on('start', (event) => {
-				if (!event.active) simulation.alphaTarget(0.3).restart();
-				event.subject.fx = event.subject.x;
-				event.subject.fy = event.subject.y;
-			})
-			.on('drag', (event) => {
-				event.subject.fx = event.x;
-				event.subject.fy = event.y;
-			})
-			.on('end', (event) => {
-				if (!event.active) simulation.alphaTarget(0);
-				event.subject.fx = null;
-				event.subject.fy = null;
-			});
-
-		node.call(drag as any);
-
 		// Update positions on each tick
 		simulation.on('tick', () => {
 			link

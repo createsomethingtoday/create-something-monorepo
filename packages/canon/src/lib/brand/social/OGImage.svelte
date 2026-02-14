@@ -183,10 +183,9 @@
 		font-family={typography.family.sans}
 		font-size="12"
 		fill={colors.foreground.muted}
-		text-transform="uppercase"
 		letter-spacing={typography.tracking.widest}
 	>
-		{propertyTagline}
+		{propertyTagline.toUpperCase()}
 	</text>
 
 	<!-- Title -->

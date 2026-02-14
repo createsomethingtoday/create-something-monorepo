@@ -1,4 +1,4 @@
-<script lang="ts">
+<script>
 	/**
 	 * 3D Brand Components Demo
 	 *
@@ -6,18 +6,18 @@
 	 * Note: The actual GLB model needs to be generated first using the render-pipeline.
 	 */
 
-	import { CubeMark3D } from '$lib/brand/3d/index.js';
-	import CubeMark from '$lib/brand/marks/CubeMark.svelte';
+	import { CubeMark3D } from '$lib/brand/3d';
+	import { CubeMark } from '$lib/brand/marks';
 
 	// Size options to demo
-	const sizes = ['xs', 'sm', 'md', 'lg', 'xl'] as const;
+	const sizes = ['xs', 'sm', 'md', 'lg', 'xl'];
 
 	// Track selected options
-	let selectedSize = $state<(typeof sizes)[number]>('lg');
+	let selectedSize = $state('lg');
 	let autoRotate = $state(true);
 	let interactive = $state(false);
 	let showShadows = $state(true);
-	let materialVariant = $state<'glass' | 'frosted' | 'crystal'>('glass');
+	let materialVariant = $state('glass');
 </script>
 
 <svelte:head>

@@ -14,15 +14,11 @@
 		title: string;
 		heroImage: string;
 		location: string;
+		outcome?: string;
 	}
 
 	interface Props {
-		projects: Array<{
-			slug: string;
-			title: string;
-			location: string;
-			heroImage: string;
-		}>;
+		projects: Project[];
 		variant?: 'default' | 'subtle' | 'strong';
 	}
 

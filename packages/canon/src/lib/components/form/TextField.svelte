@@ -8,6 +8,8 @@
 	 * Canon: The form field disappears; only the input remains.
 	 */
 
+	import type { HTMLInputAttributes } from 'svelte/elements';
+
 	interface Props {
 		/** Input value (bindable) */
 		value?: string;
@@ -32,7 +34,7 @@
 		/** Input id (auto-generated if not provided) */
 		id?: string;
 		/** Autocomplete attribute */
-		autocomplete?: string;
+		autocomplete?: HTMLInputAttributes['autocomplete'];
 		/** Input pattern for validation */
 		pattern?: string;
 		/** Minimum length */

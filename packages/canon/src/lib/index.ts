@@ -155,7 +155,16 @@ export * from './diagrams/index.js';
 export * from './insights/index.js';
 
 // Navigation (headers, drawers, search)
-export * from './navigation/index.js';
+export {
+	StickyHeader,
+	MobileDrawer,
+	CommandPalette,
+	UnifiedSearch,
+	RelatedContent,
+	ConceptJourney,
+	MenuButton,
+	MegaMenu
+} from './navigation/index.js';
 
 // Filtering (AI-native product filtering components)
 export * from './filtering/index.js';

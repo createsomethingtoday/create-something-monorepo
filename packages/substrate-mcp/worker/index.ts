@@ -248,10 +248,13 @@ export class SubstrateMCP extends McpAgent<Env> {
 
     // Register all three tiers with auth-aware accessors
     // Closures read from this._auth which is updated on every fetch() before MCP processing
+    // Pass inner Server for sampling/createMessage support on destructive tools
+    const samplingServer = (this.server as any).server as import('../src/tools/index.js').SamplingCapable | undefined;
     registerTools(
       this.server, rateLimitedD1, () => r2,
       () => this._auth.actor,
       { getRole: () => this._auth.role, getWorkspaceIds: () => this._auth.workspaceIds },
+      samplingServer,
     );
     registerResources(this.server, () => d1); // Resources are read-only, no rate limit
     registerPrompts(this.server, () => d1);

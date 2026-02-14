@@ -7,7 +7,9 @@
 	 */
 
 	import SEO from '../components/SEO.svelte';
-	import type { PropertyDomain } from '../analytics/types';
+	import type { Property } from '../analytics/types';
+
+	type PropertyDomain = Exclude<Property, 'lms'>;
 
 	interface Props {
 		data: {

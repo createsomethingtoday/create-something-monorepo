@@ -59,28 +59,68 @@
 	let errorMsg = $state<string | null>(null);
 	let data = $state<ObservabilityData | null>(null);
 	let days = $state(7);
+	let activeRequestId = 0;
+	let activeController: AbortController | null = null;
 
 	async function loadDashboard() {
+		const requestId = ++activeRequestId;
+		activeController?.abort();
+		const controller = new AbortController();
+		activeController = controller;
+
 		loading = true;
 		errorMsg = null;
 		try {
-			const response = await fetch(`/api/admin/observability?days=${days}`);
-			if (!response.ok) {
-				throw new Error(`Failed to load: ${response.statusText}`);
+			const response = await fetch(`/api/admin/observability?days=${days}`, {
+				signal: controller.signal
+			});
+
+			if (response.status === 401 || response.status === 403) {
+				window.location.href = '/admin/login';
+				return;
 			}
-			data = await response.json();
+
+			if (!response.ok) {
+				let message = response.statusText || 'Request failed';
+				try {
+					const body = (await response.json()) as { error?: unknown };
+					if (typeof body.error === 'string') {
+						message = body.error;
+					}
+				} catch {
+					// If response body isn't JSON, keep fallback message.
+				}
+				throw new Error(`Failed to load dashboard (${response.status}): ${message}`);
+			}
+
+			const payload = (await response.json()) as ObservabilityData;
+			if (requestId !== activeRequestId) return;
+			data = payload;
 		} catch (err) {
+			if (err instanceof DOMException && err.name === 'AbortError') {
+				return;
+			}
+			if (requestId !== activeRequestId) return;
 			errorMsg = err instanceof Error ? err.message : 'Failed to load dashboard';
 			console.error('Dashboard error:', err);
 		} finally {
-			loading = false;
+			if (requestId === activeRequestId) {
+				loading = false;
+				activeController = null;
+			}
 		}
 	}
 
 	$effect(() => {
 		// Tracks `days` — fires on mount and whenever `days` changes
 		void days;
-		loadDashboard();
+		void loadDashboard();
+	});
+
+	$effect(() => {
+		return () => {
+			activeController?.abort();
+		};
 	});
 
 	function formatCost(cost: number): string {
@@ -119,6 +159,15 @@
 
 	function totalTasks(tasks: TaskSummary): number {
 		return tasks.ready + tasks.claimed + tasks.blocked + tasks.done + tasks.cancelled;
+	}
+
+	function getTouchpointWidth(count: number, total: number): number {
+		if (total <= 0) return 0;
+		return Math.min(100, Math.max(0, (count / total) * 100));
+	}
+
+	function hasCost(activity: Activity): activity is Activity & { cost: number } {
+		return typeof activity.cost === 'number' && Number.isFinite(activity.cost);
 	}
 </script>
 
@@ -197,6 +246,11 @@
 						<span class="breakdown-dot" style="background: var(--color-accent)"></span>
 						<span class="breakdown-label">Running</span>
 						<span class="breakdown-value">{data.tasks.claimed}</span>
+					</div>
+					<div class="breakdown-item">
+						<span class="breakdown-dot" style="background: var(--color-warning)"></span>
+						<span class="breakdown-label">Blocked</span>
+						<span class="breakdown-value">{data.tasks.blocked}</span>
 					</div>
 					<div class="breakdown-item">
 						<span class="breakdown-dot" style="background: var(--color-success)"></span>
@@ -294,7 +348,7 @@
 							<span class="atlas-bar">
 								<span
 									class="atlas-fill"
-									style="width: {(count / data.traces.total) * 100}%"
+									style="width: {getTouchpointWidth(count, data.traces.total)}%"
 								></span>
 							</span>
 							<span class="atlas-value">{count}</span>
@@ -322,7 +376,7 @@
 								>
 									{activity.status}
 								</span>
-								{#if activity.cost}
+								{#if hasCost(activity)}
 									<span class="activity-cost">{formatCost(activity.cost)}</span>
 								{/if}
 							</span>

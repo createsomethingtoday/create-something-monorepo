@@ -3,6 +3,7 @@
 	import { AccountPage } from '@create-something/canon/auth/components';
 
 	let { data } = $props();
+	const accountUser = data.user as { email?: string; name?: string; tier?: string } | null;
 </script>
 
 <SEO
@@ -13,7 +14,7 @@
 />
 
 <AccountPage
-	user={data.user}
+	user={accountUser}
 	pageTitle="Account | CREATE SOMETHING AGENCY"
 	currentProperty="agency"
 />

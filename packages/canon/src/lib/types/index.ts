@@ -1,8 +1,22 @@
 // Type exports
 export type { Paper, AnalyticsEventRequest } from './paper.js';
 export type { Quote } from './common.js';
-export type { FileBasedExperiment, FileBasedPaper } from './experiment.js';
+export type { FileBasedExperiment, FileBasedExperimentPaper, FileBasedPaper } from './experiment.js';
 export { transformExperimentToPaper, transformResearchPaperToPaper } from './experiment.js';
+export type {
+	ThresholdType,
+	CirculationMode,
+	Season,
+	TimeOfDay,
+	FloorPlanData,
+	CirculationData,
+	ElevationData,
+	RoofPlanData,
+	SectionData,
+	SitePlanData,
+	SystemsData,
+	LightStudyData
+} from './architecture.js';
 
 // API response types
 export type { ApiResponse, PaginatedResponse } from './api.js';

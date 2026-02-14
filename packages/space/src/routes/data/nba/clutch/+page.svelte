@@ -163,11 +163,11 @@
 								</div>
 								
 								<div class="col stat">
-									<span class="stat-value">{formatPct(player.fgPct)}</span>
+									<span class="stat-value">{formatPct(player.fieldGoalPercentage)}</span>
 								</div>
 								
 								<div class="col stat">
-									<span class="stat-value">{player.points}</span>
+									<span class="stat-value">{player.pointsScored}</span>
 								</div>
 								
 								<div class="col stat">

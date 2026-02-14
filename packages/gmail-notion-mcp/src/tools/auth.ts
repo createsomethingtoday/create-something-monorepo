@@ -3,7 +3,14 @@
  * Uses Composio connectedAccounts API; auth config IDs are optional (set by admin).
  */
 
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+interface ToolServer {
+  tool(
+    name: string,
+    description: string,
+    paramsSchema: Record<string, unknown>,
+    handler: (params: Record<string, unknown>) => Promise<{ content: Array<{ type: 'text'; text: string }> }>
+  ): void;
+}
 
 const COMPOSIO_CONNECT_API = 'https://backend.composio.dev/api/v1/connectedAccounts';
 const ENTITY_ID = 'default';
@@ -22,7 +29,7 @@ export interface AuthToolDeps {
 }
 
 function registerAuthToolsForToolkit(
-  server: McpServer,
+  server: ToolServer,
   toolkit: 'gmail' | 'notion',
   authConfigId: string | undefined,
   deps: AuthToolDeps,
@@ -153,7 +160,7 @@ function registerAuthToolsForToolkit(
   );
 }
 
-export function registerAuthTools(server: McpServer, deps: AuthToolDeps): void {
+export function registerAuthTools(server: ToolServer, deps: AuthToolDeps): void {
   registerAuthToolsForToolkit(server, 'gmail', deps.gmailAuthConfigId, deps);
   registerAuthToolsForToolkit(server, 'notion', deps.notionAuthConfigId, deps);
 }

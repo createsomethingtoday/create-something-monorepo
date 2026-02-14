@@ -11,9 +11,10 @@
 
 	interface Props {
 		currentDate: string; // YYYY-MM-DD
+		baseUrl?: string;
 	}
 
-	let { currentDate }: Props = $props();
+	let { currentDate, baseUrl = '/experiments/nba-live' }: Props = $props();
 
 	function formatDate(dateStr: string): string {
 		const date = new Date(dateStr + 'T00:00:00');
@@ -35,7 +36,7 @@
 		const date = new Date(currentDate + 'T00:00:00');
 		date.setDate(date.getDate() + offset);
 		const newDate = date.toISOString().split('T')[0];
-		goto(`/experiments/nba-live?date=${newDate}`);
+		goto(`${baseUrl}?date=${newDate}`);
 	}
 </script>
 

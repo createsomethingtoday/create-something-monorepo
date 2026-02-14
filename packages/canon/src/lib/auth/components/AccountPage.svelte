@@ -4,9 +4,11 @@
 
 	interface Props {
 		user: {
+			id?: string;
 			email?: string;
 			name?: string;
 			tier?: string;
+			analytics_opt_out?: boolean;
 		} | null;
 		pageTitle?: string;
 		currentProperty: 'space' | 'io' | 'agency' | 'ltd' | 'lms';

@@ -126,8 +126,7 @@
 
 <div
 	class="isometric-assembly {className}"
-	use:inview={{ threshold: 0.3 }}
-	oninview={() => (isInView = true)}
+	use:inview={{ threshold: 0.3, onInView: () => (isInView = true) }}
 >
 	<svg {viewBox} class="assembly-svg">
 		<defs>

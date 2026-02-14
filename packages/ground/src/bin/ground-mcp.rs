@@ -235,6 +235,9 @@ fn main() {
                     "resources": {
                         "subscribe": false,
                         "listChanged": false
+                    },
+                    "prompts": {
+                        "listChanged": false
                     }
                 },
                 "serverInfo": {
@@ -287,7 +290,7 @@ fn main() {
                 let uri = request.params.get("uri")
                     .and_then(|v| v.as_str())
                     .unwrap_or("");
-                
+
                 if let Some(resource) = ui_registry.get(uri) {
                     Response::success(id, json!({
                         "contents": [{
@@ -300,7 +303,211 @@ fn main() {
                     Response::error(id, -32002, format!("Resource not found: {}", uri))
                 }
             }
-            
+
+            // Judgment tier — Prompts
+            "prompts/list" => {
+                Response::success(id, json!({
+                    "prompts": [
+                        {
+                            "name": "refactor_planning",
+                            "description": "Plan a safe refactoring sequence. Analyzes duplicates, dead exports, and orphans to determine optimal removal order with risk assessment.",
+                            "arguments": [
+                                {
+                                    "name": "path",
+                                    "description": "Directory path to analyze for refactoring (e.g., 'src/' or 'packages/mylib')",
+                                    "required": true
+                                }
+                            ]
+                        },
+                        {
+                            "name": "architecture_health_score",
+                            "description": "Calculate a composite health score for a codebase directory. Combines orphan%, duplicate%, and dead export% into a single score with actionable recommendations.",
+                            "arguments": [
+                                {
+                                    "name": "path",
+                                    "description": "Directory path to assess (e.g., 'src/' or '.')",
+                                    "required": true
+                                }
+                            ]
+                        },
+                        {
+                            "name": "workers_safety_review",
+                            "description": "Scan for Node.js APIs and patterns that break in Cloudflare Workers (V8 isolates). Suggests Workers-compatible alternatives.",
+                            "arguments": [
+                                {
+                                    "name": "path",
+                                    "description": "Entry point or directory to scan for Workers compatibility (e.g., 'src/index.ts')",
+                                    "required": true
+                                }
+                            ]
+                        }
+                    ]
+                }))
+            }
+
+            "prompts/get" => {
+                let prompt_name = request.params.get("name")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("");
+                let args = request.params.get("arguments")
+                    .cloned()
+                    .unwrap_or(json!({}));
+                let path = args.get("path")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or(".");
+
+                match prompt_name {
+                    "refactor_planning" => Response::success(id, json!({
+                        "description": format!("Refactoring plan for {}", path),
+                        "messages": [{
+                            "role": "user",
+                            "content": {
+                                "type": "text",
+                                "text": format!(r#"You are planning a safe refactoring sequence for the codebase at `{}`. Use Ground tools in this exact order to build a complete picture before making any changes.
+
+## Step 1: Find Duplicate Functions (highest risk — 18% higher bug correlation)
+Use `ground_find_duplicate_functions` on the target path. Duplicates are the #1 source of inconsistent behavior during refactoring. Start here because:
+- Removing one copy of a duplicate while missing another causes silent bugs.
+- Duplicates often have subtle differences that reveal which version is canonical.
+
+## Step 2: Find Dead Exports
+Use `ground_find_dead_exports` on each module in the target path. Dead exports are safe to remove because nothing depends on them. They're low-risk wins that:
+- Reduce bundle size and API surface.
+- Simplify the dependency graph for later steps.
+
+## Step 3: Find Orphans
+Use `ground_find_orphans` in the target path. Orphaned files have no incoming imports — they're either entry points or dead code. Cross-reference with your build config.
+
+## Step 4: Check Connections
+For each file you plan to modify, use `ground_check_connections` to understand its dependency graph. A file with 20 dependents needs more careful refactoring than one with 2.
+
+## Step 5: Build the Refactoring Plan
+Based on the analysis, produce a plan with:
+- **Safe removals** (dead exports, confirmed orphans): Do these first.
+- **Consolidations** (duplicates): Merge into canonical locations, update imports.
+- **Risky changes** (high-connectivity modules): Do these last, with tests.
+
+For each change, specify:
+1. File path and action (remove, merge, rename).
+2. Risk level (LOW/MEDIUM/HIGH) based on connection count.
+3. Suggested test to verify after the change.
+
+## Step 6: Verify with ground_analyze
+Run `ground_analyze` on the target path to confirm the health score improves after your planned changes."#, path)
+                            }
+                        }]
+                    })),
+
+                    "architecture_health_score" => Response::success(id, json!({
+                        "description": format!("Architecture health score for {}", path),
+                        "messages": [{
+                            "role": "user",
+                            "content": {
+                                "type": "text",
+                                "text": format!(r#"Calculate a composite architecture health score for `{}`. Use Ground tools to gather metrics, then compute the score.
+
+## Data Collection
+
+Run these Ground tools to gather raw metrics:
+
+1. **`ground_analyze`** on the path — gives overall summary including file count, function count.
+2. **`ground_find_orphans`** — count orphaned files vs total files = orphan%.
+3. **`ground_find_duplicate_functions`** — count duplicate groups vs total functions = duplicate%.
+4. **`ground_find_dead_exports`** on key modules — count dead exports vs total exports = dead%.
+
+## Score Calculation
+
+Compute the health score (0-10) using this formula:
+
+```
+health = 10 - (orphan_penalty + duplicate_penalty + dead_export_penalty)
+
+Where:
+  orphan_penalty    = min(3, orphan% × 10)       # 30%+ orphans = max 3 point penalty
+  duplicate_penalty = min(4, duplicate% × 20)     # 20%+ duplicates = max 4 point penalty
+  dead_export_penalty = min(3, dead_export% × 10) # 30%+ dead = max 3 point penalty
+```
+
+Duplicates are weighted heaviest because they correlate with 18% higher bug rates.
+
+## Output Format
+
+Present results as:
+
+### Health Score: X.X / 10
+
+| Metric | Value | Penalty | Recommendation |
+|--------|-------|---------|----------------|
+| Orphan files | X/Y (Z%) | -N | [specific action] |
+| Duplicate functions | X groups | -N | [specific action] |
+| Dead exports | X/Y (Z%) | -N | [specific action] |
+
+### Score Interpretation
+- **9-10**: Excellent — minimal maintenance debt.
+- **7-8**: Good — some cleanup opportunities.
+- **5-6**: Fair — refactoring recommended this sprint.
+- **3-4**: Poor — technical debt actively slowing development.
+- **0-2**: Critical — immediate intervention needed.
+
+### Top 3 Recommendations
+[Ordered by impact: what to fix first, second, third, with specific file paths.]"#, path)
+                            }
+                        }]
+                    })),
+
+                    "workers_safety_review" => Response::success(id, json!({
+                        "description": format!("Cloudflare Workers safety review for {}", path),
+                        "messages": [{
+                            "role": "user",
+                            "content": {
+                                "type": "text",
+                                "text": format!(r#"Scan `{}` for Node.js APIs and patterns that will break in Cloudflare Workers (V8 isolates). Use Ground tools to analyze the code.
+
+## Step 1: Check Environment
+Use `ground_check_environment` with the target path as entry point. This detects:
+- Node.js built-in module usage (`fs`, `path`, `crypto`, `child_process`, etc.)
+- Global objects not available in Workers (`process`, `Buffer`, `__dirname`, `__filename`)
+- Dynamic `require()` calls
+
+## Step 2: Analyze Dependencies
+Use `ground_check_connections` to trace what the entry point imports. For each dependency:
+- Flag any that import Node.js built-ins.
+- Check if Workers-compatible alternatives exist.
+
+## Step 3: Common Breaking Patterns
+
+Flag these specific patterns with recommended fixes:
+
+| Node.js Pattern | Workers Alternative |
+|----------------|---------------------|
+| `fs.readFile()` | Workers KV, R2, or D1 |
+| `path.join()` | String concatenation or URL API |
+| `crypto.randomBytes()` | `crypto.getRandomValues()` |
+| `Buffer.from()` | `Uint8Array` or `TextEncoder` |
+| `process.env` | `env` binding parameter |
+| `setTimeout` (long) | Durable Objects alarms |
+| `child_process` | No equivalent — redesign needed |
+| `net`/`dgram` | `fetch()` or WebSocket |
+| `stream.Readable` | `ReadableStream` (Web Streams API) |
+| `__dirname` | Not available — use URL resolution |
+
+## Step 4: Report
+
+For each finding, provide:
+1. **File and line** where the incompatible API is used.
+2. **Severity**: CRITICAL (will crash), WARNING (may fail), INFO (suboptimal).
+3. **Fix**: The specific Workers-compatible replacement.
+4. **Effort**: LOW (drop-in replacement), MEDIUM (minor refactor), HIGH (architectural change).
+
+Summarize with a compatibility score: what percentage of the codebase is Workers-ready."#, path)
+                            }
+                        }]
+                    })),
+
+                    _ => Response::error(id, -32002, format!("Prompt not found: {}", prompt_name))
+                }
+            }
+
             "tools/call" => {
                 let tool_name = request.params.get("name")
                     .and_then(|v| v.as_str())
