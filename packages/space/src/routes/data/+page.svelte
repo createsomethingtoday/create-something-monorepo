@@ -23,7 +23,7 @@
 />
 
 <section class="page">
-	<div class="container">
+	<div class="container shell-inner">
 		<h1 class="title">Data Studio</h1>
 		<p class="subtitle">
 			Live data dashboards with real-time updates, caching, and historical snapshots.
@@ -54,7 +54,6 @@
 	}
 
 	.container {
-		max-width: 48rem;
 		margin: 0 auto;
 	}
 

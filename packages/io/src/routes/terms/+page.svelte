@@ -10,7 +10,7 @@
 />
 
 <section class="pt-32 pb-16 px-6">
-  <div class="max-w-4xl mx-auto">
+  <div class="shell-inner">
     <div class="space-y-6 animate-reveal">
       <h1 class="page-title">Terms of Service</h1>
       <p class="date-text">Last updated: January 29, 2026</p>
@@ -19,7 +19,7 @@
 </section>
 
 <section class="pb-24 px-6">
-  <div class="max-w-4xl mx-auto">
+  <div class="shell-inner">
     <TermsOfServiceContent
       property="io"
       domain="createsomething.io"

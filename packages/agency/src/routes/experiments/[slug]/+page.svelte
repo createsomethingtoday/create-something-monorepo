@@ -31,7 +31,7 @@
 	<ArticleHeader {paper} />
 
 	<!-- Main Content with Sidebar -->
-	<div class="w-full max-w-7xl mx-auto px-6">
+	<div class="shell-inner-pad">
 		<div class="grid grid-cols-1 lg:grid-cols-[80px_1fr] gap-12">
 			<!-- Sidebar - Share Buttons (left, sticky) -->
 			<aside class="hidden lg:block">
@@ -49,7 +49,7 @@
 	<RelatedArticles papers={relatedPapers} currentPaperId={paper.id} />
 
 	<!-- Back to Experiments -->
-	<div class="w-full max-w-5xl mx-auto px-6 py-12">
+	<div class="shell-inner-pad py-12">
 		<a
 			href="/experiments"
 			class="inline-flex items-center gap-2 back-link"

@@ -238,6 +238,15 @@
     margin-right: auto;
   }
 
+  .shell-inner-pad {
+    width: 100%;
+    max-width: var(--content-width-xl, 80rem);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--container-padding, 1.5rem);
+    padding-right: var(--container-padding, 1.5rem);
+  }
+
   .container {
     width: 100%;
     max-width: var(--container-xl);

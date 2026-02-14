@@ -10,7 +10,7 @@
 />
 
 <section class="relative pt-32 pb-16 px-6">
-  <div class="max-w-4xl mx-auto">
+  <div class="shell-inner">
     <div class="space-y-6 animate-reveal">
       <h1 class="page-title">
         Privacy Policy
@@ -23,7 +23,7 @@
 </section>
 
 <section class="pb-20 px-6">
-  <div class="max-w-4xl mx-auto">
+  <div class="shell-inner">
     <PrivacyPolicyContent
       property="io"
       domain="createsomething.io"

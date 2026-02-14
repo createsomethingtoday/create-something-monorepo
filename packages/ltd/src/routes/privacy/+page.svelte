@@ -11,7 +11,7 @@
 />
 
 <section class="pt-24 pb-16 px-6">
-  <div class="max-w-4xl mx-auto">
+  <div class="shell-inner">
     <p class="eyebrow mb-6">Being-as-Trust</p>
     <h1 class="page-title mb-4">Privacy Policy</h1>
     <p class="date-text">Last updated: January 29, 2026</p>
@@ -19,7 +19,7 @@
 </section>
 
 <section class="pb-24 px-6">
-  <div class="max-w-4xl mx-auto">
+  <div class="shell-inner">
     <PrivacyPolicyContent
       property="ltd"
       domain="createsomething.ltd"
