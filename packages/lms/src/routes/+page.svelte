@@ -2,7 +2,11 @@
   import { ArrowRight, TerminalSquare, Wrench, Bug } from 'lucide-svelte';
   import { PATHS } from '$content/paths';
 
-  const course = PATHS[0];
+  const course = PATHS[0] ?? null;
+  const firstLessonHref = course?.lessons[0]
+    ? `/paths/${course.id}/${course.lessons[0].id}`
+    : '/paths';
+  const courseHref = course ? `/paths/${course.id}` : '/paths';
 
   const workflow = [
     {
@@ -39,29 +43,38 @@
       One focused course. No theory detours. You build a working MCP server from scratch and connect it
       to Codex.
     </p>
-    <a href="/paths/codex-mcp/what-is-codex-and-mcp" class="btn-primary">
-      Start Lesson 1
+    <a href={firstLessonHref} class="btn-primary">
+      {course ? 'Start Lesson 1' : 'View Course'}
       <ArrowRight size={16} />
     </a>
   </section>
 
   <section class="course-overview">
     <h2 class="section-title">Course Outline</h2>
-    <a class="course-card {course.color}" href="/paths/{course.id}">
-      <div class="course-card-header">
-        <h3>{course.title}</h3>
-        <span>{course.lessons.length} lessons</span>
+    {#if course}
+      <a class="course-card {course.color}" href={courseHref}>
+        <div class="course-card-header">
+          <h3>{course.title}</h3>
+          <span>{course.lessons.length} lessons</span>
+        </div>
+        <p>{course.description}</p>
+        <ol>
+          {#each course.lessons as lesson}
+            <li>
+              <span>{lesson.title}</span>
+              <span>{lesson.duration}</span>
+            </li>
+          {/each}
+        </ol>
+      </a>
+    {:else}
+      <div class="course-card">
+        <div class="course-card-header">
+          <h3>Course Coming Soon</h3>
+        </div>
+        <p>Course content is being prepared. Check back shortly.</p>
       </div>
-      <p>{course.description}</p>
-      <ol>
-        {#each course.lessons as lesson}
-          <li>
-            <span>{lesson.title}</span>
-            <span>{lesson.duration}</span>
-          </li>
-        {/each}
-      </ol>
-    </a>
+    {/if}
   </section>
 
   <section>
