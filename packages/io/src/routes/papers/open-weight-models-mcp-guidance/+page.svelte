@@ -541,3 +541,183 @@ const result = await env.AI.run("@cf/openai/gpt-oss-20b", {
 	</div>
 </div>
 
+<style>
+	:global(body) {
+		background: linear-gradient(180deg, #0b1020 0%, #131a2d 45%, #10182e 100%);
+		color: #e5e7eb;
+	}
+
+	.paper-container {
+		background: rgba(11, 16, 32, 0.92);
+		border: 1px solid rgba(148, 163, 184, 0.2);
+		border-radius: 20px;
+		box-shadow: 0 24px 60px rgba(2, 6, 23, 0.45);
+	}
+
+	.paper-header {
+		border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+	}
+
+	.paper-id {
+		color: #93c5fd;
+		font-size: 0.85rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.paper-title {
+		font-size: clamp(2rem, 3.5vw, 3rem);
+		line-height: 1.1;
+		font-weight: 700;
+		color: #f8fafc;
+	}
+
+	.paper-subtitle {
+		color: #cbd5e1;
+		font-size: 1.1rem;
+		line-height: 1.55;
+	}
+
+	.paper-meta {
+		color: #94a3b8;
+		font-size: 0.95rem;
+	}
+
+	.abstract-section {
+		border: 1px dashed rgba(148, 163, 184, 0.28);
+		border-radius: 16px;
+		padding: 1.25rem;
+		background: rgba(15, 23, 42, 0.45);
+	}
+
+	.section-heading {
+		font-size: clamp(1.5rem, 2.4vw, 1.85rem);
+		margin-bottom: 0.75rem;
+		color: #f8fafc;
+	}
+
+	.subsection-heading {
+		font-size: 1.15rem;
+		color: #bfdbfe;
+	}
+
+	.body-text {
+		color: #d1d5db;
+	}
+
+	.metric-card {
+		background: linear-gradient(180deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.85));
+		border: 1px solid rgba(148, 163, 184, 0.25);
+		border-radius: 14px;
+	}
+
+	.metric-card:hover {
+		border-color: rgba(191, 219, 254, 0.5);
+		transform: translateY(-2px);
+	}
+
+	.metric-value {
+		font-size: 1rem;
+		font-weight: 700;
+		color: #93c5fd;
+		margin-bottom: 0.45rem;
+	}
+
+	.metric-label {
+		color: #e2e8f0;
+		line-height: 1.5;
+	}
+
+	.quote-box {
+		background: rgba(15, 23, 42, 0.75);
+		border-left: 4px solid #38bdf8;
+		border-radius: 12px;
+	}
+
+	.quote-text {
+		color: #f1f5f9;
+		font-size: 1.02rem;
+		line-height: 1.75;
+	}
+
+	.quote-attribution {
+		color: #93c5fd;
+		font-size: 0.95rem;
+	}
+
+	.metric-table {
+		width: 100%;
+		border: 1px solid rgba(148, 163, 184, 0.22);
+		border-collapse: collapse;
+		border-radius: 12px;
+		overflow: hidden;
+	}
+
+	.metric-table th,
+	.metric-table td {
+		padding: 0.75rem 0.85rem;
+		border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+		border-right: 1px solid rgba(148, 163, 184, 0.12);
+		text-align: left;
+		vertical-align: top;
+	}
+
+	.metric-table th:last-child,
+	.metric-table td:last-child {
+		border-right: none;
+	}
+
+	.metric-table th {
+		background: rgba(30, 41, 59, 0.72);
+		color: #bfdbfe;
+		font-weight: 600;
+	}
+
+	.metric-table tr:last-child td {
+		border-bottom: none;
+	}
+
+	.metric-table tr:nth-child(even) td {
+		background: rgba(15, 23, 42, 0.35);
+	}
+
+	.code-block {
+		background: #020617;
+		border-radius: 12px;
+		border: 1px solid rgba(56, 189, 248, 0.25);
+	}
+
+	.code-primary {
+		color: #e2e8f0;
+		font-size: 0.95rem;
+		line-height: 1.65;
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+	}
+
+	.metric-table code,
+	.code-primary {
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+	}
+
+	@media (max-width: 768px) {
+		.paper-container {
+			padding: 1rem;
+			border-radius: 14px;
+		}
+
+		.metric-card {
+			margin-bottom: 0.5rem;
+		}
+
+		.paper-title {
+			font-size: 2rem;
+		}
+	}
+
+	@media (max-width: 640px) {
+		.metric-table th,
+		.metric-table td {
+			padding: 0.65rem 0.55rem;
+		}
+	}
+</style>
