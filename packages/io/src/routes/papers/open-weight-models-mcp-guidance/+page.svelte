@@ -646,39 +646,42 @@ const result = await env.AI.run("@cf/openai/gpt-oss-20b", {
 	}
 
 	.metric-table {
-		width: 100%;
-		border: 1px solid rgba(148, 163, 184, 0.22);
 		border-collapse: collapse;
-		border-radius: 12px;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
 		overflow: hidden;
 	}
 
-	.metric-table th,
-	.metric-table td {
-		padding: 0.75rem 0.85rem;
-		border-bottom: 1px solid rgba(148, 163, 184, 0.16);
-		border-right: 1px solid rgba(148, 163, 184, 0.12);
-		text-align: left;
-		vertical-align: top;
-	}
-
-	.metric-table th:last-child,
-	.metric-table td:last-child {
-		border-right: none;
-	}
-
 	.metric-table th {
-		background: rgba(30, 41, 59, 0.72);
-		color: #bfdbfe;
+		background: var(--color-bg-subtle);
+		padding: var(--space-md);
+		text-align: left;
+		font-size: var(--text-body-sm);
 		font-weight: 600;
+		color: var(--color-fg-secondary);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		border-bottom: 1px solid var(--color-border-emphasis);
+	}
+
+	.metric-table td {
+		padding: var(--space-md);
+		border-bottom: 1px solid var(--color-border-default);
+		color: var(--color-fg-tertiary);
+		vertical-align: top;
 	}
 
 	.metric-table tr:last-child td {
 		border-bottom: none;
 	}
 
-	.metric-table tr:nth-child(even) td {
-		background: rgba(15, 23, 42, 0.35);
+	.metric-table code {
+		font-family: 'Stack Sans', monospace;
+		background: var(--color-bg-subtle);
+		padding: 0.125rem 0.375rem;
+		border-radius: var(--radius-sm);
+		font-size: 0.9em;
 	}
 
 	.code-block {
@@ -694,7 +697,6 @@ const result = await env.AI.run("@cf/openai/gpt-oss-20b", {
 		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 	}
 
-	.metric-table code,
 	.code-primary {
 		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 	}
