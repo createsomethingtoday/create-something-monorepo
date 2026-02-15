@@ -32,13 +32,13 @@ All Half Dozen MCPs share `halfdozen-feedback` D1 for telemetry. Fleet-wide quer
 |---|---------|-------------|--------|-----|-----------|
 | 1 | `halfdozen-notion-mcp` | `notion-halfdozen-create-something` | Active | `createsomething-notion.mcp.workway.co` | Yes |
 | 2 | `halfdozen-notion-mcp` (System Studio) | `notion-halfdozen-create-something` | Active | `system-studio-notion.mcp.workway.co` | Yes |
-| 3 | `halfdozen-notion-mcp` (BLOND:ISH) | `notion-halfdozen-create-something` | Planned | `blondish-notion.mcp.workway.co` | Yes |
-| 4 | `halfdozen-notion-mcp` (C3 Management) | `notion-halfdozen-create-something` | Planned | `c3-management-notion.mcp.workway.co` | Yes |
-| 5 | `halfdozen-notion-mcp` (Cracked) | `notion-halfdozen-create-something` | Planned | `cracked-notion.mcp.workway.co` | Yes |
-| 6 | `halfdozen-notion-mcp` (Fanpad) | `notion-halfdozen-create-something` | Planned | `fanpad-notion.mcp.workway.co` | Yes |
-| 7 | `halfdozen-notion-mcp` (Lightswitch) | `notion-halfdozen-create-something` | Planned | `lightswitch-notion.mcp.workway.co` | Yes |
-| 8 | `halfdozen-notion-mcp` (Phase 3) | `notion-halfdozen-create-something` | Planned | `phase-3-notion.mcp.workway.co` | Yes |
-| 9 | `halfdozen-notion-mcp` (Three Six Zero) | `notion-halfdozen-create-something` | Planned | `three-six-zero-notion.mcp.workway.co` | Yes |
+| 3 | `halfdozen-notion-mcp` (BLOND:ISH) | `notion-halfdozen-create-something` | Active | `blondish-notion.mcp.workway.co` | Yes |
+| 4 | `halfdozen-notion-mcp` (C3 Management) | `notion-halfdozen-create-something` | Active | `c3-management-notion.mcp.workway.co` | Yes |
+| 5 | `halfdozen-notion-mcp` (Cracked) | `notion-halfdozen-create-something` | Active | `cracked-notion.mcp.workway.co` | Yes |
+| 6 | `halfdozen-notion-mcp` (Fanpad) | `notion-halfdozen-create-something` | Active | `fanpad-notion.mcp.workway.co` | Yes |
+| 7 | `halfdozen-notion-mcp` (Lightswitch) | `notion-halfdozen-create-something` | Active | `lightswitch-notion.mcp.workway.co` | Yes |
+| 8 | `halfdozen-notion-mcp` (Phase 3) | `notion-halfdozen-create-something` | Active | `phase-3-notion.mcp.workway.co` | Yes |
+| 9 | `halfdozen-notion-mcp` (Three Six Zero) | `notion-halfdozen-create-something` | Active | `three-six-zero-notion.mcp.workway.co` | Yes |
 | 10 | `halfdozen-gmail-sync` | `halfdozen-gmail-sync` | Active | `gmail.mcp.workway.co` | Yes |
 | 11 | `halfdozen-zoom-sync` | `halfdozen-zoom-sync` | Active | `zoom.mcp.workway.co` | Yes |
 | 12 | `half-dozen-youtube-sync` | `half-dozen-youtube-sync` | Active | `youtube.mcp.workway.co` | Yes |
