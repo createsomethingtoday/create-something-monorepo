@@ -62,6 +62,12 @@ csm/csm/.repo.git
 __pycache__/
 .dev.vars
 
+# Judgment Layer (policy packs + local Andon logs)
+.judgment/
+!.judgment/README.md
+!.judgment/policies/
+!.judgment/policies/**
+
 # Python virtual environments
 venv/
 .venv/

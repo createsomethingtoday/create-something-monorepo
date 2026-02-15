@@ -1,0 +1,33 @@
+{
+  "name": "@create-something/judgment-layer",
+  "version": "0.1.0",
+  "description": "Lightweight, tuneable Judgment Layer prototype built on codex app-server (policy packs + approval gating + Andon logs).",
+  "type": "module",
+  "bin": {
+    "cs-judge": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "check": "tsc --noEmit",
+    "test": "pnpm build && node --test test/*.test.mjs",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@iarna/toml": "^2.2.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.0.0"
+  },
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/judgment-layer"
+  }
+}
