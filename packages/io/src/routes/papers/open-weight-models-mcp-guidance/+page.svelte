@@ -542,16 +542,12 @@ const result = await env.AI.run("@cf/openai/gpt-oss-20b", {
 </div>
 
 <style>
-	:global(body) {
-		background: linear-gradient(180deg, #0b1020 0%, #131a2d 45%, #10182e 100%);
-		color: #e5e7eb;
-	}
-
 	.paper-container {
-		background: rgba(11, 16, 32, 0.92);
-		border: 1px solid rgba(148, 163, 184, 0.2);
+		background: var(--color-bg-pure);
+		border: 1px solid var(--color-border-default);
 		border-radius: 20px;
-		box-shadow: 0 24px 60px rgba(2, 6, 23, 0.45);
+		box-shadow: var(--shadow-md);
+		color: var(--color-fg-primary);
 	}
 
 	.paper-header {
