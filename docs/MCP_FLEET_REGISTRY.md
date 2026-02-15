@@ -18,6 +18,7 @@ Two Cloudflare accounts host the fleet:
 |--------|---------|
 | **Active** | Deployed, serving traffic, telemetry enabled |
 | **Active (unmetered)** | Deployed but no telemetry yet |
+| **Planned** | Config committed; not yet deployed |
 | **Dormant** | Exists but incomplete or unused |
 | **Local** | Stdio/local server, not a Cloudflare Worker |
 
@@ -31,10 +32,17 @@ All Half Dozen MCPs share `halfdozen-feedback` D1 for telemetry. Fleet-wide quer
 |---|---------|-------------|--------|-----|-----------|
 | 1 | `halfdozen-notion-mcp` | `notion-halfdozen-create-something` | Active | `createsomething-notion.mcp.workway.co` | Yes |
 | 2 | `halfdozen-notion-mcp` (System Studio) | `notion-halfdozen-create-something` | Active | `system-studio-notion.mcp.workway.co` | Yes |
-| 3 | `halfdozen-gmail-sync` | `halfdozen-gmail-sync` | Active | `gmail.mcp.workway.co` | Yes |
-| 4 | `halfdozen-zoom-sync` | `halfdozen-zoom-sync` | Active | `zoom.mcp.workway.co` | Yes |
-| 5 | `half-dozen-youtube-sync` | `half-dozen-youtube-sync` | Active | `youtube.mcp.workway.co` | Yes |
-| 6 | `halfdozen-telemetry-mcp` | `halfdozen-telemetry` | Active | `halfdozen-telemetry-mcp.half-dozen.workers.dev` | — (reads telemetry) |
+| 3 | `halfdozen-notion-mcp` (BLOND:ISH) | `notion-halfdozen-create-something` | Planned | `blondish-notion.mcp.workway.co` | Yes |
+| 4 | `halfdozen-notion-mcp` (C3 Management) | `notion-halfdozen-create-something` | Planned | `c3-management-notion.mcp.workway.co` | Yes |
+| 5 | `halfdozen-notion-mcp` (Cracked) | `notion-halfdozen-create-something` | Planned | `cracked-notion.mcp.workway.co` | Yes |
+| 6 | `halfdozen-notion-mcp` (Fanpad) | `notion-halfdozen-create-something` | Planned | `fanpad-notion.mcp.workway.co` | Yes |
+| 7 | `halfdozen-notion-mcp` (Lightswitch) | `notion-halfdozen-create-something` | Planned | `lightswitch-notion.mcp.workway.co` | Yes |
+| 8 | `halfdozen-notion-mcp` (Phase 3) | `notion-halfdozen-create-something` | Planned | `phase-3-notion.mcp.workway.co` | Yes |
+| 9 | `halfdozen-notion-mcp` (Three Six Zero) | `notion-halfdozen-create-something` | Planned | `three-six-zero-notion.mcp.workway.co` | Yes |
+| 10 | `halfdozen-gmail-sync` | `halfdozen-gmail-sync` | Active | `gmail.mcp.workway.co` | Yes |
+| 11 | `halfdozen-zoom-sync` | `halfdozen-zoom-sync` | Active | `zoom.mcp.workway.co` | Yes |
+| 12 | `half-dozen-youtube-sync` | `half-dozen-youtube-sync` | Active | `youtube.mcp.workway.co` | Yes |
+| 13 | `halfdozen-telemetry-mcp` | `halfdozen-telemetry` | Active | `halfdozen-telemetry-mcp.half-dozen.workers.dev` | — (reads telemetry) |
 
 ### Naming Note
 
@@ -48,13 +56,13 @@ Active MCPs use `cs-telemetry` D1 for telemetry. Fleet-wide queries via the **CS
 
 | # | Package | Server Name | Status | URL | Telemetry | D1 |
 |---|---------|-------------|--------|-----|-----------|-----|
-| 7 | `schedule-mcp` | `schedule-mcp` | Active | `schedule.mcp.createsomething.agency` | Yes | `schedule-mcp-db` + `cs-telemetry` |
-| 8 | `substrate-mcp` | `substrate-mcp` | Active | `substrate.mcp.createsomething.agency` | Yes | `substrate-mcp-db` + `cs-telemetry` |
-| 9 | `create-something-mcp` | `create-something` | Active | `mcp.createsomething.ltd` | Yes | `cs-telemetry` |
-| 10 | `three-tier-framework-mcp` | `three-tier-framework` | Active | `framework.mcp.createsomething.agency` | Yes | `cs-telemetry` |
-| 11 | `playbook-mcp` | `playbook` | Active | `playbook.mcp.createsomething.ltd` | Yes | `cs-telemetry` |
-| 12 | `outerfields-mcp-remote` | `outerfields-pcn` | Active | `outerfields.mcp.createsomething.agency` | Yes | `cs-telemetry` |
-| 13 | `cs-telemetry-mcp` | `cs-telemetry` | Active | `cs-telemetry-mcp.createsomething.workers.dev` | — (reads telemetry) | `cs-telemetry` |
+| 14 | `schedule-mcp` | `schedule-mcp` | Active | `schedule.mcp.createsomething.agency` | Yes | `schedule-mcp-db` + `cs-telemetry` |
+| 15 | `substrate-mcp` | `substrate-mcp` | Active | `substrate.mcp.createsomething.agency` | Yes | `substrate-mcp-db` + `cs-telemetry` |
+| 16 | `create-something-mcp` | `create-something` | Active | `mcp.createsomething.ltd` | Yes | `cs-telemetry` |
+| 17 | `three-tier-framework-mcp` | `three-tier-framework` | Active | `framework.mcp.createsomething.agency` | Yes | `cs-telemetry` |
+| 18 | `playbook-mcp` | `playbook` | Active | `playbook.mcp.createsomething.ltd` | Yes | `cs-telemetry` |
+| 19 | `outerfields-mcp-remote` | `outerfields-pcn` | Active | `outerfields.mcp.createsomething.agency` | Yes | `cs-telemetry` |
+| 20 | `cs-telemetry-mcp` | `cs-telemetry` | Active | `cs-telemetry-mcp.createsomething.workers.dev` | — (reads telemetry) | `cs-telemetry` |
 
 ---
 
@@ -62,8 +70,8 @@ Active MCPs use `cs-telemetry` D1 for telemetry. Fleet-wide queries via the **CS
 
 | # | Package | Status | Notes |
 |---|---------|--------|-------|
-| 14 | `gmail-notion-mcp` | Dormant | Placeholder D1 ID (`00000000...`), Composio bridge experiment |
-| 15 | `notion-sync-mcp` | Dormant | Superseded by `halfdozen-notion-mcp`, uses mcp-core |
+| 21 | `gmail-notion-mcp` | Dormant | Placeholder D1 ID (`00000000...`), Composio bridge experiment |
+| 22 | `notion-sync-mcp` | Dormant | Superseded by `halfdozen-notion-mcp`, uses mcp-core |
 
 ---
 
@@ -73,9 +81,9 @@ Not deployed to Cloudflare. Run locally via stdio transport.
 
 | # | Package | Server Name | Notes |
 |---|---------|-------------|-------|
-| 16 | `quickbooks-notion-mcp` | `quickbooks-notion-mcp-server` | Node.js HTTP/stdio, KV for tokens |
-| 17 | `webflow-site-analyzer-mcp` | `webflow-site-analyzer-mcp` | Node.js stdio |
-| 18 | `outerfields-mcp-server` | `outerfields-pcn` | Stdio companion to remote Worker |
+| 23 | `quickbooks-notion-mcp` | `quickbooks-notion-mcp-server` | Node.js HTTP/stdio, KV for tokens |
+| 24 | `webflow-site-analyzer-mcp` | `webflow-site-analyzer-mcp` | Node.js stdio |
+| 25 | `outerfields-mcp-server` | `outerfields-pcn` | Stdio companion to remote Worker |
 
 ---
 

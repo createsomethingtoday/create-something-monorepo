@@ -55,8 +55,15 @@
     "mcp:gate:lint": "node scripts/mcp-quality-gate.mjs lint",
     "mcp:gate:test": "node scripts/mcp-quality-gate.mjs test",
     "create-mcp": "tsx scripts/create-mcp.ts",
+    "deploy:blondish-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.blondish.toml",
+    "deploy:c3-management-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.c3-management.toml",
+    "deploy:cracked-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.cracked.toml",
+    "deploy:fanpad-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.fanpad.toml",
     "deploy:halfdozen-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy",
-    "deploy:system-studio-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.system-studio.toml"
+    "deploy:lightswitch-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.lightswitch.toml",
+    "deploy:phase-3-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.phase-3.toml",
+    "deploy:system-studio-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.system-studio.toml",
+    "deploy:three-six-zero-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.three-six-zero.toml"
   },
   "devDependencies": {
     "@iarna/toml": "^2.2.5",

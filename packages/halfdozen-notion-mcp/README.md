@@ -63,6 +63,33 @@ pnpm run deploy:system-studio-notion-mcp   # from repo root
 
 **URL:** `https://system-studio-notion.mcp.workway.co/mcp`
 
+### New client instance: Half Dozen × <Client>
+
+Create a new deployment for another client (same codebase, different Worker + secrets + domain). This repo includes per-client wrangler configs under `packages/halfdozen-notion-mcp/worker/` (e.g. `wrangler.blondish.toml`).
+
+```bash
+cd packages/halfdozen-notion-mcp/worker
+
+# Set secrets for that client deployment (never commit these values)
+wrangler secret put NOTION_API_KEY --config wrangler.<client>.toml
+wrangler secret put NOTION_CLIENT_API_KEY --config wrangler.<client>.toml
+
+# Deploy (from this directory)
+pnpm exec wrangler deploy --config wrangler.<client>.toml
+```
+
+Or deploy from the repo root:
+
+```bash
+pnpm run deploy:<client>-notion-mcp
+```
+
+Verify the deployment labels:
+
+```bash
+curl -s https://<client>-notion.mcp.workway.co/ | jq
+```
+
 ## Client config
 
 **Cursor / Claude Desktop** — add MCP server (HTTP):
