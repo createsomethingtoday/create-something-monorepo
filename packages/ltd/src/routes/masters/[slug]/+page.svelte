@@ -1,9 +1,17 @@
 <script lang="ts">
 	import { PrincipleCard } from '$lib/components';
+	import { toTasteImageProxyUrl } from '$lib/taste/image';
 	import { QuoteBlock, SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+	let failedExampleImageIds = $state<Set<string>>(new Set());
+
+	function markExampleImageFailure(exampleId: string) {
+		const next = new Set(failedExampleImageIds);
+		next.add(exampleId);
+		failedExampleImageIds = next;
+	}
 </script>
 
 <SEO
@@ -98,19 +106,26 @@
 					{data.examples.length} curated examples from Are.na
 				</p>
 
-				<div class="masonry-grid">
-					{#each data.examples as example}
-						<div class="example-card group relative overflow-hidden border border-canon mb-4">
-							{#if example.image_url}
-								<img
-									src={example.image_url}
-									alt={example.title || 'Visual reference'}
-									class="example-img w-full h-auto"
-									loading="lazy"
-								/>
-							{/if}
-							<div class="example-overlay absolute inset-0">
-								<div class="absolute bottom-0 left-0 right-0 p-4">
+					<div class="masonry-grid">
+						{#each data.examples as example}
+							<div class="example-card group relative overflow-hidden border border-canon mb-4">
+								{#if example.image_url && !failedExampleImageIds.has(example.id)}
+									<img
+										src={toTasteImageProxyUrl(example.image_url) ?? example.image_url}
+										alt={example.title || 'Visual reference'}
+										class="example-img w-full h-auto"
+										loading="lazy"
+										decoding="async"
+										referrerpolicy="no-referrer"
+										onerror={() => markExampleImageFailure(example.id)}
+									/>
+								{:else}
+									<div class="example-placeholder" role="img" aria-label="Image unavailable">
+										<span>Image unavailable</span>
+									</div>
+								{/if}
+								<div class="example-overlay absolute inset-0">
+									<div class="absolute bottom-0 left-0 right-0 p-4">
 									{#if example.title}
 										<p class="example-title">{example.title}</p>
 									{/if}
@@ -288,6 +303,20 @@
 
 	.example-img {
 		transition: transform var(--duration-standard) var(--ease-standard);
+	}
+
+	.example-placeholder {
+		width: 100%;
+		min-height: 12rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: var(--space-sm);
+		background: var(--color-bg-subtle);
+		color: var(--color-fg-muted);
+		font-size: var(--text-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
 	}
 
 	.example-card:hover .example-img {

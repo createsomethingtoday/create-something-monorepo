@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Example } from '$lib/types';
+	import { toTasteImageProxyUrl } from '$lib/taste/image';
 
 	interface Props {
 		images: Example[];
@@ -15,6 +16,11 @@
 	let currentImage = $derived(images[currentIndex]);
 	let hasPrevious = $derived(currentIndex > 0);
 	let hasNext = $derived(currentIndex < images.length - 1);
+	let hasCurrentImageUrl = $derived(Boolean(currentImage?.image_url));
+	let failedImageIds = $state<Set<string>>(new Set());
+	let isCurrentImageFailed = $derived(
+		currentImage ? failedImageIds.has(currentImage.id) : false
+	);
 
 	function handleKeydown(event: KeyboardEvent) {
 		if (!isOpen) return;
@@ -45,6 +51,12 @@
 	function handleNext() {
 		if (hasNext) onNavigate(currentIndex + 1);
 	}
+
+	function markImageLoadFailure(imageId: string) {
+		const next = new Set(failedImageIds);
+		next.add(imageId);
+		failedImageIds = next;
+	}
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -71,11 +83,20 @@
 
 			<!-- Main image -->
 			<figure class="lightbox-content">
-				<img
-					src={currentImage.image_url}
-					alt={currentImage.title || 'Visual reference'}
-					class="lightbox-image"
-				/>
+				{#if hasCurrentImageUrl && !isCurrentImageFailed}
+					<img
+						src={toTasteImageProxyUrl(currentImage.image_url) ?? currentImage.image_url}
+						alt={currentImage.title || 'Visual reference'}
+						class="lightbox-image"
+						decoding="async"
+						referrerpolicy="no-referrer"
+						onerror={() => markImageLoadFailure(currentImage.id)}
+					/>
+				{:else}
+					<div class="lightbox-fallback" role="img" aria-label="Image unavailable">
+						<span>Image unavailable</span>
+					</div>
+				{/if}
 
 				<!-- Image info -->
 				{#if currentImage.title || currentImage.year || currentImage.description}
@@ -164,6 +185,21 @@
 		object-fit: contain;
 		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-surface);
+	}
+
+	.lightbox-fallback {
+		width: min(85vw, 900px);
+		height: min(75vh, 600px);
+		min-height: 14rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: 1px solid var(--color-border-default);
+		background: var(--color-bg-subtle);
+		color: var(--color-fg-muted);
+		font-size: var(--text-body-sm);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
 	}
 
 	.lightbox-info {

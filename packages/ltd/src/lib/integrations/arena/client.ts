@@ -14,6 +14,10 @@ import type {
 
 const ARENA_API_BASE = 'https://api.are.na/v2';
 const DEFAULT_CACHE_TTL = 21600; // 6 hours in seconds
+const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
+const MAX_RETRY_ATTEMPTS = 2;
+const RETRY_BASE_DELAY_MS = 400;
+const REQUEST_TIMEOUT_MS = 15000;
 
 export interface ArenaClientOptions {
 	cache?: KVNamespace;
@@ -32,6 +36,25 @@ export class ArenaClient {
 		this.accessToken = options.accessToken;
 	}
 
+	private getMethod(options: RequestInit): string {
+		return (options.method ?? 'GET').toUpperCase();
+	}
+
+	private isRetryableMethod(method: string): boolean {
+		return method === 'GET' || method === 'HEAD';
+	}
+
+	private isNetworkError(error: unknown): boolean {
+		return (
+			error instanceof TypeError ||
+			(error instanceof DOMException && error.name === 'AbortError')
+		);
+	}
+
+	private async sleep(ms: number): Promise<void> {
+		return new Promise(resolve => setTimeout(resolve, ms));
+	}
+
 	private async fetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
 		const headers: Record<string, string> = {
 			'Content-Type': 'application/json',
@@ -42,16 +65,61 @@ export class ArenaClient {
 			headers['Authorization'] = `Bearer ${this.accessToken}`;
 		}
 
-		const response = await fetch(`${ARENA_API_BASE}${endpoint}`, {
-			...options,
-			headers
-		});
+		const method = this.getMethod(options);
+		const canRetry = this.isRetryableMethod(method);
+		let lastError: Error | undefined;
 
-		if (!response.ok) {
-			throw new Error(`Are.na API error: ${response.status} ${response.statusText}`);
+		for (let attempt = 0; attempt <= MAX_RETRY_ATTEMPTS; attempt++) {
+			const controller = options.signal ? null : new AbortController();
+			const timeoutId: ReturnType<typeof setTimeout> | undefined = controller
+				? setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+				: undefined;
+
+			try {
+				const response = await fetch(`${ARENA_API_BASE}${endpoint}`, {
+					...options,
+					headers,
+					signal: options.signal ?? controller?.signal
+				});
+
+				if (timeoutId) {
+					clearTimeout(timeoutId);
+				}
+
+				if (response.ok) {
+					return response.json();
+				}
+
+				const shouldRetry =
+					canRetry && RETRYABLE_STATUS.has(response.status) && attempt < MAX_RETRY_ATTEMPTS;
+				if (shouldRetry) {
+					const retryDelay = RETRY_BASE_DELAY_MS * (attempt + 1);
+					await this.sleep(retryDelay);
+					continue;
+				}
+
+				lastError = new Error(`Are.na API error: ${response.status} ${response.statusText}`);
+				break;
+			} catch (error) {
+				if (timeoutId) {
+					clearTimeout(timeoutId);
+				}
+
+				const shouldRetry = canRetry && this.isNetworkError(error) && attempt < MAX_RETRY_ATTEMPTS;
+				if (shouldRetry) {
+					const retryDelay = RETRY_BASE_DELAY_MS * (attempt + 1);
+					await this.sleep(retryDelay);
+					continue;
+				}
+
+				lastError = error instanceof Error ? error : new Error(String(error));
+				break;
+			}
 		}
 
-		return response.json();
+		throw (
+			lastError ?? new Error(`Are.na API request failed for ${method} ${ARENA_API_BASE}${endpoint}`)
+		);
 	}
 
 	private async cachedFetch<T>(key: string, fetcher: () => Promise<T>): Promise<T> {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import ImageLightbox from '$lib/components/taste/ImageLightbox.svelte';
+	import { toTasteImageProxyUrl } from '$lib/taste/image';
 	import { ContributeBlock } from '@create-something/canon/domains/ltd';
 	import { SEO } from '@create-something/canon';
 
@@ -9,6 +10,7 @@
 	// Lightbox state
 	let selectedImageIndex = $state(-1);
 	let isLightboxOpen = $derived(selectedImageIndex >= 0);
+	let failedImageIds = $state<Set<string>>(new Set());
 
 	function openLightbox(index: number) {
 		selectedImageIndex = index;
@@ -20,6 +22,12 @@
 
 	function navigateLightbox(index: number) {
 		selectedImageIndex = index;
+	}
+
+	function markImageLoadFailure(exampleId: string) {
+		const next = new Set(failedImageIds);
+		next.add(exampleId);
+		failedImageIds = next;
 	}
 
 	// Format date for display
@@ -128,16 +136,28 @@
 				{#each data.examples as example, index}
 					<button
 						class="example-card"
-						onclick={() => openLightbox(index)}
+						onclick={() => {
+							if (example.image_url && !failedImageIds.has(example.id)) {
+								openLightbox(index);
+							}
+						}}
 						aria-label={example.title ? `View ${example.title}` : 'View image'}
+						disabled={!example.image_url || failedImageIds.has(example.id)}
 					>
-						{#if example.image_url}
+						{#if example.image_url && !failedImageIds.has(example.id)}
 							<img
-								src={example.image_url}
+								src={toTasteImageProxyUrl(example.image_url) ?? example.image_url}
 								alt={example.title || 'Visual reference'}
 								class="example-img"
 								loading="lazy"
+								decoding="async"
+								referrerpolicy="no-referrer"
+								onerror={() => markImageLoadFailure(example.id)}
 							/>
+						{:else}
+							<div class="example-placeholder" role="img" aria-label="Image unavailable">
+								<span>Image unavailable</span>
+							</div>
 						{/if}
 						<div class="example-overlay">
 							<div class="example-info">
@@ -421,11 +441,29 @@
 		outline-offset: 2px;
 	}
 
+	.example-card:disabled {
+		cursor: default;
+	}
+
 	.example-img {
 		width: 100%;
 		height: auto;
 		display: block;
 		transition: transform var(--duration-standard) var(--ease-standard);
+	}
+
+	.example-placeholder {
+		width: 100%;
+		min-height: 12rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: var(--space-sm);
+		background: var(--color-bg-subtle);
+		color: var(--color-fg-muted);
+		font-size: var(--text-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
 	}
 
 	.example-card:hover .example-img {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { formatTime } from '$lib/taste/insights';
+	import { toTasteImageProxyUrl } from '$lib/taste/image';
 	import { Sparkline } from '@create-something/tufte';
 	import type { DataPoint } from '@create-something/tufte';
 	import { SEO } from '@create-something/canon';
@@ -9,6 +10,7 @@
 
 	// Share state
 	let shareState = $state<'idle' | 'copying' | 'copied'>('idle');
+	let failedStudiedImageUrls = $state<Set<string>>(new Set());
 
 	// Format date for display
 	function formatDate(dateStr: string): string {
@@ -101,6 +103,12 @@
 			// User cancelled share or error
 			shareState = 'idle';
 		}
+	}
+
+	function markStudiedImageFailure(imageUrl: string) {
+		const next = new Set(failedStudiedImageUrls);
+		next.add(imageUrl);
+		failedStudiedImageUrls = next;
 	}
 </script>
 
@@ -244,12 +252,19 @@
 				<div class="studied-grid">
 					{#each data.mostStudied as ref}
 						<div class="studied-card">
-							{#if ref.imageUrl}
+							{#if ref.imageUrl && !failedStudiedImageUrls.has(ref.imageUrl)}
 								<img
-									src={ref.imageUrl}
+									src={toTasteImageProxyUrl(ref.imageUrl) ?? ref.imageUrl}
 									alt={ref.title}
 									class="studied-img"
 									loading="lazy"
+									decoding="async"
+									referrerpolicy="no-referrer"
+									onerror={() => {
+										if (ref.imageUrl) {
+											markStudiedImageFailure(ref.imageUrl);
+										}
+									}}
 								/>
 							{:else}
 								<div class="studied-placeholder">
