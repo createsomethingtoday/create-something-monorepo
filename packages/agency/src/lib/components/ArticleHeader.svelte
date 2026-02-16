@@ -14,7 +14,7 @@
 		development: 'Development',
 	};
 
-	const categoryDisplayName = categoryDisplayNames[paper.category] || paper.category;
+	const categoryDisplayName = $derived(categoryDisplayNames[paper.category] || paper.category);
 
 	const difficultyColors: Record<string, { text: string; bg: string }> = {
 		Beginner: { text: 'difficulty-beginner-text', bg: 'difficulty-beginner-bg' },
@@ -22,7 +22,12 @@
 		Advanced: { text: 'difficulty-advanced-text', bg: 'difficulty-advanced-bg' },
 	};
 
-	const difficultyColorClasses = difficultyColors[paper.difficulty_level || ''] || { text: 'difficulty-default-text', bg: 'difficulty-default-bg' };
+	const difficultyColorClasses = $derived(
+		difficultyColors[paper.difficulty_level || ''] || {
+			text: 'difficulty-default-text',
+			bg: 'difficulty-default-bg'
+		}
+	);
 
 	const formatDate = (dateString?: string) => {
 		if (!dateString) return '';

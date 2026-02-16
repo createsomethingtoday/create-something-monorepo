@@ -128,11 +128,7 @@
 		}
 	}
 
-	.footer-column {
-		/* Column container */
-	}
-
-	.footer-heading {
+		.footer-heading {
 		font-size: 0.75rem;
 		font-weight: var(--font-semibold, 600);
 		text-transform: uppercase;

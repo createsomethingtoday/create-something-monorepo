@@ -5,10 +5,10 @@
 	const chapters = [
 		{
 			number: '01',
-			title: 'Start with one connection',
+			title: 'Start with one outcome stack',
 			paragraphs: [
 				'Pick your biggest pain point. The report you build every Monday. The data you copy between systems. The emails you sort by hand.',
-				'We build a custom MCP server that connects that tool to Claude (or Cursor, or Codex). 2\u20134 weeks. $2,000\u2013$5,000. You own the code.',
+				'We start with an Outcome Stack: custom MCP server + Codex setup + policy + runbook. 2\u20134 weeks. $2,000\u2013$5,000. You own the code.',
 				'Now your AI agent can read your CRM, update your project tracker, draft your emails \u2014 using your actual data, not generic responses.'
 			]
 		},
@@ -35,7 +35,7 @@
 	const timeline = [
 		{
 			label: 'Month 1',
-			detail: 'Built MCP connecting HubSpot to Claude ($3,000). Agents now draft follow-up emails from CRM data.',
+			detail: 'Built Outcome Stack for HubSpot pipeline ($3,000): MCP endpoint, Codex setup, approval policy, and runbook.',
 			result: 'Saves 5 hrs/week.'
 		},
 		{
@@ -45,7 +45,7 @@
 		},
 		{
 			label: 'Month 4',
-			detail: 'Second MCP connecting Notion project tracker. Judgment Layer managing both agents.',
+			detail: 'Second MCP connected to Notion project tracker. Judgment layer runbook managing both agent flows.',
 			result: '$2,500/mo.'
 		}
 	];
@@ -120,7 +120,7 @@
 
 <SEO
 	title="Your tools don't talk to each other. We fix that. | CREATE SOMETHING"
-	description="Every day you copy data between systems, format reports nobody asked for, and post updates you assembled by hand. We build custom MCP servers that connect your tools to AI agents — so your automation runs while you sleep."
+	description="Every day you copy data between systems, format reports nobody asked for, and post updates you assembled by hand. We deliver Agent Outcome Stack: custom MCP servers plus Codex setup, policy, and runbook."
 	keywords="MCP server, small business automation, AI integration, tool connectivity, HubSpot automation, Notion integration, Claude MCP, ops automation, SMB AI"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -149,15 +149,15 @@
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					Every day you copy data between HubSpot and Notion, format reports nobody asked for, 
-					and post Slack updates you assembled by hand. AI agents like Claude could do this — if they 
-					could access your systems. That's what we&nbsp;build.
+					Every day you copy data between HubSpot and Notion, format reports nobody asked for,
+					and post Slack updates you assembled by hand. AI agents can do this if they can access your systems
+					and operate inside clear policy. That's the Outcome Stack we&nbsp;build.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
 				<div class="hero-cta">
 					<ShimmerButton href="/services">
-						Get Your First MCP
+						Get Your Outcome Stack
 					</ShimmerButton>
 					<a href="/" class="hero-link">&larr; Back to home</a>
 				</div>
@@ -342,18 +342,19 @@
 <section class="cta-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="cta-heading">Start with one&nbsp;connection.</h2>
+			<h2 class="cta-heading">Start with one&nbsp;outcome stack.</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
-				Pick the workflow that wastes the most time. We'll connect it to your AI agent 
-				in 2–4&nbsp;weeks. You own the code. You see the&nbsp;value. Then you decide what's&nbsp;next.
+				Pick the workflow that wastes the most time. We'll deliver your first Outcome Stack
+				in 2–4&nbsp;weeks. You own the code and runbook. If you need discovery or compliance-only,
+				we can scope MCP-only as the entry wedge.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<div class="cta-actions">
 				<ShimmerButton href="/services">
-					Get Your First MCP
+					Get Your Outcome Stack
 				</ShimmerButton>
 				<a href="/services" class="cta-link">See all services &rarr;</a>
 				<a href="/book" class="cta-link cta-link-secondary">Have questions? Book a call</a>

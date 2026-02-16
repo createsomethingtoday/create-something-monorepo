@@ -6,7 +6,7 @@
 	const services = [
 		{
 			name: 'Monthly Retainer',
-			description: 'Your AI architect on retainer. Custom tool connections, business intelligence, monthly refinement. Direct access to the person who builds it. Limited to 3–5 clients.',
+			description: 'Your AI architect on retainer. Agent Outcome Stack by default: custom MCP servers, Codex setup, policy artifacts, and monthly refinement. Direct access to the person who builds it. Limited to 3–5 clients.',
 			type: 'Retainer',
 			price: '2000',
 			priceDescription: '$1,500–$3,000/mo depending on scope'
@@ -20,7 +20,7 @@
 		},
 		{
 			question: "What does $1,500–$3,000/mo actually get me?",
-			answer: "Everything. Tool connections, custom workflows, business intelligence rules, monthly refinement, direct access to me. The range depends on how many tools you're connecting and how complex your workflows are. We figure out the right scope on the first call."
+			answer: "Everything in the Agent Outcome Stack: custom MCP servers, Codex setup + policy + runbook, approval and escalation rules, monthly refinement, and direct access to me. The range depends on number of systems and workflow complexity. We scope it on the first call."
 		},
 		{
 			question: "Can I connect tools myself?",
@@ -28,7 +28,11 @@
 		},
 		{
 			question: "What if I just need one quick connection?",
-			answer: "If it's truly simple, I'll point you to the right free tool or show you how to do it yourself. I don't charge for what's commodity. But most 'simple' connections turn out to need custom auth, specific data mapping, or business logic that generic tools can't handle."
+			answer: "If it's truly simple, I'll point you to the right free tool or show you how to do it yourself. I don't charge for commodity work. But most 'simple' connections need custom auth, specific data mapping, or business logic generic tools can't handle."
+		},
+		{
+			question: "Do you offer MCP-only delivery?",
+			answer: "Yes, for discovery and compliance-constrained cases. MCP-only is the entry wedge: read-only or limited-scope connectivity. The default paid package is Agent Outcome Stack, because outcomes require both MCP connectivity and agent policy operations."
 		},
 		{
 			question: "How is this different from hiring a developer?",
@@ -51,7 +55,7 @@
 
 <SEO
 	title="How I Work | Your AI Person on Retainer"
-	description="Monthly retainer. Direct access. I connect your tools to AI, teach it your business, and refine it every month. $1,500–$3,000/mo depending on scope. Limited to 3–5 clients."
+	description="Monthly retainer. Direct access. Agent Outcome Stack by default: custom MCP servers, Codex setup + policy + runbook, and monthly refinement. $1,500–$3,000/mo depending on scope."
 	keywords="AI retainer, fractional AI architect, AI automation consultant, connect tools to AI, business AI expert"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -67,11 +71,11 @@
 			<p class="hero-eyebrow">How I Work</p>
 		</BlurFade>
 		<BlurFade delay={0.1}>
-			<h1 class="hero-title">One retainer. Everything included.</h1>
+			<h1 class="hero-title">One retainer. Outcome Stack included.</h1>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<p class="hero-subtitle">
-				I don't sell tiers. I work with you directly — connecting your tools, building your workflows, teaching your AI how your business runs. Then I refine it every month.
+				I don't sell tiers. I work with you directly to deliver agents + MCPs by default: custom connectivity, Codex setup, policy artifacts, and monthly refinement. MCP-only is reserved for discovery and compliance-constrained cases.
 			</p>
 		</BlurFade>
 	</div>
@@ -97,9 +101,11 @@
 						<div class="retainer-detail">
 							<h3>What's Included</h3>
 							<ul class="retainer-list">
-								<li>Custom tool connections (any API)</li>
-								<li>Business intelligence rules</li>
-								<li>Custom workflow automation</li>
+								<li>Custom MCP server(s) for your workflows</li>
+								<li>Agent Outcome Stack delivery (agents + MCPs)</li>
+								<li>Codex setup + policy + runbook included</li>
+								<li>Approval rules and escalation triggers</li>
+								<li>Budget and latency guardrails</li>
 								<li>Monthly refinement from usage data</li>
 								<li>Direct access — Slack or email</li>
 								<li>Architecture guidance as you grow</li>
@@ -112,12 +118,13 @@
 							<ul class="retainer-list">
 								<li>Generic tool connections</li>
 								<li>Basic MCP setup</li>
+								<li>MCP-only discovery setup (read-only/compliance)</li>
 								<li>Marketplace integrations</li>
 								<li>Standard configurations</li>
 							</ul>
 							<div class="retainer-callout">
 								<p>
-									Connecting tools isn't hard. People teach it for free, and there are free marketplaces. I won't charge you for commodity work. My time goes to what's actually hard — the custom integrations and business intelligence nobody else can build for you.
+									Connecting tools is commodity. The hard part is outcome quality: policy, escalation, approvals, and adapting the system as your business changes. That's why the default package is agents + MCPs.
 								</p>
 							</div>
 						</div>
@@ -140,7 +147,7 @@
 				<div class="timeline-card">
 					<span class="timeline-label">Month 1</span>
 					<h3>The Build</h3>
-					<p>Diagnostic call. I map your tools, workflows, and gaps. Then I build — custom connections, initial business rules, first workflows. Heavy lifting happens here. By month end, your AI has access to your systems and knows the basics of how you work.</p>
+					<p>Diagnostic call. I map tools, workflows, and risk boundaries. Then I deliver the initial Outcome Stack: custom MCP, Codex setup, and policy runbook. By month end, your AI can act inside safe boundaries.</p>
 				</div>
 			</BlurFade>
 
@@ -148,7 +155,7 @@
 				<div class="timeline-card">
 					<span class="timeline-label">Month 2–3</span>
 					<h3>The Expansion</h3>
-					<p>More connections as needed. Deeper business rules — your AI learns priorities, escalation logic, quality checks. I'm watching usage data to find where it's guessing instead of knowing, and closing those gaps.</p>
+					<p>More connections as needed. Deeper business rules: priorities, escalation logic, quality checks, and golden tasks. I use usage data to find where the system is guessing and close those gaps.</p>
 				</div>
 			</BlurFade>
 
@@ -156,7 +163,7 @@
 				<div class="timeline-card">
 					<span class="timeline-label">Month 4+</span>
 					<h3>The Compound</h3>
-					<p>The system gets smarter on its own. My effort shifts to refinement — new capabilities, better rules, adapting as your business evolves. The intelligence patterns I build for you also feed the tooling I'm building to scale this work with agents. Your business rules become part of a growing system.</p>
+					<p>The system compounds. My work shifts to tuning and expansion: new capabilities, tighter policies, and better reliability. Your runbook and contracts stay current as your business changes.</p>
 				</div>
 			</BlurFade>
 		</div>

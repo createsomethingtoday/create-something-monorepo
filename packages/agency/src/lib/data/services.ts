@@ -1,7 +1,7 @@
 /**
  * Products and Services Data
  *
- * Full MCP portfolio for the /products page.
+ * Full MCP portfolio and delivery positioning for the /products page.
  * Categories: featured, developer-tools, framework, integration, client.
  */
 
@@ -219,7 +219,7 @@ export const products: Product[] = [
 		title: 'Half Dozen Sync Suite',
 		tagline: 'Gmail, YouTube, and Zoom Clips to Notion',
 		description:
-			'Three custom MCP servers syncing Gmail emails, YouTube playlist transcripts, and Zoom Clips into Notion — with contact matching, browser automation, and email notifications.',
+			'Three custom MCP servers syncing Gmail emails, YouTube playlist transcripts, and Zoom Clips into Notion — with contact matching, browser automation, and email notifications. Codex setup + policy + runbook included.',
 		badge: 'Custom Build',
 		category: 'client',
 		client: 'Half Dozen',
@@ -232,7 +232,7 @@ export const products: Product[] = [
 		title: 'Outerfields PCN',
 		tagline: 'AI-guided platform documentation',
 		description:
-			'MCP server for the OUTERFIELDS Premium Content Network — AI-driven component exploration, pattern guidance, deployment, and architecture documentation.',
+			'MCP server for the OUTERFIELDS Premium Content Network — AI-driven component exploration, pattern guidance, deployment, and architecture documentation. Codex setup + policy + runbook included.',
 		badge: 'Custom Build',
 		category: 'client',
 		client: 'Outerfields',

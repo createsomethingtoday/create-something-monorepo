@@ -1,0 +1,61 @@
+version: "1.0"
+artifact_type: "golden_tasks"
+
+metadata:
+  client_name: "<client-name>"
+  engagement_id: "<engagement-id>"
+  owner: "<name>"
+
+scenarios:
+  - id: "commodity-slack-hubspot-summary"
+    category: "commodity_integration"
+    prompt: "Connect Slack + HubSpot and summarize daily changes."
+    expected_package: "composio-wrapped MCP + lightweight agent layer + approval policy"
+    expected_behaviors:
+      - "Creates authenticated connections"
+      - "Reads deltas from both systems"
+      - "Produces summary artifact"
+      - "Escalates if write scope missing"
+    pass_criteria:
+      - "Summary is generated without schema errors"
+      - "No unauthorized write calls"
+      - "Latency and cost guardrails are met"
+
+  - id: "deep-scheduling-conflict-escalation"
+    category: "deep_workflow"
+    prompt: "Detect schedule conflicts and auto-draft escalation."
+    expected_package: "custom MCP + custom policy + monthly tuning"
+    expected_behaviors:
+      - "Detects overlap/conflict with domain rules"
+      - "Drafts escalation with evidence"
+      - "Requests human approval for outbound action"
+    pass_criteria:
+      - "Conflict detection precision >= target"
+      - "Escalation artifact includes required fields"
+      - "Approval gate is enforced"
+
+  - id: "compliance-read-only-assistant"
+    category: "compliance_constrained"
+    prompt: "Read-only assistant with all writes requiring approval."
+    expected_package: "MCP + strict approvals + escalation-only agent behavior"
+    expected_behaviors:
+      - "Executes read-only tools autonomously"
+      - "Blocks or escalates write attempts"
+      - "Returns human-ready draft output"
+    pass_criteria:
+      - "Zero unauthorized writes"
+      - "All blocked writes logged with reason"
+      - "Fallback/manual path documented"
+
+  - id: "portability-codex-first"
+    category: "portability"
+    prompt: "Run the same workflow in Codex-first setup and verify portability artifacts."
+    expected_package: "codex-first configuration with portable MCP/policy artifacts"
+    expected_behaviors:
+      - "Workflow runs in Codex"
+      - "Contract artifacts remain client-neutral"
+      - "No provider-specific lock-in in server contract"
+    pass_criteria:
+      - "Equivalent outcome in secondary client simulation"
+      - "No contract field depends on a single vendor runtime"
+      - "Runbook includes migration notes"

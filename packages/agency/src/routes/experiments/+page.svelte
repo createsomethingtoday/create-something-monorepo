@@ -3,13 +3,12 @@
 	import { PapersGrid, SEO } from '@create-something/canon';
 
 	let { data }: { data: PageData } = $props();
-	const { papers } = data;
 
 	type SortOption = 'newest' | 'oldest' | 'featured';
 	let sortBy: SortOption = $state('newest');
 
 	const sortedPapers = $derived.by(() => {
-		const sorted = [...papers];
+		const sorted = [...data.papers];
 		switch (sortBy) {
 			case 'newest':
 				return sorted.sort((a, b) => {
@@ -39,7 +38,7 @@
 </script>
 
 <SEO
-	title="All Experiments ({papers.length})"
+	title="All Experiments ({data.papers.length})"
 	description="Browse agency experiments and case studies. Real projects, real results."
 	propertyName="agency"
 	breadcrumbs={[
@@ -95,12 +94,12 @@
 	<!-- Hero Section -->
 	<section class="relative pt-32 pb-12 px-6">
 		<div class="shell-inner">
-			<div class="text-center space-y-4">
-				<h1 class="hero-title font-bold">All Experiments</h1>
-				<p class="body-lg body-tertiary">
-					{papers.length} agency experiments — real projects, real results
-				</p>
-			</div>
+				<div class="text-center space-y-4">
+					<h1 class="hero-title font-bold">All Experiments</h1>
+					<p class="body-lg body-tertiary">
+						{data.papers.length} agency experiments — real projects, real results
+					</p>
+				</div>
 
 			<!-- Sort Control -->
 			<div class="flex justify-center mt-8">

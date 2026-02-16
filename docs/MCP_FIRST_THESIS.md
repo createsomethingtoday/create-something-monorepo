@@ -1,7 +1,7 @@
 # The MCP-First Thesis
 
 > Research conducted: February 4, 2026
-> Updated: February 4, 2026 (Creation Moat pivot)
+> Updated: February 16, 2026 (Creation Moat pivot + Codex-vector packaging)
 > Context: Strategic pivot for WORKWAY and CREATE SOMETHING
 
 ## Executive Summary
@@ -60,6 +60,14 @@ The value is not in **commodity scaffolds** but in **creation expertise** applie
 OLD: Scaffolds → Learning → Services (scaffolds as entry point)
 NEW: MCP Servers → Connectivity → Intelligence Layer (creation as entry point)
 ```
+
+### Packaging Rule (Codex Vector)
+
+The go-to-market sequence is explicit:
+
+1. **Entry wedge**: `MCP-only` for discovery and compliance-constrained cases.
+2. **Default paid offer**: `Agent Outcome Stack` (custom MCP + agent layer + policy operations).
+3. **Vector**: Codex-first setup and demos, with MCP/policy artifacts portable to Claude and Cursor.
 
 ---
 
@@ -209,11 +217,11 @@ Templates are no longer the entry point. **MCP creation expertise** is.
 | Service | Description | Value |
 |---------|-------------|-------|
 | **MCP Audit** | What MCPs would unlock value for your business? | Strategic clarity |
-| **Custom MCP Development** | Build the server, package as `.mcpb` | The creation moat |
-| **Intelligence Layer** | Skills and Agents on top of your MCPs | The margin |
-| **Ongoing Support** | Auth updates, API changes, new capabilities | Recurring relationship |
+| **MCP-only (Discovery/Compliance)** | Limited-scope or read-only connectivity for teams operating agents internally | Fast trust setup with lower autonomy risk |
+| **Agent Outcome Stack (Default)** | Custom MCP server(s) + Codex setup + policy + runbook + managed judgment loop | Differentiated outcomes + premium margin |
+| **Ongoing Support** | Auth updates, policy tuning, golden-task regressions, new capabilities | Recurring relationship |
 
-**Positioning shift**: From "We build websites/apps with modern stacks" to "We build the connectivity layer between your tools and AI."
+**Positioning shift**: From "We build websites/apps with modern stacks" to "We build the connectivity and outcome layers between your tools and AI."
 
 ### The Hermeneutic Circle
 
@@ -320,6 +328,7 @@ Client Request → CREATE SOMETHING MCP Server (mcp-core)
 - Client never knows the supplier exists
 - mcp-core is always the server framework
 - Intelligence Layer is always custom
+- Agent Outcome Stack is the default commercial package
 - Supplier is swappable (MIT-licensed SDK, wrapper pattern = contained blast radius)
 
 ### Supplier Comparison
@@ -352,7 +361,7 @@ The `@create-something/composio-bridge` package provides the wrap pattern adapte
 > "The Automation Layer for Construction. Connect Procore to AI. Get outcomes while you sleep."
 
 **CREATE SOMETHING**:
-> "We build the connectivity layer between your tools and AI."
+> "We build the connectivity and outcome layers between your tools and AI."
 
 **The Creation Moat** (internal):
 > "MCP consumption is commoditized. MCP creation is not. We create."
@@ -378,9 +387,10 @@ The `@create-something/composio-bridge` package provides the wrap pattern adapte
 ### CREATE SOMETHING (Horizontal - Creation Moat)
 1. [ ] Update .io content: focus on MCP *creation* patterns, not consumption
 2. [x] Redefine .space as The Workbench — live tools, not articles
-3. [ ] Define .agency service packages: MCP Audit, Custom MCP Dev, Intelligence Layer
-4. [ ] Build reference MCPs for common integration patterns (CRM, project management, etc.)
-5. [ ] Document the creation moat thesis on .ltd
+3. [ ] Define .agency service packages: MCP Audit, MCP-only wedge, Agent Outcome Stack (default)
+4. [ ] Publish client contract templates: `mcp_contract.yaml`, `agent_contract.yaml`, `outcome_contract.md`
+5. [ ] Build reference MCPs for common integration patterns (CRM, project management, etc.)
+6. [ ] Document the creation moat thesis on .ltd
 
 ### Positioning
 1. [ ] Update all property taglines to reflect "creation > consumption"

@@ -12,6 +12,14 @@ When to use Composio for app connectivity, how we wrap it, and where the SDK sur
 
 **Default**: For new MCPs that need "connect to Gmail/Notion/Slack/…", consider Composio first via `@create-something/composio-bridge`. Use custom when the integration is strategic or client-specific.
 
+## Commercial packaging (Codex vector)
+
+Composio usage does **not** change the commercial packaging rule:
+
+- `MCP-only` remains a narrow discovery/compliance offer.
+- `Agent Outcome Stack` (agents + MCPs) is the default paid delivery.
+- Codex is the primary setup/demo vector, but MCP/policy artifacts remain portable.
+
 ## Wrap pattern
 
 Clients see a CREATE SOMETHING MCP server; Composio is plumbing. We do not expose Composio as a product name.

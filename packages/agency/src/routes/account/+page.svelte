@@ -3,7 +3,8 @@
 	import { AccountPage } from '@create-something/canon/auth/components';
 
 	let { data } = $props();
-	const accountUser = data.user as { email?: string; name?: string; tier?: string } | null;
+	type AccountUser = { email?: string; name?: string; tier?: string } | null;
+	const accountUser = $derived(data.user as AccountUser);
 </script>
 
 <SEO
