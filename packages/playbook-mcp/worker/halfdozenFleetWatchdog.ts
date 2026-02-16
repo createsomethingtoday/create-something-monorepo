@@ -91,10 +91,13 @@ export type HalfDozenScenarioRunResult = {
   required_tool_coverage: RequiredToolCoverage | null;
   required_tool_coverage_called_only: RequiredToolCoverageCalledOnly | null;
   failed_required_tool_calls: FailedRequiredToolCall[];
+  requested_servers: string[];
   model: string;
   prompt: string;
   connected_servers: string[];
   failed_servers: Array<{ server: string; error: string }>;
+  degraded: boolean;
+  degraded_reason?: string;
   tool_calls: ToolCallSummary[];
   final_output: unknown;
 };
@@ -397,6 +400,7 @@ export async function runHalfDozenScenario(input: HalfDozenScenarioRunInput): Pr
   const scenarioPreset = SCENARIO_PRESETS[input.scenario];
   const endpointConfig = resolveServerEndpoints(input);
 
+  const requestedServers = [...scenarioPreset.defaults.servers];
   const model = input.model ?? scenarioPreset.defaults.model;
   const maxTurns = input.maxTurns ?? scenarioPreset.defaults.maxTurns;
   const query = input.query ?? scenarioPreset.defaults.query;
@@ -418,12 +422,47 @@ export async function runHalfDozenScenario(input: HalfDozenScenarioRunInput): Pr
   });
 
   try {
+    const connected = mcpServers.active.map((server) => server.name);
+    const failed = [...mcpServers.errors.entries()].map(([server, error]) => ({
+      server: server.name,
+      error: error.message,
+    }));
+
+    const connectivityDegradedReason =
+      failed.length > 0
+        ? `Connected ${connected.length}/${requestedServers.length} MCP servers; unavailable: ${failed.map((item) => item.server).join(', ')}.`
+        : undefined;
+
     if (mcpServers.active.length === 0) {
-      const failures = [...mcpServers.errors.entries()].map(([server, error]) => ({
-        server: server.name,
-        error: error.message,
-      }));
-      throw new Error(`No MCP servers connected. Failures: ${JSON.stringify(failures, null, 2)}`);
+      const requiredToolCoverage = summarizeRequiredToolCoverage(
+        scenarioPreset.defaults.requiredToolNames,
+        [],
+        [],
+      );
+      const requiredToolCoverageLegacy = summarizeRequiredToolCoverageLegacy(
+        scenarioPreset.defaults.requiredToolNames,
+        [],
+      );
+      return {
+        success: true,
+        scenario: input.scenario,
+        contract_bundle: scenarioPreset.contractBundle,
+        blocked_tools: scenarioPreset.defaults.blockedToolNames,
+        required_tools: scenarioPreset.defaults.requiredToolNames,
+        required_tool_coverage: requiredToolCoverage,
+        required_tool_coverage_called_only: requiredToolCoverageLegacy,
+        failed_required_tool_calls: [],
+        requested_servers: requestedServers,
+        model,
+        prompt: query,
+        connected_servers: connected,
+        failed_servers: failed,
+        degraded: true,
+        degraded_reason: connectivityDegradedReason ?? 'No MCP servers connected.',
+        tool_calls: [],
+        final_output:
+          'No MCP servers were reachable for this scenario. Returning a degraded connectivity report so operations can continue while MCP endpoints are restored.',
+      };
     }
 
     const agent = new Agent({
@@ -434,16 +473,48 @@ export async function runHalfDozenScenario(input: HalfDozenScenarioRunInput): Pr
     });
 
     const runner = new Runner({ tracingDisabled: true });
-    const result = await runner.run(agent, query, { maxTurns });
+    let result: { newItems: unknown[]; finalOutput: unknown };
+    try {
+      const runResult = await runner.run(agent, query, { maxTurns });
+      result = {
+        newItems: runResult.newItems as unknown[],
+        finalOutput: runResult.finalOutput,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const requiredToolCoverage = summarizeRequiredToolCoverage(
+        scenarioPreset.defaults.requiredToolNames,
+        [],
+        [],
+      );
+      const requiredToolCoverageLegacy = summarizeRequiredToolCoverageLegacy(
+        scenarioPreset.defaults.requiredToolNames,
+        [],
+      );
+      return {
+        success: true,
+        scenario: input.scenario,
+        contract_bundle: scenarioPreset.contractBundle,
+        blocked_tools: scenarioPreset.defaults.blockedToolNames,
+        required_tools: scenarioPreset.defaults.requiredToolNames,
+        required_tool_coverage: requiredToolCoverage,
+        required_tool_coverage_called_only: requiredToolCoverageLegacy,
+        failed_required_tool_calls: [],
+        requested_servers: requestedServers,
+        model,
+        prompt: query,
+        connected_servers: connected,
+        failed_servers: failed,
+        degraded: true,
+        degraded_reason: `Agent run aborted after connectivity checks: ${message}`,
+        tool_calls: [],
+        final_output:
+          'The scenario entered degraded mode because agent execution failed after MCP connectivity checks. Review failed_servers and degraded_reason for remediation.',
+      };
+    }
 
-    const connected = mcpServers.active.map((server) => server.name);
-    const failed = [...mcpServers.errors.entries()].map(([server, error]) => ({
-      server: server.name,
-      error: error.message,
-    }));
-
-    const toolCalls = summarizeToolCalls(result.newItems as unknown[]);
-    const toolCallOutputs = summarizeToolCallOutputs(result.newItems as unknown[]);
+    const toolCalls = summarizeToolCalls(result.newItems);
+    const toolCallOutputs = summarizeToolCallOutputs(result.newItems);
     const requiredToolCoverage = summarizeRequiredToolCoverage(
       scenarioPreset.defaults.requiredToolNames,
       toolCalls,
@@ -468,10 +539,13 @@ export async function runHalfDozenScenario(input: HalfDozenScenarioRunInput): Pr
       required_tool_coverage: requiredToolCoverage,
       required_tool_coverage_called_only: requiredToolCoverageLegacy,
       failed_required_tool_calls: failedRequiredCalls,
+      requested_servers: requestedServers,
       model,
       prompt: query,
       connected_servers: connected,
       failed_servers: failed,
+      degraded: failed.length > 0,
+      degraded_reason: connectivityDegradedReason,
       tool_calls: toolCalls,
       final_output: result.finalOutput,
     };

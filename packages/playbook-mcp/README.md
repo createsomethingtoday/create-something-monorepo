@@ -149,6 +149,7 @@ curl -X POST "https://playbook.mcp.createsomething.ltd/clients/halfdozen/agents/
 ```
 
 All responses include contract bundle metadata, blocked/required tools, required tool coverage (when applicable), called tools, and final output.
+If one or more MCP servers are unavailable, the route returns a degraded payload (`degraded: true`) with `failed_servers` and `degraded_reason` instead of a hard failure.
 
 ## Local Development (stdio)
 
