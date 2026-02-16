@@ -12,8 +12,9 @@
 	const INITIAL_EXAMPLES_VISIBLE = 20;
 	const LOAD_MORE_STEP = 12;
 	const AUTO_LOAD_DEBOUNCE_MS = 150;
-	const AUTO_LOAD_ROOT_MARGIN = '1600px 0px 1600px 0px';
+	const AUTO_LOAD_ROOT_MARGIN = '700px 0px 700px 0px';
 	const GALLERY_IMAGE_WIDTHS = [320, 480, 640, 800, 960] as const;
+	const GALLERY_GIF_WIDTHS = [240, 320, 480, 640] as const;
 	const GALLERY_IMAGE_SIZES = '(min-width: 1024px) 24vw, (min-width: 768px) 32vw, 48vw';
 
 	// Lightbox state
@@ -57,10 +58,33 @@
 		loadedImageIds = next;
 	}
 
+	function isGifImageUrl(imageUrl: string | undefined | null): boolean {
+		if (!imageUrl) {
+			return false;
+		}
+
+		try {
+			return new URL(imageUrl).pathname.toLowerCase().endsWith('.gif');
+		} catch {
+			return imageUrl.toLowerCase().includes('.gif');
+		}
+	}
+
 	function getCardImageUrl(imageUrl: string | undefined | null, index: number): string | null {
+		const isGif = isGifImageUrl(imageUrl);
+
 		return toTasteImageProxyUrlWithOptions(imageUrl, {
-			width: index < 8 ? 960 : 640,
-			quality: index < 8 ? 72 : 68
+			width: isGif ? (index < 8 ? 640 : 480) : index < 8 ? 960 : 640,
+			quality: isGif ? 52 : index < 8 ? 72 : 68,
+			anim: isGif ? false : undefined
+		});
+	}
+
+	function getCardImageSrcSet(imageUrl: string | undefined | null): string | null {
+		const isGif = isGifImageUrl(imageUrl);
+		return toTasteImageSrcSet(imageUrl, isGif ? GALLERY_GIF_WIDTHS : GALLERY_IMAGE_WIDTHS, {
+			quality: isGif ? 52 : 68,
+			anim: isGif ? false : undefined
 		});
 	}
 
@@ -243,14 +267,12 @@
 						{#if example.image_url && !failedImageIds.has(example.id)}
 							<img
 								src={getCardImageUrl(example.image_url, index) ?? example.image_url}
-								srcset={toTasteImageSrcSet(example.image_url, GALLERY_IMAGE_WIDTHS, {
-									quality: 68
-								}) ?? undefined}
+								srcset={getCardImageSrcSet(example.image_url) ?? undefined}
 								sizes={GALLERY_IMAGE_SIZES}
 								alt={example.title || 'Visual reference'}
 								class="example-img"
-								loading={index < 12 ? 'eager' : 'lazy'}
-								fetchpriority={index < 6 ? 'high' : 'auto'}
+								loading={index < 8 ? 'eager' : 'lazy'}
+								fetchpriority={index < 4 ? 'high' : 'auto'}
 								decoding="async"
 								referrerpolicy="no-referrer"
 								onload={() => markImageLoaded(example.id)}

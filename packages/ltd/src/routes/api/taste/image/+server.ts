@@ -22,6 +22,22 @@ function parseBoundedInt(
 	return Math.min(max, Math.max(min, parsed));
 }
 
+function parseBooleanFlag(value: string | null, defaultValue: boolean): boolean {
+	if (value === null) {
+		return defaultValue;
+	}
+
+	const normalized = value.trim().toLowerCase();
+	if (normalized === '0' || normalized === 'false' || normalized === 'no') {
+		return false;
+	}
+	if (normalized === '1' || normalized === 'true' || normalized === 'yes') {
+		return true;
+	}
+
+	return defaultValue;
+}
+
 /**
  * Proxies Are.na-hosted images through our domain for better reliability and caching.
  * Restricts origin hosts to known Are.na image CDNs to avoid open-proxy abuse.
@@ -40,7 +56,9 @@ export const GET: RequestHandler = async ({ fetch, url }) => {
 	const width = parseBoundedInt(url.searchParams.get('w'), 240, 2400);
 	const quality = parseBoundedInt(url.searchParams.get('q'), 40, 90) ?? 68;
 	const dpr = parseBoundedInt(url.searchParams.get('dpr'), 1, 3) ?? 1;
+	const allowAnimation = parseBooleanFlag(url.searchParams.get('anim'), true);
 	const transformedWidth = width ? width * dpr : undefined;
+	const shouldUseImageTransform = transformedWidth !== undefined || allowAnimation === false;
 
 	const baseRequestInit: RequestInit = {
 		headers: {
@@ -48,18 +66,23 @@ export const GET: RequestHandler = async ({ fetch, url }) => {
 		}
 	};
 
-	const transformedRequestInit: RequestInit = transformedWidth
-		? {
+	const transformOptions: Record<string, unknown> = {
+		quality,
+		fit: 'scale-down',
+		format: 'auto',
+		anim: allowAnimation
+	};
+	if (transformedWidth !== undefined) {
+		transformOptions.width = transformedWidth;
+	}
+
+	const transformedRequestInit: RequestInit = shouldUseImageTransform
+		? ({
 				...baseRequestInit,
 				cf: {
-					image: {
-						width: transformedWidth,
-						quality,
-						fit: 'scale-down',
-						format: 'auto'
-					}
-				} as { image: Record<string, unknown> }
-			}
+					image: transformOptions
+				}
+			} as RequestInit)
 		: baseRequestInit;
 
 	let upstreamResponse: Response;
@@ -67,11 +90,11 @@ export const GET: RequestHandler = async ({ fetch, url }) => {
 		upstreamResponse = await fetch(normalizedUrl, transformedRequestInit);
 
 		// If image transforms are unavailable in this runtime, fall back gracefully.
-		if (transformedWidth && !upstreamResponse.ok) {
+		if (shouldUseImageTransform && !upstreamResponse.ok) {
 			upstreamResponse = await fetch(normalizedUrl, baseRequestInit);
 		}
 	} catch (err) {
-		if (transformedWidth) {
+		if (shouldUseImageTransform) {
 			try {
 				upstreamResponse = await fetch(normalizedUrl, baseRequestInit);
 			} catch (fallbackErr) {

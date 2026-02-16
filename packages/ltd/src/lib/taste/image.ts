@@ -4,6 +4,7 @@ export interface TasteImageProxyOptions {
 	width?: number;
 	quality?: number;
 	dpr?: number;
+	anim?: boolean;
 }
 
 function clampInteger(value: number | undefined, min: number, max: number): number | undefined {
@@ -86,6 +87,9 @@ export function toTasteImageProxyUrlWithOptions(
 	}
 	if (dpr !== undefined) {
 		params.set('dpr', String(dpr));
+	}
+	if (options?.anim !== undefined) {
+		params.set('anim', options.anim ? '1' : '0');
 	}
 
 	return `/api/taste/image?${params.toString()}`;
