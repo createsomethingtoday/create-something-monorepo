@@ -436,6 +436,14 @@ type ToolCallSummary = {
   callId?: string;
 };
 
+type ToolCallOutputSummary = {
+  type: string;
+  rawType?: string;
+  callId?: string;
+  status?: string;
+  output?: string;
+};
+
 function summarizeToolCalls(items: unknown[]): ToolCallSummary[] {
   return items
     .filter((item): item is { type: string; rawItem?: { type?: string; name?: string; callId?: string } } => {
@@ -448,7 +456,147 @@ function summarizeToolCalls(items: unknown[]): ToolCallSummary[] {
     }));
 }
 
-function summarizeRequiredToolCoverage(requiredToolNames: string[], toolCalls: ToolCallSummary[]): {
+function summarizeToolCallOutputs(items: unknown[]): ToolCallOutputSummary[] {
+  return items
+    .filter(
+      (
+        item,
+      ): item is { type: string; rawItem?: { type?: string; callId?: string; id?: string; status?: string; output?: unknown }; output?: unknown } => {
+        return Boolean(item && typeof item === 'object' && (item as { type?: unknown }).type === 'tool_call_output_item');
+      },
+    )
+    .map((item) => {
+      const rawOutput = item.rawItem?.output;
+      const topLevelOutput = item.output;
+      const output =
+        typeof rawOutput === 'string'
+          ? rawOutput
+          : typeof topLevelOutput === 'string'
+            ? topLevelOutput
+            : undefined;
+      return {
+        type: item.type,
+        rawType: item.rawItem?.type,
+        callId: item.rawItem?.callId ?? item.rawItem?.id,
+        status: item.rawItem?.status,
+        output,
+      };
+    });
+}
+
+function hasErrorSignal(output?: string): boolean {
+  if (!output) return false;
+  return (
+    /"error"\s*:/i.test(output) ||
+    /^\s*error[:\s]/i.test(output) ||
+    /\b(MCP error|D1_ERROR|SQLITE_ERROR|SQLITE_MISUSE)\b/i.test(output) ||
+    /\bbinding\b/i.test(output)
+  );
+}
+
+function isSuccessfulToolOutput(output: ToolCallOutputSummary | undefined): boolean {
+  if (!output) return false;
+
+  const status = output.status?.toLowerCase();
+  if (status === 'completed') {
+    return !hasErrorSignal(output.output);
+  }
+  if (status === 'incomplete' || status === 'failed') {
+    return false;
+  }
+
+  // Some output item variants may not expose a status; infer from payload.
+  return !hasErrorSignal(output.output);
+}
+
+function summarizeRequiredToolCoverage(
+  requiredToolNames: string[],
+  toolCalls: ToolCallSummary[],
+  toolCallOutputs: ToolCallOutputSummary[],
+): {
+  required_tools: string[];
+  called_tools: string[];
+  successful_tools: string[];
+  missing_required_tools: string[];
+  missing_required_tool_success: string[];
+  all_required_tools_called: boolean;
+  all_required_tools_successful: boolean;
+} | null {
+  if (requiredToolNames.length === 0) {
+    return null;
+  }
+
+  const outputByCallId = new Map<string, ToolCallOutputSummary>();
+  for (const output of toolCallOutputs) {
+    if (output.callId) {
+      outputByCallId.set(output.callId, output);
+    }
+  }
+
+  const calledSet = new Set<string>();
+  const successfulSet = new Set<string>();
+  for (const call of toolCalls) {
+    if (!call.name) {
+      continue;
+    }
+    calledSet.add(call.name);
+    if (call.callId && isSuccessfulToolOutput(outputByCallId.get(call.callId))) {
+      successfulSet.add(call.name);
+    }
+  }
+
+  const calledTools = [...calledSet].sort();
+  const successfulTools = [...successfulSet].sort();
+  const missingCalled = requiredToolNames.filter((name) => !calledSet.has(name));
+  const missingSuccessful = requiredToolNames.filter((name) => !successfulSet.has(name));
+
+  return {
+    required_tools: requiredToolNames,
+    called_tools: calledTools,
+    successful_tools: successfulTools,
+    missing_required_tools: missingCalled,
+    missing_required_tool_success: missingSuccessful,
+    all_required_tools_called: missingCalled.length === 0,
+    all_required_tools_successful: missingSuccessful.length === 0,
+  };
+}
+
+function summarizeFailedRequiredCalls(
+  requiredToolNames: string[],
+  toolCalls: ToolCallSummary[],
+  toolCallOutputs: ToolCallOutputSummary[],
+): Array<{ tool: string; callId?: string; status?: string; output_excerpt?: string }> {
+  if (requiredToolNames.length === 0) {
+    return [];
+  }
+
+  const outputByCallId = new Map<string, ToolCallOutputSummary>();
+  for (const output of toolCallOutputs) {
+    if (output.callId) {
+      outputByCallId.set(output.callId, output);
+    }
+  }
+
+  const failures: Array<{ tool: string; callId?: string; status?: string; output_excerpt?: string }> = [];
+  for (const call of toolCalls) {
+    if (!call.name || !requiredToolNames.includes(call.name)) {
+      continue;
+    }
+    const output = call.callId ? outputByCallId.get(call.callId) : undefined;
+    if (!isSuccessfulToolOutput(output)) {
+      failures.push({
+        tool: call.name,
+        callId: call.callId,
+        status: output?.status,
+        output_excerpt: output?.output?.slice(0, 200),
+      });
+    }
+  }
+
+  return failures;
+}
+
+function summarizeRequiredToolCoverageLegacy(requiredToolNames: string[], toolCalls: ToolCallSummary[]): {
   required_tools: string[];
   called_tools: string[];
   missing_required_tools: string[];
@@ -569,7 +717,10 @@ async function main(): Promise<void> {
     }));
 
     const toolCalls = summarizeToolCalls(result.newItems as unknown[]);
-    const requiredToolCoverage = summarizeRequiredToolCoverage(options.requiredToolNames, toolCalls);
+    const toolCallOutputs = summarizeToolCallOutputs(result.newItems as unknown[]);
+    const requiredToolCoverage = summarizeRequiredToolCoverage(options.requiredToolNames, toolCalls, toolCallOutputs);
+    const requiredToolCoverageLegacy = summarizeRequiredToolCoverageLegacy(options.requiredToolNames, toolCalls);
+    const failedRequiredCalls = summarizeFailedRequiredCalls(options.requiredToolNames, toolCalls, toolCallOutputs);
 
     console.log(
       JSON.stringify(
@@ -580,6 +731,8 @@ async function main(): Promise<void> {
           blocked_tools: options.blockedToolNames,
           required_tools: options.requiredToolNames,
           required_tool_coverage: requiredToolCoverage,
+          required_tool_coverage_called_only: requiredToolCoverageLegacy,
+          failed_required_tool_calls: failedRequiredCalls,
           model: options.model,
           prompt: options.query,
           connected_servers: connected,

@@ -71,7 +71,8 @@ The script returns JSON with:
 - linked contract bundle paths (if scenario is used)
 - blocked tools enforced from scenario policy
 - required tools expected by scenario policy
-- required tool coverage (which required tools were actually called)
+- required tool coverage (called vs successful completion)
+- failed required tool call summaries (status + output excerpt)
 - connected MCP servers
 - failed MCP connections (if any)
 - tool calls made by the agent

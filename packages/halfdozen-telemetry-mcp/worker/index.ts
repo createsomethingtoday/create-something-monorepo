@@ -75,6 +75,11 @@ function timeAgo(dateStr: string): string {
   return `${days}d ago`;
 }
 
+function bindStatement(stmt: D1PreparedStatement, params: unknown[]): D1PreparedStatement {
+  if (params.length === 0) return stmt;
+  return stmt.bind(...params);
+}
+
 // =============================================================================
 // MCP Agent
 // =============================================================================
@@ -342,10 +347,7 @@ export class TelemetryMCP extends McpAgent<Env> {
         query += ' ORDER BY created_at DESC LIMIT ?';
         params.push(maxLimit);
 
-        let stmt = db.prepare(query);
-        for (const p of params) {
-          stmt = stmt.bind(p);
-        }
+        const stmt = bindStatement(db.prepare(query), params);
 
         const rows = await stmt.all<{
           server_name: string;
@@ -402,10 +404,7 @@ export class TelemetryMCP extends McpAgent<Env> {
         query += ' ORDER BY created_at DESC LIMIT ?';
         params.push(limit);
 
-        let stmt = db.prepare(query);
-        for (const p of params) {
-          stmt = stmt.bind(p);
-        }
+        const stmt = bindStatement(db.prepare(query), params);
 
         const rows = await stmt.all<{
           server_name: string;
@@ -471,10 +470,7 @@ export class TelemetryMCP extends McpAgent<Env> {
 
         query += ' GROUP BY server_name, period_start ORDER BY period_start DESC';
 
-        let stmt = db.prepare(query);
-        for (const p of params) {
-          stmt = stmt.bind(p);
-        }
+        const stmt = bindStatement(db.prepare(query), params);
 
         const rows = await stmt.all<{
           server_name: string;
