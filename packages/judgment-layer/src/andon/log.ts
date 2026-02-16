@@ -5,7 +5,7 @@ export type AndonRecord = {
   id: string;
   createdAt: string; // ISO
   policyId: string;
-  kind: 'commandExecution' | 'fileChange' | 'turn';
+  kind: 'commandExecution' | 'fileChange' | 'turn' | 'alert';
   phase?: 'approval' | 'started' | 'completed';
   threadId: string;
   turnId: string;

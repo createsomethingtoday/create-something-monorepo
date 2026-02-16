@@ -28,6 +28,7 @@ test('cs-judge init scaffolds .judgment policy packs', () => {
     assert.equal(r.code, 0, r.stderr);
 
     assert.ok(existsSync(join(cwd, '.judgment', 'README.md')));
+    assert.ok(existsSync(join(cwd, '.judgment', 'checks.toml')));
     assert.ok(existsSync(join(cwd, '.judgment', 'policies', 'safe.toml')));
     assert.ok(existsSync(join(cwd, '.judgment', 'policies', 'standard.toml')));
     assert.ok(existsSync(join(cwd, '.judgment', 'policies', 'power.toml')));

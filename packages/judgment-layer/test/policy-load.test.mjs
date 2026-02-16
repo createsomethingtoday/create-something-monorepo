@@ -69,3 +69,27 @@ file_path_prefixes = ["src/"]
   }
 });
 
+test('loadProjectPolicies fails closed on invalid sandbox_policy.type', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'cs-judge-'));
+  try {
+    const dir = join(cwd, '.judgment', 'policies');
+    mkdirSync(dir, { recursive: true });
+
+    writeFileSync(
+      join(dir, 'bad.toml'),
+      `
+id = "bad"
+approval_policy = "untrusted"
+non_interactive_decision = "decline"
+
+[sandbox_policy]
+type = "notARealSandbox"
+`,
+      'utf-8'
+    );
+
+    assert.throws(() => loadProjectPolicies(cwd), /Invalid project policy files/);
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+});

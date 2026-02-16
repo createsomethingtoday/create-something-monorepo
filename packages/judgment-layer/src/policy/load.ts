@@ -25,11 +25,18 @@ type PolicyToml = {
   };
 };
 
+const SANDBOX_TYPES = new Set<JudgmentPolicy['sandboxPolicy']['type']>(['dangerFullAccess', 'readOnly', 'workspaceWrite']);
+
 function normalizePolicyFromToml(toml: PolicyToml, sourcePath: string): LoadedPolicy {
+  const sandboxType = toml.sandbox_policy?.type;
+  if (sandboxType !== undefined && !SANDBOX_TYPES.has(sandboxType)) {
+    throw new Error(`Invalid sandbox_policy.type in ${sourcePath}: ${String(sandboxType)}`);
+  }
+
   const sandboxPolicy =
-    toml.sandbox_policy?.type === 'dangerFullAccess'
+    sandboxType === 'dangerFullAccess'
       ? { type: 'dangerFullAccess' as const }
-      : toml.sandbox_policy?.type === 'readOnly'
+      : sandboxType === 'readOnly'
         ? { type: 'readOnly' as const }
         : {
             type: 'workspaceWrite' as const,
@@ -67,16 +74,21 @@ export function loadProjectPolicies(cwd: string): LoadedPolicy[] {
     .map((f) => join(dir, f));
 
   const loaded: LoadedPolicy[] = [];
+  const errors: string[] = [];
   for (const file of files) {
     try {
       const raw = readFileSync(file, 'utf-8');
       const data = TOML.parse(raw) as unknown as PolicyToml;
       if (!data.id) continue;
       loaded.push(normalizePolicyFromToml(data, file));
-    } catch {
-      // Ignore invalid policy files; CLI will show builtin policies regardless.
+    } catch (err: any) {
+      errors.push(`${file}: ${err?.message ?? String(err)}`);
     }
   }
+
+  if (errors.length) {
+    throw new Error(`Invalid project policy files:\n${errors.join('\n')}`);
+  }
+
   return loaded;
 }
-

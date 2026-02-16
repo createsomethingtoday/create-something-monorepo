@@ -4,13 +4,14 @@ Thin "cockpit" on top of `codex app-server`:
 
 - **Judgment**: selectable policy pack (prompts + sandbox + approval/gating defaults)
 - **Automation**: Codex executes tools/commands/file changes
-- **Database**: policy packs + Andon logs persisted as local artifacts
+- **Database**: policy packs + checks + Andon logs persisted as local artifacts
 
 This is intentionally lightweight: a small CLI plus a simple policy format.
 
 ## What This Is (Three-Tier Framework)
 
 - **Database tier**: `.judgment/policies/*.toml` (tracked) + `.judgment/andon.jsonl` (local JSONL audit trail)
+- **Database tier**: `.judgment/checks.toml` (tracked monitoring rules)
 - **Automation tier**: `codex app-server` runs turns, tools, commands, and applies diffs
 - **Judgment tier**: the operator selects a policy pack (sandbox posture + approval posture + “when to stop”)
 
@@ -36,11 +37,14 @@ pnpm exec cs-judge --help
 cs-judge init
 cs-judge policies
 cs-judge run --policy standard --prompt "Summarize this repo."
+cs-judge check --policy standard
+cs-judge watch --interval 300 --policy standard
 ```
 
 ## Operator Flags (Lightweight Defaults)
 
 - `--mcp minimal|inherit`: defaults to `minimal` to avoid optional MCP OAuth/auth breaking runs.
+- For `check` and `watch`, default is `inherit` unless explicitly overridden.
 - `--stream`: stream the agent message as it arrives (less “wait then dump”).
 - `--verbose`: prints commands/file-change lifecycle events (for debugging).
 - `--non-interactive`: never prompt; falls back to `policy.non_interactive_decision`.
@@ -64,3 +68,38 @@ Policies are plain TOML. Edit `.judgment/policies/*.toml` to adjust:
 - auto-approve rules (command action types, regex, file path prefixes)
 
 For some command approvals, Codex can propose an `execpolicy` amendment. In interactive mode, `cs-judge` will offer `p=accept+amend` when available.
+
+## Monitoring checks (`.judgment/checks.toml`)
+
+Minimal abstraction:
+1. Fetch from one MCP tool
+2. Extract one value from a dot-path
+3. Compare against one deterministic target
+4. Emit alert + optional suggestions
+
+Example:
+
+```toml
+[[checks]]
+id = "example_signal_low"
+description = "Trigger when signal falls below target"
+enabled = true
+server = "notion"
+tool = "query_database"
+args_json = "{\"database_id\":\"abc123\"}"
+value_path = "results.0.properties.Score.number"
+operator = "lt" # lt | lte | gt | gte | eq | neq
+target = 50
+severity = "high" # low | medium | high | critical
+cooldown_minutes = 60
+notify_channel = "console"
+suggestion_prompt = "Suggest three actions for this week."
+allow_auto_write = false
+```
+
+Commands:
+
+```bash
+cs-judge check [--check <id>] [--policy <id>] [--mcp inherit]
+cs-judge watch [--check <id>] [--interval <seconds>] [--policy <id>] [--mcp inherit]
+```

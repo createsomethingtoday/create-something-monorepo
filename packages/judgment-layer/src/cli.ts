@@ -8,33 +8,44 @@ import { BUILTIN_POLICIES } from './policy/builtin.js';
 import { loadProjectPolicies } from './policy/load.js';
 import type { LoadedPolicy } from './policy/types.js';
 import { appendAndon } from './andon/log.js';
+import { loadChecks } from './checks/load.js';
+import { evaluateCheck } from './checks/eval.js';
+import type { JudgmentCheck } from './checks/types.js';
 
 type Args = {
   command: string;
   cwd: string;
   policyId?: string;
   prompt?: string;
+  checkId?: string;
+  intervalSeconds: number;
   nonInteractive?: boolean;
   verbose?: boolean;
   stream?: boolean;
   andonTail?: number;
   mcpMode: 'minimal' | 'inherit';
+  mcpExplicit?: boolean;
 };
 
 function parseArgs(argv: string[]): Args {
   const args = argv.slice(2);
 
-  const out: Args = { command: 'help', cwd: process.cwd(), mcpMode: 'minimal' };
+  const out: Args = { command: 'help', cwd: process.cwd(), mcpMode: 'minimal', intervalSeconds: 300 };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === '--cwd') out.cwd = resolve(args[++i] ?? out.cwd);
     else if (a === '--policy') out.policyId = args[++i];
     else if (a === '--prompt') out.prompt = args[++i];
+    else if (a === '--check') out.checkId = args[++i];
+    else if (a === '--interval') out.intervalSeconds = Math.max(10, Number(args[++i] ?? '300'));
     else if (a === '--non-interactive') out.nonInteractive = true;
     else if (a === '--verbose' || a === '-v') out.verbose = true;
     else if (a === '--stream') out.stream = true;
     else if (a === '--tail') out.andonTail = Number(args[++i] ?? '20');
-    else if (a === '--mcp') out.mcpMode = (args[++i] as any) === 'inherit' ? 'inherit' : 'minimal';
+    else if (a === '--mcp') {
+      out.mcpMode = (args[++i] as any) === 'inherit' ? 'inherit' : 'minimal';
+      out.mcpExplicit = true;
+    }
     else if (a === '--help' || a === '-h') out.command = 'help';
     else if (!a.startsWith('-') && out.command === 'help') out.command = a;
   }
@@ -49,6 +60,8 @@ Usage:
   cs-judge init [--cwd <dir>]
   cs-judge policies [--cwd <dir>]
   cs-judge andon [--cwd <dir>] [--tail <n>]
+  cs-judge check [--check <id>] [--policy <id>] [--cwd <dir>] [--mcp minimal|inherit]
+  cs-judge watch [--check <id>] [--interval <seconds>] [--policy <id>] [--cwd <dir>] [--mcp minimal|inherit]
   cs-judge run --prompt "<text>" [--policy <id>] [--cwd <dir>] [--non-interactive]
               [--mcp minimal|inherit] [--verbose] [--stream]
 
@@ -61,6 +74,7 @@ Defaults:
 function scaffoldInit(cwd: string) {
   const root = join(cwd, '.judgment');
   const policiesDir = join(root, 'policies');
+  const checksPath = join(root, 'checks.toml');
 
   mkdirSync(policiesDir, { recursive: true });
 
@@ -120,7 +134,28 @@ They are used by \`cs-judge\` to:
 
 Files:
 - \`policies/*.toml\` policy packs (track these)
+- \`checks.toml\` monitoring checks (track this)
 - \`andon.jsonl\` Andon log (ignore this)
+`;
+
+  const checksTemplate = `# Monitoring checks executed by: cs-judge check / cs-judge watch
+# Minimal abstraction: fetch from one MCP tool, extract one value, compare to one target.
+
+[[checks]]
+id = "example_signal_low"
+description = "Example: trigger when a signal drops below target"
+enabled = false
+server = "notion"
+tool = "query_database"
+args_json = "{}"
+value_path = "results.0.properties.Score.number"
+operator = "lt"
+target = 50
+severity = "high"
+cooldown_minutes = 60
+notify_channel = "console"
+suggestion_prompt = "Given this low score, suggest three concrete actions for this week."
+allow_auto_write = false
 `;
 
   if (!existsSync(join(policiesDir, 'safe.toml'))) writeFileSync(join(policiesDir, 'safe.toml'), safe, 'utf-8');
@@ -128,6 +163,7 @@ Files:
     writeFileSync(join(policiesDir, 'standard.toml'), standard, 'utf-8');
   if (!existsSync(join(policiesDir, 'power.toml'))) writeFileSync(join(policiesDir, 'power.toml'), power, 'utf-8');
   if (!existsSync(join(root, 'README.md'))) writeFileSync(join(root, 'README.md'), readme, 'utf-8');
+  if (!existsSync(checksPath)) writeFileSync(checksPath, checksTemplate, 'utf-8');
 
   console.log(`Initialized policy packs in ${policiesDir}`);
 }
@@ -272,15 +308,392 @@ function formatPolicySummary(policy: LoadedPolicy, cwd: string): string[] {
   return lines;
 }
 
-async function runWithPolicy(args: Args) {
-  const policies = listPolicies(args.cwd);
-  const policyId = args.policyId ?? 'standard';
-  const policy = policies.find((p) => p.id === policyId);
+function resolvePolicy(cwd: string, policyId?: string): LoadedPolicy {
+  const policies = listPolicies(cwd);
+  const resolvedId = policyId ?? 'standard';
+  const policy = policies.find((p) => p.id === resolvedId);
   if (!policy) {
-    console.error(`Unknown policy: ${policyId}`);
-    console.error('Available:\n' + policies.map(renderPolicyOneLine).join('\n'));
-    process.exit(1);
+    throw new Error(`Unknown policy: ${resolvedId}\nAvailable:\n${policies.map(renderPolicyOneLine).join('\n')}`);
   }
+  return policy;
+}
+
+type PromptExecutionResult = {
+  text: string;
+  status: string;
+  turnId: string;
+  threadId: string;
+  andonPath: string;
+  andonCount: number;
+  turnErrorMessage?: string;
+};
+
+function parseJsonObjectFromText(text: string): any {
+  const trimmed = text.trim();
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    // continue
+  }
+
+  const codeFence = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (codeFence?.[1]) {
+    return JSON.parse(codeFence[1].trim());
+  }
+
+  const start = trimmed.indexOf('{');
+  const end = trimmed.lastIndexOf('}');
+  if (start >= 0 && end > start) {
+    return JSON.parse(trimmed.slice(start, end + 1));
+  }
+
+  throw new Error('Unable to parse JSON object from agent output');
+}
+
+async function runPromptForMonitoring(args: Args, policy: LoadedPolicy, prompt: string): Promise<PromptExecutionResult> {
+  const appServerArgs = buildAppServerArgv(args);
+  const client = new AppServerClient({
+    argv: appServerArgs.argv,
+    stderr: args.verbose ? 'inherit' : 'pipe'
+  });
+
+  const items = new Map<string, any>();
+  const agentMessages = new Map<string, string>();
+  let lastAgentMessageId: string | null = null;
+  let threadId = '';
+  const andonRef = { path: '', count: 0 };
+
+  const logAndon = (record: any) => {
+    const path = appendAndon(args.cwd, record);
+    andonRef.path = path;
+    andonRef.count++;
+  };
+
+  const turnDone = new Promise<PromptExecutionResult>((resolveTurn, rejectTurn) => {
+    client.onMessage = (msg) => {
+      if (msg.method === 'error') {
+        const { error } = msg.params as any;
+        rejectTurn(new Error(error?.message ?? '(unknown app-server error)'));
+        return;
+      }
+
+      if (msg.id !== undefined && msg.method === 'item/commandExecution/requestApproval') {
+        const { itemId, threadId: msgThreadId, turnId, reason } = msg.params as any;
+        const decision = policy.nonInteractiveDecision;
+        logAndon({
+          id: `andon_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+          createdAt: new Date().toISOString(),
+          policyId: policy.id,
+          kind: 'commandExecution',
+          phase: 'approval',
+          threadId: msgThreadId,
+          turnId,
+          itemId,
+          summary: 'monitoring prompt requested command approval',
+          details: { reason },
+          decision
+        });
+        client.respond(msg.id as any, { decision });
+        return;
+      }
+
+      if (msg.id !== undefined && msg.method === 'item/fileChange/requestApproval') {
+        const { itemId, threadId: msgThreadId, turnId, reason } = msg.params as any;
+        const decision = policy.nonInteractiveDecision;
+        logAndon({
+          id: `andon_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+          createdAt: new Date().toISOString(),
+          policyId: policy.id,
+          kind: 'fileChange',
+          phase: 'approval',
+          threadId: msgThreadId,
+          turnId,
+          itemId,
+          summary: 'monitoring prompt requested file-change approval',
+          details: { reason },
+          decision
+        });
+        client.respond(msg.id as any, { decision });
+        return;
+      }
+
+      if (msg.method === 'item/started') {
+        const { item } = msg.params as any;
+        items.set(item.id, item);
+        if (item.type === 'agentMessage') {
+          lastAgentMessageId = item.id;
+          agentMessages.set(item.id, item.text ?? '');
+        }
+        return;
+      }
+
+      if (msg.method === 'item/agentMessage/delta') {
+        const { itemId, delta } = msg.params as any;
+        agentMessages.set(itemId, (agentMessages.get(itemId) ?? '') + delta);
+        return;
+      }
+
+      if (msg.method === 'item/completed') {
+        const { item } = msg.params as any;
+        items.set(item.id, item);
+        if (item.type === 'agentMessage') {
+          lastAgentMessageId = item.id;
+          agentMessages.set(item.id, item.text ?? agentMessages.get(item.id) ?? '');
+        }
+        return;
+      }
+
+      if (msg.method === 'turn/completed') {
+        const { turn } = msg.params as any;
+        const finalMsg =
+          (lastAgentMessageId ? agentMessages.get(lastAgentMessageId) : null) ?? [...agentMessages.values()].join('');
+        resolveTurn({
+          text: (finalMsg ?? '').trim(),
+          status: turn.status as string,
+          turnId: turn.id as string,
+          threadId,
+          andonPath: andonRef.path,
+          andonCount: andonRef.count,
+          turnErrorMessage: turn.error?.message
+        });
+      }
+    };
+  });
+
+  try {
+    await client.request(
+      'initialize',
+      {
+        clientInfo: { name: 'cs_judgment_layer', title: 'CREATE SOMETHING Judgment Layer', version: '0.1.0' },
+        capabilities: { experimentalApi: true }
+      },
+      { timeoutMs: 15_000 }
+    );
+    client.notify('initialized');
+
+    const threadResult = await client.request(
+      'thread/start',
+      {
+        cwd: args.cwd,
+        model: policy.model ?? null,
+        approvalPolicy: policy.approvalPolicy,
+        developerInstructions: policy.developerInstructions ?? null
+      },
+      { timeoutMs: 30_000 }
+    );
+    threadId = threadResult.thread.id as string;
+
+    const sandboxPolicy =
+      policy.sandboxPolicy.type === 'workspaceWrite'
+        ? {
+            ...policy.sandboxPolicy,
+            writableRoots: (policy.sandboxPolicy.writableRoots ?? ['$CWD']).map((p) => (p === '$CWD' ? args.cwd : p))
+          }
+        : policy.sandboxPolicy;
+
+    await client.request(
+      'turn/start',
+      {
+        threadId,
+        input: [{ type: 'text', text: prompt }],
+        approvalPolicy: policy.approvalPolicy,
+        sandboxPolicy,
+        model: policy.model ?? null,
+        effort: policy.effort ?? null,
+        summary: policy.summary ?? null
+      },
+      { timeoutMs: 30_000 }
+    );
+
+    return await turnDone;
+  } finally {
+    client.close();
+  }
+}
+
+function readAlertState(cwd: string): Record<string, string> {
+  const path = join(cwd, '.judgment', 'alerts-state.json');
+  if (!existsSync(path)) return {};
+  try {
+    const parsed = JSON.parse(readFileSync(path, 'utf-8'));
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    return parsed as Record<string, string>;
+  } catch {
+    return {};
+  }
+}
+
+function writeAlertState(cwd: string, state: Record<string, string>): void {
+  const dir = join(cwd, '.judgment');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'alerts-state.json'), `${JSON.stringify(state, null, 2)}\n`, 'utf-8');
+}
+
+function inCooldown(lastIso: string | undefined, cooldownMinutes: number, nowMs: number): boolean {
+  if (!lastIso) return false;
+  const lastMs = Date.parse(lastIso);
+  if (Number.isNaN(lastMs)) return false;
+  return nowMs - lastMs < cooldownMinutes * 60_000;
+}
+
+function buildToolFetchPrompt(check: JudgmentCheck, parsedArgs: unknown): string {
+  return [
+    'You are running a deterministic monitoring check.',
+    'Use MCP exactly once to fetch data for this check.',
+    `Server: ${check.server}`,
+    `Tool: ${check.tool}`,
+    `Arguments JSON: ${JSON.stringify(parsedArgs)}`,
+    '',
+    'Return ONLY JSON. No markdown. No explanation.',
+    'Required shape:',
+    '{"ok":true,"toolResult":<json>}',
+    'If tool execution fails, return:',
+    '{"ok":false,"error":"<short message>"}'
+  ].join('\n');
+}
+
+async function maybeGenerateSuggestion(
+  args: Args,
+  policy: LoadedPolicy,
+  check: JudgmentCheck,
+  observed: unknown
+): Promise<string | null> {
+  if (!check.suggestionPrompt) return null;
+
+  const prompt = [
+    'Create concise, practical suggestions.',
+    `Check id: ${check.id}`,
+    `Description: ${check.description ?? ''}`,
+    `Observed value: ${JSON.stringify(observed)}`,
+    `Target: ${JSON.stringify(check.target)} (operator: ${check.operator})`,
+    '',
+    `Instruction: ${check.suggestionPrompt}`,
+    '',
+    'Return 3 bullets, each under 140 chars.'
+  ].join('\n');
+
+  const result = await runPromptForMonitoring(args, policy, prompt);
+  return result.text || null;
+}
+
+async function runChecksOnce(args: Args, policy: LoadedPolicy): Promise<void> {
+  const allChecks = loadChecks(args.cwd).checks.filter((c) => c.enabled);
+  const checks = args.checkId ? allChecks.filter((c) => c.id === args.checkId) : allChecks;
+  if (!checks.length) {
+    if (args.checkId) console.log(`No enabled check found with id "${args.checkId}"`);
+    else console.log('No enabled checks found in .judgment/checks.toml');
+    return;
+  }
+
+  const state = readAlertState(args.cwd);
+  const nowIso = new Date().toISOString();
+  const nowMs = Date.now();
+  let firedCount = 0;
+
+  for (const check of checks) {
+    let parsedArgs: unknown;
+    try {
+      parsedArgs = JSON.parse(check.argsJson);
+    } catch (err: any) {
+      console.log(`[${check.id}] error: invalid args_json (${err?.message ?? String(err)})`);
+      continue;
+    }
+
+    let fetchResult: PromptExecutionResult;
+    try {
+      fetchResult = await runPromptForMonitoring(args, policy, buildToolFetchPrompt(check, parsedArgs));
+    } catch (err: any) {
+      console.log(`[${check.id}] error: MCP fetch failed (${err?.message ?? String(err)})`);
+      continue;
+    }
+
+    let payload: any;
+    try {
+      payload = parseJsonObjectFromText(fetchResult.text);
+    } catch (err: any) {
+      console.log(`[${check.id}] error: could not parse monitor JSON (${err?.message ?? String(err)})`);
+      continue;
+    }
+
+    if (!payload?.ok) {
+      console.log(`[${check.id}] error: ${payload?.error ?? 'tool call failed'}`);
+      continue;
+    }
+
+    const evaluation = evaluateCheck(check, payload.toolResult);
+    if (!evaluation.extracted) {
+      console.log(`[${check.id}] error: ${evaluation.reason}`);
+      continue;
+    }
+
+    if (!evaluation.triggered) {
+      console.log(`[${check.id}] OK ${evaluation.reason}`);
+      continue;
+    }
+
+    const last = state[check.id];
+    if (inCooldown(last, check.cooldownMinutes, nowMs)) {
+      console.log(`[${check.id}] cooldown: alert suppressed (last=${last})`);
+      continue;
+    }
+
+    firedCount++;
+    state[check.id] = nowIso;
+    const suggestion = await maybeGenerateSuggestion(args, policy, check, evaluation.observed);
+    appendAndon(args.cwd, {
+      id: `andon_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+      createdAt: nowIso,
+      policyId: policy.id,
+      kind: 'alert',
+      phase: 'completed',
+      threadId: fetchResult.threadId,
+      turnId: fetchResult.turnId,
+      itemId: check.id,
+      summary: `check triggered: ${check.id}`,
+      details: {
+        checkId: check.id,
+        severity: check.severity,
+        notifyChannel: check.notifyChannel,
+        observed: evaluation.observed,
+        operator: check.operator,
+        target: check.target,
+        reason: evaluation.reason,
+        source: { server: check.server, tool: check.tool, valuePath: check.valuePath }
+      },
+      status: 'triggered'
+    });
+
+    console.log(`[${check.id}] ALERT severity=${check.severity} observed=${String(evaluation.observed)} target=${String(check.target)}`);
+    console.log(`source=${check.server}/${check.tool} value_path=${check.valuePath} notify=${check.notifyChannel}`);
+    if (suggestion) console.log(suggestion);
+  }
+
+  writeAlertState(args.cwd, state);
+  console.log(`Checks complete: ${checks.length} ran, ${firedCount} alert(s) fired`);
+}
+
+async function runChecks(args: Args): Promise<void> {
+  const policy = resolvePolicy(args.cwd, args.policyId);
+  for (const line of formatPolicySummary(policy, args.cwd)) console.log(line);
+  console.log(`MCP: ${args.mcpMode}`);
+  await runChecksOnce(args, policy);
+}
+
+async function watchChecks(args: Args): Promise<void> {
+  const policy = resolvePolicy(args.cwd, args.policyId);
+  for (const line of formatPolicySummary(policy, args.cwd)) console.log(line);
+  console.log(`MCP: ${args.mcpMode}`);
+  console.log(`Watch interval: ${args.intervalSeconds}s`);
+
+  while (true) {
+    console.log(`\n[${new Date().toISOString()}] Running checks...`);
+    await runChecksOnce(args, policy);
+    await new Promise((resolve) => setTimeout(resolve, args.intervalSeconds * 1000));
+  }
+}
+
+async function runWithPolicy(args: Args) {
+  const policy = resolvePolicy(args.cwd, args.policyId);
   if (!args.prompt) {
     console.error('Missing --prompt "<text>"');
     process.exit(1);
@@ -640,6 +1053,9 @@ async function runWithPolicy(args: Args) {
 
 async function main() {
   const args = parseArgs(process.argv);
+  if ((args.command === 'check' || args.command === 'watch') && !args.mcpExplicit) {
+    args.mcpMode = 'inherit';
+  }
 
   if (args.command === 'help') return void printHelp();
   if (args.command === 'init') return void scaffoldInit(args.cwd);
@@ -649,6 +1065,8 @@ async function main() {
     return;
   }
   if (args.command === 'andon') return void printAndon(args.cwd, args.andonTail ?? 20);
+  if (args.command === 'check') return void (await runChecks(args));
+  if (args.command === 'watch') return void (await watchChecks(args));
   if (args.command === 'run') return void (await runWithPolicy(args));
 
   console.error(`Unknown command: ${args.command}`);
