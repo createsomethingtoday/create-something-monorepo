@@ -28,6 +28,7 @@
 	.card {
 		border: 1px solid var(--color-border-default);
 		transition: border-color var(--duration-micro) var(--ease-standard);
+		height: 100%;
 	}
 
 	.card:hover {
@@ -41,6 +42,10 @@
 
 	.title {
 		font-size: var(--text-h3);
+		line-height: var(--leading-tight);
+		/* Keep card heights consistent even when a name wraps (e.g., "Ludwig Mies van der Rohe"). */
+		min-height: calc(2em * var(--leading-tight));
+		text-wrap: balance;
 	}
 
 	.card:hover .title {
