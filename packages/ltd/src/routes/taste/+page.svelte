@@ -6,11 +6,19 @@
 	import { SEO } from '@create-something/canon';
 
 	let { data }: { data: PageData } = $props();
+	const INITIAL_EXAMPLES_VISIBLE = 32;
+	const LOAD_MORE_STEP = 24;
 
 	// Lightbox state
 	let selectedImageIndex = $state(-1);
 	let isLightboxOpen = $derived(selectedImageIndex >= 0);
 	let failedImageIds = $state<Set<string>>(new Set());
+	let totalExamples = $derived(data.examples?.length ?? 0);
+	let visibleExamplesCount = $state(INITIAL_EXAMPLES_VISIBLE);
+	let visibleExamples = $derived(
+		(data.examples ?? []).slice(0, Math.min(visibleExamplesCount, totalExamples))
+	);
+	let hasMoreExamples = $derived(totalExamples > visibleExamplesCount);
 
 	function openLightbox(index: number) {
 		selectedImageIndex = index;
@@ -28,6 +36,13 @@
 		const next = new Set(failedImageIds);
 		next.add(exampleId);
 		failedImageIds = next;
+	}
+
+	function loadMoreExamples() {
+		visibleExamplesCount = Math.min(
+			visibleExamplesCount + LOAD_MORE_STEP,
+			totalExamples
+		);
 	}
 
 	// Format date for display
@@ -130,10 +145,12 @@
 	<section class="gallery-section">
 		<div class="max-w-7xl mx-auto px-6">
 			<h2 class="section-title">Visual References</h2>
-			<p class="section-subtitle">{data.examples.length} curated images from Are.na</p>
+			<p class="section-subtitle">
+				Showing {visibleExamples.length} of {data.examples.length} curated images from Are.na
+			</p>
 
 			<div class="masonry-grid">
-				{#each data.examples as example, index}
+				{#each visibleExamples as example, index}
 					<button
 						class="example-card"
 						onclick={() => {
@@ -149,7 +166,8 @@
 								src={toTasteImageProxyUrl(example.image_url) ?? example.image_url}
 								alt={example.title || 'Visual reference'}
 								class="example-img"
-								loading="lazy"
+								loading={index < 8 ? 'eager' : 'lazy'}
+								fetchpriority={index < 4 ? 'high' : 'low'}
 								decoding="async"
 								referrerpolicy="no-referrer"
 								onerror={() => markImageLoadFailure(example.id)}
@@ -172,6 +190,15 @@
 					</button>
 				{/each}
 			</div>
+
+			{#if hasMoreExamples}
+				<div class="load-more-row">
+					<button class="load-more-button" onclick={loadMoreExamples}>
+						Load {Math.min(LOAD_MORE_STEP, data.examples.length - visibleExamples.length)} more
+					</button>
+					<p class="load-more-meta">{data.examples.length - visibleExamples.length} remaining</p>
+				</div>
+			{/if}
 		</div>
 	</section>
 {/if}
@@ -504,6 +531,39 @@
 		font-size: var(--text-caption);
 		color: var(--color-fg-tertiary);
 		margin-top: 0.25rem;
+	}
+
+	.load-more-row {
+		margin-top: var(--space-md);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--space-xs);
+	}
+
+	.load-more-button {
+		padding: var(--space-xs) var(--space-sm);
+		border: 1px solid var(--color-border-emphasis);
+		background: var(--color-bg-surface);
+		color: var(--color-fg-primary);
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+		cursor: pointer;
+		transition: background var(--duration-micro) var(--ease-standard);
+	}
+
+	.load-more-button:hover {
+		background: var(--color-hover);
+	}
+
+	.load-more-button:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
+	}
+
+	.load-more-meta {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
 	}
 
 	/* Resources */
