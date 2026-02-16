@@ -6,6 +6,9 @@ import {
   connectMcpServers,
 } from '@openai/agents';
 
+type ServerKey = 'telemetry' | 'gmail' | 'notion';
+type ScenarioKey = 'dedup' | 'inbox-triage' | 'fleet-watchdog';
+
 type ContractBundle = {
   agent_contract: string;
   mcp_contract: string;
@@ -51,18 +54,37 @@ type FailedRequiredToolCall = {
   output_excerpt?: string;
 };
 
-export type FleetWatchdogRunInput = {
+type ScenarioPreset = {
+  defaults: {
+    query: string;
+    servers: ServerKey[];
+    model: string;
+    maxTurns: number;
+    agentName: string;
+    agentInstructions: string;
+    blockedToolNames: string[];
+    requiredToolNames: string[];
+  };
+  contractBundle: ContractBundle;
+};
+
+type ServerEndpointConfig = Record<ServerKey, string>;
+
+export type HalfDozenScenarioRunInput = {
+  scenario: ScenarioKey;
   openaiApiKey: string;
   telemetryMcpUrl?: string;
+  gmailMcpUrl?: string;
+  notionMcpUrl?: string;
   query?: string;
   model?: string;
   maxTurns?: number;
   timeoutMs?: number;
 };
 
-export type FleetWatchdogRunResult = {
+export type HalfDozenScenarioRunResult = {
   success: true;
-  scenario: 'fleet-watchdog';
+  scenario: ScenarioKey;
   contract_bundle: ContractBundle;
   blocked_tools: string[];
   required_tools: string[];
@@ -81,36 +103,123 @@ const DEFAULT_MODEL = 'gpt-4.1-mini';
 const DEFAULT_MAX_TURNS = 10;
 const DEFAULT_TIMEOUT_MS = 20_000;
 
-const TELEMETRY_SERVER_NAME = 'telemetry';
-const DEFAULT_TELEMETRY_MCP_URL = 'https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp';
-
-const AGENT_NAME = 'Half Dozen Fleet Watchdog Agent';
-const AGENT_INSTRUCTIONS =
-  'You are a reliability watchdog for the Half Dozen MCP fleet. Before final output, call query_health, query_errors, query_activity, and query_trends. Tie every incident claim to tool evidence with concrete values, and provide concise remediation guidance without performing writes.';
-
-const DEFAULT_QUERY =
-  'Run a 24-hour fleet watchdog review using query_health, query_errors, query_activity, and query_trends before finalizing. Report degraded or unhealthy services, top recurring error clusters with counts, period-over-period regressions, and first remediation step per issue. If any required tool fails or returns no data, state that explicitly.';
-
-const BLOCKED_TOOL_NAMES = ['cleanup', 'notion_bulk_archive', 'delete_automation', 'search', 'fetch', 'submit_feedback'];
-const REQUIRED_TOOL_NAMES = ['query_health', 'query_errors', 'query_activity', 'query_trends'];
-
-const CONTRACT_BUNDLE: ContractBundle = {
-  agent_contract: 'templates/agent_contract_halfdozen_fleet_watchdog.yaml',
-  mcp_contract: 'templates/mcp_contract_halfdozen_fleet_watchdog.yaml',
-  outcome_contract: 'templates/outcome_contract_halfdozen_fleet_watchdog.md',
-  golden_tasks: 'templates/golden_tasks_halfdozen_fleet_watchdog.yaml',
+const SERVER_ENDPOINTS: ServerEndpointConfig = {
+  telemetry: 'https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp',
+  gmail: 'https://gmail.mcp.workway.co/mcp',
+  notion: 'https://createsomething-notion.mcp.workway.co/mcp',
 };
 
-function createMcpServers(timeoutMs: number, telemetryMcpUrl: string): MCPServer[] {
-  return [
-    new MCPServerStreamableHttp({
-      name: TELEMETRY_SERVER_NAME,
-      url: telemetryMcpUrl,
+const MULTI_SERVER_GENERIC_BLOCKLIST = ['search', 'fetch', 'submit_feedback'];
+
+const SCENARIO_PRESETS: Record<ScenarioKey, ScenarioPreset> = {
+  dedup: {
+    defaults: {
+      query:
+        'Find likely duplicate contacts in the target Notion source, propose canonical records with confidence scores, and provide a merge plan. Do not execute destructive archive actions without explicit human approval.',
+      servers: ['notion', 'gmail'],
+      model: DEFAULT_MODEL,
+      maxTurns: DEFAULT_MAX_TURNS,
+      agentName: 'Half Dozen Dedup Agent',
+      agentInstructions:
+        'You are a deduplication and canonicalization agent for Half Dozen. Use schema-first workflows, include evidence for every merge recommendation, and avoid destructive writes unless explicitly approved.',
+      blockedToolNames: [
+        'notion_create_database',
+        'notion_update_database',
+        'delete_automation',
+        'search',
+        'fetch',
+        'submit_feedback',
+      ],
+      requiredToolNames: [],
+    },
+    contractBundle: {
+      agent_contract: 'templates/agent_contract_halfdozen_dedup.yaml',
+      mcp_contract: 'templates/mcp_contract_halfdozen_dedup.yaml',
+      outcome_contract: 'templates/outcome_contract_halfdozen_dedup.md',
+      golden_tasks: 'templates/golden_tasks_halfdozen_dedup.yaml',
+    },
+  },
+  'inbox-triage': {
+    defaults: {
+      query:
+        'Triage unread client-relevant Gmail threads from the last 24 hours, summarize which threads should sync to Notion interactions, and identify any threads that require escalation instead of autonomous writes.',
+      servers: ['gmail'],
+      model: DEFAULT_MODEL,
+      maxTurns: DEFAULT_MAX_TURNS,
+      agentName: 'Half Dozen Inbox Triage Agent',
+      agentInstructions:
+        'You are an inbox triage agent for Half Dozen. Prioritize policy-compliant thread handling, contact-linking safety, and concise evidence-based recommendations for escalation.',
+      blockedToolNames: [
+        'delete_automation',
+        'notion_bulk_archive',
+        'notion_update_database',
+        'search',
+        'fetch',
+        'submit_feedback',
+      ],
+      requiredToolNames: [],
+    },
+    contractBundle: {
+      agent_contract: 'templates/agent_contract_halfdozen_inbox_triage.yaml',
+      mcp_contract: 'templates/mcp_contract_halfdozen_inbox_triage.yaml',
+      outcome_contract: 'templates/outcome_contract_halfdozen_inbox_triage.md',
+      golden_tasks: 'templates/golden_tasks_halfdozen_inbox_triage.yaml',
+    },
+  },
+  'fleet-watchdog': {
+    defaults: {
+      query:
+        'Run a 24-hour fleet watchdog review using query_health, query_errors, query_activity, and query_trends before finalizing. Report degraded or unhealthy services, top recurring error clusters with counts, period-over-period regressions, and first remediation step per issue. If any required tool fails or returns no data, state that explicitly.',
+      servers: ['telemetry'],
+      model: DEFAULT_MODEL,
+      maxTurns: DEFAULT_MAX_TURNS,
+      agentName: 'Half Dozen Fleet Watchdog Agent',
+      agentInstructions:
+        'You are a reliability watchdog for the Half Dozen MCP fleet. Before final output, call query_health, query_errors, query_activity, and query_trends. Tie every incident claim to tool evidence with concrete values, and provide concise remediation guidance without performing writes.',
+      blockedToolNames: ['cleanup', 'notion_bulk_archive', 'delete_automation', 'search', 'fetch', 'submit_feedback'],
+      requiredToolNames: ['query_health', 'query_errors', 'query_activity', 'query_trends'],
+    },
+    contractBundle: {
+      agent_contract: 'templates/agent_contract_halfdozen_fleet_watchdog.yaml',
+      mcp_contract: 'templates/mcp_contract_halfdozen_fleet_watchdog.yaml',
+      outcome_contract: 'templates/outcome_contract_halfdozen_fleet_watchdog.md',
+      golden_tasks: 'templates/golden_tasks_halfdozen_fleet_watchdog.yaml',
+    },
+  },
+};
+
+function resolveServerEndpoints(input: HalfDozenScenarioRunInput): ServerEndpointConfig {
+  return {
+    telemetry: input.telemetryMcpUrl ?? SERVER_ENDPOINTS.telemetry,
+    gmail: input.gmailMcpUrl ?? SERVER_ENDPOINTS.gmail,
+    notion: input.notionMcpUrl ?? SERVER_ENDPOINTS.notion,
+  };
+}
+
+function createMcpServers(
+  serverKeys: ServerKey[],
+  timeoutMs: number,
+  endpointConfig: ServerEndpointConfig,
+  blockedToolNames: string[],
+): MCPServer[] {
+  const blocked = new Set<string>(blockedToolNames);
+  if (serverKeys.length > 1) {
+    for (const name of MULTI_SERVER_GENERIC_BLOCKLIST) {
+      blocked.add(name);
+    }
+  }
+
+  const blockedList = [...blocked];
+  const toolFilter = blockedList.length > 0 ? { blockedToolNames: blockedList } : undefined;
+  return serverKeys.map((serverKey) => {
+    return new MCPServerStreamableHttp({
+      name: serverKey,
+      url: endpointConfig[serverKey],
       cacheToolsList: true,
       timeout: timeoutMs,
-      toolFilter: { blockedToolNames: BLOCKED_TOOL_NAMES },
-    }),
-  ];
+      toolFilter,
+    });
+  });
 }
 
 function summarizeToolCalls(items: unknown[]): ToolCallSummary[] {
@@ -284,17 +393,24 @@ function summarizeFailedRequiredCalls(
   return failures;
 }
 
-export async function runHalfDozenFleetWatchdog(input: FleetWatchdogRunInput): Promise<FleetWatchdogRunResult> {
-  const telemetryMcpUrl = input.telemetryMcpUrl ?? DEFAULT_TELEMETRY_MCP_URL;
-  const model = input.model ?? DEFAULT_MODEL;
-  const maxTurns = input.maxTurns ?? DEFAULT_MAX_TURNS;
-  const query = input.query ?? DEFAULT_QUERY;
+export async function runHalfDozenScenario(input: HalfDozenScenarioRunInput): Promise<HalfDozenScenarioRunResult> {
+  const scenarioPreset = SCENARIO_PRESETS[input.scenario];
+  const endpointConfig = resolveServerEndpoints(input);
+
+  const model = input.model ?? scenarioPreset.defaults.model;
+  const maxTurns = input.maxTurns ?? scenarioPreset.defaults.maxTurns;
+  const query = input.query ?? scenarioPreset.defaults.query;
   const timeoutMs = input.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
   // @openai/agents reads OPENAI_API_KEY; set it explicitly in Worker runtime.
   process.env.OPENAI_API_KEY = input.openaiApiKey;
 
-  const rawServers = createMcpServers(timeoutMs, telemetryMcpUrl);
+  const rawServers = createMcpServers(
+    scenarioPreset.defaults.servers,
+    timeoutMs,
+    endpointConfig,
+    scenarioPreset.defaults.blockedToolNames,
+  );
   const mcpServers = await connectMcpServers(rawServers, {
     strict: false,
     dropFailed: true,
@@ -311,8 +427,8 @@ export async function runHalfDozenFleetWatchdog(input: FleetWatchdogRunInput): P
     }
 
     const agent = new Agent({
-      name: AGENT_NAME,
-      instructions: AGENT_INSTRUCTIONS,
+      name: scenarioPreset.defaults.agentName,
+      instructions: scenarioPreset.defaults.agentInstructions,
       model,
       mcpServers: mcpServers.active,
     });
@@ -328,16 +444,27 @@ export async function runHalfDozenFleetWatchdog(input: FleetWatchdogRunInput): P
 
     const toolCalls = summarizeToolCalls(result.newItems as unknown[]);
     const toolCallOutputs = summarizeToolCallOutputs(result.newItems as unknown[]);
-    const requiredToolCoverage = summarizeRequiredToolCoverage(REQUIRED_TOOL_NAMES, toolCalls, toolCallOutputs);
-    const requiredToolCoverageLegacy = summarizeRequiredToolCoverageLegacy(REQUIRED_TOOL_NAMES, toolCalls);
-    const failedRequiredCalls = summarizeFailedRequiredCalls(REQUIRED_TOOL_NAMES, toolCalls, toolCallOutputs);
+    const requiredToolCoverage = summarizeRequiredToolCoverage(
+      scenarioPreset.defaults.requiredToolNames,
+      toolCalls,
+      toolCallOutputs,
+    );
+    const requiredToolCoverageLegacy = summarizeRequiredToolCoverageLegacy(
+      scenarioPreset.defaults.requiredToolNames,
+      toolCalls,
+    );
+    const failedRequiredCalls = summarizeFailedRequiredCalls(
+      scenarioPreset.defaults.requiredToolNames,
+      toolCalls,
+      toolCallOutputs,
+    );
 
     return {
       success: true,
-      scenario: 'fleet-watchdog',
-      contract_bundle: CONTRACT_BUNDLE,
-      blocked_tools: BLOCKED_TOOL_NAMES,
-      required_tools: REQUIRED_TOOL_NAMES,
+      scenario: input.scenario,
+      contract_bundle: scenarioPreset.contractBundle,
+      blocked_tools: scenarioPreset.defaults.blockedToolNames,
+      required_tools: scenarioPreset.defaults.requiredToolNames,
       required_tool_coverage: requiredToolCoverage,
       required_tool_coverage_called_only: requiredToolCoverageLegacy,
       failed_required_tool_calls: failedRequiredCalls,
@@ -351,4 +478,22 @@ export async function runHalfDozenFleetWatchdog(input: FleetWatchdogRunInput): P
   } finally {
     await mcpServers.close();
   }
+}
+
+export type FleetWatchdogRunInput = Omit<HalfDozenScenarioRunInput, 'scenario'>;
+export type FleetWatchdogRunResult = HalfDozenScenarioRunResult & { scenario: 'fleet-watchdog' };
+export async function runHalfDozenFleetWatchdog(input: FleetWatchdogRunInput): Promise<FleetWatchdogRunResult> {
+  return runHalfDozenScenario({ ...input, scenario: 'fleet-watchdog' }) as Promise<FleetWatchdogRunResult>;
+}
+
+export type InboxTriageRunInput = Omit<HalfDozenScenarioRunInput, 'scenario'>;
+export type InboxTriageRunResult = HalfDozenScenarioRunResult & { scenario: 'inbox-triage' };
+export async function runHalfDozenInboxTriage(input: InboxTriageRunInput): Promise<InboxTriageRunResult> {
+  return runHalfDozenScenario({ ...input, scenario: 'inbox-triage' }) as Promise<InboxTriageRunResult>;
+}
+
+export type DedupRunInput = Omit<HalfDozenScenarioRunInput, 'scenario'>;
+export type DedupRunResult = HalfDozenScenarioRunResult & { scenario: 'dedup' };
+export async function runHalfDozenDedup(input: DedupRunInput): Promise<DedupRunResult> {
+  return runHalfDozenScenario({ ...input, scenario: 'dedup' }) as Promise<DedupRunResult>;
 }

@@ -25,9 +25,11 @@ database_name = "cs-telemetry"
 database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
 
 [vars]
-# Optional override for the fleet watchdog telemetry MCP endpoint.
+# Optional MCP endpoint overrides for Half Dozen scenario routes.
 # HALFDOZEN_TELEMETRY_MCP_URL = "https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp"
+# HALFDOZEN_GMAIL_MCP_URL = "https://gmail.mcp.workway.co/mcp"
+# HALFDOZEN_NOTION_MCP_URL = "https://createsomething-notion.mcp.workway.co/mcp"
 
-# Required secrets for protected Half Dozen agent route:
+# Required secrets for protected Half Dozen agent routes:
 # wrangler secret put OPENAI_API_KEY
 # wrangler secret put HALFDOZEN_AGENT_ROUTE_TOKEN

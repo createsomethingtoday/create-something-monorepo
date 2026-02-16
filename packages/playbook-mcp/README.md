@@ -118,9 +118,11 @@ Add to `.cursor/mcp.json`:
 }
 ```
 
-### Protected Half Dozen agent route
+### Protected Half Dozen agent routes
 
-`POST /clients/halfdozen/agents/fleet-watchdog/run`
+- `POST /clients/halfdozen/agents/fleet-watchdog/run`
+- `POST /clients/halfdozen/agents/inbox-triage/run`
+- `POST /clients/halfdozen/agents/dedup/run`
 
 Auth required:
 - `Authorization: Bearer <HALFDOZEN_AGENT_ROUTE_TOKEN>` or
@@ -140,13 +142,13 @@ Request body (optional JSON):
 Example:
 
 ```bash
-curl -X POST "https://playbook.mcp.createsomething.ltd/clients/halfdozen/agents/fleet-watchdog/run" \
+curl -X POST "https://playbook.mcp.createsomething.ltd/clients/halfdozen/agents/inbox-triage/run" \
   -H "Authorization: Bearer $HALFDOZEN_AGENT_ROUTE_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
 
-The response includes required tool coverage, failed required tool calls, connected servers, and the agent's final watchdog report.
+All responses include contract bundle metadata, blocked/required tools, required tool coverage (when applicable), called tools, and final output.
 
 ## Local Development (stdio)
 
@@ -189,7 +191,7 @@ Two transports, one codebase:
 |-----------|-----|----------|
 | **Streamable HTTP** | `.../mcp` | Claude Code, Codex, remote clients |
 | **SSE** | `.../sse` | Legacy clients (deprecated in MCP spec 2025-03-26) |
-| **Protected HTTP Route** | `.../clients/halfdozen/agents/fleet-watchdog/run` | Half Dozen fleet watchdog execution (server-side trigger) |
+| **Protected HTTP Routes** | `.../clients/halfdozen/agents/{fleet-watchdog\|inbox-triage\|dedup}/run` | Half Dozen scenario execution (server-side trigger) |
 | **stdio** | `dist/index.js` | Local development |
 
 Zero external data dependencies. Playbook content and MCP catalog are embedded in source. The Worker runs on Cloudflare's edge network. Pure workflow knowledge served through protocol.

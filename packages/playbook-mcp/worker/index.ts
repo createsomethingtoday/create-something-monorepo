@@ -20,7 +20,11 @@ import { registerTools } from '../src/tools.js';
 import { registerPrompts } from '../src/prompts.js';
 import { HOST_PLAYBOOKS } from '../src/playbooks.js';
 import { MCP_CATALOG } from '../src/catalog.js';
-import { runHalfDozenFleetWatchdog, type FleetWatchdogRunInput } from './halfdozenFleetWatchdog.js';
+import {
+  runHalfDozenDedup,
+  runHalfDozenFleetWatchdog,
+  runHalfDozenInboxTriage,
+} from './halfdozenFleetWatchdog.js';
 
 // =============================================================================
 // Types
@@ -32,6 +36,8 @@ interface Env {
   OPENAI_API_KEY?: string;
   HALFDOZEN_AGENT_ROUTE_TOKEN?: string;
   HALFDOZEN_TELEMETRY_MCP_URL?: string;
+  HALFDOZEN_GMAIL_MCP_URL?: string;
+  HALFDOZEN_NOTION_MCP_URL?: string;
 }
 
 const JSON_HEADERS = {
@@ -40,15 +46,34 @@ const JSON_HEADERS = {
 };
 
 const HALFDOZEN_FLEET_WATCHDOG_ROUTE = '/clients/halfdozen/agents/fleet-watchdog/run';
+const HALFDOZEN_INBOX_TRIAGE_ROUTE = '/clients/halfdozen/agents/inbox-triage/run';
+const HALFDOZEN_DEDUP_ROUTE = '/clients/halfdozen/agents/dedup/run';
 
-const FleetWatchdogRouteBodySchema = z.object({
+const HALFDOZEN_PROTECTED_ROUTES = [
+  HALFDOZEN_FLEET_WATCHDOG_ROUTE,
+  HALFDOZEN_INBOX_TRIAGE_ROUTE,
+  HALFDOZEN_DEDUP_ROUTE,
+] as const;
+
+const AgentRouteBodySchema = z.object({
   query: z.string().min(1).optional(),
   model: z.string().min(1).optional(),
   max_turns: z.number().int().min(1).max(30).optional(),
   timeout_ms: z.number().int().min(1_000).max(120_000).optional(),
 });
 
-type FleetWatchdogRouteBody = z.infer<typeof FleetWatchdogRouteBodySchema>;
+type AgentRouteBody = z.infer<typeof AgentRouteBodySchema>;
+
+type HalfDozenRouteRunInput = {
+  openaiApiKey: string;
+  telemetryMcpUrl?: string;
+  gmailMcpUrl?: string;
+  notionMcpUrl?: string;
+  query?: string;
+  model?: string;
+  maxTurns?: number;
+  timeoutMs?: number;
+};
 
 function jsonResponse(data: unknown, status = 200, extraHeaders: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(data, null, 2), {
@@ -95,7 +120,11 @@ function validateRouteToken(request: Request, expectedToken?: string): Response 
   return null;
 }
 
-async function parseFleetWatchdogBody(request: Request): Promise<FleetWatchdogRouteBody> {
+function isHalfDozenScenarioRoute(pathname: string): pathname is (typeof HALFDOZEN_PROTECTED_ROUTES)[number] {
+  return (HALFDOZEN_PROTECTED_ROUTES as readonly string[]).includes(pathname);
+}
+
+async function parseAgentRouteBody(request: Request): Promise<AgentRouteBody> {
   const contentType = request.headers.get('content-type')?.toLowerCase() ?? '';
   if (!contentType.includes('application/json')) {
     return {};
@@ -107,7 +136,7 @@ async function parseFleetWatchdogBody(request: Request): Promise<FleetWatchdogRo
   }
 
   const parsed = JSON.parse(raw) as unknown;
-  return FleetWatchdogRouteBodySchema.parse(parsed);
+  return AgentRouteBodySchema.parse(parsed);
 }
 
 // =============================================================================
@@ -117,7 +146,7 @@ async function parseFleetWatchdogBody(request: Request): Promise<FleetWatchdogRo
 export class PlaybookMCP extends McpAgent<Env> {
   server: any = new McpServer({
     name: 'playbook',
-    version: '1.2.0',
+    version: '1.3.0',
   });
 
   async init() {
@@ -140,7 +169,7 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
 
-    if (url.pathname === HALFDOZEN_FLEET_WATCHDOG_ROUTE) {
+    if (isHalfDozenScenarioRoute(url.pathname)) {
       if (request.method === 'OPTIONS') {
         return new Response(null, {
           headers: {
@@ -179,9 +208,9 @@ export default {
         );
       }
 
-      let body: FleetWatchdogRouteBody = {};
+      let body: AgentRouteBody = {};
       try {
-        body = await parseFleetWatchdogBody(request);
+        body = await parseAgentRouteBody(request);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         return jsonResponse(
@@ -194,9 +223,11 @@ export default {
         );
       }
 
-      const runInput: FleetWatchdogRunInput = {
+      const baseInput: HalfDozenRouteRunInput = {
         openaiApiKey: env.OPENAI_API_KEY,
         telemetryMcpUrl: env.HALFDOZEN_TELEMETRY_MCP_URL,
+        gmailMcpUrl: env.HALFDOZEN_GMAIL_MCP_URL,
+        notionMcpUrl: env.HALFDOZEN_NOTION_MCP_URL,
         query: body.query,
         model: body.model,
         maxTurns: body.max_turns,
@@ -204,14 +235,30 @@ export default {
       };
 
       try {
-        const result = await runHalfDozenFleetWatchdog(runInput);
+        if (url.pathname === HALFDOZEN_FLEET_WATCHDOG_ROUTE) {
+          const result = await runHalfDozenFleetWatchdog(baseInput);
+          return jsonResponse(result);
+        }
+
+        if (url.pathname === HALFDOZEN_INBOX_TRIAGE_ROUTE) {
+          const result = await runHalfDozenInboxTriage(baseInput);
+          return jsonResponse(result);
+        }
+
+        const result = await runHalfDozenDedup(baseInput);
         return jsonResponse(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
+        const scenario =
+          url.pathname === HALFDOZEN_FLEET_WATCHDOG_ROUTE
+            ? 'fleet-watchdog'
+            : url.pathname === HALFDOZEN_INBOX_TRIAGE_ROUTE
+              ? 'inbox-triage'
+              : 'dedup';
         return jsonResponse(
           {
             success: false,
-            scenario: 'fleet-watchdog',
+            scenario,
             error: message,
           },
           500,
@@ -227,7 +274,7 @@ export default {
     if (url.pathname === '/' || url.pathname === '/health') {
       return jsonResponse({
         name: 'playbook',
-        version: '1.2.0',
+        version: '1.3.0',
         description: 'Host workflow playbooks and installation guidance for MCP onboarding',
         hosts: HOST_PLAYBOOKS.map((p) => p.name),
         catalogEntries: MCP_CATALOG.length,
@@ -235,8 +282,10 @@ export default {
           mcp: '/mcp',
           sse: '/sse',
           halfdozen_fleet_watchdog: HALFDOZEN_FLEET_WATCHDOG_ROUTE,
+          halfdozen_inbox_triage: HALFDOZEN_INBOX_TRIAGE_ROUTE,
+          halfdozen_dedup: HALFDOZEN_DEDUP_ROUTE,
         },
-        protectedRoutes: [HALFDOZEN_FLEET_WATCHDOG_ROUTE],
+        protectedRoutes: HALFDOZEN_PROTECTED_ROUTES,
         tools: [
           'get_playbook',
           'compare_hosts',
