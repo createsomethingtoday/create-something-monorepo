@@ -155,6 +155,19 @@ Slack notifications (optional):
 - Set `HALFDOZEN_SLACK_WEBHOOK_URL` to receive every run summary.
 - Set `HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL` for alerts when a run is degraded or required-tool coverage fails. If omitted, escalations go to the primary webhook.
 
+Slack command controls (optional):
+- Route: `POST /clients/halfdozen/slack/commands`
+- Set `HALFDOZEN_SLACK_SIGNING_SECRET` (required) so Slack requests are signature-verified.
+- Set `HALFDOZEN_SLACK_TEAM_ID` (optional) to restrict command execution to a single Slack workspace.
+- Configure a slash command (for example `/halfdozen`) in your Slack app pointing to:
+  - `https://playbook.mcp.createsomething.ltd/clients/halfdozen/slack/commands`
+- Command usage:
+  - `/halfdozen watchdog`
+  - `/halfdozen inbox`
+  - `/halfdozen dedup`
+  - `/halfdozen watchdog investigate no-data servers only`
+- Responses are acknowledged immediately, then the agent posts the completed result back into Slack via `response_url`.
+
 ## Local Development (stdio)
 
 For local development, the stdio transport server is also available:
@@ -197,6 +210,7 @@ Two transports, one codebase:
 | **Streamable HTTP** | `.../mcp` | Claude Code, Codex, remote clients |
 | **SSE** | `.../sse` | Legacy clients (deprecated in MCP spec 2025-03-26) |
 | **Protected HTTP Routes** | `.../clients/halfdozen/agents/{fleet-watchdog\|inbox-triage\|dedup}/run` | Half Dozen scenario execution (server-side trigger) |
+| **Slack Command Route** | `.../clients/halfdozen/slack/commands` | Slack slash command and interactive scenario triggers |
 | **stdio** | `dist/index.js` | Local development |
 
 Zero external data dependencies. Playbook content and MCP catalog are embedded in source. The Worker runs on Cloudflare's edge network. Pure workflow knowledge served through protocol.

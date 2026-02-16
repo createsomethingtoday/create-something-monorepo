@@ -37,3 +37,8 @@ database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
 # Optional notification webhooks:
 # wrangler secret put HALFDOZEN_SLACK_WEBHOOK_URL
 # wrangler secret put HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL
+
+# Slack command ingress protection:
+# wrangler secret put HALFDOZEN_SLACK_SIGNING_SECRET
+# Optional workspace restriction:
+# wrangler secret put HALFDOZEN_SLACK_TEAM_ID

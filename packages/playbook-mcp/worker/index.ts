@@ -41,6 +41,8 @@ interface Env {
   HALFDOZEN_NOTION_MCP_URL?: string;
   HALFDOZEN_SLACK_WEBHOOK_URL?: string;
   HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL?: string;
+  HALFDOZEN_SLACK_SIGNING_SECRET?: string;
+  HALFDOZEN_SLACK_TEAM_ID?: string;
 }
 
 const JSON_HEADERS = {
@@ -51,6 +53,8 @@ const JSON_HEADERS = {
 const HALFDOZEN_FLEET_WATCHDOG_ROUTE = '/clients/halfdozen/agents/fleet-watchdog/run';
 const HALFDOZEN_INBOX_TRIAGE_ROUTE = '/clients/halfdozen/agents/inbox-triage/run';
 const HALFDOZEN_DEDUP_ROUTE = '/clients/halfdozen/agents/dedup/run';
+const HALFDOZEN_SLACK_COMMAND_ROUTE = '/clients/halfdozen/slack/commands';
+const SLACK_TIMESTAMP_TOLERANCE_SECONDS = 300;
 
 const HALFDOZEN_PROTECTED_ROUTES = [
   HALFDOZEN_FLEET_WATCHDOG_ROUTE,
@@ -85,6 +89,36 @@ type SlackPayload = {
   blocks?: Array<Record<string, unknown>>;
 };
 
+type SlackResponsePayload = SlackPayload & {
+  response_type?: 'ephemeral' | 'in_channel';
+  replace_original?: boolean;
+};
+
+type SlackCommandFields = {
+  command?: string;
+  text?: string;
+  response_url?: string;
+  team_id?: string;
+  channel_id?: string;
+  channel_name?: string;
+  user_id?: string;
+  user_name?: string;
+};
+
+type SlackAction = {
+  action_id?: string;
+  value?: string;
+};
+
+type SlackInteractionPayload = {
+  type?: string;
+  team?: { id?: string };
+  channel?: { id?: string; name?: string };
+  user?: { id?: string; username?: string; name?: string };
+  response_url?: string;
+  actions?: SlackAction[];
+};
+
 function jsonResponse(data: unknown, status = 200, extraHeaders: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(data, null, 2), {
     status,
@@ -92,10 +126,66 @@ function jsonResponse(data: unknown, status = 200, extraHeaders: Record<string, 
   });
 }
 
+function slackJsonResponse(data: SlackResponsePayload, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
 function scenarioLabel(scenario: ScenarioKey): string {
   if (scenario === 'fleet-watchdog') return 'Fleet Watchdog';
   if (scenario === 'inbox-triage') return 'Inbox Triage';
   return 'Dedup';
+}
+
+function scenarioRoute(scenario: ScenarioKey): string {
+  if (scenario === 'fleet-watchdog') return HALFDOZEN_FLEET_WATCHDOG_ROUTE;
+  if (scenario === 'inbox-triage') return HALFDOZEN_INBOX_TRIAGE_ROUTE;
+  return HALFDOZEN_DEDUP_ROUTE;
+}
+
+function parseScenarioKey(value: string): ScenarioKey | null {
+  const normalized = value.trim().toLowerCase();
+  if (['fleet-watchdog', 'watchdog', 'fleet'].includes(normalized)) return 'fleet-watchdog';
+  if (['inbox-triage', 'inbox', 'triage'].includes(normalized)) return 'inbox-triage';
+  if (['dedup', 'de-dup', 'duplicate', 'duplicates'].includes(normalized)) return 'dedup';
+  return null;
+}
+
+function parseSlackCommand(text: string): { scenario?: ScenarioKey; query?: string; showHelp: boolean } {
+  const trimmed = text.trim();
+  if (trimmed.length === 0) {
+    return { showHelp: true };
+  }
+
+  const parts = trimmed.split(/\s+/);
+  const first = parts[0]?.toLowerCase();
+  if (!first) return { showHelp: true };
+  if (first === 'help' || first === '--help' || first === '-h') {
+    return { showHelp: true };
+  }
+
+  const scenario = parseScenarioKey(first);
+  if (!scenario) {
+    return { showHelp: true };
+  }
+
+  const query = trimmed.slice(first.length).trim();
+  return {
+    scenario,
+    query: query.length > 0 ? query : undefined,
+    showHelp: false,
+  };
+}
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i += 1) {
+    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return mismatch === 0;
 }
 
 function truncateText(value: string, max = 240): string {
@@ -187,6 +277,151 @@ function buildScenarioErrorSlackPayload(
   };
 }
 
+function buildSlackQuickActionElements(): Array<Record<string, unknown>> {
+  return [
+    {
+      type: 'button',
+      action_id: 'run_fleet_watchdog',
+      text: { type: 'plain_text', text: 'Fleet Watchdog' },
+      value: 'fleet-watchdog',
+    },
+    {
+      type: 'button',
+      action_id: 'run_inbox_triage',
+      text: { type: 'plain_text', text: 'Inbox Triage' },
+      value: 'inbox-triage',
+    },
+    {
+      type: 'button',
+      action_id: 'run_dedup',
+      text: { type: 'plain_text', text: 'Dedup' },
+      value: 'dedup',
+    },
+  ];
+}
+
+function buildSlackHelpResponse(command: string): SlackResponsePayload {
+  return {
+    response_type: 'ephemeral',
+    text: 'Use the command with a scenario key: watchdog, inbox, or dedup.',
+    blocks: [
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text:
+            '*Half Dozen agent controls*\n' +
+            `Run one of the following:\n` +
+            `• \`${command} watchdog\`\n` +
+            `• \`${command} inbox\`\n` +
+            `• \`${command} dedup\`\n` +
+            `Optional custom query:\n` +
+            `• \`${command} watchdog investigate no-data servers only\``,
+        },
+      },
+      {
+        type: 'actions',
+        elements: buildSlackQuickActionElements(),
+      },
+    ],
+  };
+}
+
+function buildSlackAcceptedResponse(
+  scenario: ScenarioKey,
+  runId: string,
+  query?: string,
+): SlackResponsePayload {
+  const queryLine = query ? `\nQuery override: ${truncateText(query, 180)}` : '';
+  return {
+    response_type: 'ephemeral',
+    text: `Running ${scenarioLabel(scenario)} (${runId}).`,
+    blocks: [
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `Starting *${scenarioLabel(scenario)}*.\nRun ID: \`${runId}\`${queryLine}`,
+        },
+      },
+    ],
+  };
+}
+
+function buildSlackCompletedResponse(
+  result: HalfDozenScenarioRunResult,
+  runId: string,
+  route: string,
+): SlackResponsePayload {
+  const summary = truncateText(String(result.final_output ?? ''), 1400);
+  const status = shouldEscalate(result) ? 'ALERT' : 'OK';
+  const failedServers = result.failed_servers.length > 0 ? result.failed_servers.map((item) => item.server).join(', ') : 'none';
+  return {
+    response_type: 'in_channel',
+    text: `${status}: ${scenarioLabel(result.scenario)} run ${runId}`,
+    blocks: [
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `*${status}* ${scenarioLabel(result.scenario)}\nRun ID: \`${runId}\`\nRoute: \`${route}\``,
+        },
+      },
+      {
+        type: 'section',
+        fields: [
+          { type: 'mrkdwn', text: `*Degraded*\n${result.degraded ? 'yes' : 'no'}` },
+          { type: 'mrkdwn', text: `*Coverage*\n${getCoverageStatus(result)}` },
+          { type: 'mrkdwn', text: `*Connected Servers*\n${result.connected_servers.join(', ') || 'none'}` },
+          { type: 'mrkdwn', text: `*Failed Servers*\n${failedServers}` },
+        ],
+      },
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `*Summary*\n${summary || 'No final output.'}`,
+        },
+      },
+      {
+        type: 'actions',
+        elements: buildSlackQuickActionElements(),
+      },
+    ],
+  };
+}
+
+function buildSlackRunFailedResponse(
+  scenario: ScenarioKey,
+  runId: string,
+  errorMessage: string,
+): SlackResponsePayload {
+  return {
+    response_type: 'in_channel',
+    text: `ALERT: ${scenarioLabel(scenario)} run failed ${runId}`,
+    blocks: [
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `*ALERT* ${scenarioLabel(scenario)}\nRun ID: \`${runId}\``,
+        },
+      },
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `*Error*\n${truncateText(errorMessage, 1400)}`,
+        },
+      },
+      {
+        type: 'actions',
+        elements: buildSlackQuickActionElements(),
+      },
+    ],
+  };
+}
+
 async function postSlackWebhook(webhookUrl: string, payload: SlackPayload): Promise<void> {
   const response = await fetch(webhookUrl, {
     method: 'POST',
@@ -197,6 +432,79 @@ async function postSlackWebhook(webhookUrl: string, payload: SlackPayload): Prom
     const body = await response.text();
     throw new Error(`Slack webhook failed (${response.status}): ${body}`);
   }
+}
+
+async function postSlackResponse(responseUrl: string, payload: SlackResponsePayload): Promise<void> {
+  const response = await fetch(responseUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Slack response_url failed (${response.status}): ${body}`);
+  }
+}
+
+async function verifySlackSignature(
+  request: Request,
+  rawBody: string,
+  signingSecret?: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!signingSecret) {
+    return {
+      ok: false,
+      error: 'Server misconfigured: HALFDOZEN_SLACK_SIGNING_SECRET is not set.',
+    };
+  }
+
+  const signature = request.headers.get('X-Slack-Signature');
+  const timestamp = request.headers.get('X-Slack-Request-Timestamp');
+  if (!signature || !timestamp) {
+    return {
+      ok: false,
+      error: 'Missing Slack signature headers.',
+    };
+  }
+
+  const timestampSec = Number(timestamp);
+  if (!Number.isFinite(timestampSec)) {
+    return {
+      ok: false,
+      error: 'Invalid Slack timestamp header.',
+    };
+  }
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (Math.abs(nowSec - timestampSec) > SLACK_TIMESTAMP_TOLERANCE_SECONDS) {
+    return {
+      ok: false,
+      error: 'Slack request timestamp is outside allowed tolerance window.',
+    };
+  }
+
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(signingSecret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const baseString = `v0:${timestamp}:${rawBody}`;
+  const digestBytes = new Uint8Array(
+    await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(baseString)),
+  );
+  const digestHex = [...digestBytes].map((value) => value.toString(16).padStart(2, '0')).join('');
+  const expectedSignature = `v0=${digestHex}`;
+
+  if (!timingSafeEqual(signature, expectedSignature)) {
+    return {
+      ok: false,
+      error: 'Slack signature mismatch.',
+    };
+  }
+
+  return { ok: true };
 }
 
 function queueSuccessNotifications(
@@ -315,6 +623,110 @@ async function parseAgentRouteBody(request: Request): Promise<AgentRouteBody> {
   return AgentRouteBodySchema.parse(parsed);
 }
 
+function parseScenarioFromRoute(pathname: string): ScenarioKey {
+  if (pathname === HALFDOZEN_FLEET_WATCHDOG_ROUTE) return 'fleet-watchdog';
+  if (pathname === HALFDOZEN_INBOX_TRIAGE_ROUTE) return 'inbox-triage';
+  return 'dedup';
+}
+
+async function runScenarioByKey(
+  scenario: ScenarioKey,
+  input: HalfDozenRouteRunInput,
+): Promise<HalfDozenScenarioRunResult> {
+  if (scenario === 'fleet-watchdog') {
+    return runHalfDozenFleetWatchdog(input);
+  }
+  if (scenario === 'inbox-triage') {
+    return runHalfDozenInboxTriage(input);
+  }
+  return runHalfDozenDedup(input);
+}
+
+function buildHalfDozenRunInput(env: Env, body: AgentRouteBody | { query?: string }): HalfDozenRouteRunInput {
+  return {
+    openaiApiKey: env.OPENAI_API_KEY as string,
+    telemetryMcpUrl: env.HALFDOZEN_TELEMETRY_MCP_URL,
+    gmailMcpUrl: env.HALFDOZEN_GMAIL_MCP_URL,
+    notionMcpUrl: env.HALFDOZEN_NOTION_MCP_URL,
+    query: body.query,
+    model: 'model' in body ? body.model : undefined,
+    maxTurns: 'max_turns' in body ? body.max_turns : undefined,
+    timeoutMs: 'timeout_ms' in body ? body.timeout_ms : undefined,
+  };
+}
+
+function parseSlackCommandFields(rawBody: string): SlackCommandFields {
+  const params = new URLSearchParams(rawBody);
+  return {
+    command: params.get('command') ?? undefined,
+    text: params.get('text') ?? undefined,
+    response_url: params.get('response_url') ?? undefined,
+    team_id: params.get('team_id') ?? undefined,
+    channel_id: params.get('channel_id') ?? undefined,
+    channel_name: params.get('channel_name') ?? undefined,
+    user_id: params.get('user_id') ?? undefined,
+    user_name: params.get('user_name') ?? undefined,
+  };
+}
+
+function parseSlackInteractionPayload(rawBody: string): SlackInteractionPayload {
+  const params = new URLSearchParams(rawBody);
+  const payloadRaw = params.get('payload') ?? '{}';
+  return JSON.parse(payloadRaw) as SlackInteractionPayload;
+}
+
+function validateSlackTeam(teamId: string | undefined, expectedTeamId?: string): Response | null {
+  if (!expectedTeamId) return null;
+  if (teamId === expectedTeamId) return null;
+
+  return jsonResponse(
+    {
+      success: false,
+      error: 'Unauthorized Slack workspace.',
+    },
+    401,
+  );
+}
+
+function parseScenarioFromSlackAction(action: SlackAction | undefined): ScenarioKey | null {
+  if (!action) return null;
+  if (action.value) {
+    const scenario = parseScenarioKey(action.value);
+    if (scenario) return scenario;
+  }
+  if (action.action_id) {
+    const normalized = action.action_id.replace(/^run_/, '').replace(/_/g, '-');
+    const scenario = parseScenarioKey(normalized);
+    if (scenario) return scenario;
+  }
+  return null;
+}
+
+function queueSlackScenarioRun(
+  ctx: ExecutionContext,
+  env: Env,
+  scenario: ScenarioKey,
+  query: string | undefined,
+  responseUrl: string,
+  runId: string,
+): void {
+  const route = scenarioRoute(scenario);
+  const runInput = buildHalfDozenRunInput(env, { query });
+
+  ctx.waitUntil(
+    (async () => {
+      try {
+        const result = await runScenarioByKey(scenario, runInput);
+        const payload = buildSlackCompletedResponse(result, runId, route);
+        await postSlackResponse(responseUrl, payload);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        await postSlackResponse(responseUrl, buildSlackRunFailedResponse(scenario, runId, message));
+      }
+    })(),
+  );
+}
+
 // =============================================================================
 // MCP Agent
 // =============================================================================
@@ -322,7 +734,7 @@ async function parseAgentRouteBody(request: Request): Promise<AgentRouteBody> {
 export class PlaybookMCP extends McpAgent<Env> {
   server: any = new McpServer({
     name: 'playbook',
-    version: '1.4.0',
+    version: '1.5.0',
   });
 
   async init() {
@@ -344,6 +756,111 @@ export class PlaybookMCP extends McpAgent<Env> {
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
+
+    if (url.pathname === HALFDOZEN_SLACK_COMMAND_ROUTE) {
+      if (request.method !== 'POST') {
+        return jsonResponse(
+          {
+            success: false,
+            error: 'Method not allowed',
+            message: 'Use POST for this endpoint.',
+          },
+          405,
+          { Allow: 'POST' },
+        );
+      }
+
+      const contentType = request.headers.get('content-type')?.toLowerCase() ?? '';
+      if (!contentType.includes('application/x-www-form-urlencoded')) {
+        return jsonResponse(
+          {
+            success: false,
+            error: 'Unsupported content type',
+            message: 'Slack commands require application/x-www-form-urlencoded.',
+          },
+          415,
+        );
+      }
+
+      const rawBody = await request.text();
+      const signatureCheck = await verifySlackSignature(request, rawBody, env.HALFDOZEN_SLACK_SIGNING_SECRET);
+      if (!signatureCheck.ok) {
+        return jsonResponse(
+          {
+            success: false,
+            error: 'Unauthorized',
+            message: signatureCheck.error,
+          },
+          401,
+        );
+      }
+
+      if (!env.OPENAI_API_KEY) {
+        return slackJsonResponse({
+          response_type: 'ephemeral',
+          text: 'Playbook MCP is misconfigured: OPENAI_API_KEY is not set.',
+        });
+      }
+
+      const params = new URLSearchParams(rawBody);
+      const runId = crypto.randomUUID();
+
+      if (params.has('payload')) {
+        let payload: SlackInteractionPayload;
+        try {
+          payload = parseSlackInteractionPayload(rawBody);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          return jsonResponse(
+            {
+              success: false,
+              error: 'Invalid Slack interaction payload',
+              message,
+            },
+            400,
+          );
+        }
+
+        const teamError = validateSlackTeam(payload.team?.id, env.HALFDOZEN_SLACK_TEAM_ID);
+        if (teamError) return teamError;
+
+        const responseUrl = payload.response_url;
+        if (!responseUrl) {
+          return slackJsonResponse({
+            response_type: 'ephemeral',
+            text: 'Unable to run command: missing Slack response URL.',
+          });
+        }
+
+        const scenario = parseScenarioFromSlackAction(payload.actions?.[0]);
+        if (!scenario) {
+          return slackJsonResponse(buildSlackHelpResponse('/halfdozen'));
+        }
+
+        queueSlackScenarioRun(ctx, env, scenario, undefined, responseUrl, runId);
+        return slackJsonResponse(buildSlackAcceptedResponse(scenario, runId));
+      }
+
+      const fields = parseSlackCommandFields(rawBody);
+      const teamError = validateSlackTeam(fields.team_id, env.HALFDOZEN_SLACK_TEAM_ID);
+      if (teamError) return teamError;
+
+      const command = fields.command ?? '/halfdozen';
+      const parsed = parseSlackCommand(fields.text ?? '');
+      if (parsed.showHelp || !parsed.scenario) {
+        return slackJsonResponse(buildSlackHelpResponse(command));
+      }
+
+      if (!fields.response_url) {
+        return slackJsonResponse({
+          response_type: 'ephemeral',
+          text: 'Unable to run command: missing Slack response URL.',
+        });
+      }
+
+      queueSlackScenarioRun(ctx, env, parsed.scenario, parsed.query, fields.response_url, runId);
+      return slackJsonResponse(buildSlackAcceptedResponse(parsed.scenario, runId, parsed.query));
+    }
 
     if (isHalfDozenScenarioRoute(url.pathname)) {
       const runId = crypto.randomUUID();
@@ -400,41 +917,15 @@ export default {
         );
       }
 
-      const baseInput: HalfDozenRouteRunInput = {
-        openaiApiKey: env.OPENAI_API_KEY,
-        telemetryMcpUrl: env.HALFDOZEN_TELEMETRY_MCP_URL,
-        gmailMcpUrl: env.HALFDOZEN_GMAIL_MCP_URL,
-        notionMcpUrl: env.HALFDOZEN_NOTION_MCP_URL,
-        query: body.query,
-        model: body.model,
-        maxTurns: body.max_turns,
-        timeoutMs: body.timeout_ms,
-      };
+      const baseInput = buildHalfDozenRunInput(env, body);
+      const scenario = parseScenarioFromRoute(url.pathname);
 
       try {
-        if (url.pathname === HALFDOZEN_FLEET_WATCHDOG_ROUTE) {
-          const result = await runHalfDozenFleetWatchdog(baseInput);
-          queueSuccessNotifications(ctx, env, result, url.pathname, runId);
-          return jsonResponse(result);
-        }
-
-        if (url.pathname === HALFDOZEN_INBOX_TRIAGE_ROUTE) {
-          const result = await runHalfDozenInboxTriage(baseInput);
-          queueSuccessNotifications(ctx, env, result, url.pathname, runId);
-          return jsonResponse(result);
-        }
-
-        const result = await runHalfDozenDedup(baseInput);
+        const result = await runScenarioByKey(scenario, baseInput);
         queueSuccessNotifications(ctx, env, result, url.pathname, runId);
         return jsonResponse(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        const scenario =
-          url.pathname === HALFDOZEN_FLEET_WATCHDOG_ROUTE
-            ? 'fleet-watchdog'
-            : url.pathname === HALFDOZEN_INBOX_TRIAGE_ROUTE
-              ? 'inbox-triage'
-              : 'dedup';
         queueErrorNotification(ctx, env, scenario, url.pathname, runId, message);
         return jsonResponse(
           {
@@ -455,7 +946,7 @@ export default {
     if (url.pathname === '/' || url.pathname === '/health') {
       return jsonResponse({
         name: 'playbook',
-        version: '1.4.0',
+        version: '1.5.0',
         description: 'Host workflow playbooks and installation guidance for MCP onboarding',
         hosts: HOST_PLAYBOOKS.map((p) => p.name),
         catalogEntries: MCP_CATALOG.length,
@@ -465,11 +956,14 @@ export default {
           halfdozen_fleet_watchdog: HALFDOZEN_FLEET_WATCHDOG_ROUTE,
           halfdozen_inbox_triage: HALFDOZEN_INBOX_TRIAGE_ROUTE,
           halfdozen_dedup: HALFDOZEN_DEDUP_ROUTE,
+          halfdozen_slack_commands: HALFDOZEN_SLACK_COMMAND_ROUTE,
         },
         protectedRoutes: HALFDOZEN_PROTECTED_ROUTES,
         notifications: {
           halfdozenSlackWebhookConfigured: Boolean(env.HALFDOZEN_SLACK_WEBHOOK_URL),
           halfdozenSlackEscalationWebhookConfigured: Boolean(env.HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL),
+          halfdozenSlackCommandSigningConfigured: Boolean(env.HALFDOZEN_SLACK_SIGNING_SECRET),
+          halfdozenSlackTeamRestricted: Boolean(env.HALFDOZEN_SLACK_TEAM_ID),
         },
         tools: [
           'get_playbook',
