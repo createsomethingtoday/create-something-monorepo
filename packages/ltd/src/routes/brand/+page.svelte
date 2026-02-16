@@ -78,7 +78,13 @@
 
 	function downloadSvg(filename: string) {
 		if (browser) {
-			window.open(`/brand/${filename}`, '_blank');
+			const link = document.createElement('a');
+			link.href = `/brand/${filename}?download=1&v=${Date.now()}`;
+			link.download = filename;
+			link.rel = 'noopener';
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
 		}
 	}
 </script>

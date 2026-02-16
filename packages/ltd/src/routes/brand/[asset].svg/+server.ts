@@ -201,8 +201,9 @@ const assets: Record<string, (params: { light?: boolean }) => string> = {
 </svg>`
 };
 
-export const GET: RequestHandler = async ({ params }) => {
+export const GET: RequestHandler = async ({ params, url }) => {
 	const assetName = params.asset;
+	const isDownload = url.searchParams.get('download') === '1';
 
 	if (!assetName || !assets[assetName]) {
 		throw error(404, 'Asset not found');
@@ -213,6 +214,7 @@ export const GET: RequestHandler = async ({ params }) => {
 	return new Response(svg, {
 		headers: {
 			'Content-Type': 'image/svg+xml; charset=utf-8',
+			'Content-Disposition': isDownload ? `attachment; filename="${assetName}.svg"` : 'inline',
 			'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
 			'Access-Control-Allow-Origin': '*'
 		}
