@@ -12,82 +12,114 @@
 	import { onMount } from 'svelte';
 	import { videoPlayer, type Video } from '$lib/stores/videoPlayer';
 	import { videoStats } from '$lib/stores/videoStats';
+	import type { Video as DbVideo } from '$lib/server/db/videos';
+	import { fetchVideoPlayback } from '$lib/client/video-playback';
 	import VideoModal from './VideoModal.svelte';
 
 	// Cloudflare R2 CDN base URL
 	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
 
-	const videos: Video[] = [
-		{
-			id: 'v1',
-			title: 'Weatherford, TX Promo',
-			description: 'Showcasing the best of Weatherford, Texas',
-			duration: '0:57',
-			thumbnail: `${CDN_BASE}/thumbnails/weatherford-promo.jpg`,
-			category: 'Promo',
-			src: `${CDN_BASE}/videos/weatherford-promo.mp4`
-		},
-		{
-			id: 'v2',
-			title: 'Outerfields Takes on the Texas State Fair',
-			description: 'Experience the Texas State Fair with Outerfields',
-			duration: '0:57',
-			thumbnail: `${CDN_BASE}/thumbnails/texas-state-fair.jpg`,
-			category: 'Event',
-			src: `${CDN_BASE}/videos/texas-state-fair.mp4`
-		},
-		{
-			id: 'v3',
-			title: 'GOTV USCCA POD Jerry Yanis',
-			description: 'Jerry Yanis discusses GOTV with USCCA',
-			duration: '12:19',
-			thumbnail: `${CDN_BASE}/thumbnails/gotv-uscca.jpg`,
-			category: 'Podcast',
-			src: `${CDN_BASE}/videos/gotv-uscca.mp4`
-		},
-		{
-			id: 'v4',
-			title: 'Hilti Cast In Anchors',
-			description: 'Professional product showcase for Hilti anchors',
-			duration: '0:57',
-			thumbnail: `${CDN_BASE}/thumbnails/hilti-anchors.jpg`,
-			category: 'Product',
-			src: `${CDN_BASE}/videos/hilti-anchors.mp4`
-		},
-		{
-			id: 'v5',
-			title: 'STACCATO Prairie Fire Gun Range Promo',
-			description: 'Prairie Fire Gun Range promotional trailer',
-			duration: '1:16',
-			thumbnail: `${CDN_BASE}/thumbnails/staccato-promo.jpg`,
-			category: 'Promo',
-			src: `${CDN_BASE}/videos/staccato-promo.mp4`
-		},
-		{
-			id: 'v6',
-			title: 'USCCA Expo Promo Tim Kennedy',
-			description: 'Tim Kennedy at the USCCA Expo',
-			duration: '0:42',
-			thumbnail: `${CDN_BASE}/thumbnails/uscca-expo-promo.jpg`,
-			category: 'Promo',
-			src: `${CDN_BASE}/videos/uscca-expo-promo.mp4`
+	interface FeaturedCard extends Video {
+	}
+
+	let videos = $state<FeaturedCard[]>([]);
+	let isLoading = $state(true);
+	let loadError = $state<string | null>(null);
+
+	function formatClock(totalSeconds: number): string {
+		const seconds = Math.max(0, Math.floor(totalSeconds));
+		const hours = Math.floor(seconds / 3600);
+		const mins = Math.floor((seconds % 3600) / 60);
+		const secs = seconds % 60;
+		if (hours > 0) {
+			return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 		}
-	];
+		return `${mins}:${secs.toString().padStart(2, '0')}`;
+	}
+
+	function getThumbnailPath(path: string): string {
+		if (path.startsWith('/thumbnails/')) return path;
+		return `/thumbnails${path.startsWith('/') ? '' : '/'}${path}`;
+	}
+
+	function toLegacyAssetUrl(path: string): string {
+		if (path.startsWith('http://') || path.startsWith('https://')) return path;
+		return `${CDN_BASE}${path.startsWith('/') ? '' : '/'}${path}`;
+	}
+
+	function mapDbVideo(video: DbVideo): FeaturedCard {
+		return {
+			id: video.id,
+			title: video.title,
+			description: video.description || '',
+			duration: formatClock(video.duration_seconds ?? video.duration),
+			thumbnail: getThumbnailPath(video.thumbnail_path),
+			category: video.category,
+			src: ''
+		};
+	}
 
 	// Start polling for live stats on mount
 	onMount(() => {
 		videoStats.startPolling(10000); // Update every 10 seconds
+		void loadFeaturedVideos();
 
 		return () => {
 			videoStats.stopPolling();
 		};
 	});
 
-	function playVideo(video: Video) {
-		// All content freely accessible as portfolio showcase
-		videoPlayer.play(video);
-		// Increment view count
-		videoStats.incrementView(video.id);
+	async function loadFeaturedVideos() {
+		try {
+			isLoading = true;
+			loadError = null;
+
+			const response = await fetch('/api/videos');
+			const payload = await response.json();
+			if (!response.ok || !payload?.success) {
+				throw new Error(payload?.error || 'Failed to load featured videos');
+			}
+
+			const rows = ((payload.data?.videos || []) as DbVideo[]).slice(0, 6);
+			videos = rows.map(mapDbVideo);
+		} catch (error) {
+			loadError = error instanceof Error ? error.message : 'Failed to load featured videos';
+			videos = [];
+		} finally {
+			isLoading = false;
+		}
+	}
+
+	async function playVideo(video: FeaturedCard) {
+		try {
+			const playback = await fetchVideoPlayback(video.id);
+			let src: string | null = null;
+
+			if (playback.status === 'ready' && playback.grant) {
+				src = playback.grant.hlsUrl;
+			}
+			if (!src && playback.status === 'legacy' && playback.legacyAssetPath) {
+				src = toLegacyAssetUrl(playback.legacyAssetPath);
+			}
+
+			if (!src) {
+				loadError = playback.message || 'Playback is not ready yet.';
+				return;
+			}
+
+			videoPlayer.play({
+				id: video.id,
+				title: video.title,
+				description: video.description,
+				duration: video.duration,
+				thumbnail: video.thumbnail,
+				category: video.category,
+				src
+			});
+			videoStats.incrementView(video.id);
+		} catch (error) {
+			loadError = error instanceof Error ? error.message : 'Failed to start playback';
+		}
 	}
 
 	function formatViews(views: number): string {
@@ -112,37 +144,45 @@
 		</div>
 
 		<div class="videos-grid highlight-grid">
-			{#each videos as video, index}
-				<button
-					class="video-card highlight-item"
-					style="--index: {index}"
-					onclick={() => playVideo(video)}
-				>
-					<div class="video-thumbnail">
-						<img src={video.thumbnail} alt={video.title} loading="lazy" />
-						<div class="video-overlay">
-							<span class="play-button" aria-hidden="true">
-								<Play size={32} />
-							</span>
-						</div>
-						<span class="video-duration">{video.duration}</span>
-					</div>
-					<div class="video-info">
-						<span class="video-category">{video.category}</span>
-						<h3 class="video-title">{video.title}</h3>
-						<p class="video-description">{video.description}</p>
-						{#if $videoStats.views[video.id] !== undefined}
-							<div class="video-views">
-								<Eye size={14} />
-								<span>{formatViews($videoStats.views[video.id])} views</span>
-								{#if $videoStats.isLive}
-									<span class="live-indicator" title="Real-time data from Cloudflare"></span>
-								{/if}
+			{#if isLoading}
+				<p class="empty-state">Loading featured videos…</p>
+			{:else if loadError}
+				<p class="empty-state">{loadError}</p>
+			{:else if videos.length === 0}
+				<p class="empty-state">No featured videos available.</p>
+			{:else}
+				{#each videos as video, index}
+					<button
+						class="video-card highlight-item"
+						style="--index: {index}"
+						onclick={() => playVideo(video)}
+					>
+						<div class="video-thumbnail">
+							<img src={video.thumbnail} alt={video.title} loading="lazy" />
+							<div class="video-overlay">
+								<span class="play-button" aria-hidden="true">
+									<Play size={32} />
+								</span>
 							</div>
-						{/if}
-					</div>
-				</button>
-			{/each}
+							<span class="video-duration">{video.duration}</span>
+						</div>
+						<div class="video-info">
+							<span class="video-category">{video.category}</span>
+							<h3 class="video-title">{video.title}</h3>
+							<p class="video-description">{video.description}</p>
+							{#if $videoStats.views[video.id] !== undefined}
+								<div class="video-views">
+									<Eye size={14} />
+									<span>{formatViews($videoStats.views[video.id])} views</span>
+									{#if $videoStats.isLive}
+										<span class="live-indicator" title="Real-time data from Cloudflare"></span>
+									{/if}
+								</div>
+							{/if}
+						</div>
+					</button>
+				{/each}
+			{/if}
 		</div>
 	</div>
 </section>
@@ -199,6 +239,13 @@
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
 		gap: 1.5rem;
+	}
+
+	.empty-state {
+		grid-column: 1 / -1;
+		text-align: center;
+		color: var(--color-fg-muted);
+		padding: 2rem;
 	}
 
 	.video-card {

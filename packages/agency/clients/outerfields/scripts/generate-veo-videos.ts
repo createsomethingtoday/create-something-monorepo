@@ -11,13 +11,16 @@
  * 3. Cloudflare API token with Stream permissions
  *
  * Usage:
- *   npx ts-node scripts/generate-veo-videos.ts [--dry-run] [--video-id <id>]
+ *   npx ts-node scripts/generate-veo-videos.ts [--dry-run] [--video-id <id>] [--skip-register]
  *
  * Environment variables:
  *   GOOGLE_CLOUD_PROJECT - GCP project ID
  *   GOOGLE_APPLICATION_CREDENTIALS - Path to service account key
  *   CLOUDFLARE_API_TOKEN - CF API token
  *   CLOUDFLARE_ACCOUNT_ID - CF account ID
+ *   CLOUDFLARE_STREAM_CUSTOMER_CODE - Stream customer code used in playback URLs
+ *   OUTERFIELDS_API_BASE_URL - Base URL of the deployed Outerfields app
+ *   OUTERFIELDS_VIDEO_INGEST_TOKEN - Bearer token for /api/v1/uploads/generated
  */
 
 import { OUTERFIELDS_VIDEO_PROMPTS, createVeoRequest, estimateCost, type VeoPrompt } from './veo-prompts';
@@ -31,8 +34,12 @@ interface Config {
 	gcpLocation: string;
 	cfAccountId: string;
 	cfApiToken: string;
+	cfCustomerCode: string;
 	outputDir: string;
 	dryRun: boolean;
+	outerfieldsApiBaseUrl: string;
+	outerfieldsIngestToken?: string;
+	registerGenerated: boolean;
 	specificVideoId?: string;
 }
 
@@ -40,9 +47,14 @@ function loadConfig(): Config {
 	const gcpProject = process.env.GOOGLE_CLOUD_PROJECT;
 	const cfAccountId = process.env.CLOUDFLARE_ACCOUNT_ID;
 	const cfApiToken = process.env.CLOUDFLARE_API_TOKEN;
+	const cfCustomerCode = process.env.CLOUDFLARE_STREAM_CUSTOMER_CODE;
+	const outerfieldsApiBaseUrl =
+		process.env.OUTERFIELDS_API_BASE_URL || 'https://outerfields.createsomething.agency';
+	const outerfieldsIngestToken = process.env.OUTERFIELDS_VIDEO_INGEST_TOKEN;
 
 	const args = process.argv.slice(2);
 	const dryRun = args.includes('--dry-run');
+	let registerGenerated = !args.includes('--skip-register');
 	const videoIdIndex = args.indexOf('--video-id');
 	const specificVideoId = videoIdIndex !== -1 ? args[videoIdIndex + 1] : undefined;
 
@@ -55,13 +67,22 @@ function loadConfig(): Config {
 		process.exit(1);
 	}
 
+	if (!dryRun && registerGenerated && !outerfieldsIngestToken) {
+		console.warn('⚠️ OUTERFIELDS_VIDEO_INGEST_TOKEN missing. Generated videos will NOT be registered in D1.');
+		registerGenerated = false;
+	}
+
 	return {
 		gcpProject: gcpProject || 'demo-project',
 		gcpLocation: 'us-central1',
 		cfAccountId: cfAccountId || 'demo-account',
 		cfApiToken: cfApiToken || 'demo-token',
+		cfCustomerCode: cfCustomerCode || cfAccountId || 'demo-customer',
 		outputDir: './generated-videos',
 		dryRun,
+		outerfieldsApiBaseUrl,
+		outerfieldsIngestToken,
+		registerGenerated,
 		specificVideoId
 	};
 }
@@ -256,7 +277,7 @@ async function uploadToCloudflareStream(
 					category: prompt.category,
 					outerfieldsId: prompt.id
 				},
-				requireSignedURLs: false,
+				requireSignedURLs: true,
 				allowedOrigins: ['outerfields.createsomething.agency', 'localhost:5173']
 			})
 		}
@@ -275,10 +296,10 @@ async function uploadToCloudflareStream(
 
 	return {
 		uid: video.uid,
-		playbackUrl: `https://customer-${config.cfAccountId}.cloudflarestream.com/${video.uid}/iframe`,
-		thumbnailUrl: `https://customer-${config.cfAccountId}.cloudflarestream.com/${video.uid}/thumbnails/thumbnail.jpg`,
-		dashUrl: `https://customer-${config.cfAccountId}.cloudflarestream.com/${video.uid}/manifest/video.mpd`,
-		hlsUrl: `https://customer-${config.cfAccountId}.cloudflarestream.com/${video.uid}/manifest/video.m3u8`
+		playbackUrl: `https://customer-${config.cfCustomerCode}.cloudflarestream.com/${video.uid}/iframe`,
+		thumbnailUrl: `https://customer-${config.cfCustomerCode}.cloudflarestream.com/${video.uid}/thumbnails/thumbnail.jpg`,
+		dashUrl: `https://customer-${config.cfCustomerCode}.cloudflarestream.com/${video.uid}/manifest/video.mpd`,
+		hlsUrl: `https://customer-${config.cfCustomerCode}.cloudflarestream.com/${video.uid}/manifest/video.m3u8`
 	};
 }
 
@@ -330,6 +351,7 @@ interface VideoManifestEntry {
 	thumbnailUrl: string;
 	dashUrl: string;
 	hlsUrl: string;
+	outerfieldsVideoId?: string | null;
 	generatedAt: string;
 }
 
@@ -339,13 +361,90 @@ interface VideoManifest {
 	videos: VideoManifestEntry[];
 }
 
+interface GeneratedRegistrationResult {
+	videoId: string;
+	streamUid: string;
+	seriesId?: string | null;
+}
+
+function toSeriesSlug(category: string): string {
+	return category
+		.toLowerCase()
+		.trim()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '');
+}
+
+function toSeriesTitle(category: string): string {
+	return category
+		.split(/[-_\s]+/)
+		.filter(Boolean)
+		.map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+		.join(' ');
+}
+
+async function registerGeneratedVideo(
+	config: Config,
+	prompt: VeoPrompt,
+	stream: StreamUploadResult
+): Promise<GeneratedRegistrationResult | null> {
+	if (!config.registerGenerated) {
+		return null;
+	}
+
+	const payload = {
+		title: prompt.title,
+		category: prompt.category,
+		description: `Generated with Veo (${prompt.style})`,
+		seriesSlug: prompt.seriesSlug || toSeriesSlug(prompt.category),
+		seriesTitle: prompt.seriesTitle || toSeriesTitle(prompt.category),
+		episodeNumber: prompt.episodeNumber ?? null,
+		streamUid: stream.uid,
+		durationSeconds: prompt.duration,
+		playbackPolicy: 'private' as const,
+		tier: 'free' as const
+	};
+
+	if (config.dryRun) {
+		return {
+			videoId: `dryrun_${prompt.id}`,
+			streamUid: stream.uid,
+			seriesId: `series_${(prompt.seriesSlug || toSeriesSlug(prompt.category)).replace(/-/g, '_')}`
+		};
+	}
+
+	const response = await fetch(`${config.outerfieldsApiBaseUrl}/api/v1/uploads/generated`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			Authorization: `Bearer ${config.outerfieldsIngestToken}`
+		},
+		body: JSON.stringify(payload)
+	});
+
+	const result = await response.json();
+	if (!response.ok || !result?.success) {
+		throw new Error(result?.error || `Generated ingest registration failed (${response.status})`);
+	}
+
+	return {
+		videoId: result.data.videoId,
+		streamUid: result.data.streamUid,
+		seriesId: result.data.seriesId ?? null
+	};
+}
+
 function generateManifest(
-	results: Array<{ prompt: VeoPrompt; stream: StreamUploadResult }>
+	results: Array<{
+		prompt: VeoPrompt;
+		stream: StreamUploadResult;
+		registration: GeneratedRegistrationResult | null;
+	}>
 ): VideoManifest {
 	return {
 		version: '1.0.0',
 		generatedAt: new Date().toISOString(),
-		videos: results.map(({ prompt, stream }) => ({
+		videos: results.map(({ prompt, stream, registration }) => ({
 			id: prompt.id,
 			title: prompt.title,
 			category: prompt.category,
@@ -356,6 +455,7 @@ function generateManifest(
 			thumbnailUrl: stream.thumbnailUrl,
 			dashUrl: stream.dashUrl,
 			hlsUrl: stream.hlsUrl,
+			outerfieldsVideoId: registration?.videoId || null,
 			generatedAt: new Date().toISOString()
 		}))
 	};
@@ -374,6 +474,9 @@ async function main() {
 
 	if (config.dryRun) {
 		console.log('🔍 DRY RUN MODE - No actual generation or upload\n');
+	}
+	if (config.registerGenerated) {
+		console.log(`🔗 Register generated videos via: ${config.outerfieldsApiBaseUrl}/api/v1/uploads/generated\n`);
 	}
 
 	// Select prompts to process
@@ -395,7 +498,11 @@ async function main() {
 	console.log('');
 
 	// Process each video
-	const results: Array<{ prompt: VeoPrompt; stream: StreamUploadResult }> = [];
+	const results: Array<{
+		prompt: VeoPrompt;
+		stream: StreamUploadResult;
+		registration: GeneratedRegistrationResult | null;
+	}> = [];
 
 	for (const prompt of prompts) {
 		try {
@@ -414,8 +521,12 @@ async function main() {
 				config
 			);
 
-			results.push({ prompt, stream: streamResult });
+			const registration = await registerGeneratedVideo(config, prompt, streamResult);
+			results.push({ prompt, stream: streamResult, registration });
 			console.log(`   ✅ Complete: ${streamResult.playbackUrl}`);
+			if (registration) {
+				console.log(`   ✅ Registered in Outerfields: ${registration.videoId}`);
+			}
 		} catch (error) {
 			console.error(`   ❌ Failed: ${error}`);
 		}
@@ -441,6 +552,7 @@ async function main() {
 
 	console.log('\n✨ Generation complete!');
 	console.log(`   Success: ${results.length}/${prompts.length}`);
+	console.log(`   Registered: ${results.filter((entry) => entry.registration).length}/${results.length}`);
 }
 
 main().catch(console.error);

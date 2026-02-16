@@ -7,6 +7,31 @@ This app deploys to **Cloudflare Pages** via `@sveltejs/adapter-cloudflare`.
 - **Bindings**: `wrangler.toml` (primary). `wrangler.jsonc` is reference-only.
 - **Migrations**: `migrations/*.sql`
 
+## Video Pipeline v1 (Cloudflare Stream + D1)
+
+Outerfields now supports a Stream-first ingest pipeline for large uploads:
+
+- `POST /api/v1/uploads/init` creates a D1 reservation + Stream tus upload URL
+- `POST /api/v1/uploads/complete` marks client upload complete (`pending_upload` -> `processing`)
+- `POST /api/v1/webhooks/stream` applies Stream lifecycle updates (`processing`/`ready`/`failed`)
+- `GET /api/v1/videos/:id/playback` returns signed HLS playback grants (default TTL: 900s)
+- `GET /api/v1/series` / `POST /api/v1/series` / `GET /api/v1/series/:id/videos` provide series metadata
+- `POST /api/v1/uploads/generated` normalizes Veo-generated outputs into the same ingest contract
+
+### Required Stream env/secrets
+
+Vars (`wrangler.toml` / Pages vars):
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_STREAM_CUSTOMER_CODE`
+- `CLOUDFLARE_STREAM_ALLOWED_ORIGINS`
+- `VIDEO_STREAM_TOKEN_TTL_SECONDS`
+- `VIDEO_SERIES_ADMIN_EMAILS`
+
+Secrets (Pages secrets / `wrangler secret put`):
+- `CLOUDFLARE_STREAM_API_TOKEN`
+- `CLOUDFLARE_STREAM_WEBHOOK_SECRET`
+- `VIDEO_INGEST_API_TOKEN`
+
 ## Local checks (no Cloudflare access needed)
 
 From repo root:
@@ -43,6 +68,13 @@ Migrations:
 - `migrations/0001_auth_system.sql`
 - `migrations/0002_videos.sql`
 - `migrations/0003_discovery_calls.sql`
+- `migrations/0004_seed_demo_users.sql`
+- `migrations/0005_comments.sql`
+- `migrations/0006_transcripts.sql`
+- `migrations/0007_user_events.sql`
+- `migrations/0008_agent_proposals.sql`
+- `migrations/0009_vid_lmc_continental.sql`
+- `migrations/0010_video_pipeline.sql`
 
 ### KV
 
@@ -76,7 +108,8 @@ wrangler r2 object put outerfields-videos/videos/example.mp4 --file ./assets/vid
 wrangler r2 object put outerfields-videos/thumbnails/example.jpg --file ./assets/thumbnails/example.jpg
 ```
 
-Note: the app builds public URLs using a fixed CDN base + the stored `asset_path`/`thumbnail_path`. If you use a different public hostname, update the CDN base in:
+Note: thumbnails still load from static/R2 paths. Video playback now prefers signed Stream HLS grants from `/api/v1/videos/:id/playback`, and only falls back to `asset_path` during migration.
+If you use a different legacy R2 hostname, update the CDN base in:
 - `src/lib/components/FeaturedVideos.svelte`
 - `src/lib/components/ContentCategories.svelte`
 

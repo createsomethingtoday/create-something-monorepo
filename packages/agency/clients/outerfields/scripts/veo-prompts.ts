@@ -21,6 +21,9 @@ export interface VeoPrompt {
 	id: string;
 	title: string;
 	category: string;
+	seriesSlug?: string;
+	seriesTitle?: string;
+	episodeNumber?: number;
 	prompt: string;
 	negativePrompt?: string;
 	duration: number; // seconds

@@ -16,6 +16,7 @@
 	import CommentSection from '$lib/components/CommentSection.svelte';
 	import TranscriptPanel from '$lib/components/TranscriptPanel.svelte';
 	import { ChevronLeft, ChevronRight, Lock } from 'lucide-svelte';
+	import { fetchVideoPlayback } from '$lib/client/video-playback';
 	import type { PageData } from './$types';
 
 	// Cloudflare R2 CDN base URL
@@ -28,12 +29,14 @@
 	const isAccessible = $derived(data.isAccessible);
 	const isMember = $derived(data.isMember);
 	const user = $derived(data.user);
+	let playbackSrc = $state<string | null>(null);
+	let playbackState = $state<'loading' | 'ready' | 'processing' | 'failed' | 'auth_required' | 'error'>('loading');
+	let playbackMessage = $state<string | null>(null);
 
 	// Current playback time for transcript sync
 	let currentTime = $state(0);
 
-	// Get video source URL
-	function getVideoSrc(assetPath: string): string {
+	function toLegacyAssetUrl(assetPath: string): string {
 		if (assetPath.startsWith('http')) return assetPath;
 		return `${CDN_BASE}${assetPath.startsWith('/') ? '' : '/'}${assetPath}`;
 	}
@@ -96,6 +99,68 @@
 		console.log('Seek to:', time);
 	}
 
+	$effect(() => {
+		if (!isAccessible || !video) {
+			playbackSrc = null;
+			playbackState = 'error';
+			playbackMessage = null;
+			return;
+		}
+
+		let cancelled = false;
+		playbackState = 'loading';
+		playbackMessage = null;
+		playbackSrc = null;
+
+		void (async () => {
+			try {
+				const playback = await fetchVideoPlayback(video.id);
+				if (cancelled) return;
+
+				if (playback.status === 'ready' && playback.grant) {
+					playbackSrc = playback.grant.hlsUrl;
+					playbackState = 'ready';
+					return;
+				}
+
+				if (playback.status === 'legacy' && (playback.legacyAssetPath || video.asset_path)) {
+					playbackSrc = toLegacyAssetUrl(playback.legacyAssetPath || video.asset_path);
+					playbackState = 'ready';
+					return;
+				}
+
+				if (playback.status === 'processing') {
+					playbackState = 'processing';
+					playbackMessage = playback.message || 'Video is still processing.';
+					return;
+				}
+
+				if (playback.status === 'failed') {
+					playbackState = 'failed';
+					playbackMessage = playback.message || 'Video processing failed.';
+					return;
+				}
+
+				if (playback.status === 'auth_required') {
+					playbackState = 'auth_required';
+					playbackMessage = playback.message || 'Sign in required to play this video.';
+					return;
+				}
+
+				playbackState = 'error';
+				playbackMessage = playback.message || 'Unable to start playback.';
+			} catch (error) {
+				if (cancelled) return;
+				playbackState = 'error';
+				playbackMessage = error instanceof Error ? error.message : 'Unable to start playback.';
+			}
+		})();
+
+		return () => {
+			cancelled = true;
+		};
+	});
+
 	// SEO data
 	const seo = $derived({
 		title: video ? `${video.title} | OUTERFIELDS` : 'Watch | OUTERFIELDS',
@@ -113,7 +178,7 @@
 		thumbnailUrl: seo.image,
 		uploadDate: new Date(video.created_at * 1000).toISOString(),
 		duration: `PT${Math.floor(video.duration / 60)}M${video.duration % 60}S`,
-		contentUrl: getVideoSrc(video.asset_path),
+		contentUrl: video.asset_path ? toLegacyAssetUrl(video.asset_path) : undefined,
 		embedUrl: seo.url,
 		publisher: {
 			'@type': 'Organization',
@@ -149,13 +214,35 @@
 		<div class="main-content">
 			<!-- Video Player -->
 			{#if isAccessible}
-				<WatchPagePlayer
-					videoId={video.id}
-					src={getVideoSrc(video.asset_path)}
-					poster={getThumbnailSrc(video.thumbnail_path)}
-					title={video.title}
-					onTimeUpdate={handleTimeUpdate}
-				/>
+				{#if playbackState === 'ready' && playbackSrc}
+					<WatchPagePlayer
+						videoId={video.id}
+						src={playbackSrc}
+						poster={getThumbnailSrc(video.thumbnail_path)}
+						title={video.title}
+						onTimeUpdate={handleTimeUpdate}
+					/>
+				{:else}
+					<div class="playback-status">
+						<h2 class="playback-status-title">
+							{#if playbackState === 'processing'}
+								Video Processing
+							{:else if playbackState === 'failed'}
+								Video Unavailable
+							{:else if playbackState === 'auth_required'}
+								Sign In Required
+							{:else}
+								Preparing Playback
+							{/if}
+						</h2>
+						<p class="playback-status-message">
+							{playbackMessage || 'Preparing secure playback URL…'}
+						</p>
+						{#if playbackState === 'auth_required'}
+							<a href="/login" class="gate-cta">Sign In</a>
+						{/if}
+					</div>
+				{/if}
 			{:else}
 				<div class="gate-container">
 					<div class="gate-poster" style="background-image: url({getThumbnailSrc(video.thumbnail_path)})">
@@ -260,6 +347,31 @@
 		margin: 0 auto;
 		padding: 0 1.5rem;
 		box-sizing: border-box;
+	}
+
+	.playback-status {
+		min-height: 360px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 2.5rem;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		text-align: center;
+	}
+
+	.playback-status-title {
+		margin: 0 0 0.75rem 0;
+		font-size: 1.5rem;
+		color: var(--color-fg-primary);
+	}
+
+	.playback-status-message {
+		margin: 0;
+		color: var(--color-fg-muted);
+		max-width: 42ch;
 	}
 
 	/* Main Content */

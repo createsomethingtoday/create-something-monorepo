@@ -17,11 +17,17 @@ const DEFAULT_VIEWS: Record<string, number> = {
 
 export const GET: RequestHandler = async ({ platform }) => {
 	const kv = platform?.env?.VIDEO_STATS;
+	const db = platform?.env?.DB;
 
 	// If KV is available, get real stats
 	if (kv) {
 		const stats: Record<string, number> = {};
-		const videoIds = ['v1', 'v2', 'v3', 'v4', 'v5'];
+		let videoIds: string[] = Object.keys(DEFAULT_VIEWS);
+
+		if (db) {
+			const rows = await db.prepare('SELECT id FROM videos ORDER BY created_at DESC LIMIT 200').all<{ id: string }>();
+			videoIds = rows.results?.map((row: { id: string }) => row.id) || videoIds;
+		}
 
 		for (const id of videoIds) {
 			const views = await kv.get(`views:${id}`);

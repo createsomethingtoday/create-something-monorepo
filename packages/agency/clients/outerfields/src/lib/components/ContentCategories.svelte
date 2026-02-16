@@ -15,12 +15,8 @@
 	import CategoryRow from './CategoryRow.svelte';
 	import EditorChoice from './EditorChoice.svelte';
 	import { onMount } from 'svelte';
-	import { videoPlayer, type Video as PlayerVideo } from '$lib/stores/videoPlayer';
 	import type { Video as DbVideo } from '$lib/server/db/videos';
 	import { categoryFilter, FILTER_TO_CATEGORIES, FILTER_LABELS, type CategoryFilter } from '$lib/stores/categoryFilter.svelte';
-
-	// Cloudflare R2 CDN base URL (public bucket) - used for video assets only
-	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
 
 	/**
 	 * Get thumbnail path - uses local static thumbnails (Flux-generated)
@@ -54,8 +50,6 @@
 	let allCategories = $state<Array<{ title: string; categoryId: string; videos: RowVideo[] }>>([]);
 	let isLoading = $state(true);
 	let loadError = $state<string | null>(null);
-	let playerVideosById = $state<Record<string, PlayerVideo>>({});
-	let rowVideosById = $state<Record<string, RowVideo>>({});
 
 	const activeFilter = $derived(categoryFilter.active);
 
@@ -107,12 +101,6 @@
 		return map[categoryId] || categoryId;
 	}
 
-	function toAssetUrl(path: string): string {
-		if (path.startsWith('http://') || path.startsWith('https://')) return path;
-		// Normalize leading slash so CDN_BASE + "/videos/..." doesn't double-slash
-		return `${CDN_BASE}${path.startsWith('/') ? '' : '/'}${path}`;
-	}
-
 	function buildRowVideo(v: DbVideo): RowVideo {
 		return {
 			id: v.id,
@@ -123,25 +111,6 @@
 			category: v.category,
 			...(v.episode_number ? { episodeNumber: v.episode_number } : {})
 		};
-	}
-
-	function buildPlayerVideo(v: DbVideo): PlayerVideo {
-		return {
-			id: v.id,
-			title: v.title,
-			description: v.description || '',
-			duration: formatClock(v.duration),
-			thumbnail: getThumbnailPath(v),
-			category: titleFromCategoryId(v.category),
-			src: toAssetUrl(v.asset_path)  // Videos still come from R2 CDN
-		};
-	}
-
-	function handleVideoClick(videoId: string) {
-		// All content is now freely accessible - no gating
-		const video = playerVideosById[videoId];
-		if (!video) return;
-		videoPlayer.play(video);
 	}
 
 	onMount(async () => {
@@ -158,28 +127,17 @@
 
 			const grouped = result.data as Record<string, DbVideo[]>;
 
-			const byId: Record<string, PlayerVideo> = {};
 			const rows: Array<{ title: string; categoryId: string; videos: RowVideo[] }> = Object.entries(grouped)
 				.sort(([a], [b]) => a.localeCompare(b))
-				.map(([categoryId, vids]) => {
-					for (const v of vids) {
-						byId[v.id] = buildPlayerVideo(v);
-					}
-					return {
-						title: titleFromCategoryId(categoryId),
-						categoryId,
-						videos: vids.map(buildRowVideo)
-					};
-				});
-
-			playerVideosById = byId;
+				.map(([categoryId, vids]) => ({
+					title: titleFromCategoryId(categoryId),
+					categoryId,
+					videos: vids.map(buildRowVideo)
+				}));
 			allCategories = rows;
-			rowVideosById = Object.fromEntries(rows.flatMap(r => r.videos.map(v => [v.id, v])));
 		} catch (err) {
 			loadError = err instanceof Error ? err.message : 'Failed to load videos';
 			allCategories = [];
-			playerVideosById = {};
-			rowVideosById = {};
 		} finally {
 			isLoading = false;
 		}

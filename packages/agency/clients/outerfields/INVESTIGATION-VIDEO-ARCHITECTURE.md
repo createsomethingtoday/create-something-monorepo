@@ -1,5 +1,19 @@
 # Video Architecture Investigation
 
+## 2026-02-16 Implementation Update
+
+The architecture conflict documented below has now been resolved in code with a Stream-first pipeline:
+
+- Added migration `migrations/0010_video_pipeline.sql` (series table + ingest/playback fields on `videos`)
+- Added Stream ingest/playback API surface under `src/routes/api/v1/**`
+- Added secure signed playback grants (`GET /api/v1/videos/:id/playback`)
+- Added Stream webhook ingestion with signature verification (`POST /api/v1/webhooks/stream`)
+- Added series APIs and DB module (`src/lib/server/db/series.ts`)
+- Updated player entry points to request signed playback and show processing/failed/auth fallback states
+- Updated Veo generation script to register generated videos through `/api/v1/uploads/generated`
+
+Current status is no longer blocked on architecture selection.
+
 **Task**: R2 Asset Upload (Task 3 of Outerfields Production Deployment)
 **Loom**: lm-ebb3
 **Beads**: csm-w0jnb
