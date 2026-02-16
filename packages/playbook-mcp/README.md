@@ -73,7 +73,7 @@ Deployed as a Cloudflare Worker with Streamable HTTP transport:
 
 **URL**: `https://playbook.mcp.createsomething.ltd`
 
-No installation, no API keys, no setup. Point any MCP client at the URL.
+The core MCP transport is open for onboarding (`/mcp`, `/sse`). Client-specific agent trigger routes are protected with bearer token auth.
 
 ### Claude Code
 
@@ -118,6 +118,36 @@ Add to `.cursor/mcp.json`:
 }
 ```
 
+### Protected Half Dozen agent route
+
+`POST /clients/halfdozen/agents/fleet-watchdog/run`
+
+Auth required:
+- `Authorization: Bearer <HALFDOZEN_AGENT_ROUTE_TOKEN>` or
+- `X-API-Key: <HALFDOZEN_AGENT_ROUTE_TOKEN>`
+
+Request body (optional JSON):
+
+```json
+{
+  "query": "Custom watchdog prompt",
+  "model": "gpt-4.1-mini",
+  "max_turns": 10,
+  "timeout_ms": 20000
+}
+```
+
+Example:
+
+```bash
+curl -X POST "https://playbook.mcp.createsomething.ltd/clients/halfdozen/agents/fleet-watchdog/run" \
+  -H "Authorization: Bearer $HALFDOZEN_AGENT_ROUTE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+The response includes required tool coverage, failed required tool calls, connected servers, and the agent's final watchdog report.
+
 ## Local Development (stdio)
 
 For local development, the stdio transport server is also available:
@@ -159,6 +189,7 @@ Two transports, one codebase:
 |-----------|-----|----------|
 | **Streamable HTTP** | `.../mcp` | Claude Code, Codex, remote clients |
 | **SSE** | `.../sse` | Legacy clients (deprecated in MCP spec 2025-03-26) |
+| **Protected HTTP Route** | `.../clients/halfdozen/agents/fleet-watchdog/run` | Half Dozen fleet watchdog execution (server-side trigger) |
 | **stdio** | `dist/index.js` | Local development |
 
 Zero external data dependencies. Playbook content and MCP catalog are embedded in source. The Worker runs on Cloudflare's edge network. Pure workflow knowledge served through protocol.

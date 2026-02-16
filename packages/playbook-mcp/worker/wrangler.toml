@@ -23,3 +23,11 @@ new_sqlite_classes = ["PlaybookMCP"]
 binding = "TELEMETRY_DB"
 database_name = "cs-telemetry"
 database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
+
+[vars]
+# Optional override for the fleet watchdog telemetry MCP endpoint.
+# HALFDOZEN_TELEMETRY_MCP_URL = "https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp"
+
+# Required secrets for protected Half Dozen agent route:
+# wrangler secret put OPENAI_API_KEY
+# wrangler secret put HALFDOZEN_AGENT_ROUTE_TOKEN
