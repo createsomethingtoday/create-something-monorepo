@@ -33,3 +33,7 @@ database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
 # Required secrets for protected Half Dozen agent routes:
 # wrangler secret put OPENAI_API_KEY
 # wrangler secret put HALFDOZEN_AGENT_ROUTE_TOKEN
+
+# Optional notification webhooks:
+# wrangler secret put HALFDOZEN_SLACK_WEBHOOK_URL
+# wrangler secret put HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL

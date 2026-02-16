@@ -151,6 +151,10 @@ curl -X POST "https://playbook.mcp.createsomething.ltd/clients/halfdozen/agents/
 All responses include contract bundle metadata, blocked/required tools, required tool coverage (when applicable), called tools, and final output.
 If one or more MCP servers are unavailable, the route returns a degraded payload (`degraded: true`) with `failed_servers` and `degraded_reason` instead of a hard failure.
 
+Slack notifications (optional):
+- Set `HALFDOZEN_SLACK_WEBHOOK_URL` to receive every run summary.
+- Set `HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL` for alerts when a run is degraded or required-tool coverage fails. If omitted, escalations go to the primary webhook.
+
 ## Local Development (stdio)
 
 For local development, the stdio transport server is also available:

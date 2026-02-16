@@ -25,6 +25,7 @@ import {
   runHalfDozenFleetWatchdog,
   runHalfDozenInboxTriage,
 } from './halfdozenFleetWatchdog.js';
+import type { HalfDozenScenarioRunResult } from './halfdozenFleetWatchdog.js';
 
 // =============================================================================
 // Types
@@ -38,6 +39,8 @@ interface Env {
   HALFDOZEN_TELEMETRY_MCP_URL?: string;
   HALFDOZEN_GMAIL_MCP_URL?: string;
   HALFDOZEN_NOTION_MCP_URL?: string;
+  HALFDOZEN_SLACK_WEBHOOK_URL?: string;
+  HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL?: string;
 }
 
 const JSON_HEADERS = {
@@ -75,11 +78,184 @@ type HalfDozenRouteRunInput = {
   timeoutMs?: number;
 };
 
+type ScenarioKey = 'fleet-watchdog' | 'inbox-triage' | 'dedup';
+
+type SlackPayload = {
+  text: string;
+  blocks?: Array<Record<string, unknown>>;
+};
+
 function jsonResponse(data: unknown, status = 200, extraHeaders: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(data, null, 2), {
     status,
     headers: { ...JSON_HEADERS, ...extraHeaders },
   });
+}
+
+function scenarioLabel(scenario: ScenarioKey): string {
+  if (scenario === 'fleet-watchdog') return 'Fleet Watchdog';
+  if (scenario === 'inbox-triage') return 'Inbox Triage';
+  return 'Dedup';
+}
+
+function truncateText(value: string, max = 240): string {
+  if (value.length <= max) return value;
+  return `${value.slice(0, max - 3)}...`;
+}
+
+function getCoverageStatus(result: HalfDozenScenarioRunResult): string {
+  const coverage = result.required_tool_coverage;
+  if (!coverage) return 'n/a';
+  if (coverage.all_required_tools_successful) return 'ok';
+  return 'failed';
+}
+
+function hasRequiredCoverageFailure(result: HalfDozenScenarioRunResult): boolean {
+  const coverage = result.required_tool_coverage;
+  if (!coverage) return false;
+  return !coverage.all_required_tools_called || !coverage.all_required_tools_successful;
+}
+
+function shouldEscalate(result: HalfDozenScenarioRunResult): boolean {
+  return result.degraded || hasRequiredCoverageFailure(result) || result.failed_required_tool_calls.length > 0;
+}
+
+function buildScenarioSuccessSlackPayload(
+  result: HalfDozenScenarioRunResult,
+  route: string,
+  runId: string,
+): SlackPayload {
+  const status = shouldEscalate(result) ? 'ALERT' : 'OK';
+  const text = `${status}: ${scenarioLabel(result.scenario)} run ${runId}`;
+  const failedServers = result.failed_servers.length > 0 ? result.failed_servers.map((item) => item.server).join(', ') : 'none';
+  const outputPreview = truncateText(String(result.final_output ?? ''));
+
+  return {
+    text,
+    blocks: [
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `*${status}* ${scenarioLabel(result.scenario)}\nRun ID: \`${runId}\`\nRoute: \`${route}\``,
+        },
+      },
+      {
+        type: 'section',
+        fields: [
+          { type: 'mrkdwn', text: `*Degraded*\n${result.degraded ? 'yes' : 'no'}` },
+          { type: 'mrkdwn', text: `*Coverage*\n${getCoverageStatus(result)}` },
+          { type: 'mrkdwn', text: `*Connected Servers*\n${result.connected_servers.join(', ') || 'none'}` },
+          { type: 'mrkdwn', text: `*Failed Servers*\n${failedServers}` },
+        ],
+      },
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `*Summary*\n${outputPreview || 'No final output.'}`,
+        },
+      },
+    ],
+  };
+}
+
+function buildScenarioErrorSlackPayload(
+  scenario: ScenarioKey,
+  route: string,
+  runId: string,
+  errorMessage: string,
+): SlackPayload {
+  return {
+    text: `ALERT: ${scenarioLabel(scenario)} run failed ${runId}`,
+    blocks: [
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `*ALERT* ${scenarioLabel(scenario)}\nRun ID: \`${runId}\`\nRoute: \`${route}\``,
+        },
+      },
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `*Error*\n${truncateText(errorMessage, 1200)}`,
+        },
+      },
+    ],
+  };
+}
+
+async function postSlackWebhook(webhookUrl: string, payload: SlackPayload): Promise<void> {
+  const response = await fetch(webhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Slack webhook failed (${response.status}): ${body}`);
+  }
+}
+
+function queueSuccessNotifications(
+  ctx: ExecutionContext,
+  env: Env,
+  result: HalfDozenScenarioRunResult,
+  route: string,
+  runId: string,
+): void {
+  const primaryWebhook = env.HALFDOZEN_SLACK_WEBHOOK_URL;
+  const escalationWebhook = env.HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL;
+  if (!primaryWebhook && !escalationWebhook) return;
+
+  const escalate = shouldEscalate(result);
+  const payload = buildScenarioSuccessSlackPayload(result, route, runId);
+
+  ctx.waitUntil(
+    (async () => {
+      try {
+        let sentPrimary = false;
+        if (primaryWebhook) {
+          await postSlackWebhook(primaryWebhook, payload);
+          sentPrimary = true;
+        }
+
+        if (escalate) {
+          const escalationTarget = escalationWebhook ?? primaryWebhook;
+          if (escalationTarget && (!sentPrimary || escalationTarget !== primaryWebhook)) {
+            await postSlackWebhook(escalationTarget, payload);
+          }
+        }
+      } catch (error) {
+        console.error('Half Dozen Slack notify failed', error);
+      }
+    })(),
+  );
+}
+
+function queueErrorNotification(
+  ctx: ExecutionContext,
+  env: Env,
+  scenario: ScenarioKey,
+  route: string,
+  runId: string,
+  errorMessage: string,
+): void {
+  const escalationWebhook = env.HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL ?? env.HALFDOZEN_SLACK_WEBHOOK_URL;
+  if (!escalationWebhook) return;
+
+  const payload = buildScenarioErrorSlackPayload(scenario, route, runId, errorMessage);
+  ctx.waitUntil(
+    (async () => {
+      try {
+        await postSlackWebhook(escalationWebhook, payload);
+      } catch (error) {
+        console.error('Half Dozen Slack escalation notify failed', error);
+      }
+    })(),
+  );
 }
 
 function getAuthToken(request: Request): string | null {
@@ -146,7 +322,7 @@ async function parseAgentRouteBody(request: Request): Promise<AgentRouteBody> {
 export class PlaybookMCP extends McpAgent<Env> {
   server: any = new McpServer({
     name: 'playbook',
-    version: '1.3.0',
+    version: '1.4.0',
   });
 
   async init() {
@@ -170,6 +346,7 @@ export default {
     const url = new URL(request.url);
 
     if (isHalfDozenScenarioRoute(url.pathname)) {
+      const runId = crypto.randomUUID();
       if (request.method === 'OPTIONS') {
         return new Response(null, {
           headers: {
@@ -237,15 +414,18 @@ export default {
       try {
         if (url.pathname === HALFDOZEN_FLEET_WATCHDOG_ROUTE) {
           const result = await runHalfDozenFleetWatchdog(baseInput);
+          queueSuccessNotifications(ctx, env, result, url.pathname, runId);
           return jsonResponse(result);
         }
 
         if (url.pathname === HALFDOZEN_INBOX_TRIAGE_ROUTE) {
           const result = await runHalfDozenInboxTriage(baseInput);
+          queueSuccessNotifications(ctx, env, result, url.pathname, runId);
           return jsonResponse(result);
         }
 
         const result = await runHalfDozenDedup(baseInput);
+        queueSuccessNotifications(ctx, env, result, url.pathname, runId);
         return jsonResponse(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -255,6 +435,7 @@ export default {
             : url.pathname === HALFDOZEN_INBOX_TRIAGE_ROUTE
               ? 'inbox-triage'
               : 'dedup';
+        queueErrorNotification(ctx, env, scenario, url.pathname, runId, message);
         return jsonResponse(
           {
             success: false,
@@ -274,7 +455,7 @@ export default {
     if (url.pathname === '/' || url.pathname === '/health') {
       return jsonResponse({
         name: 'playbook',
-        version: '1.3.0',
+        version: '1.4.0',
         description: 'Host workflow playbooks and installation guidance for MCP onboarding',
         hosts: HOST_PLAYBOOKS.map((p) => p.name),
         catalogEntries: MCP_CATALOG.length,
@@ -286,6 +467,10 @@ export default {
           halfdozen_dedup: HALFDOZEN_DEDUP_ROUTE,
         },
         protectedRoutes: HALFDOZEN_PROTECTED_ROUTES,
+        notifications: {
+          halfdozenSlackWebhookConfigured: Boolean(env.HALFDOZEN_SLACK_WEBHOOK_URL),
+          halfdozenSlackEscalationWebhookConfigured: Boolean(env.HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL),
+        },
         tools: [
           'get_playbook',
           'compare_hosts',
