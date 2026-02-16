@@ -33,6 +33,13 @@
     "harness:start": "pnpm --filter @create-something/harness harness start",
     "harness:status": "pnpm --filter @create-something/harness harness status",
     "harness:resume": "pnpm --filter @create-something/harness harness resume",
+    "agent:halfdozen:smoke": "tsx scripts/openai-agent-sdk-halfdozen-smoke.ts",
+    "agent:halfdozen:dedup": "tsx scripts/openai-agent-sdk-halfdozen-smoke.ts --scenario dedup",
+    "agent:halfdozen:dedup:connect": "tsx scripts/openai-agent-sdk-halfdozen-smoke.ts --scenario dedup --connect-only",
+    "agent:halfdozen:inbox-triage": "tsx scripts/openai-agent-sdk-halfdozen-smoke.ts --scenario inbox-triage",
+    "agent:halfdozen:inbox-triage:connect": "tsx scripts/openai-agent-sdk-halfdozen-smoke.ts --scenario inbox-triage --connect-only",
+    "agent:halfdozen:fleet-watchdog": "tsx scripts/openai-agent-sdk-halfdozen-smoke.ts --scenario fleet-watchdog",
+    "agent:halfdozen:fleet-watchdog:connect": "tsx scripts/openai-agent-sdk-halfdozen-smoke.ts --scenario fleet-watchdog --connect-only",
     "ui": "./scripts/ui-preview.sh",
     "ui:start": "./scripts/ui-preview.sh start",
     "ui:stop": "./scripts/ui-preview.sh stop",
@@ -68,6 +75,7 @@
   "devDependencies": {
     "@iarna/toml": "^2.2.5",
     "@mizchi/lsmcp": "^0.10.0",
+    "@openai/agents": "^0.4.10",
     "@typescript-eslint/parser": "^8.50.1",
     "esbuild": "^0.24.2",
     "glob": "^13.0.0",
@@ -75,7 +83,8 @@
     "prettier-plugin-svelte": "^3.4.1",
     "tsx": "^4.21.0",
     "typescript": "^5.7.2",
-    "yaml": "^2.8.2"
+    "yaml": "^2.8.2",
+    "zod": "^4.3.6"
   },
   "engines": {
     "node": ">=20.0.0",

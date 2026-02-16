@@ -1,0 +1,183 @@
+version: "1.0"
+contract_type: "mcp_contract"
+
+metadata:
+  client_name: "half-dozen"
+  engagement_id: "hd-inbox-triage-v1"
+  delivery_model: "agent-outcome-stack" # agent-outcome-stack | mcp-only
+  status: "draft" # draft | active | deprecated
+  owners:
+    technical_owner: "create-something-platform"
+    client_owner: "halfdozen-ops"
+  codex_vector:
+    primary_client: "codex"
+    portability_target_clients:
+      - "claude"
+      - "cursor"
+
+mcp_server:
+  name: "halfdozen-gmail-sync"
+  version: "4.0.0"
+  transport: "remote" # sse | stdio | remote
+  endpoints:
+    production: "https://gmail.mcp.workway.co/mcp"
+    staging: "https://gmail.mcp.workway.co/mcp"
+  runtime:
+    framework: "@create-something/mcp-core"
+    hosting: "cloudflare-workers"
+
+auth:
+  strategy: "oauth" # oauth | api-key | service-account | mixed
+  provider: "google-gmail-and-notion"
+  scopes:
+    required:
+      - "gmail.readonly"
+      - "notion:pages.read"
+      - "notion:pages.write"
+    optional:
+      - "gmail.modify"
+  token_lifecycle:
+    refresh_policy: "Automatic refresh from stored OAuth credentials with retry once."
+    revocation_policy: "Pause automation and require reauthorization on revoke."
+  secrets:
+    owner: "create-something-platform"
+    rotation_window_days: 90
+
+resources:
+  - id: "telemetry-usage"
+    uri: "telemetry://usage"
+    schema_ref: "packages/mcp-core/src/telemetry.ts"
+    data_classification: "internal" # public | internal | confidential | restricted
+    freshness_sla_minutes: 15
+  - id: "telemetry-health"
+    uri: "telemetry://health"
+    schema_ref: "packages/mcp-core/src/telemetry.ts"
+    data_classification: "internal"
+    freshness_sla_minutes: 15
+  - id: "telemetry-activity"
+    uri: "telemetry://activity"
+    schema_ref: "packages/mcp-core/src/telemetry.ts"
+    data_classification: "internal"
+    freshness_sla_minutes: 15
+
+tools:
+  - name: "search_emails"
+    description: "Search Gmail for target threads using Gmail query syntax."
+    schema_ref: "packages/halfdozen-gmail-sync/worker/index.ts#search_emails"
+    side_effect_level: "read" # read | write | destructive
+    approval_required: "never" # never | policy | always
+    latency_budget_ms: 6000
+    idempotent: true
+  - name: "sync_email"
+    description: "Sync a Gmail message to Notion interactions."
+    schema_ref: "packages/halfdozen-gmail-sync/worker/index.ts#sync_email"
+    side_effect_level: "write"
+    approval_required: "policy"
+    latency_budget_ms: 8000
+    idempotent: true
+  - name: "find_contact"
+    description: "Resolve sender identity against existing Notion contacts."
+    schema_ref: "packages/halfdozen-gmail-sync/worker/index.ts#find_contact"
+    side_effect_level: "read"
+    approval_required: "never"
+    latency_budget_ms: 5000
+    idempotent: true
+  - name: "create_contact"
+    description: "Create a new Notion contact when no confident match exists."
+    schema_ref: "packages/halfdozen-gmail-sync/worker/index.ts#create_contact"
+    side_effect_level: "write"
+    approval_required: "policy"
+    latency_budget_ms: 7000
+    idempotent: false
+  - name: "link_contact"
+    description: "Repair interaction-to-contact relation and archive accidental auto-created contact."
+    schema_ref: "packages/halfdozen-gmail-sync/worker/index.ts#link_contact"
+    side_effect_level: "write"
+    approval_required: "policy"
+    latency_budget_ms: 7000
+    idempotent: true
+  - name: "enrich_contact"
+    description: "Append structured research notes to contact records."
+    schema_ref: "packages/halfdozen-gmail-sync/worker/index.ts#enrich_contact"
+    side_effect_level: "write"
+    approval_required: "policy"
+    latency_budget_ms: 8000
+    idempotent: false
+  - name: "preview_automation"
+    description: "Dry-run a Gmail query before creating or changing automations."
+    schema_ref: "packages/halfdozen-gmail-sync/worker/index.ts#preview_automation"
+    side_effect_level: "read"
+    approval_required: "never"
+    latency_budget_ms: 8000
+    idempotent: true
+  - name: "create_automation"
+    description: "Create recurring sync rule for inbox triage."
+    schema_ref: "packages/halfdozen-gmail-sync/worker/index.ts#create_automation"
+    side_effect_level: "write"
+    approval_required: "policy"
+    latency_budget_ms: 7000
+    idempotent: false
+  - name: "pause_automation"
+    description: "Pause unstable or noisy sync automation."
+    schema_ref: "packages/halfdozen-gmail-sync/worker/index.ts#pause_automation"
+    side_effect_level: "write"
+    approval_required: "policy"
+    latency_budget_ms: 5000
+    idempotent: true
+  - name: "resume_automation"
+    description: "Resume previously paused sync automation."
+    schema_ref: "packages/halfdozen-gmail-sync/worker/index.ts#resume_automation"
+    side_effect_level: "write"
+    approval_required: "policy"
+    latency_budget_ms: 5000
+    idempotent: true
+  - name: "list_automations"
+    description: "List all automation rules and statuses for operator review."
+    schema_ref: "packages/halfdozen-gmail-sync/worker/index.ts#list_automations"
+    side_effect_level: "read"
+    approval_required: "never"
+    latency_budget_ms: 4000
+    idempotent: true
+  - name: "get_automation_history"
+    description: "Fetch recent run history to evaluate drift and failures."
+    schema_ref: "packages/halfdozen-gmail-sync/worker/index.ts#get_automation_history"
+    side_effect_level: "read"
+    approval_required: "never"
+    latency_budget_ms: 5000
+    idempotent: true
+
+prompts:
+  - id: "capabilities"
+    purpose: "Guidance prompt listing Gmail/Notion tool workflows for operators."
+    owner: "create-something-platform"
+    version: "1.0"
+
+error_model:
+  retry_policy:
+    max_retries: 2
+    backoff_ms: 500
+  codes:
+    - code: "AUTH_EXPIRED"
+      meaning: "Gmail or Notion OAuth credentials are expired/revoked."
+      user_action: "Run auth flow and retry."
+    - code: "QUERY_INVALID"
+      meaning: "Provided Gmail query syntax is invalid or too broad."
+      user_action: "Refine query and preview before sync."
+    - code: "CONTACT_MATCH_CONFLICT"
+      meaning: "Multiple contacts are plausible and no safe automatic link exists."
+      user_action: "Escalate for manual contact selection."
+    - code: "AUTOMATION_FAILURE_LOOP"
+      meaning: "Automation is repeatedly failing for same root cause."
+      user_action: "Pause automation and escalate incident."
+
+handoff_bundle:
+  required_artifacts:
+    - "mcp_contract_halfdozen_inbox_triage.yaml"
+    - "agent_contract_halfdozen_inbox_triage.yaml"
+    - "outcome_contract_halfdozen_inbox_triage.md"
+    - "golden_tasks_halfdozen_inbox_triage.yaml"
+  operational_assets:
+    - "endpoint inventory"
+    - "auth scope matrix"
+    - "tool/resource/prompt registry"
+    - "incident + rollback runbook"

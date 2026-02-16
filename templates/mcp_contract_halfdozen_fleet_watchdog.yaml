@@ -1,0 +1,151 @@
+version: "1.0"
+contract_type: "mcp_contract"
+
+metadata:
+  client_name: "half-dozen"
+  engagement_id: "hd-fleet-watchdog-v1"
+  delivery_model: "agent-outcome-stack" # agent-outcome-stack | mcp-only
+  status: "draft" # draft | active | deprecated
+  owners:
+    technical_owner: "create-something-platform"
+    client_owner: "halfdozen-ops"
+  codex_vector:
+    primary_client: "codex"
+    portability_target_clients:
+      - "claude"
+      - "cursor"
+
+mcp_server:
+  name: "halfdozen-telemetry"
+  version: "1.0.0"
+  transport: "remote" # sse | stdio | remote
+  endpoints:
+    production: "https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp"
+    staging: "https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp"
+  runtime:
+    framework: "@create-something/mcp-core"
+    hosting: "cloudflare-workers"
+
+auth:
+  strategy: "api-key" # oauth | api-key | service-account | mixed
+  provider: "cloudflare-route-access"
+  scopes:
+    required:
+      - "telemetry.read"
+    optional:
+      - "telemetry.maintenance"
+  token_lifecycle:
+    refresh_policy: "Rotate access token monthly; short-lived tokens preferred."
+    revocation_policy: "Immediate revoke on exposure and rotate worker secret."
+  secrets:
+    owner: "create-something-platform"
+    rotation_window_days: 30
+
+resources:
+  - id: "fleet-status"
+    uri: "fleet://status"
+    schema_ref: "packages/halfdozen-telemetry-mcp/worker/index.ts"
+    data_classification: "internal" # public | internal | confidential | restricted
+    freshness_sla_minutes: 5
+
+tools:
+  - name: "query_health"
+    description: "Check 24h server health, error rate, and latency."
+    schema_ref: "packages/halfdozen-telemetry-mcp/worker/index.ts#query_health"
+    side_effect_level: "read" # read | write | destructive
+    approval_required: "never" # never | policy | always
+    latency_budget_ms: 5000
+    idempotent: true
+  - name: "query_usage"
+    description: "Get run volumes by period and server."
+    schema_ref: "packages/halfdozen-telemetry-mcp/worker/index.ts#query_usage"
+    side_effect_level: "read"
+    approval_required: "never"
+    latency_budget_ms: 5000
+    idempotent: true
+  - name: "query_activity"
+    description: "Inspect recent tool invocations for anomaly triage."
+    schema_ref: "packages/halfdozen-telemetry-mcp/worker/index.ts#query_activity"
+    side_effect_level: "read"
+    approval_required: "never"
+    latency_budget_ms: 6000
+    idempotent: true
+  - name: "query_errors"
+    description: "Group and summarize error patterns over a lookback window."
+    schema_ref: "packages/halfdozen-telemetry-mcp/worker/index.ts#query_errors"
+    side_effect_level: "read"
+    approval_required: "never"
+    latency_budget_ms: 6000
+    idempotent: true
+  - name: "query_trends"
+    description: "Compare period-over-period usage for drift detection."
+    schema_ref: "packages/halfdozen-telemetry-mcp/worker/index.ts#query_trends"
+    side_effect_level: "read"
+    approval_required: "never"
+    latency_budget_ms: 6000
+    idempotent: true
+  - name: "run_sql"
+    description: "Execute read-only SQL for custom diagnostics."
+    schema_ref: "packages/halfdozen-telemetry-mcp/worker/index.ts#run_sql"
+    side_effect_level: "read"
+    approval_required: "policy"
+    latency_budget_ms: 7000
+    idempotent: true
+  - name: "describe_tables"
+    description: "Inspect telemetry table schemas for safe query construction."
+    schema_ref: "packages/halfdozen-telemetry-mcp/worker/index.ts#describe_tables"
+    side_effect_level: "read"
+    approval_required: "never"
+    latency_budget_ms: 5000
+    idempotent: true
+  - name: "cleanup"
+    description: "Delete old invocation records after explicit operator approval."
+    schema_ref: "packages/halfdozen-telemetry-mcp/worker/index.ts#cleanup"
+    side_effect_level: "destructive"
+    approval_required: "always"
+    latency_budget_ms: 10000
+    idempotent: true
+
+prompts:
+  - id: "health_review"
+    purpose: "Structured fleet health check and prioritization."
+    owner: "create-something-platform"
+    version: "1.0"
+  - id: "activity_report"
+    purpose: "Periodic summary of usage, reliability, and trends."
+    owner: "create-something-platform"
+    version: "1.0"
+  - id: "debug_server"
+    purpose: "Stepwise diagnostic flow for one server under incident."
+    owner: "create-something-platform"
+    version: "1.0"
+
+error_model:
+  retry_policy:
+    max_retries: 2
+    backoff_ms: 500
+  codes:
+    - code: "AUTH_INVALID"
+      meaning: "Telemetry endpoint authentication token is missing or invalid."
+      user_action: "Refresh API key/route token."
+    - code: "SQL_WRITE_BLOCKED"
+      meaning: "run_sql attempted non-SELECT statement."
+      user_action: "Use SELECT-only query and rerun."
+    - code: "NO_RECENT_DATA"
+      meaning: "No invocation data in requested window."
+      user_action: "Widen lookback or verify server activity."
+    - code: "D1_UNAVAILABLE"
+      meaning: "Telemetry database unavailable or timed out."
+      user_action: "Escalate incident and retry after cooldown."
+
+handoff_bundle:
+  required_artifacts:
+    - "mcp_contract_halfdozen_fleet_watchdog.yaml"
+    - "agent_contract_halfdozen_fleet_watchdog.yaml"
+    - "outcome_contract_halfdozen_fleet_watchdog.md"
+    - "golden_tasks_halfdozen_fleet_watchdog.yaml"
+  operational_assets:
+    - "endpoint inventory"
+    - "auth scope matrix"
+    - "tool/resource/prompt registry"
+    - "incident + rollback runbook"

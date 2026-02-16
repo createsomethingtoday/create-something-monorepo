@@ -1,0 +1,108 @@
+version: "1.0"
+contract_type: "agent_contract"
+
+metadata:
+  client_name: "half-dozen"
+  engagement_id: "hd-fleet-watchdog-v1"
+  status: "draft" # draft | active | deprecated
+  delivery_mode: "agent-outcome-stack" # agent-outcome-stack | mcp-only
+
+agent_profile:
+  name: "halfdozen-fleet-watchdog-agent"
+  purpose: "Monitor MCP fleet reliability, detect regressions early, and produce incident-ready diagnostics."
+  primary_interface: "codex" # codex | claude | cursor | api
+  portability:
+    required: true
+    supported_clients:
+      - "codex"
+      - "claude"
+      - "cursor"
+
+workflow:
+  triggers:
+    - id: "hourly-health-check"
+      type: "schedule"
+      schedule_utc: "0 * * * *"
+      condition: "Run every hour across all Half Dozen servers."
+    - id: "high-error-spike"
+      type: "event"
+      condition: "Run immediately when error rate exceeds 10% in a 30-minute window."
+  output_artifacts:
+    - "fleet_health_snapshot.json"
+    - "incident_triage_report.md"
+    - "recommended_remediation_plan.md"
+
+capability_scope:
+  allowed_tools:
+    - "query_health"
+    - "query_usage"
+    - "query_activity"
+    - "query_errors"
+    - "query_trends"
+    - "run_sql"
+    - "describe_tables"
+  blocked_tools:
+    - "cleanup"
+    - "notion_bulk_archive"
+    - "delete_automation"
+  allowed_resource_patterns:
+    - "fleet://status"
+    - "fleet://summary"
+
+approval_and_control:
+  mode: "human-in-the-loop" # none | human-in-the-loop | hybrid
+  write_operations: "blocked" # blocked | policy | always-approved
+  destructive_operations: "always-human"
+  escalation_triggers:
+    - "server_status_degraded_or_unhealthy"
+    - "error_rate_above_10_percent"
+    - "p95_latency_above_5000ms"
+    - "no_activity_on_expected_active_server"
+
+judgment_layer:
+  policy_artifacts:
+    - id: "HD-FLEET-OBSERVABILITY-POLICY"
+      description: "Classification thresholds and severity mapping for incidents."
+      owner: "platform"
+      version: "1.0"
+    - id: "HD-INCIDENT-ESCALATION-POLICY"
+      description: "Routing and response expectations for Sev3-Sev1 conditions."
+      owner: "operations"
+      version: "1.0"
+  decision_thresholds:
+    minimum_confidence: 0.9
+    max_autonomous_steps: 8
+
+budget_and_latency_guardrails:
+  max_cost_usd_per_day: 8
+  max_cost_usd_per_task: 0.5
+  p95_latency_ms: 8000
+  hard_timeout_ms: 30000
+
+observability:
+  log_sink: "halfdozen-feedback"
+  required_metrics:
+    - "tool_success_rate"
+    - "error_rate_by_server"
+    - "incident_detection_time"
+    - "false_positive_rate"
+    - "mttd_minutes"
+
+success_metrics:
+  - id: "detection_speed"
+    target: "MTTD <= 15 minutes for degraded or unhealthy states"
+  - id: "false_positive_control"
+    target: "<= 10% false positive incidents"
+  - id: "coverage"
+    target: "100% of active Half Dozen MCP servers included in hourly checks"
+  - id: "escalation_quality"
+    target: ">= 90% of escalations include actionable tool-level evidence"
+
+runbook:
+  codex_setup_included: true
+  policy_pack_included: true
+  operator_runbook_included: true
+  rollback_steps:
+    - "Disable event trigger and retain hourly checks only"
+    - "Fallback to manual telemetry prompt workflow"
+    - "Escalate unresolved anomalies to on-call owner"

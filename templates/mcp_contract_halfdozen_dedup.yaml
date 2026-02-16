@@ -1,0 +1,149 @@
+version: "1.0"
+contract_type: "mcp_contract"
+
+metadata:
+  client_name: "half-dozen"
+  engagement_id: "hd-dedup-v1"
+  delivery_model: "agent-outcome-stack" # agent-outcome-stack | mcp-only
+  status: "draft" # draft | active | deprecated
+  owners:
+    technical_owner: "create-something-platform"
+    client_owner: "halfdozen-ops"
+  codex_vector:
+    primary_client: "codex"
+    portability_target_clients:
+      - "claude"
+      - "cursor"
+
+mcp_server:
+  name: "notion-halfdozen-create-something"
+  version: "2026.02"
+  transport: "remote" # sse | stdio | remote
+  endpoints:
+    production: "https://createsomething-notion.mcp.workway.co/mcp"
+    staging: "https://createsomething-notion.mcp.workway.co/mcp"
+  runtime:
+    framework: "@create-something/mcp-core"
+    hosting: "cloudflare-workers"
+
+integration_dependencies:
+  secondary_mcp_servers:
+    - name: "halfdozen-gmail-sync"
+      endpoint: "https://gmail.mcp.workway.co/mcp"
+      required_tools:
+        - "link_contact"
+
+auth:
+  strategy: "oauth" # oauth | api-key | service-account | mixed
+  provider: "notion-and-google"
+  scopes:
+    required:
+      - "notion:databases.read"
+      - "notion:pages.read"
+      - "notion:pages.write"
+      - "gmail.readonly"
+    optional:
+      - "gmail.modify"
+  token_lifecycle:
+    refresh_policy: "Automatic refresh; fail closed and escalate on token refresh failure."
+    revocation_policy: "Immediate lockout on revoked credentials; require operator reconnect."
+  secrets:
+    owner: "create-something-platform"
+    rotation_window_days: 90
+
+resources:
+  - id: "workspace-manifest"
+    uri: "notion://workspaces"
+    schema_ref: "packages/halfdozen-notion-mcp/src/resources.ts"
+    data_classification: "internal" # public | internal | confidential | restricted
+    freshness_sla_minutes: 30
+  - id: "tool-manifest"
+    uri: "notion://tools"
+    schema_ref: "packages/halfdozen-notion-mcp/src/resources.ts"
+    data_classification: "internal"
+    freshness_sla_minutes: 30
+  - id: "telemetry-health"
+    uri: "telemetry://health"
+    schema_ref: "packages/mcp-core/src/telemetry.ts"
+    data_classification: "internal"
+    freshness_sla_minutes: 15
+
+tools:
+  - name: "notion_get_database"
+    description: "Fetch schema before any dedup query/update operations."
+    schema_ref: "packages/halfdozen-notion-mcp/src/schemas.ts#notionGetDatabaseSchema"
+    side_effect_level: "read" # read | write | destructive
+    approval_required: "never" # never | policy | always
+    latency_budget_ms: 4000
+    idempotent: true
+  - name: "notion_query_database"
+    description: "Find duplicate candidates and canonical record candidates."
+    schema_ref: "packages/halfdozen-notion-mcp/src/schemas.ts#notionQueryDatabaseSchema"
+    side_effect_level: "read"
+    approval_required: "never"
+    latency_budget_ms: 5000
+    idempotent: true
+  - name: "notion_get_page"
+    description: "Load candidate pages for tie-break and evidence checks."
+    schema_ref: "packages/halfdozen-notion-mcp/src/schemas.ts#notionGetPageSchema"
+    side_effect_level: "read"
+    approval_required: "never"
+    latency_budget_ms: 4000
+    idempotent: true
+  - name: "notion_bulk_update"
+    description: "Apply canonical fields and merge metadata across duplicate clusters."
+    schema_ref: "packages/halfdozen-notion-mcp/src/schemas.ts#notionBulkUpdateSchema"
+    side_effect_level: "write"
+    approval_required: "policy"
+    latency_budget_ms: 8000
+    idempotent: true
+  - name: "link_contact"
+    description: "Repair relation links from interactions to canonical contact pages."
+    schema_ref: "packages/halfdozen-gmail-sync/worker/index.ts#link_contact"
+    side_effect_level: "write"
+    approval_required: "policy"
+    latency_budget_ms: 8000
+    idempotent: true
+  - name: "notion_bulk_archive"
+    description: "Archive duplicate pages after canonical merge and relation repair."
+    schema_ref: "packages/halfdozen-notion-mcp/src/schemas.ts#notionBulkArchiveSchema"
+    side_effect_level: "destructive"
+    approval_required: "always"
+    latency_budget_ms: 8000
+    idempotent: true
+
+prompts:
+  - id: "task_workflow"
+    purpose: "Workspace routing and schema-first Notion workflow policy."
+    owner: "create-something-platform"
+    version: "1.0"
+
+error_model:
+  retry_policy:
+    max_retries: 2
+    backoff_ms: 500
+  codes:
+    - code: "AUTH_EXPIRED"
+      meaning: "OAuth credentials for Notion or Gmail are expired/revoked."
+      user_action: "Reconnect account and rerun cluster."
+    - code: "SCHEMA_MISMATCH"
+      meaning: "Data source schema differs from expected merge plan."
+      user_action: "Refresh schema via notion_get_database and regenerate plan."
+    - code: "CANONICAL_AMBIGUOUS"
+      meaning: "No single canonical record meets confidence threshold."
+      user_action: "Escalate cluster for manual selection."
+    - code: "RELATION_REPAIR_FAILED"
+      meaning: "Interaction links could not be safely moved to canonical contact."
+      user_action: "Escalate and keep duplicates unarchived."
+
+handoff_bundle:
+  required_artifacts:
+    - "mcp_contract_halfdozen_dedup.yaml"
+    - "agent_contract_halfdozen_dedup.yaml"
+    - "outcome_contract_halfdozen_dedup.md"
+    - "golden_tasks_halfdozen_dedup.yaml"
+  operational_assets:
+    - "endpoint inventory"
+    - "auth scope matrix"
+    - "tool/resource/prompt registry"
+    - "incident + rollback runbook"

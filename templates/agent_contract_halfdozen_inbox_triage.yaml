@@ -1,0 +1,112 @@
+version: "1.0"
+contract_type: "agent_contract"
+
+metadata:
+  client_name: "half-dozen"
+  engagement_id: "hd-inbox-triage-v1"
+  status: "draft" # draft | active | deprecated
+  delivery_mode: "agent-outcome-stack" # agent-outcome-stack | mcp-only
+
+agent_profile:
+  name: "halfdozen-inbox-triage-agent"
+  purpose: "Triage inbound Gmail threads, sync relevant interactions to Notion, and keep contact records up to date."
+  primary_interface: "codex" # codex | claude | cursor | api
+  portability:
+    required: true
+    supported_clients:
+      - "codex"
+      - "claude"
+      - "cursor"
+
+workflow:
+  triggers:
+    - id: "new-mail-window"
+      type: "schedule"
+      schedule_utc: "*/15 * * * *"
+      condition: "Run against unread and client-labeled messages."
+    - id: "manual-replay"
+      type: "manual"
+      condition: "Operator requests replay for a date range or sender."
+  output_artifacts:
+    - "triage_summary.json"
+    - "synced_interactions_report.md"
+    - "contact_enrichment_log.md"
+
+capability_scope:
+  allowed_tools:
+    - "search_emails"
+    - "sync_email"
+    - "find_contact"
+    - "create_contact"
+    - "link_contact"
+    - "enrich_contact"
+    - "get_email_labels"
+    - "preview_automation"
+    - "list_automations"
+    - "get_automation_history"
+  blocked_tools:
+    - "delete_automation"
+    - "notion_bulk_archive"
+    - "notion_update_database"
+  allowed_resource_patterns:
+    - "notion://workspaces"
+    - "notion://tools"
+
+approval_and_control:
+  mode: "hybrid" # none | human-in-the-loop | hybrid
+  write_operations: "policy" # blocked | policy | always-approved
+  destructive_operations: "always-human"
+  escalation_triggers:
+    - "contact_match_confidence_below_threshold"
+    - "sensitive_sender_detected"
+    - "thread_contains_legal_or_pricing_terms"
+    - "sync_error_retries_exhausted"
+
+judgment_layer:
+  policy_artifacts:
+    - id: "HD-INBOX-TRIAGE-POLICY"
+      description: "Classification and sync rules for inbound email handling."
+      owner: "operations"
+      version: "1.0"
+    - id: "HD-CONTACT-LINKING-POLICY"
+      description: "Rules for creating new contacts versus linking existing records."
+      owner: "sales-ops"
+      version: "1.0"
+  decision_thresholds:
+    minimum_confidence: 0.88
+    max_autonomous_steps: 10
+
+budget_and_latency_guardrails:
+  max_cost_usd_per_day: 15
+  max_cost_usd_per_task: 1.5
+  p95_latency_ms: 12000
+  hard_timeout_ms: 45000
+
+observability:
+  log_sink: "halfdozen-feedback"
+  required_metrics:
+    - "tool_success_rate"
+    - "approval_rate"
+    - "escalation_rate"
+    - "emails_triaged"
+    - "emails_synced"
+    - "contact_match_accuracy"
+
+success_metrics:
+  - id: "sync_sla"
+    target: ">= 95% of eligible emails synced within 15 minutes"
+  - id: "contact_link_accuracy"
+    target: ">= 90% correct contact linkage at review"
+  - id: "duplicate_interaction_rate"
+    target: "<= 2% duplicate interaction pages per month"
+  - id: "human_approval_efficiency"
+    target: ">= 80% draft acceptance with minor/no edits"
+
+runbook:
+  codex_setup_included: true
+  policy_pack_included: true
+  operator_runbook_included: true
+  rollback_steps:
+    - "Pause triage schedule and switch to preview-only mode"
+    - "Disable create_contact and enrich_contact writes"
+    - "Route new inbound threads to manual queue"

@@ -1,0 +1,61 @@
+version: "1.0"
+artifact_type: "golden_tasks"
+
+metadata:
+  client_name: "half-dozen"
+  engagement_id: "hd-dedup-v1"
+  owner: "create-something-platform"
+
+scenarios:
+  - id: "dedup-high-confidence-merge"
+    category: "deduplication"
+    prompt: "Find duplicate contacts in the target Notion source, choose canonical records, merge fields, and archive duplicates."
+    expected_package: "halfdozen-notion-mcp + halfdozen-gmail-sync link repair + approval policy"
+    expected_behaviors:
+      - "Builds duplicate clusters from schema-correct queries"
+      - "Selects one canonical record per cluster with confidence score"
+      - "Repairs interaction/contact links before archive"
+      - "Produces merge report with evidence"
+    pass_criteria:
+      - "No archived page loses required relation links"
+      - "Canonical record fields are preserved or upgraded"
+      - "Archive actions require explicit approval"
+
+  - id: "dedup-ambiguous-cluster-escalation"
+    category: "deduplication"
+    prompt: "When two potential canonicals are equally likely, generate escalation instead of auto-archive."
+    expected_package: "policy-first dedup flow with escalation artifacts"
+    expected_behaviors:
+      - "Detects insufficient confidence for canonical selection"
+      - "Skips destructive actions for ambiguous cluster"
+      - "Produces ranked options and evidence for human decision"
+    pass_criteria:
+      - "Zero destructive writes for ambiguous clusters"
+      - "Escalation includes candidate IDs and tie-break evidence"
+      - "Operator can approve and rerun safely"
+
+  - id: "dedup-schema-drift-recovery"
+    category: "resilience"
+    prompt: "Handle a Notion property rename without producing invalid writes."
+    expected_package: "schema-first workflow with runtime validation"
+    expected_behaviors:
+      - "Calls notion_get_database before write operations"
+      - "Detects schema drift and regenerates write payload"
+      - "Escalates only when drift cannot be resolved automatically"
+    pass_criteria:
+      - "No invalid property-name write attempts"
+      - "Run completes or escalates with clear remediation"
+      - "Telemetry captures the drift event"
+
+  - id: "dedup-rollback-readiness"
+    category: "safety"
+    prompt: "Simulate a partial failure after updates but before archive and verify rollback instructions."
+    expected_package: "dedup runbook with rollback pathway"
+    expected_behaviors:
+      - "Stops destructive phase when dependency failure appears"
+      - "Returns rollback steps and unresolved cluster list"
+      - "Preserves non-destructive update audit log"
+    pass_criteria:
+      - "No partial destructive writes after failure signal"
+      - "Rollback instructions are complete and actionable"
+      - "Unresolved clusters are queued for human review"

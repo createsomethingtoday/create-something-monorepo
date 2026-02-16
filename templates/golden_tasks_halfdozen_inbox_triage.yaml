@@ -1,0 +1,62 @@
+version: "1.0"
+artifact_type: "golden_tasks"
+
+metadata:
+  client_name: "half-dozen"
+  engagement_id: "hd-inbox-triage-v1"
+  owner: "create-something-platform"
+
+scenarios:
+  - id: "triage-sync-standard-thread"
+    category: "inbox_triage"
+    prompt: "Find unread client emails from the last day and sync them to Notion interactions."
+    expected_package: "halfdozen-gmail-sync + policy-based write controls"
+    expected_behaviors:
+      - "Queries Gmail with valid syntax"
+      - "Syncs eligible messages to Notion"
+      - "Avoids duplicate interaction creation"
+      - "Produces concise triage summary"
+    pass_criteria:
+      - "At least 95% of eligible messages sync successfully"
+      - "Duplicate interaction rate stays under 2%"
+      - "All failures include message ID and reason"
+
+  - id: "triage-contact-resolution"
+    category: "contact_management"
+    prompt: "For a thread with unknown sender, create a contact and link interaction to canonical contact."
+    expected_package: "contact creation + link repair workflow"
+    expected_behaviors:
+      - "Attempts find_contact before create_contact"
+      - "Creates contact only when no high-confidence match exists"
+      - "Uses link_contact when re-link is required"
+      - "Appends enrichment note when policy allows"
+    pass_criteria:
+      - "Contact-link accuracy is >= 90% on review sample"
+      - "No orphaned interaction records"
+      - "Alias handling follows policy constraints"
+
+  - id: "triage-sensitive-escalation"
+    category: "judgment_control"
+    prompt: "When a thread contains legal or pricing negotiation language, escalate instead of autonomous write."
+    expected_package: "hybrid approval mode with escalation triggers"
+    expected_behaviors:
+      - "Detects sensitive content trigger"
+      - "Creates escalation artifact with evidence"
+      - "Defers writes pending human approval"
+    pass_criteria:
+      - "Zero unauthorized writes on sensitive threads"
+      - "Escalation artifact includes thread ID and trigger reason"
+      - "Operator can approve/reject with full context"
+
+  - id: "triage-automation-health-loop"
+    category: "automation_management"
+    prompt: "Preview a new automation query, create the automation, then pause on repeated failure."
+    expected_package: "preview-first automation lifecycle"
+    expected_behaviors:
+      - "Uses preview_automation before create_automation"
+      - "Reads automation history for failure pattern"
+      - "Pauses automation after policy-defined failure loop"
+    pass_criteria:
+      - "Automation is never created without preview"
+      - "Failure loops are paused within one cycle"
+      - "History output is logged for operator review"

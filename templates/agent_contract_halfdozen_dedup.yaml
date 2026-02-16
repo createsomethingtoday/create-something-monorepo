@@ -1,0 +1,107 @@
+version: "1.0"
+contract_type: "agent_contract"
+
+metadata:
+  client_name: "half-dozen"
+  engagement_id: "hd-dedup-v1"
+  status: "draft" # draft | active | deprecated
+  delivery_mode: "agent-outcome-stack" # agent-outcome-stack | mcp-only
+
+agent_profile:
+  name: "halfdozen-dedup-agent"
+  purpose: "Detect and resolve duplicate Notion records while preserving canonical records and relationships."
+  primary_interface: "codex" # codex | claude | cursor | api
+  portability:
+    required: true
+    supported_clients:
+      - "codex"
+      - "claude"
+      - "cursor"
+
+workflow:
+  triggers:
+    - id: "nightly-dedup"
+      type: "schedule"
+      schedule_utc: "0 7 * * *"
+      condition: "Run only when at least 50 new records were added since prior run."
+    - id: "manual-dedup"
+      type: "manual"
+      condition: "Operator requests dedupe for a specific workspace and data source."
+  output_artifacts:
+    - "dedupe_report.json"
+    - "merge_plan.md"
+    - "escalation_ticket.md"
+
+capability_scope:
+  allowed_tools:
+    - "notion_get_database"
+    - "notion_query_database"
+    - "notion_get_page"
+    - "notion_bulk_update"
+    - "notion_bulk_archive"
+    - "link_contact"
+  blocked_tools:
+    - "notion_create_database"
+    - "notion_update_database"
+    - "delete_automation"
+  allowed_resource_patterns:
+    - "notion://workspaces"
+    - "notion://tools"
+
+approval_and_control:
+  mode: "hybrid" # none | human-in-the-loop | hybrid
+  write_operations: "policy" # blocked | policy | always-approved
+  destructive_operations: "always-human"
+  escalation_triggers:
+    - "candidate_confidence_below_threshold"
+    - "more_than_one_canonical_candidate"
+    - "archive_count_exceeds_20"
+    - "schema_mismatch_detected"
+
+judgment_layer:
+  policy_artifacts:
+    - id: "HD-DEDUP-POLICY"
+      description: "Canonicalization rules for duplicate detection and merge order."
+      owner: "operations"
+      version: "1.0"
+    - id: "HD-DATA-SAFETY-POLICY"
+      description: "Safety limits for destructive actions and rollback behavior."
+      owner: "platform"
+      version: "1.0"
+  decision_thresholds:
+    minimum_confidence: 0.92
+    max_autonomous_steps: 12
+
+budget_and_latency_guardrails:
+  max_cost_usd_per_day: 10
+  max_cost_usd_per_task: 1
+  p95_latency_ms: 15000
+  hard_timeout_ms: 60000
+
+observability:
+  log_sink: "halfdozen-feedback"
+  required_metrics:
+    - "tool_success_rate"
+    - "escalation_rate"
+    - "duplicate_clusters_detected"
+    - "records_merged"
+    - "records_archived"
+
+success_metrics:
+  - id: "merge_precision"
+    target: ">= 95% human-accepted merge plans"
+  - id: "unauthorized_destructive_writes"
+    target: "0 per month"
+  - id: "manual_cleanup_reduction"
+    target: ">= 60% reduction in manual dedupe time"
+  - id: "dedupe_cycle_time"
+    target: "<= 24h from detection to resolved state"
+
+runbook:
+  codex_setup_included: true
+  policy_pack_included: true
+  operator_runbook_included: true
+  rollback_steps:
+    - "Stop archival actions and switch to report-only mode"
+    - "Restore archived pages using Notion page history if approved"
+    - "Route unresolved clusters to human owner"
