@@ -8,6 +8,7 @@
 	let { data }: { data: PageData } = $props();
 	const INITIAL_EXAMPLES_VISIBLE = 32;
 	const LOAD_MORE_STEP = 24;
+	const AUTO_LOAD_DEBOUNCE_MS = 200;
 
 	// Lightbox state
 	let selectedImageIndex = $state(-1);
@@ -15,6 +16,7 @@
 	let failedImageIds = $state<Set<string>>(new Set());
 	let totalExamples = $derived(data.examples?.length ?? 0);
 	let visibleExamplesCount = $state(INITIAL_EXAMPLES_VISIBLE);
+	let isAutoLoading = $state(false);
 	let visibleExamples = $derived(
 		(data.examples ?? []).slice(0, Math.min(visibleExamplesCount, totalExamples))
 	);
@@ -39,10 +41,41 @@
 	}
 
 	function loadMoreExamples() {
+		if (isAutoLoading || visibleExamplesCount >= totalExamples) return;
+		isAutoLoading = true;
 		visibleExamplesCount = Math.min(
 			visibleExamplesCount + LOAD_MORE_STEP,
 			totalExamples
 		);
+		setTimeout(() => {
+			isAutoLoading = false;
+		}, AUTO_LOAD_DEBOUNCE_MS);
+	}
+
+	function autoLoadSentinel(node: HTMLDivElement) {
+		if (typeof IntersectionObserver === 'undefined') {
+			return;
+		}
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) {
+						loadMoreExamples();
+					}
+				}
+			},
+			{
+				rootMargin: '700px 0px 700px 0px'
+			}
+		);
+
+		observer.observe(node);
+		return {
+			destroy() {
+				observer.disconnect();
+			}
+		};
 	}
 
 	// Format date for display
@@ -193,10 +226,14 @@
 
 			{#if hasMoreExamples}
 				<div class="load-more-row">
-					<button class="load-more-button" onclick={loadMoreExamples}>
-						Load {Math.min(LOAD_MORE_STEP, data.examples.length - visibleExamples.length)} more
-					</button>
-					<p class="load-more-meta">{data.examples.length - visibleExamples.length} remaining</p>
+					<div class="auto-load-sentinel" use:autoLoadSentinel aria-hidden="true"></div>
+					<p class="load-more-meta">
+						{#if isAutoLoading}
+							Loading more...
+						{:else}
+							Scroll to load more ({data.examples.length - visibleExamples.length} remaining)
+						{/if}
+					</p>
 				</div>
 			{/if}
 		</div>
@@ -541,24 +578,9 @@
 		gap: var(--space-xs);
 	}
 
-	.load-more-button {
-		padding: var(--space-xs) var(--space-sm);
-		border: 1px solid var(--color-border-emphasis);
-		background: var(--color-bg-surface);
-		color: var(--color-fg-primary);
-		font-size: var(--text-body-sm);
-		font-weight: 500;
-		cursor: pointer;
-		transition: background var(--duration-micro) var(--ease-standard);
-	}
-
-	.load-more-button:hover {
-		background: var(--color-hover);
-	}
-
-	.load-more-button:focus-visible {
-		outline: 2px solid var(--color-focus);
-		outline-offset: 2px;
+	.auto-load-sentinel {
+		width: 100%;
+		height: 1px;
 	}
 
 	.load-more-meta {
