@@ -1,19 +1,26 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import ImageLightbox from '$lib/components/taste/ImageLightbox.svelte';
-	import { toTasteImageProxyUrl } from '$lib/taste/image';
+	import {
+		toTasteImageProxyUrlWithOptions,
+		toTasteImageSrcSet
+	} from '$lib/taste/image';
 	import { ContributeBlock } from '@create-something/canon/domains/ltd';
 	import { SEO } from '@create-something/canon';
 
 	let { data }: { data: PageData } = $props();
-	const INITIAL_EXAMPLES_VISIBLE = 32;
-	const LOAD_MORE_STEP = 24;
-	const AUTO_LOAD_DEBOUNCE_MS = 200;
+	const INITIAL_EXAMPLES_VISIBLE = 20;
+	const LOAD_MORE_STEP = 12;
+	const AUTO_LOAD_DEBOUNCE_MS = 150;
+	const AUTO_LOAD_ROOT_MARGIN = '1600px 0px 1600px 0px';
+	const GALLERY_IMAGE_WIDTHS = [320, 480, 640, 800, 960] as const;
+	const GALLERY_IMAGE_SIZES = '(min-width: 1024px) 24vw, (min-width: 768px) 32vw, 48vw';
 
 	// Lightbox state
 	let selectedImageIndex = $state(-1);
 	let isLightboxOpen = $derived(selectedImageIndex >= 0);
 	let failedImageIds = $state<Set<string>>(new Set());
+	let loadedImageIds = $state<Set<string>>(new Set());
 	let totalExamples = $derived(data.examples?.length ?? 0);
 	let visibleExamplesCount = $state(INITIAL_EXAMPLES_VISIBLE);
 	let isAutoLoading = $state(false);
@@ -38,6 +45,40 @@
 		const next = new Set(failedImageIds);
 		next.add(exampleId);
 		failedImageIds = next;
+	}
+
+	function markImageLoaded(exampleId: string) {
+		if (loadedImageIds.has(exampleId)) {
+			return;
+		}
+
+		const next = new Set(loadedImageIds);
+		next.add(exampleId);
+		loadedImageIds = next;
+	}
+
+	function getCardImageUrl(imageUrl: string | undefined | null, index: number): string | null {
+		return toTasteImageProxyUrlWithOptions(imageUrl, {
+			width: index < 8 ? 960 : 640,
+			quality: index < 8 ? 72 : 68
+		});
+	}
+
+	function handleImageError(
+		event: Event,
+		exampleId: string,
+		fallbackUrl: string | undefined | null
+	) {
+		const imageElement = event.currentTarget as HTMLImageElement | null;
+
+		// If the optimized proxy variant fails, fall back once to the source URL.
+		if (imageElement && fallbackUrl && imageElement.src !== fallbackUrl) {
+			imageElement.srcset = '';
+			imageElement.src = fallbackUrl;
+			return;
+		}
+
+		markImageLoadFailure(exampleId);
 	}
 
 	function loadMoreExamples() {
@@ -66,7 +107,7 @@
 				}
 			},
 			{
-				rootMargin: '700px 0px 700px 0px'
+				rootMargin: AUTO_LOAD_ROOT_MARGIN
 			}
 		);
 
@@ -186,6 +227,11 @@
 				{#each visibleExamples as example, index}
 					<button
 						class="example-card"
+						class:is-loading={Boolean(
+							example.image_url &&
+								!failedImageIds.has(example.id) &&
+								!loadedImageIds.has(example.id)
+						)}
 						onclick={() => {
 							if (example.image_url && !failedImageIds.has(example.id)) {
 								openLightbox(index);
@@ -196,14 +242,19 @@
 					>
 						{#if example.image_url && !failedImageIds.has(example.id)}
 							<img
-								src={toTasteImageProxyUrl(example.image_url) ?? example.image_url}
+								src={getCardImageUrl(example.image_url, index) ?? example.image_url}
+								srcset={toTasteImageSrcSet(example.image_url, GALLERY_IMAGE_WIDTHS, {
+									quality: 68
+								}) ?? undefined}
+								sizes={GALLERY_IMAGE_SIZES}
 								alt={example.title || 'Visual reference'}
 								class="example-img"
-								loading={index < 8 ? 'eager' : 'lazy'}
-								fetchpriority={index < 4 ? 'high' : 'low'}
+								loading={index < 12 ? 'eager' : 'lazy'}
+								fetchpriority={index < 6 ? 'high' : 'auto'}
 								decoding="async"
 								referrerpolicy="no-referrer"
-								onerror={() => markImageLoadFailure(example.id)}
+								onload={() => markImageLoaded(example.id)}
+								onerror={(event) => handleImageError(event, example.id, example.image_url)}
 							/>
 						{:else}
 							<div class="example-placeholder" role="img" aria-label="Image unavailable">
@@ -500,6 +551,18 @@
 		transition: border-color var(--duration-micro) var(--ease-standard);
 	}
 
+	.example-card.is-loading {
+		background:
+			linear-gradient(
+				110deg,
+				color-mix(in oklab, var(--color-bg-surface) 88%, black 12%) 10%,
+				color-mix(in oklab, var(--color-bg-surface) 96%, white 4%) 45%,
+				color-mix(in oklab, var(--color-bg-surface) 88%, black 12%) 80%
+			);
+		background-size: 200% 100%;
+		animation: gallery-shimmer 1.3s linear infinite;
+	}
+
 	.example-card:focus-visible {
 		outline: 2px solid var(--color-focus);
 		outline-offset: 2px;
@@ -513,7 +576,12 @@
 		width: 100%;
 		height: auto;
 		display: block;
+		opacity: 1;
 		transition: transform var(--duration-standard) var(--ease-standard);
+	}
+
+	.example-card.is-loading .example-img {
+		opacity: 0;
 	}
 
 	.example-placeholder {
@@ -586,6 +654,21 @@
 	.load-more-meta {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
+	}
+
+	@keyframes gallery-shimmer {
+		0% {
+			background-position: 200% 0;
+		}
+		100% {
+			background-position: -200% 0;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.example-card.is-loading {
+			animation: none;
+		}
 	}
 
 	/* Resources */
