@@ -253,6 +253,7 @@
 						class="example-card"
 						class:is-loading={Boolean(
 							example.image_url &&
+								!isGifImageUrl(example.image_url) &&
 								!failedImageIds.has(example.id) &&
 								!loadedImageIds.has(example.id)
 						)}
@@ -265,19 +266,26 @@
 						disabled={!example.image_url || failedImageIds.has(example.id)}
 					>
 						{#if example.image_url && !failedImageIds.has(example.id)}
-							<img
-								src={getCardImageUrl(example.image_url, index) ?? example.image_url}
-								srcset={getCardImageSrcSet(example.image_url) ?? undefined}
-								sizes={GALLERY_IMAGE_SIZES}
-								alt={example.title || 'Visual reference'}
-								class="example-img"
-								loading={index < 8 ? 'eager' : 'lazy'}
-								fetchpriority={index < 4 ? 'high' : 'auto'}
-								decoding="async"
-								referrerpolicy="no-referrer"
-								onload={() => markImageLoaded(example.id)}
-								onerror={(event) => handleImageError(event, example.id, example.image_url)}
-							/>
+							{#if isGifImageUrl(example.image_url)}
+								<div class="example-placeholder gif-preview" role="img" aria-label="Animated image">
+									<span>Animated preview</span>
+									<span class="gif-preview-subtitle">Open to play</span>
+								</div>
+							{:else}
+								<img
+									src={getCardImageUrl(example.image_url, index) ?? example.image_url}
+									srcset={getCardImageSrcSet(example.image_url) ?? undefined}
+									sizes={GALLERY_IMAGE_SIZES}
+									alt={example.title || 'Visual reference'}
+									class="example-img"
+									loading={index < 8 ? 'eager' : 'lazy'}
+									fetchpriority={index < 4 ? 'high' : 'auto'}
+									decoding="async"
+									referrerpolicy="no-referrer"
+									onload={() => markImageLoaded(example.id)}
+									onerror={(event) => handleImageError(event, example.id, example.image_url)}
+								/>
+							{/if}
 						{:else}
 							<div class="example-placeholder" role="img" aria-label="Image unavailable">
 								<span>Image unavailable</span>
@@ -610,6 +618,7 @@
 		width: 100%;
 		min-height: 12rem;
 		display: flex;
+		flex-direction: column;
 		align-items: center;
 		justify-content: center;
 		padding: var(--space-sm);
@@ -618,6 +627,21 @@
 		font-size: var(--text-caption);
 		text-transform: uppercase;
 		letter-spacing: 0.08em;
+	}
+
+	.example-placeholder.gif-preview {
+		background:
+			radial-gradient(circle at 20% 20%, color-mix(in oklab, var(--color-bg-surface) 90%, white 10%), transparent 50%),
+			var(--color-bg-subtle);
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.gif-preview-subtitle {
+		margin-top: 0.4rem;
+		font-size: 0.66rem;
+		letter-spacing: 0.04em;
+		text-transform: none;
+		color: var(--color-fg-subtle);
 	}
 
 	.example-card:hover .example-img {
