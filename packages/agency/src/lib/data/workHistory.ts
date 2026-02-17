@@ -20,8 +20,8 @@ export interface WorkHistoryItem {
  * - `packages/space/static/resume-micah-johnson-techforce.html`
  *
  * Notes:
- * - Some foundational experiences (e.g. photography company) are intentionally left as "date needed"
- *   until confirmed, to avoid guessing.
+ * - Some foundational experiences (e.g. photography company, equine vet tech) are intentionally left as
+ *   "date needed" until confirmed, to avoid guessing.
  */
 export const workHistory: WorkHistoryItem[] = [
 	{
@@ -46,8 +46,33 @@ export const workHistory: WorkHistoryItem[] = [
 		]
 	},
 	{
+		id: 'burleson-equine-hospital',
+		date: 'Date needed (2 years, concurrent with photography)',
+		role: 'Veterinary Technician (Equine)',
+		org: 'Burleson Equine Hospital',
+		subtitle: 'Equine nursing · Blood draws · Farm visits · Clinical logging',
+		bullets: [
+			{
+				label: 'Complexity',
+				text: 'High-stakes clinical work with living systems: patient variability, time-sensitive decisions, and strict safety constraints (animal + human).'
+			},
+			{
+				label: 'Hands-on Duties',
+				text: "Equine nursing, drawing blood, administering medication per doctor's orders, assisting on farm visits, and maintaining accurate logs."
+			},
+			{
+				label: 'Abstraction Tools',
+				text: 'Protocols, checklists, dosage discipline, and documentation as a single source of truth for continuity of care.'
+			},
+			{
+				label: 'Carry-forward (.agency)',
+				text: 'Operational rigor + traceability: when stakes are real, you design systems that prevent errors, keep humans in the loop, and leave an audit trail.'
+			}
+		]
+	},
+	{
 		id: 'photography-company',
-		date: 'Date needed (post-2010, pre-Nov 2013)',
+		date: 'Date needed (post-2010, pre-Nov 2013; concurrent with equine vet tech)',
 		role: 'Co-owner (Photography Company)',
 		org: 'Independent',
 		subtitle: 'Creative production pipeline · First attempt at web development as a service',
@@ -289,4 +314,3 @@ export const workHistoryMilestones = {
 	],
 	orientation: 'horizontal' as const
 };
-
