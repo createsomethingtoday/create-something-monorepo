@@ -32,6 +32,7 @@ Before querying, updating, or creating pages in a data source:
 
 ## Common workflow
 - **Read from one workspace, act in the other**: e.g. Use **notion_search** or **notion_query_database** in halfdozen to find the source; then **notion_create_page** or **notion_update_page** in client for the outcome.
+- **Agency Ops note**: In CREATE SOMETHING Agency Ops, **Substrate is canonical** and these Notion databases are treated as a **view layer**. Avoid manual edits to fields that are synced from Substrate.
 
 ## Batch operations
 When updating or archiving many pages, use **notion_bulk_update** or **notion_bulk_archive** instead of calling update/archive repeatedly.`,

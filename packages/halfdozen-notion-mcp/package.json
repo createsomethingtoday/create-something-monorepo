@@ -7,7 +7,9 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "sync:agency-ops": "node sync-agency-ops-to-substrate.mjs",
+    "sync:agency-ops:view": "node sync-substrate-agency-ops-to-notion.mjs"
   },
   "dependencies": {
     "@create-something/mcp-core": "workspace:*",

@@ -36,6 +36,32 @@ Every tool call includes `workspace: "halfdozen"` or `workspace: "client"` so th
 
    MCP endpoint: `http://localhost:8787/mcp` (Streamable HTTP).
 
+## Agency Ops Registry (Substrate Canonical, Notion View)
+
+For CREATE SOMETHING Agency Ops, **Substrate is canonical** and **Notion is a view layer** for browsing/filtering.
+
+This package includes two scripts:
+
+1. **Bootstrap / migration (Notion → Substrate)** — one-time import of existing Notion ops databases into Substrate:
+
+   ```bash
+   cd packages/halfdozen-notion-mcp
+   NOTION_SYNC_BEARER_TOKEN=<token> SUBSTRATE_ADMIN_TOKEN=<token or SUBSTRATE_TOKEN> \
+   pnpm run sync:agency-ops
+   ```
+
+2. **View sync (Substrate → Notion)** — upserts Notion pages from Substrate and writes back `notion_page_id`/`notion_url` into Substrate for stable mapping:
+
+   ```bash
+   cd packages/halfdozen-notion-mcp
+   NOTION_SYNC_BEARER_TOKEN=<token> SUBSTRATE_ADMIN_TOKEN=<token or SUBSTRATE_TOKEN> \
+   pnpm run sync:agency-ops:view
+   ```
+
+   Notes:
+   - Optional env overrides: `NOTION_URL`, `SUBSTRATE_URL`, `DRY_RUN=1`.
+   - If `Agents` database does not exist in Notion and the script cannot infer the parent page, set `NOTION_AGENCY_OPS_PARENT_PAGE_ID=<page_id>` and rerun.
+
 ## Production
 
 - **URL:** `https://createsomething-notion.mcp.workway.co/mcp` (after deploy and custom domain).
