@@ -975,7 +975,7 @@ export default {
           'scaffold_project',
           'verify_mcp_connection',
         ],
-        resources: 6,
+        resources: HOST_PLAYBOOKS.length + 3,
         prompts: ['workflow_setup', 'host_comparison', 'project_structure'],
       });
     }

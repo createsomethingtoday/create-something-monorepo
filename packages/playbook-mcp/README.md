@@ -1,6 +1,6 @@
 # Playbook MCP
 
-Host workflow playbooks for MCP onboarding. Teaches non-technical users how to work effectively in Codex, Cursor, and Claude Desktop.
+Host workflow playbooks for MCP onboarding. Teaches users how to work effectively in Codex, Cursor, Claude Desktop, Claude Code, Windsurf, and VS Code (Copilot).
 
 Lightweight by design — ships alongside client MCPs for onboarding. No philosophy, no papers, no design system. Just workflow guidance.
 
@@ -8,7 +8,7 @@ Lightweight by design — ships alongside client MCPs for onboarding. No philoso
 
 | Tier | MCP Primitive | Role in This Server |
 |------|---------------|---------------------|
-| **Database** | Resources | 6 playbook resources: host-specific guidance, comparison matrix, graduation path |
+| **Database** | Resources | Host playbooks (one resource per host) + list + comparison matrix + graduation path |
 | **Automation** | Tools | 8 tools: playbook content (3) + installation guidance (5) |
 | **Judgment** | Prompts | 3 prompts: workflow setup, host comparison, project structure guidance |
 
@@ -22,6 +22,9 @@ Application-controlled playbook content.
 | `playbooks://hosts/codex` | Codex workflow playbook: mental model, patterns, folder structure |
 | `playbooks://hosts/cursor` | Cursor workflow playbook: mental model, patterns, folder structure |
 | `playbooks://hosts/claude-desktop` | Claude Desktop workflow playbook: mental model, patterns |
+| `playbooks://hosts/claude-code` | Claude Code workflow playbook: mental model, patterns |
+| `playbooks://hosts/windsurf` | Windsurf workflow playbook: mental model, patterns |
+| `playbooks://hosts/vscode` | VS Code (Copilot) workflow playbook: mental model, patterns |
 | `playbooks://comparison` | Host comparison matrix by task type + MCP usage patterns |
 | `playbooks://graduation-path` | The Graduation Path: Claude Desktop -> Cursor -> Codex |
 
