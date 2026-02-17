@@ -13,7 +13,7 @@ enabled = true
 # Create with: wrangler kv namespace create GMAIL_TOKENS
 [[kv_namespaces]]
 binding = "GMAIL_TOKENS"
-id = "REPLACE_ME"
+id = "f1841166d2bc4cfeb4fd5096a68fa765"
 
 # Optional fleet telemetry (recommended)
 [[d1_databases]]
@@ -26,4 +26,3 @@ database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
 # GOOGLE_CLIENT_SECRET
 # AUTHORIZED_EMAIL         — the single Gmail account this MCP serves (e.g. micah@createsomething.io)
 # MCP_API_KEY              — required to call /mcp from ChatGPT (Authorization: Bearer ...)
-
