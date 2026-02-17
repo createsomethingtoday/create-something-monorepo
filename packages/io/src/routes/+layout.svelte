@@ -144,8 +144,8 @@
 		mode="io"
 		showNewsletter={true}
 		turnstileSiteKey={data.turnstileSiteKey}
-		newsletterTitle="Stay updated with new experiments"
-		newsletterDescription="Get notified when new research is published. Real metrics, tracked experiments, honest learnings."
+		newsletterTitle="Get the monthly research digest"
+		newsletterDescription="Papers, experiments, and patterns—delivered."
 		aboutText="Systematic evaluation of AI-native development through tracked experiments. Real data from building with Claude Code and Cloudflare."
 		quickLinks={[
 			{ label: 'Experiments', href: '/experiments' },

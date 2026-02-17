@@ -10,7 +10,7 @@
 	 */
 	import type { PageData } from './$types';
 	import { HeroSection } from '@create-something/canon/domains/io';
-	import { PapersGrid, SEO, NewsletterSignup } from '@create-something/canon';
+	import { PapersGrid, SEO } from '@create-something/canon';
 	import type { Paper } from '@create-something/canon/types';
 
 	let { data }: { data: PageData } = $props();
@@ -81,13 +81,6 @@
 		</div>
 	</div>
 </section>
-
-<!-- Newsletter CTA -->
-<NewsletterSignup
-	headline="Get the monthly research digest"
-	description="Papers, experiments, and patterns—delivered."
-	source="io-homepage"
-/>
 
 <style>
 	.ecosystem {
