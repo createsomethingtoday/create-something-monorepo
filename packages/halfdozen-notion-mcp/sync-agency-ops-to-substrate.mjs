@@ -245,6 +245,58 @@ function tableSchemaByName(name, idByName = {}) {
       { name: 'notion_url', type: 'url', required: false },
       { name: 'source_system', type: 'text', required: false },
     ],
+    judgment_packs: [
+      { name: 'name', type: 'text', required: true, description: 'Human name for this policy pack' },
+      { name: 'status', type: 'select', required: true, options: ['draft', 'active', 'deprecated'], description: 'Lifecycle status' },
+      { name: 'version', type: 'text', required: false },
+      { name: 'primary_interface', type: 'select', required: false, options: ['slack', 'codex', 'notion', 'api'] },
+      { name: 'approval_mode', type: 'select', required: false, options: ['none', 'human-in-the-loop', 'hybrid'] },
+      { name: 'write_operations', type: 'select', required: false, options: ['blocked', 'policy', 'always-approved'] },
+      { name: 'destructive_operations', type: 'select', required: false, options: ['blocked', 'always-human'] },
+      {
+        name: 'escalation_triggers',
+        type: 'multi_select',
+        required: false,
+        options: [
+          'pricing_or_contract_change',
+          'high_confidence_below_threshold',
+          'missing_required_data',
+          'dependency_down',
+          'auth_expired',
+          'scope_missing',
+          'rate_limited',
+          'unknown_error',
+        ],
+      },
+      { name: 'decision_thresholds', type: 'json', required: false },
+      { name: 'budget_and_latency_guardrails', type: 'json', required: false },
+      { name: 'allowed_tools', type: 'json', required: false },
+      { name: 'blocked_tools', type: 'json', required: false },
+      { name: 'allowed_resource_patterns', type: 'json', required: false },
+      { name: 'approval_matrix', type: 'json', required: false },
+      { name: 'policy_format', type: 'select', required: false, options: ['yaml', 'json', 'markdown', 'text'] },
+      { name: 'policy_artifact', type: 'text', required: false },
+      { name: 'slack_channel_id', type: 'text', required: false },
+      { name: 'slack_message_ts', type: 'text', required: false },
+      { name: 'slack_view_id', type: 'text', required: false },
+      { name: 'notes', type: 'text', required: false },
+      { name: 'engagement_id', type: 'relation', relation_table_id: idByName.engagements, required: false },
+      { name: 'engagement_name', type: 'text', required: false },
+      { name: 'engagement_notion_page_id', type: 'text', required: false },
+      { name: 'source_system', type: 'text', required: false },
+      { name: 'last_applied_at', type: 'datetime', required: false },
+    ],
+    policy_change_log: [
+      { name: 'changed_at', type: 'datetime', required: true },
+      { name: 'change_type', type: 'select', required: true, options: ['create', 'update', 'activate', 'deactivate', 'rollback'] },
+      { name: 'actor', type: 'text', required: false },
+      { name: 'channel', type: 'text', required: false },
+      { name: 'source_system', type: 'select', required: false, options: ['slack', 'codex', 'notion', 'api', 'manual'] },
+      { name: 'judgment_pack_id', type: 'relation', relation_table_id: idByName.judgment_packs, required: false },
+      { name: 'reason', type: 'text', required: false },
+      { name: 'diff', type: 'json', required: false },
+      { name: 'raw_event', type: 'json', required: false },
+    ],
   };
 
   return colDefaults[name] || [];
@@ -441,6 +493,20 @@ async function upsertAgencies(context) {
     'delivery_milestones',
     'Delivery milestones tied to engagements',
     tableSchemaByName('delivery_milestones', { engagements: engagementsTable.id })
+  );
+  const judgmentPacksTable = await ensureTable(
+    context.substrate,
+    ws.id,
+    'judgment_packs',
+    'Judgment layer policy packs (Slack-controlled config) for engagements.',
+    tableSchemaByName('judgment_packs', { engagements: engagementsTable.id })
+  );
+  await ensureTable(
+    context.substrate,
+    ws.id,
+    'policy_change_log',
+    'Audit trail for Judgment-layer policy changes (typically authored via Slack).',
+    tableSchemaByName('policy_change_log', { judgment_packs: judgmentPacksTable.id })
   );
 
   const tableNameMap = {

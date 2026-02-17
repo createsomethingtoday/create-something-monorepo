@@ -31,6 +31,22 @@ export async function ensureInitialized(e: D1Exec): Promise<void> {
   if (_init) return;
   try { await e('SELECT 1 FROM workspaces LIMIT 1'); _init = true; await migrateSchema(e); }
   catch { await initSchema(e); _init = true; }
+  // Some tools write audit entries to a reserved workspace_id (e.g. token operations).
+  // Ensure it exists to avoid FK failures that would otherwise strand partially-created tokens.
+  await ensureSystemWorkspace(e);
+}
+
+async function ensureSystemWorkspace(e: D1Exec): Promise<void> {
+  // Keep this workspace archived so it doesn't appear in normal list_workspaces views.
+  // It exists only to satisfy audit_log.workspace_id foreign key constraints.
+  try {
+    await e(
+      "INSERT OR IGNORE INTO workspaces (id,name,description,archived_at) VALUES (?,?,?,datetime('now'))",
+      ['__system__', '__system__', 'System workspace (internal, archived)'],
+    );
+  } catch {
+    // Best-effort: if the table doesn't exist yet, initSchema will handle it.
+  }
 }
 
 async function initSchema(e: D1Exec): Promise<void> {

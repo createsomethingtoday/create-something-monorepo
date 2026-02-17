@@ -14,6 +14,8 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { enableTelemetry } from '@create-something/mcp-core';
 import { z } from 'zod';
+import { Client as McpClient } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
 import { registerResources } from '../src/resources.js';
 import { registerTools } from '../src/tools.js';
@@ -42,7 +44,12 @@ interface Env {
   HALFDOZEN_SLACK_WEBHOOK_URL?: string;
   HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL?: string;
   HALFDOZEN_SLACK_SIGNING_SECRET?: string;
+  HALFDOZEN_SLACK_BOT_TOKEN?: string;
   HALFDOZEN_SLACK_TEAM_ID?: string;
+  HALFDOZEN_SLACK_POLICY_ALLOWED_USER_IDS?: string;
+  HALFDOZEN_SLACK_POLICY_CHANNEL_NAME?: string;
+  SUBSTRATE_MCP_URL?: string;
+  SUBSTRATE_TOKEN?: string;
 }
 
 const JSON_HEADERS = {
@@ -55,6 +62,9 @@ const HALFDOZEN_INBOX_TRIAGE_ROUTE = '/clients/halfdozen/agents/inbox-triage/run
 const HALFDOZEN_DEDUP_ROUTE = '/clients/halfdozen/agents/dedup/run';
 const HALFDOZEN_SLACK_COMMAND_ROUTE = '/clients/halfdozen/slack/commands';
 const SLACK_TIMESTAMP_TOLERANCE_SECONDS = 300;
+const DEFAULT_SUBSTRATE_MCP_URL = 'https://substrate.mcp.createsomething.agency/mcp';
+const DEFAULT_HALFDOZEN_POLICY_CHANNEL = 'client-halfdozen-ops';
+const HALFDOZEN_POLICY_MODAL_CALLBACK_ID = 'halfdozen_policy_pack_v1';
 
 const HALFDOZEN_PROTECTED_ROUTES = [
   HALFDOZEN_FLEET_WATCHDOG_ROUTE,
@@ -103,6 +113,7 @@ type SlackCommandFields = {
   channel_name?: string;
   user_id?: string;
   user_name?: string;
+  trigger_id?: string;
 };
 
 type SlackAction = {
@@ -117,6 +128,13 @@ type SlackInteractionPayload = {
   user?: { id?: string; username?: string; name?: string };
   response_url?: string;
   actions?: SlackAction[];
+  trigger_id?: string;
+  view?: {
+    id?: string;
+    callback_id?: string;
+    private_metadata?: string;
+    state?: { values?: Record<string, Record<string, { value?: string; selected_option?: { value?: string }; selected_options?: Array<{ value?: string }> }>> };
+  };
 };
 
 function jsonResponse(data: unknown, status = 200, extraHeaders: Record<string, string> = {}): Response {
@@ -666,6 +684,7 @@ function parseSlackCommandFields(rawBody: string): SlackCommandFields {
     channel_name: params.get('channel_name') ?? undefined,
     user_id: params.get('user_id') ?? undefined,
     user_name: params.get('user_name') ?? undefined,
+    trigger_id: params.get('trigger_id') ?? undefined,
   };
 }
 
@@ -725,6 +744,506 @@ function queueSlackScenarioRun(
       }
     })(),
   );
+}
+
+function parseCommaSeparatedList(raw?: string): string[] {
+  if (!raw) return [];
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function getPolicyChannelName(env: Env): string {
+  return (env.HALFDOZEN_SLACK_POLICY_CHANNEL_NAME || DEFAULT_HALFDOZEN_POLICY_CHANNEL).trim();
+}
+
+function isSlackPolicyAllowed(env: Env, userId?: string, channelName?: string): { ok: true } | { ok: false; message: string } {
+  const allowed = parseCommaSeparatedList(env.HALFDOZEN_SLACK_POLICY_ALLOWED_USER_IDS);
+  if (allowed.length > 0 && (!userId || !allowed.includes(userId))) {
+    return { ok: false, message: 'You are not allowed to manage policy in this workspace.' };
+  }
+
+  const requiredChannel = getPolicyChannelName(env);
+  if (requiredChannel && channelName && channelName !== requiredChannel) {
+    return { ok: false, message: `Policy changes are restricted to #${requiredChannel}.` };
+  }
+
+  return { ok: true };
+}
+
+async function slackApi(env: Env, method: string, body: Record<string, unknown>): Promise<any> {
+  if (!env.HALFDOZEN_SLACK_BOT_TOKEN) {
+    throw new Error('Server misconfigured: HALFDOZEN_SLACK_BOT_TOKEN is not set.');
+  }
+
+  const resp = await fetch(`https://slack.com/api/${method}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.HALFDOZEN_SLACK_BOT_TOKEN}`,
+      'Content-Type': 'application/json; charset=utf-8',
+    },
+    body: JSON.stringify(body),
+  });
+  const json = await resp.json();
+  if (!resp.ok || !json?.ok) {
+    throw new Error(`Slack API ${method} failed: ${json?.error || resp.statusText}`);
+  }
+  return json;
+}
+
+function slackPolicyModalView(privateMetadata: Record<string, unknown>): Record<string, unknown> {
+  const initial = [
+    'version: "1.0"',
+    'contract_type: "agent_contract"',
+    '',
+    'metadata:',
+    '  client_name: "Half Dozen"',
+    '  engagement_id: "<filled-by-system>"',
+    '  status: "draft" # draft | active | deprecated',
+    '  delivery_mode: "agent-outcome-stack"',
+    '',
+    'approval_and_control:',
+    '  mode: "hybrid" # none | human-in-the-loop | hybrid',
+    '  write_operations: "policy" # blocked | policy | always-approved',
+    '  destructive_operations: "always-human"',
+    '  escalation_triggers:',
+    '    - "missing_required_data"',
+    '',
+    'judgment_layer:',
+    '  decision_thresholds:',
+    '    minimum_confidence: 0.8',
+    '    max_autonomous_steps: 5',
+    '',
+    'budget_and_latency_guardrails:',
+    '  hard_timeout_ms: 30000',
+    '',
+    '# See templates/agent_contract.yaml for the full schema.',
+  ].join('\n');
+
+  return {
+    type: 'modal',
+    callback_id: HALFDOZEN_POLICY_MODAL_CALLBACK_ID,
+    private_metadata: JSON.stringify(privateMetadata),
+    title: { type: 'plain_text', text: 'Policy Pack' },
+    submit: { type: 'plain_text', text: 'Save' },
+    close: { type: 'plain_text', text: 'Cancel' },
+    blocks: [
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: '*Judgment layer config* (modal-only). This creates a versioned policy pack in Substrate + an audit log entry.',
+        },
+      },
+      {
+        type: 'input',
+        block_id: 'engagement',
+        label: { type: 'plain_text', text: 'Engagement' },
+        element: {
+          type: 'static_select',
+          action_id: 'engagement_value',
+          options: [
+            {
+              text: { type: 'plain_text', text: 'Half Dozen — MCP Fleet' },
+              value: 'Half Dozen — MCP Fleet',
+            },
+          ],
+        },
+      },
+      {
+        type: 'input',
+        block_id: 'pack_name',
+        label: { type: 'plain_text', text: 'Policy pack name' },
+        element: {
+          type: 'plain_text_input',
+          action_id: 'pack_name_value',
+          placeholder: { type: 'plain_text', text: 'e.g. Half Dozen Fleet - Standard Ops' },
+        },
+      },
+      {
+        type: 'input',
+        block_id: 'status',
+        label: { type: 'plain_text', text: 'Status' },
+        element: {
+          type: 'radio_buttons',
+          action_id: 'status_value',
+          options: [
+            { text: { type: 'plain_text', text: 'Draft' }, value: 'draft' },
+            { text: { type: 'plain_text', text: 'Active' }, value: 'active' },
+          ],
+          initial_option: { text: { type: 'plain_text', text: 'Draft' }, value: 'draft' },
+        },
+      },
+      {
+        type: 'input',
+        block_id: 'approval_mode',
+        label: { type: 'plain_text', text: 'Approval mode' },
+        element: {
+          type: 'radio_buttons',
+          action_id: 'approval_mode_value',
+          options: [
+            { text: { type: 'plain_text', text: 'Hybrid' }, value: 'hybrid' },
+            { text: { type: 'plain_text', text: 'Human-in-the-loop' }, value: 'human-in-the-loop' },
+            { text: { type: 'plain_text', text: 'None' }, value: 'none' },
+          ],
+          initial_option: { text: { type: 'plain_text', text: 'Hybrid' }, value: 'hybrid' },
+        },
+      },
+      {
+        type: 'input',
+        block_id: 'write_ops',
+        label: { type: 'plain_text', text: 'Write operations' },
+        element: {
+          type: 'radio_buttons',
+          action_id: 'write_ops_value',
+          options: [
+            { text: { type: 'plain_text', text: 'Policy-gated' }, value: 'policy' },
+            { text: { type: 'plain_text', text: 'Blocked' }, value: 'blocked' },
+            { text: { type: 'plain_text', text: 'Always approved' }, value: 'always-approved' },
+          ],
+          initial_option: { text: { type: 'plain_text', text: 'Policy-gated' }, value: 'policy' },
+        },
+      },
+      {
+        type: 'input',
+        block_id: 'destructive_ops',
+        label: { type: 'plain_text', text: 'Destructive operations' },
+        element: {
+          type: 'radio_buttons',
+          action_id: 'destructive_ops_value',
+          options: [
+            { text: { type: 'plain_text', text: 'Always human' }, value: 'always-human' },
+            { text: { type: 'plain_text', text: 'Blocked' }, value: 'blocked' },
+          ],
+          initial_option: { text: { type: 'plain_text', text: 'Always human' }, value: 'always-human' },
+        },
+      },
+      {
+        type: 'input',
+        block_id: 'escalation_triggers',
+        label: { type: 'plain_text', text: 'Escalation triggers' },
+        optional: true,
+        element: {
+          type: 'multi_static_select',
+          action_id: 'escalation_triggers_value',
+          options: [
+            { text: { type: 'plain_text', text: 'Missing required data' }, value: 'missing_required_data' },
+            { text: { type: 'plain_text', text: 'Dependency down' }, value: 'dependency_down' },
+            { text: { type: 'plain_text', text: 'Auth expired' }, value: 'auth_expired' },
+            { text: { type: 'plain_text', text: 'Rate limited' }, value: 'rate_limited' },
+            { text: { type: 'plain_text', text: 'Unknown error' }, value: 'unknown_error' },
+          ],
+        },
+      },
+      {
+        type: 'input',
+        block_id: 'thresholds',
+        label: { type: 'plain_text', text: 'Decision thresholds (optional)' },
+        optional: true,
+        element: {
+          type: 'plain_text_input',
+          action_id: 'thresholds_value',
+          placeholder: { type: 'plain_text', text: 'min_confidence=0.8, max_steps=5, hard_timeout_ms=30000' },
+        },
+      },
+      {
+        type: 'input',
+        block_id: 'tool_lists',
+        label: { type: 'plain_text', text: 'Tool allow/block lists (optional)' },
+        optional: true,
+        element: {
+          type: 'plain_text_input',
+          action_id: 'tool_lists_value',
+          multiline: true,
+          placeholder: { type: 'plain_text', text: 'allowed: tool_a, tool_b\nblocked: tool_x' },
+        },
+      },
+      {
+        type: 'input',
+        block_id: 'policy_artifact',
+        label: { type: 'plain_text', text: 'Policy artifact (YAML)' },
+        element: {
+          type: 'plain_text_input',
+          action_id: 'policy_artifact_value',
+          multiline: true,
+          initial_value: initial,
+        },
+      },
+      {
+        type: 'input',
+        block_id: 'notes',
+        label: { type: 'plain_text', text: 'Notes / rationale' },
+        optional: true,
+        element: {
+          type: 'plain_text_input',
+          action_id: 'notes_value',
+          multiline: true,
+        },
+      },
+    ],
+  };
+}
+
+function getViewValue(
+  values: SlackInteractionPayload['view']['state']['values'],
+  blockId: string,
+  actionId: string,
+): { value?: string; selected?: string; selectedMany?: string[] } {
+  const block = values?.[blockId];
+  const action = block?.[actionId];
+  if (!action) return {};
+  return {
+    value: action.value,
+    selected: action.selected_option?.value,
+    selectedMany: Array.isArray(action.selected_options) ? action.selected_options.map((x) => x.value).filter(Boolean) as string[] : undefined,
+  };
+}
+
+function parseThresholds(raw: string | undefined): Record<string, number> | null {
+  if (!raw) return null;
+  const text = raw.trim();
+  if (!text) return null;
+
+  const out: Record<string, number> = {};
+  const pairs = text
+    .split(/[,\\n]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  for (const pair of pairs) {
+    const [kRaw, vRaw] = pair.split('=').map((s) => s.trim());
+    if (!kRaw || !vRaw) continue;
+    const key = kRaw
+      .replace(/minimum_confidence|min_confidence/i, 'minimum_confidence')
+      .replace(/max_autonomous_steps|max_steps/i, 'max_autonomous_steps')
+      .replace(/hard_timeout_ms|timeout_ms/i, 'hard_timeout_ms');
+    const num = Number(vRaw);
+    if (Number.isFinite(num)) out[key] = num;
+  }
+
+  return Object.keys(out).length > 0 ? out : null;
+}
+
+function parseToolLists(raw: string | undefined): { allowed?: string[]; blocked?: string[] } {
+  const text = (raw || '').trim();
+  if (!text) return {};
+
+  const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+  const out: { allowed?: string[]; blocked?: string[] } = {};
+
+  const parseList = (s: string) =>
+    s
+      .split(/[,\s]+/)
+      .map((x) => x.trim())
+      .filter(Boolean);
+
+  for (const line of lines) {
+    const lower = line.toLowerCase();
+    if (lower.startsWith('allowed:')) {
+      out.allowed = parseList(line.slice('allowed:'.length));
+    } else if (lower.startsWith('blocked:')) {
+      out.blocked = parseList(line.slice('blocked:'.length));
+    }
+  }
+
+  return out;
+}
+
+async function connectSubstrate(env: Env) {
+  const url = env.SUBSTRATE_MCP_URL || DEFAULT_SUBSTRATE_MCP_URL;
+  const token = env.SUBSTRATE_TOKEN;
+  if (!token) throw new Error('Server misconfigured: SUBSTRATE_TOKEN is not set.');
+
+  const transport = new StreamableHTTPClientTransport(new URL(url), {
+    requestInit: {
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  });
+  const client = new McpClient({ name: 'playbook-halfdozen', version: '1.0.0' }, { capabilities: {} });
+  await client.connect(transport);
+
+  const callTool = async (name: string, args: Record<string, unknown>) => {
+    const out = await client.callTool({ name, arguments: args });
+    const text = out.content?.[0]?.text;
+    return text ? JSON.parse(text) : null;
+  };
+
+  return { client, callTool, close: () => client.close() };
+}
+
+async function handleHalfDozenPolicyViewSubmission(payload: SlackInteractionPayload, env: Env): Promise<void> {
+  const view = payload.view;
+  const values = view?.state?.values;
+
+  const engagement = getViewValue(values, 'engagement', 'engagement_value').selected;
+  const name = getViewValue(values, 'pack_name', 'pack_name_value').value?.trim();
+  const status = getViewValue(values, 'status', 'status_value').selected || 'draft';
+  const approvalMode = getViewValue(values, 'approval_mode', 'approval_mode_value').selected || 'hybrid';
+  const writeOps = getViewValue(values, 'write_ops', 'write_ops_value').selected || 'policy';
+  const destructiveOps = getViewValue(values, 'destructive_ops', 'destructive_ops_value').selected || 'always-human';
+  const escalationTriggers = getViewValue(values, 'escalation_triggers', 'escalation_triggers_value').selectedMany || [];
+  const thresholdsRaw = getViewValue(values, 'thresholds', 'thresholds_value').value;
+  const toolsRaw = getViewValue(values, 'tool_lists', 'tool_lists_value').value;
+  const policyArtifact = getViewValue(values, 'policy_artifact', 'policy_artifact_value').value || '';
+  const notes = getViewValue(values, 'notes', 'notes_value').value?.trim() || '';
+
+  const privateMetadataRaw = view?.private_metadata || '{}';
+  const privateMetadata = (() => {
+    try {
+      return JSON.parse(privateMetadataRaw) as { channel_id?: string; channel_name?: string; user_id?: string };
+    } catch {
+      return {};
+    }
+  })();
+
+  const actor = payload.user?.id || privateMetadata.user_id;
+  const channelId = privateMetadata.channel_id;
+  const channelName = privateMetadata.channel_name;
+
+  const access = isSlackPolicyAllowed(env, actor, channelName);
+  if (!access.ok) {
+    if (channelId && actor) {
+      await slackApi(env, 'chat.postEphemeral', {
+        channel: channelId,
+        user: actor,
+        text: access.message,
+      });
+    }
+    return;
+  }
+
+  if (!engagement) {
+    if (channelId && actor) {
+      await slackApi(env, 'chat.postEphemeral', {
+        channel: channelId,
+        user: actor,
+        text: 'Missing engagement selection.',
+      });
+    }
+    return;
+  }
+
+  const thresholds = parseThresholds(thresholdsRaw);
+  const toolLists = parseToolLists(toolsRaw);
+
+  const { callTool, close } = await connectSubstrate(env);
+  try {
+    const workspace_name = 'CREATE SOMETHING Agency Ops';
+
+    const engagementResult = await callTool('find_records', {
+      workspace_name,
+      table_name: 'engagements',
+      filters: [{ column: 'name', operator: 'eq', value: engagement }],
+      limit: 5,
+    });
+    const engagementRecord = engagementResult?.records?.[0];
+    if (!engagementRecord) {
+      throw new Error(`Engagement not found in Substrate: ${engagement}`);
+    }
+
+    const engagementNotionId = engagementRecord.data?.notion_page_id || '';
+    const now = new Date();
+    const nowIso = now.toISOString();
+    const versionTag = nowIso.slice(0, 10);
+
+    let deprecatedCount = 0;
+    if (status === 'active' && engagementNotionId) {
+      const activePacks = await callTool('find_records', {
+        workspace_name,
+        table_name: 'judgment_packs',
+        filters: [
+          { column: 'engagement_notion_page_id', operator: 'eq', value: engagementNotionId },
+          { column: 'status', operator: 'eq', value: 'active' },
+        ],
+        limit: 50,
+      });
+
+      for (const pack of activePacks?.records || []) {
+        if (!pack?.id) continue;
+        await callTool('update_record', {
+          record_id: pack.id,
+          data: { status: 'deprecated' },
+        });
+        deprecatedCount += 1;
+      }
+    }
+
+    const packData: Record<string, unknown> = {
+      name: name && name.length > 0 ? name : `${engagement} - ${versionTag}`,
+      status,
+      version: versionTag,
+      primary_interface: 'slack',
+      approval_mode: approvalMode,
+      write_operations: writeOps,
+      destructive_operations: destructiveOps,
+      escalation_triggers: escalationTriggers,
+      decision_thresholds: thresholds ?? undefined,
+      allowed_tools: toolLists.allowed && toolLists.allowed.length > 0 ? toolLists.allowed : undefined,
+      blocked_tools: toolLists.blocked && toolLists.blocked.length > 0 ? toolLists.blocked : undefined,
+      policy_format: 'yaml',
+      policy_artifact: policyArtifact,
+      slack_channel_id: channelId || undefined,
+      slack_view_id: view?.id || undefined,
+      notes: notes || undefined,
+      engagement_id: engagementRecord.id,
+      engagement_name: engagementRecord.data?.name || engagement,
+      engagement_notion_page_id: engagementNotionId || undefined,
+      source_system: 'slack',
+      ...(status === 'active' ? { last_applied_at: nowIso } : {}),
+    };
+
+    const created = await callTool('add_record', {
+      workspace_name,
+      table_name: 'judgment_packs',
+      data: packData,
+    });
+    const judgmentPackId = created?.record?.id || created?.id || created?.record_id;
+
+    await callTool('add_record', {
+      workspace_name,
+      table_name: 'policy_change_log',
+      data: {
+        changed_at: nowIso,
+        change_type: 'create',
+        actor: actor || undefined,
+        channel: channelId || undefined,
+        source_system: 'slack',
+        judgment_pack_id: judgmentPackId || undefined,
+        reason: notes || undefined,
+        diff: {
+          created: packData,
+          deprecated_previous_active_packs: deprecatedCount,
+        },
+        raw_event: {
+          type: payload.type,
+          user_id: actor,
+          view_id: view?.id,
+          callback_id: view?.callback_id,
+        },
+      },
+    });
+
+    if (channelId && actor) {
+      const suffix = deprecatedCount > 0 ? ` (deprecated ${deprecatedCount} prior active pack${deprecatedCount === 1 ? '' : 's'})` : '';
+      await slackApi(env, 'chat.postEphemeral', {
+        channel: channelId,
+        user: actor,
+        text: `Saved policy pack: ${String(packData.name)} [${status}]${suffix}`,
+      });
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (channelId && actor) {
+      await slackApi(env, 'chat.postEphemeral', {
+        channel: channelId,
+        user: actor,
+        text: `Failed to save policy pack: ${truncateText(message, 600)}`,
+      });
+    }
+  } finally {
+    close();
+  }
 }
 
 // =============================================================================
@@ -795,13 +1314,6 @@ export default {
         );
       }
 
-      if (!env.OPENAI_API_KEY) {
-        return slackJsonResponse({
-          response_type: 'ephemeral',
-          text: 'Playbook MCP is misconfigured: OPENAI_API_KEY is not set.',
-        });
-      }
-
       const params = new URLSearchParams(rawBody);
       const runId = crypto.randomUUID();
 
@@ -824,17 +1336,29 @@ export default {
         const teamError = validateSlackTeam(payload.team?.id, env.HALFDOZEN_SLACK_TEAM_ID);
         if (teamError) return teamError;
 
+        if (payload.type === 'view_submission' && payload.view?.callback_id === HALFDOZEN_POLICY_MODAL_CALLBACK_ID) {
+          ctx.waitUntil(handleHalfDozenPolicyViewSubmission(payload, env));
+          return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
+        }
+
+        const scenario = parseScenarioFromSlackAction(payload.actions?.[0]);
+        if (!scenario) {
+          return slackJsonResponse(buildSlackHelpResponse('/halfdozen'));
+        }
+
+        if (!env.OPENAI_API_KEY) {
+          return slackJsonResponse({
+            response_type: 'ephemeral',
+            text: 'Playbook MCP is misconfigured: OPENAI_API_KEY is not set.',
+          });
+        }
+
         const responseUrl = payload.response_url;
         if (!responseUrl) {
           return slackJsonResponse({
             response_type: 'ephemeral',
             text: 'Unable to run command: missing Slack response URL.',
           });
-        }
-
-        const scenario = parseScenarioFromSlackAction(payload.actions?.[0]);
-        if (!scenario) {
-          return slackJsonResponse(buildSlackHelpResponse('/halfdozen'));
         }
 
         queueSlackScenarioRun(ctx, env, scenario, undefined, responseUrl, runId);
@@ -846,6 +1370,53 @@ export default {
       if (teamError) return teamError;
 
       const command = fields.command ?? '/halfdozen';
+      const cmdText = (fields.text ?? '').trim();
+      if (cmdText.toLowerCase().startsWith('policy')) {
+        const access = isSlackPolicyAllowed(env, fields.user_id, fields.channel_name);
+        if (!access.ok) {
+          return slackJsonResponse({
+            response_type: 'ephemeral',
+            text: access.message,
+          });
+        }
+
+        if (!fields.trigger_id) {
+          return slackJsonResponse({
+            response_type: 'ephemeral',
+            text: 'Slack did not provide a trigger_id for this command (required to open a modal).',
+          });
+        }
+
+        try {
+          await slackApi(env, 'views.open', {
+            trigger_id: fields.trigger_id,
+            view: slackPolicyModalView({
+              channel_id: fields.channel_id,
+              channel_name: fields.channel_name,
+              user_id: fields.user_id,
+            }),
+          });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          return slackJsonResponse({
+            response_type: 'ephemeral',
+            text: `Failed to open policy modal: ${truncateText(message, 600)}`,
+          });
+        }
+
+        return slackJsonResponse({
+          response_type: 'ephemeral',
+          text: 'Opening policy modal...',
+        });
+      }
+
+      if (!env.OPENAI_API_KEY) {
+        return slackJsonResponse({
+          response_type: 'ephemeral',
+          text: 'Playbook MCP is misconfigured: OPENAI_API_KEY is not set.',
+        });
+      }
+
       const parsed = parseSlackCommand(fields.text ?? '');
       if (parsed.showHelp || !parsed.scenario) {
         return slackJsonResponse(buildSlackHelpResponse(command));
@@ -963,7 +1534,11 @@ export default {
           halfdozenSlackWebhookConfigured: Boolean(env.HALFDOZEN_SLACK_WEBHOOK_URL),
           halfdozenSlackEscalationWebhookConfigured: Boolean(env.HALFDOZEN_SLACK_ESCALATION_WEBHOOK_URL),
           halfdozenSlackCommandSigningConfigured: Boolean(env.HALFDOZEN_SLACK_SIGNING_SECRET),
+          halfdozenSlackBotConfigured: Boolean(env.HALFDOZEN_SLACK_BOT_TOKEN),
           halfdozenSlackTeamRestricted: Boolean(env.HALFDOZEN_SLACK_TEAM_ID),
+          halfdozenSlackPolicyAllowlistConfigured: Boolean(env.HALFDOZEN_SLACK_POLICY_ALLOWED_USER_IDS),
+          halfdozenSlackPolicyChannel: getPolicyChannelName(env),
+          substrateConfigured: Boolean(env.SUBSTRATE_TOKEN),
         },
         tools: [
           'get_playbook',

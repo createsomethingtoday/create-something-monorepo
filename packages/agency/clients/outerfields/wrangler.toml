@@ -9,7 +9,7 @@ CLOUDFLARE_ACCOUNT_ID = "9645bd52e640b8a4f40a3a55ff1dd75a"
 CLOUDFLARE_STREAM_CUSTOMER_CODE = "wi9kww2lo6qhi8n8"
 CLOUDFLARE_STREAM_ALLOWED_ORIGINS = "outerfields.createsomething.agency,localhost:5173"
 VIDEO_STREAM_TOKEN_TTL_SECONDS = "900"
-VIDEO_ADMIN_EMAILS = "micah@createsomething.io"
+VIDEO_ADMIN_EMAILS = "micah@createsomething.io,aaron@outerfields.co"
 VIDEO_SERIES_ADMIN_EMAILS = "micah@createsomething.io"
 
 # Configure secrets:

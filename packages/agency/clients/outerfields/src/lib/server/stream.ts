@@ -6,8 +6,12 @@ interface StreamConfig {
 
 export interface StreamConfigEnv {
 	CLOUDFLARE_ACCOUNT_ID?: string;
+	CF_ACCOUNT_ID?: string;
+	CLOUDFLARE_STREAM_ACCOUNT_ID?: string;
 	CLOUDFLARE_STREAM_API_TOKEN?: string;
+	STREAM_API_TOKEN?: string;
 	CLOUDFLARE_STREAM_CUSTOMER_CODE?: string;
+	STREAM_CUSTOMER_CODE?: string;
 	CLOUDFLARE_STREAM_WEBHOOK_SECRET?: string;
 	CLOUDFLARE_STREAM_ALLOWED_ORIGINS?: string;
 	VIDEO_STREAM_TOKEN_TTL_SECONDS?: string;
@@ -64,20 +68,26 @@ export function getMaxDirectUploadBytes(): number {
 }
 
 function requireConfig(env: StreamConfigEnv): StreamConfig {
-	if (!env.CLOUDFLARE_ACCOUNT_ID) {
+	const accountId =
+		env.CLOUDFLARE_ACCOUNT_ID || env.CF_ACCOUNT_ID || env.CLOUDFLARE_STREAM_ACCOUNT_ID;
+	const apiToken = env.CLOUDFLARE_STREAM_API_TOKEN || env.STREAM_API_TOKEN;
+	const customerCode =
+		env.CLOUDFLARE_STREAM_CUSTOMER_CODE || env.STREAM_CUSTOMER_CODE;
+
+	if (!accountId) {
 		throw new Error('Missing CLOUDFLARE_ACCOUNT_ID');
 	}
-	if (!env.CLOUDFLARE_STREAM_API_TOKEN) {
+	if (!apiToken) {
 		throw new Error('Missing CLOUDFLARE_STREAM_API_TOKEN');
 	}
-	if (!env.CLOUDFLARE_STREAM_CUSTOMER_CODE) {
+	if (!customerCode) {
 		throw new Error('Missing CLOUDFLARE_STREAM_CUSTOMER_CODE');
 	}
 
 	return {
-		accountId: env.CLOUDFLARE_ACCOUNT_ID,
-		apiToken: env.CLOUDFLARE_STREAM_API_TOKEN,
-		customerCode: env.CLOUDFLARE_STREAM_CUSTOMER_CODE
+		accountId,
+		apiToken,
+		customerCode
 	};
 }
 
@@ -288,8 +298,9 @@ export async function verifyStreamWebhookSignature(
 }
 
 export function getStreamCustomerCode(env: StreamConfigEnv): string {
-	if (!env.CLOUDFLARE_STREAM_CUSTOMER_CODE) {
+	const customerCode = env.CLOUDFLARE_STREAM_CUSTOMER_CODE || env.STREAM_CUSTOMER_CODE;
+	if (!customerCode) {
 		throw new Error('Missing CLOUDFLARE_STREAM_CUSTOMER_CODE');
 	}
-	return env.CLOUDFLARE_STREAM_CUSTOMER_CODE;
+	return customerCode;
 }
