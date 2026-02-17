@@ -1,24 +1,12 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { createSeries, getSeries } from '$lib/server/db/series';
+import { isAdminUser } from '$lib/server/admin';
 
 interface CreateSeriesRequest {
 	slug: string;
 	title: string;
 	description?: string;
-}
-
-function isAdminUser(localsUser: App.Locals['user'], adminEmails?: string): boolean {
-	if (!localsUser) return false;
-	if (localsUser.role === 'admin') return true;
-
-	if (!adminEmails) return false;
-	const normalized = adminEmails
-		.split(',')
-		.map((value) => value.trim().toLowerCase())
-		.filter(Boolean);
-
-	return normalized.includes(localsUser.email.toLowerCase());
 }
 
 /**
@@ -49,7 +37,7 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		return json({ success: false, error: 'Database not available' }, { status: 500 });
 	}
 
-	if (!isAdminUser(locals.user, platform?.env.VIDEO_SERIES_ADMIN_EMAILS)) {
+	if (!locals.user || !isAdminUser(locals.user, platform?.env)) {
 		return json({ success: false, error: 'Admin access required' }, { status: 403 });
 	}
 

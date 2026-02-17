@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { createGeneratedVideo } from '$lib/server/db/videos';
 import { upsertSeries } from '$lib/server/db/series';
+import { isAdminUser } from '$lib/server/admin';
 
 interface GeneratedIngestRequest {
 	title: string;
@@ -35,7 +36,8 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		return json({ success: false, error: 'Database not available' }, { status: 500 });
 	}
 
-	const authorized = !!locals.user || hasValidIngestToken(request, platform?.env.VIDEO_INGEST_API_TOKEN);
+	const authorized =
+		isAdminUser(locals.user, platform?.env) || hasValidIngestToken(request, platform?.env.VIDEO_INGEST_API_TOKEN);
 	if (!authorized) {
 		return json({ success: false, error: 'Authentication required' }, { status: 401 });
 	}

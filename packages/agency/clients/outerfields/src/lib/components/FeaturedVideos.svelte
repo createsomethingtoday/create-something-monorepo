@@ -3,7 +3,7 @@
 	 * OUTERFIELDS Featured Videos
 	 *
 	 * Interactive video section showing sample content with play functionality
-	 * Uses shared VideoModal component for player UI
+	 * Uses global VideoModal (controlled via videoPlayer store) for player UI
 	 * Shows live view counts via Cloudflare KV
 	 * 
 	 * All content freely accessible as portfolio showcase (PCN services model)
@@ -12,9 +12,7 @@
 	import { onMount } from 'svelte';
 	import { videoPlayer, type Video } from '$lib/stores/videoPlayer';
 	import { videoStats } from '$lib/stores/videoStats';
-	import type { Video as DbVideo } from '$lib/server/db/videos';
 	import { fetchVideoPlayback } from '$lib/client/video-playback';
-	import VideoModal from './VideoModal.svelte';
 
 	// Cloudflare R2 CDN base URL
 	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
@@ -47,14 +45,29 @@
 		return `${CDN_BASE}${path.startsWith('/') ? '' : '/'}${path}`;
 	}
 
-	function mapDbVideo(video: DbVideo): FeaturedCard {
+	interface FeaturedCatalogEntry {
+		seriesTitle: string | null;
+		seriesSlug: string | null;
+		video: {
+			id: string;
+			title: string;
+			tier: 'free' | 'preview' | 'gated';
+			episode_number: number | null;
+			duration_seconds: number | null;
+			duration: number;
+			thumbnail_path: string;
+			series_id: string | null;
+		};
+	}
+
+	function mapCatalogVideo(entry: FeaturedCatalogEntry): FeaturedCard {
 		return {
-			id: video.id,
-			title: video.title,
-			description: video.description || '',
-			duration: formatClock(video.duration_seconds ?? video.duration),
-			thumbnail: getThumbnailPath(video.thumbnail_path),
-			category: video.category,
+			id: entry.video.id,
+			title: entry.video.title,
+			description: '',
+			duration: formatClock(entry.video.duration_seconds ?? entry.video.duration),
+			thumbnail: getThumbnailPath(entry.video.thumbnail_path),
+			category: entry.seriesTitle || entry.seriesSlug || 'Featured',
 			src: ''
 		};
 	}
@@ -74,14 +87,14 @@
 			isLoading = true;
 			loadError = null;
 
-			const response = await fetch('/api/videos');
+			const response = await fetch('/api/v1/catalog/featured?limit=6');
 			const payload = await response.json();
 			if (!response.ok || !payload?.success) {
 				throw new Error(payload?.error || 'Failed to load featured videos');
 			}
 
-			const rows = ((payload.data?.videos || []) as DbVideo[]).slice(0, 6);
-			videos = rows.map(mapDbVideo);
+			const rows = (payload.data?.videos || []) as FeaturedCatalogEntry[];
+			videos = rows.map(mapCatalogVideo);
 		} catch (error) {
 			loadError = error instanceof Error ? error.message : 'Failed to load featured videos';
 			videos = [];
@@ -186,9 +199,6 @@
 		</div>
 	</div>
 </section>
-
-<!-- Shared video modal component (engagement data fetched from KV) -->
-<VideoModal />
 
 <style>
 	.videos-section {

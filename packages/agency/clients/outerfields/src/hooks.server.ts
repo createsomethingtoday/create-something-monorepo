@@ -25,6 +25,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 			VIDEO_STREAM_TOKEN_TTL_SECONDS?: string;
 			VIDEO_INGEST_API_TOKEN?: string;
 			VIDEO_SERIES_ADMIN_EMAILS?: string;
+			VIDEO_ADMIN_EMAILS?: string;
 		};
 	} | undefined;
 

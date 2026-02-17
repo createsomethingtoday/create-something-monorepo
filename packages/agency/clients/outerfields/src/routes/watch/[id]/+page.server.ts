@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { getVideoById, getVideos } from '$lib/server/db/videos';
+import { getAdminVideoById, getVideoById, getVideos } from '$lib/server/db/videos';
+import { isAdminUser } from '$lib/server/admin';
 
 /**
  * Watch Page Server Load
@@ -22,7 +23,8 @@ export const load: PageServerLoad = async ({ params, platform, locals }) => {
 	}
 
 	// Fetch the main video
-	const video = await getVideoById(db, id);
+	const isAdmin = isAdminUser(locals.user, platform?.env);
+	const video = isAdmin ? await getAdminVideoById(db, id) : await getVideoById(db, id);
 
 	if (!video) {
 		throw error(404, 'Video not found');
@@ -60,7 +62,7 @@ export const load: PageServerLoad = async ({ params, platform, locals }) => {
 	const isMember = user?.membership ?? false;
 
 	// Determine if video is accessible
-	const isAccessible = video.tier === 'free' || isMember;
+	const isAccessible = isAdmin || video.tier === 'free' || isMember;
 
 	return {
 		video,
@@ -72,6 +74,7 @@ export const load: PageServerLoad = async ({ params, platform, locals }) => {
 		},
 		isAccessible,
 		isMember,
+		isAdmin,
 		user
 	};
 };

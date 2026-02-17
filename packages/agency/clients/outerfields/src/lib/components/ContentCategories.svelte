@@ -15,8 +15,7 @@
 	import CategoryRow from './CategoryRow.svelte';
 	import EditorChoice from './EditorChoice.svelte';
 	import { onMount } from 'svelte';
-	import type { Video as DbVideo } from '$lib/server/db/videos';
-	import { categoryFilter, FILTER_TO_CATEGORIES, FILTER_LABELS, type CategoryFilter } from '$lib/stores/categoryFilter.svelte';
+	import { categoryFilter, FILTER_LABELS, type CategoryFilter } from '$lib/stores/categoryFilter.svelte';
 
 	/**
 	 * Get thumbnail path - uses local static thumbnails (Flux-generated)
@@ -26,14 +25,9 @@
 	 * Static folder has:    static/thumbnails/crew-call/ep01.jpg
 	 * Served at:            /thumbnails/crew-call/ep01.jpg ✓
 	 */
-	function getThumbnailPath(v: DbVideo): string {
-		// D1 thumbnail_path is already in the correct format: /thumbnails/...
-		// Just use it directly since static folder serves at that path
-		if (v.thumbnail_path.startsWith('/thumbnails/')) {
-			return v.thumbnail_path;
-		}
-		// Fallback: prefix with /thumbnails if missing
-		return `/thumbnails${v.thumbnail_path.startsWith('/') ? '' : '/'}${v.thumbnail_path}`;
+	function getThumbnailPath(thumbnailPath: string): string {
+		if (thumbnailPath.startsWith('/thumbnails/')) return thumbnailPath;
+		return `/thumbnails${thumbnailPath.startsWith('/') ? '' : '/'}${thumbnailPath}`;
 	}
 
 	type RowTier = 'free' | 'preview' | 'gated';
@@ -47,7 +41,32 @@
 		episodeNumber?: number;
 	}
 
-	let allCategories = $state<Array<{ title: string; categoryId: string; videos: RowVideo[] }>>([]);
+	interface CatalogSeries {
+		id: string;
+		slug: string;
+		title: string;
+		description: string | null;
+		sortOrder: number;
+		homeFilters: string[];
+	}
+
+	interface CatalogVideo {
+		id: string;
+		title: string;
+		tier: RowTier;
+		episode_number: number | null;
+		duration_seconds: number | null;
+		duration: number;
+		thumbnail_path: string;
+		series_id: string | null;
+	}
+
+	interface CatalogRow {
+		series: CatalogSeries;
+		videos: CatalogVideo[];
+	}
+
+	let allRows = $state<Array<{ series: CatalogSeries; videos: RowVideo[] }>>([]);
 	let isLoading = $state(true);
 	let loadError = $state<string | null>(null);
 
@@ -59,24 +78,24 @@
 		{ id: 'series', label: 'Series' },
 		{ id: 'films', label: 'Films' },
 		{ id: 'bts', label: 'Behind the Scenes' },
-		{ id: 'trailers', label: 'Trailers' }
+		{ id: 'trailers', label: 'Trailers' },
+		{ id: 'free', label: 'Free to Watch' }
 	];
 
 	function handleFilterClick(id: CategoryFilter) {
 		categoryFilter.set(id);
 	}
 
-	// Filter categories based on the active filter
-	const filteredCategories = $derived.by(() => {
-		if (activeFilter === 'all') {
-			return allCategories;
+	const filteredRows = $derived.by(() => {
+		if (activeFilter === 'all') return allRows;
+
+		if (activeFilter === 'free') {
+			return allRows
+				.map((row) => ({ ...row, videos: row.videos.filter((video) => video.tier === 'free') }))
+				.filter((row) => row.videos.length > 0);
 		}
 
-		// Filter by category
-		const allowedCategories = FILTER_TO_CATEGORIES[activeFilter];
-		if (!allowedCategories) return allCategories;
-
-		return allCategories.filter(cat => allowedCategories.includes(cat.categoryId));
+		return allRows.filter((row) => row.series.homeFilters?.includes(activeFilter));
 	});
 
 	function formatClock(totalSeconds: number): string {
@@ -88,27 +107,14 @@
 		return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 	}
 
-	function titleFromCategoryId(categoryId: string): string {
-		const map: Record<string, string> = {
-			'crew-call': 'Crew Call',
-			'reconnecting-relationships': 'Reconnecting Relationships',
-			kodiak: 'Kodiak',
-			'lincoln-manufacturing': 'Lincoln Manufacturing',
-			'guns-out-tv': 'Guns Out TV',
-			films: 'Films',
-			'coming-soon': 'Coming Soon'
-		};
-		return map[categoryId] || categoryId;
-	}
-
-	function buildRowVideo(v: DbVideo): RowVideo {
+	function buildRowVideo(series: CatalogSeries, v: CatalogVideo): RowVideo {
 		return {
 			id: v.id,
 			title: v.title,
-			thumbnail: getThumbnailPath(v),
-			duration: formatClock(v.duration),
+			thumbnail: getThumbnailPath(v.thumbnail_path),
+			duration: formatClock(v.duration_seconds ?? v.duration),
 			tier: v.tier,
-			category: v.category,
+			category: series.title,
 			...(v.episode_number ? { episodeNumber: v.episode_number } : {})
 		};
 	}
@@ -118,26 +124,23 @@
 			isLoading = true;
 			loadError = null;
 
-			const response = await fetch('/api/videos?grouped=true');
-			const result = await response.json();
+			const response = await fetch('/api/v1/catalog/home');
+			const result = (await response.json()) as unknown;
+			const payload = result as { success?: boolean; data?: { rows?: CatalogRow[] }; error?: string };
 
-			if (!response.ok || !result?.success) {
-				throw new Error(result?.error || 'Failed to load videos');
+			if (!response.ok || !payload?.success) {
+				throw new Error(payload?.error || 'Failed to load catalog');
 			}
 
-			const grouped = result.data as Record<string, DbVideo[]>;
+			const rows = payload.data?.rows || [];
 
-			const rows: Array<{ title: string; categoryId: string; videos: RowVideo[] }> = Object.entries(grouped)
-				.sort(([a], [b]) => a.localeCompare(b))
-				.map(([categoryId, vids]) => ({
-					title: titleFromCategoryId(categoryId),
-					categoryId,
-					videos: vids.map(buildRowVideo)
-				}));
-			allCategories = rows;
+			allRows = rows.map((row) => ({
+				series: row.series,
+				videos: (row.videos || []).map((video) => buildRowVideo(row.series, video))
+			}));
 		} catch (err) {
 			loadError = err instanceof Error ? err.message : 'Failed to load videos';
-			allCategories = [];
+			allRows = [];
 		} finally {
 			isLoading = false;
 		}
@@ -162,6 +165,8 @@
 				Behind the scenes of our productions.
 			{:else if activeFilter === 'series'}
 				Ongoing series from our content network.
+			{:else if activeFilter === 'free'}
+				Free episodes available to watch without membership.
 			{:else}
 				50+ episodes demonstrating the quality and scale we deliver
 			{/if}
@@ -186,13 +191,13 @@
 			<p class="empty-state">Loading videos…</p>
 		{:else if loadError}
 			<p class="empty-state">{loadError}</p>
-		{:else if filteredCategories.length === 0}
+		{:else if filteredRows.length === 0}
 			<p class="empty-state">No videos in this category yet.</p>
 		{:else}
-			{#each filteredCategories as category (category.categoryId)}
-				<CategoryRow title={category.title} videos={category.videos} useLinks={true} />
+			{#each filteredRows as row (row.series.id)}
+				<CategoryRow title={row.series.title} videos={row.videos} useLinks={true} />
 				<!-- Insert EditorChoice after Crew Call -->
-				{#if category.categoryId === 'crew-call' && (activeFilter === 'all' || activeFilter === 'films')}
+				{#if row.series.slug === 'crew-call' && (activeFilter === 'all' || activeFilter === 'films')}
 					<EditorChoice />
 				{/if}
 			{/each}

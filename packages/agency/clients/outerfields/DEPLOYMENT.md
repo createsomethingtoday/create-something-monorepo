@@ -25,7 +25,7 @@ Vars (`wrangler.toml` / Pages vars):
 - `CLOUDFLARE_STREAM_CUSTOMER_CODE`
 - `CLOUDFLARE_STREAM_ALLOWED_ORIGINS`
 - `VIDEO_STREAM_TOKEN_TTL_SECONDS`
-- `VIDEO_SERIES_ADMIN_EMAILS`
+- `VIDEO_ADMIN_EMAILS` (comma-separated allowlist; back-compat: `VIDEO_SERIES_ADMIN_EMAILS`)
 
 Secrets (Pages secrets / `wrangler secret put`):
 - `CLOUDFLARE_STREAM_API_TOKEN`

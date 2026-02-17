@@ -1,11 +1,16 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import type { Video } from './videos';
 
+export type SeriesVisibility = 'draft' | 'published' | 'archived';
+
 export interface Series {
 	id: string;
 	slug: string;
 	title: string;
 	description: string | null;
+	visibility: SeriesVisibility;
+	sort_order: number;
+	home_filters: string;
 	created_at: number;
 	updated_at: number;
 }
@@ -41,7 +46,14 @@ function createSeriesId(slug: string): string {
 
 export async function getSeries(db: D1Database): Promise<Series[]> {
 	const result = await db
-		.prepare('SELECT * FROM series ORDER BY title ASC')
+		.prepare(`SELECT * FROM series WHERE visibility = 'published' ORDER BY sort_order ASC, title ASC`)
+		.all<Series>();
+	return result.results || [];
+}
+
+export async function listAdminSeries(db: D1Database): Promise<Series[]> {
+	const result = await db
+		.prepare('SELECT * FROM series ORDER BY sort_order ASC, title ASC')
 		.all<Series>();
 	return result.results || [];
 }
@@ -68,10 +80,10 @@ export async function createSeries(db: D1Database, input: CreateSeriesInput): Pr
 
 	await db
 		.prepare(
-			`INSERT INTO series (id, slug, title, description, created_at, updated_at)
-			 VALUES (?, ?, ?, ?, ?, ?)`
+			`INSERT INTO series (id, slug, title, description, home_filters, created_at, updated_at)
+			 VALUES (?, ?, ?, ?, ?, ?, ?)`
 		)
-		.bind(id, slug, input.title.trim(), input.description?.trim() || null, now, now)
+		.bind(id, slug, input.title.trim(), input.description?.trim() || null, '["series"]', now, now)
 		.run();
 
 	const created = await getSeriesByIdentifier(db, id);
@@ -93,14 +105,14 @@ export async function upsertSeries(db: D1Database, input: CreateSeriesInput): Pr
 
 	await db
 		.prepare(
-			`INSERT INTO series (id, slug, title, description, created_at, updated_at)
-			 VALUES (?, ?, ?, ?, ?, ?)
+			`INSERT INTO series (id, slug, title, description, home_filters, created_at, updated_at)
+			 VALUES (?, ?, ?, ?, ?, ?, ?)
 			 ON CONFLICT(slug) DO UPDATE SET
 			 title = excluded.title,
 			 description = COALESCE(excluded.description, series.description),
 			 updated_at = excluded.updated_at`
 		)
-		.bind(id, slug, input.title.trim(), input.description?.trim() || null, now, now)
+		.bind(id, slug, input.title.trim(), input.description?.trim() || null, '["series"]', now, now)
 		.run();
 
 	const created = await getSeriesByIdentifier(db, slug);
@@ -125,6 +137,7 @@ export async function getSeriesVideos(
 			`SELECT v.*
 			 FROM videos v
 			 WHERE v.series_id = ?
+			   AND v.visibility = 'published'
 			 ORDER BY v.episode_number NULLS LAST, v.created_at ASC`
 		)
 		.bind(series.id)
@@ -136,4 +149,44 @@ export async function getSeriesVideos(
 		seriesTitle: series.title,
 		video
 	}));
+}
+
+export interface UpdateSeriesHomeConfigInput {
+	title?: string;
+	description?: string | null;
+	visibility?: SeriesVisibility;
+	sort_order?: number;
+	home_filters?: string;
+}
+
+export async function updateSeriesHomeConfig(
+	db: D1Database,
+	seriesId: string,
+	input: UpdateSeriesHomeConfigInput
+): Promise<Series | null> {
+	const now = nowSeconds();
+
+	await db
+		.prepare(
+			`UPDATE series
+			 SET title = COALESCE(?, title),
+				 description = COALESCE(?, description),
+				 visibility = COALESCE(?, visibility),
+				 sort_order = COALESCE(?, sort_order),
+				 home_filters = COALESCE(?, home_filters),
+				 updated_at = ?
+			 WHERE id = ?`
+		)
+		.bind(
+			input.title?.trim() || null,
+			input.description === undefined ? null : input.description,
+			input.visibility ?? null,
+			Number.isFinite(input.sort_order) ? input.sort_order : null,
+			input.home_filters ?? null,
+			now,
+			seriesId
+		)
+		.run();
+
+	return getSeriesByIdentifier(db, seriesId);
 }

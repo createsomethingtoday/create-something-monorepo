@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getVideoById } from '$lib/server/db/videos';
+import { getAdminVideoById, getVideoById } from '$lib/server/db/videos';
+import { isAdminUser } from '$lib/server/admin';
 import {
 	buildPublicHlsUrl,
 	buildSignedHlsUrl,
@@ -29,8 +30,14 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
 		return json({ success: false, error: 'Video ID is required' }, { status: 400 });
 	}
 
-	const video = await getVideoById(db, videoId);
+	const isAdmin = isAdminUser(locals.user, platform?.env);
+	const video = isAdmin ? await getAdminVideoById(db, videoId) : await getVideoById(db, videoId);
 	if (!video) {
+		return json({ success: false, error: 'Video not found' }, { status: 404 });
+	}
+
+	if (!isAdmin && video.visibility !== 'published') {
+		// Avoid leaking draft/archived metadata.
 		return json({ success: false, error: 'Video not found' }, { status: 404 });
 	}
 

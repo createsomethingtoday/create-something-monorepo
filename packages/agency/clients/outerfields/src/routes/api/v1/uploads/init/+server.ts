@@ -5,6 +5,8 @@ import {
 	createVideoUploadReservation,
 	markVideoUploadFailed
 } from '$lib/server/db/videos';
+import { getSeriesByIdentifier } from '$lib/server/db/series';
+import { isAdminUser } from '$lib/server/admin';
 import { createTusDirectUpload, getMaxDirectUploadBytes } from '$lib/server/stream';
 import type { CreateUploadRequest, CreateUploadResponse } from '$lib/types/video-pipeline';
 
@@ -32,6 +34,10 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		return json({ success: false, error: 'Authentication required' }, { status: 401 });
 	}
 
+	if (!isAdminUser(locals.user, platform?.env)) {
+		return json({ success: false, error: 'Admin access required' }, { status: 403 });
+	}
+
 	let payload: CreateUploadRequest;
 	try {
 		payload = (await request.json()) as CreateUploadRequest;
@@ -40,13 +46,13 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 	}
 
 	const title = payload.title?.trim();
-	const category = payload.category?.trim();
+	const seriesIdentifier = payload.seriesId?.trim();
 
 	if (!title) {
 		return json({ success: false, error: 'Title is required' }, { status: 400 });
 	}
-	if (!category) {
-		return json({ success: false, error: 'Category is required' }, { status: 400 });
+	if (!seriesIdentifier) {
+		return json({ success: false, error: 'seriesId is required' }, { status: 400 });
 	}
 	if (!Number.isFinite(payload.fileSizeBytes) || payload.fileSizeBytes <= 0) {
 		return json({ success: false, error: 'fileSizeBytes must be a positive number' }, { status: 400 });
@@ -68,13 +74,21 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		return json({ success: false, error: 'Invalid playbackPolicy value' }, { status: 400 });
 	}
 
+	const series = await getSeriesByIdentifier(db, seriesIdentifier);
+	if (!series) {
+		return json({ success: false, error: 'Series not found' }, { status: 404 });
+	}
+
+	// Legacy category field is still used by some UI. Default to series slug.
+	const category = payload.category?.trim() || series.slug;
+
 	const reservation = await createVideoUploadReservation(db, {
 		title,
 		category,
 		description: payload.description,
 		episodeNumber: payload.episodeNumber,
 		tier: payload.tier,
-		seriesId: payload.seriesId,
+		seriesId: series.id,
 		playbackPolicy: payload.playbackPolicy ?? 'private',
 		ingestSource: 'upload',
 		sourceBytes: payload.fileSizeBytes,
@@ -91,7 +105,7 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 			meta: {
 				videoId: reservation.id,
 				category,
-				seriesId: payload.seriesId || ''
+				seriesId: series.id
 			}
 		});
 

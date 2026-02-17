@@ -35,11 +35,12 @@ export interface SeriesEpisode {
 
 export interface CreateUploadRequest {
 	title: string;
-	category: string;
+	/** Legacy field. If omitted, server will default to the selected series slug. */
+	category?: string;
 	description?: string;
 	episodeNumber?: number | null;
 	tier?: 'free' | 'preview' | 'gated';
-	seriesId?: string | null;
+	seriesId: string;
 	fileSizeBytes: number;
 	fileName?: string;
 	playbackPolicy?: VideoPlaybackPolicy;

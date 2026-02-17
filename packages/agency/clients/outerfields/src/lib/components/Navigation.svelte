@@ -17,9 +17,10 @@
 			membership: boolean;
 			createdAt: string;
 		} | null;
+		isAdmin?: boolean;
 	}
 
-	let { user = null }: Props = $props();
+	let { user = null, isAdmin = false }: Props = $props();
 
 	// Mobile menu state
 	let isMobileMenuOpen = $state(false);
@@ -57,6 +58,15 @@
 						{link.label}
 					</a>
 				{/each}
+				{#if isAdmin}
+					<a
+						href="/admin/videos"
+						class="nav-link"
+						class:active={$page.url.pathname.startsWith('/admin')}
+					>
+						Admin
+					</a>
+				{/if}
 			</nav>
 		</div>
 
@@ -110,6 +120,16 @@
 						{link.label}
 					</a>
 				{/each}
+				{#if isAdmin}
+					<a
+						href="/admin/videos"
+						class="mobile-nav-link"
+						class:active={$page.url.pathname.startsWith('/admin')}
+						onclick={closeMobileMenu}
+					>
+						Admin
+					</a>
+				{/if}
 			</div>
 
 			<div class="mobile-menu-actions">

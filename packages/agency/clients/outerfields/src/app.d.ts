@@ -35,6 +35,7 @@ declare global {
 				VIDEO_STREAM_TOKEN_TTL_SECONDS?: string;
 				VIDEO_INGEST_API_TOKEN?: string;
 				VIDEO_SERIES_ADMIN_EMAILS?: string;
+				VIDEO_ADMIN_EMAILS?: string;
 			};
 		}
 	}

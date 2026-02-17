@@ -26,6 +26,7 @@
 				membership: boolean;
 				createdAt: string;
 			} | null;
+			isAdmin: boolean;
 		};
 	}
 
@@ -42,7 +43,7 @@
 </script>
 
 <div class="page-wrapper">
-	<Navigation user={data.user} />
+	<Navigation user={data.user} isAdmin={data.isAdmin} />
 	<main class="main-wrapper">
 		{@render children()}
 	</main>

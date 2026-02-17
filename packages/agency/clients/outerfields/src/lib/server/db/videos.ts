@@ -3,6 +3,7 @@ import type { D1Database } from '@cloudflare/workers-types';
 export type VideoIngestStatus = 'pending_upload' | 'processing' | 'ready' | 'failed';
 export type VideoIngestSource = 'upload' | 'generated';
 export type VideoPlaybackPolicy = 'private' | 'public';
+export type VideoVisibility = 'draft' | 'published' | 'archived';
 
 export interface Video {
 	id: string;
@@ -23,6 +24,9 @@ export interface Video {
 	playback_policy: VideoPlaybackPolicy;
 	playback_ready_at: number | null;
 	failure_reason: string | null;
+	visibility: VideoVisibility;
+	is_featured: number;
+	featured_order: number;
 	created_at: number;
 	updated_at: number;
 }
@@ -54,6 +58,17 @@ export interface StreamWebhookUpdate {
 	failureReason?: string | null;
 }
 
+export interface ListAdminVideosFilters {
+	q?: string;
+	visibility?: VideoVisibility | 'all';
+	ingestStatus?: VideoIngestStatus | 'all';
+	seriesId?: string;
+	tier?: 'free' | 'preview' | 'gated';
+	featured?: 'true' | 'false';
+	limit?: number;
+	offset?: number;
+}
+
 function nowSeconds(): number {
 	return Math.floor(Date.now() / 1000);
 }
@@ -70,11 +85,11 @@ export async function getVideos(
 	db: D1Database,
 	category?: string
 ): Promise<VideosResponse> {
-	let query = 'SELECT * FROM videos';
-	const params: string[] = [];
+	let query = `SELECT * FROM videos WHERE visibility = ?`;
+	const params: Array<string | number> = ['published'];
 
 	if (category) {
-		query += ' WHERE category = ?';
+		query += ' AND category = ?';
 		params.push(category);
 	}
 
@@ -110,6 +125,17 @@ export async function getVideosByCategory(db: D1Database): Promise<Record<string
  * Get a single video by ID.
  */
 export async function getVideoById(db: D1Database, id: string): Promise<Video | null> {
+	const result = await db
+		.prepare(`SELECT * FROM videos WHERE id = ? AND visibility = ?`)
+		.bind(id, 'published')
+		.first<Video>();
+	return result || null;
+}
+
+/**
+ * Get a single video by ID (admin view, includes drafts/archived).
+ */
+export async function getAdminVideoById(db: D1Database, id: string): Promise<Video | null> {
 	const result = await db.prepare('SELECT * FROM videos WHERE id = ?').bind(id).first<Video>();
 	return result || null;
 }
@@ -138,55 +164,61 @@ export async function createVideoUploadReservation(
 	const playbackPolicy = input.playbackPolicy ?? 'private';
 	const ingestSource = input.ingestSource ?? 'upload';
 
-	await db
-		.prepare(
-			`INSERT INTO videos (
+		await db
+			.prepare(
+				`INSERT INTO videos (
+					id,
+					title,
+					category,
+					series_id,
+					episode_number,
+					tier,
+					duration,
+					duration_seconds,
+					asset_path,
+					stream_uid,
+					thumbnail_path,
+					description,
+					ingest_status,
+					ingest_source,
+					source_bytes,
+					playback_policy,
+					visibility,
+					is_featured,
+					featured_order,
+					created_at,
+					updated_at
+				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+			)
+			.bind(
 				id,
-				title,
-				category,
-				series_id,
-				episode_number,
+				input.title,
+				input.category,
+				input.seriesId ?? null,
+				input.episodeNumber ?? null,
 				tier,
-				duration,
-				duration_seconds,
-				asset_path,
-				stream_uid,
-				thumbnail_path,
-				description,
-				ingest_status,
-				ingest_source,
-				source_bytes,
-				playback_policy,
-				created_at,
-				updated_at
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-		)
-		.bind(
-			id,
-			input.title,
-			input.category,
-			input.seriesId ?? null,
-			input.episodeNumber ?? null,
-			tier,
-			Math.max(0, input.durationSeconds ?? 0),
-			input.durationSeconds ?? null,
-			'',
-			input.streamUid ?? null,
-			'/thumbnails/hero-building-outerfields.jpg',
-			input.description ?? null,
-			'pending_upload',
-			ingestSource,
-			input.sourceBytes ?? null,
-			playbackPolicy,
-			createdAt,
-			createdAt
-		)
-		.run();
+				Math.max(0, input.durationSeconds ?? 0),
+				input.durationSeconds ?? null,
+				'',
+				input.streamUid ?? null,
+				'/thumbnails/hero-building-outerfields.jpg',
+				input.description ?? null,
+				'pending_upload',
+				ingestSource,
+				input.sourceBytes ?? null,
+				playbackPolicy,
+				'draft',
+				0,
+				0,
+				createdAt,
+				createdAt
+			)
+			.run();
 
-	const created = await getVideoById(db, id);
-	if (!created) {
-		throw new Error('Failed to create reserved video row');
-	}
+		const created = await getAdminVideoById(db, id);
+		if (!created) {
+			throw new Error('Failed to create reserved video row');
+		}
 
 	return created;
 }
@@ -219,7 +251,7 @@ export async function createGeneratedVideo(
 			.run();
 	}
 
-	return (await getVideoById(db, created.id)) ?? created;
+	return (await getAdminVideoById(db, created.id)) ?? created;
 }
 
 /**
@@ -261,7 +293,7 @@ export async function markVideoUploadCompleted(
 		.bind(nowSeconds(), videoId)
 		.run();
 
-	return getVideoById(db, videoId);
+	return getAdminVideoById(db, videoId);
 }
 
 /**
@@ -283,7 +315,7 @@ export async function markVideoUploadFailed(
 		.bind(failureReason, nowSeconds(), videoId)
 		.run();
 
-	return getVideoById(db, videoId);
+	return getAdminVideoById(db, videoId);
 }
 
 /**
@@ -356,8 +388,13 @@ export async function getVideosByTier(
 	tier: 'free' | 'preview' | 'gated'
 ): Promise<VideosResponse> {
 	const result = await db
-		.prepare('SELECT * FROM videos WHERE tier = ? ORDER BY category, episode_number NULLS LAST')
-		.bind(tier)
+		.prepare(
+			`SELECT * FROM videos
+			 WHERE tier = ?
+			   AND visibility = ?
+			 ORDER BY category, episode_number NULLS LAST`
+		)
+		.bind(tier, 'published')
 		.all<Video>();
 
 	return {
@@ -378,12 +415,183 @@ export async function getFreeVideos(db: D1Database): Promise<VideosResponse> {
  */
 export async function searchVideos(db: D1Database, query: string): Promise<VideosResponse> {
 	const result = await db
-		.prepare('SELECT * FROM videos WHERE title LIKE ? ORDER BY category, episode_number NULLS LAST')
-		.bind(`%${query}%`)
+		.prepare(
+			`SELECT * FROM videos
+			 WHERE visibility = ?
+			   AND title LIKE ?
+			 ORDER BY category, episode_number NULLS LAST`
+		)
+		.bind('published', `%${query}%`)
 		.all<Video>();
 
 	return {
 		videos: result.results || [],
 		total: result.results?.length || 0
+	};
+}
+
+export interface HomeCatalogSeriesRow {
+	id: string;
+	slug: string;
+	title: string;
+	description: string | null;
+	sort_order: number;
+	home_filters: string;
+}
+
+export interface HomeCatalogRow {
+	series: HomeCatalogSeriesRow;
+	videos: Video[];
+}
+
+export async function getHomeCatalogRows(db: D1Database): Promise<HomeCatalogRow[]> {
+	const seriesResult = await db
+		.prepare(
+			`SELECT id, slug, title, description, sort_order, home_filters
+			 FROM series
+			 WHERE visibility = 'published'
+			 ORDER BY sort_order ASC, title ASC`
+		)
+		.all<HomeCatalogSeriesRow>();
+
+	const rows: HomeCatalogRow[] = [];
+
+	for (const series of seriesResult.results || []) {
+		const videos = await db
+			.prepare(
+				`SELECT *
+				 FROM videos
+				 WHERE series_id = ?
+				   AND visibility = 'published'
+				   AND ingest_status = 'ready'
+				 ORDER BY episode_number IS NULL ASC, episode_number ASC, created_at ASC`
+			)
+			.bind(series.id)
+			.all<Video>();
+
+		if ((videos.results || []).length === 0) continue;
+
+		rows.push({
+			series,
+			videos: videos.results || []
+		});
+	}
+
+	return rows;
+}
+
+export interface FeaturedCatalogVideo {
+	video: Video;
+	seriesTitle: string | null;
+	seriesSlug: string | null;
+}
+
+export async function getFeaturedCatalogVideos(db: D1Database, limit: number): Promise<FeaturedCatalogVideo[]> {
+	const capped = Math.max(1, Math.min(50, Math.floor(limit)));
+
+	const featured = await db
+		.prepare(
+			`SELECT v.*, s.title as series_title, s.slug as series_slug
+			 FROM videos v
+			 LEFT JOIN series s ON s.id = v.series_id
+			 WHERE v.visibility = 'published'
+			   AND v.ingest_status = 'ready'
+			   AND v.is_featured = 1
+			 ORDER BY v.featured_order ASC, v.updated_at DESC
+			 LIMIT ?`
+		)
+		.bind(capped)
+		.all<(Video & { series_title: string | null; series_slug: string | null })>();
+
+	const featuredRows = featured.results || [];
+	if (featuredRows.length > 0) {
+		return featuredRows.map((row) => ({
+			video: row,
+			seriesTitle: row.series_title ?? null,
+			seriesSlug: row.series_slug ?? null
+		}));
+	}
+
+	const fallback = await db
+		.prepare(
+			`SELECT v.*, s.title as series_title, s.slug as series_slug
+			 FROM videos v
+			 LEFT JOIN series s ON s.id = v.series_id
+			 WHERE v.visibility = 'published'
+			   AND v.ingest_status = 'ready'
+			 ORDER BY v.updated_at DESC
+			 LIMIT ?`
+		)
+		.bind(capped)
+		.all<(Video & { series_title: string | null; series_slug: string | null })>();
+
+	return (fallback.results || []).map((row) => ({
+		video: row,
+		seriesTitle: row.series_title ?? null,
+		seriesSlug: row.series_slug ?? null
+	}));
+}
+
+export async function listAdminVideos(
+	db: D1Database,
+	filters: ListAdminVideosFilters = {}
+): Promise<VideosResponse> {
+	const limit = Math.max(1, Math.min(500, Math.floor(filters.limit ?? 200)));
+	const offset = Math.max(0, Math.floor(filters.offset ?? 0));
+
+	let where = 'WHERE 1 = 1';
+	const params: Array<string | number> = [];
+
+	if (filters.q?.trim()) {
+		where += ' AND title LIKE ?';
+		params.push(`%${filters.q.trim()}%`);
+	}
+
+	if (filters.visibility && filters.visibility !== 'all') {
+		where += ' AND visibility = ?';
+		params.push(filters.visibility);
+	}
+
+	if (filters.ingestStatus && filters.ingestStatus !== 'all') {
+		where += ' AND ingest_status = ?';
+		params.push(filters.ingestStatus);
+	}
+
+	if (filters.seriesId?.trim()) {
+		where += ' AND series_id = ?';
+		params.push(filters.seriesId.trim());
+	}
+
+	if (filters.tier) {
+		where += ' AND tier = ?';
+		params.push(filters.tier);
+	}
+
+	if (filters.featured === 'true') {
+		where += ' AND is_featured = 1';
+	}
+	if (filters.featured === 'false') {
+		where += ' AND is_featured = 0';
+	}
+
+	const countResult = await db
+		.prepare(`SELECT COUNT(1) as count FROM videos ${where}`)
+		.bind(...params)
+		.first<{ count: number }>();
+
+	const rowsResult = await db
+		.prepare(
+			`SELECT *
+			 FROM videos
+			 ${where}
+			 ORDER BY updated_at DESC
+			 LIMIT ? OFFSET ?`
+		)
+		.bind(...params, limit, offset)
+		.all<Video>();
+
+	return {
+		videos: rowsResult.results || [],
+		total: countResult?.count ?? (rowsResult.results?.length || 0)
 	};
 }

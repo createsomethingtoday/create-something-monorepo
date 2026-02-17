@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { markVideoUploadCompleted } from '$lib/server/db/videos';
+import { isAdminUser } from '$lib/server/admin';
 
 interface CompleteUploadRequest {
 	videoId: string;
@@ -18,6 +19,10 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 
 	if (!locals.user) {
 		return json({ success: false, error: 'Authentication required' }, { status: 401 });
+	}
+
+	if (!isAdminUser(locals.user, platform?.env)) {
+		return json({ success: false, error: 'Admin access required' }, { status: 403 });
 	}
 
 	let payload: CompleteUploadRequest;
