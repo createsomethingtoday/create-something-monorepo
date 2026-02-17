@@ -36,6 +36,35 @@ Every tool call includes `workspace: "halfdozen"` or `workspace: "client"` so th
 
    MCP endpoint: `http://localhost:8787/mcp` (Streamable HTTP).
 
+## Substrate Ops Mirror (Authoritative)
+
+This MCP still reads/writes Notion pages directly, but **operational state and delivery reporting are mirrored to Substrate** in:
+
+- `CREATE SOMETHING Agency Ops` workspace
+- `clients`
+- `engagements`
+- `mcp_services`
+- `delivery_milestones`
+
+Use this command for a full refresh from Notion → Substrate:
+
+```bash
+cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/halfdozen-notion-mcp"
+NOTION_SYNC_BEARER_TOKEN=<token> SUBSTRATE_ADMIN_TOKEN=<token or SUBSTRATE_TOKEN> \
+pnpm run sync:agency-ops
+```
+
+Required env (mirror only):
+
+- `NOTION_SYNC_BEARER_TOKEN`: Bearer token for Notion MCP auth.
+- `SUBSTRATE_ADMIN_TOKEN` or `SUBSTRATE_TOKEN`: Substrate admin bearer.
+
+Operational guidance:
+
+- Run manually after notable changes to the Agency Ops Notion databases.
+- If a client has different Notion workspace URLs, ensure the `NOTION_SYNC_BEARER_TOKEN` matches that MCP credential context.
+- This process preserves relations (`client`↔`engagement`, `engagement`↔`mcp_service`, `delivery_milestone`→`engagement`) and writes `notion_page_id` / `notion_url` for traceability.
+
 ## Production
 
 - **URL:** `https://createsomething-notion.mcp.workway.co/mcp` (after deploy and custom domain).
