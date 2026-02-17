@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
 	import { onMount } from 'svelte';
+	import WorkHistoryTimeline from '$lib/components/WorkHistoryTimeline.svelte';
 
 	// Scroll reveal observer
 	onMount(() => {
@@ -88,6 +89,20 @@
 			<p>
 				<a href="https://www.linkedin.com/in/micahryanjohnson/" class="link" target="_blank" rel="noopener noreferrer">LinkedIn</a> · <a href="mailto:micah@createsomething.agency" class="link">Email</a>
 			</p>
+		</div>
+	</div>
+</section>
+
+<!-- Timeline -->
+<section class="about-section" id="timeline">
+	<div class="section-container">
+		<div class="about-content reveal">
+			<h2>Timeline</h2>
+			<p>
+				The through-line: using tools to abstract complexity while still understanding the complexity underneath.
+				That pattern shows up in science, creative work, client services, marketplace systems, and now AI integrations.
+			</p>
+			<WorkHistoryTimeline />
 		</div>
 	</div>
 </section>
