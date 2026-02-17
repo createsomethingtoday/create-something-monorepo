@@ -47,7 +47,7 @@ export const workHistory: WorkHistoryItem[] = [
 	},
 	{
 		id: 'burleson-equine-hospital',
-		date: 'Date needed (2 years, concurrent with photography)',
+		date: '2010 – 2012',
 		role: 'Veterinary Technician (Equine)',
 		org: 'Burleson Equine Hospital',
 		subtitle: 'Equine nursing · Blood draws · Farm visits · Clinical logging',
@@ -72,7 +72,7 @@ export const workHistory: WorkHistoryItem[] = [
 	},
 	{
 		id: 'photography-company',
-		date: 'Date needed (post-2010, pre-Nov 2013; concurrent with equine vet tech)',
+		date: 'Date needed (concurrent with equine vet tech in 2010–2012; pre-Nov 2013)',
 		role: 'Co-owner (Photography Company)',
 		org: 'Independent',
 		subtitle: 'Creative production pipeline · First attempt at web development as a service',

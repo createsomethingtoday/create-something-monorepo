@@ -56,7 +56,7 @@
 	</ol>
 
 	<p class="timeline-footnote">
-		To lock dates: I still need the photography company date range, Burleson Equine Hospital date range, plus dates for Boulder Digital Arts and UTA Web Design.
+		To lock dates: I still need the photography company date range, plus dates for Boulder Digital Arts and UTA Web Design.
 	</p>
 </div>
 
