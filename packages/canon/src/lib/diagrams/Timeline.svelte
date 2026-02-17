@@ -32,7 +32,9 @@
   const layoutedEvents = events.map((event, i) => {
     const x = lineStartX + i * eventSpacing;
     const alternateY = i % 2 === 0;
-    const labelY = alternateY ? lineY - 50 : lineY + 50;
+    // Give labels/descriptions more breathing room from the center line so
+    // marker-adjacent text doesn't feel cramped.
+    const labelY = alternateY ? lineY - 70 : lineY + 70;
 
     return {
       ...event,
