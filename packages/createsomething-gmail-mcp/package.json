@@ -1,11 +1,11 @@
 {
-  "name": "@create-something/personal-gmail-mcp",
+  "name": "@create-something/createsomething-gmail-mcp",
   "version": "0.1.0",
-  "description": "Local MCP server (Streamable HTTP + stdio) for personal Gmail access in Codex (search/read/send).",
+  "description": "Local MCP server (Streamable HTTP + stdio) for CREATE SOMETHING Gmail access in Codex (search/read/send).",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "personal-gmail-mcp": "dist/index.js"
+    "createsomething-gmail-mcp": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -37,4 +37,3 @@
   "author": "CREATE SOMETHING <hello@createsomething.agency>",
   "license": "MIT"
 }
-

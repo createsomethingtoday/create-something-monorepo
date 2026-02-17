@@ -1,4 +1,4 @@
-# Personal Gmail MCP (Codex)
+# CREATE SOMETHING Gmail MCP (Codex)
 
 Local MCP server that connects to a single Gmail account via Google OAuth and exposes a small, safe toolset for Codex: search, read, send, label/triage.
 
@@ -15,7 +15,7 @@ Local MCP server that connects to a single Gmail account via Google OAuth and ex
 
 ### 2. Configure environment
 
-Create `packages/personal-gmail-mcp/.env`:
+Create `packages/createsomething-gmail-mcp/.env`:
 
 ```bash
 GOOGLE_CLIENT_ID="..."
@@ -29,18 +29,18 @@ GMAIL_ALLOWED_EMAIL="micah@createsomething.io"
 ### 3. Authorize Gmail (one-time)
 
 ```bash
-pnpm --filter @create-something/personal-gmail-mcp auth
+pnpm --filter @create-something/createsomething-gmail-mcp auth
 ```
 
-Tokens are stored at `~/.config/create-something/personal-gmail-mcp/tokens.json` by default (override with `GMAIL_TOKEN_PATH`).
+Tokens are stored at `~/.config/create-something/createsomething-gmail-mcp/tokens.json` by default (override with `GMAIL_TOKEN_PATH`).
 
 ## Run (for Codex)
 
 Codex uses Streamable HTTP URLs, so run the server locally on a port:
 
 ```bash
-pnpm --filter @create-something/personal-gmail-mcp build
-pnpm --filter @create-something/personal-gmail-mcp start:http
+pnpm --filter @create-something/createsomething-gmail-mcp build
+pnpm --filter @create-something/createsomething-gmail-mcp start:http
 ```
 
 Health:
@@ -52,11 +52,43 @@ Health:
 Add to `~/.codex/config.toml`:
 
 ```toml
-[mcp_servers."personal-gmail"]
+[mcp_servers."createsomething-gmail-mcp"]
 url = "http://localhost:3850/mcp"
 ```
 
 Start a new Codex session.
+
+## Remote (ChatGPT)
+
+This MCP can also run as a remote Cloudflare Worker so ChatGPT can access it.
+
+### Deploy
+
+1. Create a KV namespace (for the refresh token)
+2. Set `GMAIL_TOKENS` KV id in `worker/wrangler.toml`
+3. Deploy
+
+```bash
+cd packages/createsomething-gmail-mcp/worker
+pnpm install
+pnpm deploy
+```
+
+### Remote OAuth redirect URI
+
+In Google Cloud Console, add this redirect URI (replace with your deployed Worker origin):
+
+`https://YOUR_WORKER_HOSTNAME/callback`
+
+Then authorize the mailbox by visiting:
+
+`https://YOUR_WORKER_HOSTNAME/auth?email=micah@createsomething.io`
+
+### ChatGPT MCP URL
+
+Use:
+- MCP endpoint: `https://YOUR_WORKER_HOSTNAME/mcp`
+- If you set `MCP_API_KEY`, configure ChatGPT to send `Authorization: Bearer <MCP_API_KEY>`.
 
 ## Tools
 
@@ -74,4 +106,3 @@ Start a new Codex session.
 
 - Default OAuth scopes include read + send + modify. Override with `GMAIL_SCOPES` if you want read-only.
 - If you change scopes, re-run auth to get a token with the new grants.
-

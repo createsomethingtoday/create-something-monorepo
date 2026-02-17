@@ -10,6 +10,7 @@ packages:
   - 'packages/gmail-notion-mcp/worker'
   - 'packages/halfdozen-telemetry-mcp/worker'
   # CREATE SOMETHING account
+  - 'packages/createsomething-gmail-mcp/worker'
   - 'packages/schedule-mcp/worker'
   - 'packages/substrate-mcp/worker'
   - 'packages/create-something-mcp/worker'

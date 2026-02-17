@@ -2,7 +2,7 @@
  * Gmail OAuth Flow (local single-user)
  *
  * - Uses GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET.
- * - Stores tokens on disk (default: ~/.config/create-something/personal-gmail-mcp/tokens.json)
+ * - Stores tokens on disk (default: ~/.config/create-something/createsomething-gmail-mcp/tokens.json)
  */
 
 import { google, Auth } from 'googleapis';
@@ -26,7 +26,7 @@ function defaultTokenPath(): string {
   const base = process.env.XDG_CONFIG_HOME
     ? process.env.XDG_CONFIG_HOME
     : path.join(os.homedir(), '.config');
-  return path.join(base, 'create-something', 'personal-gmail-mcp', 'tokens.json');
+  return path.join(base, 'create-something', 'createsomething-gmail-mcp', 'tokens.json');
 }
 
 function ensureTokenDir(tokenPath: string) {
@@ -67,7 +67,7 @@ export class GmailOAuth {
     if (!this.clientId || !this.clientSecret) {
       throw new Error(
         'GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are required.\n' +
-        'Set them in packages/personal-gmail-mcp/.env or as environment variables.'
+        'Set them in packages/createsomething-gmail-mcp/.env or as environment variables.'
       );
     }
   }
@@ -76,7 +76,7 @@ export class GmailOAuth {
     this.assertConfigured();
     const tokens = await this.loadTokens();
     if (!tokens) {
-      throw new Error('No Gmail tokens found. Run `pnpm --filter @create-something/personal-gmail-mcp auth` first.');
+      throw new Error('No Gmail tokens found. Run `pnpm --filter @create-something/createsomething-gmail-mcp auth` first.');
     }
 
     this.oauth2Client.setCredentials(tokens);
@@ -161,7 +161,7 @@ export class GmailOAuth {
 
       server.listen(port, () => {
         // eslint-disable-next-line no-console
-        console.error(`[personal-gmail-mcp] Waiting for authorization on http://localhost:${port}/callback`);
+        console.error(`[createsomething-gmail-mcp] Waiting for authorization on http://localhost:${port}/callback`);
       });
 
       server.on('error', (err: NodeJS.ErrnoException) => {

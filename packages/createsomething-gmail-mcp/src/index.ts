@@ -18,18 +18,18 @@ if (command === 'auth') {
   oauth.runAuthFlow()
     .then(() => {
       // eslint-disable-next-line no-console
-      console.error('[personal-gmail-mcp] Gmail authorized successfully');
+      console.error('[createsomething-gmail-mcp] Gmail authorized successfully');
       process.exit(0);
     })
     .catch((error) => {
       // eslint-disable-next-line no-console
-      console.error('[personal-gmail-mcp] Auth failed:', error instanceof Error ? error.message : String(error));
+      console.error('[createsomething-gmail-mcp] Auth failed:', error instanceof Error ? error.message : String(error));
       process.exit(1);
     });
 } else {
   startServer().catch((error) => {
     // eslint-disable-next-line no-console
-    console.error('[personal-gmail-mcp] Server error:', error instanceof Error ? error.message : String(error));
+    console.error('[createsomething-gmail-mcp] Server error:', error instanceof Error ? error.message : String(error));
     process.exit(1);
   });
 }
@@ -48,7 +48,7 @@ async function runStdio(): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   // eslint-disable-next-line no-console
-  console.error('[personal-gmail-mcp] running on stdio');
+  console.error('[createsomething-gmail-mcp] running on stdio');
 }
 
 async function runHTTP(): Promise<void> {
@@ -71,7 +71,7 @@ async function runHTTP(): Promise<void> {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         status: 'ok',
-        server: 'personal-gmail-mcp',
+        server: 'createsomething-gmail-mcp',
         transport: 'streamable-http',
         endpoint: '/mcp',
       }));
@@ -98,7 +98,7 @@ async function runHTTP(): Promise<void> {
 
   httpServer.listen(port, () => {
     // eslint-disable-next-line no-console
-    console.error(`[personal-gmail-mcp] running on Streamable HTTP :${port} (endpoint: /mcp)`);
+    console.error(`[createsomething-gmail-mcp] running on Streamable HTTP :${port} (endpoint: /mcp)`);
   });
 
   process.on('SIGINT', () => {
@@ -106,4 +106,3 @@ async function runHTTP(): Promise<void> {
     process.exit(0);
   });
 }
-

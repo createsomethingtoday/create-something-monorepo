@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { GmailClient } from './gmail/client.js';
 
-const SERVER_NAME = 'personal-gmail-mcp';
+const SERVER_NAME = 'createsomething-gmail-mcp';
 const SERVER_VERSION = '0.1.0';
 
 function assertAllowedEmail(profileEmail: string) {
@@ -375,4 +375,3 @@ Rules:
 
   return server;
 }
-

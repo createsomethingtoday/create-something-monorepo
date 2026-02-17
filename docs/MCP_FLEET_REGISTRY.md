@@ -82,7 +82,7 @@ Not deployed to Cloudflare. Run locally via stdio transport.
 | # | Package | Server Name | Notes |
 |---|---------|-------------|-------|
 | 23 | `quickbooks-notion-mcp` | `quickbooks-notion-mcp-server` | Node.js HTTP/stdio, KV for tokens |
-| 24 | `personal-gmail-mcp` | `personal-gmail-mcp` | Local Streamable HTTP/stdio Gmail (search/read/send). Codex via `http://localhost:<port>/mcp` |
+| 24 | `createsomething-gmail-mcp` | `createsomething-gmail-mcp` | Local + remote Worker Gmail (search/read/send). Local Codex via `http://localhost:<port>/mcp`. Remote: deploy `packages/createsomething-gmail-mcp/worker` and authorize at `/auth`. |
 | 25 | `webflow-site-analyzer-mcp` | `webflow-site-analyzer-mcp` | Node.js stdio |
 | 26 | `outerfields-mcp-server` | `outerfields-pcn` | Stdio companion to remote Worker |
 
