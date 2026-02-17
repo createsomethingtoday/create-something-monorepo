@@ -10,7 +10,7 @@
  * No philosophy, no papers, no design system. Just workflow guidance.
  *
  * Architecture:
- *   Database (Resources)  — 6 playbook resources
+ *   Database (Resources)  — per-host playbooks + list/comparison/graduation resources
  *   Judgment (Prompts)    — workflow_setup, host_comparison, project_structure
  */
 
@@ -22,6 +22,8 @@ import { registerTools } from './tools.js';
 import { registerPrompts } from './prompts.js';
 import { HOST_PLAYBOOKS } from './playbooks.js';
 import { MCP_CATALOG } from './catalog.js';
+
+const RESOURCE_COUNT = HOST_PLAYBOOKS.length + 3; // list + per-host + comparison + graduation path
 
 const server = new McpServer({
   name: 'playbook',
@@ -39,4 +41,6 @@ const transport = new StdioServerTransport();
 await server.connect(transport);
 
 console.error('Playbook MCP running on stdio');
-console.error(`Content: ${HOST_PLAYBOOKS.length} host playbooks, ${MCP_CATALOG.length} catalog entries, 8 tools, 3 prompts, 6 resources`);
+console.error(
+  `Content: ${HOST_PLAYBOOKS.length} host playbooks, ${MCP_CATALOG.length} catalog entries, 8 tools, 3 prompts, ${RESOURCE_COUNT} resources`,
+);
