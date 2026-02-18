@@ -328,6 +328,16 @@ type PromptExecutionResult = {
   turnErrorMessage?: string;
 };
 
+function isTransientAppServerErrorMessage(message: string | undefined): boolean {
+  if (!message) return false;
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes('reconnecting') ||
+    normalized.includes('stream disconnected') ||
+    normalized.includes('retrying turn')
+  );
+}
+
 function parseJsonObjectFromText(text: string): any {
   const trimmed = text.trim();
   try {
@@ -373,7 +383,9 @@ async function runPromptForMonitoring(args: Args, policy: LoadedPolicy, prompt: 
     client.onMessage = (msg) => {
       if (msg.method === 'error') {
         const { error } = msg.params as any;
-        rejectTurn(new Error(error?.message ?? '(unknown app-server error)'));
+        const message = error?.message ?? '(unknown app-server error)';
+        if (isTransientAppServerErrorMessage(message)) return;
+        rejectTurn(new Error(message));
         return;
       }
 
@@ -725,6 +737,22 @@ async function runWithPolicy(args: Args) {
     stderr: args.verbose ? 'inherit' : 'pipe'
   });
 
+  let resolveTurnDone: (() => void) | null = null;
+  let rejectTurnDone: ((err: Error) => void) | null = null;
+  let turnDoneSettled = false;
+  const turnDone = new Promise<void>((resolve, reject) => {
+    resolveTurnDone = () => {
+      if (turnDoneSettled) return;
+      turnDoneSettled = true;
+      resolve();
+    };
+    rejectTurnDone = (err) => {
+      if (turnDoneSettled) return;
+      turnDoneSettled = true;
+      reject(err);
+    };
+  });
+
   const andonRef = { path: '', count: 0 };
   const logAndon = (record: any) => {
     const path = appendAndon(args.cwd, record);
@@ -735,9 +763,12 @@ async function runWithPolicy(args: Args) {
   client.onMessage = async (msg) => {
     if (msg.method === 'error') {
       const { error } = msg.params as any;
-      console.error(`\nApp-server error: ${error?.message ?? '(unknown error)'}`);
+      const message = error?.message ?? '(unknown error)';
+      if (isTransientAppServerErrorMessage(message)) return;
+      console.error(`\nApp-server error: ${message}`);
       client.close();
-      process.exit(1);
+      rejectTurnDone?.(new Error(message));
+      return;
     }
 
     // Server-initiated approval requests.
@@ -995,6 +1026,7 @@ async function runWithPolicy(args: Args) {
       if (turn.error?.message) console.log(`Turn error: ${turn.error.message}`);
       console.log(`Turn status: ${turn.status}`);
       client.close();
+      resolveTurnDone?.();
       return;
     }
   };
@@ -1049,6 +1081,7 @@ async function runWithPolicy(args: Args) {
   );
 
   if (args.verbose) console.log('Turn started');
+  await turnDone;
 }
 
 async function main() {

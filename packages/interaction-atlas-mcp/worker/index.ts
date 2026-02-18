@@ -791,39 +791,141 @@ export default {
     <style>
       ${openAiBaseCss({ bgSubtle: '#f3f4f6' })}
       header {
-        padding: 1rem 1.25rem;
+        padding: 0.95rem 1.2rem 0.85rem;
         border-bottom: 1px solid var(--border);
         position: sticky;
         top: 0;
-        background: rgba(247, 247, 248, 0.92);
+        background: rgba(247, 247, 248, 0.94);
         backdrop-filter: blur(10px);
         z-index: 10;
+      }
+      .headerGrid {
+        max-width: 1320px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 0.9rem;
+        flex-wrap: wrap;
+      }
+      .titleBlock {
+        min-width: 340px;
+        flex: 1;
+      }
+      .eyebrow {
+        font-size: 0.72rem;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--text-soft);
+      }
+      .title {
+        margin-top: 0.14rem;
+        font-size: 1.28rem;
+        font-weight: 700;
+        letter-spacing: 0.004em;
+        line-height: 1.2;
+      }
+      .metaLine {
+        margin-top: 0.24rem;
+        color: var(--text-soft);
+        font-size: 0.9rem;
+      }
+      .operatorHint {
+        margin-top: 0.3rem;
+        color: var(--text-muted);
+        line-height: 1.35;
+      }
+      .toolbarTight {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0;
+        flex-wrap: wrap;
+      }
+      .surfaceLegend {
+        opacity: 0.85;
+      }
+      .guidedRail {
+        max-width: 1320px;
+        margin: 0.72rem auto 0;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.58rem 0.72rem;
+        background: var(--bg-elevated);
+      }
+      .processLadder {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+        align-items: center;
+        margin: 0.15rem 0 0.48rem;
+      }
+      .guidedFooter {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.72rem;
+        align-items: center;
+        flex-wrap: wrap;
       }
       main {
         max-width: 1320px;
         margin: 0 auto;
-        padding: 1rem 1.25rem 6rem;
+        padding: 0.95rem 1.2rem 6rem;
         display: grid;
-        grid-template-columns: minmax(320px, 0.95fr) minmax(420px, 1.05fr);
+        grid-template-columns: minmax(320px, 0.96fr) minmax(440px, 1.04fr);
         gap: 1rem;
-      }
-      @media (max-width: 1080px) {
-        main { grid-template-columns: 1fr; }
-      }
-      @media (max-width: 720px) {
-        header { padding: 0.9rem 0.9rem; }
-        main { padding: 0.8rem 0.9rem 7.5rem; }
       }
       .panel {
         border: 1px solid var(--border);
-        border-radius: 14px;
+        border-radius: 7px;
         background: var(--bg-elevated);
-        padding: 1rem;
-        box-shadow: var(--shadow);
+        padding: 0.88rem 0.95rem;
       }
-      .panelTitle { font-size: 0.99rem; font-weight: 650; letter-spacing: 0.01em; margin-bottom: 0.3rem; color: var(--text); }
+      .sectionLabel {
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-soft);
+        margin-bottom: 0.1rem;
+      }
+      .panelTitle {
+        font-size: 1.03rem;
+        font-weight: 650;
+        letter-spacing: 0.01em;
+        margin-bottom: 0.2rem;
+        color: var(--text);
+      }
+      .panelLead {
+        margin: 0.12rem 0 0.68rem;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        line-height: 1.35;
+      }
       .muted { color: var(--text-muted); }
-      .row { display: flex; gap: 0.55rem; flex-wrap: wrap; margin: 0.5rem 0; align-items: center; }
+      .row { display: flex; gap: 0.55rem; flex-wrap: wrap; margin: 0.46rem 0; align-items: center; }
+      .rowKey {
+        align-items: flex-start;
+        border-top: 1px solid var(--border);
+        padding-top: 0.5rem;
+        margin-top: 0.5rem;
+      }
+      .rowLabel {
+        min-width: 120px;
+        font-size: 0.77rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--text-soft);
+        padding-top: 0.5rem;
+      }
+      .inlineField {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .inlineField > span {
+        color: var(--text-soft);
+        font-size: 0.85rem;
+      }
       a { color: var(--accent-strong); text-decoration: none; }
       a:hover { text-decoration: underline; }
       select, input, textarea, button {
@@ -852,11 +954,21 @@ export default {
         cursor: not-allowed;
       }
       .btnPrimary {
+        background: #f0f9ff;
+        border-color: #99d9ff;
+        color: #155e75;
+      }
+      .btnPrimary:hover {
+        background: #e0f2fe;
+        border-color: #7dd3fc;
+        color: #164e63;
+      }
+      .btnCritical {
         background: var(--accent);
         border-color: var(--accent);
         color: #ffffff;
       }
-      .btnPrimary:hover {
+      .btnCritical:hover {
         background: var(--accent-strong);
         border-color: var(--accent-strong);
         color: #ffffff;
@@ -871,28 +983,28 @@ export default {
         background: #ffe8e5;
       }
       .statusBadge {
-        font-size: 0.75rem;
-        border: 1px solid var(--border-strong);
+        font-size: 0.74rem;
+        border: 1px solid var(--border);
         border-radius: 999px;
         padding: 0.2rem 0.55rem;
         color: var(--text);
-        background: #ffffff;
+        background: var(--bg-elevated);
       }
       .rule {
-        border: 1px solid var(--border);
-        border-radius: 10px;
+        border: 1px solid var(--border-strong);
+        border-radius: 8px;
         padding: 0.65rem;
         margin: 0.5rem 0;
         background: #ffffff;
       }
       .rule.dragging { opacity: 0.55; }
       .pill {
-        font-size: 0.75rem;
-        border: 1px solid var(--border-strong);
-        border-radius: 999px;
-        padding: 0.15rem 0.5rem;
+        font-size: 0.73rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.14rem 0.42rem;
         color: var(--text-soft);
-        background: #ffffff;
+        background: var(--bg-subtle);
       }
       .pillAdd, .pillTighten {
         border-color: #a7f3d0;
@@ -915,12 +1027,12 @@ export default {
         background: #ffffff;
       }
       .atlasTag {
-        font-size: 0.72rem;
-        border: 1px solid #bae6fd;
-        border-radius: 999px;
-        padding: 0.12rem 0.5rem;
-        color: #155e75;
-        background: #f0f9ff;
+        font-size: 0.7rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.1rem 0.4rem;
+        color: var(--text-soft);
+        background: var(--bg-subtle);
       }
       pre {
         overflow: auto;
@@ -935,6 +1047,15 @@ export default {
       .advancedOnly { display: none; }
       body.mode-advanced .advancedOnly { display: block; }
       body.mode-advanced .advancedOnly.row { display: flex; }
+      .ruleListFrame {
+        border-top: 1px solid var(--border);
+        margin-top: 0.52rem;
+        padding-top: 0.35rem;
+      }
+      .blockDivider {
+        border-top: 1px dashed var(--border);
+        margin: 0.76rem 0 0.68rem;
+      }
       .actionBar {
         position: fixed;
         left: 0;
@@ -942,47 +1063,51 @@ export default {
         bottom: 0;
         z-index: 20;
         border-top: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.96);
+        background: rgba(255, 255, 255, 0.97);
         backdrop-filter: blur(10px);
-        padding: 0.75rem 1.25rem;
+        padding: 0.7rem 1.2rem;
+      }
+      .actionBarInner {
+        max-width: 1320px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .actionLead {
+        min-width: 310px;
       }
       .riskHigh { color: #b42318; }
       .riskMedium { color: #b54708; }
       .riskLow { color: #027a48; }
       .step {
         font-size: 0.78rem;
-        border: 1px solid var(--border-strong);
-        border-radius: 999px;
-        padding: 0.12rem 0.48rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.12rem 0.46rem;
         color: var(--text-soft);
         background: #ffffff;
       }
       .impactCard {
         border: 1px solid var(--border);
-        border-radius: 10px;
+        border-radius: 8px;
         padding: 0.55rem 0.65rem;
         background: #ffffff;
-        min-width: 180px;
+        min-width: 170px;
       }
       .impactLabel { color: var(--text-soft); font-size: 0.78rem; }
       .impactValue { font-size: 1rem; font-weight: 650; color: var(--text); }
       .guardrailGood { color: #027a48; }
       .guardrailWarn { color: #b42318; }
-      .guidedRail {
-        margin-top: 0.65rem;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 0.65rem;
-        background: #ffffff;
-        box-shadow: var(--shadow);
-      }
       .stepStatus {
         font-size: 0.72rem;
-        border-radius: 999px;
+        border-radius: 6px;
         padding: 0.1rem 0.45rem;
-        border: 1px solid var(--border-strong);
+        border: 1px solid var(--border);
         color: var(--text-soft);
-        background: #ffffff;
+        background: var(--bg-subtle);
       }
       .stepReady {
         border-color: #fde68a;
@@ -996,16 +1121,32 @@ export default {
       }
       .stepNav { cursor: pointer; background: #ffffff; }
       .stepNav:hover { border-color: var(--accent-strong); background: var(--bg-subtle); }
+      @media (max-width: 1080px) {
+        main { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 720px) {
+        header { padding: 0.84rem 0.9rem 0.8rem; }
+        .title { font-size: 1.14rem; }
+        .titleBlock { min-width: 0; }
+        .guidedRail { margin-top: 0.65rem; }
+        .rowKey { gap: 0.45rem; }
+        .rowLabel { min-width: 100%; padding-top: 0; }
+        .inlineField { flex-wrap: wrap; }
+        main { padding: 0.84rem 0.9rem 7.4rem; }
+      }
     </style>
   </head>
   <body>
     <header>
-      <div style="display:flex;justify-content:space-between;gap:0.75rem;align-items:flex-start;flex-wrap:wrap;">
-        <div>
-          <div style="font-size:1.2rem;font-weight:700;">Policy Tuning Studio</div>
-          <div class="muted" style="margin-top:0.25rem;">Account: ${esc(authCtx.accountId)} · Entity: ${esc(entityType)}:${esc(entityId)}</div>
-          <div class="muted" style="margin-top:0.35rem;">Simple mode is recommended for non-technical operators.</div>
-          <div class="row" style="margin-top:0.45rem;">
+      <div class="headerGrid">
+        <div class="titleBlock">
+          <div class="eyebrow">Judgment Layer / Policy Editor</div>
+          <div class="title">Policy Tuning Studio</div>
+          <div class="metaLine">Account: ${esc(authCtx.accountId)} · Entity: ${esc(entityType)}:${esc(entityId)}</div>
+          <div id="modeHint" class="operatorHint">
+            Simple mode enforces guardrails before activation.
+          </div>
+          <div class="row surfaceLegend advancedOnly" style="margin-top:0.36rem;">
             <span class="atlasTag">AI Tasks</span>
             <span class="atlasTag">Human Tasks</span>
             <span class="atlasTag">System Tasks</span>
@@ -1013,14 +1154,8 @@ export default {
             <span class="atlasTag">Constraints</span>
             <span class="atlasTag">Touchpoints</span>
           </div>
-          <div class="row" style="margin-top:0.5rem;">
-            <span class="step">1. Choose</span>
-            <span class="step">2. Draft</span>
-            <span class="step">3. Preview</span>
-            <span class="step">4. Make Live</span>
-          </div>
         </div>
-        <div class="row" style="margin:0;">
+        <div class="toolbarTight">
           <span id="statusBadge" class="statusBadge">Ready</span>
           <label class="muted" for="uiMode">View</label>
           <select id="uiMode">
@@ -1030,36 +1165,35 @@ export default {
           <a href="/policies?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}">Back to policies</a>
         </div>
       </div>
-      <div id="modeHint" class="muted" style="margin-top:0.45rem;">
-        Simple mode enforces guardrails before activation.
-      </div>
       <div class="guidedRail">
-        <div id="guidedSteps" class="row" style="margin:0 0 0.45rem;"></div>
-        <div style="display:flex;justify-content:space-between;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+        <div class="sectionLabel">Workflow</div>
+        <div id="guidedSteps" class="processLadder"></div>
+        <div class="guidedFooter">
           <div id="guidedHint" class="muted">Follow the guided steps from left to right.</div>
-          <button id="guidedPrimaryCta" class="btnPrimary">Start</button>
+          <button id="guidedPrimaryCta">Apply Objective Template</button>
         </div>
       </div>
     </header>
     <main>
       <section class="panel">
+        <div class="sectionLabel">01 Diff</div>
         <div class="panelTitle">What Changed</div>
-        <div class="row">
-          <label>Comparison style</label>
+        <div class="panelLead">Compare the current live policy with your proposed snapshot before touching activation controls.</div>
+        <div class="row rowKey">
+          <div class="rowLabel">Comparison</div>
           <select id="compareMode">
             <option value="active-vs-selected" selected>Current live vs selected</option>
             <option value="any-two">Choose any two snapshots</option>
           </select>
         </div>
-        <div class="row">
-          <label>Current live snapshot</label>
-          <select id="beforeVersion"></select>
-          <label>Proposed snapshot</label>
-          <select id="afterVersion"></select>
+        <div class="row rowKey">
+          <div class="rowLabel">Snapshots</div>
+          <label class="inlineField"><span>Current live</span><select id="beforeVersion"></select></label>
+          <label class="inlineField"><span>Proposed</span><select id="afterVersion"></select></label>
         </div>
         <div class="row advancedOnly">
           <button id="reloadBtn">Reload</button>
-          <button id="activateAfterBtn" class="btnPrimary">Make Live (Advanced)</button>
+          <button id="activateAfterBtn">Make Live (Advanced)</button>
         </div>
         <div id="diffSummary" class="row"></div>
         <div id="guardrailTrend" class="row"></div>
@@ -1067,10 +1201,11 @@ export default {
       </section>
 
       <section class="panel">
+        <div class="sectionLabel">02 Policy</div>
         <div class="panelTitle">Decision Rules</div>
-        <div class="muted" style="margin-bottom:0.5rem;">Reorder rules to control what runs first. Top rules have stronger priority.</div>
-        <div class="row">
-          <label class="muted">Objective</label>
+        <div class="panelLead">Rank rules by priority, tune guardrails, then simulate expected decision deltas before making changes live.</div>
+        <div class="row rowKey">
+          <div class="rowLabel">Objective</div>
           <select id="objectivePreset">
             <option value="balanced" selected>Balanced automation</option>
             <option value="safety-first">Safety first (more review/block)</option>
@@ -1078,23 +1213,27 @@ export default {
           </select>
           <button id="applyPresetBtn">Apply Objective Template</button>
         </div>
-        <div class="row">
-          <label class="muted">Guardrails</label>
-          <label>Max review delta <input id="maxReviewDelta" type="number" min="0" value="2" style="width:88px;" /></label>
-          <label>Max block delta <input id="maxBlockDelta" type="number" min="0" value="1" style="width:88px;" /></label>
+        <div class="row rowKey">
+          <div class="rowLabel">Guardrails</div>
+          <label class="inlineField"><span>Max review delta</span><input id="maxReviewDelta" type="number" min="0" value="2" style="width:88px;" /></label>
+          <label class="inlineField"><span>Max block delta</span><input id="maxBlockDelta" type="number" min="0" value="1" style="width:88px;" /></label>
           <button id="resetGuardrailsBtn">Reset Defaults</button>
         </div>
         <div id="ruleMeta" class="row"></div>
-        <div id="ruleList"></div>
+        <div class="ruleListFrame">
+          <div id="ruleList"></div>
+        </div>
 
-        <div style="margin-top:0.75rem;" class="panelTitle">Add Rule</div>
+        <div class="blockDivider"></div>
+        <div class="sectionLabel">Rule Builder</div>
+        <div class="panelTitle" style="margin-bottom:0.25rem;">Add Rule</div>
         <div class="row advancedOnly">
           <input id="ruleId" placeholder="Rule ID (advanced)" />
           <input id="rulePriority" type="number" value="50" />
           <input id="toolNames" placeholder="Tool names (comma-separated)" />
         </div>
-        <div class="row">
-          <label class="muted">Rule name</label>
+        <div class="row rowKey">
+          <div class="rowLabel">Rule Name</div>
           <input id="ruleName" placeholder="Example: Review before write actions" style="min-width:320px;" />
         </div>
         <div class="row">
@@ -1102,16 +1241,18 @@ export default {
           <label><input type="checkbox" id="hasHumanReviewStep" /> Already has human review</label>
           <label class="advancedOnly"><input type="checkbox" id="introspectionOk" /> Tool discovery succeeded</label>
         </div>
-        <div class="row">
+        <div class="row rowKey">
+          <div class="rowLabel">Decision</div>
           <select id="decision">
             <option value="allow">Allow automatically</option>
             <option value="require_human_review">Require human review</option>
             <option value="block">Block action</option>
           </select>
           <input id="reason" placeholder="Why this rule exists" style="min-width: 320px;" />
-          <button id="addRuleBtn" class="btnPrimary">Add Rule</button>
+          <button id="addRuleBtn">Add Rule</button>
         </div>
-        <div class="row">
+        <div class="row rowKey">
+          <div class="rowLabel">Actions</div>
           <button id="saveDraftBtn" class="btnPrimary">Save Draft</button>
           <button id="simulateBtn">Preview Impact</button>
         </div>
@@ -1120,8 +1261,8 @@ export default {
       </section>
     </main>
     <div class="actionBar">
-      <div style="display:flex;justify-content:space-between;gap:0.75rem;align-items:center;flex-wrap:wrap;">
-        <div>
+      <div class="actionBarInner">
+        <div class="actionLead">
           <div style="font-weight:600;">Make Live Safely</div>
           <div id="riskSummary" class="muted">Run Preview Impact to see risk before activation.</div>
           <div id="guardrailStatus" class="muted" style="margin-top:0.2rem;">Guardrails: pending preview.</div>
@@ -1129,7 +1270,7 @@ export default {
         <div class="row" style="margin:0;">
           <button id="simulateBottomBtn">Preview Impact</button>
           <button id="rollbackBtn">Rollback to Current Live</button>
-          <button id="makeLiveBtn" class="btnPrimary">Make Live</button>
+          <button id="makeLiveBtn" class="btnCritical">Make Live</button>
         </div>
       </div>
     </div>
