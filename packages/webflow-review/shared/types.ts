@@ -16,6 +16,22 @@ export interface Finding {
   createdAt?: number;
 }
 
+export interface PolicySourceSnapshot {
+  url: string;
+  title: string;
+  fetchedAt: string;
+  contentHash: string;
+}
+
+export interface PolicyContext {
+  policyVersion: string;
+  generatedAt: string;
+  sources: {
+    submissionGuidelines: PolicySourceSnapshot;
+    gradingRubric: PolicySourceSnapshot;
+  };
+}
+
 export interface Review {
   id: string;
   projectId: string;
@@ -31,12 +47,14 @@ export interface Review {
 export interface ReviewPageRequest {
   url: string;
   checks?: CheckType[];
+  includePolicyContext?: boolean;
 }
 
 export interface ReviewPageResponse {
   findings: Finding[];
   score: number;
   duration?: number;
+  policy?: PolicyContext;
 }
 
 export interface ReviewProjectRequest {

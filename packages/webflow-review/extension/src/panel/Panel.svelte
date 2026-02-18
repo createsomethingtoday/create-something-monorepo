@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { Finding } from '../../../shared/types';
+  import type { Finding, PolicyContext } from '../../../shared/types';
   import FindingCard from './FindingCard.svelte';
   import ScoreRing from './ScoreRing.svelte';
 
@@ -9,6 +9,7 @@
   let findings: Finding[] = [];
   let score: number | null = null;
   let duration: number | null = null;
+  let policy: PolicyContext | null = null;
 
   let currentUrl: string = '';
   let projectId: string = '';
@@ -42,6 +43,18 @@
         handleReviewResult(message.result);
       }
     });
+
+    // Preload policy context so reviewers can see the active rubric version.
+    chrome.runtime
+      .sendMessage({ action: 'getPolicyContext' })
+      .then((result) => {
+        if (result?.success && result.policy) {
+          policy = result.policy;
+        }
+      })
+      .catch(() => {
+        policy = null;
+      });
   });
 
   async function startReview() {
@@ -54,6 +67,7 @@
     error = null;
     findings = [];
     score = null;
+    policy = null;
 
     try {
       const response = await chrome.runtime.sendMessage({
@@ -205,6 +219,7 @@
     findings = result.findings || [];
     score = result.score;
     duration = result.duration;
+    policy = result.policy || policy;
   }
 
   function handleFindingClick(finding: Finding) {
@@ -298,6 +313,18 @@
             {/if}
           </div>
         </div>
+
+        {#if policy}
+          <div class="policy-context">
+            <div class="policy-title">Policy Context</div>
+            <div class="policy-version">Version: {policy.policyVersion}</div>
+            <div class="policy-source">
+              <a href={policy.sources.submissionGuidelines.url} target="_blank" rel="noreferrer">Guidelines</a>
+              <span> · </span>
+              <a href={policy.sources.gradingRubric.url} target="_blank" rel="noreferrer">Rubric</a>
+            </div>
+          </div>
+        {/if}
 
         <!-- Summary -->
         <div class="summary">
@@ -511,6 +538,45 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 12px;
     margin-bottom: 24px;
+  }
+
+  .policy-context {
+    margin-bottom: 16px;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #ffffff;
+  }
+
+  .policy-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6b7280;
+    margin-bottom: 4px;
+  }
+
+  .policy-version {
+    font-size: 13px;
+    font-weight: 500;
+    color: #111827;
+    margin-bottom: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  .policy-source {
+    font-size: 12px;
+    color: #4b5563;
+  }
+
+  .policy-source a {
+    color: #2563eb;
+    text-decoration: none;
+  }
+
+  .policy-source a:hover {
+    text-decoration: underline;
   }
 
   .summary-item {

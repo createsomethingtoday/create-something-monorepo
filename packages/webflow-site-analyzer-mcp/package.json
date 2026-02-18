@@ -12,6 +12,7 @@
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
+    "policy:refresh": "npx tsx src/policy/snapshot-cli.ts",
     "temporal:worker": "npx tsx src/temporal/worker.ts",
     "temporal:trigger": "npx tsx src/temporal/trigger.ts",
     "temporal:server": "temporal server start-dev --http-port 7243",

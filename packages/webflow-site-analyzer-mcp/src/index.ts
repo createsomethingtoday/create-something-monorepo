@@ -36,6 +36,7 @@ import {
   recordImageOptimizationScore,
   recordTouchpointCount
 } from './observability.js';
+import { getWebflowPolicySnapshot, refreshWebflowPolicySnapshot } from './policy/index.js';
 import type {
   TouchpointAnalysis,
   SEOAnalysis,
@@ -605,6 +606,13 @@ async function compareVersions(baseVersionId: string, compareVersionId: string):
   };
 }
 
+async function getWebflowReviewPolicy(refresh = false) {
+  if (refresh) {
+    return refreshWebflowPolicySnapshot();
+  }
+  return getWebflowPolicySnapshot(false);
+}
+
 // =============================================================================
 // MCP Server Setup
 // =============================================================================
@@ -728,6 +736,24 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         },
         required: ['url']
       }
+    },
+    {
+      name: 'get_webflow_review_policy',
+      description: 'Fetch and normalize Webflow Template Submission Guidelines + Grading Rubric from canonical web pages with provenance and policy version hash.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          refresh: {
+            type: 'boolean',
+            description: 'Force a fresh fetch from canonical source URLs instead of using cache'
+          }
+        }
+      }
+    },
+    {
+      name: 'refresh_webflow_review_policy',
+      description: 'Force refresh policy ingestion from canonical Webflow guideline and rubric pages.',
+      inputSchema: { type: 'object', properties: {} }
     },
 
     // =========================================================================
@@ -877,6 +903,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         break;
       case 'extract_designer_metadata':
         result = await extractDesignerMetadata(safeArgs as unknown as ExtractDesignerMetadataInput);
+        break;
+      case 'get_webflow_review_policy':
+        result = await getWebflowReviewPolicy(Boolean(safeArgs.refresh));
+        break;
+      case 'refresh_webflow_review_policy':
+        result = await getWebflowReviewPolicy(true);
         break;
 
       // Intelligence Layer
