@@ -11,8 +11,13 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { HOST_PLAYBOOKS, HOST_COMPARISONS, GRADUATION_PATH, MCP_HOST_PATTERNS } from './playbooks.js';
 import type { HostPlaybook } from './playbooks.js';
 import { MCP_CATALOG, getCatalogByCategory, getCatalogEntry } from './catalog.js';
+import { WORKFLOW_IDS, WORKFLOWS, getWorkflowById } from './workflows.js';
+import { exportWorkflowToAtlasStudio } from './atlas-studio.js';
 
 export function registerTools(server: McpServer) {
+  const workflowIdSchema = z.enum(WORKFLOW_IDS as [string, ...string[]])
+    .describe('Stable workflow id. Use list_workflows to discover available ids.');
+
   // ==========================================================================
   // get_playbook — retrieve workflow guidance for a specific host
   // ==========================================================================
@@ -124,6 +129,79 @@ export function registerTools(server: McpServer) {
 
       return { content: [{ type: 'text', text: lines.join('\n') }] };
     }
+  );
+
+  // ==========================================================================
+  // list_workflows — structured workflows (machine-readable)
+  // ==========================================================================
+
+  server.tool(
+    'list_workflows',
+    'List structured workflows derived from host playbooks. Each workflow has a stable id and can be exported to Atlas Studio.',
+    {},
+    async () => ({
+      content: [{
+        type: 'text',
+        text: JSON.stringify(WORKFLOWS.map((w) => ({
+          id: w.id,
+          hostSlug: w.hostSlug,
+          hostName: w.hostName,
+          name: w.name,
+          description: w.description,
+          domain: w.domain,
+        })), null, 2),
+      }],
+    }),
+  );
+
+  // ==========================================================================
+  // get_workflow — retrieve a structured workflow
+  // ==========================================================================
+
+  server.tool(
+    'get_workflow',
+    'Get a structured workflow by id. Returns machine-readable steps with Atlas reference ids.',
+    {
+      workflow_id: workflowIdSchema,
+    },
+    async ({ workflow_id }) => {
+      const workflow = getWorkflowById(workflow_id);
+      if (!workflow) {
+        return { content: [{ type: 'text', text: JSON.stringify({ error: `Unknown workflow_id: ${workflow_id}` }, null, 2) }] };
+      }
+
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify(workflow, null, 2),
+        }],
+      };
+    },
+  );
+
+  // ==========================================================================
+  // export_workflow_atlas_studio — Atlas Studio BuilderState JSON
+  // ==========================================================================
+
+  server.tool(
+    'export_workflow_atlas_studio',
+    'Export a workflow in Atlas Studio import format (BuilderState JSON: { nodes, edges, personas }).',
+    {
+      workflow_id: workflowIdSchema,
+    },
+    async ({ workflow_id }) => {
+      const workflow = getWorkflowById(workflow_id);
+      if (!workflow) {
+        return { content: [{ type: 'text', text: JSON.stringify({ error: `Unknown workflow_id: ${workflow_id}` }, null, 2) }] };
+      }
+
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify(exportWorkflowToAtlasStudio(workflow), null, 2),
+        }],
+      };
+    },
   );
 
   // ==========================================================================
@@ -674,7 +752,13 @@ function formatPlaybook(playbook: HostPlaybook, patterns: HostPlaybook['workflow
   ];
 
   for (const p of patterns) {
-    lines.push('', `### ${p.name}`, p.description, '', ...p.steps.map((s, i) => `${i + 1}. ${s}`));
+    lines.push(
+      '',
+      `### ${p.name}`,
+      p.description,
+      '',
+      ...p.steps.map((s, i) => `${i + 1}. ${s.notes || s.customLabel || s.referenceId}`),
+    );
   }
 
   if (playbook.folderTemplate) {

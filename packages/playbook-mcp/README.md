@@ -9,7 +9,7 @@ Lightweight by design — ships alongside client MCPs for onboarding. No philoso
 | Tier | MCP Primitive | Role in This Server |
 |------|---------------|---------------------|
 | **Database** | Resources | Host playbooks (one resource per host) + list + comparison matrix + graduation path |
-| **Automation** | Tools | 8 tools: playbook content (3) + installation guidance (5) |
+| **Automation** | Tools | 11 tools: playbook content + workflow exports (6) + installation guidance (5) |
 | **Judgment** | Prompts | 3 prompts: workflow setup, host comparison, project structure guidance |
 
 ## Resources (Database Tier)
@@ -25,6 +25,9 @@ Application-controlled playbook content.
 | `playbooks://hosts/claude-code` | Claude Code workflow playbook: mental model, patterns |
 | `playbooks://hosts/windsurf` | Windsurf workflow playbook: mental model, patterns |
 | `playbooks://hosts/vscode` | VS Code (Copilot) workflow playbook: mental model, patterns |
+| `playbooks://workflows/list` | Structured workflows (machine-readable) derived from host playbooks |
+| `playbooks://workflows/{id}` | A single structured workflow (JSON) |
+| `playbooks://workflows/{id}/atlas-studio` | Atlas Studio import JSON (BuilderState) for a single workflow |
 | `playbooks://comparison` | Host comparison matrix by task type + MCP usage patterns |
 | `playbooks://graduation-path` | The Graduation Path: Claude Desktop -> Cursor -> Codex |
 
@@ -39,6 +42,9 @@ Model-controlled functions. These mirror Resources for hosts that only support t
 | `get_playbook` | Get the workflow playbook for a specific host. Supports domain filtering (construction, legal, agency, general). |
 | `compare_hosts` | Compare Codex, Cursor, and Claude Desktop for a task type (project-management, research, document-drafting, data-analysis, general). |
 | `get_folder_structure` | Get the recommended folder structure for AI-assisted work in Codex or Cursor. |
+| `list_workflows` | List structured workflows with stable ids (machine-readable). |
+| `get_workflow` | Get a structured workflow by id (steps include Atlas reference ids). |
+| `export_workflow_atlas_studio` | Export a workflow in Atlas Studio import format (BuilderState JSON). |
 
 ### Installation Tools
 
