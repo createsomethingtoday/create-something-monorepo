@@ -11,20 +11,41 @@ Required:
 
 Optional:
 
-- `BRAINTRUST_PROJECT_NAME` (defaults to `Create Something`)
-- `OPENAI_MODEL` (defaults to `gpt-4o-mini`)
+- `BRAINTRUST_PROJECT_NAME` (defaults to `CREATE SOMETHING`)
+- `OPENAI_MODEL` (defaults to `gpt-4o`)
 - `OPENAI_PROMPT` (defaults to `What is 1+1?`)
 
-## 2) Run The Smoke Script
+Optional production env vars (when validating the deployed worker route):
+
+- `HALFDOZEN_AGENT_ROUTE_TOKEN`
+- `PLAYBOOK_MCP_BASE_URL` (defaults to `https://playbook.mcp.createsomething.ltd`)
+- `PLAYBOOK_MCP_SCENARIO` (`inbox-triage`, `fleet-watchdog`, `dedup`)
+- `PLAYBOOK_MCP_QUERY`
+
+## 2) Run The Smoke Scripts
+
+Local OpenAI smoke (direct OpenAI call):
 
 ```bash
-pnpm tsx scripts/braintrust-openai-smoke.ts
+pnpm braintrust:smoke
+```
+
+Production route smoke (runs a protected Half Dozen scenario in the deployed worker and prints response):
+
+```bash
+pnpm braintrust:playbook-smoke
 ```
 
 If everything is wired correctly, you should see:
 
 - The model response in your terminal
 - A trace in Braintrust for the OpenAI call
+
+For production smoke, you should additionally see:
+
+- `200` from the worker endpoint
+- `success: true` in response payload
+- A new trace in the Braintrust project for that scenario run
 
 ## 3) Integrate In Your App
 
@@ -36,9 +57,7 @@ import { OpenAI } from 'openai';
 
 initBraintrust({ projectName: 'My Project' });
 
-const openai = wrapOpenAI(
-  new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-);
+const openai = wrapOpenAI(new OpenAI({ apiKey: process.env.OPENAI_API_KEY }));
 ```
 
 Notes:
@@ -64,3 +83,24 @@ This repo's Half Dozen smoke script will automatically enable Agents tracing whe
 ```bash
 pnpm agent:halfdozen:smoke --scenario inbox-triage
 ```
+
+## Runbook (Production Checklist)
+
+1. Set required environment variables (`BRAINTRUST_API_KEY`, `OPENAI_API_KEY`, `HALFDOZEN_AGENT_ROUTE_TOKEN`).
+2. Confirm worker secrets:
+
+```bash
+cd packages/playbook-mcp/worker && pnpm exec wrangler secret list
+```
+
+3. Trigger prod smoke:
+
+```bash
+set -a; . ./scripts/braintrust-playbook-smoke.env.example; set +a; pnpm braintrust:playbook-smoke
+```
+
+4. Verify:
+
+- Worker response status is non-error and `success: true`.
+- Braintrust project receives the latest trace for that run.
+- If no trace appears, check worker secret freshness and deployment version.

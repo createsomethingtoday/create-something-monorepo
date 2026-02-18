@@ -12,7 +12,7 @@ function requireEnv(name: string): string {
 }
 
 initLogger({
-  projectName: process.env.BRAINTRUST_PROJECT_NAME ?? 'Create Something',
+  projectName: process.env.BRAINTRUST_PROJECT_NAME ?? 'CREATE SOMETHING',
   apiKey: requireEnv('BRAINTRUST_API_KEY')
 });
 
@@ -23,20 +23,22 @@ const client = wrapOpenAI(
 );
 
 async function main() {
-  const model = process.env.OPENAI_MODEL ?? 'gpt-4o-mini';
+  const model = process.env.OPENAI_MODEL ?? 'gpt-4o';
   const prompt = process.env.OPENAI_PROMPT ?? 'What is 1+1?';
 
-  const result = await client.chat.completions.create({
-    model,
-    messages: [{ role: 'user', content: prompt }]
-  });
+  try {
+    const result = await client.chat.completions.create({
+      model,
+      messages: [{ role: 'user', content: prompt }]
+    });
 
-  console.log(result.choices[0]?.message?.content ?? '');
-  await flush();
+    console.log(result.choices[0]?.message?.content ?? '');
+  } finally {
+    await flush();
+  }
 }
 
 main().catch((err) => {
   console.error(err);
   process.exitCode = 1;
 });
-
