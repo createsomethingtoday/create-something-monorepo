@@ -1,6 +1,6 @@
 // Shared TypeScript types for Webflow Review
 
-export type CheckType = 'seo' | 'links' | 'a11y' | 'performance';
+export type CheckType = 'seo' | 'links' | 'a11y' | 'performance' | 'interactions';
 export type Severity = 'critical' | 'warning' | 'info';
 export type ReviewStatus = 'queued' | 'running' | 'completed' | 'failed';
 

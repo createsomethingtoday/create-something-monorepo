@@ -27,7 +27,8 @@
     {
       "matches": [
         "https://webflow.com/design/*",
-        "https://preview.webflow.com/preview/*"
+        "https://preview.webflow.com/preview/*",
+        "https://*.webflow.io/*"
       ],
       "js": ["content.js"],
       "run_at": "document_end"

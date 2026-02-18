@@ -126,7 +126,7 @@ async function handleSaveSettings(settings: any) {
 // Tab update listener - auto-review if enabled
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status !== 'complete') return;
-  if (!tab.url?.includes('webflow.com')) return;
+  if (!tab.url?.includes('webflow.com') && !tab.url?.includes('webflow.io')) return;
 
   // Check if auto-review is enabled
   const settings = await getSettings();

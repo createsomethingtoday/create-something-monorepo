@@ -16,6 +16,7 @@
       case 'links': return '🔗';
       case 'a11y': return '♿';
       case 'performance': return '⚡';
+      case 'interactions': return '✨';
       default: return '📋';
     }
   }
@@ -26,6 +27,7 @@
       case 'links': return 'Links';
       case 'a11y': return 'Accessibility';
       case 'performance': return 'Performance';
+      case 'interactions': return 'Interactions';
       default: return 'General';
     }
   }
