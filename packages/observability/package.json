@@ -14,6 +14,14 @@
       "types": "./dist/atlas.d.ts",
       "import": "./dist/atlas.js"
     },
+    "./braintrust": {
+      "types": "./dist/braintrust.d.ts",
+      "import": "./dist/braintrust.js"
+    },
+    "./openai-agents": {
+      "types": "./dist/openai-agents.d.ts",
+      "import": "./dist/openai-agents.js"
+    },
     "./mcp": {
       "types": "./dist/mcp.d.ts",
       "import": "./dist/mcp.js"
@@ -42,13 +50,18 @@
     "directory": "packages/observability"
   },
   "dependencies": {
+    "braintrust": "^2.2.2",
     "langfuse": "^3.0.0"
   },
   "peerDependencies": {
-    "@modelcontextprotocol/sdk": ">=1.0.0"
+    "@modelcontextprotocol/sdk": ">=1.0.0",
+    "@openai/agents": ">=0.4.0"
   },
   "peerDependenciesMeta": {
     "@modelcontextprotocol/sdk": {
+      "optional": true
+    },
+    "@openai/agents": {
       "optional": true
     }
   },

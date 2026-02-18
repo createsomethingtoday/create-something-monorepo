@@ -15,6 +15,9 @@ import { McpAgent } from 'agents/mcp';
 import { enableTelemetry } from '@create-something/mcp-core';
 import { z } from 'zod';
 
+import { registerOpenAIAgentsBraintrustTracing } from '@create-something/observability/openai-agents';
+import { flush as flushBraintrust } from '@create-something/observability/braintrust';
+
 import { registerResources } from '../src/resources.js';
 import { registerTools } from '../src/tools.js';
 import { registerPrompts } from '../src/prompts.js';
@@ -35,6 +38,12 @@ interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   TELEMETRY_DB?: D1Database;
   OPENAI_API_KEY?: string;
+  BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_NAME?: string;
+  BRAINTRUST_ORG_NAME?: string;
+  BRAINTRUST_PROJECT_ID?: string;
+  BRAINTRUST_APP_URL?: string;
+  BRAINTRUST_ENABLED?: string;
   HALFDOZEN_AGENT_ROUTE_TOKEN?: string;
   HALFDOZEN_TELEMETRY_MCP_URL?: string;
   HALFDOZEN_GMAIL_MCP_URL?: string;
@@ -715,13 +724,31 @@ function queueSlackScenarioRun(
 
   ctx.waitUntil(
     (async () => {
+      const braintrustTracingEnabled = registerOpenAIAgentsBraintrustTracing({
+        projectName: env.BRAINTRUST_PROJECT_NAME ?? 'Playbook MCP',
+        tags: ['playbook-mcp', 'halfdozen', 'slack'],
+        braintrust: {
+          apiKey: env.BRAINTRUST_API_KEY,
+          orgName: env.BRAINTRUST_ORG_NAME,
+          projectId: env.BRAINTRUST_PROJECT_ID,
+          appUrl: env.BRAINTRUST_APP_URL,
+          enabled: env.BRAINTRUST_ENABLED ? env.BRAINTRUST_ENABLED !== 'false' : undefined
+        }
+      });
+
       try {
         const result = await runScenarioByKey(scenario, runInput);
         const payload = buildSlackCompletedResponse(result, runId, route);
         await postSlackResponse(responseUrl, payload);
+        if (braintrustTracingEnabled) {
+          await flushBraintrust().catch(() => {});
+        }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         await postSlackResponse(responseUrl, buildSlackRunFailedResponse(scenario, runId, message));
+        if (braintrustTracingEnabled) {
+          await flushBraintrust().catch(() => {});
+        }
       }
     })(),
   );
@@ -919,14 +946,31 @@ export default {
 
       const baseInput = buildHalfDozenRunInput(env, body);
       const scenario = parseScenarioFromRoute(url.pathname);
+      const braintrustTracingEnabled = registerOpenAIAgentsBraintrustTracing({
+        projectName: env.BRAINTRUST_PROJECT_NAME ?? 'Playbook MCP',
+        tags: ['playbook-mcp', 'halfdozen', 'http'],
+        braintrust: {
+          apiKey: env.BRAINTRUST_API_KEY,
+          orgName: env.BRAINTRUST_ORG_NAME,
+          projectId: env.BRAINTRUST_PROJECT_ID,
+          appUrl: env.BRAINTRUST_APP_URL,
+          enabled: env.BRAINTRUST_ENABLED ? env.BRAINTRUST_ENABLED !== 'false' : undefined
+        }
+      });
 
       try {
         const result = await runScenarioByKey(scenario, baseInput);
         queueSuccessNotifications(ctx, env, result, url.pathname, runId);
+        if (braintrustTracingEnabled) {
+          ctx.waitUntil(flushBraintrust().catch(() => {}));
+        }
         return jsonResponse(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         queueErrorNotification(ctx, env, scenario, url.pathname, runId, message);
+        if (braintrustTracingEnabled) {
+          ctx.waitUntil(flushBraintrust().catch(() => {}));
+        }
         return jsonResponse(
           {
             success: false,
