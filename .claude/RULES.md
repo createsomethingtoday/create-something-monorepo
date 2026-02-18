@@ -18,6 +18,7 @@ This index catalogs all domain-specific rules that agents should apply during de
 | Rule | Triggers | Domain |
 |------|----------|--------|
 | [cloudflare-patterns](#cloudflare-patterns) | D1, KV, Workers code | Infrastructure |
+| [context7-patterns](#context7-patterns) | External library/API docs | Grounding |
 | [beads-patterns](#beads-patterns) | Issue tracking, `bd` commands | Workflow |
 | [orchestration-patterns](#orchestration-patterns) | Multi-session work | Workflow |
 | [harness-patterns](#harness-patterns) | Single-session work | Workflow |
@@ -124,6 +125,12 @@ This index catalogs all domain-specific rules that agents should apply during de
 - **Priority**: P0
 - **Triggers**: API routes, server-side code, error boundaries
 - **Summary**: Consistent error handling across the monorepo
+
+#### context7-patterns
+- **File**: `rules/context7-patterns.md`
+- **Priority**: P1
+- **Triggers**: External library/API documentation, setup/configuration, version-sensitive code generation
+- **Summary**: Use Context7 MCP to pull up-to-date, version-specific docs/examples into context
 
 ---
 

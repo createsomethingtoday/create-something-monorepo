@@ -150,6 +150,14 @@ import { Button, Card } from '@create-something/components';
 
 **Principle:** It is better to admit uncertainty than to create disconnection through hallucination.
 
+### External Library Docs: Context7
+
+For third-party libraries/frameworks (Next.js, Cloudflare Workers, Stripe, Supabase, etc.), prefer **Context7 MCP** to pull **up-to-date, version-specific docs/examples** into context.
+
+- Add `use context7` to the request when you need docs, setup, configuration steps, or code generation.
+- If you already know the library id, pin it: `use library /vercel/next.js`
+- Mention versions explicitly when relevant: “Next.js 14 middleware … use context7”
+
 ## Tool Preferences
 
 When working in this codebase, prefer these tools over manual approaches:

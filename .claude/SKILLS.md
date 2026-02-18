@@ -7,6 +7,7 @@ This index catalogs all available agent skills for the CREATE SOMETHING system. 
 | Skill | Category | Priority | Composable |
 |-------|----------|----------|------------|
 | [ground-claims](#ground-claims) | quality-assurance | P0 | Yes |
+| [context7-docs](#context7-docs) | quality-assurance | P1 | Yes |
 | [voice-validator](#voice-validator) | quality-assurance | P0 | Yes |
 | [canon-maintenance](#canon-maintenance) | quality-assurance | P0 | Yes |
 | [subtractive-review](#subtractive-review) | quality-assurance | P0 | Yes |
@@ -36,6 +37,15 @@ Skills for validating code, content, and design against CREATE SOMETHING standar
 - **Related**: subtractive-review, canon-maintenance
 - **Composable**: Yes — use before any code cleanup or refactoring
 - **Tools**: ground_compare, ground_count_uses, ground_check_connections, ground_find_duplicate_functions, ground_find_orphans, ground_find_dead_exports
+
+#### context7-docs
+- **File**: `skills/context7-docs.md`
+- **Priority**: P1
+- **Description**: Use Context7 MCP to pull up-to-date external library/API docs into context before generating code
+- **Triggers**: API docs, external library, SDK, setup, configuration, hallucinated API
+- **Related**: ground-claims, subtractive-review
+- **Composable**: Yes — layer with Ground for repo-local verification
+- **Tools**: resolve-library-id, query-docs
 
 #### voice-validator
 - **File**: `skills/voice-validator.md`
