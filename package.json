@@ -97,7 +97,8 @@
     ],
     "overrides": {
       "undici": ">=7.18.2",
-      "@types/node": "24.10.9"
+      "@types/node": "24.10.9",
+      "@modelcontextprotocol/sdk": "1.25.3"
     }
   },
   "dependencies": {
