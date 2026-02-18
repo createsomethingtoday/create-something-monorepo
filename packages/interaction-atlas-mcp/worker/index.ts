@@ -125,31 +125,52 @@ export default {
 
     function openAiBaseCss(options: OpenAiCssOptions = {}): string {
       const contentMaxCss = options.contentMax ? `--content-max: ${esc(options.contentMax)};` : '';
-      const bgSubtle = options.bgSubtle ?? '#f9fafb';
+      const bgSubtleCss = options.bgSubtle ? `--bg-subtle: ${esc(options.bgSubtle)};` : '';
       return `
       :root {
-        color-scheme: light;
+        color-scheme: dark;
         ${contentMaxCss}
-        --bg: #f7f7f8;
-        --bg-elevated: #ffffff;
-        --bg-subtle: ${esc(bgSubtle)};
-        --border: #e5e7eb;
-        --border-strong: #d1d5db;
-        --text: #111827;
-        --text-muted: #4b5563;
-        --text-soft: #6b7280;
+        --bg: #0d1117;
+        --bg-elevated: #131a23;
+        --bg-subtle: #1a222e;
+        ${bgSubtleCss}
+        --bg-canvas: #101722;
+        --bg-overlay: rgba(11, 16, 23, 0.92);
+        --border: #293342;
+        --border-strong: #3a4658;
+        --text: #e6edf3;
+        --text-muted: #b6c2cf;
+        --text-soft: #8b9aab;
         --accent: #10a37f;
-        --accent-strong: #0d8c6d;
-        --danger: #b42318;
-        --danger-strong: #912018;
-        --focus: rgba(16, 163, 127, 0.25);
-        --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 12px rgba(16, 24, 40, 0.06);
+        --accent-strong: #14b58e;
+        --danger: #f87171;
+        --danger-strong: #ef4444;
+        --focus: rgba(16, 163, 127, 0.32);
+        --shadow: 0 8px 24px rgba(5, 10, 18, 0.42);
+        --tone-neutral-border: var(--border-strong);
+        --tone-neutral-text: var(--text-muted);
+        --tone-neutral-bg: var(--bg-canvas);
+        --tone-success-border: #2f7262;
+        --tone-success-text: #8be7cb;
+        --tone-success-bg: rgba(16, 163, 127, 0.2);
+        --tone-error-border: #8f4b53;
+        --tone-error-text: #ffb9bf;
+        --tone-error-bg: rgba(239, 68, 68, 0.18);
+        --tone-warn-border: #8f6934;
+        --tone-warn-text: #f7ce87;
+        --tone-warn-bg: rgba(245, 158, 11, 0.16);
+        --tone-info-border: #376e83;
+        --tone-info-text: #95d6f7;
+        --tone-info-bg: rgba(56, 189, 248, 0.16);
       }
       * { box-sizing: border-box; }
       body {
         font-family: 'Soehne', 'Söhne', 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
         margin: 0;
-        background: radial-gradient(1800px 400px at 10% -20%, #ffffff, transparent), var(--bg);
+        background:
+          radial-gradient(1400px 360px at 10% -20%, rgba(255, 255, 255, 0.08), transparent 62%),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 42%),
+          var(--bg);
         color: var(--text);
       }`;
     }
@@ -181,7 +202,7 @@ export default {
       header {
         padding: 1rem 1.25rem;
         border-bottom: 1px solid var(--border);
-        background: rgba(247, 247, 248, 0.92);
+        background: var(--bg-overlay);
         backdrop-filter: blur(10px);
       }
       .headerInner {
@@ -260,23 +281,23 @@ export default {
         border: 1px solid var(--border-strong);
         border-radius: 999px;
         padding: 0.16rem 0.55rem;
-        color: var(--text-soft);
-        background: #ffffff;
+        color: var(--tone-neutral-text);
+        background: var(--tone-neutral-bg);
       }
       .pill.active {
-        border-color: #a7f3d0;
-        color: #065f46;
-        background: #ecfdf3;
+        border-color: var(--tone-success-border);
+        color: var(--tone-success-text);
+        background: var(--tone-success-bg);
       }
       .pill.statusOk {
-        border-color: #a7f3d0;
-        color: #065f46;
-        background: #ecfdf3;
+        border-color: var(--tone-success-border);
+        color: var(--tone-success-text);
+        background: var(--tone-success-bg);
       }
       .pill.statusBad {
-        border-color: #fecaca;
-        color: #991b1b;
-        background: #fef2f2;
+        border-color: var(--tone-error-border);
+        color: var(--tone-error-text);
+        background: var(--tone-error-bg);
       }
       details {
         border: 1px solid var(--border);
@@ -300,13 +321,13 @@ export default {
       code {
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
         font-size: 0.9em;
-        color: #1f2937;
+        color: var(--text-muted);
       }
-      .ok { color: #027a48; }
-      .bad { color: #b42318; }
+      .ok { color: var(--tone-success-text); }
+      .bad { color: var(--tone-error-text); }
       .alertBad {
-        border-color: #fecaca;
-        background: #fef2f2;
+        border-color: var(--tone-error-border);
+        background: var(--tone-error-bg);
       }
       .spacer { height: 0.75rem; }
       .versionRow {
@@ -789,13 +810,13 @@ export default {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Policy Tuning Studio</title>
     <style>
-      ${openAiBaseCss({ bgSubtle: '#f3f4f6' })}
+      ${openAiBaseCss()}
       header {
         padding: 1rem 1.25rem;
         border-bottom: 1px solid var(--border);
         position: sticky;
         top: 0;
-        background: rgba(247, 247, 248, 0.92);
+        background: var(--bg-overlay);
         backdrop-filter: blur(10px);
         z-index: 10;
       }
@@ -827,7 +848,7 @@ export default {
       a { color: var(--accent-strong); text-decoration: none; }
       a:hover { text-decoration: underline; }
       select, input, textarea, button {
-        background: #ffffff;
+        background: var(--bg-canvas);
         color: var(--text);
         border: 1px solid var(--border-strong);
         border-radius: 8px;
@@ -843,9 +864,9 @@ export default {
       button {
         cursor: pointer;
         transition: border-color 120ms, background 120ms, transform 120ms, color 120ms;
-        background: #ffffff;
+        background: var(--bg-canvas);
       }
-      button:hover { border-color: #9ca3af; background: var(--bg-subtle); }
+      button:hover { border-color: var(--border-strong); background: var(--bg-subtle); }
       button:active { transform: translateY(1px); }
       button:disabled {
         opacity: 0.6;
@@ -854,36 +875,51 @@ export default {
       .btnPrimary {
         background: var(--accent);
         border-color: var(--accent);
-        color: #ffffff;
+        color: #f3fffb;
       }
       .btnPrimary:hover {
         background: var(--accent-strong);
         border-color: var(--accent-strong);
-        color: #ffffff;
+        color: #f3fffb;
       }
       .btnDanger {
-        background: #fff5f4;
-        border-color: #f0c1bc;
-        color: var(--danger);
+        background: var(--tone-error-bg);
+        border-color: var(--tone-error-border);
+        color: var(--tone-error-text);
       }
       .btnDanger:hover {
-        border-color: #e89f97;
-        background: #ffe8e5;
+        border-color: var(--danger-strong);
+        background: rgba(239, 68, 68, 0.25);
       }
       .statusBadge {
         font-size: 0.75rem;
         border: 1px solid var(--border-strong);
         border-radius: 999px;
         padding: 0.2rem 0.55rem;
-        color: var(--text);
-        background: #ffffff;
+        color: var(--text-muted);
+        background: var(--bg-canvas);
+      }
+      .statusBadge.status-neutral {
+        border-color: var(--tone-neutral-border);
+        color: var(--tone-neutral-text);
+        background: var(--tone-neutral-bg);
+      }
+      .statusBadge.status-success {
+        border-color: var(--tone-success-border);
+        color: var(--tone-success-text);
+        background: var(--tone-success-bg);
+      }
+      .statusBadge.status-error {
+        border-color: var(--tone-error-border);
+        color: var(--tone-error-text);
+        background: var(--tone-error-bg);
       }
       .rule {
         border: 1px solid var(--border);
         border-radius: 10px;
         padding: 0.65rem;
         margin: 0.5rem 0;
-        background: #ffffff;
+        background: var(--bg-canvas);
       }
       .rule.dragging { opacity: 0.55; }
       .pill {
@@ -891,45 +927,45 @@ export default {
         border: 1px solid var(--border-strong);
         border-radius: 999px;
         padding: 0.15rem 0.5rem;
-        color: var(--text-soft);
-        background: #ffffff;
+        color: var(--tone-neutral-text);
+        background: var(--tone-neutral-bg);
       }
       .pillAdd, .pillTighten {
-        border-color: #a7f3d0;
-        color: #065f46;
-        background: #ecfdf3;
+        border-color: var(--tone-success-border);
+        color: var(--tone-success-text);
+        background: var(--tone-success-bg);
       }
       .pillRemove, .pillRelax {
-        border-color: #fecaca;
-        color: #991b1b;
-        background: #fef2f2;
+        border-color: var(--tone-error-border);
+        color: var(--tone-error-text);
+        background: var(--tone-error-bg);
       }
       .pillChange {
-        border-color: #fde68a;
-        color: #92400e;
-        background: #fffbeb;
+        border-color: var(--tone-warn-border);
+        color: var(--tone-warn-text);
+        background: var(--tone-warn-bg);
       }
       .pillSame {
-        border-color: var(--border-strong);
-        color: var(--text-soft);
-        background: #ffffff;
+        border-color: var(--tone-neutral-border);
+        color: var(--tone-neutral-text);
+        background: var(--tone-neutral-bg);
       }
       .atlasTag {
         font-size: 0.72rem;
-        border: 1px solid #bae6fd;
+        border: 1px solid var(--tone-info-border);
         border-radius: 999px;
         padding: 0.12rem 0.5rem;
-        color: #155e75;
-        background: #f0f9ff;
+        color: var(--tone-info-text);
+        background: var(--tone-info-bg);
       }
       pre {
         overflow: auto;
         border: 1px solid var(--border);
-        background: #f9fafb;
+        background: var(--bg-canvas);
         border-radius: 8px;
         padding: 0.7rem;
         max-height: 320px;
-        color: #111827;
+        color: var(--text);
       }
       .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.86rem; }
       .advancedOnly { display: none; }
@@ -942,38 +978,38 @@ export default {
         bottom: 0;
         z-index: 20;
         border-top: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.96);
+        background: var(--bg-overlay);
         backdrop-filter: blur(10px);
         padding: 0.75rem 1.25rem;
       }
-      .riskHigh { color: #b42318; }
-      .riskMedium { color: #b54708; }
-      .riskLow { color: #027a48; }
+      .riskHigh { color: var(--tone-error-text); }
+      .riskMedium { color: var(--tone-warn-text); }
+      .riskLow { color: var(--tone-success-text); }
       .step {
         font-size: 0.78rem;
         border: 1px solid var(--border-strong);
         border-radius: 999px;
         padding: 0.12rem 0.48rem;
-        color: var(--text-soft);
-        background: #ffffff;
+        color: var(--tone-neutral-text);
+        background: var(--tone-neutral-bg);
       }
       .impactCard {
         border: 1px solid var(--border);
         border-radius: 10px;
         padding: 0.55rem 0.65rem;
-        background: #ffffff;
+        background: var(--bg-canvas);
         min-width: 180px;
       }
       .impactLabel { color: var(--text-soft); font-size: 0.78rem; }
       .impactValue { font-size: 1rem; font-weight: 650; color: var(--text); }
-      .guardrailGood { color: #027a48; }
-      .guardrailWarn { color: #b42318; }
+      .guardrailGood { color: var(--tone-success-text); }
+      .guardrailWarn { color: var(--tone-error-text); }
       .guidedRail {
         margin-top: 0.65rem;
         border: 1px solid var(--border);
         border-radius: 12px;
         padding: 0.65rem;
-        background: #ffffff;
+        background: var(--bg-canvas);
         box-shadow: var(--shadow);
       }
       .stepStatus {
@@ -981,20 +1017,20 @@ export default {
         border-radius: 999px;
         padding: 0.1rem 0.45rem;
         border: 1px solid var(--border-strong);
-        color: var(--text-soft);
-        background: #ffffff;
+        color: var(--tone-neutral-text);
+        background: var(--tone-neutral-bg);
       }
       .stepReady {
-        border-color: #fde68a;
-        color: #92400e;
-        background: #fffbeb;
+        border-color: var(--tone-warn-border);
+        color: var(--tone-warn-text);
+        background: var(--tone-warn-bg);
       }
       .stepDone {
-        border-color: #a7f3d0;
-        color: #065f46;
-        background: #ecfdf3;
+        border-color: var(--tone-success-border);
+        color: var(--tone-success-text);
+        background: var(--tone-success-bg);
       }
-      .stepNav { cursor: pointer; background: #ffffff; }
+      .stepNav { cursor: pointer; background: var(--bg-canvas); }
       .stepNav:hover { border-color: var(--accent-strong); background: var(--bg-subtle); }
     </style>
   </head>
@@ -1021,7 +1057,7 @@ export default {
           </div>
         </div>
         <div class="row" style="margin:0;">
-          <span id="statusBadge" class="statusBadge">Ready</span>
+          <span id="statusBadge" class="statusBadge status-neutral">Ready</span>
           <label class="muted" for="uiMode">View</label>
           <select id="uiMode">
             <option value="simple" selected>Simple</option>
@@ -1292,9 +1328,14 @@ export default {
         const el = byId('statusBadge');
         if (!el) return;
         el.textContent = text;
-        el.style.borderColor = tone === 'error' ? '#f0c1bc' : tone === 'success' ? '#a7f3d0' : '#d1d5db';
-        el.style.color = tone === 'error' ? '#b42318' : tone === 'success' ? '#027a48' : '#374151';
-        el.style.background = tone === 'error' ? '#fff5f4' : tone === 'success' ? '#ecfdf3' : '#ffffff';
+        el.classList.remove('status-error', 'status-success', 'status-neutral');
+        if (tone === 'error') {
+          el.classList.add('status-error');
+        } else if (tone === 'success') {
+          el.classList.add('status-success');
+        } else {
+          el.classList.add('status-neutral');
+        }
       }
 
       function computeDiff(beforePolicy, afterPolicy) {
