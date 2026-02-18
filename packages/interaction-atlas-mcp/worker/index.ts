@@ -130,38 +130,81 @@ export default {
       :root {
         color-scheme: dark;
         ${contentMaxCss}
-        --bg: #0d1117;
-        --bg-elevated: #131a23;
-        --bg-subtle: #1a222e;
+        /* OpenAI Apps SDK UI v0.2.1 token subset (dark theme). */
+        --gray-25: #101010;
+        --gray-50: #131313;
+        --gray-100: #181818;
+        --gray-200: #212121;
+        --gray-300: #303030;
+        --gray-350: #393939;
+        --gray-400: #414141;
+        --gray-600: #8f8f8f;
+        --gray-700: #afafaf;
+        --gray-1000: #ffffff;
+        --blue-200: #66b5ff;
+        --blue-400: #0285ff;
+        --green-400: #04b84c;
+        --orange-500: #e25507;
+        --red-500: #e02e2a;
+        --white: #ffffff;
+        --color-text: var(--gray-1000);
+        --color-text-secondary: var(--gray-700);
+        --color-text-tertiary: var(--gray-600);
+        --color-ring: var(--blue-400);
+        --color-border-subtle: rgba(255, 255, 255, 0.06);
+        --color-border: rgba(255, 255, 255, 0.12);
+        --color-border-strong: rgba(255, 255, 255, 0.2);
+        --color-background-primary-surface: rgba(255, 255, 255, 0.08);
+        --color-surface: var(--gray-200);
+        --color-surface-secondary: var(--gray-100);
+        --color-surface-tertiary: var(--gray-50);
+        --color-surface-elevated: var(--gray-300);
+        --color-surface-elevated-secondary: var(--gray-400);
+        --color-background-info-surface: rgba(2, 133, 255, 0.13);
+        --color-border-info-surface: rgba(2, 133, 255, 0.13);
+        --color-text-info-surface: var(--blue-200);
+        --color-background-warning-surface: rgba(251, 106, 34, 0.16);
+        --color-border-warning-surface: rgba(251, 106, 34, 0.16);
+        --color-text-warning-surface: var(--orange-500);
+        --color-background-danger-surface: rgba(250, 66, 62, 0.16);
+        --color-border-danger-surface: rgba(250, 66, 62, 0.16);
+        --color-text-danger-surface: var(--red-500);
+        --color-background-success-surface: rgba(4, 184, 76, 0.15);
+        --color-border-success-surface: rgba(4, 184, 76, 0.15);
+        --color-text-success-surface: var(--green-400);
+        --bg: var(--color-surface-secondary);
+        --bg-elevated: var(--color-surface-elevated);
+        --bg-subtle: var(--color-surface);
         ${bgSubtleCss}
-        --bg-canvas: #101722;
-        --bg-overlay: rgba(11, 16, 23, 0.92);
-        --border: #293342;
-        --border-strong: #3a4658;
-        --text: #e6edf3;
-        --text-muted: #b6c2cf;
-        --text-soft: #8b9aab;
+        --bg-canvas: var(--color-surface-tertiary);
+        --bg-overlay: rgba(13, 13, 13, 0.88);
+        --border: var(--color-border);
+        --border-strong: var(--color-border-strong);
+        --text: var(--color-text);
+        --text-muted: var(--color-text-secondary);
+        --text-soft: var(--color-text-tertiary);
         --accent: #10a37f;
         --accent-strong: #14b58e;
-        --danger: #f87171;
-        --danger-strong: #ef4444;
-        --focus: rgba(16, 163, 127, 0.32);
-        --shadow: 0 8px 24px rgba(5, 10, 18, 0.42);
+        --danger: var(--color-text-danger-surface);
+        --danger-strong: #fa423e;
+        --focus: rgba(2, 133, 255, 0.32);
+        --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -4px rgba(0, 0, 0, 0.2);
+        --text-on-accent: #f3fffb;
         --tone-neutral-border: var(--border-strong);
         --tone-neutral-text: var(--text-muted);
-        --tone-neutral-bg: var(--bg-canvas);
-        --tone-success-border: #2f7262;
-        --tone-success-text: #8be7cb;
-        --tone-success-bg: rgba(16, 163, 127, 0.2);
-        --tone-error-border: #8f4b53;
-        --tone-error-text: #ffb9bf;
-        --tone-error-bg: rgba(239, 68, 68, 0.18);
-        --tone-warn-border: #8f6934;
-        --tone-warn-text: #f7ce87;
-        --tone-warn-bg: rgba(245, 158, 11, 0.16);
-        --tone-info-border: #376e83;
-        --tone-info-text: #95d6f7;
-        --tone-info-bg: rgba(56, 189, 248, 0.16);
+        --tone-neutral-bg: var(--color-background-primary-surface);
+        --tone-success-border: var(--color-border-success-surface);
+        --tone-success-text: var(--color-text-success-surface);
+        --tone-success-bg: var(--color-background-success-surface);
+        --tone-error-border: var(--color-border-danger-surface);
+        --tone-error-text: var(--color-text-danger-surface);
+        --tone-error-bg: var(--color-background-danger-surface);
+        --tone-warn-border: var(--color-border-warning-surface);
+        --tone-warn-text: var(--color-text-warning-surface);
+        --tone-warn-bg: var(--color-background-warning-surface);
+        --tone-info-border: var(--color-border-info-surface);
+        --tone-info-text: var(--color-text-info-surface);
+        --tone-info-bg: var(--color-background-info-surface);
       }
       * { box-sizing: border-box; }
       body {
@@ -190,7 +233,7 @@ export default {
     function renderViewerPage(options: ViewerPageOptions): string {
       const maxWidth = options.maxWidth ?? '1100px';
       return `<!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark" data-openai-ui="apps-sdk-ui-0.2.1">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -804,7 +847,7 @@ export default {
       const entityId = url.searchParams.get('entity_id') ?? 'fleet-watchdog';
       const entityType: AtlasEntityType = entityTypeParam === 'mcp' ? 'mcp' : 'agent';
       const html = `<!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark" data-openai-ui="apps-sdk-ui-0.2.1">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -875,12 +918,12 @@ export default {
       .btnPrimary {
         background: var(--accent);
         border-color: var(--accent);
-        color: #f3fffb;
+        color: var(--text-on-accent);
       }
       .btnPrimary:hover {
         background: var(--accent-strong);
         border-color: var(--accent-strong);
-        color: #f3fffb;
+        color: var(--text-on-accent);
       }
       .btnDanger {
         background: var(--tone-error-bg);
