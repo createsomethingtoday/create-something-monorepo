@@ -30,3 +30,4 @@ Start with:
 
 - [guides/COMPONENT_GUIDE.md](./guides/COMPONENT_GUIDE.md) — Component library usage
 - [guides/EXAMPLES.md](./guides/EXAMPLES.md) — Code examples
+- [guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md](./guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md) — OpenAI + CREATE SOMETHING Judgment Layer dogfood loop

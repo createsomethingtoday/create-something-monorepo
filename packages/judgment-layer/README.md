@@ -41,6 +41,25 @@ cs-judge check --policy standard
 cs-judge watch --interval 300 --policy standard
 ```
 
+## Dogfood Mode (OpenAI + CREATE SOMETHING)
+
+Use a two-lane loop:
+
+1. Run an OpenAI-backed scenario for evidence generation.
+2. Run `cs-judge` for policy/approval/Andon decisions.
+
+```bash
+# Lane 1: OpenAI scenario (reasoning + MCP evidence)
+pnpm agent:halfdozen:fleet-watchdog
+
+# Lane 2: CREATE SOMETHING Judgment Layer (policy control)
+cs-judge run --policy standard --prompt "Evaluate the scenario output against policy and emit one Andon object if uncertain."
+cs-judge andon --tail 20
+```
+
+Full playbook:
+`../../docs/guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md`
+
 ## Operator Flags (Lightweight Defaults)
 
 - `--mcp minimal|inherit`: defaults to `minimal` to avoid optional MCP OAuth/auth breaking runs.
