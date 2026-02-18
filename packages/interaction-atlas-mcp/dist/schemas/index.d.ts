@@ -34,4 +34,61 @@ export declare const WorkflowIdSchema: z.ZodObject<{
     workflow_id: string;
 }>;
 export type WorkflowIdInput = z.infer<typeof WorkflowIdSchema>;
+export declare const WorkflowToolSequenceItemSchema: z.ZodObject<{
+    server: z.ZodOptional<z.ZodString>;
+    tool: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    tool: string;
+    server?: string | undefined;
+}, {
+    tool: string;
+    server?: string | undefined;
+}>;
+export declare const WorkflowMapFromToolSequenceSchema: z.ZodObject<{
+    name: z.ZodOptional<z.ZodString>;
+    workflow_id: z.ZodOptional<z.ZodString>;
+    primaryUseCase: z.ZodOptional<z.ZodString>;
+    touchpoints: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    constraints: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    sequence: z.ZodArray<z.ZodObject<{
+        server: z.ZodOptional<z.ZodString>;
+        tool: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        tool: string;
+        server?: string | undefined;
+    }, {
+        tool: string;
+        server?: string | undefined;
+    }>, "many">;
+    add_synthesis: z.ZodOptional<z.ZodBoolean>;
+    add_verification: z.ZodOptional<z.ZodBoolean>;
+    add_human_review: z.ZodOptional<z.ZodBoolean>;
+}, "strip", z.ZodTypeAny, {
+    sequence: {
+        tool: string;
+        server?: string | undefined;
+    }[];
+    constraints?: string[] | undefined;
+    name?: string | undefined;
+    primaryUseCase?: string | undefined;
+    touchpoints?: string[] | undefined;
+    workflow_id?: string | undefined;
+    add_synthesis?: boolean | undefined;
+    add_verification?: boolean | undefined;
+    add_human_review?: boolean | undefined;
+}, {
+    sequence: {
+        tool: string;
+        server?: string | undefined;
+    }[];
+    constraints?: string[] | undefined;
+    name?: string | undefined;
+    primaryUseCase?: string | undefined;
+    touchpoints?: string[] | undefined;
+    workflow_id?: string | undefined;
+    add_synthesis?: boolean | undefined;
+    add_verification?: boolean | undefined;
+    add_human_review?: boolean | undefined;
+}>;
+export type WorkflowMapFromToolSequenceInput = z.infer<typeof WorkflowMapFromToolSequenceSchema>;
 //# sourceMappingURL=index.d.ts.map

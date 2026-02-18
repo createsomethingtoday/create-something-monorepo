@@ -9,7 +9,10 @@
 import { jsonContent, errorContent } from '@create-something/mcp-core';
 import { getAtlasStats, getPattern, searchPatterns, } from '@quietloudlab/ai-interaction-atlas';
 import { getBuiltWorkflowTemplate, getWorkflowMermaid, listWorkflowSummaries, validateBuiltWorkflow, } from '../workflows/index.js';
-import { AtlasGetSchema, AtlasSearchSchema, WorkflowIdSchema } from '../schemas/index.js';
+import { buildWorkflowTemplate } from '../workflows/build.js';
+import { workflowTemplateToMermaid } from '../workflows/mermaid.js';
+import { mapToolSequenceToWorkflowDefinition } from '../workflows/map.js';
+import { AtlasGetSchema, AtlasSearchSchema, WorkflowIdSchema, WorkflowMapFromToolSequenceSchema } from '../schemas/index.js';
 export function registerTools(server) {
     server.tool('atlas_stats', 'Get summary counts for the AI Interaction Atlas dataset.', {}, async (_params, ctx) => {
         return jsonContent({ accountId: ctx.accountId, stats: getAtlasStats() });
@@ -65,6 +68,21 @@ export function registerTools(server) {
         if (!mermaid)
             return errorContent(`Unknown workflow_id: ${input.workflow_id}`);
         return jsonContent({ accountId: ctx.accountId, workflow_id: input.workflow_id, mermaid });
+    }, { readOnly: true });
+    server.tool('workflow_map_from_tool_sequence', 'Automatically map an ordered tool-call sequence into an Atlas WorkflowTemplate for client review.', WorkflowMapFromToolSequenceSchema.shape, async (params, ctx) => {
+        const input = WorkflowMapFromToolSequenceSchema.parse(params);
+        const def = mapToolSequenceToWorkflowDefinition(input);
+        const workflow = buildWorkflowTemplate(def);
+        const validation = validateBuiltWorkflow(workflow);
+        const mermaid = workflowTemplateToMermaid(workflow);
+        return jsonContent({
+            accountId: ctx.accountId,
+            definition: def,
+            valid: validation.valid,
+            invalidIds: validation.invalidIds,
+            mermaid,
+            workflow,
+        });
     }, { readOnly: true });
 }
 //# sourceMappingURL=index.js.map
