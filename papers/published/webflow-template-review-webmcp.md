@@ -29,8 +29,14 @@ If we want higher quality and faster throughput, we need a way to make review da
 ## II. Constraints: What You Can (and Can’t) See From a Published Site
 
 Published Webflow sites are a different world than Designer:
-- You can reliably inspect the DOM, computed metadata, and client-side behavior.
-- You cannot directly access Designer-only configuration (style manager, unused classes, component structure, CMS schema, etc.).
+
+| Surface | Published Site | Designer |
+|---------|----------------|----------|
+| DOM and runtime behavior | Available | Available |
+| Metadata and public page signals | Available | Available |
+| Style manager and unused class inventory | Not available | Available |
+| Component/symbol structure internals | Not available | Available |
+| CMS schema and configuration internals | Not available | Available |
 
 So the system is designed around a hard boundary:
 
@@ -66,43 +72,21 @@ When present, the snippet registers tools in a WebMCP-aligned shape so future ag
 
 At the time of writing, the published-site tools include:
 
-### Site and Discovery
-
-- `get_site_info`
-  - Basic page/site identifiers and environment signals
-- `get_sitemap_urls`
-  - Attempts to fetch and parse `/sitemap.xml` to support multi-page review
-
-### Page Hygiene Audits
-
-- `audit_dom`
-  - Baseline DOM/environment signals used by other tools
-- `audit_headings`
-  - H1 count, skipped heading levels, empty headings
-- `audit_meta`
-  - Title/description, OG tags, canonical, robots
-- `audit_links`
-  - Empty/placeholder href, `_blank` missing `rel=noopener`, missing accessible name
-- `audit_images`
-  - Missing alt, above-fold lazy-loading flags, basic sizing/format signals
-- `audit_forms`
-  - Missing label associations / accessible names for form controls
-- `audit_media`
-  - Video/audio autoplay/controls signals (useful for background media review)
-- `audit_404`
-  - Probes a non-existent path and reports observed 404 behavior
-
-### Interactions Audits
-
-- `audit_ix2`
-  - Captures and summarizes legacy Webflow Interactions (IX2)
-- `audit_ix3`
-  - Captures and summarizes Webflow Interactions 3 (IX3)
-
-### Aggregation
-
-- `audit_webflow_way`
-  - Runs the “review bundle” and returns a single consolidated object (optionally including sitemap-driven sampling)
+| Tool | Category | Primary Signals |
+|------|----------|-----------------|
+| `get_site_info` | Site and discovery | Page/site identifiers and environment signals |
+| `get_sitemap_urls` | Site and discovery | `/sitemap.xml` discovery for multi-page review |
+| `audit_dom` | Page hygiene | Baseline DOM and environment signals |
+| `audit_headings` | Page hygiene | H1 count, skipped levels, empty headings |
+| `audit_meta` | Page hygiene | Title/description, OG tags, canonical, robots |
+| `audit_links` | Page hygiene | Placeholder links, `_blank` rel safety, missing accessible names |
+| `audit_images` | Page hygiene | Missing alt, above-fold lazy-loading, sizing/format hints |
+| `audit_forms` | Page hygiene | Missing label associations and accessible names |
+| `audit_media` | Page hygiene | Autoplay/controls signals for video/audio |
+| `audit_404` | Page hygiene | Non-existent-path probe and observed 404 behavior |
+| `audit_ix2` | Interactions | Legacy IX2 configuration/state capture and summaries |
+| `audit_ix3` | Interactions | IX3 interaction/timeline capture and summaries |
+| `audit_webflow_way` | Aggregation | Consolidated review object (optionally sitemap-driven) |
 
 The practical outcome is that an agent can produce a reviewer-friendly summary (and a machine-verifiable artifact) in one call.
 
@@ -134,21 +118,30 @@ The intended workflow looks like this:
 5. Reviewer escalates only the remaining “Designer-only” checks
 
 This splits review labor cleanly:
-- Agents handle repeatable hygiene checks
-- Humans handle judgment and Designer-only validation
+
+| Role | Responsibility |
+|------|----------------|
+| Agents | Repeatable published-site hygiene checks and evidence capture |
+| Humans | Judgment calls and Designer-only validation |
 
 ## VII. Limitations (Explicit)
 
 What this does not solve:
-- Unused CSS classes and style manager hygiene
-- CMS schema/config validation
-- Designer component structure and symbol integrity
-- Deep performance analysis (lab + field)
+
+| Area | Limitation |
+|------|------------|
+| CSS/style hygiene | Cannot verify unused classes or style manager state |
+| CMS internals | Cannot validate CMS schema/configuration details |
+| Designer structure | Cannot inspect component/symbol integrity in Designer |
+| Performance depth | Cannot replace full lab + field performance analysis |
 
 And what requires tuning:
-- Form label heuristics (Webflow form patterns vary)
-- “Above the fold” image classification (viewport-dependent)
-- Sitemap discovery (many templates don’t publish a sitemap)
+
+| Heuristic | Why Tuning Is Needed |
+|-----------|----------------------|
+| Form labeling checks | Webflow form structures vary across templates |
+| Above-fold image checks | Classification depends on viewport and layout context |
+| Sitemap discovery | Many templates do not publish `/sitemap.xml` |
 
 These aren’t failures. They’re the shape of the boundary between published-site visibility and Designer state.
 
