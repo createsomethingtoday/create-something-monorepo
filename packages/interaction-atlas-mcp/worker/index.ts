@@ -118,6 +118,252 @@ export default {
       }
     }
 
+    type OpenAiCssOptions = {
+      contentMax?: string;
+      bgSubtle?: string;
+    };
+
+    function openAiBaseCss(options: OpenAiCssOptions = {}): string {
+      const contentMaxCss = options.contentMax ? `--content-max: ${esc(options.contentMax)};` : '';
+      const bgSubtle = options.bgSubtle ?? '#f9fafb';
+      return `
+      :root {
+        color-scheme: light;
+        ${contentMaxCss}
+        --bg: #f7f7f8;
+        --bg-elevated: #ffffff;
+        --bg-subtle: ${esc(bgSubtle)};
+        --border: #e5e7eb;
+        --border-strong: #d1d5db;
+        --text: #111827;
+        --text-muted: #4b5563;
+        --text-soft: #6b7280;
+        --accent: #10a37f;
+        --accent-strong: #0d8c6d;
+        --danger: #b42318;
+        --danger-strong: #912018;
+        --focus: rgba(16, 163, 127, 0.25);
+        --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 12px rgba(16, 24, 40, 0.06);
+      }
+      * { box-sizing: border-box; }
+      body {
+        font-family: 'Soehne', 'Söhne', 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        margin: 0;
+        background: radial-gradient(1800px 400px at 10% -20%, #ffffff, transparent), var(--bg);
+        color: var(--text);
+      }`;
+    }
+
+    type ViewerPageOptions = {
+      title: string;
+      heading: string;
+      subtitle?: string;
+      headerMeta?: string;
+      headerActions?: string;
+      body: string;
+      footer?: string;
+      maxWidth?: string;
+      includeMermaid?: boolean;
+    };
+
+    function renderViewerPage(options: ViewerPageOptions): string {
+      const maxWidth = options.maxWidth ?? '1100px';
+      return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${esc(options.title)}</title>
+    <style>
+      ${openAiBaseCss({ contentMax: maxWidth })}
+      a { color: var(--accent-strong); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+        background: rgba(247, 247, 248, 0.92);
+        backdrop-filter: blur(10px);
+      }
+      .headerInner {
+        max-width: var(--content-max);
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.35rem;
+        letter-spacing: 0.01em;
+      }
+      .subtitle {
+        margin: 0.3rem 0 0;
+        color: var(--text-muted);
+        line-height: 1.45;
+      }
+      .headerActions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+      }
+      main {
+        max-width: var(--content-max);
+        margin: 0 auto;
+        padding: 1rem 1.25rem 2rem;
+      }
+      footer {
+        max-width: var(--content-max);
+        margin: 0 auto;
+        padding: 1rem 1.25rem 2rem;
+        color: var(--text-soft);
+      }
+      .card, .panel {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--bg-elevated);
+        padding: 1rem;
+        margin: 0.75rem 0;
+        box-shadow: var(--shadow);
+      }
+      .split {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+      .stack { display: grid; gap: 0.28rem; }
+      .cardTitle { font-size: 1.05rem; font-weight: 600; }
+      .muted { color: var(--text-muted); }
+      .label { color: var(--text-soft); }
+      .meta {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 0.6rem;
+      }
+      .row {
+        display: flex;
+        gap: 0.55rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.75rem;
+        border: 1px solid var(--border-strong);
+        border-radius: 999px;
+        padding: 0.16rem 0.55rem;
+        color: var(--text-soft);
+        background: #ffffff;
+      }
+      .pill.active {
+        border-color: #a7f3d0;
+        color: #065f46;
+        background: #ecfdf3;
+      }
+      .pill.statusOk {
+        border-color: #a7f3d0;
+        color: #065f46;
+        background: #ecfdf3;
+      }
+      .pill.statusBad {
+        border-color: #fecaca;
+        color: #991b1b;
+        background: #fef2f2;
+      }
+      details {
+        border: 1px solid var(--border);
+        background: var(--bg-elevated);
+        border-radius: 12px;
+        padding: 0.75rem 0.9rem;
+      }
+      summary {
+        cursor: pointer;
+        color: var(--text);
+        font-weight: 600;
+      }
+      pre {
+        overflow: auto;
+        padding: 0.75rem;
+        border-radius: 10px;
+        background: var(--bg-subtle);
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+        font-size: 0.9em;
+        color: #1f2937;
+      }
+      .ok { color: #027a48; }
+      .bad { color: #b42318; }
+      .alertBad {
+        border-color: #fecaca;
+        background: #fef2f2;
+      }
+      .spacer { height: 0.75rem; }
+      .versionRow {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--bg-subtle);
+        padding: 0.6rem 0.7rem;
+        margin: 0.45rem 0;
+      }
+      .fieldGrid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 0.6rem;
+      }
+      .field {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--bg-subtle);
+        padding: 0.55rem 0.65rem;
+      }
+      .fieldLabel {
+        color: var(--text-soft);
+        font-size: 0.78rem;
+        margin-bottom: 0.15rem;
+      }
+      @media (max-width: 720px) {
+        header { padding: 0.9rem; }
+        main { padding: 0.8rem 0.9rem 1.5rem; }
+        footer { padding: 0.8rem 0.9rem 1.5rem; }
+        .headerActions { justify-content: flex-start; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="headerInner">
+        <div>
+          <h1>${options.heading}</h1>
+          ${options.subtitle ? `<p class="subtitle">${options.subtitle}</p>` : ''}
+          ${options.headerMeta ? `<div class="meta">${options.headerMeta}</div>` : ''}
+        </div>
+        ${options.headerActions ? `<div class="headerActions">${options.headerActions}</div>` : ''}
+      </div>
+    </header>
+    <main>${options.body}</main>
+    ${options.footer ? `<footer>${options.footer}</footer>` : ''}
+    ${options.includeMermaid
+      ? `<script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "base" });
+    </script>`
+      : ''
+    }
+  </body>
+</html>`;
+    }
+
     // Health check
     if (url.pathname === '/health') {
       return new Response(JSON.stringify({ status: 'ok' }, null, 2), { headers: JSON_HEADERS });
@@ -543,70 +789,148 @@ export default {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Policy Tuning Studio</title>
     <style>
-      :root { color-scheme: dark; }
-      body {
-        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-        margin: 0;
-        background:
-          linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px),
-          #0b0b10;
-        background-size: 28px 28px, 28px 28px, auto;
-        color: #f8fafc;
-      }
+      ${openAiBaseCss({ bgSubtle: '#f3f4f6' })}
       header {
-        padding: 1.1rem 1.35rem;
-        border-bottom: 1px solid #1f2937;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--border);
         position: sticky;
         top: 0;
-        background: rgba(11, 11, 16, 0.92);
-        backdrop-filter: blur(6px);
+        background: rgba(247, 247, 248, 0.92);
+        backdrop-filter: blur(10px);
         z-index: 10;
       }
-      main { padding: 1rem 1.25rem 5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-      @media (max-width: 1040px) { main { grid-template-columns: 1fr; } }
+      main {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 1rem 1.25rem 6rem;
+        display: grid;
+        grid-template-columns: minmax(320px, 0.95fr) minmax(420px, 1.05fr);
+        gap: 1rem;
+      }
+      @media (max-width: 1080px) {
+        main { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 720px) {
+        header { padding: 0.9rem 0.9rem; }
+        main { padding: 0.8rem 0.9rem 7.5rem; }
+      }
       .panel {
-        border: 1px solid #1f2937;
+        border: 1px solid var(--border);
         border-radius: 14px;
-        background: #111827;
+        background: var(--bg-elevated);
         padding: 1rem;
-        box-shadow: inset 0 1px 0 rgba(148,163,184,0.08);
+        box-shadow: var(--shadow);
       }
-      .panelTitle { font-weight: 650; letter-spacing: 0.01em; margin-bottom: 0.25rem; }
-      .muted { color: #94a3b8; }
-      .row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.45rem 0; align-items: center; }
+      .panelTitle { font-size: 0.99rem; font-weight: 650; letter-spacing: 0.01em; margin-bottom: 0.3rem; color: var(--text); }
+      .muted { color: var(--text-muted); }
+      .row { display: flex; gap: 0.55rem; flex-wrap: wrap; margin: 0.5rem 0; align-items: center; }
+      a { color: var(--accent-strong); text-decoration: none; }
+      a:hover { text-decoration: underline; }
       select, input, textarea, button {
-        background: #020617;
-        color: #f8fafc;
-        border: 1px solid #334155;
+        background: #ffffff;
+        color: var(--text);
+        border: 1px solid var(--border-strong);
         border-radius: 8px;
-        padding: 0.4rem 0.6rem;
+        padding: 0.45rem 0.65rem;
+        font: inherit;
+        min-height: 36px;
       }
-      select:focus, input:focus, textarea:focus { outline: none; border-color: #60a5fa; box-shadow: 0 0 0 2px rgba(96,165,250,0.18); }
-      button { cursor: pointer; transition: border-color 120ms, background 120ms, transform 120ms; }
-      button:hover { border-color: #60a5fa; background: #0b1220; }
+      select:focus-visible, input:focus-visible, textarea:focus-visible, button:focus-visible {
+        outline: none;
+        border-color: var(--accent-strong);
+        box-shadow: 0 0 0 3px var(--focus);
+      }
+      button {
+        cursor: pointer;
+        transition: border-color 120ms, background 120ms, transform 120ms, color 120ms;
+        background: #ffffff;
+      }
+      button:hover { border-color: #9ca3af; background: var(--bg-subtle); }
       button:active { transform: translateY(1px); }
-      .btnPrimary { background: #1d4ed8; border-color: #1e40af; color: #dbeafe; }
-      .btnPrimary:hover { background: #1e40af; color: #eff6ff; }
-      .btnDanger { background: #3f1212; border-color: #7f1d1d; color: #fecaca; }
-      .statusBadge { font-size: 0.75rem; border: 1px solid #334155; border-radius: 999px; padding: 0.2rem 0.55rem; color: #cbd5e1; }
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      .btnPrimary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #ffffff;
+      }
+      .btnPrimary:hover {
+        background: var(--accent-strong);
+        border-color: var(--accent-strong);
+        color: #ffffff;
+      }
+      .btnDanger {
+        background: #fff5f4;
+        border-color: #f0c1bc;
+        color: var(--danger);
+      }
+      .btnDanger:hover {
+        border-color: #e89f97;
+        background: #ffe8e5;
+      }
+      .statusBadge {
+        font-size: 0.75rem;
+        border: 1px solid var(--border-strong);
+        border-radius: 999px;
+        padding: 0.2rem 0.55rem;
+        color: var(--text);
+        background: #ffffff;
+      }
       .rule {
-        border: 1px solid #334155;
+        border: 1px solid var(--border);
         border-radius: 10px;
         padding: 0.65rem;
         margin: 0.5rem 0;
-        background: linear-gradient(180deg, #0b1220, #0a1020);
+        background: #ffffff;
       }
       .rule.dragging { opacity: 0.55; }
-      .pill { font-size: 0.75rem; border: 1px solid #334155; border-radius: 999px; padding: 0.15rem 0.5rem; color: #cbd5e1; background: #0f172a; }
-      .pillAdd { border-color: #14532d; color: #bbf7d0; background: rgba(20,83,45,0.22); }
-      .pillRemove { border-color: #7f1d1d; color: #fecaca; background: rgba(127,29,29,0.22); }
-      .pillChange { border-color: #78350f; color: #fde68a; background: rgba(120,53,15,0.22); }
-      .pillTighten { border-color: #14532d; color: #bbf7d0; background: rgba(20,83,45,0.22); }
-      .pillRelax { border-color: #7f1d1d; color: #fecaca; background: rgba(127,29,29,0.22); }
-      .pillSame { border-color: #334155; color: #cbd5e1; background: #0f172a; }
-      .atlasTag { font-size: 0.72rem; border: 1px solid #1e3a8a; border-radius: 999px; padding: 0.12rem 0.5rem; color: #bfdbfe; background: rgba(30,58,138,0.22); }
-      pre { overflow: auto; border: 1px solid #1f2937; background: #020617; border-radius: 8px; padding: 0.7rem; max-height: 320px; color: #e2e8f0; }
+      .pill {
+        font-size: 0.75rem;
+        border: 1px solid var(--border-strong);
+        border-radius: 999px;
+        padding: 0.15rem 0.5rem;
+        color: var(--text-soft);
+        background: #ffffff;
+      }
+      .pillAdd, .pillTighten {
+        border-color: #a7f3d0;
+        color: #065f46;
+        background: #ecfdf3;
+      }
+      .pillRemove, .pillRelax {
+        border-color: #fecaca;
+        color: #991b1b;
+        background: #fef2f2;
+      }
+      .pillChange {
+        border-color: #fde68a;
+        color: #92400e;
+        background: #fffbeb;
+      }
+      .pillSame {
+        border-color: var(--border-strong);
+        color: var(--text-soft);
+        background: #ffffff;
+      }
+      .atlasTag {
+        font-size: 0.72rem;
+        border: 1px solid #bae6fd;
+        border-radius: 999px;
+        padding: 0.12rem 0.5rem;
+        color: #155e75;
+        background: #f0f9ff;
+      }
+      pre {
+        overflow: auto;
+        border: 1px solid var(--border);
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 0.7rem;
+        max-height: 320px;
+        color: #111827;
+      }
       .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.86rem; }
       .advancedOnly { display: none; }
       body.mode-advanced .advancedOnly { display: block; }
@@ -617,26 +941,61 @@ export default {
         right: 0;
         bottom: 0;
         z-index: 20;
-        border-top: 1px solid #1f2937;
-        background: rgba(11, 11, 16, 0.95);
-        backdrop-filter: blur(6px);
+        border-top: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(10px);
         padding: 0.75rem 1.25rem;
       }
-      .riskHigh { color: #fecaca; }
-      .riskMedium { color: #fde68a; }
-      .riskLow { color: #bbf7d0; }
-      .step { font-size: 0.78rem; border: 1px solid #334155; border-radius: 999px; padding: 0.12rem 0.48rem; color: #cbd5e1; }
-      .impactCard { border: 1px solid #334155; border-radius: 10px; padding: 0.5rem; background: #0f172a; min-width: 180px; }
-      .impactLabel { color: #94a3b8; font-size: 0.78rem; }
-      .impactValue { font-size: 1rem; font-weight: 650; color: #f8fafc; }
-      .guardrailGood { color: #bbf7d0; }
-      .guardrailWarn { color: #fecaca; }
-      .guidedRail { margin-top: 0.65rem; border: 1px solid #1f2937; border-radius: 12px; padding: 0.65rem; background: #0b1220; }
-      .stepStatus { font-size: 0.72rem; border-radius: 999px; padding: 0.1rem 0.45rem; border: 1px solid #334155; color: #cbd5e1; }
-      .stepReady { border-color: #78350f; color: #fde68a; background: rgba(120,53,15,0.2); }
-      .stepDone { border-color: #14532d; color: #bbf7d0; background: rgba(20,83,45,0.22); }
-      .stepNav { cursor: pointer; background: #0f172a; }
-      .stepNav:hover { border-color: #60a5fa; background: #0b1220; }
+      .riskHigh { color: #b42318; }
+      .riskMedium { color: #b54708; }
+      .riskLow { color: #027a48; }
+      .step {
+        font-size: 0.78rem;
+        border: 1px solid var(--border-strong);
+        border-radius: 999px;
+        padding: 0.12rem 0.48rem;
+        color: var(--text-soft);
+        background: #ffffff;
+      }
+      .impactCard {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.55rem 0.65rem;
+        background: #ffffff;
+        min-width: 180px;
+      }
+      .impactLabel { color: var(--text-soft); font-size: 0.78rem; }
+      .impactValue { font-size: 1rem; font-weight: 650; color: var(--text); }
+      .guardrailGood { color: #027a48; }
+      .guardrailWarn { color: #b42318; }
+      .guidedRail {
+        margin-top: 0.65rem;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 0.65rem;
+        background: #ffffff;
+        box-shadow: var(--shadow);
+      }
+      .stepStatus {
+        font-size: 0.72rem;
+        border-radius: 999px;
+        padding: 0.1rem 0.45rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-soft);
+        background: #ffffff;
+      }
+      .stepReady {
+        border-color: #fde68a;
+        color: #92400e;
+        background: #fffbeb;
+      }
+      .stepDone {
+        border-color: #a7f3d0;
+        color: #065f46;
+        background: #ecfdf3;
+      }
+      .stepNav { cursor: pointer; background: #ffffff; }
+      .stepNav:hover { border-color: var(--accent-strong); background: var(--bg-subtle); }
     </style>
   </head>
   <body>
@@ -668,7 +1027,7 @@ export default {
             <option value="simple" selected>Simple</option>
             <option value="advanced">Advanced</option>
           </select>
-          <a href="/policies?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}" style="color:#93c5fd;">Back to policies</a>
+          <a href="/policies?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}">Back to policies</a>
         </div>
       </div>
       <div id="modeHint" class="muted" style="margin-top:0.45rem;">
@@ -933,9 +1292,9 @@ export default {
         const el = byId('statusBadge');
         if (!el) return;
         el.textContent = text;
-        el.style.borderColor = tone === 'error' ? '#7f1d1d' : tone === 'success' ? '#14532d' : '#334155';
-        el.style.color = tone === 'error' ? '#fecaca' : tone === 'success' ? '#bbf7d0' : '#cbd5e1';
-        el.style.background = tone === 'error' ? 'rgba(127,29,29,0.22)' : tone === 'success' ? 'rgba(20,83,45,0.22)' : 'transparent';
+        el.style.borderColor = tone === 'error' ? '#f0c1bc' : tone === 'success' ? '#a7f3d0' : '#d1d5db';
+        el.style.color = tone === 'error' ? '#b42318' : tone === 'success' ? '#027a48' : '#374151';
+        el.style.background = tone === 'error' ? '#fff5f4' : tone === 'success' ? '#ecfdf3' : '#ffffff';
       }
 
       function computeDiff(beforePolicy, afterPolicy) {
@@ -956,15 +1315,15 @@ export default {
 
       function renderRuleList() {
         const wrap = byId('ruleList');
-        if (!draftPolicy) { wrap.innerHTML = '<div style="color:#9ca3af;">No draft loaded.</div>'; return; }
+        if (!draftPolicy) { wrap.innerHTML = '<div class="muted">No draft loaded.</div>'; return; }
         draftPolicy.rules = sortedRules(draftPolicy.rules);
         byId('ruleMeta').innerHTML = '<span class="pill">Rules: ' + draftPolicy.rules.length + '</span>' +
           '<span class="pill">Snapshot: ' + (draftPolicy.id || '(draft)') + '</span>';
         wrap.innerHTML = draftPolicy.rules.map((r, i) => {
           return '<div class="rule" draggable="true" data-index="' + i + '">' +
             '<div class="row"><span class="pill">#' + r.priority + '</span><strong>' + (r.displayName || r.id) + '</strong><span>' + (r.then?.decision || '') + '</span><button data-remove="' + i + '" class="btnDanger" style="margin-left:auto;">Remove</button></div>' +
-            '<div style="color:#9ca3af;">' + (r.then?.reason || '') + '</div>' +
-            '<div class="advancedOnly" style="color:#64748b;font-size:0.85rem;">when: ' + JSON.stringify(r.when || {}) + '</div>' +
+            '<div class="muted">' + (r.then?.reason || '') + '</div>' +
+            '<div class="advancedOnly" style="color:var(--text-soft);font-size:0.85rem;">when: ' + JSON.stringify(r.when || {}) + '</div>' +
             '</div>';
         }).join('');
 
@@ -1433,48 +1792,46 @@ export default {
         return { ...v, guardrails };
       });
 
-      const html = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Judgment Policies</title>
-    <style>
-      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; background: #0b0b10; color: #e5e7eb; }
-      header { padding: 1.75rem 1.5rem 1rem; border-bottom: 1px solid #1f2937; }
-      main { padding: 1rem 1.5rem 2rem; max-width: 980px; }
-      .card { border: 1px solid #1f2937; border-radius: 12px; background: #0f172a; padding: 0.9rem; margin: 0.75rem 0; }
-      .pill { font-size: 0.75rem; border: 1px solid #334155; border-radius: 999px; padding: 0.15rem 0.55rem; }
-      code { color: #cbd5e1; }
-      a { color: #93c5fd; text-decoration: none; }
-    </style>
-  </head>
-  <body>
-    <header>
-      <h1 style="margin:0;">Judgment Policies</h1>
-      <div style="color:#9ca3af;margin-top:0.35rem;">${esc(accountId)} · ${esc(entityType)}:${esc(entityId)}</div>
-      <div style="margin-top:0.55rem;" class="pill">Active: <code>${esc(active.policyVersionId)}</code></div>
-    </header>
-    <main>
+      const versionsMarkup =
+        versionsWithGuardrails.length === 0
+          ? '<div class="muted">No saved policy versions yet.</div>'
+          : versionsWithGuardrails
+              .map(
+                (v) => `<div class="versionRow">
+                <div><code>${esc(v.id)}</code></div>
+                <div class="muted" style="margin-top:0.2rem;">${esc(v.status)} · ${esc(String(v.created_at))}</div>
+                <div class="muted" style="margin-top:0.18rem;">guardrails(review<=<code>${esc(String(v.guardrails.maxReviewDelta ?? 'default'))}</code>, block<=<code>${esc(String(v.guardrails.maxBlockDelta ?? 'default'))}</code>)</div>
+              </div>`,
+              )
+              .join('');
+
+      const body = `
       <div class="card">
-        <div style="font-weight:600;margin-bottom:0.35rem;">Active policy</div>
-        <div style="color:#9ca3af;margin-bottom:0.35rem;">
+        <div class="cardTitle">Active policy</div>
+        <div class="muted" style="margin-top:0.35rem;margin-bottom:0.45rem;">
           Guardrails: review delta max <code>${esc(String(activeGuardrails.maxReviewDelta ?? 'default'))}</code> · block delta max <code>${esc(String(activeGuardrails.maxBlockDelta ?? 'default'))}</code>
         </div>
         <pre><code>${esc(JSON.stringify(active.policy, null, 2))}</code></pre>
       </div>
       <div class="card">
-        <div style="font-weight:600;margin-bottom:0.35rem;">Saved versions</div>
-        ${versionsWithGuardrails.length === 0 ? '<div style="color:#9ca3af;">No saved policy versions yet.</div>' : versionsWithGuardrails.map(v => `<div style="margin:0.4rem 0;"><code>${esc(v.id)}</code> · ${esc(v.status)} · ${esc(String(v.created_at))} · guardrails(review<=${esc(String(v.guardrails.maxReviewDelta ?? 'default'))}, block<=${esc(String(v.guardrails.maxBlockDelta ?? 'default'))})</div>`).join('')}
+        <div class="cardTitle">Saved versions</div>
+        <div style="margin-top:0.5rem;">${versionsMarkup}</div>
       </div>
-      <div style="color:#9ca3af;margin:0.75rem 0 0.35rem;">
-        Access scope: this page and policy APIs are account-scoped by your API key/Bearer token context.
+      <div class="muted" style="margin:0.8rem 0 0.35rem;">
+        Access scope: this page and policy APIs are account-scoped by your API key or Bearer token context.
       </div>
-      <div style="color:#64748b;">JSON API: <a href="/api/policies?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}"><code>/api/policies</code></a></div>
-      <div style="color:#64748b;margin-top:0.35rem;">Visual editor: <a href="/policies/editor?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}"><code>/policies/editor</code></a></div>
-    </main>
-  </body>
-</html>`;
+      <div class="muted">JSON API: <a href="/api/policies?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}"><code>/api/policies</code></a></div>
+      <div class="muted" style="margin-top:0.35rem;">Visual editor: <a href="/policies/editor?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}"><code>/policies/editor</code></a></div>`;
+
+      const html = renderViewerPage({
+        title: 'Judgment Policies',
+        heading: 'Judgment Policies',
+        subtitle: `${esc(accountId)} · ${esc(entityType)}:${esc(entityId)}`,
+        headerMeta: `<span class="pill">Active <code>${esc(active.policyVersionId)}</code></span>`,
+        headerActions: `<a class="pill" href="/policies/editor?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}">Open visual editor</a>`,
+        body,
+        maxWidth: '1020px',
+      });
 
       return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
@@ -1489,47 +1846,48 @@ export default {
       const summary = JSON.parse(report.summary_json) as Record<string, unknown>;
       const scenarios = JSON.parse(report.scenario_set_json) as unknown;
 
-      const html = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Policy Estimate Report</title>
-    <style>
-      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; background: #0b0b10; color: #e5e7eb; }
-      header { padding: 1.75rem 1.5rem 1rem; border-bottom: 1px solid #1f2937; }
-      main { padding: 1rem 1.5rem 2rem; max-width: 980px; }
-      .card { border: 1px solid #1f2937; border-radius: 12px; background: #0f172a; padding: 0.9rem; margin: 0.75rem 0; }
-      code { color: #cbd5e1; }
-    </style>
-  </head>
-  <body>
-    <header>
-      <h1 style="margin:0;">Policy Estimate Report</h1>
-      <div style="color:#9ca3af;margin-top:0.35rem;"><code>${esc(report.id)}</code></div>
-    </header>
-    <main>
+      const body = `
       <div class="card">
-        <div><strong>Account:</strong> ${esc(report.account_id)}</div>
-        <div><strong>Entity:</strong> ${esc(report.entity_type)}:${esc(report.entity_id)}</div>
-        <div><strong>Before:</strong> <code>${esc(report.before_policy_version_id ?? 'none')}</code></div>
-        <div><strong>After:</strong> <code>${esc(report.after_policy_version_id)}</code></div>
+        <div class="cardTitle">Metadata</div>
+        <div class="fieldGrid" style="margin-top:0.55rem;">
+          <div class="field">
+            <div class="fieldLabel">Account</div>
+            <div>${esc(report.account_id)}</div>
+          </div>
+          <div class="field">
+            <div class="fieldLabel">Entity</div>
+            <div>${esc(report.entity_type)}:${esc(report.entity_id)}</div>
+          </div>
+          <div class="field">
+            <div class="fieldLabel">Before</div>
+            <div><code>${esc(report.before_policy_version_id ?? 'none')}</code></div>
+          </div>
+          <div class="field">
+            <div class="fieldLabel">After</div>
+            <div><code>${esc(report.after_policy_version_id)}</code></div>
+          </div>
+        </div>
       </div>
       <div class="card">
-        <div style="font-weight:600;margin-bottom:0.35rem;">Summary</div>
+        <div class="cardTitle">Summary</div>
         <pre><code>${esc(JSON.stringify(summary, null, 2))}</code></pre>
       </div>
       <div class="card">
-        <div style="font-weight:600;margin-bottom:0.35rem;">Scenarios</div>
+        <div class="cardTitle">Scenarios</div>
         <pre><code>${esc(JSON.stringify(scenarios, null, 2))}</code></pre>
       </div>
-      <div style="color:#9ca3af;margin:0.75rem 0 0.35rem;">
+      <div class="muted" style="margin:0.8rem 0 0.35rem;">
         Access scope: report visibility is account-scoped by your API key/Bearer token context.
       </div>
-      <div style="color:#64748b;">API: <code>${esc(`${baseUrl}/api/reports/${report.id}`)}</code></div>
-    </main>
-  </body>
-</html>`;
+      <div class="muted">API: <code>${esc(`${baseUrl}/api/reports/${report.id}`)}</code></div>`;
+
+      const html = renderViewerPage({
+        title: 'Policy Estimate Report',
+        heading: 'Policy Estimate Report',
+        headerMeta: `<span class="pill"><code>${esc(report.id)}</code></span>`,
+        body,
+        maxWidth: '1020px',
+      });
 
       return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
@@ -1537,57 +1895,32 @@ export default {
     // Human viewer
     if (url.pathname === '/workflows') {
       const workflows = listWorkflowSummaries();
-      const html = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Interaction Atlas — Workflows</title>
-    <style>
-      :root { color-scheme: light; }
-      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; background: #0b0b10; color: #e5e7eb; }
-      a { color: #93c5fd; text-decoration: none; }
-      a:hover { text-decoration: underline; }
-      header { padding: 2rem 1.5rem 1rem; border-bottom: 1px solid #1f2937; background: radial-gradient(1000px 600px at 15% 10%, #111827, transparent), #0b0b10; }
-      h1 { margin: 0 0 0.25rem 0; font-size: 1.4rem; letter-spacing: 0.01em; }
-      p { margin: 0.25rem 0 0 0; color: #9ca3af; line-height: 1.4; }
-      main { padding: 1rem 1.5rem 2rem; max-width: 980px; }
-      .card { border: 1px solid #1f2937; background: #0f172a; border-radius: 14px; padding: 1rem; margin: 0.75rem 0; }
-      .meta { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem; }
-      .pill { font-size: 0.75rem; color: #cbd5e1; border: 1px solid #334155; border-radius: 999px; padding: 0.15rem 0.55rem; background: rgba(15, 23, 42, 0.6); }
-      code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 0.875em; color: #e2e8f0; }
-      footer { padding: 1rem 1.5rem 2rem; color: #6b7280; border-top: 1px solid #111827; }
-    </style>
-  </head>
-  <body>
-    <header>
-      <h1>Interaction Atlas — Workflow Viewer</h1>
-      <p>Read-only agentic workflows mapped into <code>@quietloudlab/ai-interaction-atlas</code> terms.</p>
-      <p style="margin-top:0.55rem;"><a href="/mcps">MCP catalog</a></p>
-    </header>
-    <main>
-      ${workflows.map(w => {
-        const tags = (w.tags ?? []).slice(0, 8);
-        return `<div class="card">
-          <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;">
-            <div>
-              <div style="font-size:1.05rem;font-weight:600;"><a href="/workflows/${esc(w.id)}">${esc(w.name)}</a></div>
-              <div style="margin-top:0.25rem;color:#9ca3af;">${esc(w.description)}</div>
-              <div style="margin-top:0.5rem;color:#cbd5e1;"><span style="color:#64748b;">Use case:</span> ${esc(w.primaryUseCase)}</div>
+      const cards = workflows
+        .map((w) => {
+          const tags = (w.tags ?? []).slice(0, 8);
+          return `<article class="card">
+          <div class="split">
+            <div class="stack">
+              <div class="cardTitle"><a href="/workflows/${esc(w.id)}">${esc(w.name)}</a></div>
+              <div class="muted">${esc(w.description)}</div>
+              <div class="muted"><span class="label">Use case:</span> ${esc(w.primaryUseCase)}</div>
             </div>
-            <div style="text-align:right;">
-              <div class="pill"><code>${esc(w.id)}</code></div>
-            </div>
+            <div><span class="pill"><code>${esc(w.id)}</code></span></div>
           </div>
-          ${tags.length > 0 ? `<div class="meta">${tags.map(t => `<span class="pill">${esc(t)}</span>`).join('')}</div>` : ''}
-        </div>`;
-      }).join('')}
-    </main>
-    <footer>
-      MCP endpoint: <code>/mcp</code> · JSON API: <code>/api/workflows</code>
-    </footer>
-  </body>
-</html>`;
+          ${tags.length > 0 ? `<div class="meta">${tags.map((t) => `<span class="pill">${esc(t)}</span>`).join('')}</div>` : ''}
+        </article>`;
+        })
+        .join('');
+
+      const html = renderViewerPage({
+        title: 'Interaction Atlas - Workflows',
+        heading: 'Interaction Atlas - Workflow Viewer',
+        subtitle: 'Read-only agentic workflows mapped into <code>@quietloudlab/ai-interaction-atlas</code> terms.',
+        headerActions: '<a class="pill" href="/mcps">MCP catalog</a>',
+        body: cards,
+        footer: 'MCP endpoint: <code>/mcp</code> · JSON API: <code>/api/workflows</code>',
+        maxWidth: '980px',
+      });
 
       return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
@@ -1608,76 +1941,41 @@ export default {
         { key: 'third-party', label: 'Third-party' },
       ];
 
-      const html = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Interaction Atlas — MCP Catalog</title>
-    <style>
-      :root { color-scheme: light; }
-      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; background: #0b0b10; color: #e5e7eb; }
-      a { color: #93c5fd; text-decoration: none; }
-      a:hover { text-decoration: underline; }
-      header { padding: 2rem 1.5rem 1rem; border-bottom: 1px solid #1f2937; background: radial-gradient(1000px 600px at 15% 10%, #111827, transparent), #0b0b10; }
-      h1 { margin: 0 0 0.25rem 0; font-size: 1.4rem; letter-spacing: 0.01em; }
-      p { margin: 0.25rem 0 0 0; color: #9ca3af; line-height: 1.4; }
-      main { padding: 1rem 1.5rem 2rem; max-width: 980px; }
-      .card { border: 1px solid #1f2937; background: #0f172a; border-radius: 14px; padding: 1rem; margin: 0.75rem 0; }
-      .meta { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem; }
-      .pill { font-size: 0.75rem; color: #cbd5e1; border: 1px solid #334155; border-radius: 999px; padding: 0.15rem 0.55rem; background: rgba(15, 23, 42, 0.6); }
-      .pill.active { border-color: #60a5fa; color: #dbeafe; background: rgba(37, 99, 235, 0.12); }
-      code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 0.875em; color: #e2e8f0; }
-      footer { padding: 1rem 1.5rem 2rem; color: #6b7280; border-top: 1px solid #111827; }
-    </style>
-  </head>
-  <body>
-    <header>
-      <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;">
-        <div>
-          <h1>Interaction Atlas — MCP Catalog</h1>
-          <p>Auto-mapped capability workflows per MCP server (generated from tool introspection when available).</p>
-          <div class="meta">
-            ${categories.map(c => {
-              const href = c.key === 'all' ? '/mcps' : `/mcps?category=${encodeURIComponent(c.key)}`;
-              const cls = c.key === category ? 'pill active' : 'pill';
-              return `<a class="${cls}" href="${esc(href)}">${esc(c.label)}</a>`;
-            }).join('')}
-          </div>
-        </div>
-        <div style="text-align:right;">
-          <a href="/workflows">Curated workflows</a>
-          <div style="margin-top:0.5rem;color:#64748b;"><code>/api/mcps</code></div>
-        </div>
-      </div>
-    </header>
-    <main>
-      ${mcps.map(m => {
-        const tags: string[] = [
-          m.category,
-          ...(m.requiresAuth ? ['requires-auth'] : ['no-auth']),
-          ...m.transports,
-        ];
-        return `<div class="card">
-          <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;">
-            <div>
-              <div style="font-size:1.05rem;font-weight:600;"><a href="/mcps/${esc(m.slug)}">${esc(m.name)}</a></div>
-              <div style="margin-top:0.25rem;color:#9ca3af;">${esc(m.description)}</div>
-              <div style="margin-top:0.55rem;color:#cbd5e1;"><span style="color:#64748b;">URL:</span> <code>${esc(m.url)}</code></div>
+      const categoryPills = categories
+        .map((c) => {
+          const href = c.key === 'all' ? '/mcps' : `/mcps?category=${encodeURIComponent(c.key)}`;
+          const cls = c.key === category ? 'pill active' : 'pill';
+          return `<a class="${cls}" href="${esc(href)}">${esc(c.label)}</a>`;
+        })
+        .join('');
+
+      const cards = mcps
+        .map((m) => {
+          const tags: string[] = [m.category, ...(m.requiresAuth ? ['requires-auth'] : ['no-auth']), ...m.transports];
+          return `<article class="card">
+          <div class="split">
+            <div class="stack">
+              <div class="cardTitle"><a href="/mcps/${esc(m.slug)}">${esc(m.name)}</a></div>
+              <div class="muted">${esc(m.description)}</div>
+              <div class="muted"><span class="label">URL:</span> <code>${esc(m.url)}</code></div>
             </div>
-            <div style="text-align:right;">
-              <div class="pill"><code>${esc(m.slug)}</code></div>
-            </div>
+            <div><span class="pill"><code>${esc(m.slug)}</code></span></div>
           </div>
-          <div class="meta">${tags.map(t => `<span class="pill">${esc(t)}</span>`).join('')}</div>
-        </div>`;
-      }).join('')}
-    </main>
-    <footer>
-      MCP endpoint: <code>/mcp</code> · JSON API: <code>/api/mcps</code>
-    </footer>
-  </body>
-</html>`;
+          <div class="meta">${tags.map((t) => `<span class="pill">${esc(t)}</span>`).join('')}</div>
+        </article>`;
+        })
+        .join('');
+
+      const html = renderViewerPage({
+        title: 'Interaction Atlas - MCP Catalog',
+        heading: 'Interaction Atlas - MCP Catalog',
+        subtitle: 'Auto-mapped capability workflows per MCP server (generated from tool introspection when available).',
+        headerMeta: categoryPills,
+        headerActions: '<a class="pill" href="/workflows">Curated workflows</a><span class="pill"><code>/api/mcps</code></span>',
+        body: cards,
+        footer: 'MCP endpoint: <code>/mcp</code> · JSON API: <code>/api/mcps</code>',
+        maxWidth: '980px',
+      });
 
       return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
@@ -1699,111 +1997,70 @@ export default {
       const resourceCount = introspection.ok ? introspection.value.resources.length : 0;
       const promptCount = introspection.ok ? introspection.value.prompts.length : 0;
 
-      const html = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MCP — ${esc(entry.name)}</title>
-    <style>
-      :root { color-scheme: light; }
-      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; background: #0b0b10; color: #e5e7eb; }
-      a { color: #93c5fd; text-decoration: none; }
-      a:hover { text-decoration: underline; }
-      header { padding: 1.75rem 1.5rem 1rem; border-bottom: 1px solid #1f2937; background: radial-gradient(1000px 600px at 15% 10%, #111827, transparent), #0b0b10; }
-      h1 { margin: 0 0 0.25rem 0; font-size: 1.35rem; letter-spacing: 0.01em; }
-      p { margin: 0.25rem 0 0 0; color: #9ca3af; line-height: 1.4; }
-      main { padding: 1rem 1.5rem 2rem; max-width: 1100px; }
-      .row { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.75rem; }
-      .pill { font-size: 0.75rem; color: #cbd5e1; border: 1px solid #334155; border-radius: 999px; padding: 0.15rem 0.55rem; background: rgba(15, 23, 42, 0.6); }
-      .panel { border: 1px solid #1f2937; background: #0f172a; border-radius: 14px; padding: 1rem; margin: 0.75rem 0; }
-      details { border: 1px solid #1f2937; background: #0b1220; border-radius: 12px; padding: 0.75rem 0.9rem; }
-      summary { cursor: pointer; color: #cbd5e1; font-weight: 600; }
-      pre { overflow: auto; padding: 0.75rem; border-radius: 10px; background: #020617; border: 1px solid #111827; color: #e2e8f0; }
-      code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 0.9em; }
-      .ok { color: #34d399; }
-      .bad { color: #f87171; }
-    </style>
-  </head>
-  <body>
-    <header>
-      <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;">
-        <div>
-          <h1>${esc(entry.name)} <span style="font-weight:500;color:#64748b;">(mcp:${esc(entry.slug)})</span></h1>
-          <p>${esc(entry.description)}</p>
-          <div class="row">
-            <span class="pill">${esc(entry.category)}</span>
-            <span class="pill">${entry.requiresAuth ? 'requires-auth' : 'no-auth'}</span>
-            ${entry.transports.map(t => `<span class="pill">${esc(t)}</span>`).join('')}
-            <span class="pill"><code>${esc(endpointUrl)}</code></span>
-          </div>
-        </div>
-        <div style="text-align:right;">
-          <a href="/mcps">All MCPs</a>
-          <div style="margin-top:0.5rem;">
-            <span class="pill">${validation.valid ? `<span class="ok">valid</span>` : `<span class="bad">invalid</span>`}</span>
-          </div>
-        </div>
-      </div>
-    </header>
-    <main>
+      const headerMeta = [
+        `<span class="pill">${esc(entry.category)}</span>`,
+        `<span class="pill">${entry.requiresAuth ? 'requires-auth' : 'no-auth'}</span>`,
+        ...entry.transports.map((t) => `<span class="pill">${esc(t)}</span>`),
+        `<span class="pill"><code>${esc(endpointUrl)}</code></span>`,
+      ].join('');
+
+      const introspectionSummary = introspection.ok
+        ? `<span class="ok">ok</span> · tools: <code>${toolCount}</code> · resources: <code>${resourceCount}</code> · prompts: <code>${promptCount}</code>`
+        : `<span class="bad">failed</span> · ${esc(introspection.error)}`;
+
+      const body = `
       <div class="panel">
-        <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;">
-          <div>
-            <div style="color:#9ca3af;margin-bottom:0.25rem;">Introspection</div>
-            <div style="color:#cbd5e1;">
-              ${introspection.ok
-                ? `<span class="ok">ok</span> · tools: <code>${toolCount}</code> · resources: <code>${resourceCount}</code> · prompts: <code>${promptCount}</code>`
-                : `<span class="bad">failed</span> · ${esc(introspection.error)}`
-              }
-            </div>
+        <div class="split">
+          <div class="stack">
+            <div class="label">Introspection</div>
+            <div>${introspectionSummary}</div>
           </div>
-          <div style="text-align:right;color:#64748b;">
-            <div><code>/api/mcps/${esc(entry.slug)}</code></div>
-          </div>
+          <div><span class="pill"><code>/api/mcps/${esc(entry.slug)}</code></span></div>
         </div>
       </div>
 
       <div class="panel">
-        <div style="color:#9ca3af;margin-bottom:0.5rem;">Mermaid diagram (auto-mapped)</div>
+        <div class="label" style="margin-bottom:0.5rem;">Mermaid diagram (auto-mapped)</div>
         <pre class="mermaid">${esc(mermaid)}</pre>
       </div>
 
-      ${validation.valid ? '' : `<div class="panel"><div class="bad" style="font-weight:600;">Invalid Atlas IDs</div><div style="margin-top:0.5rem;color:#cbd5e1;"><code>${esc(validation.invalidIds.join(', '))}</code></div></div>`}
+      ${validation.valid ? '' : `<div class="panel alertBad"><div class="bad" style="font-weight:600;">Invalid Atlas IDs</div><div class="muted" style="margin-top:0.5rem;"><code>${esc(validation.invalidIds.join(', '))}</code></div></div>`}
 
       <details>
         <summary>MCP Entry JSON</summary>
         <pre><code>${esc(JSON.stringify(entry, null, 2))}</code></pre>
       </details>
 
-      <div style="height:0.75rem;"></div>
+      <div class="spacer"></div>
 
       <details>
         <summary>Introspection JSON</summary>
         <pre><code>${esc(JSON.stringify(introspection, null, 2))}</code></pre>
       </details>
 
-      <div style="height:0.75rem;"></div>
+      <div class="spacer"></div>
 
       <details>
         <summary>Workflow Definition JSON</summary>
         <pre><code>${esc(JSON.stringify(def, null, 2))}</code></pre>
       </details>
 
-      <div style="height:0.75rem;"></div>
+      <div class="spacer"></div>
 
       <details>
         <summary>Workflow JSON (Atlas WorkflowTemplate)</summary>
         <pre><code>${esc(JSON.stringify(workflow, null, 2))}</code></pre>
-      </details>
-    </main>
+      </details>`;
 
-    <script type="module">
-      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
-      mermaid.initialize({ startOnLoad: true, theme: "base" });
-    </script>
-  </body>
-</html>`;
+      const html = renderViewerPage({
+        title: `MCP - ${entry.name}`,
+        heading: `${esc(entry.name)} <span class="label" style="font-weight:500;">(mcp:${esc(entry.slug)})</span>`,
+        subtitle: esc(entry.description),
+        headerMeta,
+        headerActions: `<a class="pill" href="/mcps">All MCPs</a><span class="pill ${validation.valid ? 'statusOk' : 'statusBad'}">${validation.valid ? 'valid' : 'invalid'}</span>`,
+        body,
+        includeMermaid: true,
+      });
 
       return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
@@ -1817,71 +2074,33 @@ export default {
       const mermaid = getWorkflowMermaid(workflowId) ?? 'error: mermaid generation failed';
       const validation = validateBuiltWorkflow(template);
 
-      const html = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Workflow — ${esc(workflowId)}</title>
-    <style>
-      :root { color-scheme: light; }
-      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; background: #0b0b10; color: #e5e7eb; }
-      a { color: #93c5fd; text-decoration: none; }
-      a:hover { text-decoration: underline; }
-      header { padding: 1.75rem 1.5rem 1rem; border-bottom: 1px solid #1f2937; background: radial-gradient(1000px 600px at 15% 10%, #111827, transparent), #0b0b10; }
-      h1 { margin: 0 0 0.25rem 0; font-size: 1.35rem; letter-spacing: 0.01em; }
-      p { margin: 0.25rem 0 0 0; color: #9ca3af; line-height: 1.4; }
-      main { padding: 1rem 1.5rem 2rem; max-width: 1100px; }
-      .row { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.75rem; }
-      .pill { font-size: 0.75rem; color: #cbd5e1; border: 1px solid #334155; border-radius: 999px; padding: 0.15rem 0.55rem; background: rgba(15, 23, 42, 0.6); }
-      .panel { border: 1px solid #1f2937; background: #0f172a; border-radius: 14px; padding: 1rem; margin: 0.75rem 0; }
-      details { border: 1px solid #1f2937; background: #0b1220; border-radius: 12px; padding: 0.75rem 0.9rem; }
-      summary { cursor: pointer; color: #cbd5e1; font-weight: 600; }
-      pre { overflow: auto; padding: 0.75rem; border-radius: 10px; background: #020617; border: 1px solid #111827; color: #e2e8f0; }
-      code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 0.9em; }
-      .ok { color: #34d399; }
-      .bad { color: #f87171; }
-    </style>
-  </head>
-  <body>
-    <header>
-      <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;">
-        <div>
-          <h1>${esc(template.name)} <span style="font-weight:500;color:#64748b;">(${esc(workflowId)})</span></h1>
-          <p>${esc(template.description)}</p>
-          <div class="row">
-            <span class="pill">${esc(template.primary_use_case)}</span>
-            ${(template.tags ?? []).map(t => `<span class="pill">${esc(t)}</span>`).join('')}
-          </div>
-        </div>
-        <div style="text-align:right;">
-          <a href="/workflows">All workflows</a>
-          <div style="margin-top:0.5rem;">
-            <span class="pill">${validation.valid ? `<span class="ok">valid</span>` : `<span class="bad">invalid</span>`}</span>
-          </div>
-        </div>
-      </div>
-    </header>
-    <main>
+      const headerMeta = [
+        `<span class="pill">${esc(template.primary_use_case)}</span>`,
+        ...(template.tags ?? []).map((t) => `<span class="pill">${esc(t)}</span>`),
+      ].join('');
+
+      const body = `
       <div class="panel">
-        <div style="color:#9ca3af;margin-bottom:0.5rem;">Mermaid diagram</div>
+        <div class="label" style="margin-bottom:0.5rem;">Mermaid diagram</div>
         <pre class="mermaid">${esc(mermaid)}</pre>
       </div>
 
-      ${validation.valid ? '' : `<div class="panel"><div class="bad" style="font-weight:600;">Invalid Atlas IDs</div><div style="margin-top:0.5rem;color:#cbd5e1;"><code>${esc(validation.invalidIds.join(', '))}</code></div></div>`}
+      ${validation.valid ? '' : `<div class="panel alertBad"><div class="bad" style="font-weight:600;">Invalid Atlas IDs</div><div class="muted" style="margin-top:0.5rem;"><code>${esc(validation.invalidIds.join(', '))}</code></div></div>`}
 
       <details>
         <summary>Workflow JSON (Atlas WorkflowTemplate)</summary>
         <pre><code>${esc(JSON.stringify(template, null, 2))}</code></pre>
-      </details>
-    </main>
+      </details>`;
 
-    <script type="module">
-      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
-      mermaid.initialize({ startOnLoad: true, theme: "base" });
-    </script>
-  </body>
-</html>`;
+      const html = renderViewerPage({
+        title: `Workflow - ${workflowId}`,
+        heading: `${esc(template.name)} <span class="label" style="font-weight:500;">(${esc(workflowId)})</span>`,
+        subtitle: esc(template.description),
+        headerMeta,
+        headerActions: `<a class="pill" href="/workflows">All workflows</a><span class="pill ${validation.valid ? 'statusOk' : 'statusBad'}">${validation.valid ? 'valid' : 'invalid'}</span>`,
+        body,
+        includeMermaid: true,
+      });
 
       return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
