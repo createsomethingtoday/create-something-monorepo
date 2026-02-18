@@ -1,0 +1,37 @@
+{
+  "name": "@create-something/webflow-app-review-mcp",
+  "version": "1.0.0",
+  "description": "Webflow App Review MCP with Airtable-scoped app review workflows",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "webflow-app-review-mcp": "src/index.js"
+  },
+  "scripts": {
+    "build": "rm -rf dist && mkdir -p dist && cp src/*.js dist/",
+    "start": "node src/index.js",
+    "check": "pnpm test",
+    "lint": "echo 'No lint configured for webflow-app-review-mcp yet'",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.18"
+  },
+  "keywords": [
+    "mcp",
+    "webflow",
+    "app-review",
+    "airtable"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/webflow-app-review-mcp"
+  }
+}
