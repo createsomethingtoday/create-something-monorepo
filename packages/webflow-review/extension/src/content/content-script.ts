@@ -96,8 +96,10 @@ async function runSnippetAudit(): Promise<
   | { success: true; ix2?: unknown; ix3?: unknown }
   | { success: false; error: string }
 > {
-  const ix2 = await callSnippetTool('audit_ix2', {}, { timeoutMs: 2000 });
-  const ix3 = await callSnippetTool('audit_ix3', {}, { timeoutMs: 2000 });
+  const [ix2, ix3] = await Promise.all([
+    callSnippetTool('audit_ix2', {}, { timeoutMs: 2000 }),
+    callSnippetTool('audit_ix3', {}, { timeoutMs: 2000 }),
+  ]);
 
   if (!ix2.ok && !ix3.ok) {
     // Most likely: snippet not installed, or tool names differ.

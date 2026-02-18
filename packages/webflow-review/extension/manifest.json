@@ -42,12 +42,12 @@
     "default_title": "Webflow Template Review"
   },
   "side_panel": {
-    "default_path": "panel.html"
+    "default_path": "src/panel/panel.html"
   },
-  "options_page": "options.html",
+  "options_page": "src/options/options.html",
   "web_accessible_resources": [
     {
-      "resources": ["panel.html", "options.html"],
+      "resources": ["src/panel/panel.html", "src/options/options.html"],
       "matches": ["https://webflow.com/*", "https://*.webflow.io/*"]
     }
   ]
