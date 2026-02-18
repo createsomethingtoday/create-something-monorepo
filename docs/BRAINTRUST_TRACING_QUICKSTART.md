@@ -46,6 +46,7 @@ For production smoke, you should additionally see:
 - `200` from the worker endpoint
 - `success: true` in response payload
 - A new trace in the Braintrust project for that scenario run
+- No Braintrust flush-auth errors in worker logs (`Invalid API Key`, `Failed to construct records`, `Dropping batch`)
 
 ## 3) Integrate In Your App
 
@@ -104,3 +105,4 @@ set -a; . ./scripts/braintrust-playbook-smoke.env.example; set +a; pnpm braintru
 - Worker response status is non-error and `success: true`.
 - Braintrust project receives the latest trace for that run.
 - If no trace appears, check worker secret freshness and deployment version.
+- `Half Dozen Slack notify failed (404 no_service)` is a separate webhook-notification warning and does not block scenario execution or Braintrust trace flushing.
