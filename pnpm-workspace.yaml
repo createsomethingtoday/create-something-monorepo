@@ -15,4 +15,5 @@ packages:
   - 'packages/create-something-mcp/worker'
   - 'packages/three-tier-framework-mcp/worker'
   - 'packages/playbook-mcp/worker'
+  - 'packages/webflow-app-review-mcp/worker'
   - 'packages/cs-telemetry-mcp/worker'

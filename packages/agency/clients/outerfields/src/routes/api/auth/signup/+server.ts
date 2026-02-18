@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import type { D1Database, KVNamespace } from '@cloudflare/workers-types';
+import { getDBFromPlatform } from '$lib/server/d1-compat';
+import { getSessions } from '$lib/server/kv-compat';
 
 // Simple password hashing for demo (in production use bcrypt)
 async function hashPassword(password: string): Promise<string> {
@@ -14,27 +15,23 @@ async function hashPassword(password: string): Promise<string> {
 export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 	try {
 		const body = await request.json();
-		const { email, password, name } = body;
+		const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+		const password = typeof body.password === 'string' ? body.password : '';
+		const name = typeof body.name === 'string' ? body.name : '';
 
 		if (!email || !password) {
 			return json({ success: false, error: 'Email and password are required' }, { status: 400 });
 		}
 
-		if (!name || typeof name !== 'string' || name.trim().length === 0) {
+		if (!name || name.trim().length === 0) {
 			return json({ success: false, error: 'Name is required' }, { status: 400 });
 		}
 
-		// Check if DB and SESSIONS are available
-		const env = platform?.env as { DB?: D1Database; SESSIONS?: KVNamespace } | undefined;
-		if (!env?.DB || !env?.SESSIONS) {
-			return json(
-				{ success: false, error: 'Database not configured' },
-				{ status: 500 }
-			);
-		}
+		const db = getDBFromPlatform(platform);
+		const sessions = getSessions();
 
 		// Prevent duplicate accounts
-		const existing = await env.DB.prepare('SELECT id FROM users WHERE email = ?')
+		const existing = await db.prepare('SELECT id FROM users WHERE lower(email) = ?')
 			.bind(email)
 			.first<{ id: string }>();
 		if (existing) {
@@ -45,7 +42,7 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 		const now = Date.now();
 		const passwordHash = await hashPassword(password);
 
-		await env.DB.prepare(
+		await db.prepare(
 			`INSERT INTO users (id, email, password_hash, name, membership, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`
 		)
@@ -62,7 +59,7 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 			createdAt: now
 		};
 
-		await env.SESSIONS.put(`session:${sessionToken}`, JSON.stringify(sessionData), {
+		await sessions.put(`session:${sessionToken}`, JSON.stringify(sessionData), {
 			expirationTtl: 60 * 60 * 24 // 24 hours
 		});
 

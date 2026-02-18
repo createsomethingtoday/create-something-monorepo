@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { getDBFromPlatform } from '$lib/server/d1-compat';
 import { getVideoById, getVideos } from '$lib/server/db/videos';
 
 /**
@@ -11,12 +12,8 @@ import { getVideoById, getVideos } from '$lib/server/db/videos';
  * 2. Other categories as fallback
  * 3. Excludes the current video
  */
-export const GET: RequestHandler = async ({ params, platform, url }) => {
-	const db = platform?.env.DB;
-
-	if (!db) {
-		return json({ success: false, error: 'Database not available' }, { status: 500 });
-	}
+export const GET: RequestHandler = async ({ params, url, platform }) => {
+	const db = getDBFromPlatform(platform);
 
 	const { id } = params;
 	const limit = parseInt(url.searchParams.get('limit') ?? '12');

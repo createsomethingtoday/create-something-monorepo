@@ -63,6 +63,7 @@ Active MCPs use `cs-telemetry` D1 for telemetry. Fleet-wide queries via the **CS
 | 18 | `playbook-mcp` | `playbook` | Active | `playbook.mcp.createsomething.ltd` | Yes | `cs-telemetry` |
 | 19 | `outerfields-mcp-remote` | `outerfields-pcn` | Active | `outerfields.mcp.createsomething.agency` | Yes | `cs-telemetry` |
 | 20 | `cs-telemetry-mcp` | `cs-telemetry` | Active | `cs-telemetry-mcp.createsomething.workers.dev` | — (reads telemetry) | `cs-telemetry` |
+| 21 | `webflow-app-review-mcp` | `webflow-app-review-mcp` | Planned | `webflow-app-review-mcp.<workers.dev/custom-domain>` | Yes | `cs-telemetry` |
 
 ---
 
@@ -70,8 +71,8 @@ Active MCPs use `cs-telemetry` D1 for telemetry. Fleet-wide queries via the **CS
 
 | # | Package | Status | Notes |
 |---|---------|--------|-------|
-| 21 | `gmail-notion-mcp` | Dormant | Placeholder D1 ID (`00000000...`), Composio bridge experiment |
-| 22 | `notion-sync-mcp` | Dormant | Superseded by `halfdozen-notion-mcp`, uses mcp-core |
+| 22 | `gmail-notion-mcp` | Dormant | Placeholder D1 ID (`00000000...`), Composio bridge experiment |
+| 23 | `notion-sync-mcp` | Dormant | Superseded by `halfdozen-notion-mcp`, uses mcp-core |
 
 ---
 
@@ -81,9 +82,9 @@ Not deployed to Cloudflare. Run locally via stdio transport.
 
 | # | Package | Server Name | Notes |
 |---|---------|-------------|-------|
-| 23 | `quickbooks-notion-mcp` | `quickbooks-notion-mcp-server` | Node.js HTTP/stdio, KV for tokens |
-| 24 | `webflow-site-analyzer-mcp` | `webflow-site-analyzer-mcp` | Node.js stdio |
-| 25 | `outerfields-mcp-server` | `outerfields-pcn` | Stdio companion to remote Worker |
+| 24 | `quickbooks-notion-mcp` | `quickbooks-notion-mcp-server` | Node.js HTTP/stdio, KV for tokens |
+| 25 | `webflow-site-analyzer-mcp` | `webflow-site-analyzer-mcp` | Node.js stdio |
+| 26 | `outerfields-mcp-server` | `outerfields-pcn` | Stdio companion to remote Worker |
 
 ---
 

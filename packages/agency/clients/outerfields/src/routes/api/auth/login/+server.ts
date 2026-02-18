@@ -1,5 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { getDBFromPlatform } from '$lib/server/d1-compat';
+import { getSessions } from '$lib/server/kv-compat';
 
 // Simple password hashing for demo (in production use bcrypt)
 async function hashPassword(password: string): Promise<string> {
@@ -18,37 +20,36 @@ async function verifyPassword(password: string, hash: string): Promise<boolean> 
 export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 	try {
 		const body = await request.json();
-		const { email, password } = body;
+		const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+		const password = typeof body.password === 'string' ? body.password : '';
 
 		if (!email || !password) {
 			return json({ success: false, error: 'Email and password are required' }, { status: 400 });
 		}
 
-		// Check if DB and SESSIONS are available
-		if (!platform?.env.DB || !platform?.env.SESSIONS) {
-			return json(
-				{ success: false, error: 'Database not configured' },
-				{ status: 500 }
-			);
-		}
+		const db = getDBFromPlatform(platform);
+		const sessions = getSessions();
 
 		// Find user in database
-		const result = await platform.env.DB.prepare(
-			'SELECT id, email, name, password_hash, membership, created_at FROM users WHERE email = ?'
-		)
+		const result = await db
+			.prepare(
+				'SELECT id, email, name, password_hash, membership, created_at FROM users WHERE lower(email) = ?'
+			)
 			.bind(email)
 			.first<{
 				id: string;
 				email: string;
 				name: string;
 				password_hash: string;
-				membership: number;
+				membership: unknown;
 				created_at: number;
 			}>();
 
 		if (!result) {
 			return json({ success: false, error: 'Invalid credentials' }, { status: 401 });
 		}
+
+		const hasMembership = result.membership === true || result.membership === 1 || result.membership === '1';
 
 		// Verify password
 		const passwordValid = await verifyPassword(password, result.password_hash);
@@ -62,12 +63,12 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 			userId: result.id,
 			email: result.email,
 			name: result.name,
-			membership: result.membership === 1,
+			membership: hasMembership,
 			createdAt: Date.now()
 		};
 
 		// Store session in KV with 24-hour expiration
-		await platform.env.SESSIONS.put(
+		await sessions.put(
 			`session:${sessionToken}`,
 			JSON.stringify(sessionData),
 			{ expirationTtl: 60 * 60 * 24 } // 24 hours
@@ -88,7 +89,7 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 			id: result.id,
 			email: result.email,
 			name: result.name,
-			membership: result.membership === 1,
+			membership: hasMembership,
 			createdAt: new Date(result.created_at).toISOString()
 		};
 

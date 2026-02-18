@@ -1,6 +1,10 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { getVideoById, getVideos } from '$lib/server/db/videos';
+import { getAdminVideoById, getVideoById, getVideos } from '$lib/server/db/videos';
+import { getDBFromPlatform } from '$lib/server/d1-compat';
+import { getSeriesByIdentifier } from '$lib/server/db/series';
+import { isAdminUser } from '$lib/server/admin';
+import { resolveRuntimeEnv } from '$lib/server/env';
 
 /**
  * Watch Page Server Load
@@ -8,12 +12,9 @@ import { getVideoById, getVideos } from '$lib/server/db/videos';
  * Fetches video data and related videos for the dedicated watch page.
  * Handles 404 for invalid video IDs and respects tier gating.
  */
-export const load: PageServerLoad = async ({ params, platform, locals }) => {
-	const db = platform?.env.DB;
-
-	if (!db) {
-		throw error(500, 'Database not available');
-	}
+export const load: PageServerLoad = async ({ params, locals, platform }) => {
+	const db = getDBFromPlatform(platform);
+	const runtimeEnv = resolveRuntimeEnv(((platform as { env?: Record<string, string | undefined> } | undefined)?.env));
 
 	const { id } = params;
 
@@ -21,12 +22,20 @@ export const load: PageServerLoad = async ({ params, platform, locals }) => {
 		throw error(400, 'Video ID is required');
 	}
 
-	// Fetch the main video
-	const video = await getVideoById(db, id);
+	const isAdmin = isAdminUser(locals.user, runtimeEnv);
+
+	// Fetch the main video (admins can preview drafts/archived)
+	const video = isAdmin ? await getAdminVideoById(db, id) : await getVideoById(db, id);
 
 	if (!video) {
 		throw error(404, 'Video not found');
 	}
+
+	if (!isAdmin && video.visibility !== 'published') {
+		throw error(404, 'Video not found');
+	}
+
+	const series = video.series_id ? await getSeriesByIdentifier(db, video.series_id) : null;
 
 	// Fetch related videos (same category, excluding current)
 	const { videos: allVideos } = await getVideos(db);
@@ -60,7 +69,7 @@ export const load: PageServerLoad = async ({ params, platform, locals }) => {
 	const isMember = user?.membership ?? false;
 
 	// Determine if video is accessible
-	const isAccessible = video.tier === 'free' || isMember;
+	const isAccessible = isAdmin || video.tier === 'free' || isMember;
 
 	return {
 		video,
@@ -72,6 +81,14 @@ export const load: PageServerLoad = async ({ params, platform, locals }) => {
 		},
 		isAccessible,
 		isMember,
-		user
+		user,
+		isAdmin,
+		series: series
+			? {
+					id: series.id,
+					slug: series.slug,
+					title: series.title
+				}
+			: null
 	};
 };

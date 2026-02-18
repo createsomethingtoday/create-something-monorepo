@@ -8,7 +8,7 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "deploy": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=outerfields-pcn",
+    "deploy": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=outerfields-pcn --branch=main",
     "deploy:preview": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=outerfields-pcn --branch=preview",
     "migrate": "wrangler d1 migrations apply outerfields-db",
     "migrate:list": "wrangler d1 migrations list outerfields-db",
@@ -20,6 +20,8 @@
     "@sveltejs/adapter-cloudflare": "^6.0.0",
     "@sveltejs/kit": "^2.15.1",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/pg": "^8.16.0",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
     "svelte": "^5.16.0",
@@ -32,8 +34,12 @@
   "type": "module",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "better-sqlite3": "^12.6.2",
+    "hls.js": "^1.6.15",
     "lucide-svelte": "^0.562.0",
+    "pg": "^8.18.0",
     "resend": "^6.7.0",
-    "stripe": "^20.1.2"
+    "stripe": "^20.1.2",
+    "tus-js-client": "^4.3.1"
   }
 }

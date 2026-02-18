@@ -104,6 +104,34 @@ If unset, the Stripe webhook will skip welcome emails.
 wrangler pages secret put RESEND_API_KEY
 ```
 
+### Admin (required for /admin and uploads)
+
+- `VIDEO_ADMIN_EMAILS` (comma-separated email allowlist)
+
+```bash
+wrangler pages secret put VIDEO_ADMIN_EMAILS
+```
+
+### Cloudflare Stream (required for Stream uploads + signed playback)
+
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CLOUDFLARE_STREAM_API_TOKEN`
+- `CLOUDFLARE_STREAM_CUSTOMER_CODE`
+- `CLOUDFLARE_STREAM_WEBHOOK_SECRET`
+- `CLOUDFLARE_STREAM_ALLOWED_ORIGINS` (optional; comma-separated)
+- `VIDEO_STREAM_TOKEN_TTL_SECONDS` (optional; default 900)
+- `VIDEO_INGEST_API_TOKEN` (optional; Bearer token for `/api/v1/uploads/generated`)
+
+```bash
+wrangler pages secret put CLOUDFLARE_ACCOUNT_ID
+wrangler pages secret put CLOUDFLARE_STREAM_API_TOKEN
+wrangler pages secret put CLOUDFLARE_STREAM_CUSTOMER_CODE
+wrangler pages secret put CLOUDFLARE_STREAM_WEBHOOK_SECRET
+wrangler pages secret put CLOUDFLARE_STREAM_ALLOWED_ORIGINS
+wrangler pages secret put VIDEO_STREAM_TOKEN_TTL_SECONDS
+wrangler pages secret put VIDEO_INGEST_API_TOKEN
+```
+
 ## Deploy
 
 ```bash
