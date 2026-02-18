@@ -76,16 +76,21 @@
 		align-items: center;
 		gap: var(--space-xs);
 		padding: var(--space-xs);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
+		background: color-mix(in srgb, var(--color-shell-surface-tertiary) 92%, transparent);
+		border: 1px solid var(--color-shell-border-default);
 		border-radius: var(--radius-full);
 		z-index: var(--z-fixed);
-		opacity: 0.6;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		opacity: 0.82;
+		backdrop-filter: blur(8px);
+		box-shadow: var(--color-shell-shadow);
+		transition:
+			opacity var(--duration-micro) var(--ease-standard),
+			border-color var(--duration-micro) var(--ease-standard);
 	}
 
 	.mode-indicator:hover {
 		opacity: 1;
+		border-color: var(--color-shell-border-strong);
 	}
 
 	.mode-item {
@@ -99,7 +104,7 @@
 	}
 
 	.mode-item:hover:not(.active) {
-		background: var(--color-hover);
+		background: var(--color-shell-surface-hover);
 	}
 
 	.mode-item.active {
@@ -110,7 +115,7 @@
 		width: 8px;
 		height: 8px;
 		border-radius: var(--radius-full);
-		background: var(--color-fg-muted);
+		background: var(--color-fg-subtle);
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
@@ -120,18 +125,7 @@
 
 	.mode-item.active .mode-dot {
 		background: var(--color-fg-primary);
-		box-shadow: 0 0 8px var(--color-fg-primary);
-		animation: pulse 2s infinite;
-	}
-
-	@keyframes pulse {
-		0%,
-		100% {
-			box-shadow: 0 0 8px var(--color-fg-primary);
-		}
-		50% {
-			box-shadow: 0 0 16px var(--color-fg-primary);
-		}
+		box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-fg-primary) 18%, transparent);
 	}
 
 	.mode-label {
@@ -147,6 +141,11 @@
 
 	.mode-item.active .mode-label {
 		color: var(--color-fg-primary);
+	}
+
+	.mode-item:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
 	}
 
 	.you-are-here-tooltip {

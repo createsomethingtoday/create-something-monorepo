@@ -1,8 +1,7 @@
 <script lang="ts">
 	import '../app.css';
-	import { Navigation, Analytics, ModeIndicator, LayoutSEO } from '@create-something/canon';
+	import { Navigation, Footer, Analytics, ModeIndicator, LayoutSEO } from '@create-something/canon';
 	import { UnifiedSearch } from '@create-something/canon/navigation';
-	import AgencyFooter from '$lib/components/AgencyFooter.svelte';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { afterNavigate, onNavigate } from '$app/navigation';
@@ -103,7 +102,19 @@
 		{@render children()}
 	</main>
 
-	<AgencyFooter />
+	<Footer
+		mode="agency"
+		showNewsletter={false}
+		aboutText="Automation design firm for MCP-first systems. Strategy, implementation, and ongoing operation for production workflows."
+		quickLinks={[
+			{ label: 'How I Work', href: '/services' },
+			{ label: 'What I\'ve Built', href: '/products' },
+			{ label: 'About', href: '/about' },
+			{ label: 'Book a Call', href: '/book' }
+		]}
+		showSocial={true}
+		isAuthenticated={!!data.user}
+	/>
 
 	<ModeIndicator current="agency" />
 </div>

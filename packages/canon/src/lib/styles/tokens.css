@@ -47,6 +47,20 @@
   --color-border-emphasis: rgba(255, 255, 255, 0.2);
   --color-border-strong: rgba(255, 255, 255, 0.3);
 
+  /* Shell surfaces - OpenAI-aligned neutral layers for nav/search/footer
+   * Keep the same black foundation while introducing clearer surface steps.
+   */
+  --color-shell-surface: #0d0d0d;
+  --color-shell-surface-secondary: #101010;
+  --color-shell-surface-tertiary: #131313;
+  --color-shell-surface-elevated: #161616;
+  --color-shell-surface-hover: #1c1c1c;
+  --color-shell-border-subtle: rgba(255, 255, 255, 0.06);
+  --color-shell-border-default: rgba(255, 255, 255, 0.12);
+  --color-shell-border-strong: rgba(255, 255, 255, 0.2);
+  --color-shell-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --color-shell-shadow-strong: 0 20px 50px rgba(0, 0, 0, 0.55);
+
   /* Semantic colors - Functional, not decorative
    * All colors are WCAG AA compliant (4.5:1+ on pure black).
    */
@@ -693,6 +707,17 @@
   --color-border-default: rgba(0, 0, 0, 0.1);
   --color-border-emphasis: rgba(0, 0, 0, 0.15);
   --color-border-strong: rgba(0, 0, 0, 0.25);
+
+  --color-shell-surface: #ffffff;
+  --color-shell-surface-secondary: #fafafa;
+  --color-shell-surface-tertiary: #f5f5f5;
+  --color-shell-surface-elevated: #eeeeee;
+  --color-shell-surface-hover: #e8e8e8;
+  --color-shell-border-subtle: rgba(0, 0, 0, 0.05);
+  --color-shell-border-default: rgba(0, 0, 0, 0.1);
+  --color-shell-border-strong: rgba(0, 0, 0, 0.16);
+  --color-shell-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  --color-shell-shadow-strong: 0 20px 50px rgba(0, 0, 0, 0.14);
 
   --color-hover: rgba(0, 0, 0, 0.03);
   --color-active: rgba(0, 0, 0, 0.06);
