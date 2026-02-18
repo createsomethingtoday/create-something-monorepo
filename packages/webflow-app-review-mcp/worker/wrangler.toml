@@ -1,0 +1,30 @@
+name = "webflow-app-review-mcp"
+main = "index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+# Optional custom domain route once provisioned.
+# [[routes]]
+# pattern = "webflow-app-review.mcp.createsomething.agency"
+# custom_domain = true
+
+[observability]
+enabled = true
+
+[vars]
+AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "WebflowAppReviewMCP"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["WebflowAppReviewMCP"]
+
+# Optional fleet telemetry binding.
+# [[d1_databases]]
+# binding = "TELEMETRY_DB"
+# database_name = "cs-telemetry"
+# database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
