@@ -929,6 +929,28 @@ importers:
         specifier: ^4.64.0
         version: 4.64.0(@cloudflare/workers-types@4.20260128.0)
 
+  packages/interaction-atlas-mcp:
+    dependencies:
+      '@create-something/mcp-core':
+        specifier: workspace:*
+        version: link:../mcp-core
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.25.3
+        version: 1.26.0(@cfworker/json-schema@4.1.1)(zod@3.25.76)
+      '@quietloudlab/ai-interaction-atlas':
+        specifier: ^1.0.7
+        version: 1.0.7
+      zod:
+        specifier: ^3.23.0
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
   packages/io:
     dependencies:
       '@create-something/canon':
@@ -5153,6 +5175,10 @@ packages:
     resolution: {integrity: sha512-aBSREisdsGH890S2rQqK82qmQYU3uFpSH8wcZWHgHzl3LfzsxAKbLNiAG9mO8v1Y0UICBeClICxPJvyr0rcuxg==}
     engines: {node: '>=18'}
     hasBin: true
+
+  '@quietloudlab/ai-interaction-atlas@1.0.7':
+    resolution: {integrity: sha512-KNKElTt6i/0DOSzRXKyRnNiuv7eqUuZqNj0DvGaE13SZHlm0Hi2rVBZqjMMUU77FhSzmbOpzlWNl+JOjvT/c+A==}
+    engines: {node: '>=18.0.0'}
 
   '@react-email/render@1.1.2':
     resolution: {integrity: sha512-RnRehYN3v9gVlNMehHPHhyp2RQo7+pSkHDtXPvg3s0GbzM9SQMW4Qrf8GRNvtpLC4gsI+Wt0VatNRUFqjvevbw==}
@@ -13935,6 +13961,30 @@ snapshots:
       - hono
       - supports-color
 
+  '@modelcontextprotocol/sdk@1.26.0(@cfworker/json-schema@4.1.1)(zod@3.25.76)':
+    dependencies:
+      '@hono/node-server': 1.19.9(hono@4.11.7)
+      ajv: 8.17.1
+      ajv-formats: 3.0.1(ajv@8.17.1)
+      content-type: 1.0.5
+      cors: 2.8.6
+      cross-spawn: 7.0.6
+      eventsource: 3.0.7
+      eventsource-parser: 3.0.6
+      express: 5.2.1
+      express-rate-limit: 8.2.1(express@5.2.1)
+      hono: 4.11.7
+      jose: 6.1.3
+      json-schema-typed: 8.0.2
+      pkce-challenge: 5.0.1
+      raw-body: 3.0.2
+      zod: 3.25.76
+      zod-to-json-schema: 3.25.1(zod@3.25.76)
+    optionalDependencies:
+      '@cfworker/json-schema': 4.1.1
+    transitivePeerDependencies:
+      - supports-color
+
   '@modelcontextprotocol/sdk@1.26.0(@cfworker/json-schema@4.1.1)(zod@4.3.6)':
     dependencies:
       '@hono/node-server': 1.19.9(hono@4.11.7)
@@ -14332,6 +14382,8 @@ snapshots:
       - bare-buffer
       - react-native-b4a
       - supports-color
+
+  '@quietloudlab/ai-interaction-atlas@1.0.7': {}
 
   '@react-email/render@1.1.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
@@ -17578,7 +17630,6 @@ snapshots:
     dependencies:
       express: 5.2.1
       ip-address: 10.0.1
-    optional: true
 
   express@5.2.1:
     dependencies:
@@ -18253,8 +18304,7 @@ snapshots:
 
   iota-array@1.0.0: {}
 
-  ip-address@10.0.1:
-    optional: true
+  ip-address@10.0.1: {}
 
   ip-address@10.1.0: {}
 
