@@ -40,6 +40,8 @@ import {
   VersionSelectionSetSchema,
   JudgmentPolicyActivateSchema,
   JudgmentPolicyCompareReportGetSchema,
+  JudgmentDashboardSummaryParamsSchema,
+  JudgmentDashboardSummarySchema,
   JudgmentPolicyEstimateSchema,
   JudgmentPolicyGetSchema,
   JudgmentPolicySaveSchema,
@@ -90,6 +92,7 @@ import {
   listPendingApprovals,
   upsertAutomationContract,
 } from '../storage/control-plane.js';
+import { getJudgmentDashboardSummary } from '../storage/dashboard.js';
 import type { JudgmentEstimateScenario } from '../judgment/types.js';
 
 function slugFromUrl(url: string): string {
@@ -812,6 +815,30 @@ export function registerTools(server: ScopedMcpServer): void {
         estimateReference: latestEstimate?.id ?? null,
         visualizationUrl,
         judgmentDecision: decision,
+      });
+    },
+    { readOnly: true },
+  );
+
+  server.tool(
+    'judgment_dashboard_summary',
+    'Get account-scoped Judgment Layer dashboard data for Atlas Studio (policies, estimates, runs, approvals).',
+    JudgmentDashboardSummaryParamsSchema.shape,
+    async (params, ctx) => {
+      const input = JudgmentDashboardSummarySchema.parse(params);
+      const db = getDbFromMetadata(ctx);
+      const dashboard = await getJudgmentDashboardSummary(db, {
+        accountId: ctx.accountId,
+        entityType: input.entity_type,
+        entityId: input.entity_id,
+        recentLimit: input.recent_limit,
+      });
+      return jsonContent({
+        meta: {
+          authScope: 'account',
+          note: 'Use this payload as Atlas Studio dashboard state; web policy editor is deprecated.',
+        },
+        dashboard,
       });
     },
     { readOnly: true },

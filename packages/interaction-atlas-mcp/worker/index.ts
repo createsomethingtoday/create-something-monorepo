@@ -37,6 +37,7 @@ import {
   listActiveAutomationContracts,
   listPendingApprovals,
 } from '../src/storage/control-plane.js';
+import { getJudgmentDashboardSummary } from '../src/storage/dashboard.js';
 
 interface Env extends InteractionAtlasEnv {}
 
@@ -777,11 +778,94 @@ export default {
       );
     }
 
+    if (url.pathname === '/api/dashboard/summary') {
+      const authCtx = await authProvider.resolve(request, _env);
+      const entityTypeParam = url.searchParams.get('entity_type');
+      const entityId = url.searchParams.get('entity_id');
+      const entityType: AtlasEntityType | undefined = entityTypeParam === 'mcp' || entityTypeParam === 'agent' ? entityTypeParam : undefined;
+      const recentLimitParam = Number(url.searchParams.get('recent_limit') ?? '10');
+      const recentLimit = Number.isFinite(recentLimitParam) ? Math.max(1, Math.min(25, Math.floor(recentLimitParam))) : 10;
+
+      if ((entityType && !entityId) || (!entityType && entityId)) {
+        return new Response(
+          JSON.stringify(
+            { error: 'invalid_scope', message: 'entity_type and entity_id must be provided together.' },
+            null,
+            2,
+          ),
+          { status: 400, headers: JSON_HEADERS },
+        );
+      }
+
+      const dashboard = await getJudgmentDashboardSummary(_env.DB, {
+        accountId: authCtx.accountId,
+        entityType,
+        entityId: entityId ?? undefined,
+        recentLimit,
+      });
+
+      return new Response(
+        JSON.stringify(
+          {
+            meta: {
+              authScope: 'account',
+              note: 'Atlas Studio dashboard payload. Policy web editor is deprecated in favor of MCP consumption.',
+            },
+            dashboard,
+          },
+          null,
+          2,
+        ),
+        { headers: JSON_HEADERS },
+      );
+    }
+
     if (url.pathname === '/policies/editor') {
       const authCtx = await authProvider.resolve(request, _env);
       const entityTypeParam = url.searchParams.get('entity_type');
       const entityId = url.searchParams.get('entity_id') ?? 'fleet-watchdog';
       const entityType: AtlasEntityType = entityTypeParam === 'mcp' ? 'mcp' : 'agent';
+      const legacyUi = url.searchParams.get('legacy_ui') === '1';
+      if (!legacyUi) {
+        const dashboard = await getJudgmentDashboardSummary(_env.DB, {
+          accountId: authCtx.accountId,
+          entityType,
+          entityId,
+          recentLimit: 8,
+        });
+        return new Response(
+          JSON.stringify(
+            {
+              meta: {
+                authScope: 'account',
+                note: 'Policy web editor is deprecated. Atlas Studio should consume MCP tools and dashboard APIs directly.',
+              },
+              uiDeprecated: true,
+              recommendedSurface: 'Atlas Studio',
+              atlasStudio: {
+                mcpEndpoint: '/mcp',
+                recommendedTools: [
+                  'judgment_dashboard_summary',
+                  'judgment_policy_get',
+                  'judgment_policy_estimate',
+                  'judgment_policy_save',
+                  'judgment_policy_activate',
+                  'approval_inbox_list',
+                ],
+                dashboardApi: `/api/dashboard/summary?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}`,
+                policiesApi: `/api/policies?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}`,
+                policyEstimateApi: '/api/policies/estimate',
+                policyActivateApi: '/api/policies/activate',
+              },
+              dashboard,
+              legacyUiOptIn: `/policies/editor?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}&legacy_ui=1`,
+            },
+            null,
+            2,
+          ),
+          { status: 410, headers: JSON_HEADERS },
+        );
+      }
       const html = `<!doctype html>
 <html lang="en">
   <head>
@@ -1913,6 +1997,48 @@ export default {
       const entityId = url.searchParams.get('entity_id') ?? 'fleet-watchdog';
       const accountId = authCtx.accountId;
       const entityType: AtlasEntityType = entityTypeParam === 'mcp' ? 'mcp' : 'agent';
+      const legacyUi = url.searchParams.get('legacy_ui') === '1';
+      if (!legacyUi) {
+        const dashboard = await getJudgmentDashboardSummary(_env.DB, {
+          accountId,
+          entityType,
+          entityId,
+          recentLimit: 10,
+        });
+        return new Response(
+          JSON.stringify(
+            {
+              meta: {
+                authScope: 'account',
+                note: 'Policy web pages are deprecated. Atlas Studio should consume MCP and JSON APIs directly.',
+              },
+              uiDeprecated: true,
+              recommendedSurface: 'Atlas Studio',
+              atlasStudio: {
+                mcpEndpoint: '/mcp',
+                recommendedTools: [
+                  'judgment_dashboard_summary',
+                  'judgment_policy_get',
+                  'judgment_policy_estimate',
+                  'judgment_policy_save',
+                  'judgment_policy_activate',
+                  'approval_inbox_list',
+                ],
+                dashboardApi: `/api/dashboard/summary?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}`,
+                policiesApi: `/api/policies?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}`,
+                policySaveApi: '/api/policies/save',
+                policyEstimateApi: '/api/policies/estimate',
+                policyActivateApi: '/api/policies/activate',
+              },
+              dashboard,
+              legacyUiOptIn: `/policies?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}&legacy_ui=1`,
+            },
+            null,
+            2,
+          ),
+          { status: 410, headers: JSON_HEADERS },
+        );
+      }
       const active = await resolveActivePolicy(_env.DB, {
         accountId,
         entityType,
@@ -1962,14 +2088,14 @@ export default {
         Access scope: this page and policy APIs are account-scoped by your API key or Bearer token context.
       </div>
       <div class="muted">JSON API: <a href="/api/policies?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}"><code>/api/policies</code></a></div>
-      <div class="muted" style="margin-top:0.35rem;">Visual editor: <a href="/policies/editor?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}"><code>/policies/editor</code></a></div>`;
+      <div class="muted" style="margin-top:0.35rem;">Legacy visual editor: <a href="/policies/editor?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}&legacy_ui=1"><code>/policies/editor?legacy_ui=1</code></a></div>`;
 
       const html = renderViewerPage({
         title: 'Judgment Policies',
         heading: 'Judgment Policies',
         subtitle: `${esc(accountId)} · ${esc(entityType)}:${esc(entityId)}`,
         headerMeta: `<span class="pill">Active <code>${esc(active.policyVersionId)}</code></span>`,
-        headerActions: `<a class="pill" href="/policies/editor?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}">Open visual editor</a>`,
+        headerActions: `<a class="pill" href="/policies/editor?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}&legacy_ui=1">Open legacy visual editor</a>`,
         body,
         maxWidth: '1020px',
       });
@@ -2262,8 +2388,9 @@ export default {
           workflowsApi: '/api/workflows',
           mcps: '/mcps',
           mcpsApi: '/api/mcps',
-          policies: '/policies',
-          policyEditor: '/policies/editor?entity_type=agent&entity_id=<id>',
+          policies: '/policies?entity_type=agent&entity_id=<id>',
+          policyEditorDeprecated: '/policies/editor?entity_type=agent&entity_id=<id>',
+          dashboardSummaryApi: '/api/dashboard/summary',
           policiesApi: '/api/policies?entity_type=agent&entity_id=<id>',
           policySaveApi: '/api/policies/save',
           policyActivateApi: '/api/policies/activate',
@@ -2277,6 +2404,7 @@ export default {
         authNotes: {
           mcp: 'Use x-api-key or Bearer token for account-scoped context. Missing key resolves to public read-only.',
           policiesAndReports: 'Policy and report endpoints are scoped to authenticated account context (no account query override).',
+          uiDeprecation: 'Policy web UIs are deprecated by default; Atlas Studio should consume MCP tools + /api/dashboard/summary.',
         },
       }, null, 2), { headers: JSON_HEADERS });
     }

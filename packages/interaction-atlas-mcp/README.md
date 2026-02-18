@@ -44,6 +44,7 @@ Resolution order at runtime:
 
 Policy lifecycle tools:
 
+- `judgment_dashboard_summary`
 - `judgment_policy_get`
 - `judgment_policy_save`
 - `judgment_policy_activate`
@@ -70,7 +71,9 @@ New MCP tools for operator workflows:
 ## HTTP Endpoints
 
 - `GET /workflows`, `GET /mcps` (viewer pages)
-- `GET /policies` (policy page)
+- `GET /api/dashboard/summary` (Atlas Studio dashboard payload; optional `entity_type`, `entity_id`, `recent_limit`)
+- `GET /policies` and `GET /policies/editor` now return MCP-first deprecation payloads by default.
+  - Use `legacy_ui=1` query param to temporarily access old pages.
 - `GET /reports/:reportId` (shareable estimate report page)
 - `GET /api/policies?entity_type=<mcp|agent>&entity_id=<id>`
 - `GET /api/reports/:reportId`
@@ -80,7 +83,7 @@ New MCP tools for operator workflows:
 
 ## Auth Scope
 
-Policy and report APIs/pages are account-scoped by authenticated context (`x-api-key` or Bearer token).
+Policy/report/dashboard APIs are account-scoped by authenticated context (`x-api-key` or Bearer token).
 
 - `meta.authScope = "account"` is returned for policy/report JSON APIs and policy/version MCP tool responses.
 - Missing key resolves to public read-only context.
