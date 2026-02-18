@@ -46,7 +46,18 @@ Context7 provides two tools:
 - `resolve-library-id` (turn “nextjs” into a Context7 library id)
 - `query-docs` (retrieve relevant docs/examples for your query)
 
+## Common Library IDs
+
+| Library | Context7 ID |
+|---------|-------------|
+| SvelteKit | `/sveltejs/kit` |
+| Cloudflare Workers SDK / Wrangler | `/cloudflare/workers-sdk` |
+| Cloudflare Docs (D1, KV, Pages) | `/cloudflare/cloudflare-docs` |
+| Hono | `/honojs/hono` |
+| Vitest | `/vitest-dev/vitest` |
+| TypeScript | `/microsoft/typescript` |
+| Zod | `/colinhacks/zod` |
+
 ## Working Rule
 
 If you are about to write code that depends on an external API and you can’t cite the exact signature/config from memory, **pause and consult Context7 first**.
-

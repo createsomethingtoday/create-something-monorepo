@@ -12,6 +12,7 @@ Model Context Protocol (MCP) server templates for common integrations.
 | `github/` | GitHub repository management | Ready |
 | `notion/` | Notion workspace integration | Ready |
 | `cloudflare/` | Cloudflare Workers/D1/KV | Ready |
+| `context7/` | Up-to-date library/API docs for code generation | Ready |
 
 ## Usage
 
@@ -37,6 +38,25 @@ Model Context Protocol (MCP) server templates for common integrations.
      }
    }
    ```
+
+## Context7 Quick Add
+
+Use Context7 for version-specific docs and code examples:
+
+```json
+{
+  "mcpServers": {
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp"
+    }
+  }
+}
+```
+
+Agent rule recommendation:
+- Always use Context7 MCP for external library/API docs, setup/configuration steps, and code generation.
+- Add `use context7` (or pin with `use library /<owner>/<repo>`) in prompts when docs grounding is needed.
 
 ## Support
 

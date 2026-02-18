@@ -70,8 +70,19 @@ Mention the version in the request:
 
 “How do I set up Next.js 14 middleware? use context7”
 
+## Common IDs In This Monorepo
+
+| Library | Context7 ID |
+|---------|-------------|
+| SvelteKit | `/sveltejs/kit` |
+| Cloudflare Workers SDK / Wrangler | `/cloudflare/workers-sdk` |
+| Cloudflare Docs (D1, KV, Pages) | `/cloudflare/cloudflare-docs` |
+| Hono | `/honojs/hono` |
+| Vitest | `/vitest-dev/vitest` |
+| TypeScript | `/microsoft/typescript` |
+| Zod | `/colinhacks/zod` |
+
 ## Boundaries
 
 - **Context7 is for external libs.** For monorepo-local symbols, verify by reading source and/or `pnpm exports` (do not guess imports).
 - For high-stakes behavior (security/auth), treat docs as guidance and still reason about threat model and edge cases.
-
