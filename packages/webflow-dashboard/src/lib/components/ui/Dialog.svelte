@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { tick } from 'svelte';
 	import { X } from 'lucide-svelte';
 
 	interface Props {
@@ -11,6 +12,11 @@
 	}
 
 	let { isOpen, onClose, title, size = 'md', children }: Props = $props();
+	let dialogElement = $state<HTMLDivElement | null>(null);
+	let lastFocusedElement = $state<HTMLElement | null>(null);
+
+	const focusableSelector =
+		'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 	function handleBackdropClick(e: MouseEvent) {
 		if (e.target === e.currentTarget) {
@@ -18,20 +24,79 @@
 		}
 	}
 
+	function getFocusableElements(): HTMLElement[] {
+		if (!dialogElement) return [];
+		return Array.from(dialogElement.querySelectorAll<HTMLElement>(focusableSelector)).filter(
+			(el) => !el.hasAttribute('disabled') && el.tabIndex !== -1
+		);
+	}
+
+	function trapFocus(event: KeyboardEvent) {
+		const focusable = getFocusableElements();
+		if (focusable.length === 0) {
+			event.preventDefault();
+			return;
+		}
+
+		const first = focusable[0];
+		const last = focusable[focusable.length - 1];
+		const current = document.activeElement as HTMLElement | null;
+
+		if (event.shiftKey && current === first) {
+			event.preventDefault();
+			last.focus();
+			return;
+		}
+
+		if (!event.shiftKey && current === last) {
+			event.preventDefault();
+			first.focus();
+		}
+	}
+
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
 			onClose();
+			return;
+		}
+
+		if (e.key === 'Tab') {
+			trapFocus(e);
 		}
 	}
-</script>
 
-<svelte:window onkeydown={handleKeydown} />
+	$effect(() => {
+		if (!isOpen || typeof document === 'undefined') return;
+
+		lastFocusedElement = document.activeElement as HTMLElement | null;
+
+		void tick().then(() => {
+			const focusable = getFocusableElements();
+			if (focusable.length > 0) {
+				focusable[0].focus();
+				return;
+			}
+			dialogElement?.focus();
+		});
+
+		return () => {
+			lastFocusedElement?.focus();
+		};
+	});
+</script>
 
 {#if isOpen}
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="backdrop" onclick={handleBackdropClick}>
-		<div class="dialog {size}" role="dialog" aria-modal="true" aria-labelledby={title ? 'dialog-title' : undefined}>
+	<div class="backdrop" onclick={handleBackdropClick} onkeydown={handleKeydown}>
+		<div
+			class="dialog {size}"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby={title ? 'dialog-title' : undefined}
+			tabindex="-1"
+			bind:this={dialogElement}
+		>
 		{#if title}
 			<div class="dialog-header">
 				<h2 id="dialog-title" class="dialog-title">{title}</h2>

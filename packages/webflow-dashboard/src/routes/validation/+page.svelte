@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { Header, Button, Card, WebflowWayCard } from '$lib/components';
+	import { Header, Button, Card, WebflowWayCard, BackNavigation } from '$lib/components';
 	import type { PageData } from './$types';
-	import { ChevronLeft, CheckCircle2, Check, Info } from 'lucide-svelte';
+	import { CheckCircle2, Check, Info } from 'lucide-svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -15,10 +14,6 @@
 	async function handleLogout() {
 		await fetch('/api/auth/logout', { method: 'POST' });
 		window.location.href = '/login';
-	}
-
-	function handleBackToDashboard() {
-		goto('/dashboard');
 	}
 
 	async function handleOpenGsapValidator() {
@@ -40,11 +35,7 @@
 
 	<main class="main-content">
 		<div class="content-wrapper">
-		<!-- Back Navigation -->
-		<Button variant="link" onclick={handleBackToDashboard} class="back-link">
-			<ChevronLeft size={16} />
-			Back to Dashboard
-		</Button>
+		<BackNavigation />
 
 			<!-- Header -->
 			<div class="page-header">
@@ -133,8 +124,7 @@
 
 <!-- GSAP Validation Modal -->
 {#if isGsapModalOpen && GsapValidationModal}
-	<svelte:component
-		this={GsapValidationModal}
+	<GsapValidationModal
 		isOpen={isGsapModalOpen}
 		onClose={() => isGsapModalOpen = false}
 		userEmail={data.user?.email}
@@ -154,19 +144,6 @@
 	.content-wrapper {
 		max-width: 80rem;
 		margin: 0 auto;
-	}
-
-	:global(.back-link) {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-xs);
-		margin-bottom: var(--space-md);
-		color: var(--color-fg-secondary);
-		transition: color var(--duration-micro) var(--ease-standard);
-	}
-
-	:global(.back-link:hover) {
-		color: var(--color-fg-primary);
 	}
 
 	.page-header {
@@ -263,7 +240,7 @@
 		color: var(--color-fg-secondary);
 	}
 
-	.tool-features svg {
+	.tool-features :global(svg) {
 		color: var(--color-success);
 		flex-shrink: 0;
 	}
@@ -333,7 +310,7 @@
 		border-radius: var(--radius-lg);
 	}
 
-	.tip-box svg {
+	.tip-box :global(svg) {
 		color: var(--color-info);
 		flex-shrink: 0;
 		margin-top: 2px;

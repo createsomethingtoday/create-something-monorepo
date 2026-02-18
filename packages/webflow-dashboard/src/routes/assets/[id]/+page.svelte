@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import type { Asset } from '$lib/server/airtable';
-	import { goto, invalidateAll } from '$app/navigation';
+import { goto } from '$app/navigation';
 	import DOMPurify from 'isomorphic-dompurify';
 	import {
 		Header,
@@ -25,7 +25,9 @@
 		Sparkline,
 		TimelineCard,
 		AnalyticsCard,
-		DataFreshnessIndicator
+		DataFreshnessIndicator,
+		Dialog,
+		BackNavigation
 	} from '$lib/components';
 	import EditAssetModal from '$lib/components/EditAssetModal.svelte';
 	import { toast } from '$lib/stores/toast';
@@ -39,7 +41,6 @@
 		});
 	}
 	import {
-		ArrowLeft,
 		Eye,
 		ExternalLink,
 		Store,
@@ -56,9 +57,12 @@
 	} from 'lucide-svelte';
 
 	let { data }: { data: PageData } = $props();
+	const getInitialAsset = () => data.asset;
+	const tabOrder = ['overview', 'timeline', 'analytics'] as const;
+	type TabValue = (typeof tabOrder)[number];
 
 	// Use reactive state so updates refresh the view
-	let asset = $state<Asset>(data.asset);
+	let asset = $state<Asset>(getInitialAsset());
 
 	// Smart default tab based on asset status
 	// - Pending/Review assets: Show Timeline (most actionable)
@@ -70,11 +74,12 @@
 		return 'overview';
 	}
 
-	let activeTab = $state(getDefaultTab(data.asset.status));
+	let activeTab = $state<TabValue>(getDefaultTab(getInitialAsset().status) as TabValue);
 	let showPerformance = $state(false);
 	let imageError = $state(false);
 	let showEditModal = $state(false);
-	let isArchiving = $state(false);
+let isArchiving = $state(false);
+let showArchiveConfirm = $state(false);
 
 	// Format dates
 	function formatDate(dateStr?: string): string {
@@ -100,10 +105,6 @@
 	async function handleLogout() {
 		await fetch('/api/auth/logout', { method: 'POST' });
 		window.location.href = '/login';
-	}
-
-	function handleBack() {
-		goto('/dashboard');
 	}
 
 	// Can show metrics for non-Upcoming and non-Rejected statuses
@@ -203,11 +204,11 @@
 
 	async function handleArchiveClick() {
 		if (isArchiving) return;
+	showArchiveConfirm = true;
+}
 
-		if (!confirm('Are you sure you want to archive this asset? This will remove it from the marketplace.')) {
-			return;
-		}
-
+async function confirmArchive() {
+	if (isArchiving) return;
 		isArchiving = true;
 
 		try {
@@ -218,8 +219,37 @@
 			toast.error(message);
 		} finally {
 			isArchiving = false;
+		showArchiveConfirm = false;
 		}
 	}
+
+function setActiveTab(value: TabValue) {
+	if (value === 'analytics' && !canShowMetrics) return;
+	activeTab = value;
+}
+
+function handleTabListKeydown(event: KeyboardEvent) {
+	if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+
+	event.preventDefault();
+
+	const enabledTabs = tabOrder.filter((tab) => tab !== 'analytics' || canShowMetrics);
+	const currentIndex = enabledTabs.indexOf(activeTab as TabValue);
+
+	if (event.key === 'Home') {
+		setActiveTab(enabledTabs[0]);
+		return;
+	}
+
+	if (event.key === 'End') {
+		setActiveTab(enabledTabs[enabledTabs.length - 1]);
+		return;
+	}
+
+	const delta = event.key === 'ArrowRight' ? 1 : -1;
+	const nextIndex = (currentIndex + delta + enabledTabs.length) % enabledTabs.length;
+	setActiveTab(enabledTabs[nextIndex]);
+}
 </script>
 
 <svelte:head>
@@ -231,13 +261,7 @@
 
 	<main class="main-content">
 		<div class="content-wrapper">
-			<!-- Breadcrumb / Back Navigation -->
-			<div class="breadcrumb">
-				<button type="button" class="back-btn" onclick={handleBack}>
-					<ArrowLeft size={20} />
-					Back to Dashboard
-				</button>
-			</div>
+			<BackNavigation />
 
 			<!-- Header Section -->
 			<div class="detail-header">
@@ -279,43 +303,49 @@
 				</div>
 			</div>
 
-			<!-- Tabs Navigation -->
-			<div class="tabs-container">
-				<div class="tabs-list">
-					<button
-						type="button"
-						class="tab-trigger"
-						class:active={activeTab === 'overview'}
-						onclick={() => (activeTab = 'overview')}
+			<Tabs value={activeTab} class="tabs-container">
+				<TabsList class="asset-tabs-list" onkeydown={handleTabListKeydown}>
+					<TabsTrigger
+						value="overview"
+						active={activeTab === 'overview'}
+						id="asset-tab-overview"
+						aria-controls="asset-panel-overview"
+						onclick={() => setActiveTab('overview')}
 					>
 						Overview
-					</button>
-					<button
-						type="button"
-						class="tab-trigger"
-						class:active={activeTab === 'timeline'}
-						onclick={() => (activeTab = 'timeline')}
+					</TabsTrigger>
+					<TabsTrigger
+						value="timeline"
+						active={activeTab === 'timeline'}
+						id="asset-tab-timeline"
+						aria-controls="asset-panel-timeline"
+						onclick={() => setActiveTab('timeline')}
 					>
 						<Clock size={14} />
 						Timeline
-					</button>
-					<button
-						type="button"
-						class="tab-trigger"
-						class:active={activeTab === 'analytics'}
-						onclick={() => (activeTab = 'analytics')}
+					</TabsTrigger>
+					<TabsTrigger
+						value="analytics"
+						active={activeTab === 'analytics'}
+						id="asset-tab-analytics"
+						aria-controls="asset-panel-analytics"
+						onclick={() => setActiveTab('analytics')}
 						disabled={!canShowMetrics}
 						title={!canShowMetrics ? 'Analytics available after publishing' : ''}
 					>
 						<LineChart size={14} />
 						Analytics
-					</button>
-				</div>
-			</div>
+					</TabsTrigger>
+				</TabsList>
 
-			<!-- Tab Content -->
-			<div class="tab-content">
-				{#if activeTab === 'overview'}
+				<TabsContent
+					value="overview"
+					active={activeTab === 'overview'}
+					id="asset-panel-overview"
+					aria-labelledby="asset-tab-overview"
+					tabindex={0}
+					class="tab-content"
+				>
 					<div class="overview-grid">
 						<!-- Left Column -->
 						<div class="left-column">
@@ -512,12 +542,28 @@
 							{/if}
 						</div>
 					</div>
-{:else if activeTab === 'timeline'}
+				</TabsContent>
+				<TabsContent
+					value="timeline"
+					active={activeTab === 'timeline'}
+					id="asset-panel-timeline"
+					aria-labelledby="asset-tab-timeline"
+					tabindex={0}
+					class="tab-content"
+				>
 					<TimelineCard {asset} />
-				{:else if activeTab === 'analytics'}
+				</TabsContent>
+				<TabsContent
+					value="analytics"
+					active={activeTab === 'analytics'}
+					id="asset-panel-analytics"
+					aria-labelledby="asset-tab-analytics"
+					tabindex={0}
+					class="tab-content"
+				>
 					<AnalyticsCard {asset} />
-				{/if}
-			</div>
+				</TabsContent>
+			</Tabs>
 		</div>
 	</main>
 </div>
@@ -532,6 +578,22 @@
 	/>
 {/if}
 
+<Dialog isOpen={showArchiveConfirm} onClose={() => (showArchiveConfirm = false)} title="Archive this asset?">
+	<div class="archive-dialog-content">
+		<p>
+			Are you sure you want to archive <strong>{asset.name}</strong>? This removes it from the marketplace.
+		</p>
+		<div class="archive-dialog-actions">
+			<Button variant="secondary" onclick={() => (showArchiveConfirm = false)} disabled={isArchiving}>
+				Cancel
+			</Button>
+			<Button variant="destructive" onclick={confirmArchive} disabled={isArchiving}>
+				{isArchiving ? 'Archiving...' : 'Archive asset'}
+			</Button>
+		</div>
+	</div>
+</Dialog>
+
 <style>
 	.detail-page {
 		min-height: 100vh;
@@ -545,29 +607,6 @@
 	.content-wrapper {
 		max-width: 80rem;
 		margin: 0 auto;
-	}
-
-	.breadcrumb {
-		margin-bottom: var(--space-md);
-	}
-
-	.back-btn {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-xs);
-		padding: var(--space-xs) var(--space-sm);
-		background: transparent;
-		border: none;
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-sm);
-		cursor: pointer;
-		border-radius: var(--radius-md);
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.back-btn:hover {
-		background: var(--color-hover);
-		color: var(--color-fg-primary);
 	}
 
 	.detail-header {
@@ -600,47 +639,33 @@
 		flex-wrap: wrap;
 	}
 
-	.tabs-container {
-		border-bottom: 1px solid var(--color-border-default);
+	:global(.tabs-container) {
 		margin-bottom: var(--space-lg);
 	}
 
-	.tabs-list {
+	:global(.asset-tabs-list) {
 		display: flex;
-		gap: 0;
-	}
-
-	.tab-trigger {
-		display: inline-flex;
-		align-items: center;
 		gap: var(--space-xs);
-		padding: var(--space-sm) var(--space-md);
-		background: transparent;
-		border: none;
-		border-bottom: 2px solid transparent;
+		background: var(--color-bg-subtle);
+		border-radius: var(--radius-md);
+		padding: var(--space-xs);
+	}
+
+	.archive-dialog-content {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-md);
 		color: var(--color-fg-secondary);
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
-		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
-	.tab-trigger:hover:not(:disabled) {
-		color: var(--color-fg-primary);
+	.archive-dialog-content p {
+		margin: 0;
 	}
 
-	.tab-trigger.active {
-		color: var(--color-fg-primary);
-		border-bottom-color: var(--color-fg-primary);
-	}
-
-	.tab-trigger:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.tab-content {
-		/* Content container */
+	.archive-dialog-actions {
+		display: flex;
+		justify-content: flex-end;
+		gap: var(--space-sm);
 	}
 
 	.overview-grid {
@@ -715,7 +740,7 @@
 		color: var(--color-info);
 	}
 
-	.rejection-card {
+	:global(.rejection-card) {
 		border-color: var(--color-error-border);
 	}
 

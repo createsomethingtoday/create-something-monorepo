@@ -4,18 +4,30 @@
 	import StatusBadge from './StatusBadge.svelte';
 	import DataFreshnessIndicator from './DataFreshnessIndicator.svelte';
 	import type { Asset } from '$lib/server/airtable';
-	import { BarChart3, Package, TrendingUp, CalendarClock, CheckCircle2, Rocket, AlertTriangle, XCircle } from 'lucide-svelte';
+	import {
+		BarChart3,
+		Package,
+		TrendingUp,
+		CalendarClock,
+		CheckCircle2,
+		Rocket,
+		AlertTriangle,
+		XCircle,
+		SearchX,
+		RefreshCw
+	} from 'lucide-svelte';
 
 	interface Props {
 		assets: Asset[];
 		searchTerm?: string;
+		onSearch?: (term: string) => void;
 		onView?: (id: string) => void;
 		onEdit?: (id: string) => void;
 		onArchive?: (id: string) => Promise<void>;
 		onRefresh?: () => void;
 	}
 
-	let { assets, searchTerm = '', onView, onEdit, onArchive, onRefresh }: Props = $props();
+	let { assets, searchTerm = '', onSearch, onView, onEdit, onArchive, onRefresh }: Props = $props();
 
 	let showPerformance = $state(false);
 	let expandedStatuses = $state<string[]>([]);
@@ -132,6 +144,26 @@
 			{ viewers: 0, purchases: 0, revenue: 0 }
 		);
 	}
+
+	function clearSearch() {
+		onSearch?.('');
+	}
+
+	function getSortLabel() {
+		const fieldMap: Record<string, string> = {
+			name: 'Name',
+			submittedDate: 'Submitted date',
+			uniqueViewers: 'Viewers',
+			cumulativePurchases: 'Purchases',
+			cumulativeRevenue: 'Revenue'
+		};
+		const directionLabel = sortConfig.direction === 'asc' ? 'ascending' : 'descending';
+		return `${fieldMap[sortConfig.key] ?? sortConfig.key} (${directionLabel})`;
+	}
+
+	function isArchivedStatus(status: string): boolean {
+		return status.toLowerCase().includes('delisted');
+	}
 </script>
 
 <div class="assets-display">
@@ -151,15 +183,32 @@
 		<Card>
 			<CardContent>
 				<div class="empty-state">
-					<Package size={64} strokeWidth={1.5} />
-					<h3>No assets found</h3>
-					<p>
-						{#if searchTerm}
-							No assets match your search "{searchTerm}".
-						{:else}
-							Your published and pending templates will be displayed here.
+					{#if searchTerm}
+						<SearchX size={64} strokeWidth={1.5} />
+						<h3>No assets match "{searchTerm}"</h3>
+						<p>Try a different keyword or clear your search to view all assets.</p>
+						<div class="empty-actions">
+							<Button variant="secondary" onclick={clearSearch}>Clear search</Button>
+							{#if onRefresh}
+								<Button variant="outline" onclick={onRefresh}>
+									<RefreshCw size={14} />
+									Refresh assets
+								</Button>
+							{/if}
+						</div>
+					{:else}
+						<Package size={64} strokeWidth={1.5} />
+						<h3>No assets yet</h3>
+						<p>Your published and pending templates will appear here after sync.</p>
+						{#if onRefresh}
+							<div class="empty-actions">
+								<Button variant="secondary" onclick={onRefresh}>
+									<RefreshCw size={14} />
+									Refresh assets
+								</Button>
+							</div>
 						{/if}
-					</p>
+					{/if}
 				</div>
 			</CardContent>
 		</Card>
@@ -176,7 +225,7 @@
 					<div class="status-info">
 						<div class="status-icon {config?.bgClass || ''}">
 							{#if config?.icon}
-								<svelte:component this={config.icon} size={18} />
+								<config.icon size={18} />
 							{:else}
 								<span>•</span>
 							{/if}
@@ -186,42 +235,73 @@
 							<span class="status-count">
 								{statusAssets.length} {statusAssets.length === 1 ? 'asset' : 'assets'}
 							</span>
+							<span class="sort-summary">Sorted by {getSortLabel()}</span>
 						</div>
 					</div>
 					<StatusBadge {status} />
 				</div>
 
 				<Card>
-					<div class="table-container">
+					<div class="table-container desktop-table">
 						<Table>
 							<TableHeader>
 								<TableRow>
 									<TableHead class="w-12"></TableHead>
 									<TableHead>
-										<button type="button" class="sort-btn" onclick={() => requestSort('name')}>
+										<button
+											type="button"
+											class="sort-btn"
+											class:active={sortConfig.key === 'name'}
+											aria-label="Sort by name"
+											onclick={() => requestSort('name')}
+										>
 											Name{getSortIndicator('name')}
 										</button>
 									</TableHead>
 									<TableHead>
-										<button type="button" class="sort-btn" onclick={() => requestSort('submittedDate')}>
+										<button
+											type="button"
+											class="sort-btn"
+											class:active={sortConfig.key === 'submittedDate'}
+											aria-label="Sort by submitted date"
+											onclick={() => requestSort('submittedDate')}
+										>
 											Submitted{getSortIndicator('submittedDate')}
 										</button>
 									</TableHead>
 									<TableHead>Type</TableHead>
 									{#if showPerformance}
 										<TableHead class="text-center">
-											<button type="button" class="sort-btn" onclick={() => requestSort('uniqueViewers')}>
+											<button
+												type="button"
+												class="sort-btn"
+												class:active={sortConfig.key === 'uniqueViewers'}
+												aria-label="Sort by viewers"
+												onclick={() => requestSort('uniqueViewers')}
+											>
 												Viewers{getSortIndicator('uniqueViewers')}
 											</button>
 										</TableHead>
 										<TableHead class="text-center">
-											<button type="button" class="sort-btn" onclick={() => requestSort('cumulativePurchases')}>
+											<button
+												type="button"
+												class="sort-btn"
+												class:active={sortConfig.key === 'cumulativePurchases'}
+												aria-label="Sort by purchases"
+												onclick={() => requestSort('cumulativePurchases')}
+											>
 												Purchases{getSortIndicator('cumulativePurchases')}
 											</button>
 										</TableHead>
 										<TableHead class="text-center">
 											<div class="revenue-header">
-												<button type="button" class="sort-btn" onclick={() => requestSort('cumulativeRevenue')}>
+												<button
+													type="button"
+													class="sort-btn"
+													class:active={sortConfig.key === 'cumulativeRevenue'}
+													aria-label="Sort by revenue"
+													onclick={() => requestSort('cumulativeRevenue')}
+												>
 													Revenue{getSortIndicator('cumulativeRevenue')}
 												</button>
 												<DataFreshnessIndicator variant="tooltip" />
@@ -259,6 +339,57 @@
 								{/if}
 							</TableBody>
 						</Table>
+					</div>
+
+					<div class="mobile-cards">
+						{#each visibleAssets as asset (asset.id)}
+							<article class="asset-card-mobile">
+								<div class="mobile-header-row">
+									<div class="mobile-asset-meta">
+										<h4 class="mobile-asset-name">{asset.name}</h4>
+										<p class="mobile-asset-type">{asset.type}</p>
+									</div>
+									<StatusBadge status={asset.status} size="sm" />
+								</div>
+
+								<div class="mobile-stats">
+									<div>
+										<span class="mobile-label">Submitted</span>
+										<span class="mobile-value">
+											{asset.submittedDate
+												? new Date(asset.submittedDate).toLocaleDateString()
+												: 'N/A'}
+										</span>
+									</div>
+									{#if showPerformance && !['Upcoming', 'Rejected'].includes(asset.status)}
+										<div>
+											<span class="mobile-label">Viewers</span>
+											<span class="mobile-value">{asset.uniqueViewers?.toLocaleString() ?? '0'}</span>
+										</div>
+										<div>
+											<span class="mobile-label">Purchases</span>
+											<span class="mobile-value">{asset.cumulativePurchases?.toLocaleString() ?? '0'}</span>
+										</div>
+										<div>
+											<span class="mobile-label">Revenue</span>
+											<span class="mobile-value">${asset.cumulativeRevenue?.toLocaleString() ?? '0'}</span>
+										</div>
+									{/if}
+								</div>
+
+								<div class="mobile-actions">
+									{#if onView}
+										<Button size="sm" variant="outline" onclick={() => onView(asset.id)}>View</Button>
+									{/if}
+									{#if onEdit}
+										<Button size="sm" variant="secondary" onclick={() => onEdit(asset.id)}>Edit</Button>
+									{/if}
+									{#if onArchive && !isArchivedStatus(asset.status)}
+										<Button size="sm" variant="destructive" onclick={() => onArchive(asset.id)}>Archive</Button>
+									{/if}
+								</div>
+							</article>
+						{/each}
 					</div>
 
 					{#if statusAssets.length > 10}
@@ -374,6 +505,11 @@
 		color: var(--color-fg-muted);
 	}
 
+	.sort-summary {
+		font-size: var(--text-caption);
+		color: var(--color-fg-tertiary);
+	}
+
 	.table-container {
 		overflow-x: auto;
 	}
@@ -393,6 +529,12 @@
 
 	.sort-btn:hover {
 		color: var(--color-fg-primary);
+	}
+
+	.sort-btn.active {
+		color: var(--color-fg-primary);
+		text-decoration: underline;
+		text-underline-offset: 4px;
 	}
 
 	.show-more {
@@ -444,6 +586,89 @@
 		color: var(--color-fg-muted);
 		margin: 0;
 		max-width: 24rem;
+	}
+
+	.empty-actions {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: var(--space-sm);
+		margin-top: var(--space-md);
+	}
+
+	.mobile-cards {
+		display: none;
+		padding: var(--space-sm);
+	}
+
+	.asset-card-mobile {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		padding: var(--space-sm);
+		background: var(--color-bg-surface);
+	}
+
+	.mobile-header-row {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: var(--space-sm);
+	}
+
+	.mobile-asset-meta {
+		min-width: 0;
+	}
+
+	.mobile-asset-name {
+		margin: 0;
+		font-size: var(--text-body);
+		color: var(--color-fg-primary);
+	}
+
+	.mobile-asset-type {
+		margin: 0;
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.mobile-stats {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--space-sm);
+	}
+
+	.mobile-label {
+		display: block;
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.mobile-value {
+		display: block;
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-primary);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.mobile-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-xs);
+	}
+
+	@media (max-width: 900px) {
+		.desktop-table {
+			display: none;
+		}
+
+		.mobile-cards {
+			display: grid;
+			gap: var(--space-sm);
+		}
 	}
 
 	:global(.text-center) {

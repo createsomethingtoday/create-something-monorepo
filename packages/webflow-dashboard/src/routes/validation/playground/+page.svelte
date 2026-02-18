@@ -7,7 +7,7 @@
 		TabOption,
 		SortOption
 	} from '$lib/types/validation';
-	import { Header } from '$lib/components';
+	import { Header, BackNavigation, Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components';
 
 	let { data }: { data: PageData } = $props();
 
@@ -113,10 +113,7 @@
 		<div class="content-wrapper">
 			<!-- Header Section -->
 			<section class="header-section">
-				<a href="/validation" class="back-link">
-					<span class="back-arrow">←</span>
-					Back to Validation Tools
-				</a>
+				<BackNavigation href="/validation" label="Back to Validation Tools" />
 				<h1 class="page-title">GSAP Validation Playground</h1>
 				<p class="page-subtitle">
 					Validate your Webflow site against GSAP template guidelines. The validator crawls up to
@@ -196,40 +193,39 @@
 					</div>
 
 					<!-- Tabs -->
-					<div class="tabs">
-						<button
-							class="tab"
-							class:active={activeTab === 'overview'}
-							onclick={() => (activeTab = 'overview')}
-						>
-							Overview
-						</button>
-						<button
-							class="tab"
-							class:active={activeTab === 'pages'}
-							onclick={() => (activeTab = 'pages')}
-						>
-							Pages ({result.pageResults.length})
-						</button>
-						<button
-							class="tab"
-							class:active={activeTab === 'issues'}
-							onclick={() => (activeTab = 'issues')}
-						>
-							Issues ({result.issues.totalFlaggedCode})
-						</button>
-						<button
-							class="tab"
-							class:active={activeTab === 'recommendations'}
-							onclick={() => (activeTab = 'recommendations')}
-						>
-							Recommendations ({result.recommendations.length})
-						</button>
-					</div>
+					<Tabs value={activeTab} class="tabs-shell">
+						<TabsList class="tabs">
+							<TabsTrigger
+								value="overview"
+								active={activeTab === 'overview'}
+								onclick={() => (activeTab = 'overview')}
+							>
+								Overview
+							</TabsTrigger>
+							<TabsTrigger
+								value="pages"
+								active={activeTab === 'pages'}
+								onclick={() => (activeTab = 'pages')}
+							>
+								Pages ({result.pageResults.length})
+							</TabsTrigger>
+							<TabsTrigger
+								value="issues"
+								active={activeTab === 'issues'}
+								onclick={() => (activeTab = 'issues')}
+							>
+								Issues ({result.issues.totalFlaggedCode})
+							</TabsTrigger>
+							<TabsTrigger
+								value="recommendations"
+								active={activeTab === 'recommendations'}
+								onclick={() => (activeTab = 'recommendations')}
+							>
+								Recommendations ({result.recommendations.length})
+							</TabsTrigger>
+						</TabsList>
 
-					<!-- Tab Content -->
-					<div class="tab-content">
-						{#if activeTab === 'overview'}
+						<TabsContent value="overview" active={activeTab === 'overview'} class="tab-content">
 							<div class="overview-content">
 								<div class="overview-grid">
 									<div class="overview-card">
@@ -284,7 +280,8 @@
 									</div>
 								{/if}
 							</div>
-						{:else if activeTab === 'pages'}
+						</TabsContent>
+						<TabsContent value="pages" active={activeTab === 'pages'} class="tab-content">
 							<div class="pages-content">
 								<div class="pages-toolbar">
 									<label class="sort-label">
@@ -355,7 +352,8 @@
 									{/each}
 								</div>
 							</div>
-						{:else if activeTab === 'issues'}
+						</TabsContent>
+						<TabsContent value="issues" active={activeTab === 'issues'} class="tab-content">
 							<div class="issues-content">
 								{#if result.issues.totalFlaggedCode === 0}
 									<div class="no-issues-message">
@@ -384,7 +382,8 @@
 									</div>
 								{/if}
 							</div>
-						{:else if activeTab === 'recommendations'}
+						</TabsContent>
+						<TabsContent value="recommendations" active={activeTab === 'recommendations'} class="tab-content">
 							<div class="recommendations-content">
 								{#each result.recommendations as rec}
 									<div class="recommendation-card {rec.type}">
@@ -405,8 +404,8 @@
 									</div>
 								{/each}
 							</div>
-						{/if}
-					</div>
+						</TabsContent>
+					</Tabs>
 				</section>
 			{/if}
 		</div>
@@ -431,21 +430,6 @@
 	/* Header Section */
 	.header-section {
 		margin-bottom: var(--space-lg);
-	}
-
-	.back-link {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-xs);
-		color: var(--color-fg-muted);
-		text-decoration: none;
-		font-size: var(--text-body-sm);
-		margin-bottom: var(--space-sm);
-		transition: color var(--duration-micro) var(--ease-standard);
-	}
-
-	.back-link:hover {
-		color: var(--color-fg-primary);
 	}
 
 	.page-title {
@@ -681,35 +665,17 @@
 	}
 
 	/* Tabs */
+	.tabs-shell {
+		gap: 0;
+	}
+
 	.tabs {
 		display: flex;
 		gap: var(--space-xs);
 		border-bottom: 1px solid var(--color-border-default);
-		padding-bottom: var(--space-xs);
-	}
-
-	.tab {
-		padding: var(--space-sm) var(--space-md);
+		padding: 0 0 var(--space-xs);
+		border-radius: 0;
 		background: transparent;
-		border: none;
-		color: var(--color-fg-muted);
-		font-size: var(--text-body);
-		cursor: pointer;
-		border-radius: var(--radius-md) var(--radius-md) 0 0;
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.tab:hover {
-		color: var(--color-fg-secondary);
-		background: var(--color-hover);
-	}
-
-	.tab.active {
-		color: var(--color-fg-primary);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-bottom: 1px solid var(--color-bg-surface);
-		margin-bottom: -1px;
 	}
 
 	.tab-content {

@@ -1,8 +1,7 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { Header, Button } from '$lib/components';
+	import { Header, Button, BackNavigation } from '$lib/components';
 	import MarketplaceInsights from '$lib/components/MarketplaceInsights.svelte';
-	import { Clock, ChevronLeft, AlertCircle, BarChart3, Info } from 'lucide-svelte';
+	import { Clock, AlertCircle, BarChart3, Info } from 'lucide-svelte';
 	import type { PageData } from './$types';
 
 	interface LeaderboardEntry {
@@ -153,9 +152,6 @@
 		window.location.href = '/login';
 	}
 
-	function handleBackToDashboard() {
-		goto('/dashboard');
-	}
 </script>
 
 <svelte:head>
@@ -167,11 +163,7 @@
 
 	<main class="main-content">
 		<div class="content-wrapper">
-			<!-- Back Navigation -->
-			<Button variant="link" onclick={handleBackToDashboard} class="back-link">
-				<ChevronLeft size={16} />
-				Back to Dashboard
-			</Button>
+			<BackNavigation />
 
 			<!-- Header -->
 			<div class="page-header">
@@ -261,31 +253,6 @@
 		margin: 0 auto;
 	}
 
-	:global(.back-link) {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-xs);
-		margin-bottom: var(--space-md);
-		color: var(--color-fg-muted);
-		font-weight: var(--font-normal);
-		background: transparent !important;
-		transition: color var(--duration-micro) var(--ease-standard);
-	}
-
-	:global(.back-link:hover) {
-		color: var(--color-fg-primary);
-		background: transparent !important;
-	}
-
-	/* Ensure maximum contrast on hover in both modes */
-	:global([data-theme="light"] .back-link:hover) {
-		color: #000000;
-	}
-
-	:global([data-theme="dark"] .back-link:hover) {
-		color: #ffffff;
-	}
-
 	.page-header {
 		margin-bottom: var(--space-lg);
 		padding-bottom: var(--space-md);
@@ -321,7 +288,7 @@
 		margin: 0;
 	}
 
-	.sync-info svg {
+	.sync-info :global(svg) {
 		flex-shrink: 0;
 		color: var(--color-info);
 	}
@@ -409,7 +376,7 @@
 		border-radius: var(--radius-lg);
 	}
 
-	.error-container svg {
+	.error-container :global(svg) {
 		color: var(--color-error);
 		flex-shrink: 0;
 		margin-top: 2px;
