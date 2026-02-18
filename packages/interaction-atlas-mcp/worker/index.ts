@@ -631,6 +631,12 @@ export default {
       .impactValue { font-size: 1rem; font-weight: 650; color: #f8fafc; }
       .guardrailGood { color: #bbf7d0; }
       .guardrailWarn { color: #fecaca; }
+      .guidedRail { margin-top: 0.65rem; border: 1px solid #1f2937; border-radius: 12px; padding: 0.65rem; background: #0b1220; }
+      .stepStatus { font-size: 0.72rem; border-radius: 999px; padding: 0.1rem 0.45rem; border: 1px solid #334155; color: #cbd5e1; }
+      .stepReady { border-color: #78350f; color: #fde68a; background: rgba(120,53,15,0.2); }
+      .stepDone { border-color: #14532d; color: #bbf7d0; background: rgba(20,83,45,0.22); }
+      .stepNav { cursor: pointer; background: #0f172a; }
+      .stepNav:hover { border-color: #60a5fa; background: #0b1220; }
     </style>
   </head>
   <body>
@@ -663,6 +669,16 @@ export default {
             <option value="advanced">Advanced</option>
           </select>
           <a href="/policies?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}" style="color:#93c5fd;">Back to policies</a>
+        </div>
+      </div>
+      <div id="modeHint" class="muted" style="margin-top:0.45rem;">
+        Simple mode enforces guardrails before activation.
+      </div>
+      <div class="guidedRail">
+        <div id="guidedSteps" class="row" style="margin:0 0 0.45rem;"></div>
+        <div style="display:flex;justify-content:space-between;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+          <div id="guidedHint" class="muted">Follow the guided steps from left to right.</div>
+          <button id="guidedPrimaryCta" class="btnPrimary">Start</button>
         </div>
       </div>
     </header>
@@ -802,6 +818,82 @@ export default {
           trend(before.maxReviewDelta, after.maxReviewDelta, 'Review threshold') +
           trend(before.maxBlockDelta, after.maxBlockDelta, 'Block threshold');
       }
+      function isGuardrailBreached() {
+        if (!latestEstimateSummary) return false;
+        const reviewDelta = Math.max(0, latestEstimateSummary.delta.require_human_review || 0);
+        const blockDelta = Math.max(0, latestEstimateSummary.delta.block || 0);
+        const guardrails = getDraftGuardrails();
+        return reviewDelta > guardrails.maxReviewDelta || blockDelta > guardrails.maxBlockDelta;
+      }
+      function computeGuidedState() {
+        const before = selectedPolicy('beforeVersion');
+        const after = draftPolicy || selectedPolicy('afterVersion');
+        const diff = computeDiff(before, after);
+        const changedTotal = (diff.added?.length || 0) + (diff.removed?.length || 0) + (diff.changed?.length || 0);
+        const chooseComplete = Boolean(after);
+        const draftComplete = chooseComplete && changedTotal > 0;
+        const previewComplete = Boolean(latestEstimateSummary);
+        const guardrailBreach = isGuardrailBreached();
+        const makeLiveReady = previewComplete && !guardrailBreach;
+        const makeLiveComplete = makeLiveReady && Boolean(activePolicyVersionId) && activePolicyVersionId === byId('afterVersion')?.value;
+        return { chooseComplete, draftComplete, previewComplete, makeLiveReady, makeLiveComplete, guardrailBreach };
+      }
+      function renderGuidedRail() {
+        const steps = byId('guidedSteps');
+        const hint = byId('guidedHint');
+        const cta = byId('guidedPrimaryCta');
+        if (!steps || !hint || !cta) return;
+        const s = computeGuidedState();
+        const status = (complete, ready) =>
+          complete ? '<span class="stepStatus stepDone">Complete</span>' : ready ? '<span class="stepStatus stepReady">Ready</span>' : '<span class="stepStatus">Not started</span>';
+        steps.innerHTML =
+          '<button type="button" class="step stepNav" data-step="choose">1. Choose</button>' + status(s.chooseComplete, true) +
+          '<button type="button" class="step stepNav" data-step="draft">2. Draft</button>' + status(s.draftComplete, s.chooseComplete) +
+          '<button type="button" class="step stepNav" data-step="preview">3. Preview</button>' + status(s.previewComplete, s.draftComplete) +
+          '<button type="button" class="step stepNav" data-step="make-live">4. Make Live</button>' + status(s.makeLiveComplete, s.makeLiveReady);
+
+        let action = 'apply-template';
+        let label = 'Apply Objective Template';
+        let copy = 'Start with a template to draft a policy change.';
+        if (!s.draftComplete) {
+          action = 'apply-template';
+          label = 'Apply Objective Template';
+          copy = 'Choose an objective template and create a draft change.';
+        } else if (!s.previewComplete) {
+          action = 'simulate';
+          label = 'Preview Impact';
+          copy = 'Run preview to estimate allow/review/block deltas.';
+        } else if (s.makeLiveReady && !s.makeLiveComplete) {
+          action = 'activate';
+          label = 'Make Live';
+          copy = 'Guardrails pass. You can safely activate this snapshot.';
+        } else if (s.makeLiveComplete) {
+          action = 'none';
+          label = 'Live Now';
+          copy = 'Current proposed snapshot is already live.';
+        } else if (s.guardrailBreach) {
+          action = 'adjust';
+          label = 'Adjust Rules or Guardrails';
+          copy = 'Preview exceeds guardrails. Lower risk before activation.';
+        }
+        hint.textContent = copy;
+        cta.textContent = label;
+        cta.dataset.action = action;
+        cta.disabled = action === 'none';
+        cta.style.opacity = action === 'none' ? '0.6' : '1';
+      }
+      function jumpToStep(step) {
+        const map = {
+          choose: byId('afterVersion'),
+          draft: byId('objectivePreset'),
+          preview: byId('simulateBtn'),
+          'make-live': byId('makeLiveBtn'),
+        };
+        const target = map[step];
+        if (!target) return;
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (typeof target.focus === 'function') target.focus();
+      }
       function ensureDraftGuardrails() {
         if (!draftPolicy) return;
         const g = getDraftGuardrails();
@@ -821,6 +913,14 @@ export default {
         const mode = byId('uiMode')?.value || 'simple';
         document.body.classList.remove('mode-simple', 'mode-advanced');
         document.body.classList.add(mode === 'advanced' ? 'mode-advanced' : 'mode-simple');
+        const hint = byId('modeHint');
+        if (hint) {
+          hint.textContent =
+            mode === 'advanced'
+              ? 'Advanced mode shows full technical controls and expert override actions.'
+              : 'Simple mode enforces guardrails before activation.';
+        }
+        renderGuidedRail();
       }
       function setMakeLiveEnabled(enabled) {
         const btn = byId('makeLiveBtn');
@@ -924,6 +1024,7 @@ export default {
           diff
         });
         updateRiskSummary(diff);
+        renderGuidedRail();
       }
 
       function renderImpactCards() {
@@ -961,7 +1062,7 @@ export default {
         const reviewDelta = Math.max(0, latestEstimateSummary?.delta?.require_human_review || 0);
         const blockDelta = Math.max(0, latestEstimateSummary?.delta?.block || 0);
         const guardrails = getDraftGuardrails();
-        const guardrailBreach = reviewDelta > guardrails.maxReviewDelta || blockDelta > guardrails.maxBlockDelta;
+        const guardrailBreach = isGuardrailBreached();
         if (guardrail) {
           if (!latestEstimateSummary) {
             guardrail.className = 'muted';
@@ -976,6 +1077,7 @@ export default {
         }
         const simpleMode = (byId('uiMode')?.value || 'simple') === 'simple';
         setMakeLiveEnabled(!simpleMode || !!latestEstimateSummary && !guardrailBreach);
+        renderGuidedRail();
       }
 
       function syncDraftFromAfter() {
@@ -1265,10 +1367,36 @@ export default {
         renderDiff();
         setStatus('Rule added', 'success');
       });
+      byId('guidedPrimaryCta').addEventListener('click', () => {
+        const action = byId('guidedPrimaryCta')?.dataset?.action;
+        if (action === 'apply-template') {
+          applyPresetRules();
+          return;
+        }
+        if (action === 'simulate') {
+          runSimulation();
+          return;
+        }
+        if (action === 'activate') {
+          activateAfter();
+          return;
+        }
+        if (action === 'adjust') {
+          byId('maxReviewDelta')?.focus();
+        }
+      });
+      byId('guidedSteps').addEventListener('click', (event) => {
+        const el = event.target;
+        if (!el || !(el instanceof HTMLElement)) return;
+        const step = el.getAttribute('data-step');
+        if (!step) return;
+        jumpToStep(step);
+      });
 
       applyUIMode();
       setMakeLiveEnabled(false);
       renderGuardrailsInputs();
+      renderGuidedRail();
       loadData().catch((e) => {
         byId('simulationOutput').textContent = String(e);
         setStatus('Failed to load', 'error');
