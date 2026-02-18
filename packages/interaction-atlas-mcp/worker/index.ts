@@ -304,6 +304,16 @@ export default {
       .cardTitle { font-size: 1.05rem; font-weight: 600; }
       .muted { color: var(--text-muted); }
       .label { color: var(--text-soft); }
+      .mt18 { margin-top: 0.18rem; }
+      .mt2 { margin-top: 0.2rem; }
+      .mt3 { margin-top: 0.35rem; }
+      .mt5 { margin-top: 0.5rem; }
+      .mt55 { margin-top: 0.55rem; }
+      .mb5 { margin-bottom: 0.5rem; }
+      .my8 { margin: 0.8rem 0 0.35rem; }
+      .my35_45 { margin-top: 0.35rem; margin-bottom: 0.45rem; }
+      .fw500 { font-weight: 500; }
+      .fw600 { font-weight: 600; }
       .meta {
         display: flex;
         gap: 0.5rem;
@@ -1075,16 +1085,44 @@ export default {
       }
       .stepNav { cursor: pointer; background: var(--bg-canvas); }
       .stepNav:hover { border-color: var(--accent-strong); background: var(--bg-subtle); }
+      .headerTop {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+      .layoutSplit {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.75rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .titleLg { font-size: 1.2rem; font-weight: 700; line-height: 1.2; }
+      .titleSm { font-weight: 600; }
+      .rowZero { margin: 0; }
+      .rowGuidedSteps { margin: 0 0 0.45rem; }
+      .mt2 { margin-top: 0.2rem; }
+      .mt3 { margin-top: 0.35rem; }
+      .mt4 { margin-top: 0.45rem; }
+      .mt5 { margin-top: 0.5rem; }
+      .mt6 { margin-top: 0.75rem; }
+      .mb5 { margin-bottom: 0.5rem; }
+      .inputNarrow { width: 88px; }
+      .inputWide { min-width: min(320px, 100%); }
+      .mlAuto { margin-left: auto; }
+      .ruleWhen { color: var(--text-soft); font-size: 0.85rem; }
     </style>
   </head>
   <body>
     <header>
-      <div style="display:flex;justify-content:space-between;gap:0.75rem;align-items:flex-start;flex-wrap:wrap;">
+      <div class="headerTop">
         <div>
-          <div style="font-size:1.2rem;font-weight:700;">Policy Tuning Studio</div>
-          <div class="muted" style="margin-top:0.25rem;">Account: ${esc(authCtx.accountId)} · Entity: ${esc(entityType)}:${esc(entityId)}</div>
-          <div class="muted" style="margin-top:0.35rem;">Simple mode is recommended for non-technical operators.</div>
-          <div class="row" style="margin-top:0.45rem;">
+          <div class="titleLg">Policy Tuning Studio</div>
+          <div class="muted mt2">Account: ${esc(authCtx.accountId)} · Entity: ${esc(entityType)}:${esc(entityId)}</div>
+          <div class="muted mt3">Simple mode is recommended for non-technical operators.</div>
+          <div class="row mt4">
             <span class="atlasTag">AI Tasks</span>
             <span class="atlasTag">Human Tasks</span>
             <span class="atlasTag">System Tasks</span>
@@ -1092,14 +1130,14 @@ export default {
             <span class="atlasTag">Constraints</span>
             <span class="atlasTag">Touchpoints</span>
           </div>
-          <div class="row" style="margin-top:0.5rem;">
+          <div class="row mt5">
             <span class="step">1. Choose</span>
             <span class="step">2. Draft</span>
             <span class="step">3. Preview</span>
             <span class="step">4. Make Live</span>
           </div>
         </div>
-        <div class="row" style="margin:0;">
+        <div class="row rowZero">
           <span id="statusBadge" class="statusBadge status-neutral">Ready</span>
           <label class="muted" for="uiMode">View</label>
           <select id="uiMode">
@@ -1109,12 +1147,12 @@ export default {
           <a href="/policies?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}">Back to policies</a>
         </div>
       </div>
-      <div id="modeHint" class="muted" style="margin-top:0.45rem;">
+      <div id="modeHint" class="muted mt4">
         Simple mode enforces guardrails before activation.
       </div>
       <div class="guidedRail">
-        <div id="guidedSteps" class="row" style="margin:0 0 0.45rem;"></div>
-        <div style="display:flex;justify-content:space-between;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+        <div id="guidedSteps" class="row rowGuidedSteps"></div>
+        <div class="layoutSplit">
           <div id="guidedHint" class="muted">Follow the guided steps from left to right.</div>
           <button id="guidedPrimaryCta" class="btnPrimary">Start</button>
         </div>
@@ -1147,7 +1185,7 @@ export default {
 
       <section class="panel">
         <div class="panelTitle">Decision Rules</div>
-        <div class="muted" style="margin-bottom:0.5rem;">Reorder rules to control what runs first. Top rules have stronger priority.</div>
+        <div class="muted mb5">Reorder rules to control what runs first. Top rules have stronger priority.</div>
         <div class="row">
           <label class="muted">Objective</label>
           <select id="objectivePreset">
@@ -1159,14 +1197,14 @@ export default {
         </div>
         <div class="row">
           <label class="muted">Guardrails</label>
-          <label>Max review delta <input id="maxReviewDelta" type="number" min="0" value="2" style="width:88px;" /></label>
-          <label>Max block delta <input id="maxBlockDelta" type="number" min="0" value="1" style="width:88px;" /></label>
+          <label>Max review delta <input id="maxReviewDelta" class="inputNarrow" type="number" min="0" value="2" /></label>
+          <label>Max block delta <input id="maxBlockDelta" class="inputNarrow" type="number" min="0" value="1" /></label>
           <button id="resetGuardrailsBtn">Reset Defaults</button>
         </div>
         <div id="ruleMeta" class="row"></div>
         <div id="ruleList"></div>
 
-        <div style="margin-top:0.75rem;" class="panelTitle">Add Rule</div>
+        <div class="panelTitle mt6">Add Rule</div>
         <div class="row advancedOnly">
           <input id="ruleId" placeholder="Rule ID (advanced)" />
           <input id="rulePriority" type="number" value="50" />
@@ -1174,7 +1212,7 @@ export default {
         </div>
         <div class="row">
           <label class="muted">Rule name</label>
-          <input id="ruleName" placeholder="Example: Review before write actions" style="min-width:320px;" />
+          <input id="ruleName" class="inputWide" placeholder="Example: Review before write actions" />
         </div>
         <div class="row">
           <label><input type="checkbox" id="hasWriteIntent" /> Involves changes/writes</label>
@@ -1187,7 +1225,7 @@ export default {
             <option value="require_human_review">Require human review</option>
             <option value="block">Block action</option>
           </select>
-          <input id="reason" placeholder="Why this rule exists" style="min-width: 320px;" />
+          <input id="reason" class="inputWide" placeholder="Why this rule exists" />
           <button id="addRuleBtn" class="btnPrimary">Add Rule</button>
         </div>
         <div class="row">
@@ -1199,13 +1237,13 @@ export default {
       </section>
     </main>
     <div class="actionBar">
-      <div style="display:flex;justify-content:space-between;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+      <div class="layoutSplit">
         <div>
-          <div style="font-weight:600;">Make Live Safely</div>
+          <div class="titleSm">Make Live Safely</div>
           <div id="riskSummary" class="muted">Run Preview Impact to see risk before activation.</div>
-          <div id="guardrailStatus" class="muted" style="margin-top:0.2rem;">Guardrails: pending preview.</div>
+          <div id="guardrailStatus" class="muted mt2">Guardrails: pending preview.</div>
         </div>
-        <div class="row" style="margin:0;">
+        <div class="row rowZero">
           <button id="simulateBottomBtn">Preview Impact</button>
           <button id="rollbackBtn">Rollback to Current Live</button>
           <button id="makeLiveBtn" class="btnPrimary">Make Live</button>
@@ -1318,7 +1356,6 @@ export default {
         cta.textContent = label;
         cta.dataset.action = action;
         cta.disabled = action === 'none';
-        cta.style.opacity = action === 'none' ? '0.6' : '1';
       }
       function jumpToStep(step) {
         const map = {
@@ -1364,7 +1401,6 @@ export default {
         const btn = byId('makeLiveBtn');
         if (!btn) return;
         btn.disabled = !enabled;
-        btn.style.opacity = enabled ? '1' : '0.6';
         btn.title = enabled ? '' : 'Preview indicates guardrail thresholds exceeded.';
       }
       function setStatus(text, tone) {
@@ -1405,9 +1441,9 @@ export default {
           '<span class="pill">Snapshot: ' + (draftPolicy.id || '(draft)') + '</span>';
         wrap.innerHTML = draftPolicy.rules.map((r, i) => {
           return '<div class="rule" draggable="true" data-index="' + i + '">' +
-            '<div class="row"><span class="pill">#' + r.priority + '</span><strong>' + (r.displayName || r.id) + '</strong><span>' + (r.then?.decision || '') + '</span><button data-remove="' + i + '" class="btnDanger" style="margin-left:auto;">Remove</button></div>' +
+            '<div class="row"><span class="pill">#' + r.priority + '</span><strong>' + (r.displayName || r.id) + '</strong><span>' + (r.then?.decision || '') + '</span><button data-remove="' + i + '" class="btnDanger mlAuto">Remove</button></div>' +
             '<div class="muted">' + (r.then?.reason || '') + '</div>' +
-            '<div class="advancedOnly" style="color:var(--text-soft);font-size:0.85rem;">when: ' + JSON.stringify(r.when || {}) + '</div>' +
+            '<div class="advancedOnly ruleWhen">when: ' + JSON.stringify(r.when || {}) + '</div>' +
             '</div>';
         }).join('');
 
@@ -1883,8 +1919,8 @@ export default {
               .map(
                 (v) => `<div class="versionRow">
                 <div><code>${esc(v.id)}</code></div>
-                <div class="muted" style="margin-top:0.2rem;">${esc(v.status)} · ${esc(String(v.created_at))}</div>
-                <div class="muted" style="margin-top:0.18rem;">guardrails(review<=<code>${esc(String(v.guardrails.maxReviewDelta ?? 'default'))}</code>, block<=<code>${esc(String(v.guardrails.maxBlockDelta ?? 'default'))}</code>)</div>
+                <div class="muted mt2">${esc(v.status)} · ${esc(String(v.created_at))}</div>
+                <div class="muted mt18">guardrails(review<=<code>${esc(String(v.guardrails.maxReviewDelta ?? 'default'))}</code>, block<=<code>${esc(String(v.guardrails.maxBlockDelta ?? 'default'))}</code>)</div>
               </div>`,
               )
               .join('');
@@ -1892,20 +1928,20 @@ export default {
       const body = `
       <div class="card">
         <div class="cardTitle">Active policy</div>
-        <div class="muted" style="margin-top:0.35rem;margin-bottom:0.45rem;">
+        <div class="muted my35_45">
           Guardrails: review delta max <code>${esc(String(activeGuardrails.maxReviewDelta ?? 'default'))}</code> · block delta max <code>${esc(String(activeGuardrails.maxBlockDelta ?? 'default'))}</code>
         </div>
         <pre><code>${esc(JSON.stringify(active.policy, null, 2))}</code></pre>
       </div>
       <div class="card">
         <div class="cardTitle">Saved versions</div>
-        <div style="margin-top:0.5rem;">${versionsMarkup}</div>
+        <div class="mt5">${versionsMarkup}</div>
       </div>
-      <div class="muted" style="margin:0.8rem 0 0.35rem;">
+      <div class="muted my8">
         Access scope: this page and policy APIs are account-scoped by your API key or Bearer token context.
       </div>
       <div class="muted">JSON API: <a href="/api/policies?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}"><code>/api/policies</code></a></div>
-      <div class="muted" style="margin-top:0.35rem;">Visual editor: <a href="/policies/editor?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}"><code>/policies/editor</code></a></div>`;
+      <div class="muted mt3">Visual editor: <a href="/policies/editor?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}"><code>/policies/editor</code></a></div>`;
 
       const html = renderViewerPage({
         title: 'Judgment Policies',
@@ -1933,7 +1969,7 @@ export default {
       const body = `
       <div class="card">
         <div class="cardTitle">Metadata</div>
-        <div class="fieldGrid" style="margin-top:0.55rem;">
+        <div class="fieldGrid mt55">
           <div class="field">
             <div class="fieldLabel">Account</div>
             <div>${esc(report.account_id)}</div>
@@ -1960,7 +1996,7 @@ export default {
         <div class="cardTitle">Scenarios</div>
         <pre><code>${esc(JSON.stringify(scenarios, null, 2))}</code></pre>
       </div>
-      <div class="muted" style="margin:0.8rem 0 0.35rem;">
+      <div class="muted my8">
         Access scope: report visibility is account-scoped by your API key/Bearer token context.
       </div>
       <div class="muted">API: <code>${esc(`${baseUrl}/api/reports/${report.id}`)}</code></div>`;
@@ -2104,11 +2140,11 @@ export default {
       </div>
 
       <div class="panel">
-        <div class="label" style="margin-bottom:0.5rem;">Mermaid diagram (auto-mapped)</div>
+        <div class="label mb5">Mermaid diagram (auto-mapped)</div>
         <pre class="mermaid">${esc(mermaid)}</pre>
       </div>
 
-      ${validation.valid ? '' : `<div class="panel alertBad"><div class="bad" style="font-weight:600;">Invalid Atlas IDs</div><div class="muted" style="margin-top:0.5rem;"><code>${esc(validation.invalidIds.join(', '))}</code></div></div>`}
+      ${validation.valid ? '' : `<div class="panel alertBad"><div class="bad fw600">Invalid Atlas IDs</div><div class="muted mt5"><code>${esc(validation.invalidIds.join(', '))}</code></div></div>`}
 
       <details>
         <summary>MCP Entry JSON</summary>
@@ -2138,7 +2174,7 @@ export default {
 
       const html = renderViewerPage({
         title: `MCP - ${entry.name}`,
-        heading: `${esc(entry.name)} <span class="label" style="font-weight:500;">(mcp:${esc(entry.slug)})</span>`,
+        heading: `${esc(entry.name)} <span class="label fw500">(mcp:${esc(entry.slug)})</span>`,
         subtitle: esc(entry.description),
         headerMeta,
         headerActions: `<a class="pill" href="/mcps">All MCPs</a><span class="pill ${validation.valid ? 'statusOk' : 'statusBad'}">${validation.valid ? 'valid' : 'invalid'}</span>`,
@@ -2165,11 +2201,11 @@ export default {
 
       const body = `
       <div class="panel">
-        <div class="label" style="margin-bottom:0.5rem;">Mermaid diagram</div>
+        <div class="label mb5">Mermaid diagram</div>
         <pre class="mermaid">${esc(mermaid)}</pre>
       </div>
 
-      ${validation.valid ? '' : `<div class="panel alertBad"><div class="bad" style="font-weight:600;">Invalid Atlas IDs</div><div class="muted" style="margin-top:0.5rem;"><code>${esc(validation.invalidIds.join(', '))}</code></div></div>`}
+      ${validation.valid ? '' : `<div class="panel alertBad"><div class="bad fw600">Invalid Atlas IDs</div><div class="muted mt5"><code>${esc(validation.invalidIds.join(', '))}</code></div></div>`}
 
       <details>
         <summary>Workflow JSON (Atlas WorkflowTemplate)</summary>
@@ -2178,7 +2214,7 @@ export default {
 
       const html = renderViewerPage({
         title: `Workflow - ${workflowId}`,
-        heading: `${esc(template.name)} <span class="label" style="font-weight:500;">(${esc(workflowId)})</span>`,
+        heading: `${esc(template.name)} <span class="label fw500">(${esc(workflowId)})</span>`,
         subtitle: esc(template.description),
         headerMeta,
         headerActions: `<a class="pill" href="/workflows">All workflows</a><span class="pill ${validation.valid ? 'statusOk' : 'statusBad'}">${validation.valid ? 'valid' : 'invalid'}</span>`,
