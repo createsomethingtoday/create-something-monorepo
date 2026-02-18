@@ -11,7 +11,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
   const MESSAGE_MARKER = '__wf_review_snippet_v1';
 
   /** @type {any | null} */
@@ -24,68 +24,163 @@
   /** @type {number | null} */
   let ix3CapturedAt = null;
 
-  function patchIx2Module(ix2) {
-    if (!ix2 || typeof ix2.init !== 'function') return;
-    if (ix2.init.__wfReviewPatched) return;
+  const patchedWebflowRequireFns = new WeakSet();
+  const wrappedIx2Modules = new WeakMap();
+  const wrappedIx3Modules = new WeakMap();
+  const wrappedIx3Instances = new WeakMap();
 
-    const originalInit = ix2.init.bind(ix2);
-    ix2.init = (payload) => {
-      ix2InitPayload = payload;
-      ix2CapturedAt = Date.now();
-      return originalInit(payload);
-    };
-    ix2.init.__wfReviewPatched = true;
+  function defineDataProp(obj, key, value) {
+    // Some Webflow modules are module-namespace-like objects whose exports are getter-only.
+    // Using assignment can throw in strict mode due to prototype accessors with no setter.
+    Object.defineProperty(obj, key, {
+      configurable: true,
+      enumerable: true,
+      writable: true,
+      value,
+    });
   }
 
-  function patchIx3Module(ix3) {
-    if (!ix3 || ix3.__wfReviewPatched) return;
-    ix3.__wfReviewPatched = true;
+  function wrapIx2Module(ix2) {
+    if (!ix2) return ix2;
+    const initFn = ix2.init;
+    if (typeof initFn !== 'function') return ix2;
 
-    if (typeof ix3.getInstance === 'function') {
-      const originalGetInstance = ix3.getInstance.bind(ix3);
-      ix3.getInstance = () => {
-        const inst = originalGetInstance();
-        if (inst && typeof inst.register === 'function' && !inst.register.__wfReviewPatched) {
-          const originalRegister = inst.register.bind(inst);
-          inst.register = (interactions, timelines) => {
-            if (Array.isArray(interactions) && Array.isArray(timelines)) {
-              ix3RegisterPayload = { interactions, timelines };
-              ix3CapturedAt = Date.now();
-            }
-            return originalRegister(interactions, timelines);
-          };
-          inst.register.__wfReviewPatched = true;
-        }
-        return inst;
-      };
-    }
+    const cached = wrappedIx2Modules.get(ix2);
+    if (cached) return cached;
+
+    const wrapped = Object.create(ix2);
+    defineDataProp(wrapped, 'init', (...args) => {
+      ix2InitPayload = args[0] ?? null;
+      ix2CapturedAt = Date.now();
+
+      const currentInit = ix2.init;
+      if (typeof currentInit !== 'function') return undefined;
+      return currentInit.apply(ix2, args);
+    });
+
+    wrappedIx2Modules.set(ix2, wrapped);
+    return wrapped;
+  }
+
+  function wrapIx3Instance(inst) {
+    if (!inst) return inst;
+    if (typeof inst.register !== 'function') return inst;
+
+    const cached = wrappedIx3Instances.get(inst);
+    if (cached) return cached;
+
+    const wrapped = Object.create(inst);
+    defineDataProp(wrapped, 'register', (...args) => {
+      const interactions = args[0];
+      const timelines = args[1];
+
+      if (Array.isArray(interactions) && Array.isArray(timelines)) {
+        ix3RegisterPayload = { interactions, timelines };
+        ix3CapturedAt = Date.now();
+      }
+
+      const currentRegister = inst.register;
+      if (typeof currentRegister !== 'function') return undefined;
+      return currentRegister.apply(inst, args);
+    });
+
+    wrappedIx3Instances.set(inst, wrapped);
+    return wrapped;
+  }
+
+  function wrapIx3Module(ix3) {
+    if (!ix3) return ix3;
+    if (typeof ix3.getInstance !== 'function') return ix3;
+
+    const cached = wrappedIx3Modules.get(ix3);
+    if (cached) return cached;
+
+    const wrapped = Object.create(ix3);
+    defineDataProp(wrapped, 'getInstance', (...args) => {
+      const currentGetInstance = ix3.getInstance;
+      if (typeof currentGetInstance !== 'function') return null;
+      const inst = currentGetInstance.apply(ix3, args);
+      return wrapIx3Instance(inst);
+    });
+
+    wrappedIx3Modules.set(ix3, wrapped);
+    return wrapped;
   }
 
   function patchWebflowRequire(webflow) {
     if (!webflow || typeof webflow.require !== 'function') return false;
-    if (webflow.require.__wfReviewPatched) return true;
+    if (patchedWebflowRequireFns.has(webflow.require)) return true;
 
     const originalRequire = webflow.require.bind(webflow);
-    webflow.require = (name) => {
+    const wrappedRequire = (name) => {
       const mod = originalRequire(name);
-      if (name === 'ix2') patchIx2Module(mod);
-      if (name === 'ix3') patchIx3Module(mod);
+      if (name === 'ix2') return wrapIx2Module(mod);
+      if (name === 'ix3') return wrapIx3Module(mod);
       return mod;
     };
-    webflow.require.__wfReviewPatched = true;
-    return true;
+
+    try {
+      webflow.require = wrappedRequire;
+      patchedWebflowRequireFns.add(wrappedRequire);
+      return true;
+    } catch {
+      // Fall back to defining an own property if assignment fails (e.g. accessor with no setter).
+    }
+
+    try {
+      defineDataProp(webflow, 'require', wrappedRequire);
+      patchedWebflowRequireFns.add(wrappedRequire);
+      return true;
+    } catch {
+      // If `require` is read-only, we can't patch. (We still attempt store-based reads later.)
+      return false;
+    }
+  }
+
+  let webflowHookInstalled = false;
+  function installWebflowHook() {
+    if (webflowHookInstalled) return;
+    webflowHookInstalled = true;
+
+    try {
+      const desc = Object.getOwnPropertyDescriptor(window, 'Webflow');
+      if (desc && desc.configurable === false) return;
+      if (desc && (typeof desc.get === 'function' || typeof desc.set === 'function')) return;
+
+      let current = window.Webflow;
+      Object.defineProperty(window, 'Webflow', {
+        configurable: true,
+        enumerable: true,
+        get() {
+          return current;
+        },
+        set(v) {
+          current = v;
+          try {
+            patchWebflowRequire(v);
+          } catch {
+            // ignore
+          }
+        },
+      });
+
+      if (current) patchWebflowRequire(current);
+    } catch {
+      // ignore
+    }
   }
 
   function tryPatchWebflowNow() {
     try {
-      // eslint-disable-next-line no-undef
       return patchWebflowRequire(window.Webflow);
     } catch {
       return false;
     }
   }
 
-  // Best-effort: patch early and keep trying for a short window in case Webflow loads later.
+  installWebflowHook();
+
+  // Best-effort: keep trying for a short window in case Webflow loads later.
   // This is needed because published Webflow bundles call Webflow.require("ix2").init(...) during load.
   const patchStart = Date.now();
   const patchTimer = setInterval(() => {
@@ -105,7 +200,7 @@
       const wf = window.Webflow;
       if (!wf || typeof wf.require !== 'function') return { source: 'none', payload: null, capturedAt: null };
       const ix2 = wf.require('ix2');
-      const store = ix2 && ix2.store;
+      const store = ix2 && (ix2.store || ix2._store || ix2.__store);
       if (!store || typeof store.getState !== 'function') {
         return { source: 'none', payload: null, capturedAt: null };
       }
@@ -571,4 +666,3 @@
     // Ignore WebMCP registration failures.
   }
 })();
-
