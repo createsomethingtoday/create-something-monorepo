@@ -1,6 +1,6 @@
 {
   "name": "@create-something/playbook-mcp",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Host workflow playbooks for MCP onboarding — teaches non-technical users how to work effectively in Codex, Cursor, and Claude Desktop",
   "type": "module",
   "main": "dist/index.js",

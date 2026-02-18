@@ -1,3 +1,4 @@
+import { isValidTaskId } from '@quietloudlab/ai-interaction-atlas';
 function classifyTool(toolName) {
     const t = toolName.toLowerCase();
     // Notifications / outbound comms
@@ -14,20 +15,30 @@ function classifyTool(toolName) {
         return 'read';
     return 'other';
 }
-function toolKindToAtlasTask(kind) {
+function chooseValidTaskId(candidates) {
+    const desired = candidates[0] ?? 'system_api';
+    for (const id of candidates) {
+        if (isValidTaskId(id))
+            return { desired, taskId: id, usedFallback: id !== desired, allInvalid: false };
+    }
+    // No candidates exist in the Atlas dataset. Keep the desired id so validation
+    // surfaces the issue, and emit a warning for operators.
+    return { desired, taskId: desired, usedFallback: false, allInvalid: true };
+}
+function toolKindToAtlasTaskCandidates(kind) {
     switch (kind) {
         case 'read':
-            return 'system_read_db';
+            return ['system_read_db', 'system_query_db', 'system_api'];
         case 'create':
-            return 'system_create_db';
+            return ['system_create_db', 'system_write_db', 'system_api'];
         case 'update':
-            return 'system_update_db';
+            return ['system_update_db', 'system_write_db', 'system_create_db', 'system_api'];
         case 'delete':
-            return 'system_delete_db';
+            return ['system_delete_db', 'system_archive_db', 'system_write_db', 'system_api'];
         case 'notify':
-            return 'system_notification';
+            return ['system_notification', 'system_api'];
         case 'other':
-            return 'system_api';
+            return ['system_api'];
     }
 }
 function kindLabel(kind) {
@@ -85,6 +96,7 @@ function groupTools(tools) {
 export function mapMcpToWorkflowDefinition(entry, introspection) {
     const tools = introspection?.tools ?? [];
     const grouped = groupTools(tools);
+    const warnings = [];
     const steps = [];
     if (entry.requiresAuth) {
         steps.push({
@@ -97,27 +109,44 @@ export function mapMcpToWorkflowDefinition(entry, introspection) {
                 { type: 'constraint', referenceId: 'const_privacy' },
             ],
         });
+        if (!isValidTaskId('human_connect_integration')) {
+            warnings.push('Atlas task id invalid: "human_connect_integration" is not defined in the dataset.');
+        }
     }
     steps.push({
         referenceId: 'human_type_input',
         label: 'Provide Goal / Query',
         notes: 'User describes what they want done. This is the start of an agentic run.',
     });
+    if (!isValidTaskId('human_type_input')) {
+        warnings.push('Atlas task id invalid: "human_type_input" is not defined in the dataset.');
+    }
     const orderedKinds = ['read', 'create', 'update', 'delete', 'notify', 'other'];
     for (const kind of orderedKinds) {
         const group = grouped[kind];
         if (!group || group.length === 0)
             continue;
+        const candidates = toolKindToAtlasTaskCandidates(kind);
+        const resolved = chooseValidTaskId(candidates);
+        if (resolved.usedFallback) {
+            warnings.push(`Atlas task id fallback for "${kind}": "${resolved.desired}" is not defined; using "${resolved.taskId}".`);
+        }
+        else if (resolved.allInvalid) {
+            warnings.push(`Atlas task id invalid for "${kind}": none of [${candidates.map((c) => `"${c}"`).join(', ')}] are defined.`);
+        }
         steps.push({
-            referenceId: toolKindToAtlasTask(kind),
+            referenceId: resolved.taskId,
             label: `${kindLabel(kind)} (${group.length})`,
             notes: `Tool surface:\n${summarizeTools(group)}`,
             attachments: attachmentsForKind(kind, entry),
         });
     }
     if (tools.length === 0) {
+        const resolved = chooseValidTaskId(['system_api']);
+        if (resolved.allInvalid)
+            warnings.push('Atlas task id invalid: "system_api" is not defined in the dataset.');
         steps.push({
-            referenceId: 'system_api',
+            referenceId: resolved.taskId,
             label: 'MCP Tool Surface (unavailable)',
             notes: entry.requiresAuth
                 ? 'Tool list unavailable without authentication. Connect the integration, then re-run introspection.'
@@ -131,17 +160,26 @@ export function mapMcpToWorkflowDefinition(entry, introspection) {
         notes: 'Synthesize tool outputs into a coherent answer or report.',
         attachments: [{ type: 'constraint', referenceId: 'const_format', notes: 'Prefer structured outputs for downstream review.' }],
     });
+    if (!isValidTaskId('task_synthesize')) {
+        warnings.push('Atlas task id invalid: "task_synthesize" is not defined in the dataset.');
+    }
     steps.push({
         referenceId: 'task_verify',
         notes: 'Verify key claims against evidence (tool outputs, sources).',
         attachments: [{ type: 'constraint', referenceId: 'const_quality_threshold' }],
     });
+    if (!isValidTaskId('task_verify')) {
+        warnings.push('Atlas task id invalid: "task_verify" is not defined in the dataset.');
+    }
     steps.push({
         referenceId: 'human_review',
         notes: 'Human reviews the outcome and approves any next actions.',
         attachments: [{ type: 'constraint', referenceId: 'const_human_loop' }],
     });
-    return {
+    if (!isValidTaskId('human_review')) {
+        warnings.push('Atlas task id invalid: "human_review" is not defined in the dataset.');
+    }
+    const definition = {
         id: `mcp-${entry.slug}`,
         name: `MCP: ${entry.name}`,
         description: entry.description,
@@ -160,5 +198,6 @@ export function mapMcpToWorkflowDefinition(entry, introspection) {
             notes: 'This is an automatically generated capability map. It does not represent a single "happy path" run; it summarizes the available tool surface grouped by system operation type.',
         },
     };
+    return { definition, warnings };
 }
 //# sourceMappingURL=map.js.map

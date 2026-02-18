@@ -178,28 +178,30 @@ export function registerTools(server: ScopedMcpServer): void {
     { readOnly: true },
   );
 
-  server.tool(
-    'workflow_map_from_tool_sequence',
-    'Automatically map an ordered tool-call sequence into an Atlas WorkflowTemplate for client review.',
-    WorkflowMapFromToolSequenceSchema.shape,
-    async (params, ctx) => {
-      const input = WorkflowMapFromToolSequenceSchema.parse(params);
-      const def = mapToolSequenceToWorkflowDefinition(input);
-      const workflow = buildWorkflowTemplate(def);
-      const validation = validateBuiltWorkflow(workflow);
-      const mermaid = workflowTemplateToMermaid(workflow);
+	  server.tool(
+	    'workflow_map_from_tool_sequence',
+	    'Automatically map an ordered tool-call sequence into an Atlas WorkflowTemplate for client review.',
+	    WorkflowMapFromToolSequenceSchema.shape,
+	    async (params, ctx) => {
+	      const input = WorkflowMapFromToolSequenceSchema.parse(params);
+	      const mapped = mapToolSequenceToWorkflowDefinition(input);
+	      const def = mapped.definition;
+	      const workflow = buildWorkflowTemplate(def);
+	      const validation = validateBuiltWorkflow(workflow);
+	      const mermaid = workflowTemplateToMermaid(workflow);
 
-      return jsonContent({
-        accountId: ctx.accountId,
-        definition: def,
-        valid: validation.valid,
-        invalidIds: validation.invalidIds,
-        mermaid,
-        workflow,
-      });
-    },
-    { readOnly: true },
-  );
+	      return jsonContent({
+	        accountId: ctx.accountId,
+	        definition: def,
+	        warnings: mapped.warnings,
+	        valid: validation.valid,
+	        invalidIds: validation.invalidIds,
+	        mermaid,
+	        workflow,
+	      });
+	    },
+	    { readOnly: true },
+	  );
 
   server.tool(
     'mcp_catalog_list',
@@ -260,29 +262,31 @@ export function registerTools(server: ScopedMcpServer): void {
       if (input.slug && !entry) return errorContent(`Unknown MCP slug: ${input.slug}`);
       if (!entry) return errorContent('Provide slug or url.');
 
-      const endpointUrl = input.url
-        ? resolveMcpHttpEndpointUrlFromUrl(input.url)
-        : resolveMcpHttpEndpointUrl(entry);
+	      const endpointUrl = input.url
+	        ? resolveMcpHttpEndpointUrlFromUrl(input.url)
+	        : resolveMcpHttpEndpointUrl(entry);
 
-      const introspection = await introspectMcpServer(endpointUrl);
-      const def = mapMcpToWorkflowDefinition(entry, introspection.ok ? introspection.value : undefined);
+	      const introspection = await introspectMcpServer(endpointUrl);
+	      const mapped = mapMcpToWorkflowDefinition(entry, introspection.ok ? introspection.value : undefined);
+	      const def = mapped.definition;
 
-      const workflow = buildWorkflowTemplate(def);
-      const validation = validateBuiltWorkflow(workflow);
-      const mermaid = workflowTemplateToMermaid(workflow);
+	      const workflow = buildWorkflowTemplate(def);
+	      const validation = validateBuiltWorkflow(workflow);
+	      const mermaid = workflowTemplateToMermaid(workflow);
 
-      return jsonContent({
-        accountId: ctx.accountId,
-        entry,
-        endpointUrl,
-        introspection,
-        definition: def,
-        valid: validation.valid,
-        invalidIds: validation.invalidIds,
-        mermaid,
-        workflow,
-      });
-    },
-    { readOnly: true },
-  );
+	      return jsonContent({
+	        accountId: ctx.accountId,
+	        entry,
+	        endpointUrl,
+	        introspection,
+	        definition: def,
+	        warnings: mapped.warnings,
+	        valid: validation.valid,
+	        invalidIds: validation.invalidIds,
+	        mermaid,
+	        workflow,
+	      });
+	    },
+	    { readOnly: true },
+	  );
 }

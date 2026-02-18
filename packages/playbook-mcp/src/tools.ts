@@ -12,11 +12,14 @@ import { HOST_PLAYBOOKS, HOST_COMPARISONS, GRADUATION_PATH, MCP_HOST_PATTERNS } 
 import type { HostPlaybook } from './playbooks.js';
 import { MCP_CATALOG, getCatalogByCategory, getCatalogEntry } from './catalog.js';
 import { WORKFLOW_IDS, WORKFLOWS, getWorkflowById } from './workflows.js';
-import { exportWorkflowToAtlasStudio } from './atlas-studio.js';
+import { exportWorkflowToAtlasStudio, exportOutcomePlaybookToAtlasStudio } from './atlas-studio.js';
+import { OUTCOME_PLAYBOOK_IDS, OUTCOME_PLAYBOOKS, getOutcomePlaybookById } from './outcome-playbooks.js';
 
 export function registerTools(server: McpServer) {
   const workflowIdSchema = z.enum(WORKFLOW_IDS as [string, ...string[]])
     .describe('Stable workflow id. Use list_workflows to discover available ids.');
+  const outcomePlaybookIdSchema = z.enum(OUTCOME_PLAYBOOK_IDS as [string, ...string[]])
+    .describe('Stable outcome playbook id. Use list_outcome_playbooks to discover available ids.');
 
   // ==========================================================================
   // get_playbook — retrieve workflow guidance for a specific host
@@ -199,6 +202,88 @@ export function registerTools(server: McpServer) {
         content: [{
           type: 'text',
           text: JSON.stringify(exportWorkflowToAtlasStudio(workflow), null, 2),
+        }],
+      };
+    },
+  );
+
+  // ==========================================================================
+  // list_outcome_playbooks — AI-native workflow library
+  // ==========================================================================
+
+  server.tool(
+    'list_outcome_playbooks',
+    'List AI-native outcome playbooks (construction, agency, ops) with stable ids and metadata.',
+    {
+      vertical: z.enum(['construction', 'agency', 'ops', 'all']).optional()
+        .describe('Filter by vertical (default: all)'),
+    },
+    async ({ vertical }) => {
+      const selected = (vertical && vertical !== 'all')
+        ? OUTCOME_PLAYBOOKS.filter((p) => p.vertical === vertical)
+        : OUTCOME_PLAYBOOKS;
+
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify(selected.map((p) => ({
+            id: p.id,
+            name: p.name,
+            vertical: p.vertical,
+            priority: p.priority,
+            description: p.description,
+            oversight: p.oversight,
+          })), null, 2),
+        }],
+      };
+    },
+  );
+
+  // ==========================================================================
+  // get_outcome_playbook — retrieve a playbook by id (machine-readable)
+  // ==========================================================================
+
+  server.tool(
+    'get_outcome_playbook',
+    'Get an AI-native outcome playbook by id (machine-readable). Includes Atlas-mapped steps, integrations, judgment notes, and test scenarios.',
+    {
+      playbook_id: outcomePlaybookIdSchema,
+    },
+    async ({ playbook_id }) => {
+      const playbook = getOutcomePlaybookById(playbook_id);
+      if (!playbook) {
+        return { content: [{ type: 'text', text: JSON.stringify({ error: `Unknown playbook_id: ${playbook_id}` }, null, 2) }] };
+      }
+
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify(playbook, null, 2),
+        }],
+      };
+    },
+  );
+
+  // ==========================================================================
+  // export_outcome_playbook_atlas_studio — Atlas Studio BuilderState JSON
+  // ==========================================================================
+
+  server.tool(
+    'export_outcome_playbook_atlas_studio',
+    'Export an outcome playbook in Atlas Studio import format (BuilderState JSON: { nodes, edges, personas }).',
+    {
+      playbook_id: outcomePlaybookIdSchema,
+    },
+    async ({ playbook_id }) => {
+      const playbook = getOutcomePlaybookById(playbook_id);
+      if (!playbook) {
+        return { content: [{ type: 'text', text: JSON.stringify({ error: `Unknown playbook_id: ${playbook_id}` }, null, 2) }] };
+      }
+
+      return {
+        content: [{
+          type: 'text',
+          text: JSON.stringify(exportOutcomePlaybookToAtlasStudio(playbook), null, 2),
         }],
       };
     },

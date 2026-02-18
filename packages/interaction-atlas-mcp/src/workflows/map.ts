@@ -1,6 +1,8 @@
 import type { AtlasWorkflowDefinition, WorkflowStepDef } from './types.js';
 import type { WorkflowMapFromToolSequenceInput } from '../schemas/index.js';
 
+import { isValidTaskId } from '@quietloudlab/ai-interaction-atlas';
+
 function slugify(input: string): string {
   return input
     .toLowerCase()
@@ -10,34 +12,71 @@ function slugify(input: string): string {
     .slice(0, 80) || 'mapped-workflow';
 }
 
-function classifyToolToAtlasTask(toolName: string): { taskId: string; kind: 'read' | 'write' | 'notify' | 'other' } {
+type AtlasTaskKind = 'read' | 'write' | 'notify' | 'other';
+
+type ClassifiedToolTask = {
+  kind: AtlasTaskKind;
+  // Ordered by preference: first entry is the "intended" mapping. If it is not
+  // present in the Atlas dataset, we fall back to later entries.
+  candidates: string[];
+};
+
+function chooseValidTaskId(candidates: string[]): { desired: string; taskId: string; usedFallback: boolean; allInvalid: boolean } {
+  const desired = candidates[0] ?? 'system_api';
+
+  for (const id of candidates) {
+    if (isValidTaskId(id)) return { desired, taskId: id, usedFallback: id !== desired, allInvalid: false };
+  }
+
+  // No candidates exist in the Atlas dataset. Keep the desired id so validation
+  // surfaces the issue, and emit a warning for operators.
+  return { desired, taskId: desired, usedFallback: false, allInvalid: true };
+}
+
+function classifyToolToAtlasTask(toolName: string): ClassifiedToolTask {
   const t = toolName.toLowerCase();
 
   // Notifications / outbound comms
-  if (/(^|_)(notify|slack|email|send|message)(_|$)/.test(t)) return { taskId: 'system_notification', kind: 'notify' };
+  if (/(^|_)(notify|slack|email|send|message)(_|$)/.test(t)) {
+    return { kind: 'notify', candidates: ['system_notification', 'system_api'] };
+  }
 
   // Inbound triggers / schedules
-  if (/(^|_)(webhook)(_|$)/.test(t)) return { taskId: 'system_webhook', kind: 'other' };
-  if (/(^|_)(timer|cron|schedule)(_|$)/.test(t)) return { taskId: 'system_timer', kind: 'other' };
+  if (/(^|_)(webhook)(_|$)/.test(t)) return { kind: 'other', candidates: ['system_webhook', 'system_api'] };
+  if (/(^|_)(timer|cron|schedule)(_|$)/.test(t)) return { kind: 'other', candidates: ['system_timer', 'system_api'] };
 
   // CRUD-ish tools
-  if (/(^|_)(create|add|insert|new)(_|$)/.test(t)) return { taskId: 'system_create_db', kind: 'write' };
-  if (/(^|_)(update|modify|patch|upsert|set)(_|$)/.test(t)) return { taskId: 'system_update_db', kind: 'write' };
-  if (/(^|_)(delete|remove|archive|trash|purge)(_|$)/.test(t)) return { taskId: 'system_delete_db', kind: 'write' };
-  if (/(^|_)(list|get|read|fetch|find|search|query)(_|$)/.test(t)) return { taskId: 'system_read_db', kind: 'read' };
+  if (/(^|_)(create|add|insert|new)(_|$)/.test(t)) {
+    return { kind: 'write', candidates: ['system_create_db', 'system_write_db', 'system_api'] };
+  }
+  if (/(^|_)(update|modify|patch|upsert|set)(_|$)/.test(t)) {
+    return { kind: 'write', candidates: ['system_update_db', 'system_write_db', 'system_create_db', 'system_api'] };
+  }
+  if (/(^|_)(delete|remove|archive|trash|purge)(_|$)/.test(t)) {
+    return { kind: 'write', candidates: ['system_delete_db', 'system_archive_db', 'system_write_db', 'system_api'] };
+  }
+  if (/(^|_)(list|get|read|fetch|find|search|query)(_|$)/.test(t)) {
+    return { kind: 'read', candidates: ['system_read_db', 'system_query_db', 'system_api'] };
+  }
 
   // Default: external API / system op
-  return { taskId: 'system_api', kind: 'other' };
+  return { kind: 'other', candidates: ['system_api'] };
 }
 
 function defaultLabelFor(tool: string, server?: string): string {
   return server ? `${server}.${tool}` : tool;
 }
 
-export function mapToolSequenceToWorkflowDefinition(input: WorkflowMapFromToolSequenceInput): AtlasWorkflowDefinition {
+export type WorkflowToolSequenceMapping = {
+  definition: AtlasWorkflowDefinition;
+  warnings: string[];
+};
+
+export function mapToolSequenceToWorkflowDefinition(input: WorkflowMapFromToolSequenceInput): WorkflowToolSequenceMapping {
   const name = input.name?.trim() || 'Mapped Workflow';
   const workflowId = input.workflow_id?.trim() || slugify(name);
 
+  const warnings: string[] = [];
   const steps: WorkflowStepDef[] = [];
 
   // Always start with human intent specification.
@@ -46,10 +85,22 @@ export function mapToolSequenceToWorkflowDefinition(input: WorkflowMapFromToolSe
     label: 'Provide Goal / Query',
     notes: 'User describes objective and scope for the run (what “good” looks like).',
   });
+  if (!isValidTaskId('human_type_input')) {
+    warnings.push('Atlas task id invalid: "human_type_input" is not defined in the dataset.');
+  }
 
   for (const item of input.sequence) {
     const classified = classifyToolToAtlasTask(item.tool);
     const label = defaultLabelFor(item.tool, item.server);
+    const resolved = chooseValidTaskId(classified.candidates);
+
+    if (resolved.usedFallback) {
+      warnings.push(`Atlas task id fallback for "${label}": "${resolved.desired}" is not defined; using "${resolved.taskId}".`);
+    } else if (resolved.allInvalid) {
+      warnings.push(
+        `Atlas task id invalid for "${label}": none of [${classified.candidates.map((c) => `"${c}"`).join(', ')}] are defined.`,
+      );
+    }
 
     const attachments: WorkflowStepDef['attachments'] = [];
 
@@ -66,7 +117,7 @@ export function mapToolSequenceToWorkflowDefinition(input: WorkflowMapFromToolSe
     }
 
     steps.push({
-      referenceId: classified.taskId,
+      referenceId: resolved.taskId,
       label,
       notes: `Mapped from tool call: ${label}`,
       attachments,
@@ -82,6 +133,9 @@ export function mapToolSequenceToWorkflowDefinition(input: WorkflowMapFromToolSe
       referenceId: 'task_synthesize',
       notes: 'Synthesize tool outputs into a coherent result for the user.',
     });
+    if (!isValidTaskId('task_synthesize')) {
+      warnings.push('Atlas task id invalid: "task_synthesize" is not defined in the dataset.');
+    }
   }
 
   if (addVerification) {
@@ -90,6 +144,9 @@ export function mapToolSequenceToWorkflowDefinition(input: WorkflowMapFromToolSe
       notes: 'Verify key claims against evidence (tool outputs) and flag low-confidence areas.',
       attachments: [{ type: 'constraint', referenceId: 'const_quality_threshold' }],
     });
+    if (!isValidTaskId('task_verify')) {
+      warnings.push('Atlas task id invalid: "task_verify" is not defined in the dataset.');
+    }
   }
 
   if (addHumanReview) {
@@ -98,9 +155,12 @@ export function mapToolSequenceToWorkflowDefinition(input: WorkflowMapFromToolSe
       notes: 'Human reviews and approves next actions (especially if any write ops are proposed).',
       attachments: [{ type: 'constraint', referenceId: 'const_human_loop' }],
     });
+    if (!isValidTaskId('human_review')) {
+      warnings.push('Atlas task id invalid: "human_review" is not defined in the dataset.');
+    }
   }
 
-  return {
+  const definition: AtlasWorkflowDefinition = {
     id: workflowId,
     name,
     description: 'Automatically mapped workflow from an observed/planned tool-call sequence.',
@@ -113,5 +173,6 @@ export function mapToolSequenceToWorkflowDefinition(input: WorkflowMapFromToolSe
       notes: 'Generated mapping. Treat as a draft and review before using for governance.',
     },
   };
-}
 
+  return { definition, warnings };
+}

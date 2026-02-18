@@ -105,13 +105,15 @@ export function registerTools(server) {
     }, { readOnly: true });
     server.tool('workflow_map_from_tool_sequence', 'Automatically map an ordered tool-call sequence into an Atlas WorkflowTemplate for client review.', WorkflowMapFromToolSequenceSchema.shape, async (params, ctx) => {
         const input = WorkflowMapFromToolSequenceSchema.parse(params);
-        const def = mapToolSequenceToWorkflowDefinition(input);
+        const mapped = mapToolSequenceToWorkflowDefinition(input);
+        const def = mapped.definition;
         const workflow = buildWorkflowTemplate(def);
         const validation = validateBuiltWorkflow(workflow);
         const mermaid = workflowTemplateToMermaid(workflow);
         return jsonContent({
             accountId: ctx.accountId,
             definition: def,
+            warnings: mapped.warnings,
             valid: validation.valid,
             invalidIds: validation.invalidIds,
             mermaid,
@@ -161,7 +163,8 @@ export function registerTools(server) {
             ? resolveMcpHttpEndpointUrlFromUrl(input.url)
             : resolveMcpHttpEndpointUrl(entry);
         const introspection = await introspectMcpServer(endpointUrl);
-        const def = mapMcpToWorkflowDefinition(entry, introspection.ok ? introspection.value : undefined);
+        const mapped = mapMcpToWorkflowDefinition(entry, introspection.ok ? introspection.value : undefined);
+        const def = mapped.definition;
         const workflow = buildWorkflowTemplate(def);
         const validation = validateBuiltWorkflow(workflow);
         const mermaid = workflowTemplateToMermaid(workflow);
@@ -171,6 +174,7 @@ export function registerTools(server) {
             endpointUrl,
             introspection,
             definition: def,
+            warnings: mapped.warnings,
             valid: validation.valid,
             invalidIds: validation.invalidIds,
             mermaid,

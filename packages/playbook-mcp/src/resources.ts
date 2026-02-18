@@ -7,7 +7,8 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { HOST_PLAYBOOKS, HOST_COMPARISONS, GRADUATION_PATH, MCP_HOST_PATTERNS } from './playbooks.js';
 import type { HostPlaybook } from './playbooks.js';
 import { WORKFLOWS } from './workflows.js';
-import { exportWorkflowToAtlasStudio } from './atlas-studio.js';
+import { exportWorkflowToAtlasStudio, exportOutcomePlaybookToAtlasStudio } from './atlas-studio.js';
+import { OUTCOME_PLAYBOOKS } from './outcome-playbooks.js';
 
 export function registerResources(server: McpServer) {
   // List
@@ -92,6 +93,57 @@ export function registerResources(server: McpServer) {
           uri: uri.href,
           mimeType: 'application/json',
           text: JSON.stringify(exportWorkflowToAtlasStudio(workflow), null, 2),
+        }],
+      }),
+    );
+  }
+
+  // Outcome playbooks (AI-native workflow library)
+  server.resource(
+    'playbooks-outcomes-list',
+    'playbooks://outcomes/list',
+    { description: `Outcome playbooks (${OUTCOME_PLAYBOOKS.length}) — AI-native workflows for construction, agency, and ops`, mimeType: 'application/json' },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(OUTCOME_PLAYBOOKS.map((p) => ({
+          id: p.id,
+          name: p.name,
+          vertical: p.vertical,
+          priority: p.priority,
+          description: p.description,
+          oversight: p.oversight,
+          uri: `playbooks://outcomes/${p.id}`,
+          atlasStudioUri: `playbooks://outcomes/${p.id}/atlas-studio`,
+        })), null, 2),
+      }],
+    }),
+  );
+
+  for (const playbook of OUTCOME_PLAYBOOKS) {
+    server.resource(
+      `outcome-${playbook.id}`,
+      `playbooks://outcomes/${playbook.id}`,
+      { description: `Outcome playbook: ${playbook.name} (${playbook.vertical})`, mimeType: 'application/json' },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(playbook, null, 2),
+        }],
+      }),
+    );
+
+    server.resource(
+      `outcome-${playbook.id}-atlas-studio`,
+      `playbooks://outcomes/${playbook.id}/atlas-studio`,
+      { description: `Atlas Studio import JSON for outcome playbook: ${playbook.name}`, mimeType: 'application/json' },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(exportOutcomePlaybookToAtlasStudio(playbook), null, 2),
         }],
       }),
     );
