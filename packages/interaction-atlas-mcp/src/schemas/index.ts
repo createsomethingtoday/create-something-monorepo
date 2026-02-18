@@ -47,3 +47,24 @@ export const WorkflowMapFromToolSequenceSchema = z.object({
 });
 
 export type WorkflowMapFromToolSequenceInput = z.infer<typeof WorkflowMapFromToolSequenceSchema>;
+
+export const McpCatalogListSchema = z.object({
+  category: z.enum(['create-something', 'workway', 'third-party', 'all']).optional().describe('Catalog category filter'),
+});
+
+export type McpCatalogListInput = z.infer<typeof McpCatalogListSchema>;
+
+export const McpIntrospectSchema = z.object({
+  slug: z.string().min(1).optional().describe('Catalog slug (preferred)'),
+  url: z.string().url().optional().describe('Explicit MCP Streamable HTTP endpoint URL (e.g. https://host/mcp)'),
+});
+
+export type McpIntrospectInput = z.infer<typeof McpIntrospectSchema>;
+
+export const McpMapSchema = z.object({
+  slug: z.string().min(1).optional().describe('Catalog slug (preferred)'),
+  url: z.string().url().optional().describe('Explicit MCP Streamable HTTP endpoint URL'),
+  name: z.string().min(1).optional().describe('Optional display name when mapping an arbitrary URL'),
+});
+
+export type McpMapInput = z.infer<typeof McpMapSchema>;

@@ -91,4 +91,37 @@ export declare const WorkflowMapFromToolSequenceSchema: z.ZodObject<{
     add_human_review?: boolean | undefined;
 }>;
 export type WorkflowMapFromToolSequenceInput = z.infer<typeof WorkflowMapFromToolSequenceSchema>;
+export declare const McpCatalogListSchema: z.ZodObject<{
+    category: z.ZodOptional<z.ZodEnum<["create-something", "workway", "third-party", "all"]>>;
+}, "strip", z.ZodTypeAny, {
+    category?: "create-something" | "workway" | "third-party" | "all" | undefined;
+}, {
+    category?: "create-something" | "workway" | "third-party" | "all" | undefined;
+}>;
+export type McpCatalogListInput = z.infer<typeof McpCatalogListSchema>;
+export declare const McpIntrospectSchema: z.ZodObject<{
+    slug: z.ZodOptional<z.ZodString>;
+    url: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    slug?: string | undefined;
+    url?: string | undefined;
+}, {
+    slug?: string | undefined;
+    url?: string | undefined;
+}>;
+export type McpIntrospectInput = z.infer<typeof McpIntrospectSchema>;
+export declare const McpMapSchema: z.ZodObject<{
+    slug: z.ZodOptional<z.ZodString>;
+    url: z.ZodOptional<z.ZodString>;
+    name: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    name?: string | undefined;
+    slug?: string | undefined;
+    url?: string | undefined;
+}, {
+    name?: string | undefined;
+    slug?: string | undefined;
+    url?: string | undefined;
+}>;
+export type McpMapInput = z.infer<typeof McpMapSchema>;
 //# sourceMappingURL=index.d.ts.map

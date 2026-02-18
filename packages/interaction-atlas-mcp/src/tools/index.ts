@@ -27,7 +27,57 @@ import { buildWorkflowTemplate } from '../workflows/build.js';
 import { workflowTemplateToMermaid } from '../workflows/mermaid.js';
 import { mapToolSequenceToWorkflowDefinition } from '../workflows/map.js';
 
-import { AtlasGetSchema, AtlasSearchSchema, WorkflowIdSchema, WorkflowMapFromToolSequenceSchema } from '../schemas/index.js';
+import {
+  AtlasGetSchema,
+  AtlasSearchSchema,
+  WorkflowIdSchema,
+  WorkflowMapFromToolSequenceSchema,
+  McpCatalogListSchema,
+  McpIntrospectSchema,
+  McpMapSchema,
+} from '../schemas/index.js';
+
+import type { McpCatalogEntry } from '../mcps/catalog.js';
+import {
+  findMcpCatalogEntry,
+  listMcpCatalog,
+  resolveMcpHttpEndpointUrl,
+  resolveMcpHttpEndpointUrlFromUrl,
+} from '../mcps/catalog.js';
+import { introspectMcpServer } from '../mcps/introspect.js';
+import { mapMcpToWorkflowDefinition } from '../mcps/map.js';
+
+function slugFromUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    const raw = `${u.host}${u.pathname}`.replace(/\/+$/g, '');
+    return raw
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 80) || 'mcp';
+  } catch {
+    return url
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 80) || 'mcp';
+  }
+}
+
+function makeSyntheticCatalogEntry(url: string, name?: string): McpCatalogEntry {
+  return {
+    name: name ?? url,
+    slug: slugFromUrl(url),
+    url,
+    description: 'Arbitrary MCP server URL',
+    category: 'third-party',
+    transports: ['http'],
+    requiresAuth: false,
+  };
+}
 
 export function registerTools(server: ScopedMcpServer): void {
   server.tool(
@@ -141,6 +191,91 @@ export function registerTools(server: ScopedMcpServer): void {
 
       return jsonContent({
         accountId: ctx.accountId,
+        definition: def,
+        valid: validation.valid,
+        invalidIds: validation.invalidIds,
+        mermaid,
+        workflow,
+      });
+    },
+    { readOnly: true },
+  );
+
+  server.tool(
+    'mcp_catalog_list',
+    'List known MCP servers from the Playbook catalog.',
+    McpCatalogListSchema.shape,
+    async (params, ctx) => {
+      const input = McpCatalogListSchema.parse(params);
+      return jsonContent({
+        accountId: ctx.accountId,
+        category: input.category ?? 'all',
+        catalog: listMcpCatalog(input.category),
+      });
+    },
+    { readOnly: true },
+  );
+
+  server.tool(
+    'mcp_introspect',
+    'Introspect an MCP server (tools/resources/prompts) via Streamable HTTP.',
+    McpIntrospectSchema.shape,
+    async (params, ctx) => {
+      const input = McpIntrospectSchema.parse(params);
+
+      const entry = input.slug ? findMcpCatalogEntry(input.slug) : undefined;
+      if (input.slug && !entry) return errorContent(`Unknown MCP slug: ${input.slug}`);
+
+      const endpointUrl = input.url
+        ? resolveMcpHttpEndpointUrlFromUrl(input.url)
+        : entry
+          ? resolveMcpHttpEndpointUrl(entry)
+          : undefined;
+      if (!endpointUrl) return errorContent('Provide slug or url.');
+
+      const introspection = await introspectMcpServer(endpointUrl);
+
+      return jsonContent({
+        accountId: ctx.accountId,
+        entry,
+        endpointUrl,
+        introspection,
+      });
+    },
+    { readOnly: true },
+  );
+
+  server.tool(
+    'mcp_map_to_workflow',
+    'Automatically map an MCP server into an Atlas workflow (capability map) for client review.',
+    McpMapSchema.shape,
+    async (params, ctx) => {
+      const input = McpMapSchema.parse(params);
+
+      const entry = input.slug
+        ? findMcpCatalogEntry(input.slug)
+        : input.url
+          ? makeSyntheticCatalogEntry(input.url, input.name)
+          : undefined;
+      if (input.slug && !entry) return errorContent(`Unknown MCP slug: ${input.slug}`);
+      if (!entry) return errorContent('Provide slug or url.');
+
+      const endpointUrl = input.url
+        ? resolveMcpHttpEndpointUrlFromUrl(input.url)
+        : resolveMcpHttpEndpointUrl(entry);
+
+      const introspection = await introspectMcpServer(endpointUrl);
+      const def = mapMcpToWorkflowDefinition(entry, introspection.ok ? introspection.value : undefined);
+
+      const workflow = buildWorkflowTemplate(def);
+      const validation = validateBuiltWorkflow(workflow);
+      const mermaid = workflowTemplateToMermaid(workflow);
+
+      return jsonContent({
+        accountId: ctx.accountId,
+        entry,
+        endpointUrl,
+        introspection,
         definition: def,
         valid: validation.valid,
         invalidIds: validation.invalidIds,

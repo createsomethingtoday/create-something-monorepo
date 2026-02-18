@@ -7,7 +7,18 @@
 
 import { createServer } from '../src/server.js';
 import type { InteractionAtlasEnv } from '../src/auth.js';
-import { getBuiltWorkflowTemplate, getWorkflowMermaid, listWorkflowSummaries, validateBuiltWorkflow } from '../src/workflows/index.js';
+import {
+  getBuiltWorkflowTemplate,
+  getWorkflowMermaid,
+  listWorkflowSummaries,
+  validateBuiltWorkflow,
+} from '../src/workflows/index.js';
+import { buildWorkflowTemplate } from '../src/workflows/build.js';
+import { workflowTemplateToMermaid } from '../src/workflows/mermaid.js';
+
+import { findMcpCatalogEntry, listMcpCatalog, resolveMcpHttpEndpointUrl } from '../src/mcps/catalog.js';
+import { introspectMcpServer } from '../src/mcps/introspect.js';
+import { mapMcpToWorkflowDefinition } from '../src/mcps/map.js';
 
 interface Env extends InteractionAtlasEnv {}
 
@@ -47,6 +58,43 @@ export default {
       return new Response(JSON.stringify({ workflowId, valid: validation.valid, invalidIds: validation.invalidIds, workflow: template }, null, 2), { headers: JSON_HEADERS });
     }
 
+    // JSON API — MCP catalog + auto-maps
+    if (url.pathname === '/api/mcps') {
+      const categoryParam = url.searchParams.get('category') ?? 'all';
+      const category: 'create-something' | 'workway' | 'third-party' | 'all' =
+        categoryParam === 'create-something' || categoryParam === 'workway' || categoryParam === 'third-party' || categoryParam === 'all'
+          ? categoryParam
+          : 'all';
+
+      return new Response(JSON.stringify({ category, catalog: listMcpCatalog(category) }, null, 2), { headers: JSON_HEADERS });
+    }
+
+    const apiMcpMatch = url.pathname.match(/^\/api\/mcps\/([a-z0-9-]+)$/i);
+    if (apiMcpMatch) {
+      const slug = apiMcpMatch[1];
+      const entry = findMcpCatalogEntry(slug);
+      if (!entry) return new Response(JSON.stringify({ error: 'Not found', slug }, null, 2), { status: 404, headers: JSON_HEADERS });
+
+      const endpointUrl = resolveMcpHttpEndpointUrl(entry);
+      const introspection = await introspectMcpServer(endpointUrl);
+      const def = mapMcpToWorkflowDefinition(entry, introspection.ok ? introspection.value : undefined);
+      const workflow = buildWorkflowTemplate(def);
+      const validation = validateBuiltWorkflow(workflow);
+      const mermaid = workflowTemplateToMermaid(workflow);
+
+      return new Response(JSON.stringify({
+        slug,
+        entry,
+        endpointUrl,
+        introspection,
+        definition: def,
+        valid: validation.valid,
+        invalidIds: validation.invalidIds,
+        mermaid,
+        workflow,
+      }, null, 2), { headers: JSON_HEADERS });
+    }
+
     // Human viewer
     if (url.pathname === '/workflows') {
       const workflows = listWorkflowSummaries();
@@ -76,6 +124,7 @@ export default {
     <header>
       <h1>Interaction Atlas — Workflow Viewer</h1>
       <p>Read-only agentic workflows mapped into <code>@quietloudlab/ai-interaction-atlas</code> terms.</p>
+      <p style="margin-top:0.55rem;"><a href="/mcps">MCP catalog</a></p>
     </header>
     <main>
       ${workflows.map(w => {
@@ -98,6 +147,222 @@ export default {
     <footer>
       MCP endpoint: <code>/mcp</code> · JSON API: <code>/api/workflows</code>
     </footer>
+  </body>
+</html>`;
+
+      return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    }
+
+    if (url.pathname === '/mcps') {
+      const categoryParam = url.searchParams.get('category') ?? 'all';
+      const category: 'create-something' | 'workway' | 'third-party' | 'all' =
+        categoryParam === 'create-something' || categoryParam === 'workway' || categoryParam === 'third-party' || categoryParam === 'all'
+          ? categoryParam
+          : 'all';
+
+      const mcps = listMcpCatalog(category);
+
+      const categories: Array<{ key: typeof category; label: string }> = [
+        { key: 'all', label: 'All' },
+        { key: 'create-something', label: 'CREATE SOMETHING' },
+        { key: 'workway', label: 'WORKWAY' },
+        { key: 'third-party', label: 'Third-party' },
+      ];
+
+      const html = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Interaction Atlas — MCP Catalog</title>
+    <style>
+      :root { color-scheme: light; }
+      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; background: #0b0b10; color: #e5e7eb; }
+      a { color: #93c5fd; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      header { padding: 2rem 1.5rem 1rem; border-bottom: 1px solid #1f2937; background: radial-gradient(1000px 600px at 15% 10%, #111827, transparent), #0b0b10; }
+      h1 { margin: 0 0 0.25rem 0; font-size: 1.4rem; letter-spacing: 0.01em; }
+      p { margin: 0.25rem 0 0 0; color: #9ca3af; line-height: 1.4; }
+      main { padding: 1rem 1.5rem 2rem; max-width: 980px; }
+      .card { border: 1px solid #1f2937; background: #0f172a; border-radius: 14px; padding: 1rem; margin: 0.75rem 0; }
+      .meta { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem; }
+      .pill { font-size: 0.75rem; color: #cbd5e1; border: 1px solid #334155; border-radius: 999px; padding: 0.15rem 0.55rem; background: rgba(15, 23, 42, 0.6); }
+      .pill.active { border-color: #60a5fa; color: #dbeafe; background: rgba(37, 99, 235, 0.12); }
+      code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 0.875em; color: #e2e8f0; }
+      footer { padding: 1rem 1.5rem 2rem; color: #6b7280; border-top: 1px solid #111827; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;">
+        <div>
+          <h1>Interaction Atlas — MCP Catalog</h1>
+          <p>Auto-mapped capability workflows per MCP server (generated from tool introspection when available).</p>
+          <div class="meta">
+            ${categories.map(c => {
+              const href = c.key === 'all' ? '/mcps' : `/mcps?category=${encodeURIComponent(c.key)}`;
+              const cls = c.key === category ? 'pill active' : 'pill';
+              return `<a class="${cls}" href="${esc(href)}">${esc(c.label)}</a>`;
+            }).join('')}
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <a href="/workflows">Curated workflows</a>
+          <div style="margin-top:0.5rem;color:#64748b;"><code>/api/mcps</code></div>
+        </div>
+      </div>
+    </header>
+    <main>
+      ${mcps.map(m => {
+        const tags: string[] = [
+          m.category,
+          ...(m.requiresAuth ? ['requires-auth'] : ['no-auth']),
+          ...m.transports,
+        ];
+        return `<div class="card">
+          <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;">
+            <div>
+              <div style="font-size:1.05rem;font-weight:600;"><a href="/mcps/${esc(m.slug)}">${esc(m.name)}</a></div>
+              <div style="margin-top:0.25rem;color:#9ca3af;">${esc(m.description)}</div>
+              <div style="margin-top:0.55rem;color:#cbd5e1;"><span style="color:#64748b;">URL:</span> <code>${esc(m.url)}</code></div>
+            </div>
+            <div style="text-align:right;">
+              <div class="pill"><code>${esc(m.slug)}</code></div>
+            </div>
+          </div>
+          <div class="meta">${tags.map(t => `<span class="pill">${esc(t)}</span>`).join('')}</div>
+        </div>`;
+      }).join('')}
+    </main>
+    <footer>
+      MCP endpoint: <code>/mcp</code> · JSON API: <code>/api/mcps</code>
+    </footer>
+  </body>
+</html>`;
+
+      return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+    }
+
+    const mcpMatch = url.pathname.match(/^\/mcps\/([a-z0-9-]+)$/i);
+    if (mcpMatch) {
+      const slug = mcpMatch[1];
+      const entry = findMcpCatalogEntry(slug);
+      if (!entry) return new Response('Not found', { status: 404 });
+
+      const endpointUrl = resolveMcpHttpEndpointUrl(entry);
+      const introspection = await introspectMcpServer(endpointUrl);
+      const def = mapMcpToWorkflowDefinition(entry, introspection.ok ? introspection.value : undefined);
+      const workflow = buildWorkflowTemplate(def);
+      const mermaid = workflowTemplateToMermaid(workflow) ?? 'error: mermaid generation failed';
+      const validation = validateBuiltWorkflow(workflow);
+
+      const toolCount = introspection.ok ? introspection.value.tools.length : 0;
+      const resourceCount = introspection.ok ? introspection.value.resources.length : 0;
+      const promptCount = introspection.ok ? introspection.value.prompts.length : 0;
+
+      const html = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MCP — ${esc(entry.name)}</title>
+    <style>
+      :root { color-scheme: light; }
+      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; background: #0b0b10; color: #e5e7eb; }
+      a { color: #93c5fd; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      header { padding: 1.75rem 1.5rem 1rem; border-bottom: 1px solid #1f2937; background: radial-gradient(1000px 600px at 15% 10%, #111827, transparent), #0b0b10; }
+      h1 { margin: 0 0 0.25rem 0; font-size: 1.35rem; letter-spacing: 0.01em; }
+      p { margin: 0.25rem 0 0 0; color: #9ca3af; line-height: 1.4; }
+      main { padding: 1rem 1.5rem 2rem; max-width: 1100px; }
+      .row { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.75rem; }
+      .pill { font-size: 0.75rem; color: #cbd5e1; border: 1px solid #334155; border-radius: 999px; padding: 0.15rem 0.55rem; background: rgba(15, 23, 42, 0.6); }
+      .panel { border: 1px solid #1f2937; background: #0f172a; border-radius: 14px; padding: 1rem; margin: 0.75rem 0; }
+      details { border: 1px solid #1f2937; background: #0b1220; border-radius: 12px; padding: 0.75rem 0.9rem; }
+      summary { cursor: pointer; color: #cbd5e1; font-weight: 600; }
+      pre { overflow: auto; padding: 0.75rem; border-radius: 10px; background: #020617; border: 1px solid #111827; color: #e2e8f0; }
+      code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 0.9em; }
+      .ok { color: #34d399; }
+      .bad { color: #f87171; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;">
+        <div>
+          <h1>${esc(entry.name)} <span style="font-weight:500;color:#64748b;">(mcp:${esc(entry.slug)})</span></h1>
+          <p>${esc(entry.description)}</p>
+          <div class="row">
+            <span class="pill">${esc(entry.category)}</span>
+            <span class="pill">${entry.requiresAuth ? 'requires-auth' : 'no-auth'}</span>
+            ${entry.transports.map(t => `<span class="pill">${esc(t)}</span>`).join('')}
+            <span class="pill"><code>${esc(endpointUrl)}</code></span>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <a href="/mcps">All MCPs</a>
+          <div style="margin-top:0.5rem;">
+            <span class="pill">${validation.valid ? `<span class="ok">valid</span>` : `<span class="bad">invalid</span>`}</span>
+          </div>
+        </div>
+      </div>
+    </header>
+    <main>
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;">
+          <div>
+            <div style="color:#9ca3af;margin-bottom:0.25rem;">Introspection</div>
+            <div style="color:#cbd5e1;">
+              ${introspection.ok
+                ? `<span class="ok">ok</span> · tools: <code>${toolCount}</code> · resources: <code>${resourceCount}</code> · prompts: <code>${promptCount}</code>`
+                : `<span class="bad">failed</span> · ${esc(introspection.error)}`
+              }
+            </div>
+          </div>
+          <div style="text-align:right;color:#64748b;">
+            <div><code>/api/mcps/${esc(entry.slug)}</code></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div style="color:#9ca3af;margin-bottom:0.5rem;">Mermaid diagram (auto-mapped)</div>
+        <pre class="mermaid">${esc(mermaid)}</pre>
+      </div>
+
+      ${validation.valid ? '' : `<div class="panel"><div class="bad" style="font-weight:600;">Invalid Atlas IDs</div><div style="margin-top:0.5rem;color:#cbd5e1;"><code>${esc(validation.invalidIds.join(', '))}</code></div></div>`}
+
+      <details>
+        <summary>MCP Entry JSON</summary>
+        <pre><code>${esc(JSON.stringify(entry, null, 2))}</code></pre>
+      </details>
+
+      <div style="height:0.75rem;"></div>
+
+      <details>
+        <summary>Introspection JSON</summary>
+        <pre><code>${esc(JSON.stringify(introspection, null, 2))}</code></pre>
+      </details>
+
+      <div style="height:0.75rem;"></div>
+
+      <details>
+        <summary>Workflow Definition JSON</summary>
+        <pre><code>${esc(JSON.stringify(def, null, 2))}</code></pre>
+      </details>
+
+      <div style="height:0.75rem;"></div>
+
+      <details>
+        <summary>Workflow JSON (Atlas WorkflowTemplate)</summary>
+        <pre><code>${esc(JSON.stringify(workflow, null, 2))}</code></pre>
+      </details>
+    </main>
+
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "base" });
+    </script>
   </body>
 </html>`;
 
@@ -196,6 +461,8 @@ export default {
           mcp: '/mcp',
           workflows: '/workflows',
           workflowsApi: '/api/workflows',
+          mcps: '/mcps',
+          mcpsApi: '/api/mcps',
           health: '/health',
         },
       }, null, 2), { headers: JSON_HEADERS });

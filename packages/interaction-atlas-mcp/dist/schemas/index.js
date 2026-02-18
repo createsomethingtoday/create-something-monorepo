@@ -33,4 +33,16 @@ export const WorkflowMapFromToolSequenceSchema = z.object({
     add_verification: z.boolean().optional().describe('Append task_verify (default: true)'),
     add_human_review: z.boolean().optional().describe('Append human_review (default: true)'),
 });
+export const McpCatalogListSchema = z.object({
+    category: z.enum(['create-something', 'workway', 'third-party', 'all']).optional().describe('Catalog category filter'),
+});
+export const McpIntrospectSchema = z.object({
+    slug: z.string().min(1).optional().describe('Catalog slug (preferred)'),
+    url: z.string().url().optional().describe('Explicit MCP Streamable HTTP endpoint URL (e.g. https://host/mcp)'),
+});
+export const McpMapSchema = z.object({
+    slug: z.string().min(1).optional().describe('Catalog slug (preferred)'),
+    url: z.string().url().optional().describe('Explicit MCP Streamable HTTP endpoint URL'),
+    name: z.string().min(1).optional().describe('Optional display name when mapping an arbitrary URL'),
+});
 //# sourceMappingURL=index.js.map
