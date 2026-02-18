@@ -23,7 +23,7 @@ function requireEnv(env: Env, key: keyof Env): string {
   return value;
 }
 
-export class AppReviewMCP extends McpAgent<Env> {
+export class WebflowAppReviewMCP extends McpAgent<Env> {
   server = new McpServer({
     name: 'webflow-app-review-mcp',
     version: '1.0.0',
@@ -63,11 +63,11 @@ export default {
     }
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
-      return AppReviewMCP.serve('/mcp').fetch(request, env, ctx);
+      return WebflowAppReviewMCP.serve('/mcp').fetch(request, env, ctx);
     }
 
     if (url.pathname === '/sse' || url.pathname.startsWith('/sse/')) {
-      return AppReviewMCP.serve('/sse').fetch(request, env, ctx);
+      return WebflowAppReviewMCP.serve('/sse').fetch(request, env, ctx);
     }
 
     if (url.pathname === '/') {
