@@ -203,6 +203,15 @@ function truncateText(value: string, max = 240): string {
   return `${value.slice(0, max - 3)}...`;
 }
 
+async function safeFlushBraintrust(context: string): Promise<void> {
+  try {
+    await flushBraintrust();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn(`[observability] Braintrust flush failed during ${context}: ${message}`);
+  }
+}
+
 function getCoverageStatus(result: HalfDozenScenarioRunResult): string {
   const coverage = result.required_tool_coverage;
   if (!coverage) return 'n/a';
@@ -745,13 +754,13 @@ function queueSlackScenarioRun(
         const payload = buildSlackCompletedResponse(result, runId, route);
         await postSlackResponse(responseUrl, payload);
         if (braintrustTracingEnabled) {
-          await flushBraintrust().catch(() => {});
+          await safeFlushBraintrust('slack scenario run');
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         await postSlackResponse(responseUrl, buildSlackRunFailedResponse(scenario, runId, message));
         if (braintrustTracingEnabled) {
-          await flushBraintrust().catch(() => {});
+          await safeFlushBraintrust('slack scenario error');
         }
       }
     })(),
@@ -969,14 +978,14 @@ export default {
         });
         queueSuccessNotifications(ctx, env, result, url.pathname, runId);
         if (braintrustTracingEnabled) {
-          ctx.waitUntil(flushBraintrust().catch(() => {}));
+          ctx.waitUntil(safeFlushBraintrust('halfdozen HTTP route success'));
         }
         return jsonResponse(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         queueErrorNotification(ctx, env, scenario, url.pathname, runId, message);
         if (braintrustTracingEnabled) {
-          ctx.waitUntil(flushBraintrust().catch(() => {}));
+          ctx.waitUntil(safeFlushBraintrust('halfdozen HTTP route error'));
         }
         return jsonResponse(
           {
