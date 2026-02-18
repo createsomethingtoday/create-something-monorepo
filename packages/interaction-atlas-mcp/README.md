@@ -1,0 +1,291 @@
+# @create-something/interaction-atlas-mcp
+
+AI Interaction Atlas mapping server for MCPs and agents with:
+
+- versioned workflow visualizations,
+- operator-selectable versions,
+- policy-driven Judgment tuning,
+- pre/post estimate reports with shareable URLs.
+
+## Core Flows
+
+### 1) Mapping + visualization URLs
+
+The following tools now return visualization URLs and decision metadata:
+
+- `workflow_get`
+- `workflow_mermaid`
+- `workflow_map_from_tool_sequence`
+- `mcp_map_to_workflow`
+
+Common output fields include:
+
+- `resolvedVersion`
+- `selectionSource`
+- `commitSha`
+- `policyVersionId`
+- `activePolicyVersionId`
+- `visualizationUrl`
+- `judgmentDecision`
+- `estimateReference` (latest estimate report id when available)
+
+### 2) Version selection
+
+- `version_selection_get` -> read default/latest selection for an entity.
+- `version_selection_set` -> set account default version for an entity.
+
+Resolution order at runtime:
+
+1. per-request override (`versionId` or `commitSha`) if allowed,
+2. account default version,
+3. latest version.
+
+### 3) Judgment policy tuning
+
+Policy lifecycle tools:
+
+- `judgment_policy_get`
+- `judgment_policy_save`
+- `judgment_policy_activate`
+- `judgment_policy_estimate`
+- `judgment_policy_compare_report_get`
+
+`judgment_policy_estimate` returns:
+
+- `inlineSummary` (before/after deltas),
+- `reportId`,
+- `reportUrl`.
+
+### 4) Minimal control plane surfaces
+
+New MCP tools for operator workflows:
+
+- `automation_contract_list`
+- `automation_contract_get`
+- `automation_contract_upsert`
+- `automation_run_start`
+- `approval_inbox_list`
+- `approval_inbox_decide`
+
+## HTTP Endpoints
+
+- `GET /workflows`, `GET /mcps` (viewer pages)
+- `GET /policies` (policy page)
+- `GET /reports/:reportId` (shareable estimate report page)
+- `GET /api/policies?entity_type=<mcp|agent>&entity_id=<id>`
+- `GET /api/reports/:reportId`
+- `GET /api/automations` (active automation contracts for account)
+- `GET /api/automations/:automationId` (active contract details)
+- `GET /api/inbox` (pending approval requests)
+
+## Auth Scope
+
+Policy and report APIs/pages are account-scoped by authenticated context (`x-api-key` or Bearer token).
+
+- `meta.authScope = "account"` is returned for policy/report JSON APIs and policy/version MCP tool responses.
+- Missing key resolves to public read-only context.
+
+### API key role binding
+
+`API_KEYS` supports optional role suffix:
+
+- `key:account`
+- `key:account:role`
+
+Supported roles:
+
+- `admin`
+- `operator`
+- `auditor`
+- `readonly`
+
+`admin` and `operator` can mutate policy/version/control-plane state. `auditor` and `readonly` are read-only.
+
+## Ops Handoff (Role Test Checklist)
+
+Use this checklist after key rotation or environment changes.
+
+1. Confirm role/account resolution via MCP `auth_whoami`:
+   - `admin` -> `accountId=<tenant>`, `role=admin`, `readOnly=false`
+   - `operator` -> `accountId=<tenant>`, `role=operator`, `readOnly=false`
+   - `auditor` -> `accountId=<tenant>`, `role=auditor`, `readOnly=true`
+   - `readonly` -> `accountId=<tenant>`, `role=readonly`, `readOnly=true`
+2. Confirm read APIs are account-scoped:
+   - `GET /api/automations`
+   - `GET /api/inbox`
+3. Confirm write paths:
+   - `operator` can call `automation_contract_upsert` and `judgment_policy_save`
+   - `auditor` and `readonly` cannot call write tools (tool hidden in read-only mode)
+4. Confirm policy activation consistency:
+   - activating policy version `B` demotes prior active version `A` to `draft`
+5. Confirm DB invariants:
+   - only one active automation contract per `(account_id, automation_id)`
+   - autonomous contracts require non-`none` assignment mode
+
+### Quick verify commands
+
+Replace `ATLAS_HOST` and `KEY`:
+
+```bash
+# whoami
+curl -sS \
+  -H "accept: application/json, text/event-stream" \
+  -H "x-api-key: KEY" \
+  -H "content-type: application/json" \
+  -d '{"jsonrpc":"2.0","id":"who","method":"tools/call","params":{"name":"auth_whoami","arguments":{}}}' \
+  "ATLAS_HOST/mcp"
+
+# account-scoped automations list
+curl -sS -H "x-api-key: KEY" "ATLAS_HOST/api/automations"
+```
+
+## D1 Migrations
+
+Apply migrations in order:
+
+1. `worker/migrations/0001_versions_visualizations.sql`
+2. `worker/migrations/0002_judgment_policy.sql`
+3. `worker/migrations/0003_automation_registry.sql`
+4. `worker/migrations/0004_runs_approvals_audit.sql`
+5. `worker/migrations/0005_policy_activation_governance.sql`
+6. `worker/migrations/0006_control_plane_invariants.sql`
+
+Ensure `worker/wrangler.toml` has a valid D1 `database_id` before deploy.
+Use `worker/migrations/ROLLOUT.md` for apply order, post-migration checks, and rollback guidance.
+
+## Land-The-Plane Checklist
+
+To complete production readiness for Atlas + Judgment control-plane persistence:
+
+1. Set the target `database_id` in `worker/wrangler.toml`.
+2. Apply all six migrations to the target D1 database.
+3. Verify trigger-based invariants:
+   - one active automation contract per `(account_id, automation_id)`,
+   - autonomous execution requires non-`none` assignment mode in contract `spec_json`,
+   - approval transitions only from `pending`,
+   - `awaiting_approval` run state requires a pending approval row.
+4. Run end-to-end verification against deployed worker:
+   - mapping tools return visualization URLs,
+   - policy save/get/activate paths resolve correct active version,
+   - estimate reports persist and are retrievable via URL/API,
+   - approval and run events are queryable for audit replay.
+
+## cURL Examples
+
+Replace:
+
+- `ATLAS_HOST` with your worker host (for example `https://interaction-atlas-mcp.example.com`)
+- `API_KEY` with your account-scoped key
+
+### Get active policy for an entity
+
+```bash
+curl -sS \
+  -H "x-api-key: API_KEY" \
+  "ATLAS_HOST/api/policies?entity_type=agent&entity_id=fleet-watchdog"
+```
+
+### Save a draft policy (MCP tool call)
+
+```bash
+curl -sS \
+  -H "x-api-key: API_KEY" \
+  -H "content-type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": "1",
+    "method": "tools/call",
+    "params": {
+      "name": "judgment_policy_save",
+      "arguments": {
+        "entity_type": "agent",
+        "entity_id": "fleet-watchdog",
+        "status": "draft",
+        "policy": {
+          "id": "policy-fleet-watchdog-v2",
+          "name": "Fleet Watchdog v2",
+          "rules": [
+            {
+              "id": "rule-review-write",
+              "priority": 10,
+              "when": { "hasWriteIntent": true, "hasHumanReviewStep": false },
+              "then": {
+                "decision": "require_human_review",
+                "reason": "Write intent requires explicit human review."
+              }
+            },
+            {
+              "id": "rule-default-allow",
+              "priority": 999,
+              "when": {},
+              "then": { "decision": "allow", "reason": "Default allow." }
+            }
+          ]
+        }
+      }
+    }
+  }' \
+  "ATLAS_HOST/mcp"
+```
+
+### Run policy estimate (inline + report URL)
+
+```bash
+curl -sS \
+  -H "x-api-key: API_KEY" \
+  -H "content-type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": "2",
+    "method": "tools/call",
+    "params": {
+      "name": "judgment_policy_estimate",
+      "arguments": {
+        "entity_type": "agent",
+        "entity_id": "fleet-watchdog",
+        "scenarios": [
+          { "id": "s1", "toolName": "workflow_get", "hasWriteIntent": false, "hasHumanReviewStep": true, "introspectionOk": true },
+          { "id": "s2", "toolName": "workflow_map_from_tool_sequence", "hasWriteIntent": true, "hasHumanReviewStep": false, "introspectionOk": true },
+          { "id": "s3", "toolName": "mcp_map_to_workflow", "hasWriteIntent": true, "hasHumanReviewStep": true, "introspectionOk": false }
+        ]
+      }
+    }
+  }' \
+  "ATLAS_HOST/mcp"
+```
+
+### Activate a saved policy version
+
+```bash
+curl -sS \
+  -H "x-api-key: API_KEY" \
+  -H "content-type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": "3",
+    "method": "tools/call",
+    "params": {
+      "name": "judgment_policy_activate",
+      "arguments": {
+        "entity_type": "agent",
+        "entity_id": "fleet-watchdog",
+        "policy_version_id": "pol_example_version_id"
+      }
+    }
+  }' \
+  "ATLAS_HOST/mcp"
+```
+
+### Fetch a saved estimate report (JSON API)
+
+```bash
+curl -sS \
+  -H "x-api-key: API_KEY" \
+  "ATLAS_HOST/api/reports/rep_example_report_id"
+```
+
+### Open shareable report page
+
+```bash
+open "ATLAS_HOST/reports/rep_example_report_id"
+```

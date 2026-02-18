@@ -1,0 +1,403 @@
+import type { D1Database } from '@create-something/mcp-core';
+import type { AtlasEntityType } from './versions.js';
+
+export type PolicyStatus = 'draft' | 'active' | 'archived';
+
+export interface PolicyRule {
+  id: string;
+  priority: number;
+  when: {
+    toolNames?: string[];
+    hasWriteIntent?: boolean;
+    hasHumanReviewStep?: boolean;
+    introspectionOk?: boolean;
+    accountIds?: string[];
+  };
+  then: {
+    decision: 'allow' | 'require_human_review' | 'block';
+    reason: string;
+  };
+}
+
+export interface JudgmentPolicy {
+  id: string;
+  name: string;
+  description?: string;
+  rules: PolicyRule[];
+}
+
+export interface PolicyVersionRow {
+  id: string;
+  account_id: string;
+  entity_type: AtlasEntityType;
+  entity_id: string;
+  status: PolicyStatus;
+  policy_json: string;
+  created_by: string;
+  created_at: number;
+}
+
+export interface PolicyEstimateSummary {
+  before: { allow: number; require_human_review: number; block: number };
+  after: { allow: number; require_human_review: number; block: number };
+  delta: { allow: number; require_human_review: number; block: number };
+  scenarioCount: number;
+}
+
+export interface EstimateReportRow {
+  id: string;
+  account_id: string;
+  entity_type: AtlasEntityType;
+  entity_id: string;
+  before_policy_version_id: string | null;
+  after_policy_version_id: string;
+  scenario_set_json: string;
+  summary_json: string;
+  created_by: string;
+  created_at: number;
+}
+
+function nowEpochSeconds(): number {
+  return Math.floor(Date.now() / 1000);
+}
+
+function randSuffix(): string {
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function safeIdPart(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64) || 'unknown';
+}
+
+function makePolicyVersionId(accountId: string, entityType: AtlasEntityType, entityId: string): string {
+  return ['pol', safeIdPart(accountId), safeIdPart(entityType), safeIdPart(entityId), String(nowEpochSeconds()), randSuffix()].join('_');
+}
+
+function makeEstimateReportId(accountId: string, entityType: AtlasEntityType, entityId: string): string {
+  return ['rep', safeIdPart(accountId), safeIdPart(entityType), safeIdPart(entityId), String(nowEpochSeconds()), randSuffix()].join('_');
+}
+
+export function createDefaultPolicy(entityId: string): JudgmentPolicy {
+  return {
+    id: `default-${safeIdPart(entityId)}`,
+    name: `Default policy for ${entityId}`,
+    description: 'Baseline hard-gate policy for Atlas workflow mapping.',
+    rules: [
+      {
+        id: 'jr_block_readonly_write_01',
+        priority: 10,
+        when: { hasWriteIntent: true, accountIds: ['public'] },
+        then: {
+          decision: 'block',
+          reason: 'Public read-only account cannot run write-intent path.',
+        },
+      },
+      {
+        id: 'jr_review_introspection_failure_02',
+        priority: 20,
+        when: { toolNames: ['mcp_map_to_workflow'], introspectionOk: false },
+        then: {
+          decision: 'require_human_review',
+          reason: 'Introspection failed; operator review required.',
+        },
+      },
+      {
+        id: 'jr_review_missing_human_step_03',
+        priority: 30,
+        when: { hasWriteIntent: true, hasHumanReviewStep: false },
+        then: {
+          decision: 'require_human_review',
+          reason: 'Write-intent path without explicit human review.',
+        },
+      },
+      {
+        id: 'jr_allow_default_99',
+        priority: 999,
+        when: {},
+        then: {
+          decision: 'allow',
+          reason: 'No restrictive rules matched.',
+        },
+      },
+    ],
+  };
+}
+
+export async function savePolicyVersion(
+  db: D1Database | undefined,
+  input: {
+    accountId: string;
+    entityType: AtlasEntityType;
+    entityId: string;
+    status?: PolicyStatus;
+    policy: JudgmentPolicy;
+    createdBy: string;
+  },
+): Promise<PolicyVersionRow> {
+  const status = input.status ?? 'draft';
+  const id = makePolicyVersionId(input.accountId, input.entityType, input.entityId);
+  const row: PolicyVersionRow = {
+    id,
+    account_id: input.accountId,
+    entity_type: input.entityType,
+    entity_id: input.entityId,
+    status,
+    policy_json: JSON.stringify(input.policy),
+    created_by: input.createdBy,
+    created_at: nowEpochSeconds(),
+  };
+
+  if (!db) return row;
+
+  await db
+    .prepare(
+      `INSERT INTO judgment_policy_versions
+       (id, account_id, entity_type, entity_id, status, policy_json, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(
+      row.id,
+      row.account_id,
+      row.entity_type,
+      row.entity_id,
+      row.status,
+      row.policy_json,
+      row.created_by,
+      row.created_at,
+    )
+    .run();
+
+  return row;
+}
+
+export async function getPolicyVersionById(
+  db: D1Database | undefined,
+  accountId: string,
+  policyVersionId: string,
+): Promise<PolicyVersionRow | null> {
+  if (!db) return null;
+  return db
+    .prepare(`SELECT * FROM judgment_policy_versions WHERE account_id = ? AND id = ? LIMIT 1`)
+    .bind(accountId, policyVersionId)
+    .first<PolicyVersionRow>();
+}
+
+export async function listPolicyVersions(
+  db: D1Database | undefined,
+  accountId: string,
+  entityType: AtlasEntityType,
+  entityId: string,
+): Promise<PolicyVersionRow[]> {
+  if (!db) return [];
+  const result = await db
+    .prepare(
+      `SELECT * FROM judgment_policy_versions
+       WHERE account_id = ? AND entity_type = ? AND entity_id = ?
+       ORDER BY created_at DESC`,
+    )
+    .bind(accountId, entityType, entityId)
+    .all<PolicyVersionRow>();
+  return result.results;
+}
+
+export async function getActivePolicySelection(
+  db: D1Database | undefined,
+  accountId: string,
+  entityType: AtlasEntityType,
+  entityId: string,
+): Promise<string | null> {
+  if (!db) return null;
+  const row = await db
+    .prepare(
+      `SELECT active_policy_version_id FROM judgment_policy_selection
+       WHERE account_id = ? AND entity_type = ? AND entity_id = ?
+       LIMIT 1`,
+    )
+    .bind(accountId, entityType, entityId)
+    .first<{ active_policy_version_id: string }>();
+  return row?.active_policy_version_id ?? null;
+}
+
+export async function activatePolicyVersion(
+  db: D1Database | undefined,
+  input: {
+    accountId: string;
+    entityType: AtlasEntityType;
+    entityId: string;
+    policyVersionId: string;
+    updatedBy: string;
+  },
+): Promise<void> {
+  if (!db) return;
+
+  await db
+    .prepare(
+      `UPDATE judgment_policy_versions
+       SET status = 'draft'
+       WHERE account_id = ? AND entity_type = ? AND entity_id = ? AND status = 'active'`,
+    )
+    .bind(input.accountId, input.entityType, input.entityId)
+    .run();
+
+  await db
+    .prepare(
+      `INSERT INTO judgment_policy_selection
+       (account_id, entity_type, entity_id, active_policy_version_id, updated_by, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(account_id, entity_type, entity_id) DO UPDATE SET
+         active_policy_version_id = excluded.active_policy_version_id,
+         updated_by = excluded.updated_by,
+         updated_at = excluded.updated_at`,
+    )
+    .bind(
+      input.accountId,
+      input.entityType,
+      input.entityId,
+      input.policyVersionId,
+      input.updatedBy,
+      nowEpochSeconds(),
+    )
+    .run();
+
+  await db
+    .prepare(`UPDATE judgment_policy_versions SET status = 'active' WHERE account_id = ? AND id = ?`)
+    .bind(input.accountId, input.policyVersionId)
+    .run();
+}
+
+export async function resolveActivePolicy(
+  db: D1Database | undefined,
+  input: {
+    accountId: string;
+    entityType: AtlasEntityType;
+    entityId: string;
+  },
+): Promise<{ policyVersionId: string; policy: JudgmentPolicy }> {
+  const fallback = createDefaultPolicy(input.entityId);
+  if (!db) {
+    return {
+      policyVersionId: `default-${safeIdPart(input.entityId)}`,
+      policy: fallback,
+    };
+  }
+
+  const selectedId = await getActivePolicySelection(db, input.accountId, input.entityType, input.entityId);
+  if (selectedId) {
+    const selected = await getPolicyVersionById(db, input.accountId, selectedId);
+    if (selected) {
+      return {
+        policyVersionId: selected.id,
+        policy: JSON.parse(selected.policy_json) as JudgmentPolicy,
+      };
+    }
+  }
+
+  const latest = await db
+    .prepare(
+      `SELECT * FROM judgment_policy_versions
+       WHERE account_id = ? AND entity_type = ? AND entity_id = ?
+       ORDER BY created_at DESC
+       LIMIT 1`,
+    )
+    .bind(input.accountId, input.entityType, input.entityId)
+    .first<PolicyVersionRow>();
+
+  if (latest) {
+    return {
+      policyVersionId: latest.id,
+      policy: JSON.parse(latest.policy_json) as JudgmentPolicy,
+    };
+  }
+
+  return {
+    policyVersionId: `default-${safeIdPart(input.entityId)}`,
+    policy: fallback,
+  };
+}
+
+export async function saveEstimateReport(
+  db: D1Database | undefined,
+  input: {
+    accountId: string;
+    entityType: AtlasEntityType;
+    entityId: string;
+    beforePolicyVersionId: string | null;
+    afterPolicyVersionId: string;
+    scenarioSet: unknown;
+    summary: PolicyEstimateSummary;
+    createdBy: string;
+  },
+): Promise<EstimateReportRow> {
+  const id = makeEstimateReportId(input.accountId, input.entityType, input.entityId);
+  const row: EstimateReportRow = {
+    id,
+    account_id: input.accountId,
+    entity_type: input.entityType,
+    entity_id: input.entityId,
+    before_policy_version_id: input.beforePolicyVersionId,
+    after_policy_version_id: input.afterPolicyVersionId,
+    scenario_set_json: JSON.stringify(input.scenarioSet),
+    summary_json: JSON.stringify(input.summary),
+    created_by: input.createdBy,
+    created_at: nowEpochSeconds(),
+  };
+
+  if (!db) return row;
+
+  await db
+    .prepare(
+      `INSERT INTO judgment_estimate_reports
+       (id, account_id, entity_type, entity_id, before_policy_version_id, after_policy_version_id, scenario_set_json, summary_json, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(
+      row.id,
+      row.account_id,
+      row.entity_type,
+      row.entity_id,
+      row.before_policy_version_id,
+      row.after_policy_version_id,
+      row.scenario_set_json,
+      row.summary_json,
+      row.created_by,
+      row.created_at,
+    )
+    .run();
+
+  return row;
+}
+
+export async function getEstimateReportById(
+  db: D1Database | undefined,
+  accountId: string,
+  reportId: string,
+): Promise<EstimateReportRow | null> {
+  if (!db) return null;
+  return db
+    .prepare(`SELECT * FROM judgment_estimate_reports WHERE account_id = ? AND id = ? LIMIT 1`)
+    .bind(accountId, reportId)
+    .first<EstimateReportRow>();
+}
+
+export async function getLatestEstimateReport(
+  db: D1Database | undefined,
+  accountId: string,
+  entityType: AtlasEntityType,
+  entityId: string,
+): Promise<EstimateReportRow | null> {
+  if (!db) return null;
+  return db
+    .prepare(
+      `SELECT * FROM judgment_estimate_reports
+       WHERE account_id = ? AND entity_type = ? AND entity_id = ?
+       ORDER BY created_at DESC
+       LIMIT 1`,
+    )
+    .bind(accountId, entityType, entityId)
+    .first<EstimateReportRow>();
+}
