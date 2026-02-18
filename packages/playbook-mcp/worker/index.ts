@@ -89,6 +89,7 @@ type HalfDozenRouteRunInput = {
   model?: string;
   maxTurns?: number;
   timeoutMs?: number;
+  tracingDisabled?: boolean;
 };
 
 type ScenarioKey = 'fleet-watchdog' | 'inbox-triage' | 'dedup';
@@ -737,7 +738,10 @@ function queueSlackScenarioRun(
       });
 
       try {
-        const result = await runScenarioByKey(scenario, runInput);
+        const result = await runScenarioByKey(scenario, {
+          ...runInput,
+          tracingDisabled: !braintrustTracingEnabled,
+        });
         const payload = buildSlackCompletedResponse(result, runId, route);
         await postSlackResponse(responseUrl, payload);
         if (braintrustTracingEnabled) {
@@ -959,7 +963,10 @@ export default {
       });
 
       try {
-        const result = await runScenarioByKey(scenario, baseInput);
+        const result = await runScenarioByKey(scenario, {
+          ...baseInput,
+          tracingDisabled: !braintrustTracingEnabled,
+        });
         queueSuccessNotifications(ctx, env, result, url.pathname, runId);
         if (braintrustTracingEnabled) {
           ctx.waitUntil(flushBraintrust().catch(() => {}));

@@ -9,7 +9,7 @@
  */
 
 import type { Span as AgentsSpan, SpanData, Trace as AgentsTrace, TracingProcessor } from '@openai/agents';
-import { addTraceProcessor } from '@openai/agents';
+import { addTraceProcessor, setTraceProcessors } from '@openai/agents';
 
 import { flush, initBraintrust, isBraintrustEnabled, startSpan, type BraintrustConfig } from './braintrust.js';
 
@@ -18,6 +18,12 @@ export type OpenAIAgentsBraintrustTracingConfig = {
   projectName?: string;
   tags?: string[];
   braintrust?: BraintrustConfig;
+  /**
+   * By default, the OpenAI Agents SDK auto-installs an exporter that sends traces
+   * to OpenAI (`/v1/traces/ingest`). In most client deployments we only want
+   * Braintrust, so this defaults to `true` to replace the processors.
+   */
+  replaceTraceProcessors?: boolean;
 };
 
 let installed = false;
@@ -287,7 +293,13 @@ export function registerOpenAIAgentsBraintrustTracing(
   if (!isBraintrustEnabled()) return false;
   if (installed) return true;
 
-  addTraceProcessor(new BraintrustAgentsTraceProcessor(options.tags ?? []));
+  const processor = new BraintrustAgentsTraceProcessor(options.tags ?? []);
+  const replace = options.replaceTraceProcessors ?? true;
+  if (replace) {
+    setTraceProcessors([processor]);
+  } else {
+    addTraceProcessor(processor);
+  }
   installed = true;
   return true;
 }
