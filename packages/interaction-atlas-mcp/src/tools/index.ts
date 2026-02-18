@@ -178,6 +178,17 @@ function jsonError(data: unknown): ReturnType<typeof errorContent> {
   };
 }
 
+function guardrailsFromPolicy(policy: unknown): { maxReviewDelta: number | null; maxBlockDelta: number | null } {
+  if (!policy || typeof policy !== 'object') {
+    return { maxReviewDelta: null, maxBlockDelta: null };
+  }
+  const g = (policy as { guardrails?: { maxReviewDelta?: unknown; maxBlockDelta?: unknown } }).guardrails;
+  return {
+    maxReviewDelta: typeof g?.maxReviewDelta === 'number' ? g.maxReviewDelta : null,
+    maxBlockDelta: typeof g?.maxBlockDelta === 'number' ? g.maxBlockDelta : null,
+  };
+}
+
 type VersionedToolInput = {
   versionId?: string;
   commitSha?: string;
@@ -818,6 +829,7 @@ export function registerTools(server: ScopedMcpServer): void {
       if (input.policy_version_id) {
         const row = await getPolicyVersionById(db, ctx.accountId, input.policy_version_id);
         if (!row) return errorContent(`Unknown policy_version_id for account "${ctx.accountId}": ${input.policy_version_id}`);
+        const parsedPolicy = JSON.parse(row.policy_json);
         return jsonContent({
           meta: {
             authScope: 'account',
@@ -827,8 +839,17 @@ export function registerTools(server: ScopedMcpServer): void {
           entity_type: input.entity_type,
           entity_id: input.entity_id,
           policyVersion: row,
-          policy: JSON.parse(row.policy_json),
-          availableVersions: versions.map((v) => ({ id: v.id, status: v.status, created_at: v.created_at })),
+          policy: parsedPolicy,
+          guardrails: guardrailsFromPolicy(parsedPolicy),
+          availableVersions: versions.map((v) => {
+            const parsed = JSON.parse(v.policy_json);
+            return {
+              id: v.id,
+              status: v.status,
+              created_at: v.created_at,
+              guardrails: guardrailsFromPolicy(parsed),
+            };
+          }),
         });
       }
 
@@ -847,7 +868,16 @@ export function registerTools(server: ScopedMcpServer): void {
         entity_id: input.entity_id,
         activePolicyVersionId: active.policyVersionId,
         policy: active.policy,
-        availableVersions: versions.map((v) => ({ id: v.id, status: v.status, created_at: v.created_at })),
+        guardrails: guardrailsFromPolicy(active.policy),
+        availableVersions: versions.map((v) => {
+          const parsed = JSON.parse(v.policy_json);
+          return {
+            id: v.id,
+            status: v.status,
+            created_at: v.created_at,
+            guardrails: guardrailsFromPolicy(parsed),
+          };
+        }),
       });
     },
     { readOnly: true },
