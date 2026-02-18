@@ -19,10 +19,16 @@ export interface PolicyRule {
   };
 }
 
+export interface PolicyGuardrails {
+  maxReviewDelta?: number;
+  maxBlockDelta?: number;
+}
+
 export interface JudgmentPolicy {
   id: string;
   name: string;
   description?: string;
+  guardrails?: PolicyGuardrails;
   rules: PolicyRule[];
 }
 
@@ -87,6 +93,10 @@ export function createDefaultPolicy(entityId: string): JudgmentPolicy {
     id: `default-${safeIdPart(entityId)}`,
     name: `Default policy for ${entityId}`,
     description: 'Baseline hard-gate policy for Atlas workflow mapping.',
+    guardrails: {
+      maxReviewDelta: 2,
+      maxBlockDelta: 1,
+    },
     rules: [
       {
         id: 'jr_block_readonly_write_01',

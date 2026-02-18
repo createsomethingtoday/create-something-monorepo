@@ -1,5 +1,10 @@
 export type JudgmentDecisionType = 'allow' | 'require_human_review' | 'block';
 
+export interface JudgmentGuardrails {
+  maxReviewDelta?: number;
+  maxBlockDelta?: number;
+}
+
 export interface JudgmentRule {
   id: string;
   priority: number;
@@ -20,6 +25,7 @@ export interface JudgmentPolicy {
   id: string;
   name: string;
   description?: string;
+  guardrails?: JudgmentGuardrails;
   rules: JudgmentRule[];
 }
 

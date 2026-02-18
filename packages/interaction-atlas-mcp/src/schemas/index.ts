@@ -108,10 +108,16 @@ const JudgmentRuleSchema = z.object({
   }),
 });
 
+const JudgmentGuardrailsSchema = z.object({
+  maxReviewDelta: z.number().int().min(0).optional(),
+  maxBlockDelta: z.number().int().min(0).optional(),
+});
+
 export const JudgmentPolicySchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   description: z.string().optional(),
+  guardrails: JudgmentGuardrailsSchema.optional(),
   rules: z.array(JudgmentRuleSchema).min(1),
 });
 

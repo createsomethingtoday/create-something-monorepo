@@ -168,6 +168,19 @@ export default {
         entityId,
       });
       const versions = await listPolicyVersions(_env.DB, accountId, entityType, entityId);
+      const activeGuardrails = {
+        maxReviewDelta:
+          typeof active.policy.guardrails?.maxReviewDelta === 'number' ? active.policy.guardrails.maxReviewDelta : null,
+        maxBlockDelta: typeof active.policy.guardrails?.maxBlockDelta === 'number' ? active.policy.guardrails.maxBlockDelta : null,
+      };
+      const versionsWithGuardrails = versions.map((v) => {
+        const parsed = JSON.parse(v.policy_json) as JudgmentPolicy;
+        const guardrails = {
+          maxReviewDelta: typeof parsed.guardrails?.maxReviewDelta === 'number' ? parsed.guardrails.maxReviewDelta : null,
+          maxBlockDelta: typeof parsed.guardrails?.maxBlockDelta === 'number' ? parsed.guardrails.maxBlockDelta : null,
+        };
+        return { ...v, guardrails };
+      });
       return new Response(
         JSON.stringify(
           {
@@ -180,12 +193,19 @@ export default {
             entityId,
             activePolicyVersionId: active.policyVersionId,
             activePolicy: active.policy,
-            versions: versions.map((v) => ({
+            activeGuardrails: {
+              maxReviewDelta:
+                typeof active.policy.guardrails?.maxReviewDelta === 'number' ? active.policy.guardrails.maxReviewDelta : null,
+              maxBlockDelta:
+                typeof active.policy.guardrails?.maxBlockDelta === 'number' ? active.policy.guardrails.maxBlockDelta : null,
+            },
+            versions: versionsWithGuardrails.map((v) => ({
               id: v.id,
               status: v.status,
               created_by: v.created_by,
               created_at: v.created_at,
               policy: JSON.parse(v.policy_json),
+              guardrails: v.guardrails,
             })),
           },
           null,
@@ -582,6 +602,9 @@ export default {
       .pillAdd { border-color: #14532d; color: #bbf7d0; background: rgba(20,83,45,0.22); }
       .pillRemove { border-color: #7f1d1d; color: #fecaca; background: rgba(127,29,29,0.22); }
       .pillChange { border-color: #78350f; color: #fde68a; background: rgba(120,53,15,0.22); }
+      .pillTighten { border-color: #14532d; color: #bbf7d0; background: rgba(20,83,45,0.22); }
+      .pillRelax { border-color: #7f1d1d; color: #fecaca; background: rgba(127,29,29,0.22); }
+      .pillSame { border-color: #334155; color: #cbd5e1; background: #0f172a; }
       .atlasTag { font-size: 0.72rem; border: 1px solid #1e3a8a; border-radius: 999px; padding: 0.12rem 0.5rem; color: #bfdbfe; background: rgba(30,58,138,0.22); }
       pre { overflow: auto; border: 1px solid #1f2937; background: #020617; border-radius: 8px; padding: 0.7rem; max-height: 320px; color: #e2e8f0; }
       .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.86rem; }
@@ -664,6 +687,7 @@ export default {
           <button id="activateAfterBtn" class="btnPrimary">Make Live (Advanced)</button>
         </div>
         <div id="diffSummary" class="row"></div>
+        <div id="guardrailTrend" class="row"></div>
         <pre id="diffOutput" class="mono advancedOnly"></pre>
       </section>
 
@@ -678,6 +702,12 @@ export default {
             <option value="speed-first">Speed first (more auto-allow)</option>
           </select>
           <button id="applyPresetBtn">Apply Objective Template</button>
+        </div>
+        <div class="row">
+          <label class="muted">Guardrails</label>
+          <label>Max review delta <input id="maxReviewDelta" type="number" min="0" value="2" style="width:88px;" /></label>
+          <label>Max block delta <input id="maxBlockDelta" type="number" min="0" value="1" style="width:88px;" /></label>
+          <button id="resetGuardrailsBtn">Reset Defaults</button>
         </div>
         <div id="ruleMeta" class="row"></div>
         <div id="ruleList"></div>
@@ -737,7 +767,7 @@ export default {
       let policies = new Map();
       let draftPolicy = null;
       let latestEstimateSummary = null;
-      const guardrails = {
+      const DEFAULT_GUARDRAILS = {
         maxReviewDelta: 2,
         maxBlockDelta: 1,
       };
@@ -746,6 +776,47 @@ export default {
       function sortedRules(rules) { return [...rules].sort((a, b) => a.priority - b.priority); }
       function pretty(value) { return JSON.stringify(value, null, 2); }
       function impactText(delta) { return (delta > 0 ? '+' : '') + String(delta || 0); }
+      function getDraftGuardrails() {
+        return {
+          maxReviewDelta: Number(draftPolicy?.guardrails?.maxReviewDelta ?? DEFAULT_GUARDRAILS.maxReviewDelta),
+          maxBlockDelta: Number(draftPolicy?.guardrails?.maxBlockDelta ?? DEFAULT_GUARDRAILS.maxBlockDelta),
+        };
+      }
+      function guardrailsFromPolicy(policy) {
+        return {
+          maxReviewDelta: Number(policy?.guardrails?.maxReviewDelta ?? DEFAULT_GUARDRAILS.maxReviewDelta),
+          maxBlockDelta: Number(policy?.guardrails?.maxBlockDelta ?? DEFAULT_GUARDRAILS.maxBlockDelta),
+        };
+      }
+      function renderGuardrailTrend(beforePolicy, afterPolicy) {
+        const host = byId('guardrailTrend');
+        if (!host) return;
+        const before = guardrailsFromPolicy(beforePolicy);
+        const after = guardrailsFromPolicy(afterPolicy);
+        const trend = (beforeValue, afterValue, label) => {
+          if (afterValue < beforeValue) return '<span class="pill pillTighten">' + label + ': tightened ' + beforeValue + '→' + afterValue + '</span>';
+          if (afterValue > beforeValue) return '<span class="pill pillRelax">' + label + ': relaxed ' + beforeValue + '→' + afterValue + '</span>';
+          return '<span class="pill pillSame">' + label + ': no change ' + afterValue + '</span>';
+        };
+        host.innerHTML =
+          trend(before.maxReviewDelta, after.maxReviewDelta, 'Review threshold') +
+          trend(before.maxBlockDelta, after.maxBlockDelta, 'Block threshold');
+      }
+      function ensureDraftGuardrails() {
+        if (!draftPolicy) return;
+        const g = getDraftGuardrails();
+        draftPolicy.guardrails = {
+          maxReviewDelta: Number.isFinite(g.maxReviewDelta) && g.maxReviewDelta >= 0 ? g.maxReviewDelta : DEFAULT_GUARDRAILS.maxReviewDelta,
+          maxBlockDelta: Number.isFinite(g.maxBlockDelta) && g.maxBlockDelta >= 0 ? g.maxBlockDelta : DEFAULT_GUARDRAILS.maxBlockDelta,
+        };
+      }
+      function renderGuardrailsInputs() {
+        const g = getDraftGuardrails();
+        const review = byId('maxReviewDelta');
+        const block = byId('maxBlockDelta');
+        if (review) review.value = String(g.maxReviewDelta);
+        if (block) block.value = String(g.maxBlockDelta);
+      }
       function applyUIMode() {
         const mode = byId('uiMode')?.value || 'simple';
         document.body.classList.remove('mode-simple', 'mode-advanced');
@@ -838,15 +909,18 @@ export default {
 
       function renderDiff() {
         const before = selectedPolicy('beforeVersion');
-        const after = selectedPolicy('afterVersion');
+        const after = draftPolicy || selectedPolicy('afterVersion');
         const diff = computeDiff(before, after);
         byId('diffSummary').innerHTML =
           '<span class="pill pillAdd">added: ' + diff.added.length + '</span>' +
           '<span class="pill pillRemove">removed: ' + diff.removed.length + '</span>' +
           '<span class="pill pillChange">changed: ' + diff.changed.length + '</span>';
+        renderGuardrailTrend(before, after);
         byId('diffOutput').textContent = pretty({
           beforeVersion: byId('beforeVersion').value || null,
           afterVersion: byId('afterVersion').value || null,
+          guardrailsBefore: guardrailsFromPolicy(before),
+          guardrailsAfter: guardrailsFromPolicy(after),
           diff
         });
         updateRiskSummary(diff);
@@ -886,6 +960,7 @@ export default {
 
         const reviewDelta = Math.max(0, latestEstimateSummary?.delta?.require_human_review || 0);
         const blockDelta = Math.max(0, latestEstimateSummary?.delta?.block || 0);
+        const guardrails = getDraftGuardrails();
         const guardrailBreach = reviewDelta > guardrails.maxReviewDelta || blockDelta > guardrails.maxBlockDelta;
         if (guardrail) {
           if (!latestEstimateSummary) {
@@ -907,6 +982,8 @@ export default {
         const after = selectedPolicy('afterVersion');
         if (!after) return;
         draftPolicy = JSON.parse(JSON.stringify(after));
+        ensureDraftGuardrails();
+        renderGuardrailsInputs();
         renderRuleList();
       }
 
@@ -978,9 +1055,19 @@ export default {
         };
 
         if (!draftPolicy) {
-          draftPolicy = { id: 'draft-' + entityId, name: 'Draft Policy', rules: [] };
+          draftPolicy = {
+            id: 'draft-' + entityId,
+            name: 'Draft Policy',
+            guardrails: {
+              maxReviewDelta: DEFAULT_GUARDRAILS.maxReviewDelta,
+              maxBlockDelta: DEFAULT_GUARDRAILS.maxBlockDelta,
+            },
+            rules: [],
+          };
         }
         draftPolicy.rules = templates[preset].map((r) => ({ ...r }));
+        ensureDraftGuardrails();
+        renderGuardrailsInputs();
         renderRuleList();
         renderDiff();
         setStatus('Applied objective template', 'success');
@@ -1020,6 +1107,7 @@ export default {
 
       async function saveDraft() {
         if (!draftPolicy) return;
+        ensureDraftGuardrails();
         setStatus('Saving draft...', 'neutral');
         const res = await fetch('/api/policies/save', {
           method: 'POST',
@@ -1114,11 +1202,41 @@ export default {
       byId('makeLiveBtn').addEventListener('click', activateAfter);
       byId('rollbackBtn').addEventListener('click', rollbackToCurrentLive);
       byId('applyPresetBtn').addEventListener('click', applyPresetRules);
+      byId('resetGuardrailsBtn').addEventListener('click', () => {
+        if (!draftPolicy) return;
+        draftPolicy.guardrails = {
+          maxReviewDelta: DEFAULT_GUARDRAILS.maxReviewDelta,
+          maxBlockDelta: DEFAULT_GUARDRAILS.maxBlockDelta,
+        };
+        renderGuardrailsInputs();
+        renderDiff();
+        setStatus('Guardrails reset to defaults', 'success');
+      });
+      byId('maxReviewDelta').addEventListener('input', () => {
+        if (!draftPolicy) return;
+        draftPolicy.guardrails = {
+          ...getDraftGuardrails(),
+          maxReviewDelta: Number(byId('maxReviewDelta').value || DEFAULT_GUARDRAILS.maxReviewDelta),
+        };
+        renderDiff();
+      });
+      byId('maxBlockDelta').addEventListener('input', () => {
+        if (!draftPolicy) return;
+        draftPolicy.guardrails = {
+          ...getDraftGuardrails(),
+          maxBlockDelta: Number(byId('maxBlockDelta').value || DEFAULT_GUARDRAILS.maxBlockDelta),
+        };
+        renderDiff();
+      });
       byId('addRuleBtn').addEventListener('click', () => {
         if (!draftPolicy) {
           draftPolicy = {
             id: 'draft-' + entityId,
             name: 'Draft Policy',
+            guardrails: {
+              maxReviewDelta: DEFAULT_GUARDRAILS.maxReviewDelta,
+              maxBlockDelta: DEFAULT_GUARDRAILS.maxBlockDelta,
+            },
             rules: [],
           };
         }
@@ -1150,6 +1268,7 @@ export default {
 
       applyUIMode();
       setMakeLiveEnabled(false);
+      renderGuardrailsInputs();
       loadData().catch((e) => {
         byId('simulationOutput').textContent = String(e);
         setStatus('Failed to load', 'error');
@@ -1172,6 +1291,19 @@ export default {
         entityId,
       });
       const versions = await listPolicyVersions(_env.DB, accountId, entityType, entityId);
+      const activeGuardrails = {
+        maxReviewDelta:
+          typeof active.policy.guardrails?.maxReviewDelta === 'number' ? active.policy.guardrails.maxReviewDelta : null,
+        maxBlockDelta: typeof active.policy.guardrails?.maxBlockDelta === 'number' ? active.policy.guardrails.maxBlockDelta : null,
+      };
+      const versionsWithGuardrails = versions.map((v) => {
+        const parsed = JSON.parse(v.policy_json) as JudgmentPolicy;
+        const guardrails = {
+          maxReviewDelta: typeof parsed.guardrails?.maxReviewDelta === 'number' ? parsed.guardrails.maxReviewDelta : null,
+          maxBlockDelta: typeof parsed.guardrails?.maxBlockDelta === 'number' ? parsed.guardrails.maxBlockDelta : null,
+        };
+        return { ...v, guardrails };
+      });
 
       const html = `<!doctype html>
 <html lang="en">
@@ -1198,11 +1330,14 @@ export default {
     <main>
       <div class="card">
         <div style="font-weight:600;margin-bottom:0.35rem;">Active policy</div>
+        <div style="color:#9ca3af;margin-bottom:0.35rem;">
+          Guardrails: review delta max <code>${esc(String(activeGuardrails.maxReviewDelta ?? 'default'))}</code> · block delta max <code>${esc(String(activeGuardrails.maxBlockDelta ?? 'default'))}</code>
+        </div>
         <pre><code>${esc(JSON.stringify(active.policy, null, 2))}</code></pre>
       </div>
       <div class="card">
         <div style="font-weight:600;margin-bottom:0.35rem;">Saved versions</div>
-        ${versions.length === 0 ? '<div style="color:#9ca3af;">No saved policy versions yet.</div>' : versions.map(v => `<div style="margin:0.4rem 0;"><code>${esc(v.id)}</code> · ${esc(v.status)} · ${esc(String(v.created_at))}</div>`).join('')}
+        ${versionsWithGuardrails.length === 0 ? '<div style="color:#9ca3af;">No saved policy versions yet.</div>' : versionsWithGuardrails.map(v => `<div style="margin:0.4rem 0;"><code>${esc(v.id)}</code> · ${esc(v.status)} · ${esc(String(v.created_at))} · guardrails(review<=${esc(String(v.guardrails.maxReviewDelta ?? 'default'))}, block<=${esc(String(v.guardrails.maxBlockDelta ?? 'default'))})</div>`).join('')}
       </div>
       <div style="color:#9ca3af;margin:0.75rem 0 0.35rem;">
         Access scope: this page and policy APIs are account-scoped by your API key/Bearer token context.
