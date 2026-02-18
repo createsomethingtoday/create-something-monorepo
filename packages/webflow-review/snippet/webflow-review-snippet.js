@@ -11,7 +11,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.1.1';
+  const VERSION = '0.2.0';
   const MESSAGE_MARKER = '__wf_review_snippet_v1';
 
   /** @type {any | null} */
@@ -236,6 +236,58 @@
     return set;
   }
 
+  function normalizeText(value) {
+    return String(value || '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function truncateText(value, maxLen) {
+    const s = normalizeText(value);
+    if (!Number.isFinite(maxLen) || maxLen <= 0) return s;
+    if (s.length <= maxLen) return s;
+    return `${s.slice(0, Math.max(0, maxLen - 3))}...`;
+  }
+
+  function cssEscape(value) {
+    try {
+      // eslint-disable-next-line no-undef
+      if (window.CSS && typeof window.CSS.escape === 'function') return window.CSS.escape(String(value));
+    } catch {
+      // ignore
+    }
+    return String(value);
+  }
+
+  function getSimpleSelector(el) {
+    try {
+      if (!el || !(el instanceof Element)) return null;
+      const tag = el.tagName.toLowerCase();
+      const id = el.getAttribute('id');
+      if (id) return `#${cssEscape(id)}`;
+
+      const cls = normalizeText(el.getAttribute('class') || '')
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 3);
+      if (cls.length) return `${tag}.${cls.map(cssEscape).join('.')}`;
+      return tag;
+    } catch {
+      return null;
+    }
+  }
+
+  function describeEl(el, { maxText = 140 } = {}) {
+    if (!el || !(el instanceof Element)) return null;
+    return {
+      tag: el.tagName.toLowerCase(),
+      id: el.getAttribute('id') || null,
+      className: el.getAttribute('class') || null,
+      text: truncateText(el.textContent || '', maxText) || null,
+      selector: getSimpleSelector(el),
+    };
+  }
+
   const tools = Object.create(null);
 
   function registerTool(tool) {
@@ -364,6 +416,573 @@
           count: linksMissingHref.length,
           examples: linkExamples,
         },
+      };
+    },
+  });
+
+  registerTool({
+    name: 'audit_headings',
+    description: 'Audit heading structure (H1 count, skipped levels, empty headings) on the current page.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        maxItems: {
+          type: 'integer',
+          description: 'Maximum items to include in each list',
+          default: 50,
+        },
+      },
+      additionalProperties: false,
+    },
+    execute: async ({ maxItems = 50 } = {}) => {
+      const headings = Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,h6'));
+
+      const items = [];
+      const emptyHeadings = [];
+      const skippedHeadingLevels = [];
+
+      let prev = null;
+      for (const el of headings) {
+        const tag = el.tagName.toLowerCase();
+        const level = Number(tag.slice(1));
+        const desc = describeEl(el, { maxText: 180 }) || { tag, id: null, className: null, text: null, selector: null };
+
+        if (items.length < maxItems) items.push({ level, ...desc });
+
+        if (!desc.text) {
+          if (emptyHeadings.length < maxItems) emptyHeadings.push({ level, ...desc });
+        }
+
+        if (prev && Number.isFinite(prev.level) && Number.isFinite(level) && level > prev.level + 1) {
+          if (skippedHeadingLevels.length < maxItems) {
+            skippedHeadingLevels.push({
+              fromLevel: prev.level,
+              toLevel: level,
+              previous: prev,
+              current: { level, ...desc },
+            });
+          }
+        }
+
+        prev = { level, ...desc };
+      }
+
+      const h1Count = headings.filter((h) => h.tagName === 'H1').length;
+
+      return {
+        summary: {
+          headings: headings.length,
+          h1: h1Count,
+          missingH1: h1Count === 0,
+          multipleH1: h1Count > 1,
+          skippedHeadingLevels: skippedHeadingLevels.length,
+          emptyHeadings: emptyHeadings.length,
+        },
+        headings: items,
+        skippedHeadingLevels,
+        emptyHeadings,
+      };
+    },
+  });
+
+  registerTool({
+    name: 'audit_meta',
+    description: 'Audit SEO metadata on the current page (title, description, Open Graph, canonical, robots).',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      additionalProperties: false,
+    },
+    execute: async () => {
+      const title = normalizeText(document.title || '');
+      const description = normalizeText(
+        document.querySelector('meta[name="description"]')?.getAttribute('content') || ''
+      );
+
+      const canonical = normalizeText(document.querySelector('link[rel="canonical"]')?.getAttribute('href') || '');
+      const robots = normalizeText(document.querySelector('meta[name="robots"]')?.getAttribute('content') || '');
+      const generator = normalizeText(
+        document.querySelector('meta[name="generator"]')?.getAttribute('content') || ''
+      );
+
+      const ogTitle = normalizeText(
+        document.querySelector('meta[property="og:title"]')?.getAttribute('content') || ''
+      );
+      const ogDescription = normalizeText(
+        document.querySelector('meta[property="og:description"]')?.getAttribute('content') || ''
+      );
+      const ogImage = normalizeText(
+        document.querySelector('meta[property="og:image"]')?.getAttribute('content') || ''
+      );
+      const ogUrl = normalizeText(
+        document.querySelector('meta[property="og:url"]')?.getAttribute('content') || ''
+      );
+      const ogType = normalizeText(
+        document.querySelector('meta[property="og:type"]')?.getAttribute('content') || ''
+      );
+
+      const warnings = [];
+      if (title && title.length > 60) warnings.push({ code: 'title_too_long', length: title.length });
+      if (description && (description.length < 50 || description.length > 170)) {
+        warnings.push({ code: 'description_length_out_of_range', length: description.length });
+      }
+
+      const missing = [];
+      if (!title) missing.push('title');
+      if (!description) missing.push('description');
+      if (!ogTitle) missing.push('og:title');
+      if (!ogDescription) missing.push('og:description');
+      if (!ogImage) missing.push('og:image');
+
+      return {
+        url: window.location.href,
+        title: { present: Boolean(title), value: title || null, length: title.length },
+        description: { present: Boolean(description), value: description || null, length: description.length },
+        canonical: { present: Boolean(canonical), href: canonical || null },
+        robots: { present: Boolean(robots), content: robots || null },
+        generator: generator || null,
+        openGraph: {
+          title: ogTitle || null,
+          description: ogDescription || null,
+          image: ogImage || null,
+          url: ogUrl || null,
+          type: ogType || null,
+        },
+        missing,
+        warnings,
+      };
+    },
+  });
+
+  registerTool({
+    name: 'audit_links',
+    description:
+      'Audit links on the current page (empty/placeholder href, target=_blank rel=noopener, missing accessible name).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        maxExamples: {
+          type: 'integer',
+          description: 'Maximum examples to include per check',
+          default: 20,
+        },
+      },
+      additionalProperties: false,
+    },
+    execute: async ({ maxExamples = 20 } = {}) => {
+      const links = Array.from(document.querySelectorAll('a'));
+
+      const emptyHref = [];
+      const placeholderHref = [];
+      const blankTargetMissingRel = [];
+      const missingAccessibleName = [];
+
+      for (const a of links) {
+        const href = (a.getAttribute('href') || '').trim();
+        const target = (a.getAttribute('target') || '').trim();
+        const rel = (a.getAttribute('rel') || '').trim();
+
+        const text = truncateText(a.textContent || '', 120);
+        const ariaLabel = normalizeText(a.getAttribute('aria-label') || '');
+        const title = normalizeText(a.getAttribute('title') || '');
+        const hasName = Boolean(text || ariaLabel || title);
+
+        const desc = {
+          ...describeEl(a, { maxText: 120 }),
+          href: href || null,
+          target: target || null,
+          rel: rel || null,
+        };
+
+        if (!href) {
+          if (emptyHref.length < maxExamples) emptyHref.push(desc);
+        } else {
+          const lower = href.toLowerCase();
+          if (href === '#' || lower.startsWith('javascript:')) {
+            if (placeholderHref.length < maxExamples) placeholderHref.push(desc);
+          }
+        }
+
+        if (target === '_blank') {
+          const hasNoopener = /\bnoopener\b/i.test(rel);
+          if (!hasNoopener) {
+            if (blankTargetMissingRel.length < maxExamples) blankTargetMissingRel.push(desc);
+          }
+        }
+
+        if (!hasName) {
+          if (missingAccessibleName.length < maxExamples) missingAccessibleName.push(desc);
+        }
+      }
+
+      return {
+        summary: {
+          links: links.length,
+          emptyHref: emptyHref.length,
+          placeholderHref: placeholderHref.length,
+          blankTargetMissingRel: blankTargetMissingRel.length,
+          missingAccessibleName: missingAccessibleName.length,
+        },
+        emptyHref,
+        placeholderHref,
+        blankTargetMissingRel,
+        missingAccessibleName,
+      };
+    },
+  });
+
+  function getUrlExtension(url) {
+    try {
+      if (!url) return null;
+      if (url.startsWith('data:')) return 'data';
+      const u = new URL(url, window.location.origin);
+      const m = u.pathname.toLowerCase().match(/\.([a-z0-9]+)$/);
+      return m ? m[1] : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function hasExplicitImageDimensions(img) {
+    try {
+      if (!img || !(img instanceof HTMLImageElement)) return false;
+      if (img.hasAttribute('width') && img.hasAttribute('height')) return true;
+      const style = window.getComputedStyle(img);
+      const ar = style ? String(style.getPropertyValue('aspect-ratio') || '').trim() : '';
+      if (ar && ar !== 'auto') return true;
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  registerTool({
+    name: 'audit_images',
+    description:
+      'Audit images on the current page (alt text, loading behavior, width/height or aspect-ratio hints).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        maxExamples: {
+          type: 'integer',
+          description: 'Maximum examples to include per check',
+          default: 20,
+        },
+        aboveFoldThresholdPx: {
+          type: 'integer',
+          description: 'Pixels from top of viewport considered above-the-fold',
+          default: 0,
+        },
+      },
+      additionalProperties: false,
+    },
+    execute: async ({ maxExamples = 20, aboveFoldThresholdPx = 0 } = {}) => {
+      const imgs = Array.from(document.querySelectorAll('img'));
+      const viewport = { width: window.innerWidth, height: window.innerHeight };
+
+      const missingAlt = [];
+      const missingDimensions = [];
+      const aboveFoldLazy = [];
+      const belowFoldNotLazy = [];
+
+      const formats = Object.create(null);
+
+      for (const img of imgs) {
+        const src = img.currentSrc || img.getAttribute('src') || '';
+        const ext = getUrlExtension(src) || 'unknown';
+        formats[ext] = (formats[ext] || 0) + 1;
+
+        const alt = (img.getAttribute('alt') || '').trim();
+        const loading = img.loading || img.getAttribute('loading') || null;
+
+        const rect = img.getBoundingClientRect();
+        const isVisible = rect.width > 0 && rect.height > 0;
+        const aboveFold = isVisible && rect.top <= viewport.height + Math.max(0, aboveFoldThresholdPx) && rect.bottom > 0;
+
+        const desc = {
+          ...describeEl(img, { maxText: 0 }),
+          src: src || null,
+          alt: alt || null,
+          loading: loading || null,
+          widthAttr: img.getAttribute('width') || null,
+          heightAttr: img.getAttribute('height') || null,
+        };
+
+        if (!alt) {
+          if (missingAlt.length < maxExamples) missingAlt.push(desc);
+        }
+
+        if (!hasExplicitImageDimensions(img)) {
+          if (missingDimensions.length < maxExamples) missingDimensions.push(desc);
+        }
+
+        if (aboveFold && loading === 'lazy') {
+          if (aboveFoldLazy.length < maxExamples) aboveFoldLazy.push(desc);
+        }
+
+        if (!aboveFold && isVisible && loading !== 'lazy') {
+          if (belowFoldNotLazy.length < maxExamples) belowFoldNotLazy.push(desc);
+        }
+      }
+
+      return {
+        viewport,
+        summary: {
+          images: imgs.length,
+          missingAlt: missingAlt.length,
+          missingDimensions: missingDimensions.length,
+          aboveFoldLazy: aboveFoldLazy.length,
+          belowFoldNotLazy: belowFoldNotLazy.length,
+        },
+        formats,
+        missingAlt,
+        missingDimensions,
+        aboveFoldLazy,
+        belowFoldNotLazy,
+      };
+    },
+  });
+
+  function fieldHasLabel(field) {
+    try {
+      if (!field || !(field instanceof Element)) return false;
+      const tag = field.tagName.toLowerCase();
+      if (tag === 'input') {
+        const type = (field.getAttribute('type') || '').toLowerCase();
+        if (type === 'hidden') return true;
+      }
+
+      const ariaLabel = normalizeText(field.getAttribute('aria-label') || '');
+      const ariaLabelledBy = normalizeText(field.getAttribute('aria-labelledby') || '');
+      if (ariaLabel || ariaLabelledBy) return true;
+
+      if (field.closest('label')) return true;
+
+      const id = field.getAttribute('id');
+      if (id) {
+        const lbl = document.querySelector(`label[for="${cssEscape(id)}"]`);
+        if (lbl) return true;
+      }
+
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  registerTool({
+    name: 'audit_forms',
+    description: 'Audit forms for basic accessibility (labels / aria-labels on fields).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        maxExamples: {
+          type: 'integer',
+          description: 'Maximum examples to include',
+          default: 20,
+        },
+      },
+      additionalProperties: false,
+    },
+    execute: async ({ maxExamples = 20 } = {}) => {
+      const fields = Array.from(document.querySelectorAll('input, select, textarea'));
+      const missingLabels = [];
+
+      for (const field of fields) {
+        if (fieldHasLabel(field)) continue;
+        if (missingLabels.length >= maxExamples) break;
+
+        const tag = field.tagName.toLowerCase();
+        const type = tag === 'input' ? (field.getAttribute('type') || 'text') : null;
+        const name = field.getAttribute('name') || null;
+        const placeholder = field.getAttribute('placeholder') || null;
+
+        missingLabels.push({
+          ...describeEl(field, { maxText: 0 }),
+          fieldTag: tag,
+          fieldType: type,
+          name,
+          placeholder,
+        });
+      }
+
+      return {
+        summary: {
+          fields: fields.length,
+          missingLabels: missingLabels.length,
+        },
+        missingLabels,
+      };
+    },
+  });
+
+  registerTool({
+    name: 'audit_media',
+    description: 'Audit video elements for autoplay/controls and background video pause controls.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        maxExamples: {
+          type: 'integer',
+          description: 'Maximum examples to include',
+          default: 20,
+        },
+      },
+      additionalProperties: false,
+    },
+    execute: async ({ maxExamples = 20 } = {}) => {
+      const videos = Array.from(document.querySelectorAll('video'));
+      const autoplayWithoutControls = [];
+      const backgroundVideosMissingControl = [];
+
+      for (const video of videos) {
+        const autoplay = video.autoplay || video.hasAttribute('autoplay');
+        const controls = video.controls || video.hasAttribute('controls');
+
+        const wrapper = video.closest('.w-background-video');
+        const isBackground = Boolean(wrapper);
+        const hasControl = wrapper
+          ? Boolean(
+              wrapper.querySelector('.w-background-video--control, [data-w-bg-video-control], button')
+            )
+          : false;
+
+        const src = video.currentSrc || video.getAttribute('src') || video.querySelector('source')?.getAttribute('src') || null;
+
+        const desc = {
+          ...describeEl(video, { maxText: 0 }),
+          src,
+          autoplay,
+          controls,
+          muted: video.muted || video.hasAttribute('muted'),
+          loop: video.loop || video.hasAttribute('loop'),
+          playsInline: video.playsInline || video.hasAttribute('playsinline'),
+          isBackground,
+          hasBackgroundControl: hasControl,
+        };
+
+        if (autoplay && !controls && !isBackground) {
+          if (autoplayWithoutControls.length < maxExamples) autoplayWithoutControls.push(desc);
+        }
+
+        if (isBackground && autoplay && !hasControl) {
+          if (backgroundVideosMissingControl.length < maxExamples) backgroundVideosMissingControl.push(desc);
+        }
+      }
+
+      return {
+        summary: {
+          videos: videos.length,
+          autoplayWithoutControls: autoplayWithoutControls.length,
+          backgroundVideosMissingControl: backgroundVideosMissingControl.length,
+        },
+        autoplayWithoutControls,
+        backgroundVideosMissingControl,
+      };
+    },
+  });
+
+  registerTool({
+    name: 'audit_404',
+    description: 'Probe a non-existent path to confirm the site serves a 404 page (status + basic structure).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        probePath: {
+          type: 'string',
+          description: 'Optional path to request (defaults to a random non-existent path)',
+        },
+      },
+      additionalProperties: false,
+    },
+    execute: async ({ probePath } = {}) => {
+      const rnd = Math.random().toString(36).slice(2);
+      const path = probePath && typeof probePath === 'string' && probePath ? probePath : `/__wf_review_404_probe_${rnd}__`;
+      const url = new URL(path, window.location.origin).toString();
+
+      const resp = await fetch(url, { method: 'GET', redirect: 'follow' });
+      const text = await resp.text().catch(() => '');
+
+      let navCount = 0;
+      let linkCount = 0;
+      let h1Count = 0;
+      let title = null;
+
+      try {
+        const doc = new DOMParser().parseFromString(text, 'text/html');
+        title = normalizeText(doc.title || '') || null;
+        navCount = doc.querySelectorAll('nav').length;
+        linkCount = doc.querySelectorAll('a[href]').length;
+        h1Count = doc.querySelectorAll('h1').length;
+      } catch {
+        // ignore
+      }
+
+      return {
+        url,
+        status: resp.status,
+        ok: resp.status === 404,
+        title,
+        navCount,
+        linkCount,
+        h1Count,
+      };
+    },
+  });
+
+  registerTool({
+    name: 'audit_webflow_way',
+    description:
+      'Run a consolidated Webflow Way-focused audit (published-site checks): meta, headings, DOM, links, images, forms, media, interactions.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        maxExamples: {
+          type: 'integer',
+          description: 'Maximum examples to include per check',
+          default: 20,
+        },
+        includeSitemap: {
+          type: 'boolean',
+          description: 'Whether to include sitemap URLs in the output',
+          default: false,
+        },
+        sitemapMaxUrls: {
+          type: 'integer',
+          description: 'Maximum sitemap URLs to include if includeSitemap is true',
+          default: 200,
+        },
+      },
+      additionalProperties: false,
+    },
+    execute: async ({ maxExamples = 20, includeSitemap = false, sitemapMaxUrls = 200 } = {}) => {
+      const site = await callTool('get_site_info', {});
+      const meta = await callTool('audit_meta', {});
+      const headings = await callTool('audit_headings', { maxItems: maxExamples });
+      const dom = await callTool('audit_dom', { maxExamples });
+      const links = await callTool('audit_links', { maxExamples });
+      const images = await callTool('audit_images', { maxExamples });
+      const forms = await callTool('audit_forms', { maxExamples });
+      const media = await callTool('audit_media', { maxExamples });
+
+      const ix2 = await callTool('audit_ix2', { maxItems: maxExamples });
+      const ix3 = await callTool('audit_ix3', { maxItems: maxExamples });
+
+      const sitemap = includeSitemap
+        ? await callTool('get_sitemap_urls', { maxUrls: sitemapMaxUrls })
+        : null;
+
+      return {
+        site,
+        meta,
+        headings,
+        dom,
+        links,
+        images,
+        forms,
+        media,
+        interactions: { ix2, ix3 },
+        sitemap,
       };
     },
   });
@@ -598,11 +1217,8 @@
     version: VERSION,
     listTools,
     callTool,
-    auditAll: async () => {
-      const dom = await callTool('audit_dom', {});
-      const ix2 = await callTool('audit_ix2', {});
-      const ix3 = await callTool('audit_ix3', {});
-      return { dom, ix2, ix3 };
+    auditAll: async ({ maxExamples = 20, includeSitemap = false } = {}) => {
+      return await callTool('audit_webflow_way', { maxExamples, includeSitemap });
     },
   };
 
@@ -643,23 +1259,35 @@
   try {
     // eslint-disable-next-line no-undef
     const modelContext = window.navigator && window.navigator.modelContext;
+
+    const toWebMcpTool = (t) => ({
+      name: t.name,
+      description: t.description,
+      inputSchema: t.inputSchema,
+      execute: async (input, agent) => {
+        const raw = await t.execute(input, agent);
+
+        // If a tool already returns a WebMCP-style response, pass it through.
+        if (raw && typeof raw === 'object' && Array.isArray(raw.content)) return raw;
+
+        let text;
+        try {
+          text = typeof raw === 'string' ? raw : JSON.stringify(raw, null, 2);
+        } catch {
+          text = raw == null ? String(raw) : '[unserializable tool result]';
+        }
+
+        return { content: [{ type: 'text', text }] };
+      },
+    });
+
     if (modelContext && typeof modelContext.provideContext === 'function') {
       modelContext.provideContext({
-        tools: Object.values(tools).map((t) => ({
-          name: t.name,
-          description: t.description,
-          inputSchema: t.inputSchema,
-          execute: t.execute,
-        })),
+        tools: Object.values(tools).map(toWebMcpTool),
       });
     } else if (modelContext && typeof modelContext.registerTool === 'function') {
       for (const t of Object.values(tools)) {
-        modelContext.registerTool({
-          name: t.name,
-          description: t.description,
-          inputSchema: t.inputSchema,
-          execute: t.execute,
-        });
+        modelContext.registerTool(toWebMcpTool(t));
       }
     }
   } catch {
