@@ -26,6 +26,7 @@
  */
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { initLogger, type Logger, type Span } from 'braintrust';
 import type { D1Database } from './stores/d1.js';
 
 // =============================================================================
@@ -83,6 +84,68 @@ export interface ActivityResult {
     error: string | null;
     createdAt: string;
   }>;
+}
+
+export interface BraintrustTelemetryOptions {
+  apiKey?: string;
+  projectName?: string;
+  enabled?: boolean;
+}
+
+// =============================================================================
+// Braintrust (optional)
+// =============================================================================
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let braintrustLogger: Logger<any> | null = null;
+
+function initBraintrustTelemetry(options: BraintrustTelemetryOptions, serverName: string): boolean {
+  if (!options.apiKey || options.enabled === false) return false;
+  if (braintrustLogger) return true;
+
+  braintrustLogger = initLogger({
+    apiKey: options.apiKey,
+    projectName: options.projectName || serverName,
+    asyncFlush: true,
+    setCurrent: true,
+  });
+
+  return true;
+}
+
+async function emitBraintrustInvocation(args: {
+  serverName: string;
+  toolName: string;
+  accountId: string;
+  input: unknown;
+  output: unknown;
+  durationMs: number;
+  success: boolean;
+  error?: string;
+}): Promise<void> {
+  if (!braintrustLogger) return;
+
+  await braintrustLogger.traced(
+    (span: Span) => {
+      span.log({
+        input: args.input,
+        output: args.output,
+        error: args.error,
+        tags: ['mcp', args.serverName, args.toolName, args.success ? 'success' : 'error'],
+        metadata: {
+          server: args.serverName,
+          tool: args.toolName,
+          accountId: args.accountId,
+          durationMs: args.durationMs,
+          success: args.success,
+        },
+      });
+    },
+    {
+      name: `mcp:${args.serverName}:${args.toolName}`,
+      type: 'tool',
+    },
+  );
 }
 
 // =============================================================================
@@ -294,8 +357,10 @@ export function enableTelemetry(
   db: D1Database,
   serverName: string,
   getAccountId?: () => string,
+  braintrustOptions?: BraintrustTelemetryOptions,
 ): void {
   const resolveAccount = getAccountId || (() => 'operator');
+  const braintrustEnabled = initBraintrustTelemetry(braintrustOptions || {}, serverName);
 
   // Proxy server.tool() to wrap handlers with metering.
   // Cast through `any` to bypass TypeScript's strict overload checking on .apply().
@@ -320,14 +385,41 @@ export function enableTelemetry(
     // Wrap the handler with metering
     args[lastIdx] = async (...handlerArgs: unknown[]) => {
       const start = Date.now();
+      const accountId = resolveAccount();
       try {
         const result = await (originalHandler as Function).apply(null, handlerArgs);
-        recordInvocation(db, serverName, resolveAccount(), toolName, Date.now() - start, true)
+        const durationMs = Date.now() - start;
+        recordInvocation(db, serverName, accountId, toolName, durationMs, true)
           .catch((e: unknown) => console.warn(`[telemetry] metering failed for ${toolName}:`, e));
+        if (braintrustEnabled) {
+          emitBraintrustInvocation({
+            serverName,
+            toolName,
+            accountId,
+            input: handlerArgs[0],
+            output: result,
+            durationMs,
+            success: true,
+          }).catch((e: unknown) => console.warn(`[telemetry] braintrust emit failed for ${toolName}:`, e));
+        }
         return result;
       } catch (error) {
-        recordInvocation(db, serverName, resolveAccount(), toolName, Date.now() - start, false, error)
+        const durationMs = Date.now() - start;
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        recordInvocation(db, serverName, accountId, toolName, durationMs, false, error)
           .catch((e: unknown) => console.warn(`[telemetry] metering failed for ${toolName}:`, e));
+        if (braintrustEnabled) {
+          emitBraintrustInvocation({
+            serverName,
+            toolName,
+            accountId,
+            input: handlerArgs[0],
+            output: { error: errorMessage },
+            durationMs,
+            success: false,
+            error: errorMessage,
+          }).catch((e: unknown) => console.warn(`[telemetry] braintrust emit failed for ${toolName}:`, e));
+        }
         throw error;
       }
     };

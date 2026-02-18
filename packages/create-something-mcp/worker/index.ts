@@ -54,7 +54,10 @@ export class CreateSomethingMCP extends McpAgent<Env> {
   async init() {
     // Telemetry: meter all tool calls + register health/usage resources
     if (this.env.TELEMETRY_DB) {
-      enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'create-something');
+      enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'create-something', undefined, {
+        apiKey: (this.env as any).BRAINTRUST_API_KEY,
+        projectName: 'create-something',
+      });
     }
 
     registerResources(this.server);

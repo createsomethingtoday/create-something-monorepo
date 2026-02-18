@@ -88,7 +88,10 @@ export class ZoomClipsMCP extends McpAgent<Env> {
   async init() {
     // Telemetry: meter all tool calls + register health/usage resources
     if (this.env.FEEDBACK_DB) {
-      enableTelemetry(this.server, this.env.FEEDBACK_DB, 'halfdozen-zoom-sync');
+      enableTelemetry(this.server, this.env.FEEDBACK_DB, 'halfdozen-zoom-sync', undefined, {
+        apiKey: (this.env as any).BRAINTRUST_API_KEY,
+        projectName: 'halfdozen-zoom-sync',
+      });
     }
 
     const getDb = () => this.env.DB as unknown as D1Database;

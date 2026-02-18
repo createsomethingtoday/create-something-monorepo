@@ -474,7 +474,10 @@ export class YouTubeSyncMCP extends McpAgent<Env> {
   async init() {
     // Telemetry: meter all tool calls + register health/usage resources
     if (this.env.FEEDBACK_DB) {
-      enableTelemetry(this.server, this.env.FEEDBACK_DB, SERVER_NAME);
+      enableTelemetry(this.server, this.env.FEEDBACK_DB, SERVER_NAME, undefined, {
+        apiKey: (this.env as any).BRAINTRUST_API_KEY,
+        projectName: SERVER_NAME,
+      });
     }
 
     // ── Resources ──────────────────────────────────────────────────────

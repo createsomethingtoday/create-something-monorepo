@@ -791,7 +791,10 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
   async init() {
     // Telemetry: meter all tool calls + register health/usage resources
     if (this.env.FEEDBACK_DB) {
-      enableTelemetry(this.server, this.env.FEEDBACK_DB, 'halfdozen-gmail-sync');
+      enableTelemetry(this.server, this.env.FEEDBACK_DB, 'halfdozen-gmail-sync', undefined, {
+        apiKey: (this.env as any).BRAINTRUST_API_KEY,
+        projectName: 'halfdozen-gmail-sync',
+      });
     }
 
     // Tool: Search Emails

@@ -117,7 +117,10 @@ export class ScheduleMCP extends McpAgent<Env> {
   async init() {
     // Telemetry: meter all tool calls + register health/usage resources
     if (this.env.TELEMETRY_DB) {
-      enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'schedule-mcp');
+      enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'schedule-mcp', undefined, {
+        apiKey: (this.env as any).BRAINTRUST_API_KEY,
+        projectName: 'schedule-mcp',
+      });
     }
 
     // Configure Insight for Worker mode (logs to console → wrangler tail)
