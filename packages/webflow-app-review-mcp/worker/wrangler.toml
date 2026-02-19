@@ -1,11 +1,16 @@
 name = "webflow-app-review-mcp"
 main = "index.ts"
 compatibility_date = "2026-02-18"
-compatibility_flags = ["nodejs_compat"]
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 
 [[durable_objects.bindings]]
 name = "MCP_OBJECT"
 class_name = "WebflowAppReviewMCP"
+
+[[kv_namespaces]]
+binding = "OAUTH_KV"
+id = "ef6ba893e47343e0b26b0918775e6b89"
+preview_id = "b659942e9bc24630a482ea1a28b4cf80"
 
 [[migrations]]
 tag = "v1"

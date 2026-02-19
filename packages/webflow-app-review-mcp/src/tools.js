@@ -71,7 +71,7 @@ export function registerTools(server, getClient) {
             const health = await getClient().healthCheck();
             return asSuccess({
                 ...health,
-                auth: 'Bearer token required at worker boundary when MCP_API_KEY is configured.',
+                auth: 'OAuth 2.1 on /mcp and /sse (legacy bearer token still accepted when MCP_API_KEY is configured).',
             });
         }
         catch (error) {
