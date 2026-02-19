@@ -39,10 +39,12 @@ All Half Dozen MCPs share `halfdozen-feedback` D1 for telemetry. Fleet-wide quer
 | 7 | `halfdozen-notion-mcp` (Lightswitch) | `notion-halfdozen-create-something` | Active | `lightswitch-notion.mcp.workway.co` | Yes |
 | 8 | `halfdozen-notion-mcp` (Phase 3) | `notion-halfdozen-create-something` | Active | `phase-3-notion.mcp.workway.co` | Yes |
 | 9 | `halfdozen-notion-mcp` (Three Six Zero) | `notion-halfdozen-create-something` | Active | `three-six-zero-notion.mcp.workway.co` | Yes |
-| 10 | `halfdozen-gmail-sync` | `halfdozen-gmail-sync` | Active | `gmail.mcp.workway.co` | Yes |
-| 11 | `halfdozen-zoom-sync` | `halfdozen-zoom-sync` | Active | `zoom.mcp.workway.co` | Yes |
-| 12 | `half-dozen-youtube-sync` | `half-dozen-youtube-sync` | Active | `youtube.mcp.workway.co` | Yes |
-| 13 | `halfdozen-telemetry-mcp` | `halfdozen-telemetry` | Active | `halfdozen-telemetry-mcp.half-dozen.workers.dev` | — (reads telemetry) |
+| 10 | `halfdozen-gmail-sync` (Danny) | `halfdozen-gmail-sync-danny` | Active | `gmail.mcp.workway.co` | Yes |
+| 11 | `halfdozen-gmail-sync` (Fillip) | `halfdozen-gmail-sync-fillip` | Active | `fillip-gmail.mcp.workway.co` | Yes |
+| 12 | `halfdozen-gmail-sync` (Leah) | `halfdozen-gmail-sync-leah` | Active | `leah-gmail.mcp.workway.co` | Yes |
+| 13 | `halfdozen-zoom-sync` | `halfdozen-zoom-sync` | Active | `zoom.mcp.workway.co` | Yes |
+| 14 | `half-dozen-youtube-sync` | `half-dozen-youtube-sync` | Active | `youtube.mcp.workway.co` | Yes |
+| 15 | `halfdozen-telemetry-mcp` | `halfdozen-telemetry` | Active | `halfdozen-telemetry-mcp.half-dozen.workers.dev` | — (reads telemetry) |
 
 ### Naming Note
 

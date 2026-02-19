@@ -48,10 +48,16 @@ const SERVER_VERSION = '1.0.0';
 
 // Known servers in the fleet
 const FLEET_SERVERS = [
+  // Legacy aggregate identity retained for historical continuity.
   'halfdozen-gmail-sync',
+  // Per-operator isolated Gmail instances.
+  'halfdozen-gmail-sync-danny',
+  'halfdozen-gmail-sync-fillip',
+  'halfdozen-gmail-sync-leah',
   'notion-halfdozen-create-something',
   'halfdozen-zoom-sync',
   'half-dozen-youtube-sync',
+  'quickbooks-notion-mcp',
 ];
 
 // =============================================================================

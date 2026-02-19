@@ -85,7 +85,12 @@ const CS_FLEET_SERVERS = [
 
 // Known servers on WORKWAY (Half Dozen) account.
 const WORKWAY_FLEET_SERVERS = [
+  // Legacy aggregate identity retained for historical continuity.
   'halfdozen-gmail-sync',
+  // Per-operator isolated Gmail instances.
+  'halfdozen-gmail-sync-danny',
+  'halfdozen-gmail-sync-fillip',
+  'halfdozen-gmail-sync-leah',
   'notion-halfdozen-create-something',
   'halfdozen-zoom-sync',
   'half-dozen-youtube-sync',
