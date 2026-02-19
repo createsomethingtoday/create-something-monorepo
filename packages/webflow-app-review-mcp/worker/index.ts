@@ -32,6 +32,8 @@ interface Env {
   SHARED_OAUTH_CLIENT_ID?: string;
   SHARED_OAUTH_CLIENT_SECRET?: string;
   SHARED_OAUTH_CLIENT_NAME?: string;
+  SHARED_OAUTH_ALLOWED_REDIRECT_HOSTS?: string;
+  ALLOW_LEGACY_API_KEY?: string;
 }
 
 function requireEnv(env: Env, key: keyof Env): string {
@@ -77,6 +79,79 @@ interface StoredOAuthClient {
 
 function hasSharedClientCredentials(env: Env): boolean {
   return Boolean(env.SHARED_OAUTH_CLIENT_ID?.trim() && env.SHARED_OAUTH_CLIENT_SECRET?.trim());
+}
+
+function parseBooleanEnv(value: string | undefined): boolean {
+  if (!value) {
+    return false;
+  }
+  const normalized = value.trim().toLowerCase();
+  return normalized === '1'
+    || normalized === 'true'
+    || normalized === 'yes'
+    || normalized === 'on';
+}
+
+function constantTimeEqual(a: string, b: string): boolean {
+  const encoder = new TextEncoder();
+  const aBytes = encoder.encode(a);
+  const bBytes = encoder.encode(b);
+  const maxLen = Math.max(aBytes.length, bBytes.length);
+  let diff = aBytes.length ^ bBytes.length;
+  for (let i = 0; i < maxLen; i += 1) {
+    diff |= (aBytes[i] ?? 0) ^ (bBytes[i] ?? 0);
+  }
+  return diff === 0;
+}
+
+function legacyApiKeyEnabled(env: Env): boolean {
+  if (!env.MCP_API_KEY?.trim()) {
+    return false;
+  }
+  if (env.ALLOW_LEGACY_API_KEY !== undefined) {
+    return parseBooleanEnv(env.ALLOW_LEGACY_API_KEY);
+  }
+  // Security-first default: when using shared-client OAuth, do not allow static token fallback.
+  return !hasSharedClientCredentials(env);
+}
+
+function parseAllowedRedirectHosts(env: Env): string[] {
+  return (env.SHARED_OAUTH_ALLOWED_REDIRECT_HOSTS ?? '')
+    .split(',')
+    .map((host) => host.trim().toLowerCase())
+    .filter((host) => host.length > 0);
+}
+
+function hostMatchesAllowedEntry(hostname: string, allowedHost: string): boolean {
+  if (allowedHost.startsWith('*.')) {
+    const suffix = allowedHost.slice(2);
+    return hostname === suffix || hostname.endsWith(`.${suffix}`);
+  }
+  return hostname === allowedHost;
+}
+
+function validateSharedRedirectUri(redirectUri: string, env: Env): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(redirectUri);
+  } catch {
+    return 'redirect_uri must be a valid URL.';
+  }
+
+  const protocol = parsed.protocol.toLowerCase();
+  const hostname = parsed.hostname.toLowerCase();
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+  const protocolAllowed = protocol === 'https:' || (protocol === 'http:' && isLocalhost);
+  if (!protocolAllowed) {
+    return 'redirect_uri must use https (http is allowed only for localhost).';
+  }
+
+  const allowedHosts = parseAllowedRedirectHosts(env);
+  if (allowedHosts.length > 0 && !allowedHosts.some((allowedHost) => hostMatchesAllowedEntry(hostname, allowedHost))) {
+    return `redirect_uri host "${hostname}" is not allowed.`;
+  }
+
+  return null;
 }
 
 async function sha256Hex(value: string): Promise<string> {
@@ -143,6 +218,9 @@ function isSsePath(pathname: string): boolean {
 function withCors(response: Response): Response {
   const headers = new Headers(response.headers);
   headers.set('Access-Control-Allow-Origin', '*');
+  headers.set('Cache-Control', 'no-store');
+  headers.set('Pragma', 'no-cache');
+  headers.set('X-Content-Type-Options', 'nosniff');
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
@@ -216,6 +294,16 @@ const defaultHandler = {
               },
             }, 400);
           }
+          const redirectValidationError = validateSharedRedirectUri(requestedRedirectUri, env);
+          if (redirectValidationError) {
+            return jsonResponse({
+              ok: false,
+              error: {
+                code: 'OAUTH_REDIRECT_URI_NOT_ALLOWED',
+                message: redirectValidationError,
+              },
+            }, 400);
+          }
           await ensureSharedOAuthClient(env, requestedRedirectUri);
         }
 
@@ -268,9 +356,9 @@ const defaultHandler = {
         },
         auth: {
           oauth: 'OAuth 2.1 (authorization code + PKCE)',
-          legacy_api_key: Boolean(env.MCP_API_KEY),
+          legacy_api_key: legacyApiKeyEnabled(env),
           oauth_mode: usingSharedClient ? 'shared-client-secret' : 'dynamic-registration',
-          shared_client_id: usingSharedClient ? env.SHARED_OAUTH_CLIENT_ID : null,
+          shared_client_configured: usingSharedClient,
         },
       });
     }
@@ -292,7 +380,8 @@ function createOAuthProvider(enableDynamicRegistration: boolean): OAuthProvider 
     allowImplicitFlow: false,
     // Keep Codex and other existing clients working while new OAuth clients migrate.
     resolveExternalToken: ({ token, env }): { props: Record<string, unknown> } | null => {
-      if (!env?.MCP_API_KEY || token !== env.MCP_API_KEY) {
+      const expectedApiKey = env?.MCP_API_KEY?.trim();
+      if (!expectedApiKey || !legacyApiKeyEnabled(env) || !constantTimeEqual(token, expectedApiKey)) {
         return null;
       }
       return {

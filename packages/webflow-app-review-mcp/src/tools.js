@@ -9,6 +9,7 @@ const DEFAULT_VERSIONS_LIMIT = 25;
 const MAX_QUEUE_FEEDBACK_CHARS = 280;
 const MAX_VERSION_FEEDBACK_CHARS = 400;
 const MAX_ASSET_HTML_CHARS = 2000;
+const REDACTED_VALUE = '[REDACTED]';
 const QUERY_STOP_WORDS = new Set([
     'a',
     'an',
@@ -115,11 +116,23 @@ function compactVersionRecord(version) {
         reviewFeedback: truncateText(version.reviewFeedback, MAX_VERSION_FEEDBACK_CHARS),
     };
 }
-function compactAssetRecord(asset) {
+function sanitizeAssetRecord(asset, includeSensitiveFields = false) {
+    if (includeSensitiveFields) {
+        return asset;
+    }
     return {
         ...asset,
-        latestReviewFeedback: truncateText(asset.latestReviewFeedback, MAX_QUEUE_FEEDBACK_CHARS),
-        descriptionLongHtml: truncateText(asset.descriptionLongHtml, MAX_ASSET_HTML_CHARS),
+        credentials: typeof asset.credentials === 'string' && asset.credentials.length > 0
+            ? REDACTED_VALUE
+            : asset.credentials,
+    };
+}
+function compactAssetRecord(asset, includeSensitiveFields = false) {
+    const sanitized = sanitizeAssetRecord(asset, includeSensitiveFields);
+    return {
+        ...sanitized,
+        latestReviewFeedback: truncateText(sanitized.latestReviewFeedback, MAX_QUEUE_FEEDBACK_CHARS),
+        descriptionLongHtml: truncateText(sanitized.descriptionLongHtml, MAX_ASSET_HTML_CHARS),
     };
 }
 function queryTerms(query) {
@@ -148,7 +161,7 @@ export function registerTools(server, getClient) {
             const health = await getClient().healthCheck();
             return asSuccess({
                 ...health,
-                auth: 'OAuth 2.1 on /mcp and /sse (legacy bearer token still accepted when MCP_API_KEY is configured).',
+                auth: 'OAuth 2.1 on /mcp and /sse (legacy bearer token accepted only when ALLOW_LEGACY_API_KEY=true and MCP_API_KEY is configured).',
             });
         }
         catch (error) {
@@ -174,11 +187,12 @@ export function registerTools(server, getClient) {
             return asError(error);
         }
     });
-    server.tool('app_review_get_asset', 'Get one app review payload by asset_id or app_id, including version history.', {
+    server.tool('app_review_get_asset', 'Get one app review payload by asset_id or app_id, including version history. Sensitive credentials are redacted unless include_sensitive_fields=true.', {
         asset_id: z.string().min(1).optional(),
         app_id: z.string().min(1).optional(),
         versions_limit: z.number().int().min(1).max(500).optional(),
         include_full_text: z.boolean().optional(),
+        include_sensitive_fields: z.boolean().optional(),
     }, async (params) => {
         try {
             if (!params.asset_id && !params.app_id) {
@@ -196,8 +210,9 @@ export function registerTools(server, getClient) {
             }
             const versions = await client.listVersionsForAsset(asset.assetId, params.versions_limit ?? DEFAULT_VERSIONS_LIMIT);
             const compacted = params.include_full_text !== true;
+            const includeSensitiveFields = params.include_sensitive_fields === true;
             return asSuccess({
-                asset: compacted ? compactAssetRecord(asset) : asset,
+                asset: compacted ? compactAssetRecord(asset, includeSensitiveFields) : sanitizeAssetRecord(asset, includeSensitiveFields),
                 versions: compacted ? versions.map(compactVersionRecord) : versions,
                 compacted,
             });
@@ -370,7 +385,7 @@ export function registerTools(server, getClient) {
                 throw new AirtableClientError('NO_MUTATION_FIELDS', 'No writable fields were provided for update.', 400);
             }
             return asSuccess({
-                updated_asset: updatedAsset,
+                updated_asset: sanitizeAssetRecord(updatedAsset, false),
                 routed_updates: routedUpdates,
             });
         }
@@ -386,7 +401,7 @@ export function registerTools(server, getClient) {
             const client = getClient();
             await requireAppAsset(client, params.asset_id);
             const updated = await client.setMarketplaceStatus(params.asset_id, params.marketplace_status);
-            return asSuccess({ updated_asset: updated });
+            return asSuccess({ updated_asset: sanitizeAssetRecord(updated, false) });
         }
         catch (error) {
             return asError(error);
