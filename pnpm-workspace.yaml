@@ -16,3 +16,4 @@ packages:
   - 'packages/three-tier-framework-mcp/worker'
   - 'packages/playbook-mcp/worker'
   - 'packages/cs-telemetry-mcp/worker'
+  - 'packages/meetings-mcp/worker'
