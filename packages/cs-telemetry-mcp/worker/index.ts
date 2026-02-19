@@ -803,7 +803,7 @@ export class CSTelemetryMCP extends McpAgent<Env> {
             errors: errs,
             errorRate: Math.round(errorRate * 1000) / 10 + '%',
             avgDuration: formatDuration(Math.round(stats?.avg_duration ?? 0)),
-            tools: tools.map((t) => ({
+            tools: tools.results.map((t) => ({
               name: t.tool_name, calls: t.invocations, errors: t.errors, avgMs: Math.round(t.avg_ms ?? 0),
             })),
           });
@@ -868,7 +868,7 @@ export class CSTelemetryMCP extends McpAgent<Env> {
           const sourceRows = await sourceConfig
             .all<{ server_name: string; account_id: string; period_start: string; runs_this_period: number }>(query, params);
 
-          for (const row of sourceRows) {
+          for (const row of sourceRows.results) {
             rows.push({ ...row, source: sourceConfig.label });
           }
         }
@@ -1380,14 +1380,32 @@ export class CSTelemetryMCP extends McpAgent<Env> {
         const { activeSources, unavailableSources } = sources;
 
         const cap = Math.max(1, Math.min(limit, 100));
-        let query = `SELECT server_name, tool_name, success, duration_ms, error_message, correlation_id, request_id, created_at FROM mcp_tool_invocations WHERE 1=1`;
-        const params: unknown[] = [];
-        if (server) { query += ' AND server_name = ?'; params.push(server); }
-        if (tool) { query += ' AND tool_name = ?'; params.push(tool); }
-        if (correlationId) { query += ' AND correlation_id = ?'; params.push(correlationId); }
-        if (success !== undefined) { query += ' AND success = ?'; params.push(success ? 1 : 0); }
-        query += ' ORDER BY created_at DESC LIMIT ?';
-        params.push(cap);
+        const commonConditions: string[] = [];
+        const commonParams: unknown[] = [];
+        if (server) { commonConditions.push('server_name = ?'); commonParams.push(server); }
+        if (tool) { commonConditions.push('tool_name = ?'); commonParams.push(tool); }
+        if (success !== undefined) { commonConditions.push('success = ?'); commonParams.push(success ? 1 : 0); }
+
+        const withCorrelationConditions = correlationId
+          ? [...commonConditions, 'correlation_id = ?']
+          : [...commonConditions];
+        const withCorrelationParams = correlationId
+          ? [...commonParams, correlationId]
+          : [...commonParams];
+
+        const whereWithCorrelation = withCorrelationConditions.length > 0
+          ? ` WHERE ${withCorrelationConditions.join(' AND ')}`
+          : '';
+        const whereWithoutCorrelation = commonConditions.length > 0
+          ? ` WHERE ${commonConditions.join(' AND ')}`
+          : '';
+
+        const queryWithCorrelation = `SELECT server_name, tool_name, success, duration_ms, error_message, correlation_id, request_id, created_at
+                                      FROM mcp_tool_invocations${whereWithCorrelation}
+                                      ORDER BY created_at DESC LIMIT ?`;
+        const queryWithoutCorrelation = `SELECT server_name, tool_name, success, duration_ms, error_message, NULL AS correlation_id, NULL AS request_id, created_at
+                                         FROM mcp_tool_invocations${whereWithoutCorrelation}
+                                         ORDER BY created_at DESC LIMIT ?`;
 
         const merged: Array<{
           server_name: string;
@@ -1400,21 +1418,57 @@ export class CSTelemetryMCP extends McpAgent<Env> {
           created_at: string;
           source: string;
         }> = [];
+        const schemaWarnings: Array<{ source: string; warning: string }> = [];
 
         for (const sourceConfig of activeSources) {
-          const rows = await sourceConfig
-            .all<{
-              server_name: string;
-              tool_name: string;
-              success: number;
-              duration_ms: number | null;
-              error_message: string | null;
-              correlation_id: string | null;
-              request_id: string | null;
-              created_at: string;
-            }>(query, params);
-          for (const row of rows) {
-            merged.push({ ...row, source: sourceConfig.label });
+          try {
+            const rows = await sourceConfig
+              .all<{
+                server_name: string;
+                tool_name: string;
+                success: number;
+                duration_ms: number | null;
+                error_message: string | null;
+                correlation_id: string | null;
+                request_id: string | null;
+                created_at: string;
+              }>(queryWithCorrelation, [...withCorrelationParams, cap]);
+            for (const row of rows.results) {
+              merged.push({ ...row, source: sourceConfig.label });
+            }
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            const missingCorrelationColumns = message.includes('no such column: correlation_id')
+              || message.includes('no such column: request_id');
+            if (!missingCorrelationColumns) throw error;
+
+            if (correlationId) {
+              schemaWarnings.push({
+                source: sourceConfig.label,
+                warning: 'Source schema lacks correlation_id/request_id; skipped due correlationId filter.',
+              });
+              continue;
+            }
+
+            schemaWarnings.push({
+              source: sourceConfig.label,
+              warning: 'Source schema lacks correlation_id/request_id; returning null for those fields.',
+            });
+
+            const rows = await sourceConfig
+              .all<{
+                server_name: string;
+                tool_name: string;
+                success: number;
+                duration_ms: number | null;
+                error_message: string | null;
+                correlation_id: string | null;
+                request_id: string | null;
+                created_at: string;
+              }>(queryWithoutCorrelation, [...commonParams, cap]);
+            for (const row of rows.results) {
+              merged.push({ ...row, source: sourceConfig.label });
+            }
           }
         }
 
@@ -1428,6 +1482,7 @@ export class CSTelemetryMCP extends McpAgent<Env> {
             key: sourceConfig.key,
             reason: sourceConfig.unavailableReason ?? 'Source unavailable',
           })),
+          schemaWarnings,
           invocations: selected.map((r) => ({
             source: r.source,
             server: r.server_name, tool: r.tool_name, success: r.success === 1,
@@ -1476,7 +1531,7 @@ export class CSTelemetryMCP extends McpAgent<Env> {
         for (const sourceConfig of activeSources) {
           const rows = await sourceConfig
             .all<{ server_name: string; tool_name: string; error_message: string | null; created_at: string }>(query, params);
-          for (const row of rows) {
+          for (const row of rows.results) {
             merged.push({ ...row, source: sourceConfig.label });
           }
         }
@@ -1596,14 +1651,31 @@ export class CSTelemetryMCP extends McpAgent<Env> {
         }
 
         const tables = await sourceConfig.all<{ name: string }>(
-          `SELECT name FROM sqlite_master WHERE type='table' ORDER BY name`,
+          `SELECT name
+           FROM sqlite_master
+           WHERE type='table'
+             AND name NOT LIKE '_cf_%'
+             AND name NOT LIKE 'sqlite_%'
+           ORDER BY name`,
         );
         const schemas: Record<string, unknown[]> = {};
         for (const t of tables.results) {
-          const info = await sourceConfig.all<{ name: string; type: string; pk: number; notnull: number; dflt_value: string | null }>(
-            `PRAGMA table_info(${t.name})`,
-          );
-          schemas[t.name] = info.results.map((c) => ({ column: c.name, type: c.type, pk: c.pk === 1, nullable: c.notnull === 0, default: c.dflt_value }));
+          try {
+            const info = await sourceConfig.all<{ name: string; type: string; pk: number; notnull: number; dflt_value: string | null }>(
+              `PRAGMA table_info(${t.name})`,
+            );
+            schemas[t.name] = info.results.map((c) => ({
+              column: c.name,
+              type: c.type,
+              pk: c.pk === 1,
+              nullable: c.notnull === 0,
+              default: c.dflt_value,
+            }));
+          } catch (error) {
+            schemas[t.name] = [{
+              error: error instanceof Error ? error.message : String(error),
+            }];
+          }
         }
         return {
           content: [{
