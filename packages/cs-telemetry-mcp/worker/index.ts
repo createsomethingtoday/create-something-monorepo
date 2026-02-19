@@ -89,6 +89,7 @@ const WORKWAY_FLEET_SERVERS = [
   'notion-halfdozen-create-something',
   'halfdozen-zoom-sync',
   'half-dozen-youtube-sync',
+  'quickbooks-notion-mcp',
 ];
 
 const FLEET_SERVERS = [

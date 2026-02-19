@@ -16,3 +16,9 @@ QBO_REDIRECT_URI = "https://quickbooks.mcp.workway.co/auth/callback"
 [[kv_namespaces]]
 binding = "QBO_TOKENS"
 id = "6e50625dddb94fe38067b986154f8696"
+
+# Shared feedback database (WORKWAY MCP telemetry)
+[[d1_databases]]
+binding = "FEEDBACK_DB"
+database_name = "halfdozen-feedback"
+database_id = "4eb35a0f-6ee2-4d0c-8c0a-9a2ab4049b97"

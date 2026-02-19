@@ -35,12 +35,98 @@ import { COMPONENT_DOCS, PATTERN_DOCS, EXTENSION_GUIDES, DEPLOYMENT_DOCS, ARCHIT
 const SERVER_NAME = 'outerfields-pcn';
 const SERVER_VERSION = '2.0.0';
 
+interface TelemetryD1Database {
+	prepare(query: string): {
+		bind(...values: unknown[]): {
+			run(): Promise<{ success: boolean }>;
+		};
+		run(): Promise<{ success: boolean }>;
+	};
+}
+
+function getCurrentPeriod(): string {
+	const now = new Date();
+	return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+async function recordInvocation(
+	db: TelemetryD1Database,
+	serverName: string,
+	accountId: string,
+	toolName: string,
+	durationMs: number,
+	success: boolean,
+	error?: unknown,
+): Promise<void> {
+	const period = getCurrentPeriod();
+	const errorMessage = error
+		? (error instanceof Error ? error.message : String(error)).slice(0, 500)
+		: null;
+
+	await db
+		.prepare(
+			`INSERT INTO mcp_run_counts (server_name, account_id, period_start, runs_this_period, updated_at)
+       VALUES (?, ?, ?, 1, datetime('now'))
+       ON CONFLICT(server_name, account_id, period_start) DO UPDATE SET
+         runs_this_period = mcp_run_counts.runs_this_period + 1,
+         updated_at = datetime('now')`,
+		)
+		.bind(serverName, accountId, period)
+		.run();
+
+	try {
+		await db
+			.prepare(
+				`INSERT INTO mcp_tool_invocations (server_name, account_id, tool_name, success, duration_ms, error_message)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+			)
+			.bind(serverName, accountId, toolName, success ? 1 : 0, durationMs, errorMessage)
+			.run();
+	} catch {
+		// Best-effort telemetry: never block request handling.
+	}
+}
+
+function enableTelemetry(
+	server: McpServer,
+	db: TelemetryD1Database,
+	serverName: string,
+	getAccountId: () => string = () => 'operator',
+): void {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const originalToolFn = (server as any).tool;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	(server as any).tool = function (...args: unknown[]) {
+		const lastIdx = args.length - 1;
+		const handler = args[lastIdx];
+
+		if (typeof handler !== 'function') {
+			return originalToolFn.apply(server, args);
+		}
+
+		const toolName = String(args[0]);
+		args[lastIdx] = async (...handlerArgs: unknown[]) => {
+			const started = Date.now();
+			try {
+				const result = await (handler as (...callArgs: unknown[]) => unknown)(...handlerArgs);
+				void recordInvocation(db, serverName, getAccountId(), toolName, Date.now() - started, true);
+				return result;
+			} catch (error) {
+				void recordInvocation(db, serverName, getAccountId(), toolName, Date.now() - started, false, error);
+				throw error;
+			}
+		};
+
+		return originalToolFn.apply(server, args);
+	};
+}
+
 // =============================================================================
 // Server Factory — creates a new McpServer instance per request
 // (Required by MCP SDK 1.26+ to prevent cross-client data leaks)
 // =============================================================================
 
-function createServer(): McpServer {
+function createServer(env: McpEnv): McpServer {
 	const server = new McpServer({
 		name: SERVER_NAME,
 		version: SERVER_VERSION,
@@ -50,6 +136,10 @@ function createServer(): McpServer {
 			sizes: ['any'],
 		}],
 	});
+
+	if (env.TELEMETRY_DB) {
+		enableTelemetry(server as any, env.TELEMETRY_DB as any, SERVER_NAME);
+	}
 
 	// =========================================================================
 	// Database Tier — Resources (read-only data, no side effects)
@@ -291,6 +381,8 @@ Use pcn_guide_extension to get step-by-step guidance for the closest extension t
 interface McpEnv {
 	/** Optional API key for authenticating remote MCP clients */
 	MCP_API_KEY?: string;
+	/** Shared telemetry DB for fleet observability */
+	TELEMETRY_DB?: TelemetryD1Database;
 }
 
 /**
@@ -364,7 +456,7 @@ export default {
 			const authError = validateApiKey(request, env);
 			if (authError) return authError;
 
-			const server = createServer();
+			const server = createServer(env);
 			const transport = new WebStandardStreamableHTTPServerTransport({
 				sessionIdGenerator: undefined,
 				enableJsonResponse: true,

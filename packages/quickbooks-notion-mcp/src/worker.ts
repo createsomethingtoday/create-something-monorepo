@@ -11,6 +11,15 @@ import { registerConnectionTools } from "./tools/connections.js";
 import { logger } from "./services/logger.js";
 import type { QBOCompanyInfo } from "./types.js";
 
+interface TelemetryD1Database {
+  prepare(query: string): {
+    bind(...values: unknown[]): {
+      run(): Promise<{ success: boolean }>;
+    };
+    run(): Promise<{ success: boolean }>;
+  };
+}
+
 export interface Env {
   QBO_CLIENT_ID: string;
   QBO_CLIENT_SECRET: string;
@@ -19,11 +28,89 @@ export interface Env {
   NOTION_API_KEY: string;
   COMPOSIO_API_KEY: string;
   MCP_API_KEY: string;
+  FEEDBACK_DB?: TelemetryD1Database;
   QBO_TOKENS: {
     get(key: string): Promise<string | null>;
     put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
     delete(key: string): Promise<void>;
     list(options?: { prefix?: string }): Promise<{ keys: { name: string }[] }>;
+  };
+}
+
+function getCurrentPeriod(): string {
+  const now = new Date();
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+async function recordInvocation(
+  db: TelemetryD1Database,
+  serverName: string,
+  accountId: string,
+  toolName: string,
+  durationMs: number,
+  success: boolean,
+  error?: unknown,
+): Promise<void> {
+  const period = getCurrentPeriod();
+  const errorMessage = error
+    ? (error instanceof Error ? error.message : String(error)).slice(0, 500)
+    : null;
+
+  await db
+    .prepare(
+      `INSERT INTO mcp_run_counts (server_name, account_id, period_start, runs_this_period, updated_at)
+       VALUES (?, ?, ?, 1, datetime('now'))
+       ON CONFLICT(server_name, account_id, period_start) DO UPDATE SET
+         runs_this_period = mcp_run_counts.runs_this_period + 1,
+         updated_at = datetime('now')`,
+    )
+    .bind(serverName, accountId, period)
+    .run();
+
+  try {
+    await db
+      .prepare(
+        `INSERT INTO mcp_tool_invocations (server_name, account_id, tool_name, success, duration_ms, error_message)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(serverName, accountId, toolName, success ? 1 : 0, durationMs, errorMessage)
+      .run();
+  } catch {
+    // Best-effort telemetry: never block request handling.
+  }
+}
+
+function enableTelemetry(
+  server: McpServer,
+  db: TelemetryD1Database,
+  serverName: string,
+  getAccountId: () => string = () => "operator",
+): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const originalToolFn = (server as any).tool;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (server as any).tool = function (...args: unknown[]) {
+    const lastIdx = args.length - 1;
+    const handler = args[lastIdx];
+
+    if (typeof handler !== "function") {
+      return originalToolFn.apply(server, args);
+    }
+
+    const toolName = String(args[0]);
+    args[lastIdx] = async (...handlerArgs: unknown[]) => {
+      const started = Date.now();
+      try {
+        const result = await (handler as (...callArgs: unknown[]) => unknown)(...handlerArgs);
+        void recordInvocation(db, serverName, getAccountId(), toolName, Date.now() - started, true);
+        return result;
+      } catch (error) {
+        void recordInvocation(db, serverName, getAccountId(), toolName, Date.now() - started, false, error);
+        throw error;
+      }
+    };
+
+    return originalToolFn.apply(server, args);
   };
 }
 
@@ -355,6 +442,10 @@ export default {
           name: "quickbooks-notion-mcp-server",
           version: "2.1.0",
         });
+
+        if (env.FEEDBACK_DB) {
+          enableTelemetry(server as any, env.FEEDBACK_DB as any, "quickbooks-notion-mcp");
+        }
 
         // Initialize Notion client
         const notion = new NotionClient({ apiKey: env.NOTION_API_KEY });
