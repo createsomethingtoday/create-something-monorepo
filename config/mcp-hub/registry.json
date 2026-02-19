@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "servers": {
+    "create-something": {
+      "transport": "http",
+      "url": "https://mcp.createsomething.ltd/mcp",
+      "description": "CREATE SOMETHING content MCP",
+      "tags": ["core", "content", "cs"]
+    },
+    "three-tier-framework": {
+      "transport": "http",
+      "url": "https://framework.mcp.createsomething.agency/mcp",
+      "description": "Three-Tier Framework MCP",
+      "tags": ["core", "framework", "cs"]
+    },
+    "playbook": {
+      "transport": "http",
+      "url": "https://playbook.mcp.createsomething.ltd/mcp",
+      "description": "Workflow playbooks MCP",
+      "tags": ["core", "workflow", "cs"]
+    },
+    "cs-telemetry": {
+      "transport": "http",
+      "url": "https://cs-telemetry-mcp.createsomething.workers.dev/mcp",
+      "description": "Fleet telemetry MCP for CREATE SOMETHING account",
+      "tags": ["observability", "telemetry", "cs"]
+    },
+    "schedule-mcp": {
+      "transport": "http",
+      "url": "https://schedule.mcp.createsomething.agency/mcp",
+      "description": "Scheduling MCP",
+      "tags": ["ops", "scheduling", "cs"]
+    },
+    "substrate-mcp": {
+      "transport": "http",
+      "url": "https://substrate.mcp.createsomething.agency/mcp",
+      "description": "Substrate execution/storage MCP",
+      "tags": ["ops", "automation", "cs"]
+    },
+    "notion-halfdozen-create-something": {
+      "transport": "http",
+      "url": "https://createsomething-notion.mcp.workway.co/mcp",
+      "description": "Half Dozen Notion MCP for CREATE SOMETHING",
+      "tags": ["halfdozen", "notion", "workway"]
+    },
+    "half-dozen-youtube-sync": {
+      "transport": "http",
+      "url": "https://youtube.mcp.workway.co/mcp",
+      "description": "Half Dozen YouTube sync MCP",
+      "tags": ["halfdozen", "youtube", "workway"]
+    },
+    "webflow-local": {
+      "transport": "stdio",
+      "command": "node",
+      "args": ["./packages/webflow-mcp/dist/index.js"],
+      "description": "Local Webflow MCP from this monorepo",
+      "tags": ["local", "dev", "webflow"]
+    },
+    "lsmcp": {
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@mizchi/lsmcp", "mcp"],
+      "description": "Local file-system MCP utility",
+      "tags": ["local", "dev", "filesystem"]
+    }
+  },
+  "bundles": {
+    "core": ["create-something", "three-tier-framework", "playbook"],
+    "observability": ["cs-telemetry"],
+    "ops": ["schedule-mcp", "substrate-mcp"],
+    "halfdozen": ["notion-halfdozen-create-something", "half-dozen-youtube-sync"],
+    "local-dev": ["webflow-local", "lsmcp"]
+  },
+  "defaults": {
+    "enabledBundles": ["core", "observability"],
+    "enabledServers": [],
+    "disabledServers": [],
+    "codexConfigPath": ".codex/config.toml"
+  }
+}
