@@ -17,9 +17,15 @@
 	import TranscriptPanel from '$lib/components/TranscriptPanel.svelte';
 	import { ChevronLeft, ChevronRight, Lock } from 'lucide-svelte';
 	import type { PageData } from './$types';
+	import { onMount } from 'svelte';
 
-	// Cloudflare R2 CDN base URL
-	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
+	import { VIDEO_CDN_BASE } from '$lib/constants/video';
+	import { fetchVideoPlayback } from '$lib/client/video-playback';
+
+	// In dev, when the CDN file is missing, use a public sample so the player still works
+	const FALLBACK_VIDEO_SRC = import.meta.env.DEV
+		? 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'
+		: undefined;
 
 	let { data }: { data: PageData } = $props();
 
@@ -28,14 +34,27 @@
 	const isAccessible = $derived(data.isAccessible);
 	const isMember = $derived(data.isMember);
 	const user = $derived(data.user);
+	const isAdmin = $derived(data.isAdmin);
+	const series = $derived(data.series);
 
 	// Current playback time for transcript sync
 	let currentTime = $state(0);
 
+	let playbackSrc = $state<string | null>(null);
+	let playbackState = $state<
+		| { status: 'idle' | 'loading' }
+		| { status: 'ready'; src: string }
+		| { status: 'processing'; message: string }
+		| { status: 'failed'; message: string }
+		| { status: 'unavailable'; message: string }
+		| { status: 'error'; message: string }
+		| { status: 'auth_required'; message: string }
+	>({ status: 'idle' });
+
 	// Get video source URL
 	function getVideoSrc(assetPath: string): string {
 		if (assetPath.startsWith('http')) return assetPath;
-		return `${CDN_BASE}${assetPath.startsWith('/') ? '' : '/'}${assetPath}`;
+		return `${VIDEO_CDN_BASE}${assetPath.startsWith('/') ? '' : '/'}${assetPath}`;
 	}
 
 	// Get thumbnail URL
@@ -51,19 +70,12 @@
 		return `${mins}:${secs.toString().padStart(2, '0')}`;
 	}
 
-	// Category display name
-	function getCategoryName(categoryId: string): string {
-		const map: Record<string, string> = {
-			'crew-call': 'Crew Call',
-			'reconnecting-relationships': 'Reconnecting Relationships',
-			kodiak: 'Kodiak',
-			'lincoln-manufacturing': 'Lincoln Manufacturing',
-			'guns-out-tv': 'Guns Out TV',
-			films: 'Films',
-			'coming-soon': 'Coming Soon',
-			lmc: 'LMC'
-		};
-		return map[categoryId] || categoryId;
+	function titleizeSlug(value: string): string {
+		return value
+			.split('-')
+			.filter(Boolean)
+			.map((part) => part.slice(0, 1).toUpperCase() + part.slice(1))
+			.join(' ');
 	}
 
 	// Transform related videos to RelatedVideos format
@@ -96,6 +108,57 @@
 		console.log('Seek to:', time);
 	}
 
+	async function resolvePlayback() {
+		if (!video || !isAccessible) return;
+
+		playbackState = { status: 'loading' };
+		playbackSrc = null;
+
+		const playback = await fetchVideoPlayback(video.id);
+
+		if (playback.status === 'ready' && playback.grant?.hlsUrl) {
+			playbackSrc = playback.grant.hlsUrl;
+			playbackState = { status: 'ready', src: playback.grant.hlsUrl };
+			return;
+		}
+
+		if (playback.status === 'legacy') {
+			const legacyPath = playback.legacyAssetPath || video.asset_path;
+			if (legacyPath) {
+				const src = getVideoSrc(legacyPath);
+				playbackSrc = src;
+				playbackState = { status: 'ready', src };
+				return;
+			}
+		}
+
+		if (playback.status === 'processing') {
+			playbackState = { status: 'processing', message: playback.message || 'Video is still processing' };
+			return;
+		}
+
+		if (playback.status === 'failed') {
+			playbackState = { status: 'failed', message: playback.message || 'Video processing failed' };
+			return;
+		}
+
+		if (playback.status === 'auth_required') {
+			playbackState = { status: 'auth_required', message: playback.message || 'Membership required' };
+			return;
+		}
+
+		if (playback.status === 'unavailable') {
+			playbackState = { status: 'unavailable', message: playback.message || 'Video unavailable' };
+			return;
+		}
+
+		playbackState = { status: 'error', message: playback.message || 'Failed to resolve playback' };
+	}
+
+	onMount(() => {
+		void resolvePlayback();
+	});
+
 	// SEO data
 	const seo = $derived({
 		title: video ? `${video.title} | OUTERFIELDS` : 'Watch | OUTERFIELDS',
@@ -105,7 +168,8 @@
 	});
 
 	// JSON-LD Video Schema
-	const videoSchema = $derived(video ? {
+	const videoSchema = $derived(video ? (() => {
+		const schema: Record<string, unknown> = {
 		'@context': 'https://schema.org',
 		'@type': 'VideoObject',
 		name: video.title,
@@ -113,7 +177,6 @@
 		thumbnailUrl: seo.image,
 		uploadDate: new Date(video.created_at * 1000).toISOString(),
 		duration: `PT${Math.floor(video.duration / 60)}M${video.duration % 60}S`,
-		contentUrl: getVideoSrc(video.asset_path),
 		embedUrl: seo.url,
 		publisher: {
 			'@type': 'Organization',
@@ -123,7 +186,14 @@
 				url: 'https://outerfields.createsomething.agency/logo-outerfields.png'
 			}
 		}
-	} : null);
+		};
+
+		if (video.asset_path) {
+			schema.contentUrl = getVideoSrc(video.asset_path);
+		}
+
+		return schema;
+	})() : null);
 </script>
 
 <svelte:head>
@@ -149,13 +219,46 @@
 		<div class="main-content">
 			<!-- Video Player -->
 			{#if isAccessible}
-				<WatchPagePlayer
-					videoId={video.id}
-					src={getVideoSrc(video.asset_path)}
-					poster={getThumbnailSrc(video.thumbnail_path)}
-					title={video.title}
-					onTimeUpdate={handleTimeUpdate}
-				/>
+				{#if playbackSrc}
+					<WatchPagePlayer
+						videoId={video.id}
+						src={playbackSrc}
+						poster={getThumbnailSrc(video.thumbnail_path)}
+						title={video.title}
+						fallbackSrc={FALLBACK_VIDEO_SRC}
+						onTimeUpdate={handleTimeUpdate}
+					/>
+				{:else}
+					<div class="gate-container">
+						<div class="gate-poster" style="background-image: url({getThumbnailSrc(video.thumbnail_path)})">
+							<div class="gate-overlay">
+								{#if playbackState.status === 'loading' || playbackState.status === 'idle'}
+									<h2>Loading video…</h2>
+									<p>Preparing playback.</p>
+								{:else if playbackState.status === 'processing'}
+									<h2>Processing</h2>
+									<p>{playbackState.message}</p>
+								{:else if playbackState.status === 'failed'}
+									<h2>Processing Failed</h2>
+									<p>{playbackState.message}</p>
+								{:else if playbackState.status === 'unavailable'}
+									<h2>Unavailable</h2>
+									<p>{playbackState.message}</p>
+								{:else if playbackState.status === 'auth_required'}
+									<Lock size={48} />
+									<h2>Members Only</h2>
+									<p>{playbackState.message}</p>
+									<a href="/#pricing" class="gate-cta">
+										Become a Founding Member - $99
+									</a>
+								{:else if playbackState.status === 'error'}
+									<h2>Error</h2>
+									<p>{playbackState.message}</p>
+								{/if}
+							</div>
+						</div>
+					</div>
+				{/if}
 			{:else}
 				<div class="gate-container">
 					<div class="gate-poster" style="background-image: url({getThumbnailSrc(video.thumbnail_path)})">
@@ -175,8 +278,11 @@
 			<div class="video-info">
 				<div class="video-meta">
 					<a href="/" class="category-link">
-						{getCategoryName(video.category)}
+						{series?.title || titleizeSlug(video.category)}
 					</a>
+					{#if isAdmin && video.visibility !== 'published'}
+						<span class="episode-badge">{video.visibility.toUpperCase()}</span>
+					{/if}
 					{#if video.episode_number}
 						<span class="episode-badge">Episode {video.episode_number}</span>
 					{/if}
@@ -257,12 +363,13 @@
 		grid-template-columns: 1fr 360px;
 		gap: 1.5rem;
 		max-width: 1800px;
+		width: 100%;
 		margin: 0 auto;
 		padding: 0 1.5rem;
 		box-sizing: border-box;
 	}
 
-	/* Main Content */
+	/* Main Content - min-width: 0 allows grid item to shrink below content size */
 	.main-content {
 		min-width: 0;
 		max-width: 100%;
@@ -433,11 +540,12 @@
 		padding-top: 0.5rem;
 	}
 
-	/* Responsive - iPad and tablets */
+	/* Responsive - iPad and tablets (single column + tighter layout) */
 	@media (max-width: 1100px) {
 		.watch-layout {
 			grid-template-columns: 1fr;
 			padding: 0 1rem;
+			gap: 1.25rem;
 		}
 
 		.sidebar {
@@ -445,7 +553,39 @@
 		}
 	}
 
-	/* Tablet portrait */
+	/* Tablet-only: reduce vertical bulk so the page isn't too tall */
+	@media (max-width: 1100px) and (min-width: 641px) {
+		.watch-page {
+			padding-top: 4rem;
+		}
+
+		.video-info {
+			padding: 1rem 0;
+		}
+
+		.video-meta {
+			margin-bottom: 0.5rem;
+		}
+
+		.video-title {
+			margin-bottom: 0.5rem;
+		}
+
+		.video-description {
+			margin-bottom: 1rem;
+		}
+
+		.episode-nav {
+			margin: 1.25rem 0;
+			padding: 1.25rem 0;
+		}
+
+		.transcript-section {
+			margin: 1rem 0;
+		}
+	}
+
+	/* Tablet portrait and below */
 	@media (max-width: 768px) {
 		.watch-page {
 			padding-top: 4rem;
@@ -456,30 +596,57 @@
 		}
 	}
 
-	/* Mobile */
+	/* Mobile - reduce vertical bulk so the page isn't too tall */
 	@media (max-width: 640px) {
 		.watch-page {
 			padding-top: 0;
+			min-height: auto;
 		}
 
 		.watch-layout {
-			padding: 0;
+			padding: 0 0.75rem;
+			gap: 1rem;
 		}
 
 		.video-info {
-			padding: 1rem;
+			padding: 0.75rem 0;
 		}
 
-		.sidebar {
-			padding: 0 1rem 2rem;
+		.video-meta {
+			margin-bottom: 0.5rem;
+		}
+
+		.video-title {
+			margin-bottom: 0.5rem;
+		}
+
+		.video-description {
+			margin-bottom: 1rem;
 		}
 
 		.episode-nav {
+			margin: 1rem 0;
+			padding: 1rem 0;
 			flex-direction: column;
 		}
 
 		.episode-link.next {
 			margin-left: 0;
+		}
+
+		.transcript-section {
+			margin: 0.75rem 0;
+		}
+
+		.sidebar {
+			padding: 0 0 2rem;
+		}
+	}
+
+	/* Very small viewports - prevent overflow */
+	@media (max-width: 380px) {
+		.watch-layout {
+			padding: 0 0.5rem;
 		}
 	}
 </style>

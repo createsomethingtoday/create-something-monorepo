@@ -2,6 +2,9 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-	// @ts-expect-error Vite version mismatch between sveltekit and local vite
-	plugins: [sveltekit()]
+	plugins: [sveltekit()],
+	ssr: {
+		// Keep SQLite fallback external for local Node development.
+		external: ['better-sqlite3']
+	}
 });

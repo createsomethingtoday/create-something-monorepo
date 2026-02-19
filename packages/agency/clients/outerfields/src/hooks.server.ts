@@ -1,5 +1,5 @@
 import type { Handle } from '@sveltejs/kit';
-import type { D1Database, KVNamespace } from '@cloudflare/workers-types';
+import { getSessions, setCloudflareKVBindings } from '$lib/server/kv-compat';
 
 interface SessionData {
 	userId: string;
@@ -10,22 +10,15 @@ interface SessionData {
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
-	const platform = event.platform as {
-		env: {
-			DB?: D1Database;
-			SESSIONS?: KVNamespace;
-			VIDEO_STATS?: KVNamespace;
-			AI?: any;
-		};
-	} | undefined;
+	setCloudflareKVBindings(event.platform?.env);
 
 	// Get session token from cookie
 	const sessionToken = event.cookies.get('session_token');
 
-	if (sessionToken && platform?.env.SESSIONS) {
+	if (sessionToken) {
 		try {
-			// Retrieve session from KV
-			const sessionJson = await platform.env.SESSIONS.get(`session:${sessionToken}`);
+			const sessions = getSessions();
+			const sessionJson = await sessions.get(`session:${sessionToken}`);
 
 			if (sessionJson) {
 				const sessionData: SessionData = JSON.parse(sessionJson);
