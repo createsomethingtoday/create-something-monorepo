@@ -107,6 +107,34 @@ describe('AirtableClient queue + lookup behavior', () => {
     expect(asset?.assetId).toBe('rec-app-b');
     expect(asset?.appName).toBe('App B');
   });
+
+  it('resolves asset by record id via RECORD_ID formula lookup', async () => {
+    const fetchFn = async (input) => {
+      const url = new URL(String(input));
+      const formula = url.searchParams.get('filterByFormula');
+
+      if (formula === "RECORD_ID() = 'rec-app-by-id'") {
+        return jsonResponse({
+          records: [
+            makeRecord('rec-app-by-id', {
+              [FIELD_IDS.assets.name]: 'App By Id',
+              [FIELD_IDS.assets.type]: APP_ASSET_TYPE,
+              [FIELD_IDS.assets.visibility]: 'Public',
+            }),
+          ],
+        });
+      }
+
+      return jsonResponse({ records: [] });
+    };
+
+    const client = new AirtableClient({ apiKey: 'test-key', fetchFn });
+    const asset = await client.getAssetById('rec-app-by-id');
+
+    expect(asset).not.toBeNull();
+    expect(asset?.assetId).toBe('rec-app-by-id');
+    expect(asset?.appName).toBe('App By Id');
+  });
 });
 
 describe('AirtableClient fetch binding', () => {

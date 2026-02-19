@@ -308,17 +308,14 @@ export class AirtableClient {
     }
     async getRecord(tableId, recordId, fieldIds) {
         assertScopedTable(tableId);
-        const query = new URLSearchParams();
-        query.set('returnFieldsByFieldId', 'true');
-        fieldIds.forEach((fieldId) => query.append('fields[]', fieldId));
-        try {
-            return await this.requestJson(`/${encodeURIComponent(tableId)}/${encodeURIComponent(recordId)}`, { method: 'GET' }, query);
-        }
-        catch (error) {
-            if (error instanceof AirtableClientError && error.status === 404)
-                return null;
-            throw error;
-        }
+        const formula = `RECORD_ID() = '${escapeFormulaValue(recordId)}'`;
+        const records = await this.listRecords({
+            tableId,
+            fieldIds,
+            limit: 1,
+            filterByFormula: formula,
+        });
+        return records[0] ?? null;
     }
     async updateRecord(tableId, recordId, fields) {
         assertScopedTable(tableId);
