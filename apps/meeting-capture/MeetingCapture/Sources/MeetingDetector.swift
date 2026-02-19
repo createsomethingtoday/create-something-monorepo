@@ -55,6 +55,19 @@ enum DetectionTransition: Equatable {
     case none
 }
 
+enum ZoomMeetingHeuristics {
+    static func isInMeeting(windowCount: Int?, hasZoomHelper: Bool, hasZoomClips: Bool) -> Bool {
+        // If we can inspect Zoom windows, prefer that as the authoritative signal.
+        // Helper processes can linger briefly after meetings end.
+        if let windowCount {
+            return windowCount > 1
+        }
+
+        // If AppleScript/Automation is unavailable, fall back to helper processes.
+        return hasZoomHelper || hasZoomClips
+    }
+}
+
 class MeetingDetector {
     // Meeting app bundle identifiers
     private let meetingApps: [String: String] = [
@@ -166,41 +179,39 @@ class MeetingDetector {
     }
 
     private func isZoomInMeeting() -> Bool {
-        // Check for Zoom meeting using native APIs
-        // Method 1: Check if CptHost helper is running (only active during meetings)
+        // Check for Zoom meeting using native APIs.
         let runningApps = NSWorkspace.shared.runningApplications
 
-        // CptHost and caphost are Zoom's meeting helper processes
+        // CptHost and caphost are Zoom meeting helper processes.
         let hasZoomHelper = runningApps.contains { app in
             let name = app.localizedName ?? ""
             return name.contains("CptHost") || name.contains("caphost")
         }
 
-        if hasZoomHelper {
-            return true
-        }
-
-        // Method 2: Check if ZoomClips is running (recording helper, only during meetings)
+        // ZoomClips is another Zoom meeting helper.
         let hasZoomClips = runningApps.contains { app in
             app.bundleIdentifier?.contains("ZoomClips") == true
         }
 
-        if hasZoomClips {
-            return true
-        }
-
-        // Method 3: Fallback to AppleScript for window count
+        // Prefer deterministic window count when Automation is permitted.
         let script = """
         tell application "System Events"
             if exists (process "zoom.us") then
                 tell process "zoom.us"
-                    return (count of every window) > 1
+                    return count of every window
                 end tell
             end if
-            return false
+            return 0
         end tell
         """
-        return runAppleScript(script) == "true"
+
+        let windowCount = runAppleScript(script).flatMap(Int.init)
+
+        return ZoomMeetingHeuristics.isInMeeting(
+            windowCount: windowCount,
+            hasZoomHelper: hasZoomHelper,
+            hasZoomClips: hasZoomClips
+        )
     }
 
     private func isTeamsInMeeting() -> Bool {
@@ -245,14 +256,14 @@ class MeetingDetector {
         return runAppleScript(script) == "true"
     }
 
-    private func runAppleScript(_ source: String) -> String {
+    private func runAppleScript(_ source: String) -> String? {
         var error: NSDictionary?
         if let script = NSAppleScript(source: source) {
             let result = script.executeAndReturnError(&error)
             if error == nil {
-                return result.stringValue ?? "false"
+                return result.stringValue
             }
         }
-        return "false"
+        return nil
     }
 }
