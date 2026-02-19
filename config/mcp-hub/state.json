@@ -1,6 +1,11 @@
 {
-  "enabledBundles": ["core", "observability"],
-  "enabledServers": [],
+  "enabledBundles": [
+    "core",
+    "observability"
+  ],
+  "enabledServers": [
+    "halfdozen-dm-mcp"
+  ],
   "disabledServers": [],
-  "updatedAt": "2026-02-19T00:00:00.000Z"
+  "updatedAt": "2026-02-19T22:21:36.726Z"
 }
