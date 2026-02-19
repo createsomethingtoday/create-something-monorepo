@@ -4,6 +4,7 @@
  */
 
 import Foundation
+import AVFoundation
 
 struct MeetingMetadata: Codable {
     let recordedAt: Date
@@ -43,6 +44,7 @@ struct UploadResponse: Codable {
 
 enum UploadError: LocalizedError {
     case fileNotFound
+    case invalidAudioFile(String)
     case networkError(String)
     case serverError(String)
     case invalidResponse
@@ -51,6 +53,8 @@ enum UploadError: LocalizedError {
         switch self {
         case .fileNotFound:
             return "Audio file not found"
+        case .invalidAudioFile(let reason):
+            return "Invalid audio file: \(reason)"
         case .networkError(let message):
             return "Network error: \(message)"
         case .serverError(let message):
@@ -62,6 +66,9 @@ enum UploadError: LocalizedError {
 }
 
 class MeetingUploader {
+    private static let minAudioFileSizeBytes = 32 * 1024
+    private static let minAudioDurationSeconds = 0.5
+
     // Configure this to your deployed Worker URL
     private var baseURL: String {
         UserDefaults.standard.string(forKey: "apiBaseURL")
@@ -69,9 +76,12 @@ class MeetingUploader {
     }
 
     func upload(audioURL: URL, metadata: MeetingMetadata) async throws -> String {
-        guard FileManager.default.fileExists(atPath: audioURL.path) else {
-            throw UploadError.fileNotFound
-        }
+        let validation = try await validateAudioForUpload(audioURL: audioURL)
+        print(
+            "Validated audio for upload: \(audioURL.lastPathComponent), " +
+            "\(validation.fileSizeBytes) bytes, " +
+            String(format: "%.2fs", validation.durationSeconds)
+        )
 
         let url = URL(string: "\(baseURL)/upload")!
 
@@ -139,6 +149,58 @@ class MeetingUploader {
         } catch {
             throw UploadError.networkError(error.localizedDescription)
         }
+    }
+
+    func validateAudioForUpload(audioURL: URL) async throws -> (fileSizeBytes: Int, durationSeconds: Double) {
+        guard FileManager.default.fileExists(atPath: audioURL.path) else {
+            throw UploadError.fileNotFound
+        }
+
+        let values = try audioURL.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
+        if values.isRegularFile == false {
+            throw UploadError.invalidAudioFile("Path is not a regular file")
+        }
+
+        let fileSize = values.fileSize ?? 0
+        guard fileSize >= Self.minAudioFileSizeBytes else {
+            throw UploadError.invalidAudioFile(
+                "File too small (\(fileSize) bytes). Expected at least \(Self.minAudioFileSizeBytes) bytes."
+            )
+        }
+
+        let durationSeconds: Double
+        do {
+            let asset = AVURLAsset(url: audioURL)
+            let isPlayable = try await asset.load(.isPlayable)
+            guard isPlayable else {
+                throw UploadError.invalidAudioFile("Asset is not playable")
+            }
+
+            let audioTracks = try await asset.loadTracks(withMediaType: .audio)
+            guard !audioTracks.isEmpty else {
+                throw UploadError.invalidAudioFile("No audio track found")
+            }
+
+            let duration = try await asset.load(.duration)
+            durationSeconds = CMTimeGetSeconds(duration)
+            guard durationSeconds.isFinite, durationSeconds >= Self.minAudioDurationSeconds else {
+                throw UploadError.invalidAudioFile(
+                    String(
+                        format: "Audio duration too short (%.2fs). Expected at least %.2fs.",
+                        durationSeconds,
+                        Self.minAudioDurationSeconds
+                    )
+                )
+            }
+        } catch let error as UploadError {
+            throw error
+        } catch {
+            throw UploadError.invalidAudioFile(
+                "Unreadable audio container: \(error.localizedDescription)"
+            )
+        }
+
+        return (fileSizeBytes: fileSize, durationSeconds: durationSeconds)
     }
 
     private func getMimeType(for url: URL) -> String {
