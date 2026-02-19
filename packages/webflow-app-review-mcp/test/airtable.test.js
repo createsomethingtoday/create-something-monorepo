@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import { AirtableClient } from '../src/airtable.js';
-import { FIELD_IDS } from '../src/schema.js';
+import { APP_ASSET_TYPE, FIELD_IDS } from '../src/schema.js';
 
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -14,6 +14,8 @@ function makeRecord(id, fields) {
   return { id, fields };
 }
 
+const TEMPLATE_ASSET_TYPE = 'Template🏗️';
+
 describe('AirtableClient queue + lookup behavior', () => {
   it('applies queue limit after app-scope filtering', async () => {
     const fetchFn = async (input) => {
@@ -25,9 +27,12 @@ describe('AirtableClient queue + lookup behavior', () => {
           records: [
             makeRecord('rec-non-app', {
               [FIELD_IDS.assets.name]: 'Non App Record',
+              [FIELD_IDS.assets.type]: TEMPLATE_ASSET_TYPE,
+              [FIELD_IDS.assets.visibility]: 'Public',
             }),
             makeRecord('rec-app-1', {
               [FIELD_IDS.assets.name]: 'App One',
+              [FIELD_IDS.assets.type]: APP_ASSET_TYPE,
               [FIELD_IDS.assets.visibility]: 'Public',
             }),
           ],
@@ -39,10 +44,12 @@ describe('AirtableClient queue + lookup behavior', () => {
         records: [
           makeRecord('rec-app-2', {
             [FIELD_IDS.assets.name]: 'App Two',
+            [FIELD_IDS.assets.type]: APP_ASSET_TYPE,
             [FIELD_IDS.assets.visibility]: 'Public',
           }),
           makeRecord('rec-app-3', {
             [FIELD_IDS.assets.name]: 'App Three',
+            [FIELD_IDS.assets.type]: APP_ASSET_TYPE,
             [FIELD_IDS.assets.visibility]: 'Public',
           }),
         ],
@@ -66,7 +73,14 @@ describe('AirtableClient queue + lookup behavior', () => {
           records: [
             makeRecord('rec-app-a', {
               [FIELD_IDS.assets.name]: 'App A',
+              [FIELD_IDS.assets.type]: APP_ASSET_TYPE,
               [FIELD_IDS.assets.appId]: ['alpha'],
+              [FIELD_IDS.assets.visibility]: 'Public',
+            }),
+            makeRecord('rec-template-b', {
+              [FIELD_IDS.assets.name]: 'Template B',
+              [FIELD_IDS.assets.type]: TEMPLATE_ASSET_TYPE,
+              [FIELD_IDS.assets.appId]: ['beta-target'],
               [FIELD_IDS.assets.visibility]: 'Public',
             }),
           ],
@@ -78,6 +92,7 @@ describe('AirtableClient queue + lookup behavior', () => {
         records: [
           makeRecord('rec-app-b', {
             [FIELD_IDS.assets.name]: 'App B',
+            [FIELD_IDS.assets.type]: APP_ASSET_TYPE,
             [FIELD_IDS.assets.appId]: ['beta-target'],
             [FIELD_IDS.assets.visibility]: 'Public',
           }),
@@ -104,6 +119,7 @@ describe('AirtableClient fetch binding', () => {
         records: [
           makeRecord('rec-app-health', {
             [FIELD_IDS.assets.name]: 'Health App',
+            [FIELD_IDS.assets.type]: APP_ASSET_TYPE,
             [FIELD_IDS.assets.visibility]: 'Public',
           }),
         ],

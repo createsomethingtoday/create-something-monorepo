@@ -6,6 +6,7 @@ export const TABLE_IDS = {
 export const FIELD_IDS = {
     assets: {
         name: 'fldUzJBor3Gnkykjc',
+        type: 'fld7kubS6EE1LOC8d',
         marketplaceStatus: 'fld51CeQNGDgW9b0D',
         latestReviewStatus: 'fldZPFzH3q3KBAjNW',
         daysInCurrentReviewStage: 'fldXmGN0yV8EshIWE',
@@ -72,6 +73,8 @@ export const CAPABILITIES_OPTIONS = [
     'Designer Extension',
     'Hybrid',
 ];
+export const ASSET_TYPE_OPTIONS = ['Template🏗️', 'Library📚', 'App🖥️'];
+export const APP_ASSET_TYPE = 'App🖥️';
 export const REVIEW_STATUS_OPTIONS = [
     '🆕Ready for Review',
     '🏃🏾In Review',
@@ -193,20 +196,29 @@ export function isReviewType(value) {
 export function isRejectionReason(value) {
     return REJECTION_REASON_OPTIONS.includes(value);
 }
-function hasValue(value) {
-    if (value === null || value === undefined)
-        return false;
-    if (Array.isArray(value))
-        return value.length > 0;
-    if (typeof value === 'string')
-        return value.trim().length > 0;
-    return true;
+function toSingleSelectValue(value) {
+    if (Array.isArray(value)) {
+        return toSingleSelectValue(value[0]);
+    }
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        return trimmed.length > 0 ? trimmed : undefined;
+    }
+    if (value && typeof value === 'object') {
+        const maybeName = value.name;
+        if (typeof maybeName === 'string') {
+            const trimmed = maybeName.trim();
+            return trimmed.length > 0 ? trimmed : undefined;
+        }
+    }
+    return undefined;
 }
 export function isAppLikeAsset(fields) {
-    return (hasValue(fields[FIELD_IDS.assets.capabilities]) ||
-        hasValue(fields[FIELD_IDS.assets.clientId]) ||
-        hasValue(fields[FIELD_IDS.assets.appId]) ||
-        hasValue(fields[FIELD_IDS.assets.visibility]));
+    const typeValue = toSingleSelectValue(fields[FIELD_IDS.assets.type]);
+    if (!typeValue)
+        return false;
+    // Prefer exact match; keep prefix fallback for future emoji/icon changes.
+    return typeValue === APP_ASSET_TYPE || typeValue.startsWith('App');
 }
 export function validateAssetMetadataWriteKeys(keys) {
     const invalidKeys = [];
@@ -254,6 +266,7 @@ export const APP_REVIEW_FIELD_MAP = {
             days_in_current_review_stage: FIELD_IDS.assets.daysInCurrentReviewStage,
             workspace_dashboard_url: FIELD_IDS.assets.workspaceDashboardUrl,
             app_id: FIELD_IDS.assets.appId,
+            asset_type: FIELD_IDS.assets.type,
             install_url_formula: FIELD_IDS.assets.installUrlFormula,
         },
     },
@@ -274,6 +287,7 @@ export const APP_REVIEW_FIELD_MAP = {
     },
     canonicalMappings: CANONICAL_FIELD_MAPPINGS,
     statusOptions: {
+        assetType: ASSET_TYPE_OPTIONS,
         marketplace: MARKETPLACE_STATUS_OPTIONS,
         visibility: VISIBILITY_OPTIONS,
         capabilities: CAPABILITIES_OPTIONS,

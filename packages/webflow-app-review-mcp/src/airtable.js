@@ -3,6 +3,7 @@ const SCOPED_TABLE_IDS = new Set(Object.values(TABLE_IDS));
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
 const ASSET_QUEUE_FIELD_IDS = [
     FIELD_IDS.assets.name,
+    FIELD_IDS.assets.type,
     FIELD_IDS.assets.marketplaceStatus,
     FIELD_IDS.assets.latestReviewStatus,
     FIELD_IDS.assets.daysInCurrentReviewStage,
@@ -161,6 +162,7 @@ function mapQueueRecord(record) {
     return {
         assetId: record.id,
         appName: firstString(fields[FIELD_IDS.assets.name]) ?? '',
+        assetType: firstString(fields[FIELD_IDS.assets.type]),
         marketplaceStatus: firstString(fields[FIELD_IDS.assets.marketplaceStatus]),
         latestReviewStatus: firstString(fields[FIELD_IDS.assets.latestReviewStatus]),
         daysInCurrentReviewStage: toNumberValue(fields[FIELD_IDS.assets.daysInCurrentReviewStage]),
