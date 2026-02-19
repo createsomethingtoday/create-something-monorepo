@@ -28,27 +28,27 @@
 	};
 
 	let { data }: Props = $props();
-	const content = data.content;
+	const content = $derived(data.content);
 
 	// Hero content with CMS overrides
-	const heroTitle = content?.hero?.title ?? 'Next Generation Recovery';
-	const heroSubtitle = content?.hero?.subtitle ?? 'Valorize low-grade ores with LithX—advanced chelation technology for critical metals recovery from heaps, tailings, and complex mineralogy';
-	const heroVideo = content?.hero?.video ?? 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/168384056-deep-open-pit-mine-copper-ore-.mp4';
-	const heroCta = content?.hero?.cta ?? 'Learn More';
+	const heroTitle = $derived(content?.hero?.title ?? 'Next Generation Recovery');
+	const heroSubtitle = $derived(content?.hero?.subtitle ?? 'Valorize low-grade ores with LithX—advanced chelation technology for critical metals recovery from heaps, tailings, and complex mineralogy');
+	const heroVideo = $derived(content?.hero?.video ?? 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/168384056-deep-open-pit-mine-copper-ore-.mp4');
+	const heroCta = $derived(content?.hero?.cta ?? 'Learn More');
 
 	// Why section with CMS overrides
-	const whyTitle = content?.why?.title ?? 'Advanced Chelation Technology';
-	const whySubtitle = content?.why?.subtitle ?? 'Our proprietary chemistry platform enables efficient metal extraction with reduced environmental impact and operational complexity.';
-	const whyFeatures = content?.whyFeatures ?? [
+	const whyTitle = $derived(content?.why?.title ?? 'Advanced Chelation Technology');
+	const whySubtitle = $derived(content?.why?.subtitle ?? 'Our proprietary chemistry platform enables efficient metal extraction with reduced environmental impact and operational complexity.');
+	const whyFeatures = $derived(content?.whyFeatures ?? [
 		{ icon: 'beaker', title: 'Ultra-Strong Chelators' },
 		{ icon: 'thermometer', title: 'Ambient Temperature' },
 		{ icon: 'leaf', title: 'Environmentally Friendly' },
 		{ icon: 'plug', title: 'Drop-In Solution' }
-	];
+	]);
 
 	// Section headers with CMS overrides
-	const solutionsHeadline = content?.solutionsHeader?.headline ?? lithxSolutionsHeader.headline;
-	const methodsHeadline = content?.methodsHeader?.headline ?? lithxMethodsHeader.headline;
+	const solutionsHeadline = $derived(content?.solutionsHeader?.headline ?? lithxSolutionsHeader.headline);
+	const methodsHeadline = $derived(content?.methodsHeader?.headline ?? lithxMethodsHeader.headline);
 
 	// Transform lithx solutions to TabbedSolutions format
 	const tabbedSolutions = lithxSolutions.map(solution => ({

@@ -11,8 +11,8 @@
 
 	let { progress, totalSteps, onResume, onStartOver }: Props = $props();
 
-	const progressPercent = calculateProgress(progress.completedSteps, totalSteps);
-	const lastVisit = formatTimestamp(progress.timestamp);
+	let progressPercent = $derived(calculateProgress(progress.completedSteps, totalSteps));
+	let lastVisit = $derived(formatTimestamp(progress.timestamp));
 </script>
 
 <div

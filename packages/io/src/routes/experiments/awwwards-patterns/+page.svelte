@@ -200,11 +200,12 @@
 		</p>
 
 		<div class="demo-container">
-			<div
-				class="stagger-grid"
-				onmouseenter={() => (gridHovered = true)}
-				onmouseleave={() => (gridHovered = false)}
-			>
+				<div
+					class="stagger-grid"
+					onmouseenter={() => (gridHovered = true)}
+					onmouseleave={() => (gridHovered = false)}
+					role="presentation"
+				>
 				{#each gridItems as item, i}
 					<div class="stagger-item" style="--index: {i}">
 						{item.title}

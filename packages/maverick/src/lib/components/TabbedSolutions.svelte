@@ -38,7 +38,7 @@
 		labelType = 'name'
 	}: Props = $props();
 
-	let activeTab = $state(solutions[0]?.id ?? '');
+	let activeTab = $state('');
 	let mobileOpen = $state(false);
 	let visible = $state(false);
 	let contentVisible = $state(false);
@@ -59,6 +59,17 @@
 			document.body.style.overflow = 'hidden';
 		} else {
 			document.body.style.overflow = '';
+		}
+	});
+
+	$effect(() => {
+		if (solutions.length === 0) {
+			activeTab = '';
+			return;
+		}
+
+		if (!solutions.some((solution) => solution.id === activeTab)) {
+			activeTab = solutions[0].id;
 		}
 	});
 
@@ -90,6 +101,12 @@
 					applicationId: activeSolution?.id
 				}
 			}));
+		}
+	}
+
+	function handleBackdropClick(event: MouseEvent) {
+		if (event.target === event.currentTarget) {
+			closeVideoModal();
 		}
 	}
 
@@ -130,7 +147,7 @@
 		}
 	};
 
-	const colors = accentColors[accentColor];
+	const colors = $derived(accentColors[accentColor]);
 </script>
 
 <section use:inview={{ onInView: () => (visible = true) }} class="solutions-section">
@@ -340,20 +357,20 @@
 </section>
 
 <!-- Video Modal -->
-{#if videoModalOpen && activeSolution?.youtubeId}
-	<div
-		class="video-modal-backdrop"
-		onclick={closeVideoModal}
-		role="presentation"
-	>
+	{#if videoModalOpen && activeSolution?.youtubeId}
 		<div
-			class="video-modal-content"
-			onclick={(e) => e.stopPropagation()}
-			role="dialog"
-			aria-modal="true"
-			aria-label="{productPrefix} {activeSolution.name} video"
-			use:focusTrap={{ active: videoModalOpen, onEscape: closeVideoModal }}
+			class="video-modal-backdrop"
+			onclick={handleBackdropClick}
+			role="presentation"
 		>
+			<div
+				class="video-modal-content"
+				role="dialog"
+				aria-modal="true"
+				aria-label="{productPrefix} {activeSolution.name} video"
+				tabindex="-1"
+				use:focusTrap={{ active: videoModalOpen, onEscape: closeVideoModal }}
+			>
 			<button
 				type="button"
 				class="video-modal-close"

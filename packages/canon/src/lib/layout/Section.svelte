@@ -39,9 +39,9 @@
 		children
 	}: Props = $props();
 
-	const variantClass = `section--${variant}`;
-	const sizeClass = `section--${size}`;
-	const widthClass = `section--${width}`;
+	const variantClass = $derived(`section--${variant}`);
+	const sizeClass = $derived(`section--${size}`);
+	const widthClass = $derived(`section--${width}`);
 </script>
 
 <section

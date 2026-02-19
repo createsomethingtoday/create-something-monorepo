@@ -27,7 +27,7 @@
   let sessionId = $state('')
   let startTime = $state(0)
   let metrics = $state<ExperimentMetrics>({
-    paper_id: paper.id,
+    paper_id: '',
     session_id: '',
     start_time: 0,
     commands_executed: [],
@@ -53,6 +53,10 @@
       ? Math.round((completedSteps.length / commands.length) * 100)
       : 0
   )
+
+  $effect(() => {
+    metrics.paper_id = paper.id
+  })
 
   onMount(async () => {
     // Parse commands from JSON

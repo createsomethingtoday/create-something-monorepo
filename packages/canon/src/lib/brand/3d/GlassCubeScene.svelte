@@ -40,18 +40,18 @@
 	const geometry = new THREE.BoxGeometry(1, 1, 1);
 
 	// Create materials for each face
-	const faceMaterials = createCubeFaceMaterials(materialVariant, materialOverrides);
+	const faceMaterials = $derived(createCubeFaceMaterials(materialVariant, materialOverrides));
 
 	// Material array for BufferGeometry faces
 	// Order: +X (right), -X (left), +Y (top), -Y (bottom), +Z (front), -Z (back)
-	const materials = [
+	const materials = $derived([
 		faceMaterials.right, // +X
 		faceMaterials.left, // -X
 		faceMaterials.top, // +Y
 		faceMaterials.top, // -Y (use top for bottom too)
 		faceMaterials.right, // +Z
 		faceMaterials.left // -Z
-	];
+	]);
 
 	// =============================================================================
 	// ROTATION ANIMATION

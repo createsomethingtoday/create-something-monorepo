@@ -154,12 +154,14 @@
 					<span class="loading-pulse">Loading...</span>
 				</Badge>
 			{:else}
-				<Badge variant={getBadgeVariant()}>
-					{#if submissionData().isWhitelisted}
-						<CheckCircle2 size={12} class="whitelist-icon" />
-						Unlimited
-					{:else}
-						{submissionData().assetsSubmitted30}/{SUBMISSION_LIMIT} this month
+					<Badge variant={getBadgeVariant()}>
+						{#if submissionData().isWhitelisted}
+							<span class="whitelist-icon">
+								<CheckCircle2 size={12} />
+							</span>
+							Unlimited
+						{:else}
+							{submissionData().assetsSubmitted30}/{SUBMISSION_LIMIT} this month
 					{/if}
 				</Badge>
 			{/if}
@@ -720,7 +722,7 @@
 		font-size: var(--text-body-sm);
 	}
 
-	.whitelist-banner-full svg {
+	.whitelist-banner-full :global(svg) {
 		flex-shrink: 0;
 	}
 
@@ -730,7 +732,7 @@
 		font-size: var(--text-body-sm);
 	}
 
-	.warning-banner svg {
+	.warning-banner :global(svg) {
 		flex-shrink: 0;
 	}
 

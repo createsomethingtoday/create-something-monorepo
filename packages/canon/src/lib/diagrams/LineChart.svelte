@@ -8,57 +8,60 @@
   }
 
   let { data, config = {} }: Props = $props();
+  const width = $derived(config.width ?? 700);
+  const height = $derived(config.height ?? 400);
+  const title = $derived(config.title);
+  const property = $derived(config.property ?? 'io');
+  const branded = $derived(config.branded ?? false);
 
-  const {
-    width = 700,
-    height = 400,
-    title,
-    property = 'io',
-    branded = false,
-  } = config;
-
-  const { series, showPoints = true, showGrid = true } = data;
+  const series = $derived(data.series);
+  const showPoints = $derived(data.showPoints ?? true);
+  const showGrid = $derived(data.showGrid ?? true);
 
   const PADDING = 42;
   const CHART_LEFT = PADDING + 50;
-  const CHART_RIGHT = width - PADDING;
-  const CHART_TOP = PADDING + (title ? 40 : 0);
-  const CHART_BOTTOM = height - PADDING - 30;
+  const CHART_RIGHT = $derived(width - PADDING);
+  const CHART_TOP = $derived(PADDING + (title ? 40 : 0));
+  const CHART_BOTTOM = $derived(height - PADDING - 30);
 
-  const chartWidth = CHART_RIGHT - CHART_LEFT;
-  const chartHeight = CHART_BOTTOM - CHART_TOP;
+  const chartWidth = $derived(CHART_RIGHT - CHART_LEFT);
+  const chartHeight = $derived(CHART_BOTTOM - CHART_TOP);
 
   // Calculate bounds
-  const allYValues = series.flatMap((s) => s.data.map((d) => d.y));
-  const maxY = Math.max(...allYValues);
-  const minY = Math.min(0, Math.min(...allYValues));
-  const yRange = maxY - minY || 1;
+  const allYValues = $derived(series.flatMap((s) => s.data.map((d) => d.y)));
+  const maxY = $derived(Math.max(...allYValues, 0));
+  const minY = $derived(Math.min(0, ...allYValues, 0));
+  const yRange = $derived(maxY - minY || 1);
 
-  const allXValues = series.flatMap((s) => s.data.map((d) => (typeof d.x === 'number' ? d.x : 0)));
-  const maxX = Math.max(...allXValues);
-  const minX = Math.min(...allXValues);
-  const xRange = maxX - minX || 1;
+  const allXValues = $derived(series.flatMap((s) => s.data.map((d) => (typeof d.x === 'number' ? d.x : 0))));
+  const maxX = $derived(Math.max(...allXValues, 0));
+  const minX = $derived(Math.min(...allXValues, 0));
+  const xRange = $derived(maxX - minX || 1);
 
   // Grid
   const gridLines = 5;
-  const gridPositions = Array.from({ length: gridLines + 1 }, (_, i) => ({
-    y: CHART_TOP + (chartHeight * i) / gridLines,
-    value: Math.round(maxY - (yRange * i) / gridLines),
-  }));
+  const gridPositions = $derived(
+    Array.from({ length: gridLines + 1 }, (_, i) => ({
+      y: CHART_TOP + (chartHeight * i) / gridLines,
+      value: Math.round(maxY - (yRange * i) / gridLines),
+    }))
+  );
 
   // Series data
-  const seriesData = series.map((s, si) => {
-    const color = s.color ?? getDataColor(si, property);
-    const points = s.data.map((d) => {
-      const xVal = typeof d.x === 'number' ? d.x : 0;
-      return {
-        x: CHART_LEFT + ((xVal - minX) / xRange) * chartWidth,
-        y: CHART_BOTTOM - ((d.y - minY) / yRange) * chartHeight,
-      };
-    });
-    const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
-    return { ...s, color, points, pathD };
-  });
+  const seriesData = $derived(
+    series.map((s, si) => {
+      const color = s.color ?? getDataColor(si, property);
+      const points = s.data.map((d) => {
+        const xVal = typeof d.x === 'number' ? d.x : 0;
+        return {
+          x: CHART_LEFT + ((xVal - minX) / xRange) * chartWidth,
+          y: CHART_BOTTOM - ((d.y - minY) / yRange) * chartHeight,
+        };
+      });
+      const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+      return { ...s, color, points, pathD };
+    })
+  );
 </script>
 
 <svg

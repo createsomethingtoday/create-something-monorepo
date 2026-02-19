@@ -16,7 +16,7 @@
 	}
 
 	let { data }: Props = $props();
-	const content = data.content;
+	const content = $derived(data.content);
 
 	let mainVisible = $state(false);
 	let featuredVisible = $state(false);
@@ -87,10 +87,10 @@
 	];
 
 	// Use CMS content or fallback to defaults
-	const pageTitle = content?.title ?? 'Maverick In the News';
-	const newsArticles = content?.articles ?? defaultArticles;
-	const featuredArticle = newsArticles.find(article => article.featured) || newsArticles[0];
-	const regularArticles = newsArticles.filter(article => !article.featured);
+	const pageTitle = $derived(content?.title ?? 'Maverick In the News');
+	const newsArticles = $derived(content?.articles ?? defaultArticles);
+	const featuredArticle = $derived(newsArticles.find((article) => article.featured) || newsArticles[0]);
+	const regularArticles = $derived(newsArticles.filter((article) => !article.featured));
 </script>
 
 <svelte:head>

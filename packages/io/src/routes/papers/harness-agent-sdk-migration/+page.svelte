@@ -889,7 +889,7 @@ await db.deployments.create({
 		color: var(--color-fg-secondary);
 	}
 
-	.text-emphasis {
+	:global(.text-emphasis) {
 		color: var(--color-fg-primary);
 	}
 
@@ -964,7 +964,7 @@ await db.deployments.create({
 		color: var(--color-fg-secondary);
 	}
 
-	.code-block {
+	:global(.code-block) {
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
@@ -995,7 +995,7 @@ await db.deployments.create({
 		border-top: 1px solid var(--color-border-default);
 	}
 
-	.code-block-success {
+	:global(.code-block-success) {
 		background: var(--color-bg-subtle);
 		border: 1px solid var(--color-border-success, var(--color-border-default));
 		border-radius: var(--radius-lg);
@@ -1006,7 +1006,7 @@ await db.deployments.create({
 		white-space: pre;
 	}
 
-	.code-secondary {
+	:global(.code-secondary) {
 		color: var(--color-fg-tertiary);
 	}
 

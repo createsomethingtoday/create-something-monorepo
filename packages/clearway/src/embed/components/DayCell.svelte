@@ -64,7 +64,7 @@
 	data-availability={availabilityLevel()}
 	{disabled}
 	{onclick}
-	aria-selected={selected}
+	aria-pressed={selected}
 	aria-disabled={disabled}
 	aria-label="{dayName}, {date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}, {availability ? `${availability.availableSlots} slots available` : 'loading'}"
 >

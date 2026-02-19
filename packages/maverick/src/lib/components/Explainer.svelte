@@ -35,7 +35,7 @@
 		}
 	];
 
-	const items = points ?? defaultPoints;
+	const items = $derived(points ?? defaultPoints);
 
 	// Gradient colors for each point
 	const gradientColors = [
@@ -53,8 +53,8 @@
 		return [text];
 	}
 
-	const headlineText = headline ?? 'We are unlocking critical resources through precision chemistry.';
-	const headlineParts = formatHeadline(headlineText);
+	const headlineText = $derived(headline ?? 'We are unlocking critical resources through precision chemistry.');
+	const headlineParts = $derived(formatHeadline(headlineText));
 </script>
 
 <section

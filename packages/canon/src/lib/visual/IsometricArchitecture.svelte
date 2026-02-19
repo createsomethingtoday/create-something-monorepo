@@ -49,8 +49,8 @@
 	}: Props = $props();
 
 	// Scroll-triggered animation state
-	let isInView = $state(!animateOnScroll);
-	const shouldAnimate = $derived(animate && isInView);
+	let isInView = $state(false);
+	const shouldAnimate = $derived(animate && (!animateOnScroll || isInView));
 
 	const defaultSize = { w: 60, h: 30, d: 40 };
 

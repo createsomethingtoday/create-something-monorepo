@@ -46,11 +46,13 @@
 	];
 
 	// Use provided showcaseImages only if it's a valid non-empty array with complete items
-	const items = (showcaseImages && showcaseImages.length > 0 && showcaseImages[0]?.href)
-		? showcaseImages
-		: defaultShowcase;
+	const items = $derived(
+		showcaseImages && showcaseImages.length > 0 && showcaseImages[0]?.href
+			? showcaseImages
+			: defaultShowcase
+	);
 
-	const displayHeadline = headline || defaultHeadline;
+	const displayHeadline = $derived(headline || defaultHeadline);
 </script>
 
 <section

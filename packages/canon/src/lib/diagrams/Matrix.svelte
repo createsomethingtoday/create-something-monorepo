@@ -7,31 +7,31 @@
   }
 
   let { data, config = {} }: Props = $props();
+  const width = $derived(config.width ?? 700);
+  const height = $derived(config.height ?? 400);
+  const title = $derived(config.title);
+  const subtitle = $derived(config.subtitle);
+  const property = $derived(config.property ?? 'io');
+  const branded = $derived(config.branded ?? false);
 
-  const {
-    width = 700,
-    height = 400,
-    title,
-    subtitle,
-    property = 'io',
-    branded = false,
-  } = config;
-
-  const { rowHeaders, columnHeaders, cells, caption } = data;
+  const rowHeaders = $derived(data.rowHeaders);
+  const columnHeaders = $derived(data.columnHeaders);
+  const cells = $derived(data.cells);
+  const caption = $derived(data.caption);
   const showLabels = true;
 
   const PADDING = 42;
   const HEADER_HEIGHT = 40;
   const ROW_LABEL_WIDTH = 120;
 
-  const titleHeight = (title ? 32 : 0) + (subtitle ? 24 : 0);
-  const tableTop = PADDING + titleHeight + 20;
+  const titleHeight = $derived((title ? 32 : 0) + (subtitle ? 24 : 0));
+  const tableTop = $derived(PADDING + titleHeight + 20);
   const tableLeft = PADDING + ROW_LABEL_WIDTH;
-  const tableWidth = width - PADDING * 2 - ROW_LABEL_WIDTH;
-  const tableHeight = height - tableTop - PADDING - 20;
+  const tableWidth = $derived(width - PADDING * 2 - ROW_LABEL_WIDTH);
+  const tableHeight = $derived(height - tableTop - PADDING - 20);
 
-  const colWidth = tableWidth / columnHeaders.length;
-  const rowHeight = (tableHeight - HEADER_HEIGHT) / rowHeaders.length;
+  const colWidth = $derived(tableWidth / columnHeaders.length);
+  const rowHeight = $derived((tableHeight - HEADER_HEIGHT) / rowHeaders.length);
 
   function getCellValue(row: number, col: number): string | number | boolean | undefined {
     return cells[row]?.[col]?.value;

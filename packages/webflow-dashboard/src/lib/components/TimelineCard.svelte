@@ -420,7 +420,7 @@
 	}
 
 	/* Rejection Card */
-	.rejection-card {
+	:global(.rejection-card) {
 		border-color: var(--color-error-border);
 	}
 

@@ -45,7 +45,7 @@
   }
 
   /* Section Headers - h2 uses base styles from Canon */
-  .section-subtitle {
+  :global(.section-subtitle) {
     font-size: var(--text-body-lg);
     color: var(--color-fg-secondary);
   }
@@ -62,7 +62,7 @@
     color: var(--color-fg-muted);
   }
 
-  .card-title {
+  :global(.card-title) {
     font-size: var(--text-body-lg);
     font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
@@ -95,7 +95,7 @@
     color: var(--color-fg-primary);
   }
 
-  .metric-description {
+  :global(.metric-description) {
     font-size: var(--text-body-sm);
     color: var(--color-fg-tertiary);
   }
@@ -142,12 +142,12 @@
     color: var(--color-fg-tertiary);
   }
 
-  .principle-application {
+  :global(.principle-application) {
     font-size: var(--text-caption);
     color: var(--color-fg-muted);
   }
 
-  .principle-label {
+  :global(.principle-label) {
     color: var(--color-fg-tertiary);
   }
 
@@ -221,7 +221,7 @@
   }
 
   /* Mode Cards */
-  .mode-title {
+  :global(.mode-title) {
     font-size: var(--text-body-lg);
     font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
@@ -257,12 +257,12 @@
   }
 
   /* Info */
-  .info-label {
+  :global(.info-label) {
     font-size: var(--text-body-sm);
     color: var(--color-fg-tertiary);
   }
 
-  .info-value {
+  :global(.info-value) {
     color: var(--color-fg-primary);
   }
 
@@ -272,13 +272,13 @@
     color: var(--color-fg-subtle);
   }
 
-  .step-title {
+  :global(.step-title) {
     font-size: var(--text-body);
     font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
   }
 
-  .step-description {
+  :global(.step-description) {
     font-size: var(--text-body-sm);
     color: var(--color-fg-tertiary);
   }
@@ -300,7 +300,7 @@
     color: var(--color-fg-primary);
   }
 
-  .work-description {
+  :global(.work-description) {
     color: var(--color-fg-secondary);
   }
 
@@ -319,7 +319,7 @@
     color: var(--color-fg-primary);
   }
 
-  .footer-text {
+  :global(.footer-text) {
     font-size: var(--text-body-sm);
     color: var(--color-fg-tertiary);
   }
@@ -334,7 +334,7 @@
     color: var(--color-fg-secondary);
   }
 
-  .canon-note {
+  :global(.canon-note) {
     font-size: var(--text-body-sm);
     color: var(--color-fg-secondary);
   }

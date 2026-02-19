@@ -19,7 +19,7 @@
 
 	// Chart dimensions
 	const chartWidth = 450; // Increased from 400 to prevent value overlap
-	const chartHeight = duos.length * 60 + 40; // 60px per bar + padding
+	let chartHeight = $derived(duos.length * 60 + 40); // 60px per bar + padding
 	const barHeight = 40;
 	const labelWidth = 140; // Increased from 120 to accommodate longer names
 	const maxPPP = 2.2; // Max scale for PPP (handles high-performing duos at 2.0+)

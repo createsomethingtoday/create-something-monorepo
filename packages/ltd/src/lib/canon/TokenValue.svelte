@@ -20,7 +20,7 @@
 	}: Props = $props();
 
 	// Copy format: var(--token-name)
-	const copyText = `var(${token})`;
+	let copyText = $derived(`var(${token})`);
 </script>
 
 <div class="token-value">

@@ -124,7 +124,6 @@
 	class="presentation"
 	class:fullscreen={isFullscreen}
 	bind:this={containerRef}
-	tabindex="0"
 	role="application"
 	aria-label="Presentation: {title}"
 >

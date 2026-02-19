@@ -9,30 +9,30 @@
 	let { paper }: Props = $props();
 
 	const categoryDisplayNames: Record<string, string> = {
-		automation: "Automation",
-		webflow: "Webflow",
-		development: "Development",
+		automation: 'Automation',
+		webflow: 'Webflow',
+		development: 'Development',
 	};
 
-	const categoryDisplayName =
-		categoryDisplayNames[paper.category] || paper.category;
+	const categoryDisplayName = $derived(categoryDisplayNames[paper.category] || paper.category);
 
 	const difficultyLevels: Record<string, string> = {
-		Beginner: "difficulty-beginner",
-		Intermediate: "difficulty-intermediate",
-		Advanced: "difficulty-advanced",
+		Beginner: 'difficulty-beginner',
+		Intermediate: 'difficulty-intermediate',
+		Advanced: 'difficulty-advanced',
 	};
 
-	const difficultyClass =
-		difficultyLevels[paper.difficulty_level || ""] || "difficulty-default";
+	const difficultyClass = $derived(
+		difficultyLevels[paper.difficulty_level || ''] || 'difficulty-default'
+	);
 
 	const formatDate = (dateString?: string) => {
-		if (!dateString) return "";
+		if (!dateString) return '';
 		const date = new Date(dateString);
-		return date.toLocaleDateString("en-US", {
-			year: "numeric",
-			month: "long",
-			day: "numeric",
+		return date.toLocaleDateString('en-US', {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric',
 		});
 	};
 </script>

@@ -969,26 +969,9 @@
 		color: var(--color-fg-muted);
 	}
 
-	.forbidden-title {
-		font-size: var(--text-body-lg);
-	}
-
 	.forbidden-grid {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);
-	}
-
-	.vague-examples {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-	}
-
-	.vague {
-		color: var(--color-fg-muted);
-	}
-
-	.replacement {
-		color: var(--color-fg-secondary);
 	}
 
 	.decoration-rules {

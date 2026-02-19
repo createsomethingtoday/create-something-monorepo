@@ -91,12 +91,13 @@
 </script>
 
 <div class="tabs tabs-{variant} tabs-{size}">
-	<div
-		class="tabs-list"
-		role="tablist"
-		bind:this={tablistRef}
-		onkeydown={handleKeyDown}
-	>
+		<div
+			class="tabs-list"
+			role="tablist"
+			tabindex={0}
+			bind:this={tablistRef}
+			onkeydown={handleKeyDown}
+		>
 		{#each tabs as tab}
 			<button
 				type="button"

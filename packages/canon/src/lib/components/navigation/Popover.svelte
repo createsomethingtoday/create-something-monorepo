@@ -67,6 +67,13 @@
 		}
 	}
 
+	function handleTriggerKeyDown(event: KeyboardEvent) {
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			toggle();
+		}
+	}
+
 	$effect(() => {
 		if (open) {
 			document.addEventListener('click', handleClickOutside, true);
@@ -78,7 +85,7 @@
 </script>
 
 <div class="popover-wrapper" bind:this={wrapperRef}>
-	<div class="popover-trigger" onclick={toggle}>
+	<div class="popover-trigger" role="button" tabindex={0} onclick={toggle} onkeydown={handleTriggerKeyDown}>
 		{@render trigger()}
 	</div>
 

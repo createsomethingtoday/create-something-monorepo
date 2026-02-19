@@ -519,15 +519,15 @@
 	}
 
 	/* Icons */
-	.icon-secondary {
+	:global(.icon-secondary) {
 		color: var(--color-fg-secondary);
 	}
 
-	.icon-success {
+	:global(.icon-success) {
 		color: var(--color-success);
 	}
 
-	.icon-muted {
+	:global(.icon-muted) {
 		color: var(--color-fg-subtle);
 	}
 

@@ -84,7 +84,7 @@
 			}));
 	}
 
-	const items = normalizeSolutions(solutions);
+	const items = $derived.by(() => normalizeSolutions(solutions));
 </script>
 
 <section

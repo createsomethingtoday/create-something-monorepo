@@ -20,7 +20,7 @@
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-	const { experiment } = data;
+	const experiment = $derived(data.experiment);
 
 	// Demo data for Knowledge Graph
 	const graphNodes = Array.from({ length: 50 }, (_, i) => ({

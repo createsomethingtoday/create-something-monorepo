@@ -19,7 +19,7 @@
 	}
 
 	let { data }: Props = $props();
-	const content = data.content;
+	const content = $derived(data.content);
 
 	const jsonLd = {
 		"@context": "https://schema.org",

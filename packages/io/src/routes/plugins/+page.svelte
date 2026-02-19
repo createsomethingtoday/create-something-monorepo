@@ -15,7 +15,7 @@
 	});
 
 	const marketplaceCommand = '/plugin marketplace add createsomethingtoday/claude-plugins';
-	const installAllCommand = plugins.map((p) => `/plugin install ${p.slug}@create-something`).join(' && ');
+	const installAllCommand = $derived(plugins.map((p) => `/plugin install ${p.slug}@create-something`).join(' && '));
 
 	async function copyMarketplace() {
 		try {

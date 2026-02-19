@@ -9,7 +9,9 @@
 	let { paper, showFullStats = false }: Props = $props();
 
 	// Check if this is a tracked experiment
-	const isTrackedExperiment = paper.slug.includes('experiment') || paper.category === 'experiments';
+	const isTrackedExperiment = $derived(
+		paper.slug.includes('experiment') || paper.category === 'experiments'
+	);
 
 	// Extract metrics from paper content or use defaults
 	const metrics = {

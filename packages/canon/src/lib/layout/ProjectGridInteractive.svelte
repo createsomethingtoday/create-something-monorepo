@@ -32,11 +32,11 @@
 		strong: 0.3
 	};
 
-	const opacity = siblingOpacity[variant] ?? 0.5;
+	const opacity = $derived(siblingOpacity[variant] ?? 0.5);
 </script>
 
 <section class="project-grid-interactive">
-	<div class="grid highlight-grid">
+		<div class="grid highlight-grid" style="--sibling-opacity: {opacity}">
 		{#each projects as project, index}
 			<a
 				href="/projects/{project.slug}"
@@ -70,14 +70,14 @@
 		background: var(--color-bg-pure);
 	}
 
-	.gallery-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-		gap: var(--space-xs);
-		padding: 0 var(--space-md);
-		max-width: 1400px;
-		margin: 0 auto;
-	}
+		.highlight-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+			gap: var(--space-xs);
+			padding: 0 var(--space-md);
+			max-width: 1400px;
+			margin: 0 auto;
+		}
 
 	.project-card {
 		position: relative;
@@ -90,41 +90,33 @@
 	}
 
 	/* CalArts pattern: grid highlights hovered item, dims siblings */
-	.gallery-grid:hover .project-card:not(:hover) {
-		opacity: 0.5;
-	}
+		.highlight-grid:hover .project-card:not(:hover) {
+			opacity: var(--sibling-opacity);
+		}
 
 	.project-card {
 		position: relative;
 		transition: opacity var(--duration-standard) var(--ease-standard);
 	}
 
-	.image-container {
-		position: relative;
-		width: 100%;
-		overflow: hidden;
-		background: var(--color-bg-elevated);
-	}
+		.project-image-container {
+			position: relative;
+			width: 100%;
+			overflow: hidden;
+			background: var(--color-bg-elevated);
+			aspect-ratio: 4 / 3;
+		}
 
-	/* Aspect ratios */
-	.project-item--large .image-container {
-		aspect-ratio: 16 / 9;
-	}
+		.project-image {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			transition: transform var(--duration-standard) var(--ease-standard);
+		}
 
-	.project-item:not(.project-item--large) .image-container {
-		aspect-ratio: 4 / 3;
-	}
-
-	.project-image {
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		transition: transform var(--duration-standard) var(--ease-standard);
-	}
-
-	.project-item:hover .project-image {
-		transform: scale(var(--scale-micro));
-	}
+		.project-card:hover .project-image {
+			transform: scale(var(--scale-micro));
+		}
 
 	/* Meta overlay */
 	.project-meta {
@@ -144,10 +136,10 @@
 			transform var(--duration-standard) var(--ease-standard);
 	}
 
-	.project-item:hover .project-meta {
-		opacity: 1;
-		transform: translateY(0);
-	}
+		.project-card:hover .project-meta {
+			opacity: 1;
+			transform: translateY(0);
+		}
 
 	.project-title {
 		font-size: var(--text-body);
@@ -164,9 +156,9 @@
 
 	/* Responsive */
 	@media (max-width: 768px) {
-		.gallery-grid {
-			grid-template-columns: 1fr;
-		}
+			.highlight-grid {
+				grid-template-columns: 1fr;
+			}
 
 		/* Always show meta on mobile */
 		.project-meta {
@@ -176,17 +168,17 @@
 	}
 
 	@media (min-width: 1200px) {
-		.gallery-grid {
-			grid-template-columns: repeat(3, 1fr);
+			.highlight-grid {
+				grid-template-columns: repeat(3, 1fr);
+			}
 		}
-	}
 
-	/* Reduced motion */
-	@media (prefers-reduced-motion: reduce) {
-		.project-item {
-			animation: none;
-			opacity: 1;
-			transform: none;
+		/* Reduced motion */
+		@media (prefers-reduced-motion: reduce) {
+			.project-card {
+				animation: none;
+				opacity: 1;
+				transform: none;
 		}
 
 		.project-image {

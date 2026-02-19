@@ -173,13 +173,14 @@
 
 			<section class="status-section">
 				<div class="status-header">
-					<div class="status-info">
-						<div class="status-icon {config?.bgClass || ''}">
-							{#if config?.icon}
-								<svelte:component this={config.icon} size={18} />
-							{:else}
-								<span>•</span>
-							{/if}
+						<div class="status-info">
+							<div class="status-icon {config?.bgClass || ''}">
+								{#if config?.icon}
+									{@const StatusIcon = config.icon}
+									<StatusIcon size={18} />
+								{:else}
+									<span>•</span>
+								{/if}
 						</div>
 						<div class="status-meta">
 							<h3 class="status-title">{status}</h3>

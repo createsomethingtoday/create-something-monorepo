@@ -16,21 +16,21 @@
 	}
 
 	let { data }: Props = $props();
-	const content = data.content;
+	const content = $derived(data.content);
 
 	// Hero content with CMS overrides
-	const heroTitle = content?.hero?.title ?? 'Introducing HydroX';
-	const heroSubtitle = content?.hero?.subtitle ?? 'Unlocking new domestic sources of critical minerals and industrial water';
-	const heroVideo = content?.hero?.video ?? 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/124452682-engineers-assessing-waste-wate.mp4';
-	const heroCta = content?.hero?.cta ?? 'Learn More';
+	const heroTitle = $derived(content?.hero?.title ?? 'Introducing HydroX');
+	const heroSubtitle = $derived(content?.hero?.subtitle ?? 'Unlocking new domestic sources of critical minerals and industrial water');
+	const heroVideo = $derived(content?.hero?.video ?? 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/124452682-engineers-assessing-waste-wate.mp4');
+	const heroCta = $derived(content?.hero?.cta ?? 'Learn More');
 
 	// Statistics section with CMS overrides
-	const statisticsHeadline = content?.statistics?.headline ?? 'HydroX is a process that cleans wastewater for industrial use while recovering and processing valuable byproducts';
-	const statisticsCta = content?.statistics?.cta ?? 'Learn More';
+	const statisticsHeadline = $derived(content?.statistics?.headline ?? 'HydroX is a process that cleans wastewater for industrial use while recovering and processing valuable byproducts');
+	const statisticsCta = $derived(content?.statistics?.cta ?? 'Learn More');
 
 	// Section headlines with CMS overrides
-	const metalsHeadline = content?.metalsHeadline ?? 'Metals of interest';
-	const wasteHeadline = content?.wasteHeadline ?? 'Recover From';
+	const metalsHeadline = $derived(content?.metalsHeadline ?? 'Metals of interest');
+	const wasteHeadline = $derived(content?.wasteHeadline ?? 'Recover From');
 
 	// Metals of interest - matches React dmeMetalImages
 	const metals = [

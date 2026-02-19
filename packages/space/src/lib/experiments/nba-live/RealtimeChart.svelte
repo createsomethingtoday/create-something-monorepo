@@ -61,13 +61,13 @@
 	// Canvas and state
 	let canvas: HTMLCanvasElement | null = $state(null);
 	let hoveredPoint: { point: DataPoint; series: Series } | null = $state(null);
-	let animationProgress = $state(animate ? 0 : 1);
+	let animationProgress = $state(0);
 	let previousData = $state<Series[]>([]);
 
 	// Layout
 	const padding = { top: 20, right: 20, bottom: 40, left: 60 };
-	const chartWidth = width - padding.left - padding.right;
-	const chartHeight = height - padding.top - padding.bottom;
+	let chartWidth = $derived(width - padding.left - padding.right);
+	let chartHeight = $derived(height - padding.top - padding.bottom);
 
 	// Resolved colors (canvas can't use CSS vars directly)
 	let colors = $state({

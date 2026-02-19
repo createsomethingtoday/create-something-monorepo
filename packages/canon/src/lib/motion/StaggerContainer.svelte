@@ -96,10 +96,6 @@
 </div>
 
 <style>
-	.stagger-container {
-		/* Container doesn't animate, children do */
-	}
-
 	/* Children get stagger delays via CSS counter */
 	.stagger-container :global(.stagger-item) {
 		opacity: 0;

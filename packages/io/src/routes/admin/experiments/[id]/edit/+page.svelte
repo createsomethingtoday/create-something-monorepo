@@ -230,11 +230,11 @@
 				{/if}
 			</div>
 
-			<!-- Tags -->
-			<div>
-				<label class="form-label">Tags (Multi-select)</label>
-				<div class="flex flex-wrap gap-2">
-					{#each allTags as tag}
+				<!-- Tags -->
+				<div>
+					<p class="form-label">Tags (Multi-select)</p>
+					<div class="flex flex-wrap gap-2">
+						{#each allTags as tag}
 						<button
 							type="button"
 							onclick={() => toggleTag(tag.id)}

@@ -7,7 +7,6 @@
 	 * Canon-compliant: monochrome, minimal chrome.
 	 */
 
-	import { onMount } from 'svelte';
 	import WeekView from './components/WeekView.svelte';
 	import MonthView from './components/MonthView.svelte';
 	import ViewToggle from './components/ViewToggle.svelte';
@@ -46,8 +45,16 @@
 				: 'https://clearway.pages.dev/api';
 
 	// Create stores
-	const calendar = createCalendarState({ advanceBookingDays, timezone });
-	const availabilityCache = createAvailabilityCache(facilitySlug, API_BASE);
+	const calendar = createCalendarState({ advanceBookingDays: 30, timezone: 'America/Chicago' });
+	let availabilityCache = $state(createAvailabilityCache('', API_BASE));
+
+	$effect(() => {
+		calendar.updateConfig({ advanceBookingDays, timezone });
+	});
+
+	$effect(() => {
+		availabilityCache = createAvailabilityCache(facilitySlug, API_BASE);
+	});
 
 	// Current view: 'calendar' or 'slots'
 	let currentView = $state<'calendar' | 'slots'>('calendar');

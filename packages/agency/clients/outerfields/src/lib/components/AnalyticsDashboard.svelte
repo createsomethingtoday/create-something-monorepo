@@ -302,15 +302,9 @@
 		line-height: 1.7;
 	}
 
-	.dashboard-wrapper {
-		position: relative;
-	}
-
-	.dashboard-wrapper.blurred > :not(.members-overlay) {
-		filter: blur(8px);
-		pointer-events: none;
-		user-select: none;
-	}
+		.dashboard-wrapper {
+			position: relative;
+		}
 
 	/* Tufte: Single row of 4, high data-ink ratio, minimal decoration */
 	.metrics-grid {
@@ -400,19 +394,8 @@
 		letter-spacing: 0.05em;
 	}
 
-	.metric-footer {
-		display: flex;
-		align-items: center;
-		gap: 0.375rem;
-		margin-top: 0.75rem;
-		padding-top: 0.75rem;
-		border-top: 1px solid var(--color-border-default);
-		font-size: 0.75rem;
-		color: var(--color-fg-muted);
-	}
-
-	.chatbot-tease {
-		display: flex;
+		.chatbot-tease {
+			display: flex;
 		align-items: center;
 		gap: 1.5rem;
 		padding: 2rem;
@@ -470,70 +453,8 @@
 		border-color: var(--color-fg-primary);
 	}
 
-	/* Members Only Overlay */
-	.members-overlay {
-		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		backdrop-filter: blur(8px);
-		background: rgba(0, 0, 0, 0.7);
-		border-radius: var(--radius-lg);
-		z-index: 10;
-	}
-
-	.overlay-content {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		text-align: center;
-		max-width: 28rem;
-		padding: 2rem;
-	}
-
-	.overlay-icon {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.overlay-content h3 {
-		font-size: 2rem;
-		font-weight: 700;
-		color: var(--color-fg-primary);
-		margin: 1rem 0 0.5rem;
-	}
-
-	.overlay-content p {
-		font-size: 1rem;
-		color: var(--color-fg-muted);
-		line-height: 1.6;
-		margin: 0 0 2rem;
-	}
-
-	.unlock-btn {
-		display: inline-block;
-		padding: 1rem 2rem;
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
-		border-radius: var(--radius-md);
-		font-size: 1rem;
-		font-weight: 700;
-		text-decoration: none;
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.unlock-btn:hover {
-		background: var(--color-fg-secondary);
-		transform: translateY(-2px);
-	}
-
-	.loading-state,
-	.error-state {
+		.loading-state,
+		.error-state {
 		padding: 4rem 2rem;
 		text-align: center;
 		color: var(--color-fg-muted);

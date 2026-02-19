@@ -115,20 +115,25 @@
 			</p>
 		{/if}
 	</div>
-{:else if variant === 'tooltip'}
-	<button 
-		class="freshness-tooltip"
-		onclick={handleClick}
-		aria-label="Show data freshness info"
-	>
-		<Info size={14} />
-	</button>
-	{#if showTooltip}
-		<div class="tooltip-backdrop" onclick={closeTooltip}></div>
-		<div 
-			class="tooltip-fixed"
-			style="top: {tooltipPosition.top}px; left: {tooltipPosition.left}px;"
+	{:else if variant === 'tooltip'}
+		<button 
+			class="freshness-tooltip"
+			onclick={handleClick}
+			aria-label="Show data freshness info"
 		>
+			<Info size={14} />
+		</button>
+		{#if showTooltip}
+			<button
+				type="button"
+				class="tooltip-backdrop"
+				onclick={closeTooltip}
+				aria-label="Close data freshness tooltip"
+			></button>
+			<div 
+				class="tooltip-fixed"
+				style="top: {tooltipPosition.top}px; left: {tooltipPosition.left}px;"
+			>
 			<button class="tooltip-close" onclick={closeTooltip}>
 				<X size={12} />
 			</button>
@@ -202,6 +207,9 @@
 		position: fixed;
 		inset: 0;
 		z-index: 999;
+		background: transparent;
+		border: none;
+		padding: 0;
 	}
 
 	.tooltip-fixed {

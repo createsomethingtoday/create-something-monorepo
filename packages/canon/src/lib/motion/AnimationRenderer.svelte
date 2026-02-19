@@ -68,7 +68,7 @@
 	} = $props();
 
 	let isPlaying = $state(false);
-	let progress = tweened(0, { duration: spec.duration, easing: cubicOut });
+	let progress = tweened(0, { duration: 0, easing: cubicOut });
 
 	function play() {
 		if (isPlaying) return;

@@ -8,17 +8,16 @@
   }
 
   let { data, config = {} }: Props = $props();
+  const width = $derived(config.width ?? 800);
+  const height = $derived(config.height ?? 400);
+  const title = $derived(config.title);
+  const subtitle = $derived(config.subtitle);
+  const property = $derived(config.property ?? 'io');
+  const branded = $derived(config.branded ?? false);
 
-  const {
-    width = 800,
-    height = 400,
-    title,
-    subtitle,
-    property = 'io',
-    branded = false,
-  } = config;
-
-  const { nodes, edges, direction = 'horizontal' } = data;
+  const nodes = $derived(data.nodes);
+  const edges = $derived(data.edges);
+  const direction = $derived(data.direction ?? 'horizontal');
 
   // Layout constants
   const NODE_WIDTH = 140;
@@ -26,11 +25,11 @@
   const PADDING = 42;
 
   // Calculate node positions
-  function layoutNodes(nodes: FlowNode[]): (FlowNode & { x: number; y: number })[] {
-    const count = nodes.length;
+  function layoutNodes(inputNodes: FlowNode[]): (FlowNode & { x: number; y: number })[] {
+    const count = inputNodes.length;
     const isHorizontal = direction === 'horizontal';
 
-    return nodes.map((node, i) => {
+    return inputNodes.map((node, i) => {
       const positions = isHorizontal
         ? distribute(PADDING + NODE_WIDTH / 2, width - PADDING - NODE_WIDTH / 2, count)
         : distribute(PADDING + NODE_HEIGHT / 2 + 60, height - PADDING - NODE_HEIGHT / 2, count);
@@ -84,12 +83,11 @@
     return `M${x},${y - hh} L${x + hw},${y} L${x},${y + hh} L${x - hw},${y} Z`;
   }
 
+  let layoutedNodes = $state<(FlowNode & { x: number; y: number })[]>([]);
   $effect(() => {
     layoutedNodes = layoutNodes(nodes);
   });
-
-  let layoutedNodes = $state(layoutNodes(nodes));
-  const accentColor = getAccentColor(property);
+  const accentColor = $derived(getAccentColor(property));
 </script>
 
 <svg

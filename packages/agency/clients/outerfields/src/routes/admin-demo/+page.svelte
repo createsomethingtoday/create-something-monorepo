@@ -152,11 +152,13 @@
 	let currentChartData = $derived(chartDataByPeriod[selectedPeriod]);
 
 	// Add numeric values for sorting
-	const uploadsWithNumbers: UploadItem[] = data.uploads.map((u, i) => ({
-		...u,
-		viewsNum: u.views === '-' ? 0 : parseFloat(u.views?.replace('K', '000').replace('.', '') || '0'),
-		uploadedAtNum: data.uploads.length - i // Most recent = highest
-	}));
+	const uploadsWithNumbers = $derived.by(() =>
+		data.uploads.map((u, i) => ({
+			...u,
+			viewsNum: u.views === '-' ? 0 : parseFloat(u.views?.replace('K', '000').replace('.', '') || '0'),
+			uploadedAtNum: data.uploads.length - i // Most recent = highest
+		}))
+	);
 
 	// Filtered and sorted uploads
 	let filteredUploads = $derived.by(() => {
