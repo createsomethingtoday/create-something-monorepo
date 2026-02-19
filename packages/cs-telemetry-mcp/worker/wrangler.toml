@@ -9,6 +9,8 @@ enabled = true
 
 # Secret required at deploy time:
 # - OPERATOR_API_TOKEN (for /mcp and /sse operator endpoints)
+# Optional secret for unified cross-account view:
+# - WORKWAY_D1_API_TOKEN (Cloudflare API token with D1 read access to WORKWAY telemetry DB)
 
 # Durable Object for MCP sessions
 [[durable_objects.bindings]]
@@ -30,3 +32,8 @@ database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
 binding = "CONTROL_DB"
 database_name = "cs-gateway"
 database_id = "e6a63efe-8e86-41da-b6ed-e5aa85ba7443"
+
+[vars]
+# Optional WORKWAY source config for unified telemetry queries.
+WORKWAY_ACCOUNT_ID = "5c3e9cf4d55ce171b844fad0931607f9"
+WORKWAY_TELEMETRY_DB_ID = "4eb35a0f-6ee2-4d0c-8c0a-9a2ab4049b97"

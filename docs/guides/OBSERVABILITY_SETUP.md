@@ -217,6 +217,16 @@ Telemetry MCP endpoint split:
 - Operator endpoint: `/mcp` and `/sse` (Bearer `OPERATOR_API_TOKEN`)
 - Client endpoint: `/client/mcp` and `/client/sse` (Bearer tenant runtime key)
 
+Unified CREATE SOMETHING + WORKWAY fleet view (optional):
+
+- `cs-telemetry-mcp` can aggregate both fleets when `WORKWAY_D1_API_TOKEN` is configured.
+- Required runtime vars/secrets in `packages/cs-telemetry-mcp/worker/wrangler.toml`:
+  - `WORKWAY_ACCOUNT_ID` (defaults to WORKWAY account)
+  - `WORKWAY_TELEMETRY_DB_ID` (defaults to `halfdozen-feedback`)
+  - `WORKWAY_D1_API_TOKEN` (secret; D1 read access on WORKWAY account)
+- With this enabled, `query_health`, `query_usage`, `query_activity`, and `query_errors`
+  support `scope: 'cs' | 'workway' | 'all'` and return source-tagged results.
+
 ## Cost Tracking
 
 Langfuse automatically tracks costs for supported models. Configure custom pricing:
