@@ -23,6 +23,8 @@ import { createBindingExecutor, ensureInitialized, listClientMappings } from '..
 import { syncClient } from '../src/services/sync-engine.js';
 import { SyncDirection } from '../src/constants.js';
 import type { D1Executor, D1DatabaseBinding } from '../src/types.js';
+import { recordInvocation } from '@create-something/mcp-core';
+import type { InsightEmitter, InsightEvent } from '@create-something/mcp-core';
 
 // =============================================================================
 // Worker Environment
@@ -30,6 +32,7 @@ import type { D1Executor, D1DatabaseBinding } from '../src/types.js';
 
 export interface Env {
   DB: D1Database;
+  TELEMETRY_DB?: D1Database;
   CF_ACCOUNT_ID: string;
   CF_API_TOKEN: string;
   CF_D1_DATABASE_ID: string;
@@ -39,6 +42,43 @@ export interface Env {
   TOKEN_ENCRYPTION_KEY?: string;
   /** Optional comma-separated list of allowed CORS origins (e.g., "https://inspector.mcp.dev,https://app.example.com") */
   CORS_ALLOWED_ORIGINS?: string;
+}
+
+const TELEMETRY_SERVER_NAME = 'notion-sync-mcp';
+
+function createTelemetryInsight(db?: D1Database): InsightEmitter | undefined {
+  if (!db) return undefined;
+  return {
+    emit(event: InsightEvent): void {
+      if (event.tier !== 'automation') return;
+      if (!event.action.startsWith('tool:')) return;
+      const toolName = event.action.slice('tool:'.length);
+      if (!toolName) return;
+
+      const durationMs = typeof event.durationMs === 'number' ? event.durationMs : 0;
+      const success = event.success !== false;
+      const metadata = event.metadata && typeof event.metadata === 'object'
+        ? event.metadata as Record<string, unknown>
+        : null;
+      const errorMessage = success ? undefined : (
+        typeof metadata?.error === 'string'
+          ? metadata.error
+          : 'Tool invocation failed'
+      );
+
+      void recordInvocation(
+        db as any,
+        TELEMETRY_SERVER_NAME,
+        event.accountId || 'operator',
+        toolName,
+        durationMs,
+        success,
+        errorMessage,
+      ).catch((err) => {
+        console.warn('[telemetry] notion-sync metering failed:', err);
+      });
+    },
+  };
 }
 
 // =============================================================================
@@ -261,6 +301,7 @@ export default {
           d1Source: { type: 'binding', db: env.DB as unknown as D1DatabaseBinding },
           encryptionKey: env.TOKEN_ENCRYPTION_KEY,
         }),
+        insight: createTelemetryInsight(env.TELEMETRY_DB),
       });
 
       return server.handleRequest(request, env);

@@ -15,6 +15,11 @@ binding = "DB"
 database_name = "notion-sync"
 database_id = "3b897645-ea00-4a1a-9894-7b91604b6f3d"
 
+[[d1_databases]]
+binding = "TELEMETRY_DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
+
 [triggers]
 crons = ["*/15 * * * *"]
 

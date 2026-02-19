@@ -12,6 +12,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { ComposioToolFactory } from '@create-something/composio-bridge';
+import { enableTelemetry } from '@create-something/mcp-core';
 import { registerAuthTools } from '../src/tools/auth.js';
 import { incrementRun, getUsage } from '../src/metering.js';
 import { normalizeAccountId } from '../src/identity.js';
@@ -27,6 +28,8 @@ interface Env {
   COMPOSIO_NOTION_AUTH_CONFIG_ID?: string;
   /** D1 for run metering (100 free, then 1¢/run). Create with wrangler d1 create gmail-notion-mcp-runs */
   RUNS_DB?: D1Database;
+  /** Shared telemetry DB for fleet observability. */
+  TELEMETRY_DB?: D1Database;
 }
 
 // =============================================================================
@@ -69,6 +72,10 @@ export class GmailNotionMCP extends McpAgent<Env> {
     }
 
     const getEntityId = () => this.currentAccountId ?? 'default';
+
+    if (this.env.TELEMETRY_DB) {
+      enableTelemetry(this.server as any, this.env.TELEMETRY_DB as any, 'gmail-notion-mcp', getEntityId);
+    }
 
     const factory = new ComposioToolFactory({
       apiKey,

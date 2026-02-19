@@ -2,6 +2,7 @@ name = "gmail-notion-mcp"
 main = "index.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 
 # Optional: set account_id and routes for production
 # account_id = "..."
@@ -18,6 +19,11 @@ binding = "RUNS_DB"
 database_name = "gmail-notion-mcp-runs"
 database_id = "6791208a-0fc4-4815-8965-6b6584c9af42"
 migrations_dir = "migrations"
+
+[[d1_databases]]
+binding = "TELEMETRY_DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
 
 [[durable_objects.bindings]]
 name = "MCP_OBJECT"

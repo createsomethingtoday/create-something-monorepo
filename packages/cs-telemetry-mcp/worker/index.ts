@@ -53,6 +53,9 @@ const FLEET_SERVERS = [
   'three-tier-framework',
   'playbook',
   'outerfields-pcn',
+  'webflow-app-review-mcp',
+  'gmail-notion-mcp',
+  'notion-sync-mcp',
 ];
 
 // =============================================================================
