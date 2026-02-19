@@ -66,6 +66,7 @@
     "mcp:hub:status": "node packages/cs-mcp-hub/dist/index.js --status",
     "mcp:hub:write-config": "node packages/cs-mcp-hub/dist/index.js --write-codex",
     "create-mcp": "tsx scripts/create-mcp.ts",
+    "deploy:halfdozen-dm-mcp": "cd packages/halfdozen-dm-mcp/worker && pnpm exec wrangler deploy",
     "deploy:blondish-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.blondish.toml",
     "deploy:c3-management-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.c3-management.toml",
     "deploy:cracked-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.cracked.toml",

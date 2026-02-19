@@ -43,6 +43,12 @@
       "description": "Half Dozen Notion MCP for CREATE SOMETHING",
       "tags": ["halfdozen", "notion", "workway"]
     },
+    "halfdozen-dm-mcp": {
+      "transport": "http",
+      "url": "https://dm.mcp.workway.co/mcp",
+      "description": "Half Dozen DM MCP (Notion tools in v1)",
+      "tags": ["halfdozen", "dm", "notion", "workway"]
+    },
     "half-dozen-youtube-sync": {
       "transport": "http",
       "url": "https://youtube.mcp.workway.co/mcp",
@@ -68,7 +74,7 @@
     "core": ["create-something", "three-tier-framework", "playbook"],
     "observability": ["cs-telemetry"],
     "ops": ["schedule-mcp", "substrate-mcp"],
-    "halfdozen": ["notion-halfdozen-create-something", "half-dozen-youtube-sync"],
+    "halfdozen": ["notion-halfdozen-create-something", "halfdozen-dm-mcp", "half-dozen-youtube-sync"],
     "local-dev": ["webflow-local", "lsmcp"]
   },
   "defaults": {

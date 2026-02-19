@@ -45,6 +45,7 @@ All Half Dozen MCPs share `halfdozen-feedback` D1 for telemetry. Fleet-wide quer
 | 13 | `halfdozen-zoom-sync` | `halfdozen-zoom-sync` | Active | `zoom.mcp.workway.co` | Yes |
 | 14 | `half-dozen-youtube-sync` | `half-dozen-youtube-sync` | Active | `youtube.mcp.workway.co` | Yes |
 | 15 | `halfdozen-telemetry-mcp` | `halfdozen-telemetry` | Active | `halfdozen-telemetry-mcp.half-dozen.workers.dev` | — (reads telemetry) |
+| 16 | `halfdozen-dm-mcp` | `halfdozen-dm-mcp` | Active | `dm.mcp.workway.co` | Yes |
 
 ### Naming Note
 

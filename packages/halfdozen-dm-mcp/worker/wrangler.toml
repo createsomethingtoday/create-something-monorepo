@@ -1,0 +1,38 @@
+name = "halfdozen-dm-mcp"
+main = "index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "5c3e9cf4d55ce171b844fad0931607f9"  # WORKWAY
+
+# Production URL: https://dm.mcp.workway.co
+[[routes]]
+pattern = "dm.mcp.workway.co"
+custom_domain = true
+
+[observability]
+enabled = true
+
+# Durable Object for MCP sessions
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "HalfDozenDmMcp"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["HalfDozenDmMcp"]
+
+# Shared feedback database (all Half Dozen MCPs)
+[[d1_databases]]
+binding = "FEEDBACK_DB"
+database_name = "halfdozen-feedback"
+database_id = "4eb35a0f-6ee2-4d0c-8c0a-9a2ab4049b97"
+
+[vars]
+WORKSPACE_CLIENT_LABEL = "DM"
+WORKSPACE_CLIENT_DESCRIPTION = "DM Notion workspace"
+MCP_DISPLAY_NAME = "Half Dozen DM MCP"
+MCP_DESCRIPTION = "Half Dozen DM MCP. Notion tools enabled in v1; additional toolsets can be added over time."
+ENABLED_TOOLSETS = "notion"
+
+# Secrets (set via wrangler secret put)
+# NOTION_API_KEY — DM client Notion workspace

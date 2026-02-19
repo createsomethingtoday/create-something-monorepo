@@ -1,0 +1,36 @@
+{
+  "name": "@create-something/halfdozen-dm-mcp",
+  "version": "1.0.0",
+  "description": "Half Dozen DM MCP — generalized endpoint with Notion tools in v1 (single client workspace).",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@create-something/mcp-core": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "@notionhq/client": "^5.9.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.3"
+  },
+  "keywords": [
+    "mcp",
+    "notion",
+    "half-dozen",
+    "dm",
+    "model-context-protocol"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/halfdozen-dm-mcp"
+  }
+}
