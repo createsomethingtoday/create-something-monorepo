@@ -29,4 +29,4 @@ database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
 [[d1_databases]]
 binding = "CONTROL_DB"
 database_name = "cs-gateway"
-database_id = "REPLACE_WITH_CS_GATEWAY_DATABASE_ID"
+database_id = "e6a63efe-8e86-41da-b6ed-e5aa85ba7443"
