@@ -2,9 +2,22 @@
 
 This guide covers the observability stack for CREATE SOMETHING agents, combining Cloudflare Workers Automatic Tracing with Langfuse for LLM/MCP-specific observability.
 
+As of February 2026, gateway-control telemetry is also first-class:
+
+- `cs-gateway` D1: tenant config, runtime keys, policy/budget/rate state
+- `cs-telemetry` D1: gateway request events (`gateway_requests`), alerts (`gateway_alerts`), and rollups (`gateway_daily_rollups`)
+- `cs-telemetry-mcp`: query layer for fleet + gateway usage/cost/budget burn
+
 ## Architecture
 
 ```
+┌─────────────────────────────────────────────────────────────────┐
+│                Runtime Governance Layer                          │
+│   gateway-control-worker + portkey-gateway-worker               │
+│   D1 logs: gateway_requests / gateway_alerts / rollups          │
+└─────────────────────────────┬───────────────────────────────────┘
+                              │
+                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Infrastructure Layer                          │
 │    Cloudflare Workers Automatic Tracing (OTLP Export)           │
@@ -19,7 +32,7 @@ This guide covers the observability stack for CREATE SOMETHING agents, combining
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                   Unified Dashboard                              │
-│    SvelteKit + Loom + Agentic Executor + Langfuse               │
+│    SvelteKit + Loom + Telemetry MCP + Langfuse                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -161,6 +174,48 @@ Apply Atlas vocabulary as trace metadata for consistent observability:
 3. **Generations** - LLM calls with token usage and cost
 4. **Sessions** - Group traces by user session
 5. **Metrics** - Latency, cost, error rates
+
+## Gateway Request Telemetry (Control Plane)
+
+Gateway request telemetry is persisted in `cs-telemetry`:
+
+- `gateway_requests`: per-request logs with tenant, provider, model, tokens, estimated cost, latency, budget/rate outcomes
+- `gateway_alerts`: budget threshold, error-rate spike, and failover alerts
+- `gateway_daily_rollups`: daily aggregates per tenant/provider/model
+
+Correlation support:
+
+- Runtime responses return `x-cs-correlation-id`.
+- MCP tool invocations can include `correlation_id` / `request_id` and are stored in `mcp_tool_invocations`.
+- Join `gateway_requests.correlation_id` with `mcp_tool_invocations.correlation_id` for end-to-end Codex/MCP traceability.
+
+Primary query interfaces:
+
+- `telemetry://gateway/usage` resource in `cs-telemetry-mcp`
+- `telemetry://decision/scorecards` resource in `cs-telemetry-mcp`
+- `query_gateway_usage` tool
+- `query_tenant_cost` tool
+- `query_budget_burn` tool
+- `query_decision_scorecard` tool
+- `query_tenant_sql` tool (runtime-key scoped, read-only via `{{tenant_id}}` placeholder)
+
+Decision views in `cs-telemetry`:
+
+- `vw_gateway_adoption`
+- `vw_gateway_cost_efficiency`
+- `vw_gateway_reliability`
+- `vw_gateway_policy_risk`
+
+Client SQL guardrails:
+
+- `query_tenant_sql` validates runtime key against `cs-gateway.tenant_runtime_keys`.
+- Query must include `{{tenant_id}}` placeholder; it is rewritten to parameterized binds.
+- Only allowlisted tables/views are permitted for tenant SQL.
+
+Telemetry MCP endpoint split:
+
+- Operator endpoint: `/mcp` and `/sse` (Bearer `OPERATOR_API_TOKEN`)
+- Client endpoint: `/client/mcp` and `/client/sse` (Bearer tenant runtime key)
 
 ## Cost Tracking
 

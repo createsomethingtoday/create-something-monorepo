@@ -108,9 +108,13 @@ export { FEEDBACK_TOOL_SCHEMA, createFeedbackToolHandler, registerFeedbackTool }
 export {
   enableTelemetry,
   recordInvocation,
+  recordGatewayRequest,
   getUsage,
   getHealth,
   getActivity,
+  getGatewayUsage,
+  getTenantCost,
+  getBudgetBurn,
   cleanupOldInvocations,
   TELEMETRY_MIGRATION,
 } from './telemetry.js';
@@ -119,8 +123,15 @@ export type {
   UsageResult,
   HealthResult,
   ActivityResult,
+  InvocationMetadata,
   RunCountRow,
   ToolInvocationRow,
+  GatewayRequestEvent,
+  GatewayUsageQuery,
+  GatewayUsageRow,
+  GatewayUsageResult,
+  TenantCostResult,
+  BudgetBurnResult,
 } from './telemetry.js';
 
 // =============================================================================

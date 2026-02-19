@@ -1,0 +1,12 @@
+name = "portkey-gateway-worker"
+main = "index.ts"
+compatibility_date = "2026-02-01"
+compatibility_flags = ["nodejs_compat"]
+
+[observability]
+enabled = true
+
+[vars]
+# Deploy this worker in front of your pinned Portkey OSS gateway deployment.
+# Example: "https://portkey-oss-gateway.example.workers.dev"
+PORTKEY_UPSTREAM_URL = ""

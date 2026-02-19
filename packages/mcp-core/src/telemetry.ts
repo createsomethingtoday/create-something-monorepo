@@ -48,6 +48,9 @@ export interface ToolInvocationRow {
   success: number;
   duration_ms: number | null;
   error_message: string | null;
+  correlation_id?: string | null;
+  request_id?: string | null;
+  metadata_json?: string | null;
   created_at: string;
 }
 
@@ -81,8 +84,83 @@ export interface ActivityResult {
     success: boolean;
     durationMs: number | null;
     error: string | null;
+    correlationId?: string | null;
+    requestId?: string | null;
+    metadata?: Record<string, unknown>;
     createdAt: string;
   }>;
+}
+
+export interface InvocationMetadata {
+  correlationId?: string;
+  requestId?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface GatewayRequestEvent {
+  correlationId: string;
+  requestId: string;
+  tenantId: string;
+  tenantSlug?: string;
+  runtimeKeyPrefix?: string;
+  providerSlug: string;
+  modelName?: string | null;
+  endpoint: string;
+  success: boolean;
+  statusCode?: number | null;
+  latencyMs?: number | null;
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+  estimatedCostUsd?: number;
+  budgetDecision?: 'allow' | 'warn' | 'block';
+  rateLimited?: boolean;
+  failoverActivated?: boolean;
+  errorMessage?: string | null;
+  upstreamRequestId?: string | null;
+}
+
+export interface GatewayUsageQuery {
+  tenantId?: string;
+  providerSlug?: string;
+  modelName?: string;
+  from?: string;
+  to?: string;
+  limit?: number;
+}
+
+export interface GatewayUsageRow {
+  tenantId: string;
+  providerSlug: string;
+  modelName: string;
+  requests: number;
+  successful: number;
+  failed: number;
+  totalTokens: number;
+  totalCostUsd: number;
+  avgLatencyMs: number;
+}
+
+export interface GatewayUsageResult {
+  filters: GatewayUsageQuery;
+  rows: GatewayUsageRow[];
+}
+
+export interface TenantCostResult {
+  tenantId: string;
+  from: string | null;
+  to: string | null;
+  requests: number;
+  tokens: number;
+  totalCostUsd: number;
+}
+
+export interface BudgetBurnResult {
+  tenantId: string;
+  month: string;
+  monthlyBudgetUsd: number;
+  currentSpendUsd: number;
+  burnPercent: number;
 }
 
 // =============================================================================
@@ -94,6 +172,17 @@ function getCurrentPeriod(): string {
   const y = now.getUTCFullYear();
   const m = String(now.getUTCMonth() + 1).padStart(2, '0');
   return `${y}-${m}`;
+}
+
+function parseOptionalMetadata(input: string | null | undefined): Record<string, unknown> | undefined {
+  if (!input) return undefined;
+  try {
+    const parsed = JSON.parse(input) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return undefined;
+    return parsed as Record<string, unknown>;
+  } catch {
+    return undefined;
+  }
 }
 
 // =============================================================================
@@ -112,6 +201,7 @@ export async function recordInvocation(
   durationMs: number,
   success: boolean,
   error?: unknown,
+  invocation?: InvocationMetadata,
 ): Promise<void> {
   const period = getCurrentPeriod();
   const errorMessage = error
@@ -130,14 +220,46 @@ export async function recordInvocation(
     .bind(serverName, accountId, period)
     .run();
 
-  // Log individual invocation
-  await db
-    .prepare(
-      `INSERT INTO mcp_tool_invocations (server_name, account_id, tool_name, success, duration_ms, error_message)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-    )
-    .bind(serverName, accountId, toolName, success ? 1 : 0, durationMs, errorMessage)
-    .run();
+  const metadataJson = invocation?.metadata ? JSON.stringify(invocation.metadata) : null;
+
+  // Log individual invocation with graceful fallback for pre-correlation schemas.
+  try {
+    await db
+      .prepare(
+        `INSERT INTO mcp_tool_invocations (
+          server_name,
+          account_id,
+          tool_name,
+          success,
+          duration_ms,
+          error_message,
+          correlation_id,
+          request_id,
+          metadata_json
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        serverName,
+        accountId,
+        toolName,
+        success ? 1 : 0,
+        durationMs,
+        errorMessage,
+        invocation?.correlationId ?? null,
+        invocation?.requestId ?? null,
+        metadataJson,
+      )
+      .run();
+  } catch {
+    await db
+      .prepare(
+        `INSERT INTO mcp_tool_invocations (server_name, account_id, tool_name, success, duration_ms, error_message)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(serverName, accountId, toolName, success ? 1 : 0, durationMs, errorMessage)
+      .run();
+  }
 }
 
 /**
@@ -234,7 +356,7 @@ export async function getActivity(
 ): Promise<ActivityResult> {
   const rows = await db
     .prepare(
-      `SELECT tool_name, account_id, success, duration_ms, error_message, created_at
+      `SELECT tool_name, account_id, success, duration_ms, error_message, correlation_id, request_id, metadata_json, created_at
        FROM mcp_tool_invocations
        WHERE server_name = ?
        ORDER BY created_at DESC
@@ -251,6 +373,9 @@ export async function getActivity(
       success: r.success === 1,
       durationMs: r.duration_ms,
       error: r.error_message,
+      correlationId: r.correlation_id ?? null,
+      requestId: r.request_id ?? null,
+      metadata: parseOptionalMetadata(r.metadata_json),
       createdAt: r.created_at,
     })),
   };
@@ -273,8 +398,239 @@ export async function cleanupOldInvocations(
 }
 
 // =============================================================================
+// Gateway telemetry operations
+// =============================================================================
+
+function buildGatewayWhereClause(filters: GatewayUsageQuery): {
+  where: string;
+  params: unknown[];
+} {
+  const clauses: string[] = ['1 = 1'];
+  const params: unknown[] = [];
+
+  if (filters.tenantId) {
+    clauses.push('tenant_id = ?');
+    params.push(filters.tenantId);
+  }
+  if (filters.providerSlug) {
+    clauses.push('provider_slug = ?');
+    params.push(filters.providerSlug);
+  }
+  if (filters.modelName) {
+    clauses.push('model_name = ?');
+    params.push(filters.modelName);
+  }
+  if (filters.from) {
+    clauses.push('created_at >= ?');
+    params.push(filters.from);
+  }
+  if (filters.to) {
+    clauses.push('created_at <= ?');
+    params.push(filters.to);
+  }
+
+  return {
+    where: clauses.join(' AND '),
+    params,
+  };
+}
+
+export async function recordGatewayRequest(
+  db: D1Database,
+  event: GatewayRequestEvent,
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO gateway_requests (
+         correlation_id,
+         request_id,
+         tenant_id,
+         tenant_slug,
+         runtime_key_prefix,
+         provider_slug,
+         model_name,
+         endpoint,
+         success,
+         status_code,
+         latency_ms,
+         prompt_tokens,
+         completion_tokens,
+         total_tokens,
+         estimated_cost_usd,
+         budget_decision,
+         rate_limited,
+         failover_activated,
+         error_message,
+         upstream_request_id,
+         created_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+    )
+    .bind(
+      event.correlationId,
+      event.requestId,
+      event.tenantId,
+      event.tenantSlug ?? null,
+      event.runtimeKeyPrefix ?? null,
+      event.providerSlug,
+      event.modelName ?? null,
+      event.endpoint,
+      event.success ? 1 : 0,
+      event.statusCode ?? null,
+      event.latencyMs ?? null,
+      event.promptTokens ?? 0,
+      event.completionTokens ?? 0,
+      event.totalTokens ?? 0,
+      event.estimatedCostUsd ?? 0,
+      event.budgetDecision ?? 'allow',
+      event.rateLimited ? 1 : 0,
+      event.failoverActivated ? 1 : 0,
+      event.errorMessage ?? null,
+      event.upstreamRequestId ?? null,
+    )
+    .run();
+}
+
+export async function getGatewayUsage(
+  db: D1Database,
+  filters: GatewayUsageQuery = {},
+): Promise<GatewayUsageResult> {
+  const { where, params } = buildGatewayWhereClause(filters);
+  const limit = Math.max(1, Math.min(filters.limit ?? 100, 500));
+
+  const rows = await db
+    .prepare(
+      `SELECT
+         tenant_id,
+         provider_slug,
+         COALESCE(model_name, 'unknown') as model_name,
+         COUNT(*) as requests,
+         SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successful,
+         SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as failed,
+         COALESCE(SUM(total_tokens), 0) as total_tokens,
+         COALESCE(SUM(estimated_cost_usd), 0) as total_cost_usd,
+         COALESCE(AVG(latency_ms), 0) as avg_latency_ms
+       FROM gateway_requests
+       WHERE ${where}
+       GROUP BY tenant_id, provider_slug, model_name
+       ORDER BY requests DESC
+       LIMIT ?`,
+    )
+    .bind(...params, limit)
+    .all<{
+      tenant_id: string;
+      provider_slug: string;
+      model_name: string;
+      requests: number;
+      successful: number;
+      failed: number;
+      total_tokens: number;
+      total_cost_usd: number;
+      avg_latency_ms: number;
+    }>();
+
+  return {
+    filters,
+    rows: rows.results.map((row) => ({
+      tenantId: row.tenant_id,
+      providerSlug: row.provider_slug,
+      modelName: row.model_name,
+      requests: row.requests,
+      successful: row.successful,
+      failed: row.failed,
+      totalTokens: row.total_tokens,
+      totalCostUsd: Number(row.total_cost_usd ?? 0),
+      avgLatencyMs: Math.round(Number(row.avg_latency_ms ?? 0)),
+    })),
+  };
+}
+
+export async function getTenantCost(
+  db: D1Database,
+  tenantId: string,
+  from?: string,
+  to?: string,
+): Promise<TenantCostResult> {
+  const filters = buildGatewayWhereClause({ tenantId, from, to });
+
+  const row = await db
+    .prepare(
+      `SELECT
+         COUNT(*) as requests,
+         COALESCE(SUM(total_tokens), 0) as tokens,
+         COALESCE(SUM(estimated_cost_usd), 0) as total_cost_usd
+       FROM gateway_requests
+       WHERE ${filters.where}`,
+    )
+    .bind(...filters.params)
+    .first<{ requests: number; tokens: number; total_cost_usd: number }>();
+
+  return {
+    tenantId,
+    from: from ?? null,
+    to: to ?? null,
+    requests: row?.requests ?? 0,
+    tokens: row?.tokens ?? 0,
+    totalCostUsd: Number(row?.total_cost_usd ?? 0),
+  };
+}
+
+export async function getBudgetBurn(
+  db: D1Database,
+  tenantId: string,
+  monthlyBudgetUsd: number,
+): Promise<BudgetBurnResult> {
+  const month = getCurrentPeriod();
+
+  const row = await db
+    .prepare(
+      `SELECT COALESCE(SUM(estimated_cost_usd), 0) as spend
+       FROM gateway_requests
+       WHERE tenant_id = ?
+         AND created_at >= date('now', 'start of month')`,
+    )
+    .bind(tenantId)
+    .first<{ spend: number }>();
+
+  const currentSpend = Number(row?.spend ?? 0);
+  const burnPercent = monthlyBudgetUsd > 0
+    ? Number(((currentSpend / monthlyBudgetUsd) * 100).toFixed(2))
+    : 0;
+
+  return {
+    tenantId,
+    month,
+    monthlyBudgetUsd,
+    currentSpendUsd: currentSpend,
+    burnPercent,
+  };
+}
+
+// =============================================================================
 // enableTelemetry — the integration point
 // =============================================================================
+
+function extractInvocationMetadata(handlerArgs: unknown[]): InvocationMetadata | undefined {
+  const args = handlerArgs[0];
+  if (!args || typeof args !== 'object' || Array.isArray(args)) return undefined;
+
+  const record = args as Record<string, unknown>;
+  const correlationId = typeof record.correlation_id === 'string'
+    ? record.correlation_id
+    : typeof record.correlationId === 'string'
+      ? record.correlationId
+      : undefined;
+  const requestId = typeof record.request_id === 'string'
+    ? record.request_id
+    : typeof record.requestId === 'string'
+      ? record.requestId
+      : undefined;
+
+  if (!correlationId && !requestId) return undefined;
+  return {
+    correlationId,
+    requestId,
+  };
+}
 
 /**
  * Enable telemetry on an McpServer instance.
@@ -320,13 +676,14 @@ export function enableTelemetry(
     // Wrap the handler with metering
     args[lastIdx] = async (...handlerArgs: unknown[]) => {
       const start = Date.now();
+      const invocation = extractInvocationMetadata(handlerArgs);
       try {
         const result = await (originalHandler as Function).apply(null, handlerArgs);
-        recordInvocation(db, serverName, resolveAccount(), toolName, Date.now() - start, true)
+        recordInvocation(db, serverName, resolveAccount(), toolName, Date.now() - start, true, undefined, invocation)
           .catch((e: unknown) => console.warn(`[telemetry] metering failed for ${toolName}:`, e));
         return result;
       } catch (error) {
-        recordInvocation(db, serverName, resolveAccount(), toolName, Date.now() - start, false, error)
+        recordInvocation(db, serverName, resolveAccount(), toolName, Date.now() - start, false, error, invocation)
           .catch((e: unknown) => console.warn(`[telemetry] metering failed for ${toolName}:`, e));
         throw error;
       }
@@ -478,6 +835,9 @@ CREATE TABLE IF NOT EXISTS mcp_tool_invocations (
   success INTEGER NOT NULL DEFAULT 1,
   duration_ms INTEGER,
   error_message TEXT,
+  correlation_id TEXT,
+  request_id TEXT,
+  metadata_json TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -486,4 +846,40 @@ CREATE INDEX IF NOT EXISTS idx_mcp_invocations_server_time
   ON mcp_tool_invocations(server_name, created_at);
 CREATE INDEX IF NOT EXISTS idx_mcp_invocations_tool
   ON mcp_tool_invocations(server_name, tool_name);
+
+CREATE INDEX IF NOT EXISTS idx_mcp_invocations_correlation
+  ON mcp_tool_invocations(correlation_id, created_at);
+
+-- Gateway telemetry: OpenAI-compatible request tracking
+CREATE TABLE IF NOT EXISTS gateway_requests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  correlation_id TEXT,
+  request_id TEXT,
+  tenant_id TEXT NOT NULL,
+  tenant_slug TEXT,
+  runtime_key_prefix TEXT,
+  provider_slug TEXT NOT NULL,
+  model_name TEXT,
+  endpoint TEXT NOT NULL,
+  success INTEGER NOT NULL DEFAULT 1,
+  status_code INTEGER,
+  latency_ms INTEGER,
+  prompt_tokens INTEGER,
+  completion_tokens INTEGER,
+  total_tokens INTEGER,
+  estimated_cost_usd REAL NOT NULL DEFAULT 0,
+  budget_decision TEXT NOT NULL DEFAULT 'allow',
+  rate_limited INTEGER NOT NULL DEFAULT 0,
+  failover_activated INTEGER NOT NULL DEFAULT 0,
+  error_message TEXT,
+  upstream_request_id TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_gateway_requests_tenant_time
+  ON gateway_requests(tenant_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_gateway_requests_correlation
+  ON gateway_requests(correlation_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_gateway_requests_model
+  ON gateway_requests(provider_slug, model_name, created_at);
 `.trim();
