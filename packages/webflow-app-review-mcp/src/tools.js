@@ -4,6 +4,37 @@ import { APP_REVIEW_FIELD_MAP, CAPABILITIES_OPTIONS, MARKETPLACE_STATUS_OPTIONS,
 const collaboratorRefSchema = z.object({
     id: z.string().min(1),
 });
+const DEFAULT_QUEUE_LIMIT = 25;
+const DEFAULT_VERSIONS_LIMIT = 25;
+const MAX_QUEUE_FEEDBACK_CHARS = 280;
+const MAX_VERSION_FEEDBACK_CHARS = 400;
+const MAX_ASSET_HTML_CHARS = 2000;
+const QUERY_STOP_WORDS = new Set([
+    'a',
+    'an',
+    'and',
+    'app',
+    'apps',
+    'can',
+    'find',
+    'for',
+    'has',
+    'have',
+    'i',
+    'in',
+    'is',
+    'it',
+    'me',
+    'of',
+    'please',
+    'show',
+    'that',
+    'the',
+    'to',
+    'we',
+    'with',
+    'you',
+]);
 function jsonContent(value) {
     return {
         content: [{ type: 'text', text: JSON.stringify(value, null, 2) }],
@@ -65,6 +96,52 @@ function cleanObject(value) {
     const entries = Object.entries(value).filter(([, v]) => v !== undefined);
     return Object.fromEntries(entries);
 }
+function truncateText(value, maxChars) {
+    if (typeof value !== 'string')
+        return value;
+    if (value.length <= maxChars)
+        return value;
+    return `${value.slice(0, maxChars)}…`;
+}
+function compactQueueRecord(record) {
+    return {
+        ...record,
+        latestReviewFeedback: truncateText(record.latestReviewFeedback, MAX_QUEUE_FEEDBACK_CHARS),
+    };
+}
+function compactVersionRecord(version) {
+    return {
+        ...version,
+        reviewFeedback: truncateText(version.reviewFeedback, MAX_VERSION_FEEDBACK_CHARS),
+    };
+}
+function compactAssetRecord(asset) {
+    return {
+        ...asset,
+        latestReviewFeedback: truncateText(asset.latestReviewFeedback, MAX_QUEUE_FEEDBACK_CHARS),
+        descriptionLongHtml: truncateText(asset.descriptionLongHtml, MAX_ASSET_HTML_CHARS),
+    };
+}
+function queryTerms(query) {
+    const terms = query
+        .toLowerCase()
+        .split(/[^a-z0-9]+/g)
+        .map((term) => term.trim())
+        .filter((term) => term.length >= 3 && !QUERY_STOP_WORDS.has(term));
+    return Array.from(new Set(terms));
+}
+function matchesQueueQuery(record, query) {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery)
+        return true;
+    const searchValues = [record.appName, record.appId, record.clientId];
+    const normalizedValues = searchValues.filter((value) => typeof value === 'string').map((value) => value.toLowerCase());
+    const terms = queryTerms(normalizedQuery);
+    if (terms.length === 0) {
+        return normalizedValues.some((value) => value.includes(normalizedQuery));
+    }
+    return terms.some((term) => normalizedValues.some((value) => value.includes(term)));
+}
 export function registerTools(server, getClient) {
     server.tool('app_review_health', 'Runtime health check for Webflow App Review MCP and Airtable connectivity.', {}, async () => {
         try {
@@ -78,12 +155,20 @@ export function registerTools(server, getClient) {
             return asError(error);
         }
     });
-    server.tool('app_review_list_queue', 'List apps-only review queue with key status fields from Assets.', {
+    server.tool('app_review_list_queue', 'List apps-only review queue with key status fields from Assets. Use query for app-name/client-id/app-id lookups.', {
         limit: z.number().int().min(1).max(500).optional(),
+        query: z.string().min(1).optional(),
+        include_full_text: z.boolean().optional(),
     }, async (params) => {
         try {
-            const queue = await getClient().listAssetQueue(params.limit ?? 100);
-            return asSuccess({ count: queue.length, records: queue });
+            const requestedLimit = params.limit ?? DEFAULT_QUEUE_LIMIT;
+            const scanLimit = params.query ? 500 : requestedLimit;
+            const queue = await getClient().listAssetQueue(scanLimit);
+            const filteredQueue = params.query ? queue.filter((record) => matchesQueueQuery(record, params.query)) : queue;
+            const limitedQueue = filteredQueue.slice(0, requestedLimit);
+            const compacted = params.include_full_text !== true;
+            const records = compacted ? limitedQueue.map(compactQueueRecord) : limitedQueue;
+            return asSuccess({ count: records.length, records, compacted });
         }
         catch (error) {
             return asError(error);
@@ -93,6 +178,7 @@ export function registerTools(server, getClient) {
         asset_id: z.string().min(1).optional(),
         app_id: z.string().min(1).optional(),
         versions_limit: z.number().int().min(1).max(500).optional(),
+        include_full_text: z.boolean().optional(),
     }, async (params) => {
         try {
             if (!params.asset_id && !params.app_id) {
@@ -108,8 +194,13 @@ export function registerTools(server, getClient) {
                     app_id: params.app_id,
                 });
             }
-            const versions = await client.listVersionsForAsset(asset.assetId, params.versions_limit ?? 100);
-            return asSuccess({ asset, versions });
+            const versions = await client.listVersionsForAsset(asset.assetId, params.versions_limit ?? DEFAULT_VERSIONS_LIMIT);
+            const compacted = params.include_full_text !== true;
+            return asSuccess({
+                asset: compacted ? compactAssetRecord(asset) : asset,
+                versions: compacted ? versions.map(compactVersionRecord) : versions,
+                compacted,
+            });
         }
         catch (error) {
             return asError(error);
@@ -118,12 +209,19 @@ export function registerTools(server, getClient) {
     server.tool('app_review_list_versions', 'List all submission versions for an app asset.', {
         asset_id: z.string().min(1),
         limit: z.number().int().min(1).max(500).optional(),
+        include_full_text: z.boolean().optional(),
     }, async (params) => {
         try {
             const client = getClient();
             await requireAppAsset(client, params.asset_id);
-            const versions = await client.listVersionsForAsset(params.asset_id, params.limit ?? 100);
-            return asSuccess({ asset_id: params.asset_id, count: versions.length, versions });
+            const versions = await client.listVersionsForAsset(params.asset_id, params.limit ?? DEFAULT_VERSIONS_LIMIT);
+            const compacted = params.include_full_text !== true;
+            return asSuccess({
+                asset_id: params.asset_id,
+                count: versions.length,
+                versions: compacted ? versions.map(compactVersionRecord) : versions,
+                compacted,
+            });
         }
         catch (error) {
             return asError(error);
@@ -131,10 +229,12 @@ export function registerTools(server, getClient) {
     });
     server.tool('app_review_get_version', 'Get one version record by version_id (apps-only scoped).', {
         version_id: z.string().min(1),
+        include_full_text: z.boolean().optional(),
     }, async (params) => {
         try {
             const version = await requireAppVersion(getClient(), params.version_id);
-            return asSuccess({ version });
+            const compacted = params.include_full_text !== true;
+            return asSuccess({ version: compacted ? compactVersionRecord(version) : version, compacted });
         }
         catch (error) {
             return asError(error);

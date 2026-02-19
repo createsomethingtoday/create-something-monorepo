@@ -25,13 +25,17 @@ See `worker/` for streamable HTTP and SSE transport wiring.
 
 - Primary: OAuth 2.1 (authorization code + PKCE)
 - Compatibility: static bearer token still works when `MCP_API_KEY` is configured
+- Protected shared-client mode:
+  - Set `SHARED_OAUTH_CLIENT_ID` and `SHARED_OAUTH_CLIENT_SECRET`
+  - Dynamic client registration is disabled
+  - Only the configured client ID/secret can complete OAuth token exchange
 
 OAuth endpoints:
 
 - `/.well-known/oauth-authorization-server`
 - `/authorize`
 - `/oauth/token`
-- `/oauth/register`
+- `/oauth/register` (only when shared-client mode is not configured)
 
 API endpoints:
 
@@ -39,11 +43,30 @@ API endpoints:
 - `/sse`
 - `/health`
 
+### Context-safe defaults
+
+To reduce context-window overload in chat clients:
+
+- `app_review_list_queue` defaults to `limit=25`
+- `app_review_get_asset` and `app_review_list_versions` default to `versions_limit=25`
+- Long text fields are truncated in default responses
+
+For full payloads, pass `include_full_text: true` to:
+
+- `app_review_list_queue`
+- `app_review_get_asset`
+- `app_review_list_versions`
+- `app_review_get_version`
+
+For app lookup prompts (for example, "find Webflow app"), pass `query` to `app_review_list_queue` to filter server-side and keep responses small.
+
 ### Claude custom connector
 
 Use the worker base URL (for example `https://webflow-app-review-mcp.createsomething.workers.dev`).
 
 - URL: your base MCP URL
-- OAuth Client ID / Secret: leave blank to use dynamic client registration
+- OAuth Client ID / Secret:
+  - Shared-client mode: enter the shared values
+  - Dynamic mode: leave blank to use dynamic client registration
 
 Claude should discover OAuth metadata automatically and prompt for authorization.
