@@ -14,16 +14,28 @@ This deployment bootstraps the Portkey-on-Cloudflare stack implemented in this r
 
 ```bash
 cd packages/gateway-control-worker
-pnpm exec wrangler d1 migrations apply cs-gateway --local
-pnpm exec wrangler d1 migrations apply cs-gateway --remote
+pnpm exec wrangler d1 execute cs-gateway --local --file ../../migrations/cs-gateway/0001_tenants_and_runtime_keys.sql
+pnpm exec wrangler d1 execute cs-gateway --local --file ../../migrations/cs-gateway/0002_provider_credentials_and_policies.sql
+pnpm exec wrangler d1 execute cs-gateway --local --file ../../migrations/cs-gateway/0003_budgets_and_rate_limits.sql
+
+pnpm exec wrangler d1 execute cs-gateway --remote --file ../../migrations/cs-gateway/0001_tenants_and_runtime_keys.sql
+pnpm exec wrangler d1 execute cs-gateway --remote --file ../../migrations/cs-gateway/0002_provider_credentials_and_policies.sql
+pnpm exec wrangler d1 execute cs-gateway --remote --file ../../migrations/cs-gateway/0003_budgets_and_rate_limits.sql
 ```
 
 ### cs-telemetry
 
 ```bash
 cd packages/cs-telemetry-mcp/worker
-pnpm exec wrangler d1 migrations apply cs-telemetry --local
-pnpm exec wrangler d1 migrations apply cs-telemetry --remote
+pnpm exec wrangler d1 execute cs-telemetry --local --file ../../../migrations/cs-telemetry/0001_telemetry_tables.sql
+pnpm exec wrangler d1 execute cs-telemetry --local --file ../../../migrations/cs-telemetry/0002_gateway_requests.sql
+pnpm exec wrangler d1 execute cs-telemetry --local --file ../../../migrations/cs-telemetry/0003_gateway_daily_rollups.sql
+pnpm exec wrangler d1 execute cs-telemetry --local --file ../../../migrations/cs-telemetry/0004_decision_views.sql
+
+pnpm exec wrangler d1 execute cs-telemetry --remote --file ../../../migrations/cs-telemetry/0001_telemetry_tables.sql
+pnpm exec wrangler d1 execute cs-telemetry --remote --file ../../../migrations/cs-telemetry/0002_gateway_requests.sql
+pnpm exec wrangler d1 execute cs-telemetry --remote --file ../../../migrations/cs-telemetry/0003_gateway_daily_rollups.sql
+pnpm exec wrangler d1 execute cs-telemetry --remote --file ../../../migrations/cs-telemetry/0004_decision_views.sql
 ```
 
 ## 2) Configure secrets
