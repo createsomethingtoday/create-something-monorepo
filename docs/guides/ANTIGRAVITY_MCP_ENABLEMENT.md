@@ -38,6 +38,7 @@ File location:
 - On this machine: `/Users/micahjohnson/.gemini/antigravity/mcp_config.json`
 
 This is a global Antigravity config file.
+On first run, this file may be empty.
 
 ## Recommended Antigravity Config
 
@@ -68,10 +69,20 @@ Notes:
 - `mcp-remote` is a bridge for stdio-first clients to connect to remote OAuth MCP servers.
 - Replace `REPLACE_WITH_SHARED_SECRET` with your distributed shared secret.
 - If your Antigravity runtime does not resolve `${...}` placeholders in args, inline the secret in the JSON string instead.
+- If `mcp_config.json` is empty, paste the full JSON block above.
+- If `mcp_config.json` already has other servers, merge only the `app-review-mcp` object under `mcpServers`.
+
+## Reload Required After Save
+
+After saving `mcp_config.json`, reload Antigravity MCP state:
+
+1. Return to `MCP Servers` and click refresh/reload.
+2. If the server does not appear, restart Antigravity completely.
+3. Re-open `MCP Servers` and confirm `app-review-mcp` is listed before testing tools.
 
 ## Redirect Allowlist Requirement
 
-`mcp-remote` uses localhost callback defaults for OAuth (host `localhost`, port `3334` by default).  
+`mcp-remote` uses localhost callback defaults for OAuth (host `localhost`; port defaults to `3334` but may vary by runtime).  
 Your Worker currently enforces host allowlisting via `SHARED_OAUTH_ALLOWED_REDIRECT_HOSTS`, so include localhost hosts:
 
 ```bash
@@ -85,8 +96,19 @@ If you run `mcp-remote` with `--host <custom-host>`, include that host in the al
 1. `curl https://webflow-app-review-mcp.createsomething.workers.dev/health` shows:
    - `"oauth_mode": "shared-client-secret"`
    - `"shared_client_configured": true`
-2. Antigravity shows the server as connected after auth.
-3. A simple tool call succeeds (for example `app_review_list_queue` with a small `limit`).
+2. Treat step 1 as server-side validation only (it does not confirm Antigravity loaded your local config).
+3. Antigravity shows the server as connected after auth.
+4. A simple tool call succeeds (for example `app_review_list_queue` with a small `limit`).
+
+## First-Run Troubleshooting
+
+- Symptom: `server name app-review-mcp not found`.
+- Cause: Antigravity has not reloaded `mcp_config.json`.
+- Fix: refresh MCP Servers, then fully restart Antigravity if needed.
+
+- Symptom: OAuth flow opens but callback is rejected.
+- Cause: redirect host not allowlisted in `SHARED_OAUTH_ALLOWED_REDIRECT_HOSTS`.
+- Fix: ensure `localhost` and `127.0.0.1` are in the allowlist (plus any custom host passed to `mcp-remote --host`).
 
 ## Security Notes
 
