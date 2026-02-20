@@ -6,11 +6,38 @@
 
 ## Summary
 
-The commercial default is now **Agent Outcome Stack** (agents + MCPs), with **MCP-only** as a narrow entry wedge.
+The commercial default is now **Agent Outcome Stack** (**Skills + MCP**), with **MCP-only** as a narrow entry wedge.
 
 - MCP remains the chassis: trust boundaries, connectivity, policy artifacts.
 - Outcomes are the product: execution quality, escalation policy, and continuous tuning.
 - Codex is the primary setup and demo vector, while MCP contracts stay portable.
+- Canonical phrasing for delivery vector is now **Skills on MCP**.
+
+## Delivery Vector Language System
+
+Use context-specific ordering, not a single global phrase:
+
+- `canonical_phrase`: **Skills on MCP**
+- `client_facing_label`: **Skills + MCP**
+- `technical_label`: **MCP + Skills**
+
+Placement rules:
+
+- Operator-facing headlines, subheads, sales pages, and outbound use `Skills + MCP`.
+- Technical proof surfaces (architecture docs, security/compliance notes, and RFP responses) use `MCP + Skills`.
+- Commercial packaging names stay unchanged: `Agent Outcome Stack` default, `MCP-only` exception.
+
+Technical statement (must appear in technical proof surfaces):
+
+- **MCP is the substrate for auth, trust boundaries, portability, and governance; Skills are the behavior layer.**
+
+Context-bloat objection handling (approved line):
+
+- **We scope tool access by bundle and workflow so only relevant capabilities enter context.**
+
+Competitive moat emphasis:
+
+- Hard-to-copy elements lead all positioning: custom MCP creation, auth/security boundary design, policy artifacts, approval/escalation runbooks, and monthly tuning.
 
 ## Strategic decision
 
@@ -47,6 +74,8 @@ Use when:
 
 Deliverables:
 - Custom MCP endpoint(s)
+- Client-facing vector: `Skills + MCP`
+- Technical vector: `MCP + Skills`
 - **Codex setup + policy + runbook included**
 - Agent behavior contracts (allowed tools, guardrails, approvals)
 - Golden task suite + regression checks
@@ -69,6 +98,7 @@ Every engagement ships three artifacts:
 - Escalation triggers
 - Budget and latency guardrails
 - Model/client portability assumptions
+- `delivery_vector` metadata (`canonical_phrase`, `client_facing_label`, `technical_label`)
 
 3. `outcome_contract.md`
 - Target workflows
@@ -76,6 +106,7 @@ Every engagement ships three artifacts:
 - Fallback/manual path
 - Ownership boundaries
 - Review cadence
+- Messaging orientation (`Skills + MCP` for operator-facing pages, `MCP + Skills` for technical proof)
 
 ## Per-client handoff bundle
 
@@ -100,6 +131,7 @@ Required in every handoff:
 
 - Update `.agency` copy to position "first MCP" as start, not default package.
 - Add explicit Codex deliverable language in service/product copy.
+- Adopt `Skills + MCP` on operator-facing pages and maintain package naming.
 
 ### Weeks 4-8
 
@@ -111,6 +143,7 @@ Required in every handoff:
 - Run 2-3 engagements with Agent Outcome Stack default.
 - Measure attach/conversion/time-to-outcome.
 - Publish one case study comparing MCP-only vs bundled outcomes.
+- Run a 14-day headline A/B test: `Skills + MCP` vs `MCP + Skills`.
 
 ## Test scenarios
 
@@ -135,6 +168,18 @@ Required in every handoff:
 - Time to first autonomous business outcome is <= 14 days from kickoff.
 - Golden task success rate is >= 90% under defined approval policy.
 - Handoff includes all contracts and runbook artifacts with no undocumented behavior.
+- For operator traffic, `Skills + MCP` improves booked diagnostic calls per unique visitor without reducing technical trust.
+
+## Validation Plan
+
+14-day A/B test on operator-facing traffic:
+
+- Variant A headline: `Skills + MCP`
+- Variant B headline: `MCP + Skills`
+- Primary KPI: booked diagnostic calls per unique visitor
+- Secondary KPI: discovery-call clarity measured by "what is MCP?" interruptions in first 10 minutes
+- Technical trust KPI: no decline in security/portability confidence in enterprise conversations
+- Win condition: adopt `Skills + MCP` as front-door default if conversion improves and technical trust holds
 
 ## Defaults and assumptions
 
