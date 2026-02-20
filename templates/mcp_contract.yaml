@@ -1,4 +1,4 @@
-version: "1.0"
+version: "1.1"
 contract_type: "mcp_contract"
 
 metadata:
@@ -26,6 +26,26 @@ mcp_server:
     framework: "@create-something/mcp-core"
     hosting: "cloudflare-workers"
 
+gateway:
+  mode: "broker" # broker | compat
+  broker_tools:
+    search: "hub_tools_search"
+    describe: "hub_tools_describe"
+    invoke: "hub_tools_invoke"
+  compat_window:
+    enabled: false
+    sunset_date: "<yyyy-mm-dd>"
+    legacy_clients: []
+  connector_scope:
+    allowed_connectors: []
+    allowed_servers: []
+    blocked_connectors: []
+  trace_requirements:
+    correlation_id_header: "x-correlation-id"
+    request_id_header: "x-request-id"
+    require_related_task: true
+    retention_days: 30
+
 auth:
   strategy: "oauth" # oauth | api-key | service-account | mixed
   provider: "<provider-name>"
@@ -48,12 +68,27 @@ resources:
 
 tools:
   - name: "<tool-name>"
+    tool_ref: "<server:tool>" # Required for brokered routing contracts
     description: "<what-it-does>"
     schema_ref: "<schema-url-or-path>"
     side_effect_level: "read" # read | write | destructive
     approval_required: "policy" # never | policy | always
     latency_budget_ms: 5000
     idempotent: true
+
+policy_defaults:
+  tenant_policy_mode: "allow-list" # allow-list | deny-list
+  denied_tool_refs: []
+  read_only_overrides: []
+  escalation_on_policy_deny: true
+
+quota_defaults:
+  global:
+    window_seconds: 60
+    max_calls: 120
+  connectors: []
+  servers: []
+  tools: []
 
 prompts:
   - id: "<prompt-id>"

@@ -42,6 +42,14 @@
 
 ## 2. SCOPE OF WORK
 
+### 2.0 Default Integration Shape
+
+Unless explicitly waived in writing, multi-integration agent scopes will use:
+
+- Brokered MCP discovery (`search -> describe -> invoke`)
+- Tenant policy defaults and quota defaults at the gateway
+- Correlation and trace requirements for all production calls
+
 ### 2.1 In Scope
 
 {{IN_SCOPE_ITEMS}}

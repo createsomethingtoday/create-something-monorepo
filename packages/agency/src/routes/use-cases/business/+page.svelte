@@ -8,7 +8,7 @@
 			title: 'Start with one outcome stack',
 			paragraphs: [
 				'Pick your biggest pain point. The report you build every Monday. The data you copy between systems. The emails you sort by hand.',
-				'We start with an Outcome Stack: custom MCP server + Codex setup + policy + runbook. 2\u20134 weeks. $2,000\u2013$5,000. You own the code.',
+				'We start with an Outcome Stack: custom MCP server + brokered gateway + Codex setup + policy + runbook. 2\u20134 weeks. $2,000\u2013$5,000. You own the code.',
 				'Now your AI agent can read your CRM, update your project tracker, draft your emails \u2014 using your actual data, not generic responses.'
 			]
 		},
@@ -35,7 +35,7 @@
 	const timeline = [
 		{
 			label: 'Month 1',
-			detail: 'Built Outcome Stack for HubSpot pipeline ($3,000): MCP endpoint, Codex setup, approval policy, and runbook.',
+			detail: 'Built Outcome Stack for HubSpot pipeline ($3,000): MCP endpoint, brokered discovery flow, Codex setup, approval policy, and runbook.',
 			result: 'Saves 5 hrs/week.'
 		},
 		{
@@ -120,7 +120,7 @@
 
 <SEO
 	title="Your tools don't talk to each other. We fix that. | CREATE SOMETHING"
-	description="Every day you copy data between systems, format reports nobody asked for, and post updates you assembled by hand. We deliver Agent Outcome Stack: custom MCP servers plus Codex setup, policy, and runbook."
+	description="Every day you copy data between systems, format reports nobody asked for, and post updates you assembled by hand. We deliver Agent Outcome Stack: custom MCP servers plus brokered gateway discovery, Codex setup, policy, and runbook."
 	keywords="MCP server, small business automation, AI integration, tool connectivity, HubSpot automation, Notion integration, Claude MCP, ops automation, SMB AI"
 	ogImage="/og-image.svg"
 	propertyName="agency"

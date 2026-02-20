@@ -1,4 +1,4 @@
-version: "1.0"
+version: "1.1"
 contract_type: "agent_contract"
 
 metadata:
@@ -19,10 +19,23 @@ agent_profile:
       - "cursor"
 
 capability_scope:
+  discovery_mode: "broker" # broker | compat
+  broker_entry_tools:
+    - "hub_tools_search"
+    - "hub_tools_describe"
+    - "hub_tools_invoke"
   allowed_tools:
     - "<tool-name>"
+  allowed_tool_refs:
+    - "<server:tool>"
   blocked_tools:
     - "<tool-name>"
+  blocked_tool_refs:
+    - "<server:tool>"
+  allowed_connectors:
+    - "<connector>"
+  blocked_connectors:
+    - "<connector>"
   allowed_resource_patterns:
     - "<resource-uri-glob>"
 
@@ -30,6 +43,13 @@ approval_and_control:
   mode: "hybrid" # none | human-in-the-loop | hybrid
   write_operations: "policy" # blocked | policy | always-approved
   destructive_operations: "always-human"
+  policy_defaults:
+    deny_writes_without_approval: true
+    enforce_read_only_when_flagged: true
+    escalate_on_policy_deny: true
+  quota_defaults:
+    global_max_calls_per_minute: 120
+    max_write_calls_per_minute: 30
   escalation_triggers:
     - "pricing_or_contract_change"
     - "high_confidence_below_threshold"
@@ -53,6 +73,10 @@ budget_and_latency_guardrails:
 
 observability:
   log_sink: "<provider>"
+  correlation:
+    header: "x-correlation-id"
+    request_header: "x-request-id"
+    require_on_write_paths: true
   required_metrics:
     - "tool_success_rate"
     - "approval_rate"

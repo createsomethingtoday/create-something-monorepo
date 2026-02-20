@@ -36,6 +36,16 @@ Pricing is a design decision. It follows the same [Subtractive Triad](/canon) th
 
 ## Pricing Principles
 
+### 0. Default Package Shape (non-negotiable baseline)
+
+For multi-integration engagements, the default architecture sold is:
+
+- Brokered gateway discovery (`search -> describe -> invoke`)
+- Tenant policy and quota controls
+- Codex setup + runbook + contract artifacts
+
+`MCP-only` remains an entry wedge for discovery/compliance scopes and should be framed as constrained, read-first brokered connectivity.
+
 ### 1. Value-Based, Not Time-Based
 
 We price based on the outcome we deliver, not the time it takes. A solution that saves $500K/year is worth more than the hours we spent building it.

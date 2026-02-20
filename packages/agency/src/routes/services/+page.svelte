@@ -6,7 +6,7 @@
 	const services = [
 		{
 			name: 'Monthly Retainer',
-			description: 'Your AI architect on retainer. Agent Outcome Stack by default: custom MCP servers, Codex setup, policy artifacts, and monthly refinement. Direct access to the person who builds it. Limited to 3–5 clients.',
+			description: 'Your AI architect on retainer. Agent Outcome Stack by default: custom MCP servers, brokered gateway discovery, Codex setup, policy artifacts, and monthly refinement. Direct access to the person who builds it. Limited to 3–5 clients.',
 			type: 'Retainer',
 			price: '2000',
 			priceDescription: '$1,500–$3,000/mo depending on scope'
@@ -20,7 +20,7 @@
 		},
 		{
 			question: "What does $1,500–$3,000/mo actually get me?",
-			answer: "Everything in the Agent Outcome Stack: custom MCP servers, Codex setup + policy + runbook, approval and escalation rules, monthly refinement, and direct access to me. The range depends on number of systems and workflow complexity. We scope it on the first call."
+			answer: "Everything in the Agent Outcome Stack: custom MCP servers, brokered gateway + managed policy controls, Codex setup + policy + runbook, approval and escalation rules, monthly refinement, and direct access to me. The range depends on number of systems and workflow complexity. We scope it on the first call."
 		},
 		{
 			question: "Can I connect tools myself?",
@@ -32,7 +32,7 @@
 		},
 		{
 			question: "Do you offer MCP-only delivery?",
-			answer: "Yes, for discovery and compliance-constrained cases. MCP-only is the entry wedge: read-only or limited-scope connectivity. The default paid package is Agent Outcome Stack, because outcomes require both MCP connectivity and agent policy operations."
+			answer: "Yes, for discovery and compliance-constrained cases. MCP-only is the entry wedge: read-first brokered connectivity with policy guardrails. The default paid package is Agent Outcome Stack, because outcomes require both MCP connectivity and agent policy operations."
 		},
 		{
 			question: "How is this different from hiring a developer?",
@@ -55,7 +55,7 @@
 
 <SEO
 	title="How I Work | Your AI Person on Retainer"
-	description="Monthly retainer. Direct access. Agent Outcome Stack by default: custom MCP servers, Codex setup + policy + runbook, and monthly refinement. $1,500–$3,000/mo depending on scope."
+	description="Monthly retainer. Direct access. Agent Outcome Stack by default: custom MCP servers, brokered gateway discovery, Codex setup + policy + runbook, and monthly refinement. $1,500–$3,000/mo depending on scope."
 	keywords="AI retainer, fractional AI architect, AI automation consultant, connect tools to AI, business AI expert"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -75,7 +75,7 @@
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<p class="hero-subtitle">
-				I don't sell tiers. I work with you directly to deliver agents + MCPs by default: custom connectivity, Codex setup, policy artifacts, and monthly refinement. MCP-only is reserved for discovery and compliance-constrained cases.
+				I don't sell tiers. I work with you directly to deliver agents + MCPs by default: brokered connectivity, Codex setup, policy artifacts, and monthly refinement. MCP-only is reserved for discovery and compliance-constrained cases.
 			</p>
 		</BlurFade>
 	</div>
@@ -102,6 +102,7 @@
 							<h3>What's Included</h3>
 							<ul class="retainer-list">
 								<li>Custom MCP server(s) for your workflows</li>
+								<li>Brokered gateway discovery (`search -> describe -> invoke`)</li>
 								<li>Agent Outcome Stack delivery (agents + MCPs)</li>
 								<li>Codex setup + policy + runbook included</li>
 								<li>Approval rules and escalation triggers</li>

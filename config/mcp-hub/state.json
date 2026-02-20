@@ -5,8 +5,9 @@
     "observability"
   ],
   "enabledServers": [
-    "notion-halfdozen-create-something"
+    "notion-halfdozen-create-something",
+    "webflow-local"
   ],
   "disabledServers": [],
-  "updatedAt": "2026-02-20T04:49:11.104Z"
+  "updatedAt": "2026-02-20T13:58:30.101Z"
 }

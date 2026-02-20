@@ -12,6 +12,11 @@ binding = "TELEMETRY_DB"
 database_name = "cs-telemetry"
 database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
 
+[[d1_databases]]
+binding = "HUB_DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
+
 [vars]
 # Optional. If set, /mcp requires Authorization: Bearer <token>
 # HUB_API_TOKEN = ""
@@ -26,3 +31,7 @@ database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
 # Runtime cache controls.
 # HUB_REFRESH_SECONDS = "300"
 # HUB_CACHE_BUST = ""
+
+# Discovery controls.
+# HUB_DISCOVERY_MODE = "broker" # broker (default) | compat (migration-only)
+# HUB_LIST_PAGE_SIZE = "50"

@@ -20,6 +20,16 @@ Composio usage does **not** change the commercial packaging rule:
 - `Agent Outcome Stack` (agents + MCPs) is the default paid delivery.
 - Codex is the primary setup/demo vector, but MCP/policy artifacts remain portable.
 
+## Gateway routing defaults
+
+For multi-integration or high-cardinality tool catalogs:
+
+- Prefer routing through `@create-something/cs-mcp-hub-remote` broker tools (`hub_tools_search`, `hub_tools_describe`, `hub_tools_invoke`).
+- Default discovery mode is `broker`; use `compat` only for migration/legacy clients.
+- Keep direct Composio tool registration for narrow catalogs and client-specific MCPs where the tool surface is intentionally small.
+
+This keeps context footprint bounded while preserving CREATE SOMETHING policy/quota controls at the gateway.
+
 ## Wrap pattern
 
 Clients see a CREATE SOMETHING MCP server; Composio is plumbing. We do not expose Composio as a product name.

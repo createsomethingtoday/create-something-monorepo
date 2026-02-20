@@ -34,6 +34,8 @@ Optional runtime selection:
 - `HUB_DISABLED_SERVERS`
 - `HUB_REFRESH_SECONDS`
 - `HUB_ACCOUNT_ID` (fallback account id for hub telemetry writes)
+- `HUB_DISCOVERY_MODE` (`broker` default; set `compat` only for migration windows)
+- `HUB_LIST_PAGE_SIZE` (default `50`)
 
 ## Telemetry
 
@@ -55,6 +57,16 @@ Inspection:
 - `hubInvocations` (hub-side handling)
 - `routedDownstreamInvocations` (hub-observed downstream calls)
 - `downstreamInvocations` (native downstream telemetry rows, when correlation is present there)
+
+## Broker-first usage
+
+New deployments should use the broker flow:
+
+1. `hub_tools_search`
+2. `hub_tools_describe`
+3. `hub_tools_invoke`
+
+`compat` mode keeps direct proxy tools available for legacy clients, but should be treated as temporary migration behavior.
 
 ## Client Config Example
 

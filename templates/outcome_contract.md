@@ -18,6 +18,7 @@ For each workflow, define:
 - Required systems
 - Expected output artifact
 - Human approval requirement
+- Broker path (`search -> describe -> invoke`) and allowed tool refs
 
 ## 3) Success Metrics
 Define measurable outcomes.
@@ -33,6 +34,7 @@ Define safe fallback behavior.
 - If policy confidence is below threshold: route to human owner.
 - If write operation is blocked: return draft artifact and escalation ticket.
 - If dependency fails: use documented manual workflow and capture incident.
+- If quota is exceeded: pause autonomous retries and escalate with correlation id.
 
 ## 5) Ownership Boundaries
 Clarify who owns what.
@@ -49,14 +51,18 @@ All items are required for completion.
 - [ ] `outcome_contract.md`
 - [ ] `golden_tasks.yaml`
 - [ ] Endpoint inventory and auth scope matrix
+- [ ] Broker scope matrix (allowed tool refs, connectors, server routes)
+- [ ] Tenant policy defaults + quota defaults
 - [ ] Tool/resource/prompt registry
 - [ ] Incident and rollback runbook
+- [ ] Correlation and trace lookup instructions (`x-correlation-id`, `hub_trace_lookup`)
 
 ## 7) Change Control
 How changes are approved.
 
 - Policy change requests require explicit owner approval.
 - Tool scope expansions require security review.
+- Direct proxy exposure (`compat` mode) requires migration expiry date and owner sign-off.
 - Pricing/commercial logic changes are always human approved.
 
 ## 8) Review Cadence

@@ -59,3 +59,68 @@ scenarios:
       - "Equivalent outcome in secondary client simulation"
       - "No contract field depends on a single vendor runtime"
       - "Runbook includes migration notes"
+
+  - id: "broker-large-catalog-shortlist"
+    category: "broker_discovery"
+    prompt: "Find and invoke the correct tool from a large catalog without loading full inventory."
+    expected_package: "brokered hub routing with progressive discovery"
+    expected_behaviors:
+      - "Uses hub_tools_search to produce a narrow shortlist"
+      - "Uses hub_tools_describe before execution"
+      - "Invokes via hub_tools_invoke with a resolved toolRef"
+    pass_criteria:
+      - "No full-catalog tool dump appears in model context logs"
+      - "Invocation succeeds through broker route metadata"
+      - "Correlation id present for search/describe/invoke chain"
+
+  - id: "broker-policy-deny-write"
+    category: "policy_enforcement"
+    prompt: "Attempt a blocked write operation for a tenant with deny policy."
+    expected_package: "tenant policy controls enforced at gateway"
+    expected_behaviors:
+      - "Write attempt is blocked before downstream invocation"
+      - "Structured denial error is returned with policy code"
+      - "Escalation path is suggested in response artifact"
+    pass_criteria:
+      - "Zero downstream write side effects"
+      - "Error code indicates policy denial"
+      - "Denial event appears in telemetry with correlation id"
+
+  - id: "broker-quota-limit-deterministic"
+    category: "quota_enforcement"
+    prompt: "Exceed configured tenant quota and verify deterministic throttling behavior."
+    expected_package: "tenant quota controls enforced at gateway"
+    expected_behaviors:
+      - "Quota counter increments per invocation scope"
+      - "Limit breach returns deterministic quota error"
+      - "No downstream call when quota is exceeded"
+    pass_criteria:
+      - "Quota error payload includes scope and window details"
+      - "No duplicate retries after quota exceed response"
+      - "Recovery works after quota window rollover"
+
+  - id: "compat-migration-legacy-proxy-client"
+    category: "migration_compatibility"
+    prompt: "Run a legacy proxy-tool workflow during migration window."
+    expected_package: "broker-default deployment with temporary compat support"
+    expected_behaviors:
+      - "Legacy proxy tool names remain callable in compat mode"
+      - "Migration owner and sunset date are documented"
+      - "Broker path remains available in parallel"
+    pass_criteria:
+      - "Legacy flow passes without behavior regression"
+      - "Compat mode disabled by default in new environments"
+      - "Migration checklist includes rollback and cutoff criteria"
+
+  - id: "handoff-contract-broker-completeness"
+    category: "handoff_quality"
+    prompt: "Validate handoff bundle includes broker scope, policy defaults, quota defaults, and traces."
+    expected_package: "agent-outcome-stack handoff with broker contracts"
+    expected_behaviors:
+      - "mcp_contract includes discovery mode and toolRef scope"
+      - "agent_contract includes allowed tool refs and connector scope"
+      - "outcome contract references correlation and trace lookup process"
+    pass_criteria:
+      - "All required artifacts are present and complete"
+      - "Broker scope matrix and quota defaults are attached"
+      - "Golden task report references broker/policy/quota scenarios"
