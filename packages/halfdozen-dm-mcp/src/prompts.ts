@@ -29,14 +29,16 @@ Before querying, updating, or creating pages in a data source:
 2. Use only the property names and valid select/status values returned; otherwise updates will fail.
 
 ## Common workflow
-- Use **notion_search** or **notion_query_database** to locate records.
+- Prefer known **data_source_id** values and call **notion_query_database** directly when possible.
+- Use **notion_search** only when IDs are unknown.
 - Use **notion_create_page** or **notion_update_page** for write operations.
 
 ## Batch operations
-When updating or archiving many pages, use **notion_bulk_update** or **notion_bulk_archive** instead of calling update/archive repeatedly.`,
-          },
-        },
-      ],
-    }),
+When updating or archiving many pages, use **notion_bulk_update** or **notion_bulk_archive** instead of calling update/archive repeatedly.
+For very large cleanups, run smaller batches (for example 20-50 pages at a time).`
+          }
+        }
+      ]
+    })
   );
 }

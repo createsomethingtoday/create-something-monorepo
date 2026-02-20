@@ -22,6 +22,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { z } from 'zod';
+import { WORKWAY_FLEET_SERVERS } from '../../../config/mcp-hub/telemetry-fleet.ts';
 
 // =============================================================================
 // Types
@@ -47,18 +48,7 @@ const SERVER_NAME = 'halfdozen-telemetry';
 const SERVER_VERSION = '1.0.0';
 
 // Known servers in the fleet
-const FLEET_SERVERS = [
-  // Legacy aggregate identity retained for historical continuity.
-  'halfdozen-gmail-sync',
-  // Per-operator isolated Gmail instances.
-  'halfdozen-gmail-sync-danny',
-  'halfdozen-gmail-sync-fillip',
-  'halfdozen-gmail-sync-leah',
-  'notion-halfdozen-create-something',
-  'halfdozen-zoom-sync',
-  'half-dozen-youtube-sync',
-  'quickbooks-notion-mcp',
-];
+const FLEET_SERVERS = WORKWAY_FLEET_SERVERS;
 
 // =============================================================================
 // Helper: format duration
@@ -93,7 +83,7 @@ function bindStatement(stmt: D1PreparedStatement, params: unknown[]): D1Prepared
 export class TelemetryMCP extends McpAgent<Env> {
   server = new McpServer({
     name: SERVER_NAME,
-    version: SERVER_VERSION,
+    version: SERVER_VERSION
   });
 
   async init() {
@@ -107,7 +97,7 @@ export class TelemetryMCP extends McpAgent<Env> {
       'fleet://status',
       {
         description: 'Health status overview of all Half Dozen MCP servers',
-        mimeType: 'application/json',
+        mimeType: 'application/json'
       },
       async () => {
         const servers: Array<Record<string, unknown>> = [];
@@ -121,7 +111,7 @@ export class TelemetryMCP extends McpAgent<Env> {
                  SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as errors,
                  AVG(duration_ms) as avg_duration
                FROM mcp_tool_invocations
-               WHERE server_name = ? AND created_at > datetime('now', '-24 hours')`,
+               WHERE server_name = ? AND created_at > datetime('now', '-24 hours')`
             )
             .bind(serverName)
             .first<{ total: number; errors: number; avg_duration: number }>();
@@ -129,7 +119,7 @@ export class TelemetryMCP extends McpAgent<Env> {
           const lastActivity = await db
             .prepare(
               `SELECT created_at FROM mcp_tool_invocations
-               WHERE server_name = ? ORDER BY created_at DESC LIMIT 1`,
+               WHERE server_name = ? ORDER BY created_at DESC LIMIT 1`
             )
             .bind(serverName)
             .first<{ created_at: string }>();
@@ -150,20 +140,20 @@ export class TelemetryMCP extends McpAgent<Env> {
             errors24h: errors,
             errorRate24h: Math.round(errorRate * 1000) / 10 + '%',
             avgDurationMs: Math.round(stats?.avg_duration ?? 0),
-            lastActivity: lastActivity?.created_at
-              ? timeAgo(lastActivity.created_at)
-              : 'never',
+            lastActivity: lastActivity?.created_at ? timeAgo(lastActivity.created_at) : 'never'
           });
         }
 
         return {
-          contents: [{
-            uri: 'fleet://status',
-            mimeType: 'application/json',
-            text: JSON.stringify({ fleet: servers, checkedAt: new Date().toISOString() }, null, 2),
-          }],
+          contents: [
+            {
+              uri: 'fleet://status',
+              mimeType: 'application/json',
+              text: JSON.stringify({ fleet: servers, checkedAt: new Date().toISOString() }, null, 2)
+            }
+          ]
         };
-      },
+      }
     );
 
     // ─── Tools (Automation tier) ────────────────────────────────────────
@@ -173,8 +163,11 @@ export class TelemetryMCP extends McpAgent<Env> {
       'query_health',
       'Get health status for one or all MCP servers. Shows 24h stats: invocations, errors, error rate, tool breakdown, avg response time.',
       {
-        server: z.string().optional().describe('Server name (e.g., "halfdozen-gmail-sync"). Omit for all servers.'),
-        hours: z.number().optional().describe('Lookback window in hours (default: 24)'),
+        server: z
+          .string()
+          .optional()
+          .describe('Server name (e.g., "halfdozen-gmail-sync"). Omit for all servers.'),
+        hours: z.number().optional().describe('Lookback window in hours (default: 24)')
       },
       async ({ server, hours = 24 }) => {
         const targets = server ? [server] : FLEET_SERVERS;
@@ -191,10 +184,16 @@ export class TelemetryMCP extends McpAgent<Env> {
                  MIN(duration_ms) as min_duration,
                  MAX(duration_ms) as max_duration
                FROM mcp_tool_invocations
-               WHERE server_name = ? AND created_at > datetime('now', '-' || ? || ' hours')`,
+               WHERE server_name = ? AND created_at > datetime('now', '-' || ? || ' hours')`
             )
             .bind(srv, hours)
-            .first<{ total: number; errors: number; avg_duration: number; min_duration: number; max_duration: number }>();
+            .first<{
+              total: number;
+              errors: number;
+              avg_duration: number;
+              min_duration: number;
+              max_duration: number;
+            }>();
 
           // Per-tool breakdown
           const tools = await db
@@ -207,7 +206,7 @@ export class TelemetryMCP extends McpAgent<Env> {
                FROM mcp_tool_invocations
                WHERE server_name = ? AND created_at > datetime('now', '-' || ? || ' hours')
                GROUP BY tool_name
-               ORDER BY invocations DESC`,
+               ORDER BY invocations DESC`
             )
             .bind(srv, hours)
             .all<{ tool_name: string; invocations: number; errors: number; avg_ms: number }>();
@@ -215,7 +214,7 @@ export class TelemetryMCP extends McpAgent<Env> {
           const lastActivity = await db
             .prepare(
               `SELECT created_at FROM mcp_tool_invocations
-               WHERE server_name = ? ORDER BY created_at DESC LIMIT 1`,
+               WHERE server_name = ? ORDER BY created_at DESC LIMIT 1`
             )
             .bind(srv)
             .first<{ created_at: string }>();
@@ -244,18 +243,20 @@ export class TelemetryMCP extends McpAgent<Env> {
               name: t.tool_name,
               calls: t.invocations,
               errors: t.errors,
-              avgMs: Math.round(t.avg_ms ?? 0),
-            })),
+              avgMs: Math.round(t.avg_ms ?? 0)
+            }))
           });
         }
 
         return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify(results.length === 1 ? results[0] : results, null, 2),
-          }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(results.length === 1 ? results[0] : results, null, 2)
+            }
+          ]
         };
-      },
+      }
     );
 
     // Tool: Query usage / run counts
@@ -264,13 +265,15 @@ export class TelemetryMCP extends McpAgent<Env> {
       'Get aggregate run counts by server and period. Shows how many tool calls each MCP has handled.',
       {
         server: z.string().optional().describe('Filter by server name. Omit for all.'),
-        period: z.string().optional().describe('Period in YYYY-MM format (default: current month)'),
+        period: z.string().optional().describe('Period in YYYY-MM format (default: current month)')
       },
       async ({ server, period }) => {
-        const currentPeriod = period || (() => {
-          const now = new Date();
-          return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
-        })();
+        const currentPeriod =
+          period ||
+          (() => {
+            const now = new Date();
+            return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+          })();
 
         let query = `SELECT server_name, account_id, period_start, runs_this_period, updated_at
                       FROM mcp_run_counts WHERE period_start = ?`;
@@ -294,7 +297,10 @@ export class TelemetryMCP extends McpAgent<Env> {
         }>();
 
         // Aggregate by server
-        const byServer: Record<string, { total: number; accounts: Array<{ id: string; runs: number }> }> = {};
+        const byServer: Record<
+          string,
+          { total: number; accounts: Array<{ id: string; runs: number }> }
+        > = {};
         for (const row of rows.results) {
           if (!byServer[row.server_name]) {
             byServer[row.server_name] = { total: 0, accounts: [] };
@@ -302,23 +308,29 @@ export class TelemetryMCP extends McpAgent<Env> {
           byServer[row.server_name].total += row.runs_this_period;
           byServer[row.server_name].accounts.push({
             id: row.account_id,
-            runs: row.runs_this_period,
+            runs: row.runs_this_period
           });
         }
 
         const totalRuns = Object.values(byServer).reduce((sum, s) => sum + s.total, 0);
 
         return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              period: currentPeriod,
-              totalRuns,
-              servers: byServer,
-            }, null, 2),
-          }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  period: currentPeriod,
+                  totalRuns,
+                  servers: byServer
+                },
+                null,
+                2
+              )
+            }
+          ]
         };
-      },
+      }
     );
 
     // Tool: Query recent activity
@@ -329,7 +341,7 @@ export class TelemetryMCP extends McpAgent<Env> {
         server: z.string().optional().describe('Filter by server name'),
         tool: z.string().optional().describe('Filter by tool name'),
         success: z.boolean().optional().describe('Filter by success (true) or failure (false)'),
-        limit: z.number().optional().describe('Number of results (default: 25, max: 100)'),
+        limit: z.number().optional().describe('Number of results (default: 25, max: 100)')
       },
       async ({ server, tool, success, limit = 25 }) => {
         const maxLimit = Math.min(limit, 100);
@@ -372,19 +384,25 @@ export class TelemetryMCP extends McpAgent<Env> {
           duration: r.duration_ms ? formatDuration(r.duration_ms) : null,
           error: r.error_message,
           when: timeAgo(r.created_at),
-          timestamp: r.created_at,
+          timestamp: r.created_at
         }));
 
         return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              count: invocations.length,
-              invocations,
-            }, null, 2),
-          }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  count: invocations.length,
+                  invocations
+                },
+                null,
+                2
+              )
+            }
+          ]
         };
-      },
+      }
     );
 
     // Tool: Query errors specifically
@@ -394,7 +412,7 @@ export class TelemetryMCP extends McpAgent<Env> {
       {
         server: z.string().optional().describe('Filter by server name'),
         hours: z.number().optional().describe('Lookback window in hours (default: 72)'),
-        limit: z.number().optional().describe('Max results (default: 50)'),
+        limit: z.number().optional().describe('Max results (default: 50)')
       },
       async ({ server, hours = 72, limit = 50 }) => {
         let query = `SELECT server_name, tool_name, error_message, duration_ms, created_at
@@ -421,11 +439,26 @@ export class TelemetryMCP extends McpAgent<Env> {
         }>();
 
         // Group by error pattern
-        const patterns: Record<string, { count: number; servers: Set<string>; tools: Set<string>; latest: string; sample: string }> = {};
+        const patterns: Record<
+          string,
+          {
+            count: number;
+            servers: Set<string>;
+            tools: Set<string>;
+            latest: string;
+            sample: string;
+          }
+        > = {};
         for (const r of rows.results) {
           const key = (r.error_message || 'unknown').slice(0, 100);
           if (!patterns[key]) {
-            patterns[key] = { count: 0, servers: new Set(), tools: new Set(), latest: r.created_at, sample: r.error_message || 'unknown' };
+            patterns[key] = {
+              count: 0,
+              servers: new Set(),
+              tools: new Set(),
+              latest: r.created_at,
+              sample: r.error_message || 'unknown'
+            };
           }
           patterns[key].count++;
           patterns[key].servers.add(r.server_name);
@@ -439,21 +472,27 @@ export class TelemetryMCP extends McpAgent<Env> {
             occurrences: p.count,
             servers: [...p.servers],
             tools: [...p.tools],
-            latest: timeAgo(p.latest),
+            latest: timeAgo(p.latest)
           }));
 
         return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              window: `${hours}h`,
-              totalErrors: rows.results.length,
-              uniquePatterns: grouped.length,
-              errors: grouped,
-            }, null, 2),
-          }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  window: `${hours}h`,
+                  totalErrors: rows.results.length,
+                  uniquePatterns: grouped.length,
+                  errors: grouped
+                },
+                null,
+                2
+              )
+            }
+          ]
         };
-      },
+      }
     );
 
     // Tool: Query trends — compare periods
@@ -462,7 +501,7 @@ export class TelemetryMCP extends McpAgent<Env> {
       'Compare usage trends across time periods. Shows whether MCPs are being used more or less.',
       {
         server: z.string().optional().describe('Filter by server name'),
-        periods: z.number().optional().describe('Number of months to compare (default: 3)'),
+        periods: z.number().optional().describe('Number of months to compare (default: 3)')
       },
       async ({ server, periods = 3 }) => {
         let query = `SELECT server_name, period_start, SUM(runs_this_period) as total_runs
@@ -497,15 +536,21 @@ export class TelemetryMCP extends McpAgent<Env> {
         }
 
         return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              periodsCompared: periods,
-              trends: byServer,
-            }, null, 2),
-          }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  periodsCompared: periods,
+                  trends: byServer
+                },
+                null,
+                2
+              )
+            }
+          ]
         };
-      },
+      }
     );
 
     // Tool: Run arbitrary SQL (read-only)
@@ -513,40 +558,52 @@ export class TelemetryMCP extends McpAgent<Env> {
       'run_sql',
       'Run a read-only SQL query against the telemetry database. Tables: mcp_run_counts, mcp_tool_invocations, feedback. Use for custom analysis.',
       {
-        query: z.string().describe('SQL SELECT query to execute'),
+        query: z.string().describe('SQL SELECT query to execute')
       },
       async ({ query: sqlQuery }) => {
         // Safety: only allow SELECT
         const trimmed = sqlQuery.trim().toLowerCase();
         if (!trimmed.startsWith('select')) {
           return {
-            content: [{
-              type: 'text',
-              text: JSON.stringify({ error: 'Only SELECT queries are allowed. This is a read-only interface.' }),
-            }],
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  error: 'Only SELECT queries are allowed. This is a read-only interface.'
+                })
+              }
+            ]
           };
         }
 
         try {
           const rows = await db.prepare(sqlQuery).all();
           return {
-            content: [{
-              type: 'text',
-              text: JSON.stringify({
-                rowCount: rows.results.length,
-                results: rows.results,
-              }, null, 2),
-            }],
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    rowCount: rows.results.length,
+                    results: rows.results
+                  },
+                  null,
+                  2
+                )
+              }
+            ]
           };
         } catch (error) {
           return {
-            content: [{
-              type: 'text',
-              text: JSON.stringify({ error: String(error) }),
-            }],
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({ error: String(error) })
+              }
+            ]
           };
         }
-      },
+      }
     );
 
     // Tool: Cleanup old invocations
@@ -555,13 +612,13 @@ export class TelemetryMCP extends McpAgent<Env> {
       'Delete old tool invocation records to keep the database lean. Run counts are preserved.',
       {
         days: z.number().optional().describe('Keep invocations from the last N days (default: 30)'),
-        dry_run: z.boolean().optional().describe('Preview what would be deleted without deleting'),
+        dry_run: z.boolean().optional().describe('Preview what would be deleted without deleting')
       },
       async ({ days = 30, dry_run = true }) => {
         const countResult = await db
           .prepare(
             `SELECT COUNT(*) as count FROM mcp_tool_invocations
-             WHERE created_at < datetime('now', '-' || ? || ' days')`,
+             WHERE created_at < datetime('now', '-' || ? || ' days')`
           )
           .bind(days)
           .first<{ count: number }>();
@@ -570,39 +627,52 @@ export class TelemetryMCP extends McpAgent<Env> {
 
         if (dry_run) {
           return {
-            content: [{
-              type: 'text',
-              text: JSON.stringify({
-                dryRun: true,
-                wouldDelete: toDelete,
-                keepingDays: days,
-                message: toDelete > 0
-                  ? `Would delete ${toDelete} invocation records older than ${days} days. Run with dry_run=false to execute.`
-                  : `No records older than ${days} days found.`,
-              }, null, 2),
-            }],
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    dryRun: true,
+                    wouldDelete: toDelete,
+                    keepingDays: days,
+                    message:
+                      toDelete > 0
+                        ? `Would delete ${toDelete} invocation records older than ${days} days. Run with dry_run=false to execute.`
+                        : `No records older than ${days} days found.`
+                  },
+                  null,
+                  2
+                )
+              }
+            ]
           };
         }
 
         await db
           .prepare(
             `DELETE FROM mcp_tool_invocations
-             WHERE created_at < datetime('now', '-' || ? || ' days')`,
+             WHERE created_at < datetime('now', '-' || ? || ' days')`
           )
           .bind(days)
           .run();
 
         return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              deleted: toDelete,
-              keepingDays: days,
-              message: `Deleted ${toDelete} invocation records older than ${days} days. Run counts preserved.`,
-            }, null, 2),
-          }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  deleted: toDelete,
+                  keepingDays: days,
+                  message: `Deleted ${toDelete} invocation records older than ${days} days. Run counts preserved.`
+                },
+                null,
+                2
+              )
+            }
+          ]
         };
-      },
+      }
     );
 
     // Tool: List database schema
@@ -617,25 +687,32 @@ export class TelemetryMCP extends McpAgent<Env> {
 
         const schemas: Record<string, unknown[]> = {};
         for (const t of tables.results) {
-          const info = await db
-            .prepare(`PRAGMA table_info(${t.name})`)
-            .all<{ cid: number; name: string; type: string; notnull: number; dflt_value: string | null; pk: number }>();
+          const info = await db.prepare(`PRAGMA table_info(${t.name})`).all<{
+            cid: number;
+            name: string;
+            type: string;
+            notnull: number;
+            dflt_value: string | null;
+            pk: number;
+          }>();
           schemas[t.name] = info.results.map((c) => ({
             column: c.name,
             type: c.type,
             primaryKey: c.pk === 1,
             nullable: c.notnull === 0,
-            default: c.dflt_value,
+            default: c.dflt_value
           }));
         }
 
         return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify(schemas, null, 2),
-          }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(schemas, null, 2)
+            }
+          ]
         };
-      },
+      }
     );
 
     // ─── Prompts (Judgment tier) ────────────────────────────────────────
@@ -644,11 +721,12 @@ export class TelemetryMCP extends McpAgent<Env> {
       'health_review',
       'Review the health of all Half Dozen MCPs and flag any issues',
       () => ({
-        messages: [{
-          role: 'user' as const,
-          content: {
-            type: 'text' as const,
-            text: `Review the health of all Half Dozen MCP servers. Use query_health with no server filter to get all servers, then:
+        messages: [
+          {
+            role: 'user' as const,
+            content: {
+              type: 'text' as const,
+              text: `Review the health of all Half Dozen MCP servers. Use query_health with no server filter to get all servers, then:
 
 1. Flag any servers with errors or degraded status
 2. Note which tools are being used most and least
@@ -656,21 +734,23 @@ export class TelemetryMCP extends McpAgent<Env> {
 4. Highlight any unusually slow tools (avg > 5s)
 5. Give a brief overall assessment
 
-Be concise — this is a health check, not a novel.`,
-          },
-        }],
-      }),
+Be concise — this is a health check, not a novel.`
+            }
+          }
+        ]
+      })
     );
 
     this.server.prompt(
       'activity_report',
       'Generate a summary report of MCP activity for this period',
       () => ({
-        messages: [{
-          role: 'user' as const,
-          content: {
-            type: 'text' as const,
-            text: `Generate an activity report for the Half Dozen MCP fleet. Use query_usage to get this month's numbers, then query_health for the last 24h detail. Include:
+        messages: [
+          {
+            role: 'user' as const,
+            content: {
+              type: 'text' as const,
+              text: `Generate an activity report for the Half Dozen MCP fleet. Use query_usage to get this month's numbers, then query_health for the last 24h detail. Include:
 
 1. Total tool calls this month across all MCPs
 2. Which MCPs are getting the most use
@@ -678,24 +758,26 @@ Be concise — this is a health check, not a novel.`,
 4. Any errors or reliability issues
 5. Month-over-month trend if data is available (use query_trends)
 
-Format it as a clean summary I could share with the team.`,
-          },
-        }],
-      }),
+Format it as a clean summary I could share with the team.`
+            }
+          }
+        ]
+      })
     );
 
     this.server.prompt(
       'debug_server',
       'Investigate issues with a specific MCP server',
       {
-        server: z.string().describe('Name of the MCP server to investigate'),
+        server: z.string().describe('Name of the MCP server to investigate')
       },
       ({ server: srv }) => ({
-        messages: [{
-          role: 'user' as const,
-          content: {
-            type: 'text' as const,
-            text: `Investigate the ${srv} MCP server. Something might be wrong. Use these tools in order:
+        messages: [
+          {
+            role: 'user' as const,
+            content: {
+              type: 'text' as const,
+              text: `Investigate the ${srv} MCP server. Something might be wrong. Use these tools in order:
 
 1. query_health for ${srv} — get the overview
 2. query_errors filtered to ${srv} — what's failing?
@@ -704,10 +786,11 @@ Format it as a clean summary I could share with the team.`,
 Then tell me:
 - Is this server healthy?
 - If not, what's the likely cause?
-- What should I check or fix?`,
-          },
-        }],
-      }),
+- What should I check or fix?`
+            }
+          }
+        ]
+      })
     );
   }
 }
@@ -734,7 +817,8 @@ export default {
           {
             name: SERVER_NAME,
             version: SERVER_VERSION,
-            description: 'Chat with your MCP fleet. Query health, usage, errors, and trends across all Half Dozen MCP servers.',
+            description:
+              'Chat with your MCP fleet. Query health, usage, errors, and trends across all Half Dozen MCP servers.',
             fleet: FLEET_SERVERS,
             tools: [
               'query_health',
@@ -744,19 +828,19 @@ export default {
               'query_trends',
               'run_sql',
               'cleanup',
-              'describe_tables',
+              'describe_tables'
             ],
             resources: ['fleet://status'],
             prompts: ['health_review', 'activity_report', 'debug_server'],
-            endpoints: { mcp: '/mcp', sse: '/sse' },
+            endpoints: { mcp: '/mcp', sse: '/sse' }
           },
           null,
-          2,
+          2
         ),
-        { headers: { 'Content-Type': 'application/json' } },
+        { headers: { 'Content-Type': 'application/json' } }
       );
     }
 
     return new Response('Not found', { status: 404 });
-  },
+  }
 };

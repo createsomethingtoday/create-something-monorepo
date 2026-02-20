@@ -1,9 +1,12 @@
 {
   "enabledBundles": [
     "core",
+    "halfdozen-observability",
     "observability"
   ],
-  "enabledServers": [],
+  "enabledServers": [
+    "notion-halfdozen-create-something"
+  ],
   "disabledServers": [],
-  "updatedAt": "2026-02-19T23:02:04Z"
+  "updatedAt": "2026-02-20T04:49:11.104Z"
 }

@@ -37,6 +37,24 @@
       "description": "Substrate execution/storage MCP",
       "tags": ["ops", "automation", "cs"]
     },
+    "outerfields-pcn": {
+      "transport": "http",
+      "url": "https://outerfields.mcp.createsomething.agency/mcp",
+      "description": "OUTERFIELDS remote MCP",
+      "tags": ["agency", "outerfields", "cs"]
+    },
+    "gmail-notion-mcp": {
+      "transport": "http",
+      "url": "https://gmail-notion-mcp.createsomething.workers.dev/mcp",
+      "description": "Dormant Gmail to Notion MCP prototype",
+      "tags": ["dormant", "prototype", "cs"]
+    },
+    "notion-sync-mcp": {
+      "transport": "http",
+      "url": "https://notion-sync-mcp-worker.createsomething.workers.dev/mcp",
+      "description": "Dormant Notion sync MCP prototype",
+      "tags": ["dormant", "prototype", "cs"]
+    },
     "notion-halfdozen-create-something": {
       "transport": "http",
       "url": "https://createsomething-notion.mcp.workway.co/mcp",
@@ -55,11 +73,60 @@
       "description": "Half Dozen YouTube sync MCP",
       "tags": ["halfdozen", "youtube", "workway"]
     },
+    "halfdozen-gmail-sync-danny": {
+      "transport": "http",
+      "url": "https://gmail.mcp.workway.co/mcp",
+      "description": "Half Dozen Gmail sync MCP (Danny)",
+      "tags": ["halfdozen", "gmail", "workway"]
+    },
+    "halfdozen-gmail-sync-fillip": {
+      "transport": "http",
+      "url": "https://fillip-gmail.mcp.workway.co/mcp",
+      "description": "Half Dozen Gmail sync MCP (Fillip)",
+      "tags": ["halfdozen", "gmail", "workway"]
+    },
+    "halfdozen-gmail-sync-leah": {
+      "transport": "http",
+      "url": "https://leah-gmail.mcp.workway.co/mcp",
+      "description": "Half Dozen Gmail sync MCP (Leah)",
+      "tags": ["halfdozen", "gmail", "workway"]
+    },
+    "halfdozen-zoom-sync": {
+      "transport": "http",
+      "url": "https://zoom.mcp.workway.co/mcp",
+      "description": "Half Dozen Zoom sync MCP",
+      "tags": ["halfdozen", "zoom", "workway"]
+    },
+    "halfdozen-telemetry": {
+      "transport": "http",
+      "url": "https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp",
+      "description": "Fleet telemetry MCP for WORKWAY account",
+      "tags": ["observability", "telemetry", "workway"]
+    },
+    "quickbooks-notion-mcp-server": {
+      "transport": "http",
+      "url": "https://quickbooks.mcp.workway.co/mcp",
+      "description": "QuickBooks to Notion MCP server",
+      "tags": ["finance", "quickbooks", "notion", "workway"]
+    },
+    "meetings": {
+      "transport": "http",
+      "url": "https://meetings-mcp.createsomething.workers.dev/mcp?token=YOUR_MCP_API_KEY",
+      "description": "Meetings MCP (requires API token in query string)",
+      "tags": ["meetings", "cs"]
+    },
     "webflow-local": {
       "transport": "stdio",
       "command": "node",
       "args": ["./packages/webflow-mcp/dist/index.js"],
       "description": "Local Webflow MCP from this monorepo",
+      "tags": ["local", "dev", "webflow"]
+    },
+    "webflow-site-analyzer-mcp": {
+      "transport": "stdio",
+      "command": "node",
+      "args": ["./packages/webflow-site-analyzer-mcp/dist/index.js"],
+      "description": "Local Webflow Site Analyzer MCP from this monorepo",
       "tags": ["local", "dev", "webflow"]
     },
     "lsmcp": {
@@ -74,8 +141,14 @@
     "core": ["create-something", "three-tier-framework", "playbook"],
     "observability": ["cs-telemetry"],
     "ops": ["schedule-mcp", "substrate-mcp"],
+    "agency": ["outerfields-pcn"],
+    "dormant": ["gmail-notion-mcp", "notion-sync-mcp"],
     "halfdozen": ["notion-halfdozen-create-something", "halfdozen-dm-mcp", "half-dozen-youtube-sync"],
-    "local-dev": ["webflow-local", "lsmcp"]
+    "halfdozen-sync": ["halfdozen-gmail-sync-danny", "halfdozen-gmail-sync-fillip", "halfdozen-gmail-sync-leah", "halfdozen-zoom-sync"],
+    "halfdozen-observability": ["halfdozen-telemetry"],
+    "meetings": ["meetings"],
+    "finance": ["quickbooks-notion-mcp-server"],
+    "local-dev": ["webflow-local", "webflow-site-analyzer-mcp", "lsmcp"]
   },
   "defaults": {
     "enabledBundles": ["core", "observability"],

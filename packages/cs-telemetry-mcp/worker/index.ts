@@ -13,6 +13,12 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { z } from 'zod';
+import {
+  CS_FLEET_SERVERS,
+  FLEET_SERVERS,
+  SERVER_SOURCE_BY_NAME,
+  WORKWAY_FLEET_SERVERS
+} from '../../../config/mcp-hub/telemetry-fleet.ts';
 
 // =============================================================================
 // Types
@@ -70,43 +76,6 @@ const CF_API_BASE = 'https://api.cloudflare.com/client/v4';
 const WORKWAY_ACCOUNT_ID_DEFAULT = '5c3e9cf4d55ce171b844fad0931607f9';
 const WORKWAY_TELEMETRY_DB_ID_DEFAULT = '4eb35a0f-6ee2-4d0c-8c0a-9a2ab4049b97';
 
-// Known servers on the CREATE SOMETHING Cloudflare account.
-const CS_FLEET_SERVERS = [
-  'schedule-mcp',
-  'substrate-mcp',
-  'create-something',
-  'three-tier-framework',
-  'playbook',
-  'outerfields-pcn',
-  'webflow-app-review-mcp',
-  'gmail-notion-mcp',
-  'notion-sync-mcp',
-];
-
-// Known servers on WORKWAY (Half Dozen) account.
-const WORKWAY_FLEET_SERVERS = [
-  // Legacy aggregate identity retained for historical continuity.
-  'halfdozen-gmail-sync',
-  // Per-operator isolated Gmail instances.
-  'halfdozen-gmail-sync-danny',
-  'halfdozen-gmail-sync-fillip',
-  'halfdozen-gmail-sync-leah',
-  'notion-halfdozen-create-something',
-  'halfdozen-zoom-sync',
-  'half-dozen-youtube-sync',
-  'quickbooks-notion-mcp',
-];
-
-const FLEET_SERVERS = [
-  ...CS_FLEET_SERVERS,
-  ...WORKWAY_FLEET_SERVERS,
-];
-
-const SERVER_SOURCE_BY_NAME: Record<string, TelemetrySourceKey> = {
-  ...Object.fromEntries(CS_FLEET_SERVERS.map((name) => [name, 'cs' as const])),
-  ...Object.fromEntries(WORKWAY_FLEET_SERVERS.map((name) => [name, 'workway' as const])),
-};
-
 // =============================================================================
 // Helpers
 // =============================================================================
@@ -137,14 +106,12 @@ function parseBearerToken(request: Request): string | null {
 async function sha256Hex(input: string): Promise<string> {
   const bytes = new TextEncoder().encode(input);
   const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return [...new Uint8Array(digest)]
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 async function resolveTenantFromRuntimeKey(
   controlDb: D1Database | undefined,
-  runtimeKey: string,
+  runtimeKey: string
 ): Promise<{ tenantId: string; tenantSlug: string | null; keyPrefix: string } | null> {
   if (!controlDb) return null;
   const keyHash = await sha256Hex(runtimeKey);
@@ -160,7 +127,7 @@ async function resolveTenantFromRuntimeKey(
          AND rk.revoked_at IS NULL
          AND (rk.expires_at IS NULL OR rk.expires_at > datetime('now'))
          AND gt.status = 'active'
-       LIMIT 1`,
+       LIMIT 1`
     )
     .bind(keyHash)
     .first<{ tenant_id: string; tenant_slug: string | null; key_prefix: string }>();
@@ -169,7 +136,7 @@ async function resolveTenantFromRuntimeKey(
   return {
     tenantId: row.tenant_id,
     tenantSlug: row.tenant_slug,
-    keyPrefix: row.key_prefix,
+    keyPrefix: row.key_prefix
   };
 }
 
@@ -190,7 +157,7 @@ function createBindingSource(
   key: TelemetrySourceKey,
   label: string,
   servers: string[],
-  db: D1Database,
+  db: D1Database
 ): TelemetrySource {
   return {
     key,
@@ -202,7 +169,7 @@ function createBindingSource(
     },
     first<T = unknown>(query: string, params: unknown[] = []): Promise<T | null> {
       return bindStatement(db.prepare(query), params).first<T>();
-    },
+    }
   };
 }
 
@@ -211,11 +178,12 @@ function createWorkwaySource(env: Env): TelemetrySource {
   const databaseId = env.WORKWAY_TELEMETRY_DB_ID ?? WORKWAY_TELEMETRY_DB_ID_DEFAULT;
   const apiToken = env.WORKWAY_D1_API_TOKEN?.trim();
 
-  const unavailableReason = !apiToken
-    ? 'WORKWAY_D1_API_TOKEN is not configured.'
-    : '';
+  const unavailableReason = !apiToken ? 'WORKWAY_D1_API_TOKEN is not configured.' : '';
 
-  const query = async <T = unknown>(sql: string, params: unknown[] = []): Promise<{ results: T[] }> => {
+  const query = async <T = unknown>(
+    sql: string,
+    params: unknown[] = []
+  ): Promise<{ results: T[] }> => {
     if (!apiToken) {
       throw new Error('WORKWAY telemetry source unavailable: missing WORKWAY_D1_API_TOKEN.');
     }
@@ -225,9 +193,9 @@ function createWorkwaySource(env: Env): TelemetrySource {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiToken}`,
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ sql, params }),
+      body: JSON.stringify({ sql, params })
     });
 
     if (!response.ok) {
@@ -235,7 +203,7 @@ function createWorkwaySource(env: Env): TelemetrySource {
       throw new Error(`WORKWAY D1 query failed (${response.status}): ${text}`);
     }
 
-    const payload = await response.json() as D1RestResponse<T>;
+    const payload = (await response.json()) as D1RestResponse<T>;
     if (payload.success === false) {
       const reason = payload.errors?.[0]?.message ?? 'Unknown Cloudflare D1 API error';
       throw new Error(`WORKWAY D1 API error: ${reason}`);
@@ -255,7 +223,7 @@ function createWorkwaySource(env: Env): TelemetrySource {
     async first<T = unknown>(sql: string, params: unknown[] = []): Promise<T | null> {
       const rows = await query<T>(sql, params);
       return rows.results[0] ?? null;
-    },
+    }
   };
 }
 
@@ -267,10 +235,11 @@ const TENANT_SQL_ALLOWED_TABLES = new Set([
   'vw_gateway_adoption',
   'vw_gateway_cost_efficiency',
   'vw_gateway_reliability',
-  'vw_gateway_policy_risk',
+  'vw_gateway_policy_risk'
 ]);
 
-const TENANT_SQL_BLOCKED_PATTERN = /\b(insert|update|delete|drop|alter|create|replace|pragma|attach|detach|vacuum|reindex|analyze|begin|commit|rollback)\b/i;
+const TENANT_SQL_BLOCKED_PATTERN =
+  /\b(insert|update|delete|drop|alter|create|replace|pragma|attach|detach|vacuum|reindex|analyze|begin|commit|rollback)\b/i;
 
 function validateTenantSql(query: string): { rewrittenQuery: string; tenantBindCount: number } {
   const trimmed = query.trim();
@@ -332,30 +301,37 @@ export class CSTelemetryMCP extends McpAgent<Env> {
 
   private denyOperatorOnly() {
     return {
-      content: [{ type: 'text' as const, text: JSON.stringify({ error: 'Operator-only endpoint. Use /mcp with operator token.' }) }],
-      isError: true,
+      content: [
+        {
+          type: 'text' as const,
+          text: JSON.stringify({ error: 'Operator-only endpoint. Use /mcp with operator token.' })
+        }
+      ],
+      isError: true
     };
   }
 
-  private resolveTenantScope(requestedTenantId?: string): { tenantId: string; tenantSlug: string | null } | null {
+  private resolveTenantScope(
+    requestedTenantId?: string
+  ): { tenantId: string; tenantSlug: string | null } | null {
     if (this.mode !== 'client') return null;
     if (!this.tenantScope) return null;
     if (
-      requestedTenantId
-      && requestedTenantId !== this.tenantScope.tenantId
-      && requestedTenantId !== this.tenantScope.tenantSlug
+      requestedTenantId &&
+      requestedTenantId !== this.tenantScope.tenantId &&
+      requestedTenantId !== this.tenantScope.tenantSlug
     ) {
       throw new Error('tenantId does not match client scope');
     }
     return {
       tenantId: this.tenantScope.tenantId,
-      tenantSlug: this.tenantScope.tenantSlug,
+      tenantSlug: this.tenantScope.tenantSlug
     };
   }
 
   server = new McpServer({
     name: SERVER_NAME,
-    version: SERVER_VERSION,
+    version: SERVER_VERSION
   });
 
   async init() {
@@ -364,21 +340,21 @@ export class CSTelemetryMCP extends McpAgent<Env> {
     const workwaySource = createWorkwaySource(this.env);
     const sourceMap = new Map<TelemetrySourceKey, TelemetrySource>([
       [csSource.key, csSource],
-      [workwaySource.key, workwaySource],
+      [workwaySource.key, workwaySource]
     ]);
 
     const sourceStatus = () => ({
       [csSource.key]: {
         label: csSource.label,
         available: csSource.available,
-        servers: csSource.servers,
+        servers: csSource.servers
       },
       [workwaySource.key]: {
         label: workwaySource.label,
         available: workwaySource.available,
         servers: workwaySource.servers,
-        reason: workwaySource.unavailableReason ?? null,
-      },
+        reason: workwaySource.unavailableReason ?? null
+      }
     });
 
     const resolveSources = (scope?: TelemetryScope): TelemetrySource[] => {
@@ -396,7 +372,7 @@ export class CSTelemetryMCP extends McpAgent<Env> {
 
     const resolveQueryableSources = (
       scope?: TelemetryScope,
-      serverName?: string,
+      serverName?: string
     ): { activeSources: TelemetrySource[]; unavailableSources: TelemetrySource[] } => {
       if (serverName) {
         const serverSource = resolveServerSource(serverName);
@@ -408,14 +384,14 @@ export class CSTelemetryMCP extends McpAgent<Env> {
         }
         return {
           activeSources: serverSource.available ? [serverSource] : [],
-          unavailableSources: serverSource.available ? [] : [serverSource],
+          unavailableSources: serverSource.available ? [] : [serverSource]
         };
       }
 
       const requested = resolveSources(scope);
       return {
         activeSources: requested.filter((source) => source.available),
-        unavailableSources: requested.filter((source) => !source.available),
+        unavailableSources: requested.filter((source) => !source.available)
       };
     };
 
@@ -426,16 +402,18 @@ export class CSTelemetryMCP extends McpAgent<Env> {
       'fleet://status',
       {
         description: 'Health status overview of CREATE SOMETHING and WORKWAY MCP fleets',
-        mimeType: 'application/json',
+        mimeType: 'application/json'
       },
       async () => {
         if (this.mode !== 'operator') {
           return {
-            contents: [{
-              uri: 'fleet://status',
-              mimeType: 'application/json',
-              text: JSON.stringify({ error: 'Operator-only resource' }),
-            }],
+            contents: [
+              {
+                uri: 'fleet://status',
+                mimeType: 'application/json',
+                text: JSON.stringify({ error: 'Operator-only resource' })
+              }
+            ]
           };
         }
 
@@ -453,30 +431,32 @@ export class CSTelemetryMCP extends McpAgent<Env> {
                 errorRate24h: 'n/a',
                 avgDurationMs: null,
                 lastActivity: 'unknown',
-                reason: source.unavailableReason ?? 'Source is unavailable',
+                reason: source.unavailableReason ?? 'Source is unavailable'
               });
             }
             continue;
           }
 
           for (const serverName of source.servers) {
-            const stats = await source
-              .first<{ total: number; errors: number; avg_duration: number }>(
-                `SELECT
+            const stats = await source.first<{
+              total: number;
+              errors: number;
+              avg_duration: number;
+            }>(
+              `SELECT
                    COUNT(*) as total,
                    SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as errors,
                    AVG(duration_ms) as avg_duration
                  FROM mcp_tool_invocations
                  WHERE server_name = ? AND created_at > datetime('now', '-24 hours')`,
-                [serverName],
-              );
+              [serverName]
+            );
 
-            const lastActivity = await source
-              .first<{ created_at: string }>(
-                `SELECT created_at FROM mcp_tool_invocations
+            const lastActivity = await source.first<{ created_at: string }>(
+              `SELECT created_at FROM mcp_tool_invocations
                  WHERE server_name = ? ORDER BY created_at DESC LIMIT 1`,
-                [serverName],
-              );
+              [serverName]
+            );
 
             const total = Number(stats?.total ?? 0);
             const errors = Number(stats?.errors ?? 0);
@@ -495,23 +475,29 @@ export class CSTelemetryMCP extends McpAgent<Env> {
               errors24h: errors,
               errorRate24h: `${Math.round(errorRate * 1000) / 10}%`,
               avgDurationMs: Math.round(Number(stats?.avg_duration ?? 0)),
-              lastActivity: lastActivity?.created_at ? timeAgo(lastActivity.created_at) : 'never',
+              lastActivity: lastActivity?.created_at ? timeAgo(lastActivity.created_at) : 'never'
             });
           }
         }
 
         return {
-          contents: [{
-            uri: 'fleet://status',
-            mimeType: 'application/json',
-            text: JSON.stringify({
-              fleet: servers,
-              sources: sourceStatus(),
-              checkedAt: new Date().toISOString(),
-            }, null, 2),
-          }],
+          contents: [
+            {
+              uri: 'fleet://status',
+              mimeType: 'application/json',
+              text: JSON.stringify(
+                {
+                  fleet: servers,
+                  sources: sourceStatus(),
+                  checkedAt: new Date().toISOString()
+                },
+                null,
+                2
+              )
+            }
+          ]
         };
-      },
+      }
     );
 
     this.server.resource(
@@ -519,16 +505,18 @@ export class CSTelemetryMCP extends McpAgent<Env> {
       'telemetry://gateway/usage',
       {
         description: 'Gateway usage summary (last 24 hours) grouped by tenant/provider/model.',
-        mimeType: 'application/json',
+        mimeType: 'application/json'
       },
       async () => {
         if (this.mode !== 'operator') {
           return {
-            contents: [{
-              uri: 'telemetry://gateway/usage',
-              mimeType: 'application/json',
-              text: JSON.stringify({ error: 'Operator-only resource' }),
-            }],
+            contents: [
+              {
+                uri: 'telemetry://gateway/usage',
+                mimeType: 'application/json',
+                text: JSON.stringify({ error: 'Operator-only resource' })
+              }
+            ]
           };
         }
 
@@ -549,7 +537,7 @@ export class CSTelemetryMCP extends McpAgent<Env> {
              WHERE created_at > datetime('now', '-24 hours')
              GROUP BY tenant_id, tenant_slug, provider_slug, model_name
              ORDER BY requests DESC
-             LIMIT 200`,
+             LIMIT 200`
           )
           .all<{
             tenant_id: string;
@@ -565,17 +553,23 @@ export class CSTelemetryMCP extends McpAgent<Env> {
           }>();
 
         return {
-          contents: [{
-            uri: 'telemetry://gateway/usage',
-            mimeType: 'application/json',
-            text: JSON.stringify({
-              window: '24h',
-              rows: rows.results,
-              generatedAt: new Date().toISOString(),
-            }, null, 2),
-          }],
+          contents: [
+            {
+              uri: 'telemetry://gateway/usage',
+              mimeType: 'application/json',
+              text: JSON.stringify(
+                {
+                  window: '24h',
+                  rows: rows.results,
+                  generatedAt: new Date().toISOString()
+                },
+                null,
+                2
+              )
+            }
+          ]
         };
-      },
+      }
     );
 
     this.server.resource(
@@ -583,17 +577,21 @@ export class CSTelemetryMCP extends McpAgent<Env> {
       'telemetry://client/overview',
       {
         description: 'Tenant-scoped performance overview for client endpoint sessions.',
-        mimeType: 'application/json',
+        mimeType: 'application/json'
       },
       async () => {
         const scoped = this.resolveTenantScope();
         if (!scoped) {
           return {
-            contents: [{
-              uri: 'telemetry://client/overview',
-              mimeType: 'application/json',
-              text: JSON.stringify({ error: 'Client scope unavailable. Use /client/mcp with runtime key.' }),
-            }],
+            contents: [
+              {
+                uri: 'telemetry://client/overview',
+                mimeType: 'application/json',
+                text: JSON.stringify({
+                  error: 'Client scope unavailable. Use /client/mcp with runtime key.'
+                })
+              }
+            ]
           };
         }
 
@@ -608,7 +606,7 @@ export class CSTelemetryMCP extends McpAgent<Env> {
                ROUND(COALESCE(AVG(latency_ms), 0), 2) AS avg_latency_ms
              FROM gateway_requests
              WHERE tenant_id = ?
-               AND created_at > datetime('now', '-30 days')`,
+               AND created_at > datetime('now', '-30 days')`
           )
           .bind(scoped.tenantId)
           .first<{
@@ -621,27 +619,34 @@ export class CSTelemetryMCP extends McpAgent<Env> {
           }>();
 
         return {
-          contents: [{
-            uri: 'telemetry://client/overview',
-            mimeType: 'application/json',
-            text: JSON.stringify({
-              tenantId: scoped.tenantId,
-              tenantSlug: scoped.tenantSlug,
-              window: '30d',
-              summary,
-              generatedAt: new Date().toISOString(),
-            }, null, 2),
-          }],
+          contents: [
+            {
+              uri: 'telemetry://client/overview',
+              mimeType: 'application/json',
+              text: JSON.stringify(
+                {
+                  tenantId: scoped.tenantId,
+                  tenantSlug: scoped.tenantSlug,
+                  window: '30d',
+                  summary,
+                  generatedAt: new Date().toISOString()
+                },
+                null,
+                2
+              )
+            }
+          ]
         };
-      },
+      }
     );
 
     this.server.resource(
       'decision-scorecards',
       'telemetry://decision/scorecards',
       {
-        description: 'Decision scorecards (adoption/cost/reliability/policy risk) for all tenants over 30 days.',
-        mimeType: 'application/json',
+        description:
+          'Decision scorecards (adoption/cost/reliability/policy risk) for all tenants over 30 days.',
+        mimeType: 'application/json'
       },
       async () => {
         const rows = await db
@@ -664,7 +669,7 @@ export class CSTelemetryMCP extends McpAgent<Env> {
              FROM gateway_requests gr
              WHERE gr.created_at > datetime('now', '-30 days')
              GROUP BY gr.tenant_id
-             ORDER BY requests DESC`,
+             ORDER BY requests DESC`
           )
           .all<{
             tenant_id: string;
@@ -686,46 +691,53 @@ export class CSTelemetryMCP extends McpAgent<Env> {
         const scorecards = rows.results.map((row) => {
           const successRate = row.requests > 0 ? (row.successful / row.requests) * 100 : 0;
           const errorRate = row.requests > 0 ? (row.failed / row.requests) * 100 : 0;
-          const costPer1k = row.total_tokens > 0 ? row.total_cost_usd / (row.total_tokens / 1000) : 0;
+          const costPer1k =
+            row.total_tokens > 0 ? row.total_cost_usd / (row.total_tokens / 1000) : 0;
           return {
             tenantId: row.tenant_id,
             tenantSlug: row.tenant_slug,
             adoption: {
               requests: row.requests,
               activeModels: row.active_models,
-              activeProviders: row.active_providers,
+              activeProviders: row.active_providers
             },
             costEfficiency: {
               totalCostUsd: row.total_cost_usd,
               totalTokens: row.total_tokens,
-              costPer1kTokensUsd: Number(costPer1k.toFixed(6)),
+              costPer1kTokensUsd: Number(costPer1k.toFixed(6))
             },
             reliability: {
               successRatePercent: Number(successRate.toFixed(2)),
               errorRatePercent: Number(errorRate.toFixed(2)),
               avgLatencyMs: row.avg_latency_ms,
               failoverEvents: row.failover_events,
-              rateLimitedEvents: row.rate_limited_events,
+              rateLimitedEvents: row.rate_limited_events
             },
             policyRisk: {
               budgetWarnEvents: row.budget_warn_events,
-              budgetBlockEvents: row.budget_block_events,
-            },
+              budgetBlockEvents: row.budget_block_events
+            }
           };
         });
 
         return {
-          contents: [{
-            uri: 'telemetry://decision/scorecards',
-            mimeType: 'application/json',
-            text: JSON.stringify({
-              window: '30d',
-              scorecards,
-              generatedAt: new Date().toISOString(),
-            }, null, 2),
-          }],
+          contents: [
+            {
+              uri: 'telemetry://decision/scorecards',
+              mimeType: 'application/json',
+              text: JSON.stringify(
+                {
+                  window: '30d',
+                  scorecards,
+                  generatedAt: new Date().toISOString()
+                },
+                null,
+                2
+              )
+            }
+          ]
         };
-      },
+      }
     );
 
     // ─── Tools ──────────────────────────────────────────────────────────
@@ -735,8 +747,11 @@ export class CSTelemetryMCP extends McpAgent<Env> {
       'Get health status for one or all MCP servers across CREATE SOMETHING and WORKWAY.',
       {
         server: z.string().optional().describe('Server name. Omit for all servers.'),
-        scope: z.enum(['cs', 'workway', 'all']).optional().describe('Telemetry source scope (default: all available).'),
-        hours: z.number().optional().describe('Lookback window in hours (default: 24)'),
+        scope: z
+          .enum(['cs', 'workway', 'all'])
+          .optional()
+          .describe('Telemetry source scope (default: all available).'),
+        hours: z.number().optional().describe('Lookback window in hours (default: 24)')
       },
       async ({ server, scope, hours = 24 }) => {
         if (this.mode !== 'operator') return this.denyOperatorOnly();
@@ -745,23 +760,32 @@ export class CSTelemetryMCP extends McpAgent<Env> {
           sources = resolveQueryableSources(scope, server);
         } catch (error) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ error: error instanceof Error ? error.message : String(error) }) }],
-            isError: true,
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  error: error instanceof Error ? error.message : String(error)
+                })
+              }
+            ],
+            isError: true
           };
         }
 
         const { activeSources, unavailableSources } = sources;
         if (activeSources.length === 0) {
           return {
-            content: [{
-              type: 'text',
-              text: JSON.stringify({
-                error: 'No telemetry sources available for the requested scope.',
-                scope: scope ?? 'default',
-                sources: sourceStatus(),
-              }),
-            }],
-            isError: true,
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  error: 'No telemetry sources available for the requested scope.',
+                  scope: scope ?? 'default',
+                  sources: sourceStatus()
+                })
+              }
+            ],
+            isError: true
           };
         }
 
@@ -771,24 +795,33 @@ export class CSTelemetryMCP extends McpAgent<Env> {
         const results: Array<Record<string, unknown>> = [];
 
         for (const target of targets) {
-          const stats = await target.source
-            .first<{ total: number; errors: number; avg_duration: number; min_duration: number; max_duration: number }>(
-              `SELECT COUNT(*) as total, SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as errors,
+          const stats = await target.source.first<{
+            total: number;
+            errors: number;
+            avg_duration: number;
+            min_duration: number;
+            max_duration: number;
+          }>(
+            `SELECT COUNT(*) as total, SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as errors,
                  AVG(duration_ms) as avg_duration, MIN(duration_ms) as min_duration, MAX(duration_ms) as max_duration
                FROM mcp_tool_invocations
                WHERE server_name = ? AND created_at > datetime('now', '-' || ? || ' hours')`,
-              [target.name, hours],
-            );
+            [target.name, hours]
+          );
 
-          const tools = await target.source
-            .all<{ tool_name: string; invocations: number; errors: number; avg_ms: number }>(
-              `SELECT tool_name, COUNT(*) as invocations, SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as errors,
+          const tools = await target.source.all<{
+            tool_name: string;
+            invocations: number;
+            errors: number;
+            avg_ms: number;
+          }>(
+            `SELECT tool_name, COUNT(*) as invocations, SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) as errors,
                  AVG(duration_ms) as avg_ms
                FROM mcp_tool_invocations
                WHERE server_name = ? AND created_at > datetime('now', '-' || ? || ' hours')
                GROUP BY tool_name ORDER BY invocations DESC`,
-              [target.name, hours],
-            );
+            [target.name, hours]
+          );
 
           const total = stats?.total ?? 0;
           const errs = stats?.errors ?? 0;
@@ -809,25 +842,34 @@ export class CSTelemetryMCP extends McpAgent<Env> {
             errorRate: Math.round(errorRate * 1000) / 10 + '%',
             avgDuration: formatDuration(Math.round(stats?.avg_duration ?? 0)),
             tools: tools.results.map((t) => ({
-              name: t.tool_name, calls: t.invocations, errors: t.errors, avgMs: Math.round(t.avg_ms ?? 0),
-            })),
+              name: t.tool_name,
+              calls: t.invocations,
+              errors: t.errors,
+              avgMs: Math.round(t.avg_ms ?? 0)
+            }))
           });
         }
 
         return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              scope: scope ?? (workwaySource.available ? 'all' : 'cs'),
-              unavailableSources: unavailableSources.map((source) => ({
-                key: source.key,
-                reason: source.unavailableReason ?? 'Source unavailable',
-              })),
-              results: results.length === 1 ? results[0] : results,
-            }, null, 2),
-          }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  scope: scope ?? (workwaySource.available ? 'all' : 'cs'),
+                  unavailableSources: unavailableSources.map((source) => ({
+                    key: source.key,
+                    reason: source.unavailableReason ?? 'Source unavailable'
+                  })),
+                  results: results.length === 1 ? results[0] : results
+                },
+                null,
+                2
+              )
+            }
+          ]
         };
-      },
+      }
     );
 
     this.server.tool(
@@ -835,23 +877,35 @@ export class CSTelemetryMCP extends McpAgent<Env> {
       'Get aggregate run counts by server and period.',
       {
         server: z.string().optional().describe('Filter by server name.'),
-        scope: z.enum(['cs', 'workway', 'all']).optional().describe('Telemetry source scope (default: all available).'),
-        period: z.string().optional().describe('Period in YYYY-MM format (default: current month)'),
+        scope: z
+          .enum(['cs', 'workway', 'all'])
+          .optional()
+          .describe('Telemetry source scope (default: all available).'),
+        period: z.string().optional().describe('Period in YYYY-MM format (default: current month)')
       },
       async ({ server, scope, period }) => {
         if (this.mode !== 'operator') return this.denyOperatorOnly();
-        const currentPeriod = period || (() => {
-          const now = new Date();
-          return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
-        })();
+        const currentPeriod =
+          period ||
+          (() => {
+            const now = new Date();
+            return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+          })();
 
         let sources: { activeSources: TelemetrySource[]; unavailableSources: TelemetrySource[] };
         try {
           sources = resolveQueryableSources(scope, server);
         } catch (error) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ error: error instanceof Error ? error.message : String(error) }) }],
-            isError: true,
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  error: error instanceof Error ? error.message : String(error)
+                })
+              }
+            ],
+            isError: true
           };
         }
 
@@ -867,11 +921,18 @@ export class CSTelemetryMCP extends McpAgent<Env> {
         for (const sourceConfig of activeSources) {
           let query = `SELECT server_name, account_id, period_start, runs_this_period FROM mcp_run_counts WHERE period_start = ?`;
           const params: unknown[] = [currentPeriod];
-          if (server) { query += ' AND server_name = ?'; params.push(server); }
+          if (server) {
+            query += ' AND server_name = ?';
+            params.push(server);
+          }
           query += ' ORDER BY runs_this_period DESC';
 
-          const sourceRows = await sourceConfig
-            .all<{ server_name: string; account_id: string; period_start: string; runs_this_period: number }>(query, params);
+          const sourceRows = await sourceConfig.all<{
+            server_name: string;
+            account_id: string;
+            period_start: string;
+            runs_this_period: number;
+          }>(query, params);
 
           for (const row of sourceRows.results) {
             rows.push({ ...row, source: sourceConfig.label });
@@ -884,22 +945,28 @@ export class CSTelemetryMCP extends McpAgent<Env> {
         }
 
         return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              period: currentPeriod,
-              scope: scope ?? (workwaySource.available ? 'all' : 'cs'),
-              totalRuns: Object.values(byServer).reduce((a, b) => a + b, 0),
-              servers: byServer,
-              rows,
-              unavailableSources: unavailableSources.map((sourceConfig) => ({
-                key: sourceConfig.key,
-                reason: sourceConfig.unavailableReason ?? 'Source unavailable',
-              })),
-            }, null, 2),
-          }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  period: currentPeriod,
+                  scope: scope ?? (workwaySource.available ? 'all' : 'cs'),
+                  totalRuns: Object.values(byServer).reduce((a, b) => a + b, 0),
+                  servers: byServer,
+                  rows,
+                  unavailableSources: unavailableSources.map((sourceConfig) => ({
+                    key: sourceConfig.key,
+                    reason: sourceConfig.unavailableReason ?? 'Source unavailable'
+                  }))
+                },
+                null,
+                2
+              )
+            }
+          ]
         };
-      },
+      }
     );
 
     this.server.tool(
@@ -911,17 +978,32 @@ export class CSTelemetryMCP extends McpAgent<Env> {
         model: z.string().optional().describe('Filter by model name.'),
         from: z.string().optional().describe('Inclusive lower timestamp bound (ISO).'),
         to: z.string().optional().describe('Inclusive upper timestamp bound (ISO).'),
-        limit: z.number().optional().describe('Max grouped rows (default: 100, max: 500).'),
+        limit: z.number().optional().describe('Max grouped rows (default: 100, max: 500).')
       },
       async ({ tenantId, provider, model, from, to, limit = 100 }) => {
         if (this.mode !== 'operator') return this.denyOperatorOnly();
         const where: string[] = ['1 = 1'];
         const params: unknown[] = [];
-        if (tenantId) { where.push('tenant_id = ?'); params.push(tenantId); }
-        if (provider) { where.push('provider_slug = ?'); params.push(provider); }
-        if (model) { where.push('model_name = ?'); params.push(model); }
-        if (from) { where.push('created_at >= ?'); params.push(from); }
-        if (to) { where.push('created_at <= ?'); params.push(to); }
+        if (tenantId) {
+          where.push('tenant_id = ?');
+          params.push(tenantId);
+        }
+        if (provider) {
+          where.push('provider_slug = ?');
+          params.push(provider);
+        }
+        if (model) {
+          where.push('model_name = ?');
+          params.push(model);
+        }
+        if (from) {
+          where.push('created_at >= ?');
+          params.push(from);
+        }
+        if (to) {
+          where.push('created_at <= ?');
+          params.push(to);
+        }
 
         const rows = await db
           .prepare(
@@ -940,7 +1022,7 @@ export class CSTelemetryMCP extends McpAgent<Env> {
              WHERE ${where.join(' AND ')}
              GROUP BY tenant_id, tenant_slug, provider_slug, model_name
              ORDER BY requests DESC
-             LIMIT ?`,
+             LIMIT ?`
           )
           .bind(...params, Math.max(1, Math.min(limit, 500)))
           .all<{
@@ -957,15 +1039,28 @@ export class CSTelemetryMCP extends McpAgent<Env> {
           }>();
 
         return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              filters: { tenantId, provider, model, from, to, limit: Math.max(1, Math.min(limit, 500)) },
-              rows: rows.results,
-            }, null, 2),
-          }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  filters: {
+                    tenantId,
+                    provider,
+                    model,
+                    from,
+                    to,
+                    limit: Math.max(1, Math.min(limit, 500))
+                  },
+                  rows: rows.results
+                },
+                null,
+                2
+              )
+            }
+          ]
         };
-      },
+      }
     );
 
     this.server.tool(
@@ -974,7 +1069,7 @@ export class CSTelemetryMCP extends McpAgent<Env> {
       {
         tenantId: z.string().optional().describe('Tenant id (optional on client endpoint).'),
         from: z.string().optional().describe('Inclusive lower timestamp bound (ISO).'),
-        to: z.string().optional().describe('Inclusive upper timestamp bound (ISO).'),
+        to: z.string().optional().describe('Inclusive upper timestamp bound (ISO).')
       },
       async ({ tenantId, from, to }) => {
         let scoped: { tenantId: string; tenantSlug: string | null } | null = null;
@@ -982,22 +1077,35 @@ export class CSTelemetryMCP extends McpAgent<Env> {
           scoped = this.resolveTenantScope(tenantId);
         } catch (error) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ error: error instanceof Error ? error.message : String(error) }) }],
-            isError: true,
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  error: error instanceof Error ? error.message : String(error)
+                })
+              }
+            ],
+            isError: true
           };
         }
         const effectiveTenantId = scoped?.tenantId ?? tenantId;
         if (!effectiveTenantId) {
           return {
             content: [{ type: 'text', text: JSON.stringify({ error: 'tenantId is required.' }) }],
-            isError: true,
+            isError: true
           };
         }
 
         const where: string[] = ['tenant_id = ?'];
         const params: unknown[] = [effectiveTenantId];
-        if (from) { where.push('created_at >= ?'); params.push(from); }
-        if (to) { where.push('created_at <= ?'); params.push(to); }
+        if (from) {
+          where.push('created_at >= ?');
+          params.push(from);
+        }
+        if (to) {
+          where.push('created_at <= ?');
+          params.push(to);
+        }
 
         const summary = await db
           .prepare(
@@ -1008,7 +1116,7 @@ export class CSTelemetryMCP extends McpAgent<Env> {
                COALESCE(SUM(total_tokens), 0) AS total_tokens,
                ROUND(COALESCE(SUM(estimated_cost_usd), 0), 6) AS total_cost_usd
              FROM gateway_requests
-             WHERE ${where.join(' AND ')}`,
+             WHERE ${where.join(' AND ')}`
           )
           .bind(...params)
           .first<{
@@ -1030,25 +1138,31 @@ export class CSTelemetryMCP extends McpAgent<Env> {
              WHERE ${where.join(' AND ')}
              GROUP BY day
              ORDER BY day DESC
-             LIMIT 90`,
+             LIMIT 90`
           )
           .bind(...params)
           .all<{ day: string; requests: number; total_tokens: number; total_cost_usd: number }>();
 
         return {
-          content: [{
-            type: 'text',
-              text: JSON.stringify({
-              tenantId: effectiveTenantId,
-              tenantSlug: scoped?.tenantSlug ?? null,
-              from: from ?? null,
-              to: to ?? null,
-              summary,
-              byDay: byDay.results,
-            }, null, 2),
-          }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  tenantId: effectiveTenantId,
+                  tenantSlug: scoped?.tenantSlug ?? null,
+                  from: from ?? null,
+                  to: to ?? null,
+                  summary,
+                  byDay: byDay.results
+                },
+                null,
+                2
+              )
+            }
+          ]
         };
-      },
+      }
     );
 
     this.server.tool(
@@ -1056,7 +1170,7 @@ export class CSTelemetryMCP extends McpAgent<Env> {
       'Calculate budget burn for a tenant this month.',
       {
         tenantId: z.string().optional().describe('Tenant id (optional on client endpoint).'),
-        monthlyBudgetUsd: z.number().describe('Configured monthly budget in USD.'),
+        monthlyBudgetUsd: z.number().describe('Configured monthly budget in USD.')
       },
       async ({ tenantId, monthlyBudgetUsd }) => {
         let scoped: { tenantId: string; tenantSlug: string | null } | null = null;
@@ -1064,15 +1178,22 @@ export class CSTelemetryMCP extends McpAgent<Env> {
           scoped = this.resolveTenantScope(tenantId);
         } catch (error) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ error: error instanceof Error ? error.message : String(error) }) }],
-            isError: true,
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  error: error instanceof Error ? error.message : String(error)
+                })
+              }
+            ],
+            isError: true
           };
         }
         const effectiveTenantId = scoped?.tenantId ?? tenantId;
         if (!effectiveTenantId) {
           return {
             content: [{ type: 'text', text: JSON.stringify({ error: 'tenantId is required.' }) }],
-            isError: true,
+            isError: true
           };
         }
 
@@ -1081,30 +1202,37 @@ export class CSTelemetryMCP extends McpAgent<Env> {
             `SELECT COALESCE(SUM(estimated_cost_usd), 0) AS spend
              FROM gateway_requests
              WHERE tenant_id = ?
-               AND created_at >= datetime('now', 'start of month')`,
+               AND created_at >= datetime('now', 'start of month')`
           )
           .bind(effectiveTenantId)
           .first<{ spend: number }>();
 
         const spend = Number(spendRow?.spend ?? 0);
-        const burnPercent = monthlyBudgetUsd > 0 ? Number(((spend / monthlyBudgetUsd) * 100).toFixed(2)) : 0;
+        const burnPercent =
+          monthlyBudgetUsd > 0 ? Number(((spend / monthlyBudgetUsd) * 100).toFixed(2)) : 0;
         const decision = burnPercent >= 100 ? 'block' : burnPercent >= 80 ? 'warn' : 'allow';
 
         return {
-          content: [{
-            type: 'text',
-              text: JSON.stringify({
-              tenantId: effectiveTenantId,
-              tenantSlug: scoped?.tenantSlug ?? null,
-              period: `${new Date().getUTCFullYear()}-${String(new Date().getUTCMonth() + 1).padStart(2, '0')}`,
-              monthlyBudgetUsd,
-              currentSpendUsd: spend,
-              burnPercent,
-              decision,
-            }, null, 2),
-          }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  tenantId: effectiveTenantId,
+                  tenantSlug: scoped?.tenantSlug ?? null,
+                  period: `${new Date().getUTCFullYear()}-${String(new Date().getUTCMonth() + 1).padStart(2, '0')}`,
+                  monthlyBudgetUsd,
+                  currentSpendUsd: spend,
+                  burnPercent,
+                  decision
+                },
+                null,
+                2
+              )
+            }
+          ]
         };
-      },
+      }
     );
 
     this.server.tool(
@@ -1112,8 +1240,11 @@ export class CSTelemetryMCP extends McpAgent<Env> {
       'Summarize adoption, cost efficiency, reliability, and policy risk for one tenant.',
       {
         tenantId: z.string().optional().describe('Tenant id (optional on client endpoint).'),
-        runtimeKey: z.string().optional().describe('Operator mode only: tenant runtime key to auto-scope tenant.'),
-        days: z.number().optional().describe('Lookback window in days (default: 30, max: 365).'),
+        runtimeKey: z
+          .string()
+          .optional()
+          .describe('Operator mode only: tenant runtime key to auto-scope tenant.'),
+        days: z.number().optional().describe('Lookback window in days (default: 30, max: 365).')
       },
       async ({ tenantId, runtimeKey, days = 30 }) => {
         let resolvedTenantId: string | null = null;
@@ -1124,8 +1255,15 @@ export class CSTelemetryMCP extends McpAgent<Env> {
           scoped = this.resolveTenantScope(tenantId);
         } catch (error) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ error: error instanceof Error ? error.message : String(error) }) }],
-            isError: true,
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  error: error instanceof Error ? error.message : String(error)
+                })
+              }
+            ],
+            isError: true
           };
         }
         if (scoped) {
@@ -1133,11 +1271,13 @@ export class CSTelemetryMCP extends McpAgent<Env> {
           resolvedTenantSlug = scoped.tenantSlug;
           if (runtimeKey) {
             return {
-              content: [{
-                type: 'text',
-                text: JSON.stringify({ error: 'runtimeKey is not allowed on client endpoint.' }),
-              }],
-              isError: true,
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({ error: 'runtimeKey is not allowed on client endpoint.' })
+                }
+              ],
+              isError: true
             };
           }
         } else {
@@ -1146,22 +1286,28 @@ export class CSTelemetryMCP extends McpAgent<Env> {
             const resolved = await resolveTenantFromRuntimeKey(this.env.CONTROL_DB, runtimeKey);
             if (!resolved) {
               return {
-                content: [{
-                  type: 'text',
-                  text: JSON.stringify({ error: 'Invalid runtime key or CONTROL_DB not configured.' }),
-                }],
-                isError: true,
+                content: [
+                  {
+                    type: 'text',
+                    text: JSON.stringify({
+                      error: 'Invalid runtime key or CONTROL_DB not configured.'
+                    })
+                  }
+                ],
+                isError: true
               };
             }
             resolvedTenantId = resolved.tenantId;
             resolvedTenantSlug = resolved.tenantSlug;
             if (tenantId && tenantId !== resolvedTenantId) {
               return {
-                content: [{
-                  type: 'text',
-                  text: JSON.stringify({ error: 'tenantId does not match runtimeKey scope.' }),
-                }],
-                isError: true,
+                content: [
+                  {
+                    type: 'text',
+                    text: JSON.stringify({ error: 'tenantId does not match runtimeKey scope.' })
+                  }
+                ],
+                isError: true
               };
             }
           }
@@ -1169,11 +1315,13 @@ export class CSTelemetryMCP extends McpAgent<Env> {
 
         if (!resolvedTenantId) {
           return {
-            content: [{
-              type: 'text',
-              text: JSON.stringify({ error: 'Provide tenantId or runtimeKey.' }),
-            }],
-            isError: true,
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({ error: 'Provide tenantId or runtimeKey.' })
+              }
+            ],
+            isError: true
           };
         }
 
@@ -1196,7 +1344,7 @@ export class CSTelemetryMCP extends McpAgent<Env> {
                SUM(CASE WHEN budget_decision = 'block' THEN 1 ELSE 0 END) AS budget_block_events
              FROM gateway_requests
              WHERE tenant_id = ?
-               AND created_at > datetime('now', '-' || ? || ' days')`,
+               AND created_at > datetime('now', '-' || ? || ' days')`
           )
           .bind(resolvedTenantId, lookback)
           .first<{
@@ -1222,7 +1370,7 @@ export class CSTelemetryMCP extends McpAgent<Env> {
                SUM(CASE WHEN alert_type = 'provider_failover_activated' THEN 1 ELSE 0 END) AS failover_alerts
              FROM gateway_alerts
              WHERE tenant_id = ?
-               AND created_at > datetime('now', '-' || ? || ' days')`,
+               AND created_at > datetime('now', '-' || ? || ' days')`
           )
           .bind(resolvedTenantId, lookback)
           .first<{
@@ -1247,12 +1395,12 @@ export class CSTelemetryMCP extends McpAgent<Env> {
           adoption: {
             requests,
             activeProviders: Number(row?.active_providers ?? 0),
-            activeModels: Number(row?.active_models ?? 0),
+            activeModels: Number(row?.active_models ?? 0)
           },
           costEfficiency: {
             totalCostUsd: totalCost,
             totalTokens,
-            costPer1kTokensUsd: Number(costPer1k.toFixed(6)),
+            costPer1kTokensUsd: Number(costPer1k.toFixed(6))
           },
           reliability: {
             successRatePercent: Number(successRate.toFixed(2)),
@@ -1260,61 +1408,71 @@ export class CSTelemetryMCP extends McpAgent<Env> {
             avgLatencyMs: Number(row?.avg_latency_ms ?? 0),
             failoverEvents: Number(row?.failover_events ?? 0),
             rateLimitedEvents: Number(row?.rate_limited_events ?? 0),
-            errorSpikeAlerts: Number(alertRow?.error_spike_alerts ?? 0),
+            errorSpikeAlerts: Number(alertRow?.error_spike_alerts ?? 0)
           },
           policyRisk: {
             budgetWarnEvents: Number(row?.budget_warn_events ?? 0),
             budgetBlockEvents: Number(row?.budget_block_events ?? 0),
             budgetAlerts: Number(alertRow?.budget_alerts ?? 0),
-            failoverAlerts: Number(alertRow?.failover_alerts ?? 0),
-          },
+            failoverAlerts: Number(alertRow?.failover_alerts ?? 0)
+          }
         };
 
         return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify(scorecard, null, 2),
-          }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(scorecard, null, 2)
+            }
+          ]
         };
-      },
+      }
     );
 
     this.server.tool(
       'query_tenant_sql',
       'Run a tenant-scoped read-only SQL query (runtime-key scoped). Query must include {{tenant_id}} placeholder.',
       {
-        runtimeKey: z.string().optional().describe('Operator mode only: runtime key used to resolve hard tenant scope.'),
-        query: z.string().describe("Read-only SQL with {{tenant_id}} placeholder."),
-        limit: z.number().optional().describe('Max rows returned (default: 200, max: 1000).'),
+        runtimeKey: z
+          .string()
+          .optional()
+          .describe('Operator mode only: runtime key used to resolve hard tenant scope.'),
+        query: z.string().describe('Read-only SQL with {{tenant_id}} placeholder.'),
+        limit: z.number().optional().describe('Max rows returned (default: 200, max: 1000).')
       },
       async ({ runtimeKey, query, limit = 200 }) => {
         try {
-          let resolved: { tenantId: string; tenantSlug: string | null; keyPrefix: string } | null = null;
+          let resolved: { tenantId: string; tenantSlug: string | null; keyPrefix: string } | null =
+            null;
 
           const scoped = this.resolveTenantScope();
           if (scoped) {
             resolved = {
               tenantId: scoped.tenantId,
               tenantSlug: scoped.tenantSlug,
-              keyPrefix: this.tenantScope?.keyPrefix ?? 'scoped',
+              keyPrefix: this.tenantScope?.keyPrefix ?? 'scoped'
             };
             if (runtimeKey) {
               return {
-                content: [{
-                  type: 'text',
-                  text: JSON.stringify({ error: 'runtimeKey is not allowed on client endpoint.' }),
-                }],
-                isError: true,
+                content: [
+                  {
+                    type: 'text',
+                    text: JSON.stringify({ error: 'runtimeKey is not allowed on client endpoint.' })
+                  }
+                ],
+                isError: true
               };
             }
           } else {
             if (!runtimeKey) {
               return {
-                content: [{
-                  type: 'text',
-                  text: JSON.stringify({ error: 'runtimeKey is required on operator endpoint.' }),
-                }],
-                isError: true,
+                content: [
+                  {
+                    type: 'text',
+                    text: JSON.stringify({ error: 'runtimeKey is required on operator endpoint.' })
+                  }
+                ],
+                isError: true
               };
             }
             resolved = await resolveTenantFromRuntimeKey(this.env.CONTROL_DB, runtimeKey);
@@ -1322,11 +1480,15 @@ export class CSTelemetryMCP extends McpAgent<Env> {
 
           if (!resolved) {
             return {
-              content: [{
-                type: 'text',
-                text: JSON.stringify({ error: 'Invalid runtime key or CONTROL_DB not configured.' }),
-              }],
-              isError: true,
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({
+                    error: 'Invalid runtime key or CONTROL_DB not configured.'
+                  })
+                }
+              ],
+              isError: true
             };
           }
 
@@ -1334,32 +1496,43 @@ export class CSTelemetryMCP extends McpAgent<Env> {
           const { rewrittenQuery, tenantBindCount } = validateTenantSql(query);
           const scopedQuery = `SELECT * FROM (${rewrittenQuery}) AS tenant_scoped_result LIMIT ?`;
           const bindParams = [...Array(tenantBindCount).fill(resolved.tenantId), rowLimit];
-          const rows = await db.prepare(scopedQuery).bind(...bindParams).all();
+          const rows = await db
+            .prepare(scopedQuery)
+            .bind(...bindParams)
+            .all();
           return {
-            content: [{
-              type: 'text',
-              text: JSON.stringify({
-                tenantId: resolved.tenantId,
-                tenantSlug: resolved.tenantSlug,
-                keyPrefix: resolved.keyPrefix,
-                rowCount: rows.results.length,
-                limit: rowLimit,
-                results: rows.results,
-              }, null, 2),
-            }],
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    tenantId: resolved.tenantId,
+                    tenantSlug: resolved.tenantSlug,
+                    keyPrefix: resolved.keyPrefix,
+                    rowCount: rows.results.length,
+                    limit: rowLimit,
+                    results: rows.results
+                  },
+                  null,
+                  2
+                )
+              }
+            ]
           };
         } catch (error) {
           return {
-            content: [{
-              type: 'text',
-              text: JSON.stringify({
-                error: error instanceof Error ? error.message : String(error),
-              }),
-            }],
-            isError: true,
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  error: error instanceof Error ? error.message : String(error)
+                })
+              }
+            ],
+            isError: true
           };
         }
-      },
+      }
     );
 
     this.server.tool(
@@ -1367,9 +1540,11 @@ export class CSTelemetryMCP extends McpAgent<Env> {
       'Get recent tool invocations. Filter by server, tool, or success/failure.',
       {
         scope: z.enum(['cs', 'workway', 'all']).optional(),
-        server: z.string().optional(), tool: z.string().optional(),
+        server: z.string().optional(),
+        tool: z.string().optional(),
         correlationId: z.string().optional(),
-        success: z.boolean().optional(), limit: z.number().optional().describe('Max results (default: 25)'),
+        success: z.boolean().optional(),
+        limit: z.number().optional().describe('Max results (default: 25)')
       },
       async ({ scope, server, tool, correlationId, success, limit = 25 }) => {
         if (this.mode !== 'operator') return this.denyOperatorOnly();
@@ -1378,8 +1553,15 @@ export class CSTelemetryMCP extends McpAgent<Env> {
           sources = resolveQueryableSources(scope, server);
         } catch (error) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ error: error instanceof Error ? error.message : String(error) }) }],
-            isError: true,
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  error: error instanceof Error ? error.message : String(error)
+                })
+              }
+            ],
+            isError: true
           };
         }
         const { activeSources, unavailableSources } = sources;
@@ -1387,9 +1569,18 @@ export class CSTelemetryMCP extends McpAgent<Env> {
         const cap = Math.max(1, Math.min(limit, 100));
         const commonConditions: string[] = [];
         const commonParams: unknown[] = [];
-        if (server) { commonConditions.push('server_name = ?'); commonParams.push(server); }
-        if (tool) { commonConditions.push('tool_name = ?'); commonParams.push(tool); }
-        if (success !== undefined) { commonConditions.push('success = ?'); commonParams.push(success ? 1 : 0); }
+        if (server) {
+          commonConditions.push('server_name = ?');
+          commonParams.push(server);
+        }
+        if (tool) {
+          commonConditions.push('tool_name = ?');
+          commonParams.push(tool);
+        }
+        if (success !== undefined) {
+          commonConditions.push('success = ?');
+          commonParams.push(success ? 1 : 0);
+        }
 
         const withCorrelationConditions = correlationId
           ? [...commonConditions, 'correlation_id = ?']
@@ -1398,12 +1589,12 @@ export class CSTelemetryMCP extends McpAgent<Env> {
           ? [...commonParams, correlationId]
           : [...commonParams];
 
-        const whereWithCorrelation = withCorrelationConditions.length > 0
-          ? ` WHERE ${withCorrelationConditions.join(' AND ')}`
-          : '';
-        const whereWithoutCorrelation = commonConditions.length > 0
-          ? ` WHERE ${commonConditions.join(' AND ')}`
-          : '';
+        const whereWithCorrelation =
+          withCorrelationConditions.length > 0
+            ? ` WHERE ${withCorrelationConditions.join(' AND ')}`
+            : '';
+        const whereWithoutCorrelation =
+          commonConditions.length > 0 ? ` WHERE ${commonConditions.join(' AND ')}` : '';
 
         const queryWithCorrelation = `SELECT server_name, tool_name, success, duration_ms, error_message, correlation_id, request_id, created_at
                                       FROM mcp_tool_invocations${whereWithCorrelation}
@@ -1427,50 +1618,51 @@ export class CSTelemetryMCP extends McpAgent<Env> {
 
         for (const sourceConfig of activeSources) {
           try {
-            const rows = await sourceConfig
-              .all<{
-                server_name: string;
-                tool_name: string;
-                success: number;
-                duration_ms: number | null;
-                error_message: string | null;
-                correlation_id: string | null;
-                request_id: string | null;
-                created_at: string;
-              }>(queryWithCorrelation, [...withCorrelationParams, cap]);
+            const rows = await sourceConfig.all<{
+              server_name: string;
+              tool_name: string;
+              success: number;
+              duration_ms: number | null;
+              error_message: string | null;
+              correlation_id: string | null;
+              request_id: string | null;
+              created_at: string;
+            }>(queryWithCorrelation, [...withCorrelationParams, cap]);
             for (const row of rows.results) {
               merged.push({ ...row, source: sourceConfig.label });
             }
           } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
-            const missingCorrelationColumns = message.includes('no such column: correlation_id')
-              || message.includes('no such column: request_id');
+            const missingCorrelationColumns =
+              message.includes('no such column: correlation_id') ||
+              message.includes('no such column: request_id');
             if (!missingCorrelationColumns) throw error;
 
             if (correlationId) {
               schemaWarnings.push({
                 source: sourceConfig.label,
-                warning: 'Source schema lacks correlation_id/request_id; skipped due correlationId filter.',
+                warning:
+                  'Source schema lacks correlation_id/request_id; skipped due correlationId filter.'
               });
               continue;
             }
 
             schemaWarnings.push({
               source: sourceConfig.label,
-              warning: 'Source schema lacks correlation_id/request_id; returning null for those fields.',
+              warning:
+                'Source schema lacks correlation_id/request_id; returning null for those fields.'
             });
 
-            const rows = await sourceConfig
-              .all<{
-                server_name: string;
-                tool_name: string;
-                success: number;
-                duration_ms: number | null;
-                error_message: string | null;
-                correlation_id: string | null;
-                request_id: string | null;
-                created_at: string;
-              }>(queryWithoutCorrelation, [...commonParams, cap]);
+            const rows = await sourceConfig.all<{
+              server_name: string;
+              tool_name: string;
+              success: number;
+              duration_ms: number | null;
+              error_message: string | null;
+              correlation_id: string | null;
+              request_id: string | null;
+              created_at: string;
+            }>(queryWithoutCorrelation, [...commonParams, cap]);
             for (const row of rows.results) {
               merged.push({ ...row, source: sourceConfig.label });
             }
@@ -1480,23 +1672,39 @@ export class CSTelemetryMCP extends McpAgent<Env> {
         merged.sort((a, b) => b.created_at.localeCompare(a.created_at));
         const selected = merged.slice(0, cap);
 
-        return { content: [{ type: 'text', text: JSON.stringify({
-          count: selected.length,
-          scope: scope ?? (workwaySource.available ? 'all' : 'cs'),
-          unavailableSources: unavailableSources.map((sourceConfig) => ({
-            key: sourceConfig.key,
-            reason: sourceConfig.unavailableReason ?? 'Source unavailable',
-          })),
-          schemaWarnings,
-          invocations: selected.map((r) => ({
-            source: r.source,
-            server: r.server_name, tool: r.tool_name, success: r.success === 1,
-            duration: r.duration_ms ? formatDuration(r.duration_ms) : null,
-            error: r.error_message, correlationId: r.correlation_id, requestId: r.request_id,
-            when: timeAgo(r.created_at), timestamp: r.created_at,
-          })),
-        }, null, 2) }] };
-      },
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  count: selected.length,
+                  scope: scope ?? (workwaySource.available ? 'all' : 'cs'),
+                  unavailableSources: unavailableSources.map((sourceConfig) => ({
+                    key: sourceConfig.key,
+                    reason: sourceConfig.unavailableReason ?? 'Source unavailable'
+                  })),
+                  schemaWarnings,
+                  invocations: selected.map((r) => ({
+                    source: r.source,
+                    server: r.server_name,
+                    tool: r.tool_name,
+                    success: r.success === 1,
+                    duration: r.duration_ms ? formatDuration(r.duration_ms) : null,
+                    error: r.error_message,
+                    correlationId: r.correlation_id,
+                    requestId: r.request_id,
+                    when: timeAgo(r.created_at),
+                    timestamp: r.created_at
+                  }))
+                },
+                null,
+                2
+              )
+            }
+          ]
+        };
+      }
     );
 
     this.server.tool(
@@ -1505,7 +1713,7 @@ export class CSTelemetryMCP extends McpAgent<Env> {
       {
         scope: z.enum(['cs', 'workway', 'all']).optional(),
         server: z.string().optional(),
-        hours: z.number().optional().describe('Lookback hours (default: 72)'),
+        hours: z.number().optional().describe('Lookback hours (default: 72)')
       },
       async ({ scope, server, hours = 72 }) => {
         if (this.mode !== 'operator') return this.denyOperatorOnly();
@@ -1514,15 +1722,25 @@ export class CSTelemetryMCP extends McpAgent<Env> {
           sources = resolveQueryableSources(scope, server);
         } catch (error) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ error: error instanceof Error ? error.message : String(error) }) }],
-            isError: true,
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  error: error instanceof Error ? error.message : String(error)
+                })
+              }
+            ],
+            isError: true
           };
         }
         const { activeSources, unavailableSources } = sources;
 
         let query = `SELECT server_name, tool_name, error_message, created_at FROM mcp_tool_invocations WHERE success = 0 AND created_at > datetime('now', '-' || ? || ' hours')`;
         const params: unknown[] = [hours];
-        if (server) { query += ' AND server_name = ?'; params.push(server); }
+        if (server) {
+          query += ' AND server_name = ?';
+          params.push(server);
+        }
         query += ' ORDER BY created_at DESC LIMIT 100';
 
         const merged: Array<{
@@ -1534,8 +1752,12 @@ export class CSTelemetryMCP extends McpAgent<Env> {
         }> = [];
 
         for (const sourceConfig of activeSources) {
-          const rows = await sourceConfig
-            .all<{ server_name: string; tool_name: string; error_message: string | null; created_at: string }>(query, params);
+          const rows = await sourceConfig.all<{
+            server_name: string;
+            tool_name: string;
+            error_message: string | null;
+            created_at: string;
+          }>(query, params);
           for (const row of rows.results) {
             merged.push({ ...row, source: sourceConfig.label });
           }
@@ -1543,7 +1765,16 @@ export class CSTelemetryMCP extends McpAgent<Env> {
 
         merged.sort((a, b) => b.created_at.localeCompare(a.created_at));
 
-        const patterns: Record<string, { count: number; sources: Set<string>; servers: Set<string>; tools: Set<string>; sample: string }> = {};
+        const patterns: Record<
+          string,
+          {
+            count: number;
+            sources: Set<string>;
+            servers: Set<string>;
+            tools: Set<string>;
+            sample: string;
+          }
+        > = {};
         for (const r of merged) {
           const key = (r.error_message || 'unknown').slice(0, 100);
           if (!patterns[key]) {
@@ -1552,7 +1783,7 @@ export class CSTelemetryMCP extends McpAgent<Env> {
               sources: new Set(),
               servers: new Set(),
               tools: new Set(),
-              sample: r.error_message || 'unknown',
+              sample: r.error_message || 'unknown'
             };
           }
           patterns[key].count++;
@@ -1561,23 +1792,36 @@ export class CSTelemetryMCP extends McpAgent<Env> {
           patterns[key].tools.add(r.tool_name);
         }
 
-        return { content: [{ type: 'text', text: JSON.stringify({
-          window: `${hours}h`,
-          scope: scope ?? (workwaySource.available ? 'all' : 'cs'),
-          totalErrors: merged.length,
-          unavailableSources: unavailableSources.map((sourceConfig) => ({
-            key: sourceConfig.key,
-            reason: sourceConfig.unavailableReason ?? 'Source unavailable',
-          })),
-          errors: Object.values(patterns).sort((a, b) => b.count - a.count).map((p) => ({
-            error: p.sample,
-            occurrences: p.count,
-            sources: [...p.sources],
-            servers: [...p.servers],
-            tools: [...p.tools],
-          })),
-        }, null, 2) }] };
-      },
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  window: `${hours}h`,
+                  scope: scope ?? (workwaySource.available ? 'all' : 'cs'),
+                  totalErrors: merged.length,
+                  unavailableSources: unavailableSources.map((sourceConfig) => ({
+                    key: sourceConfig.key,
+                    reason: sourceConfig.unavailableReason ?? 'Source unavailable'
+                  })),
+                  errors: Object.values(patterns)
+                    .sort((a, b) => b.count - a.count)
+                    .map((p) => ({
+                      error: p.sample,
+                      occurrences: p.count,
+                      sources: [...p.sources],
+                      servers: [...p.servers],
+                      tools: [...p.tools]
+                    }))
+                },
+                null,
+                2
+              )
+            }
+          ]
+        };
+      }
     );
 
     this.server.tool(
@@ -1585,48 +1829,62 @@ export class CSTelemetryMCP extends McpAgent<Env> {
       'Run a read-only SQL query against a telemetry database source.',
       {
         query: z.string().describe('SQL SELECT query'),
-        source: z.enum(['cs', 'workway']).optional().describe('Telemetry source (default: cs).'),
+        source: z.enum(['cs', 'workway']).optional().describe('Telemetry source (default: cs).')
       },
       async ({ query: sqlQuery, source = 'cs' }) => {
         if (this.mode !== 'operator') return this.denyOperatorOnly();
         if (!sqlQuery.trim().toLowerCase().startsWith('select')) {
-          return { content: [{ type: 'text', text: JSON.stringify({ error: 'Only SELECT queries allowed.' }) }] };
+          return {
+            content: [
+              { type: 'text', text: JSON.stringify({ error: 'Only SELECT queries allowed.' }) }
+            ]
+          };
         }
         const sourceConfig = sourceMap.get(source);
         if (!sourceConfig) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ error: `Unknown source '${source}'.` }) }],
-            isError: true,
+            content: [
+              { type: 'text', text: JSON.stringify({ error: `Unknown source '${source}'.` }) }
+            ],
+            isError: true
           };
         }
         if (!sourceConfig.available) {
           return {
-            content: [{
-              type: 'text',
-              text: JSON.stringify({
-                error: `Source '${source}' is unavailable.`,
-                reason: sourceConfig.unavailableReason ?? 'Unknown reason',
-              }),
-            }],
-            isError: true,
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  error: `Source '${source}' is unavailable.`,
+                  reason: sourceConfig.unavailableReason ?? 'Unknown reason'
+                })
+              }
+            ],
+            isError: true
           };
         }
         try {
           const rows = await sourceConfig.all(sqlQuery);
           return {
-            content: [{
-              type: 'text',
-              text: JSON.stringify({
-                source: sourceConfig.label,
-                rowCount: rows.results.length,
-                results: rows.results,
-              }, null, 2),
-            }],
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    source: sourceConfig.label,
+                    rowCount: rows.results.length,
+                    results: rows.results
+                  },
+                  null,
+                  2
+                )
+              }
+            ]
           };
         } catch (error) {
           return { content: [{ type: 'text', text: JSON.stringify({ error: String(error) }) }] };
         }
-      },
+      }
     );
 
     this.server.tool(
@@ -1638,20 +1896,24 @@ export class CSTelemetryMCP extends McpAgent<Env> {
         const sourceConfig = sourceMap.get(source);
         if (!sourceConfig) {
           return {
-            content: [{ type: 'text', text: JSON.stringify({ error: `Unknown source '${source}'.` }) }],
-            isError: true,
+            content: [
+              { type: 'text', text: JSON.stringify({ error: `Unknown source '${source}'.` }) }
+            ],
+            isError: true
           };
         }
         if (!sourceConfig.available) {
           return {
-            content: [{
-              type: 'text',
-              text: JSON.stringify({
-                error: `Source '${source}' is unavailable.`,
-                reason: sourceConfig.unavailableReason ?? 'Unknown reason',
-              }),
-            }],
-            isError: true,
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify({
+                  error: `Source '${source}' is unavailable.`,
+                  reason: sourceConfig.unavailableReason ?? 'Unknown reason'
+                })
+              }
+            ],
+            isError: true
           };
         }
 
@@ -1661,37 +1923,49 @@ export class CSTelemetryMCP extends McpAgent<Env> {
            WHERE type='table'
              AND name NOT LIKE '_cf_%'
              AND name NOT LIKE 'sqlite_%'
-           ORDER BY name`,
+           ORDER BY name`
         );
         const schemas: Record<string, unknown[]> = {};
         for (const t of tables.results) {
           try {
-            const info = await sourceConfig.all<{ name: string; type: string; pk: number; notnull: number; dflt_value: string | null }>(
-              `PRAGMA table_info(${t.name})`,
-            );
+            const info = await sourceConfig.all<{
+              name: string;
+              type: string;
+              pk: number;
+              notnull: number;
+              dflt_value: string | null;
+            }>(`PRAGMA table_info(${t.name})`);
             schemas[t.name] = info.results.map((c) => ({
               column: c.name,
               type: c.type,
               pk: c.pk === 1,
               nullable: c.notnull === 0,
-              default: c.dflt_value,
+              default: c.dflt_value
             }));
           } catch (error) {
-            schemas[t.name] = [{
-              error: error instanceof Error ? error.message : String(error),
-            }];
+            schemas[t.name] = [
+              {
+                error: error instanceof Error ? error.message : String(error)
+              }
+            ];
           }
         }
         return {
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              source: sourceConfig.label,
-              schemas,
-            }, null, 2),
-          }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  source: sourceConfig.label,
+                  schemas
+                },
+                null,
+                2
+              )
+            }
+          ]
         };
-      },
+      }
     );
 
     // ─── Prompts ────────────────────────────────────────────────────────
@@ -1700,19 +1974,21 @@ export class CSTelemetryMCP extends McpAgent<Env> {
       'health_review',
       'Review health of all CREATE SOMETHING + WORKWAY MCPs',
       () => ({
-        messages: [{
-          role: 'user' as const,
-          content: {
-            type: 'text' as const,
-            text: `Review the health of all MCP servers across CREATE SOMETHING and WORKWAY. Use query_health to get all servers, then:
+        messages: [
+          {
+            role: 'user' as const,
+            content: {
+              type: 'text' as const,
+              text: `Review the health of all MCP servers across CREATE SOMETHING and WORKWAY. Use query_health to get all servers, then:
 1. Flag any servers with errors or degraded status
 2. Note which tools are most/least used
 3. Check for servers with no recent activity
 4. Highlight unusually slow tools (avg > 5s)
-5. Brief overall assessment`,
-          },
-        }],
-      }),
+5. Brief overall assessment`
+            }
+          }
+        ]
+      })
     );
 
     this.server.prompt(
@@ -1720,31 +1996,35 @@ export class CSTelemetryMCP extends McpAgent<Env> {
       'Investigate issues with a specific MCP server',
       { server: z.string().describe('Server name to investigate') },
       ({ server: srv }) => ({
-        messages: [{
-          role: 'user' as const,
-          content: {
-            type: 'text' as const,
-            text: `Investigate ${srv}. Use query_health, query_errors, and query_activity for ${srv}. Is it healthy? What's failing? What should I fix?`,
-          },
-        }],
-      }),
+        messages: [
+          {
+            role: 'user' as const,
+            content: {
+              type: 'text' as const,
+              text: `Investigate ${srv}. Use query_health, query_errors, and query_activity for ${srv}. Is it healthy? What's failing? What should I fix?`
+            }
+          }
+        ]
+      })
     );
 
     this.server.prompt(
       'client_performance_review',
       'Review my tenant performance and suggest optimization actions.',
       () => ({
-        messages: [{
-          role: 'user' as const,
-          content: {
-            type: 'text' as const,
-            text: `Review my tenant performance. Use telemetry://client/overview, query_decision_scorecard, and query_budget_burn. Provide:
+        messages: [
+          {
+            role: 'user' as const,
+            content: {
+              type: 'text' as const,
+              text: `Review my tenant performance. Use telemetry://client/overview, query_decision_scorecard, and query_budget_burn. Provide:
 1. current operating status
 2. cost and reliability risks
-3. top 3 optimization actions for this week`,
-          },
-        }],
-      }),
+3. top 3 optimization actions for this week`
+            }
+          }
+        ]
+      })
     );
   }
 }
@@ -1761,14 +2041,14 @@ export default {
       if (!env.OPERATOR_API_TOKEN) {
         return new Response(JSON.stringify({ error: 'OPERATOR_API_TOKEN is not configured.' }), {
           status: 503,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' }
         });
       }
       const token = parseBearerToken(request);
       if (!token || token !== env.OPERATOR_API_TOKEN) {
         return new Response(JSON.stringify({ error: 'Unauthorized operator access.' }), {
           status: 401,
-          headers: { 'Content-Type': 'application/json', 'WWW-Authenticate': 'Bearer' },
+          headers: { 'Content-Type': 'application/json', 'WWW-Authenticate': 'Bearer' }
         });
       }
       const scoped = withInjectedHeaders(request, { 'x-cs-mcp-mode': 'operator' });
@@ -1778,14 +2058,14 @@ export default {
       if (!env.OPERATOR_API_TOKEN) {
         return new Response(JSON.stringify({ error: 'OPERATOR_API_TOKEN is not configured.' }), {
           status: 503,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json' }
         });
       }
       const token = parseBearerToken(request);
       if (!token || token !== env.OPERATOR_API_TOKEN) {
         return new Response(JSON.stringify({ error: 'Unauthorized operator access.' }), {
           status: 401,
-          headers: { 'Content-Type': 'application/json', 'WWW-Authenticate': 'Bearer' },
+          headers: { 'Content-Type': 'application/json', 'WWW-Authenticate': 'Bearer' }
         });
       }
       const scoped = withInjectedHeaders(request, { 'x-cs-mcp-mode': 'operator' });
@@ -1796,19 +2076,22 @@ export default {
       if (!token) {
         return new Response(JSON.stringify({ error: 'Missing Bearer runtime key.' }), {
           status: 401,
-          headers: { 'Content-Type': 'application/json', 'WWW-Authenticate': 'Bearer' },
+          headers: { 'Content-Type': 'application/json', 'WWW-Authenticate': 'Bearer' }
         });
       }
       const tenant = await resolveTenantFromRuntimeKey(env.CONTROL_DB, token);
       if (!tenant) {
-        return new Response(JSON.stringify({ error: 'Invalid runtime key or CONTROL_DB unavailable.' }), {
-          status: 401,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return new Response(
+          JSON.stringify({ error: 'Invalid runtime key or CONTROL_DB unavailable.' }),
+          {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
       }
       const scoped = withInjectedHeaders(request, {
         'x-cs-mcp-mode': 'client',
-        'x-cs-tenant-scope': JSON.stringify(tenant),
+        'x-cs-tenant-scope': JSON.stringify(tenant)
       });
       return CSTelemetryMCP.serve('/client/mcp').fetch(scoped, env, ctx);
     }
@@ -1817,66 +2100,89 @@ export default {
       if (!token) {
         return new Response(JSON.stringify({ error: 'Missing Bearer runtime key.' }), {
           status: 401,
-          headers: { 'Content-Type': 'application/json', 'WWW-Authenticate': 'Bearer' },
+          headers: { 'Content-Type': 'application/json', 'WWW-Authenticate': 'Bearer' }
         });
       }
       const tenant = await resolveTenantFromRuntimeKey(env.CONTROL_DB, token);
       if (!tenant) {
-        return new Response(JSON.stringify({ error: 'Invalid runtime key or CONTROL_DB unavailable.' }), {
-          status: 401,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return new Response(
+          JSON.stringify({ error: 'Invalid runtime key or CONTROL_DB unavailable.' }),
+          {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
       }
       const scoped = withInjectedHeaders(request, {
         'x-cs-mcp-mode': 'client',
-        'x-cs-tenant-scope': JSON.stringify(tenant),
+        'x-cs-tenant-scope': JSON.stringify(tenant)
       });
       return CSTelemetryMCP.serve('/client/sse').fetch(scoped, env, ctx);
     }
 
     if (url.pathname === '/') {
       const workwayConfigured = Boolean(env.WORKWAY_D1_API_TOKEN?.trim());
-      return new Response(JSON.stringify({
-        name: SERVER_NAME, version: SERVER_VERSION,
-        description: 'Chat with CREATE SOMETHING + WORKWAY MCP fleets. Query health, usage, and errors in one place.',
-        fleet: FLEET_SERVERS,
-        fleets: {
-          cs: CS_FLEET_SERVERS,
-          workway: WORKWAY_FLEET_SERVERS,
-        },
-        sources: {
-          cs: {
-            label: 'create-something',
-            available: true,
+      return new Response(
+        JSON.stringify(
+          {
+            name: SERVER_NAME,
+            version: SERVER_VERSION,
+            description:
+              'Chat with CREATE SOMETHING + WORKWAY MCP fleets. Query health, usage, and errors in one place.',
+            fleet: FLEET_SERVERS,
+            fleets: {
+              cs: CS_FLEET_SERVERS,
+              workway: WORKWAY_FLEET_SERVERS
+            },
+            sources: {
+              cs: {
+                label: 'create-something',
+                available: true
+              },
+              workway: {
+                label: 'workway',
+                available: workwayConfigured,
+                reason: workwayConfigured
+                  ? null
+                  : 'Set WORKWAY_D1_API_TOKEN secret to enable WORKWAY telemetry queries.'
+              }
+            },
+            tools: [
+              'query_health',
+              'query_usage',
+              'query_gateway_usage',
+              'query_tenant_cost',
+              'query_budget_burn',
+              'query_decision_scorecard',
+              'query_tenant_sql',
+              'query_activity',
+              'query_errors',
+              'run_sql',
+              'describe_tables'
+            ],
+            resources: [
+              'fleet://status',
+              'telemetry://gateway/usage',
+              'telemetry://decision/scorecards',
+              'telemetry://client/overview'
+            ],
+            prompts: ['health_review', 'debug_server', 'client_performance_review'],
+            endpoints: {
+              operator: { mcp: '/mcp', sse: '/sse', auth: 'Bearer OPERATOR_API_TOKEN' },
+              client: {
+                mcp: '/client/mcp',
+                sse: '/client/sse',
+                auth: 'Bearer <tenant_runtime_key>'
+              }
+            }
           },
-          workway: {
-            label: 'workway',
-            available: workwayConfigured,
-            reason: workwayConfigured ? null : 'Set WORKWAY_D1_API_TOKEN secret to enable WORKWAY telemetry queries.',
-          },
-        },
-        tools: [
-          'query_health',
-          'query_usage',
-          'query_gateway_usage',
-          'query_tenant_cost',
-          'query_budget_burn',
-          'query_decision_scorecard',
-          'query_tenant_sql',
-          'query_activity',
-          'query_errors',
-          'run_sql',
-          'describe_tables',
-        ],
-        resources: ['fleet://status', 'telemetry://gateway/usage', 'telemetry://decision/scorecards', 'telemetry://client/overview'],
-        prompts: ['health_review', 'debug_server', 'client_performance_review'],
-        endpoints: {
-          operator: { mcp: '/mcp', sse: '/sse', auth: 'Bearer OPERATOR_API_TOKEN' },
-          client: { mcp: '/client/mcp', sse: '/client/sse', auth: 'Bearer <tenant_runtime_key>' },
-        },
-      }, null, 2), { headers: { 'Content-Type': 'application/json' } });
+          null,
+          2
+        ),
+        { headers: { 'Content-Type': 'application/json' } }
+      );
     }
 
     return new Response('Not found', { status: 404 });
-  },
+  }
 };
