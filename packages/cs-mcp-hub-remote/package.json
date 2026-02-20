@@ -1,0 +1,21 @@
+{
+  "name": "@create-something/cs-mcp-hub-remote",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Remote single-endpoint MCP hub for CREATE SOMETHING",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.3"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.0.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.3.0",
+    "wrangler": "^4.0.0"
+  }
+}

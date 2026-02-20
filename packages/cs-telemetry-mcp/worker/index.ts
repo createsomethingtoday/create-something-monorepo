@@ -29,6 +29,7 @@ interface Env {
   DB: D1Database;
   CONTROL_DB?: D1Database;
   OPERATOR_API_TOKEN?: string;
+  HUB_OPERATOR_API_TOKEN?: string;
   WORKWAY_D1_API_TOKEN?: string;
   WORKWAY_ACCOUNT_ID?: string;
   WORKWAY_TELEMETRY_DB_ID?: string;
@@ -101,6 +102,18 @@ function parseBearerToken(request: Request): string | null {
   const auth = request.headers.get('authorization');
   if (!auth?.startsWith('Bearer ')) return null;
   return auth.slice(7).trim();
+}
+
+function getOperatorTokens(env: Env): string[] {
+  return [env.OPERATOR_API_TOKEN, env.HUB_OPERATOR_API_TOKEN]
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value));
+}
+
+function isAuthorizedOperatorToken(token: string | null, env: Env): boolean {
+  if (!token) return false;
+  const tokens = getOperatorTokens(env);
+  return tokens.includes(token);
 }
 
 async function sha256Hex(input: string): Promise<string> {
@@ -2038,14 +2051,15 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
-      if (!env.OPERATOR_API_TOKEN) {
-        return new Response(JSON.stringify({ error: 'OPERATOR_API_TOKEN is not configured.' }), {
+      const operatorTokens = getOperatorTokens(env);
+      if (operatorTokens.length === 0) {
+        return new Response(JSON.stringify({ error: 'No operator token is configured.' }), {
           status: 503,
           headers: { 'Content-Type': 'application/json' }
         });
       }
       const token = parseBearerToken(request);
-      if (!token || token !== env.OPERATOR_API_TOKEN) {
+      if (!isAuthorizedOperatorToken(token, env)) {
         return new Response(JSON.stringify({ error: 'Unauthorized operator access.' }), {
           status: 401,
           headers: { 'Content-Type': 'application/json', 'WWW-Authenticate': 'Bearer' }
@@ -2055,14 +2069,15 @@ export default {
       return CSTelemetryMCP.serve('/mcp').fetch(scoped, env, ctx);
     }
     if (url.pathname === '/sse' || url.pathname.startsWith('/sse/')) {
-      if (!env.OPERATOR_API_TOKEN) {
-        return new Response(JSON.stringify({ error: 'OPERATOR_API_TOKEN is not configured.' }), {
+      const operatorTokens = getOperatorTokens(env);
+      if (operatorTokens.length === 0) {
+        return new Response(JSON.stringify({ error: 'No operator token is configured.' }), {
           status: 503,
           headers: { 'Content-Type': 'application/json' }
         });
       }
       const token = parseBearerToken(request);
-      if (!token || token !== env.OPERATOR_API_TOKEN) {
+      if (!isAuthorizedOperatorToken(token, env)) {
         return new Response(JSON.stringify({ error: 'Unauthorized operator access.' }), {
           status: 401,
           headers: { 'Content-Type': 'application/json', 'WWW-Authenticate': 'Bearer' }
