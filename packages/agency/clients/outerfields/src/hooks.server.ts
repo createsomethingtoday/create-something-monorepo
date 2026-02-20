@@ -1,11 +1,13 @@
 import type { Handle } from '@sveltejs/kit';
 import type { D1Database, KVNamespace } from '@cloudflare/workers-types';
+import { getUserRole } from '$lib/server/auth';
 
 interface SessionData {
 	userId: string;
 	email: string;
 	name: string;
 	membership: boolean;
+	role?: 'admin' | 'user';
 	createdAt: number;
 }
 
@@ -27,18 +29,21 @@ export const handle: Handle = async ({ event, resolve }) => {
 			// Retrieve session from KV
 			const sessionJson = await platform.env.SESSIONS.get(`session:${sessionToken}`);
 
-			if (sessionJson) {
-				const sessionData: SessionData = JSON.parse(sessionJson);
+				if (sessionJson) {
+					const sessionData: SessionData = JSON.parse(sessionJson);
+					const role: 'admin' | 'user' =
+						sessionData.role === 'admin' ? 'admin' : getUserRole(sessionData.email);
 
-				// Set user in locals for access in load functions
-				event.locals.user = {
-					id: sessionData.userId,
-					email: sessionData.email,
-					name: sessionData.name,
-					membership: sessionData.membership,
-					createdAt: new Date(sessionData.createdAt).toISOString()
-				};
-			}
+					// Set user in locals for access in load functions
+					event.locals.user = {
+						id: sessionData.userId,
+						email: sessionData.email,
+						name: sessionData.name,
+						membership: sessionData.membership,
+						role,
+						createdAt: new Date(sessionData.createdAt).toISOString()
+					};
+				}
 		} catch (error) {
 			console.error('Error retrieving session:', error);
 			// Clear invalid session cookie

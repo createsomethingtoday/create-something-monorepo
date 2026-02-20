@@ -20,8 +20,8 @@
 		formState = 'submitting';
 
 		try {
-			// In production, this would send to an API endpoint
-			// For demo purposes, we'll just simulate success
+			// TODO: Connect this form to the contact API endpoint.
+			// For now we simulate submission success.
 			await new Promise(resolve => setTimeout(resolve, 1000));
 			formState = 'success';
 
@@ -75,11 +75,11 @@
 
 				<div class="info-card">
 					<h2>Quick Links</h2>
-					<div class="quick-links">
-						<a href="/demo" class="quick-link">
-							<span class="quick-link-icon">▸</span>
-							<span>Try the Demo</span>
-						</a>
+						<div class="quick-links">
+							<a href="/demo" class="quick-link">
+								<span class="quick-link-icon">▸</span>
+								<span>Open Video Library</span>
+							</a>
 						<a href="/privacy" class="quick-link">
 							<span class="quick-link-icon">▸</span>
 							<span>Privacy Policy</span>

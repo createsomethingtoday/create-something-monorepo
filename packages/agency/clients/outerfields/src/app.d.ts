@@ -10,7 +10,7 @@ declare global {
 				name: string;
 				membership: boolean;
 				createdAt: string;
-				role?: string;
+				role?: 'admin' | 'user';
 			};
 		}
 		// interface PageData {}
@@ -20,6 +20,7 @@ declare global {
 				DB?: D1Database;
 				SESSIONS?: KVNamespace;
 				VIDEO_STATS?: KVNamespace;
+				VIDEO_ASSETS?: R2Bucket;
 				AI?: Ai;
 				ANTHROPIC_API_KEY?: string;
 				STRIPE_SECRET_KEY?: string;

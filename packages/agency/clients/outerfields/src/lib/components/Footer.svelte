@@ -43,13 +43,13 @@
 			<!-- Platform column -->
 			<div class="footer-column">
 				<h3 class="column-title">Platform</h3>
-				<ul class="column-links">
-					<li><a href="/#features">Features</a></li>
-					<li><a href="/#pricing">Pricing</a></li>
-					<li><a href="/demo">Demo</a></li>
-					<li><a href="/changelog">Changelog</a></li>
-				</ul>
-			</div>
+					<ul class="column-links">
+						<li><a href="/#features">Features</a></li>
+						<li><a href="/#pricing">Pricing</a></li>
+						<li><a href="/demo">Library</a></li>
+						<li><a href="/changelog">Changelog</a></li>
+					</ul>
+				</div>
 
 			<!-- Company column -->
 			<div class="footer-column">

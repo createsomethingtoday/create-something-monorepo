@@ -5,7 +5,8 @@
  */
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getPendingProposals, createProposal } from '$lib/server/proposals';
+import { createProposal } from '$lib/server/proposals';
+import { isAdminUser } from '$lib/server/auth';
 
 /**
  * GET /api/admin/proposals
@@ -13,16 +14,15 @@ import { getPendingProposals, createProposal } from '$lib/server/proposals';
  * List proposals (with optional filters)
  */
 export const GET: RequestHandler = async ({ url, platform, locals }) => {
+  if (!isAdminUser(locals.user)) {
+    return json({ error: 'Not authorized' }, { status: 403 });
+  }
+
   const db = platform?.env?.DB;
   
   if (!db) {
     return json({ proposals: [], total: 0, error: 'Database not available' });
   }
-  
-  // TODO: Add proper admin auth check
-  // if (!locals.user?.isAdmin) {
-  //   return json({ error: 'Unauthorized' }, { status: 401 });
-  // }
   
   const status = url.searchParams.get('status') || 'pending';
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
@@ -56,7 +56,11 @@ export const GET: RequestHandler = async ({ url, platform, locals }) => {
  * 
  * Create a new proposal (for testing/manual creation)
  */
-export const POST: RequestHandler = async ({ request, platform }) => {
+export const POST: RequestHandler = async ({ request, platform, locals }) => {
+  if (!isAdminUser(locals.user)) {
+    return json({ error: 'Not authorized' }, { status: 403 });
+  }
+
   const db = platform?.env?.DB;
   
   if (!db) {

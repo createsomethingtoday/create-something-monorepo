@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { getUserRole } from '$lib/server/auth';
 
 // Simple password hashing for demo (in production use bcrypt)
 async function hashPassword(password: string): Promise<string> {
@@ -51,20 +52,23 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 		}
 
 		// Verify password
-		const passwordValid = await verifyPassword(password, result.password_hash);
-		if (!passwordValid) {
-			return json({ success: false, error: 'Invalid credentials' }, { status: 401 });
-		}
+			const passwordValid = await verifyPassword(password, result.password_hash);
+			if (!passwordValid) {
+				return json({ success: false, error: 'Invalid credentials' }, { status: 401 });
+			}
+
+			const role = getUserRole(result.email);
 
 		// Create session
 		const sessionToken = crypto.randomUUID();
-		const sessionData = {
-			userId: result.id,
-			email: result.email,
-			name: result.name,
-			membership: result.membership === 1,
-			createdAt: Date.now()
-		};
+			const sessionData = {
+				userId: result.id,
+				email: result.email,
+				name: result.name,
+				membership: result.membership === 1,
+				role,
+				createdAt: Date.now()
+			};
 
 		// Store session in KV with 24-hour expiration
 		await platform.env.SESSIONS.put(
@@ -84,13 +88,14 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 		});
 
 		// Return user data (without password hash)
-		const user = {
-			id: result.id,
-			email: result.email,
-			name: result.name,
-			membership: result.membership === 1,
-			createdAt: new Date(result.created_at).toISOString()
-		};
+			const user = {
+				id: result.id,
+				email: result.email,
+				name: result.name,
+				membership: result.membership === 1,
+				role,
+				createdAt: new Date(result.created_at).toISOString()
+			};
 
 		return json({ success: true, data: { user } });
 	} catch (err) {

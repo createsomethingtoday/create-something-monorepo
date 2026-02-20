@@ -40,6 +40,9 @@
 
 	// Get thumbnail URL
 	function getThumbnailSrc(thumbnailPath: string): string {
+		if (thumbnailPath.startsWith('http://') || thumbnailPath.startsWith('https://')) {
+			return thumbnailPath;
+		}
 		if (thumbnailPath.startsWith('/thumbnails/')) return thumbnailPath;
 		return `/thumbnails${thumbnailPath.startsWith('/') ? '' : '/'}${thumbnailPath}`;
 	}
