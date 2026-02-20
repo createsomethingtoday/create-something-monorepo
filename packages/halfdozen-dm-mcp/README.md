@@ -6,10 +6,11 @@ v1 ships with **Notion tools only** (single client workspace, single key), while
 
 ## Setup
 
-1. Add Notion integration key as Worker secret:
+1. Add Worker secrets:
 
 ```bash
 cd packages/halfdozen-dm-mcp/worker
+wrangler secret put MCP_API_KEY
 wrangler secret put NOTION_API_KEY
 ```
 
@@ -39,8 +40,20 @@ cd packages/halfdozen-dm-mcp/worker
 pnpm exec wrangler deploy
 ```
 
+## Auth
+
+`/mcp` and `/sse` require `MCP_API_KEY`.
+
+Accepted auth forms:
+
+- `Authorization: Bearer <MCP_API_KEY>`
+- `X-API-Key: <MCP_API_KEY>`
+
+If `MCP_API_KEY` is missing in a deployment, the server returns `500` on MCP transport routes to indicate misconfiguration.
+
 ## Environment
 
+- `MCP_API_KEY` (secret): transport auth token required for `/mcp` and `/sse`
 - `NOTION_API_KEY` (secret): DM client Notion integration token
 - `WORKSPACE_CLIENT_LABEL` (var): default `DM`
 - `WORKSPACE_CLIENT_DESCRIPTION` (var): default `DM Notion workspace`
@@ -75,3 +88,34 @@ DM v1 targets a single workspace, so tool inputs do **not** include a `workspace
 - `dm://tools` — canonical list of exposed tools
 - `dm://toolsets` — enabled toolsets and workspace target
 
+## Client Setup
+
+### Codex (`~/.codex/config.toml`)
+
+```toml
+[mcp_servers.halfdozen-dm-mcp]
+url = "https://dm.mcp.workway.co/mcp"
+enabled = true
+bearer_token_env_var = "HALFDOZEN_DM_MCP_API_KEY"
+```
+
+Set the token in your shell/profile:
+
+```bash
+export HALFDOZEN_DM_MCP_API_KEY="YOUR_DM_MCP_API_KEY"
+```
+
+### Claude Desktop (`claude_desktop_config.json`)
+
+```json
+{
+  "mcpServers": {
+    "halfdozen-dm-mcp": {
+      "url": "https://dm.mcp.workway.co/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_DM_MCP_API_KEY"
+      }
+    }
+  }
+}
+```

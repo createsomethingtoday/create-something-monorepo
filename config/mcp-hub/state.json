@@ -3,9 +3,7 @@
     "core",
     "observability"
   ],
-  "enabledServers": [
-    "halfdozen-dm-mcp"
-  ],
+  "enabledServers": [],
   "disabledServers": [],
-  "updatedAt": "2026-02-19T22:21:36.726Z"
+  "updatedAt": "2026-02-19T23:02:04Z"
 }

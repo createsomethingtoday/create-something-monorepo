@@ -13,6 +13,7 @@ import { getNotionClient, requireNotionClient } from '../src/lib/notion.js';
 import { registerNotionTools } from '../src/tools/index.js';
 import { DM_NOTION_TOOLS, registerToolsetsResource, registerToolsResource } from '../src/resources.js';
 import { registerTaskWorkflowPrompt } from '../src/prompts.js';
+import { validateApiKey } from './lib/auth.js';
 
 // =============================================================================
 // Types
@@ -21,6 +22,7 @@ import { registerTaskWorkflowPrompt } from '../src/prompts.js';
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   FEEDBACK_DB: D1Database;
+  MCP_API_KEY?: string;
   NOTION_API_KEY?: string;
   WORKSPACE_CLIENT_LABEL?: string;
   WORKSPACE_CLIENT_DESCRIPTION?: string;
@@ -78,10 +80,14 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
+      const authError = validateApiKey(request, env);
+      if (authError) return authError;
       return HalfDozenDmMcp.serve('/mcp').fetch(request, env, ctx);
     }
 
     if (url.pathname === '/sse' || url.pathname.startsWith('/sse/')) {
+      const authError = validateApiKey(request, env);
+      if (authError) return authError;
       return HalfDozenDmMcp.serve('/sse').fetch(request, env, ctx);
     }
 
@@ -96,7 +102,10 @@ export default {
             description: config.description,
             toolsets: config.enabledToolsets,
             tools: DM_NOTION_TOOLS.map((t) => t.name),
-            auth: { client: `NOTION_API_KEY — ${config.clientLabel}` },
+            auth: {
+              transport: 'Authorization: Bearer <MCP_API_KEY> or X-API-Key',
+              upstream: `NOTION_API_KEY (server-side secret) — ${config.clientLabel}`,
+            },
             endpoints: { mcp: '/mcp', sse: '/sse' },
           },
           null,

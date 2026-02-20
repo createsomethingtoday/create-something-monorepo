@@ -35,4 +35,5 @@ MCP_DESCRIPTION = "Half Dozen DM MCP. Notion tools enabled in v1; additional too
 ENABLED_TOOLSETS = "notion"
 
 # Secrets (set via wrangler secret put)
+# MCP_API_KEY — required for DM MCP transport auth (Bearer or X-API-Key)
 # NOTION_API_KEY — DM client Notion workspace
