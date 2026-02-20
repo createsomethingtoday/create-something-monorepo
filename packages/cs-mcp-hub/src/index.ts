@@ -379,6 +379,7 @@ function buildStatusPayload(
 ): Record<string, unknown> {
   const state = loadState(paths);
   const resolution = resolveState(registry, state);
+  const connectionsPayload = buildConnectionsPayload(registry, downstream, resolution.enabledServerNames);
 
   return {
     hub: {
@@ -397,6 +398,13 @@ function buildStatusPayload(
       toolCount: server.tools.length,
     })),
     failedServers: downstream.failed,
+    connectionSummary: {
+      enabledServerNames: connectionsPayload.enabledServerNames,
+      totalConfiguredServers: connectionsPayload.totalConfiguredServers,
+      connected: connectionsPayload.connected,
+      failed: connectionsPayload.failed,
+      idle: connectionsPayload.idle,
+    },
     proxyToolCount: proxies.toolDefinitions.length,
     bundles: Object.keys(registry.bundles)
       .sort()

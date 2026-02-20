@@ -33,16 +33,6 @@
 	// Environment variables (secrets set via wrangler secret put)
 	"vars": {
 		"ENVIRONMENT": "production"
-	},
-
-	// Daily/hourly cron jobs for analytics snapshots and cleanup tasks
-	// Cron jobs are executed by Cloudflare Workers/Pages cron triggers and should
-	// continue to call these HTTP routes for maintenance tasks.
-	"triggers": {
-		"crons": [
-			"0 0 * * *",
-			"0 1 * * *"
-		]
 	}
 
 	// Cron triggers: Configure in Cloudflare Dashboard > Workers & Pages > webflow-dashboard > Triggers
