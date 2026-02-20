@@ -66,10 +66,23 @@
 		}
 	});
 
-	// Scroll to hash after navigation
-	afterNavigate(({ to }) => {
+	// Scroll handling after navigation:
+	// - Hash links scroll to section
+	// - Page links scroll to top (except popstate/back-forward)
+	afterNavigate(({ to, from, type }) => {
 		if (to?.url.hash) {
 			setTimeout(() => scrollToHash(to.url.hash), 100);
+			return;
+		}
+
+		if (type === 'popstate' || type === 'enter') return;
+		if (!to || !from) return;
+
+		const changedPath = to.url.pathname !== from.url.pathname || to.url.search !== from.url.search;
+		if (changedPath) {
+			requestAnimationFrame(() => {
+				window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+			});
 		}
 	});
 
