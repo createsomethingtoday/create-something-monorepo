@@ -50,7 +50,8 @@
 	}: Props = $props();
 
 	let touched = $state(false);
-	let fieldId = $state(name || `field-${Math.random().toString(36).slice(2, 9)}`);
+	const fallbackFieldId = `field-${Math.random().toString(36).slice(2, 9)}`;
+	const fieldId = $derived(name || fallbackFieldId);
 
 	// Show error only after field has been touched (if validateOnBlur)
 	const showError = $derived(error && (!validateOnBlur || touched));

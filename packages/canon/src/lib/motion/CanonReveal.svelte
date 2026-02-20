@@ -230,10 +230,6 @@
 
 	/* Reduced motion */
 	@media (prefers-reduced-motion: reduce) {
-		.canon-reveal {
-			/* For reduced motion, show text immediately */
-		}
-
 		.reveal-text {
 			opacity: 1 !important;
 			filter: none !important;

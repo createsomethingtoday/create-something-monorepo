@@ -1,0 +1,12 @@
+{
+  "enabledBundles": [
+    "core",
+    "halfdozen-observability",
+    "observability"
+  ],
+  "enabledServers": [
+    "notion-halfdozen-create-something"
+  ],
+  "disabledServers": [],
+  "updatedAt": "2026-02-20T04:49:11.104Z"
+}

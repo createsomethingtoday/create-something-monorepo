@@ -32,7 +32,7 @@
 		return scenes[index % scenes.length];
 	}
 
-	const animationScene = getAnimationScene(paper);
+	const animationScene = $derived(getAnimationScene(paper));
 
 	// Map category to display name
 	const categoryDisplayNames: Record<string, string> = {
@@ -41,16 +41,18 @@
 		development: 'Development',
 	};
 
-	const categoryDisplayName = categoryDisplayNames[paper.category] || paper.category;
+	const categoryDisplayName = $derived(categoryDisplayNames[paper.category] || paper.category);
 
 	// Format date
-	const formattedDate = paper.published_at
-		? new Date(paper.published_at).toLocaleDateString('en-US', {
-				month: 'long',
-				day: 'numeric',
-				year: 'numeric',
-			})
-		: null;
+	const formattedDate = $derived(
+		paper.published_at
+			? new Date(paper.published_at).toLocaleDateString('en-US', {
+					month: 'long',
+					day: 'numeric',
+					year: 'numeric',
+				})
+			: null
+	);
 </script>
 
 <a href={`/experiments/${paper.slug}`} class="block h-full">

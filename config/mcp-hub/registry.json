@@ -1,0 +1,409 @@
+{
+  "version": 1,
+  "servers": {
+    "create-something": {
+      "transport": "http",
+      "url": "https://mcp.createsomething.ltd/mcp",
+      "description": "CREATE SOMETHING content MCP",
+      "tags": [
+        "core",
+        "content",
+        "cs"
+      ],
+      "catalog": {
+        "include": true,
+        "name": "CREATE SOMETHING Content",
+        "slug": "create-something",
+        "category": "create-something",
+        "requiresAuth": false,
+        "transports": [
+          "http",
+          "sse"
+        ]
+      }
+    },
+    "three-tier-framework": {
+      "transport": "http",
+      "url": "https://framework.mcp.createsomething.agency/mcp",
+      "description": "Three-Tier Framework MCP",
+      "tags": [
+        "core",
+        "framework",
+        "cs"
+      ],
+      "catalog": {
+        "include": true,
+        "name": "Three-Tier Framework",
+        "slug": "three-tier-framework",
+        "category": "create-something",
+        "requiresAuth": false,
+        "transports": [
+          "http",
+          "sse"
+        ]
+      }
+    },
+    "playbook": {
+      "transport": "http",
+      "url": "https://playbook.mcp.createsomething.ltd/mcp",
+      "description": "Workflow playbooks MCP",
+      "tags": [
+        "core",
+        "workflow",
+        "cs"
+      ],
+      "catalog": {
+        "include": true,
+        "name": "Playbook",
+        "slug": "playbook",
+        "category": "create-something",
+        "requiresAuth": false,
+        "transports": [
+          "http",
+          "sse"
+        ]
+      }
+    },
+    "cs-telemetry": {
+      "transport": "http",
+      "url": "https://cs-telemetry-mcp.createsomething.workers.dev/mcp",
+      "description": "Fleet telemetry MCP for CREATE SOMETHING account",
+      "bearer_token_env_var": "CS_TELEMETRY_OPERATOR_API_TOKEN",
+      "tags": [
+        "observability",
+        "telemetry",
+        "cs"
+      ]
+    },
+    "schedule-mcp": {
+      "transport": "http",
+      "url": "https://schedule.mcp.createsomething.agency/mcp",
+      "description": "Scheduling MCP",
+      "tags": [
+        "ops",
+        "scheduling",
+        "cs"
+      ],
+      "catalog": {
+        "include": true,
+        "name": "Schedule",
+        "slug": "schedule",
+        "category": "create-something",
+        "requiresAuth": false,
+        "transports": [
+          "http",
+          "sse"
+        ]
+      }
+    },
+    "substrate-mcp": {
+      "transport": "http",
+      "url": "https://substrate.mcp.createsomething.agency/mcp",
+      "description": "Substrate execution/storage MCP",
+      "tags": [
+        "ops",
+        "automation",
+        "cs"
+      ],
+      "catalog": {
+        "include": true,
+        "name": "Substrate",
+        "slug": "substrate",
+        "category": "create-something",
+        "requiresAuth": true,
+        "authType": "bearer",
+        "transports": [
+          "http",
+          "sse"
+        ]
+      }
+    },
+    "outerfields-pcn": {
+      "transport": "http",
+      "url": "https://outerfields.mcp.createsomething.agency/mcp",
+      "description": "OUTERFIELDS remote MCP",
+      "tags": [
+        "agency",
+        "outerfields",
+        "cs"
+      ],
+      "catalog": {
+        "include": true,
+        "name": "Outerfields PCN",
+        "slug": "outerfields",
+        "category": "create-something",
+        "requiresAuth": false,
+        "transports": [
+          "http",
+          "sse"
+        ]
+      }
+    },
+    "gmail-notion-mcp": {
+      "transport": "http",
+      "url": "https://gmail-notion-mcp.createsomething.workers.dev/mcp",
+      "description": "Dormant Gmail to Notion MCP prototype",
+      "tags": [
+        "dormant",
+        "prototype",
+        "cs"
+      ]
+    },
+    "notion-sync-mcp": {
+      "transport": "http",
+      "url": "https://notion-sync-mcp-worker.createsomething.workers.dev/mcp",
+      "description": "Dormant Notion sync MCP prototype",
+      "tags": [
+        "dormant",
+        "prototype",
+        "cs"
+      ]
+    },
+    "notion-halfdozen-create-something": {
+      "transport": "http",
+      "url": "https://createsomething-notion.mcp.workway.co/mcp",
+      "description": "Half Dozen Notion MCP for CREATE SOMETHING",
+      "tags": [
+        "halfdozen",
+        "notion",
+        "workway"
+      ]
+    },
+    "halfdozen-dm-mcp": {
+      "transport": "http",
+      "url": "https://dm.mcp.workway.co/mcp",
+      "description": "Half Dozen DM MCP (Notion CRUD + DM-scoped Google Drive sync)",
+      "tags": [
+        "halfdozen",
+        "dm",
+        "notion",
+        "drive",
+        "composio",
+        "workway"
+      ]
+    },
+    "half-dozen-youtube-sync": {
+      "transport": "http",
+      "url": "https://youtube.mcp.workway.co/mcp",
+      "description": "Half Dozen YouTube sync MCP",
+      "tags": [
+        "halfdozen",
+        "youtube",
+        "workway"
+      ],
+      "catalog": {
+        "include": true,
+        "name": "YouTube Sync",
+        "slug": "youtube-sync",
+        "category": "workway",
+        "requiresAuth": true,
+        "transports": [
+          "http",
+          "sse"
+        ]
+      }
+    },
+    "halfdozen-gmail-sync-danny": {
+      "transport": "http",
+      "url": "https://gmail.mcp.workway.co/mcp",
+      "description": "Half Dozen Gmail sync MCP (Danny)",
+      "tags": [
+        "halfdozen",
+        "gmail",
+        "workway"
+      ],
+      "catalog": {
+        "include": true,
+        "name": "Gmail Sync",
+        "slug": "gmail-sync",
+        "category": "workway",
+        "requiresAuth": true,
+        "transports": [
+          "http",
+          "sse"
+        ]
+      }
+    },
+    "halfdozen-gmail-sync-fillip": {
+      "transport": "http",
+      "url": "https://fillip-gmail.mcp.workway.co/mcp",
+      "description": "Half Dozen Gmail sync MCP (Fillip)",
+      "tags": [
+        "halfdozen",
+        "gmail",
+        "workway"
+      ]
+    },
+    "halfdozen-gmail-sync-leah": {
+      "transport": "http",
+      "url": "https://leah-gmail.mcp.workway.co/mcp",
+      "description": "Half Dozen Gmail sync MCP (Leah)",
+      "tags": [
+        "halfdozen",
+        "gmail",
+        "workway"
+      ]
+    },
+    "halfdozen-zoom-sync": {
+      "transport": "http",
+      "url": "https://zoom.mcp.workway.co/mcp",
+      "description": "Half Dozen Zoom sync MCP",
+      "tags": [
+        "halfdozen",
+        "zoom",
+        "workway"
+      ],
+      "catalog": {
+        "include": true,
+        "name": "Zoom Sync",
+        "slug": "zoom-sync",
+        "category": "workway",
+        "requiresAuth": true,
+        "transports": [
+          "http",
+          "sse"
+        ]
+      }
+    },
+    "halfdozen-telemetry": {
+      "transport": "http",
+      "url": "https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp",
+      "description": "Fleet telemetry MCP for WORKWAY account",
+      "bearer_token_env_var": "HALFDOZEN_TELEMETRY_OPERATOR_API_TOKEN",
+      "tags": [
+        "observability",
+        "telemetry",
+        "workway"
+      ]
+    },
+    "quickbooks-notion-mcp-server": {
+      "transport": "http",
+      "url": "https://quickbooks.mcp.workway.co/mcp",
+      "description": "QuickBooks to Notion MCP server",
+      "tags": [
+        "finance",
+        "quickbooks",
+        "notion",
+        "workway"
+      ],
+      "catalog": {
+        "include": true,
+        "name": "QuickBooks Notion Sync",
+        "slug": "quickbooks-notion",
+        "category": "workway",
+        "requiresAuth": true,
+        "authType": "oauth",
+        "transports": [
+          "http",
+          "sse"
+        ]
+      }
+    },
+    "meetings": {
+      "transport": "http",
+      "url": "https://meetings-mcp.createsomething.workers.dev/mcp",
+      "description": "Meetings MCP (requires API key via bearer_token_env_var or header auth)",
+      "tags": [
+        "meetings",
+        "cs"
+      ],
+      "bearer_token_env_var": "MEETINGS_MCP_API_KEY"
+    },
+    "webflow-local": {
+      "transport": "stdio",
+      "command": "node",
+      "args": [
+        "./packages/webflow-mcp/dist/index.js"
+      ],
+      "description": "Local Webflow MCP from this monorepo",
+      "tags": [
+        "local",
+        "dev",
+        "webflow"
+      ]
+    },
+    "webflow-site-analyzer-mcp": {
+      "transport": "stdio",
+      "command": "node",
+      "args": [
+        "./packages/webflow-site-analyzer-mcp/dist/index.js"
+      ],
+      "description": "Local Webflow Site Analyzer MCP from this monorepo",
+      "tags": [
+        "local",
+        "dev",
+        "webflow"
+      ]
+    },
+    "lsmcp": {
+      "transport": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@mizchi/lsmcp",
+        "mcp"
+      ],
+      "description": "Local file-system MCP utility",
+      "tags": [
+        "local",
+        "dev",
+        "filesystem"
+      ]
+    }
+  },
+  "bundles": {
+    "core": [
+      "create-something",
+      "three-tier-framework",
+      "playbook"
+    ],
+    "observability": [
+      "cs-telemetry"
+    ],
+    "ops": [
+      "schedule-mcp",
+      "substrate-mcp"
+    ],
+    "agency": [
+      "outerfields-pcn"
+    ],
+    "dormant": [
+      "gmail-notion-mcp",
+      "notion-sync-mcp"
+    ],
+    "halfdozen": [
+      "notion-halfdozen-create-something",
+      "halfdozen-dm-mcp",
+      "half-dozen-youtube-sync"
+    ],
+    "halfdozen-sync": [
+      "halfdozen-gmail-sync-danny",
+      "halfdozen-gmail-sync-fillip",
+      "halfdozen-gmail-sync-leah",
+      "halfdozen-zoom-sync"
+    ],
+    "halfdozen-observability": [
+      "halfdozen-telemetry"
+    ],
+    "meetings": [
+      "meetings"
+    ],
+    "finance": [
+      "quickbooks-notion-mcp-server"
+    ],
+    "local-dev": [
+      "webflow-local",
+      "webflow-site-analyzer-mcp",
+      "lsmcp"
+    ]
+  },
+  "defaults": {
+    "enabledBundles": [
+      "core",
+      "observability"
+    ],
+    "enabledServers": [],
+    "disabledServers": [],
+    "codexConfigPath": ".codex/config.toml"
+  }
+}

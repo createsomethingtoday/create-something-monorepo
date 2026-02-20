@@ -44,7 +44,7 @@
 	}: Props = $props();
 
 	// Local state
-	let selected = $state<Set<string>>(new Set(selectedIds));
+	let selected = $state<Set<string>>(new Set());
 	let note = $state('');
 	let isCreating = $state(false);
 	let newCollectionName = $state('');

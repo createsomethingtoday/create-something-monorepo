@@ -1,0 +1,40 @@
+name: Svelte Strict Check
+
+on:
+  pull_request:
+    paths:
+      - 'packages/**/src/**/*.svelte'
+      - 'packages/**/package.json'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/svelte-strict-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  svelte-strict-check:
+    name: pnpm check (strict warnings)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Strict workspace check
+        run: pnpm check

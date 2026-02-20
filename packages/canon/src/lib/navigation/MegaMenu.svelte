@@ -295,20 +295,21 @@
 		}
 	});
 
-	const panelWidthStyle = panelWidth === 'auto'
-		? ''
-		: panelWidth === 'full'
-			? 'width: 100%; left: 0; right: 0;'
-			: `width: ${panelWidth};`;
+	const panelWidthStyle = $derived(
+		panelWidth === 'auto'
+			? ''
+			: panelWidth === 'full'
+				? 'width: 100%; left: 0; right: 0;'
+				: `width: ${panelWidth};`
+	);
 </script>
 
-<nav
-	bind:this={menuElement}
-	class="mega-menu {className}"
-	class:reduced-motion={prefersReducedMotion}
-	role="navigation"
-	aria-label="Main navigation"
->
+	<nav
+		bind:this={menuElement}
+		class="mega-menu {className}"
+		class:reduced-motion={prefersReducedMotion}
+		aria-label="Main navigation"
+	>
 	<ul class="menu-list" role="menubar">
 		{#each items as item, index (item.id)}
 			<li class="menu-item" role="none">
@@ -346,14 +347,15 @@
 
 					<!-- Dropdown panel -->
 					{#if activeItemId === item.id && item.sections}
-						<div
-							class="menu-panel"
-							class:has-featured={!!item.featured}
-							style={panelWidthStyle}
-							role="menu"
-							aria-label="{item.label} menu"
-							data-panel={item.id}
-							onmouseenter={handlePanelMouseEnter}
+							<div
+								class="menu-panel"
+								class:has-featured={!!item.featured}
+								style={panelWidthStyle}
+								role="menu"
+								tabindex={0}
+								aria-label="{item.label} menu"
+								data-panel={item.id}
+								onmouseenter={handlePanelMouseEnter}
 							onmouseleave={handlePanelMouseLeave}
 						>
 							<div class="panel-content">

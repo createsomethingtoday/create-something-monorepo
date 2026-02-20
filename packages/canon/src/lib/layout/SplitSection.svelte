@@ -45,9 +45,9 @@
 		right
 	}: Props = $props();
 
-	const alignClass = `split--align-${align}`;
-	const gapClass = `split--gap-${gap}`;
-	const stackClass = `split--stack-${stackAt}`;
+	const alignClass = $derived(`split--align-${align}`);
+	const gapClass = $derived(`split--gap-${gap}`);
+	const stackClass = $derived(`split--stack-${stackAt}`);
 </script>
 
 <div

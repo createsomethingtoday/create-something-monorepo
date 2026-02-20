@@ -32,8 +32,8 @@
 	}: Props = $props();
 
 	// Determine if this video should show as locked
-	const isLocked = tier === 'gated';
-	const isFree = tier === 'free';
+	const isLocked = $derived(tier === 'gated');
+	const isFree = $derived(tier === 'free');
 
 	// Use link if href provided and no onClick, otherwise use button
 	const useLink = $derived(!!href && !onClick);

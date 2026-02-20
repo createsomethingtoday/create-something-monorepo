@@ -36,7 +36,7 @@
 	}: Props = $props();
 	
 	let element: HTMLElement;
-	let isVisible = $state(!inView);
+	let isVisible = $state(false);
 	
 	onMount(() => {
 		if (!inView) {

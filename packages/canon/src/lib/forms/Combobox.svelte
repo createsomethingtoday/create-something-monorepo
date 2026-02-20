@@ -58,6 +58,7 @@
 	let highlightedIndex = $state(0);
 	let inputRef: HTMLInputElement | undefined = $state();
 	let listRef: HTMLUListElement | undefined = $state();
+	const listboxId = `combobox-${crypto.randomUUID().slice(0, 8)}`;
 
 	// Filter options based on query
 	const filteredOptions = $derived(
@@ -141,6 +142,13 @@
 		}
 	}
 
+	function handleOptionKeydown(event: KeyboardEvent, option: Option) {
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			selectOption(option);
+		}
+	}
+
 	function scrollToHighlighted() {
 		if (listRef) {
 			const item = listRef.children[highlightedIndex] as HTMLElement;
@@ -175,7 +183,7 @@
 </script>
 
 <div class="combobox" class:open class:disabled>
-	<div class="combobox-trigger" onclick={openDropdown}>
+	<div class="combobox-trigger">
 		<input
 			bind:this={inputRef}
 			type="text"
@@ -191,6 +199,7 @@
 			{disabled}
 			role="combobox"
 			aria-expanded={open}
+			aria-controls={listboxId}
 			aria-haspopup="listbox"
 			aria-autocomplete="list"
 			autocomplete="off"
@@ -221,6 +230,7 @@
 	{#if open}
 		<ul
 			bind:this={listRef}
+			id={listboxId}
 			class="combobox-dropdown"
 			role="listbox"
 			aria-label="Options"
@@ -235,8 +245,10 @@
 						class:selected={option.value === value}
 						class:disabled={option.disabled}
 						onclick={() => selectOption(option)}
+						onkeydown={(event) => handleOptionKeydown(event, option)}
 						onmouseenter={() => (highlightedIndex = index)}
 						role="option"
+						tabindex={option.disabled ? -1 : 0}
 						aria-selected={option.value === value}
 						aria-disabled={option.disabled}
 					>

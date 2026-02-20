@@ -7,7 +7,8 @@
 import type { Env, TranscriptionResult, SummaryResult } from '../types';
 
 const WHISPER_MODEL = '@cf/openai/whisper-large-v3-turbo';
-const WHISPER_LIMIT = 25 * 1024 * 1024; // 25MB Whisper API limit - larger files use AssemblyAI
+const WHISPER_API_LIMIT = 25 * 1024 * 1024; // Cloudflare Whisper request limit
+const WHISPER_SAFE_LIMIT = 8 * 1024 * 1024; // Keep well below API limit to avoid worker memory/CPU spikes
 
 /**
  * Process audio: transcribe with Whisper, summarize with Claude
@@ -78,7 +79,7 @@ export async function processAudio(
 }
 
 /**
- * Transcribe audio - uses Whisper for small files, AssemblyAI for large files
+ * Transcribe audio - uses Whisper for small files, AssemblyAI for larger files
  * Falls back to AssemblyAI if Whisper fails (e.g., m4a format issues)
  */
 async function transcribeAudioChunked(
@@ -88,8 +89,9 @@ async function transcribeAudioChunked(
   const totalSize = audioBuffer.byteLength;
   console.log(`Transcribing audio: ${totalSize} bytes (${(totalSize / 1024 / 1024).toFixed(2)} MB)`);
 
-  // If file is small enough, try Cloudflare Workers AI (Whisper) first
-  if (totalSize <= WHISPER_LIMIT) {
+  // Whisper accepts up to 25MB, but base64 conversion inside a Worker can
+  // exceed memory/CPU limits on larger files. Route larger files to AssemblyAI.
+  if (totalSize <= WHISPER_SAFE_LIMIT) {
     console.log('Trying Cloudflare Workers AI (Whisper)');
     try {
       return await transcribeWithWhisper(audioBuffer, env);
@@ -107,12 +109,16 @@ async function transcribeAudioChunked(
     }
   }
 
-  // Large file: use AssemblyAI directly
+  // Larger file: use AssemblyAI directly
   if (!env.ASSEMBLYAI_API_KEY) {
-    throw new Error(`Audio file too large (${(totalSize / 1024 / 1024).toFixed(2)} MB) and no ASSEMBLYAI_API_KEY configured`);
+    throw new Error(
+      `Audio file too large for safe in-worker Whisper processing (${(totalSize / 1024 / 1024).toFixed(2)} MB). ` +
+      `Configure ASSEMBLYAI_API_KEY for files above ${(WHISPER_SAFE_LIMIT / 1024 / 1024).toFixed(0)} MB ` +
+      `(Whisper API hard limit: ${(WHISPER_API_LIMIT / 1024 / 1024).toFixed(0)} MB).`
+    );
   }
 
-  console.log('File exceeds Whisper limit, using AssemblyAI');
+  console.log('File exceeds safe Whisper limit, using AssemblyAI');
   return transcribeWithAssemblyAI(audioBuffer, env);
 }
 
@@ -238,10 +244,14 @@ function sleep(ms: number): Promise<void> {
 
 function bufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
   let binary = '';
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
+
+  for (let i = 0; i < bytes.byteLength; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode(...chunk);
   }
+
   return btoa(binary);
 }
 

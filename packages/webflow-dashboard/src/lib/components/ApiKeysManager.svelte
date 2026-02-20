@@ -410,12 +410,12 @@
 		font-size: var(--text-body-sm);
 	}
 
-	.success-card {
+	:global(.success-card) {
 		border-color: var(--color-success-border);
 		background: var(--color-success-muted);
 	}
 
-	.success-title {
+	:global(.success-title) {
 		display: flex;
 		align-items: center;
 		gap: var(--space-sm);
@@ -465,7 +465,7 @@
 		color: var(--color-fg-primary);
 	}
 
-	.generate-form-card {
+	:global(.generate-form-card) {
 		border-color: var(--color-info-border);
 	}
 
@@ -658,20 +658,20 @@
 		gap: var(--space-xs);
 	}
 
-	.revoke-btn {
+	:global(.revoke-btn) {
 		color: var(--color-error);
 	}
 
-	.revoke-btn:hover {
+	:global(.revoke-btn:hover) {
 		background: var(--color-error-muted);
 	}
 
-	.docs-card {
+	:global(.docs-card) {
 		background: var(--color-info-muted);
 		border-color: var(--color-info-border);
 	}
 
-	.docs-title {
+	:global(.docs-title) {
 		display: flex;
 		align-items: center;
 		gap: var(--space-sm);

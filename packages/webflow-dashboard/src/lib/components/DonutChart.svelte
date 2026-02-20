@@ -16,13 +16,13 @@
 
 	let { data, size = 200, thickness = 30 }: Props = $props();
 
-	const radius = size / 2;
-	const innerRadius = radius - thickness;
-	const circumference = 2 * Math.PI * (radius - thickness / 2);
+	const radius = $derived(size / 2);
+	const innerRadius = $derived(radius - thickness);
+	const circumference = $derived(2 * Math.PI * (radius - thickness / 2));
 
 	// Calculate total and percentages
-	const total = $derived(data.reduce((sum, item) => sum + item.value, 0));
-	const segments = $derived(
+	const total = $derived.by(() => data.reduce((sum, item) => sum + item.value, 0));
+	const segments = $derived.by(() =>
 		data.map((item, index) => {
 			const percentage = total > 0 ? item.value / total : 0;
 			const dashArray = percentage * circumference;

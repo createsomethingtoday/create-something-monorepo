@@ -42,8 +42,9 @@
 	}: Props = $props();
 
 	// Generate unique ID if not provided
-	const fieldId = id || `switch-${crypto.randomUUID().slice(0, 8)}`;
-	const descriptionId = `${fieldId}-description`;
+	const fallbackFieldId = `switch-${crypto.randomUUID().slice(0, 8)}`;
+	const fieldId = $derived(id || fallbackFieldId);
+	const descriptionId = $derived(`${fieldId}-description`);
 
 	function handleClick() {
 		if (!disabled) {
@@ -86,6 +87,7 @@
 		role="switch"
 		aria-checked={checked}
 		aria-describedby={description ? descriptionId : undefined}
+		aria-label={label || 'Toggle switch'}
 		{disabled}
 		class="switch-track"
 		class:checked

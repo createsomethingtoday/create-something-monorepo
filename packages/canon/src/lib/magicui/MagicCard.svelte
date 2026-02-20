@@ -32,8 +32,8 @@
 		children
 	}: Props = $props();
 	
-	let mouseX = $state(-gradientSize);
-	let mouseY = $state(-gradientSize);
+	let mouseX = $state(-200);
+	let mouseY = $state(-200);
 	
 	function handlePointerMove(e: PointerEvent) {
 		const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();

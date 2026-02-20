@@ -352,12 +352,15 @@
 	<div class="controls-overlay" class:visible={showControls || !isPlaying}>
 		<!-- Progress bar -->
 		<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-		<div
-			class="progress-bar-container"
-			onclick={handleProgressClick}
-			onmousemove={handleProgressHover}
-			onmouseleave={handleProgressLeave}
-		>
+			<div
+				class="progress-bar-container"
+				onclick={handleProgressClick}
+				onmousemove={handleProgressHover}
+				onmouseleave={handleProgressLeave}
+				role="button"
+				tabindex="0"
+				aria-label="Seek playback position"
+			>
 			{#if getCurrentEngagementData().length > 0}
 				<svg
 					class="engagement-heatmap"

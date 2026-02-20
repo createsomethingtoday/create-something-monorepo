@@ -8,10 +8,11 @@
 	import { SEO } from '@create-something/canon';
 	import type { PageData } from './$types';
 
-	let { data }: { data: PageData } = $props();
-	
-	// Use $derived for reactivity on client-side navigation
-	let pattern = $derived(data.pattern);
+let { data }: { data: PageData } = $props();
+
+// Use $derived for reactivity on client-side navigation
+let pattern = $derived(data.pattern);
+let PatternComponent = $derived(pattern.component);
 </script>
 
 <SEO
@@ -26,4 +27,4 @@
 />
 
 <!-- Render the MDsveX component (uses MarkdownLayout automatically) -->
-<svelte:component this={pattern.component} {...pattern.frontmatter} />
+<PatternComponent {...pattern.frontmatter} />

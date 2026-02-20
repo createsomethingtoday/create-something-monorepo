@@ -56,9 +56,8 @@
 	} from 'lucide-svelte';
 
 	let { data }: { data: PageData } = $props();
-
-	// Use reactive state so updates refresh the view
-	let asset = $state<Asset>(data.asset);
+	let editedAsset = $state<Asset | null>(null);
+	const asset = $derived(editedAsset ?? data.asset);
 
 	// Smart default tab based on asset status
 	// - Pending/Review assets: Show Timeline (most actionable)
@@ -70,11 +69,24 @@
 		return 'overview';
 	}
 
-	let activeTab = $state(getDefaultTab(data.asset.status));
+	let activeTab = $state('overview');
 	let showPerformance = $state(false);
 	let imageError = $state(false);
 	let showEditModal = $state(false);
 	let isArchiving = $state(false);
+	let previousAssetId = $state<string | null>(null);
+
+	$effect(() => {
+		if (data.asset.id !== previousAssetId) {
+			previousAssetId = data.asset.id;
+			editedAsset = null;
+			activeTab = getDefaultTab(data.asset.status);
+			showPerformance = false;
+			imageError = false;
+			showEditModal = false;
+			isArchiving = false;
+		}
+	});
 
 	// Format dates
 	function formatDate(dateStr?: string): string {
@@ -177,10 +189,10 @@
 			throw new Error(data.message || 'Failed to update asset');
 		}
 
-		const result = (await response.json()) as { asset: typeof asset };
+			const result = (await response.json()) as { asset: Asset };
 
-		// Update local state with new asset data
-		asset = result.asset;
+			// Update local state with new asset data
+			editedAsset = result.asset;
 
 		// Reset image error state in case thumbnail changed
 		imageError = false;
@@ -639,13 +651,9 @@
 		cursor: not-allowed;
 	}
 
-	.tab-content {
-		/* Content container */
-	}
-
-	.overview-grid {
-		display: grid;
-		grid-template-columns: 1fr;
+		.overview-grid {
+			display: grid;
+			grid-template-columns: 1fr;
 		gap: var(--space-lg);
 	}
 
@@ -715,9 +723,9 @@
 		color: var(--color-info);
 	}
 
-	.rejection-card {
-		border-color: var(--color-error-border);
-	}
+		:global(.rejection-card) {
+			border-color: var(--color-error-border);
+		}
 
 	.rejection-header {
 		display: flex;

@@ -51,6 +51,12 @@
 		success = '';
 	}
 
+	function handleOverlayClick(event: MouseEvent) {
+		if (event.target === event.currentTarget) {
+			closeModal();
+		}
+	}
+
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
 		isSubmitting = true;
@@ -109,8 +115,19 @@
 
 <!-- Modal -->
 {#if isOpen}
-	<div class="modal-overlay" onclick={closeModal}>
-		<div class="modal-content" onclick={(e) => e.stopPropagation()}>
+	<div
+		class="modal-overlay"
+		onclick={handleOverlayClick}
+		onkeydown={(event) => {
+			if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
+				event.preventDefault();
+				closeModal();
+			}
+		}}
+		role="button"
+		tabindex="0"
+	>
+		<div class="modal-content">
 			<div class="modal-header">
 				<h2 class="modal-title">Contribute to Are.na</h2>
 				<button class="close-btn" onclick={closeModal} aria-label="Close">×</button>
@@ -131,8 +148,8 @@
 				</div>
 
 				<!-- Content Type Selection -->
-				<div class="form-group">
-					<label class="form-label">Block Type</label>
+				<fieldset class="form-group">
+					<legend class="form-label">Block Type</legend>
 					<div class="radio-group">
 						<label class="radio-label">
 							<input type="radio" bind:group={contentType} value="source" />
@@ -143,7 +160,7 @@
 							<span>Text (Markdown)</span>
 						</label>
 					</div>
-				</div>
+				</fieldset>
 
 				<!-- Source URL -->
 				{#if contentType === 'source'}

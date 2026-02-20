@@ -300,14 +300,6 @@
 		line-height: var(--leading-relaxed);
 	}
 
-	.note-label {
-		display: block;
-		margin-top: var(--space-xs);
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		letter-spacing: var(--tracking-wide);
-	}
-
 	/* ==========================================================================
 	   STAGGERED REVEAL: Hermeneutic Scaffolding
 	   Identity (who) → Offer (what) → Explanation (why) → Affordance (how)

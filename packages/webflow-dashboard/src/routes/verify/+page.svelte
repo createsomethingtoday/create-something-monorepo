@@ -16,16 +16,23 @@
 	// Map server status to UI status
 	type UIStatus = 'verifying' | 'success' | 'error' | 'no-token';
 
-	function getInitialStatus(): UIStatus {
+	function getInitialStatus(serverStatus: PageData['status'], serverError: string | null): UIStatus {
 		// If server already determined an error, show it immediately
-		if (data.status === 'no-token') return 'no-token';
-		if (data.error) return 'error';
+		if (serverStatus === 'no-token') return 'no-token';
+		if (serverError) return 'error';
 		// Otherwise, show verifying (though server-side should have redirected on success)
 		return 'verifying';
 	}
 
-	let status = $state<UIStatus>(getInitialStatus());
-	let errorMessage = $state<string | null>(data.error);
+	const serverStatus = $derived(data.status);
+	const serverError = $derived(data.error);
+	let status = $state<UIStatus>('verifying');
+	let errorMessage = $state<string | null>(null);
+
+	$effect(() => {
+		status = getInitialStatus(serverStatus, serverError);
+		errorMessage = serverError;
+	});
 
 	// Client-side verification fallback for manual token entry
 	async function verifyToken(token: string) {
@@ -165,15 +172,15 @@
 		gap: var(--space-sm);
 	}
 
-	.status-message svg {
+	.status-message :global(svg) {
 		margin-bottom: var(--space-sm);
 	}
 
-	.status-message.success svg {
+	.status-message.success :global(svg) {
 		color: var(--color-success);
 	}
 
-	.status-message.error svg {
+	.status-message.error :global(svg) {
 		color: var(--color-error);
 	}
 

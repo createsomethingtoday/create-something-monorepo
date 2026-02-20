@@ -81,6 +81,7 @@ routes = [{ pattern = "${domain}", custom_domain = true }]
 
 [env.${env_name}.vars]
 AUTHORIZED_EMAIL = "${email}"
+TELEMETRY_SERVER_NAME = "halfdozen-gmail-sync-${env_name}"
 
 [[env.${env_name}.durable_objects.bindings]]
 name = "MCP_OBJECT"

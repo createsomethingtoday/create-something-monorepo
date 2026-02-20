@@ -30,7 +30,13 @@
 	let { headline, steps, numbered = false, accentColor = 'lithx', onCtaClick }: Props = $props();
 
 	let visible = $state(false);
-	let stepVisibility = $state<boolean[]>(steps.map(() => false));
+	let stepVisibility = $state<boolean[]>([]);
+
+	$effect(() => {
+		if (steps.length !== stepVisibility.length) {
+			stepVisibility = steps.map((_, index) => stepVisibility[index] ?? false);
+		}
+	});
 
 	function getImagePosition(index: number, step: ProcessStep): 'left' | 'right' {
 		return step.imagePosition || (index % 2 === 0 ? 'left' : 'right');

@@ -50,7 +50,7 @@
 	}: Props = $props();
 
 	let wrapperRef: HTMLDivElement;
-	let menuRef: HTMLDivElement;
+	let menuRef: HTMLDivElement | undefined = $state();
 	let focusedIndex = $state(-1);
 
 	const enabledItems = $derived(items.filter((item) => !item.disabled));
@@ -145,23 +145,26 @@
 	});
 </script>
 
-<div class="dropdown-wrapper" bind:this={wrapperRef} onkeydown={handleKeyDown}>
-	<button
-		type="button"
-		class="dropdown-trigger"
-		aria-haspopup="menu"
-		aria-expanded={open}
-		onclick={toggle}
-	>
+<div class="dropdown-wrapper" bind:this={wrapperRef}>
+		<button
+			type="button"
+			class="dropdown-trigger"
+			aria-haspopup="menu"
+			aria-expanded={open}
+			onclick={toggle}
+			onkeydown={handleKeyDown}
+		>
 		{@render trigger({ open })}
 	</button>
 
 	{#if open}
-		<div
-			class="dropdown-menu dropdown-{position}"
-			role="menu"
-			bind:this={menuRef}
-		>
+			<div
+				class="dropdown-menu dropdown-{position}"
+				role="menu"
+				bind:this={menuRef}
+				tabindex={0}
+				onkeydown={handleKeyDown}
+			>
 			{#each items as item, index}
 				{#if item.divider}
 					<div class="dropdown-divider" role="separator"></div>

@@ -33,8 +33,8 @@
 	}: Props = $props();
 
 	// Scroll-triggered animation state
-	let isInView = $state(!animateOnScroll);
-	const shouldAnimate = $derived(animate && isInView);
+	let isInView = $state(false);
+	const shouldAnimate = $derived(animate && (!animateOnScroll || isInView));
 
 	// Three pillars of the triad
 	const pillars = [

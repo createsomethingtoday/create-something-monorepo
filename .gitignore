@@ -42,7 +42,12 @@ coverage
 .wrangler/
 
 # Client apps (in development)
-apps/
+# Keep apps ignored by default, but track Meeting Capture.
+apps/*
+!apps/meeting-capture/
+!apps/meeting-capture/**
+apps/meeting-capture/MeetingCapture/.build/
+apps/meeting-capture/MeetingCapture/.swiftpm/
 
 # Gastown nested repositories
 csm/.repo.git

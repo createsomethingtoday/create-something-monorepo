@@ -99,6 +99,35 @@ export default {
       console.log(`Processing meeting ${meetingId} from queue (attempt ${message.attempts})`);
 
       try {
+        const existing = await env.DB.prepare(
+          'SELECT status FROM meetings WHERE id = ?'
+        )
+          .bind(meetingId)
+          .first<{ status: string }>();
+
+        if (!existing) {
+          console.warn(`Meeting ${meetingId} not found, acknowledging message`);
+          message.ack();
+          continue;
+        }
+
+        if (existing.status === 'completed') {
+          console.log(`Meeting ${meetingId} already completed, acknowledging duplicate message`);
+          message.ack();
+          continue;
+        }
+
+        // Mark as actively processing only when consumer actually starts.
+        await env.DB.prepare(`
+          UPDATE meetings SET
+            status = 'processing',
+            error_message = NULL,
+            updated_at = datetime('now')
+          WHERE id = ?
+        `)
+          .bind(meetingId)
+          .run();
+
         // Get audio from R2
         const audioObject = await env.STORAGE.get(audioKey);
         if (!audioObject) {
@@ -225,9 +254,9 @@ async function handleReprocess(
     );
   }
 
-  // Update status
+  // Move back to pending; queue consumer will transition to processing.
   await env.DB.prepare(
-    `UPDATE meetings SET status = 'processing', error_message = NULL, updated_at = datetime('now') WHERE id = ?`
+    `UPDATE meetings SET status = 'pending', error_message = NULL, updated_at = datetime('now') WHERE id = ?`
   )
     .bind(id)
     .run();
@@ -237,7 +266,30 @@ async function handleReprocess(
     meetingId: id,
     audioKey: meeting.audio_key,
   };
-  await env.PROCESSING_QUEUE.send(message);
+  try {
+    await env.PROCESSING_QUEUE.send(message);
+  } catch (queueError) {
+    await env.DB.prepare(`
+      UPDATE meetings SET
+        status = 'failed',
+        error_message = ?,
+        updated_at = datetime('now')
+      WHERE id = ?
+    `)
+      .bind(
+        `Queue enqueue failed during reprocess: ${queueError instanceof Error ? queueError.message : 'Unknown queue error'}`,
+        id
+      )
+      .run();
+
+    return jsonResponse(
+      {
+        success: false,
+        message: `Failed to queue reprocessing: ${queueError instanceof Error ? queueError.message : 'Unknown queue error'}`,
+      },
+      500
+    );
+  }
 
   return jsonResponse({
     success: true,

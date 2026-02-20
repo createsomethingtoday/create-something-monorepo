@@ -16,13 +16,8 @@
 
 	let { welcomeMessage, commands = [] }: Props = $props();
 
-	let history = $state<string[]>([
-		welcomeMessage || '🚀 Welcome to Create Something Terminal v2.0',
-		'',
-		'Built with SvelteKit + Cloudflare Workers',
-		'Type "help" for available commands',
-		''
-	]);
+	const defaultWelcomeMessage = '🚀 Welcome to Create Something Terminal v2.0';
+	let history = $state<string[]>([]);
 	let currentInput = $state('');
 	let commandHistory = $state<string[]>([]);
 	let historyIndex = $state(-1);
@@ -30,6 +25,18 @@
 
 	let inputRef: HTMLInputElement;
 	let terminalRef: HTMLDivElement;
+
+	$effect(() => {
+		if (history.length === 0) {
+			history = [
+				welcomeMessage || defaultWelcomeMessage,
+				'',
+				'Built with SvelteKit + Cloudflare Workers',
+				'Type "help" for available commands',
+				''
+			];
+		}
+	});
 
 	// Auto-focus input on mount
 	onMount(() => {
@@ -230,6 +237,12 @@ Contact Create Something:
 		bind:this={terminalRef}
 		class="terminal-content flex-1 overflow-y-auto p-4"
 		onclick={() => inputRef?.focus()}
+		onkeydown={(e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				inputRef?.focus();
+			}
+		}}
 		use:keyboardClick={{ onclick: () => inputRef?.focus() }}
 		role="button"
 		tabindex="0"

@@ -46,19 +46,48 @@
 
 	let { data }: { data: PageData } = $props();
 
+	function getLiveMetrics(input: PageData) {
+		return {
+			automationsToday: input.metrics?.automations?.today || 0,
+			callsProcessed: input.metrics?.automations?.callsProcessed || 0,
+			confirmationsSent: input.metrics?.automations?.confirmationsSent || 0,
+			eligibilityChecked: input.metrics?.automations?.eligibilityChecked || 0,
+			recallsContacted: input.metrics?.automations?.recallsContacted || 0,
+			agentTasks: input.metrics?.agents?.completed || 0
+		};
+	}
+
 	// LOCAL STATE: Items we can modify client-side (demo mode)
-	let localItems = $state([...data.items] as LocalItem[]);
-	let localActivityLog = $state([...(data.activityLog || [])]);
-	let actionsToday = $state(data.metrics?.humanActions?.today || 0);
+	let localItems = $state<LocalItem[]>([]);
+	let localActivityLog = $state<Array<{ minutesAgo: number; text: string }>>([]);
+	let actionsToday = $state(0);
 	
 	// LIVE METRICS: These increment in real-time to show automation happening
 	let liveMetrics = $state({
-		automationsToday: data.metrics?.automations?.today || 0,
-		callsProcessed: data.metrics?.automations?.callsProcessed || 0,
-		confirmationsSent: data.metrics?.automations?.confirmationsSent || 0,
-		eligibilityChecked: data.metrics?.automations?.eligibilityChecked || 0,
-		recallsContacted: data.metrics?.automations?.recallsContacted || 0,
-		agentTasks: data.metrics?.agents?.completed || 0,
+		automationsToday: 0,
+		callsProcessed: 0,
+		confirmationsSent: 0,
+		eligibilityChecked: 0,
+		recallsContacted: 0,
+		agentTasks: 0
+	});
+	let lastDataSyncKey = $state<string | null>(null);
+
+	$effect(() => {
+		const syncKey = JSON.stringify({
+			items: data.items.map((item) => item.id),
+			activityCount: data.activityLog?.length ?? 0,
+			humanActions: data.metrics?.humanActions?.today ?? 0,
+			automations: data.metrics?.automations?.today ?? 0
+		});
+
+		if (syncKey !== lastDataSyncKey) {
+			lastDataSyncKey = syncKey;
+			localItems = [...data.items] as LocalItem[];
+			localActivityLog = [...(data.activityLog || [])];
+			actionsToday = data.metrics?.humanActions?.today || 0;
+			liveMetrics = getLiveMetrics(data);
+		}
 	});
 
 	// Toast notifications
@@ -421,6 +450,12 @@
 		const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
 		return text.replace(regex, '<mark>$1</mark>');
 	}
+
+	function handleKeyboardHelpOverlayClick(event: MouseEvent) {
+		if (event.target === event.currentTarget) {
+			showKeyboardHelp = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -559,11 +594,11 @@
 	</header>
 
 	<!-- Filter Panel -->
-	{#if showFilters}
-		<div class="filter-panel">
-			<div class="filter-group">
-				<label class="filter-label">Status</label>
-				<div class="filter-options">
+		{#if showFilters}
+			<div class="filter-panel">
+				<div class="filter-group">
+					<div class="filter-label">Status</div>
+					<div class="filter-options">
 					{#each ['inbox', 'approved', 'dismissed', 'snoozed', 'archived'] as status}
 						<label class="filter-chip" class:active={statusFilter.includes(status)}>
 							<input
@@ -581,11 +616,11 @@
 						</label>
 					{/each}
 				</div>
-			</div>
+				</div>
 
-			<div class="filter-group">
-				<label class="filter-label">Source</label>
-				<div class="filter-options">
+				<div class="filter-group">
+					<div class="filter-label">Source</div>
+					<div class="filter-options">
 					{#each availableSources as source}
 						<label class="filter-chip" class:active={sourceFilter.includes(source)}>
 							<input
@@ -603,11 +638,11 @@
 						</label>
 					{/each}
 				</div>
-			</div>
+				</div>
 
-			<div class="filter-group">
-				<label class="filter-label">Score Range</label>
-				<div class="score-range">
+				<div class="filter-group">
+					<div class="filter-label">Score Range</div>
+					<div class="score-range">
 					<input
 						type="number"
 						min="0"
@@ -888,8 +923,19 @@
 
 	<!-- Keyboard Shortcuts Help -->
 	{#if showKeyboardHelp}
-		<div class="keyboard-help-overlay" onclick={() => showKeyboardHelp = false}>
-			<div class="keyboard-help" onclick={(e) => e.stopPropagation()}>
+		<div
+			class="keyboard-help-overlay"
+			onclick={handleKeyboardHelpOverlayClick}
+			role="button"
+			tabindex="0"
+			onkeydown={(e) => {
+				if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+					e.preventDefault();
+					showKeyboardHelp = false;
+				}
+			}}
+		>
+			<div class="keyboard-help">
 				<h3>Keyboard shortcuts</h3>
 				<div class="shortcut-grid">
 					<div class="shortcut-section">
@@ -969,11 +1015,11 @@
 		text-align: left;
 	}
 
-	.activity-chevron {
+	:global(.activity-chevron) {
 		transition: transform var(--duration-micro) var(--ease-standard);
 	}
 
-	.activity-bar.expanded .activity-chevron {
+	.activity-bar.expanded :global(.activity-chevron) {
 		transform: rotate(180deg);
 	}
 
@@ -985,10 +1031,6 @@
 		grid-template-columns: 1fr 1.618fr 2.618fr;
 		gap: var(--space-lg);
 		border-top: 1px solid var(--color-border-subtle);
-	}
-
-	.activity-section {
-		/* No background, no border - let data breathe */
 	}
 
 	.activity-section-title {

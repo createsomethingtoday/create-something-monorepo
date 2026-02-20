@@ -8,72 +8,75 @@
   }
 
   let { data, config = {} }: Props = $props();
+  const width = $derived(config.width ?? 500);
+  const height = $derived(config.height ?? 400);
+  const title = $derived(config.title);
+  const property = $derived(config.property ?? 'io');
+  const branded = $derived(config.branded ?? false);
 
-  const {
-    width = 500,
-    height = 400,
-    title,
-    property = 'io',
-    branded = false,
-  } = config;
-
-  const { data: chartData, donut = false, showLabels = true, showPercentages = true } = data;
+  const chartData = $derived(data.data);
+  const donut = $derived(data.donut ?? false);
+  const showLabels = $derived(data.showLabels ?? true);
+  const showPercentages = $derived(data.showPercentages ?? true);
 
   const PADDING = 42;
-  const centerX = width / 2;
-  const centerY = height / 2 + (title ? 20 : 0);
-  const radius = Math.min(width, height) / 2 - PADDING - 40;
-  const innerRadius = donut ? radius * 0.6 : 0;
+  const centerX = $derived(width / 2);
+  const centerY = $derived(height / 2 + (title ? 20 : 0));
+  const radius = $derived(Math.min(width, height) / 2 - PADDING - 40);
+  const innerRadius = $derived(donut ? radius * 0.6 : 0);
 
-  const total = chartData.reduce((sum, d) => sum + d.value, 0);
+  const total = $derived(chartData.reduce((sum, d) => sum + d.value, 0));
 
   // Calculate slices
-  let currentAngle = -90;
-  const slices = chartData.map((d, i) => {
-    const sliceAngle = (d.value / total) * 360;
-    const startAngle = currentAngle;
-    const endAngle = currentAngle + sliceAngle;
-    const largeArc = sliceAngle > 180 ? 1 : 0;
+  const slices = $derived.by(() => {
+    let currentAngle = -90;
+    const denominator = total || 1;
+    return chartData.map((d, i) => {
+      const sliceAngle = (d.value / denominator) * 360;
+      const startAngle = currentAngle;
+      const endAngle = currentAngle + sliceAngle;
+      const largeArc = sliceAngle > 180 ? 1 : 0;
 
-    const startRad = (startAngle * Math.PI) / 180;
-    const endRad = (endAngle * Math.PI) / 180;
+      const startRad = (startAngle * Math.PI) / 180;
+      const endRad = (endAngle * Math.PI) / 180;
 
-    const x1 = centerX + radius * Math.cos(startRad);
-    const y1 = centerY + radius * Math.sin(startRad);
-    const x2 = centerX + radius * Math.cos(endRad);
-    const y2 = centerY + radius * Math.sin(endRad);
+      const x1 = centerX + radius * Math.cos(startRad);
+      const y1 = centerY + radius * Math.sin(startRad);
+      const x2 = centerX + radius * Math.cos(endRad);
+      const y2 = centerY + radius * Math.sin(endRad);
 
-    let pathD: string;
-    if (donut) {
-      const ix1 = centerX + innerRadius * Math.cos(startRad);
-      const iy1 = centerY + innerRadius * Math.sin(startRad);
-      const ix2 = centerX + innerRadius * Math.cos(endRad);
-      const iy2 = centerY + innerRadius * Math.sin(endRad);
-      pathD = `M${x1},${y1} A${radius},${radius} 0 ${largeArc},1 ${x2},${y2} L${ix2},${iy2} A${innerRadius},${innerRadius} 0 ${largeArc},0 ${ix1},${iy1} Z`;
-    } else {
-      pathD = `M${centerX},${centerY} L${x1},${y1} A${radius},${radius} 0 ${largeArc},1 ${x2},${y2} Z`;
-    }
+      let pathD: string;
+      if (donut) {
+        const ix1 = centerX + innerRadius * Math.cos(startRad);
+        const iy1 = centerY + innerRadius * Math.sin(startRad);
+        const ix2 = centerX + innerRadius * Math.cos(endRad);
+        const iy2 = centerY + innerRadius * Math.sin(endRad);
+        pathD = `M${x1},${y1} A${radius},${radius} 0 ${largeArc},1 ${x2},${y2} L${ix2},${iy2} A${innerRadius},${innerRadius} 0 ${largeArc},0 ${ix1},${iy1} Z`;
+      } else {
+        pathD = `M${centerX},${centerY} L${x1},${y1} A${radius},${radius} 0 ${largeArc},1 ${x2},${y2} Z`;
+      }
 
-    const midAngle = (startAngle + endAngle) / 2;
-    const midRad = (midAngle * Math.PI) / 180;
-    const labelRadius = radius + 20;
-    const labelX = centerX + labelRadius * Math.cos(midRad);
-    const labelY = centerY + labelRadius * Math.sin(midRad);
+      const midAngle = (startAngle + endAngle) / 2;
+      const midRad = (midAngle * Math.PI) / 180;
+      const labelRadius = radius + 20;
+      const labelX = centerX + labelRadius * Math.cos(midRad);
+      const labelY = centerY + labelRadius * Math.sin(midRad);
 
-    const percentage = Math.round((d.value / total) * 100);
-    const color = d.color ?? getDataColor(i, property);
+      const percentage = Math.round((d.value / denominator) * 100);
+      const color = d.color ?? getDataColor(i, property);
 
-    currentAngle = endAngle;
+      currentAngle = endAngle;
 
-    return {
-      ...d,
-      pathD,
-      color,
-      labelX,
-      labelY,
-      percentage,
-      textAnchor: midAngle > 90 && midAngle < 270 ? 'end' : 'start',
-    };
+      return {
+        ...d,
+        pathD,
+        color,
+        labelX,
+        labelY,
+        percentage,
+        textAnchor: midAngle > 90 && midAngle < 270 ? 'end' : 'start',
+      };
+    });
   });
 </script>
 

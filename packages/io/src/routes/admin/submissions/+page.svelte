@@ -419,6 +419,7 @@
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
 		display: -webkit-box;
+		line-clamp: 2;
 		-webkit-line-clamp: 2;
 		-webkit-box-orient: vertical;
 		overflow: hidden;

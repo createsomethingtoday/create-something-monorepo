@@ -352,59 +352,9 @@
 		overflow: hidden;
 	}
 
-	.gate-overlay {
-		position: absolute;
-		inset: 0;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: rgba(0, 0, 0, 0.75);
-		backdrop-filter: blur(8px);
-		padding: var(--space-lg);
-	}
-
-	.gate-content {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		text-align: center;
-		max-width: 20rem;
-		width: 100%;
-	}
-
-	.gate-title {
-		font-size: var(--text-body-lg);
-		font-weight: 700;
-		color: var(--color-fg-primary);
-		margin: 0 0 var(--space-sm);
-	}
-
-	.gate-description {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
-		margin: 0 0 var(--space-md);
-	}
-
-	.unlock-button {
-		display: inline-block;
-		padding: var(--space-sm) var(--space-md);
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
-		border-radius: var(--radius-md);
-		font-size: var(--text-body-sm);
-		font-weight: 600;
-		text-decoration: none;
-		transition: opacity var(--duration-micro) var(--ease-standard);
-	}
-
-	.unlock-button:hover {
-		opacity: 0.9;
-	}
-
-	.card-footer {
-		padding: var(--space-md);
-		background: rgba(0, 0, 0, 0.2);
+		.card-footer {
+			padding: var(--space-md);
+			background: rgba(0, 0, 0, 0.2);
 	}
 
 	.tool-description {

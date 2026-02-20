@@ -11,6 +11,7 @@ const SCOPES = ['active', 'fleet', 'all'];
 // Source of truth aligned with docs/MCP_FLEET_REGISTRY.md.
 const FLEET_REGISTRY = {
   active: [
+    'packages/halfdozen-dm-mcp',
     'packages/halfdozen-notion-mcp',
     'packages/halfdozen-gmail-sync',
     'packages/halfdozen-zoom-sync',

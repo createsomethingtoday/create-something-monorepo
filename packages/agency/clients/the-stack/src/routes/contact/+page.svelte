@@ -31,17 +31,17 @@
         <div class="margin-top-24">
           <ul class="list_wrap fade-in" style="animation-delay: 0.2s;">
             <li class="list_wrap-item">
-              <a href="#" class="text-style-inlinelink">
+              <a href="https://www.instagram.com/" class="text-style-inlinelink" target="_blank" rel="noopener noreferrer">
                 <span class="text-size-medium">Instagram</span>
               </a>
             </li>
             <li class="list_wrap-item">
-              <a href="#" class="text-style-inlinelink">
+              <a href="https://www.linkedin.com/" class="text-style-inlinelink" target="_blank" rel="noopener noreferrer">
                 <span class="text-size-medium">LinkedIn</span>
               </a>
             </li>
             <li class="list_wrap-item">
-              <a href="#" class="text-style-inlinelink">
+              <a href="https://www.tiktok.com/" class="text-style-inlinelink" target="_blank" rel="noopener noreferrer">
                 <span class="text-size-medium">TikTok</span>
               </a>
             </li>

@@ -212,13 +212,14 @@
 				{#each propertyOrder as property}
 					{#if groups[property] && groups[property]!.length > 0}
 						{@const propertyInfo = PROPERTY_INFO[property]}
+						{@const Icon = propertyInfo.icon}
 						<div class="related-group">
-							<div class="group-header">
-								<span class="group-icon">
-									<svelte:component this={propertyInfo.icon} size={14} strokeWidth={2} />
-								</span>
-								<span class="group-name">{propertyInfo.name}</span>
-							</div>
+								<div class="group-header">
+									<span class="group-icon">
+										<Icon size={14} strokeWidth={2} />
+									</span>
+									<span class="group-name">{propertyInfo.name}</span>
+								</div>
 							<ul class="group-items">
 								{#each groups[property]! as item}
 									<li class="related-item">

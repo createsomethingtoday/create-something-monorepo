@@ -8,53 +8,57 @@
   }
 
   let { data, config = {} }: Props = $props();
+  const width = $derived(config.width ?? 600);
+  const height = $derived(config.height ?? 400);
+  const title = $derived(config.title);
+  const property = $derived(config.property ?? 'io');
+  const branded = $derived(config.branded ?? false);
 
-  const {
-    width = 600,
-    height = 400,
-    title,
-    property = 'io',
-    branded = false,
-  } = config;
-
-  const { data: chartData, showValues = true, showGrid = true } = data;
+  const chartData = $derived(data.data);
+  const showValues = $derived(data.showValues ?? true);
+  const showGrid = $derived(data.showGrid ?? true);
 
   const PADDING = 42;
   const CHART_LEFT = PADDING + 50;
-  const CHART_RIGHT = width - PADDING;
-  const CHART_TOP = PADDING + (title ? 40 : 0);
-  const CHART_BOTTOM = height - PADDING - 30;
+  const CHART_RIGHT = $derived(width - PADDING);
+  const CHART_TOP = $derived(PADDING + (title ? 40 : 0));
+  const CHART_BOTTOM = $derived(height - PADDING - 30);
 
-  const chartWidth = CHART_RIGHT - CHART_LEFT;
-  const chartHeight = CHART_BOTTOM - CHART_TOP;
+  const chartWidth = $derived(CHART_RIGHT - CHART_LEFT);
+  const chartHeight = $derived(CHART_BOTTOM - CHART_TOP);
 
-  const maxValue = Math.max(...chartData.map((d) => d.value));
-  const barCount = chartData.length;
+  const maxValue = $derived(Math.max(...chartData.map((d) => d.value), 0));
+  const barCount = $derived(chartData.length);
 
   const BAR_SPACING = 0.2;
-  const totalBarWidth = chartWidth / barCount;
-  const barWidth = totalBarWidth * (1 - BAR_SPACING);
-  const barGap = totalBarWidth * BAR_SPACING;
+  const totalBarWidth = $derived(barCount > 0 ? chartWidth / barCount : 0);
+  const barWidth = $derived(totalBarWidth * (1 - BAR_SPACING));
+  const barGap = $derived(totalBarWidth * BAR_SPACING);
 
   // Grid lines
   const gridLines = 5;
-  const gridPositions = Array.from({ length: gridLines + 1 }, (_, i) => ({
-    y: CHART_TOP + (chartHeight * i) / gridLines,
-    value: Math.round(maxValue * (1 - i / gridLines)),
-  }));
+  const gridPositions = $derived(
+    Array.from({ length: gridLines + 1 }, (_, i) => ({
+      y: CHART_TOP + (chartHeight * i) / gridLines,
+      value: Math.round(maxValue * (1 - i / gridLines)),
+    }))
+  );
 
   // Bar positions
-  const bars = chartData.map((d, i) => {
-    const barHeight = (d.value / maxValue) * chartHeight;
-    return {
-      ...d,
-      x: CHART_LEFT + i * totalBarWidth + barGap / 2,
-      y: CHART_BOTTOM - barHeight,
-      width: barWidth,
-      height: barHeight,
-      color: d.color ?? getDataColor(i, property),
-    };
-  });
+  const bars = $derived(
+    chartData.map((d, i) => {
+      const denominator = maxValue || 1;
+      const barHeight = (d.value / denominator) * chartHeight;
+      return {
+        ...d,
+        x: CHART_LEFT + i * totalBarWidth + barGap / 2,
+        y: CHART_BOTTOM - barHeight,
+        width: barWidth,
+        height: barHeight,
+        color: d.color ?? getDataColor(i, property),
+      };
+    })
+  );
 </script>
 
 <svg

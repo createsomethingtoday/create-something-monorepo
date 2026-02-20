@@ -7,12 +7,12 @@
 
 	let { data }: Props = $props();
 
-	const stats = [
+	let stats = $derived([
 		{ label: 'Solutions', value: data.solutionCount ?? 0, brand: 'primary' },
 		{ label: 'News Articles', value: data.newsCount ?? 0, brand: 'primary' },
 		{ label: 'Testimonials', value: data.testimonialCount ?? 0, brand: 'primary' },
 		{ label: 'New Contacts', value: data.newContactCount ?? 0, brand: 'warning' },
-	];
+	]);
 
 	const quickActions = [
 		{ label: 'Add Solution', href: '/dashboard/solutions/new', brand: 'lithx' },
@@ -156,10 +156,6 @@
 		.stats-grid {
 			grid-template-columns: repeat(4, 1fr);
 		}
-	}
-
-	.stat-card {
-		/* inherits from .card in app.css */
 	}
 
 	.stat-label {
