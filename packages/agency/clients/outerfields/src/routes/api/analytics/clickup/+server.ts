@@ -1,45 +1,68 @@
 /**
  * ClickUp Analytics API Endpoint
  *
- * Fetches project/task progress from ClickUp API
- * Returns active tasks, completed tasks, and sprint progress
+ * Returns live project progress metrics from internal proposal workflows.
  */
 import { json, type RequestHandler } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async ({ platform }) => {
+	const db = platform?.env?.DB;
+	if (!db) {
+		return json(
+			{
+				success: false,
+				error: 'Database not available'
+			},
+			{ status: 503 }
+		);
+	}
+
 	try {
-		// In production, would use actual ClickUp API
-		// const CLICKUP_API_KEY = platform?.env.CLICKUP_API_KEY;
-		// const CLICKUP_TEAM_ID = platform?.env.CLICKUP_TEAM_ID;
+		const now = Date.now();
+		const startOfDay = new Date();
+		startOfDay.setHours(0, 0, 0, 0);
+		const startOfDayMs = startOfDay.getTime();
 
-		// For now, return mock data that matches expected structure
-		const mockData = {
-			activeTasks: 23,
-			completedToday: 7,
-			progress: 64
-		};
+		const [activeResult, completedTodayResult, totalResult, doneResult] = await Promise.all([
+			db.prepare(
+				`SELECT COUNT(*) as count
+				 FROM agent_proposals
+				 WHERE status IN ('pending', 'approved')`
+			).first<{ count: number }>(),
+			db
+				.prepare(
+					`SELECT COUNT(*) as count
+					 FROM agent_proposals
+					 WHERE status IN ('applied', 'rolled_back', 'rejected')
+					   AND updated_at >= ?`
+				)
+				.bind(startOfDayMs)
+				.first<{ count: number }>(),
+			db.prepare('SELECT COUNT(*) as count FROM agent_proposals').first<{ count: number }>(),
+			db
+				.prepare(
+					`SELECT COUNT(*) as count
+					 FROM agent_proposals
+					 WHERE status IN ('applied', 'rolled_back')`
+				)
+				.first<{ count: number }>()
+		]);
 
-		// TODO: Replace with actual ClickUp API call
-		// const response = await fetch(
-		//   `https://api.clickup.com/api/v2/team/${CLICKUP_TEAM_ID}/task`,
-		//   {
-		//     headers: {
-		//       'Authorization': CLICKUP_API_KEY,
-		//       'Content-Type': 'application/json'
-		//     }
-		//   }
-		// );
-		//
-		// const data = await response.json();
-		// const activeTasks = data.tasks.filter(t => t.status.status !== 'complete').length;
-		// const completedToday = data.tasks.filter(t =>
-		//   t.status.status === 'complete' &&
-		//   new Date(t.date_closed).toDateString() === new Date().toDateString()
-		// ).length;
+		const activeTasks = Number(activeResult?.count || 0);
+		const completedToday = Number(completedTodayResult?.count || 0);
+		const total = Number(totalResult?.count || 0);
+		const done = Number(doneResult?.count || 0);
+		const progress = total > 0 ? Math.round((done / total) * 100) : 0;
 
 		return json({
 			success: true,
-			data: mockData
+			data: {
+				activeTasks,
+				completedToday,
+				progress
+			},
+			refreshedAt: now,
+			source: 'd1'
 		});
 	} catch (error) {
 		console.error('ClickUp analytics error:', error);

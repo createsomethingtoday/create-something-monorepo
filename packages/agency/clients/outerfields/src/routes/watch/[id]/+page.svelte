@@ -54,6 +54,10 @@
 		return `${mins}:${secs.toString().padStart(2, '0')}`;
 	}
 
+	function toEpochMs(epoch: number): number {
+		return epoch < 1_000_000_000_000 ? epoch * 1000 : epoch;
+	}
+
 	// Category display name
 	function getCategoryName(categoryId: string): string {
 		const map: Record<string, string> = {
@@ -109,15 +113,15 @@
 
 	// JSON-LD Video Schema
 	const videoSchema = $derived(video ? {
-		'@context': 'https://schema.org',
-		'@type': 'VideoObject',
-		name: video.title,
-		description: video.description || `Watch ${video.title} on OUTERFIELDS`,
-		thumbnailUrl: seo.image,
-		uploadDate: new Date(video.created_at * 1000).toISOString(),
-		duration: `PT${Math.floor(video.duration / 60)}M${video.duration % 60}S`,
-		contentUrl: getVideoSrc(video.asset_path),
-		embedUrl: seo.url,
+			'@context': 'https://schema.org',
+			'@type': 'VideoObject',
+			name: video.title,
+			description: video.description || `Watch ${video.title} on OUTERFIELDS`,
+			thumbnailUrl: seo.image,
+			uploadDate: new Date(toEpochMs(video.created_at)).toISOString(),
+			duration: `PT${Math.floor(video.duration / 60)}M${video.duration % 60}S`,
+			contentUrl: getVideoSrc(video.asset_path),
+			embedUrl: seo.url,
 		publisher: {
 			'@type': 'Organization',
 			name: 'OUTERFIELDS',
@@ -192,11 +196,11 @@
 					<p class="video-description">{video.description}</p>
 				{/if}
 
-				<!-- Analytics -->
-				<VideoAnalytics 
-					videoId={video.id} 
-					publishedAt={new Date(video.created_at * 1000).toISOString()}
-				/>
+					<!-- Analytics -->
+					<VideoAnalytics
+						videoId={video.id}
+						publishedAt={new Date(toEpochMs(video.created_at)).toISOString()}
+					/>
 
 				<!-- Episode Navigation -->
 				{#if related.prevVideo || related.nextVideo}

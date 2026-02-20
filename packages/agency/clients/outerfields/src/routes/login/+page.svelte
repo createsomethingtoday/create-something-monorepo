@@ -95,13 +95,13 @@
 					Create your account
 				{/if}
 			</h1>
-			<p class="auth-subtitle">
-				{#if mode === 'login'}
-					Sign in to access the platform demo
-				{:else}
-					Join to experience the full platform
-				{/if}
-			</p>
+				<p class="auth-subtitle">
+					{#if mode === 'login'}
+						Sign in to access the platform
+					{:else}
+						Join to experience the full platform
+					{/if}
+				</p>
 		</div>
 
 		<form onsubmit={handleSubmit} class="auth-form">

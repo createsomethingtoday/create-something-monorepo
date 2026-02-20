@@ -111,7 +111,8 @@
 	}
 
 	function formatDate(epochMs: number): string {
-		return new Date(epochMs).toLocaleDateString();
+		const normalized = epochMs < 1_000_000_000_000 ? epochMs * 1000 : epochMs;
+		return new Date(normalized).toLocaleDateString();
 	}
 
 	function clearStatus() {

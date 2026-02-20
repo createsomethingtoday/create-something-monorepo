@@ -5,9 +5,8 @@
 	 * Simple contact form and information
 	 */
 
-	import { goto } from '$app/navigation';
-
 	let formState: 'idle' | 'submitting' | 'success' | 'error' = $state('idle');
+	let errorMessage = $state('Something went wrong. Please try again.');
 	let formData = $state({
 		name: '',
 		email: '',
@@ -18,11 +17,20 @@
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
 		formState = 'submitting';
+		errorMessage = 'Something went wrong. Please try again.';
 
 		try {
-			// TODO: Connect this form to the contact API endpoint.
-			// For now we simulate submission success.
-			await new Promise(resolve => setTimeout(resolve, 1000));
+			const response = await fetch('/api/contact', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(formData)
+			});
+
+			const result = await response.json();
+			if (!response.ok || !result.success) {
+				throw new Error(result.error || 'Failed to submit contact form');
+			}
+
 			formState = 'success';
 
 			// Clear form after 2 seconds
@@ -31,6 +39,7 @@
 				formState = 'idle';
 			}, 2000);
 		} catch (error) {
+			errorMessage = error instanceof Error ? error.message : 'Something went wrong. Please try again.';
 			formState = 'error';
 			setTimeout(() => {
 				formState = 'idle';
@@ -160,11 +169,11 @@
 
 					{#if formState === 'success'}
 						<p class="form-message success">Thanks! We'll get back to you soon.</p>
-					{:else if formState === 'error'}
-						<p class="form-message error">Something went wrong. Please try again.</p>
-					{/if}
-				</form>
-			</div>
+						{:else if formState === 'error'}
+							<p class="form-message error">{errorMessage}</p>
+						{/if}
+					</form>
+				</div>
 		</div>
 
 		<footer class="contact-footer">
