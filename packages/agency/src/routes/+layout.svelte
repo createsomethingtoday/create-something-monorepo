@@ -5,7 +5,7 @@
 	import AgencyFooter from '$lib/components/AgencyFooter.svelte';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { afterNavigate, onNavigate } from '$app/navigation';
+	import { afterNavigate, disableScrollHandling, onNavigate } from '$app/navigation';
 
 	let { children, data } = $props();
 
@@ -67,23 +67,25 @@
 	});
 
 	// Scroll handling after navigation:
+	// - Preserve browser restore for popstate/back-forward
 	// - Hash links scroll to section
-	// - Page links scroll to top (except popstate/back-forward)
-	afterNavigate(({ to, from, type }) => {
+	// - Other internal links scroll to top
+	afterNavigate(({ to, type }) => {
+		if (type !== 'enter' && type !== 'popstate') {
+			disableScrollHandling();
+		}
+
 		if (to?.url.hash) {
 			setTimeout(() => scrollToHash(to.url.hash), 100);
 			return;
 		}
 
 		if (type === 'popstate' || type === 'enter') return;
-		if (!to || !from) return;
-
-		const changedPath = to.url.pathname !== from.url.pathname || to.url.search !== from.url.search;
-		if (changedPath) {
-			requestAnimationFrame(() => {
-				window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-			});
-		}
+		setTimeout(() => {
+			window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+			document.documentElement.scrollTop = 0;
+			document.body.scrollTop = 0;
+		}, 0);
 	});
 
 </script>
