@@ -2,7 +2,13 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { CallToolRequestSchema, ListToolsRequestSchema, type Tool } from '@modelcontextprotocol/sdk/types.js';
+import {
+  CallToolRequestSchema,
+  ListResourcesRequestSchema,
+  ListToolsRequestSchema,
+  ReadResourceRequestSchema,
+  type Tool,
+} from '@modelcontextprotocol/sdk/types.js';
 
 import {
   getEffectiveCodexPath,
@@ -128,6 +134,7 @@ async function runServerMode(): Promise<void> {
     {
       capabilities: {
         tools: {},
+        resources: {},
       },
     },
   );
@@ -135,6 +142,67 @@ async function runServerMode(): Promise<void> {
   server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: [...MANAGEMENT_TOOLS, ...proxies.toolDefinitions],
   }));
+
+  server.setRequestHandler(ListResourcesRequestSchema, async () => ({
+    resources: [
+      {
+        uri: 'hub://status',
+        name: 'Hub Status',
+        description: 'Hub runtime status, resolution summary, connected/failed servers, and proxy tooling counts.',
+        mimeType: 'application/json',
+      },
+      {
+        uri: 'hub://registry',
+        name: 'Hub Registry',
+        description: 'Configured registry servers and bundles as seen by hub runtime.',
+        mimeType: 'application/json',
+      },
+      {
+        uri: 'hub://proxy-tools',
+        name: 'Hub Proxy Tools',
+        description: 'Current proxied tools exposed by the hub instance.',
+        mimeType: 'application/json',
+      },
+      {
+        uri: 'hub://state',
+        name: 'Hub State',
+        description: 'Resolved state payload, including enabled bundles and servers.',
+        mimeType: 'application/json',
+      },
+      {
+        uri: 'hub://connections',
+        name: 'Hub Connections',
+        description: 'Per-server connection status for all configured servers.',
+        mimeType: 'application/json',
+      },
+    ],
+  }));
+
+  server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+    const uri = request.params.uri;
+
+    const status = buildStatusPayload(paths, registry, downstream, proxies);
+    const registryPayload = buildRegistryPayload(registry);
+    const proxyToolsPayload = {
+      proxyTools: proxies.toolDefinitions.map((tool) => tool.name),
+      count: proxies.toolDefinitions.length,
+    };
+
+    switch (uri) {
+      case 'hub://status':
+        return toJsonResource(uri, status);
+      case 'hub://registry':
+        return toJsonResource(uri, registryPayload);
+      case 'hub://proxy-tools':
+        return toJsonResource(uri, proxyToolsPayload);
+      case 'hub://state':
+        return toJsonResource(uri, buildStatePayload(paths, registry));
+      case 'hub://connections':
+        return toJsonResource(uri, buildConnectionsPayload(registry, downstream, resolution.enabledServerNames));
+      default:
+        throw new Error(`Unknown resource: ${uri}`);
+    }
+  });
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const toolName = request.params.name;
@@ -342,6 +410,57 @@ function buildStatusPayload(
   };
 }
 
+function buildStatePayload(
+  paths: RegistryPaths,
+  registry: McpBundleRegistry,
+): Record<string, unknown> {
+  const state = loadState(paths);
+  const resolution = resolveState(registry, state);
+  return {
+    state: resolution.state,
+    enabledServerNames: resolution.enabledServerNames,
+    warnings: resolution.warnings,
+  };
+}
+
+function buildConnectionsPayload(
+  registry: McpBundleRegistry,
+  downstream: Awaited<ReturnType<typeof connectDownstreamServers>>,
+  enabledServerNames: string[],
+): Record<string, unknown> {
+  const connectedByName = new Map(downstream.connected.map((server) => [server.name, server]));
+  const failedByName = new Map(downstream.failed.map((server) => [server.name, server.error]));
+  const enabledSet = new Set(enabledServerNames);
+
+  const connections = Object.entries(registry.servers)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([name, config]) => {
+      const connected = connectedByName.get(name);
+      const failedError = failedByName.get(name);
+      const enabled = enabledSet.has(name);
+      const status = connected ? 'connected' : failedError ? 'failed' : enabled ? 'disabled' : 'idle';
+
+      return {
+        name,
+        enabled,
+        transport: config.transport,
+        target: config.transport === 'http' ? config.url : `${config.command} ${(config.args ?? []).join(' ')}`.trim(),
+        status,
+        toolCount: connected ? connected.tools.length : 0,
+        error: failedError ?? null,
+      };
+    });
+
+  return {
+    enabledServerNames,
+    totalConfiguredServers: connections.length,
+    connected: downstream.connected.length,
+    failed: downstream.failed.length,
+    idle: connections.filter((connection) => connection.status === 'idle').length,
+    connections,
+  };
+}
+
 function buildRegistryPayload(registry: McpBundleRegistry): Record<string, unknown> {
   const servers = Object.entries(registry.servers)
     .sort(([a], [b]) => a.localeCompare(b))
@@ -368,6 +487,18 @@ function toJsonResult(payload: Record<string, unknown>) {
   return {
     content: [{ type: 'text' as const, text: JSON.stringify(payload, null, 2) }],
     structuredContent: payload,
+  };
+}
+
+function toJsonResource(uri: string, payload: unknown) {
+  return {
+    contents: [
+      {
+        uri,
+        mimeType: 'application/json',
+        text: JSON.stringify(payload, null, 2),
+      },
+    ],
   };
 }
 

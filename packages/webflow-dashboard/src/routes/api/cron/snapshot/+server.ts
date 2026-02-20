@@ -88,3 +88,8 @@ export const GET: RequestHandler = async ({ request, platform }) => {
 		throw error(500, `Failed to capture snapshots: ${err instanceof Error ? err.message : 'Unknown error'}`);
 	}
 };
+
+// Also support POST for cron providers that do not send GET requests.
+export const POST: RequestHandler = async (event) => {
+	return GET(event);
+};
