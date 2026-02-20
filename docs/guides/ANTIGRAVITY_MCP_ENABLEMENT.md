@@ -16,6 +16,11 @@ This server is configured for OAuth 2.1 shared-client mode:
 - `client_secret`: shared reviewer secret
 - Legacy bearer fallback is disabled (`legacy_api_key: false`)
 
+## Critical Compatibility Note
+
+Google Cloud documents that Antigravity currently does not support MCP OAuth client-ID/secret flows natively.  
+For this server, use the `mcp-remote` bridge with static OAuth client info.
+
 Because dynamic client registration is disabled in shared-client mode, Antigravity should connect through `mcp-remote` with static OAuth client info.
 
 ## Antigravity Navigation (Confirmed)
@@ -26,6 +31,13 @@ In Antigravity:
 2. Click `...` (top of panel) and choose `MCP Servers`.
 3. Click `Manage MCP Servers` > `View raw config`.
 4. Edit `mcp_config.json`.
+
+File location:
+
+- `~/.gemini/antigravity/mcp_config.json`
+- On this machine: `/Users/micahjohnson/.gemini/antigravity/mcp_config.json`
+
+This is a global Antigravity config file.
 
 ## Recommended Antigravity Config
 
@@ -86,4 +98,5 @@ If you run `mcp-remote` with `--host <custom-host>`, include that host in the al
 ## Research References
 
 - Antigravity MCP setup flow (`MCP Servers` -> `Manage MCP Servers` -> `View raw config`) and custom `mcp_config.json` format: [Google Cloud docs](https://docs.cloud.google.com/alloydb/docs/connect-ide-using-mcp-toolbox)
+- Antigravity OAuth limitation for MCP client ID/secret: [Google Cloud MCP known issues](https://docs.cloud.google.com/mcp/known-issues)
 - `mcp-remote` usage, `--static-oauth-client-info`, and localhost OAuth callback defaults: [mcp-remote README](https://raw.githubusercontent.com/geelen/mcp-remote/main/README.md)
