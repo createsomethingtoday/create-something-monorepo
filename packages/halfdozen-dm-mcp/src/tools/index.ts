@@ -5,6 +5,7 @@
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { Client } from '@notionhq/client';
+import type { DriveComposioClient, DriveActionSlugOverrides } from './drive-sync.js';
 import {
   notionSearchSchema,
   notionListDatabasesSchema,
@@ -39,6 +40,13 @@ import {
   handleNotionCreateDatabase,
   handleNotionUpdateDatabase
 } from './handlers.js';
+import { registerDriveAuthTools } from './drive-auth.js';
+import {
+  registerDriveSyncTools,
+  resolveDriveActionSlugs,
+  type DriveActionSlugs,
+} from './drive-sync.js';
+import type { D1Database } from '../lib/drive-sync-state.js';
 
 const DM_HINT = 'All calls target the DM client workspace configured on this server.';
 
@@ -174,4 +182,44 @@ export function registerNotionTools(server: McpServer, notionClient: Client): vo
         params as Parameters<typeof handleNotionUpdateDatabase>[1]
       )
   );
+}
+
+export interface RegisterDriveToolsDeps {
+  composioClient: DriveComposioClient;
+  composioApiKey: string;
+  driveAuthConfigId?: string;
+  driveSyncDb: D1Database;
+  entityId: string;
+  targetDataSourceId: string;
+  actionSlugOverrides: DriveActionSlugOverrides;
+  defaultRecentLimit: number;
+  initialLookbackDays: number;
+}
+
+export async function registerDriveTools(
+  server: McpServer,
+  notionClient: Client,
+  deps: RegisterDriveToolsDeps
+): Promise<DriveActionSlugs> {
+  const actionSlugs = await resolveDriveActionSlugs(deps.composioClient, deps.actionSlugOverrides);
+
+  registerDriveAuthTools(server, {
+    composioClient: deps.composioClient,
+    composioApiKey: deps.composioApiKey,
+    driveAuthConfigId: deps.driveAuthConfigId,
+    entityId: deps.entityId,
+  });
+
+  registerDriveSyncTools(server, {
+    composioClient: deps.composioClient,
+    notionClient,
+    driveSyncDb: deps.driveSyncDb,
+    entityId: deps.entityId,
+    targetDataSourceId: deps.targetDataSourceId,
+    actionSlugs,
+    defaultRecentLimit: deps.defaultRecentLimit,
+    initialLookbackDays: deps.initialLookbackDays,
+  });
+
+  return actionSlugs;
 }

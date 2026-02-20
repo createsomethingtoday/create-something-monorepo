@@ -14,8 +14,12 @@ Codex MCP settings are a flat list. This control plane keeps local/workspace MCP
 ## Files
 
 - Registry: `config/mcp-hub/registry.json`
+- Registry schema: `config/mcp-hub/registry.schema.json`
 - State: `config/mcp-hub/state.json`
 - Gateway package: `packages/cs-mcp-hub`
+- Generated artifacts:
+  - `packages/playbook-mcp/src/catalog.registry.generated.ts`
+  - `docs/MCP_FLEET_REGISTRY.generated.md`
 
 ## Run
 
@@ -31,6 +35,9 @@ pnpm mcp:hub:status
 node packages/cs-mcp-hub/dist/index.js --enable-bundle ops
 node packages/cs-mcp-hub/dist/index.js --disable-server cs-telemetry
 pnpm mcp:hub:write-config
+pnpm mcp:registry:validate
+pnpm mcp:registry:check
+pnpm mcp:registry:generate
 ```
 
 ## Codex Configuration

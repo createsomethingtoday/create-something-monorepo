@@ -72,8 +72,9 @@ async function connectSingleServer(
   try {
     if (config.transport === 'http') {
       const requestInit: RequestInit = {};
-      if (config.headers && Object.keys(config.headers).length > 0) {
-        requestInit.headers = { ...config.headers };
+      const headers = resolveHttpHeaders(config);
+      if (Object.keys(headers).length > 0) {
+        requestInit.headers = headers;
       }
       const transport = new StreamableHTTPClientTransport(new URL(config.url), { requestInit });
       await client.connect(transport);
@@ -112,4 +113,29 @@ async function listAllTools(client: Client): Promise<Tool[]> {
     }
     cursor = page.nextCursor;
   }
+}
+
+function resolveHttpHeaders(config: Extract<McpServerConfig, { transport: 'http' }>): Record<string, string> {
+  const headers: Record<string, string> = {
+    ...(config.http_headers ?? {}),
+    ...(config.headers ?? {}),
+  };
+
+  if (config.env_http_headers) {
+    for (const [headerName, envVarName] of Object.entries(config.env_http_headers)) {
+      const value = process.env[envVarName];
+      if (value) {
+        headers[headerName] = value;
+      }
+    }
+  }
+
+  if (config.bearer_token_env_var && !headers.Authorization) {
+    const token = process.env[config.bearer_token_env_var];
+    if (token) {
+      headers.Authorization = token.toLowerCase().startsWith('bearer ') ? token : `Bearer ${token}`;
+    }
+  }
+
+  return headers;
 }

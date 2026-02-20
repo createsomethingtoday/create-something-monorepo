@@ -63,3 +63,20 @@ export interface NotionUpdateDatabaseInput {
   data_source_id?: string;
   properties?: Record<string, unknown>;
 }
+
+export interface GoogleDriveListFilesInput {
+  query?: string;
+  page_size?: number;
+  page_token?: string;
+}
+
+export interface GoogleDriveSyncFileToNotionInput {
+  file_id: string;
+  with_content?: boolean;
+}
+
+export interface GoogleDriveSyncRecentToNotionInput {
+  limit?: number;
+  since_iso?: string;
+  with_content?: boolean;
+}

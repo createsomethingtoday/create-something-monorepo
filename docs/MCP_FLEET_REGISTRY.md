@@ -2,6 +2,9 @@
 
 > The fleet inventory for all CREATE SOMETHING and WORKWAY MCP servers.
 > Updated: February 20, 2026
+>
+> Machine source of truth: `config/mcp-hub/registry.json` (validated by `config/mcp-hub/registry.schema.json`).
+> Generated snapshot: `docs/MCP_FLEET_REGISTRY.generated.md`.
 
 ## Fleet Overview
 
@@ -46,6 +49,8 @@ All Half Dozen MCPs share `halfdozen-feedback` D1 for telemetry. Fleet-wide quer
 | 14  | `half-dozen-youtube-sync`               | `half-dozen-youtube-sync`           | Active | `youtube.mcp.workway.co`                         | Yes                 |
 | 15  | `halfdozen-telemetry-mcp`               | `halfdozen-telemetry`               | Active | `halfdozen-telemetry-mcp.half-dozen.workers.dev` | — (reads telemetry) |
 | 16  | `halfdozen-dm-mcp`                      | `halfdozen-dm-mcp`                  | Active | `dm.mcp.workway.co`                              | Yes                 |
+
+`halfdozen-dm-mcp` v2 now includes DM-scoped Google Drive sync (Composio-backed Drive + direct Notion writes) in addition to Notion CRUD.
 
 ### Naming Note
 

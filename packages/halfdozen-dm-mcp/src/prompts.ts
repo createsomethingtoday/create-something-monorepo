@@ -7,6 +7,19 @@ import type { DmConfig } from './config.js';
 
 export function registerTaskWorkflowPrompt(server: McpServer, config: DmConfig): void {
   const { displayName, clientLabel, clientDescription } = config;
+  const hasDrive = config.enabledToolsets.includes('drive');
+  const driveSection = hasDrive
+    ? `
+## Drive sync (DM shared account)
+- Drive entity: **${config.drive.entityId}** (shared DM account).
+- Check connection with **google_drive_connection_status**.
+- If disconnected, call **google_drive_get_connect_link** and provide the URL to the user.
+- Use **google_drive_list_files** to discover candidate files.
+- Sync one file via **google_drive_sync_file_to_notion** or run incremental sync with **google_drive_sync_recent_to_notion**.
+- Target data source is server-configured; sync calls fail fast if required schema properties are missing.
+`
+    : '';
+
   server.prompt(
     'task_workflow',
     `How to use ${displayName} — schema-first Notion workflow for ${clientLabel}`,
@@ -35,7 +48,7 @@ Before querying, updating, or creating pages in a data source:
 
 ## Batch operations
 When updating or archiving many pages, use **notion_bulk_update** or **notion_bulk_archive** instead of calling update/archive repeatedly.
-For very large cleanups, run smaller batches (for example 20-50 pages at a time).`
+For very large cleanups, run smaller batches (for example 20-50 pages at a time).${driveSection}`
           }
         }
       ]

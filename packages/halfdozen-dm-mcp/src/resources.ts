@@ -24,7 +24,25 @@ export const DM_NOTION_TOOLS = [
   { name: 'notion_update_database', description: 'Update database title/description and data source properties' },
 ] as const;
 
-export function registerToolsResource(server: McpServer): void {
+/** Canonical list of DM Drive sync tools. */
+export const DM_DRIVE_TOOLS = [
+  { name: 'google_drive_connection_status', description: 'Check DM shared Google Drive connection state' },
+  { name: 'google_drive_get_connect_link', description: 'Get a DM Drive OAuth connect link' },
+  { name: 'google_drive_list_files', description: 'List/search files from DM Google Drive account' },
+  { name: 'google_drive_sync_file_to_notion', description: 'Sync one Drive file to the DM Notion sync source' },
+  { name: 'google_drive_sync_recent_to_notion', description: 'Incrementally sync recently modified Drive files' },
+] as const;
+
+export function getToolsForConfig(config: DmConfig): Array<{ name: string; description: string }> {
+  const enabled = new Set(config.enabledToolsets);
+  const tools: Array<{ name: string; description: string }> = [];
+  if (enabled.has('notion')) tools.push(...DM_NOTION_TOOLS);
+  if (enabled.has('drive')) tools.push(...DM_DRIVE_TOOLS);
+  return tools;
+}
+
+export function registerToolsResource(server: McpServer, config: DmConfig): void {
+  const tools = getToolsForConfig(config);
   server.resource(
     'tools',
     'dm://tools',
@@ -39,8 +57,9 @@ export function registerToolsResource(server: McpServer): void {
           mimeType: 'application/json',
           text: JSON.stringify(
             {
-              tools: DM_NOTION_TOOLS,
-              hint: `This MCP currently exposes ${DM_NOTION_TOOLS.length} Notion tools.`,
+              toolsets: config.enabledToolsets,
+              tools,
+              hint: `This MCP currently exposes ${tools.length} tools across ${config.enabledToolsets.length} toolset(s).`,
             },
             null,
             2
@@ -72,7 +91,14 @@ export function registerToolsetsResource(server: McpServer, config: DmConfig): v
                 label: config.clientLabel,
                 description: config.clientDescription,
               },
-              hint: 'DM v1 is Notion-only and targets a single client workspace.',
+              drive: {
+                entity_id: config.drive.entityId,
+                target_data_source_configured: Boolean(config.drive.targetDataSourceId),
+                cron_enabled: config.drive.enableCron,
+                cron_batch_size: config.drive.cronBatchSize,
+                cron_initial_lookback_days: config.drive.cronInitialLookbackDays,
+              },
+              hint: 'DM targets a single workspace with optional Drive sync automation.',
             },
             null,
             2

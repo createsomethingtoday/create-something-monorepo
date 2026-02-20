@@ -179,8 +179,19 @@ function buildCodexEntry(server: McpServerConfig, enabled: boolean): Record<stri
       url: server.url,
       enabled,
     };
-    if (server.headers && Object.keys(server.headers).length > 0) {
-      entry.headers = { ...server.headers };
+
+    const staticHeaders = {
+      ...(server.http_headers ?? {}),
+      ...(server.headers ?? {}),
+    };
+    if (Object.keys(staticHeaders).length > 0) {
+      entry.http_headers = staticHeaders;
+    }
+    if (server.env_http_headers && Object.keys(server.env_http_headers).length > 0) {
+      entry.env_http_headers = { ...server.env_http_headers };
+    }
+    if (server.bearer_token_env_var) {
+      entry.bearer_token_env_var = server.bearer_token_env_var;
     }
     return entry;
   }

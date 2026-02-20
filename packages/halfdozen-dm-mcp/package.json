@@ -1,7 +1,7 @@
 {
   "name": "@create-something/halfdozen-dm-mcp",
   "version": "1.0.0",
-  "description": "Half Dozen DM MCP — generalized endpoint with Notion tools in v1 (single client workspace).",
+  "description": "Half Dozen DM MCP — generalized endpoint with Notion tools and DM-scoped Google Drive sync.",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@create-something/composio-bridge": "workspace:*",
     "@create-something/mcp-core": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "@notionhq/client": "^5.9.0",

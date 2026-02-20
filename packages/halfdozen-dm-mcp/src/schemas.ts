@@ -176,3 +176,54 @@ export const notionUpdateDatabaseSchema = z
       )
   })
   .strict();
+
+export const googleDriveListFilesSchema = z
+  .object({
+    query: z.string().optional().describe('Optional Drive search query'),
+    page_size: z
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .default(25)
+      .describe('Maximum files to return (default 25)'),
+    page_token: z.string().optional().describe('Pagination token from previous response')
+  })
+  .strict();
+
+export const googleDriveSyncFileToNotionSchema = z
+  .object({
+    file_id: z.string().describe('Google Drive file ID'),
+    with_content: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe(
+        'If true, attempt content extraction for supported types (Google Docs + text/markdown/csv/json).'
+      )
+  })
+  .strict();
+
+export const googleDriveSyncRecentToNotionSchema = z
+  .object({
+    limit: z
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .optional()
+      .default(25)
+      .describe('Max files to process this run (default 25)'),
+    since_iso: z
+      .string()
+      .optional()
+      .describe('Override incremental checkpoint and sync files modified after this ISO timestamp'),
+    with_content: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe(
+        'If true, attempt content extraction for supported files. Cron always uses metadata-only mode.'
+      )
+  })
+  .strict();
