@@ -405,6 +405,7 @@ function buildStatusPayload(
       failed: connectionsPayload.failed,
       idle: connectionsPayload.idle,
     },
+    connections: connectionsPayload.connections,
     proxyToolCount: proxies.toolDefinitions.length,
     bundles: Object.keys(registry.bundles)
       .sort()
