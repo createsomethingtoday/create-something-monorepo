@@ -431,6 +431,8 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: var(--space-3, 0.75rem);
+		margin-top: auto;
+		min-width: 0;
 	}
 
 	.product-npm {
@@ -440,6 +442,11 @@
 		padding: 0.2rem 0.5rem;
 		border-radius: var(--radius-sm, 4px);
 		font-family: var(--font-mono, monospace);
+		flex: 1 1 auto;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.product-cta {
@@ -448,6 +455,8 @@
 		color: var(--color-fg-secondary);
 		transition: color var(--duration-micro, 200ms) var(--ease-standard);
 		margin-left: auto;
+		flex-shrink: 0;
+		white-space: nowrap;
 	}
 
 	.product-card:hover .product-cta {
@@ -549,6 +558,10 @@
 		.product-footer {
 			flex-direction: column;
 			align-items: flex-start;
+		}
+
+		.product-npm {
+			width: 100%;
 		}
 
 		.product-cta {
