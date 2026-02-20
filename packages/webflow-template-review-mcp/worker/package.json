@@ -9,6 +9,7 @@
     "tail": "wrangler tail"
   },
   "dependencies": {
+    "@cloudflare/workers-oauth-provider": "^0.0.7",
     "@create-something/mcp-core": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "agents": "^0.3.10",

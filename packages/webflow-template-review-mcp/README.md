@@ -12,28 +12,53 @@ Remote MCP server for Webflow Template Review workflows, scoped to Airtable temp
 
 ## Security
 
-Worker endpoints `/mcp` and `/sse` require:
+Primary auth is OAuth 2.1 (authorization code + PKCE) with optional legacy bearer fallback.
 
-- `Authorization: Bearer <MCP_API_KEY>`
+OAuth endpoints:
 
-Public endpoint `/` is health/info only.
+- `/.well-known/oauth-authorization-server`
+- `/authorize`
+- `/oauth/token`
+- `/oauth/register` (only when shared-client mode is not configured)
 
-Secrets (Worker):
+Protected MCP endpoints:
 
-- `MCP_API_KEY`
-- `AIRTABLE_API_KEY`
+- `/mcp`
+- `/sse`
+
+Public endpoints:
+
+- `/`
+- `/health`
+
+Worker secrets/env:
+
+- `AIRTABLE_API_KEY` (required)
+- `MCP_API_KEY` (required for legacy bearer fallback)
+- `SHARED_OAUTH_CLIENT_ID` (recommended for Claude/Desktop shared-client mode)
+- `SHARED_OAUTH_CLIENT_SECRET` (recommended; can match `MCP_API_KEY`)
+- `SHARED_OAUTH_CLIENT_NAME` (optional)
+- `SHARED_OAUTH_ALLOWED_REDIRECT_HOSTS` (optional comma-separated allowlist)
 - `AIRTABLE_BASE_ID` (optional, defaults to `appMoIgXMTTTNIc3p`)
+- `ALLOW_LEGACY_API_KEY=true` (set in `wrangler.toml` by default for Codex compatibility)
 
-## Token Rotation
+## Token/Client Rotation
 
-Rotate the shared bearer token with Wrangler secrets:
+Rotate the shared bearer token:
 
 ```bash
 cd /Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/webflow-template-review-mcp/worker
 pnpm exec wrangler secret put MCP_API_KEY
 ```
 
-After rotation, distribute the new token to the review team and invalidate old local client configs.
+Set/update shared OAuth client values (Claude Desktop):
+
+```bash
+pnpm exec wrangler secret put SHARED_OAUTH_CLIENT_ID
+pnpm exec wrangler secret put SHARED_OAUTH_CLIENT_SECRET
+```
+
+When using shared-client mode, `SHARED_OAUTH_CLIENT_SECRET` can be the same value as `MCP_API_KEY`.
 
 ## MCP Interface
 
@@ -76,6 +101,8 @@ cd /Users/micahjohnson/Documents/Github/Create Something/create-something-monore
 pnpm install
 pnpm exec wrangler secret put MCP_API_KEY
 pnpm exec wrangler secret put AIRTABLE_API_KEY
+pnpm exec wrangler secret put SHARED_OAUTH_CLIENT_ID
+pnpm exec wrangler secret put SHARED_OAUTH_CLIENT_SECRET
 pnpm deploy
 ```
 
