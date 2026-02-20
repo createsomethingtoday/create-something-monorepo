@@ -3,14 +3,14 @@
 > Auto-generated from `config/mcp-hub/registry.json`.
 > Regenerate with `pnpm mcp:registry:generate`.
 
-## Active (17)
+## Active (19)
 
 | Server | Transport | Endpoint | Tags |
 | --- | --- | --- | --- |
 | `create-something` | `http` | `https://mcp.createsomething.ltd/mcp` | `core`, `content`, `cs` |
 | `cs-telemetry` | `http` | `https://cs-telemetry-mcp.createsomething.workers.dev/mcp` | `observability`, `telemetry`, `cs` |
 | `half-dozen-youtube-sync` | `http` | `https://youtube.mcp.workway.co/mcp` | `halfdozen`, `youtube`, `workway` |
-| `halfdozen-dm-mcp` | `http` | `https://dm.mcp.workway.co/mcp` | `halfdozen`, `dm`, `notion`, `workway` |
+| `halfdozen-dm-mcp` | `http` | `https://dm.mcp.workway.co/mcp` | `halfdozen`, `dm`, `notion`, `drive`, `composio`, `workway` |
 | `halfdozen-gmail-sync-danny` | `http` | `https://gmail.mcp.workway.co/mcp` | `halfdozen`, `gmail`, `workway` |
 | `halfdozen-gmail-sync-fillip` | `http` | `https://fillip-gmail.mcp.workway.co/mcp` | `halfdozen`, `gmail`, `workway` |
 | `halfdozen-gmail-sync-leah` | `http` | `https://leah-gmail.mcp.workway.co/mcp` | `halfdozen`, `gmail`, `workway` |
@@ -22,6 +22,8 @@
 | `playbook` | `http` | `https://playbook.mcp.createsomething.ltd/mcp` | `core`, `workflow`, `cs` |
 | `quickbooks-notion-mcp-server` | `http` | `https://quickbooks.mcp.workway.co/mcp` | `finance`, `quickbooks`, `notion`, `workway` |
 | `schedule-mcp` | `http` | `https://schedule.mcp.createsomething.agency/mcp` | `ops`, `scheduling`, `cs` |
+| `slack_create_something` | `http` | `https://mcp.slack.com/mcp` | `slack`, `communication`, `cs` |
+| `slack_webflow` | `http` | `https://mcp.slack.com/mcp` | `slack`, `communication`, `webflow` |
 | `substrate-mcp` | `http` | `https://substrate.mcp.createsomething.agency/mcp` | `ops`, `automation`, `cs` |
 | `three-tier-framework` | `http` | `https://framework.mcp.createsomething.agency/mcp` | `core`, `framework`, `cs` |
 
@@ -55,3 +57,4 @@
 | `meetings` | `meetings` |
 | `observability` | `cs-telemetry` |
 | `ops` | `schedule-mcp`, `substrate-mcp` |
+| `slack` | `slack_create_something`, `slack_webflow` |

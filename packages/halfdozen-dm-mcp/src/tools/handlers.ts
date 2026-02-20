@@ -92,6 +92,42 @@ function responseFromPayload(payload: unknown): ToolResponse {
   };
 }
 
+async function resolveDataSourceIdentifier(
+  client: Client,
+  identifier: string
+): Promise<{ dataSourceId: string; resolvedFromDatabaseId?: string }> {
+  let dataSourceError: unknown;
+
+  // First try as data_source_id (preferred in Notion API 2025-09-03)
+  try {
+    const ds = await client.dataSources.retrieve({ data_source_id: identifier });
+    return { dataSourceId: ds.id };
+  } catch (error) {
+    dataSourceError = error;
+  }
+
+  // Fallback: treat identifier as database_id and resolve primary data source
+  try {
+    const db = await client.databases.retrieve({ database_id: identifier });
+    const dataSources =
+      'data_sources' in db ? (db as { data_sources?: Array<{ id?: string }> }).data_sources : undefined;
+    const dataSourceId = dataSources?.[0]?.id;
+    if (!dataSourceId) {
+      throw new Error(`Database ${identifier} has no accessible data sources`);
+    }
+    return { dataSourceId, resolvedFromDatabaseId: identifier };
+  } catch (databaseError) {
+    const dataSourceMessage =
+      dataSourceError instanceof Error ? dataSourceError.message : String(dataSourceError);
+    const databaseMessage =
+      databaseError instanceof Error ? databaseError.message : String(databaseError);
+    throw new Error(
+      `Could not resolve "${identifier}" as data_source_id or database_id. ` +
+        `data_source_id error: ${dataSourceMessage}; database_id error: ${databaseMessage}`
+    );
+  }
+}
+
 async function mapWithConcurrency<TIn, TOut>(
   items: readonly TIn[],
   concurrency: number,
@@ -192,24 +228,53 @@ export async function handleNotionGetDatabase(
     return responseFromPayload(cached);
   }
 
-  const ds = await client.dataSources.retrieve({ data_source_id: params.data_source_id });
+  const { dataSourceId, resolvedFromDatabaseId } = await resolveDataSourceIdentifier(
+    client,
+    params.data_source_id
+  );
+
+  const resolvedCached = getCachedValue(dataSourceSchemaCache, dataSourceId);
+  if (resolvedCached) {
+    if (params.data_source_id !== dataSourceId) {
+      setCachedValue(
+        dataSourceSchemaCache,
+        params.data_source_id,
+        resolvedCached,
+        DATA_SOURCE_SCHEMA_CACHE_TTL_MS
+      );
+    }
+    return responseFromPayload(resolvedCached);
+  }
+
+  const ds = await client.dataSources.retrieve({ data_source_id: dataSourceId });
   const schema = Object.entries(ds.properties).map(([name, p]) => ({
     name,
     type: (p as { type: string }).type,
     id: (p as { id: string }).id
   }));
   const title = 'title' in ds ? ds.title : undefined;
-  const payload: DataSourceSchemaPayload = {
+  const payload: DataSourceSchemaPayload & { resolved_from_database_id?: string } = {
     data_source_id: ds.id,
     title,
     schema
   };
+  if (resolvedFromDatabaseId) {
+    payload.resolved_from_database_id = resolvedFromDatabaseId;
+  }
   setCachedValue(
     dataSourceSchemaCache,
-    params.data_source_id,
+    ds.id,
     payload,
     DATA_SOURCE_SCHEMA_CACHE_TTL_MS
   );
+  if (params.data_source_id !== ds.id) {
+    setCachedValue(
+      dataSourceSchemaCache,
+      params.data_source_id,
+      payload,
+      DATA_SOURCE_SCHEMA_CACHE_TTL_MS
+    );
+  }
   return responseFromPayload(payload);
 }
 

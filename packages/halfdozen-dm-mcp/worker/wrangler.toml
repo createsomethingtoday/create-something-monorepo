@@ -25,7 +25,7 @@ new_sqlite_classes = ["HalfDozenDmMcp"]
 [[d1_databases]]
 binding = "DRIVE_SYNC_DB"
 database_name = "halfdozen-dm-drive-sync"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "6a297bfd-028d-4a16-b745-e8bc5b9e658c"
 migrations_dir = "migrations"
 
 # Shared feedback database (all Half Dozen MCPs)

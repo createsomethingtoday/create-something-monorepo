@@ -5,8 +5,9 @@
     "observability"
   ],
   "enabledServers": [
-    "notion-halfdozen-create-something"
+    "notion-halfdozen-create-something",
+    "slack_create_something"
   ],
   "disabledServers": [],
-  "updatedAt": "2026-02-20T04:49:11.104Z"
+  "updatedAt": "2026-02-20T19:21:57.746Z"
 }

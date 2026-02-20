@@ -309,6 +309,28 @@
       ],
       "bearer_token_env_var": "MEETINGS_MCP_API_KEY"
     },
+    "slack_create_something": {
+      "transport": "http",
+      "url": "https://mcp.slack.com/mcp",
+      "description": "Slack MCP for CREATE SOMETHING workspace",
+      "bearer_token_env_var": "SLACK_CREATE_SOMETHING_MCP_TOKEN",
+      "tags": [
+        "slack",
+        "communication",
+        "cs"
+      ]
+    },
+    "slack_webflow": {
+      "transport": "http",
+      "url": "https://mcp.slack.com/mcp",
+      "description": "Slack MCP for Webflow workspace",
+      "bearer_token_env_var": "SLACK_WEBFLOW_MCP_TOKEN",
+      "tags": [
+        "slack",
+        "communication",
+        "webflow"
+      ]
+    },
     "webflow-local": {
       "transport": "stdio",
       "command": "node",
@@ -387,6 +409,10 @@
     ],
     "meetings": [
       "meetings"
+    ],
+    "slack": [
+      "slack_create_something",
+      "slack_webflow"
     ],
     "finance": [
       "quickbooks-notion-mcp-server"
