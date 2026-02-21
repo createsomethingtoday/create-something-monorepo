@@ -40,6 +40,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build composio-bridge dependency
+        run: pnpm --filter @create-something/composio-bridge build
+
       - name: Deploy Composio toolkit gateway
         run: pnpm --filter @create-something/composio-toolkit-mcp deploy
         env:

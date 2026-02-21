@@ -45,12 +45,14 @@ Per tool call, entity id resolves in this order:
 ## Local dev
 
 ```bash
+pnpm --filter @create-something/composio-bridge build
 pnpm --filter @create-something/composio-toolkit-mcp dev
 ```
 
 ## Deploy
 
 ```bash
+pnpm --filter @create-something/composio-bridge build
 pnpm --filter @create-something/composio-toolkit-mcp deploy
 ```
 
