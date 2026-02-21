@@ -18,6 +18,16 @@
         "./packages/webflow-mcp/dist/index.js"
       ]
     },
+    "airtable": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "airtable-mcp-server"
+      ],
+      "env": {
+        "AIRTABLE_API_KEY": "${AIRTABLE_API_KEY}"
+      }
+    },
     "half-dozen-youtube-sync": {
       "type": "http",
       "url": "https://youtube.mcp.workway.co/mcp"

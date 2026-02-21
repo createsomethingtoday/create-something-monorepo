@@ -2321,6 +2321,24 @@ importers:
         specifier: ^5.0.0
         version: 5.9.3
 
+  packages/webflow-automation/worker:
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.0.0
+        version: 4.20260205.0
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      tsx:
+        specifier: ^4.20.5
+        version: 4.21.0
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+      wrangler:
+        specifier: ^4.39.0
+        version: 4.64.0(@cloudflare/workers-types@4.20260205.0)
+
   packages/webflow-components:
     dependencies:
       '@webflow/react':
