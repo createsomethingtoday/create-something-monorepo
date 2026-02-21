@@ -10,6 +10,8 @@ import {
   getAllMcpTools,
 } from '@openai/agents';
 
+import { registerOpenAIAgentsBraintrustTracing } from '@create-something/observability/openai-agents';
+
 type ServerKey = 'telemetry' | 'youtube' | 'gmail' | 'zoom' | 'notion';
 type ScenarioKey = 'dedup' | 'inbox-triage' | 'fleet-watchdog';
 
@@ -705,7 +707,12 @@ async function main(): Promise<void> {
       mcpServers: mcpServers.active,
     });
 
-    const runner = new Runner({ tracingDisabled: true });
+    const braintrustTracingEnabled = registerOpenAIAgentsBraintrustTracing({
+      projectName: process.env.BRAINTRUST_PROJECT_NAME ?? 'Create Something',
+      tags: ['halfdozen', 'smoke']
+    });
+
+    const runner = new Runner({ tracingDisabled: !braintrustTracingEnabled });
     const result = await runner.run(agent, options.query, {
       maxTurns: options.maxTurns,
     });
