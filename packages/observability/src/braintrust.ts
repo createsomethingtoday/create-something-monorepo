@@ -28,7 +28,13 @@
  * ```
  */
 
-import { flush, initLogger, type Logger, type Span } from 'braintrust';
+import {
+  flush as flushBraintrustGlobal,
+  initLogger,
+  startSpan as startBraintrustSpan,
+  type Logger,
+  type Span,
+} from 'braintrust';
 import type { AITaskType, AtlasMetadata } from './atlas.js';
 
 // =============================================================================
@@ -38,6 +44,9 @@ import type { AITaskType, AtlasMetadata } from './atlas.js';
 export interface BraintrustConfig {
   apiKey?: string;
   projectName?: string;
+  orgName?: string;
+  projectId?: string;
+  appUrl?: string;
   enabled?: boolean;
   /** Async flush — recommended for Workers / edge where there is no long-lived process. */
   asyncFlush?: boolean;
@@ -86,24 +95,48 @@ export function getBraintrustLogger(): Logger<any> | null {
 }
 
 /**
+ * True when Braintrust logging is enabled and initialized.
+ */
+export function isBraintrustEnabled(): boolean {
+  return _config.enabled !== false && _logger !== null;
+}
+
+/**
+ * Start a Braintrust span using the global Braintrust helper.
+ * Used by OpenAI Agents trace bridging.
+ */
+export function startSpan(...args: Parameters<typeof startBraintrustSpan>): ReturnType<typeof startBraintrustSpan> {
+  return startBraintrustSpan(...args);
+}
+
+/**
+ * Flush Braintrust queues (logger + global queue).
+ * Safe to call repeatedly.
+ */
+export async function flush(): Promise<void> {
+  if (_logger && _config.enabled !== false) {
+    try {
+      await _logger.flush();
+    } catch (err) {
+      console.warn('[braintrust] logger.flush failed:', err);
+    }
+  }
+
+  try {
+    await flushBraintrustGlobal();
+  } catch (err) {
+    console.warn('[braintrust] global flush failed:', err);
+  }
+}
+
+/**
  * Flush and close Braintrust logging.
  * Safe to call multiple times.
  */
 export async function shutdownBraintrust(): Promise<void> {
   if (!_logger || _config.enabled === false) return;
 
-  try {
-    await _logger.flush();
-  } catch (err) {
-    console.warn('[braintrust] logger.flush failed during shutdown:', err);
-  }
-
-  // Flush global queue as an additional best-effort safety net.
-  try {
-    await flush();
-  } catch (err) {
-    console.warn('[braintrust] global flush failed during shutdown:', err);
-  }
+  await flush();
 
   _logger = null;
 }
