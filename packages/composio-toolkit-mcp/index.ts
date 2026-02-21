@@ -31,7 +31,6 @@ type ToolRoute = {
 const SERVER_NAME = 'composio-toolkit-mcp';
 const SERVER_VERSION = '0.1.0';
 const DEFAULT_CACHE_SECONDS = 300;
-const COMPOSIO_CONNECT_API = 'https://backend.composio.dev/api/v1/connectedAccounts';
 
 const runtimeCache = new Map<string, ToolkitRuntime>();
 const pendingRuntimeLoads = new Map<string, Promise<ToolkitRuntime>>();
@@ -202,34 +201,23 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
           });
         }
 
-        const response = await fetch(COMPOSIO_CONNECT_API, {
-          method: 'POST',
-          headers: {
-            'x-api-key': env.COMPOSIO_API_KEY!,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            integrationId: authConfigId,
-            data: { userUuid: entityId },
-          }),
-        });
+        const connectionRequest = await client.getSDK().connectedAccounts.link(entityId, authConfigId);
+        const connectionState = asRecord(connectionRequest);
+        const redirectUrl = stringOrNull(connectionState?.redirectUrl);
+        const requestId = stringOrNull(connectionState?.id);
+        const rawStatus =
+          stringOrNull(connectionState?.status) ??
+          stringOrNull(connectionState?.connectionStatus);
+        const status = rawStatus ? rawStatus.toUpperCase() : null;
 
-        if (!response.ok) {
-          const body = await response.text();
-          return toErrorResult(`Composio connect API failed: ${response.status} ${body}`);
-        }
-
-        const payload = (await response.json()) as {
-          redirectUrl?: string;
-          connectionStatus?: string;
-        };
-
-        if (payload.connectionStatus === 'ACTIVE') {
+        if (status === 'ACTIVE' || status === 'CONNECTED') {
           return toJsonResult({
             toolkitSlug: runtime.toolkitSlug,
             entityId,
             alreadyConnected: true,
             link: null,
+            requestId,
+            status,
             message: `Toolkit "${runtime.toolkitSlug}" is already connected for entity "${entityId}".`,
           });
         }
@@ -238,8 +226,10 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
           toolkitSlug: runtime.toolkitSlug,
           entityId,
           authConfigId,
-          link: payload.redirectUrl ?? null,
-          message: payload.redirectUrl
+          requestId,
+          status,
+          link: redirectUrl,
+          message: redirectUrl
             ? 'Present this URL to the user, then retry connection_status.'
             : 'No redirect URL returned by Composio. Retry connection_status.',
         });
@@ -447,6 +437,12 @@ function parseBearerToken(value: string): string | null {
   if (!match) return null;
   const token = match[1]?.trim();
   return token || null;
+}
+
+function stringOrNull(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed || null;
 }
 
 function parseAuthConfigMap(raw: string | undefined): Record<string, string> {
