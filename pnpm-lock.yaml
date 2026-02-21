@@ -32,12 +32,18 @@ importers:
       '@typescript-eslint/parser':
         specifier: ^8.50.1
         version: 8.54.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
+      braintrust:
+        specifier: ^2.2.2
+        version: 2.2.2(chokidar@3.6.0)(zod@4.3.6)
       esbuild:
         specifier: ^0.24.2
         version: 0.24.2
       glob:
         specifier: ^13.0.0
         version: 13.0.0
+      openai:
+        specifier: ^6.22.0
+        version: 6.22.0(ws@8.19.0)(zod@4.3.6)
       prettier:
         specifier: ^3.7.4
         version: 3.8.1
@@ -579,6 +585,28 @@ importers:
         specifier: ^5.7.0
         version: 5.9.3
 
+  packages/composio-toolkit-mcp:
+    dependencies:
+      '@create-something/composio-bridge':
+        specifier: workspace:*
+        version: link:../composio-bridge
+      '@modelcontextprotocol/sdk':
+        specifier: 1.25.3
+        version: 1.25.3(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@4.3.6)
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.0.0
+        version: 4.20260205.0
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
+      wrangler:
+        specifier: ^4.0.0
+        version: 4.64.0(@cloudflare/workers-types@4.20260205.0)
+
   packages/create-something-mcp:
     dependencies:
       '@create-something/playbook-mcp':
@@ -619,6 +647,41 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^4.0.0
         version: 4.20260205.0
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
+      wrangler:
+        specifier: ^4.0.0
+        version: 4.64.0(@cloudflare/workers-types@4.20260205.0)
+
+  packages/cs-mcp-hub:
+    dependencies:
+      '@iarna/toml':
+        specifier: ^2.2.5
+        version: 2.2.5
+      '@modelcontextprotocol/sdk':
+        specifier: 1.25.3
+        version: 1.25.3(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@4.3.6)
+    devDependencies:
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
+
+  packages/cs-mcp-hub-remote:
+    dependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: 1.25.3
+        version: 1.25.3(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@4.3.6)
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.0.0
+        version: 4.20260205.0
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
       typescript:
         specifier: ^5.3.0
         version: 5.9.3
@@ -733,6 +796,62 @@ importers:
       vitest:
         specifier: ^3.0.0
         version: 3.2.4(@types/node@24.10.9)(jiti@2.6.1)(jsdom@27.4.0(@noble/hashes@1.8.0))(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/halfdozen-dm-mcp:
+    dependencies:
+      '@create-something/composio-bridge':
+        specifier: workspace:*
+        version: link:../composio-bridge
+      '@create-something/mcp-core':
+        specifier: workspace:*
+        version: link:../mcp-core
+      '@modelcontextprotocol/sdk':
+        specifier: 1.25.3
+        version: 1.25.3(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@3.25.76)
+      '@notionhq/client':
+        specifier: ^5.9.0
+        version: 5.9.0
+      zod:
+        specifier: ^3.23.0
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/halfdozen-dm-mcp/worker:
+    dependencies:
+      '@create-something/composio-bridge':
+        specifier: workspace:*
+        version: link:../../composio-bridge
+      '@create-something/mcp-core':
+        specifier: workspace:*
+        version: link:../../mcp-core
+      '@modelcontextprotocol/sdk':
+        specifier: 1.25.3
+        version: 1.25.3(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@3.25.76)
+      '@notionhq/client':
+        specifier: ^5.9.0
+        version: 5.9.0
+      agents:
+        specifier: ^0.3.10
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.0.6)(@cloudflare/workers-types@4.20260205.0)(ai@6.0.84(zod@3.25.76))(hono@4.11.7)(react@19.2.4)(zod@3.25.76)
+      zod:
+        specifier: ^3.23.0
+        version: 3.25.76
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20260205.0
+        version: 4.20260205.0
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
+      wrangler:
+        specifier: ^4.62.0
+        version: 4.64.0(@cloudflare/workers-types@4.20260205.0)
 
   packages/halfdozen-gmail-sync:
     dependencies:
@@ -1348,6 +1467,34 @@ importers:
         specifier: ^4.64.0
         version: 4.64.0(@cloudflare/workers-types@4.20260128.0)
 
+  packages/meetings-mcp/worker:
+    dependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: 1.25.3
+        version: 1.25.3(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@3.25.76)
+      agents:
+        specifier: ^0.3.10
+        version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.0.6)(@cloudflare/workers-types@4.20260205.0)(ai@6.0.84(zod@3.25.76))(hono@4.11.7)(react@19.2.4)(zod@3.25.76)
+      zod:
+        specifier: ^3.23.0
+        version: 3.25.76
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.0.0
+        version: 4.20260205.0
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      tsx:
+        specifier: ^4.7.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
+      wrangler:
+        specifier: ^4.0.0
+        version: 4.64.0(@cloudflare/workers-types@4.20260205.0)
+
   packages/motion-studio:
     dependencies:
       '@create-something/canon':
@@ -1544,6 +1691,9 @@ importers:
       '@create-something/mcp-core':
         specifier: workspace:*
         version: link:../../mcp-core
+      '@create-something/observability':
+        specifier: workspace:*
+        version: link:../../observability
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
         version: 1.25.3(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@4.3.6)
@@ -2298,6 +2448,24 @@ importers:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
+
+  packages/webflow-automation/worker:
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.0.0
+        version: 4.20260205.0
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      tsx:
+        specifier: ^4.20.5
+        version: 4.21.0
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
+      wrangler:
+        specifier: ^4.39.0
+        version: 4.64.0(@cloudflare/workers-types@4.20260205.0)
 
   packages/webflow-components:
     dependencies:
@@ -9563,18 +9731,6 @@ packages:
     resolution: {integrity: sha512-7x81NCL719oNbsq/3mh+hVrAWmFuEYUqrq/Iw3kUzH8ReypT9QQ0BLoJS7/G9k6N81XjW4qHWtjWwe/9eLy1EQ==}
     engines: {node: '>=12'}
 
-  openai@6.19.0:
-    resolution: {integrity: sha512-5uGrF82Ql7TKgIWUnuxh+OyzYbPRPwYDSgGc05JowbXRFsOkuj0dJuCdPCTBZT4mcmp2NEvj/URwDzW+lYgmVw==}
-    hasBin: true
-    peerDependencies:
-      ws: ^8.18.0
-      zod: ^3.25 || ^4.0
-    peerDependenciesMeta:
-      ws:
-        optional: true
-      zod:
-        optional: true
-
   openai@6.22.0:
     resolution: {integrity: sha512-7Yvy17F33Bi9RutWbsaYt5hJEEJ/krRPOrwan+f9aCPuMat1WVsb2VNSII5W1EksKT6fF69TG/xj4XzodK3JZw==}
     hasBin: true
@@ -12969,7 +13125,7 @@ snapshots:
       '@composio/json-schema-to-zod': 0.1.20(zod@3.25.76)
       '@types/json-schema': 7.0.15
       chalk: 4.1.2
-      openai: 6.19.0(ws@8.19.0)(zod@3.25.76)
+      openai: 6.22.0(ws@8.19.0)(zod@3.25.76)
       pusher-js: 8.4.0
       semver: 7.7.3
       zod: 3.25.76
@@ -19846,7 +20002,7 @@ snapshots:
       is-docker: 2.2.1
       is-wsl: 2.2.0
 
-  openai@6.19.0(ws@8.19.0)(zod@3.25.76):
+  openai@6.22.0(ws@8.19.0)(zod@3.25.76):
     optionalDependencies:
       ws: 8.19.0
       zod: 3.25.76
