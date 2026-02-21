@@ -80,6 +80,7 @@ export type HalfDozenScenarioRunInput = {
   model?: string;
   maxTurns?: number;
   timeoutMs?: number;
+  tracingDisabled?: boolean;
 };
 
 export type HalfDozenScenarioRunResult = {
@@ -472,7 +473,7 @@ export async function runHalfDozenScenario(input: HalfDozenScenarioRunInput): Pr
       mcpServers: mcpServers.active,
     });
 
-    const runner = new Runner({ tracingDisabled: true });
+    const runner = new Runner({ tracingDisabled: input.tracingDisabled ?? true });
     let result: { newItems: unknown[]; finalOutput: unknown };
     try {
       const runResult = await runner.run(agent, query, { maxTurns });
