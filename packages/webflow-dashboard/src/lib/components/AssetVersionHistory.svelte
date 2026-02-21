@@ -53,6 +53,13 @@
 		}
 	}
 
+	function handleVersionKeydown(event: KeyboardEvent, versionId: string) {
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			toggleVersionSelection(versionId);
+		}
+	}
+
 	async function handleRollback(versionId: string) {
 		if (!confirm('Are you sure you want to rollback to this version? This will create a new version entry.')) {
 			return;
@@ -105,11 +112,15 @@
 		{:else}
 			<div class="space-y-4">
 				{#each versions as version}
-					<div
-						class="version-item"
-						class:selected={selectedVersions.includes(version.id)}
-						onclick={() => toggleVersionSelection(version.id)}
-					>
+						<div
+							class="version-item"
+							class:selected={selectedVersions.includes(version.id)}
+							onclick={() => toggleVersionSelection(version.id)}
+							onkeydown={(event) => handleVersionKeydown(event, version.id)}
+							role="button"
+							tabindex="0"
+							aria-pressed={selectedVersions.includes(version.id)}
+						>
 						<div class="flex items-start justify-between">
 							<div class="flex-1">
 								<div class="flex items-center gap-2 mb-1">

@@ -14,7 +14,7 @@
 		development: 'Development',
 	};
 
-	const categoryDisplayName = categoryDisplayNames[paper.category] || paper.category;
+	let categoryDisplayName = $derived(categoryDisplayNames[paper.category] || paper.category);
 
 
 	const formatDate = (dateString?: string) => {

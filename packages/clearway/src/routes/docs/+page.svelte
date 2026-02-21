@@ -174,12 +174,6 @@
 		color: var(--color-fg-primary, #fff);
 	}
 
-	p code {
-		background: var(--color-bg-surface, #111);
-		padding: 0.2em 0.4em;
-		border-radius: var(--radius-sm, 4px);
-	}
-
 	.options-table {
 		width: 100%;
 		border-collapse: collapse;

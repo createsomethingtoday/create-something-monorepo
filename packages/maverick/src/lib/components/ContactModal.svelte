@@ -42,13 +42,13 @@
 	let { isOpen, onClose, defaultCategoryId, defaultProductId, defaultApplicationId, content }: Props = $props();
 
 	// Defaults with CMS overrides
-	const modalTitle = content?.title ?? 'Get in Touch';
-	const modalDescription = content?.description ?? 'Ready to transform your industrial chemistry operations? Our technical team is here to help you optimize performance and drive results.';
-	const contactEmails = content?.emails ?? [
+	const modalTitle = $derived(content?.title ?? 'Get in Touch');
+	const modalDescription = $derived(content?.description ?? 'Ready to transform your industrial chemistry operations? Our technical team is here to help you optimize performance and drive results.');
+	const contactEmails = $derived(content?.emails ?? [
 		{ label: 'General Inquiries', address: 'info@maverickx.com' },
 		{ label: 'Technical Support', address: 'support@maverickx.com' },
 		{ label: 'Sales & Partnerships', address: 'sales@maverickx.com' }
-	];
+	]);
 
 	// Form state
 	let name = $state('');
@@ -305,15 +305,16 @@
 		<!-- Container -->
 		<div class="modal-container">
 			<!-- Modal Content -->
-			<div
-				class="modal-content"
-				class:is-open={isOpen}
-				role="dialog"
-				aria-modal="true"
-				aria-labelledby="contact-modal-title"
-				use:focusTrap={{ active: isOpen, onEscape: onClose }}
-				onclick={(e) => e.stopPropagation()}
-				onkeydown={(e) => e.stopPropagation()}
+				<div
+					class="modal-content"
+					class:is-open={isOpen}
+					role="dialog"
+					aria-modal="true"
+					aria-labelledby="contact-modal-title"
+					tabindex="-1"
+					use:focusTrap={{ active: isOpen, onEscape: onClose }}
+					onclick={(e) => e.stopPropagation()}
+					onkeydown={(e) => e.stopPropagation()}
 			>
 				<!-- Close Button -->
 				<button
@@ -431,12 +432,13 @@
 						<div class="dropdown-wrapper">
 							<div class="form-label">Area of Interest</div>
 							<div class="relative">
-								<button
-									type="button"
-									class="dropdown-trigger"
-									class:has-value={category}
-									onclick={() => categoryDropdownOpen = !categoryDropdownOpen}
-								>
+									<button
+										type="button"
+										class="dropdown-trigger"
+										class:has-value={category}
+										class:is-open={categoryDropdownOpen}
+										onclick={() => categoryDropdownOpen = !categoryDropdownOpen}
+									>
 									<div class="truncate">{category ? category.title : 'Select solution area'}</div>
 									<svg
 										class="dropdown-arrow"

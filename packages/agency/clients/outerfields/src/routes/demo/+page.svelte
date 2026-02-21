@@ -1,861 +1,406 @@
 <script lang="ts">
-	/**
-	 * OUTERFIELDS Demo Page
-	 *
-	 * Showcases a finished PCN subscriber experience.
-	 * Example subscription tiers: Monthly ($9), Annual ($99), Lifetime ($199)
-	 */
-	import { Star, Play, Plus, Info, ArrowRight, Check, ArrowLeft } from 'lucide-svelte';
-	import { videoPlayer, type Video } from '$lib/stores/videoPlayer';
-	import VideoModal from '$lib/components/VideoModal.svelte';
-
-	// Example subscription tiers
-	const subscriptionTiers = [
-		{
-			id: 'monthly',
-			name: 'Monthly',
-			price: '$9',
-			period: '/month',
-			description: 'Flexible monthly access',
-			features: ['Full content library', 'HD streaming', 'Cancel anytime']
-		},
-		{
-			id: 'annual',
-			name: 'Annual',
-			price: '$99',
-			period: '/year',
-			description: 'Save 8% annually',
-			features: ['Full content library', '4K streaming', 'Priority support', 'Exclusive content'],
-			popular: true
-		},
-		{
-			id: 'lifetime',
-			name: 'Lifetime',
-			price: '$199',
-			period: 'one-time',
-			description: 'Pay once, access forever',
-			features: ['Full content library', '4K streaming', 'Priority support', 'Exclusive content', 'Future updates included']
-		}
-	];
-
-	// Cloudflare R2 CDN base URL (same as marketing page)
-	const CDN_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
-
-	// Video source mapping for demo content
-	const videoSources: Record<string, string> = {
-		'1': `${CDN_BASE}/videos/weatherford-promo.mp4`,
-		'2': `${CDN_BASE}/videos/texas-state-fair.mp4`,
-		'3': `${CDN_BASE}/videos/gotv-uscca.mp4`,
-		'4': `${CDN_BASE}/videos/hilti-anchors.mp4`,
-		'5': `${CDN_BASE}/videos/staccato-promo.mp4`,
-		'6': `${CDN_BASE}/videos/uscca-expo-promo.mp4`,
-		'7': `${CDN_BASE}/videos/weatherford-promo.mp4`,
-		'8': `${CDN_BASE}/videos/texas-state-fair.mp4`,
-		'9': `${CDN_BASE}/videos/gotv-uscca.mp4`,
-		'10': `${CDN_BASE}/videos/hilti-anchors.mp4`,
-		'11': `${CDN_BASE}/videos/staccato-promo.mp4`,
-		'12': `${CDN_BASE}/videos/uscca-expo-promo.mp4`,
-		featured: `${CDN_BASE}/videos/gotv-uscca.mp4`
-	};
-
-	// Engagement data for heatmap visualization
-	// Note: Engagement heatmap is sourced from KV via the shared VideoModal store,
-	// so we don't pass in local mock engagement data here.
-
-	interface ContentItem {
-		id: string;
-		title: string;
-		thumbnail: string;
-		duration: string;
-		progress?: number;
-		episode?: string;
-		views?: string;
-		isNew?: boolean;
-	}
-
-	interface Category {
-		title: string;
-		items: ContentItem[];
-	}
+	import CategoryRow from '$lib/components/CategoryRow.svelte';
+	import { ArrowRight, LayoutDashboard, Play } from 'lucide-svelte';
+	import type { PageData } from './$types';
 
 	interface Props {
-		data: {
-			user: { name: string; avatar: string | null };
-			categories: Category[];
-		};
+		data: PageData;
 	}
 
 	let { data }: Props = $props();
 
-	let featuredContent = {
-		id: 'featured',
-		title: 'Demo: Private Content Network',
-		description:
-			'This is an example of what a finished PCN looks like for subscribers. Full video playback, engagement analytics, and AI-powered features—all included in every network we build.',
-		thumbnail: '/thumbnails/hero-building-outerfields.jpg',
-		duration: '16 min',
-		rating: '4.9',
-		year: '2026',
-		category: 'Demo'
-	};
-
-	function playVideo(item: ContentItem | typeof featuredContent) {
-		const video: Video = {
-			id: item.id,
-			title: item.title,
-			description: 'episode' in item ? `${item.episode} • ${item.duration}` : item.duration,
-			duration: item.duration,
-			thumbnail: item.thumbnail,
-			category: 'category' in item ? item.category : 'Demo',
-			src: videoSources[item.id] || videoSources['featured']
-		};
-		videoPlayer.play(video);
-	}
+	const featured = $derived(data.featured);
+	const categories = $derived(data.categories);
+	const totalCategories = $derived(categories.length);
+	const freeVideos = $derived(
+		categories.reduce(
+			(total, category) => total + category.items.filter((video) => video.tier === 'free').length,
+			0
+		)
+	);
 </script>
 
 <svelte:head>
-	<title>Demo: Private Content Network Experience | OUTERFIELDS</title>
+	<title>Library | OUTERFIELDS</title>
 </svelte:head>
 
-<div class="portal">
-	<!-- Back to Main Site -->
-	<a href="/" class="back-link">
-		<ArrowLeft size={16} />
-		Return to Main Site
-	</a>
-
-	<!-- Featured Hero -->
-	<section class="featured-hero">
-		<div class="hero-backdrop">
-			<!-- Sketchfab 3D embed background -->
-			<iframe
-				title="OUTERFIELDS 3D Experience"
-				class="sketchfab-embed"
-				frameborder="0"
-				allow="autoplay; fullscreen"
-				src="https://sketchfab.com/models/d6521362b37b48e3a82bce4911409303/embed?autospin=0.2&autostart=1&preload=1&ui_infos=0&ui_stop=0&ui_inspector=0&ui_watermark_link=0&ui_watermark=0&ui_hint=0&ui_ar=1&ui_help=0&ui_settings=0&ui_vr=0&ui_fullscreen=0&ui_annotations=0&ui_theme=dark&dnt=1"
-			></iframe>
-			<div class="hero-gradient"></div>
-		</div>
-
-		<div class="hero-content">
-			<span class="featured-badge">Featured</span>
-			<h1 class="hero-title">{featuredContent.title}</h1>
-			<div class="hero-meta">
-				<span class="rating">
-					<Star size={16} />
-					{featuredContent.rating}
-				</span>
-				<span>{featuredContent.year}</span>
-				<span>{featuredContent.duration}</span>
-			</div>
-			<p class="hero-description">{featuredContent.description}</p>
-			<div class="hero-actions">
-				<button class="btn-play" onclick={() => playVideo(featuredContent)}>
-					<Play size={20} />
-					Play
-				</button>
-				<button class="btn-add">
-					<Plus size={20} />
-					My List
-				</button>
-				<button class="btn-info">
-					<Info size={20} />
-				</button>
-			</div>
-		</div>
-	</section>
-
-	<!-- Content Categories -->
-	<div class="categories">
-		{#each data.categories as category}
-			<section class="category">
-				<h2 class="category-title">{category.title}</h2>
-				<div class="content-row">
-					{#each category.items as item}
-						<button class="content-card" onclick={() => playVideo(item)}>
-							<div class="card-thumbnail">
-								<img src={item.thumbnail} alt={item.title} loading="lazy" />
-								{#if item.isNew}
-									<span class="badge-new">New</span>
-								{/if}
-								{#if item.progress !== undefined}
-									<div class="progress-bar">
-										<div class="progress-fill" style="width: {item.progress}%"></div>
-									</div>
-								{/if}
-								<div class="card-overlay">
-									<span class="play-button">
-										<Play size={24} />
-									</span>
-								</div>
-							</div>
-							<div class="card-info">
-								<h3 class="card-title">{item.title}</h3>
-								<div class="card-meta">
-									{#if item.episode}
-										<span>{item.episode}</span>
-										<span class="dot"></span>
-									{/if}
-									<span>{item.duration}</span>
-									{#if item.views}
-										<span class="dot"></span>
-										<span>{item.views} views</span>
-									{/if}
-								</div>
-							</div>
-						</button>
-					{/each}
+<div class="library-page">
+	<header class="library-header glass-card">
+		<div class="header-copy">
+			<p class="eyebrow">Subscriber Library</p>
+			<h1>Welcome back, {data.user.name}</h1>
+			<p class="subtitle">Browse the published catalog and watch from any category.</p>
+			<div class="metrics">
+				<div class="metric-chip">
+					<span class="metric-label">Videos</span>
+					<strong>{data.totalVideos}</strong>
 				</div>
-			</section>
-		{/each}
-	</div>
-
-	<!-- About This Demo -->
-	<section class="about-demo">
-		<div class="about-card">
-			<Info size={24} />
-			<div class="about-content">
-				<h3>About This Demo</h3>
-				<p>
-					You're viewing an example of a finished Private Content Network. This is what your subscribers see—premium content, seamless playback, and a professional browsing experience. Every PCN we build includes these features and more.
-				</p>
+				<div class="metric-chip">
+					<span class="metric-label">Collections</span>
+					<strong>{totalCategories}</strong>
+				</div>
+				<div class="metric-chip">
+					<span class="metric-label">Free to Watch</span>
+					<strong>{freeVideos}</strong>
+				</div>
 			</div>
 		</div>
-	</section>
-
-	<!-- Example Subscription Pricing -->
-	<section class="pricing-section">
-		<div class="pricing-header">
-			<h2>Example Subscription Tiers</h2>
-			<p>Flexible pricing options for your audience</p>
+		<div class="header-actions">
+			{#if data.isAdmin}
+				<a href="/admin" class="btn-secondary">
+					<LayoutDashboard size={16} />
+					Open Admin
+				</a>
+			{/if}
+			<a href="/" class="btn-primary">Main Site</a>
 		</div>
-		<div class="pricing-grid">
-			{#each subscriptionTiers as tier}
-				<div class="pricing-card" class:popular={tier.popular}>
-					{#if tier.popular}
-						<span class="popular-badge">Most Popular</span>
-					{/if}
-					<h3 class="tier-name">{tier.name}</h3>
-					<div class="tier-price">
-						<span class="price">{tier.price}</span>
-						<span class="period">{tier.period}</span>
-					</div>
-					<p class="tier-description">{tier.description}</p>
-					<ul class="tier-features">
-						{#each tier.features as feature}
-							<li>
-								<Check size={14} />
-								{feature}
-							</li>
-						{/each}
-					</ul>
-					<button class="tier-button" disabled>
-						Example Only
-					</button>
+	</header>
+
+	{#if featured}
+		<section class="featured">
+			<div class="featured-media">
+				<img src={featured.thumbnail} alt={featured.title} />
+				<div class="overlay"></div>
+				<p class="featured-label">Latest Upload</p>
+			</div>
+			<div class="featured-content">
+				<p class="featured-kicker">Fresh in your feed</p>
+				<h2>{featured.title}</h2>
+				<p>{featured.description}</p>
+				<div class="featured-meta">
+					<span>{featured.duration}</span>
+					<span class="dot"></span>
+					<span>{featured.tier}</span>
 				</div>
+				<a href={`/watch/${featured.id}`} class="play-link">
+					<Play size={16} />
+					Watch now
+					<ArrowRight size={14} />
+				</a>
+			</div>
+		</section>
+	{/if}
+
+	<section class="rows">
+		<div class="rows-header">
+			<h2>Browse Library</h2>
+			<p>{totalCategories} collections • {data.totalVideos} videos</p>
+		</div>
+
+		{#if categories.length === 0}
+			<div class="empty-state">No videos have been uploaded yet.</div>
+		{:else}
+			{#each categories as category (category.categoryId)}
+				<CategoryRow title={category.title} videos={category.items} useLinks={true} />
 			{/each}
-		</div>
-		<p class="pricing-note">
-			These are example tiers. Your PCN pricing is fully customizable to match your business model.
-		</p>
+		{/if}
 	</section>
-
-	<!-- Return CTA -->
-	<div class="return-cta">
-		<h3>Ready to Build Your Own PCN?</h3>
-		<p>We handle everything—platform, production, marketing, and ongoing support.</p>
-		<a href="/#pricing" class="cta-button">
-			View Pricing
-			<ArrowRight size={16} />
-		</a>
-	</div>
 </div>
 
-<!-- Shared video modal component (DRY: reused from marketing page) -->
-<VideoModal />
-
 <style>
-	.portal {
-		min-height: 100vh;
-		background: var(--color-bg-pure);
-		padding-bottom: 4rem;
-	}
-
-	/* Back Link */
-	.back-link {
-		position: fixed;
-		top: 5rem;
-		left: 1.5rem;
-		z-index: 100;
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.5rem 1rem;
-		background: rgba(30, 30, 30, 0.9);
-		border: 1px solid var(--color-border-default);
-		border-radius: 0.5rem;
-		color: var(--color-fg-secondary);
-		font-size: 0.875rem;
-		text-decoration: none;
-		backdrop-filter: blur(8px);
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.back-link:hover {
-		background: var(--color-bg-surface);
-		color: var(--color-fg-primary);
-	}
-
-	/* Featured Hero */
-	.featured-hero {
+	.library-page {
 		position: relative;
-		height: 80vh;
-		min-height: 500px;
-		max-height: 800px;
-		margin-bottom: 2rem;
+		isolation: isolate;
+		padding-top: 5.5rem;
+		padding-bottom: 3.5rem;
 	}
 
-	.hero-backdrop {
+	.library-page::before,
+	.library-page::after {
+		content: '';
 		position: absolute;
-		inset: 0;
-		overflow: hidden;
-	}
-
-	.hero-backdrop :global(.sketchfab-embed) {
-		width: 100%;
-		height: 120%;
-		border: none;
 		pointer-events: none;
-		transform: scale(1.1);
-		transform-origin: center center;
+		z-index: -1;
+		filter: blur(70px);
+		opacity: 0.42;
 	}
 
-	.hero-gradient {
-		position: absolute;
-		inset: 0;
+	.library-page::before {
+		top: 4rem;
+		right: 4%;
+		width: clamp(180px, 26vw, 320px);
+		height: clamp(180px, 26vw, 320px);
+		background: radial-gradient(circle, rgba(244, 81, 38, 0.42), rgba(244, 81, 38, 0));
+	}
+
+	.library-page::after {
+		top: 14rem;
+		left: -2rem;
+		width: clamp(220px, 30vw, 360px);
+		height: clamp(220px, 30vw, 360px);
+		background: radial-gradient(circle, rgba(218, 191, 255, 0.2), rgba(218, 191, 255, 0));
+	}
+
+	.library-header {
+		max-width: var(--container-max-width);
+		margin: 0 auto 1.3rem;
+		padding: 1.15rem 1.25rem;
+		display: flex;
+		justify-content: space-between;
+		gap: 1.35rem;
+		flex-wrap: wrap;
+		align-items: flex-start;
+		border-radius: 1rem;
 		background: linear-gradient(
-			to right,
-			rgba(0, 0, 0, 0.9) 0%,
-			rgba(0, 0, 0, 0.6) 40%,
-			transparent 70%
-		),
-		linear-gradient(
-			to top,
-			var(--color-bg-pure) 0%,
-			transparent 30%
+			135deg,
+			rgba(244, 81, 38, 0.1) 0%,
+			rgba(255, 255, 255, 0.04) 32%,
+			rgba(255, 255, 255, 0.02) 100%
 		);
 	}
 
-	.hero-content {
-		position: absolute;
-		bottom: 20%;
-		left: 4%;
-		max-width: 40rem;
-		z-index: 1;
+	.header-copy {
+		flex: 1 1 28rem;
+		min-width: min(100%, 19rem);
 	}
 
-	.featured-badge {
-		display: inline-block;
-		padding: 0.25rem 0.75rem;
-		background: var(--color-primary);
-		color: var(--color-bg-pure);
-		border-radius: 0.25rem;
+	.eyebrow {
+		margin: 0;
 		font-size: 0.75rem;
-		font-weight: 600;
 		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		margin-bottom: 1rem;
+		letter-spacing: 0.1em;
+		color: var(--color-fg-subtle);
 	}
 
-	.hero-title {
-		font-size: clamp(2rem, 4vw, 3.5rem);
-		font-weight: 700;
-		color: var(--color-fg-primary);
-		margin: 0 0 1rem;
-		line-height: 1.1;
+	h1 {
+		margin: 0.25rem 0 0.55rem;
+		font-size: clamp(1.8rem, 3vw, 2.55rem);
+		line-height: 1.12;
 	}
 
-	.hero-meta {
+	.subtitle {
+		margin: 0;
+		max-width: 40ch;
+		color: var(--color-fg-tertiary);
+	}
+
+	.metrics {
+		margin-top: 1rem;
 		display: flex;
-		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.55rem;
+	}
+
+	.metric-chip {
+		min-width: 7.25rem;
+		padding: 0.58rem 0.74rem;
+		border-radius: 0.72rem;
+		border: 1px solid var(--color-border-default);
+		background: rgba(255, 255, 255, 0.04);
+	}
+
+	.metric-label {
+		display: block;
+		font-size: 0.7rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--color-fg-subtle);
+	}
+
+	.metric-chip strong {
+		display: block;
+		margin-top: 0.05rem;
+		font-size: 1.1rem;
+		line-height: 1.2;
+	}
+
+	.header-actions {
+		display: flex;
+		gap: 0.55rem;
+		align-self: flex-end;
+		flex-wrap: wrap;
+	}
+
+	.header-actions a {
+		min-width: 8.9rem;
+	}
+
+	.featured {
+		max-width: var(--container-max-width);
+		margin: 0 auto 2.2rem;
+		padding: 0 1.25rem;
+		display: grid;
+		grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
 		gap: 1rem;
-		font-size: 0.875rem;
-		color: var(--color-fg-secondary);
-		margin-bottom: 1rem;
+		align-items: stretch;
 	}
 
-	.rating {
-		display: flex;
-		align-items: center;
-		gap: 0.25rem;
-		color: var(--color-warning);
-	}
-
-	.rating :global(svg) {
-		flex-shrink: 0;
-	}
-
-	.hero-description {
-		font-size: 1rem;
-		line-height: 1.6;
-		color: var(--color-fg-secondary);
-		margin: 0 0 1.5rem;
-		display: -webkit-box;
-		-webkit-line-clamp: 3;
-		line-clamp: 3;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-	}
-
-	.hero-actions {
-		display: flex;
-		gap: 0.75rem;
-	}
-
-	.btn-play {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.75rem 1.5rem;
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
-		border: none;
-		border-radius: 0.375rem;
-		font-size: 1rem;
-		font-weight: 600;
-		cursor: pointer;
-		transition: transform var(--duration-micro) var(--ease-standard);
-	}
-
-	.btn-play:hover {
-		transform: scale(1.05);
-	}
-
-	.btn-add {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.75rem 1.5rem;
-		background: rgba(255, 255, 255, 0.2);
-		color: var(--color-fg-primary);
-		border: none;
-		border-radius: 0.375rem;
-		font-size: 1rem;
-		font-weight: 500;
-		cursor: pointer;
-		transition: background var(--duration-micro) var(--ease-standard);
-	}
-
-	.btn-add:hover {
-		background: rgba(255, 255, 255, 0.3);
-	}
-
-	.btn-info {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 2.75rem;
-		height: 2.75rem;
-		background: rgba(255, 255, 255, 0.2);
-		color: var(--color-fg-primary);
-		border: 1px solid rgba(255, 255, 255, 0.3);
-		border-radius: 50%;
-		cursor: pointer;
-		transition: background var(--duration-micro) var(--ease-standard);
-	}
-
-	.btn-info:hover {
-		background: rgba(255, 255, 255, 0.3);
-	}
-
-	/* Categories */
-	.categories {
-		padding: 0 4%;
-	}
-
-	.category {
-		margin-bottom: 2.5rem;
-	}
-
-	.category-title {
-		font-size: 1.25rem;
-		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin: 0 0 1rem;
-	}
-
-	.content-row {
-		display: flex;
-		gap: 0.75rem;
-		overflow-x: auto;
-		scroll-snap-type: x mandatory;
-		scrollbar-width: none;
-		-ms-overflow-style: none;
-		padding-bottom: 0.5rem;
-	}
-
-	.content-row::-webkit-scrollbar {
-		display: none;
-	}
-
-	.content-card {
-		flex: 0 0 auto;
-		width: 280px;
-		scroll-snap-align: start;
-		cursor: pointer;
-		/* Button reset for interactive card */
-		background: none;
-		border: none;
-		padding: 0;
-		text-align: left;
-		font: inherit;
-		color: inherit;
-	}
-
-	.card-thumbnail {
+	.featured-media {
 		position: relative;
-		aspect-ratio: 16/9;
-		border-radius: 0.5rem;
+		border-radius: 0.9rem;
 		overflow: hidden;
-		margin-bottom: 0.75rem;
+		aspect-ratio: 16 / 9;
+		border: 1px solid var(--color-border-default);
+		background: linear-gradient(145deg, rgba(0, 0, 0, 0.7), rgba(16, 16, 16, 1));
 	}
 
-	.card-thumbnail img {
+	.featured-media img {
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
-		transition: transform var(--duration-standard) var(--ease-standard);
+		transform: scale(1.01);
 	}
 
-	.content-card:hover .card-thumbnail img {
-		transform: scale(1.05);
-	}
-
-	.badge-new {
-		position: absolute;
-		top: 0.5rem;
-		left: 0.5rem;
-		padding: 0.25rem 0.5rem;
-		background: var(--color-primary);
-		color: var(--color-bg-pure); /* Black text on white background */
-		border-radius: 0.25rem;
-		font-size: 0.625rem;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.progress-bar {
-		position: absolute;
-		bottom: 0;
-		left: 0;
-		right: 0;
-		height: 3px;
-		background: rgba(255, 255, 255, 0.3);
-	}
-
-	.progress-fill {
-		height: 100%;
-		background: var(--color-primary);
-	}
-
-	.card-overlay {
+	.overlay {
 		position: absolute;
 		inset: 0;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: rgba(0, 0, 0, 0.5);
-		opacity: 0;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		background: linear-gradient(
+			to top,
+			rgba(0, 0, 0, 0.75),
+			rgba(0, 0, 0, 0.22) 50%,
+			rgba(0, 0, 0, 0.04) 100%
+		);
 	}
 
-	.content-card:hover .card-overlay {
-		opacity: 1;
-	}
-
-	/* Play button styles are global in app.css */
-
-	.card-info {
-		padding: 0 0.25rem;
-	}
-
-	.card-title {
-		font-size: 0.875rem;
-		font-weight: 500;
+	.featured-label {
+		position: absolute;
+		top: 0.85rem;
+		left: 0.85rem;
+		margin: 0;
+		padding: 0.3rem 0.55rem;
+		font-size: 0.72rem;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		border-radius: var(--radius-full);
+		border: 1px solid rgba(255, 255, 255, 0.22);
+		background: rgba(0, 0, 0, 0.45);
 		color: var(--color-fg-primary);
-		margin: 0 0 0.375rem;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
 	}
 
-	.card-meta {
+	.featured-content {
+		padding: 1.1rem 1.15rem;
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.9rem;
+		background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+		display: grid;
+		gap: 0.8rem;
+		align-content: center;
+	}
+
+	.featured-kicker {
+		margin: 0;
+		font-size: 0.72rem;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--color-fg-subtle);
+	}
+
+	.featured-content h2 {
+		margin: 0;
+		font-size: clamp(1.3rem, 1.5vw + 0.85rem, 1.8rem);
+		line-height: 1.2;
+	}
+
+	.featured-content p {
+		margin: 0;
+		color: var(--color-fg-secondary);
+	}
+
+	.featured-meta {
 		display: flex;
 		align-items: center;
-		gap: 0.375rem;
-		font-size: 0.75rem;
-		color: var(--color-fg-muted);
+		gap: 0.5rem;
+		color: var(--color-fg-tertiary);
+		font-size: 0.85rem;
+		text-transform: lowercase;
 	}
 
 	.dot {
-		width: 3px;
-		height: 3px;
+		width: 4px;
+		height: 4px;
+		border-radius: 999px;
 		background: var(--color-fg-subtle);
-		border-radius: 50%;
 	}
 
-	/* About Demo Section */
-	.about-demo {
-		padding: 0 4%;
-		margin-bottom: 3rem;
-	}
-
-	.about-card {
-		display: flex;
-		align-items: flex-start;
-		gap: 1rem;
-		max-width: 60rem;
-		margin: 0 auto;
-		padding: 1.5rem 2rem;
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: 1rem;
-	}
-
-	.about-card > :global(svg) {
-		color: var(--color-sun);
-		flex-shrink: 0;
-		margin-top: 0.25rem;
-	}
-
-	.about-content h3 {
-		font-size: 1rem;
-		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin: 0 0 0.5rem;
-	}
-
-	.about-content p {
-		font-size: 0.9375rem;
-		color: var(--color-fg-muted);
-		line-height: 1.6;
-		margin: 0;
-	}
-
-	/* Pricing Section */
-	.pricing-section {
-		padding: 4rem 4%;
-		background: var(--color-bg-surface);
-	}
-
-	.pricing-header {
-		text-align: center;
-		margin-bottom: 2rem;
-	}
-
-	.pricing-header h2 {
-		font-size: clamp(1.5rem, 3vw, 2rem);
-		font-weight: 700;
-		color: var(--color-fg-primary);
-		margin: 0 0 0.5rem;
-	}
-
-	.pricing-header p {
-		font-size: 1rem;
-		color: var(--color-slate);
-		margin: 0;
-	}
-
-	.pricing-grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 1.5rem;
-		max-width: 60rem;
-		margin: 0 auto;
-	}
-
-	.pricing-card {
-		position: relative;
-		padding: 2rem;
-		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
-		border-radius: 1rem;
-		text-align: center;
-	}
-
-	.pricing-card.popular {
-		border-color: var(--color-sun);
-	}
-
-	.popular-badge {
-		position: absolute;
-		top: -0.75rem;
-		left: 50%;
-		transform: translateX(-50%);
-		padding: 0.25rem 0.75rem;
-		background: var(--color-sun);
-		color: white;
-		font-size: 0.6875rem;
-		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		border-radius: 9999px;
-	}
-
-	.tier-name {
-		font-size: 1.125rem;
-		font-weight: 600;
-		color: var(--color-fg-primary);
-		margin: 0 0 1rem;
-	}
-
-	.tier-price {
-		margin-bottom: 0.5rem;
-	}
-
-	.tier-price .price {
-		font-size: 2.5rem;
-		font-weight: 700;
-		color: var(--color-fg-primary);
-	}
-
-	.tier-price .period {
-		font-size: 1rem;
-		color: var(--color-slate);
-	}
-
-	.tier-description {
-		font-size: 0.875rem;
-		color: var(--color-slate);
-		margin: 0 0 1.5rem;
-	}
-
-	.tier-features {
-		list-style: none;
-		padding: 0;
-		margin: 0 0 1.5rem;
-		text-align: left;
-	}
-
-	.tier-features li {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		font-size: 0.875rem;
-		color: var(--color-fg-secondary);
-		padding: 0.375rem 0;
-	}
-
-	.tier-features li :global(svg) {
-		color: var(--color-sun);
-		flex-shrink: 0;
-	}
-
-	.tier-button {
-		width: 100%;
-		padding: 0.75rem 1.5rem;
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: 0.5rem;
-		font-size: 0.875rem;
-		font-weight: 600;
-		color: var(--color-fg-muted);
-		cursor: not-allowed;
-	}
-
-	.pricing-note {
-		text-align: center;
-		font-size: 0.875rem;
-		color: var(--color-slate);
-		margin: 2rem 0 0;
-	}
-
-	/* Return CTA */
-	.return-cta {
-		text-align: center;
-		padding: 4rem 1.5rem;
-	}
-
-	.return-cta h3 {
-		font-size: 1.5rem;
-		font-weight: 700;
-		color: var(--color-fg-primary);
-		margin: 0 0 0.5rem;
-	}
-
-	.return-cta p {
-		font-size: 1rem;
-		color: var(--color-slate);
-		margin: 0 0 1.5rem;
-	}
-
-	.cta-button {
+	.play-link {
 		display: inline-flex;
 		align-items: center;
 		gap: 0.5rem;
-		padding: 1rem 2rem;
-		background: var(--color-sun);
-		color: white;
-		font-size: 1rem;
-		font-weight: 700;
+		width: fit-content;
+		padding: 0.62rem 0.9rem;
+		border-radius: 0.68rem;
+		border: 1px solid var(--color-border-default);
+		background: rgba(255, 255, 255, 0.07);
 		text-decoration: none;
-		border-radius: 0.5rem;
+		color: var(--color-fg-primary);
+		font-weight: 600;
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
-	.cta-button:hover {
-		background: var(--color-primary-hover);
-		transform: scale(1.02);
+	.play-link:hover {
+		background: rgba(255, 255, 255, 0.13);
+		border-color: var(--color-border-emphasis);
+		transform: translateY(-1px);
+	}
+
+	.rows {
+		display: grid;
+		gap: 0.4rem;
+	}
+
+	.rows-header {
+		max-width: var(--container-max-width);
+		margin: 0 auto 0.55rem;
+		padding: 0 1.25rem;
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 0.6rem 1rem;
+		flex-wrap: wrap;
+	}
+
+	.rows-header h2 {
+		margin: 0;
+		font-size: clamp(1.18rem, 1.2vw + 0.85rem, 1.6rem);
+	}
+
+	.rows-header p {
+		margin: 0;
+		color: var(--color-fg-muted);
+		font-size: 0.9rem;
+	}
+
+	.empty-state {
+		max-width: calc(var(--container-max-width) - 2.5rem);
+		margin: 0 auto;
+		text-align: center;
+		color: var(--color-fg-muted);
+		padding: 2rem 1rem;
+		border: 1px solid var(--color-border-default);
+		border-radius: 0.85rem;
+		background: rgba(255, 255, 255, 0.02);
 	}
 
 	@media (max-width: 900px) {
-		.pricing-grid {
+		.featured {
 			grid-template-columns: 1fr;
-			max-width: 24rem;
+		}
+
+		.header-actions {
+			align-self: flex-start;
 		}
 	}
 
-	@media (max-width: 768px) {
-		.back-link {
-			top: auto;
-			bottom: 1rem;
-			left: 1rem;
-			right: 1rem;
-			justify-content: center;
+	@media (max-width: 640px) {
+		.library-page {
+			padding-top: 5rem;
+			padding-bottom: 2.9rem;
 		}
 
-		.hero-content {
-			bottom: 10%;
-			left: 5%;
-			right: 5%;
+		.header-actions {
+			width: 100%;
 		}
 
-		.hero-description {
-			-webkit-line-clamp: 2;
-			line-clamp: 2;
+		.header-actions a {
+			flex: 1 1 10.5rem;
 		}
 
-		.categories {
-			padding: 0 5%;
+		.metrics {
+			gap: 0.5rem;
 		}
 
-		.content-card {
-			width: 200px;
-		}
-
-		.about-demo {
-			padding: 0 5%;
-		}
-
-		.about-card {
-			flex-direction: column;
-			text-align: center;
-		}
-
-		.pricing-section {
-			padding: 3rem 5%;
+		.metric-chip {
+			flex: 1 1 7.3rem;
 		}
 	}
 </style>

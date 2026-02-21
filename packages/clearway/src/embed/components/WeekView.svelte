@@ -258,8 +258,8 @@
 
 	/* Mobile: hide day name in header since DayCell shows it */
 	@media (min-width: 640px) {
-		.week-grid :global(.day-cell) {
-			/* Day name hidden on desktop since headers are shown */
+		.week-grid :global(.day-name) {
+			display: none;
 		}
 	}
 

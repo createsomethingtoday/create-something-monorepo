@@ -47,7 +47,7 @@
 	const headerHeight = 24;
 
 	const svgWidth = labelWidth + totalHours * hourWidth + 20;
-	const svgHeight = headerHeight + rhythm.spaces.length * rowHeight + 20;
+	const svgHeight = $derived(headerHeight + rhythm.spaces.length * rowHeight + 20);
 
 	// Position helpers
 	function hourToX(hour: number): number {

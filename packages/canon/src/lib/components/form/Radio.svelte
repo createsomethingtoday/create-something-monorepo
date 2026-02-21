@@ -42,11 +42,12 @@
 	}: Props = $props();
 
 	// Generate unique ID if not provided
-	const fieldId = id || `radio-${crypto.randomUUID().slice(0, 8)}`;
-	const descriptionId = `${fieldId}-description`;
+	const fallbackFieldId = `radio-${crypto.randomUUID().slice(0, 8)}`;
+	const fieldId = $derived(id || fallbackFieldId);
+	const descriptionId = $derived(`${fieldId}-description`);
 </script>
 
-<div class="radio" class:radio-sm={size === 'sm'} class:radio-lg={size === 'lg'}>
+<div class="radio" class:radio-sm={size === 'sm'} class:radio-lg={size === 'lg'} class:disabled>
 	<div class="radio-control">
 		<input
 			type="radio"
@@ -173,10 +174,10 @@
 		user-select: none;
 	}
 
-	.radio-input:disabled ~ .radio-content .radio-label {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
+		.radio.disabled .radio-label {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
 
 	/* Description */
 	.radio-description {

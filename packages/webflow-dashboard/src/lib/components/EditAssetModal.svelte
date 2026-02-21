@@ -34,32 +34,40 @@
 
 	let { asset, onClose, onSave, onArchive }: Props = $props();
 
+	function getInitialFormState(currentAsset: Asset) {
+		return {
+			name: currentAsset.name,
+			descriptionShort: currentAsset.descriptionShort || '',
+			descriptionLongHtml: currentAsset.descriptionLongHtml || currentAsset.description || '',
+			websiteUrl: currentAsset.websiteUrl || '',
+			previewUrl: currentAsset.previewUrl || ''
+		};
+	}
+
+	function getInitialSecondaryThumbnails(currentAsset: Asset): string[] {
+		return currentAsset.secondaryThumbnails || (currentAsset.secondaryThumbnailUrl ? [currentAsset.secondaryThumbnailUrl] : []);
+	}
+
 	// Form state
 	let formData = $state({
-		name: asset.name,
-		descriptionShort: asset.descriptionShort || '',
-		descriptionLongHtml: asset.descriptionLongHtml || asset.description || '',
-		websiteUrl: asset.websiteUrl || '',
-		previewUrl: asset.previewUrl || ''
+		name: '',
+		descriptionShort: '',
+		descriptionLongHtml: '',
+		websiteUrl: '',
+		previewUrl: ''
 	});
 
 	// Keep form state in sync when editing a different asset without remounting the component
-	let lastAssetId = $state(asset.id);
+	let lastAssetId = $state<string | null>(null);
 	$effect(() => {
 		if (asset.id !== lastAssetId) {
 			lastAssetId = asset.id;
 
-			formData = {
-				name: asset.name,
-				descriptionShort: asset.descriptionShort || '',
-				descriptionLongHtml: asset.descriptionLongHtml || asset.description || '',
-				websiteUrl: asset.websiteUrl || '',
-				previewUrl: asset.previewUrl || ''
-			};
+			formData = getInitialFormState(asset);
 
 			thumbnailUrl = asset.thumbnailUrl || null;
 			secondaryThumbnailUrl = asset.secondaryThumbnailUrl || null;
-			secondaryThumbnails = asset.secondaryThumbnails || (asset.secondaryThumbnailUrl ? [asset.secondaryThumbnailUrl] : []);
+			secondaryThumbnails = getInitialSecondaryThumbnails(asset);
 			carouselImages = asset.carouselImages || [];
 
 			error = null;
@@ -69,12 +77,10 @@
 	});
 
 	// Image state
-	let thumbnailUrl = $state<string | null>(asset.thumbnailUrl || null);
-	let secondaryThumbnailUrl = $state<string | null>(asset.secondaryThumbnailUrl || null);
-	let secondaryThumbnails = $state<string[]>(
-		asset.secondaryThumbnails || (asset.secondaryThumbnailUrl ? [asset.secondaryThumbnailUrl] : [])
-	);
-	let carouselImages = $state<string[]>(asset.carouselImages || []);
+	let thumbnailUrl = $state<string | null>(null);
+	let secondaryThumbnailUrl = $state<string | null>(null);
+	let secondaryThumbnails = $state<string[]>([]);
+	let carouselImages = $state<string[]>([]);
 
 	// UI state
 	let isLoading = $state(false);
@@ -87,10 +93,10 @@
 	let modalRef: HTMLDivElement | undefined = $state();
 
 	// Original name for comparison
-	const originalName = asset.name;
+	const originalName = $derived(asset.name);
 
 	// Can archive if not already delisted
-	const canArchive = !asset.status.includes('Delisted');
+	const canArchive = $derived(!asset.status.includes('Delisted'));
 
 	function handleClickOutside(event: MouseEvent) {
 		if (modalRef && !modalRef.contains(event.target as Node)) {
@@ -546,13 +552,9 @@
 		overflow-y: auto;
 	}
 
-	.modal-card {
-		/* Card styles from ui */
-	}
-
-	.modal-description {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		.modal-description {
+			font-size: var(--text-body-sm);
+			color: var(--color-fg-secondary);
 		margin: var(--space-xs) 0 0;
 	}
 
@@ -620,13 +622,7 @@
 		font-size: var(--text-body-sm);
 	}
 
-	.image-field,
-	.carousel-field,
-	.secondary-field {
-		/* Field containers */
-	}
-
-	.modal-footer {
+		.modal-footer {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;

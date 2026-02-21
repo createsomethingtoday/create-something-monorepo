@@ -422,43 +422,8 @@
 		border-radius: 0.125rem;
 	}
 
-	/* Preview Gate */
-	.preview-gate {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 1.5rem;
-		margin: 0.5rem;
-		background: var(--color-bg-pure);
-		border: 1px dashed var(--color-border-default);
-		border-radius: 0.5rem;
-		text-align: center;
-	}
-
-	.preview-gate :global(svg) {
-		color: var(--color-fg-muted);
-	}
-
-	.preview-gate p {
-		margin: 0;
-		font-size: 0.8125rem;
-		color: var(--color-fg-muted);
-	}
-
-	.unlock-link {
-		font-size: 0.8125rem;
-		color: var(--color-primary);
-		text-decoration: none;
-		font-weight: 500;
-	}
-
-	.unlock-link:hover {
-		text-decoration: underline;
-	}
-
-	/* Footer */
-	.transcript-footer {
+		/* Footer */
+		.transcript-footer {
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -536,22 +501,9 @@
 			font-size: 1rem; /* Prevent zoom on iOS */
 		}
 
-		.preview-gate {
-			padding: 1.25rem;
-			margin: 0.375rem;
-		}
-
-		.preview-gate p {
-			font-size: 0.75rem;
-		}
-
-		.unlock-link {
-			font-size: 0.75rem;
-		}
-
-		.transcript-footer {
-			padding: 0.625rem;
-			font-size: 0.6875rem;
+			.transcript-footer {
+				padding: 0.625rem;
+				font-size: 0.6875rem;
 		}
 	}
 

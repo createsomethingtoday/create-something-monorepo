@@ -37,7 +37,14 @@ function getProvidedSecret(request: Request): string | null {
 	}
 
 	const headerSecret = request.headers.get('x-cron-secret')?.trim();
-	return headerSecret || null;
+	if (headerSecret) return headerSecret;
+
+	const url = new URL(request.url);
+	const querySecret = url.searchParams.get('cron_secret')?.trim();
+	if (querySecret) return querySecret;
+
+	const queryToken = url.searchParams.get('token')?.trim();
+	return queryToken || null;
 }
 
 /**

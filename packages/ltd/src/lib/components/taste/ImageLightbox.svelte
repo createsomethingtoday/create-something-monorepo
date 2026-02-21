@@ -38,6 +38,14 @@
 		}
 	}
 
+	function handleBackdropKeydown(event: KeyboardEvent) {
+		if (event.target !== event.currentTarget) return;
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			onClose();
+		}
+	}
+
 	function handlePrevious() {
 		if (hasPrevious) onNavigate(currentIndex - 1);
 	}
@@ -50,8 +58,14 @@
 <svelte:window onkeydown={handleKeydown} />
 
 {#if isOpen && currentImage}
-	<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-	<div class="lightbox-backdrop" onclick={handleBackdropClick}>
+	<div
+		class="lightbox-backdrop"
+		role="button"
+		tabindex="0"
+		aria-label="Close image viewer"
+		onclick={handleBackdropClick}
+		onkeydown={handleBackdropKeydown}
+	>
 		<div class="lightbox-container" role="dialog" aria-modal="true" aria-label="Image viewer">
 			<!-- Close button -->
 			<button class="close-button" onclick={onClose} aria-label="Close viewer">

@@ -45,7 +45,13 @@
 
 	let hasAnimated = $state(false);
 	let sectionRef: HTMLElement | undefined = $state();
-	let displayValues = $state<number[]>(metrics.map(() => 0));
+	let displayValues = $state<number[]>([]);
+
+	$effect(() => {
+		if (!hasAnimated) {
+			displayValues = metrics.map(() => 0);
+		}
+	});
 
 	// Easing function for smooth animation
 	function easeOutExpo(t: number): number {

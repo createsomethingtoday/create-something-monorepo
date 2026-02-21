@@ -192,12 +192,13 @@
 	</main>
 
 	{#if isProfileOpen && EditProfileModal}
-		<svelte:component this={EditProfileModal} onClose={handleProfileClose} />
+		{@const ProfileModal = EditProfileModal}
+		<ProfileModal onClose={handleProfileClose} />
 	{/if}
 
 	{#if isEditModalOpen && currentEditingAsset && EditAssetModal}
-		<svelte:component
-			this={EditAssetModal}
+		{@const AssetModal = EditAssetModal}
+		<AssetModal
 			asset={currentEditingAsset}
 			onClose={handleEditClose}
 			onSave={handleEditSave}

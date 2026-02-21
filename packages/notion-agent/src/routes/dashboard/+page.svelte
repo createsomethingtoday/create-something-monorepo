@@ -86,6 +86,33 @@
 		streamingSteps = [];
 	}
 
+	function handleCreateOverlayClick(event: MouseEvent) {
+		if (event.target === event.currentTarget) {
+			closeModal();
+		}
+	}
+
+	function handleCreateOverlayKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			closeModal();
+		}
+	}
+
+	function handleResultOverlayClick(event: MouseEvent) {
+		if (event.target === event.currentTarget && executionResult) {
+			closeResultModal();
+		}
+	}
+
+	function handleResultOverlayKeydown(event: KeyboardEvent) {
+		if (!executionResult) return;
+		if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			closeResultModal();
+		}
+	}
+
 	function openCreateModal() {
 		formName = '';
 		formDescription = '';
@@ -260,11 +287,17 @@
 
 <!-- Create/Edit Modal -->
 {#if showCreateModal || editingAgent}
-	<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-	<div class="modal-overlay" onclick={closeModal}>
-		<div class="modal" onclick={(e) => e.stopPropagation()}>
+	<div
+		class="modal-overlay"
+		role="button"
+		tabindex="0"
+		aria-label="Close modal"
+		onclick={handleCreateOverlayClick}
+		onkeydown={handleCreateOverlayKeydown}
+	>
+		<div class="modal" role="dialog" aria-modal="true" aria-labelledby="create-agent-modal-title">
 			<div class="modal-header">
-				<h2>{editingAgent ? 'Edit Agent' : 'Create Agent'}</h2>
+				<h2 id="create-agent-modal-title">{editingAgent ? 'Edit Agent' : 'Create Agent'}</h2>
 				<button class="close-btn" onclick={closeModal}>
 					<X size={20} />
 				</button>
@@ -302,7 +335,7 @@ Example: Every morning, summarize my incomplete tasks from the Projects database
 				</div>
 
 				<div class="form-group">
-					<label>Authorized Databases</label>
+					<p class="group-label">Authorized Databases</p>
 					<div class="database-selector">
 						{#each data.databases as db}
 							<label class="database-option" class:selected={formDatabases.includes(db.id)}>
@@ -340,11 +373,17 @@ Example: Every morning, summarize my incomplete tasks from the Projects database
 
 <!-- Execution Result Modal -->
 {#if showResultModal}
-	<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-	<div class="modal-overlay" onclick={executionResult ? closeResultModal : undefined}>
-		<div class="modal result-modal" onclick={(e) => e.stopPropagation()}>
+	<div
+		class="modal-overlay"
+		role="button"
+		tabindex={executionResult ? 0 : -1}
+		aria-label={executionResult ? 'Close execution result modal' : 'Execution in progress'}
+		onclick={handleResultOverlayClick}
+		onkeydown={handleResultOverlayKeydown}
+	>
+		<div class="modal result-modal" role="dialog" aria-modal="true" aria-labelledby="execution-result-modal-title">
 			<div class="modal-header">
-				<h2>{runningAgentId ? 'Running Agent...' : 'Execution Result'}</h2>
+				<h2 id="execution-result-modal-title">{runningAgentId ? 'Running Agent...' : 'Execution Result'}</h2>
 				{#if executionResult}
 					<button class="close-btn" onclick={closeResultModal}>
 						<X size={20} />
@@ -666,6 +705,14 @@ Example: Every morning, summarize my incomplete tasks from the Projects database
 		font-weight: 500;
 		color: var(--color-fg-primary);
 		margin-bottom: var(--space-xs);
+	}
+
+	.form-group .group-label {
+		display: block;
+		font-size: var(--text-body-sm);
+		font-weight: 500;
+		color: var(--color-fg-primary);
+		margin: 0 0 var(--space-xs);
 	}
 
 	.form-group input[type="text"],

@@ -933,7 +933,7 @@ gt sling worker-3 "cd /project && ./ralph.sh --prd api-prd.json"
 		border-bottom: none;
 	}
 
-	.metric-table code {
+	:global(.metric-table code) {
 		font-family: 'Stack Sans', monospace;
 		background: var(--color-bg-subtle);
 		padding: 0.125rem 0.375rem;
@@ -957,7 +957,7 @@ gt sling worker-3 "cd /project && ./ralph.sh --prd api-prd.json"
 		color: var(--color-fg-muted);
 	}
 
-	.code-block {
+	:global(.code-block) {
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
@@ -965,7 +965,7 @@ gt sling worker-3 "cd /project && ./ralph.sh --prd api-prd.json"
 		overflow-x: auto;
 	}
 
-	.code-secondary {
+	:global(.code-secondary) {
 		color: var(--color-fg-secondary);
 	}
 
@@ -1044,7 +1044,7 @@ gt sling worker-3 "cd /project && ./ralph.sh --prd api-prd.json"
 		color: var(--color-fg-primary);
 	}
 
-	.inline-code {
+	:global(.inline-code) {
 		background: var(--color-bg-surface);
 		padding: 0.125rem 0.5rem;
 		border-radius: var(--radius-sm);

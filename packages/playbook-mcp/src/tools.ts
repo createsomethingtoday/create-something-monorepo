@@ -445,9 +445,13 @@ export function registerTools(server: McpServer) {
 
       if (config.configFormat === 'toml') {
         // Codex uses TOML
+        const authEnvVar = `${server_name.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase()}_API_KEY`;
+        const expectsBearer = catalogEntry?.requiresAuth && catalogEntry?.authType !== 'oauth';
         entry = auth_token
-          ? `[mcp_servers."${server_name}"]\nurl = "${fullUrl}"\n\n[mcp_servers."${server_name}".headers]\nAuthorization = "Bearer ${auth_token}"`
-          : `[mcp_servers."${server_name}"]\nurl = "${fullUrl}"`;
+          ? `[mcp_servers."${server_name}"]\nurl = "${fullUrl}"\nhttp_headers = { Authorization = "Bearer ${auth_token}" }`
+          : expectsBearer
+            ? `[mcp_servers."${server_name}"]\nurl = "${fullUrl}"\nbearer_token_env_var = "${authEnvVar}"`
+            : `[mcp_servers."${server_name}"]\nurl = "${fullUrl}"`;
         fullExample = `# Add to ${config.configPath}\n\n${entry}`;
         instructions.push(
           `1. Open ${config.configPath} in a text editor (or create it if it doesn't exist)`,
@@ -460,6 +464,11 @@ export function registerTools(server: McpServer) {
           `3. Save the file`,
           `4. Restart Codex or start a new session for the change to take effect`,
         );
+        if (!auth_token && expectsBearer) {
+          instructions.push(
+            `5. Export \`${authEnvVar}\` in your shell before starting Codex (for example: \`export ${authEnvVar}=your_token_here\`)`,
+          );
+        }
       } else {
         // JSON format (Cursor, Claude Desktop, Claude Code, Windsurf, VS Code)
         // Windsurf uses "serverUrl" for remote HTTP servers; others use "url"

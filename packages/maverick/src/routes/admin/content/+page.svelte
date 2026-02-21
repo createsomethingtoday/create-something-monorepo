@@ -345,7 +345,7 @@
 													{#if !HIDDEN_FIELDS.includes(k) && pathMatches([section, String(i), k])}
 														{@const isMatch = isExactMatch([section, String(i), k])}
 														<div class="field-row" class:is-match={isMatch}>
-															<label class="field-label" class:is-match={isMatch}>{formatLabel(k)}</label>
+															<div class="field-label" class:is-match={isMatch}>{formatLabel(k)}</div>
 															{#if typeof v === 'string' && v.length > 100}
 																<textarea
 																	value={v}
@@ -382,7 +382,7 @@
 										{#if !HIDDEN_FIELDS.includes(k) && pathMatches([section, k])}
 											{@const isMatch = isExactMatch([section, k])}
 											<div class="field-row" class:is-match={isMatch}>
-												<label class="field-label" class:is-match={isMatch}>{formatLabel(k)}</label>
+													<div class="field-label" class:is-match={isMatch}>{formatLabel(k)}</div>
 												{#if typeof v === 'string' && v.length > 100}
 													<textarea
 														value={v}
@@ -408,7 +408,7 @@
 																		{#if !HIDDEN_FIELDS.includes(nk) && (typeof nv === 'string' || typeof nv === 'number')}
 																			{@const nestedMatch = isExactMatch([section, k, String(i), nk])}
 																			<div class="field-row" class:is-match={nestedMatch}>
-																				<label class="field-label" class:is-match={nestedMatch}>{formatLabel(nk)}</label>
+																					<div class="field-label" class:is-match={nestedMatch}>{formatLabel(nk)}</div>
 																				<input
 																					type={typeof nv === 'number' ? 'number' : 'text'}
 																					value={nv}
@@ -429,7 +429,7 @@
 															{#if !HIDDEN_FIELDS.includes(nk) && (typeof nv === 'string' || typeof nv === 'number')}
 																{@const nestedMatch = isExactMatch([section, k, nk])}
 																<div class="field-row" class:is-match={nestedMatch}>
-																	<label class="field-label" class:is-match={nestedMatch}>{formatLabel(nk)}</label>
+																		<div class="field-label" class:is-match={nestedMatch}>{formatLabel(nk)}</div>
 																	{#if typeof nv === 'string' && nv.length > 100}
 																		<textarea
 																			value={nv}

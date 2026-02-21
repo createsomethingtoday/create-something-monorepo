@@ -144,11 +144,11 @@
 		};
 	});
 
-	const alignmentClass = {
+	const alignmentClass = $derived({
 		start: 'align-start',
 		center: 'align-center',
 		end: 'align-end'
-	}[align];
+	}[align]);
 </script>
 
 <section

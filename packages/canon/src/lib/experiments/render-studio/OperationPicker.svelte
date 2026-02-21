@@ -125,7 +125,7 @@
 	<!-- Operation-specific controls -->
 	{#if selectedOperationType === 'add-furniture'}
 		<div class="operation-controls">
-			<label class="control-label">Furniture Type</label>
+			<p class="control-label">Furniture Type</p>
 			<div class="furniture-grid">
 				{#each furnitureTypes as f}
 					{@const FurnitureIcon = iconMap[f.icon]}
@@ -154,7 +154,7 @@
 		</div>
 	{:else if selectedOperationType === 'add-people'}
 		<div class="operation-controls">
-			<label class="control-label">Number of People</label>
+			<p class="control-label">Number of People</p>
 			<input
 				type="range"
 				bind:value={peopleCount}
@@ -166,7 +166,7 @@
 		</div>
 	{:else if selectedOperationType === 'add-label'}
 		<div class="operation-controls">
-			<label class="control-label">Label Text</label>
+			<p class="control-label">Label Text</p>
 			<input
 				type="text"
 				bind:value={labelText}
@@ -184,7 +184,7 @@
 		</div>
 	{:else if selectedOperationType === 'remove-element'}
 		<div class="operation-controls">
-			<label class="control-label">Element Selector</label>
+			<p class="control-label">Element Selector</p>
 			<input
 				type="text"
 				bind:value={removeSelector}

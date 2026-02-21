@@ -5,13 +5,24 @@
 	import AgencyFooter from '$lib/components/AgencyFooter.svelte';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { afterNavigate, onNavigate } from '$app/navigation';
+	import { afterNavigate, disableScrollHandling, onNavigate } from '$app/navigation';
 
 	let { children, data } = $props();
+
+	function scrollToTop() {
+		window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+		document.documentElement.scrollTop = 0;
+		document.body.scrollTop = 0;
+	}
 
 	// View Transitions API - Hermeneutic Navigation
 	// .agency: Efficient (200ms)
 	onNavigate((navigation) => {
+		// Keep back/forward restoration, but force top-scroll on normal page links
+		if (navigation.type !== 'popstate' && !navigation.to?.url.hash) {
+			disableScrollHandling();
+		}
+
 		if (!document.startViewTransition) return;
 		if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
@@ -63,14 +74,32 @@
 
 		if (window.location.hash) {
 			setTimeout(() => scrollToHash(window.location.hash), 100);
+			return;
+		}
+
+		// Handle full-document navigations that hydrate as type='enter'
+		const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+		const isBackForward = navEntry?.type === 'back_forward';
+		if (!isBackForward) {
+			requestAnimationFrame(scrollToTop);
+			setTimeout(scrollToTop, 50);
 		}
 	});
 
-	// Scroll to hash after navigation
-	afterNavigate(({ to }) => {
+	// Scroll handling after navigation:
+	// - Preserve browser restore for popstate/back-forward
+	// - Hash links scroll to section
+	// - Other internal links scroll to top
+	afterNavigate(({ to, type }) => {
 		if (to?.url.hash) {
 			setTimeout(() => scrollToHash(to.url.hash), 100);
+			return;
 		}
+
+		if (type === 'popstate') return;
+
+		requestAnimationFrame(scrollToTop);
+		setTimeout(scrollToTop, 50);
 	});
 
 </script>

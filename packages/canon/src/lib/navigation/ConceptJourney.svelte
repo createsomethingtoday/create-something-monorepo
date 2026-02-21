@@ -242,16 +242,17 @@
 			{#each activeStages() as stage, index}
 				{@const items = story.journey[stage.key]?.slice(0, maxItemsPerStage) || []}
 				{@const hasContent = items.length > 0}
+				{@const Icon = stage.icon}
 				
 				<section class="journey-stage" class:empty={!hasContent}>
 					<!-- Stage Header -->
-					<div class="stage-header">
-						<div class="stage-marker">
-							<span class="stage-number">{index + 1}</span>
-							<span class="stage-icon">
-								<svelte:component this={stage.icon} size={18} strokeWidth={2} />
-							</span>
-						</div>
+						<div class="stage-header">
+							<div class="stage-marker">
+								<span class="stage-number">{index + 1}</span>
+								<span class="stage-icon">
+									<Icon size={18} strokeWidth={2} />
+								</span>
+							</div>
 						<div class="stage-info">
 							<h2 class="stage-name">
 								<span class="stage-verb">{stage.verb}</span>

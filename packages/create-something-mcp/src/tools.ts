@@ -35,10 +35,10 @@ export function registerTools(server: McpServer) {
 
   server.tool(
     'search',
-    'Search across all CREATE SOMETHING content: papers, Canon design system, patterns, masters, praxis exercises, products, and framework definitions. Returns ranked results with matched terms.',
+    'Search across all CREATE SOMETHING content: papers, Canon design system, patterns, masters, praxis exercises, products, full property markdown documents, and framework definitions. Returns ranked results with matched terms.',
     {
       query: z.string().describe('Search query — can be a concept, term, or phrase'),
-      type: z.enum(['paper', 'canon', 'pattern', 'master', 'praxis', 'product', 'framework', 'playbook']).optional()
+      type: z.enum(['paper', 'canon', 'pattern', 'master', 'praxis', 'product', 'framework', 'playbook', 'document']).optional()
         .describe('Filter results to a specific content type'),
       property: z.enum(['io', 'ltd', 'space', 'agency', 'framework']).optional()
         .describe('Filter results to a specific property'),
@@ -59,7 +59,7 @@ export function registerTools(server: McpServer) {
       }
 
       const PROPERTY_LABELS: Record<string, string> = { io: '.io', ltd: '.ltd', space: '.space', agency: '.agency', framework: 'Framework' };
-      const TYPE_ICONS: Record<string, string> = { paper: 'Paper', canon: 'Canon', pattern: 'Pattern', master: 'Master', praxis: 'Praxis', product: 'Product', framework: 'Framework' };
+      const TYPE_ICONS: Record<string, string> = { paper: 'Paper', canon: 'Canon', pattern: 'Pattern', master: 'Master', praxis: 'Praxis', product: 'Product', framework: 'Framework', playbook: 'Playbook', document: 'Document' };
 
       const lines = [`## Search: "${query}"\n`, `**${results.length} results found**\n`];
 

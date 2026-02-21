@@ -53,10 +53,10 @@
 							</li>
 						{/each}
 					</ul>
-					<a href="/admin-demo" class="card-cta">
-						<LayoutDashboard size={18} />
-						Explore Admin Demo
-					</a>
+						<a href="/admin" class="card-cta">
+							<LayoutDashboard size={18} />
+							Open Admin Workspace
+						</a>
 				</div>
 			</div>
 
@@ -78,10 +78,10 @@
 							</li>
 						{/each}
 					</ul>
-					<a href="/demo" class="card-cta">
-						<PlayCircle size={18} />
-						Explore User Demo
-					</a>
+						<a href="/demo" class="card-cta">
+							<PlayCircle size={18} />
+							Open Video Library
+						</a>
 				</div>
 			</div>
 		</div>

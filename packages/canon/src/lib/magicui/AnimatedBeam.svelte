@@ -63,13 +63,15 @@
 	const id = browser ? crypto.randomUUID().replace(/-/g, '').slice(0, 8) : 'ssr';
 
 	// Calculate control points for curve
-	const midX = (fromX + toX) / 2;
-	const midY = (fromY + toY) / 2 + curvature;
+	const midX = $derived((fromX + toX) / 2);
+	const midY = $derived((fromY + toY) / 2 + curvature);
 
 	// SVG path for quadratic bezier curve
-	const pathD = curvature !== 0
-		? `M ${fromX} ${fromY} Q ${midX} ${midY} ${toX} ${toY}`
-		: `M ${fromX} ${fromY} L ${toX} ${toY}`;
+	const pathD = $derived(
+		curvature !== 0
+			? `M ${fromX} ${fromY} Q ${midX} ${midY} ${toX} ${toY}`
+			: `M ${fromX} ${fromY} L ${toX} ${toY}`
+	);
 </script>
 
 <svg

@@ -192,16 +192,17 @@
 		margin: 0 0 var(--space-md) 0;
 	}
 
-	.description {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-		line-height: 1.6;
-		margin: 0 0 var(--space-md) 0;
-		display: -webkit-box;
-		-webkit-line-clamp: 3;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-	}
+		.description {
+			font-size: var(--text-body);
+			color: var(--color-fg-secondary);
+			line-height: 1.6;
+			margin: 0 0 var(--space-md) 0;
+			display: -webkit-box;
+			line-clamp: 3;
+			-webkit-line-clamp: 3;
+			-webkit-box-orient: vertical;
+			overflow: hidden;
+		}
 
 	.meta {
 		display: flex;
@@ -317,9 +318,10 @@
 			font-size: 1.75rem;
 		}
 
-		.description {
-			-webkit-line-clamp: 2;
-		}
+			.description {
+				line-clamp: 2;
+				-webkit-line-clamp: 2;
+			}
 
 		.actions {
 			flex-direction: column;

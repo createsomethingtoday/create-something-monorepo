@@ -54,7 +54,7 @@
 	let playbackState = $state<SpritzPlaybackState>('stopped');
 	let currentWordIndex = $state(0);
 	let totalWords = $state(0);
-	let currentWpm = $state(wpm);
+	let currentWpm = $state(300);
 	let currentMessageIndex = $state(0);
 	let currentLabel = $state('');
 
@@ -211,17 +211,20 @@
 			loadCurrentMessage();
 		}
 	});
+
+	$effect(() => {
+		currentWpm = wpm;
+		engine?.setWPM(wpm);
+	});
 </script>
 
-<!-- svelte-ignore a11y_no_noninteractive_tabindex a11y_no_noninteractive_element_interactions -->
+<svelte:window onkeydown={handleKeydown} />
+
 <div
 	class="spritz {className}"
 	class:spritz--playing={isPlaying}
 	class:spritz--complete={isComplete}
-	tabindex="0"
-	role="application"
 	aria-label="Speed reading display"
-	onkeydown={handleKeydown}
 >
 	{#if currentLabel}
 		<div class="spritz-label">{currentLabel}</div>

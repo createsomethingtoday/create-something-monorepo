@@ -18,6 +18,7 @@
 			totalViews: number;
 			avgWatchTime: string;
 			topVideo: string;
+			completionRate: number;
 		};
 		instagram?: {
 			followers: number;
@@ -42,14 +43,14 @@
 
 	// Fetch analytics data
 	async function fetchAnalytics() {
-
 		if (!interactive) {
 			// Presentation mode: avoid network calls; show representative mock data.
 			data = {
 				videoEngagement: {
 					totalViews: 12547,
 					avgWatchTime: '4m 32s',
-					topVideo: 'Episode 1: The Beginning'
+					topVideo: 'Episode 1: The Beginning',
+					completionRate: 73
 				},
 				instagram: { followers: 8200, engagement: 4.8, recentPosts: 12 },
 				youtube: { subscribers: 3100, views: 42000, avgViews: 1200 },
@@ -60,10 +61,11 @@
 		}
 
 		try {
-			const [clickupRes, instagramRes, youtubeRes] = await Promise.allSettled([
+			const [clickupRes, instagramRes, youtubeRes, platformRes] = await Promise.allSettled([
 				fetch('/api/analytics/clickup'),
 				fetch('/api/analytics/instagram'),
-				fetch('/api/analytics/youtube')
+				fetch('/api/analytics/youtube'),
+				fetch('/api/analytics/platform')
 			]);
 
 			const newData: DashboardData = {};
@@ -92,12 +94,12 @@
 				}
 			}
 
-			// Mock video engagement data (would come from platform analytics)
-			newData.videoEngagement = {
-				totalViews: 12547,
-				avgWatchTime: '4m 32s',
-				topVideo: 'Crew Call Ep 1: The Beginning'
-			};
+			if (platformRes.status === 'fulfilled' && platformRes.value.ok) {
+				const platformData = await platformRes.value.json();
+				if (platformData.success) {
+					newData.videoEngagement = platformData.data;
+				}
+			}
 
 			data = newData;
 		} catch (err) {
@@ -156,7 +158,7 @@
 									<span class="stat-label">Avg Watch Time</span>
 								</div>
 								<div class="stat-item">
-									<span class="stat-value">73%</span>
+									<span class="stat-value">{data.videoEngagement?.completionRate ?? 73}%</span>
 									<span class="stat-label">Completion Rate</span>
 								</div>
 							</div>
@@ -302,15 +304,9 @@
 		line-height: 1.7;
 	}
 
-	.dashboard-wrapper {
-		position: relative;
-	}
-
-	.dashboard-wrapper.blurred > :not(.members-overlay) {
-		filter: blur(8px);
-		pointer-events: none;
-		user-select: none;
-	}
+		.dashboard-wrapper {
+			position: relative;
+		}
 
 	/* Tufte: Single row of 4, high data-ink ratio, minimal decoration */
 	.metrics-grid {
@@ -400,19 +396,8 @@
 		letter-spacing: 0.05em;
 	}
 
-	.metric-footer {
-		display: flex;
-		align-items: center;
-		gap: 0.375rem;
-		margin-top: 0.75rem;
-		padding-top: 0.75rem;
-		border-top: 1px solid var(--color-border-default);
-		font-size: 0.75rem;
-		color: var(--color-fg-muted);
-	}
-
-	.chatbot-tease {
-		display: flex;
+		.chatbot-tease {
+			display: flex;
 		align-items: center;
 		gap: 1.5rem;
 		padding: 2rem;
@@ -470,70 +455,8 @@
 		border-color: var(--color-fg-primary);
 	}
 
-	/* Members Only Overlay */
-	.members-overlay {
-		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		backdrop-filter: blur(8px);
-		background: rgba(0, 0, 0, 0.7);
-		border-radius: var(--radius-lg);
-		z-index: 10;
-	}
-
-	.overlay-content {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		text-align: center;
-		max-width: 28rem;
-		padding: 2rem;
-	}
-
-	.overlay-icon {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.overlay-content h3 {
-		font-size: 2rem;
-		font-weight: 700;
-		color: var(--color-fg-primary);
-		margin: 1rem 0 0.5rem;
-	}
-
-	.overlay-content p {
-		font-size: 1rem;
-		color: var(--color-fg-muted);
-		line-height: 1.6;
-		margin: 0 0 2rem;
-	}
-
-	.unlock-btn {
-		display: inline-block;
-		padding: 1rem 2rem;
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
-		border-radius: var(--radius-md);
-		font-size: 1rem;
-		font-weight: 700;
-		text-decoration: none;
-		transition: all var(--duration-micro) var(--ease-standard);
-	}
-
-	.unlock-btn:hover {
-		background: var(--color-fg-secondary);
-		transform: translateY(-2px);
-	}
-
-	.loading-state,
-	.error-state {
+		.loading-state,
+		.error-state {
 		padding: 4rem 2rem;
 		text-align: center;
 		color: var(--color-fg-muted);

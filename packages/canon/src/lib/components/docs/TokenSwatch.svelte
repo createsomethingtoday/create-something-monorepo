@@ -12,7 +12,7 @@
 	}
 
 	let { token, label, size = 'md' }: Props = $props();
-	const displayLabel = label ?? token.replace(/^--color-/, '');
+	const displayLabel = $derived(label ?? token.replace(/^--color-/, ''));
 </script>
 
 <div class="swatch" class:sm={size === 'sm'} class:lg={size === 'lg'}>

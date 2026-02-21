@@ -11,6 +11,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { UserEvent, EventType, StoredEvent } from '$lib/types/events';
+import { isAdminUser } from '$lib/server/auth';
 
 /**
  * Valid event types (for validation)
@@ -146,9 +147,10 @@ export const GET: RequestHandler = async ({ url, platform, locals }) => {
   if (!db) {
     return json({ events: [], total: 0 });
   }
-  
-  // Check if user is admin (you'd implement proper admin check here)
-  // For now, just allow access for debugging
+
+  if (!isAdminUser(locals.user)) {
+    return json({ error: 'Not authorized' }, { status: 403 });
+  }
   
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '100'), 1000);
   const eventType = url.searchParams.get('type');

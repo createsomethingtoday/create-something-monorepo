@@ -39,16 +39,19 @@
 		6: 'clamp(1rem, 1.5vw, 1.25rem)' // 16px → 20px
 	};
 
-	const fontSize =
+	const fontSize = $derived(
 		fluidScale === 'canonical'
 			? canonicalScales[level]
 			: min && max
 				? `clamp(${min}, 5vw, ${max})`
-				: canonicalScales[level];
+				: canonicalScales[level]
+	);
 
-	const letterSpacing = level <= 2 ? '-0.025em' : level <= 4 ? '-0.02em' : '-0.015em';
+	const letterSpacing = $derived(level <= 2 ? '-0.025em' : level <= 4 ? '-0.02em' : '-0.015em');
 
-	const baseStyles = `font-weight: 700; line-height: 1.2; letter-spacing: ${letterSpacing}; font-size: ${fontSize};`;
+	const baseStyles = $derived(
+		`font-weight: 700; line-height: 1.2; letter-spacing: ${letterSpacing}; font-size: ${fontSize};`
+	);
 </script>
 
 <svelte:element this={`h${level}`} class={className} style={baseStyles}>

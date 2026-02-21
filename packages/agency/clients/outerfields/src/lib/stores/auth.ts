@@ -5,6 +5,7 @@ export interface User {
 	email: string;
 	name: string;
 	membership: boolean;
+	role?: 'admin' | 'user';
 	createdAt: string;
 }
 

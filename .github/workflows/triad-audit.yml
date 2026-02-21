@@ -59,10 +59,9 @@ jobs:
       - name: Get PR diff
         id: diff
         run: |
-          gh pr diff ${{ github.event.pull_request.number }} > pr_diff.txt
+          git fetch --no-tags --prune --depth=1 origin "${{ github.event.pull_request.base.ref }}"
+          git diff --no-color "origin/${{ github.event.pull_request.base.ref }}"...HEAD > pr_diff.txt
           echo "diff_size=$(wc -l < pr_diff.txt | tr -d ' ')" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Subtractive Triad Audit
         id: audit

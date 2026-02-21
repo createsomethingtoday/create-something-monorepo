@@ -8,17 +8,18 @@ MCP server for learning Codex by building an MCP.
 npx @createsomething/learn init
 ```
 
-Or add to Codex settings manually:
+Or add directly in Codex:
 
-```json
-{
-  "mcpServers": {
-    "learn": {
-      "command": "npx",
-      "args": ["@createsomething/learn"]
-    }
-  }
-}
+```bash
+codex mcp add learn -- npx -y @createsomething/learn
+```
+
+You can also configure manually in `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.learn]
+command = "npx"
+args = ["-y", "@createsomething/learn"]
 ```
 
 ## Course

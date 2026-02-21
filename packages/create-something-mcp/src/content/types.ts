@@ -113,6 +113,22 @@ export interface Product {
 }
 
 // ============================================================================
+// Property Documents (All Property Markdown Content)
+// ============================================================================
+
+export interface PropertyDocument {
+  id: string;
+  property: 'io' | 'ltd' | 'space' | 'agency';
+  title: string;
+  description: string;
+  section: string;
+  path: string;
+  slug: string;
+  uri: string;
+  content: string;
+}
+
+// ============================================================================
 // Host Playbooks — re-exported from @create-something/playbook-mcp (canonical)
 // ============================================================================
 
@@ -129,7 +145,7 @@ export type {
 
 export interface ContentItem {
   id: string;
-  type: 'paper' | 'canon' | 'pattern' | 'master' | 'praxis' | 'product' | 'framework' | 'playbook';
+  type: 'paper' | 'canon' | 'pattern' | 'master' | 'praxis' | 'product' | 'framework' | 'playbook' | 'document';
   title: string;
   description: string;
   content: string;

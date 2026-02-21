@@ -34,11 +34,25 @@
 	// =============================================================================
 
 	let container: HTMLElement;
-	let phase = $state<RevelationPhase>(animation.enabled ? 'reading' : 'complete');
-	let progress = $state(animation.enabled ? 0 : 1);
-	let hasAnimated = $state(!animation.enabled);
+	let phase = $state<RevelationPhase>('reading');
+	let progress = $state(0);
+	let hasAnimated = $state(false);
 	let showingOriginal = $state(false);
-	let currentDirection = $state<'forward' | 'reverse'>(direction);
+	let currentDirection = $state<'forward' | 'reverse'>('forward');
+
+	$effect(() => {
+		if (!animation.enabled) {
+			phase = 'complete';
+			progress = 1;
+			hasAnimated = true;
+		}
+	});
+
+	$effect(() => {
+		if (!showingOriginal) {
+			currentDirection = direction;
+		}
+	});
 
 	// =============================================================================
 	// ANIMATION LOGIC
@@ -191,14 +205,14 @@
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-<article
-	bind:this={container}
-	class="key-insight {containerClass} {className}"
-	onclick={handleClick}
-	onkeydown={handleKeydown}
-	role={animation.trigger === 'click' ? 'button' : undefined}
-	tabindex={animation.trigger === 'click' ? 0 : undefined}
-	aria-label="Key Insight: {insight.principle}"
+	<article
+		bind:this={container}
+		class="key-insight {containerClass} {className}"
+		onclick={animation.trigger === 'click' ? handleClick : undefined}
+		onkeydown={animation.trigger === 'click' ? handleKeydown : undefined}
+		role={animation.trigger === 'click' ? 'button' : undefined}
+		tabindex={animation.trigger === 'click' ? 0 : undefined}
+		aria-label="Key Insight: {insight.principle}"
 >
 
 	<!-- Main content -->

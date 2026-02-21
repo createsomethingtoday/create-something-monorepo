@@ -22,8 +22,8 @@
 	const margin = 25;
 
 	// SVG dimensions
-	const svgWidth = circulation.width * scale + margin * 2 + 40;
-	const svgHeight = circulation.depth * scale + margin * 2 + 20;
+	const svgWidth = $derived(circulation.width * scale + margin * 2 + 40);
+	const svgHeight = $derived(circulation.depth * scale + margin * 2 + 20);
 
 	// Coordinate transforms
 	function tx(x: number): number {

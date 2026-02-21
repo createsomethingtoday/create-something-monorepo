@@ -124,7 +124,7 @@
 	let facilityName = $state('');
 
 	// Element refs for scrolling
-	let bookingRef: HTMLDivElement | null = null;
+	let bookingRef = $state<HTMLDivElement | null>(null);
 
 	// API base URL - use relative path for same-origin, absolute for embeds
 	const API_BASE =
@@ -617,7 +617,6 @@
 		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
 	}
 
-	.widget[data-theme='dark'] .date-input,
 	.widget[data-theme='dark'] button {
 		background: var(--color-bg-surface, #111111);
 		color: var(--color-fg-primary, #ffffff);

@@ -6,6 +6,10 @@ metadata:
   engagement_id: "<engagement-id>"
   status: "draft" # draft | active | deprecated
   delivery_mode: "agent-outcome-stack" # agent-outcome-stack | mcp-only
+  delivery_vector:
+    canonical_phrase: "Skills on MCP"
+    client_facing_label: "Skills + MCP"
+    technical_label: "MCP + Skills"
 
 agent_profile:
   name: "<agent-name>"

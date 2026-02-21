@@ -4,7 +4,7 @@
 	import type { Paper } from '@create-something/canon/types';
 
 	let { data }: { data: PageData } = $props();
-	const { papers } = data;
+	const papers = $derived(data.papers);
 
 	function getTestsPrinciples(experiment: unknown): string[] {
 		if (typeof experiment !== 'object' || experiment === null) return [];
@@ -151,11 +151,12 @@
 							d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
 						/>
 					</svg>
-					{#if searchQuery}
-						<button
-							onclick={() => searchQuery = ''}
-							class="search-clear"
-						>
+						{#if searchQuery}
+							<button
+								onclick={() => searchQuery = ''}
+								class="search-clear"
+								aria-label="Clear search"
+							>
 							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 							</svg>

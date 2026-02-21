@@ -37,6 +37,67 @@ export interface ComposioClientConfig {
   timeoutMs?: number;
 }
 
+/**
+ * Options for fetching Composio tool definitions.
+ *
+ * By default, Composio auto-applies "important" filtering for toolkit lookups.
+ * Set `important: false` for full-surface discovery.
+ */
+export interface ComposioToolDiscoveryOptions {
+  /** Max tools to return from Composio. */
+  limit?: number;
+  /** Search query for tool names/descriptions. */
+  search?: string;
+  /** Restrict to auth config IDs. */
+  authConfigIds?: string[];
+  /** Include only important tools when true; all tools when false. */
+  important?: boolean;
+}
+
+/**
+ * Options for listing Composio toolkits.
+ */
+export interface ComposioToolkitListOptions {
+  /** Optional category filter. */
+  category?: string;
+  /** Source of toolkits. Defaults to Composio SDK behavior. */
+  managedBy?: 'all' | 'composio' | 'project';
+  /** Sort order. */
+  sortBy?: 'usage' | 'alphabetically';
+  /** Optional request page size hint. */
+  limit?: number;
+  /** Optional cursor hint (when supported by SDK/backend). */
+  cursor?: string;
+}
+
+/**
+ * Normalized Composio toolkit summary for inventory/sync flows.
+ */
+export interface ComposioToolkitSummary {
+  /** Toolkit slug (e.g. "gmail"). */
+  slug: string;
+  /** Human-friendly name. */
+  name: string;
+  /** Optional toolkit description. */
+  description?: string;
+  /** Category slugs for grouping/bundles. */
+  categories: string[];
+  /** Approximate number of tools in this toolkit. */
+  toolsCount?: number;
+  /** Approximate number of triggers in this toolkit. */
+  triggersCount?: number;
+  /** Available toolkit versions, if provided. */
+  availableVersions?: string[];
+  /** Composio-auth schemes supported by this toolkit. */
+  authSchemes?: string[];
+  /** Composio-managed auth schemes supported by this toolkit. */
+  composioManagedAuthSchemes?: string[];
+  /** Whether this toolkit can run without auth. */
+  noAuth?: boolean;
+  /** Whether this toolkit is local/project scoped in Composio. */
+  isLocalToolkit: boolean;
+}
+
 // =============================================================================
 // App & Tool Configuration
 // =============================================================================
@@ -77,6 +138,12 @@ export interface AppConfig {
 export interface ToolFactoryConfig extends ComposioClientConfig {
   /** Apps to register tools for */
   apps: AppConfig[] | string[];
+
+  /**
+   * Tool discovery controls passed through to Composio getRawComposioTools().
+   * Keep undefined to preserve existing default behavior.
+   */
+  toolDiscovery?: ComposioToolDiscoveryOptions;
 
   /**
    * User ID resolver — maps mcp-core's accountId to Composio's userId.

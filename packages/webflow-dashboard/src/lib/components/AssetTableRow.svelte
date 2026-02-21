@@ -15,17 +15,20 @@
 
 	let imageError = $state(false);
 
-	// Clean status for display logic
-	const cleanedStatus = asset.status
-		.replace(/^\d*️⃣/u, '')
-		.replace(/🆕/u, '')
-		.replace(/📅/u, '')
-		.replace(/🚀/u, '')
-		.replace(/☠️/u, '')
-		.replace(/❌/u, '')
-		.trim();
+	function cleanStatus(value: string): string {
+		return value
+			.replace(/^\d*️⃣/u, '')
+			.replace(/🆕/u, '')
+			.replace(/📅/u, '')
+			.replace(/🚀/u, '')
+			.replace(/☠️/u, '')
+			.replace(/❌/u, '')
+			.trim();
+	}
 
-	const showMetrics = !['Upcoming', 'Rejected'].includes(cleanedStatus);
+	// Clean status for display logic
+	const cleanedStatus = $derived(cleanStatus(asset.status));
+	const showMetrics = $derived(!['Upcoming', 'Rejected'].includes(cleanedStatus));
 
 	// Tufte: Show relationships, not just numbers
 	// Conversion rate = purchases / viewers (key performance indicator)

@@ -49,7 +49,7 @@
 	}: Props = $props();
 
 	let inputs: HTMLInputElement[] = $state([]);
-	let digits = $state<string[]>(Array(length).fill(''));
+	let digits = $state<string[]>([]);
 
 	// Sync internal digits with external value
 	$effect(() => {

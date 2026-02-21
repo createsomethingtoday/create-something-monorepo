@@ -15,9 +15,9 @@
 		compact?: boolean;
 	}
 	
-	let { garbageTimeMinutes, totalMinutes, reliabilityScore, compact = false }: Props = $props();
-	
-	let showTooltip = $state(false);
+let { garbageTimeMinutes, totalMinutes, reliabilityScore, compact = false }: Props = $props();
+
+let showTooltip = $state(false);
 	
 	const garbageTimePct = $derived((garbageTimeMinutes / totalMinutes) * 100);
 	
@@ -27,15 +27,25 @@
 		return 'low';
 	});
 	
-	const warningText = $derived(() => {
-		if (severityLevel() === 'high') {
-			return 'Most stats from garbage time';
-		}
-		if (severityLevel() === 'medium') {
-			return 'Some stats from garbage time';
-		}
-		return 'Limited garbage time';
-	});
+const warningText = $derived(() => {
+	if (severityLevel() === 'high') {
+		return 'Most stats from garbage time';
+	}
+	if (severityLevel() === 'medium') {
+		return 'Some stats from garbage time';
+	}
+	return 'Limited garbage time';
+});
+
+function handleKeydown(event: KeyboardEvent) {
+	if (event.key === 'Enter' || event.key === ' ') {
+		event.preventDefault();
+		showTooltip = !showTooltip;
+	}
+	if (event.key === 'Escape') {
+		showTooltip = false;
+	}
+}
 </script>
 
 <div 
@@ -44,12 +54,14 @@
 	class:high={severityLevel() === 'high'}
 	class:medium={severityLevel() === 'medium'}
 	class:low={severityLevel() === 'low'}
-	role="tooltip"
+	role="button"
 	aria-label={warningText()}
 	onmouseenter={() => showTooltip = true}
 	onmouseleave={() => showTooltip = false}
 	onfocus={() => showTooltip = true}
 	onblur={() => showTooltip = false}
+	onclick={() => showTooltip = !showTooltip}
+	onkeydown={handleKeydown}
 	tabindex="0"
 >
 	<AlertCircle size={compact ? 14 : 16} />

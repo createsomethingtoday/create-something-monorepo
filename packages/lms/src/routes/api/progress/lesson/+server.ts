@@ -18,6 +18,7 @@ import { getPath } from '$lib/content/paths';
  *  - lessonId: string
  *  - action: 'start' | 'complete'
  *  - timeSpent?: number (seconds, for complete action)
+ *  - reflection?: string (optional learner reflection)
  */
 export const POST: RequestHandler = async ({ request, platform, locals }) => {
 	const user = locals.user;
@@ -36,6 +37,7 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 		lessonId?: string;
 		action?: string;
 		timeSpent?: number;
+		reflection?: string;
 	};
 
 	try {
@@ -44,7 +46,7 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 		throw error(400, 'Invalid JSON body');
 	}
 
-	const { pathId, lessonId, action, timeSpent } = body;
+	const { pathId, lessonId, action, timeSpent, reflection } = body;
 
 	if (!pathId || !lessonId || !action) {
 		throw error(400, 'Missing required fields: pathId, lessonId, action');
@@ -74,8 +76,12 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 			});
 		} else if (action === 'complete') {
 			const seconds = typeof timeSpent === 'number' && timeSpent > 0 ? timeSpent : 0;
+			const reflectionText = typeof reflection === 'string' ? reflection.trim() : '';
 
 			await tracker.completeLesson(user.id, pathId, lessonId, seconds);
+			if (reflectionText) {
+				await tracker.addReflection(user.id, reflectionText, pathId, lessonId);
+			}
 
 			// Check if all lessons in the path are completed
 			const pathProgress = await tracker.getPathProgress(user.id, pathId);

@@ -1,0 +1,378 @@
+#!/usr/bin/env tsx
+
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+type CatalogCategory = 'create-something' | 'workway';
+type CatalogAuthType = 'bearer' | 'oauth';
+type CatalogTransport = 'http' | 'sse';
+type ServerLifecycle = 'active' | 'dormant' | 'local';
+
+type CatalogConfig = {
+  include: boolean;
+  name?: string;
+  slug?: string;
+  category: CatalogCategory;
+  description?: string;
+  transports?: CatalogTransport[];
+  requiresAuth?: boolean;
+  authType?: CatalogAuthType;
+  setupNotes?: string;
+};
+
+type BaseServer = {
+  description?: string;
+  tags?: string[];
+  lifecycle?: ServerLifecycle;
+  package_path?: string;
+  catalog?: CatalogConfig;
+};
+
+type HttpServer = BaseServer & {
+  transport: 'http';
+  url: string;
+  http_headers?: Record<string, string>;
+  env_http_headers?: Record<string, string>;
+  bearer_token_env_var?: string;
+  headers?: Record<string, string>; // legacy compatibility
+};
+
+type StdioServer = BaseServer & {
+  transport: 'stdio';
+  command: string;
+  args?: string[];
+  env?: Record<string, string>;
+  cwd?: string;
+};
+
+type RegistryServer = HttpServer | StdioServer;
+
+type Registry = {
+  version: number;
+  servers: Record<string, RegistryServer>;
+  bundles: Record<string, string[]>;
+  defaults?: {
+    enabledBundles?: string[];
+    enabledServers?: string[];
+    disabledServers?: string[];
+    codexConfigPath?: string;
+  };
+};
+
+type GeneratedCatalogEntry = {
+  name: string;
+  slug: string;
+  url: string;
+  description: string;
+  category: CatalogCategory;
+  transports: CatalogTransport[];
+  requiresAuth: boolean;
+  authType?: CatalogAuthType;
+  setupNotes?: string;
+};
+
+const ROOT = process.cwd();
+const REGISTRY_PATH = resolve(ROOT, 'config/mcp-hub/registry.json');
+const SCHEMA_PATH = resolve(ROOT, 'config/mcp-hub/registry.schema.json');
+const GENERATED_CATALOG_PATH = resolve(ROOT, 'packages/playbook-mcp/src/catalog.registry.generated.ts');
+const GENERATED_FLEET_DOC_PATH = resolve(ROOT, 'docs/MCP_FLEET_REGISTRY.generated.md');
+
+const command = (process.argv[2] ?? 'check').trim().toLowerCase();
+
+if (!['check', 'generate', 'validate'].includes(command)) {
+  console.error('Usage: tsx scripts/mcp-registry.ts [check|generate|validate]');
+  process.exit(2);
+}
+
+if (!existsSync(REGISTRY_PATH)) {
+  console.error(`Registry missing: ${REGISTRY_PATH}`);
+  process.exit(1);
+}
+if (!existsSync(SCHEMA_PATH)) {
+  console.error(`Schema missing: ${SCHEMA_PATH}`);
+  process.exit(1);
+}
+
+const registry = loadRegistry(REGISTRY_PATH);
+const errors = validateRegistry(registry);
+if (errors.length > 0) {
+  console.error('Registry validation failed:');
+  for (const error of errors) {
+    console.error(`- ${error}`);
+  }
+  process.exit(1);
+}
+
+const catalogEntries = buildCatalogEntries(registry);
+const generatedCatalog = renderCatalogFile(catalogEntries);
+const generatedFleetDoc = renderFleetDoc(registry);
+
+if (command === 'validate') {
+  console.log('Registry validation passed.');
+  process.exit(0);
+}
+
+if (command === 'generate') {
+  writeFileSync(GENERATED_CATALOG_PATH, generatedCatalog, 'utf8');
+  writeFileSync(GENERATED_FLEET_DOC_PATH, generatedFleetDoc, 'utf8');
+  console.log(`Wrote ${relativeToRoot(GENERATED_CATALOG_PATH)}`);
+  console.log(`Wrote ${relativeToRoot(GENERATED_FLEET_DOC_PATH)}`);
+  process.exit(0);
+}
+
+const drift: string[] = [];
+if (!isFileContentEqual(GENERATED_CATALOG_PATH, generatedCatalog)) {
+  drift.push(relativeToRoot(GENERATED_CATALOG_PATH));
+}
+if (!isFileContentEqual(GENERATED_FLEET_DOC_PATH, generatedFleetDoc)) {
+  drift.push(relativeToRoot(GENERATED_FLEET_DOC_PATH));
+}
+
+if (drift.length > 0) {
+  console.error('Registry artifacts are out of date:');
+  for (const file of drift) {
+    console.error(`- ${file}`);
+  }
+  console.error('Run: pnpm mcp:registry:generate');
+  process.exit(1);
+}
+
+console.log('Registry check passed.');
+
+function loadRegistry(path: string): Registry {
+  return JSON.parse(readFileSync(path, 'utf8')) as Registry;
+}
+
+function validateRegistry(data: Registry): string[] {
+  const errors: string[] = [];
+
+  if (data.version !== 1) {
+    errors.push(`version must be 1 (received ${String(data.version)})`);
+  }
+
+  if (!isPlainObject(data.servers) || Object.keys(data.servers).length === 0) {
+    errors.push('servers must be a non-empty object');
+  }
+  if (!isPlainObject(data.bundles)) {
+    errors.push('bundles must be an object');
+  }
+
+  const serverNames = new Set(Object.keys(data.servers ?? {}));
+  const catalogSlugs = new Set<string>();
+
+  for (const [serverName, server] of Object.entries(data.servers ?? {})) {
+    if (!isPlainObject(server)) {
+      errors.push(`server ${serverName}: config must be an object`);
+      continue;
+    }
+
+    if (server.transport === 'http') {
+      if (typeof server.url !== 'string' || server.url.length === 0) {
+        errors.push(`server ${serverName}: http transport requires non-empty url`);
+      }
+    } else if (server.transport === 'stdio') {
+      if (typeof server.command !== 'string' || server.command.length === 0) {
+        errors.push(`server ${serverName}: stdio transport requires non-empty command`);
+      }
+    } else {
+      errors.push(`server ${serverName}: transport must be "http" or "stdio"`);
+    }
+
+    if (server.catalog?.include) {
+      if (server.transport !== 'http') {
+        errors.push(`server ${serverName}: catalog.include requires http transport`);
+      }
+      if (!server.catalog.category) {
+        errors.push(`server ${serverName}: catalog.include requires category`);
+      }
+      const slug = server.catalog.slug?.trim() || serverName;
+      if (catalogSlugs.has(slug)) {
+        errors.push(`duplicate catalog slug: ${slug}`);
+      }
+      catalogSlugs.add(slug);
+    }
+  }
+
+  for (const [bundleName, members] of Object.entries(data.bundles ?? {})) {
+    if (!Array.isArray(members)) {
+      errors.push(`bundle ${bundleName}: must be an array`);
+      continue;
+    }
+    for (const serverName of members) {
+      if (!serverNames.has(serverName)) {
+        errors.push(`bundle ${bundleName}: unknown server ${serverName}`);
+      }
+    }
+  }
+
+  for (const bundleName of data.defaults?.enabledBundles ?? []) {
+    if (!(bundleName in (data.bundles ?? {}))) {
+      errors.push(`defaults.enabledBundles references unknown bundle: ${bundleName}`);
+    }
+  }
+
+  for (const serverName of data.defaults?.enabledServers ?? []) {
+    if (!serverNames.has(serverName)) {
+      errors.push(`defaults.enabledServers references unknown server: ${serverName}`);
+    }
+  }
+
+  for (const serverName of data.defaults?.disabledServers ?? []) {
+    if (!serverNames.has(serverName)) {
+      errors.push(`defaults.disabledServers references unknown server: ${serverName}`);
+    }
+  }
+
+  return errors;
+}
+
+function buildCatalogEntries(data: Registry): GeneratedCatalogEntry[] {
+  const entries: GeneratedCatalogEntry[] = [];
+
+  for (const [serverName, server] of Object.entries(data.servers)) {
+    if (!server.catalog?.include) continue;
+    if (server.transport !== 'http') continue;
+
+    const category = server.catalog.category;
+    const name = server.catalog.name?.trim() || titleCase(serverName);
+    const slug = server.catalog.slug?.trim() || serverName;
+    const description =
+      server.catalog.description?.trim() ||
+      server.description?.trim() ||
+      `${name} MCP server`;
+    const transports =
+      server.catalog.transports && server.catalog.transports.length > 0
+        ? server.catalog.transports
+        : (['http'] as CatalogTransport[]);
+
+    const requiresAuth =
+      server.catalog.requiresAuth ??
+      Boolean(
+        server.bearer_token_env_var ||
+          (server.http_headers && Object.keys(server.http_headers).length > 0) ||
+          (server.env_http_headers && Object.keys(server.env_http_headers).length > 0),
+      );
+
+    const entry: GeneratedCatalogEntry = {
+      name,
+      slug,
+      url: stripTransportSuffix(server.url),
+      description,
+      category,
+      transports,
+      requiresAuth,
+    };
+
+    if (server.catalog.authType) {
+      entry.authType = server.catalog.authType;
+    }
+    if (server.catalog.setupNotes) {
+      entry.setupNotes = server.catalog.setupNotes;
+    }
+
+    entries.push(entry);
+  }
+
+  entries.sort((a, b) => {
+    if (a.category !== b.category) return a.category.localeCompare(b.category);
+    return a.name.localeCompare(b.name);
+  });
+
+  return entries;
+}
+
+function renderCatalogFile(entries: GeneratedCatalogEntry[]): string {
+  return [
+    '/**',
+    ' * AUTO-GENERATED FILE. DO NOT EDIT.',
+    ' * Source: config/mcp-hub/registry.json',
+    ' * Regenerate with: pnpm mcp:registry:generate',
+    ' */',
+    '',
+    `export const REGISTRY_CATALOG_ENTRIES = ${JSON.stringify(entries, null, 2)} as const;`,
+    '',
+  ].join('\n');
+}
+
+function renderFleetDoc(data: Registry): string {
+  const byLifecycle: Record<ServerLifecycle, Array<{ name: string; server: RegistryServer }>> = {
+    active: [],
+    dormant: [],
+    local: [],
+  };
+
+  for (const [name, server] of Object.entries(data.servers)) {
+    const lifecycle = resolveLifecycle(server);
+    byLifecycle[lifecycle].push({ name, server });
+  }
+
+  for (const values of Object.values(byLifecycle)) {
+    values.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  const lines: string[] = [
+    '# MCP Fleet Registry (Generated)',
+    '',
+    '> Auto-generated from `config/mcp-hub/registry.json`.',
+    '> Regenerate with `pnpm mcp:registry:generate`.',
+    '',
+  ];
+
+  for (const lifecycle of ['active', 'dormant', 'local'] as const) {
+    const rows = byLifecycle[lifecycle];
+    lines.push(`## ${titleCase(lifecycle)} (${rows.length})`, '');
+    lines.push('| Server | Transport | Endpoint | Tags |');
+    lines.push('| --- | --- | --- | --- |');
+    for (const row of rows) {
+      const endpoint =
+        row.server.transport === 'http'
+          ? `\`${row.server.url}\``
+          : `\`${row.server.command}${row.server.args?.length ? ` ${row.server.args.join(' ')}` : ''}\``;
+      const tags = row.server.tags?.length ? row.server.tags.map((tag) => `\`${tag}\``).join(', ') : '—';
+      lines.push(`| \`${row.name}\` | \`${row.server.transport}\` | ${endpoint} | ${tags} |`);
+    }
+    lines.push('');
+  }
+
+  lines.push('## Bundles', '');
+  lines.push('| Bundle | Servers |');
+  lines.push('| --- | --- |');
+  for (const [bundleName, members] of Object.entries(data.bundles).sort(([a], [b]) => a.localeCompare(b))) {
+    const memberText = members.map((member) => `\`${member}\``).join(', ');
+    lines.push(`| \`${bundleName}\` | ${memberText} |`);
+  }
+  lines.push('');
+
+  return lines.join('\n');
+}
+
+function resolveLifecycle(server: RegistryServer): ServerLifecycle {
+  if (server.lifecycle) return server.lifecycle;
+  if (server.transport === 'stdio') return 'local';
+  if (server.tags?.includes('local')) return 'local';
+  if (server.tags?.includes('dormant') || server.tags?.includes('prototype')) return 'dormant';
+  return 'active';
+}
+
+function stripTransportSuffix(url: string): string {
+  return url.replace(/\/(mcp|sse)(\?.*)?$/, '');
+}
+
+function titleCase(input: string): string {
+  return input
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isFileContentEqual(filePath: string, expected: string): boolean {
+  if (!existsSync(filePath)) return false;
+  return readFileSync(filePath, 'utf8') === expected;
+}
+
+function relativeToRoot(filePath: string): string {
+  return filePath.replace(`${ROOT}/`, '');
+}

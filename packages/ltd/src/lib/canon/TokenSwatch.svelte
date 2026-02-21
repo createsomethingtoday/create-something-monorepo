@@ -26,10 +26,10 @@
 	}: Props = $props();
 
 	// Copy format: var(--color-name)
-	const copyText = `var(${token})`;
+	let copyText = $derived(`var(${token})`);
 
 	// Check if value is rgba or transparent
-	const isTransparent = value.includes('rgba') || value === 'transparent';
+	let isTransparent = $derived(value.includes('rgba') || value === 'transparent');
 </script>
 
 <div class="token-swatch" class:swatch-sm={size === 'sm'} class:swatch-lg={size === 'lg'}>

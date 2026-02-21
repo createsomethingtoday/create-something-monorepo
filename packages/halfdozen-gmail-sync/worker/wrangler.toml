@@ -49,6 +49,7 @@ crons = ["*/5 * * * *"]
 [vars]
 # Base instance = Danny
 AUTHORIZED_EMAIL = "dm@halfdozen.co"
+TELEMETRY_SERVER_NAME = "halfdozen-gmail-sync-danny"
 
 # ─── Per-User Environments ───────────────────────────────────
 # Deploy with: wrangler deploy --env <name>
@@ -61,6 +62,7 @@ routes = [{ pattern = "fillip-gmail.mcp.workway.co", custom_domain = true }]
 
 [env.fillip.vars]
 AUTHORIZED_EMAIL = "fillip@halfdozen.co"
+TELEMETRY_SERVER_NAME = "halfdozen-gmail-sync-fillip"
 
 [[env.fillip.durable_objects.bindings]]
 name = "MCP_OBJECT"
@@ -90,6 +92,7 @@ routes = [{ pattern = "leah-gmail.mcp.workway.co", custom_domain = true }]
 
 [env.leah.vars]
 AUTHORIZED_EMAIL = "leah@halfdozen.co"
+TELEMETRY_SERVER_NAME = "halfdozen-gmail-sync-leah"
 
 [[env.leah.durable_objects.bindings]]
 name = "MCP_OBJECT"

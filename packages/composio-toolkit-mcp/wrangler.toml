@@ -1,0 +1,19 @@
+name = "composio-toolkit-mcp"
+main = "index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[observability]
+enabled = true
+
+[vars]
+# Optional default/fallback entity id when request headers do not provide identity.
+# COMPOSIO_DEFAULT_ENTITY_ID = "demo"
+
+# Optional JSON map of toolkit -> auth config id used by get_connect_link.
+# Example: {"gmail":"ac_xxx","notion":"ac_yyy"}
+# COMPOSIO_AUTH_CONFIG_MAP = "{}"
+
+# Optional cache TTL (seconds) for toolkit inventory + tool definitions.
+# COMPOSIO_TOOL_CACHE_SECONDS = "300"

@@ -168,7 +168,8 @@
 					class:dragging={draggedItem?.id === item.id}
 					class:drag-over={dragOverIndex === index}
 					class:editable={isEditable}
-					role="listitem"
+					role="button"
+					aria-label={item.title || 'Collection item'}
 					tabindex="0"
 					draggable={isEditable}
 					onclick={() => handleItemClick(item)}
@@ -473,6 +474,7 @@
 		font-weight: 600;
 		color: var(--color-fg-primary);
 		display: -webkit-box;
+		line-clamp: 2;
 		-webkit-line-clamp: 2;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
@@ -482,6 +484,7 @@
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
 		display: -webkit-box;
+		line-clamp: 2;
 		-webkit-line-clamp: 2;
 		-webkit-box-orient: vertical;
 		overflow: hidden;

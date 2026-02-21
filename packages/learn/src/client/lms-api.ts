@@ -125,10 +125,15 @@ export class LMSClient {
 		}
 	}
 
-	async completeLesson(pathId: string, lessonId: string, timeSpent: number): Promise<{ pathCompleted: boolean }> {
+	async completeLesson(
+		pathId: string,
+		lessonId: string,
+		timeSpent: number,
+		reflection?: string
+	): Promise<{ pathCompleted: boolean }> {
 		const response = await this.fetch('/api/progress/lesson', {
 			method: 'POST',
-			body: JSON.stringify({ pathId, lessonId, action: 'complete', timeSpent })
+			body: JSON.stringify({ pathId, lessonId, action: 'complete', timeSpent, reflection })
 		});
 
 		if (!response.ok) {

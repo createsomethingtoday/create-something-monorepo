@@ -45,11 +45,12 @@
 	}: Props = $props();
 
 	// Generate unique ID if not provided
-	const fieldId = id || `checkbox-${crypto.randomUUID().slice(0, 8)}`;
-	const descriptionId = `${fieldId}-description`;
+	const fallbackFieldId = `checkbox-${crypto.randomUUID().slice(0, 8)}`;
+	const fieldId = $derived(id || fallbackFieldId);
+	const descriptionId = $derived(`${fieldId}-description`);
 </script>
 
-<div class="checkbox" class:checkbox-sm={size === 'sm'} class:checkbox-lg={size === 'lg'}>
+<div class="checkbox" class:checkbox-sm={size === 'sm'} class:checkbox-lg={size === 'lg'} class:disabled>
 	<div class="checkbox-control">
 		<input
 			type="checkbox"
@@ -184,10 +185,10 @@
 		user-select: none;
 	}
 
-	.checkbox-input:disabled ~ .checkbox-content .checkbox-label {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
+		.checkbox.disabled .checkbox-label {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
 
 	/* Description */
 	.checkbox-description {

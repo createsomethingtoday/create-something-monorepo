@@ -6,15 +6,19 @@
 
 	let { status, size = 'default' }: Props = $props();
 
+	function cleanStatus(value: string): string {
+		return value
+			.replace(/^\d*️⃣/u, '')
+			.replace(/🆕/u, '')
+			.replace(/📅/u, '')
+			.replace(/🚀/u, '')
+			.replace(/☠️/u, '')
+			.replace(/❌/u, '')
+			.trim();
+	}
+
 	// Clean emoji prefixes from status
-	const cleanedStatus = status
-		.replace(/^\d*️⃣/u, '')
-		.replace(/🆕/u, '')
-		.replace(/📅/u, '')
-		.replace(/🚀/u, '')
-		.replace(/☠️/u, '')
-		.replace(/❌/u, '')
-		.trim();
+	const cleanedStatus = $derived(cleanStatus(status));
 
 	const statusConfig: Record<string, { bg: string; text: string; border: string }> = {
 		Scheduled: {
@@ -44,11 +48,13 @@
 		}
 	};
 
-	const config = statusConfig[cleanedStatus] || {
+	const config = $derived(
+		statusConfig[cleanedStatus] || {
 		bg: 'var(--color-bg-subtle)',
 		text: 'var(--color-fg-secondary)',
 		border: 'var(--color-border-default)'
-	};
+		}
+	);
 
 	const sizeClasses: Record<string, string> = {
 		sm: 'badge-sm',

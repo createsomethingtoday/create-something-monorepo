@@ -8,6 +8,7 @@ import { PAPERS } from './content/generated/papers.js';
 import { CANON_PAGES } from './content/generated/canon.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
+import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
 // GRAPH_EDGES (800 KB) lazy-loaded only when graph://edges is requested
 import { MASTERS } from './content/masters.js';
 import { PRAXIS_EXERCISES } from './content/praxis.js';
@@ -344,6 +345,73 @@ export function registerResources(server: McpServer) {
   );
 
   // ==========================================================================
+  // Property Documents (all markdown content across .io/.ltd/.space/.agency)
+  // ==========================================================================
+
+  server.resource(
+    'docs-list',
+    'docs://list',
+    { description: `All ingested property documents (${PROPERTY_DOCUMENTS.length} markdown files)`, mimeType: 'application/json' },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(PROPERTY_DOCUMENTS.map(doc => ({
+          id: doc.id,
+          property: doc.property,
+          title: doc.title,
+          section: doc.section,
+          path: doc.path,
+          uri: doc.uri,
+        })), null, 2)
+      }]
+    })
+  );
+
+  const propertyDocumentBuckets = {
+    io: PROPERTY_DOCUMENTS.filter(doc => doc.property === 'io'),
+    ltd: PROPERTY_DOCUMENTS.filter(doc => doc.property === 'ltd'),
+    space: PROPERTY_DOCUMENTS.filter(doc => doc.property === 'space'),
+    agency: PROPERTY_DOCUMENTS.filter(doc => doc.property === 'agency'),
+  } as const;
+
+  for (const [property, docs] of Object.entries(propertyDocumentBuckets)) {
+    server.resource(
+      `docs-list-${property}`,
+      `docs://list/${property}`,
+      { description: `All ${property.toUpperCase()} documents (${docs.length})`, mimeType: 'application/json' },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(docs.map(doc => ({
+            id: doc.id,
+            title: doc.title,
+            section: doc.section,
+            path: doc.path,
+            uri: doc.uri,
+          })), null, 2)
+        }]
+      })
+    );
+  }
+
+  for (const doc of PROPERTY_DOCUMENTS) {
+    server.resource(
+      `doc-${sanitizeResourceId(doc.id)}`,
+      doc.uri,
+      { description: `${doc.property.toUpperCase()} document: ${doc.title}`, mimeType: 'text/markdown' },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'text/markdown',
+          text: formatPropertyDocumentMarkdown(doc),
+        }]
+      })
+    );
+  }
+
+  // ==========================================================================
   // Host Playbooks — Workflow Intelligence (.space)
   // ==========================================================================
 
@@ -478,6 +546,20 @@ function formatPlaybookMarkdown(playbook: typeof HOST_PLAYBOOKS[number]): string
   }
 
   return sections.join('\n');
+}
+
+function sanitizeResourceId(value: string): string {
+  return value.replace(/[^a-zA-Z0-9_-]/g, '-');
+}
+
+function formatPropertyDocumentMarkdown(doc: typeof PROPERTY_DOCUMENTS[number]): string {
+  return [
+    `# ${doc.title}`,
+    '',
+    `**Property:** .${doc.property} | **Section:** ${doc.section} | **Path:** \`${doc.path}\``,
+    '',
+    doc.content
+  ].join('\n');
 }
 
 function formatGraduationPathMarkdown(): string {

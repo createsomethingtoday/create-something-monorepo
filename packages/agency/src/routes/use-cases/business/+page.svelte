@@ -2,13 +2,19 @@
 	import { SEO } from '@create-something/canon';
 	import { AnimatedGridPattern, BlurFade, BorderBeam, OrbitingCircles, ShimmerButton } from '@create-something/canon/magicui';
 
+	const deliveryVector = {
+		canonicalPhrase: 'Skills on MCP',
+		clientFacingLabel: 'Skills + MCP',
+		technicalLabel: 'MCP + Skills'
+	};
+
 	const chapters = [
 		{
 			number: '01',
 			title: 'Start with one outcome stack',
 			paragraphs: [
 				'Pick your biggest pain point. The report you build every Monday. The data you copy between systems. The emails you sort by hand.',
-				'We start with an Outcome Stack: custom MCP server + Codex setup + policy + runbook. 2\u20134 weeks. $2,000\u2013$5,000. You own the code.',
+				`We start with an Outcome Stack using ${deliveryVector.clientFacingLabel}: custom MCP server + Codex setup + policy + runbook. 2\u20134 weeks. $2,000\u2013$5,000. You own the code.`,
 				'Now your AI agent can read your CRM, update your project tracker, draft your emails \u2014 using your actual data, not generic responses.'
 			]
 		},
@@ -120,7 +126,7 @@
 
 <SEO
 	title="Your tools don't talk to each other. We fix that. | CREATE SOMETHING"
-	description="Every day you copy data between systems, format reports nobody asked for, and post updates you assembled by hand. We deliver Agent Outcome Stack: custom MCP servers plus Codex setup, policy, and runbook."
+	description="We deploy business skills on top of secure MCP connectivity so your team gets outcomes, not prompt babysitting. We deliver Agent Outcome Stack with Skills + MCP: custom connectivity, policy, and runbook."
 	keywords="MCP server, small business automation, AI integration, tool connectivity, HubSpot automation, Notion integration, Claude MCP, ops automation, SMB AI"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -149,9 +155,9 @@
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					Every day you copy data between HubSpot and Notion, format reports nobody asked for,
-					and post Slack updates you assembled by hand. AI agents can do this if they can access your systems
-					and operate inside clear policy. That's the Outcome Stack we&nbsp;build.
+					We deploy business skills on top of secure MCP connectivity so your team gets outcomes, not prompt babysitting.
+					Every day you copy data between HubSpot and Notion, format reports nobody asked for, and post Slack updates you assembled by hand.
+					That's why we ship Agent Outcome Stack with {deliveryVector.clientFacingLabel} as the front-door delivery vector.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
@@ -347,8 +353,7 @@
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
 				Pick the workflow that wastes the most time. We'll deliver your first Outcome Stack
-				in 2–4&nbsp;weeks. You own the code and runbook. If you need discovery or compliance-only,
-				we can scope MCP-only as the entry wedge.
+				in 2–4&nbsp;weeks. You own the code and runbook. Delivery vector is {deliveryVector.canonicalPhrase}, and technical proof surfaces use {deliveryVector.technicalLabel}. If you need discovery or compliance-only, we can scope MCP-only as the entry wedge.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
