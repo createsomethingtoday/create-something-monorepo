@@ -4,19 +4,64 @@
  * and generates TypeScript modules for embedding in the MCP server.
  *
  * Sources:
- *   packages/io/content/papers/*.md         → papers
- *   packages/ltd/src/lib/content/canon/**   → canon pages
- *   packages/ltd/src/lib/content/patterns/* → design patterns
- *   packages/io/static/.graph/              → knowledge graph
+ *   packages/io/content/papers/*.md               → papers
+ *   packages/ltd/src/lib/content/canon/**         → canon pages
+ *   packages/ltd/src/lib/content/patterns/*.md    → design patterns
+ *   .graph/ (fallback: packages/io/static/.graph) → knowledge graph
+ *   packages/{io,ltd,space,agency}/**/*.md        → property documents
  *
  * Run: tsx scripts/build-content.ts
  */
 
-import { readdir, readFile, mkdir, writeFile, stat } from 'node:fs/promises';
-import { join, basename, relative } from 'node:path';
+import { readdir, readFile, mkdir, writeFile } from 'node:fs/promises';
+import { basename, join, relative } from 'node:path';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
 const OUT_DIR = join(import.meta.dirname, '..', 'src', 'content', 'generated');
+
+const IGNORED_DIRECTORY_NAMES = new Set([
+  'node_modules',
+  '.svelte-kit',
+  '.wrangler',
+  '.git',
+  '.cache',
+  '.vite',
+  '.mf',
+  'dist',
+  'build',
+  'coverage',
+]);
+
+type PropertyKey = 'io' | 'ltd' | 'space' | 'agency';
+
+interface PropertyScanConfig {
+  property: PropertyKey;
+  root: string;
+  excludePrefixes: string[];
+}
+
+const PROPERTY_SCAN_CONFIG: PropertyScanConfig[] = [
+  {
+    property: 'io',
+    root: join(ROOT, 'packages', 'io'),
+    excludePrefixes: ['content/papers/'],
+  },
+  {
+    property: 'ltd',
+    root: join(ROOT, 'packages', 'ltd'),
+    excludePrefixes: ['src/lib/content/canon/', 'src/lib/content/patterns/'],
+  },
+  {
+    property: 'space',
+    root: join(ROOT, 'packages', 'space'),
+    excludePrefixes: [],
+  },
+  {
+    property: 'agency',
+    root: join(ROOT, 'packages', 'agency'),
+    excludePrefixes: [],
+  },
+];
 
 // ============================================================================
 // Simple frontmatter parser (no dependencies)
@@ -51,12 +96,26 @@ function parseFrontmatter(content: string): Frontmatter {
 // File traversal helpers
 // ============================================================================
 
+interface MarkdownFile {
+  relativePath: string;
+  frontmatter: Record<string, string>;
+  content: string;
+}
+
+function normalizePath(path: string): string {
+  return path.replace(/\\/g, '/');
+}
+
+function isMarkdownFile(fileName: string): boolean {
+  return fileName.endsWith('.md') && !fileName.endsWith('.draft') && !fileName.includes('.md.draft');
+}
+
 async function readMarkdownFiles(dir: string): Promise<{ slug: string; frontmatter: Record<string, string>; content: string }[]> {
   const results: { slug: string; frontmatter: Record<string, string>; content: string }[] = [];
   try {
     const entries = await readdir(dir);
     for (const entry of entries) {
-      if (!entry.endsWith('.md') || entry.endsWith('.draft') || entry.includes('.md.draft')) continue;
+      if (!isMarkdownFile(entry)) continue;
       const filePath = join(dir, entry);
       const raw = await readFile(filePath, 'utf-8');
       const { data, body } = parseFrontmatter(raw);
@@ -81,7 +140,7 @@ async function readMarkdownFilesRecursive(dir: string, section = ''): Promise<{ 
       if (entry.isDirectory()) {
         const sub = await readMarkdownFilesRecursive(fullPath, entry.name);
         results.push(...sub);
-      } else if (entry.name.endsWith('.md') && !entry.name.endsWith('.draft') && !entry.name.includes('.md.draft')) {
+      } else if (isMarkdownFile(entry.name)) {
         const raw = await readFile(fullPath, 'utf-8');
         const { data, body } = parseFrontmatter(raw);
         results.push({
@@ -95,6 +154,60 @@ async function readMarkdownFilesRecursive(dir: string, section = ''): Promise<{ 
   } catch (e) {
     console.error(`Warning: Could not read directory ${dir}:`, (e as Error).message);
   }
+  return results;
+}
+
+async function collectMarkdownFilesRecursive(
+  root: string,
+  excludePrefixes: string[]
+): Promise<MarkdownFile[]> {
+  const results: MarkdownFile[] = [];
+
+  const normalizedPrefixes = excludePrefixes
+    .map(prefix => normalizePath(prefix).replace(/^\/+/, ''))
+    .map(prefix => prefix.endsWith('/') ? prefix : `${prefix}/`);
+
+  const isExcluded = (relativePath: string) => {
+    const normalizedPath = normalizePath(relativePath).replace(/^\/+/, '');
+    return normalizedPrefixes.some(prefix => normalizedPath.startsWith(prefix));
+  };
+
+  const walk = async (directory: string): Promise<void> => {
+    let entries;
+    try {
+      entries = await readdir(directory, { withFileTypes: true });
+    } catch (error) {
+      console.error(`Warning: Could not read directory ${directory}:`, (error as Error).message);
+      return;
+    }
+
+    for (const entry of entries) {
+      const fullPath = join(directory, entry.name);
+      const relPath = normalizePath(relative(root, fullPath));
+
+      if (entry.isDirectory()) {
+        if (IGNORED_DIRECTORY_NAMES.has(entry.name)) {
+          continue;
+        }
+        await walk(fullPath);
+        continue;
+      }
+
+      if (!isMarkdownFile(entry.name)) continue;
+      if (isExcluded(relPath)) continue;
+
+      const raw = await readFile(fullPath, 'utf-8');
+      const { data, body } = parseFrontmatter(raw);
+      results.push({
+        relativePath: relPath,
+        frontmatter: data,
+        content: body
+      });
+    }
+  };
+
+  await walk(root);
+  results.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
   return results;
 }
 
@@ -219,6 +332,134 @@ ${entries.join(',\n')}
 }
 
 // ============================================================================
+// Build property documents (all markdown content across .io/.ltd/.space/.agency)
+// ============================================================================
+
+interface BuildPropertyDocumentsResult {
+  source: string;
+  totalCount: number;
+  countsByProperty: Record<PropertyKey, number>;
+}
+
+function stripMarkdownExtension(path: string): string {
+  return path.endsWith('.md') ? path.slice(0, -3) : path;
+}
+
+function encodeUriPath(path: string): string {
+  return path
+    .split('/')
+    .map(segment => encodeURIComponent(segment))
+    .join('/');
+}
+
+function humanizeSlugSegment(value: string): string {
+  return value
+    .replace(/[-_]+/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+function extractHeading(content: string): string | null {
+  const match = content.match(/^#\s+(.+)$/m);
+  return match ? match[1].trim() : null;
+}
+
+function deriveTitle(
+  relativePath: string,
+  frontmatter: Record<string, string>,
+  body: string
+): string {
+  const explicit = frontmatter.title?.trim();
+  if (explicit) return explicit;
+
+  const heading = extractHeading(body);
+  if (heading) return heading;
+
+  const slug = stripMarkdownExtension(relativePath);
+  const parts = slug.split('/');
+  const leaf = parts[parts.length - 1] || 'document';
+  if (leaf.toLowerCase() === 'readme' && parts.length > 1) {
+    return `${humanizeSlugSegment(parts[parts.length - 2])} Readme`;
+  }
+  return humanizeSlugSegment(leaf);
+}
+
+function deriveDescription(frontmatter: Record<string, string>, body: string): string {
+  const explicit = frontmatter.description || frontmatter.abstract || frontmatter.subtitle || frontmatter.lead;
+  if (explicit && explicit.trim()) {
+    return explicit.trim();
+  }
+
+  const paragraph = body
+    .split(/\n\s*\n/)
+    .map(block => block.replace(/^#+\s+/gm, '').trim())
+    .find(block => block.length > 0);
+
+  if (!paragraph) return '';
+  return paragraph.slice(0, 240);
+}
+
+async function buildPropertyDocuments(): Promise<BuildPropertyDocumentsResult> {
+  const entries: string[] = [];
+  const countsByProperty: Record<PropertyKey, number> = {
+    io: 0,
+    ltd: 0,
+    space: 0,
+    agency: 0,
+  };
+
+  for (const config of PROPERTY_SCAN_CONFIG) {
+    const files = await collectMarkdownFilesRecursive(config.root, config.excludePrefixes);
+
+    for (const file of files) {
+      const slug = stripMarkdownExtension(file.relativePath);
+      const section = slug.includes('/') ? slug.split('/')[0] : 'root';
+      const title = deriveTitle(file.relativePath, file.frontmatter, file.content);
+      const description = deriveDescription(file.frontmatter, file.content);
+      const uriPath = encodeUriPath(slug);
+      const uri = `docs://${config.property}/${uriPath}`;
+
+      entries.push(`  {
+    id: ${JSON.stringify(`${config.property}:${slug}`)},
+    property: ${JSON.stringify(config.property)},
+    title: ${JSON.stringify(title)},
+    description: ${JSON.stringify(description)},
+    section: ${JSON.stringify(section)},
+    path: ${JSON.stringify(file.relativePath)},
+    slug: ${JSON.stringify(slug)},
+    uri: ${JSON.stringify(uri)},
+    content: \`${escapeForTemplate(file.content)}\`
+  }`);
+
+      countsByProperty[config.property] += 1;
+    }
+  }
+
+  return {
+    source: `/**
+ * Generated property documents content — DO NOT EDIT MANUALLY.
+ * Run: npm run build:content
+ * Sources:
+ *   packages/io/**/* (excluding content/papers)
+ *   packages/ltd/**/* (excluding src/lib/content/canon and src/lib/content/patterns)
+ *   packages/space/**/*
+ *   packages/agency/**/*
+ */
+
+import type { PropertyDocument } from '../types.js';
+
+export const PROPERTY_DOCUMENTS: PropertyDocument[] = [
+${entries.join(',\n')}
+];
+`,
+    totalCount: entries.length,
+    countsByProperty,
+  };
+}
+
+// ============================================================================
 // Build knowledge graph
 // ============================================================================
 
@@ -293,11 +534,12 @@ async function main() {
   await mkdir(OUT_DIR, { recursive: true });
 
   // Build all content in parallel
-  const [papers, canon, patterns, graph] = await Promise.all([
+  const [papers, canon, patterns, graph, propertyDocs] = await Promise.all([
     buildPapers(),
     buildCanon(),
     buildPatterns(),
-    buildGraph()
+    buildGraph(),
+    buildPropertyDocuments(),
   ]);
 
   // Write generated files
@@ -306,6 +548,7 @@ async function main() {
     writeFile(join(OUT_DIR, 'canon.ts'), canon, 'utf-8'),
     writeFile(join(OUT_DIR, 'patterns.ts'), patterns, 'utf-8'),
     writeFile(join(OUT_DIR, 'graph.ts'), graph, 'utf-8'),
+    writeFile(join(OUT_DIR, 'property-docs.ts'), propertyDocs.source, 'utf-8'),
   ]);
 
   // Count content
@@ -314,12 +557,17 @@ async function main() {
   const patternCount = (patterns.match(/slug:/g) || []).length;
   const nodeCount = (graph.match(/"id":/g) || []).length;
 
-  console.log(`Content built successfully:`);
-  console.log(`  Papers:   ${paperCount}`);
-  console.log(`  Canon:    ${canonCount}`);
-  console.log(`  Patterns: ${patternCount}`);
-  console.log(`  Graph:    ${nodeCount} nodes`);
-  console.log(`  Output:   ${relative(process.cwd(), OUT_DIR)}`);
+  console.log('Content built successfully:');
+  console.log(`  Papers:         ${paperCount}`);
+  console.log(`  Canon:          ${canonCount}`);
+  console.log(`  Patterns:       ${patternCount}`);
+  console.log(`  Graph:          ${nodeCount} nodes`);
+  console.log(`  Property docs:  ${propertyDocs.totalCount}`);
+  console.log(`    .io:          ${propertyDocs.countsByProperty.io}`);
+  console.log(`    .ltd:         ${propertyDocs.countsByProperty.ltd}`);
+  console.log(`    .space:       ${propertyDocs.countsByProperty.space}`);
+  console.log(`    .agency:      ${propertyDocs.countsByProperty.agency}`);
+  console.log(`  Output:         ${relative(process.cwd(), OUT_DIR)}`);
 }
 
 main().catch(err => {
