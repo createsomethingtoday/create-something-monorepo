@@ -20,6 +20,7 @@ Remote MCP hub that exposes one public endpoint and proxies tools from enabled d
 - `hub_list_registry`
 - `hub_list_proxy_tools`
 - `hub_search_proxy_tools` (query/server filter + cursor pagination)
+- `hub_policy_status` (active policy/runtime limit settings)
 - `hub_refresh_connections`
 - `hub_update_state` (`writeCodexConfig` accepted for parity; ignored remotely)
 - `hub_trace_lookup`
@@ -35,6 +36,10 @@ Environment variables:
 - `HUB_REFRESH_SECONDS` (optional): cache TTL for downstream tool catalog, default `300`
 - `HUB_CACHE_BUST` (optional): any value change forces runtime refresh
 - `HUB_ACCOUNT_ID` (optional): fallback account ID written to hub telemetry rows
+- `HUB_RATE_LIMIT_MAX_CALLS_PER_WINDOW` (optional): enable per-window proxy call limits when > 0
+- `HUB_RATE_LIMIT_WINDOW_SECONDS` (optional): rate-limit window size, default `60`
+- `HUB_RATE_LIMIT_SCOPE` (optional): `account` (default), `account_server`, or `account_server_tool`
+- `HUB_RATE_LIMIT_EXEMPT_SERVERS` (optional): comma-separated downstream server names excluded from limits
 - `HUB_STATE_KV` (recommended binding): stores remote hub enable/disable state so `hub_update_state` persists
 
 Downstream auth variables are read dynamically from each registry server's `env_http_headers` and `bearer_token_env_var` config.
