@@ -188,6 +188,7 @@ const MANAGEMENT_TOOLS: Tool[] = [
         disableBundles: { type: 'array', items: { type: 'string' } },
         enableServers: { type: 'array', items: { type: 'string' } },
         disableServers: { type: 'array', items: { type: 'string' } },
+        writeCodexConfig: { type: 'boolean' },
       },
       additionalProperties: false,
     },
@@ -669,6 +670,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
       }
 
       if (toolName === 'hub_update_state') {
+        const writeCodexRequested = booleanArg(args.writeCodexConfig, false);
         const patch = {
           enableBundles: stringArrayArg(args.enableBundles, 'enableBundles'),
           disableBundles: stringArrayArg(args.disableBundles, 'disableBundles'),
@@ -682,6 +684,12 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           ...stateUpdate,
           enabledServerNames: refreshed.stateResolution.enabledServerNames,
           warnings: refreshed.stateResolution.warnings,
+          codexWrite: writeCodexRequested
+            ? {
+                supported: false,
+                reason: 'Remote hub does not write local .codex/config.toml files.',
+              }
+            : null,
           note: 'State persisted remotely. Proxy tool list refreshed from live downstream connections.',
         });
 
@@ -903,6 +911,13 @@ function numberArg(raw: unknown, fallback: number, min: number, max: number): nu
     return fallback;
   }
   return Math.max(min, Math.min(max, Math.floor(raw)));
+}
+
+function booleanArg(raw: unknown, fallback: boolean): boolean {
+  if (typeof raw !== 'boolean') {
+    return fallback;
+  }
+  return raw;
 }
 
 function stringArrayArg(raw: unknown, fieldName: string): string[] {

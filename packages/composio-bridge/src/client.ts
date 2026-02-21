@@ -112,23 +112,28 @@ export class ComposioClient {
           : {}),
       });
       const rawItems = Array.isArray(rawTools)
-        ? rawTools
-        : (((rawTools as unknown as Record<string, unknown>)?.items as unknown[]) ?? []);
+        ? rawTools.filter(isRecord)
+        : ((Array.isArray((rawTools as Record<string, unknown>)?.items)
+          ? (rawTools as Record<string, unknown>).items
+          : []) as unknown[]).filter(isRecord);
 
       // Map to our internal type — insulates us from SDK shape changes
-      return (rawItems ?? []).map((tool: Record<string, unknown>) => ({
-        slug: String(tool.slug ?? tool.enum ?? ''),
-        name: String(tool.name ?? tool.displayName ?? ''),
-        description: String(tool.description ?? ''),
-        app: String(
-          (tool.toolkit as Record<string, unknown>)?.name ??
-          (tool.toolkit as Record<string, unknown>)?.slug ??
-          tool.appName ??
-          tool.app ??
-          '',
-        ),
-        parameters: normalizeParameters(tool.inputParameters ?? tool.parameters),
-      }));
+      return (rawItems ?? []).map((tool) => {
+        const rawTool = tool as Record<string, unknown>;
+        return {
+          slug: String(rawTool.slug ?? rawTool.enum ?? ''),
+          name: String(rawTool.name ?? rawTool.displayName ?? ''),
+          description: String(rawTool.description ?? ''),
+          app: String(
+            (rawTool.toolkit as Record<string, unknown>)?.name ??
+            (rawTool.toolkit as Record<string, unknown>)?.slug ??
+            rawTool.appName ??
+            rawTool.app ??
+            '',
+          ),
+          parameters: normalizeParameters(rawTool.inputParameters ?? rawTool.parameters),
+        };
+      });
     } catch (error) {
       throw new ComposioBridgeError(
         `Failed to fetch tools for toolkits [${toolkits.join(', ')}]: ${error instanceof Error ? error.message : String(error)}`,
@@ -155,10 +160,12 @@ export class ComposioClient {
       });
 
       const items = Array.isArray(response)
-        ? (response as Record<string, unknown>[])
-        : (((response as unknown as Record<string, unknown>)?.items as unknown[]) ?? []);
+        ? response.filter(isRecord)
+        : ((Array.isArray((response as Record<string, unknown>)?.items)
+          ? (response as Record<string, unknown>).items
+          : []) as unknown[]).filter(isRecord);
 
-      return items.map(normalizeToolkit);
+      return items.map((item) => normalizeToolkit(item as Record<string, unknown>));
     } catch (error) {
       throw new ComposioBridgeError(
         `Failed to list toolkits: ${error instanceof Error ? error.message : String(error)}`,
@@ -408,4 +415,8 @@ function arrayOfStrings(value: unknown): string[] | undefined {
     .map((entry) => String(entry).trim())
     .filter(Boolean);
   return normalized.length > 0 ? normalized : undefined;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

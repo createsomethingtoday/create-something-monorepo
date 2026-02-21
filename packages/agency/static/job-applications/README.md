@@ -18,7 +18,7 @@ Centralized job application assets organized by company.
 | braintrust | cover-letter.html, cover-letter.pdf, resume.html, resume.pdf |
 | centaur | cover-letter.html, cover-letter.pdf, resume.html, resume.pdf |
 | hightouch | cover-letter.html, cover-letter.pdf, resume.html, resume.pdf |
-| hnb-api-governance-lead | resume.html |
+| hnb-api-governance-lead | cover-letter.html, cover-letter.pdf, resume.html, resume.pdf |
 | includedhealth | application.pdf, combined.html |
 | mainstay | application.pdf, combined.html |
 | morningbrew | application.pdf, combined.html |
