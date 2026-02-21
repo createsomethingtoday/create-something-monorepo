@@ -56,6 +56,26 @@ query($username: String!, $from: DateTime!, $to: DateTime!) {
 `;
 
 /**
+ * Deterministic PRNG so fallback mock data is stable across Remotion render workers.
+ */
+function createSeededRandom(seedInput: string): () => number {
+  let seed = 2166136261;
+  for (let i = 0; i < seedInput.length; i++) {
+    seed ^= seedInput.charCodeAt(i);
+    seed = Math.imul(seed, 16777619);
+  }
+  seed >>>= 0;
+
+  return () => {
+    seed += 0x6d2b79f5;
+    let t = seed;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
  * Fetch GitHub contribution data for a user
  */
 export async function fetchGitHubContributions(
@@ -176,6 +196,9 @@ export function calculateStats(calendar: ContributionCalendar) {
 export function generateMockData(username: string): GitHubContributionData {
   const weeks = [];
   const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const dateSeed = now.toISOString().slice(0, 10);
+  const random = createSeededRandom(`${username}:${dateSeed}`);
   
   for (let w = 0; w < 53; w++) {
     const contributionDays = [];
@@ -185,14 +208,14 @@ export function generateMockData(username: string): GitHubContributionData {
       
       // Generate pseudo-random contribution count
       // Higher probability of 0, occasional bursts
-      const rand = Math.random();
+      const rand = random();
       let count = 0;
-      if (rand > 0.6) count = Math.floor(Math.random() * 5) + 1;
-      if (rand > 0.9) count = Math.floor(Math.random() * 15) + 5;
-      if (rand > 0.98) count = Math.floor(Math.random() * 30) + 10;
+      if (rand > 0.6) count = Math.floor(random() * 5) + 1;
+      if (rand > 0.9) count = Math.floor(random() * 15) + 5;
+      if (rand > 0.98) count = Math.floor(random() * 30) + 10;
       
       // Skip weekends more often
-      if ((d === 0 || d === 6) && Math.random() > 0.3) count = 0;
+      if ((d === 0 || d === 6) && random() > 0.3) count = 0;
       
       contributionDays.push({
         date: date.toISOString().split('T')[0],
@@ -218,7 +241,7 @@ export function generateMockData(username: string): GitHubContributionData {
           ),
           weeks,
         },
-        restrictedContributionsCount: Math.floor(Math.random() * 500),
+        restrictedContributionsCount: Math.floor(random() * 500),
         commitContributionsByRepository: [
           { repository: { name: 'monorepo', nameWithOwner: `${username}/monorepo`, isPrivate: false }, contributions: { totalCount: 1200 } },
           { repository: { name: 'dashboard', nameWithOwner: `${username}/dashboard`, isPrivate: true }, contributions: { totalCount: 800 } },

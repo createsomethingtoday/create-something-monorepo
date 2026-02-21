@@ -43,8 +43,8 @@ export const GitHubHistoryCommercial: React.FC<GitHubHistoryCommercialProps> = (
       try {
         let githubData: GitHubContributionData;
         
-        if (useMockData || !githubToken) {
-          // Use mock data for development or when no token provided
+        if (useMockData) {
+          // Use deterministic mock data for explicit development mode
           githubData = generateMockData(username);
         } else {
           // Fetch real data from GitHub
