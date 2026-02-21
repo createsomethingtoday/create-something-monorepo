@@ -41,7 +41,9 @@
 		xl: 'p-12'
 	};
 
-	const baseClasses = `card card-${variant} card-radius-${radius} ${hover ? 'card-hover' : ''} ${paddingMap[padding]} ${className}`;
+	const baseClasses = $derived(
+		`card card-${variant} card-radius-${radius} ${hover ? 'card-hover' : ''} ${paddingMap[padding]} ${className}`
+	);
 </script>
 
 {#if href}

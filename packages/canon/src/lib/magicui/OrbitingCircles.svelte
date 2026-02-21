@@ -42,7 +42,7 @@
 		children
 	}: Props = $props();
 
-	const direction = reverse ? 'reverse' : 'normal';
+	const direction = $derived(reverse ? 'reverse' : 'normal');
 </script>
 
 <div

@@ -12,28 +12,25 @@ pnpm --filter @create-something/codex-demo-mcp build
 
 ## 2) Add MCP Config
 
-In this repo, update `.mcp.json` and add a local entry:
+Use Codex MCP management to register your local server:
 
-```json
-{
-  "mcpServers": {
-    "codex-demo": {
-      "command": "node",
-      "args": [
-        "/ABSOLUTE/PATH/TO/create-something-monorepo/packages/codex-demo-mcp/dist/index.js"
-      ]
-    }
-  }
-}
+```bash
+codex mcp add codex-demo -- node "$(pwd)/packages/codex-demo-mcp/dist/index.js"
 ```
 
-Use an absolute path for `dist/index.js`.
+This writes server config to your Codex config and uses an absolute path based on the current repo.
 
-## 3) Reload Codex Session
+## 3) Verify Registration
+
+```bash
+codex mcp get codex-demo
+```
+
+## 4) Reload Codex Session
 
 After saving config, restart your Codex session so the new server is discovered.
 
-## 4) Verify in Chat
+## 5) Verify in Chat
 
 Ask Codex:
 

@@ -5,7 +5,7 @@
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-	const { experiment } = data;
+	const experiment = $derived(data.experiment);
 
 	interface RenderSubmitResponse {
 		demo?: boolean;

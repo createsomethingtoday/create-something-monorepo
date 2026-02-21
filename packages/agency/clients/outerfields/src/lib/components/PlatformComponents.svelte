@@ -186,14 +186,15 @@
         <span class="vision-badge">Our Formula</span>
         <h3 class="vision-title">The Outerfields Approach</h3>
       </div>
-      <div class="vision-grid">
-        {#each visionPillars as pillar}
-          <div class="vision-card">
-            <div class="vision-icon">
-              <svelte:component this={pillar.icon} size={24} />
-            </div>
-            <h4 class="vision-name">{pillar.title}</h4>
-            <p class="vision-description">{pillar.description}</p>
+	      <div class="vision-grid">
+	        {#each visionPillars as pillar}
+	          {@const PillarIcon = pillar.icon}
+	          <div class="vision-card">
+	            <div class="vision-icon">
+	              <PillarIcon size={24} />
+	            </div>
+	            <h4 class="vision-name">{pillar.title}</h4>
+	            <p class="vision-description">{pillar.description}</p>
           </div>
         {/each}
       </div>

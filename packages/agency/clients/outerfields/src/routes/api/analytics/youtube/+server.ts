@@ -1,40 +1,39 @@
 /**
  * YouTube Analytics API Endpoint
  *
- * Fetches YouTube metrics via YouTube Data API
- * Returns subscribers, total views, and average views per video
+ * Returns live subscriber/view metrics based on platform data.
  */
 import { json, type RequestHandler } from '@sveltejs/kit';
+import { getPlatformAnalyticsMetrics } from '$lib/server/analytics';
 
 export const GET: RequestHandler = async ({ platform }) => {
+	const db = platform?.env?.DB;
+	if (!db) {
+		return json(
+			{
+				success: false,
+				error: 'Database not available'
+			},
+			{ status: 503 }
+		);
+	}
+
 	try {
-		// In production, would use actual YouTube Data API
-		// const YOUTUBE_API_KEY = platform?.env.YOUTUBE_API_KEY;
-		// const YOUTUBE_CHANNEL_ID = platform?.env.YOUTUBE_CHANNEL_ID;
+		const [membersResult, platformMetrics] = await Promise.all([
+			db.prepare('SELECT COUNT(*) as count FROM users WHERE membership = 1').first<{ count: number }>(),
+			getPlatformAnalyticsMetrics(db, platform?.env?.VIDEO_STATS)
+		]);
 
-		// For now, return mock data that matches expected structure
-		const mockData = {
-			subscribers: 3127,
-			views: 42389,
-			avgViews: 1247
-		};
-
-		// TODO: Replace with actual YouTube Data API call
-		// const channelResponse = await fetch(
-		//   `https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${YOUTUBE_CHANNEL_ID}&key=${YOUTUBE_API_KEY}`
-		// );
-		//
-		// const channelData = await channelResponse.json();
-		// const stats = channelData.items[0].statistics;
-		//
-		// const subscribers = parseInt(stats.subscriberCount);
-		// const totalViews = parseInt(stats.viewCount);
-		// const videoCount = parseInt(stats.videoCount);
-		// const avgViews = Math.floor(totalViews / videoCount);
+		const subscribers = Number(membersResult?.count || 0);
 
 		return json({
 			success: true,
-			data: mockData
+			data: {
+				subscribers,
+				views: platformMetrics.totalViews,
+				avgViews: platformMetrics.avgViews
+			},
+			source: 'd1+kv'
 		});
 	} catch (error) {
 		console.error('YouTube analytics error:', error);

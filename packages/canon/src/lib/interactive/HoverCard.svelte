@@ -61,14 +61,18 @@
 	}: Props = $props();
 
 	let triggerElement: HTMLElement;
-	let cardElement: HTMLElement;
+	let cardElement: HTMLElement | undefined = $state();
 	let isOpen = $state(false);
 	let isVisible = $state(false);
 	let openTimeout: ReturnType<typeof setTimeout>;
 	let closeTimeout: ReturnType<typeof setTimeout>;
-	let actualSide = $state(side);
+	let actualSide = $state<'top' | 'bottom' | 'left' | 'right'>('bottom');
 	let position = $state({ top: 0, left: 0 });
 	let arrowPosition = $state({ top: 0, left: 0 });
+
+	$effect(() => {
+		actualSide = side;
+	});
 
 	// Check for reduced motion preference
 	const prefersReducedMotion = browser
@@ -295,6 +299,7 @@
 		onmouseleave={handleTriggerMouseLeave}
 		onfocusin={handleTriggerFocus}
 		onfocusout={handleTriggerBlur}
+		role="presentation"
 		aria-describedby={isOpen ? 'hover-card-content' : undefined}
 	>
 		{@render trigger()}

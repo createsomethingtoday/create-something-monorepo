@@ -84,7 +84,7 @@
 		: false;
 
 	// Use native scrolling if reduced motion is preferred
-	const useNative = native || prefersReducedMotion;
+	const useNative = $derived(native || prefersReducedMotion);
 
 	function getScrollLimit(): number {
 		if (!browser || !contentElement || !wrapperElement) return 0;
@@ -326,9 +326,8 @@
 	class:locked
 	class:reduced-motion={prefersReducedMotion}
 	role="region"
-	tabindex="0"
+	aria-label="Smooth scroll container"
 	ontouchstart={handleTouchStart}
-	onkeydown={handleKeyDown}
 	onscroll={useNative ? handleNativeScroll : undefined}
 >
 	<div

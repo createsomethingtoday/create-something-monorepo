@@ -25,7 +25,7 @@
 	}
 
 	let { children, data }: Props = $props();
-	const globalContent = data.globalContent;
+	const globalContent = $derived(data.globalContent);
 
 	// Check if we're on an admin route - admin has its own layout
 	const isAdmin = $derived($page.url.pathname.startsWith('/admin'));

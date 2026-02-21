@@ -18,13 +18,7 @@
 
 	let { welcomeMessage, commands = [], onCommandExecuted }: Props = $props();
 
-	let history = $state<string[]>([
-		welcomeMessage || '🚀 Welcome to Create Something Terminal v2.0',
-		'',
-		'Built with SvelteKit + Cloudflare Workers',
-		'Type "help" for available commands',
-		''
-	]);
+	let history = $state<string[]>([]);
 	let currentInput = $state('');
 	let commandHistory = $state<string[]>([]);
 	let historyIndex = $state(-1);
@@ -36,6 +30,19 @@
 
 	let inputRef: HTMLInputElement;
 	let terminalRef: HTMLDivElement;
+	let didInitHistory = false;
+
+	$effect(() => {
+		if (didInitHistory) return;
+		history = [
+			welcomeMessage || '🚀 Welcome to Create Something Terminal v2.0',
+			'',
+			'Built with SvelteKit + Cloudflare Workers',
+			'Type "help" for available commands',
+			''
+		];
+		didInitHistory = true;
+	});
 
 	// NEW: Update suggested command when commands are provided
 	$effect(() => {

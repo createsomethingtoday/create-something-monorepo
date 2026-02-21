@@ -321,7 +321,7 @@
 		margin: 0;
 	}
 
-	.sync-info svg {
+	.sync-info :global(svg) {
 		flex-shrink: 0;
 		color: var(--color-info);
 	}
@@ -409,7 +409,7 @@
 		border-radius: var(--radius-lg);
 	}
 
-	.error-container svg {
+	.error-container :global(svg) {
 		color: var(--color-error);
 		flex-shrink: 0;
 		margin-top: 2px;

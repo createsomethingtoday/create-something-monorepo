@@ -67,12 +67,13 @@ export async function handleUpload(
       },
     });
 
-    // Create meeting record in D1 with 'processing' status
+    // Create meeting record in D1 as pending. We only transition to
+    // `processing` once the queue consumer actually begins work.
     await env.DB.prepare(`
       INSERT INTO meetings (
         id, recorded_at, title, project_id, property, tags, participants,
         audio_key, audio_size_bytes, audio_format, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'processing')
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
     `)
       .bind(
         meetingId,
@@ -93,7 +94,25 @@ export async function handleUpload(
       meetingId,
       audioKey,
     };
-    await env.PROCESSING_QUEUE.send(message);
+    try {
+      await env.PROCESSING_QUEUE.send(message);
+    } catch (queueError) {
+      // Prevent orphaned "processing forever" rows when enqueue fails.
+      await env.DB.prepare(`
+        UPDATE meetings SET
+          status = 'failed',
+          error_message = ?,
+          updated_at = datetime('now')
+        WHERE id = ?
+      `)
+        .bind(
+          `Queue enqueue failed: ${queueError instanceof Error ? queueError.message : 'Unknown queue error'}`,
+          meetingId
+        )
+        .run();
+
+      throw queueError;
+    }
 
     console.log(`Queued meeting ${meetingId} for processing`);
 

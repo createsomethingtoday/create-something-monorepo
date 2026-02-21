@@ -37,7 +37,7 @@
 
 	let uploadQueue = $state<UploadItem[]>([]);
 	let isDragOver = $state(false);
-	let fileInput: HTMLInputElement;
+	let fileInput: HTMLInputElement | undefined = $state();
 
 	/**
 	 * Validate file on the client side before uploading.
@@ -232,14 +232,14 @@
 </script>
 
 <div class="carousel-uploader">
-	<label class="uploader-label">
+	<p class="uploader-label">
 		Carousel Images
 		{#if minImages > 0}
 			<span class="label-hint">({value.length}/{maxImages} uploaded, min {minImages})</span>
 		{:else}
 			<span class="label-hint">({value.length}/{maxImages} uploaded)</span>
 		{/if}
-	</label>
+	</p>
 
 	{#if uploadQueue.length > 0}
 		<div class="upload-queue">

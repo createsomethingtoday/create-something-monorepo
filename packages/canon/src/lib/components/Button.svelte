@@ -28,7 +28,9 @@
 		lg: 'btn-lg px-8 py-4 min-h-[44px]'
 	};
 
-	const baseClasses = `btn btn-${variant} ${sizeClasses[size]} ${fullWidth ? 'w-full' : ''} flex items-center justify-center gap-2`;
+	const baseClasses = $derived(
+		`btn btn-${variant} ${sizeClasses[size]} ${fullWidth ? 'w-full' : ''} flex items-center justify-center gap-2`
+	);
 </script>
 
 {#if href && !disabled}

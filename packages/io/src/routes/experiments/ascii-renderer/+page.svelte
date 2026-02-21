@@ -12,7 +12,7 @@
 	import { onMount } from 'svelte';
 
 	let { data }: { data: PageData } = $props();
-	const { experiment } = data;
+	const experiment = $derived(data.experiment);
 
 	// Renderer configuration
 	let cellWidth = $state(8);

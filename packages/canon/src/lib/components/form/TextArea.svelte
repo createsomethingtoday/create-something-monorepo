@@ -69,9 +69,10 @@
 	}: Props = $props();
 
 	// Generate unique ID if not provided
-	const fieldId = id || `textarea-${crypto.randomUUID().slice(0, 8)}`;
-	const descriptionId = `${fieldId}-description`;
-	const errorId = `${fieldId}-error`;
+	const fallbackFieldId = `textarea-${crypto.randomUUID().slice(0, 8)}`;
+	const fieldId = $derived(id || fallbackFieldId);
+	const descriptionId = $derived(`${fieldId}-description`);
+	const errorId = $derived(`${fieldId}-error`);
 
 	// Determine aria-describedby based on what's shown
 	const ariaDescribedBy = $derived(

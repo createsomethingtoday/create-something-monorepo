@@ -23,10 +23,10 @@
 	let { onContactClick, content }: Props = $props();
 
 	// Defaults with CMS overrides
-	const tagline = content?.tagline ?? 'Engineering the future of chemistry for safer, more profitable natural resource production.';
-	const addressLine1 = content?.address?.line1 ?? '444 E. St. Elmo Rd.';
-	const addressLine2 = content?.address?.line2 ?? 'Bldg. B';
-	const addressLine3 = content?.address?.line3 ?? 'Austin, TX 78745';
+	const tagline = $derived(content?.tagline ?? 'Engineering the future of chemistry for safer, more profitable natural resource production.');
+	const addressLine1 = $derived(content?.address?.line1 ?? '444 E. St. Elmo Rd.');
+	const addressLine2 = $derived(content?.address?.line2 ?? 'Bldg. B');
+	const addressLine3 = $derived(content?.address?.line3 ?? 'Austin, TX 78745');
 
 	const companyLinks = [
 		{ href: '/oil-gas', label: 'OIL & GAS' },

@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { D1Database, KVNamespace } from '@cloudflare/workers-types';
+import { getUserRole } from '$lib/server/auth';
 
 // Simple password hashing for demo (in production use bcrypt)
 async function hashPassword(password: string): Promise<string> {
@@ -41,9 +42,10 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 			return json({ success: false, error: 'Account already exists' }, { status: 409 });
 		}
 
-		const userId = crypto.randomUUID();
-		const now = Date.now();
-		const passwordHash = await hashPassword(password);
+			const userId = crypto.randomUUID();
+			const now = Date.now();
+			const passwordHash = await hashPassword(password);
+			const role = getUserRole(email);
 
 		await env.DB.prepare(
 			`INSERT INTO users (id, email, password_hash, name, membership, created_at, updated_at)
@@ -54,13 +56,14 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 
 		// Create session
 		const sessionToken = crypto.randomUUID();
-		const sessionData = {
-			userId,
-			email,
-			name: name.trim(),
-			membership: false,
-			createdAt: now
-		};
+			const sessionData = {
+				userId,
+				email,
+				name: name.trim(),
+				membership: false,
+				role,
+				createdAt: now
+			};
 
 		await env.SESSIONS.put(`session:${sessionToken}`, JSON.stringify(sessionData), {
 			expirationTtl: 60 * 60 * 24 // 24 hours
@@ -76,13 +79,14 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 			maxAge: 60 * 60 * 24 // 24 hours
 		});
 
-		const user = {
-			id: userId,
-			email,
-			name: name.trim(),
-			membership: false,
-			createdAt: new Date(now).toISOString()
-		};
+			const user = {
+				id: userId,
+				email,
+				name: name.trim(),
+				membership: false,
+				role,
+				createdAt: new Date(now).toISOString()
+			};
 
 		return json({ success: true, data: { user } });
 	} catch (err) {

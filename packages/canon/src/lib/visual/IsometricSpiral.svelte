@@ -34,8 +34,8 @@
 	}: Props = $props();
 
 	// Scroll-triggered animation state
-	let isInView = $state(!animateOnScroll);
-	const shouldAnimate = $derived(animate && isInView);
+	let isInView = $state(false);
+	const shouldAnimate = $derived(animate && (!animateOnScroll || isInView));
 
 	// Generate spiral path points
 	function generateSpiralPoints(numPoints: number): { x: number; y: number }[] {

@@ -7,42 +7,42 @@
   }
 
   let { data, config = {} }: Props = $props();
+  const width = $derived(config.width ?? 900);
+  const height = $derived(config.height ?? 300);
+  const title = $derived(config.title);
+  const subtitle = $derived(config.subtitle);
+  const property = $derived(config.property ?? 'io');
+  const branded = $derived(config.branded ?? false);
 
-  const {
-    width = 900,
-    height = 300,
-    title,
-    subtitle,
-    property = 'io',
-    branded = false,
-  } = config;
-
-  const { events, orientation = 'horizontal' } = data;
+  const events = $derived(data.events);
+  const orientation = $derived(data.orientation ?? 'horizontal');
 
   const PADDING = 42;
-  const titleHeight = (title ? 32 : 0) + (subtitle ? 24 : 0);
+  const titleHeight = $derived((title ? 32 : 0) + (subtitle ? 24 : 0));
 
   // Layout calculations
-  const isHorizontal = orientation === 'horizontal';
-  const lineY = height / 2;
+  const isHorizontal = $derived(orientation === 'horizontal');
+  const lineY = $derived(height / 2);
   const lineStartX = PADDING + 60;
-  const lineEndX = width - PADDING - 60;
-  const eventSpacing = (lineEndX - lineStartX) / (events.length - 1 || 1);
+  const lineEndX = $derived(width - PADDING - 60);
+  const eventSpacing = $derived((lineEndX - lineStartX) / (events.length - 1 || 1));
 
-  const layoutedEvents = events.map((event, i) => {
-    const x = lineStartX + i * eventSpacing;
-    const alternateY = i % 2 === 0;
-    // Give labels/descriptions more breathing room from the center line so
-    // marker-adjacent text doesn't feel cramped.
-    const labelY = alternateY ? lineY - 70 : lineY + 70;
+  const layoutedEvents = $derived(
+    events.map((event, i) => {
+      const x = lineStartX + i * eventSpacing;
+      const alternateY = i % 2 === 0;
+      // Give labels/descriptions more breathing room from the center line so
+      // marker-adjacent text doesn't feel cramped.
+      const labelY = alternateY ? lineY - 70 : lineY + 70;
 
-    return {
-      ...event,
-      x,
-      labelY,
-      alternateY,
-    };
-  });
+      return {
+        ...event,
+        x,
+        labelY,
+        alternateY,
+      };
+    })
+  );
 </script>
 
 <svg

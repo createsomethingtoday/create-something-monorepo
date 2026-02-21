@@ -141,13 +141,11 @@
 
 <div
 	class="carousel"
-	onmouseenter={handleMouseEnter}
-	onmouseleave={handleMouseLeave}
-	onkeydown={handleKeydown}
+	onpointerenter={handleMouseEnter}
+	onpointerleave={handleMouseLeave}
 	role="region"
 	aria-roledescription="carousel"
 	aria-label="Carousel"
-	tabindex="0"
 >
 	<!-- Slides Track -->
 	<div class="carousel-viewport">

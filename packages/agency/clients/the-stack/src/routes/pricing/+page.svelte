@@ -338,19 +338,6 @@
 		text-align: center;
 	}
 
-
-	/* Gold Rules */
-	.gold-rule {
-		height: 2px;
-		background: linear-gradient(90deg, transparent, var(--green), transparent);
-		margin-bottom: 3rem;
-	}
-
-	.gold-rule:last-child {
-		margin-bottom: 0;
-		margin-top: 3rem;
-	}
-
 	/* Pricing Grid */
 	.pricing-grid {
 		display: grid;
@@ -390,15 +377,6 @@
 		background: rgba(150, 110, 68, 0.08);
 	}
 
-	.pricing-card.is-featured {
-		background: rgba(255, 255, 255, 0.03);
-		border: 2px solid var(--green);
-	}
-
-	.pricing-card.is-featured:hover {
-		background: rgba(150, 110, 68, 0.1);
-	}
-
 	.card-label {
 		font-family: var(--font-coolvetica);
 		font-size: 1.25rem;
@@ -408,8 +386,7 @@
 		margin-bottom: 0.75rem;
 	}
 
-	.is-dark .card-label,
-	.is-featured .card-label {
+	.is-dark .card-label {
 		color: var(--light-grey);
 	}
 
@@ -420,8 +397,7 @@
 		line-height: 1;
 	}
 
-	.is-dark .card-price,
-	.is-featured .card-price {
+	.is-dark .card-price {
 		color: var(--white);
 	}
 
@@ -432,8 +408,7 @@
 		margin-left: 0.25rem;
 	}
 
-	.is-dark .price-period,
-	.is-featured .price-period {
+	.is-dark .price-period {
 		color: var(--light-grey);
 	}
 
@@ -495,10 +470,6 @@
 		font-size: 1rem;
 		color: var(--black);
 		margin-bottom: 0.75rem;
-	}
-
-	.benefit-item.text-color-white {
-		color: var(--white);
 	}
 
 	.benefit-item.text-color-lightgrey {

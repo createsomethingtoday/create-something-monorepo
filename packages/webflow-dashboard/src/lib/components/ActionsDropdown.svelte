@@ -63,18 +63,20 @@
 		}
 	}
 
-	// Clean status for comparison
-	const cleanedStatus = status
-		.replace(/^\d*️⃣/u, '')
-		.replace(/🆕/u, '')
-		.replace(/📅/u, '')
-		.replace(/🚀/u, '')
-		.replace(/☠️/u, '')
-		.replace(/❌/u, '')
-		.trim();
+	function cleanStatus(value: string): string {
+		return value
+			.replace(/^\d*️⃣/u, '')
+			.replace(/🆕/u, '')
+			.replace(/📅/u, '')
+			.replace(/🚀/u, '')
+			.replace(/☠️/u, '')
+			.replace(/❌/u, '')
+			.trim();
+	}
 
-	const canEdit = ['Published', 'Upcoming', 'Scheduled'].includes(cleanedStatus);
-	const canArchive = !cleanedStatus.includes('Delisted');
+	const cleanedStatus = $derived(cleanStatus(status));
+	const canEdit = $derived(['Published', 'Upcoming', 'Scheduled'].includes(cleanedStatus));
+	const canArchive = $derived(!cleanedStatus.includes('Delisted'));
 
 	$effect(() => {
 		if (isOpen) {

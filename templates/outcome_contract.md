@@ -4,6 +4,9 @@
 - Client: `<client-name>`
 - Engagement ID: `<engagement-id>`
 - Delivery Model: `Agent Outcome Stack` (default) or `MCP-only` (exception)
+- Delivery Vector Canonical Phrase: `Skills on MCP`
+- Delivery Vector (Client-Facing): `Skills + MCP`
+- Delivery Vector (Technical): `MCP + Skills`
 - Primary Interface: `Codex` (portable artifacts required)
 
 ## 2) Target Workflows
@@ -59,7 +62,16 @@ How changes are approved.
 - Tool scope expansions require security review.
 - Pricing/commercial logic changes are always human approved.
 
-## 8) Review Cadence
+## 8) Messaging and Trust
+Positioning rules that remain aligned across sales, delivery, and technical proof.
+
+- Operator-facing pages and outreach lead with `Skills + MCP`.
+- Technical architecture, security, and compliance surfaces use `MCP + Skills`.
+- Technical positioning statement: `MCP is the substrate for auth, trust boundaries, portability, and governance; Skills are the behavior layer.`
+- Context-bloat objection handling: `We scope tool access by bundle and workflow so only relevant capabilities enter context.`
+- Moat emphasis order: custom MCP creation, auth/security boundary design, policy artifacts, approval/escalation runbooks, monthly tuning.
+
+## 9) Review Cadence
 - Weekly: golden task report + incident summary
 - Monthly: policy tuning and roadmap update
 - Quarterly: architecture and portability review

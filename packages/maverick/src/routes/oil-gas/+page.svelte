@@ -30,27 +30,27 @@
 	};
 
 	let { data }: Props = $props();
-	const content = data.content;
+	const content = $derived(data.content);
 
 	// Hero content with CMS overrides
-	const heroTitle = content?.hero?.title ?? 'Targeted Non-Hazmat Chemistry';
-	const heroSubtitle = content?.hero?.subtitle ?? 'Boost production and slash costs with PetroX™ — Advanced non-hazmat chemistry for superior oilfield operations';
-	const heroVideo = content?.hero?.video ?? 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/082466515-oil-rig-pumpjack-working-natur.mp4';
-	const heroCta = content?.hero?.cta ?? 'Learn More';
+	const heroTitle = $derived(content?.hero?.title ?? 'Targeted Non-Hazmat Chemistry');
+	const heroSubtitle = $derived(content?.hero?.subtitle ?? 'Boost production and slash costs with PetroX™ — Advanced non-hazmat chemistry for superior oilfield operations');
+	const heroVideo = $derived(content?.hero?.video ?? 'https://pub-fb87e05654104f5fbb33989fc4dca65b.r2.dev/videos/082466515-oil-rig-pumpjack-working-natur.mp4');
+	const heroCta = $derived(content?.hero?.cta ?? 'Learn More');
 
 	// Why PetroX section with CMS overrides
-	const whyTitle = content?.why?.title ?? 'Why PetroX™?';
-	const whySubtitle = content?.why?.subtitle ?? 'Industry-leading oilfield chemistry that delivers results without the downsides of traditional treatments.';
-	const whyFeatures = content?.whyFeatures ?? [
+	const whyTitle = $derived(content?.why?.title ?? 'Why PetroX™?');
+	const whySubtitle = $derived(content?.why?.subtitle ?? 'Industry-leading oilfield chemistry that delivers results without the downsides of traditional treatments.');
+	const whyFeatures = $derived(content?.whyFeatures ?? [
 		{ icon: 'zap', title: 'Superior Performance' },
 		{ icon: 'shield-check', title: 'Non-Hazmat' },
 		{ icon: 'wrench', title: 'Infrastructure-Safe' },
 		{ icon: 'clock', title: 'Minimal Downtime' }
-	];
+	]);
 
 	// Section headers with CMS overrides
-	const solutionsHeadline = content?.solutionsHeader?.headline ?? petroxSolutionsHeader.headline;
-	const operationsHeadline = content?.operationsHeader?.headline ?? petroxOperationsHeader.headline;
+	const solutionsHeadline = $derived(content?.solutionsHeader?.headline ?? petroxSolutionsHeader.headline);
+	const operationsHeadline = $derived(content?.operationsHeader?.headline ?? petroxOperationsHeader.headline);
 
 	// Transform petrox solutions to TabbedSolutions format
 	const tabbedSolutions = petroxSolutions.map(solution => ({

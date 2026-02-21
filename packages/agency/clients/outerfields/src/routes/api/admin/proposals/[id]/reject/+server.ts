@@ -4,8 +4,13 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { rejectProposal } from '$lib/server/proposals';
+import { isAdminUser } from '$lib/server/auth';
 
 export const POST: RequestHandler = async ({ params, request, platform, locals }) => {
+  if (!isAdminUser(locals.user)) {
+    return json({ error: 'Not authorized' }, { status: 403 });
+  }
+
   const db = platform?.env?.DB;
   
   if (!db) {

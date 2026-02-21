@@ -141,13 +141,10 @@
 
 <section
 	class="testimonials"
-	onmouseenter={handleMouseEnter}
-	onmouseleave={handleMouseLeave}
-	onkeydown={handleKeydown}
-	role="region"
+	onpointerenter={handleMouseEnter}
+	onpointerleave={handleMouseLeave}
 	aria-roledescription="carousel"
 	aria-label="Testimonials"
-	tabindex="0"
 >
 	{#if headline || subheadline}
 		<header class="testimonials-header">

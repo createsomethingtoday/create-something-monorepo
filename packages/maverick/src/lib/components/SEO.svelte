@@ -30,7 +30,7 @@
 	}: Props = $props();
 
 	const siteName = 'Maverick X';
-	const fullTitle = title.includes('Maverick X') ? title : `${title} | Maverick X`;
+	const fullTitle = $derived(title.includes('Maverick X') ? title : `${title} | Maverick X`);
 </script>
 
 <svelte:head>
@@ -70,4 +70,3 @@
 		{@html `<script type="application/ld+json">${JSON.stringify(jsonLd)}<\/script>`}
 	{/if}
 </svelte:head>
-

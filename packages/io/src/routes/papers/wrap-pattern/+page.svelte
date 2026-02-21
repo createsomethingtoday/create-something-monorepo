@@ -964,7 +964,7 @@
 		border-bottom: none;
 	}
 
-	.metric-table code {
+	:global(.metric-table code) {
 		font-family: 'Stack Sans', monospace;
 		background: var(--color-bg-subtle);
 		padding: 0.125rem 0.375rem;

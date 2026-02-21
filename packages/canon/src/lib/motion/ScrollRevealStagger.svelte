@@ -49,10 +49,6 @@
 </div>
 
 <style>
-	.scroll-reveal-stagger {
-		/* Container doesn't need styles - children handle their own reveal */
-	}
-
 	/* Direct children cascade in */
 	.scroll-reveal-stagger.visible :global(> *) {
 		opacity: 0;

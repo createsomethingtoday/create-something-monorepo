@@ -34,8 +34,8 @@
 		return null;
 	}
 
-	const targetMode = extractMode(href);
-	const isCrossProperty = targetMode !== null && targetMode !== from;
+	const targetMode = $derived(extractMode(href));
+	const isCrossProperty = $derived(targetMode !== null && targetMode !== from);
 
 	function handleClick(e: MouseEvent) {
 		if (!isCrossProperty) return;

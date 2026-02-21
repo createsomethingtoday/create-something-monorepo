@@ -1,0 +1,33 @@
+name = "cs-mcp-hub-remote"
+main = "index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[observability]
+enabled = true
+
+[[d1_databases]]
+binding = "TELEMETRY_DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
+
+[[kv_namespaces]]
+binding = "HUB_STATE_KV"
+id = "00000000000000000000000000000000"
+preview_id = "00000000000000000000000000000000"
+
+[vars]
+# Optional. If set, /mcp requires Authorization: Bearer <token>
+# HUB_API_TOKEN = ""
+
+# Comma-separated or JSON array strings.
+# Defaults to registry defaults when unset.
+# HUB_ENABLED_BUNDLES = "core,observability"
+# HUB_ENABLED_SERVERS = ""
+# HUB_DISABLED_SERVERS = ""
+# HUB_ACCOUNT_ID = "operator"
+
+# Runtime cache controls.
+# HUB_REFRESH_SECONDS = "300"
+# HUB_CACHE_BUST = ""

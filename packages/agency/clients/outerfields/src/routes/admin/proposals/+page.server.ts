@@ -2,8 +2,18 @@
  * Admin Proposals Page - Server
  */
 import type { PageServerLoad } from './$types';
+import { redirect } from '@sveltejs/kit';
+import { isAdminUser } from '$lib/server/auth';
 
-export const load: PageServerLoad = async ({ platform }) => {
+export const load: PageServerLoad = async ({ platform, locals }) => {
+  if (!locals.user) {
+    redirect(302, '/login?redirect=/admin/proposals');
+  }
+
+  if (!isAdminUser(locals.user)) {
+    redirect(302, '/demo');
+  }
+
   const db = platform?.env?.DB;
   
   if (!db) {

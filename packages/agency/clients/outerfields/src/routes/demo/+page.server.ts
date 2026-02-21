@@ -1,123 +1,111 @@
 import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
+import { getVideos, type Video } from '$lib/server/db/videos';
+import { isAdminUser } from '$lib/server/auth';
 
-export const load: PageServerLoad = async ({ locals }) => {
-	// Check if authenticated via session (hooks.server.ts sets locals.user)
+interface RowVideo {
+	id: string;
+	title: string;
+	thumbnail: string;
+	duration: string;
+	tier: 'free' | 'preview' | 'gated';
+	category: string;
+	episodeNumber?: number;
+}
+
+const CATEGORY_TITLES: Record<string, string> = {
+	'crew-call': 'Crew Call',
+	'reconnecting-relationships': 'Reconnecting Relationships',
+	kodiak: 'Kodiak',
+	'lincoln-manufacturing': 'Lincoln Manufacturing',
+	'guns-out-tv': 'Guns Out TV',
+	films: 'Films',
+	'coming-soon': 'Coming Soon',
+	lmc: 'LMC'
+};
+
+function formatClock(totalSeconds: number): string {
+	const s = Math.max(0, Math.floor(totalSeconds));
+	const hours = Math.floor(s / 3600);
+	const minutes = Math.floor((s % 3600) / 60);
+	const seconds = s % 60;
+	if (hours > 0) return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+	return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function getThumbnailPath(video: Video): string {
+	if (video.thumbnail_path.startsWith('http://') || video.thumbnail_path.startsWith('https://')) {
+		return video.thumbnail_path;
+	}
+	if (video.thumbnail_path.startsWith('/thumbnails/')) return video.thumbnail_path;
+	return `/thumbnails${video.thumbnail_path.startsWith('/') ? '' : '/'}${video.thumbnail_path}`;
+}
+
+function toRowVideo(video: Video): RowVideo {
+	return {
+		id: video.id,
+		title: video.title,
+		thumbnail: getThumbnailPath(video),
+		duration: formatClock(video.duration),
+		tier: video.tier,
+		category: video.category,
+		...(video.episode_number ? { episodeNumber: video.episode_number } : {})
+	};
+}
+
+export const load: PageServerLoad = async ({ locals, platform }) => {
 	if (!locals.user) {
 		redirect(302, '/login?redirect=/demo');
 	}
 
-	// Return demo content data - OUTERFIELDS team building the PCN
-	// Uses locally generated Flux AI thumbnails
+	const db = platform?.env.DB;
+	if (!db) {
+		return {
+			user: locals.user,
+			isAdmin: isAdminUser(locals.user),
+			featured: null,
+			categories: [],
+			totalVideos: 0
+		};
+	}
+
+	const { videos } = await getVideos(db);
+
+	const sortedByLatest = [...videos].sort((a, b) => b.created_at - a.created_at);
+	const featuredVideo = sortedByLatest[0] || null;
+
+	const grouped = new Map<string, RowVideo[]>();
+	for (const video of sortedByLatest) {
+		if (!grouped.has(video.category)) {
+			grouped.set(video.category, []);
+		}
+		grouped.get(video.category)!.push(toRowVideo(video));
+	}
+
+	const categories = Array.from(grouped.entries()).map(([categoryId, items]) => ({
+		categoryId,
+		title: CATEGORY_TITLES[categoryId] || categoryId,
+		items: items.sort((a, b) => {
+			const aEpisode = a.episodeNumber ?? Number.MAX_SAFE_INTEGER;
+			const bEpisode = b.episodeNumber ?? Number.MAX_SAFE_INTEGER;
+			return aEpisode - bEpisode;
+		})
+	}));
+
 	return {
-		user: {
-			name: locals.user.name,
-			avatar: null
-		},
-		categories: [
-			{
-				title: 'Continue Watching',
-				items: [
-					{
-						id: '1',
-						title: 'Building the Custom Video Player',
-						thumbnail: '/thumbnails/dev-video-player.jpg',
-						progress: 72,
-						duration: '18 min',
-						episode: 'Dev Log #14'
-					},
-					{
-						id: '2',
-						title: 'Designing the Admin Dashboard',
-						thumbnail: '/thumbnails/design-dashboard.jpg',
-						progress: 45,
-						duration: '24 min',
-						episode: 'Design #8'
-					}
-				]
-			},
-			{
-				title: 'Platform Development',
-				items: [
-					{
-						id: '3',
-						title: 'Edge-First Architecture Deep Dive',
-						thumbnail: '/thumbnails/architecture-edge.jpg',
-						duration: '31 min',
-						views: '2.4K'
-					},
-					{
-						id: '4',
-						title: 'Real-Time Analytics Pipeline',
-						thumbnail: '/thumbnails/realtime-analytics.jpg',
-						duration: '22 min',
-						views: '1.8K'
-					},
-					{
-						id: '5',
-						title: 'Multi-Tenant Platform Design',
-						thumbnail: '/thumbnails/multi-tenant.jpg',
-						duration: '27 min',
-						views: '3.1K'
-					},
-					{
-						id: '6',
-						title: 'Stripe Integration Deep Dive',
-						thumbnail: '/thumbnails/stripe-integration.jpg',
-						duration: '19 min',
-						views: '2.9K'
-					}
-				]
-			},
-			{
-				title: 'Design System',
-				items: [
-					{
-						id: '7',
-						title: 'Canon Design Tokens',
-						thumbnail: '/thumbnails/canon-tokens.jpg',
-						duration: '35 min',
-						isNew: true
-					},
-					{
-						id: '8',
-						title: 'Motion Design System',
-						thumbnail: '/thumbnails/motion-design.jpg',
-						duration: '28 min',
-						isNew: true
-					},
-					{
-						id: '9',
-						title: 'Svelte 5 Component Architecture',
-						thumbnail: '/thumbnails/svelte-components.jpg',
-						duration: '45 min',
-						isNew: true
-					}
-				]
-			},
-			{
-				title: 'Team Insights',
-				items: [
-					{
-						id: '10',
-						title: 'Why We Built OUTERFIELDS',
-						thumbnail: '/thumbnails/why-we-built.jpg',
-						duration: '18 min'
-					},
-					{
-						id: '11',
-						title: 'The Problem with Uscreen',
-						thumbnail: '/thumbnails/problem-uscreen.jpg',
-						duration: '24 min'
-					},
-					{
-						id: '12',
-						title: 'Creator-First Philosophy',
-						thumbnail: '/thumbnails/creator-first.jpg',
-						duration: '15 min'
-					}
-				]
-			}
-		]
+		user: locals.user,
+		isAdmin: isAdminUser(locals.user),
+		featured: featuredVideo
+			? {
+					id: featuredVideo.id,
+					title: featuredVideo.title,
+					description: featuredVideo.description || 'Latest upload in your library.',
+					thumbnail: getThumbnailPath(featuredVideo),
+					duration: formatClock(featuredVideo.duration),
+					tier: featuredVideo.tier
+				}
+			: null,
+		categories,
+		totalVideos: videos.length
 	};
 };

@@ -48,7 +48,7 @@
 	}: Props = $props();
 
 	let element: HTMLSpanElement;
-	let displayValue = $state(from);
+	let displayValue = $state(0);
 	let hasAnimated = $state(false);
 
 	// Check for reduced motion preference
@@ -108,6 +108,8 @@
 
 	onMount(() => {
 		if (!browser || !element) return;
+
+		displayValue = from;
 
 		// If reduced motion, show immediately
 		if (prefersReducedMotion) {

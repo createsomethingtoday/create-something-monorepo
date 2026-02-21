@@ -24,9 +24,3 @@
 <div class="stagger-item {className}">
 	{@render children?.()}
 </div>
-
-<style>
-	.stagger-item {
-		/* Styles controlled by parent StaggerContainer */
-	}
-</style>

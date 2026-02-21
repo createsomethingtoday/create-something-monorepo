@@ -1,47 +1,42 @@
 /**
  * Instagram Analytics API Endpoint
  *
- * Fetches Instagram metrics via Instagram Graph API
- * Returns followers, engagement rate, and recent posts
+ * Returns live social-style health metrics derived from platform data.
  */
 import { json, type RequestHandler } from '@sveltejs/kit';
+import { getRecentEngagementRate, getRecentVideoCount } from '$lib/server/analytics';
 
 export const GET: RequestHandler = async ({ platform }) => {
+	const db = platform?.env?.DB;
+	if (!db) {
+		return json(
+			{
+				success: false,
+				error: 'Database not available'
+			},
+			{ status: 503 }
+		);
+	}
+
 	try {
-		// In production, would use actual Instagram Graph API
-		// const INSTAGRAM_ACCESS_TOKEN = platform?.env.INSTAGRAM_ACCESS_TOKEN;
-		// const INSTAGRAM_USER_ID = platform?.env.INSTAGRAM_USER_ID;
+		const usersResult = await db
+			.prepare('SELECT COUNT(*) as count FROM users')
+			.first<{ count: number }>();
+		const followers = Number(usersResult?.count || 0);
 
-		// For now, return mock data that matches expected structure
-		const mockData = {
-			followers: 8234,
-			engagement: 4.8,
-			recentPosts: 12
-		};
-
-		// TODO: Replace with actual Instagram Graph API call
-		// const response = await fetch(
-		//   `https://graph.instagram.com/${INSTAGRAM_USER_ID}?fields=followers_count,media_count&access_token=${INSTAGRAM_ACCESS_TOKEN}`
-		// );
-		//
-		// const data = await response.json();
-		//
-		// // Calculate engagement rate from recent posts
-		// const mediaResponse = await fetch(
-		//   `https://graph.instagram.com/${INSTAGRAM_USER_ID}/media?fields=like_count,comments_count,timestamp&access_token=${INSTAGRAM_ACCESS_TOKEN}`
-		// );
-		// const mediaData = await mediaResponse.json();
-		//
-		// const recentPosts = mediaData.data.slice(0, 12);
-		// const totalEngagement = recentPosts.reduce((sum, post) =>
-		//   sum + (post.like_count || 0) + (post.comments_count || 0), 0
-		// );
-		// const avgEngagement = totalEngagement / recentPosts.length;
-		// const engagementRate = (avgEngagement / data.followers_count) * 100;
+		const [engagement, recentPosts] = await Promise.all([
+			getRecentEngagementRate(db),
+			getRecentVideoCount(db, 30)
+		]);
 
 		return json({
 			success: true,
-			data: mockData
+			data: {
+				followers,
+				engagement,
+				recentPosts
+			},
+			source: 'd1'
 		});
 	} catch (error) {
 		console.error('Instagram analytics error:', error);

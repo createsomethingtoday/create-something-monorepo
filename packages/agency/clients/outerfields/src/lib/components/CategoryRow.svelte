@@ -71,32 +71,37 @@
 <section class="category-row">
 	<div class="category-header-wrapper">
 		<div class="category-header">
-		<h2 class="category-title">{title}</h2>
-		<div class="scroll-controls">
-			<button
-				class="scroll-button"
-				class:disabled={!canScrollLeft}
-				onclick={() => scroll('left')}
-				aria-label="Scroll left"
-				disabled={!canScrollLeft}
-			>
-				<ChevronLeft size={24} />
-			</button>
-			<button
-				class="scroll-button"
-				class:disabled={!canScrollRight}
-				onclick={() => scroll('right')}
-				aria-label="Scroll right"
-				disabled={!canScrollRight}
-			>
-				<ChevronRight size={24} />
-			</button>
-		</div>
+			<div class="category-labels">
+				<h2 class="category-title">{title}</h2>
+				<p class="category-meta">{videos.length} {videos.length === 1 ? 'video' : 'videos'}</p>
+			</div>
+			<div class="scroll-controls">
+				<button
+					class="scroll-button"
+					class:disabled={!canScrollLeft}
+					onclick={() => scroll('left')}
+					aria-label="Scroll left"
+					disabled={!canScrollLeft}
+				>
+					<ChevronLeft size={20} />
+				</button>
+				<button
+					class="scroll-button"
+					class:disabled={!canScrollRight}
+					onclick={() => scroll('right')}
+					aria-label="Scroll right"
+					disabled={!canScrollRight}
+				>
+					<ChevronRight size={20} />
+				</button>
+			</div>
 		</div>
 	</div>
 
 	<div
 		class="cards-container"
+		class:show-left-fade={canScrollLeft}
+		class:show-right-fade={canScrollRight}
 		bind:this={scrollContainer}
 		onscroll={handleScroll}
 	>
@@ -114,27 +119,41 @@
 
 <style>
 	.category-row {
-		width: 100%;
-		margin-bottom: var(--space-2xl);
+		max-width: var(--container-max-width);
+		margin: 0 auto var(--space-2xl);
+		padding: 0 1.25rem;
 	}
 
 	.category-header-wrapper {
-		max-width: var(--container-max-width);
-		margin: 0 auto;
+		margin: 0;
 	}
 
 	.category-header {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		margin-bottom: var(--space-md);
+		margin-bottom: 0.7rem;
+		gap: 0.8rem;
+	}
+
+	.category-labels {
+		display: grid;
+		gap: 0.05rem;
 	}
 
 	.category-title {
-		font-size: var(--text-h2);
+		font-size: clamp(1.25rem, 1.6vw + 0.6rem, 1.75rem);
 		font-weight: 700;
 		color: var(--color-fg-primary);
 		margin: 0;
+	}
+
+	.category-meta {
+		margin: 0;
+		font-size: 0.82rem;
+		color: var(--color-fg-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
 	}
 
 	.scroll-controls {
@@ -143,13 +162,13 @@
 	}
 
 	.scroll-button {
-		width: 36px;
-		height: 36px;
+		width: 34px;
+		height: 34px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: rgba(255, 255, 255, 0.05);
-		border: none;
+		background: rgba(255, 255, 255, 0.06);
+		border: 1px solid rgba(255, 255, 255, 0.16);
 		border-radius: var(--radius-full);
 		color: var(--color-fg-primary);
 		cursor: pointer;
@@ -157,7 +176,9 @@
 	}
 
 	.scroll-button:hover:not(.disabled) {
-		background: rgba(255, 255, 255, 0.1);
+		background: rgba(255, 255, 255, 0.14);
+		border-color: rgba(255, 255, 255, 0.24);
+		transform: translateY(-1px);
 	}
 
 	.scroll-button.disabled {
@@ -166,23 +187,57 @@
 	}
 
 	.cards-container {
+		position: relative;
 		overflow-x: auto;
 		overflow-y: hidden;
 		scroll-behavior: smooth;
 		-webkit-overflow-scrolling: touch;
 		scrollbar-width: none; /* Firefox */
 		-ms-overflow-style: none; /* IE/Edge */
+		padding: 0.15rem 0;
 	}
 
 	.cards-container::-webkit-scrollbar {
 		display: none; /* Chrome/Safari */
 	}
 
+	.cards-container::before,
+	.cards-container::after {
+		content: '';
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		width: 2rem;
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity var(--duration-micro) var(--ease-standard);
+		z-index: 5;
+	}
+
+	.cards-container::before {
+		left: 0;
+		background: linear-gradient(to right, var(--color-bg-pure), rgba(30, 30, 30, 0));
+	}
+
+	.cards-container::after {
+		right: 0;
+		background: linear-gradient(to left, var(--color-bg-pure), rgba(30, 30, 30, 0));
+	}
+
+	.cards-container.show-left-fade::before {
+		opacity: 1;
+	}
+
+	.cards-container.show-right-fade::after {
+		opacity: 1;
+	}
+
 	.cards-inner {
 		display: flex;
 		gap: var(--space-md);
-		/* Align card start with container edge */
-		padding: 0 max(1rem, calc((100vw - var(--container-max-width)) / 2));
+		width: max-content;
+		min-width: 100%;
+		padding: 0.1rem 0.15rem 0.3rem;
 	}
 
 	/* Responsive */
@@ -191,12 +246,22 @@
 			font-size: var(--text-h3);
 		}
 
+		.category-meta {
+			font-size: 0.75rem;
+		}
+
 		.cards-inner {
 			gap: var(--space-sm);
+			padding-bottom: 0.25rem;
 		}
 
 		.scroll-controls {
 			display: none; /* Hide buttons on mobile, rely on touch scroll */
+		}
+
+		.cards-container::before,
+		.cards-container::after {
+			display: none;
 		}
 	}
 </style>

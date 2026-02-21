@@ -3,10 +3,16 @@
 	import { BlurFade, ShimmerButton } from '@create-something/canon/magicui';
 
 	// Structured data for SEO/AEO
+	const deliveryVector = {
+		canonicalPhrase: 'Skills on MCP',
+		clientFacingLabel: 'Skills + MCP',
+		technicalLabel: 'MCP + Skills'
+	};
+
 	const services = [
 		{
 			name: 'Monthly Retainer',
-			description: 'Your AI architect on retainer. Agent Outcome Stack by default: custom MCP servers, Codex setup, policy artifacts, and monthly refinement. Direct access to the person who builds it. Limited to 3–5 clients.',
+			description: `Your AI architect on retainer. Agent Outcome Stack by default: ${deliveryVector.clientFacingLabel} delivery, custom MCP servers, Codex setup, policy artifacts, and monthly refinement. Direct access to the person who builds it. Limited to 3–5 clients.`,
 			type: 'Retainer',
 			price: '2000',
 			priceDescription: '$1,500–$3,000/mo depending on scope'
@@ -20,7 +26,7 @@
 		},
 		{
 			question: "What does $1,500–$3,000/mo actually get me?",
-			answer: "Everything in the Agent Outcome Stack: custom MCP servers, Codex setup + policy + runbook, approval and escalation rules, monthly refinement, and direct access to me. The range depends on number of systems and workflow complexity. We scope it on the first call."
+			answer: `Everything in the Agent Outcome Stack: ${deliveryVector.clientFacingLabel} delivery, custom MCP servers, Codex setup + policy + runbook, approval and escalation rules, monthly refinement, and direct access to me. The range depends on number of systems and workflow complexity. We scope it on the first call.`
 		},
 		{
 			question: "Can I connect tools myself?",
@@ -33,6 +39,10 @@
 		{
 			question: "Do you offer MCP-only delivery?",
 			answer: "Yes, for discovery and compliance-constrained cases. MCP-only is the entry wedge: read-only or limited-scope connectivity. The default paid package is Agent Outcome Stack, because outcomes require both MCP connectivity and agent policy operations."
+		},
+		{
+			question: "Why do you position it as Skills + MCP?",
+			answer: `We deploy business skills on top of secure MCP connectivity so your team gets outcomes, not prompt babysitting. Technical proof uses ${deliveryVector.technicalLabel}: MCP is the substrate for auth, trust boundaries, portability, and governance; Skills are the behavior layer. We scope tool access by bundle and workflow so only relevant capabilities enter context. The moat is hard to copy: custom MCP creation, auth/security boundary design, policy artifacts, approval/escalation runbooks, and monthly tuning.`
 		},
 		{
 			question: "How is this different from hiring a developer?",
@@ -55,7 +65,7 @@
 
 <SEO
 	title="How I Work | Your AI Person on Retainer"
-	description="Monthly retainer. Direct access. Agent Outcome Stack by default: custom MCP servers, Codex setup + policy + runbook, and monthly refinement. $1,500–$3,000/mo depending on scope."
+	description="Monthly retainer. Direct access. Agent Outcome Stack by default: Skills + MCP delivery, custom MCP servers, Codex setup + policy + runbook, and monthly refinement. $1,500–$3,000/mo depending on scope."
 	keywords="AI retainer, fractional AI architect, AI automation consultant, connect tools to AI, business AI expert"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -75,7 +85,7 @@
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<p class="hero-subtitle">
-				I don't sell tiers. I work with you directly to deliver agents + MCPs by default: custom connectivity, Codex setup, policy artifacts, and monthly refinement. MCP-only is reserved for discovery and compliance-constrained cases.
+				We deploy business skills on top of secure MCP connectivity so your team gets outcomes, not prompt babysitting. I deliver Agent Outcome Stack by default with {deliveryVector.clientFacingLabel}: custom connectivity, Codex setup, policy artifacts, and monthly refinement. MCP-only is reserved for discovery and compliance-constrained cases.
 			</p>
 		</BlurFade>
 	</div>
@@ -102,7 +112,7 @@
 							<h3>What's Included</h3>
 							<ul class="retainer-list">
 								<li>Custom MCP server(s) for your workflows</li>
-								<li>Agent Outcome Stack delivery (agents + MCPs)</li>
+								<li>Agent Outcome Stack delivery ({deliveryVector.clientFacingLabel})</li>
 								<li>Codex setup + policy + runbook included</li>
 								<li>Approval rules and escalation triggers</li>
 								<li>Budget and latency guardrails</li>
@@ -124,7 +134,7 @@
 							</ul>
 							<div class="retainer-callout">
 								<p>
-									Connecting tools is commodity. The hard part is outcome quality: policy, escalation, approvals, and adapting the system as your business changes. That's why the default package is agents + MCPs.
+									Connecting tools is commodity. The hard part is hard-to-copy execution quality: custom MCP creation, auth/security boundary design, policy artifacts, approval/escalation runbooks, and monthly tuning. That's why the default package is {deliveryVector.canonicalPhrase}.
 								</p>
 							</div>
 						</div>

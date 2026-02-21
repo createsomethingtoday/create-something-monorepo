@@ -300,13 +300,14 @@ const hammerOpacity = interpolate(progress, [0, 0.2, 0.6, 1], [1, 1, 0.3, 0]);</
 					</div>
 
 					<div class="demo-dots">
-						{#each canonRevealStyles as _, i}
-							<button
-								class="demo-dot"
-								class:active={i === currentRevealIndex}
-								onclick={() => {
-									currentRevealIndex = i;
-									revealKey++;
+							{#each canonRevealStyles as _, i}
+								<button
+									class="demo-dot"
+									class:active={i === currentRevealIndex}
+									aria-label={`Show reveal style ${i + 1}`}
+									onclick={() => {
+										currentRevealIndex = i;
+										revealKey++;
 								}}
 							></button>
 						{/each}
@@ -631,7 +632,7 @@ const currentPhase = spec.phases.find(p =&gt;
 		color: var(--color-fg-secondary);
 	}
 
-	.text-emphasis {
+	:global(.text-emphasis) {
 		color: var(--color-fg-primary);
 	}
 
@@ -735,7 +736,7 @@ const currentPhase = spec.phases.find(p =&gt;
 	}
 
 	/* Code */
-	.code-block {
+	:global(.code-block) {
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
@@ -743,7 +744,7 @@ const currentPhase = spec.phases.find(p =&gt;
 		overflow-x: auto;
 	}
 
-	.code-primary {
+	:global(.code-primary) {
 		color: var(--color-fg-primary);
 		white-space: pre;
 	}

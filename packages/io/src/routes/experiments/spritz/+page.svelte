@@ -4,7 +4,7 @@
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
-	const { experiment } = data;
+	const experiment = $derived(data.experiment);
 
 	// "Nicely Said" content - principles for writing clear, human-friendly content
 	const nicelySaidPrinciples = [
@@ -470,13 +470,13 @@ engine.play();`}</pre>
 		margin-bottom: var(--space-xs);
 	}
 
-	.section a {
+	:global(.section a) {
 		color: var(--color-fg-primary);
 		text-decoration: underline;
 		text-underline-offset: 0.15em;
 	}
 
-	.section a:hover {
+	:global(.section a:hover) {
 		color: var(--color-fg-secondary);
 	}
 

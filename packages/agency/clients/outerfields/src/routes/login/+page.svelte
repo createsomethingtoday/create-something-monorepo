@@ -53,13 +53,16 @@
 				return;
 			}
 
-			// Update auth store with user data
-			if (result.success && result.data?.user) {
-				authStore.setUser(result.data.user);
-			}
+				// Update auth store with user data
+				if (result.success && result.data?.user) {
+					authStore.setUser(result.data.user);
+				}
 
-			await invalidateAll();
-			goto(data.redirectTo || '/demo');
+				await invalidateAll();
+				const isAdmin = result.data?.user?.role === 'admin';
+				const destination =
+					data.redirectTo === '/demo' && isAdmin ? '/admin' : (data.redirectTo || '/demo');
+				goto(destination);
 		} catch {
 			error = 'An unexpected error occurred';
 		} finally {
@@ -92,13 +95,13 @@
 					Create your account
 				{/if}
 			</h1>
-			<p class="auth-subtitle">
-				{#if mode === 'login'}
-					Sign in to access the platform demo
-				{:else}
-					Join to experience the full platform
-				{/if}
-			</p>
+				<p class="auth-subtitle">
+					{#if mode === 'login'}
+						Sign in to access the platform
+					{:else}
+						Join to experience the full platform
+					{/if}
+				</p>
 		</div>
 
 		<form onsubmit={handleSubmit} class="auth-form">

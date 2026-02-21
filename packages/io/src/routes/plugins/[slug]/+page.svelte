@@ -4,13 +4,13 @@
 
 	let { data }: { data: PageData } = $props();
 	let { plugin } = $derived(data);
-	let relatedPlugins = $derived(getRelatedPlugins(plugin.slug));
+	let relatedPlugins = $derived.by(() => getRelatedPlugins(plugin.slug));
 
-	const url = `https://createsomething.io/plugins/${plugin.slug}`;
+	const url = $derived(`https://createsomething.io/plugins/${plugin.slug}`);
 
 	// CLI commands
 	const marketplaceCommand = '/plugin marketplace add createsomethingtoday/claude-plugins';
-	const installCommand = `/plugin install ${plugin.slug}@create-something`;
+	const installCommand = $derived(`/plugin install ${plugin.slug}@create-something`);
 
 	let copiedMarketplace = $state(false);
 	let copiedInstall = $state(false);
@@ -704,6 +704,7 @@
 		line-height: 1.5;
 		margin: 0;
 		display: -webkit-box;
+		line-clamp: 2;
 		-webkit-line-clamp: 2;
 		-webkit-box-orient: vertical;
 		overflow: hidden;

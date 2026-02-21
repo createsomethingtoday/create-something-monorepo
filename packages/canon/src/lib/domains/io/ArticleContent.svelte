@@ -15,9 +15,11 @@
 
 	// Use html_content if it's substantial (not just an excerpt), otherwise use markdown content
 	// Some papers have html_content set to a short excerpt instead of full rendered HTML
-	const hasSubstantialHtmlContent = !!paper.html_content &&
-		(!paper.content || paper.html_content.length >= paper.content.length * 0.5);
-	const contentToRender = hasSubstantialHtmlContent ? paper.html_content : paper.content;
+	const hasSubstantialHtmlContent = $derived(
+		!!paper.html_content &&
+			(!paper.content || paper.html_content.length >= paper.content.length * 0.5)
+	);
+	const contentToRender = $derived(hasSubstantialHtmlContent ? paper.html_content : paper.content);
 
 	// For markdown content, configure marked
 	let renderedContent = $state("");

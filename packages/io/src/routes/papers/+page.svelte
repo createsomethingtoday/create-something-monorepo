@@ -8,7 +8,7 @@
 	import { SEO } from '@create-something/canon';
 
 	let { data } = $props();
-	const papers = data.papers;
+	const papers = $derived(data.papers);
 
 	// Search state
 	let searchQuery = $state('');

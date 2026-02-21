@@ -32,11 +32,17 @@ Guidelines:
 - Sound like a knowledgeable friend, not a corporate report`;
 
 export const POST: RequestHandler = async ({ request, platform }) => {
+	let question = '';
+	let providedAnalytics: VideoAnalytics | undefined;
+
 	try {
-		const { message, videoAnalytics } = await request.json() as {
+		const { message, videoAnalytics } = (await request.json()) as {
 			message: string;
 			videoAnalytics?: VideoAnalytics;
 		};
+
+		question = message;
+		providedAnalytics = videoAnalytics;
 
 		if (!message) {
 			return json({ error: 'Message is required', success: false }, { status: 400 });
@@ -44,11 +50,11 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 		const apiKey = platform?.env?.ANTHROPIC_API_KEY;
 		if (!apiKey) {
-			// Fallback to demo response if no API key configured
+			// Fallback response when Anthropic is not configured.
 			return json({
-				message: getDemoResponse(message),
+				message: getFallbackResponse(message, videoAnalytics),
 				success: true,
-				demo: true
+				source: 'fallback'
 			});
 		}
 
@@ -58,6 +64,15 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		let systemPrompt = analyticsExpertPrompt;
 		if (videoAnalytics?.title) {
 			systemPrompt += `\n\nCurrent video being analyzed: "${videoAnalytics.title}"`;
+		}
+		if (videoAnalytics?.views) {
+			systemPrompt += `\nCurrent reported views: ${videoAnalytics.views}`;
+		}
+		if (videoAnalytics?.engagement) {
+			systemPrompt += `\nCurrent reported engagement: ${videoAnalytics.engagement}`;
+		}
+		if (videoAnalytics?.avgWatch) {
+			systemPrompt += `\nCurrent reported average watch time: ${videoAnalytics.avgWatch}`;
 		}
 
 		const response = await client.messages.create({
@@ -83,49 +98,51 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	} catch (error) {
 		console.error('Claude analytics chat error:', error);
 
-		// Return demo response on error
+		// Return resilient fallback response on provider/API errors.
 		return json({
-			message: getDemoResponse(''),
+			message: getFallbackResponse(question, providedAnalytics),
 			success: true,
-			demo: true,
-			error: 'Using demo mode'
+			source: 'fallback'
 		});
 	}
 };
 
 /**
- * Demo responses when API key is not configured
- * These showcase what Claude would say without incurring API costs
+ * Fallback responses when Anthropic is unavailable.
  */
-function getDemoResponse(question: string): string {
+function getFallbackResponse(question: string, analytics?: VideoAnalytics): string {
 	const lowerQuestion = question.toLowerCase();
+	const viewsText = analytics?.views || 'N/A';
+	const engagementText = analytics?.engagement || 'N/A';
+	const watchText = analytics?.avgWatch || 'N/A';
+	const titleText = analytics?.title || 'your current top video';
 
 	if (lowerQuestion.includes('more views') || lowerQuestion.includes('performing')) {
-		return `Looking at your analytics, this video is crushing it for a few clear reasons. Your 24.8% engagement rate is exceptional—most videos in this niche hover around 8-12%. The real magic is in your traffic sources: 42% from Browse Features means the algorithm is actively pushing your content.
+		return `Performance looks strong for ${titleText}. Based on your current snapshot (${viewsText} views, ${engagementText} engagement), your next lift usually comes from stronger opening hooks and clearer thumbnail/title packaging.
 
-The 4m 32s average watch time suggests your hook and pacing are working well. To replicate this, look at what topic you covered and how you structured the first 30 seconds. That's your formula for the next one.`;
+Run one A/B iteration this week: keep topic constant, change only title + first 20 seconds. Compare click-through and early retention to identify the winning format quickly.`;
 	}
 
 	if (lowerQuestion.includes('next') || lowerQuestion.includes('make')) {
-		return `Based on what's working, I'd double down on the format that got you here. Your Browse Features traffic (42%) tells me the algorithm likes your content style. Your audience retention peaks at 3:15—that's your sweet spot for content density.
+		return `Use ${titleText} as the baseline and publish a follow-up that answers the obvious next question your audience has.
 
-Try a follow-up that explores a related angle. If this video was "How to X," try "Why Most People Fail at X" or "The One Thing I Wish I Knew About X." Same audience, fresh perspective.`;
+Keep format, pacing, and runtime close to your current average watch time (${watchText}) so you can compare performance cleanly across uploads.`;
 	}
 
 	if (lowerQuestion.includes('retention') || lowerQuestion.includes('audience')) {
-		return `Your retention is solid—78% of viewers make it to 3:15, which is above average. But here's the opportunity: you're losing 22% somewhere in that first 3 minutes.
+		return `Your current average watch time is ${watchText}. To improve retention, tighten the first 30-45 seconds and bring the payoff forward.
 
-Check your analytics for the exact drop-off points. Usually it's either a slow intro (first 30 seconds) or a segment that doesn't deliver on the hook's promise. Tighten those moments, and you could push retention over 85%.`;
+Then review where drop-offs cluster and cut repetitive setup. Small edits there typically create the biggest completion gains.`;
 	}
 
 	if (lowerQuestion.includes('traffic') || lowerQuestion.includes('coming from')) {
-		return `Your traffic breakdown is interesting: Browse Features dominates at 42%, which means the algorithm is your best friend right now. Suggested Videos at 28% shows you're appearing alongside related content.
+		return `To diagnose traffic quality, compare sources by watch time and completion rather than raw views.
 
-The 18% from External Links is worth investigating—that's significant outside traffic. Check if there's a specific site or community driving those views. That could be a partnership opportunity or a place to engage directly.`;
+If a source delivers low watch time, adjust the hook or landing expectation for that audience segment.`;
 	}
 
 	// Default response
-	return `Based on your current metrics (2.4M views, 24.8% engagement, 4:32 avg watch time), you're in a strong position. Your content is resonating with the algorithm and your audience.
+	return `Current snapshot: ${viewsText} views, ${engagementText} engagement, ${watchText} average watch time.
 
-What specific aspect would you like to dive deeper into? I can analyze your traffic sources, suggest content ideas, or help optimize your retention strategy.`;
+Ask about one target outcome (more views, better retention, or next-video planning), and I’ll give a focused action plan.`;
 }

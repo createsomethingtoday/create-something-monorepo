@@ -41,7 +41,7 @@
 	let isUploading = $state(false);
 	let error = $state<string | null>(null);
 	let uploadProgress = $state(0);
-	let fileInput: HTMLInputElement;
+	let fileInput: HTMLInputElement | undefined = $state();
 
 	/**
 	 * Validate file on the client side before uploading.
@@ -228,7 +228,7 @@
 </script>
 
 <div class="image-uploader">
-	<label class="uploader-label">{label}</label>
+	<p class="uploader-label">{label}</p>
 
 	{#if value}
 		<div class="preview-container">

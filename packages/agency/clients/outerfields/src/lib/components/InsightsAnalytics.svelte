@@ -36,6 +36,7 @@
       totalViews: number;
       avgWatchTime: string;
       topVideo: string;
+      completionRate: number;
     };
     instagram?: {
       followers: number;
@@ -64,7 +65,8 @@
         videoEngagement: {
           totalViews: 12547,
           avgWatchTime: '4m 32s',
-          topVideo: 'Episode 1: The Beginning'
+          topVideo: 'Episode 1: The Beginning',
+          completionRate: 73
         },
         instagram: { followers: 8200, engagement: 4.8, recentPosts: 12 },
         youtube: { subscribers: 3100, views: 42000, avgViews: 1200 },
@@ -75,10 +77,11 @@
     }
 
     try {
-      const [clickupRes, instagramRes, youtubeRes] = await Promise.allSettled([
+      const [clickupRes, instagramRes, youtubeRes, platformRes] = await Promise.allSettled([
         fetch('/api/analytics/clickup'),
         fetch('/api/analytics/instagram'),
-        fetch('/api/analytics/youtube')
+        fetch('/api/analytics/youtube'),
+        fetch('/api/analytics/platform')
       ]);
 
       const newData: DashboardData = {};
@@ -104,11 +107,12 @@
         }
       }
 
-      newData.videoEngagement = {
-        totalViews: 12547,
-        avgWatchTime: '4m 32s',
-        topVideo: 'Crew Call Ep 1: The Beginning'
-      };
+      if (platformRes.status === 'fulfilled' && platformRes.value.ok) {
+        const platformData = await platformRes.value.json();
+        if (platformData.success) {
+          newData.videoEngagement = platformData.data;
+        }
+      }
 
       dashboardData = newData;
     } catch (err) {
@@ -276,7 +280,9 @@
                   <span class="stat-label">Avg Watch Time</span>
                 </div>
                 <div class="stat-item">
-                  <span class="stat-value">73%</span>
+                  <span class="stat-value"
+                    >{dashboardData.videoEngagement?.completionRate ?? 73}%</span
+                  >
                   <span class="stat-label">Completion Rate</span>
                 </div>
               </div>

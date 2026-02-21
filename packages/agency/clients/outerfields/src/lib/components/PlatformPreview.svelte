@@ -188,12 +188,12 @@
 			</div>
 		</div>
 
-		<div class="preview-cta">
-			<a href={activeTab === 'user' ? '/demo' : '/admin-demo'} class="btn-primary">
-				<ExternalLink size={20} />
-				Try Full {activeTab === 'user' ? 'User Portal' : 'Admin Dashboard'}
-			</a>
-		</div>
+			<div class="preview-cta">
+				<a href={activeTab === 'user' ? '/demo' : '/admin'} class="btn-primary">
+					<ExternalLink size={20} />
+					Open {activeTab === 'user' ? 'Video Library' : 'Admin Workspace'}
+				</a>
+			</div>
 	</div>
 </section>
 

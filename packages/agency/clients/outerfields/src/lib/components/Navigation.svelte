@@ -15,6 +15,7 @@
 			email: string;
 			name: string;
 			membership: boolean;
+			role?: 'admin' | 'user';
 			createdAt: string;
 		} | null;
 	}
@@ -47,28 +48,33 @@
 			</a>
 
 			<!-- Desktop Nav Links -->
-			<nav class="nav-links desktop-only">
-				{#each NAV_LINKS as link}
-					<a
-						href={link.href}
-						class="nav-link"
-						class:active={$page.url.pathname === link.href}
-					>
-						{link.label}
-					</a>
-				{/each}
-			</nav>
-		</div>
+				<nav class="nav-links desktop-only">
+					{#each NAV_LINKS as link}
+						<a
+							href={link.href}
+							class="nav-link"
+							class:active={$page.url.pathname === link.href}
+						>
+							{link.label}
+						</a>
+					{/each}
+					{#if user?.role === 'admin'}
+						<a href="/admin" class="nav-link" class:active={$page.url.pathname === '/admin'}>Admin</a>
+					{/if}
+				</nav>
+			</div>
 
 		<div class="nav-right">
 			{#if user}
-				<span class="user-info">
-					<User size={16} />
-					<span class="user-name">{user.name || user.email}</span>
-					{#if user.membership}
-						<span class="role-badge">Member</span>
-					{/if}
-				</span>
+					<span class="user-info">
+						<User size={16} />
+						<span class="user-name">{user.name || user.email}</span>
+						{#if user.role === 'admin'}
+							<span class="role-badge">Admin</span>
+						{:else if user.membership}
+							<span class="role-badge">Member</span>
+						{/if}
+					</span>
 				<button class="btn-logout" onclick={handleLogout}>
 					<LogOut size={16} />
 					<span>Log Out</span>
@@ -99,28 +105,40 @@
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<div class="mobile-menu-overlay" onclick={closeMobileMenu} role="presentation"></div>
 		<nav class="mobile-menu">
-			<div class="mobile-menu-links">
-				{#each NAV_LINKS as link}
-					<a
-						href={link.href}
-						class="mobile-nav-link"
-						class:active={$page.url.pathname === link.href}
-						onclick={closeMobileMenu}
-					>
-						{link.label}
-					</a>
-				{/each}
-			</div>
+				<div class="mobile-menu-links">
+					{#each NAV_LINKS as link}
+						<a
+							href={link.href}
+							class="mobile-nav-link"
+							class:active={$page.url.pathname === link.href}
+							onclick={closeMobileMenu}
+						>
+							{link.label}
+						</a>
+					{/each}
+					{#if user?.role === 'admin'}
+						<a
+							href="/admin"
+							class="mobile-nav-link"
+							class:active={$page.url.pathname === '/admin'}
+							onclick={closeMobileMenu}
+						>
+							Admin
+						</a>
+					{/if}
+				</div>
 
 			<div class="mobile-menu-actions">
 				{#if user}
-					<div class="mobile-user-info">
-						<User size={18} />
-						<span>{user.name || user.email}</span>
-						{#if user.membership}
-							<span class="role-badge">Member</span>
-						{/if}
-					</div>
+						<div class="mobile-user-info">
+							<User size={18} />
+							<span>{user.name || user.email}</span>
+							{#if user.role === 'admin'}
+								<span class="role-badge">Admin</span>
+							{:else if user.membership}
+								<span class="role-badge">Member</span>
+							{/if}
+						</div>
 					<button class="mobile-logout-btn" onclick={() => { closeMobileMenu(); handleLogout(); }}>
 						<LogOut size={18} />
 						<span>Log Out</span>

@@ -26,8 +26,8 @@
 	const margin = 30;
 
 	// SVG dimensions
-	const svgWidth = study.width * scale + margin * 2 + 60;
-	const svgHeight = study.depth * scale + margin * 2 + 40;
+	const svgWidth = $derived(study.width * scale + margin * 2 + 60);
+	const svgHeight = $derived(study.depth * scale + margin * 2 + 40);
 
 	// Coordinate transforms (SVG y is inverted)
 	function tx(x: number): number {

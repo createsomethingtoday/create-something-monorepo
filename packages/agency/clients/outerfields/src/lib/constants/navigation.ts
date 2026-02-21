@@ -21,7 +21,7 @@ export const NAV_LINKS: NavLink[] = [
 	{ label: 'Home', href: '/' },
 	{ label: 'Features', href: '/#features', isAnchor: true },
 	{ label: 'Pricing', href: '/#pricing', isAnchor: true },
-	{ label: 'Demo', href: '/demo' }
+	{ label: 'Library', href: '/demo' }
 ];
 
 // Footer links (Company column - excludes items in other columns)

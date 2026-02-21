@@ -673,7 +673,7 @@
 		margin: 0 0 var(--space-md);
 	}
 
-	.section-title svg {
+	.section-title :global(svg) {
 		color: var(--color-info);
 	}
 
@@ -698,7 +698,7 @@
 		background: var(--color-success-muted);
 	}
 
-	.insight-opportunity svg {
+	.insight-opportunity :global(svg) {
 		color: var(--color-success);
 	}
 
@@ -706,7 +706,7 @@
 		background: var(--color-info-muted);
 	}
 
-	.insight-trend svg {
+	.insight-trend :global(svg) {
 		color: var(--color-info);
 	}
 
@@ -714,7 +714,6 @@
 		background: var(--color-warning-muted);
 	}
 
-	.insight-warning svg,
 	.insight-warning :global(svg) {
 		color: var(--color-warning);
 	}
@@ -877,6 +876,7 @@
 		color: var(--color-fg-primary);
 		margin: 0 0 var(--space-xs);
 		display: -webkit-box;
+		line-clamp: 2;
 		-webkit-line-clamp: 2;
 		-webkit-box-orient: vertical;
 		overflow: hidden;

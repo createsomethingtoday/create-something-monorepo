@@ -31,6 +31,9 @@
 	 * Served at:            /thumbnails/crew-call/ep01.jpg ✓
 	 */
 	function getThumbnailPath(v: DbVideo): string {
+		if (v.thumbnail_path.startsWith('http://') || v.thumbnail_path.startsWith('https://')) {
+			return v.thumbnail_path;
+		}
 		// D1 thumbnail_path is already in the correct format: /thumbnails/...
 		// Just use it directly since static folder serves at that path
 		if (v.thumbnail_path.startsWith('/thumbnails/')) {

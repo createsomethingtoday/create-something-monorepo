@@ -1,0 +1,236 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://create-something.dev/schemas/mcp-hub-registry.schema.json",
+  "title": "MCP Hub Registry",
+  "description": "Schema for config/mcp-hub/registry.json",
+  "type": "object",
+  "required": ["version", "servers", "bundles"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "servers": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/server"
+      }
+    },
+    "bundles": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabledBundles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "enabledServers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "disabledServers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "codexConfigPath": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "$defs": {
+    "stringMap": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "catalog": {
+      "type": "object",
+      "required": ["include", "category"],
+      "additionalProperties": false,
+      "properties": {
+        "include": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["create-something", "workway"]
+        },
+        "description": {
+          "type": "string"
+        },
+        "transports": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["http", "sse"]
+          }
+        },
+        "requiresAuth": {
+          "type": "boolean"
+        },
+        "authType": {
+          "type": "string",
+          "enum": ["bearer", "oauth"]
+        },
+        "setupNotes": {
+          "type": "string"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "lifecycle": {
+          "type": "string",
+          "enum": ["active", "dormant", "local"]
+        },
+        "package_path": {
+          "type": "string"
+        },
+        "catalog": {
+          "$ref": "#/$defs/catalog"
+        }
+      }
+    },
+    "httpServer": {
+      "type": "object",
+      "required": ["transport", "url"],
+      "additionalProperties": false,
+      "properties": {
+        "transport": {
+          "const": "http"
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "http_headers": {
+          "$ref": "#/$defs/stringMap"
+        },
+        "env_http_headers": {
+          "$ref": "#/$defs/stringMap"
+        },
+        "bearer_token_env_var": {
+          "type": "string",
+          "minLength": 1
+        },
+        "headers": {
+          "$ref": "#/$defs/stringMap"
+        },
+        "description": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "lifecycle": {
+          "type": "string",
+          "enum": ["active", "dormant", "local"]
+        },
+        "package_path": {
+          "type": "string"
+        },
+        "catalog": {
+          "$ref": "#/$defs/catalog"
+        }
+      }
+    },
+    "stdioServer": {
+      "type": "object",
+      "required": ["transport", "command"],
+      "additionalProperties": false,
+      "properties": {
+        "transport": {
+          "const": "stdio"
+        },
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "env": {
+          "$ref": "#/$defs/stringMap"
+        },
+        "cwd": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "lifecycle": {
+          "type": "string",
+          "enum": ["active", "dormant", "local"]
+        },
+        "package_path": {
+          "type": "string"
+        },
+        "catalog": {
+          "$ref": "#/$defs/catalog"
+        }
+      }
+    },
+    "server": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/httpServer"
+        },
+        {
+          "$ref": "#/$defs/stdioServer"
+        }
+      ]
+    }
+  }
+}

@@ -133,8 +133,8 @@
 
 <!-- GSAP Validation Modal -->
 {#if isGsapModalOpen && GsapValidationModal}
-	<svelte:component
-		this={GsapValidationModal}
+	{@const GsapModal = GsapValidationModal}
+	<GsapModal
 		isOpen={isGsapModalOpen}
 		onClose={() => isGsapModalOpen = false}
 		userEmail={data.user?.email}
@@ -263,7 +263,7 @@
 		color: var(--color-fg-secondary);
 	}
 
-	.tool-features svg {
+	.tool-features :global(svg) {
 		color: var(--color-success);
 		flex-shrink: 0;
 	}
@@ -333,7 +333,7 @@
 		border-radius: var(--radius-lg);
 	}
 
-	.tip-box svg {
+	.tip-box :global(svg) {
 		color: var(--color-info);
 		flex-shrink: 0;
 		margin-top: 2px;

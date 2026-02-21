@@ -25,9 +25,9 @@
 </script>
 
 <div class="secondary-uploader">
-	<label class="uploader-label">
+	<p class="uploader-label">
 		Secondary Thumbnail Image (Optional)
-	</label>
+	</p>
 	<p class="description">
 		{maxImages === 1 ? 'Add a promotional image' : `Add up to ${maxImages} promotional images`} with 150:199 aspect ratio (e.g., 750×995px)
 	</p>
@@ -64,12 +64,6 @@
 		gap: var(--space-xs);
 	}
 
-	.label-hint {
-		font-size: var(--text-caption);
-		font-weight: var(--font-normal);
-		color: var(--color-fg-muted);
-	}
-
 	.description {
 		font-size: var(--text-caption);
 		color: var(--color-fg-secondary);
@@ -86,9 +80,5 @@
 		.thumbnail-grid {
 			grid-template-columns: 1fr;
 		}
-	}
-
-	.thumbnail-slot {
-		/* Container for each ImageUploader instance */
 	}
 </style>

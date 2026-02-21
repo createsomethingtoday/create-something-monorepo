@@ -18,16 +18,17 @@
 
 	interface Props {
 		children: import('svelte').Snippet;
-		data: {
-			user: {
-				id: string;
-				email: string;
-				name: string;
-				membership: boolean;
-				createdAt: string;
-			} | null;
-		};
-	}
+			data: {
+				user: {
+					id: string;
+					email: string;
+					name: string;
+					membership: boolean;
+					role?: 'admin' | 'user';
+					createdAt: string;
+				} | null;
+			};
+		}
 
 	let { children, data }: Props = $props();
 

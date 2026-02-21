@@ -14,8 +14,8 @@
 	let { paper, isCompleted = false, onReset }: Props = $props();
 
 	// Use html_content if available, otherwise use markdown content
-	const hasHtmlContent = !!paper.html_content;
-	const contentToRender = paper.html_content || paper.content;
+	const hasHtmlContent = $derived(!!paper.html_content);
+	const contentToRender = $derived(paper.html_content || paper.content);
 
 	// For markdown content, configure marked
 	let renderedContent = $state("");

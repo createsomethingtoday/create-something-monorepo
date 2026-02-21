@@ -118,13 +118,32 @@ export class ProgressTracker {
   ): Promise<void> {
     const now = Math.floor(Date.now() / 1000);
 
+    // Ensure path progress exists and points at the current lesson.
     await this.db
       .prepare(
-        `UPDATE lesson_progress
-         SET status = 'completed', completed_at = ?, time_spent = time_spent + ?
-         WHERE learner_id = ? AND path_id = ? AND lesson_id = ?`
+        `INSERT INTO path_progress (learner_id, path_id, status, started_at, current_lesson)
+         VALUES (?, ?, 'in_progress', ?, ?)
+         ON CONFLICT(learner_id, path_id) DO UPDATE SET
+           status = CASE WHEN status = 'completed' THEN 'completed' ELSE 'in_progress' END,
+           current_lesson = ?`
       )
-      .bind(now, timeSpent, learnerId, pathId, lessonId)
+      .bind(learnerId, pathId, now, lessonId, lessonId)
+      .run();
+
+    // Upsert completion so direct complete calls still persist progress.
+    await this.db
+      .prepare(
+        `INSERT INTO lesson_progress
+           (learner_id, path_id, lesson_id, status, started_at, completed_at, time_spent, visits)
+         VALUES (?, ?, ?, 'completed', ?, ?, ?, 1)
+         ON CONFLICT(learner_id, path_id, lesson_id) DO UPDATE SET
+           status = 'completed',
+           completed_at = excluded.completed_at,
+           time_spent = lesson_progress.time_spent + excluded.time_spent,
+           started_at = COALESCE(lesson_progress.started_at, excluded.started_at),
+           visits = CASE WHEN lesson_progress.visits > 0 THEN lesson_progress.visits ELSE 1 END`
+      )
+      .bind(learnerId, pathId, lessonId, now, now, timeSpent)
       .run();
   }
 

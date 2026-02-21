@@ -286,7 +286,6 @@
 						disabled={day.isDisabled}
 						tabindex={day.inMonth ? 0 : -1}
 						aria-label={day.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-						aria-selected={day.isSelected}
 					>
 						{day.date.getDate()}
 					</button>
