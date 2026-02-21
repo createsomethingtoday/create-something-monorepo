@@ -17,7 +17,13 @@
  */
 
 import { Composio } from '@composio/core';
-import type { ComposioClientConfig, ComposioAccount } from './types.js';
+import type {
+  ComposioClientConfig,
+  ComposioAccount,
+  ComposioToolDiscoveryOptions,
+  ComposioToolkitListOptions,
+  ComposioToolkitSummary,
+} from './types.js';
 
 // =============================================================================
 // Error Types
@@ -91,14 +97,26 @@ export class ComposioClient {
    * Uses getRawComposioTools() to get tool definitions without provider wrapping.
    * The ToolFactory converts these to mcp-core tool registrations.
    */
-  async getTools(toolkits: string[]): Promise<ComposioToolDef[]> {
+  async getTools(
+    toolkits: string[],
+    options: ComposioToolDiscoveryOptions = {},
+  ): Promise<ComposioToolDef[]> {
     try {
       const rawTools = await this.composio.tools.getRawComposioTools({
         toolkits: toolkits.map((t) => t.toLowerCase()),
+        ...(options.limit ? { limit: options.limit } : {}),
+        ...(typeof options.important === 'boolean' ? { important: options.important } : {}),
+        ...(options.search ? { search: options.search } : {}),
+        ...(options.authConfigIds && options.authConfigIds.length > 0
+          ? { authConfigIds: options.authConfigIds }
+          : {}),
       });
+      const rawItems = Array.isArray(rawTools)
+        ? rawTools
+        : (((rawTools as unknown as Record<string, unknown>)?.items as unknown[]) ?? []);
 
       // Map to our internal type — insulates us from SDK shape changes
-      return (rawTools ?? []).map((tool: Record<string, unknown>) => ({
+      return (rawItems ?? []).map((tool: Record<string, unknown>) => ({
         slug: String(tool.slug ?? tool.enum ?? ''),
         name: String(tool.name ?? tool.displayName ?? ''),
         description: String(tool.description ?? ''),
@@ -115,6 +133,36 @@ export class ComposioClient {
       throw new ComposioBridgeError(
         `Failed to fetch tools for toolkits [${toolkits.join(', ')}]: ${error instanceof Error ? error.message : String(error)}`,
         'TOOLS_FETCH_FAILED',
+      );
+    }
+  }
+
+  // ===========================================================================
+  // Toolkit Discovery (Automation tier)
+  // ===========================================================================
+
+  /**
+   * List Composio toolkits for inventory/sync flows.
+   */
+  async listToolkits(options: ComposioToolkitListOptions = {}): Promise<ComposioToolkitSummary[]> {
+    try {
+      const response = await this.composio.toolkits.get({
+        ...(options.category ? { category: options.category } : {}),
+        ...(options.managedBy ? { managedBy: options.managedBy } : {}),
+        ...(options.sortBy ? { sortBy: options.sortBy } : {}),
+        ...(options.limit ? { limit: options.limit } : {}),
+        ...(options.cursor ? { cursor: options.cursor } : {}),
+      });
+
+      const items = Array.isArray(response)
+        ? (response as Record<string, unknown>[])
+        : (((response as unknown as Record<string, unknown>)?.items as unknown[]) ?? []);
+
+      return items.map(normalizeToolkit);
+    } catch (error) {
+      throw new ComposioBridgeError(
+        `Failed to list toolkits: ${error instanceof Error ? error.message : String(error)}`,
+        'TOOLKITS_FETCH_FAILED',
       );
     }
   }
@@ -305,4 +353,59 @@ function normalizeParameters(
     properties: p.properties as Record<string, unknown> ?? {},
     required: p.required as string[] ?? undefined,
   };
+}
+
+function normalizeToolkit(raw: Record<string, unknown>): ComposioToolkitSummary {
+  const meta = (raw.meta as Record<string, unknown> | undefined) ?? {};
+  const categoriesRaw = Array.isArray(meta.categories) ? meta.categories : [];
+
+  return {
+    slug: String(raw.slug ?? ''),
+    name: String(raw.name ?? raw.slug ?? ''),
+    description: stringOrUndefined(meta.description ?? raw.description),
+    categories: categoriesRaw
+      .map((category) => {
+        if (typeof category === 'string') return category;
+        if (!category || typeof category !== 'object') return '';
+        const c = category as Record<string, unknown>;
+        return String(c.slug ?? c.id ?? c.name ?? '').trim().toLowerCase();
+      })
+      .filter(Boolean),
+    toolsCount: numberOrUndefined(meta.toolsCount ?? meta.tools_count),
+    triggersCount: numberOrUndefined(meta.triggersCount ?? meta.triggers_count),
+    availableVersions: arrayOfStrings(meta.availableVersions),
+    authSchemes: arrayOfStrings(raw.authSchemes),
+    composioManagedAuthSchemes: arrayOfStrings(raw.composioManagedAuthSchemes),
+    noAuth: booleanOrUndefined(raw.noAuth),
+    isLocalToolkit: Boolean(raw.isLocalToolkit),
+  };
+}
+
+function stringOrUndefined(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+function numberOrUndefined(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+function booleanOrUndefined(value: unknown): boolean | undefined {
+  if (typeof value === 'boolean') return value;
+  return undefined;
+}
+
+function arrayOfStrings(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const normalized = value
+    .filter((entry) => typeof entry === 'string')
+    .map((entry) => String(entry).trim())
+    .filter(Boolean);
+  return normalized.length > 0 ? normalized : undefined;
 }

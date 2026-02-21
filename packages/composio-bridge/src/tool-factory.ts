@@ -19,7 +19,12 @@
 import { z, type ZodRawShape } from 'zod';
 import type { ScopedMcpServer } from '@create-something/mcp-core';
 import { ComposioClient, type ComposioToolDef } from './client.js';
-import type { AppConfig, McpServerLike, ToolFactoryConfig } from './types.js';
+import type {
+  AppConfig,
+  ComposioToolDiscoveryOptions,
+  McpServerLike,
+  ToolFactoryConfig,
+} from './types.js';
 
 // =============================================================================
 // JSON Schema → Zod conversion
@@ -148,6 +153,7 @@ export class ComposioToolFactory {
   private readonly client: ComposioClient;
   private readonly appConfigs: AppConfig[];
   private readonly resolveUserId: (accountId: string) => string | Promise<string>;
+  private readonly toolDiscovery: ComposioToolDiscoveryOptions | undefined;
 
   /** Cached tool definitions — fetched once, reused across registrations */
   private toolCache: Map<string, ComposioToolDef[]> | null = null;
@@ -166,6 +172,7 @@ export class ComposioToolFactory {
     );
 
     this.resolveUserId = config.resolveUserId ?? ((id: string) => id);
+    this.toolDiscovery = config.toolDiscovery;
   }
 
   // ===========================================================================
@@ -354,7 +361,7 @@ export class ComposioToolFactory {
     if (this.toolCache) return this.toolCache;
 
     const appNames = this.appConfigs.map((c) => c.app.toUpperCase());
-    const allTools = await this.client.getTools(appNames);
+    const allTools = await this.client.getTools(appNames, this.toolDiscovery);
 
     const byApp = new Map<string, ComposioToolDef[]>();
     for (const tool of allTools) {
