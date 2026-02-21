@@ -181,6 +181,39 @@ function getWorkspacePackageDirs() {
   return dirs;
 }
 
+function getWorkspacePackageIndex() {
+  const result = spawnSync('pnpm', ['-r', 'list', '--depth', '-1', '--json'], {
+    cwd: REPO_ROOT,
+    env: process.env,
+    encoding: 'utf8',
+  });
+
+  if (result.status !== 0) {
+    console.error('Warning: failed to query pnpm workspace package names; skipping prebuild phase.');
+    return new Map();
+  }
+
+  let list;
+  try {
+    list = JSON.parse(result.stdout || '[]');
+  } catch {
+    console.error('Warning: failed to parse pnpm workspace package names; skipping prebuild phase.');
+    return new Map();
+  }
+
+  const index = new Map();
+  for (const item of list) {
+    if (!item || typeof item.name !== 'string' || typeof item.path !== 'string') continue;
+    index.set(item.name, {
+      name: item.name,
+      dir: item.path,
+      relDir: normalizePath(path.relative(REPO_ROOT, item.path)),
+    });
+  }
+
+  return index;
+}
+
 function getPackageManager(pkgDir, workspaceDirs, deps = {}) {
   const relDir = normalizePath(path.relative(REPO_ROOT, pkgDir));
 
@@ -356,6 +389,47 @@ function ensureDepsForNpmPackage(pkg) {
   return run('npm', ['ci', '--ignore-scripts'], pkg.dir, `${pkg.relDir} | deps`);
 }
 
+function getWorkspaceBuildTargets(packages, workspacePackageIndex) {
+  const targets = new Map();
+
+  for (const pkg of packages) {
+    for (const [depName, depRange] of Object.entries(pkg.deps)) {
+      if (typeof depRange !== 'string' || !depRange.startsWith('workspace:')) continue;
+      const workspacePkg = workspacePackageIndex.get(depName);
+      if (!workspacePkg) continue;
+
+      const pkgJsonPath = path.join(workspacePkg.dir, 'package.json');
+      if (!existsSync(pkgJsonPath)) continue;
+
+      let manifest;
+      try {
+        manifest = JSON.parse(readFileSync(pkgJsonPath, 'utf8'));
+      } catch (err) {
+        console.error(`Failed to parse ${normalizePath(path.relative(REPO_ROOT, pkgJsonPath))}: ${String(err)}`);
+        process.exit(1);
+      }
+
+      if (typeof manifest?.scripts?.build === 'string') {
+        targets.set(depName, workspacePkg);
+      }
+    }
+  }
+
+  return [...targets.values()].sort((a, b) => a.relDir.localeCompare(b.relDir));
+}
+
+function ensureWorkspaceBuildTargetsBuilt(targets) {
+  if (targets.length === 0) return 0;
+
+  console.log(`\nPrebuilding ${targets.length} workspace dependency package(s) referenced via workspace:*`);
+  for (const target of targets) {
+    const status = run('pnpm', ['run', 'build'], target.dir, `${target.relDir} | prebuild`);
+    if (status !== 0) return status;
+  }
+
+  return 0;
+}
+
 function pnpmExecTsc(pkg, stage) {
   if (pkg.manager === 'npm') {
     return run('npm', ['exec', '--', 'tsc', '--noEmit'], pkg.dir, `${pkg.relDir} | ${stage}`);
@@ -446,6 +520,7 @@ function runStageForPackage(pkg, stage) {
 
 const { stage: requestedStage, scope: requestedScope } = parseArgs(process.argv.slice(2));
 const workspaceDirs = getWorkspacePackageDirs();
+const workspacePackageIndex = getWorkspacePackageIndex();
 const packages = discoverMcpPackages(requestedScope, workspaceDirs);
 
 if (packages.length === 0) {
@@ -464,6 +539,13 @@ for (const pkg of packages) {
 }
 
 const stagesToRun = requestedStage === 'all' ? STAGES : [requestedStage];
+
+if (stagesToRun.some((stage) => stage !== 'lint')) {
+  const buildTargets = getWorkspaceBuildTargets(packages, workspacePackageIndex);
+  const status = ensureWorkspaceBuildTargetsBuilt(buildTargets);
+  if (status !== 0) process.exit(status);
+}
+
 let failures = 0;
 
 for (const stage of stagesToRun) {
