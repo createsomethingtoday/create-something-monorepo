@@ -8,9 +8,12 @@
     "secrets": "echo 'Run: wrangler secret put <NAME>' && echo 'Required: NOTION_API_KEY, NOTION_DATABASE_ID'"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.3",
+    "@modelcontextprotocol/sdk": "1.25.3",
     "agents": "^0.3.10",
     "zod": "^3.23.0"
+  },
+  "overrides": {
+    "@modelcontextprotocol/sdk": "1.25.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260205.0",
