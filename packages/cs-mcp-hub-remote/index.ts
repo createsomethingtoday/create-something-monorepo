@@ -71,7 +71,7 @@ type ProxyRoute = {
   proxyToolName: string;
   serverName: string;
   downstreamToolName: string;
-  call: (args: Record<string, unknown>, trace: InvocationTrace) => Promise<any>;
+  call: (args: Record<string, unknown>, trace: InvocationTrace, accountId: string) => Promise<any>;
 };
 
 type ProxyCatalog = {
@@ -128,6 +128,7 @@ interface Env {
   HUB_REFRESH_SECONDS?: string;
   HUB_CACHE_BUST?: string;
   HUB_ACCOUNT_ID?: string;
+  HUB_STATE_KV?: KVNamespace;
   TELEMETRY_DB?: D1Database;
   [key: string]: unknown;
 }
@@ -135,6 +136,7 @@ interface Env {
 const HUB_NAME = 'create-something-hub-remote';
 const HUB_VERSION = '1.0.0';
 const DEFAULT_REFRESH_SECONDS = 300;
+const HUB_STATE_KV_KEY = 'hub_state_v1';
 
 const registry = registryJson as unknown as McpBundleRegistry;
 
@@ -172,6 +174,21 @@ const MANAGEMENT_TOOLS: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'hub_update_state',
+    description:
+      'Enable/disable bundles or servers in remote hub state (persisted in HUB_STATE_KV) and refresh connections.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        enableBundles: { type: 'array', items: { type: 'string' } },
+        disableBundles: { type: 'array', items: { type: 'string' } },
+        enableServers: { type: 'array', items: { type: 'string' } },
+        disableServers: { type: 'array', items: { type: 'string' } },
+      },
       additionalProperties: false,
     },
   },
@@ -249,6 +266,7 @@ export default {
               health: '/health',
             },
             auth_required: Boolean(readEnvString(env, 'HUB_API_TOKEN')),
+            state_storage: env.HUB_STATE_KV ? 'kv' : 'env-only',
             downstream_auth_config: {
               has_cs_telemetry_operator_token: Boolean(
                 readEnvString(env, 'CS_TELEMETRY_OPERATOR_API_TOKEN'),
@@ -322,7 +340,8 @@ function timingSafeEqual(a: string, b: string): boolean {
 }
 
 async function getHubRuntime(env: Env, options: { force?: boolean } = {}): Promise<HubRuntime> {
-  const resolution = resolveState(registry, readStateFromEnv(env, registry));
+  const persistedState = await readHubState(env, registry);
+  const resolution = resolveState(registry, persistedState);
   const key = buildRuntimeCacheKey(env, resolution.state);
   const ttlMs = parsePositiveInt(readEnvString(env, 'HUB_REFRESH_SECONDS'), DEFAULT_REFRESH_SECONDS) * 1000;
 
@@ -479,6 +498,7 @@ async function callDownstreamToolWithTrace(
   toolName: string,
   args: Record<string, unknown>,
   trace: InvocationTrace,
+  accountId: string,
 ): Promise<any> {
   const client = new Client({
     name: `${HUB_NAME}:${server.name}:proxy`,
@@ -492,6 +512,8 @@ async function callDownstreamToolWithTrace(
     'x-hub-server': HUB_NAME,
     'x-hub-downstream-server': server.name,
     'x-hub-downstream-tool': toolName,
+    'x-mcp-account-id': accountId,
+    'x-hub-account-id': accountId,
   };
 
   const transport = new StreamableHTTPClientTransport(new URL(server.config.url), {
@@ -542,7 +564,8 @@ function buildProxyCatalog(connectedServers: ConnectedDownstream[]): ProxyCatalo
         proxyToolName: proxyName,
         serverName: server.name,
         downstreamToolName: tool.name,
-        call: (args, trace) => callDownstreamToolWithTrace(server, tool.name, args, trace),
+        call: (args, trace, accountId) =>
+          callDownstreamToolWithTrace(server, tool.name, args, trace, accountId),
       });
     }
   }
@@ -645,6 +668,37 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         return result;
       }
 
+      if (toolName === 'hub_update_state') {
+        const patch = {
+          enableBundles: stringArrayArg(args.enableBundles, 'enableBundles'),
+          disableBundles: stringArrayArg(args.disableBundles, 'disableBundles'),
+          enableServers: stringArrayArg(args.enableServers, 'enableServers'),
+          disableServers: stringArrayArg(args.disableServers, 'disableServers'),
+        };
+
+        const stateUpdate = await applyRemoteStateUpdate(env, patch);
+        const refreshed = await getHubRuntime(env, { force: true });
+        const result = toJsonResult({
+          ...stateUpdate,
+          enabledServerNames: refreshed.stateResolution.enabledServerNames,
+          warnings: refreshed.stateResolution.warnings,
+          note: 'State persisted remotely. Proxy tool list refreshed from live downstream connections.',
+        });
+
+        await recordHubInvocation(env, {
+          accountId,
+          toolName,
+          success: true,
+          durationMs: Date.now() - startedAt,
+          trace,
+          metadata: {
+            type: 'management',
+            patch,
+          },
+        });
+        return result;
+      }
+
       if (toolName === 'hub_trace_lookup') {
         const correlationId = stringArg(args.correlationId) ?? '';
         if (!correlationId) {
@@ -697,7 +751,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         return errorResult;
       }
 
-      const proxiedResult = await route.call(args, trace);
+      const proxiedResult = await route.call(args, trace, accountId);
       const proxiedSuccess = !resultIsError(proxiedResult);
       const durationMs = Date.now() - startedAt;
       await Promise.all([
@@ -781,7 +835,7 @@ function buildStatusPayload(runtime: HubRuntime): Record<string, unknown> {
     proxyToolCount: runtime.proxies.toolDefinitions.length,
     warnings: runtime.proxies.warnings,
     builtAt: new Date(runtime.builtAt).toISOString(),
-    note: 'Use hub_refresh_connections to force reconnect + rebuild proxy tool catalog.',
+    note: 'Use hub_update_state for live toggles and hub_refresh_connections to force reconnect + rebuild proxy catalog.',
   };
 }
 
@@ -810,6 +864,25 @@ function buildRegistryPayload(currentRegistry: McpBundleRegistry): Record<string
   };
 }
 
+async function applyRemoteStateUpdate(
+  env: Env,
+  patch: {
+    enableBundles: string[];
+    disableBundles: string[];
+    enableServers: string[];
+    disableServers: string[];
+  },
+): Promise<Record<string, unknown>> {
+  const current = await readHubState(env, registry);
+  const next = updateState(registry, current, patch);
+  const write = await writeHubState(env, next);
+
+  return {
+    updatedState: next,
+    storage: write,
+  };
+}
+
 function normalizeArgs(raw: unknown): Record<string, unknown> {
   if (!isRecord(raw)) {
     return {};
@@ -830,6 +903,14 @@ function numberArg(raw: unknown, fallback: number, min: number, max: number): nu
     return fallback;
   }
   return Math.max(min, Math.min(max, Math.floor(raw)));
+}
+
+function stringArrayArg(raw: unknown, fieldName: string): string[] {
+  if (raw === undefined) return [];
+  if (!Array.isArray(raw) || raw.some((entry) => typeof entry !== 'string')) {
+    throw new Error(`"${fieldName}" must be an array of strings`);
+  }
+  return uniqueSortedStrings(raw as string[]);
 }
 
 function resultIsError(value: unknown): boolean {
@@ -904,16 +985,19 @@ function extractInvocationTrace(request: unknown, extra: unknown): InvocationTra
 function resolveAccountId(extra: unknown, env: Env): string {
   const extraRecord = asRecord(extra);
   const authInfo = asRecord(extraRecord?.authInfo);
+  const authorization = getHeaderValue(extraRecord?.requestInfo, 'authorization');
   const fromHeader =
+    getHeaderValue(extraRecord?.requestInfo, 'x-mcp-account-id') ??
     getHeaderValue(extraRecord?.requestInfo, 'x-account-id') ??
     getHeaderValue(extraRecord?.requestInfo, 'x-tenant-id') ??
     getHeaderValue(extraRecord?.requestInfo, 'x-hub-account-id');
+  const fromBearer = authorization ? parseBearerToken(authorization) : null;
   const fromAuth =
     normalizeTraceValue(authInfo?.accountId) ??
     normalizeTraceValue(authInfo?.tenantId) ??
     normalizeTraceValue(authInfo?.clientId) ??
     normalizeTraceValue(authInfo?.sub);
-  return fromHeader ?? fromAuth ?? readEnvString(env, 'HUB_ACCOUNT_ID') ?? 'operator';
+  return fromHeader ?? fromBearer ?? fromAuth ?? readEnvString(env, 'HUB_ACCOUNT_ID') ?? 'operator';
 }
 
 function normalizeTraceValue(value: unknown): string | null {
@@ -965,6 +1049,13 @@ function getHeaderValue(requestInfo: unknown, name: string): string | null {
   }
 
   return null;
+}
+
+function parseBearerToken(value: string): string | null {
+  const match = value.match(/^Bearer\s+(.+)$/i);
+  if (!match) return null;
+  const token = match[1]?.trim();
+  return token ? token : null;
 }
 
 function getCurrentPeriod(): string {
@@ -1395,6 +1486,52 @@ function isMissingColumnError(message: string, column: string): boolean {
   return message.includes(`no such column: ${column}`) || message.includes(`no column named ${column}`);
 }
 
+async function readHubState(env: Env, currentRegistry: McpBundleRegistry): Promise<HubState> {
+  const fromKv = await readHubStateFromKv(env);
+  if (fromKv) {
+    return fromKv;
+  }
+  return readStateFromEnv(env, currentRegistry);
+}
+
+async function readHubStateFromKv(env: Env): Promise<HubState | null> {
+  const kv = env.HUB_STATE_KV;
+  if (!kv) return null;
+
+  const raw = await kv.get(HUB_STATE_KV_KEY);
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    return {
+      enabledBundles: parseStateStringArray(parsed.enabledBundles),
+      enabledServers: parseStateStringArray(parsed.enabledServers),
+      disabledServers: parseStateStringArray(parsed.disabledServers),
+    };
+  } catch (error) {
+    console.warn(
+      `[${HUB_NAME}] failed to parse HUB_STATE_KV payload; falling back to env/defaults: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+    return null;
+  }
+}
+
+async function writeHubState(env: Env, state: HubState): Promise<Record<string, unknown>> {
+  const kv = env.HUB_STATE_KV;
+  if (!kv) {
+    throw new Error('HUB_STATE_KV binding is not configured on this hub deployment.');
+  }
+
+  await kv.put(HUB_STATE_KV_KEY, JSON.stringify(state));
+  return {
+    persisted: true,
+    key: HUB_STATE_KV_KEY,
+    storage: 'kv',
+  };
+}
+
 function readStateFromEnv(env: Env, currentRegistry: McpBundleRegistry): HubState {
   const defaults = currentRegistry.defaults ?? {};
 
@@ -1414,6 +1551,45 @@ function readStateFromEnv(env: Env, currentRegistry: McpBundleRegistry): HubStat
     enabledBundles,
     enabledServers,
     disabledServers,
+  };
+}
+
+function updateState(
+  currentRegistry: McpBundleRegistry,
+  current: HubState,
+  patch: {
+    enableBundles?: string[];
+    disableBundles?: string[];
+    enableServers?: string[];
+    disableServers?: string[];
+  },
+): HubState {
+  const baseline = resolveState(currentRegistry, current).state;
+
+  const enabledBundles = new Set<string>(baseline.enabledBundles);
+  const enabledServers = new Set<string>(baseline.enabledServers);
+  const disabledServers = new Set<string>(baseline.disabledServers);
+
+  for (const bundle of patch.enableBundles ?? []) {
+    enabledBundles.add(bundle);
+  }
+  for (const bundle of patch.disableBundles ?? []) {
+    enabledBundles.delete(bundle);
+  }
+
+  for (const server of patch.enableServers ?? []) {
+    enabledServers.add(server);
+    disabledServers.delete(server);
+  }
+  for (const server of patch.disableServers ?? []) {
+    enabledServers.delete(server);
+    disabledServers.add(server);
+  }
+
+  return {
+    enabledBundles: [...enabledBundles].sort(),
+    enabledServers: [...enabledServers].sort(),
+    disabledServers: [...disabledServers].sort(),
   };
 }
 
@@ -1500,6 +1676,16 @@ function parseList(raw: string | undefined): string[] | null {
   }
 
   return uniqueSortedStrings(trimmed.split(',').map((part) => part.trim()).filter(Boolean));
+}
+
+function parseStateStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return uniqueSortedStrings(
+    value
+      .filter((entry) => typeof entry === 'string')
+      .map((entry) => String(entry).trim())
+      .filter(Boolean),
+  );
 }
 
 function parsePositiveInt(raw: string | undefined, fallback: number): number {
