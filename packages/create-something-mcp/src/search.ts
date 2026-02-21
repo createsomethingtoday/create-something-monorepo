@@ -8,6 +8,7 @@ import { PAPERS } from './content/generated/papers.js';
 import { CANON_PAGES } from './content/generated/canon.js';
 import { PATTERNS } from './content/generated/patterns.js';
 import { GRAPH_NODES } from './content/generated/graph.js';
+import { PROPERTY_DOCUMENTS } from './content/generated/property-docs.js';
 // GRAPH_EDGES (800 KB) lazy-loaded only when findRelated() is called
 import { MASTERS } from './content/masters.js';
 import { PRAXIS_EXERCISES } from './content/praxis.js';
@@ -104,6 +105,19 @@ function buildContentIndex(): ContentItem[] {
       content: p.description,
       property: 'agency',
       uri: `products://list`
+    });
+  }
+
+  // Property Documents
+  for (const doc of PROPERTY_DOCUMENTS) {
+    items.push({
+      id: `document:${doc.id}`,
+      type: 'document',
+      title: doc.title,
+      description: doc.description,
+      content: doc.content,
+      property: doc.property,
+      uri: doc.uri
     });
   }
 
