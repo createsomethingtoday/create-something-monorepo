@@ -172,6 +172,7 @@ async function runServerMode(): Promise<void> {
   const resolution = resolveState(registry, initialState);
   const downstream = await connectDownstreamServers(registry, resolution.enabledServerNames);
   const proxies = buildProxyCatalog(downstream.connected);
+  const rateLimitPolicy = resolveRateLimitPolicy(process.env);
 
   const server = new Server(
     {
@@ -228,7 +229,7 @@ async function runServerMode(): Promise<void> {
   server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
     const uri = request.params.uri;
 
-    const status = buildStatusPayload(paths, registry, downstream, proxies);
+    const status = buildStatusPayload(paths, registry, downstream, proxies, rateLimitPolicy);
     const registryPayload = buildRegistryPayload(registry);
     const proxyToolsPayload = {
       proxyTools: proxies.toolDefinitions.map((tool) => tool.name),
@@ -257,7 +258,7 @@ async function runServerMode(): Promise<void> {
 
     try {
       if (toolName === 'hub_status') {
-        return toJsonResult(buildStatusPayload(paths, registry, downstream, proxies));
+        return toJsonResult(buildStatusPayload(paths, registry, downstream, proxies, rateLimitPolicy));
       }
 
       if (toolName === 'hub_list_registry') {
@@ -275,6 +276,10 @@ async function runServerMode(): Promise<void> {
         return toJsonResult(searchProxyTools(proxies, args));
       }
 
+      if (toolName === 'hub_policy_status') {
+        return toJsonResult(buildPolicyStatusPayload(rateLimitPolicy));
+      }
+
       if (toolName === 'hub_update_state') {
         return toJsonResult(applyStateUpdate(args, paths, registry));
       }
@@ -286,6 +291,14 @@ async function runServerMode(): Promise<void> {
       const route = proxies.routes.get(toolName);
       if (!route) {
         return toErrorResult(`Unknown tool "${toolName}"`);
+      }
+
+      const rateLimitDecision = applyRateLimit(rateLimitPolicy, 'operator', route);
+      if (!rateLimitDecision.allowed) {
+        return toErrorResult(
+          `Rate limit exceeded (${rateLimitDecision.maxCalls} calls per ${rateLimitDecision.windowSeconds}s, scope=${rateLimitDecision.scope}). ` +
+          `Retry after ${rateLimitDecision.resetAt}.`,
+        );
       }
 
       return await route.call(args);
@@ -427,6 +440,7 @@ function buildStatusPayload(
   registry: McpBundleRegistry,
   downstream: Awaited<ReturnType<typeof connectDownstreamServers>>,
   proxies: ProxyCatalog,
+  rateLimitPolicy?: RateLimitPolicy,
 ): Record<string, unknown> {
   const state = loadState(paths);
   const resolution = resolveState(registry, state);
@@ -465,6 +479,7 @@ function buildStatusPayload(
         enabled: resolution.state.enabledBundles.includes(bundleName),
         servers: registry.bundles[bundleName],
       })),
+    policy: buildPolicyStatusPayload(rateLimitPolicy ?? resolveRateLimitPolicy(process.env)),
     warnings: [...resolution.warnings, ...proxies.warnings],
     note: 'State edits apply immediately to config writes, but proxy tool list updates on hub restart.',
   };
@@ -541,6 +556,144 @@ function buildRegistryPayload(registry: McpBundleRegistry): Record<string, unkno
     bundles,
     defaults: registry.defaults ?? {},
   };
+}
+
+function buildPolicyStatusPayload(policy: RateLimitPolicy): Record<string, unknown> {
+  return {
+    rateLimit: {
+      enabled: policy.enabled,
+      scope: policy.scope,
+      maxCallsPerWindow: policy.maxCalls,
+      windowSeconds: policy.windowSeconds,
+      exemptServers: [...policy.exemptServers].sort(),
+      activeBucketCount: rateLimitBuckets.size,
+    },
+    note: policy.enabled
+      ? 'Rate limiting applies only to proxied downstream tool calls.'
+      : 'Rate limiting is disabled. Set HUB_RATE_LIMIT_MAX_CALLS_PER_WINDOW > 0 to enable.',
+  };
+}
+
+function resolveRateLimitPolicy(
+  env: NodeJS.ProcessEnv,
+): RateLimitPolicy {
+  const maxCalls = parsePositiveInt(env.HUB_RATE_LIMIT_MAX_CALLS_PER_WINDOW, 0);
+  const windowSeconds = parsePositiveInt(env.HUB_RATE_LIMIT_WINDOW_SECONDS, 60);
+  const scope = parseRateLimitScope(env.HUB_RATE_LIMIT_SCOPE);
+  const exemptServers = new Set(parseCsvList(env.HUB_RATE_LIMIT_EXEMPT_SERVERS));
+
+  const enabled = maxCalls > 0;
+  return {
+    enabled,
+    maxCalls,
+    windowMs: windowSeconds * 1000,
+    windowSeconds,
+    scope,
+    exemptServers,
+  };
+}
+
+function parseRateLimitScope(raw: string | undefined): RateLimitScope {
+  const normalized = (raw ?? '').trim().toLowerCase();
+  if (normalized === 'account_server') return 'account_server';
+  if (normalized === 'account_server_tool') return 'account_server_tool';
+  return 'account';
+}
+
+function applyRateLimit(
+  policy: RateLimitPolicy,
+  accountId: string,
+  route: ProxyRoute,
+): RateLimitDecision {
+  if (!policy.enabled || policy.exemptServers.has(route.serverName)) {
+    return {
+      allowed: true,
+      key: 'disabled',
+      remaining: Number.MAX_SAFE_INTEGER,
+      resetAt: new Date(Date.now()).toISOString(),
+      scope: policy.scope,
+      maxCalls: policy.maxCalls,
+      windowSeconds: policy.windowSeconds,
+    };
+  }
+
+  const now = Date.now();
+  const key = buildRateLimitKey(policy.scope, accountId, route);
+  const current = rateLimitBuckets.get(key);
+  const windowStartMs = current ? current.windowStartMs : now;
+  const windowExpired = now >= windowStartMs + policy.windowMs;
+
+  const bucket = !current || windowExpired
+    ? { windowStartMs: now, count: 0, lastSeenMs: now }
+    : current;
+
+  if (bucket.count >= policy.maxCalls) {
+    bucket.lastSeenMs = now;
+    rateLimitBuckets.set(key, bucket);
+    maybeSweepRateLimitBuckets(now, policy.windowMs);
+    return {
+      allowed: false,
+      key,
+      remaining: 0,
+      resetAt: new Date(bucket.windowStartMs + policy.windowMs).toISOString(),
+      scope: policy.scope,
+      maxCalls: policy.maxCalls,
+      windowSeconds: policy.windowSeconds,
+    };
+  }
+
+  bucket.count += 1;
+  bucket.lastSeenMs = now;
+  rateLimitBuckets.set(key, bucket);
+  maybeSweepRateLimitBuckets(now, policy.windowMs);
+
+  return {
+    allowed: true,
+    key,
+    remaining: Math.max(0, policy.maxCalls - bucket.count),
+    resetAt: new Date(bucket.windowStartMs + policy.windowMs).toISOString(),
+    scope: policy.scope,
+    maxCalls: policy.maxCalls,
+    windowSeconds: policy.windowSeconds,
+  };
+}
+
+function buildRateLimitKey(
+  scope: RateLimitScope,
+  accountId: string,
+  route: ProxyRoute,
+): string {
+  if (scope === 'account_server_tool') {
+    return `${accountId}::${route.serverName}::${route.downstreamToolName}`;
+  }
+  if (scope === 'account_server') {
+    return `${accountId}::${route.serverName}`;
+  }
+  return accountId;
+}
+
+function maybeSweepRateLimitBuckets(nowMs: number, windowMs: number): void {
+  rateLimitSweepCounter += 1;
+  if (rateLimitSweepCounter % 100 !== 0) return;
+
+  const staleBefore = nowMs - Math.max(windowMs * 2, 120_000);
+  for (const [key, bucket] of rateLimitBuckets.entries()) {
+    if (bucket.lastSeenMs < staleBefore) {
+      rateLimitBuckets.delete(key);
+    }
+  }
+}
+
+function parseCsvList(raw: string | undefined): string[] {
+  if (!raw) return [];
+  return [...new Set(raw.split(',').map((part) => part.trim()).filter(Boolean))].sort();
+}
+
+function parsePositiveInt(raw: string | undefined, fallback: number): number {
+  if (!raw) return fallback;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return parsed;
 }
 
 function searchProxyTools(

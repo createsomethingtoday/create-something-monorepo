@@ -56,6 +56,7 @@ Then disable direct downstream entries in `.codex/config.toml` (or let the hub w
 - `hub_write_codex_config`
 - `hub_list_proxy_tools`
 - `hub_search_proxy_tools` (query/server filter + cursor pagination)
+- `hub_policy_status` (active policy/runtime limit settings)
 
 Proxied tool names are namespaced:
 
