@@ -30,6 +30,24 @@ This package implements the **wrap pattern**: clients see CREATE SOMETHING MCP; 
 - **Execution**: `client.executeTool(slug, params, userId)` → `tools.execute(slug, { userId, arguments: params, dangerouslySkipVersionCheck: true })` (see Executing tools).
 - **User scoping**: Every execution is scoped to a Composio entity/user ID; that user must have connected accounts for the app (see Authenticating tools).
 
+## Execution policy runtime
+
+`ComposioClientConfig` supports centralized retry policy controls via `executionPolicy`:
+
+- `retryMode: 'off' | 'safe' | 'all'`
+  - `off`: no retries
+  - `safe` (default): retries for idempotent read operations only (`getTools`, `listToolkits`, `getConnectedAccounts`)
+  - `all`: retries all operations, including `executeTool`
+- `retry` tuning:
+  - `maxAttempts` (default `3`)
+  - `baseDelayMs` (default `250`)
+  - `maxDelayMs` (default `4000`)
+  - `jitterRatio` (default `0.2`)
+  - `retryableStatusCodes` (default includes `408`, `429`, `5xx`)
+  - `retryableErrorCodes` (transport/runtime error codes such as `ETIMEDOUT`)
+
+Use `retryMode: 'all'` only when duplicate side effects are acceptable or downstream operations are idempotent.
+
 ## Toolkit versioning
 
 Docs support configuring toolkit versions at SDK init or per execution. Our client does not yet expose versioning; add via `Composio` constructor options (e.g. `toolkitVersions: { github: '20250909_00' }`) if needed (see [toolkit versioning](https://docs.composio.dev/docs/tools-direct/toolkit-versioning)).

@@ -35,6 +35,75 @@ export interface ComposioClientConfig {
 
   /** Request timeout in milliseconds. Defaults to 30_000. */
   timeoutMs?: number;
+
+  /**
+   * Centralized execution policy for Composio SDK calls.
+   *
+   * Defaults to safe retries for idempotent reads (tool discovery, toolkit list,
+   * connected account checks), and no automatic retries for tool execution.
+   */
+  executionPolicy?: ComposioExecutionPolicy;
+}
+
+/**
+ * Retry behavior for Composio SDK calls.
+ */
+export interface ComposioRetryPolicy {
+  /**
+   * Maximum number of attempts, including the first call.
+   * Defaults to 3.
+   */
+  maxAttempts?: number;
+
+  /**
+   * Base delay before retrying attempt #2 (milliseconds).
+   * Defaults to 250ms.
+   */
+  baseDelayMs?: number;
+
+  /**
+   * Maximum backoff delay per attempt (milliseconds).
+   * Defaults to 4_000ms.
+   */
+  maxDelayMs?: number;
+
+  /**
+   * Jitter ratio applied to backoff delay to avoid thundering herd.
+   * Defaults to 0.2 (±20% jitter).
+   */
+  jitterRatio?: number;
+
+  /**
+   * HTTP status codes considered retryable.
+   * Defaults include standard transient classes (408/429/5xx).
+   */
+  retryableStatusCodes?: number[];
+
+  /**
+   * Transport/runtime error codes considered retryable.
+   * Examples: ETIMEDOUT, ECONNRESET, EAI_AGAIN.
+   */
+  retryableErrorCodes?: string[];
+}
+
+/**
+ * Shared policy controls for Composio operations.
+ */
+export interface ComposioExecutionPolicy {
+  /**
+   * Retry mode:
+   * - off: disable all retries
+   * - safe: retry only idempotent read operations
+   * - all: retry all operations, including tool execution
+   *
+   * Defaults to 'safe'.
+   */
+  retryMode?: 'off' | 'safe' | 'all';
+
+  /**
+   * Retry tuning.
+   */
+  retry?: ComposioRetryPolicy;
 }
 
 /**

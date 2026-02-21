@@ -1,6 +1,6 @@
 # Composio Vendor Evaluation
 
-**Status**: Phase 1 — Technical Evaluation  
+**Status**: Decision Recorded — **CONDITIONAL ADOPT** (Phase 1 complete; Phase 2 pilot pending)  
 **Date**: February 2026  
 **Package**: `packages/composio-bridge/`
 
@@ -120,27 +120,25 @@ COMPOSIO_API_KEY=... pnpm --filter=composio-bridge eval:all
 | **Tool Quality** | `eval/tool-quality.ts` | Schema completeness, descriptions, naming, CRUD coverage |
 | **Auth Flow** | `eval/auth-flow.ts` | Provider resolution, token provider, connected accounts |
 
-### Results Template
-
-_Fill in after running evaluations._
+### Results (from `packages/composio-bridge/eval-report.json`, run on 2026-02-10)
 
 | Test | Result | Details |
 |------|--------|---------|
-| SDK Import | | |
-| Client Instantiation | | |
-| Fetch Compatibility | | |
-| No Node.js Builtins | | |
-| Health Check Latency | | |
-| Tool Discovery Latency | | |
-| Single App Tools | | |
-| Schema Completeness | | |
-| Description Quality | | |
-| Naming Conventions | | |
-| CRUD Coverage | | |
-| Auth Provider Resolve | | |
-| Token Provider | | |
-| Connected Accounts | | |
-| HTTP Request Auth | | |
+| SDK Import | Pass | `@composio/core` imported successfully with `Composio` class |
+| Client Instantiation | Pass | Composio client instantiated successfully |
+| Fetch Compatibility | Pass | SDK uses standard fetch (Workers-compatible) |
+| No Node.js Builtins | Pass | No Node.js built-in dependencies detected |
+| Health Check Latency | Pass | 305-390ms average (threshold <2s) |
+| Tool Discovery Latency | Pass | 192-214ms, 20 tools discovered (threshold <5s) |
+| Single App Tools | Pass | 20 `GITHUB` tools discovered |
+| Schema Completeness | Pass | 100% typed, 100% described, 100% schema coverage (20 tools / 165 params) |
+| Description Quality | Pass | 100% substantive descriptions |
+| Naming Conventions | Pass | 100% UPPER_SNAKE_CASE with app prefix |
+| CRUD Coverage | Pass | CRUD coverage present in tested toolkit set |
+| Auth Provider Resolve | Pass | AccountContext resolved correctly |
+| Token Provider | Pass | Returns Composio API key; app OAuth handled by Composio |
+| Connected Accounts | Pass | API path works; 0 accounts expected for fresh test entity |
+| HTTP Request Auth | Pass | Header-based account resolution verified |
 
 ## Risk Mitigations
 
@@ -191,14 +189,14 @@ _Fill in after running evaluations._
 
 ## Phase Plan
 
-### Phase 1: Technical Evaluation (1 week) ← CURRENT
+### Phase 1: Technical Evaluation (1 week) — COMPLETE
 
 - [x] Create `composio-bridge` package with wrap pattern architecture
-- [ ] Install Composio SDK, run Workers compatibility tests
-- [ ] Run full evaluation suite with API key
-- [ ] Document results in this file
+- [x] Install Composio SDK, run Workers compatibility tests
+- [x] Run full evaluation suite with API key
+- [x] Document results in this file
 
-### Phase 2: Client Pilot (2 weeks)
+### Phase 2: Client Pilot (2 weeks) — NEXT
 
 - [ ] Pick next .agency client request needing a long-tail integration
 - [ ] Build it with Composio-wrapped MCP using the bridge
@@ -210,11 +208,16 @@ _Fill in after running evaluations._
 - **Adopt if**: Workers-compatible, tool depth sufficient for CRUD, cost < $100/mo
 - **Reject if**: Not Workers-compatible, tools too shallow, auth UX poor
 - **Conditional if**: Mostly works but needs workarounds (document them)
+- **Decision (2026-02-21)**: **Conditional adopt** based on 29/29 passing technical evals and wrap-pattern fit, with pilot closure required before marking full program completion.
 
 ## Go/No-Go Decision
 
-_To be filled after Phase 1 evaluation._
+**Recommendation**: **CONDITIONAL ADOPT**  
+**Date**: **2026-02-21**  
+**Decided by**: **CREATE SOMETHING engineering documentation review**
 
-**Recommendation**: _PENDING_  
-**Date**: _TBD_  
-**Decided by**: _TBD_
+**Scope of this recommendation**
+
+- **GO** for commodity CRUD integrations where Composio remains invisible behind CREATE SOMETHING MCP servers.
+- **NO-GO** for deep domain or client-SLA-critical integrations where custom MCP remains the primary path.
+- **Required to reach full completion**: finish one client pilot (Phase 2) and keep canonical decision docs synchronized with eval artifacts.

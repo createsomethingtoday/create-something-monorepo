@@ -77,6 +77,29 @@ const MANAGEMENT_TOOLS: Tool[] = [
       properties: {},
     },
   },
+  {
+    name: 'hub_search_proxy_tools',
+    description: 'Search proxied tools with optional server filter and cursor pagination.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string' },
+        serverName: { type: 'string' },
+        cursor: { type: 'string' },
+        limit: { type: 'number' },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'hub_policy_status',
+    description: 'Show active proxy policy settings (including rate limits) for this hub runtime.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      additionalProperties: false,
+    },
+  },
 ];
 
 type ProxyRoute = {
@@ -102,6 +125,30 @@ type AdminArgs = {
   disableServers: string[];
   help: boolean;
 };
+
+type RateLimitScope = 'account' | 'account_server' | 'account_server_tool';
+
+type RateLimitPolicy = {
+  enabled: boolean;
+  maxCalls: number;
+  windowMs: number;
+  windowSeconds: number;
+  scope: RateLimitScope;
+  exemptServers: Set<string>;
+};
+
+type RateLimitDecision = {
+  allowed: boolean;
+  key: string;
+  remaining: number;
+  resetAt: string;
+  scope: RateLimitScope;
+  maxCalls: number;
+  windowSeconds: number;
+};
+
+const rateLimitBuckets = new Map<string, { windowStartMs: number; count: number; lastSeenMs: number }>();
+let rateLimitSweepCounter = 0;
 
 void main().catch((error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
@@ -222,6 +269,10 @@ async function runServerMode(): Promise<void> {
           proxyTools: proxies.toolDefinitions.map((tool) => tool.name),
           count: proxies.toolDefinitions.length,
         });
+      }
+
+      if (toolName === 'hub_search_proxy_tools') {
+        return toJsonResult(searchProxyTools(proxies, args));
       }
 
       if (toolName === 'hub_update_state') {
@@ -492,6 +543,63 @@ function buildRegistryPayload(registry: McpBundleRegistry): Record<string, unkno
   };
 }
 
+function searchProxyTools(
+  proxies: ProxyCatalog,
+  args: Record<string, unknown>,
+): Record<string, unknown> {
+  const query = stringArg(args.query);
+  const serverNameFilter = stringArg(args.serverName);
+  const cursor = stringArg(args.cursor);
+  const limit = numberArg(args.limit, 25, 1, 100);
+  const startIndex = cursor ? numberArg(Number(cursor), 0, 0, Number.MAX_SAFE_INTEGER) : 0;
+
+  const definitionByName = new Map(proxies.toolDefinitions.map((tool) => [tool.name, tool]));
+  const all = Array.from(proxies.routes.values())
+    .map((route) => {
+      const definition = definitionByName.get(route.proxyToolName);
+      return {
+        proxyToolName: route.proxyToolName,
+        serverName: route.serverName,
+        downstreamToolName: route.downstreamToolName,
+        description: definition?.description ?? '',
+      };
+    })
+    .sort((a, b) => a.proxyToolName.localeCompare(b.proxyToolName));
+
+  const filtered = all.filter((item) => {
+    if (serverNameFilter && item.serverName !== serverNameFilter) {
+      return false;
+    }
+
+    if (!query) {
+      return true;
+    }
+
+    const q = query.toLowerCase();
+    return (
+      item.proxyToolName.toLowerCase().includes(q) ||
+      item.serverName.toLowerCase().includes(q) ||
+      item.downstreamToolName.toLowerCase().includes(q) ||
+      item.description.toLowerCase().includes(q)
+    );
+  });
+
+  const page = filtered.slice(startIndex, startIndex + limit);
+  const nextCursor = startIndex + page.length < filtered.length
+    ? String(startIndex + page.length)
+    : null;
+
+  return {
+    query,
+    serverName: serverNameFilter,
+    total: filtered.length,
+    limit,
+    cursor: cursor ?? '0',
+    nextCursor,
+    tools: page,
+  };
+}
+
 function toJsonResult(payload: Record<string, unknown>) {
   return {
     content: [{ type: 'text' as const, text: JSON.stringify(payload, null, 2) }],
@@ -523,6 +631,21 @@ function normalizeArgs(raw: unknown): Record<string, unknown> {
     return {};
   }
   return raw;
+}
+
+function stringArg(raw: unknown): string | null {
+  if (typeof raw !== 'string') {
+    return null;
+  }
+  const trimmed = raw.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function numberArg(raw: unknown, fallback: number, min: number, max: number): number {
+  if (typeof raw !== 'number' || !Number.isFinite(raw)) {
+    return fallback;
+  }
+  return Math.max(min, Math.min(max, Math.floor(raw)));
 }
 
 function stringArrayArg(raw: unknown, fieldName: string): string[] {

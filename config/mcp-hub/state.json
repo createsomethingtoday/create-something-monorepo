@@ -1,7 +1,9 @@
 {
   "enabledBundles": [],
   "enabledServers": [
-    "composio-toolkit-gmail"
+    "composio-toolkit-airtable",
+    "composio-toolkit-gmail",
+    "composio-toolkit-webflow"
   ],
   "disabledServers": [
     "create-something",
@@ -12,5 +14,5 @@
     "slack_create_something",
     "three-tier-framework"
   ],
-  "updatedAt": "2026-02-21T11:44:58.724Z"
+  "updatedAt": "2026-02-21T17:52:12.516Z"
 }

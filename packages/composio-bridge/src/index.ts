@@ -61,6 +61,8 @@ export type { ComposioToolDef } from './client.js';
 
 export type {
   ComposioClientConfig,
+  ComposioExecutionPolicy,
+  ComposioRetryPolicy,
   AppConfig,
   ComposioToolDiscoveryOptions,
   ComposioToolkitListOptions,

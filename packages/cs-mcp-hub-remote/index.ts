@@ -88,6 +88,27 @@ type HubRuntime = {
   proxies: ProxyCatalog;
 };
 
+type RateLimitScope = 'account' | 'account_server' | 'account_server_tool';
+
+type RateLimitPolicy = {
+  enabled: boolean;
+  maxCalls: number;
+  windowMs: number;
+  windowSeconds: number;
+  scope: RateLimitScope;
+  exemptServers: Set<string>;
+};
+
+type RateLimitDecision = {
+  allowed: boolean;
+  key: string;
+  remaining: number;
+  resetAt: string;
+  scope: RateLimitScope;
+  maxCalls: number;
+  windowSeconds: number;
+};
+
 type InvocationTrace = {
   requestId: string;
   correlationId: string;
@@ -128,6 +149,10 @@ interface Env {
   HUB_REFRESH_SECONDS?: string;
   HUB_CACHE_BUST?: string;
   HUB_ACCOUNT_ID?: string;
+  HUB_RATE_LIMIT_MAX_CALLS_PER_WINDOW?: string;
+  HUB_RATE_LIMIT_WINDOW_SECONDS?: string;
+  HUB_RATE_LIMIT_SCOPE?: string;
+  HUB_RATE_LIMIT_EXEMPT_SERVERS?: string;
   HUB_STATE_KV?: KVNamespace;
   TELEMETRY_DB?: D1Database;
   [key: string]: unknown;
@@ -169,6 +194,20 @@ const MANAGEMENT_TOOLS: Tool[] = [
     },
   },
   {
+    name: 'hub_search_proxy_tools',
+    description: 'Search proxy tools with optional server filter and cursor pagination.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string' },
+        serverName: { type: 'string' },
+        cursor: { type: 'string' },
+        limit: { type: 'number' },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
     name: 'hub_refresh_connections',
     description: 'Force-refresh downstream MCP connections and proxy tool catalog.',
     inputSchema: {
@@ -206,6 +245,15 @@ const MANAGEMENT_TOOLS: Tool[] = [
       additionalProperties: false,
     },
   },
+  {
+    name: 'hub_policy_status',
+    description: 'Show active proxy policy settings (including rate limits) for this hub runtime.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      additionalProperties: false,
+    },
+  },
 ];
 
 let runtimeCache:
@@ -224,6 +272,9 @@ let pendingRuntimeLoad:
   | null = null;
 
 let hubRouteTableReady = false;
+
+const rateLimitBuckets = new Map<string, { windowStartMs: number; count: number; lastSeenMs: number }>();
+let rateLimitSweepCounter = 0;
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -258,6 +309,7 @@ export default {
     if (url.pathname === '/' || url.pathname === '/health') {
       try {
         const runtime = await getHubRuntime(env);
+        const policy = resolveRateLimitPolicy(env);
         return withCors(
           jsonResponse({
             name: HUB_NAME,
@@ -268,6 +320,14 @@ export default {
             },
             auth_required: Boolean(readEnvString(env, 'HUB_API_TOKEN')),
             state_storage: env.HUB_STATE_KV ? 'kv' : 'env-only',
+            rate_limit_policy: {
+              enabled: policy.enabled,
+              scope: policy.scope,
+              max_calls_per_window: policy.maxCalls,
+              window_seconds: policy.windowSeconds,
+              exempt_servers: [...policy.exemptServers].sort(),
+              active_bucket_count: rateLimitBuckets.size,
+            },
             downstream_auth_config: {
               has_cs_telemetry_operator_token: Boolean(
                 readEnvString(env, 'CS_TELEMETRY_OPERATOR_API_TOKEN'),
@@ -579,6 +639,7 @@ function buildProxyCatalog(connectedServers: ConnectedDownstream[]): ProxyCatalo
 }
 
 function buildHubServer(runtime: HubRuntime, env: Env): Server {
+  const rateLimitPolicy = resolveRateLimitPolicy(env);
   const server = new Server(
     {
       name: HUB_NAME,
@@ -605,7 +666,10 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
 
     try {
       if (toolName === 'hub_status') {
-        const result = toJsonResult(buildStatusPayload(runtime));
+        const result = toJsonResult({
+          ...buildStatusPayload(runtime),
+          policy: buildPolicyStatusPayload(rateLimitPolicy),
+        });
         await recordHubInvocation(env, {
           accountId,
           toolName,
@@ -647,6 +711,25 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           trace,
           metadata: {
             type: 'management',
+          },
+        });
+        return result;
+      }
+
+      if (toolName === 'hub_search_proxy_tools') {
+        const result = toJsonResult(searchProxyTools(runtime.proxies, args));
+        await recordHubInvocation(env, {
+          accountId,
+          toolName,
+          success: true,
+          durationMs: Date.now() - startedAt,
+          trace,
+          metadata: {
+            type: 'management',
+            query: stringArg(args.query),
+            serverName: stringArg(args.serverName),
+            limit: numberArg(args.limit, 25, 1, 100),
+            cursor: stringArg(args.cursor),
           },
         });
         return result;
@@ -742,6 +825,21 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         return result;
       }
 
+      if (toolName === 'hub_policy_status') {
+        const result = toJsonResult(buildPolicyStatusPayload(rateLimitPolicy));
+        await recordHubInvocation(env, {
+          accountId,
+          toolName,
+          success: true,
+          durationMs: Date.now() - startedAt,
+          trace,
+          metadata: {
+            type: 'management',
+          },
+        });
+        return result;
+      }
+
       route = runtime.proxies.routes.get(toolName) ?? null;
       if (!route) {
         const errorResult = toErrorResult(`Unknown tool "${toolName}"`);
@@ -759,6 +857,57 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         return errorResult;
       }
 
+      const rateLimitDecision = applyRateLimit(rateLimitPolicy, accountId, route);
+      if (!rateLimitDecision.allowed) {
+        const durationMs = Date.now() - startedAt;
+        const message =
+          `Rate limit exceeded (${rateLimitDecision.maxCalls} calls per ${rateLimitDecision.windowSeconds}s, scope=${rateLimitDecision.scope}). ` +
+          `Retry after ${rateLimitDecision.resetAt}.`;
+
+        await Promise.all([
+          recordHubInvocation(env, {
+            accountId,
+            toolName,
+            success: false,
+            durationMs,
+            trace,
+            errorMessage: message,
+            metadata: {
+              type: 'policy',
+              policy: 'rate_limit',
+              downstreamServer: route.serverName,
+              downstreamTool: route.downstreamToolName,
+              scope: rateLimitDecision.scope,
+              key: rateLimitDecision.key,
+              remaining: rateLimitDecision.remaining,
+              resetAt: rateLimitDecision.resetAt,
+              maxCalls: rateLimitDecision.maxCalls,
+              windowSeconds: rateLimitDecision.windowSeconds,
+            },
+          }),
+          recordHubRouteInvocation(env, {
+            accountId,
+            downstreamServer: route.serverName,
+            downstreamTool: route.downstreamToolName,
+            success: false,
+            durationMs,
+            trace,
+            errorMessage: message,
+            metadata: {
+              proxyToolName: toolName,
+              blockedByPolicy: 'rate_limit',
+              scope: rateLimitDecision.scope,
+              remaining: rateLimitDecision.remaining,
+              resetAt: rateLimitDecision.resetAt,
+              maxCalls: rateLimitDecision.maxCalls,
+              windowSeconds: rateLimitDecision.windowSeconds,
+            },
+          }),
+        ]);
+
+        return toErrorResult(message);
+      }
+
       const proxiedResult = await route.call(args, trace, accountId);
       const proxiedSuccess = !resultIsError(proxiedResult);
       const durationMs = Date.now() - startedAt;
@@ -774,6 +923,13 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
             type: 'proxy',
             downstreamServer: route.serverName,
             downstreamTool: route.downstreamToolName,
+            rateLimit: {
+              scope: rateLimitDecision.scope,
+              remaining: rateLimitDecision.remaining,
+              resetAt: rateLimitDecision.resetAt,
+              maxCalls: rateLimitDecision.maxCalls,
+              windowSeconds: rateLimitDecision.windowSeconds,
+            },
           },
         }),
         recordHubRouteInvocation(env, {
@@ -872,6 +1028,131 @@ function buildRegistryPayload(currentRegistry: McpBundleRegistry): Record<string
   };
 }
 
+function buildPolicyStatusPayload(policy: RateLimitPolicy): Record<string, unknown> {
+  return {
+    rateLimit: {
+      enabled: policy.enabled,
+      scope: policy.scope,
+      maxCallsPerWindow: policy.maxCalls,
+      windowSeconds: policy.windowSeconds,
+      exemptServers: [...policy.exemptServers].sort(),
+      activeBucketCount: rateLimitBuckets.size,
+    },
+    note: policy.enabled
+      ? 'Rate limiting applies only to proxied downstream tool calls.'
+      : 'Rate limiting is disabled. Set HUB_RATE_LIMIT_MAX_CALLS_PER_WINDOW > 0 to enable.',
+  };
+}
+
+function resolveRateLimitPolicy(env: Env): RateLimitPolicy {
+  const maxCallsRaw = readEnvString(env, 'HUB_RATE_LIMIT_MAX_CALLS_PER_WINDOW');
+  const maxCalls = parsePositiveInt(maxCallsRaw, 0);
+  const windowSeconds = parsePositiveInt(readEnvString(env, 'HUB_RATE_LIMIT_WINDOW_SECONDS'), 60);
+  const scope = parseRateLimitScope(readEnvString(env, 'HUB_RATE_LIMIT_SCOPE'));
+  const exemptServers = new Set(parseList(readEnvString(env, 'HUB_RATE_LIMIT_EXEMPT_SERVERS')) ?? []);
+
+  const enabled = maxCalls > 0;
+  return {
+    enabled,
+    maxCalls,
+    windowMs: windowSeconds * 1000,
+    windowSeconds,
+    scope,
+    exemptServers,
+  };
+}
+
+function parseRateLimitScope(raw: string | undefined): RateLimitScope {
+  const normalized = (raw ?? '').trim().toLowerCase();
+  if (normalized === 'account_server') return 'account_server';
+  if (normalized === 'account_server_tool') return 'account_server_tool';
+  return 'account';
+}
+
+function applyRateLimit(
+  policy: RateLimitPolicy,
+  accountId: string,
+  route: ProxyRoute,
+): RateLimitDecision {
+  if (!policy.enabled || policy.exemptServers.has(route.serverName)) {
+    return {
+      allowed: true,
+      key: 'disabled',
+      remaining: Number.MAX_SAFE_INTEGER,
+      resetAt: new Date(Date.now()).toISOString(),
+      scope: policy.scope,
+      maxCalls: policy.maxCalls,
+      windowSeconds: policy.windowSeconds,
+    };
+  }
+
+  const now = Date.now();
+  const key = buildRateLimitKey(policy.scope, accountId, route);
+  const current = rateLimitBuckets.get(key);
+  const windowStartMs = current ? current.windowStartMs : now;
+  const windowExpired = now >= windowStartMs + policy.windowMs;
+
+  const bucket = !current || windowExpired
+    ? { windowStartMs: now, count: 0, lastSeenMs: now }
+    : current;
+
+  if (bucket.count >= policy.maxCalls) {
+    bucket.lastSeenMs = now;
+    rateLimitBuckets.set(key, bucket);
+    maybeSweepRateLimitBuckets(now, policy.windowMs);
+    return {
+      allowed: false,
+      key,
+      remaining: 0,
+      resetAt: new Date(bucket.windowStartMs + policy.windowMs).toISOString(),
+      scope: policy.scope,
+      maxCalls: policy.maxCalls,
+      windowSeconds: policy.windowSeconds,
+    };
+  }
+
+  bucket.count += 1;
+  bucket.lastSeenMs = now;
+  rateLimitBuckets.set(key, bucket);
+  maybeSweepRateLimitBuckets(now, policy.windowMs);
+
+  return {
+    allowed: true,
+    key,
+    remaining: Math.max(0, policy.maxCalls - bucket.count),
+    resetAt: new Date(bucket.windowStartMs + policy.windowMs).toISOString(),
+    scope: policy.scope,
+    maxCalls: policy.maxCalls,
+    windowSeconds: policy.windowSeconds,
+  };
+}
+
+function buildRateLimitKey(
+  scope: RateLimitScope,
+  accountId: string,
+  route: ProxyRoute,
+): string {
+  if (scope === 'account_server_tool') {
+    return `${accountId}::${route.serverName}::${route.downstreamToolName}`;
+  }
+  if (scope === 'account_server') {
+    return `${accountId}::${route.serverName}`;
+  }
+  return accountId;
+}
+
+function maybeSweepRateLimitBuckets(nowMs: number, windowMs: number): void {
+  rateLimitSweepCounter += 1;
+  if (rateLimitSweepCounter % 100 !== 0) return;
+
+  const staleBefore = nowMs - Math.max(windowMs * 2, 120_000);
+  for (const [key, bucket] of rateLimitBuckets.entries()) {
+    if (bucket.lastSeenMs < staleBefore) {
+      rateLimitBuckets.delete(key);
+    }
+  }
+}
+
 async function applyRemoteStateUpdate(
   env: Env,
   patch: {
@@ -888,6 +1169,63 @@ async function applyRemoteStateUpdate(
   return {
     updatedState: next,
     storage: write,
+  };
+}
+
+function searchProxyTools(
+  proxies: ProxyCatalog,
+  args: Record<string, unknown>,
+): Record<string, unknown> {
+  const query = stringArg(args.query);
+  const serverNameFilter = stringArg(args.serverName);
+  const cursor = stringArg(args.cursor);
+  const limit = numberArg(args.limit, 25, 1, 100);
+  const startIndex = cursor ? numberArg(Number(cursor), 0, 0, Number.MAX_SAFE_INTEGER) : 0;
+
+  const definitionByName = new Map(proxies.toolDefinitions.map((tool) => [tool.name, tool]));
+  const all = Array.from(proxies.routes.values())
+    .map((route) => {
+      const definition = definitionByName.get(route.proxyToolName);
+      return {
+        proxyToolName: route.proxyToolName,
+        serverName: route.serverName,
+        downstreamToolName: route.downstreamToolName,
+        description: definition?.description ?? '',
+      };
+    })
+    .sort((a, b) => a.proxyToolName.localeCompare(b.proxyToolName));
+
+  const filtered = all.filter((item) => {
+    if (serverNameFilter && item.serverName !== serverNameFilter) {
+      return false;
+    }
+
+    if (!query) {
+      return true;
+    }
+
+    const q = query.toLowerCase();
+    return (
+      item.proxyToolName.toLowerCase().includes(q) ||
+      item.serverName.toLowerCase().includes(q) ||
+      item.downstreamToolName.toLowerCase().includes(q) ||
+      item.description.toLowerCase().includes(q)
+    );
+  });
+
+  const page = filtered.slice(startIndex, startIndex + limit);
+  const nextCursor = startIndex + page.length < filtered.length
+    ? String(startIndex + page.length)
+    : null;
+
+  return {
+    query,
+    serverName: serverNameFilter,
+    total: filtered.length,
+    limit,
+    cursor: cursor ?? '0',
+    nextCursor,
+    tools: page,
   };
 }
 

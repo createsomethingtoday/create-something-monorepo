@@ -164,6 +164,7 @@ export class ComposioToolFactory {
       baseURL: config.baseURL,
       fetch: config.fetch,
       timeoutMs: config.timeoutMs,
+      executionPolicy: config.executionPolicy,
     });
 
     // Normalize string[] shorthand to AppConfig[]

@@ -19,6 +19,7 @@ Remote MCP hub that exposes one public endpoint and proxies tools from enabled d
 - `hub_status`
 - `hub_list_registry`
 - `hub_list_proxy_tools`
+- `hub_search_proxy_tools` (query/server filter + cursor pagination)
 - `hub_refresh_connections`
 - `hub_update_state` (`writeCodexConfig` accepted for parity; ignored remotely)
 - `hub_trace_lookup`

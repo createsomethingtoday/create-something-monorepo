@@ -123,6 +123,7 @@ export class ComposioAuthProvider implements AuthProvider {
       baseURL: config.baseURL,
       fetch: config.fetch,
       timeoutMs: config.timeoutMs,
+      executionPolicy: config.executionPolicy,
     });
   }
 
