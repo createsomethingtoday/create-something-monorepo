@@ -1,15 +1,16 @@
 {
-  "enabledBundles": [
-    "core",
-    "halfdozen-observability",
-    "observability"
-  ],
+  "enabledBundles": [],
   "enabledServers": [
+    "composio-toolkit-gmail"
+  ],
+  "disabledServers": [
     "create-something",
     "cs-telemetry",
+    "halfdozen-telemetry",
     "notion-halfdozen-create-something",
-    "slack_create_something"
+    "playbook",
+    "slack_create_something",
+    "three-tier-framework"
   ],
-  "disabledServers": [],
-  "updatedAt": "2026-02-21T00:00:00.000Z"
+  "updatedAt": "2026-02-21T11:44:58.724Z"
 }
