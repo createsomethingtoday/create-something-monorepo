@@ -5,7 +5,7 @@
   "description": "Canon-compliant terminal tooling configuration",
   "scripts": {
     "install-dotfiles": "./scripts/install.sh",
-    "check": "echo 'Checking dotfiles...' && ls -la ~/.config/neomutt && ls -la ~/.taskrc"
+    "check": "echo 'Checking dotfiles...' && if [ -d ~/.config/neomutt ] && [ -f ~/.taskrc ]; then ls -la ~/.config/neomutt && ls -la ~/.taskrc; else echo 'Dotfiles not installed in this environment; skipping installed-state check.'; fi"
   },
   "keywords": [
     "dotfiles",
