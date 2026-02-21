@@ -10,7 +10,6 @@ import {
   type AirtableConfig,
   type AirtableRecord,
   type IngestRequest,
-  type OutboundStatus,
   type ParseResult,
   type TransitionRequest,
   type TransitionResult,
@@ -364,6 +363,18 @@ export async function markDeadLetter(
   parseStatus: ParseResult['parseStatus']
 ): Promise<void> {
   const messageKey = buildMessageKey(input.channel_id, input.message_ts);
+  let existingRetryCount = 0;
+
+  try {
+    const existing = await getRecordByMessageKey(config, messageKey);
+    const existingRaw = existing?.fields?.[AIRTABLE_FIELDS.RETRY_COUNT];
+    if (typeof existingRaw === 'number' && Number.isFinite(existingRaw)) {
+      existingRetryCount = existingRaw;
+    }
+  } catch {
+    // Best effort; do not fail dead-letter fallback if lookup fails.
+  }
+
   const deadLetterFields: Record<string, unknown> = {
     [AIRTABLE_FIELDS.MESSAGE_KEY]: messageKey,
     [AIRTABLE_FIELDS.SLACK_CHANNEL_ID]: input.channel_id,
@@ -371,10 +382,11 @@ export async function markDeadLetter(
     [AIRTABLE_FIELDS.SLACK_THREAD_TS]: input.thread_ts,
     [AIRTABLE_FIELDS.RAW_MESSAGE_TEXT]: input.raw_text,
     [AIRTABLE_FIELDS.PARSE_STATUS]: parseStatus,
-    [AIRTABLE_FIELDS.RETRY_COUNT]: 3,
+    [AIRTABLE_FIELDS.RETRY_COUNT]: Math.max(existingRetryCount + 1, 3),
     [AIRTABLE_FIELDS.DEAD_LETTER]: true,
     [AIRTABLE_FIELDS.LAST_ERROR]: reason,
-    [AIRTABLE_FIELDS.WORKFLOW_STATE]: 'Blocked'
+    [AIRTABLE_FIELDS.WORKFLOW_STATE]: 'Blocked',
+    [AIRTABLE_FIELDS.OUTBOUND_STATUS]: 'failed'
   };
 
   try {
@@ -386,16 +398,11 @@ export async function markDeadLetter(
 
     await createRecord(config, {
       ...deadLetterFields,
-      [AIRTABLE_FIELDS.OUTBOUND_STATUS]: (existingStateToOutbound('Blocked') as OutboundStatus)
+      [AIRTABLE_FIELDS.OUTBOUND_ATTEMPTS]: 0
     });
   } catch (error) {
     console.error('Failed to mark dead-letter record:', errorMessage(error));
   }
-}
-
-function existingStateToOutbound(state: WorkflowState): OutboundStatus {
-  if (state === 'Done') return 'ready';
-  return 'failed';
 }
 
 function trimString(value: unknown): string {
