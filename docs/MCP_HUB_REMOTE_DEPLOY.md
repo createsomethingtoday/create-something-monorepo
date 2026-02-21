@@ -35,6 +35,16 @@ Optional runtime selection:
 - `HUB_REFRESH_SECONDS`
 - `HUB_ACCOUNT_ID` (fallback account id for hub telemetry writes)
 
+State persistence:
+
+- Bind `HUB_STATE_KV` in `wrangler.toml` and set namespace IDs.
+- `hub_update_state` writes enabled/disabled bundles/servers into KV and then refreshes live connections.
+- `hub_update_state` accepts `writeCodexConfig` for parity with local hub tooling, but remote deploys do not write local Codex config files.
+
+Identity forwarding:
+
+- Remote hub forwards `x-mcp-account-id` and `x-hub-account-id` headers on proxied downstream tool calls.
+
 ## Telemetry
 
 `cs-mcp-hub-remote` writes hub-level records into `cs-telemetry` (`mcp_tool_invocations` and `mcp_run_counts`) via `TELEMETRY_DB`.

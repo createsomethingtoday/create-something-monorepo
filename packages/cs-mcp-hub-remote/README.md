@@ -20,6 +20,7 @@ Remote MCP hub that exposes one public endpoint and proxies tools from enabled d
 - `hub_list_registry`
 - `hub_list_proxy_tools`
 - `hub_refresh_connections`
+- `hub_update_state` (`writeCodexConfig` accepted for parity; ignored remotely)
 - `hub_trace_lookup`
 
 ## Configuration
@@ -33,8 +34,13 @@ Environment variables:
 - `HUB_REFRESH_SECONDS` (optional): cache TTL for downstream tool catalog, default `300`
 - `HUB_CACHE_BUST` (optional): any value change forces runtime refresh
 - `HUB_ACCOUNT_ID` (optional): fallback account ID written to hub telemetry rows
+- `HUB_STATE_KV` (recommended binding): stores remote hub enable/disable state so `hub_update_state` persists
 
 Downstream auth variables are read dynamically from each registry server's `env_http_headers` and `bearer_token_env_var` config.
+
+Account forwarding:
+
+- Proxied tool calls forward `x-mcp-account-id` and `x-hub-account-id` to downstream MCPs.
 
 ## Telemetry + Correlation
 

@@ -8,7 +8,7 @@
  *   packages/ltd/src/lib/content/canon/**         → canon pages
  *   packages/ltd/src/lib/content/patterns/*.md    → design patterns
  *   .graph/ (fallback: packages/io/static/.graph) → knowledge graph
- *   packages/{io,ltd,space,agency}/**/*.md        → property documents
+ *   property package markdown files                → property documents
  *
  * Run: tsx scripts/build-content.ts
  */
@@ -442,10 +442,10 @@ async function buildPropertyDocuments(): Promise<BuildPropertyDocumentsResult> {
  * Generated property documents content — DO NOT EDIT MANUALLY.
  * Run: npm run build:content
  * Sources:
- *   packages/io/**/* (excluding content/papers)
- *   packages/ltd/**/* (excluding src/lib/content/canon and src/lib/content/patterns)
- *   packages/space/**/*
- *   packages/agency/**/*
+ *   packages/io markdown files (excluding content/papers)
+ *   packages/ltd markdown files (excluding src/lib/content/canon and src/lib/content/patterns)
+ *   packages/space markdown files
+ *   packages/agency markdown files
  */
 
 import type { PropertyDocument } from '../types.js';

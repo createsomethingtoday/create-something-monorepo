@@ -10,7 +10,8 @@
  * npx @createsomething/learn clear
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { existsSync } from 'fs';
+import { spawnSync } from 'child_process';
 import { join } from 'path';
 import { homedir } from 'os';
 import { isAuthenticated, clearAuth, getCurrentUser } from './auth/storage.js';
@@ -21,6 +22,9 @@ const COMMANDS = {
 	clear: 'Clear authentication and cached data',
 	help: 'Show this help message'
 };
+
+const CODEX_MCP_ADD_ARGS = ['mcp', 'add', 'learn', '--', 'npx', '-y', '@createsomething/learn'];
+const CODEX_MCP_ADD_COMMAND = `codex ${CODEX_MCP_ADD_ARGS.join(' ')}`;
 
 function printHelp() {
 	console.log(`
@@ -34,19 +38,35 @@ ${Object.entries(COMMANDS)
 	.join('\n')}
 
 MCP Server:
-  Add to your Codex settings:
+  Add with Codex CLI:
+  ${CODEX_MCP_ADD_COMMAND}
 
-  {
-    "mcpServers": {
-      "learn": {
-        "command": "npx",
-        "args": ["@createsomething/learn"]
-      }
-    }
-  }
+  Or manually in ~/.codex/config.toml:
+  [mcp_servers.learn]
+  command = "npx"
+  args = ["-y", "@createsomething/learn"]
 
 Learn more: https://learn.createsomething.space/paths/codex-mcp
 `);
+}
+
+function hasCodexMcpCli(): boolean {
+	const result = spawnSync('codex', ['mcp', '--help'], { stdio: 'ignore' });
+	return result.status === 0;
+}
+
+function isLearnServerConfigured(): boolean {
+	const result = spawnSync('codex', ['mcp', 'get', 'learn'], { stdio: 'ignore' });
+	return result.status === 0;
+}
+
+function printManualConfigFallback() {
+	console.log('Manual fallback (~/.codex/config.toml):');
+	console.log('');
+	console.log('[mcp_servers.learn]');
+	console.log('command = "npx"');
+	console.log('args = ["-y", "@createsomething/learn"]');
+	console.log('');
 }
 
 function printStatus() {
@@ -89,40 +109,20 @@ function clearData() {
 function initSetup() {
 	console.log('\nCREATE SOMETHING Learn Setup\n');
 
-	const codexConfigDir = join(homedir(), '.config', 'claude-code');
-	const codexConfigFile = join(codexConfigDir, 'settings.json');
-
-	let existingConfig: Record<string, unknown> = {};
-	let configExists = false;
-
-	if (existsSync(codexConfigFile)) {
-		try {
-			existingConfig = JSON.parse(readFileSync(codexConfigFile, 'utf-8'));
-			configExists = true;
-		} catch {
-			// Invalid JSON, start fresh
-		}
-	}
-
-	const mcpServers = (existingConfig.mcpServers as Record<string, unknown>) || {};
-	if (mcpServers.learn) {
-		console.log('✓ MCP server already configured in Codex settings');
-	} else {
-		console.log('To enable the learning tools, add this to your Codex settings:\n');
-		console.log(`  File: ${codexConfigFile}\n`);
-		console.log(`  {
-    "mcpServers": {
-      "learn": {
-        "command": "npx",
-        "args": ["@createsomething/learn"]
-      }
-    }
-  }`);
+	if (!hasCodexMcpCli()) {
+		console.log('○ Codex CLI not found or MCP commands unavailable');
+		console.log('  Install or update Codex CLI, then run:');
+		console.log(`  ${CODEX_MCP_ADD_COMMAND}`);
 		console.log('');
-
-		if (configExists) {
-			console.log('  Or run: npx @createsomething/learn init --auto\n');
-		}
+		printManualConfigFallback();
+	} else if (isLearnServerConfigured()) {
+		console.log('✓ MCP server already configured in Codex');
+	} else {
+		console.log('Run this command to enable learning tools in Codex:\n');
+		console.log(`  ${CODEX_MCP_ADD_COMMAND}`);
+		console.log('');
+		console.log('Or run: npx @createsomething/learn init --auto');
+		console.log('');
 	}
 
 	if (isAuthenticated()) {
@@ -134,40 +134,43 @@ function initSetup() {
 	}
 
 	console.log('\n--- Next Steps ---\n');
-	console.log('1. Add the MCP server configuration above');
+	console.log('1. Add the MCP server using the command above');
 	console.log('2. Restart Codex');
 	console.log('3. Ask for: "Learn Codex by building an MCP"');
 	console.log('4. Complete lessons in the codex-mcp path');
 }
 
 function initAuto() {
-	const codexConfigDir = join(homedir(), '.config', 'claude-code');
-	const codexConfigFile = join(codexConfigDir, 'settings.json');
-
-	if (!existsSync(codexConfigDir)) {
-		mkdirSync(codexConfigDir, { recursive: true });
+	if (!hasCodexMcpCli()) {
+		console.error('Error: Codex CLI with MCP support was not found.');
+		console.error(`Run manually once available: ${CODEX_MCP_ADD_COMMAND}`);
+		console.error('');
+		printManualConfigFallback();
+		process.exit(1);
 	}
 
-	let config: Record<string, unknown> = {};
-	if (existsSync(codexConfigFile)) {
-		try {
-			config = JSON.parse(readFileSync(codexConfigFile, 'utf-8'));
-		} catch {
-			// Invalid JSON, start fresh
+	if (isLearnServerConfigured()) {
+		console.log('✓ MCP server already configured in Codex');
+		console.log('\nRestart Codex, then ask:');
+		console.log('  "Help me learn Codex by building an MCP"');
+		return;
+	}
+
+	const result = spawnSync('codex', CODEX_MCP_ADD_ARGS, {
+		encoding: 'utf-8'
+	});
+
+	if (result.status !== 0) {
+		console.error('Error: Failed to configure Codex MCP server automatically.');
+		if (result.stderr?.trim()) {
+			console.error(result.stderr.trim());
+		} else if (result.stdout?.trim()) {
+			console.error(result.stdout.trim());
 		}
+		process.exit(result.status ?? 1);
 	}
 
-	const mcpServers = (config.mcpServers as Record<string, unknown>) || {};
-	mcpServers.learn = {
-		command: 'npx',
-		args: ['@createsomething/learn']
-	};
-	config.mcpServers = mcpServers;
-
-	writeFileSync(codexConfigFile, JSON.stringify(config, null, 2));
-
-	console.log('✓ MCP server configured in Codex settings');
-	console.log(`  File: ${codexConfigFile}`);
+	console.log('✓ MCP server configured in Codex');
 	console.log('\nRestart Codex, then ask:');
 	console.log('  "Help me learn Codex by building an MCP"');
 }

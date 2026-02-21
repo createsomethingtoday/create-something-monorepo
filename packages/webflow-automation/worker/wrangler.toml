@@ -1,0 +1,15 @@
+name = "webflow-onboarding-sync"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[observability]
+enabled = true
+
+[vars]
+# Default table name for onboarding operations.
+AIRTABLE_ONBOARDING_TABLE = "Partner Onboarding Ops"
+
+# Required secrets (set with wrangler secret put):
+# AIRTABLE_API_KEY
+# AIRTABLE_BASE_ID

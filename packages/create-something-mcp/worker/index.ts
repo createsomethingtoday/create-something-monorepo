@@ -32,6 +32,7 @@ import { PROPERTY_DOCUMENTS } from '../src/content/generated/property-docs.js';
 import { MASTERS } from '../src/content/masters.js';
 import { PRAXIS_EXERCISES } from '../src/content/praxis.js';
 import { PRODUCTS } from '../src/content/products.js';
+import { HOST_PLAYBOOKS } from '../src/content/playbooks.js';
 
 // =============================================================================
 // Types
@@ -56,6 +57,8 @@ export class CreateSomethingMCP extends McpAgent<Env> {
     // Telemetry: meter all tool calls + register health/usage resources
     if (this.env.TELEMETRY_DB) {
       enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'create-something');
+    } else {
+      console.warn('[create-something-mcp] TELEMETRY_DB binding missing; telemetry disabled.');
     }
 
     registerResources(this.server);
@@ -92,6 +95,10 @@ export default {
           mcp: '/mcp (Streamable HTTP — Claude Code, Codex)',
           sse: '/sse (SSE — Cursor, legacy clients)',
         },
+        telemetry: {
+          enabled: Boolean(env.TELEMETRY_DB),
+          backend: env.TELEMETRY_DB ? 'd1:cs-telemetry' : 'disabled',
+        },
         content: {
           papers: PAPERS.length,
           canon_pages: CANON_PAGES.length,
@@ -104,7 +111,7 @@ export default {
           property_docs: PROPERTY_DOCUMENTS.length,
         },
         capabilities: {
-          resources: `${PAPERS.length + CANON_PAGES.length + PATTERNS.length + MASTERS.length + PROPERTY_DOCUMENTS.length + 10 + 2 + 2 + 1 + 1} URIs (Database tier)`,
+          resources: `${PAPERS.length + CANON_PAGES.length + PATTERNS.length + MASTERS.length + PROPERTY_DOCUMENTS.length + HOST_PLAYBOOKS.length + 26} URIs (Database tier)`,
           tools: '5 tools (Automation tier — search, relate, classify, apply_triad, audit_design)',
           prompts: '8 prompts (Judgment tier — architecture_review, design_review, triad_analysis, mcp_design, research_dive, workflow_setup, host_comparison, project_structure)',
         },

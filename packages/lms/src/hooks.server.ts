@@ -73,13 +73,13 @@ export const handle: Handle = async ({ event, resolve }) => {
 		);
 	}
 
-	const accessToken = event.cookies.get('cs_access_token');
-	const refreshToken = event.cookies.get('cs_refresh_token');
+	const authorizationHeader = event.request.headers.get('authorization');
+	const bearerMatch = authorizationHeader?.match(/^Bearer\s+(.+)$/i);
+	const bearerAccessToken = bearerMatch?.[1];
 
-	if (accessToken) {
-		// Try to validate the access token
-		const payload = await validateJWT(accessToken);
-
+	// Support direct Bearer token auth for MCP clients and other non-browser consumers.
+	if (bearerAccessToken) {
+		const payload = await validateJWT(bearerAccessToken);
 		if (payload) {
 			event.locals.user = {
 				id: payload.sub,
@@ -87,41 +87,61 @@ export const handle: Handle = async ({ event, resolve }) => {
 				tier: payload.tier,
 				source: payload.source,
 			};
-		} else if (refreshToken) {
-			// Access token invalid/expired, try to refresh
-			const newTokens = await refreshTokens(refreshToken);
+		}
+	}
 
-			if (newTokens) {
-				// Set new cookies
-				event.cookies.set('cs_access_token', newTokens.access_token, {
-					path: '/',
-					httpOnly: true,
-					secure: true,
-					sameSite: 'lax',
-					maxAge: newTokens.expires_in,
-				});
-				event.cookies.set('cs_refresh_token', newTokens.refresh_token, {
-					path: '/',
-					httpOnly: true,
-					secure: true,
-					sameSite: 'lax',
-					maxAge: 7 * 24 * 60 * 60, // 7 days
-				});
+	// Fallback to browser cookie auth when no valid Bearer token user is present.
+	if (!event.locals.user) {
+		const accessToken = event.cookies.get('cs_access_token');
+		const refreshToken = event.cookies.get('cs_refresh_token');
 
-				// Parse the new token to get user info
-				const newPayload = decodeJWT(newTokens.access_token);
-				if (newPayload) {
-					event.locals.user = {
-						id: newPayload.sub,
-						email: newPayload.email,
-						tier: newPayload.tier,
-						source: newPayload.source,
-					};
+		if (accessToken) {
+			// Try to validate the access token
+			const payload = await validateJWT(accessToken);
+
+			if (payload) {
+				event.locals.user = {
+					id: payload.sub,
+					email: payload.email,
+					tier: payload.tier,
+					source: payload.source,
+				};
+			} else if (refreshToken) {
+				// Access token invalid/expired, try to refresh
+				const newTokens = await refreshTokens(refreshToken);
+
+				if (newTokens) {
+					// Set new cookies
+					event.cookies.set('cs_access_token', newTokens.access_token, {
+						path: '/',
+						httpOnly: true,
+						secure: true,
+						sameSite: 'lax',
+						maxAge: newTokens.expires_in,
+					});
+					event.cookies.set('cs_refresh_token', newTokens.refresh_token, {
+						path: '/',
+						httpOnly: true,
+						secure: true,
+						sameSite: 'lax',
+						maxAge: 7 * 24 * 60 * 60, // 7 days
+					});
+
+					// Parse the new token to get user info
+					const newPayload = decodeJWT(newTokens.access_token);
+					if (newPayload) {
+						event.locals.user = {
+							id: newPayload.sub,
+							email: newPayload.email,
+							tier: newPayload.tier,
+							source: newPayload.source,
+						};
+					}
+				} else {
+					// Refresh failed, clear cookies
+					event.cookies.delete('cs_access_token', { path: '/' });
+					event.cookies.delete('cs_refresh_token', { path: '/' });
 				}
-			} else {
-				// Refresh failed, clear cookies
-				event.cookies.delete('cs_access_token', { path: '/' });
-				event.cookies.delete('cs_refresh_token', { path: '/' });
 			}
 		}
 	}

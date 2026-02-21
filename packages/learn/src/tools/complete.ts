@@ -102,7 +102,7 @@ Example:
 	try {
 		const client = new LMSClient(auth.tokens);
 
-		const result = await client.completeLesson(pathId, lessonId, timeSpent);
+		const result = await client.completeLesson(pathId, lessonId, timeSpent, reflection);
 
 		if (result.pathCompleted) {
 			return [
