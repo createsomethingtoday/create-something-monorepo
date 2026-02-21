@@ -10,10 +10,12 @@ import type {
   ReviewProjectResponse,
   ReviewStatusResponse,
   Finding,
+  PolicyContext,
 } from '../../../shared/types';
 import { SEVERITY_WEIGHTS } from '../../../shared/constants';
 import { checkSEO } from '../../seo-checker/src/index';
 import { validateLinks } from '../../link-validator/src/index';
+import { getWebflowPolicySnapshot } from '../../../../webflow-site-analyzer-mcp/src/policy/index';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -36,7 +38,7 @@ app.get('/health', (c) => {
 // Single page review (synchronous)
 app.post('/api/review/page', async (c) => {
   const startTime = Date.now();
-  const { url, checks = ['seo', 'links'] } = await c.req.json<ReviewPageRequest>();
+  const { url, checks = ['seo', 'links'], includePolicyContext = true } = await c.req.json<ReviewPageRequest>();
 
   if (!url) {
     return c.json({ error: 'URL is required' }, 400);
@@ -44,6 +46,17 @@ app.post('/api/review/page', async (c) => {
 
   try {
     const findings: Finding[] = [];
+    let policyContext: PolicyContext | undefined;
+
+    // Knowledge gate: policy/rubric context is sourced from MCP policy ingestion.
+    if (includePolicyContext) {
+      const policy = await getWebflowPolicySnapshot(false);
+      policyContext = {
+        policyVersion: policy.policyVersion,
+        generatedAt: policy.generatedAt,
+        sources: policy.sources,
+      };
+    }
 
     // Run checks in parallel
     const checkPromises = [];
@@ -67,6 +80,7 @@ app.post('/api/review/page', async (c) => {
       findings,
       score,
       duration,
+      policy: policyContext,
     };
 
     // Track API usage
@@ -91,6 +105,23 @@ app.post('/api/review/page', async (c) => {
 
     return c.json({
       error: 'Failed to review page',
+      details: error instanceof Error ? error.message : String(error),
+    }, 500);
+  }
+});
+
+// Policy context endpoint for extension/app bootstrapping.
+app.get('/api/policy/webflow', async (c) => {
+  try {
+    const policy = await getWebflowPolicySnapshot(false);
+    return c.json({
+      policyVersion: policy.policyVersion,
+      generatedAt: policy.generatedAt,
+      sources: policy.sources,
+    });
+  } catch (error) {
+    return c.json({
+      error: 'Failed to fetch policy context',
       details: error instanceof Error ? error.message : String(error),
     }, 500);
   }

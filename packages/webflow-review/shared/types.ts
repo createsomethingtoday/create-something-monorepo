@@ -1,6 +1,6 @@
 // Shared TypeScript types for Webflow Review
 
-export type CheckType = 'seo' | 'links' | 'a11y' | 'performance';
+export type CheckType = 'seo' | 'links' | 'a11y' | 'performance' | 'interactions';
 export type Severity = 'critical' | 'warning' | 'info';
 export type ReviewStatus = 'queued' | 'running' | 'completed' | 'failed';
 
@@ -14,6 +14,22 @@ export interface Finding {
   evidence?: Record<string, any>;
   autoFixable?: boolean;
   createdAt?: number;
+}
+
+export interface PolicySourceSnapshot {
+  url: string;
+  title: string;
+  fetchedAt: string;
+  contentHash: string;
+}
+
+export interface PolicyContext {
+  policyVersion: string;
+  generatedAt: string;
+  sources: {
+    submissionGuidelines: PolicySourceSnapshot;
+    gradingRubric: PolicySourceSnapshot;
+  };
 }
 
 export interface Review {
@@ -31,12 +47,14 @@ export interface Review {
 export interface ReviewPageRequest {
   url: string;
   checks?: CheckType[];
+  includePolicyContext?: boolean;
 }
 
 export interface ReviewPageResponse {
   findings: Finding[];
   score: number;
   duration?: number;
+  policy?: PolicyContext;
 }
 
 export interface ReviewProjectRequest {

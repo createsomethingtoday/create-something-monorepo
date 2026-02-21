@@ -26,6 +26,7 @@
  */
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { initLogger, type Logger, type Span } from 'braintrust';
 import type { D1Database } from './stores/d1.js';
 
 // =============================================================================
@@ -48,15 +49,7 @@ export interface ToolInvocationRow {
   success: number;
   duration_ms: number | null;
   error_message: string | null;
-  correlation_id: string | null;
-  request_id: string | null;
-  metadata_json: string | null;
   created_at: string;
-}
-
-export interface InvocationTrace {
-  correlationId?: string | null;
-  requestId?: string | null;
 }
 
 export interface UsageResult {
@@ -89,10 +82,70 @@ export interface ActivityResult {
     success: boolean;
     durationMs: number | null;
     error: string | null;
-    correlationId?: string | null;
-    requestId?: string | null;
     createdAt: string;
   }>;
+}
+
+export interface BraintrustTelemetryOptions {
+  apiKey?: string;
+  projectName?: string;
+  enabled?: boolean;
+}
+
+// =============================================================================
+// Braintrust (optional)
+// =============================================================================
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let braintrustLogger: Logger<any> | null = null;
+
+function initBraintrustTelemetry(options: BraintrustTelemetryOptions, serverName: string): boolean {
+  if (!options.apiKey || options.enabled === false) return false;
+  if (braintrustLogger) return true;
+
+  braintrustLogger = initLogger({
+    apiKey: options.apiKey,
+    projectName: options.projectName || serverName,
+    asyncFlush: true,
+    setCurrent: true,
+  });
+
+  return true;
+}
+
+async function emitBraintrustInvocation(args: {
+  serverName: string;
+  toolName: string;
+  accountId: string;
+  input: unknown;
+  output: unknown;
+  durationMs: number;
+  success: boolean;
+  error?: string;
+}): Promise<void> {
+  if (!braintrustLogger) return;
+
+  await braintrustLogger.traced(
+    (span: Span) => {
+      span.log({
+        input: args.input,
+        output: args.output,
+        error: args.error,
+        tags: ['mcp', args.serverName, args.toolName, args.success ? 'success' : 'error'],
+        metadata: {
+          server: args.serverName,
+          tool: args.toolName,
+          accountId: args.accountId,
+          durationMs: args.durationMs,
+          success: args.success,
+        },
+      });
+    },
+    {
+      name: `mcp:${args.serverName}:${args.toolName}`,
+      type: 'tool',
+    },
+  );
 }
 
 // =============================================================================
@@ -104,81 +157,6 @@ function getCurrentPeriod(): string {
   const y = now.getUTCFullYear();
   const m = String(now.getUTCMonth() + 1).padStart(2, '0');
   return `${y}-${m}`;
-}
-
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
-}
-
-function normalizeTraceValue(value: unknown): string | null {
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    return trimmed ? trimmed.slice(0, 256) : null;
-  }
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? String(value) : null;
-  }
-  return null;
-}
-
-function createFallbackRequestId(): string {
-  return `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function getHeaderValue(
-  headers: Record<string, string | string[] | undefined> | undefined,
-  name: string
-): string | null {
-  if (!headers) return null;
-  const target = name.toLowerCase();
-
-  for (const [key, value] of Object.entries(headers)) {
-    if (key.toLowerCase() !== target) continue;
-    if (typeof value === 'string') return normalizeTraceValue(value);
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        const normalized = normalizeTraceValue(item);
-        if (normalized) return normalized;
-      }
-    }
-  }
-
-  return null;
-}
-
-function extractInvocationTrace(handlerArgs: unknown[]): InvocationTrace {
-  const extra = asRecord(handlerArgs[handlerArgs.length - 1]);
-  const headers = asRecord(extra?.requestInfo)?.headers as
-    | Record<string, string | string[] | undefined>
-    | undefined;
-  const meta = asRecord(extra?._meta);
-  const relatedTask = asRecord(meta?.['io.modelcontextprotocol/related-task']);
-
-  const requestId =
-    getHeaderValue(headers, 'x-request-id') ??
-    normalizeTraceValue(extra?.requestId) ??
-    createFallbackRequestId();
-
-  const correlationId =
-    getHeaderValue(headers, 'x-correlation-id') ??
-    normalizeTraceValue(relatedTask?.taskId) ??
-    normalizeTraceValue(extra?.sessionId) ??
-    normalizeTraceValue(meta?.progressToken) ??
-    requestId;
-
-  return { requestId, correlationId };
-}
-
-function isTraceColumnMissingError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error);
-  return (
-    message.includes('no such column: correlation_id') ||
-    message.includes('no such column: request_id') ||
-    message.includes('no column named correlation_id') ||
-    message.includes('no column named request_id')
-  );
 }
 
 // =============================================================================
@@ -197,7 +175,6 @@ export async function recordInvocation(
   durationMs: number,
   success: boolean,
   error?: unknown,
-  trace?: InvocationTrace
 ): Promise<void> {
   const period = getCurrentPeriod();
   const errorMessage = error
@@ -211,41 +188,19 @@ export async function recordInvocation(
        VALUES (?, ?, ?, 1, datetime('now'))
        ON CONFLICT(server_name, account_id, period_start) DO UPDATE SET
          runs_this_period = mcp_run_counts.runs_this_period + 1,
-         updated_at = datetime('now')`
+         updated_at = datetime('now')`,
     )
     .bind(serverName, accountId, period)
     .run();
 
-  try {
-    // Log individual invocation with traceability columns.
-    await db
-      .prepare(
-        `INSERT INTO mcp_tool_invocations (server_name, account_id, tool_name, success, duration_ms, error_message, correlation_id, request_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-      )
-      .bind(
-        serverName,
-        accountId,
-        toolName,
-        success ? 1 : 0,
-        durationMs,
-        errorMessage,
-        trace?.correlationId ?? null,
-        trace?.requestId ?? null
-      )
-      .run();
-  } catch (e) {
-    if (!isTraceColumnMissingError(e)) throw e;
-
-    // Backward-compatible fallback for older telemetry schemas not yet migrated.
-    await db
-      .prepare(
-        `INSERT INTO mcp_tool_invocations (server_name, account_id, tool_name, success, duration_ms, error_message)
-         VALUES (?, ?, ?, ?, ?, ?)`
-      )
-      .bind(serverName, accountId, toolName, success ? 1 : 0, durationMs, errorMessage)
-      .run();
-  }
+  // Log individual invocation
+  await db
+    .prepare(
+      `INSERT INTO mcp_tool_invocations (server_name, account_id, tool_name, success, duration_ms, error_message)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(serverName, accountId, toolName, success ? 1 : 0, durationMs, errorMessage)
+    .run();
 }
 
 /**
@@ -254,7 +209,7 @@ export async function recordInvocation(
 export async function getUsage(
   db: D1Database,
   serverName: string,
-  accountId?: string
+  accountId?: string,
 ): Promise<UsageResult> {
   const period = getCurrentPeriod();
   const acct = accountId || 'operator';
@@ -262,7 +217,7 @@ export async function getUsage(
   const row = await db
     .prepare(
       `SELECT server_name, account_id, period_start, runs_this_period
-       FROM mcp_run_counts WHERE server_name = ? AND account_id = ? AND period_start = ?`
+       FROM mcp_run_counts WHERE server_name = ? AND account_id = ? AND period_start = ?`,
     )
     .bind(serverName, acct, period)
     .first<RunCountRow>();
@@ -271,14 +226,17 @@ export async function getUsage(
     serverName,
     accountId: acct,
     period,
-    runsThisPeriod: row?.runs_this_period ?? 0
+    runsThisPeriod: row?.runs_this_period ?? 0,
   };
 }
 
 /**
  * Get health status for a server based on last 24 hours of activity.
  */
-export async function getHealth(db: D1Database, serverName: string): Promise<HealthResult> {
+export async function getHealth(
+  db: D1Database,
+  serverName: string,
+): Promise<HealthResult> {
   // Tool breakdown for last 24h
   const breakdown = await db
     .prepare(
@@ -290,7 +248,7 @@ export async function getHealth(db: D1Database, serverName: string): Promise<Hea
        FROM mcp_tool_invocations
        WHERE server_name = ? AND created_at > datetime('now', '-24 hours')
        GROUP BY tool_name
-       ORDER BY invocations DESC`
+       ORDER BY invocations DESC`,
     )
     .bind(serverName)
     .all<{ tool_name: string; invocations: number; errors: number; avg_duration_ms: number }>();
@@ -299,7 +257,7 @@ export async function getHealth(db: D1Database, serverName: string): Promise<Hea
   const lastRow = await db
     .prepare(
       `SELECT created_at FROM mcp_tool_invocations
-       WHERE server_name = ? ORDER BY created_at DESC LIMIT 1`
+       WHERE server_name = ? ORDER BY created_at DESC LIMIT 1`,
     )
     .bind(serverName)
     .first<{ created_at: string }>();
@@ -322,10 +280,10 @@ export async function getHealth(db: D1Database, serverName: string): Promise<Hea
       toolName: r.tool_name,
       invocations: r.invocations,
       errors: r.errors,
-      avgDurationMs: Math.round(r.avg_duration_ms ?? 0)
+      avgDurationMs: Math.round(r.avg_duration_ms ?? 0),
     })),
     lastActivity: lastRow?.created_at ?? null,
-    checkedAt: new Date().toISOString()
+    checkedAt: new Date().toISOString(),
   };
 }
 
@@ -335,15 +293,15 @@ export async function getHealth(db: D1Database, serverName: string): Promise<Hea
 export async function getActivity(
   db: D1Database,
   serverName: string,
-  limit: number = 50
+  limit: number = 50,
 ): Promise<ActivityResult> {
   const rows = await db
     .prepare(
-      `SELECT tool_name, account_id, success, duration_ms, error_message, correlation_id, request_id, created_at
+      `SELECT tool_name, account_id, success, duration_ms, error_message, created_at
        FROM mcp_tool_invocations
        WHERE server_name = ?
        ORDER BY created_at DESC
-       LIMIT ?`
+       LIMIT ?`,
     )
     .bind(serverName, limit)
     .all<ToolInvocationRow>();
@@ -356,10 +314,8 @@ export async function getActivity(
       success: r.success === 1,
       durationMs: r.duration_ms,
       error: r.error_message,
-      correlationId: r.correlation_id,
-      requestId: r.request_id,
-      createdAt: r.created_at
-    }))
+      createdAt: r.created_at,
+    })),
   };
 }
 
@@ -369,11 +325,11 @@ export async function getActivity(
  */
 export async function cleanupOldInvocations(
   db: D1Database,
-  daysToKeep: number = 30
+  daysToKeep: number = 30,
 ): Promise<void> {
   await db
     .prepare(
-      `DELETE FROM mcp_tool_invocations WHERE created_at < datetime('now', '-' || ? || ' days')`
+      `DELETE FROM mcp_tool_invocations WHERE created_at < datetime('now', '-' || ? || ' days')`,
     )
     .bind(daysToKeep)
     .run();
@@ -400,9 +356,11 @@ export function enableTelemetry(
   server: McpServer,
   db: D1Database,
   serverName: string,
-  getAccountId?: () => string
+  getAccountId?: () => string,
+  braintrustOptions?: BraintrustTelemetryOptions,
 ): void {
   const resolveAccount = getAccountId || (() => 'operator');
+  const braintrustEnabled = initBraintrustTelemetry(braintrustOptions || {}, serverName);
 
   // Proxy server.tool() to wrap handlers with metering.
   // Cast through `any` to bypass TypeScript's strict overload checking on .apply().
@@ -427,31 +385,41 @@ export function enableTelemetry(
     // Wrap the handler with metering
     args[lastIdx] = async (...handlerArgs: unknown[]) => {
       const start = Date.now();
-      const trace = extractInvocationTrace(handlerArgs);
+      const accountId = resolveAccount();
       try {
         const result = await (originalHandler as Function).apply(null, handlerArgs);
-        recordInvocation(
-          db,
-          serverName,
-          resolveAccount(),
-          toolName,
-          Date.now() - start,
-          true,
-          undefined,
-          trace
-        ).catch((e: unknown) => console.warn(`[telemetry] metering failed for ${toolName}:`, e));
+        const durationMs = Date.now() - start;
+        recordInvocation(db, serverName, accountId, toolName, durationMs, true)
+          .catch((e: unknown) => console.warn(`[telemetry] metering failed for ${toolName}:`, e));
+        if (braintrustEnabled) {
+          emitBraintrustInvocation({
+            serverName,
+            toolName,
+            accountId,
+            input: handlerArgs[0],
+            output: result,
+            durationMs,
+            success: true,
+          }).catch((e: unknown) => console.warn(`[telemetry] braintrust emit failed for ${toolName}:`, e));
+        }
         return result;
       } catch (error) {
-        recordInvocation(
-          db,
-          serverName,
-          resolveAccount(),
-          toolName,
-          Date.now() - start,
-          false,
-          error,
-          trace
-        ).catch((e: unknown) => console.warn(`[telemetry] metering failed for ${toolName}:`, e));
+        const durationMs = Date.now() - start;
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        recordInvocation(db, serverName, accountId, toolName, durationMs, false, error)
+          .catch((e: unknown) => console.warn(`[telemetry] metering failed for ${toolName}:`, e));
+        if (braintrustEnabled) {
+          emitBraintrustInvocation({
+            serverName,
+            toolName,
+            accountId,
+            input: handlerArgs[0],
+            output: { error: errorMessage },
+            durationMs,
+            success: false,
+            error: errorMessage,
+          }).catch((e: unknown) => console.warn(`[telemetry] braintrust emit failed for ${toolName}:`, e));
+        }
         throw error;
       }
     };
@@ -471,7 +439,7 @@ function registerTelemetryResources(
   server: McpServer,
   db: D1Database,
   serverName: string,
-  getAccountId: () => string
+  getAccountId: () => string,
 ): void {
   // Usage resource — aggregate run counts
   server.resource(
@@ -479,32 +447,28 @@ function registerTelemetryResources(
     'telemetry://usage',
     {
       description: `Run usage for ${serverName} this period`,
-      mimeType: 'application/json'
+      mimeType: 'application/json',
     },
     async () => {
       try {
         const usage = await getUsage(db, serverName, getAccountId());
         return {
-          contents: [
-            {
-              uri: 'telemetry://usage',
-              mimeType: 'application/json',
-              text: JSON.stringify(usage, null, 2)
-            }
-          ]
+          contents: [{
+            uri: 'telemetry://usage',
+            mimeType: 'application/json',
+            text: JSON.stringify(usage, null, 2),
+          }],
         };
       } catch (error) {
         return {
-          contents: [
-            {
-              uri: 'telemetry://usage',
-              mimeType: 'application/json',
-              text: JSON.stringify({ error: String(error), serverName })
-            }
-          ]
+          contents: [{
+            uri: 'telemetry://usage',
+            mimeType: 'application/json',
+            text: JSON.stringify({ error: String(error), serverName }),
+          }],
         };
       }
-    }
+    },
   );
 
   // Health resource — error rates, response times, status
@@ -513,37 +477,33 @@ function registerTelemetryResources(
     'telemetry://health',
     {
       description: `Health status for ${serverName} (last 24 hours)`,
-      mimeType: 'application/json'
+      mimeType: 'application/json',
     },
     async () => {
       try {
         const health = await getHealth(db, serverName);
         return {
-          contents: [
-            {
-              uri: 'telemetry://health',
-              mimeType: 'application/json',
-              text: JSON.stringify(health, null, 2)
-            }
-          ]
+          contents: [{
+            uri: 'telemetry://health',
+            mimeType: 'application/json',
+            text: JSON.stringify(health, null, 2),
+          }],
         };
       } catch (error) {
         return {
-          contents: [
-            {
-              uri: 'telemetry://health',
-              mimeType: 'application/json',
-              text: JSON.stringify({
-                serverName,
-                status: 'unhealthy',
-                error: String(error),
-                checkedAt: new Date().toISOString()
-              })
-            }
-          ]
+          contents: [{
+            uri: 'telemetry://health',
+            mimeType: 'application/json',
+            text: JSON.stringify({
+              serverName,
+              status: 'unhealthy',
+              error: String(error),
+              checkedAt: new Date().toISOString(),
+            }),
+          }],
         };
       }
-    }
+    },
   );
 
   // Activity resource — recent tool invocations
@@ -552,32 +512,28 @@ function registerTelemetryResources(
     'telemetry://activity',
     {
       description: `Recent activity log for ${serverName}`,
-      mimeType: 'application/json'
+      mimeType: 'application/json',
     },
     async () => {
       try {
         const activity = await getActivity(db, serverName);
         return {
-          contents: [
-            {
-              uri: 'telemetry://activity',
-              mimeType: 'application/json',
-              text: JSON.stringify(activity, null, 2)
-            }
-          ]
+          contents: [{
+            uri: 'telemetry://activity',
+            mimeType: 'application/json',
+            text: JSON.stringify(activity, null, 2),
+          }],
         };
       } catch (error) {
         return {
-          contents: [
-            {
-              uri: 'telemetry://activity',
-              mimeType: 'application/json',
-              text: JSON.stringify({ error: String(error), serverName })
-            }
-          ]
+          contents: [{
+            uri: 'telemetry://activity',
+            mimeType: 'application/json',
+            text: JSON.stringify({ error: String(error), serverName }),
+          }],
         };
       }
-    }
+    },
   );
 }
 
@@ -614,9 +570,6 @@ CREATE TABLE IF NOT EXISTS mcp_tool_invocations (
   success INTEGER NOT NULL DEFAULT 1,
   duration_ms INTEGER,
   error_message TEXT,
-  correlation_id TEXT,
-  request_id TEXT,
-  metadata_json TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -625,8 +578,4 @@ CREATE INDEX IF NOT EXISTS idx_mcp_invocations_server_time
   ON mcp_tool_invocations(server_name, created_at);
 CREATE INDEX IF NOT EXISTS idx_mcp_invocations_tool
   ON mcp_tool_invocations(server_name, tool_name);
-CREATE INDEX IF NOT EXISTS idx_mcp_invocations_correlation_time
-  ON mcp_tool_invocations(correlation_id, created_at);
-CREATE INDEX IF NOT EXISTS idx_mcp_invocations_request_id
-  ON mcp_tool_invocations(request_id);
 `.trim();

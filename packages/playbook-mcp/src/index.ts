@@ -22,12 +22,18 @@ import { registerTools } from './tools.js';
 import { registerPrompts } from './prompts.js';
 import { HOST_PLAYBOOKS } from './playbooks.js';
 import { MCP_CATALOG } from './catalog.js';
+import { WORKFLOWS } from './workflows.js';
+import { OUTCOME_PLAYBOOKS } from './outcome-playbooks.js';
 
-const RESOURCE_COUNT = HOST_PLAYBOOKS.length + 3; // list + per-host + comparison + graduation path
+const RESOURCE_COUNT =
+  HOST_PLAYBOOKS.length +
+  5 + // list + workflows list + outcomes list + comparison + graduation path
+  (WORKFLOWS.length * 2) + // workflow JSON + atlas export
+  (OUTCOME_PLAYBOOKS.length * 2); // outcome playbook JSON + atlas export
 
 const server = new McpServer({
   name: 'playbook',
-  version: '1.1.0',
+  version: '1.3.0',
 });
 
 registerResources(server);
@@ -42,5 +48,5 @@ await server.connect(transport);
 
 console.error('Playbook MCP running on stdio');
 console.error(
-  `Content: ${HOST_PLAYBOOKS.length} host playbooks, ${MCP_CATALOG.length} catalog entries, 8 tools, 3 prompts, ${RESOURCE_COUNT} resources`,
+  `Content: ${HOST_PLAYBOOKS.length} host playbooks, ${OUTCOME_PLAYBOOKS.length} outcome playbooks, ${MCP_CATALOG.length} catalog entries, 14 tools, 3 prompts, ${RESOURCE_COUNT} resources`,
 );

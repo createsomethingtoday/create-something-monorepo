@@ -9,7 +9,7 @@ Lightweight by design — ships alongside client MCPs for onboarding. No philoso
 | Tier | MCP Primitive | Role in This Server |
 |------|---------------|---------------------|
 | **Database** | Resources | Host playbooks (one resource per host) + list + comparison matrix + graduation path |
-| **Automation** | Tools | 8 tools: playbook content (3) + installation guidance (5) |
+| **Automation** | Tools | 14 tools: host playbooks + outcome playbooks + Atlas exports (9) + installation guidance (5) |
 | **Judgment** | Prompts | 3 prompts: workflow setup, host comparison, project structure guidance |
 
 ## Resources (Database Tier)
@@ -25,6 +25,12 @@ Application-controlled playbook content.
 | `playbooks://hosts/claude-code` | Claude Code workflow playbook: mental model, patterns |
 | `playbooks://hosts/windsurf` | Windsurf workflow playbook: mental model, patterns |
 | `playbooks://hosts/vscode` | VS Code (Copilot) workflow playbook: mental model, patterns |
+| `playbooks://workflows/list` | Structured workflows (machine-readable) derived from host playbooks |
+| `playbooks://workflows/{id}` | A single structured workflow (JSON) |
+| `playbooks://workflows/{id}/atlas-studio` | Atlas Studio import JSON (BuilderState) for a single workflow |
+| `playbooks://outcomes/list` | Outcome playbooks (AI-native workflows) across construction, agency, and ops |
+| `playbooks://outcomes/{id}` | A single outcome playbook (JSON) |
+| `playbooks://outcomes/{id}/atlas-studio` | Atlas Studio import JSON (BuilderState) for a single outcome playbook |
 | `playbooks://comparison` | Host comparison matrix by task type + MCP usage patterns |
 | `playbooks://graduation-path` | The Graduation Path: Claude Desktop -> Cursor -> Codex |
 
@@ -39,6 +45,12 @@ Model-controlled functions. These mirror Resources for hosts that only support t
 | `get_playbook` | Get the workflow playbook for a specific host. Supports domain filtering (construction, legal, agency, general). |
 | `compare_hosts` | Compare Codex, Cursor, and Claude Desktop for a task type (project-management, research, document-drafting, data-analysis, general). |
 | `get_folder_structure` | Get the recommended folder structure for AI-assisted work in Codex or Cursor. |
+| `list_workflows` | List structured workflows with stable ids (machine-readable). |
+| `get_workflow` | Get a structured workflow by id (steps include Atlas reference ids). |
+| `export_workflow_atlas_studio` | Export a workflow in Atlas Studio import format (BuilderState JSON). |
+| `list_outcome_playbooks` | List AI-native outcome playbooks with stable ids (machine-readable). |
+| `get_outcome_playbook` | Get an outcome playbook by id (includes steps, integrations, judgment notes, test scenarios). |
+| `export_outcome_playbook_atlas_studio` | Export an outcome playbook in Atlas Studio import format (BuilderState JSON). |
 
 ### Installation Tools
 

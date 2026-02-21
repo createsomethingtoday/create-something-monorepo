@@ -26,11 +26,37 @@ export interface HostPlaybook {
   folderTemplate?: FolderTemplate;
 }
 
+export type WorkflowDomain = 'construction' | 'legal' | 'agency' | 'general';
+
+export interface WorkflowStep {
+  /**
+   * Atlas reference id. Should be one of:
+   * - human_* (human tasks)
+   * - task_* (AI tasks)
+   * - system_* (system tasks)
+   */
+  referenceId: string;
+  /**
+   * Short label shown in Atlas nodes.
+   * Use `notes` for full prose instructions.
+   */
+  customLabel: string;
+  /**
+   * Full prose instruction (formerly the raw step string).
+   */
+  notes: string;
+}
+
 export interface WorkflowPattern {
+  /**
+   * Stable id for programmatic lookups and Atlas exports.
+   * Convention: "{hostSlug}--{slugified-workflow-name}"
+   */
+  id: string;
   name: string;
   description: string;
-  domain?: string;
-  steps: string[];
+  domain?: WorkflowDomain;
+  steps: WorkflowStep[];
 }
 
 export interface FolderTemplate {
@@ -88,38 +114,97 @@ export const HOST_PLAYBOOKS: HostPlaybook[] = [
     configLocation: '~/.codex/config.toml',
     workflowPatterns: [
       {
+        id: 'codex--morning-briefing',
         name: 'Morning Briefing',
         description: 'Codex autonomously prepares a summary of overnight changes, open items, and priorities for the day.',
         domain: 'general',
         steps: [
-          'Create a briefings/ folder in your project',
-          'Add instructions in AGENTS.md: "Each morning, review open items and create a briefing in briefings/YYYY-MM-DD.md"',
-          'Include what data sources to check (connected MCPs, files, etc.)',
-          'Codex generates the briefing before you start work'
+          {
+            referenceId: 'human_configure',
+            customLabel: 'Create briefings/ folder',
+            notes: 'Create a briefings/ folder in your project'
+          },
+          {
+            referenceId: 'human_edit',
+            customLabel: 'Add AGENTS.md instructions',
+            notes: 'Add instructions in AGENTS.md: "Each morning, review open items and create a briefing in briefings/YYYY-MM-DD.md"'
+          },
+          {
+            referenceId: 'human_edit',
+            customLabel: 'Specify data sources',
+            notes: 'Include what data sources to check (connected MCPs, files, etc.)'
+          },
+          {
+            referenceId: 'task_generate',
+            customLabel: 'Generate briefing',
+            notes: 'Codex generates the briefing before you start work'
+          }
         ]
       },
       {
+        id: 'codex--document-drafter',
         name: 'Document Drafter',
         description: 'Codex drafts documents following templates and institutional standards.',
         domain: 'construction',
         steps: [
-          'Create a templates/ folder with your standard document formats',
-          'Create a drafts/ folder for output',
-          'In AGENTS.md, describe your organization\'s style, tone, and standards',
-          'Task Codex: "Draft an RFI for [issue] following the template in templates/rfi.md"',
-          'Review the draft in drafts/, provide feedback, iterate'
+          {
+            referenceId: 'human_configure',
+            customLabel: 'Create templates/ folder',
+            notes: 'Create a templates/ folder with your standard document formats'
+          },
+          {
+            referenceId: 'human_configure',
+            customLabel: 'Create drafts/ folder',
+            notes: 'Create a drafts/ folder for output'
+          },
+          {
+            referenceId: 'human_edit',
+            customLabel: 'Add style standards',
+            notes: 'In AGENTS.md, describe your organization\'s style, tone, and standards'
+          },
+          {
+            referenceId: 'human_type_input',
+            customLabel: 'Request document draft',
+            notes: 'Task Codex: "Draft an RFI for [issue] following the template in templates/rfi.md"'
+          },
+          {
+            referenceId: 'human_review',
+            customLabel: 'Review and iterate',
+            notes: 'Review the draft in drafts/, provide feedback, iterate'
+          }
         ]
       },
       {
+        id: 'codex--recurring-analysis',
         name: 'Recurring Analysis',
         description: 'Codex runs periodic analysis across your project data.',
         domain: 'general',
         steps: [
-          'Create an analysis/ folder with your analysis scripts or instructions',
-          'Connect relevant MCP servers (data sources) in config.toml',
-          'Describe the analysis cadence and output format in AGENTS.md',
-          'Codex reads data via MCP Resources, processes it, writes results',
-          'Results accumulate over time — building institutional knowledge'
+          {
+            referenceId: 'human_configure',
+            customLabel: 'Create analysis/ folder',
+            notes: 'Create an analysis/ folder with your analysis scripts or instructions'
+          },
+          {
+            referenceId: 'human_connect_integration',
+            customLabel: 'Connect MCP servers',
+            notes: 'Connect relevant MCP servers (data sources) in config.toml'
+          },
+          {
+            referenceId: 'human_edit',
+            customLabel: 'Define cadence & format',
+            notes: 'Describe the analysis cadence and output format in AGENTS.md'
+          },
+          {
+            referenceId: 'system_orchestrate',
+            customLabel: 'Run analysis loop',
+            notes: 'Codex reads data via MCP Resources, processes it, writes results'
+          },
+          {
+            referenceId: 'system_state',
+            customLabel: 'Accumulate knowledge',
+            notes: 'Results accumulate over time — building institutional knowledge'
+          }
         ]
       }
     ],
@@ -191,39 +276,102 @@ export const HOST_PLAYBOOKS: HostPlaybook[] = [
     configLocation: '.cursor/mcp.json (project) or ~/.cursor/mcp.json (global)',
     workflowPatterns: [
       {
+        id: 'cursor--guided-editing',
         name: 'Guided Editing',
         description: 'Use Agent mode to make multi-file changes while you watch and guide.',
         domain: 'general',
         steps: [
-          'Open your project folder in Cursor',
-          'Create .cursor/rules/ with guidance files for your work patterns',
-          'Use Agent mode (Cmd+I to open Composer, then Cmd+. to toggle Agent) for multi-step tasks',
-          'Review each change in the diff view before accepting',
-          'Use follow-up prompts to refine — "make this more formal" or "add the client name"'
+          {
+            referenceId: 'human_navigate_space',
+            customLabel: 'Open project in Cursor',
+            notes: 'Open your project folder in Cursor'
+          },
+          {
+            referenceId: 'human_configure',
+            customLabel: 'Create .cursor/rules/',
+            notes: 'Create .cursor/rules/ with guidance files for your work patterns'
+          },
+          {
+            referenceId: 'human_start_process',
+            customLabel: 'Use Agent mode',
+            notes: 'Use Agent mode (Cmd+I to open Composer, then Cmd+. to toggle Agent) for multi-step tasks'
+          },
+          {
+            referenceId: 'human_review',
+            customLabel: 'Review diffs',
+            notes: 'Review each change in the diff view before accepting'
+          },
+          {
+            referenceId: 'human_provide_feedback',
+            customLabel: 'Refine with follow-ups',
+            notes: 'Use follow-up prompts to refine — "make this more formal" or "add the client name"'
+          }
         ]
       },
       {
+        id: 'cursor--data-dashboard',
         name: 'Data Dashboard',
         description: 'Connect MCP servers to pull live data and build reports in Cursor.',
         domain: 'general',
         steps: [
-          'Add MCP servers to .cursor/mcp.json for your data sources',
-          'Ask the agent to pull data: "Get the latest project updates from Procore"',
-          'The agent uses MCP tools to fetch data and format it',
-          'Iterate on the format: "Make this a table" or "Highlight overdue items"',
-          'Save the output as a document or report'
+          {
+            referenceId: 'human_connect_integration',
+            customLabel: 'Configure MCP servers',
+            notes: 'Add MCP servers to .cursor/mcp.json for your data sources'
+          },
+          {
+            referenceId: 'human_type_input',
+            customLabel: 'Request data pull',
+            notes: 'Ask the agent to pull data: "Get the latest project updates from Procore"'
+          },
+          {
+            referenceId: 'system_api',
+            customLabel: 'Fetch via MCP tools',
+            notes: 'The agent uses MCP tools to fetch data and format it'
+          },
+          {
+            referenceId: 'human_provide_feedback',
+            customLabel: 'Iterate on format',
+            notes: 'Iterate on the format: "Make this a table" or "Highlight overdue items"'
+          },
+          {
+            referenceId: 'human_export',
+            customLabel: 'Save report',
+            notes: 'Save the output as a document or report'
+          }
         ]
       },
       {
+        id: 'cursor--template-refinement',
         name: 'Template Refinement',
         description: 'Collaboratively build and refine document templates.',
         domain: 'general',
         steps: [
-          'Open an existing template or start a new document',
-          'Describe what you need: "Create an RFI template for concrete work"',
-          'Review the generated template in real-time',
-          'Request specific changes: "Add a field for weather conditions"',
-          'Save the refined template for reuse (in Codex projects too)'
+          {
+            referenceId: 'human_navigate_space',
+            customLabel: 'Open template',
+            notes: 'Open an existing template or start a new document'
+          },
+          {
+            referenceId: 'human_type_input',
+            customLabel: 'Describe needs',
+            notes: 'Describe what you need: "Create an RFI template for concrete work"'
+          },
+          {
+            referenceId: 'human_review',
+            customLabel: 'Review template',
+            notes: 'Review the generated template in real-time'
+          },
+          {
+            referenceId: 'human_provide_feedback',
+            customLabel: 'Request changes',
+            notes: 'Request specific changes: "Add a field for weather conditions"'
+          },
+          {
+            referenceId: 'human_export',
+            customLabel: 'Save refined template',
+            notes: 'Save the refined template for reuse (in Codex projects too)'
+          }
         ]
       }
     ],
@@ -287,39 +435,102 @@ export const HOST_PLAYBOOKS: HostPlaybook[] = [
     configLocation: '~/Library/Application Support/Claude/claude_desktop_config.json (macOS)',
     workflowPatterns: [
       {
+        id: 'claude-desktop--project-hub',
         name: 'Project Hub',
         description: 'Use Claude Desktop Projects to maintain persistent context for ongoing work.',
         domain: 'general',
         steps: [
-          'Create a Project for each major work area (e.g., "Highway 101 Bridge Project")',
-          'Add context documents to the Project: specs, contacts, standards',
-          'Write Project Instructions that describe your role and preferences',
-          'Start new conversations within the Project — context carries over',
-          'Star important conversations for quick retrieval later'
+          {
+            referenceId: 'human_organize',
+            customLabel: 'Create a Project',
+            notes: 'Create a Project for each major work area (e.g., "Highway 101 Bridge Project")'
+          },
+          {
+            referenceId: 'human_upload_file',
+            customLabel: 'Add context docs',
+            notes: 'Add context documents to the Project: specs, contacts, standards'
+          },
+          {
+            referenceId: 'human_edit',
+            customLabel: 'Write instructions',
+            notes: 'Write Project Instructions that describe your role and preferences'
+          },
+          {
+            referenceId: 'human_start_process',
+            customLabel: 'Start conversations',
+            notes: 'Start new conversations within the Project — context carries over'
+          },
+          {
+            referenceId: 'human_flag',
+            customLabel: 'Star key threads',
+            notes: 'Star important conversations for quick retrieval later'
+          }
         ]
       },
       {
+        id: 'claude-desktop--document-analysis',
         name: 'Document Analysis',
         description: 'Upload documents for quick analysis, comparison, or summarization.',
         domain: 'general',
         steps: [
-          'Upload the document(s) to analyze',
-          'Ask specific questions: "What are the key risks in this contract?"',
-          'Request structured output: "Create a comparison table of these two bids"',
-          'Use follow-ups to drill deeper: "Elaborate on the insurance clause"',
-          'Copy the output — Claude Desktop Artifacts make this easy'
+          {
+            referenceId: 'human_upload_file',
+            customLabel: 'Upload documents',
+            notes: 'Upload the document(s) to analyze'
+          },
+          {
+            referenceId: 'human_type_input',
+            customLabel: 'Ask questions',
+            notes: 'Ask specific questions: "What are the key risks in this contract?"'
+          },
+          {
+            referenceId: 'human_type_input',
+            customLabel: 'Request structured output',
+            notes: 'Request structured output: "Create a comparison table of these two bids"'
+          },
+          {
+            referenceId: 'human_provide_feedback',
+            customLabel: 'Drill deeper',
+            notes: 'Use follow-ups to drill deeper: "Elaborate on the insurance clause"'
+          },
+          {
+            referenceId: 'human_export',
+            customLabel: 'Export results',
+            notes: 'Copy the output — Claude Desktop Artifacts make this easy'
+          }
         ]
       },
       {
+        id: 'claude-desktop--mcp-quick-access',
         name: 'MCP Quick Access',
         description: 'Use connected MCP servers for quick data lookups without leaving the conversation.',
         domain: 'general',
         steps: [
-          'Ensure MCP servers are configured in claude_desktop_config.json',
-          'Ask Claude to use the connected tools: "Check Procore for open RFIs on Project X"',
-          'Claude calls the MCP tool and returns the data in conversation',
-          'Ask follow-up questions about the data',
-          'For recurring workflows, consider graduating to Codex'
+          {
+            referenceId: 'human_connect_integration',
+            customLabel: 'Configure MCP servers',
+            notes: 'Ensure MCP servers are configured in claude_desktop_config.json'
+          },
+          {
+            referenceId: 'human_type_input',
+            customLabel: 'Request tool use',
+            notes: 'Ask Claude to use the connected tools: "Check Procore for open RFIs on Project X"'
+          },
+          {
+            referenceId: 'system_api',
+            customLabel: 'Call MCP tools',
+            notes: 'Claude calls the MCP tool and returns the data in conversation'
+          },
+          {
+            referenceId: 'human_provide_feedback',
+            customLabel: 'Ask follow-ups',
+            notes: 'Ask follow-up questions about the data'
+          },
+          {
+            referenceId: 'human_choose',
+            customLabel: 'Graduate if recurring',
+            notes: 'For recurring workflows, consider graduating to Codex'
+          }
         ]
       }
     ]
@@ -362,27 +573,69 @@ export const HOST_PLAYBOOKS: HostPlaybook[] = [
     configLocation: '~/.claude.json (user) or .mcp.json (project)',
     workflowPatterns: [
       {
+        id: 'claude-code--project-bootstrap',
         name: 'Project Bootstrap',
         description: 'Use Claude Code to scaffold a new project with MCP servers configured from the start.',
         domain: 'general',
         steps: [
-          'Create CLAUDE.md with project context, standards, and instructions',
-          'Add project-specific MCP servers: claude mcp add --transport http <name> <url>',
-          'Verify servers: claude then /mcp to check connections',
-          'Start working: "Set up the project structure following CLAUDE.md"',
-          'Review changes in git before committing'
+          {
+            referenceId: 'human_edit',
+            customLabel: 'Create CLAUDE.md',
+            notes: 'Create CLAUDE.md with project context, standards, and instructions'
+          },
+          {
+            referenceId: 'human_connect_integration',
+            customLabel: 'Add MCP servers',
+            notes: 'Add project-specific MCP servers: claude mcp add --transport http <name> <url>'
+          },
+          {
+            referenceId: 'human_validate',
+            customLabel: 'Verify connections',
+            notes: 'Verify servers: claude then /mcp to check connections'
+          },
+          {
+            referenceId: 'human_type_input',
+            customLabel: 'Request scaffold',
+            notes: 'Start working: "Set up the project structure following CLAUDE.md"'
+          },
+          {
+            referenceId: 'human_review',
+            customLabel: 'Review changes',
+            notes: 'Review changes in git before committing'
+          }
         ]
       },
       {
+        id: 'claude-code--code-review',
         name: 'Code Review',
         description: 'Claude Code reviews your changes, runs tests, and suggests improvements.',
         domain: 'general',
         steps: [
-          'Stage your changes: git add .',
-          'Ask Claude Code: "Review the staged changes for bugs, style issues, and test coverage"',
-          'Claude reads diffs, checks test results, and provides feedback',
-          'Iterate on suggestions',
-          'Commit when satisfied'
+          {
+            referenceId: 'system_git',
+            customLabel: 'Stage changes',
+            notes: 'Stage your changes: git add .'
+          },
+          {
+            referenceId: 'human_type_input',
+            customLabel: 'Request review',
+            notes: 'Ask Claude Code: "Review the staged changes for bugs, style issues, and test coverage"'
+          },
+          {
+            referenceId: 'task_verify',
+            customLabel: 'Verify diffs & tests',
+            notes: 'Claude reads diffs, checks test results, and provides feedback'
+          },
+          {
+            referenceId: 'human_edit',
+            customLabel: 'Apply suggestions',
+            notes: 'Iterate on suggestions'
+          },
+          {
+            referenceId: 'system_git',
+            customLabel: 'Commit changes',
+            notes: 'Commit when satisfied'
+          }
         ]
       }
     ]
@@ -422,27 +675,69 @@ export const HOST_PLAYBOOKS: HostPlaybook[] = [
     configLocation: '~/.codeium/windsurf/mcp_config.json',
     workflowPatterns: [
       {
+        id: 'windsurf--marketplace-setup',
         name: 'Marketplace Setup',
         description: 'Browse and install MCP servers from Windsurf\'s built-in marketplace.',
         domain: 'general',
         steps: [
-          'Open Windsurf and click the Plugins icon in the sidebar',
-          'Browse available MCP servers (look for the blue verified checkmark)',
-          'Click Install on the server you want',
-          'Enter your API key or authentication credentials',
-          'Click Save — Cascade can now use the server\'s tools'
+          {
+            referenceId: 'human_navigate_space',
+            customLabel: 'Open plugins',
+            notes: 'Open Windsurf and click the Plugins icon in the sidebar'
+          },
+          {
+            referenceId: 'human_select_option',
+            customLabel: 'Browse MCP servers',
+            notes: 'Browse available MCP servers (look for the blue verified checkmark)'
+          },
+          {
+            referenceId: 'human_start_process',
+            customLabel: 'Install server',
+            notes: 'Click Install on the server you want'
+          },
+          {
+            referenceId: 'human_authenticate',
+            customLabel: 'Authenticate',
+            notes: 'Enter your API key or authentication credentials'
+          },
+          {
+            referenceId: 'human_validate',
+            customLabel: 'Save & enable',
+            notes: 'Click Save — Cascade can now use the server\'s tools'
+          }
         ]
       },
       {
+        id: 'windsurf--manual-server-config',
         name: 'Manual Server Config',
         description: 'Add custom or self-hosted MCP servers via the raw config file.',
         domain: 'general',
         steps: [
-          'In Windsurf chat, click the MCP servers button (hammer icon)',
-          'Click Configure → Manage Plugins → View Raw Config',
-          'Add your server entry to mcp_config.json',
-          'For remote HTTP: use serverUrl field with /mcp endpoint',
-          'Click Refresh to load the new server'
+          {
+            referenceId: 'human_navigate_space',
+            customLabel: 'Open MCP config UI',
+            notes: 'In Windsurf chat, click the MCP servers button (hammer icon)'
+          },
+          {
+            referenceId: 'human_navigate_space',
+            customLabel: 'View raw config',
+            notes: 'Click Configure → Manage Plugins → View Raw Config'
+          },
+          {
+            referenceId: 'human_edit',
+            customLabel: 'Edit mcp_config.json',
+            notes: 'Add your server entry to mcp_config.json'
+          },
+          {
+            referenceId: 'human_configure',
+            customLabel: 'Set serverUrl',
+            notes: 'For remote HTTP: use serverUrl field with /mcp endpoint'
+          },
+          {
+            referenceId: 'human_validate',
+            customLabel: 'Refresh',
+            notes: 'Click Refresh to load the new server'
+          }
         ]
       }
     ]
@@ -480,15 +775,36 @@ export const HOST_PLAYBOOKS: HostPlaybook[] = [
     configLocation: '.vscode/mcp.json (project) or VS Code settings.json (user)',
     workflowPatterns: [
       {
+        id: 'vscode--copilot-agent-setup',
         name: 'Copilot Agent Setup',
         description: 'Configure MCP servers for use with Copilot agent mode.',
         domain: 'general',
         steps: [
-          'Open VS Code Settings (Cmd+,)',
-          'Search for "MCP" in settings',
-          'Add server entries under the MCP configuration section',
-          'Alternatively, create .vscode/mcp.json in your project root',
-          'Open Copilot chat and switch to Agent mode to use MCP tools'
+          {
+            referenceId: 'human_navigate_space',
+            customLabel: 'Open settings',
+            notes: 'Open VS Code Settings (Cmd+,)'
+          },
+          {
+            referenceId: 'human_type_input',
+            customLabel: 'Find MCP settings',
+            notes: 'Search for "MCP" in settings'
+          },
+          {
+            referenceId: 'human_edit',
+            customLabel: 'Add server entries',
+            notes: 'Add server entries under the MCP configuration section'
+          },
+          {
+            referenceId: 'human_configure',
+            customLabel: 'Create .vscode/mcp.json',
+            notes: 'Alternatively, create .vscode/mcp.json in your project root'
+          },
+          {
+            referenceId: 'human_start_process',
+            customLabel: 'Use Copilot Agent mode',
+            notes: 'Open Copilot chat and switch to Agent mode to use MCP tools'
+          }
         ]
       }
     ]

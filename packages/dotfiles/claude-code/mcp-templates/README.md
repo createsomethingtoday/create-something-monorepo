@@ -10,6 +10,7 @@ Copy the relevant server configuration to your `~/.claude/settings.json` under `
 
 | Template | Purpose | File |
 |----------|---------|------|
+| Context7 | Up-to-date library docs and code examples | `context7.json` |
 | Perplexity | Web search, research, reasoning | `perplexity.json` |
 | Slack | Send messages, read channels | `slack.json` |
 | Linear | Issue tracking integration | `linear.json` |

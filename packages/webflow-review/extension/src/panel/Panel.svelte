@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import type { Finding } from '../../../shared/types';
+  import type { Finding, PolicyContext } from '../../../shared/types';
   import FindingCard from './FindingCard.svelte';
   import ScoreRing from './ScoreRing.svelte';
 
@@ -9,9 +9,11 @@
   let findings: Finding[] = [];
   let score: number | null = null;
   let duration: number | null = null;
+  let policy: PolicyContext | null = null;
 
   let currentUrl: string = '';
   let projectId: string = '';
+  let activeTabId: number | null = null;
 
   // Group findings by severity
   $: criticalFindings = findings.filter(f => f.severity === 'critical');
@@ -21,14 +23,18 @@
   onMount(() => {
     // Get current page info
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]?.id) {
-        chrome.tabs.sendMessage(tabs[0].id, { action: 'getPageUrl' }, (response) => {
-          if (response) {
-            currentUrl = response.url;
-            projectId = response.projectId;
-          }
-        });
-      }
+      const tab = tabs[0];
+      if (!tab?.id) return;
+
+      activeTabId = tab.id;
+      if (tab.url) currentUrl = tab.url;
+
+      // Best-effort: get richer context from the content script (projectId, designer/preview flags, etc).
+      chrome.tabs.sendMessage(tab.id, { action: 'getPageUrl' }, (response) => {
+        if (!response) return;
+        if (typeof response.url === 'string') currentUrl = response.url;
+        if (typeof response.projectId === 'string') projectId = response.projectId;
+      });
     });
 
     // Listen for review completion
@@ -37,6 +43,18 @@
         handleReviewResult(message.result);
       }
     });
+
+    // Preload policy context so reviewers can see the active rubric version.
+    chrome.runtime
+      .sendMessage({ action: 'getPolicyContext' })
+      .then((result) => {
+        if (result?.success && result.policy) {
+          policy = result.policy;
+        }
+      })
+      .catch(() => {
+        policy = null;
+      });
   });
 
   async function startReview() {
@@ -49,6 +67,7 @@
     error = null;
     findings = [];
     score = null;
+    policy = null;
 
     try {
       const response = await chrome.runtime.sendMessage({
@@ -57,11 +76,136 @@
         projectId,
       });
 
-      handleReviewResult(response);
+      // If we're on a published *.webflow.io site, try to augment results with snippet-provided checks
+      // (e.g. Interactions audits) if the creator has installed the snippet.
+      const merged = await maybeMergeSnippetFindings(response);
+      handleReviewResult(merged);
     } catch (err) {
       error = err instanceof Error ? err.message : 'Review failed';
       isLoading = false;
     }
+  }
+
+  async function maybeMergeSnippetFindings(result: any): Promise<any> {
+    if (!result?.success) return result;
+    if (!activeTabId) return result;
+
+    let isWebflowIo = false;
+    try {
+      isWebflowIo = new URL(currentUrl).hostname.endsWith('.webflow.io');
+    } catch {
+      isWebflowIo = false;
+    }
+    if (!isWebflowIo) return result;
+
+    try {
+      const snippetResponse = await sendMessageToActiveTab({ action: 'runSnippetAudit' });
+      if (!snippetResponse?.success) return result;
+
+      const snippetFindings = snippetAuditToFindings(snippetResponse);
+      if (snippetFindings.length === 0) return result;
+
+      return {
+        ...result,
+        findings: [...(result.findings || []), ...snippetFindings],
+      };
+    } catch {
+      return result;
+    }
+  }
+
+  function sendMessageToActiveTab(message: any): Promise<any | null> {
+    if (!activeTabId) return Promise.resolve(null);
+
+    return new Promise((resolve) => {
+      chrome.tabs.sendMessage(activeTabId!, message, (response) => {
+        if (chrome.runtime.lastError) {
+          resolve(null);
+          return;
+        }
+        resolve(response ?? null);
+      });
+    });
+  }
+
+  function snippetAuditToFindings(snippetResponse: any): Finding[] {
+    const out: Finding[] = [];
+
+    const ix2 = snippetResponse.ix2;
+    if (ix2?.missingActionLists?.length) {
+      out.push({
+        checkType: 'interactions',
+        severity: 'critical',
+        message: `${ix2.missingActionLists.length} IX2 event(s) reference missing action list(s)`,
+        pageUrl: currentUrl,
+        evidence: {
+          missingActionLists: ix2.missingActionLists.slice(0, 20),
+        },
+      });
+    }
+
+    if (ix2?.unusedActionLists?.length) {
+      out.push({
+        checkType: 'interactions',
+        severity: 'info',
+        message: `${ix2.unusedActionLists.length} unused IX2 action list(s)`,
+        pageUrl: currentUrl,
+        evidence: {
+          unusedActionLists: ix2.unusedActionLists.slice(0, 50),
+        },
+      });
+    }
+
+    if (ix2?.missingTargets?.length) {
+      out.push({
+        checkType: 'interactions',
+        severity: 'warning',
+        message: `${ix2.missingTargets.length} IX2 event target(s) not found on this page`,
+        pageUrl: currentUrl,
+        evidence: {
+          missingTargets: ix2.missingTargets.slice(0, 50),
+        },
+      });
+    }
+
+    const ix3 = snippetResponse.ix3;
+    if (ix3?.missingTimelines?.length) {
+      out.push({
+        checkType: 'interactions',
+        severity: 'critical',
+        message: `${ix3.missingTimelines.length} IX3 interaction(s) reference missing timeline(s)`,
+        pageUrl: currentUrl,
+        evidence: {
+          missingTimelines: ix3.missingTimelines.slice(0, 20),
+        },
+      });
+    }
+
+    if (ix3?.missingTargetSelectors?.length) {
+      out.push({
+        checkType: 'interactions',
+        severity: 'warning',
+        message: `${ix3.missingTargetSelectors.length} IX3 selector(s) match no elements on this page`,
+        pageUrl: currentUrl,
+        evidence: {
+          missingTargetSelectors: ix3.missingTargetSelectors.slice(0, 50),
+        },
+      });
+    }
+
+    if (ix3?.deletedInteractions?.length) {
+      out.push({
+        checkType: 'interactions',
+        severity: 'info',
+        message: `${ix3.deletedInteractions.length} deleted IX3 interaction(s) still present in the published bundle`,
+        pageUrl: currentUrl,
+        evidence: {
+          deletedInteractions: ix3.deletedInteractions.slice(0, 50),
+        },
+      });
+    }
+
+    return out;
   }
 
   function handleReviewResult(result: any) {
@@ -75,6 +219,7 @@
     findings = result.findings || [];
     score = result.score;
     duration = result.duration;
+    policy = result.policy || policy;
   }
 
   function handleFindingClick(finding: Finding) {
@@ -168,6 +313,18 @@
             {/if}
           </div>
         </div>
+
+        {#if policy}
+          <div class="policy-context">
+            <div class="policy-title">Policy Context</div>
+            <div class="policy-version">Version: {policy.policyVersion}</div>
+            <div class="policy-source">
+              <a href={policy.sources.submissionGuidelines.url} target="_blank" rel="noreferrer">Guidelines</a>
+              <span> · </span>
+              <a href={policy.sources.gradingRubric.url} target="_blank" rel="noreferrer">Rubric</a>
+            </div>
+          </div>
+        {/if}
 
         <!-- Summary -->
         <div class="summary">
@@ -381,6 +538,45 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 12px;
     margin-bottom: 24px;
+  }
+
+  .policy-context {
+    margin-bottom: 16px;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #ffffff;
+  }
+
+  .policy-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #6b7280;
+    margin-bottom: 4px;
+  }
+
+  .policy-version {
+    font-size: 13px;
+    font-weight: 500;
+    color: #111827;
+    margin-bottom: 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  .policy-source {
+    font-size: 12px;
+    color: #4b5563;
+  }
+
+  .policy-source a {
+    color: #2563eb;
+    text-decoration: none;
+  }
+
+  .policy-source a:hover {
+    text-decoration: underline;
   }
 
   .summary-item {

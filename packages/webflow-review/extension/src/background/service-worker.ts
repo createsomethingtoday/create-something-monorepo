@@ -1,6 +1,6 @@
 // Background Service Worker - Handles API communication and side panel
 
-import type { ReviewPageRequest, ReviewPageResponse } from '../../../shared/types';
+import type { PolicyContext, ReviewPageRequest, ReviewPageResponse } from '../../../shared/types';
 
 // Configuration
 const API_BASE_URL = 'https://webflow-review-orchestrator.YOUR_SUBDOMAIN.workers.dev';
@@ -50,6 +50,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message.action === 'getPolicyContext') {
+    fetchPolicyContext()
+      .then((policy) => sendResponse({ success: Boolean(policy), policy }))
+      .catch((error) =>
+        sendResponse({
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      );
+    return true;
+  }
+
   return false;
 });
 
@@ -64,6 +76,7 @@ async function handleStartReview(url: string, projectId: string) {
     const request: ReviewPageRequest = {
       url,
       checks: settings.enabledChecks || ['seo', 'links'],
+      includePolicyContext: true,
     };
 
     const response = await fetch(`${apiUrl}/api/review/page`, {
@@ -86,6 +99,7 @@ async function handleStartReview(url: string, projectId: string) {
       findings: result.findings,
       score: result.score,
       duration: result.duration,
+      policy: result.policy,
     };
   } catch (error) {
     console.error('[Webflow Review] Review failed:', error);
@@ -93,6 +107,18 @@ async function handleStartReview(url: string, projectId: string) {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
     };
+  }
+}
+
+async function fetchPolicyContext(): Promise<PolicyContext | null> {
+  try {
+    const settings = await getSettings();
+    const apiUrl = settings.apiUrl || API_BASE_URL;
+    const response = await fetch(`${apiUrl}/api/policy/webflow`);
+    if (!response.ok) return null;
+    return await response.json<PolicyContext>();
+  } catch {
+    return null;
   }
 }
 
@@ -126,7 +152,7 @@ async function handleSaveSettings(settings: any) {
 // Tab update listener - auto-review if enabled
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status !== 'complete') return;
-  if (!tab.url?.includes('webflow.com')) return;
+  if (!tab.url?.includes('webflow.com') && !tab.url?.includes('webflow.io')) return;
 
   // Check if auto-review is enabled
   const settings = await getSettings();

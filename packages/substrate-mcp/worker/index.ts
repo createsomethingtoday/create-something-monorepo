@@ -224,7 +224,10 @@ export class SubstrateMCP extends McpAgent<Env> {
   async init() {
     // Telemetry: meter all tool calls + register health/usage resources
     if (this.env.TELEMETRY_DB) {
-      enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'substrate-mcp');
+      enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'substrate-mcp', undefined, {
+        apiKey: (this.env as any).BRAINTRUST_API_KEY,
+        projectName: 'substrate-mcp',
+      });
     }
 
     // D1 via binding — with observability tracking

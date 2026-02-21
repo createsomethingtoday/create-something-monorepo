@@ -2,6 +2,7 @@
 export { default as Header } from './Header.svelte';
 export { default as Search } from './Search.svelte';
 export { default as DarkModeToggle } from './DarkModeToggle.svelte';
+export { default as BackNavigation } from './BackNavigation.svelte';
 
 // Asset components
 export { default as AssetsDisplay } from './AssetsDisplay.svelte';

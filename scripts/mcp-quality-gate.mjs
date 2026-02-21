@@ -181,11 +181,19 @@ function getWorkspacePackageDirs() {
   return dirs;
 }
 
-function getPackageManager(pkgDir, workspaceDirs) {
+function getPackageManager(pkgDir, workspaceDirs, deps = {}) {
   const relDir = normalizePath(path.relative(REPO_ROOT, pkgDir));
 
   if (workspaceDirs.has(relDir)) {
     return 'pnpm';
+  }
+
+  // `workspace:*` ranges cannot be installed with npm. Force pnpm for any
+  // package that references workspace-local dependencies.
+  for (const version of Object.values(deps)) {
+    if (typeof version === 'string' && version.startsWith('workspace:')) {
+      return 'pnpm';
+    }
   }
 
   if (existsSync(path.join(pkgDir, 'package-lock.json'))) {
@@ -212,19 +220,21 @@ function parsePackage(pkgFile, workspaceDirs) {
 
   const pkgDir = path.dirname(pkgFile);
   const relDir = normalizePath(path.relative(REPO_ROOT, pkgDir));
+  const deps = {
+    ...(json.dependencies ?? {}),
+    ...(json.devDependencies ?? {}),
+    ...(json.peerDependencies ?? {}),
+  };
+  const manager = getPackageManager(pkgDir, workspaceDirs, deps);
 
   return {
     name: json.name ?? relDir,
     relDir,
     dir: pkgDir,
     scripts: json.scripts ?? {},
-    manager: getPackageManager(pkgDir, workspaceDirs),
+    manager,
     isWorker: relDir.endsWith('/worker'),
-    deps: {
-      ...(json.dependencies ?? {}),
-      ...(json.devDependencies ?? {}),
-      ...(json.peerDependencies ?? {}),
-    },
+    deps,
   };
 }
 

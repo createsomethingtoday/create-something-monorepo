@@ -6,6 +6,9 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { HOST_PLAYBOOKS, HOST_COMPARISONS, GRADUATION_PATH, MCP_HOST_PATTERNS } from './playbooks.js';
 import type { HostPlaybook } from './playbooks.js';
+import { WORKFLOWS } from './workflows.js';
+import { exportWorkflowToAtlasStudio, exportOutcomePlaybookToAtlasStudio } from './atlas-studio.js';
+import { OUTCOME_PLAYBOOKS } from './outcome-playbooks.js';
 
 export function registerResources(server: McpServer) {
   // List
@@ -41,6 +44,108 @@ export function registerResources(server: McpServer) {
           text: formatPlaybookMarkdown(playbook)
         }]
       })
+    );
+  }
+
+  // Structured workflows (machine-readable)
+  server.resource(
+    'playbooks-workflows-list',
+    'playbooks://workflows/list',
+    { description: `Structured workflows (${WORKFLOWS.length}) derived from host playbooks`, mimeType: 'application/json' },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(WORKFLOWS.map((w) => ({
+          id: w.id,
+          hostSlug: w.hostSlug,
+          hostName: w.hostName,
+          name: w.name,
+          description: w.description,
+          domain: w.domain,
+          uri: `playbooks://workflows/${w.id}`,
+          atlasStudioUri: `playbooks://workflows/${w.id}/atlas-studio`,
+        })), null, 2)
+      }]
+    })
+  );
+
+  for (const workflow of WORKFLOWS) {
+    server.resource(
+      `workflow-${workflow.id}`,
+      `playbooks://workflows/${workflow.id}`,
+      { description: `Workflow: ${workflow.name} (${workflow.hostName})`, mimeType: 'application/json' },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(workflow, null, 2),
+        }],
+      }),
+    );
+
+    server.resource(
+      `workflow-${workflow.id}-atlas-studio`,
+      `playbooks://workflows/${workflow.id}/atlas-studio`,
+      { description: `Atlas Studio import JSON for workflow: ${workflow.name} (${workflow.hostName})`, mimeType: 'application/json' },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(exportWorkflowToAtlasStudio(workflow), null, 2),
+        }],
+      }),
+    );
+  }
+
+  // Outcome playbooks (AI-native workflow library)
+  server.resource(
+    'playbooks-outcomes-list',
+    'playbooks://outcomes/list',
+    { description: `Outcome playbooks (${OUTCOME_PLAYBOOKS.length}) — AI-native workflows for construction, agency, and ops`, mimeType: 'application/json' },
+    async (uri) => ({
+      contents: [{
+        uri: uri.href,
+        mimeType: 'application/json',
+        text: JSON.stringify(OUTCOME_PLAYBOOKS.map((p) => ({
+          id: p.id,
+          name: p.name,
+          vertical: p.vertical,
+          priority: p.priority,
+          description: p.description,
+          oversight: p.oversight,
+          uri: `playbooks://outcomes/${p.id}`,
+          atlasStudioUri: `playbooks://outcomes/${p.id}/atlas-studio`,
+        })), null, 2),
+      }],
+    }),
+  );
+
+  for (const playbook of OUTCOME_PLAYBOOKS) {
+    server.resource(
+      `outcome-${playbook.id}`,
+      `playbooks://outcomes/${playbook.id}`,
+      { description: `Outcome playbook: ${playbook.name} (${playbook.vertical})`, mimeType: 'application/json' },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(playbook, null, 2),
+        }],
+      }),
+    );
+
+    server.resource(
+      `outcome-${playbook.id}-atlas-studio`,
+      `playbooks://outcomes/${playbook.id}/atlas-studio`,
+      { description: `Atlas Studio import JSON for outcome playbook: ${playbook.name}`, mimeType: 'application/json' },
+      async (uri) => ({
+        contents: [{
+          uri: uri.href,
+          mimeType: 'application/json',
+          text: JSON.stringify(exportOutcomePlaybookToAtlasStudio(playbook), null, 2),
+        }],
+      }),
     );
   }
 
@@ -89,7 +194,14 @@ function formatPlaybookMarkdown(playbook: HostPlaybook): string {
     '', '## Workflow Patterns', ''
   ];
   for (const p of playbook.workflowPatterns) {
-    sections.push(`### ${p.name}`, '', p.description, '', ...p.steps.map((s, i) => `${i + 1}. ${s}`), '');
+    sections.push(
+      `### ${p.name}`,
+      '',
+      p.description,
+      '',
+      ...p.steps.map((s, i) => `${i + 1}. ${s.notes || s.customLabel || s.referenceId}`),
+      ''
+    );
   }
   if (playbook.folderTemplate) {
     sections.push('## Folder Structure', '', playbook.folderTemplate.description, '', '```', playbook.folderTemplate.structure, '```', '',

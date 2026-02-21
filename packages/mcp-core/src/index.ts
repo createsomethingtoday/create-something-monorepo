@@ -121,6 +121,7 @@ export type {
   ActivityResult,
   RunCountRow,
   ToolInvocationRow,
+  BraintrustTelemetryOptions,
 } from './telemetry.js';
 
 // =============================================================================

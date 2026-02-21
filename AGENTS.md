@@ -150,6 +150,30 @@ import { Button, Card } from '@create-something/components';
 
 **Principle:** It is better to admit uncertainty than to create disconnection through hallucination.
 
+### External Library Docs: Context7
+
+For third-party libraries/frameworks (SvelteKit, Cloudflare Workers, Wrangler, Hono, Vitest, Stripe, Supabase, etc.), prefer **Context7 MCP** to pull **up-to-date, version-specific docs/examples** into context.
+
+- Add `use context7` when you need docs, setup/configuration steps, API usage, or code generation.
+- If you know the library ID, pin it directly: `use library /vercel/next.js`.
+- Mention versions explicitly when relevant: "Next.js 14 middleware ... use context7".
+- When unsure about a library ID, run `resolve-library-id` first instead of guessing.
+
+**Tools available via MCP:**
+- `resolve-library-id` — map a library name to a Context7 library ID
+- `query-docs` — fetch relevant docs/examples for a specific library ID and task
+
+**Common library IDs for this monorepo:**
+| Library | Context7 ID |
+|---------|-------------|
+| SvelteKit | `/sveltejs/kit` |
+| Cloudflare Workers SDK / Wrangler | `/cloudflare/workers-sdk` |
+| Cloudflare Docs (D1, KV, Pages) | `/cloudflare/cloudflare-docs` |
+| Hono | `/honojs/hono` |
+| Vitest | `/vitest-dev/vitest` |
+| TypeScript | `/microsoft/typescript` |
+| Zod | `/colinhacks/zod` |
+
 ## Tool Preferences
 
 When working in this codebase, prefer these tools over manual approaches:

@@ -1,170 +1,263 @@
 /**
- * Braintrust integration helpers.
+ * Braintrust Integration
  *
- * Notes:
- * - `braintrust`'s `initLogger()` will prompt for login if no API key is set.
- *   In server/CI contexts that is undesirable, so this wrapper disables tracing
- *   when `BRAINTRUST_API_KEY` is missing.
- * - `wrapOpenAI()` is a no-op when Braintrust isn't configured.
+ * MCP tool invocation logging via Braintrust. Runs alongside (or instead of)
+ * Langfuse — the two emitters are independent.
+ *
+ * Three-Tier Framework alignment:
+ *   - Database:    Logger cached per project (what exists)
+ *   - Automation:  wrapMcpToolWithBraintrust / emitToolInvocation (what happens)
+ *   - Judgment:    Per-client account_id in metadata enables policy/billing insight
+ *   - Insight:     Every tool call surfaces in Braintrust logs with Atlas metadata
+ *
+ * Usage:
+ * ```typescript
+ * import { initBraintrust, emitToolInvocation } from '@create-something/observability/braintrust';
+ *
+ * initBraintrust({ apiKey: process.env.BRAINTRUST_API_KEY, projectName: 'my-mcp' });
+ *
+ * await emitToolInvocation({
+ *   serverName: 'my-mcp',
+ *   toolName: 'get_project',
+ *   accountId: 'client-abc',
+ *   input: args,
+ *   output: result,
+ *   durationMs: 120,
+ *   success: true,
+ * });
+ * ```
  */
 
-import {
-  currentLogger,
-  currentSpan,
-  flush,
-  initLogger,
-  setMaskingFunction,
-  startSpan,
-  traced,
-  wrapAnthropic,
-  wrapOpenAI,
-  wrapOpenAIv4,
-  type Logger
-} from 'braintrust';
+import { flush, initLogger, type Logger, type Span } from 'braintrust';
+import type { AITaskType, AtlasMetadata } from './atlas.js';
 
-export {
-  // Core span APIs
-  traced,
-  startSpan,
-  currentSpan,
-
-  // Logger helpers
-  currentLogger,
-  flush,
-
-  // LLM provider wrappers
-  wrapOpenAI,
-  wrapOpenAIv4,
-  wrapAnthropic
-};
+// =============================================================================
+// Configuration
+// =============================================================================
 
 export interface BraintrustConfig {
   apiKey?: string;
   projectName?: string;
-  projectId?: string;
-  orgName?: string;
-  appUrl?: string;
   enabled?: boolean;
+  /** Async flush — recommended for Workers / edge where there is no long-lived process. */
   asyncFlush?: boolean;
-  maskSecrets?: boolean;
 }
 
-let braintrustLogger: Logger<boolean> | null = null;
-let braintrustEnabled = true;
-
-function parseEnabled(value: string | undefined): boolean | undefined {
-  if (value === undefined) return undefined;
-  const normalized = value.trim().toLowerCase();
-  if (['1', 'true', 'yes', 'y', 'on'].includes(normalized)) return true;
-  if (['0', 'false', 'no', 'n', 'off'].includes(normalized)) return false;
-  return undefined;
-}
-
-function defaultMaskSecrets(value: unknown): unknown {
-  const seen = new WeakMap<object, unknown>();
-
-  const shouldRedactKey = (key: string): boolean =>
-    /(^|_)(api[-_]?key|token|secret|password|authorization|cookie|set-cookie)($|_)/i.test(key);
-
-  const redactString = (input: string): string => {
-    const trimmed = input.trim();
-    if (/^bearer\\s+/i.test(trimmed)) return '[REDACTED]';
-    // Common API key prefixes. Keep heuristic broad; false positives are acceptable.
-    if (/\\bsk-[A-Za-z0-9_-]{10,}\\b/.test(trimmed)) return '[REDACTED]';
-    if (/\\bxox[baprs]-[A-Za-z0-9-]{10,}\\b/.test(trimmed)) return '[REDACTED]';
-    return input;
-  };
-
-  const walk = (v: unknown, depth: number): unknown => {
-    if (depth > 20) return '[TRUNCATED]';
-    if (v === null || v === undefined) return v;
-
-    if (typeof v === 'string') return redactString(v);
-    if (typeof v === 'number' || typeof v === 'boolean') return v;
-
-    if (Array.isArray(v)) return v.map((item) => walk(item, depth + 1));
-
-    if (typeof v === 'object') {
-      const obj = v as Record<string, unknown>;
-      const existing = seen.get(obj);
-      if (existing) return existing;
-
-      const out: Record<string, unknown> = {};
-      seen.set(obj, out);
-
-      for (const [key, val] of Object.entries(obj)) {
-        if (shouldRedactKey(key)) {
-          out[key] = '[REDACTED]';
-        } else {
-          out[key] = walk(val, depth + 1);
-        }
-      }
-      return out;
-    }
-
-    // Functions, symbols, bigints, etc. Don't leak arbitrary values.
-    return String(v);
-  };
-
-  return walk(value, 0);
-}
+let _config: BraintrustConfig = { enabled: true, asyncFlush: true };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _logger: Logger<any> | null = null;
 
 /**
- * Initialize the Braintrust logger.
- *
- * This sets Braintrust's "current logger" global, which is what `wrapOpenAI()`
- * and other helpers rely on to emit traces.
+ * Initialize the Braintrust logger. Call once at application startup.
+ * Safe to call multiple times — subsequent calls are no-ops if already initialized.
  */
-export function initBraintrust(options: BraintrustConfig = {}): Logger<boolean> | null {
-  const enabled = options.enabled ?? parseEnabled(process.env.BRAINTRUST_ENABLED) ?? true;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function initBraintrust(config: BraintrustConfig = {}): Logger<any> | null {
+  _config = { ..._config, ...config };
 
-  if (!enabled) {
-    braintrustEnabled = false;
-    braintrustLogger = null;
-    return null;
-  }
+  const apiKey = config.apiKey || process.env.BRAINTRUST_API_KEY;
+  const projectName = config.projectName || process.env.BRAINTRUST_PROJECT || 'mcp-fleet';
 
-  const apiKey = options.apiKey ?? process.env.BRAINTRUST_API_KEY;
   if (!apiKey) {
-    // Avoid interactive login prompts in non-local environments.
-    console.warn('[observability] Missing BRAINTRUST_API_KEY. Braintrust tracing disabled.');
-    braintrustEnabled = false;
-    braintrustLogger = null;
+    console.warn('[braintrust] Missing BRAINTRUST_API_KEY. Tracing disabled.');
+    _config.enabled = false;
     return null;
   }
 
-  braintrustEnabled = true;
-  const maskSecrets = options.maskSecrets ?? true;
-  if (maskSecrets) {
-    setMaskingFunction(defaultMaskSecrets);
-  }
+  if (_config.enabled === false) return null;
+  if (_logger) return _logger;
 
-  braintrustLogger = initLogger({
+  _logger = initLogger({
+    projectName,
     apiKey,
-    projectName: options.projectName ?? process.env.BRAINTRUST_PROJECT_NAME,
-    projectId: options.projectId ?? process.env.BRAINTRUST_PROJECT_ID,
-    orgName: options.orgName ?? process.env.BRAINTRUST_ORG_NAME,
-    appUrl: options.appUrl ?? process.env.BRAINTRUST_APP_URL,
-    asyncFlush: options.asyncFlush ?? true
+    asyncFlush: _config.asyncFlush ?? true,
+    setCurrent: true,
   });
 
-  return braintrustLogger;
-}
-
-export function getBraintrustLogger(): Logger<boolean> | null {
-  return braintrustLogger;
-}
-
-export function isBraintrustEnabled(): boolean {
-  return braintrustEnabled;
+  return _logger;
 }
 
 /**
- * Flush any pending Braintrust logs.
- * Call before process exit (especially in short-lived scripts).
+ * Get the cached Braintrust logger. Returns null if not initialized.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getBraintrustLogger(): Logger<any> | null {
+  return _logger;
+}
+
+/**
+ * Flush and close Braintrust logging.
+ * Safe to call multiple times.
  */
 export async function shutdownBraintrust(): Promise<void> {
-  if (!braintrustEnabled) return;
-  await flush();
-  braintrustLogger = null;
+  if (!_logger || _config.enabled === false) return;
+
+  try {
+    await _logger.flush();
+  } catch (err) {
+    console.warn('[braintrust] logger.flush failed during shutdown:', err);
+  }
+
+  // Flush global queue as an additional best-effort safety net.
+  try {
+    await flush();
+  } catch (err) {
+    console.warn('[braintrust] global flush failed during shutdown:', err);
+  }
+
+  _logger = null;
 }
+
+// =============================================================================
+// Direct span emission
+// =============================================================================
+
+export interface ToolInvocationEvent {
+  serverName: string;
+  toolName: string;
+  /** Client identifier — stored in metadata for per-client segmentation. */
+  accountId?: string;
+  input?: unknown;
+  output?: unknown;
+  durationMs?: number;
+  success: boolean;
+  error?: string;
+  aiTaskType?: AITaskType;
+  atlasMetadata?: AtlasMetadata;
+}
+
+/**
+ * Emit a single MCP tool invocation as a Braintrust span.
+ * Best-effort: failures are swallowed so tool execution is never blocked.
+ */
+export async function emitToolInvocation(event: ToolInvocationEvent): Promise<void> {
+  if (!_logger || !_config.enabled) return;
+
+  try {
+    await _logger.traced(
+      (span: Span) => {
+        span.log({
+          input: event.input,
+          output: event.output,
+          error: event.error,
+          tags: [
+            'mcp',
+            event.serverName,
+            event.toolName,
+            event.success ? 'success' : 'error',
+          ],
+          metadata: {
+            server: event.serverName,
+            tool: event.toolName,
+            accountId: event.accountId || 'operator',
+            durationMs: event.durationMs,
+            success: event.success,
+            aiTaskType: event.aiTaskType,
+            ...event.atlasMetadata,
+          },
+        });
+      },
+      {
+        name: `mcp:${event.serverName}:${event.toolName}`,
+        type: 'tool',
+      },
+    );
+  } catch (err) {
+    console.warn('[braintrust] emitToolInvocation failed:', err);
+  }
+}
+
+// =============================================================================
+// Wrap an MCP tool handler
+// =============================================================================
+
+export interface WrappedToolOptions {
+  serverName: string;
+  toolName: string;
+  aiTaskType?: AITaskType;
+  atlasMetadata?: AtlasMetadata;
+  /** Resolve the calling account from the handler arguments or surrounding context. */
+  getAccountId?: (args: Record<string, unknown>) => string | undefined;
+}
+
+/**
+ * Wrap an async MCP tool handler so every invocation is logged to Braintrust.
+ *
+ * @example
+ * server.tool(
+ *   'get_project',
+ *   'Get project by ID',
+ *   schema,
+ *   wrapMcpToolWithBraintrust(
+ *     { serverName: 'procore-mcp', toolName: 'get_project', aiTaskType: 'extract' },
+ *     async (args) => procoreClient.getProject(args.projectId as string)
+ *   )
+ * );
+ */
+export function wrapMcpToolWithBraintrust<TArgs extends Record<string, unknown>, TResult>(
+  options: WrappedToolOptions,
+  handler: (args: TArgs) => Promise<TResult>,
+): (args: TArgs) => Promise<TResult> {
+  return async (args: TArgs): Promise<TResult> => {
+    if (!_logger || !_config.enabled) {
+      return handler(args);
+    }
+
+    const accountId = options.getAccountId?.(args);
+    const start = Date.now();
+
+    return _logger.traced(
+      async (span: Span) => {
+        span.log({
+          input: args,
+          tags: ['mcp', options.serverName, options.toolName],
+          metadata: {
+            server: options.serverName,
+            tool: options.toolName,
+            accountId: accountId || 'operator',
+            aiTaskType: options.aiTaskType,
+            ...options.atlasMetadata,
+          },
+        });
+
+        try {
+          const result = await handler(args);
+          span.log({
+            output: result,
+            metadata: {
+              success: true,
+              durationMs: Date.now() - start,
+            },
+          });
+          return result;
+        } catch (error) {
+          const durationMs = Date.now() - start;
+          const errorMessage = error instanceof Error ? error.message : String(error);
+
+          span.log({
+            output: { error: errorMessage },
+            error: errorMessage,
+            tags: ['mcp', options.serverName, options.toolName, 'error'],
+            metadata: {
+              success: false,
+              durationMs,
+              error: errorMessage,
+            },
+          });
+
+          throw error;
+        }
+      },
+      {
+        name: `mcp:${options.serverName}:${options.toolName}`,
+        type: 'tool',
+      },
+    );
+  };
+}
+
+// =============================================================================
+// Re-exports for convenience
+// =============================================================================
+
+export type { AITaskType, AtlasMetadata } from './atlas.js';

@@ -1,0 +1,26 @@
+name = "webflow-app-review-mcp"
+main = "index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[observability]
+enabled = true
+
+# Optional default; can also be set as Worker secret/var.
+[vars]
+AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
+
+[[d1_databases]]
+binding = "TELEMETRY_DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "WebflowAppReviewMCP"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["WebflowAppReviewMCP"]
+

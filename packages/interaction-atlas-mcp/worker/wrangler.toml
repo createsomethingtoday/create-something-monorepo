@@ -1,15 +1,20 @@
 name = "interaction-atlas-mcp"
 main = "index.ts"
 compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 
 # [vars]
 # CLIENT_ID = ""
 
+# Visualization/version persistence
+[[d1_databases]]
+binding = "DB"
+# Set these for your environment before deploy.
+database_name = "interaction-atlas-mcp"
+database_id = "575753ad-4ed5-4fb8-9986-42df2b78376d"
+migrations_dir = "migrations"
+
 # [[kv_namespaces]]
 # binding = "TOKENS"
 # id = ""
-
-# [[d1_databases]]
-# binding = "DB"
-# database_name = ""
-# database_id = ""

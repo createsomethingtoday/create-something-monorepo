@@ -1,5 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { getDBFromPlatform } from '$lib/server/d1-compat';
 import { getVideoById } from '$lib/server/db/videos';
 
 /**
@@ -7,11 +8,7 @@ import { getVideoById } from '$lib/server/db/videos';
  * Returns a single video by ID
  */
 export const GET: RequestHandler = async ({ params, platform }) => {
-	const db = platform?.env.DB;
-
-	if (!db) {
-		return json({ error: 'Database not available' }, { status: 500 });
-	}
+	const db = getDBFromPlatform(platform);
 
 	const { id } = params;
 

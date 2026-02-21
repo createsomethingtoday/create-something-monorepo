@@ -11,6 +11,7 @@ export const CHECK_TYPES = {
   links: 'Links',
   a11y: 'Accessibility',
   performance: 'Performance',
+  interactions: 'Interactions',
 } as const;
 
 export const REVIEW_TIMEOUT_MS = 60000; // 1 minute max per page

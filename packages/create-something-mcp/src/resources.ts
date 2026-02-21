@@ -521,7 +521,7 @@ function formatPlaybookMarkdown(playbook: typeof HOST_PLAYBOOKS[number]): string
       pattern.description,
       pattern.domain ? `\n*Domain: ${pattern.domain}*` : '',
       '',
-      ...pattern.steps.map((s, i) => `${i + 1}. ${s}`),
+      ...pattern.steps.map((s, i) => `${i + 1}. ${s.notes || s.customLabel || s.referenceId}`),
       ''
     );
   }

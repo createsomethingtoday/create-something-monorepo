@@ -48,6 +48,10 @@ This MCP server operates at the following tiers of the [Three-Tier Framework](..
   - CMS collections with item counts
   - Assets inventory (images, SVGs, videos)
   - Site plan and breakpoints
+- **Policy Ingestion (MCP Source of Truth)**: Fetch and normalize canonical review policy from:
+  - `https://webflow.com/templates/submission-guidelines`
+  - `https://webflow.com/templates/grading-rubric`
+  - Includes provenance (`source_url`, fetch timestamp, content hash) and `policyVersion`
 
 ### Intelligence Layer (Self-Improvement)
 - **Script Versioning**: All extraction scripts are versioned with semantic versioning
@@ -442,6 +446,59 @@ Extract template metadata from Webflow Designer Preview URL. This tool navigates
 - Quality assurance (verify all CMS collections have items)
 - Asset inventory (count images, SVGs, videos)
 
+### `get_webflow_review_policy`
+
+Fetches the latest review policy from canonical Webflow pages and returns normalized data plus provenance.
+
+```typescript
+// Input
+{
+  refresh?: false  // Set true to bypass cache and fetch immediately
+}
+
+// Output
+{
+  policyVersion: string,            // Hash of source content hashes
+  generatedAt: string,
+  sources: {
+    submissionGuidelines: {
+      url: string,
+      title: string,
+      fetchedAt: string,
+      contentHash: string
+    },
+    gradingRubric: {
+      url: string,
+      title: string,
+      fetchedAt: string,
+      contentHash: string
+    }
+  },
+  submissionGuidelines: {
+    sections: Array<{ name: string, items: string[] }>
+  },
+  gradingRubric: {
+    criteriaRows: Array<{
+      criteria: string,
+      satisfactory: string,
+      good: string,
+      exceptional: string
+    }>
+  }
+}
+```
+
+### `refresh_webflow_review_policy`
+
+Forces a fresh policy fetch from canonical URLs (no cache).
+
+```typescript
+// Input
+{}
+// Output
+// Same as get_webflow_review_policy
+```
+
 ### `get_provider_status`
 
 Check browser provider health and session metrics.
@@ -734,6 +791,9 @@ pnpm dev
 
 # Type check
 pnpm typecheck
+
+# Refresh and print canonical Webflow policy snapshot
+pnpm policy:refresh
 ```
 
 ## Durable Execution with Temporal

@@ -47,15 +47,15 @@
 	}
 
 	.card-glass {
-		background: rgba(0, 0, 0, 0.90);
-		border: 1px solid rgba(255, 255, 255, 0.15);
+		background: color-mix(in srgb, var(--color-bg-surface) 86%, transparent);
+		border: 1px solid color-mix(in srgb, var(--color-border-emphasis) 55%, transparent);
 		backdrop-filter: blur(10px);
-		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+		box-shadow: var(--shadow-md);
 	}
 
 	.card-glass:hover {
-		background: rgba(0, 0, 0, 0.92);
-		border-color: rgba(255, 255, 255, 0.2);
+		background: color-mix(in srgb, var(--color-bg-surface) 92%, transparent);
+		border-color: color-mix(in srgb, var(--color-border-emphasis) 75%, transparent);
 	}
 
 	@media (prefers-reduced-motion: reduce) {

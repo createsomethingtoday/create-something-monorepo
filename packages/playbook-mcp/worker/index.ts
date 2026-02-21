@@ -780,7 +780,10 @@ export class PlaybookMCP extends McpAgent<Env> {
   async init() {
     // Telemetry: meter all tool calls + register health/usage resources
     if (this.env.TELEMETRY_DB) {
-      enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'playbook');
+      enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'playbook', undefined, {
+        apiKey: (this.env as any).BRAINTRUST_API_KEY,
+        projectName: 'playbook',
+      });
     }
 
     registerResources(this.server);

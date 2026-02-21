@@ -1,8 +1,12 @@
 /**
  * MCP Server Instrumentation
- * 
+ *
  * Provides tracing utilities for MCP server tool handlers.
- * Integrates with Langfuse for LLM observability.
+ * Integrates with Langfuse for LLM observability and Braintrust for
+ * per-client MCP usage visibility.
+ *
+ * Dual-emit: when both LANGFUSE_* and BRAINTRUST_API_KEY are set, every tool
+ * invocation is sent to both backends independently (best-effort).
  */
 
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -16,6 +20,12 @@ import {
   type TraceHandle
 } from './index.js';
 import { mcpToolMetadata, type AITaskType, type AtlasMetadata } from './atlas.js';
+import {
+  initBraintrust,
+  emitToolInvocation,
+  shutdownBraintrust,
+  type BraintrustConfig,
+} from './braintrust.js';
 
 // =============================================================================
 // Types
@@ -24,6 +34,12 @@ import { mcpToolMetadata, type AITaskType, type AtlasMetadata } from './atlas.js
 export interface McpServerConfig extends ObservabilityConfig {
   serverName: string;
   serverVersion?: string;
+  /** Braintrust configuration. When provided (or BRAINTRUST_API_KEY env is set),
+   *  every tool invocation is also logged to Braintrust. */
+  braintrust?: BraintrustConfig;
+  /** Resolve the calling account ID from the tool arguments.
+   *  Used for per-client segmentation in both D1 telemetry and Braintrust. */
+  getAccountId?: (args: Record<string, unknown>) => string | undefined;
 }
 
 export interface ToolHandlerContext {
@@ -69,7 +85,7 @@ export interface ToolMetadata {
  * });
  */
 export function createInstrumentedMcpServer(config: McpServerConfig) {
-  // Initialize observability client
+  // Initialize Langfuse observability
   initObservability({
     publicKey: config.publicKey,
     secretKey: config.secretKey,
@@ -77,8 +93,20 @@ export function createInstrumentedMcpServer(config: McpServerConfig) {
     enabled: config.enabled
   });
 
+  // Initialize Braintrust when configured or env key present
+  const btApiKey = config.braintrust?.apiKey || process.env.BRAINTRUST_API_KEY;
+  if (btApiKey) {
+    initBraintrust({
+      apiKey: btApiKey,
+      projectName: config.braintrust?.projectName || process.env.BRAINTRUST_PROJECT || config.serverName,
+      enabled: config.braintrust?.enabled ?? true,
+      asyncFlush: config.braintrust?.asyncFlush ?? true,
+    });
+  }
+
   const serverName = config.serverName;
   const serverVersion = config.serverVersion || '1.0.0';
+  const getAccountId = config.getAccountId;
 
   /**
    * Wrap a tool handler with automatic tracing.
@@ -118,6 +146,16 @@ export function createInstrumentedMcpServer(config: McpServerConfig) {
     });
 
     const startTime = Date.now();
+    let accountId: string | undefined;
+    try {
+      accountId = getAccountId?.(safeArgs);
+    } catch (error) {
+      console.warn(
+        `[mcp-observability] getAccountId failed for ${serverName}:${name}:`,
+        error instanceof Error ? error.message : String(error),
+      );
+      accountId = undefined;
+    }
 
     try {
       // Execute the handler
@@ -127,14 +165,15 @@ export function createInstrumentedMcpServer(config: McpServerConfig) {
         toolName: name
       });
 
-      // Log success
+      const durationMs = Date.now() - startTime;
+
+      // Langfuse — log success
       span.end({
         success: true,
-        duration_ms: Date.now() - startTime,
+        duration_ms: durationMs,
         has_content: result.content?.length > 0
       });
 
-      // Update trace with output
       if (trace.trace) {
         trace.trace.update({
           output: {
@@ -144,16 +183,30 @@ export function createInstrumentedMcpServer(config: McpServerConfig) {
         });
       }
 
+      // Braintrust — emit alongside Langfuse (best-effort, non-blocking)
+      emitToolInvocation({
+        serverName,
+        toolName: name,
+        accountId,
+        input: safeArgs,
+        output: { contentLength: result.content?.length || 0, isError: result.isError || false },
+        durationMs,
+        success: true,
+        aiTaskType,
+        atlasMetadata: { ...mcpToolMetadata(serverName, name, aiTaskType), ...additionalMetadata },
+      }).catch(() => {});
+
       return result;
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
+      const durationMs = Date.now() - startTime;
 
-      // Log error
+      // Langfuse — log error
       span.end({
         success: false,
         error: errorMessage,
-        duration_ms: Date.now() - startTime
+        duration_ms: durationMs
       });
 
       logEvent(trace, {
@@ -165,6 +218,20 @@ export function createInstrumentedMcpServer(config: McpServerConfig) {
         level: 'ERROR',
         statusMessage: errorMessage
       });
+
+      // Braintrust — emit error (best-effort, non-blocking)
+      emitToolInvocation({
+        serverName,
+        toolName: name,
+        accountId,
+        input: safeArgs,
+        output: { error: errorMessage },
+        durationMs,
+        success: false,
+        error: errorMessage,
+        aiTaskType,
+        atlasMetadata: { ...mcpToolMetadata(serverName, name, aiTaskType), ...additionalMetadata },
+      }).catch(() => {});
 
       // Return error result
       return {
@@ -186,6 +253,7 @@ export function createInstrumentedMcpServer(config: McpServerConfig) {
   async function shutdown(): Promise<void> {
     const { shutdownObservability } = await import('./index.js');
     await shutdownObservability();
+    await shutdownBraintrust();
   }
 
   return {

@@ -20,7 +20,6 @@ interface Env {
   NOTION_INTERACTIONS_DB_ID: string;
   NOTION_CONTACTS_DB_ID: string;
   AUTHORIZED_EMAIL: string;        // The single user this instance serves
-  TELEMETRY_SERVER_NAME?: string;  // Optional explicit telemetry identity per deployment
   TEAM_EMAILS?: string;            // Optional: full team list for direction detection
   ADMIN_SECRET?: string;
   ADDON_SECRET?: string;
@@ -148,23 +147,6 @@ function getAuthorizedEmail(env: Env): string {
     throw new Error('AUTHORIZED_EMAIL not configured. Set it to the email this instance serves.');
   }
   return env.AUTHORIZED_EMAIL.trim().toLowerCase();
-}
-
-const LEGACY_TELEMETRY_SERVER_NAME = 'halfdozen-gmail-sync';
-const TELEMETRY_SERVER_BY_EMAIL: Record<string, string> = {
-  'dm@halfdozen.co': 'halfdozen-gmail-sync-danny',
-  'fillip@halfdozen.co': 'halfdozen-gmail-sync-fillip',
-  'leah@halfdozen.co': 'halfdozen-gmail-sync-leah',
-};
-
-function getTelemetryServerName(env: Env): string {
-  const explicit = env.TELEMETRY_SERVER_NAME?.trim();
-  if (explicit) return explicit;
-
-  const byEmail = TELEMETRY_SERVER_BY_EMAIL[getAuthorizedEmail(env)];
-  if (byEmail) return byEmail;
-
-  return LEGACY_TELEMETRY_SERVER_NAME;
 }
 
 /** Team emails for direction detection (inbound vs outbound). Always includes AUTHORIZED_EMAIL. */
@@ -807,11 +789,12 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
   });
 
   async init() {
-    const telemetryServerName = getTelemetryServerName(this.env);
-
     // Telemetry: meter all tool calls + register health/usage resources
     if (this.env.FEEDBACK_DB) {
-      enableTelemetry(this.server, this.env.FEEDBACK_DB, telemetryServerName);
+      enableTelemetry(this.server, this.env.FEEDBACK_DB, 'halfdozen-gmail-sync', undefined, {
+        apiKey: (this.env as any).BRAINTRUST_API_KEY,
+        projectName: 'halfdozen-gmail-sync',
+      });
     }
 
     // Tool: Search Emails
@@ -1603,7 +1586,7 @@ Format the report so it's easy to scan.`,
     // Feedback (cross-cutting — support ticket pathway)
     // ═══════════════════════════════════════════════════════════════
     if (this.env.FEEDBACK_DB) {
-      registerFeedbackTool(this.server, new D1FeedbackStore(this.env.FEEDBACK_DB), telemetryServerName);
+      registerFeedbackTool(this.server, new D1FeedbackStore(this.env.FEEDBACK_DB), 'halfdozen-gmail-sync');
     }
   }
 }
@@ -1967,13 +1950,11 @@ export default {
 
     if (url.pathname === '/') {
       const authorizedEmail = env.AUTHORIZED_EMAIL?.trim() || '(not configured)';
-      const telemetryServerName = getTelemetryServerName(env);
       return new Response(JSON.stringify({
         name: 'halfdozen-gmail-sync-mcp',
         version: '4.0.0',
         features: ['single-user-isolation', 'chatgpt-connector', 'background-automations'],
         authorized_email: authorizedEmail,
-        telemetry_server_name: telemetryServerName,
         endpoints: {
           mcp: '/mcp',
           sse: '/sse',
