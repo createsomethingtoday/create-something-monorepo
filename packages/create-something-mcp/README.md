@@ -28,6 +28,8 @@ Content from all CREATE SOMETHING properties.
 | `graph://nodes`, `graph://edges` | .io | Knowledge graph (edges lazy-loaded) |
 | `praxis://exercises` | .space | Interactive coding exercises |
 | `products://list` | .agency | Products and services |
+| `docs://list`, `docs://list/{property}` | all | Full markdown document index across `.io`, `.ltd`, `.space`, `.agency` |
+| `docs://{property}/{slug}` | all | Individual markdown documents from property repositories |
 | `playbooks://list`, `playbooks://hosts/{slug}` | playbook | Host workflow playbooks (via @create-something/playbook-mcp) |
 | `playbooks://comparison` | playbook | Host comparison matrix by task type |
 | `playbooks://graduation-path` | playbook | Graduation path: Claude Desktop -> Cursor -> Codex |
@@ -36,7 +38,7 @@ Content from all CREATE SOMETHING properties.
 
 | Tool | Purpose |
 |------|---------|
-| `search` | Cross-property full-text search across all content types. Supports type and property filtering. |
+| `search` | Cross-property full-text search across all content types, including full property markdown documents. Supports type and property filtering. |
 | `relate` | Knowledge graph traversal. Find related concepts with configurable depth. |
 | `classify_component` | Classify a component into Three-Tier Framework tier(s) with confidence and rationale. |
 | `apply_triad` | Apply the Subtractive Triad (DRY, Rams, Heidegger) to an artifact. |
@@ -117,6 +119,10 @@ npm run deploy   # Deploy to production
 npm run tail     # Tail production logs
 ```
 
+## Telemetry
+
+Worker deploys include telemetry via `@create-something/mcp-core` and the `TELEMETRY_DB` D1 binding (`cs-telemetry`). Tool invocations and run counts are written to fleet telemetry tables (`mcp_tool_invocations`, `mcp_run_counts`).
+
 ## Content Pipeline
 
 Content is extracted from the monorepo's source files and compiled into JSON:
@@ -125,7 +131,7 @@ Content is extracted from the monorepo's source files and compiled into JSON:
 pnpm --filter=@create-something/mcp build:content
 ```
 
-This generates files in `src/content/generated/` (papers, canon, patterns, graph). Other content (masters, praxis, products, framework) is hand-authored in `src/content/`.
+This generates files in `src/content/generated/` (papers, canon, patterns, graph, property-docs). Other content (masters, praxis, products, framework) is hand-authored in `src/content/`.
 
 Playbook data is imported from `@create-something/playbook-mcp` (canonical source) — not duplicated.
 
