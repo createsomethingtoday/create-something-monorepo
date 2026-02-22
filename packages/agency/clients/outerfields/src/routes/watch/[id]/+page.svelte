@@ -511,6 +511,7 @@
 	.episode-link {
 		display: flex;
 		align-items: center;
+		flex-wrap: wrap;
 		gap: 0.5rem;
 		padding: 0.75rem 1rem;
 		background: var(--color-bg-surface);
@@ -520,6 +521,11 @@
 		text-decoration: none;
 		font-size: 0.875rem;
 		transition: border-color var(--duration-micro) var(--ease-standard);
+	}
+
+	.episode-link span {
+		min-width: 0;
+		overflow-wrap: anywhere;
 	}
 
 	.episode-link:hover {
@@ -634,6 +640,10 @@
 			margin-left: 0;
 		}
 
+		.episode-link {
+			font-size: 0.8125rem;
+		}
+
 		.transcript-section {
 			margin: 0.75rem 0;
 		}
@@ -647,6 +657,15 @@
 	@media (max-width: 380px) {
 		.watch-layout {
 			padding: 0 0.5rem;
+		}
+
+		.video-title {
+			font-size: 1.25rem;
+			line-height: 1.25;
+		}
+
+		.video-description {
+			font-size: 0.9375rem;
 		}
 	}
 </style>

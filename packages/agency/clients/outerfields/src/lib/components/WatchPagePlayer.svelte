@@ -1048,9 +1048,17 @@
 			flex-wrap: wrap;
 		}
 
+		.controls-left {
+			gap: 0.25rem;
+		}
+
 		.controls-right {
 			width: 100%;
 			justify-content: flex-end;
+		}
+
+		.time-display {
+			display: none;
 		}
 	}
 </style>

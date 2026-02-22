@@ -183,6 +183,7 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
+		gap: 0.5rem;
 		margin-bottom: 0.5rem;
 	}
 
@@ -193,7 +194,7 @@
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
-		max-width: 180px;
+		max-width: min(180px, calc(100% - 4.5rem));
 	}
 
 	.mini-time {
@@ -259,6 +260,16 @@
 			left: max(0.75rem, env(safe-area-inset-left));
 			right: max(0.75rem, env(safe-area-inset-right));
 			bottom: max(0.75rem, env(safe-area-inset-bottom));
+		}
+	}
+
+	@media (max-width: 360px) {
+		.mini-time {
+			display: none;
+		}
+
+		.mini-title {
+			max-width: 100%;
 		}
 	}
 </style>

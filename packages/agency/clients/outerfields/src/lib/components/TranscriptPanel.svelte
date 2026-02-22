@@ -244,11 +244,16 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
+		min-width: 0;
 	}
 
 	.header-title {
 		font-size: 0.9375rem;
 		font-weight: 600;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.segment-count {
@@ -413,6 +418,7 @@
 		font-size: 0.875rem;
 		color: var(--color-fg-secondary);
 		line-height: 1.5;
+		overflow-wrap: anywhere;
 	}
 
 	.segment-text :global(mark) {
@@ -526,6 +532,10 @@
 
 		.segment-text {
 			font-size: 0.8125rem;
+		}
+
+		.segment-count {
+			display: none;
 		}
 	}
 </style>
