@@ -385,7 +385,12 @@ export function enableTelemetry(
     // Wrap the handler with metering
     args[lastIdx] = async (...handlerArgs: unknown[]) => {
       const start = Date.now();
-      const accountId = resolveAccount();
+      let accountId = 'operator';
+      try {
+        accountId = resolveAccount();
+      } catch (error) {
+        console.warn('[telemetry] getAccountId threw, using fallback accountId=operator:', error);
+      }
       try {
         const result = await (originalHandler as Function).apply(null, handlerArgs);
         const durationMs = Date.now() - start;

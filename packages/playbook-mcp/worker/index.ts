@@ -608,7 +608,7 @@ function validateRouteToken(request: Request, expectedToken?: string): Response 
   }
 
   const actualToken = getAuthToken(request);
-  if (!actualToken || actualToken !== expectedToken) {
+  if (!actualToken || !timingSafeEqual(actualToken, expectedToken)) {
     return jsonResponse(
       {
         success: false,
