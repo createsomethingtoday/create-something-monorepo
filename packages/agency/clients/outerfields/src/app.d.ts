@@ -16,10 +16,11 @@ declare global {
 		// interface PageData {}
 		// interface PageState {}
 		interface Platform {
-			env: {
-				DB?: import('@cloudflare/workers-types').D1Database;
-				SESSIONS?: import('@cloudflare/workers-types').KVNamespace;
-				VIDEO_STATS?: import('@cloudflare/workers-types').KVNamespace;
+				env: {
+					DB?: import('@cloudflare/workers-types').D1Database;
+					VIDEO_ASSETS?: import('@cloudflare/workers-types').R2Bucket;
+					SESSIONS?: import('@cloudflare/workers-types').KVNamespace;
+					VIDEO_STATS?: import('@cloudflare/workers-types').KVNamespace;
 				AI?: any;
 				ANTHROPIC_API_KEY?: string;
 				STRIPE_SECRET_KEY?: string;

@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { deleteVideo, updateVideo } from '$lib/server/db/videos';
 import { isAdminUser } from '$lib/server/auth';
+import { getDBFromPlatform } from '$lib/server/d1-compat';
 
 function parseTier(value: unknown): 'free' | 'preview' | 'gated' | undefined {
 	if (value === 'free' || value === 'preview' || value === 'gated') return value;
@@ -19,10 +20,7 @@ export const PATCH: RequestHandler = async ({ params, request, platform, locals 
 		return json({ success: false, error: 'Not authorized' }, { status: 403 });
 	}
 
-	const db = platform?.env.DB;
-	if (!db) {
-		return json({ success: false, error: 'Database not available' }, { status: 500 });
-	}
+	const db = getDBFromPlatform(platform);
 
 	const id = params.id;
 	if (!id) {
@@ -73,10 +71,7 @@ export const DELETE: RequestHandler = async ({ params, platform, locals }) => {
 		return json({ success: false, error: 'Not authorized' }, { status: 403 });
 	}
 
-	const db = platform?.env.DB;
-	if (!db) {
-		return json({ success: false, error: 'Database not available' }, { status: 500 });
-	}
+	const db = getDBFromPlatform(platform);
 
 	const id = params.id;
 	if (!id) {

@@ -9,6 +9,7 @@ import {
 	type CreateVideoInput
 } from '$lib/server/db/videos';
 import { isAdminUser } from '$lib/server/auth';
+import { getDBFromPlatform } from '$lib/server/d1-compat';
 
 const DEFAULT_THUMBNAIL = '/thumbnails/hero-building-outerfields.jpg';
 const R2_PUBLIC_BASE = 'https://pub-cbac02584c2c4411aa214a7070ccd208.r2.dev';
@@ -73,10 +74,7 @@ export const GET: RequestHandler = async ({ url, platform, locals }) => {
 		return json({ success: false, error: 'Not authorized' }, { status: 403 });
 	}
 
-	const db = platform?.env.DB;
-	if (!db) {
-		return json({ success: false, error: 'Database not available' }, { status: 500 });
-	}
+	const db = getDBFromPlatform(platform);
 
 	const search = url.searchParams.get('search')?.trim() || '';
 	const category = url.searchParams.get('category')?.trim() || '';
@@ -114,14 +112,11 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 		return json({ success: false, error: 'Not authorized' }, { status: 403 });
 	}
 
-	const db = platform?.env.DB;
-	if (!db) {
-		return json({ success: false, error: 'Database not available' }, { status: 500 });
-	}
+	const db = getDBFromPlatform(platform);
 
 	try {
 		const contentType = request.headers.get('content-type') || '';
-		const bucket = platform?.env.VIDEO_ASSETS;
+		const bucket = (platform?.env as { VIDEO_ASSETS?: R2Bucket } | undefined)?.VIDEO_ASSETS;
 
 		let input: CreateVideoInput | null = null;
 
