@@ -36,7 +36,7 @@ vi.mock('$lib/server/env', () => ({
 	resolveRuntimeEnv: resolveRuntimeEnvMock
 }));
 
-import { GET } from './+server';
+import { GET } from '../../../../../../../routes/api/v1/videos/[id]/playback/+server';
 
 function createVideo(overrides: Partial<Record<string, unknown>> = {}) {
 	return {

@@ -13,7 +13,7 @@ vi.mock('$lib/server/d1-compat', () => ({
 	getDBFromPlatform: getDBFromPlatformMock
 }));
 
-import { GET } from './+server';
+import { GET } from '../../../../../../routes/api/videos/[id]/related/+server';
 
 function createVideo(overrides: Partial<Record<string, unknown>> = {}) {
 	return {

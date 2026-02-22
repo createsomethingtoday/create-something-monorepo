@@ -16,7 +16,7 @@ vi.mock('$lib/server/d1-compat', () => ({
 	getDBFromPlatform: getDBFromPlatformMock
 }));
 
-import { load } from './+page.server';
+import { load } from '../../../routes/demo/+page.server';
 
 function createVideo(overrides: Partial<Record<string, unknown>> = {}) {
 	return {
