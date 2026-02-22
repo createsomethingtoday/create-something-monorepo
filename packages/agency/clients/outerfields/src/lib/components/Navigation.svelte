@@ -28,10 +28,29 @@
 	$effect(() => {
 		if (typeof document === 'undefined') return;
 
-		document.body.style.overflow = isMobileMenuOpen ? 'hidden' : '';
+		const overflowValue = isMobileMenuOpen ? 'hidden' : '';
+		document.body.style.overflow = overflowValue;
+		document.documentElement.style.overflow = overflowValue;
 
 		return () => {
 			document.body.style.overflow = '';
+			document.documentElement.style.overflow = '';
+		};
+	});
+
+	$effect(() => {
+		if (typeof window === 'undefined') return;
+
+		const desktopBreakpoint = window.matchMedia('(min-width: 1025px)');
+		const closeOnDesktop = (event: MediaQueryListEvent) => {
+			if (event.matches) {
+				closeMobileMenu();
+			}
+		};
+
+		desktopBreakpoint.addEventListener('change', closeOnDesktop);
+		return () => {
+			desktopBreakpoint.removeEventListener('change', closeOnDesktop);
 		};
 	});
 
@@ -43,11 +62,19 @@
 		isMobileMenuOpen = false;
 	}
 
+	function handleWindowKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape') {
+			closeMobileMenu();
+		}
+	}
+
 	async function handleLogout() {
 		await fetch('/api/auth/logout', { method: 'POST' });
 		window.location.href = '/';
 	}
 </script>
+
+<svelte:window onkeydown={handleWindowKeydown} />
 
 <header class="nav-header">
 	<div class="nav-container">
@@ -114,7 +141,7 @@
 	{#if isMobileMenuOpen}
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<div class="mobile-menu-overlay" onclick={closeMobileMenu} role="presentation"></div>
-		<nav class="mobile-menu">
+		<nav class="mobile-menu" aria-label="Mobile navigation">
 				<div class="mobile-menu-links">
 					{#each NAV_LINKS as link}
 						<a
@@ -175,6 +202,7 @@
 		transition: background var(--duration-standard) var(--ease-standard);
 		overflow-x: hidden;
 		max-width: 100vw;
+		box-sizing: border-box;
 	}
 
 	.nav-container {
@@ -334,9 +362,11 @@
 		display: flex;
 		flex-direction: column;
 		overflow-y: auto;
+		overscroll-behavior: contain;
 		padding: max(5rem, env(safe-area-inset-top)) max(1.5rem, env(safe-area-inset-right))
 			max(2rem, env(safe-area-inset-bottom)) max(1.5rem, env(safe-area-inset-left));
 		animation: slideIn var(--duration-standard) var(--ease-standard);
+		box-sizing: border-box;
 	}
 
 	@keyframes slideIn {
@@ -453,7 +483,11 @@
 	/* Tablet - show mobile menu earlier to prevent overflow */
 	@media (max-width: 1024px) {
 		.nav-header {
-			padding: 0.75rem 1rem;
+			padding:
+				max(0.75rem, env(safe-area-inset-top))
+				max(1rem, env(safe-area-inset-right))
+				0.75rem
+				max(1rem, env(safe-area-inset-left));
 		}
 
 		.desktop-only {
@@ -478,6 +512,12 @@
 
 		.user-info {
 			display: none;
+		}
+	}
+
+	@media (max-width: 480px) {
+		.mobile-menu {
+			width: 100vw;
 		}
 	}
 </style>
