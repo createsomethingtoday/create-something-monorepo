@@ -51,13 +51,15 @@ vi.mock('$lib/server/env', () => ({
 
 import { GET } from '../../../../../../../routes/api/v1/videos/[id]/playback/+server';
 
+const VALID_STREAM_UID = '88888888888888888888888888888888';
+
 function createVideo(overrides: Partial<Record<string, unknown>> = {}) {
 	return {
 		id: 'vid_default',
 		visibility: 'published',
 		tier: 'free',
 		ingest_status: 'ready',
-		stream_uid: 'stream_1',
+		stream_uid: VALID_STREAM_UID,
 		asset_path: '',
 		playback_policy: 'public',
 		failure_reason: null,
@@ -114,6 +116,26 @@ describe('GET /api/v1/videos/[id]/playback', () => {
 
 		expect(response.status).toBe(409);
 		expect(response.headers.get('cache-control')).toBe('private, no-store');
+	});
+
+	it('returns 409 when stream_uid is malformed', async () => {
+		getVideoByIdMock.mockResolvedValue(
+			createVideo({
+				id: 'vid_bad_uid',
+				stream_uid: 'stream_invalid'
+			})
+		);
+
+		const response = await GET({
+			params: { id: 'vid_bad_uid' },
+			locals: { user: null },
+			platform: {}
+		} as never);
+
+		expect(response.status).toBe(409);
+		expect(response.headers.get('cache-control')).toBe('private, no-store');
+		const body = (await response.json()) as { error: string };
+		expect(body.error).toBe('Video stream is unavailable');
 	});
 
 	it('returns 409 with failure reason when ingest_status is failed', async () => {

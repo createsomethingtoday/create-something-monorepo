@@ -8,8 +8,8 @@ function hasText(value: string | null | undefined): boolean {
 }
 
 export function isValidStreamUid(value: string | null | undefined): boolean {
-	if (!hasText(value)) return false;
-	return STREAM_UID_PATTERN.test(value.trim());
+	const normalized = typeof value === 'string' ? value.trim() : '';
+	return normalized.length > 0 && STREAM_UID_PATTERN.test(normalized);
 }
 
 export function hasPlayableVideoSource(video: Pick<Video, 'stream_uid' | 'asset_path'>): boolean {

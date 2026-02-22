@@ -20,6 +20,8 @@ vi.mock('$lib/server/d1-compat', () => ({
 
 import { load } from '../../../routes/demo/+page.server';
 
+const VALID_STREAM_UID = '55555555555555555555555555555555';
+
 function createVideo(overrides: Partial<Record<string, unknown>> = {}) {
 	return {
 		id: 'vid_default',
@@ -32,7 +34,7 @@ function createVideo(overrides: Partial<Record<string, unknown>> = {}) {
 		created_at: 1000,
 		visibility: 'published',
 		ingest_status: 'ready',
-		stream_uid: 'stream_1',
+		stream_uid: VALID_STREAM_UID,
 		asset_path: '',
 		description: null,
 		...overrides

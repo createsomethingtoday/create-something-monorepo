@@ -42,6 +42,8 @@ vi.mock('$lib/server/env', () => ({
 
 import { load } from '../../../../routes/watch/[id]/+page.server';
 
+const VALID_STREAM_UID = '66666666666666666666666666666666';
+
 function createVideo(overrides: Partial<Record<string, unknown>> = {}) {
 	return {
 		id: 'vid_default',
@@ -51,7 +53,7 @@ function createVideo(overrides: Partial<Record<string, unknown>> = {}) {
 		tier: 'free',
 		visibility: 'published',
 		ingest_status: 'ready',
-		stream_uid: 'stream_1',
+		stream_uid: VALID_STREAM_UID,
 		asset_path: '',
 		series_id: null,
 		...overrides
@@ -81,7 +83,7 @@ describe('watch/[id] load', () => {
 				createVideo({ id: 'prev_ready', episode_number: 1, stream_uid: null, asset_path: '/videos/1.mp4' }),
 				current,
 				createVideo({ id: 'next_failed', episode_number: 3, ingest_status: 'failed', stream_uid: 'stream_failed' }),
-				createVideo({ id: 'next_ready', episode_number: 4, stream_uid: 'stream_ready' }),
+				createVideo({ id: 'next_ready', episode_number: 4, stream_uid: '77777777777777777777777777777777' }),
 				createVideo({ id: 'other_ready', category: 'kodiak', episode_number: 1, stream_uid: null, asset_path: '/videos/k1.mp4' }),
 				createVideo({ id: 'other_pending', category: 'kodiak', ingest_status: 'pending_upload', stream_uid: 'stream_pending' })
 			]
