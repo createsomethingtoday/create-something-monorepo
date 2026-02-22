@@ -9,9 +9,9 @@
 
 	let { data }: { data: PageData } = $props();
 
-	let series = $state(data.series);
-	let videos = $state(data.videos);
-	let total = $state(data.total);
+	const series = $derived(data.series);
+	let videos = $state<PageData['videos']>([]);
+	let total = $state(0);
 
 	let isLoading = $state(false);
 	let listError = $state<string | null>(null);
@@ -64,6 +64,11 @@
 
 	let drafts = $state<Record<string, EditDraft>>({});
 
+	$effect(() => {
+		videos = data.videos;
+		total = data.total;
+	});
+
 	function ensureDraft(video: VideoRow) {
 		if (drafts[video.id]) return;
 
@@ -81,8 +86,6 @@
 			featured_order: video.featured_order || 0
 		};
 	}
-
-	for (const v of videos) ensureDraft(v);
 
 	$effect(() => {
 		for (const v of videos) ensureDraft(v);

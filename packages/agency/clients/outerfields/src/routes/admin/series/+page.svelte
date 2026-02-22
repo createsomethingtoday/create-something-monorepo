@@ -14,7 +14,7 @@
 	let { data }: { data: PageData } = $props();
 
 	type UiSeries = PageData['series'][number];
-	let rows = $state<UiSeries[]>(data.series);
+	let rows = $state<UiSeries[]>([]);
 
 	let createSlug = $state('');
 	let createTitle = $state('');
@@ -24,6 +24,17 @@
 	let isBusy = $state(false);
 	let errorMessage = $state<string | null>(null);
 	let successMessage = $state<string | null>(null);
+
+	function cloneSeriesRow(row: UiSeries): UiSeries {
+		return {
+			...row,
+			homeFilters: [...(row.homeFilters || [])]
+		};
+	}
+
+	$effect(() => {
+		rows = data.series.map(cloneSeriesRow);
+	});
 
 	function clearMessages() {
 		errorMessage = null;
@@ -541,4 +552,3 @@
 		}
 	}
 </style>
-
