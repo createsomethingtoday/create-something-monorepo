@@ -73,6 +73,8 @@ export function initBraintrust(config: BraintrustConfig = {}): Logger<any> | nul
     return null;
   }
 
+  // Recover from prior missing-key initialization unless explicitly disabled.
+  _config.enabled = config.enabled ?? true;
   if (_config.enabled === false) return null;
   if (_logger) return _logger;
 
