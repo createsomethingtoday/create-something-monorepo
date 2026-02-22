@@ -139,8 +139,8 @@
 <style>
 	.mini-player {
 		position: fixed;
-		bottom: 1.5rem;
-		right: 1.5rem;
+		bottom: max(1.5rem, env(safe-area-inset-bottom));
+		right: max(1.5rem, env(safe-area-inset-right));
 		z-index: 1000;
 		width: 320px;
 		background: var(--color-bg-pure);
@@ -255,10 +255,10 @@
 
 	@media (max-width: 480px) {
 		.mini-player {
-			width: calc(100% - 2rem);
-			left: 1rem;
-			right: 1rem;
-			bottom: 1rem;
+			width: auto;
+			left: max(1rem, env(safe-area-inset-left));
+			right: max(1rem, env(safe-area-inset-right));
+			bottom: max(1rem, env(safe-area-inset-bottom));
 		}
 	}
 </style>

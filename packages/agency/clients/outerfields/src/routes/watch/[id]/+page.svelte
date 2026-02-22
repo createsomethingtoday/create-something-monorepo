@@ -353,7 +353,7 @@
 	.watch-page {
 		min-height: 100vh;
 		background: var(--color-bg-pure);
-		padding-top: 5rem; /* Account for fixed navigation */
+		padding-top: calc(5rem + env(safe-area-inset-top)); /* Account for fixed navigation */
 		overflow-x: hidden;
 		max-width: 100vw;
 	}
@@ -556,7 +556,7 @@
 	/* Tablet-only: reduce vertical bulk so the page isn't too tall */
 	@media (max-width: 1100px) and (min-width: 641px) {
 		.watch-page {
-			padding-top: 4rem;
+			padding-top: calc(4rem + env(safe-area-inset-top));
 		}
 
 		.video-info {
@@ -588,7 +588,7 @@
 	/* Tablet portrait and below */
 	@media (max-width: 768px) {
 		.watch-page {
-			padding-top: 4rem;
+			padding-top: calc(4rem + env(safe-area-inset-top));
 		}
 
 		.video-info {
@@ -599,7 +599,7 @@
 	/* Mobile - reduce vertical bulk so the page isn't too tall */
 	@media (max-width: 640px) {
 		.watch-page {
-			padding-top: 0;
+			padding-top: calc(3.75rem + env(safe-area-inset-top));
 			min-height: auto;
 		}
 

@@ -706,7 +706,11 @@
 		bottom: 0;
 		left: 0;
 		right: 0;
-		padding: 2rem 1rem 1rem;
+		padding:
+			2rem
+			max(1rem, env(safe-area-inset-right))
+			max(1rem, env(safe-area-inset-bottom))
+			max(1rem, env(safe-area-inset-left));
 		background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
 		opacity: 0;
 		transition: opacity var(--duration-micro) var(--ease-standard);
@@ -939,7 +943,11 @@
 
 	@media (max-width: 768px) {
 		.controls-overlay {
-			padding: 1.5rem 0.75rem 0.75rem;
+			padding:
+				1.5rem
+				max(0.75rem, env(safe-area-inset-right))
+				max(0.75rem, env(safe-area-inset-bottom))
+				max(0.75rem, env(safe-area-inset-left));
 		}
 
 		.progress-bar-container {
@@ -980,7 +988,11 @@
 		}
 
 		.controls-overlay {
-			padding: 1rem 0.5rem 0.5rem;
+			padding:
+				1rem
+				max(0.5rem, env(safe-area-inset-right))
+				max(0.5rem, env(safe-area-inset-bottom))
+				max(0.5rem, env(safe-area-inset-left));
 		}
 
 		.controls-bar {

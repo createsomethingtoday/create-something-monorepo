@@ -75,14 +75,20 @@
 <style>
 	.hero {
 		position: relative;
-		height: 100vh;
+		min-height: 100vh;
+		min-height: 100dvh;
 		min-height: 600px;
 		width: 100%;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: 0 1.5rem;
+		padding:
+			calc(6.5rem + env(safe-area-inset-top))
+			max(1.5rem, env(safe-area-inset-right))
+			max(2rem, env(safe-area-inset-bottom))
+			max(1.5rem, env(safe-area-inset-left));
 		overflow: hidden;
+		box-sizing: border-box;
 	}
 
 	.hero-container {
@@ -168,7 +174,7 @@
 		flex-direction: column;
 		align-items: center;
 		gap: var(--space-md);
-		margin-top: 15vh;
+		margin-top: 0;
 	}
 
 	/* Main Title - Space Grotesk Bold, increased size for visual prominence */
@@ -242,13 +248,12 @@
 	/* Responsive */
 	@media (max-width: 768px) {
 		.hero {
-			height: 90vh;
-			min-height: 550px;
-			padding: 0 1rem;
-		}
-
-		.hero-content {
-			margin-top: 20vh;
+			min-height: 100dvh;
+			padding:
+				calc(5.75rem + env(safe-area-inset-top))
+				max(1rem, env(safe-area-inset-right))
+				max(1.5rem, env(safe-area-inset-bottom))
+				max(1rem, env(safe-area-inset-left));
 		}
 
 		.hero-actions {
@@ -278,8 +283,7 @@
 
 	@media (max-width: 480px) {
 		.hero {
-			height: 85vh;
-			min-height: 500px;
+			padding-top: calc(5.25rem + env(safe-area-inset-top));
 		}
 
 		.hero-content {
