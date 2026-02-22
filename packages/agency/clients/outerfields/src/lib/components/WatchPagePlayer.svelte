@@ -770,7 +770,9 @@
 		border: 1px solid var(--color-border-default);
 		border-radius: 6px;
 		padding: 0.5rem 0.75rem;
-		white-space: nowrap;
+		max-width: min(260px, calc(100vw - 2rem));
+		white-space: normal;
+		text-align: center;
 		z-index: 20;
 		pointer-events: none;
 		display: flex;
@@ -870,7 +872,8 @@
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		padding: 0.75rem;
-		min-width: 180px;
+		min-width: 170px;
+		max-width: min(220px, calc(100vw - 1.5rem));
 		z-index: 30;
 	}
 
@@ -997,6 +1000,13 @@
 
 		.controls-bar {
 			gap: 0.375rem;
+			flex-wrap: wrap;
+			justify-content: space-between;
+		}
+
+		.controls-left,
+		.controls-right {
+			min-width: 0;
 		}
 
 		.control-btn {
@@ -1015,6 +1025,7 @@
 
 		.time-display {
 			font-size: 0.6875rem;
+			margin-left: 0;
 		}
 
 		.center-play-button {

@@ -142,7 +142,7 @@
 		bottom: max(1.5rem, env(safe-area-inset-bottom));
 		right: max(1.5rem, env(safe-area-inset-right));
 		z-index: 1000;
-		width: 320px;
+		width: min(320px, calc(100vw - 3rem - env(safe-area-inset-left) - env(safe-area-inset-right)));
 		background: var(--color-bg-pure);
 		border: 1px solid var(--color-border-default);
 		border-radius: 0.75rem;
@@ -256,9 +256,9 @@
 	@media (max-width: 480px) {
 		.mini-player {
 			width: auto;
-			left: max(1rem, env(safe-area-inset-left));
-			right: max(1rem, env(safe-area-inset-right));
-			bottom: max(1rem, env(safe-area-inset-bottom));
+			left: max(0.75rem, env(safe-area-inset-left));
+			right: max(0.75rem, env(safe-area-inset-right));
+			bottom: max(0.75rem, env(safe-area-inset-bottom));
 		}
 	}
 </style>
