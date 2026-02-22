@@ -2,16 +2,14 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getCategorySummaries, renameCategory } from '$lib/server/db/videos';
 import { isAdminUser } from '$lib/server/auth';
+import { getDBFromPlatform } from '$lib/server/d1-compat';
 
 export const GET: RequestHandler = async ({ platform, locals }) => {
 	if (!isAdminUser(locals.user)) {
 		return json({ success: false, error: 'Not authorized' }, { status: 403 });
 	}
 
-	const db = platform?.env.DB;
-	if (!db) {
-		return json({ success: false, error: 'Database not available' }, { status: 500 });
-	}
+	const db = getDBFromPlatform(platform);
 
 	try {
 		const categories = await getCategorySummaries(db);
@@ -27,10 +25,7 @@ export const PATCH: RequestHandler = async ({ request, platform, locals }) => {
 		return json({ success: false, error: 'Not authorized' }, { status: 403 });
 	}
 
-	const db = platform?.env.DB;
-	if (!db) {
-		return json({ success: false, error: 'Database not available' }, { status: 500 });
-	}
+	const db = getDBFromPlatform(platform);
 
 	try {
 		const body = await request.json();

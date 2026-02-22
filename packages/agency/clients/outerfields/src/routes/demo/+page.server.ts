@@ -2,6 +2,7 @@ import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
 import { getVideos, type Video } from '$lib/server/db/videos';
 import { isAdminUser } from '$lib/server/auth';
+import { getDBFromPlatform } from '$lib/server/d1-compat';
 
 interface RowVideo {
 	id: string;
@@ -58,16 +59,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		redirect(302, '/login?redirect=/demo');
 	}
 
-	const db = platform?.env.DB;
-	if (!db) {
-		return {
-			user: locals.user,
-			isAdmin: isAdminUser(locals.user),
-			featured: null,
-			categories: [],
-			totalVideos: 0
-		};
-	}
+	const db = getDBFromPlatform(platform);
 
 	const { videos } = await getVideos(db);
 

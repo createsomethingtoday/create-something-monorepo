@@ -79,6 +79,40 @@ export interface ListAdminVideosFilters {
 	offset?: number;
 }
 
+/**
+ * Legacy admin API compatibility types.
+ * Kept to support /api/admin/* routes while /api/v1/* is the primary surface.
+ */
+export interface CreateVideoInput {
+	title: string;
+	category: string;
+	tier: 'free' | 'preview' | 'gated';
+	duration: number;
+	episode_number?: number | null;
+	asset_path: string;
+	thumbnail_path?: string;
+	description?: string | null;
+}
+
+export interface UpdateVideoInput {
+	title?: string;
+	category?: string;
+	tier?: 'free' | 'preview' | 'gated';
+	duration?: number;
+	episode_number?: number | null;
+	asset_path?: string;
+	thumbnail_path?: string;
+	description?: string | null;
+}
+
+export interface CategorySummary {
+	category: string;
+	total: number;
+	free: number;
+	preview: number;
+	gated: number;
+}
+
 function nowSeconds(): number {
 	return Math.floor(Date.now() / 1000);
 }
@@ -86,6 +120,15 @@ function nowSeconds(): number {
 function createVideoId(): string {
 	const suffix = randomUUID().replace(/-/g, '').slice(0, 16);
 	return `vid_${suffix}`;
+}
+
+async function resolveSeriesIdBySlug(db: D1Compat, slug: string): Promise<string | null> {
+	if (!slug) return null;
+	const row = await db
+		.prepare('SELECT id FROM series WHERE slug = ? LIMIT 1')
+		.bind(slug)
+		.first<{ id: string }>();
+	return row?.id ?? null;
 }
 
 /**
@@ -410,6 +453,233 @@ export async function searchVideos(db: D1Compat, query: string): Promise<VideosR
 		videos: result.results || [],
 		total: result.results?.length || 0
 	};
+}
+
+/**
+ * Legacy helper used by /api/admin/categories.
+ */
+export async function getCategorySummaries(db: D1Compat): Promise<CategorySummary[]> {
+	const result = await db
+		.prepare(
+			`SELECT
+				category,
+				COUNT(*) AS total,
+				SUM(CASE WHEN tier = 'free' THEN 1 ELSE 0 END) AS free,
+				SUM(CASE WHEN tier = 'preview' THEN 1 ELSE 0 END) AS preview,
+				SUM(CASE WHEN tier = 'gated' THEN 1 ELSE 0 END) AS gated
+			FROM videos
+			WHERE visibility != 'archived'
+			GROUP BY category
+			ORDER BY category ASC`
+		)
+		.all<CategorySummary>();
+
+	return result.results || [];
+}
+
+/**
+ * Legacy helper used by /api/admin/categories.
+ */
+export async function renameCategory(db: D1Compat, from: string, to: string): Promise<number> {
+	const source = from.trim();
+	const target = to.trim();
+	if (!source || !target || source === target) return 0;
+
+	const [sourceSeriesId, targetSeriesId] = await Promise.all([
+		resolveSeriesIdBySlug(db, source),
+		resolveSeriesIdBySlug(db, target)
+	]);
+
+	if (sourceSeriesId && !targetSeriesId) {
+		await db
+			.prepare('UPDATE series SET slug = ?, updated_at = ? WHERE id = ?')
+			.bind(target, nowSeconds(), sourceSeriesId)
+			.run();
+	}
+
+	const nextSeriesId = targetSeriesId ?? sourceSeriesId;
+
+	let updateStatement =
+		'UPDATE videos SET category = ?, updated_at = ? WHERE category = ?';
+	const bindValues: Array<string | number | null> = [target, nowSeconds(), source];
+
+	if (nextSeriesId) {
+		updateStatement =
+			'UPDATE videos SET category = ?, series_id = ?, updated_at = ? WHERE category = ?';
+		bindValues.splice(1, 0, nextSeriesId);
+	}
+
+	const result = await db.prepare(updateStatement).bind(...bindValues).run();
+	return result.meta.changes;
+}
+
+/**
+ * Legacy helper used by /api/admin/videos.
+ */
+export async function createVideo(db: D1Compat, input: CreateVideoInput): Promise<Video> {
+	const id = createVideoId();
+	const now = nowSeconds();
+	const title = input.title.trim();
+	const category = input.category.trim();
+	const duration = Math.max(1, Math.floor(input.duration));
+	const thumbnailPath = input.thumbnail_path?.trim() || '/thumbnails/hero-building-outerfields.jpg';
+	const seriesId = await resolveSeriesIdBySlug(db, category);
+
+	await db
+		.prepare(
+			`INSERT INTO videos (
+				id,
+				title,
+				category,
+				series_id,
+				episode_number,
+				tier,
+				duration,
+				duration_seconds,
+				asset_path,
+				stream_uid,
+				thumbnail_path,
+				description,
+				ingest_status,
+				ingest_source,
+				source_bytes,
+				playback_policy,
+				playback_ready_at,
+				failure_reason,
+				visibility,
+				is_featured,
+				featured_order,
+				created_at,
+				updated_at
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		)
+		.bind(
+			id,
+			title,
+			category,
+			seriesId,
+			input.episode_number ?? null,
+			input.tier,
+			duration,
+			duration,
+			input.asset_path,
+			null,
+			thumbnailPath,
+			input.description ?? null,
+			'ready',
+			'generated',
+			null,
+			'public',
+			now,
+			null,
+			'published',
+			0,
+			0,
+			now,
+			now
+		)
+		.run();
+
+	const created = await getAdminVideoById(db, id);
+	if (!created) {
+		throw new Error('Failed to create video');
+	}
+
+	return created;
+}
+
+/**
+ * Legacy helper used by /api/admin/videos/:id.
+ */
+export async function updateVideo(db: D1Compat, id: string, input: UpdateVideoInput): Promise<Video | null> {
+	const existing = await getAdminVideoById(db, id);
+	if (!existing) return null;
+
+	const sets: string[] = [];
+	const values: Array<string | number | null> = [];
+
+	if (input.title !== undefined) {
+		sets.push('title = ?');
+		values.push(input.title.trim());
+	}
+
+	if (input.category !== undefined) {
+		const category = input.category.trim();
+		const seriesId = await resolveSeriesIdBySlug(db, category);
+		sets.push('category = ?');
+		values.push(category);
+		sets.push('series_id = ?');
+		values.push(seriesId);
+	}
+
+	if (input.tier !== undefined) {
+		sets.push('tier = ?');
+		values.push(input.tier);
+	}
+
+	if (input.duration !== undefined) {
+		const duration = Math.max(1, Math.floor(input.duration));
+		sets.push('duration = ?');
+		values.push(duration);
+		sets.push('duration_seconds = ?');
+		values.push(duration);
+	}
+
+	if (input.episode_number !== undefined) {
+		sets.push('episode_number = ?');
+		values.push(input.episode_number);
+	}
+
+	if (input.asset_path !== undefined) {
+		sets.push('asset_path = ?');
+		values.push(input.asset_path);
+	}
+
+	if (input.thumbnail_path !== undefined) {
+		sets.push('thumbnail_path = ?');
+		values.push(input.thumbnail_path);
+	}
+
+	if (input.description !== undefined) {
+		sets.push('description = ?');
+		values.push(input.description);
+	}
+
+	if (sets.length === 0) {
+		return existing;
+	}
+
+	sets.push('updated_at = ?');
+	values.push(nowSeconds());
+
+	await db
+		.prepare(`UPDATE videos SET ${sets.join(', ')} WHERE id = ?`)
+		.bind(...values, id)
+		.run();
+
+	return getAdminVideoById(db, id);
+}
+
+/**
+ * Legacy helper used by /api/admin/videos/:id.
+ */
+export async function deleteVideo(db: D1Compat, id: string): Promise<boolean> {
+	const existing = await getAdminVideoById(db, id);
+	if (!existing) return false;
+
+	await db
+		.prepare(
+			`UPDATE videos
+			 SET visibility = 'archived',
+				 is_featured = 0,
+				 featured_order = 0,
+				 updated_at = ?
+			 WHERE id = ?`
+		)
+		.bind(nowSeconds(), id)
+		.run();
+
+	return true;
 }
 
 export interface HomeCatalogSeriesRow {

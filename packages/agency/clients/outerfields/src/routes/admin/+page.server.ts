@@ -2,6 +2,7 @@ import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
 import { getCategorySummaries, getVideos } from '$lib/server/db/videos';
 import { isAdminUser } from '$lib/server/auth';
+import { getDBFromPlatform } from '$lib/server/d1-compat';
 
 export const load: PageServerLoad = async ({ locals, platform }) => {
 	if (!locals.user) {
@@ -12,15 +13,7 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 		redirect(302, '/demo');
 	}
 
-	const db = platform?.env.DB;
-	if (!db) {
-		return {
-			user: locals.user,
-			videos: [],
-			categories: [],
-			totalVideos: 0
-		};
-	}
+	const db = getDBFromPlatform(platform);
 
 	const [{ videos, total }, categories] = await Promise.all([
 		getVideos(db),
