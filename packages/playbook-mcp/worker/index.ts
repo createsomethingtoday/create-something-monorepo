@@ -189,11 +189,20 @@ function parseSlackCommand(text: string): { scenario?: ScenarioKey; query?: stri
   };
 }
 
+const textEncoder = new TextEncoder();
+
 function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let mismatch = 0;
-  for (let i = 0; i < a.length; i += 1) {
-    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  const aBytes = textEncoder.encode(a);
+  const bBytes = textEncoder.encode(b);
+  const maxLength = Math.max(aBytes.length, bBytes.length);
+
+  // Include length mismatch in the accumulator so different-length values
+  // still take the same loop path and fail without early return timing hints.
+  let mismatch = aBytes.length ^ bBytes.length;
+  for (let i = 0; i < maxLength; i += 1) {
+    const aByte = i < aBytes.length ? aBytes[i] : 0;
+    const bByte = i < bBytes.length ? bBytes[i] : 0;
+    mismatch |= aByte ^ bByte;
   }
   return mismatch === 0;
 }
