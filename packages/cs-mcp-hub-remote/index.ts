@@ -109,6 +109,22 @@ type RateLimitDecision = {
   windowSeconds: number;
 };
 
+type QuotaPolicy = {
+  enabled: boolean;
+  maxCallsPerPeriod: number;
+  exemptServers: Set<string>;
+};
+
+type QuotaDecision = {
+  allowed: boolean;
+  key: string;
+  remaining: number;
+  currentCount: number;
+  maxCallsPerPeriod: number;
+  period: string;
+  reason?: string;
+};
+
 type InvocationTrace = {
   requestId: string;
   correlationId: string;
@@ -153,6 +169,8 @@ interface Env {
   HUB_RATE_LIMIT_WINDOW_SECONDS?: string;
   HUB_RATE_LIMIT_SCOPE?: string;
   HUB_RATE_LIMIT_EXEMPT_SERVERS?: string;
+  HUB_QUOTA_MAX_PROXY_CALLS_PER_PERIOD?: string;
+  HUB_QUOTA_EXEMPT_SERVERS?: string;
   HUB_STATE_KV?: KVNamespace;
   TELEMETRY_DB?: D1Database;
   [key: string]: unknown;
@@ -247,7 +265,7 @@ const MANAGEMENT_TOOLS: Tool[] = [
   },
   {
     name: 'hub_policy_status',
-    description: 'Show active proxy policy settings (including rate limits) for this hub runtime.',
+    description: 'Show active proxy policy settings (rate limits + quotas) for this hub runtime.',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -275,6 +293,7 @@ let hubRouteTableReady = false;
 
 const rateLimitBuckets = new Map<string, { windowStartMs: number; count: number; lastSeenMs: number }>();
 let rateLimitSweepCounter = 0;
+const HUB_PROXY_PERIOD_COUNTER_SERVER = `${HUB_NAME}:proxy`;
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -309,7 +328,8 @@ export default {
     if (url.pathname === '/' || url.pathname === '/health') {
       try {
         const runtime = await getHubRuntime(env);
-        const policy = resolveRateLimitPolicy(env);
+        const rateLimitPolicy = resolveRateLimitPolicy(env);
+        const quotaPolicy = resolveQuotaPolicy(env);
         return withCors(
           jsonResponse({
             name: HUB_NAME,
@@ -320,14 +340,7 @@ export default {
             },
             auth_required: Boolean(readEnvString(env, 'HUB_API_TOKEN')),
             state_storage: env.HUB_STATE_KV ? 'kv' : 'env-only',
-            rate_limit_policy: {
-              enabled: policy.enabled,
-              scope: policy.scope,
-              max_calls_per_window: policy.maxCalls,
-              window_seconds: policy.windowSeconds,
-              exempt_servers: [...policy.exemptServers].sort(),
-              active_bucket_count: rateLimitBuckets.size,
-            },
+            policy: buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env),
             downstream_auth_config: {
               has_cs_telemetry_operator_token: Boolean(
                 readEnvString(env, 'CS_TELEMETRY_OPERATOR_API_TOKEN'),
@@ -640,6 +653,7 @@ function buildProxyCatalog(connectedServers: ConnectedDownstream[]): ProxyCatalo
 
 function buildHubServer(runtime: HubRuntime, env: Env): Server {
   const rateLimitPolicy = resolveRateLimitPolicy(env);
+  const quotaPolicy = resolveQuotaPolicy(env);
   const server = new Server(
     {
       name: HUB_NAME,
@@ -668,7 +682,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
       if (toolName === 'hub_status') {
         const result = toJsonResult({
           ...buildStatusPayload(runtime),
-          policy: buildPolicyStatusPayload(rateLimitPolicy),
+          policy: buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env),
         });
         await recordHubInvocation(env, {
           accountId,
@@ -826,7 +840,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
       }
 
       if (toolName === 'hub_policy_status') {
-        const result = toJsonResult(buildPolicyStatusPayload(rateLimitPolicy));
+        const result = toJsonResult(buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env));
         await recordHubInvocation(env, {
           accountId,
           toolName,
@@ -908,6 +922,56 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         return toErrorResult(message);
       }
 
+      const quotaDecision = await applyQuotaPolicy(env, quotaPolicy, accountId, route);
+      if (!quotaDecision.allowed) {
+        const durationMs = Date.now() - startedAt;
+        const message =
+          `Quota exceeded (${quotaDecision.maxCallsPerPeriod} proxy calls per period=${quotaDecision.period}). ` +
+          `Remaining ${quotaDecision.remaining}.`;
+
+        await Promise.all([
+          recordHubInvocation(env, {
+            accountId,
+            toolName,
+            success: false,
+            durationMs,
+            trace,
+            errorMessage: message,
+            metadata: {
+              type: 'policy',
+              policy: 'quota',
+              reason: quotaDecision.reason ?? null,
+              downstreamServer: route.serverName,
+              downstreamTool: route.downstreamToolName,
+              remaining: quotaDecision.remaining,
+              currentCount: quotaDecision.currentCount,
+              maxCallsPerPeriod: quotaDecision.maxCallsPerPeriod,
+              period: quotaDecision.period,
+            },
+          }),
+          recordHubRouteInvocation(env, {
+            accountId,
+            downstreamServer: route.serverName,
+            downstreamTool: route.downstreamToolName,
+            success: false,
+            durationMs,
+            trace,
+            errorMessage: message,
+            metadata: {
+              proxyToolName: toolName,
+              blockedByPolicy: 'quota',
+              reason: quotaDecision.reason ?? null,
+              remaining: quotaDecision.remaining,
+              currentCount: quotaDecision.currentCount,
+              maxCallsPerPeriod: quotaDecision.maxCallsPerPeriod,
+              period: quotaDecision.period,
+            },
+          }),
+        ]);
+
+        return toErrorResult(message);
+      }
+
       const proxiedResult = await route.call(args, trace, accountId);
       const proxiedSuccess = !resultIsError(proxiedResult);
       const durationMs = Date.now() - startedAt;
@@ -929,6 +993,13 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
               resetAt: rateLimitDecision.resetAt,
               maxCalls: rateLimitDecision.maxCalls,
               windowSeconds: rateLimitDecision.windowSeconds,
+            },
+            quota: {
+              remaining: quotaDecision.remaining,
+              currentCount: quotaDecision.currentCount,
+              maxCallsPerPeriod: quotaDecision.maxCallsPerPeriod,
+              period: quotaDecision.period,
+              reason: quotaDecision.reason ?? null,
             },
           },
         }),
@@ -1028,19 +1099,38 @@ function buildRegistryPayload(currentRegistry: McpBundleRegistry): Record<string
   };
 }
 
-function buildPolicyStatusPayload(policy: RateLimitPolicy): Record<string, unknown> {
+function buildPolicyStatusPayload(
+  rateLimitPolicy: RateLimitPolicy,
+  quotaPolicy: QuotaPolicy,
+  env: Env,
+): Record<string, unknown> {
+  const period = getCurrentPeriod();
+
   return {
     rateLimit: {
-      enabled: policy.enabled,
-      scope: policy.scope,
-      maxCallsPerWindow: policy.maxCalls,
-      windowSeconds: policy.windowSeconds,
-      exemptServers: [...policy.exemptServers].sort(),
+      enabled: rateLimitPolicy.enabled,
+      scope: rateLimitPolicy.scope,
+      maxCallsPerWindow: rateLimitPolicy.maxCalls,
+      windowSeconds: rateLimitPolicy.windowSeconds,
+      exemptServers: [...rateLimitPolicy.exemptServers].sort(),
       activeBucketCount: rateLimitBuckets.size,
     },
-    note: policy.enabled
-      ? 'Rate limiting applies only to proxied downstream tool calls.'
-      : 'Rate limiting is disabled. Set HUB_RATE_LIMIT_MAX_CALLS_PER_WINDOW > 0 to enable.',
+    quota: {
+      enabled: quotaPolicy.enabled,
+      maxCallsPerPeriod: quotaPolicy.maxCallsPerPeriod,
+      period,
+      counterServerName: HUB_PROXY_PERIOD_COUNTER_SERVER,
+      telemetryDbConfigured: Boolean(env.TELEMETRY_DB),
+      exemptServers: [...quotaPolicy.exemptServers].sort(),
+    },
+    note: [
+      rateLimitPolicy.enabled
+        ? 'Rate limiting applies only to proxied downstream tool calls.'
+        : 'Rate limiting is disabled. Set HUB_RATE_LIMIT_MAX_CALLS_PER_WINDOW > 0 to enable.',
+      quotaPolicy.enabled
+        ? `Quota enforcement uses TELEMETRY_DB mcp_run_counts with server_name=${HUB_PROXY_PERIOD_COUNTER_SERVER}.`
+        : 'Quota is disabled. Set HUB_QUOTA_MAX_PROXY_CALLS_PER_PERIOD > 0 to enable.',
+    ].join(' '),
   };
 }
 
@@ -1067,6 +1157,20 @@ function parseRateLimitScope(raw: string | undefined): RateLimitScope {
   if (normalized === 'account_server') return 'account_server';
   if (normalized === 'account_server_tool') return 'account_server_tool';
   return 'account';
+}
+
+function resolveQuotaPolicy(env: Env): QuotaPolicy {
+  const maxCallsPerPeriod = parsePositiveInt(
+    readEnvString(env, 'HUB_QUOTA_MAX_PROXY_CALLS_PER_PERIOD'),
+    0,
+  );
+  const exemptServers = new Set(parseList(readEnvString(env, 'HUB_QUOTA_EXEMPT_SERVERS')) ?? []);
+
+  return {
+    enabled: maxCallsPerPeriod > 0,
+    maxCallsPerPeriod,
+    exemptServers,
+  };
 }
 
 function applyRateLimit(
@@ -1125,6 +1229,105 @@ function applyRateLimit(
     maxCalls: policy.maxCalls,
     windowSeconds: policy.windowSeconds,
   };
+}
+
+async function applyQuotaPolicy(
+  env: Env,
+  policy: QuotaPolicy,
+  accountId: string,
+  route: ProxyRoute,
+): Promise<QuotaDecision> {
+  const period = getCurrentPeriod();
+  const key = `${accountId}::${period}`;
+
+  if (!policy.enabled || policy.exemptServers.has(route.serverName)) {
+    return {
+      allowed: true,
+      key,
+      remaining: Number.MAX_SAFE_INTEGER,
+      currentCount: 0,
+      maxCallsPerPeriod: policy.maxCallsPerPeriod,
+      period,
+      reason: 'disabled_or_exempt',
+    };
+  }
+
+  const db = env.TELEMETRY_DB;
+  if (!db) {
+    return {
+      allowed: true,
+      key,
+      remaining: Number.MAX_SAFE_INTEGER,
+      currentCount: 0,
+      maxCallsPerPeriod: policy.maxCallsPerPeriod,
+      period,
+      reason: 'telemetry_db_unavailable',
+    };
+  }
+
+  try {
+    const currentCount = await getQuotaCount(db, accountId, period);
+    if (currentCount >= policy.maxCallsPerPeriod) {
+      return {
+        allowed: false,
+        key,
+        remaining: 0,
+        currentCount,
+        maxCallsPerPeriod: policy.maxCallsPerPeriod,
+        period,
+      };
+    }
+
+    const updatedCount = await incrementQuotaCount(db, accountId, period);
+    return {
+      allowed: true,
+      key,
+      remaining: Math.max(0, policy.maxCallsPerPeriod - updatedCount),
+      currentCount: updatedCount,
+      maxCallsPerPeriod: policy.maxCallsPerPeriod,
+      period,
+    };
+  } catch (error) {
+    return {
+      allowed: true,
+      key,
+      remaining: Number.MAX_SAFE_INTEGER,
+      currentCount: 0,
+      maxCallsPerPeriod: policy.maxCallsPerPeriod,
+      period,
+      reason: `quota_check_failed:${error instanceof Error ? error.message : String(error)}`,
+    };
+  }
+}
+
+async function getQuotaCount(db: D1Database, accountId: string, period: string): Promise<number> {
+  const row = await db
+    .prepare(
+      `SELECT runs_this_period
+       FROM mcp_run_counts
+       WHERE server_name = ? AND account_id = ? AND period_start = ?
+       LIMIT 1`,
+    )
+    .bind(HUB_PROXY_PERIOD_COUNTER_SERVER, accountId, period)
+    .first<{ runs_this_period: number | null }>();
+
+  const count = row?.runs_this_period;
+  return typeof count === 'number' && Number.isFinite(count) ? Math.max(0, Math.floor(count)) : 0;
+}
+
+async function incrementQuotaCount(db: D1Database, accountId: string, period: string): Promise<number> {
+  await db
+    .prepare(
+      `INSERT INTO mcp_run_counts (server_name, account_id, period_start, runs_this_period, updated_at)
+       VALUES (?, ?, ?, 1, datetime('now'))
+       ON CONFLICT(server_name, account_id, period_start) DO UPDATE SET
+         runs_this_period = mcp_run_counts.runs_this_period + 1,
+         updated_at = datetime('now')`,
+    )
+    .bind(HUB_PROXY_PERIOD_COUNTER_SERVER, accountId, period)
+    .run();
+
+  return getQuotaCount(db, accountId, period);
 }
 
 function buildRateLimitKey(

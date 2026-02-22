@@ -40,6 +40,8 @@ Environment variables:
 - `HUB_RATE_LIMIT_WINDOW_SECONDS` (optional): rate-limit window size, default `60`
 - `HUB_RATE_LIMIT_SCOPE` (optional): `account` (default), `account_server`, or `account_server_tool`
 - `HUB_RATE_LIMIT_EXEMPT_SERVERS` (optional): comma-separated downstream server names excluded from limits
+- `HUB_QUOTA_MAX_PROXY_CALLS_PER_PERIOD` (optional): per-account hard cap for proxy calls in current UTC month
+- `HUB_QUOTA_EXEMPT_SERVERS` (optional): comma-separated downstream server names excluded from quota checks
 - `HUB_STATE_KV` (recommended binding): stores remote hub enable/disable state so `hub_update_state` persists
 
 Downstream auth variables are read dynamically from each registry server's `env_http_headers` and `bearer_token_env_var` config.

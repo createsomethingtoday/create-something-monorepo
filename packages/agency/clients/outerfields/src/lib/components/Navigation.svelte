@@ -25,6 +25,16 @@
 	// Mobile menu state
 	let isMobileMenuOpen = $state(false);
 
+	$effect(() => {
+		if (typeof document === 'undefined') return;
+
+		document.body.style.overflow = isMobileMenuOpen ? 'hidden' : '';
+
+		return () => {
+			document.body.style.overflow = '';
+		};
+	});
+
 	function toggleMobileMenu() {
 		isMobileMenuOpen = !isMobileMenuOpen;
 	}
@@ -159,7 +169,8 @@
 		left: 0;
 		right: 0;
 		z-index: 50;
-		padding: 1rem 1.5rem;
+		padding: max(1rem, env(safe-area-inset-top)) max(1.5rem, env(safe-area-inset-right)) 1rem
+			max(1.5rem, env(safe-area-inset-left));
 		background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent);
 		transition: background var(--duration-standard) var(--ease-standard);
 		overflow-x: hidden;
@@ -315,13 +326,16 @@
 		top: 0;
 		right: 0;
 		width: min(320px, 85vw);
-		height: 100vh;
+		height: 100dvh;
+		max-height: 100vh;
 		background: var(--color-bg-pure);
 		border-left: 1px solid var(--color-border-default);
 		z-index: 51;
 		display: flex;
 		flex-direction: column;
-		padding: 5rem 1.5rem 2rem;
+		overflow-y: auto;
+		padding: max(5rem, env(safe-area-inset-top)) max(1.5rem, env(safe-area-inset-right))
+			max(2rem, env(safe-area-inset-bottom)) max(1.5rem, env(safe-area-inset-left));
 		animation: slideIn var(--duration-standard) var(--ease-standard);
 	}
 
