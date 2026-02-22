@@ -1,12 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const getVideoByIdMock = vi.fn();
-const getAdminVideoByIdMock = vi.fn();
-const getVideosMock = vi.fn();
-const getDBFromPlatformMock = vi.fn();
-const getSeriesByIdentifierMock = vi.fn();
-const isAdminUserMock = vi.fn();
-const resolveRuntimeEnvMock = vi.fn();
+const {
+	getVideoByIdMock,
+	getAdminVideoByIdMock,
+	getVideosMock,
+	getDBFromPlatformMock,
+	getSeriesByIdentifierMock,
+	isAdminUserMock,
+	resolveRuntimeEnvMock
+} = vi.hoisted(() => ({
+	getVideoByIdMock: vi.fn(),
+	getAdminVideoByIdMock: vi.fn(),
+	getVideosMock: vi.fn(),
+	getDBFromPlatformMock: vi.fn(),
+	getSeriesByIdentifierMock: vi.fn(),
+	isAdminUserMock: vi.fn(),
+	resolveRuntimeEnvMock: vi.fn()
+}));
 
 vi.mock('$lib/server/db/videos', () => ({
 	getVideoById: getVideoByIdMock,
@@ -82,11 +92,24 @@ describe('watch/[id] load', () => {
 			locals: { user: null },
 			platform: {}
 		} as never);
+		if (!result) {
+			throw new Error('Expected watch load to return page data');
+		}
 
-		expect(result.video.id).toBe('current');
-		expect(result.related.sameCategory.map((video) => video.id)).toEqual(['prev_ready', 'next_ready']);
-		expect(result.related.otherCategories.map((video) => video.id)).toEqual(['other_ready']);
-		expect(result.related.prevVideo?.id).toBe('prev_ready');
-		expect(result.related.nextVideo?.id).toBe('next_ready');
+		const typedResult = result as {
+			video: { id: string };
+			related: {
+				sameCategory: Array<{ id: string }>;
+				otherCategories: Array<{ id: string }>;
+				prevVideo: { id: string } | null;
+				nextVideo: { id: string } | null;
+			};
+		};
+
+		expect(typedResult.video.id).toBe('current');
+		expect(typedResult.related.sameCategory.map((video) => video.id)).toEqual(['prev_ready', 'next_ready']);
+		expect(typedResult.related.otherCategories.map((video) => video.id)).toEqual(['other_ready']);
+		expect(typedResult.related.prevVideo?.id).toBe('prev_ready');
+		expect(typedResult.related.nextVideo?.id).toBe('next_ready');
 	});
 });

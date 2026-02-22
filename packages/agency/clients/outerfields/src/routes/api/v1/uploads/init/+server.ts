@@ -48,10 +48,11 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 
 		const title = payload.title?.trim();
 		const seriesIdentifier = payload.seriesId?.trim();
+		const rawMaxDurationSeconds = payload.maxDurationSeconds;
 		const maxDurationSeconds =
-			payload.maxDurationSeconds === undefined || payload.maxDurationSeconds === null
+			rawMaxDurationSeconds === undefined || rawMaxDurationSeconds === null
 				? undefined
-				: Math.floor(payload.maxDurationSeconds);
+				: Math.floor(rawMaxDurationSeconds);
 
 		if (!title) {
 			return json({ success: false, error: 'Title is required' }, { status: 400 });
@@ -78,12 +79,13 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		if (payload.playbackPolicy && !isSupportedPlaybackPolicy(payload.playbackPolicy)) {
 			return json({ success: false, error: 'Invalid playbackPolicy value' }, { status: 400 });
 		}
-		if (
-			payload.maxDurationSeconds !== undefined &&
-			payload.maxDurationSeconds !== null &&
-			(!Number.isFinite(payload.maxDurationSeconds) || payload.maxDurationSeconds <= 0 || !Number.isFinite(maxDurationSeconds) || maxDurationSeconds <= 0)
-		) {
-			return json({ success: false, error: 'maxDurationSeconds must be a positive number' }, { status: 400 });
+		if (rawMaxDurationSeconds !== undefined && rawMaxDurationSeconds !== null) {
+			if (!Number.isFinite(rawMaxDurationSeconds) || rawMaxDurationSeconds <= 0) {
+				return json({ success: false, error: 'maxDurationSeconds must be a positive number' }, { status: 400 });
+			}
+			if (maxDurationSeconds === undefined || maxDurationSeconds <= 0) {
+				return json({ success: false, error: 'maxDurationSeconds must be a positive number' }, { status: 400 });
+			}
 		}
 
 		const series = await getSeriesByIdentifier(db, seriesIdentifier);

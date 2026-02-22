@@ -1,18 +1,26 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const getAdminVideoByIdMock = vi.fn();
-const isAdminUserMock = vi.fn();
-const getDBFromPlatformMock = vi.fn();
-const resolveRuntimeEnvMock = vi.fn();
+const { getAdminVideoByIdMock, isAdminUserMock, getDBFromPlatformMock, resolveRuntimeEnvMock, runMock, firstMock, prepareMock } =
+	vi.hoisted(() => {
+		const hoistedRunMock = vi.fn();
+		const hoistedFirstMock = vi.fn();
+		const hoistedPrepareMock = vi.fn(() => ({
+			bind: vi.fn(() => ({
+				run: hoistedRunMock,
+				first: hoistedFirstMock
+			}))
+		}));
 
-const runMock = vi.fn();
-const firstMock = vi.fn();
-const prepareMock = vi.fn(() => ({
-	bind: vi.fn(() => ({
-		run: runMock,
-		first: firstMock
-	}))
-}));
+		return {
+			getAdminVideoByIdMock: vi.fn(),
+			isAdminUserMock: vi.fn(),
+			getDBFromPlatformMock: vi.fn(),
+			resolveRuntimeEnvMock: vi.fn(),
+			runMock: hoistedRunMock,
+			firstMock: hoistedFirstMock,
+			prepareMock: hoistedPrepareMock
+		};
+	});
 
 vi.mock('$lib/server/db/videos', () => ({
 	getAdminVideoById: getAdminVideoByIdMock

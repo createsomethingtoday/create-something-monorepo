@@ -1,15 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const getVideoByIdMock = vi.fn();
-const getAdminVideoByIdMock = vi.fn();
-const isAdminUserMock = vi.fn();
-const getDBFromPlatformMock = vi.fn();
-const resolveRuntimeEnvMock = vi.fn();
-const buildPublicHlsUrlMock = vi.fn();
-const buildSignedHlsUrlMock = vi.fn();
-const createStreamPlaybackTokenMock = vi.fn();
-const getPlaybackTokenTtlSecondsMock = vi.fn();
-const getStreamCustomerCodeMock = vi.fn();
+const {
+	getVideoByIdMock,
+	getAdminVideoByIdMock,
+	isAdminUserMock,
+	getDBFromPlatformMock,
+	resolveRuntimeEnvMock,
+	buildPublicHlsUrlMock,
+	buildSignedHlsUrlMock,
+	createStreamPlaybackTokenMock,
+	getPlaybackTokenTtlSecondsMock,
+	getStreamCustomerCodeMock
+} = vi.hoisted(() => ({
+	getVideoByIdMock: vi.fn(),
+	getAdminVideoByIdMock: vi.fn(),
+	isAdminUserMock: vi.fn(),
+	getDBFromPlatformMock: vi.fn(),
+	resolveRuntimeEnvMock: vi.fn(),
+	buildPublicHlsUrlMock: vi.fn(),
+	buildSignedHlsUrlMock: vi.fn(),
+	createStreamPlaybackTokenMock: vi.fn(),
+	getPlaybackTokenTtlSecondsMock: vi.fn(),
+	getStreamCustomerCodeMock: vi.fn()
+}));
 
 vi.mock('$lib/server/d1-compat', () => ({
 	getDBFromPlatform: getDBFromPlatformMock

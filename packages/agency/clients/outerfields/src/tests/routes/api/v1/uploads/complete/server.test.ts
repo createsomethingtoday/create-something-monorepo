@@ -1,10 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const getAdminVideoByIdMock = vi.fn();
-const markVideoUploadCompletedMock = vi.fn();
-const isAdminUserMock = vi.fn();
-const getDBFromPlatformMock = vi.fn();
-const resolveRuntimeEnvMock = vi.fn();
+const {
+	getAdminVideoByIdMock,
+	markVideoUploadCompletedMock,
+	isAdminUserMock,
+	getDBFromPlatformMock,
+	resolveRuntimeEnvMock
+} = vi.hoisted(() => ({
+	getAdminVideoByIdMock: vi.fn(),
+	markVideoUploadCompletedMock: vi.fn(),
+	isAdminUserMock: vi.fn(),
+	getDBFromPlatformMock: vi.fn(),
+	resolveRuntimeEnvMock: vi.fn()
+}));
 
 vi.mock('$lib/server/db/videos', () => ({
 	getAdminVideoById: getAdminVideoByIdMock,

@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const getVideoByIdMock = vi.fn();
-const getVideosMock = vi.fn();
-const getDBFromPlatformMock = vi.fn();
+const { getVideoByIdMock, getVideosMock, getDBFromPlatformMock } = vi.hoisted(() => ({
+	getVideoByIdMock: vi.fn(),
+	getVideosMock: vi.fn(),
+	getDBFromPlatformMock: vi.fn()
+}));
 
 vi.mock('$lib/server/db/videos', () => ({
 	getVideoById: getVideoByIdMock,

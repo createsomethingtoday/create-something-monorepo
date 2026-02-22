@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const getVideosMock = vi.fn();
-const isAdminUserMock = vi.fn();
-const getDBFromPlatformMock = vi.fn();
+const { getVideosMock, isAdminUserMock, getDBFromPlatformMock } = vi.hoisted(() => ({
+	getVideosMock: vi.fn(),
+	isAdminUserMock: vi.fn(),
+	getDBFromPlatformMock: vi.fn()
+}));
 
 vi.mock('$lib/server/db/videos', () => ({
 	getVideos: getVideosMock
@@ -60,11 +62,22 @@ describe('demo load', () => {
 			locals: { user: { id: 'usr_1', email: 'member@example.com', name: 'Member One' } },
 			platform: {}
 		} as never);
+		if (!result) {
+			throw new Error('Expected demo load to return page data');
+		}
 
-		expect(result.totalVideos).toBe(2);
-		expect(result.featured?.id).toBe('ready_newest');
+		const typedResult = result as {
+			totalVideos: number;
+			featured: { id: string } | null;
+			categories: Array<{ items: Array<{ id: string }> }>;
+		};
 
-		const returnedIds = result.categories.flatMap((category) => category.items.map((item) => item.id));
+		expect(typedResult.totalVideos).toBe(2);
+		expect(typedResult.featured?.id).toBe('ready_newest');
+
+		const returnedIds = typedResult.categories.flatMap((category) =>
+			category.items.map((item) => item.id)
+		);
 		expect(returnedIds.sort()).toEqual(['ready_newest', 'ready_oldest']);
 	});
 });
