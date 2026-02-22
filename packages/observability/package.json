@@ -21,6 +21,10 @@
     "./braintrust": {
       "types": "./dist/braintrust.d.ts",
       "import": "./dist/braintrust.js"
+    },
+    "./openai-agents": {
+      "types": "./dist/openai-agents.d.ts",
+      "import": "./dist/openai-agents.js"
     }
   },
   "files": [

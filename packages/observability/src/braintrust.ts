@@ -28,7 +28,13 @@
  * ```
  */
 
-import { flush, initLogger, type Logger, type Span } from 'braintrust';
+import {
+  flush as braintrustFlush,
+  initLogger,
+  startSpan as braintrustStartSpan,
+  type Logger,
+  type Span,
+} from 'braintrust';
 import type { AITaskType, AtlasMetadata } from './atlas.js';
 
 // =============================================================================
@@ -86,25 +92,49 @@ export function getBraintrustLogger(): Logger<any> | null {
 }
 
 /**
+ * Whether Braintrust tracing is currently active.
+ */
+export function isBraintrustEnabled(): boolean {
+  return _config.enabled !== false && _logger !== null;
+}
+
+/**
+ * Start a Braintrust span using the global logger context.
+ *
+ * This is intentionally re-exported for integrations (e.g., OpenAI Agents)
+ * that build their own span tree.
+ */
+export const startSpan = braintrustStartSpan;
+
+/**
+ * Best-effort flush for pending Braintrust events.
+ *
+ * Uses both logger-level and global flush paths to maximize delivery in Workers.
+ */
+export async function flush(): Promise<void> {
+  if (_config.enabled === false) return;
+
+  if (_logger) {
+    try {
+      await _logger.flush();
+    } catch (err) {
+      console.warn('[braintrust] logger.flush failed:', err);
+    }
+  }
+
+  try {
+    await braintrustFlush();
+  } catch (err) {
+    console.warn('[braintrust] global flush failed:', err);
+  }
+}
+
+/**
  * Flush and close Braintrust logging.
  * Safe to call multiple times.
  */
 export async function shutdownBraintrust(): Promise<void> {
-  if (!_logger || _config.enabled === false) return;
-
-  try {
-    await _logger.flush();
-  } catch (err) {
-    console.warn('[braintrust] logger.flush failed during shutdown:', err);
-  }
-
-  // Flush global queue as an additional best-effort safety net.
-  try {
-    await flush();
-  } catch (err) {
-    console.warn('[braintrust] global flush failed during shutdown:', err);
-  }
-
+  await flush();
   _logger = null;
 }
 

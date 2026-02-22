@@ -7,6 +7,12 @@ import { spawnSync } from 'node:child_process';
 const REPO_ROOT = process.cwd();
 const STAGES = ['typecheck', 'lint', 'test'];
 const SCOPES = ['active', 'fleet', 'all'];
+const PREFLIGHT_BUILD_PACKAGES = [
+  '@create-something/mcp-core',
+  '@create-something/observability',
+  '@create-something/playbook-mcp',
+];
+const PREFLIGHT_STAGES = new Set(['typecheck', 'test']);
 
 // Source of truth aligned with docs/MCP_FLEET_REGISTRY.md.
 const FLEET_REGISTRY = {
@@ -132,6 +138,27 @@ function run(command, args, cwd, label) {
     env: process.env,
   });
   return result.status ?? 1;
+}
+
+function runPreflightBuilds(stagesToRun) {
+  if (!stagesToRun.some((stage) => PREFLIGHT_STAGES.has(stage))) return;
+
+  console.log('\n=== MCP PREFLIGHT BUILDS ===');
+  console.log(`Building shared workspace dependencies: ${PREFLIGHT_BUILD_PACKAGES.join(', ')}`);
+
+  for (const pkg of PREFLIGHT_BUILD_PACKAGES) {
+    const status = run(
+      'pnpm',
+      ['--filter', pkg, 'run', 'build'],
+      REPO_ROOT,
+      `preflight | ${pkg}`,
+    );
+
+    if (status !== 0) {
+      console.error(`Preflight build failed for ${pkg}.`);
+      process.exit(status);
+    }
+  }
 }
 
 function hasAnyWranglerConfig(pkgDir) {
@@ -465,6 +492,8 @@ for (const pkg of packages) {
 
 const stagesToRun = requestedStage === 'all' ? STAGES : [requestedStage];
 let failures = 0;
+
+runPreflightBuilds(stagesToRun);
 
 for (const stage of stagesToRun) {
   console.log(`\n=== MCP ${stage.toUpperCase()} ===`);
