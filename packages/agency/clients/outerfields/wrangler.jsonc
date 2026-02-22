@@ -1,6 +1,7 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "outerfields-pcn",
+	"account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
 	"compatibility_date": "2025-01-01",
 	"compatibility_flags": ["nodejs_compat"],
 	"pages_build_output_dir": ".svelte-kit/cloudflare",
