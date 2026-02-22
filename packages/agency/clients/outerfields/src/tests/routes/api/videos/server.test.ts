@@ -17,12 +17,14 @@ vi.mock('$lib/server/d1-compat', () => ({
 
 import { GET } from '../../../../routes/api/videos/+server';
 
+const VALID_STREAM_UID = '11111111111111111111111111111111';
+
 function createVideo(overrides: Partial<Record<string, unknown>> = {}) {
 	return {
 		id: 'vid_default',
 		visibility: 'published',
 		ingest_status: 'ready',
-		stream_uid: 'stream_1',
+		stream_uid: VALID_STREAM_UID,
 		asset_path: '',
 		...overrides
 	};
@@ -37,7 +39,7 @@ describe('GET /api/videos', () => {
 	it('returns only publicly playable videos in the default list response', async () => {
 		getVideosMock.mockResolvedValue({
 			videos: [
-				createVideo({ id: 'playable_stream', stream_uid: 'stream_1' }),
+				createVideo({ id: 'playable_stream', stream_uid: VALID_STREAM_UID }),
 				createVideo({ id: 'playable_asset', stream_uid: null, asset_path: '/videos/asset.mp4' }),
 				createVideo({ id: 'processing', ingest_status: 'processing' }),
 				createVideo({ id: 'failed', ingest_status: 'failed' }),

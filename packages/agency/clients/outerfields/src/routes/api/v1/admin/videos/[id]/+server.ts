@@ -4,6 +4,7 @@ import { isAdminUser } from '$lib/server/admin';
 import { getDBFromPlatform } from '$lib/server/d1-compat';
 import { getAdminVideoById, type VideoPlaybackPolicy, type VideoVisibility } from '$lib/server/db/videos';
 import { resolveRuntimeEnv } from '$lib/server/env';
+import { hasPlayableVideoSource } from '$lib/server/video-availability';
 
 function nowSeconds(): number {
 	return Math.floor(Date.now() / 1000);
@@ -22,10 +23,6 @@ function normalizeTier(value: unknown): 'free' | 'preview' | 'gated' | null {
 function normalizePlaybackPolicy(value: unknown): VideoPlaybackPolicy | null {
 	if (value === 'private' || value === 'public') return value;
 	return null;
-}
-
-function hasText(value: string | null | undefined): boolean {
-	return typeof value === 'string' && value.trim().length > 0;
 }
 
 /**
@@ -145,7 +142,10 @@ export const PATCH: RequestHandler = async ({ locals, params, request, platform 
 		}
 
 		const nextAssetPath = assetPath !== undefined ? assetPath : existing.asset_path;
-		const hasSource = hasText(existing.stream_uid) || hasText(nextAssetPath);
+		const hasSource = hasPlayableVideoSource({
+			stream_uid: existing.stream_uid,
+			asset_path: nextAssetPath
+		});
 		if (!hasSource) {
 			return json(
 				{

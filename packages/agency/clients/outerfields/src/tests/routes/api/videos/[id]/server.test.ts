@@ -15,13 +15,15 @@ vi.mock('$lib/server/d1-compat', () => ({
 
 import { GET } from '../../../../../routes/api/videos/[id]/+server';
 
+const VALID_STREAM_UID = '44444444444444444444444444444444';
+
 function createVideo(overrides: Partial<Record<string, unknown>> = {}) {
 	return {
 		id: 'vid_default',
 		title: 'Video',
 		visibility: 'published',
 		ingest_status: 'ready',
-		stream_uid: 'stream_1',
+		stream_uid: VALID_STREAM_UID,
 		asset_path: '',
 		...overrides
 	};

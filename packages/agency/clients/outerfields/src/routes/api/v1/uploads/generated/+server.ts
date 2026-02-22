@@ -5,6 +5,7 @@ import { upsertSeries } from '$lib/server/db/series';
 import { isAdminUser } from '$lib/server/admin';
 import { getDBFromPlatform } from '$lib/server/d1-compat';
 import { resolveRuntimeEnv } from '$lib/server/env';
+import { isValidStreamUid } from '$lib/server/video-availability';
 
 interface GeneratedIngestRequest {
 	title: string;
@@ -57,6 +58,9 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 	}
 	if (!payload.streamUid?.trim()) {
 		return json({ success: false, error: 'streamUid is required' }, { status: 400 });
+	}
+	if (!isValidStreamUid(payload.streamUid)) {
+		return json({ success: false, error: 'streamUid must be a valid Cloudflare Stream UID' }, { status: 400 });
 	}
 
 	let seriesId = payload.seriesId?.trim() || null;

@@ -17,6 +17,8 @@ vi.mock('$lib/server/d1-compat', () => ({
 
 import { GET } from '../../../../../../routes/api/videos/[id]/related/+server';
 
+const VALID_STREAM_UID = '22222222222222222222222222222222';
+
 function createVideo(overrides: Partial<Record<string, unknown>> = {}) {
 	return {
 		id: 'vid_default',
@@ -24,7 +26,7 @@ function createVideo(overrides: Partial<Record<string, unknown>> = {}) {
 		episode_number: 1,
 		visibility: 'published',
 		ingest_status: 'ready',
-		stream_uid: 'stream_1',
+		stream_uid: VALID_STREAM_UID,
 		asset_path: '',
 		...overrides
 	};
@@ -60,7 +62,7 @@ describe('GET /api/videos/[id]/related', () => {
 				createVideo({ id: 'current', category: 'crew-call', episode_number: 2 }),
 				createVideo({ id: 'same_ready', category: 'crew-call', episode_number: 3, asset_path: '/videos/3.mp4', stream_uid: null }),
 				createVideo({ id: 'same_failed', category: 'crew-call', episode_number: 4, ingest_status: 'failed' }),
-				createVideo({ id: 'other_ready', category: 'kodiak', episode_number: 1, stream_uid: 'stream_other' }),
+				createVideo({ id: 'other_ready', category: 'kodiak', episode_number: 1, stream_uid: '33333333333333333333333333333333' }),
 				createVideo({ id: 'other_processing', category: 'kodiak', ingest_status: 'processing', stream_uid: 'stream_pending' }),
 				createVideo({ id: 'other_no_source', category: 'films', stream_uid: null, asset_path: '' })
 			]

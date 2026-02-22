@@ -10,6 +10,7 @@ import {
 	getPlaybackTokenTtlSeconds,
 	getStreamCustomerCode
 } from '$lib/server/stream';
+import { isValidStreamUid } from '$lib/server/video-availability';
 import type { VideoPlaybackGrant } from '$lib/types/video-pipeline';
 import { resolveRuntimeEnv } from '$lib/server/env';
 
@@ -65,6 +66,18 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
 		);
 	}
 
+	if (!isValidStreamUid(video.stream_uid)) {
+		return jsonNoStore(
+			{
+				success: false,
+				error: 'Video stream is unavailable',
+				ingestStatus: video.ingest_status,
+				legacyAssetPath: video.asset_path || null
+			},
+			{ status: 409 }
+		);
+	}
+
 	if (video.ingest_status !== 'ready') {
 		const message =
 			video.ingest_status === 'failed'
@@ -86,18 +99,19 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
 		const customerCode = getStreamCustomerCode(runtimeEnv);
 		const issuedAt = Math.floor(Date.now() / 1000);
 		const expiresAt = issuedAt + getPlaybackTokenTtlSeconds(runtimeEnv);
+		const streamUid = video.stream_uid.trim();
 
 		const hlsUrl =
 			video.playback_policy === 'public'
-				? buildPublicHlsUrl(customerCode, video.stream_uid)
+				? buildPublicHlsUrl(customerCode, streamUid)
 				: buildSignedHlsUrl(
 						customerCode,
-						(await createStreamPlaybackToken(runtimeEnv, video.stream_uid, expiresAt)).token
+						(await createStreamPlaybackToken(runtimeEnv, streamUid, expiresAt)).token
 					);
 
 		const grant: VideoPlaybackGrant = {
 			videoId: video.id,
-			streamUid: video.stream_uid,
+			streamUid,
 			hlsUrl,
 			expiresAt,
 			issuedAt,

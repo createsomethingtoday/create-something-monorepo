@@ -36,7 +36,7 @@
 			title="OUTERFIELDS 3D Experience"
 			class="sketchfab-embed"
 			frameborder="0"
-			allow="autoplay; fullscreen"
+			allow="fullscreen"
 			src="https://sketchfab.com/models/d6521362b37b48e3a82bce4911409303/embed?autospin=0.2&autostart=1&preload=1&ui_infos=0&ui_stop=0&ui_inspector=0&ui_watermark_link=0&ui_watermark=0&ui_hint=0&ui_ar=1&ui_help=0&ui_settings=0&ui_vr=0&ui_fullscreen=0&ui_annotations=0&ui_theme=dark&dnt=1"
 		></iframe>
 		<div class="hero-gradient"></div>
