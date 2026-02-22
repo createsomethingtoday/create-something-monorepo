@@ -44,6 +44,9 @@ import type { AITaskType, AtlasMetadata } from './atlas.js';
 export interface BraintrustConfig {
   apiKey?: string;
   projectName?: string;
+  orgName?: string;
+  projectId?: string;
+  appUrl?: string;
   enabled?: boolean;
   /** Async flush — recommended for Workers / edge where there is no long-lived process. */
   asyncFlush?: boolean;
