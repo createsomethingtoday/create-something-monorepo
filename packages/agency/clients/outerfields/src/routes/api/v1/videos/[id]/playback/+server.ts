@@ -13,6 +13,15 @@ import {
 import type { VideoPlaybackGrant } from '$lib/types/video-pipeline';
 import { resolveRuntimeEnv } from '$lib/server/env';
 
+function jsonNoStore(body: unknown, init?: ResponseInit): Response {
+	const headers = new Headers(init?.headers);
+	headers.set('Cache-Control', 'private, no-store');
+	return json(body, {
+		...init,
+		headers
+	});
+}
+
 /**
  * GET /api/v1/videos/:id/playback
  * Returns a short-lived playback grant for Stream-backed videos (with legacy fallback).
@@ -23,29 +32,29 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
 
 	const videoId = params.id;
 	if (!videoId) {
-		return json({ success: false, error: 'Video ID is required' }, { status: 400 });
+		return jsonNoStore({ success: false, error: 'Video ID is required' }, { status: 400 });
 	}
 
 	const isAdmin = isAdminUser(locals.user, runtimeEnv);
 	const video = isAdmin ? await getAdminVideoById(db, videoId) : await getVideoById(db, videoId);
 
 	if (!video) {
-		return json({ success: false, error: 'Video not found' }, { status: 404 });
+		return jsonNoStore({ success: false, error: 'Video not found' }, { status: 404 });
 	}
 
 	if (!isAdmin && video.visibility !== 'published') {
 		// Avoid leaking draft/archived metadata.
-		return json({ success: false, error: 'Video not found' }, { status: 404 });
+		return jsonNoStore({ success: false, error: 'Video not found' }, { status: 404 });
 	}
 
 	// Tier gating: members-only content requires a member session.
 	const isMember = locals.user?.membership ?? false;
 	if (!isAdmin && video.tier !== 'free' && !isMember) {
-		return json({ success: false, error: 'Membership required' }, { status: 401 });
+		return jsonNoStore({ success: false, error: 'Membership required' }, { status: 401 });
 	}
 
 	if (!video.stream_uid) {
-		return json(
+		return jsonNoStore(
 			{
 				success: false,
 				error: 'Video is not Stream-backed',
@@ -62,7 +71,7 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
 				? video.failure_reason || 'Video processing failed'
 				: 'Video is still processing';
 
-		return json(
+		return jsonNoStore(
 			{
 				success: false,
 				error: message,
@@ -95,9 +104,9 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
 			policy: video.playback_policy
 		};
 
-		return json({ success: true, data: grant });
+		return jsonNoStore({ success: true, data: grant });
 	} catch (error) {
-		return json(
+		return jsonNoStore(
 			{
 				success: false,
 				error: error instanceof Error ? error.message : 'Failed to create playback grant'

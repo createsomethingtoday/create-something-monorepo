@@ -10,9 +10,11 @@ function parseTier(value: unknown): 'free' | 'preview' | 'gated' | undefined {
 }
 
 function normalizeAssetPath(path: string | undefined): string | undefined {
-	if (!path) return path;
-	if (path.startsWith('http://') || path.startsWith('https://')) return path;
-	return path.startsWith('/') ? path : `/${path}`;
+	if (!path) return undefined;
+	const trimmed = path.trim();
+	if (!trimmed) return undefined;
+	if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+	return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
 }
 
 export const PATCH: RequestHandler = async ({ params, request, platform, locals }) => {
@@ -29,6 +31,31 @@ export const PATCH: RequestHandler = async ({ params, request, platform, locals 
 
 	try {
 		const body = await request.json();
+		const hasAssetPathInput =
+			Object.prototype.hasOwnProperty.call(body, 'assetPath') ||
+			Object.prototype.hasOwnProperty.call(body, 'asset_path');
+		const hasThumbnailPathInput =
+			Object.prototype.hasOwnProperty.call(body, 'thumbnailPath') ||
+			Object.prototype.hasOwnProperty.call(body, 'thumbnail_path');
+
+		const rawAssetPath = hasAssetPathInput ? String(body.assetPath ?? body.asset_path ?? '').trim() : undefined;
+		if (hasAssetPathInput && !rawAssetPath) {
+			return json({ success: false, error: 'assetPath cannot be empty' }, { status: 400 });
+		}
+
+		const normalizedAssetPath = normalizeAssetPath(rawAssetPath);
+		if (hasAssetPathInput && !normalizedAssetPath) {
+			return json({ success: false, error: 'assetPath must be a valid URL/path' }, { status: 400 });
+		}
+
+		const rawThumbnailPath = hasThumbnailPathInput
+			? String(body.thumbnailPath ?? body.thumbnail_path ?? '').trim()
+			: undefined;
+		const normalizedThumbnailPath = normalizeAssetPath(rawThumbnailPath);
+		if (hasThumbnailPathInput && !normalizedThumbnailPath) {
+			return json({ success: false, error: 'thumbnailPath must be a valid URL/path' }, { status: 400 });
+		}
+
 		const updated = await updateVideo(db, id, {
 			title: body.title ? String(body.title).trim() : undefined,
 			category: body.category ? String(body.category).trim() : undefined,
@@ -43,12 +70,8 @@ export const PATCH: RequestHandler = async ({ params, request, platform, locals 
 				body.duration === undefined || body.duration === null || body.duration === ''
 					? undefined
 					: Math.max(1, Math.floor(Number(body.duration))),
-			asset_path: normalizeAssetPath(
-				body.assetPath ? String(body.assetPath).trim() : undefined
-			),
-			thumbnail_path: normalizeAssetPath(
-				body.thumbnailPath ? String(body.thumbnailPath).trim() : undefined
-			),
+			asset_path: normalizedAssetPath,
+			thumbnail_path: normalizedThumbnailPath,
 			description:
 				body.description === undefined
 					? undefined

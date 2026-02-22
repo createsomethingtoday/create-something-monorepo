@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { markVideoUploadCompleted } from '$lib/server/db/videos';
+import { getAdminVideoById, markVideoUploadCompleted } from '$lib/server/db/videos';
 import { isAdminUser } from '$lib/server/admin';
 import { getDBFromPlatform } from '$lib/server/d1-compat';
 import { resolveRuntimeEnv } from '$lib/server/env';
@@ -32,13 +32,45 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		return json({ success: false, error: 'Invalid JSON body' }, { status: 400 });
 	}
 
-	if (!payload.videoId) {
+	const videoId = payload.videoId?.trim();
+	if (!videoId) {
 		return json({ success: false, error: 'videoId is required' }, { status: 400 });
 	}
 
-	const video = await markVideoUploadCompleted(db, payload.videoId);
-	if (!video) {
+	const existing = await getAdminVideoById(db, videoId);
+	if (!existing) {
 		return json({ success: false, error: 'Video not found' }, { status: 404 });
+	}
+
+	if (!existing.stream_uid?.trim()) {
+		return json(
+			{
+				success: false,
+				error: 'Video upload is missing stream_uid and cannot be completed',
+				ingestStatus: existing.ingest_status
+			},
+			{ status: 409 }
+		);
+	}
+
+	if (existing.ingest_status === 'failed') {
+		return json(
+			{
+				success: false,
+				error: existing.failure_reason || 'Video upload has failed and cannot be completed',
+				ingestStatus: existing.ingest_status
+			},
+			{ status: 409 }
+		);
+	}
+
+	let video = existing;
+	if (existing.ingest_status === 'pending_upload') {
+		const updated = await markVideoUploadCompleted(db, videoId);
+		if (!updated) {
+			return json({ success: false, error: 'Video not found' }, { status: 404 });
+		}
+		video = updated;
 	}
 
 	return json({

@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getDBFromPlatform } from '$lib/server/d1-compat';
 import { getVideoById, getVideos } from '$lib/server/db/videos';
+import { filterPubliclyPlayable, isPubliclyPlayable } from '$lib/server/video-availability';
 
 /**
  * GET /api/videos/[id]/related
@@ -28,12 +29,13 @@ export const GET: RequestHandler = async ({ params, url, platform }) => {
 		// Get the current video to find its category
 		const currentVideo = await getVideoById(db, id);
 
-		if (!currentVideo) {
+		if (!currentVideo || !isPubliclyPlayable(currentVideo)) {
 			return json({ success: false, error: 'Video not found' }, { status: 404 });
 		}
 
 		// Fetch all videos
-		const { videos: allVideos } = await getVideos(db);
+		const { videos: allVideosRaw } = await getVideos(db);
+		const allVideos = filterPubliclyPlayable(allVideosRaw);
 
 		// Same category videos (excluding current)
 		const sameCategory = includeSameCategory

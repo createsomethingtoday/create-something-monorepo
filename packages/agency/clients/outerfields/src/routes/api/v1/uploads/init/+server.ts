@@ -48,6 +48,10 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 
 		const title = payload.title?.trim();
 		const seriesIdentifier = payload.seriesId?.trim();
+		const maxDurationSeconds =
+			payload.maxDurationSeconds === undefined || payload.maxDurationSeconds === null
+				? undefined
+				: Math.floor(payload.maxDurationSeconds);
 
 		if (!title) {
 			return json({ success: false, error: 'Title is required' }, { status: 400 });
@@ -74,6 +78,13 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		if (payload.playbackPolicy && !isSupportedPlaybackPolicy(payload.playbackPolicy)) {
 			return json({ success: false, error: 'Invalid playbackPolicy value' }, { status: 400 });
 		}
+		if (
+			payload.maxDurationSeconds !== undefined &&
+			payload.maxDurationSeconds !== null &&
+			(!Number.isFinite(payload.maxDurationSeconds) || payload.maxDurationSeconds <= 0 || !Number.isFinite(maxDurationSeconds) || maxDurationSeconds <= 0)
+		) {
+			return json({ success: false, error: 'maxDurationSeconds must be a positive number' }, { status: 400 });
+		}
 
 		const series = await getSeriesByIdentifier(db, seriesIdentifier);
 		if (!series) {
@@ -93,7 +104,7 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 			playbackPolicy: payload.playbackPolicy ?? 'private',
 			ingestSource: 'upload',
 			sourceBytes: payload.fileSizeBytes,
-			durationSeconds: payload.maxDurationSeconds ?? null
+			durationSeconds: maxDurationSeconds ?? null
 		});
 
 		try {
@@ -101,7 +112,7 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 				uploadLength: payload.fileSizeBytes,
 				fileName: payload.fileName?.trim() || `${title}.mp4`,
 				creatorId: locals.user.id,
-				maxDurationSeconds: payload.maxDurationSeconds,
+				maxDurationSeconds,
 				playbackPolicy: payload.playbackPolicy ?? 'private',
 				meta: {
 					videoId: reservation.id,

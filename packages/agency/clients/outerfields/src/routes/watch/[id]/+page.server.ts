@@ -5,6 +5,7 @@ import { getDBFromPlatform } from '$lib/server/d1-compat';
 import { getSeriesByIdentifier } from '$lib/server/db/series';
 import { isAdminUser } from '$lib/server/admin';
 import { resolveRuntimeEnv } from '$lib/server/env';
+import { filterPubliclyPlayable, isPubliclyPlayable } from '$lib/server/video-availability';
 
 /**
  * Watch Page Server Load
@@ -39,16 +40,17 @@ export const load: PageServerLoad = async ({ params, locals, platform }) => {
 
 	// Fetch related videos (same category, excluding current)
 	const { videos: allVideos } = await getVideos(db);
+	const publiclyPlayable = filterPubliclyPlayable(allVideos);
 	
 	// Get videos from same category (excluding current)
-	const sameCategory = allVideos
+	const sameCategory = publiclyPlayable
 		.filter(v => v.category === video.category && v.id !== video.id)
 		.sort((a, b) => (a.episode_number ?? 999) - (b.episode_number ?? 999))
 		.slice(0, 8);
 
 	// Get videos from other categories as fallback
-	const otherCategories = allVideos
-		.filter(v => v.category !== video.category)
+	const otherCategories = publiclyPlayable
+		.filter(v => v.category !== video.category && v.id !== video.id)
 		.slice(0, 6);
 
 	// Determine next/previous episodes
@@ -57,11 +59,13 @@ export const load: PageServerLoad = async ({ params, locals, platform }) => {
 		.sort((a, b) => (a.episode_number ?? 999) - (b.episode_number ?? 999));
 	
 	const currentIndex = categoryVideos.findIndex(v => v.id === video.id);
-	const nextVideo = currentIndex >= 0 && currentIndex < categoryVideos.length - 1
-		? categoryVideos[currentIndex + 1]
+	const nextVideo = currentIndex >= 0
+		? categoryVideos.slice(currentIndex + 1).find((candidate) => isPubliclyPlayable(candidate)) || null
 		: null;
 	const prevVideo = currentIndex > 0
-		? categoryVideos[currentIndex - 1]
+		? [...categoryVideos.slice(0, currentIndex)]
+				.reverse()
+				.find((candidate) => isPubliclyPlayable(candidate)) || null
 		: null;
 
 	// Check user membership for gating

@@ -30,10 +30,26 @@ function getExtension(fileName: string, fallback: string): string {
 	return fallback;
 }
 
-function normalizeAssetPath(path: string): string {
-	if (!path) return path;
-	if (path.startsWith('http://') || path.startsWith('https://')) return path;
-	return path.startsWith('/') ? path : `/${path}`;
+function normalizeAssetPath(path: string): string | null {
+	const trimmed = path.trim();
+	if (!trimmed) return null;
+
+	if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+		try {
+			const parsed = new URL(trimmed);
+			if (!parsed.protocol.startsWith('http')) return null;
+			return trimmed;
+		} catch {
+			return null;
+		}
+	}
+
+	return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+}
+
+function hasMimePrefix(file: File, expectedPrefix: 'video/' | 'image/'): boolean {
+	const contentType = file.type?.toLowerCase() || '';
+	return contentType.startsWith(expectedPrefix);
 }
 
 async function uploadToR2(
@@ -143,6 +159,12 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 
 			let assetPath = assetPathRaw;
 			if (videoFile instanceof File && videoFile.size > 0) {
+				if (!hasMimePrefix(videoFile, 'video/')) {
+					return json(
+						{ success: false, error: 'Uploaded video file must have a video/* MIME type' },
+						{ status: 400 }
+					);
+				}
 				if (!bucket) {
 					return json(
 						{ success: false, error: 'Upload bucket is not configured' },
@@ -152,15 +174,22 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 				assetPath = await uploadToR2(bucket, videoFile, 'videos', title);
 			}
 
-			if (!assetPath) {
+			const normalizedAssetPath = normalizeAssetPath(assetPath);
+			if (!normalizedAssetPath) {
 				return json(
-					{ success: false, error: 'Provide a video file or assetPath URL/path' },
+					{ success: false, error: 'Provide a valid video file or assetPath URL/path' },
 					{ status: 400 }
 				);
 			}
 
 			let thumbnailPath = thumbnailPathRaw || DEFAULT_THUMBNAIL;
 			if (thumbnailFile instanceof File && thumbnailFile.size > 0) {
+				if (!hasMimePrefix(thumbnailFile, 'image/')) {
+					return json(
+						{ success: false, error: 'Uploaded thumbnail file must have an image/* MIME type' },
+						{ status: 400 }
+					);
+				}
 				if (!bucket) {
 					return json(
 						{ success: false, error: 'Upload bucket is not configured' },
@@ -170,6 +199,10 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 				const uploadedThumbPath = await uploadToR2(bucket, thumbnailFile, 'thumbnails', title);
 				thumbnailPath = `${R2_PUBLIC_BASE}${uploadedThumbPath}`;
 			}
+			const normalizedThumbnailPath = normalizeAssetPath(thumbnailPath);
+			if (!normalizedThumbnailPath) {
+				return json({ success: false, error: 'Invalid thumbnailPath URL/path' }, { status: 400 });
+			}
 
 			input = {
 				title,
@@ -178,8 +211,8 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 				duration,
 				episode_number: episodeNumber,
 				description,
-				asset_path: normalizeAssetPath(assetPath),
-				thumbnail_path: normalizeAssetPath(thumbnailPath)
+				asset_path: normalizedAssetPath,
+				thumbnail_path: normalizedThumbnailPath
 			};
 		} else {
 			const body = await request.json();
@@ -198,6 +231,15 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 			if (!assetPath) {
 				return json({ success: false, error: 'assetPath is required' }, { status: 400 });
 			}
+			const normalizedAssetPath = normalizeAssetPath(assetPath);
+			if (!normalizedAssetPath) {
+				return json({ success: false, error: 'assetPath must be a valid URL/path' }, { status: 400 });
+			}
+			const thumbnailPath = String(body.thumbnailPath || body.thumbnail_path || DEFAULT_THUMBNAIL).trim();
+			const normalizedThumbnailPath = normalizeAssetPath(thumbnailPath);
+			if (!normalizedThumbnailPath) {
+				return json({ success: false, error: 'thumbnailPath must be a valid URL/path' }, { status: 400 });
+			}
 
 			input = {
 				title,
@@ -208,10 +250,8 @@ export const POST: RequestHandler = async ({ request, platform, locals }) => {
 					? Number(body.episodeNumber)
 					: null,
 				description: String(body.description || '').trim() || null,
-				asset_path: normalizeAssetPath(assetPath),
-				thumbnail_path: normalizeAssetPath(
-					String(body.thumbnailPath || body.thumbnail_path || DEFAULT_THUMBNAIL).trim()
-				)
+				asset_path: normalizedAssetPath,
+				thumbnail_path: normalizedThumbnailPath
 			};
 		}
 

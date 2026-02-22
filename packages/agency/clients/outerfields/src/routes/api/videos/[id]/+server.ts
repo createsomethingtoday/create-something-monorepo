@@ -2,6 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getDBFromPlatform } from '$lib/server/d1-compat';
 import { getVideoById } from '$lib/server/db/videos';
+import { isPubliclyPlayable } from '$lib/server/video-availability';
 
 /**
  * GET /api/videos/[id]
@@ -19,7 +20,7 @@ export const GET: RequestHandler = async ({ params, platform }) => {
 	try {
 		const video = await getVideoById(db, id);
 
-		if (!video) {
+		if (!video || !isPubliclyPlayable(video)) {
 			throw error(404, 'Video not found');
 		}
 

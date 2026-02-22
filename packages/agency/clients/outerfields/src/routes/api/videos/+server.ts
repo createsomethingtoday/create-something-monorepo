@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getDBFromPlatform } from '$lib/server/d1-compat';
 import { getVideos, getVideosByCategory } from '$lib/server/db/videos';
+import { filterPubliclyPlayable } from '$lib/server/video-availability';
 
 /**
  * GET /api/videos
@@ -19,11 +20,23 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 	try {
 		if (grouped) {
 			const videosByCategory = await getVideosByCategory(db);
-			return json({ success: true, data: videosByCategory });
+			const filteredByCategory = Object.fromEntries(
+				Object.entries(videosByCategory)
+					.map(([categoryName, videos]) => [categoryName, filterPubliclyPlayable(videos)])
+					.filter(([, videos]) => videos.length > 0)
+			);
+			return json({ success: true, data: filteredByCategory });
 		}
 
 		const result = await getVideos(db, category);
-		return json({ success: true, data: result });
+		const videos = filterPubliclyPlayable(result.videos);
+		return json({
+			success: true,
+			data: {
+				videos,
+				total: videos.length
+			}
+		});
 	} catch (error) {
 		console.error('Error fetching videos:', error);
 		return json({ error: 'Failed to fetch videos' }, { status: 500 });

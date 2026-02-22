@@ -3,6 +3,7 @@ import { redirect } from '@sveltejs/kit';
 import { getVideos, type Video } from '$lib/server/db/videos';
 import { isAdminUser } from '$lib/server/auth';
 import { getDBFromPlatform } from '$lib/server/d1-compat';
+import { filterPubliclyPlayable } from '$lib/server/video-availability';
 
 interface RowVideo {
 	id: string;
@@ -61,7 +62,8 @@ export const load: PageServerLoad = async ({ locals, platform }) => {
 
 	const db = getDBFromPlatform(platform);
 
-	const { videos } = await getVideos(db);
+	const { videos: allVideos } = await getVideos(db);
+	const videos = filterPubliclyPlayable(allVideos);
 
 	const sortedByLatest = [...videos].sort((a, b) => b.created_at - a.created_at);
 	const featuredVideo = sortedByLatest[0] || null;

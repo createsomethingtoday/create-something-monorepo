@@ -24,6 +24,10 @@ function normalizePlaybackPolicy(value: unknown): VideoPlaybackPolicy | null {
 	return null;
 }
 
+function hasText(value: string | null | undefined): boolean {
+	return typeof value === 'string' && value.trim().length > 0;
+}
+
 /**
  * GET /api/v1/admin/videos/:id
  */
@@ -73,18 +77,6 @@ export const PATCH: RequestHandler = async ({ locals, params, request, platform 
 	const visibility = payload.visibility !== undefined ? normalizeVisibility(payload.visibility) : null;
 	if (payload.visibility !== undefined && !visibility) {
 		return json({ success: false, error: 'Invalid visibility value' }, { status: 400 });
-	}
-
-	// Guardrail: do not allow publishing Stream-backed videos until Stream is ready.
-	if (visibility === 'published' && existing.stream_uid && existing.ingest_status !== 'ready') {
-		return json(
-			{
-				success: false,
-				error: 'Cannot publish a Stream-backed video until processing is complete',
-				ingestStatus: existing.ingest_status
-			},
-			{ status: 400 }
-		);
 	}
 
 	const tier = payload.tier !== undefined ? normalizeTier(payload.tier) : null;
@@ -139,6 +131,31 @@ export const PATCH: RequestHandler = async ({ locals, params, request, platform 
 	const seriesId = typeof payload.series_id === 'string' ? payload.series_id.trim() : undefined;
 	const thumbnailPath = typeof payload.thumbnail_path === 'string' ? payload.thumbnail_path.trim() : undefined;
 	const assetPath = typeof payload.asset_path === 'string' ? payload.asset_path.trim() : undefined;
+
+	if (visibility === 'published') {
+		if (existing.ingest_status !== 'ready') {
+			return json(
+				{
+					success: false,
+					error: 'Cannot publish a video until ingest is ready',
+					ingestStatus: existing.ingest_status
+				},
+				{ status: 400 }
+			);
+		}
+
+		const nextAssetPath = assetPath !== undefined ? assetPath : existing.asset_path;
+		const hasSource = hasText(existing.stream_uid) || hasText(nextAssetPath);
+		if (!hasSource) {
+			return json(
+				{
+					success: false,
+					error: 'Cannot publish a video without a playable source (stream_uid or asset_path)'
+				},
+				{ status: 400 }
+			);
+		}
+	}
 
 	let nextCategory: string | undefined;
 	if (seriesId !== undefined && seriesId.length > 0) {
