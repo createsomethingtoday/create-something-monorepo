@@ -26,10 +26,12 @@ export function isAdminUser(
 	if (!user?.email) return false;
 
 	const normalizedEmail = user.email.toLowerCase();
+	// Demo environment should always recognize the seeded demo admin account.
+	if (isAdminEmail(normalizedEmail)) return true;
+
 	const configured = env?.VIDEO_ADMIN_EMAILS || env?.VIDEO_SERIES_ADMIN_EMAILS;
 	if (!configured) {
-		// Back-compat for demo deployments that rely on the seeded admin account.
-		return isAdminEmail(normalizedEmail);
+		return false;
 	}
 
 	return normalizeEmailList(configured).includes(normalizedEmail);

@@ -20,15 +20,15 @@ describe('isAdminUser (env allowlist + demo fallback)', () => {
 		expect(result).toBe(true);
 	});
 
-	it('does not allow demo email when explicit allowlist excludes it', () => {
+	it('always allows demo admin email even when explicit allowlist excludes it', () => {
 		const result = isAdminUser(createUser('admin@outerfields.com'), {
 			VIDEO_ADMIN_EMAILS: 'ops@example.com'
 		});
 
-		expect(result).toBe(false);
+		expect(result).toBe(true);
 	});
 
-	it('falls back to demo admin email when allowlist is not configured', () => {
+	it('allows demo admin email when allowlist is not configured', () => {
 		const result = isAdminUser(createUser('admin@outerfields.com'), {});
 
 		expect(result).toBe(true);
