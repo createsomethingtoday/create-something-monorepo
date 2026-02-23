@@ -4,6 +4,7 @@ import {
   MCPServerStreamableHttp,
   Runner,
   connectMcpServers,
+  setDefaultOpenAIKey,
 } from '@openai/agents';
 
 type ServerKey = 'telemetry' | 'gmail' | 'notion';
@@ -407,8 +408,8 @@ export async function runHalfDozenScenario(input: HalfDozenScenarioRunInput): Pr
   const query = input.query ?? scenarioPreset.defaults.query;
   const timeoutMs = input.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
-  // @openai/agents reads OPENAI_API_KEY; set it explicitly in Worker runtime.
-  process.env.OPENAI_API_KEY = input.openaiApiKey;
+  // Set API key for the OpenAI Agents SDK without relying on Node `process.env`.
+  setDefaultOpenAIKey(input.openaiApiKey);
 
   const rawServers = createMcpServers(
     scenarioPreset.defaults.servers,
