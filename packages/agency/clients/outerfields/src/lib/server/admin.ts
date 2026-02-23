@@ -1,3 +1,5 @@
+import { isAdminEmail } from '$lib/server/auth';
+
 export interface AdminEnv extends Record<string, string | undefined> {
 	VIDEO_ADMIN_EMAILS?: string;
 	VIDEO_SERIES_ADMIN_EMAILS?: string;
@@ -23,8 +25,12 @@ export function isAdminUser(
 ): boolean {
 	if (!user?.email) return false;
 
+	const normalizedEmail = user.email.toLowerCase();
 	const configured = env?.VIDEO_ADMIN_EMAILS || env?.VIDEO_SERIES_ADMIN_EMAILS;
-	if (!configured) return false;
+	if (!configured) {
+		// Back-compat for demo deployments that rely on the seeded admin account.
+		return isAdminEmail(normalizedEmail);
+	}
 
-	return normalizeEmailList(configured).includes(user.email.toLowerCase());
+	return normalizeEmailList(configured).includes(normalizedEmail);
 }
