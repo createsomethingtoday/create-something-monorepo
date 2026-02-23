@@ -74,12 +74,12 @@ describe('demo load', () => {
 			categories: Array<{ items: Array<{ id: string }> }>;
 		};
 
-		expect(typedResult.totalVideos).toBe(2);
+		expect(typedResult.totalVideos).toBe(1);
 		expect(typedResult.featured?.id).toBe('ready_newest');
 
 		const returnedIds = typedResult.categories.flatMap((category) =>
 			category.items.map((item) => item.id)
 		);
-		expect(returnedIds.sort()).toEqual(['ready_newest', 'ready_oldest']);
+		expect(returnedIds.sort()).toEqual(['ready_newest']);
 	});
 });

@@ -25,7 +25,7 @@ function jsonNoStore(body: unknown, init?: ResponseInit): Response {
 
 /**
  * GET /api/v1/videos/:id/playback
- * Returns a short-lived playback grant for Stream-backed videos (with legacy fallback).
+ * Returns a short-lived playback grant for Stream-backed videos.
  */
 export const GET: RequestHandler = async ({ params, locals, platform }) => {
 	const runtimeEnv = resolveRuntimeEnv(((platform as { env?: Record<string, string | undefined> } | undefined)?.env));
@@ -58,9 +58,8 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
 		return jsonNoStore(
 			{
 				success: false,
-				error: 'Video is not Stream-backed',
-				ingestStatus: video.ingest_status,
-				legacyAssetPath: video.asset_path || null
+				error: 'Video stream is unavailable',
+				ingestStatus: video.ingest_status
 			},
 			{ status: 404 }
 		);
@@ -71,8 +70,7 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
 			{
 				success: false,
 				error: 'Video stream is unavailable',
-				ingestStatus: video.ingest_status,
-				legacyAssetPath: video.asset_path || null
+				ingestStatus: video.ingest_status
 			},
 			{ status: 409 }
 		);

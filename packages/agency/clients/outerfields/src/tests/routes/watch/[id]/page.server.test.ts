@@ -80,11 +80,11 @@ describe('watch/[id] load', () => {
 		getVideoByIdMock.mockResolvedValue(current);
 		getVideosMock.mockResolvedValue({
 			videos: [
-				createVideo({ id: 'prev_ready', episode_number: 1, stream_uid: null, asset_path: '/videos/1.mp4' }),
+				createVideo({ id: 'prev_ready', episode_number: 1, stream_uid: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', asset_path: '' }),
 				current,
 				createVideo({ id: 'next_failed', episode_number: 3, ingest_status: 'failed', stream_uid: 'stream_failed' }),
 				createVideo({ id: 'next_ready', episode_number: 4, stream_uid: '77777777777777777777777777777777' }),
-				createVideo({ id: 'other_ready', category: 'kodiak', episode_number: 1, stream_uid: null, asset_path: '/videos/k1.mp4' }),
+				createVideo({ id: 'other_ready', category: 'kodiak', episode_number: 1, stream_uid: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', asset_path: '' }),
 				createVideo({ id: 'other_pending', category: 'kodiak', ingest_status: 'pending_upload', stream_uid: 'stream_pending' })
 			]
 		});

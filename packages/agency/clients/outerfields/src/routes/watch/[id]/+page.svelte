@@ -18,8 +18,6 @@
 	import { ChevronLeft, ChevronRight, Lock } from 'lucide-svelte';
 	import type { PageData } from './$types';
 	import { onMount } from 'svelte';
-
-	import { VIDEO_CDN_BASE } from '$lib/constants/video';
 	import { fetchVideoPlayback } from '$lib/client/video-playback';
 
 	// In dev, when the CDN file is missing, use a public sample so the player still works
@@ -50,17 +48,6 @@
 		| { status: 'error'; message: string }
 		| { status: 'auth_required'; message: string }
 	>({ status: 'idle' });
-
-	// Get video source URL
-	function getVideoSrc(assetPath: string): string {
-		if (assetPath.startsWith('http')) return assetPath;
-		const normalizedPath = assetPath.startsWith('/') ? assetPath : `/${assetPath}`;
-
-		// Serve legacy video paths from same-origin so private R2 assets can be proxied by the app.
-		if (normalizedPath.startsWith('/videos/')) return normalizedPath;
-
-		return `${VIDEO_CDN_BASE}${normalizedPath}`;
-	}
 
 	// Get thumbnail URL
 	function getThumbnailSrc(thumbnailPath: string): string {
@@ -102,7 +89,7 @@
 	]);
 
 	// Handle time updates from player
-	function handleTimeUpdate(time: number, duration: number) {
+	function handleTimeUpdate(time: number) {
 		currentTime = time;
 	}
 
@@ -125,37 +112,6 @@
 			playbackSrc = playback.grant.hlsUrl;
 			playbackState = { status: 'ready', src: playback.grant.hlsUrl };
 			return;
-		}
-
-		if (playback.status === 'legacy') {
-			const legacyPath = playback.legacyAssetPath || video.asset_path;
-			if (legacyPath) {
-				const src = getVideoSrc(legacyPath);
-
-				// Probe same-origin legacy assets first so missing files render an explicit unavailable state.
-				if (src.startsWith('/')) {
-					try {
-						const probe = await fetch(src, { method: 'HEAD' });
-						if (!probe.ok) {
-							playbackState = {
-								status: 'unavailable',
-								message: 'Legacy video file is unavailable'
-							};
-							return;
-						}
-					} catch {
-						playbackState = {
-							status: 'unavailable',
-							message: 'Legacy video file is unavailable'
-						};
-						return;
-					}
-				}
-
-				playbackSrc = src;
-				playbackState = { status: 'ready', src };
-				return;
-			}
 		}
 
 		if (playback.status === 'processing') {
@@ -213,10 +169,6 @@
 			}
 		}
 		};
-
-		if (video.asset_path) {
-			schema.contentUrl = getVideoSrc(video.asset_path);
-		}
 
 		return schema;
 	})() : null);

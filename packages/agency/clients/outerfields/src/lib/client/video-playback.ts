@@ -5,7 +5,6 @@ export type PlaybackResolutionStatus =
 	| 'processing'
 	| 'failed'
 	| 'auth_required'
-	| 'legacy'
 	| 'unavailable'
 	| 'error';
 
@@ -13,14 +12,12 @@ export interface PlaybackResolution {
 	status: PlaybackResolutionStatus;
 	grant?: VideoPlaybackGrant;
 	ingestStatus?: VideoIngestStatus;
-	legacyAssetPath?: string;
 	message?: string;
 }
 
 interface PlaybackErrorResponse {
 	error?: string;
 	ingestStatus?: VideoIngestStatus;
-	legacyAssetPath?: string | null;
 	failureReason?: string | null;
 }
 
@@ -46,14 +43,6 @@ export async function fetchVideoPlayback(videoId: string): Promise<PlaybackResol
 		};
 	}
 
-	if (response.status === 404 && errorPayload.legacyAssetPath) {
-		return {
-			status: 'legacy',
-			legacyAssetPath: errorPayload.legacyAssetPath,
-			message: errorPayload.error || 'Using legacy video source'
-		};
-	}
-
 	if (response.status === 409) {
 		return {
 			status: errorPayload.ingestStatus === 'failed' ? 'failed' : 'processing',
@@ -74,4 +63,3 @@ export async function fetchVideoPlayback(videoId: string): Promise<PlaybackResol
 		message: fallback
 	};
 }
-

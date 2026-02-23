@@ -141,16 +141,14 @@ export const PATCH: RequestHandler = async ({ locals, params, request, platform 
 			);
 		}
 
-		const nextAssetPath = assetPath !== undefined ? assetPath : existing.asset_path;
 		const hasSource = hasPlayableVideoSource({
-			stream_uid: existing.stream_uid,
-			asset_path: nextAssetPath
+			stream_uid: existing.stream_uid
 		});
 		if (!hasSource) {
 			return json(
 				{
 					success: false,
-					error: 'Cannot publish a video without a playable source (stream_uid or asset_path)'
+					error: 'Cannot publish a video without a valid stream_uid'
 				},
 				{ status: 400 }
 			);

@@ -40,7 +40,7 @@ describe('GET /api/videos', () => {
 		getVideosMock.mockResolvedValue({
 			videos: [
 				createVideo({ id: 'playable_stream', stream_uid: VALID_STREAM_UID }),
-				createVideo({ id: 'playable_asset', stream_uid: null, asset_path: '/videos/asset.mp4' }),
+				createVideo({ id: 'asset_only_hidden', stream_uid: null, asset_path: '/videos/asset.mp4' }),
 				createVideo({ id: 'processing', ingest_status: 'processing' }),
 				createVideo({ id: 'failed', ingest_status: 'failed' }),
 				createVideo({ id: 'missing_source', stream_uid: null, asset_path: '' })
@@ -59,14 +59,14 @@ describe('GET /api/videos', () => {
 			data: { total: number; videos: Array<{ id: string }> };
 		};
 		expect(body.success).toBe(true);
-		expect(body.data.total).toBe(2);
-		expect(body.data.videos.map((video) => video.id)).toEqual(['playable_stream', 'playable_asset']);
+		expect(body.data.total).toBe(1);
+		expect(body.data.videos.map((video) => video.id)).toEqual(['playable_stream']);
 	});
 
 	it('filters grouped responses and removes empty categories', async () => {
 		getVideosByCategoryMock.mockResolvedValue({
 			films: [
-				createVideo({ id: 'films_ready', stream_uid: null, asset_path: '/videos/films-ready.mp4' }),
+				createVideo({ id: 'films_ready', stream_uid: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', asset_path: '' }),
 				createVideo({ id: 'films_pending', ingest_status: 'pending_upload', stream_uid: 'stream_pending' })
 			],
 			drafts: [

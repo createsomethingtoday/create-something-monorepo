@@ -60,7 +60,7 @@ describe('GET /api/videos/[id]/related', () => {
 		getVideosMock.mockResolvedValue({
 			videos: [
 				createVideo({ id: 'current', category: 'crew-call', episode_number: 2 }),
-				createVideo({ id: 'same_ready', category: 'crew-call', episode_number: 3, asset_path: '/videos/3.mp4', stream_uid: null }),
+				createVideo({ id: 'same_ready', category: 'crew-call', episode_number: 3, stream_uid: '99999999999999999999999999999999', asset_path: '' }),
 				createVideo({ id: 'same_failed', category: 'crew-call', episode_number: 4, ingest_status: 'failed' }),
 				createVideo({ id: 'other_ready', category: 'kodiak', episode_number: 1, stream_uid: '33333333333333333333333333333333' }),
 				createVideo({ id: 'other_processing', category: 'kodiak', ingest_status: 'processing', stream_uid: 'stream_pending' }),
