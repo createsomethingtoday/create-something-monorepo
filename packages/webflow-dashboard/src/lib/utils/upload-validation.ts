@@ -64,6 +64,94 @@ export function validateWebPMagicBytes(buffer: ArrayBuffer): boolean {
 }
 
 /**
+ * Extract WebP image dimensions directly from file bytes.
+ *
+ * Supports VP8, VP8L, and VP8X containers.
+ * Returns null when dimensions cannot be determined.
+ */
+export function getWebPDimensions(buffer: ArrayBuffer): { width: number; height: number } | null {
+	if (!validateWebPMagicBytes(buffer)) {
+		return null;
+	}
+
+	const bytes = new Uint8Array(buffer);
+	let offset = 12; // RIFF(4) + size(4) + WEBP(4)
+
+	while (offset + 8 <= bytes.length) {
+		const chunkType = String.fromCharCode(
+			bytes[offset],
+			bytes[offset + 1],
+			bytes[offset + 2],
+			bytes[offset + 3]
+		);
+		const chunkSize =
+			bytes[offset + 4] |
+			(bytes[offset + 5] << 8) |
+			(bytes[offset + 6] << 16) |
+			(bytes[offset + 7] << 24);
+		const dataOffset = offset + 8;
+
+		if (dataOffset + chunkSize > bytes.length) {
+			return null;
+		}
+
+		if (chunkType === 'VP8X') {
+			if (chunkSize < 10) return null;
+			const widthMinusOne =
+				bytes[dataOffset + 4] |
+				(bytes[dataOffset + 5] << 8) |
+				(bytes[dataOffset + 6] << 16);
+			const heightMinusOne =
+				bytes[dataOffset + 7] |
+				(bytes[dataOffset + 8] << 8) |
+				(bytes[dataOffset + 9] << 16);
+
+			return { width: widthMinusOne + 1, height: heightMinusOne + 1 };
+		}
+
+		if (chunkType === 'VP8 ') {
+			// VP8 frame header: bytes 3..5 should be 0x9d 0x01 0x2a
+			if (chunkSize < 10) return null;
+			if (
+				bytes[dataOffset + 3] !== 0x9d ||
+				bytes[dataOffset + 4] !== 0x01 ||
+				bytes[dataOffset + 5] !== 0x2a
+			) {
+				return null;
+			}
+
+			const rawWidth = bytes[dataOffset + 6] | (bytes[dataOffset + 7] << 8);
+			const rawHeight = bytes[dataOffset + 8] | (bytes[dataOffset + 9] << 8);
+
+			return {
+				width: rawWidth & 0x3fff,
+				height: rawHeight & 0x3fff
+			};
+		}
+
+		if (chunkType === 'VP8L') {
+			if (chunkSize < 5) return null;
+			if (bytes[dataOffset] !== 0x2f) return null;
+
+			const b1 = bytes[dataOffset + 1];
+			const b2 = bytes[dataOffset + 2];
+			const b3 = bytes[dataOffset + 3];
+			const b4 = bytes[dataOffset + 4];
+
+			const width = 1 + (b1 | ((b2 & 0x3f) << 8));
+			const height = 1 + ((b2 >> 6) | (b3 << 2) | ((b4 & 0x0f) << 10));
+
+			return { width, height };
+		}
+
+		// Chunks are padded to even sizes.
+		offset = dataOffset + chunkSize + (chunkSize % 2);
+	}
+
+	return null;
+}
+
+/**
  * Thumbnail aspect ratio constants.
  * Standard Webflow marketplace thumbnail: 150:199 (width:height)
  */

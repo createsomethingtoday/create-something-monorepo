@@ -9,13 +9,18 @@ import { getSession } from '$lib/server/kv';
  */
 export const GET: RequestHandler = async ({ platform, cookies }) => {
 	const sessionToken = cookies.get('session_token');
+	const sessions = platform?.env?.SESSIONS;
 
 	if (!sessionToken) {
 		return json({ authenticated: false }, { status: 401 });
 	}
 
+	if (!sessions) {
+		return json({ authenticated: false, error: 'Authentication service unavailable' }, { status: 503 });
+	}
+
 	try {
-		const sessionData = await getSession(platform!.env.SESSIONS, sessionToken);
+		const sessionData = await getSession(sessions, sessionToken);
 
 		if (!sessionData) {
 			// Clear invalid cookie

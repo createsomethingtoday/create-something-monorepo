@@ -85,16 +85,11 @@ export const PATCH: RequestHandler = async ({ params, request, locals, platform 
 
 // PUT - Update asset with images
 export const PUT: RequestHandler = async ({ params, request, locals, platform }) => {
-	console.log('[Asset PUT] Request received for asset:', params.id);
-	
 	if (!locals.user?.email) {
-		console.log('[Asset PUT] Unauthorized - no user email');
 		throw error(401, 'Unauthorized');
 	}
-	console.log('[Asset PUT] User:', locals.user.email);
 
 	if (!platform?.env) {
-		console.log('[Asset PUT] Platform environment not available');
 		throw error(500, 'Platform environment not available');
 	}
 
@@ -103,10 +98,8 @@ export const PUT: RequestHandler = async ({ params, request, locals, platform })
 	// Verify ownership
 	const isOwner = await airtable.verifyAssetOwnership(params.id, locals.user.email);
 	if (!isOwner) {
-		console.log('[Asset PUT] Ownership verification failed');
 		throw error(403, 'You do not have permission to edit this asset');
 	}
-	console.log('[Asset PUT] Ownership verified');
 
 	const body = (await request.json()) as {
 		name?: string;

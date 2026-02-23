@@ -24,7 +24,14 @@ interface ValidationRequest {
 
 const WORKER_URL = 'https://gsap-validation-worker.createsomething.workers.dev/crawlWebsite';
 
-export const POST: RequestHandler = async ({ request, locals }) => {
+export const POST: RequestHandler = async ({ request, locals, platform }) => {
+	const debugLogs = platform?.env?.DEBUG_LOGS === 'true';
+	const debugLog = (...args: unknown[]) => {
+		if (debugLogs) {
+			console.log(...args);
+		}
+	};
+
 	if (!locals.user?.email) {
 		throw error(401, 'Unauthorized');
 	}
@@ -42,7 +49,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	try {
-		console.log(`[Validation] Validating URL: ${url}`);
+		debugLog(`[Validation] Validating URL: ${url}`);
 
 		// Call the external GSAP validation worker
 		const response = await fetch(WORKER_URL, {
@@ -129,7 +136,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			recommendations: generateRecommendations(workerData)
 		};
 
-		console.log(`[Validation] Completed for ${url}. Pass rate: ${result.summary.passRate}%`);
+		debugLog(`[Validation] Completed for ${url}. Pass rate: ${result.summary.passRate}%`);
 
 		return json(result);
 	} catch (err) {

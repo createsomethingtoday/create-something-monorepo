@@ -35,13 +35,19 @@ async function trackServerEvent(
 export const POST: RequestHandler = async ({ request, platform, getClientAddress }) => {
 	const clientIp = getClientAddress();
 	const db = platform?.env?.DB;
+	const sessions = platform?.env?.SESSIONS;
+
+	if (!sessions) {
+		return json({ error: 'Authentication service unavailable' }, { status: 503 });
+	}
 
 	// Rate limiting: 5 attempts per 15 minutes
 	const rateLimitResult = await checkRateLimit(
-		platform!.env.SESSIONS,
+		sessions,
 		`auth:login:${clientIp}`,
 		5,
-		900
+		900,
+		{ failOpen: false }
 	);
 
 	if (!rateLimitResult.allowed) {
@@ -97,7 +103,11 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 				email_domain: validatedEmail.split('@')[1] || 'unknown'
 			});
 
-			return json({ error: 'Email not found' }, { status: 404 });
+			// Prevent account enumeration by returning the same success message
+			// used for known accounts.
+			return json({
+				message: 'If your email is registered, a verification email has been sent'
+			});
 		}
 
 		// Generate verification token
@@ -115,8 +125,9 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 			email_domain: validatedEmail.split('@')[1] || 'unknown'
 		});
 
-		console.log('[Login] Verification email triggered via Airtable automation:', { to: validatedEmail });
-		return json({ message: 'Verification email sent' });
+		return json({
+			message: 'If your email is registered, a verification email has been sent'
+		});
 	} catch (error) {
 		console.error('Login error:', error);
 

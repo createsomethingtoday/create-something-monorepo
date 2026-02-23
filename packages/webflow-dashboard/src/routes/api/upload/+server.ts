@@ -5,7 +5,9 @@ import {
 	validateWebP,
 	validateFileSize,
 	validateMimeType,
-	THUMBNAIL_ASPECT_RATIO
+	THUMBNAIL_ASPECT_RATIO,
+	getWebPDimensions,
+	validateThumbnailAspectRatio
 } from '$lib/utils/upload-validation';
 
 /** Maximum file size: 10MB */
@@ -19,10 +21,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
  * Form data:
  * - file: The file to upload (required, must be WebP)
  * - type: Upload type - 'thumbnail' | 'image' (optional, default: 'image')
- * - width: Image width in pixels (optional, for thumbnail validation)
- * - height: Image height in pixels (optional, for thumbnail validation)
- *
- * When type=thumbnail, validates the 150:199 aspect ratio.
+ * When type=thumbnail, validates the 150:199 aspect ratio from decoded image bytes.
  */
 export const POST: RequestHandler = async ({ request, locals, platform }) => {
 	// Require authentication
@@ -39,8 +38,6 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		const formData = await request.formData();
 		const file = formData.get('file');
 		const uploadType = formData.get('type')?.toString() || 'image';
-		const width = formData.get('width');
-		const height = formData.get('height');
 
 		if (!file || !(file instanceof File)) {
 			throw error(400, 'No file uploaded');
@@ -62,30 +59,23 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 			throw error(400, 'Invalid WebP file format');
 		}
 
-		// Validate thumbnail aspect ratio if type=thumbnail and dimensions provided
-		// Uses absolute tolerance (0.01) to match old interface behavior exactly
-		if (uploadType === 'thumbnail' && width && height) {
-			const w = parseInt(width.toString(), 10);
-			const h = parseInt(height.toString(), 10);
+		// Validate thumbnail aspect ratio from actual image bytes (not client-provided metadata).
+		if (uploadType === 'thumbnail') {
+			const dimensions = getWebPDimensions(arrayBuffer);
+			if (!dimensions) {
+				throw error(400, 'Unable to determine image dimensions');
+			}
 
-			if (!isNaN(w) && !isNaN(h)) {
-				const actualRatio = w / h;
-				const expectedRatio = THUMBNAIL_ASPECT_RATIO.width / THUMBNAIL_ASPECT_RATIO.height;
-				const deviation = Math.abs(actualRatio - expectedRatio);
-				
-				if (deviation > THUMBNAIL_ASPECT_RATIO.tolerance) {
-					throw error(
-						400,
-						`Invalid thumbnail aspect ratio (${w}×${h}). Expected ${THUMBNAIL_ASPECT_RATIO.width}:${THUMBNAIL_ASPECT_RATIO.height} ratio. Try 750×995px.`
-					);
-				}
+			if (!validateThumbnailAspectRatio(dimensions.width, dimensions.height)) {
+				throw error(
+					400,
+					`Invalid thumbnail aspect ratio (${dimensions.width}×${dimensions.height}). Expected ${THUMBNAIL_ASPECT_RATIO.width}:${THUMBNAIL_ASPECT_RATIO.height} ratio. Try 750×995px.`
+				);
 			}
 		}
 
 		// Extract origin for absolute URL construction (required for Airtable)
 		const origin = new URL(request.url).origin;
-		console.log('[Upload API] Origin for absolute URL:', origin);
-
 		// Upload to R2 using the utility function
 		const result = await uploadToR2(uploads, arrayBuffer, {
 			filename: file.name || 'upload.webp',
@@ -96,9 +86,6 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 				uploadType
 			}
 		});
-
-		console.log('[Upload API] Upload result URL:', result.url);
-		console.log('[Upload API] Is absolute URL:', result.url.startsWith('http'));
 
 		return json({
 			url: result.url,

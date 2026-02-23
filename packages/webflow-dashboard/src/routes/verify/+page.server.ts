@@ -12,6 +12,7 @@ import { setSession, generateSessionToken, checkRateLimit } from '$lib/server/kv
  */
 export const load: PageServerLoad = async ({ url, platform, cookies, getClientAddress }) => {
 	const token = url.searchParams.get('token');
+	const sessions = platform?.env?.SESSIONS;
 
 	// If no token, show the verify page (user may paste token manually)
 	if (!token) {
@@ -23,12 +24,20 @@ export const load: PageServerLoad = async ({ url, platform, cookies, getClientAd
 
 	const clientIp = getClientAddress();
 
+	if (!sessions) {
+		return {
+			status: 'error' as const,
+			error: 'Authentication service unavailable. Please try again later.'
+		};
+	}
+
 	// Rate limiting: 5 attempts per 15 minutes
 	const rateLimitResult = await checkRateLimit(
-		platform!.env.SESSIONS,
+		sessions,
 		`auth:verify:${clientIp}`,
 		5,
-		900
+		900,
+		{ failOpen: false }
 	);
 
 	if (!rateLimitResult.allowed) {
@@ -74,7 +83,7 @@ export const load: PageServerLoad = async ({ url, platform, cookies, getClientAd
 		const sessionToken = generateSessionToken();
 
 		// Store session in KV (2-hour TTL)
-		await setSession(platform!.env.SESSIONS, sessionToken, result.email);
+		await setSession(sessions, sessionToken, result.email);
 
 		// Set HTTP-only cookie
 		// Note: sameSite 'none' required for cross-origin Webflow integration

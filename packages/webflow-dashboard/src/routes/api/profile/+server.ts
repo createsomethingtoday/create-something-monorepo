@@ -109,25 +109,16 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 		const email = locals.user.email;
 		const data = (await request.json()) as ProfileUpdateData;
 
-		console.log('[ProfileAPI] PATCH: Updating profile for', email, {
-			hasName: data.name !== undefined,
-			hasBio: data.biography !== undefined,
-			hasLegalName: data.legalName !== undefined,
-			hasAvatar: data.avatarUrl !== undefined
-		});
-
 		const base = getBase(platform.env as { AIRTABLE_API_KEY: string; AIRTABLE_BASE_ID: string });
 
 		// Step 1: Find creator (same query as GET — errors propagate, not swallowed)
 		const records = await getRecordsByEmail(base, email);
 
-		if (!records || records.length === 0) {
-			console.warn('[ProfileAPI] PATCH: No creator found for email:', email);
-			throw error(404, 'Profile not found');
-		}
+			if (!records || records.length === 0) {
+				throw error(404, 'Profile not found');
+			}
 
 		const recordId = records[0].id;
-		console.log('[ProfileAPI] PATCH: Found creator record:', recordId);
 
 		// Step 2: Build Airtable fields directly (matches original Next.js approach)
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -145,8 +136,6 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 			throw error(400, 'No fields to update');
 		}
 
-		console.log('[ProfileAPI] PATCH: Updating fields:', Object.keys(fields));
-
 		// Step 3: Update directly (matches original — one call, errors propagate)
 		const updatedRecords = await base(CREATORS_TABLE).update([
 			{ id: recordId, fields }
@@ -157,8 +146,6 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 		}
 
 		const updated = updatedRecords[0];
-		console.log('[ProfileAPI] PATCH: Profile updated successfully for', email);
-
 		return json(
 			{
 				id: updated.id,

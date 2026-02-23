@@ -29,6 +29,8 @@ const VIEWS = {
 interface AirtableEnv {
 	AIRTABLE_API_KEY: string;
 	AIRTABLE_BASE_ID: string;
+	ENVIRONMENT?: string;
+	DEBUG_AIRTABLE?: string;
 }
 
 // ==================== SECURITY UTILITIES ====================
@@ -187,6 +189,12 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 	}
 
 	const base = new Airtable({ apiKey: env.AIRTABLE_API_KEY }).base(env.AIRTABLE_BASE_ID);
+	const debugEnabled = env.DEBUG_AIRTABLE === 'true';
+	const debugLog = (...args: unknown[]) => {
+		if (debugEnabled) {
+			console.log(...args);
+		}
+	};
 
 	return {
 		// ==================== AUTH ====================
@@ -469,8 +477,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				carouselImages?: string[];
 			}
 		): Promise<Asset | null> {
-			console.log('[Airtable] updateAssetWithImages called for id:', id);
-			console.log('[Airtable] Input data:', JSON.stringify({
+			debugLog('[Airtable] updateAssetWithImages called for id:', id);
+			debugLog('[Airtable] Input data:', JSON.stringify({
 				...data,
 				thumbnailUrl: data.thumbnailUrl ? `${data.thumbnailUrl.substring(0, 80)}...` : data.thumbnailUrl
 			}));
@@ -489,7 +497,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			// Image fields - Airtable expects array of { url: string }
 			// Use field IDs (not names) to match old dashboard exactly
 			if (data.thumbnailUrl !== undefined) {
-				console.log('[Airtable] Setting thumbnail field fld43LxLHMZb2yF7F to:', data.thumbnailUrl ? `[{ url: "${data.thumbnailUrl.substring(0, 50)}..." }]` : '[]');
+				debugLog('[Airtable] Setting thumbnail field fld43LxLHMZb2yF7F to:', data.thumbnailUrl ? `[{ url: "${data.thumbnailUrl.substring(0, 50)}..." }]` : '[]');
 				fields['fld43LxLHMZb2yF7F'] = data.thumbnailUrl
 					? [{ url: data.thumbnailUrl }]
 					: [];
@@ -510,17 +518,17 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				fields['fldneaPyoRXBAVtS1'] = data.carouselImages.map(url => ({ url }));
 			}
 
-			console.log('[Airtable] Fields to update:', Object.keys(fields));
+			debugLog('[Airtable] Fields to update:', Object.keys(fields));
 
 			if (Object.keys(fields).length === 0) {
-				console.log('[Airtable] No fields to update, returning null');
+				debugLog('[Airtable] No fields to update, returning null');
 				return null;
 			}
 
 			try {
-				console.log('[Airtable] Calling base.update with fields...');
+				debugLog('[Airtable] Calling base.update with fields...');
 				const records = await base(TABLES.ASSETS).update([{ id, fields }]);
-				console.log('[Airtable] Update successful, record id:', records[0].id);
+				debugLog('[Airtable] Update successful, record id:', records[0].id);
 				const record = records[0];
 				const rawStatus = record.fields['🚀Marketplace Status'] as string || 'Draft';
 				const cleanedStatus = cleanMarketplaceStatus(rawStatus) as Asset['status'];
@@ -796,13 +804,13 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		 */
 		async getCreatorByEmail(email: string): Promise<Creator | null> {
 			try {
-				console.log('[Airtable] Searching for creator with email:', email);
-				console.log('[Airtable] Using table ID:', TABLES.CREATORS);
+				debugLog('[Airtable] Searching for creator with email:', email);
+				debugLog('[Airtable] Using table ID:', TABLES.CREATORS);
 				
 				// Single-line formula to avoid any whitespace issues
 				const formula = `OR(FIND("${email}", ARRAYJOIN({📧Email}, ",")) > 0, FIND("${email}", ARRAYJOIN({📧WF Account Email}, ",")) > 0, FIND("${email}", ARRAYJOIN({📧Emails}, ",")) > 0)`;
 				
-				console.log('[Airtable] Formula:', formula);
+				debugLog('[Airtable] Formula:', formula);
 				
 				const records = await base(TABLES.CREATORS)
 					.select({
@@ -810,15 +818,15 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					})
 					.firstPage();
 
-				console.log('[Airtable] Query completed. Found records:', records.length);
+				debugLog('[Airtable] Query completed. Found records:', records.length);
 				
 				if (records.length === 0) {
-					console.log('[Airtable] No creator found for email:', email);
+					debugLog('[Airtable] No creator found for email:', email);
 					return null;
 				}
 
 				const record = records[0];
-				console.log('[Airtable] Record field keys:', Object.keys(record.fields));
+				debugLog('[Airtable] Record field keys:', Object.keys(record.fields));
 				
 				// Use the exact field names from the original Next.js implementation
 				const creator = {
@@ -831,7 +839,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					legalName: (record.fields['ℹ️Legal Name'] as string) // Match original: 'ℹ️Legal Name' not '📜Legal Name'
 				};
 				
-				console.log('[Airtable] Returning creator:', {
+				debugLog('[Airtable] Returning creator:', {
 					id: creator.id,
 					name: creator.name,
 					hasAvatar: !!creator.avatarUrl,
@@ -869,11 +877,11 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			}
 
 			if (Object.keys(fields).length === 0) {
-				console.log('[Airtable] updateCreator: No fields to update');
+				debugLog('[Airtable] updateCreator: No fields to update');
 				return null;
 			}
 
-			console.log('[Airtable] updateCreator called:', {
+			debugLog('[Airtable] updateCreator called:', {
 				creatorId: id,
 				fieldKeys: Object.keys(fields),
 				hasAvatar: 'fldyddTon9Lu8BR8G' in fields,
@@ -883,7 +891,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			try {
 				const records = await base(TABLES.CREATORS).update([{ id, fields }]) as Airtable.Records<Airtable.FieldSet>;
 				const record = records[0];
-				console.log('[Airtable] updateCreator success:', { creatorId: record.id });
+				debugLog('[Airtable] updateCreator success:', { creatorId: record.id });
 				return {
 					id: record.id,
 					name: (record.fields['Name'] as string) || '', // Match original field name
@@ -1133,30 +1141,30 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			createdBy: string,
 			changes: Record<string, unknown> | string
 		): Promise<AssetVersion | null> {
-			console.log('[Airtable] createAssetVersion called:', { assetId, createdBy, changesType: typeof changes });
-			console.log('[Airtable] Using ASSET_VERSIONS table:', TABLES.ASSET_VERSIONS);
+			debugLog('[Airtable] createAssetVersion called:', { assetId, createdBy, changesType: typeof changes });
+			debugLog('[Airtable] Using ASSET_VERSIONS table:', TABLES.ASSET_VERSIONS);
 			
 			try {
 				// Get current asset state
-				console.log('[Airtable] Fetching asset state...');
+				debugLog('[Airtable] Fetching asset state...');
 				const asset = await this.getAsset(assetId);
 				if (!asset) {
-					console.log('[Airtable] Asset not found:', assetId);
+					debugLog('[Airtable] Asset not found:', assetId);
 					return null;
 				}
-				console.log('[Airtable] Asset found:', asset.name);
+				debugLog('[Airtable] Asset found:', asset.name);
 
 				// Check if asset is "Upcoming" - don't create versions for upcoming assets
 				// Matches v1 logic: pages/api/asset/createVersion/[id].js lines 50-57
 				const cleanStatus = asset.status.replace(/^\d️⃣/u, '').replace(/🆕|🚀/gu, '').trim();
 				if (cleanStatus === 'Upcoming') {
-					console.log('[Airtable] Asset is Upcoming, skipping version creation');
+					debugLog('[Airtable] Asset is Upcoming, skipping version creation');
 					return null;
 				}
 
 			// Get the next version number by counting existing versions
 			// Matches v1 logic exactly: pages/api/asset/createVersion/[id].js lines 62-64
-			console.log('[Airtable] Querying existing versions...');
+			debugLog('[Airtable] Querying existing versions...');
 			const existingVersions = await base(TABLES.ASSET_VERSIONS)
 				.select({
 					filterByFormula: `{fldknoYakli2sqznT} = '${escapeAirtableString(assetId)}'`
@@ -1164,7 +1172,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				.all();
 			
 			const nextVersion = existingVersions.length + 1;
-			console.log('[Airtable] Existing versions count:', existingVersions.length, '-> Next version:', nextVersion);
+			debugLog('[Airtable] Existing versions count:', existingVersions.length, '-> Next version:', nextVersion);
 
 				// Create snapshot of current state
 				const snapshot = {
@@ -1188,7 +1196,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					);
 					
 					if (!hasSignificantChanges) {
-						console.log('[Airtable] No significant changes detected, skipping version creation');
+						debugLog('[Airtable] No significant changes detected, skipping version creation');
 						return null;
 					}
 				}
@@ -1201,7 +1209,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					? JSON.stringify({ changes, snapshot, createdBy })  // Legacy format for string changes
 					: JSON.stringify(changes);  // V1 format - just the structured changes
 				
-				console.log('[Airtable] Creating version record with fields:', {
+				debugLog('[Airtable] Creating version record with fields:', {
 					'fldemWilqCQcOCh5s': [assetId],
 					'fldn2ImbgwKfCdWWA': nextVersion,
 					'fldjYFJMGTerFYlol': 'Meta Update',
@@ -1215,7 +1223,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					'fldc999gbJ8LWWoTC': changesJson, // Changes JSON - matches v1 format
 					'fldLEIZMEjZvH5n23': ['zendesk'] // Source - must match existing linked record
 				});
-				console.log('[Airtable] Version record created:', records.id);
+				debugLog('[Airtable] Version record created:', records.id);
 
 				const changesStr = typeof changes === 'string' ? changes : JSON.stringify(changes);
 				return {

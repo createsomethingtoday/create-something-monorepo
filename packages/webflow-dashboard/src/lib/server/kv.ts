@@ -67,7 +67,14 @@ export async function checkRateLimit(
 	kv: KVNamespace,
 	key: string,
 	limit: number,
-	windowSeconds: number
+	windowSeconds: number,
+	options: {
+		/**
+		 * When true, storage failures allow requests (legacy behavior).
+		 * When false (default), failures deny requests to avoid bypassing controls.
+		 */
+		failOpen?: boolean;
+	} = {}
 ): Promise<{ allowed: boolean; remaining: number; retryAfter: number }> {
 	const now = Math.floor(Date.now() / 1000);
 	const windowKey = `ratelimit:${key}:${Math.floor(now / windowSeconds)}`;
@@ -96,7 +103,11 @@ export async function checkRateLimit(
 			retryAfter: 0
 		};
 	} catch {
-		// On error, allow the request
-		return { allowed: true, remaining: limit, retryAfter: 0 };
+		if (options.failOpen) {
+			return { allowed: true, remaining: limit, retryAfter: 0 };
+		}
+
+		// Fail closed by default to avoid bypassing auth controls when KV is unavailable.
+		return { allowed: false, remaining: 0, retryAfter: windowSeconds };
 	}
 }

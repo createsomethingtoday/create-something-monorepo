@@ -14,6 +14,8 @@ declare global {
 				ADMIN_EMAILS?: string;
 				CSRF_TRUSTED_ORIGINS?: string;
 				ENVIRONMENT?: string;
+				DEBUG_LOGS?: string;
+				DEBUG_AIRTABLE?: string;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;

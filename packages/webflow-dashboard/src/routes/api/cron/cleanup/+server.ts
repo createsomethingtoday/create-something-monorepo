@@ -19,6 +19,13 @@ interface R2Object {
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 export const GET: RequestHandler = async ({ platform, request }) => {
+	const debugLogs = platform?.env?.DEBUG_LOGS === 'true';
+	const debugLog = (...args: unknown[]) => {
+		if (debugLogs) {
+			console.log(...args);
+		}
+	};
+
 	if (
 		!isAuthorizedCronRequest(
 			request,
@@ -59,7 +66,7 @@ export const GET: RequestHandler = async ({ platform, request }) => {
 					try {
 						await uploads.delete(object.key);
 						deleted++;
-						console.log(`[Cron Cleanup] Deleted: ${object.key}`);
+						debugLog(`[Cron Cleanup] Deleted: ${object.key}`);
 					} catch (deleteError) {
 						console.error(`[Cron Cleanup] Failed to delete ${object.key}:`, deleteError);
 					}
@@ -69,7 +76,7 @@ export const GET: RequestHandler = async ({ platform, request }) => {
 			cursor = listed.truncated ? listed.cursor : undefined;
 		} while (cursor);
 
-		console.log(`[Cron Cleanup] Completed. Checked: ${checked}, Deleted: ${deleted}`);
+		debugLog(`[Cron Cleanup] Completed. Checked: ${checked}, Deleted: ${deleted}`);
 
 		return json({
 			success: true,

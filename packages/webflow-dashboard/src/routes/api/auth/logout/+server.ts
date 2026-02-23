@@ -9,11 +9,12 @@ import { deleteSession } from '$lib/server/kv';
  */
 export const POST: RequestHandler = async ({ platform, cookies }) => {
 	const sessionToken = cookies.get('session_token');
+	const sessions = platform?.env?.SESSIONS;
 
-	if (sessionToken) {
+	if (sessionToken && sessions) {
 		try {
 			// Delete session from KV
-			await deleteSession(platform!.env.SESSIONS, sessionToken);
+			await deleteSession(sessions, sessionToken);
 		} catch (error) {
 			console.error('Session deletion error:', error);
 			// Continue with logout even if KV deletion fails
