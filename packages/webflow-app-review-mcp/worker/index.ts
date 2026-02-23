@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { enableTelemetry } from '@create-something/mcp-core';
 
-import { validateBearerToken } from '../src/auth.js';
+import { misconfiguredResponse, validateBearerToken } from '../src/auth.js';
 import { AirtableClient } from '../src/airtable.js';
 import { DEFAULT_AIRTABLE_BASE_ID } from '../src/schema.js';
 import { registerPrompts } from '../src/prompts.js';
@@ -18,6 +18,9 @@ interface Env {
 }
 
 export function validateApiKey(request: Request, env: Env): Response | null {
+  if (!env.MCP_API_KEY) {
+    return misconfiguredResponse('MCP_API_KEY is not configured for this deployment.');
+  }
   return validateBearerToken(request, env.MCP_API_KEY);
 }
 
@@ -87,7 +90,8 @@ export default {
             version: '1.0.0',
             description: 'Webflow App Review MCP — Airtable-scoped review workflows for Assets + Asset Versions',
             auth: {
-              mode: env.MCP_API_KEY ? 'Bearer required' : 'open (MCP_API_KEY not configured)',
+              mode: 'Bearer required',
+              configured: Boolean(env.MCP_API_KEY),
               header: 'Authorization: Bearer <MCP_API_KEY>',
             },
             endpoints: {
@@ -114,4 +118,3 @@ export default {
     return new Response('Not found', { status: 404, headers: CORS_HEADERS });
   },
 };
-

@@ -13,7 +13,7 @@
 		salesRank: number;
 		revenueRank: number;
 		isUserTemplate: boolean;
-		/** Trend data for sparkline visualization (optional, generated if not provided) */
+		/** Historical trend data from backend (optional) */
 		trendData?: number[];
 	}
 
@@ -55,51 +55,6 @@
 	}
 
 	let { leaderboard, categories, insights, userTemplates, summary }: Props = $props();
-
-	/**
-	 * Generate simulated trend data for sparkline visualization
-	 * In production, this would come from historical API data
-	 */
-	function generateTrendData(sales: number, rank: number): number[] {
-		// Create a realistic trend based on current position
-		// Top performers tend to have upward trends
-		const baseVariation = rank <= 5 ? 0.1 : rank <= 20 ? 0.15 : 0.2;
-		const trend = rank <= 5 ? 0.02 : rank <= 20 ? 0 : -0.01;
-
-		const points: number[] = [];
-		let current = sales * 0.75; // Start at 75% of current
-
-		for (let i = 0; i < 6; i++) {
-			const variation = (Math.random() - 0.5) * 2 * baseVariation;
-			current = current * (1 + trend + variation);
-			points.push(Math.max(0, current));
-		}
-		// End at approximately current sales
-		points.push(sales);
-
-		return points;
-	}
-
-	/**
-	 * Determine trend direction for a category
-	 */
-	function getCategoryTrend(category: CategoryEntry): { direction: 'up' | 'down' | 'neutral'; percent: number } {
-		// Use provided trend data or calculate based on revenue rank
-		if (category.trend && category.changePercent !== undefined) {
-			return { direction: category.trend, percent: category.changePercent };
-		}
-
-		// Simulate trend based on revenue rank
-		const isHot = category.revenueRank <= 5;
-		const isGrowing = category.templatesInSubcategory < 30;
-
-		if (isHot && isGrowing) {
-			return { direction: 'up', percent: Math.floor(Math.random() * 15) + 5 };
-		} else if (category.revenueRank > 20) {
-			return { direction: 'down', percent: -(Math.floor(Math.random() * 10) + 2) };
-		}
-		return { direction: 'neutral', percent: Math.floor(Math.random() * 5) - 2 };
-	}
 
 	/**
 	 * Sort insights by priority and type
@@ -268,7 +223,7 @@
 		<div class="leaderboard-grid">
 			{#each leaderboard.slice(0, 5) as template, index}
 				{@const badge = getRankBadge(index)}
-				{@const trendData = template.trendData || generateTrendData(template.totalSales30d, index + 1)}
+				{@const hasTemplateTrend = Array.isArray(template.trendData) && template.trendData.length >= 2}
 				<div
 					class="leaderboard-card"
 					class:user-template={template.isUserTemplate}
@@ -307,15 +262,19 @@
 
 						<!-- Sparkline trend visualization -->
 						<div class="sparkline-container">
-							<Sparkline
-								data={trendData}
-								width={80}
-								height={24}
-								color={index === 0 ? 'var(--color-rank-gold)' : index < 3 ? 'var(--color-success)' : 'var(--color-info)'}
-								showTrend
-								filled
-							/>
-							<span class="trend-label">30d trend</span>
+							{#if hasTemplateTrend}
+								<Sparkline
+									data={template.trendData ?? []}
+									width={80}
+									height={24}
+									color={index === 0 ? 'var(--color-rank-gold)' : index < 3 ? 'var(--color-success)' : 'var(--color-info)'}
+									showTrend
+									filled
+								/>
+								<span class="trend-label">30d trend</span>
+							{:else}
+								<span class="trend-unavailable">Trend unavailable</span>
+							{/if}
 						</div>
 					</div>
 					<div class="leaderboard-footer">
@@ -474,7 +433,6 @@
 				{#each sortedCategories() as category}
 					{@const competition = getCompetitionIndicator(category.templatesInSubcategory)}
 					{@const hasUserTemplate = userCategories().has(category.category)}
-					{@const trend = getCategoryTrend(category)}
 					<div class="category-card" class:user-category={hasUserTemplate}>
 						<div class="category-card-header">
 							<div class="category-info">
@@ -486,17 +444,21 @@
 						<div class="category-metric">
 							<div class="metric-main">
 								<span class="metric-value">${Math.round(category.avgRevenuePerTemplate).toLocaleString()}</span>
-								<!-- Trend indicator -->
-								<span class="trend-indicator trend-{trend.direction}">
-									{#if trend.direction === 'up'}
-										<TrendingUp size={14} />
-									{:else if trend.direction === 'down'}
-										<TrendingDown size={14} />
-									{:else}
-										<Minus size={14} />
-									{/if}
-									<span class="trend-percent">{trend.percent > 0 ? '+' : ''}{trend.percent}%</span>
-								</span>
+								{#if category.trend && category.changePercent !== undefined}
+									<!-- Trend indicator -->
+									<span class="trend-indicator trend-{category.trend}">
+										{#if category.trend === 'up'}
+											<TrendingUp size={14} />
+										{:else if category.trend === 'down'}
+											<TrendingDown size={14} />
+										{:else}
+											<Minus size={14} />
+										{/if}
+										<span class="trend-percent">{category.changePercent > 0 ? '+' : ''}{category.changePercent}%</span>
+									</span>
+								{:else}
+									<span class="trend-unavailable">Trend unavailable</span>
+								{/if}
 							</div>
 							<span class="metric-label">avg per template</span>
 						</div>
@@ -945,6 +907,12 @@
 	.trend-label {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
+	}
+
+	.trend-unavailable {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		font-style: italic;
 	}
 
 	/* Categories */

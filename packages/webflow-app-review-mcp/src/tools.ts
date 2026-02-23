@@ -102,7 +102,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
         const health = await getClient().healthCheck();
         return asSuccess({
           ...health,
-          auth: 'Bearer token required at worker boundary when MCP_API_KEY is configured.',
+          auth: 'Bearer token required at worker boundary.',
         });
       } catch (error) {
         return asError(error);
@@ -408,4 +408,3 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
     async () => asSuccess(APP_REVIEW_FIELD_MAP),
   );
 }
-

@@ -139,6 +139,8 @@ Before reaching for agents, consider these existing patterns:
 
 ### Volume (December 2025)
 
+These values are a historical December 2025 snapshot for analysis context, not live operational metrics.
+
 | Metric | Value |
 |--------|-------|
 | Assets submitted | 382 |

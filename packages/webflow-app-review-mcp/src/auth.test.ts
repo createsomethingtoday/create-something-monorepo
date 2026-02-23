@@ -1,13 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { validateBearerToken } from './auth.js';
+import { misconfiguredResponse, validateBearerToken } from './auth.js';
 
 describe('validateBearerToken', () => {
-  it('allows requests when token enforcement is disabled', () => {
-    const req = new Request('https://example.com/mcp');
-    expect(validateBearerToken(req, undefined)).toBeNull();
-  });
-
   it('returns 401 when Authorization header is missing', async () => {
     const req = new Request('https://example.com/mcp');
     const response = validateBearerToken(req, 'secret');
@@ -33,3 +28,11 @@ describe('validateBearerToken', () => {
   });
 });
 
+describe('misconfiguredResponse', () => {
+  it('returns 503 with MISCONFIGURED code', async () => {
+    const response = misconfiguredResponse('MCP_API_KEY is not configured.');
+    expect(response.status).toBe(503);
+    const body = await response.json();
+    expect(body?.error?.code).toBe('MISCONFIGURED');
+  });
+});

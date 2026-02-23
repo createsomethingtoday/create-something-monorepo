@@ -20,19 +20,19 @@ Worker boundary bearer auth:
 - Header: `Authorization: Bearer <MCP_API_KEY>`
 - Configure with:
   - `wrangler secret put MCP_API_KEY`
-
-If `MCP_API_KEY` is unset, auth is bypassed (development mode only).
+- `MCP_API_KEY` is required in all environments.
+- If `MCP_API_KEY` is missing, `/mcp` and `/sse` return `503` with `MISCONFIGURED`.
 
 ## Secrets / Vars
 
 Required:
 
 - `AIRTABLE_API_KEY` (Airtable PAT)
+- `MCP_API_KEY` (worker boundary bearer token)
 
 Optional:
 
 - `AIRTABLE_BASE_ID` (defaults to `appMoIgXMTTTNIc3p`)
-- `MCP_API_KEY`
 
 ## Tools
 
@@ -90,4 +90,3 @@ pnpm exec wrangler secret put MCP_API_KEY
 ```
 
 Distribute the new token to the app review team and invalidate prior copies operationally.
-

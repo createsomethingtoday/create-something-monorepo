@@ -52,7 +52,9 @@ The Asset Dashboard refactor is the clearest example. We had a 65% complete port
 
 ---
 
-## Current Numbers
+## December 2025 Snapshot (Historical)
+
+The metrics below are a point-in-time snapshot from December 2025, not live dashboard values.
 
 | Metric | December 2025 |
 |--------|---------------|

@@ -6,6 +6,7 @@
 **Source Repository**: `/Users/micahjohnson/Documents/Github/Webflow/wf-asset-dashboard`  
 **Target Repository**: `/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/webflow-dashboard`  
 **Status**: 🟡 PARTIAL PORT - Critical Features Missing
+**Note**: Initially authored January 7, 2026. Targeted corrections applied February 23, 2026.
 
 ---
 
@@ -25,12 +26,10 @@ The SvelteKit port (`@create-something/webflow-dashboard`) has successfully migr
 - Basic UI components
 
 **❌ Missing Features** (Critical Gaps):
-- **Marketplace Insights Component** (30+ features)
 - **Submission Tracking System** (complex hybrid API)
-- **GSAP Validation Playground** (full UI + results display)
 - **Webflow Way Validation Integration** (multi-tool architecture)
 - **Design Enhancements** (animations, kinetic numbers)
-- **Multiple specialized components** (15+ components)
+- **Multiple specialized components** (12+ components)
 - **Advanced hooks** (10+ custom hooks)
 - **Editor/Edit Links System** (admin features)
 - **Status History Tracking**
@@ -91,32 +90,22 @@ The SvelteKit port (`@create-something/webflow-dashboard`) has successfully migr
 
 ---
 
-### 4. Analytics & Marketplace Insights ❌ CRITICALLY INCOMPLETE
+### 4. Analytics & Marketplace Insights ✅ MOSTLY PORTED
 
 | Feature | Original (Next.js) | Port (SvelteKit) | Status |
 |---------|-------------------|------------------|--------|
 | Leaderboard API | ✅ `/api/analytics/leaderboard` | ✅ `/api/analytics/leaderboard` | ✅ COMPLETE |
 | Categories API | ✅ `/api/analytics/categories` | ✅ `/api/analytics/categories` | ✅ COMPLETE |
-| **MarketplaceInsights Component** | ✅ (770+ lines) | ❌ | ❌ MISSING |
-| **Top performers display** | ✅ | ❌ | ❌ MISSING |
-| **Trending categories** | ✅ | ❌ | ❌ MISSING |
-| **Market insights generation** | ✅ | ❌ | ❌ MISSING |
-| **Personalized recommendations** | ✅ | ❌ | ❌ MISSING |
-| **AnimatedNumber component** | ✅ | ❌ | ❌ MISSING |
-| **CategoryPerformanceTable** | ✅ | ❌ | ❌ MISSING |
-| **MarketplaceSummaryCards** | ✅ | ❌ | ❌ MISSING |
+| **MarketplaceInsights Component** | ✅ (770+ lines) | ✅ `src/lib/components/MarketplaceInsights.svelte` | ✅ COMPLETE |
+| **Top performers display** | ✅ | ✅ | ✅ COMPLETE |
+| **Trending categories** | ✅ | ✅ | ✅ COMPLETE |
+| **Market insights generation** | ✅ | ✅ | ✅ COMPLETE |
+| **Personalized recommendations** | ✅ | ✅ | ✅ COMPLETE |
+| **AnimatedNumber component** | ✅ | ✅ (`KineticNumber`) | ✅ COMPLETE |
+| **CategoryPerformanceTable** | ✅ | ✅ (table + mobile cards) | ✅ COMPLETE |
+| **MarketplaceSummaryCards** | ✅ | ✅ (summary grid) | ✅ COMPLETE |
 
-**Critical Impact**: Entire marketplace insights feature set missing. This was a **major feature** (documented in MARKETPLACE_INSIGHTS.md) that provides creators with competitive intelligence.
-
-**Missing Features**:
-- Top 5 templates leaderboard with rankings
-- Trending categories with revenue analytics
-- Auto-generated market insights (trends, opportunities, warnings)
-- User template highlighting and positioning
-- Animated metrics and kinetic numbers
-- Category performance breakdown
-- Competition level indicators
-- Revenue analytics and comparisons
+**Current Gap**: Core Marketplace Insights UX is ported. Remaining work is focused on upstream historical trend-data availability (no synthetic trend fallback).
 
 ---
 
@@ -144,21 +133,21 @@ The SvelteKit port (`@create-something/webflow-dashboard`) has successfully migr
 
 ---
 
-### 6. Validation Tools ❌ CRITICALLY INCOMPLETE
+### 6. Validation Tools ⚠️ PARTIALLY PORTED
 
 | Feature | Original (Next.js) | Port (SvelteKit) | Status |
 |---------|-------------------|------------------|--------|
 | GSAP validation API | ✅ `/api/validation/playground` | ✅ `/api/validation/gsap` | ✅ COMPLETE |
-| **GSAP Validation UI** | ✅ `GsapValidationModal.jsx` | ❌ | ❌ MISSING |
-| **Validation results display** | ✅ (Tabs: Overview, Pages, Issues, Recs) | ❌ | ❌ MISSING |
-| **Validation playground page** | ✅ `/pages/validation-playground.js` | ❌ | ❌ MISSING |
+| **GSAP Validation UI** | ✅ `GsapValidationModal.jsx` | ✅ `src/lib/components/GsapValidationModal.svelte` | ✅ COMPLETE |
+| **Validation results display** | ✅ (Tabs: Overview, Pages, Issues, Recs) | ✅ | ✅ COMPLETE |
+| **Validation playground page** | ✅ `/pages/validation-playground.js` | ✅ `/validation/playground` | ✅ COMPLETE |
 | **Webflow Way Validation** | ✅ (Architecture doc) | ❌ | ❌ MISSING |
 | **Multi-tool validation registry** | ✅ `/utils/validationToolRegistry.js` | ❌ | ❌ MISSING |
 | **Feature flag system** | ✅ `/utils/featureFlags.js` | ❌ | ❌ MISSING |
 | **ValidationToolsPanel** | ✅ | ❌ | ❌ MISSING |
 | **ToolInstallModal** | ✅ | ❌ | ❌ MISSING |
 
-**Critical Impact**: Only the API endpoint was ported. The entire validation UI, results display, and multi-tool architecture is **completely missing**.
+**Current Gap**: GSAP validation API + modal + playground are ported. Remaining work is the broader multi-tool validation architecture (registry/feature flags/panels).
 
 **Original Features** (from multi-tool-validation-architecture.md):
 - Comprehensive validation tool registry system
@@ -175,24 +164,21 @@ The SvelteKit port (`@create-something/webflow-dashboard`) has successfully migr
 
 #### Original Components (38 total):
 
-**Missing in Port** (15 components):
+**Missing in Port** (12 components):
 1. ❌ `AnimatedNumber.jsx` - Kinetic number animations
 2. ❌ `CarouselUploader.jsx` - Multi-image carousel upload
 3. ❌ `CategoryPerformanceTable.jsx` - Category analytics table
-4. ❌ `GsapValidationModal.jsx` - Validation results UI
-5. ❌ `LoadingSkeleton.jsx` - Loading states
-6. ❌ `LoadingSpinner.jsx` - Spinner component
-7. ❌ `MarketplaceInsights.jsx` - **MAJOR FEATURE** (770+ lines)
-8. ❌ `MarketplaceSummaryCards.jsx` - Summary metrics
-9. ❌ `Overview.jsx` - Dashboard overview with animations
-10. ❌ `SecondaryThumbnailUploader.jsx` - Additional image upload
-11. ❌ `StatusHistory.jsx` - Asset status timeline
-12. ❌ `SubmissionTracker.jsx` - **CRITICAL FEATURE**
-13. ❌ `WebflowWayCard.jsx` - Webflow Way validation card
-14. ❌ `WebflowWayBetaBanner.jsx` - Beta feature announcement
-15. ❌ `AssetDetailsView.jsx` - Detailed asset view
+4. ❌ `LoadingSkeleton.jsx` - Loading states
+5. ❌ `LoadingSpinner.jsx` - Spinner component
+6. ❌ `MarketplaceSummaryCards.jsx` - Summary metrics
+7. ❌ `Overview.jsx` - Dashboard overview with animations
+8. ❌ `SecondaryThumbnailUploader.jsx` - Additional image upload
+9. ❌ `StatusHistory.jsx` - Asset status timeline
+10. ❌ `SubmissionTracker.jsx` - **CRITICAL FEATURE**
+11. ❌ `WebflowWayBetaBanner.jsx` - Beta feature announcement
+12. ❌ `AssetDetailsView.jsx` - Detailed asset view
 
-**Ported Components** (11 components):
+**Ported Components** (14 components):
 1. ✅ `ApiKeysManager` - ✅ Ported
 2. ✅ `AssetsDisplay` - ✅ Ported
 3. ✅ `DarkModeToggle` - ✅ Ported
@@ -204,6 +190,9 @@ The SvelteKit port (`@create-something/webflow-dashboard`) has successfully migr
 9. ✅ `Toast` - ✅ Ported
 10. ✅ `AssetTableRow` - ✅ Ported (as `TableRow` in original)
 11. ✅ `ActionsDropdown` - ✅ Ported (as `MoreOptions` in original)
+12. ✅ `GsapValidationModal` - ✅ Ported
+13. ✅ `MarketplaceInsights` - ✅ Ported
+14. ✅ `WebflowWayCard` - ✅ Ported
 
 **UI Framework Components** (not compared):
 - Both use similar UI primitives (Radix UI vs shadcn/ui components)
@@ -350,25 +339,23 @@ The original dashboard had extensive design enhancements (documented in DESIGN_E
 ### Tier 1: Business-Critical (Blocks Production Use)
 
 1. **Submission Tracking System** - Required for template limit management
-2. **GSAP Validation UI** - Required for compliance checks
-3. **Marketplace Insights** - Major competitive intelligence feature
-4. **Asset Versioning** - Data integrity for updates
+2. **Asset Versioning** - Data integrity for updates
+3. **Carousel + Secondary Thumbnail Upload** - Required for full template showcase parity
+4. **Related Assets API** - Supports creator workflow parity
 
 ### Tier 2: High-Value Features (Degraded Experience)
 
-5. **Carousel Image Upload** - Template showcase
-6. **Secondary Thumbnails** - Marketing materials
-7. **Multi-tool Validation Framework** - Extensibility
-8. **Design Animations** - Professional polish
-9. **Custom Hooks** - Code maintainability
+5. **Multi-tool Validation Framework** - Extensibility
+6. **Design Animations** - Professional polish
+7. **Custom Hooks** - Code maintainability
+8. **Marketplace historical trend data feed** - Removes trend unavailability states
 
 ### Tier 3: Supporting Features (Nice-to-Have)
 
-10. **Related Assets API** - Cross-template linking
-11. **Status History** - Audit trail
-12. **Admin Edit Links** - Workflow optimization
-13. **Loading Skeletons** - UX polish
-14. **Tag Management** - Organization
+9. **Status History** - Audit trail
+10. **Admin Edit Links** - Workflow optimization
+11. **Loading Skeletons** - UX polish
+12. **Tag Management** - Organization
 
 ---
 
@@ -430,36 +417,34 @@ The original dashboard had extensive design enhancements (documented in DESIGN_E
    - **Effort**: 5 days
    - **Impact**: Blocks production use without this
 
-2. **Port GSAP Validation UI**
-   - Create validation modal component
-   - Add results display (tabs: Overview, Pages, Issues, Recommendations)
-   - Integrate with existing API endpoint
+2. **Complete Multi-Image Upload Parity**
+   - Implement carousel and secondary-thumbnail upload components
+   - Add reorder/delete management parity in edit workflows
    - **Effort**: 3 days
-   - **Impact**: Required for compliance workflow
+   - **Impact**: Required for template presentation parity
 
-3. **Port Carousel & Secondary Thumbnail Upload**
-   - Create `ImageUploader` component with multi-image support
-   - Add R2 upload logic for multiple images
-   - **Effort**: 3 days
-   - **Impact**: Template showcase quality
+3. **Implement Asset Versioning**
+   - Add version creation/update endpoints
+   - Track version history in UI
+   - **Effort**: 4 days
+   - **Impact**: Data integrity for updates
 
 ### Phase 2: High-Value Features (Priority: HIGH)
 
 **Timeline**: 3-4 weeks
 
-4. **Port Marketplace Insights**
-   - Recreate `MarketplaceInsights` component (770+ lines)
-   - Add category performance tables
-   - Implement trend calculations
-   - Add user template highlighting
-   - **Effort**: 7 days
-   - **Impact**: Major competitive feature
-
-5. **Port Asset Versioning System**
-   - Add version creation API endpoint
-   - Track version history in UI
+4. **Add Historical Trend Data Feed**
+   - Provide backend historical series for leaderboard/category trend rendering
+   - Eliminate UI trend-unavailable states for populated records
    - **Effort**: 4 days
-   - **Impact**: Data integrity for updates
+   - **Impact**: Improves insight quality and credibility
+
+5. **Port Multi-Tool Validation Framework**
+   - Implement validation registry
+   - Add feature flag system
+   - Expand Webflow Way integration path
+   - **Effort**: 5 days
+   - **Impact**: Extensibility for future tools
 
 6. **Add Design Enhancements**
    - Evaluate Svelte animation libraries (svelte/motion, auto-animate)
@@ -511,8 +496,8 @@ The original dashboard had extensive design enhancements (documented in DESIGN_E
 
 **Blocking Issues**:
 1. ❌ No submission tracking - users cannot manage template limits
-2. ❌ No validation UI - compliance workflow broken
-3. ❌ Missing image upload features - template presentation incomplete
+2. ❌ Missing image upload parity (carousel/secondary thumbnails) - template presentation incomplete
+3. ❌ No asset versioning - update auditability and rollback safety gaps
 
 **Recommended Path**:
 1. Complete Phase 1 (Critical Features) before production deployment
@@ -544,12 +529,12 @@ The original dashboard had extensive design enhancements (documented in DESIGN_E
 - Analytics API: ✅ 10/10
 - Profile/Keys: ✅ 10/10
 - **Submission Tracking: ❌ 0/10**
-- **Validation UI: ❌ 0/10**
-- **Marketplace Insights: ❌ 0/10**
+- **Validation UI: ⚠️ 7/10** (GSAP flow ported; multi-tool validation architecture pending)
+- **Marketplace Insights: ⚠️ 7/10** (core UI ported; historical trend feed pending)
 
 ### User Experience: 50/100
 
-- UI Components: ⚠️ 6/10 (11/26 components)
+- UI Components: ⚠️ 6/10 (14/26 components)
 - Animations: ❌ 0/10
 - Loading States: ⚠️ 5/10
 - Error Handling: ✅ 8/10
@@ -567,8 +552,8 @@ The original dashboard had extensive design enhancements (documented in DESIGN_E
 ### Business Value: 45/100
 
 - Core Workflow: ⚠️ 6/10 (blocked by submission tracking)
-- Competitive Features: ❌ 0/10 (marketplace insights missing)
-- Compliance Tools: ❌ 3/10 (validation UI missing)
+- Competitive Features: ⚠️ 6/10 (marketplace insights ported; historical trend feed pending)
+- Compliance Tools: ⚠️ 5/10 (GSAP validation ported; multi-tool validation system missing)
 - Data Integrity: ⚠️ 6/10 (versioning missing)
 
 ---
@@ -583,9 +568,9 @@ The SvelteKit port has successfully migrated the **technical infrastructure** (C
 
 **Blockers**:
 1. Submission tracking system (critical for template limits)
-2. GSAP validation UI (required for compliance)
-3. Marketplace insights (major competitive feature)
-4. Multi-image upload (template showcase quality)
+2. Multi-tool validation architecture (registry, feature flags, install UX)
+3. Multi-image upload (template showcase quality)
+4. Asset versioning (auditability and rollback safety)
 
 ### Recommended Action Plan
 
@@ -628,4 +613,3 @@ The SvelteKit port has successfully migrated the **technical infrastructure** (C
 **Model**: Claude Sonnet 4.5  
 **Date**: January 7, 2026  
 **Document Version**: 1.0
-
