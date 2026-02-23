@@ -47,7 +47,7 @@
 		</div>
 		<div class="header-actions">
 			{#if data.isAdmin}
-				<a href="/admin" class="btn-secondary">
+				<a href="/admin/videos" class="btn-secondary">
 					<LayoutDashboard size={16} />
 					Open Admin
 				</a>

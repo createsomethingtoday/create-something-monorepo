@@ -96,7 +96,7 @@
 						</a>
 					{/each}
 					{#if user?.role === 'admin'}
-						<a href="/admin" class="nav-link" class:active={$page.url.pathname === '/admin'}>Admin</a>
+						<a href="/admin/videos" class="nav-link" class:active={$page.url.pathname.startsWith('/admin')}>Admin</a>
 					{/if}
 				</nav>
 			</div>
@@ -155,9 +155,9 @@
 					{/each}
 					{#if user?.role === 'admin'}
 						<a
-							href="/admin"
+							href="/admin/videos"
 							class="mobile-nav-link"
-							class:active={$page.url.pathname === '/admin'}
+							class:active={$page.url.pathname.startsWith('/admin')}
 							onclick={closeMobileMenu}
 						>
 							Admin

@@ -61,7 +61,7 @@
 				await invalidateAll();
 				const isAdmin = result.data?.user?.role === 'admin';
 				const destination =
-					data.redirectTo === '/demo' && isAdmin ? '/admin' : (data.redirectTo || '/demo');
+					data.redirectTo === '/demo' && isAdmin ? '/admin/videos' : (data.redirectTo || '/demo');
 				goto(destination);
 		} catch {
 			error = 'An unexpected error occurred';

@@ -3,8 +3,8 @@ import { redirect } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) {
-		redirect(302, '/login?redirect=/admin');
+		redirect(302, '/login?redirect=/admin/videos');
 	}
 
-	redirect(307, '/admin');
+	redirect(307, '/admin/videos');
 };
