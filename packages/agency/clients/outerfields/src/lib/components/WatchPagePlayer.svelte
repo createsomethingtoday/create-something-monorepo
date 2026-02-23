@@ -49,6 +49,7 @@
 
 	// When main src fails we can switch to fallback; reset when src prop changes
 	let loadError = $state(false);
+	let loadErrorMessage = $state('This video couldn’t be loaded.');
 	let usedFallback = $state(false);
 	let effectiveSrc = $derived(usedFallback && fallbackSrc ? fallbackSrc : src);
 	let attachedSource = $state<AttachedMediaSource | null>(null);
@@ -162,9 +163,11 @@
 			duration = videoElement.duration;
 		}
 		loadError = false;
+		loadErrorMessage = 'This video couldn’t be loaded.';
 	}
 
 	function handleVideoError() {
+		loadErrorMessage = 'This video couldn’t be loaded.';
 		loadError = true;
 		// If we have a fallback and haven't tried it yet, switch to it
 		if (fallbackSrc && !usedFallback) {
@@ -177,6 +180,7 @@
 		if (fallbackSrc && !usedFallback) {
 			usedFallback = true;
 			loadError = false;
+			loadErrorMessage = 'This video couldn’t be loaded.';
 		}
 	}
 
@@ -340,6 +344,7 @@
 	$effect(() => {
 		src;
 		loadError = false;
+		loadErrorMessage = 'This video couldn’t be loaded.';
 		usedFallback = false;
 	});
 
@@ -350,7 +355,17 @@
 		lastAppliedSrc = nextSrc;
 
 		attachedSource?.destroy();
-		attachedSource = await attachVideoSource(videoElement, nextSrc);
+		attachedSource = await attachVideoSource(videoElement, nextSrc, {
+			onError: (message) => {
+				loadErrorMessage = message;
+				loadError = true;
+				if (fallbackSrc && !usedFallback) {
+					usedFallback = true;
+					loadError = false;
+					loadErrorMessage = 'This video couldn’t be loaded.';
+				}
+			}
+		});
 		// Ensure the element treats the new source as active (esp. after switching fallback).
 		videoElement.load();
 		if (autoplay) {
@@ -393,7 +408,7 @@
 
 	{#if loadError}
 		<div class="video-error-overlay">
-			<p class="video-error-message">This video couldn’t be loaded.</p>
+			<p class="video-error-message">{loadErrorMessage}</p>
 			{#if fallbackSrc && !usedFallback}
 				<button type="button" class="video-error-fallback" onclick={tryFallback}>
 					Try sample video

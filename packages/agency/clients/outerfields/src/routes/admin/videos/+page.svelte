@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { Upload, RefreshCw, Save, Archive, ExternalLink } from 'lucide-svelte';
+	import { onDestroy, tick } from 'svelte';
 
 	type VisibilityFilter = 'all' | 'draft' | 'published' | 'archived';
 	type IngestFilter = 'all' | 'pending_upload' | 'processing' | 'ready' | 'failed';
@@ -49,7 +50,6 @@
 		series_id: string;
 		episode_number: string;
 		thumbnail_path: string;
-		asset_path: string;
 		playback_policy: 'private' | 'public';
 		is_featured: boolean;
 		featured_order: number;
@@ -63,6 +63,12 @@
 	};
 
 	let drafts = $state<Record<string, EditDraft>>({});
+	let highlightedVideoId = $state<string | null>(null);
+	let ingestMonitoringVideoId = $state<string | null>(null);
+	let ingestMonitorToken = 0;
+
+	const INGEST_POLL_INTERVAL_MS = 5000;
+	const INGEST_POLL_TIMEOUT_MS = 3 * 60 * 1000;
 
 	$effect(() => {
 		videos = data.videos;
@@ -80,7 +86,6 @@
 			series_id: video.series_id || '',
 			episode_number: video.episode_number === null ? '' : String(video.episode_number),
 			thumbnail_path: video.thumbnail_path || '',
-			asset_path: video.asset_path || '',
 			playback_policy: video.playback_policy,
 			is_featured: video.is_featured === 1,
 			featured_order: video.featured_order || 0
@@ -148,6 +153,94 @@
 		return parsed;
 	}
 
+	function getVideoById(videoId: string): VideoRow | undefined {
+		return videos.find((row) => row.id === videoId);
+	}
+
+	function canPublishVideo(videoId: string): boolean {
+		return getVideoById(videoId)?.ingest_status === 'ready';
+	}
+
+	async function fetchVideo(videoId: string): Promise<VideoRow> {
+		const response = await fetch(`/api/v1/admin/videos/${videoId}`);
+		const json = (await response.json()) as { success?: boolean; data?: VideoRow; error?: string };
+		if (!response.ok || !json.success || !json.data) {
+			throw new Error(json.error || 'Failed to fetch uploaded video');
+		}
+		return json.data;
+	}
+
+	function upsertVideoRow(nextVideo: VideoRow): void {
+		let found = false;
+		videos = videos.map((row) => {
+			if (row.id !== nextVideo.id) return row;
+			found = true;
+			return nextVideo;
+		});
+		if (!found) videos = [nextVideo, ...videos];
+		delete drafts[nextVideo.id];
+		ensureDraft(nextVideo);
+	}
+
+	async function focusVideoRow(videoId: string): Promise<void> {
+		highlightedVideoId = videoId;
+		await tick();
+		const row = document.getElementById(`video-row-${videoId}`) as HTMLDetailsElement | null;
+		if (!row) return;
+		row.open = true;
+		row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		row.focus();
+	}
+
+	function sleep(ms: number): Promise<void> {
+		return new Promise((resolve) => setTimeout(resolve, ms));
+	}
+
+	async function monitorIngestUntilSettled(videoId: string): Promise<void> {
+		const token = ++ingestMonitorToken;
+		ingestMonitoringVideoId = videoId;
+		const startedAt = Date.now();
+
+		while (token === ingestMonitorToken && Date.now() - startedAt < INGEST_POLL_TIMEOUT_MS) {
+			try {
+				const refreshedVideo = await fetchVideo(videoId);
+				if (token !== ingestMonitorToken) return;
+				upsertVideoRow(refreshedVideo);
+
+				if (refreshedVideo.ingest_status === 'ready') {
+					ingestMonitoringVideoId = null;
+					uploadMessage = 'Stream ingest is ready. You can publish this video now.';
+					return;
+				}
+
+				if (refreshedVideo.ingest_status === 'failed') {
+					ingestMonitoringVideoId = null;
+					const reason = refreshedVideo.failure_reason?.trim();
+					uploadMessage = reason
+						? `Stream processing failed: ${reason}`
+						: 'Stream processing failed. Review ingest details before publishing.';
+					return;
+				}
+			} catch (error) {
+				if (token === ingestMonitorToken) {
+					ingestMonitoringVideoId = null;
+					uploadMessage =
+						error instanceof Error
+							? `Could not refresh ingest status: ${error.message}`
+							: 'Could not refresh ingest status';
+				}
+				return;
+			}
+
+			await sleep(INGEST_POLL_INTERVAL_MS);
+		}
+
+		if (token === ingestMonitorToken) {
+			ingestMonitoringVideoId = null;
+			uploadMessage = 'Upload is still processing in Stream. Publish once ingest status shows ready.';
+		}
+	}
+
 	async function saveVideo(videoId: string) {
 		actionMessage = null;
 		actionError = null;
@@ -155,6 +248,9 @@
 		try {
 			const draft = drafts[videoId];
 			if (!draft) throw new Error('Missing draft state');
+			if (draft.visibility === 'published' && !canPublishVideo(videoId)) {
+				throw new Error('Cannot publish until ingest status is ready.');
+			}
 
 			const payload: Record<string, unknown> = {
 				title: draft.title,
@@ -163,7 +259,6 @@
 				series_id: draft.series_id || null,
 				episode_number: parseEpisodeNumber(draft.episode_number),
 				thumbnail_path: draft.thumbnail_path,
-				asset_path: draft.asset_path,
 				playback_policy: draft.playback_policy,
 				visibility: draft.visibility,
 				is_featured: draft.is_featured ? 1 : 0,
@@ -223,6 +318,9 @@
 		uploadMessage = null;
 		uploadVideoId = null;
 		uploadProgress = 0;
+		highlightedVideoId = null;
+		ingestMonitoringVideoId = null;
+		ingestMonitorToken += 1;
 
 		if (!uploadFile) {
 			uploadMessage = 'Choose a video file to upload.';
@@ -317,12 +415,33 @@
 			uploadEpisodeNumber = '';
 
 			await refreshVideos();
+			if (uploadVideoId) {
+				const uploadedVideo = await fetchVideo(uploadVideoId);
+				upsertVideoRow(uploadedVideo);
+				await focusVideoRow(uploadVideoId);
+
+				if (uploadedVideo.ingest_status === 'ready') {
+					uploadMessage = 'Upload complete. Stream ingest is ready; you can publish now.';
+				} else if (uploadedVideo.ingest_status === 'failed') {
+					const reason = uploadedVideo.failure_reason?.trim();
+					uploadMessage = reason
+						? `Upload complete but processing failed: ${reason}`
+						: 'Upload complete but processing failed.';
+				} else {
+					uploadMessage = 'Upload complete. Waiting for Stream ingest to reach ready…';
+					void monitorIngestUntilSettled(uploadVideoId);
+				}
+			}
 		} catch (err) {
 			uploadMessage = err instanceof Error ? err.message : 'Upload failed';
 		} finally {
 			uploadBusy = false;
 		}
 	}
+
+	onDestroy(() => {
+		ingestMonitorToken += 1;
+	});
 </script>
 
 <svelte:head>
@@ -507,7 +626,12 @@
 		{:else}
 			<div class="video-list">
 				{#each videos as v (v.id)}
-					<details class="video-card">
+					<details
+						id={"video-row-" + v.id}
+						class="video-card"
+						class:highlighted={highlightedVideoId === v.id}
+						tabindex="-1"
+					>
 						<summary class="video-summary">
 							<div class="summary-title">
 								<span class="title">{v.title}</span>
@@ -535,7 +659,12 @@
 									<span>Visibility</span>
 									<select bind:value={drafts[v.id].visibility}>
 										<option value="draft">draft</option>
-										<option value="published">published</option>
+										<option
+											value="published"
+											disabled={v.ingest_status !== 'ready' && drafts[v.id].visibility !== 'published'}
+										>
+											published
+										</option>
 										<option value="archived">archived</option>
 									</select>
 								</label>
@@ -582,9 +711,13 @@
 									<input bind:value={drafts[v.id].thumbnail_path} />
 								</label>
 
-								<label class="field span-2">
-									<span>Legacy Asset Path</span>
-									<input bind:value={drafts[v.id].asset_path} />
+								<label class="field span-2 readonly-field">
+									<span>Stream UID</span>
+									<input
+										value={v.stream_uid || ''}
+										placeholder="Pending Stream assignment"
+										readonly
+									/>
 								</label>
 
 								<div class="field span-3 inline">
@@ -603,6 +736,22 @@
 									</label>
 								</div>
 							</div>
+
+							{#if v.asset_path}
+								<details class="legacy-debug">
+									<summary>Legacy asset path (read-only debug)</summary>
+									<p class="mono">{v.asset_path}</p>
+								</details>
+							{/if}
+
+							{#if v.ingest_status !== 'ready'}
+								<p class="hint warning">
+									Publishing is disabled while ingest is <span class="mono">{v.ingest_status}</span>.
+								</p>
+							{/if}
+							{#if ingestMonitoringVideoId === v.id}
+								<p class="hint">Checking Stream ingest status…</p>
+							{/if}
 
 							<div class="row-actions">
 								<a class="btn" href={`/watch/${v.id}`} target="_blank" rel="noreferrer">
@@ -741,6 +890,11 @@
 		outline: none;
 	}
 
+	.readonly-field input {
+		background: rgba(255, 255, 255, 0.06);
+		color: var(--color-fg-secondary);
+	}
+
 	.span-2 {
 		grid-column: span 2;
 	}
@@ -829,6 +983,30 @@
 		color: var(--color-fg-secondary);
 	}
 
+	.legacy-debug {
+		margin-top: 0.85rem;
+		padding: 0.75rem;
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		border-radius: 0.75rem;
+		background: rgba(255, 255, 255, 0.02);
+	}
+
+	.legacy-debug summary {
+		cursor: pointer;
+		font-size: 0.8rem;
+		color: var(--color-fg-muted);
+	}
+
+	.legacy-debug p {
+		margin: 0.6rem 0 0;
+		color: var(--color-fg-secondary);
+		word-break: break-all;
+	}
+
+	.warning {
+		color: rgba(255, 220, 140, 0.95);
+	}
+
 	.filters {
 		display: grid;
 		grid-template-columns: 1.4fr repeat(5, 1fr);
@@ -848,6 +1026,11 @@
 		border-radius: 1rem;
 		background: rgba(0, 0, 0, 0.18);
 		overflow: hidden;
+	}
+
+	.video-card.highlighted {
+		border-color: rgba(244, 81, 38, 0.5);
+		box-shadow: 0 0 0 1px rgba(244, 81, 38, 0.25);
 	}
 
 	.video-summary {
