@@ -21,6 +21,7 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
+import { enableTelemetry } from '@create-something/mcp-core';
 import { z } from 'zod';
 import { WORKWAY_FLEET_SERVERS } from '../../../config/mcp-hub/telemetry-fleet.ts';
 
@@ -31,6 +32,7 @@ import { WORKWAY_FLEET_SERVERS } from '../../../config/mcp-hub/telemetry-fleet.t
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   DB: D1Database;
+  BRAINTRUST_API_KEY?: string;
 }
 
 interface D1Database {
@@ -88,6 +90,10 @@ export class TelemetryMCP extends McpAgent<Env> {
 
   async init() {
     const db = this.env.DB;
+    enableTelemetry(this.server, db, SERVER_NAME, undefined, {
+      apiKey: (this.env as any).BRAINTRUST_API_KEY,
+      projectName: SERVER_NAME,
+    });
 
     // ─── Resources (Database tier) ──────────────────────────────────────
 

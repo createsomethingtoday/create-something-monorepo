@@ -682,6 +682,12 @@ function buildHalfDozenRunInput(env: Env, body: AgentRouteBody | { query?: strin
   };
 }
 
+function isBraintrustRouteTracingEnabled(env: Env): boolean {
+  const enabled = env.BRAINTRUST_ENABLED?.trim().toLowerCase();
+  if (enabled === 'false' || enabled === '0' || enabled === 'off') return false;
+  return Boolean(env.BRAINTRUST_API_KEY);
+}
+
 function parseSlackCommandFields(rawBody: string): SlackCommandFields {
   const params = new URLSearchParams(rawBody);
   return {
@@ -742,7 +748,7 @@ function queueSlackScenarioRun(
 
   ctx.waitUntil(
     (async () => {
-      const braintrustTracingEnabled = false;
+      const braintrustTracingEnabled = isBraintrustRouteTracingEnabled(env);
 
       try {
         const result = await runScenarioByKey(scenario, {
@@ -960,7 +966,7 @@ export default {
 
       const baseInput = buildHalfDozenRunInput(env, body);
       const scenario = parseScenarioFromRoute(url.pathname);
-      const braintrustTracingEnabled = false;
+      const braintrustTracingEnabled = isBraintrustRouteTracingEnabled(env);
 
       try {
         const result = await runScenarioByKey(scenario, {

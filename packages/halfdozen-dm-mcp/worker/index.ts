@@ -32,6 +32,7 @@ interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   FEEDBACK_DB: D1Database;
   DRIVE_SYNC_DB?: D1Database;
+  BRAINTRUST_API_KEY?: string;
 
   MCP_API_KEY?: string;
   NOTION_API_KEY?: string;
@@ -70,7 +71,10 @@ export class HalfDozenDmMcp extends McpAgent<Env> {
   async init() {
     // Telemetry: meter all tool calls + register health/usage resources
     if (this.env.FEEDBACK_DB) {
-      enableTelemetry(this.server, this.env.FEEDBACK_DB, SERVER_NAME);
+      enableTelemetry(this.server, this.env.FEEDBACK_DB, SERVER_NAME, undefined, {
+        apiKey: (this.env as any).BRAINTRUST_API_KEY,
+        projectName: SERVER_NAME,
+      });
     }
 
     const config = getDmConfig(this.env);

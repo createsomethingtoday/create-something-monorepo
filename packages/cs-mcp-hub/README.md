@@ -57,12 +57,46 @@ Then disable direct downstream entries in `.codex/config.toml` (or let the hub w
 - `hub_list_proxy_tools`
 - `hub_search_proxy_tools` (query/server filter + cursor pagination)
 - `hub_policy_status` (active policy/runtime limit settings)
+- `hub_route_problem` (problem-axis classification + model/workflow routing recommendation)
 
 Proxied tool names are namespaced:
 
 `<server>__<tool>`
 
 Example: `create-something__search`
+
+## Problem Routing Tool
+
+`hub_route_problem` resolves the "which model for which problem" question by classifying a task across bottleneck axes:
+
+- reasoning
+- effort
+- coordination
+- domain expertise
+- ambiguity
+- judgment/willpower
+- emotional intelligence
+
+It returns:
+
+- primary and secondary bottleneck axes with confidence
+- recommended routing profile (`pure_reasoner`, `equipped_reasoner`, `specialist_coder`, etc.)
+- staged execution plan
+- guardrails for human checkpoints
+
+Example tool call payload:
+
+```json
+{
+  "task": "Coordinate 6 teams to migrate 3000 contracts with API tooling",
+  "requiresToolOrchestration": true,
+  "stakeholderCount": 8,
+  "expectedDurationMinutes": 720,
+  "riskLevel": "high",
+  "domainCriticality": "medium",
+  "isCodeTask": true
+}
+```
 
 ## Admin CLI
 

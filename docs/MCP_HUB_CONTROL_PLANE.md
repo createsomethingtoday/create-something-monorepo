@@ -67,6 +67,13 @@ Example:
 - `create-something__search`
 - `playbook__workflow_setup`
 
+## Judgment Routing Utility
+
+The hub also exposes `hub_route_problem` to classify a task by bottleneck axis
+(reasoning, effort, coordination, ambiguity, etc.) and return a routing plan.
+
+This operationalizes the "which AI for which problem" discipline directly in the MCP layer.
+
 ## Operational Note
 
 State changes update files immediately, but proxied tool inventory is built at startup. Restart the hub after changing enabled bundles/servers.

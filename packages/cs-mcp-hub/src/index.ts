@@ -21,6 +21,7 @@ import {
   writeCodexConfig,
 } from './config.js';
 import { closeDownstreamServers, connectDownstreamServers } from './downstream.js';
+import { routeProblem, type HubProblemRouteArgs } from './problem-routing.js';
 import type { McpBundleRegistry, RegistryPaths, StatePatch } from './types.js';
 
 const HUB_NAME = 'create-something-hub';
@@ -97,6 +98,26 @@ const MANAGEMENT_TOOLS: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'hub_route_problem',
+    description:
+      'Classify task bottleneck axis (reasoning/effort/coordination/ambiguity/etc.) and return model-profile routing.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        task: { type: 'string' },
+        context: { type: 'string' },
+        requiresToolOrchestration: { type: 'boolean' },
+        stakeholderCount: { type: 'number' },
+        expectedDurationMinutes: { type: 'number' },
+        riskLevel: { type: 'string', enum: ['low', 'medium', 'high'] },
+        domainCriticality: { type: 'string', enum: ['low', 'medium', 'high'] },
+        isCodeTask: { type: 'boolean' },
+      },
+      required: ['task'],
       additionalProperties: false,
     },
   },
@@ -278,6 +299,10 @@ async function runServerMode(): Promise<void> {
 
       if (toolName === 'hub_policy_status') {
         return toJsonResult(buildPolicyStatusPayload(rateLimitPolicy));
+      }
+
+      if (toolName === 'hub_route_problem') {
+        return toJsonResult(routeProblem(parseProblemRouteArgs(args)));
       }
 
       if (toolName === 'hub_update_state') {
@@ -801,6 +826,19 @@ function numberArg(raw: unknown, fallback: number, min: number, max: number): nu
   return Math.max(min, Math.min(max, Math.floor(raw)));
 }
 
+function enumArg<T extends string>(raw: unknown, fieldName: string, values: readonly T[], fallback: T): T {
+  if (raw === undefined) return fallback;
+  if (typeof raw !== 'string') {
+    throw new Error(`"${fieldName}" must be one of: ${values.join(', ')}`);
+  }
+  const normalized = raw.trim().toLowerCase();
+  const matched = values.find((value) => value === normalized);
+  if (!matched) {
+    throw new Error(`"${fieldName}" must be one of: ${values.join(', ')}`);
+  }
+  return matched;
+}
+
 function stringArrayArg(raw: unknown, fieldName: string): string[] {
   if (raw === undefined) {
     return [];
@@ -819,6 +857,40 @@ function booleanArg(raw: unknown, defaultValue: boolean): boolean {
     throw new Error('Boolean argument expected');
   }
   return raw;
+}
+
+function parseProblemRouteArgs(args: Record<string, unknown>): HubProblemRouteArgs {
+  const task = stringArg(args.task);
+  if (!task) {
+    throw new Error('"task" is required');
+  }
+
+  const context = stringArg(args.context) ?? undefined;
+
+  let isCodeTask: boolean | null | undefined;
+  if (args.isCodeTask === undefined) {
+    isCodeTask = undefined;
+  } else if (typeof args.isCodeTask === 'boolean') {
+    isCodeTask = args.isCodeTask;
+  } else {
+    throw new Error('"isCodeTask" must be a boolean');
+  }
+
+  return {
+    task,
+    context,
+    requiresToolOrchestration: booleanArg(args.requiresToolOrchestration, false),
+    stakeholderCount: numberArg(args.stakeholderCount, 1, 1, 10_000),
+    expectedDurationMinutes: numberArg(args.expectedDurationMinutes, 60, 1, 60 * 24 * 30),
+    riskLevel: enumArg(args.riskLevel, 'riskLevel', ['low', 'medium', 'high'] as const, 'medium'),
+    domainCriticality: enumArg(
+      args.domainCriticality,
+      'domainCriticality',
+      ['low', 'medium', 'high'] as const,
+      'medium',
+    ),
+    isCodeTask,
+  };
 }
 
 function loadContext(): { paths: RegistryPaths; registry: McpBundleRegistry } {
