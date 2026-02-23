@@ -28,6 +28,8 @@ import { registerFeedbackTool, D1FeedbackStore, enableTelemetry } from '@create-
 interface Env {
   NOTION_API_KEY: string;
   NOTION_DATABASE_ID: string;
+  BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_NAME?: string;
   RESEND_API_KEY?: string;
   SYNC_PLAYLIST_URLS?: string;  // Comma-separated playlist URLs for cron
   ALERT_EMAIL?: string;
@@ -41,6 +43,12 @@ interface Env {
 
 const SERVER_NAME = 'half-dozen-youtube-sync';
 const SERVER_VERSION = '2.0.0';
+const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+
+function resolveBraintrustProjectName(env: { BRAINTRUST_PROJECT_NAME?: string }): string {
+  const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
+  return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+}
 
 const NOTION_API = 'https://api.notion.com/v1';
 const NOTION_VERSION = '2022-06-28';
@@ -476,7 +484,7 @@ export class YouTubeSyncMCP extends McpAgent<Env> {
     if (this.env.FEEDBACK_DB) {
       enableTelemetry(this.server, this.env.FEEDBACK_DB, SERVER_NAME, undefined, {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
-        projectName: SERVER_NAME,
+        projectName: resolveBraintrustProjectName(this.env),
       });
     }
 

@@ -48,6 +48,8 @@ interface Env {
 
   // Shared feedback database (all Half Dozen MCPs)
   FEEDBACK_DB: any;
+  BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_NAME?: string;
 
   // KV namespace for session context
   ZOOM_SESSION_CONTEXT: KVNamespace;
@@ -67,6 +69,12 @@ interface Env {
 const SESSION_CONTEXT_KEY = 'zoom-session-context';
 // Steel Profile ID (preferred over session context when set — one-time login, reuse until 30-day expiry)
 const CLIPS_PROFILE_ID_KEY = 'zoom-clips-profile-id';
+const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+
+function resolveBraintrustProjectName(env: { BRAINTRUST_PROJECT_NAME?: string }): string {
+  const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
+  return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+}
 
 // =============================================================================
 // MCP Agent — Durable Object with all three primitives
@@ -90,7 +98,7 @@ export class ZoomClipsMCP extends McpAgent<Env> {
     if (this.env.FEEDBACK_DB) {
       enableTelemetry(this.server, this.env.FEEDBACK_DB, 'halfdozen-zoom-sync', undefined, {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
-        projectName: 'halfdozen-zoom-sync',
+        projectName: resolveBraintrustProjectName(this.env),
       });
     }
 

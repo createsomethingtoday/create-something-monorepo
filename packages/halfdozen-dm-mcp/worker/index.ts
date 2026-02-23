@@ -33,6 +33,7 @@ interface Env {
   FEEDBACK_DB: D1Database;
   DRIVE_SYNC_DB?: D1Database;
   BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_NAME?: string;
 
   MCP_API_KEY?: string;
   NOTION_API_KEY?: string;
@@ -57,6 +58,12 @@ interface Env {
 }
 
 const SERVER_NAME = 'halfdozen-dm-mcp';
+const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+
+function resolveBraintrustProjectName(env: { BRAINTRUST_PROJECT_NAME?: string }): string {
+  const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
+  return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+}
 
 // =============================================================================
 // MCP Agent
@@ -73,7 +80,7 @@ export class HalfDozenDmMcp extends McpAgent<Env> {
     if (this.env.FEEDBACK_DB) {
       enableTelemetry(this.server, this.env.FEEDBACK_DB, SERVER_NAME, undefined, {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
-        projectName: SERVER_NAME,
+        projectName: resolveBraintrustProjectName(this.env),
       });
     }
 

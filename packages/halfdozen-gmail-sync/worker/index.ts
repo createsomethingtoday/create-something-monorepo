@@ -19,6 +19,8 @@ interface Env {
   NOTION_API_KEY: string;
   NOTION_INTERACTIONS_DB_ID: string;
   NOTION_CONTACTS_DB_ID: string;
+  BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_NAME?: string;
   AUTHORIZED_EMAIL: string;        // The single user this instance serves
   TEAM_EMAILS?: string;            // Optional: full team list for direction detection
   ADMIN_SECRET?: string;
@@ -74,6 +76,13 @@ interface Automation {
 // Gmail API helpers
 // ═══════════════════════════════════════════════════════════════
 const GMAIL_API = 'https://gmail.googleapis.com/gmail/v1/users/me';
+const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+
+function resolveBraintrustProjectName(env: { BRAINTRUST_PROJECT_NAME?: string }): string {
+  const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
+  return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+}
+
 const OAUTH_SCOPES = [
   'https://www.googleapis.com/auth/gmail.readonly',
   'https://www.googleapis.com/auth/userinfo.email',
@@ -793,7 +802,7 @@ export class GmailSyncMCPv2 extends McpAgent<Env> {
     if (this.env.FEEDBACK_DB) {
       enableTelemetry(this.server, this.env.FEEDBACK_DB, 'halfdozen-gmail-sync', undefined, {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
-        projectName: 'halfdozen-gmail-sync',
+        projectName: resolveBraintrustProjectName(this.env),
       });
     }
 

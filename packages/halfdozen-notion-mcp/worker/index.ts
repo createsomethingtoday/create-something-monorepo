@@ -26,6 +26,8 @@ import { registerTaskWorkflowPrompt } from '../src/prompts.js';
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   FEEDBACK_DB: D1Database;
+  BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_NAME?: string;
   NOTION_API_KEY?: string;
   NOTION_CLIENT_API_KEY?: string;
   WORKSPACE_HALFDOZEN_LABEL?: string;
@@ -37,6 +39,12 @@ interface Env {
 }
 
 const SERVER_NAME = 'notion-halfdozen-create-something';
+const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+
+function resolveBraintrustProjectName(env: { BRAINTRUST_PROJECT_NAME?: string }): string {
+  const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
+  return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+}
 
 // =============================================================================
 // MCP Agent
@@ -53,7 +61,7 @@ export class NotionHalfDozenMcp extends McpAgent<Env> {
     if (this.env.FEEDBACK_DB) {
       enableTelemetry(this.server, this.env.FEEDBACK_DB, SERVER_NAME, undefined, {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
-        projectName: SERVER_NAME,
+        projectName: resolveBraintrustProjectName(this.env),
       });
     }
 

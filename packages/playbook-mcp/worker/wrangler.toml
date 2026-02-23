@@ -33,7 +33,7 @@ database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
 # Braintrust tracing defaults (override per environment in the Cloudflare dashboard).
 # Tracing is enabled automatically when `BRAINTRUST_API_KEY` is present; `BRAINTRUST_ENABLED`
 # provides an explicit on/off switch.
-BRAINTRUST_PROJECT_NAME = "Playbook MCP"
+BRAINTRUST_PROJECT_NAME = "CREATE SOMETHING"
 BRAINTRUST_ENABLED = "true"
 
 # Required secrets for protected Half Dozen agent routes:

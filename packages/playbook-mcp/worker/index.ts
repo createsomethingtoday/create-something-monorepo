@@ -63,6 +63,7 @@ const HALFDOZEN_INBOX_TRIAGE_ROUTE = '/clients/halfdozen/agents/inbox-triage/run
 const HALFDOZEN_DEDUP_ROUTE = '/clients/halfdozen/agents/dedup/run';
 const HALFDOZEN_SLACK_COMMAND_ROUTE = '/clients/halfdozen/slack/commands';
 const SLACK_TIMESTAMP_TOLERANCE_SECONDS = 300;
+const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
 
 const HALFDOZEN_PROTECTED_ROUTES = [
   HALFDOZEN_FLEET_WATCHDOG_ROUTE,
@@ -682,6 +683,11 @@ function buildHalfDozenRunInput(env: Env, body: AgentRouteBody | { query?: strin
   };
 }
 
+function resolveBraintrustProjectName(env: { BRAINTRUST_PROJECT_NAME?: string }): string {
+  const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
+  return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+}
+
 function isBraintrustRouteTracingEnabled(env: Env): boolean {
   const enabled = env.BRAINTRUST_ENABLED?.trim().toLowerCase();
   if (enabled === 'false' || enabled === '0' || enabled === 'off') return false;
@@ -786,7 +792,7 @@ export class PlaybookMCP extends McpAgent<Env> {
     if (this.env.TELEMETRY_DB) {
       enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'playbook', undefined, {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
-        projectName: 'playbook',
+        projectName: resolveBraintrustProjectName(this.env),
       });
     }
 

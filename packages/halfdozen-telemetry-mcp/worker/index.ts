@@ -33,6 +33,7 @@ interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   DB: D1Database;
   BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_NAME?: string;
 }
 
 interface D1Database {
@@ -48,6 +49,12 @@ interface D1PreparedStatement {
 
 const SERVER_NAME = 'halfdozen-telemetry';
 const SERVER_VERSION = '1.0.0';
+const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+
+function resolveBraintrustProjectName(env: { BRAINTRUST_PROJECT_NAME?: string }): string {
+  const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
+  return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+}
 
 // Known servers in the fleet
 const FLEET_SERVERS = WORKWAY_FLEET_SERVERS;
@@ -92,7 +99,7 @@ export class TelemetryMCP extends McpAgent<Env> {
     const db = this.env.DB;
     enableTelemetry(this.server, db, SERVER_NAME, undefined, {
       apiKey: (this.env as any).BRAINTRUST_API_KEY,
-      projectName: SERVER_NAME,
+      projectName: resolveBraintrustProjectName(this.env),
     });
 
     // ─── Resources (Database tier) ──────────────────────────────────────
