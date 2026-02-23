@@ -128,6 +128,25 @@
         },
         "catalog": {
           "$ref": "#/$defs/catalog"
+        },
+        "capabilityClass": {
+          "type": "string",
+          "enum": ["read", "write", "mixed"]
+        },
+        "riskTier": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        },
+        "retryProfile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requiredScopes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
@@ -174,6 +193,25 @@
         },
         "catalog": {
           "$ref": "#/$defs/catalog"
+        },
+        "capabilityClass": {
+          "type": "string",
+          "enum": ["read", "write", "mixed"]
+        },
+        "riskTier": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        },
+        "retryProfile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requiredScopes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },

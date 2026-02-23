@@ -26,6 +26,10 @@ type BaseServer = {
   lifecycle?: ServerLifecycle;
   package_path?: string;
   catalog?: CatalogConfig;
+  capabilityClass?: 'read' | 'write' | 'mixed';
+  riskTier?: 'low' | 'medium' | 'high';
+  retryProfile?: string;
+  requiredScopes?: string[];
 };
 
 type HttpServer = BaseServer & {
@@ -190,6 +194,18 @@ function validateRegistry(data: Registry): string[] {
         errors.push(`duplicate catalog slug: ${slug}`);
       }
       catalogSlugs.add(slug);
+    }
+
+    if (server.capabilityClass && !['read', 'write', 'mixed'].includes(server.capabilityClass)) {
+      errors.push(`server ${serverName}: capabilityClass must be read|write|mixed`);
+    }
+
+    if (server.riskTier && !['low', 'medium', 'high'].includes(server.riskTier)) {
+      errors.push(`server ${serverName}: riskTier must be low|medium|high`);
+    }
+
+    if (server.requiredScopes && (!Array.isArray(server.requiredScopes) || server.requiredScopes.some((scope) => typeof scope !== 'string' || scope.trim().length === 0))) {
+      errors.push(`server ${serverName}: requiredScopes must be a non-empty string array when provided`);
     }
   }
 

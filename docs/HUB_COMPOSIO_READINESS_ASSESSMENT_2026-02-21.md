@@ -5,6 +5,17 @@
 - **Hub MCP production ready?** **Not yet for the documented target: one MCP gateway fronting hundreds of tools.**
 - **Composio integration complete?** **Recommendation is now documented as conditional adopt, but full completion is still open pending pilot closure.**
 
+## Update (2026-02-23)
+
+Remote hub implementation now includes:
+
+- brokered discovery/invocation tools (`hub_tools_search`, `hub_tools_describe`, `hub_tools_invoke`)
+- catalog persistence in `HUB_CONTROL_DB` + `hub_refresh_catalog`
+- JWT claims auth mode with scope/capability policy checks
+- centralized retry profile execution in the gateway runtime
+
+Backward compatibility mode is still active (`HUB_ENABLE_LEGACY_PROXY_TOOLS=true` by default), so fleet migration and closure evidence remain required before upgrading this report’s final verdict.
+
 ## Evidence from project documentation
 
 ### 1) Hub MCP readiness

@@ -12,6 +12,11 @@ binding = "TELEMETRY_DB"
 database_name = "cs-telemetry"
 database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
 
+[[d1_databases]]
+binding = "HUB_CONTROL_DB"
+database_name = "cs-mcp-hub-control"
+database_id = "d0bd6b84-3d9e-4ddc-8fc3-d12be7878e0b"
+
 [[kv_namespaces]]
 binding = "HUB_STATE_KV"
 id = "f77e7c97087041d29fbf0d12e5a831ee"
@@ -20,6 +25,16 @@ preview_id = "6356c7663c334a4195243971e117565c"
 [vars]
 # Optional. If set, /mcp requires Authorization: Bearer <token>
 # HUB_API_TOKEN = ""
+# HUB_AUTH_REQUIRED = "true"
+# HUB_AUTH_JWKS_URL = "https://auth.example.com/.well-known/jwks.json"
+# HUB_AUTH_ISSUER = "https://auth.example.com/"
+# HUB_AUTH_AUDIENCE = "create-something-hub"
+# HUB_AUTH_CLOCK_SKEW_SECONDS = "60"
+# HUB_ALLOW_STATIC_OPERATOR_TOKEN = "false"
+# HUB_ENABLE_LEGACY_PROXY_TOOLS = "true"
+# HUB_BROKER_DEFAULT_LIMIT = "25"
+# HUB_RETRY_PROFILE_DEFAULT = "standard"
+# HUB_CATALOG_TTL_SECONDS = "300"
 
 # Comma-separated or JSON array strings.
 # Defaults to registry defaults when unset.

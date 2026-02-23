@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "defaultEffect": "deny",
+  "allow": [
+    {
+      "scope": "hub:admin",
+      "server": "*",
+      "tool": "*"
+    },
+    {
+      "scope": "hub:invoke:read",
+      "server": "*",
+      "tool": "*"
+    },
+    {
+      "scope": "hub:invoke:write",
+      "server": "*",
+      "tool": "*"
+    }
+  ],
+  "deny": [
+    {
+      "scope": "hub:deny",
+      "server": "*",
+      "tool": "*"
+    }
+  ],
+  "retryProfiles": {
+    "standard": {
+      "maxAttempts": 3,
+      "baseDelayMs": 200,
+      "maxDelayMs": 2000,
+      "jitter": true,
+      "retryableStatusCodes": [408, 429, 500, 502, 503, 504],
+      "retryableErrorSubstrings": ["timeout", "temporar", "rate limit", "429", "503"],
+      "nonRetryableErrorSubstrings": ["permission", "forbidden", "unauthorized", "invalid_request"]
+    },
+    "aggressive": {
+      "maxAttempts": 5,
+      "baseDelayMs": 150,
+      "maxDelayMs": 3000,
+      "jitter": true,
+      "retryableStatusCodes": [408, 429, 500, 502, 503, 504],
+      "retryableErrorSubstrings": ["timeout", "temporar", "rate limit", "429", "503", "connection reset"],
+      "nonRetryableErrorSubstrings": ["permission", "forbidden", "unauthorized", "invalid_request"]
+    },
+    "conservative": {
+      "maxAttempts": 2,
+      "baseDelayMs": 300,
+      "maxDelayMs": 1500,
+      "jitter": true,
+      "retryableStatusCodes": [408, 429, 500, 502, 503, 504],
+      "retryableErrorSubstrings": ["timeout", "temporar", "429"],
+      "nonRetryableErrorSubstrings": ["permission", "forbidden", "unauthorized", "invalid_request"]
+    }
+  }
+}

@@ -4,6 +4,10 @@
 
 Evaluate whether the current CREATE SOMETHING MCP organization is ready for a **"one MCP fronting hundreds of tools across dozens of SaaS products"** model, and what should change.
 
+## Update (2026-02-23)
+
+`packages/cs-mcp-hub-remote` now ships brokered gateway primitives (`hub_tools_search`, `hub_tools_describe`, `hub_tools_invoke`, `hub_refresh_catalog`) plus centralized policy enforcement (JWT claims auth, scope/capability checks, rate limits, quotas, retry profiles). Legacy `<server>__<tool>` proxies remain enabled by default for backward compatibility.
+
 ## Executive verdict
 
 **Short answer:** the current shape is a strong foundation for connector modularity, but it is **not yet shaped as a scalable gateway** for hundreds of tools.
