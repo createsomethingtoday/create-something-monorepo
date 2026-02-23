@@ -570,24 +570,23 @@
 		position: fixed;
 		inset: 0;
 		z-index: 50;
-		background: var(--color-overlay-heavy, rgba(0, 0, 0, 0.7));
+		background: color-mix(in srgb, var(--color-shell-surface) 58%, transparent);
 		animation: fadeIn var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.palette {
 		position: fixed;
-		top: 15%;
+		top: 10%;
 		left: 50%;
 		transform: translateX(-50%);
 		z-index: 51;
-		width: min(640px, 90vw);
-		max-height: 70vh;
-		/* Glass Design System - "The Automation Layer" */
-		background-color: var(--glass-bg-medium);
-		backdrop-filter: blur(var(--glass-blur-xl)) var(--glass-saturate-xl);
-		border: 1px solid var(--glass-border-medium);
-		border-radius: var(--radius-lg, 12px);
-		box-shadow: var(--glass-shadow-lg);
+		width: min(720px, 92vw);
+		max-height: 78vh;
+		background: color-mix(in srgb, var(--color-shell-surface-tertiary) 92%, transparent);
+		backdrop-filter: blur(14px);
+		border: 1px solid var(--color-shell-border-default);
+		border-radius: var(--radius-xl, 16px);
+		box-shadow: var(--color-shell-shadow-strong);
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
@@ -598,8 +597,8 @@
 		display: flex;
 		align-items: center;
 		gap: var(--space-sm, 1rem);
-		padding: var(--space-md, 1.618rem);
-		border-bottom: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		padding: var(--space-sm, 1rem) var(--space-md, 1.618rem);
+		border-bottom: 1px solid var(--color-shell-border-default);
 	}
 
 	.palette-search-icon {
@@ -626,14 +625,14 @@
 	.palette-loading {
 		font-size: var(--text-caption, 0.75rem);
 		color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
-		background: var(--color-bg-surface, #111);
+		background: var(--color-shell-surface-elevated);
 		padding: 4px 8px;
 		border-radius: var(--radius-sm, 6px);
-		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		border: 1px solid var(--color-shell-border-default);
 	}
 
 	.palette-loading {
-		color: var(--color-accent, #3b82f6);
+		color: var(--color-fg-secondary);
 	}
 
 	.palette-results {
@@ -663,11 +662,11 @@
 		display: flex;
 		align-items: center;
 		gap: var(--space-xs, 0.5rem);
-		padding: var(--space-xs, 0.5rem) var(--space-sm, 1rem);
+		padding: var(--space-xs, 0.5rem) var(--space-sm, 0.75rem);
 		font-size: var(--text-caption, 0.75rem);
 		color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
 		text-transform: uppercase;
-		letter-spacing: 0.05em;
+		letter-spacing: 0.08em;
 	}
 
 	.palette-group-icon {
@@ -689,17 +688,25 @@
 		gap: var(--space-sm, 1rem);
 		width: 100%;
 		padding: var(--space-sm, 1rem);
-		background: transparent;
-		border: none;
+		background: color-mix(in srgb, var(--color-shell-surface-secondary) 40%, transparent);
+		border: 1px solid transparent;
 		border-radius: var(--radius-md, 8px);
 		cursor: pointer;
 		text-align: left;
-		transition: background var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+		transition:
+			background var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1)),
+			border-color var(--duration-micro, 200ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
 	}
 
 	.palette-item:hover,
 	.palette-item.selected {
-		background: var(--color-bg-surface, #111);
+		background: var(--color-shell-surface-hover);
+		border-color: var(--color-shell-border-default);
+	}
+
+	.palette-item:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
 	}
 
 	.palette-item-icon {
@@ -734,8 +741,9 @@
 
 	.palette-item-type {
 		font-size: var(--text-caption, 0.75rem);
-		color: var(--color-fg-subtle, rgba(255, 255, 255, 0.3));
-		background: var(--color-bg-surface, #111);
+		color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
+		background: var(--color-shell-surface-elevated);
+		border: 1px solid var(--color-shell-border-subtle);
 		padding: 2px 6px;
 		border-radius: var(--radius-sm, 6px);
 		flex-shrink: 0;
@@ -751,8 +759,8 @@
 		display: flex;
 		gap: var(--space-md, 1.618rem);
 		padding: var(--space-sm, 1rem) var(--space-md, 1.618rem);
-		border-top: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
-		background: var(--color-bg-surface, #111);
+		border-top: 1px solid var(--color-shell-border-default);
+		background: color-mix(in srgb, var(--color-shell-surface-secondary) 90%, transparent);
 	}
 
 	.palette-hint {
@@ -766,15 +774,15 @@
 	.palette-hint kbd {
 		font-size: var(--text-caption-xs, 0.625rem);
 		padding: 2px 6px;
-		background: var(--color-bg-elevated, #0a0a0a);
-		border: 1px solid var(--color-border-default, rgba(255, 255, 255, 0.1));
+		background: var(--color-shell-surface-elevated);
+		border: 1px solid var(--color-shell-border-default);
 		border-radius: var(--radius-sm, 6px);
 	}
 
 	.palette-current {
 		margin-left: auto;
 		font-size: var(--text-caption, 0.75rem);
-		color: var(--color-accent, #3b82f6);
+		color: var(--color-fg-secondary);
 		display: flex;
 		align-items: center;
 		gap: 4px;
@@ -789,11 +797,11 @@
 	@keyframes scaleIn {
 		from {
 			opacity: 0;
-			transform: translateX(-50%) scale(0.95);
+			transform: translateX(-50%) translateY(8px) scale(0.98);
 		}
 		to {
 			opacity: 1;
-			transform: translateX(-50%) scale(1);
+			transform: translateX(-50%) translateY(0) scale(1);
 		}
 	}
 
@@ -831,12 +839,12 @@
 		border-radius: var(--radius-full);
 		
 		/* Canon: elevated surface with strong border for visibility */
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-emphasis);
+		background: var(--color-shell-surface-elevated);
+		border: 1px solid var(--color-shell-border-default);
 		color: var(--color-fg-primary);
 		
 		/* Canon shadow for elevation */
-		box-shadow: var(--shadow-lg);
+		box-shadow: var(--color-shell-shadow);
 		
 		cursor: pointer;
 		align-items: center;
@@ -851,9 +859,9 @@
 	}
 
 	.mobile-search-button:hover {
-		background: var(--color-bg-surface);
-		border-color: var(--color-border-strong);
-		box-shadow: var(--shadow-xl);
+		background: var(--color-shell-surface-hover);
+		border-color: var(--color-shell-border-strong);
+		box-shadow: var(--color-shell-shadow-strong);
 	}
 
 	.mobile-search-button:active {
@@ -873,8 +881,8 @@
 
 	/* Mobile close button in footer - Canon styling */
 	.palette-close-btn {
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
+		background: var(--color-shell-surface-elevated);
+		border: 1px solid var(--color-shell-border-default);
 		border-radius: var(--radius-md);
 		padding: var(--space-xs) var(--space-sm);
 		color: var(--color-fg-secondary);
@@ -887,8 +895,8 @@
 	}
 
 	.palette-close-btn:hover {
-		background: var(--color-bg-surface);
-		border-color: var(--color-border-emphasis);
+		background: var(--color-shell-surface-hover);
+		border-color: var(--color-shell-border-strong);
 	}
 
 	.palette-close-btn:active {
@@ -913,7 +921,7 @@
 			/* More accessible position on mobile */
 			top: var(--space-md);
 			width: calc(100vw - var(--space-md) * 2);
-			max-height: calc(100vh - var(--space-lg) * 2);
+			max-height: calc(100vh - var(--space-md) * 2);
 			border-radius: var(--radius-lg);
 		}
 

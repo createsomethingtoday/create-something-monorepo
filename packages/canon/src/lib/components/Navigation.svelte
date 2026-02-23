@@ -74,7 +74,7 @@
 			</a>
 
 			<!-- Desktop Navigation Links -->
-			<div class="hidden lg:flex items-center gap-8 ml-8">
+			<div class="nav-desktop hidden lg:flex items-center gap-2 ml-8">
 				{#each links as link}
 					<a href={link.href} class="nav-link" class:active={isActive(link)}>
 						{link.label}
@@ -161,13 +161,12 @@
 <style>
 	/* Navigation Container */
 	.nav-container {
-		border-bottom: 1px solid var(--color-border-default);
-		background: var(--color-bg-pure);
+		border-bottom: 1px solid var(--color-shell-border-default);
+		background: var(--color-shell-surface);
 	}
 
 	.nav-inner {
-		padding-top: 1rem;
-		padding-bottom: 1rem;
+		padding: 0.875rem var(--container-padding, 1.5rem);
 		display: flex;
 		flex-direction: column;
 	}
@@ -178,25 +177,21 @@
 		left: 0;
 		right: 0;
 		width: 100%;
-		z-index: 50;
-		/* Glass Design System - "The Automation Layer" */
-		background-color: rgba(0, 0, 0, 0.72);
-		backdrop-filter: blur(16px) saturate(130%);
-		-webkit-backdrop-filter: blur(16px) saturate(130%);
-		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-		/* Liquid glass shine - box-shadow based for premium look */
-		box-shadow: 
-			inset 1px 1px 2px 0 rgba(255, 255, 255, 0.08),
-			inset -1px -1px 1px 0 rgba(255, 255, 255, 0.04),
-			0 4px 24px rgba(0, 0, 0, 0.4);
+		z-index: var(--z-fixed);
+		background-color: color-mix(in srgb, var(--color-shell-surface) 86%, transparent);
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
+		border-bottom: 1px solid var(--color-shell-border-default);
+		box-shadow: var(--color-shell-shadow);
 	}
 
 	/* Logo */
 	.nav-logo {
 		font-size: 1.25rem;
 		font-weight: var(--font-bold);
-		letter-spacing: -0.025em;
+		letter-spacing: -0.02em;
 		color: var(--color-fg-primary);
+		text-decoration: none;
 	}
 
 	.nav-logo-suffix {
@@ -204,70 +199,97 @@
 		color: var(--color-fg-tertiary);
 	}
 
-	/* Navigation Links - Underline Reveal Pattern */
+	/* Navigation Links */
 	.nav-link {
-		position: relative;
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-medium);
 		color: var(--color-fg-secondary);
 		text-decoration: none;
-		transition: color var(--duration-micro) var(--ease-standard);
+		border-radius: var(--radius-md);
+		padding: 0.4rem 0.7rem;
+		transition:
+			color var(--duration-micro) var(--ease-standard),
+			background-color var(--duration-micro) var(--ease-standard),
+			border-color var(--duration-micro) var(--ease-standard);
 	}
 
-	/* Underline reveal on hover (Pattern 2: Typography-First Links) */
-	.nav-link::after {
-		content: '';
-		position: absolute;
-		bottom: -2px;
-		left: 0;
-		width: 0;
-		height: 1px;
-		background: var(--color-fg-primary);
-		transition: width var(--duration-micro) var(--ease-standard);
+	.nav-link:hover {
+		color: var(--color-fg-primary);
+		background: var(--color-shell-surface-hover);
 	}
 
-	.nav-link:hover,
 	.nav-link.active {
 		color: var(--color-fg-primary);
+		background: var(--color-shell-surface-tertiary);
 	}
 
-	.nav-link:hover::after,
-	.nav-link.active::after {
-		width: 100%;
+	.nav-link:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
 	}
 
 	/* CTA Button */
 	.nav-cta {
-		padding: 0.5rem 1.5rem;
+		padding: 0.5rem 1rem;
 		background: var(--color-fg-primary);
 		color: var(--color-bg-pure);
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-semibold);
-		border-radius: var(--radius-full);
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		border-radius: var(--radius-lg);
+		border: 1px solid transparent;
+		text-decoration: none;
+		transition:
+			opacity var(--duration-micro) var(--ease-standard),
+			transform var(--duration-micro) var(--ease-standard);
 	}
 
 	.nav-cta:hover {
 		opacity: 0.9;
+		transform: translateY(-1px);
+	}
+
+	.nav-cta:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
+	}
+
+	.nav-desktop {
+		border: 1px solid var(--color-shell-border-subtle);
+		background: color-mix(in srgb, var(--color-shell-surface-secondary) 88%, transparent);
+		border-radius: var(--radius-full);
+		padding: 0.25rem;
 	}
 
 	/* Mobile Menu Button */
 	.nav-menu-button {
 		color: var(--color-fg-primary);
-		transition: color var(--duration-micro) var(--ease-standard);
+		background: var(--color-shell-surface-tertiary);
+		border: 1px solid var(--color-shell-border-default);
+		border-radius: var(--radius-md);
+		transition:
+			color var(--duration-micro) var(--ease-standard),
+			background var(--duration-micro) var(--ease-standard),
+			border-color var(--duration-micro) var(--ease-standard);
 	}
 
 	.nav-menu-button:hover {
-		color: var(--color-fg-secondary);
+		background: var(--color-shell-surface-hover);
+		border-color: var(--color-shell-border-strong);
+	}
+
+	.nav-menu-button:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
 	}
 
 	/* Mobile Menu */
 	.nav-mobile-menu {
-		border-top: 1px solid rgba(255, 255, 255, 0.1);
-		/* Glass effect for mobile menu */
-		background-color: rgba(0, 0, 0, 0.65);
-		backdrop-filter: blur(12px) saturate(120%);
-		-webkit-backdrop-filter: blur(12px) saturate(120%);
+		border: 1px solid var(--color-shell-border-default);
+		background: var(--color-shell-surface-secondary);
+		border-radius: var(--radius-lg);
+		padding-left: var(--space-sm);
+		padding-right: var(--space-sm);
+		box-shadow: var(--color-shell-shadow);
 	}
 
 	/* Slide down animation for mobile menu */
@@ -295,7 +317,7 @@
 	/* Mobile User Section */
 	.nav-mobile-user {
 		border-top: 1px solid var(--color-border-default);
-		padding-top: var(--space-md);
+		padding-top: var(--space-sm);
 		margin-top: var(--space-sm);
 		display: flex;
 		flex-direction: column;
