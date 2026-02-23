@@ -51,9 +51,12 @@ DRIVE_CRON_INITIAL_LOOKBACK_DAYS = "7"
 COMPOSIO_DRIVE_LIST_FILES_TOOL_SLUG = ""
 COMPOSIO_DRIVE_GET_METADATA_TOOL_SLUG = ""
 COMPOSIO_DRIVE_PARSE_FILE_TOOL_SLUG = ""
+BRAINTRUST_PROJECT_NAME = "halfdozen-dm-mcp"
+BRAINTRUST_ENABLED = "true"
 
 # Secrets (set via wrangler secret put)
 # MCP_API_KEY — required for DM MCP transport auth (Bearer or X-API-Key)
 # NOTION_API_KEY — DM client Notion workspace
 # COMPOSIO_API_KEY — required for Drive sync tools
 # COMPOSIO_GOOGLEDRIVE_AUTH_CONFIG_ID — set to ac_RSiSxytldB_X for connect-link flow
+# BRAINTRUST_API_KEY — optional; enables Braintrust telemetry export

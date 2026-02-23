@@ -1,9 +1,12 @@
 {
-  "enabledBundles": [],
+  "enabledBundles": [
+    "meetings"
+  ],
   "enabledServers": [
     "composio-toolkit-airtable",
     "composio-toolkit-gmail",
-    "composio-toolkit-webflow"
+    "composio-toolkit-webflow",
+    "meetings"
   ],
   "disabledServers": [
     "create-something",
@@ -14,5 +17,5 @@
     "slack_create_something",
     "three-tier-framework"
   ],
-  "updatedAt": "2026-02-21T17:52:12.516Z"
+  "updatedAt": "2026-02-23T17:03:44.309Z"
 }

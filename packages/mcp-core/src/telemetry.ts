@@ -436,6 +436,85 @@ export function enableTelemetry(
   registerTelemetryResources(server, db, serverName, resolveAccount);
 }
 
+/**
+ * Enable Braintrust-only telemetry on an McpServer instance.
+ *
+ * Use this when you want Braintrust traces without requiring D1 telemetry tables.
+ * Call this BEFORE registering tools.
+ */
+export function enableBraintrustTelemetry(
+  server: McpServer,
+  serverName: string,
+  getAccountId?: () => string,
+  braintrustOptions?: BraintrustTelemetryOptions,
+): void {
+  const resolveAccount = getAccountId || (() => 'operator');
+  const braintrustEnabled = initBraintrustTelemetry(braintrustOptions || {}, serverName);
+  if (!braintrustEnabled) return;
+
+  // Proxy server.tool() to wrap handlers with Braintrust-only emission.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const originalToolFn = (server as any).tool;
+
+  (server as any).tool = function (...args: unknown[]) {
+    const lastIdx = args.length - 1;
+    const originalHandler = args[lastIdx];
+
+    if (typeof originalHandler !== 'function') {
+      return originalToolFn.apply(server, args);
+    }
+
+    const toolName = args[0] as string;
+
+    // Skip telemetry meta-operation tool.
+    if (toolName === 'submit_feedback') {
+      return originalToolFn.apply(server, args);
+    }
+
+    args[lastIdx] = async (...handlerArgs: unknown[]) => {
+      const start = Date.now();
+      let accountId = 'operator';
+
+      try {
+        accountId = resolveAccount();
+      } catch (error) {
+        console.warn('[telemetry] getAccountId threw, using fallback accountId=operator:', error);
+      }
+
+      try {
+        const result = await (originalHandler as Function).apply(null, handlerArgs);
+        const durationMs = Date.now() - start;
+        emitBraintrustInvocation({
+          serverName,
+          toolName,
+          accountId,
+          input: handlerArgs[0],
+          output: result,
+          durationMs,
+          success: true,
+        }).catch((e: unknown) => console.warn(`[telemetry] braintrust emit failed for ${toolName}:`, e));
+        return result;
+      } catch (error) {
+        const durationMs = Date.now() - start;
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        emitBraintrustInvocation({
+          serverName,
+          toolName,
+          accountId,
+          input: handlerArgs[0],
+          output: { error: errorMessage },
+          durationMs,
+          success: false,
+          error: errorMessage,
+        }).catch((e: unknown) => console.warn(`[telemetry] braintrust emit failed for ${toolName}:`, e));
+        throw error;
+      }
+    };
+
+    return originalToolFn.apply(server, args);
+  };
+}
+
 // =============================================================================
 // Telemetry Resources
 // =============================================================================

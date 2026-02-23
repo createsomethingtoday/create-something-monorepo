@@ -1,4 +1,5 @@
 import type { MCPServer } from '@openai/agents';
+import { registerOpenAIAgentsBraintrustTracing } from '@create-something/observability/openai-agents';
 
 type AgentsSdk = typeof import('@openai/agents');
 type MCPServerStreamableHttpCtor = typeof import('@openai/agents').MCPServerStreamableHttp;
@@ -94,6 +95,15 @@ export type HalfDozenScenarioRunInput = {
   maxTurns?: number;
   timeoutMs?: number;
   tracingDisabled?: boolean;
+  braintrust?: {
+    enabled?: boolean;
+    apiKey?: string;
+    projectName?: string;
+    orgName?: string;
+    projectId?: string;
+    appUrl?: string;
+    tags?: string[];
+  };
 };
 
 export type HalfDozenScenarioRunResult = {
@@ -489,7 +499,24 @@ export async function runHalfDozenScenario(input: HalfDozenScenarioRunInput): Pr
       mcpServers: mcpServers.active,
     });
 
-    const runner = new agentsSdk.Runner({ tracingDisabled: input.tracingDisabled ?? true });
+    const braintrustTracingEnabled = registerOpenAIAgentsBraintrustTracing({
+      enabled: input.braintrust?.enabled ?? false,
+      projectName: input.braintrust?.projectName,
+      tags: input.braintrust?.tags ?? ['playbook-mcp', 'halfdozen'],
+      braintrust: {
+        apiKey: input.braintrust?.apiKey,
+        projectName: input.braintrust?.projectName,
+        orgName: input.braintrust?.orgName,
+        projectId: input.braintrust?.projectId,
+        appUrl: input.braintrust?.appUrl,
+        enabled: input.braintrust?.enabled ?? false,
+        asyncFlush: true,
+      },
+    });
+
+    const runner = new agentsSdk.Runner({
+      tracingDisabled: input.tracingDisabled ?? !braintrustTracingEnabled,
+    });
     let result: { newItems: unknown[]; finalOutput: unknown };
     try {
       const runResult = await runner.run(agent, query, { maxTurns });

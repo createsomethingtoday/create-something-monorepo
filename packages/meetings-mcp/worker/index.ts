@@ -6,6 +6,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { z } from 'zod';
+import { enableBraintrustTelemetry } from '@create-something/mcp-core';
 
 import { validateApiKey } from './lib/auth.js';
 import {
@@ -27,6 +28,9 @@ interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   DB: D1Database;
   MCP_API_KEY?: string;
+  BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_NAME?: string;
+  BRAINTRUST_ENABLED?: string;
 }
 
 interface SearchRow extends MeetingRow {
@@ -35,6 +39,18 @@ interface SearchRow extends MeetingRow {
 
 const SERVER_NAME = 'meetings';
 const SERVER_VERSION = '1.0.0';
+
+function parseBoolean(raw: string | undefined, fallback: boolean): boolean {
+  if (!raw || !raw.trim()) return fallback;
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') {
+    return true;
+  }
+  if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
+    return false;
+  }
+  return fallback;
+}
 
 function textResult(payload: unknown, isError = false) {
   return {
@@ -132,6 +148,11 @@ export class MeetingsMCP extends McpAgent<Env> {
 
   async init() {
     const db = this.env.DB;
+    enableBraintrustTelemetry(this.server, SERVER_NAME, undefined, {
+      apiKey: this.env.BRAINTRUST_API_KEY,
+      projectName: this.env.BRAINTRUST_PROJECT_NAME ?? SERVER_NAME,
+      enabled: parseBoolean(this.env.BRAINTRUST_ENABLED, true),
+    });
 
     this.server.resource(
       'meetings-stats',

@@ -13,6 +13,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { z } from 'zod';
+import { enableBraintrustTelemetry } from '@create-something/mcp-core';
 import {
   CS_FLEET_SERVERS,
   FLEET_SERVERS,
@@ -28,6 +29,9 @@ interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   DB: D1Database;
   CONTROL_DB?: D1Database;
+  BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_NAME?: string;
+  BRAINTRUST_ENABLED?: string;
   OPERATOR_API_TOKEN?: string;
   HUB_OPERATOR_API_TOKEN?: string;
   WORKWAY_D1_API_TOKEN?: string;
@@ -96,6 +100,18 @@ function timeAgo(dateStr: string): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
+}
+
+function parseBoolean(raw: string | undefined, fallback: boolean): boolean {
+  if (!raw || !raw.trim()) return fallback;
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') {
+    return true;
+  }
+  if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
+    return false;
+  }
+  return fallback;
 }
 
 function parseBearerToken(request: Request): string | null {
@@ -349,6 +365,20 @@ export class CSTelemetryMCP extends McpAgent<Env> {
 
   async init() {
     const db = this.env.DB;
+    enableBraintrustTelemetry(
+      this.server,
+      SERVER_NAME,
+      () => {
+        if (this.mode === 'client') return this.tenantScope?.tenantId ?? 'client';
+        return 'operator';
+      },
+      {
+        apiKey: this.env.BRAINTRUST_API_KEY,
+        projectName: this.env.BRAINTRUST_PROJECT_NAME ?? SERVER_NAME,
+        enabled: parseBoolean(this.env.BRAINTRUST_ENABLED, true),
+      },
+    );
+
     const csSource = createBindingSource('cs', 'create-something', CS_FLEET_SERVERS, db);
     const workwaySource = createWorkwaySource(this.env);
     const sourceMap = new Map<TelemetrySourceKey, TelemetrySource>([

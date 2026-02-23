@@ -26,3 +26,10 @@ new_sqlite_classes = ["TelemetryMCP"]
 binding = "DB"
 database_name = "halfdozen-feedback"
 database_id = "4eb35a0f-6ee2-4d0c-8c0a-9a2ab4049b97"
+
+[vars]
+BRAINTRUST_PROJECT_NAME = "halfdozen-telemetry"
+BRAINTRUST_ENABLED = "true"
+
+# Optional secret:
+# wrangler secret put BRAINTRUST_API_KEY

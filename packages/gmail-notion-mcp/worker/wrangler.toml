@@ -12,6 +12,10 @@ compatibility_flags = ["nodejs_compat"]
 [observability]
 enabled = true
 
+[vars]
+BRAINTRUST_PROJECT_NAME = "gmail-notion-mcp"
+BRAINTRUST_ENABLED = "true"
+
 # D1 for run metering (100 free runs, then 1¢/run). Create DB: wrangler d1 create gmail-notion-mcp-runs
 [[d1_databases]]
 binding = "RUNS_DB"
@@ -31,3 +35,4 @@ new_sqlite_classes = ["GmailNotionMCP"]
 # COMPOSIO_API_KEY — required for Composio tools
 # COMPOSIO_GMAIL_AUTH_CONFIG_ID — optional; for gmail_get_connect_link
 # COMPOSIO_NOTION_AUTH_CONFIG_ID — optional; for notion_get_connect_link
+# BRAINTRUST_API_KEY — optional; enables Braintrust telemetry export

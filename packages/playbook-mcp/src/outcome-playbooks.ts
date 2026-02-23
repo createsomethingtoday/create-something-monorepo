@@ -594,7 +594,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     oversight: 'required',
     requiredIntegrations: [
       { kind: 'mcp', slug: 'substrate', label: 'Substrate', required: true, purpose: 'Store case studies, bios, pricing bands, and proposal templates' },
-      { kind: 'composio', slug: 'google_drive', label: 'Docs (Drive)', required: false, purpose: 'Pull existing assets and deliver the final proposal' },
+      { kind: 'composio', slug: 'googledrive', label: 'Docs (Drive)', required: false, purpose: 'Pull existing assets and deliver the final proposal' },
     ],
     inputs: [
       { schema: 'rfp', description: 'RFP/brief document and any attachments' },
@@ -640,7 +640,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     oversight: 'recommended',
     requiredIntegrations: [
       { kind: 'composio', slug: 'google_analytics', label: 'Analytics (GA4)', required: false, purpose: 'Fetch site/app performance metrics' },
-      { kind: 'composio', slug: 'google_ads', label: 'Ads (Google)', required: false, purpose: 'Fetch ad performance metrics' },
+      { kind: 'composio', slug: 'googleads', label: 'Ads (Google)', required: false, purpose: 'Fetch ad performance metrics' },
       { kind: 'mcp', slug: 'substrate', label: 'Substrate', required: true, purpose: 'Store KPI definitions, templates, and historical briefs' },
     ],
     inputs: [
@@ -731,7 +731,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     oversight: 'required',
     requiredIntegrations: [
       { kind: 'mcp', slug: 'substrate', label: 'Substrate', required: true, purpose: 'Store brand guidelines, prior winners/losers, and creative templates' },
-      { kind: 'composio', slug: 'google_ads', label: 'Ads Platform', required: false, purpose: 'Push approved variants and read performance metrics' },
+      { kind: 'composio', slug: 'googleads', label: 'Ads Platform', required: false, purpose: 'Push approved variants and read performance metrics' },
     ],
     inputs: [
       { schema: 'campaign_brief', description: 'Offer, audience, constraints, target action' },
@@ -775,7 +775,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     oversight: 'required',
     requiredIntegrations: [
       { kind: 'mcp', slug: 'substrate', label: 'Substrate', required: true, purpose: 'Store content pillars, campaign calendar, and approval rules' },
-      { kind: 'composio', slug: 'buffer', label: 'Scheduler (optional)', required: false, purpose: 'Schedule approved posts' },
+      { kind: 'composio', slug: 'ayrshare', label: 'Scheduler (Ayrshare, optional)', required: false, purpose: 'Schedule approved posts' },
     ],
     inputs: [
       { schema: 'content_pillars', description: 'Themes, offers, events, and constraints for the week' },
@@ -1302,7 +1302,7 @@ export const OUTCOME_PLAYBOOKS: OutcomePlaybook[] = [
     whyValuable: 'Onboarding is cross-system and error-prone. Automation reduces delays and ensures consistent access control.',
     oversight: 'required',
     requiredIntegrations: [
-      { kind: 'composio', slug: 'google_workspace', label: 'Google Workspace', required: false, purpose: 'Create user accounts and groups' },
+      { kind: 'composio', slug: 'google_admin', label: 'Google Admin (Workspace)', required: false, purpose: 'Create user accounts and groups' },
       { kind: 'composio', slug: 'slack', label: 'Slack', required: false, purpose: 'Invite to channels and set roles' },
       { kind: 'composio', slug: 'notion', label: 'Notion', required: false, purpose: 'Create onboarding page and tasks' },
       { kind: 'mcp', slug: 'substrate', label: 'Substrate', required: true, purpose: 'Store role templates and audit logs' },

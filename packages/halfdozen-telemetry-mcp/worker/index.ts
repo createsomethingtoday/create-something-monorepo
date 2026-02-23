@@ -22,6 +22,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { z } from 'zod';
+import { enableBraintrustTelemetry } from '@create-something/mcp-core';
 import { WORKWAY_FLEET_SERVERS } from '../../../config/mcp-hub/telemetry-fleet.ts';
 
 // =============================================================================
@@ -31,6 +32,9 @@ import { WORKWAY_FLEET_SERVERS } from '../../../config/mcp-hub/telemetry-fleet.t
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   DB: D1Database;
+  BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_NAME?: string;
+  BRAINTRUST_ENABLED?: string;
 }
 
 interface D1Database {
@@ -71,6 +75,18 @@ function timeAgo(dateStr: string): string {
   return `${days}d ago`;
 }
 
+function parseBoolean(raw: string | undefined, fallback: boolean): boolean {
+  if (!raw || !raw.trim()) return fallback;
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') {
+    return true;
+  }
+  if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
+    return false;
+  }
+  return fallback;
+}
+
 function bindStatement(stmt: D1PreparedStatement, params: unknown[]): D1PreparedStatement {
   if (params.length === 0) return stmt;
   return stmt.bind(...params);
@@ -88,6 +104,11 @@ export class TelemetryMCP extends McpAgent<Env> {
 
   async init() {
     const db = this.env.DB;
+    enableBraintrustTelemetry(this.server, SERVER_NAME, undefined, {
+      apiKey: this.env.BRAINTRUST_API_KEY,
+      projectName: this.env.BRAINTRUST_PROJECT_NAME ?? SERVER_NAME,
+      enabled: parseBoolean(this.env.BRAINTRUST_ENABLED, true),
+    });
 
     // ─── Resources (Database tier) ──────────────────────────────────────
 

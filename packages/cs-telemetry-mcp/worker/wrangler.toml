@@ -39,3 +39,8 @@ database_id = "e6a63efe-8e86-41da-b6ed-e5aa85ba7443"
 # Optional WORKWAY source config for unified telemetry queries.
 WORKWAY_ACCOUNT_ID = "5c3e9cf4d55ce171b844fad0931607f9"
 WORKWAY_TELEMETRY_DB_ID = "4eb35a0f-6ee2-4d0c-8c0a-9a2ab4049b97"
+BRAINTRUST_PROJECT_NAME = "cs-telemetry"
+BRAINTRUST_ENABLED = "true"
+
+# Optional secret:
+# wrangler secret put BRAINTRUST_API_KEY

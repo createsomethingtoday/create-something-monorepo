@@ -70,6 +70,18 @@ const HALFDOZEN_PROTECTED_ROUTES = [
   HALFDOZEN_DEDUP_ROUTE,
 ] as const;
 
+function parseBoolean(raw: string | undefined, fallback: boolean): boolean {
+  if (!raw || !raw.trim()) return fallback;
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') {
+    return true;
+  }
+  if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
+    return false;
+  }
+  return fallback;
+}
+
 const AgentRouteBodySchema = z.object({
   query: z.string().min(1).optional(),
   model: z.string().min(1).optional(),
@@ -89,6 +101,15 @@ type HalfDozenRouteRunInput = {
   maxTurns?: number;
   timeoutMs?: number;
   tracingDisabled?: boolean;
+  braintrust?: {
+    enabled?: boolean;
+    apiKey?: string;
+    projectName?: string;
+    orgName?: string;
+    projectId?: string;
+    appUrl?: string;
+    tags?: string[];
+  };
 };
 
 type ScenarioKey = 'fleet-watchdog' | 'inbox-triage' | 'dedup';
@@ -670,6 +691,8 @@ async function runScenarioByKey(
 }
 
 function buildHalfDozenRunInput(env: Env, body: AgentRouteBody | { query?: string }): HalfDozenRouteRunInput {
+  const braintrustEnabled = parseBoolean(env.BRAINTRUST_ENABLED, true) && Boolean(env.BRAINTRUST_API_KEY);
+
   return {
     openaiApiKey: env.OPENAI_API_KEY as string,
     telemetryMcpUrl: env.HALFDOZEN_TELEMETRY_MCP_URL,
@@ -679,6 +702,16 @@ function buildHalfDozenRunInput(env: Env, body: AgentRouteBody | { query?: strin
     model: 'model' in body ? body.model : undefined,
     maxTurns: 'max_turns' in body ? body.max_turns : undefined,
     timeoutMs: 'timeout_ms' in body ? body.timeout_ms : undefined,
+    tracingDisabled: !braintrustEnabled,
+    braintrust: {
+      enabled: braintrustEnabled,
+      apiKey: env.BRAINTRUST_API_KEY,
+      projectName: env.BRAINTRUST_PROJECT_NAME ?? 'Playbook MCP',
+      orgName: env.BRAINTRUST_ORG_NAME,
+      projectId: env.BRAINTRUST_PROJECT_ID,
+      appUrl: env.BRAINTRUST_APP_URL,
+      tags: ['playbook-mcp', 'halfdozen'],
+    },
   };
 }
 
@@ -742,22 +775,17 @@ function queueSlackScenarioRun(
 
   ctx.waitUntil(
     (async () => {
-      const braintrustTracingEnabled = false;
-
       try {
-        const result = await runScenarioByKey(scenario, {
-          ...runInput,
-          tracingDisabled: !braintrustTracingEnabled,
-        });
+        const result = await runScenarioByKey(scenario, runInput);
         const payload = buildSlackCompletedResponse(result, runId, route);
         await postSlackResponse(responseUrl, payload);
-        if (braintrustTracingEnabled) {
+        if (runInput.braintrust?.enabled) {
           await safeFlushBraintrust('slack scenario run');
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         await postSlackResponse(responseUrl, buildSlackRunFailedResponse(scenario, runId, message));
-        if (braintrustTracingEnabled) {
+        if (runInput.braintrust?.enabled) {
           await safeFlushBraintrust('slack scenario error');
         }
       }
@@ -780,7 +808,8 @@ export class PlaybookMCP extends McpAgent<Env> {
     if (this.env.TELEMETRY_DB) {
       enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'playbook', undefined, {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
-        projectName: 'playbook',
+        projectName: this.env.BRAINTRUST_PROJECT_NAME ?? 'playbook',
+        enabled: parseBoolean(this.env.BRAINTRUST_ENABLED, true),
       });
     }
 
@@ -960,22 +989,18 @@ export default {
 
       const baseInput = buildHalfDozenRunInput(env, body);
       const scenario = parseScenarioFromRoute(url.pathname);
-      const braintrustTracingEnabled = false;
 
       try {
-        const result = await runScenarioByKey(scenario, {
-          ...baseInput,
-          tracingDisabled: !braintrustTracingEnabled,
-        });
+        const result = await runScenarioByKey(scenario, baseInput);
         queueSuccessNotifications(ctx, env, result, url.pathname, runId);
-        if (braintrustTracingEnabled) {
+        if (baseInput.braintrust?.enabled) {
           ctx.waitUntil(safeFlushBraintrust('halfdozen HTTP route success'));
         }
         return jsonResponse(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         queueErrorNotification(ctx, env, scenario, url.pathname, runId, message);
-        if (braintrustTracingEnabled) {
+        if (baseInput.braintrust?.enabled) {
           ctx.waitUntil(safeFlushBraintrust('halfdozen HTTP route error'));
         }
         return jsonResponse(

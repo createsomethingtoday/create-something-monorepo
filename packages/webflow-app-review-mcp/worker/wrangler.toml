@@ -10,6 +10,8 @@ enabled = true
 # Optional default; can also be set as Worker secret/var.
 [vars]
 AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
+BRAINTRUST_PROJECT_NAME = "webflow-app-review-mcp"
+BRAINTRUST_ENABLED = "true"
 
 [[d1_databases]]
 binding = "TELEMETRY_DB"
@@ -24,3 +26,5 @@ class_name = "WebflowAppReviewMCP"
 tag = "v1"
 new_sqlite_classes = ["WebflowAppReviewMCP"]
 
+# Optional secret:
+# wrangler secret put BRAINTRUST_API_KEY

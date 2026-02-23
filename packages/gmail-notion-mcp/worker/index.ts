@@ -12,6 +12,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { ComposioToolFactory } from '@create-something/composio-bridge';
+import { enableBraintrustTelemetry } from '@create-something/mcp-core';
 import { registerAuthTools } from '../src/tools/auth.js';
 import { incrementRun, getUsage } from '../src/metering.js';
 import { normalizeAccountId } from '../src/identity.js';
@@ -27,6 +28,21 @@ interface Env {
   COMPOSIO_NOTION_AUTH_CONFIG_ID?: string;
   /** D1 for run metering (100 free, then 1¢/run). Create with wrangler d1 create gmail-notion-mcp-runs */
   RUNS_DB?: D1Database;
+  BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_NAME?: string;
+  BRAINTRUST_ENABLED?: string;
+}
+
+function parseBoolean(raw: string | undefined, fallback: boolean): boolean {
+  if (!raw || !raw.trim()) return fallback;
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') {
+    return true;
+  }
+  if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
+    return false;
+  }
+  return fallback;
 }
 
 // =============================================================================
@@ -61,6 +77,17 @@ export class GmailNotionMCP extends McpAgent<Env> {
   }
 
   async init() {
+    enableBraintrustTelemetry(
+      this.server,
+      'gmail-notion-mcp',
+      () => this.currentAccountId ?? 'default',
+      {
+        apiKey: this.env.BRAINTRUST_API_KEY,
+        projectName: this.env.BRAINTRUST_PROJECT_NAME ?? 'gmail-notion-mcp',
+        enabled: parseBoolean(this.env.BRAINTRUST_ENABLED, true),
+      },
+    );
+
     const apiKey = this.env.COMPOSIO_API_KEY;
     if (!apiKey) {
       console.warn('COMPOSIO_API_KEY not set; Gmail/Notion tools will not be registered.');

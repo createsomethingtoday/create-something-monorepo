@@ -7,8 +7,13 @@ account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 [observability]
 enabled = true
 
+[vars]
+BRAINTRUST_PROJECT_NAME = "meetings"
+BRAINTRUST_ENABLED = "true"
+
 # Secret required in production:
 # - MCP_API_KEY
+# - BRAINTRUST_API_KEY (optional; enables Braintrust telemetry export)
 
 [[durable_objects.bindings]]
 name = "MCP_OBJECT"

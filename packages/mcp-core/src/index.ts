@@ -107,6 +107,7 @@ export { FEEDBACK_TOOL_SCHEMA, createFeedbackToolHandler, registerFeedbackTool }
 
 export {
   enableTelemetry,
+  enableBraintrustTelemetry,
   recordInvocation,
   getUsage,
   getHealth,

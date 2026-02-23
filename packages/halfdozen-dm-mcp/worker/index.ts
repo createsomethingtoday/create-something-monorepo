@@ -53,9 +53,24 @@ interface Env {
   COMPOSIO_DRIVE_LIST_FILES_TOOL_SLUG?: string;
   COMPOSIO_DRIVE_GET_METADATA_TOOL_SLUG?: string;
   COMPOSIO_DRIVE_PARSE_FILE_TOOL_SLUG?: string;
+  BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_NAME?: string;
+  BRAINTRUST_ENABLED?: string;
 }
 
 const SERVER_NAME = 'halfdozen-dm-mcp';
+
+function parseBoolean(raw: string | undefined, fallback: boolean): boolean {
+  if (!raw || !raw.trim()) return fallback;
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') {
+    return true;
+  }
+  if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
+    return false;
+  }
+  return fallback;
+}
 
 // =============================================================================
 // MCP Agent
@@ -70,7 +85,11 @@ export class HalfDozenDmMcp extends McpAgent<Env> {
   async init() {
     // Telemetry: meter all tool calls + register health/usage resources
     if (this.env.FEEDBACK_DB) {
-      enableTelemetry(this.server, this.env.FEEDBACK_DB, SERVER_NAME);
+      enableTelemetry(this.server, this.env.FEEDBACK_DB, SERVER_NAME, undefined, {
+        apiKey: this.env.BRAINTRUST_API_KEY,
+        projectName: this.env.BRAINTRUST_PROJECT_NAME ?? SERVER_NAME,
+        enabled: parseBoolean(this.env.BRAINTRUST_ENABLED, true),
+      });
     }
 
     const config = getDmConfig(this.env);

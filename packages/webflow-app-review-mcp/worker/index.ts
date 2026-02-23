@@ -15,6 +15,21 @@ interface Env {
   MCP_API_KEY?: string;
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID?: string;
+  BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_NAME?: string;
+  BRAINTRUST_ENABLED?: string;
+}
+
+function parseBoolean(raw: string | undefined, fallback: boolean): boolean {
+  if (!raw || !raw.trim()) return fallback;
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') {
+    return true;
+  }
+  if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
+    return false;
+  }
+  return fallback;
 }
 
 export function validateApiKey(request: Request, env: Env): Response | null {
@@ -36,6 +51,12 @@ export class WebflowAppReviewMCP extends McpAgent<Env> {
         this.server,
         this.env.TELEMETRY_DB as unknown as Parameters<typeof enableTelemetry>[1],
         'webflow-app-review-mcp',
+        undefined,
+        {
+          apiKey: this.env.BRAINTRUST_API_KEY,
+          projectName: this.env.BRAINTRUST_PROJECT_NAME ?? 'webflow-app-review-mcp',
+          enabled: parseBoolean(this.env.BRAINTRUST_ENABLED, true),
+        },
       );
     }
 
