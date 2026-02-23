@@ -54,7 +54,12 @@
 	// Get video source URL
 	function getVideoSrc(assetPath: string): string {
 		if (assetPath.startsWith('http')) return assetPath;
-		return `${VIDEO_CDN_BASE}${assetPath.startsWith('/') ? '' : '/'}${assetPath}`;
+		const normalizedPath = assetPath.startsWith('/') ? assetPath : `/${assetPath}`;
+
+		// Serve legacy video paths from same-origin so private R2 assets can be proxied by the app.
+		if (normalizedPath.startsWith('/videos/')) return normalizedPath;
+
+		return `${VIDEO_CDN_BASE}${normalizedPath}`;
 	}
 
 	// Get thumbnail URL
@@ -126,6 +131,27 @@
 			const legacyPath = playback.legacyAssetPath || video.asset_path;
 			if (legacyPath) {
 				const src = getVideoSrc(legacyPath);
+
+				// Probe same-origin legacy assets first so missing files render an explicit unavailable state.
+				if (src.startsWith('/')) {
+					try {
+						const probe = await fetch(src, { method: 'HEAD' });
+						if (!probe.ok) {
+							playbackState = {
+								status: 'unavailable',
+								message: 'Legacy video file is unavailable'
+							};
+							return;
+						}
+					} catch {
+						playbackState = {
+							status: 'unavailable',
+							message: 'Legacy video file is unavailable'
+						};
+						return;
+					}
+				}
+
 				playbackSrc = src;
 				playbackState = { status: 'ready', src };
 				return;

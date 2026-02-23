@@ -1,11 +1,23 @@
-import {
-  Agent,
-  type MCPServer,
-  MCPServerStreamableHttp,
-  Runner,
-  connectMcpServers,
-  setDefaultOpenAIKey,
-} from '@openai/agents';
+import type { MCPServer } from '@openai/agents';
+
+type AgentsSdk = typeof import('@openai/agents');
+type MCPServerStreamableHttpCtor = typeof import('@openai/agents').MCPServerStreamableHttp;
+
+let agentsSdkPromise: Promise<AgentsSdk> | null = null;
+
+async function loadAgentsSdk(): Promise<AgentsSdk> {
+  if (agentsSdkPromise) return agentsSdkPromise;
+
+  // Force debug package browser branch under nodejs_compat before SDK module init.
+  const runtimeProcess = (globalThis as { process?: { browser?: boolean; type?: string } }).process;
+  if (runtimeProcess) {
+    runtimeProcess.browser = true;
+    runtimeProcess.type = runtimeProcess.type ?? 'renderer';
+  }
+
+  agentsSdkPromise = import('@openai/agents');
+  return agentsSdkPromise;
+}
 
 type ServerKey = 'telemetry' | 'gmail' | 'notion';
 type ScenarioKey = 'dedup' | 'inbox-triage' | 'fleet-watchdog';
@@ -206,6 +218,7 @@ function createMcpServers(
   timeoutMs: number,
   endpointConfig: ServerEndpointConfig,
   blockedToolNames: string[],
+  MCPServerStreamableHttp: MCPServerStreamableHttpCtor,
 ): MCPServer[] {
   const blocked = new Set<string>(blockedToolNames);
   if (serverKeys.length > 1) {
@@ -399,6 +412,7 @@ function summarizeFailedRequiredCalls(
 }
 
 export async function runHalfDozenScenario(input: HalfDozenScenarioRunInput): Promise<HalfDozenScenarioRunResult> {
+  const agentsSdk = await loadAgentsSdk();
   const scenarioPreset = SCENARIO_PRESETS[input.scenario];
   const endpointConfig = resolveServerEndpoints(input);
 
@@ -409,15 +423,16 @@ export async function runHalfDozenScenario(input: HalfDozenScenarioRunInput): Pr
   const timeoutMs = input.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
   // Set API key for the OpenAI Agents SDK without relying on Node `process.env`.
-  setDefaultOpenAIKey(input.openaiApiKey);
+  agentsSdk.setDefaultOpenAIKey(input.openaiApiKey);
 
   const rawServers = createMcpServers(
     scenarioPreset.defaults.servers,
     timeoutMs,
     endpointConfig,
     scenarioPreset.defaults.blockedToolNames,
+    agentsSdk.MCPServerStreamableHttp,
   );
-  const mcpServers = await connectMcpServers(rawServers, {
+  const mcpServers = await agentsSdk.connectMcpServers(rawServers, {
     strict: false,
     dropFailed: true,
     connectInParallel: true,
@@ -467,14 +482,14 @@ export async function runHalfDozenScenario(input: HalfDozenScenarioRunInput): Pr
       };
     }
 
-    const agent = new Agent({
+    const agent = new agentsSdk.Agent({
       name: scenarioPreset.defaults.agentName,
       instructions: scenarioPreset.defaults.agentInstructions,
       model,
       mcpServers: mcpServers.active,
     });
 
-    const runner = new Runner({ tracingDisabled: input.tracingDisabled ?? true });
+    const runner = new agentsSdk.Runner({ tracingDisabled: input.tracingDisabled ?? true });
     let result: { newItems: unknown[]; finalOutput: unknown };
     try {
       const runResult = await runner.run(agent, query, { maxTurns });

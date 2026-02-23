@@ -15,7 +15,6 @@ import { McpAgent } from 'agents/mcp';
 import { enableTelemetry } from '@create-something/mcp-core';
 import { z } from 'zod';
 
-import { registerOpenAIAgentsBraintrustTracing } from '@create-something/observability/openai-agents';
 import { flush as flushBraintrust } from '@create-something/observability/braintrust';
 
 import { registerResources } from '../src/resources.js';
@@ -743,17 +742,7 @@ function queueSlackScenarioRun(
 
   ctx.waitUntil(
     (async () => {
-      const braintrustTracingEnabled = registerOpenAIAgentsBraintrustTracing({
-        projectName: env.BRAINTRUST_PROJECT_NAME ?? 'Playbook MCP',
-        tags: ['playbook-mcp', 'halfdozen', 'slack'],
-        braintrust: {
-          apiKey: env.BRAINTRUST_API_KEY,
-          orgName: env.BRAINTRUST_ORG_NAME,
-          projectId: env.BRAINTRUST_PROJECT_ID,
-          appUrl: env.BRAINTRUST_APP_URL,
-          enabled: env.BRAINTRUST_ENABLED ? env.BRAINTRUST_ENABLED !== 'false' : undefined
-        }
-      });
+      const braintrustTracingEnabled = false;
 
       try {
         const result = await runScenarioByKey(scenario, {
@@ -971,17 +960,7 @@ export default {
 
       const baseInput = buildHalfDozenRunInput(env, body);
       const scenario = parseScenarioFromRoute(url.pathname);
-      const braintrustTracingEnabled = registerOpenAIAgentsBraintrustTracing({
-        projectName: env.BRAINTRUST_PROJECT_NAME ?? 'Playbook MCP',
-        tags: ['playbook-mcp', 'halfdozen', 'http'],
-        braintrust: {
-          apiKey: env.BRAINTRUST_API_KEY,
-          orgName: env.BRAINTRUST_ORG_NAME,
-          projectId: env.BRAINTRUST_PROJECT_ID,
-          appUrl: env.BRAINTRUST_APP_URL,
-          enabled: env.BRAINTRUST_ENABLED ? env.BRAINTRUST_ENABLED !== 'false' : undefined
-        }
-      });
+      const braintrustTracingEnabled = false;
 
       try {
         const result = await runScenarioByKey(scenario, {
