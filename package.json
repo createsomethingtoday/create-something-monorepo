@@ -79,6 +79,8 @@
     "deploy:cracked-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.cracked.toml",
     "deploy:fanpad-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.fanpad.toml",
     "deploy:halfdozen-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy",
+    "deploy:juice-labs-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.juice-labs.toml",
+    "deploy:kk-management-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.kk-management.toml",
     "deploy:lightswitch-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.lightswitch.toml",
     "deploy:phase-3-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.phase-3.toml",
     "deploy:system-studio-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.system-studio.toml",

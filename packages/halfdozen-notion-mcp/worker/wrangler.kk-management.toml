@@ -1,0 +1,40 @@
+# KK Management × HD Client — Notion MCP instance (same code, different secrets/URL)
+name = "kk-management-notion-mcp"
+main = "index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "5c3e9cf4d55ce171b844fad0931607f9"  # WORKWAY
+
+# Production URL: https://kk-management-notion.mcp.workway.co
+[[routes]]
+pattern = "kk-management-notion.mcp.workway.co"
+custom_domain = true
+
+[observability]
+enabled = true
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "NotionHalfDozenMcp"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["NotionHalfDozenMcp"]
+
+[[d1_databases]]
+binding = "FEEDBACK_DB"
+database_name = "halfdozen-feedback"
+database_id = "4eb35a0f-6ee2-4d0c-8c0a-9a2ab4049b97"
+
+# Workspace labels: halfdozen = HD internal, client = KK Management
+[vars]
+WORKSPACE_HALFDOZEN_LABEL = "Half Dozen"
+WORKSPACE_HALFDOZEN_DESCRIPTION = "Half Dozen internal — Meeting Capture, transcripts, training, etc."
+WORKSPACE_CLIENT_LABEL = "KK Management"
+WORKSPACE_CLIENT_DESCRIPTION = "KK Management Notion workspace"
+MCP_DISPLAY_NAME = "Notion Half Dozen × KK Management"
+MCP_DESCRIPTION = "Half Dozen internal and KK Management Notion. Full Notion tools; no Composio."
+
+# Secrets (set via wrangler secret put --config wrangler.kk-management.toml)
+# NOTION_API_KEY        — Half Dozen (used for workspace "halfdozen")
+# NOTION_CLIENT_API_KEY — KK Management (used for workspace "client")
