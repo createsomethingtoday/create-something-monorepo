@@ -22,44 +22,59 @@ interface PlaybackErrorResponse {
 }
 
 export async function fetchVideoPlayback(videoId: string): Promise<PlaybackResolution> {
-	const response = await fetch(`/api/v1/videos/${videoId}/playback`);
-	const payload = (await response.json()) as unknown;
-	const successPayload = payload as { success?: boolean; data?: VideoPlaybackGrant };
-	const errorPayload = payload as PlaybackErrorResponse;
+	try {
+		const response = await fetch(`/api/v1/videos/${videoId}/playback`);
+		let payload: unknown = {};
 
-	if (response.ok && successPayload.data) {
+		try {
+			payload = (await response.json()) as unknown;
+		} catch {
+			// Keep a safe fallback if the server responds with non-JSON.
+			payload = {};
+		}
+
+		const successPayload = payload as { success?: boolean; data?: VideoPlaybackGrant };
+		const errorPayload = payload as PlaybackErrorResponse;
+
+		if (response.ok && successPayload.data) {
+			return {
+				status: 'ready',
+				grant: successPayload.data
+			};
+		}
+
+		const fallback = errorPayload.error || 'Failed to resolve playback';
+
+		if (response.status === 401) {
+			return {
+				status: 'auth_required',
+				message: errorPayload.error || 'Sign in required to watch this video'
+			};
+		}
+
+		if (response.status === 409) {
+			return {
+				status: errorPayload.ingestStatus === 'failed' ? 'failed' : 'processing',
+				ingestStatus: errorPayload.ingestStatus,
+				message: errorPayload.failureReason || errorPayload.error || 'Video is still being prepared'
+			};
+		}
+
+		if (response.status === 404) {
+			return {
+				status: 'unavailable',
+				message: errorPayload.error || 'Video stream is not available'
+			};
+		}
+
 		return {
-			status: 'ready',
-			grant: successPayload.data
+			status: 'error',
+			message: fallback
+		};
+	} catch (error) {
+		return {
+			status: 'error',
+			message: error instanceof Error ? error.message : 'Failed to resolve playback'
 		};
 	}
-
-	const fallback = errorPayload.error || 'Failed to resolve playback';
-
-	if (response.status === 401) {
-		return {
-			status: 'auth_required',
-			message: errorPayload.error || 'Sign in required to watch this video'
-		};
-	}
-
-	if (response.status === 409) {
-		return {
-			status: errorPayload.ingestStatus === 'failed' ? 'failed' : 'processing',
-			ingestStatus: errorPayload.ingestStatus,
-			message: errorPayload.failureReason || errorPayload.error || 'Video is still being prepared'
-		};
-	}
-
-	if (response.status === 404) {
-		return {
-			status: 'unavailable',
-			message: errorPayload.error || 'Video stream is not available'
-		};
-	}
-
-	return {
-		status: 'error',
-		message: fallback
-	};
 }

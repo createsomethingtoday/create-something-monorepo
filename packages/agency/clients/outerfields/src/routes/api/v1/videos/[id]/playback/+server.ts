@@ -23,6 +23,23 @@ function jsonNoStore(body: unknown, init?: ResponseInit): Response {
 	});
 }
 
+function resolveLegacyAssetPlaybackUrl(assetPath: string | null | undefined): string | null {
+	if (!assetPath) return null;
+
+	const trimmed = assetPath.trim();
+	if (!trimmed) return null;
+
+	if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+		return trimmed;
+	}
+
+	if (trimmed.startsWith('/')) {
+		return trimmed;
+	}
+
+	return `/${trimmed}`;
+}
+
 /**
  * GET /api/v1/videos/:id/playback
  * Returns a short-lived playback grant for Stream-backed videos.
@@ -54,7 +71,23 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
 		return jsonNoStore({ success: false, error: 'Membership required' }, { status: 401 });
 	}
 
+	const issuedAt = Math.floor(Date.now() / 1000);
+	const legacyAssetUrl = resolveLegacyAssetPlaybackUrl(video.asset_path);
+
 	if (!video.stream_uid) {
+		if (legacyAssetUrl) {
+			const fallbackGrant: VideoPlaybackGrant = {
+				videoId: video.id,
+				streamUid: `legacy-${video.id}`,
+				hlsUrl: legacyAssetUrl,
+				// Legacy direct-file playback has no token expiry; keep a long-lived marker.
+				expiresAt: issuedAt + 60 * 60 * 24 * 365,
+				issuedAt,
+				policy: video.playback_policy
+			};
+			return jsonNoStore({ success: true, data: fallbackGrant, source: 'asset' });
+		}
+
 		return jsonNoStore(
 			{
 				success: false,
@@ -66,6 +99,18 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
 	}
 
 	if (!isValidStreamUid(video.stream_uid)) {
+		if (legacyAssetUrl) {
+			const fallbackGrant: VideoPlaybackGrant = {
+				videoId: video.id,
+				streamUid: `legacy-${video.id}`,
+				hlsUrl: legacyAssetUrl,
+				expiresAt: issuedAt + 60 * 60 * 24 * 365,
+				issuedAt,
+				policy: video.playback_policy
+			};
+			return jsonNoStore({ success: true, data: fallbackGrant, source: 'asset' });
+		}
+
 		return jsonNoStore(
 			{
 				success: false,
@@ -95,7 +140,6 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
 
 	try {
 		const customerCode = getStreamCustomerCode(runtimeEnv);
-		const issuedAt = Math.floor(Date.now() / 1000);
 		const expiresAt = issuedAt + getPlaybackTokenTtlSeconds(runtimeEnv);
 		const streamUid = video.stream_uid.trim();
 

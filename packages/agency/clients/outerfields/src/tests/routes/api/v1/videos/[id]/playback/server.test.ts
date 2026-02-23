@@ -138,16 +138,43 @@ describe('GET /api/v1/videos/[id]/playback', () => {
 		expect(body.error).toBe('Video stream is unavailable');
 	});
 
-	it('returns 404 when stream_uid is missing', async () => {
+	it('returns asset-path fallback grant when stream_uid is missing but asset_path exists', async () => {
 		getVideoByIdMock.mockResolvedValue(
 			createVideo({
 				id: 'vid_missing_uid',
-				stream_uid: null
+				stream_uid: null,
+				asset_path: '/videos/legacy-upload.mp4'
 			})
 		);
 
 		const response = await GET({
 			params: { id: 'vid_missing_uid' },
+			locals: { user: null },
+			platform: {}
+		} as never);
+
+		expect(response.status).toBe(200);
+		expect(response.headers.get('cache-control')).toBe('private, no-store');
+		const body = (await response.json()) as {
+			success: boolean;
+			data: { videoId: string; hlsUrl: string };
+		};
+		expect(body.success).toBe(true);
+		expect(body.data.videoId).toBe('vid_missing_uid');
+		expect(body.data.hlsUrl).toBe('/videos/legacy-upload.mp4');
+	});
+
+	it('returns 404 when stream_uid is missing and no asset fallback exists', async () => {
+		getVideoByIdMock.mockResolvedValue(
+			createVideo({
+				id: 'vid_missing_uid_no_fallback',
+				stream_uid: null,
+				asset_path: ''
+			})
+		);
+
+		const response = await GET({
+			params: { id: 'vid_missing_uid_no_fallback' },
 			locals: { user: null },
 			platform: {}
 		} as never);
