@@ -6,6 +6,7 @@ interface SessionData {
 	email: string;
 	name: string;
 	membership: boolean;
+	role?: 'admin' | 'user';
 	createdAt: number;
 }
 
@@ -29,6 +30,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 					email: sessionData.email,
 					name: sessionData.name,
 					membership: sessionData.membership,
+					role: sessionData.role,
 					createdAt: new Date(sessionData.createdAt).toISOString()
 				};
 			}

@@ -53,7 +53,7 @@
 							</li>
 						{/each}
 					</ul>
-						<a href="/admin" class="card-cta">
+						<a href="/admin/videos" class="card-cta">
 							<LayoutDashboard size={18} />
 							Open Admin Workspace
 						</a>

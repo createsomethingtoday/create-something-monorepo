@@ -189,7 +189,7 @@
 		</div>
 
 			<div class="preview-cta">
-				<a href={activeTab === 'user' ? '/demo' : '/admin'} class="btn-primary">
+				<a href={activeTab === 'user' ? '/demo' : '/admin/videos'} class="btn-primary">
 					<ExternalLink size={20} />
 					Open {activeTab === 'user' ? 'Video Library' : 'Admin Workspace'}
 				</a>

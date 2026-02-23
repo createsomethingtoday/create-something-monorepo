@@ -1,74 +1,72 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { updateVideoMock, deleteVideoMock, isAdminUserMock, getDBFromPlatformMock } = vi.hoisted(() => ({
-	updateVideoMock: vi.fn(),
-	deleteVideoMock: vi.fn(),
-	isAdminUserMock: vi.fn(),
-	getDBFromPlatformMock: vi.fn()
-}));
-
-vi.mock('$lib/server/db/videos', () => ({
-	updateVideo: updateVideoMock,
-	deleteVideo: deleteVideoMock
+const { isAdminUserMock } = vi.hoisted(() => ({
+	isAdminUserMock: vi.fn()
 }));
 
 vi.mock('$lib/server/auth', () => ({
 	isAdminUser: isAdminUserMock
 }));
 
-vi.mock('$lib/server/d1-compat', () => ({
-	getDBFromPlatform: getDBFromPlatformMock
-}));
+import { DELETE, PATCH } from '../../../../../../routes/api/admin/videos/[id]/+server';
 
-import { PATCH } from '../../../../../../routes/api/admin/videos/[id]/+server';
-
-describe('PATCH /api/admin/videos/[id]', () => {
+describe('Legacy /api/admin/videos/[id] write endpoints', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+	});
+
+	it('returns 403 when PATCH is called by non-admin', async () => {
+		isAdminUserMock.mockReturnValue(false);
+
+		const response = await PATCH({
+			params: { id: 'vid_1' },
+			request: new Request('http://test.local/api/admin/videos/vid_1', {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ title: 'New title' })
+			}),
+			locals: { user: { id: 'usr_1', email: 'member@example.com' } },
+			platform: {}
+		} as never);
+
+		expect(response.status).toBe(403);
+	});
+
+	it('returns 410 for PATCH with migration guidance', async () => {
 		isAdminUserMock.mockReturnValue(true);
-		getDBFromPlatformMock.mockReturnValue({ db: 'mock' });
-		updateVideoMock.mockResolvedValue({ id: 'vid_1' });
-	});
 
-	it('rejects attempts to clear assetPath', async () => {
 		const response = await PATCH({
 			params: { id: 'vid_1' },
 			request: new Request('http://test.local/api/admin/videos/vid_1', {
 				method: 'PATCH',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ assetPath: '   ' })
+				body: JSON.stringify({ title: 'New title' })
 			}),
 			locals: { user: { id: 'usr_1', email: 'admin@example.com' } },
 			platform: {}
 		} as never);
 
-		expect(response.status).toBe(400);
-		expect(updateVideoMock).not.toHaveBeenCalled();
+		expect(response.status).toBe(410);
+		const body = (await response.json()) as { success: boolean; adminVideosApi: string };
+		expect(body.success).toBe(false);
+		expect(body.adminVideosApi).toBe('/api/v1/admin/videos/:id');
 	});
 
-	it('normalizes assetPath/thumbnailPath values before update', async () => {
-		const response = await PATCH({
+	it('returns 410 for DELETE with migration guidance', async () => {
+		isAdminUserMock.mockReturnValue(true);
+
+		const response = await DELETE({
 			params: { id: 'vid_1' },
 			request: new Request('http://test.local/api/admin/videos/vid_1', {
-				method: 'PATCH',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					assetPath: 'videos/ep1.mp4',
-					thumbnailPath: 'thumbnails/ep1.jpg'
-				})
+				method: 'DELETE'
 			}),
 			locals: { user: { id: 'usr_1', email: 'admin@example.com' } },
 			platform: {}
 		} as never);
 
-		expect(response.status).toBe(200);
-		expect(updateVideoMock).toHaveBeenCalledWith(
-			{ db: 'mock' },
-			'vid_1',
-			expect.objectContaining({
-				asset_path: '/videos/ep1.mp4',
-				thumbnail_path: '/thumbnails/ep1.jpg'
-			})
-		);
+		expect(response.status).toBe(410);
+		const body = (await response.json()) as { success: boolean; adminVideosApi: string };
+		expect(body.success).toBe(false);
+		expect(body.adminVideosApi).toBe('/api/v1/admin/videos/:id');
 	});
 });

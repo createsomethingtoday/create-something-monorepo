@@ -2,6 +2,8 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getDBFromPlatform } from '$lib/server/d1-compat';
 import { getSessions } from '$lib/server/kv-compat';
+import { isAdminUser } from '$lib/server/admin';
+import { resolveRuntimeEnv } from '$lib/server/env';
 
 // Simple password hashing for demo (in production use bcrypt)
 async function hashPassword(password: string): Promise<string> {
@@ -29,6 +31,9 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 
 		const db = getDBFromPlatform(platform);
 		const sessions = getSessions();
+		const runtimeEnv = resolveRuntimeEnv(
+			((platform as { env?: Record<string, string | undefined> } | undefined)?.env)
+		);
 
 		// Find user in database
 		const result = await db
@@ -50,6 +55,18 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 		}
 
 		const hasMembership = result.membership === true || result.membership === 1 || result.membership === '1';
+		const role = isAdminUser(
+			{
+				id: result.id,
+				email: result.email,
+				name: result.name,
+				membership: hasMembership,
+				createdAt: new Date(result.created_at).toISOString()
+			},
+			runtimeEnv
+		)
+			? 'admin'
+			: 'user';
 
 		// Verify password
 		const passwordValid = await verifyPassword(password, result.password_hash);
@@ -64,6 +81,7 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 			email: result.email,
 			name: result.name,
 			membership: hasMembership,
+			role,
 			createdAt: Date.now()
 		};
 
@@ -90,6 +108,7 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 			email: result.email,
 			name: result.name,
 			membership: hasMembership,
+			role,
 			createdAt: new Date(result.created_at).toISOString()
 		};
 
