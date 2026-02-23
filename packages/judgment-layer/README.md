@@ -37,6 +37,7 @@ pnpm exec cs-judge --help
 cs-judge init
 cs-judge policies
 cs-judge run --policy standard --prompt "Summarize this repo."
+cs-judge route --task "Coordinate 6 teams to migrate 3000 contracts" --requires-tools --stakeholders 8 --duration 720 --risk high --criticality medium --code-task
 cs-judge check --policy standard
 cs-judge watch --interval 300 --policy standard
 ```
@@ -67,6 +68,7 @@ Full playbook:
 - `--stream`: stream the agent message as it arrives (less “wait then dump”).
 - `--verbose`: prints commands/file-change lifecycle events (for debugging).
 - `--non-interactive`: never prompt; falls back to `policy.non_interactive_decision`.
+- `route`: calls Hub MCP `hub_route_problem` and prints bottleneck-axis classification + staged routing plan.
 
 ## Andon
 

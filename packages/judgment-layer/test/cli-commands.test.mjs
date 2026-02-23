@@ -99,3 +99,14 @@ test('cs-judge andon tails the Andon JSONL log', () => {
     rmSync(cwd, { recursive: true, force: true });
   }
 });
+
+test('cs-judge route requires --task', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'cs-judge-'));
+  try {
+    const r = runCli(['route', '--cwd', cwd], cwd);
+    assert.equal(r.code, 1);
+    assert.match(r.stderr, /Missing --task/);
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+});

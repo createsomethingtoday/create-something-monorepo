@@ -17,6 +17,14 @@ type Args = {
   cwd: string;
   policyId?: string;
   prompt?: string;
+  routeTask?: string;
+  routeContext?: string;
+  routeRequiresTools: boolean;
+  routeStakeholderCount: number;
+  routeDurationMinutes: number;
+  routeRiskLevel: string;
+  routeDomainCriticality: string;
+  routeCodeTask?: boolean;
   checkId?: string;
   intervalSeconds: number;
   nonInteractive?: boolean;
@@ -30,12 +38,32 @@ type Args = {
 function parseArgs(argv: string[]): Args {
   const args = argv.slice(2);
 
-  const out: Args = { command: 'help', cwd: process.cwd(), mcpMode: 'minimal', intervalSeconds: 300 };
+  const out: Args = {
+    command: 'help',
+    cwd: process.cwd(),
+    mcpMode: 'minimal',
+    intervalSeconds: 300,
+    routeRequiresTools: false,
+    routeStakeholderCount: 1,
+    routeDurationMinutes: 60,
+    routeRiskLevel: 'medium',
+    routeDomainCriticality: 'medium',
+  };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === '--cwd') out.cwd = resolve(args[++i] ?? out.cwd);
     else if (a === '--policy') out.policyId = args[++i];
     else if (a === '--prompt') out.prompt = args[++i];
+    else if (a === '--task') out.routeTask = args[++i];
+    else if (a === '--context') out.routeContext = args[++i];
+    else if (a === '--requires-tools') out.routeRequiresTools = true;
+    else if (a === '--no-requires-tools') out.routeRequiresTools = false;
+    else if (a === '--stakeholders') out.routeStakeholderCount = parsePositiveInt(args[++i], out.routeStakeholderCount);
+    else if (a === '--duration') out.routeDurationMinutes = parsePositiveInt(args[++i], out.routeDurationMinutes);
+    else if (a === '--risk') out.routeRiskLevel = (args[++i] ?? out.routeRiskLevel).toLowerCase();
+    else if (a === '--criticality') out.routeDomainCriticality = (args[++i] ?? out.routeDomainCriticality).toLowerCase();
+    else if (a === '--code-task') out.routeCodeTask = true;
+    else if (a === '--no-code-task') out.routeCodeTask = false;
     else if (a === '--check') out.checkId = args[++i];
     else if (a === '--interval') out.intervalSeconds = Math.max(10, Number(args[++i] ?? '300'));
     else if (a === '--non-interactive') out.nonInteractive = true;
@@ -52,6 +80,13 @@ function parseArgs(argv: string[]): Args {
   return out;
 }
 
+function parsePositiveInt(raw: string | undefined, fallback: number): number {
+  if (!raw) return fallback;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(1, Math.floor(parsed));
+}
+
 function printHelp() {
   console.log(`
 CREATE SOMETHING Judgment Layer (prototype)
@@ -62,6 +97,10 @@ Usage:
   cs-judge andon [--cwd <dir>] [--tail <n>]
   cs-judge check [--check <id>] [--policy <id>] [--cwd <dir>] [--mcp minimal|inherit]
   cs-judge watch [--check <id>] [--interval <seconds>] [--policy <id>] [--cwd <dir>] [--mcp minimal|inherit]
+  cs-judge route --task "<text>" [--context "<text>"] [--requires-tools|--no-requires-tools]
+                 [--stakeholders <n>] [--duration <minutes>] [--risk low|medium|high]
+                 [--criticality low|medium|high] [--code-task|--no-code-task]
+                 [--policy <id>] [--cwd <dir>] [--mcp minimal|inherit]
   cs-judge run --prompt "<text>" [--policy <id>] [--cwd <dir>] [--non-interactive]
               [--mcp minimal|inherit] [--verbose] [--stream]
 
@@ -564,6 +603,59 @@ function buildToolFetchPrompt(check: JudgmentCheck, parsedArgs: unknown): string
   ].join('\n');
 }
 
+function parseSeverityLevel(raw: string, fieldName: string): 'low' | 'medium' | 'high' {
+  if (raw === 'low' || raw === 'medium' || raw === 'high') return raw;
+  throw new Error(`Invalid ${fieldName}: ${raw}. Expected low|medium|high`);
+}
+
+type RouteToolArgs = {
+  task: string;
+  context?: string;
+  requiresToolOrchestration: boolean;
+  stakeholderCount: number;
+  expectedDurationMinutes: number;
+  riskLevel: 'low' | 'medium' | 'high';
+  domainCriticality: 'low' | 'medium' | 'high';
+  isCodeTask?: boolean;
+};
+
+function buildRouteToolArgs(args: Args): RouteToolArgs {
+  if (!args.routeTask || !args.routeTask.trim()) {
+    throw new Error('Missing --task "<text>"');
+  }
+
+  const routeArgs: RouteToolArgs = {
+    task: args.routeTask.trim(),
+    context: args.routeContext?.trim() || undefined,
+    requiresToolOrchestration: args.routeRequiresTools,
+    stakeholderCount: Math.max(1, Math.floor(args.routeStakeholderCount)),
+    expectedDurationMinutes: Math.max(1, Math.floor(args.routeDurationMinutes)),
+    riskLevel: parseSeverityLevel(args.routeRiskLevel, '--risk'),
+    domainCriticality: parseSeverityLevel(args.routeDomainCriticality, '--criticality'),
+  };
+
+  if (typeof args.routeCodeTask === 'boolean') {
+    routeArgs.isCodeTask = args.routeCodeTask;
+  }
+
+  return routeArgs;
+}
+
+function buildProblemRoutePrompt(routeArgs: RouteToolArgs): string {
+  return [
+    'You are running a deterministic problem-routing step.',
+    'Use MCP exactly once.',
+    'Tool: hub_route_problem',
+    `Arguments JSON: ${JSON.stringify(routeArgs)}`,
+    '',
+    'Return ONLY JSON. No markdown. No explanation.',
+    'Required shape:',
+    '{"ok":true,"toolResult":<json>}',
+    'If tool execution fails, return:',
+    '{"ok":false,"error":"<short message>"}'
+  ].join('\n');
+}
+
 async function maybeGenerateSuggestion(
   args: Args,
   policy: LoadedPolicy,
@@ -689,6 +781,31 @@ async function runChecks(args: Args): Promise<void> {
   for (const line of formatPolicySummary(policy, args.cwd)) console.log(line);
   console.log(`MCP: ${args.mcpMode}`);
   await runChecksOnce(args, policy);
+}
+
+async function runProblemRoute(args: Args): Promise<void> {
+  const policy = resolvePolicy(args.cwd, args.policyId);
+  const routeArgs = buildRouteToolArgs(args);
+
+  for (const line of formatPolicySummary(policy, args.cwd)) console.log(line);
+  console.log(`MCP: ${args.mcpMode}`);
+
+  const result = await runPromptForMonitoring(args, policy, buildProblemRoutePrompt(routeArgs));
+
+  let payload: any;
+  try {
+    payload = parseJsonObjectFromText(result.text);
+  } catch (err: any) {
+    throw new Error(`Could not parse route JSON (${err?.message ?? String(err)})`);
+  }
+
+  if (!payload?.ok) {
+    throw new Error(`Routing failed: ${payload?.error ?? 'tool call failed'}`);
+  }
+
+  const routed = payload.toolResult;
+  console.log('\n--- Problem Route ---\n');
+  console.log(JSON.stringify(routed, null, 2));
 }
 
 async function watchChecks(args: Args): Promise<void> {
@@ -1086,7 +1203,7 @@ async function runWithPolicy(args: Args) {
 
 async function main() {
   const args = parseArgs(process.argv);
-  if ((args.command === 'check' || args.command === 'watch') && !args.mcpExplicit) {
+  if ((args.command === 'check' || args.command === 'watch' || args.command === 'route') && !args.mcpExplicit) {
     args.mcpMode = 'inherit';
   }
 
@@ -1100,6 +1217,7 @@ async function main() {
   if (args.command === 'andon') return void printAndon(args.cwd, args.andonTail ?? 20);
   if (args.command === 'check') return void (await runChecks(args));
   if (args.command === 'watch') return void (await watchChecks(args));
+  if (args.command === 'route') return void (await runProblemRoute(args));
   if (args.command === 'run') return void (await runWithPolicy(args));
 
   console.error(`Unknown command: ${args.command}`);

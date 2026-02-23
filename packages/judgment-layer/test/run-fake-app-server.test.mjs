@@ -100,6 +100,55 @@ rl.on('line', (line) => {
     if (msg.method === 'turn/start') {
       send({ id: msg.id, result: { turn: { id: turnId, status: 'inProgress', items: [], error: null } } });
 
+      if (scenario === 'route') {
+        const promptText =
+          msg &&
+          msg.params &&
+          Array.isArray(msg.params.input) &&
+          msg.params.input[0] &&
+          typeof msg.params.input[0].text === 'string'
+            ? msg.params.input[0].text
+            : '';
+
+        const hasHubTool = promptText.includes('Tool: hub_route_problem');
+        const payload = hasHubTool
+          ? {
+              ok: true,
+              toolResult: {
+                classification: {
+                  primaryAxis: 'effort',
+                  primaryScore: 0.71,
+                  confidence: 0.8
+                },
+                routing: {
+                  profile: 'specialist_coder',
+                  mode: 'specialist'
+                }
+              }
+            }
+          : { ok: false, error: 'missing hub_route_problem tool call' };
+
+        send({
+          method: 'item/started',
+          params: {
+            threadId,
+            turnId,
+            item: { type: 'agentMessage', id: 'msg_route', text: JSON.stringify(payload) }
+          }
+        });
+        send({
+          method: 'item/completed',
+          params: {
+            threadId,
+            turnId,
+            item: { type: 'agentMessage', id: 'msg_route', text: JSON.stringify(payload) }
+          }
+        });
+        send({ method: 'turn/completed', params: { threadId, turn: { id: turnId, status: 'completed', items: [], error: null } } });
+        process.exit(0);
+        return;
+      }
+
       // Begin a mocked approval flow.
       send({
         method: 'item/started',
@@ -225,3 +274,48 @@ test('cs-judge run auto-approves when commandActions are allow-listed', () => {
   }
 });
 
+test('cs-judge route calls hub_route_problem and prints routing payload', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'cs-judge-'));
+  try {
+    const binDir = join(cwd, 'bin');
+    mkdirSync(binDir, { recursive: true });
+    writeFakeCodex(binDir);
+
+    const r = runCli(
+      [
+        'route',
+        '--cwd',
+        cwd,
+        '--policy',
+        'safe',
+        '--task',
+        'Coordinate teams to migrate contracts',
+        '--context',
+        'Needs tooling and sustained execution',
+        '--requires-tools',
+        '--stakeholders',
+        '6',
+        '--duration',
+        '480',
+        '--risk',
+        'high',
+        '--criticality',
+        'medium',
+        '--code-task',
+      ],
+      cwd,
+      {
+        HOME: cwd,
+        PATH: `${binDir}:${process.env.PATH ?? ''}`,
+        FAKE_CODEX_SCENARIO: 'route',
+      }
+    );
+
+    assert.equal(r.code, 0, r.stderr);
+    assert.match(r.stdout, /MCP: inherit/);
+    assert.match(r.stdout, /"profile": "specialist_coder"/);
+    assert.match(r.stdout, /"primaryAxis": "effort"/);
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+});
