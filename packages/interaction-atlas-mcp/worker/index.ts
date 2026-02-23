@@ -37,6 +37,7 @@ import {
   listActiveAutomationContracts,
   listPendingApprovals,
 } from '../src/storage/control-plane.js';
+import { getJudgmentDashboardSummary } from '../src/storage/dashboard.js';
 
 interface Env extends InteractionAtlasEnv {}
 
@@ -125,95 +126,31 @@ export default {
 
     function openAiBaseCss(options: OpenAiCssOptions = {}): string {
       const contentMaxCss = options.contentMax ? `--content-max: ${esc(options.contentMax)};` : '';
-      const bgSubtleCss = options.bgSubtle ? `--bg-subtle: ${esc(options.bgSubtle)};` : '';
+      const bgSubtle = options.bgSubtle ?? '#f9fafb';
       return `
       :root {
-        color-scheme: dark;
+        color-scheme: light;
         ${contentMaxCss}
-        /* OpenAI Apps SDK UI v0.2.1 token subset (dark theme). */
-        --gray-25: #101010;
-        --gray-50: #131313;
-        --gray-100: #181818;
-        --gray-200: #212121;
-        --gray-300: #303030;
-        --gray-350: #393939;
-        --gray-400: #414141;
-        --gray-600: #8f8f8f;
-        --gray-700: #afafaf;
-        --gray-1000: #ffffff;
-        --blue-200: #66b5ff;
-        --blue-400: #0285ff;
-        --green-400: #04b84c;
-        --orange-500: #e25507;
-        --red-500: #e02e2a;
-        --white: #ffffff;
-        --color-text: var(--gray-1000);
-        --color-text-secondary: var(--gray-700);
-        --color-text-tertiary: var(--gray-600);
-        --color-ring: var(--blue-400);
-        --color-border-subtle: rgba(255, 255, 255, 0.06);
-        --color-border: rgba(255, 255, 255, 0.12);
-        --color-border-strong: rgba(255, 255, 255, 0.2);
-        --color-background-primary-surface: rgba(255, 255, 255, 0.08);
-        --color-surface: var(--gray-200);
-        --color-surface-secondary: var(--gray-100);
-        --color-surface-tertiary: var(--gray-50);
-        --color-surface-elevated: var(--gray-300);
-        --color-surface-elevated-secondary: var(--gray-400);
-        --color-background-info-surface: rgba(2, 133, 255, 0.13);
-        --color-border-info-surface: rgba(2, 133, 255, 0.13);
-        --color-text-info-surface: var(--blue-200);
-        --color-background-warning-surface: rgba(251, 106, 34, 0.16);
-        --color-border-warning-surface: rgba(251, 106, 34, 0.16);
-        --color-text-warning-surface: var(--orange-500);
-        --color-background-danger-surface: rgba(250, 66, 62, 0.16);
-        --color-border-danger-surface: rgba(250, 66, 62, 0.16);
-        --color-text-danger-surface: var(--red-500);
-        --color-background-success-surface: rgba(4, 184, 76, 0.15);
-        --color-border-success-surface: rgba(4, 184, 76, 0.15);
-        --color-text-success-surface: var(--green-400);
-        --bg: var(--color-surface-secondary);
-        --bg-elevated: var(--color-surface-elevated);
-        --bg-subtle: var(--color-surface);
-        ${bgSubtleCss}
-        --bg-canvas: var(--color-surface-tertiary);
-        --bg-overlay: rgba(13, 13, 13, 0.88);
-        --border: var(--color-border);
-        --border-strong: var(--color-border-strong);
-        --text: var(--color-text);
-        --text-muted: var(--color-text-secondary);
-        --text-soft: var(--color-text-tertiary);
+        --bg: #f7f7f8;
+        --bg-elevated: #ffffff;
+        --bg-subtle: ${esc(bgSubtle)};
+        --border: #e5e7eb;
+        --border-strong: #d1d5db;
+        --text: #111827;
+        --text-muted: #4b5563;
+        --text-soft: #6b7280;
         --accent: #10a37f;
-        --accent-strong: #14b58e;
-        --danger: var(--color-text-danger-surface);
-        --danger-strong: #fa423e;
-        --focus: rgba(2, 133, 255, 0.32);
-        --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -4px rgba(0, 0, 0, 0.2);
-        --text-on-accent: #f3fffb;
-        --tone-neutral-border: var(--border-strong);
-        --tone-neutral-text: var(--text-muted);
-        --tone-neutral-bg: var(--color-background-primary-surface);
-        --tone-success-border: var(--color-border-success-surface);
-        --tone-success-text: var(--color-text-success-surface);
-        --tone-success-bg: var(--color-background-success-surface);
-        --tone-error-border: var(--color-border-danger-surface);
-        --tone-error-text: var(--color-text-danger-surface);
-        --tone-error-bg: var(--color-background-danger-surface);
-        --tone-warn-border: var(--color-border-warning-surface);
-        --tone-warn-text: var(--color-text-warning-surface);
-        --tone-warn-bg: var(--color-background-warning-surface);
-        --tone-info-border: var(--color-border-info-surface);
-        --tone-info-text: var(--color-text-info-surface);
-        --tone-info-bg: var(--color-background-info-surface);
+        --accent-strong: #0d8c6d;
+        --danger: #b42318;
+        --danger-strong: #912018;
+        --focus: rgba(16, 163, 127, 0.25);
+        --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 12px rgba(16, 24, 40, 0.06);
       }
       * { box-sizing: border-box; }
       body {
         font-family: 'Soehne', 'Söhne', 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
         margin: 0;
-        background:
-          radial-gradient(1400px 360px at 10% -20%, rgba(255, 255, 255, 0.08), transparent 62%),
-          linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 42%),
-          var(--bg);
+        background: radial-gradient(1800px 400px at 10% -20%, #ffffff, transparent), var(--bg);
         color: var(--text);
       }`;
     }
@@ -233,7 +170,7 @@ export default {
     function renderViewerPage(options: ViewerPageOptions): string {
       const maxWidth = options.maxWidth ?? '1100px';
       return `<!doctype html>
-<html lang="en" data-theme="dark" data-openai-ui="apps-sdk-ui-0.2.1">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -245,7 +182,7 @@ export default {
       header {
         padding: 1rem 1.25rem;
         border-bottom: 1px solid var(--border);
-        background: var(--bg-overlay);
+        background: rgba(247, 247, 248, 0.92);
         backdrop-filter: blur(10px);
       }
       .headerInner {
@@ -304,16 +241,6 @@ export default {
       .cardTitle { font-size: 1.05rem; font-weight: 600; }
       .muted { color: var(--text-muted); }
       .label { color: var(--text-soft); }
-      .mt18 { margin-top: 0.18rem; }
-      .mt2 { margin-top: 0.2rem; }
-      .mt3 { margin-top: 0.35rem; }
-      .mt5 { margin-top: 0.5rem; }
-      .mt55 { margin-top: 0.55rem; }
-      .mb5 { margin-bottom: 0.5rem; }
-      .my8 { margin: 0.8rem 0 0.35rem; }
-      .my35_45 { margin-top: 0.35rem; margin-bottom: 0.45rem; }
-      .fw500 { font-weight: 500; }
-      .fw600 { font-weight: 600; }
       .meta {
         display: flex;
         gap: 0.5rem;
@@ -334,23 +261,23 @@ export default {
         border: 1px solid var(--border-strong);
         border-radius: 999px;
         padding: 0.16rem 0.55rem;
-        color: var(--tone-neutral-text);
-        background: var(--tone-neutral-bg);
+        color: var(--text-soft);
+        background: #ffffff;
       }
       .pill.active {
-        border-color: var(--tone-success-border);
-        color: var(--tone-success-text);
-        background: var(--tone-success-bg);
+        border-color: #a7f3d0;
+        color: #065f46;
+        background: #ecfdf3;
       }
       .pill.statusOk {
-        border-color: var(--tone-success-border);
-        color: var(--tone-success-text);
-        background: var(--tone-success-bg);
+        border-color: #a7f3d0;
+        color: #065f46;
+        background: #ecfdf3;
       }
       .pill.statusBad {
-        border-color: var(--tone-error-border);
-        color: var(--tone-error-text);
-        background: var(--tone-error-bg);
+        border-color: #fecaca;
+        color: #991b1b;
+        background: #fef2f2;
       }
       details {
         border: 1px solid var(--border);
@@ -374,13 +301,13 @@ export default {
       code {
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
         font-size: 0.9em;
-        color: var(--text-muted);
+        color: #1f2937;
       }
-      .ok { color: var(--tone-success-text); }
-      .bad { color: var(--tone-error-text); }
+      .ok { color: #027a48; }
+      .bad { color: #b42318; }
       .alertBad {
-        border-color: var(--tone-error-border);
-        background: var(--tone-error-bg);
+        border-color: #fecaca;
+        background: #fef2f2;
       }
       .spacer { height: 0.75rem; }
       .versionRow {
@@ -851,57 +778,242 @@ export default {
       );
     }
 
+    if (url.pathname === '/api/dashboard/summary') {
+      const authCtx = await authProvider.resolve(request, _env);
+      const entityTypeParam = url.searchParams.get('entity_type');
+      const entityId = url.searchParams.get('entity_id');
+      const entityType: AtlasEntityType | undefined = entityTypeParam === 'mcp' || entityTypeParam === 'agent' ? entityTypeParam : undefined;
+      const recentLimitParam = Number(url.searchParams.get('recent_limit') ?? '10');
+      const recentLimit = Number.isFinite(recentLimitParam) ? Math.max(1, Math.min(25, Math.floor(recentLimitParam))) : 10;
+
+      if ((entityType && !entityId) || (!entityType && entityId)) {
+        return new Response(
+          JSON.stringify(
+            { error: 'invalid_scope', message: 'entity_type and entity_id must be provided together.' },
+            null,
+            2,
+          ),
+          { status: 400, headers: JSON_HEADERS },
+        );
+      }
+
+      const dashboard = await getJudgmentDashboardSummary(_env.DB, {
+        accountId: authCtx.accountId,
+        entityType,
+        entityId: entityId ?? undefined,
+        recentLimit,
+      });
+
+      return new Response(
+        JSON.stringify(
+          {
+            meta: {
+              authScope: 'account',
+              note: 'Atlas Studio dashboard payload. Policy web editor is deprecated in favor of MCP consumption.',
+            },
+            dashboard,
+          },
+          null,
+          2,
+        ),
+        { headers: JSON_HEADERS },
+      );
+    }
+
     if (url.pathname === '/policies/editor') {
       const authCtx = await authProvider.resolve(request, _env);
       const entityTypeParam = url.searchParams.get('entity_type');
       const entityId = url.searchParams.get('entity_id') ?? 'fleet-watchdog';
       const entityType: AtlasEntityType = entityTypeParam === 'mcp' ? 'mcp' : 'agent';
+      const legacyUi = url.searchParams.get('legacy_ui') === '1';
+      if (!legacyUi) {
+        const dashboard = await getJudgmentDashboardSummary(_env.DB, {
+          accountId: authCtx.accountId,
+          entityType,
+          entityId,
+          recentLimit: 8,
+        });
+        return new Response(
+          JSON.stringify(
+            {
+              meta: {
+                authScope: 'account',
+                note: 'Policy web editor is deprecated. Atlas Studio should consume MCP tools and dashboard APIs directly.',
+              },
+              uiDeprecated: true,
+              recommendedSurface: 'Atlas Studio',
+              atlasStudio: {
+                mcpEndpoint: '/mcp',
+                recommendedTools: [
+                  'judgment_dashboard_summary',
+                  'judgment_policy_get',
+                  'judgment_policy_estimate',
+                  'judgment_policy_save',
+                  'judgment_policy_activate',
+                  'approval_inbox_list',
+                ],
+                dashboardApi: `/api/dashboard/summary?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}`,
+                policiesApi: `/api/policies?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}`,
+                policyEstimateApi: '/api/policies/estimate',
+                policyActivateApi: '/api/policies/activate',
+              },
+              dashboard,
+              legacyUiOptIn: `/policies/editor?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}&legacy_ui=1`,
+            },
+            null,
+            2,
+          ),
+          { status: 410, headers: JSON_HEADERS },
+        );
+      }
       const html = `<!doctype html>
-<html lang="en" data-theme="dark" data-openai-ui="apps-sdk-ui-0.2.1">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Policy Tuning Studio</title>
     <style>
-      ${openAiBaseCss()}
+      ${openAiBaseCss({ bgSubtle: '#f3f4f6' })}
       header {
-        padding: 1rem 1.25rem;
+        padding: 0.95rem 1.2rem 0.85rem;
         border-bottom: 1px solid var(--border);
         position: sticky;
         top: 0;
-        background: var(--bg-overlay);
+        background: rgba(247, 247, 248, 0.94);
         backdrop-filter: blur(10px);
         z-index: 10;
+      }
+      .headerGrid {
+        max-width: 1320px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 0.9rem;
+        flex-wrap: wrap;
+      }
+      .titleBlock {
+        min-width: 340px;
+        flex: 1;
+      }
+      .eyebrow {
+        font-size: 0.72rem;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        color: var(--text-soft);
+      }
+      .title {
+        margin-top: 0.14rem;
+        font-size: 1.28rem;
+        font-weight: 700;
+        letter-spacing: 0.004em;
+        line-height: 1.2;
+      }
+      .metaLine {
+        margin-top: 0.24rem;
+        color: var(--text-soft);
+        font-size: 0.9rem;
+      }
+      .operatorHint {
+        margin-top: 0.3rem;
+        color: var(--text-muted);
+        line-height: 1.35;
+      }
+      .toolbarTight {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0;
+        flex-wrap: wrap;
+      }
+      .surfaceLegend {
+        opacity: 0.85;
+      }
+      .guidedRail {
+        max-width: 1320px;
+        margin: 0.72rem auto 0;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 0.58rem 0.72rem;
+        background: var(--bg-elevated);
+      }
+      .processLadder {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+        align-items: center;
+        margin: 0.15rem 0 0.48rem;
+      }
+      .guidedFooter {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.72rem;
+        align-items: center;
+        flex-wrap: wrap;
       }
       main {
         max-width: 1320px;
         margin: 0 auto;
-        padding: 1rem 1.25rem 6rem;
+        padding: 0.95rem 1.2rem 6rem;
         display: grid;
-        grid-template-columns: minmax(320px, 0.95fr) minmax(420px, 1.05fr);
+        grid-template-columns: minmax(320px, 0.96fr) minmax(440px, 1.04fr);
         gap: 1rem;
-      }
-      @media (max-width: 1080px) {
-        main { grid-template-columns: 1fr; }
-      }
-      @media (max-width: 720px) {
-        header { padding: 0.9rem 0.9rem; }
-        main { padding: 0.8rem 0.9rem 7.5rem; }
       }
       .panel {
         border: 1px solid var(--border);
-        border-radius: 14px;
+        border-radius: 7px;
         background: var(--bg-elevated);
-        padding: 1rem;
-        box-shadow: var(--shadow);
+        padding: 0.88rem 0.95rem;
       }
-      .panelTitle { font-size: 0.99rem; font-weight: 650; letter-spacing: 0.01em; margin-bottom: 0.3rem; color: var(--text); }
+      .sectionLabel {
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-soft);
+        margin-bottom: 0.1rem;
+      }
+      .panelTitle {
+        font-size: 1.03rem;
+        font-weight: 650;
+        letter-spacing: 0.01em;
+        margin-bottom: 0.2rem;
+        color: var(--text);
+      }
+      .panelLead {
+        margin: 0.12rem 0 0.68rem;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        line-height: 1.35;
+      }
       .muted { color: var(--text-muted); }
-      .row { display: flex; gap: 0.55rem; flex-wrap: wrap; margin: 0.5rem 0; align-items: center; }
+      .row { display: flex; gap: 0.55rem; flex-wrap: wrap; margin: 0.46rem 0; align-items: center; }
+      .rowKey {
+        align-items: flex-start;
+        border-top: 1px solid var(--border);
+        padding-top: 0.5rem;
+        margin-top: 0.5rem;
+      }
+      .rowLabel {
+        min-width: 120px;
+        font-size: 0.77rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--text-soft);
+        padding-top: 0.5rem;
+      }
+      .inlineField {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .inlineField > span {
+        color: var(--text-soft);
+        font-size: 0.85rem;
+      }
       a { color: var(--accent-strong); text-decoration: none; }
       a:hover { text-decoration: underline; }
       select, input, textarea, button {
-        background: var(--bg-canvas);
+        background: #ffffff;
         color: var(--text);
         border: 1px solid var(--border-strong);
         border-radius: 8px;
@@ -917,113 +1029,117 @@ export default {
       button {
         cursor: pointer;
         transition: border-color 120ms, background 120ms, transform 120ms, color 120ms;
-        background: var(--bg-canvas);
+        background: #ffffff;
       }
-      button:hover { border-color: var(--border-strong); background: var(--bg-subtle); }
+      button:hover { border-color: #9ca3af; background: var(--bg-subtle); }
       button:active { transform: translateY(1px); }
       button:disabled {
         opacity: 0.6;
         cursor: not-allowed;
       }
       .btnPrimary {
-        background: var(--accent);
-        border-color: var(--accent);
-        color: var(--text-on-accent);
+        background: #f0f9ff;
+        border-color: #99d9ff;
+        color: #155e75;
       }
       .btnPrimary:hover {
+        background: #e0f2fe;
+        border-color: #7dd3fc;
+        color: #164e63;
+      }
+      .btnCritical {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #ffffff;
+      }
+      .btnCritical:hover {
         background: var(--accent-strong);
         border-color: var(--accent-strong);
-        color: var(--text-on-accent);
+        color: #ffffff;
       }
       .btnDanger {
-        background: var(--tone-error-bg);
-        border-color: var(--tone-error-border);
-        color: var(--tone-error-text);
+        background: #fff5f4;
+        border-color: #f0c1bc;
+        color: var(--danger);
       }
       .btnDanger:hover {
-        border-color: var(--danger-strong);
-        background: rgba(239, 68, 68, 0.25);
+        border-color: #e89f97;
+        background: #ffe8e5;
       }
       .statusBadge {
-        font-size: 0.75rem;
-        border: 1px solid var(--border-strong);
+        font-size: 0.74rem;
+        border: 1px solid var(--border);
         border-radius: 999px;
         padding: 0.2rem 0.55rem;
-        color: var(--text-muted);
-        background: var(--bg-canvas);
-      }
-      .statusBadge.status-neutral {
-        border-color: var(--tone-neutral-border);
-        color: var(--tone-neutral-text);
-        background: var(--tone-neutral-bg);
-      }
-      .statusBadge.status-success {
-        border-color: var(--tone-success-border);
-        color: var(--tone-success-text);
-        background: var(--tone-success-bg);
-      }
-      .statusBadge.status-error {
-        border-color: var(--tone-error-border);
-        color: var(--tone-error-text);
-        background: var(--tone-error-bg);
+        color: var(--text);
+        background: var(--bg-elevated);
       }
       .rule {
-        border: 1px solid var(--border);
-        border-radius: 10px;
+        border: 1px solid var(--border-strong);
+        border-radius: 8px;
         padding: 0.65rem;
         margin: 0.5rem 0;
-        background: var(--bg-canvas);
+        background: #ffffff;
       }
       .rule.dragging { opacity: 0.55; }
       .pill {
-        font-size: 0.75rem;
-        border: 1px solid var(--border-strong);
-        border-radius: 999px;
-        padding: 0.15rem 0.5rem;
-        color: var(--tone-neutral-text);
-        background: var(--tone-neutral-bg);
+        font-size: 0.73rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.14rem 0.42rem;
+        color: var(--text-soft);
+        background: var(--bg-subtle);
       }
       .pillAdd, .pillTighten {
-        border-color: var(--tone-success-border);
-        color: var(--tone-success-text);
-        background: var(--tone-success-bg);
+        border-color: #a7f3d0;
+        color: #065f46;
+        background: #ecfdf3;
       }
       .pillRemove, .pillRelax {
-        border-color: var(--tone-error-border);
-        color: var(--tone-error-text);
-        background: var(--tone-error-bg);
+        border-color: #fecaca;
+        color: #991b1b;
+        background: #fef2f2;
       }
       .pillChange {
-        border-color: var(--tone-warn-border);
-        color: var(--tone-warn-text);
-        background: var(--tone-warn-bg);
+        border-color: #fde68a;
+        color: #92400e;
+        background: #fffbeb;
       }
       .pillSame {
-        border-color: var(--tone-neutral-border);
-        color: var(--tone-neutral-text);
-        background: var(--tone-neutral-bg);
+        border-color: var(--border-strong);
+        color: var(--text-soft);
+        background: #ffffff;
       }
       .atlasTag {
-        font-size: 0.72rem;
-        border: 1px solid var(--tone-info-border);
-        border-radius: 999px;
-        padding: 0.12rem 0.5rem;
-        color: var(--tone-info-text);
-        background: var(--tone-info-bg);
+        font-size: 0.7rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.1rem 0.4rem;
+        color: var(--text-soft);
+        background: var(--bg-subtle);
       }
       pre {
         overflow: auto;
         border: 1px solid var(--border);
-        background: var(--bg-canvas);
+        background: #f9fafb;
         border-radius: 8px;
         padding: 0.7rem;
         max-height: 320px;
-        color: var(--text);
+        color: #111827;
       }
       .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.86rem; }
       .advancedOnly { display: none; }
       body.mode-advanced .advancedOnly { display: block; }
       body.mode-advanced .advancedOnly.row { display: flex; }
+      .ruleListFrame {
+        border-top: 1px solid var(--border);
+        margin-top: 0.52rem;
+        padding-top: 0.35rem;
+      }
+      .blockDivider {
+        border-top: 1px dashed var(--border);
+        margin: 0.76rem 0 0.68rem;
+      }
       .actionBar {
         position: fixed;
         left: 0;
@@ -1031,98 +1147,90 @@ export default {
         bottom: 0;
         z-index: 20;
         border-top: 1px solid var(--border);
-        background: var(--bg-overlay);
+        background: rgba(255, 255, 255, 0.97);
         backdrop-filter: blur(10px);
-        padding: 0.75rem 1.25rem;
+        padding: 0.7rem 1.2rem;
       }
-      .riskHigh { color: var(--tone-error-text); }
-      .riskMedium { color: var(--tone-warn-text); }
-      .riskLow { color: var(--tone-success-text); }
-      .step {
-        font-size: 0.78rem;
-        border: 1px solid var(--border-strong);
-        border-radius: 999px;
-        padding: 0.12rem 0.48rem;
-        color: var(--tone-neutral-text);
-        background: var(--tone-neutral-bg);
-      }
-      .impactCard {
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 0.55rem 0.65rem;
-        background: var(--bg-canvas);
-        min-width: 180px;
-      }
-      .impactLabel { color: var(--text-soft); font-size: 0.78rem; }
-      .impactValue { font-size: 1rem; font-weight: 650; color: var(--text); }
-      .guardrailGood { color: var(--tone-success-text); }
-      .guardrailWarn { color: var(--tone-error-text); }
-      .guidedRail {
-        margin-top: 0.65rem;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 0.65rem;
-        background: var(--bg-canvas);
-        box-shadow: var(--shadow);
-      }
-      .stepStatus {
-        font-size: 0.72rem;
-        border-radius: 999px;
-        padding: 0.1rem 0.45rem;
-        border: 1px solid var(--border-strong);
-        color: var(--tone-neutral-text);
-        background: var(--tone-neutral-bg);
-      }
-      .stepReady {
-        border-color: var(--tone-warn-border);
-        color: var(--tone-warn-text);
-        background: var(--tone-warn-bg);
-      }
-      .stepDone {
-        border-color: var(--tone-success-border);
-        color: var(--tone-success-text);
-        background: var(--tone-success-bg);
-      }
-      .stepNav { cursor: pointer; background: var(--bg-canvas); }
-      .stepNav:hover { border-color: var(--accent-strong); background: var(--bg-subtle); }
-      .headerTop {
-        display: flex;
-        justify-content: space-between;
-        gap: 0.75rem;
-        align-items: flex-start;
-        flex-wrap: wrap;
-      }
-      .layoutSplit {
+      .actionBarInner {
+        max-width: 1320px;
+        margin: 0 auto;
         display: flex;
         justify-content: space-between;
         gap: 0.75rem;
         align-items: center;
         flex-wrap: wrap;
       }
-      .titleLg { font-size: 1.2rem; font-weight: 700; line-height: 1.2; }
-      .titleSm { font-weight: 600; }
-      .rowZero { margin: 0; }
-      .rowGuidedSteps { margin: 0 0 0.45rem; }
-      .mt2 { margin-top: 0.2rem; }
-      .mt3 { margin-top: 0.35rem; }
-      .mt4 { margin-top: 0.45rem; }
-      .mt5 { margin-top: 0.5rem; }
-      .mt6 { margin-top: 0.75rem; }
-      .mb5 { margin-bottom: 0.5rem; }
-      .inputNarrow { width: 88px; }
-      .inputWide { min-width: min(320px, 100%); }
-      .mlAuto { margin-left: auto; }
-      .ruleWhen { color: var(--text-soft); font-size: 0.85rem; }
+      .actionLead {
+        min-width: 310px;
+      }
+      .riskHigh { color: #b42318; }
+      .riskMedium { color: #b54708; }
+      .riskLow { color: #027a48; }
+      .step {
+        font-size: 0.78rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 0.12rem 0.46rem;
+        color: var(--text-soft);
+        background: #ffffff;
+      }
+      .impactCard {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.55rem 0.65rem;
+        background: #ffffff;
+        min-width: 170px;
+      }
+      .impactLabel { color: var(--text-soft); font-size: 0.78rem; }
+      .impactValue { font-size: 1rem; font-weight: 650; color: var(--text); }
+      .guardrailGood { color: #027a48; }
+      .guardrailWarn { color: #b42318; }
+      .stepStatus {
+        font-size: 0.72rem;
+        border-radius: 6px;
+        padding: 0.1rem 0.45rem;
+        border: 1px solid var(--border);
+        color: var(--text-soft);
+        background: var(--bg-subtle);
+      }
+      .stepReady {
+        border-color: #fde68a;
+        color: #92400e;
+        background: #fffbeb;
+      }
+      .stepDone {
+        border-color: #a7f3d0;
+        color: #065f46;
+        background: #ecfdf3;
+      }
+      .stepNav { cursor: pointer; background: #ffffff; }
+      .stepNav:hover { border-color: var(--accent-strong); background: var(--bg-subtle); }
+      @media (max-width: 1080px) {
+        main { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 720px) {
+        header { padding: 0.84rem 0.9rem 0.8rem; }
+        .title { font-size: 1.14rem; }
+        .titleBlock { min-width: 0; }
+        .guidedRail { margin-top: 0.65rem; }
+        .rowKey { gap: 0.45rem; }
+        .rowLabel { min-width: 100%; padding-top: 0; }
+        .inlineField { flex-wrap: wrap; }
+        main { padding: 0.84rem 0.9rem 7.4rem; }
+      }
     </style>
   </head>
   <body>
     <header>
-      <div class="headerTop">
-        <div>
-          <div class="titleLg">Policy Tuning Studio</div>
-          <div class="muted mt2">Account: ${esc(authCtx.accountId)} · Entity: ${esc(entityType)}:${esc(entityId)}</div>
-          <div class="muted mt3">Simple mode is recommended for non-technical operators.</div>
-          <div class="row mt4">
+      <div class="headerGrid">
+        <div class="titleBlock">
+          <div class="eyebrow">Judgment Layer / Policy Editor</div>
+          <div class="title">Policy Tuning Studio</div>
+          <div class="metaLine">Account: ${esc(authCtx.accountId)} · Entity: ${esc(entityType)}:${esc(entityId)}</div>
+          <div id="modeHint" class="operatorHint">
+            Simple mode enforces guardrails before activation.
+          </div>
+          <div class="row surfaceLegend advancedOnly" style="margin-top:0.36rem;">
             <span class="atlasTag">AI Tasks</span>
             <span class="atlasTag">Human Tasks</span>
             <span class="atlasTag">System Tasks</span>
@@ -1130,15 +1238,9 @@ export default {
             <span class="atlasTag">Constraints</span>
             <span class="atlasTag">Touchpoints</span>
           </div>
-          <div class="row mt5">
-            <span class="step">1. Choose</span>
-            <span class="step">2. Draft</span>
-            <span class="step">3. Preview</span>
-            <span class="step">4. Make Live</span>
-          </div>
         </div>
-        <div class="row rowZero">
-          <span id="statusBadge" class="statusBadge status-neutral">Ready</span>
+        <div class="toolbarTight">
+          <span id="statusBadge" class="statusBadge">Ready</span>
           <label class="muted" for="uiMode">View</label>
           <select id="uiMode">
             <option value="simple" selected>Simple</option>
@@ -1147,36 +1249,35 @@ export default {
           <a href="/policies?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}">Back to policies</a>
         </div>
       </div>
-      <div id="modeHint" class="muted mt4">
-        Simple mode enforces guardrails before activation.
-      </div>
       <div class="guidedRail">
-        <div id="guidedSteps" class="row rowGuidedSteps"></div>
-        <div class="layoutSplit">
+        <div class="sectionLabel">Workflow</div>
+        <div id="guidedSteps" class="processLadder"></div>
+        <div class="guidedFooter">
           <div id="guidedHint" class="muted">Follow the guided steps from left to right.</div>
-          <button id="guidedPrimaryCta" class="btnPrimary">Start</button>
+          <button id="guidedPrimaryCta">Apply Objective Template</button>
         </div>
       </div>
     </header>
     <main>
       <section class="panel">
+        <div class="sectionLabel">01 Diff</div>
         <div class="panelTitle">What Changed</div>
-        <div class="row">
-          <label>Comparison style</label>
+        <div class="panelLead">Compare the current live policy with your proposed snapshot before touching activation controls.</div>
+        <div class="row rowKey">
+          <div class="rowLabel">Comparison</div>
           <select id="compareMode">
             <option value="active-vs-selected" selected>Current live vs selected</option>
             <option value="any-two">Choose any two snapshots</option>
           </select>
         </div>
-        <div class="row">
-          <label>Current live snapshot</label>
-          <select id="beforeVersion"></select>
-          <label>Proposed snapshot</label>
-          <select id="afterVersion"></select>
+        <div class="row rowKey">
+          <div class="rowLabel">Snapshots</div>
+          <label class="inlineField"><span>Current live</span><select id="beforeVersion"></select></label>
+          <label class="inlineField"><span>Proposed</span><select id="afterVersion"></select></label>
         </div>
         <div class="row advancedOnly">
           <button id="reloadBtn">Reload</button>
-          <button id="activateAfterBtn" class="btnPrimary">Make Live (Advanced)</button>
+          <button id="activateAfterBtn">Make Live (Advanced)</button>
         </div>
         <div id="diffSummary" class="row"></div>
         <div id="guardrailTrend" class="row"></div>
@@ -1184,10 +1285,11 @@ export default {
       </section>
 
       <section class="panel">
+        <div class="sectionLabel">02 Policy</div>
         <div class="panelTitle">Decision Rules</div>
-        <div class="muted mb5">Reorder rules to control what runs first. Top rules have stronger priority.</div>
-        <div class="row">
-          <label class="muted">Objective</label>
+        <div class="panelLead">Rank rules by priority, tune guardrails, then simulate expected decision deltas before making changes live.</div>
+        <div class="row rowKey">
+          <div class="rowLabel">Objective</div>
           <select id="objectivePreset">
             <option value="balanced" selected>Balanced automation</option>
             <option value="safety-first">Safety first (more review/block)</option>
@@ -1195,40 +1297,46 @@ export default {
           </select>
           <button id="applyPresetBtn">Apply Objective Template</button>
         </div>
-        <div class="row">
-          <label class="muted">Guardrails</label>
-          <label>Max review delta <input id="maxReviewDelta" class="inputNarrow" type="number" min="0" value="2" /></label>
-          <label>Max block delta <input id="maxBlockDelta" class="inputNarrow" type="number" min="0" value="1" /></label>
+        <div class="row rowKey">
+          <div class="rowLabel">Guardrails</div>
+          <label class="inlineField"><span>Max review delta</span><input id="maxReviewDelta" type="number" min="0" value="2" style="width:88px;" /></label>
+          <label class="inlineField"><span>Max block delta</span><input id="maxBlockDelta" type="number" min="0" value="1" style="width:88px;" /></label>
           <button id="resetGuardrailsBtn">Reset Defaults</button>
         </div>
         <div id="ruleMeta" class="row"></div>
-        <div id="ruleList"></div>
+        <div class="ruleListFrame">
+          <div id="ruleList"></div>
+        </div>
 
-        <div class="panelTitle mt6">Add Rule</div>
+        <div class="blockDivider"></div>
+        <div class="sectionLabel">Rule Builder</div>
+        <div class="panelTitle" style="margin-bottom:0.25rem;">Add Rule</div>
         <div class="row advancedOnly">
           <input id="ruleId" placeholder="Rule ID (advanced)" />
           <input id="rulePriority" type="number" value="50" />
           <input id="toolNames" placeholder="Tool names (comma-separated)" />
         </div>
-        <div class="row">
-          <label class="muted">Rule name</label>
-          <input id="ruleName" class="inputWide" placeholder="Example: Review before write actions" />
+        <div class="row rowKey">
+          <div class="rowLabel">Rule Name</div>
+          <input id="ruleName" placeholder="Example: Review before write actions" style="min-width:320px;" />
         </div>
         <div class="row">
           <label><input type="checkbox" id="hasWriteIntent" /> Involves changes/writes</label>
           <label><input type="checkbox" id="hasHumanReviewStep" /> Already has human review</label>
           <label class="advancedOnly"><input type="checkbox" id="introspectionOk" /> Tool discovery succeeded</label>
         </div>
-        <div class="row">
+        <div class="row rowKey">
+          <div class="rowLabel">Decision</div>
           <select id="decision">
             <option value="allow">Allow automatically</option>
             <option value="require_human_review">Require human review</option>
             <option value="block">Block action</option>
           </select>
-          <input id="reason" class="inputWide" placeholder="Why this rule exists" />
-          <button id="addRuleBtn" class="btnPrimary">Add Rule</button>
+          <input id="reason" placeholder="Why this rule exists" style="min-width: 320px;" />
+          <button id="addRuleBtn">Add Rule</button>
         </div>
-        <div class="row">
+        <div class="row rowKey">
+          <div class="rowLabel">Actions</div>
           <button id="saveDraftBtn" class="btnPrimary">Save Draft</button>
           <button id="simulateBtn">Preview Impact</button>
         </div>
@@ -1237,16 +1345,16 @@ export default {
       </section>
     </main>
     <div class="actionBar">
-      <div class="layoutSplit">
-        <div>
-          <div class="titleSm">Make Live Safely</div>
+      <div class="actionBarInner">
+        <div class="actionLead">
+          <div style="font-weight:600;">Make Live Safely</div>
           <div id="riskSummary" class="muted">Run Preview Impact to see risk before activation.</div>
-          <div id="guardrailStatus" class="muted mt2">Guardrails: pending preview.</div>
+          <div id="guardrailStatus" class="muted" style="margin-top:0.2rem;">Guardrails: pending preview.</div>
         </div>
-        <div class="row rowZero">
+        <div class="row" style="margin:0;">
           <button id="simulateBottomBtn">Preview Impact</button>
           <button id="rollbackBtn">Rollback to Current Live</button>
-          <button id="makeLiveBtn" class="btnPrimary">Make Live</button>
+          <button id="makeLiveBtn" class="btnCritical">Make Live</button>
         </div>
       </div>
     </div>
@@ -1356,6 +1464,7 @@ export default {
         cta.textContent = label;
         cta.dataset.action = action;
         cta.disabled = action === 'none';
+        cta.style.opacity = action === 'none' ? '0.6' : '1';
       }
       function jumpToStep(step) {
         const map = {
@@ -1401,20 +1510,16 @@ export default {
         const btn = byId('makeLiveBtn');
         if (!btn) return;
         btn.disabled = !enabled;
+        btn.style.opacity = enabled ? '1' : '0.6';
         btn.title = enabled ? '' : 'Preview indicates guardrail thresholds exceeded.';
       }
       function setStatus(text, tone) {
         const el = byId('statusBadge');
         if (!el) return;
         el.textContent = text;
-        el.classList.remove('status-error', 'status-success', 'status-neutral');
-        if (tone === 'error') {
-          el.classList.add('status-error');
-        } else if (tone === 'success') {
-          el.classList.add('status-success');
-        } else {
-          el.classList.add('status-neutral');
-        }
+        el.style.borderColor = tone === 'error' ? '#f0c1bc' : tone === 'success' ? '#a7f3d0' : '#d1d5db';
+        el.style.color = tone === 'error' ? '#b42318' : tone === 'success' ? '#027a48' : '#374151';
+        el.style.background = tone === 'error' ? '#fff5f4' : tone === 'success' ? '#ecfdf3' : '#ffffff';
       }
 
       function computeDiff(beforePolicy, afterPolicy) {
@@ -1441,9 +1546,9 @@ export default {
           '<span class="pill">Snapshot: ' + (draftPolicy.id || '(draft)') + '</span>';
         wrap.innerHTML = draftPolicy.rules.map((r, i) => {
           return '<div class="rule" draggable="true" data-index="' + i + '">' +
-            '<div class="row"><span class="pill">#' + r.priority + '</span><strong>' + (r.displayName || r.id) + '</strong><span>' + (r.then?.decision || '') + '</span><button data-remove="' + i + '" class="btnDanger mlAuto">Remove</button></div>' +
+            '<div class="row"><span class="pill">#' + r.priority + '</span><strong>' + (r.displayName || r.id) + '</strong><span>' + (r.then?.decision || '') + '</span><button data-remove="' + i + '" class="btnDanger" style="margin-left:auto;">Remove</button></div>' +
             '<div class="muted">' + (r.then?.reason || '') + '</div>' +
-            '<div class="advancedOnly ruleWhen">when: ' + JSON.stringify(r.when || {}) + '</div>' +
+            '<div class="advancedOnly" style="color:var(--text-soft);font-size:0.85rem;">when: ' + JSON.stringify(r.when || {}) + '</div>' +
             '</div>';
         }).join('');
 
@@ -1892,6 +1997,48 @@ export default {
       const entityId = url.searchParams.get('entity_id') ?? 'fleet-watchdog';
       const accountId = authCtx.accountId;
       const entityType: AtlasEntityType = entityTypeParam === 'mcp' ? 'mcp' : 'agent';
+      const legacyUi = url.searchParams.get('legacy_ui') === '1';
+      if (!legacyUi) {
+        const dashboard = await getJudgmentDashboardSummary(_env.DB, {
+          accountId,
+          entityType,
+          entityId,
+          recentLimit: 10,
+        });
+        return new Response(
+          JSON.stringify(
+            {
+              meta: {
+                authScope: 'account',
+                note: 'Policy web pages are deprecated. Atlas Studio should consume MCP and JSON APIs directly.',
+              },
+              uiDeprecated: true,
+              recommendedSurface: 'Atlas Studio',
+              atlasStudio: {
+                mcpEndpoint: '/mcp',
+                recommendedTools: [
+                  'judgment_dashboard_summary',
+                  'judgment_policy_get',
+                  'judgment_policy_estimate',
+                  'judgment_policy_save',
+                  'judgment_policy_activate',
+                  'approval_inbox_list',
+                ],
+                dashboardApi: `/api/dashboard/summary?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}`,
+                policiesApi: `/api/policies?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}`,
+                policySaveApi: '/api/policies/save',
+                policyEstimateApi: '/api/policies/estimate',
+                policyActivateApi: '/api/policies/activate',
+              },
+              dashboard,
+              legacyUiOptIn: `/policies?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}&legacy_ui=1`,
+            },
+            null,
+            2,
+          ),
+          { status: 410, headers: JSON_HEADERS },
+        );
+      }
       const active = await resolveActivePolicy(_env.DB, {
         accountId,
         entityType,
@@ -1919,8 +2066,8 @@ export default {
               .map(
                 (v) => `<div class="versionRow">
                 <div><code>${esc(v.id)}</code></div>
-                <div class="muted mt2">${esc(v.status)} · ${esc(String(v.created_at))}</div>
-                <div class="muted mt18">guardrails(review<=<code>${esc(String(v.guardrails.maxReviewDelta ?? 'default'))}</code>, block<=<code>${esc(String(v.guardrails.maxBlockDelta ?? 'default'))}</code>)</div>
+                <div class="muted" style="margin-top:0.2rem;">${esc(v.status)} · ${esc(String(v.created_at))}</div>
+                <div class="muted" style="margin-top:0.18rem;">guardrails(review<=<code>${esc(String(v.guardrails.maxReviewDelta ?? 'default'))}</code>, block<=<code>${esc(String(v.guardrails.maxBlockDelta ?? 'default'))}</code>)</div>
               </div>`,
               )
               .join('');
@@ -1928,27 +2075,27 @@ export default {
       const body = `
       <div class="card">
         <div class="cardTitle">Active policy</div>
-        <div class="muted my35_45">
+        <div class="muted" style="margin-top:0.35rem;margin-bottom:0.45rem;">
           Guardrails: review delta max <code>${esc(String(activeGuardrails.maxReviewDelta ?? 'default'))}</code> · block delta max <code>${esc(String(activeGuardrails.maxBlockDelta ?? 'default'))}</code>
         </div>
         <pre><code>${esc(JSON.stringify(active.policy, null, 2))}</code></pre>
       </div>
       <div class="card">
         <div class="cardTitle">Saved versions</div>
-        <div class="mt5">${versionsMarkup}</div>
+        <div style="margin-top:0.5rem;">${versionsMarkup}</div>
       </div>
-      <div class="muted my8">
+      <div class="muted" style="margin:0.8rem 0 0.35rem;">
         Access scope: this page and policy APIs are account-scoped by your API key or Bearer token context.
       </div>
       <div class="muted">JSON API: <a href="/api/policies?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}"><code>/api/policies</code></a></div>
-      <div class="muted mt3">Visual editor: <a href="/policies/editor?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}"><code>/policies/editor</code></a></div>`;
+      <div class="muted" style="margin-top:0.35rem;">Legacy visual editor: <a href="/policies/editor?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}&legacy_ui=1"><code>/policies/editor?legacy_ui=1</code></a></div>`;
 
       const html = renderViewerPage({
         title: 'Judgment Policies',
         heading: 'Judgment Policies',
         subtitle: `${esc(accountId)} · ${esc(entityType)}:${esc(entityId)}`,
         headerMeta: `<span class="pill">Active <code>${esc(active.policyVersionId)}</code></span>`,
-        headerActions: `<a class="pill" href="/policies/editor?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}">Open visual editor</a>`,
+        headerActions: `<a class="pill" href="/policies/editor?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}&legacy_ui=1">Open legacy visual editor</a>`,
         body,
         maxWidth: '1020px',
       });
@@ -1969,7 +2116,7 @@ export default {
       const body = `
       <div class="card">
         <div class="cardTitle">Metadata</div>
-        <div class="fieldGrid mt55">
+        <div class="fieldGrid" style="margin-top:0.55rem;">
           <div class="field">
             <div class="fieldLabel">Account</div>
             <div>${esc(report.account_id)}</div>
@@ -1996,7 +2143,7 @@ export default {
         <div class="cardTitle">Scenarios</div>
         <pre><code>${esc(JSON.stringify(scenarios, null, 2))}</code></pre>
       </div>
-      <div class="muted my8">
+      <div class="muted" style="margin:0.8rem 0 0.35rem;">
         Access scope: report visibility is account-scoped by your API key/Bearer token context.
       </div>
       <div class="muted">API: <code>${esc(`${baseUrl}/api/reports/${report.id}`)}</code></div>`;
@@ -2140,11 +2287,11 @@ export default {
       </div>
 
       <div class="panel">
-        <div class="label mb5">Mermaid diagram (auto-mapped)</div>
+        <div class="label" style="margin-bottom:0.5rem;">Mermaid diagram (auto-mapped)</div>
         <pre class="mermaid">${esc(mermaid)}</pre>
       </div>
 
-      ${validation.valid ? '' : `<div class="panel alertBad"><div class="bad fw600">Invalid Atlas IDs</div><div class="muted mt5"><code>${esc(validation.invalidIds.join(', '))}</code></div></div>`}
+      ${validation.valid ? '' : `<div class="panel alertBad"><div class="bad" style="font-weight:600;">Invalid Atlas IDs</div><div class="muted" style="margin-top:0.5rem;"><code>${esc(validation.invalidIds.join(', '))}</code></div></div>`}
 
       <details>
         <summary>MCP Entry JSON</summary>
@@ -2174,7 +2321,7 @@ export default {
 
       const html = renderViewerPage({
         title: `MCP - ${entry.name}`,
-        heading: `${esc(entry.name)} <span class="label fw500">(mcp:${esc(entry.slug)})</span>`,
+        heading: `${esc(entry.name)} <span class="label" style="font-weight:500;">(mcp:${esc(entry.slug)})</span>`,
         subtitle: esc(entry.description),
         headerMeta,
         headerActions: `<a class="pill" href="/mcps">All MCPs</a><span class="pill ${validation.valid ? 'statusOk' : 'statusBad'}">${validation.valid ? 'valid' : 'invalid'}</span>`,
@@ -2201,11 +2348,11 @@ export default {
 
       const body = `
       <div class="panel">
-        <div class="label mb5">Mermaid diagram</div>
+        <div class="label" style="margin-bottom:0.5rem;">Mermaid diagram</div>
         <pre class="mermaid">${esc(mermaid)}</pre>
       </div>
 
-      ${validation.valid ? '' : `<div class="panel alertBad"><div class="bad fw600">Invalid Atlas IDs</div><div class="muted mt5"><code>${esc(validation.invalidIds.join(', '))}</code></div></div>`}
+      ${validation.valid ? '' : `<div class="panel alertBad"><div class="bad" style="font-weight:600;">Invalid Atlas IDs</div><div class="muted" style="margin-top:0.5rem;"><code>${esc(validation.invalidIds.join(', '))}</code></div></div>`}
 
       <details>
         <summary>Workflow JSON (Atlas WorkflowTemplate)</summary>
@@ -2214,7 +2361,7 @@ export default {
 
       const html = renderViewerPage({
         title: `Workflow - ${workflowId}`,
-        heading: `${esc(template.name)} <span class="label fw500">(${esc(workflowId)})</span>`,
+        heading: `${esc(template.name)} <span class="label" style="font-weight:500;">(${esc(workflowId)})</span>`,
         subtitle: esc(template.description),
         headerMeta,
         headerActions: `<a class="pill" href="/workflows">All workflows</a><span class="pill ${validation.valid ? 'statusOk' : 'statusBad'}">${validation.valid ? 'valid' : 'invalid'}</span>`,
@@ -2241,8 +2388,9 @@ export default {
           workflowsApi: '/api/workflows',
           mcps: '/mcps',
           mcpsApi: '/api/mcps',
-          policies: '/policies',
-          policyEditor: '/policies/editor?entity_type=agent&entity_id=<id>',
+          policies: '/policies?entity_type=agent&entity_id=<id>',
+          policyEditorDeprecated: '/policies/editor?entity_type=agent&entity_id=<id>',
+          dashboardSummaryApi: '/api/dashboard/summary',
           policiesApi: '/api/policies?entity_type=agent&entity_id=<id>',
           policySaveApi: '/api/policies/save',
           policyActivateApi: '/api/policies/activate',
@@ -2256,6 +2404,7 @@ export default {
         authNotes: {
           mcp: 'Use x-api-key or Bearer token for account-scoped context. Missing key resolves to public read-only.',
           policiesAndReports: 'Policy and report endpoints are scoped to authenticated account context (no account query override).',
+          uiDeprecation: 'Policy web UIs are deprecated by default; Atlas Studio should consume MCP tools + /api/dashboard/summary.',
         },
       }, null, 2), { headers: JSON_HEADERS });
     }

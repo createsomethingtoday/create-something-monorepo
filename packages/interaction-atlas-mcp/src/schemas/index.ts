@@ -161,6 +161,23 @@ export const JudgmentPolicyCompareReportGetSchema = z.object({
   report_id: z.string().min(1),
 });
 
+export const JudgmentDashboardSummaryParamsSchema = z.object({
+  entity_type: z.enum(['mcp', 'agent']).optional(),
+  entity_id: z.string().min(1).optional(),
+  recent_limit: z.number().int().min(1).max(25).optional(),
+});
+
+export const JudgmentDashboardSummarySchema = JudgmentDashboardSummaryParamsSchema.superRefine((value, issueCtx) => {
+  const hasEntityType = Boolean(value.entity_type);
+  const hasEntityId = Boolean(value.entity_id);
+  if (hasEntityType !== hasEntityId) {
+    issueCtx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'entity_type and entity_id must be provided together when scoping by entity.',
+    });
+  }
+});
+
 export const AutomationContractGetSchema = z.object({
   automation_id: z.string().min(1),
 });
