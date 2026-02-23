@@ -33,6 +33,143 @@ interface AirtableEnv {
 	DEBUG_AIRTABLE?: string;
 }
 
+export interface MarketplaceFreshnessMetadata {
+	timestamp: string | null;
+	source: 'field' | 'record-created-time' | 'none';
+	fieldName?: string;
+}
+
+const MARKETPLACE_TIMESTAMP_FIELD_HINTS = [
+	'lastsync',
+	'syncedat',
+	'syncat',
+	'lastupdated',
+	'updatedat',
+	'snapshotdate',
+	'snapshotat',
+	'asofdate',
+	'dataasof',
+	'refreshedat',
+	'reportdate',
+	'weekending',
+	'windowend'
+] as const;
+
+const MARKETPLACE_TIMESTAMP_FIELD_EXCLUDES = [
+	'published',
+	'submitted',
+	'decision',
+	'release',
+	'launch',
+	'approval',
+	'createdby'
+] as const;
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function parseTimestampCandidate(value: unknown): Date | null {
+	if (value instanceof Date) {
+		return Number.isNaN(value.getTime()) ? null : value;
+	}
+
+	if (typeof value === 'string') {
+		const trimmed = value.trim();
+		if (!trimmed || /^\d{1,4}$/.test(trimmed)) {
+			return null;
+		}
+
+		const parsed = new Date(trimmed);
+		return Number.isNaN(parsed.getTime()) ? null : parsed;
+	}
+
+	if (typeof value === 'number' && Number.isFinite(value)) {
+		// Handle Unix seconds or milliseconds.
+		const ms = value > 1_000_000_000_000 ? value : value > 1_000_000_000 ? value * 1000 : null;
+		if (!ms) return null;
+
+		const parsed = new Date(ms);
+		return Number.isNaN(parsed.getTime()) ? null : parsed;
+	}
+
+	return null;
+}
+
+function isLikelyMarketplaceTimestampField(fieldName: string): boolean {
+	const normalized = fieldName.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+	if (MARKETPLACE_TIMESTAMP_FIELD_EXCLUDES.some((token) => normalized.includes(token))) {
+		return false;
+	}
+
+	return MARKETPLACE_TIMESTAMP_FIELD_HINTS.some((token) => normalized.includes(token));
+}
+
+function isReasonableRecentTimestamp(date: Date, maxAgeDays: number): boolean {
+	const now = Date.now();
+	const value = date.getTime();
+	const maxFuture = now + 2 * MS_PER_DAY;
+	const minRecent = now - maxAgeDays * MS_PER_DAY;
+	return value <= maxFuture && value >= minRecent;
+}
+
+function extractMarketplaceFreshness(
+	records: readonly Airtable.Record<Airtable.FieldSet>[]
+): MarketplaceFreshnessMetadata {
+	let latestFieldTimestamp: { date: Date; fieldName: string } | null = null;
+	let latestCreatedTime: Date | null = null;
+
+	for (const record of records) {
+		for (const [fieldName, rawValue] of Object.entries(record.fields)) {
+			if (!isLikelyMarketplaceTimestampField(fieldName)) {
+				continue;
+			}
+
+			const values = Array.isArray(rawValue) ? rawValue : [rawValue];
+			for (const value of values) {
+				const parsed = parseTimestampCandidate(value);
+				if (!parsed || !isReasonableRecentTimestamp(parsed, 180)) {
+					continue;
+				}
+
+				if (!latestFieldTimestamp || parsed.getTime() > latestFieldTimestamp.date.getTime()) {
+					latestFieldTimestamp = { date: parsed, fieldName };
+				}
+			}
+		}
+
+		const createdAt = parseTimestampCandidate(
+			(record as Airtable.Record<Airtable.FieldSet> & { _rawJson?: { createdTime?: string } })._rawJson
+				?.createdTime
+		);
+
+		if (createdAt && isReasonableRecentTimestamp(createdAt, 21)) {
+			if (!latestCreatedTime || createdAt.getTime() > latestCreatedTime.getTime()) {
+				latestCreatedTime = createdAt;
+			}
+		}
+	}
+
+	if (latestFieldTimestamp) {
+		return {
+			timestamp: latestFieldTimestamp.date.toISOString(),
+			source: 'field',
+			fieldName: latestFieldTimestamp.fieldName
+		};
+	}
+
+	if (latestCreatedTime) {
+		return {
+			timestamp: latestCreatedTime.toISOString(),
+			source: 'record-created-time'
+		};
+	}
+
+	return {
+		timestamp: null,
+		source: 'none'
+	};
+}
+
 // ==================== SECURITY UTILITIES ====================
 
 /**
@@ -1063,16 +1200,19 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		/**
 		 * Get leaderboard data (top 50 templates by sales).
 		 */
-		async getLeaderboard(): Promise<Array<{
-			templateName: string;
-			category: string;
-			creatorEmail: string;
-			totalSales30d: number;
-			totalRevenue30d: number;
-			avgRevenuePerSale: number;
-			salesRank: number;
-			revenueRank: number;
-		}>> {
+		async getLeaderboard(): Promise<{
+			records: Array<{
+				templateName: string;
+				category: string;
+				creatorEmail: string;
+				totalSales30d: number;
+				totalRevenue30d: number;
+				avgRevenuePerSale: number;
+				salesRank: number;
+				revenueRank: number;
+			}>;
+			freshness: MarketplaceFreshnessMetadata;
+		}> {
 			const records = await base(TABLES.LEADERBOARD)
 				.select({
 					view: VIEWS.LEADERBOARD,
@@ -1081,30 +1221,36 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				})
 				.all();
 
-			return records.map(record => ({
-				templateName: record.fields['TEMPLATE_NAME'] as string || '',
-				category: record.fields['CATEGORY'] as string || '',
-				creatorEmail: record.fields['CREATOR_EMAIL'] as string || '',
-				totalSales30d: Number(record.fields['TOTAL_SALES_30D']) || 0,
-				totalRevenue30d: Number(record.fields['TOTAL_REVENUE_30D']) || 0,
-				avgRevenuePerSale: Number(record.fields['AVG_REVENUE_PER_SALE']) || 0,
-				salesRank: Number(record.fields['SALES_RANK']) || 0,
-				revenueRank: Number(record.fields['REVENUE_RANK']) || 0
-			}));
+			return {
+				records: records.map(record => ({
+					templateName: record.fields['TEMPLATE_NAME'] as string || '',
+					category: record.fields['CATEGORY'] as string || '',
+					creatorEmail: record.fields['CREATOR_EMAIL'] as string || '',
+					totalSales30d: Number(record.fields['TOTAL_SALES_30D']) || 0,
+					totalRevenue30d: Number(record.fields['TOTAL_REVENUE_30D']) || 0,
+					avgRevenuePerSale: Number(record.fields['AVG_REVENUE_PER_SALE']) || 0,
+					salesRank: Number(record.fields['SALES_RANK']) || 0,
+					revenueRank: Number(record.fields['REVENUE_RANK']) || 0
+				})),
+				freshness: extractMarketplaceFreshness(records)
+			};
 		},
 
 		/**
 		 * Get category performance data.
 		 */
-		async getCategoryPerformance(): Promise<Array<{
-			category: string;
-			subcategory: string;
-			templatesInSubcategory: number;
-			totalSales30d: number;
-			totalRevenue30d: number;
-			avgRevenuePerTemplate: number;
-			revenueRank: number;
-		}>> {
+		async getCategoryPerformance(): Promise<{
+			records: Array<{
+				category: string;
+				subcategory: string;
+				templatesInSubcategory: number;
+				totalSales30d: number;
+				totalRevenue30d: number;
+				avgRevenuePerTemplate: number;
+				revenueRank: number;
+			}>;
+			freshness: MarketplaceFreshnessMetadata;
+		}> {
 			const records = await base(TABLES.CATEGORY_PERFORMANCE)
 				.select({
 					view: VIEWS.CATEGORY_PERFORMANCE,
@@ -1112,15 +1258,18 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				})
 				.all();
 
-			return records.map(record => ({
-				category: record.fields['CATEGORY'] as string || '',
-				subcategory: record.fields['SUBCATEGORY'] as string || '',
-				templatesInSubcategory: Number(record.fields['TEMPLATES_IN_SUBCATEGORY']) || 0,
-				totalSales30d: Number(record.fields['TOTAL_SALES_30D']) || 0,
-				totalRevenue30d: Number(record.fields['TOTAL_REVENUE_30D']) || 0,
-				avgRevenuePerTemplate: Number(record.fields['AVG_REVENUE_PER_TEMPLATE']) || 0,
-				revenueRank: Number(record.fields['REVENUE_RANK']) || 0
-			}));
+			return {
+				records: records.map(record => ({
+					category: record.fields['CATEGORY'] as string || '',
+					subcategory: record.fields['SUBCATEGORY'] as string || '',
+					templatesInSubcategory: Number(record.fields['TEMPLATES_IN_SUBCATEGORY']) || 0,
+					totalSales30d: Number(record.fields['TOTAL_SALES_30D']) || 0,
+					totalRevenue30d: Number(record.fields['TOTAL_REVENUE_30D']) || 0,
+					avgRevenuePerTemplate: Number(record.fields['AVG_REVENUE_PER_TEMPLATE']) || 0,
+					revenueRank: Number(record.fields['REVENUE_RANK']) || 0
+				})),
+				freshness: extractMarketplaceFreshness(records)
+			};
 		},
 
 		// ==================== ASSET VERSIONS ====================

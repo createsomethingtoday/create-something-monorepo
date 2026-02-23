@@ -37,9 +37,14 @@
 			userBestRank: number | null;
 			lastUpdated: string;
 			nextUpdateDate?: string;
+			expectedLastSyncTime?: string;
 			syncSchedule?: string;
 			dataWindow?: string;
 			timeUntilNextSync?: string;
+			freshnessSource?: 'schedule-estimate' | 'airtable-field' | 'airtable-record-created-time';
+			isFreshnessEstimated?: boolean;
+			isStale?: boolean;
+			staleSinceHours?: number | null;
 		};
 	}
 
@@ -54,9 +59,14 @@
 			avgRevenue: number;
 			lastUpdated: string;
 			nextUpdate: string;
+			expectedLastSyncTime?: string;
 			syncSchedule: string;
 			dataWindow: string;
 			timeUntilNextSync: string;
+			freshnessSource?: 'schedule-estimate' | 'airtable-field' | 'airtable-record-created-time';
+			isFreshnessEstimated?: boolean;
+			isStale?: boolean;
+			staleSinceHours?: number | null;
 		};
 	}
 
@@ -72,7 +82,8 @@
 		totalMarketplaceSales: 0,
 		userBestRank: null,
 		lastUpdated: '',
-		nextUpdateDate: undefined
+		nextUpdateDate: undefined,
+		isFreshnessEstimated: true
 	});
 	
 	/**
@@ -107,6 +118,15 @@
 		return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 	}
 
+	function formatAbsoluteDate(isoDate: string): string {
+		const date = new Date(isoDate);
+		return date.toLocaleDateString('en-US', {
+			month: 'short',
+			day: 'numeric',
+			year: 'numeric'
+		});
+	}
+
 	$effect(() => {
 		loadData();
 	});
@@ -117,8 +137,8 @@
 
 		try {
 			const [leaderboardRes, categoriesRes] = await Promise.all([
-				fetch('/api/analytics/leaderboard'),
-				fetch('/api/analytics/categories')
+				fetch('/api/analytics/leaderboard', { cache: 'no-store' }),
+				fetch('/api/analytics/categories', { cache: 'no-store' })
 			]);
 
 			if (!leaderboardRes.ok || !categoriesRes.ok) {
@@ -177,7 +197,8 @@
 							<p class="sync-info">
 								<Clock size={14} />
 								<span class="sync-text">
-									Last updated: <strong>{formatLastUpdated(summary.lastUpdated)}</strong>
+									{summary.isFreshnessEstimated ? 'Last expected update:' : 'Last updated:'}
+									<strong>{formatLastUpdated(summary.lastUpdated)}</strong>
 									{#if summary.nextUpdateDate}
 										<span class="next-update">• Next update: {formatNextUpdate(summary.nextUpdateDate)}</span>
 									{/if}
@@ -185,8 +206,20 @@
 							</p>
 							<p class="sync-note">
 								<BarChart3 size={12} />
-								Data refreshes weekly on Mondays at 4 PM UTC with a rolling 30-day sales window
+								{#if summary.isFreshnessEstimated}
+									Data refreshes weekly on Mondays at 4 PM UTC with a rolling 30-day sales window. Last update timestamp is estimated from the schedule.
+								{:else if summary.freshnessSource === 'airtable-record-created-time'}
+									Data refreshes weekly on Mondays at 4 PM UTC. Timestamp is inferred from Airtable record creation metadata.
+								{:else}
+									Data refreshes weekly on Mondays at 4 PM UTC with a rolling 30-day sales window.
+								{/if}
 							</p>
+							{#if summary.isStale && summary.expectedLastSyncTime}
+								<p class="sync-warning">
+									<AlertCircle size={12} />
+									Data appears stale. Expected refresh: {formatAbsoluteDate(summary.expectedLastSyncTime)}.
+								</p>
+							{/if}
 						</div>
 					{/if}
 				</div>
@@ -318,6 +351,16 @@
 		margin: 0;
 		padding-left: 22px; /* Align with text above (icon width + gap) */
 		font-style: italic;
+	}
+
+	.sync-warning {
+		display: flex;
+		align-items: center;
+		gap: var(--space-xs);
+		font-size: var(--text-caption);
+		color: var(--color-warning);
+		margin: 0;
+		padding-left: 22px;
 	}
 
 	.sync-note :global(svg) {

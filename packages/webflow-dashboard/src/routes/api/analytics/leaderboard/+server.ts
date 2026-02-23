@@ -3,6 +3,12 @@ import type { RequestHandler } from './$types';
 import { getAirtableClient } from '$lib/server/airtable';
 import { getSyncMetadata } from '$lib/utils/sync-schedule';
 
+const noCacheHeaders = {
+	'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+	'Pragma': 'no-cache',
+	'Expires': '0'
+} as const;
+
 /**
  * API endpoint to fetch top templates leaderboard data
  * 
@@ -27,10 +33,11 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 		const airtable = getAirtableClient(platform?.env);
 
 		// Fetch leaderboard data and creator profile in parallel
-		const [records, creator] = await Promise.all([
+		const [leaderboardResult, creator] = await Promise.all([
 			airtable.getLeaderboard(),
 			airtable.getCreatorByEmail(userEmail)
 		]);
+		const records = leaderboardResult.records;
 
 		// Collect all known emails for this user (login email + creator record emails)
 		// The leaderboard CREATOR_EMAIL comes from Snowflake (workspace owner email)
@@ -73,33 +80,44 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 		const userTotalRevenue = userTemplates.reduce((sum, t) => sum + (t.totalRevenue30d || 0), 0);
 
 		// Get actual sync schedule metadata (not current time)
-		const syncMetadata = getSyncMetadata();
-
-		return json({
-			leaderboard,
-			userTemplates,
-			summary: {
-				topTemplate: topTemplate
-					? {
-							name: topTemplate.templateName,
-							revenue: topTemplate.isUserTemplate ? topTemplate.totalRevenue30d : undefined,
-							sales: topTemplate.totalSales30d
-						}
-					: null,
-				totalMarketplaceSales,
-				userTotalRevenue,
-				userBestRank:
-					userTemplates.length > 0
-						? Math.min(...userTemplates.map((t) => t.revenueRank))
-						: null,
-				userTemplateCount: userTemplates.length,
-				lastUpdated: syncMetadata.lastSyncTime,
-				nextUpdateDate: syncMetadata.nextSyncTime,
-				syncSchedule: syncMetadata.syncSchedule,
-				dataWindow: syncMetadata.dataWindow,
-				timeUntilNextSync: syncMetadata.timeUntilNextSync
-			}
+		const syncMetadata = getSyncMetadata({
+			actualLastSyncTime: leaderboardResult.freshness.timestamp,
+			actualSource: leaderboardResult.freshness.source
 		});
+
+			return json(
+				{
+					leaderboard,
+					userTemplates,
+					summary: {
+						topTemplate: topTemplate
+							? {
+									name: topTemplate.templateName,
+									revenue: topTemplate.isUserTemplate ? topTemplate.totalRevenue30d : undefined,
+									sales: topTemplate.totalSales30d
+								}
+							: null,
+						totalMarketplaceSales,
+						userTotalRevenue,
+						userBestRank:
+							userTemplates.length > 0
+								? Math.min(...userTemplates.map((t) => t.revenueRank))
+								: null,
+						userTemplateCount: userTemplates.length,
+						lastUpdated: syncMetadata.lastSyncTime,
+						nextUpdateDate: syncMetadata.nextSyncTime,
+						expectedLastSyncTime: syncMetadata.expectedLastSyncTime,
+						syncSchedule: syncMetadata.syncSchedule,
+						dataWindow: syncMetadata.dataWindow,
+						timeUntilNextSync: syncMetadata.timeUntilNextSync,
+						freshnessSource: syncMetadata.freshnessSource,
+						isFreshnessEstimated: syncMetadata.isEstimated,
+						isStale: syncMetadata.isStale,
+						staleSinceHours: syncMetadata.staleSinceHours
+					}
+				},
+				{ headers: noCacheHeaders }
+			);
 	} catch (err) {
 		console.error('Leaderboard API Error:', err);
 		throw error(500, 'Failed to fetch leaderboard data');

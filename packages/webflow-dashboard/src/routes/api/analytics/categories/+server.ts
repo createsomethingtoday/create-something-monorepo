@@ -3,6 +3,12 @@ import type { RequestHandler } from './$types';
 import { getAirtableClient } from '$lib/server/airtable';
 import { getSyncMetadata } from '$lib/utils/sync-schedule';
 
+const noCacheHeaders = {
+	'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+	'Pragma': 'no-cache',
+	'Expires': '0'
+} as const;
+
 /**
  * API endpoint to fetch category performance data
  * 
@@ -24,7 +30,8 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 		const airtable = getAirtableClient(platform?.env);
 
 		// Fetch category performance data
-		const categories = await airtable.getCategoryPerformance();
+		const categoryResult = await airtable.getCategoryPerformance();
+		const categories = categoryResult.records;
 
 		// Calculate summary statistics
 		const topCategories = categories.slice(0, 5);
@@ -66,7 +73,10 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 		}
 
 		// Get actual sync schedule metadata (not current time)
-		const syncMetadata = getSyncMetadata();
+		const syncMetadata = getSyncMetadata({
+			actualLastSyncTime: categoryResult.freshness.timestamp,
+			actualSource: categoryResult.freshness.source
+		});
 
 		// Calculate total marketplace revenue across all categories
 		const totalRevenue = categories.reduce((sum, c) => {
@@ -78,24 +88,32 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 		// Total templates across all categories
 		const totalTemplates = categories.reduce((sum, c) => sum + c.templatesInSubcategory, 0);
 
-		return json({
-			categories,
-			topCategories,
-			insights,
-			summary: {
-				totalCategories: categories.length,
-				totalTemplates,
-				totalSales,
-				totalRevenue,
-				avgRevenue: Math.round(avgRevenue),
-				lowestCompetition,
-				lastUpdated: syncMetadata.lastSyncTime,
-				nextUpdate: syncMetadata.nextSyncTime,
-				syncSchedule: syncMetadata.syncSchedule,
-				dataWindow: syncMetadata.dataWindow,
-				timeUntilNextSync: syncMetadata.timeUntilNextSync
-			}
-		});
+			return json(
+				{
+					categories,
+					topCategories,
+					insights,
+					summary: {
+						totalCategories: categories.length,
+						totalTemplates,
+						totalSales,
+						totalRevenue,
+						avgRevenue: Math.round(avgRevenue),
+						lowestCompetition,
+						lastUpdated: syncMetadata.lastSyncTime,
+						nextUpdate: syncMetadata.nextSyncTime,
+						expectedLastSyncTime: syncMetadata.expectedLastSyncTime,
+						syncSchedule: syncMetadata.syncSchedule,
+						dataWindow: syncMetadata.dataWindow,
+						timeUntilNextSync: syncMetadata.timeUntilNextSync,
+						freshnessSource: syncMetadata.freshnessSource,
+						isFreshnessEstimated: syncMetadata.isEstimated,
+						isStale: syncMetadata.isStale,
+						staleSinceHours: syncMetadata.staleSinceHours
+					}
+				},
+				{ headers: noCacheHeaders }
+			);
 	} catch (err) {
 		console.error('Categories API Error:', err);
 		throw error(500, 'Failed to fetch category data');

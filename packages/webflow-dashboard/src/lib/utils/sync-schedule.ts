@@ -4,18 +4,29 @@
  *
  * Ported from v1: wf-asset-dashboard/utils/syncSchedule.js
  *
- * IMPORTANT: These functions calculate *theoretical* sync times based on the
- * calendar schedule. They do NOT verify whether Census actually ran. If Census
- * fails on a Monday, the dashboard will still report that sync time as "last sync."
- * A future improvement would be to check Airtable record modification timestamps.
+ * IMPORTANT: These functions provide schedule-derived sync times by default.
+ * Callers can pass an actual timestamp from Airtable/source records when available;
+ * otherwise metadata is marked as estimated so the UI can avoid over-claiming freshness.
  */
 
 export interface SyncMetadata {
 	lastSyncTime: string;
+	expectedLastSyncTime: string;
 	nextSyncTime: string;
 	syncSchedule: string;
 	dataWindow: string;
 	timeUntilNextSync: string;
+	freshnessSource: 'schedule-estimate' | 'airtable-field' | 'airtable-record-created-time';
+	isEstimated: boolean;
+	isStale: boolean;
+	staleSinceHours: number | null;
+}
+
+interface SyncMetadataOptions {
+	actualLastSyncTime?: string | null;
+	actualSource?: 'field' | 'record-created-time' | 'none';
+	// Allow a tolerance because upstream syncs can be delayed by a few hours.
+	staleThresholdHours?: number;
 }
 
 /**
@@ -103,15 +114,45 @@ export function getTimeUntilNextSync(): string {
  * Get sync metadata for API responses.
  * Returns calculated sync times based on the weekly Monday 4 PM UTC schedule.
  */
-export function getSyncMetadata(): SyncMetadata {
-	const lastSync = getLastSyncTime();
+export function getSyncMetadata(options: SyncMetadataOptions = {}): SyncMetadata {
+	const expectedLastSync = getLastSyncTime();
 	const nextSync = getNextSyncTime();
+	const staleThresholdHours = options.staleThresholdHours ?? 12;
+
+	let reportedLastSync = expectedLastSync;
+	let freshnessSource: SyncMetadata['freshnessSource'] = 'schedule-estimate';
+	let isEstimated = true;
+
+	if (options.actualLastSyncTime) {
+		const parsed = new Date(options.actualLastSyncTime);
+		if (!Number.isNaN(parsed.getTime())) {
+			reportedLastSync = parsed;
+			freshnessSource =
+				options.actualSource === 'field'
+					? 'airtable-field'
+					: options.actualSource === 'record-created-time'
+						? 'airtable-record-created-time'
+						: 'schedule-estimate';
+			// Record-created-time is only a proxy; keep it marked as estimated.
+			isEstimated = freshnessSource !== 'airtable-field';
+		}
+	}
+
+	const staleDeltaMs = expectedLastSync.getTime() - reportedLastSync.getTime();
+	const staleThresholdMs = staleThresholdHours * 60 * 60 * 1000;
+	const isStale = staleDeltaMs > staleThresholdMs;
+	const staleSinceHours = isStale ? Math.floor(staleDeltaMs / (60 * 60 * 1000)) : null;
 
 	return {
-		lastSyncTime: lastSync.toISOString(),
+		lastSyncTime: reportedLastSync.toISOString(),
+		expectedLastSyncTime: expectedLastSync.toISOString(),
 		nextSyncTime: nextSync.toISOString(),
 		syncSchedule: 'Weekly on Mondays at 16:00 UTC (4 PM UTC)',
 		dataWindow: 'Rolling 30-day window',
-		timeUntilNextSync: getTimeUntilNextSync()
+		timeUntilNextSync: getTimeUntilNextSync(),
+		freshnessSource,
+		isEstimated,
+		isStale,
+		staleSinceHours
 	};
 }
