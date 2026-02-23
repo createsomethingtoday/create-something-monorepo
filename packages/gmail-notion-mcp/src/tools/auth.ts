@@ -17,6 +17,24 @@ const ENTITY_ID = 'default';
 
 export interface ConnectionChecker {
   hasActiveConnection(userId: string, toolkit: string): Promise<boolean>;
+  listAuthConfigs?: (options?: {
+    toolkit?: string;
+    limit?: number;
+    cursor?: string;
+    isComposioManaged?: boolean;
+    enabledOnly?: boolean;
+  }) => Promise<{
+    items: Array<{ id: string }>;
+    nextCursor: string | null;
+  }>;
+  createConnectionLink?: (
+    userId: string,
+    authConfigId: string,
+    callbackUrl?: string,
+  ) => Promise<{
+    redirectUrl?: string | null;
+    status?: string;
+  }>;
 }
 
 export interface AuthToolDeps {
@@ -26,6 +44,27 @@ export interface AuthToolDeps {
   notionAuthConfigId: string | undefined;
   /** Resolve entity id at call time (for multi-user). If omitted, uses 'default'. */
   getEntityId?: () => string | Promise<string>;
+}
+
+async function resolveAuthConfigId(
+  toolkit: 'gmail' | 'notion',
+  explicitAuthConfigId: string | undefined,
+  deps: AuthToolDeps,
+): Promise<string | undefined> {
+  if (explicitAuthConfigId) return explicitAuthConfigId;
+  if (!deps.composioClient.listAuthConfigs) return undefined;
+
+  try {
+    const result = await deps.composioClient.listAuthConfigs({
+      toolkit,
+      enabledOnly: true,
+      limit: 1,
+    });
+    const id = result.items?.[0]?.id;
+    return id ? id : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function registerAuthToolsForToolkit(
@@ -74,7 +113,8 @@ function registerAuthToolsForToolkit(
     {},
     async () => {
       const entityId = deps.getEntityId ? await deps.getEntityId() : ENTITY_ID;
-      if (!authConfigId) {
+      const resolvedAuthConfigId = await resolveAuthConfigId(toolkit, authConfigId, deps);
+      if (!resolvedAuthConfigId) {
         return {
           content: [
             {
@@ -82,7 +122,7 @@ function registerAuthToolsForToolkit(
               text: JSON.stringify(
                 {
                   link: null,
-                  message: `Connect link not configured. Set COMPOSIO_${label.toUpperCase()}_AUTH_CONFIG_ID (from Composio dashboard) and redeploy.`,
+                  message: `Connect link not configured. Set COMPOSIO_${label.toUpperCase()}_AUTH_CONFIG_ID or create an enabled ${label} auth config in Composio.`,
                 },
                 null,
                 2,
@@ -93,23 +133,35 @@ function registerAuthToolsForToolkit(
       }
 
       try {
-        const response = await fetch(COMPOSIO_CONNECT_API, {
-          method: 'POST',
-          headers: { 'x-api-key': deps.composioApiKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ integrationId: authConfigId, data: { userUuid: entityId } }),
-        });
+        let redirectUrl: string | null | undefined;
+        let connectionStatus: string | undefined;
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          return {
-            content: [
-              { type: 'text' as const, text: JSON.stringify({ link: null, error: `Composio API: ${response.status} ${errorText}` }, null, 2) },
-            ],
-          };
+        if (deps.composioClient.createConnectionLink) {
+          const linkResult = await deps.composioClient.createConnectionLink(entityId, resolvedAuthConfigId);
+          redirectUrl = linkResult.redirectUrl;
+          connectionStatus = linkResult.status;
+        } else {
+          const response = await fetch(COMPOSIO_CONNECT_API, {
+            method: 'POST',
+            headers: { 'x-api-key': deps.composioApiKey, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ integrationId: resolvedAuthConfigId, data: { userUuid: entityId } }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            return {
+              content: [
+                { type: 'text' as const, text: JSON.stringify({ link: null, error: `Composio API: ${response.status} ${errorText}` }, null, 2) },
+              ],
+            };
+          }
+
+          const data = (await response.json()) as { redirectUrl?: string; connectionStatus?: string };
+          redirectUrl = data.redirectUrl;
+          connectionStatus = data.connectionStatus;
         }
 
-        const data = (await response.json()) as { redirectUrl?: string; connectionStatus?: string };
-        if (data.connectionStatus === 'ACTIVE') {
+        if (connectionStatus === 'ACTIVE') {
           return {
             content: [
               {
@@ -123,7 +175,7 @@ function registerAuthToolsForToolkit(
             ],
           };
         }
-        if (!data.redirectUrl) {
+        if (!redirectUrl) {
           return {
             content: [
               {
@@ -142,7 +194,11 @@ function registerAuthToolsForToolkit(
             {
               type: 'text' as const,
               text: JSON.stringify(
-                { link: data.redirectUrl, message: 'Present this link to the user, then check connection_status.' },
+                {
+                  link: redirectUrl,
+                  authConfigId: resolvedAuthConfigId,
+                  message: 'Present this link to the user, then check connection_status.',
+                },
                 null,
                 2,
               ),

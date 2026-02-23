@@ -3,6 +3,7 @@
 Host workflow playbooks for MCP onboarding. Teaches users how to work effectively in Codex, Cursor, Claude Desktop, Claude Code, Windsurf, and VS Code (Copilot).
 
 Lightweight by design — ships alongside client MCPs for onboarding. No philosophy, no papers, no design system. Just workflow guidance.
+For fleet routing, policy, and multi-MCP control plane concerns, use Hub MCP (`@create-something/cs-mcp-hub` or `@create-something/cs-mcp-hub-remote`).
 
 ## Framework Tier
 
@@ -112,7 +113,24 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ### OpenAI Codex
 
+Recommended for multi-MCP and fleet-scale setups: use Hub as a single entry.
+
 Add to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers."create-something-hub"]
+command = "node"
+args = ["./packages/cs-mcp-hub/dist/index.js"]
+enabled = true
+```
+
+Build before use:
+
+```bash
+pnpm --filter @create-something/cs-mcp-hub build
+```
+
+Direct Playbook-only setup (quick onboarding / small setup):
 
 ```toml
 [mcp_servers."playbook"]
@@ -229,6 +247,7 @@ Two transports, one codebase:
 | **stdio** | `dist/index.js` | Local development |
 
 Zero external data dependencies. Playbook content and MCP catalog are embedded in source. The Worker runs on Cloudflare's edge network. Pure workflow knowledge served through protocol.
+Playbook is not the MCP fleet gateway; Hub MCP is the control plane for that concern.
 
 ## MCP Catalog
 

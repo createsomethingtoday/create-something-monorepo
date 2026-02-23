@@ -16,19 +16,29 @@ This package implements the **wrap pattern**: clients see CREATE SOMETHING MCP; 
 | Class / page | URL | Bridge usage |
 |--------------|-----|--------------|
 | **TypeScript SDK** (index) | https://docs.composio.dev/reference/sdk-reference/typescript | Install `@composio/core`; `Composio` constructor, `tools.get`, `tools.execute`. |
-| **Composio** | https://docs.composio.dev/reference/sdk-reference/typescript/composio | Core class. We use `apiKey`, optional `baseURL`. `flush()` for Workers telemetry (not wired yet). |
+| **Composio** | https://docs.composio.dev/reference/sdk-reference/typescript/composio | Core class. We use `apiKey`, optional `baseURL`. `flush()` remains available for Worker telemetry flushing. |
 | **Tools** | https://docs.composio.dev/reference/sdk-reference/typescript/tools | **Primary**: `getRawComposioTools(query)`, `getRawComposioToolBySlug(slug)`, `execute(slug, { userId, arguments })`. We use `dangerouslySkipVersionCheck: true` in execute. |
 | **Toolkits** | https://docs.composio.dev/reference/sdk-reference/typescript/toolkits | `toolkits.get(slug)`, `authorize()`, `listCategories()`. Not used in bridge; useful for auth/config discovery. |
 | **ConnectedAccounts** | https://docs.composio.dev/reference/sdk-reference/typescript/connected-accounts | `initiate()`, `link()`, `list()`, `get()`, `waitForConnection()`. ComposioAuthProvider / connect flows use these (e.g. quickbooks-notion-mcp). |
-| **AuthConfigs** | https://docs.composio.dev/reference/sdk-reference/typescript/auth-configs | `get()`, `list()`, `create()`, `update()`. Auth config IDs used when initiating connections. |
+| **AuthConfigs** | https://docs.composio.dev/reference/sdk-reference/typescript/auth-configs | `get()`, `list()`, `create()`, `update()`, `enable()`, `disable()`, `delete()`. Exposed in `ComposioClient` for auth control-plane automation. |
 | **MCP** | https://docs.composio.dev/reference/sdk-reference/typescript/mcp | Composio-hosted MCP config (create/list/update). We run our own MCP servers and wrap Composio tools via ComposioToolFactory. |
 | **Triggers** | https://docs.composio.dev/reference/sdk-reference/typescript/triggers | Webhook triggers (create, subscribe, verifyWebhook). Not used in this bridge. |
+
+## Internal log APIs (REST)
+
+| Endpoint | URL | Bridge usage |
+|----------|-----|--------------|
+| **Action execution logs** | https://docs.composio.dev/reference/api-reference/logs/postInternalActionExecutionLogs | `ComposioClient.listInternalActionExecutionLogs()` for diagnostics/reconciliation. |
+| **Trigger logs** | https://docs.composio.dev/reference/api-reference/logs/postInternalTriggerLogs | `ComposioClient.listInternalTriggerLogs()` for trigger delivery diagnostics. |
+| **Action log fields** | https://docs.composio.dev/reference/api-reference/logs/getInternalActionExecutionLogFields | `ComposioClient.listInternalActionExecutionLogFields()` for validating `search_params` keys. |
 
 ## Mapping (bridge → SDK)
 
 - **Discovery**: `client.getTools(toolkits)` → `getRawComposioTools({ toolkits })` (no user_id; see Fetching tools).
 - **Execution**: `client.executeTool(slug, params, userId)` → `tools.execute(slug, { userId, arguments: params, dangerouslySkipVersionCheck: true })` (see Executing tools).
 - **User scoping**: Every execution is scoped to a Composio entity/user ID; that user must have connected accounts for the app (see Authenticating tools).
+- **Auth configs**: `list/get/create/update/enable/disable/delete` are exposed directly through `ComposioClient`.
+- **Internal diagnostics**: internal action/trigger logs use direct REST calls to `/api/v3/internal/*` with API key auth.
 
 ## Execution policy runtime
 

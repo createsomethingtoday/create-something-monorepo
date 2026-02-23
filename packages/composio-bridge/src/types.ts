@@ -28,6 +28,12 @@ export interface ComposioClientConfig {
   baseURL?: string;
 
   /**
+   * Base URL for Composio internal diagnostics APIs.
+   * Defaults to backend.composio.dev unless explicitly overridden.
+   */
+  internalApiBaseUrl?: string;
+
+  /**
    * Custom fetch implementation.
    * Use this in Cloudflare Workers or environments with a non-global fetch.
    */
@@ -165,6 +171,158 @@ export interface ComposioToolkitSummary {
   noAuth?: boolean;
   /** Whether this toolkit is local/project scoped in Composio. */
   isLocalToolkit: boolean;
+}
+
+// =============================================================================
+// Auth Configs (Database tier control plane)
+// =============================================================================
+
+/**
+ * Filter options for listing auth configs through the Composio SDK.
+ */
+export interface ComposioAuthConfigListOptions {
+  toolkit?: string;
+  limit?: number;
+  cursor?: string;
+  isComposioManaged?: boolean;
+  enabledOnly?: boolean;
+}
+
+/**
+ * Normalized auth config shape used by bridge consumers.
+ */
+export interface ComposioAuthConfig {
+  id: string;
+  name: string;
+  toolkit: string;
+  status: 'ENABLED' | 'DISABLED' | string;
+  noOfConnections: number;
+  isComposioManaged?: boolean;
+  authScheme?: string;
+  createdAt?: string;
+  lastUpdatedAt?: string;
+  raw: Record<string, unknown>;
+}
+
+/**
+ * Paginated auth config list result.
+ */
+export interface ComposioAuthConfigListResult {
+  items: ComposioAuthConfig[];
+  nextCursor: string | null;
+  totalPages?: number;
+}
+
+/**
+ * Minimal create response for auth config creation.
+ */
+export interface ComposioAuthConfigCreateResult {
+  id: string;
+  toolkit?: string;
+  authScheme?: string;
+  isComposioManaged?: boolean;
+  raw: Record<string, unknown>;
+}
+
+/**
+ * Link payload returned when creating a Composio connect link.
+ */
+export interface ComposioConnectionLinkResult {
+  id: string;
+  status?: string;
+  redirectUrl?: string | null;
+  raw: Record<string, unknown>;
+}
+
+// =============================================================================
+// Internal Log APIs (Automation diagnostics)
+// =============================================================================
+
+/**
+ * Primitive value type accepted in search_params.
+ */
+export type ComposioInternalSearchValue = string | number | boolean;
+
+/**
+ * Shared filters for Composio internal log endpoints.
+ */
+export interface ComposioInternalLogQueryBase {
+  connectedAccountId?: string;
+  status?: string;
+  startTime?: string;
+  endTime?: string;
+  limit?: number;
+  cursor?: string;
+  searchParams?: Record<string, ComposioInternalSearchValue>;
+}
+
+/**
+ * Filter payload for POST /api/v3/internal/action_execution_logs.
+ */
+export interface ComposioInternalActionExecutionLogQuery extends ComposioInternalLogQueryBase {
+  actionName?: string;
+}
+
+/**
+ * Filter payload for POST /api/v3/internal/trigger_logs.
+ */
+export interface ComposioInternalTriggerLogQuery extends ComposioInternalLogQueryBase {
+  triggerId?: string;
+}
+
+/**
+ * Normalized internal action-execution log row.
+ */
+export interface ComposioInternalActionExecutionLog {
+  id?: string;
+  connectedAccountId?: string;
+  actionName?: string;
+  status?: string;
+  startTime?: string;
+  endTime?: string;
+  raw: Record<string, unknown>;
+}
+
+/**
+ * Normalized internal trigger log row.
+ */
+export interface ComposioInternalTriggerLog {
+  id?: string;
+  connectedAccountId?: string;
+  triggerId?: string;
+  triggerSlug?: string;
+  status?: string;
+  startTime?: string;
+  endTime?: string;
+  raw: Record<string, unknown>;
+}
+
+/**
+ * Paginated internal action log result.
+ */
+export interface ComposioInternalActionExecutionLogResult {
+  items: ComposioInternalActionExecutionLog[];
+  nextCursor: string | null;
+  totalPages?: number;
+}
+
+/**
+ * Paginated internal trigger log result.
+ */
+export interface ComposioInternalTriggerLogResult {
+  items: ComposioInternalTriggerLog[];
+  nextCursor: string | null;
+  totalPages?: number;
+}
+
+/**
+ * Searchable field metadata from GET /api/v3/internal/action_execution_logs/fields.
+ */
+export interface ComposioInternalActionExecutionLogField {
+  name: string;
+  type?: string;
+  description?: string;
+  raw: Record<string, unknown>;
 }
 
 // =============================================================================

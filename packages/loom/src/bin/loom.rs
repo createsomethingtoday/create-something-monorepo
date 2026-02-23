@@ -11,6 +11,7 @@
 //! # Create tasks
 //! lm create "Fix authentication bug"
 //! lm create "Plan new feature" --labels planning,architecture
+//! lm work "Fix authentication bug" --agent claude-code --priority high --labels bug,auth
 //!
 //! # View work
 //! lm ready        # Tasks ready to work on
@@ -96,7 +97,7 @@ enum Commands {
         priority: Option<String>,
         
         /// New issue type (bug, feature, task, epic, chore)
-        #[arg(long, name = "type")]
+        #[arg(long = "issue-type", visible_alias = "type", value_name = "type")]
         issue_type: Option<String>,
         
         /// New description
@@ -141,6 +142,36 @@ enum Commands {
         /// Parent task ID
         #[arg(long, short)]
         parent: Option<String>,
+    },
+
+    /// Start working on something (creates and claims task atomically)
+    Work {
+        /// Task title
+        title: String,
+
+        /// Agent name (defaults to system hostname)
+        #[arg(long, short)]
+        agent: Option<String>,
+
+        /// Task priority (critical, high, normal, low)
+        #[arg(long)]
+        priority: Option<String>,
+
+        /// Labels (comma-separated)
+        #[arg(long, short)]
+        labels: Option<String>,
+
+        /// Description
+        #[arg(long, short)]
+        description: Option<String>,
+
+        /// Parent task ID
+        #[arg(long, short)]
+        parent: Option<String>,
+
+        /// Issue type (bug, feature, task, epic, chore)
+        #[arg(long = "issue-type", visible_alias = "type", value_name = "type")]
+        issue_type: Option<String>,
     },
     
     /// Claim a task
@@ -557,18 +588,14 @@ fn run() -> Result<(), LoomError> {
             }
             
             if let Some(priority_str) = priority {
-                use loom::Priority as TaskPriority;
-                let priority = TaskPriority::from_str(&priority_str)
-                    .ok_or_else(|| LoomError::Config(format!("Invalid priority: {}", priority_str)))?;
+                let priority = parse_priority(&priority_str)?;
                 loom.set_priority(&id, priority)?;
                 println!("Priority updated to {:?}", priority);
                 updated = true;
             }
             
             if let Some(type_str) = issue_type {
-                use loom::IssueType;
-                let issue_type = IssueType::from_str(&type_str)
-                    .ok_or_else(|| LoomError::Config(format!("Invalid issue type: {}", type_str)))?;
+                let issue_type = parse_issue_type(&type_str)?;
                 loom.set_issue_type(&id, issue_type)?;
                 println!("Issue type updated to {:?}", issue_type);
                 updated = true;
@@ -582,7 +609,7 @@ fn run() -> Result<(), LoomError> {
             }
             
             if !updated {
-                println!("No updates specified. Use --status, --priority, --type, or --description");
+                println!("No updates specified. Use --status, --priority, --issue-type (or --type), or --description");
             }
         }
         
@@ -699,6 +726,39 @@ fn run() -> Result<(), LoomError> {
             })?;
             
             println!("Created: {} - {}", task.id, task.title);
+        }
+
+        Commands::Work { title, agent, priority, labels, description, parent, issue_type } => {
+            let mut loom = Loom::open_or_init(".")?;
+            let agent = agent.unwrap_or_else(get_hostname);
+            let labels: Vec<String> = labels
+                .map(|l| l.split(',').map(|s| s.trim().to_string()).collect())
+                .unwrap_or_default();
+            let priority = priority
+                .as_deref()
+                .map(parse_priority)
+                .transpose()?
+                .unwrap_or_default();
+            let issue_type = issue_type
+                .as_deref()
+                .map(parse_issue_type)
+                .transpose()?
+                .unwrap_or_default();
+
+            let task = loom.create_task(CreateTask {
+                title,
+                description,
+                priority,
+                issue_type,
+                labels,
+                parent,
+                evidence: None,
+                repo: None,
+            })?;
+
+            let task = loom.claim(&task.id, &agent)?;
+            println!("Created and claimed: {} - {}", task.id, task.title);
+            println!("Agent: {}", agent);
         }
         
         Commands::Claim { id, agent } => {
@@ -1444,6 +1504,16 @@ fn parse_status(s: &str) -> Result<Status, LoomError> {
         "cancelled" => Ok(Status::Cancelled),
         _ => Err(LoomError::Config(format!("Unknown status: {}", s))),
     }
+}
+
+fn parse_priority(s: &str) -> Result<loom::Priority, LoomError> {
+    loom::Priority::from_str(s)
+        .ok_or_else(|| LoomError::Config(format!("Invalid priority: {}", s)))
+}
+
+fn parse_issue_type(s: &str) -> Result<loom::IssueType, LoomError> {
+    loom::IssueType::from_str(s)
+        .ok_or_else(|| LoomError::Config(format!("Invalid issue type: {}", s)))
 }
 
 fn truncate(s: &str, max: usize) -> String {

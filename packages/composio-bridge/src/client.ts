@@ -18,9 +18,22 @@
 
 import { Composio } from '@composio/core';
 import type {
+  ComposioAuthConfig,
+  ComposioAuthConfigCreateResult,
+  ComposioAuthConfigListOptions,
+  ComposioAuthConfigListResult,
+  ComposioConnectionLinkResult,
   ComposioClientConfig,
   ComposioAccount,
   ComposioExecutionPolicy,
+  ComposioInternalActionExecutionLog,
+  ComposioInternalActionExecutionLogField,
+  ComposioInternalActionExecutionLogQuery,
+  ComposioInternalActionExecutionLogResult,
+  ComposioInternalSearchValue,
+  ComposioInternalTriggerLog,
+  ComposioInternalTriggerLogQuery,
+  ComposioInternalTriggerLogResult,
   ComposioToolDiscoveryOptions,
   ComposioToolkitListOptions,
   ComposioToolkitSummary,
@@ -86,7 +99,15 @@ interface NormalizedExecutionPolicy {
 }
 
 interface PolicyContext {
-  operation: 'TOOLS_FETCH' | 'TOOLKITS_FETCH' | 'TOOL_EXECUTE' | 'ACCOUNTS_FETCH';
+  operation:
+    | 'TOOLS_FETCH'
+    | 'TOOLKITS_FETCH'
+    | 'TOOL_EXECUTE'
+    | 'ACCOUNTS_FETCH'
+    | 'AUTH_CONFIGS_FETCH'
+    | 'AUTH_CONFIGS_MUTATE'
+    | 'CONNECTION_LINK_CREATE'
+    | 'INTERNAL_LOGS_FETCH';
   idempotent: boolean;
 }
 
@@ -135,10 +156,12 @@ function normalizeExecutionPolicy(
 export class ComposioClient {
   private readonly composio: Composio;
   private readonly config: ComposioClientConfig;
+  private readonly internalApiBaseUrl: string;
   private readonly executionPolicy: NormalizedExecutionPolicy;
 
   constructor(config: ComposioClientConfig) {
     this.config = config;
+    this.internalApiBaseUrl = resolveInternalApiBaseUrl(config.internalApiBaseUrl ?? config.baseURL);
     this.executionPolicy = normalizeExecutionPolicy(config.executionPolicy);
 
     this.composio = new Composio({
@@ -328,6 +351,315 @@ export class ComposioClient {
   }
 
   // ===========================================================================
+  // Auth Config Management (Database tier)
+  // ===========================================================================
+
+  /**
+   * List auth configs (optionally filtered by toolkit or Composio-managed flag).
+   */
+  async listAuthConfigs(
+    options: ComposioAuthConfigListOptions = {},
+  ): Promise<ComposioAuthConfigListResult> {
+    try {
+      const response = await this.runWithPolicy(
+        () => this.composio.authConfigs.list({
+          ...(options.toolkit ? { toolkit: options.toolkit.toLowerCase() } : {}),
+          ...(options.limit ? { limit: options.limit } : {}),
+          ...(options.cursor ? { cursor: options.cursor } : {}),
+          ...(typeof options.isComposioManaged === 'boolean'
+            ? { isComposioManaged: options.isComposioManaged }
+            : {}),
+        }),
+        { operation: 'AUTH_CONFIGS_FETCH', idempotent: true },
+      );
+
+      const normalized = normalizeAuthConfigListResponse(response);
+      if (!options.enabledOnly) return normalized;
+
+      return {
+        ...normalized,
+        items: normalized.items.filter((item) => item.status === 'ENABLED'),
+      };
+    } catch (error) {
+      throw toBridgeError(error, 'Failed to list auth configs', 'AUTH_CONFIGS_LIST_FAILED');
+    }
+  }
+
+  /**
+   * Retrieve one auth config by ID.
+   */
+  async getAuthConfig(authConfigId: string): Promise<ComposioAuthConfig> {
+    try {
+      const response = await this.runWithPolicy(
+        () => this.composio.authConfigs.get(authConfigId),
+        { operation: 'AUTH_CONFIGS_FETCH', idempotent: true },
+      );
+
+      if (!isRecord(response)) {
+        throw new Error('Unexpected auth config payload shape');
+      }
+
+      return normalizeAuthConfig(response);
+    } catch (error) {
+      throw toBridgeError(
+        error,
+        `Failed to fetch auth config ${authConfigId}`,
+        'AUTH_CONFIGS_GET_FAILED',
+      );
+    }
+  }
+
+  /**
+   * Find the first auth config for a toolkit.
+   * Paginates a few pages to avoid missing configs on larger workspaces.
+   */
+  async findAuthConfigForToolkit(
+    toolkit: string,
+    options: {
+      enabledOnly?: boolean;
+      isComposioManaged?: boolean;
+      limit?: number;
+      maxPages?: number;
+    } = {},
+  ): Promise<ComposioAuthConfig | null> {
+    const maxPages = clampInteger(options.maxPages, 1, 20, 5);
+    let cursor: string | undefined;
+
+    for (let page = 0; page < maxPages; page += 1) {
+      const result = await this.listAuthConfigs({
+        toolkit,
+        enabledOnly: options.enabledOnly,
+        isComposioManaged: options.isComposioManaged,
+        limit: options.limit,
+        cursor,
+      });
+
+      if (result.items.length > 0) {
+        return result.items[0];
+      }
+
+      if (!result.nextCursor) break;
+      cursor = result.nextCursor;
+    }
+
+    return null;
+  }
+
+  /**
+   * Create an auth config for a toolkit.
+   */
+  async createAuthConfig(
+    toolkit: string,
+    options: Record<string, unknown> = {},
+  ): Promise<ComposioAuthConfigCreateResult> {
+    try {
+      type CreateAuthConfigOptions = Parameters<Composio['authConfigs']['create']>[1];
+      const response = await this.runWithPolicy(
+        () => this.composio.authConfigs.create(toolkit.toLowerCase(), options as CreateAuthConfigOptions),
+        { operation: 'AUTH_CONFIGS_MUTATE', idempotent: false },
+      );
+
+      if (!isRecord(response)) {
+        throw new Error('Unexpected auth config create payload shape');
+      }
+
+      return normalizeAuthConfigCreateResponse(response);
+    } catch (error) {
+      throw toBridgeError(
+        error,
+        `Failed to create auth config for toolkit ${toolkit}`,
+        'AUTH_CONFIGS_CREATE_FAILED',
+      );
+    }
+  }
+
+  /**
+   * Update an existing auth config and return the refreshed representation.
+   */
+  async updateAuthConfig(
+    authConfigId: string,
+    data: Record<string, unknown>,
+  ): Promise<ComposioAuthConfig> {
+    try {
+      type UpdateAuthConfigOptions = Parameters<Composio['authConfigs']['update']>[1];
+      await this.runWithPolicy(
+        () => this.composio.authConfigs.update(authConfigId, data as UpdateAuthConfigOptions),
+        { operation: 'AUTH_CONFIGS_MUTATE', idempotent: false },
+      );
+
+      return await this.getAuthConfig(authConfigId);
+    } catch (error) {
+      throw toBridgeError(
+        error,
+        `Failed to update auth config ${authConfigId}`,
+        'AUTH_CONFIGS_UPDATE_FAILED',
+      );
+    }
+  }
+
+  /**
+   * Enable an auth config and return the refreshed representation.
+   */
+  async enableAuthConfig(authConfigId: string): Promise<ComposioAuthConfig> {
+    try {
+      await this.runWithPolicy(
+        () => this.composio.authConfigs.enable(authConfigId),
+        { operation: 'AUTH_CONFIGS_MUTATE', idempotent: false },
+      );
+
+      return await this.getAuthConfig(authConfigId);
+    } catch (error) {
+      throw toBridgeError(
+        error,
+        `Failed to enable auth config ${authConfigId}`,
+        'AUTH_CONFIGS_ENABLE_FAILED',
+      );
+    }
+  }
+
+  /**
+   * Disable an auth config and return the refreshed representation.
+   */
+  async disableAuthConfig(authConfigId: string): Promise<ComposioAuthConfig> {
+    try {
+      await this.runWithPolicy(
+        () => this.composio.authConfigs.disable(authConfigId),
+        { operation: 'AUTH_CONFIGS_MUTATE', idempotent: false },
+      );
+
+      return await this.getAuthConfig(authConfigId);
+    } catch (error) {
+      throw toBridgeError(
+        error,
+        `Failed to disable auth config ${authConfigId}`,
+        'AUTH_CONFIGS_DISABLE_FAILED',
+      );
+    }
+  }
+
+  /**
+   * Delete an auth config by ID.
+   */
+  async deleteAuthConfig(authConfigId: string): Promise<void> {
+    try {
+      await this.runWithPolicy(
+        () => this.composio.authConfigs.delete(authConfigId),
+        { operation: 'AUTH_CONFIGS_MUTATE', idempotent: false },
+      );
+    } catch (error) {
+      throw toBridgeError(
+        error,
+        `Failed to delete auth config ${authConfigId}`,
+        'AUTH_CONFIGS_DELETE_FAILED',
+      );
+    }
+  }
+
+  /**
+   * Create a connect link for an entity/user and auth config.
+   */
+  async createConnectionLink(
+    userId: string,
+    authConfigId: string,
+    callbackUrl?: string,
+  ): Promise<ComposioConnectionLinkResult> {
+    try {
+      const response = await this.runWithPolicy(
+        () => this.composio.connectedAccounts.link(
+          userId,
+          authConfigId,
+          callbackUrl ? { callbackUrl } : undefined,
+        ),
+        { operation: 'CONNECTION_LINK_CREATE', idempotent: false },
+      );
+
+      return normalizeConnectionLinkResult(response);
+    } catch (error) {
+      throw toBridgeError(
+        error,
+        `Failed to create connection link for auth config ${authConfigId}`,
+        'CONNECTION_LINK_CREATE_FAILED',
+      );
+    }
+  }
+
+  // ===========================================================================
+  // Internal Logs (Automation diagnostics)
+  // ===========================================================================
+
+  /**
+   * Query internal action execution logs from Composio.
+   */
+  async listInternalActionExecutionLogs(
+    query: ComposioInternalActionExecutionLogQuery = {},
+  ): Promise<ComposioInternalActionExecutionLogResult> {
+    try {
+      const response = await this.runWithPolicy(
+        () => this.requestInternalApi(
+          '/api/v3/internal/action_execution_logs',
+          'POST',
+          toInternalActionLogRequestBody(query),
+        ),
+        { operation: 'INTERNAL_LOGS_FETCH', idempotent: true },
+      );
+
+      return normalizeInternalActionExecutionLogResult(response);
+    } catch (error) {
+      throw toBridgeError(
+        error,
+        'Failed to query Composio internal action execution logs',
+        'INTERNAL_ACTION_LOGS_FAILED',
+      );
+    }
+  }
+
+  /**
+   * Query internal trigger logs from Composio.
+   */
+  async listInternalTriggerLogs(
+    query: ComposioInternalTriggerLogQuery = {},
+  ): Promise<ComposioInternalTriggerLogResult> {
+    try {
+      const response = await this.runWithPolicy(
+        () => this.requestInternalApi(
+          '/api/v3/internal/trigger_logs',
+          'POST',
+          toInternalTriggerLogRequestBody(query),
+        ),
+        { operation: 'INTERNAL_LOGS_FETCH', idempotent: true },
+      );
+
+      return normalizeInternalTriggerLogResult(response);
+    } catch (error) {
+      throw toBridgeError(
+        error,
+        'Failed to query Composio internal trigger logs',
+        'INTERNAL_TRIGGER_LOGS_FAILED',
+      );
+    }
+  }
+
+  /**
+   * List supported searchable fields for action execution logs.
+   */
+  async listInternalActionExecutionLogFields(): Promise<ComposioInternalActionExecutionLogField[]> {
+    try {
+      const response = await this.runWithPolicy(
+        () => this.requestInternalApi('/api/v3/internal/action_execution_logs/fields', 'GET'),
+        { operation: 'INTERNAL_LOGS_FETCH', idempotent: true },
+      );
+
+      return normalizeInternalActionExecutionLogFields(response);
+    } catch (error) {
+      throw toBridgeError(
+        error,
+        'Failed to fetch Composio internal action execution log fields',
+        'INTERNAL_ACTION_LOG_FIELDS_FAILED',
+      );
+    }
+  }
+
+  // ===========================================================================
   // Health Check
   // ===========================================================================
 
@@ -382,6 +714,61 @@ export class ComposioClient {
     }
 
     throw lastError;
+  }
+
+  private async requestInternalApi(
+    path: string,
+    method: 'GET' | 'POST',
+    body?: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    const fetchFn = this.config.fetch ?? globalThis.fetch;
+    if (typeof fetchFn !== 'function') {
+      throw new ComposioBridgeError(
+        'No fetch implementation available for internal Composio API calls',
+        'INTERNAL_API_FETCH_UNAVAILABLE',
+      );
+    }
+
+    const url = joinUrl(this.internalApiBaseUrl, path);
+    const controller = typeof AbortController === 'function'
+      ? new AbortController()
+      : undefined;
+    const timeoutMs = this.config.timeoutMs ?? 30_000;
+    const timeoutHandle = controller
+      ? setTimeout(() => controller.abort(), timeoutMs)
+      : undefined;
+
+    try {
+      const response = await fetchFn(url, {
+        method,
+        headers: {
+          'x-api-key': this.config.apiKey,
+          ...(body ? { 'content-type': 'application/json' } : {}),
+        },
+        ...(body ? { body: JSON.stringify(body) } : {}),
+        ...(controller ? { signal: controller.signal } : {}),
+      });
+
+      const text = await response.text();
+      if (!response.ok) {
+        throw new ComposioBridgeError(
+          `Composio internal API ${method} ${path} failed (${response.status}): ${truncate(text, 500)}`,
+          'INTERNAL_API_REQUEST_FAILED',
+          response.status,
+        );
+      }
+
+      if (!text.trim()) return {};
+
+      const parsed = JSON.parse(text) as unknown;
+      if (isRecord(parsed)) return parsed;
+      if (Array.isArray(parsed)) return { items: parsed };
+      return { value: parsed };
+    } finally {
+      if (timeoutHandle !== undefined) {
+        clearTimeout(timeoutHandle);
+      }
+    }
   }
 
   // ===========================================================================
@@ -487,10 +874,273 @@ function normalizeToolkit(raw: Record<string, unknown>): ComposioToolkitSummary 
   };
 }
 
+function normalizeAuthConfigListResponse(response: unknown): ComposioAuthConfigListResult {
+  if (!isRecord(response)) {
+    return { items: [], nextCursor: null };
+  }
+
+  const itemsRaw = Array.isArray(response.items) ? response.items : [];
+  const items = itemsRaw.filter(isRecord).map((item) => normalizeAuthConfig(item));
+
+  return {
+    items,
+    nextCursor: extractNextCursor(response),
+    totalPages: numberOrUndefined(response.totalPages ?? response.total_pages),
+  };
+}
+
+function normalizeAuthConfigCreateResponse(raw: Record<string, unknown>): ComposioAuthConfigCreateResult {
+  return {
+    id: String(raw.id ?? ''),
+    toolkit: stringOrUndefined(raw.toolkit),
+    authScheme: stringOrUndefined(raw.authScheme ?? raw.auth_scheme),
+    isComposioManaged: booleanOrUndefined(raw.isComposioManaged ?? raw.is_composio_managed),
+    raw,
+  };
+}
+
+function normalizeAuthConfig(raw: Record<string, unknown>): ComposioAuthConfig {
+  const toolkitRaw = isRecord(raw.toolkit) ? raw.toolkit : {};
+
+  return {
+    id: String(raw.id ?? ''),
+    name: String(raw.name ?? ''),
+    toolkit: String(toolkitRaw.slug ?? raw.toolkit ?? ''),
+    status: String(raw.status ?? 'UNKNOWN').toUpperCase(),
+    noOfConnections: numberOrUndefined(raw.noOfConnections ?? raw.no_of_connections) ?? 0,
+    isComposioManaged: booleanOrUndefined(raw.isComposioManaged ?? raw.is_composio_managed),
+    authScheme: stringOrUndefined(raw.authScheme ?? raw.auth_scheme),
+    createdAt: stringOrUndefined(raw.createdAt ?? raw.created_at),
+    lastUpdatedAt: stringOrUndefined(raw.lastUpdatedAt ?? raw.last_updated_at),
+    raw,
+  };
+}
+
+function normalizeConnectionLinkResult(value: unknown): ComposioConnectionLinkResult {
+  const raw = toSerializableRecord(value);
+
+  return {
+    id: String(raw.id ?? ''),
+    status: stringOrUndefined(raw.status),
+    redirectUrl: nullableString(raw.redirectUrl ?? raw.redirect_url),
+    raw,
+  };
+}
+
+function toInternalActionLogRequestBody(
+  query: ComposioInternalActionExecutionLogQuery,
+): Record<string, unknown> {
+  return toInternalLogRequestBody(query, {
+    ...(query.actionName ? { action_name: query.actionName } : {}),
+  });
+}
+
+function toInternalTriggerLogRequestBody(
+  query: ComposioInternalTriggerLogQuery,
+): Record<string, unknown> {
+  return toInternalLogRequestBody(query, {
+    ...(query.triggerId ? { trigger_id: query.triggerId } : {}),
+  });
+}
+
+function toInternalLogRequestBody(
+  query: {
+    connectedAccountId?: string;
+    status?: string;
+    startTime?: string;
+    endTime?: string;
+    limit?: number;
+    cursor?: string;
+    searchParams?: Record<string, ComposioInternalSearchValue>;
+  },
+  extra: Record<string, unknown>,
+): Record<string, unknown> {
+  return {
+    ...extra,
+    ...(query.connectedAccountId ? { connected_account_id: query.connectedAccountId } : {}),
+    ...(query.status ? { status: query.status } : {}),
+    ...(query.startTime ? { start_time: query.startTime } : {}),
+    ...(query.endTime ? { end_time: query.endTime } : {}),
+    ...(typeof query.limit === 'number' ? { limit: query.limit } : {}),
+    ...(query.cursor ? { cursor: query.cursor } : {}),
+    ...(query.searchParams && Object.keys(query.searchParams).length > 0
+      ? { search_params: query.searchParams }
+      : {}),
+  };
+}
+
+function normalizeInternalActionExecutionLogResult(
+  response: Record<string, unknown>,
+): ComposioInternalActionExecutionLogResult {
+  const items = extractListItems(response)
+    .filter(isRecord)
+    .map((item) => normalizeInternalActionExecutionLog(item));
+
+  return {
+    items,
+    nextCursor: extractNextCursor(response),
+    totalPages: numberOrUndefined(response.totalPages ?? response.total_pages),
+  };
+}
+
+function normalizeInternalTriggerLogResult(
+  response: Record<string, unknown>,
+): ComposioInternalTriggerLogResult {
+  const items = extractListItems(response)
+    .filter(isRecord)
+    .map((item) => normalizeInternalTriggerLog(item));
+
+  return {
+    items,
+    nextCursor: extractNextCursor(response),
+    totalPages: numberOrUndefined(response.totalPages ?? response.total_pages),
+  };
+}
+
+function normalizeInternalActionExecutionLog(item: Record<string, unknown>): ComposioInternalActionExecutionLog {
+  const metadata = isRecord(item.metadata) ? item.metadata : {};
+
+  return {
+    id: stringOrUndefined(item.id ?? item.log_id ?? metadata.log_id),
+    connectedAccountId: stringOrUndefined(
+      item.connected_account_id ?? item.connectedAccountId ?? metadata.connected_account_id,
+    ),
+    actionName: stringOrUndefined(item.action_name ?? item.actionName ?? metadata.action_name),
+    status: stringOrUndefined(item.status ?? metadata.status),
+    startTime: stringOrUndefined(item.start_time ?? item.startTime ?? metadata.start_time),
+    endTime: stringOrUndefined(item.end_time ?? item.endTime ?? metadata.end_time),
+    raw: item,
+  };
+}
+
+function normalizeInternalTriggerLog(item: Record<string, unknown>): ComposioInternalTriggerLog {
+  const metadata = isRecord(item.metadata) ? item.metadata : {};
+
+  return {
+    id: stringOrUndefined(item.id ?? item.log_id ?? metadata.log_id),
+    connectedAccountId: stringOrUndefined(
+      item.connected_account_id ?? item.connectedAccountId ?? metadata.connected_account_id,
+    ),
+    triggerId: stringOrUndefined(item.trigger_id ?? item.triggerId ?? metadata.trigger_id),
+    triggerSlug: stringOrUndefined(item.trigger_slug ?? item.triggerSlug ?? metadata.trigger_slug),
+    status: stringOrUndefined(item.status ?? metadata.status),
+    startTime: stringOrUndefined(item.start_time ?? item.startTime ?? metadata.start_time),
+    endTime: stringOrUndefined(item.end_time ?? item.endTime ?? metadata.end_time),
+    raw: item,
+  };
+}
+
+function normalizeInternalActionExecutionLogFields(
+  response: Record<string, unknown>,
+): ComposioInternalActionExecutionLogField[] {
+  const fieldContainer = Array.isArray(response.fields)
+    ? response.fields
+    : extractListItems(response);
+
+  const fields: ComposioInternalActionExecutionLogField[] = [];
+  for (const entry of fieldContainer) {
+    if (typeof entry === 'string') {
+      fields.push({
+        name: entry,
+        raw: { name: entry },
+      });
+      continue;
+    }
+    if (!isRecord(entry)) continue;
+    const name = stringOrUndefined(entry.name ?? entry.field ?? entry.key ?? entry.id);
+    if (!name) continue;
+    fields.push({
+      name,
+      type: stringOrUndefined(entry.type),
+      description: stringOrUndefined(entry.description),
+      raw: entry,
+    });
+  }
+
+  return fields;
+}
+
+function extractListItems(response: Record<string, unknown>): unknown[] {
+  if (Array.isArray(response.items)) return response.items;
+  if (Array.isArray(response.results)) return response.results;
+  if (Array.isArray(response.data)) return response.data;
+  if (Array.isArray(response.logs)) return response.logs;
+
+  if (isRecord(response.data)) {
+    const nestedData = response.data;
+    if (Array.isArray(nestedData.items)) return nestedData.items;
+    if (Array.isArray(nestedData.results)) return nestedData.results;
+    if (Array.isArray(nestedData.logs)) return nestedData.logs;
+  }
+
+  return [];
+}
+
+function extractNextCursor(response: Record<string, unknown>): string | null {
+  const direct = nullableString(response.nextCursor ?? response.next_cursor ?? response.cursor);
+  if (direct !== null) return direct;
+
+  if (isRecord(response.data)) {
+    const nested = nullableString(
+      response.data.nextCursor ?? response.data.next_cursor ?? response.data.cursor,
+    );
+    if (nested !== null) return nested;
+  }
+
+  return null;
+}
+
+function resolveInternalApiBaseUrl(rawBaseUrl: string | undefined): string {
+  const baseUrl = (rawBaseUrl && rawBaseUrl.trim())
+    ? rawBaseUrl.trim()
+    : 'https://backend.composio.dev';
+  return baseUrl.replace(/\/+$/, '');
+}
+
+function joinUrl(baseUrl: string, path: string): string {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const normalizedBase = baseUrl.replace(/\/+$/, '');
+
+  if (normalizedBase.endsWith('/api/v3') && normalizedPath.startsWith('/api/v3/')) {
+    return `${normalizedBase}${normalizedPath.slice('/api/v3'.length)}`;
+  }
+
+  return `${normalizedBase}${normalizedPath}`;
+}
+
+function truncate(value: string, maxLength: number): string {
+  const trimmed = value.trim();
+  if (trimmed.length <= maxLength) return trimmed;
+  return `${trimmed.slice(0, maxLength)}...`;
+}
+
+function toSerializableRecord(value: unknown): Record<string, unknown> {
+  if (isRecord(value)) return value;
+
+  if (value && typeof value === 'object' && 'toJSON' in value) {
+    const candidate = (value as { toJSON?: () => unknown }).toJSON?.();
+    if (isRecord(candidate)) return candidate;
+  }
+
+  try {
+    const cloned = JSON.parse(JSON.stringify(value)) as unknown;
+    if (isRecord(cloned)) return cloned;
+  } catch {
+    // Best effort fallback below.
+  }
+
+  return {};
+}
+
 function stringOrUndefined(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
   return trimmed ? trimmed : undefined;
+}
+
+function nullableString(value: unknown): string | null {
+  const normalized = stringOrUndefined(value);
+  return normalized ?? null;
 }
 
 function numberOrUndefined(value: unknown): number | undefined {

@@ -356,8 +356,10 @@ export function registerTools(server: McpServer) {
     {
       category: z.enum(['create-something', 'workway', 'third-party', 'all']).optional()
         .describe('Filter by category (default: all)'),
+      host: z.enum(['codex', 'cursor', 'claude-desktop', 'claude-code', 'windsurf', 'vscode']).optional()
+        .describe('Optional host context. When set to codex, response includes a hub-first recommendation.'),
     },
-    async ({ category }) => {
+    async ({ category, host }) => {
       const entries = getCatalogByCategory(category || 'all');
 
       const lines = [
@@ -366,6 +368,23 @@ export function registerTools(server: McpServer) {
         `${entries.length} servers available:`,
         '',
       ];
+
+      if (host === 'codex') {
+        lines.push(
+          '## Recommended for Codex: Hub-First Setup',
+          '',
+          'Use a single `create-something-hub` entry for multi-MCP operations, policy controls, and bundle/state management.',
+          '',
+          '```toml',
+          CODEX_HUB_CONFIG_ENTRY,
+          '```',
+          '',
+          'Build first: `pnpm --filter @create-something/cs-mcp-hub build`',
+          '',
+          'Direct MCP entries listed below still work for quick or small setups.',
+          '',
+        );
+      }
 
       const grouped: Record<string, typeof entries> = {};
       for (const entry of entries) {
@@ -411,9 +430,9 @@ export function registerTools(server: McpServer) {
     'Generate the exact config entry to install an MCP server into a specific host. Returns the config file path, the entry to add, and step-by-step instructions. The agent should then write this config using its native file tools.',
     {
       server_name: z.string()
-        .describe('Name/slug for the MCP server entry (e.g., "playbook", "procore", "cloudflare-docs")'),
-      server_url: z.string()
-        .describe('The MCP server URL (e.g., "https://playbook.mcp.createsomething.ltd")'),
+        .describe('Name/slug for the MCP server entry (e.g., "playbook", "procore", "cloudflare-docs", "create-something-hub")'),
+      server_url: z.string().optional()
+        .describe('The MCP server URL (e.g., "https://playbook.mcp.createsomething.ltd"). Optional only when server_name is "create-something-hub" for Codex local setup.'),
       host: z.enum(['codex', 'cursor', 'claude-desktop', 'claude-code', 'windsurf', 'vscode'])
         .describe('Which host to generate config for'),
       transport: z.enum(['http', 'sse']).optional()
@@ -425,6 +444,56 @@ export function registerTools(server: McpServer) {
       const config = HOST_CONFIG_MAP[host];
       if (!config) {
         return { content: [{ type: 'text', text: JSON.stringify({ error: `Unknown host: ${host}` }) }] };
+      }
+
+      const normalizedServerName = server_name.trim();
+      const isCodexHubRequest = host === 'codex' && normalizedServerName === 'create-something-hub';
+
+      if (isCodexHubRequest) {
+        const instructions = [
+          `1. Build the local hub package: \`pnpm --filter @create-something/cs-mcp-hub build\``,
+          `2. Open ${config.configPath} (or create it if missing)`,
+          '3. Add this TOML section:',
+          '',
+          '```toml',
+          CODEX_HUB_CONFIG_ENTRY,
+          '```',
+          '',
+          '4. Save the file',
+          `5. ${config.restartInstruction}`,
+          '6. Optional: run `node packages/cs-mcp-hub/dist/index.js --write-codex` to enforce single-hub mode.',
+        ];
+
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              host: config.displayName,
+              configPath: config.configPath,
+              configFormat: config.configFormat,
+              serverName: normalizedServerName,
+              serverUrl: null,
+              transport: 'stdio',
+              requiresAuth: false,
+              entry: CODEX_HUB_CONFIG_ENTRY,
+              fullExample: `# Add to ${config.configPath}\n\n${CODEX_HUB_CONFIG_ENTRY}`,
+              instructions: instructions.join('\n'),
+              agentAction: `Read ${config.configPath}, append the TOML section for create-something-hub, then write the file back.`,
+              note: 'This is the recommended Codex setup for multi-MCP fleets. Keep Playbook as onboarding content, Hub as control plane.',
+            }, null, 2),
+          }],
+        };
+      }
+
+      if (!server_url) {
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              error: 'server_url is required unless generating Codex config for "create-something-hub".',
+            }, null, 2),
+          }],
+        };
       }
 
       // Determine the full URL with transport path
@@ -440,18 +509,18 @@ export function registerTools(server: McpServer) {
       const instructions: string[] = [];
 
       // Look up catalog entry for setup notes
-      const catalogEntry = getCatalogEntry(server_name);
+      const catalogEntry = getCatalogEntry(normalizedServerName);
       const setupNotes = catalogEntry?.setupNotes || '';
 
       if (config.configFormat === 'toml') {
         // Codex uses TOML
-        const authEnvVar = `${server_name.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase()}_API_KEY`;
+        const authEnvVar = `${normalizedServerName.replace(/[^a-zA-Z0-9]/g, '_').toUpperCase()}_API_KEY`;
         const expectsBearer = catalogEntry?.requiresAuth && catalogEntry?.authType !== 'oauth';
         entry = auth_token
-          ? `[mcp_servers."${server_name}"]\nurl = "${fullUrl}"\nhttp_headers = { Authorization = "Bearer ${auth_token}" }`
+          ? `[mcp_servers."${normalizedServerName}"]\nurl = "${fullUrl}"\nhttp_headers = { Authorization = "Bearer ${auth_token}" }`
           : expectsBearer
-            ? `[mcp_servers."${server_name}"]\nurl = "${fullUrl}"\nbearer_token_env_var = "${authEnvVar}"`
-            : `[mcp_servers."${server_name}"]\nurl = "${fullUrl}"`;
+            ? `[mcp_servers."${normalizedServerName}"]\nurl = "${fullUrl}"\nbearer_token_env_var = "${authEnvVar}"`
+            : `[mcp_servers."${normalizedServerName}"]\nurl = "${fullUrl}"`;
         fullExample = `# Add to ${config.configPath}\n\n${entry}`;
         instructions.push(
           `1. Open ${config.configPath} in a text editor (or create it if it doesn't exist)`,
@@ -478,7 +547,7 @@ export function registerTools(server: McpServer) {
           serverConfig.headers = { Authorization: `Bearer ${auth_token}` };
         }
         const jsonEntry = {
-          [server_name]: serverConfig,
+          [normalizedServerName]: serverConfig,
         };
 
         entry = JSON.stringify(jsonEntry, null, 2);
@@ -491,7 +560,7 @@ export function registerTools(server: McpServer) {
         const openInstruction = host === 'windsurf'
           ? `1. In Windsurf chat, click the MCP servers button (hammer icon) → Configure → Manage Plugins → View Raw Config`
           : host === 'claude-code'
-            ? `1. Alternatively, run: claude mcp add --transport http ${server_name} ${fullUrl}`
+            ? `1. Alternatively, run: claude mcp add --transport http ${normalizedServerName} ${fullUrl}`
             : `1. Open ${config.configPath}`;
 
         instructions.push(
@@ -499,7 +568,7 @@ export function registerTools(server: McpServer) {
           `2. If the file exists, add this entry inside the "mcpServers" object:`,
           ``,
           `\`\`\`json`,
-          `"${server_name}": ${JSON.stringify(serverConfig, null, 2)}`,
+          `"${normalizedServerName}": ${JSON.stringify(serverConfig, null, 2)}`,
           `\`\`\``,
           ``,
           `3. If the file doesn't exist, create it with this content:`,
@@ -518,6 +587,19 @@ export function registerTools(server: McpServer) {
         instructions.push('', '---', '**Setup Notes:**', setupNotes);
       }
 
+      if (host === 'codex') {
+        instructions.push(
+          '',
+          '---',
+          '**Codex Recommendation (Fleet Scale):**',
+          'Prefer a single `create-something-hub` entry to centralize policy and routing.',
+          '',
+          '```toml',
+          CODEX_HUB_CONFIG_ENTRY,
+          '```',
+        );
+      }
+
       return {
         content: [{
           type: 'text',
@@ -525,7 +607,7 @@ export function registerTools(server: McpServer) {
             host: config.displayName,
             configPath: config.configPath,
             configFormat: config.configFormat,
-            serverName: server_name,
+            serverName: normalizedServerName,
             serverUrl: fullUrl,
             transport: selectedTransport,
             requiresAuth: catalogEntry?.requiresAuth || !!auth_token,
@@ -533,6 +615,13 @@ export function registerTools(server: McpServer) {
             fullExample,
             instructions: instructions.join('\n'),
             setupNotes: setupNotes || undefined,
+            hubRecommendation: host === 'codex'
+              ? {
+                  serverName: 'create-something-hub',
+                  entry: CODEX_HUB_CONFIG_ENTRY,
+                  rationale: 'Use one hub entry for multi-MCP operations. Keep direct entries for quick/small setups.',
+                }
+              : undefined,
             agentAction: config.configFormat === 'toml'
               ? `Read ${config.configPath}, append the TOML section, write the file back.`
               : `Read ${config.configPath} as JSON. If it exists, parse it, add the entry to mcpServers, write it back. If it doesn't exist, write the full example as a new file.`,
@@ -821,6 +910,11 @@ const HOST_CONFIG_MAP: Record<string, {
     capabilities: ['Copilot agent mode', 'Largest editor ecosystem', 'Extension marketplace', 'Team config sharing'],
   },
 };
+
+const CODEX_HUB_CONFIG_ENTRY = `[mcp_servers."create-something-hub"]
+command = "node"
+args = ["./packages/cs-mcp-hub/dist/index.js"]
+enabled = true`;
 
 // ============================================================================
 // Formatting helper
