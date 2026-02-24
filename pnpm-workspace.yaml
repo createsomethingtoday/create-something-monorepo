@@ -9,6 +9,7 @@ packages:
   - 'packages/halfdozen-notion-mcp/worker'
   - 'packages/halfdozen-gmail-sync/worker'
   - 'packages/halfdozen-zoom-sync/worker'
+  - 'packages/half-dozen-youtube-sync/worker'
   - 'packages/gmail-notion-mcp/worker'
   - 'packages/halfdozen-telemetry-mcp/worker'
   # CREATE SOMETHING account
