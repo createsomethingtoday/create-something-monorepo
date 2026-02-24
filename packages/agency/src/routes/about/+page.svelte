@@ -23,9 +23,9 @@
 </script>
 
 <SEO
-	title="About | Micah Johnson — Notion-First Agent Systems"
-	description="CTO-level architecture for Notion-first operations: reliability, policy, and enterprise MCP extension. 16+ production integrations built."
-	keywords="Micah Johnson, agent systems, Notion architecture, MCP consulting, AI operations reliability"
+	title="About | Micah Johnson — Custom Workflow MCPs"
+	description="CTO-level architecture for custom workflow MCPs, reliability controls, and enterprise extension. 16+ production integrations built."
+	keywords="Micah Johnson, custom mcp development, workflow architecture, mcp consulting, ai operations reliability"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -51,9 +51,8 @@
 		<div class="about-content reveal">
 			<h2>The approach</h2>
 			<p>
-				Half Dozen runs client operations in Notion: deployment, onboarding, and weekly management.
-				CREATE SOMETHING .agency is the technical extension layer I lead: evals, policy controls,
-				incident loops, and custom MCP/orchestration when native automation reaches its limits.
+				CREATE SOMETHING .agency is built around one core promise: custom workflow MCPs for production operations.
+				From there, I layer autonomy assurance (evals, policy controls, incident loops) and enterprise extension when requirements exceed standard tooling.
 			</p>
 			<p>
 				My methodology is the Subtractive Triad: before building anything new, I
@@ -73,8 +72,7 @@
 			<p>
 				Micah Johnson. System Architect on the Marketplace Team at Webflow — building
 				internal tools, onboarding systems, and platform infrastructure serving millions
-				of users. CTO partner to Half Dozen, focused on the technical architecture behind
-				Notion-first autonomous operations.
+				of users. Focused on technical architecture for production agent systems.
 			</p>
 			<p>
 				I have deployed 16+ production integrations connecting tools like Salesforce,
@@ -132,8 +130,8 @@
 		<div class="about-content reveal">
 			<h2>Also building</h2>
 			<p>
-				I am also building <a href="https://workway.co" class="link" target="_blank" rel="noopener noreferrer">WORKWAY</a> and supporting Half Dozen's client operations stack.
-				What we learn in production feeds directly back into .agency reliability frameworks and extension playbooks.
+				I am also building <a href="https://workway.co" class="link" target="_blank" rel="noopener noreferrer">WORKWAY</a>.
+				When clients need full system development and onboarding as the primary engagement, I provide a direct referral path to trusted partners, including Half Dozen.
 			</p>
 		</div>
 	</div>

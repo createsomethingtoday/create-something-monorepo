@@ -5,11 +5,11 @@
 	// Structured data for SEO/AEO
 	const services = [
 		{
-			name: 'Core Notion Ops',
-			description: 'Half Dozen deploys your Notion operating system, onboards your team, and runs weekly execution.',
-			type: 'Managed Service',
+			name: 'Custom Workflow MCPs',
+			description: 'CREATE SOMETHING builds custom MCP workflows for business-critical operations that generic automations cannot handle reliably.',
+			type: 'Implementation Sprint',
 			price: 'Custom',
-			priceDescription: 'Monthly managed service'
+			priceDescription: 'Scoped build with optional ongoing support'
 		},
 		{
 			name: 'Autonomy Assurance',
@@ -114,9 +114,9 @@
 {/snippet}
 
 <SEO
-	title="Notion-First AgentOps | CREATE SOMETHING .agency"
-	description="Half Dozen runs your Notion operating system. CREATE SOMETHING .agency provides autonomy assurance and enterprise MCP extensions for high-stakes workflows."
-	keywords="Notion agentops, autonomy assurance, MCP consulting, enterprise agent reliability, Notion automation architecture"
+	title="Custom Workflow MCPs | CREATE SOMETHING .agency"
+	description="CREATE SOMETHING builds custom workflow MCPs, autonomy assurance, and enterprise extensions for production agent systems."
+	keywords="custom mcp development, workflow mcp, autonomy assurance, enterprise agent reliability, mcp consulting"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	{services}
@@ -138,21 +138,20 @@
 	<div class="hero-container">
 		<div class="hero-content">
 			<BlurFade delay={0}>
-				<p class="hero-eyebrow">Notion-first operating model</p>
+				<p class="hero-eyebrow">CREATE SOMETHING .agency</p>
 			</BlurFade>
 			<BlurFade delay={0.1}>
-				<h1 class="hero-title">Run in Notion. Scale with control.</h1>
+				<h1 class="hero-title">Custom workflow MCPs for production teams.</h1>
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					Half Dozen deploys your Notion system, onboards your team, and runs weekly execution.
-					CREATE SOMETHING .agency adds the technical layer: evals, policy gates, incident loops,
-					and custom extensions when your workflows outgrow native automation.
+					I design and ship custom MCP workflows for real business operations, then add
+					assurance and enterprise controls as autonomy scales.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.25}>
 				<p class="hero-detail-secondary">
-					Notion-first for speed. Assurance-first for reliability.
+					If you need full system development and team onboarding, I can route you to a trusted partner.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
@@ -268,7 +267,7 @@
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="section-intro">
-				Three lanes, one system. Keep day-to-day execution simple in Notion while layering reliability and custom depth only where needed.
+				Three lanes, one owner. Build custom workflow capability first, then layer reliability and enterprise depth where needed.
 			</p>
 		</BlurFade>
 		
@@ -281,8 +280,8 @@
 					</div>
 					<div class="funnel-step-content">
 						<span class="funnel-step-label">Lane 1</span>
-						<h3>Core Notion Ops (Half Dozen)</h3>
-						<p>Danny deploys the system, Filip trains your team, and Leah runs weekly management. This gets teams moving fast with clear operating cadence.</p>
+						<h3>Custom Workflow MCPs (.agency)</h3>
+						<p>I build the custom integration and workflow logic for the operations that matter most, with clear boundaries and production-ready behavior.</p>
 					</div>
 				</div>
 			</BlurFade>
@@ -295,7 +294,7 @@
 					</div>
 					<div class="funnel-step-content">
 						<span class="funnel-step-label">Lane 2</span>
-						<h3>Autonomy Assurance (.agency)</h3>
+						<h3>Autonomy Assurance</h3>
 						<p>I add evals, release gates, policy rules, and incident reviews so agent behavior stays reliable as autonomy expands.</p>
 					</div>
 				</div>
@@ -308,7 +307,7 @@
 					</div>
 					<div class="funnel-step-content">
 						<span class="funnel-step-label">Lane 3</span>
-						<h3>Enterprise Extension (.agency)</h3>
+						<h3>Enterprise Extension</h3>
 						<p>For high-stakes workflows, I build custom MCP and orchestration layers across systems, with governance and traceability that native automation cannot yet provide.</p>
 					</div>
 				</div>
@@ -325,7 +324,7 @@
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="section-intro">
-				A modular offer stack. Start with operations, add assurance, then extend only when complexity demands it.
+				A modular offer stack. Start with custom workflow MCPs, add assurance as risk grows, and extend for enterprise constraints.
 			</p>
 		</BlurFade>
 		
@@ -333,19 +332,19 @@
 			<BlurFade delay={0.15}>
 				<div class="offering-card">
 					<div class="offering-header">
-						<h3 class="offering-name">Core Notion Ops</h3>
+						<h3 class="offering-name">Custom Workflow MCPs</h3>
 					</div>
 					<div class="offering-body">
 						<p class="offering-description">
-							Half Dozen deploys your Notion operating system, onboards your team, and keeps execution moving every week.
+							.agency designs and builds the workflow-specific MCP layer that generic connectors and marketplace tools cannot model safely.
 						</p>
 						<div class="offering-deliverables">
 							<span class="deliverables-label">Includes</span>
 							<ul>
-								<li>Notion workspace and workflow deployment</li>
-								<li>Team onboarding and operating playbooks</li>
-								<li>Weekly management and execution support</li>
-								<li>Fast baseline automation for internal ops</li>
+								<li>Custom tool actions and workflow endpoints</li>
+								<li>Business-rule mapping for high-value operations</li>
+								<li>Secure auth and trust-boundary design</li>
+								<li>Documentation and handoff artifacts</li>
 							</ul>
 						</div>
 					</div>
@@ -409,16 +408,16 @@
 		<BlurFade delay={0.1}>
 			<div class="problem-statements">
 				<p class="problem-text">
-					The market is converging on Notion as the easiest place to launch agent workflows. That is a feature, not a threat: it accelerates baseline adoption.
+					Native agent features are getting easier to adopt. That is good for teams and good for velocity.
 				</p>
 				<p class="problem-text">
-					The technical gap remains reliability, policy, and cross-system orchestration. This is where .agency creates value above baseline setup and training.
+					The hard gap remains custom workflow logic, reliability controls, and cross-system orchestration. That is where .agency compounds value.
 				</p>
 				<p class="problem-text">
-					Half Dozen runs operations. .agency runs assurance and extension. The split keeps delivery clear and lets both teams compound what they do best.
+					When a client primarily needs full system development and team onboarding, I refer that engagement to Half Dozen directly.
 				</p>
 				<p class="problem-punchline">
-					Notion-first for speed. Custom where reliability and enterprise depth require it.
+					CREATE SOMETHING owns custom workflows, assurance, and enterprise extension.
 				</p>
 			</div>
 		</BlurFade>
@@ -461,11 +460,11 @@
 <section class="cta-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="cta-heading">Need Notion speed with production-grade autonomy?</h2>
+			<h2 class="cta-heading">Need custom workflow infrastructure that holds in production?</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
-				Book an architecture call. We will map whether you need Core Notion Ops only, Assurance, or full Enterprise Extension.
+				Book an architecture call. We will map whether you need Custom Workflow MCPs, Autonomy Assurance, Enterprise Extension, or a system-development referral.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>

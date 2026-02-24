@@ -22,16 +22,17 @@
 
 	type BookingStep = 'date' | 'time' | 'details' | 'confirm';
 	type ServiceLane =
-		| 'core_notion_ops'
+		| 'custom_workflow_mcps'
 		| 'autonomy_assurance'
 		| 'enterprise_extension'
+		| 'system_development_referral'
 		| 'not_sure';
 
 	const laneOptions: Array<{ value: ServiceLane; label: string; description: string }> = [
 		{
-			value: 'core_notion_ops',
-			label: 'Core Notion Ops',
-			description: 'Team setup, onboarding, and weekly operating cadence.'
+			value: 'custom_workflow_mcps',
+			label: 'Custom Workflow MCPs',
+			description: 'Custom workflow implementation for high-value business operations.'
 		},
 		{
 			value: 'autonomy_assurance',
@@ -44,9 +45,14 @@
 			description: 'Custom MCP/orchestration for high-stakes cross-system workflows.'
 		},
 		{
+			value: 'system_development_referral',
+			label: 'System Development Referral',
+			description: 'Full system build and onboarding needs (routed to partner team).'
+		},
+		{
 			value: 'not_sure',
 			label: 'Not sure yet',
-			description: 'Need help mapping the right lane.'
+			description: 'Need help mapping the right engagement.'
 		}
 	];
 
@@ -219,7 +225,7 @@
 
 <SEO
 	title="Book an Architecture Call"
-	description="Schedule a 30-minute architecture call to map whether you need Core Notion Ops, Autonomy Assurance, or Enterprise Extension."
+	description="Schedule a 30-minute architecture call to map Custom Workflow MCPs, Autonomy Assurance, Enterprise Extension, or system-development referral."
 	propertyName="agency"
 />
 
@@ -227,7 +233,7 @@
 	<header class="booking-header">
 		<h1 class="booking-title">Book an architecture call</h1>
 		<p class="booking-subtitle">
-			30 minutes to map your lane: Core Notion Ops, Autonomy Assurance, or Enterprise Extension.
+			30 minutes to map your lane: Custom Workflow MCPs, Autonomy Assurance, Enterprise Extension, or referral.
 		</p>
 	</header>
 

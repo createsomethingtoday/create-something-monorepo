@@ -41,7 +41,7 @@
 
 	// Quick access items for unified search
 	const quickAccessItems = [
-		{ id: 'nav-services', label: 'How I Work', description: 'Core Ops, Assurance, Extension model', href: '/services', icon: '🔨', keywords: ['notion', 'agentops', 'assurance', 'pricing', 'services'] },
+		{ id: 'nav-services', label: 'How I Work', description: 'Custom MCPs, Assurance, Extension', href: '/services', icon: '🔨', keywords: ['custom mcp', 'workflow', 'assurance', 'pricing', 'services'] },
 		{ id: 'nav-products', label: 'What I\'ve Built', description: '16+ production integrations', href: '/products', icon: '📦', keywords: ['portfolio', 'tools', 'integrations'] },
 		{ id: 'nav-book', label: 'Book a Call', description: 'See if there\'s a fit', href: '/book', icon: '📞', keywords: ['contact', 'hire', 'start', 'book', 'call'] },
 		{ id: 'nav-space', label: 'Go to .space', description: 'MCP experiments', href: 'https://createsomething.space', icon: '🧪', keywords: ['explore', 'try', 'interactive'] },
@@ -134,7 +134,7 @@
 	<Footer
 		mode="agency"
 		showNewsletter={false}
-		aboutText="Notion-first AgentOps with reliability, policy, and enterprise extension for production autonomous workflows."
+		aboutText="Custom workflow MCPs with reliability, policy, and enterprise extension for production autonomous workflows."
 		quickLinks={[
 			{ label: 'How I Work', href: '/services' },
 			{ label: 'What I\'ve Built', href: '/products' },

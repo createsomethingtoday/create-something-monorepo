@@ -67,8 +67,8 @@
 
 <SEO
 	title="Start Your AgentOps Lane | CREATE SOMETHING .agency"
-	description="Book an architecture call or send your workflow details. We'll map whether you need Core Notion Ops, Autonomy Assurance, or Enterprise Extension."
-	keywords="notion agentops, autonomy assurance, enterprise extension, mcp architecture, ai workflow reliability"
+	description="Book an architecture call or send your workflow details. We'll map whether you need Custom Workflow MCPs, Autonomy Assurance, Enterprise Extension, or a system-development referral."
+	keywords="custom workflow mcp, autonomy assurance, enterprise extension, mcp architecture, ai workflow reliability"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -130,7 +130,7 @@
 
 				<div class="form-field">
 					<label for="message" class="form-label">Which lane or workflow needs attention first?</label>
-					<p class="form-helper">Tell us your stack, constraints, and bottleneck. We'll map it to Core Ops, Assurance, or Extension.</p>
+					<p class="form-helper">Tell us your stack, constraints, and bottleneck. We'll map it to Custom MCPs, Assurance, Extension, or referral.</p>
 					<textarea
 						id="message"
 						name="message"

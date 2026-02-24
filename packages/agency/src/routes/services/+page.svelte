@@ -11,11 +11,11 @@
 
 	const services = [
 		{
-			name: 'Core Notion Ops',
-			description: 'Half Dozen deploys and manages your Notion operating system.',
-			type: 'Managed Service',
+			name: 'Custom Workflow MCPs',
+			description: 'Custom workflow MCP implementation for business-critical operations.',
+			type: 'Implementation Sprint',
 			price: 'Custom',
-			priceDescription: 'Monthly'
+			priceDescription: 'Scoped build'
 		},
 		{
 			name: 'Autonomy Assurance',
@@ -35,16 +35,16 @@
 
 	const faqItems = [
 		{
-			question: 'Why Notion-first?',
-			answer: 'Notion gives teams the fastest path to shared operating behavior with low adoption friction. We start there for speed, then layer reliability and extension only where needed.'
+			question: 'What is your primary service?',
+			answer: 'Custom Workflow MCPs for production business workflows. Assurance and Enterprise Extension are layered as complexity and risk increase.'
 		},
 		{
-			question: 'What does Half Dozen own?',
-			answer: 'Half Dozen owns onboarding, training, and weekly execution management. They keep the operating system running and the team moving.'
+			question: 'Do you build full business systems and run onboarding?',
+			answer: 'When system development and team onboarding are the primary need, I provide a direct referral path to Half Dozen.'
 		},
 		{
 			question: 'What does .agency own?',
-			answer: '.agency owns reliability, policy, and enterprise extension: evals, guardrails, incident loops, and custom MCP/orchestration when workflows exceed native Notion limits.'
+			answer: '.agency owns custom workflow MCP design, reliability controls, policy boundaries, and enterprise extension architecture.'
 		},
 		{
 			question: 'When should we add Autonomy Assurance?',
@@ -70,9 +70,9 @@
 </script>
 
 <SEO
-	title="How We Work | Notion Ops + Autonomy Assurance"
-	description="Operating model: Half Dozen runs Notion operations, CREATE SOMETHING .agency runs reliability and enterprise extension."
-	keywords="Notion operations, autonomy assurance, enterprise MCP, agent reliability, AI operating model"
+	title="How We Work | Custom Workflow MCPs + Assurance"
+	description="CREATE SOMETHING .agency delivers custom workflow MCPs, autonomy assurance, and enterprise extension for production agent systems."
+	keywords="custom workflow mcp, autonomy assurance, enterprise mcp, agent reliability, ai operations architecture"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	{services}
@@ -87,12 +87,12 @@
 			<p class="hero-eyebrow">How I Work</p>
 		</BlurFade>
 		<BlurFade delay={0.1}>
-			<h1 class="hero-title">Three lanes. One operating system.</h1>
+			<h1 class="hero-title">Three offers. One escalation path.</h1>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<p class="hero-subtitle">
-				Half Dozen handles deployment, onboarding, and weekly execution in Notion.
-				.agency handles reliability and extension: evals, policy controls, and custom MCP/orchestration for workflows that exceed native limits.
+				CREATE SOMETHING .agency leads with Custom Workflow MCPs, then layers Autonomy Assurance and Enterprise Extension as risk and complexity increase.
+				When a client needs full system development and onboarding as the main work, I route that directly to Half Dozen.
 			</p>
 		</BlurFade>
 	</div>
@@ -105,11 +105,11 @@
 			<div class="retainer-card">
 				<div class="retainer-header">
 					<div class="retainer-pricing">
-						<div class="retainer-price">3-Lane Model</div>
-						<div class="retainer-period">Notion-first delivery</div>
+						<div class="retainer-price">Offer Ladder</div>
+						<div class="retainer-period">CREATE SOMETHING delivery</div>
 					</div>
 					<p class="retainer-note">
-						Start with operations. Add assurance when autonomy depth increases.<br />
+						Start with workflow implementation. Add assurance when incident cost rises.<br />
 						Escalate to extension for enterprise constraints.
 					</p>
 				</div>
@@ -118,11 +118,12 @@
 						<div class="retainer-detail">
 							<h3>Service Ladder</h3>
 							<ul class="retainer-list">
-								<li><strong>Core Notion Ops:</strong> deployment, onboarding, weekly management</li>
+								<li><strong>Custom Workflow MCPs:</strong> core workflow implementation</li>
 								<li><strong>Autonomy Assurance:</strong> evals, release gates, policy tuning, incident reviews</li>
 								<li><strong>Enterprise Extension:</strong> custom MCP/orchestration and governance controls</li>
 								<li>Delivery vector: {deliveryVector.clientFacingLabel}</li>
 								<li>MCP-only available as scoped entry wedge</li>
+								<li>System-development-first engagements routed by referral</li>
 								<li>Client owns code and operating artifacts</li>
 							</ul>
 						</div>
@@ -160,8 +161,8 @@
 			<BlurFade delay={0.1}>
 				<div class="timeline-card">
 					<span class="timeline-label">Phase 1</span>
-					<h3>Foundation</h3>
-					<p>Half Dozen deploys the Notion operating system, onboards your team, and establishes weekly execution habits.</p>
+					<h3>Workflow Build</h3>
+					<p>Implement the highest-value custom workflow MCPs with clear trust boundaries and production behavior.</p>
 				</div>
 			</BlurFade>
 
@@ -212,7 +213,7 @@
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
-				Book a call and we will scope where Core Ops is enough, where Assurance is required, and where Enterprise Extension becomes necessary.
+				Book a call and we will scope the right CREATE SOMETHING offer, and route system-development-first needs to Half Dozen when appropriate.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>

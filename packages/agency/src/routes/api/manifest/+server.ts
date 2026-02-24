@@ -38,9 +38,9 @@ interface ContentItem {
  */
 const SERVICES: ContentItem[] = [
 	{
-		slug: 'core-notion-ops',
-		title: 'Core Notion Ops',
-		description: 'Half Dozen deploys the Notion operating system, onboards teams, and runs weekly execution cadence.',
+		slug: 'custom-workflow-mcps',
+		title: 'Custom Workflow MCPs',
+		description: 'CREATE SOMETHING builds custom workflow MCPs for business-critical operations with clear trust boundaries.',
 		category: 'service'
 	},
 	{
