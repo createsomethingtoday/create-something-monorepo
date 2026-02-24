@@ -40,6 +40,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build mcp-core dependency
+        run: pnpm --filter @create-something/mcp-core build
+
       - name: Build composio-bridge dependency
         run: pnpm --filter @create-something/composio-bridge build
 

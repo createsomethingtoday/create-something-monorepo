@@ -9,6 +9,7 @@ const STAGES = ['typecheck', 'lint', 'test'];
 const SCOPES = ['active', 'fleet', 'all'];
 const PREFLIGHT_BUILD_PACKAGES = [
   '@create-something/mcp-core',
+  '@create-something/composio-bridge',
   '@create-something/observability',
   '@create-something/playbook-mcp',
 ];

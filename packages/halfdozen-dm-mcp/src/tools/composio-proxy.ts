@@ -10,6 +10,7 @@ import { z } from 'zod';
 import {
   ComposioClient,
   type ComposioToolDef,
+  type ComposioToolkitSummary,
 } from '@create-something/composio-bridge';
 import type { DmComposioConfig } from '../config.js';
 
@@ -159,7 +160,9 @@ async function resolveToolkitDiscovery(
       });
 
       return {
-        toolkits: normalizeToolkitList(inventory.map((item) => item.slug)),
+        toolkits: normalizeToolkitList(
+          inventory.map((item: ComposioToolkitSummary) => item.slug)
+        ),
         warnings,
       };
     } catch (error) {
