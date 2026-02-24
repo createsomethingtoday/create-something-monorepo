@@ -44,6 +44,7 @@ Optional:
 - `app_review_update_version_review`
 - `app_review_update_asset_metadata`
 - `app_review_set_marketplace_status`
+- `app_review_cleanup_related_asset_links` (dry-run by default)
 - `app_review_get_field_map`
 
 ## Resources
@@ -90,4 +91,3 @@ pnpm exec wrangler secret put MCP_API_KEY
 ```
 
 Distribute the new token to the app review team and invalidate prior copies operationally.
-

@@ -5,9 +5,15 @@ export const TABLE_IDS = {
   assetVersions: 'tblHxZ2hgSFLZxsZu',
 } as const;
 
+export const VIEW_IDS = {
+  assetsDailyAssetLinkCleanup: 'viwk5QUSeUhz5ys4s',
+} as const;
+
 export const FIELD_IDS = {
   assets: {
     name: 'fldUzJBor3Gnkykjc',
+    relatedAssets: 'fldByR4rgaKy7VZMU',
+    lifecycleStatus: 'fldQRpdwNXArAOYFA',
     marketplaceStatus: 'fld51CeQNGDgW9b0D',
     latestReviewStatus: 'fldZPFzH3q3KBAjNW',
     daysInCurrentReviewStage: 'fldXmGN0yV8EshIWE',
@@ -317,6 +323,7 @@ export const CANONICAL_FIELD_MAPPINGS = {
 
 export const APP_REVIEW_FIELD_MAP = {
   tables: TABLE_IDS,
+  views: VIEW_IDS,
   assets: {
     writable: WRITABLE_ASSET_FIELDS,
     readOnly: {
@@ -343,6 +350,16 @@ export const APP_REVIEW_FIELD_MAP = {
     },
   },
   canonicalMappings: CANONICAL_FIELD_MAPPINGS,
+  cleanupDefaults: {
+    tool: 'app_review_cleanup_related_asset_links',
+    view_id: VIEW_IDS.assetsDailyAssetLinkCleanup,
+    link_field_id: FIELD_IDS.assets.relatedAssets,
+    linked_status_field_id: FIELD_IDS.assets.lifecycleStatus,
+    linked_name_field_id: FIELD_IDS.assets.name,
+    archived_status: 'Archived',
+    archived_name_contains: 'archived',
+    dry_run: true,
+  },
   statusOptions: {
     marketplace: MARKETPLACE_STATUS_OPTIONS,
     visibility: VISIBILITY_OPTIONS,
@@ -352,4 +369,3 @@ export const APP_REVIEW_FIELD_MAP = {
     rejectionReason: REJECTION_REASON_OPTIONS,
   },
 } as const;
-

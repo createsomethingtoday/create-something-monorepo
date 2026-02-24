@@ -1,15 +1,22 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
-import type { AirtableClient, AppReviewVersion, CollaboratorRef } from './airtable.js';
+import type {
+  AirtableClient,
+  AppReviewVersion,
+  CollaboratorRef,
+  RelatedAssetLinkCleanupOptions,
+} from './airtable.js';
 import { AirtableClientError } from './airtable.js';
 import {
   APP_REVIEW_FIELD_MAP,
   CAPABILITIES_OPTIONS,
+  FIELD_IDS,
   MARKETPLACE_STATUS_OPTIONS,
   REJECTION_REASON_OPTIONS,
   REVIEW_STATUS_OPTIONS,
   REVIEW_TYPE_OPTIONS,
+  VIEW_IDS,
   VISIBILITY_OPTIONS,
   getReadOnlyAssetWriteHint,
 } from './schema.js';
@@ -402,10 +409,57 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
   );
 
   server.tool(
+    'app_review_cleanup_related_asset_links',
+    'Prune archived related-asset links in Assets. Matches linked records when status is Archived or name contains archived. Defaults to dry-run.',
+    {
+      dry_run: z.boolean().optional(),
+      view_id: z.string().min(1).optional(),
+      archived_status: z.string().min(1).optional(),
+      archived_name_contains: z.string().min(1).optional(),
+      sample_limit: z.number().int().min(1).max(100).optional(),
+      link_field_id: z.string().min(1).optional(),
+      linked_status_field_id: z.string().min(1).optional(),
+      linked_name_field_id: z.string().min(1).optional(),
+    },
+    async (params) => {
+      try {
+        const cleanupInput: RelatedAssetLinkCleanupOptions = cleanObject({
+          dryRun: params.dry_run,
+          viewId: params.view_id,
+          archivedStatus: params.archived_status,
+          archivedNameContains: params.archived_name_contains,
+          sampleLimit: params.sample_limit,
+          linkFieldId: params.link_field_id,
+          linkedStatusFieldId: params.linked_status_field_id,
+          linkedNameFieldId: params.linked_name_field_id,
+        });
+
+        const defaults = {
+          dry_run: true,
+          view_id: VIEW_IDS.assetsDailyAssetLinkCleanup,
+          archived_status: 'Archived',
+          archived_name_contains: 'archived',
+          sample_limit: 10,
+          link_field_id: FIELD_IDS.assets.relatedAssets,
+          linked_status_field_id: FIELD_IDS.assets.lifecycleStatus,
+          linked_name_field_id: FIELD_IDS.assets.name,
+        };
+
+        const result = await getClient().cleanupArchivedRelatedAssetLinks(cleanupInput);
+        return asSuccess({
+          defaults,
+          result,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
     'app_review_get_field_map',
     'Return canonical Airtable field mappings, writability, and allowed status options.',
     {},
     async () => asSuccess(APP_REVIEW_FIELD_MAP),
   );
 }
-
