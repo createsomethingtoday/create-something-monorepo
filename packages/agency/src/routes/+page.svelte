@@ -141,7 +141,7 @@
 				<p class="hero-eyebrow">CREATE SOMETHING .agency</p>
 			</BlurFade>
 			<BlurFade delay={0.1}>
-				<h1 class="hero-title">Custom workflow MCPs.</h1>
+				<h1 class="hero-title">Custom Workflow MCPs.</h1>
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
@@ -149,7 +149,7 @@
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.25}>
-				<p class="hero-proof">16+ production integrations shipped.</p>
+				<p class="hero-proof">Then layer assurance and enterprise controls as autonomy scales.</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
 				<div class="hero-cta">
@@ -158,9 +158,6 @@
 					</ShimmerButton>
 					<a href="#how" class="hero-link">How it works →</a>
 				</div>
-			</BlurFade>
-			<BlurFade delay={0.35}>
-				<p class="hero-microcopy">Then layer assurance and enterprise controls as autonomy scales.</p>
 			</BlurFade>
 		</div>
 		<BlurFade delay={0.4} class="hero-visual-wrapper">
@@ -594,13 +591,6 @@
 	
 	.hero-link:hover {
 		color: var(--color-fg-primary);
-	}
-
-	.hero-microcopy {
-		margin-top: var(--space-3, 0.75rem);
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		max-width: var(--content-width-sm);
 	}
 
 	/* Hero visual frame - contains glow + bordered container */
