@@ -35,10 +35,11 @@ MCP_DESCRIPTION = "Half Dozen DM MCP. Notion tools plus DM-namespaced Composio p
 ENABLED_TOOLSETS = "notion,composio"
 COMPOSIO_ENTITY_ID = "dm"
 COMPOSIO_PROXY_MODE = "allowlist"
-COMPOSIO_ALLOWED_TOOLKITS = "airtable,gmail,webflow"
-COMPOSIO_ALLOWED_TOOLKITS_BY_ENTITY = "{}"
+COMPOSIO_ALLOWED_TOOLKITS = "googledrive,zoom,slack,quickbooks"
+COMPOSIO_ALLOWED_TOOLKITS_BY_ENTITY = "{\"dm\":\"googledrive,zoom,slack,quickbooks\"}"
 COMPOSIO_TOOL_NAME_PREFIX = "dm_composio"
 COMPOSIO_TOOL_CACHE_SECONDS = "300"
+# Keep empty in source; inject real mapping per environment (toolkit -> auth config id).
 COMPOSIO_AUTH_CONFIG_MAP = "{}"
 
 # Secrets (set via wrangler secret put)

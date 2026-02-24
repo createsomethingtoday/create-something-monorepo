@@ -28,11 +28,11 @@ wrangler secret put COMPOSIO_API_KEY
 
 - `ENABLED_TOOLSETS=notion,composio`
 - `COMPOSIO_PROXY_MODE=allowlist` (recommended)
-- `COMPOSIO_ALLOWED_TOOLKITS=airtable,gmail,webflow` (example)
+- `COMPOSIO_ALLOWED_TOOLKITS=googledrive,zoom,slack,quickbooks` (example)
 - `COMPOSIO_ALLOWED_TOOLKITS_BY_ENTITY={...}` (optional per-entity override)
 - `COMPOSIO_ENTITY_ID=dm` (default entity fallback)
 - `COMPOSIO_TOOL_NAME_PREFIX=dm_composio`
-- `COMPOSIO_AUTH_CONFIG_MAP={...}` (required for `dm_composio_get_connect_link`)
+- `COMPOSIO_AUTH_CONFIG_MAP={...}` (required for `dm_composio_get_connect_link`, inject per environment)
 
 3. Run locally:
 
