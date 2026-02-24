@@ -138,9 +138,6 @@
 	<div class="hero-container">
 		<div class="hero-content">
 			<BlurFade delay={0}>
-				<p class="hero-eyebrow">CREATE SOMETHING .agency</p>
-			</BlurFade>
-			<BlurFade delay={0.1}>
 				<h1 class="hero-title">Custom Workflow MCPs.</h1>
 			</BlurFade>
 			<BlurFade delay={0.2}>
@@ -149,9 +146,6 @@
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.25}>
-				<p class="hero-proof">Then layer assurance and enterprise controls as autonomy scales.</p>
-			</BlurFade>
-			<BlurFade delay={0.3}>
 				<div class="hero-cta">
 					<ShimmerButton href="/book">
 						Book a Call
@@ -543,15 +537,6 @@
 		text-align: left;
 	}
 	
-	.hero-eyebrow {
-		font-size: var(--text-body-sm);
-		text-transform: uppercase;
-		letter-spacing: 0.15em;
-		color: rgba(96, 165, 250, 0.9);
-		margin-bottom: var(--space-5, 1.5rem);
-		font-weight: var(--font-semibold);
-	}
-	
 	.hero-title {
 		font-size: clamp(2.75rem, 5vw + 1.5rem, 5rem);
 		font-weight: var(--font-bold);
@@ -567,13 +552,6 @@
 		margin-bottom: var(--space-5, 1.5rem);
 		line-height: var(--leading-relaxed);
 		max-width: var(--content-width-sm);
-	}
-	
-	.hero-proof {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-6, 2rem);
-		letter-spacing: 0.01em;
 	}
 	
 	.hero-cta {
