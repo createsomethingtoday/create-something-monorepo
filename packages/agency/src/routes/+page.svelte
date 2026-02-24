@@ -405,7 +405,7 @@
 					When a client primarily needs full system development and team onboarding, I refer that engagement to Half Dozen directly.
 				</p>
 				<p class="problem-punchline">
-					CREATE SOMETHING owns custom workflows, assurance, and enterprise extension.
+					One owner for custom workflows, assurance, and enterprise extension.
 				</p>
 			</div>
 		</BlurFade>
@@ -996,11 +996,13 @@
 	}
 
 	.problem-punchline {
-		font-size: var(--text-h2);
-		font-weight: var(--font-bold);
+		font-size: clamp(1.5rem, 2.2vw + 0.9rem, 2.4rem);
+		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
-		line-height: 1.2;
-		letter-spacing: var(--tracking-tight, -0.015em);
+		line-height: 1.28;
+		letter-spacing: var(--tracking-tight, -0.01em);
+		max-width: 32ch;
+		margin: var(--space-8, 3rem) auto 0;
 	}
 	
 	/* Audience / Built For */
