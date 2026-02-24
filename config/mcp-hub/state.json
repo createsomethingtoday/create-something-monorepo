@@ -6,6 +6,7 @@
     "composio-toolkit-airtable",
     "composio-toolkit-gmail",
     "composio-toolkit-webflow",
+    "halfdozen-dm-mcp",
     "meetings"
   ],
   "disabledServers": [
@@ -17,5 +18,5 @@
     "slack_create_something",
     "three-tier-framework"
   ],
-  "updatedAt": "2026-02-23T22:13:46.439Z"
+  "updatedAt": "2026-02-24T02:28:24.508Z"
 }

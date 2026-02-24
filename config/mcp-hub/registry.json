@@ -172,6 +172,7 @@
     "halfdozen-dm-mcp": {
       "transport": "http",
       "url": "https://dm.mcp.workway.co/mcp",
+      "bearer_token_env_var": "HALFDOZEN_DM_MCP_API_KEY",
       "description": "Half Dozen DM MCP (Notion CRUD + DM-scoped Google Drive sync)",
       "tags": [
         "halfdozen",
