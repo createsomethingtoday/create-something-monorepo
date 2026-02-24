@@ -39,9 +39,9 @@
 	function generateGoogleCalendarLink(): string {
 		const start = new Date(event.start_at).toISOString().replace(/-|:|\.\d+/g, '');
 		const end = new Date(event.end_at).toISOString().replace(/-|:|\.\d+/g, '');
-		const title = encodeURIComponent('Discovery Call - CREATE SOMETHING');
+		const title = encodeURIComponent('Architecture Call - CREATE SOMETHING');
 		const details = encodeURIComponent(
-			'Discovery call with CREATE SOMETHING to discuss your project.'
+			'Architecture call with CREATE SOMETHING to map your operating lane and next actions.'
 		);
 
 		return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}`;
@@ -50,9 +50,9 @@
 	function generateOutlookLink(): string {
 		const start = new Date(event.start_at).toISOString();
 		const end = new Date(event.end_at).toISOString();
-		const title = encodeURIComponent('Discovery Call - CREATE SOMETHING');
+		const title = encodeURIComponent('Architecture Call - CREATE SOMETHING');
 		const body = encodeURIComponent(
-			'Discovery call with CREATE SOMETHING to discuss your project.'
+			'Architecture call with CREATE SOMETHING to map your operating lane and next actions.'
 		);
 
 		return `https://outlook.live.com/calendar/0/deeplink/compose?subject=${title}&startdt=${start}&enddt=${end}&body=${body}`;
@@ -71,8 +71,8 @@ UID:${event.id}@createsomething.agency
 DTSTAMP:${now}
 DTSTART:${start}
 DTEND:${end}
-SUMMARY:Discovery Call - CREATE SOMETHING
-DESCRIPTION:Discovery call with CREATE SOMETHING to discuss your project.
+SUMMARY:Architecture Call - CREATE SOMETHING
+DESCRIPTION:Architecture call with CREATE SOMETHING to map your operating lane and next actions.
 END:VEVENT
 END:VCALENDAR`;
 
@@ -129,7 +129,7 @@ END:VCALENDAR`;
 			>
 				Outlook
 			</a>
-			<a href={generateICalData()} download="discovery-call.ics" class="calendar-button">
+			<a href={generateICalData()} download="architecture-call.ics" class="calendar-button">
 				iCal / Apple
 			</a>
 		</div>

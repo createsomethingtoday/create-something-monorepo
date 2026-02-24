@@ -23,9 +23,9 @@
 </script>
 
 <SEO
-	title="About | Micah Johnson — Your AI Person"
-	description="I connect business tools to AI and teach the AI how your business works. 16+ production integrations. System Architect at Webflow. Based in Texas."
-	keywords="Micah Johnson, AI integration, fractional AI architect, business tool automation, AI consulting Texas"
+	title="About | Micah Johnson — Notion-First Agent Systems"
+	description="CTO-level architecture for Notion-first operations: reliability, policy, and enterprise MCP extension. 16+ production integrations built."
+	keywords="Micah Johnson, agent systems, Notion architecture, MCP consulting, AI operations reliability"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -35,12 +35,12 @@
 	<div class="hero-grid"></div>
 	<div class="hero-content">
 		<p class="hero-eyebrow reveal">About</p>
-		<h1 class="hero-title reveal">I build connections. Then I build intelligence.</h1>
+		<h1 class="hero-title reveal">I build operating systems for autonomy.</h1>
 		<p class="hero-detail reveal">
 			I started by connecting business tools to AI — Salesforce, HubSpot, Notion,
-			Procore, custom systems. I've built 16+ production integrations. That experience
-			taught me something: the connection is the easy part. The intelligence — teaching
-			AI how your business actually works — is what makes it valuable.
+			Procore, and custom systems. I have built 16+ production integrations. That work
+			clarified where value compounds: not at basic connectivity, but at reliability,
+			governance, and system design for real operations.
 		</p>
 	</div>
 </section>
@@ -51,16 +51,15 @@
 		<div class="about-content reveal">
 			<h2>The approach</h2>
 			<p>
-				I connect your business tools to AI, then build the intelligence
-				on top. I give Claude, Cursor, and Codex access to your actual systems, then teach
-				them how your business works — through business rules, workflow logic, and
-				ongoing refinement.
+				Half Dozen runs client operations in Notion: deployment, onboarding, and weekly management.
+				CREATE SOMETHING .agency is the technical extension layer I lead: evals, policy controls,
+				incident loops, and custom MCP/orchestration when native automation reaches its limits.
 			</p>
 			<p>
 				My methodology is the Subtractive Triad: before building anything new, I
 				audit your systems to find what should be removed — duplication, excess,
-				disconnection. What remains is what's worth connecting. This is why my
-				implementations work: I don't just add connections. I design the system first.
+				disconnection. What remains is what's worth automating. This is why the systems
+				hold up in production: the architecture is designed before capabilities are added.
 			</p>
 		</div>
 	</div>
@@ -74,14 +73,14 @@
 			<p>
 				Micah Johnson. System Architect on the Marketplace Team at Webflow — building
 				internal tools, onboarding systems, and platform infrastructure serving millions
-				of users. Also building custom AI integrations and managed intelligence services
-				for businesses across the US.
+				of users. CTO partner to Half Dozen, focused on the technical architecture behind
+				Notion-first autonomous operations.
 			</p>
 			<p>
-				I've deployed 16+ production integrations connecting tools like Salesforce,
+				I have deployed 16+ production integrations connecting tools like Salesforce,
 				HubSpot, Notion, Slack, Procore, and custom internal systems to AI. That
-				building experience is what makes the intelligence work credible — I know
-				what breaks because I've built it.
+				building experience informs where to trust native tooling and where to design
+				custom control layers.
 			</p>
 			<p>
 				Based in Texas. Working with businesses across the US.
@@ -117,7 +116,7 @@
 				<li><a href="https://createsomething.ltd" class="link" target="_blank" rel="noopener noreferrer"><strong>.ltd</strong></a> — Philosophy and principles</li>
 				<li><a href="https://createsomething.io" class="link" target="_blank" rel="noopener noreferrer"><strong>.io</strong></a> — Research and validated patterns</li>
 				<li><a href="https://createsomething.space" class="link" target="_blank" rel="noopener noreferrer"><strong>.space</strong></a> — Tools and experiments</li>
-				<li><strong>.agency</strong> — Your AI person <span class="muted">(you are here)</span></li>
+				<li><strong>.agency</strong> — Autonomy assurance and enterprise extension <span class="muted">(you are here)</span></li>
 			</ul>
 			<p>
 				Client work informs the research. Research refines the methodology. The methodology
@@ -133,7 +132,8 @@
 		<div class="about-content reveal">
 			<h2>Also building</h2>
 			<p>
-				I'm also building <a href="https://workway.co" class="link" target="_blank" rel="noopener noreferrer">WORKWAY</a> — AI automation for construction, built on Procore. What I learn building for construction strengthens what I bring to every client engagement.
+				I am also building <a href="https://workway.co" class="link" target="_blank" rel="noopener noreferrer">WORKWAY</a> and supporting Half Dozen's client operations stack.
+				What we learn in production feeds directly back into .agency reliability frameworks and extension playbooks.
 			</p>
 		</div>
 	</div>
@@ -142,7 +142,7 @@
 <!-- CTA -->
 <section class="cta-section">
 	<div class="section-container">
-		<h2 class="cta-heading reveal">Limited roster. Let's see if there's a fit.</h2>
+		<h2 class="cta-heading reveal">Need assurance above your Notion baseline?</h2>
 		<div class="cta-actions reveal">
 			<a href="/book" class="cta-link-primary">Book a Call →</a>
 			<a href="/services" class="cta-link-secondary">How I work →</a>

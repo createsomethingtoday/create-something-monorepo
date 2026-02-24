@@ -21,11 +21,40 @@
 	}
 
 	type BookingStep = 'date' | 'time' | 'details' | 'confirm';
+	type ServiceLane =
+		| 'core_notion_ops'
+		| 'autonomy_assurance'
+		| 'enterprise_extension'
+		| 'not_sure';
+
+	const laneOptions: Array<{ value: ServiceLane; label: string; description: string }> = [
+		{
+			value: 'core_notion_ops',
+			label: 'Core Notion Ops',
+			description: 'Team setup, onboarding, and weekly operating cadence.'
+		},
+		{
+			value: 'autonomy_assurance',
+			label: 'Autonomy Assurance',
+			description: 'Evals, policy gates, and incident controls for reliability.'
+		},
+		{
+			value: 'enterprise_extension',
+			label: 'Enterprise Extension',
+			description: 'Custom MCP/orchestration for high-stakes cross-system workflows.'
+		},
+		{
+			value: 'not_sure',
+			label: 'Not sure yet',
+			description: 'Need help mapping the right lane.'
+		}
+	];
 
 	// State
 	let step = $state<BookingStep>('date');
 	let selectedDate = $state<Date | null>(null);
 	let selectedSlot = $state<TimeSlot | null>(null);
+	let selectedLane = $state<ServiceLane>('not_sure');
 	let slots = $state<TimeSlot[]>([]);
 	let confirmedEvent = $state<BookingEvent | null>(null);
 
@@ -110,6 +139,13 @@
 		step = 'details';
 	}
 
+	function mergeLaneIntoNotes(notes: string): string {
+		const lane = laneOptions.find((option) => option.value === selectedLane);
+		const laneLine = `Intake lane: ${lane?.label ?? 'Not sure yet'}`;
+		const trimmedNotes = notes.trim();
+		return trimmedNotes ? `${laneLine}\n${trimmedNotes}` : laneLine;
+	}
+
 	// Handle form submission
 	async function handleFormSubmit(data: {
 		name: string;
@@ -144,7 +180,7 @@
 					email: data.email,
 					timezone,
 					company: data.company || undefined,
-					notes: data.notes || undefined
+					notes: mergeLaneIntoNotes(data.notes)
 				})
 			});
 
@@ -182,16 +218,16 @@
 </script>
 
 <SEO
-	title="Book an Outcome Stack Diagnostic"
-	description="Schedule a 30-minute diagnostic to scope your first Outcome Stack: systems, workflow boundaries, and implementation path."
+	title="Book an Architecture Call"
+	description="Schedule a 30-minute architecture call to map whether you need Core Notion Ops, Autonomy Assurance, or Enterprise Extension."
 	propertyName="agency"
 />
 
 <main class="booking-page">
 	<header class="booking-header">
-		<h1 class="booking-title">Book an Outcome Stack Diagnostic</h1>
+		<h1 class="booking-title">Book an architecture call</h1>
 		<p class="booking-subtitle">
-			30 minutes to map your systems, workflow bottlenecks, and trust boundaries.
+			30 minutes to map your lane: Core Notion Ops, Autonomy Assurance, or Enterprise Extension.
 		</p>
 	</header>
 
@@ -245,7 +281,27 @@
 			</section>
 		{:else if step === 'details'}
 			<section class="step-content">
-				<h2 class="step-title">Your details</h2>
+				<h2 class="step-title">Your details and lane</h2>
+				<div class="lane-intake" role="radiogroup" aria-labelledby="lane-intake-title">
+					<p id="lane-intake-title" class="lane-intake-title">Which lane do you think you need?</p>
+					<p class="lane-intake-helper">This only helps us prep. We can re-scope together on the call.</p>
+					<div class="lane-options">
+						{#each laneOptions as lane}
+							<label class="lane-option" class:selected={selectedLane === lane.value}>
+								<input
+									type="radio"
+									name="service-lane"
+									value={lane.value}
+									bind:group={selectedLane}
+								/>
+								<span class="lane-option-text">
+									<span class="lane-option-label">{lane.label}</span>
+									<span class="lane-option-description">{lane.description}</span>
+								</span>
+							</label>
+						{/each}
+					</div>
+				</div>
 				{#if selectedSlot}
 					<BookingForm
 						{selectedSlot}
@@ -405,6 +461,70 @@
 		background: var(--color-error-muted);
 		border: 1px solid var(--color-error-border);
 		border-radius: var(--radius-md);
+	}
+
+	.lane-intake {
+		padding: var(--space-md);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		background: var(--color-bg-surface);
+	}
+
+	.lane-intake-title {
+		font-size: var(--text-body);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-primary);
+		margin-bottom: var(--space-2xs);
+	}
+
+	.lane-intake-helper {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-tertiary);
+		margin-bottom: var(--space-sm);
+	}
+
+	.lane-options {
+		display: grid;
+		gap: var(--space-xs);
+	}
+
+	.lane-option {
+		display: flex;
+		gap: var(--space-sm);
+		align-items: flex-start;
+		padding: var(--space-sm);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		cursor: pointer;
+		transition:
+			border-color var(--duration-micro) var(--ease-standard),
+			background var(--duration-micro) var(--ease-standard);
+	}
+
+	.lane-option input {
+		margin-top: 0.2rem;
+	}
+
+	.lane-option.selected {
+		border-color: var(--color-border-emphasis);
+		background: var(--color-bg-muted);
+	}
+
+	.lane-option-text {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2xs);
+	}
+
+	.lane-option-label {
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-primary);
+	}
+
+	.lane-option-description {
+		font-size: var(--text-caption);
+		color: var(--color-fg-tertiary);
 	}
 
 	/* Footer */

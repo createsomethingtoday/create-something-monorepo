@@ -11,62 +11,68 @@
 
 	const services = [
 		{
-			name: 'Monthly Retainer',
-			description: `Your AI architect on retainer. Agent Outcome Stack by default: ${deliveryVector.clientFacingLabel} delivery, custom MCP servers, Codex setup, policy artifacts, and monthly refinement. Direct access to the person who builds it. Limited to 3–5 clients.`,
-			type: 'Retainer',
-			price: '2000',
-			priceDescription: '$1,500–$3,000/mo depending on scope'
+			name: 'Core Notion Ops',
+			description: 'Half Dozen deploys and manages your Notion operating system.',
+			type: 'Managed Service',
+			price: 'Custom',
+			priceDescription: 'Monthly'
+		},
+		{
+			name: 'Autonomy Assurance',
+			description: `Operational reliability layer delivered with ${deliveryVector.clientFacingLabel}: evals, policy controls, release gates, and incident loops.`,
+			type: 'Add-on Retainer',
+			price: 'Custom',
+			priceDescription: 'Monthly'
+		},
+		{
+			name: 'Enterprise Extension',
+			description: 'Custom MCP and orchestration for high-stakes, cross-system, and compliance-heavy workflows.',
+			type: 'Project + Managed',
+			price: 'Custom',
+			priceDescription: 'Scoped implementation'
 		}
 	];
 
 	const faqItems = [
 		{
-			question: "Why a retainer instead of project pricing?",
-			answer: "AI isn't a one-time build. Your tools change, your workflows evolve, your AI generates data that reveals new gaps. A retainer means I'm always improving your system — not waiting for you to file a ticket."
+			question: 'Why Notion-first?',
+			answer: 'Notion gives teams the fastest path to shared operating behavior with low adoption friction. We start there for speed, then layer reliability and extension only where needed.'
 		},
 		{
-			question: "What does $1,500–$3,000/mo actually get me?",
-			answer: `Everything in the Agent Outcome Stack: ${deliveryVector.clientFacingLabel} delivery, custom MCP servers, Codex setup + policy + runbook, approval and escalation rules, monthly refinement, and direct access to me. The range depends on number of systems and workflow complexity. We scope it on the first call.`
+			question: 'What does Half Dozen own?',
+			answer: 'Half Dozen owns onboarding, training, and weekly execution management. They keep the operating system running and the team moving.'
 		},
 		{
-			question: "Can I connect tools myself?",
-			answer: "Yes — and I'll teach you. Generic connections are commodity work. There are free marketplaces and tutorials for that. My time goes to the custom work: the integrations that are specific to how your business runs, the intelligence layer that teaches your AI your priorities and rules."
+			question: 'What does .agency own?',
+			answer: '.agency owns reliability, policy, and enterprise extension: evals, guardrails, incident loops, and custom MCP/orchestration when workflows exceed native Notion limits.'
 		},
 		{
-			question: "What if I just need one quick connection?",
-			answer: "If it's truly simple, I'll point you to the right free tool or show you how to do it yourself. I don't charge for commodity work. But most 'simple' connections need custom auth, specific data mapping, or business logic generic tools can't handle."
+			question: 'When should we add Autonomy Assurance?',
+			answer: 'Add it when failures become expensive, workflows become autonomous, or multiple systems must stay in sync. Assurance is the reliability gate before scale.'
 		},
 		{
-			question: "Do you offer MCP-only delivery?",
-			answer: "Yes, for discovery and compliance-constrained cases. MCP-only is the entry wedge: read-only or limited-scope connectivity. The default paid package is Agent Outcome Stack, because outcomes require both MCP connectivity and agent policy operations."
+			question: 'When do we need Enterprise Extension?',
+			answer: 'Use Enterprise Extension for regulated, high-volume, or cross-system operations requiring deterministic retries, auditability, and custom trust boundaries.'
 		},
 		{
-			question: "Why do you position it as Skills + MCP?",
-			answer: `We deploy business skills on top of secure MCP connectivity so your team gets outcomes, not prompt babysitting. Technical proof uses ${deliveryVector.technicalLabel}: MCP is the substrate for auth, trust boundaries, portability, and governance; Skills are the behavior layer. We scope tool access by bundle and workflow so only relevant capabilities enter context. The moat is hard to copy: custom MCP creation, auth/security boundary design, policy artifacts, approval/escalation runbooks, and monthly tuning.`
+			question: 'Do you still offer MCP-only?',
+			answer: 'Yes. MCP-only remains a scoped wedge for discovery and compliance-constrained rollouts, but default delivery moves to outcomes and operational reliability.'
 		},
 		{
-			question: "How is this different from hiring a developer?",
-			answer: "A developer builds what you spec. I figure out what to build. I understand both the AI ecosystem and how to translate business workflows into automation. You're not managing a developer — you're getting an architect who owns the outcome."
+			question: 'Do clients own the implementation?',
+			answer: 'Yes. Clients retain ownership of code, workflows, and operating documentation. We optimize for portability and long-term control.'
 		},
 		{
-			question: "Do I own the code?",
-			answer: "Yes. Everything I build — integrations, workflows, business rules — you own the source code, the deployment, and the documentation. No lock-in. If you leave, you keep everything."
-		},
-		{
-			question: "Why only 3–5 clients?",
-			answer: "Because this work requires understanding your business deeply enough to teach AI how it runs. I can't do that at scale — yet. Every engagement builds the intelligence patterns and tooling that will eventually let me scale this with agents. The limited roster today is how the product gets built for tomorrow."
-		},
-		{
-			question: "What tools can you connect?",
-			answer: "Anything with an API. Salesforce, HubSpot, Notion, Slack, Google Workspace, Procore, QuickBooks, Zoom, internal databases, custom systems. I've built 16+ production integrations across dozens of platforms."
+			question: 'Why the phrase Skills + MCP?',
+			answer: `Client-facing delivery is ${deliveryVector.clientFacingLabel}. Technical proof uses ${deliveryVector.technicalLabel}: MCP handles trust and connectivity while Skills carry behavior and workflow intent.`
 		}
 	];
 </script>
 
 <SEO
-	title="How I Work | Your AI Person on Retainer"
-	description="Monthly retainer. Direct access. Agent Outcome Stack by default: Skills + MCP delivery, custom MCP servers, Codex setup + policy + runbook, and monthly refinement. $1,500–$3,000/mo depending on scope."
-	keywords="AI retainer, fractional AI architect, AI automation consultant, connect tools to AI, business AI expert"
+	title="How We Work | Notion Ops + Autonomy Assurance"
+	description="Operating model: Half Dozen runs Notion operations, CREATE SOMETHING .agency runs reliability and enterprise extension."
+	keywords="Notion operations, autonomy assurance, enterprise MCP, agent reliability, AI operating model"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	{services}
@@ -81,11 +87,12 @@
 			<p class="hero-eyebrow">How I Work</p>
 		</BlurFade>
 		<BlurFade delay={0.1}>
-			<h1 class="hero-title">One retainer. Outcome Stack included.</h1>
+			<h1 class="hero-title">Three lanes. One operating system.</h1>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<p class="hero-subtitle">
-				We deploy business skills on top of secure MCP connectivity so your team gets outcomes, not prompt babysitting. I deliver Agent Outcome Stack by default with {deliveryVector.clientFacingLabel}: custom connectivity, Codex setup, policy artifacts, and monthly refinement. MCP-only is reserved for discovery and compliance-constrained cases.
+				Half Dozen handles deployment, onboarding, and weekly execution in Notion.
+				.agency handles reliability and extension: evals, policy controls, and custom MCP/orchestration for workflows that exceed native limits.
 			</p>
 		</BlurFade>
 	</div>
@@ -98,43 +105,40 @@
 			<div class="retainer-card">
 				<div class="retainer-header">
 					<div class="retainer-pricing">
-						<div class="retainer-price">$1,500–$3,000</div>
-						<div class="retainer-period">per month</div>
+						<div class="retainer-price">3-Lane Model</div>
+						<div class="retainer-period">Notion-first delivery</div>
 					</div>
 					<p class="retainer-note">
-						Scope depends on number of tools and workflow complexity.<br />
-						We figure out the right number on the first call.
+						Start with operations. Add assurance when autonomy depth increases.<br />
+						Escalate to extension for enterprise constraints.
 					</p>
 				</div>
 				<div class="retainer-body">
 					<div class="retainer-columns">
 						<div class="retainer-detail">
-							<h3>What's Included</h3>
+							<h3>Service Ladder</h3>
 							<ul class="retainer-list">
-								<li>Custom MCP server(s) for your workflows</li>
-								<li>Agent Outcome Stack delivery ({deliveryVector.clientFacingLabel})</li>
-								<li>Codex setup + policy + runbook included</li>
-								<li>Approval rules and escalation triggers</li>
-								<li>Budget and latency guardrails</li>
-								<li>Monthly refinement from usage data</li>
-								<li>Direct access — Slack or email</li>
-								<li>Architecture guidance as you grow</li>
-								<li>Monitoring and maintenance</li>
-								<li>Source code ownership — no lock-in</li>
+								<li><strong>Core Notion Ops:</strong> deployment, onboarding, weekly management</li>
+								<li><strong>Autonomy Assurance:</strong> evals, release gates, policy tuning, incident reviews</li>
+								<li><strong>Enterprise Extension:</strong> custom MCP/orchestration and governance controls</li>
+								<li>Delivery vector: {deliveryVector.clientFacingLabel}</li>
+								<li>MCP-only available as scoped entry wedge</li>
+								<li>Client owns code and operating artifacts</li>
 							</ul>
 						</div>
 						<div class="retainer-detail">
-							<h3>What I Teach You for Free</h3>
+							<h3>Escalation Triggers</h3>
 							<ul class="retainer-list">
-								<li>Generic tool connections</li>
-								<li>Basic MCP setup</li>
-								<li>MCP-only discovery setup (read-only/compliance)</li>
-								<li>Marketplace integrations</li>
-								<li>Standard configurations</li>
+								<li>Repeated automation failures or high incident cost</li>
+								<li>Cross-system workflow coupling and data drift risk</li>
+								<li>Regulated or high-stakes operations requiring auditability</li>
+								<li>Need for deterministic retries/idempotency</li>
+								<li>Enterprise security or trust-boundary requirements</li>
 							</ul>
 							<div class="retainer-callout">
 								<p>
-									Connecting tools is commodity. The hard part is hard-to-copy execution quality: custom MCP creation, auth/security boundary design, policy artifacts, approval/escalation runbooks, and monthly tuning. That's why the default package is {deliveryVector.canonicalPhrase}.
+									Notion setup and training are necessary but not sufficient for high-autonomy systems.
+									The durable value is reliability engineering, policy governance, and extension architecture.
 								</p>
 							</div>
 						</div>
@@ -155,25 +159,25 @@
 		<div class="timeline-grid">
 			<BlurFade delay={0.1}>
 				<div class="timeline-card">
-					<span class="timeline-label">Month 1</span>
-					<h3>The Build</h3>
-					<p>Diagnostic call. I map tools, workflows, and risk boundaries. Then I deliver the initial Outcome Stack: custom MCP, Codex setup, and policy runbook. By month end, your AI can act inside safe boundaries.</p>
+					<span class="timeline-label">Phase 1</span>
+					<h3>Foundation</h3>
+					<p>Half Dozen deploys the Notion operating system, onboards your team, and establishes weekly execution habits.</p>
 				</div>
 			</BlurFade>
 
 			<BlurFade delay={0.2}>
 				<div class="timeline-card">
-					<span class="timeline-label">Month 2–3</span>
-					<h3>The Expansion</h3>
-					<p>More connections as needed. Deeper business rules: priorities, escalation logic, quality checks, and golden tasks. I use usage data to find where the system is guessing and close those gaps.</p>
+					<span class="timeline-label">Phase 2</span>
+					<h3>Assurance</h3>
+					<p>.agency adds eval coverage, release checks, policy envelopes, and incident loops as automation scope and risk increase.</p>
 				</div>
 			</BlurFade>
 
 			<BlurFade delay={0.3}>
 				<div class="timeline-card">
-					<span class="timeline-label">Month 4+</span>
-					<h3>The Compound</h3>
-					<p>The system compounds. My work shifts to tuning and expansion: new capabilities, tighter policies, and better reliability. Your runbook and contracts stay current as your business changes.</p>
+					<span class="timeline-label">Phase 3</span>
+					<h3>Extension</h3>
+					<p>For enterprise constraints, we extend beyond Notion-native automations with custom MCP/orchestration and governance controls.</p>
 				</div>
 			</BlurFade>
 		</div>
@@ -204,11 +208,11 @@
 <section class="cta-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="cta-heading">Limited roster. Let's see if there's a fit.</h2>
+			<h2 class="cta-heading">Map your lane and escalation path.</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
-				Book a call. I'll look at your tools and workflows and give you an honest assessment — including what you can do yourself for free.
+				Book a call and we will scope where Core Ops is enough, where Assurance is required, and where Enterprise Extension becomes necessary.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>

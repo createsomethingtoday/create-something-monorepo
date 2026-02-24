@@ -38,21 +38,27 @@ interface ContentItem {
  */
 const SERVICES: ContentItem[] = [
 	{
-		slug: 'mcp-audit',
-		title: 'MCP Audit',
-		description: 'Map your tools, workflows, and trust boundaries. Prioritized roadmap for what to connect and what to remove.',
+		slug: 'core-notion-ops',
+		title: 'Core Notion Ops',
+		description: 'Half Dozen deploys the Notion operating system, onboards teams, and runs weekly execution cadence.',
+		category: 'service'
+	},
+	{
+		slug: 'autonomy-assurance',
+		title: 'Autonomy Assurance',
+		description: 'CREATE SOMETHING .agency provides evals, release gates, policy controls, and incident loops for autonomous operations.',
+		category: 'service'
+	},
+	{
+		slug: 'enterprise-extension',
+		title: 'Enterprise Extension',
+		description: 'Custom MCP and orchestration for high-stakes, cross-system, and compliance-heavy workflows.',
 		category: 'service'
 	},
 	{
 		slug: 'mcp-only-discovery',
 		title: 'MCP-only (Discovery/Compliance)',
-		description: 'Entry wedge for read-only or limited-scope connectivity when teams need trust setup before autonomous workflows.',
-		category: 'service'
-	},
-	{
-		slug: 'agent-outcome-stack',
-		title: 'Agent Outcome Stack',
-		description: 'Default delivery: Skills + MCP with custom MCP server(s), Codex setup, policy artifacts, runbook, and monthly refinement.',
+		description: 'Scoped entry wedge for read-only or limited-scope connectivity when teams need trust setup before autonomous workflows.',
 		category: 'service'
 	}
 ];

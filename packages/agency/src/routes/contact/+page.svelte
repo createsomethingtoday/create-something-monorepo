@@ -66,9 +66,9 @@
 </script>
 
 <SEO
-	title="Start Your Outcome Stack | CREATE SOMETHING .agency"
-	description="Book an Outcome Stack diagnostic call or send your workflow details. We'll map tools, risk boundaries, and next actions."
-	keywords="agent outcome stack, skills and mcp, mcp audit, mcp-only discovery, ai workflow operations"
+	title="Start Your AgentOps Lane | CREATE SOMETHING .agency"
+	description="Book an architecture call or send your workflow details. We'll map whether you need Core Notion Ops, Autonomy Assurance, or Enterprise Extension."
+	keywords="notion agentops, autonomy assurance, enterprise extension, mcp architecture, ai workflow reliability"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -78,9 +78,9 @@
 	<div class="hero-grid"></div>
 	<div class="hero-content">
 		<p class="hero-eyebrow reveal">Contact</p>
-		<h1 class="hero-title reveal">Start with one outcome stack.</h1>
+		<h1 class="hero-title reveal">Start with the right lane.</h1>
 		<p class="hero-detail reveal">
-			Book a diagnostic call or send your workflow details. We scope delivery around outcomes, not generic integrations.
+			Book an architecture call or send your workflow details. We scope for the right operating lane, then extend only where needed.
 		</p>
 	</div>
 </section>
@@ -92,7 +92,7 @@
 		<!-- Book a Call -->
 		<div class="contact-option reveal">
 			<h2>Book a call</h2>
-			<p>30-minute diagnostic call. We map your tools, workflow bottlenecks, and trust boundaries to scope your first Outcome Stack.</p>
+			<p>30-minute architecture call. We map your tools, workflow bottlenecks, and risk profile to place you in the right lane.</p>
 			<div class="cal-button">
 				<SavvyCalButton variant="primary" size="lg" />
 			</div>
@@ -101,7 +101,7 @@
 		<!-- Send a Message -->
 		<div class="contact-option reveal">
 			<h2>Send a message</h2>
-			<p>Not ready for a call? Send your current stack and the first workflow you want solved.</p>
+			<p>Not ready for a call? Send your stack, bottleneck, and current risk concerns.</p>
 			
 			<form class="contact-form" onsubmit={handleSubmit}>
 				<div class="form-field">
@@ -129,15 +129,15 @@
 				</div>
 
 				<div class="form-field">
-					<label for="message" class="form-label">What outcome do you want first?</label>
-					<p class="form-helper">Tell us your stack and bottleneck. We'll translate that into the right delivery scope.</p>
+					<label for="message" class="form-label">Which lane or workflow needs attention first?</label>
+					<p class="form-helper">Tell us your stack, constraints, and bottleneck. We'll map it to Core Ops, Assurance, or Extension.</p>
 					<textarea
 						id="message"
 						name="message"
 						required
 						rows="4"
 						class="form-input form-textarea"
-						placeholder="e.g., HubSpot + Notion + Slack. We lose 6 hours/week updating project status manually and need approval-safe automation."
+						placeholder="e.g., HubSpot + Notion + Slack. We need evals and approval-safe automation before expanding autonomous workflows."
 					></textarea>
 				</div>
 

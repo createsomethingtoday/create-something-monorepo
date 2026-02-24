@@ -5,11 +5,25 @@
 	// Structured data for SEO/AEO
 	const services = [
 		{
-			name: 'Monthly Retainer',
-			description: 'Your AI architect on retainer. I connect your tools to AI, teach it how your business works, and refine it every month. Limited to 3–5 clients at a time. Direct access, no layers.',
-			type: 'Retainer',
-			price: '2000',
-			priceDescription: '$1,500–$3,000/mo depending on scope'
+			name: 'Core Notion Ops',
+			description: 'Half Dozen deploys your Notion operating system, onboards your team, and runs weekly execution.',
+			type: 'Managed Service',
+			price: 'Custom',
+			priceDescription: 'Monthly managed service'
+		},
+		{
+			name: 'Autonomy Assurance',
+			description: 'CREATE SOMETHING .agency adds evals, policy gates, release checks, and incident loops so autonomy scales safely.',
+			type: 'Add-on Retainer',
+			price: 'Custom',
+			priceDescription: 'Monthly reliability and governance layer'
+		},
+		{
+			name: 'Enterprise Extension',
+			description: 'Custom MCP and orchestration for cross-system, high-stakes, and compliance-heavy workflows.',
+			type: 'Project + Managed',
+			price: 'Custom',
+			priceDescription: 'Scoped implementation with optional ongoing support'
 		}
 	];
 
@@ -100,9 +114,9 @@
 {/snippet}
 
 <SEO
-	title="Your AI Person | CREATE SOMETHING .agency"
-	description="I work with 3–5 businesses at a time. I connect your tools to AI, teach it how your business works, and refine it every month. Direct access. No layers. 16+ production integrations built."
-	keywords="fractional AI architect, AI automation consultant, AI for business, connect tools to AI, AI retainer, business AI expert"
+	title="Notion-First AgentOps | CREATE SOMETHING .agency"
+	description="Half Dozen runs your Notion operating system. CREATE SOMETHING .agency provides autonomy assurance and enterprise MCP extensions for high-stakes workflows."
+	keywords="Notion agentops, autonomy assurance, MCP consulting, enterprise agent reliability, Notion automation architecture"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	{services}
@@ -124,23 +138,25 @@
 	<div class="hero-container">
 		<div class="hero-content">
 			<BlurFade delay={0}>
-				<p class="hero-eyebrow">Limited to 3–5 clients</p>
+				<p class="hero-eyebrow">Notion-first operating model</p>
 			</BlurFade>
 			<BlurFade delay={0.1}>
-				<h1 class="hero-title">I'm your AI&nbsp;person.</h1>
+				<h1 class="hero-title">Run in Notion. Scale with control.</h1>
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					I connect your business tools to AI, build custom workflows for how you actually work, and teach your AI your business — which clients are priority, when to escalate, what quality looks like. Then I refine it every month.
+					Half Dozen deploys your Notion system, onboards your team, and runs weekly execution.
+					CREATE SOMETHING .agency adds the technical layer: evals, policy gates, incident loops,
+					and custom extensions when your workflows outgrow native automation.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.25}>
 				<p class="hero-detail-secondary">
-					Direct access. No account managers. No layers. You work with the person who builds it.
+					Notion-first for speed. Assurance-first for reliability.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
-				<p class="hero-proof">16+ production integrations built. Clients recovering 15+ hours per week.</p>
+				<p class="hero-proof">16+ production integrations built. Built for teams running real operations, not demo automations.</p>
 			</BlurFade>
 			<BlurFade delay={0.35}>
 				<div class="hero-cta">
@@ -252,7 +268,7 @@
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="section-intro">
-				Monthly retainer. Everything included. The simple stuff I'll teach you to do yourself. My time goes to what's actually hard.
+				Three lanes, one system. Keep day-to-day execution simple in Notion while layering reliability and custom depth only where needed.
 			</p>
 		</BlurFade>
 		
@@ -264,9 +280,9 @@
 						<div class="funnel-step-line"></div>
 					</div>
 					<div class="funnel-step-content">
-						<span class="funnel-step-label">First call</span>
-						<h3>Diagnostic</h3>
-						<p>I look at your tools, your workflows, where time leaks. What should your AI be doing that it can't today? Where are the gaps between what you have and what's possible? This shapes everything.</p>
+						<span class="funnel-step-label">Lane 1</span>
+						<h3>Core Notion Ops (Half Dozen)</h3>
+						<p>Danny deploys the system, Filip trains your team, and Leah runs weekly management. This gets teams moving fast with clear operating cadence.</p>
 					</div>
 				</div>
 			</BlurFade>
@@ -278,9 +294,9 @@
 						<div class="funnel-step-line"></div>
 					</div>
 					<div class="funnel-step-content">
-						<span class="funnel-step-label">Month 1</span>
-						<h3>Build</h3>
-						<p>I connect your tools, build custom workflows, and set up the intelligence layer — the business rules that teach your AI how you actually work. Generic connections? I'll show you how to do those yourself. My time goes to the custom work nobody else can do.</p>
+						<span class="funnel-step-label">Lane 2</span>
+						<h3>Autonomy Assurance (.agency)</h3>
+						<p>I add evals, release gates, policy rules, and incident reviews so agent behavior stays reliable as autonomy expands.</p>
 					</div>
 				</div>
 			</BlurFade>
@@ -291,9 +307,9 @@
 						<div class="funnel-step-num">3</div>
 					</div>
 					<div class="funnel-step-content">
-						<span class="funnel-step-label">Ongoing</span>
-						<h3>Refine</h3>
-						<p>Every month, your AI generates data about what's working and what isn't. I close the gaps — new business rules, better workflows, new connections as your needs change. It compounds. Your AI gets smarter every month without you doing anything.</p>
+						<span class="funnel-step-label">Lane 3</span>
+						<h3>Enterprise Extension (.agency)</h3>
+						<p>For high-stakes workflows, I build custom MCP and orchestration layers across systems, with governance and traceability that native automation cannot yet provide.</p>
 					</div>
 				</div>
 			</BlurFade>
@@ -309,7 +325,7 @@
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="section-intro">
-				One retainer. Everything below. You own all code and infrastructure.
+				A modular offer stack. Start with operations, add assurance, then extend only when complexity demands it.
 			</p>
 		</BlurFade>
 		
@@ -317,19 +333,19 @@
 			<BlurFade delay={0.15}>
 				<div class="offering-card">
 					<div class="offering-header">
-						<h3 class="offering-name">Connections</h3>
+						<h3 class="offering-name">Core Notion Ops</h3>
 					</div>
 					<div class="offering-body">
 						<p class="offering-description">
-							Your tools connected to your AI. Salesforce, HubSpot, Notion, Procore, QuickBooks, Gmail — anything with an API. Custom-built for how you actually use them.
+							Half Dozen deploys your Notion operating system, onboards your team, and keeps execution moving every week.
 						</p>
 						<div class="offering-deliverables">
 							<span class="deliverables-label">Includes</span>
 							<ul>
-								<li>Custom integrations, deployed and managed</li>
-								<li>Secure authentication</li>
-								<li>Works with Claude, Cursor, Codex, ChatGPT</li>
-								<li>Full source code — you own everything</li>
+								<li>Notion workspace and workflow deployment</li>
+								<li>Team onboarding and operating playbooks</li>
+								<li>Weekly management and execution support</li>
+								<li>Fast baseline automation for internal ops</li>
 							</ul>
 						</div>
 					</div>
@@ -340,19 +356,19 @@
 				<div class="offering-card offering-featured">
 					<span class="offering-badge">The real product</span>
 					<div class="offering-header">
-						<h3 class="offering-name">Intelligence</h3>
+						<h3 class="offering-name">Autonomy Assurance</h3>
 					</div>
 					<div class="offering-body">
 						<p class="offering-description">
-							Business rules that teach your AI how your business works. Which clients are priority. When to escalate vs. handle autonomously. What your quality standards are. Refined monthly from real data.
+							.agency runs the reliability layer that keeps autonomous operations safe as they scale: evals, release checks, policy controls, and incident loops.
 						</p>
 						<div class="offering-deliverables">
 							<span class="deliverables-label">Includes</span>
 							<ul>
-								<li>Custom decision logic for your workflows</li>
-								<li>When AI isn't sure, it asks instead of guessing</li>
-								<li>Monthly refinement from usage data</li>
-								<li>New capabilities as your needs evolve</li>
+								<li>Eval suites and pre-release quality gates</li>
+								<li>Policy and approval boundaries by workflow risk</li>
+								<li>Incident taxonomy, triage, and postmortem loop</li>
+								<li>Monthly tuning using run data</li>
 							</ul>
 						</div>
 					</div>
@@ -362,19 +378,19 @@
 			<BlurFade delay={0.35}>
 				<div class="offering-card">
 					<div class="offering-header">
-						<h3 class="offering-name">Direct Access</h3>
+						<h3 class="offering-name">Enterprise Extension</h3>
 					</div>
 					<div class="offering-body">
 						<p class="offering-description">
-							When something breaks, when you want to add a tool, when you have a question about what to automate next — you reach me directly. Not a support queue. Not an account manager. The person who built it.
+							When Notion-native automation hits technical limits, .agency designs and builds the extension layer for enterprise-grade autonomy.
 						</p>
 						<div class="offering-deliverables">
 							<span class="deliverables-label">Includes</span>
 							<ul>
-								<li>Direct Slack or email access</li>
-								<li>Architecture guidance as you grow</li>
-								<li>I teach you the commodity stuff</li>
-								<li>Maintenance, monitoring, updates</li>
+								<li>Custom MCP and cross-system orchestration</li>
+								<li>Auditability and governance controls</li>
+								<li>Deterministic retry/idempotency for critical flows</li>
+								<li>Architecture support for enterprise requirements</li>
 							</ul>
 						</div>
 					</div>
@@ -393,16 +409,16 @@
 		<BlurFade delay={0.1}>
 			<div class="problem-statements">
 				<p class="problem-text">
-					I work with 3–5 businesses at a time. That's it. The scarcity isn't artificial — there's one of me, and this work requires understanding your business deeply enough to teach AI how it runs.
+					The market is converging on Notion as the easiest place to launch agent workflows. That is a feature, not a threat: it accelerates baseline adoption.
 				</p>
 				<p class="problem-text">
-					Monthly retainer, $1,500–$3,000 depending on scope. First month is the heavy build. After that, effort shifts to refinement — closing gaps, adding capabilities, making your AI smarter. The system compounds.
+					The technical gap remains reliability, policy, and cross-system orchestration. This is where .agency creates value above baseline setup and training.
 				</p>
 				<p class="problem-text">
-					Every engagement builds the intelligence layer — the business rules, decision logic, and workflow patterns that teach AI how to work. Those patterns compound across clients. The limited roster today is how the product gets built for tomorrow.
+					Half Dozen runs operations. .agency runs assurance and extension. The split keeps delivery clear and lets both teams compound what they do best.
 				</p>
 				<p class="problem-punchline">
-					You own everything. I build it, I maintain it, I refine it.
+					Notion-first for speed. Custom where reliability and enterprise depth require it.
 				</p>
 			</div>
 		</BlurFade>
@@ -420,21 +436,21 @@
 			<BlurFade delay={0.1}>
 				<div class="audience-card">
 					<h3>16+ Production Integrations</h3>
-					<p>Salesforce, HubSpot, Notion, Slack, Gmail, Procore, QuickBooks, Zoom, YouTube, custom internal systems. Built, deployed, and running in production.</p>
+					<p>Salesforce, HubSpot, Notion, Slack, Gmail, Procore, QuickBooks, Zoom, YouTube, and custom internal systems deployed in production.</p>
 				</div>
 			</BlurFade>
 
 			<BlurFade delay={0.2}>
 				<div class="audience-card">
-					<h3>15+ Hours/Week Recovered</h3>
-					<p>A 15-person firm recovered 15+ hours per week and roughly $39,000/year. Less time copying data between tools. More time on actual work.</p>
+					<h3>Operational Time Recovered</h3>
+					<p>Client teams have recovered double-digit weekly hours by reducing manual cross-tool work and improving automation reliability.</p>
 				</div>
 			</BlurFade>
 
 			<BlurFade delay={0.3}>
 				<div class="audience-card">
-					<h3>System Architect at Webflow</h3>
-					<p>Currently a System Architect on the Marketplace Team at Webflow — building internal tools, onboarding systems, and platform infrastructure serving millions. Applying that same rigor to AI automation.</p>
+					<h3>AgentOps + Architecture Depth</h3>
+					<p>The same system architecture rigor used in large-scale platforms is applied to agent reliability, policy controls, and enterprise extension planning.</p>
 				</div>
 			</BlurFade>
 		</div>
@@ -445,11 +461,11 @@
 <section class="cta-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="cta-heading">Limited roster. If there's a fit, let's talk.</h2>
+			<h2 class="cta-heading">Need Notion speed with production-grade autonomy?</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
-				Book a call. I'll look at your tools, your workflows, and where AI can actually help. No pitch — just an honest assessment of whether this makes sense for your business.
+				Book an architecture call. We will map whether you need Core Notion Ops only, Assurance, or full Enterprise Extension.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
