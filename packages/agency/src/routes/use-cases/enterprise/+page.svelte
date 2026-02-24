@@ -1,8 +1,13 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
-	import { SavvyCalButton } from '@create-something/canon/domains/agency';
 	import { IntegrationFlow } from '@create-something/canon/interactive';
 	import { BlurFade, ShimmerButton } from '@create-something/canon/magicui';
+
+	const deliveryVector = {
+		canonicalPhrase: 'Skills on MCP',
+		clientFacingLabel: 'Skills + MCP',
+		technicalLabel: 'MCP + Skills'
+	};
 
 	// Integration flow — judgment layer architecture
 	const integrations = [
@@ -89,44 +94,44 @@
 
 	const plans = [
 		{
-			name: 'Foundation',
-			price: '$1,500',
+			name: 'Outcome Stack Core',
+			price: '$1,500–$2,000',
 			period: '/mo',
-			scope: '1–2 managed agents/MCPs',
+			scope: '1–2 workflows in operation',
 			features: [
-				'Weekly prompt optimization',
+				'Custom MCP operating baseline',
+				'Weekly prompt and policy tuning',
 				'Monthly performance reporting',
-				'Drift detection & correction',
-				'Email support'
+				'Drift detection and correction'
 			],
 			featured: false
 		},
 		{
-			name: 'Professional',
-			price: '$2,500',
+			name: 'Outcome Stack Growth',
+			price: '$2,000–$3,000',
 			period: '/mo',
-			scope: '3–5 managed agents/MCPs',
+			scope: '3–5 workflows in operation',
 			features: [
-				'Everything in Foundation',
-				'Agent orchestration',
-				'Policy management',
-				'Escalation path design',
+				'Everything in Core',
+				'Cross-agent orchestration',
+				'Approval and escalation policy operations',
+				'Golden-task regression checks',
 				'Bi-weekly optimization calls'
 			],
 			featured: true
 		},
 		{
-			name: 'Enterprise',
-			price: '$3,500',
-			period: '/mo',
-			scope: '5+ managed agents/MCPs',
+			name: 'Regulated / Multi-Team',
+			price: 'Custom',
+			period: '',
+			scope: 'Complex environments and governance-heavy operations',
 			features: [
-				'Everything in Professional',
-				'Dedicated account manager',
-				'Quarterly business review',
-				'Priority support',
+				'Everything in Growth',
+				'Advanced governance and audit-ready controls',
 				'Custom reporting dashboards',
-				'Expansion roadmapping'
+				'Quarterly business review',
+				'Expansion roadmapping',
+				'Direct architect access (no account layers)'
 			],
 			featured: false
 		}
@@ -141,9 +146,9 @@
 </script>
 
 <SEO
-	title="The Judgment Layer — Managed AI Intelligence | CREATE SOMETHING .agency"
-	description="Connections without intelligence are just pipes. We manage the Judgment Layer — prompt optimization, agent orchestration, policy management, and performance monitoring for your AI automation."
-	keywords="managed AI services, prompt optimization, agent orchestration, policy management, MCP management, judgment layer, AI governance"
+	title="Enterprise Judgment Operations | CREATE SOMETHING .agency"
+	description="Enterprise operating model for Agent Outcome Stack. Skills + MCP delivery with policy operations, orchestration, and ongoing reliability controls."
+	keywords="enterprise mcp operations, judgment layer, agent outcome stack, policy operations, ai governance"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -161,16 +166,15 @@
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					You've connected your tools to AI. Now the hard part: making it smart. 
-					Prompt optimization. Agent orchestration. Policy management. Decision oversight. 
-					That's the Judgment Layer — and it's what separates automation that works 
-					from automation that breaks.
+					For teams already running MCPs, this is the operating layer that keeps outcomes reliable.
+					We run Judgment operations inside the Agent Outcome Stack: prompt optimization, policy control,
+					approval/escalation logic, and ongoing reliability oversight.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
 				<div class="hero-cta">
 					<ShimmerButton href="https://createsomething.agency/book">
-						Start Managed Services
+						Book Outcome Stack Call
 					</ShimmerButton>
 					<a href="/services" class="hero-link">View all services →</a>
 				</div>
@@ -283,16 +287,16 @@
 </section>
 
 <!-- Pricing -->
-<section class="pricing-section">
-	<div class="section-container">
-		<BlurFade>
-			<h2 class="section-heading">Managed Services Pricing</h2>
-		</BlurFade>
-		<BlurFade delay={0.1}>
-			<p class="section-intro">
-				Ongoing intelligence management, scaled to your automation footprint.
-			</p>
-		</BlurFade>
+	<section class="pricing-section">
+		<div class="section-container">
+			<BlurFade>
+				<h2 class="section-heading">Operating Plans</h2>
+			</BlurFade>
+			<BlurFade delay={0.1}>
+				<p class="section-intro">
+					Operating envelopes for the Outcome Stack. MCP-only remains an entry wedge for discovery and compliance-constrained rollouts.
+				</p>
+			</BlurFade>
 
 		<div class="pricing-grid">
 			{#each plans as plan, i}
@@ -308,24 +312,24 @@
 								{#each plan.features as feature}
 									<li>{feature}</li>
 								{/each}
-							</ul>
-							<div class="pricing-cta">
-								<ShimmerButton href="https://createsomething.agency/book">
-									Start Managed Services
-								</ShimmerButton>
+								</ul>
+								<div class="pricing-cta">
+									<ShimmerButton href="https://createsomething.agency/book">
+										Book Outcome Stack Call
+									</ShimmerButton>
+								</div>
 							</div>
-						</div>
 					</div>
 				</BlurFade>
 			{/each}
 		</div>
 
-		<BlurFade delay={0.6}>
-			<p class="pricing-footer">
-				Custom pricing for complex environments. <a href="https://createsomething.agency/book" class="pricing-link">Let's talk.</a>
-			</p>
-		</BlurFade>
-	</div>
+			<BlurFade delay={0.6}>
+				<p class="pricing-footer">
+					Need help picking the right path? <a href="https://createsomething.agency/book" class="pricing-link">Let's talk.</a>
+				</p>
+			</BlurFade>
+		</div>
 </section>
 
 <!-- Who This Is For -->
@@ -355,15 +359,15 @@
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
-				Stop hoping your automation keeps working. Start managing it.
+				Run governed, outcome-focused automation with clear policies and direct operational ownership.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<div class="cta-buttons">
 				<ShimmerButton href="https://createsomething.agency/book">
-					Start Managed Services
+					Book Outcome Stack Call
 				</ShimmerButton>
-				<a href="/services" class="cta-secondary">Need connections first? Start with an MCP →</a>
+				<a href="/services" class="cta-secondary">Need discovery first? Start with MCP-only wedge →</a>
 			</div>
 		</BlurFade>
 	</div>

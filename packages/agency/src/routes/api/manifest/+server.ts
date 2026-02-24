@@ -38,21 +38,21 @@ interface ContentItem {
  */
 const SERVICES: ContentItem[] = [
 	{
-		slug: 'web-development',
-		title: 'Web Development',
-		description: '3 weeks to production. Sub-100ms response times. Edge-deployed, zero maintenance.',
+		slug: 'mcp-audit',
+		title: 'MCP Audit',
+		description: 'Map your tools, workflows, and trust boundaries. Prioritized roadmap for what to connect and what to remove.',
 		category: 'service'
 	},
 	{
-		slug: 'automation',
-		title: 'Agent Automation Systems',
-		description: '60-70% time savings on manual work. Systems that process data, make decisions, and talk to your tools.',
+		slug: 'mcp-only-discovery',
+		title: 'MCP-only (Discovery/Compliance)',
+		description: 'Entry wedge for read-only or limited-scope connectivity when teams need trust setup before autonomous workflows.',
 		category: 'service'
 	},
 	{
-		slug: 'transformation',
-		title: 'Digital Transformation',
-		description: 'Strategic advisory for organizations ready to embrace agent-native development.',
+		slug: 'agent-outcome-stack',
+		title: 'Agent Outcome Stack',
+		description: 'Default delivery: Skills + MCP with custom MCP server(s), Codex setup, policy artifacts, runbook, and monthly refinement.',
 		category: 'service'
 	}
 ];

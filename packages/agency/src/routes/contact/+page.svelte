@@ -66,9 +66,9 @@
 </script>
 
 <SEO
-	title="Get Started | Connect Your Tools to AI"
-	description="Book a discovery call or send us a message. We'll map your tools, scope your project, and give you a clear price."
-	keywords="contact, connect tools to AI, MCP development, discovery call, get started"
+	title="Start Your Outcome Stack | CREATE SOMETHING .agency"
+	description="Book an Outcome Stack diagnostic call or send your workflow details. We'll map tools, risk boundaries, and next actions."
+	keywords="agent outcome stack, skills and mcp, mcp audit, mcp-only discovery, ai workflow operations"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -78,9 +78,9 @@
 	<div class="hero-grid"></div>
 	<div class="hero-content">
 		<p class="hero-eyebrow reveal">Contact</p>
-		<h1 class="hero-title reveal">Let's talk</h1>
+		<h1 class="hero-title reveal">Start with one outcome stack.</h1>
 		<p class="hero-detail reveal">
-			Book a discovery call or send us a message about your project.
+			Book a diagnostic call or send your workflow details. We scope delivery around outcomes, not generic integrations.
 		</p>
 	</div>
 </section>
@@ -92,7 +92,7 @@
 		<!-- Book a Call -->
 		<div class="contact-option reveal">
 			<h2>Book a call</h2>
-			<p>30-minute discovery call. We'll discuss your tools, goals, and scope your project.</p>
+			<p>30-minute diagnostic call. We map your tools, workflow bottlenecks, and trust boundaries to scope your first Outcome Stack.</p>
 			<div class="cal-button">
 				<SavvyCalButton variant="primary" size="lg" />
 			</div>
@@ -101,7 +101,7 @@
 		<!-- Send a Message -->
 		<div class="contact-option reveal">
 			<h2>Send a message</h2>
-			<p>Not ready for a call? Send us details about your project.</p>
+			<p>Not ready for a call? Send your current stack and the first workflow you want solved.</p>
 			
 			<form class="contact-form" onsubmit={handleSubmit}>
 				<div class="form-field">
@@ -129,15 +129,15 @@
 				</div>
 
 				<div class="form-field">
-					<label for="message" class="form-label">What tools do you want to connect?</label>
-					<p class="form-helper">Don't worry if you're not sure—we'll figure it out on the call.</p>
+					<label for="message" class="form-label">What outcome do you want first?</label>
+					<p class="form-helper">Tell us your stack and bottleneck. We'll translate that into the right delivery scope.</p>
 					<textarea
 						id="message"
 						name="message"
 						required
 						rows="4"
 						class="form-input form-textarea"
-						placeholder="e.g., We use HubSpot for sales and Notion for docs, and want Claude to work with both..."
+						placeholder="e.g., HubSpot + Notion + Slack. We lose 6 hours/week updating project status manually and need approval-safe automation."
 					></textarea>
 				</div>
 

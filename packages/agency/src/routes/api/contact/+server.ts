@@ -78,7 +78,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
     <div class="content">
       <h1>Thanks for reaching out</h1>
       <p>Hi ${name},</p>
-      <p>I've received your inquiry${service ? ` about ${service}` : ''} and will get back to you within 24 hours to discuss your project.</p>
+      <p>I've received your inquiry${service ? ` about ${service}` : ''} and will get back to you within 24 hours to scope your first outcome stack.</p>
       <div class="message-box">
         ${service ? `<p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Service: ${service}</p>` : ''}
         <p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Your Message:</p>

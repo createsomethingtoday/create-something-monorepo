@@ -182,16 +182,16 @@
 </script>
 
 <SEO
-	title="Book a Discovery Call"
-	description="Schedule a discovery call with CREATE SOMETHING. Let's discuss your project and explore how we can help."
+	title="Book an Outcome Stack Diagnostic"
+	description="Schedule a 30-minute diagnostic to scope your first Outcome Stack: systems, workflow boundaries, and implementation path."
 	propertyName="agency"
 />
 
 <main class="booking-page">
 	<header class="booking-header">
-		<h1 class="booking-title">Book a Discovery Call</h1>
+		<h1 class="booking-title">Book an Outcome Stack Diagnostic</h1>
 		<p class="booking-subtitle">
-			30 minutes to explore your project and see if we're a good fit.
+			30 minutes to map your systems, workflow bottlenecks, and trust boundaries.
 		</p>
 	</header>
 
