@@ -24,25 +24,49 @@ export const DM_NOTION_TOOLS = [
   { name: 'notion_update_database', description: 'Update database title/description and data source properties' },
 ] as const;
 
-/** Canonical list of DM Drive sync tools. */
-export const DM_DRIVE_TOOLS = [
-  { name: 'google_drive_connection_status', description: 'Check DM shared Google Drive connection state' },
-  { name: 'google_drive_get_connect_link', description: 'Get a DM Drive OAuth connect link' },
-  { name: 'google_drive_list_files', description: 'List/search files from DM Google Drive account' },
-  { name: 'google_drive_sync_file_to_notion', description: 'Sync one Drive file to the DM Notion sync source' },
-  { name: 'google_drive_sync_recent_to_notion', description: 'Incrementally sync recently modified Drive files' },
+/** Canonical list of DM Composio management tools. */
+export const DM_COMPOSIO_MANAGEMENT_TOOLS = [
+  { name: 'dm_composio_toolkit_inventory', description: 'List DM Composio toolkit/tool inventory for the current entity' },
+  { name: 'dm_composio_connection_status', description: 'Check Composio connection status for toolkit(s)' },
+  { name: 'dm_composio_get_connect_link', description: 'Get a one-time Composio OAuth link for a toolkit' },
 ] as const;
 
-export function getToolsForConfig(config: DmConfig): Array<{ name: string; description: string }> {
+export interface DmComposioProxyToolSummary {
+  name: string;
+  description: string;
+  toolkit: string;
+}
+
+export interface DmComposioRuntimeSummary {
+  registeredToolkits: string[];
+  proxiedToolCount: number;
+  warnings: string[];
+}
+
+export function getToolsForConfig(
+  config: DmConfig,
+  composioTools: DmComposioProxyToolSummary[] = []
+): Array<{ name: string; description: string }> {
   const enabled = new Set(config.enabledToolsets);
   const tools: Array<{ name: string; description: string }> = [];
   if (enabled.has('notion')) tools.push(...DM_NOTION_TOOLS);
-  if (enabled.has('drive')) tools.push(...DM_DRIVE_TOOLS);
+  if (enabled.has('composio')) {
+    tools.push(...DM_COMPOSIO_MANAGEMENT_TOOLS);
+    tools.push(...composioTools.map((tool) => ({ name: tool.name, description: tool.description })));
+  }
   return tools;
 }
 
-export function registerToolsResource(server: McpServer, config: DmConfig): void {
-  const tools = getToolsForConfig(config);
+export function registerToolsResource(
+  server: McpServer,
+  config: DmConfig,
+  composioTools: DmComposioProxyToolSummary[] = []
+): void {
+  const tools = getToolsForConfig(config, composioTools);
+  const MAX_LISTED_TOOLS = 500;
+  const listedTools = tools.slice(0, MAX_LISTED_TOOLS);
+  const truncated = tools.length > listedTools.length;
+
   server.resource(
     'tools',
     'dm://tools',
@@ -58,7 +82,9 @@ export function registerToolsResource(server: McpServer, config: DmConfig): void
           text: JSON.stringify(
             {
               toolsets: config.enabledToolsets,
-              tools,
+              tools: listedTools,
+              truncated,
+              total_tools: tools.length,
               hint: `This MCP currently exposes ${tools.length} tools across ${config.enabledToolsets.length} toolset(s).`,
             },
             null,
@@ -70,7 +96,11 @@ export function registerToolsResource(server: McpServer, config: DmConfig): void
   );
 }
 
-export function registerToolsetsResource(server: McpServer, config: DmConfig): void {
+export function registerToolsetsResource(
+  server: McpServer,
+  config: DmConfig,
+  composioRuntime?: DmComposioRuntimeSummary
+): void {
   server.resource(
     'toolsets',
     'dm://toolsets',
@@ -91,14 +121,17 @@ export function registerToolsetsResource(server: McpServer, config: DmConfig): v
                 label: config.clientLabel,
                 description: config.clientDescription,
               },
-              drive: {
-                entity_id: config.drive.entityId,
-                target_data_source_configured: Boolean(config.drive.targetDataSourceId),
-                cron_enabled: config.drive.enableCron,
-                cron_batch_size: config.drive.cronBatchSize,
-                cron_initial_lookback_days: config.drive.cronInitialLookbackDays,
+              composio: {
+                proxy_mode: config.composio.proxyMode,
+                default_entity_id: config.composio.defaultEntityId,
+                allowed_toolkits: config.composio.allowedToolkits,
+                allowed_toolkits_by_entity: config.composio.allowedToolkitsByEntity,
+                tool_name_prefix: config.composio.toolNamePrefix,
+                registered_toolkits: composioRuntime?.registeredToolkits ?? [],
+                proxied_tool_count: composioRuntime?.proxiedToolCount ?? 0,
+                warnings: composioRuntime?.warnings ?? [],
               },
-              hint: 'DM targets a single workspace with optional Drive sync automation.',
+              hint: 'DM targets a single Notion workspace and DM-namespaced Composio proxy tools.',
             },
             null,
             2

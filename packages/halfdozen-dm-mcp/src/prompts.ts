@@ -4,19 +4,32 @@
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { DmConfig } from './config.js';
+import type { DmComposioRuntimeSummary } from './resources.js';
 
-export function registerTaskWorkflowPrompt(server: McpServer, config: DmConfig): void {
+export function registerTaskWorkflowPrompt(
+  server: McpServer,
+  config: DmConfig,
+  composioRuntime?: DmComposioRuntimeSummary
+): void {
   const { displayName, clientLabel, clientDescription } = config;
-  const hasDrive = config.enabledToolsets.includes('drive');
-  const driveSection = hasDrive
+  const hasComposio = config.enabledToolsets.includes('composio');
+  const composioSection = hasComposio
     ? `
-## Drive sync (DM shared account)
-- Drive entity: **${config.drive.entityId}** (shared DM account).
-- Check connection with **google_drive_connection_status**.
-- If disconnected, call **google_drive_get_connect_link** and provide the URL to the user.
-- Use **google_drive_list_files** to discover candidate files.
-- Sync one file via **google_drive_sync_file_to_notion** or run incremental sync with **google_drive_sync_recent_to_notion**.
-- Target data source is server-configured; sync calls fail fast if required schema properties are missing.
+## Composio proxy tools (DM namespace)
+- Proxy mode: **${config.composio.proxyMode}**
+- Default entity ID: **${config.composio.defaultEntityId}**
+- Registered toolkits: **${
+      composioRuntime && composioRuntime.registeredToolkits.length > 0
+        ? composioRuntime.registeredToolkits.join(', ')
+        : '(none)'
+    }**
+- Tool prefix: **${config.composio.toolNamePrefix}**
+- Check current toolkit access with **dm_composio_toolkit_inventory**.
+- Check account connections with **dm_composio_connection_status**.
+- If disconnected, call **dm_composio_get_connect_link** and provide the URL to the user.
+- Proxied action tools are DM-namespaced as:
+  - \`${config.composio.toolNamePrefix}__<toolkit>__<tool>\`
+- You may pass \`entity_id\` (or \`__dm_entity_id\`) on composio calls to target a specific entity; otherwise server default/header entity is used.
 `
     : '';
 
@@ -48,7 +61,7 @@ Before querying, updating, or creating pages in a data source:
 
 ## Batch operations
 When updating or archiving many pages, use **notion_bulk_update** or **notion_bulk_archive** instead of calling update/archive repeatedly.
-For very large cleanups, run smaller batches (for example 20-50 pages at a time).${driveSection}`
+For very large cleanups, run smaller batches (for example 20-50 pages at a time).${composioSection}`
           }
         }
       ]

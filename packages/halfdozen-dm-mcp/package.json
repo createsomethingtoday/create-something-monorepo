@@ -1,7 +1,7 @@
 {
   "name": "@create-something/halfdozen-dm-mcp",
   "version": "1.0.0",
-  "description": "Half Dozen DM MCP — generalized endpoint with Notion tools and DM-scoped Google Drive sync.",
+  "description": "Half Dozen DM MCP — generalized endpoint with Notion tools and DM-namespaced Composio proxy tools.",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {

@@ -1,21 +1,17 @@
 /**
  * DM server display + capability config from env.
- * v2 adds Drive sync while preserving Notion defaults.
+ * v3 replaces direct Drive integration with DM-namespaced Composio proxy tools.
  */
 
-export interface DmDriveToolSlugConfig {
-  listFiles?: string;
-  getMetadata?: string;
-  parseFile?: string;
-}
+export type DmComposioProxyMode = 'allowlist' | 'all';
 
-export interface DmDriveConfig {
-  entityId: string;
-  targetDataSourceId?: string;
-  enableCron: boolean;
-  cronBatchSize: number;
-  cronInitialLookbackDays: number;
-  toolSlugs: DmDriveToolSlugConfig;
+export interface DmComposioConfig {
+  defaultEntityId: string;
+  proxyMode: DmComposioProxyMode;
+  allowedToolkits: string[];
+  allowedToolkitsByEntity: Record<string, string[]>;
+  toolNamePrefix: string;
+  toolCacheSeconds: number;
 }
 
 export interface DmConfig {
@@ -24,7 +20,7 @@ export interface DmConfig {
   displayName: string;
   description: string;
   enabledToolsets: string[];
-  drive: DmDriveConfig;
+  composio: DmComposioConfig;
 }
 
 interface ConfigEnv {
@@ -34,13 +30,11 @@ interface ConfigEnv {
   MCP_DESCRIPTION?: string;
   ENABLED_TOOLSETS?: string;
   COMPOSIO_ENTITY_ID?: string;
-  DRIVE_SYNC_DATA_SOURCE_ID?: string;
-  ENABLE_DRIVE_CRON?: string;
-  DRIVE_CRON_BATCH_SIZE?: string;
-  DRIVE_CRON_INITIAL_LOOKBACK_DAYS?: string;
-  COMPOSIO_DRIVE_LIST_FILES_TOOL_SLUG?: string;
-  COMPOSIO_DRIVE_GET_METADATA_TOOL_SLUG?: string;
-  COMPOSIO_DRIVE_PARSE_FILE_TOOL_SLUG?: string;
+  COMPOSIO_PROXY_MODE?: string;
+  COMPOSIO_ALLOWED_TOOLKITS?: string;
+  COMPOSIO_ALLOWED_TOOLKITS_BY_ENTITY?: string;
+  COMPOSIO_TOOL_NAME_PREFIX?: string;
+  COMPOSIO_TOOL_CACHE_SECONDS?: string;
 }
 
 const DEFAULTS = {
@@ -48,13 +42,28 @@ const DEFAULTS = {
   clientDescription: 'DM client Notion workspace',
   displayName: 'Half Dozen DM MCP',
   description:
-    'Half Dozen DM MCP. Notion tools plus DM-scoped Google Drive sync for workflow automation.',
-  enabledToolsets: ['notion', 'drive'],
-  driveEntityId: 'dm',
-  enableDriveCron: false,
-  driveCronBatchSize: 25,
-  driveCronInitialLookbackDays: 7,
+    'Half Dozen DM MCP. Notion tools plus DM-namespaced Composio proxy tools with allow-list controls.',
+  enabledToolsets: ['notion', 'composio'],
+  composioEntityId: 'dm',
+  composioProxyMode: 'allowlist' as DmComposioProxyMode,
+  composioAllowedToolkits: [] as string[],
+  composioToolNamePrefix: 'dm_composio',
+  composioToolCacheSeconds: 300,
 } as const;
+
+function normalizeToolkitSlug(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function parseToolkitList(raw: string | undefined, fallback: string[]): string[] {
+  if (!raw || !raw.trim()) return [...fallback];
+  const parsed = raw
+    .split(',')
+    .map(normalizeToolkitSlug)
+    .filter(Boolean);
+  if (parsed.length === 0) return [...fallback];
+  return Array.from(new Set(parsed));
+}
 
 function parseToolsets(raw?: string): string[] {
   if (!raw || !raw.trim()) return [...DEFAULTS.enabledToolsets];
@@ -66,22 +75,6 @@ function parseToolsets(raw?: string): string[] {
   return Array.from(new Set(parsed));
 }
 
-function parseBoolean(raw: string | undefined, fallback: boolean): boolean {
-  if (!raw || !raw.trim()) return fallback;
-  const normalized = raw.trim().toLowerCase();
-  if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on')
-    return true;
-  if (
-    normalized === '0' ||
-    normalized === 'false' ||
-    normalized === 'no' ||
-    normalized === 'off'
-  ) {
-    return false;
-  }
-  return fallback;
-}
-
 function parsePositiveInt(raw: string | undefined, fallback: number): number {
   if (!raw || !raw.trim()) return fallback;
   const parsed = Number.parseInt(raw, 10);
@@ -89,29 +82,70 @@ function parsePositiveInt(raw: string | undefined, fallback: number): number {
   return parsed;
 }
 
-export function getDmConfig(env: ConfigEnv): DmConfig {
-  const entityId = env.COMPOSIO_ENTITY_ID?.trim() || DEFAULTS.driveEntityId;
+function parseProxyMode(raw: string | undefined): DmComposioProxyMode {
+  const normalized = raw?.trim().toLowerCase();
+  if (normalized === 'all') return 'all';
+  return 'allowlist';
+}
 
+function parseAllowedToolkitsByEntity(raw: string | undefined): Record<string, string[]> {
+  if (!raw || !raw.trim()) return {};
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {};
+    }
+
+    const map: Record<string, string[]> = {};
+    for (const [entity, value] of Object.entries(parsed as Record<string, unknown>)) {
+      const normalizedEntity = entity.trim().toLowerCase();
+      if (!normalizedEntity) continue;
+
+      let toolkits: string[] = [];
+      if (Array.isArray(value)) {
+        toolkits = value
+          .filter((entry): entry is string => typeof entry === 'string')
+          .map(normalizeToolkitSlug)
+          .filter(Boolean);
+      } else if (typeof value === 'string') {
+        toolkits = value
+          .split(',')
+          .map(normalizeToolkitSlug)
+          .filter(Boolean);
+      }
+
+      if (toolkits.length > 0) {
+        map[normalizedEntity] = Array.from(new Set(toolkits));
+      }
+    }
+
+    return map;
+  } catch {
+    return {};
+  }
+}
+
+export function getDmConfig(env: ConfigEnv): DmConfig {
   return {
     clientLabel: env.WORKSPACE_CLIENT_LABEL ?? DEFAULTS.clientLabel,
     clientDescription: env.WORKSPACE_CLIENT_DESCRIPTION ?? DEFAULTS.clientDescription,
     displayName: env.MCP_DISPLAY_NAME ?? DEFAULTS.displayName,
     description: env.MCP_DESCRIPTION ?? DEFAULTS.description,
     enabledToolsets: parseToolsets(env.ENABLED_TOOLSETS),
-    drive: {
-      entityId,
-      targetDataSourceId: env.DRIVE_SYNC_DATA_SOURCE_ID?.trim() || undefined,
-      enableCron: parseBoolean(env.ENABLE_DRIVE_CRON, DEFAULTS.enableDriveCron),
-      cronBatchSize: parsePositiveInt(env.DRIVE_CRON_BATCH_SIZE, DEFAULTS.driveCronBatchSize),
-      cronInitialLookbackDays: parsePositiveInt(
-        env.DRIVE_CRON_INITIAL_LOOKBACK_DAYS,
-        DEFAULTS.driveCronInitialLookbackDays
+    composio: {
+      defaultEntityId: env.COMPOSIO_ENTITY_ID?.trim() || DEFAULTS.composioEntityId,
+      proxyMode: parseProxyMode(env.COMPOSIO_PROXY_MODE ?? DEFAULTS.composioProxyMode),
+      allowedToolkits: parseToolkitList(
+        env.COMPOSIO_ALLOWED_TOOLKITS,
+        DEFAULTS.composioAllowedToolkits
       ),
-      toolSlugs: {
-        listFiles: env.COMPOSIO_DRIVE_LIST_FILES_TOOL_SLUG?.trim() || undefined,
-        getMetadata: env.COMPOSIO_DRIVE_GET_METADATA_TOOL_SLUG?.trim() || undefined,
-        parseFile: env.COMPOSIO_DRIVE_PARSE_FILE_TOOL_SLUG?.trim() || undefined,
-      },
+      allowedToolkitsByEntity: parseAllowedToolkitsByEntity(env.COMPOSIO_ALLOWED_TOOLKITS_BY_ENTITY),
+      toolNamePrefix: env.COMPOSIO_TOOL_NAME_PREFIX?.trim() || DEFAULTS.composioToolNamePrefix,
+      toolCacheSeconds: parsePositiveInt(
+        env.COMPOSIO_TOOL_CACHE_SECONDS,
+        DEFAULTS.composioToolCacheSeconds
+      ),
     },
   };
 }

@@ -21,39 +21,27 @@ class_name = "HalfDozenDmMcp"
 tag = "v1"
 new_sqlite_classes = ["HalfDozenDmMcp"]
 
-# Drive sync checkpoint/index database
-[[d1_databases]]
-binding = "DRIVE_SYNC_DB"
-database_name = "halfdozen-dm-drive-sync"
-database_id = "6a297bfd-028d-4a16-b745-e8bc5b9e658c"
-migrations_dir = "migrations"
-
 # Shared feedback database (all Half Dozen MCPs)
 [[d1_databases]]
 binding = "FEEDBACK_DB"
 database_name = "halfdozen-feedback"
 database_id = "4eb35a0f-6ee2-4d0c-8c0a-9a2ab4049b97"
 
-[triggers]
-crons = ["*/15 * * * *"]
-
 [vars]
 WORKSPACE_CLIENT_LABEL = "DM"
 WORKSPACE_CLIENT_DESCRIPTION = "DM Notion workspace"
 MCP_DISPLAY_NAME = "Half Dozen DM MCP"
-MCP_DESCRIPTION = "Half Dozen DM MCP. Notion tools plus DM-scoped Google Drive sync."
-ENABLED_TOOLSETS = "notion,drive"
+MCP_DESCRIPTION = "Half Dozen DM MCP. Notion tools plus DM-namespaced Composio proxy tools."
+ENABLED_TOOLSETS = "notion,composio"
 COMPOSIO_ENTITY_ID = "dm"
-DRIVE_SYNC_DATA_SOURCE_ID = ""
-ENABLE_DRIVE_CRON = "false"
-DRIVE_CRON_BATCH_SIZE = "25"
-DRIVE_CRON_INITIAL_LOOKBACK_DAYS = "7"
-COMPOSIO_DRIVE_LIST_FILES_TOOL_SLUG = ""
-COMPOSIO_DRIVE_GET_METADATA_TOOL_SLUG = ""
-COMPOSIO_DRIVE_PARSE_FILE_TOOL_SLUG = ""
+COMPOSIO_PROXY_MODE = "allowlist"
+COMPOSIO_ALLOWED_TOOLKITS = "airtable,gmail,webflow"
+COMPOSIO_ALLOWED_TOOLKITS_BY_ENTITY = "{}"
+COMPOSIO_TOOL_NAME_PREFIX = "dm_composio"
+COMPOSIO_TOOL_CACHE_SECONDS = "300"
+COMPOSIO_AUTH_CONFIG_MAP = "{}"
 
 # Secrets (set via wrangler secret put)
 # MCP_API_KEY — required for DM MCP transport auth (Bearer or X-API-Key)
 # NOTION_API_KEY — DM client Notion workspace
-# COMPOSIO_API_KEY — required for Drive sync tools
-# COMPOSIO_GOOGLEDRIVE_AUTH_CONFIG_ID — set to ac_RSiSxytldB_X for connect-link flow
+# COMPOSIO_API_KEY — required for Composio proxy tools
