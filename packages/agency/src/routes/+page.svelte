@@ -141,29 +141,26 @@
 				<p class="hero-eyebrow">CREATE SOMETHING .agency</p>
 			</BlurFade>
 			<BlurFade delay={0.1}>
-				<h1 class="hero-title">Custom workflow MCPs for production teams.</h1>
+				<h1 class="hero-title">Custom workflow MCPs.</h1>
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					I design and ship custom MCP workflows for real business operations, then add
-					assurance and enterprise controls as autonomy scales.
+					I build workflow MCPs for business-critical operations.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.25}>
-				<p class="hero-detail-secondary">
-					If you need full system development and team onboarding, I can route you to a trusted partner.
-				</p>
+				<p class="hero-proof">16+ production integrations shipped.</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
-				<p class="hero-proof">16+ production integrations built. Built for teams running real operations, not demo automations.</p>
-			</BlurFade>
-			<BlurFade delay={0.35}>
 				<div class="hero-cta">
 					<ShimmerButton href="/book">
 						Book a Call
 					</ShimmerButton>
 					<a href="#how" class="hero-link">How it works →</a>
 				</div>
+			</BlurFade>
+			<BlurFade delay={0.35}>
+				<p class="hero-microcopy">Then layer assurance and enterprise controls as autonomy scales.</p>
 			</BlurFade>
 		</div>
 		<BlurFade delay={0.4} class="hero-visual-wrapper">
@@ -570,17 +567,9 @@
 	.hero-detail {
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-secondary);
-		margin-bottom: var(--space-4, 1rem);
+		margin-bottom: var(--space-5, 1.5rem);
 		line-height: var(--leading-relaxed);
 		max-width: var(--content-width-sm);
-	}
-
-	.hero-detail-secondary {
-		font-size: var(--text-body);
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-4, 1rem);
-		line-height: var(--leading-relaxed);
-		font-style: italic;
 	}
 	
 	.hero-proof {
@@ -605,6 +594,13 @@
 	
 	.hero-link:hover {
 		color: var(--color-fg-primary);
+	}
+
+	.hero-microcopy {
+		margin-top: var(--space-3, 0.75rem);
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-muted);
+		max-width: var(--content-width-sm);
 	}
 
 	/* Hero visual frame - contains glow + bordered container */
