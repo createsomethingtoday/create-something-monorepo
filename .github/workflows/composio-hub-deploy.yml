@@ -47,13 +47,13 @@ jobs:
         run: pnpm --filter @create-something/composio-bridge build
 
       - name: Deploy Composio toolkit gateway
-        run: pnpm --filter @create-something/composio-toolkit-mcp deploy
+        run: pnpm --filter @create-something/composio-toolkit-mcp run deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Deploy remote MCP hub
-        run: pnpm --filter @create-something/cs-mcp-hub-remote deploy
+        run: pnpm --filter @create-something/cs-mcp-hub-remote run deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
