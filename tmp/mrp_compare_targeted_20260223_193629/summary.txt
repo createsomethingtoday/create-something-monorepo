@@ -1,0 +1,56 @@
+tmp_dir=/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/tmp/mrp_compare_targeted_20260223_193629
+archived_ids_no_easy=220
+matched_in_airtable=155
+not_found_in_airtable=66
+json_parse_failed=0
+
+Status combinations for matched IDs:
+ 101 Archived	4️⃣Delisted☠️
+  29 Active	3️⃣Published🚀
+  24 Draft	4️⃣Delisted☠️
+   1 Draft	5️⃣Rejected❌
+
+First 20 matched rows:
+mrp_id	record_id	name	cms_status	marketplace_status
+53166f72171335542200007a	reciHqwoJmM6sCiHE	Hide Archived otqra5ax	Draft	4️⃣Delisted☠️
+532874e651afcf551e000c8a	recbghkxCrvy8Gm1u	Fullscreen Archived ulq3xdzv	Draft	4️⃣Delisted☠️
+532876315bc1094c39000b27	recLH5ylF4zIUCT9d	Gradient Archived kzueqvw2	Draft	4️⃣Delisted☠️
+53309f2de7e0b113060001b1	rec0JpZic035IxJux	Whitespace Archived 1guwjey8	Draft	4️⃣Delisted☠️
+533e3b45f152c82c6e00083b	recvG0fQ31cYp4nXQ	Columnism Archived 6tp3wv1l	Draft	4️⃣Delisted☠️
+535a98680548c9ed47000d32	recnCvVZ5tcChe0kU	Palette Alt Archived a17vobov	Draft	4️⃣Delisted☠️
+535d99c1982e82775e000316	recUQ0RbPyd9ZjEgO	Dotted Archived jhod8r73	Draft	4️⃣Delisted☠️
+5363d25e2827b3f9290007fd	recwQTmUbe2WxovIl	Flatstyle Archived lu7gx3tx	Draft	4️⃣Delisted☠️
+537e33d5c365901355c859bd	recI7rnAwIBc8ZnbY	March	Active	3️⃣Published🚀
+537f8f53e82da27d34a96466	rec6w4cO7fkiN55T2	Grow Archived tj1o133k	Draft	4️⃣Delisted☠️
+5395db9e38947f542cc4b276	rec95Z7Rq5Q8nFHjK	Xinova Archived v04olk05	Draft	4️⃣Delisted☠️
+53b431a1cda5546f71249f0e	recKesqAZAjf8fXbR	Raven	Active	3️⃣Published🚀
+53b432b9146db98661cc3bfb	recCXZDUqQXDMq0P8	Essential Archived 8rerv0iw	Draft	4️⃣Delisted☠️
+53b4334402227d70711a9138	recy7DleYXDoRLVLM	Tabbed Archived 2l01ct08	Draft	4️⃣Delisted☠️
+53f24032ea31eaf625043274	recT03JBINFB57gDS	Milano	Active	3️⃣Published🚀
+5411d23ef00773a43a4b907f	receGPemyBDwKse7W	Story	Active	3️⃣Published🚀
+5419b546a1b0d11714f16453	recPHYQY5lvcTuBiu	Left Handed Archived w0enbb7e	Draft	4️⃣Delisted☠️
+5419b5eacdf0143623a9fb94	recibo02GepZfGUKJ	Entitled Archived cn1v3jgc	Draft	4️⃣Delisted☠️
+542483b5d903582652f06166	rec8EhZ7JEiAarPQN	Five	Active	3️⃣Published🚀
+54456909a05709a755da9d77	recMlsCX1cjaTM6UF	Open	Active	3️⃣Published🚀
+
+First 20 not-found IDs:
+530d48a7f1f517525200014d
+530e6c3095ab4ec93c0002e4
+53b434aa02227d70711a9155
+56845a5726f535d63a438174
+570c2f01967d19d4522a1624
+574e2b3d8b442692574d0baf
+579002cde99c01fc668fc719
+58ae02f459765a5c07c5ba75
+59417038acb7fd5a00672761
+596d240b1a8505679b2fc583
+59a4611048a6400001360ca7
+5e6bd05dc86bcc06a5e88638
+5e78e9e99f35d71d8dcf7322
+5e8d005658c168888f81563d
+600ecbaac4e610b67279613b
+60121087ad89fd506d61957f
+60121359c68e70cc526671e4
+601ed9754e3f2068b1289219
+6036bf1e68357b45f61e299f
+60481af90cb9a30ff778aa8d

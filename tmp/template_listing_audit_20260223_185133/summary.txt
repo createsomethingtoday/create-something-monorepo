@@ -1,0 +1,12 @@
+OUTDIR=/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/tmp/template_listing_audit_20260223_185133
+TOTAL_MATCHES=1732
+WITH_LISTING_URL=1731
+WITHOUT_LISTING_URL=1
+SAFE_404_410=1694
+EXCEPTIONS_200=26
+OTHER_STATUS_CODES=11
+
+HTTP_CODE_BREAKDOWN:
+1694 404
+  26 200
+  11 500
