@@ -422,8 +422,8 @@
 		<div class="audience-grid">
 			<BlurFade delay={0.1}>
 				<div class="audience-card">
-					<h3>16+ Production Integrations</h3>
-					<p>Salesforce, HubSpot, Notion, Slack, Gmail, Procore, QuickBooks, Zoom, YouTube, and custom internal systems deployed in production.</p>
+					<h3>16+ Custom Production Integrations</h3>
+					<p>16+ custom integrations shipped in production across Salesforce, HubSpot, Notion, Slack, Gmail, Procore, QuickBooks, Zoom, YouTube, and internal systems, with broader connector coverage available via Composio when needed.</p>
 				</div>
 			</BlurFade>
 
