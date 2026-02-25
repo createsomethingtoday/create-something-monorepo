@@ -126,6 +126,64 @@ export interface ExclusionListResult {
   }>;
 }
 
+export type MatrixSignalLevel = 'pass' | 'warn' | 'fail_major';
+export type MatrixSnippetStatus = 'pass' | 'fail_hard' | 'fail_soft';
+export type MatrixAgentRecommendation =
+  | 'pass'
+  | 'escalate_minor'
+  | 'escalate_major'
+  | 'block_submission';
+export type MatrixHumanOutcome = 'approve' | 'revise' | 'reject' | 'exclude_pair';
+
+export interface PlagiarismDecisionRecord {
+  pair_id: string;
+  vector_score_overall: number; // 0-1
+  vector_level: MatrixSignalLevel;
+  visual_max_section: number; // 0-1
+  visual_avg: number; // 0-1
+  visual_level: MatrixSignalLevel;
+  interaction_similarity: number; // 0-100
+  shared_interaction_ids: number;
+  convergence_sections_high: number;
+  interaction_level: MatrixSignalLevel;
+  snippet_status: MatrixSnippetStatus;
+  agent_recommendation: MatrixAgentRecommendation;
+  human_outcome?: MatrixHumanOutcome;
+  evidence_bundle_refs: {
+    screenshots?: string[];
+    vector_source?: 'vectorize' | 'local_proxy' | 'unavailable';
+    vector_payload?: unknown;
+    interaction_summary?: {
+      interaction_similarity: number;
+      interaction_verdict: string;
+      shared_interaction_ids: number;
+      convergence_sections_high: number;
+      convergence_sections_medium: number;
+    };
+    snippet_diagnostics?: {
+      url?: string;
+      marker?: string;
+      required_version?: string;
+      snippet_present?: boolean;
+      version?: string | null;
+      version_ok?: boolean;
+      smoke_ok?: boolean;
+      ix2_available?: boolean;
+      ix3_available?: boolean;
+      error?: string | null;
+      checked_at?: number | null;
+    };
+    visual_override?: {
+      applied: boolean;
+      rule?: string | null;
+      raw_visual_level: MatrixSignalLevel;
+      effective_visual_level: MatrixSignalLevel;
+    };
+    timestamp?: number;
+    [key: string]: unknown;
+  };
+}
+
 // =============================================================================
 // API Helpers
 // =============================================================================

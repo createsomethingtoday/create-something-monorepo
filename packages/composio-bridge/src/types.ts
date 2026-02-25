@@ -223,6 +223,74 @@ export interface ToolFactoryConfig extends ComposioClientConfig {
    * Defaults to identity (accountId is used as-is).
    */
   resolveUserId?: (accountId: string) => string | Promise<string>;
+
+  /**
+   * Optional execution hooks for request/response middleware.
+   *
+   * Use this for cross-cutting concerns like:
+   * - request normalization
+   * - response redaction and output safety
+   * - metering and trace annotations
+   */
+  executionHooks?: ComposioToolExecutionHooks;
+}
+
+/**
+ * Tool registration path where execution happened.
+ */
+export type ComposioRegistrationMode = 'scoped' | 'mcp_server' | 'resolver';
+
+/**
+ * Shared execution metadata for hook contexts.
+ */
+export interface ComposioExecutionContextBase {
+  app: string;
+  toolName: string;
+  toolSlug: string;
+  entityId: string;
+  mode: ComposioRegistrationMode;
+}
+
+/**
+ * Context passed to beforeExecute hooks.
+ */
+export interface ComposioBeforeExecuteContext extends ComposioExecutionContextBase {
+  params: Record<string, unknown>;
+}
+
+/**
+ * Context passed to afterExecute hooks.
+ */
+export interface ComposioAfterExecuteContext extends ComposioExecutionContextBase {
+  params: Record<string, unknown>;
+  result: Record<string, unknown>;
+}
+
+/**
+ * Optional hook called before execution.
+ *
+ * Return a params object to replace the current params.
+ * Return void to keep params unchanged.
+ */
+export type ComposioBeforeExecuteHook = (
+  ctx: ComposioBeforeExecuteContext,
+) => Record<string, unknown> | void | Promise<Record<string, unknown> | void>;
+
+/**
+ * Optional hook called after execution.
+ *
+ * Must return the result object that should be exposed to the MCP client.
+ */
+export type ComposioAfterExecuteHook = (
+  ctx: ComposioAfterExecuteContext,
+) => Record<string, unknown> | Promise<Record<string, unknown>>;
+
+/**
+ * Execution hook collection for tool middleware.
+ */
+export interface ComposioToolExecutionHooks {
+  beforeExecute?: ComposioBeforeExecuteHook[];
+  afterExecute?: ComposioAfterExecuteHook[];
 }
 
 // =============================================================================

@@ -21,6 +21,9 @@ import type { ScopedMcpServer } from '@create-something/mcp-core';
 import { ComposioClient, type ComposioToolDef } from './client.js';
 import type {
   AppConfig,
+  ComposioExecutionContextBase,
+  ComposioRegistrationMode,
+  ComposioToolExecutionHooks,
   ComposioToolDiscoveryOptions,
   McpServerLike,
   ToolFactoryConfig,
@@ -154,6 +157,7 @@ export class ComposioToolFactory {
   private readonly appConfigs: AppConfig[];
   private readonly resolveUserId: (accountId: string) => string | Promise<string>;
   private readonly toolDiscovery: ComposioToolDiscoveryOptions | undefined;
+  private readonly executionHooks: ComposioToolExecutionHooks | undefined;
 
   /** Cached tool definitions — fetched once, reused across registrations */
   private toolCache: Map<string, ComposioToolDef[]> | null = null;
@@ -174,6 +178,7 @@ export class ComposioToolFactory {
 
     this.resolveUserId = config.resolveUserId ?? ((id: string) => id);
     this.toolDiscovery = config.toolDiscovery;
+    this.executionHooks = config.executionHooks;
   }
 
   // ===========================================================================
@@ -223,18 +228,26 @@ export class ComposioToolFactory {
           zodShape,
           async (params, ctx) => {
             const entityId = await this.resolveUserId(ctx.accountId);
+            const baseContext = this.buildExecutionContext(
+              tool,
+              toolName,
+              entityId,
+              'scoped',
+            );
+            const nextParams = await this.applyBeforeExecuteHooks(baseContext, params);
 
             const result = await this.client.executeTool(
               tool.slug,
-              params,
+              nextParams,
               entityId,
             );
+            const safeResult = await this.applyAfterExecuteHooks(baseContext, nextParams, result);
 
             return {
               content: [
                 {
                   type: 'text' as const,
-                  text: JSON.stringify(result, null, 2),
+                  text: JSON.stringify(safeResult, null, 2),
                 },
               ],
             };
@@ -282,9 +295,17 @@ export class ComposioToolFactory {
           description,
           zodShape,
           async (params) => {
-            const result = await this.client.executeTool(tool.slug, params, entityId);
+            const baseContext = this.buildExecutionContext(
+              tool,
+              toolName,
+              entityId,
+              'mcp_server',
+            );
+            const nextParams = await this.applyBeforeExecuteHooks(baseContext, params);
+            const result = await this.client.executeTool(tool.slug, nextParams, entityId);
+            const safeResult = await this.applyAfterExecuteHooks(baseContext, nextParams, result);
             return {
-              content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
+              content: [{ type: 'text' as const, text: JSON.stringify(safeResult, null, 2) }],
             };
           },
         );
@@ -333,12 +354,20 @@ export class ComposioToolFactory {
           zodShape,
           async (params) => {
             const entityId = await getEntityId();
-            const result = await this.client.executeTool(tool.slug, params, entityId);
+            const baseContext = this.buildExecutionContext(
+              tool,
+              toolName,
+              entityId,
+              'resolver',
+            );
+            const nextParams = await this.applyBeforeExecuteHooks(baseContext, params);
+            const result = await this.client.executeTool(tool.slug, nextParams, entityId);
+            const safeResult = await this.applyAfterExecuteHooks(baseContext, nextParams, result);
             if (onToolCall) {
               await onToolCall(entityId, toolName);
             }
             return {
-              content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
+              content: [{ type: 'text' as const, text: JSON.stringify(safeResult, null, 2) }],
             };
           },
         );
@@ -390,6 +419,65 @@ export class ComposioToolFactory {
    */
   clearCache(): void {
     this.toolCache = null;
+  }
+
+  // ===========================================================================
+  // Execution hooks
+  // ===========================================================================
+
+  private buildExecutionContext(
+    tool: ComposioToolDef,
+    toolName: string,
+    entityId: string,
+    mode: ComposioRegistrationMode,
+  ): ComposioExecutionContextBase {
+    return {
+      app: tool.app,
+      toolName,
+      toolSlug: tool.slug,
+      entityId,
+      mode,
+    };
+  }
+
+  private async applyBeforeExecuteHooks(
+    baseContext: ComposioExecutionContextBase,
+    params: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    const hooks = this.executionHooks?.beforeExecute;
+    if (!hooks || hooks.length === 0) {
+      return params;
+    }
+
+    let nextParams = params;
+    for (const hook of hooks) {
+      const maybeNext = await hook({ ...baseContext, params: nextParams });
+      if (maybeNext) {
+        nextParams = maybeNext;
+      }
+    }
+    return nextParams;
+  }
+
+  private async applyAfterExecuteHooks(
+    baseContext: ComposioExecutionContextBase,
+    params: Record<string, unknown>,
+    result: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    const hooks = this.executionHooks?.afterExecute;
+    if (!hooks || hooks.length === 0) {
+      return result;
+    }
+
+    let nextResult = result;
+    for (const hook of hooks) {
+      nextResult = await hook({
+        ...baseContext,
+        params,
+        result: nextResult,
+      });
+    }
+    return nextResult;
   }
 
   // ===========================================================================

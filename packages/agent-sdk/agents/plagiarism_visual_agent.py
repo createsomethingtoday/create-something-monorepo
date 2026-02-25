@@ -14,10 +14,12 @@ even when code is reconstructed.
 
 import asyncio
 import base64
+import hashlib
 import json
 import os
 import re
-from dataclasses import dataclass, asdict
+import time
+from dataclasses import asdict, dataclass, field
 from typing import List, Dict, Optional, Tuple, Literal, Any
 from pathlib import Path
 
@@ -26,8 +28,36 @@ from playwright.async_api import async_playwright, Browser, Page
 from PIL import Image
 import io
 
-from anthropic import Anthropic
-import google.generativeai as genai
+try:
+    from anthropic import Anthropic
+except ImportError:
+    Anthropic = None
+
+try:
+    import google.generativeai as genai
+except ImportError:
+    genai = None
+
+
+SignalLevel = Literal["pass", "warn", "fail_major"]
+SnippetStatus = Literal["pass", "fail_hard", "fail_soft"]
+AgentRecommendation = Literal["pass", "escalate_minor", "escalate_major", "block_submission"]
+HumanOutcome = Literal["approve", "revise", "reject", "exclude_pair"]
+
+VECTOR_WARN_THRESHOLD = 0.65
+VECTOR_MAJOR_THRESHOLD = 0.80
+
+VISUAL_PASS_MAX_THRESHOLD = 0.70
+VISUAL_PASS_AVG_THRESHOLD = 0.60
+VISUAL_MAJOR_THRESHOLD = 0.85
+
+INTERACTION_WARN_THRESHOLD = 70.0
+INTERACTION_MAJOR_THRESHOLD = 80.0
+INTERACTION_CONVERGENCE_MAJOR = 2
+
+REQUIRED_SNIPPET_VERSION = "0.2.0"
+SNIPPET_VERSION_MARKER = "__wf_review_snippet_v1"
+VISUAL_SINGLE_SECTION_SPIKE_RULE = "single_section_spike_low_vector_low_interaction"
 
 
 # =============================================================================
@@ -62,7 +92,7 @@ class SectionComparison:
 @dataclass
 class PlagiarismAnalysisResult:
     """Final multi-modal analysis result"""
-    verdict: Literal['major', 'minor', 'none']
+    verdict: Literal['major', 'minor', 'none', 'blocked']
     confidence: float
     sections_analyzed: int
     section_comparisons: List[SectionComparison]
@@ -76,6 +106,186 @@ class PlagiarismAnalysisResult:
     vector_js_similarity: float = 0.0
     local_html_similarity: float = 0.0
     local_css_similarity: float = 0.0
+    decision_record: Optional["PlagiarismDecisionRecord"] = None
+
+
+@dataclass
+class PlagiarismDecisionRecord:
+    """Strict pair-level decision contract for agent/human ownership."""
+
+    pair_id: str
+    vector_score_overall: float
+    vector_level: SignalLevel
+    visual_max_section: float
+    visual_avg: float
+    visual_level: SignalLevel
+    interaction_similarity: float
+    shared_interaction_ids: int
+    convergence_sections_high: int
+    interaction_level: SignalLevel
+    snippet_status: SnippetStatus
+    agent_recommendation: AgentRecommendation
+    human_outcome: Optional[HumanOutcome] = None
+    evidence_bundle_refs: Dict[str, Any] = field(default_factory=dict)
+
+
+# =============================================================================
+# DECISION MATRIX HELPERS
+# =============================================================================
+
+
+def build_pair_id(original_url: str, alleged_copy_url: str) -> str:
+    """Deterministic pair identifier for evidence joins."""
+
+    canonical = f"{original_url.strip()}|{alleged_copy_url.strip()}"
+    digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:16]
+    return f"pair_{digest}"
+
+
+def _parse_semver(v: Optional[str]) -> Tuple[int, int, int]:
+    if not v:
+        return (0, 0, 0)
+    parts = re.findall(r"\d+", str(v))
+    nums = [int(p) for p in parts[:3]]
+    while len(nums) < 3:
+        nums.append(0)
+    return tuple(nums[:3])  # type: ignore[return-value]
+
+
+def _version_at_least(found: Optional[str], required: str) -> bool:
+    return _parse_semver(found) >= _parse_semver(required)
+
+
+def classify_vector_level(vector_score_overall: float, vector_source: str) -> SignalLevel:
+    """
+    Strict vector thresholds.
+    Any non-vectorize source stays at least warn, even if numeric score is low.
+    """
+
+    if vector_score_overall >= VECTOR_MAJOR_THRESHOLD:
+        return "fail_major"
+    if vector_score_overall >= VECTOR_WARN_THRESHOLD:
+        return "warn"
+    if vector_source != "vectorize":
+        return "warn"
+    return "pass"
+
+
+def classify_visual_level(
+    visual_max_section: float,
+    visual_avg: float,
+    sections_analyzed: int,
+) -> SignalLevel:
+    """Strict visual thresholds with explicit degradation when no sections were comparable."""
+
+    if visual_max_section >= VISUAL_MAJOR_THRESHOLD:
+        return "fail_major"
+    if sections_analyzed == 0:
+        return "warn"
+    if visual_max_section >= VISUAL_PASS_MAX_THRESHOLD or visual_avg >= VISUAL_PASS_AVG_THRESHOLD:
+        return "warn"
+    return "pass"
+
+
+def classify_interaction_level(
+    interaction_similarity: float,
+    shared_interaction_ids: int,
+    convergence_sections_high: int,
+    convergence_sections_medium: int,
+) -> SignalLevel:
+    """Strict interaction thresholds."""
+
+    if (
+        interaction_similarity >= INTERACTION_MAJOR_THRESHOLD
+        or shared_interaction_ids > 0
+        or convergence_sections_high >= INTERACTION_CONVERGENCE_MAJOR
+    ):
+        return "fail_major"
+    if interaction_similarity >= INTERACTION_WARN_THRESHOLD or convergence_sections_medium > 0:
+        return "warn"
+    return "pass"
+
+
+def apply_visual_spike_override(
+    visual_level: SignalLevel,
+    visual_max_section: float,
+    visual_avg: float,
+    vector_score_overall: float,
+    interaction_similarity: float,
+    shared_interaction_ids: int,
+    convergence_sections_high: int,
+) -> Tuple[SignalLevel, bool]:
+    """
+    Downgrade a single-section visual spike to warn when all other plagiarism signals are low.
+
+    This encodes the policy scenario where one visually similar section alone should still
+    require human review, but not force an automatic major escalation.
+    """
+
+    if visual_level != "fail_major":
+        return visual_level, False
+
+    isolated_visual_spike = (
+        visual_max_section >= VISUAL_MAJOR_THRESHOLD
+        and visual_avg < VISUAL_PASS_AVG_THRESHOLD
+        and vector_score_overall < VECTOR_WARN_THRESHOLD
+        and interaction_similarity < INTERACTION_WARN_THRESHOLD
+        and shared_interaction_ids == 0
+        and convergence_sections_high == 0
+    )
+
+    if isolated_visual_spike:
+        return "warn", True
+    return visual_level, False
+
+
+def classify_snippet_status(
+    diagnostics: Dict[str, Any],
+    interactions_exist: bool,
+) -> SnippetStatus:
+    """Classify snippet evidence as pass/fail_hard/fail_soft."""
+
+    if not diagnostics.get("snippet_present", False):
+        return "fail_hard"
+    if not diagnostics.get("version_ok", False):
+        return "fail_hard"
+    if not diagnostics.get("smoke_ok", False):
+        return "fail_hard"
+
+    ix2_available = bool(diagnostics.get("ix2_available", False))
+    ix3_available = bool(diagnostics.get("ix3_available", False))
+    if interactions_exist and not (ix2_available or ix3_available):
+        return "fail_soft"
+    return "pass"
+
+
+def classify_agent_recommendation(
+    snippet_status: SnippetStatus,
+    vector_level: SignalLevel,
+    visual_level: SignalLevel,
+    interaction_level: SignalLevel,
+) -> AgentRecommendation:
+    """Deterministic pair-level recommendation."""
+
+    if snippet_status == "fail_hard":
+        return "block_submission"
+    if "fail_major" in {vector_level, visual_level, interaction_level}:
+        return "escalate_major"
+    if snippet_status == "fail_soft" or "warn" in {vector_level, visual_level, interaction_level}:
+        return "escalate_minor"
+    return "pass"
+
+
+def map_recommendation_to_verdict(
+    recommendation: AgentRecommendation,
+) -> Literal["major", "minor", "none", "blocked"]:
+    if recommendation == "escalate_major":
+        return "major"
+    if recommendation == "escalate_minor":
+        return "minor"
+    if recommendation == "block_submission":
+        return "blocked"
+    return "none"
 
 
 # =============================================================================
@@ -350,10 +560,19 @@ class VisualComparator:
         self.provider_name = provider
         
         if provider == 'claude':
+            if Anthropic is None:
+                raise RuntimeError(
+                    "anthropic package is required for provider='claude'. Install with: pip install anthropic"
+                )
             self.client = Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
             # Use Claude Sonnet 4 from the provider config
             self.model = "claude-sonnet-4-20250514"
         else:
+            if genai is None:
+                raise RuntimeError(
+                    "google-generativeai package is required for provider='gemini'. "
+                    "Install with: pip install google-generativeai"
+                )
             genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
             self.client = genai.GenerativeModel('gemini-2.0-flash-exp')
             self.model = "gemini-2.0-flash-exp"
@@ -839,6 +1058,93 @@ class MultiModalPlagiarismAnalyzer:
         similarity = (count_similarity * 0.4 + id_overlap * 0.6) * 100
         
         return similarity, verdict
+
+    async def collect_snippet_evidence(self, url: str) -> Dict[str, Any]:
+        """
+        Validate snippet availability and smoke-test audit_webflow_way.
+
+        This is submission-gating evidence, not a plagiarism signal by itself.
+        """
+
+        diagnostics: Dict[str, Any] = {
+            "url": url,
+            "marker": SNIPPET_VERSION_MARKER,
+            "required_version": REQUIRED_SNIPPET_VERSION,
+            "snippet_present": False,
+            "version": None,
+            "version_ok": False,
+            "smoke_ok": False,
+            "ix2_available": False,
+            "ix3_available": False,
+            "error": None,
+            "checked_at": None,
+        }
+
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            page = await browser.new_page(viewport={"width": 1920, "height": 1080})
+            try:
+                await page.goto(url, wait_until="networkidle", timeout=30000)
+                snippet_data = await page.evaluate(
+                    """
+                    async () => {
+                        const out = {
+                            snippet_present: false,
+                            version: null,
+                            smoke_ok: false,
+                            ix2_available: false,
+                            ix3_available: false,
+                            smoke_error: null
+                        };
+
+                        const api = window.__wfReview;
+                        if (!api || typeof api.callTool !== 'function') {
+                            return out;
+                        }
+
+                        out.snippet_present = true;
+                        out.version = api.version || null;
+
+                        try {
+                            const audit = await api.callTool('audit_webflow_way', {
+                                maxExamples: 5,
+                                includeSitemap: false
+                            });
+                            out.smoke_ok = true;
+
+                            const ix2 = audit && audit.interactions && audit.interactions.ix2;
+                            const ix3 = audit && audit.interactions && audit.interactions.ix3;
+                            out.ix2_available = Boolean(ix2 && ix2.available);
+                            out.ix3_available = Boolean(ix3 && ix3.available);
+                        } catch (err) {
+                            out.smoke_error = err ? String(err) : 'unknown smoke test error';
+                        }
+
+                        return out;
+                    }
+                    """
+                )
+                diagnostics.update(
+                    {
+                        "snippet_present": bool(snippet_data.get("snippet_present", False)),
+                        "version": snippet_data.get("version"),
+                        "smoke_ok": bool(snippet_data.get("smoke_ok", False)),
+                        "ix2_available": bool(snippet_data.get("ix2_available", False)),
+                        "ix3_available": bool(snippet_data.get("ix3_available", False)),
+                        "error": snippet_data.get("smoke_error"),
+                        "checked_at": int(time.time() * 1000),
+                    }
+                )
+                diagnostics["version_ok"] = _version_at_least(
+                    diagnostics.get("version"), REQUIRED_SNIPPET_VERSION
+                )
+            except Exception as exc:
+                diagnostics["error"] = f"snippet_check_failed: {type(exc).__name__}: {exc}"
+                diagnostics["checked_at"] = int(time.time() * 1000)
+            finally:
+                await browser.close()
+
+        return diagnostics
     
     async def analyze(
         self,
@@ -1044,16 +1350,128 @@ class MultiModalPlagiarismAnalyzer:
                 interaction_similarity = 0.0
                 interaction_verdict = f"analysis failed: {str(e)}"
                 convergent_sections = []
+                orig_interactions = {}
+                copy_interactions = {}
             
-            # Step 6: Generate verdict (considering visual, interaction, and CONVERGENCE)
-            verdict, confidence, reasoning = self._generate_verdict(
-                comparisons,
-                interaction_similarity,
-                interaction_verdict,
-                convergent_sections
+            # Step 6: Validate snippet evidence (submission hard requirement)
+            print("🧪 Validating snippet evidence on submission template...")
+            snippet_diagnostics = await self.collect_snippet_evidence(alleged_copy_url)
+            interactions_exist_on_submission = bool(copy_interactions.get("interactive_elements", 0) > 0)
+            snippet_status = classify_snippet_status(
+                snippet_diagnostics,
+                interactions_exist=interactions_exist_on_submission,
             )
-            
-            # Step 7: Calculate cost (rough estimate)
+
+            # Step 7: Strict pair-level matrix classification
+            visual_max_section = max((c.visual_similarity for c in comparisons), default=0.0)
+            visual_avg = (
+                sum(c.visual_similarity for c in comparisons) / len(comparisons) if comparisons else 0.0
+            )
+            convergence_sections_high = sum(
+                1 for c in convergent_sections if c.get("convergence_score", 0.0) > 0.70
+            )
+            convergence_sections_medium = sum(
+                1 for c in convergent_sections if 0.50 < c.get("convergence_score", 0.0) <= 0.70
+            )
+            shared_interaction_ids = len(
+                set(orig_interactions.get("interaction_ids", []))
+                & set(copy_interactions.get("interaction_ids", []))
+            )
+
+            if vector_similarity_overall is not None:
+                effective_vector_score = float(vector_similarity_overall)
+            else:
+                effective_vector_score = float((html_similarity + css_similarity) / 2)
+                vector_source = "local_proxy"
+
+            vector_level = classify_vector_level(effective_vector_score, vector_source)
+            raw_visual_level = classify_visual_level(visual_max_section, visual_avg, len(comparisons))
+            visual_level, visual_override_applied = apply_visual_spike_override(
+                raw_visual_level,
+                visual_max_section,
+                visual_avg,
+                effective_vector_score,
+                interaction_similarity,
+                shared_interaction_ids,
+                convergence_sections_high,
+            )
+            interaction_level = classify_interaction_level(
+                interaction_similarity,
+                shared_interaction_ids,
+                convergence_sections_high,
+                convergence_sections_medium,
+            )
+            agent_recommendation = classify_agent_recommendation(
+                snippet_status,
+                vector_level,
+                visual_level,
+                interaction_level,
+            )
+
+            pair_id = build_pair_id(original_url, alleged_copy_url)
+            evidence_bundle_refs: Dict[str, Any] = {
+                "screenshots": [c.screenshot_path for c in original_sections + copy_sections if c.screenshot_path],
+                "vector_source": vector_source,
+                "vector_payload": vector_result if vector_result else None,
+                "interaction_summary": {
+                    "interaction_similarity": interaction_similarity,
+                    "interaction_verdict": interaction_verdict,
+                    "shared_interaction_ids": shared_interaction_ids,
+                    "convergence_sections_high": convergence_sections_high,
+                    "convergence_sections_medium": convergence_sections_medium,
+                },
+                "snippet_diagnostics": snippet_diagnostics,
+                "visual_override": {
+                    "applied": visual_override_applied,
+                    "rule": VISUAL_SINGLE_SECTION_SPIKE_RULE if visual_override_applied else None,
+                    "raw_visual_level": raw_visual_level,
+                    "effective_visual_level": visual_level,
+                },
+                "timestamp": int(time.time() * 1000),
+            }
+            decision_record = PlagiarismDecisionRecord(
+                pair_id=pair_id,
+                vector_score_overall=effective_vector_score,
+                vector_level=vector_level,
+                visual_max_section=visual_max_section,
+                visual_avg=visual_avg,
+                visual_level=visual_level,
+                interaction_similarity=interaction_similarity,
+                shared_interaction_ids=shared_interaction_ids,
+                convergence_sections_high=convergence_sections_high,
+                interaction_level=interaction_level,
+                snippet_status=snippet_status,
+                agent_recommendation=agent_recommendation,
+                human_outcome=None,
+                evidence_bundle_refs=evidence_bundle_refs,
+            )
+
+            verdict = map_recommendation_to_verdict(agent_recommendation)
+            confidence_basis = max(
+                effective_vector_score,
+                visual_max_section,
+                interaction_similarity / 100.0,
+            )
+            confidence = confidence_basis if verdict in {"major", "minor"} else 1.0 - min(confidence_basis, 1.0)
+
+            reasoning = (
+                "STRICT MATRIX DECISION\n"
+                f"- pair_id: {pair_id}\n"
+                f"- vector: score={effective_vector_score:.3f}, level={vector_level}, source={vector_source}\n"
+                f"- visual: max={visual_max_section:.3f}, avg={visual_avg:.3f}, level={visual_level}"
+                f"{' (downgraded isolated spike)' if visual_override_applied else ''}\n"
+                f"- interaction: similarity={interaction_similarity:.1f}, shared_ids={shared_interaction_ids}, "
+                f"high_convergence={convergence_sections_high}, level={interaction_level}\n"
+                f"- snippet: status={snippet_status}, version={snippet_diagnostics.get('version')}, "
+                f"smoke_ok={snippet_diagnostics.get('smoke_ok')}, ix2={snippet_diagnostics.get('ix2_available')}, "
+                f"ix3={snippet_diagnostics.get('ix3_available')}\n"
+                f"- recommendation: {agent_recommendation}\n\n"
+                "Ownership:\n"
+                "- Agent: computes deterministic signal levels, recommendation, and evidence bundle.\n"
+                "- Human: resolves policy exceptions and final enforcement (approve/revise/reject/exclude_pair)."
+            )
+
+            # Step 8: Calculate cost (rough estimate)
             cost = len(comparisons) * 0.015  # ~$0.015 per visual comparison
             
             result = PlagiarismAnalysisResult(
@@ -1063,13 +1481,14 @@ class MultiModalPlagiarismAnalyzer:
                 section_comparisons=comparisons,
                 reasoning=reasoning + f"\n\nInteraction Analysis: {interaction_verdict} ({interaction_similarity:.1f}% similar)",
                 cost_estimate=cost,
-                vector_similarity_overall=float(vector_similarity_overall or 0.0),
+                vector_similarity_overall=effective_vector_score,
                 vector_similarity_source=vector_source,
                 vector_html_similarity=float(vector_html or 0.0),
                 vector_css_similarity=float(vector_css or 0.0),
                 vector_js_similarity=float(vector_js or 0.0),
                 local_html_similarity=float(html_similarity),
-                local_css_similarity=float(css_similarity)
+                local_css_similarity=float(css_similarity),
+                decision_record=decision_record,
             )
             
             return result

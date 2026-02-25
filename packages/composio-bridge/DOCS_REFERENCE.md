@@ -48,6 +48,27 @@ This package implements the **wrap pattern**: clients see CREATE SOMETHING MCP; 
 
 Use `retryMode: 'all'` only when duplicate side effects are acceptable or downstream operations are idempotent.
 
+## Security middleware contract
+
+`ComposioToolFactory` now supports execution middleware via `ToolFactoryConfig.executionHooks`:
+
+- `beforeExecute[]`: request normalization/guardrails
+- `afterExecute[]`: response redaction/sanitization before MCP output
+
+For a secure-by-default pattern, use:
+
+- `DEFAULT_SECURE_OUTPUT_POLICY`
+- `composeSecureOutputPolicies([...])`
+- `createSecureOutputRedactionHook(policy)`
+
+from `src/security.ts`.
+
+This lets teams enforce:
+
+- universal baseline redaction (tokens/passwords/secrets)
+- toolkit-level overrides (e.g. Zoom recording URLs/tokens)
+- per-client policy artifacts (stricter masking/retention)
+
 ## Toolkit versioning
 
 Docs support configuring toolkit versions at SDK init or per execution. Our client does not yet expose versioning; add via `Composio` constructor options (e.g. `toolkitVersions: { github: '20250909_00' }`) if needed (see [toolkit versioning](https://docs.composio.dev/docs/tools-direct/toolkit-versioning)).

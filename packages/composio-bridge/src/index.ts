@@ -56,6 +56,18 @@ export { ComposioClient, ComposioBridgeError } from './client.js';
 export type { ComposioToolDef } from './client.js';
 
 // =============================================================================
+// Security — Redaction middleware and policy artifacts
+// =============================================================================
+
+export {
+  DEFAULT_SECURE_OUTPUT_POLICY,
+  composeSecureOutputPolicies,
+  createSecureOutputRedactionHook,
+  redactSensitiveResult,
+  resolveSecureOutputRules,
+} from './security.js';
+
+// =============================================================================
 // Types — Configuration and Decision Framework
 // =============================================================================
 
@@ -68,6 +80,13 @@ export type {
   ComposioToolkitListOptions,
   ComposioToolkitSummary,
   ToolFactoryConfig,
+  ComposioRegistrationMode,
+  ComposioExecutionContextBase,
+  ComposioBeforeExecuteContext,
+  ComposioAfterExecuteContext,
+  ComposioBeforeExecuteHook,
+  ComposioAfterExecuteHook,
+  ComposioToolExecutionHooks,
   ComposioAccount,
   McpServerLike,
   DepthClassification,
@@ -75,3 +94,8 @@ export type {
   EvalResult,
   EvalReport,
 } from './types.js';
+
+export type {
+  SecureOutputRuleSet,
+  SecureOutputPolicyArtifact,
+} from './security.js';
