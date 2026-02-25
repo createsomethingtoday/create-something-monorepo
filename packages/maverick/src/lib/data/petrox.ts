@@ -121,45 +121,6 @@ export const petroxSolutions: PetroxSolution[] = [
 		]
 	},
 	{
-		id: 'microbe',
-		name: 'Microbe',
-		headline: 'Control microbial souring and corrosion in production systems',
-		description:
-			'Microbiological control for sulfate-reducing bacteria and biofilm prevention.',
-		details:
-			'PetroX Biocide controls microbial activity that leads to souring, corrosion, and hydrogen sulfide generation. The THPS-based formulation provides broad-spectrum efficacy against sulfate-reducing bacteria while remaining compatible with production chemistry and safe for downhole equipment.',
-		image: '/images/petrox-fracturing.jpg',
-		features: [
-			'Broad-spectrum efficacy',
-			'Prevents souring',
-			'Reduces corrosion',
-			'Safe for personnel'
-		],
-		stats: [
-			{ label: 'Kill Rate', value: '99.9%+' },
-			{ label: 'Duration', value: 'Long-lasting' }
-		]
-	},
-	{
-		id: 'h2s',
-		name: 'H₂S',
-		headline: 'Neutralize H₂S safely and meet pipeline specifications',
-		description: 'Hydrogen sulfide scavenger for sour gas and produced water treatment.',
-		details:
-			'PetroX H2S neutralizes hydrogen sulfide in gas streams and produced water, improving safety and meeting pipeline specifications. The non-toxic scavenger chemistry works rapidly at ambient conditions without forming hazardous byproducts.',
-		image: '/images/petrox-eor.jpg',
-		features: [
-			'Rapid H₂S neutralization',
-			'Non-toxic formulation',
-			'Works at ambient conditions',
-			'Meets pipeline specifications'
-		],
-		stats: [
-			{ label: 'H₂S Removal', value: '99%+' },
-			{ label: 'Safety', value: 'Non-Toxic' }
-		]
-	},
-	{
 		id: 'custom',
 		name: 'Custom',
 		headline: 'Tailored chemistry solutions for your unique challenges',

@@ -81,8 +81,6 @@
 		{ id: 'scale', title: 'Scale' },
 		{ id: 'wax', title: 'Wax' },
 		{ id: 'clear', title: 'Clear' },
-		{ id: 'microbe', title: 'Microbe' },
-		{ id: 'h2s', title: 'H₂S' },
 		{ id: 'custom', title: 'Custom' }
 	];
 
@@ -93,8 +91,6 @@
 		{ id: 'scale', title: 'Scale' },
 		{ id: 'wax', title: 'Wax' },
 		{ id: 'clear', title: 'Clear' },
-		{ id: 'microbe', title: 'Microbe' },
-		{ id: 'h2s', title: 'H₂S' },
 		{ id: 'custom', title: 'Custom' }
 	];
 
