@@ -12,7 +12,10 @@ import { registerFeedbackTool, D1FeedbackStore, enableTelemetry } from '@create-
 import { getDmConfig } from '../src/config.js';
 import { getNotionClient, requireNotionClient } from '../src/lib/notion.js';
 import { registerNotionTools } from '../src/tools/index.js';
-import { registerComposioProxyTools } from '../src/tools/composio-proxy.js';
+import {
+  discoverComposioProxyTools,
+  registerComposioProxyTools,
+} from '../src/tools/composio-proxy.js';
 import {
   DM_NOTION_TOOLS,
   getToolsForConfig,
@@ -23,6 +26,7 @@ import {
 } from '../src/resources.js';
 import { registerTaskWorkflowPrompt } from '../src/prompts.js';
 import { validateApiKey } from './lib/auth.js';
+import type { DmConfig } from '../src/config.js';
 
 // =============================================================================
 // Types
@@ -58,10 +62,89 @@ const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
 
 let lastComposioRuntimeSummary: DmComposioRuntimeSummary | undefined;
 let lastComposioProxyTools: DmComposioProxyToolSummary[] = [];
+let rootComposioSnapshot:
+  | {
+      fetchedAt: number;
+      runtimeSummary: DmComposioRuntimeSummary;
+      proxyTools: DmComposioProxyToolSummary[];
+    }
+  | undefined;
 
 function resolveBraintrustProjectName(env: { BRAINTRUST_PROJECT_NAME?: string }): string {
   const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
   return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+}
+
+async function resolveRootComposioSnapshot(
+  env: Env,
+  config: DmConfig,
+  enabledToolsets: Set<string>
+): Promise<{
+  runtimeSummary: DmComposioRuntimeSummary | undefined;
+  proxyTools: DmComposioProxyToolSummary[];
+}> {
+  if (!enabledToolsets.has('composio')) {
+    return { runtimeSummary: undefined, proxyTools: [] };
+  }
+
+  if (lastComposioRuntimeSummary && lastComposioProxyTools.length > 0) {
+    return {
+      runtimeSummary: lastComposioRuntimeSummary,
+      proxyTools: lastComposioProxyTools,
+    };
+  }
+
+  const ttlMs = Math.max(5, config.composio.toolCacheSeconds) * 1000;
+  if (rootComposioSnapshot && Date.now() - rootComposioSnapshot.fetchedAt < ttlMs) {
+    return {
+      runtimeSummary: rootComposioSnapshot.runtimeSummary,
+      proxyTools: rootComposioSnapshot.proxyTools,
+    };
+  }
+
+  if (!env.COMPOSIO_API_KEY) {
+    return {
+      runtimeSummary: lastComposioRuntimeSummary,
+      proxyTools: lastComposioProxyTools,
+    };
+  }
+
+  try {
+    const composioClient = new ComposioClient({ apiKey: env.COMPOSIO_API_KEY });
+    const discovery = await discoverComposioProxyTools({
+      composioClient,
+      composioConfig: config.composio,
+    });
+
+    const proxyTools = discovery.proxiedTools.map((tool) => ({
+      name: tool.name,
+      description: tool.description,
+      toolkit: tool.toolkit,
+    }));
+    const runtimeSummary: DmComposioRuntimeSummary = {
+      registeredToolkits: discovery.registeredToolkits,
+      proxiedToolCount: discovery.proxiedTools.length,
+      warnings: discovery.warnings,
+    };
+
+    rootComposioSnapshot = {
+      fetchedAt: Date.now(),
+      runtimeSummary,
+      proxyTools,
+    };
+
+    return { runtimeSummary, proxyTools };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      runtimeSummary: {
+        registeredToolkits: [],
+        proxiedToolCount: 0,
+        warnings: [message],
+      },
+      proxyTools: [],
+    };
+  }
 }
 
 // =============================================================================
@@ -162,6 +245,13 @@ export class HalfDozenDmMcp extends McpAgent<Env> {
 
     lastComposioRuntimeSummary = composioRuntimeSummary;
     lastComposioProxyTools = composioProxyTools;
+    if (composioRuntimeSummary) {
+      rootComposioSnapshot = {
+        fetchedAt: Date.now(),
+        runtimeSummary: composioRuntimeSummary,
+        proxyTools: composioProxyTools,
+      };
+    }
 
     registerToolsetsResource(this.server, config, composioRuntimeSummary);
     registerToolsResource(this.server, config, composioProxyTools);
@@ -196,7 +286,10 @@ export default {
     if (url.pathname === '/') {
       const config = getDmConfig(env);
       const enabledToolsets = new Set(config.enabledToolsets);
-      const declaredTools = getToolsForConfig(config, lastComposioProxyTools).map((tool) => tool.name);
+      const rootComposio = await resolveRootComposioSnapshot(env, config, enabledToolsets);
+      const declaredTools = getToolsForConfig(config, rootComposio.proxyTools).map(
+        (tool) => tool.name
+      );
 
       return new Response(
         JSON.stringify(
@@ -223,9 +316,9 @@ export default {
               allowed_toolkits: config.composio.allowedToolkits,
               allowed_toolkits_by_entity: config.composio.allowedToolkitsByEntity,
               tool_name_prefix: config.composio.toolNamePrefix,
-              registered_toolkits: lastComposioRuntimeSummary?.registeredToolkits ?? [],
-              proxied_tool_count: lastComposioRuntimeSummary?.proxiedToolCount ?? 0,
-              warnings: lastComposioRuntimeSummary?.warnings ?? [],
+              registered_toolkits: rootComposio.runtimeSummary?.registeredToolkits ?? [],
+              proxied_tool_count: rootComposio.runtimeSummary?.proxiedToolCount ?? 0,
+              warnings: rootComposio.runtimeSummary?.warnings ?? [],
             },
             notion: {
               toolset_enabled: enabledToolsets.has('notion'),

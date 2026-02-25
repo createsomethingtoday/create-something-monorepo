@@ -108,6 +108,11 @@ If `MCP_API_KEY` is missing in a deployment, the server returns `500` on MCP tra
 - `dm://tools` — tools exposed by currently enabled toolsets
 - `dm://toolsets` — enabled toolsets + workspace + composio runtime/allow-list config
 
+## Root Metadata (`/`)
+
+- `GET /` returns server metadata including the resolved tool list.
+- When Composio is enabled, the endpoint uses a cached Composio discovery fallback so DM proxy tools (for example `dm_composio__dropbox__*`) are visible even before an `/mcp` session warms in-memory state.
+
 ## Client Setup
 
 ### Codex (`~/.codex/config.toml`)
