@@ -118,7 +118,7 @@ describe('GET /api/v1/videos/[id]/playback', () => {
 		expect(response.headers.get('cache-control')).toBe('private, no-store');
 	});
 
-	it('returns 409 when stream_uid is malformed', async () => {
+	it('returns 404 when stream_uid is malformed', async () => {
 		getVideoByIdMock.mockResolvedValue(
 			createVideo({
 				id: 'vid_bad_uid',
@@ -132,7 +132,7 @@ describe('GET /api/v1/videos/[id]/playback', () => {
 			platform: {}
 		} as never);
 
-		expect(response.status).toBe(409);
+		expect(response.status).toBe(404);
 		expect(response.headers.get('cache-control')).toBe('private, no-store');
 		const body = (await response.json()) as { error: string };
 		expect(body.error).toBe('Video stream is unavailable');

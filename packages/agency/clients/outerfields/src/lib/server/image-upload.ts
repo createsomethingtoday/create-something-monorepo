@@ -59,6 +59,15 @@ function readU24LE(bytes: Uint8Array, offset: number): number {
 	return bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16);
 }
 
+function readU32LE(bytes: Uint8Array, offset: number): number {
+	return (
+		bytes[offset] +
+		(bytes[offset + 1] << 8) +
+		(bytes[offset + 2] << 16) +
+		(bytes[offset + 3] * 0x1000000)
+	);
+}
+
 function normalizeDeclaredMime(mime: string): SupportedImageMime | null {
 	if (mime === 'image/jpg') return 'image/jpeg';
 	if (mime === 'image/jpeg' || mime === 'image/png' || mime === 'image/webp') return mime;
@@ -187,10 +196,7 @@ function parseWebpDimensions(bytes: Uint8Array): ImageDimensions | null {
 			chunkTagBytes[2],
 			chunkTagBytes[3]
 		);
-		const chunkSize = readU32BE(
-			new Uint8Array([bytes[offset + 7], bytes[offset + 6], bytes[offset + 5], bytes[offset + 4]]),
-			0
-		);
+		const chunkSize = readU32LE(bytes, offset + 4);
 		const chunkDataStart = offset + 8;
 		const chunkDataEnd = chunkDataStart + chunkSize;
 		if (chunkDataEnd > bytes.length) return null;

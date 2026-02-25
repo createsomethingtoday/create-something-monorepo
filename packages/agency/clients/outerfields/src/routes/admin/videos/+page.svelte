@@ -40,6 +40,10 @@
 	let actionBusy = $state(false);
 	let actionMessage = $state<string | null>(null);
 	let actionError = $state<string | null>(null);
+	let thumbnailFilesByVideoId = $state<Record<string, File | null>>({});
+	let thumbnailUploadBusyByVideoId = $state<Record<string, boolean>>({});
+	let thumbnailUploadMessageByVideoId = $state<Record<string, string | null>>({});
+	let thumbnailUploadErrorByVideoId = $state<Record<string, boolean>>({});
 
 	type VideoRow = PageData['videos'][number];
 	type EditDraft = {
@@ -60,6 +64,19 @@
 		data?: { videoId: string; uploadUrl: string; tusResumable: string };
 		error?: string;
 		message?: string;
+	};
+
+	type ThumbnailUploadJson = {
+		success?: boolean;
+		data?: VideoRow;
+		error?: string;
+		upload?: {
+			key: string;
+			contentType: string;
+			size: number;
+			width: number;
+			height: number;
+		};
 	};
 
 	let drafts = $state<Record<string, EditDraft>>({});
@@ -151,6 +168,14 @@
 		const parsed = Number.parseInt(trimmed, 10);
 		if (!Number.isFinite(parsed)) return null;
 		return parsed;
+	}
+
+	function getThumbnailSrc(thumbnailPath: string): string {
+		const normalized = thumbnailPath.trim();
+		if (!normalized) return '';
+		if (normalized.startsWith('http://') || normalized.startsWith('https://')) return normalized;
+		if (normalized.startsWith('/thumbnails/')) return normalized;
+		return `/thumbnails${normalized.startsWith('/') ? '' : '/'}${normalized}`;
 	}
 
 	function getVideoById(videoId: string): VideoRow | undefined {
@@ -312,6 +337,60 @@
 	function handleFileChange(e: Event) {
 		const input = e.target as HTMLInputElement;
 		uploadFile = input.files?.[0] || null;
+	}
+
+	function handleThumbnailFileChange(videoId: string, e: Event) {
+		const input = e.target as HTMLInputElement;
+		thumbnailFilesByVideoId[videoId] = input.files?.[0] || null;
+		thumbnailUploadMessageByVideoId[videoId] = null;
+		thumbnailUploadErrorByVideoId[videoId] = false;
+	}
+
+	async function uploadThumbnail(videoId: string) {
+		const file = thumbnailFilesByVideoId[videoId];
+		if (!file) {
+			thumbnailUploadMessageByVideoId[videoId] = 'Choose an image file first.';
+			thumbnailUploadErrorByVideoId[videoId] = true;
+			return;
+		}
+
+		thumbnailUploadBusyByVideoId[videoId] = true;
+		thumbnailUploadMessageByVideoId[videoId] = null;
+		thumbnailUploadErrorByVideoId[videoId] = false;
+
+		try {
+			const formData = new FormData();
+			formData.set('file', file);
+
+			const response = await fetch(`/api/v1/admin/videos/${videoId}/thumbnail`, {
+				method: 'POST',
+				body: formData
+			});
+
+			const raw = await response.text();
+			let payload: ThumbnailUploadJson | null = null;
+			try {
+				payload = JSON.parse(raw) as ThumbnailUploadJson;
+			} catch {
+				payload = null;
+			}
+
+			if (!response.ok || !payload?.success || !payload.data) {
+				const message = payload?.error || (raw?.trim() ? raw.trim() : null) || 'Failed to upload thumbnail';
+				throw new Error(message);
+			}
+
+			upsertVideoRow(payload.data);
+			thumbnailFilesByVideoId[videoId] = null;
+			thumbnailUploadMessageByVideoId[videoId] = `Thumbnail uploaded (${payload.upload?.width ?? '?'}x${payload.upload?.height ?? '?'})`;
+			thumbnailUploadErrorByVideoId[videoId] = false;
+		} catch (error) {
+			thumbnailUploadMessageByVideoId[videoId] =
+				error instanceof Error ? error.message : 'Failed to upload thumbnail';
+			thumbnailUploadErrorByVideoId[videoId] = true;
+		} finally {
+			thumbnailUploadBusyByVideoId[videoId] = false;
+		}
 	}
 
 	async function startUpload() {
@@ -711,6 +790,27 @@
 									<input bind:value={drafts[v.id].thumbnail_path} />
 								</label>
 
+								<label class="field span-2">
+									<span>Upload Thumbnail File</span>
+									<input
+										type="file"
+										accept="image/jpeg,image/png,image/webp"
+										onchange={(e) => handleThumbnailFileChange(v.id, e)}
+									/>
+								</label>
+
+								<div class="field">
+									<span>Thumbnail Upload</span>
+									<button
+										class="btn thumbnail-upload-btn"
+										onclick={() => uploadThumbnail(v.id)}
+										disabled={thumbnailUploadBusyByVideoId[v.id] || !thumbnailFilesByVideoId[v.id]}
+									>
+										<Upload size={16} />
+										<span>{thumbnailUploadBusyByVideoId[v.id] ? 'Uploading…' : 'Upload Thumbnail'}</span>
+									</button>
+								</div>
+
 								<label class="field span-2 readonly-field">
 									<span>Stream UID</span>
 									<input
@@ -734,6 +834,30 @@
 												(drafts[v.id].featured_order = Number((e.target as HTMLInputElement).value))}
 										/>
 									</label>
+
+								<div class="thumbnail-preview span-3">
+									<span>Thumbnail Preview</span>
+									{#if drafts[v.id].thumbnail_path.trim()}
+										<img
+											src={getThumbnailSrc(drafts[v.id].thumbnail_path)}
+											alt={`Thumbnail preview for ${drafts[v.id].title}`}
+											loading="lazy"
+										/>
+										<p class="mono">{getThumbnailSrc(drafts[v.id].thumbnail_path)}</p>
+									{:else}
+										<p class="hint">No thumbnail path set.</p>
+									{/if}
+
+									{#if thumbnailUploadMessageByVideoId[v.id]}
+										<p
+											class="thumbnail-upload-status"
+											class:error={thumbnailUploadErrorByVideoId[v.id]}
+											class:success={!thumbnailUploadErrorByVideoId[v.id]}
+										>
+											{thumbnailUploadMessageByVideoId[v.id]}
+										</p>
+									{/if}
+								</div>
 								</div>
 							</div>
 
@@ -888,6 +1012,16 @@
 		color: var(--color-fg-primary);
 		padding: 0 0.85rem;
 		outline: none;
+	}
+
+	.field input[type='file'] {
+		height: auto;
+		padding: 0.6rem 0.85rem;
+	}
+
+	.thumbnail-upload-btn {
+		width: 100%;
+		justify-content: center;
 	}
 
 	.readonly-field input {
@@ -1120,6 +1254,44 @@
 		gap: 0.5rem;
 		justify-content: flex-end;
 		flex-wrap: wrap;
+	}
+
+	.thumbnail-preview {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding: 0.75rem;
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		border-radius: 0.75rem;
+		background: rgba(255, 255, 255, 0.02);
+	}
+
+	.thumbnail-preview img {
+		width: min(360px, 100%);
+		aspect-ratio: 16 / 9;
+		object-fit: cover;
+		border-radius: 0.5rem;
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		background: rgba(0, 0, 0, 0.2);
+	}
+
+	.thumbnail-preview p {
+		margin: 0;
+		color: var(--color-fg-muted);
+		word-break: break-all;
+	}
+
+	.thumbnail-upload-status {
+		margin: 0;
+		font-size: 0.85rem;
+	}
+
+	.thumbnail-upload-status.success {
+		color: rgba(210, 255, 230, 0.95);
+	}
+
+	.thumbnail-upload-status.error {
+		color: rgba(255, 220, 220, 0.95);
 	}
 
 	.mono {

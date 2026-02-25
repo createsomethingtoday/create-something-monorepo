@@ -115,9 +115,10 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
 			{
 				success: false,
 				error: 'Video stream is unavailable',
-				ingestStatus: video.ingest_status
+				ingestStatus: video.ingest_status,
+				reason: 'invalid_stream_uid'
 			},
-			{ status: 409 }
+			{ status: 404 }
 		);
 	}
 

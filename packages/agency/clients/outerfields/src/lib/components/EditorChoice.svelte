@@ -32,6 +32,9 @@
 	}
 
 	function getThumbnailPath(v: DbVideo): string {
+		if (v.thumbnail_path.startsWith('http://') || v.thumbnail_path.startsWith('https://')) {
+			return v.thumbnail_path;
+		}
 		if (v.thumbnail_path.startsWith('/thumbnails/')) {
 			return v.thumbnail_path;
 		}

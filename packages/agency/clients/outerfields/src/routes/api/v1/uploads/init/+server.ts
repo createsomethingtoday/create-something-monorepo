@@ -11,6 +11,7 @@ import { createTusDirectUpload, getMaxDirectUploadBytes } from '$lib/server/stre
 import type { CreateUploadRequest, CreateUploadResponse } from '$lib/types/video-pipeline';
 import { getDBFromPlatform } from '$lib/server/d1-compat';
 import { resolveRuntimeEnv } from '$lib/server/env';
+import { isValidStreamUid } from '$lib/server/video-availability';
 
 const MAX_FILE_SIZE_BYTES = getMaxDirectUploadBytes();
 
@@ -122,6 +123,10 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 					seriesId: series.id
 				}
 			});
+
+			if (!isValidStreamUid(directUpload.streamUid)) {
+				throw new Error('Cloudflare Stream returned an invalid stream UID');
+			}
 
 			await attachStreamUidToVideo(db, reservation.id, directUpload.streamUid);
 
