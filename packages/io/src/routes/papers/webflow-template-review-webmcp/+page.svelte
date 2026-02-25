@@ -83,8 +83,8 @@ ${paper.content || ''}
 	keywords="webflow template review, WebMCP, MCP tools, agent QA, interactions audit, a11y, SEO hygiene"
 	canonical={fullUrl}
 	ogType="article"
-	publishedTime={paper.published_at}
-	modifiedTime={paper.updated_at}
+	publishedTime={paper.published_at ?? undefined}
+	modifiedTime={paper.updated_at ?? undefined}
 	articleSection="Methodology"
 	articleTags={paper.tags ? paper.tags.map((t) => t.name) : []}
 	propertyName="io"
@@ -153,4 +153,3 @@ ${paper.content || ''}
 		color: var(--color-fg-primary);
 	}
 </style>
-

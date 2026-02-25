@@ -12,7 +12,7 @@
     "dev:ltd": "pnpm --filter @create-something/ltd dev",
     "dev:io": "pnpm --filter @create-something/io dev",
     "dev:space": "pnpm --filter @create-something/space dev",
-    "dev:agency": "pnpm --filter @create-something/agency dev",
+    "dev:agency": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package && pnpm --filter @create-something/agency dev",
     "build": "pnpm --filter @createsomething/components package && pnpm --parallel -r build",
     "build:lib": "pnpm --filter @createsomething/components package",
     "build:ltd": "pnpm --filter @create-something/ltd build",

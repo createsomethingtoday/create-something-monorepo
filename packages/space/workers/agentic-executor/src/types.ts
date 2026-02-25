@@ -1,6 +1,8 @@
 // Agentic Layer Type Definitions
 
-import type { ContentBlock } from '@anthropic-ai/sdk/resources/messages';
+type MessageContentBlock = Record<string, unknown> & {
+  type: string;
+};
 
 // ============================================================================
 // Task & Session
@@ -51,7 +53,7 @@ export interface SessionState {
 
 export interface Message {
   role: 'user' | 'assistant';
-  content: string | ContentBlock[];
+  content: string | MessageContentBlock[];
 }
 
 export interface ToolResultContent {

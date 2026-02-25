@@ -3,6 +3,7 @@ import { dirname, isAbsolute, join, resolve } from 'node:path';
 import TOML from '@iarna/toml';
 
 import type {
+  HubRoutingConfig,
   McpBundleRegistry,
   McpHubState,
   McpServerConfig,
@@ -15,13 +16,15 @@ import type {
 const DEFAULT_REGISTRY_PATH = join('config', 'mcp-hub', 'registry.json');
 const DEFAULT_STATE_PATH = join('config', 'mcp-hub', 'state.json');
 const DEFAULT_CODEX_CONFIG_PATH = join('.codex', 'config.toml');
+const DEFAULT_ROUTING_PATH = join('config', 'mcp-hub', 'routing.json');
 
 export function resolveRegistryPaths(rootDir = resolve(process.env.CS_MCP_HUB_ROOT ?? process.cwd())): RegistryPaths {
   const registryPath = resolveMaybeRelative(rootDir, process.env.CS_MCP_HUB_REGISTRY, DEFAULT_REGISTRY_PATH);
   const statePath = resolveMaybeRelative(rootDir, process.env.CS_MCP_HUB_STATE, DEFAULT_STATE_PATH);
   const codexConfigPath = resolveMaybeRelative(rootDir, process.env.CS_MCP_HUB_CODEX_CONFIG, DEFAULT_CODEX_CONFIG_PATH);
+  const routingPath = resolveMaybeRelative(rootDir, process.env.CS_MCP_HUB_ROUTING, DEFAULT_ROUTING_PATH);
 
-  return { rootDir, registryPath, statePath, codexConfigPath };
+  return { rootDir, registryPath, statePath, codexConfigPath, routingPath };
 }
 
 export function loadRegistry(paths: RegistryPaths): McpBundleRegistry {
@@ -42,6 +45,24 @@ export function loadState(paths: RegistryPaths): McpHubState {
     return {};
   }
   return readJsonFile<McpHubState>(paths.statePath, 'state');
+}
+
+export function loadRouting(paths: RegistryPaths): HubRoutingConfig {
+  if (!existsSync(paths.routingPath)) {
+    return { version: 1, tenants: {}, aliases: {} };
+  }
+
+  const routing = readJsonFile<HubRoutingConfig>(paths.routingPath, 'routing');
+  if (routing.version !== 1) {
+    throw new Error(`Unsupported routing version at ${paths.routingPath}: ${String((routing as any).version)}`);
+  }
+
+  return {
+    version: 1,
+    defaults: routing.defaults ?? {},
+    tenants: routing.tenants ?? {},
+    aliases: routing.aliases ?? {},
+  };
 }
 
 export function saveState(paths: RegistryPaths, state: McpHubState): void {

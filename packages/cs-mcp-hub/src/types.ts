@@ -94,6 +94,7 @@ export type RegistryPaths = {
   registryPath: string;
   statePath: string;
   codexConfigPath: string;
+  routingPath: string;
 };
 
 export type StatePatch = {
@@ -101,4 +102,41 @@ export type StatePatch = {
   disableBundles?: string[];
   enableServers?: string[];
   disableServers?: string[];
+};
+
+export type OauthApprovalStatus = 'approved' | 'pending' | 'blocked';
+
+export type TenantRoutingPolicy = {
+  allowServers?: string[];
+  denyServers?: string[];
+  allowTags?: string[];
+  denyTags?: string[];
+  allowToolPrefixes?: string[];
+  denyToolPrefixes?: string[];
+};
+
+export type RoutedAliasCandidate = {
+  server: string;
+  tool: string;
+  provider?: string;
+  oauthApproval?: OauthApprovalStatus;
+  note?: string;
+};
+
+export type RoutedAliasConfig = {
+  description?: string;
+  inputSchema?: Record<string, unknown>;
+  candidates: RoutedAliasCandidate[];
+  tenantAllowlist?: string[];
+  tenantDenylist?: string[];
+};
+
+export type HubRoutingConfig = {
+  version: 1;
+  defaults?: {
+    tenant?: string;
+    allowPendingOauthApprovals?: boolean;
+  };
+  tenants?: Record<string, TenantRoutingPolicy>;
+  aliases?: Record<string, RoutedAliasConfig>;
 };

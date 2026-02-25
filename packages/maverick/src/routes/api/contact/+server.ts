@@ -171,6 +171,11 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 		});
 
 		// Send notification to sales team
+		const notificationRecipients = [
+			'calvin@maverickmetals.com',
+			'matthew@maverickmetals.com'
+		];
+
 		const notificationPromise = fetch('https://api.resend.com/emails', {
 			method: 'POST',
 			headers: {
@@ -179,7 +184,7 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 			},
 			body: JSON.stringify({
 				from: 'Maverick X Contact Form <noreply@createsomething.io>',
-				to: 'calvin@maverickmetals.com',
+				to: notificationRecipients,
 				replyTo: data.email,
 				subject: `Maverick X Inquiry: ${safeCategory || 'General'} from ${safeName}`,
 				html: `<!DOCTYPE html>

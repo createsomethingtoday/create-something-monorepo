@@ -2,7 +2,6 @@
 // Implements session management with hooks for security and cost control
 
 import Anthropic from '@anthropic-ai/sdk';
-import type { MessageCreateParamsNonStreaming } from '@anthropic-ai/sdk/resources/messages';
 import {
   BudgetEnforcementHook,
   CompletionValidationHook,
@@ -489,7 +488,7 @@ export class AgenticSession {
       messages: this.conversationHistory as any,
       tools: this.buildTools(),
       tool_choice: { type: 'auto' }
-    } as MessageCreateParamsNonStreaming);
+    });
 
     // Calculate actual cost
     const actualCost = this.calculateCost(response.usage!);

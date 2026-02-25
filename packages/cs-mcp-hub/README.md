@@ -13,9 +13,11 @@ This package gives you:
 
 - Registry: `config/mcp-hub/registry.json`
 - State: `config/mcp-hub/state.json`
+- Routing: `config/mcp-hub/routing.json`
 
 Registry defines all known MCP servers + bundles.
 State defines what is currently enabled.
+Routing defines tenant-specific tool exposure and multi-provider alias failover.
 
 ## Build
 
@@ -56,6 +58,7 @@ Then disable direct downstream entries in `.codex/config.toml` (or let the hub w
 - `hub_write_codex_config`
 - `hub_list_proxy_tools`
 - `hub_search_proxy_tools` (query/server filter + cursor pagination)
+- `hub_list_routing` (tenant policy + alias failover plans)
 - `hub_policy_status` (active policy/runtime limit settings)
 - `hub_route_problem` (problem-axis classification + model/workflow routing recommendation)
 
@@ -64,6 +67,9 @@ Proxied tool names are namespaced:
 `<server>__<tool>`
 
 Example: `create-something__search`
+
+Routed aliases are configured in `config/mcp-hub/routing.json` and can fail over
+across multiple provider candidates (for example: Arcade -> Composio).
 
 ## Problem Routing Tool
 

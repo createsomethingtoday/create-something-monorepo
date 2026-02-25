@@ -16,6 +16,7 @@ Codex MCP settings are a flat list. This control plane keeps local/workspace MCP
 - Registry: `config/mcp-hub/registry.json`
 - Registry schema: `config/mcp-hub/registry.schema.json`
 - State: `config/mcp-hub/state.json`
+- Routing: `config/mcp-hub/routing.json`
 - Gateway package: `packages/cs-mcp-hub`
 - Generated artifacts:
   - `packages/playbook-mcp/src/catalog.registry.generated.ts`
@@ -66,6 +67,26 @@ Example:
 
 - `create-something__search`
 - `playbook__workflow_setup`
+
+Routing aliases can also be defined in `routing.json` to map one logical tool
+to multiple provider candidates (ordered failover).
+
+## Tenant + Provider Routing
+
+The hub now supports tenant-scoped exposure and provider failover without
+splitting into separate MCP gateways:
+
+- Tenant policy gates tools by server, tags, and tool prefix.
+- Alias routes define candidate targets across providers (e.g. Arcade first,
+  Composio fallback).
+- OAuth approval state is respected per candidate (`approved`, `pending`,
+  `blocked`), with pending candidates opt-in via env.
+
+Runtime env:
+
+- `CS_MCP_HUB_ROUTING` (optional path override)
+- `HUB_TENANT_ID` (tenant policy key)
+- `HUB_ALLOW_PENDING_OAUTH_APPROVALS` (`true|false`)
 
 ## Judgment Routing Utility
 

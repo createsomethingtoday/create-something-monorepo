@@ -1,22 +1,20 @@
 {
-  "enabledBundles": [
-    "meetings"
-  ],
+  "enabledBundles": [],
   "enabledServers": [
+    "halfdozen-dm-mcp"
+  ],
+  "disabledServers": [
     "composio-toolkit-airtable",
     "composio-toolkit-gmail",
     "composio-toolkit-webflow",
-    "halfdozen-dm-mcp",
-    "meetings"
-  ],
-  "disabledServers": [
     "create-something",
     "cs-telemetry",
     "halfdozen-telemetry",
+    "meetings",
     "notion-halfdozen-create-something",
     "playbook",
     "slack_create_something",
     "three-tier-framework"
   ],
-  "updatedAt": "2026-02-24T02:28:24.508Z"
+  "updatedAt": "2026-02-24T22:59:03.414Z"
 }

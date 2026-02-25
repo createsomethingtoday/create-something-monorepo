@@ -12,6 +12,7 @@ import {
 
 import {
   getEffectiveCodexPath,
+  loadRouting,
   loadRegistry,
   loadState,
   resolveRegistryPaths,
@@ -22,7 +23,15 @@ import {
 } from './config.js';
 import { closeDownstreamServers, connectDownstreamServers } from './downstream.js';
 import { routeProblem, type HubProblemRouteArgs } from './problem-routing.js';
-import type { McpBundleRegistry, RegistryPaths, StatePatch } from './types.js';
+import {
+  filterDirectRoutesByTenant,
+  planAliasRoutes,
+  resolveTenantRoutingContext,
+  type AliasRoutePlan,
+  type DirectToolRouteMeta,
+  type DirectRouteWithTags,
+} from './routing.js';
+import type { HubRoutingConfig, McpBundleRegistry, RegistryPaths, StatePatch } from './types.js';
 
 const HUB_NAME = 'create-something-hub';
 const HUB_VERSION = '0.1.0';
@@ -93,6 +102,15 @@ const MANAGEMENT_TOOLS: Tool[] = [
     },
   },
   {
+    name: 'hub_list_routing',
+    description: 'Show active tenant routing policy, alias plans, and filtered tool visibility.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
     name: 'hub_policy_status',
     description: 'Show active proxy policy settings (including rate limits) for this hub runtime.',
     inputSchema: {
@@ -127,11 +145,15 @@ type ProxyRoute = {
   proxyToolName: string;
   serverName: string;
   downstreamToolName: string;
+  source: 'direct' | 'alias';
+  candidates?: AliasRoutePlan['candidates'];
   call: (args: Record<string, unknown>) => Promise<any>;
 };
 
 type ProxyCatalog = {
   toolDefinitions: Tool[];
+  directRouteMetas: DirectToolRouteMeta[];
+  aliasPlans: AliasRoutePlan[];
   routes: Map<string, ProxyRoute>;
   warnings: string[];
 };
@@ -189,10 +211,16 @@ async function main(): Promise<void> {
 
 async function runServerMode(): Promise<void> {
   const { paths, registry } = loadContext();
+  const routing = loadRouting(paths);
+  const tenantRouting = resolveTenantRoutingContext(
+    routing,
+    process.env.HUB_TENANT_ID,
+    parseBooleanEnv(process.env.HUB_ALLOW_PENDING_OAUTH_APPROVALS, false),
+  );
   const initialState = loadState(paths);
   const resolution = resolveState(registry, initialState);
   const downstream = await connectDownstreamServers(registry, resolution.enabledServerNames);
-  const proxies = buildProxyCatalog(downstream.connected);
+  const proxies = buildProxyCatalog(downstream.connected, registry, routing, tenantRouting);
   const rateLimitPolicy = resolveRateLimitPolicy(process.env);
 
   const server = new Server(
@@ -244,18 +272,25 @@ async function runServerMode(): Promise<void> {
         description: 'Per-server connection status for all configured servers.',
         mimeType: 'application/json',
       },
+      {
+        uri: 'hub://routing',
+        name: 'Hub Routing',
+        description: 'Tenant policy, alias routes, and provider failover plan.',
+        mimeType: 'application/json',
+      },
     ],
   }));
 
   server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
     const uri = request.params.uri;
 
-    const status = buildStatusPayload(paths, registry, downstream, proxies, rateLimitPolicy);
+    const status = buildStatusPayload(paths, registry, downstream, proxies, rateLimitPolicy, tenantRouting);
     const registryPayload = buildRegistryPayload(registry);
     const proxyToolsPayload = {
       proxyTools: proxies.toolDefinitions.map((tool) => tool.name),
       count: proxies.toolDefinitions.length,
     };
+    const routingPayload = buildRoutingPayload(routing, tenantRouting, proxies);
 
     switch (uri) {
       case 'hub://status':
@@ -268,6 +303,8 @@ async function runServerMode(): Promise<void> {
         return toJsonResource(uri, buildStatePayload(paths, registry));
       case 'hub://connections':
         return toJsonResource(uri, buildConnectionsPayload(registry, downstream, resolution.enabledServerNames));
+      case 'hub://routing':
+        return toJsonResource(uri, routingPayload);
       default:
         throw new Error(`Unknown resource: ${uri}`);
     }
@@ -279,7 +316,7 @@ async function runServerMode(): Promise<void> {
 
     try {
       if (toolName === 'hub_status') {
-        return toJsonResult(buildStatusPayload(paths, registry, downstream, proxies, rateLimitPolicy));
+        return toJsonResult(buildStatusPayload(paths, registry, downstream, proxies, rateLimitPolicy, tenantRouting));
       }
 
       if (toolName === 'hub_list_registry') {
@@ -295,6 +332,10 @@ async function runServerMode(): Promise<void> {
 
       if (toolName === 'hub_search_proxy_tools') {
         return toJsonResult(searchProxyTools(proxies, args));
+      }
+
+      if (toolName === 'hub_list_routing') {
+        return toJsonResult(buildRoutingPayload(routing, tenantRouting, proxies));
       }
 
       if (toolName === 'hub_policy_status') {
@@ -340,6 +381,9 @@ async function runServerMode(): Promise<void> {
   console.error(
     `[${HUB_NAME}] enabled=${resolution.enabledServerNames.length} connected=${downstream.connected.length} failed=${downstream.failed.length} proxied_tools=${proxies.toolDefinitions.length}`,
   );
+  console.error(
+    `[${HUB_NAME}] tenant=${tenantRouting.tenantId} direct_tools=${proxies.directRouteMetas.length} aliases=${proxies.aliasPlans.length}`,
+  );
   if (downstream.failed.length > 0) {
     console.error(`[${HUB_NAME}] failed servers: ${downstream.failed.map((f) => f.name).join(', ')}`);
   }
@@ -369,33 +413,120 @@ async function runServerMode(): Promise<void> {
   process.on('SIGTERM', () => void shutdown());
 }
 
-function buildProxyCatalog(connectedServers: Awaited<ReturnType<typeof connectDownstreamServers>>['connected']): ProxyCatalog {
+function buildProxyCatalog(
+  connectedServers: Awaited<ReturnType<typeof connectDownstreamServers>>['connected'],
+  registry: McpBundleRegistry,
+  routing: HubRoutingConfig,
+  tenantRouting: ReturnType<typeof resolveTenantRoutingContext>,
+): ProxyCatalog {
   const toolDefinitions: Tool[] = [];
   const routes = new Map<string, ProxyRoute>();
+  const directRouteMap = new Map<string, ProxyRoute>();
   const warnings: string[] = [];
+  const directRoutesWithTags: DirectRouteWithTags[] = [];
 
   for (const server of connectedServers) {
+    const serverTags = registry.servers[server.name]?.tags ?? [];
     for (const tool of server.tools) {
       const baseProxyName = buildProxyToolName(server.name, tool.name);
-      const proxyName = reserveProxyName(baseProxyName, routes, warnings);
-
-      toolDefinitions.push({
-        ...tool,
-        name: proxyName,
-        description: `[${server.name}] ${tool.description ?? ''}`.trim(),
-        inputSchema: tool.inputSchema ?? { type: 'object', properties: {} },
-      });
-
-      routes.set(proxyName, {
+      const proxyName = reserveProxyName(baseProxyName, directRouteMap, warnings);
+      const inputSchema = normalizeToolInputSchema(tool.inputSchema);
+      const description = `[${server.name}] ${tool.description ?? ''}`.trim();
+      const routeMeta: DirectToolRouteMeta = {
         proxyToolName: proxyName,
         serverName: server.name,
         downstreamToolName: tool.name,
+        description,
+        inputSchema,
+      };
+
+      const route: ProxyRoute = {
+        proxyToolName: proxyName,
+        serverName: server.name,
+        downstreamToolName: tool.name,
+        source: 'direct',
         call: (args) => server.client.callTool({ name: tool.name, arguments: args }),
+      };
+
+      directRouteMap.set(proxyName, route);
+      directRoutesWithTags.push({
+        route: routeMeta,
+        serverTags,
       });
     }
   }
 
-  return { toolDefinitions, routes, warnings };
+  const directRouteMetas = filterDirectRoutesByTenant(directRoutesWithTags, tenantRouting.policy);
+  const allowedDirectProxyNames = new Set(directRouteMetas.map((route) => route.proxyToolName));
+
+  for (const directRouteMeta of directRouteMetas) {
+    const directRoute = directRouteMap.get(directRouteMeta.proxyToolName);
+    if (!directRoute) {
+      warnings.push(`Direct route metadata references missing route "${directRouteMeta.proxyToolName}"`);
+      continue;
+    }
+
+    routes.set(directRouteMeta.proxyToolName, directRoute);
+    toolDefinitions.push({
+      name: directRouteMeta.proxyToolName,
+      description: directRouteMeta.description,
+      inputSchema: directRouteMeta.inputSchema,
+    });
+  }
+
+  const aliasPlanResult = planAliasRoutes(routing, directRouteMetas, tenantRouting);
+  warnings.push(...aliasPlanResult.warnings);
+
+  for (const aliasPlan of aliasPlanResult.plans) {
+    const normalizedAliasName = sanitizeName(aliasPlan.aliasToolName);
+    if (normalizedAliasName !== aliasPlan.aliasToolName) {
+      warnings.push(`Alias "${aliasPlan.aliasToolName}" normalized to "${normalizedAliasName}"`);
+    }
+
+    const aliasProxyName = reserveProxyName(normalizedAliasName, routes, warnings);
+    toolDefinitions.push({
+      name: aliasProxyName,
+      description: `[alias] ${aliasPlan.description}`,
+      inputSchema: aliasPlan.inputSchema,
+    });
+
+    routes.set(aliasProxyName, {
+      proxyToolName: aliasProxyName,
+      serverName: 'hub-routing',
+      downstreamToolName: aliasPlan.aliasToolName,
+      source: 'alias',
+      candidates: aliasPlan.candidates,
+      call: async (args) => {
+        const failures: string[] = [];
+        for (const candidate of aliasPlan.candidates) {
+          const candidateProxyName = candidate.proxyToolName;
+          if (!candidateProxyName || !allowedDirectProxyNames.has(candidateProxyName)) {
+            failures.push(`[${candidate.serverName}/${candidate.downstreamToolName}] unavailable`);
+            continue;
+          }
+
+          const target = directRouteMap.get(candidateProxyName);
+          if (!target) {
+            failures.push(`[${candidate.serverName}/${candidate.downstreamToolName}] unresolved`);
+            continue;
+          }
+
+          try {
+            return await target.call(args);
+          } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : String(error);
+            failures.push(`[${candidate.serverName}/${candidate.downstreamToolName}] ${message}`);
+          }
+        }
+
+        throw new Error(
+          `Alias "${aliasPlan.aliasToolName}" exhausted all candidates. ${failures.join(' | ')}`,
+        );
+      },
+    });
+  }
+
+  return { toolDefinitions, directRouteMetas, aliasPlans: aliasPlanResult.plans, routes, warnings };
 }
 
 function reserveProxyName(baseName: string, routes: Map<string, ProxyRoute>, warnings: string[]): string {
@@ -415,6 +546,13 @@ function reserveProxyName(baseName: string, routes: Map<string, ProxyRoute>, war
 
 function buildProxyToolName(serverName: string, downstreamToolName: string): string {
   return `${sanitizeName(serverName)}__${sanitizeName(downstreamToolName)}`;
+}
+
+function normalizeToolInputSchema(inputSchema: unknown): Tool['inputSchema'] {
+  if (isRecord(inputSchema) && inputSchema.type === 'object') {
+    return inputSchema as Tool['inputSchema'];
+  }
+  return { type: 'object', properties: {} };
 }
 
 function sanitizeName(value: string): string {
@@ -466,6 +604,7 @@ function buildStatusPayload(
   downstream: Awaited<ReturnType<typeof connectDownstreamServers>>,
   proxies: ProxyCatalog,
   rateLimitPolicy?: RateLimitPolicy,
+  tenantRouting?: ReturnType<typeof resolveTenantRoutingContext>,
 ): Record<string, unknown> {
   const state = loadState(paths);
   const resolution = resolveState(registry, state);
@@ -480,6 +619,7 @@ function buildStatusPayload(
       registryPath: paths.registryPath,
       statePath: paths.statePath,
       codexConfigPath: paths.codexConfigPath,
+      routingPath: paths.routingPath,
     },
     state: resolution.state,
     enabledServerNames: resolution.enabledServerNames,
@@ -497,6 +637,10 @@ function buildStatusPayload(
     },
     connections: connectionsPayload.connections,
     proxyToolCount: proxies.toolDefinitions.length,
+    proxyToolBreakdown: {
+      direct: proxies.directRouteMetas.length,
+      aliases: proxies.aliasPlans.length,
+    },
     bundles: Object.keys(registry.bundles)
       .sort()
       .map((bundleName) => ({
@@ -504,9 +648,17 @@ function buildStatusPayload(
         enabled: resolution.state.enabledBundles.includes(bundleName),
         servers: registry.bundles[bundleName],
       })),
+    routing: tenantRouting
+      ? {
+          tenantId: tenantRouting.tenantId,
+          allowPendingOauthApprovals: tenantRouting.allowPendingOauthApprovals,
+          aliasCount: proxies.aliasPlans.length,
+        }
+      : null,
     policy: buildPolicyStatusPayload(rateLimitPolicy ?? resolveRateLimitPolicy(process.env)),
     warnings: [...resolution.warnings, ...proxies.warnings],
-    note: 'State edits apply immediately to config writes, but proxy tool list updates on hub restart.',
+    note:
+      'State edits apply immediately to config writes. Routing and proxied tool inventory update on hub restart.',
   };
 }
 
@@ -580,6 +732,38 @@ function buildRegistryPayload(registry: McpBundleRegistry): Record<string, unkno
     servers,
     bundles,
     defaults: registry.defaults ?? {},
+  };
+}
+
+function buildRoutingPayload(
+  routing: HubRoutingConfig,
+  tenantRouting: ReturnType<typeof resolveTenantRoutingContext>,
+  proxies: ProxyCatalog,
+): Record<string, unknown> {
+  const aliasPlans = proxies.aliasPlans.map((plan) => ({
+    aliasToolName: plan.aliasToolName,
+    description: plan.description,
+    candidateCount: plan.candidates.length,
+    candidates: plan.candidates.map((candidate) => ({
+      serverName: candidate.serverName,
+      downstreamToolName: candidate.downstreamToolName,
+      provider: candidate.provider ?? null,
+      oauthApproval: candidate.oauthApproval ?? null,
+      directProxyToolName: candidate.proxyToolName ?? null,
+    })),
+    skippedCandidates: plan.skippedCandidates,
+  }));
+
+  return {
+    tenant: {
+      tenantId: tenantRouting.tenantId,
+      allowPendingOauthApprovals: tenantRouting.allowPendingOauthApprovals,
+      policy: tenantRouting.policy,
+    },
+    configuredAliases: Object.keys(routing.aliases ?? {}).sort(),
+    activeAliases: aliasPlans,
+    directProxyToolCount: proxies.directRouteMetas.length,
+    totalProxyToolCount: proxies.toolDefinitions.length,
   };
 }
 
@@ -721,6 +905,14 @@ function parsePositiveInt(raw: string | undefined, fallback: number): number {
   return parsed;
 }
 
+function parseBooleanEnv(raw: string | undefined, fallback: boolean): boolean {
+  if (!raw) return fallback;
+  const normalized = raw.trim().toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+  return fallback;
+}
+
 function searchProxyTools(
   proxies: ProxyCatalog,
   args: Record<string, unknown>,
@@ -735,11 +927,14 @@ function searchProxyTools(
   const all = Array.from(proxies.routes.values())
     .map((route) => {
       const definition = definitionByName.get(route.proxyToolName);
+      const candidateServers = (route.candidates ?? []).map((candidate) => candidate.serverName);
       return {
         proxyToolName: route.proxyToolName,
         serverName: route.serverName,
         downstreamToolName: route.downstreamToolName,
         description: definition?.description ?? '',
+        source: route.source,
+        candidateServers,
       };
     })
     .sort((a, b) => a.proxyToolName.localeCompare(b.proxyToolName));
@@ -758,7 +953,9 @@ function searchProxyTools(
       item.proxyToolName.toLowerCase().includes(q) ||
       item.serverName.toLowerCase().includes(q) ||
       item.downstreamToolName.toLowerCase().includes(q) ||
-      item.description.toLowerCase().includes(q)
+      item.description.toLowerCase().includes(q) ||
+      item.source.toLowerCase().includes(q) ||
+      item.candidateServers.some((server) => server.toLowerCase().includes(q))
     );
   });
 
@@ -1011,6 +1208,8 @@ async function runAdminMode(args: AdminArgs): Promise<void> {
     },
     {
       toolDefinitions: [],
+      directRouteMetas: [],
+      aliasPlans: [],
       routes: new Map(),
       warnings: [],
     },
@@ -1046,6 +1245,9 @@ Environment overrides:
   CS_MCP_HUB_REGISTRY
   CS_MCP_HUB_STATE
   CS_MCP_HUB_CODEX_CONFIG
+  CS_MCP_HUB_ROUTING
+  HUB_TENANT_ID
+  HUB_ALLOW_PENDING_OAUTH_APPROVALS
 `);
 }
 

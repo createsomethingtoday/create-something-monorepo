@@ -77,12 +77,14 @@
 	.milestones-inner {
 		padding: var(--space-3, 0.75rem);
 		overflow-x: auto;
+		overflow-y: hidden;
+		max-width: 100%;
+		overscroll-behavior-x: contain;
 	}
 
 	.milestones-inner :global(svg.diagram.timeline) {
-		width: 100%;
+		width: max(100%, 760px);
 		height: auto;
-		min-width: 760px;
 		display: block;
 	}
 
@@ -97,7 +99,7 @@
 
 	.timeline-item {
 		display: grid;
-		grid-template-columns: 18px 1fr;
+		grid-template-columns: minmax(18px, 18px) minmax(0, 1fr);
 		gap: var(--space-4, 1rem);
 		align-items: start;
 	}
@@ -133,6 +135,7 @@
 	}
 
 	.timeline-body {
+		min-width: 0;
 		padding: var(--space-4, 1rem);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg, 14px);
@@ -163,6 +166,7 @@
 		color: var(--color-fg-secondary);
 		margin-bottom: var(--space-4, 1rem);
 		line-height: var(--leading-relaxed);
+		overflow-wrap: anywhere;
 	}
 
 	.timeline-bullets {
@@ -175,6 +179,7 @@
 		font-size: var(--text-body-sm);
 		line-height: var(--leading-relaxed);
 		margin-bottom: var(--space-2, 0.5rem);
+		overflow-wrap: anywhere;
 	}
 
 	.timeline-bullets li:last-child {

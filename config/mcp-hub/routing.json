@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "defaults": {
+    "tenant": "default",
+    "allowPendingOauthApprovals": false
+  },
+  "tenants": {
+    "default": {}
+  },
+  "aliases": {}
+}
