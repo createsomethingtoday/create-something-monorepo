@@ -35,12 +35,12 @@ MCP_DESCRIPTION = "Half Dozen DM MCP. Notion tools plus DM-namespaced Composio p
 ENABLED_TOOLSETS = "notion,composio"
 COMPOSIO_ENTITY_ID = "dm"
 COMPOSIO_PROXY_MODE = "allowlist"
-COMPOSIO_ALLOWED_TOOLKITS = "googledrive,zoom,slack,quickbooks"
-COMPOSIO_ALLOWED_TOOLKITS_BY_ENTITY = "{\"dm\":\"googledrive,zoom,slack,quickbooks\"}"
+COMPOSIO_ALLOWED_TOOLKITS = "googledrive,zoom,slack,quickbooks,dropbox"
+COMPOSIO_ALLOWED_TOOLKITS_BY_ENTITY = "{\"dm\":\"googledrive,zoom,slack,quickbooks,dropbox\"}"
 COMPOSIO_TOOL_NAME_PREFIX = "dm_composio"
 COMPOSIO_TOOL_CACHE_SECONDS = "300"
 # Keep empty in source; inject real mapping per environment (toolkit -> auth config id).
-COMPOSIO_AUTH_CONFIG_MAP = "{\"googledrive\":\"ac_RSiSxytldB_X\",\"googlesheets\":\"ac_OM0nTZEDZo8B\",\"youtube\":\"ac_a0HEkJuhNwV6\",\"zoom\":\"ac_HICJVIWYyAy9\",\"slack\":\"ac_hiMdof4yHMQL\",\"quickbooks\":\"ac_r4r7Zuy8NCFL\"}"
+COMPOSIO_AUTH_CONFIG_MAP = "{\"googledrive\":\"ac_RSiSxytldB_X\",\"googlesheets\":\"ac_OM0nTZEDZo8B\",\"youtube\":\"ac_a0HEkJuhNwV6\",\"zoom\":\"ac_HICJVIWYyAy9\",\"slack\":\"ac_hiMdof4yHMQL\",\"quickbooks\":\"ac_r4r7Zuy8NCFL\",\"dropbox\":\"ac_xY-40ToAQEPy\"}"
 
 # Secrets (set via wrangler secret put)
 # MCP_API_KEY — required for DM MCP transport auth (Bearer or X-API-Key)

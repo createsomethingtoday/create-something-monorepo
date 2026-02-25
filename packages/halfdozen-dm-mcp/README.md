@@ -28,7 +28,7 @@ wrangler secret put COMPOSIO_API_KEY
 
 - `ENABLED_TOOLSETS=notion,composio`
 - `COMPOSIO_PROXY_MODE=allowlist` (recommended)
-- `COMPOSIO_ALLOWED_TOOLKITS=googledrive,zoom,slack,quickbooks` (example)
+- `COMPOSIO_ALLOWED_TOOLKITS=googledrive,zoom,slack,quickbooks,dropbox` (example)
 - `COMPOSIO_ALLOWED_TOOLKITS_BY_ENTITY={...}` (optional per-entity override)
 - `COMPOSIO_ENTITY_ID=dm` (default entity fallback)
 - `COMPOSIO_TOOL_NAME_PREFIX=dm_composio`
