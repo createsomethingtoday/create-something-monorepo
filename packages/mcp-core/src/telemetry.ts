@@ -159,6 +159,141 @@ function getCurrentPeriod(): string {
   return `${y}-${m}`;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  return value as Record<string, unknown>;
+}
+
+function normalizeString(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function readHeaderValue(headers: unknown, name: string): string | null {
+  const normalizedName = name.toLowerCase();
+
+  if (!headers) return null;
+
+  // Headers-like object
+  if (typeof headers === 'object' && headers !== null) {
+    const maybeGet = (headers as { get?: unknown }).get;
+    if (typeof maybeGet === 'function') {
+      try {
+        const value = (maybeGet as (key: string) => unknown).call(headers, name);
+        const normalized = normalizeString(value);
+        if (normalized) return normalized;
+      } catch {
+        // Ignore malformed headers objects and continue with fallback parsing.
+      }
+    }
+  }
+
+  // Array-like headers (e.g. [["x-header", "value"]])
+  if (Array.isArray(headers)) {
+    for (const entry of headers) {
+      if (!Array.isArray(entry) || entry.length < 2) continue;
+      if (String(entry[0]).toLowerCase() !== normalizedName) continue;
+      const normalized = normalizeString(entry[1]);
+      if (normalized) return normalized;
+    }
+    return null;
+  }
+
+  // Plain object headers
+  const headersRecord = asRecord(headers);
+  if (!headersRecord) return null;
+
+  for (const [key, value] of Object.entries(headersRecord)) {
+    if (key.toLowerCase() !== normalizedName) continue;
+
+    const direct = normalizeString(value);
+    if (direct) return direct;
+
+    if (Array.isArray(value) && value.length > 0) {
+      const first = normalizeString(value[0]);
+      if (first) return first;
+    }
+  }
+
+  return null;
+}
+
+function parseBearerAccountId(authorizationHeader: string | null): string | null {
+  if (!authorizationHeader) return null;
+  if (!authorizationHeader.toLowerCase().startsWith('bearer ')) return null;
+  return normalizeString(authorizationHeader.slice(7));
+}
+
+function inferAccountIdFromHandlerArgs(handlerArgs: unknown[]): string | null {
+  const params = asRecord(handlerArgs[0]);
+  if (params) {
+    const fromParams =
+      normalizeString(params.account_id) ??
+      normalizeString(params.entity_id) ??
+      normalizeString(params.__dm_entity_id);
+    if (fromParams) return fromParams;
+  }
+
+  const extra = asRecord(handlerArgs[1]);
+  if (!extra) return null;
+
+  const requestInfo = asRecord(extra.requestInfo) ?? extra;
+  const requestInfoRequest = asRecord(requestInfo.request);
+
+  const fromHeaders =
+    readHeaderValue(requestInfo.headers, 'x-mcp-account-id') ??
+    readHeaderValue(requestInfo.headers, 'x-account-id') ??
+    readHeaderValue(requestInfoRequest?.headers, 'x-mcp-account-id') ??
+    readHeaderValue(requestInfoRequest?.headers, 'x-account-id');
+  if (fromHeaders) return fromHeaders;
+
+  const fromAuthorization =
+    parseBearerAccountId(readHeaderValue(requestInfo.headers, 'authorization')) ??
+    parseBearerAccountId(readHeaderValue(requestInfoRequest?.headers, 'authorization'));
+  if (fromAuthorization) return fromAuthorization;
+
+  return null;
+}
+
+function extractToolErrorMessage(result: Record<string, unknown>): string | undefined {
+  const direct = normalizeString(result.error) ?? normalizeString(result.message);
+  if (direct) return direct;
+
+  const structured = asRecord(result.structuredContent);
+  const structuredError = normalizeString(structured?.error) ?? normalizeString(structured?.message);
+  if (structuredError) return structuredError;
+
+  const content = Array.isArray(result.content) ? result.content : [];
+  for (const entry of content) {
+    const contentRecord = asRecord(entry);
+    const text = normalizeString(contentRecord?.text);
+    if (!text) continue;
+
+    if (text.toLowerCase().startsWith('error:')) {
+      const trimmed = text.slice(6).trim();
+      return trimmed.length > 0 ? trimmed : text;
+    }
+    return text;
+  }
+
+  return undefined;
+}
+
+function classifyToolResult(result: unknown): { success: boolean; errorMessage?: string } {
+  const record = asRecord(result);
+  if (!record || record.isError !== true) {
+    return { success: true };
+  }
+
+  return {
+    success: false,
+    errorMessage: extractToolErrorMessage(record),
+  };
+}
+
 // =============================================================================
 // Core Operations
 // =============================================================================
@@ -354,7 +489,7 @@ export async function cleanupOldInvocations(
  */
 export function enableTelemetry(
   server: McpServer,
-  db: D1Database,
+  db: D1Database | undefined,
   serverName: string,
   getAccountId?: () => string,
   braintrustOptions?: BraintrustTelemetryOptions,
@@ -362,10 +497,91 @@ export function enableTelemetry(
   const resolveAccount = getAccountId || (() => 'operator');
   const braintrustEnabled = initBraintrustTelemetry(braintrustOptions || {}, serverName);
 
-  // Proxy server.tool() to wrap handlers with metering.
+  const resolveInvocationAccountId = (handlerArgs: unknown[]): string => {
+    let configuredAccountId: string | null = null;
+    try {
+      configuredAccountId = normalizeString(resolveAccount());
+    } catch (error) {
+      console.warn('[telemetry] getAccountId threw, using fallback resolution:', error);
+    }
+
+    const inferredAccountId = inferAccountIdFromHandlerArgs(handlerArgs);
+    if (configuredAccountId && configuredAccountId.toLowerCase() !== 'operator') {
+      return configuredAccountId;
+    }
+    if (inferredAccountId) {
+      return inferredAccountId;
+    }
+    return configuredAccountId ?? 'operator';
+  };
+
+  // Proxy server.tool() and server.registerTool() to wrap handlers with metering.
   // Cast through `any` to bypass TypeScript's strict overload checking on .apply().
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const originalToolFn = (server as any).tool;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const originalRegisterToolFn = (server as any).registerTool;
+
+  const wrapRegisteredHandler = (
+    toolName: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    originalHandler: any,
+  ) => async (...handlerArgs: unknown[]) => {
+    const start = Date.now();
+    const accountId = resolveInvocationAccountId(handlerArgs);
+
+    try {
+      const result = await originalHandler.apply(null, handlerArgs);
+      const durationMs = Date.now() - start;
+      const classification = classifyToolResult(result);
+      const success = classification.success;
+      const toolError =
+        classification.errorMessage ?? (success ? undefined : `Tool "${toolName}" returned isError=true`);
+
+      if (db) {
+        recordInvocation(db, serverName, accountId, toolName, durationMs, success, toolError)
+          .catch((e: unknown) => console.warn(`[telemetry] metering failed for ${toolName}:`, e));
+      }
+
+      if (braintrustEnabled) {
+        emitBraintrustInvocation({
+          serverName,
+          toolName,
+          accountId,
+          input: handlerArgs[0],
+          output: result,
+          durationMs,
+          success,
+          error: toolError,
+        }).catch((e: unknown) => console.warn(`[telemetry] braintrust emit failed for ${toolName}:`, e));
+      }
+
+      return result;
+    } catch (error) {
+      const durationMs = Date.now() - start;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+
+      if (db) {
+        recordInvocation(db, serverName, accountId, toolName, durationMs, false, error)
+          .catch((e: unknown) => console.warn(`[telemetry] metering failed for ${toolName}:`, e));
+      }
+
+      if (braintrustEnabled) {
+        emitBraintrustInvocation({
+          serverName,
+          toolName,
+          accountId,
+          input: handlerArgs[0],
+          output: { error: errorMessage },
+          durationMs,
+          success: false,
+          error: errorMessage,
+        }).catch((e: unknown) => console.warn(`[telemetry] braintrust emit failed for ${toolName}:`, e));
+      }
+
+      throw error;
+    }
+  };
 
   (server as any).tool = function (...args: unknown[]) {
     const lastIdx = args.length - 1;
@@ -375,65 +591,40 @@ export function enableTelemetry(
       return originalToolFn.apply(server, args);
     }
 
-    const toolName = args[0] as string;
+    const toolName = String(args[0] ?? '');
 
     // Skip metering on the submit_feedback tool (meta-operation)
     if (toolName === 'submit_feedback') {
       return originalToolFn.apply(server, args);
     }
 
-    // Wrap the handler with metering
-    args[lastIdx] = async (...handlerArgs: unknown[]) => {
-      const start = Date.now();
-      let accountId = 'operator';
-      try {
-        accountId = resolveAccount();
-      } catch (error) {
-        console.warn('[telemetry] getAccountId threw, using fallback accountId=operator:', error);
-      }
-      try {
-        const result = await (originalHandler as Function).apply(null, handlerArgs);
-        const durationMs = Date.now() - start;
-        recordInvocation(db, serverName, accountId, toolName, durationMs, true)
-          .catch((e: unknown) => console.warn(`[telemetry] metering failed for ${toolName}:`, e));
-        if (braintrustEnabled) {
-          emitBraintrustInvocation({
-            serverName,
-            toolName,
-            accountId,
-            input: handlerArgs[0],
-            output: result,
-            durationMs,
-            success: true,
-          }).catch((e: unknown) => console.warn(`[telemetry] braintrust emit failed for ${toolName}:`, e));
-        }
-        return result;
-      } catch (error) {
-        const durationMs = Date.now() - start;
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        recordInvocation(db, serverName, accountId, toolName, durationMs, false, error)
-          .catch((e: unknown) => console.warn(`[telemetry] metering failed for ${toolName}:`, e));
-        if (braintrustEnabled) {
-          emitBraintrustInvocation({
-            serverName,
-            toolName,
-            accountId,
-            input: handlerArgs[0],
-            output: { error: errorMessage },
-            durationMs,
-            success: false,
-            error: errorMessage,
-          }).catch((e: unknown) => console.warn(`[telemetry] braintrust emit failed for ${toolName}:`, e));
-        }
-        throw error;
-      }
-    };
-
+    args[lastIdx] = wrapRegisteredHandler(toolName, originalHandler);
     return originalToolFn.apply(server, args);
   };
 
-  // Register telemetry resources
-  registerTelemetryResources(server, db, serverName, resolveAccount);
+  if (typeof originalRegisterToolFn === 'function') {
+    (server as any).registerTool = function (...args: unknown[]) {
+      const handlerIdx = 2;
+      const originalHandler = args[handlerIdx];
+
+      if (typeof originalHandler !== 'function') {
+        return originalRegisterToolFn.apply(server, args);
+      }
+
+      const toolName = String(args[0] ?? '');
+      if (toolName === 'submit_feedback') {
+        return originalRegisterToolFn.apply(server, args);
+      }
+
+      args[handlerIdx] = wrapRegisteredHandler(toolName, originalHandler);
+      return originalRegisterToolFn.apply(server, args);
+    };
+  }
+
+  // Register telemetry resources when D1 is available.
+  if (db) {
+    registerTelemetryResources(server, db, serverName, resolveAccount);
+  }
 }
 
 // =============================================================================

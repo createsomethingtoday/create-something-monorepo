@@ -33,6 +33,7 @@ import { registerClipsResources } from '../src/resources/clips.js';
 import { registerStatusResources } from '../src/resources/status.js';
 import { registerPrompts } from '../src/prompts/analysis.js';
 import { initSchema, type D1Database } from '../src/lib/db.js';
+import { createHalfDozenZoomExecutionHooks } from '../src/lib/composio-security-policy.js';
 import type { SteelSessionContext } from '../src/lib/steel.js';
 
 // =============================================================================
@@ -92,11 +93,30 @@ export class ZoomClipsMCP extends McpAgent<Env> {
   });
 
   private schemaInitialized = false;
+  private currentAccountId = 'operator';
+
+  override async fetch(request: Request): Promise<Response> {
+    this.currentAccountId = this.getAccountIdFromRequest(request) ?? 'operator';
+    return super.fetch(request);
+  }
+
+  private getAccountIdFromRequest(request: Request): string | null {
+    const accountHeader = request.headers.get('x-mcp-account-id') ?? request.headers.get('x-account-id');
+    if (accountHeader?.trim()) return accountHeader.trim();
+
+    const auth = request.headers.get('authorization');
+    if (auth?.toLowerCase().startsWith('bearer ')) {
+      const token = auth.slice(7).trim();
+      if (token) return token;
+    }
+
+    return null;
+  }
 
   async init() {
     // Telemetry: meter all tool calls + register health/usage resources
     if (this.env.FEEDBACK_DB) {
-      enableTelemetry(this.server, this.env.FEEDBACK_DB, 'halfdozen-zoom-sync', undefined, {
+      enableTelemetry(this.server, this.env.FEEDBACK_DB, 'halfdozen-zoom-sync', () => this.currentAccountId, {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
         projectName: resolveBraintrustProjectName(this.env),
       });
@@ -179,7 +199,8 @@ export class ZoomClipsMCP extends McpAgent<Env> {
     if (this.env.COMPOSIO_API_KEY) {
       const composioFactory = new ComposioToolFactory({
         apiKey: this.env.COMPOSIO_API_KEY,
-        apps: [{ app: 'ZOOM', prefix: 'zoom_api' }],
+        apps: [{ app: 'ZOOM', prefix: 'zoom_api', readOnly: true }],
+        executionHooks: createHalfDozenZoomExecutionHooks(),
       });
       const composioCount = await composioFactory.registerToolsOnMcpServer(
         this.server as import('@create-something/composio-bridge').McpServerLike,

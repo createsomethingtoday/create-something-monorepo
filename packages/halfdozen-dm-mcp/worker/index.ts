@@ -73,11 +73,30 @@ export class HalfDozenDmMcp extends McpAgent<Env> {
     name: SERVER_NAME,
     version: '1.0.0',
   });
+  private currentAccountId = 'operator';
+
+  override async fetch(request: Request): Promise<Response> {
+    this.currentAccountId = this.getAccountIdFromRequest(request) ?? 'operator';
+    return super.fetch(request);
+  }
+
+  private getAccountIdFromRequest(request: Request): string | null {
+    const accountHeader = request.headers.get('x-mcp-account-id') ?? request.headers.get('x-account-id');
+    if (accountHeader?.trim()) return accountHeader.trim();
+
+    const auth = request.headers.get('authorization');
+    if (auth?.toLowerCase().startsWith('bearer ')) {
+      const token = auth.slice(7).trim();
+      if (token) return token;
+    }
+
+    return null;
+  }
 
   async init() {
     // Telemetry: meter all tool calls + register health/usage resources
     if (this.env.FEEDBACK_DB) {
-      enableTelemetry(this.server, this.env.FEEDBACK_DB, SERVER_NAME, undefined, {
+      enableTelemetry(this.server, this.env.FEEDBACK_DB, SERVER_NAME, () => this.currentAccountId, {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
         projectName: resolveBraintrustProjectName(this.env),
       });
@@ -225,4 +244,3 @@ export default {
     return new Response('Not found', { status: 404 });
   },
 };
-
