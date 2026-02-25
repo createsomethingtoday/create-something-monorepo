@@ -85,7 +85,7 @@
 				<div class="info-card">
 					<h2>Quick Links</h2>
 						<div class="quick-links">
-							<a href="/demo" class="quick-link">
+							<a href="/library" class="quick-link">
 								<span class="quick-link-icon">▸</span>
 								<span>Open Video Library</span>
 							</a>

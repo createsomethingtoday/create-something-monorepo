@@ -14,6 +14,7 @@ Crawl-delay: 1
 Disallow: /api/
 Disallow: /admin-demo/
 Disallow: /demo/
+Disallow: /library/
 
 # Allow important assets
 Allow: /*.css

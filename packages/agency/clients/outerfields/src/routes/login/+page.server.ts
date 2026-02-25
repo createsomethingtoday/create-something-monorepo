@@ -10,12 +10,12 @@ export const load: PageServerLoad = async ({ url, locals, platform }) => {
 			((platform as { env?: Record<string, string | undefined> } | undefined)?.env)
 		);
 		const adminHome = '/admin/videos';
-		const defaultHome = isAdminUser(locals.user, runtimeEnv) ? adminHome : '/demo';
+		const defaultHome = isAdminUser(locals.user, runtimeEnv) ? adminHome : '/library';
 		const redirectTo = url.searchParams.get('redirect') || defaultHome;
 		redirect(302, redirectTo);
 	}
 
 	return {
-		redirectTo: url.searchParams.get('redirect') || '/demo'
+		redirectTo: url.searchParams.get('redirect') || '/library'
 	};
 };

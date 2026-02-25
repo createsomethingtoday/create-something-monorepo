@@ -28,10 +28,10 @@
 	"prefer_related_applications": false,
 	"shortcuts": [
 		{
-			"name": "Demo",
-			"short_name": "Demo",
-			"description": "Try the OUTERFIELDS demo",
-			"url": "/demo",
+			"name": "Library",
+			"short_name": "Library",
+			"description": "Open the OUTERFIELDS video library",
+			"url": "/library",
 			"icons": [{ "src": "/favicon.svg", "sizes": "any" }]
 		},
 		{

@@ -46,7 +46,7 @@
 					<ul class="column-links">
 						<li><a href="/#features">Features</a></li>
 						<li><a href="/#pricing">Pricing</a></li>
-						<li><a href="/demo">Library</a></li>
+						<li><a href="/library">Library</a></li>
 						<li><a href="/changelog">Changelog</a></li>
 					</ul>
 				</div>
