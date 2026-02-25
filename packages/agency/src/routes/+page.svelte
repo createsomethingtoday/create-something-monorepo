@@ -1110,13 +1110,8 @@
 			font-size: clamp(2.75rem, 8vw, 5rem);
 		}
 
-		.hero-cta {
-			flex-wrap: wrap;
-			row-gap: var(--space-3, 0.75rem);
-		}
-
 		.hero-link {
-			flex-basis: 100%;
+			display: none;
 		}
 
 		.offerings-grid {
