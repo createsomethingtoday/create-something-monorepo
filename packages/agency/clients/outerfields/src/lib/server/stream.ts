@@ -3,7 +3,6 @@ import { createHmac } from 'node:crypto';
 interface StreamConfig {
 	accountId: string;
 	apiToken: string;
-	customerCode: string;
 }
 
 export interface StreamConfigEnv extends Record<string, string | undefined> {
@@ -71,7 +70,6 @@ export function getMaxDirectUploadBytes(): number {
 function requireConfig(env: StreamConfigEnv): StreamConfig {
 	const accountId = env.CLOUDFLARE_ACCOUNT_ID || env.CF_ACCOUNT_ID || env.CLOUDFLARE_STREAM_ACCOUNT_ID;
 	const apiToken = env.CLOUDFLARE_STREAM_API_TOKEN || env.STREAM_API_TOKEN;
-	const customerCode = env.CLOUDFLARE_STREAM_CUSTOMER_CODE || env.STREAM_CUSTOMER_CODE;
 
 	if (!accountId) {
 		throw new Error('Missing CLOUDFLARE_ACCOUNT_ID');
@@ -79,14 +77,10 @@ function requireConfig(env: StreamConfigEnv): StreamConfig {
 	if (!apiToken) {
 		throw new Error('Missing CLOUDFLARE_STREAM_API_TOKEN');
 	}
-	if (!customerCode) {
-		throw new Error('Missing CLOUDFLARE_STREAM_CUSTOMER_CODE');
-	}
 
 	return {
 		accountId,
-		apiToken,
-		customerCode
+		apiToken
 	};
 }
 
@@ -216,12 +210,14 @@ export async function createStreamPlaybackToken(
 	};
 }
 
-export function buildSignedHlsUrl(customerCode: string, token: string): string {
-	return `https://customer-${customerCode}.cloudflarestream.com/${token}/manifest/video.m3u8`;
+export function buildSignedHlsUrl(tokenOrCustomerCode: string, maybeToken?: string): string {
+	const token = (maybeToken ?? tokenOrCustomerCode).trim();
+	return `https://videodelivery.net/${token}/manifest/video.m3u8`;
 }
 
-export function buildPublicHlsUrl(customerCode: string, streamUid: string): string {
-	return `https://customer-${customerCode}.cloudflarestream.com/${streamUid}/manifest/video.m3u8`;
+export function buildPublicHlsUrl(streamUidOrCustomerCode: string, maybeStreamUid?: string): string {
+	const streamUid = (maybeStreamUid ?? streamUidOrCustomerCode).trim();
+	return `https://videodelivery.net/${streamUid}/manifest/video.m3u8`;
 }
 
 function parseWebhookSignatureHeader(signatureHeader: string): { timestamp: number; signature: string } | null {

@@ -33,12 +33,21 @@ export interface RegisterComposioProxyToolsDeps {
   authConfigMapRaw?: string;
 }
 
+export interface DiscoverComposioProxyToolsDeps {
+  composioClient: ComposioClient;
+  composioConfig: DmComposioConfig;
+}
+
 interface ProxyRoute {
   name: string;
   toolkit: string;
   composioToolSlug: string;
   description: string;
   inputSchema: z.ZodTypeAny;
+}
+
+interface ProxyDiscoveryResult extends ComposioProxyRegistrationResult {
+  routes: ProxyRoute[];
 }
 
 const MANAGEMENT_TOOL_NAMES = new Set([
@@ -53,40 +62,9 @@ export async function registerComposioProxyTools(
   server: McpServer,
   deps: RegisterComposioProxyToolsDeps
 ): Promise<ComposioProxyRegistrationResult> {
-  const warnings: string[] = [];
   const authConfigMap = parseAuthConfigMap(deps.authConfigMapRaw);
-  const discovery = await resolveToolkitDiscovery(deps.composioClient, deps.composioConfig);
-
-  warnings.push(...discovery.warnings);
-
-  const registeredToolkits = discovery.toolkits;
-  const proxiedTools: RegisteredDmComposioTool[] = [];
-  const routes: ProxyRoute[] = [];
-  const usedNames = new Set<string>(MANAGEMENT_TOOL_NAMES);
-
-  for (const toolkit of registeredToolkits) {
-    try {
-      const defs = await deps.composioClient.getTools([toolkit], {
-        important: false,
-        limit: 10000,
-      });
-
-      for (const def of defs) {
-        const route = buildRoute(def, toolkit, deps.composioConfig.toolNamePrefix, usedNames);
-        routes.push(route);
-        proxiedTools.push({
-          name: route.name,
-          description: route.description,
-          toolkit,
-          composioToolSlug: def.slug,
-        });
-      }
-    } catch (error) {
-      warnings.push(
-        `Failed to load Composio tools for toolkit "${toolkit}": ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
+  const discovery = await discoverComposioRoutes(deps);
+  const { routes, proxiedTools, registeredToolkits, warnings } = discovery;
 
   registerManagementTools(server, deps, authConfigMap, registeredToolkits, proxiedTools);
 
@@ -142,6 +120,59 @@ export async function registerComposioProxyTools(
     proxiedTools,
     registeredToolkits,
     warnings,
+  };
+}
+
+export async function discoverComposioProxyTools(
+  deps: DiscoverComposioProxyToolsDeps
+): Promise<ComposioProxyRegistrationResult> {
+  const discovery = await discoverComposioRoutes(deps);
+  const { routes: _routes, ...publicResult } = discovery;
+  return publicResult;
+}
+
+async function discoverComposioRoutes(
+  deps: DiscoverComposioProxyToolsDeps
+): Promise<ProxyDiscoveryResult> {
+  const warnings: string[] = [];
+  const discovery = await resolveToolkitDiscovery(deps.composioClient, deps.composioConfig);
+
+  warnings.push(...discovery.warnings);
+
+  const registeredToolkits = discovery.toolkits;
+  const proxiedTools: RegisteredDmComposioTool[] = [];
+  const routes: ProxyRoute[] = [];
+  const usedNames = new Set<string>(MANAGEMENT_TOOL_NAMES);
+
+  for (const toolkit of registeredToolkits) {
+    try {
+      const defs = await deps.composioClient.getTools([toolkit], {
+        important: false,
+        limit: 10000,
+      });
+
+      for (const def of defs) {
+        const route = buildRoute(def, toolkit, deps.composioConfig.toolNamePrefix, usedNames);
+        routes.push(route);
+        proxiedTools.push({
+          name: route.name,
+          description: route.description,
+          toolkit,
+          composioToolSlug: def.slug,
+        });
+      }
+    } catch (error) {
+      warnings.push(
+        `Failed to load Composio tools for toolkit "${toolkit}": ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  return {
+    proxiedTools,
+    registeredToolkits,
+    warnings,
+    routes,
   };
 }
 

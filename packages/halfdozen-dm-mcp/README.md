@@ -28,7 +28,7 @@ wrangler secret put COMPOSIO_API_KEY
 
 - `ENABLED_TOOLSETS=notion,composio`
 - `COMPOSIO_PROXY_MODE=allowlist` (recommended)
-- `COMPOSIO_ALLOWED_TOOLKITS=googledrive,zoom,slack,quickbooks` (example)
+- `COMPOSIO_ALLOWED_TOOLKITS=googledrive,zoom,slack,quickbooks,dropbox` (example)
 - `COMPOSIO_ALLOWED_TOOLKITS_BY_ENTITY={...}` (optional per-entity override)
 - `COMPOSIO_ENTITY_ID=dm` (default entity fallback)
 - `COMPOSIO_TOOL_NAME_PREFIX=dm_composio`
@@ -107,6 +107,11 @@ If `MCP_API_KEY` is missing in a deployment, the server returns `500` on MCP tra
 
 - `dm://tools` — tools exposed by currently enabled toolsets
 - `dm://toolsets` — enabled toolsets + workspace + composio runtime/allow-list config
+
+## Root Metadata (`/`)
+
+- `GET /` returns server metadata including the resolved tool list.
+- When Composio is enabled, the endpoint uses a cached Composio discovery fallback so DM proxy tools (for example `dm_composio__dropbox__*`) are visible even before an `/mcp` session warms in-memory state.
 
 ## Client Setup
 

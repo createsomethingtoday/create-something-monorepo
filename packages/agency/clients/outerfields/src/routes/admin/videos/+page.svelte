@@ -40,6 +40,10 @@
 	let actionBusy = $state(false);
 	let actionMessage = $state<string | null>(null);
 	let actionError = $state<string | null>(null);
+	let thumbnailFilesByVideoId = $state<Record<string, File | null>>({});
+	let thumbnailUploadBusyByVideoId = $state<Record<string, boolean>>({});
+	let thumbnailUploadMessageByVideoId = $state<Record<string, string | null>>({});
+	let thumbnailUploadErrorByVideoId = $state<Record<string, boolean>>({});
 
 	type VideoRow = PageData['videos'][number];
 	type EditDraft = {
@@ -60,6 +64,19 @@
 		data?: { videoId: string; uploadUrl: string; tusResumable: string };
 		error?: string;
 		message?: string;
+	};
+
+	type ThumbnailUploadJson = {
+		success?: boolean;
+		data?: VideoRow;
+		error?: string;
+		upload?: {
+			key: string;
+			contentType: string;
+			size: number;
+			width: number;
+			height: number;
+		};
 	};
 
 	let drafts = $state<Record<string, EditDraft>>({});
@@ -151,6 +168,14 @@
 		const parsed = Number.parseInt(trimmed, 10);
 		if (!Number.isFinite(parsed)) return null;
 		return parsed;
+	}
+
+	function getThumbnailSrc(thumbnailPath: string): string {
+		const normalized = thumbnailPath.trim();
+		if (!normalized) return '';
+		if (normalized.startsWith('http://') || normalized.startsWith('https://')) return normalized;
+		if (normalized.startsWith('/thumbnails/')) return normalized;
+		return `/thumbnails${normalized.startsWith('/') ? '' : '/'}${normalized}`;
 	}
 
 	function getVideoById(videoId: string): VideoRow | undefined {
@@ -314,6 +339,60 @@
 		uploadFile = input.files?.[0] || null;
 	}
 
+	function handleThumbnailFileChange(videoId: string, e: Event) {
+		const input = e.target as HTMLInputElement;
+		thumbnailFilesByVideoId[videoId] = input.files?.[0] || null;
+		thumbnailUploadMessageByVideoId[videoId] = null;
+		thumbnailUploadErrorByVideoId[videoId] = false;
+	}
+
+	async function uploadThumbnail(videoId: string) {
+		const file = thumbnailFilesByVideoId[videoId];
+		if (!file) {
+			thumbnailUploadMessageByVideoId[videoId] = 'Choose an image file first.';
+			thumbnailUploadErrorByVideoId[videoId] = true;
+			return;
+		}
+
+		thumbnailUploadBusyByVideoId[videoId] = true;
+		thumbnailUploadMessageByVideoId[videoId] = null;
+		thumbnailUploadErrorByVideoId[videoId] = false;
+
+		try {
+			const formData = new FormData();
+			formData.set('file', file);
+
+			const response = await fetch(`/api/v1/admin/videos/${videoId}/thumbnail`, {
+				method: 'POST',
+				body: formData
+			});
+
+			const raw = await response.text();
+			let payload: ThumbnailUploadJson | null = null;
+			try {
+				payload = JSON.parse(raw) as ThumbnailUploadJson;
+			} catch {
+				payload = null;
+			}
+
+			if (!response.ok || !payload?.success || !payload.data) {
+				const message = payload?.error || (raw?.trim() ? raw.trim() : null) || 'Failed to upload thumbnail';
+				throw new Error(message);
+			}
+
+			upsertVideoRow(payload.data);
+			thumbnailFilesByVideoId[videoId] = null;
+			thumbnailUploadMessageByVideoId[videoId] = `Thumbnail uploaded (${payload.upload?.width ?? '?'}x${payload.upload?.height ?? '?'})`;
+			thumbnailUploadErrorByVideoId[videoId] = false;
+		} catch (error) {
+			thumbnailUploadMessageByVideoId[videoId] =
+				error instanceof Error ? error.message : 'Failed to upload thumbnail';
+			thumbnailUploadErrorByVideoId[videoId] = true;
+		} finally {
+			thumbnailUploadBusyByVideoId[videoId] = false;
+		}
+	}
+
 	async function startUpload() {
 		uploadMessage = null;
 		uploadVideoId = null;
@@ -462,7 +541,7 @@
 		</nav>
 	</header>
 
-	<section class="panel">
+		<section class="panel upload-panel">
 		<h2>Upload New Video</h2>
 		<p class="hint">
 			Uploads create a draft video. After Stream finishes processing, you can publish it to appear on the home page.
@@ -517,12 +596,12 @@
 			</label>
 		</div>
 
-		<div class="actions">
-			<button class="btn primary" onclick={startUpload} disabled={uploadBusy}>
-				<Upload size={16} />
-				<span>{uploadBusy ? 'Uploading…' : 'Start Upload'}</span>
-			</button>
-		</div>
+			<div class="actions upload-actions">
+				<button class="btn primary" onclick={startUpload} disabled={uploadBusy}>
+					<Upload size={16} />
+					<span>{uploadBusy ? 'Uploading…' : 'Start Upload'}</span>
+				</button>
+			</div>
 
 		{#if uploadBusy}
 			<div class="progress">
@@ -538,7 +617,7 @@
 		{/if}
 	</section>
 
-	<section class="panel">
+		<section class="panel videos-panel">
 		<div class="panel-head">
 			<div>
 				<h2>Videos</h2>
@@ -601,7 +680,7 @@
 				</select>
 			</label>
 
-			<div class="actions">
+			<div class="actions filter-actions">
 				<button class="btn" onclick={refreshVideos} disabled={isLoading || actionBusy}>
 					<RefreshCw size={16} />
 					<span>Apply</span>
@@ -711,6 +790,27 @@
 									<input bind:value={drafts[v.id].thumbnail_path} />
 								</label>
 
+								<label class="field span-2">
+									<span>Upload Thumbnail File</span>
+									<input
+										type="file"
+										accept="image/jpeg,image/png,image/webp"
+										onchange={(e) => handleThumbnailFileChange(v.id, e)}
+									/>
+								</label>
+
+								<div class="field">
+									<span>Thumbnail Upload</span>
+									<button
+										class="btn thumbnail-upload-btn"
+										onclick={() => uploadThumbnail(v.id)}
+										disabled={thumbnailUploadBusyByVideoId[v.id] || !thumbnailFilesByVideoId[v.id]}
+									>
+										<Upload size={16} />
+										<span>{thumbnailUploadBusyByVideoId[v.id] ? 'Uploading…' : 'Upload Thumbnail'}</span>
+									</button>
+								</div>
+
 								<label class="field span-2 readonly-field">
 									<span>Stream UID</span>
 									<input
@@ -734,6 +834,30 @@
 												(drafts[v.id].featured_order = Number((e.target as HTMLInputElement).value))}
 										/>
 									</label>
+
+								<div class="thumbnail-preview span-3">
+									<span>Thumbnail Preview</span>
+									{#if drafts[v.id].thumbnail_path.trim()}
+										<img
+											src={getThumbnailSrc(drafts[v.id].thumbnail_path)}
+											alt={`Thumbnail preview for ${drafts[v.id].title}`}
+											loading="lazy"
+										/>
+										<p class="mono">{getThumbnailSrc(drafts[v.id].thumbnail_path)}</p>
+									{:else}
+										<p class="hint">No thumbnail path set.</p>
+									{/if}
+
+									{#if thumbnailUploadMessageByVideoId[v.id]}
+										<p
+											class="thumbnail-upload-status"
+											class:error={thumbnailUploadErrorByVideoId[v.id]}
+											class:success={!thumbnailUploadErrorByVideoId[v.id]}
+										>
+											{thumbnailUploadMessageByVideoId[v.id]}
+										</p>
+									{/if}
+								</div>
 								</div>
 							</div>
 
@@ -780,21 +904,26 @@
 	</section>
 </div>
 
-<style>
-	.admin-wrap {
-		max-width: 1100px;
-		margin: 0 auto;
-		padding: 7rem 1.5rem 3rem;
-	}
+	<style>
+		.admin-wrap {
+			max-width: 1120px;
+			margin: 0 auto;
+			padding: 6.5rem 1.75rem 3.5rem;
+		}
 
-	.admin-header {
-		display: flex;
-		align-items: flex-end;
-		justify-content: space-between;
-		gap: 1.5rem;
-		margin-bottom: 2rem;
-		flex-wrap: wrap;
-	}
+		.admin-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 1.5rem;
+			margin-bottom: 1.6rem;
+			flex-wrap: wrap;
+		}
+
+		.admin-title {
+			display: grid;
+			gap: 0.2rem;
+		}
 
 	.admin-title h1 {
 		margin: 0 0 0.25rem;
@@ -807,14 +936,15 @@
 		color: var(--color-fg-muted);
 	}
 
-	.admin-tabs {
-		display: flex;
-		gap: 0.5rem;
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: 9999px;
-		padding: 0.25rem;
-	}
+		.admin-tabs {
+			display: flex;
+			gap: 0.5rem;
+			background: var(--color-bg-surface);
+			border: 1px solid var(--color-border-default);
+			border-radius: 9999px;
+			padding: 0.25rem;
+			margin-left: auto;
+		}
 
 	.tab {
 		display: inline-flex;
@@ -832,13 +962,23 @@
 		font-weight: 700;
 	}
 
-	.panel {
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: 1rem;
-		padding: 1.25rem;
-		margin-bottom: 1.25rem;
-	}
+		.panel {
+			background: var(--color-bg-surface);
+			border: 1px solid var(--color-border-default);
+			border-radius: 1rem;
+			padding: 1.35rem 1.45rem;
+			margin-bottom: 1rem;
+			display: grid;
+			gap: 0.95rem;
+		}
+
+		.upload-panel {
+			gap: 0.85rem;
+		}
+
+		.videos-panel {
+			gap: 0.85rem;
+		}
 
 	.panel-head {
 		display: flex;
@@ -848,29 +988,30 @@
 		margin-bottom: 1rem;
 	}
 
-	.panel h2 {
-		margin: 0 0 0.35rem;
-		color: var(--color-fg-primary);
-		font-size: 1.05rem;
-	}
+		.panel h2 {
+			margin: 0 0 0.35rem;
+			color: var(--color-fg-primary);
+			font-size: 1.12rem;
+		}
 
-	.hint {
-		margin: 0.25rem 0 0;
-		color: var(--color-fg-muted);
-		font-size: 0.875rem;
-	}
+		.hint {
+			margin: 0.25rem 0 0;
+			color: var(--color-fg-muted);
+			font-size: 0.875rem;
+		}
 
-	.grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 0.75rem;
-	}
+		.grid {
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 0.85rem 0.9rem;
+		}
 
-	.field {
-		display: flex;
-		flex-direction: column;
-		gap: 0.35rem;
-	}
+		.field {
+			display: flex;
+			flex-direction: column;
+			gap: 0.35rem;
+			min-width: 0;
+		}
 
 	.field span {
 		color: var(--color-fg-muted);
@@ -879,15 +1020,45 @@
 		letter-spacing: 0.06em;
 	}
 
-	.field input,
-	.field select {
-		height: 2.5rem;
-		border-radius: 0.75rem;
-		border: 1px solid var(--color-border-default);
-		background: rgba(0, 0, 0, 0.25);
-		color: var(--color-fg-primary);
-		padding: 0 0.85rem;
-		outline: none;
+		.field input,
+		.field select {
+			height: 2.5rem;
+			width: 100%;
+			min-width: 0;
+			border-radius: 0.75rem;
+			border: 1px solid var(--color-border-default);
+			background: rgba(0, 0, 0, 0.25);
+			color: var(--color-fg-primary);
+			padding: 0 0.85rem;
+			outline: none;
+		}
+
+		.field input[type='file'] {
+			height: auto;
+			min-height: 2.6rem;
+			padding: 0.5rem 0.65rem;
+		}
+
+		.field input[type='file']::file-selector-button {
+			margin-right: 0.6rem;
+			padding: 0.4rem 0.7rem;
+			border-radius: 0.55rem;
+			border: 1px solid var(--color-border-default);
+			background: rgba(255, 255, 255, 0.05);
+			color: var(--color-fg-primary);
+			font-size: 0.82rem;
+			font-weight: 600;
+			cursor: pointer;
+			transition: background var(--duration-micro) var(--ease-standard);
+		}
+
+		.field input[type='file']::file-selector-button:hover {
+			background: rgba(255, 255, 255, 0.1);
+		}
+
+	.thumbnail-upload-btn {
+		width: 100%;
+		justify-content: center;
 	}
 
 	.readonly-field input {
@@ -903,11 +1074,22 @@
 		grid-column: 1 / -1;
 	}
 
-	.actions {
-		display: flex;
-		gap: 0.5rem;
-		align-items: center;
-	}
+		.actions {
+			display: flex;
+			gap: 0.5rem;
+			align-items: center;
+			flex-wrap: wrap;
+		}
+
+		.upload-actions {
+			justify-content: flex-start;
+		}
+
+		.filter-actions {
+			grid-column: 1 / -1;
+			justify-content: flex-end;
+			margin-top: 0.1rem;
+		}
 
 	.btn {
 		display: inline-flex;
@@ -1007,13 +1189,13 @@
 		color: rgba(255, 220, 140, 0.95);
 	}
 
-	.filters {
-		display: grid;
-		grid-template-columns: 1.4fr repeat(5, 1fr);
-		gap: 0.75rem;
-		align-items: end;
-		margin-bottom: 1rem;
-	}
+		.filters {
+			display: grid;
+			grid-template-columns: minmax(0, 1.5fr) repeat(5, minmax(0, 1fr));
+			gap: 0.75rem 0.7rem;
+			align-items: end;
+			margin-bottom: 1rem;
+		}
 
 	.video-list {
 		display: flex;
@@ -1122,19 +1304,69 @@
 		flex-wrap: wrap;
 	}
 
+	.thumbnail-preview {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding: 0.75rem;
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		border-radius: 0.75rem;
+		background: rgba(255, 255, 255, 0.02);
+	}
+
+	.thumbnail-preview img {
+		width: min(360px, 100%);
+		aspect-ratio: 16 / 9;
+		object-fit: cover;
+		border-radius: 0.5rem;
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		background: rgba(0, 0, 0, 0.2);
+	}
+
+	.thumbnail-preview p {
+		margin: 0;
+		color: var(--color-fg-muted);
+		word-break: break-all;
+	}
+
+	.thumbnail-upload-status {
+		margin: 0;
+		font-size: 0.85rem;
+	}
+
+	.thumbnail-upload-status.success {
+		color: rgba(210, 255, 230, 0.95);
+	}
+
+	.thumbnail-upload-status.error {
+		color: rgba(255, 220, 220, 0.95);
+	}
+
 	.mono {
 		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
 			monospace;
 	}
 
-	@media (max-width: 980px) {
-		.filters {
-			grid-template-columns: 1fr;
-		}
+		@media (max-width: 980px) {
+			.admin-wrap {
+				padding: 6rem 1.2rem 2.6rem;
+			}
 
-		.video-summary {
-			grid-template-columns: 1fr;
-		}
+			.panel {
+				padding: 1.1rem 1rem;
+			}
+
+			.filters {
+				grid-template-columns: 1fr;
+			}
+
+			.filter-actions {
+				justify-content: flex-start;
+			}
+
+			.video-summary {
+				grid-template-columns: 1fr;
+			}
 
 		.updated {
 			text-align: left;

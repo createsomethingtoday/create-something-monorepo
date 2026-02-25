@@ -1,5 +1,6 @@
 import type { D1Compat } from '$lib/server/d1-compat';
 import { randomUUID } from 'node:crypto';
+import { filterPubliclyPlayable, isPubliclyPlayable } from '$lib/server/video-availability';
 
 import type {
 	VideoIngestSource,
@@ -721,11 +722,12 @@ export async function getHomeCatalogRows(db: D1Compat): Promise<HomeCatalogRow[]
 			.bind(series.id)
 			.all<Video>();
 
-		if ((videos.results || []).length === 0) continue;
+		const playableVideos = filterPubliclyPlayable(videos.results || []);
+		if (playableVideos.length === 0) continue;
 
 		rows.push({
 			series,
-			videos: videos.results || []
+			videos: playableVideos
 		});
 	}
 
@@ -740,6 +742,7 @@ export interface FeaturedCatalogVideo {
 
 export async function getFeaturedCatalogVideos(db: D1Compat, limit: number): Promise<FeaturedCatalogVideo[]> {
 	const capped = Math.max(1, Math.min(50, Math.floor(limit)));
+	const queryLimit = Math.max(1, Math.min(200, capped * 4));
 
 	const featured = await db
 		.prepare(
@@ -749,20 +752,22 @@ export async function getFeaturedCatalogVideos(db: D1Compat, limit: number): Pro
 			 WHERE v.visibility = 'published'
 			   AND v.ingest_status = 'ready'
 			   AND v.is_featured = 1
-			 ORDER BY v.featured_order ASC, v.updated_at DESC
+		 ORDER BY v.featured_order ASC, v.updated_at DESC
 			 LIMIT ?`
 		)
-		.bind(capped)
+		.bind(queryLimit)
 		.all<(Video & { series_title: string | null; series_slug: string | null })>();
 
-	const featuredRows = featured.results || [];
-	if (featuredRows.length > 0) {
-		return featuredRows.map((row) => ({
+	const featuredRows = (featured.results || []).filter((row) => isPubliclyPlayable(row));
+	if (featuredRows.length >= capped) {
+		return featuredRows.slice(0, capped).map((row) => ({
 			video: row,
 			seriesTitle: row.series_title ?? null,
 			seriesSlug: row.series_slug ?? null
 		}));
 	}
+
+	const featuredIds = new Set(featuredRows.map((row) => row.id));
 
 	const fallback = await db
 		.prepare(
@@ -771,13 +776,17 @@ export async function getFeaturedCatalogVideos(db: D1Compat, limit: number): Pro
 			 LEFT JOIN series s ON s.id = v.series_id
 			 WHERE v.visibility = 'published'
 			   AND v.ingest_status = 'ready'
-			 ORDER BY v.updated_at DESC
+		 ORDER BY v.updated_at DESC
 			 LIMIT ?`
 		)
-		.bind(capped)
+		.bind(queryLimit)
 		.all<(Video & { series_title: string | null; series_slug: string | null })>();
 
-	return (fallback.results || []).map((row) => ({
+	const fallbackRows = (fallback.results || []).filter(
+		(row) => !featuredIds.has(row.id) && isPubliclyPlayable(row)
+	);
+
+	return [...featuredRows, ...fallbackRows].slice(0, capped).map((row) => ({
 		video: row,
 		seriesTitle: row.series_title ?? null,
 		seriesSlug: row.series_slug ?? null

@@ -4,6 +4,7 @@ import { getAdminVideoById, markVideoUploadCompleted } from '$lib/server/db/vide
 import { isAdminUser } from '$lib/server/admin';
 import { getDBFromPlatform } from '$lib/server/d1-compat';
 import { resolveRuntimeEnv } from '$lib/server/env';
+import { isValidStreamUid } from '$lib/server/video-availability';
 
 interface CompleteUploadRequest {
 	videoId: string;
@@ -47,6 +48,17 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 			{
 				success: false,
 				error: 'Video upload is missing stream_uid and cannot be completed',
+				ingestStatus: existing.ingest_status
+			},
+			{ status: 409 }
+		);
+	}
+
+	if (!isValidStreamUid(existing.stream_uid)) {
+		return json(
+			{
+				success: false,
+				error: 'Video upload has an invalid stream_uid and cannot be completed',
 				ingestStatus: existing.ingest_status
 			},
 			{ status: 409 }

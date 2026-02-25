@@ -33,6 +33,8 @@ vi.mock('$lib/server/env', () => ({
 
 import { POST } from '../../../../../../routes/api/v1/uploads/complete/+server';
 
+const VALID_STREAM_UID = '22222222222222222222222222222222';
+
 describe('POST /api/v1/uploads/complete', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -44,13 +46,13 @@ describe('POST /api/v1/uploads/complete', () => {
 	it('transitions pending_upload to processing', async () => {
 		getAdminVideoByIdMock.mockResolvedValue({
 			id: 'vid_1',
-			stream_uid: 'stream_1',
+			stream_uid: VALID_STREAM_UID,
 			ingest_status: 'pending_upload',
 			failure_reason: null
 		});
 		markVideoUploadCompletedMock.mockResolvedValue({
 			id: 'vid_1',
-			stream_uid: 'stream_1',
+			stream_uid: VALID_STREAM_UID,
 			ingest_status: 'processing',
 			updated_at: 123
 		});
@@ -76,7 +78,7 @@ describe('POST /api/v1/uploads/complete', () => {
 	it('is idempotent when upload is already ready', async () => {
 		getAdminVideoByIdMock.mockResolvedValue({
 			id: 'vid_2',
-			stream_uid: 'stream_2',
+			stream_uid: '33333333333333333333333333333333',
 			ingest_status: 'ready',
 			updated_at: 456,
 			failure_reason: null
@@ -124,7 +126,7 @@ describe('POST /api/v1/uploads/complete', () => {
 	it('returns 409 when ingest_status is failed', async () => {
 		getAdminVideoByIdMock.mockResolvedValue({
 			id: 'vid_4',
-			stream_uid: 'stream_4',
+			stream_uid: '44444444444444444444444444444444',
 			ingest_status: 'failed',
 			failure_reason: 'transcode failed'
 		});
@@ -134,6 +136,28 @@ describe('POST /api/v1/uploads/complete', () => {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ videoId: 'vid_4' })
+			}),
+			locals: { user: { id: 'usr_1', email: 'admin@example.com' } },
+			platform: {}
+		} as never);
+
+		expect(response.status).toBe(409);
+		expect(markVideoUploadCompletedMock).not.toHaveBeenCalled();
+	});
+
+	it('returns 409 when stream_uid is malformed', async () => {
+		getAdminVideoByIdMock.mockResolvedValue({
+			id: 'vid_5',
+			stream_uid: 'stream_invalid',
+			ingest_status: 'pending_upload',
+			failure_reason: null
+		});
+
+		const response = await POST({
+			request: new Request('http://test.local/api/v1/uploads/complete', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ videoId: 'vid_5' })
 			}),
 			locals: { user: { id: 'usr_1', email: 'admin@example.com' } },
 			platform: {}

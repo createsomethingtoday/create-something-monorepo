@@ -13,6 +13,7 @@
 	 * Served at:            /thumbnails/crew-call/ep01.jpg ✓
 	 */
 		function getThumbnailPath(thumbnailPath: string): string {
+			if (thumbnailPath.startsWith('http://') || thumbnailPath.startsWith('https://')) return thumbnailPath;
 			if (thumbnailPath.startsWith('/thumbnails/')) return thumbnailPath;
 			return `/thumbnails${thumbnailPath.startsWith('/') ? '' : '/'}${thumbnailPath}`;
 		}

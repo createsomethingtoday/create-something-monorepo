@@ -7,8 +7,7 @@ import {
 	buildPublicHlsUrl,
 	buildSignedHlsUrl,
 	createStreamPlaybackToken,
-	getPlaybackTokenTtlSeconds,
-	getStreamCustomerCode
+	getPlaybackTokenTtlSeconds
 } from '$lib/server/stream';
 import { isValidStreamUid } from '$lib/server/video-availability';
 import type { VideoPlaybackGrant } from '$lib/types/video-pipeline';
@@ -115,9 +114,10 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
 			{
 				success: false,
 				error: 'Video stream is unavailable',
-				ingestStatus: video.ingest_status
+				ingestStatus: video.ingest_status,
+				reason: 'invalid_stream_uid'
 			},
-			{ status: 409 }
+			{ status: 404 }
 		);
 	}
 
@@ -139,15 +139,13 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
 	}
 
 	try {
-		const customerCode = getStreamCustomerCode(runtimeEnv);
 		const expiresAt = issuedAt + getPlaybackTokenTtlSeconds(runtimeEnv);
 		const streamUid = video.stream_uid.trim();
 
 		const hlsUrl =
 			video.playback_policy === 'public'
-				? buildPublicHlsUrl(customerCode, streamUid)
+				? buildPublicHlsUrl(streamUid)
 				: buildSignedHlsUrl(
-						customerCode,
 						(await createStreamPlaybackToken(runtimeEnv, streamUid, expiresAt)).token
 					);
 
