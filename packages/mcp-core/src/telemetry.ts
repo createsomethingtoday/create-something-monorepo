@@ -483,7 +483,7 @@ export async function cleanupOldInvocations(
  * Best-effort: metering failures never block tool execution.
  *
  * @param server        - McpServer instance
- * @param db            - D1 database with telemetry tables (run migration first)
+ * @param db            - Optional D1 database with telemetry tables (run migration first)
  * @param serverName    - MCP server name (stored with each record)
  * @param getAccountId  - Optional function to resolve account ID (defaults to 'operator')
  */

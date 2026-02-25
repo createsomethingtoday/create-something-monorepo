@@ -1,6 +1,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { CallToolRequestSchema, ListToolsRequestSchema, type Tool } from '@modelcontextprotocol/sdk/types.js';
+import { initLogger, type Logger, type Span } from 'braintrust';
 import {
   ComposioClient,
   type ComposioToolDef,
@@ -12,6 +13,8 @@ interface Env {
   COMPOSIO_AUTH_CONFIG_MAP?: string;
   COMPOSIO_DEFAULT_ENTITY_ID?: string;
   COMPOSIO_TOOL_CACHE_SECONDS?: string;
+  BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_NAME?: string;
 }
 
 type ToolkitRuntime = {
@@ -31,9 +34,13 @@ type ToolRoute = {
 const SERVER_NAME = 'composio-toolkit-mcp';
 const SERVER_VERSION = '0.1.0';
 const DEFAULT_CACHE_SECONDS = 300;
+const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
 
 const runtimeCache = new Map<string, ToolkitRuntime>();
 const pendingRuntimeLoads = new Map<string, Promise<ToolkitRuntime>>();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let braintrustLogger: Logger<any> | null = null;
+let braintrustLoggerKey: string | null = null;
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -56,6 +63,8 @@ export default {
             composioApiKey: Boolean(env.COMPOSIO_API_KEY),
             authConfigMapEntries: Object.keys(parseAuthConfigMap(env.COMPOSIO_AUTH_CONFIG_MAP)).length,
             defaultEntity: env.COMPOSIO_DEFAULT_ENTITY_ID ?? 'default',
+            braintrustApiKey: Boolean(env.BRAINTRUST_API_KEY),
+            braintrustProject: resolveBraintrustProjectName(env),
           },
           cache: {
             ttlSeconds: parsePositiveInt(env.COMPOSIO_TOOL_CACHE_SECONDS, DEFAULT_CACHE_SECONDS),
@@ -113,6 +122,7 @@ export default {
 function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request): Server {
   const client = new ComposioClient({ apiKey: env.COMPOSIO_API_KEY! });
   const authConfigMap = parseAuthConfigMap(env.COMPOSIO_AUTH_CONFIG_MAP);
+  const logger = getBraintrustLogger(env);
 
   const managementTools: Tool[] = [
     {
@@ -175,30 +185,67 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
     const toolName = toolRequest.params.name;
     const args = normalizeArgs(toolRequest.params.arguments);
     const entityId = resolveEntityId(extra, request, env);
+    const startedAt = Date.now();
+
+    const emitAndReturn = async (
+      result: {
+        isError?: boolean;
+        content: Array<{ type: 'text'; text: string }>;
+        structuredContent?: unknown;
+      },
+      composioToolSlug?: string,
+      explicitError?: string,
+    ) => {
+      if (logger) {
+        const durationMs = Date.now() - startedAt;
+        const success = result.isError !== true;
+        const error = explicitError ?? (success ? undefined : extractToolErrorMessage(result));
+
+        emitBraintrustInvocation(logger, {
+          serverName: `${SERVER_NAME}:${runtime.toolkitSlug}`,
+          toolkitSlug: runtime.toolkitSlug,
+          toolName,
+          composioToolSlug,
+          accountId: entityId,
+          input: args,
+          output: result,
+          durationMs,
+          success,
+          error,
+        }).catch((emitError) => {
+          console.warn(
+            `[telemetry] braintrust emit failed for ${runtime.toolkitSlug}:${toolName}:`,
+            emitError,
+          );
+        });
+      }
+
+      return result;
+    };
 
     try {
       if (toolName === 'connection_status') {
         const connected = await client.hasActiveConnection(entityId, runtime.toolkitSlug);
-        return toJsonResult({
+        return emitAndReturn(toJsonResult({
           toolkitSlug: runtime.toolkitSlug,
           entityId,
           connected,
           message: connected
             ? `Toolkit "${runtime.toolkitSlug}" is connected for entity "${entityId}".`
             : `Toolkit "${runtime.toolkitSlug}" is not connected. Call get_connect_link and present the URL to the user.`,
-        });
+        }));
       }
 
       if (toolName === 'get_connect_link') {
         const authConfigId = authConfigMap[runtime.toolkitSlug] ?? authConfigMap[runtime.toolkitSlug.toLowerCase()];
         if (!authConfigId) {
-          return toJsonResult({
+          return emitAndReturn(toJsonResult({
             toolkitSlug: runtime.toolkitSlug,
             entityId,
             link: null,
             message:
               'No auth config ID found for this toolkit. Add it to COMPOSIO_AUTH_CONFIG_MAP and redeploy.',
-          });
+          }));
         }
 
         const connectionRequest = await client.getSDK().connectedAccounts.link(entityId, authConfigId);
@@ -211,7 +258,7 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
         const status = rawStatus ? rawStatus.toUpperCase() : null;
 
         if (status === 'ACTIVE' || status === 'CONNECTED') {
-          return toJsonResult({
+          return emitAndReturn(toJsonResult({
             toolkitSlug: runtime.toolkitSlug,
             entityId,
             alreadyConnected: true,
@@ -219,10 +266,10 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
             requestId,
             status,
             message: `Toolkit "${runtime.toolkitSlug}" is already connected for entity "${entityId}".`,
-          });
+          }));
         }
 
-        return toJsonResult({
+        return emitAndReturn(toJsonResult({
           toolkitSlug: runtime.toolkitSlug,
           entityId,
           authConfigId,
@@ -232,32 +279,30 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
           message: redirectUrl
             ? 'Present this URL to the user, then retry connection_status.'
             : 'No redirect URL returned by Composio. Retry connection_status.',
-        });
+        }));
       }
 
       if (toolName === 'toolkit_info') {
-        return toJsonResult({
+        return emitAndReturn(toJsonResult({
           toolkitSlug: runtime.toolkitSlug,
           entityId,
           builtAt: new Date(runtime.builtAt).toISOString(),
           toolCount: runtime.toolDefs.length,
           toolkit: runtime.toolkitInfo,
-        });
+        }));
       }
 
       const route = toolRoutes.find((candidate) => candidate.toolName === toolName);
       if (!route) {
-        return toErrorResult(`Unknown tool "${toolName}".`);
+        const message = `Unknown tool "${toolName}".`;
+        return emitAndReturn(toErrorResult(message), undefined, message);
       }
 
       const result = await client.executeTool(route.composioToolSlug, args, entityId);
-      return toJsonResult(result);
+      return emitAndReturn(toJsonResult(result), route.composioToolSlug);
     } catch (error) {
-      return toErrorResult(
-        error instanceof Error
-          ? error.message
-          : `Tool "${toolName}" failed: ${String(error)}`,
-      );
+      const message = error instanceof Error ? error.message : `Tool "${toolName}" failed: ${String(error)}`;
+      return emitAndReturn(toErrorResult(message), undefined, message);
     }
   });
 
@@ -473,6 +518,97 @@ function parsePositiveInt(raw: string | undefined, fallback: number): number {
   const parsed = Number.parseInt(raw, 10);
   if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
   return parsed;
+}
+
+function resolveBraintrustProjectName(env: { BRAINTRUST_PROJECT_NAME?: string }): string {
+  const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
+  return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getBraintrustLogger(env: Env): Logger<any> | null {
+  const apiKey = env.BRAINTRUST_API_KEY?.trim();
+  if (!apiKey) return null;
+
+  const projectName = resolveBraintrustProjectName(env);
+  const nextKey = `${apiKey}::${projectName}`;
+
+  if (!braintrustLogger || braintrustLoggerKey !== nextKey) {
+    braintrustLogger = initLogger({
+      apiKey,
+      projectName,
+      asyncFlush: true,
+      setCurrent: true,
+    });
+    braintrustLoggerKey = nextKey;
+  }
+
+  return braintrustLogger;
+}
+
+async function emitBraintrustInvocation(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  logger: Logger<any>,
+  args: {
+    serverName: string;
+    toolkitSlug: string;
+    toolName: string;
+    accountId: string;
+    composioToolSlug?: string;
+    input: unknown;
+    output: unknown;
+    durationMs: number;
+    success: boolean;
+    error?: string;
+  },
+): Promise<void> {
+  await logger.traced(
+    (span: Span) => {
+      span.log({
+        input: args.input,
+        output: args.output,
+        error: args.error,
+        tags: ['mcp', SERVER_NAME, args.toolkitSlug, args.toolName, args.success ? 'success' : 'error'],
+        metadata: {
+          server: args.serverName,
+          toolkit: args.toolkitSlug,
+          tool: args.toolName,
+          composioToolSlug: args.composioToolSlug,
+          accountId: args.accountId,
+          durationMs: args.durationMs,
+          success: args.success,
+        },
+      });
+    },
+    {
+      name: `mcp:${args.serverName}:${args.toolName}`,
+      type: 'tool',
+    },
+  );
+}
+
+function extractToolErrorMessage(result: {
+  content: Array<{ type: 'text'; text: string }>;
+  structuredContent?: unknown;
+}): string | undefined {
+  const structured = asRecord(result.structuredContent);
+  if (structured && typeof structured.error === 'string' && structured.error.trim().length > 0) {
+    return structured.error.trim();
+  }
+
+  for (const entry of result.content) {
+    if (entry.type !== 'text') continue;
+    const trimmed = entry.text.trim();
+    if (!trimmed) continue;
+
+    if (trimmed.toLowerCase().startsWith('error:')) {
+      const withoutPrefix = trimmed.slice(6).trim();
+      return withoutPrefix.length > 0 ? withoutPrefix : trimmed;
+    }
+    return trimmed;
+  }
+
+  return undefined;
 }
 
 function toJsonResult(payload: Record<string, unknown>) {
