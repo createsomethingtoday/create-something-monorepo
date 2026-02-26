@@ -67,6 +67,9 @@ csm/csm/.repo.git
 __pycache__/
 .dev.vars
 
+# Local onboarding docs containing temporary plaintext keys
+docs/DM_HUB_CLIENT_ONBOARDING.md
+
 # Judgment Layer (policy packs + local Andon logs)
 .judgment/
 !.judgment/README.md
