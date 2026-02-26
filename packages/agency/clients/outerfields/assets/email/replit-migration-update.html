@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root {
+      --bg0: #070b14;
+      --bg1: #0f172a;
+      --panel: rgba(15, 23, 42, 0.72);
+      --line: rgba(148, 163, 184, 0.22);
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accentA: #38bdf8;
+      --accentB: #f59e0b;
+      --ok: #22c55e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      width: 1536px;
+      height: 1024px;
+      font-family: "SF Pro Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(900px 500px at 15% 15%, rgba(56, 189, 248, 0.26), transparent 65%),
+        radial-gradient(720px 520px at 85% 80%, rgba(245, 158, 11, 0.22), transparent 70%),
+        linear-gradient(135deg, var(--bg0), var(--bg1));
+      overflow: hidden;
+    }
+    .grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(148, 163, 184, 0.09) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.09) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(circle at center, black 45%, transparent 92%);
+      opacity: 0.4;
+    }
+    .frame {
+      position: absolute;
+      inset: 70px;
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      background: linear-gradient(165deg, rgba(15, 23, 42, 0.78), rgba(2, 6, 23, 0.66));
+      box-shadow: 0 24px 120px rgba(2, 6, 23, 0.7);
+      padding: 62px;
+    }
+    .eyebrow {
+      display: inline-block;
+      font-size: 20px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #cbd5e1;
+      margin-bottom: 26px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 76px;
+      line-height: 1.06;
+      letter-spacing: -0.02em;
+      max-width: 1120px;
+    }
+    .sub {
+      margin-top: 22px;
+      max-width: 980px;
+      font-size: 34px;
+      line-height: 1.35;
+      color: #cbd5e1;
+    }
+    .cards {
+      margin-top: 58px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+    }
+    .card {
+      min-height: 220px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 22px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+    .card .title {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      letter-spacing: -0.01em;
+    }
+    .pill {
+      display: inline-block;
+      font-size: 18px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      margin-right: 8px;
+      margin-bottom: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      color: #cbd5e1;
+    }
+    .ok { color: #bbf7d0; border-color: rgba(34, 197, 94, 0.35); }
+    .flow {
+      position: absolute;
+      right: 70px;
+      top: 76px;
+      padding: 12px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(2, 6, 23, 0.55);
+      color: #cbd5e1;
+      font-size: 20px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .accent {
+      background: linear-gradient(120deg, var(--accentA), var(--accentB));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="frame">
+    <div class="flow">Migration Plan</div>
+    <div class="eyebrow">Outerfields Platform Update</div>
+    <h1>
+      Moving Outerfields to <span class="accent">Replit</span> with a clean, stable deployment workflow
+    </h1>
+    <div class="sub">
+      Production data, environment settings, and publishing flow aligned so uploads and the live app stay in sync.
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="title">Infrastructure</div>
+        <span class="pill">App Runtime</span>
+        <span class="pill ok">Replit Deployments</span><br />
+        <span class="pill">Database</span>
+        <span class="pill ok">Neon Postgres</span>
+      </div>
+      <div class="card">
+        <div class="title">Content Pipeline</div>
+        <span class="pill">Upload API</span>
+        <span class="pill ok">Single Environment</span><br />
+        <span class="pill">Media URLs</span>
+        <span class="pill ok">Consistent Source</span>
+      </div>
+      <div class="card">
+        <div class="title">Operations</div>
+        <span class="pill">Secrets</span>
+        <span class="pill ok">Replit Managed</span><br />
+        <span class="pill">Launch Process</span>
+        <span class="pill ok">Documented</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
