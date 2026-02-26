@@ -42,6 +42,14 @@ export type HttpServerConfig = {
    * Backward-compat alias. Prefer http_headers.
    */
   headers?: StringMap;
+  /**
+   * Preferred per-server downstream call timeout in milliseconds.
+   */
+  tool_call_timeout_ms?: number;
+  /**
+   * Backward-compat alias for tool_call_timeout_ms.
+   */
+  timeout_ms?: number;
   description?: string;
   tags?: string[];
 } & ServerMetadata;

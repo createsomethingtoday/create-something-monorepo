@@ -934,10 +934,15 @@ function parsePositiveIntFromUnknown(raw: unknown, fallback: number): number {
 }
 
 function resolveToolCallTimeoutMs(
-  config: { tool_call_timeout_ms?: number; timeout_ms?: number },
+  config: unknown,
   fallback: number,
 ): number {
-  return parsePositiveIntFromUnknown(config.tool_call_timeout_ms ?? config.timeout_ms, fallback);
+  if (!config || typeof config !== 'object') {
+    return fallback;
+  }
+
+  const timeoutConfig = config as { tool_call_timeout_ms?: unknown; timeout_ms?: unknown };
+  return parsePositiveIntFromUnknown(timeoutConfig.tool_call_timeout_ms ?? timeoutConfig.timeout_ms, fallback);
 }
 
 function parseBooleanEnv(raw: string | undefined, fallback: boolean): boolean {
