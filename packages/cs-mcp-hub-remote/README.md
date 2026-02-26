@@ -48,6 +48,7 @@ Environment variables:
 - `HUB_QUOTA_EXEMPT_SERVERS` (optional): comma-separated downstream server names excluded from quota checks
 - `HUB_STATE_KV` (recommended binding): stores remote hub enable/disable state so `hub_update_state` persists
 - `BRAINTRUST_API_KEY` (optional): enables Braintrust trace emission for hub invocations
+- `BRAINTRUST_PROJECT_ID` (optional): Braintrust project ID (takes precedence over name)
 - `BRAINTRUST_PROJECT_NAME` (optional): Braintrust project name (default `CREATE SOMETHING`)
 - `BRAINTRUST_ENABLED` (optional): override automatic enablement (`true`/`false`)
 

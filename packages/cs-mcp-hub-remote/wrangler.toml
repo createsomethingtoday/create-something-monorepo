@@ -36,5 +36,6 @@ preview_id = "6356c7663c334a4195243971e117565c"
 
 # Optional Braintrust tracing for hub invocations.
 # Set BRAINTRUST_API_KEY as a secret in Cloudflare.
+# Set BRAINTRUST_PROJECT_ID as a secret (or var) to target an exact Braintrust project.
 # BRAINTRUST_PROJECT_NAME = "CREATE SOMETHING"
 # BRAINTRUST_ENABLED = "true"

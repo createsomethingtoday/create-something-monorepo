@@ -186,6 +186,7 @@ const DOWNSTREAM_BEARER_ENV_FALLBACK: Record<string, string> = {
 
 interface Env {
   BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_ID?: string;
   BRAINTRUST_PROJECT_NAME?: string;
   BRAINTRUST_ENABLED?: string;
   HUB_API_TOKEN?: string;
@@ -387,6 +388,7 @@ export default {
           ? await getHubRuntime(env, { force: true })
           : runtimeCache?.runtime ?? null;
         const runtimeSource = fullHealth ? 'full' : runtime ? 'cache' : 'none';
+        const braintrustProject = resolveBraintrustProjectConfig(env);
 
         const rateLimitPolicy = resolveRateLimitPolicy(env);
         const quotaPolicy = resolveQuotaPolicy(env);
@@ -406,7 +408,8 @@ export default {
                 Boolean(readEnvString(env, 'BRAINTRUST_API_KEY')),
               ),
               configured: Boolean(readEnvString(env, 'BRAINTRUST_API_KEY')),
-              project_name: resolveBraintrustProjectName(env),
+              project: braintrustProject.display,
+              project_id_configured: Boolean(braintrustProject.projectId),
             },
             policy: buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env),
             downstream_auth_config: {
@@ -2055,6 +2058,24 @@ function resolveBraintrustProjectName(env: Env): string {
   return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
 }
 
+function resolveBraintrustProjectConfig(
+  env: Env,
+): { projectId?: string; projectName?: string; display: string } {
+  const projectId = readEnvString(env, 'BRAINTRUST_PROJECT_ID')?.trim();
+  if (projectId && projectId.length > 0) {
+    return {
+      projectId,
+      display: projectId,
+    };
+  }
+
+  const projectName = resolveBraintrustProjectName(env);
+  return {
+    projectName,
+    display: projectName,
+  };
+}
+
 function parseBooleanFlag(raw: string | undefined, fallback: boolean): boolean {
   if (raw === undefined) return fallback;
   const normalized = raw.trim().toLowerCase();
@@ -2077,8 +2098,9 @@ function getBraintrustLogger(env: Env): Logger<any> | null {
     return null;
   }
 
-  const projectName = resolveBraintrustProjectName(env);
-  const nextKey = `${apiKey}::${projectName}`;
+  const project = resolveBraintrustProjectConfig(env);
+  const projectKey = project.projectId ?? project.projectName ?? DEFAULT_BRAINTRUST_PROJECT_NAME;
+  const nextKey = `${apiKey}::${projectKey}`;
   if (braintrustLogger && braintrustLoggerKey === nextKey) {
     return braintrustLogger;
   }
@@ -2086,7 +2108,8 @@ function getBraintrustLogger(env: Env): Logger<any> | null {
   try {
     braintrustLogger = initLogger({
       apiKey,
-      projectName,
+      projectName: project.projectName,
+      projectId: project.projectId,
       asyncFlush: true,
       setCurrent: true,
     });
