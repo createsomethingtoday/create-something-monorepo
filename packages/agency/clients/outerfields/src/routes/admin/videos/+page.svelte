@@ -829,20 +829,11 @@
 				</select>
 			</label>
 
-<<<<<<< HEAD
 			<div class="actions filter-actions">
 				<button class="btn" onclick={refreshVideos} disabled={isLoading || actionBusy}>
 					<RefreshCw size={16} />
 					<span>Apply</span>
 				</button>
-=======
-				<div class="actions filter-actions">
-					<button class="btn" onclick={refreshVideos} disabled={isLoading || actionBusy}>
-						<RefreshCw size={16} />
-						<span>Apply</span>
-					</button>
-				</div>
->>>>>>> codex/braintrust-composio-instrumentation
 			</div>
 
 			{#if hasActiveFilters()}
@@ -1130,15 +1121,6 @@
 	</section>
 </div>
 
-<<<<<<< HEAD
-	<style>
-		.admin-wrap {
-			max-width: 1120px;
-			margin: 0 auto;
-			padding: 6.5rem 1.75rem 3.5rem;
-		}
-
-=======
 {#if confirmDialog}
 	<div
 		class="confirm-overlay"
@@ -1188,8 +1170,6 @@
 			margin: 0 auto;
 			padding: 6.5rem 1.75rem 3.5rem;
 		}
-
->>>>>>> codex/braintrust-composio-instrumentation
 		.admin-header {
 			display: flex;
 			align-items: center;
@@ -1475,9 +1455,6 @@
 			align-items: end;
 			margin-bottom: 1rem;
 		}
-<<<<<<< HEAD
-=======
-
 		.active-filters {
 			display: flex;
 			flex-wrap: wrap;
@@ -1512,7 +1489,6 @@
 			border-color: rgba(244, 81, 38, 0.35);
 			color: rgba(255, 225, 215, 0.96);
 		}
->>>>>>> codex/braintrust-composio-instrumentation
 
 	.video-list {
 		display: flex;
@@ -1668,19 +1644,6 @@
 		background: rgba(255, 255, 255, 0.02);
 	}
 
-<<<<<<< HEAD
-	.thumbnail-preview {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-		padding: 0.75rem;
-		border: 1px solid rgba(255, 255, 255, 0.12);
-		border-radius: 0.75rem;
-		background: rgba(255, 255, 255, 0.02);
-	}
-
-=======
->>>>>>> codex/braintrust-composio-instrumentation
 	.thumbnail-preview img {
 		width: min(360px, 100%);
 		aspect-ratio: 16 / 9;
@@ -1688,54 +1651,6 @@
 		border-radius: 0.5rem;
 		border: 1px solid rgba(255, 255, 255, 0.12);
 		background: rgba(0, 0, 0, 0.2);
-<<<<<<< HEAD
-	}
-
-	.thumbnail-preview p {
-		margin: 0;
-		color: var(--color-fg-muted);
-		word-break: break-all;
-	}
-
-	.thumbnail-upload-status {
-		margin: 0;
-		font-size: 0.85rem;
-	}
-
-	.thumbnail-upload-status.success {
-		color: rgba(210, 255, 230, 0.95);
-	}
-
-	.thumbnail-upload-status.error {
-		color: rgba(255, 220, 220, 0.95);
-	}
-
-	.mono {
-		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
-			monospace;
-	}
-
-		@media (max-width: 980px) {
-			.admin-wrap {
-				padding: 6rem 1.2rem 2.6rem;
-			}
-
-			.panel {
-				padding: 1.1rem 1rem;
-			}
-
-			.filters {
-				grid-template-columns: 1fr;
-			}
-
-			.filter-actions {
-				justify-content: flex-start;
-			}
-
-			.video-summary {
-				grid-template-columns: 1fr;
-			}
-=======
 	}
 
 	.thumbnail-preview p {
@@ -1772,7 +1687,6 @@
 			justify-content: center;
 			padding: 1.25rem;
 		}
->>>>>>> codex/braintrust-composio-instrumentation
 
 		.confirm-modal {
 			width: min(28rem, 100%);
