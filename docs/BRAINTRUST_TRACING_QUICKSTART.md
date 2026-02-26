@@ -74,6 +74,12 @@ Run all MCP eval scaffolds:
 pnpm braintrust:eval:mcp
 ```
 
+Run all MCP eval scaffolds locally without uploading logs:
+
+```bash
+pnpm braintrust:eval:mcp:local
+```
+
 Run one eval scaffold:
 
 ```bash

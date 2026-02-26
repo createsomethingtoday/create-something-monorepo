@@ -65,6 +65,14 @@ function reachabilityScore(output: AccountIsolationOutput): Score {
   };
 }
 
+function configuredScore(output: AccountIsolationOutput): Score {
+  return {
+    name: 'configured_for_live_run',
+    score: output.skipped ? 0 : 1,
+    metadata: { skipped: output.skipped, reason: output.reason },
+  };
+}
+
 function reflectionScoreA(output: AccountIsolationOutput): Score {
   if (output.skipped) {
     return { name: 'reflects_account_a', score: null, metadata: { reason: output.reason } };
@@ -169,6 +177,7 @@ void Eval<AccountIsolationInput, AccountIsolationOutput>('create-something-mcp-f
     };
   },
   scores: [
+    ({ output }) => configuredScore(output),
     ({ output }) => reachabilityScore(output),
     ({ output }) => reflectionScoreA(output),
     ({ output }) => reflectionScoreB(output),

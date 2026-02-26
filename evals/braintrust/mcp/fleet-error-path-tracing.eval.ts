@@ -52,6 +52,14 @@ function non2xxScore(output: ErrorPathOutput): Score {
   };
 }
 
+function configuredScore(output: ErrorPathOutput): Score {
+  return {
+    name: 'configured_for_live_run',
+    score: output.skipped ? 0 : 1,
+    metadata: { skipped: output.skipped, reason: output.reason },
+  };
+}
+
 function authStatusScore(output: ErrorPathOutput): Score {
   if (output.skipped) {
     return { name: 'auth_status_code', score: null, metadata: { reason: output.reason } };
@@ -122,6 +130,7 @@ void Eval<ErrorPathInput, ErrorPathOutput>('create-something-mcp-fleet', {
     };
   },
   scores: [
+    ({ output }) => configuredScore(output),
     ({ output }) => non2xxScore(output),
     ({ output }) => authStatusScore(output),
     ({ output }) => structuredErrorScore(output),

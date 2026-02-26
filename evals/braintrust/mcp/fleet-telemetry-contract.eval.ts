@@ -55,6 +55,14 @@ function routeOkScore(output: ContractOutput): Score {
   };
 }
 
+function configuredScore(output: ContractOutput): Score {
+  return {
+    name: 'configured_for_live_run',
+    score: output.skipped ? 0 : 1,
+    metadata: { skipped: output.skipped, reason: output.reason },
+  };
+}
+
 function structuredJsonScore(output: ContractOutput): Score {
   if (output.skipped) {
     return { name: 'structured_json', score: null, metadata: { reason: output.reason } };
@@ -134,6 +142,7 @@ void Eval<ContractInput, ContractOutput>('create-something-mcp-fleet', {
     };
   },
   scores: [
+    ({ output }) => configuredScore(output),
     ({ output }) => routeOkScore(output),
     ({ output }) => structuredJsonScore(output),
     ({ output }) => successFlagScore(output),
