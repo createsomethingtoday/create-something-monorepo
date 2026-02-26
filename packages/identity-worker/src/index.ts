@@ -385,6 +385,239 @@ async function handleCrossDomainExchange(request: Request, env: Env): Promise<Re
 	});
 }
 
+// MCP Session Router Handlers
+
+const DEFAULT_MCP_HUB_URL = 'https://cs-mcp-hub-remote.createsomething.workers.dev/mcp';
+const MIN_MCP_SESSION_TTL_SECONDS = 300;
+const DEFAULT_MCP_SESSION_TTL_SECONDS = 86400;
+const MAX_MCP_SESSION_TTL_SECONDS = 604800;
+
+type McpToolMode = 'read_only' | 'read_write';
+
+interface CreateMcpSessionBody {
+	tenant_id?: string;
+	host?: string;
+	toolkit_profile?: string[];
+	tool_mode?: McpToolMode;
+	ttl_seconds?: number;
+}
+
+interface ResolveMcpSessionBody {
+	token?: string;
+}
+
+async function handleCreateMcpSession(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+	const payload = await authenticate(request, env);
+	if (!payload) {
+		return json({ error: 'unauthorized', message: 'Invalid token', status: 401 }, 401);
+	}
+
+	const body = await parseJSON<CreateMcpSessionBody>(request);
+	if (!body) {
+		return json({ error: 'invalid_request', message: 'Invalid JSON', status: 400 }, 400);
+	}
+
+	const tenantId = normalizeTenantId(body.tenant_id);
+	const host = normalizeHostName(body.host);
+	const toolMode = normalizeToolMode(body.tool_mode);
+	const toolkitProfile = normalizeToolkitProfile(body.toolkit_profile);
+	const allowedToolPrefixes = buildAllowedToolPrefixes(toolkitProfile);
+	const ttlSeconds = clampTtlSeconds(body.ttl_seconds);
+
+	const sessionId = `ms_${generateUUID().replace(/-/g, '')}`;
+	const rawToken = `ms_tok_${generateSecureToken(48)}`;
+	const tokenHash = await hashToken(rawToken);
+	const accountId = `acct_${generateUUID().replace(/-/g, '')}`;
+	const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
+
+	await createMcpSession(db, {
+		id: sessionId,
+		user_id: payload.sub,
+		tenant_id: tenantId,
+		account_id: accountId,
+		host,
+		tool_mode: toolMode,
+		toolkit_profile_json: JSON.stringify(toolkitProfile),
+		allowed_tool_prefixes_json: JSON.stringify(allowedToolPrefixes),
+		token_hash: tokenHash,
+		expires_at: expiresAt,
+	});
+
+	await replaceMcpSessionScopes(
+		db,
+		sessionId,
+		[
+			...toolkitProfile.map((toolkit) => ({ scope_type: 'toolkit' as const, scope_value: toolkit })),
+			...allowedToolPrefixes.map((prefix) => ({ scope_type: 'tool_prefix' as const, scope_value: prefix })),
+		],
+	);
+
+	await createMcpAuthEvent(db, {
+		id: generateUUID(),
+		session_id: sessionId,
+		user_id: payload.sub,
+		event_type: 'mcp_session_created',
+		event_data_json: JSON.stringify({
+			host,
+			tenant_id: tenantId,
+			tool_mode: toolMode,
+			toolkit_profile: toolkitProfile,
+			ttl_seconds: ttlSeconds,
+		}),
+	});
+
+	return json({
+		session_id: sessionId,
+		token: rawToken,
+		mcp_url: env.MCP_HUB_URL ?? DEFAULT_MCP_HUB_URL,
+		expires_at: expiresAt,
+		account_id: accountId,
+		tenant_id: tenantId,
+		user_id: payload.sub,
+		host,
+		tool_mode: toolMode,
+		toolkit_profile: toolkitProfile,
+		allowed_tool_prefixes: allowedToolPrefixes,
+		required_auth: [],
+	});
+}
+
+async function handleResolveMcpSession(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+	const authorized = isMcpResolveAuthorized(request, env);
+	if (!authorized.ok) {
+		return json({ error: 'unauthorized', message: authorized.message, status: authorized.status }, authorized.status);
+	}
+
+	const body = await parseJSON<ResolveMcpSessionBody>(request);
+	if (!body?.token) {
+		return json({ error: 'invalid_request', message: 'token is required', status: 400 }, 400);
+	}
+
+	const tokenHash = await hashToken(body.token);
+	const session = await findMcpSessionByTokenHash(db, tokenHash);
+	if (!session) {
+		return json({ valid: false, reason: 'session_not_found' });
+	}
+
+	const now = Date.now();
+	const expired = new Date(session.expires_at).getTime() <= now;
+	const revoked = Boolean(session.revoked_at);
+	if (expired || revoked) {
+		await createMcpAuthEvent(db, {
+			id: generateUUID(),
+			session_id: session.id,
+			user_id: session.user_id,
+			event_type: 'mcp_session_resolve_rejected',
+			event_data_json: JSON.stringify({
+				reason: revoked ? 'revoked' : 'expired',
+				expires_at: session.expires_at,
+				revoked_at: session.revoked_at,
+			}),
+		});
+		return json({
+			valid: false,
+			reason: revoked ? 'revoked' : 'expired',
+			session_id: session.id,
+			expires_at: session.expires_at,
+			revoked_at: session.revoked_at,
+		});
+	}
+
+	const toolkitProfile = parseStringArray(session.toolkit_profile_json);
+	const allowedToolPrefixes = parseStringArray(session.allowed_tool_prefixes_json);
+
+	await createMcpAuthEvent(db, {
+		id: generateUUID(),
+		session_id: session.id,
+		user_id: session.user_id,
+		event_type: 'mcp_session_resolved',
+		event_data_json: JSON.stringify({
+			account_id: session.account_id,
+			tenant_id: session.tenant_id,
+		}),
+	});
+
+	return json({
+		valid: true,
+		session_id: session.id,
+		account_id: session.account_id,
+		tenant_id: session.tenant_id,
+		user_id: session.user_id,
+		host: session.host,
+		tool_mode: session.tool_mode,
+		expires_at: session.expires_at,
+		allowed_tool_prefixes: allowedToolPrefixes,
+		toolkit_profile: toolkitProfile,
+		allow_pending_oauth_approvals: false,
+	});
+}
+
+async function handleGetMcpSession(request: Request, env: Env, sessionId: string): Promise<Response> {
+	const db = env.DB;
+	const payload = await authenticate(request, env);
+	if (!payload) {
+		return json({ error: 'unauthorized', message: 'Invalid token', status: 401 }, 401);
+	}
+
+	const session = await findMcpSessionById(db, sessionId);
+	if (!session) {
+		return json({ error: 'not_found', message: 'Session not found', status: 404 }, 404);
+	}
+
+	if (session.user_id !== payload.sub) {
+		return json({ error: 'forbidden', message: 'Session does not belong to authenticated user', status: 403 }, 403);
+	}
+
+	return json({
+		session_id: session.id,
+		account_id: session.account_id,
+		tenant_id: session.tenant_id,
+		user_id: session.user_id,
+		host: session.host,
+		tool_mode: session.tool_mode,
+		toolkit_profile: parseStringArray(session.toolkit_profile_json),
+		allowed_tool_prefixes: parseStringArray(session.allowed_tool_prefixes_json),
+		expires_at: session.expires_at,
+		revoked_at: session.revoked_at,
+		created_at: session.created_at,
+		updated_at: session.updated_at,
+		active: session.revoked_at === null && new Date(session.expires_at).getTime() > Date.now(),
+	});
+}
+
+async function handleRevokeMcpSession(request: Request, env: Env, sessionId: string): Promise<Response> {
+	const db = env.DB;
+	const payload = await authenticate(request, env);
+	if (!payload) {
+		return json({ error: 'unauthorized', message: 'Invalid token', status: 401 }, 401);
+	}
+
+	const session = await findMcpSessionById(db, sessionId);
+	if (!session) {
+		return json({ error: 'not_found', message: 'Session not found', status: 404 }, 404);
+	}
+	if (session.user_id !== payload.sub) {
+		return json({ error: 'forbidden', message: 'Session does not belong to authenticated user', status: 403 }, 403);
+	}
+
+	const revoked = await revokeMcpSession(db, sessionId);
+	await createMcpAuthEvent(db, {
+		id: generateUUID(),
+		session_id: sessionId,
+		user_id: payload.sub,
+		event_type: 'mcp_session_revoked',
+		event_data_json: JSON.stringify({ revoked }),
+	});
+
+	return json({
+		success: revoked,
+		session_id: sessionId,
+		revoked,
+	});
+}
+
 async function handleMagicLogin(request: Request, env: Env): Promise<Response> {
 	const db = env.DB;
 
@@ -575,6 +808,7 @@ async function handleChangePassword(request: Request, env: Env): Promise<Respons
 
 	// Revoke all tokens to force re-login (security best practice)
 	await revokeAllUserTokens(db, payload.sub);
+	await revokeAllMcpSessionsForUser(db, payload.sub);
 
 	return json({ success: true, message: 'Password updated. Please log in again.' });
 }
@@ -693,6 +927,7 @@ async function handleVerifyEmailChange(request: Request, env: Env): Promise<Resp
 
 	// Revoke all tokens (security - force re-login with new email)
 	await revokeAllUserTokens(db, changeRequest.user_id);
+	await revokeAllMcpSessionsForUser(db, changeRequest.user_id);
 
 	return json({
 		success: true,
@@ -736,6 +971,7 @@ async function handleDeleteMe(request: Request, env: Env): Promise<Response> {
 
 	// Revoke all tokens immediately
 	await revokeAllUserTokens(db, user.id);
+	await revokeAllMcpSessionsForUser(db, user.id);
 
 	// Send confirmation email (if email service is configured)
 	if (env.RESEND_API_KEY) {
@@ -1020,6 +1256,7 @@ async function handleHardDelete(request: Request, env: Env, userId: string): Pro
 
 	// Revoke all tokens first (in case any are still valid)
 	await revokeAllUserTokens(db, userId);
+	await revokeAllMcpSessionsForUser(db, userId);
 
 	// Hard delete the user
 	const deleted = await hardDeleteUser(db, userId);
@@ -1063,6 +1300,7 @@ async function handleCleanupDeletedUsers(request: Request, env: Env): Promise<Re
 	for (const user of usersToDelete) {
 		// Revoke any remaining tokens
 		await revokeAllUserTokens(db, user.id);
+		await revokeAllMcpSessionsForUser(db, user.id);
 
 		// Hard delete
 		const deleted = await hardDeleteUser(db, user.id);
@@ -1078,6 +1316,88 @@ async function handleCleanupDeletedUsers(request: Request, env: Env): Promise<Re
 }
 
 // Utilities
+
+function normalizeTenantId(raw: string | undefined): string {
+	const candidate = (raw ?? 'default').trim().toLowerCase();
+	if (!candidate) return 'default';
+	return candidate.replace(/[^a-z0-9._-]/g, '_').slice(0, 64);
+}
+
+function normalizeHostName(raw: string | undefined): string {
+	const candidate = (raw ?? 'codex').trim().toLowerCase();
+	if (!candidate) return 'codex';
+	return candidate.replace(/[^a-z0-9._-]/g, '_').slice(0, 64);
+}
+
+function normalizeToolMode(raw: McpToolMode | undefined): McpToolMode {
+	return raw === 'read_only' ? 'read_only' : 'read_write';
+}
+
+function normalizeToolkitProfile(raw: string[] | undefined): string[] {
+	if (!Array.isArray(raw)) return [];
+	const normalized = raw
+		.map((value) => value.trim().toLowerCase())
+		.filter(Boolean)
+		.map((value) => value.replace(/[^a-z0-9_]/g, '_'))
+		.map((value) => value.replace(/^_+|_+$/g, ''))
+		.filter(Boolean);
+	return [...new Set(normalized)].slice(0, 200);
+}
+
+function buildAllowedToolPrefixes(toolkits: string[]): string[] {
+	return toolkits.map((toolkit) => `composio-toolkit-${toolkit}__`);
+}
+
+function clampTtlSeconds(raw: number | undefined): number {
+	if (!Number.isFinite(raw)) return DEFAULT_MCP_SESSION_TTL_SECONDS;
+	const ttl = Math.trunc(Number(raw));
+	if (ttl < MIN_MCP_SESSION_TTL_SECONDS) return MIN_MCP_SESSION_TTL_SECONDS;
+	if (ttl > MAX_MCP_SESSION_TTL_SECONDS) return MAX_MCP_SESSION_TTL_SECONDS;
+	return ttl;
+}
+
+function parseStringArray(raw: string): string[] {
+	try {
+		const parsed = JSON.parse(raw) as unknown;
+		if (!Array.isArray(parsed)) return [];
+		return parsed
+			.filter((value): value is string => typeof value === 'string')
+			.map((value) => value.trim())
+			.filter(Boolean);
+	} catch {
+		return [];
+	}
+}
+
+function isMcpResolveAuthorized(
+	request: Request,
+	env: Env
+): { ok: true } | { ok: false; status: number; message: string } {
+	const expected = env.MCP_SESSION_RESOLVE_TOKEN?.trim();
+	if (!expected) {
+		return { ok: false, status: 503, message: 'MCP session resolver is not configured' };
+	}
+
+	const bearer = request.headers.get('Authorization');
+	const bearerToken = bearer?.startsWith('Bearer ') ? bearer.slice(7).trim() : null;
+	const altHeader = request.headers.get('X-Session-Resolve-Token')?.trim();
+	const apiKeyHeader = request.headers.get('X-API-Key')?.trim();
+	const provided = bearerToken || altHeader || apiKeyHeader;
+	if (!provided || !constantTimeEqual(provided, expected)) {
+		return { ok: false, status: 401, message: 'Invalid resolver credentials' };
+	}
+
+	return { ok: true };
+}
+
+function constantTimeEqual(a: string, b: string): boolean {
+	if (a.length !== b.length) return false;
+	let mismatch = 0;
+	for (let i = 0; i < a.length; i += 1) {
+		mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+	}
+	return mismatch === 0;
+}
 
 async function authenticate(request: Request, env: Env): Promise<JWTPayload | null> {
 	const auth = request.headers.get('Authorization');
@@ -1105,7 +1425,7 @@ function cors(response: Response, request: Request, env: Env): Response {
 	if (origin && allowed.includes(origin)) {
 		headers.set('Access-Control-Allow-Origin', origin);
 		headers.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-		headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key');
+		headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key, X-Session-Resolve-Token');
 		headers.set('Access-Control-Allow-Credentials', 'true');
 		headers.set('Access-Control-Max-Age', '86400');
 	}

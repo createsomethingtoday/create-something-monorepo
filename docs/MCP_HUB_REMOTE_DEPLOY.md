@@ -34,6 +34,18 @@ Optional runtime selection:
 - `HUB_DISABLED_SERVERS`
 - `HUB_REFRESH_SECONDS`
 - `HUB_ACCOUNT_ID` (fallback account id for hub telemetry writes)
+- `HUB_SESSION_RESOLVE_URL` (identity-worker resolver endpoint, e.g. `https://id.createsomething.space/v1/mcp/sessions/resolve`)
+- `HUB_SESSION_RESOLVE_TOKEN` (shared secret used to authorize resolver calls)
+- `HUB_SESSION_RESOLVE_TIMEOUT_MS` (default `5000`)
+
+When `HUB_SESSION_RESOLVE_URL` + `HUB_SESSION_RESOLVE_TOKEN` are configured and clients pass bearer MCP session tokens, the hub resolves:
+
+- `account_id`
+- `tenant_id`
+- `session_id`
+- `allowed_tool_prefixes`
+
+and enforces tool access by prefix before routing.
 
 State persistence:
 

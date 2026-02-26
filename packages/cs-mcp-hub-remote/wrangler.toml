@@ -27,6 +27,8 @@ preview_id = "6356c7663c334a4195243971e117565c"
 # HUB_ENABLED_SERVERS = ""
 # HUB_DISABLED_SERVERS = ""
 # HUB_ACCOUNT_ID = "operator"
+# HUB_SESSION_RESOLVE_URL = "https://id.createsomething.space/v1/mcp/sessions/resolve"
+# HUB_SESSION_RESOLVE_TIMEOUT_MS = "5000"
 
 # Runtime cache controls.
 # HUB_REFRESH_SECONDS = "300"

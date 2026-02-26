@@ -24,6 +24,10 @@ Single identity across all properties: .space, .io, .agency, .ltd, and .learn.
 | POST | `/auth/logout` | Invalidate session |
 | GET | `/auth/me` | Get current user |
 | GET | `/.well-known/jwks.json` | Public keys |
+| POST | `/v1/mcp/sessions` | Create MCP session token + policy claims |
+| POST | `/v1/mcp/sessions/resolve` | Resolve MCP session token (hub-only) |
+| GET | `/v1/mcp/sessions/:id` | Inspect own MCP session |
+| POST | `/v1/mcp/sessions/:id/revoke` | Revoke own MCP session |
 
 ## Stack
 
@@ -55,6 +59,11 @@ Properties verify tokens by:
 1. Fetching JWKS from `/.well-known/jwks.json`
 2. Validating JWT signature
 3. Checking expiration and issuer
+
+MCP hub integration:
+1. Frontend/backend creates session via `POST /v1/mcp/sessions` with user JWT
+2. Host stores returned MCP token and calls hub endpoint
+3. Hub introspects token via `POST /v1/mcp/sessions/resolve` using `MCP_SESSION_RESOLVE_TOKEN`
 
 ## Related
 

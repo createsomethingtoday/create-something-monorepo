@@ -30,6 +30,9 @@ Remote MCP hub that exposes one public endpoint and proxies tools from enabled d
 Environment variables:
 
 - `HUB_API_TOKEN` (optional): if set, `/mcp` requires `Authorization: Bearer <token>`
+- `HUB_SESSION_RESOLVE_URL` (optional): identity-worker resolver endpoint (`/v1/mcp/sessions/resolve`)
+- `HUB_SESSION_RESOLVE_TOKEN` (optional): shared secret used by hub to call resolver endpoint
+- `HUB_SESSION_RESOLVE_TIMEOUT_MS` (optional): resolver call timeout, default `5000`
 - `HUB_ENABLED_BUNDLES` (optional): comma-separated or JSON array (defaults from registry)
 - `HUB_ENABLED_SERVERS` (optional): comma-separated or JSON array
 - `HUB_DISABLED_SERVERS` (optional): comma-separated or JSON array
@@ -49,6 +52,12 @@ Downstream auth variables are read dynamically from each registry server's `env_
 Account forwarding:
 
 - Proxied tool calls forward `x-mcp-account-id` and `x-hub-account-id` to downstream MCPs.
+
+Session-scoped identity (optional):
+
+- When session resolver env vars are configured and the caller uses bearer MCP session tokens,
+  the hub resolves `account_id`, `tenant_id`, and `allowed_tool_prefixes` from identity-worker.
+- Proxy tools are then filtered/enforced by `allowed_tool_prefixes` before execution.
 
 ## Telemetry + Correlation
 

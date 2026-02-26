@@ -131,6 +131,25 @@ type InvocationTrace = {
   transportRequestId: string;
 };
 
+type IdentitySessionResolveResponse = {
+  valid?: boolean;
+  session_id?: string;
+  account_id?: string;
+  tenant_id?: string;
+  user_id?: string;
+  allowed_tool_prefixes?: unknown;
+  reason?: string;
+};
+
+type ResolvedAccountContext = {
+  accountId: string;
+  tenantId: string | null;
+  userId: string | null;
+  sessionId: string | null;
+  allowedToolPrefixes: string[] | null;
+  identitySource: 'session' | 'fallback';
+};
+
 type HubInvocationLog = {
   accountId: string;
   toolName: string;
@@ -159,6 +178,9 @@ const DOWNSTREAM_BEARER_ENV_FALLBACK: Record<string, string> = {
 
 interface Env {
   HUB_API_TOKEN?: string;
+  HUB_SESSION_RESOLVE_URL?: string;
+  HUB_SESSION_RESOLVE_TOKEN?: string;
+  HUB_SESSION_RESOLVE_TIMEOUT_MS?: string;
   HUB_ENABLED_BUNDLES?: string;
   HUB_ENABLED_SERVERS?: string;
   HUB_DISABLED_SERVERS?: string;
@@ -294,6 +316,12 @@ let hubRouteTableReady = false;
 const rateLimitBuckets = new Map<string, { windowStartMs: number; count: number; lastSeenMs: number }>();
 let rateLimitSweepCounter = 0;
 const HUB_PROXY_PERIOD_COUNTER_SERVER = `${HUB_NAME}:proxy`;
+const sessionResolveCache = new Map<
+  string,
+  { value: IdentitySessionResolveResponse | null; expiresAtMs: number }
+>();
+const DEFAULT_SESSION_RESOLVE_TIMEOUT_MS = 5000;
+const SESSION_RESOLVE_CACHE_MS = 30000;
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -347,6 +375,14 @@ export default {
               ),
               has_halfdozen_telemetry_operator_token: Boolean(
                 readEnvString(env, 'HALFDOZEN_TELEMETRY_OPERATOR_API_TOKEN'),
+              ),
+            },
+            session_resolver: {
+              enabled: Boolean(readEnvString(env, 'HUB_SESSION_RESOLVE_URL')),
+              has_token: Boolean(readEnvString(env, 'HUB_SESSION_RESOLVE_TOKEN')),
+              timeout_ms: parsePositiveInt(
+                readEnvString(env, 'HUB_SESSION_RESOLVE_TIMEOUT_MS'),
+                DEFAULT_SESSION_RESOLVE_TIMEOUT_MS,
               ),
             },
             enabled_servers: runtime.stateResolution.enabledServerNames,
@@ -674,7 +710,8 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
     const toolName = request.params.name;
     const args = normalizeArgs(request.params.arguments);
     const trace = extractInvocationTrace(request, extra);
-    const accountId = resolveAccountId(extra, env);
+    const accountContext = await resolveAccountContext(extra, env);
+    const accountId = accountContext.accountId;
     const startedAt = Date.now();
     let route: ProxyRoute | null = null;
 
@@ -871,6 +908,49 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         return errorResult;
       }
 
+      if (!isRouteAllowedForSession(route, accountContext.allowedToolPrefixes)) {
+        const message =
+          `Tool "${toolName}" is not enabled for this session. ` +
+          'Request a new MCP session with the required toolkit profile.';
+        const durationMs = Date.now() - startedAt;
+        await Promise.all([
+          recordHubInvocation(env, {
+            accountId,
+            toolName,
+            success: false,
+            durationMs,
+            trace,
+            errorMessage: message,
+            metadata: {
+              type: 'policy',
+              policy: 'session_scope',
+              downstreamServer: route.serverName,
+              downstreamTool: route.downstreamToolName,
+              tenantId: accountContext.tenantId,
+              sessionId: accountContext.sessionId,
+              identitySource: accountContext.identitySource,
+              allowedToolPrefixes: accountContext.allowedToolPrefixes ?? null,
+            },
+          }),
+          recordHubRouteInvocation(env, {
+            accountId,
+            downstreamServer: route.serverName,
+            downstreamTool: route.downstreamToolName,
+            success: false,
+            durationMs,
+            trace,
+            errorMessage: message,
+            metadata: {
+              proxyToolName: toolName,
+              blockedByPolicy: 'session_scope',
+              tenantId: accountContext.tenantId,
+              sessionId: accountContext.sessionId,
+            },
+          }),
+        ]);
+        return toErrorResult(message);
+      }
+
       const rateLimitDecision = applyRateLimit(rateLimitPolicy, accountId, route);
       if (!rateLimitDecision.allowed) {
         const durationMs = Date.now() - startedAt;
@@ -987,6 +1067,10 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
             type: 'proxy',
             downstreamServer: route.serverName,
             downstreamTool: route.downstreamToolName,
+            tenantId: accountContext.tenantId,
+            userId: accountContext.userId,
+            sessionId: accountContext.sessionId,
+            identitySource: accountContext.identitySource,
             rateLimit: {
               scope: rateLimitDecision.scope,
               remaining: rateLimitDecision.remaining,
@@ -1031,6 +1115,10 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           type: route ? 'proxy' : 'management',
           downstreamServer: route?.serverName ?? null,
           downstreamTool: route?.downstreamToolName ?? null,
+          tenantId: accountContext.tenantId,
+          userId: accountContext.userId,
+          sessionId: accountContext.sessionId,
+          identitySource: accountContext.identitySource,
         },
       });
       if (route) {
@@ -1538,7 +1626,33 @@ function extractInvocationTrace(request: unknown, extra: unknown): InvocationTra
   };
 }
 
-function resolveAccountId(extra: unknown, env: Env): string {
+async function resolveAccountContext(extra: unknown, env: Env): Promise<ResolvedAccountContext> {
+  const extraRecord = asRecord(extra);
+  const authorization = getHeaderValue(extraRecord?.requestInfo, 'authorization');
+  const bearerToken = authorization ? parseBearerToken(authorization) : null;
+
+  if (bearerToken && isSessionResolverConfigured(env)) {
+    const resolved = await resolveSessionForBearerToken(env, bearerToken);
+    const accountId = normalizeTraceValue(resolved?.account_id);
+    if (!resolved || resolved.valid !== true || !accountId) {
+      const reason = normalizeTraceValue(resolved?.reason);
+      throw new Error(reason ? `Unauthorized MCP session token: ${reason}` : 'Unauthorized MCP session token');
+    }
+
+    return {
+      accountId,
+      tenantId: normalizeTraceValue(resolved.tenant_id),
+      userId: normalizeTraceValue(resolved.user_id),
+      sessionId: normalizeTraceValue(resolved.session_id),
+      allowedToolPrefixes: parseAllowedToolPrefixes(resolved.allowed_tool_prefixes),
+      identitySource: 'session',
+    };
+  }
+
+  return resolveFallbackAccountContext(extra, env);
+}
+
+function resolveFallbackAccountContext(extra: unknown, env: Env): ResolvedAccountContext {
   const extraRecord = asRecord(extra);
   const authInfo = asRecord(extraRecord?.authInfo);
   const authorization = getHeaderValue(extraRecord?.requestInfo, 'authorization');
@@ -1553,7 +1667,114 @@ function resolveAccountId(extra: unknown, env: Env): string {
     normalizeTraceValue(authInfo?.tenantId) ??
     normalizeTraceValue(authInfo?.clientId) ??
     normalizeTraceValue(authInfo?.sub);
-  return fromHeader ?? fromBearer ?? fromAuth ?? readEnvString(env, 'HUB_ACCOUNT_ID') ?? 'operator';
+  return {
+    accountId: fromHeader ?? fromBearer ?? fromAuth ?? readEnvString(env, 'HUB_ACCOUNT_ID') ?? 'operator',
+    tenantId: normalizeTraceValue(authInfo?.tenantId) ?? null,
+    userId: normalizeTraceValue(authInfo?.sub) ?? null,
+    sessionId: null,
+    allowedToolPrefixes: null,
+    identitySource: 'fallback',
+  };
+}
+
+function isSessionResolverConfigured(env: Env): boolean {
+  return Boolean(readEnvString(env, 'HUB_SESSION_RESOLVE_URL') && readEnvString(env, 'HUB_SESSION_RESOLVE_TOKEN'));
+}
+
+async function resolveSessionForBearerToken(
+  env: Env,
+  token: string,
+): Promise<IdentitySessionResolveResponse | null> {
+  const now = Date.now();
+  const cached = sessionResolveCache.get(token);
+  if (cached && cached.expiresAtMs > now) {
+    return cached.value;
+  }
+
+  const resolveUrl = readEnvString(env, 'HUB_SESSION_RESOLVE_URL');
+  const resolveToken = readEnvString(env, 'HUB_SESSION_RESOLVE_TOKEN');
+  if (!resolveUrl || !resolveToken) {
+    return null;
+  }
+
+  const timeoutMs = parsePositiveInt(
+    readEnvString(env, 'HUB_SESSION_RESOLVE_TIMEOUT_MS'),
+    DEFAULT_SESSION_RESOLVE_TIMEOUT_MS,
+  );
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(resolveUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${resolveToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const value = { valid: false, reason: `resolver_http_${response.status}` };
+      sessionResolveCache.set(token, { value, expiresAtMs: now + SESSION_RESOLVE_CACHE_MS });
+      maybeSweepSessionResolveCache(now);
+      return value;
+    }
+
+    const payload = (await response.json()) as IdentitySessionResolveResponse;
+    sessionResolveCache.set(token, { value: payload, expiresAtMs: now + SESSION_RESOLVE_CACHE_MS });
+    maybeSweepSessionResolveCache(now);
+    return payload;
+  } catch (error) {
+    const value = {
+      valid: false,
+      reason: error instanceof Error ? `resolver_error:${error.name}` : 'resolver_error',
+    };
+    sessionResolveCache.set(token, { value, expiresAtMs: now + SESSION_RESOLVE_CACHE_MS });
+    maybeSweepSessionResolveCache(now);
+    return value;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function maybeSweepSessionResolveCache(nowMs: number): void {
+  if (sessionResolveCache.size < 256) return;
+  for (const [key, value] of sessionResolveCache.entries()) {
+    if (value.expiresAtMs <= nowMs) {
+      sessionResolveCache.delete(key);
+    }
+  }
+}
+
+function parseAllowedToolPrefixes(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((entry): entry is string => typeof entry === 'string')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .slice(0, 500);
+}
+
+function isRouteAllowedForSession(route: ProxyRoute, allowedToolPrefixes: string[] | null): boolean {
+  if (allowedToolPrefixes === null) {
+    return true;
+  }
+  if (allowedToolPrefixes.length === 0) {
+    return false;
+  }
+
+  if (allowedToolPrefixes.some((prefix) => route.proxyToolName.startsWith(prefix))) {
+    return true;
+  }
+
+  const directPrefix = `${sanitizeName(route.serverName)}__`;
+  if (allowedToolPrefixes.includes(directPrefix)) {
+    return true;
+  }
+
+  return false;
 }
 
 function normalizeTraceValue(value: unknown): string | null {
