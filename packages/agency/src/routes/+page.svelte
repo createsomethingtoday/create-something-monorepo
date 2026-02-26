@@ -138,7 +138,7 @@
 	<div class="hero-container">
 		<div class="hero-content">
 			<BlurFade delay={0}>
-				<h1 class="hero-title">Constraint OS for Production Autonomy.</h1>
+				<h1 class="hero-title">Constraint for Production Autonomy.</h1>
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
