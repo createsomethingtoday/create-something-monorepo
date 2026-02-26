@@ -58,6 +58,8 @@ Session-scoped identity (optional):
 - When session resolver env vars are configured and the caller uses bearer MCP session tokens,
   the hub resolves `account_id`, `tenant_id`, and `allowed_tool_prefixes` from identity-worker.
 - Proxy tools are then filtered/enforced by `allowed_tool_prefixes` before execution.
+- For compatibility with existing `HUB_API_TOKEN` auth, pass session tokens in `X-MCP-Session-Token`.
+  (Or pass `HUB_API_TOKEN` as `?token=` and session token in `Authorization`.)
 
 ## Telemetry + Correlation
 

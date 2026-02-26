@@ -47,6 +47,11 @@ When `HUB_SESSION_RESOLVE_URL` + `HUB_SESSION_RESOLVE_TOKEN` are configured and 
 
 and enforces tool access by prefix before routing.
 
+Compatibility note:
+
+- If `HUB_API_TOKEN` is enabled, keep using it for gateway auth and pass MCP session tokens in `X-MCP-Session-Token`.
+- Alternate pattern: keep `HUB_API_TOKEN` in `?token=` query param and pass MCP session token in `Authorization: Bearer ...`.
+
 State persistence:
 
 - Bind `HUB_STATE_KV` in `wrangler.toml` and set namespace IDs.

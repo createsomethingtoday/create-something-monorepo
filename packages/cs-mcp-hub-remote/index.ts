@@ -1630,9 +1630,14 @@ async function resolveAccountContext(extra: unknown, env: Env): Promise<Resolved
   const extraRecord = asRecord(extra);
   const authorization = getHeaderValue(extraRecord?.requestInfo, 'authorization');
   const bearerToken = authorization ? parseBearerToken(authorization) : null;
+  const sessionHeaderToken = getHeaderValue(extraRecord?.requestInfo, 'x-mcp-session-token');
+  const staticHubToken = readEnvString(env, 'HUB_API_TOKEN');
+  const bearerIsHubToken =
+    bearerToken && staticHubToken ? timingSafeEqual(bearerToken, staticHubToken) : false;
+  const sessionToken = sessionHeaderToken ?? (bearerToken && !bearerIsHubToken ? bearerToken : null);
 
-  if (bearerToken && isSessionResolverConfigured(env)) {
-    const resolved = await resolveSessionForBearerToken(env, bearerToken);
+  if (sessionToken && isSessionResolverConfigured(env)) {
+    const resolved = await resolveSessionForBearerToken(env, sessionToken);
     const accountId = normalizeTraceValue(resolved?.account_id);
     if (!resolved || resolved.valid !== true || !accountId) {
       const reason = normalizeTraceValue(resolved?.reason);
@@ -1656,12 +1661,15 @@ function resolveFallbackAccountContext(extra: unknown, env: Env): ResolvedAccoun
   const extraRecord = asRecord(extra);
   const authInfo = asRecord(extraRecord?.authInfo);
   const authorization = getHeaderValue(extraRecord?.requestInfo, 'authorization');
+  const staticHubToken = readEnvString(env, 'HUB_API_TOKEN');
   const fromHeader =
     getHeaderValue(extraRecord?.requestInfo, 'x-mcp-account-id') ??
     getHeaderValue(extraRecord?.requestInfo, 'x-account-id') ??
     getHeaderValue(extraRecord?.requestInfo, 'x-tenant-id') ??
     getHeaderValue(extraRecord?.requestInfo, 'x-hub-account-id');
-  const fromBearer = authorization ? parseBearerToken(authorization) : null;
+  const rawBearer = authorization ? parseBearerToken(authorization) : null;
+  const fromBearer =
+    rawBearer && staticHubToken && timingSafeEqual(rawBearer, staticHubToken) ? null : rawBearer;
   const fromAuth =
     normalizeTraceValue(authInfo?.accountId) ??
     normalizeTraceValue(authInfo?.tenantId) ??

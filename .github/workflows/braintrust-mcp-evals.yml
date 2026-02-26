@@ -1,6 +1,8 @@
 name: Braintrust MCP Evals
 
 on:
+  schedule:
+    - cron: '17 5 * * *'
   pull_request:
     paths:
       - 'evals/braintrust/mcp/**'
@@ -18,6 +20,17 @@ on:
       - 'pnpm-lock.yaml'
       - '.github/workflows/braintrust-mcp-evals.yml'
   workflow_dispatch:
+    inputs:
+      run_live:
+        description: 'Also run the live Braintrust-upload job (requires BRAINTRUST_API_KEY)'
+        required: false
+        default: false
+        type: boolean
+      run_local:
+        description: 'Run the local no-upload eval job'
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: read
@@ -31,6 +44,7 @@ jobs:
     name: MCP Evals (Local / No Upload)
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.run_local != 'false' }}
 
     steps:
       - name: Checkout
@@ -54,14 +68,22 @@ jobs:
         run: pnpm exec braintrust eval ./evals/braintrust/mcp --list --no-send-logs
 
       - name: Run MCP evaluators locally
-        run: pnpm exec braintrust eval ./evals/braintrust/mcp --no-send-logs
+        run: pnpm exec braintrust eval ./evals/braintrust/mcp --no-send-logs --terminate-on-failure --jsonl | tee braintrust-mcp-evals.local.jsonl
+
+      - name: Upload local eval artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: braintrust-mcp-evals-local
+          path: braintrust-mcp-evals.local.jsonl
+          if-no-files-found: warn
 
   evals-live:
     name: MCP Evals (Braintrust Upload)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: evals-local
-    if: ${{ github.event_name != 'pull_request' && secrets.BRAINTRUST_API_KEY != '' }}
+    if: ${{ secrets.BRAINTRUST_API_KEY != '' && ((github.event_name == 'workflow_dispatch' && github.event.inputs.run_live == 'true') || (github.event_name != 'workflow_dispatch' && github.event_name != 'pull_request')) }}
     env:
       BRAINTRUST_API_KEY: ${{ secrets.BRAINTRUST_API_KEY }}
       BRAINTRUST_PROJECT_NAME: ${{ vars.BRAINTRUST_PROJECT_NAME }}
@@ -97,4 +119,12 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run MCP evaluators with Braintrust upload
-        run: pnpm exec braintrust eval ./evals/braintrust/mcp
+        run: pnpm exec braintrust eval ./evals/braintrust/mcp --terminate-on-failure --jsonl | tee braintrust-mcp-evals.live.jsonl
+
+      - name: Upload live eval artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: braintrust-mcp-evals-live
+          path: braintrust-mcp-evals.live.jsonl
+          if-no-files-found: warn
