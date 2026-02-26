@@ -1,0 +1,604 @@
+{
+  "generated_at": "2026-02-26T14:57:27.522Z",
+  "target": "https://cs-mcp-hub-remote.createsomething.workers.dev",
+  "config": {
+    "sample_count_per_path": 50,
+    "timeout_ms_per_request": 6000
+  },
+  "series": {
+    "health_fast": {
+      "name": "health_fast",
+      "pathname": "/health",
+      "summary": {
+        "count": 50,
+        "successes": 50,
+        "failures": 0,
+        "success_rate": 1,
+        "min": 0.024,
+        "p50": 0.03,
+        "p90": 0.033,
+        "p95": 0.036,
+        "p99": 0.08,
+        "avg": 0.031240000000000014,
+        "max": 0.08
+      },
+      "samples": [
+        {
+          "status_code": 200,
+          "time_seconds": 0.08,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.036,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.032,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.028,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.03,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.027,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.031,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.037,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.029,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.033,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.032,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.032,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.029,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.03,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.031,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.03,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.035,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.029,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.029,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.031,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.028,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.032,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.029,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.032,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.027,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.029,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.028,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.031,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.028,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.029,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.03,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.028,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.029,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.03,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.024,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.029,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.032,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.03,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.03,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.028,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.029,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.032,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.029,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.031,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.036,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.033,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.029,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.029,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.028,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.032,
+          "timeout": false
+        }
+      ]
+    },
+    "health_full": {
+      "name": "health_full",
+      "pathname": "/health?full=1",
+      "summary": {
+        "count": 50,
+        "successes": 0,
+        "failures": 50,
+        "success_rate": 0,
+        "min": 6,
+        "p50": 6,
+        "p90": 6,
+        "p95": 6,
+        "p99": 6,
+        "avg": 6,
+        "max": 6
+      },
+      "samples": [
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        }
+      ]
+    }
+  },
+  "comparison": {
+    "delta_p50_seconds": 5.97,
+    "delta_p95_seconds": 5.964,
+    "p50_ratio_full_over_fast": 200,
+    "p95_ratio_full_over_fast": 166.667
+  }
+}
