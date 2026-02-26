@@ -6,6 +6,8 @@
 [mcp_servers.dm]
 url = "https://dm.mcp.workway.co/mcp"
 enabled = true
+startup_timeout_sec = 60
+tool_timeout_sec = 120
 
 [mcp_servers.dm.http_headers]
 Authorization = "Bearer <REPLACE_WITH_DM_MCP_API_KEY>"
@@ -13,6 +15,8 @@ Authorization = "Bearer <REPLACE_WITH_DM_MCP_API_KEY>"
 [mcp_servers.half_dozen_danny_hub]
 url = "https://cs-mcp-hub-remote.createsomething.workers.dev/mcp"
 enabled = true
+startup_timeout_sec = 60
+tool_timeout_sec = 120
 
 [mcp_servers.half_dozen_danny_hub.http_headers]
 Authorization = "Bearer <REPLACE_WITH_HUB_API_TOKEN>"
@@ -37,3 +41,5 @@ curl -is "https://cs-mcp-hub-remote.createsomething.workers.dev/mcp" -H "Authori
 Expected:
 - unauthenticated requests: `401`
 - authenticated/tokenized requests: `406`
+
+If the first Hub MCP connect times out, retry once after ~15-30 seconds (cold runtime warm-up).

@@ -515,9 +515,22 @@ async function getHubRuntime(env: Env, options: { force?: boolean } = {}): Promi
   }
 
   if (!options.force && pendingRuntimeLoad && pendingRuntimeLoad.key === key) {
+    if (runtimeCache && runtimeCache.key === key) {
+      return runtimeCache.runtime;
+    }
     return pendingRuntimeLoad.promise;
   }
 
+  const refreshPromise = startRuntimeLoad(env, resolution, key);
+
+  if (!options.force && runtimeCache && runtimeCache.key === key) {
+    return runtimeCache.runtime;
+  }
+
+  return refreshPromise;
+}
+
+function startRuntimeLoad(env: Env, resolution: StateResolution, key: string): Promise<HubRuntime> {
   const promise = buildHubRuntime(env, resolution)
     .then((runtime) => {
       const previousRuntime = runtimeCache?.runtime;
@@ -546,24 +559,44 @@ async function buildHubRuntime(env: Env, stateResolution: StateResolution): Prom
   const failed: DownstreamFailure[] = [];
   const warnings = [...stateResolution.warnings];
 
-  for (const serverName of stateResolution.enabledServerNames) {
-    const config = registry.servers[serverName];
-    if (!config) {
-      failed.push({ name: serverName, error: `Server "${serverName}" not found in registry` });
+  const connectionResults = await Promise.all(
+    stateResolution.enabledServerNames.map(async (serverName) => {
+      const config = registry.servers[serverName];
+      if (!config) {
+        return {
+          type: 'failed' as const,
+          payload: { name: serverName, error: `Server "${serverName}" not found in registry` },
+        };
+      }
+
+      if (config.transport !== 'http') {
+        return {
+          type: 'warning' as const,
+          payload: `Skipping "${serverName}": remote hub only supports HTTP downstream servers`,
+        };
+      }
+
+      const result = await connectSingleDownstream(serverName, config, env);
+      if ('client' in result) {
+        return { type: 'connected' as const, payload: result };
+      }
+
+      return { type: 'failed' as const, payload: result };
+    }),
+  );
+
+  for (const result of connectionResults) {
+    if (result.type === 'connected') {
+      connected.push(result.payload);
       continue;
     }
 
-    if (config.transport !== 'http') {
-      warnings.push(`Skipping "${serverName}": remote hub only supports HTTP downstream servers`);
+    if (result.type === 'failed') {
+      failed.push(result.payload);
       continue;
     }
 
-    const result = await connectSingleDownstream(serverName, config, env);
-    if ('client' in result) {
-      connected.push(result);
-    } else {
-      failed.push(result);
-    }
+    warnings.push(result.payload);
   }
 
   connected.sort((a, b) => a.name.localeCompare(b.name));
@@ -598,11 +631,20 @@ async function connectSingleDownstream(
     requestInit.headers = requestHeaders;
 
     const toolCallTimeoutMs = resolveToolCallTimeoutMs(config, env);
+    const connectTimeoutMs = resolveDownstreamConnectTimeoutMs(config);
 
     const transport = new StreamableHTTPClientTransport(new URL(config.url), { requestInit });
-    await client.connect(transport);
+    await withTimeout(
+      client.connect(transport),
+      connectTimeoutMs,
+      `Timeout connecting to downstream MCP "${name}"`,
+    );
 
-    const tools = await listAllTools(client);
+    const tools = await withTimeout(
+      listAllTools(client),
+      connectTimeoutMs,
+      `Timeout listing tools from downstream MCP "${name}"`,
+    );
     return {
       name,
       config,
@@ -622,6 +664,27 @@ async function connectSingleDownstream(
     const message = error instanceof Error ? error.message : String(error);
     return { name, error: message };
   }
+}
+
+function resolveDownstreamConnectTimeoutMs(config: HttpServerConfig): number {
+  return parsePositiveIntFromUnknown(config.timeout_ms, 8_000);
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+    return promise;
+  }
+
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} after ${timeoutMs}ms`)), timeoutMs);
+  });
+
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timer !== undefined) {
+      clearTimeout(timer);
+    }
+  });
 }
 
 function resolveToolCallTimeoutMs(config: HttpServerConfig, env: Env): number {
