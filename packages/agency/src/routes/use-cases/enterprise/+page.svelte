@@ -172,12 +172,12 @@
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
-				<div class="hero-cta">
-					<ShimmerButton href="https://createsomething.agency/book">
-						Book Outcome Stack Call
-					</ShimmerButton>
-					<a href="/services" class="hero-link">View all services →</a>
-				</div>
+					<div class="hero-cta">
+						<ShimmerButton href="https://createsomething.agency/book">
+							Book Mapping Session
+						</ShimmerButton>
+						<a href="/services" class="hero-link">View all services →</a>
+					</div>
 			</BlurFade>
 		</div>
 		<BlurFade delay={0.4} class="hero-visual-wrapper">
@@ -313,11 +313,11 @@
 									<li>{feature}</li>
 								{/each}
 								</ul>
-								<div class="pricing-cta">
-									<ShimmerButton href="https://createsomething.agency/book">
-										Book Outcome Stack Call
-									</ShimmerButton>
-								</div>
+									<div class="pricing-cta">
+										<ShimmerButton href="https://createsomething.agency/book">
+											Book Mapping Session
+										</ShimmerButton>
+									</div>
 							</div>
 					</div>
 				</BlurFade>
@@ -365,9 +365,9 @@
 		<BlurFade delay={0.2}>
 			<div class="cta-buttons">
 				<ShimmerButton href="https://createsomething.agency/book">
-					Book Outcome Stack Call
+					Book Mapping Session
 				</ShimmerButton>
-				<a href="/services" class="cta-secondary">Need discovery first? Start with MCP-only wedge →</a>
+				<a href="/services" class="cta-secondary">Need a constrained start? Use an MCP-only wedge →</a>
 			</div>
 		</BlurFade>
 	</div>

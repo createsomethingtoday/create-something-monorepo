@@ -138,7 +138,7 @@
 	<div class="hero-container">
 		<div class="hero-content">
 			<BlurFade delay={0}>
-				<h1 class="hero-title">Constraint for Production Autonomy.</h1>
+				<h1 class="hero-title">Constraint OS for Production Autonomy.</h1>
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
@@ -148,7 +148,7 @@
 			<BlurFade delay={0.25}>
 				<div class="hero-cta">
 					<ShimmerButton href="/book">
-						Book a Call
+						Book Mapping Session
 					</ShimmerButton>
 					<a href="#how" class="hero-link">How it works →</a>
 				</div>
@@ -452,13 +452,13 @@
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
-				Book an architecture call and I will map your Constraint OS and show what the artifact bundle looks like for your workflows.
+				Book a Constraint Mapping Session and I will map your policy boundary and show what the artifact bundle looks like for your workflows.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<div class="cta-buttons">
 				<ShimmerButton href="/book">
-					Book a Call
+					Book Mapping Session
 				</ShimmerButton>
 				<a href="/services" class="cta-book-link">
 					Review the approach →

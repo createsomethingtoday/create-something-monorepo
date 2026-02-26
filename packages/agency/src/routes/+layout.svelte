@@ -43,7 +43,7 @@
 	const quickAccessItems = [
 		{ id: 'nav-services', label: 'How I Work', description: 'Custom MCPs, Assurance, Extension', href: '/services', icon: '🔨', keywords: ['custom mcp', 'workflow', 'assurance', 'pricing', 'services'] },
 		{ id: 'nav-products', label: 'What I\'ve Built', description: 'Artifact-backed production workflows', href: '/products', icon: '📦', keywords: ['portfolio', 'tools', 'integrations'] },
-		{ id: 'nav-book', label: 'Book a Call', description: 'See if there\'s a fit', href: '/book', icon: '📞', keywords: ['contact', 'hire', 'start', 'book', 'call'] },
+		{ id: 'nav-book', label: 'Book Mapping Session', description: 'Map fit and policy boundary', href: '/book', icon: '📞', keywords: ['contact', 'hire', 'start', 'book', 'mapping', 'session'] },
 		{ id: 'nav-space', label: 'Go to .space', description: 'MCP experiments', href: 'https://createsomething.space', icon: '🧪', keywords: ['explore', 'try', 'interactive'] },
 		{ id: 'nav-io', label: 'Go to .io', description: 'MCP patterns for builders', href: 'https://createsomething.io', icon: '📖', keywords: ['papers', 'research', 'learn'] },
 		{ id: 'nav-ltd', label: 'Go to .ltd', description: 'Philosophy of automation', href: 'https://createsomething.ltd', icon: '📜', keywords: ['canon', 'principles', 'foundation'] },
@@ -122,7 +122,7 @@
 		links={navLinks}
 		currentPath={$page.url.pathname}
 		fixed={true}
-		ctaLabel="Book a Call"
+		ctaLabel="Book Mapping Session"
 		ctaHref="/book"
 		showLogin={false}
 	/>
@@ -139,7 +139,7 @@
 			{ label: 'How I Work', href: '/services' },
 			{ label: 'What I\'ve Built', href: '/products' },
 			{ label: 'About', href: '/about' },
-			{ label: 'Book a Call', href: '/book' }
+			{ label: 'Book Mapping Session', href: '/book' }
 		]}
 		showSocial={true}
 		isAuthenticated={!!data.user}

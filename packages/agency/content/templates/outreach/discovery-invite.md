@@ -1,6 +1,6 @@
-# Discovery Call Invitation Templates
+# Constraint Mapping Invitation Templates
 
-**Purpose**: Convert warm relationship into discovery conversation
+**Purpose**: Convert warm relationship into a Constraint Mapping Session
 **When to use**: After 2-3 positive exchanges, clear ICP match
 **Prerequisite**: They know who you are and have shown interest
 
@@ -11,9 +11,9 @@
 **Context**: After good back-and-forth in messages
 
 ```
-This is easier to talk through than type -
+This is easier to talk through than type.
 
-Would you be up for a 15-minute call? Not a sales pitch - genuinely curious about what you're building at {{company}} and happy to share what we've learned.
+Would you be up for a 20-minute Constraint Mapping Session? Not a sales pitch - we'll map your workflow bottlenecks and where governance is required.
 
 Here's my calendar if useful: {{calendar_link}}
 
@@ -22,11 +22,11 @@ Or just throw out a time that works.
 
 **Example**:
 ```
-This is easier to talk through than type -
+This is easier to talk through than type.
 
-Would you be up for a 15-minute call? Not a sales pitch - genuinely curious about what you're building at Acme and happy to share what we've learned.
+Would you be up for a 20-minute Constraint Mapping Session? Not a sales pitch - we'll map your workflow bottlenecks and where governance is required.
 
-Here's my calendar if useful: savvycal.com/createsomething/discovery
+Here's my calendar if useful: createsomething.agency/book
 
 Or just throw out a time that works.
 ```
@@ -40,7 +40,7 @@ Or just throw out a time that works.
 ```
 You mentioned {{challenge}} - we just worked through something similar with {{anonymized_client}}.
 
-Would 15 minutes be useful to compare notes? I can walk through what worked (and what didn't).
+Would 20 minutes be useful to compare notes? I can walk through what worked (and what didn't).
 
 No pitch, just problem-solving.
 
@@ -51,11 +51,11 @@ No pitch, just problem-solving.
 ```
 You mentioned the AI integration isn't sticking with your team - we just worked through something similar with a client in your space.
 
-Would 15 minutes be useful to compare notes? I can walk through what worked (and what didn't).
+Would 20 minutes be useful to compare notes? I can walk through what worked (and what didn't).
 
 No pitch, just problem-solving.
 
-savvycal.com/createsomething/discovery
+createsomething.agency/book
 ```
 
 ---
@@ -67,7 +67,7 @@ savvycal.com/createsomething/discovery
 ```
 Based on our conversation, I think this might be relevant: {{resource_link}}
 
-If it resonates, happy to dig deeper on a call. 15 minutes, no commitment.
+If it resonates, happy to dig deeper on a Constraint Mapping Session. 20 minutes, no commitment.
 
 {{calendar_link}}
 ```
@@ -81,9 +81,9 @@ If it resonates, happy to dig deeper on a call. 15 minutes, no commitment.
 ```
 You mentioned {{initiative}} is coming up in {{timeframe}}.
 
-Might be worth a quick call before you get too deep in. We've seen a few patterns that could save you time.
+Might be worth a quick Constraint Mapping Session before you get too deep in. We've seen a few patterns that could save you time.
 
-15 minutes, happy to just share what we know.
+20 minutes, happy to just share what we know.
 
 {{calendar_link}}
 ```
@@ -97,7 +97,7 @@ Might be worth a quick call before you get too deep in. We've seen a few pattern
 ```
 I've enjoyed this exchange - feels like we're circling similar problems.
 
-Would be easier to continue over a call. 15 minutes, no agenda beyond "what are you working on and how can we help?"
+Would be easier to continue over a Constraint Mapping Session. 20 minutes, no agenda beyond "what are you working on and how can we help?"
 
 {{calendar_link}} - or suggest a time.
 ```
@@ -130,7 +130,7 @@ Happy to catch up if timing's better now.
 ```
 ❌ "Let me know if you have 30 minutes this week."
 ```
-*Problem*: 30 min feels like a commitment; 15 min is easy
+*Problem*: 30 min feels like a commitment; keep it near 20 min unless they ask for deeper technical review.
 
 ```
 ❌ "I think we could really help you with..."
@@ -148,14 +148,14 @@ Happy to catch up if timing's better now.
 
 **Structure**:
 1. **Reference** - Connect to previous exchange
-2. **Value** - What they'll get from the call
+2. **Value** - What they'll get from the mapping session
 3. **Pressure release** - "No pitch" / "No commitment"
 4. **Easy action** - Calendar link OR time suggestion
 
 **Time positioning**:
-- Always say "15 minutes" (feels low-commitment)
-- Actual calls often run 20-30 if going well
-- Never ask for 30+ upfront
+- Ask for "20 minutes" to match the live discovery flow
+- Sessions may run 20-30 if signal is strong
+- Avoid asking for 30+ upfront unless buyer requests deep technical review
 
 ---
 
@@ -183,7 +183,7 @@ Then:
 1. Send calendar invite with video link
 2. Review their LinkedIn, company, recent posts
 3. Prepare 1-2 relevant examples
-4. Review discovery call script
+4. Review `content/sales/discovery-call-script.md`
 
 ---
 
@@ -219,11 +219,11 @@ Happy to reconnect down the road if more relevant then.
 
 When sending invite:
 - Update lead stage to `consideration`
-- Note: Discovery invite sent {{date}}
+- Note: Constraint Mapping invite sent {{date}}
 
 When call scheduled:
 - Update stage to `decision`
-- Note: Call scheduled {{date/time}}
+- Note: Mapping session scheduled {{date/time}}
 - Set `discovery_call_at` field
 
 ---
@@ -238,8 +238,10 @@ When call scheduled:
 
 ## Calendar Link Setup
 
-**SavvyCal settings for discovery calls**:
-- Duration: 15 minutes (can extend if needed)
+**SavvyCal settings for mapping sessions**:
+- Duration: 20 minutes (can extend if needed)
 - Buffer: 15 minutes after
 - Availability: Business hours + limited evenings
-- Questions: "What's the main thing you'd want to discuss?"
+- Questions:
+  - "Which workflow is highest-cost when it fails?"
+  - "Which systems must stay in sync?"

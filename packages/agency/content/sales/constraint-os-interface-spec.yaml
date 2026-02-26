@@ -1,0 +1,78 @@
+version: "1.0"
+name: "Constraint OS Commercial Interface"
+owner: "CREATE SOMETHING .agency"
+updated_at: "2026-02-26"
+
+message_taxonomy:
+  core_phrase: "Constraint OS for production autonomy."
+  client_facing_delivery_vector: "Skills + MCP"
+  technical_proof_vector: "MCP + Skills"
+
+offer_ladder:
+  - name: "Custom Workflow MCPs"
+    purpose: "Build trusted workflow substrate and deterministic execution paths."
+  - name: "Autonomy Assurance"
+    purpose: "Add policy controls, release gates, approval rules, and incident loops."
+  - name: "Enterprise Extension"
+    purpose: "Handle high-stakes cross-system governance and custom trust boundaries."
+
+one_pager_interface:
+  input:
+    - buyer_context
+    - workflow_pain
+    - risk_profile
+  output:
+    - concise_narrative
+    - offer_ladder_mapping
+    - trust_artifacts
+    - cta
+  trust_artifacts:
+    - "mcp_contract.yaml"
+    - "agent_contract.yaml"
+    - "outcome_contract.md"
+    - "golden-task checks + runbook"
+  cta:
+    name: "Constraint Mapping Session"
+    expected_output:
+      - pilot_scope
+      - policy_boundary
+      - thirty_day_plan
+
+call_script_interface:
+  input:
+    - call_stage
+    - buyer_responses
+    - objection_type
+  output:
+    - next_question
+    - pitch_block
+    - close_path
+  stages:
+    - "0-3: context and intent"
+    - "3-10: qualification"
+    - "10-15: diagnosis playback"
+    - "15-22: solution mapping"
+    - "22-26: objection handling"
+    - "26-30: close"
+  close_paths:
+    high_fit: "Schedule paid Constraint Mapping Session"
+    medium_fit: "Run MCP-only wedge with explicit assurance trigger"
+    low_fit: "Park or refer with re-entry condition"
+
+operating_model:
+  - "Auto-allow safe actions"
+  - "Route risky actions to approval inbox"
+  - "Block disallowed actions with reason and audit trail"
+
+reliability_kpis:
+  - unreviewed_risky_actions_prevented
+  - approval_turnaround
+  - incident_rate_trend
+  - governed_workflow_coverage
+
+discovery_note_required_fields:
+  - workflow_candidate
+  - risk_class
+  - required_approvals
+  - integration_systems
+  - recommended_package_tier
