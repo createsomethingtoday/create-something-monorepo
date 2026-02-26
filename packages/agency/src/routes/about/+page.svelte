@@ -186,7 +186,7 @@
     </BlurFade>
     <BlurFade delay={0.2}>
       <div class="cta-actions">
-        <a href="/book" class="cta-link-primary">Book a Call →</a>
+        <a href="/book" class="cta-link-primary">Book Mapping Session →</a>
         <a href="/services" class="cta-link-secondary">How I work →</a>
       </div>
     </BlurFade>

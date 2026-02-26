@@ -224,16 +224,16 @@
 </script>
 
 <SEO
-	title="Book an Architecture Call"
-	description="Schedule a 30-minute architecture call to map Custom Workflow MCPs, Autonomy Assurance, Enterprise Extension, or system-development referral."
+	title="Book a Constraint Mapping Session"
+	description="Schedule a mapping session to scope Custom Workflow MCPs, Autonomy Assurance, Enterprise Extension, or system-development referral."
 	propertyName="agency"
 />
 
 <main class="booking-page">
 	<header class="booking-header">
-		<h1 class="booking-title">Book an architecture call</h1>
+		<h1 class="booking-title">Book a Constraint Mapping Session</h1>
 		<p class="booking-subtitle">
-			30 minutes to map your lane: Custom Workflow MCPs, Autonomy Assurance, Enterprise Extension, or referral.
+			Map your lane: Custom Workflow MCPs, Autonomy Assurance, Enterprise Extension, or referral.
 		</p>
 	</header>
 

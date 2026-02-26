@@ -210,7 +210,8 @@ Commit:
 1. Send the one-pager before or immediately after call one.
 2. Use this script as a branching guide, not verbatim.
 3. Capture outputs in a standard discovery note.
-4. Build proposals using the same artifact vocabulary.
+4. Execute post-call follow-up from `../templates/sales/constraint-os-follow-up-sequence.md`.
+5. Build proposals using the same artifact vocabulary.
 
 ### Discovery note template (required fields)
 

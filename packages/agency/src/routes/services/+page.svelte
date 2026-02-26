@@ -273,7 +273,7 @@
     </BlurFade>
     <BlurFade delay={0.2}>
       <div class="cta-buttons">
-        <ShimmerButton href="/book">Book a Call</ShimmerButton>
+        <ShimmerButton href="/book">Book a Mapping Session</ShimmerButton>
         <a href="/products" class="cta-secondary">See what I've built →</a>
       </div>
     </BlurFade>

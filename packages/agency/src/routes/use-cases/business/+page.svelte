@@ -362,7 +362,7 @@
 					Get Your Outcome Stack
 				</ShimmerButton>
 				<a href="/services" class="cta-link">See all services &rarr;</a>
-				<a href="/book" class="cta-link cta-link-secondary">Have questions? Book a call</a>
+				<a href="/book" class="cta-link cta-link-secondary">Have questions? Book a mapping session</a>
 			</div>
 		</BlurFade>
 	</div>

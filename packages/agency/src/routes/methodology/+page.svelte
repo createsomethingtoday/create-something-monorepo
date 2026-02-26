@@ -303,7 +303,7 @@
 		<BlurFade delay={0.2}>
 			<div class="cta-buttons">
 				<ShimmerButton href="/book">
-					Book a Call
+					Book Mapping Session
 				</ShimmerButton>
 				<a href="/services" class="cta-secondary">
 					How I work →

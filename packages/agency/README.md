@@ -1,6 +1,6 @@
 # CREATE SOMETHING Agency
 
-**createsomething.agency** — Custom MCP Development
+**createsomething.agency** — Constraint OS for production autonomy
 
 We build the connectivity layer between your tools and AI.
 
@@ -15,20 +15,20 @@ Neither Claude Desktop, Claude Cowork, nor Codex can create MCP servers from wit
 - Domain expertise (understanding your business)
 - MCP protocol knowledge (auth, transports, error handling)
 - Integration experience (data mapping, security boundaries)
-- Intelligence Layer design (Skills and Agents on top)
+- Constraint OS design (Skills + MCP with policy boundaries)
 
 This is what `.agency` delivers.
 
 ---
 
-## Service Offerings
+## Service Ladder
 
-| Service | Description | Deliverable |
-|---------|-------------|-------------|
-| **MCP Audit** | What MCPs would unlock value for your business? | Strategic report + prioritized roadmap |
-| **Custom MCP Development** | Build the server, package as `.mcpb` | Production-ready MCP server |
-| **Intelligence Layer** | Skills and Agents on top of your MCPs | Working automations |
-| **Ongoing Support** | Auth updates, API changes, new capabilities | Retainer relationship |
+| Offer | Description | Typical Output |
+|-------|-------------|----------------|
+| **Custom Workflow MCPs** | Build trusted workflow substrate for business-critical operations. | Workflow implementation + integration contracts |
+| **Autonomy Assurance** | Add policy controls, release gates, approval rules, and incident loops. | Governed runtime behavior + reliability controls |
+| **Enterprise Extension** | Extend for high-stakes, cross-system, and compliance-heavy workflows. | Custom governance boundaries + enterprise orchestration |
+| **Constraint Mapping Session** | Paid pre-implementation mapping to scope workflow and policy boundary. | Pilot scope, policy boundary, and 30-day plan |
 
 ---
 
@@ -46,8 +46,8 @@ This is what `.agency` delivers.
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Entry point**: MCP server that connects your existing tools
-**Upsell**: Intelligence Layer that produces outcomes
+**Entry point**: Custom Workflow MCPs that connect your systems with trusted action paths  
+**Expansion**: Assurance and Extension based on risk and workflow complexity
 
 ---
 
@@ -120,11 +120,23 @@ packages/agency/
 │   │   └── admin/           # Internal tools
 │   └── lib/                 # Shared utilities
 ├── content/                 # Operational content
-│   ├── sales/               # Discovery scripts, proposals
+│   ├── sales/               # Constraint OS buyer brief, script, and interface spec
 │   └── case-studies/        # MCP project documentation
 ├── docs/                    # Client documentation
 └── workers/                 # Cloudflare Workers
 ```
+
+## Sales Assets
+
+The active sales system is documented in:
+
+- `content/sales/README.md`
+- `content/sales/constraint-os-buyer-brief-ops-revops.md`
+- `content/sales/discovery-call-script.md`
+- `content/sales/constraint-os-interface-spec.yaml`
+- `content/templates/sales/discovery-note-template.md`
+- `content/templates/sales/constraint-os-proposal-input-template.md`
+- `content/templates/sales/constraint-os-follow-up-sequence.md`
 
 ---
 

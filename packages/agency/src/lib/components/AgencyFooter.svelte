@@ -20,7 +20,7 @@
 				<ul class="footer-links">
 					<li><a href="/services">How I Work</a></li>
 					<li><a href="/products">What I've Built</a></li>
-					<li><a href="/book">Book a Call</a></li>
+					<li><a href="/book">Book Mapping Session</a></li>
 				</ul>
 			</div>
 

@@ -45,6 +45,21 @@ This GTM strategy embodies the [Hermeneutic Circle](/canon/concepts/hermeneutic-
 - [x] Lead management (`/admin/funnel/leads/new`)
 - [x] Metrics recording (`/admin/funnel/record`)
 
+### Constraint OS Sales Assets v1 (Ops/RevOps)
+- [x] Sales asset index (`content/sales/README.md`)
+- [x] One-pager buyer brief (`content/sales/constraint-os-buyer-brief-ops-revops.md`)
+- [x] Live discovery script (`content/sales/discovery-call-script.md`)
+- [x] Commercial interface spec (`content/sales/constraint-os-interface-spec.yaml`)
+- [x] Discovery note template (`content/templates/sales/discovery-note-template.md`)
+- [x] Proposal input template (`content/templates/sales/constraint-os-proposal-input-template.md`)
+- [x] Follow-up cadence template (`content/templates/sales/constraint-os-follow-up-sequence.md`)
+
+**Standard run sequence:**
+1. Send buyer brief before or immediately after call one.
+2. Run discovery using branching script (not verbatim).
+3. Capture output in discovery note template.
+4. Build proposal from the same artifact vocabulary (`mcp_contract.yaml`, `agent_contract.yaml`, `outcome_contract.md`).
+
 ### LMS Content
 - [x] Lesson 2 (DRY) - Praxis section added
 - [x] Lesson 3 (Rams) - Praxis section added
@@ -185,6 +200,9 @@ Post-proposal cadence:
 - Day 7: Value reminder + case study
 - Day 14: Decision timeline check
 - Day 21: Final follow-up or close
+
+Constraint OS sequence template:
+- `content/templates/sales/constraint-os-follow-up-sequence.md`
 
 ### Success Criteria
 - [ ] 1 proposal sent
@@ -345,5 +363,5 @@ Based on learnings, plan:
 
 ---
 
-*Last updated: December 29, 2025*
+*Last updated: February 26, 2026*
 *Owner: CREATE SOMETHING GTM*

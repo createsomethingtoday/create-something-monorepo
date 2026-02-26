@@ -48,7 +48,7 @@
 
 <SEO
   title="Start Your AgentOps Lane | CREATE SOMETHING .agency"
-  description="Book an architecture call or send your workflow details. We'll map whether you need Custom Workflow MCPs, Autonomy Assurance, Enterprise Extension, or a system-development referral."
+  description="Book a Constraint Mapping Session or send your workflow details. We'll map whether you need Custom Workflow MCPs, Autonomy Assurance, Enterprise Extension, or a system-development referral."
   keywords="custom workflow mcp, autonomy assurance, enterprise extension, mcp architecture, ai workflow reliability"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -76,7 +76,7 @@
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-detail">
-        Book an architecture call or send your workflow details. We scope for the right operating
+        Book a Constraint Mapping Session or send your workflow details. We scope your operating
         lane, then extend only where needed.
       </p>
     </BlurFade>
@@ -86,12 +86,12 @@
 <!-- Contact Options -->
 <section class="contact-section">
   <div class="contact-container">
-    <!-- Book a Call -->
+    <!-- Book a Constraint Mapping Session -->
     <BlurFade delay={0.1}>
       <div class="contact-option">
-        <h2>Book a call</h2>
+        <h2>Book a Constraint Mapping Session</h2>
         <p>
-          30-minute architecture call. We map your tools, workflow bottlenecks, and risk profile to
+          20-minute mapping session. We map your tools, workflow bottlenecks, and risk profile to
           place you in the right lane.
         </p>
         <div class="cal-button">
