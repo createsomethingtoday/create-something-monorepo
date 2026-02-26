@@ -23,6 +23,7 @@
     "lint": "pnpm --recursive run lint",
     "format": "prettier --write \"packages/**/*.{js,ts,svelte,json,css,md}\"",
     "test": "pnpm --recursive run test",
+    "braintrust:eval": "pnpm exec braintrust eval",
     "braintrust:smoke": "tsx scripts/braintrust-openai-smoke.ts",
     "braintrust:playbook-smoke": "tsx scripts/braintrust-playbook-mcp-smoke.ts",
     "graph:build": "tsx scripts/build-knowledge-graph/index.ts",
