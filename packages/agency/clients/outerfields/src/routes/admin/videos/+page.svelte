@@ -835,51 +835,52 @@
 					<span>Apply</span>
 				</button>
 			</div>
+		</div>
 
-			{#if hasActiveFilters()}
-				<div class="active-filters" aria-label="Active filters">
-					{#if q.trim()}
-						<button class="filter-chip" onclick={() => void clearSingleFilter('q')}>
-							<span>Search: "{q.trim()}"</span>
-							<strong aria-hidden="true">×</strong>
-						</button>
-					{/if}
-					{#if visibility !== 'all'}
-						<button class="filter-chip" onclick={() => void clearSingleFilter('visibility')}>
-							<span>Visibility: {visibility}</span>
-							<strong aria-hidden="true">×</strong>
-						</button>
-					{/if}
-					{#if ingestStatus !== 'all'}
-						<button class="filter-chip" onclick={() => void clearSingleFilter('ingestStatus')}>
-							<span>Ingest: {ingestStatus}</span>
-							<strong aria-hidden="true">×</strong>
-						</button>
-					{/if}
-					{#if tier !== 'all'}
-						<button class="filter-chip" onclick={() => void clearSingleFilter('tier')}>
-							<span>Tier: {tier}</span>
-							<strong aria-hidden="true">×</strong>
-						</button>
-					{/if}
-					{#if seriesId.trim()}
-						<button class="filter-chip" onclick={() => void clearSingleFilter('seriesId')}>
-							<span>Series: {seriesLabel(seriesId)}</span>
-							<strong aria-hidden="true">×</strong>
-						</button>
-					{/if}
-					{#if featured !== 'all'}
-						<button class="filter-chip" onclick={() => void clearSingleFilter('featured')}>
-							<span>Featured: {featured}</span>
-							<strong aria-hidden="true">×</strong>
-						</button>
-					{/if}
-
-					<button class="filter-chip clear-all-chip" onclick={() => void clearAllFilters()}>
-						Clear all
+		{#if hasActiveFilters()}
+			<div class="active-filters" aria-label="Active filters">
+				{#if q.trim()}
+					<button class="filter-chip" onclick={() => void clearSingleFilter('q')}>
+						<span>Search: "{q.trim()}"</span>
+						<strong aria-hidden="true">×</strong>
 					</button>
-				</div>
-			{/if}
+				{/if}
+				{#if visibility !== 'all'}
+					<button class="filter-chip" onclick={() => void clearSingleFilter('visibility')}>
+						<span>Visibility: {visibility}</span>
+						<strong aria-hidden="true">×</strong>
+					</button>
+				{/if}
+				{#if ingestStatus !== 'all'}
+					<button class="filter-chip" onclick={() => void clearSingleFilter('ingestStatus')}>
+						<span>Ingest: {ingestStatus}</span>
+						<strong aria-hidden="true">×</strong>
+					</button>
+				{/if}
+				{#if tier !== 'all'}
+					<button class="filter-chip" onclick={() => void clearSingleFilter('tier')}>
+						<span>Tier: {tier}</span>
+						<strong aria-hidden="true">×</strong>
+					</button>
+				{/if}
+				{#if seriesId.trim()}
+					<button class="filter-chip" onclick={() => void clearSingleFilter('seriesId')}>
+						<span>Series: {seriesLabel(seriesId)}</span>
+						<strong aria-hidden="true">×</strong>
+					</button>
+				{/if}
+				{#if featured !== 'all'}
+					<button class="filter-chip" onclick={() => void clearSingleFilter('featured')}>
+						<span>Featured: {featured}</span>
+						<strong aria-hidden="true">×</strong>
+					</button>
+				{/if}
+
+				<button class="filter-chip clear-all-chip" onclick={() => void clearAllFilters()}>
+					Clear all
+				</button>
+			</div>
+		{/if}
 
 		{#if listError}
 			<div class="notice error">{listError}</div>
