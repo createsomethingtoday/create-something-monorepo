@@ -335,7 +335,8 @@ let pendingRuntimeLoad:
   | null = null;
 
 let hubRouteTableReady = false;
-let braintrustLogger: Logger<Record<string, unknown>> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let braintrustLogger: Logger<any> | null = null;
 let braintrustLoggerKey: string | null = null;
 
 const rateLimitBuckets = new Map<string, { windowStartMs: number; count: number; lastSeenMs: number }>();
@@ -399,6 +400,14 @@ export default {
             },
             auth_required: Boolean(readEnvString(env, 'HUB_API_TOKEN')),
             state_storage: env.HUB_STATE_KV ? 'kv' : 'env-only',
+            braintrust: {
+              enabled: parseBooleanFlag(
+                readEnvString(env, 'BRAINTRUST_ENABLED'),
+                Boolean(readEnvString(env, 'BRAINTRUST_API_KEY')),
+              ),
+              configured: Boolean(readEnvString(env, 'BRAINTRUST_API_KEY')),
+              project_name: resolveBraintrustProjectName(env),
+            },
             policy: buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env),
             downstream_auth_config: {
               has_cs_telemetry_operator_token: Boolean(
@@ -2055,7 +2064,8 @@ function parseBooleanFlag(raw: string | undefined, fallback: boolean): boolean {
   return fallback;
 }
 
-function getBraintrustLogger(env: Env): Logger<Record<string, unknown>> | null {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getBraintrustLogger(env: Env): Logger<any> | null {
   const hasApiKey = Boolean(readEnvString(env, 'BRAINTRUST_API_KEY'));
   const enabled = parseBooleanFlag(readEnvString(env, 'BRAINTRUST_ENABLED'), hasApiKey);
   if (!enabled) {
@@ -2168,8 +2178,8 @@ function emitBraintrustHubInvocation(env: Env, log: HubInvocationLog, accountId:
   const input = redactForBraintrust(log.input);
   const output = redactForBraintrust(log.output);
 
-  logger
-    .traced(
+  try {
+    const tracedResult = logger.traced(
       (span: Span) => {
         span.log({
           input,
@@ -2192,12 +2202,20 @@ function emitBraintrustHubInvocation(env: Env, log: HubInvocationLog, accountId:
         name: `mcp:${HUB_NAME}:${log.toolName}`,
         type: 'tool',
       },
-    )
-    .catch((error: unknown) => {
-      console.warn(
-        `[${HUB_NAME}] braintrust emit failed for ${log.toolName}: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    });
+    );
+
+    if (tracedResult && typeof (tracedResult as Promise<void>).catch === 'function') {
+      void (tracedResult as Promise<void>).catch((error: unknown) => {
+        console.warn(
+          `[${HUB_NAME}] braintrust emit failed for ${log.toolName}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      });
+    }
+  } catch (error) {
+    console.warn(
+      `[${HUB_NAME}] braintrust emit failed for ${log.toolName}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }
 
 async function recordHubInvocation(env: Env, log: HubInvocationLog): Promise<void> {
