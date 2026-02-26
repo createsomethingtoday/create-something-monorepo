@@ -3,6 +3,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { CallToolRequestSchema, ListToolsRequestSchema, type Tool } from '@modelcontextprotocol/sdk/types.js';
+import { initLogger, type Logger, type Span } from 'braintrust';
 
 import registryJson from '../../config/mcp-hub/registry.json';
 
@@ -162,6 +163,8 @@ type HubInvocationLog = {
   durationMs: number;
   errorMessage?: string | null;
   trace: InvocationTrace;
+  input?: unknown;
+  output?: unknown;
   metadata?: Record<string, unknown>;
 };
 
@@ -182,6 +185,9 @@ const DOWNSTREAM_BEARER_ENV_FALLBACK: Record<string, string> = {
 };
 
 interface Env {
+  BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_NAME?: string;
+  BRAINTRUST_ENABLED?: string;
   HUB_API_TOKEN?: string;
   HUB_TOOL_CALL_TIMEOUT_MS?: string;
   HUB_SESSION_RESOLVE_URL?: string;
@@ -208,6 +214,17 @@ const HUB_NAME = 'create-something-hub-remote';
 const HUB_VERSION = '1.0.0';
 const DEFAULT_REFRESH_SECONDS = 300;
 const HUB_STATE_KV_KEY = 'hub_state_v1';
+const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+const REDACTED = '[REDACTED]';
+const TRUNCATED = '[TRUNCATED]';
+const MAX_REDACTION_DEPTH = 6;
+const MAX_REDACTION_KEYS = 100;
+const MAX_REDACTION_ARRAY_ITEMS = 50;
+const MAX_REDACTION_STRING_LENGTH = 4_000;
+const SENSITIVE_FIELD_PATTERNS: RegExp[] = [
+  /(^|_|-)(api[-_]?key|token|secret|password|authorization|cookie|session|bearer)(_|-|$)/i,
+  /(^|_|-)(accountid|account_id)(_|-|$)/i,
+];
 
 const registry = registryJson as unknown as McpBundleRegistry;
 
@@ -318,6 +335,8 @@ let pendingRuntimeLoad:
   | null = null;
 
 let hubRouteTableReady = false;
+let braintrustLogger: Logger<Record<string, unknown>> | null = null;
+let braintrustLoggerKey: string | null = null;
 
 const rateLimitBuckets = new Map<string, { windowStartMs: number; count: number; lastSeenMs: number }>();
 let rateLimitSweepCounter = 0;
@@ -869,6 +888,8 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           success: true,
           durationMs: Date.now() - startedAt,
           trace,
+          input: args,
+          output: result,
           metadata: {
             type: 'management',
           },
@@ -884,6 +905,8 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           success: true,
           durationMs: Date.now() - startedAt,
           trace,
+          input: args,
+          output: result,
           metadata: {
             type: 'management',
           },
@@ -902,6 +925,8 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           success: true,
           durationMs: Date.now() - startedAt,
           trace,
+          input: args,
+          output: result,
           metadata: {
             type: 'management',
           },
@@ -917,6 +942,8 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           success: true,
           durationMs: Date.now() - startedAt,
           trace,
+          input: args,
+          output: result,
           metadata: {
             type: 'management',
             query: stringArg(args.query),
@@ -937,6 +964,8 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           success: true,
           durationMs: Date.now() - startedAt,
           trace,
+          input: args,
+          output: result,
           metadata: {
             type: 'management',
             refreshed: true,
@@ -975,6 +1004,8 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           success: true,
           durationMs: Date.now() - startedAt,
           trace,
+          input: args,
+          output: result,
           metadata: {
             type: 'management',
             patch,
@@ -994,6 +1025,8 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
             durationMs: Date.now() - startedAt,
             trace,
             errorMessage: '"correlationId" is required',
+            input: args,
+            output: errorResult,
             metadata: {
               type: 'management',
             },
@@ -1009,6 +1042,8 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           success: true,
           durationMs: Date.now() - startedAt,
           trace,
+          input: args,
+          output: result,
           metadata: {
             type: 'management',
             correlationId,
@@ -1026,6 +1061,8 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           success: true,
           durationMs: Date.now() - startedAt,
           trace,
+          input: args,
+          output: result,
           metadata: {
             type: 'management',
           },
@@ -1043,6 +1080,8 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           durationMs: Date.now() - startedAt,
           trace,
           errorMessage: `Unknown tool "${toolName}"`,
+          input: args,
+          output: errorResult,
           metadata: {
             type: 'unknown-tool',
           },
@@ -1063,6 +1102,8 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
             durationMs,
             trace,
             errorMessage: message,
+            input: args,
+            output: toErrorResult(message),
             metadata: {
               type: 'policy',
               policy: 'session_scope',
@@ -1108,6 +1149,8 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
             durationMs,
             trace,
             errorMessage: message,
+            input: args,
+            output: toErrorResult(message),
             metadata: {
               type: 'policy',
               policy: 'rate_limit',
@@ -1159,6 +1202,8 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
             durationMs,
             trace,
             errorMessage: message,
+            input: args,
+            output: toErrorResult(message),
             metadata: {
               type: 'policy',
               policy: 'quota',
@@ -1205,6 +1250,8 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           durationMs,
           trace,
           errorMessage: proxiedSuccess ? null : 'Downstream MCP returned isError response',
+          input: args,
+          output: proxiedResult,
           metadata: {
             type: 'proxy',
             downstreamServer: route.serverName,
@@ -1253,6 +1300,8 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         durationMs,
         trace,
         errorMessage: message,
+        input: args,
+        output: toErrorResult(`Tool "${toolName}" failed: ${message}`),
         metadata: {
           type: route ? 'proxy' : 'management',
           downstreamServer: route?.serverName ?? null,
@@ -1992,11 +2041,172 @@ function getCurrentPeriod(): string {
   return `${year}-${month}`;
 }
 
+function resolveBraintrustProjectName(env: Env): string {
+  const configured = readEnvString(env, 'BRAINTRUST_PROJECT_NAME')?.trim();
+  return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+}
+
+function parseBooleanFlag(raw: string | undefined, fallback: boolean): boolean {
+  if (raw === undefined) return fallback;
+  const normalized = raw.trim().toLowerCase();
+  if (!normalized) return fallback;
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+  return fallback;
+}
+
+function getBraintrustLogger(env: Env): Logger<Record<string, unknown>> | null {
+  const hasApiKey = Boolean(readEnvString(env, 'BRAINTRUST_API_KEY'));
+  const enabled = parseBooleanFlag(readEnvString(env, 'BRAINTRUST_ENABLED'), hasApiKey);
+  if (!enabled) {
+    return null;
+  }
+
+  const apiKey = readEnvString(env, 'BRAINTRUST_API_KEY');
+  if (!apiKey) {
+    return null;
+  }
+
+  const projectName = resolveBraintrustProjectName(env);
+  const nextKey = `${apiKey}::${projectName}`;
+  if (braintrustLogger && braintrustLoggerKey === nextKey) {
+    return braintrustLogger;
+  }
+
+  try {
+    braintrustLogger = initLogger({
+      apiKey,
+      projectName,
+      asyncFlush: true,
+      setCurrent: true,
+    });
+    braintrustLoggerKey = nextKey;
+    return braintrustLogger;
+  } catch (error) {
+    console.warn(`[${HUB_NAME}] braintrust logger init failed: ${error instanceof Error ? error.message : String(error)}`);
+    return null;
+  }
+}
+
+function looksSensitiveField(key: string): boolean {
+  return SENSITIVE_FIELD_PATTERNS.some((pattern) => pattern.test(key));
+}
+
+function redactString(value: string): string {
+  const trimmed = value.trim();
+  if (/^Bearer\s+/i.test(trimmed)) {
+    return 'Bearer [REDACTED]';
+  }
+  if (/^[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+$/.test(trimmed) && trimmed.length > 24) {
+    return REDACTED;
+  }
+  if (trimmed.length > MAX_REDACTION_STRING_LENGTH) {
+    return `${trimmed.slice(0, MAX_REDACTION_STRING_LENGTH)}...`;
+  }
+  return value;
+}
+
+function redactForBraintrust(value: unknown, depth = 0, keyHint = ''): unknown {
+  if (depth > MAX_REDACTION_DEPTH) return TRUNCATED;
+  if (value === null || value === undefined) return value;
+
+  if (looksSensitiveField(keyHint)) {
+    return REDACTED;
+  }
+
+  if (typeof value === 'string') {
+    return redactString(value);
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    const limited = value.slice(0, MAX_REDACTION_ARRAY_ITEMS).map((entry) =>
+      redactForBraintrust(entry, depth + 1, keyHint),
+    );
+    if (value.length > MAX_REDACTION_ARRAY_ITEMS) {
+      limited.push({
+        truncatedItems: value.length - MAX_REDACTION_ARRAY_ITEMS,
+      });
+    }
+    return limited;
+  }
+
+  if (isRecord(value)) {
+    const output: Record<string, unknown> = {};
+    const entries = Object.entries(value);
+    for (const [index, [key, entryValue]] of entries.entries()) {
+      if (index >= MAX_REDACTION_KEYS) {
+        output.__truncatedKeys = entries.length - MAX_REDACTION_KEYS;
+        break;
+      }
+      output[key] = looksSensitiveField(key) ? REDACTED : redactForBraintrust(entryValue, depth + 1, key);
+    }
+    return output;
+  }
+
+  return redactString(String(value));
+}
+
+function hashString(value: string): string {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
+function emitBraintrustHubInvocation(env: Env, log: HubInvocationLog, accountId: string): void {
+  const logger = getBraintrustLogger(env);
+  if (!logger) return;
+
+  const accountRef = `acct_${hashString(accountId)}`;
+  const metadata = redactForBraintrust(log.metadata) as Record<string, unknown> | null;
+  const input = redactForBraintrust(log.input);
+  const output = redactForBraintrust(log.output);
+
+  logger
+    .traced(
+      (span: Span) => {
+        span.log({
+          input,
+          output,
+          error: log.errorMessage ?? undefined,
+          tags: ['mcp', 'hub', HUB_NAME, log.toolName, log.success ? 'success' : 'error'],
+          metadata: {
+            server: HUB_NAME,
+            tool: log.toolName,
+            accountRef,
+            success: log.success,
+            durationMs: Math.max(0, Math.floor(log.durationMs)),
+            correlationId: log.trace.correlationId,
+            requestId: log.trace.requestId,
+            metadata,
+          },
+        });
+      },
+      {
+        name: `mcp:${HUB_NAME}:${log.toolName}`,
+        type: 'tool',
+      },
+    )
+    .catch((error: unknown) => {
+      console.warn(
+        `[${HUB_NAME}] braintrust emit failed for ${log.toolName}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    });
+}
+
 async function recordHubInvocation(env: Env, log: HubInvocationLog): Promise<void> {
+  const accountId = (log.accountId || 'operator').slice(0, 256);
+  emitBraintrustHubInvocation(env, log, accountId);
+
   const db = env.TELEMETRY_DB;
   if (!db) return;
 
-  const accountId = (log.accountId || 'operator').slice(0, 256);
   const period = getCurrentPeriod();
   const errorMessage = log.errorMessage ? log.errorMessage.slice(0, 500) : null;
   const metadataJson = safeJsonStringify(log.metadata);

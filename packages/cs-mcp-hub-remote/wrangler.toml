@@ -33,3 +33,8 @@ preview_id = "6356c7663c334a4195243971e117565c"
 # Runtime cache controls.
 # HUB_REFRESH_SECONDS = "300"
 # HUB_CACHE_BUST = ""
+
+# Optional Braintrust tracing for hub invocations.
+# Set BRAINTRUST_API_KEY as a secret in Cloudflare.
+# BRAINTRUST_PROJECT_NAME = "CREATE SOMETHING"
+# BRAINTRUST_ENABLED = "true"

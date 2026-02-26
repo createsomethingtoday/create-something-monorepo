@@ -47,6 +47,9 @@ Environment variables:
 - `HUB_QUOTA_MAX_PROXY_CALLS_PER_PERIOD` (optional): per-account hard cap for proxy calls in current UTC month
 - `HUB_QUOTA_EXEMPT_SERVERS` (optional): comma-separated downstream server names excluded from quota checks
 - `HUB_STATE_KV` (recommended binding): stores remote hub enable/disable state so `hub_update_state` persists
+- `BRAINTRUST_API_KEY` (optional): enables Braintrust trace emission for hub invocations
+- `BRAINTRUST_PROJECT_NAME` (optional): Braintrust project name (default `CREATE SOMETHING`)
+- `BRAINTRUST_ENABLED` (optional): override automatic enablement (`true`/`false`)
 
 Downstream auth variables are read dynamically from each registry server's `env_http_headers` and `bearer_token_env_var` config.
 
@@ -71,6 +74,10 @@ Session-scoped identity (optional):
 
 - Hub invocations are written to `mcp_tool_invocations`/`mcp_run_counts` in `TELEMETRY_DB`.
 - Hub-observed downstream routes are written to `mcp_hub_routes` in `TELEMETRY_DB`.
+- When `BRAINTRUST_API_KEY` is configured, hub invocations are also emitted to Braintrust with:
+  - redacted tool `input`/`output` payloads
+  - correlation metadata (`correlationId`, `requestId`)
+  - stable pseudonymous `accountRef` (hashed from account ID)
 - Each proxied call carries correlation via MCP `relatedTask.taskId`.
 - Use `hub_trace_lookup` (or `cs-telemetry` `query_activity` with `correlationId`) to inspect:
   - `hubInvocations` (hub tool handling)
