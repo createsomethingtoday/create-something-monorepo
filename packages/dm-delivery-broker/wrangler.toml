@@ -4,12 +4,14 @@ main = "src/index.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+workers_dev = true
+preview_urls = false
 
 [observability]
 enabled = true
 
 [vars]
-ENVIRONMENT = "development"
+ENVIRONMENT = "production"
 # Comma-separated CORS allowlist.
 ALLOWED_ORIGINS = "https://createsomething.io,https://createsomething.space,https://createsomething.agency,https://workway.co,https://www.workway.co"
 # Public base URL used when issuing one-time links.
@@ -23,6 +25,3 @@ DELIVERY_BASE_URL = "https://dm-delivery-broker.createsomething.workers.dev"
 binding = "DB"
 database_name = "dm-delivery-broker-db"
 database_id = "168274ba-d26d-462a-8524-9573822fdde7"
-
-[env.production]
-vars = { ENVIRONMENT = "production" }
