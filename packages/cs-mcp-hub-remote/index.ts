@@ -708,7 +708,7 @@ function buildDownstreamCallRequest(
   toolName: string,
   args: Record<string, unknown>,
   trace: InvocationTrace,
-): Record<string, unknown> {
+): Parameters<Client['callTool']>[0] {
   return {
     name: toolName,
     arguments: args,
@@ -2608,6 +2608,16 @@ function parsePositiveInt(raw: string | undefined, fallback: number): number {
   }
 
   return parsed;
+}
+
+function parsePositiveIntFromUnknown(raw: unknown, fallback: number): number {
+  if (typeof raw === 'number') {
+    return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : fallback;
+  }
+  if (typeof raw === 'string') {
+    return parsePositiveInt(raw, fallback);
+  }
+  return fallback;
 }
 
 async function closeHubRuntime(runtime: HubRuntime): Promise<void> {
