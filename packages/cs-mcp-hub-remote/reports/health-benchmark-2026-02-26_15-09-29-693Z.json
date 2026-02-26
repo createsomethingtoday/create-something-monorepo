@@ -1,0 +1,576 @@
+{
+  "generated_at": "2026-02-26T15:09:29.693Z",
+  "target": "https://cs-mcp-hub-remote.createsomething.workers.dev",
+  "config": {
+    "sample_count_per_path": 50,
+    "timeout_ms_per_request": 30000,
+    "concurrency": 10
+  },
+  "series": {
+    "health_fast": {
+      "name": "health_fast",
+      "pathname": "/health",
+      "summary": {
+        "count": 50,
+        "successes": 50,
+        "failures": 0,
+        "success_rate": 1,
+        "min": 0.027,
+        "p50": 0.039,
+        "p90": 0.128,
+        "p95": 0.146,
+        "p99": 0.163,
+        "avg": 0.05544,
+        "max": 0.163
+      },
+      "samples": [
+        {
+          "status_code": 200,
+          "time_seconds": 0.163,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.096,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.141,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.148,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.128,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.142,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.146,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.105,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.099,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.109,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.034,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.048,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.037,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.036,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.027,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.038,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.036,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.035,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.044,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.031,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.048,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.032,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.045,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.031,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.048,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.03,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.039,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.036,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.037,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.031,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.041,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.045,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.032,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.04,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.043,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.042,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.034,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.034,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.028,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.03,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.032,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.037,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.041,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.044,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.047,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.034,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.032,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.045,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.03,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.041,
+          "timeout": false
+        }
+      ]
+    },
+    "health_full": {
+      "name": "health_full",
+      "pathname": "/health?full=1",
+      "summary": {
+        "count": 50,
+        "successes": 29,
+        "failures": 21,
+        "success_rate": 0.58,
+        "min": 21.788,
+        "p50": 22.444,
+        "p90": 30,
+        "p95": 30,
+        "p99": 30,
+        "avg": 25.761219999999998,
+        "max": 30
+      },
+      "samples": [
+        {
+          "status_code": 200,
+          "time_seconds": 22.035,
+          "timeout": false
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 28.474,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 21.922,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 26.799,
+          "timeout": false
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 22.176,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 21.979,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 21.95,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 22.125,
+          "timeout": false
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 22.25,
+          "timeout": false
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 27.281,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 22.103,
+          "timeout": false
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 22.023,
+          "timeout": false
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 22.425,
+          "timeout": false
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 22.065,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 22.059,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 23.125,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 22.155,
+          "timeout": false
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 22.386,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 21.788,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 22.027,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 21.842,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 22.054,
+          "timeout": false
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 21.84,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 22.042,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 22.175,
+          "timeout": false
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 22.001,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 22.444,
+          "timeout": false
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 30,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 22.285,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 22.231,
+          "timeout": false
+        }
+      ]
+    }
+  },
+  "comparison": {
+    "delta_p50_seconds": 22.405,
+    "delta_p95_seconds": 29.854,
+    "p50_ratio_full_over_fast": 575.487,
+    "p95_ratio_full_over_fast": 205.479
+  }
+}
