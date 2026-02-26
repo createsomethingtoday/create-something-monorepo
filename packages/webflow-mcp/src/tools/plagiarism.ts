@@ -5,7 +5,9 @@
  * Classic CS algorithms (LSH, PageRank, Bayesian) exposed via HTTP.
  */
 
-const PLAGIARISM_API = 'https://plagiarism-agent.createsomething.workers.dev';
+const PLAGIARISM_API =
+  process.env.PLAGIARISM_API ?? 'https://plagiarism-agent.createsomething.workers.dev';
+const REQUEST_TIMEOUT_MS = Number(process.env.PLAGIARISM_REQUEST_TIMEOUT_MS ?? '30000');
 
 // =============================================================================
 // Types
@@ -126,6 +128,25 @@ export interface ExclusionListResult {
   }>;
 }
 
+export interface CompareUrlsResult {
+  originalUrl: string;
+  allegedCopyUrl: string;
+  vectorSimilarity: {
+    html_similarity: number;
+    css_similarity: number;
+    js_similarity: number;
+    webflow_similarity: number;
+    dom_similarity: number;
+    overall: number;
+    verdict: string;
+  };
+  timestamp: number;
+  normalization?: {
+    originalUrl: { input: string; normalized: string };
+    allegedCopyUrl: { input: string; normalized: string };
+  };
+}
+
 export type MatrixSignalLevel = 'pass' | 'warn' | 'fail_major';
 export type MatrixSnippetStatus = 'pass' | 'fail_hard' | 'fail_soft';
 export type MatrixAgentRecommendation =
@@ -191,6 +212,7 @@ export interface PlagiarismDecisionRecord {
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(url, {
     ...options,
+    signal: options?.signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,
@@ -203,6 +225,39 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   }
 
   return response.json();
+}
+
+const WEBFLOW_TEMPLATE_LISTING_REGEX = /^https?:\/\/(?:www\.)?webflow\.com\/templates\/html\/[^/?#]+/i;
+const WEBFLOW_PREVIEW_URL_REGEX = /https:\/\/[a-zA-Z0-9-]+\.webflow\.io\/?/g;
+
+async function normalizeComparableUrl(url: string): Promise<string> {
+  if (!WEBFLOW_TEMPLATE_LISTING_REGEX.test(url)) {
+    return url;
+  }
+
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+    if (!response.ok) {
+      return url;
+    }
+
+    const html = await response.text();
+
+    // Prefer explicit "Preview in browser" CTA when available.
+    const browserPreviewMatch = html.match(/id="footer-browser-preview"[^>]*href="([^"]+)"/i);
+    if (browserPreviewMatch?.[1]) {
+      return browserPreviewMatch[1];
+    }
+
+    const previewMatch = html.match(WEBFLOW_PREVIEW_URL_REGEX);
+    if (previewMatch && previewMatch.length > 0) {
+      return previewMatch[0];
+    }
+
+    return url;
+  } catch {
+    return url;
+  }
 }
 
 // =============================================================================
@@ -323,4 +378,29 @@ export async function checkExclusion(
 /** List all exclusions */
 export async function listExclusions(limit: number = 100): Promise<ExclusionListResult> {
   return fetchJson<ExclusionListResult>(`${PLAGIARISM_API}/exclusions?limit=${limit}`);
+}
+
+/** Compare two template/site URLs using vector similarity endpoint */
+export async function compareUrls(
+  originalUrl: string,
+  allegedCopyUrl: string
+): Promise<CompareUrlsResult> {
+  const normalizedOriginalUrl = await normalizeComparableUrl(originalUrl);
+  const normalizedAllegedCopyUrl = await normalizeComparableUrl(allegedCopyUrl);
+
+  const result = await fetchJson<CompareUrlsResult>(`${PLAGIARISM_API}/api/compare`, {
+    method: 'POST',
+    body: JSON.stringify({
+      originalUrl: normalizedOriginalUrl,
+      allegedCopyUrl: normalizedAllegedCopyUrl,
+    }),
+  });
+
+  return {
+    ...result,
+    normalization: {
+      originalUrl: { input: originalUrl, normalized: normalizedOriginalUrl },
+      allegedCopyUrl: { input: allegedCopyUrl, normalized: normalizedAllegedCopyUrl },
+    },
+  };
 }

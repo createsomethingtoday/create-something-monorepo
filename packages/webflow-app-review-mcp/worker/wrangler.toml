@@ -7,9 +7,19 @@ account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 [observability]
 enabled = true
 
-# Optional default; can also be set as Worker secret/var.
 [vars]
 AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
+SHARED_OAUTH_CLIENT_ID = "app-review-reviewers"
+
+# Secrets (set via `wrangler secret put`):
+#   SHARED_OAUTH_CLIENT_SECRET
+#   SHARED_OAUTH_ALLOWED_REDIRECT_HOSTS  (e.g. "claude.ai,localhost,127.0.0.1")
+#   AIRTABLE_API_KEY
+
+[[kv_namespaces]]
+binding = "OAUTH_KV"
+id = "ef6ba893e47343e0b26b0918775e6b89"
+preview_id = "b659942e9bc24630a482ea1a28b4cf80"
 
 [[d1_databases]]
 binding = "TELEMETRY_DB"

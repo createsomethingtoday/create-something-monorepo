@@ -23,6 +23,16 @@
     "notion-halfdozen-create-something": {
       "type": "http",
       "url": "https://createsomething-notion.mcp.workway.co/mcp"
+    },
+    "webflow-app-review-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote@latest",
+        "https://webflow-app-review-mcp.createsomething.workers.dev/mcp",
+        "--static-oauth-client-info",
+        "{\"client_id\":\"app-review-reviewers\",\"client_secret\":\"63d5947f5d1e692557d2be1ebf3d9e17927550ef22cd0f573a8447ca9b8df40b\"}"
+      ]
     }
   }
 }

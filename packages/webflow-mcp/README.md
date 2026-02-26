@@ -16,8 +16,11 @@ Agent-native tools for the Webflow Marketplace team. Exposes plagiarism detectio
 | `plagiarism_pagerank` | PageRank (1996) | Identify originals vs copies |
 | `plagiarism_pagerank_leaderboard` | PageRank | Top authoritative templates |
 | `plagiarism_detect_frameworks` | Regex | Detect 15+ JS frameworks |
-| `plagiarism_confidence` | Bayes' theorem | Calculate plagiarism probability |
+| `plagiarism_confidence` | Bayes' theorem | Calculate plagiarism probability for template ID pairs |
+| `plagiarism_compare_urls` | Vector similarity | Compare two URLs directly (normalizes Webflow listing URLs) |
 | `plagiarism_exclude` | - | Mark pair as false positive |
+| `plagiarism_exclusion_check` | - | Check whether a pair is excluded |
+| `plagiarism_exclusion_list` | - | List exclusions for audit workflows |
 
 ## Installation
 
@@ -71,6 +74,10 @@ Once configured, your AI agent can use these tools:
 
 > Use plagiarism_confidence to calculate plagiarism probability between 
   template "startub" and "nimatra"
+
+> Use plagiarism_compare_urls to compare
+  https://prospect-finance-saas-webflow-template.webflow.io/
+  and https://webflow.com/templates/html/anorva-website-template
 
 > Use plagiarism_detect_frameworks to see what JS libraries 
   https://fancy-template.webflow.io uses
