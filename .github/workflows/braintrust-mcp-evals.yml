@@ -83,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: evals-local
-    if: ${{ secrets.BRAINTRUST_API_KEY != '' && ((github.event_name == 'workflow_dispatch' && github.event.inputs.run_live == 'true') || (github.event_name != 'workflow_dispatch' && github.event_name != 'pull_request')) }}
+    if: ${{ always() && secrets.BRAINTRUST_API_KEY != '' && (needs.evals-local.result == 'success' || needs.evals-local.result == 'skipped') && ((github.event_name == 'workflow_dispatch' && github.event.inputs.run_live == 'true') || (github.event_name != 'workflow_dispatch' && github.event_name != 'pull_request')) }}
     env:
       BRAINTRUST_API_KEY: ${{ secrets.BRAINTRUST_API_KEY }}
       BRAINTRUST_PROJECT_NAME: ${{ vars.BRAINTRUST_PROJECT_NAME }}
@@ -120,6 +120,48 @@ jobs:
 
       - name: Run MCP evaluators with Braintrust upload
         run: pnpm exec braintrust eval ./evals/braintrust/mcp --terminate-on-failure --jsonl | tee braintrust-mcp-evals.live.jsonl
+
+      - name: Enforce live eval configuration coverage
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+
+          const path = 'braintrust-mcp-evals.live.jsonl';
+          const raw = fs.readFileSync(path, 'utf8').trim();
+          if (!raw) {
+            console.error('No JSONL output found from Braintrust eval run.');
+            process.exit(1);
+          }
+
+          const lines = raw.split('\n').filter(Boolean);
+          const failed = [];
+
+          for (const line of lines) {
+            let row;
+            try {
+              row = JSON.parse(line);
+            } catch (error) {
+              console.error(`Invalid JSONL row: ${line}`);
+              process.exit(1);
+            }
+
+            const exp = row.experimentName || '(unknown)';
+            const score = row?.scores?.configured_for_live_run?.score;
+            if (score !== 1) {
+              failed.push({ experimentName: exp, configured_for_live_run: score });
+            }
+          }
+
+          if (failed.length > 0) {
+            console.error('Live MCP eval coverage check failed:');
+            for (const item of failed) {
+              console.error(`- ${item.experimentName}: configured_for_live_run=${item.configured_for_live_run}`);
+            }
+            process.exit(1);
+          }
+
+          console.log('All live evals are fully configured (configured_for_live_run=1).');
+          NODE
 
       - name: Upload live eval artifact
         if: always()
