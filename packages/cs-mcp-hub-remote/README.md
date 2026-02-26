@@ -33,6 +33,7 @@ Environment variables:
 - `HUB_SESSION_RESOLVE_URL` (optional): identity-worker resolver endpoint (`/v1/mcp/sessions/resolve`)
 - `HUB_SESSION_RESOLVE_TOKEN` (optional): shared secret used by hub to call resolver endpoint
 - `HUB_SESSION_RESOLVE_TIMEOUT_MS` (optional): resolver call timeout, default `5000`
+- `HUB_TOOL_CALL_TIMEOUT_MS` (optional): default downstream tool-call timeout in milliseconds, default `120000`
 - `HUB_ENABLED_BUNDLES` (optional): comma-separated or JSON array (defaults from registry)
 - `HUB_ENABLED_SERVERS` (optional): comma-separated or JSON array
 - `HUB_DISABLED_SERVERS` (optional): comma-separated or JSON array
@@ -48,6 +49,11 @@ Environment variables:
 - `HUB_STATE_KV` (recommended binding): stores remote hub enable/disable state so `hub_update_state` persists
 
 Downstream auth variables are read dynamically from each registry server's `env_http_headers` and `bearer_token_env_var` config.
+
+Per-server timeout override (registry):
+
+- `tool_call_timeout_ms` (preferred): timeout in milliseconds for that downstream server
+- `timeout_ms` (backward-compat alias)
 
 Account forwarding:
 

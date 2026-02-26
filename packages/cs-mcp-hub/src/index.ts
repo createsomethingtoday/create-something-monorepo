@@ -35,6 +35,7 @@ import type { HubRoutingConfig, McpBundleRegistry, RegistryPaths, StatePatch } f
 
 const HUB_NAME = 'create-something-hub';
 const HUB_VERSION = '0.1.0';
+const DEFAULT_TOOL_CALL_TIMEOUT_MS = 120_000;
 
 const MANAGEMENT_TOOLS: Tool[] = [
   {
@@ -220,7 +221,17 @@ async function runServerMode(): Promise<void> {
   const initialState = loadState(paths);
   const resolution = resolveState(registry, initialState);
   const downstream = await connectDownstreamServers(registry, resolution.enabledServerNames);
-  const proxies = buildProxyCatalog(downstream.connected, registry, routing, tenantRouting);
+  const defaultToolCallTimeoutMs = parsePositiveInt(
+    process.env.HUB_TOOL_CALL_TIMEOUT_MS,
+    DEFAULT_TOOL_CALL_TIMEOUT_MS,
+  );
+  const proxies = buildProxyCatalog(
+    downstream.connected,
+    registry,
+    routing,
+    tenantRouting,
+    defaultToolCallTimeoutMs,
+  );
   const rateLimitPolicy = resolveRateLimitPolicy(process.env);
 
   const server = new Server(
@@ -418,6 +429,7 @@ function buildProxyCatalog(
   registry: McpBundleRegistry,
   routing: HubRoutingConfig,
   tenantRouting: ReturnType<typeof resolveTenantRoutingContext>,
+  defaultToolCallTimeoutMs: number,
 ): ProxyCatalog {
   const toolDefinitions: Tool[] = [];
   const routes = new Map<string, ProxyRoute>();
@@ -427,6 +439,7 @@ function buildProxyCatalog(
 
   for (const server of connectedServers) {
     const serverTags = registry.servers[server.name]?.tags ?? [];
+    const toolCallTimeoutMs = resolveToolCallTimeoutMs(server.config, defaultToolCallTimeoutMs);
     for (const tool of server.tools) {
       const baseProxyName = buildProxyToolName(server.name, tool.name);
       const proxyName = reserveProxyName(baseProxyName, directRouteMap, warnings);
@@ -445,7 +458,12 @@ function buildProxyCatalog(
         serverName: server.name,
         downstreamToolName: tool.name,
         source: 'direct',
-        call: (args) => server.client.callTool({ name: tool.name, arguments: args }),
+        call: (args) =>
+          server.client.callTool(
+            { name: tool.name, arguments: args },
+            undefined,
+            { timeout: toolCallTimeoutMs },
+          ),
       };
 
       directRouteMap.set(proxyName, route);
@@ -903,6 +921,23 @@ function parsePositiveInt(raw: string | undefined, fallback: number): number {
   const parsed = Number.parseInt(raw, 10);
   if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
   return parsed;
+}
+
+function parsePositiveIntFromUnknown(raw: unknown, fallback: number): number {
+  if (typeof raw === 'number') {
+    return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : fallback;
+  }
+  if (typeof raw === 'string') {
+    return parsePositiveInt(raw, fallback);
+  }
+  return fallback;
+}
+
+function resolveToolCallTimeoutMs(
+  config: { tool_call_timeout_ms?: number; timeout_ms?: number },
+  fallback: number,
+): number {
+  return parsePositiveIntFromUnknown(config.tool_call_timeout_ms ?? config.timeout_ms, fallback);
 }
 
 function parseBooleanEnv(raw: string | undefined, fallback: boolean): boolean {

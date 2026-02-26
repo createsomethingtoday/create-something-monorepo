@@ -124,3 +124,6 @@ By default, state changes auto-write `.codex/config.toml`. Add `--no-write-codex
   - downstream registry servers are written as `enabled = false`
 - State/config updates apply immediately to file output.
 - Proxy tool availability is computed at startup; restart the hub after state changes to refresh proxied tools.
+- Downstream call timeouts:
+  - `HUB_TOOL_CALL_TIMEOUT_MS` sets the default timeout in milliseconds (default `120000`)
+  - Per-server registry override is supported via `tool_call_timeout_ms` (or `timeout_ms` alias)

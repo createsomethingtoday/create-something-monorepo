@@ -14,6 +14,8 @@ type HttpServerConfig = {
   http_headers?: StringMap;
   env_http_headers?: StringMap;
   bearer_token_env_var?: string;
+  tool_call_timeout_ms?: number;
+  timeout_ms?: number;
   headers?: StringMap;
   description?: string;
   tags?: string[];
@@ -63,6 +65,9 @@ type ConnectedDownstream = {
   name: string;
   config: HttpServerConfig;
   baseHeaders: Record<string, string>;
+  requestHeaders: Record<string, string>;
+  toolCallTimeoutMs: number;
+  callQueue: Promise<void>;
   client: Client;
   tools: Tool[];
 };
@@ -178,6 +183,7 @@ const DOWNSTREAM_BEARER_ENV_FALLBACK: Record<string, string> = {
 
 interface Env {
   HUB_API_TOKEN?: string;
+  HUB_TOOL_CALL_TIMEOUT_MS?: string;
   HUB_SESSION_RESOLVE_URL?: string;
   HUB_SESSION_RESOLVE_TOKEN?: string;
   HUB_SESSION_RESOLVE_TIMEOUT_MS?: string;
@@ -538,16 +544,26 @@ async function connectSingleDownstream(
 
   try {
     const requestInit: RequestInit = {};
-    const headers = resolveHttpHeaders(name, config, env);
-    if (Object.keys(headers).length > 0) {
-      requestInit.headers = headers;
-    }
+    const baseHeaders = resolveHttpHeaders(name, config, env);
+    const requestHeaders = { ...baseHeaders };
+    requestInit.headers = requestHeaders;
+
+    const toolCallTimeoutMs = resolveToolCallTimeoutMs(config, env);
 
     const transport = new StreamableHTTPClientTransport(new URL(config.url), { requestInit });
     await client.connect(transport);
 
     const tools = await listAllTools(client);
-    return { name, config, baseHeaders: headers, client, tools };
+    return {
+      name,
+      config,
+      baseHeaders,
+      requestHeaders,
+      toolCallTimeoutMs,
+      callQueue: Promise.resolve(),
+      client,
+      tools,
+    };
   } catch (error) {
     try {
       await client.close();
@@ -557,6 +573,11 @@ async function connectSingleDownstream(
     const message = error instanceof Error ? error.message : String(error);
     return { name, error: message };
   }
+}
+
+function resolveToolCallTimeoutMs(config: HttpServerConfig, env: Env): number {
+  const defaultTimeoutMs = parsePositiveInt(readEnvString(env, 'HUB_TOOL_CALL_TIMEOUT_MS'), 120_000);
+  return parsePositiveIntFromUnknown(config.tool_call_timeout_ms ?? config.timeout_ms, defaultTimeoutMs);
 }
 
 function resolveHttpHeaders(
@@ -610,20 +631,43 @@ async function callDownstreamToolWithTrace(
   trace: InvocationTrace,
   accountId: string,
 ): Promise<any> {
+  return queueDownstreamCall(server, async () => {
+    const traceHeaders = buildDownstreamTraceHeaders(server, toolName, trace, accountId);
+    const previousHeaders = applyRequestHeaders(server.requestHeaders, traceHeaders);
+
+    try {
+      return await server.client.callTool(
+        buildDownstreamCallRequest(toolName, args, trace),
+        undefined,
+        { timeout: server.toolCallTimeoutMs },
+      );
+    } catch (error) {
+      if (!shouldFallbackToFreshClient(error)) {
+        throw error;
+      }
+
+      return callDownstreamToolWithFreshClient(server, toolName, args, trace, accountId);
+    } finally {
+      restoreRequestHeaders(server.requestHeaders, previousHeaders);
+    }
+  });
+}
+
+async function callDownstreamToolWithFreshClient(
+  server: ConnectedDownstream,
+  toolName: string,
+  args: Record<string, unknown>,
+  trace: InvocationTrace,
+  accountId: string,
+): Promise<any> {
   const client = new Client({
     name: `${HUB_NAME}:${server.name}:proxy`,
     version: HUB_VERSION,
   });
 
-  const headers: Record<string, string> = {
+  const headers = {
     ...server.baseHeaders,
-    'x-correlation-id': trace.correlationId,
-    'x-request-id': trace.requestId,
-    'x-hub-server': HUB_NAME,
-    'x-hub-downstream-server': server.name,
-    'x-hub-downstream-tool': toolName,
-    'x-mcp-account-id': accountId,
-    'x-hub-account-id': accountId,
+    ...buildDownstreamTraceHeaders(server, toolName, trace, accountId),
   };
 
   const transport = new StreamableHTTPClientTransport(new URL(server.config.url), {
@@ -634,16 +678,11 @@ async function callDownstreamToolWithTrace(
 
   await client.connect(transport);
   try {
-    return await client.callTool({
-      name: toolName,
-      arguments: args,
-      _meta: {
-        progressToken: trace.requestId,
-        'io.modelcontextprotocol/related-task': {
-          taskId: trace.correlationId,
-        },
-      },
-    });
+    return await client.callTool(
+      buildDownstreamCallRequest(toolName, args, trace),
+      undefined,
+      { timeout: server.toolCallTimeoutMs },
+    );
   } finally {
     try {
       await client.close();
@@ -651,6 +690,91 @@ async function callDownstreamToolWithTrace(
       // Best-effort cleanup.
     }
   }
+}
+
+function queueDownstreamCall<T>(
+  server: ConnectedDownstream,
+  operation: () => Promise<T>,
+): Promise<T> {
+  const scheduled = server.callQueue.then(operation, operation);
+  server.callQueue = scheduled.then(
+    () => undefined,
+    () => undefined,
+  );
+  return scheduled;
+}
+
+function buildDownstreamCallRequest(
+  toolName: string,
+  args: Record<string, unknown>,
+  trace: InvocationTrace,
+): Record<string, unknown> {
+  return {
+    name: toolName,
+    arguments: args,
+    _meta: {
+      progressToken: trace.requestId,
+      'io.modelcontextprotocol/related-task': {
+        taskId: trace.correlationId,
+      },
+    },
+  };
+}
+
+function buildDownstreamTraceHeaders(
+  server: ConnectedDownstream,
+  toolName: string,
+  trace: InvocationTrace,
+  accountId: string,
+): Record<string, string> {
+  return {
+    'x-correlation-id': trace.correlationId,
+    'x-request-id': trace.requestId,
+    'x-hub-server': HUB_NAME,
+    'x-hub-downstream-server': server.name,
+    'x-hub-downstream-tool': toolName,
+    'x-mcp-account-id': accountId,
+    'x-hub-account-id': accountId,
+  };
+}
+
+function applyRequestHeaders(
+  target: Record<string, string>,
+  updates: Record<string, string>,
+): Record<string, string | undefined> {
+  const previous: Record<string, string | undefined> = {};
+  for (const [key, value] of Object.entries(updates)) {
+    previous[key] = target[key];
+    target[key] = value;
+  }
+  return previous;
+}
+
+function restoreRequestHeaders(
+  target: Record<string, string>,
+  previous: Record<string, string | undefined>,
+): void {
+  for (const [key, value] of Object.entries(previous)) {
+    if (typeof value === 'string') {
+      target[key] = value;
+    } else {
+      delete target[key];
+    }
+  }
+}
+
+function shouldFallbackToFreshClient(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  return (
+    message.includes('session') ||
+    message.includes('not initialized') ||
+    message.includes('transport is closed') ||
+    message.includes('connection closed')
+  );
 }
 
 function buildProxyCatalog(connectedServers: ConnectedDownstream[]): ProxyCatalog {
