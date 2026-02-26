@@ -1,0 +1,100 @@
+name: Braintrust MCP Evals
+
+on:
+  pull_request:
+    paths:
+      - 'evals/braintrust/mcp/**'
+      - 'scripts/braintrust-mcp-evals.env.example'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/braintrust-mcp-evals.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'evals/braintrust/mcp/**'
+      - 'scripts/braintrust-mcp-evals.env.example'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/braintrust-mcp-evals.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: braintrust-mcp-evals-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  evals-local:
+    name: MCP Evals (Local / No Upload)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: List MCP evaluators
+        run: pnpm exec braintrust eval ./evals/braintrust/mcp --list --no-send-logs
+
+      - name: Run MCP evaluators locally
+        run: pnpm exec braintrust eval ./evals/braintrust/mcp --no-send-logs
+
+  evals-live:
+    name: MCP Evals (Braintrust Upload)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: evals-local
+    if: ${{ github.event_name != 'pull_request' && secrets.BRAINTRUST_API_KEY != '' }}
+    env:
+      BRAINTRUST_API_KEY: ${{ secrets.BRAINTRUST_API_KEY }}
+      BRAINTRUST_PROJECT_NAME: ${{ vars.BRAINTRUST_PROJECT_NAME }}
+      HALFDOZEN_AGENT_ROUTE_TOKEN: ${{ secrets.HALFDOZEN_AGENT_ROUTE_TOKEN }}
+      MCP_FLEET_CONTRACT_URL: ${{ vars.MCP_FLEET_CONTRACT_URL }}
+      MCP_FLEET_CONTRACT_QUERY: ${{ vars.MCP_FLEET_CONTRACT_QUERY }}
+      MCP_FLEET_ERROR_URL: ${{ vars.MCP_FLEET_ERROR_URL }}
+      MCP_FLEET_ERROR_QUERY: ${{ vars.MCP_FLEET_ERROR_QUERY }}
+      MCP_ACCOUNT_ISOLATION_URL: ${{ vars.MCP_ACCOUNT_ISOLATION_URL }}
+      MCP_ACCOUNT_ISOLATION_TOKEN: ${{ secrets.MCP_ACCOUNT_ISOLATION_TOKEN }}
+      MCP_ACCOUNT_HEADER_NAME: ${{ vars.MCP_ACCOUNT_HEADER_NAME }}
+      MCP_ACCOUNT_FIELD_PATH: ${{ vars.MCP_ACCOUNT_FIELD_PATH }}
+      MCP_ACCOUNT_A: ${{ vars.MCP_ACCOUNT_A }}
+      MCP_ACCOUNT_B: ${{ vars.MCP_ACCOUNT_B }}
+      MCP_ACCOUNT_ISOLATION_BODY_JSON: ${{ vars.MCP_ACCOUNT_ISOLATION_BODY_JSON }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run MCP evaluators with Braintrust upload
+        run: pnpm exec braintrust eval ./evals/braintrust/mcp

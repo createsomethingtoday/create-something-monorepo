@@ -4,7 +4,16 @@
  * Canon: The database disappears into the query.
  */
 
-import type { User, RefreshToken, SigningKey, ApiKey, CrossDomainToken } from '../types';
+import type {
+	User,
+	RefreshToken,
+	SigningKey,
+	ApiKey,
+	CrossDomainToken,
+	McpAuthEvent,
+	McpSession,
+	McpSessionScope,
+} from '../types';
 
 // User queries
 export async function findUserByEmail(db: D1Database, email: string): Promise<User | null> {
@@ -407,4 +416,150 @@ export async function countRecentCrossDomainTokens(
 
 export async function cleanExpiredCrossDomainTokens(db: D1Database): Promise<void> {
 	await db.prepare("DELETE FROM cross_domain_tokens WHERE expires_at < datetime('now')").run();
+}
+
+// MCP session queries
+export async function createMcpSession(
+	db: D1Database,
+	session: {
+		id: string;
+		user_id: string;
+		tenant_id: string;
+		account_id: string;
+		host: string;
+		tool_mode: 'read_only' | 'read_write';
+		toolkit_profile_json: string;
+		allowed_tool_prefixes_json: string;
+		token_hash: string;
+		expires_at: string;
+	}
+): Promise<void> {
+	await db
+		.prepare(
+			`INSERT INTO mcp_sessions (
+         id, user_id, tenant_id, account_id, host, tool_mode,
+         toolkit_profile_json, allowed_tool_prefixes_json, token_hash, expires_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		)
+		.bind(
+			session.id,
+			session.user_id,
+			session.tenant_id,
+			session.account_id,
+			session.host,
+			session.tool_mode,
+			session.toolkit_profile_json,
+			session.allowed_tool_prefixes_json,
+			session.token_hash,
+			session.expires_at
+		)
+		.run();
+}
+
+export async function findMcpSessionById(db: D1Database, id: string): Promise<McpSession | null> {
+	return db.prepare('SELECT * FROM mcp_sessions WHERE id = ?').bind(id).first<McpSession>();
+}
+
+export async function findMcpSessionByTokenHash(db: D1Database, tokenHash: string): Promise<McpSession | null> {
+	return db
+		.prepare(
+			`SELECT * FROM mcp_sessions
+       WHERE token_hash = ?
+       LIMIT 1`
+		)
+		.bind(tokenHash)
+		.first<McpSession>();
+}
+
+export async function listMcpSessionScopes(db: D1Database, sessionId: string): Promise<McpSessionScope[]> {
+	const result = await db
+		.prepare(
+			`SELECT * FROM mcp_session_scopes
+       WHERE session_id = ?
+       ORDER BY scope_type ASC, scope_value ASC`
+		)
+		.bind(sessionId)
+		.all<McpSessionScope>();
+	return result.results ?? [];
+}
+
+export async function replaceMcpSessionScopes(
+	db: D1Database,
+	sessionId: string,
+	scopes: Array<{ scope_type: 'toolkit' | 'tool_prefix'; scope_value: string }>
+): Promise<void> {
+	await db.prepare('DELETE FROM mcp_session_scopes WHERE session_id = ?').bind(sessionId).run();
+	for (const scope of scopes) {
+		await db
+			.prepare(
+				`INSERT INTO mcp_session_scopes (id, session_id, scope_type, scope_value)
+         VALUES (?, ?, ?, ?)`
+			)
+			.bind(crypto.randomUUID(), sessionId, scope.scope_type, scope.scope_value)
+			.run();
+	}
+}
+
+export async function revokeMcpSession(db: D1Database, id: string): Promise<boolean> {
+	const result = await db
+		.prepare(
+			`UPDATE mcp_sessions
+       SET revoked_at = datetime('now'), updated_at = datetime('now')
+       WHERE id = ? AND revoked_at IS NULL`
+		)
+		.bind(id)
+		.run();
+	return result.meta.changes > 0;
+}
+
+export async function revokeAllMcpSessionsForUser(db: D1Database, userId: string): Promise<void> {
+	await db
+		.prepare(
+			`UPDATE mcp_sessions
+       SET revoked_at = datetime('now'), updated_at = datetime('now')
+       WHERE user_id = ? AND revoked_at IS NULL`
+		)
+		.bind(userId)
+		.run();
+}
+
+export async function cleanExpiredMcpSessions(db: D1Database): Promise<void> {
+	await db.prepare("DELETE FROM mcp_sessions WHERE expires_at < datetime('now')").run();
+	await db
+		.prepare(
+			`DELETE FROM mcp_session_scopes
+       WHERE session_id NOT IN (SELECT id FROM mcp_sessions)`
+		)
+		.run();
+}
+
+export async function createMcpAuthEvent(
+	db: D1Database,
+	event: {
+		id: string;
+		session_id: string | null;
+		user_id: string | null;
+		event_type: string;
+		event_data_json: string;
+	}
+): Promise<void> {
+	await db
+		.prepare(
+			`INSERT INTO mcp_auth_events (id, session_id, user_id, event_type, event_data_json)
+       VALUES (?, ?, ?, ?, ?)`
+		)
+		.bind(event.id, event.session_id, event.user_id, event.event_type, event.event_data_json)
+		.run();
+}
+
+export async function listMcpAuthEvents(db: D1Database, sessionId: string): Promise<McpAuthEvent[]> {
+	const result = await db
+		.prepare(
+			`SELECT * FROM mcp_auth_events
+       WHERE session_id = ?
+       ORDER BY created_at DESC`
+		)
+		.bind(sessionId)
+		.all<McpAuthEvent>();
+	return result.results ?? [];
 }

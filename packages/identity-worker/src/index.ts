@@ -32,6 +32,13 @@ import {
 	findCrossDomainTokenByHash,
 	markCrossDomainTokenUsed,
 	countRecentCrossDomainTokens,
+	createMcpSession,
+	findMcpSessionById,
+	findMcpSessionByTokenHash,
+	replaceMcpSessionScopes,
+	revokeMcpSession,
+	revokeAllMcpSessionsForUser,
+	createMcpAuthEvent,
 } from './db/queries';
 import { sendVerificationEmail, sendDeletionConfirmationEmail } from './services/email';
 
@@ -84,6 +91,18 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	// Cross-domain SSO endpoints
 	if (path === '/v1/auth/cross-domain/generate' && method === 'POST') return handleCrossDomainGenerate(request, env);
 	if (path === '/v1/auth/cross-domain/exchange' && method === 'POST') return handleCrossDomainExchange(request, env);
+
+	// MCP session router endpoints
+	if (path === '/v1/mcp/sessions' && method === 'POST') return handleCreateMcpSession(request, env);
+	if (path === '/v1/mcp/sessions/resolve' && method === 'POST') return handleResolveMcpSession(request, env);
+	if (path.startsWith('/v1/mcp/sessions/') && method === 'GET') {
+		const sessionId = path.replace('/v1/mcp/sessions/', '');
+		if (sessionId) return handleGetMcpSession(request, env, sessionId);
+	}
+	if (path.startsWith('/v1/mcp/sessions/') && path.endsWith('/revoke') && method === 'POST') {
+		const sessionId = path.replace('/v1/mcp/sessions/', '').replace('/revoke', '').replace(/\/$/, '');
+		if (sessionId) return handleRevokeMcpSession(request, env, sessionId);
+	}
 
 	// User endpoints (protected)
 	if (path === '/v1/users/me' && method === 'GET') return handleGetMe(request, env);

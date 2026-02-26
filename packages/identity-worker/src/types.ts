@@ -11,6 +11,8 @@ export interface Env {
 	ENVIRONMENT: string;
 	ALLOWED_ORIGINS: string;
 	RESEND_API_KEY?: string;
+	MCP_HUB_URL?: string;
+	MCP_SESSION_RESOLVE_TOKEN?: string;
 }
 
 // Database models
@@ -152,4 +154,38 @@ export interface CrossDomainExchangeRequest {
 
 export interface CrossDomainExchangeResponse extends TokenResponse {
 	user: UserResponse;
+}
+
+// MCP session contracts (multi-tenant hub)
+export interface McpSession {
+	id: string;
+	user_id: string;
+	tenant_id: string;
+	account_id: string;
+	host: string;
+	tool_mode: 'read_only' | 'read_write';
+	toolkit_profile_json: string;
+	allowed_tool_prefixes_json: string;
+	token_hash: string;
+	expires_at: string;
+	revoked_at: string | null;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface McpSessionScope {
+	id: string;
+	session_id: string;
+	scope_type: 'toolkit' | 'tool_prefix';
+	scope_value: string;
+	created_at: string;
+}
+
+export interface McpAuthEvent {
+	id: string;
+	session_id: string | null;
+	user_id: string | null;
+	event_type: string;
+	event_data_json: string;
+	created_at: string;
 }
