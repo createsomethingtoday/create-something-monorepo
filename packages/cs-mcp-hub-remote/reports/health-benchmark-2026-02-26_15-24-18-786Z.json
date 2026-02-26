@@ -1,0 +1,70 @@
+{
+  "generated_at": "2026-02-26T15:24:18.786Z",
+  "target": "https://cs-mcp-hub-remote.createsomething.workers.dev",
+  "config": {
+    "sample_count_per_path": 1,
+    "timeout_ms_per_request": 1000,
+    "concurrency": 1,
+    "fast_path": "/health",
+    "full_path": "/health?full=1&probe=1"
+  },
+  "series": {
+    "health_fast": {
+      "name": "health_fast",
+      "pathname": "/health",
+      "summary": {
+        "count": 1,
+        "successes": 1,
+        "failures": 0,
+        "timeouts": 0,
+        "success_rate": 1,
+        "min": 0.13,
+        "p50": 0.13,
+        "p90": 0.13,
+        "p95": 0.13,
+        "p99": 0.13,
+        "avg": 0.13,
+        "max": 0.13
+      },
+      "samples": [
+        {
+          "status_code": 200,
+          "time_seconds": 0.13,
+          "timeout": false
+        }
+      ]
+    },
+    "health_full": {
+      "name": "health_full",
+      "pathname": "/health?full=1&probe=1",
+      "summary": {
+        "count": 1,
+        "successes": 0,
+        "failures": 1,
+        "timeouts": 1,
+        "success_rate": 0,
+        "min": 1,
+        "p50": 1,
+        "p90": 1,
+        "p95": 1,
+        "p99": 1,
+        "avg": 1,
+        "max": 1
+      },
+      "samples": [
+        {
+          "status_code": 0,
+          "time_seconds": 1,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        }
+      ]
+    }
+  },
+  "comparison": {
+    "delta_p50_seconds": 0.87,
+    "delta_p95_seconds": 0.87,
+    "p50_ratio_full_over_fast": 7.692,
+    "p95_ratio_full_over_fast": 7.692
+  }
+}

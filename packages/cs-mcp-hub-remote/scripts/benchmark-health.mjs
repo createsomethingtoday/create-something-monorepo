@@ -47,12 +47,14 @@ function summarize(samples) {
   const count = samples.length;
   const successes = samples.filter((sample) => sample.status_code === 200).length;
   const failures = count - successes;
+  const timeouts = samples.filter((sample) => sample.timeout === true).length;
   const avg = count > 0 ? times.reduce((total, value) => total + value, 0) / count : 0;
 
   return {
     count,
     successes,
     failures,
+    timeouts,
     success_rate: count > 0 ? successes / count : 0,
     min: times[0] ?? null,
     p50: quantile(times, 0.5),
@@ -133,26 +135,73 @@ function buildComparison(fastSummary, fullSummary) {
   };
 }
 
+function formatSeconds(value) {
+  if (value == null) {
+    return 'n/a';
+  }
+  return `${value.toFixed(3)}s`;
+}
+
+function formatPercent(value) {
+  return `${(value * 100).toFixed(1)}%`;
+}
+
+function buildMarkdownReport({
+  generatedAt,
+  target,
+  config,
+  fastPath,
+  fullPath,
+  fastSummary,
+  fullSummary,
+  comparison,
+}) {
+  return `# Health Benchmark Summary
+
+- Generated: ${generatedAt}
+- Target: ${target}
+- Samples per path: ${config.sample_count_per_path}
+- Timeout per request: ${config.timeout_ms_per_request}ms
+- Concurrency: ${config.concurrency}
+
+| Path | Success | Timeouts | p50 | p95 | Avg |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| \`${fastPath}\` | ${fastSummary.successes}/${fastSummary.count} (${formatPercent(fastSummary.success_rate)}) | ${fastSummary.timeouts} | ${formatSeconds(fastSummary.p50)} | ${formatSeconds(fastSummary.p95)} | ${formatSeconds(fastSummary.avg)} |
+| \`${fullPath}\` | ${fullSummary.successes}/${fullSummary.count} (${formatPercent(fullSummary.success_rate)}) | ${fullSummary.timeouts} | ${formatSeconds(fullSummary.p50)} | ${formatSeconds(fullSummary.p95)} | ${formatSeconds(fullSummary.avg)} |
+
+## Comparison
+
+- Delta p50: ${formatSeconds(comparison.delta_p50_seconds)}
+- Delta p95: ${formatSeconds(comparison.delta_p95_seconds)}
+- Ratio p50 (full/fast): ${comparison.p50_ratio_full_over_fast ?? 'n/a'}
+- Ratio p95 (full/fast): ${comparison.p95_ratio_full_over_fast ?? 'n/a'}
+`;
+}
+
 async function main() {
   const argv = parseArgs(process.argv.slice(2));
   const baseUrl = argv.target ?? 'https://cs-mcp-hub-remote.createsomething.workers.dev';
+  const fastPath = argv['fast-path'] ?? '/health';
+  const fullPath = argv['full-path'] ?? '/health?full=1';
   const samples = parsePositiveInt(argv.samples, 50);
   const timeoutMs = parsePositiveInt(argv['timeout-ms'], 6000);
   const concurrency = parsePositiveInt(argv.concurrency, 1);
   const outDir = argv['out-dir'] ?? path.resolve(process.cwd(), 'reports');
 
   const generatedAt = new Date().toISOString();
-  const outFile = path.join(outDir, `health-benchmark-${toSafeTimestamp(generatedAt)}.json`);
+  const outBase = path.join(outDir, `health-benchmark-${toSafeTimestamp(generatedAt)}`);
+  const outFile = `${outBase}.json`;
+  const outMdFile = `${outBase}.md`;
 
   fs.mkdirSync(outDir, { recursive: true });
 
-  await hit(baseUrl, '/health', timeoutMs);
-  await hit(baseUrl, '/health?full=1', timeoutMs);
+  await hit(baseUrl, fastPath, timeoutMs);
+  await hit(baseUrl, fullPath, timeoutMs);
 
   const fastSeries = await runSeries({
     name: 'health_fast',
     baseUrl,
-    pathname: '/health',
+    pathname: fastPath,
     samples,
     timeoutMs,
     concurrency,
@@ -160,7 +209,7 @@ async function main() {
   const fullSeries = await runSeries({
     name: 'health_full',
     baseUrl,
-    pathname: '/health?full=1',
+    pathname: fullPath,
     samples,
     timeoutMs,
     concurrency,
@@ -173,6 +222,8 @@ async function main() {
       sample_count_per_path: samples,
       timeout_ms_per_request: timeoutMs,
       concurrency,
+      fast_path: fastPath,
+      full_path: fullPath,
     },
     series: {
       health_fast: fastSeries,
@@ -182,11 +233,30 @@ async function main() {
   };
 
   fs.writeFileSync(outFile, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(
+    outMdFile,
+    `${buildMarkdownReport({
+      generatedAt,
+      target: baseUrl,
+      config: report.config,
+      fastPath,
+      fullPath,
+      fastSummary: fastSeries.summary,
+      fullSummary: fullSeries.summary,
+      comparison: report.comparison,
+    })}\n`,
+    'utf8',
+  );
 
   console.log(
     JSON.stringify(
       {
         out_file: outFile,
+        out_markdown_file: outMdFile,
+        paths: {
+          fast: fastPath,
+          full: fullPath,
+        },
         fast_summary: fastSeries.summary,
         full_summary: fullSeries.summary,
         comparison: report.comparison,
