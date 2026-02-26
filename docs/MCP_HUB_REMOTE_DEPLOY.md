@@ -47,11 +47,6 @@ When `HUB_SESSION_RESOLVE_URL` + `HUB_SESSION_RESOLVE_TOKEN` are configured and 
 
 and enforces tool access by prefix before routing.
 
-Compatibility note:
-
-- If `HUB_API_TOKEN` is enabled, keep using it for gateway auth and pass MCP session tokens in `X-MCP-Session-Token`.
-- Alternate pattern: keep `HUB_API_TOKEN` in `?token=` query param and pass MCP session token in `Authorization: Bearer ...`.
-
 State persistence:
 
 - Bind `HUB_STATE_KV` in `wrangler.toml` and set namespace IDs.
@@ -85,12 +80,16 @@ Inspection:
 
 ## Client Config Example
 
-Use one MCP server URL:
+Use one MCP server URL and pass auth in Codex headers:
 
 ```toml
 [mcp_servers."create-something-hub"]
 url = "https://cs-mcp-hub-remote.<your-workers-subdomain>.workers.dev/mcp"
 enabled = true
+
+[mcp_servers."create-something-hub".http_headers]
+Authorization = "Bearer <REPLACE_WITH_HUB_API_TOKEN>"
 ```
 
-If `HUB_API_TOKEN` is configured, include the bearer token header in your MCP client.
+Client handoff rule:
+Do not hand off client shell-env commands for `HUB_*` values. `HUB_*` variables are deployment/runtime settings for operators; client auth belongs in MCP `http_headers`.

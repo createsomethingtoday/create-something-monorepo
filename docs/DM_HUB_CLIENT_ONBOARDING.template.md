@@ -22,7 +22,8 @@ tool_timeout_sec = 120
 Authorization = "Bearer <REPLACE_WITH_HUB_API_TOKEN>"
 ```
 
-If your hub config already has `X-MCP-Session-Token`, keep it in the same `[mcp_servers.half_dozen_danny_hub.http_headers]` block.
+Client handoff rule:
+Do not ask clients to export `HUB_*` shell variables. Configure client authentication in Codex `http_headers` only.
 
 ## 2) Restart Codex
 

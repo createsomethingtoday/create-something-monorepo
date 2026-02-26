@@ -10,7 +10,7 @@
 
 ## Live Deployment
 
-**Control UI:** https://relay.createsomething.workers.dev/?token=a6be7629046df1b3708ceb0a149afc7bfdf6afdef5e9b168078d4f6e6f3f74a4
+**Control UI:** https://relay.createsomething.workers.dev/
 
 **Gateway Token:** `a6be7629046df1b3708ceb0a149afc7bfdf6afdef5e9b168078d4f6e6f3f74a4`
 

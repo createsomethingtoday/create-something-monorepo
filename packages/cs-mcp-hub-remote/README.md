@@ -52,6 +52,8 @@ Environment variables:
 - `BRAINTRUST_PROJECT_NAME` (optional): Braintrust project name (default `CREATE SOMETHING`)
 - `BRAINTRUST_ENABLED` (optional): override automatic enablement (`true`/`false`)
 
+These `HUB_*` variables are operator/runtime configuration for deploying the hub worker. Client handoff should use MCP client headers (for example, Codex `http_headers.Authorization`) rather than shell-exported `HUB_*` values.
+
 Downstream auth variables are read dynamically from each registry server's `env_http_headers` and `bearer_token_env_var` config.
 
 Per-server timeout override (registry):
@@ -68,8 +70,7 @@ Session-scoped identity (optional):
 - When session resolver env vars are configured and the caller uses bearer MCP session tokens,
   the hub resolves `account_id`, `tenant_id`, and `allowed_tool_prefixes` from identity-worker.
 - Proxy tools are then filtered/enforced by `allowed_tool_prefixes` before execution.
-- For compatibility with existing `HUB_API_TOKEN` auth, pass session tokens in `X-MCP-Session-Token`.
-  (Or pass `HUB_API_TOKEN` as `?token=` and session token in `Authorization`.)
+- Clients should authenticate using the standard MCP `Authorization: Bearer ...` header in client config (for example, Codex `http_headers.Authorization`).
 
 ## Telemetry + Correlation
 
