@@ -268,7 +268,7 @@
 					</div>
 					<div class="funnel-step-content">
 						<span class="funnel-step-label">Lane 1</span>
-						<h3>Custom Workflow MCPs (.agency)</h3>
+						<h3>Custom Workflow MCPs</h3>
 						<p>I build the custom integration and workflow logic for the operations that matter most, with clear boundaries and production-ready behavior.</p>
 					</div>
 				</div>
