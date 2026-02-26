@@ -1,0 +1,28 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "dm-delivery-broker"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[observability]
+enabled = true
+
+[vars]
+ENVIRONMENT = "development"
+# Comma-separated CORS allowlist.
+ALLOWED_ORIGINS = "https://createsomething.io,https://createsomething.space,https://createsomething.agency,https://workway.co,https://www.workway.co"
+# Public base URL used when issuing one-time links.
+DELIVERY_BASE_URL = "https://dm-delivery-broker.createsomething.workers.dev"
+
+# Secrets (set with `wrangler secret put`):
+# DELIVERY_ADMIN_TOKEN   (required for issue/revoke/inspect endpoints)
+# DELIVERY_ENCRYPTION_KEY (required, 32-byte base64 or base64url key)
+
+[[d1_databases]]
+binding = "DB"
+database_name = "dm-delivery-broker-db"
+database_id = "168274ba-d26d-462a-8524-9573822fdde7"
+
+[env.production]
+vars = { ENVIRONMENT = "production" }

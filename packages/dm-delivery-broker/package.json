@@ -1,0 +1,22 @@
+{
+  "name": "@create-something/dm-delivery-broker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Secure one-time secret delivery broker for DM + Hub client onboarding",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "types": "wrangler types",
+    "db:create": "wrangler d1 create dm-delivery-broker-db",
+    "db:migrate": "wrangler d1 migrations apply dm-delivery-broker-db",
+    "db:migrate:local": "wrangler d1 migrations apply dm-delivery-broker-db --local",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "@types/node": "^22.10.2",
+    "typescript": "^5.6.3",
+    "wrangler": "^4.64.0"
+  }
+}

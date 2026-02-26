@@ -711,6 +711,21 @@ importers:
         specifier: ^4.62.0
         version: 4.64.0(@cloudflare/workers-types@4.20260205.0)
 
+  packages/dm-delivery-broker:
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20241127.0
+        version: 4.20260205.0
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+      wrangler:
+        specifier: ^4.64.0
+        version: 4.64.0(@cloudflare/workers-types@4.20260205.0)
+
   packages/dotfiles: {}
 
   packages/eslint-plugin-canon:
@@ -15356,7 +15371,7 @@ snapshots:
 
   '@sveltejs/adapter-cloudflare@6.0.1(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)))(wrangler@4.64.0(@cloudflare/workers-types@4.20260128.0))':
     dependencies:
-      '@cloudflare/workers-types': 4.20260128.0
+      '@cloudflare/workers-types': 4.20260205.0
       '@sveltejs/kit': 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
       esbuild: 0.24.2
       worktop: 0.8.0-next.18
@@ -15364,7 +15379,7 @@ snapshots:
 
   '@sveltejs/adapter-cloudflare@6.0.1(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)))(wrangler@4.64.0(@cloudflare/workers-types@4.20260128.0))':
     dependencies:
-      '@cloudflare/workers-types': 4.20260128.0
+      '@cloudflare/workers-types': 4.20260205.0
       '@sveltejs/kit': 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
       esbuild: 0.24.2
       worktop: 0.8.0-next.18
