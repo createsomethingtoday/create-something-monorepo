@@ -1,261 +1,263 @@
-# Discovery Call Script
+# Constraint OS Discovery Call Script (Ops/RevOps)
 
-**Duration:** 30 minutes
-**Goal:** Understand if we can help, and what "help" would look like.
-
----
-
-## Recognition Patterns
-
-You might feel pressure to pitch during discovery calls. Here's what works better: genuine curiosity about their situation.
-
-| You might reach for | What serves the conversation |
-|---------------------|------------------------------|
-| Jumping to solutions | "Tell me more about that" |
-| Filling silence | Letting them think |
-| Proving expertise | Asking questions that reveal your understanding |
-| Closing the deal | Clarity for both parties |
+**Audience:** Ops/RevOps leaders  
+**Duration:** 20–30 minutes  
+**Primary objective:** confirm fit and secure next step for a Constraint Mapping Session  
+**Message taxonomy:** core phrase "Constraint OS for production autonomy"; client-facing `Skills + MCP`; technical proof `MCP + Skills`
 
 ---
 
-## Before the Call (5 min prep)
+## 0) Before the call (5 minutes)
 
-Review any available context:
-- [ ] Website/LinkedIn
-- [ ] Referral source notes
-- [ ] Any previous correspondence
-- [ ] Their tech stack (if known)
+Prepare:
 
-**Mindset:** We're here to understand, not to sell. The goal is clarity for both parties.
+- company context (team size, motion, operating systems)
+- likely workflow pain candidates (handoffs, approvals, cross-system drift)
+- existing automation footprint (if known)
+- probable risk profile (low/medium/high)
 
----
+Anchor mindset:
 
-## Opening (2 minutes)
-
-> "Thanks for making time. Before we dive in—what prompted you to reach out?"
-
-Listen. Don't fill silence. Their answer reveals priority.
-
-**If referred:**
-> "How do you know [referrer]? What did they tell you about what we do?"
+- diagnose before prescribing
+- map risk and workflow economics
+- close to a concrete next action
 
 ---
 
-## The Problem (10 minutes)
+## 1) Minute 0–3: context and intent
 
-### Surface the Pain
+Opening:
 
-> "Walk me through a typical week. What's taking more time or energy than it should?"
+> "Thanks for making time. I want to use this call to understand where operations are breaking down, then decide whether a Constraint OS pilot is the right next step. Sound good?"
 
-Follow-up questions:
-- "When did this start becoming a problem?"
-- "What have you tried so far?"
-- "What happens if nothing changes?"
+Intent prompt:
 
-### Quantify the Impact
-
-> "If you had to put a number on it—hours per week, cost per month, deals lost—what would you estimate?"
-
-**Note:** People often underestimate. Gently probe: "Is that just you, or the whole team?"
-
-### Desired State
-
-> "If we fast-forward six months and this is solved—what does that look like? What are you doing instead?"
+> "What prompted this conversation now?"
 
 ---
 
-## The Triad Assessment (5 minutes)
+## 2) Minute 3–10: qualification questions
 
-Based on what they've shared, mentally map to the Subtractive Triad:
+Use these in sequence:
 
-| Level | Question | Signal |
-|-------|----------|--------|
-| **Implementation (DRY)** | "Are you doing the same thing in multiple places?" | Repeated manual processes, copy-paste workflows |
-| **Artifact (Rams)** | "What would you eliminate if you could?" | Features no one uses, reports no one reads |
-| **System (Heidegger)** | "What's disconnected that should be connected?" | Data silos, decision bottlenecks, coordination overhead |
+1. **Workflow autonomy**
+> "Which workflows are already autonomous versus still manually gated?"
 
-**Ask the diagnostic question:**
+2. **Failure cost concentration**
+> "Where are failure costs highest today, in time, dollars, or customer impact?"
 
-> "If I'm hearing you right, the core issue is [paraphrase]. Is that accurate, or am I missing something?"
+3. **Human gate boundaries**
+> "Which actions require a human gate today, and where are gates currently missing?"
 
-Wait for confirmation. Adjust if needed.
+4. **Cross-system coupling**
+> "What systems must stay in sync for this workflow to work end-to-end?"
 
----
+Follow-up probes:
 
-## Fit Assessment (5 minutes)
-
-### Our Side
-
-Internally evaluate:
-- Do we have a service that addresses this?
-- Is the scope realistic for their timeline/budget?
-- Are they decision-makers or do we need another call?
-
-### Their Side
-
-> "Have you worked with agencies or consultants before? What worked? What didn't?"
-
-> "What's your timeline for making a decision on this?"
-
-> "Besides yourself, who else needs to be involved in this decision?"
+- "What did you already try?"
+- "Where does work drift between systems?"
+- "What breaks first when volume spikes?"
 
 ---
 
-## Next Steps (5 minutes)
+## 3) Minute 10–15: diagnosis playback in buyer language
 
-### If Good Fit
+Playback format:
 
-> "Based on what you've described, I think we can help. Here's what I'd suggest as next steps:
->
-> 1. I'll send you a brief write-up of what I heard today
-> 2. If that resonates, we'll put together a proposal
-> 3. You review, we answer questions, and you decide
->
-> Does that work for you?"
+> "Here’s what I’m hearing: [workflow candidate] is failing at [governance boundary], and the cost shows up as [impact]. The issue isn’t just connectivity; it’s controlled execution under risk."
 
-**Timeline commitment:**
-> "I can have that write-up to you by [day]. What's the best email?"
+Then validate:
 
-### If Maybe
+> "Is that accurate, or what should I correct?"
 
-> "I want to be honest—I'm not 100% sure we're the right fit for this. Let me think on it and send you a note either way by [day]. Would that work?"
+If confirmed, position:
 
-### If Not a Fit
-
-> "I appreciate you sharing all of this. Based on what you've described, I don't think we're the right partner for this particular need. [Reason: scope, timeline, expertise mismatch].
->
-> What I can do is [alternative: recommend someone else, point to a resource, suggest a different approach]."
-
-**Graceful exit:** "Is there anything else I can help clarify before we wrap up?"
+> "That is exactly what Constraint OS is designed for: keep safe actions fast, gate risky actions explicitly, and keep every decision auditable."
 
 ---
 
-## After the Call (5 minutes)
+## 4) Minute 15–22: solution mapping to offer ladder
 
-1. **Send thank-you email** (within 2 hours)
-2. **Log the call** in CRM/notes with:
-   - Company, contact, role
-   - Problem summary (1-2 sentences)
-   - Triad level assessment
-   - Estimated scope/budget range
-   - Next step and deadline
-3. **Create proposal input** if proceeding:
-   ```bash
-   # Use the proposal API
-   curl -X POST https://createsomething.agency/api/proposals \
-     -H "Content-Type: application/json" \
-     -d '{ ... }'
-   ```
+Map problem to delivery tier:
 
----
+1. **Custom Workflow MCPs**
+- build trusted workflow substrate
+- normalize tool contracts and execution paths
 
-## Email Templates
+2. **Autonomy Assurance**
+- policy controls, release gates, approval rules, incident loops
+- default path for production-risk workflows
 
-### Thank You (Same Day)
+3. **Enterprise Extension**
+- high-stakes cross-system orchestration
+- strict governance and trust-boundary customization
 
-```
-Subject: Following up from our call
+Live mapping line:
 
-[Name],
-
-Thanks for the conversation today. Here's what I heard:
-
-**The Problem:** [1-2 sentence summary]
-
-**What We'd Remove:** [Triad-aligned framing]
-
-**Next Step:** [What you committed to]
-
-I'll have [deliverable] to you by [day]. Reply to this thread with any questions in the meantime.
-
-Best,
-Micah
-```
-
-### Proposal Follow-Up (When Ready)
-
-```
-Subject: Proposal: [Service] for [Company]
-
-[Name],
-
-Attached is the proposal we discussed. Key points:
-
-- **Timeline:** [X] weeks
-- **Investment:** [Price]
-- **What We Remove:** [Top 2-3 items from triad assessment]
-
-Take your time reviewing. Happy to hop on a quick call if questions come up.
-
-Best,
-Micah
-
-P.S. The proposal is valid for 30 days. After that, we'd need to revisit scope/pricing.
-```
-
-### Not a Fit (Graceful Decline)
-
-```
-Subject: Thanks for considering us
-
-[Name],
-
-I've thought more about our conversation, and I don't think we're the right fit for this engagement. [Brief, honest reason].
-
-A few thoughts that might help:
-- [Alternative recommendation or resource]
-- [Different approach they might consider]
-
-If your needs evolve, feel free to reach back out. Happy to revisit.
-
-Best,
-Micah
-```
+> "Based on your current risk and coupling, you likely start at [tier] with an assurance posture of [approval mode]."
 
 ---
 
-## Red Flags
+## 5) Minute 22–26: objection handling with pivots
 
-Watch for these during the call:
+### Objection: "We already have automations."
+Response:
 
-| Signal | Meaning | Response |
-|--------|---------|----------|
-| "We need this done ASAP" | Unrealistic timeline | "What's driving the urgency? Let's see if there's a phased approach." |
-| "Can you give me a quote right now?" | Price shopping | "I'd rather give you an accurate number than a fast one. Let me think on scope." |
-| "Our last agency was terrible" | Pattern or isolated? | "What specifically went wrong? I want to make sure we don't repeat that." |
-| "I need to check with my boss" | Not the decision-maker | "Should we loop them in for the next conversation?" |
-| "We don't really have a budget yet" | Not ready to buy | "When you do have clarity on budget, what range would be realistic?" |
+> "That’s useful baseline capability. The gap we usually see is governance under failure: who approves risky actions, what gets blocked, and how decisions are audited."
+
+Pivot:
+
+> "Where do your current automations fail or require manual cleanup?"
+
+### Objection: "This sounds heavy."
+Response:
+
+> "It’s phased. We start with one workflow, govern only high-risk actions, and expand coverage only when reliability metrics support it."
+
+Pivot:
+
+> "Would a 30-day pilot on one high-cost workflow be acceptable?"
+
+### Objection: "Why not MCP-only?"
+Response:
+
+> "MCP-only is a good wedge for discovery or compliance-constrained starts. Constraint OS is what makes autonomous outcomes reliable at production scale."
+
+Pivot:
+
+> "Do you want connectivity only, or governed execution with measurable reliability?"
+
+### Objection: price resistance
+Response:
+
+> "The right comparison isn’t to generic automation cost. It’s to failure cost: incident cleanup, approval delays, and trust erosion."
+
+Pivot:
+
+> "What does one bad workflow incident actually cost your team?"
 
 ---
 
-## Subtractive Triad Reference
+## 6) Minute 26–30: close to next step
 
-Use this to map their problem to our services:
+### High fit
 
-| Triad Level | Question | Service Fit |
-|-------------|----------|-------------|
-| **Implementation** | "Have I built this before?" | Web Development, Canon CSS |
-| **Artifact** | "Does this earn its existence?" | Automation, Automation Patterns |
-| **System** | "Does this serve the whole?" | Agentic Systems, Partnership, Transformation |
+Use when pain is clear, buyer has authority, and urgency exists.
 
-**Philosophy:** We don't add features. We remove what obscures.
+> "Next step is a paid Constraint Mapping Session. You’ll get pilot scope, policy boundary, and a 30-day implementation plan."
+
+Commit:
+
+- owner
+- date
+- required stakeholders
+
+### Medium fit
+
+Use when value is likely but authority, budget, or urgency is partial.
+
+> "We can start with a scoped MCP-only wedge and define explicit triggers for moving into Autonomy Assurance."
+
+Commit:
+
+- wedge workflow
+- trigger criteria
+- review checkpoint date
+
+### Low fit
+
+Use when no urgent workflow economics or no practical sponsorship path.
+
+> "I don’t think this should proceed right now. Let’s park with a re-entry condition."
+
+Commit:
+
+- explicit re-entry condition
+- expected timing window
 
 ---
 
-## Quick Reference
+## Prewritten content blocks
 
-**Proposal API:**
-```bash
-curl https://createsomething.agency/api/proposals  # GET for docs
-curl -X POST https://createsomething.agency/api/proposals -d '...'  # Generate
-```
+### 30-second positioning statement
 
-**Services:**
-- `web-development` ($5,000+, 2-4 weeks)
-- `automation` ($15,000+, 4-8 weeks)
-- `agentic-systems` ($35,000+, 8-16 weeks)
-- `partnership` ($5,000/mo, ongoing)
-- `transformation` ($50,000+, 12-16 weeks)
-- `advisory` ($10,000/mo, 6-month min)
+> "CREATE SOMETHING runs a Constraint OS for production autonomy. We build custom workflow MCPs, then layer governance so safe actions stay fast, risky actions are approval-gated, and every decision is auditable."
 
-**CTA:** createsomething.agency/discover
+### 2-minute "how it works in practice"
+
+> "In practice, we map one high-cost workflow, define policy boundaries, and ship three operating artifacts: `mcp_contract.yaml`, `agent_contract.yaml`, and `outcome_contract.md`.  
+> Runtime behavior is simple: safe actions auto-allow, risky actions route to approval inbox, disallowed actions block with reason. Then we review reliability KPIs and expand coverage based on evidence."
+
+### Three case-pattern examples
+
+1. **Cross-system drift prevention**  
+   CRM and support tooling diverge under volume; governed routing enforces sync paths and reduces reconciliation overhead.
+2. **Approval-gated write workflows**  
+   Write/send actions require explicit gate while read paths stay fast; reduces unreviewed risky changes.
+3. **Incident-to-policy feedback loop**  
+   Repeated failure patterns are codified into policy updates, reducing recurrence over time.
+
+### Closing language by fit
+
+1. **High fit:** "Let’s schedule the Constraint Mapping Session and lock stakeholders now."
+2. **Medium fit:** "Let’s scope a narrow wedge and define assurance trigger thresholds upfront."
+3. **Low fit:** "Let’s pause and re-enter when [condition] is true."
+
+---
+
+## Internal usage protocol
+
+1. Send the one-pager before or immediately after call one.
+2. Use this script as a branching guide, not verbatim.
+3. Capture outputs in a standard discovery note.
+4. Build proposals using the same artifact vocabulary.
+
+### Discovery note template (required fields)
+
+- workflow candidate
+- risk class (`low|medium|high`)
+- required approvals
+- integration systems
+- recommended package tier
+- buyer authority level
+- next step owner and date
+
+---
+
+## Test cases and pass conditions
+
+### Scenario A: Ops lead with failed automations
+Pass when buyer restates the 3-tier offer ladder and requests pilot scope.
+
+### Scenario B: technical stakeholder requests architecture depth
+Pass when call transitions to trust boundaries, policy runtime, and portability without losing business framing.
+
+### Scenario C: price resistance
+Pass when discussion anchors to failure cost and a phased entry path.
+
+### Scenario D: "we only want MCP"
+Pass when MCP-only is framed as wedge with explicit assurance trigger criteria.
+
+### Scenario E: multi-stakeholder call
+Pass when call closes with named owner, scoped next step, and date.
+
+---
+
+## Acceptance criteria for this script
+
+1. Another team member can run the call flow without ad-lib invention.
+2. Every objection path ends with a concrete next action.
+3. Discovery notes are proposal-ready in one pass.
+4. Script supports a 20–30 minute call without losing core diagnosis steps.
+
+---
+
+## Assumptions and defaults
+
+1. Primary buyer is Ops/RevOps.
+2. Primary channel is live discovery calls.
+3. Primary success objective is operational reliability.
+4. Messaging aligns to current `.agency` phrasing and contract artifacts.
+5. Version 1 favors clarity and conversion over long-form technical depth.
+
+**CTA:** createsomething.agency/book
