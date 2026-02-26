@@ -78,7 +78,7 @@
 							</li>
 						{/each}
 					</ul>
-						<a href="/demo" class="card-cta">
+						<a href="/library" class="card-cta">
 							<PlayCircle size={18} />
 							Open Video Library
 						</a>

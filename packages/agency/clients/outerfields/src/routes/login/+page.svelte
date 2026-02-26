@@ -60,8 +60,10 @@
 
 				await invalidateAll();
 				const isAdmin = result.data?.user?.role === 'admin';
+				const normalizedRedirect =
+					data.redirectTo === '/demo' ? '/library' : (data.redirectTo || '/library');
 				const destination =
-					data.redirectTo === '/demo' && isAdmin ? '/admin/videos' : (data.redirectTo || '/demo');
+					isAdmin && normalizedRedirect === '/library' ? '/admin/videos' : normalizedRedirect;
 				goto(destination);
 		} catch {
 			error = 'An unexpected error occurred';
@@ -175,7 +177,7 @@
 			{#if mode === 'login'}
 				<p>
 					Don't have an account?
-					<button type="button" onclick={() => goto(`/signup?redirect=${encodeURIComponent(data.redirectTo || '/demo')}`)}>
+					<button type="button" onclick={() => goto(`/signup?redirect=${encodeURIComponent(data.redirectTo || '/library')}`)}>
 						Create one
 					</button>
 				</p>

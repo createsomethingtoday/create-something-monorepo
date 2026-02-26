@@ -47,7 +47,7 @@
 			}
 
 			await invalidateAll();
-			goto(data.redirectTo || '/demo');
+			goto(data.redirectTo || '/library');
 		} catch {
 			error = 'An unexpected error occurred';
 		} finally {
@@ -284,4 +284,3 @@
 		text-decoration: underline;
 	}
 </style>
-

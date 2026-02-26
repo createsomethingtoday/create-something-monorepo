@@ -59,6 +59,13 @@
 		featured_order: number;
 	};
 
+	type ConfirmDialogAction = 'archive' | 'publish';
+	type ConfirmDialogState = {
+		action: ConfirmDialogAction;
+		videoId: string;
+		videoTitle: string;
+	};
+
 	type UploadInitJson = {
 		success?: boolean;
 		data?: { videoId: string; uploadUrl: string; tusResumable: string };
@@ -82,6 +89,7 @@
 	let drafts = $state<Record<string, EditDraft>>({});
 	let highlightedVideoId = $state<string | null>(null);
 	let ingestMonitoringVideoId = $state<string | null>(null);
+	let confirmDialog = $state<ConfirmDialogState | null>(null);
 	let ingestMonitorToken = 0;
 
 	const INGEST_POLL_INTERVAL_MS = 5000;
@@ -134,6 +142,131 @@
 		params.set('limit', '200');
 		params.set('offset', '0');
 		return params;
+	}
+
+	function hasActiveFilters(): boolean {
+		return (
+			q.trim().length > 0 ||
+			visibility !== 'all' ||
+			ingestStatus !== 'all' ||
+			tier !== 'all' ||
+			seriesId.trim().length > 0 ||
+			featured !== 'all'
+		);
+	}
+
+	async function clearAllFilters(): Promise<void> {
+		q = '';
+		visibility = 'all';
+		ingestStatus = 'all';
+		tier = 'all';
+		seriesId = '';
+		featured = 'all';
+		await refreshVideos();
+	}
+
+	async function clearSingleFilter(
+		filter: 'q' | 'visibility' | 'ingestStatus' | 'tier' | 'seriesId' | 'featured'
+	): Promise<void> {
+		switch (filter) {
+			case 'q':
+				q = '';
+				break;
+			case 'visibility':
+				visibility = 'all';
+				break;
+			case 'ingestStatus':
+				ingestStatus = 'all';
+				break;
+			case 'tier':
+				tier = 'all';
+				break;
+			case 'seriesId':
+				seriesId = '';
+				break;
+			case 'featured':
+				featured = 'all';
+				break;
+		}
+		await refreshVideos();
+	}
+
+	function isVideoDirty(video: VideoRow): boolean {
+		const draft = drafts[video.id];
+		if (!draft) return false;
+
+		const normalizedDraftTitle = draft.title.trim();
+		const normalizedDraftDescription = draft.description.trim();
+		const normalizedDraftSeriesId = draft.series_id.trim();
+		const normalizedDraftThumbnail = draft.thumbnail_path.trim();
+		const normalizedDraftEpisode = parseEpisodeNumber(draft.episode_number);
+		const normalizedDraftFeaturedOrder = Math.max(0, Math.floor(draft.featured_order || 0));
+		const normalizedVideoFeaturedOrder = Math.max(0, Math.floor(video.featured_order || 0));
+
+		return (
+			normalizedDraftTitle !== video.title.trim() ||
+			normalizedDraftDescription !== (video.description || '').trim() ||
+			draft.tier !== video.tier ||
+			draft.visibility !== video.visibility ||
+			normalizedDraftSeriesId !== (video.series_id || '') ||
+			normalizedDraftEpisode !== video.episode_number ||
+			normalizedDraftThumbnail !== (video.thumbnail_path || '').trim() ||
+			draft.playback_policy !== video.playback_policy ||
+			(draft.is_featured ? 1 : 0) !== video.is_featured ||
+			normalizedDraftFeaturedOrder !== normalizedVideoFeaturedOrder
+		);
+	}
+
+	function closeConfirmDialog(): void {
+		if (actionBusy) return;
+		confirmDialog = null;
+	}
+
+	function requestArchiveVideo(videoId: string): void {
+		const video = getVideoById(videoId);
+		if (!video) return;
+		confirmDialog = {
+			action: 'archive',
+			videoId,
+			videoTitle: video.title
+		};
+	}
+
+	function requestPublishVideo(videoId: string): void {
+		actionError = null;
+		if (!canPublishVideo(videoId)) {
+			actionError = 'Cannot publish until ingest status is ready.';
+			return;
+		}
+		const video = getVideoById(videoId);
+		if (!video) return;
+		confirmDialog = {
+			action: 'publish',
+			videoId,
+			videoTitle: video.title
+		};
+	}
+
+	async function confirmDialogAction(): Promise<void> {
+		if (!confirmDialog || actionBusy) return;
+		const pending = confirmDialog;
+		confirmDialog = null;
+
+		if (pending.action === 'archive') {
+			await archiveVideo(pending.videoId);
+			return;
+		}
+
+		await saveVideo(pending.videoId, {
+			visibility: 'published',
+			successMessage: 'Video published.'
+		});
+	}
+
+	function handleWindowKeydown(event: KeyboardEvent): void {
+		if (event.key !== 'Escape' || !confirmDialog) return;
+		event.preventDefault();
+		closeConfirmDialog();
 	}
 
 	async function refreshVideos() {
@@ -266,14 +399,29 @@
 		}
 	}
 
-	async function saveVideo(videoId: string) {
+	async function saveVideo(
+		videoId: string,
+		options?: {
+			visibility?: EditDraft['visibility'];
+			successMessage?: string;
+		}
+	) {
 		actionMessage = null;
 		actionError = null;
 		actionBusy = true;
 		try {
+			const video = getVideoById(videoId);
+			if (!video) throw new Error('Video not found');
 			const draft = drafts[videoId];
 			if (!draft) throw new Error('Missing draft state');
-			if (draft.visibility === 'published' && !canPublishVideo(videoId)) {
+			const nextVisibility = options?.visibility ?? draft.visibility;
+
+			if (!options?.visibility && !isVideoDirty(video)) {
+				actionMessage = 'No changes to save.';
+				return;
+			}
+
+			if (nextVisibility === 'published' && !canPublishVideo(videoId)) {
 				throw new Error('Cannot publish until ingest status is ready.');
 			}
 
@@ -285,7 +433,7 @@
 				episode_number: parseEpisodeNumber(draft.episode_number),
 				thumbnail_path: draft.thumbnail_path,
 				playback_policy: draft.playback_policy,
-				visibility: draft.visibility,
+				visibility: nextVisibility,
 				is_featured: draft.is_featured ? 1 : 0,
 				featured_order: Math.max(0, Math.floor(draft.featured_order || 0))
 			};
@@ -302,10 +450,10 @@
 
 			videos = videos.map((row) => (row.id === videoId ? json.data! : row));
 			// Re-sync draft to what the server accepted.
-			delete drafts[videoId];
-			ensureDraft(json.data);
+				delete drafts[videoId];
+				ensureDraft(json.data);
 
-			actionMessage = 'Video saved.';
+				actionMessage = options?.successMessage || 'Video saved.';
 		} catch (err) {
 			actionError = err instanceof Error ? err.message : 'Failed to update video';
 		} finally {
@@ -316,7 +464,6 @@
 	async function archiveVideo(videoId: string) {
 		actionMessage = null;
 		actionError = null;
-		if (!confirm('Archive this video?')) return;
 
 		actionBusy = true;
 		try {
@@ -527,6 +674,8 @@
 	<title>Admin | Videos</title>
 </svelte:head>
 
+<svelte:window onkeydown={handleWindowKeydown} />
+
 <div class="admin-wrap">
 	<header class="admin-header">
 		<div class="admin-title">
@@ -629,7 +778,7 @@
 			</button>
 		</div>
 
-		<div class="filters">
+			<div class="filters">
 			<label class="field">
 				<span>Search</span>
 				<input bind:value={q} placeholder="Title contains…" />
@@ -680,13 +829,66 @@
 				</select>
 			</label>
 
+<<<<<<< HEAD
 			<div class="actions filter-actions">
 				<button class="btn" onclick={refreshVideos} disabled={isLoading || actionBusy}>
 					<RefreshCw size={16} />
 					<span>Apply</span>
 				</button>
+=======
+				<div class="actions filter-actions">
+					<button class="btn" onclick={refreshVideos} disabled={isLoading || actionBusy}>
+						<RefreshCw size={16} />
+						<span>Apply</span>
+					</button>
+				</div>
+>>>>>>> codex/braintrust-composio-instrumentation
 			</div>
-		</div>
+
+			{#if hasActiveFilters()}
+				<div class="active-filters" aria-label="Active filters">
+					{#if q.trim()}
+						<button class="filter-chip" onclick={() => void clearSingleFilter('q')}>
+							<span>Search: "{q.trim()}"</span>
+							<strong aria-hidden="true">×</strong>
+						</button>
+					{/if}
+					{#if visibility !== 'all'}
+						<button class="filter-chip" onclick={() => void clearSingleFilter('visibility')}>
+							<span>Visibility: {visibility}</span>
+							<strong aria-hidden="true">×</strong>
+						</button>
+					{/if}
+					{#if ingestStatus !== 'all'}
+						<button class="filter-chip" onclick={() => void clearSingleFilter('ingestStatus')}>
+							<span>Ingest: {ingestStatus}</span>
+							<strong aria-hidden="true">×</strong>
+						</button>
+					{/if}
+					{#if tier !== 'all'}
+						<button class="filter-chip" onclick={() => void clearSingleFilter('tier')}>
+							<span>Tier: {tier}</span>
+							<strong aria-hidden="true">×</strong>
+						</button>
+					{/if}
+					{#if seriesId.trim()}
+						<button class="filter-chip" onclick={() => void clearSingleFilter('seriesId')}>
+							<span>Series: {seriesLabel(seriesId)}</span>
+							<strong aria-hidden="true">×</strong>
+						</button>
+					{/if}
+					{#if featured !== 'all'}
+						<button class="filter-chip" onclick={() => void clearSingleFilter('featured')}>
+							<span>Featured: {featured}</span>
+							<strong aria-hidden="true">×</strong>
+						</button>
+					{/if}
+
+					<button class="filter-chip clear-all-chip" onclick={() => void clearAllFilters()}>
+						Clear all
+					</button>
+				</div>
+			{/if}
 
 		{#if listError}
 			<div class="notice error">{listError}</div>
@@ -716,14 +918,17 @@
 								<span class="title">{v.title}</span>
 								<span class="meta mono">{v.id}</span>
 							</div>
-							<div class="badges">
-								<span class="badge">{seriesLabel(v.series_id)}</span>
-								<span class="badge">{v.visibility}</span>
-								<span class="badge">{v.ingest_status}</span>
-								{#if v.is_featured === 1}
-									<span class="badge featured">featured #{v.featured_order}</span>
-								{/if}
-							</div>
+								<div class="badges">
+									<span class="badge">{seriesLabel(v.series_id)}</span>
+									<span class="badge">{v.visibility}</span>
+									<span class="badge">{v.ingest_status}</span>
+									{#if v.is_featured === 1}
+										<span class="badge featured">featured #{v.featured_order}</span>
+									{/if}
+									{#if isVideoDirty(v)}
+										<span class="badge unsaved">unsaved changes</span>
+									{/if}
+								</div>
 							<div class="updated">{formatDate(v.updated_at)}</div>
 						</summary>
 
@@ -877,20 +1082,41 @@
 								<p class="hint">Checking Stream ingest status…</p>
 							{/if}
 
-							<div class="row-actions">
-								<a class="btn" href={`/watch/${v.id}`} target="_blank" rel="noreferrer">
-									<ExternalLink size={16} />
-									<span>Preview</span>
-								</a>
-								<button class="btn" onclick={() => saveVideo(v.id)} disabled={actionBusy}>
-									<Save size={16} />
-									<span>Save</span>
-								</button>
-								<button class="btn danger" onclick={() => archiveVideo(v.id)} disabled={actionBusy}>
-									<Archive size={16} />
-									<span>Archive</span>
-								</button>
-							</div>
+								<div class="row-actions">
+									<div class="row-actions-meta">
+										{#if isVideoDirty(v)}
+											<p class="dirty-state">Unsaved changes</p>
+										{:else}
+											<p class="saved-state">All changes saved</p>
+										{/if}
+									</div>
+									<div class="row-actions-buttons">
+										<a class="btn" href={`/watch/${v.id}`} target="_blank" rel="noreferrer">
+											<ExternalLink size={16} />
+											<span>Preview</span>
+										</a>
+										<button
+											class="btn"
+											onclick={() => saveVideo(v.id)}
+											disabled={actionBusy || !isVideoDirty(v)}
+										>
+											<Save size={16} />
+											<span>Save</span>
+										</button>
+										<button
+											class="btn primary"
+											onclick={() => requestPublishVideo(v.id)}
+											disabled={actionBusy || !canPublishVideo(v.id)}
+										>
+											<Save size={16} />
+											<span>Publish</span>
+										</button>
+										<button class="btn danger" onclick={() => requestArchiveVideo(v.id)} disabled={actionBusy}>
+											<Archive size={16} />
+											<span>Archive</span>
+										</button>
+									</div>
+								</div>
 
 							<p class="hint">
 								stream_uid: <span class="mono">{v.stream_uid || '—'}</span> · ingest:
@@ -904,6 +1130,7 @@
 	</section>
 </div>
 
+<<<<<<< HEAD
 	<style>
 		.admin-wrap {
 			max-width: 1120px;
@@ -911,6 +1138,58 @@
 			padding: 6.5rem 1.75rem 3.5rem;
 		}
 
+=======
+{#if confirmDialog}
+	<div
+		class="confirm-overlay"
+		role="presentation"
+		onclick={(event) => {
+			if (event.target === event.currentTarget) {
+				closeConfirmDialog();
+			}
+		}}
+	>
+		<div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+			<h3 id="confirm-title">
+				{confirmDialog.action === 'archive' ? 'Archive this video?' : 'Publish this video?'}
+			</h3>
+			<p>
+				{#if confirmDialog.action === 'archive'}
+					This will hide "{confirmDialog.videoTitle}" from public catalog views.
+				{:else}
+					This will set "{confirmDialog.videoTitle}" to published for public catalog visibility.
+				{/if}
+			</p>
+			<div class="confirm-actions">
+				<button class="btn" onclick={closeConfirmDialog} disabled={actionBusy}>
+					Cancel
+				</button>
+				<button
+					class={`btn ${confirmDialog.action === 'archive' ? 'danger' : 'primary'}`}
+					onclick={confirmDialogAction}
+					disabled={actionBusy}
+				>
+					{#if actionBusy}
+						Working…
+					{:else if confirmDialog.action === 'archive'}
+						Archive video
+					{:else}
+						Publish video
+					{/if}
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+	<style>
+		.admin-wrap {
+			max-width: 1120px;
+			margin: 0 auto;
+			padding: 6.5rem 1.75rem 3.5rem;
+		}
+
+>>>>>>> codex/braintrust-composio-instrumentation
 		.admin-header {
 			display: flex;
 			align-items: center;
@@ -1196,6 +1475,44 @@
 			align-items: end;
 			margin-bottom: 1rem;
 		}
+<<<<<<< HEAD
+=======
+
+		.active-filters {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 0.5rem;
+			margin: -0.2rem 0 0.65rem;
+		}
+
+		.filter-chip {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.45rem;
+			padding: 0.38rem 0.68rem;
+			border-radius: 9999px;
+			border: 1px solid rgba(255, 255, 255, 0.16);
+			background: rgba(255, 255, 255, 0.05);
+			color: var(--color-fg-secondary);
+			font-size: 0.78rem;
+			cursor: pointer;
+			transition: background var(--duration-micro) var(--ease-standard);
+		}
+
+		.filter-chip strong {
+			font-size: 0.86rem;
+			line-height: 1;
+		}
+
+		.filter-chip:hover {
+			background: rgba(255, 255, 255, 0.1);
+		}
+
+		.clear-all-chip {
+			border-color: rgba(244, 81, 38, 0.35);
+			color: rgba(255, 225, 215, 0.96);
+		}
+>>>>>>> codex/braintrust-composio-instrumentation
 
 	.video-list {
 		display: flex;
@@ -1203,12 +1520,12 @@
 		gap: 0.75rem;
 	}
 
-	.video-card {
-		border: 1px solid var(--color-border-default);
-		border-radius: 1rem;
-		background: rgba(0, 0, 0, 0.18);
-		overflow: hidden;
-	}
+		.video-card {
+			border: 1px solid var(--color-border-default);
+			border-radius: 1rem;
+			background: rgba(0, 0, 0, 0.18);
+			overflow: visible;
+		}
 
 	.video-card.highlighted {
 		border-color: rgba(244, 81, 38, 0.5);
@@ -1261,10 +1578,15 @@
 		white-space: nowrap;
 	}
 
-	.badge.featured {
-		border-color: rgba(255, 220, 90, 0.35);
-		color: rgba(255, 235, 160, 0.95);
-	}
+		.badge.featured {
+			border-color: rgba(255, 220, 90, 0.35);
+			color: rgba(255, 235, 160, 0.95);
+		}
+
+		.badge.unsaved {
+			border-color: rgba(244, 81, 38, 0.45);
+			color: rgba(255, 220, 205, 0.95);
+		}
 
 	.updated {
 		color: var(--color-fg-muted);
@@ -1296,13 +1618,45 @@
 		width: 140px;
 	}
 
-	.row-actions {
-		margin-top: 1rem;
-		display: flex;
-		gap: 0.5rem;
-		justify-content: flex-end;
-		flex-wrap: wrap;
-	}
+		.row-actions {
+			margin-top: 1rem;
+			display: flex;
+			gap: 0.75rem;
+			justify-content: space-between;
+			align-items: center;
+			flex-wrap: wrap;
+			position: sticky;
+			bottom: -1px;
+			padding: 0.7rem 0 0.2rem;
+			border-top: 1px solid rgba(255, 255, 255, 0.08);
+			background: linear-gradient(
+				180deg,
+				rgba(18, 18, 20, 0.22) 0%,
+				rgba(18, 18, 20, 0.93) 35%,
+				rgba(18, 18, 20, 0.95) 100%
+			);
+			backdrop-filter: blur(6px);
+		}
+
+		.row-actions-meta p {
+			margin: 0;
+			font-size: 0.82rem;
+		}
+
+		.dirty-state {
+			color: rgba(255, 220, 160, 0.95);
+		}
+
+		.saved-state {
+			color: var(--color-fg-muted);
+		}
+
+		.row-actions-buttons {
+			display: flex;
+			gap: 0.5rem;
+			flex-wrap: wrap;
+			justify-content: flex-end;
+		}
 
 	.thumbnail-preview {
 		display: flex;
@@ -1314,6 +1668,19 @@
 		background: rgba(255, 255, 255, 0.02);
 	}
 
+<<<<<<< HEAD
+	.thumbnail-preview {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding: 0.75rem;
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		border-radius: 0.75rem;
+		background: rgba(255, 255, 255, 0.02);
+	}
+
+=======
+>>>>>>> codex/braintrust-composio-instrumentation
 	.thumbnail-preview img {
 		width: min(360px, 100%);
 		aspect-ratio: 16 / 9;
@@ -1321,6 +1688,7 @@
 		border-radius: 0.5rem;
 		border: 1px solid rgba(255, 255, 255, 0.12);
 		background: rgba(0, 0, 0, 0.2);
+<<<<<<< HEAD
 	}
 
 	.thumbnail-preview p {
@@ -1367,6 +1735,93 @@
 			.video-summary {
 				grid-template-columns: 1fr;
 			}
+=======
+	}
+
+	.thumbnail-preview p {
+		margin: 0;
+		color: var(--color-fg-muted);
+		word-break: break-all;
+	}
+
+	.thumbnail-upload-status {
+		margin: 0;
+		font-size: 0.85rem;
+	}
+
+	.thumbnail-upload-status.success {
+		color: rgba(210, 255, 230, 0.95);
+	}
+
+	.thumbnail-upload-status.error {
+		color: rgba(255, 220, 220, 0.95);
+	}
+
+		.mono {
+			font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+				monospace;
+		}
+
+		.confirm-overlay {
+			position: fixed;
+			inset: 0;
+			z-index: 80;
+			background: rgba(0, 0, 0, 0.62);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 1.25rem;
+		}
+>>>>>>> codex/braintrust-composio-instrumentation
+
+		.confirm-modal {
+			width: min(28rem, 100%);
+			background: rgba(22, 22, 24, 0.98);
+			border: 1px solid rgba(255, 255, 255, 0.16);
+			border-radius: 0.95rem;
+			padding: 1.15rem 1.2rem;
+			box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
+		}
+
+		.confirm-modal h3 {
+			margin: 0;
+			font-size: 1.1rem;
+			color: var(--color-fg-primary);
+		}
+
+		.confirm-modal p {
+			margin: 0.65rem 0 0;
+			color: var(--color-fg-secondary);
+		}
+
+		.confirm-actions {
+			margin-top: 1rem;
+			display: flex;
+			justify-content: flex-end;
+			gap: 0.55rem;
+			flex-wrap: wrap;
+		}
+
+			@media (max-width: 980px) {
+				.admin-wrap {
+				padding: 6rem 1.2rem 2.6rem;
+			}
+
+			.panel {
+				padding: 1.1rem 1rem;
+			}
+
+			.filters {
+				grid-template-columns: 1fr;
+			}
+
+			.filter-actions {
+				justify-content: flex-start;
+			}
+
+			.video-summary {
+				grid-template-columns: 1fr;
+			}
 
 		.updated {
 			text-align: left;
@@ -1377,8 +1832,17 @@
 			align-items: flex-start;
 		}
 
-		.row-actions {
-			justify-content: flex-start;
-		}
-	}
-</style>
+				.row-actions {
+					position: static;
+					padding-top: 0.9rem;
+					border-top: 1px solid rgba(255, 255, 255, 0.08);
+					background: transparent;
+					backdrop-filter: none;
+					justify-content: flex-start;
+				}
+
+				.row-actions-buttons {
+					justify-content: flex-start;
+				}
+			}
+	</style>

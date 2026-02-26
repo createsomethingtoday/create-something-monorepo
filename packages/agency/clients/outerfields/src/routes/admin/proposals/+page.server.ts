@@ -11,7 +11,7 @@ export const load: PageServerLoad = async ({ platform, locals }) => {
   }
 
   if (!isAdminUser(locals.user)) {
-    redirect(302, '/demo');
+    redirect(302, '/library');
   }
 
   const db = platform?.env?.DB;

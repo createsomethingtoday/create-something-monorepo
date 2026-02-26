@@ -48,7 +48,47 @@ For production smoke, you should additionally see:
 - A new trace in the Braintrust project for that scenario run
 - No Braintrust flush-auth errors in worker logs (`Invalid API Key`, `Failed to construct records`, `Dropping batch`)
 
-## 3) Integrate In Your App
+## 3) Run MCP Eval Scaffolds
+
+This repo now includes three Braintrust eval scaffolds for MCP integration checks:
+
+- `fleet_telemetry_contract`
+- `fleet_error_path_tracing`
+- `account_isolation`
+
+Load env defaults (edit for your routes first):
+
+```bash
+set -a; . ./scripts/braintrust-mcp-evals.env.example; set +a
+```
+
+List available evals:
+
+```bash
+pnpm braintrust:eval:mcp:list
+```
+
+Run all MCP eval scaffolds:
+
+```bash
+pnpm braintrust:eval:mcp
+```
+
+Run all MCP eval scaffolds locally without uploading logs:
+
+```bash
+pnpm braintrust:eval:mcp:local
+```
+
+Run one eval scaffold:
+
+```bash
+pnpm braintrust:eval:mcp:contract
+pnpm braintrust:eval:mcp:error-path
+pnpm braintrust:eval:mcp:account-isolation
+```
+
+## 4) Integrate In Your App
 
 Use the wrapper entrypoint:
 

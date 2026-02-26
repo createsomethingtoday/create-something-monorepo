@@ -1,329 +1,375 @@
 <script lang="ts">
-	import { SEO } from '@create-something/canon';
-	import { onMount } from 'svelte';
-	import WorkHistoryTimeline from '$lib/components/WorkHistoryTimeline.svelte';
-
-	// Scroll reveal observer
-	onMount(() => {
-		const observer = new IntersectionObserver(
-			(entries) => {
-				entries.forEach((entry) => {
-					if (entry.isIntersecting) {
-						entry.target.classList.add('visible');
-					}
-				});
-			},
-			{ threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
-		);
-
-		document.querySelectorAll('.reveal').forEach((el) => observer.observe(el));
-
-		return () => observer.disconnect();
-	});
+  import { SEO } from '@create-something/canon';
+  import { AnimatedGridPattern, BlurFade } from '@create-something/canon/magicui';
+  import WorkHistoryTimeline from '$lib/components/WorkHistoryTimeline.svelte';
 </script>
 
 <SEO
-	title="About | Micah Johnson — Custom Workflow MCPs"
-	description="CTO-level architecture for custom workflow MCPs, reliability controls, and enterprise extension. 16+ production integrations built."
-	keywords="Micah Johnson, custom mcp development, workflow architecture, mcp consulting, ai operations reliability"
-	ogImage="/og-image.svg"
-	propertyName="agency"
+  title="About | Micah Johnson — Custom Workflow MCPs"
+  description="CTO-level architecture for Constraint OS delivery: custom workflow MCPs, Autonomy Assurance, and artifact-based operations."
+  keywords="Micah Johnson, custom mcp development, workflow architecture, mcp consulting, ai operations reliability"
+  ogImage="/og-image.svg"
+  propertyName="agency"
 />
 
 <!-- Hero -->
 <section class="hero">
-	<div class="hero-grid"></div>
-	<div class="hero-content">
-		<p class="hero-eyebrow reveal">About</p>
-		<h1 class="hero-title reveal">I build operating systems for autonomy.</h1>
-		<p class="hero-detail reveal">
-			I started by connecting business tools to AI — Salesforce, HubSpot, Notion,
-			Procore, and custom systems. I have built 16+ production integrations. That work
-			clarified where value compounds: not at basic connectivity, but at reliability,
-			governance, and system design for real operations.
-		</p>
-	</div>
+  <div class="hero-grid-container">
+    <AnimatedGridPattern
+      numSquares={25}
+      maxOpacity={0.08}
+      duration={4}
+      repeatDelay={2}
+      width={60}
+      height={60}
+      class="hero-animated-grid"
+    />
+  </div>
+  <div class="hero-content">
+    <BlurFade delay={0}>
+      <p class="hero-eyebrow">About</p>
+    </BlurFade>
+    <BlurFade delay={0.1}>
+      <h1 class="hero-title">I build operating systems for autonomy.</h1>
+    </BlurFade>
+    <BlurFade delay={0.2}>
+      <p class="hero-detail">
+        I started by connecting business tools to AI — Salesforce, HubSpot, Notion, Procore, and
+        custom systems. That work clarified where value compounds: not at basic connectivity, but at
+        reliability, governance, and system design for real operations.
+      </p>
+    </BlurFade>
+  </div>
 </section>
 
 <!-- The Approach -->
 <section class="about-section">
-	<div class="section-container">
-		<div class="about-content reveal">
-			<h2>The approach</h2>
-			<p>
-				CREATE SOMETHING .agency is built around one core promise: custom workflow MCPs for production operations.
-				From there, I layer autonomy assurance (evals, policy controls, incident loops) and enterprise extension when requirements exceed standard tooling.
-			</p>
-			<p>
-				My methodology is the Subtractive Triad: before building anything new, I
-				audit your systems to find what should be removed — duplication, excess,
-				disconnection. What remains is what's worth automating. This is why the systems
-				hold up in production: the architecture is designed before capabilities are added.
-			</p>
-		</div>
-	</div>
+  <div class="section-container">
+    <BlurFade delay={0.1}>
+      <div class="about-content">
+        <h2>The approach</h2>
+        <p>
+          CREATE SOMETHING .agency runs a Constraint OS for production autonomy. I build custom
+          workflow MCPs, then layer Autonomy Assurance (evals, policy controls, incident loops) and
+          Enterprise Extension when requirements exceed standard tooling.
+        </p>
+        <p>
+          My methodology is the Subtractive Triad: before building anything new, I audit your
+          systems to find what should be removed — duplication, excess, disconnection. What remains
+          is what's worth automating. This is why the systems hold up in production: the
+          architecture is designed before capabilities are added.
+        </p>
+      </div>
+    </BlurFade>
+  </div>
 </section>
 
 <!-- Background -->
 <section class="about-section">
-	<div class="section-container">
-		<div class="about-content reveal">
-			<h2>Background</h2>
-			<p>
-				Micah Johnson. System Architect on the Marketplace Team at Webflow — building
-				internal tools, onboarding systems, and platform infrastructure serving millions
-				of users. Focused on technical architecture for production agent systems.
-			</p>
-			<p>
-				I have deployed 16+ production integrations connecting tools like Salesforce,
-				HubSpot, Notion, Slack, Procore, and custom internal systems to AI. That
-				building experience informs where to trust native tooling and where to design
-				custom control layers.
-			</p>
-			<p>
-				Based in Texas. Working with businesses across the US.
-			</p>
-			<p>
-				<a href="https://www.linkedin.com/in/micahryanjohnson/" class="link" target="_blank" rel="noopener noreferrer">LinkedIn</a> · <a href="mailto:micah@createsomething.agency" class="link">Email</a>
-			</p>
-		</div>
-	</div>
+  <div class="section-container">
+    <BlurFade delay={0.1}>
+      <div class="about-content">
+        <h2>Background</h2>
+        <p>
+          Micah Johnson. System Architect on the Marketplace Team at Webflow — building internal
+          tools, onboarding systems, and platform infrastructure serving millions of users. Focused
+          on technical architecture for production agent systems.
+        </p>
+        <p>
+          I have deployed production integrations connecting tools like Salesforce, HubSpot, Notion,
+          Slack, Procore, and custom internal systems to AI. That building experience informs where
+          to trust native tooling and where to design custom control layers.
+        </p>
+        <p>Based in Texas. Working with businesses across the US.</p>
+        <p>
+          <a
+            href="https://www.linkedin.com/in/micahryanjohnson/"
+            class="link"
+            target="_blank"
+            rel="noopener noreferrer">LinkedIn</a
+          >
+          · <a href="mailto:micah@createsomething.agency" class="link">Email</a>
+        </p>
+      </div>
+    </BlurFade>
+  </div>
 </section>
 
 <!-- Timeline -->
 <section class="about-section" id="timeline">
-	<div class="section-container">
-		<div class="about-content reveal">
-			<h2>Timeline</h2>
-			<p>
-				The through-line: using tools to abstract complexity while still understanding the complexity underneath.
-				That pattern shows up in science, creative work, client services, marketplace systems, and now AI integrations.
-			</p>
-			<WorkHistoryTimeline />
-		</div>
-	</div>
+  <div class="section-container">
+    <BlurFade delay={0.1}>
+      <div class="about-content">
+        <h2>Timeline</h2>
+        <p>
+          The through-line: using tools to abstract complexity while still understanding the
+          complexity underneath. That pattern shows up in science, creative work, client services,
+          marketplace systems, and now AI integrations.
+        </p>
+        <WorkHistoryTimeline />
+      </div>
+    </BlurFade>
+  </div>
 </section>
 
 <!-- The System -->
 <section class="about-section">
-	<div class="section-container">
-		<div class="about-content reveal">
-			<h2>The system behind the work</h2>
-			<p>CREATE SOMETHING operates as a connected system — each part informs the others:</p>
-			<ul class="circle-list">
-				<li><a href="https://createsomething.ltd" class="link" target="_blank" rel="noopener noreferrer"><strong>.ltd</strong></a> — Philosophy and principles</li>
-				<li><a href="https://createsomething.io" class="link" target="_blank" rel="noopener noreferrer"><strong>.io</strong></a> — Research and validated patterns</li>
-				<li><a href="https://createsomething.space" class="link" target="_blank" rel="noopener noreferrer"><strong>.space</strong></a> — Tools and experiments</li>
-				<li><strong>.agency</strong> — Autonomy assurance and enterprise extension <span class="muted">(you are here)</span></li>
-			</ul>
-			<p>
-				Client work informs the research. Research refines the methodology. The methodology
-				improves the client work. Every part serves the whole.
-			</p>
-		</div>
-	</div>
+  <div class="section-container">
+    <BlurFade delay={0.1}>
+      <div class="about-content">
+        <h2>The system behind the work</h2>
+        <p>CREATE SOMETHING operates as a connected system — each part informs the others:</p>
+        <ul class="circle-list">
+          <li>
+            <a
+              href="https://createsomething.ltd"
+              class="link"
+              target="_blank"
+              rel="noopener noreferrer"><strong>.ltd</strong></a
+            > — Philosophy and principles
+          </li>
+          <li>
+            <a
+              href="https://createsomething.io"
+              class="link"
+              target="_blank"
+              rel="noopener noreferrer"><strong>.io</strong></a
+            > — Research and validated patterns
+          </li>
+          <li>
+            <a
+              href="https://createsomething.space"
+              class="link"
+              target="_blank"
+              rel="noopener noreferrer"><strong>.space</strong></a
+            > — Tools and experiments
+          </li>
+          <li>
+            <strong>.agency</strong> — Constraint OS, Autonomy Assurance, and enterprise extension
+            <span class="muted">(you are here)</span>
+          </li>
+        </ul>
+        <p>
+          Client work informs the research. Research refines the methodology. The methodology
+          improves the client work. Every part serves the whole.
+        </p>
+      </div>
+    </BlurFade>
+  </div>
 </section>
 
 <!-- Also Building -->
 <section class="about-section">
-	<div class="section-container">
-		<div class="about-content reveal">
-			<h2>Also building</h2>
-			<p>
-				I am also building <a href="https://workway.co" class="link" target="_blank" rel="noopener noreferrer">WORKWAY</a>.
-				When clients need full system development and onboarding as the primary engagement, I provide a direct referral path to trusted partners, including Half Dozen.
-			</p>
-		</div>
-	</div>
+  <div class="section-container">
+    <BlurFade delay={0.1}>
+      <div class="about-content">
+        <h2>Also building</h2>
+        <p>
+          I am also building <a
+            href="https://workway.co"
+            class="link"
+            target="_blank"
+            rel="noopener noreferrer">WORKWAY</a
+          >. When clients need full system development and onboarding as the primary engagement, I
+          provide a direct referral path to trusted partners, including Half Dozen.
+        </p>
+      </div>
+    </BlurFade>
+  </div>
 </section>
 
 <!-- CTA -->
 <section class="cta-section">
-	<div class="section-container">
-		<h2 class="cta-heading reveal">Need assurance above your Notion baseline?</h2>
-		<div class="cta-actions reveal">
-			<a href="/book" class="cta-link-primary">Book a Call →</a>
-			<a href="/services" class="cta-link-secondary">How I work →</a>
-		</div>
-	</div>
+  <div class="section-container">
+    <BlurFade delay={0.1}>
+      <h2 class="cta-heading">Need trust you can inspect?</h2>
+    </BlurFade>
+    <BlurFade delay={0.2}>
+      <div class="cta-actions">
+        <a href="/book" class="cta-link-primary">Book a Call →</a>
+        <a href="/services" class="cta-link-secondary">How I work →</a>
+      </div>
+    </BlurFade>
+  </div>
 </section>
 
 <style>
-	/* Section containers */
-	.section-container {
-		max-width: var(--content-width-xl);
-		margin: 0 auto;
-		padding: 0 var(--container-padding, 1.5rem);
-	}
+  /* Section containers */
+  .section-container {
+    max-width: var(--content-width-xl);
+    margin: 0 auto;
+    padding: 0 var(--container-padding, 1.5rem);
+  }
 
-	/* Hero with grid background */
-	.hero {
-		position: relative;
-		padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem) var(--section-padding, 6rem);
-		overflow: hidden;
-	}
+  /* Hero with grid background */
+  .hero {
+    position: relative;
+    padding: var(--section-padding-lg, 8rem) var(--container-padding, 1.5rem)
+      var(--section-padding, 6rem);
+    overflow: hidden;
+  }
 
-	.hero-grid {
-		position: absolute;
-		inset: 0;
-		background-image:
-			linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-			linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-		background-size: 60px 60px;
-		mask-image: linear-gradient(to bottom, black 0%, transparent 80%);
-		-webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 80%);
-		pointer-events: none;
-	}
+  .hero-grid-container {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
 
-	.hero-content {
-		position: relative;
-		text-align: center;
-		max-width: var(--content-width-xl);
-		margin: 0 auto;
-	}
+  :global(.hero-animated-grid) {
+    mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
+    -webkit-mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
+  }
 
-	.hero-eyebrow {
-		font-size: var(--text-body-sm);
-		text-transform: uppercase;
-		letter-spacing: 0.15em;
-		color: var(--color-fg-muted);
-		margin-bottom: var(--space-5, 1.5rem);
-	}
+  .hero-content {
+    position: relative;
+    text-align: center;
+    max-width: var(--content-width-xl);
+    margin: 0 auto;
+  }
 
-	.hero-title {
-		font-size: var(--text-display);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-5, 1.5rem);
-		line-height: 1.1;
-		letter-spacing: var(--tracking-tighter, -0.025em);
-	}
+  .hero-eyebrow {
+    font-size: var(--text-body-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--color-fg-muted);
+    margin-bottom: var(--space-5, 1.5rem);
+  }
 
-	.hero-detail {
-		font-size: var(--text-body-lg);
-		color: var(--color-fg-secondary);
-		line-height: var(--leading-relaxed);
-		max-width: 38em;
-		margin: 0 auto;
-	}
+  .hero-title {
+    font-size: var(--text-display);
+    font-weight: var(--font-semibold);
+    color: var(--color-fg-primary);
+    margin-bottom: var(--space-5, 1.5rem);
+    line-height: 1.1;
+    letter-spacing: var(--tracking-tighter, -0.025em);
+  }
 
-	/* About Sections */
-	.about-section {
-		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
-	}
+  .hero-detail {
+    font-size: var(--text-body-lg);
+    color: var(--color-fg-secondary);
+    line-height: var(--leading-relaxed);
+    max-width: 38em;
+    margin: 0 auto;
+  }
 
-	.about-content h2 {
-		font-size: var(--text-h3);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-4, 1rem);
-	}
+  /* About Sections */
+  .about-section {
+    padding: var(--section-padding, 6rem) 0;
+    border-top: 1px solid var(--color-border-default);
+  }
 
-	.about-content p {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-		line-height: var(--leading-relaxed);
-		margin-bottom: var(--space-4, 1rem);
-	}
+  .about-content h2 {
+    font-size: var(--text-h3);
+    font-weight: var(--font-semibold);
+    color: var(--color-fg-primary);
+    margin-bottom: var(--space-4, 1rem);
+  }
 
-	.about-content p:last-child {
-		margin-bottom: 0;
-	}
+  .about-content p {
+    font-size: var(--text-body);
+    color: var(--color-fg-secondary);
+    line-height: var(--leading-relaxed);
+    margin-bottom: var(--space-4, 1rem);
+  }
 
-	/* Hermeneutic circle list */
-	.circle-list {
-		list-style: none;
-		padding: 0;
-		margin: 0 0 var(--space-4, 1rem) 0;
-	}
+  .about-content p:last-child {
+    margin-bottom: 0;
+  }
 
-	.circle-list li {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-		line-height: var(--leading-relaxed);
-		padding: var(--space-2, 0.5rem) 0;
-		border-bottom: 1px solid var(--color-border-default);
-	}
+  /* Hermeneutic circle list */
+  .circle-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--space-4, 1rem) 0;
+  }
 
-	.circle-list li:first-child {
-		border-top: 1px solid var(--color-border-default);
-	}
+  .circle-list li {
+    font-size: var(--text-body);
+    color: var(--color-fg-secondary);
+    line-height: var(--leading-relaxed);
+    padding: var(--space-2, 0.5rem) 0;
+    border-bottom: 1px solid var(--color-border-default);
+  }
 
-	.circle-list li strong {
-		color: var(--color-fg-primary);
-		font-weight: var(--font-semibold);
-	}
+  .circle-list li:first-child {
+    border-top: 1px solid var(--color-border-default);
+  }
 
-	.muted {
-		color: var(--color-fg-muted);
-		font-size: var(--text-body-sm);
-	}
+  .circle-list li strong {
+    color: var(--color-fg-primary);
+    font-weight: var(--font-semibold);
+  }
 
-	.link {
-		color: var(--color-fg-primary);
-		transition: opacity var(--duration-micro, 200ms) var(--ease-standard);
-	}
+  .muted {
+    color: var(--color-fg-muted);
+    font-size: var(--text-body-sm);
+  }
 
-	.link:hover {
-		opacity: 0.7;
-	}
+  .link {
+    color: var(--color-fg-primary);
+    transition: opacity var(--duration-micro, 200ms) var(--ease-standard);
+  }
 
-	/* CTA */
-	.cta-section {
-		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
-		text-align: center;
-	}
+  .link:hover {
+    opacity: 0.7;
+  }
 
-	.cta-heading {
-		font-size: var(--text-h1);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-5, 1.5rem);
-	}
+  /* CTA */
+  .cta-section {
+    padding: var(--section-padding, 6rem) 0;
+    border-top: 1px solid var(--color-border-default);
+    text-align: center;
+  }
 
-	.cta-actions {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: var(--space-4, 1rem);
-	}
+  .cta-heading {
+    font-size: var(--text-h1);
+    font-weight: var(--font-semibold);
+    color: var(--color-fg-primary);
+    margin-bottom: var(--space-5, 1.5rem);
+  }
 
-	.cta-link-primary {
-		font-size: var(--text-body);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		transition: opacity var(--duration-micro, 200ms) var(--ease-standard);
-	}
+  .cta-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4, 1rem);
+  }
 
-	.cta-link-primary:hover {
-		opacity: 0.7;
-	}
+  .cta-link-primary {
+    font-size: var(--text-body);
+    font-weight: var(--font-semibold);
+    color: var(--color-fg-primary);
+    transition: opacity var(--duration-micro, 200ms) var(--ease-standard);
+  }
 
-	.cta-link-secondary {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-muted);
-		transition: color var(--duration-micro, 200ms) var(--ease-standard);
-	}
+  .cta-link-primary:hover {
+    opacity: 0.7;
+  }
 
-	.cta-link-secondary:hover {
-		color: var(--color-fg-primary);
-	}
+  .cta-link-secondary {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+    transition: color var(--duration-micro, 200ms) var(--ease-standard);
+  }
 
-	/* Responsive */
-	@media (max-width: 768px) {
-		.hero {
-			padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
-		}
+  .cta-link-secondary:hover {
+    color: var(--color-fg-primary);
+  }
 
-		.hero-title {
-			font-size: var(--text-h1);
-		}
+  /* Responsive */
+  @media (max-width: 768px) {
+    .hero {
+      padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
+    }
 
-		.about-section,
-		.cta-section {
-			padding: var(--layout-3, 4rem) 0;
-		}
-	}
+    .hero-title {
+      font-size: var(--text-h1);
+    }
+
+    .about-section,
+    .cta-section {
+      padding: var(--layout-3, 4rem) 0;
+    }
+  }
 </style>
