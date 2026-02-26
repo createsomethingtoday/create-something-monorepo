@@ -24,7 +24,7 @@
 
 <SEO
 	title="About | Micah Johnson — Custom Workflow MCPs"
-	description="CTO-level architecture for custom workflow MCPs, reliability controls, and enterprise extension. 16+ production integrations built."
+	description="CTO-level architecture for Constraint OS delivery: custom workflow MCPs, Autonomy Assurance, and artifact-based operations."
 	keywords="Micah Johnson, custom mcp development, workflow architecture, mcp consulting, ai operations reliability"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -38,9 +38,8 @@
 		<h1 class="hero-title reveal">I build operating systems for autonomy.</h1>
 		<p class="hero-detail reveal">
 			I started by connecting business tools to AI — Salesforce, HubSpot, Notion,
-			Procore, and custom systems. I have built 16+ production integrations. That work
-			clarified where value compounds: not at basic connectivity, but at reliability,
-			governance, and system design for real operations.
+			Procore, and custom systems. That work clarified where value compounds: not at basic
+			connectivity, but at reliability, governance, and system design for real operations.
 		</p>
 	</div>
 </section>
@@ -51,8 +50,8 @@
 		<div class="about-content reveal">
 			<h2>The approach</h2>
 			<p>
-				CREATE SOMETHING .agency is built around one core promise: custom workflow MCPs for production operations.
-				From there, I layer autonomy assurance (evals, policy controls, incident loops) and enterprise extension when requirements exceed standard tooling.
+				CREATE SOMETHING .agency runs a Constraint OS for production autonomy.
+				I build custom workflow MCPs, then layer Autonomy Assurance (evals, policy controls, incident loops) and Enterprise Extension when requirements exceed standard tooling.
 			</p>
 			<p>
 				My methodology is the Subtractive Triad: before building anything new, I
@@ -75,7 +74,7 @@
 				of users. Focused on technical architecture for production agent systems.
 			</p>
 			<p>
-				I have deployed 16+ production integrations connecting tools like Salesforce,
+				I have deployed production integrations connecting tools like Salesforce,
 				HubSpot, Notion, Slack, Procore, and custom internal systems to AI. That
 				building experience informs where to trust native tooling and where to design
 				custom control layers.
@@ -114,7 +113,7 @@
 				<li><a href="https://createsomething.ltd" class="link" target="_blank" rel="noopener noreferrer"><strong>.ltd</strong></a> — Philosophy and principles</li>
 				<li><a href="https://createsomething.io" class="link" target="_blank" rel="noopener noreferrer"><strong>.io</strong></a> — Research and validated patterns</li>
 				<li><a href="https://createsomething.space" class="link" target="_blank" rel="noopener noreferrer"><strong>.space</strong></a> — Tools and experiments</li>
-				<li><strong>.agency</strong> — Autonomy assurance and enterprise extension <span class="muted">(you are here)</span></li>
+				<li><strong>.agency</strong> — Constraint OS, Autonomy Assurance, and enterprise extension <span class="muted">(you are here)</span></li>
 			</ul>
 			<p>
 				Client work informs the research. Research refines the methodology. The methodology
@@ -140,7 +139,7 @@
 <!-- CTA -->
 <section class="cta-section">
 	<div class="section-container">
-		<h2 class="cta-heading reveal">Need assurance above your Notion baseline?</h2>
+		<h2 class="cta-heading reveal">Need trust you can inspect?</h2>
 		<div class="cta-actions reveal">
 			<a href="/book" class="cta-link-primary">Book a Call →</a>
 			<a href="/services" class="cta-link-secondary">How I work →</a>

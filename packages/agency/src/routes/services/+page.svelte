@@ -70,9 +70,9 @@
 </script>
 
 <SEO
-	title="How We Work | Custom Workflow MCPs + Assurance"
-	description="CREATE SOMETHING .agency delivers custom workflow MCPs, autonomy assurance, and enterprise extension for production agent systems."
-	keywords="custom workflow mcp, autonomy assurance, enterprise mcp, agent reliability, ai operations architecture"
+	title="How We Work | Constraint OS for Production Autonomy"
+	description="CREATE SOMETHING .agency delivers a Constraint OS for production autonomy: Custom Workflow MCPs, Autonomy Assurance, and Enterprise Extension."
+	keywords="constraint os, custom workflow mcp, autonomy assurance, enterprise mcp, agent reliability, ai operations architecture"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	{services}
@@ -87,12 +87,12 @@
 			<p class="hero-eyebrow">How I Work</p>
 		</BlurFade>
 		<BlurFade delay={0.1}>
-			<h1 class="hero-title">Three offers. One escalation path.</h1>
+			<h1 class="hero-title">Three offers. One Constraint OS.</h1>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<p class="hero-subtitle">
-				CREATE SOMETHING .agency leads with Custom Workflow MCPs, then layers Autonomy Assurance and Enterprise Extension as risk and complexity increase.
-				When a client needs full system development and onboarding as the main work, I route that directly to Half Dozen.
+				Start with Custom Workflow MCPs. Add Autonomy Assurance when failure cost rises.
+				Escalate to Enterprise Extension for cross-system, high-stakes operations.
 			</p>
 		</BlurFade>
 	</div>
@@ -105,8 +105,8 @@
 			<div class="retainer-card">
 				<div class="retainer-header">
 					<div class="retainer-pricing">
-						<div class="retainer-price">Offer Ladder</div>
-						<div class="retainer-period">CREATE SOMETHING delivery</div>
+						<div class="retainer-price">Constraint OS</div>
+						<div class="retainer-period">CREATE SOMETHING delivery model</div>
 					</div>
 					<p class="retainer-note">
 						Start with workflow implementation. Add assurance when incident cost rises.<br />
@@ -146,6 +146,24 @@
 					</div>
 				</div>
 			</div>
+		</BlurFade>
+	</div>
+</section>
+
+<!-- Trust Artifacts -->
+<section class="retainer-section">
+	<div class="section-container">
+		<BlurFade>
+			<h2 class="section-heading">What Ships Every Engagement</h2>
+		</BlurFade>
+		<BlurFade delay={0.1}>
+			<ul class="retainer-list artifact-list">
+				<li><strong>mcp_contract.yaml:</strong> tools, resources, auth scopes, and error model</li>
+				<li><strong>agent_contract.yaml:</strong> allowed actions, approvals, and escalation rules</li>
+				<li><strong>outcome_contract.md:</strong> workflow targets, success criteria, and fallback path</li>
+				<li><strong>golden_tasks.yaml:</strong> release gate checks and latest pass/fail status</li>
+				<li><strong>runbook:</strong> incident response, rollback, and ownership boundaries</li>
+			</ul>
 		</BlurFade>
 	</div>
 </section>
@@ -209,11 +227,11 @@
 <section class="cta-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="cta-heading">Map your lane and escalation path.</h2>
+			<h2 class="cta-heading">Map your constraint surface.</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
-				Book a call and we will scope the right CREATE SOMETHING offer, and route system-development-first needs to Half Dozen when appropriate.
+				We’ll define your operating boundaries, failure modes, and escalation path before implementation.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>

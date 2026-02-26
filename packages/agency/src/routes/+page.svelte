@@ -114,9 +114,9 @@
 {/snippet}
 
 <SEO
-	title="Custom Workflow MCPs | CREATE SOMETHING .agency"
-	description="CREATE SOMETHING builds custom workflow MCPs, autonomy assurance, and enterprise extensions for production agent systems."
-	keywords="custom mcp development, workflow mcp, autonomy assurance, enterprise agent reliability, mcp consulting"
+	title="Constraint OS for Production Autonomy | CREATE SOMETHING .agency"
+	description="CREATE SOMETHING .agency runs a Constraint OS for production autonomy: custom workflow MCPs, Autonomy Assurance, and Enterprise Extension."
+	keywords="constraint os, custom mcp development, workflow mcp, autonomy assurance, enterprise agent reliability, mcp consulting"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	{services}
@@ -138,11 +138,11 @@
 	<div class="hero-container">
 		<div class="hero-content">
 			<BlurFade delay={0}>
-				<h1 class="hero-title">Custom Workflow MCPs.</h1>
+				<h1 class="hero-title">Constraint OS for Production Autonomy.</h1>
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					I build workflow MCPs for business-critical operations.
+					I build custom workflow MCPs, then run Autonomy Assurance so agent behavior stays reliable as your workflows scale.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.25}>
@@ -255,7 +255,7 @@
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="section-intro">
-				Three lanes, one owner. Build custom workflow capability first, then layer reliability and enterprise depth where needed.
+				One Constraint OS, three escalation lanes: Custom Workflow MCPs, Autonomy Assurance, and Enterprise Extension.
 			</p>
 		</BlurFade>
 		
@@ -405,7 +405,7 @@
 					When a client primarily needs full system development and team onboarding, I refer that engagement to Half Dozen directly.
 				</p>
 				<p class="problem-punchline">
-					One owner for custom workflows, assurance, and enterprise extension.
+					Constraints are the product. Autonomy is the outcome.
 				</p>
 			</div>
 		</BlurFade>
@@ -416,28 +416,28 @@
 <section class="audience-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="section-heading">Track Record</h2>
+			<h2 class="section-heading">Trust Artifacts</h2>
 		</BlurFade>
 		
 		<div class="audience-grid">
 			<BlurFade delay={0.1}>
 				<div class="audience-card">
-					<h3>16+ Custom Production Integrations</h3>
-					<p>16+ custom integrations shipped in production across Salesforce, HubSpot, Notion, Slack, Gmail, Procore, QuickBooks, Zoom, YouTube, and internal systems, with broader connector coverage available via Composio when needed.</p>
+					<h3>Contract Pack</h3>
+					<p>Every engagement ships with <code>mcp_contract.yaml</code>, <code>agent_contract.yaml</code>, and <code>outcome_contract.md</code> so scope, behavior, and outcomes are explicit.</p>
 				</div>
 			</BlurFade>
 
 			<BlurFade delay={0.2}>
 				<div class="audience-card">
-					<h3>Operational Time Recovered</h3>
-					<p>Client teams have recovered double-digit weekly hours by reducing manual cross-tool work and improving automation reliability.</p>
+					<h3>Release Evidence</h3>
+					<p>Golden task definitions and pass/fail results are documented before release. Reliability is gated by evidence, not intuition.</p>
 				</div>
 			</BlurFade>
 
 			<BlurFade delay={0.3}>
 				<div class="audience-card">
-					<h3>AgentOps + Architecture Depth</h3>
-					<p>The same system architecture rigor used in large-scale platforms is applied to agent reliability, policy controls, and enterprise extension planning.</p>
+					<h3>Operations Runbook</h3>
+					<p>Approval paths, escalation triggers, rollback steps, and ownership boundaries are delivered as operating artifacts your team can run.</p>
 				</div>
 			</BlurFade>
 		</div>
@@ -448,11 +448,11 @@
 <section class="cta-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="cta-heading">Need custom workflow infrastructure that holds in production?</h2>
+			<h2 class="cta-heading">Need trust you can inspect?</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
-				Book an architecture call. We will map whether you need Custom Workflow MCPs, Autonomy Assurance, Enterprise Extension, or a system-development referral.
+				Book an architecture call and I will map your Constraint OS and show what the artifact bundle looks like for your workflows.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
@@ -460,8 +460,8 @@
 				<ShimmerButton href="/book">
 					Book a Call
 				</ShimmerButton>
-				<a href="/products" class="cta-book-link">
-					See what I've built →
+				<a href="/services" class="cta-book-link">
+					Review the approach →
 				</a>
 			</div>
 		</BlurFade>

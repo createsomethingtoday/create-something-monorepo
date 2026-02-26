@@ -34,7 +34,7 @@
 </script>
 
 <SEO
-	title="What I've Built | 16+ Production Integrations"
+	title="What I've Built | Production Workflow MCPs"
 	description="Open source tools and custom integrations connecting business tools to AI. Notion, Gmail, Zoom, Salesforce, HubSpot, Procore, and more."
 	keywords="AI integrations, business tool automation, Notion AI, Gmail AI, Zoom AI, Salesforce AI, custom AI development, MCP servers"
 	ogImage="/og-image.svg"
@@ -48,7 +48,7 @@
 		<p class="hero-eyebrow reveal">Open Source + Custom</p>
 		<h1 class="hero-title reveal">What I've Built</h1>
 		<p class="hero-subtitle reveal">
-			{products.length} integrations — open source tools, platform connectors, and custom builds for clients.
+			Open source tools, platform connectors, and custom builds for production workflows.
 		</p>
 	</div>
 </section>
