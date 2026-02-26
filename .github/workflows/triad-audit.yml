@@ -67,10 +67,8 @@ jobs:
         id: audit
         run: |
           RESULT=$(cat pr_diff.txt | claude -p "Review this PR through the Subtractive Triad. Provide scores for DRY, Rams, Heidegger (0-10 each), list violations, and recommend APPROVE, REQUEST_CHANGES, or COMMENT." --output-format json --allowedTools "Read,Grep" 2>/dev/null || echo '{"error": "failed"}')
-          ANALYSIS=$(echo "$RESULT" | jq -r '.result // "Audit could not complete"')
-          COST=$(echo "$RESULT" | jq -r '.total_cost_usd // "unknown"')
+          ANALYSIS=$(echo "$RESULT" | jq -r '.result // "Audit could not complete"' 2>/dev/null || echo "Audit could not complete")
           echo "$ANALYSIS" > audit_result.txt
-          echo "cost=$COST" >> $GITHUB_OUTPUT
           if echo "$ANALYSIS" | grep -qi "REQUEST_CHANGES"; then
             echo "recommendation=request_changes" >> $GITHUB_OUTPUT
           elif echo "$ANALYSIS" | grep -qi "APPROVE"; then

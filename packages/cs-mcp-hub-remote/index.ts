@@ -14,6 +14,8 @@ type HttpServerConfig = {
   http_headers?: StringMap;
   env_http_headers?: StringMap;
   bearer_token_env_var?: string;
+  tool_call_timeout_ms?: number;
+  timeout_ms?: number;
   headers?: StringMap;
   description?: string;
   tags?: string[];
@@ -63,6 +65,7 @@ type ConnectedDownstream = {
   name: string;
   config: HttpServerConfig;
   baseHeaders: Record<string, string>;
+  toolCallTimeoutMs: number;
   client: Client;
   tools: Tool[];
 };
@@ -181,6 +184,7 @@ interface Env {
   HUB_SESSION_RESOLVE_URL?: string;
   HUB_SESSION_RESOLVE_TOKEN?: string;
   HUB_SESSION_RESOLVE_TIMEOUT_MS?: string;
+  HUB_TOOL_CALL_TIMEOUT_MS?: string;
   HUB_ENABLED_BUNDLES?: string;
   HUB_ENABLED_SERVERS?: string;
   HUB_DISABLED_SERVERS?: string;
@@ -321,6 +325,7 @@ const sessionResolveCache = new Map<
   { value: IdentitySessionResolveResponse | null; expiresAtMs: number }
 >();
 const DEFAULT_SESSION_RESOLVE_TIMEOUT_MS = 5000;
+const DEFAULT_TOOL_CALL_TIMEOUT_MS = 120_000;
 const SESSION_RESOLVE_CACHE_MS = 30000;
 
 export default {
@@ -547,7 +552,8 @@ async function connectSingleDownstream(
     await client.connect(transport);
 
     const tools = await listAllTools(client);
-    return { name, config, baseHeaders: headers, client, tools };
+    const toolCallTimeoutMs = resolveToolCallTimeoutMs(config, env);
+    return { name, config, baseHeaders: headers, toolCallTimeoutMs, client, tools };
   } catch (error) {
     try {
       await client.close();
@@ -587,6 +593,14 @@ function resolveHttpHeaders(
   }
 
   return headers;
+}
+
+function resolveToolCallTimeoutMs(config: HttpServerConfig, env: Env): number {
+  const fallback = parsePositiveInt(
+    readEnvString(env, 'HUB_TOOL_CALL_TIMEOUT_MS'),
+    DEFAULT_TOOL_CALL_TIMEOUT_MS,
+  );
+  return parsePositiveIntFromUnknown(config.tool_call_timeout_ms ?? config.timeout_ms, fallback);
 }
 
 async function listAllTools(client: Client): Promise<Tool[]> {
@@ -634,16 +648,22 @@ async function callDownstreamToolWithTrace(
 
   await client.connect(transport);
   try {
-    return await client.callTool({
-      name: toolName,
-      arguments: args,
-      _meta: {
-        progressToken: trace.requestId,
-        'io.modelcontextprotocol/related-task': {
-          taskId: trace.correlationId,
+    return await client.callTool(
+      {
+        name: toolName,
+        arguments: args,
+        _meta: {
+          progressToken: trace.requestId,
+          'io.modelcontextprotocol/related-task': {
+            taskId: trace.correlationId,
+          },
         },
       },
-    });
+      undefined,
+      {
+        timeout: server.toolCallTimeoutMs,
+      },
+    );
   } finally {
     try {
       await client.close();
@@ -2484,6 +2504,16 @@ function parsePositiveInt(raw: string | undefined, fallback: number): number {
   }
 
   return parsed;
+}
+
+function parsePositiveIntFromUnknown(raw: unknown, fallback: number): number {
+  if (typeof raw === 'number') {
+    return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : fallback;
+  }
+  if (typeof raw === 'string') {
+    return parsePositiveInt(raw, fallback);
+  }
+  return fallback;
 }
 
 async function closeHubRuntime(runtime: HubRuntime): Promise<void> {

@@ -19,6 +19,14 @@ export type ServerLifecycle = 'active' | 'dormant' | 'local';
 export type ServerMetadata = {
   lifecycle?: ServerLifecycle;
   package_path?: string;
+  /**
+   * Preferred per-server timeout override (milliseconds) for downstream tool calls.
+   */
+  tool_call_timeout_ms?: number;
+  /**
+   * Backward-compat alias for tool_call_timeout_ms.
+   */
+  timeout_ms?: number;
   catalog?: ServerCatalogConfig;
 };
 
