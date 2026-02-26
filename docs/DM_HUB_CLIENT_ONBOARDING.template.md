@@ -1,85 +1,39 @@
-# DM Hub Client Onboarding (Template, Secure Delivery, Any Client)
+# DM Client Onboarding (Template, Direct Config, No Exports)
 
-## 1) Operator Issues One-Time Package (Broker API)
+## 1) Add MCP Entries Directly In `~/.codex/config.toml`
 
-```bash
-export DELIVERY_BROKER_ENDPOINT="https://dm-delivery-broker.createsomething.workers.dev"
-export DELIVERY_ADMIN_TOKEN="<REPLACE_WITH_DELIVERY_ADMIN_TOKEN>"
-export CLIENT_ID="<REPLACE_WITH_CLIENT_ID>" # e.g. acme
+```toml
+[mcp_servers.dm]
+url = "https://dm.mcp.workway.co/mcp"
+enabled = true
 
-ISSUE_RESPONSE="$(curl -fsS -X POST "${DELIVERY_BROKER_ENDPOINT}/v1/delivery/issue" \
-  -H "Authorization: Bearer ${DELIVERY_ADMIN_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -H "X-Operator-Id: <OPERATOR_ID>" \
-  -d '{
-    "client_id": "'"${CLIENT_ID}"'",
-    "ttl_seconds": 900,
-    "max_redemptions": 1,
-    "recipient": "<CLIENT_EMAIL>",
-    "note": "DM + Hub onboarding package",
-    "payload": {
-      "dm": {
-        "endpoint": "https://dm.mcp.workway.co/mcp",
-        "api_key": "<REPLACE_WITH_DM_MCP_API_KEY>"
-      },
-      "hub": {
-        "endpoint": "https://cs-mcp-hub-remote.createsomething.workers.dev/mcp",
-        "api_token": "<REPLACE_WITH_HUB_API_TOKEN>"
-      }
-    }
-  }')"
+[mcp_servers.dm.http_headers]
+Authorization = "Bearer <REPLACE_WITH_DM_MCP_API_KEY>"
 
-export DELIVERY_ID="$(echo "$ISSUE_RESPONSE" | jq -r '.delivery_id')"
-export DELIVERY_URL="$(echo "$ISSUE_RESPONSE" | jq -r '.delivery_url')"
-export DELIVERY_CODE="$(echo "$ISSUE_RESPONSE" | jq -r '.delivery_code')"
+[mcp_servers.half_dozen_danny_hub]
+url = "https://cs-mcp-hub-remote.createsomething.workers.dev/mcp"
+enabled = true
 
-unset ISSUE_RESPONSE
+[mcp_servers.half_dozen_danny_hub.http_headers]
+Authorization = "Bearer <REPLACE_WITH_HUB_API_TOKEN>"
 ```
 
-## 2) Client Redeems Delivery Package
+If your hub config already has `X-MCP-Session-Token`, keep it in the same `[mcp_servers.half_dozen_danny_hub.http_headers]` block.
 
-```bash
-PAYLOAD_JSON="$(curl -fsS "$DELIVERY_URL" -H "X-Delivery-Code: ${DELIVERY_CODE}")"
+## 2) Restart Codex
 
-export DM_ENDPOINT="$(echo "$PAYLOAD_JSON" | jq -r '.payload.dm.endpoint')"
-export HALFDOZEN_DM_MCP_API_KEY="$(echo "$PAYLOAD_JSON" | jq -r '.payload.dm.api_key')"
-
-export HUB_ENDPOINT="$(echo "$PAYLOAD_JSON" | jq -r '.payload.hub.endpoint')"
-export HUB_API_TOKEN="$(echo "$PAYLOAD_JSON" | jq -r '.payload.hub.api_token')"
-
-unset PAYLOAD_JSON
-unset DELIVERY_URL
-unset DELIVERY_CODE
-```
+Close and reopen Codex so MCP connections reload with the updated config.
 
 ## 3) Verify Connectivity
 
 ```bash
-curl -is "$DM_ENDPOINT" | head -n 1
-curl -is "$DM_ENDPOINT" -H "Authorization: Bearer $HALFDOZEN_DM_MCP_API_KEY" | head -n 1
+curl -is "https://dm.mcp.workway.co/mcp" | head -n 1
+curl -is "https://dm.mcp.workway.co/mcp" -H "Authorization: Bearer <REPLACE_WITH_DM_MCP_API_KEY>" | head -n 1
 
-curl -is "$HUB_ENDPOINT" | head -n 1
-curl -is "$HUB_ENDPOINT" -H "Authorization: Bearer $HUB_API_TOKEN" | head -n 1
+curl -is "https://cs-mcp-hub-remote.createsomething.workers.dev/mcp" | head -n 1
+curl -is "https://cs-mcp-hub-remote.createsomething.workers.dev/mcp" -H "Authorization: Bearer <REPLACE_WITH_HUB_API_TOKEN>" | head -n 1
 ```
 
-## 4) Optional: Revoke Package After Successful Onboarding
-
-```bash
-curl -fsS -X POST "${DELIVERY_BROKER_ENDPOINT}/v1/delivery/${DELIVERY_ID}/revoke" \
-  -H "Authorization: Bearer ${DELIVERY_ADMIN_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{"reason":"Onboarding complete"}'
-```
-
-## 5) Session Cleanup
-
-```bash
-unset HALFDOZEN_DM_MCP_API_KEY
-unset HUB_API_TOKEN
-unset DM_ENDPOINT
-unset HUB_ENDPOINT
-unset DELIVERY_ID
-unset CLIENT_ID
-unset DELIVERY_BROKER_ENDPOINT
-unset DELIVERY_ADMIN_TOKEN
-```
+Expected:
+- unauthenticated requests: `401`
+- authenticated/tokenized requests: `406`
