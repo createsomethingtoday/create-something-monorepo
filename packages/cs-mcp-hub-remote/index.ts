@@ -361,7 +361,13 @@ export default {
 
     if (url.pathname === '/' || url.pathname === '/health') {
       try {
-        const runtime = await getHubRuntime(env);
+        const fullHealth =
+          url.searchParams.get('full') === '1' || url.searchParams.get('full') === 'true';
+        const runtime = fullHealth
+          ? await getHubRuntime(env, { force: true })
+          : runtimeCache?.runtime ?? null;
+        const runtimeSource = fullHealth ? 'full' : runtime ? 'cache' : 'none';
+
         const rateLimitPolicy = resolveRateLimitPolicy(env);
         const quotaPolicy = resolveQuotaPolicy(env);
         return withCors(
@@ -391,15 +397,27 @@ export default {
                 DEFAULT_SESSION_RESOLVE_TIMEOUT_MS,
               ),
             },
-            enabled_servers: runtime.stateResolution.enabledServerNames,
-            connected_servers: runtime.connected.map((server) => ({
-              name: server.name,
-              tool_count: server.tools.length,
-            })),
-            failed_servers: runtime.failed,
-            proxy_tool_count: runtime.proxies.toolDefinitions.length,
-            warnings: runtime.stateResolution.warnings.concat(runtime.proxies.warnings),
-            built_at: new Date(runtime.builtAt).toISOString(),
+            runtime: {
+              source: runtimeSource,
+              loading: Boolean(pendingRuntimeLoad),
+              full_check: fullHealth,
+              built_at: runtime ? new Date(runtime.builtAt).toISOString() : null,
+              age_ms: runtime ? Math.max(0, Date.now() - runtime.builtAt) : null,
+            },
+            enabled_servers: runtime?.stateResolution.enabledServerNames ?? [],
+            connected_servers:
+              runtime?.connected.map((server) => ({
+                name: server.name,
+                tool_count: server.tools.length,
+              })) ?? [],
+            failed_servers: runtime?.failed ?? [],
+            proxy_tool_count: runtime?.proxies.toolDefinitions.length ?? 0,
+            warnings: runtime
+              ? runtime.stateResolution.warnings.concat(runtime.proxies.warnings)
+              : [],
+            built_at: runtime ? new Date(runtime.builtAt).toISOString() : null,
+            full_check_hint:
+              'Append ?full=1 to include a live runtime refresh in this response.',
           }),
         );
       } catch (error) {
