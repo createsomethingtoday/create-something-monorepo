@@ -32,7 +32,14 @@ export interface AbuseMitigationConfig {
   windowSeconds: number;
   blockThreshold: number;
   distinctToolThreshold: number;
+  responseMode?: 'auto_off' | 'review';
 }
+
+export type SecurityIncidentDecision =
+  | 'dismiss'
+  | 'monitor'
+  | 'enforce_read_only'
+  | 'enforce_off';
 
 function nowEpochSeconds(): number {
   return Math.floor(Date.now() / 1000);
@@ -234,26 +241,108 @@ export async function createSecurityIncident(
 
 export async function listRecentSecurityIncidents(
   db: D1Database | undefined,
-  input: { accountId: string; limit?: number },
+  input: { accountId: string; limit?: number; status?: 'open' | 'resolved' },
 ): Promise<SecurityIncidentRow[]> {
   if (!db) return [];
   const limit = Math.max(1, Math.min(50, Math.floor(input.limit ?? 10)));
   try {
-    const result = await db
-      .prepare(
-        `SELECT id, account_id, incident_type, severity, action_mode, reason, signal_json, status, correlation_id, created_at, resolved_at, resolved_by
+    const hasStatus = Boolean(input.status);
+    const sql = hasStatus
+      ? `SELECT id, account_id, incident_type, severity, action_mode, reason, signal_json, status, correlation_id, created_at, resolved_at, resolved_by
+         FROM judgment_security_incidents
+         WHERE account_id = ? AND status = ?
+         ORDER BY created_at DESC
+         LIMIT ?`
+      : `SELECT id, account_id, incident_type, severity, action_mode, reason, signal_json, status, correlation_id, created_at, resolved_at, resolved_by
          FROM judgment_security_incidents
          WHERE account_id = ?
          ORDER BY created_at DESC
-         LIMIT ?`,
-      )
-      .bind(input.accountId, limit)
-      .all<SecurityIncidentRow>();
+         LIMIT ?`;
+    const args = hasStatus ? [input.accountId, input.status as string, limit] : [input.accountId, limit];
+    const result = await db.prepare(sql).bind(...args).all<SecurityIncidentRow>();
     return result.results;
   } catch (error) {
     if (isMissingTableError(error)) return [];
     throw error;
   }
+}
+
+export async function getSecurityIncidentById(
+  db: D1Database | undefined,
+  input: { accountId: string; incidentId: string },
+): Promise<SecurityIncidentRow | null> {
+  if (!db) return null;
+  try {
+    return await db
+      .prepare(
+        `SELECT id, account_id, incident_type, severity, action_mode, reason, signal_json, status, correlation_id, created_at, resolved_at, resolved_by
+         FROM judgment_security_incidents
+         WHERE account_id = ? AND id = ?
+         LIMIT 1`,
+      )
+      .bind(input.accountId, input.incidentId)
+      .first<SecurityIncidentRow>();
+  } catch (error) {
+    if (isMissingTableError(error)) return null;
+    throw error;
+  }
+}
+
+export async function resolveSecurityIncident(
+  db: D1Database | undefined,
+  input: {
+    accountId: string;
+    incidentId: string;
+    decision: SecurityIncidentDecision;
+    note?: string;
+    decidedBy: string;
+  },
+): Promise<{ incident: SecurityIncidentRow; accessMode: AccountAccessMode } | null> {
+  const incident = await getSecurityIncidentById(db, {
+    accountId: input.accountId,
+    incidentId: input.incidentId,
+  });
+  if (!incident) return null;
+
+  let accessMode: AccountAccessMode = 'normal';
+  if (input.decision === 'enforce_read_only') accessMode = 'read_only';
+  if (input.decision === 'enforce_off') accessMode = 'off';
+
+  const reasonPrefix = input.note ? `${input.note} | ` : '';
+  await setAccountAccess(db, {
+    accountId: input.accountId,
+    mode: accessMode,
+    reason: `${reasonPrefix}incident_decision=${input.decision}`,
+    incidentId: incident.id,
+    updatedBy: input.decidedBy,
+  });
+
+  if (db) {
+    try {
+      await db
+        .prepare(
+          `UPDATE judgment_security_incidents
+           SET status = 'resolved',
+               resolved_at = ?,
+               resolved_by = ?
+           WHERE account_id = ? AND id = ?`,
+        )
+        .bind(nowEpochSeconds(), input.decidedBy, input.accountId, input.incidentId)
+        .run();
+    } catch (error) {
+      if (!isMissingTableError(error)) throw error;
+    }
+  }
+
+  return {
+    incident: {
+      ...incident,
+      status: 'resolved',
+      resolved_at: nowEpochSeconds(),
+      resolved_by: input.decidedBy,
+    },
+    accessMode,
+  };
 }
 
 export async function evaluateAbusePatternAndMitigate(
@@ -318,12 +407,14 @@ export async function evaluateAbusePatternAndMitigate(
   const reason =
     `Abuse pattern detected: ${blockedTotal} blocked tool calls across ${distinctTools} distinct tools` +
     ` in the last ${Math.max(60, Math.floor(input.config.windowSeconds))}s.`;
+  const responseMode = input.config.responseMode === 'review' ? 'review' : 'auto_off';
+  const actionMode: AccountAccessMode = responseMode === 'review' ? 'normal' : 'off';
 
   const incident = await createSecurityIncident(db, {
     accountId: input.accountId,
     incidentType: 'abuse_pattern_block_spike',
     severity: 'critical',
-    actionMode: 'off',
+    actionMode,
     reason,
     signal: {
       blockedTotal,
@@ -334,23 +425,27 @@ export async function evaluateAbusePatternAndMitigate(
         distinctTools: distinctToolThreshold,
       },
       triggerToolName: input.currentToolName,
+      responseMode,
+      recommendedDecision: 'enforce_off',
     },
     correlationId: input.correlationId ?? null,
   });
 
-  await setAccountAccess(db, {
-    accountId: input.accountId,
-    mode: 'off',
-    reason: `Auto kill-switch: ${reason}`,
-    incidentId: incident.id,
-    updatedBy: 'system:abuse-guard',
-  });
+  if (responseMode === 'auto_off') {
+    await setAccountAccess(db, {
+      accountId: input.accountId,
+      mode: 'off',
+      reason: `Auto kill-switch: ${reason}`,
+      incidentId: incident.id,
+      updatedBy: 'system:abuse-guard',
+    });
+  }
 
   return {
     triggered: true,
-    actionMode: 'off',
+    actionMode,
     incidentId: incident.id,
-    reason,
+    reason: responseMode === 'review' ? `${reason} Review required before enforcement.` : reason,
     blockedTotal,
     distinctTools,
   };
