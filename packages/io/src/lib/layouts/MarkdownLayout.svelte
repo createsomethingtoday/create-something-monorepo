@@ -278,6 +278,5 @@ ${abstract ? `### Abstract\n${abstract}\n\n` : ''}
 	.related-content-section {
 		margin-top: var(--space-2xl);
 		padding-top: var(--space-xl);
-		border-top: 1px solid var(--color-border-default);
 	}
 </style>

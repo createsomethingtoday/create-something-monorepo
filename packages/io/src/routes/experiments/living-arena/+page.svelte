@@ -1770,7 +1770,6 @@
 	/* Footer */
 	.experiment-footer {
 		padding: var(--space-xl) var(--space-lg);
-		border-top: 1px solid var(--color-border-default);
 		display: grid;
 		grid-template-columns: 2fr 1fr;
 		gap: var(--space-xl);
@@ -1824,7 +1823,6 @@
 	.intelligence-section {
 		padding: var(--space-xl) var(--space-lg);
 		background: var(--color-bg-subtle);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.section-header {
@@ -2066,7 +2064,6 @@
 	.incident-section {
 		padding: var(--space-xl) var(--space-lg);
 		background: var(--color-bg-pure);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.incident-log {
@@ -2380,7 +2377,6 @@
 	.reasoning-section {
 		padding: var(--space-xl) var(--space-lg);
 		background: var(--color-bg-subtle);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.reasoning-container {
@@ -2588,7 +2584,6 @@
 	.holistic-section {
 		padding: var(--space-xl) var(--space-lg);
 		background: var(--color-bg-pure);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.holistic-container {

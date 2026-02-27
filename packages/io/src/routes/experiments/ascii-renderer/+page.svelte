@@ -723,7 +723,6 @@
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		background: var(--color-bg-surface);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.controls-section {
@@ -813,7 +812,6 @@
 	}
 
 	.technique-section {
-		border-top: 1px solid var(--color-border-default);
 		padding-top: var(--space-xl);
 	}
 

@@ -508,7 +508,6 @@
 
 	/* Info Section */
 	.info-section {
-		border-top: 1px solid var(--color-border-default);
 		padding-top: var(--space-lg);
 	}
 
@@ -535,7 +534,6 @@
 	.actions-section {
 		display: flex;
 		gap: var(--space-md);
-		border-top: 1px solid var(--color-border-default);
 		padding-top: var(--space-lg);
 	}
 </style>

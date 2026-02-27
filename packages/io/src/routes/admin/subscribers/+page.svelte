@@ -477,7 +477,6 @@
 		gap: var(--space-sm);
 		margin-top: var(--space-md);
 		padding-top: var(--space-sm);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.btn-small-mobile {
@@ -540,11 +539,9 @@
 	}
 
 	.table-body {
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.table-body > * + * {
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.table-row {
@@ -624,7 +621,6 @@
 
 	/* Stats Grid - Responsive */
 	.stats-section {
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.stats-grid {

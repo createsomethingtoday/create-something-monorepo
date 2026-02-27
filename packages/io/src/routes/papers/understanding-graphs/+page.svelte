@@ -811,7 +811,6 @@ for identity verification, but it remains independent of business logic.
 
 	/* References */
 	.references-section {
-		border-top: 1px solid var(--color-border-default);
 		padding-top: var(--space-lg);
 	}
 
@@ -832,7 +831,6 @@ for identity verification, but it remains independent of business logic.
 
 	/* Footer */
 	.paper-footer {
-		border-top: 1px solid var(--color-border-default);
 		padding-top: var(--space-md);
 	}
 

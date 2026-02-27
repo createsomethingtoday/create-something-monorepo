@@ -465,7 +465,6 @@
 	.benefits-section {
 		margin-top: var(--space-xl);
 		padding-top: var(--space-xl);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.benefits-grid {

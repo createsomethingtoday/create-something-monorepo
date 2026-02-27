@@ -877,7 +877,6 @@ Co-Authored-By: Claude Sonnet 4.5 &lt;noreply@anthropic.com&gt;</pre>
 
 	/* Footer */
 	.paper-footer {
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.footer-text {

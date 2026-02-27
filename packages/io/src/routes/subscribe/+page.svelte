@@ -592,7 +592,6 @@
 
 	/* Footer */
 	.footer-section {
-		border-top: 1px solid var(--color-border-default);
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);
 	}

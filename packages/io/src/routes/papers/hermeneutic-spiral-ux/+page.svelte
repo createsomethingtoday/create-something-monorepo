@@ -1045,7 +1045,6 @@ Bot: Great! Anything else I can help with?`}</pre>
 	}
 
 	.paper-footer {
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.footer-text {

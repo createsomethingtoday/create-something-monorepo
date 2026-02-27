@@ -1026,7 +1026,6 @@ gt sling worker-3 "cd /project && ./ralph.sh --prd api-prd.json"
 	}
 
 	.paper-footer {
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.footer-text {

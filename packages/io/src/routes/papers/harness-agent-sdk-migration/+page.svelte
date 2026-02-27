@@ -992,7 +992,6 @@ await db.deployments.create({
 	}
 
 	.paper-footer {
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	:global(.code-block-success) {

@@ -703,7 +703,6 @@ class ProviderResult:
 	/* Footer */
 	.paper-footer {
 		padding-top: var(--space-lg);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.related-papers h3 {

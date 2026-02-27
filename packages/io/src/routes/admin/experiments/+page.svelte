@@ -459,7 +459,6 @@
 
 	/* Stats Section */
 	.stats-section {
-		border-top: 1px solid var(--color-border-default);
 		padding-top: var(--space-lg);
 	}
 

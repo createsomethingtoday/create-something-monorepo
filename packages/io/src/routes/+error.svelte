@@ -168,7 +168,6 @@
 
 	.newsletter-section {
 		padding-top: var(--space-lg);
-		border-top: 1px solid var(--color-border-default);
 		max-width: 36rem;
 		margin: 0 auto;
 	}

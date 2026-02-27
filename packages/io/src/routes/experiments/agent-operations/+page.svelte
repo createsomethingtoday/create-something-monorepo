@@ -772,6 +772,5 @@
 	/* Footer */
 	.footer-section {
 		padding-top: var(--space-lg);
-		border-top: 1px solid var(--color-border-default);
 	}
 </style>

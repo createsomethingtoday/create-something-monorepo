@@ -1306,7 +1306,6 @@
 		display: grid;
 		grid-template-columns: 1fr 1.618fr;
 		gap: var(--space-md);
-		border-top: 1px solid var(--color-border-default);
 		padding-top: var(--space-md);
 	}
 
@@ -1322,7 +1321,6 @@
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
 		gap: var(--space-md);
-		border-top: 1px solid var(--color-border-default);
 		padding-top: var(--space-md);
 	}
 
@@ -1337,7 +1335,6 @@
 		display: flex;
 		justify-content: center;
 		gap: var(--space-xl);
-		border-top: 1px solid var(--color-border-default);
 		padding-top: var(--space-md);
 	}
 
@@ -1380,7 +1377,6 @@
 	/* Budget Details - Collapsible price sheet */
 	.budget-details,
 	.materials-details {
-		border-top: 1px solid var(--color-border-default);
 		padding: var(--space-lg) 0;
 		font-family: var(--font-sans, system-ui, sans-serif);
 	}
@@ -1458,7 +1454,6 @@
 	.budget-assumptions {
 		margin-top: var(--space-lg);
 		padding-top: var(--space-md);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.budget-assumptions h3 {

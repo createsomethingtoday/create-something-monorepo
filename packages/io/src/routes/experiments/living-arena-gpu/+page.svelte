@@ -1218,7 +1218,6 @@
 	.scenarios-section {
 		padding: var(--space-xl) var(--space-lg);
 		background: var(--color-bg-subtle);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.section-header {
@@ -1414,7 +1413,6 @@
 	/* Footer */
 	.experiment-footer {
 		padding: var(--space-xl) var(--space-lg);
-		border-top: 1px solid var(--color-border-default);
 		display: grid;
 		grid-template-columns: 2fr 1fr;
 		gap: var(--space-xl);

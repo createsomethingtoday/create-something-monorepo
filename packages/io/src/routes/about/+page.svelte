@@ -181,7 +181,6 @@
 
 	.section-border {
 		padding: var(--space-xl) var(--space-md);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 

@@ -922,7 +922,6 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 	.filters-expanded {
 		margin-top: var(--space-sm);
 		padding-top: var(--space-sm);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	/* Reasoning panel */
@@ -1175,7 +1174,6 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 		color: var(--color-fg-muted);
 		margin: var(--space-sm) 0 0;
 		padding-top: var(--space-sm);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	/* Latency Table */
@@ -1384,7 +1382,6 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 	.opt-section {
 		margin-top: var(--space-md);
 		padding-top: var(--space-md);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.opt-title {

@@ -1048,7 +1048,6 @@ try {
 
 	/* Footer */
 	.paper-footer {
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.footer-text {

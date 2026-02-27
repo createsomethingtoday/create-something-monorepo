@@ -182,7 +182,6 @@
 	}
 
 	.section-divider {
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.section-title {

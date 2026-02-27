@@ -1011,7 +1011,6 @@ recede into transparent use. The methodology disappears when creating.</pre>
 
 	/* Footer */
 	.paper-footer {
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.footer-text {

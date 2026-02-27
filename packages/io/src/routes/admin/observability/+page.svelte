@@ -785,7 +785,6 @@
 
 	/* Footer */
 	.footer-section {
-		border-top: 1px solid var(--color-border-default);
 		text-align: center;
 	}
 

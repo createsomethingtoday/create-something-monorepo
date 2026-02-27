@@ -153,11 +153,9 @@
 
   /* Borders */
   .divider-top {
-    border-top: 1px solid var(--color-border-default);
   }
 
   .section-border {
-    border-top: 1px solid var(--color-border-default);
   }
 
   /* Lists */

@@ -797,7 +797,6 @@ const scroll = window.scrollY;
 	.experiment-footer {
 		margin-top: var(--space-2xl);
 		padding-top: var(--space-lg);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.tags {
