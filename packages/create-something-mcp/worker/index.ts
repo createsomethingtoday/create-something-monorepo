@@ -57,6 +57,7 @@ export class CreateSomethingMCP extends McpAgent<Env> {
       enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'create-something', undefined, {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
         projectName: 'create-something',
+        projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
       });
     }
 

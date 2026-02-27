@@ -485,6 +485,7 @@ export class YouTubeSyncMCP extends McpAgent<Env> {
       enableTelemetry(this.server, this.env.FEEDBACK_DB, SERVER_NAME, undefined, {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
         projectName: resolveBraintrustProjectName(this.env),
+        projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
       });
     }
 

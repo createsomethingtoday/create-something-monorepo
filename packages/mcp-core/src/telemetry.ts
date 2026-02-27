@@ -89,6 +89,7 @@ export interface ActivityResult {
 export interface BraintrustTelemetryOptions {
   apiKey?: string;
   projectName?: string;
+  projectId?: string;
   enabled?: boolean;
 }
 
@@ -103,12 +104,18 @@ function initBraintrustTelemetry(options: BraintrustTelemetryOptions, serverName
   if (!options.apiKey || options.enabled === false) return false;
   if (braintrustLogger) return true;
 
-  braintrustLogger = initLogger({
+  const projectId = options.projectId?.trim();
+  const loggerConfig: Parameters<typeof initLogger>[0] = {
     apiKey: options.apiKey,
     projectName: options.projectName || serverName,
     asyncFlush: true,
     setCurrent: true,
-  });
+  };
+  if (projectId) {
+    (loggerConfig as Record<string, unknown>).projectId = projectId;
+  }
+
+  braintrustLogger = initLogger(loggerConfig);
 
   return true;
 }

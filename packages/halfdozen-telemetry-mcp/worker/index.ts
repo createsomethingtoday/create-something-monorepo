@@ -100,6 +100,7 @@ export class TelemetryMCP extends McpAgent<Env> {
     enableTelemetry(this.server, db, SERVER_NAME, undefined, {
       apiKey: (this.env as any).BRAINTRUST_API_KEY,
       projectName: resolveBraintrustProjectName(this.env),
+      projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
     });
 
     // ─── Resources (Database tier) ──────────────────────────────────────

@@ -119,6 +119,7 @@ export class ZoomClipsMCP extends McpAgent<Env> {
       enableTelemetry(this.server, this.env.FEEDBACK_DB, 'halfdozen-zoom-sync', () => this.currentAccountId, {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
         projectName: resolveBraintrustProjectName(this.env),
+        projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
       });
     }
 

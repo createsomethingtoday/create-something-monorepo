@@ -120,6 +120,7 @@ export class ScheduleMCP extends McpAgent<Env> {
       enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'schedule-mcp', undefined, {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
         projectName: 'schedule-mcp',
+        projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
       });
     }
 

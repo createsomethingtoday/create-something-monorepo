@@ -14,6 +14,7 @@ interface Env {
   COMPOSIO_DEFAULT_ENTITY_ID?: string;
   COMPOSIO_TOOL_CACHE_SECONDS?: string;
   BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_ID?: string;
   BRAINTRUST_PROJECT_NAME?: string;
 }
 
@@ -64,6 +65,7 @@ export default {
             authConfigMapEntries: Object.keys(parseAuthConfigMap(env.COMPOSIO_AUTH_CONFIG_MAP)).length,
             defaultEntity: env.COMPOSIO_DEFAULT_ENTITY_ID ?? 'default',
             braintrustApiKey: Boolean(env.BRAINTRUST_API_KEY),
+            braintrustProjectId: resolveBraintrustProjectId(env),
             braintrustProject: resolveBraintrustProjectName(env),
           },
           cache: {
@@ -525,21 +527,32 @@ function resolveBraintrustProjectName(env: { BRAINTRUST_PROJECT_NAME?: string })
   return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
 }
 
+function resolveBraintrustProjectId(env: { BRAINTRUST_PROJECT_ID?: string }): string | null {
+  const configured = env.BRAINTRUST_PROJECT_ID?.trim();
+  return configured && configured.length > 0 ? configured : null;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getBraintrustLogger(env: Env): Logger<any> | null {
   const apiKey = env.BRAINTRUST_API_KEY?.trim();
   if (!apiKey) return null;
 
   const projectName = resolveBraintrustProjectName(env);
-  const nextKey = `${apiKey}::${projectName}`;
+  const projectId = resolveBraintrustProjectId(env);
+  const nextKey = `${apiKey}::${projectId ?? ''}::${projectName}`;
 
   if (!braintrustLogger || braintrustLoggerKey !== nextKey) {
-    braintrustLogger = initLogger({
+    const loggerConfig: Parameters<typeof initLogger>[0] = {
       apiKey,
       projectName,
       asyncFlush: true,
       setCurrent: true,
-    });
+    };
+    if (projectId) {
+      (loggerConfig as Record<string, unknown>).projectId = projectId;
+    }
+
+    braintrustLogger = initLogger(loggerConfig);
     braintrustLoggerKey = nextKey;
   }
 

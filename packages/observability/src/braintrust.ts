@@ -65,7 +65,12 @@ export function initBraintrust(config: BraintrustConfig = {}): Logger<any> | nul
   _config = { ..._config, ...config };
 
   const apiKey = config.apiKey || process.env.BRAINTRUST_API_KEY;
-  const projectName = config.projectName || process.env.BRAINTRUST_PROJECT || 'mcp-fleet';
+  const projectName =
+    config.projectName ||
+    process.env.BRAINTRUST_PROJECT_NAME ||
+    process.env.BRAINTRUST_PROJECT ||
+    'mcp-fleet';
+  const projectId = config.projectId || process.env.BRAINTRUST_PROJECT_ID;
 
   if (!apiKey) {
     console.warn('[braintrust] Missing BRAINTRUST_API_KEY. Tracing disabled.');
@@ -78,12 +83,17 @@ export function initBraintrust(config: BraintrustConfig = {}): Logger<any> | nul
   if (_config.enabled === false) return null;
   if (_logger) return _logger;
 
-  _logger = initLogger({
+  const loggerConfig: Parameters<typeof initLogger>[0] = {
     projectName,
     apiKey,
     asyncFlush: _config.asyncFlush ?? true,
     setCurrent: true,
-  });
+  };
+  if (projectId) {
+    (loggerConfig as Record<string, unknown>).projectId = projectId;
+  }
+
+  _logger = initLogger(loggerConfig);
 
   return _logger;
 }

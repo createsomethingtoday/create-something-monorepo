@@ -227,6 +227,7 @@ export class SubstrateMCP extends McpAgent<Env> {
       enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'substrate-mcp', undefined, {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
         projectName: 'substrate-mcp',
+        projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
       });
     }
 

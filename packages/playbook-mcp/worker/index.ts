@@ -793,6 +793,7 @@ export class PlaybookMCP extends McpAgent<Env> {
       enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'playbook', undefined, {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
         projectName: resolveBraintrustProjectName(this.env),
+        projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
       });
     }
 

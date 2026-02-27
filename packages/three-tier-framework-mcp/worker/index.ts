@@ -122,6 +122,7 @@ export class ThreeTierFrameworkMCP extends McpAgent<Env> {
       enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'three-tier-framework', undefined, {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
         projectName: 'three-tier-framework',
+        projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
       });
     }
 

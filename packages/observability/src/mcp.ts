@@ -98,7 +98,12 @@ export function createInstrumentedMcpServer(config: McpServerConfig) {
   if (btApiKey) {
     initBraintrust({
       apiKey: btApiKey,
-      projectName: config.braintrust?.projectName || process.env.BRAINTRUST_PROJECT || config.serverName,
+      projectName:
+        config.braintrust?.projectName ||
+        process.env.BRAINTRUST_PROJECT_NAME ||
+        process.env.BRAINTRUST_PROJECT ||
+        config.serverName,
+      projectId: config.braintrust?.projectId || process.env.BRAINTRUST_PROJECT_ID,
       enabled: config.braintrust?.enabled ?? true,
       asyncFlush: config.braintrust?.asyncFlush ?? true,
     });

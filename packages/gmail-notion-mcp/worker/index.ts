@@ -80,6 +80,7 @@ export class GmailNotionMCP extends McpAgent<Env> {
         {
           apiKey: this.env.BRAINTRUST_API_KEY,
           projectName: resolveBraintrustProjectName(this.env),
+          projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
         },
       );
     }
