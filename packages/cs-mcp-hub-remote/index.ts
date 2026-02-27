@@ -3288,9 +3288,8 @@ function emitHubInvocationToBraintrust(env: Env, log: HubInvocationLog): void {
   const logger = getBraintrustLogger(env);
   if (!logger) return;
   const metadata = asRecord(log.metadata);
-
-  logger
-    .traced(
+  try {
+    const maybePromise = logger.traced(
       (span: Span) => {
         span.log({
           input: {
@@ -3322,21 +3321,30 @@ function emitHubInvocationToBraintrust(env: Env, log: HubInvocationLog): void {
         name: `mcp:${HUB_NAME}:${log.toolName}`,
         type: 'tool',
       },
-    )
-    .catch((error) => {
-      console.warn(
-        `[${HUB_NAME}] braintrust hub emit failed: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    });
+    );
+
+    if (maybePromise && typeof (maybePromise as Promise<void>).catch === 'function') {
+      void (maybePromise as Promise<void>).catch((error: unknown) => {
+        console.warn(
+          `[${HUB_NAME}] braintrust hub emit failed: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      });
+    }
+  } catch (error) {
+    console.warn(
+      `[${HUB_NAME}] braintrust hub emit failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }
 
 function emitHubRouteToBraintrust(env: Env, log: HubRouteLog): void {
   const logger = getBraintrustLogger(env);
   if (!logger) return;
   const metadata = asRecord(log.metadata);
-
-  logger
-    .traced(
+  try {
+    const maybePromise = logger.traced(
       (span: Span) => {
         span.log({
           input: {
@@ -3377,12 +3385,22 @@ function emitHubRouteToBraintrust(env: Env, log: HubRouteLog): void {
         name: `mcp:${log.downstreamServer}:${log.downstreamTool}`,
         type: 'tool',
       },
-    )
-    .catch((error) => {
-      console.warn(
-        `[${HUB_NAME}] braintrust route emit failed: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    });
+    );
+
+    if (maybePromise && typeof (maybePromise as Promise<void>).catch === 'function') {
+      void (maybePromise as Promise<void>).catch((error: unknown) => {
+        console.warn(
+          `[${HUB_NAME}] braintrust route emit failed: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      });
+    }
+  } catch (error) {
+    console.warn(
+      `[${HUB_NAME}] braintrust route emit failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 }
 
 async function recordHubInvocation(env: Env, log: HubInvocationLog): Promise<void> {
