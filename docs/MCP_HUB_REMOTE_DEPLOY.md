@@ -88,11 +88,12 @@ Old pattern:
 New pattern:
 
 1. Search candidate tools with `hub_search_proxy_tools`
-2. Inspect exact schema via `hub_describe_proxy_tool`
+2. Inspect exact schema via `hub_describe_proxy_tool` (or `hub_get_proxy_tool`)
 3. Execute with:
    - `hub_execute_proxy_tool`
    - `proxyToolName`
    - `args` payload
+   - compatibility alias: `hub_run_proxy_tool`
 
 ## Telemetry
 

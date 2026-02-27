@@ -311,8 +311,36 @@ const MANAGEMENT_TOOLS: Tool[] = [
     },
   },
   {
+    name: 'hub_get_proxy_tool',
+    description: 'Compatibility alias for hub_describe_proxy_tool.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        proxyToolName: { type: 'string' },
+      },
+      required: ['proxyToolName'],
+      additionalProperties: false,
+    },
+  },
+  {
     name: 'hub_execute_proxy_tool',
     description: 'Execute a visible proxy tool by name with provided args.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        proxyToolName: { type: 'string' },
+        args: {
+          type: 'object',
+          additionalProperties: true,
+        },
+      },
+      required: ['proxyToolName'],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'hub_run_proxy_tool',
+    description: 'Compatibility alias for hub_execute_proxy_tool.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -940,7 +968,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         return result;
       }
 
-      if (toolName === 'hub_describe_proxy_tool') {
+      if (toolName === 'hub_describe_proxy_tool' || toolName === 'hub_get_proxy_tool') {
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
         const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
         const proxyToolName = stringArg(args.proxyToolName);
@@ -1007,7 +1035,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         return result;
       }
 
-      if (toolName === 'hub_execute_proxy_tool') {
+      if (toolName === 'hub_execute_proxy_tool' || toolName === 'hub_run_proxy_tool') {
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
         const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
         const proxyToolName = stringArg(args.proxyToolName);

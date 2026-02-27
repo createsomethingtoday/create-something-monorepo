@@ -21,7 +21,9 @@ Remote MCP hub that exposes one public endpoint and proxies tools from enabled d
 - `hub_list_proxy_tools` (visible proxy tools for current account/session)
 - `hub_search_proxy_tools` (visible query/server filter + cursor pagination)
 - `hub_describe_proxy_tool` (schema + downstream route metadata for one visible proxy tool)
+- `hub_get_proxy_tool` (compatibility alias for `hub_describe_proxy_tool`)
 - `hub_execute_proxy_tool` (execute one visible proxy tool by name with args)
+- `hub_run_proxy_tool` (compatibility alias for `hub_execute_proxy_tool`)
 - `hub_policy_status` (active policy/runtime limit settings)
 - `hub_list_discovery_packs` (list named discovery presets)
 - `hub_refresh_connections`
