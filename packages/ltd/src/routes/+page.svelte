@@ -1,5 +1,6 @@
 <script lang="ts">
   import { SEO, NewsletterSignup } from '@create-something/canon';
+  import { AnimatedGridPattern, BlurFade, ShimmerButton } from '@create-something/canon/magicui';
 </script>
 
 <SEO
@@ -10,25 +11,41 @@
   propertyName="ltd"
 />
 
-<!-- Hero: Gelassenheit Entrance
-     The viewer hasn't arrived yet. We don't demand immediate comprehension.
-     Each element fades in with micro-delays, settling into presence rather than arriving.
-     This embodies "releasement" — non-willful action that invites contemplation. -->
-<section class="hero pt-24 pb-32 px-6">
-  <div class="max-w-4xl mx-auto text-center">
-    <p class="eyebrow mb-6 hero-entrance" style="--delay: 0">Design Philosophy</p>
+<!-- Hero -->
+<section class="hero relative overflow-hidden pt-24 pb-32 px-6">
+  <div class="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+    <AnimatedGridPattern
+      numSquares={25}
+      maxOpacity={0.08}
+      duration={4}
+      repeatDelay={2}
+      width={60}
+      height={60}
+      class="hero-animated-grid"
+    />
+  </div>
+  <div class="max-w-4xl mx-auto text-center relative z-10">
+    <BlurFade delay={0}>
+      <p class="eyebrow mb-6">Design Philosophy</p>
+    </BlurFade>
 
-    <h1 class="mb-8 hero-entrance" style="--delay: 1">Less, But Better</h1>
+    <BlurFade delay={0.1}>
+      <h1 class="mb-8">Less, But Better</h1>
+    </BlurFade>
 
-    <p class="hero-text mb-12 max-w-2xl mx-auto leading-relaxed hero-entrance" style="--delay: 2">
-      Design principles that help you make better decisions. Learn from Dieter Rams, Mies van der
-      Rohe, and other masters who shaped how we think about quality.
-    </p>
+    <BlurFade delay={0.2}>
+      <p class="hero-text mb-12 max-w-2xl mx-auto leading-relaxed">
+        Design principles that help you make better decisions. Learn from Dieter Rams, Mies van der
+        Rohe, and other masters who shaped how we think about quality.
+      </p>
+    </BlurFade>
 
-    <div class="flex flex-col sm:flex-row gap-4 justify-center hero-entrance" style="--delay: 3">
-      <a href="/masters" class="btn-primary"> Meet the Masters </a>
-      <a href="/ethos" class="btn-secondary"> Our Approach </a>
-    </div>
+    <BlurFade delay={0.3}>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center items-center relative z-20">
+        <ShimmerButton href="/masters">Meet the Masters</ShimmerButton>
+        <a href="/ethos" class="btn-secondary"> Our Approach </a>
+      </div>
+    </BlurFade>
   </div>
 </section>
 
@@ -165,36 +182,9 @@
 />
 
 <style>
-  /* ==========================================================================
-	   GELASSENHEIT ENTRANCE
-	   "Releasement" — non-willful action that invites contemplation.
-	   Elements settle into presence rather than arrive with urgency.
-	   Uses decelerate easing (0, 0, 0.2, 1) so motion settles, not snaps.
-	   ========================================================================== */
-
-  .hero-entrance {
-    animation: fadeInSettle var(--duration-complex) cubic-bezier(0, 0, 0.2, 1);
-    animation-delay: calc(var(--delay) * var(--cascade-group));
-    animation-fill-mode: both;
-  }
-
-  @keyframes fadeInSettle {
-    from {
-      opacity: 0;
-      transform: translateY(8px); /* Minimal, not dramatic */
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .hero-entrance {
-      animation: none;
-      opacity: 1;
-      transform: none;
-    }
+  :global(.hero-animated-grid) {
+    mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
+    -webkit-mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
   }
 
   /* ==========================================================================
@@ -219,18 +209,6 @@
   .hero-text {
     font-size: var(--text-h2);
     color: var(--color-fg-secondary);
-  }
-
-  .btn-primary {
-    padding: var(--space-sm) var(--space-md);
-    background: var(--color-fg-primary);
-    color: var(--color-bg-pure);
-    font-weight: var(--font-medium);
-    transition: background var(--duration-standard) var(--ease-standard);
-  }
-
-  .btn-primary:hover {
-    background: var(--color-fg-secondary);
   }
 
   .btn-secondary {

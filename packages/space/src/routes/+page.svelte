@@ -1,5 +1,6 @@
 <script lang="ts">
   import { SEO } from '@create-something/canon';
+  import { AnimatedGridPattern, BlurFade } from '@create-something/canon/magicui';
 
   const tools = [
     {
@@ -54,16 +55,33 @@
 />
 
 <!-- Hero -->
-<section class="hero">
-  <div class="hero-container">
-    <div class="hero-eyebrow animate-reveal" style="--delay: 0">CREATE SOMETHING SPACE</div>
+<section class="hero relative overflow-hidden pt-24 pb-32 px-6">
+  <div class="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+    <AnimatedGridPattern
+      numSquares={25}
+      maxOpacity={0.08}
+      duration={4}
+      repeatDelay={2}
+      width={60}
+      height={60}
+      class="hero-animated-grid"
+    />
+  </div>
+  <div class="hero-container relative z-10">
+    <BlurFade delay={0}>
+      <div class="hero-eyebrow">CREATE SOMETHING SPACE</div>
+    </BlurFade>
 
-    <h1 class="hero-headline animate-reveal" style="--delay: 1">The Workbench</h1>
+    <BlurFade delay={0.1}>
+      <h1 class="hero-headline">The Workbench</h1>
+    </BlurFade>
 
-    <p class="hero-description animate-reveal" style="--delay: 2">
-      Live tools for building, testing, and analyzing automation infrastructure. Every tool runs on
-      Cloudflare Workers. Pick one and start working.
-    </p>
+    <BlurFade delay={0.2}>
+      <p class="hero-description">
+        Live tools for building, testing, and analyzing automation infrastructure. Every tool runs
+        on Cloudflare Workers. Pick one and start working.
+      </p>
+    </BlurFade>
   </div>
 </section>
 
@@ -161,6 +179,11 @@
 </section>
 
 <style>
+  :global(.hero-animated-grid) {
+    mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
+    -webkit-mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
+  }
+
   /* Hero */
   .hero {
     padding: 6rem 1.5rem 3rem;

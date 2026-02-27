@@ -1,6 +1,7 @@
 <script lang="ts">
   import { ArrowRight, TerminalSquare, Wrench, Bug } from 'lucide-svelte';
   import { PATHS } from '$content/paths';
+  import { AnimatedGridPattern, BlurFade, ShimmerButton } from '@create-something/canon/magicui';
 
   const course = PATHS[0] ?? null;
   const firstLessonHref = course?.lessons[0]
@@ -36,17 +37,39 @@
 </svelte:head>
 
 <div class="learn-home-shell">
-  <section class="hero">
-    <p class="eyebrow">Simple. Practical. Build-first.</p>
-    <h1 class="hero-title">Learn Codex by Building an MCP</h1>
-    <p class="hero-subtitle">
-      One focused course. No theory detours. You build a working MCP server from scratch and connect
-      it to Codex.
-    </p>
-    <a href={firstLessonHref} class="btn-primary">
-      {course ? 'Start Lesson 1' : 'View Course'}
-      <ArrowRight size={16} />
-    </a>
+  <section class="hero relative overflow-hidden py-16 px-6">
+    <div class="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+      <AnimatedGridPattern
+        numSquares={25}
+        maxOpacity={0.08}
+        duration={4}
+        repeatDelay={2}
+        width={60}
+        height={60}
+        class="hero-animated-grid"
+      />
+    </div>
+    <div class="relative z-10">
+      <BlurFade delay={0}>
+        <p class="eyebrow">Simple. Practical. Build-first.</p>
+      </BlurFade>
+      <BlurFade delay={0.1}>
+        <h1 class="hero-title">Learn Codex by Building an MCP</h1>
+      </BlurFade>
+      <BlurFade delay={0.2}>
+        <p class="hero-subtitle">
+          One focused course. No theory detours. You build a working MCP server from scratch and
+          connect it to Codex.
+        </p>
+      </BlurFade>
+      <BlurFade delay={0.3}>
+        <div class="inline-block mt-4">
+          <ShimmerButton href={firstLessonHref}>
+            {course ? 'Start Lesson 1' : 'View Course'}
+          </ShimmerButton>
+        </div>
+      </BlurFade>
+    </div>
   </section>
 
   <section class="course-overview">
@@ -92,6 +115,11 @@
 </div>
 
 <style>
+  :global(.hero-animated-grid) {
+    mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
+    -webkit-mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
+  }
+
   .learn-home-shell {
     width: min(100%, var(--content-width-xl));
     margin: 0 auto;
