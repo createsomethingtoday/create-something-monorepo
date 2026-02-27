@@ -264,7 +264,10 @@ function extractToolErrorMessage(result: Record<string, unknown>): string | unde
 
   const structured = asRecord(result.structuredContent);
   const structuredError = normalizeString(structured?.error) ?? normalizeString(structured?.message);
-  if (structuredError) return structuredError;
+  const structuredNextStep = normalizeString(structured?.next_step);
+  if (structuredError) {
+    return structuredNextStep ? `${structuredError} (next_step=${structuredNextStep})` : structuredError;
+  }
 
   const content = Array.isArray(result.content) ? result.content : [];
   for (const entry of content) {

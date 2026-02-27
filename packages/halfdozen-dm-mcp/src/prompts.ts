@@ -27,6 +27,8 @@ export function registerTaskWorkflowPrompt(
 - Check current toolkit access with **dm_composio_toolkit_inventory**.
 - Check account connections with **dm_composio_connection_status**.
 - If disconnected, call **dm_composio_get_connect_link** and provide the URL to the user.
+- Connection-first rule: before first use of any \`${config.composio.toolNamePrefix}__<toolkit>__*\` tool in a session, call **dm_composio_connection_status** for that toolkit.
+- Recovery rule: if any DM Composio tool returns an error, immediately call **dm_composio_connection_status** for that toolkit. If disconnected, call **dm_composio_get_connect_link**, return the URL, and retry only after reconnect.
 - Proxied action tools are DM-namespaced as:
   - \`${config.composio.toolNamePrefix}__<toolkit>__<tool>\`
 - You may pass \`entity_id\` (or \`__dm_entity_id\`) on composio calls to target a specific entity; otherwise server default/header entity is used.

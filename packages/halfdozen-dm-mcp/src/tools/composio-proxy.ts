@@ -50,6 +50,14 @@ interface ProxyDiscoveryResult extends ComposioProxyRegistrationResult {
   routes: ProxyRoute[];
 }
 
+interface ConnectLinkResolution {
+  authConfigId: string | null;
+  requestId: string | null;
+  status: string | null;
+  link: string | null;
+  error: string | null;
+}
+
 const MANAGEMENT_TOOL_NAMES = new Set([
   'dm_composio_toolkit_inventory',
   'dm_composio_connection_status',
@@ -106,10 +114,12 @@ export async function registerComposioProxyTools(
             result,
           });
         } catch (error) {
-          return toErrorResult(
-            error instanceof Error
-              ? error.message
-              : `Composio tool execution failed: ${String(error)}`
+          return handleComposioExecutionFailure(
+            deps,
+            authConfigMap,
+            route,
+            entityId,
+            error
           );
         }
       }
@@ -342,43 +352,164 @@ function registerManagementTools(
       const authConfigId = authConfigMap[toolkit];
       if (!authConfigId) {
         return toErrorResult(
-          `No auth config found for toolkit "${toolkit}". Set COMPOSIO_AUTH_CONFIG_MAP with an entry for "${toolkit}".`
+          `No auth config found for toolkit "${toolkit}". Set COMPOSIO_AUTH_CONFIG_MAP with an entry for "${toolkit}".`,
+          {
+            error_code: 'COMPOSIO_AUTH_CONFIG_MISSING',
+            toolkit,
+            entity_id: entityId,
+          }
         );
       }
 
-      try {
-        const connectionRequest = await deps.composioClient
-          .getSDK()
-          .connectedAccounts.link(entityId, authConfigId);
-        const state = asRecord(connectionRequest);
+      const link = await resolveConnectLink(
+        deps.composioClient,
+        authConfigMap,
+        entityId,
+        toolkit
+      );
 
-        const redirectUrl = stringOrNull(state?.redirectUrl);
-        const requestId = stringOrNull(state?.id);
-        const rawStatus =
-          stringOrNull(state?.status) ?? stringOrNull(state?.connectionStatus);
-        const status = rawStatus ? rawStatus.toUpperCase() : null;
-
+      if (link.error) {
         return toJsonResult({
           entityId,
           toolkit,
           authConfigId,
-          requestId,
-          status,
-          link: redirectUrl,
+          requestId: link.requestId,
+          status: link.status,
+          link: link.link,
+          error: link.error,
           message:
-            redirectUrl && redirectUrl.length > 0
+            link.link && link.link.length > 0
               ? 'Present this URL to the user. After auth, call dm_composio_connection_status again.'
               : 'No redirect URL returned by Composio. Retry dm_composio_connection_status.',
         });
-      } catch (error) {
-        return toErrorResult(
-          error instanceof Error
-            ? error.message
-            : `Failed to create connect link: ${String(error)}`
-        );
       }
+
+      return toJsonResult({
+        entityId,
+        toolkit,
+        authConfigId,
+        requestId: link.requestId,
+        status: link.status,
+        link: link.link,
+        message:
+          link.link && link.link.length > 0
+            ? 'Present this URL to the user. After auth, call dm_composio_connection_status again.'
+            : 'No redirect URL returned by Composio. Retry dm_composio_connection_status.',
+      });
     }
   );
+}
+
+async function handleComposioExecutionFailure(
+  deps: RegisterComposioProxyToolsDeps,
+  authConfigMap: Record<string, string>,
+  route: ProxyRoute,
+  entityId: string,
+  error: unknown
+) {
+  const rawError = describeError(error);
+  let connectionState: 'connected' | 'disconnected' | 'unknown' = 'unknown';
+  let connectionCheckError: string | null = null;
+
+  try {
+    const connected = await deps.composioClient.hasActiveConnection(entityId, route.toolkit);
+    connectionState = connected ? 'connected' : 'disconnected';
+  } catch (connectionError) {
+    connectionCheckError = describeError(connectionError);
+  }
+
+  if (connectionState === 'disconnected') {
+    const connectLink = await resolveConnectLink(
+      deps.composioClient,
+      authConfigMap,
+      entityId,
+      route.toolkit
+    );
+
+    const message =
+      connectLink.link && connectLink.link.length > 0
+        ? `No active "${route.toolkit}" connection for entity "${entityId}". Reconnect via dm_composio_get_connect_link (toolkit="${route.toolkit}") or use this URL: ${connectLink.link}`
+        : `No active "${route.toolkit}" connection for entity "${entityId}". Reconnect via dm_composio_get_connect_link (toolkit="${route.toolkit}") and retry.`;
+
+    return toErrorResult(message, {
+      error_code: 'COMPOSIO_TOOLKIT_DISCONNECTED',
+      toolkit: route.toolkit,
+      entity_id: entityId,
+      tool: route.name,
+      composio_tool_slug: route.composioToolSlug,
+      connection_state: connectionState,
+      next_step: 'reconnect_toolkit_and_retry',
+      connection_check_error: connectionCheckError,
+      upstream_error: rawError,
+      connect_link: connectLink.link,
+      connect_link_status: connectLink.status,
+      connect_link_request_id: connectLink.requestId,
+      connect_link_error: connectLink.error,
+    });
+  }
+
+  const baseMessage = `Failed to execute tool ${route.composioToolSlug}: ${rawError}`;
+  const guidance =
+    connectionState === 'connected'
+      ? 'Connection is active; verify input arguments, provider permissions/scopes, and API limits.'
+      : `Run dm_composio_connection_status for toolkit "${route.toolkit}" and reconnect if needed.`;
+
+  return toErrorResult(`${baseMessage}. ${guidance}`, {
+    error_code: 'COMPOSIO_TOOL_EXECUTION_FAILED',
+    toolkit: route.toolkit,
+    entity_id: entityId,
+    tool: route.name,
+    composio_tool_slug: route.composioToolSlug,
+    connection_state: connectionState,
+    connection_check_error: connectionCheckError,
+    upstream_error: rawError,
+    next_step:
+      connectionState === 'connected'
+        ? 'validate_arguments_or_permissions'
+        : 'check_connection_status',
+  });
+}
+
+async function resolveConnectLink(
+  composioClient: ComposioClient,
+  authConfigMap: Record<string, string>,
+  entityId: string,
+  toolkit: string
+): Promise<ConnectLinkResolution> {
+  const authConfigId = authConfigMap[toolkit];
+  if (!authConfigId) {
+    return {
+      authConfigId: null,
+      requestId: null,
+      status: null,
+      link: null,
+      error: `No auth config found for toolkit "${toolkit}"`,
+    };
+  }
+
+  try {
+    const connectionRequest = await composioClient
+      .getSDK()
+      .connectedAccounts.link(entityId, authConfigId);
+    const state = asRecord(connectionRequest);
+
+    const rawStatus = stringOrNull(state?.status) ?? stringOrNull(state?.connectionStatus);
+    return {
+      authConfigId,
+      requestId: stringOrNull(state?.id),
+      status: rawStatus ? rawStatus.toUpperCase() : null,
+      link: stringOrNull(state?.redirectUrl),
+      error: null,
+    };
+  } catch (error) {
+    return {
+      authConfigId,
+      requestId: null,
+      status: null,
+      link: null,
+      error: `Failed to create connect link: ${describeError(error)}`,
+    };
+  }
 }
 
 function buildRoute(
@@ -581,6 +712,37 @@ function asRecord(value: unknown): Record<string, unknown> | null {
   return value as Record<string, unknown>;
 }
 
+function describeError(error: unknown): string {
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message.trim();
+  }
+  if (typeof error === 'string' && error.trim().length > 0) {
+    return error.trim();
+  }
+
+  const record = asRecord(error);
+  if (!record) {
+    return String(error);
+  }
+
+  const direct =
+    stringOrNull(record.message) ??
+    stringOrNull(record.error) ??
+    stringOrNull(record.details) ??
+    stringOrNull(asRecord(record.response)?.message) ??
+    stringOrNull(asRecord(record.response)?.error) ??
+    stringOrNull(asRecord(record.cause)?.message) ??
+    stringOrNull(asRecord(record.cause)?.error);
+  if (direct) return direct;
+
+  try {
+    const serialized = JSON.stringify(record);
+    return serialized.length > 500 ? `${serialized.slice(0, 500)}...` : serialized;
+  } catch {
+    return String(error);
+  }
+}
+
 function toJsonResult(payload: Record<string, unknown>) {
   return {
     content: [{ type: 'text' as const, text: JSON.stringify(payload, null, 2) }],
@@ -588,9 +750,10 @@ function toJsonResult(payload: Record<string, unknown>) {
   };
 }
 
-function toErrorResult(message: string) {
+function toErrorResult(message: string, structured?: Record<string, unknown>) {
   return {
     isError: true,
     content: [{ type: 'text' as const, text: message }],
+    ...(structured ? { structuredContent: { error: message, ...structured } } : {}),
   };
 }

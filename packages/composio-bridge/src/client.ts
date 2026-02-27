@@ -528,8 +528,15 @@ function toBridgeError(
     return new ComposioBridgeError(message, code, error.statusCode);
   }
   const statusCode = extractStatusCode(error);
-  const detail = error instanceof Error ? error.message : String(error);
-  return new ComposioBridgeError(`${prefix}: ${detail}`, code, statusCode);
+  const detail = extractErrorMessage(error) || String(error);
+  const statusDetail = statusCode !== undefined ? ` (status ${statusCode})` : '';
+  const diagnosticDetail = extractErrorDiagnostic(error);
+  const diagnosticSuffix = diagnosticDetail ? `; ${diagnosticDetail}` : '';
+  return new ComposioBridgeError(
+    `${prefix}: ${detail}${statusDetail}${diagnosticSuffix}`,
+    code,
+    statusCode,
+  );
 }
 
 function isRetryableError(
@@ -596,6 +603,48 @@ function extractErrorMessage(error: unknown): string {
   if (typeof error === 'string') return error;
   if (isRecord(error) && typeof error.message === 'string') return error.message;
   return '';
+}
+
+function extractErrorDiagnostic(error: unknown): string | undefined {
+  if (!isRecord(error)) return undefined;
+
+  const response = isRecord(error.response) ? error.response : null;
+  const cause = isRecord(error.cause) ? error.cause : null;
+  const candidates: unknown[] = [
+    error.details,
+    error.error,
+    response?.error,
+    response?.message,
+    response?.body,
+    response?.data,
+    cause?.details,
+    cause?.error,
+    cause?.message,
+  ];
+
+  for (const candidate of candidates) {
+    const rendered = renderDiagnosticValue(candidate);
+    if (rendered) return rendered;
+  }
+
+  return undefined;
+}
+
+function renderDiagnosticValue(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+
+  if (!value || typeof value !== 'object') return undefined;
+
+  try {
+    const serialized = JSON.stringify(value);
+    if (!serialized || serialized === '{}') return undefined;
+    return serialized.length > 400 ? `${serialized.slice(0, 400)}...` : serialized;
+  } catch {
+    return undefined;
+  }
 }
 
 function extractStatusCode(error: unknown): number | undefined {
