@@ -874,11 +874,6 @@ Co-Authored-By: Claude Sonnet 4.5 &lt;noreply@anthropic.com&gt;</pre>
 	.references-list {
 		color: var(--color-fg-tertiary);
 	}
-
-	/* Footer */
-	.paper-footer {
-	}
-
 	.footer-text {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);

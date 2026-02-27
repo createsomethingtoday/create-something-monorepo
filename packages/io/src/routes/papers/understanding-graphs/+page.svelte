@@ -828,8 +828,6 @@ for identity verification, but it remains independent of business logic.
 	.reference-link:hover {
 		color: var(--color-fg-primary);
 	}
-
-	/* Footer */
 	.paper-footer {
 		padding-top: var(--space-md);
 	}

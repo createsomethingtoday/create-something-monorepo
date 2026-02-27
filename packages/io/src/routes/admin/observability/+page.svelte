@@ -782,8 +782,6 @@
 	.config-link-arrow {
 		opacity: 0.5;
 	}
-
-	/* Footer */
 	.footer-section {
 		text-align: center;
 	}

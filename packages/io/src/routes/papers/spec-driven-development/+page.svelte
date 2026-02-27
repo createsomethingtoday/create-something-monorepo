@@ -988,11 +988,6 @@ features:
 	.responsive-table-scroll {
 		overflow-x: auto;
 	}
-
-	/* Footer */
-	.paper-footer {
-	}
-
 	.footer-text {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);

@@ -1766,8 +1766,6 @@
 	.notif-time {
 		color: var(--color-fg-muted);
 	}
-
-	/* Footer */
 	.experiment-footer {
 		padding: var(--space-xl) var(--space-lg);
 		display: grid;

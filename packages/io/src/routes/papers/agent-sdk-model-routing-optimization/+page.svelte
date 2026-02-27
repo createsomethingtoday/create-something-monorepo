@@ -699,8 +699,6 @@ class ProviderResult:
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);
 	}
-
-	/* Footer */
 	.paper-footer {
 		padding-top: var(--space-lg);
 	}

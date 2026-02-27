@@ -783,8 +783,6 @@ interface DashboardCardProps &#123;
 	.references-text {
 		font-size: var(--text-body-sm, 0.913rem);
 	}
-
-	/* Footer */
 	.footer-text {
 		font-size: var(--text-body-sm, 0.913rem);
 		color: rgba(255, 255, 255, 0.4);

@@ -792,8 +792,6 @@ const scroll = window.scrollY;
 	.reference a:hover {
 		color: var(--color-fg-secondary);
 	}
-
-	/* Footer */
 	.experiment-footer {
 		margin-top: var(--space-2xl);
 		padding-top: var(--space-lg);

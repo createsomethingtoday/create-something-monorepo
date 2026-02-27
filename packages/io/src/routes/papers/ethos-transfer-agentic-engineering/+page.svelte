@@ -1008,11 +1008,6 @@ recede into transparent use. The methodology disappears when creating.</pre>
 	.references-list {
 		color: var(--color-fg-tertiary);
 	}
-
-	/* Footer */
-	.paper-footer {
-	}
-
 	.footer-text {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);

@@ -775,9 +775,6 @@ if (name === 'productType' && value === 'digital') {
 		color: var(--color-fg-tertiary);
 	}
 
-	.paper-footer {
-	}
-
 	.footer-text {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);

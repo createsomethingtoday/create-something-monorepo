@@ -768,8 +768,6 @@
 	.arch-list li strong {
 		color: var(--color-fg-secondary);
 	}
-
-	/* Footer */
 	.footer-section {
 		padding-top: var(--space-lg);
 	}

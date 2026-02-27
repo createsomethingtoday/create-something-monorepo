@@ -1026,8 +1026,6 @@ codex exec --full-auto --model gpt-4o "Apply voice audit..."
 		line-height: var(--leading-relaxed);
 		margin-bottom: var(--space-xs);
 	}
-
-	/* Footer */
 	.paper-footer {
 		margin-top: var(--space-2xl);
 		padding-top: var(--space-xl);

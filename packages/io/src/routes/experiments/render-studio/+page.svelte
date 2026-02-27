@@ -989,8 +989,6 @@
 	.comparison-item li:last-child {
 		border-bottom: none;
 	}
-
-	/* Footer */
 	.experiment-footer {
 		margin-top: var(--space-2xl);
 		padding-top: var(--space-lg);

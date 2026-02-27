@@ -1056,8 +1056,6 @@
 		font-size: var(--text-h3);
 		color: var(--color-fg-muted);
 	}
-
-	/* Footer */
 	.experiment-footer {
 		margin-top: var(--space-2xl);
 		padding-top: var(--space-lg);

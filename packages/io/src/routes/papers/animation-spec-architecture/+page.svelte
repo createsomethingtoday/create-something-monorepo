@@ -863,11 +863,6 @@ const currentPhase = spec.phases.find(p =&gt;
 	.demo-dot.active {
 		background: var(--color-fg-primary);
 	}
-
-	/* Footer */
-	.paper-footer {
-	}
-
 	.footer-text {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);

@@ -589,8 +589,6 @@
 		outline: 2px solid var(--color-focus);
 		outline-offset: 2px;
 	}
-
-	/* Footer */
 	.footer-section {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);

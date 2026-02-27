@@ -1016,9 +1016,6 @@ const principles = [
 		line-height: 1.8;
 	}
 
-	.paper-footer {
-	}
-
 	.footer-text {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);

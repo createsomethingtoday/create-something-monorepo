@@ -903,11 +903,6 @@ logger.info('Processing', { id, correlationId });`}</pre>
 	.reference-link:hover {
 		color: var(--color-fg-primary);
 	}
-
-	/* Footer */
-	.paper-footer {
-	}
-
 	.footer-text {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);

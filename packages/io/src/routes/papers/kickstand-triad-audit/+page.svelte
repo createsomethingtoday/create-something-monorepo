@@ -692,11 +692,6 @@
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body-lg);
 	}
-
-	/* Footer */
-	.paper-footer {
-	}
-
 	.footer-text {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);

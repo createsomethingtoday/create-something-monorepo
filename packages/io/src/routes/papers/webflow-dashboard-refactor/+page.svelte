@@ -828,11 +828,6 @@ export const GET: RequestHandler = async ({ platform }) => {
 	.references-list {
 		color: var(--color-fg-tertiary);
 	}
-
-	/* Footer */
-	.paper-footer {
-	}
-
 	.footer-text {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);

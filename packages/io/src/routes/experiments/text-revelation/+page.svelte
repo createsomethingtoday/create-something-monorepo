@@ -502,8 +502,6 @@
 		margin: var(--space-sm) 0 var(--space-md) 0;
 		color: var(--color-fg-secondary);
 	}
-
-	/* Footer */
 	.experiment-footer {
 		margin-top: var(--space-2xl);
 		padding-top: var(--space-lg);

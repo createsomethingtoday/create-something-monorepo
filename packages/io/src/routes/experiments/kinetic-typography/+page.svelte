@@ -611,8 +611,6 @@ const weight = 400 + (600 - 400) * emphasisProgress;`}</pre>
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
 	}
-
-	/* Footer */
 	.experiment-footer {
 		margin-top: var(--space-2xl);
 		padding-top: var(--space-lg);

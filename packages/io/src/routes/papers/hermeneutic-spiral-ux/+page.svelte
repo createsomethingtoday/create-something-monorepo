@@ -1044,9 +1044,6 @@ Bot: Great! Anything else I can help with?`}</pre>
 		color: var(--color-fg-tertiary);
 	}
 
-	.paper-footer {
-	}
-
 	.footer-text {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);

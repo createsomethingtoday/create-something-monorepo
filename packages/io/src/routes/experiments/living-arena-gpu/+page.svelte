@@ -1409,8 +1409,6 @@
 		color: var(--color-fg-secondary);
 		font-style: italic;
 	}
-
-	/* Footer */
 	.experiment-footer {
 		padding: var(--space-xl) var(--space-lg);
 		display: grid;
