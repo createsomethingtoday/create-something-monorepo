@@ -357,8 +357,7 @@
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="section-intro">
-        A modular offer stack. Start with custom workflow MCPs, add assurance as risk grows, and
-        extend for enterprise constraints.
+        Start with custom MCPs, add assurance as risk grows, and extend for enterprise constraints.
       </p>
     </BlurFade>
 
@@ -370,16 +369,15 @@
           </div>
           <div class="offering-body">
             <p class="offering-description">
-              .agency designs and builds the workflow-specific MCP layer that generic connectors and
-              marketplace tools cannot model safely.
+              Custom MCPs designed specifically for your business rules and trust boundaries.
             </p>
             <div class="offering-deliverables">
               <span class="deliverables-label">Includes</span>
               <ul>
-                <li>Custom tool actions and workflow endpoints</li>
-                <li>Business-rule mapping for high-value operations</li>
-                <li>Secure auth and trust-boundary design</li>
-                <li>Documentation and handoff artifacts</li>
+                <li>Workflow endpoints</li>
+                <li>Business-rule mapping</li>
+                <li>Secure auth boundaries</li>
+                <li>Handoff artifacts</li>
               </ul>
             </div>
           </div>
@@ -394,16 +392,16 @@
           </div>
           <div class="offering-body">
             <p class="offering-description">
-              .agency runs the reliability layer that keeps autonomous operations safe as they
-              scale: evals, release checks, policy controls, and incident loops.
+              The reliability layer for autonomous operations. Evals, release checks, and policy
+              controls.
             </p>
             <div class="offering-deliverables">
               <span class="deliverables-label">Includes</span>
               <ul>
-                <li>Eval suites and pre-release quality gates</li>
-                <li>Policy and approval boundaries by workflow risk</li>
-                <li>Incident taxonomy, triage, and postmortem loop</li>
-                <li>Monthly tuning using run data</li>
+                <li>Pre-release quality gates</li>
+                <li>Policy and approval boundaries</li>
+                <li>Postmortem loops</li>
+                <li>Monthly tuning</li>
               </ul>
             </div>
           </div>
@@ -417,16 +415,16 @@
           </div>
           <div class="offering-body">
             <p class="offering-description">
-              When Notion-native automation hits technical limits, .agency designs and builds the
-              extension layer for enterprise-grade autonomy.
+              Beyond native limits. Architecture and orchestration for strict governance
+              constraints.
             </p>
             <div class="offering-deliverables">
               <span class="deliverables-label">Includes</span>
               <ul>
-                <li>Custom MCP and cross-system orchestration</li>
-                <li>Auditability and governance controls</li>
-                <li>Deterministic retry/idempotency for critical flows</li>
-                <li>Architecture support for enterprise requirements</li>
+                <li>Cross-system orchestration</li>
+                <li>Auditability controls</li>
+                <li>Deterministic retries</li>
+                <li>Architecture support</li>
               </ul>
             </div>
           </div>
