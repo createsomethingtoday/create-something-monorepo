@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
 	import { fade } from 'svelte/transition';
 	import { Badge } from './ui';
 	import Sparkline from './Sparkline.svelte';
@@ -65,6 +66,27 @@
 		| 'subcategory'
 		| 'competition';
 
+	interface CategoryPreferences {
+		sortKey: CategorySortKey;
+		sortDirection: 'asc' | 'desc';
+		viewMode: 'table' | 'grid';
+		searchQuery: string;
+		categoryFilter: string;
+		competitionFilter: string;
+		userCategoryFilter: 'all' | 'user';
+	}
+
+	const CATEGORY_PREFERENCES_STORAGE_KEY = 'webflow-dashboard.marketplace-insights.preferences.v1';
+	const validSortKeys: CategorySortKey[] = [
+		'revenueRank',
+		'templatesInSubcategory',
+		'totalSales30d',
+		'avgRevenuePerTemplate',
+		'category',
+		'subcategory',
+		'competition'
+	];
+
 	/**
 	 * Sort insights by priority and type
 	 */
@@ -104,6 +126,7 @@
 		'totalSales30d',
 		'avgRevenuePerTemplate'
 	];
+	let preferencesLoaded = $state(false);
 
 	const availableCategoryFilters = $derived(() => {
 		return Array.from(new Set(categories.map((entry) => entry.category))).sort((a, b) =>
@@ -189,6 +212,63 @@
 			sortDirection = 'asc';
 		}
 	}
+
+	function isCategorySortKey(value: unknown): value is CategorySortKey {
+		return typeof value === 'string' && validSortKeys.includes(value as CategorySortKey);
+	}
+
+	$effect(() => {
+		if (!browser || preferencesLoaded) return;
+
+		try {
+			const raw = localStorage.getItem(CATEGORY_PREFERENCES_STORAGE_KEY);
+			if (!raw) return;
+
+			const parsed = JSON.parse(raw) as Partial<CategoryPreferences>;
+
+			if (isCategorySortKey(parsed.sortKey)) sortKey = parsed.sortKey;
+			if (parsed.sortDirection === 'asc' || parsed.sortDirection === 'desc')
+				sortDirection = parsed.sortDirection;
+			if (parsed.viewMode === 'table' || parsed.viewMode === 'grid') viewMode = parsed.viewMode;
+			if (typeof parsed.searchQuery === 'string') searchQuery = parsed.searchQuery;
+			if (typeof parsed.categoryFilter === 'string') categoryFilter = parsed.categoryFilter;
+			if (typeof parsed.competitionFilter === 'string') competitionFilter = parsed.competitionFilter;
+			if (parsed.userCategoryFilter === 'all' || parsed.userCategoryFilter === 'user') {
+				userCategoryFilter = parsed.userCategoryFilter;
+			}
+
+			if (viewMode === 'table' && !tableSortableKeys.includes(sortKey)) {
+				sortKey = 'revenueRank';
+				sortDirection = 'asc';
+			}
+		} catch {
+			// Ignore malformed preference payloads and continue with defaults.
+		} finally {
+			preferencesLoaded = true;
+		}
+	});
+
+	$effect(() => {
+		if (!browser || !preferencesLoaded) return;
+
+		const preferences: CategoryPreferences = {
+			sortKey,
+			sortDirection,
+			viewMode,
+			searchQuery,
+			categoryFilter,
+			competitionFilter,
+			userCategoryFilter
+		};
+
+		localStorage.setItem(CATEGORY_PREFERENCES_STORAGE_KEY, JSON.stringify(preferences));
+	});
+
+	$effect(() => {
+		if (categoryFilter === 'all') return;
+		if (availableCategoryFilters().includes(categoryFilter)) return;
+		categoryFilter = 'all';
+	});
 
 	function getCompetitionIndicator(templateCount: number) {
 		if (templateCount < 10)
