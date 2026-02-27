@@ -134,6 +134,14 @@ type QuotaDecision = {
   reason?: string;
 };
 
+type ProxyFailureDetails = {
+  errorMessage: string;
+  rawMessage: string;
+  code: string | number | null;
+  missingScopes: string[] | null;
+  authRelated: boolean;
+};
+
 type DiscoveryMode = 'compact' | 'full';
 
 type DiscoveryPreferences = {
@@ -1839,7 +1847,8 @@ export async function executeProxyRoute(params: {
 
   try {
     const proxiedResult = await route.call(executionArgs, trace, accountId);
-    const proxiedSuccess = !resultIsError(proxiedResult);
+    const proxyFailure = classifyProxyFailure(proxiedResult, route, entryProxyToolName);
+    const proxiedSuccess = proxyFailure === null;
     const durationMs = Date.now() - startedAt;
     await Promise.all([
       recordHubInvocation(env, {
@@ -1848,7 +1857,7 @@ export async function executeProxyRoute(params: {
         success: proxiedSuccess,
         durationMs,
         trace,
-        errorMessage: proxiedSuccess ? null : 'Downstream MCP returned isError response',
+        errorMessage: proxiedSuccess ? null : proxyFailure?.rawMessage ?? 'Downstream MCP returned isError response',
         metadata: {
           type: 'proxy',
           entrypoint,
@@ -1873,6 +1882,13 @@ export async function executeProxyRoute(params: {
             period: quotaDecision.period,
             reason: quotaDecision.reason ?? null,
           },
+          downstreamFailure: proxiedSuccess
+            ? null
+            : {
+                code: proxyFailure?.code ?? null,
+                missingScopes: proxyFailure?.missingScopes ?? null,
+                authRelated: proxyFailure?.authRelated ?? false,
+              },
         },
       }),
       recordHubRouteInvocation(env, {
@@ -1882,16 +1898,29 @@ export async function executeProxyRoute(params: {
         success: proxiedSuccess,
         durationMs,
         trace,
-        errorMessage: proxiedSuccess ? null : 'Downstream MCP returned isError response',
+        errorMessage: proxiedSuccess ? null : proxyFailure?.rawMessage ?? 'Downstream MCP returned isError response',
         metadata: {
           proxyToolName: entryProxyToolName,
           entrypoint,
+          downstreamFailure: proxiedSuccess
+            ? null
+            : {
+                code: proxyFailure?.code ?? null,
+                missingScopes: proxyFailure?.missingScopes ?? null,
+                authRelated: proxyFailure?.authRelated ?? false,
+              },
         },
       }),
     ]);
+
+    if (proxyFailure) {
+      return toErrorResult(proxyFailure.errorMessage);
+    }
+
     return proxiedResult;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    const proxyFailure = classifyProxyFailureMessage(message, route, entryProxyToolName, null);
     const durationMs = Date.now() - startedAt;
     await Promise.all([
       recordHubInvocation(env, {
@@ -1900,7 +1929,7 @@ export async function executeProxyRoute(params: {
         success: false,
         durationMs,
         trace,
-        errorMessage: message,
+        errorMessage: proxyFailure.rawMessage,
         metadata: {
           type: 'proxy',
           entrypoint,
@@ -1911,6 +1940,11 @@ export async function executeProxyRoute(params: {
           userId: accountContext.userId,
           sessionId: accountContext.sessionId,
           identitySource: accountContext.identitySource,
+          downstreamFailure: {
+            code: proxyFailure.code,
+            missingScopes: proxyFailure.missingScopes,
+            authRelated: proxyFailure.authRelated,
+          },
         },
       }),
       recordHubRouteInvocation(env, {
@@ -1920,14 +1954,19 @@ export async function executeProxyRoute(params: {
         success: false,
         durationMs,
         trace,
-        errorMessage: message,
+        errorMessage: proxyFailure.rawMessage,
         metadata: {
           proxyToolName: entryProxyToolName,
           entrypoint,
+          downstreamFailure: {
+            code: proxyFailure.code,
+            missingScopes: proxyFailure.missingScopes,
+            authRelated: proxyFailure.authRelated,
+          },
         },
       }),
     ]);
-    return toErrorResult(`Tool "${entryProxyToolName}" failed: ${message}`);
+    return toErrorResult(proxyFailure.errorMessage);
   }
 }
 
@@ -2210,6 +2249,168 @@ function optionalNumberArg(raw: unknown, fieldName: string): number | null | und
 function resultIsError(value: unknown): boolean {
   const record = asRecord(value);
   return record?.isError === true;
+}
+
+function classifyProxyFailure(
+  proxiedResult: unknown,
+  route: ProxyRoute,
+  proxyToolName: string,
+): ProxyFailureDetails | null {
+  const resultRecord = asRecord(proxiedResult);
+  if (!resultRecord) {
+    return null;
+  }
+
+  const structured = asRecord(resultRecord.structuredContent);
+  const data = asRecord(structured?.data);
+  const dataSuccess = typeof data?.success === 'boolean' ? data.success : undefined;
+  const rootSuccess = typeof structured?.successful === 'boolean' ? structured.successful : undefined;
+  const hasRootError = structured?.error !== undefined && structured.error !== null;
+
+  const semanticFailure = dataSuccess === false || rootSuccess === false || hasRootError;
+  if (!resultIsError(proxiedResult) && !semanticFailure) {
+    return null;
+  }
+
+  const rawMessage = extractProxyFailureRawMessage(resultRecord, structured, data)
+    ?? 'Downstream MCP returned an error response.';
+  const code = extractProxyFailureCode(structured, data);
+  return classifyProxyFailureMessage(rawMessage, route, proxyToolName, code);
+}
+
+function classifyProxyFailureMessage(
+  rawMessageInput: string,
+  route: ProxyRoute,
+  proxyToolName: string,
+  code: string | number | null,
+): ProxyFailureDetails {
+  const rawMessage = normalizeFailureMessage(rawMessageInput);
+  const missingScopes = extractMissingScopes(rawMessage);
+  const authRelated = Boolean(
+    missingScopes ||
+      /connectedaccountnotfound|no connected account found|invalid access token|unauthorized|invalid[_\s-]?grant|token/i
+        .test(rawMessage),
+  );
+
+  const toolkitSlug = extractToolkitSlug(route.serverName);
+  const reconnectProxyTool = `${route.serverName}__get_connect_link`;
+
+  let errorMessage: string;
+  if (missingScopes && missingScopes.length > 0) {
+    errorMessage =
+      `Missing OAuth scopes for toolkit "${toolkitSlug}" while calling "${route.downstreamToolName}": ` +
+      `${missingScopes.join(', ')}. ` +
+      `Re-auth by calling hub_execute_proxy_tool with proxyToolName="${reconnectProxyTool}".`;
+  } else if (authRelated) {
+    errorMessage =
+      `Authentication failed for toolkit "${toolkitSlug}" while calling "${route.downstreamToolName}". ` +
+      `Re-auth by calling hub_execute_proxy_tool with proxyToolName="${reconnectProxyTool}". ` +
+      `Downstream message: ${rawMessage}`;
+  } else if (code !== null) {
+    errorMessage = `Tool "${proxyToolName}" failed (code ${String(code)}): ${rawMessage}`;
+  } else {
+    errorMessage = `Tool "${proxyToolName}" failed: ${rawMessage}`;
+  }
+
+  return {
+    errorMessage,
+    rawMessage,
+    code,
+    missingScopes: missingScopes ?? null,
+    authRelated,
+  };
+}
+
+function extractProxyFailureRawMessage(
+  resultRecord: Record<string, unknown>,
+  structured: Record<string, unknown> | null,
+  data: Record<string, unknown> | null,
+): string | null {
+  const dataMessage = typeof data?.message === 'string' ? data.message : null;
+  if (dataMessage) return dataMessage;
+
+  if (typeof data?.error === 'string') return data.error;
+  if (data?.error !== undefined && data.error !== null) return JSON.stringify(data.error);
+
+  if (typeof structured?.message === 'string') return structured.message;
+  if (typeof structured?.error === 'string') return structured.error;
+  if (structured?.error !== undefined && structured.error !== null) return JSON.stringify(structured.error);
+
+  const content = resultRecord.content;
+  if (Array.isArray(content)) {
+    for (const entry of content) {
+      const item = asRecord(entry);
+      if (!item || typeof item.text !== 'string') continue;
+
+      const text = item.text.trim();
+      if (!text) continue;
+
+      const parsed = parseJsonObject(text);
+      if (parsed) {
+        const parsedData = asRecord(parsed.data);
+        if (typeof parsedData?.message === 'string') return parsedData.message;
+        if (typeof parsedData?.error === 'string') return parsedData.error;
+        if (parsedData?.error !== undefined && parsedData.error !== null) {
+          return JSON.stringify(parsedData.error);
+        }
+        if (typeof parsed.message === 'string') return parsed.message;
+        if (typeof parsed.error === 'string') return parsed.error;
+        if (parsed.error !== undefined && parsed.error !== null) return JSON.stringify(parsed.error);
+      }
+
+      return text;
+    }
+  }
+
+  return null;
+}
+
+function extractProxyFailureCode(
+  structured: Record<string, unknown> | null,
+  data: Record<string, unknown> | null,
+): string | number | null {
+  if (typeof data?.code === 'number' || typeof data?.code === 'string') {
+    return data.code;
+  }
+
+  if (typeof structured?.code === 'number' || typeof structured?.code === 'string') {
+    return structured.code;
+  }
+
+  return null;
+}
+
+function parseJsonObject(raw: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(raw);
+    return asRecord(parsed);
+  } catch {
+    return null;
+  }
+}
+
+function normalizeFailureMessage(raw: string): string {
+  return raw.replace(/\s+/g, ' ').trim();
+}
+
+function extractMissingScopes(message: string): string[] | null {
+  const match = message.match(/does not contain scopes:\[([^\]]+)\]/i);
+  if (!match?.[1]) {
+    return null;
+  }
+
+  const scopes = match[1]
+    .split(',')
+    .map((scope) => scope.trim())
+    .filter(Boolean);
+
+  return scopes.length > 0 ? scopes : null;
+}
+
+function extractToolkitSlug(serverName: string): string {
+  return serverName.startsWith('composio-toolkit-')
+    ? serverName.replace('composio-toolkit-', '')
+    : serverName;
 }
 
 function toJsonResult(payload: Record<string, unknown>) {

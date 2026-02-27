@@ -142,3 +142,67 @@ test('executeProxyRoute surfaces downstream failures as MCP errors', async () =>
   assert.equal((result as any).isError, true);
   assert.match((result as any).content[0].text, /Tool "server_a__alpha" failed: downstream exploded/);
 });
+
+test('executeProxyRoute converts semantic downstream scope failures into actionable auth errors', async () => {
+  const route = {
+    proxyToolName: 'composio-toolkit-zoom__zoom_delete_a_meeting',
+    serverName: 'composio-toolkit-zoom',
+    downstreamToolName: 'zoom_delete_a_meeting',
+    call: async () => ({
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify({
+            data: {
+              code: 4711,
+              message:
+                'Invalid access token, does not contain scopes:[meeting:delete:meeting:admin, meeting:delete:meeting].',
+              success: false,
+            },
+            error: null,
+            successful: true,
+            logId: 'log_123',
+          }),
+        },
+      ],
+      structuredContent: {
+        data: {
+          code: 4711,
+          message:
+            'Invalid access token, does not contain scopes:[meeting:delete:meeting:admin, meeting:delete:meeting].',
+          success: false,
+        },
+        error: null,
+        successful: true,
+        logId: 'log_123',
+      },
+    }),
+  };
+
+  const result = await executeProxyRoute({
+    env: {} as any,
+    route,
+    executionArgs: { meetingId: 12345678901 },
+    trace,
+    accountContext: {
+      accountId: 'acct_1',
+      tenantId: null,
+      userId: null,
+      sessionId: null,
+      allowedToolPrefixes: null,
+      identitySource: 'fallback',
+    },
+    accountId: 'acct_1',
+    toolName: 'hub_execute_proxy_tool',
+    startedAt: Date.now(),
+    rateLimitPolicy: disabledRateLimitPolicy,
+    quotaPolicy: disabledQuotaPolicy,
+    entrypoint: 'hub_execute_proxy_tool',
+    entryProxyToolName: route.proxyToolName,
+  });
+
+  assert.equal((result as any).isError, true);
+  assert.match((result as any).content[0].text, /Missing OAuth scopes for toolkit "zoom"/);
+  assert.match((result as any).content[0].text, /meeting:delete:meeting:admin/);
+  assert.match((result as any).content[0].text, /composio-toolkit-zoom__get_connect_link/);
+});
