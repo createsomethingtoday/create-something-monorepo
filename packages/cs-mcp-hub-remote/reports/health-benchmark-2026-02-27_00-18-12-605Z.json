@@ -1,0 +1,560 @@
+{
+  "generated_at": "2026-02-27T00:18:12.605Z",
+  "target": "https://cs-mcp-hub-remote.createsomething.workers.dev",
+  "config": {
+    "sample_count_per_path": 50,
+    "timeout_ms_per_request": 6000,
+    "concurrency": 1,
+    "fast_path": "/health",
+    "full_path": "/health?full=1"
+  },
+  "series": {
+    "health_fast": {
+      "name": "health_fast",
+      "pathname": "/health",
+      "summary": {
+        "count": 50,
+        "successes": 50,
+        "failures": 0,
+        "timeouts": 0,
+        "success_rate": 1,
+        "min": 0.027,
+        "p50": 0.034,
+        "p90": 0.039,
+        "p95": 0.04,
+        "p99": 0.045,
+        "avg": 0.034380000000000015,
+        "max": 0.045
+      },
+      "samples": [
+        {
+          "status_code": 200,
+          "time_seconds": 0.027,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.033,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.036,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.035,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.036,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.036,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.032,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.034,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.04,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.033,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.036,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.036,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.031,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.035,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.037,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.03,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.032,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.036,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.032,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.031,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.032,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.04,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.03,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.035,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.036,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.034,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.032,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.033,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.036,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.033,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.035,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.04,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.04,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.045,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.039,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.034,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.027,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.038,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.031,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.034,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.034,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.034,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.032,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.031,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.035,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.034,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.031,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.038,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.034,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.034,
+          "timeout": false
+        }
+      ]
+    },
+    "health_full": {
+      "name": "health_full",
+      "pathname": "/health?full=1",
+      "summary": {
+        "count": 50,
+        "successes": 49,
+        "failures": 1,
+        "timeouts": 1,
+        "success_rate": 0.98,
+        "min": 0.166,
+        "p50": 0.274,
+        "p90": 0.335,
+        "p95": 2.497,
+        "p99": 6,
+        "avg": 0.48778,
+        "max": 6
+      },
+      "samples": [
+        {
+          "status_code": 200,
+          "time_seconds": 0.37,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.316,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.289,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.304,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.319,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.29,
+          "timeout": false
+        },
+        {
+          "status_code": 0,
+          "time_seconds": 6,
+          "timeout": true,
+          "error": "TimeoutError: The operation was aborted due to timeout"
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 3.124,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 2.497,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.28,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.286,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.306,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.306,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.283,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.28,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.296,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.259,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.272,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.246,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.249,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.249,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.274,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.335,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.302,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.267,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.265,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.249,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.281,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.266,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.31,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.56,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.194,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.294,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.308,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.283,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.169,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.166,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.246,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.254,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.252,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.197,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.265,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.234,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.26,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.223,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.288,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.171,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.254,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.176,
+          "timeout": false
+        },
+        {
+          "status_code": 200,
+          "time_seconds": 0.225,
+          "timeout": false
+        }
+      ]
+    }
+  },
+  "comparison": {
+    "delta_p50_seconds": 0.24,
+    "delta_p95_seconds": 2.457,
+    "p50_ratio_full_over_fast": 8.059,
+    "p95_ratio_full_over_fast": 62.425
+  }
+}

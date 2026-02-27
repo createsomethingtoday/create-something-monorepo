@@ -139,6 +139,8 @@ type InvocationTrace = {
   requestId: string;
   correlationId: string;
   transportRequestId: string;
+  clientRequestId: string | null;
+  upstreamCorrelationId: string | null;
 };
 
 type IdentitySessionResolveResponse = {
@@ -263,7 +265,8 @@ const MANAGEMENT_TOOLS: Tool[] = [
   },
   {
     name: 'hub_search_proxy_tools',
-    description: 'Search proxy tools with optional server filter and cursor pagination.',
+    description:
+      'Search proxy tools with optional server filter and cursor pagination. Returns compact rows by default.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -271,6 +274,8 @@ const MANAGEMENT_TOOLS: Tool[] = [
         serverName: { type: 'string' },
         cursor: { type: 'string' },
         limit: { type: 'number' },
+        includeDescription: { type: 'boolean' },
+        descriptionMaxLength: { type: 'number' },
       },
       additionalProperties: false,
     },
@@ -518,10 +523,12 @@ async function getHubRuntime(env: Env, options: { force?: boolean } = {}): Promi
     return runtimeCache.runtime;
   }
 
-  if (!options.force && pendingRuntimeLoad && pendingRuntimeLoad.key === key) {
-    if (runtimeCache && runtimeCache.key === key) {
+  if (pendingRuntimeLoad && pendingRuntimeLoad.key === key) {
+    if (!options.force && runtimeCache && runtimeCache.key === key) {
       return runtimeCache.runtime;
     }
+
+    // Coalesce concurrent rebuilds for the same runtime key, even on forced refresh.
     return pendingRuntimeLoad.promise;
   }
 
@@ -889,7 +896,7 @@ function buildDownstreamTraceHeaders(
   trace: InvocationTrace,
   accountId: string,
 ): Record<string, string> {
-  return {
+  const headers: Record<string, string> = {
     'x-correlation-id': trace.correlationId,
     'x-request-id': trace.requestId,
     'x-hub-server': HUB_NAME,
@@ -898,6 +905,18 @@ function buildDownstreamTraceHeaders(
     'x-mcp-account-id': accountId,
     'x-hub-account-id': accountId,
   };
+
+  if (trace.transportRequestId && trace.transportRequestId !== trace.requestId) {
+    headers['x-hub-transport-request-id'] = trace.transportRequestId;
+  }
+  if (trace.clientRequestId) {
+    headers['x-hub-client-request-id'] = trace.clientRequestId;
+  }
+  if (trace.upstreamCorrelationId && trace.upstreamCorrelationId !== trace.correlationId) {
+    headers['x-hub-upstream-correlation-id'] = trace.upstreamCorrelationId;
+  }
+
+  return headers;
 }
 
 function applyRequestHeaders(
@@ -935,7 +954,9 @@ function shouldFallbackToFreshClient(error: unknown): boolean {
     message.includes('session') ||
     message.includes('not initialized') ||
     message.includes('transport is closed') ||
-    message.includes('connection closed')
+    message.includes('connection closed') ||
+    message.includes('cannot perform i/o on behalf of a different request') ||
+    message.includes('refcountedcanceler')
   );
 }
 
@@ -1073,7 +1094,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
             type: 'management',
             query: stringArg(args.query),
             serverName: stringArg(args.serverName),
-            limit: numberArg(args.limit, 25, 1, 100),
+            limit: numberArg(args.limit, 10, 1, 100),
             cursor: stringArg(args.cursor),
           },
         });
@@ -1366,6 +1387,9 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
 
       const proxiedResult = await route.call(args, trace, accountId);
       const proxiedSuccess = !resultIsError(proxiedResult);
+      const proxiedErrorMessage = proxiedSuccess
+        ? null
+        : getResultErrorMessage(proxiedResult) ?? 'Downstream MCP returned isError response';
       const durationMs = Date.now() - startedAt;
       await Promise.all([
         recordHubInvocation(env, {
@@ -1374,13 +1398,14 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           success: proxiedSuccess,
           durationMs,
           trace,
-          errorMessage: proxiedSuccess ? null : 'Downstream MCP returned isError response',
+          errorMessage: proxiedErrorMessage,
           input: args,
           output: proxiedResult,
           metadata: {
             type: 'proxy',
             downstreamServer: route.serverName,
             downstreamTool: route.downstreamToolName,
+            downstreamErrorMessage: proxiedErrorMessage,
             tenantId: accountContext.tenantId,
             userId: accountContext.userId,
             sessionId: accountContext.sessionId,
@@ -1408,9 +1433,10 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           success: proxiedSuccess,
           durationMs,
           trace,
-          errorMessage: proxiedSuccess ? null : 'Downstream MCP returned isError response',
+          errorMessage: proxiedErrorMessage,
           metadata: {
             proxyToolName: toolName,
+            downstreamErrorMessage: proxiedErrorMessage,
           },
         }),
       ]);
@@ -1786,7 +1812,9 @@ function searchProxyTools(
   const query = stringArg(args.query);
   const serverNameFilter = stringArg(args.serverName);
   const cursor = stringArg(args.cursor);
-  const limit = numberArg(args.limit, 25, 1, 100);
+  const limit = numberArg(args.limit, 10, 1, 100);
+  const includeDescription = booleanArg(args.includeDescription, false);
+  const descriptionMaxLength = numberArg(args.descriptionMaxLength, 220, 40, 5000);
   const startIndex = cursor ? numberArg(Number(cursor), 0, 0, Number.MAX_SAFE_INTEGER) : 0;
 
   const definitionByName = new Map(proxies.toolDefinitions.map((tool) => [tool.name, tool]));
@@ -1824,6 +1852,22 @@ function searchProxyTools(
   const nextCursor = startIndex + page.length < filtered.length
     ? String(startIndex + page.length)
     : null;
+  const tools = page.map((item) => {
+    if (!includeDescription) {
+      return {
+        proxyToolName: item.proxyToolName,
+        serverName: item.serverName,
+        downstreamToolName: item.downstreamToolName,
+      };
+    }
+
+    return {
+      proxyToolName: item.proxyToolName,
+      serverName: item.serverName,
+      downstreamToolName: item.downstreamToolName,
+      description: truncateForTelemetry(item.description, descriptionMaxLength),
+    };
+  });
 
   return {
     query,
@@ -1832,7 +1876,9 @@ function searchProxyTools(
     limit,
     cursor: cursor ?? '0',
     nextCursor,
-    tools: page,
+    includeDescription,
+    descriptionMaxLength: includeDescription ? descriptionMaxLength : null,
+    tools,
   };
 }
 
@@ -1876,6 +1922,98 @@ function stringArrayArg(raw: unknown, fieldName: string): string[] {
 function resultIsError(value: unknown): boolean {
   const record = asRecord(value);
   return record?.isError === true;
+}
+
+function getResultErrorMessage(value: unknown): string | null {
+  const record = asRecord(value);
+  if (!record || record.isError !== true) {
+    return null;
+  }
+
+  const fromStructured = extractErrorMessageFromUnknown(record.structuredContent);
+  if (fromStructured) {
+    return truncateForTelemetry(fromStructured);
+  }
+
+  const content = record.content;
+  if (Array.isArray(content)) {
+    for (const item of content) {
+      const itemRecord = asRecord(item);
+      if (!itemRecord) continue;
+      const text = normalizeMessageValue(itemRecord.text);
+      if (!text) continue;
+
+      const parsedTextError = extractErrorMessageFromUnknown(parseJsonMaybe(text));
+      if (parsedTextError) {
+        return truncateForTelemetry(parsedTextError);
+      }
+
+      return truncateForTelemetry(text);
+    }
+  }
+
+  return 'Downstream MCP returned isError response';
+}
+
+function extractErrorMessageFromUnknown(value: unknown): string | null {
+  const direct = normalizeMessageValue(value);
+  if (direct) return direct;
+
+  const record = asRecord(value);
+  if (!record) return null;
+
+  const directKeys = ['errorMessage', 'message', 'error', 'reason', 'detail'] as const;
+  for (const key of directKeys) {
+    const candidate = normalizeMessageValue(record[key]);
+    if (candidate) return candidate;
+  }
+
+  const errorRecord = asRecord(record.error);
+  if (errorRecord) {
+    const nested =
+      normalizeMessageValue(errorRecord.message) ??
+      normalizeMessageValue(errorRecord.error) ??
+      normalizeMessageValue(errorRecord.reason) ??
+      normalizeMessageValue(errorRecord.detail);
+    if (nested) return nested;
+  }
+
+  return null;
+}
+
+function parseJsonMaybe(text: string): unknown {
+  const trimmed = text.trim();
+  if (!(trimmed.startsWith('{') || trimmed.startsWith('['))) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(trimmed) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeMessageValue(value: unknown): string | null {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? String(value) : null;
+  }
+
+  if (typeof value === 'boolean') {
+    return value ? 'true' : 'false';
+  }
+
+  return null;
+}
+
+function truncateForTelemetry(value: string, maxLength = 500): string {
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, Math.max(0, maxLength - 3))}...`;
 }
 
 function toJsonResult(payload: Record<string, unknown>) {
@@ -1923,22 +2061,24 @@ function extractInvocationTrace(request: unknown, extra: unknown): InvocationTra
   const relatedTask = asRecord(meta?.['io.modelcontextprotocol/related-task']);
 
   const headerRequestId = getHeaderValue(extraRecord?.requestInfo, 'x-request-id');
-  const requestId =
+  const clientRequestId = normalizeTraceValue(requestRecord?.id);
+  const transportRequestId =
     headerRequestId ??
     normalizeTraceValue(extraRecord?.requestId) ??
-    normalizeTraceValue(requestRecord?.id) ??
-    createFallbackRequestId();
-
-  const correlationId =
+    clientRequestId;
+  const upstreamCorrelationId =
     getHeaderValue(extraRecord?.requestInfo, 'x-correlation-id') ??
     normalizeTraceValue(relatedTask?.taskId) ??
-    normalizeTraceValue(meta?.progressToken) ??
-    requestId;
+    normalizeTraceValue(meta?.progressToken);
+  const requestId = createHubTraceId('req');
+  const correlationId = upstreamCorrelationId ?? createHubTraceId('corr');
 
   return {
     requestId,
     correlationId,
-    transportRequestId: normalizeTraceValue(extraRecord?.requestId) ?? requestId,
+    transportRequestId: transportRequestId ?? requestId,
+    clientRequestId,
+    upstreamCorrelationId,
   };
 }
 
@@ -2112,8 +2252,8 @@ function normalizeTraceValue(value: unknown): string | null {
   return null;
 }
 
-function createFallbackRequestId(): string {
-  return `hub_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+function createHubTraceId(kind: 'req' | 'corr'): string {
+  return `hub_${kind}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function getHeaderValue(requestInfo: unknown, name: string): string | null {
@@ -2330,6 +2470,9 @@ function emitBraintrustHubInvocation(env: Env, log: HubInvocationLog, accountId:
             durationMs: Math.max(0, Math.floor(log.durationMs)),
             correlationId: log.trace.correlationId,
             requestId: log.trace.requestId,
+            transportRequestId: log.trace.transportRequestId,
+            clientRequestId: log.trace.clientRequestId,
+            upstreamCorrelationId: log.trace.upstreamCorrelationId,
             metadata,
           },
         });
@@ -2363,7 +2506,16 @@ async function recordHubInvocation(env: Env, log: HubInvocationLog): Promise<voi
 
   const period = getCurrentPeriod();
   const errorMessage = log.errorMessage ? log.errorMessage.slice(0, 500) : null;
-  const metadataJson = safeJsonStringify(log.metadata);
+  const metadataJson = safeJsonStringify({
+    ...(log.metadata ?? {}),
+    trace: {
+      requestId: log.trace.requestId,
+      correlationId: log.trace.correlationId,
+      transportRequestId: log.trace.transportRequestId,
+      clientRequestId: log.trace.clientRequestId,
+      upstreamCorrelationId: log.trace.upstreamCorrelationId,
+    },
+  });
 
   try {
     await db
@@ -2541,7 +2693,16 @@ async function recordHubRouteInvocation(env: Env, log: HubRouteLog): Promise<voi
         log.errorMessage ? log.errorMessage.slice(0, 500) : null,
         log.trace.correlationId,
         log.trace.requestId,
-        safeJsonStringify(log.metadata),
+        safeJsonStringify({
+          ...(log.metadata ?? {}),
+          trace: {
+            requestId: log.trace.requestId,
+            correlationId: log.trace.correlationId,
+            transportRequestId: log.trace.transportRequestId,
+            clientRequestId: log.trace.clientRequestId,
+            upstreamCorrelationId: log.trace.upstreamCorrelationId,
+          },
+        }),
       )
       .run();
   } catch (error) {
