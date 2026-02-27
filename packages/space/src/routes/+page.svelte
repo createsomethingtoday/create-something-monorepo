@@ -353,7 +353,7 @@
   .ecosystem-card:hover {
     transform: scale(var(--scale-micro));
     border-color: var(--color-border-emphasis);
-    background: var(--color-bg-surface);
+    background: transparent;
   }
 
   @keyframes cardReveal {

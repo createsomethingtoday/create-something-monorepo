@@ -40,8 +40,8 @@
     <p class="eyebrow">Simple. Practical. Build-first.</p>
     <h1 class="hero-title">Learn Codex by Building an MCP</h1>
     <p class="hero-subtitle">
-      One focused course. No theory detours. You build a working MCP server from scratch and connect it
-      to Codex.
+      One focused course. No theory detours. You build a working MCP server from scratch and connect
+      it to Codex.
     </p>
     <a href={firstLessonHref} class="btn-primary">
       {course ? 'Start Lesson 1' : 'View Course'}
@@ -140,7 +140,7 @@
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-xl);
     padding: var(--space-lg);
-    background: var(--color-bg-elevated);
+    background: transparent;
   }
 
   .course-card-header {
@@ -202,7 +202,7 @@
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg);
     padding: var(--space-md);
-    background: var(--color-bg-elevated);
+    background: transparent;
   }
 
   .workflow-card h3 {
