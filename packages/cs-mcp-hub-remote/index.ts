@@ -83,6 +83,12 @@ type ProxyCatalog = {
   warnings: string[];
 };
 
+type VisibleProxyCatalog = {
+  toolDefinitions: Tool[];
+  routes: Map<string, ProxyRoute>;
+  definitionByName: Map<string, Tool>;
+};
+
 type HubRuntime = {
   builtAt: number;
   stateResolution: StateResolution;
@@ -242,7 +248,7 @@ const MANAGEMENT_TOOLS: Tool[] = [
   },
   {
     name: 'hub_list_proxy_tools',
-    description: 'List proxy tool names currently available from connected downstream MCPs.',
+    description: 'List proxy tool names currently visible to the calling account/session.',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -251,7 +257,7 @@ const MANAGEMENT_TOOLS: Tool[] = [
   },
   {
     name: 'hub_search_proxy_tools',
-    description: 'Search proxy tools with optional server filter and cursor pagination.',
+    description: 'Search visible proxy tools with optional server filter and cursor pagination.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -260,6 +266,34 @@ const MANAGEMENT_TOOLS: Tool[] = [
         cursor: { type: 'string' },
         limit: { type: 'number' },
       },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'hub_describe_proxy_tool',
+    description: 'Describe a visible proxy tool (schema + downstream route metadata).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        proxyToolName: { type: 'string' },
+      },
+      required: ['proxyToolName'],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'hub_execute_proxy_tool',
+    description: 'Execute a visible proxy tool by name with provided args.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        proxyToolName: { type: 'string' },
+        args: {
+          type: 'object',
+          additionalProperties: true,
+        },
+      },
+      required: ['proxyToolName'],
       additionalProperties: false,
     },
   },
@@ -766,12 +800,9 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async (request, extra) => {
-    const accountContext = await resolveAccountContext(extra, env);
-    const prefs = await getDiscoveryPreferences(accountContext.accountId, runtime, env);
     const cursor = extractListCursor(request);
     const pageSize = resolveDiscoveryPageSize(env);
-    const visibleTools = buildVisibleToolDefinitions(runtime, prefs);
-    const allTools = [...MANAGEMENT_TOOLS, ...visibleTools];
+    const allTools = MANAGEMENT_TOOLS;
     const offset = decodeCursorOffset(cursor);
     const boundedOffset = Math.max(0, Math.min(offset, allTools.length));
     const nextOffset = boundedOffset + pageSize;
@@ -789,7 +820,6 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
     const accountContext = await resolveAccountContext(extra, env);
     const accountId = accountContext.accountId;
     const startedAt = Date.now();
-    let route: ProxyRoute | null = null;
 
     try {
       if (toolName === 'hub_status') {
@@ -826,9 +856,11 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
       }
 
       if (toolName === 'hub_list_proxy_tools') {
+        const prefs = await getDiscoveryPreferences(accountId, runtime, env);
+        const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
         const result = toJsonResult({
-          proxyTools: runtime.proxies.toolDefinitions.map((tool) => tool.name),
-          count: runtime.proxies.toolDefinitions.length,
+          proxyTools: visible.toolDefinitions.map((tool) => tool.name),
+          count: visible.toolDefinitions.length,
         });
         await recordHubInvocation(env, {
           accountId,
@@ -844,7 +876,13 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
       }
 
       if (toolName === 'hub_search_proxy_tools') {
-        const result = toJsonResult(searchProxyTools(runtime.proxies, args));
+        const prefs = await getDiscoveryPreferences(accountId, runtime, env);
+        const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
+        const result = toJsonResult(searchProxyTools(visible, args));
+        const query = stringArg(args.query);
+        const serverName = stringArg(args.serverName);
+        const cursor = stringArg(args.cursor);
+        const limit = numberArg(args.limit, 25, 1, 100);
         await recordHubInvocation(env, {
           accountId,
           toolName,
@@ -853,18 +891,163 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           trace,
           metadata: {
             type: 'management',
-            query: stringArg(args.query),
-            serverName: stringArg(args.serverName),
-            limit: numberArg(args.limit, 25, 1, 100),
-            cursor: stringArg(args.cursor),
+            query,
+            serverName,
+            limit,
+            cursor,
+            visibleProxyToolCount: visible.toolDefinitions.length,
           },
         });
         return result;
       }
 
+      if (toolName === 'hub_describe_proxy_tool') {
+        const prefs = await getDiscoveryPreferences(accountId, runtime, env);
+        const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
+        const proxyToolName = stringArg(args.proxyToolName);
+        if (!proxyToolName) {
+          const errorResult = toErrorResult('"proxyToolName" is required');
+          await recordHubInvocation(env, {
+            accountId,
+            toolName,
+            success: false,
+            durationMs: Date.now() - startedAt,
+            trace,
+            errorMessage: '"proxyToolName" is required',
+            metadata: {
+              type: 'management',
+              operation: 'describe_proxy_tool',
+            },
+          });
+          return errorResult;
+        }
+
+        const route = visible.routes.get(proxyToolName);
+        const definition = visible.definitionByName.get(proxyToolName);
+        if (!route || !definition) {
+          const message = `Proxy tool "${proxyToolName}" is unknown or not visible for this session.`;
+          const errorResult = toErrorResult(message);
+          await recordHubInvocation(env, {
+            accountId,
+            toolName,
+            success: false,
+            durationMs: Date.now() - startedAt,
+            trace,
+            errorMessage: message,
+            metadata: {
+              type: 'management',
+              operation: 'describe_proxy_tool',
+              proxyToolName,
+            },
+          });
+          return errorResult;
+        }
+
+        const result = toJsonResult({
+          proxyToolName,
+          serverName: route.serverName,
+          downstreamToolName: route.downstreamToolName,
+          description: definition.description ?? '',
+          inputSchema: definition.inputSchema ?? { type: 'object', properties: {} },
+          visible: true,
+        });
+        await recordHubInvocation(env, {
+          accountId,
+          toolName,
+          success: true,
+          durationMs: Date.now() - startedAt,
+          trace,
+          metadata: {
+            type: 'management',
+            operation: 'describe_proxy_tool',
+            proxyToolName,
+            serverName: route.serverName,
+            downstreamToolName: route.downstreamToolName,
+          },
+        });
+        return result;
+      }
+
+      if (toolName === 'hub_execute_proxy_tool') {
+        const prefs = await getDiscoveryPreferences(accountId, runtime, env);
+        const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
+        const proxyToolName = stringArg(args.proxyToolName);
+        if (!proxyToolName) {
+          const errorResult = toErrorResult('"proxyToolName" is required');
+          await recordHubInvocation(env, {
+            accountId,
+            toolName,
+            success: false,
+            durationMs: Date.now() - startedAt,
+            trace,
+            errorMessage: '"proxyToolName" is required',
+            metadata: {
+              type: 'management',
+              operation: 'execute_proxy_tool',
+            },
+          });
+          return errorResult;
+        }
+
+        const route = visible.routes.get(proxyToolName);
+        if (!route) {
+          const message = `Proxy tool "${proxyToolName}" is unknown or not visible for this session.`;
+          const errorResult = toErrorResult(message);
+          await recordHubInvocation(env, {
+            accountId,
+            toolName,
+            success: false,
+            durationMs: Date.now() - startedAt,
+            trace,
+            errorMessage: message,
+            metadata: {
+              type: 'management',
+              operation: 'execute_proxy_tool',
+              proxyToolName,
+            },
+          });
+          return errorResult;
+        }
+
+        if (args.args !== undefined && !isRecord(args.args)) {
+          const message = '"args" must be an object';
+          const errorResult = toErrorResult(message);
+          await recordHubInvocation(env, {
+            accountId,
+            toolName,
+            success: false,
+            durationMs: Date.now() - startedAt,
+            trace,
+            errorMessage: message,
+            metadata: {
+              type: 'management',
+              operation: 'execute_proxy_tool',
+              proxyToolName,
+            },
+          });
+          return errorResult;
+        }
+
+        const executionArgs = normalizeArgs(args.args);
+        return executeProxyRoute({
+          env,
+          route,
+          executionArgs,
+          trace,
+          accountContext,
+          accountId,
+          toolName,
+          startedAt,
+          rateLimitPolicy,
+          quotaPolicy,
+          entrypoint: 'hub_execute_proxy_tool',
+          entryProxyToolName: proxyToolName,
+        });
+      }
+
       if (toolName === 'hub_list_services') {
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
-        const result = toJsonResult(buildDiscoveryServicesPayload(runtime, prefs));
+        const result = toJsonResult(buildDiscoveryServicesPayload(runtime, prefs, accountContext));
         await recordHubInvocation(env, {
           accountId,
           toolName,
@@ -901,7 +1084,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           await persistDiscoveryPreferences(accountId, nextPrefs, env);
         }
 
-        const visibleTools = buildVisibleToolDefinitions(runtime, nextPrefs);
+        const visibleTools = buildVisibleProxyRoutes(runtime, nextPrefs, accountContext).toolDefinitions;
         try {
           await server.sendToolListChanged();
         } catch {
@@ -1038,27 +1221,10 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         return result;
       }
 
-      route = runtime.proxies.routes.get(toolName) ?? null;
-      if (!route) {
-        const errorResult = toErrorResult(`Unknown tool "${toolName}"`);
-        await recordHubInvocation(env, {
-          accountId,
-          toolName,
-          success: false,
-          durationMs: Date.now() - startedAt,
-          trace,
-          errorMessage: `Unknown tool "${toolName}"`,
-          metadata: {
-            type: 'unknown-tool',
-          },
-        });
-        return errorResult;
-      }
-
-      if (!isRouteAllowedForSession(route, accountContext.allowedToolPrefixes)) {
+      const directProxyRoute = runtime.proxies.routes.get(toolName) ?? null;
+      if (directProxyRoute) {
         const message =
-          `Tool "${toolName}" is not enabled for this session. ` +
-          'Request a new MCP session with the required toolkit profile.';
+          'Direct proxy tools are disabled. Use hub_execute_proxy_tool with proxyToolName + args.';
         const durationMs = Date.now() - startedAt;
         await Promise.all([
           recordHubInvocation(env, {
@@ -1070,184 +1236,44 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
             errorMessage: message,
             metadata: {
               type: 'policy',
-              policy: 'session_scope',
-              downstreamServer: route.serverName,
-              downstreamTool: route.downstreamToolName,
-              tenantId: accountContext.tenantId,
-              sessionId: accountContext.sessionId,
-              identitySource: accountContext.identitySource,
-              allowedToolPrefixes: accountContext.allowedToolPrefixes ?? null,
+              policy: 'broker_only',
+              entrypoint: 'direct_proxy_disabled',
+              proxyToolName: toolName,
+              downstreamServer: directProxyRoute.serverName,
+              downstreamTool: directProxyRoute.downstreamToolName,
             },
           }),
           recordHubRouteInvocation(env, {
             accountId,
-            downstreamServer: route.serverName,
-            downstreamTool: route.downstreamToolName,
+            downstreamServer: directProxyRoute.serverName,
+            downstreamTool: directProxyRoute.downstreamToolName,
             success: false,
             durationMs,
             trace,
             errorMessage: message,
             metadata: {
               proxyToolName: toolName,
-              blockedByPolicy: 'session_scope',
-              tenantId: accountContext.tenantId,
-              sessionId: accountContext.sessionId,
+              blockedByPolicy: 'broker_only',
+              entrypoint: 'direct_proxy_disabled',
             },
           }),
         ]);
         return toErrorResult(message);
       }
 
-      const rateLimitDecision = applyRateLimit(rateLimitPolicy, accountId, route);
-      if (!rateLimitDecision.allowed) {
-        const durationMs = Date.now() - startedAt;
-        const message =
-          `Rate limit exceeded (${rateLimitDecision.maxCalls} calls per ${rateLimitDecision.windowSeconds}s, scope=${rateLimitDecision.scope}). ` +
-          `Retry after ${rateLimitDecision.resetAt}.`;
-
-        await Promise.all([
-          recordHubInvocation(env, {
-            accountId,
-            toolName,
-            success: false,
-            durationMs,
-            trace,
-            errorMessage: message,
-            metadata: {
-              type: 'policy',
-              policy: 'rate_limit',
-              downstreamServer: route.serverName,
-              downstreamTool: route.downstreamToolName,
-              scope: rateLimitDecision.scope,
-              key: rateLimitDecision.key,
-              remaining: rateLimitDecision.remaining,
-              resetAt: rateLimitDecision.resetAt,
-              maxCalls: rateLimitDecision.maxCalls,
-              windowSeconds: rateLimitDecision.windowSeconds,
-            },
-          }),
-          recordHubRouteInvocation(env, {
-            accountId,
-            downstreamServer: route.serverName,
-            downstreamTool: route.downstreamToolName,
-            success: false,
-            durationMs,
-            trace,
-            errorMessage: message,
-            metadata: {
-              proxyToolName: toolName,
-              blockedByPolicy: 'rate_limit',
-              scope: rateLimitDecision.scope,
-              remaining: rateLimitDecision.remaining,
-              resetAt: rateLimitDecision.resetAt,
-              maxCalls: rateLimitDecision.maxCalls,
-              windowSeconds: rateLimitDecision.windowSeconds,
-            },
-          }),
-        ]);
-
-        return toErrorResult(message);
-      }
-
-      const quotaDecision = await applyQuotaPolicy(env, quotaPolicy, accountId, route);
-      if (!quotaDecision.allowed) {
-        const durationMs = Date.now() - startedAt;
-        const message =
-          `Quota exceeded (${quotaDecision.maxCallsPerPeriod} proxy calls per period=${quotaDecision.period}). ` +
-          `Remaining ${quotaDecision.remaining}.`;
-
-        await Promise.all([
-          recordHubInvocation(env, {
-            accountId,
-            toolName,
-            success: false,
-            durationMs,
-            trace,
-            errorMessage: message,
-            metadata: {
-              type: 'policy',
-              policy: 'quota',
-              reason: quotaDecision.reason ?? null,
-              downstreamServer: route.serverName,
-              downstreamTool: route.downstreamToolName,
-              remaining: quotaDecision.remaining,
-              currentCount: quotaDecision.currentCount,
-              maxCallsPerPeriod: quotaDecision.maxCallsPerPeriod,
-              period: quotaDecision.period,
-            },
-          }),
-          recordHubRouteInvocation(env, {
-            accountId,
-            downstreamServer: route.serverName,
-            downstreamTool: route.downstreamToolName,
-            success: false,
-            durationMs,
-            trace,
-            errorMessage: message,
-            metadata: {
-              proxyToolName: toolName,
-              blockedByPolicy: 'quota',
-              reason: quotaDecision.reason ?? null,
-              remaining: quotaDecision.remaining,
-              currentCount: quotaDecision.currentCount,
-              maxCallsPerPeriod: quotaDecision.maxCallsPerPeriod,
-              period: quotaDecision.period,
-            },
-          }),
-        ]);
-
-        return toErrorResult(message);
-      }
-
-      const proxiedResult = await route.call(args, trace, accountId);
-      const proxiedSuccess = !resultIsError(proxiedResult);
-      const durationMs = Date.now() - startedAt;
-      await Promise.all([
-        recordHubInvocation(env, {
-          accountId,
-          toolName,
-          success: proxiedSuccess,
-          durationMs,
-          trace,
-          errorMessage: proxiedSuccess ? null : 'Downstream MCP returned isError response',
-          metadata: {
-            type: 'proxy',
-            downstreamServer: route.serverName,
-            downstreamTool: route.downstreamToolName,
-            tenantId: accountContext.tenantId,
-            userId: accountContext.userId,
-            sessionId: accountContext.sessionId,
-            identitySource: accountContext.identitySource,
-            rateLimit: {
-              scope: rateLimitDecision.scope,
-              remaining: rateLimitDecision.remaining,
-              resetAt: rateLimitDecision.resetAt,
-              maxCalls: rateLimitDecision.maxCalls,
-              windowSeconds: rateLimitDecision.windowSeconds,
-            },
-            quota: {
-              remaining: quotaDecision.remaining,
-              currentCount: quotaDecision.currentCount,
-              maxCallsPerPeriod: quotaDecision.maxCallsPerPeriod,
-              period: quotaDecision.period,
-              reason: quotaDecision.reason ?? null,
-            },
-          },
-        }),
-        recordHubRouteInvocation(env, {
-          accountId,
-          downstreamServer: route.serverName,
-          downstreamTool: route.downstreamToolName,
-          success: proxiedSuccess,
-          durationMs,
-          trace,
-          errorMessage: proxiedSuccess ? null : 'Downstream MCP returned isError response',
-          metadata: {
-            proxyToolName: toolName,
-          },
-        }),
-      ]);
-      return proxiedResult;
+      const errorResult = toErrorResult(`Unknown tool "${toolName}"`);
+      await recordHubInvocation(env, {
+        accountId,
+        toolName,
+        success: false,
+        durationMs: Date.now() - startedAt,
+        trace,
+        errorMessage: `Unknown tool "${toolName}"`,
+        metadata: {
+          type: 'unknown-tool',
+        },
+      });
+      return errorResult;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const durationMs = Date.now() - startedAt;
@@ -1259,29 +1285,15 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         trace,
         errorMessage: message,
         metadata: {
-          type: route ? 'proxy' : 'management',
-          downstreamServer: route?.serverName ?? null,
-          downstreamTool: route?.downstreamToolName ?? null,
+          type: 'management',
+          downstreamServer: null,
+          downstreamTool: null,
           tenantId: accountContext.tenantId,
           userId: accountContext.userId,
           sessionId: accountContext.sessionId,
           identitySource: accountContext.identitySource,
         },
       });
-      if (route) {
-        await recordHubRouteInvocation(env, {
-          accountId,
-          downstreamServer: route.serverName,
-          downstreamTool: route.downstreamToolName,
-          success: false,
-          durationMs,
-          trace,
-          errorMessage: message,
-          metadata: {
-            proxyToolName: toolName,
-          },
-        });
-      }
       return toErrorResult(`Tool "${toolName}" failed: ${message}`);
     }
   });
@@ -1610,8 +1622,317 @@ async function applyRemoteStateUpdate(
   };
 }
 
-function searchProxyTools(
-  proxies: ProxyCatalog,
+export function buildVisibleProxyRoutes(
+  runtime: HubRuntime,
+  prefs: DiscoveryPreferences,
+  accountContext: ResolvedAccountContext,
+): VisibleProxyCatalog {
+  const sessionScoped = runtime.proxies.toolDefinitions
+    .map((tool) => {
+      const route = runtime.proxies.routes.get(tool.name);
+      if (!route) return null;
+      return { tool, route };
+    })
+    .filter((entry): entry is { tool: Tool; route: ProxyRoute } => Boolean(entry))
+    .filter((entry) => isRouteAllowedForSession(entry.route, accountContext.allowedToolPrefixes));
+
+  const discoveryScoped = prefs.mode === 'full'
+    ? sessionScoped
+    : sessionScoped.filter((entry) => prefs.activeServers.includes(entry.route.serverName));
+
+  const capped = prefs.maxProxyTools && prefs.maxProxyTools > 0
+    ? discoveryScoped.slice(0, prefs.maxProxyTools)
+    : discoveryScoped;
+
+  const toolDefinitions = capped.map((entry) => entry.tool);
+  const routes = new Map(capped.map((entry) => [entry.route.proxyToolName, entry.route]));
+  const definitionByName = new Map(toolDefinitions.map((tool) => [tool.name, tool]));
+
+  return {
+    toolDefinitions,
+    routes,
+    definitionByName,
+  };
+}
+
+export async function executeProxyRoute(params: {
+  env: Env;
+  route: ProxyRoute;
+  executionArgs: Record<string, unknown>;
+  trace: InvocationTrace;
+  accountContext: ResolvedAccountContext;
+  accountId: string;
+  toolName: string;
+  startedAt: number;
+  rateLimitPolicy: RateLimitPolicy;
+  quotaPolicy: QuotaPolicy;
+  entrypoint: 'hub_execute_proxy_tool';
+  entryProxyToolName: string;
+}): Promise<any> {
+  const {
+    env,
+    route,
+    executionArgs,
+    trace,
+    accountContext,
+    accountId,
+    toolName,
+    startedAt,
+    rateLimitPolicy,
+    quotaPolicy,
+    entrypoint,
+    entryProxyToolName,
+  } = params;
+
+  if (!isRouteAllowedForSession(route, accountContext.allowedToolPrefixes)) {
+    const message =
+      `Tool "${entryProxyToolName}" is not enabled for this session. ` +
+      'Request a new MCP session with the required toolkit profile.';
+    const durationMs = Date.now() - startedAt;
+    await Promise.all([
+      recordHubInvocation(env, {
+        accountId,
+        toolName,
+        success: false,
+        durationMs,
+        trace,
+        errorMessage: message,
+        metadata: {
+          type: 'policy',
+          policy: 'session_scope',
+          entrypoint,
+          proxyToolName: entryProxyToolName,
+          downstreamServer: route.serverName,
+          downstreamTool: route.downstreamToolName,
+          tenantId: accountContext.tenantId,
+          sessionId: accountContext.sessionId,
+          identitySource: accountContext.identitySource,
+          allowedToolPrefixes: accountContext.allowedToolPrefixes ?? null,
+        },
+      }),
+      recordHubRouteInvocation(env, {
+        accountId,
+        downstreamServer: route.serverName,
+        downstreamTool: route.downstreamToolName,
+        success: false,
+        durationMs,
+        trace,
+        errorMessage: message,
+        metadata: {
+          proxyToolName: entryProxyToolName,
+          blockedByPolicy: 'session_scope',
+          entrypoint,
+          tenantId: accountContext.tenantId,
+          sessionId: accountContext.sessionId,
+        },
+      }),
+    ]);
+    return toErrorResult(message);
+  }
+
+  const rateLimitDecision = applyRateLimit(rateLimitPolicy, accountId, route);
+  if (!rateLimitDecision.allowed) {
+    const durationMs = Date.now() - startedAt;
+    const message =
+      `Rate limit exceeded (${rateLimitDecision.maxCalls} calls per ${rateLimitDecision.windowSeconds}s, scope=${rateLimitDecision.scope}). ` +
+      `Retry after ${rateLimitDecision.resetAt}.`;
+
+    await Promise.all([
+      recordHubInvocation(env, {
+        accountId,
+        toolName,
+        success: false,
+        durationMs,
+        trace,
+        errorMessage: message,
+        metadata: {
+          type: 'policy',
+          policy: 'rate_limit',
+          entrypoint,
+          proxyToolName: entryProxyToolName,
+          downstreamServer: route.serverName,
+          downstreamTool: route.downstreamToolName,
+          scope: rateLimitDecision.scope,
+          key: rateLimitDecision.key,
+          remaining: rateLimitDecision.remaining,
+          resetAt: rateLimitDecision.resetAt,
+          maxCalls: rateLimitDecision.maxCalls,
+          windowSeconds: rateLimitDecision.windowSeconds,
+        },
+      }),
+      recordHubRouteInvocation(env, {
+        accountId,
+        downstreamServer: route.serverName,
+        downstreamTool: route.downstreamToolName,
+        success: false,
+        durationMs,
+        trace,
+        errorMessage: message,
+        metadata: {
+          proxyToolName: entryProxyToolName,
+          blockedByPolicy: 'rate_limit',
+          entrypoint,
+          scope: rateLimitDecision.scope,
+          remaining: rateLimitDecision.remaining,
+          resetAt: rateLimitDecision.resetAt,
+          maxCalls: rateLimitDecision.maxCalls,
+          windowSeconds: rateLimitDecision.windowSeconds,
+        },
+      }),
+    ]);
+
+    return toErrorResult(message);
+  }
+
+  const quotaDecision = await applyQuotaPolicy(env, quotaPolicy, accountId, route);
+  if (!quotaDecision.allowed) {
+    const durationMs = Date.now() - startedAt;
+    const message =
+      `Quota exceeded (${quotaDecision.maxCallsPerPeriod} proxy calls per period=${quotaDecision.period}). ` +
+      `Remaining ${quotaDecision.remaining}.`;
+
+    await Promise.all([
+      recordHubInvocation(env, {
+        accountId,
+        toolName,
+        success: false,
+        durationMs,
+        trace,
+        errorMessage: message,
+        metadata: {
+          type: 'policy',
+          policy: 'quota',
+          entrypoint,
+          proxyToolName: entryProxyToolName,
+          reason: quotaDecision.reason ?? null,
+          downstreamServer: route.serverName,
+          downstreamTool: route.downstreamToolName,
+          remaining: quotaDecision.remaining,
+          currentCount: quotaDecision.currentCount,
+          maxCallsPerPeriod: quotaDecision.maxCallsPerPeriod,
+          period: quotaDecision.period,
+        },
+      }),
+      recordHubRouteInvocation(env, {
+        accountId,
+        downstreamServer: route.serverName,
+        downstreamTool: route.downstreamToolName,
+        success: false,
+        durationMs,
+        trace,
+        errorMessage: message,
+        metadata: {
+          proxyToolName: entryProxyToolName,
+          blockedByPolicy: 'quota',
+          entrypoint,
+          reason: quotaDecision.reason ?? null,
+          remaining: quotaDecision.remaining,
+          currentCount: quotaDecision.currentCount,
+          maxCallsPerPeriod: quotaDecision.maxCallsPerPeriod,
+          period: quotaDecision.period,
+        },
+      }),
+    ]);
+
+    return toErrorResult(message);
+  }
+
+  try {
+    const proxiedResult = await route.call(executionArgs, trace, accountId);
+    const proxiedSuccess = !resultIsError(proxiedResult);
+    const durationMs = Date.now() - startedAt;
+    await Promise.all([
+      recordHubInvocation(env, {
+        accountId,
+        toolName,
+        success: proxiedSuccess,
+        durationMs,
+        trace,
+        errorMessage: proxiedSuccess ? null : 'Downstream MCP returned isError response',
+        metadata: {
+          type: 'proxy',
+          entrypoint,
+          proxyToolName: entryProxyToolName,
+          downstreamServer: route.serverName,
+          downstreamTool: route.downstreamToolName,
+          tenantId: accountContext.tenantId,
+          userId: accountContext.userId,
+          sessionId: accountContext.sessionId,
+          identitySource: accountContext.identitySource,
+          rateLimit: {
+            scope: rateLimitDecision.scope,
+            remaining: rateLimitDecision.remaining,
+            resetAt: rateLimitDecision.resetAt,
+            maxCalls: rateLimitDecision.maxCalls,
+            windowSeconds: rateLimitDecision.windowSeconds,
+          },
+          quota: {
+            remaining: quotaDecision.remaining,
+            currentCount: quotaDecision.currentCount,
+            maxCallsPerPeriod: quotaDecision.maxCallsPerPeriod,
+            period: quotaDecision.period,
+            reason: quotaDecision.reason ?? null,
+          },
+        },
+      }),
+      recordHubRouteInvocation(env, {
+        accountId,
+        downstreamServer: route.serverName,
+        downstreamTool: route.downstreamToolName,
+        success: proxiedSuccess,
+        durationMs,
+        trace,
+        errorMessage: proxiedSuccess ? null : 'Downstream MCP returned isError response',
+        metadata: {
+          proxyToolName: entryProxyToolName,
+          entrypoint,
+        },
+      }),
+    ]);
+    return proxiedResult;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const durationMs = Date.now() - startedAt;
+    await Promise.all([
+      recordHubInvocation(env, {
+        accountId,
+        toolName,
+        success: false,
+        durationMs,
+        trace,
+        errorMessage: message,
+        metadata: {
+          type: 'proxy',
+          entrypoint,
+          proxyToolName: entryProxyToolName,
+          downstreamServer: route.serverName,
+          downstreamTool: route.downstreamToolName,
+          tenantId: accountContext.tenantId,
+          userId: accountContext.userId,
+          sessionId: accountContext.sessionId,
+          identitySource: accountContext.identitySource,
+        },
+      }),
+      recordHubRouteInvocation(env, {
+        accountId,
+        downstreamServer: route.serverName,
+        downstreamTool: route.downstreamToolName,
+        success: false,
+        durationMs,
+        trace,
+        errorMessage: message,
+        metadata: {
+          proxyToolName: entryProxyToolName,
+          entrypoint,
+        },
+      }),
+    ]);
+    return toErrorResult(`Tool "${entryProxyToolName}" failed: ${message}`);
+  }
+}
+
+export function searchProxyTools(
+  visible: VisibleProxyCatalog,
   args: Record<string, unknown>,
 ): Record<string, unknown> {
   const query = stringArg(args.query);
@@ -1620,10 +1941,9 @@ function searchProxyTools(
   const limit = numberArg(args.limit, 25, 1, 100);
   const startIndex = cursor ? numberArg(Number(cursor), 0, 0, Number.MAX_SAFE_INTEGER) : 0;
 
-  const definitionByName = new Map(proxies.toolDefinitions.map((tool) => [tool.name, tool]));
-  const all = Array.from(proxies.routes.values())
+  const all = Array.from(visible.routes.values())
     .map((route) => {
-      const definition = definitionByName.get(route.proxyToolName);
+      const definition = visible.definitionByName.get(route.proxyToolName);
       return {
         proxyToolName: route.proxyToolName,
         serverName: route.serverName,
@@ -1670,6 +1990,7 @@ function searchProxyTools(
 function buildDiscoveryServicesPayload(
   runtime: HubRuntime,
   prefs: DiscoveryPreferences,
+  accountContext: ResolvedAccountContext,
 ): Record<string, unknown> {
   const byServer = new Map<string, number>();
   for (const tool of runtime.proxies.toolDefinitions) {
@@ -1678,7 +1999,7 @@ function buildDiscoveryServicesPayload(
     byServer.set(route.serverName, (byServer.get(route.serverName) ?? 0) + 1);
   }
 
-  const visibleProxyTools = buildVisibleToolDefinitions(runtime, prefs);
+  const visibleProxyTools = buildVisibleProxyRoutes(runtime, prefs, accountContext).toolDefinitions;
   const visibleByServer = new Map<string, number>();
   for (const tool of visibleProxyTools) {
     const route = runtime.proxies.routes.get(tool.name);
@@ -1697,23 +2018,6 @@ function buildDiscoveryServicesPayload(
     totalProxyToolCount: runtime.proxies.toolDefinitions.length,
     visibleProxyToolCount: visibleProxyTools.length,
   };
-}
-
-function buildVisibleToolDefinitions(runtime: HubRuntime, prefs: DiscoveryPreferences): Tool[] {
-  if (prefs.mode === 'full') {
-    return runtime.proxies.toolDefinitions;
-  }
-
-  const active = new Set(prefs.activeServers);
-  const scoped = runtime.proxies.toolDefinitions.filter((tool) => {
-    const route = runtime.proxies.routes.get(tool.name);
-    return route ? active.has(route.serverName) : false;
-  });
-
-  if (prefs.maxProxyTools && prefs.maxProxyTools > 0) {
-    return scoped.slice(0, prefs.maxProxyTools);
-  }
-  return scoped;
 }
 
 async function getDiscoveryPreferences(

@@ -7,6 +7,17 @@ Deploy a single public MCP endpoint that proxies the CREATE SOMETHING MCP fleet.
 - Worker package: `packages/cs-mcp-hub-remote`
 - Endpoint: `/mcp`
 
+## Breaking Change: Broker-Only Proxy Execution
+
+`cs-mcp-hub-remote` now enforces broker-only downstream execution:
+
+1. `tools/list` returns management tools only.
+2. Direct proxy tool calls (`<server>__<tool>`) are rejected.
+3. Downstream calls must go through:
+   - `hub_search_proxy_tools`
+   - `hub_describe_proxy_tool`
+   - `hub_execute_proxy_tool`
+
 ## Deploy
 
 ```bash
@@ -62,6 +73,23 @@ Identity forwarding:
 
 - Remote hub forwards `x-mcp-account-id` and `x-hub-account-id` headers on proxied downstream tool calls.
 
+## Client Migration Guidance
+
+Before cutover, update clients to stop calling direct proxy names.
+
+Old pattern:
+
+- Call `composio-toolkit-googledrive__googledrive_list_files` directly
+
+New pattern:
+
+1. Search candidate tools with `hub_search_proxy_tools`
+2. Inspect exact schema via `hub_describe_proxy_tool`
+3. Execute with:
+   - `hub_execute_proxy_tool`
+   - `proxyToolName`
+   - `args` payload
+
 ## Telemetry
 
 `cs-mcp-hub-remote` writes hub-level records into `cs-telemetry` (`mcp_tool_invocations` and `mcp_run_counts`) via `TELEMETRY_DB`.
@@ -94,3 +122,15 @@ enabled = true
 ```
 
 If `HUB_API_TOKEN` is configured, include the bearer token header in your MCP client.
+
+## Rollout Validation Checklist
+
+After deploy, validate:
+
+1. `hub_status` reports expected connected servers and proxy tool count.
+2. `tools/list` contains only management tools.
+3. `hub_search_proxy_tools` returns discovery-scoped results.
+4. `hub_describe_proxy_tool` returns input schema for a searchable tool.
+5. `hub_execute_proxy_tool` succeeds for at least one known route.
+6. Direct call to `<server>__<tool>` returns broker-only guidance error.
+7. `hub_trace_lookup` shows both hub and routed downstream telemetry rows for broker calls.

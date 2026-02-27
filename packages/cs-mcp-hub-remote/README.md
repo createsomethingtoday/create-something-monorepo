@@ -12,18 +12,35 @@ Remote MCP hub that exposes one public endpoint and proxies tools from enabled d
 - Loads downstream server registry from `config/mcp-hub/registry.json`
 - Resolves enabled bundles/servers from env vars (or registry defaults)
 - Connects to downstream HTTP MCP servers
-- Re-exports downstream tools as namespaced proxy tools: `<server>__<tool>`
+- Exposes a broker-style interface to discover and execute downstream proxy tools
 
 ## Management Tools
 
 - `hub_status`
 - `hub_list_registry`
-- `hub_list_proxy_tools`
-- `hub_search_proxy_tools` (query/server filter + cursor pagination)
+- `hub_list_proxy_tools` (visible proxy tools for current account/session)
+- `hub_search_proxy_tools` (visible query/server filter + cursor pagination)
+- `hub_describe_proxy_tool` (schema + downstream route metadata for one visible proxy tool)
+- `hub_execute_proxy_tool` (execute one visible proxy tool by name with args)
 - `hub_policy_status` (active policy/runtime limit settings)
 - `hub_refresh_connections`
 - `hub_update_state` (`writeCodexConfig` accepted for parity; ignored remotely)
 - `hub_trace_lookup`
+
+## Broker-Only Mode
+
+This hub runs in broker-only mode:
+
+- Direct proxy tool calls like `<server>__<tool>` are not callable.
+- `tools/list` returns management tools only.
+- Use this sequence for downstream actions:
+  1. `hub_search_proxy_tools`
+  2. `hub_describe_proxy_tool`
+  3. `hub_execute_proxy_tool`
+
+If a client attempts a direct proxy tool call, the hub returns:
+
+`Direct proxy tools are disabled. Use hub_execute_proxy_tool with proxyToolName + args.`
 
 ## Configuration
 
@@ -65,7 +82,7 @@ Session-scoped identity (optional):
 
 - Hub invocations are written to `mcp_tool_invocations`/`mcp_run_counts` in `TELEMETRY_DB`.
 - Hub-observed downstream routes are written to `mcp_hub_routes` in `TELEMETRY_DB`.
-- Each proxied call carries correlation via MCP `relatedTask.taskId`.
+- Each brokered downstream call carries correlation via MCP `relatedTask.taskId`.
 - Use `hub_trace_lookup` (or `cs-telemetry` `query_activity` with `correlationId`) to inspect:
   - `hubInvocations` (hub tool handling)
   - `routedDownstreamInvocations` (hub-observed downstream calls)
@@ -87,4 +104,44 @@ Then point clients to:
 
 ```text
 https://cs-mcp-hub-remote.<your-workers-subdomain>.workers.dev/mcp
+```
+
+## Example Broker Calls
+
+Search visible tools:
+
+```json
+{
+  "name": "hub_search_proxy_tools",
+  "arguments": {
+    "query": "send_message",
+    "limit": 5
+  }
+}
+```
+
+Describe one tool:
+
+```json
+{
+  "name": "hub_describe_proxy_tool",
+  "arguments": {
+    "proxyToolName": "composio-toolkit-slack__slack_send_message"
+  }
+}
+```
+
+Execute one tool:
+
+```json
+{
+  "name": "hub_execute_proxy_tool",
+  "arguments": {
+    "proxyToolName": "composio-toolkit-slack__slack_send_message",
+    "args": {
+      "channel": "C123456",
+      "text": "hello from broker mode"
+    }
+  }
+}
 ```
