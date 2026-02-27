@@ -31,6 +31,7 @@
     "braintrust:eval:mcp:error-path": "pnpm exec braintrust eval ./evals/braintrust/mcp/fleet-error-path-tracing.eval.ts",
     "braintrust:eval:mcp:account-isolation": "pnpm exec braintrust eval ./evals/braintrust/mcp/account-isolation.eval.ts",
     "braintrust:smoke": "tsx scripts/braintrust-openai-smoke.ts",
+    "braintrust:mcp:telemetry-smoke": "tsx scripts/braintrust-mcp-telemetry-smoke.ts",
     "braintrust:playbook-smoke": "tsx scripts/braintrust-playbook-mcp-smoke.ts",
     "graph:build": "tsx scripts/build-knowledge-graph/index.ts",
     "graph:build:incremental": "tsx scripts/build-knowledge-graph/index.ts --incremental",

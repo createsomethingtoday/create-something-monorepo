@@ -1,0 +1,39 @@
+{
+  "claim": {
+    "original": "https://brightedge-pro.webflow.io/",
+    "alleged_copy": "https://boono.webflow.io/"
+  },
+  "pairwise_compare": {
+    "overall": 0.9382361080038405,
+    "verdict": "high_similarity",
+    "html": 0.9166609350827138,
+    "css": 0.9569627017394028,
+    "js": 0.9482524348567268,
+    "webflow": 0.9785664530691891,
+    "dom": 0.8403090786899435
+  },
+  "bayesian_current": {
+    "ids": {
+      "probability": 0.05975956220517754,
+      "verdict": "no_plagiarism"
+    },
+    "urls": {
+      "probability": 0.037884186281700205,
+      "verdict": "no_plagiarism"
+    }
+  },
+  "bayesian_resolved": {
+    "byId": {
+      "probability": 0.7309987949712444,
+      "verdict": "likely",
+      "source": "vector_fallback",
+      "fallbackReason": "compute_confidence_low_signal"
+    },
+    "byUrl": {
+      "probability": 0.7309987949712444,
+      "verdict": "likely",
+      "source": "vector_fallback",
+      "fallbackReason": "compute_confidence_low_signal"
+    }
+  }
+}

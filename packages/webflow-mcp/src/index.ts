@@ -158,17 +158,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'plagiarism_confidence',
-      description: 'Calculate Bayesian plagiarism probability for a template pair. Combines CSS, JS, framework, and structural evidence using Bayes theorem. Returns {excluded: true} if pair is in exclusion list.',
+      description: 'Calculate Bayesian plagiarism probability for a template pair. Accepts template IDs or URLs. Uses compute/confidence first, then falls back to vector compare when confidence signals are weak for URL-driven cases. For Webflow URL pairs, applies component-pattern normalization to reduce platform-common false positives.',
       inputSchema: {
         type: 'object',
         properties: {
           templateA: { 
-            type: 'string', 
-            description: 'First template ID' 
+            type: 'string',
+            description: 'First template ID or URL'
           },
           templateB: { 
-            type: 'string', 
-            description: 'Second template ID' 
+            type: 'string',
+            description: 'Second template ID or URL'
           }
         },
         required: ['templateA', 'templateB']

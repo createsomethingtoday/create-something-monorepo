@@ -1,0 +1,77 @@
+{
+  "confidence": {
+    "probability": 0.48280246312155223,
+    "prior": 0.15,
+    "likelihood": 0.8410128772675195,
+    "verdict": "possible",
+    "factors": [
+      {
+        "name": "cssSimilarity",
+        "weight": 0.28,
+        "value": 0.9569627017394028,
+        "contribution": 0.2679495564870328
+      },
+      {
+        "name": "structuralSimilarity",
+        "weight": 0.27,
+        "value": 0.8784850068863287,
+        "contribution": 0.23719095185930877
+      },
+      {
+        "name": "vectorOverall",
+        "weight": 0.15,
+        "value": 0.9382361080038405,
+        "contribution": 0.14073541620057606
+      },
+      {
+        "name": "jsSimilarity",
+        "weight": 0.1,
+        "value": 0.9482524348567268,
+        "contribution": 0.09482524348567269
+      },
+      {
+        "name": "frameworkMatch",
+        "weight": 0.05,
+        "value": 0.9785664530691891,
+        "contribution": 0.048928322653459456
+      },
+      {
+        "name": "componentUniqueness",
+        "weight": 0.15,
+        "value": 0.34255591054313106,
+        "contribution": 0.05138338658146966
+      }
+    ]
+  },
+  "evidence": {
+    "cssSimilarity": 0.9569627017394028,
+    "jsSimilarity": 0.9482524348567268,
+    "frameworkMatch": 0.9785664530691891,
+    "structuralSimilarity": 0.8784850068863287
+  },
+  "source": "vector_fallback",
+  "fallbackReason": "compute_confidence_low_signal",
+  "vectorCompare": {
+    "overall": 0.9382361080038405,
+    "verdict": "high_similarity",
+    "html": 0.9166609350827138,
+    "css": 0.9569627017394028,
+    "js": 0.9482524348567268,
+    "webflow": 0.9785664530691891,
+    "dom": 0.8403090786899435
+  },
+  "normalization": {
+    "strategy": "webflow_pair_component_adjusted",
+    "rationale": "Applied Webflow component normalization using shared runtime markers, class overlap patterns, and data-w-id overlap."
+  },
+  "componentSignals": {
+    "sharedClassCount": 20,
+    "sharedWebflowClassRatio": 0.6,
+    "customClassJaccard": 0.012779552715654952,
+    "sharedDataWIdCount": 0,
+    "sharedDataWIdRatio": 0,
+    "sharedRuntimeMarkerRatio": 1,
+    "componentCommonality": 0.6574440894568689,
+    "componentUniqueness": 0.34255591054313106
+  }
+}

@@ -1,0 +1,1 @@
+{"frameworks":[{"name":"mutation_observer","features":["dom-mutation-tracking"],"confidence":0.7},{"name":"webflow","features":["ix2","forms"],"confidence":0.6},{"name":"swiper","features":["autoplay"],"confidence":0}],"fingerprint":"mutation_observer:dom-mutation-tracking","frameworkCount":3}
