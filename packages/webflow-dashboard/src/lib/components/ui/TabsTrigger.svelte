@@ -42,10 +42,16 @@
 		color: var(--color-fg-muted);
 		background: transparent;
 		border: none;
-		border-radius: var(--radius-sm);
+		border-right: 1px solid var(--color-border-default);
 		cursor: pointer;
-		transition: all var(--duration-micro) var(--ease-standard);
+		transition:
+			color var(--duration-micro) var(--ease-standard),
+			background-color var(--duration-micro) var(--ease-standard);
 		white-space: nowrap;
+	}
+
+	.tabs-trigger:last-child {
+		border-right: none;
 	}
 
 	.tabs-trigger:hover:not(.active) {
@@ -54,8 +60,7 @@
 
 	.tabs-trigger.active {
 		color: var(--color-fg-primary);
-		background: var(--color-bg-surface);
-		box-shadow: var(--shadow-sm);
+		background: var(--color-bg-subtle);
 	}
 
 	.tabs-trigger:focus-visible {

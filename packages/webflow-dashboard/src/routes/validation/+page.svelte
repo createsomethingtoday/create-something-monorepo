@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { Header, Button, Card, WebflowWayCard, BackNavigation } from '$lib/components';
 	import type { PageData } from './$types';
-	import { CheckCircle2, Check, Info } from 'lucide-svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -54,35 +53,21 @@
 				<!-- GSAP Validator Card -->
 				<Card class="tool-card">
 					<div class="tool-header">
-						<div class="tool-icon gsap">
-							<CheckCircle2 size={24} />
-						</div>
 						<h3 class="tool-title">GSAP Validator</h3>
+						<span class="tool-kicker">Local check</span>
 					</div>
 					<p class="tool-description">
 						Test your templates for GSAP compliance before submission. Crawls up to 50 pages and checks for custom code patterns.
 					</p>
 					<ul class="tool-features">
-						<li>
-							<Check size={16} />
-							Crawls up to 50 pages automatically
-						</li>
-						<li>
-							<Check size={16} />
-							Detects flagged code and security risks
-						</li>
-						<li>
-							<Check size={16} />
-							Provides smart recommendations
-						</li>
+						<li>Crawls up to 50 pages automatically</li>
+						<li>Detects flagged code and security risks</li>
+						<li>Provides smart recommendations</li>
 					</ul>
 					<div class="tool-actions">
-						<Button variant="secondary" onclick={handleOpenGsapValidator} class="tool-button">
-							<CheckCircle2 size={16} />
-							Quick Validate
-						</Button>
+						<Button variant="secondary" onclick={handleOpenGsapValidator} class="tool-button">Quick Validate</Button>
 						<a href="/validation/playground" class="playground-link">
-							Open Full Playground →
+							Open Full Playground
 						</a>
 					</div>
 				</Card>
@@ -107,14 +92,11 @@
 						<li>Improve template quality and user experience</li>
 					</ul>
 				<div class="tip-box">
-					<Info size={20} />
-					<div>
-						<p class="tip-title">Best Practice</p>
-						<p class="tip-text">
-							We recommend running all available validation tools before submitting your template
-							to the marketplace. This helps ensure a smooth review process.
-						</p>
-					</div>
+					<p class="tip-title">Best Practice</p>
+					<p class="tip-text">
+						Run all available validation tools before submitting your template to the marketplace.
+						This keeps review cycles shorter and reduces avoidable rejections.
+					</p>
 				</div>
 				</div>
 			</Card>
@@ -170,10 +152,12 @@
 	}
 
 	.section-title {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-body);
 		font-weight: var(--font-medium);
 		color: var(--color-fg-primary);
 		margin: 0 0 var(--space-md);
+		padding-top: var(--space-sm);
+		border-top: 1px solid var(--color-border-default);
 	}
 
 	.tools-grid {
@@ -192,28 +176,22 @@
 	.tool-header {
 		display: flex;
 		align-items: center;
-		gap: var(--space-sm);
-	}
-
-	.tool-icon {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 40px;
-		height: 40px;
-		border-radius: var(--radius-md);
-	}
-
-	.tool-icon.gsap {
-		background: var(--color-success-muted);
-		color: var(--color-success);
+		justify-content: space-between;
+		gap: var(--space-xs);
 	}
 
 	.tool-title {
-		font-size: var(--text-body-lg);
+		font-size: var(--text-body);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 		margin: 0;
+	}
+
+	.tool-kicker {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		text-transform: uppercase;
+		letter-spacing: 0.02em;
 	}
 
 	.tool-description {
@@ -233,16 +211,17 @@
 	}
 
 	.tool-features li {
-		display: flex;
-		align-items: center;
-		gap: var(--space-xs);
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
+		padding-left: var(--space-sm);
+		position: relative;
 	}
 
-	.tool-features :global(svg) {
-		color: var(--color-success);
-		flex-shrink: 0;
+	.tool-features li::before {
+		content: '•';
+		position: absolute;
+		left: 0;
+		color: var(--color-fg-muted);
 	}
 
 	.tool-actions {
@@ -264,11 +243,13 @@
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);
 		text-decoration: none;
+		border-bottom: 1px solid transparent;
 		transition: color var(--duration-micro) var(--ease-standard);
 	}
 
 	.playground-link:hover {
 		color: var(--color-fg-primary);
+		border-bottom-color: var(--color-border-default);
 	}
 
 	:global(.info-card) {
@@ -301,25 +282,18 @@
 	}
 
 	.tip-box {
-		display: flex;
-		align-items: flex-start;
-		gap: var(--space-sm);
-		padding: var(--space-md);
-		background: var(--color-info-muted);
-		border: 1px solid var(--color-info-border);
-		border-radius: var(--radius-lg);
-	}
-
-	.tip-box :global(svg) {
-		color: var(--color-info);
-		flex-shrink: 0;
-		margin-top: 2px;
+		display: grid;
+		gap: var(--space-xs);
+		padding: var(--space-sm) var(--space-md);
+		border: 1px solid var(--color-border-default);
+		border-left: 3px solid var(--color-border-emphasis);
+		border-radius: var(--radius-md);
 	}
 
 	.tip-title {
 		font-weight: var(--font-medium);
-		color: var(--color-info);
-		margin: 0 0 var(--space-xs);
+		color: var(--color-fg-primary);
+		margin: 0;
 		font-size: var(--text-body-sm);
 	}
 

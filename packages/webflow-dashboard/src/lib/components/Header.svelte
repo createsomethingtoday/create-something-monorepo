@@ -81,7 +81,7 @@
 <style>
 	.header {
 		border-bottom: 1px solid var(--color-border-default);
-		background: var(--color-bg-surface);
+		background: var(--color-bg-pure);
 	}
 
 	.header-content {
@@ -133,21 +133,23 @@
 
 	.nav-link {
 		padding: var(--space-xs) var(--space-sm);
-		border-radius: var(--radius-md);
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
 		text-decoration: none;
-		transition: all var(--duration-micro) var(--ease-standard);
+		border-bottom: 1px solid transparent;
+		transition:
+			color var(--duration-micro) var(--ease-standard),
+			border-color var(--duration-micro) var(--ease-standard);
 	}
 
 	.nav-link:hover {
 		color: var(--color-fg-primary);
-		background: var(--color-hover);
+		border-bottom-color: var(--color-border-default);
 	}
 
 	.nav-link.active {
 		color: var(--color-fg-primary);
-		background: var(--color-active);
+		border-bottom-color: var(--color-border-emphasis);
 	}
 
 	.search-desktop {

@@ -30,11 +30,11 @@
 <style>
 	.table-row {
 		border-bottom: 1px solid var(--color-border-default);
-		transition: background var(--duration-micro) var(--ease-standard);
+		transition: background-color var(--duration-micro) var(--ease-standard);
 	}
 
 	.table-row:hover {
-		background: var(--color-hover);
+		background: color-mix(in srgb, var(--color-bg-subtle) 60%, transparent);
 	}
 
 	.table-row-card {
@@ -51,13 +51,8 @@
 			padding: var(--space-md);
 			background: var(--color-bg-surface);
 			border: 1px solid var(--color-border-default);
-			border-radius: var(--radius-lg);
+			border-radius: var(--radius-md);
 			margin-bottom: var(--space-sm);
-			transition: border-color var(--duration-micro) var(--ease-standard);
-		}
-
-		.table-row-card:hover {
-			border-color: var(--color-border-emphasis);
 		}
 	}
 </style>

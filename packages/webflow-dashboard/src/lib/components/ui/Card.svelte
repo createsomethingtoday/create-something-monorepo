@@ -25,47 +25,40 @@
 
 <style>
 	.card {
-		border-radius: var(--radius-lg);
-		transition: all var(--duration-standard) var(--ease-standard);
+		border-radius: var(--radius-md);
+		border: 1px solid var(--color-border-default);
+		background: var(--color-bg-surface);
+		transition:
+			border-color var(--duration-micro) var(--ease-standard),
+			background-color var(--duration-micro) var(--ease-standard);
 	}
 
 	.card-default {
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
+		border-color: var(--color-border-default);
 	}
 
 	.card-elevated {
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		box-shadow: var(--shadow-md);
+		border-color: var(--color-border-emphasis);
 	}
 
 	.card-elevated:hover {
-		transform: translateY(-4px) scale(1.01);
-		box-shadow: var(--shadow-lg);
+		background: var(--color-bg-subtle);
 		border-color: var(--color-border-emphasis);
 	}
 
 	.card-glass {
-		background: color-mix(in srgb, var(--color-bg-surface) 86%, transparent);
-		border: 1px solid color-mix(in srgb, var(--color-border-emphasis) 55%, transparent);
-		backdrop-filter: blur(10px);
-		box-shadow: var(--shadow-md);
+		background: var(--color-bg-surface);
+		border-color: color-mix(in srgb, var(--color-border-emphasis) 65%, var(--color-border-default));
 	}
 
 	.card-glass:hover {
-		background: color-mix(in srgb, var(--color-bg-surface) 92%, transparent);
-		border-color: color-mix(in srgb, var(--color-border-emphasis) 75%, transparent);
+		background: var(--color-bg-subtle);
+		border-color: var(--color-border-emphasis);
 	}
 
 	@media (prefers-reduced-motion: reduce) {
 		.card {
 			transition: none;
-		}
-
-		.card-elevated:hover,
-		.card-glass:hover {
-			transform: none;
 		}
 	}
 </style>

@@ -29,51 +29,52 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 0.25rem;
-		padding: 0.125rem 0.5rem;
+		padding: 0.125rem 0.4rem;
 		font-size: var(--text-caption);
 		font-weight: var(--font-medium);
-		border-radius: var(--radius-md);
-		border: 1px solid transparent;
+		letter-spacing: 0.01em;
+		border-radius: var(--radius-sm);
+		border: 1px solid var(--color-border-default);
 		white-space: nowrap;
+		background: transparent;
+		color: var(--color-fg-secondary);
 	}
 
 	.badge-default {
-		background: var(--color-fg-primary);
-		color: var(--color-bg-pure);
+		color: var(--color-fg-primary);
+		border-color: var(--color-border-emphasis);
 	}
 
 	.badge-secondary {
-		background: var(--color-bg-subtle);
 		color: var(--color-fg-secondary);
 		border-color: var(--color-border-default);
 	}
 
 	.badge-success {
-		background: var(--color-success-muted);
+		background: color-mix(in srgb, var(--color-success-muted) 35%, transparent);
 		color: var(--color-success);
 		border-color: var(--color-success-border);
 	}
 
 	.badge-warning {
-		background: var(--color-warning-muted);
+		background: color-mix(in srgb, var(--color-warning-muted) 35%, transparent);
 		color: var(--color-warning);
 		border-color: var(--color-warning-border);
 	}
 
 	.badge-error {
-		background: var(--color-error-muted);
+		background: color-mix(in srgb, var(--color-error-muted) 35%, transparent);
 		color: var(--color-error);
 		border-color: var(--color-error-border);
 	}
 
 	.badge-info {
-		background: var(--color-info-muted);
+		background: color-mix(in srgb, var(--color-info-muted) 35%, transparent);
 		color: var(--color-info);
 		border-color: var(--color-info-border);
 	}
 
 	.badge-outline {
-		background: transparent;
 		color: var(--color-fg-secondary);
 		border-color: var(--color-border-default);
 	}

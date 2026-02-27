@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { fade, fly } from 'svelte/transition';
+	import { fade } from 'svelte/transition';
 	import { Badge } from './ui';
 	import Sparkline from './Sparkline.svelte';
 	import KineticNumber from './KineticNumber.svelte';
-	import { TrendingUp, TrendingDown, Minus, Trophy, Target, Zap, AlertTriangle, HelpCircle } from 'lucide-svelte';
+	import { HelpCircle } from 'lucide-svelte';
 
 	interface LeaderboardEntry {
 		templateName: string;
@@ -100,19 +100,12 @@
 
 	function getCompetitionIndicator(templateCount: number) {
 		if (templateCount < 10)
-			return { level: 'Low', color: 'success', bars: 3 };
+			return { level: 'Low', color: 'success' };
 		if (templateCount < 30)
-			return { level: 'Medium', color: 'info', bars: 5 };
+			return { level: 'Medium', color: 'info' };
 		if (templateCount < 70)
-			return { level: 'High', color: 'warning', bars: 8 };
-		return { level: 'Very High', color: 'error', bars: 10 };
-	}
-
-	function getRankBadge(index: number) {
-		if (index === 0) return { label: '1st', variant: 'warning' as const };
-		if (index === 1) return { label: '2nd', variant: 'secondary' as const };
-		if (index === 2) return { label: '3rd', variant: 'warning' as const };
-		return { label: `#${index + 1}`, variant: 'default' as const };
+			return { level: 'High', color: 'warning' };
+		return { level: 'Very High', color: 'error' };
 	}
 
 	const userCategories = $derived(() => new Set(userTemplates.map((t) => t.category)));
@@ -182,22 +175,12 @@
 	{#if insights.length > 0}
 		<section class="insights-section">
 			<h3 class="section-title">
-				<Zap size={20} class="section-icon" />
 				Market Insights
 				<span class="insight-count">{insights.length}</span>
 			</h3>
 			<div class="insights-list">
 				{#each sortedInsights() as insight}
 					<div class="insight-item insight-{insight.type}">
-						<div class="insight-icon">
-							{#if insight.type === 'opportunity'}
-								<Target size={16} />
-							{:else if insight.type === 'trend'}
-								<TrendingUp size={16} />
-							{:else}
-								<AlertTriangle size={16} />
-							{/if}
-						</div>
 						<div class="insight-content">
 							<span class="insight-label">{insight.type}</span>
 							<span class="insight-message">{insight.message}</span>
@@ -209,29 +192,23 @@
 	{/if}
 
 	<!-- Top Performers with Sparkline Trends -->
+	{#if leaderboard.length > 0}
 	<section class="leaderboard-section">
 		<h3 class="section-title">
-			<Trophy size={20} class="section-icon trophy" />
 			Top Performers This Month
 			<span class="section-subtitle">Rolling 30-day window</span>
 		</h3>
 		<div class="leaderboard-grid">
 			{#each leaderboard.slice(0, 5) as template, index}
-				{@const badge = getRankBadge(index)}
 				{@const hasTemplateTrend = Array.isArray(template.trendData) && template.trendData.length >= 2}
 				<div
 					class="leaderboard-card"
 					class:user-template={template.isUserTemplate}
 					style="--index: {index}"
-					in:fly={{ y: 20, duration: 400, delay: index * 100 }}
 				>
 					<div class="leaderboard-header">
 						<div class="rank-badge rank-{index + 1}">
-							{#if index === 0}
-								<Trophy size={14} />
-							{:else}
-								#{index + 1}
-							{/if}
+							#{index + 1}
 						</div>
 						{#if template.isUserTemplate}
 							<Badge variant="default">Your Template</Badge>
@@ -262,7 +239,7 @@
 									data={template.trendData ?? []}
 									width={80}
 									height={24}
-									color={index === 0 ? 'var(--color-rank-gold)' : index < 3 ? 'var(--color-success)' : 'var(--color-info)'}
+									color={template.isUserTemplate ? 'var(--color-info)' : 'var(--color-fg-secondary)'}
 									showTrend
 									filled
 								/>
@@ -273,21 +250,19 @@
 						</div>
 					</div>
 					<div class="leaderboard-footer">
-						<Badge variant={badge.variant}>{badge.label} Place</Badge>
-						{#if index === 0}
-							<span class="top-badge">🏆 Top Template</span>
-						{/if}
+						<Badge variant="outline">Rank #{index + 1}</Badge>
 					</div>
 				</div>
 			{/each}
 		</div>
 	</section>
+	{/if}
 
 	<!-- Category Performance Table with Trend Indicators -->
+	{#if categories.length > 0}
 	<section class="categories-section">
 		<div class="categories-header">
 			<h3 class="section-title">
-				<TrendingUp size={20} class="section-icon" />
 				Category Performance (30-Day Window)
 			</h3>
 			<div class="view-toggle">
@@ -407,16 +382,9 @@
 									<span class="revenue">${Math.round(category.avgRevenuePerTemplate).toLocaleString()}</span>
 								</td>
 								<td>
-									<div class="competition-indicator">
-										<div class="competition-bars">
-											{#each Array(10) as _, i}
-												<div class="bar" class:filled={i < competition.bars}></div>
-											{/each}
-										</div>
-										<Badge variant={competition.color === 'success' ? 'success' : competition.color === 'warning' ? 'warning' : competition.color === 'error' ? 'error' : 'info'}>
-											{competition.level}
-										</Badge>
-									</div>
+									<Badge variant={competition.color === 'success' ? 'success' : competition.color === 'warning' ? 'warning' : competition.color === 'error' ? 'error' : 'info'}>
+										{competition.level}
+									</Badge>
 								</td>
 							</tr>
 						{/each}
@@ -442,13 +410,9 @@
 								{#if category.trend && category.changePercent !== undefined}
 									<!-- Trend indicator -->
 									<span class="trend-indicator trend-{category.trend}">
-										{#if category.trend === 'up'}
-											<TrendingUp size={14} />
-										{:else if category.trend === 'down'}
-											<TrendingDown size={14} />
-										{:else}
-											<Minus size={14} />
-										{/if}
+										<span class="trend-glyph">
+											{category.trend === 'up' ? '↑' : category.trend === 'down' ? '↓' : '→'}
+										</span>
 										<span class="trend-percent">{category.changePercent > 0 ? '+' : ''}{category.changePercent}%</span>
 									</span>
 								{:else}
@@ -483,6 +447,7 @@
 			</div>
 		{/if}
 	</section>
+	{/if}
 </div>
 
 <style>
@@ -642,77 +607,53 @@
 
 	.section-title {
 		display: flex;
-		align-items: center;
-		gap: var(--space-sm);
+		align-items: baseline;
+		gap: var(--space-xs);
 		font-size: var(--text-body-lg);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 		margin: 0 0 var(--space-md);
 	}
 
-	.section-title :global(svg) {
-		color: var(--color-info);
-	}
-
 	/* Insights */
 	.insights-list {
 		display: flex;
 		flex-direction: column;
-		gap: var(--space-sm);
+		border-top: 1px solid var(--color-border-default);
 	}
 
 	.insight-item {
 		display: flex;
-		align-items: flex-start;
-		gap: var(--space-sm);
-		padding: var(--space-sm);
-		border-radius: var(--radius-md);
+		padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-md);
+		border-bottom: 1px solid var(--color-border-default);
+		border-left: 2px solid var(--color-border-default);
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
 	}
 
 	.insight-opportunity {
-		background: var(--color-success-muted);
-	}
-
-	.insight-opportunity :global(svg) {
-		color: var(--color-success);
+		border-left-color: var(--color-success-border);
 	}
 
 	.insight-trend {
-		background: var(--color-info-muted);
-	}
-
-	.insight-trend :global(svg) {
-		color: var(--color-info);
+		border-left-color: var(--color-info-border);
 	}
 
 	.insight-warning {
-		background: var(--color-warning-muted);
-	}
-
-	.insight-warning :global(svg) {
-		color: var(--color-warning);
-	}
-
-	.insight-icon {
-		flex-shrink: 0;
-		display: flex;
-		align-items: center;
-		justify-content: center;
+		border-left-color: var(--color-warning-border);
 	}
 
 	.insight-content {
 		display: flex;
 		flex-direction: column;
-		gap: 2px;
+		gap: var(--space-2xs, 2px);
 	}
 
 	.insight-label {
 		font-size: var(--text-caption);
 		font-weight: var(--font-medium);
 		text-transform: capitalize;
-		opacity: 0.8;
+		color: var(--color-fg-muted);
 	}
 
 	.insight-message {
@@ -723,27 +664,8 @@
 	.insight-count {
 		font-size: var(--text-caption);
 		font-weight: var(--font-medium);
-		padding: 2px 8px;
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-full);
 		color: var(--color-fg-muted);
-	}
-
-	.insight-opportunity :global(svg) {
-		color: var(--color-success);
-	}
-
-	.insight-trend :global(svg) {
-		color: var(--color-info);
-	}
-
-	/* Section titles with icons */
-	.section-title :global(.section-icon) {
-		color: var(--color-info);
-	}
-
-	.section-title :global(.section-icon.trophy) {
-		color: var(--color-rank-gold);
+		margin-left: auto;
 	}
 
 	.section-subtitle {
@@ -784,24 +706,18 @@
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-md);
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.leaderboard-card:hover {
-		background: var(--color-hover);
+		background: var(--color-bg-subtle);
 		border-color: var(--color-border-emphasis);
-		transform: scale(1.02);
-	}
-
-	/* Highlight grid pattern */
-	.leaderboard-grid:hover .leaderboard-card:not(:hover) {
-		opacity: 0.6;
 	}
 
 	.leaderboard-card.user-template {
-		background: var(--color-info-muted);
 		border-color: var(--color-info-border);
+		border-left-width: 3px;
 	}
 
 	.leaderboard-header {
@@ -815,32 +731,14 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 2.5rem;
-		height: 2.5rem;
-		border-radius: 50%;
+		min-width: 2.25rem;
+		padding: 0.25rem 0.5rem;
+		border-radius: var(--radius-sm);
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-border-default);
 		font-weight: var(--font-semibold);
 		font-size: var(--text-body-sm);
-	}
-
-	.rank-badge.rank-1 {
-		background: var(--color-rank-gold-muted);
-		color: var(--color-rank-gold);
-	}
-
-	.rank-badge.rank-2 {
-		background: var(--color-bg-subtle);
-		color: var(--color-fg-secondary);
-	}
-
-	.rank-badge.rank-3 {
-		background: var(--color-rank-bronze-muted);
-		color: var(--color-rank-bronze);
-	}
-
-	.rank-badge.rank-4,
-	.rank-badge.rank-5 {
-		background: var(--color-info-muted);
-		color: var(--color-info);
+		font-variant-numeric: tabular-nums;
 	}
 
 	.leaderboard-content {
@@ -867,16 +765,10 @@
 
 	.leaderboard-footer {
 		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: var(--space-sm);
+		align-items: flex-start;
+		justify-content: flex-start;
 		padding-top: var(--space-sm);
 		border-top: 1px solid var(--color-border-default);
-	}
-
-	.top-badge {
-		font-size: var(--text-caption);
-		color: var(--color-rank-gold);
 	}
 
 	/* Template metrics in leaderboard cards */
@@ -927,7 +819,6 @@
 	.trend-unavailable {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
-		font-style: italic;
 	}
 
 	/* Categories */
@@ -949,8 +840,8 @@
 
 	.toggle-btn {
 		padding: var(--space-xs) var(--space-sm);
-		border: none;
-		border-radius: var(--radius-md);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-sm);
 		background: transparent;
 		color: var(--color-fg-muted);
 		font-size: var(--text-body-sm);
@@ -964,15 +855,15 @@
 	}
 
 	.toggle-btn.active {
-		background: var(--color-bg-surface);
+		background: var(--color-bg-subtle);
 		color: var(--color-fg-primary);
-		box-shadow: var(--shadow-sm);
+		border-color: var(--color-border-emphasis);
 	}
 
 	.table-container {
 		overflow-x: auto;
 		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-md);
 	}
 
 	.data-table {
@@ -1016,7 +907,7 @@
 	}
 
 	.data-table tr.user-row {
-		background: var(--color-info-muted);
+		background: color-mix(in srgb, var(--color-info-muted) 35%, transparent);
 	}
 
 	.data-table .center {
@@ -1040,39 +931,18 @@
 
 	.rank-pill {
 		display: inline-flex;
-		padding: 2px 8px;
-		background: var(--color-bg-subtle);
+		padding: 2px 6px;
+		background: transparent;
+		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-caption);
 		font-weight: var(--font-medium);
 		color: var(--color-fg-secondary);
+		font-variant-numeric: tabular-nums;
 	}
 
 	.revenue {
 		font-weight: var(--font-semibold);
-	}
-
-	.competition-indicator {
-		display: flex;
-		align-items: center;
-		gap: var(--space-sm);
-	}
-
-	.competition-bars {
-		display: flex;
-		gap: 2px;
-		flex: 1;
-	}
-
-	.competition-bars .bar {
-		flex: 1;
-		height: 1rem;
-		background: var(--color-bg-subtle);
-		border-radius: 2px;
-	}
-
-	.competition-bars .bar.filled {
-		background: var(--color-fg-muted);
 	}
 
 	/* Grid View */
@@ -1107,12 +977,12 @@
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-md);
 	}
 
 	.category-card.user-category {
-		background: var(--color-info-muted);
 		border-color: var(--color-info-border);
+		border-left-width: 3px;
 	}
 
 	.category-card-header {
@@ -1207,12 +1077,12 @@
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-md);
 	}
 
 	.table-mobile-card.user-category {
-		background: var(--color-info-muted);
 		border-color: var(--color-info-border);
+		border-left-width: 3px;
 	}
 
 	.mobile-card-header {
@@ -1284,27 +1154,26 @@
 		gap: 0.25rem;
 		font-size: var(--text-caption);
 		font-weight: var(--font-medium);
-		padding: 2px 6px;
-		border-radius: var(--radius-sm);
+		padding: 0;
 	}
 
 	.trend-indicator.trend-up {
 		color: var(--color-success);
-		background: var(--color-success-muted);
 	}
 
 	.trend-indicator.trend-down {
 		color: var(--color-error);
-		background: var(--color-error-muted);
 	}
 
 	.trend-indicator.trend-neutral {
 		color: var(--color-fg-muted);
-		background: var(--color-bg-subtle);
 	}
 
-	.trend-indicator :global(svg) {
-		flex-shrink: 0;
+	.trend-glyph {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 0.75rem;
 	}
 
 	/* Category card footer */
@@ -1343,16 +1212,6 @@
 		.category-card,
 		.table-mobile-card {
 			transition: none;
-		}
-
-		.leaderboard-card:hover,
-		.category-card:hover {
-			transform: none;
-		}
-
-		/* Keep opacity transitions - they're subtle */
-		.leaderboard-grid:hover .leaderboard-card:not(:hover) {
-			opacity: 0.8;
 		}
 	}
 </style>

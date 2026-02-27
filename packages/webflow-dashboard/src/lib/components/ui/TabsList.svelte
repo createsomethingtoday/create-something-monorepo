@@ -19,9 +19,10 @@
 	.tabs-list {
 		display: inline-flex;
 		align-items: center;
-		gap: var(--space-xs);
-		padding: var(--space-xs);
-		background: var(--color-bg-subtle);
-		border-radius: var(--radius-md);
+		gap: 0;
+		padding: 0;
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-sm);
+		overflow: hidden;
 	}
 </style>

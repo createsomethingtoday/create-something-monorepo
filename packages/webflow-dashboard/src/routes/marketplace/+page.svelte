@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Header, Button, BackNavigation } from '$lib/components';
 	import MarketplaceInsights from '$lib/components/MarketplaceInsights.svelte';
-	import { Clock, AlertCircle, BarChart3, Info } from 'lucide-svelte';
+	import { AlertCircle } from 'lucide-svelte';
 	import type { PageData } from './$types';
 
 	interface LeaderboardEntry {
@@ -192,23 +192,21 @@
 					<p class="page-subtitle">
 						Weekly marketplace snapshot with 30-day performance data
 					</p>
-					{#if summary.lastUpdated}
-						<div class="sync-info-container">
-							<p class="sync-info">
-								<Clock size={14} />
-								<span class="sync-text">
-									{summary.isFreshnessEstimated ? 'Last expected update:' : 'Last updated:'}
-									<strong>{formatLastUpdated(summary.lastUpdated)}</strong>
+						{#if summary.lastUpdated}
+							<div class="sync-info-container">
+								<p class="sync-info">
+									<span class="sync-text">
+										{summary.isFreshnessEstimated ? 'Last expected update:' : 'Last updated:'}
+										<strong>{formatLastUpdated(summary.lastUpdated)}</strong>
 									{#if summary.nextUpdateDate}
 										<span class="next-update">• Next update: {formatNextUpdate(summary.nextUpdateDate)}</span>
 									{/if}
 								</span>
-							</p>
-							<p class="sync-note">
-								<BarChart3 size={12} />
-								{#if summary.isFreshnessEstimated}
-									Data refreshes weekly on Mondays at 4 PM UTC with a rolling 30-day sales window. Last update timestamp is estimated from the schedule.
-								{:else if summary.freshnessSource === 'airtable-record-created-time'}
+								</p>
+								<p class="sync-note">
+									{#if summary.isFreshnessEstimated}
+										Data refreshes weekly on Mondays at 4 PM UTC with a rolling 30-day sales window. Last update timestamp is estimated from the schedule.
+									{:else if summary.freshnessSource === 'airtable-record-created-time'}
 									Data refreshes weekly on Mondays at 4 PM UTC. Timestamp is inferred from Airtable record creation metadata.
 								{:else}
 									Data refreshes weekly on Mondays at 4 PM UTC with a rolling 30-day sales window.
@@ -226,8 +224,7 @@
 			</div>
 
 			<!-- Data Scope Notice -->
-			<div class="data-scope-notice">
-				<Info size={16} />
+			<aside class="data-scope-notice" aria-label="Data scope">
 				<div class="notice-content">
 					<p class="notice-title">About this data</p>
 					<p class="notice-text">
@@ -237,7 +234,7 @@
 						for templates generating sales.
 					</p>
 				</div>
-			</div>
+			</aside>
 
 			<!-- Content -->
 			{#if isLoading}
@@ -303,6 +300,7 @@
 		font-size: var(--text-body);
 		color: var(--color-fg-secondary);
 		margin: 0 0 var(--space-sm);
+		max-width: 62ch;
 	}
 
 	.sync-info-container {
@@ -343,14 +341,10 @@
 	}
 
 	.sync-note {
-		display: flex;
-		align-items: center;
-		gap: var(--space-xs);
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		margin: 0;
-		padding-left: 22px; /* Align with text above (icon width + gap) */
-		font-style: italic;
+		max-width: 84ch;
 	}
 
 	.sync-warning {
@@ -360,12 +354,7 @@
 		font-size: var(--text-caption);
 		color: var(--color-warning);
 		margin: 0;
-		padding-left: 22px;
-	}
-
-	.sync-note :global(svg) {
-		flex-shrink: 0;
-		color: var(--color-info);
+		max-width: 84ch;
 	}
 
 	.loading-container {
@@ -438,26 +427,18 @@
 	}
 
 	.data-scope-notice {
-		display: flex;
-		align-items: flex-start;
-		gap: var(--space-sm);
-		padding: var(--space-md);
-		background: var(--color-info-muted);
-		border: 1px solid var(--color-info-border);
-		border-radius: var(--radius-lg);
+		padding: var(--space-sm) var(--space-md);
+		border: 1px solid var(--color-border-default);
+		border-left: 3px solid var(--color-border-emphasis);
+		border-radius: var(--radius-md);
 		margin-bottom: var(--space-lg);
-	}
-
-	.data-scope-notice :global(svg) {
-		flex-shrink: 0;
-		color: var(--color-info);
-		margin-top: 2px;
 	}
 
 	.notice-content {
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-xs);
+		max-width: 84ch;
 	}
 
 	.notice-title {
