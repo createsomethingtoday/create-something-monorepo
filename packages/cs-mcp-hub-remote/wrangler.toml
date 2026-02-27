@@ -20,7 +20,7 @@ preview_id = "6356c7663c334a4195243971e117565c"
 [vars]
 # Discovery defaults (used when per-account discovery prefs are not persisted in KV)
 HUB_DISCOVERY_MODE = "compact"
-HUB_DISCOVERY_MAX_PROXY_TOOLS = "10"
+HUB_DISCOVERY_SHARED_PACK = "shared-auth-core"
 
 # Optional. If set, /mcp requires Authorization: Bearer <token>
 # HUB_API_TOKEN = ""
@@ -30,6 +30,8 @@ HUB_DISCOVERY_MAX_PROXY_TOOLS = "10"
 # HUB_ENABLED_BUNDLES = "core,observability"
 # HUB_ENABLED_SERVERS = ""
 # HUB_DISABLED_SERVERS = ""
+# HUB_DISCOVERY_DEFAULT_SERVERS = "composio-toolkit-gmail,composio-toolkit-googledrive"
+# HUB_DISCOVERY_MAX_PROXY_TOOLS = "200"
 # HUB_ACCOUNT_ID = "operator"
 # HUB_SESSION_RESOLVE_URL = "https://id.createsomething.space/v1/mcp/sessions/resolve"
 # HUB_SESSION_RESOLVE_TIMEOUT_MS = "5000"

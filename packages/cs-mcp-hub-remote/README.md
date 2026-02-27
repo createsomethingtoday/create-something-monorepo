@@ -23,6 +23,7 @@ Remote MCP hub that exposes one public endpoint and proxies tools from enabled d
 - `hub_describe_proxy_tool` (schema + downstream route metadata for one visible proxy tool)
 - `hub_execute_proxy_tool` (execute one visible proxy tool by name with args)
 - `hub_policy_status` (active policy/runtime limit settings)
+- `hub_list_discovery_packs` (list named discovery presets)
 - `hub_refresh_connections`
 - `hub_update_state` (`writeCodexConfig` accepted for parity; ignored remotely)
 - `hub_trace_lookup`
@@ -53,6 +54,10 @@ Environment variables:
 - `HUB_ENABLED_BUNDLES` (optional): comma-separated or JSON array (defaults from registry)
 - `HUB_ENABLED_SERVERS` (optional): comma-separated or JSON array
 - `HUB_DISABLED_SERVERS` (optional): comma-separated or JSON array
+- `HUB_DISCOVERY_MODE` (optional): `compact` (default) or `full`
+- `HUB_DISCOVERY_DEFAULT_SERVERS` (optional): comma-separated or JSON array of server names
+- `HUB_DISCOVERY_MAX_PROXY_TOOLS` (optional): positive integer cap; unset/null means no cap
+- `HUB_DISCOVERY_SHARED_PACK` (optional): named default from `config/mcp-hub/discovery-packs.json`
 - `HUB_REFRESH_SECONDS` (optional): cache TTL for downstream tool catalog, default `300`
 - `HUB_CACHE_BUST` (optional): any value change forces runtime refresh
 - `HUB_ACCOUNT_ID` (optional): fallback account ID written to hub telemetry rows
@@ -65,6 +70,12 @@ Environment variables:
 - `HUB_STATE_KV` (recommended binding): stores remote hub enable/disable state so `hub_update_state` persists
 
 Downstream auth variables are read dynamically from each registry server's `env_http_headers` and `bearer_token_env_var` config.
+
+Shared discovery packs:
+
+- `shared-auth-core`: Dropbox, Gmail, Google Drive, Google Sheets, QuickBooks, Slack, YouTube, Zoom
+- List available packs with `hub_list_discovery_packs`
+- Apply one with `hub_set_discovery` by setting `pack`
 
 Account forwarding:
 

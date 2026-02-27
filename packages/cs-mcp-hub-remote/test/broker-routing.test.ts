@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   buildVisibleProxyRoutes,
+  resolveDiscoveryPack,
   searchProxyTools,
 } from '../index.ts';
 
@@ -135,4 +136,21 @@ test('searchProxyTools only searches visible routes', () => {
   });
   assert.equal(serverFiltered.total, 1);
   assert.equal(serverFiltered.tools[0]?.proxyToolName, 'server_a__beta');
+});
+
+test('resolveDiscoveryPack returns normalized shared pack preferences', () => {
+  const runtime = createRuntime();
+  const shared = resolveDiscoveryPack('shared-auth-core', runtime as any);
+
+  assert.ok(shared);
+  assert.equal(shared.id, 'shared-auth-core');
+  assert.equal(shared.preferences.mode, 'compact');
+  assert.equal(shared.preferences.maxProxyTools, null);
+  assert.deepEqual(shared.preferences.activeServers, []);
+});
+
+test('resolveDiscoveryPack returns null for unknown pack ids', () => {
+  const runtime = createRuntime();
+  const unknown = resolveDiscoveryPack('does-not-exist', runtime as any);
+  assert.equal(unknown, null);
 });

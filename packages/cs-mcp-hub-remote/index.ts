@@ -4,6 +4,7 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { CallToolRequestSchema, ListToolsRequestSchema, type Tool } from '@modelcontextprotocol/sdk/types.js';
 
+import discoveryPacksJson from '../../config/mcp-hub/discovery-packs.json';
 import registryJson from '../../config/mcp-hub/registry.json';
 
 type StringMap = Record<string, string>;
@@ -150,6 +151,24 @@ type DiscoveryPreferences = {
   maxProxyTools: number | null;
 };
 
+type DiscoveryPackDefinition = {
+  description?: string;
+  mode?: DiscoveryMode;
+  activeServers?: string[];
+  maxProxyTools?: number | null;
+};
+
+type DiscoveryPackRegistry = {
+  version: 1;
+  packs: Record<string, DiscoveryPackDefinition>;
+};
+
+type ResolvedDiscoveryPack = {
+  id: string;
+  description: string;
+  preferences: DiscoveryPreferences;
+};
+
 type InvocationTrace = {
   requestId: string;
   correlationId: string;
@@ -216,6 +235,7 @@ interface Env {
   HUB_DISCOVERY_MODE?: string;
   HUB_DISCOVERY_DEFAULT_SERVERS?: string;
   HUB_DISCOVERY_MAX_PROXY_TOOLS?: string;
+  HUB_DISCOVERY_SHARED_PACK?: string;
   HUB_DISCOVERY_PAGE_SIZE?: string;
   HUB_RATE_LIMIT_MAX_CALLS_PER_WINDOW?: string;
   HUB_RATE_LIMIT_WINDOW_SECONDS?: string;
@@ -234,6 +254,7 @@ const DEFAULT_REFRESH_SECONDS = 300;
 const HUB_STATE_KV_KEY = 'hub_state_v1';
 
 const registry = registryJson as unknown as McpBundleRegistry;
+const discoveryPackRegistry = discoveryPacksJson as unknown as DiscoveryPackRegistry;
 
 const MANAGEMENT_TOOLS: Tool[] = [
   {
@@ -315,12 +336,22 @@ const MANAGEMENT_TOOLS: Tool[] = [
     },
   },
   {
+    name: 'hub_list_discovery_packs',
+    description: 'List available discovery packs that can be applied with hub_set_discovery.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
     name: 'hub_set_discovery',
     description:
       'Set tool discovery exposure (compact/full), choose active services, and limit visible proxy tools.',
     inputSchema: {
       type: 'object',
       properties: {
+        pack: { type: 'string' },
         mode: { type: 'string', enum: ['compact', 'full'] },
         activeServers: { type: 'array', items: { type: 'string' } },
         maxProxyTools: { type: 'number' },
@@ -1072,21 +1103,69 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         return result;
       }
 
+      if (toolName === 'hub_list_discovery_packs') {
+        const packs = listDiscoveryPacks(runtime);
+        const result = toJsonResult({
+          packs: packs.map((pack) => ({
+            id: pack.id,
+            description: pack.description,
+            discovery: pack.preferences,
+            activeServerCount: pack.preferences.activeServers.length,
+          })),
+        });
+        await recordHubInvocation(env, {
+          accountId,
+          toolName,
+          success: true,
+          durationMs: Date.now() - startedAt,
+          trace,
+          metadata: {
+            type: 'management',
+            packCount: packs.length,
+          },
+        });
+        return result;
+      }
+
       if (toolName === 'hub_set_discovery') {
         const reset = booleanArg(args.reset, false);
+        const packId = stringArg(args.pack);
         let nextPrefs: DiscoveryPreferences;
+        let appliedPack: ResolvedDiscoveryPack | null = null;
         if (reset) {
           nextPrefs = await clearDiscoveryPreferences(accountId, runtime, env);
         } else {
           const current = await getDiscoveryPreferences(accountId, runtime, env);
+          if (packId) {
+            appliedPack = resolveDiscoveryPack(packId, runtime);
+            if (!appliedPack) {
+              const message = `Unknown discovery pack "${packId}".`;
+              const errorResult = toErrorResult(message);
+              await recordHubInvocation(env, {
+                accountId,
+                toolName,
+                success: false,
+                durationMs: Date.now() - startedAt,
+                trace,
+                errorMessage: message,
+                metadata: {
+                  type: 'management',
+                  operation: 'set_discovery',
+                  pack: packId,
+                },
+              });
+              return errorResult;
+            }
+          }
+          const basePrefs = appliedPack?.preferences ?? current;
           nextPrefs = {
-            mode: parseDiscoveryMode(stringArg(args.mode)) ?? current.mode,
+            mode: parseDiscoveryMode(stringArg(args.mode)) ?? basePrefs.mode,
             activeServers: resolveDiscoveryActiveServers(
-              optionalStringArrayArg(args.activeServers, 'activeServers') ?? current.activeServers,
+              optionalStringArrayArg(args.activeServers, 'activeServers') ?? basePrefs.activeServers,
               runtime,
             ),
             maxProxyTools: resolveDiscoveryMaxProxyTools(
-              optionalNumberArg(args.maxProxyTools, 'maxProxyTools') ?? current.maxProxyTools,
+              optionalNumberArg(args.maxProxyTools, 'maxProxyTools') ?? basePrefs.maxProxyTools,
             ),
           };
           await persistDiscoveryPreferences(accountId, nextPrefs, env);
@@ -1101,6 +1180,12 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
 
         const result = toJsonResult({
           discovery: nextPrefs,
+          appliedPack: appliedPack
+            ? {
+                id: appliedPack.id,
+                description: appliedPack.description,
+              }
+            : null,
           visibleProxyToolCount: visibleTools.length,
           totalProxyToolCount: runtime.proxies.toolDefinitions.length,
           sampleVisibleProxyTools: visibleTools.slice(0, 25).map((tool) => tool.name),
@@ -1118,6 +1203,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
             activeServers: nextPrefs.activeServers,
             maxProxyTools: nextPrefs.maxProxyTools,
             reset,
+            pack: appliedPack?.id ?? null,
             visibleProxyToolCount: visibleTools.length,
           },
         });
@@ -2101,15 +2187,22 @@ async function getDiscoveryPreferences(
 }
 
 function buildDefaultDiscoveryPreferences(runtime: HubRuntime, env: Env): DiscoveryPreferences {
+  const sharedPackId = readEnvString(env, 'HUB_DISCOVERY_SHARED_PACK');
+  const sharedPack = sharedPackId ? resolveDiscoveryPack(sharedPackId, runtime) : null;
+  const modeFromEnv = parseDiscoveryMode(readEnvString(env, 'HUB_DISCOVERY_MODE'));
+  const activeServersFromEnv = parseList(readEnvString(env, 'HUB_DISCOVERY_DEFAULT_SERVERS'));
+  const maxProxyToolsRaw = readEnvString(env, 'HUB_DISCOVERY_MAX_PROXY_TOOLS');
+  const maxProxyToolsFromEnv = maxProxyToolsRaw !== undefined
+    ? resolveDiscoveryMaxProxyTools(parsePositiveInt(maxProxyToolsRaw, 0))
+    : undefined;
+
   return normalizeDiscoveryPreferences({
-    mode: parseDiscoveryMode(readEnvString(env, 'HUB_DISCOVERY_MODE')) ?? DEFAULT_DISCOVERY_MODE,
+    mode: modeFromEnv ?? sharedPack?.preferences.mode ?? DEFAULT_DISCOVERY_MODE,
     activeServers: resolveDiscoveryActiveServers(
-      parseList(readEnvString(env, 'HUB_DISCOVERY_DEFAULT_SERVERS')) ?? [],
+      activeServersFromEnv ?? sharedPack?.preferences.activeServers ?? [],
       runtime,
     ),
-    maxProxyTools: resolveDiscoveryMaxProxyTools(
-      parsePositiveInt(readEnvString(env, 'HUB_DISCOVERY_MAX_PROXY_TOOLS'), 0),
-    ),
+    maxProxyTools: maxProxyToolsFromEnv ?? sharedPack?.preferences.maxProxyTools ?? null,
   }, runtime);
 }
 
@@ -2177,6 +2270,44 @@ function resolveDiscoveryMaxProxyTools(value: number | null): number | null {
 function resolveDiscoveryPageSize(env: Env): number {
   const parsed = parsePositiveInt(readEnvString(env, 'HUB_DISCOVERY_PAGE_SIZE'), DEFAULT_DISCOVERY_PAGE_SIZE);
   return Math.min(Math.max(parsed, 1), MAX_DISCOVERY_PAGE_SIZE);
+}
+
+function listDiscoveryPacks(runtime: HubRuntime): ResolvedDiscoveryPack[] {
+  return Object.entries(discoveryPackRegistry.packs ?? {})
+    .map(([packId, definition]) => resolveDiscoveryPackDefinition(packId, definition, runtime))
+    .filter((pack): pack is ResolvedDiscoveryPack => pack !== null)
+    .sort((a, b) => a.id.localeCompare(b.id));
+}
+
+export function resolveDiscoveryPack(packId: string, runtime: HubRuntime): ResolvedDiscoveryPack | null {
+  const key = packId.trim();
+  if (!key) return null;
+  const definition = discoveryPackRegistry.packs?.[key];
+  if (!definition) return null;
+  return resolveDiscoveryPackDefinition(key, definition, runtime);
+}
+
+function resolveDiscoveryPackDefinition(
+  packId: string,
+  definition: DiscoveryPackDefinition | undefined,
+  runtime: HubRuntime,
+): ResolvedDiscoveryPack | null {
+  if (!definition) return null;
+  const mode = parseDiscoveryMode(typeof definition.mode === 'string' ? definition.mode : null) ?? DEFAULT_DISCOVERY_MODE;
+  const activeServers = parseStateStringArray(definition.activeServers);
+  const maxProxyTools = resolveDiscoveryMaxProxyTools(
+    typeof definition.maxProxyTools === 'number' ? definition.maxProxyTools : null,
+  );
+
+  return {
+    id: packId,
+    description: typeof definition.description === 'string' ? definition.description : '',
+    preferences: normalizeDiscoveryPreferences({
+      mode,
+      activeServers,
+      maxProxyTools,
+    }, runtime),
+  };
 }
 
 function extractListCursor(request: unknown): string | null {

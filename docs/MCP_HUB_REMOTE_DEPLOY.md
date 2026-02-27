@@ -43,6 +43,10 @@ Optional runtime selection:
 - `HUB_ENABLED_BUNDLES` (example: `core,observability,halfdozen-observability`)
 - `HUB_ENABLED_SERVERS` (example: `notion-halfdozen-create-something`)
 - `HUB_DISABLED_SERVERS`
+- `HUB_DISCOVERY_MODE` (`compact` or `full`)
+- `HUB_DISCOVERY_DEFAULT_SERVERS` (comma list / JSON array override)
+- `HUB_DISCOVERY_MAX_PROXY_TOOLS` (positive int cap; unset for uncapped)
+- `HUB_DISCOVERY_SHARED_PACK` (named default from `config/mcp-hub/discovery-packs.json`, for example `shared-auth-core`)
 - `HUB_REFRESH_SECONDS`
 - `HUB_ACCOUNT_ID` (fallback account id for hub telemetry writes)
 - `HUB_SESSION_RESOLVE_URL` (identity-worker resolver endpoint, e.g. `https://id.createsomething.space/v1/mcp/sessions/resolve`)
