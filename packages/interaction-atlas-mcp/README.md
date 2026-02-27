@@ -114,6 +114,22 @@ For incident response, set `MCP_TOOL_ACCESS_MODE` in Worker env/secrets:
 
 This control applies at server registration time through `@create-something/mcp-core` policy constraints (`mcpToolAccessMode`) and is intended as a fast containment lever.
 
+Quick ops commands (run from `worker/`):
+
+```bash
+# Full stop
+printf 'off' | wrangler secret put MCP_TOOL_ACCESS_MODE --config wrangler.toml
+wrangler deploy --config wrangler.toml
+
+# Containment without full outage
+printf 'read_only' | wrangler secret put MCP_TOOL_ACCESS_MODE --config wrangler.toml
+wrangler deploy --config wrangler.toml
+
+# Restore normal
+printf 'normal' | wrangler secret put MCP_TOOL_ACCESS_MODE --config wrangler.toml
+wrangler deploy --config wrangler.toml
+```
+
 ## Ops Handoff (Role Test Checklist)
 
 Use this checklist after key rotation or environment changes.
