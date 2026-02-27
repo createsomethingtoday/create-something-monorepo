@@ -57,6 +57,7 @@ import {
   JudgmentEngineRolloutSetSchema,
   JudgmentSecurityStatusGetSchema,
   JudgmentSecurityAccessSetSchema,
+  JudgmentSecurityIncidentResolveSchema,
   JudgmentPolicyGetSchema,
   JudgmentPolicySaveSchema,
   AutomationContractGetSchema,
@@ -101,8 +102,10 @@ import { getEngineRollout, setEngineRollout } from '../storage/rollout.js';
 import { getEngineMetricsSummary, recordEngineEvent } from '../storage/engine-events.js';
 import {
   evaluateAbusePatternAndMitigate,
+  getSecurityIncidentById,
   getAccountAccess,
   listRecentSecurityIncidents,
+  resolveSecurityIncident,
   setAccountAccess,
 } from '../storage/security.js';
 import {
@@ -410,12 +413,16 @@ function abuseMitigationConfigFromContext(ctx: { metadata: Record<string, unknow
   windowSeconds: number;
   blockThreshold: number;
   distinctToolThreshold: number;
+  responseMode: 'auto_off' | 'review';
 } {
+  const responseModeRaw = getStringMetadata(ctx, 'ABUSE_RESPONSE_MODE');
+  const responseMode = responseModeRaw?.toLowerCase() === 'review' ? 'review' : 'auto_off';
   return {
     enabled: boolMetadata(ctx, 'ABUSE_GUARD_ENABLED', true),
     windowSeconds: Math.max(60, intMetadata(ctx, 'ABUSE_WINDOW_SECONDS', 300)),
     blockThreshold: Math.max(2, intMetadata(ctx, 'ABUSE_BLOCK_THRESHOLD', 8)),
     distinctToolThreshold: Math.max(1, intMetadata(ctx, 'ABUSE_DISTINCT_TOOLS_THRESHOLD', 2)),
+    responseMode,
   };
 }
 
