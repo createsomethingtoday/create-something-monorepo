@@ -4,7 +4,8 @@
     AnimatedGridPattern,
     BlurFade,
     ShimmerButton,
-    BorderBeam
+    BorderBeam,
+    Marquee
   } from '@create-something/canon/magicui';
   import HubMcpFlow from '$lib/components/HubMcpFlow.svelte';
 
@@ -14,6 +15,17 @@
     clientFacingLabel: 'Skills + MCP',
     technicalLabel: 'MCP + Skills'
   };
+
+  const stackItems = [
+    { name: 'Model Context Protocol', type: 'Connectivity' },
+    { name: 'Cloudflare Workers', type: 'Compute' },
+    { name: 'Cloudflare D1', type: 'Persistence' },
+    { name: 'Anthropic Claude', type: 'Intelligence' },
+    { name: 'Durable Objects', type: 'State Coordination' },
+    { name: 'SvelteKit', type: 'Client Runtime' },
+    { name: 'TypeScript', type: 'Safety' },
+    { name: 'Notion API', type: 'Operating Interface' }
+  ];
 
   const services = [
     {
@@ -131,6 +143,30 @@
       </div>
     </BlurFade>
   </div>
+</section>
+
+<!-- Operating Stack -->
+<section class="stack-section">
+  <div class="section-container">
+    <BlurFade delay={0.4}>
+      <h2 class="section-heading-sm">The Reliability Stack</h2>
+    </BlurFade>
+  </div>
+
+  <BlurFade delay={0.5}>
+    <div class="marquee-wrapper">
+      <div class="marquee-fade-left"></div>
+      <div class="marquee-fade-right"></div>
+      <Marquee pauseOnHover={true} duration={40} gap={24} class="stack-marquee">
+        {#each stackItems as item}
+          <div class="stack-card">
+            <span class="stack-type">{item.type}</span>
+            <span class="stack-name">{item.name}</span>
+          </div>
+        {/each}
+      </Marquee>
+    </div>
+  </BlurFade>
 </section>
 
 <!-- The Retainer -->
@@ -376,6 +412,83 @@
     width: 100%;
     display: flex;
     justify-content: center;
+  }
+
+  /* Stack Marquee */
+  .stack-section {
+    padding: var(--space-8, 3rem) 0 var(--section-padding, 6rem);
+    overflow: hidden;
+  }
+
+  .section-heading-sm {
+    font-size: var(--text-body-lg);
+    font-weight: var(--font-semibold);
+    color: var(--color-fg-muted);
+    text-align: center;
+    margin-bottom: var(--space-6, 2rem);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  .marquee-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .marquee-fade-left,
+  .marquee-fade-right {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 15%;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .marquee-fade-left {
+    left: 0;
+    background: linear-gradient(to right, var(--color-bg-pure, #000000), transparent);
+  }
+
+  .marquee-fade-right {
+    right: 0;
+    background: linear-gradient(to left, var(--color-bg-pure, #000000), transparent);
+  }
+
+  .stack-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: var(--space-4, 1rem) var(--space-6, 2rem);
+    border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.05));
+    border-radius: var(--radius-lg, 12px);
+    background: rgba(255, 255, 255, 0.02);
+    box-shadow: var(--glass-shine-soft);
+    min-width: 260px;
+    height: 80px;
+    transition: border-color var(--duration-standard) var(--ease-standard);
+  }
+
+  .stack-card:hover {
+    border-color: rgba(96, 165, 250, 0.4);
+    background: rgba(96, 165, 250, 0.04);
+  }
+
+  .stack-type {
+    font-size: 0.65rem;
+    font-weight: var(--font-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(96, 165, 250, 0.8);
+    margin-bottom: 0.25rem;
+  }
+
+  .stack-name {
+    font-size: var(--text-body);
+    font-weight: var(--font-medium);
+    color: var(--color-fg-primary);
   }
 
   /* Retainer Card */
