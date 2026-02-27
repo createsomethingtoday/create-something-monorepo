@@ -104,6 +104,16 @@ Supported roles:
 
 `admin` and `operator` can mutate policy/version/control-plane state. `auditor` and `readonly` are read-only.
 
+### Reactive MCP Tool Access Kill Switch
+
+For incident response, set `MCP_TOOL_ACCESS_MODE` in Worker env/secrets:
+
+- `normal` (default): standard behavior.
+- `read_only`: only read-only MCP tools are exposed; all write tools are hidden.
+- `off`: all MCP tools are hidden (tool calls fail as unknown tool).
+
+This control applies at server registration time through `@create-something/mcp-core` policy constraints (`mcpToolAccessMode`) and is intended as a fast containment lever.
+
 ## Ops Handoff (Role Test Checklist)
 
 Use this checklist after key rotation or environment changes.

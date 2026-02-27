@@ -22,6 +22,23 @@ import {
 import { WORKFLOW_DEFINITIONS } from '../workflows/registry.js';
 import { getBuiltWorkflowTemplate, getWorkflowMermaid, listWorkflowSummaries, validateBuiltWorkflow } from '../workflows/index.js';
 
+function sanitizedMetadata(metadata: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(metadata)) {
+    const lower = key.toLowerCase();
+    if (lower.includes('api_key') || lower.includes('token') || lower.includes('secret') || key.startsWith('__')) {
+      out[key] = '[redacted]';
+      continue;
+    }
+    if (key === 'db') {
+      out[key] = '[redacted]';
+      continue;
+    }
+    out[key] = value;
+  }
+  return out;
+}
+
 export function registerResources(server: ScopedMcpServer): void {
   server.resource(
     'account',
@@ -37,7 +54,7 @@ export function registerResources(server: ScopedMcpServer): void {
           teamId: ctx.teamId,
           scopes: ctx.policy.scopes,
           readOnly: ctx.policy.readOnly,
-          metadata: ctx.metadata,
+          metadata: sanitizedMetadata(ctx.metadata),
         }, null, 2),
       }],
     }),

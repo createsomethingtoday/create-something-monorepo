@@ -6,55 +6,35 @@ export const COMPILER_VERSION = 'constraint-os-polar-compiler-v1';
 const RUNTIME_POLICY_SOURCE = `
 # Constraint OS runtime interpreter policy.
 
-has_tool_cond(rule_id) if cond_tool(rule_id, _);
-has_write_cond(rule_id) if cond_has_write_intent(rule_id, _);
-has_human_review_cond(rule_id) if cond_has_human_review_step(rule_id, _);
-has_introspection_cond(rule_id) if cond_introspection_ok(rule_id, _);
-has_account_cond(rule_id) if cond_account_id(rule_id, _);
+tool_ok(rule_id) if req_tool(rule_id, false);
+tool_ok(rule_id) if req_tool(rule_id, true) and input_tool_name(tool_name) and cond_tool(rule_id, tool_name);
 
-tool_ok(rule_id, tool_name) if not has_tool_cond(rule_id);
-tool_ok(rule_id, tool_name) if cond_tool(rule_id, tool_name);
+write_ok(rule_id) if req_has_write_intent(rule_id, false);
+write_ok(rule_id) if
+  req_has_write_intent(rule_id, true) and input_has_write_intent(has_write_intent) and cond_has_write_intent(rule_id, has_write_intent);
 
-write_ok(rule_id, has_write_intent) if not has_write_cond(rule_id);
-write_ok(rule_id, has_write_intent) if cond_has_write_intent(rule_id, has_write_intent);
+human_review_ok(rule_id) if req_has_human_review_step(rule_id, false);
+human_review_ok(rule_id) if
+  req_has_human_review_step(rule_id, true) and
+  input_has_human_review_step(has_human_review_step) and
+  cond_has_human_review_step(rule_id, has_human_review_step);
 
-human_review_ok(rule_id, has_human_review_step) if not has_human_review_cond(rule_id);
-human_review_ok(rule_id, has_human_review_step) if cond_has_human_review_step(rule_id, has_human_review_step);
+introspection_ok_cond(rule_id) if req_introspection_ok(rule_id, false);
+introspection_ok_cond(rule_id) if
+  req_introspection_ok(rule_id, true) and
+  input_introspection_ok(introspection_ok) and
+  cond_introspection_ok(rule_id, introspection_ok);
 
-introspection_ok_cond(rule_id, introspection_ok) if not has_introspection_cond(rule_id);
-introspection_ok_cond(rule_id, introspection_ok) if cond_introspection_ok(rule_id, introspection_ok);
+account_ok(rule_id) if req_account_id(rule_id, false);
+account_ok(rule_id) if req_account_id(rule_id, true) and input_account_id(account_id) and cond_account_id(rule_id, account_id);
 
-account_ok(rule_id, account_id) if not has_account_cond(rule_id);
-account_ok(rule_id, account_id) if cond_account_id(rule_id, account_id);
-
-rule_matches(rule_id, priority, decision, reason, account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok) if
+rule_matches(rule_id, priority, decision, reason) if
   rule(rule_id, priority, decision, reason) and
-  tool_ok(rule_id, tool_name) and
-  write_ok(rule_id, has_write_intent) and
-  human_review_ok(rule_id, has_human_review_step) and
-  introspection_ok_cond(rule_id, introspection_ok) and
-  account_ok(rule_id, account_id);
-
-has_better_match(priority, account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok) if
-  rule_matches(_, p2, _, _, account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok) and
-  p2 < priority;
-
-best_rule(rule_id, priority, decision, reason, account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok) if
-  rule_matches(rule_id, priority, decision, reason, account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok) and
-  not has_better_match(priority, account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok);
-
-hard_guard(read_only, has_write_intent) if read_only = true and has_write_intent = true;
-
-decision("block", "hard_guard_readonly_write", 0, "Read-only account cannot execute write-intent workflow path.", account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok, read_only) if
-  hard_guard(read_only, has_write_intent);
-
-decision(outcome, rule_id, priority, reason, account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok, read_only) if
-  not hard_guard(read_only, has_write_intent) and
-  best_rule(rule_id, priority, outcome, reason, account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok);
-
-decision("allow", "policy_default_allow", 999999, "No policy rule matched; default allow.", account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok, read_only) if
-  not hard_guard(read_only, has_write_intent) and
-  not best_rule(_, _, _, _, account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok);
+  tool_ok(rule_id) and
+  write_ok(rule_id) and
+  human_review_ok(rule_id) and
+  introspection_ok_cond(rule_id) and
+  account_ok(rule_id);
 `;
 
 function sha256(input: string): string {
@@ -78,10 +58,26 @@ function ruleFacts(policy: ConstraintPolicy): { lines: string[]; contextFacts: C
   const contextFacts: ContextFact[] = [];
 
   for (const rule of policy.rules) {
+    const hasToolCond = Boolean(rule.when.toolNames && rule.when.toolNames.length > 0);
+    const hasWriteCond = typeof rule.when.hasWriteIntent === 'boolean';
+    const hasHumanReviewCond = typeof rule.when.hasHumanReviewStep === 'boolean';
+    const hasIntrospectionCond = typeof rule.when.introspectionOk === 'boolean';
+    const hasAccountCond = Boolean(rule.when.accountIds && rule.when.accountIds.length > 0);
+
     lines.push(
       `rule(${quotePolar(rule.id)}, ${Math.floor(rule.priority)}, ${quotePolar(rule.then.decision)}, ${quotePolar(rule.then.reason)});`,
     );
     contextFacts.push(['rule', rule.id, Math.floor(rule.priority), rule.then.decision, rule.then.reason]);
+    lines.push(`req_tool(${quotePolar(rule.id)}, ${String(hasToolCond)});`);
+    contextFacts.push(['req_tool', rule.id, hasToolCond]);
+    lines.push(`req_has_write_intent(${quotePolar(rule.id)}, ${String(hasWriteCond)});`);
+    contextFacts.push(['req_has_write_intent', rule.id, hasWriteCond]);
+    lines.push(`req_has_human_review_step(${quotePolar(rule.id)}, ${String(hasHumanReviewCond)});`);
+    contextFacts.push(['req_has_human_review_step', rule.id, hasHumanReviewCond]);
+    lines.push(`req_introspection_ok(${quotePolar(rule.id)}, ${String(hasIntrospectionCond)});`);
+    contextFacts.push(['req_introspection_ok', rule.id, hasIntrospectionCond]);
+    lines.push(`req_account_id(${quotePolar(rule.id)}, ${String(hasAccountCond)});`);
+    contextFacts.push(['req_account_id', rule.id, hasAccountCond]);
 
     if (rule.when.toolNames && rule.when.toolNames.length > 0) {
       const tools = [...rule.when.toolNames].sort();

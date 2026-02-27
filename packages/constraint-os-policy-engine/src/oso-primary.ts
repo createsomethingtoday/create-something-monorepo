@@ -1,5 +1,4 @@
 import { Oso, typedVar } from 'oso-cloud';
-import { getRuntimePolicySource } from './compile.js';
 import type {
   CompiledConstraintPolicy,
   ConstraintEvaluationInput,
@@ -9,7 +8,7 @@ import type {
 
 type CachedClient = {
   client: Oso;
-  runtimePolicyHash: string | null;
+  loadedPolicyHash: string | null;
 };
 
 const CLIENT_CACHE = new Map<string, CachedClient>();
@@ -38,7 +37,7 @@ function buildClient(config: OsoPrimaryConfig): CachedClient {
     fetchTimeoutMillis: config.fetchTimeoutMillis,
   });
 
-  const created: CachedClient = { client, runtimePolicyHash: null };
+  const created: CachedClient = { client, loadedPolicyHash: null };
   CLIENT_CACHE.set(key, created);
   return created;
 }
@@ -49,9 +48,9 @@ async function ensureRuntimePolicy(
   config: OsoPrimaryConfig,
 ): Promise<void> {
   if (!config.bootstrapPolicy) return;
-  if (cached.runtimePolicyHash === compiled.runtimePolicyHash) return;
-  await cached.client.policy(getRuntimePolicySource());
-  cached.runtimePolicyHash = compiled.runtimePolicyHash;
+  if (cached.loadedPolicyHash === compiled.policyHash) return;
+  await cached.client.policy(compiled.policyPolar);
+  cached.loadedPolicyHash = compiled.policyHash;
 }
 
 export async function evaluateConstraintPolicyPrimary(
@@ -60,6 +59,21 @@ export async function evaluateConstraintPolicyPrimary(
   config: OsoPrimaryConfig,
 ): Promise<ConstraintEvaluationResult> {
   const started = Date.now();
+
+  if (input.readOnly && input.hasWriteIntent) {
+    return {
+      decision: 'block',
+      reason: 'Read-only account cannot execute write-intent workflow path.',
+      matchedRuleIds: ['hard_guard_readonly_write'],
+      engine: 'polar_v1',
+      policyHash: compiled.policyHash,
+      compilerVersion: compiled.compilerVersion,
+      evaluationPath: 'primary',
+      fallbackReason: null,
+      latencyMs: Date.now() - started,
+    };
+  }
+
   const cached = buildClient(config);
   await ensureRuntimePolicy(cached, compiled, config);
 
@@ -68,30 +82,25 @@ export async function evaluateConstraintPolicyPrimary(
   const priorityVar = typedVar('Integer');
   const reasonVar = typedVar('String');
 
-  const queryArgs = [
-    'decision',
-    decisionVar,
-    ruleIdVar,
-    priorityVar,
-    reasonVar,
-    input.accountId,
-    input.toolName,
-    Boolean(input.hasWriteIntent),
-    Boolean(input.hasHumanReviewStep),
-    Boolean(input.introspectionOk),
-    Boolean(input.readOnly),
-  ] as any;
+  const queryArgs = ['rule_matches', ruleIdVar, priorityVar, decisionVar, reasonVar] as any;
+  const contextFacts = [
+    ['input_account_id', input.accountId],
+    ['input_tool_name', input.toolName],
+    ['input_has_write_intent', Boolean(input.hasWriteIntent)],
+    ['input_has_human_review_step', Boolean(input.hasHumanReviewStep)],
+    ['input_introspection_ok', Boolean(input.introspectionOk)],
+  ];
 
   const rowsRaw = (await cached.client
     .buildQuery(queryArgs)
-    .withContextFacts(compiled.contextFacts as any)
-    .evaluate([decisionVar, ruleIdVar, priorityVar, reasonVar])) as Array<[string, string, string, string]>;
+    .withContextFacts(contextFacts as any)
+    .evaluate([ruleIdVar, priorityVar, decisionVar, reasonVar])) as Array<[string, string, string, string]>;
 
   const rows = rowsRaw
-    .map(([decision, ruleId, priority, reason]) => ({
-      decision,
+    .map(([ruleId, priority, decision, reason]) => ({
       ruleId,
       priority: Number(priority),
+      decision,
       reason,
     }))
     .filter((row) => row.decision === 'allow' || row.decision === 'require_human_review' || row.decision === 'block')

@@ -10,6 +10,7 @@ account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 # OSO_API_KEY = ""
 # OSO_BOOTSTRAP_POLICY = "true"
 # ENGINE_FALLBACK_ENABLED = "true"
+# MCP_TOOL_ACCESS_MODE = "normal" # normal | read_only | off
 
 # Visualization/version persistence
 [[d1_databases]]

@@ -16,7 +16,7 @@ import {
   getPattern,
   searchPatterns,
 } from '@quietloudlab/ai-interaction-atlas';
-import { initBraintrust, getBraintrustLogger } from '@create-something/observability/braintrust';
+import { initBraintrust, getBraintrustLogger, flush as flushBraintrust } from '@create-something/observability/braintrust';
 
 import {
   getBuiltWorkflowTemplate,
@@ -245,7 +245,8 @@ function getJudgmentBraintrustLogger(ctx: { metadata: Record<string, unknown> })
     process.env.BRAINTRUST_ENABLED;
   if (!boolString(enabledRaw, true)) return null;
 
-  const apiKey = process.env.BRAINTRUST_API_KEY;
+  const contextApiKey = getStringMetadata(ctx, '__braintrustApiKey');
+  const apiKey = contextApiKey ?? process.env.BRAINTRUST_API_KEY;
   if (!apiKey) return null;
 
   const projectName =
@@ -346,6 +347,7 @@ async function emitJudgmentDecisionTrace(
         type: 'eval',
       },
     );
+    await flushBraintrust();
   } catch (error) {
     console.warn(
       `[judgment] braintrust emit failed for ${event.toolName}:`,

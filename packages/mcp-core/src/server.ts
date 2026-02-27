@@ -270,16 +270,22 @@ export class ScopedMcpServer<TEnv = unknown> {
     });
 
     const insight = this.insight;
+    const toolAccessMode = resolveToolAccessMode(ctx);
 
     // --- Tools (Automation) ---
     for (const def of this.toolDefs) {
+      // Policy: emergency tool-access kill switch
+      if (toolAccessMode === 'off') {
+        continue;
+      }
+
       // Policy: allowedTools filter
       if (ctx.policy.allowedTools && !ctx.policy.allowedTools.includes(def.name)) {
         continue;
       }
 
       // Policy: readOnly enforcement — skip write tools
-      if (ctx.policy.readOnly && !def.readOnly) {
+      if ((ctx.policy.readOnly || toolAccessMode === 'read_only') && !def.readOnly) {
         continue;
       }
 
@@ -476,6 +482,17 @@ export class ScopedMcpServer<TEnv = unknown> {
       );
     }
   }
+}
+
+type ToolAccessMode = 'normal' | 'read_only' | 'off';
+
+function resolveToolAccessMode(ctx: AccountContext): ToolAccessMode {
+  const raw = ctx.policy.constraints?.mcpToolAccessMode;
+  if (typeof raw !== 'string') return 'normal';
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === 'off' || normalized === 'deny_all' || normalized === 'disabled') return 'off';
+  if (normalized === 'read_only' || normalized === 'read-only' || normalized === 'readonly') return 'read_only';
+  return 'normal';
 }
 
 // =============================================================================

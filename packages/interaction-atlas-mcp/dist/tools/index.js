@@ -8,7 +8,7 @@
  */
 import { jsonContent, errorContent } from '@create-something/mcp-core';
 import { getAtlasStats, getPattern, searchPatterns, } from '@quietloudlab/ai-interaction-atlas';
-import { initBraintrust, getBraintrustLogger } from '@create-something/observability/braintrust';
+import { initBraintrust, getBraintrustLogger, flush as flushBraintrust } from '@create-something/observability/braintrust';
 import { getBuiltWorkflowTemplate, getWorkflowMermaid, listWorkflowSummaries, validateBuiltWorkflow, } from '../workflows/index.js';
 import { buildWorkflowTemplate } from '../workflows/build.js';
 import { workflowTemplateToMermaid } from '../workflows/mermaid.js';
@@ -142,7 +142,8 @@ function getJudgmentBraintrustLogger(ctx) {
         process.env.BRAINTRUST_ENABLED;
     if (!boolString(enabledRaw, true))
         return null;
-    const apiKey = process.env.BRAINTRUST_API_KEY;
+    const contextApiKey = getStringMetadata(ctx, '__braintrustApiKey');
+    const apiKey = contextApiKey ?? process.env.BRAINTRUST_API_KEY;
     if (!apiKey)
         return null;
     const projectName = getStringMetadata(ctx, 'BRAINTRUST_PROJECT_NAME') ??
@@ -215,6 +216,7 @@ async function emitJudgmentDecisionTrace(ctx, event) {
             name: `judgment:interaction-atlas-mcp:${event.toolName}`,
             type: 'eval',
         });
+        await flushBraintrust();
     }
     catch (error) {
         console.warn(`[judgment] braintrust emit failed for ${event.toolName}:`, error instanceof Error ? error.message : String(error));

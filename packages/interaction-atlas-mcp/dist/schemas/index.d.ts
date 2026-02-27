@@ -832,7 +832,7 @@ export declare const AutomationContractUpsertSchema: z.ZodObject<{
     }>>;
 }, "strip", z.ZodTypeAny, {
     name: string;
-    status: "archived" | "enabled" | "disabled" | "paused";
+    status: "disabled" | "archived" | "enabled" | "paused";
     policy_version_id: string;
     automation_id: string;
     owner_type: "user" | "service";
@@ -863,7 +863,7 @@ export declare const AutomationContractUpsertSchema: z.ZodObject<{
     approval_mode: "never" | "untrusted" | "on-failure" | "on-request";
     trigger_type: "schedule" | "event" | "manual";
     mcp_profile_id: string;
-    status?: "archived" | "enabled" | "disabled" | "paused" | undefined;
+    status?: "disabled" | "archived" | "enabled" | "paused" | undefined;
     owner_type?: "user" | "service" | undefined;
     trigger_cron?: string | undefined;
     trigger_timezone?: string | undefined;

@@ -65,6 +65,16 @@ function fallbackCorrelationId() {
     const rand = Math.random().toString(36).slice(2, 10);
     return `corr_${ts}_${rand}`;
 }
+function normalizeToolAccessMode(raw) {
+    if (!raw)
+        return 'normal';
+    const normalized = raw.trim().toLowerCase();
+    if (normalized === 'off' || normalized === 'deny_all' || normalized === 'disabled')
+        return 'off';
+    if (normalized === 'read_only' || normalized === 'read-only' || normalized === 'readonly')
+        return 'read_only';
+    return 'normal';
+}
 function extractCorrelationId(request) {
     const direct = firstHeader(request, ['x-correlation-id', 'x-request-id', 'cf-ray']);
     if (direct)
@@ -92,10 +102,12 @@ export class InteractionAtlasAuthProvider {
         const engineFallbackEnabled = env?.ENGINE_FALLBACK_ENABLED ?? process.env.ENGINE_FALLBACK_ENABLED ?? 'true';
         const osoFetchTimeoutRaw = env?.OSO_FETCH_TIMEOUT_MS ?? process.env.OSO_FETCH_TIMEOUT_MS;
         const osoFetchTimeout = osoFetchTimeoutRaw ? Number(osoFetchTimeoutRaw) : undefined;
+        const mcpToolAccessMode = normalizeToolAccessMode(env?.MCP_TOOL_ACCESS_MODE ?? process.env.MCP_TOOL_ACCESS_MODE);
         const correlationId = extractCorrelationId(request);
         const braintrustProjectName = env?.BRAINTRUST_PROJECT_NAME ?? process.env.BRAINTRUST_PROJECT_NAME ?? process.env.BRAINTRUST_PROJECT ?? 'CREATE SOMETHING';
         const braintrustProjectId = env?.BRAINTRUST_PROJECT_ID ?? process.env.BRAINTRUST_PROJECT_ID;
         const braintrustEnabled = env?.BRAINTRUST_ENABLED ?? process.env.BRAINTRUST_ENABLED;
+        const braintrustApiKey = env?.BRAINTRUST_API_KEY ?? process.env.BRAINTRUST_API_KEY;
         // Public, read-only access (used for the workflow viewer).
         if (!apiKey) {
             return {
@@ -113,9 +125,11 @@ export class InteractionAtlasAuthProvider {
                     OSO_BOOTSTRAP_POLICY: osoBootstrapPolicy,
                     ENGINE_FALLBACK_ENABLED: engineFallbackEnabled,
                     OSO_FETCH_TIMEOUT_MS: Number.isFinite(osoFetchTimeout ?? NaN) ? osoFetchTimeout : undefined,
+                    MCP_TOOL_ACCESS_MODE: mcpToolAccessMode,
                     BRAINTRUST_PROJECT_NAME: braintrustProjectName,
                     BRAINTRUST_PROJECT_ID: braintrustProjectId,
                     BRAINTRUST_ENABLED: braintrustEnabled,
+                    __braintrustApiKey: braintrustApiKey,
                     db: env?.DB,
                 },
                 policy: defaultPolicy({
@@ -124,6 +138,7 @@ export class InteractionAtlasAuthProvider {
                     constraints: {
                         allowVersionOverride: false,
                         allowVersionSelectionWrite: false,
+                        mcpToolAccessMode,
                     },
                 }),
             };
@@ -153,9 +168,11 @@ export class InteractionAtlasAuthProvider {
                 OSO_BOOTSTRAP_POLICY: osoBootstrapPolicy,
                 ENGINE_FALLBACK_ENABLED: engineFallbackEnabled,
                 OSO_FETCH_TIMEOUT_MS: Number.isFinite(osoFetchTimeout ?? NaN) ? osoFetchTimeout : undefined,
+                MCP_TOOL_ACCESS_MODE: mcpToolAccessMode,
                 BRAINTRUST_PROJECT_NAME: braintrustProjectName,
                 BRAINTRUST_PROJECT_ID: braintrustProjectId,
                 BRAINTRUST_ENABLED: braintrustEnabled,
+                __braintrustApiKey: braintrustApiKey,
                 db: env?.DB,
             },
             policy: defaultPolicy({
@@ -166,6 +183,7 @@ export class InteractionAtlasAuthProvider {
                     allowVersionSelectionWrite: canWrite,
                     allowControlPlaneWrite: canWrite,
                     allowApprovalDecide: canApprove,
+                    mcpToolAccessMode,
                 },
             }),
         };

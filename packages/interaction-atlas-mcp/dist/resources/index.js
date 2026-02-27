@@ -8,6 +8,22 @@
 import { AI_TASKS, CONSTRAINTS, DATA_ARTIFACTS, HUMAN_TASKS, LAYERS, META, SYSTEM_TASKS, TOUCHPOINTS, getAtlasStats, } from '@quietloudlab/ai-interaction-atlas';
 import { WORKFLOW_DEFINITIONS } from '../workflows/registry.js';
 import { getBuiltWorkflowTemplate, getWorkflowMermaid, listWorkflowSummaries, validateBuiltWorkflow } from '../workflows/index.js';
+function sanitizedMetadata(metadata) {
+    const out = {};
+    for (const [key, value] of Object.entries(metadata)) {
+        const lower = key.toLowerCase();
+        if (lower.includes('api_key') || lower.includes('token') || lower.includes('secret') || key.startsWith('__')) {
+            out[key] = '[redacted]';
+            continue;
+        }
+        if (key === 'db') {
+            out[key] = '[redacted]';
+            continue;
+        }
+        out[key] = value;
+    }
+    return out;
+}
 export function registerResources(server) {
     server.resource('account', 'interaction-atlas://account', { description: 'Current account context (scopes, readOnly)', mimeType: 'application/json' }, async (uri, ctx) => ({
         contents: [{
@@ -19,7 +35,7 @@ export function registerResources(server) {
                     teamId: ctx.teamId,
                     scopes: ctx.policy.scopes,
                     readOnly: ctx.policy.readOnly,
-                    metadata: ctx.metadata,
+                    metadata: sanitizedMetadata(ctx.metadata),
                 }, null, 2),
             }],
     }));
