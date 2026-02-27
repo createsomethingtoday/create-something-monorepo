@@ -37,6 +37,7 @@ export type InteractionAtlasEnv = {
   ABUSE_WINDOW_SECONDS?: string;
   ABUSE_BLOCK_THRESHOLD?: string;
   ABUSE_DISTINCT_TOOLS_THRESHOLD?: string;
+  ABUSE_RESPONSE_MODE?: string;
   BRAINTRUST_PROJECT_NAME?: string;
   BRAINTRUST_PROJECT_ID?: string;
   BRAINTRUST_ENABLED?: string;
@@ -125,6 +126,13 @@ function parsePositiveInt(raw: string | undefined, fallback: number): number {
   return Math.floor(value);
 }
 
+function normalizeAbuseResponseMode(raw: string | undefined): 'auto_off' | 'review' {
+  if (!raw) return 'auto_off';
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === 'review' || normalized === 'review_then_act') return 'review';
+  return 'auto_off';
+}
+
 function extractCorrelationId(request: Request | null): string {
   const direct = firstHeader(request, ['x-correlation-id', 'x-request-id', 'cf-ray']);
   if (direct) return direct;
@@ -170,6 +178,9 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
       env?.ABUSE_DISTINCT_TOOLS_THRESHOLD ?? process.env.ABUSE_DISTINCT_TOOLS_THRESHOLD,
       2,
     );
+    const abuseResponseMode = normalizeAbuseResponseMode(
+      env?.ABUSE_RESPONSE_MODE ?? process.env.ABUSE_RESPONSE_MODE,
+    );
     const correlationId = extractCorrelationId(request);
     const braintrustProjectName =
       env?.BRAINTRUST_PROJECT_NAME ?? process.env.BRAINTRUST_PROJECT_NAME ?? process.env.BRAINTRUST_PROJECT ?? 'CREATE SOMETHING';
@@ -202,6 +213,7 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
           ABUSE_WINDOW_SECONDS: abuseWindowSeconds,
           ABUSE_BLOCK_THRESHOLD: abuseBlockThreshold,
           ABUSE_DISTINCT_TOOLS_THRESHOLD: abuseDistinctToolsThreshold,
+          ABUSE_RESPONSE_MODE: abuseResponseMode,
           BRAINTRUST_PROJECT_NAME: braintrustProjectName,
           BRAINTRUST_PROJECT_ID: braintrustProjectId,
           BRAINTRUST_ENABLED: braintrustEnabled,
@@ -256,6 +268,7 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
         ABUSE_WINDOW_SECONDS: abuseWindowSeconds,
         ABUSE_BLOCK_THRESHOLD: abuseBlockThreshold,
         ABUSE_DISTINCT_TOOLS_THRESHOLD: abuseDistinctToolsThreshold,
+        ABUSE_RESPONSE_MODE: abuseResponseMode,
         BRAINTRUST_PROJECT_NAME: braintrustProjectName,
         BRAINTRUST_PROJECT_ID: braintrustProjectId,
         BRAINTRUST_ENABLED: braintrustEnabled,

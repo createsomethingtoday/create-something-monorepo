@@ -1614,6 +1614,7 @@ export function registerTools(server: ScopedMcpServer): void {
       const incidents = await listRecentSecurityIncidents(db, {
         accountId: ctx.accountId,
         limit: input.limit ?? 10,
+        status: input.status,
       });
 
       return jsonContent({
@@ -1690,6 +1691,58 @@ export function registerTools(server: ScopedMcpServer): void {
           updated_at: row.updated_at,
           expires_at: row.expires_at,
         },
+      });
+    },
+    { readOnly: false },
+  );
+
+  server.tool(
+    'judgment_security_incident_resolve',
+    'Resolve a security incident and apply an explicit access decision.',
+    JudgmentSecurityIncidentResolveSchema.shape,
+    async (params, ctx) => {
+      const input = JudgmentSecurityIncidentResolveSchema.parse(params);
+      if (!allowControlPlaneWrite(ctx)) {
+        return jsonError({
+          error: 'security_incident_resolve_not_allowed',
+          message: 'Resolving security incidents is not permitted for this caller.',
+        });
+      }
+
+      const db = getDbFromMetadata(ctx);
+      const existing = await getSecurityIncidentById(db, {
+        accountId: ctx.accountId,
+        incidentId: input.incident_id,
+      });
+      if (!existing) {
+        return errorContent(`Unknown incident_id for account "${ctx.accountId}": ${input.incident_id}`);
+      }
+
+      const resolved = await resolveSecurityIncident(db, {
+        accountId: ctx.accountId,
+        incidentId: input.incident_id,
+        decision: input.decision,
+        note: input.note,
+        decidedBy: ctx.userId ?? 'api-key',
+      });
+
+      if (!resolved) {
+        return errorContent(`Unable to resolve incident_id for account "${ctx.accountId}": ${input.incident_id}`);
+      }
+
+      return jsonContent({
+        meta: {
+          authScope: 'account',
+          note: 'Mutation applies within authenticated account context.',
+        },
+        accountId: ctx.accountId,
+        incident: {
+          id: resolved.incident.id,
+          status: resolved.incident.status,
+          resolved_at: resolved.incident.resolved_at,
+          resolved_by: resolved.incident.resolved_by,
+        },
+        appliedAccessMode: resolved.accessMode,
       });
     },
     { readOnly: false },
