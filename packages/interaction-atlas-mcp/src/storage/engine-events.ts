@@ -3,6 +3,7 @@ import type { AtlasEntityType } from './versions.js';
 
 export interface JudgmentEngineEvent {
   id: string;
+  correlation_id: string;
   account_id: string;
   entity_type: AtlasEntityType;
   entity_id: string;
@@ -55,31 +56,66 @@ export async function recordEngineEvent(
   const createdAt = nowEpochSeconds();
   const id = eventId(input.account_id, input.entity_type, input.entity_id, input.tool_name);
 
-  await db
-    .prepare(
-      `INSERT INTO judgment_engine_events
-       (id, account_id, entity_type, entity_id, tool_name, rollout_mode, canary_percent, sampled_polar, mismatch, evaluation_path, fallback_used, legacy_decision, polar_decision, final_decision, latency_ms, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    )
-    .bind(
-      id,
-      input.account_id,
-      input.entity_type,
-      input.entity_id,
-      input.tool_name,
-      input.rollout_mode,
-      input.canary_percent,
-      input.sampled_polar,
-      input.mismatch,
-      input.evaluation_path,
-      input.fallback_used,
-      input.legacy_decision,
-      input.polar_decision,
-      input.final_decision,
-      input.latency_ms,
-      createdAt,
-    )
-    .run();
+  try {
+    await db
+      .prepare(
+        `INSERT INTO judgment_engine_events
+         (id, correlation_id, account_id, entity_type, entity_id, tool_name, rollout_mode, canary_percent, sampled_polar, mismatch, evaluation_path, fallback_used, legacy_decision, polar_decision, final_decision, latency_ms, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        id,
+        input.correlation_id,
+        input.account_id,
+        input.entity_type,
+        input.entity_id,
+        input.tool_name,
+        input.rollout_mode,
+        input.canary_percent,
+        input.sampled_polar,
+        input.mismatch,
+        input.evaluation_path,
+        input.fallback_used,
+        input.legacy_decision,
+        input.polar_decision,
+        input.final_decision,
+        input.latency_ms,
+        createdAt,
+      )
+      .run();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (!/correlation_id/i.test(message)) {
+      throw error;
+    }
+
+    // Backward compatibility for DBs where migration has not run yet.
+    await db
+      .prepare(
+        `INSERT INTO judgment_engine_events
+         (id, account_id, entity_type, entity_id, tool_name, rollout_mode, canary_percent, sampled_polar, mismatch, evaluation_path, fallback_used, legacy_decision, polar_decision, final_decision, latency_ms, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        id,
+        input.account_id,
+        input.entity_type,
+        input.entity_id,
+        input.tool_name,
+        input.rollout_mode,
+        input.canary_percent,
+        input.sampled_polar,
+        input.mismatch,
+        input.evaluation_path,
+        input.fallback_used,
+        input.legacy_decision,
+        input.polar_decision,
+        input.final_decision,
+        input.latency_ms,
+        createdAt,
+      )
+      .run();
+  }
 }
 
 export async function getEngineMetricsSummary(

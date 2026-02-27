@@ -31,6 +31,9 @@ export type InteractionAtlasEnv = {
   OSO_BOOTSTRAP_POLICY?: string;
   ENGINE_FALLBACK_ENABLED?: string;
   OSO_FETCH_TIMEOUT_MS?: string;
+  BRAINTRUST_PROJECT_NAME?: string;
+  BRAINTRUST_PROJECT_ID?: string;
+  BRAINTRUST_ENABLED?: string;
   DB?: D1Database;
 };
 
@@ -85,6 +88,36 @@ function extractApiKey(request: Request | null): string | null {
   return null;
 }
 
+function firstHeader(request: Request | null, names: string[]): string | null {
+  if (!request) return null;
+  for (const name of names) {
+    const value = request.headers.get(name);
+    if (value && value.trim().length > 0) return value.trim();
+  }
+  return null;
+}
+
+function fallbackCorrelationId(): string {
+  const ts = Date.now().toString(36);
+  const rand = Math.random().toString(36).slice(2, 10);
+  return `corr_${ts}_${rand}`;
+}
+
+function extractCorrelationId(request: Request | null): string {
+  const direct = firstHeader(request, ['x-correlation-id', 'x-request-id', 'cf-ray']);
+  if (direct) return direct;
+
+  const traceparent = firstHeader(request, ['traceparent']);
+  if (traceparent) {
+    const parts = traceparent.split('-');
+    if (parts.length >= 3 && parts[1] && parts[2]) {
+      return `${parts[1]}-${parts[2]}`;
+    }
+  }
+
+  return fallbackCorrelationId();
+}
+
 export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtlasEnv> {
   async resolve(request: Request | null, env?: InteractionAtlasEnv): Promise<AccountContext> {
     const apiKey = extractApiKey(request);
@@ -99,6 +132,11 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
     const engineFallbackEnabled = env?.ENGINE_FALLBACK_ENABLED ?? process.env.ENGINE_FALLBACK_ENABLED ?? 'true';
     const osoFetchTimeoutRaw = env?.OSO_FETCH_TIMEOUT_MS ?? process.env.OSO_FETCH_TIMEOUT_MS;
     const osoFetchTimeout = osoFetchTimeoutRaw ? Number(osoFetchTimeoutRaw) : undefined;
+    const correlationId = extractCorrelationId(request);
+    const braintrustProjectName =
+      env?.BRAINTRUST_PROJECT_NAME ?? process.env.BRAINTRUST_PROJECT_NAME ?? process.env.BRAINTRUST_PROJECT ?? 'CREATE SOMETHING';
+    const braintrustProjectId = env?.BRAINTRUST_PROJECT_ID ?? process.env.BRAINTRUST_PROJECT_ID;
+    const braintrustEnabled = env?.BRAINTRUST_ENABLED ?? process.env.BRAINTRUST_ENABLED;
 
     // Public, read-only access (used for the workflow viewer).
     if (!apiKey) {
@@ -107,6 +145,7 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
         tokenProvider: { getAccessToken: async () => '' },
         metadata: {
           auth: 'none',
+          correlationId,
           baseUrl,
           gitSha,
           runtimeRef,
@@ -116,6 +155,9 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
           OSO_BOOTSTRAP_POLICY: osoBootstrapPolicy,
           ENGINE_FALLBACK_ENABLED: engineFallbackEnabled,
           OSO_FETCH_TIMEOUT_MS: Number.isFinite(osoFetchTimeout ?? NaN) ? osoFetchTimeout : undefined,
+          BRAINTRUST_PROJECT_NAME: braintrustProjectName,
+          BRAINTRUST_PROJECT_ID: braintrustProjectId,
+          BRAINTRUST_ENABLED: braintrustEnabled,
           db: env?.DB,
         },
         policy: defaultPolicy({
@@ -145,6 +187,7 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
       tokenProvider: { getAccessToken: async () => apiKey },
       metadata: {
         auth: 'api_key',
+        correlationId,
         role,
         baseUrl,
         gitSha,
@@ -155,6 +198,9 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
         OSO_BOOTSTRAP_POLICY: osoBootstrapPolicy,
         ENGINE_FALLBACK_ENABLED: engineFallbackEnabled,
         OSO_FETCH_TIMEOUT_MS: Number.isFinite(osoFetchTimeout ?? NaN) ? osoFetchTimeout : undefined,
+        BRAINTRUST_PROJECT_NAME: braintrustProjectName,
+        BRAINTRUST_PROJECT_ID: braintrustProjectId,
+        BRAINTRUST_ENABLED: braintrustEnabled,
         db: env?.DB,
       },
       policy: defaultPolicy({

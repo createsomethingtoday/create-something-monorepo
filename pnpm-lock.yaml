@@ -1152,6 +1152,9 @@ importers:
       '@create-something/mcp-core':
         specifier: workspace:*
         version: link:../mcp-core
+      '@create-something/observability':
+        specifier: workspace:*
+        version: link:../observability
       '@create-something/playbook-mcp':
         specifier: workspace:*
         version: link:../playbook-mcp

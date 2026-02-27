@@ -28,6 +28,9 @@ export type InteractionAtlasEnv = {
     OSO_BOOTSTRAP_POLICY?: string;
     ENGINE_FALLBACK_ENABLED?: string;
     OSO_FETCH_TIMEOUT_MS?: string;
+    BRAINTRUST_PROJECT_NAME?: string;
+    BRAINTRUST_PROJECT_ID?: string;
+    BRAINTRUST_ENABLED?: string;
     DB?: D1Database;
 };
 export declare class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtlasEnv> {

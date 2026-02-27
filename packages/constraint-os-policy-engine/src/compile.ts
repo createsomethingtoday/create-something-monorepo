@@ -12,30 +12,48 @@ has_human_review_cond(rule_id) if cond_has_human_review_step(rule_id, _);
 has_introspection_cond(rule_id) if cond_introspection_ok(rule_id, _);
 has_account_cond(rule_id) if cond_account_id(rule_id, _);
 
+tool_ok(rule_id, tool_name) if not has_tool_cond(rule_id);
+tool_ok(rule_id, tool_name) if cond_tool(rule_id, tool_name);
+
+write_ok(rule_id, has_write_intent) if not has_write_cond(rule_id);
+write_ok(rule_id, has_write_intent) if cond_has_write_intent(rule_id, has_write_intent);
+
+human_review_ok(rule_id, has_human_review_step) if not has_human_review_cond(rule_id);
+human_review_ok(rule_id, has_human_review_step) if cond_has_human_review_step(rule_id, has_human_review_step);
+
+introspection_ok_cond(rule_id, introspection_ok) if not has_introspection_cond(rule_id);
+introspection_ok_cond(rule_id, introspection_ok) if cond_introspection_ok(rule_id, introspection_ok);
+
+account_ok(rule_id, account_id) if not has_account_cond(rule_id);
+account_ok(rule_id, account_id) if cond_account_id(rule_id, account_id);
+
 rule_matches(rule_id, priority, decision, reason, account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok) if
   rule(rule_id, priority, decision, reason) and
-  (not has_tool_cond(rule_id) or cond_tool(rule_id, tool_name)) and
-  (not has_write_cond(rule_id) or cond_has_write_intent(rule_id, has_write_intent)) and
-  (not has_human_review_cond(rule_id) or cond_has_human_review_step(rule_id, has_human_review_step)) and
-  (not has_introspection_cond(rule_id) or cond_introspection_ok(rule_id, introspection_ok)) and
-  (not has_account_cond(rule_id) or cond_account_id(rule_id, account_id));
+  tool_ok(rule_id, tool_name) and
+  write_ok(rule_id, has_write_intent) and
+  human_review_ok(rule_id, has_human_review_step) and
+  introspection_ok_cond(rule_id, introspection_ok) and
+  account_ok(rule_id, account_id);
+
+has_better_match(priority, account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok) if
+  rule_matches(_, p2, _, _, account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok) and
+  p2 < priority;
 
 best_rule(rule_id, priority, decision, reason, account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok) if
   rule_matches(rule_id, priority, decision, reason, account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok) and
-  not (
-    rule_matches(_, p2, _, _, account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok) and
-    p2 < priority
-  );
+  not has_better_match(priority, account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok);
+
+hard_guard(read_only, has_write_intent) if read_only = true and has_write_intent = true;
 
 decision("block", "hard_guard_readonly_write", 0, "Read-only account cannot execute write-intent workflow path.", account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok, read_only) if
-  read_only = true and has_write_intent = true;
+  hard_guard(read_only, has_write_intent);
 
 decision(outcome, rule_id, priority, reason, account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok, read_only) if
-  not (read_only = true and has_write_intent = true) and
+  not hard_guard(read_only, has_write_intent) and
   best_rule(rule_id, priority, outcome, reason, account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok);
 
 decision("allow", "policy_default_allow", 999999, "No policy rule matched; default allow.", account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok, read_only) if
-  not (read_only = true and has_write_intent = true) and
+  not hard_guard(read_only, has_write_intent) and
   not best_rule(_, _, _, _, account_id, tool_name, has_write_intent, has_human_review_step, introspection_ok);
 `;
 

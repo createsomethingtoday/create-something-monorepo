@@ -50,6 +50,34 @@ function extractApiKey(request) {
         return authHeader.slice(7);
     return null;
 }
+function firstHeader(request, names) {
+    if (!request)
+        return null;
+    for (const name of names) {
+        const value = request.headers.get(name);
+        if (value && value.trim().length > 0)
+            return value.trim();
+    }
+    return null;
+}
+function fallbackCorrelationId() {
+    const ts = Date.now().toString(36);
+    const rand = Math.random().toString(36).slice(2, 10);
+    return `corr_${ts}_${rand}`;
+}
+function extractCorrelationId(request) {
+    const direct = firstHeader(request, ['x-correlation-id', 'x-request-id', 'cf-ray']);
+    if (direct)
+        return direct;
+    const traceparent = firstHeader(request, ['traceparent']);
+    if (traceparent) {
+        const parts = traceparent.split('-');
+        if (parts.length >= 3 && parts[1] && parts[2]) {
+            return `${parts[1]}-${parts[2]}`;
+        }
+    }
+    return fallbackCorrelationId();
+}
 export class InteractionAtlasAuthProvider {
     async resolve(request, env) {
         const apiKey = extractApiKey(request);
@@ -64,6 +92,10 @@ export class InteractionAtlasAuthProvider {
         const engineFallbackEnabled = env?.ENGINE_FALLBACK_ENABLED ?? process.env.ENGINE_FALLBACK_ENABLED ?? 'true';
         const osoFetchTimeoutRaw = env?.OSO_FETCH_TIMEOUT_MS ?? process.env.OSO_FETCH_TIMEOUT_MS;
         const osoFetchTimeout = osoFetchTimeoutRaw ? Number(osoFetchTimeoutRaw) : undefined;
+        const correlationId = extractCorrelationId(request);
+        const braintrustProjectName = env?.BRAINTRUST_PROJECT_NAME ?? process.env.BRAINTRUST_PROJECT_NAME ?? process.env.BRAINTRUST_PROJECT ?? 'CREATE SOMETHING';
+        const braintrustProjectId = env?.BRAINTRUST_PROJECT_ID ?? process.env.BRAINTRUST_PROJECT_ID;
+        const braintrustEnabled = env?.BRAINTRUST_ENABLED ?? process.env.BRAINTRUST_ENABLED;
         // Public, read-only access (used for the workflow viewer).
         if (!apiKey) {
             return {
@@ -71,6 +103,7 @@ export class InteractionAtlasAuthProvider {
                 tokenProvider: { getAccessToken: async () => '' },
                 metadata: {
                     auth: 'none',
+                    correlationId,
                     baseUrl,
                     gitSha,
                     runtimeRef,
@@ -80,6 +113,9 @@ export class InteractionAtlasAuthProvider {
                     OSO_BOOTSTRAP_POLICY: osoBootstrapPolicy,
                     ENGINE_FALLBACK_ENABLED: engineFallbackEnabled,
                     OSO_FETCH_TIMEOUT_MS: Number.isFinite(osoFetchTimeout ?? NaN) ? osoFetchTimeout : undefined,
+                    BRAINTRUST_PROJECT_NAME: braintrustProjectName,
+                    BRAINTRUST_PROJECT_ID: braintrustProjectId,
+                    BRAINTRUST_ENABLED: braintrustEnabled,
                     db: env?.DB,
                 },
                 policy: defaultPolicy({
@@ -106,6 +142,7 @@ export class InteractionAtlasAuthProvider {
             tokenProvider: { getAccessToken: async () => apiKey },
             metadata: {
                 auth: 'api_key',
+                correlationId,
                 role,
                 baseUrl,
                 gitSha,
@@ -116,6 +153,9 @@ export class InteractionAtlasAuthProvider {
                 OSO_BOOTSTRAP_POLICY: osoBootstrapPolicy,
                 ENGINE_FALLBACK_ENABLED: engineFallbackEnabled,
                 OSO_FETCH_TIMEOUT_MS: Number.isFinite(osoFetchTimeout ?? NaN) ? osoFetchTimeout : undefined,
+                BRAINTRUST_PROJECT_NAME: braintrustProjectName,
+                BRAINTRUST_PROJECT_ID: braintrustProjectId,
+                BRAINTRUST_ENABLED: braintrustEnabled,
                 db: env?.DB,
             },
             policy: defaultPolicy({

@@ -17,6 +17,7 @@
   "dependencies": {
     "@create-something/constraint-os-policy-engine": "workspace:*",
     "@create-something/mcp-core": "workspace:*",
+    "@create-something/observability": "workspace:*",
     "@create-something/playbook-mcp": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "@quietloudlab/ai-interaction-atlas": "^1.0.7",

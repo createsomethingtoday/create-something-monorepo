@@ -16,6 +16,7 @@ import {
   getPattern,
   searchPatterns,
 } from '@quietloudlab/ai-interaction-atlas';
+import { initBraintrust, getBraintrustLogger } from '@create-something/observability/braintrust';
 
 import {
   getBuiltWorkflowTemplate,
@@ -218,6 +219,141 @@ type VersionedToolInput = {
   commitSha?: string;
 };
 
+let judgmentBraintrustLoggerKey: string | null = null;
+
+function fallbackCorrelationId(): string {
+  const ts = Date.now().toString(36);
+  const rand = Math.random().toString(36).slice(2, 10);
+  return `corr_${ts}_${rand}`;
+}
+
+function getCorrelationId(ctx: { metadata: Record<string, unknown> }): string {
+  return getStringMetadata(ctx, 'correlationId') ?? fallbackCorrelationId();
+}
+
+function boolString(value: string | undefined, defaultValue: boolean): boolean {
+  if (!value) return defaultValue;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'true') return true;
+  if (normalized === 'false') return false;
+  return defaultValue;
+}
+
+function getJudgmentBraintrustLogger(ctx: { metadata: Record<string, unknown> }) {
+  const enabledRaw =
+    getStringMetadata(ctx, 'BRAINTRUST_ENABLED') ??
+    process.env.BRAINTRUST_ENABLED;
+  if (!boolString(enabledRaw, true)) return null;
+
+  const apiKey = process.env.BRAINTRUST_API_KEY;
+  if (!apiKey) return null;
+
+  const projectName =
+    getStringMetadata(ctx, 'BRAINTRUST_PROJECT_NAME') ??
+    process.env.BRAINTRUST_PROJECT_NAME ??
+    process.env.BRAINTRUST_PROJECT ??
+    'CREATE SOMETHING';
+  const projectId =
+    getStringMetadata(ctx, 'BRAINTRUST_PROJECT_ID') ??
+    process.env.BRAINTRUST_PROJECT_ID ??
+    null;
+
+  const nextKey = `${apiKey}::${projectName}::${projectId ?? ''}`;
+  if (judgmentBraintrustLoggerKey !== nextKey) {
+    initBraintrust({
+      apiKey,
+      projectName,
+      projectId: projectId ?? undefined,
+      enabled: true,
+      asyncFlush: true,
+    });
+    judgmentBraintrustLoggerKey = nextKey;
+  }
+
+  return getBraintrustLogger();
+}
+
+async function emitJudgmentDecisionTrace(
+  ctx: { metadata: Record<string, unknown> },
+  event: {
+    correlationId: string;
+    accountId: string;
+    entityType: AtlasEntityType;
+    entityId: string;
+    toolName: string;
+    rolloutMode: string;
+    canaryPercent: number;
+    sampledPolar: boolean;
+    mismatch: boolean;
+    legacyDecision: string;
+    polarDecision: string;
+    finalDecision: string;
+    evaluationPath: string;
+    fallbackReason: string | null;
+    policyHash?: string;
+    compilerVersion?: string;
+    latencyMs: number;
+  },
+): Promise<void> {
+  const logger = getJudgmentBraintrustLogger(ctx);
+  if (!logger) return;
+
+  try {
+    await logger.traced(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (span: any) => {
+        span.log({
+          input: {
+            toolName: event.toolName,
+            accountId: event.accountId,
+            entityType: event.entityType,
+            entityId: event.entityId,
+            rolloutMode: event.rolloutMode,
+            canaryPercent: event.canaryPercent,
+          },
+          output: {
+            legacyDecision: event.legacyDecision,
+            polarDecision: event.polarDecision,
+            finalDecision: event.finalDecision,
+            evaluationPath: event.evaluationPath,
+          },
+          tags: ['judgment', 'mcp', 'interaction-atlas-mcp', event.toolName, event.finalDecision],
+          metadata: {
+            server: 'interaction-atlas-mcp',
+            source: 'mcp_tool_invocation',
+            correlationId: event.correlationId,
+            accountId: event.accountId,
+            entityType: event.entityType,
+            entityId: event.entityId,
+            toolName: event.toolName,
+            rolloutMode: event.rolloutMode,
+            canaryPercent: event.canaryPercent,
+            sampledPolar: event.sampledPolar,
+            mismatch: event.mismatch,
+            legacyDecision: event.legacyDecision,
+            polarDecision: event.polarDecision,
+            finalDecision: event.finalDecision,
+            evaluationPath: event.evaluationPath,
+            fallbackReason: event.fallbackReason,
+            policyHash: event.policyHash,
+            compilerVersion: event.compilerVersion,
+            latencyMs: event.latencyMs,
+          },
+        });
+      },
+      {
+        name: `judgment:interaction-atlas-mcp:${event.toolName}`,
+        type: 'eval',
+      },
+    );
+  } catch (error) {
+    console.warn(
+      `[judgment] braintrust emit failed for ${event.toolName}:`,
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+}
+
 function boolMetadata(ctx: { metadata: Record<string, unknown> }, key: string, defaultValue: boolean): boolean {
   const value = ctx.metadata[key];
   if (typeof value === 'boolean') return value;
@@ -316,6 +452,7 @@ async function evaluateDecisionForEntity(
   },
 ): Promise<JudgmentDecision> {
   const db = getDbFromMetadata(ctx);
+  const correlationId = getCorrelationId(ctx);
   const rolloutRow = await getEngineRollout(db, {
     accountId: ctx.accountId,
     entityType: args.entityType,
@@ -336,6 +473,7 @@ async function evaluateDecisionForEntity(
   const polarReference = withRollout.polar;
 
   await recordEngineEvent(db, {
+    correlation_id: correlationId,
     account_id: ctx.accountId,
     entity_type: args.entityType,
     entity_id: args.entityId,
@@ -350,6 +488,26 @@ async function evaluateDecisionForEntity(
     polar_decision: withRollout.polar.decision,
     final_decision: final.decision,
     latency_ms: Math.floor(final.latencyMs),
+  });
+
+  await emitJudgmentDecisionTrace(ctx, {
+    correlationId,
+    accountId: ctx.accountId,
+    entityType: args.entityType,
+    entityId: args.entityId,
+    toolName: args.toolName,
+    rolloutMode: rollout.mode,
+    canaryPercent: rollout.canaryPercent,
+    sampledPolar: withRollout.sampledPolar,
+    mismatch: withRollout.mismatch,
+    legacyDecision: withRollout.legacy.decision,
+    polarDecision: withRollout.polar.decision,
+    finalDecision: final.decision,
+    evaluationPath: final.evaluationPath,
+    fallbackReason: polarReference.fallbackReason ?? null,
+    policyHash: polarReference.policyHash,
+    compilerVersion: polarReference.compilerVersion,
+    latencyMs: Math.floor(final.latencyMs),
   });
 
   if (rollout.mode !== 'legacy_enforce') {

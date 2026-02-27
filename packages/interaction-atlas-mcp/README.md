@@ -153,6 +153,7 @@ Apply migrations in order:
 5. `worker/migrations/0005_policy_activation_governance.sql`
 6. `worker/migrations/0006_control_plane_invariants.sql`
 7. `worker/migrations/0007_polar_artifacts.sql`
+8. `worker/migrations/0008_judgment_event_correlation.sql`
 
 Ensure `worker/wrangler.toml` has a valid D1 `database_id` before deploy.
 Use `worker/migrations/ROLLOUT.md` for apply order, post-migration checks, and rollback guidance.
@@ -162,7 +163,7 @@ Use `worker/migrations/ROLLOUT.md` for apply order, post-migration checks, and r
 To complete production readiness for Atlas + Judgment control-plane persistence:
 
 1. Set the target `database_id` in `worker/wrangler.toml`.
-2. Apply all six migrations to the target D1 database.
+2. Apply all migrations to the target D1 database.
 3. Verify trigger-based invariants:
    - one active automation contract per `(account_id, automation_id)`,
    - autonomous execution requires non-`none` assignment mode in contract `spec_json`,

@@ -8,6 +8,7 @@
  */
 import { jsonContent, errorContent } from '@create-something/mcp-core';
 import { getAtlasStats, getPattern, searchPatterns, } from '@quietloudlab/ai-interaction-atlas';
+import { initBraintrust, getBraintrustLogger } from '@create-something/observability/braintrust';
 import { getBuiltWorkflowTemplate, getWorkflowMermaid, listWorkflowSummaries, validateBuiltWorkflow, } from '../workflows/index.js';
 import { buildWorkflowTemplate } from '../workflows/build.js';
 import { workflowTemplateToMermaid } from '../workflows/mermaid.js';
@@ -117,6 +118,108 @@ function guardrailsFromPolicy(policy) {
         maxBlockDelta: typeof g?.maxBlockDelta === 'number' ? g.maxBlockDelta : null,
     };
 }
+let judgmentBraintrustLoggerKey = null;
+function fallbackCorrelationId() {
+    const ts = Date.now().toString(36);
+    const rand = Math.random().toString(36).slice(2, 10);
+    return `corr_${ts}_${rand}`;
+}
+function getCorrelationId(ctx) {
+    return getStringMetadata(ctx, 'correlationId') ?? fallbackCorrelationId();
+}
+function boolString(value, defaultValue) {
+    if (!value)
+        return defaultValue;
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true')
+        return true;
+    if (normalized === 'false')
+        return false;
+    return defaultValue;
+}
+function getJudgmentBraintrustLogger(ctx) {
+    const enabledRaw = getStringMetadata(ctx, 'BRAINTRUST_ENABLED') ??
+        process.env.BRAINTRUST_ENABLED;
+    if (!boolString(enabledRaw, true))
+        return null;
+    const apiKey = process.env.BRAINTRUST_API_KEY;
+    if (!apiKey)
+        return null;
+    const projectName = getStringMetadata(ctx, 'BRAINTRUST_PROJECT_NAME') ??
+        process.env.BRAINTRUST_PROJECT_NAME ??
+        process.env.BRAINTRUST_PROJECT ??
+        'CREATE SOMETHING';
+    const projectId = getStringMetadata(ctx, 'BRAINTRUST_PROJECT_ID') ??
+        process.env.BRAINTRUST_PROJECT_ID ??
+        null;
+    const nextKey = `${apiKey}::${projectName}::${projectId ?? ''}`;
+    if (judgmentBraintrustLoggerKey !== nextKey) {
+        initBraintrust({
+            apiKey,
+            projectName,
+            projectId: projectId ?? undefined,
+            enabled: true,
+            asyncFlush: true,
+        });
+        judgmentBraintrustLoggerKey = nextKey;
+    }
+    return getBraintrustLogger();
+}
+async function emitJudgmentDecisionTrace(ctx, event) {
+    const logger = getJudgmentBraintrustLogger(ctx);
+    if (!logger)
+        return;
+    try {
+        await logger.traced(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (span) => {
+            span.log({
+                input: {
+                    toolName: event.toolName,
+                    accountId: event.accountId,
+                    entityType: event.entityType,
+                    entityId: event.entityId,
+                    rolloutMode: event.rolloutMode,
+                    canaryPercent: event.canaryPercent,
+                },
+                output: {
+                    legacyDecision: event.legacyDecision,
+                    polarDecision: event.polarDecision,
+                    finalDecision: event.finalDecision,
+                    evaluationPath: event.evaluationPath,
+                },
+                tags: ['judgment', 'mcp', 'interaction-atlas-mcp', event.toolName, event.finalDecision],
+                metadata: {
+                    server: 'interaction-atlas-mcp',
+                    source: 'mcp_tool_invocation',
+                    correlationId: event.correlationId,
+                    accountId: event.accountId,
+                    entityType: event.entityType,
+                    entityId: event.entityId,
+                    toolName: event.toolName,
+                    rolloutMode: event.rolloutMode,
+                    canaryPercent: event.canaryPercent,
+                    sampledPolar: event.sampledPolar,
+                    mismatch: event.mismatch,
+                    legacyDecision: event.legacyDecision,
+                    polarDecision: event.polarDecision,
+                    finalDecision: event.finalDecision,
+                    evaluationPath: event.evaluationPath,
+                    fallbackReason: event.fallbackReason,
+                    policyHash: event.policyHash,
+                    compilerVersion: event.compilerVersion,
+                    latencyMs: event.latencyMs,
+                },
+            });
+        }, {
+            name: `judgment:interaction-atlas-mcp:${event.toolName}`,
+            type: 'eval',
+        });
+    }
+    catch (error) {
+        console.warn(`[judgment] braintrust emit failed for ${event.toolName}:`, error instanceof Error ? error.message : String(error));
+    }
+}
 function boolMetadata(ctx, key, defaultValue) {
     const value = ctx.metadata[key];
     if (typeof value === 'boolean')
@@ -190,6 +293,7 @@ async function evaluatePolicyScenarios(accountId, readOnly, before, after, scena
 }
 async function evaluateDecisionForEntity(ctx, args) {
     const db = getDbFromMetadata(ctx);
+    const correlationId = getCorrelationId(ctx);
     const rolloutRow = await getEngineRollout(db, {
         accountId: ctx.accountId,
         entityType: args.entityType,
@@ -203,6 +307,7 @@ async function evaluateDecisionForEntity(ctx, args) {
     const final = withRollout.final;
     const polarReference = withRollout.polar;
     await recordEngineEvent(db, {
+        correlation_id: correlationId,
         account_id: ctx.accountId,
         entity_type: args.entityType,
         entity_id: args.entityId,
@@ -217,6 +322,25 @@ async function evaluateDecisionForEntity(ctx, args) {
         polar_decision: withRollout.polar.decision,
         final_decision: final.decision,
         latency_ms: Math.floor(final.latencyMs),
+    });
+    await emitJudgmentDecisionTrace(ctx, {
+        correlationId,
+        accountId: ctx.accountId,
+        entityType: args.entityType,
+        entityId: args.entityId,
+        toolName: args.toolName,
+        rolloutMode: rollout.mode,
+        canaryPercent: rollout.canaryPercent,
+        sampledPolar: withRollout.sampledPolar,
+        mismatch: withRollout.mismatch,
+        legacyDecision: withRollout.legacy.decision,
+        polarDecision: withRollout.polar.decision,
+        finalDecision: final.decision,
+        evaluationPath: final.evaluationPath,
+        fallbackReason: polarReference.fallbackReason ?? null,
+        policyHash: polarReference.policyHash,
+        compilerVersion: polarReference.compilerVersion,
+        latencyMs: Math.floor(final.latencyMs),
     });
     if (rollout.mode !== 'legacy_enforce') {
         const metrics = await getEngineMetricsSummary(db, {
