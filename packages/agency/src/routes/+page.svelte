@@ -784,7 +784,6 @@
   /* How It Works — Funnel Steps */
   .process-section {
     padding: var(--section-padding, 6rem) 0;
-    border-top: 1px solid var(--color-border-default);
   }
 
   .funnel-steps {
@@ -862,8 +861,6 @@
   /* Offerings Grid */
   .offerings-section {
     padding: var(--section-padding, 6rem) 0;
-    background: var(--color-bg-subtle);
-    border-top: 1px solid var(--color-border-default);
   }
 
   .offerings-grid {
@@ -1017,13 +1014,12 @@
   /* What You Get — Offerings */
   .offerings-section {
     padding: var(--section-padding, 6rem) 0;
-    border-top: 1px solid var(--color-border-default);
   }
 
   .offerings-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-5, 1.5rem);
+    gap: var(--space-8, 3rem);
     align-items: stretch;
     overflow: visible;
   }
@@ -1181,7 +1177,6 @@
   /* Problem Section */
   .problem-section {
     padding: var(--section-padding, 6rem) 0;
-    border-top: 1px solid var(--color-border-default);
   }
 
   .problem-statements {
@@ -1210,7 +1205,6 @@
   /* Audience / Built For */
   .audience-section {
     padding: var(--section-padding, 6rem) 0;
-    border-top: 1px solid var(--color-border-default);
   }
 
   .audience-grid {
@@ -1263,7 +1257,6 @@
   /* CTA */
   .cta-section {
     padding: var(--section-padding, 6rem) 0;
-    border-top: 1px solid var(--color-border-default);
     text-align: center;
   }
 
