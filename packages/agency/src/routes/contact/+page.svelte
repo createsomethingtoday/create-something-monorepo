@@ -243,7 +243,6 @@
   /* Contact Section */
   .contact-section {
     padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
-    border-top: 1px solid var(--color-border-default);
   }
 
   .contact-container {
@@ -371,7 +370,6 @@
   /* Email Section */
   .email-section {
     padding: var(--space-8, 3rem) 0;
-    border-top: 1px solid var(--color-border-default);
     text-align: center;
   }
 

@@ -322,7 +322,6 @@
   /* Products Section */
   .products-section {
     padding: 3rem var(--container-padding, 1.5rem);
-    border-top: 1px solid var(--color-border-default);
   }
 
   /* Featured Grid — 2 col, larger cards */
@@ -509,7 +508,6 @@
   /* CTA */
   .cta-section {
     padding: 3rem 0;
-    border-top: 1px solid var(--color-border-default);
     text-align: center;
   }
 

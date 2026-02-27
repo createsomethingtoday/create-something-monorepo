@@ -256,7 +256,6 @@
   /* About Sections */
   .about-section {
     padding: var(--section-padding, 6rem) 0;
-    border-top: 1px solid var(--color-border-default);
   }
 
   .about-content h2 {
@@ -318,7 +317,6 @@
   /* CTA */
   .cta-section {
     padding: var(--section-padding, 6rem) 0;
-    border-top: 1px solid var(--color-border-default);
     text-align: center;
   }
 
