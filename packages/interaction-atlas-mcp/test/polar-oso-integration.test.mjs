@@ -18,6 +18,33 @@ class FakePreparedStatement {
   async first() {
     const sql = this.sql;
 
+    if (sql.includes('FROM judgment_security_incidents i') && sql.includes('judgment_security_incident_claims c')) {
+      const [now, accountId] = this.args;
+      const ranked = this.db.incidents
+        .filter((row) => row.account_id === accountId && row.status === 'open')
+        .filter((row) => {
+          const claim = this.db.claims.get(this.db.claimKey(accountId, row.id));
+          return !(claim && claim.claim_expires_at > Number(now));
+        })
+        .sort((a, b) => {
+          const rank = (severity) => (severity === 'critical' ? 4 : severity === 'high' ? 3 : severity === 'medium' ? 2 : 1);
+          const severityDiff = rank(b.severity) - rank(a.severity);
+          if (severityDiff !== 0) return severityDiff;
+          return a.created_at - b.created_at;
+        });
+      return ranked[0] ?? null;
+    }
+
+    if (sql.includes('FROM judgment_security_incident_claims') && sql.includes('WHERE account_id = ? AND incident_id = ?')) {
+      const [accountId, incidentId] = this.args;
+      return this.db.claims.get(this.db.claimKey(accountId, incidentId)) ?? null;
+    }
+
+    if (sql.includes('FROM judgment_security_incidents') && sql.includes('WHERE account_id = ? AND id = ?')) {
+      const [accountId, incidentId] = this.args;
+      return this.db.incidents.find((row) => row.account_id === accountId && row.id === incidentId) ?? null;
+    }
+
     if (sql.includes('FROM judgment_account_access')) {
       const [accountId] = this.args;
       return this.db.accountAccess.get(accountId) ?? null;
@@ -113,11 +140,15 @@ class FakePreparedStatement {
     }
 
     if (sql.includes('FROM judgment_security_incidents')) {
-      const [accountId, limit] = this.args;
+      const [accountId, arg2, arg3] = this.args;
+      const hasStatus = typeof arg3 !== 'undefined';
+      const status = hasStatus ? String(arg2) : null;
+      const limit = Number(hasStatus ? arg3 : arg2);
       const rows = this.db.incidents
         .filter((row) => row.account_id === accountId)
+        .filter((row) => (status ? row.status === status : true))
         .sort((a, b) => b.created_at - a.created_at)
-        .slice(0, Number(limit));
+        .slice(0, limit);
       return { results: rows };
     }
 
@@ -216,6 +247,36 @@ class FakePreparedStatement {
       });
     }
 
+    if (sql.includes('UPDATE judgment_security_incidents')) {
+      const [resolvedAt, resolvedBy, accountId, incidentId] = this.args;
+      const row = this.db.incidents.find((item) => item.account_id === accountId && item.id === incidentId);
+      if (row) {
+        row.status = 'resolved';
+        row.resolved_at = resolvedAt;
+        row.resolved_by = resolvedBy;
+      }
+    }
+
+    if (sql.includes('INSERT INTO judgment_security_incident_claims')) {
+      const [accountId, incidentId, claimedBy, claimedAt, claimExpiresAt] = this.args;
+      const key = this.db.claimKey(accountId, incidentId);
+      const current = this.db.claims.get(key);
+      if (!current || Number(current.claim_expires_at) <= Number(claimedAt)) {
+        this.db.claims.set(key, {
+          account_id: accountId,
+          incident_id: incidentId,
+          claimed_by: claimedBy,
+          claimed_at: claimedAt,
+          claim_expires_at: claimExpiresAt,
+        });
+      }
+    }
+
+    if (sql.includes('DELETE FROM judgment_security_incident_claims')) {
+      const [accountId, incidentId] = this.args;
+      this.db.claims.delete(this.db.claimKey(accountId, incidentId));
+    }
+
     return { success: true };
   }
 }
@@ -226,10 +287,15 @@ class FakeD1Database {
     this.events = [];
     this.accountAccess = new Map();
     this.incidents = [];
+    this.claims = new Map();
   }
 
   key(accountId, entityType, entityId) {
     return `${accountId}::${entityType}::${entityId}`;
+  }
+
+  claimKey(accountId, incidentId) {
+    return `${accountId}::${incidentId}`;
   }
 
   now() {
@@ -554,4 +620,104 @@ test('abuse guard auto-kills access and records an incident for repeated blocked
   const message = extractRpcErrorMessage(postKillPayload);
   assert.ok(message, JSON.stringify(postKillPayload));
   assert.match(message, /method not found|unknown tool|tool .* not found/i);
+});
+
+test('abuse review mode creates incident for agent triage before enforcement', async () => {
+  const db = new FakeD1Database();
+  const server = createServer();
+  const env = {
+    API_KEYS: 'op-key:public:operator',
+    DB: db,
+    ABUSE_GUARD_ENABLED: 'true',
+    ABUSE_WINDOW_SECONDS: '600',
+    ABUSE_BLOCK_THRESHOLD: '2',
+    ABUSE_DISTINCT_TOOLS_THRESHOLD: '1',
+    ABUSE_RESPONSE_MODE: 'review',
+  };
+  const headers = { 'x-api-key': 'op-key' };
+
+  await callTool(server, env, 'workflow_map_from_tool_sequence', {
+    workflow_id: 'fleet-watchdog',
+    sequence: [{ tool: 'notion_upsert_page' }],
+    add_human_review: true,
+  });
+  await callTool(server, env, 'workflow_map_from_tool_sequence', {
+    workflow_id: 'fleet-watchdog',
+    sequence: [{ tool: 'notion_upsert_page' }],
+    add_human_review: true,
+  });
+
+  assert.equal(db.accountAccess.get('public'), undefined);
+  assert.ok(db.incidents.length >= 1);
+  assert.equal(db.incidents[0].status, 'open');
+
+  const statusPayload = await callTool(server, env, 'judgment_security_status_get', {
+    status: 'open',
+    limit: 5,
+  }, headers);
+  assert.equal(statusPayload.access.mode, 'normal');
+  assert.ok(statusPayload.incidents.length >= 1);
+
+  const incidentId = statusPayload.incidents[0].id;
+  const resolvePayload = await callTool(server, env, 'judgment_security_incident_resolve', {
+    incident_id: incidentId,
+    decision: 'enforce_off',
+    note: 'agent triage confirms abuse',
+  }, headers);
+  assert.equal(resolvePayload.appliedAccessMode, 'off');
+
+  const postKillPayload = await callRpc(server, env, 'workflow_list', {}, headers);
+  const message = extractRpcErrorMessage(postKillPayload);
+  assert.ok(message, JSON.stringify(postKillPayload));
+  assert.match(message, /method not found|unknown tool|tool .* not found/i);
+});
+
+test('review-next claims one open incident and returns recommendation for triage agent', async () => {
+  const db = new FakeD1Database();
+  const server = createServer();
+  const env = {
+    API_KEYS: 'op-key:public:operator',
+    DB: db,
+    ABUSE_GUARD_ENABLED: 'true',
+    ABUSE_WINDOW_SECONDS: '600',
+    ABUSE_BLOCK_THRESHOLD: '2',
+    ABUSE_DISTINCT_TOOLS_THRESHOLD: '1',
+    ABUSE_RESPONSE_MODE: 'review',
+  };
+  const headers = { 'x-api-key': 'op-key' };
+
+  await callTool(server, env, 'workflow_map_from_tool_sequence', {
+    workflow_id: 'fleet-watchdog',
+    sequence: [{ tool: 'notion_upsert_page' }],
+    add_human_review: true,
+  });
+  await callTool(server, env, 'workflow_map_from_tool_sequence', {
+    workflow_id: 'fleet-watchdog',
+    sequence: [{ tool: 'notion_upsert_page' }],
+    add_human_review: true,
+  });
+
+  const firstClaim = await callTool(server, env, 'judgment_security_incident_review_next', {
+    claim_ttl_seconds: 180,
+  }, headers);
+  assert.ok(firstClaim.incident?.id);
+  assert.equal(firstClaim.recommendation.decision, 'enforce_off');
+  assert.equal(firstClaim.recommendation.disposition, 'evaluate');
+  assert.ok(firstClaim.claim?.claim_expires_at > firstClaim.claim?.claimed_at);
+
+  const secondClaim = await callTool(server, env, 'judgment_security_incident_review_next', {
+    claim_ttl_seconds: 180,
+  }, headers);
+  assert.equal(secondClaim.incident, null);
+
+  await callTool(server, env, 'judgment_security_incident_resolve', {
+    incident_id: firstClaim.incident.id,
+    decision: 'monitor',
+    note: 'triage agent marked as monitor-only',
+  }, headers);
+
+  const afterResolve = await callTool(server, env, 'judgment_security_incident_review_next', {
+    claim_ttl_seconds: 180,
+  }, headers);
+  assert.equal(afterResolve.incident, null);
 });

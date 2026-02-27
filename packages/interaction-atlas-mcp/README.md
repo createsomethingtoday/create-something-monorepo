@@ -140,11 +140,14 @@ Env controls:
 - `ABUSE_WINDOW_SECONDS` (default `300`)
 - `ABUSE_BLOCK_THRESHOLD` (default `8`)
 - `ABUSE_DISTINCT_TOOLS_THRESHOLD` (default `2`)
+- `ABUSE_RESPONSE_MODE=auto_off|review` (default `auto_off`)
 
 Reporting/control MCP tools:
 
 - `judgment_security_status_get`
+- `judgment_security_incident_review_next`
 - `judgment_security_access_set`
+- `judgment_security_incident_resolve`
 
 ## Ops Handoff (Role Test Checklist)
 
@@ -197,6 +200,7 @@ Apply migrations in order:
 7. `worker/migrations/0007_polar_artifacts.sql`
 8. `worker/migrations/0008_judgment_event_correlation.sql`
 9. `worker/migrations/0009_security_response.sql`
+10. `worker/migrations/0010_security_incident_claims.sql`
 
 Ensure `worker/wrangler.toml` has a valid D1 `database_id` before deploy.
 Use `worker/migrations/ROLLOUT.md` for apply order, post-migration checks, and rollback guidance.

@@ -758,9 +758,12 @@ export declare const JudgmentEngineRolloutSetSchema: z.ZodObject<{
 }>;
 export declare const JudgmentSecurityStatusGetSchema: z.ZodObject<{
     limit: z.ZodOptional<z.ZodNumber>;
+    status: z.ZodOptional<z.ZodEnum<["open", "resolved"]>>;
 }, "strip", z.ZodTypeAny, {
+    status?: "open" | "resolved" | undefined;
     limit?: number | undefined;
 }, {
+    status?: "open" | "resolved" | undefined;
     limit?: number | undefined;
 }>;
 export declare const JudgmentSecurityAccessSetSchema: z.ZodObject<{
@@ -775,6 +778,26 @@ export declare const JudgmentSecurityAccessSetSchema: z.ZodObject<{
     mode: "normal" | "read_only" | "off";
     reason: string;
     expires_at?: number | undefined;
+}>;
+export declare const JudgmentSecurityIncidentResolveSchema: z.ZodObject<{
+    incident_id: z.ZodString;
+    decision: z.ZodEnum<["dismiss", "monitor", "enforce_read_only", "enforce_off"]>;
+    note: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    incident_id: string;
+    decision: "dismiss" | "monitor" | "enforce_read_only" | "enforce_off";
+    note?: string | undefined;
+}, {
+    incident_id: string;
+    decision: "dismiss" | "monitor" | "enforce_read_only" | "enforce_off";
+    note?: string | undefined;
+}>;
+export declare const JudgmentSecurityIncidentReviewNextSchema: z.ZodObject<{
+    claim_ttl_seconds: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    claim_ttl_seconds?: number | undefined;
+}, {
+    claim_ttl_seconds?: number | undefined;
 }>;
 export declare const JudgmentDashboardSummaryParamsSchema: z.ZodObject<{
     entity_type: z.ZodOptional<z.ZodEnum<["mcp", "agent"]>>;

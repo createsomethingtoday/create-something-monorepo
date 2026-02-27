@@ -14,7 +14,7 @@ import { buildWorkflowTemplate } from '../workflows/build.js';
 import { workflowTemplateToMermaid } from '../workflows/mermaid.js';
 import { mapToolSequenceToWorkflowDefinition } from '../workflows/map.js';
 import { evaluateConstraintPolicyHybrid, evaluateConstraintPolicyWithRollout, compileConstraintPolicy, } from '@create-something/constraint-os-policy-engine';
-import { AtlasGetSchema, AtlasSearchSchema, WorkflowIdSchema, WorkflowMapFromToolSequenceSchema, McpCatalogListSchema, McpIntrospectSchema, McpMapSchema, VersionSelectionGetSchema, VersionSelectionSetSchema, JudgmentPolicyActivateSchema, JudgmentPolicyCompareReportGetSchema, JudgmentDashboardSummaryParamsSchema, JudgmentDashboardSummarySchema, JudgmentPolicyEstimateSchema, JudgmentEngineRolloutGetSchema, JudgmentEngineRolloutSetSchema, JudgmentSecurityStatusGetSchema, JudgmentSecurityAccessSetSchema, JudgmentPolicyGetSchema, JudgmentPolicySaveSchema, AutomationContractGetSchema, AutomationContractUpsertSchema, AutomationRunStartSchema, ApprovalInboxDecideSchema, } from '../schemas/index.js';
+import { AtlasGetSchema, AtlasSearchSchema, WorkflowIdSchema, WorkflowMapFromToolSequenceSchema, McpCatalogListSchema, McpIntrospectSchema, McpMapSchema, VersionSelectionGetSchema, VersionSelectionSetSchema, JudgmentPolicyActivateSchema, JudgmentPolicyCompareReportGetSchema, JudgmentDashboardSummaryParamsSchema, JudgmentDashboardSummarySchema, JudgmentPolicyEstimateSchema, JudgmentEngineRolloutGetSchema, JudgmentEngineRolloutSetSchema, JudgmentSecurityStatusGetSchema, JudgmentSecurityAccessSetSchema, JudgmentSecurityIncidentResolveSchema, JudgmentSecurityIncidentReviewNextSchema, JudgmentPolicyGetSchema, JudgmentPolicySaveSchema, AutomationContractGetSchema, AutomationContractUpsertSchema, AutomationRunStartSchema, ApprovalInboxDecideSchema, } from '../schemas/index.js';
 import { findMcpCatalogEntry, listMcpCatalog, resolveMcpHttpEndpointUrl, resolveMcpHttpEndpointUrlFromUrl, } from '../mcps/catalog.js';
 import { introspectMcpServer } from '../mcps/introspect.js';
 import { mapMcpToWorkflowDefinition } from '../mcps/map.js';
@@ -23,7 +23,7 @@ import { recordVisualization } from '../storage/visualizations.js';
 import { activatePolicyVersion, getEstimateReportById, getLatestEstimateReport, getPolicyVersionById, listPolicyVersions, resolveActivePolicy, saveEstimateReport, savePolicyVersion, } from '../storage/policies.js';
 import { getEngineRollout, setEngineRollout } from '../storage/rollout.js';
 import { getEngineMetricsSummary, recordEngineEvent } from '../storage/engine-events.js';
-import { evaluateAbusePatternAndMitigate, getAccountAccess, listRecentSecurityIncidents, setAccountAccess, } from '../storage/security.js';
+import { claimNextSecurityIncidentForReview, evaluateAbusePatternAndMitigate, getSecurityIncidentById, getAccountAccess, listRecentSecurityIncidents, resolveSecurityIncident, setAccountAccess, } from '../storage/security.js';
 import { createAutomationRun, decideApproval, getActiveAutomationContract, listActiveAutomationContracts, listPendingApprovals, upsertAutomationContract, } from '../storage/control-plane.js';
 import { getJudgmentDashboardSummary } from '../storage/dashboard.js';
 function slugFromUrl(url) {
@@ -108,6 +108,15 @@ function jsonError(data) {
         content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
         isError: true,
     };
+}
+function parseJsonRecord(value) {
+    try {
+        const parsed = JSON.parse(value);
+        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+    }
+    catch {
+        return null;
+    }
 }
 function guardrailsFromPolicy(policy) {
     if (!policy || typeof policy !== 'object') {
@@ -264,11 +273,14 @@ function hybridConfigFromContext(ctx) {
     };
 }
 function abuseMitigationConfigFromContext(ctx) {
+    const responseModeRaw = getStringMetadata(ctx, 'ABUSE_RESPONSE_MODE');
+    const responseMode = responseModeRaw?.toLowerCase() === 'review' ? 'review' : 'auto_off';
     return {
         enabled: boolMetadata(ctx, 'ABUSE_GUARD_ENABLED', true),
         windowSeconds: Math.max(60, intMetadata(ctx, 'ABUSE_WINDOW_SECONDS', 300)),
         blockThreshold: Math.max(2, intMetadata(ctx, 'ABUSE_BLOCK_THRESHOLD', 8)),
         distinctToolThreshold: Math.max(1, intMetadata(ctx, 'ABUSE_DISTINCT_TOOLS_THRESHOLD', 2)),
+        responseMode,
     };
 }
 function defaultEstimateScenarios() {
@@ -1151,6 +1163,7 @@ export function registerTools(server) {
         const incidents = await listRecentSecurityIncidents(db, {
             accountId: ctx.accountId,
             limit: input.limit ?? 10,
+            status: input.status,
         });
         return jsonContent({
             meta: {
@@ -1172,14 +1185,7 @@ export function registerTools(server) {
                 severity: row.severity,
                 action_mode: row.action_mode,
                 reason: row.reason,
-                signal: (() => {
-                    try {
-                        return JSON.parse(row.signal_json);
-                    }
-                    catch {
-                        return null;
-                    }
-                })(),
+                signal: parseJsonRecord(row.signal_json),
                 status: row.status,
                 correlation_id: row.correlation_id,
                 created_at: row.created_at,
@@ -1188,6 +1194,49 @@ export function registerTools(server) {
             })),
         });
     }, { readOnly: true });
+    server.tool('judgment_security_incident_review_next', 'Claim the next open security incident for agent triage and recommended action.', JudgmentSecurityIncidentReviewNextSchema.shape, async (params, ctx) => {
+        if (!allowControlPlaneWrite(ctx)) {
+            return jsonError({
+                error: 'security_incident_review_not_allowed',
+                message: 'Claiming security incidents is not permitted for this caller.',
+            });
+        }
+        const input = JudgmentSecurityIncidentReviewNextSchema.parse(params);
+        const db = getDbFromMetadata(ctx);
+        const claimed = await claimNextSecurityIncidentForReview(db, {
+            accountId: ctx.accountId,
+            reviewerId: ctx.userId ?? 'api-key',
+            claimTtlSeconds: input.claim_ttl_seconds,
+        });
+        return jsonContent({
+            meta: {
+                authScope: 'account',
+                note: 'Mutation applies within authenticated account context.',
+            },
+            accountId: ctx.accountId,
+            incident: claimed
+                ? {
+                    id: claimed.incident.id,
+                    incident_type: claimed.incident.incident_type,
+                    severity: claimed.incident.severity,
+                    action_mode: claimed.incident.action_mode,
+                    reason: claimed.incident.reason,
+                    signal: parseJsonRecord(claimed.incident.signal_json),
+                    status: claimed.incident.status,
+                    correlation_id: claimed.incident.correlation_id,
+                    created_at: claimed.incident.created_at,
+                }
+                : null,
+            claim: claimed
+                ? {
+                    claimed_by: claimed.claim.claimed_by,
+                    claimed_at: claimed.claim.claimed_at,
+                    claim_expires_at: claimed.claim.claim_expires_at,
+                }
+                : null,
+            recommendation: claimed ? claimed.recommendation : null,
+        });
+    }, { readOnly: false });
     server.tool('judgment_security_access_set', 'Manually set account MCP tool-access mode for incident response.', JudgmentSecurityAccessSetSchema.shape, async (params, ctx) => {
         const input = JudgmentSecurityAccessSetSchema.parse(params);
         if (!allowControlPlaneWrite(ctx)) {
@@ -1218,6 +1267,47 @@ export function registerTools(server) {
                 updated_at: row.updated_at,
                 expires_at: row.expires_at,
             },
+        });
+    }, { readOnly: false });
+    server.tool('judgment_security_incident_resolve', 'Resolve a security incident and apply an explicit access decision.', JudgmentSecurityIncidentResolveSchema.shape, async (params, ctx) => {
+        const input = JudgmentSecurityIncidentResolveSchema.parse(params);
+        if (!allowControlPlaneWrite(ctx)) {
+            return jsonError({
+                error: 'security_incident_resolve_not_allowed',
+                message: 'Resolving security incidents is not permitted for this caller.',
+            });
+        }
+        const db = getDbFromMetadata(ctx);
+        const existing = await getSecurityIncidentById(db, {
+            accountId: ctx.accountId,
+            incidentId: input.incident_id,
+        });
+        if (!existing) {
+            return errorContent(`Unknown incident_id for account "${ctx.accountId}": ${input.incident_id}`);
+        }
+        const resolved = await resolveSecurityIncident(db, {
+            accountId: ctx.accountId,
+            incidentId: input.incident_id,
+            decision: input.decision,
+            note: input.note,
+            decidedBy: ctx.userId ?? 'api-key',
+        });
+        if (!resolved) {
+            return errorContent(`Unable to resolve incident_id for account "${ctx.accountId}": ${input.incident_id}`);
+        }
+        return jsonContent({
+            meta: {
+                authScope: 'account',
+                note: 'Mutation applies within authenticated account context.',
+            },
+            accountId: ctx.accountId,
+            incident: {
+                id: resolved.incident.id,
+                status: resolved.incident.status,
+                resolved_at: resolved.incident.resolved_at,
+                resolved_by: resolved.incident.resolved_by,
+            },
+            appliedAccessMode: resolved.accessMode,
         });
     }, { readOnly: false });
     server.tool('automation_contract_list', 'List active automation contracts for the authenticated account.', {}, async (_params, ctx) => {

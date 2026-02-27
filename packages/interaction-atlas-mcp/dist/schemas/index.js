@@ -135,11 +135,20 @@ export const JudgmentEngineRolloutSetSchema = z.object({
 });
 export const JudgmentSecurityStatusGetSchema = z.object({
     limit: z.number().int().min(1).max(50).optional(),
+    status: z.enum(['open', 'resolved']).optional(),
 });
 export const JudgmentSecurityAccessSetSchema = z.object({
     mode: z.enum(['normal', 'read_only', 'off']),
     reason: z.string().min(1),
     expires_at: z.number().int().positive().optional(),
+});
+export const JudgmentSecurityIncidentResolveSchema = z.object({
+    incident_id: z.string().min(1),
+    decision: z.enum(['dismiss', 'monitor', 'enforce_read_only', 'enforce_off']),
+    note: z.string().optional(),
+});
+export const JudgmentSecurityIncidentReviewNextSchema = z.object({
+    claim_ttl_seconds: z.number().int().min(30).max(3600).optional(),
 });
 export const JudgmentDashboardSummaryParamsSchema = z.object({
     entity_type: z.enum(['mcp', 'agent']).optional(),

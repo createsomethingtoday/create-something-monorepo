@@ -21,6 +21,7 @@ Apply in this exact order:
 7. `0007_polar_artifacts.sql`
 8. `0008_judgment_event_correlation.sql`
 9. `0009_security_response.sql`
+10. `0010_security_incident_claims.sql`
 
 ## Pre-flight checks
 

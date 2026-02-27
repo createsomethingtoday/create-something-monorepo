@@ -33,6 +33,7 @@ export type InteractionAtlasEnv = {
     ABUSE_WINDOW_SECONDS?: string;
     ABUSE_BLOCK_THRESHOLD?: string;
     ABUSE_DISTINCT_TOOLS_THRESHOLD?: string;
+    ABUSE_RESPONSE_MODE?: string;
     BRAINTRUST_PROJECT_NAME?: string;
     BRAINTRUST_PROJECT_ID?: string;
     BRAINTRUST_ENABLED?: string;

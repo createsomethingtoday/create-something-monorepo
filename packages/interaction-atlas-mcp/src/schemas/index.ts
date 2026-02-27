@@ -192,6 +192,10 @@ export const JudgmentSecurityIncidentResolveSchema = z.object({
   note: z.string().optional(),
 });
 
+export const JudgmentSecurityIncidentReviewNextSchema = z.object({
+  claim_ttl_seconds: z.number().int().min(30).max(3600).optional(),
+});
+
 export const JudgmentDashboardSummaryParamsSchema = z.object({
   entity_type: z.enum(['mcp', 'agent']).optional(),
   entity_id: z.string().min(1).optional(),

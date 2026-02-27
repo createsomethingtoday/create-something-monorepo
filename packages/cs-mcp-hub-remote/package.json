@@ -11,7 +11,8 @@
     "test": "node --import tsx --test test/*.test.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.3"
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "braintrust": "^2.2.2"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.0.0",

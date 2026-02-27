@@ -84,6 +84,14 @@ function parsePositiveInt(raw, fallback) {
         return fallback;
     return Math.floor(value);
 }
+function normalizeAbuseResponseMode(raw) {
+    if (!raw)
+        return 'auto_off';
+    const normalized = raw.trim().toLowerCase();
+    if (normalized === 'review' || normalized === 'review_then_act')
+        return 'review';
+    return 'auto_off';
+}
 function extractCorrelationId(request) {
     const direct = firstHeader(request, ['x-correlation-id', 'x-request-id', 'cf-ray']);
     if (direct)
@@ -116,6 +124,7 @@ export class InteractionAtlasAuthProvider {
         const abuseWindowSeconds = parsePositiveInt(env?.ABUSE_WINDOW_SECONDS ?? process.env.ABUSE_WINDOW_SECONDS, 300);
         const abuseBlockThreshold = parsePositiveInt(env?.ABUSE_BLOCK_THRESHOLD ?? process.env.ABUSE_BLOCK_THRESHOLD, 8);
         const abuseDistinctToolsThreshold = parsePositiveInt(env?.ABUSE_DISTINCT_TOOLS_THRESHOLD ?? process.env.ABUSE_DISTINCT_TOOLS_THRESHOLD, 2);
+        const abuseResponseMode = normalizeAbuseResponseMode(env?.ABUSE_RESPONSE_MODE ?? process.env.ABUSE_RESPONSE_MODE);
         const correlationId = extractCorrelationId(request);
         const braintrustProjectName = env?.BRAINTRUST_PROJECT_NAME ?? process.env.BRAINTRUST_PROJECT_NAME ?? process.env.BRAINTRUST_PROJECT ?? 'CREATE SOMETHING';
         const braintrustProjectId = env?.BRAINTRUST_PROJECT_ID ?? process.env.BRAINTRUST_PROJECT_ID;
@@ -146,6 +155,7 @@ export class InteractionAtlasAuthProvider {
                     ABUSE_WINDOW_SECONDS: abuseWindowSeconds,
                     ABUSE_BLOCK_THRESHOLD: abuseBlockThreshold,
                     ABUSE_DISTINCT_TOOLS_THRESHOLD: abuseDistinctToolsThreshold,
+                    ABUSE_RESPONSE_MODE: abuseResponseMode,
                     BRAINTRUST_PROJECT_NAME: braintrustProjectName,
                     BRAINTRUST_PROJECT_ID: braintrustProjectId,
                     BRAINTRUST_ENABLED: braintrustEnabled,
@@ -197,6 +207,7 @@ export class InteractionAtlasAuthProvider {
                 ABUSE_WINDOW_SECONDS: abuseWindowSeconds,
                 ABUSE_BLOCK_THRESHOLD: abuseBlockThreshold,
                 ABUSE_DISTINCT_TOOLS_THRESHOLD: abuseDistinctToolsThreshold,
+                ABUSE_RESPONSE_MODE: abuseResponseMode,
                 BRAINTRUST_PROJECT_NAME: braintrustProjectName,
                 BRAINTRUST_PROJECT_ID: braintrustProjectId,
                 BRAINTRUST_ENABLED: braintrustEnabled,

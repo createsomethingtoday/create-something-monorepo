@@ -21,6 +21,14 @@ preview_id = "6356c7663c334a4195243971e117565c"
 # Discovery defaults (used when per-account discovery prefs are not persisted in KV)
 HUB_DISCOVERY_MODE = "compact"
 HUB_DISCOVERY_SHARED_PACK = "shared-auth-core"
+# Optional Braintrust project name (falls back to "CREATE SOMETHING")
+# BRAINTRUST_PROJECT_NAME = "CREATE SOMETHING"
+# Optional explicit Braintrust project id
+# BRAINTRUST_PROJECT_ID = ""
+# Optional explicit switch; set to "false" to disable Braintrust emission
+# BRAINTRUST_ENABLED = "true"
+# Set secret at deploy-time:
+# wrangler secret put BRAINTRUST_API_KEY
 
 # Optional. If set, /mcp requires Authorization: Bearer <token>
 # HUB_API_TOKEN = ""

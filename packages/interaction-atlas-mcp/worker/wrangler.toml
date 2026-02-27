@@ -15,6 +15,7 @@ account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 # ABUSE_WINDOW_SECONDS = "300"
 # ABUSE_BLOCK_THRESHOLD = "8"
 # ABUSE_DISTINCT_TOOLS_THRESHOLD = "2"
+# ABUSE_RESPONSE_MODE = "auto_off" # auto_off | review
 
 # Visualization/version persistence
 [[d1_databases]]

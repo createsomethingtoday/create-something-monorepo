@@ -3,6 +3,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { CallToolRequestSchema, ListToolsRequestSchema, type Tool } from '@modelcontextprotocol/sdk/types.js';
+import { initLogger, type Logger, type Span } from 'braintrust';
 
 import discoveryPacksJson from '../../config/mcp-hub/discovery-packs.json';
 import intentRoutesJson from '../../config/mcp-hub/intent-routes.json';
@@ -274,6 +275,10 @@ interface Env {
   HUB_RATE_LIMIT_EXEMPT_SERVERS?: string;
   HUB_QUOTA_MAX_PROXY_CALLS_PER_PERIOD?: string;
   HUB_QUOTA_EXEMPT_SERVERS?: string;
+  BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_NAME?: string;
+  BRAINTRUST_PROJECT_ID?: string;
+  BRAINTRUST_ENABLED?: string;
   HUB_STATE_KV?: KVNamespace;
   TELEMETRY_DB?: D1Database;
   [key: string]: unknown;
@@ -539,6 +544,11 @@ const DEFAULT_DISCOVERY_PAGE_SIZE = 100;
 const MAX_DISCOVERY_PAGE_SIZE = 500;
 const discoveryPreferencesByAccount = new Map<string, DiscoveryPreferences>();
 const HUB_DISCOVERY_KV_PREFIX = 'hub_discovery_v1::';
+const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let braintrustLogger: Logger<any> | null = null;
+let braintrustLoggerKey: string | null = null;
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -3240,7 +3250,144 @@ function getCurrentPeriod(): string {
   return `${year}-${month}`;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getBraintrustLogger(env: Env): Logger<any> | null {
+  const rawEnabled = readEnvString(env, 'BRAINTRUST_ENABLED');
+  if (rawEnabled && rawEnabled.trim().toLowerCase() === 'false') {
+    return null;
+  }
+
+  const apiKey = readEnvString(env, 'BRAINTRUST_API_KEY')?.trim();
+  if (!apiKey) return null;
+
+  const projectName =
+    readEnvString(env, 'BRAINTRUST_PROJECT_NAME')?.trim() || DEFAULT_BRAINTRUST_PROJECT_NAME;
+  const projectId = readEnvString(env, 'BRAINTRUST_PROJECT_ID')?.trim();
+  const nextKey = `${apiKey}::${projectId ?? ''}::${projectName}`;
+
+  if (!braintrustLogger || braintrustLoggerKey !== nextKey) {
+    const loggerConfig: Parameters<typeof initLogger>[0] = {
+      apiKey,
+      projectName,
+      asyncFlush: true,
+      setCurrent: true,
+    };
+
+    if (projectId) {
+      (loggerConfig as Record<string, unknown>).projectId = projectId;
+    }
+
+    braintrustLogger = initLogger(loggerConfig);
+    braintrustLoggerKey = nextKey;
+  }
+
+  return braintrustLogger;
+}
+
+function emitHubInvocationToBraintrust(env: Env, log: HubInvocationLog): void {
+  const logger = getBraintrustLogger(env);
+  if (!logger) return;
+  const metadata = asRecord(log.metadata);
+
+  logger
+    .traced(
+      (span: Span) => {
+        span.log({
+          input: {
+            tool: log.toolName,
+            accountId: log.accountId,
+            correlationId: log.trace.correlationId,
+            requestId: log.trace.requestId,
+          },
+          output: {
+            success: log.success,
+            durationMs: Math.max(0, Math.floor(log.durationMs)),
+            error: log.errorMessage ?? null,
+          },
+          error: log.errorMessage ?? undefined,
+          tags: ['mcp', HUB_NAME, log.toolName, log.success ? 'success' : 'error', 'hub'],
+          metadata: {
+            server: HUB_NAME,
+            tool: log.toolName,
+            accountId: log.accountId,
+            success: log.success,
+            durationMs: Math.max(0, Math.floor(log.durationMs)),
+            correlationId: log.trace.correlationId,
+            requestId: log.trace.requestId,
+            ...(metadata ?? {}),
+          },
+        });
+      },
+      {
+        name: `mcp:${HUB_NAME}:${log.toolName}`,
+        type: 'tool',
+      },
+    )
+    .catch((error) => {
+      console.warn(
+        `[${HUB_NAME}] braintrust hub emit failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    });
+}
+
+function emitHubRouteToBraintrust(env: Env, log: HubRouteLog): void {
+  const logger = getBraintrustLogger(env);
+  if (!logger) return;
+  const metadata = asRecord(log.metadata);
+
+  logger
+    .traced(
+      (span: Span) => {
+        span.log({
+          input: {
+            downstreamServer: log.downstreamServer,
+            downstreamTool: log.downstreamTool,
+            accountId: log.accountId,
+            correlationId: log.trace.correlationId,
+            requestId: log.trace.requestId,
+          },
+          output: {
+            success: log.success,
+            durationMs: Math.max(0, Math.floor(log.durationMs)),
+            error: log.errorMessage ?? null,
+          },
+          error: log.errorMessage ?? undefined,
+          tags: [
+            'mcp',
+            HUB_NAME,
+            'hub-route',
+            log.downstreamServer,
+            log.downstreamTool,
+            log.success ? 'success' : 'error',
+          ],
+          metadata: {
+            server: HUB_NAME,
+            accountId: log.accountId,
+            downstreamServer: log.downstreamServer,
+            downstreamTool: log.downstreamTool,
+            success: log.success,
+            durationMs: Math.max(0, Math.floor(log.durationMs)),
+            correlationId: log.trace.correlationId,
+            requestId: log.trace.requestId,
+            ...(metadata ?? {}),
+          },
+        });
+      },
+      {
+        name: `mcp:${log.downstreamServer}:${log.downstreamTool}`,
+        type: 'tool',
+      },
+    )
+    .catch((error) => {
+      console.warn(
+        `[${HUB_NAME}] braintrust route emit failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    });
+}
+
 async function recordHubInvocation(env: Env, log: HubInvocationLog): Promise<void> {
+  emitHubInvocationToBraintrust(env, log);
+
   const db = env.TELEMETRY_DB;
   if (!db) return;
 
@@ -3389,6 +3536,8 @@ async function ensureHubRouteTable(db: D1Database): Promise<void> {
 }
 
 async function recordHubRouteInvocation(env: Env, log: HubRouteLog): Promise<void> {
+  emitHubRouteToBraintrust(env, log);
+
   const db = env.TELEMETRY_DB;
   if (!db) return;
 

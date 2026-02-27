@@ -58,6 +58,7 @@ import {
   JudgmentSecurityStatusGetSchema,
   JudgmentSecurityAccessSetSchema,
   JudgmentSecurityIncidentResolveSchema,
+  JudgmentSecurityIncidentReviewNextSchema,
   JudgmentPolicyGetSchema,
   JudgmentPolicySaveSchema,
   AutomationContractGetSchema,
@@ -101,6 +102,7 @@ import {
 import { getEngineRollout, setEngineRollout } from '../storage/rollout.js';
 import { getEngineMetricsSummary, recordEngineEvent } from '../storage/engine-events.js';
 import {
+  claimNextSecurityIncidentForReview,
   evaluateAbusePatternAndMitigate,
   getSecurityIncidentById,
   getAccountAccess,
@@ -212,6 +214,15 @@ function jsonError(data: unknown): ReturnType<typeof errorContent> {
     content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }],
     isError: true,
   };
+}
+
+function parseJsonRecord(value: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? (parsed as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
 }
 
 function guardrailsFromPolicy(policy: unknown): { maxReviewDelta: number | null; maxBlockDelta: number | null } {
@@ -1637,13 +1648,7 @@ export function registerTools(server: ScopedMcpServer): void {
           severity: row.severity,
           action_mode: row.action_mode,
           reason: row.reason,
-          signal: (() => {
-            try {
-              return JSON.parse(row.signal_json);
-            } catch {
-              return null;
-            }
-          })(),
+          signal: parseJsonRecord(row.signal_json),
           status: row.status,
           correlation_id: row.correlation_id,
           created_at: row.created_at,
@@ -1653,6 +1658,58 @@ export function registerTools(server: ScopedMcpServer): void {
       });
     },
     { readOnly: true },
+  );
+
+  server.tool(
+    'judgment_security_incident_review_next',
+    'Claim the next open security incident for agent triage and recommended action.',
+    JudgmentSecurityIncidentReviewNextSchema.shape,
+    async (params, ctx) => {
+      if (!allowControlPlaneWrite(ctx)) {
+        return jsonError({
+          error: 'security_incident_review_not_allowed',
+          message: 'Claiming security incidents is not permitted for this caller.',
+        });
+      }
+
+      const input = JudgmentSecurityIncidentReviewNextSchema.parse(params);
+      const db = getDbFromMetadata(ctx);
+      const claimed = await claimNextSecurityIncidentForReview(db, {
+        accountId: ctx.accountId,
+        reviewerId: ctx.userId ?? 'api-key',
+        claimTtlSeconds: input.claim_ttl_seconds,
+      });
+
+      return jsonContent({
+        meta: {
+          authScope: 'account',
+          note: 'Mutation applies within authenticated account context.',
+        },
+        accountId: ctx.accountId,
+        incident: claimed
+          ? {
+              id: claimed.incident.id,
+              incident_type: claimed.incident.incident_type,
+              severity: claimed.incident.severity,
+              action_mode: claimed.incident.action_mode,
+              reason: claimed.incident.reason,
+              signal: parseJsonRecord(claimed.incident.signal_json),
+              status: claimed.incident.status,
+              correlation_id: claimed.incident.correlation_id,
+              created_at: claimed.incident.created_at,
+            }
+          : null,
+        claim: claimed
+          ? {
+              claimed_by: claimed.claim.claimed_by,
+              claimed_at: claimed.claim.claimed_at,
+              claim_expires_at: claimed.claim.claim_expires_at,
+            }
+          : null,
+        recommendation: claimed ? claimed.recommendation : null,
+      });
+    },
+    { readOnly: false },
   );
 
   server.tool(
