@@ -5,6 +5,7 @@ import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/
 import { CallToolRequestSchema, ListToolsRequestSchema, type Tool } from '@modelcontextprotocol/sdk/types.js';
 
 import discoveryPacksJson from '../../config/mcp-hub/discovery-packs.json';
+import intentRoutesJson from '../../config/mcp-hub/intent-routes.json';
 import registryJson from '../../config/mcp-hub/registry.json';
 
 type StringMap = Record<string, string>;
@@ -169,6 +170,36 @@ type ResolvedDiscoveryPack = {
   preferences: DiscoveryPreferences;
 };
 
+type IntentRouteDefinition = {
+  proxyToolName: string;
+  description?: string;
+  synonyms?: string[];
+  preferredServer?: string;
+  fallbackQuery?: string;
+};
+
+type IntentRouteRegistry = {
+  version: 1;
+  intents: Record<string, IntentRouteDefinition>;
+};
+
+type IntentRouteCandidate = {
+  source: 'allowlist' | 'discovery' | 'none';
+  intent: string;
+  normalizedIntent: string;
+  proxyToolName: string | null;
+  serverName: string | null;
+  downstreamToolName: string | null;
+  description: string;
+  reason: string;
+  alternatives: Array<{
+    proxyToolName: string;
+    serverName: string;
+    downstreamToolName: string;
+    description: string;
+  }>;
+};
+
 type InvocationTrace = {
   requestId: string;
   correlationId: string;
@@ -255,6 +286,7 @@ const HUB_STATE_KV_KEY = 'hub_state_v1';
 
 const registry = registryJson as unknown as McpBundleRegistry;
 const discoveryPackRegistry = discoveryPacksJson as unknown as DiscoveryPackRegistry;
+const intentRouteRegistry = intentRoutesJson as unknown as IntentRouteRegistry;
 
 const MANAGEMENT_TOOLS: Tool[] = [
   {
@@ -299,6 +331,23 @@ const MANAGEMENT_TOOLS: Tool[] = [
     },
   },
   {
+    name: 'hub_route_intent',
+    description:
+      'Route a business intent to a preferred proxy tool using allowlisted mappings with optional discovery fallback.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        intent: { type: 'string' },
+        query: { type: 'string' },
+        serverName: { type: 'string' },
+        allowDiscoveryFallback: { type: 'boolean' },
+        limit: { type: 'number' },
+      },
+      required: ['intent'],
+      additionalProperties: false,
+    },
+  },
+  {
     name: 'hub_describe_proxy_tool',
     description: 'Describe a visible proxy tool (schema + downstream route metadata).',
     inputSchema: {
@@ -319,6 +368,27 @@ const MANAGEMENT_TOOLS: Tool[] = [
         proxyToolName: { type: 'string' },
       },
       required: ['proxyToolName'],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'hub_run_intent',
+    description:
+      'Route a business intent and execute the resolved proxy tool in one call (allowlist first, discovery fallback optional).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        intent: { type: 'string' },
+        args: {
+          type: 'object',
+          additionalProperties: true,
+        },
+        query: { type: 'string' },
+        serverName: { type: 'string' },
+        allowDiscoveryFallback: { type: 'boolean' },
+        limit: { type: 'number' },
+      },
+      required: ['intent'],
       additionalProperties: false,
     },
   },
@@ -968,6 +1038,48 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         return result;
       }
 
+      if (toolName === 'hub_route_intent') {
+        const intent = stringArg(args.intent);
+        if (!intent) {
+          const errorResult = toErrorResult('"intent" is required');
+          await recordHubInvocation(env, {
+            accountId,
+            toolName,
+            success: false,
+            durationMs: Date.now() - startedAt,
+            trace,
+            errorMessage: '"intent" is required',
+            metadata: {
+              type: 'management',
+              operation: 'route_intent',
+            },
+          });
+          return errorResult;
+        }
+
+        const prefs = await getDiscoveryPreferences(accountId, runtime, env);
+        const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
+        const candidate = resolveIntentRouteCandidate(visible, args);
+        const result = toJsonResult(candidateToRoutePayload(candidate, visible));
+        await recordHubInvocation(env, {
+          accountId,
+          toolName,
+          success: candidate.source !== 'none',
+          durationMs: Date.now() - startedAt,
+          trace,
+          errorMessage: candidate.source === 'none' ? candidate.reason : null,
+          metadata: {
+            type: 'management',
+            operation: 'route_intent',
+            source: candidate.source,
+            intent: candidate.intent,
+            normalizedIntent: candidate.normalizedIntent,
+            proxyToolName: candidate.proxyToolName,
+          },
+        });
+        return result;
+      }
+
       if (toolName === 'hub_describe_proxy_tool' || toolName === 'hub_get_proxy_tool') {
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
         const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
@@ -1033,6 +1145,108 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           },
         });
         return result;
+      }
+
+      if (toolName === 'hub_run_intent') {
+        const intent = stringArg(args.intent);
+        if (!intent) {
+          const errorResult = toErrorResult('"intent" is required');
+          await recordHubInvocation(env, {
+            accountId,
+            toolName,
+            success: false,
+            durationMs: Date.now() - startedAt,
+            trace,
+            errorMessage: '"intent" is required',
+            metadata: {
+              type: 'management',
+              operation: 'run_intent',
+            },
+          });
+          return errorResult;
+        }
+
+        if (args.args !== undefined && !isRecord(args.args)) {
+          const message = '"args" must be an object';
+          const errorResult = toErrorResult(message);
+          await recordHubInvocation(env, {
+            accountId,
+            toolName,
+            success: false,
+            durationMs: Date.now() - startedAt,
+            trace,
+            errorMessage: message,
+            metadata: {
+              type: 'management',
+              operation: 'run_intent',
+              intent,
+            },
+          });
+          return errorResult;
+        }
+
+        const prefs = await getDiscoveryPreferences(accountId, runtime, env);
+        const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
+        const candidate = resolveIntentRouteCandidate(visible, args);
+        if (!candidate.proxyToolName) {
+          const message = candidate.reason || `No route found for intent "${intent}".`;
+          const errorResult = toErrorResult(message);
+          await recordHubInvocation(env, {
+            accountId,
+            toolName,
+            success: false,
+            durationMs: Date.now() - startedAt,
+            trace,
+            errorMessage: message,
+            metadata: {
+              type: 'management',
+              operation: 'run_intent',
+              source: candidate.source,
+              intent: candidate.intent,
+              normalizedIntent: candidate.normalizedIntent,
+            },
+          });
+          return errorResult;
+        }
+
+        const route = visible.routes.get(candidate.proxyToolName);
+        if (!route) {
+          const message = `Resolved proxy tool "${candidate.proxyToolName}" is not visible for this session.`;
+          const errorResult = toErrorResult(message);
+          await recordHubInvocation(env, {
+            accountId,
+            toolName,
+            success: false,
+            durationMs: Date.now() - startedAt,
+            trace,
+            errorMessage: message,
+            metadata: {
+              type: 'management',
+              operation: 'run_intent',
+              source: candidate.source,
+              intent: candidate.intent,
+              normalizedIntent: candidate.normalizedIntent,
+              proxyToolName: candidate.proxyToolName,
+            },
+          });
+          return errorResult;
+        }
+
+        const executionArgs = normalizeArgs(args.args);
+        return executeProxyRoute({
+          env,
+          route,
+          executionArgs,
+          trace,
+          accountContext,
+          accountId,
+          toolName,
+          startedAt,
+          rateLimitPolicy,
+          quotaPolicy,
+          entrypoint: 'hub_run_intent',
+          entryProxyToolName: route.proxyToolName,
+        });
       }
 
       if (toolName === 'hub_execute_proxy_tool' || toolName === 'hub_run_proxy_tool') {
@@ -1788,7 +2002,7 @@ export async function executeProxyRoute(params: {
   startedAt: number;
   rateLimitPolicy: RateLimitPolicy;
   quotaPolicy: QuotaPolicy;
-  entrypoint: 'hub_execute_proxy_tool';
+  entrypoint: 'hub_execute_proxy_tool' | 'hub_run_intent';
   entryProxyToolName: string;
 }): Promise<any> {
   const {
@@ -2138,6 +2352,172 @@ export function searchProxyTools(
     nextCursor,
     tools: page,
   };
+}
+
+export function resolveIntentRouteCandidate(
+  visible: VisibleProxyCatalog,
+  args: Record<string, unknown>,
+): IntentRouteCandidate {
+  const intent = stringArg(args.intent) ?? '';
+  const normalizedIntent = normalizeIntentKey(intent);
+  const allowDiscoveryFallback = booleanArg(args.allowDiscoveryFallback, true);
+  const limit = numberArg(args.limit, 5, 1, 25);
+  const explicitServerName = stringArg(args.serverName);
+
+  if (!intent || !normalizedIntent) {
+    return {
+      source: 'none',
+      intent,
+      normalizedIntent,
+      proxyToolName: null,
+      serverName: null,
+      downstreamToolName: null,
+      description: '',
+      reason: 'Intent is required.',
+      alternatives: [],
+    };
+  }
+
+  const allowlistMatch = findAllowlistIntentMatch(normalizedIntent);
+  if (allowlistMatch && visible.routes.has(allowlistMatch.definition.proxyToolName)) {
+    const route = visible.routes.get(allowlistMatch.definition.proxyToolName)!;
+    return {
+      source: 'allowlist',
+      intent,
+      normalizedIntent,
+      proxyToolName: route.proxyToolName,
+      serverName: route.serverName,
+      downstreamToolName: route.downstreamToolName,
+      description: allowlistMatch.definition.description ?? '',
+      reason: `Matched allowlisted intent "${allowlistMatch.intentId}".`,
+      alternatives: [],
+    };
+  }
+
+  if (!allowDiscoveryFallback) {
+    const reason = allowlistMatch
+      ? `Allowlisted route "${allowlistMatch.definition.proxyToolName}" is not visible for this session.`
+      : `No allowlisted route found for intent "${intent}".`;
+    return {
+      source: 'none',
+      intent,
+      normalizedIntent,
+      proxyToolName: null,
+      serverName: null,
+      downstreamToolName: null,
+      description: '',
+      reason,
+      alternatives: [],
+    };
+  }
+
+  const query = stringArg(args.query)
+    ?? allowlistMatch?.definition.fallbackQuery
+    ?? normalizedIntent.replaceAll('_', ' ');
+  const serverName = explicitServerName ?? allowlistMatch?.definition.preferredServer ?? null;
+  const discovered = searchProxyTools(visible, { query, serverName, limit });
+  const tools = Array.isArray((discovered as Record<string, unknown>).tools)
+    ? (discovered as Record<string, unknown>).tools as Array<Record<string, unknown>>
+    : [];
+
+  const first = tools[0] ?? null;
+  if (first) {
+    return {
+      source: 'discovery',
+      intent,
+      normalizedIntent,
+      proxyToolName: stringArg(first.proxyToolName) ?? null,
+      serverName: stringArg(first.serverName) ?? null,
+      downstreamToolName: stringArg(first.downstreamToolName) ?? null,
+      description: stringArg(first.description) ?? '',
+      reason: allowlistMatch
+        ? `Allowlisted route unavailable; selected discovery fallback for intent "${intent}".`
+        : `Selected discovery fallback for intent "${intent}".`,
+      alternatives: tools.map((tool) => ({
+        proxyToolName: stringArg(tool.proxyToolName) ?? '',
+        serverName: stringArg(tool.serverName) ?? '',
+        downstreamToolName: stringArg(tool.downstreamToolName) ?? '',
+        description: stringArg(tool.description) ?? '',
+      })),
+    };
+  }
+
+  return {
+    source: 'none',
+    intent,
+    normalizedIntent,
+    proxyToolName: null,
+    serverName: null,
+    downstreamToolName: null,
+    description: '',
+    reason: `No route found for intent "${intent}" in allowlist or discovery.`,
+    alternatives: [],
+  };
+}
+
+function candidateToRoutePayload(
+  candidate: IntentRouteCandidate,
+  visible: VisibleProxyCatalog,
+): Record<string, unknown> {
+  const definition = candidate.proxyToolName
+    ? visible.definitionByName.get(candidate.proxyToolName)
+    : undefined;
+
+  return {
+    intent: candidate.intent,
+    normalizedIntent: candidate.normalizedIntent,
+    matched: candidate.source !== 'none' && Boolean(candidate.proxyToolName),
+    source: candidate.source,
+    proxyToolName: candidate.proxyToolName,
+    serverName: candidate.serverName,
+    downstreamToolName: candidate.downstreamToolName,
+    description: candidate.description || definition?.description || '',
+    inputSchema: definition?.inputSchema ?? null,
+    reason: candidate.reason,
+    alternatives: candidate.alternatives,
+  };
+}
+
+function normalizeIntentKey(value: string): string {
+  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+
+function findAllowlistIntentMatch(
+  normalizedIntent: string,
+): { intentId: string; definition: IntentRouteDefinition } | null {
+  let best:
+    | {
+      score: number;
+      intentId: string;
+      definition: IntentRouteDefinition;
+    }
+    | null = null;
+
+  for (const [intentId, definition] of Object.entries(intentRouteRegistry.intents ?? {})) {
+    if (!definition?.proxyToolName) continue;
+    const idNorm = normalizeIntentKey(intentId);
+    const synonymNorms = (definition.synonyms ?? []).map((synonym) => normalizeIntentKey(synonym));
+    const keys = [idNorm, ...synonymNorms].filter(Boolean);
+
+    let score = 0;
+    if (keys.some((key) => key === normalizedIntent)) {
+      score = idNorm === normalizedIntent ? 300 : 250;
+    } else if (keys.some((key) => key && (normalizedIntent.includes(key) || key.includes(normalizedIntent)))) {
+      score = 100;
+    }
+
+    if (!best || score > best.score) {
+      best = {
+        score,
+        intentId,
+        definition,
+      };
+    }
+  }
+
+  return best && best.score > 0
+    ? { intentId: best.intentId, definition: best.definition }
+    : null;
 }
 
 function buildDiscoveryServicesPayload(

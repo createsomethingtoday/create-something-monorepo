@@ -20,8 +20,10 @@ Remote MCP hub that exposes one public endpoint and proxies tools from enabled d
 - `hub_list_registry`
 - `hub_list_proxy_tools` (visible proxy tools for current account/session)
 - `hub_search_proxy_tools` (visible query/server filter + cursor pagination)
+- `hub_route_intent` (map business intent to a proxy tool via allowlist + fallback discovery)
 - `hub_describe_proxy_tool` (schema + downstream route metadata for one visible proxy tool)
 - `hub_get_proxy_tool` (compatibility alias for `hub_describe_proxy_tool`)
+- `hub_run_intent` (route + execute in one call)
 - `hub_execute_proxy_tool` (execute one visible proxy tool by name with args)
 - `hub_run_proxy_tool` (compatibility alias for `hub_execute_proxy_tool`)
 - `hub_policy_status` (active policy/runtime limit settings)
@@ -78,6 +80,15 @@ Shared discovery packs:
 - `shared-auth-core`: Dropbox, Gmail, Google Drive, Google Sheets, QuickBooks, Slack, YouTube, Zoom
 - List available packs with `hub_list_discovery_packs`
 - Apply one with `hub_set_discovery` by setting `pack`
+
+Intent routing:
+
+- Allowlisted intent routes are loaded from `config/mcp-hub/intent-routes.json`
+- Resolve intent only: `hub_route_intent`
+- Resolve + execute: `hub_run_intent`
+- Typical pattern for low-context workflows:
+  1. `hub_route_intent`
+  2. `hub_run_intent` (or `hub_execute_proxy_tool` with returned `proxyToolName`)
 
 Account forwarding:
 
@@ -154,6 +165,24 @@ Execute one tool:
     "args": {
       "channel": "C123456",
       "text": "hello from broker mode"
+    }
+  }
+}
+```
+
+Run one allowlisted intent in a single call:
+
+```json
+{
+  "name": "hub_run_intent",
+  "arguments": {
+    "intent": "create_zoom_meeting",
+    "args": {
+      "topic": "Weekly Business Review",
+      "type": 2,
+      "start_time": "2026-03-01T16:00:00Z",
+      "duration": 30,
+      "timezone": "UTC"
     }
   }
 }

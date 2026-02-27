@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   buildVisibleProxyRoutes,
   resolveDiscoveryPack,
+  resolveIntentRouteCandidate,
   searchProxyTools,
 } from '../index.ts';
 
@@ -58,6 +59,51 @@ function createRuntime() {
         [routeA1.proxyToolName, routeA1],
         [routeA2.proxyToolName, routeA2],
         [routeB1.proxyToolName, routeB1],
+      ]),
+      warnings: [],
+    },
+  };
+}
+
+function createIntentRuntime() {
+  const zoomRoute = {
+    proxyToolName: 'composio-toolkit-zoom__zoom_create_a_meeting',
+    serverName: 'composio-toolkit-zoom',
+    downstreamToolName: 'zoom_create_a_meeting',
+    call: async () => ({ ok: true }),
+  };
+  const sheetRoute = {
+    proxyToolName: 'composio-toolkit-googlesheets__googlesheets_batch_update',
+    serverName: 'composio-toolkit-googlesheets',
+    downstreamToolName: 'googlesheets_batch_update',
+    call: async () => ({ ok: true }),
+  };
+
+  return {
+    builtAt: 0,
+    stateResolution: {
+      state: { enabledBundles: [], enabledServers: [], disabledServers: [] },
+      enabledServerNames: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
+      warnings: [],
+    },
+    connected: [],
+    failed: [],
+    proxies: {
+      toolDefinitions: [
+        {
+          name: zoomRoute.proxyToolName,
+          description: '[zoom] create meeting',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        {
+          name: sheetRoute.proxyToolName,
+          description: '[googlesheets] batch update',
+          inputSchema: { type: 'object', properties: {} },
+        },
+      ],
+      routes: new Map([
+        [zoomRoute.proxyToolName, zoomRoute],
+        [sheetRoute.proxyToolName, sheetRoute],
       ]),
       warnings: [],
     },
@@ -153,4 +199,48 @@ test('resolveDiscoveryPack returns null for unknown pack ids', () => {
   const runtime = createRuntime();
   const unknown = resolveDiscoveryPack('does-not-exist', runtime as any);
   assert.equal(unknown, null);
+});
+
+test('resolveIntentRouteCandidate prefers allowlisted route when visible', () => {
+  const runtime = createIntentRuntime();
+  const visible = buildVisibleProxyRoutes(runtime as any, {
+    mode: 'compact',
+    activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
+    maxProxyTools: null,
+  }, {
+    accountId: 'acct_1',
+    tenantId: null,
+    userId: null,
+    sessionId: null,
+    allowedToolPrefixes: null,
+    identitySource: 'fallback',
+  });
+
+  const route = resolveIntentRouteCandidate(visible, { intent: 'create_zoom_meeting' });
+  assert.equal(route.source, 'allowlist');
+  assert.equal(route.proxyToolName, 'composio-toolkit-zoom__zoom_create_a_meeting');
+});
+
+test('resolveIntentRouteCandidate falls back to discovery for unknown intents', () => {
+  const runtime = createIntentRuntime();
+  const visible = buildVisibleProxyRoutes(runtime as any, {
+    mode: 'compact',
+    activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
+    maxProxyTools: null,
+  }, {
+    accountId: 'acct_1',
+    tenantId: null,
+    userId: null,
+    sessionId: null,
+    allowedToolPrefixes: null,
+    identitySource: 'fallback',
+  });
+
+  const route = resolveIntentRouteCandidate(visible, {
+    intent: 'record workflow rows',
+    query: 'batch update',
+    serverName: 'composio-toolkit-googlesheets',
+  });
+  assert.equal(route.source, 'discovery');
+  assert.equal(route.proxyToolName, 'composio-toolkit-googlesheets__googlesheets_batch_update');
 });

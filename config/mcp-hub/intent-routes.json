@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "intents": {
+    "create_zoom_meeting": {
+      "proxyToolName": "composio-toolkit-zoom__zoom_create_a_meeting",
+      "description": "Create a scheduled Zoom meeting.",
+      "synonyms": [
+        "create meeting",
+        "schedule meeting",
+        "new zoom meeting"
+      ],
+      "preferredServer": "composio-toolkit-zoom",
+      "fallbackQuery": "zoom create meeting"
+    },
+    "create_drive_document": {
+      "proxyToolName": "composio-toolkit-googledrive__googledrive_create_file_from_text",
+      "description": "Create a text document in Google Drive.",
+      "synonyms": [
+        "create drive doc",
+        "create google drive file",
+        "write note in drive"
+      ],
+      "preferredServer": "composio-toolkit-googledrive",
+      "fallbackQuery": "googledrive create file from text"
+    },
+    "create_sheet": {
+      "proxyToolName": "composio-toolkit-googlesheets__googlesheets_create_google_sheet1",
+      "description": "Create a Google Sheet.",
+      "synonyms": [
+        "create spreadsheet",
+        "new google sheet",
+        "make sheet"
+      ],
+      "preferredServer": "composio-toolkit-googlesheets",
+      "fallbackQuery": "googlesheets create google sheet"
+    },
+    "log_row_to_sheet": {
+      "proxyToolName": "composio-toolkit-googlesheets__googlesheets_batch_update",
+      "description": "Write a row or range into a Google Sheet.",
+      "synonyms": [
+        "append row",
+        "update sheet",
+        "write to sheet"
+      ],
+      "preferredServer": "composio-toolkit-googlesheets",
+      "fallbackQuery": "googlesheets batch update"
+    },
+    "read_sheet_values": {
+      "proxyToolName": "composio-toolkit-googlesheets__googlesheets_values_get",
+      "description": "Read values from a Google Sheet range.",
+      "synonyms": [
+        "get sheet values",
+        "read spreadsheet",
+        "fetch sheet data"
+      ],
+      "preferredServer": "composio-toolkit-googlesheets",
+      "fallbackQuery": "googlesheets values get"
+    },
+    "send_gmail_email": {
+      "proxyToolName": "composio-toolkit-gmail__gmail_send_email",
+      "description": "Send an email via Gmail.",
+      "synonyms": [
+        "send email",
+        "gmail send",
+        "compose email"
+      ],
+      "preferredServer": "composio-toolkit-gmail",
+      "fallbackQuery": "gmail send email"
+    },
+    "fetch_gmail_emails": {
+      "proxyToolName": "composio-toolkit-gmail__gmail_fetch_emails",
+      "description": "Fetch email messages from Gmail.",
+      "synonyms": [
+        "get emails",
+        "fetch inbox",
+        "latest email"
+      ],
+      "preferredServer": "composio-toolkit-gmail",
+      "fallbackQuery": "gmail fetch emails"
+    }
+  }
+}

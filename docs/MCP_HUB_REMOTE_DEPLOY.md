@@ -95,6 +95,11 @@ New pattern:
    - `args` payload
    - compatibility alias: `hub_run_proxy_tool`
 
+Low-context intent pattern (recommended for small allowlisted workflows):
+
+1. Resolve route via `hub_route_intent`
+2. Execute directly via `hub_run_intent` (or pass returned `proxyToolName` into `hub_execute_proxy_tool`)
+
 ## Telemetry
 
 `cs-mcp-hub-remote` writes hub-level records into `cs-telemetry` (`mcp_tool_invocations` and `mcp_run_counts`) via `TELEMETRY_DB`.
