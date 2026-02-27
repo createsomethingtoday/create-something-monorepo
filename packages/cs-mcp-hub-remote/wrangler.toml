@@ -18,6 +18,10 @@ id = "f77e7c97087041d29fbf0d12e5a831ee"
 preview_id = "6356c7663c334a4195243971e117565c"
 
 [vars]
+# Discovery defaults (used when per-account discovery prefs are not persisted in KV)
+HUB_DISCOVERY_MODE = "compact"
+HUB_DISCOVERY_MAX_PROXY_TOOLS = "10"
+
 # Optional. If set, /mcp requires Authorization: Bearer <token>
 # HUB_API_TOKEN = ""
 

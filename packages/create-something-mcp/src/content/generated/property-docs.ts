@@ -24681,6 +24681,21 @@ This GTM strategy embodies the [Hermeneutic Circle](/canon/concepts/hermeneutic-
 - [x] Lead management (\`/admin/funnel/leads/new\`)
 - [x] Metrics recording (\`/admin/funnel/record\`)
 
+### Constraint OS Sales Assets v1 (Ops/RevOps)
+- [x] Sales asset index (\`content/sales/README.md\`)
+- [x] One-pager buyer brief (\`content/sales/constraint-os-buyer-brief-ops-revops.md\`)
+- [x] Live discovery script (\`content/sales/discovery-call-script.md\`)
+- [x] Commercial interface spec (\`content/sales/constraint-os-interface-spec.yaml\`)
+- [x] Discovery note template (\`content/templates/sales/discovery-note-template.md\`)
+- [x] Proposal input template (\`content/templates/sales/constraint-os-proposal-input-template.md\`)
+- [x] Follow-up cadence template (\`content/templates/sales/constraint-os-follow-up-sequence.md\`)
+
+**Standard run sequence:**
+1. Send buyer brief before or immediately after call one.
+2. Run discovery using branching script (not verbatim).
+3. Capture output in discovery note template.
+4. Build proposal from the same artifact vocabulary (\`mcp_contract.yaml\`, \`agent_contract.yaml\`, \`outcome_contract.md\`).
+
 ### LMS Content
 - [x] Lesson 2 (DRY) - Praxis section added
 - [x] Lesson 3 (Rams) - Praxis section added
@@ -24821,6 +24836,9 @@ Post-proposal cadence:
 - Day 7: Value reminder + case study
 - Day 14: Decision timeline check
 - Day 21: Final follow-up or close
+
+Constraint OS sequence template:
+- \`content/templates/sales/constraint-os-follow-up-sequence.md\`
 
 ### Success Criteria
 - [ ] 1 proposal sent
@@ -24981,7 +24999,7 @@ Based on learnings, plan:
 
 ---
 
-*Last updated: December 29, 2025*
+*Last updated: February 26, 2026*
 *Owner: CREATE SOMETHING GTM*
 `
   },
@@ -25274,275 +25292,484 @@ Based on Sprint 2 baselines:
 `
   },
   {
+    id: "agency:content/sales/constraint-os-buyer-brief-ops-revops",
+    property: "agency",
+    title: "Constraint OS Buyer Brief (Ops/RevOps)",
+    description: "Constraint OS Buyer Brief (Ops/RevOps)",
+    section: "content",
+    path: "content/sales/constraint-os-buyer-brief-ops-revops.md",
+    slug: "content/sales/constraint-os-buyer-brief-ops-revops",
+    uri: "docs://agency/content/sales/constraint-os-buyer-brief-ops-revops",
+    content: `# Constraint OS Buyer Brief (Ops/RevOps)
+
+**Audience:** Ops and RevOps leaders  
+**Read time:** ~3 minutes  
+**Core phrase:** Constraint OS for production autonomy  
+**Delivery vector language:** client-facing \`Skills + MCP\`; technical proof \`MCP + Skills\`
+
+---
+
+## What this solves
+
+Most teams can now connect tools to AI. Very few can run autonomous workflows safely in production.
+
+The bottleneck is no longer "Can we connect systems?"  
+The bottleneck is "Can we govern actions, approvals, and risk while keeping execution fast?"
+
+**Constraint OS** is the operating model that closes that gap.
+
+---
+
+## Outcome in plain terms
+
+You get:
+
+- Fewer unsafe actions in live workflows.
+- Faster execution on safe actions.
+- Clear approvals for risky actions.
+- Auditable decision trails for operations and leadership.
+
+This is how automation scales without creating hidden operational risk.
+
+---
+
+## Offer ladder (how engagements scale)
+
+### 1) Custom Workflow MCPs
+Build the workflow substrate: trusted integrations, tool contracts, and deterministic execution paths.
+
+### 2) Autonomy Assurance
+Add reliability controls: policy envelopes, release gates, approval rules, and incident loops.
+
+### 3) Enterprise Extension
+Extend into high-stakes operations: cross-system orchestration, strict governance controls, and custom trust boundaries.
+
+---
+
+## What ships every engagement
+
+- \`mcp_contract.yaml\`  
+  Tool schemas, resources, auth scopes, error model.
+- \`agent_contract.yaml\`  
+  Allowed actions, approval mode, escalation triggers, budget/latency guardrails.
+- \`outcome_contract.md\`  
+  Workflow targets, success criteria, fallback/manual path, ownership boundaries.
+- Golden-task checks + runbook  
+  Regression gates, incident response, rollback path.
+
+---
+
+## Operating model (how Constraint OS works)
+
+1. Safe actions are auto-allowed.
+2. Risky actions route to an approval inbox.
+3. Disallowed actions are blocked with explicit reason.
+4. Every decision is logged for audit and tuning.
+
+This keeps operational speed where risk is low, and control where risk is high.
+
+---
+
+## Reliability KPIs to track
+
+- **Unreviewed risky actions prevented**
+- **Approval turnaround time**
+- **Incident rate trend**
+- **Governed workflow coverage**
+
+These metrics are the health signal for production autonomy.
+
+---
+
+## Common objections (short answers)
+
+### "We already have automations."
+Most automations fail at governance boundaries. Constraint OS adds approvals, policy control, and auditability so automation can scale safely.
+
+### "This sounds heavy."
+It is phased. Start with one high-value workflow, govern only the risky actions, then expand coverage with evidence.
+
+### "Why not MCP-only?"
+MCP-only is a valid entry wedge for discovery/compliance. Constraint OS is the reliability layer that makes autonomous outcomes dependable in production.
+
+---
+
+## Next step
+
+### Constraint Mapping Session
+
+Output from session:
+
+1. Pilot workflow scope.
+2. Policy boundary (auto-allow vs approval vs block).
+3. 30-day implementation plan.
+
+If the map is not convincing, do not proceed.
+`
+  },
+  {
     id: "agency:content/sales/discovery-call-script",
     property: "agency",
-    title: "Discovery Call Script",
-    description: "Discovery Call Script",
+    title: "Constraint OS Discovery Call Script (Ops/RevOps)",
+    description: "Constraint OS Discovery Call Script (Ops/RevOps)",
     section: "content",
     path: "content/sales/discovery-call-script.md",
     slug: "content/sales/discovery-call-script",
     uri: "docs://agency/content/sales/discovery-call-script",
-    content: `# Discovery Call Script
+    content: `# Constraint OS Discovery Call Script (Ops/RevOps)
 
-**Duration:** 30 minutes
-**Goal:** Understand if we can help, and what "help" would look like.
-
----
-
-## Recognition Patterns
-
-You might feel pressure to pitch during discovery calls. Here's what works better: genuine curiosity about their situation.
-
-| You might reach for | What serves the conversation |
-|---------------------|------------------------------|
-| Jumping to solutions | "Tell me more about that" |
-| Filling silence | Letting them think |
-| Proving expertise | Asking questions that reveal your understanding |
-| Closing the deal | Clarity for both parties |
+**Audience:** Ops/RevOps leaders  
+**Duration:** 20–30 minutes  
+**Primary objective:** confirm fit and secure next step for a Constraint Mapping Session  
+**Message taxonomy:** core phrase "Constraint OS for production autonomy"; client-facing \`Skills + MCP\`; technical proof \`MCP + Skills\`
 
 ---
 
-## Before the Call (5 min prep)
+## 0) Before the call (5 minutes)
 
-Review any available context:
-- [ ] Website/LinkedIn
-- [ ] Referral source notes
-- [ ] Any previous correspondence
-- [ ] Their tech stack (if known)
+Prepare:
 
-**Mindset:** We're here to understand, not to sell. The goal is clarity for both parties.
+- company context (team size, motion, operating systems)
+- likely workflow pain candidates (handoffs, approvals, cross-system drift)
+- existing automation footprint (if known)
+- probable risk profile (low/medium/high)
 
----
+Anchor mindset:
 
-## Opening (2 minutes)
-
-> "Thanks for making time. Before we dive in—what prompted you to reach out?"
-
-Listen. Don't fill silence. Their answer reveals priority.
-
-**If referred:**
-> "How do you know [referrer]? What did they tell you about what we do?"
+- diagnose before prescribing
+- map risk and workflow economics
+- close to a concrete next action
 
 ---
 
-## The Problem (10 minutes)
+## 1) Minute 0–3: context and intent
 
-### Surface the Pain
+Opening:
 
-> "Walk me through a typical week. What's taking more time or energy than it should?"
+> "Thanks for making time. I want to use this call to understand where operations are breaking down, then decide whether a Constraint OS pilot is the right next step. Sound good?"
 
-Follow-up questions:
-- "When did this start becoming a problem?"
-- "What have you tried so far?"
-- "What happens if nothing changes?"
+Intent prompt:
 
-### Quantify the Impact
-
-> "If you had to put a number on it—hours per week, cost per month, deals lost—what would you estimate?"
-
-**Note:** People often underestimate. Gently probe: "Is that just you, or the whole team?"
-
-### Desired State
-
-> "If we fast-forward six months and this is solved—what does that look like? What are you doing instead?"
+> "What prompted this conversation now?"
 
 ---
 
-## The Triad Assessment (5 minutes)
+## 2) Minute 3–10: qualification questions
 
-Based on what they've shared, mentally map to the Subtractive Triad:
+Use these in sequence:
 
-| Level | Question | Signal |
-|-------|----------|--------|
-| **Implementation (DRY)** | "Are you doing the same thing in multiple places?" | Repeated manual processes, copy-paste workflows |
-| **Artifact (Rams)** | "What would you eliminate if you could?" | Features no one uses, reports no one reads |
-| **System (Heidegger)** | "What's disconnected that should be connected?" | Data silos, decision bottlenecks, coordination overhead |
+1. **Workflow autonomy**
+> "Which workflows are already autonomous versus still manually gated?"
 
-**Ask the diagnostic question:**
+2. **Failure cost concentration**
+> "Where are failure costs highest today, in time, dollars, or customer impact?"
 
-> "If I'm hearing you right, the core issue is [paraphrase]. Is that accurate, or am I missing something?"
+3. **Human gate boundaries**
+> "Which actions require a human gate today, and where are gates currently missing?"
 
-Wait for confirmation. Adjust if needed.
+4. **Cross-system coupling**
+> "What systems must stay in sync for this workflow to work end-to-end?"
 
----
+Follow-up probes:
 
-## Fit Assessment (5 minutes)
-
-### Our Side
-
-Internally evaluate:
-- Do we have a service that addresses this?
-- Is the scope realistic for their timeline/budget?
-- Are they decision-makers or do we need another call?
-
-### Their Side
-
-> "Have you worked with agencies or consultants before? What worked? What didn't?"
-
-> "What's your timeline for making a decision on this?"
-
-> "Besides yourself, who else needs to be involved in this decision?"
+- "What did you already try?"
+- "Where does work drift between systems?"
+- "What breaks first when volume spikes?"
 
 ---
 
-## Next Steps (5 minutes)
+## 3) Minute 10–15: diagnosis playback in buyer language
 
-### If Good Fit
+Playback format:
 
-> "Based on what you've described, I think we can help. Here's what I'd suggest as next steps:
->
-> 1. I'll send you a brief write-up of what I heard today
-> 2. If that resonates, we'll put together a proposal
-> 3. You review, we answer questions, and you decide
->
-> Does that work for you?"
+> "Here’s what I’m hearing: [workflow candidate] is failing at [governance boundary], and the cost shows up as [impact]. The issue isn’t just connectivity; it’s controlled execution under risk."
 
-**Timeline commitment:**
-> "I can have that write-up to you by [day]. What's the best email?"
+Then validate:
 
-### If Maybe
+> "Is that accurate, or what should I correct?"
 
-> "I want to be honest—I'm not 100% sure we're the right fit for this. Let me think on it and send you a note either way by [day]. Would that work?"
+If confirmed, position:
 
-### If Not a Fit
-
-> "I appreciate you sharing all of this. Based on what you've described, I don't think we're the right partner for this particular need. [Reason: scope, timeline, expertise mismatch].
->
-> What I can do is [alternative: recommend someone else, point to a resource, suggest a different approach]."
-
-**Graceful exit:** "Is there anything else I can help clarify before we wrap up?"
+> "That is exactly what Constraint OS is designed for: keep safe actions fast, gate risky actions explicitly, and keep every decision auditable."
 
 ---
 
-## After the Call (5 minutes)
+## 4) Minute 15–22: solution mapping to offer ladder
 
-1. **Send thank-you email** (within 2 hours)
-2. **Log the call** in CRM/notes with:
-   - Company, contact, role
-   - Problem summary (1-2 sentences)
-   - Triad level assessment
-   - Estimated scope/budget range
-   - Next step and deadline
-3. **Create proposal input** if proceeding:
-   \`\`\`bash
-   # Use the proposal API
-   curl -X POST https://createsomething.agency/api/proposals \\
-     -H "Content-Type: application/json" \\
-     -d '{ ... }'
-   \`\`\`
+Map problem to delivery tier:
 
----
+1. **Custom Workflow MCPs**
+- build trusted workflow substrate
+- normalize tool contracts and execution paths
 
-## Email Templates
+2. **Autonomy Assurance**
+- policy controls, release gates, approval rules, incident loops
+- default path for production-risk workflows
 
-### Thank You (Same Day)
+3. **Enterprise Extension**
+- high-stakes cross-system orchestration
+- strict governance and trust-boundary customization
 
-\`\`\`
-Subject: Following up from our call
+Live mapping line:
 
-[Name],
-
-Thanks for the conversation today. Here's what I heard:
-
-**The Problem:** [1-2 sentence summary]
-
-**What We'd Remove:** [Triad-aligned framing]
-
-**Next Step:** [What you committed to]
-
-I'll have [deliverable] to you by [day]. Reply to this thread with any questions in the meantime.
-
-Best,
-Micah
-\`\`\`
-
-### Proposal Follow-Up (When Ready)
-
-\`\`\`
-Subject: Proposal: [Service] for [Company]
-
-[Name],
-
-Attached is the proposal we discussed. Key points:
-
-- **Timeline:** [X] weeks
-- **Investment:** [Price]
-- **What We Remove:** [Top 2-3 items from triad assessment]
-
-Take your time reviewing. Happy to hop on a quick call if questions come up.
-
-Best,
-Micah
-
-P.S. The proposal is valid for 30 days. After that, we'd need to revisit scope/pricing.
-\`\`\`
-
-### Not a Fit (Graceful Decline)
-
-\`\`\`
-Subject: Thanks for considering us
-
-[Name],
-
-I've thought more about our conversation, and I don't think we're the right fit for this engagement. [Brief, honest reason].
-
-A few thoughts that might help:
-- [Alternative recommendation or resource]
-- [Different approach they might consider]
-
-If your needs evolve, feel free to reach back out. Happy to revisit.
-
-Best,
-Micah
-\`\`\`
+> "Based on your current risk and coupling, you likely start at [tier] with an assurance posture of [approval mode]."
 
 ---
 
-## Red Flags
+## 5) Minute 22–26: objection handling with pivots
 
-Watch for these during the call:
+### Objection: "We already have automations."
+Response:
 
-| Signal | Meaning | Response |
-|--------|---------|----------|
-| "We need this done ASAP" | Unrealistic timeline | "What's driving the urgency? Let's see if there's a phased approach." |
-| "Can you give me a quote right now?" | Price shopping | "I'd rather give you an accurate number than a fast one. Let me think on scope." |
-| "Our last agency was terrible" | Pattern or isolated? | "What specifically went wrong? I want to make sure we don't repeat that." |
-| "I need to check with my boss" | Not the decision-maker | "Should we loop them in for the next conversation?" |
-| "We don't really have a budget yet" | Not ready to buy | "When you do have clarity on budget, what range would be realistic?" |
+> "That’s useful baseline capability. The gap we usually see is governance under failure: who approves risky actions, what gets blocked, and how decisions are audited."
+
+Pivot:
+
+> "Where do your current automations fail or require manual cleanup?"
+
+### Objection: "This sounds heavy."
+Response:
+
+> "It’s phased. We start with one workflow, govern only high-risk actions, and expand coverage only when reliability metrics support it."
+
+Pivot:
+
+> "Would a 30-day pilot on one high-cost workflow be acceptable?"
+
+### Objection: "Why not MCP-only?"
+Response:
+
+> "MCP-only is a good wedge for discovery or compliance-constrained starts. Constraint OS is what makes autonomous outcomes reliable at production scale."
+
+Pivot:
+
+> "Do you want connectivity only, or governed execution with measurable reliability?"
+
+### Objection: price resistance
+Response:
+
+> "The right comparison isn’t to generic automation cost. It’s to failure cost: incident cleanup, approval delays, and trust erosion."
+
+Pivot:
+
+> "What does one bad workflow incident actually cost your team?"
 
 ---
 
-## Subtractive Triad Reference
+## 6) Minute 26–30: close to next step
 
-Use this to map their problem to our services:
+### High fit
 
-| Triad Level | Question | Service Fit |
-|-------------|----------|-------------|
-| **Implementation** | "Have I built this before?" | Web Development, Canon CSS |
-| **Artifact** | "Does this earn its existence?" | Automation, Automation Patterns |
-| **System** | "Does this serve the whole?" | Agentic Systems, Partnership, Transformation |
+Use when pain is clear, buyer has authority, and urgency exists.
 
-**Philosophy:** We don't add features. We remove what obscures.
+> "Next step is a paid Constraint Mapping Session. You’ll get pilot scope, policy boundary, and a 30-day implementation plan."
+
+Commit:
+
+- owner
+- date
+- required stakeholders
+
+### Medium fit
+
+Use when value is likely but authority, budget, or urgency is partial.
+
+> "We can start with a scoped MCP-only wedge and define explicit triggers for moving into Autonomy Assurance."
+
+Commit:
+
+- wedge workflow
+- trigger criteria
+- review checkpoint date
+
+### Low fit
+
+Use when no urgent workflow economics or no practical sponsorship path.
+
+> "I don’t think this should proceed right now. Let’s park with a re-entry condition."
+
+Commit:
+
+- explicit re-entry condition
+- expected timing window
 
 ---
 
-## Quick Reference
+## Prewritten content blocks
 
-**Proposal API:**
-\`\`\`bash
-curl https://createsomething.agency/api/proposals  # GET for docs
-curl -X POST https://createsomething.agency/api/proposals -d '...'  # Generate
-\`\`\`
+### 30-second positioning statement
 
-**Services:**
-- \`web-development\` (\$5,000+, 2-4 weeks)
-- \`automation\` (\$15,000+, 4-8 weeks)
-- \`agentic-systems\` (\$35,000+, 8-16 weeks)
-- \`partnership\` (\$5,000/mo, ongoing)
-- \`transformation\` (\$50,000+, 12-16 weeks)
-- \`advisory\` (\$10,000/mo, 6-month min)
+> "CREATE SOMETHING runs a Constraint OS for production autonomy. We build custom workflow MCPs, then layer governance so safe actions stay fast, risky actions are approval-gated, and every decision is auditable."
 
-**CTA:** createsomething.agency/discover
+### 2-minute "how it works in practice"
+
+> "In practice, we map one high-cost workflow, define policy boundaries, and ship three operating artifacts: \`mcp_contract.yaml\`, \`agent_contract.yaml\`, and \`outcome_contract.md\`.  
+> Runtime behavior is simple: safe actions auto-allow, risky actions route to approval inbox, disallowed actions block with reason. Then we review reliability KPIs and expand coverage based on evidence."
+
+### Three case-pattern examples
+
+1. **Cross-system drift prevention**  
+   CRM and support tooling diverge under volume; governed routing enforces sync paths and reduces reconciliation overhead.
+2. **Approval-gated write workflows**  
+   Write/send actions require explicit gate while read paths stay fast; reduces unreviewed risky changes.
+3. **Incident-to-policy feedback loop**  
+   Repeated failure patterns are codified into policy updates, reducing recurrence over time.
+
+### Closing language by fit
+
+1. **High fit:** "Let’s schedule the Constraint Mapping Session and lock stakeholders now."
+2. **Medium fit:** "Let’s scope a narrow wedge and define assurance trigger thresholds upfront."
+3. **Low fit:** "Let’s pause and re-enter when [condition] is true."
+
+---
+
+## Internal usage protocol
+
+1. Send the one-pager before or immediately after call one.
+2. Use this script as a branching guide, not verbatim.
+3. Capture outputs in a standard discovery note.
+4. Execute post-call follow-up from \`../templates/sales/constraint-os-follow-up-sequence.md\`.
+5. Build proposals using the same artifact vocabulary.
+
+### Discovery note template (required fields)
+
+- workflow candidate
+- risk class (\`low|medium|high\`)
+- required approvals
+- integration systems
+- recommended package tier
+- buyer authority level
+- next step owner and date
+
+---
+
+## Test cases and pass conditions
+
+### Scenario A: Ops lead with failed automations
+Pass when buyer restates the 3-tier offer ladder and requests pilot scope.
+
+### Scenario B: technical stakeholder requests architecture depth
+Pass when call transitions to trust boundaries, policy runtime, and portability without losing business framing.
+
+### Scenario C: price resistance
+Pass when discussion anchors to failure cost and a phased entry path.
+
+### Scenario D: "we only want MCP"
+Pass when MCP-only is framed as wedge with explicit assurance trigger criteria.
+
+### Scenario E: multi-stakeholder call
+Pass when call closes with named owner, scoped next step, and date.
+
+---
+
+## Acceptance criteria for this script
+
+1. Another team member can run the call flow without ad-lib invention.
+2. Every objection path ends with a concrete next action.
+3. Discovery notes are proposal-ready in one pass.
+4. Script supports a 20–30 minute call without losing core diagnosis steps.
+
+---
+
+## Assumptions and defaults
+
+1. Primary buyer is Ops/RevOps.
+2. Primary channel is live discovery calls.
+3. Primary success objective is operational reliability.
+4. Messaging aligns to current \`.agency\` phrasing and contract artifacts.
+5. Version 1 favors clarity and conversion over long-form technical depth.
+
+**CTA:** createsomething.agency/book
+`
+  },
+  {
+    id: "agency:content/sales/README",
+    property: "agency",
+    title: "Constraint OS Sales Assets v1",
+    description: "Constraint OS Sales Assets v1",
+    section: "content",
+    path: "content/sales/README.md",
+    slug: "content/sales/README",
+    uri: "docs://agency/content/sales/README",
+    content: `# Constraint OS Sales Assets v1
+
+**Primary buyer:** Ops/RevOps  
+**Primary channel:** Live discovery and mapping calls  
+**Core phrase:** Constraint OS for production autonomy
+
+---
+
+## Asset map
+
+1. **Buyer brief (send before or after first call)**
+   - \`constraint-os-buyer-brief-ops-revops.md\`
+   - Purpose: frame problem, outcomes, offer ladder, and CTA in under 3 minutes.
+
+2. **Discovery script (run live for 20-30 minutes)**
+   - \`discovery-call-script.md\`
+   - Purpose: qualify fit, map tier, handle objections, and close to a concrete next step.
+
+3. **Commercial interface spec (machine-readable source of truth)**
+   - \`constraint-os-interface-spec.yaml\`
+   - Purpose: standardize one-pager inputs/outputs, call script branch logic, and taxonomy.
+
+4. **Discovery note (required after every call)**
+   - \`../templates/sales/discovery-note-template.md\`
+   - Purpose: standardize proposal inputs in one pass.
+
+5. **Proposal input template (delivery handoff)**
+   - \`../templates/sales/constraint-os-proposal-input-template.md\`
+   - Purpose: convert discovery output into proposal scope and contract artifact implications.
+
+6. **Follow-up sequence (post-call execution)**
+   - \`../templates/sales/constraint-os-follow-up-sequence.md\`
+   - Purpose: move high and medium fit deals to decision with clear owner and date.
+
+---
+
+## Message taxonomy
+
+- Core phrase: "Constraint OS for production autonomy."
+- Client-facing delivery vector: \`Skills + MCP\`
+- Technical proof vector: \`MCP + Skills\`
+
+---
+
+## Operating flow
+
+1. Send one-pager.
+2. Run discovery script as a branching guide.
+3. Capture discovery note.
+4. Assign fit (\`high|medium|low\`) and select close path.
+5. Execute follow-up sequence and lock next action.
+6. Build proposal using:
+   - \`mcp_contract.yaml\`
+   - \`agent_contract.yaml\`
+   - \`outcome_contract.md\`
+
+---
+
+## Fit-to-next-step policy
+
+1. **High fit**
+   - Next step: paid Constraint Mapping Session.
+   - Must exit call with owner, stakeholder set, and calendar date.
+
+2. **Medium fit**
+   - Next step: scoped MCP-only wedge.
+   - Must define assurance trigger criteria and checkpoint date.
+
+3. **Low fit**
+   - Next step: park or refer.
+   - Must define explicit re-entry condition and timing window.
+
+---
+
+## Usage discipline
+
+- Use script language blocks as defaults, then adapt to buyer wording.
+- Do not skip risk-classification in the note template.
+- Do not produce proposals with missing approval boundaries.
 `
   },
   {
@@ -27754,15 +27981,15 @@ After sending, log in funnel:
   {
     id: "agency:content/templates/outreach/discovery-invite",
     property: "agency",
-    title: "Discovery Call Invitation Templates",
-    description: "Discovery Call Invitation Templates",
+    title: "Constraint Mapping Invitation Templates",
+    description: "Constraint Mapping Invitation Templates",
     section: "content",
     path: "content/templates/outreach/discovery-invite.md",
     slug: "content/templates/outreach/discovery-invite",
     uri: "docs://agency/content/templates/outreach/discovery-invite",
-    content: `# Discovery Call Invitation Templates
+    content: `# Constraint Mapping Invitation Templates
 
-**Purpose**: Convert warm relationship into discovery conversation
+**Purpose**: Convert warm relationship into a Constraint Mapping Session
 **When to use**: After 2-3 positive exchanges, clear ICP match
 **Prerequisite**: They know who you are and have shown interest
 
@@ -27773,9 +28000,9 @@ After sending, log in funnel:
 **Context**: After good back-and-forth in messages
 
 \`\`\`
-This is easier to talk through than type -
+This is easier to talk through than type.
 
-Would you be up for a 15-minute call? Not a sales pitch - genuinely curious about what you're building at {{company}} and happy to share what we've learned.
+Would you be up for a 20-minute Constraint Mapping Session? Not a sales pitch - we'll map your workflow bottlenecks and where governance is required.
 
 Here's my calendar if useful: {{calendar_link}}
 
@@ -27784,11 +28011,11 @@ Or just throw out a time that works.
 
 **Example**:
 \`\`\`
-This is easier to talk through than type -
+This is easier to talk through than type.
 
-Would you be up for a 15-minute call? Not a sales pitch - genuinely curious about what you're building at Acme and happy to share what we've learned.
+Would you be up for a 20-minute Constraint Mapping Session? Not a sales pitch - we'll map your workflow bottlenecks and where governance is required.
 
-Here's my calendar if useful: savvycal.com/createsomething/discovery
+Here's my calendar if useful: createsomething.agency/book
 
 Or just throw out a time that works.
 \`\`\`
@@ -27802,7 +28029,7 @@ Or just throw out a time that works.
 \`\`\`
 You mentioned {{challenge}} - we just worked through something similar with {{anonymized_client}}.
 
-Would 15 minutes be useful to compare notes? I can walk through what worked (and what didn't).
+Would 20 minutes be useful to compare notes? I can walk through what worked (and what didn't).
 
 No pitch, just problem-solving.
 
@@ -27813,11 +28040,11 @@ No pitch, just problem-solving.
 \`\`\`
 You mentioned the AI integration isn't sticking with your team - we just worked through something similar with a client in your space.
 
-Would 15 minutes be useful to compare notes? I can walk through what worked (and what didn't).
+Would 20 minutes be useful to compare notes? I can walk through what worked (and what didn't).
 
 No pitch, just problem-solving.
 
-savvycal.com/createsomething/discovery
+createsomething.agency/book
 \`\`\`
 
 ---
@@ -27829,7 +28056,7 @@ savvycal.com/createsomething/discovery
 \`\`\`
 Based on our conversation, I think this might be relevant: {{resource_link}}
 
-If it resonates, happy to dig deeper on a call. 15 minutes, no commitment.
+If it resonates, happy to dig deeper on a Constraint Mapping Session. 20 minutes, no commitment.
 
 {{calendar_link}}
 \`\`\`
@@ -27843,9 +28070,9 @@ If it resonates, happy to dig deeper on a call. 15 minutes, no commitment.
 \`\`\`
 You mentioned {{initiative}} is coming up in {{timeframe}}.
 
-Might be worth a quick call before you get too deep in. We've seen a few patterns that could save you time.
+Might be worth a quick Constraint Mapping Session before you get too deep in. We've seen a few patterns that could save you time.
 
-15 minutes, happy to just share what we know.
+20 minutes, happy to just share what we know.
 
 {{calendar_link}}
 \`\`\`
@@ -27859,7 +28086,7 @@ Might be worth a quick call before you get too deep in. We've seen a few pattern
 \`\`\`
 I've enjoyed this exchange - feels like we're circling similar problems.
 
-Would be easier to continue over a call. 15 minutes, no agenda beyond "what are you working on and how can we help?"
+Would be easier to continue over a Constraint Mapping Session. 20 minutes, no agenda beyond "what are you working on and how can we help?"
 
 {{calendar_link}} - or suggest a time.
 \`\`\`
@@ -27892,7 +28119,7 @@ Happy to catch up if timing's better now.
 \`\`\`
 ❌ "Let me know if you have 30 minutes this week."
 \`\`\`
-*Problem*: 30 min feels like a commitment; 15 min is easy
+*Problem*: 30 min feels like a commitment; keep it near 20 min unless they ask for deeper technical review.
 
 \`\`\`
 ❌ "I think we could really help you with..."
@@ -27910,14 +28137,14 @@ Happy to catch up if timing's better now.
 
 **Structure**:
 1. **Reference** - Connect to previous exchange
-2. **Value** - What they'll get from the call
+2. **Value** - What they'll get from the mapping session
 3. **Pressure release** - "No pitch" / "No commitment"
 4. **Easy action** - Calendar link OR time suggestion
 
 **Time positioning**:
-- Always say "15 minutes" (feels low-commitment)
-- Actual calls often run 20-30 if going well
-- Never ask for 30+ upfront
+- Ask for "20 minutes" to match the live discovery flow
+- Sessions may run 20-30 if signal is strong
+- Avoid asking for 30+ upfront unless buyer requests deep technical review
 
 ---
 
@@ -27945,7 +28172,7 @@ Then:
 1. Send calendar invite with video link
 2. Review their LinkedIn, company, recent posts
 3. Prepare 1-2 relevant examples
-4. Review discovery call script
+4. Review \`content/sales/discovery-call-script.md\`
 
 ---
 
@@ -27981,11 +28208,11 @@ Happy to reconnect down the road if more relevant then.
 
 When sending invite:
 - Update lead stage to \`consideration\`
-- Note: Discovery invite sent {{date}}
+- Note: Constraint Mapping invite sent {{date}}
 
 When call scheduled:
 - Update stage to \`decision\`
-- Note: Call scheduled {{date/time}}
+- Note: Mapping session scheduled {{date/time}}
 - Set \`discovery_call_at\` field
 
 ---
@@ -28000,11 +28227,13 @@ When call scheduled:
 
 ## Calendar Link Setup
 
-**SavvyCal settings for discovery calls**:
-- Duration: 15 minutes (can extend if needed)
+**SavvyCal settings for mapping sessions**:
+- Duration: 20 minutes (can extend if needed)
 - Buffer: 15 minutes after
 - Availability: Business hours + limited evenings
-- Questions: "What's the main thing you'd want to discuss?"
+- Questions:
+  - "Which workflow is highest-cost when it fails?"
+  - "Which systems must stay in sync?"
 `
   },
   {
@@ -28412,6 +28641,374 @@ After sending, update lead in funnel:
 - **Response rate target**: >60% (warm leads should respond)
 - **If below 40%**: Messages too salesy, need more value-add
 - **Conversation-to-call rate**: >20% should progress to discovery
+`
+  },
+  {
+    id: "agency:content/templates/sales/constraint-os-follow-up-sequence",
+    property: "agency",
+    title: "Constraint OS Follow-up Sequence (Post-Discovery)",
+    description: "Constraint OS Follow-up Sequence (Post-Discovery)",
+    section: "content",
+    path: "content/templates/sales/constraint-os-follow-up-sequence.md",
+    slug: "content/templates/sales/constraint-os-follow-up-sequence",
+    uri: "docs://agency/content/templates/sales/constraint-os-follow-up-sequence",
+    content: `# Constraint OS Follow-up Sequence (Post-Discovery)
+
+Use this sequence after a discovery call to convert diagnosis into a concrete decision.
+
+---
+
+## Required inputs before sending follow-up
+
+- buyer fit level (\`high|medium|low\`)
+- workflow candidate
+- risk class
+- required approvals
+- integration systems
+- recommended package tier
+- next-step owner and target date
+
+---
+
+## Day 0 (within 4 hours): recap + decision path
+
+### Goal
+Confirm shared diagnosis and lock next action.
+
+### Template
+Subject: Constraint OS recap + next step
+
+Hi {{Name}},
+
+Thanks again for the discussion. Here is the operating summary from today:
+
+- Workflow candidate: {{workflow}}
+- Risk class: {{risk_class}}
+- Systems in scope: {{systems}}
+- Recommended path: {{tier}}
+
+Based on this, the next step is:
+- {{next_step}}
+- Owner: {{owner}}
+- Target date: {{date}}
+
+If this summary is accurate, I will proceed with the above path.
+
+Best,  
+{{sender}}
+
+---
+
+## Day 2: risk and economics anchor
+
+### Goal
+Re-anchor on failure cost and governance value.
+
+### Template
+Subject: quick check on failure-cost baseline
+
+Hi {{Name}},
+
+Before we finalize scope, I want to confirm one baseline:
+what is the current cost of a failure in this workflow (cleanup time, delay, or customer impact)?
+
+This baseline is how we size the initial policy boundary and pilot target.
+
+Best,  
+{{sender}}
+
+---
+
+## Day 5: path-specific follow-up
+
+### High fit
+Subject: confirm mapping session stakeholders
+
+Hi {{Name}},
+
+To finalize the Constraint Mapping Session, please confirm:
+- decision owner
+- ops/technical stakeholders
+- preferred slot this week
+
+Deliverable remains: pilot scope, policy boundary, and 30-day plan.
+
+Best,  
+{{sender}}
+
+### Medium fit
+Subject: confirm MCP wedge + assurance triggers
+
+Hi {{Name}},
+
+For the MCP-only wedge, please confirm:
+- single workflow boundary
+- trigger criteria for entering Autonomy Assurance
+- checkpoint date for trigger review
+
+Best,  
+{{sender}}
+
+### Low fit
+Subject: re-entry condition alignment
+
+Hi {{Name}},
+
+Agreed to pause for now. Please confirm the re-entry condition:
+{{reentry_condition}}
+
+When that condition is met, we can reopen with a scoped mapping call.
+
+Best,  
+{{sender}}
+
+---
+
+## Day 10: timeline checkpoint
+
+### Goal
+Prevent silent stall.
+
+### Template
+Subject: timeline check
+
+Hi {{Name}},
+
+Quick timeline check: should we keep the current next-step date, or reset it?
+
+If reset, please share the new owner and date so we can keep this moving cleanly.
+
+Best,  
+{{sender}}
+
+---
+
+## Day 14: close loop
+
+### Goal
+Resolve to one of three outcomes.
+
+### Template
+Subject: close loop on next step
+
+Hi {{Name}},
+
+I want to close this loop with one clear outcome:
+1. proceed now,  
+2. proceed later with a set date, or  
+3. pause indefinitely.
+
+Reply with the option and I will update our plan accordingly.
+
+Best,  
+{{sender}}
+
+---
+
+## Exit criteria
+
+- Every sequence ends with a named owner and date, or explicit pause condition.
+- Medium-fit sequences include documented assurance trigger criteria.
+- High-fit sequences result in a scheduled Constraint Mapping Session.
+
+`
+  },
+  {
+    id: "agency:content/templates/sales/constraint-os-proposal-input-template",
+    property: "agency",
+    title: "Constraint OS Proposal Input Template",
+    description: "Constraint OS Proposal Input Template",
+    section: "content",
+    path: "content/templates/sales/constraint-os-proposal-input-template.md",
+    slug: "content/templates/sales/constraint-os-proposal-input-template",
+    uri: "docs://agency/content/templates/sales/constraint-os-proposal-input-template",
+    content: `# Constraint OS Proposal Input Template
+
+**Purpose:** Convert discovery outputs into proposal-ready scope in one pass.  
+**Use after:** \`content/templates/sales/discovery-note-template.md\`
+
+---
+
+## Source references
+
+- discovery note path:
+- call date:
+- fit level (\`high|medium|low\`):
+- recommended tier:
+
+---
+
+## Commercial summary (client language)
+
+- buyer objective:
+- workflow candidate:
+- current failure cost:
+- target outcome in 30 days:
+- why now:
+
+---
+
+## Scope by offer ladder
+
+### Custom Workflow MCPs (required baseline)
+- systems in scope:
+- workflow boundaries:
+- implementation deliverables:
+
+### Autonomy Assurance (if included)
+- approval boundaries:
+- release gates:
+- incident loop expectations:
+
+### Enterprise Extension (if included)
+- high-stakes constraints:
+- trust-boundary requirements:
+- orchestration/governance requirements:
+
+---
+
+## Artifact implications
+
+### \`mcp_contract.yaml\` implications
+- tools/resources to define:
+- auth scopes:
+- error/fallback model:
+
+### \`agent_contract.yaml\` implications
+- allowed actions:
+- approval-required actions:
+- blocked actions:
+- escalation triggers:
+
+### \`outcome_contract.md\` implications
+- pilot scope:
+- success criteria:
+- fallback/manual path:
+- ownership boundaries:
+
+---
+
+## Reliability and risk plan
+
+- primary KPI:
+- secondary KPIs:
+- initial risk class:
+- risk mitigation commitments:
+
+---
+
+## Execution plan
+
+- 30-day plan summary:
+- milestones:
+- required client stakeholders:
+- dependencies:
+
+---
+
+## Commercial terms input
+
+- pricing lane:
+- timeline range:
+- support/retainer expectation:
+- assumptions:
+- exclusions:
+
+---
+
+## Decision close path
+
+- proposed next step:
+- decision owner:
+- target decision date:
+- if deferred: re-entry condition and date:
+
+`
+  },
+  {
+    id: "agency:content/templates/sales/discovery-note-template",
+    property: "agency",
+    title: "Constraint OS Discovery Note Template",
+    description: "Constraint OS Discovery Note Template",
+    section: "content",
+    path: "content/templates/sales/discovery-note-template.md",
+    slug: "content/templates/sales/discovery-note-template",
+    uri: "docs://agency/content/templates/sales/discovery-note-template",
+    content: `# Constraint OS Discovery Note Template
+
+**Purpose:** Standardize post-call capture so proposal drafting is consistent and fast.  
+**Use with:** \`content/sales/discovery-call-script.md\`
+
+---
+
+## Call metadata
+
+- date:
+- company:
+- primary contact:
+- role:
+- additional stakeholders:
+- call owner:
+
+---
+
+## Problem summary
+
+- triggering event:
+- current workflow pain (1-2 sentences):
+- current workaround:
+- quantified impact (time/cost/risk):
+
+---
+
+## Constraint OS qualification
+
+- workflow candidate:
+- risk class (\`low|medium|high\`):
+- required approvals (current + desired):
+- integration systems in scope:
+- failure hotspots:
+- human gate boundaries (existing/missing):
+
+---
+
+## Package recommendation
+
+- recommended tier:
+  - \`Custom Workflow MCPs\`
+  - \`Autonomy Assurance\`
+  - \`Enterprise Extension\`
+- rationale:
+- if MCP-only wedge recommended, list assurance trigger criteria:
+
+---
+
+## Commercial and decision signals
+
+- buyer authority level:
+- budget posture:
+- timeline urgency:
+- procurement or security constraints:
+- fit level (\`high|medium|low\`):
+
+---
+
+## Next step
+
+- next action:
+- owner:
+- due date:
+- required participants:
+- deliverable committed (for example: Constraint Mapping Session output):
+
+---
+
+## Proposal input block
+
+- \`mcp_contract.yaml\` implications:
+- \`agent_contract.yaml\` implications:
+- \`outcome_contract.md\` implications:
+- primary reliability KPI for pilot:
 `
   },
   {
@@ -30416,6 +31013,111 @@ All endpoints return consistent error responses:
 `
   },
   {
+    id: "agency:docs/MOBILE_EXPERIENCE_REVIEW_2026-02-25",
+    property: "agency",
+    title: ".Agency Mobile Experience Review (2026-02-25)",
+    description: ".Agency Mobile Experience Review (2026-02-25)",
+    section: "docs",
+    path: "docs/MOBILE_EXPERIENCE_REVIEW_2026-02-25.md",
+    slug: "docs/MOBILE_EXPERIENCE_REVIEW_2026-02-25",
+    uri: "docs://agency/docs/MOBILE_EXPERIENCE_REVIEW_2026-02-25",
+    content: `# .Agency Mobile Experience Review (2026-02-25)
+
+## Scope
+
+Reviewed the \`.agency\` SvelteKit property at mobile viewport \`390x844\` (iPhone 12-ish) across the primary marketing and conversion routes:
+
+- \`/\`
+- \`/services\`
+- \`/about\`
+- \`/contact\`
+- \`/book\`
+- \`/products\`
+- \`/methodology\`
+
+## QA Preconditions
+
+To run \`.agency\` locally without module-resolution blockers, these workspace packages must be packaged first:
+
+\`\`\`bash
+pnpm --filter @create-something/canon package
+pnpm --filter @create-something/tufte package
+pnpm --filter @create-something/agency dev -- --host 0.0.0.0 --port 4173
+\`\`\`
+
+## Executive Summary
+
+Status: **Partially pass with one notable layout defect.**
+
+- All audited routes render at mobile size and maintain readable typography hierarchy.
+- Primary CTA/navigation flows are present and reachable.
+- **Issue found:** \`/about\` has horizontal overflow (\`scrollWidth: 408\` on \`innerWidth: 390\`), driven by the timeline area. This introduces subtle side-scroll on mobile.
+
+## Route-Level Findings
+
+### \`/\` Home — Pass
+
+- Hero and top nav render correctly in mobile viewport.
+- No horizontal overflow detected.
+- Footer and key links remain accessible.
+
+### \`/services\` — Pass
+
+- Offer cards and section rhythm remain readable.
+- No horizontal overflow detected.
+- CTA path to contact/book remains visible.
+
+### \`/about\` — Needs fix
+
+- Core content and timeline render, but the page width exceeds viewport (\`408 > 390\`).
+- Root cause appears tied to the timeline/milestones region where a large SVG (\`min-width\`) expands the scrollable area.
+- User impact: accidental horizontal panning and perceived layout instability on mobile.
+
+### \`/contact\` — Pass
+
+- Intro copy and route intent are clear.
+- No horizontal overflow detected.
+
+### \`/book\` — Pass
+
+- Booking route renders on mobile with heading and high interaction affordance density.
+- No horizontal overflow detected.
+
+### \`/products\` — Pass
+
+- Product list structure and section spacing hold on mobile.
+- No horizontal overflow detected.
+
+### \`/methodology\` — Pass
+
+- Long-form content remains readable and scannable.
+- No horizontal overflow detected.
+
+## Priority Recommendations
+
+1. **P1 — Fix \`/about\` horizontal overflow**
+   - Constrain timeline visualization behavior at small breakpoints (e.g., reduce minimum SVG width, contain overflow to internal scroller, or provide mobile-specific timeline rendering).
+
+2. **P2 — Add a lightweight mobile smoke check**
+   - Include viewport route checks for horizontal overflow and status code sanity in CI or a pre-release script.
+
+3. **P2 — Document local QA startup**
+   - Keep the packaging preconditions (\`canon\` + \`tufte\`) in developer docs so manual/mobile QA is consistently reproducible.
+
+## Follow-up Remediation (2026-02-25)
+
+- \`/about\` timeline overflow fix implemented in \`WorkHistoryTimeline.svelte\` by constraining grid min-width behavior and locking timeline overflow to the internal scroller.
+- Workspace quality gate rerun confirms \`.agency\` passes type checking after the change.
+
+## Evidence
+
+- Mobile viewport automation confirmed:
+  - \`/about\`: \`scrollWidth: 408\`, \`innerWidth: 390\`, overflow = \`true\`
+  - Other audited routes: overflow = \`false\`
+- Screenshot capture for each audited route completed during this pass.
+`
+  },
+  {
     id: "agency:README",
     property: "agency",
     title: "CREATE SOMETHING Agency",
@@ -30426,7 +31128,7 @@ All endpoints return consistent error responses:
     uri: "docs://agency/README",
     content: `# CREATE SOMETHING Agency
 
-**createsomething.agency** — Custom MCP Development
+**createsomething.agency** — Constraint OS for production autonomy
 
 We build the connectivity layer between your tools and AI.
 
@@ -30441,20 +31143,20 @@ Neither Claude Desktop, Claude Cowork, nor Codex can create MCP servers from wit
 - Domain expertise (understanding your business)
 - MCP protocol knowledge (auth, transports, error handling)
 - Integration experience (data mapping, security boundaries)
-- Intelligence Layer design (Skills and Agents on top)
+- Constraint OS design (Skills + MCP with policy boundaries)
 
 This is what \`.agency\` delivers.
 
 ---
 
-## Service Offerings
+## Service Ladder
 
-| Service | Description | Deliverable |
-|---------|-------------|-------------|
-| **MCP Audit** | What MCPs would unlock value for your business? | Strategic report + prioritized roadmap |
-| **Custom MCP Development** | Build the server, package as \`.mcpb\` | Production-ready MCP server |
-| **Intelligence Layer** | Skills and Agents on top of your MCPs | Working automations |
-| **Ongoing Support** | Auth updates, API changes, new capabilities | Retainer relationship |
+| Offer | Description | Typical Output |
+|-------|-------------|----------------|
+| **Custom Workflow MCPs** | Build trusted workflow substrate for business-critical operations. | Workflow implementation + integration contracts |
+| **Autonomy Assurance** | Add policy controls, release gates, approval rules, and incident loops. | Governed runtime behavior + reliability controls |
+| **Enterprise Extension** | Extend for high-stakes, cross-system, and compliance-heavy workflows. | Custom governance boundaries + enterprise orchestration |
+| **Constraint Mapping Session** | Paid pre-implementation mapping to scope workflow and policy boundary. | Pilot scope, policy boundary, and 30-day plan |
 
 ---
 
@@ -30472,8 +31174,8 @@ This is what \`.agency\` delivers.
 └─────────────────────────────────────────────────────────────┘
 \`\`\`
 
-**Entry point**: MCP server that connects your existing tools
-**Upsell**: Intelligence Layer that produces outcomes
+**Entry point**: Custom Workflow MCPs that connect your systems with trusted action paths  
+**Expansion**: Assurance and Extension based on risk and workflow complexity
 
 ---
 
@@ -30546,11 +31248,23 @@ packages/agency/
 │   │   └── admin/           # Internal tools
 │   └── lib/                 # Shared utilities
 ├── content/                 # Operational content
-│   ├── sales/               # Discovery scripts, proposals
+│   ├── sales/               # Constraint OS buyer brief, script, and interface spec
 │   └── case-studies/        # MCP project documentation
 ├── docs/                    # Client documentation
 └── workers/                 # Cloudflare Workers
 \`\`\`
+
+## Sales Assets
+
+The active sales system is documented in:
+
+- \`content/sales/README.md\`
+- \`content/sales/constraint-os-buyer-brief-ops-revops.md\`
+- \`content/sales/discovery-call-script.md\`
+- \`content/sales/constraint-os-interface-spec.yaml\`
+- \`content/templates/sales/discovery-note-template.md\`
+- \`content/templates/sales/constraint-os-proposal-input-template.md\`
+- \`content/templates/sales/constraint-os-follow-up-sequence.md\`
 
 ---
 
