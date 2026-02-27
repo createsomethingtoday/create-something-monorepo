@@ -56,6 +56,15 @@
 
 	let { leaderboard, categories, insights, userTemplates, summary }: Props = $props();
 
+	type CategorySortKey =
+		| 'revenueRank'
+		| 'templatesInSubcategory'
+		| 'totalSales30d'
+		| 'avgRevenuePerTemplate'
+		| 'category'
+		| 'subcategory'
+		| 'competition';
+
 	/**
 	 * Sort insights by priority and type
 	 */
@@ -71,15 +80,74 @@
 		});
 	});
 
-	let sortKey = $state<keyof CategoryEntry>('revenueRank');
+	let sortKey = $state<CategorySortKey>('revenueRank');
 	let sortDirection = $state<'asc' | 'desc'>('asc');
 	let viewMode = $state<'table' | 'grid'>('table');
+	let searchQuery = $state('');
+	let categoryFilter = $state('all');
+	let competitionFilter = $state('all');
+	let userCategoryFilter = $state<'all' | 'user'>('all');
+	const userCategories = $derived(() => new Set(userTemplates.map((t) => t.category)));
+
+	const gridSortOptions: Array<{ key: CategorySortKey; label: string }> = [
+		{ key: 'revenueRank', label: 'Rank' },
+		{ key: 'avgRevenuePerTemplate', label: 'Avg Revenue' },
+		{ key: 'totalSales30d', label: 'Sales (30d)' },
+		{ key: 'templatesInSubcategory', label: 'Active Templates' },
+		{ key: 'competition', label: 'Competition' },
+		{ key: 'category', label: 'Category' },
+		{ key: 'subcategory', label: 'Subcategory' }
+	];
+	const tableSortableKeys: CategorySortKey[] = [
+		'revenueRank',
+		'templatesInSubcategory',
+		'totalSales30d',
+		'avgRevenuePerTemplate'
+	];
+
+	const availableCategoryFilters = $derived(() => {
+		return Array.from(new Set(categories.map((entry) => entry.category))).sort((a, b) =>
+			a.localeCompare(b)
+		);
+	});
+
+	const filteredCategories = $derived(() => {
+		const query = searchQuery.trim().toLowerCase();
+
+		return categories.filter((category) => {
+			if (query) {
+				const text = `${category.category} ${category.subcategory}`.toLowerCase();
+				if (!text.includes(query)) return false;
+			}
+
+			if (categoryFilter !== 'all' && category.category !== categoryFilter) return false;
+
+			if (competitionFilter !== 'all') {
+				const competitionLevel = getCompetitionIndicator(category.templatesInSubcategory)
+					.level.toLowerCase()
+					.replace(/\s+/g, '-');
+				if (competitionLevel !== competitionFilter) return false;
+			}
+
+			if (userCategoryFilter === 'user' && !userCategories().has(category.category)) return false;
+
+			return true;
+		});
+	});
 
 	const sortedCategories = $derived(() => {
-		return [...categories].sort((a, b) => {
+		return [...filteredCategories()].sort((a, b) => {
+			const multiplier = sortDirection === 'asc' ? 1 : -1;
+
+			if (sortKey === 'competition') {
+				const competitionOrder: Record<string, number> = { Low: 0, Medium: 1, High: 2, 'Very High': 3 };
+				const aCompetition = competitionOrder[getCompetitionIndicator(a.templatesInSubcategory).level] ?? 99;
+				const bCompetition = competitionOrder[getCompetitionIndicator(b.templatesInSubcategory).level] ?? 99;
+				return (aCompetition - bCompetition) * multiplier;
+			}
+
 			const aVal = a[sortKey];
 			const bVal = b[sortKey];
-			const multiplier = sortDirection === 'asc' ? 1 : -1;
 
 			if (typeof aVal === 'string' && typeof bVal === 'string') {
 				return aVal.localeCompare(bVal) * multiplier;
@@ -89,11 +157,35 @@
 		});
 	});
 
-	function handleSort(key: keyof CategoryEntry) {
+	const hasActiveFilters = $derived(
+		() =>
+			searchQuery.trim().length > 0 ||
+			categoryFilter !== 'all' ||
+			competitionFilter !== 'all' ||
+			userCategoryFilter !== 'all'
+	);
+
+	function handleSort(key: CategorySortKey) {
 		if (sortKey === key) {
 			sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
 		} else {
 			sortKey = key;
+			sortDirection = 'asc';
+		}
+	}
+
+	function clearFilters() {
+		searchQuery = '';
+		categoryFilter = 'all';
+		competitionFilter = 'all';
+		userCategoryFilter = 'all';
+	}
+
+	function setViewMode(mode: 'table' | 'grid') {
+		viewMode = mode;
+
+		if (mode === 'table' && !tableSortableKeys.includes(sortKey)) {
+			sortKey = 'revenueRank';
 			sortDirection = 'asc';
 		}
 	}
@@ -108,7 +200,6 @@
 		return { level: 'Very High', color: 'error' };
 	}
 
-	const userCategories = $derived(() => new Set(userTemplates.map((t) => t.category)));
 	const hasMarketplaceSalesSummaryData = $derived(
 		() => summary.totalMarketplaceSales !== 0 || Boolean(summary.lastUpdated)
 	);
@@ -269,21 +360,80 @@
 				<button
 					class="toggle-btn"
 					class:active={viewMode === 'table'}
-					onclick={() => (viewMode = 'table')}
+					onclick={() => setViewMode('table')}
 				>
 					Table
 				</button>
 				<button
 					class="toggle-btn"
 					class:active={viewMode === 'grid'}
-					onclick={() => (viewMode = 'grid')}
+					onclick={() => setViewMode('grid')}
 				>
 					Grid
 				</button>
 			</div>
 		</div>
 
-		{#if viewMode === 'table'}
+		<div class="categories-controls">
+			<div class="filter-controls">
+				<input
+					class="control-input"
+					type="search"
+					bind:value={searchQuery}
+					placeholder="Filter category or subcategory"
+					aria-label="Filter category or subcategory"
+				/>
+				<select class="control-select" bind:value={categoryFilter} aria-label="Filter by category">
+					<option value="all">All Categories</option>
+					{#each availableCategoryFilters() as categoryOption}
+						<option value={categoryOption}>{categoryOption}</option>
+					{/each}
+				</select>
+				<select class="control-select" bind:value={competitionFilter} aria-label="Filter by competition">
+					<option value="all">All Competition Levels</option>
+					<option value="low">Low Competition</option>
+					<option value="medium">Medium Competition</option>
+					<option value="high">High Competition</option>
+					<option value="very-high">Very High Competition</option>
+				</select>
+				<select class="control-select" bind:value={userCategoryFilter} aria-label="Filter by your categories">
+					<option value="all">All Portfolios</option>
+					<option value="user">Your Portfolio Categories</option>
+				</select>
+				{#if hasActiveFilters()}
+					<button class="control-btn" type="button" onclick={clearFilters}>
+						Clear
+					</button>
+				{/if}
+			</div>
+
+			{#if viewMode === 'grid'}
+				<div class="grid-sort-controls">
+					<select class="control-select" bind:value={sortKey} aria-label="Sort grid by">
+						{#each gridSortOptions as option}
+							<option value={option.key}>{option.label}</option>
+						{/each}
+					</select>
+					<button
+						class="control-btn sort-direction-btn"
+						type="button"
+						onclick={() => (sortDirection = sortDirection === 'asc' ? 'desc' : 'asc')}
+					>
+						{sortDirection === 'asc' ? 'Asc ↑' : 'Desc ↓'}
+					</button>
+				</div>
+			{/if}
+		</div>
+
+		<p class="categories-meta">
+			Showing {sortedCategories().length} of {categories.length} subcategories
+		</p>
+
+		{#if sortedCategories().length === 0}
+			<div class="categories-empty">
+				No categories match your current filters.
+			</div>
+		{:else if viewMode === 'table'}
 			<!-- Mobile Card Layout for Table View -->
 			<div class="table-mobile-cards">
 				{#each sortedCategories() as category}
@@ -838,6 +988,84 @@
 		gap: var(--space-xs);
 	}
 
+	.categories-controls {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: var(--space-sm);
+		margin-bottom: var(--space-sm);
+		flex-wrap: wrap;
+	}
+
+	.filter-controls {
+		display: flex;
+		flex: 1;
+		flex-wrap: wrap;
+		gap: var(--space-xs);
+	}
+
+	.control-input,
+	.control-select {
+		height: 2rem;
+		padding: 0 var(--space-sm);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-sm);
+		background: var(--color-bg-surface);
+		color: var(--color-fg-primary);
+		font-size: var(--text-body-sm);
+	}
+
+	.control-input {
+		min-width: 14rem;
+		flex: 1;
+	}
+
+	.control-select {
+		min-width: 10rem;
+	}
+
+	.control-btn {
+		height: 2rem;
+		padding: 0 var(--space-sm);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-sm);
+		background: transparent;
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		cursor: pointer;
+		transition: all var(--duration-micro) var(--ease-standard);
+	}
+
+	.control-btn:hover {
+		border-color: var(--color-border-emphasis);
+		color: var(--color-fg-primary);
+	}
+
+	.grid-sort-controls {
+		display: flex;
+		gap: var(--space-xs);
+	}
+
+	.sort-direction-btn {
+		min-width: 5.25rem;
+	}
+
+	.categories-meta {
+		margin: 0 0 var(--space-sm);
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+	}
+
+	.categories-empty {
+		padding: var(--space-md);
+		border: 1px dashed var(--color-border-default);
+		border-radius: var(--radius-md);
+		color: var(--color-fg-muted);
+		font-size: var(--text-body-sm);
+		text-align: center;
+	}
+
 	.toggle-btn {
 		padding: var(--space-xs) var(--space-sm);
 		border: 1px solid var(--color-border-default);
@@ -858,6 +1086,17 @@
 		background: var(--color-bg-subtle);
 		color: var(--color-fg-primary);
 		border-color: var(--color-border-emphasis);
+	}
+
+	@media (max-width: 900px) {
+		.grid-sort-controls {
+			width: 100%;
+		}
+
+		.grid-sort-controls .control-select,
+		.grid-sort-controls .control-btn {
+			flex: 1;
+		}
 	}
 
 	.table-container {
