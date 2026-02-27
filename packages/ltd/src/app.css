@@ -50,12 +50,13 @@
    Global Base Styles
    ========================================================================== */
 
-/* Links - Canonical CREATE SOMETHING micro-interactions */
-a {
+/* Links - Canonical CREATE SOMETHING micro-interactions 
+   Skip opacity hover on buttons to preserve their specific interactive styles */
+a:not([class*="button"]):not(.btn) {
   transition: opacity var(--duration-micro) var(--ease-standard);
 }
 
-a:hover {
+a:not([class*="button"]):not(.btn):hover {
   opacity: 0.7;
 }
 

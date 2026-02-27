@@ -67,11 +67,11 @@
    ========================================================================== */
 
 /* Links - Canonical CREATE SOMETHING micro-interactions */
-a {
+a:not([class*="button"]):not(.btn) {
   transition: opacity var(--duration-micro) var(--ease-standard);
 }
 
-a:hover {
+a:not([class*="button"]):not(.btn):hover {
   opacity: 0.7;
 }
 
