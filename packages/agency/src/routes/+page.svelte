@@ -1105,7 +1105,7 @@
   }
 
   .offering-header {
-    padding: var(--space-5, 1.5rem) var(--space-4, 1rem) var(--space-3, 0.75rem);
+    padding: var(--space-4, 1rem) var(--space-4, 1rem) var(--space-3, 0.75rem);
     text-align: center;
   }
 
@@ -1117,19 +1117,19 @@
   }
 
   .offering-body {
-    padding: 0 var(--space-4, 1rem) var(--space-5, 1.5rem);
+    padding: 0 var(--space-4, 1rem) var(--space-4, 1rem);
     flex: 1;
     display: flex;
     flex-direction: column;
-    border-top: 1px solid var(--color-border-default);
+    border-top: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.05));
   }
 
   .offering-description {
     font-size: var(--text-body-sm);
     color: var(--color-fg-secondary);
     line-height: var(--leading-relaxed);
-    padding-top: var(--space-4, 1rem);
-    margin-bottom: var(--space-5, 1.5rem);
+    padding-top: var(--space-3, 0.75rem);
+    margin-bottom: var(--space-4, 1rem);
   }
 
   .offering-deliverables {
