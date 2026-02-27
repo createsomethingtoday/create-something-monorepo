@@ -1,4 +1,5 @@
 import type { D1Database } from '@create-something/mcp-core';
+import { compileConstraintPolicy } from '@create-something/constraint-os-policy-engine';
 import type { AtlasEntityType } from './versions.js';
 
 export type PolicyStatus = 'draft' | 'active' | 'archived';
@@ -39,8 +40,21 @@ export interface PolicyVersionRow {
   entity_id: string;
   status: PolicyStatus;
   policy_json: string;
+  policy_engine?: string | null;
+  policy_polar?: string | null;
+  policy_hash?: string | null;
+  compiler_version?: string | null;
+  fallback_ir_json?: string | null;
   created_by: string;
   created_at: number;
+}
+
+export interface CompiledPolicyArtifact {
+  policy_engine: 'polar_v1';
+  policy_polar: string;
+  policy_hash: string;
+  compiler_version: string;
+  fallback_ir_json: string;
 }
 
 export interface PolicyEstimateSummary {
@@ -86,6 +100,49 @@ function makePolicyVersionId(accountId: string, entityType: AtlasEntityType, ent
 
 function makeEstimateReportId(accountId: string, entityType: AtlasEntityType, entityId: string): string {
   return ['rep', safeIdPart(accountId), safeIdPart(entityType), safeIdPart(entityId), String(nowEpochSeconds()), randSuffix()].join('_');
+}
+
+function compilePolicyArtifact(policy: JudgmentPolicy): CompiledPolicyArtifact {
+  const compiled = compileConstraintPolicy(policy);
+  return {
+    policy_engine: 'polar_v1',
+    policy_polar: compiled.policyPolar,
+    policy_hash: compiled.policyHash,
+    compiler_version: compiled.compilerVersion,
+    fallback_ir_json: compiled.fallbackIrJson,
+  };
+}
+
+function hasCompiledArtifact(row: PolicyVersionRow): boolean {
+  return Boolean(row.policy_polar && row.policy_hash && row.compiler_version);
+}
+
+async function backfillCompiledArtifact(
+  db: D1Database | undefined,
+  row: PolicyVersionRow,
+  policy: JudgmentPolicy,
+): Promise<PolicyVersionRow> {
+  if (hasCompiledArtifact(row)) return row;
+  const artifact = compilePolicyArtifact(policy);
+  const enriched: PolicyVersionRow = { ...row, ...artifact };
+  if (!db) return enriched;
+  await db
+    .prepare(
+      `UPDATE judgment_policy_versions
+       SET policy_engine = ?, policy_polar = ?, policy_hash = ?, compiler_version = ?, fallback_ir_json = ?
+       WHERE id = ? AND account_id = ?`,
+    )
+    .bind(
+      artifact.policy_engine,
+      artifact.policy_polar,
+      artifact.policy_hash,
+      artifact.compiler_version,
+      artifact.fallback_ir_json,
+      row.id,
+      row.account_id,
+    )
+    .run();
+  return enriched;
 }
 
 export function createDefaultPolicy(entityId: string): JudgmentPolicy {
@@ -150,6 +207,7 @@ export async function savePolicyVersion(
   },
 ): Promise<PolicyVersionRow> {
   const status = input.status ?? 'draft';
+  const artifact = compilePolicyArtifact(input.policy);
   const id = makePolicyVersionId(input.accountId, input.entityType, input.entityId);
   const row: PolicyVersionRow = {
     id,
@@ -158,6 +216,7 @@ export async function savePolicyVersion(
     entity_id: input.entityId,
     status,
     policy_json: JSON.stringify(input.policy),
+    ...artifact,
     created_by: input.createdBy,
     created_at: nowEpochSeconds(),
   };
@@ -167,8 +226,8 @@ export async function savePolicyVersion(
   await db
     .prepare(
       `INSERT INTO judgment_policy_versions
-       (id, account_id, entity_type, entity_id, status, policy_json, created_by, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, account_id, entity_type, entity_id, status, policy_json, policy_engine, policy_polar, policy_hash, compiler_version, fallback_ir_json, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       row.id,
@@ -177,6 +236,11 @@ export async function savePolicyVersion(
       row.entity_id,
       row.status,
       row.policy_json,
+      row.policy_engine ?? 'polar_v1',
+      row.policy_polar ?? null,
+      row.policy_hash ?? null,
+      row.compiler_version ?? null,
+      row.fallback_ir_json ?? null,
       row.created_by,
       row.created_at,
     )
@@ -191,10 +255,18 @@ export async function getPolicyVersionById(
   policyVersionId: string,
 ): Promise<PolicyVersionRow | null> {
   if (!db) return null;
-  return db
+  const row = await db
     .prepare(`SELECT * FROM judgment_policy_versions WHERE account_id = ? AND id = ? LIMIT 1`)
     .bind(accountId, policyVersionId)
     .first<PolicyVersionRow>();
+  if (!row) return null;
+  let parsed: JudgmentPolicy;
+  try {
+    parsed = JSON.parse(row.policy_json) as JudgmentPolicy;
+  } catch {
+    return row;
+  }
+  return backfillCompiledArtifact(db, row, parsed);
 }
 
 export async function listPolicyVersions(
@@ -212,7 +284,22 @@ export async function listPolicyVersions(
     )
     .bind(accountId, entityType, entityId)
     .all<PolicyVersionRow>();
-  return result.results;
+  const rows = result.results;
+  const output: PolicyVersionRow[] = [];
+  for (const row of rows) {
+    let parsed: JudgmentPolicy | null = null;
+    try {
+      parsed = JSON.parse(row.policy_json) as JudgmentPolicy;
+    } catch {
+      // keep raw row on parse failure
+    }
+    if (!parsed) {
+      output.push(row);
+      continue;
+    }
+    output.push(await backfillCompiledArtifact(db, row, parsed));
+  }
+  return output;
 }
 
 export async function getActivePolicySelection(
@@ -287,12 +374,14 @@ export async function resolveActivePolicy(
     entityType: AtlasEntityType;
     entityId: string;
   },
-): Promise<{ policyVersionId: string; policy: JudgmentPolicy }> {
+): Promise<{ policyVersionId: string; policy: JudgmentPolicy; compiled: CompiledPolicyArtifact }> {
   const fallback = createDefaultPolicy(input.entityId);
+  const fallbackCompiled = compilePolicyArtifact(fallback);
   if (!db) {
     return {
       policyVersionId: `default-${safeIdPart(input.entityId)}`,
       policy: fallback,
+      compiled: fallbackCompiled,
     };
   }
 
@@ -300,9 +389,19 @@ export async function resolveActivePolicy(
   if (selectedId) {
     const selected = await getPolicyVersionById(db, input.accountId, selectedId);
     if (selected) {
+      const policy = JSON.parse(selected.policy_json) as JudgmentPolicy;
+      const enriched = await backfillCompiledArtifact(db, selected, policy);
+      const compiled = compilePolicyArtifact(policy);
       return {
-        policyVersionId: selected.id,
-        policy: JSON.parse(selected.policy_json) as JudgmentPolicy,
+        policyVersionId: enriched.id,
+        policy,
+        compiled: {
+          policy_engine: 'polar_v1',
+          policy_polar: enriched.policy_polar ?? compiled.policy_polar,
+          policy_hash: enriched.policy_hash ?? compiled.policy_hash,
+          compiler_version: enriched.compiler_version ?? compiled.compiler_version,
+          fallback_ir_json: enriched.fallback_ir_json ?? compiled.fallback_ir_json,
+        },
       };
     }
   }
@@ -318,15 +417,26 @@ export async function resolveActivePolicy(
     .first<PolicyVersionRow>();
 
   if (latest) {
+    const policy = JSON.parse(latest.policy_json) as JudgmentPolicy;
+    const enriched = await backfillCompiledArtifact(db, latest, policy);
+    const compiled = compilePolicyArtifact(policy);
     return {
-      policyVersionId: latest.id,
-      policy: JSON.parse(latest.policy_json) as JudgmentPolicy,
+      policyVersionId: enriched.id,
+      policy,
+      compiled: {
+        policy_engine: 'polar_v1',
+        policy_polar: enriched.policy_polar ?? compiled.policy_polar,
+        policy_hash: enriched.policy_hash ?? compiled.policy_hash,
+        compiler_version: enriched.compiler_version ?? compiled.compiler_version,
+        fallback_ir_json: enriched.fallback_ir_json ?? compiled.fallback_ir_json,
+      },
     };
   }
 
   return {
     policyVersionId: `default-${safeIdPart(input.entityId)}`,
     policy: fallback,
+    compiled: fallbackCompiled,
   };
 }
 

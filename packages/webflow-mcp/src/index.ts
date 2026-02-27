@@ -158,7 +158,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'plagiarism_confidence',
-      description: 'Calculate Bayesian plagiarism probability for a template pair. Accepts template IDs or URLs. Uses compute/confidence first, then falls back to vector compare when confidence signals are weak for URL-driven cases. For Webflow URL pairs, applies component-pattern normalization to reduce platform-common false positives.',
+      description: 'Calculate Bayesian plagiarism probability for a template pair. Accepts template IDs or URLs. For URL-vs-URL inputs, uses vector compare as the primary evidence path. For ID/slug paths, uses compute/confidence first and falls back to vector compare when confidence signals are weak. For Webflow URL pairs, applies component-pattern normalization to reduce platform-common false positives.',
       inputSchema: {
         type: 'object',
         properties: {

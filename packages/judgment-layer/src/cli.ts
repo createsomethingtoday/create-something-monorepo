@@ -3,6 +3,12 @@ import { join, resolve } from 'node:path';
 import { homedir } from 'node:os';
 import readline from 'node:readline';
 import TOML from '@iarna/toml';
+import {
+  evaluateConstraintPolicyHybrid,
+  type ConstraintEvaluationInput,
+  type ConstraintPolicy,
+  type HybridEvaluatorConfig,
+} from '@create-something/constraint-os-policy-engine';
 import { AppServerClient } from './app-server/client.js';
 import { BUILTIN_POLICIES } from './policy/builtin.js';
 import { loadProjectPolicies } from './policy/load.js';
@@ -344,7 +350,68 @@ function formatPolicySummary(policy: LoadedPolicy, cwd: string): string[] {
     lines.push(`Auto-approve: off`);
   }
 
+  lines.push(`Constraint Engine: ${engineModeFromEnv()} (fallback: ${(process.env.ENGINE_FALLBACK_ENABLED ?? 'true').toLowerCase() !== 'false' ? 'on' : 'off'})`);
+
   return lines;
+}
+
+function engineModeFromEnv(): 'legacy' | 'hybrid' | 'polar' {
+  const raw = (process.env.CONSTRAINT_ENGINE_MODE ?? 'hybrid').toLowerCase();
+  if (raw === 'legacy' || raw === 'polar') return raw;
+  return 'hybrid';
+}
+
+function hybridConfigFromEnv(): HybridEvaluatorConfig {
+  const fetchTimeoutRaw = process.env.OSO_FETCH_TIMEOUT_MS;
+  const fetchTimeoutMillis = fetchTimeoutRaw ? Number(fetchTimeoutRaw) : undefined;
+  return {
+    mode: engineModeFromEnv(),
+    fallbackEnabled: (process.env.ENGINE_FALLBACK_ENABLED ?? 'true').toLowerCase() !== 'false',
+    oso: {
+      url: process.env.OSO_URL,
+      apiKey: process.env.OSO_API_KEY,
+      bootstrapPolicy: (process.env.OSO_BOOTSTRAP_POLICY ?? 'true').toLowerCase() !== 'false',
+      fetchTimeoutMillis: Number.isFinite(fetchTimeoutMillis ?? NaN) ? fetchTimeoutMillis : undefined,
+    },
+  };
+}
+
+function buildApprovalConstraintPolicy(policy: LoadedPolicy, kind: 'command' | 'file'): ConstraintPolicy {
+  const label = kind === 'command' ? 'command approval' : 'file approval';
+  return {
+    id: `${policy.id}-${kind}-constraint-os`,
+    name: `${policy.label} (${label})`,
+    description: `Derived from ${policy.id} for ${label}.`,
+    rules: [
+      {
+        id: `${policy.id}-${kind}-auto-allow`,
+        priority: 10,
+        when: { hasHumanReviewStep: true },
+        then: {
+          decision: 'allow',
+          reason: `Auto-approve conditions matched for ${label}.`,
+        },
+      },
+      {
+        id: `${policy.id}-${kind}-review`,
+        priority: 100,
+        when: {},
+        then: {
+          decision: 'require_human_review',
+          reason: `${label} requires operator review under current policy.`,
+        },
+      },
+    ],
+  };
+}
+
+async function evaluateApprovalConstraintDecision(
+  policy: LoadedPolicy,
+  kind: 'command' | 'file',
+  input: ConstraintEvaluationInput,
+) {
+  const derivedPolicy = buildApprovalConstraintPolicy(policy, kind);
+  return evaluateConstraintPolicyHybrid(input, derivedPolicy, null, hybridConfigFromEnv());
 }
 
 function resolvePolicy(cwd: string, policyId?: string): LoadedPolicy {
@@ -908,8 +975,25 @@ async function runWithPolicy(args: Args) {
             return false;
           }
         }) ?? false;
+      const autoApproved = allowByAction || allowByRegex;
+      const readLikeActions = ['read', 'listFiles', 'search'];
+      const hasWriteIntent =
+        actions.length > 0 ? actions.some((a) => !readLikeActions.includes(a.type)) : !autoApproved;
+      const engineDecision = await evaluateApprovalConstraintDecision(policy, 'command', {
+        toolName: 'command_approval',
+        accountId: 'local-operator',
+        readOnly: policy.sandboxPolicy.type === 'readOnly',
+        hasWriteIntent,
+        hasHumanReviewStep: autoApproved,
+        introspectionOk: true,
+      });
 
-      let decision: any = allowByAction || allowByRegex ? 'acceptForSession' : null;
+      let decision: any =
+        engineDecision.decision === 'allow'
+          ? 'acceptForSession'
+          : engineDecision.decision === 'block'
+            ? 'decline'
+            : null;
 
       if (!decision) {
         if (args.nonInteractive) {
@@ -954,7 +1038,21 @@ async function runWithPolicy(args: Args) {
         turnId,
         itemId,
         summary: `command approval: ${command}`,
-        details: { command, reason, commandActions: actions, proposedExecpolicyAmendment: proposedExecpolicyAmendment ?? null },
+        details: {
+          command,
+          reason,
+          commandActions: actions,
+          proposedExecpolicyAmendment: proposedExecpolicyAmendment ?? null,
+          constraintEngine: {
+            decision: engineDecision.decision,
+            reason: engineDecision.reason,
+            engine: engineDecision.engine,
+            evaluationPath: engineDecision.evaluationPath,
+            policyHash: engineDecision.policyHash ?? null,
+            compilerVersion: engineDecision.compilerVersion ?? null,
+            fallbackReason: engineDecision.fallbackReason ?? null
+          }
+        },
         decision: decisionStr
       });
 
@@ -977,8 +1075,21 @@ async function runWithPolicy(args: Args) {
         prefixes.length > 0
           ? changes.every((c) => prefixes.some((p) => c.path.startsWith(p)))
           : false;
+      const engineDecision = await evaluateApprovalConstraintDecision(policy, 'file', {
+        toolName: 'file_change_approval',
+        accountId: 'local-operator',
+        readOnly: policy.sandboxPolicy.type === 'readOnly',
+        hasWriteIntent: changes.length > 0,
+        hasHumanReviewStep: allowByPrefix,
+        introspectionOk: true,
+      });
 
-      let decision: any = allowByPrefix ? 'acceptForSession' : null;
+      let decision: any =
+        engineDecision.decision === 'allow'
+          ? 'acceptForSession'
+          : engineDecision.decision === 'block'
+            ? 'decline'
+            : null;
 
       if (!decision) {
         if (args.nonInteractive) {
@@ -1006,7 +1117,19 @@ async function runWithPolicy(args: Args) {
         turnId,
         itemId,
         summary: `file change approval (${changes.length} changes)`,
-        details: { changes, reason },
+        details: {
+          changes,
+          reason,
+          constraintEngine: {
+            decision: engineDecision.decision,
+            reason: engineDecision.reason,
+            engine: engineDecision.engine,
+            evaluationPath: engineDecision.evaluationPath,
+            policyHash: engineDecision.policyHash ?? null,
+            compilerVersion: engineDecision.compilerVersion ?? null,
+            fallbackReason: engineDecision.fallbackReason ?? null
+          }
+        },
         decision
       });
 

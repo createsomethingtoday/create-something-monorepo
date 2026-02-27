@@ -161,6 +161,20 @@ export const JudgmentPolicyCompareReportGetSchema = z.object({
   report_id: z.string().min(1),
 });
 
+export const JudgmentEngineRolloutGetSchema = z.object({
+  entity_type: z.enum(['mcp', 'agent']),
+  entity_id: z.string().min(1),
+});
+
+export const JudgmentEngineRolloutSetSchema = z.object({
+  entity_type: z.enum(['mcp', 'agent']),
+  entity_id: z.string().min(1),
+  mode: z.enum(['legacy_enforce', 'shadow', 'polar_enforce']),
+  canary_percent: z.number().int().min(0).max(100).default(0),
+  mismatch_threshold: z.number().min(0).max(1).optional(),
+  fallback_rate_threshold: z.number().min(0).max(1).optional(),
+});
+
 export const JudgmentDashboardSummaryParamsSchema = z.object({
   entity_type: z.enum(['mcp', 'agent']).optional(),
   entity_id: z.string().min(1).optional(),

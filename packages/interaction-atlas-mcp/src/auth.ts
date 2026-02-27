@@ -26,6 +26,11 @@ export type InteractionAtlasEnv = {
   GIT_SHA?: string;
   RUNTIME_REF?: string;
   POLICY_VERSION_ID?: string;
+  OSO_URL?: string;
+  OSO_API_KEY?: string;
+  OSO_BOOTSTRAP_POLICY?: string;
+  ENGINE_FALLBACK_ENABLED?: string;
+  OSO_FETCH_TIMEOUT_MS?: string;
   DB?: D1Database;
 };
 
@@ -88,6 +93,12 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
     const gitSha = env?.GIT_SHA ?? process.env.GIT_SHA ?? 'unknown';
     const runtimeRef = env?.RUNTIME_REF ?? process.env.RUNTIME_REF ?? 'unknown';
     const policyVersionId = env?.POLICY_VERSION_ID ?? process.env.POLICY_VERSION_ID ?? 'policy-v1';
+    const osoUrl = env?.OSO_URL ?? process.env.OSO_URL;
+    const osoApiKey = env?.OSO_API_KEY ?? process.env.OSO_API_KEY;
+    const osoBootstrapPolicy = env?.OSO_BOOTSTRAP_POLICY ?? process.env.OSO_BOOTSTRAP_POLICY ?? 'true';
+    const engineFallbackEnabled = env?.ENGINE_FALLBACK_ENABLED ?? process.env.ENGINE_FALLBACK_ENABLED ?? 'true';
+    const osoFetchTimeoutRaw = env?.OSO_FETCH_TIMEOUT_MS ?? process.env.OSO_FETCH_TIMEOUT_MS;
+    const osoFetchTimeout = osoFetchTimeoutRaw ? Number(osoFetchTimeoutRaw) : undefined;
 
     // Public, read-only access (used for the workflow viewer).
     if (!apiKey) {
@@ -100,6 +111,11 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
           gitSha,
           runtimeRef,
           policyVersionId,
+          OSO_URL: osoUrl,
+          OSO_API_KEY: osoApiKey,
+          OSO_BOOTSTRAP_POLICY: osoBootstrapPolicy,
+          ENGINE_FALLBACK_ENABLED: engineFallbackEnabled,
+          OSO_FETCH_TIMEOUT_MS: Number.isFinite(osoFetchTimeout ?? NaN) ? osoFetchTimeout : undefined,
           db: env?.DB,
         },
         policy: defaultPolicy({
@@ -134,6 +150,11 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
         gitSha,
         runtimeRef,
         policyVersionId,
+        OSO_URL: osoUrl,
+        OSO_API_KEY: osoApiKey,
+        OSO_BOOTSTRAP_POLICY: osoBootstrapPolicy,
+        ENGINE_FALLBACK_ENABLED: engineFallbackEnabled,
+        OSO_FETCH_TIMEOUT_MS: Number.isFinite(osoFetchTimeout ?? NaN) ? osoFetchTimeout : undefined,
         db: env?.DB,
       },
       policy: defaultPolicy({

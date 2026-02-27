@@ -12,15 +12,18 @@ import { getBuiltWorkflowTemplate, getWorkflowMermaid, listWorkflowSummaries, va
 import { buildWorkflowTemplate } from '../workflows/build.js';
 import { workflowTemplateToMermaid } from '../workflows/mermaid.js';
 import { mapToolSequenceToWorkflowDefinition } from '../workflows/map.js';
-import { AtlasGetSchema, AtlasSearchSchema, WorkflowIdSchema, WorkflowMapFromToolSequenceSchema, McpCatalogListSchema, McpIntrospectSchema, McpMapSchema, VersionSelectionGetSchema, VersionSelectionSetSchema, JudgmentPolicyActivateSchema, JudgmentPolicyCompareReportGetSchema, JudgmentPolicyEstimateSchema, JudgmentPolicyGetSchema, JudgmentPolicySaveSchema, AutomationContractGetSchema, AutomationContractUpsertSchema, AutomationRunStartSchema, ApprovalInboxDecideSchema, } from '../schemas/index.js';
+import { evaluateConstraintPolicyHybrid, evaluateConstraintPolicyWithRollout, compileConstraintPolicy, } from '@create-something/constraint-os-policy-engine';
+import { AtlasGetSchema, AtlasSearchSchema, WorkflowIdSchema, WorkflowMapFromToolSequenceSchema, McpCatalogListSchema, McpIntrospectSchema, McpMapSchema, VersionSelectionGetSchema, VersionSelectionSetSchema, JudgmentPolicyActivateSchema, JudgmentPolicyCompareReportGetSchema, JudgmentDashboardSummaryParamsSchema, JudgmentDashboardSummarySchema, JudgmentPolicyEstimateSchema, JudgmentEngineRolloutGetSchema, JudgmentEngineRolloutSetSchema, JudgmentPolicyGetSchema, JudgmentPolicySaveSchema, AutomationContractGetSchema, AutomationContractUpsertSchema, AutomationRunStartSchema, ApprovalInboxDecideSchema, } from '../schemas/index.js';
 import { findMcpCatalogEntry, listMcpCatalog, resolveMcpHttpEndpointUrl, resolveMcpHttpEndpointUrlFromUrl, } from '../mcps/catalog.js';
 import { introspectMcpServer } from '../mcps/introspect.js';
 import { mapMcpToWorkflowDefinition } from '../mcps/map.js';
-import { evaluateJudgment } from '../judgment/evaluate.js';
 import { bindPolicyToVersion, getDefaultSelectedVersionId, getLatestVersion, getVersionById, resolveActiveVersion, setDefaultSelectedVersion, } from '../storage/versions.js';
 import { recordVisualization } from '../storage/visualizations.js';
 import { activatePolicyVersion, getEstimateReportById, getLatestEstimateReport, getPolicyVersionById, listPolicyVersions, resolveActivePolicy, saveEstimateReport, savePolicyVersion, } from '../storage/policies.js';
+import { getEngineRollout, setEngineRollout } from '../storage/rollout.js';
+import { getEngineMetricsSummary, recordEngineEvent } from '../storage/engine-events.js';
 import { createAutomationRun, decideApproval, getActiveAutomationContract, listActiveAutomationContracts, listPendingApprovals, upsertAutomationContract, } from '../storage/control-plane.js';
+import { getJudgmentDashboardSummary } from '../storage/dashboard.js';
 function slugFromUrl(url) {
     try {
         const u = new URL(url);
@@ -90,6 +93,14 @@ function hasWriteLikeName(input) {
 function hasHumanReviewReference(input) {
     return /(human_review|review|approve|approval)/i.test(input);
 }
+function atlasSignals(input) {
+    return {
+        touchpoint: 'mcp_server',
+        aiTask: input.toolName === 'mcp_map_to_workflow' ? 'analyze' : 'orchestrate',
+        humanOversight: input.hasHumanReviewStep ? 'recommended' : 'optional',
+        constraint: input.hasWriteIntent ? 'compliance' : 'permission',
+    };
+}
 function jsonError(data) {
     return {
         content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
@@ -106,6 +117,32 @@ function guardrailsFromPolicy(policy) {
         maxBlockDelta: typeof g?.maxBlockDelta === 'number' ? g.maxBlockDelta : null,
     };
 }
+function boolMetadata(ctx, key, defaultValue) {
+    const value = ctx.metadata[key];
+    if (typeof value === 'boolean')
+        return value;
+    if (typeof value === 'string') {
+        if (value.toLowerCase() === 'true')
+            return true;
+        if (value.toLowerCase() === 'false')
+            return false;
+    }
+    return defaultValue;
+}
+function hybridConfigFromContext(ctx) {
+    const fetchTimeoutRaw = ctx.metadata.OSO_FETCH_TIMEOUT_MS;
+    const fetchTimeoutMillis = typeof fetchTimeoutRaw === 'number' ? fetchTimeoutRaw : undefined;
+    return {
+        mode: 'hybrid',
+        fallbackEnabled: boolMetadata(ctx, 'ENGINE_FALLBACK_ENABLED', true),
+        oso: {
+            url: getStringMetadata(ctx, 'OSO_URL'),
+            apiKey: getStringMetadata(ctx, 'OSO_API_KEY'),
+            bootstrapPolicy: boolMetadata(ctx, 'OSO_BOOTSTRAP_POLICY', true),
+            fetchTimeoutMillis,
+        },
+    };
+}
 function defaultEstimateScenarios() {
     return [
         { id: 'scenario-read', toolName: 'workflow_get', hasWriteIntent: false, hasHumanReviewStep: true, introspectionOk: true },
@@ -113,11 +150,13 @@ function defaultEstimateScenarios() {
         { id: 'scenario-mcp-introspection-fail', toolName: 'mcp_map_to_workflow', hasWriteIntent: true, hasHumanReviewStep: true, introspectionOk: false },
     ];
 }
-function evaluatePolicyScenarios(accountId, readOnly, before, after, scenarios) {
+async function evaluatePolicyScenarios(accountId, readOnly, before, after, scenarios, hybridConfig) {
     const initialCounts = { allow: 0, require_human_review: 0, block: 0 };
     const beforeCounts = { ...initialCounts };
     const afterCounts = { ...initialCounts };
     const details = [];
+    const compiledBefore = compileConstraintPolicy(before);
+    const compiledAfter = compileConstraintPolicy(after);
     for (const scenario of scenarios) {
         const baseInput = {
             toolName: scenario.toolName,
@@ -127,8 +166,8 @@ function evaluatePolicyScenarios(accountId, readOnly, before, after, scenarios) 
             hasHumanReviewStep: scenario.hasHumanReviewStep,
             introspectionOk: scenario.introspectionOk,
         };
-        const beforeDecision = evaluateJudgment(baseInput, before);
-        const afterDecision = evaluateJudgment(baseInput, after);
+        const beforeDecision = await evaluateConstraintPolicyHybrid(baseInput, before, compiledBefore, hybridConfig);
+        const afterDecision = await evaluateConstraintPolicyHybrid(baseInput, after, compiledAfter, hybridConfig);
         beforeCounts[beforeDecision.decision] += 1;
         afterCounts[afterDecision.decision] += 1;
         details.push({
@@ -148,6 +187,70 @@ function evaluatePolicyScenarios(accountId, readOnly, before, after, scenarios) 
         scenarioCount: scenarios.length,
     };
     return { summary, details };
+}
+async function evaluateDecisionForEntity(ctx, args) {
+    const db = getDbFromMetadata(ctx);
+    const rolloutRow = await getEngineRollout(db, {
+        accountId: ctx.accountId,
+        entityType: args.entityType,
+        entityId: args.entityId,
+    });
+    const rollout = {
+        mode: rolloutRow.mode,
+        canaryPercent: rolloutRow.canary_percent,
+    };
+    const withRollout = await evaluateConstraintPolicyWithRollout(args.input, args.policy, rollout, hybridConfigFromContext(ctx));
+    const final = withRollout.final;
+    const polarReference = withRollout.polar;
+    await recordEngineEvent(db, {
+        account_id: ctx.accountId,
+        entity_type: args.entityType,
+        entity_id: args.entityId,
+        tool_name: args.toolName,
+        rollout_mode: rollout.mode,
+        canary_percent: rollout.canaryPercent,
+        sampled_polar: withRollout.sampledPolar ? 1 : 0,
+        mismatch: withRollout.mismatch ? 1 : 0,
+        evaluation_path: final.evaluationPath,
+        fallback_used: polarReference.evaluationPath === 'fallback' ? 1 : 0,
+        legacy_decision: withRollout.legacy.decision,
+        polar_decision: withRollout.polar.decision,
+        final_decision: final.decision,
+        latency_ms: Math.floor(final.latencyMs),
+    });
+    if (rollout.mode !== 'legacy_enforce') {
+        const metrics = await getEngineMetricsSummary(db, {
+            accountId: ctx.accountId,
+            entityType: args.entityType,
+            entityId: args.entityId,
+        });
+        if (metrics.total24h > 0 &&
+            (metrics.mismatchRate > rolloutRow.mismatch_threshold ||
+                metrics.fallbackRate > rolloutRow.fallback_rate_threshold)) {
+            await setEngineRollout(db, {
+                accountId: ctx.accountId,
+                entityType: args.entityType,
+                entityId: args.entityId,
+                mode: 'legacy_enforce',
+                canaryPercent: 0,
+                mismatchThreshold: rolloutRow.mismatch_threshold,
+                fallbackRateThreshold: rolloutRow.fallback_rate_threshold,
+                updatedBy: 'system:auto-rollback',
+            });
+        }
+    }
+    return {
+        decision: final.decision,
+        reason: final.reason,
+        matchedRuleIds: final.matchedRuleIds,
+        engine: final.engine,
+        policyHash: polarReference.policyHash,
+        compilerVersion: polarReference.compilerVersion,
+        evaluationPath: final.evaluationPath,
+        fallbackReason: polarReference.fallbackReason ?? null,
+        latencyMs: Math.floor(final.latencyMs),
+        atlasSignals: atlasSignals(args.input),
+    };
 }
 async function resolveVersionForTool(ctx, input, entityType, entityId, policyVersionId) {
     const db = getDbFromMetadata(ctx);
@@ -279,13 +382,19 @@ export function registerTools(server) {
         const pagePath = `/workflows/${input.workflow_id}?version=${encodeURIComponent(versionResult.resolved.versionId)}`;
         const visualizationUrl = buildVisualizationUrl(baseUrl, pagePath);
         const validation = validateBuiltWorkflow(template);
-        const decision = evaluateJudgment({
+        const decision = await evaluateDecisionForEntity(ctx, {
+            entityType: 'agent',
+            entityId: input.workflow_id,
             toolName: 'workflow_get',
-            accountId: ctx.accountId,
-            readOnly: ctx.policy.readOnly === true,
-            hasWriteIntent: false,
-            hasHumanReviewStep: true,
-        }, activePolicy.policy);
+            policy: activePolicy.policy,
+            input: {
+                toolName: 'workflow_get',
+                accountId: ctx.accountId,
+                readOnly: ctx.policy.readOnly === true,
+                hasWriteIntent: false,
+                hasHumanReviewStep: true,
+            },
+        });
         const blocked = await blockIfNeeded(versionResult.db, ctx.accountId, versionResult.resolved.versionId, decision, 'workflow_get', input.workflow_id, pagePath);
         if (blocked)
             return blocked;
@@ -329,13 +438,19 @@ export function registerTools(server) {
         const baseUrl = getStringMetadata(ctx, 'baseUrl');
         const pagePath = `/workflows/${input.workflow_id}?version=${encodeURIComponent(versionResult.resolved.versionId)}`;
         const visualizationUrl = buildVisualizationUrl(baseUrl, pagePath);
-        const decision = evaluateJudgment({
+        const decision = await evaluateDecisionForEntity(ctx, {
+            entityType: 'agent',
+            entityId: input.workflow_id,
             toolName: 'workflow_mermaid',
-            accountId: ctx.accountId,
-            readOnly: ctx.policy.readOnly === true,
-            hasWriteIntent: false,
-            hasHumanReviewStep: true,
-        }, activePolicy.policy);
+            policy: activePolicy.policy,
+            input: {
+                toolName: 'workflow_mermaid',
+                accountId: ctx.accountId,
+                readOnly: ctx.policy.readOnly === true,
+                hasWriteIntent: false,
+                hasHumanReviewStep: true,
+            },
+        });
         const blocked = await blockIfNeeded(versionResult.db, ctx.accountId, versionResult.resolved.versionId, decision, 'workflow_mermaid', input.workflow_id, pagePath);
         if (blocked)
             return blocked;
@@ -378,13 +493,19 @@ export function registerTools(server) {
         const latestEstimate = await getLatestEstimateReport(versionResult.db, ctx.accountId, 'agent', def.id);
         const hasWriteIntent = input.sequence.some((s) => hasWriteLikeName(s.tool));
         const hasHumanReviewStep = input.add_human_review !== false || def.steps.some((s) => hasHumanReviewReference(s.referenceId));
-        const decision = evaluateJudgment({
+        const decision = await evaluateDecisionForEntity(ctx, {
+            entityType: 'agent',
+            entityId: def.id,
             toolName: 'workflow_map_from_tool_sequence',
-            accountId: ctx.accountId,
-            readOnly: ctx.policy.readOnly === true,
-            hasWriteIntent,
-            hasHumanReviewStep,
-        }, activePolicy.policy);
+            policy: activePolicy.policy,
+            input: {
+                toolName: 'workflow_map_from_tool_sequence',
+                accountId: ctx.accountId,
+                readOnly: ctx.policy.readOnly === true,
+                hasWriteIntent,
+                hasHumanReviewStep,
+            },
+        });
         const baseUrl = getStringMetadata(ctx, 'baseUrl');
         const pagePath = `/workflows/${def.id}?version=${encodeURIComponent(versionResult.resolved.versionId)}`;
         const visualizationUrl = buildVisualizationUrl(baseUrl, pagePath);
@@ -476,14 +597,20 @@ export function registerTools(server) {
         const introspectionToolNames = introspection.ok ? introspection.value.tools.map((tool) => tool.name) : [];
         const hasWriteIntent = introspectionToolNames.some((toolName) => hasWriteLikeName(toolName));
         const hasHumanReviewStep = def.steps.some((s) => hasHumanReviewReference(s.referenceId));
-        const decision = evaluateJudgment({
+        const decision = await evaluateDecisionForEntity(ctx, {
+            entityType: 'mcp',
+            entityId: entry.slug,
             toolName: 'mcp_map_to_workflow',
-            accountId: ctx.accountId,
-            readOnly: ctx.policy.readOnly === true,
-            hasWriteIntent,
-            hasHumanReviewStep,
-            introspectionOk: introspection.ok,
-        }, activePolicy.policy);
+            policy: activePolicy.policy,
+            input: {
+                toolName: 'mcp_map_to_workflow',
+                accountId: ctx.accountId,
+                readOnly: ctx.policy.readOnly === true,
+                hasWriteIntent,
+                hasHumanReviewStep,
+                introspectionOk: introspection.ok,
+            },
+        });
         const baseUrl = getStringMetadata(ctx, 'baseUrl');
         const pagePath = `/mcps/${entry.slug}?version=${encodeURIComponent(versionResult.resolved.versionId)}`;
         const visualizationUrl = buildVisualizationUrl(baseUrl, pagePath);
@@ -522,6 +649,23 @@ export function registerTools(server) {
             judgmentDecision: decision,
         });
     }, { readOnly: true });
+    server.tool('judgment_dashboard_summary', 'Get account-scoped Judgment Layer dashboard data for Atlas Studio (policies, estimates, runs, approvals).', JudgmentDashboardSummaryParamsSchema.shape, async (params, ctx) => {
+        const input = JudgmentDashboardSummarySchema.parse(params);
+        const db = getDbFromMetadata(ctx);
+        const dashboard = await getJudgmentDashboardSummary(db, {
+            accountId: ctx.accountId,
+            entityType: input.entity_type,
+            entityId: input.entity_id,
+            recentLimit: input.recent_limit,
+        });
+        return jsonContent({
+            meta: {
+                authScope: 'account',
+                note: 'Use this payload as Atlas Studio dashboard state; web policy editor is deprecated.',
+            },
+            dashboard,
+        });
+    }, { readOnly: true });
     server.tool('judgment_policy_get', 'Get a judgment policy version (or the active policy) for an MCP/agent entity.', JudgmentPolicyGetSchema.shape, async (params, ctx) => {
         const input = JudgmentPolicyGetSchema.parse(params);
         const db = getDbFromMetadata(ctx);
@@ -541,6 +685,11 @@ export function registerTools(server) {
                 entity_id: input.entity_id,
                 policyVersion: row,
                 policy: parsedPolicy,
+                compiled: {
+                    policy_engine: row.policy_engine ?? 'polar_v1',
+                    policy_hash: row.policy_hash ?? null,
+                    compiler_version: row.compiler_version ?? null,
+                },
                 guardrails: guardrailsFromPolicy(parsedPolicy),
                 availableVersions: versions.map((v) => {
                     const parsed = JSON.parse(v.policy_json);
@@ -548,6 +697,9 @@ export function registerTools(server) {
                         id: v.id,
                         status: v.status,
                         created_at: v.created_at,
+                        policy_engine: v.policy_engine ?? 'polar_v1',
+                        policy_hash: v.policy_hash ?? null,
+                        compiler_version: v.compiler_version ?? null,
                         guardrails: guardrailsFromPolicy(parsed),
                     };
                 }),
@@ -568,6 +720,11 @@ export function registerTools(server) {
             entity_id: input.entity_id,
             activePolicyVersionId: active.policyVersionId,
             policy: active.policy,
+            compiled: {
+                policy_engine: active.compiled.policy_engine,
+                policy_hash: active.compiled.policy_hash,
+                compiler_version: active.compiled.compiler_version,
+            },
             guardrails: guardrailsFromPolicy(active.policy),
             availableVersions: versions.map((v) => {
                 const parsed = JSON.parse(v.policy_json);
@@ -575,6 +732,9 @@ export function registerTools(server) {
                     id: v.id,
                     status: v.status,
                     created_at: v.created_at,
+                    policy_engine: v.policy_engine ?? 'polar_v1',
+                    policy_hash: v.policy_hash ?? null,
+                    compiler_version: v.compiler_version ?? null,
                     guardrails: guardrailsFromPolicy(parsed),
                 };
             }),
@@ -616,6 +776,11 @@ export function registerTools(server) {
             entity_id: input.entity_id,
             policyVersionId: row.id,
             status: row.status,
+            compiled: {
+                policy_engine: row.policy_engine ?? 'polar_v1',
+                policy_hash: row.policy_hash ?? null,
+                compiler_version: row.compiler_version ?? null,
+            },
         });
     }, { readOnly: false });
     server.tool('judgment_policy_activate', 'Activate a saved judgment policy version for an MCP/agent entity.', JudgmentPolicyActivateSchema.shape, async (params, ctx) => {
@@ -698,7 +863,7 @@ export function registerTools(server) {
             afterPolicyVersionId = activeBefore.policyVersionId;
         }
         const scenarios = input.scenarios ?? defaultEstimateScenarios();
-        const estimate = evaluatePolicyScenarios(ctx.accountId, ctx.policy.readOnly === true, beforePolicy, afterPolicy, scenarios);
+        const estimate = await evaluatePolicyScenarios(ctx.accountId, ctx.policy.readOnly === true, beforePolicy, afterPolicy, scenarios, hybridConfigFromContext(ctx));
         const report = await saveEstimateReport(db, {
             accountId: ctx.accountId,
             entityType: input.entity_type,
@@ -747,6 +912,69 @@ export function registerTools(server) {
             },
         });
     }, { readOnly: true });
+    server.tool('judgment_engine_rollout_get', 'Get rollout mode for hybrid policy engine on an MCP/agent entity.', JudgmentEngineRolloutGetSchema.shape, async (params, ctx) => {
+        const input = JudgmentEngineRolloutGetSchema.parse(params);
+        const db = getDbFromMetadata(ctx);
+        const rollout = await getEngineRollout(db, {
+            accountId: ctx.accountId,
+            entityType: input.entity_type,
+            entityId: input.entity_id,
+        });
+        return jsonContent({
+            meta: {
+                authScope: 'account',
+                note: 'Response is scoped to authenticated account context.',
+            },
+            accountId: ctx.accountId,
+            entity_type: input.entity_type,
+            entity_id: input.entity_id,
+            rollout: {
+                mode: rollout.mode,
+                canary_percent: rollout.canary_percent,
+                mismatch_threshold: rollout.mismatch_threshold,
+                fallback_rate_threshold: rollout.fallback_rate_threshold,
+                updated_by: rollout.updated_by,
+                updated_at: rollout.updated_at,
+            },
+        });
+    }, { readOnly: true });
+    server.tool('judgment_engine_rollout_set', 'Set rollout mode for hybrid policy engine on an MCP/agent entity.', JudgmentEngineRolloutSetSchema.shape, async (params, ctx) => {
+        const input = JudgmentEngineRolloutSetSchema.parse(params);
+        if (!allowVersionSelectionWrite(ctx)) {
+            return jsonError({
+                error: 'engine_rollout_set_not_allowed',
+                message: 'Setting engine rollout is not permitted for this caller.',
+            });
+        }
+        const db = getDbFromMetadata(ctx);
+        const rollout = await setEngineRollout(db, {
+            accountId: ctx.accountId,
+            entityType: input.entity_type,
+            entityId: input.entity_id,
+            mode: input.mode,
+            canaryPercent: input.canary_percent,
+            mismatchThreshold: input.mismatch_threshold,
+            fallbackRateThreshold: input.fallback_rate_threshold,
+            updatedBy: ctx.userId ?? 'api-key',
+        });
+        return jsonContent({
+            meta: {
+                authScope: 'account',
+                note: 'Mutation applies within authenticated account context.',
+            },
+            accountId: ctx.accountId,
+            entity_type: input.entity_type,
+            entity_id: input.entity_id,
+            rollout: {
+                mode: rollout.mode,
+                canary_percent: rollout.canary_percent,
+                mismatch_threshold: rollout.mismatch_threshold,
+                fallback_rate_threshold: rollout.fallback_rate_threshold,
+                updated_by: rollout.updated_by,
+                updated_at: rollout.updated_at,
+            },
+        });
+    }, { readOnly: false });
     server.tool('automation_contract_list', 'List active automation contracts for the authenticated account.', {}, async (_params, ctx) => {
         const db = getDbFromMetadata(ctx);
         const rows = await listActiveAutomationContracts(db, ctx.accountId);

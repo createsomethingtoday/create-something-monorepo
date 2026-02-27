@@ -682,6 +682,26 @@ export async function calculateBayesianConfidence(
   templateA: string,
   templateB: string
 ): Promise<BayesianResult> {
+  // URL-vs-URL comparisons currently rely on vector evidence as the primary source.
+  // This avoids low-signal compute/confidence responses when URL inputs are not mapped
+  // to indexed template IDs in the upstream service.
+  if (isLikelyUrl(templateA) && isLikelyUrl(templateB)) {
+    try {
+      const fallback = await getVectorFallbackConfidence(
+        templateA,
+        templateB,
+        'url_pair_vector_primary'
+      );
+      if (fallback) return fallback;
+    } catch (error) {
+      throw error instanceof Error
+        ? new Error(`Vector fallback failed for URL pair: ${error.message}`)
+        : new Error('Vector fallback failed for URL pair');
+    }
+
+    throw new Error('Vector fallback returned no similarity data for URL pair');
+  }
+
   let primary: BayesianResult | null = null;
   let primaryError: Error | null = null;
 

@@ -6,6 +6,10 @@ account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 
 # [vars]
 # CLIENT_ID = ""
+# OSO_URL = ""
+# OSO_API_KEY = ""
+# OSO_BOOTSTRAP_POLICY = "true"
+# ENGINE_FALLBACK_ENABLED = "true"
 
 # Visualization/version persistence
 [[d1_databases]]

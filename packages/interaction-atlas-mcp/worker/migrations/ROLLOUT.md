@@ -18,6 +18,7 @@ Apply in this exact order:
 4. `0004_runs_approvals_audit.sql`
 5. `0005_policy_activation_governance.sql`
 6. `0006_control_plane_invariants.sql`
+7. `0007_polar_artifacts.sql`
 
 ## Pre-flight checks
 

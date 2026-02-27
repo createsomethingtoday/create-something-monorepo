@@ -1,5 +1,6 @@
 import type { D1Database } from '@create-something/mcp-core';
 import type { AtlasEntityType } from './versions.js';
+import { getEngineMetricsSummary } from './engine-events.js';
 
 type CountRow = { count: number | string | null };
 type GroupCountRow = { key: string | null; count: number | string | null };
@@ -111,6 +112,19 @@ export interface JudgmentDashboardSummary {
       expires_at: number | null;
     }>;
   };
+  engineHealth: {
+    decisionLatency: { p50Ms: number; p95Ms: number };
+    shadowParity: { mismatchRate: number };
+    fallbackUsage: { rate: number };
+    decisionMix: Record<string, number>;
+    sampleSize24h: number;
+    businessKpis: {
+      unreviewed_risky_actions_prevented: number;
+      approval_turnaround: number | null;
+      incident_rate_trend: number;
+      governed_workflow_coverage: number;
+    };
+  };
 }
 
 export async function getJudgmentDashboardSummary(
@@ -153,6 +167,19 @@ export async function getJudgmentDashboardSummary(
         pending: 0,
         byState: { pending: 0, approved: 0, denied: 0, expired: 0, cancelled: 0 },
         latestPending: [],
+      },
+      engineHealth: {
+        decisionLatency: { p50Ms: 0, p95Ms: 0 },
+        shadowParity: { mismatchRate: 0 },
+        fallbackUsage: { rate: 0 },
+        decisionMix: { allow: 0, require_human_review: 0, block: 0 },
+        sampleSize24h: 0,
+        businessKpis: {
+          unreviewed_risky_actions_prevented: 0,
+          approval_turnaround: null,
+          incident_rate_trend: 0,
+          governed_workflow_coverage: 0,
+        },
       },
     };
   }
@@ -339,6 +366,15 @@ export async function getJudgmentDashboardSummary(
       }>(),
   ]);
 
+  const engineMetrics = await getEngineMetricsSummary(db, {
+    accountId: input.accountId,
+    entityType: hasEntityScope ? scope.entity_type : undefined,
+    entityId: hasEntityScope ? scope.entity_id : undefined,
+  });
+  const riskyGuarded =
+    (engineMetrics.byFinalDecision.require_human_review ?? 0) + (engineMetrics.byFinalDecision.block ?? 0);
+  const governedCoverage = engineMetrics.total24h > 0 ? riskyGuarded / engineMetrics.total24h : 0;
+
   return {
     accountId: input.accountId,
     generatedAt,
@@ -379,6 +415,19 @@ export async function getJudgmentDashboardSummary(
       pending: pendingApprovals,
       byState: withDefaults(approvalStateRaw, ['pending', 'approved', 'denied', 'expired', 'cancelled']),
       latestPending: latestPending.results,
+    },
+    engineHealth: {
+      decisionLatency: { p50Ms: engineMetrics.p50LatencyMs, p95Ms: engineMetrics.p95LatencyMs },
+      shadowParity: { mismatchRate: engineMetrics.mismatchRate },
+      fallbackUsage: { rate: engineMetrics.fallbackRate },
+      decisionMix: engineMetrics.byFinalDecision,
+      sampleSize24h: engineMetrics.total24h,
+      businessKpis: {
+        unreviewed_risky_actions_prevented: engineMetrics.byFinalDecision.block ?? 0,
+        approval_turnaround: null,
+        incident_rate_trend: runsLast24h > 0 ? failed24h / runsLast24h : 0,
+        governed_workflow_coverage: governedCoverage,
+      },
     },
   };
 }

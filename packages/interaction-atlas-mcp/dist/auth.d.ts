@@ -23,6 +23,11 @@ export type InteractionAtlasEnv = {
     GIT_SHA?: string;
     RUNTIME_REF?: string;
     POLICY_VERSION_ID?: string;
+    OSO_URL?: string;
+    OSO_API_KEY?: string;
+    OSO_BOOTSTRAP_POLICY?: string;
+    ENGINE_FALLBACK_ENABLED?: string;
+    OSO_FETCH_TIMEOUT_MS?: string;
     DB?: D1Database;
 };
 export declare class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtlasEnv> {

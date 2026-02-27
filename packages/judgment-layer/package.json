@@ -17,6 +17,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@create-something/constraint-os-policy-engine": "workspace:*",
     "@iarna/toml": "^2.2.5"
   },
   "devDependencies": {

@@ -724,6 +724,72 @@ export declare const JudgmentPolicyCompareReportGetSchema: z.ZodObject<{
 }, {
     report_id: string;
 }>;
+export declare const JudgmentEngineRolloutGetSchema: z.ZodObject<{
+    entity_type: z.ZodEnum<["mcp", "agent"]>;
+    entity_id: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    entity_type: "mcp" | "agent";
+    entity_id: string;
+}, {
+    entity_type: "mcp" | "agent";
+    entity_id: string;
+}>;
+export declare const JudgmentEngineRolloutSetSchema: z.ZodObject<{
+    entity_type: z.ZodEnum<["mcp", "agent"]>;
+    entity_id: z.ZodString;
+    mode: z.ZodEnum<["legacy_enforce", "shadow", "polar_enforce"]>;
+    canary_percent: z.ZodDefault<z.ZodNumber>;
+    mismatch_threshold: z.ZodOptional<z.ZodNumber>;
+    fallback_rate_threshold: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    entity_type: "mcp" | "agent";
+    entity_id: string;
+    mode: "legacy_enforce" | "shadow" | "polar_enforce";
+    canary_percent: number;
+    mismatch_threshold?: number | undefined;
+    fallback_rate_threshold?: number | undefined;
+}, {
+    entity_type: "mcp" | "agent";
+    entity_id: string;
+    mode: "legacy_enforce" | "shadow" | "polar_enforce";
+    canary_percent?: number | undefined;
+    mismatch_threshold?: number | undefined;
+    fallback_rate_threshold?: number | undefined;
+}>;
+export declare const JudgmentDashboardSummaryParamsSchema: z.ZodObject<{
+    entity_type: z.ZodOptional<z.ZodEnum<["mcp", "agent"]>>;
+    entity_id: z.ZodOptional<z.ZodString>;
+    recent_limit: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    entity_type?: "mcp" | "agent" | undefined;
+    entity_id?: string | undefined;
+    recent_limit?: number | undefined;
+}, {
+    entity_type?: "mcp" | "agent" | undefined;
+    entity_id?: string | undefined;
+    recent_limit?: number | undefined;
+}>;
+export declare const JudgmentDashboardSummarySchema: z.ZodEffects<z.ZodObject<{
+    entity_type: z.ZodOptional<z.ZodEnum<["mcp", "agent"]>>;
+    entity_id: z.ZodOptional<z.ZodString>;
+    recent_limit: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    entity_type?: "mcp" | "agent" | undefined;
+    entity_id?: string | undefined;
+    recent_limit?: number | undefined;
+}, {
+    entity_type?: "mcp" | "agent" | undefined;
+    entity_id?: string | undefined;
+    recent_limit?: number | undefined;
+}>, {
+    entity_type?: "mcp" | "agent" | undefined;
+    entity_id?: string | undefined;
+    recent_limit?: number | undefined;
+}, {
+    entity_type?: "mcp" | "agent" | undefined;
+    entity_id?: string | undefined;
+    recent_limit?: number | undefined;
+}>;
 export declare const AutomationContractGetSchema: z.ZodObject<{
     automation_id: z.ZodString;
 }, "strip", z.ZodTypeAny, {

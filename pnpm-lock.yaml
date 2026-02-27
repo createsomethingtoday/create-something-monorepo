@@ -610,6 +610,19 @@ importers:
         specifier: ^4.0.0
         version: 4.64.0(@cloudflare/workers-types@4.20260205.0)
 
+  packages/constraint-os-policy-engine:
+    dependencies:
+      oso-cloud:
+        specifier: ^2.5.6
+        version: 2.5.6
+    devDependencies:
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
   packages/create-something-mcp:
     dependencies:
       '@create-something/playbook-mcp':
@@ -1133,6 +1146,9 @@ importers:
 
   packages/interaction-atlas-mcp:
     dependencies:
+      '@create-something/constraint-os-policy-engine':
+        specifier: workspace:*
+        version: link:../constraint-os-policy-engine
       '@create-something/mcp-core':
         specifier: workspace:*
         version: link:../mcp-core
@@ -1261,6 +1277,9 @@ importers:
 
   packages/judgment-layer:
     dependencies:
+      '@create-something/constraint-os-policy-engine':
+        specifier: workspace:*
+        version: link:../constraint-os-policy-engine
       '@iarna/toml':
         specifier: ^2.2.5
         version: 2.2.5
@@ -7497,6 +7516,9 @@ packages:
     resolution: {integrity: sha512-BoZaseYGXOo5j5HUwTaegIog3JJbuH4BbrY9A1ArLjXpy+RWb3mV28F/9Gv1dDA7E2L8kngWva4NWisnLTyfgQ==}
     engines: {node: '>=20'}
 
+  cross-fetch@4.1.0:
+    resolution: {integrity: sha512-uKm5PU+MHTootlWEY+mZ4vvXoCn4fLQxT9dSc1sXVMSFkINTJVN8cAQROpwcKm8bJ/c7rgZVIBWzH5T78sNZZw==}
+
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
@@ -8246,6 +8268,9 @@ packages:
     resolution: {integrity: sha512-7yAQpD2UMJzLi1Dqv7qFYnPbaPx7ZfFK6PiIxQ4PfkGPyNyl2Ugx+a/umUonmKqjhM4DnfbMvdX6otXq83soQQ==}
     engines: {node: ^12.20 || >= 14.13}
 
+  fetch-retry@6.0.0:
+    resolution: {integrity: sha512-BUFj1aMubgib37I3v4q78fYo63Po7t4HUPTpQ6/QE6yK6cIQrP+W43FYToeTEyg5m2Y7eFUtijUuAv/PDlWuag==}
+
   fflate@0.8.2:
     resolution: {integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==}
 
@@ -8758,6 +8783,9 @@ packages:
   ip-address@10.1.0:
     resolution: {integrity: sha512-XXADHxXmvT9+CRxhXg56LJovE+bmWnEWB78LB83VZTprKTmaC5QfruXocxzTZ2Kl0DNwKuBdlIhjL8LeY8Sf8Q==}
     engines: {node: '>= 12'}
+
+  ip-num@1.5.2:
+    resolution: {integrity: sha512-CUxHEJuJk74GIQA75LD9RDkpK/3NJv8yRnseOh79AlRmFwT1HgYPKDOiVkd0QVR5MNwMj9EnOnS1yJn9CaYNZA==}
 
   ipaddr.js@1.9.1:
     resolution: {integrity: sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==}
@@ -9821,6 +9849,10 @@ packages:
   ora@8.2.0:
     resolution: {integrity: sha512-weP+BZ8MVNnlCm8c0Qdc1WSWq4Qn7I+9CJGm7Qali6g44e/PUzbjNqJX5NJ9ljlNMosfJvg1fKEGILklK9cwnw==}
     engines: {node: '>=18'}
+
+  oso-cloud@2.5.6:
+    resolution: {integrity: sha512-2j6wW72U4DJFMIDuXIc5PyqQhkE/r5b7iS4IdKQGMpwFX8NHNnXLjid7heLTp3f2aogbP//3ejTpjmw7C8/8UA==}
+    engines: {node: '>=16.0.0'}
 
   p-limit@3.1.0:
     resolution: {integrity: sha512-TYOanM3wGwNGsZN2cVTYPArw454xnXj5qmWF1bEoAc4+cU/ol7GVh7odevjp1FNHduHc3KZMcFduxU5Xc6uJRQ==}
@@ -17451,6 +17483,12 @@ snapshots:
 
   cron-schedule@6.0.0: {}
 
+  cross-fetch@4.1.0:
+    dependencies:
+      node-fetch: 2.7.0
+    transitivePeerDependencies:
+      - encoding
+
   cross-spawn@7.0.6:
     dependencies:
       path-key: 3.1.1
@@ -18432,6 +18470,8 @@ snapshots:
       node-domexception: 1.0.0
       web-streams-polyfill: 3.3.3
 
+  fetch-retry@6.0.0: {}
+
   fflate@0.8.2: {}
 
   figures@6.1.0:
@@ -19036,6 +19076,8 @@ snapshots:
   iota-array@1.0.0: {}
 
   ip-address@10.1.0: {}
+
+  ip-num@1.5.2: {}
 
   ipaddr.js@1.9.1: {}
 
@@ -20119,6 +20161,14 @@ snapshots:
       stdin-discarder: 0.2.2
       string-width: 7.2.0
       strip-ansi: 7.1.2
+
+  oso-cloud@2.5.6:
+    dependencies:
+      cross-fetch: 4.1.0
+      fetch-retry: 6.0.0
+      ip-num: 1.5.2
+    transitivePeerDependencies:
+      - encoding
 
   p-limit@3.1.0:
     dependencies:

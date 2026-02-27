@@ -152,6 +152,7 @@ Apply migrations in order:
 4. `worker/migrations/0004_runs_approvals_audit.sql`
 5. `worker/migrations/0005_policy_activation_governance.sql`
 6. `worker/migrations/0006_control_plane_invariants.sql`
+7. `worker/migrations/0007_polar_artifacts.sql`
 
 Ensure `worker/wrangler.toml` has a valid D1 `database_id` before deploy.
 Use `worker/migrations/ROLLOUT.md` for apply order, post-migration checks, and rollback guidance.

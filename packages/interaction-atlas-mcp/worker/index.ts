@@ -19,7 +19,7 @@ import { workflowTemplateToMermaid } from '../src/workflows/mermaid.js';
 import { findMcpCatalogEntry, listMcpCatalog, resolveMcpHttpEndpointUrl } from '../src/mcps/catalog.js';
 import { introspectMcpServer } from '../src/mcps/introspect.js';
 import { mapMcpToWorkflowDefinition } from '../src/mcps/map.js';
-import { evaluateJudgment } from '../src/judgment/evaluate.js';
+import { evaluateConstraintPolicyHybrid } from '@create-something/constraint-os-policy-engine';
 import type { JudgmentEstimateScenario } from '../src/judgment/types.js';
 import {
   activatePolicyVersion,
@@ -52,12 +52,18 @@ function defaultEstimateScenarios(): JudgmentEstimateScenario[] {
   ];
 }
 
-function evaluatePolicyScenarios(
+async function evaluatePolicyScenarios(
   accountId: string,
   readOnly: boolean,
   before: JudgmentPolicy,
   after: JudgmentPolicy,
   scenarios: JudgmentEstimateScenario[],
+  config: {
+    osoUrl?: string;
+    osoApiKey?: string;
+    fallbackEnabled: boolean;
+    bootstrapPolicy: boolean;
+  },
 ) {
   const init = { allow: 0, require_human_review: 0, block: 0 };
   const beforeCounts = { ...init };
@@ -73,8 +79,24 @@ function evaluatePolicyScenarios(
       hasHumanReviewStep: s.hasHumanReviewStep,
       introspectionOk: s.introspectionOk,
     };
-    const b = evaluateJudgment(inpt, before);
-    const a = evaluateJudgment(inpt, after);
+    const b = await evaluateConstraintPolicyHybrid(inpt, before, null, {
+      mode: 'hybrid',
+      fallbackEnabled: config.fallbackEnabled,
+      oso: {
+        url: config.osoUrl,
+        apiKey: config.osoApiKey,
+        bootstrapPolicy: config.bootstrapPolicy,
+      },
+    });
+    const a = await evaluateConstraintPolicyHybrid(inpt, after, null, {
+      mode: 'hybrid',
+      fallbackEnabled: config.fallbackEnabled,
+      oso: {
+        url: config.osoUrl,
+        apiKey: config.osoApiKey,
+        bootstrapPolicy: config.bootstrapPolicy,
+      },
+    });
     beforeCounts[b.decision] += 1;
     afterCounts[a.decision] += 1;
     details.push({ scenarioId: s.id, before: b.decision, after: a.decision });
@@ -597,7 +619,12 @@ export default {
       }
 
       const scenarios = body.scenarios ?? defaultEstimateScenarios();
-      const estimate = evaluatePolicyScenarios(authCtx.accountId, authCtx.policy.readOnly === true, beforePolicy, afterPolicy, scenarios);
+      const estimate = await evaluatePolicyScenarios(authCtx.accountId, authCtx.policy.readOnly === true, beforePolicy, afterPolicy, scenarios, {
+        osoUrl: _env.OSO_URL,
+        osoApiKey: _env.OSO_API_KEY,
+        fallbackEnabled: (_env.ENGINE_FALLBACK_ENABLED ?? 'true').toLowerCase() !== 'false',
+        bootstrapPolicy: (_env.OSO_BOOTSTRAP_POLICY ?? 'true').toLowerCase() !== 'false',
+      });
       const report = await saveEstimateReport(_env.DB, {
         accountId: authCtx.accountId,
         entityType,
@@ -850,6 +877,8 @@ export default {
                   'judgment_policy_estimate',
                   'judgment_policy_save',
                   'judgment_policy_activate',
+                  'judgment_engine_rollout_get',
+                  'judgment_engine_rollout_set',
                   'approval_inbox_list',
                 ],
                 dashboardApi: `/api/dashboard/summary?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}`,
@@ -2022,6 +2051,8 @@ export default {
                   'judgment_policy_estimate',
                   'judgment_policy_save',
                   'judgment_policy_activate',
+                  'judgment_engine_rollout_get',
+                  'judgment_engine_rollout_set',
                   'approval_inbox_list',
                 ],
                 dashboardApi: `/api/dashboard/summary?entity_type=${encodeURIComponent(entityType)}&entity_id=${encodeURIComponent(entityId)}`,

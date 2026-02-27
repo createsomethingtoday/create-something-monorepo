@@ -33,6 +33,12 @@ export interface JudgmentDecision {
   decision: JudgmentDecisionType;
   reason: string;
   matchedRuleIds: string[];
+  engine?: 'legacy_v1' | 'polar_v1';
+  policyHash?: string;
+  compilerVersion?: string;
+  evaluationPath?: 'legacy' | 'primary' | 'fallback';
+  fallbackReason?: string | null;
+  latencyMs?: number;
   atlasSignals: {
     touchpoint?: string;
     aiTask?: string;

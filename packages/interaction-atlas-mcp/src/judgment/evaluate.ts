@@ -26,6 +26,8 @@ export function evaluateJudgment(input: JudgmentEvaluationInput, policy: Judgmen
       decision: 'block',
       reason: 'Read-only account cannot execute write-intent workflow path.',
       matchedRuleIds: ['hard_guard_readonly_write'],
+      engine: 'legacy_v1',
+      evaluationPath: 'legacy',
       atlasSignals: atlasSignals(input),
     };
   }
@@ -37,6 +39,8 @@ export function evaluateJudgment(input: JudgmentEvaluationInput, policy: Judgmen
       decision: match.then.decision,
       reason: match.then.reason,
       matchedRuleIds: [match.id],
+      engine: 'legacy_v1',
+      evaluationPath: 'legacy',
       atlasSignals: atlasSignals(input),
     };
   }
@@ -45,6 +49,8 @@ export function evaluateJudgment(input: JudgmentEvaluationInput, policy: Judgmen
     decision: 'allow',
     reason: 'No policy rule matched; default allow.',
     matchedRuleIds: ['policy_default_allow'],
+    engine: 'legacy_v1',
+    evaluationPath: 'legacy',
     atlasSignals: atlasSignals(input),
   };
 }
