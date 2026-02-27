@@ -46,7 +46,8 @@
     <h2 class="section-title">1. What We Collect</h2>
 
     <p class="body-text">
-      We collect only what's necessary to provide our services. No tracking pixels. No advertising networks. No data brokers.
+      We collect only what's necessary to provide our services. No tracking pixels. No advertising
+      networks. No data brokers.
     </p>
 
     <h3 class="subsection-title">1.1 Session Data</h3>
@@ -60,9 +61,7 @@
     </ul>
 
     <h3 class="subsection-title">1.2 Page Views</h3>
-    <p class="body-text">
-      We collect minimal analytics to understand how our content serves you:
-    </p>
+    <p class="body-text">We collect minimal analytics to understand how our content serves you:</p>
     <ul class="policy-list">
       <li>Page URL visited</li>
       <li>Referrer (how you arrived)</li>
@@ -71,13 +70,12 @@
       <li>Browser family (e.g., Chrome, Safari—not fingerprinting)</li>
     </ul>
     <p class="body-text">
-      We do <strong class="emphasis">not</strong> use cookies for analytics. We do <strong class="emphasis">not</strong> track you across sites.
+      We do <strong class="emphasis">not</strong> use cookies for analytics. We do
+      <strong class="emphasis">not</strong> track you across sites.
     </p>
 
     <h3 class="subsection-title">1.3 User Profile</h3>
-    <p class="body-text">
-      If you create an account, we store:
-    </p>
+    <p class="body-text">If you create an account, we store:</p>
     <ul class="policy-list">
       <li>Email address (for authentication)</li>
       <li>Display name (optional)</li>
@@ -103,7 +101,8 @@
 
     <h3 class="subsection-title">2.3 Service Improvement</h3>
     <p class="body-text">
-      Aggregate page view data helps us understand which content resonates and where to focus our efforts. We never sell this data or use it for advertising.
+      Aggregate page view data helps us understand which content resonates and where to focus our
+      efforts. We never sell this data or use it for advertising.
     </p>
   </section>
 
@@ -130,7 +129,8 @@
     </div>
 
     <p class="body-text">
-      After retention periods expire, data is permanently deleted—not archived, not anonymized for later use. Deleted means deleted.
+      After retention periods expire, data is permanently deleted—not archived, not anonymized for
+      later use. Deleted means deleted.
     </p>
   </section>
 
@@ -145,9 +145,15 @@
     <div class="provider-card">
       <h3 class="provider-name">Cloudflare</h3>
       <p class="provider-purpose">
-        Infrastructure, security, and content delivery. Cloudflare processes requests to serve our websites but does not have access to your user data or analytics.
+        Infrastructure, security, and content delivery. Cloudflare processes requests to serve our
+        websites but does not have access to your user data or analytics.
       </p>
-      <a href="https://www.cloudflare.com/privacypolicy/" class="provider-link" target="_blank" rel="noopener noreferrer">
+      <a
+        href="https://www.cloudflare.com/privacypolicy/"
+        class="provider-link"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         Cloudflare Privacy Policy →
       </a>
     </div>
@@ -174,17 +180,20 @@
 
     <h3 class="subsection-title">5.1 Access</h3>
     <p class="body-text">
-      Request a complete copy of all data we hold about you. We'll provide it in a machine-readable format (JSON) within 30 days.
+      Request a complete copy of all data we hold about you. We'll provide it in a machine-readable
+      format (JSON) within 30 days.
     </p>
 
     <h3 class="subsection-title">5.2 Export</h3>
     <p class="body-text">
-      Download your data at any time from your account settings. No request needed—it's self-service.
+      Download your data at any time from your account settings. No request needed—it's
+      self-service.
     </p>
 
     <h3 class="subsection-title">5.3 Deletion</h3>
     <p class="body-text">
-      Request permanent deletion of your account and all associated data. We process deletion requests within 30 days. Once deleted, data cannot be recovered.
+      Request permanent deletion of your account and all associated data. We process deletion
+      requests within 30 days. Once deleted, data cannot be recovered.
     </p>
 
     <h3 class="subsection-title">5.4 Correction</h3>
@@ -194,7 +203,8 @@
 
     <h3 class="subsection-title">5.5 Opt-Out</h3>
     <p class="body-text">
-      Opt out of analytics collection from your account settings. Your choice is stored in your profile and respected across all CREATE SOMETHING properties.
+      Opt out of analytics collection from your account settings. Your choice is stored in your
+      profile and respected across all CREATE SOMETHING properties.
     </p>
   </section>
 
@@ -202,9 +212,7 @@
   <section class="policy-section">
     <h2 class="section-title">6. Contact for Privacy Requests</h2>
 
-    <p class="body-text">
-      For any privacy-related requests or questions:
-    </p>
+    <p class="body-text">For any privacy-related requests or questions:</p>
 
     <div class="contact-info">
       <p>
@@ -218,7 +226,8 @@
     </div>
 
     <p class="body-text">
-      For automated requests (access, export, deletion), use the self-service options in your account settings—they're faster than email.
+      For automated requests (access, export, deletion), use the self-service options in your
+      account settings—they're faster than email.
     </p>
   </section>
 
@@ -226,9 +235,7 @@
   <section class="policy-section">
     <h2 class="section-title">7. Legal Compliance</h2>
 
-    <p class="body-text">
-      This policy is designed to comply with:
-    </p>
+    <p class="body-text">This policy is designed to comply with:</p>
     <ul class="policy-list">
       <li><strong class="emphasis">GDPR</strong> (European Union)</li>
       <li><strong class="emphasis">CCPA/CPRA</strong> (California, USA)</li>
@@ -236,7 +243,8 @@
     </ul>
 
     <p class="body-text">
-      We apply these protections to all users, regardless of jurisdiction. Privacy shouldn't depend on where you live.
+      We apply these protections to all users, regardless of jurisdiction. Privacy shouldn't depend
+      on where you live.
     </p>
   </section>
 
@@ -245,7 +253,9 @@
     <h2 class="section-title">8. Changes to This Policy</h2>
 
     <p class="body-text">
-      We'll notify you of significant changes via email (if you have an account) and update the "Last updated" date. Minor clarifications don't require notification but are reflected in the date.
+      We'll notify you of significant changes via email (if you have an account) and update the
+      "Last updated" date. Minor clarifications don't require notification but are reflected in the
+      date.
     </p>
 
     <p class="body-text last-updated">
@@ -441,7 +451,6 @@
   .acknowledgment {
     margin-top: var(--space-xl);
     padding-top: var(--space-md);
-    border-top: 1px solid var(--color-border-default);
   }
 
   .acknowledgment p {
