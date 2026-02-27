@@ -18,6 +18,11 @@ class FakePreparedStatement {
   async first() {
     const sql = this.sql;
 
+    if (sql.includes('FROM judgment_account_access')) {
+      const [accountId] = this.args;
+      return this.db.accountAccess.get(accountId) ?? null;
+    }
+
     if (sql.includes('FROM judgment_engine_rollout')) {
       const [accountId, entityType, entityId] = this.args;
       return this.db.rollout.get(this.db.key(accountId, entityType, entityId)) ?? null;
@@ -68,6 +73,21 @@ class FakePreparedStatement {
       };
     }
 
+    if (sql.includes('FROM judgment_engine_events') && sql.includes('blocked_total')) {
+      const [accountId, cutoff] = this.args;
+      const blocked = this.db.events.filter(
+        (row) =>
+          row.account_id === accountId &&
+          row.created_at >= cutoff &&
+          row.final_decision === 'block',
+      );
+      const distinctTools = new Set(blocked.map((row) => row.tool_name)).size;
+      return {
+        blocked_total: blocked.length,
+        distinct_tools: distinctTools,
+      };
+    }
+
     return null;
   }
 
@@ -90,6 +110,15 @@ class FakePreparedStatement {
       return {
         results: [...counts.entries()].map(([key, count]) => ({ key, count })),
       };
+    }
+
+    if (sql.includes('FROM judgment_security_incidents')) {
+      const [accountId, limit] = this.args;
+      const rows = this.db.incidents
+        .filter((row) => row.account_id === accountId)
+        .sort((a, b) => b.created_at - a.created_at)
+        .slice(0, Number(limit));
+      return { results: rows };
     }
 
     return { results: [] };
@@ -157,6 +186,36 @@ class FakePreparedStatement {
       this.db.events.push(data);
     }
 
+    if (sql.includes('INSERT INTO judgment_account_access')) {
+      const [accountId, mode, reason, incidentId, updatedBy, updatedAt, expiresAt] = this.args;
+      this.db.accountAccess.set(accountId, {
+        account_id: accountId,
+        mode,
+        reason,
+        incident_id: incidentId,
+        updated_by: updatedBy,
+        updated_at: updatedAt,
+        expires_at: expiresAt,
+      });
+    }
+
+    if (sql.includes('INSERT INTO judgment_security_incidents')) {
+      this.db.incidents.push({
+        id: this.args[0],
+        account_id: this.args[1],
+        incident_type: this.args[2],
+        severity: this.args[3],
+        action_mode: this.args[4],
+        reason: this.args[5],
+        signal_json: this.args[6],
+        status: this.args[7],
+        correlation_id: this.args[8],
+        created_at: this.args[9],
+        resolved_at: this.args[10],
+        resolved_by: this.args[11],
+      });
+    }
+
     return { success: true };
   }
 }
@@ -165,6 +224,8 @@ class FakeD1Database {
   constructor() {
     this.rollout = new Map();
     this.events = [];
+    this.accountAccess = new Map();
+    this.incidents = [];
   }
 
   key(accountId, entityType, entityId) {
@@ -433,5 +494,64 @@ test('security kill switch read_only allows read tools and blocks write tools', 
   }, headers);
   const message = extractRpcErrorMessage(writePayload);
   assert.ok(message, JSON.stringify(writePayload));
+  assert.match(message, /method not found|unknown tool|tool .* not found/i);
+});
+
+test('security status and manual access control tools persist account posture', async () => {
+  const db = new FakeD1Database();
+  const server = createServer();
+  const env = {
+    API_KEYS: 'test-key:default:operator',
+    DB: db,
+  };
+  const headers = { 'x-api-key': 'test-key' };
+
+  const setPayload = await callTool(server, env, 'judgment_security_access_set', {
+    mode: 'read_only',
+    reason: 'manual containment test',
+  }, headers);
+  assert.equal(setPayload.access.mode, 'read_only');
+
+  const statusPayload = await callTool(server, env, 'judgment_security_status_get', {
+    limit: 5,
+  }, headers);
+  assert.equal(statusPayload.access.mode, 'read_only');
+  assert.ok(Array.isArray(statusPayload.incidents));
+});
+
+test('abuse guard auto-kills access and records an incident for repeated blocked calls', async () => {
+  const db = new FakeD1Database();
+  const server = createServer();
+  const env = {
+    DB: db,
+    ABUSE_GUARD_ENABLED: 'true',
+    ABUSE_WINDOW_SECONDS: '600',
+    ABUSE_BLOCK_THRESHOLD: '2',
+    ABUSE_DISTINCT_TOOLS_THRESHOLD: '1',
+  };
+
+  await callTool(server, env, 'workflow_map_from_tool_sequence', {
+    workflow_id: 'fleet-watchdog',
+    sequence: [{ tool: 'notion_upsert_page' }],
+    add_human_review: true,
+  });
+  await callTool(server, env, 'workflow_map_from_tool_sequence', {
+    workflow_id: 'fleet-watchdog',
+    sequence: [{ tool: 'notion_upsert_page' }],
+    add_human_review: true,
+  });
+
+  const accountAccess = db.accountAccess.get('public');
+  assert.ok(accountAccess, 'expected public account access row to exist');
+  assert.equal(accountAccess.mode, 'off');
+  assert.match(accountAccess.reason ?? '', /abuse pattern detected/i);
+  assert.ok(db.incidents.length >= 1, 'expected at least one incident record');
+  assert.equal(db.incidents[0].account_id, 'public');
+  assert.equal(db.incidents[0].action_mode, 'off');
+  assert.match(db.incidents[0].reason, /abuse pattern detected/i);
+
+  const postKillPayload = await callRpc(server, env, 'workflow_list', {});
+  const message = extractRpcErrorMessage(postKillPayload);
+  assert.ok(message, JSON.stringify(postKillPayload));
   assert.match(message, /method not found|unknown tool|tool .* not found/i);
 });

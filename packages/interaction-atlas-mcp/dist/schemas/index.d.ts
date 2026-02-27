@@ -10,11 +10,11 @@ export declare const AtlasSearchSchema: z.ZodObject<{
     limit: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
     query: string;
-    dimensions?: ("constraints" | "data" | "system" | "ai" | "human" | "touchpoints")[] | undefined;
+    dimensions?: ("system" | "constraints" | "data" | "ai" | "human" | "touchpoints")[] | undefined;
     limit?: number | undefined;
 }, {
     query: string;
-    dimensions?: ("constraints" | "data" | "system" | "ai" | "human" | "touchpoints")[] | undefined;
+    dimensions?: ("system" | "constraints" | "data" | "ai" | "human" | "touchpoints")[] | undefined;
     limit?: number | undefined;
 }>;
 export type AtlasSearchInput = z.infer<typeof AtlasSearchSchema>;
@@ -207,16 +207,16 @@ export declare const JudgmentPolicySchema: z.ZodObject<{
             decision: z.ZodEnum<["allow", "require_human_review", "block"]>;
             reason: z.ZodString;
         }, "strip", z.ZodTypeAny, {
-            decision: "allow" | "require_human_review" | "block";
             reason: string;
+            decision: "allow" | "require_human_review" | "block";
         }, {
-            decision: "allow" | "require_human_review" | "block";
             reason: string;
+            decision: "allow" | "require_human_review" | "block";
         }>;
     }, "strip", z.ZodTypeAny, {
         then: {
-            decision: "allow" | "require_human_review" | "block";
             reason: string;
+            decision: "allow" | "require_human_review" | "block";
         };
         id: string;
         priority: number;
@@ -229,8 +229,8 @@ export declare const JudgmentPolicySchema: z.ZodObject<{
         };
     }, {
         then: {
-            decision: "allow" | "require_human_review" | "block";
             reason: string;
+            decision: "allow" | "require_human_review" | "block";
         };
         id: string;
         priority: number;
@@ -247,8 +247,8 @@ export declare const JudgmentPolicySchema: z.ZodObject<{
     name: string;
     rules: {
         then: {
-            decision: "allow" | "require_human_review" | "block";
             reason: string;
+            decision: "allow" | "require_human_review" | "block";
         };
         id: string;
         priority: number;
@@ -270,8 +270,8 @@ export declare const JudgmentPolicySchema: z.ZodObject<{
     name: string;
     rules: {
         then: {
-            decision: "allow" | "require_human_review" | "block";
             reason: string;
+            decision: "allow" | "require_human_review" | "block";
         };
         id: string;
         priority: number;
@@ -345,16 +345,16 @@ export declare const JudgmentPolicySaveSchema: z.ZodObject<{
                 decision: z.ZodEnum<["allow", "require_human_review", "block"]>;
                 reason: z.ZodString;
             }, "strip", z.ZodTypeAny, {
-                decision: "allow" | "require_human_review" | "block";
                 reason: string;
+                decision: "allow" | "require_human_review" | "block";
             }, {
-                decision: "allow" | "require_human_review" | "block";
                 reason: string;
+                decision: "allow" | "require_human_review" | "block";
             }>;
         }, "strip", z.ZodTypeAny, {
             then: {
-                decision: "allow" | "require_human_review" | "block";
                 reason: string;
+                decision: "allow" | "require_human_review" | "block";
             };
             id: string;
             priority: number;
@@ -367,8 +367,8 @@ export declare const JudgmentPolicySaveSchema: z.ZodObject<{
             };
         }, {
             then: {
-                decision: "allow" | "require_human_review" | "block";
                 reason: string;
+                decision: "allow" | "require_human_review" | "block";
             };
             id: string;
             priority: number;
@@ -385,8 +385,8 @@ export declare const JudgmentPolicySaveSchema: z.ZodObject<{
         name: string;
         rules: {
             then: {
-                decision: "allow" | "require_human_review" | "block";
                 reason: string;
+                decision: "allow" | "require_human_review" | "block";
             };
             id: string;
             priority: number;
@@ -408,8 +408,8 @@ export declare const JudgmentPolicySaveSchema: z.ZodObject<{
         name: string;
         rules: {
             then: {
-                decision: "allow" | "require_human_review" | "block";
                 reason: string;
+                decision: "allow" | "require_human_review" | "block";
             };
             id: string;
             priority: number;
@@ -434,8 +434,8 @@ export declare const JudgmentPolicySaveSchema: z.ZodObject<{
         name: string;
         rules: {
             then: {
-                decision: "allow" | "require_human_review" | "block";
                 reason: string;
+                decision: "allow" | "require_human_review" | "block";
             };
             id: string;
             priority: number;
@@ -462,8 +462,8 @@ export declare const JudgmentPolicySaveSchema: z.ZodObject<{
         name: string;
         rules: {
             then: {
-                decision: "allow" | "require_human_review" | "block";
                 reason: string;
+                decision: "allow" | "require_human_review" | "block";
             };
             id: string;
             priority: number;
@@ -542,16 +542,16 @@ export declare const JudgmentPolicyEstimateSchema: z.ZodObject<{
                 decision: z.ZodEnum<["allow", "require_human_review", "block"]>;
                 reason: z.ZodString;
             }, "strip", z.ZodTypeAny, {
-                decision: "allow" | "require_human_review" | "block";
                 reason: string;
+                decision: "allow" | "require_human_review" | "block";
             }, {
-                decision: "allow" | "require_human_review" | "block";
                 reason: string;
+                decision: "allow" | "require_human_review" | "block";
             }>;
         }, "strip", z.ZodTypeAny, {
             then: {
-                decision: "allow" | "require_human_review" | "block";
                 reason: string;
+                decision: "allow" | "require_human_review" | "block";
             };
             id: string;
             priority: number;
@@ -564,8 +564,8 @@ export declare const JudgmentPolicyEstimateSchema: z.ZodObject<{
             };
         }, {
             then: {
-                decision: "allow" | "require_human_review" | "block";
                 reason: string;
+                decision: "allow" | "require_human_review" | "block";
             };
             id: string;
             priority: number;
@@ -582,8 +582,8 @@ export declare const JudgmentPolicyEstimateSchema: z.ZodObject<{
         name: string;
         rules: {
             then: {
-                decision: "allow" | "require_human_review" | "block";
                 reason: string;
+                decision: "allow" | "require_human_review" | "block";
             };
             id: string;
             priority: number;
@@ -605,8 +605,8 @@ export declare const JudgmentPolicyEstimateSchema: z.ZodObject<{
         name: string;
         rules: {
             then: {
-                decision: "allow" | "require_human_review" | "block";
                 reason: string;
+                decision: "allow" | "require_human_review" | "block";
             };
             id: string;
             priority: number;
@@ -652,8 +652,8 @@ export declare const JudgmentPolicyEstimateSchema: z.ZodObject<{
         name: string;
         rules: {
             then: {
-                decision: "allow" | "require_human_review" | "block";
                 reason: string;
+                decision: "allow" | "require_human_review" | "block";
             };
             id: string;
             priority: number;
@@ -688,8 +688,8 @@ export declare const JudgmentPolicyEstimateSchema: z.ZodObject<{
         name: string;
         rules: {
             then: {
-                decision: "allow" | "require_human_review" | "block";
                 reason: string;
+                decision: "allow" | "require_human_review" | "block";
             };
             id: string;
             priority: number;
@@ -742,19 +742,39 @@ export declare const JudgmentEngineRolloutSetSchema: z.ZodObject<{
     mismatch_threshold: z.ZodOptional<z.ZodNumber>;
     fallback_rate_threshold: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
+    mode: "legacy_enforce" | "shadow" | "polar_enforce";
     entity_type: "mcp" | "agent";
     entity_id: string;
-    mode: "legacy_enforce" | "shadow" | "polar_enforce";
     canary_percent: number;
     mismatch_threshold?: number | undefined;
     fallback_rate_threshold?: number | undefined;
 }, {
+    mode: "legacy_enforce" | "shadow" | "polar_enforce";
     entity_type: "mcp" | "agent";
     entity_id: string;
-    mode: "legacy_enforce" | "shadow" | "polar_enforce";
     canary_percent?: number | undefined;
     mismatch_threshold?: number | undefined;
     fallback_rate_threshold?: number | undefined;
+}>;
+export declare const JudgmentSecurityStatusGetSchema: z.ZodObject<{
+    limit: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    limit?: number | undefined;
+}, {
+    limit?: number | undefined;
+}>;
+export declare const JudgmentSecurityAccessSetSchema: z.ZodObject<{
+    mode: z.ZodEnum<["normal", "read_only", "off"]>;
+    reason: z.ZodString;
+    expires_at: z.ZodOptional<z.ZodNumber>;
+}, "strip", z.ZodTypeAny, {
+    mode: "normal" | "read_only" | "off";
+    reason: string;
+    expires_at?: number | undefined;
+}, {
+    mode: "normal" | "read_only" | "off";
+    reason: string;
+    expires_at?: number | undefined;
 }>;
 export declare const JudgmentDashboardSummaryParamsSchema: z.ZodObject<{
     entity_type: z.ZodOptional<z.ZodEnum<["mcp", "agent"]>>;

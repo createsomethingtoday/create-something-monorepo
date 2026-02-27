@@ -29,6 +29,10 @@ export type InteractionAtlasEnv = {
     ENGINE_FALLBACK_ENABLED?: string;
     OSO_FETCH_TIMEOUT_MS?: string;
     MCP_TOOL_ACCESS_MODE?: string;
+    ABUSE_GUARD_ENABLED?: string;
+    ABUSE_WINDOW_SECONDS?: string;
+    ABUSE_BLOCK_THRESHOLD?: string;
+    ABUSE_DISTINCT_TOOLS_THRESHOLD?: string;
     BRAINTRUST_PROJECT_NAME?: string;
     BRAINTRUST_PROJECT_ID?: string;
     BRAINTRUST_ENABLED?: string;

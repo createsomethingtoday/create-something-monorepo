@@ -481,7 +481,7 @@ async function evaluateDecisionForEntity(
   ctx: {
     accountId: string;
     metadata: Record<string, unknown>;
-    policy: { constraints: Record<string, unknown> };
+    policy: { constraints: Record<string, unknown>; readOnly?: boolean };
   },
   args: {
     entityType: AtlasEntityType;

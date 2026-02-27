@@ -133,6 +133,14 @@ export const JudgmentEngineRolloutSetSchema = z.object({
     mismatch_threshold: z.number().min(0).max(1).optional(),
     fallback_rate_threshold: z.number().min(0).max(1).optional(),
 });
+export const JudgmentSecurityStatusGetSchema = z.object({
+    limit: z.number().int().min(1).max(50).optional(),
+});
+export const JudgmentSecurityAccessSetSchema = z.object({
+    mode: z.enum(['normal', 'read_only', 'off']),
+    reason: z.string().min(1),
+    expires_at: z.number().int().positive().optional(),
+});
 export const JudgmentDashboardSummaryParamsSchema = z.object({
     entity_type: z.enum(['mcp', 'agent']).optional(),
     entity_id: z.string().min(1).optional(),
