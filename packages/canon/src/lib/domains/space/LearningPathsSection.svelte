@@ -129,7 +129,6 @@
 		flex-direction: column;
 		padding: var(--space-lg);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		text-decoration: none;
 		transition:
@@ -178,7 +177,6 @@
 		align-items: center;
 		margin-top: var(--space-md);
 		padding-top: var(--space-sm);
-		border-top: 1px solid var(--color-border-default);
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 	}

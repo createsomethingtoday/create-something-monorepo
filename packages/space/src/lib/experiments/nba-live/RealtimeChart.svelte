@@ -543,7 +543,6 @@
 	.realtime-chart {
 		position: relative;
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		overflow: hidden;
 	}
@@ -561,8 +560,6 @@
 		flex-direction: column;
 		gap: var(--space-xs);
 		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 	}
 

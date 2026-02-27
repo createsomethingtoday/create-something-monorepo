@@ -697,7 +697,6 @@ useEffect(() => {
 	}
 
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -738,7 +737,6 @@ useEffect(() => {
 
 	.metric-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -761,7 +759,6 @@ useEffect(() => {
 
 	.code-block {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-body-sm);
 		overflow-x: auto;
@@ -812,7 +809,6 @@ useEffect(() => {
 	}
 
 	.table-row {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.table-cell-emphasis {
@@ -821,7 +817,6 @@ useEffect(() => {
 
 	.info-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -860,7 +855,6 @@ useEffect(() => {
 
 	.quote-box {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 

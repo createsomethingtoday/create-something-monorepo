@@ -58,8 +58,6 @@
 	.empty-state {
 		text-align: center;
 		padding: var(--space-lg) var(--space-md);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 	}
 
@@ -76,8 +74,6 @@
 	}
 
 	.product-card {
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		overflow: hidden;
 		transition: 
@@ -116,7 +112,6 @@
 		font-size: var(--text-caption);
 		font-weight: 500;
 		padding: 2px var(--space-xs);
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-xs);
 		text-transform: uppercase;
 		letter-spacing: 0.02em;
@@ -145,7 +140,6 @@
 		justify-content: space-between;
 		font-size: var(--text-caption);
 		padding: 4px 0;
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.detail-row:first-child {

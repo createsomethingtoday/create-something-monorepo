@@ -448,7 +448,6 @@
   /* Legal notice blocks (warranties, liability) */
   .legal-notice {
     background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg);
     padding: var(--space-md);
     margin: var(--space-md) 0;
@@ -473,7 +472,6 @@
   /* Contact info */
   .contact-info {
     background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg);
     padding: var(--space-md);
     margin: var(--space-md) 0;

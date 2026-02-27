@@ -212,8 +212,6 @@
 		z-index: var(--z-dropdown, 20);
 		min-width: 160px;
 		padding: var(--space-xs);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		box-shadow: var(--shadow-lg);
 		animation: dropdownIn var(--duration-micro) var(--ease-standard);

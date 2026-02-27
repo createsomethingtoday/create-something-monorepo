@@ -346,8 +346,6 @@
 	/* Loading State */
 	.loading-state {
 		padding: var(--space-2xl);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		text-align: center;
 	}
@@ -365,8 +363,6 @@
 	/* Error State */
 	.error-state {
 		padding: var(--space-2xl);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		text-align: center;
 	}
@@ -436,8 +432,6 @@
 	.form-select {
 		width: 100%;
 		padding: var(--space-sm) var(--space-md);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		color: var(--color-fg-primary);
 		font-size: var(--text-body);
@@ -501,8 +495,6 @@
 		width: 1rem;
 		height: 1rem;
 		border-radius: var(--radius-sm);
-		border: 1px solid var(--color-border-default);
-		background: var(--color-bg-elevated);
 		cursor: pointer;
 	}
 

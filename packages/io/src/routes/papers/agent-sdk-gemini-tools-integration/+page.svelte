@@ -411,7 +411,6 @@ FILE_READ_TOOL_SCHEMA = {'{'}
 	}
 
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -440,7 +439,6 @@ FILE_READ_TOOL_SCHEMA = {'{'}
 
 	.abstract-section {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-lg);
 	}
@@ -479,7 +477,6 @@ FILE_READ_TOOL_SCHEMA = {'{'}
 
 	.callout-box {
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 		margin-bottom: var(--space-md);
@@ -493,7 +490,6 @@ FILE_READ_TOOL_SCHEMA = {'{'}
 
 	.comparison-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -511,7 +507,6 @@ FILE_READ_TOOL_SCHEMA = {'{'}
 
 	.code-block {
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 		overflow-x: auto;
@@ -548,7 +543,6 @@ FILE_READ_TOOL_SCHEMA = {'{'}
 	.metric-table {
 		border-collapse: collapse;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		overflow: hidden;
 	}
@@ -567,7 +561,6 @@ FILE_READ_TOOL_SCHEMA = {'{'}
 
 	.metric-table td {
 		padding: var(--space-md);
-		border-bottom: 1px solid var(--color-border-default);
 		color: var(--color-fg-tertiary);
 	}
 

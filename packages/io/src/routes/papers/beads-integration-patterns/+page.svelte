@@ -223,7 +223,6 @@ bd update cs-123 --status in-progress`
 
 	.comparison-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 

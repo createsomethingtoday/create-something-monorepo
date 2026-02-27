@@ -123,7 +123,6 @@
 		gap: var(--space-xs);
 		padding: var(--space-xs) var(--space-sm);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		width: fit-content;
 	}
@@ -137,7 +136,6 @@
 		height: 28px;
 		padding: 0;
 		background: transparent;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-tertiary);
 		cursor: pointer;
@@ -192,7 +190,6 @@
 	.today-button {
 		padding: var(--space-xs) var(--space-sm);
 		background: transparent;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-caption);
 		color: var(--color-fg-tertiary);

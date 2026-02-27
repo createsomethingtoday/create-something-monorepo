@@ -807,7 +807,6 @@ gt sling worker-3 "cd /project && ./ralph.sh --prd api-prd.json"
 	}
 
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -836,7 +835,6 @@ gt sling worker-3 "cd /project && ./ralph.sh --prd api-prd.json"
 
 	.abstract-section {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-lg);
 	}
@@ -879,7 +877,6 @@ gt sling worker-3 "cd /project && ./ralph.sh --prd api-prd.json"
 
 	.metric-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
@@ -906,7 +903,6 @@ gt sling worker-3 "cd /project && ./ralph.sh --prd api-prd.json"
 	.metric-table {
 		border-collapse: collapse;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		overflow: hidden;
 	}
@@ -925,7 +921,6 @@ gt sling worker-3 "cd /project && ./ralph.sh --prd api-prd.json"
 
 	.metric-table td {
 		padding: var(--space-md);
-		border-bottom: 1px solid var(--color-border-default);
 		color: var(--color-fg-tertiary);
 	}
 
@@ -943,7 +938,6 @@ gt sling worker-3 "cd /project && ./ralph.sh --prd api-prd.json"
 
 	.quote-box {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -959,7 +953,6 @@ gt sling worker-3 "cd /project && ./ralph.sh --prd api-prd.json"
 
 	:global(.code-block) {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-body-sm);
 		overflow-x: auto;
@@ -1001,7 +994,6 @@ gt sling worker-3 "cd /project && ./ralph.sh --prd api-prd.json"
 
 	.info-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 

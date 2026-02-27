@@ -155,7 +155,6 @@
 		font-size: var(--text-body);
 		color: var(--color-fg-primary);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
@@ -268,7 +267,6 @@
 		font-weight: var(--font-medium);
 		color: var(--color-fg-primary);
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		cursor: pointer;
 		transition: all var(--duration-micro) var(--ease-standard);

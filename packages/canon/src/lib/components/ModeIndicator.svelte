@@ -77,7 +77,6 @@
 		gap: var(--space-xs);
 		padding: var(--space-xs);
 		background: color-mix(in srgb, var(--color-shell-surface-tertiary) 92%, transparent);
-		border: 1px solid var(--color-shell-border-default);
 		border-radius: var(--radius-full);
 		z-index: var(--z-fixed);
 		opacity: 0.82;
@@ -154,7 +153,6 @@
 		left: 50%;
 		transform: translateX(-50%);
 		padding: 0.25rem 0.5rem;
-		background: var(--color-bg-elevated);
 		border: 1px solid var(--color-border-emphasis);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-caption);

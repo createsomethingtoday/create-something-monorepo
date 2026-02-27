@@ -483,7 +483,6 @@
 <style>
 	.timeline-editor {
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		overflow: hidden;
 		outline: none;
@@ -499,7 +498,6 @@
 		align-items: center;
 		padding: var(--space-xs) var(--space-sm);
 		background: var(--color-bg-surface);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.time-display {
@@ -530,8 +528,6 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-secondary);
 		cursor: pointer;

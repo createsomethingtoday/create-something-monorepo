@@ -599,7 +599,6 @@
 	.knowledge-graph-container {
 		position: relative;
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		overflow: hidden;
 	}
@@ -629,7 +628,6 @@
 	.controls button {
 		padding: var(--space-xs);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-secondary);
 		cursor: pointer;
@@ -650,8 +648,6 @@
 	.tooltip {
 		position: absolute;
 		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-primary);

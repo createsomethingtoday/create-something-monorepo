@@ -185,7 +185,6 @@ END:VCALENDAR`;
 		max-width: 320px;
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -230,7 +229,6 @@ END:VCALENDAR`;
 	.calendar-button {
 		padding: var(--space-xs) var(--space-sm);
 		background: transparent;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		font-size: var(--text-caption);
 		color: var(--color-fg-secondary);

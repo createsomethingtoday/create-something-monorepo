@@ -809,7 +809,6 @@ recede into transparent use. The methodology disappears when creating.</pre>
 
 	/* Header */
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -853,7 +852,6 @@ recede into transparent use. The methodology disappears when creating.</pre>
 	/* Quote Box */
 	.quote-box {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -876,7 +874,6 @@ recede into transparent use. The methodology disappears when creating.</pre>
 	/* Code Blocks */
 	.code-block {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-body-sm);
 	}
@@ -952,7 +949,6 @@ recede into transparent use. The methodology disappears when creating.</pre>
 	/* Info Cards */
 	.info-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -973,7 +969,6 @@ recede into transparent use. The methodology disappears when creating.</pre>
 
 	/* Tables */
 	.table-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.table-cell {
@@ -984,7 +979,6 @@ recede into transparent use. The methodology disappears when creating.</pre>
 	}
 
 	.table-row {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.table-row-highlight {

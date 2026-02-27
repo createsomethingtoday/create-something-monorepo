@@ -538,7 +538,6 @@
 
 	/* Header */
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -592,7 +591,6 @@
 	/* Quote Box */
 	.quote-box {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -634,7 +632,6 @@
 	/* Info Cards */
 	.info-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 

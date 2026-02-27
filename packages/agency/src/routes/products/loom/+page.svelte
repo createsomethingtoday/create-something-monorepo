@@ -446,7 +446,6 @@
 	/* Install Section - Tufte: Clear hierarchy, Golden Ratio proportions */
 	.install-section {
 		padding: var(--space-xl) 0;
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	/* Featured card container - Golden Ratio: ~61.8% width centered */
@@ -502,7 +501,6 @@
 		gap: var(--space-xs);
 		padding: var(--space-sm);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		transition: border-color var(--duration-micro) var(--ease-standard);
 	}
@@ -591,7 +589,6 @@
 	/* How Section */
 	.how-section {
 		padding: var(--space-xl) 0;
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.how-grid {
@@ -632,8 +629,6 @@
 	}
 
 	.code-example {
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-lg);
 		overflow-x: auto;
@@ -666,7 +661,6 @@
 	/* Comparison Section */
 	.comparison-section {
 		padding: var(--space-xl) 0;
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.comparison-table-wrapper {
@@ -683,7 +677,6 @@
 	.comparison-table td {
 		padding: var(--space-sm) var(--space-md);
 		text-align: left;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.comparison-table th {
@@ -717,7 +710,6 @@
 	/* Tools Section */
 	.tools-section {
 		padding: var(--space-xl) 0;
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.tools-grid {
@@ -729,7 +721,6 @@
 	.tool-category {
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -767,14 +758,11 @@
 	/* Case Study */
 	.case-study-section {
 		padding: var(--space-xl) 0;
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.case-study-card {
 		text-align: center;
 		padding: var(--space-xl);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -838,7 +826,6 @@
 	/* Links Section */
 	.links-section {
 		padding: var(--space-xl) 0;
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.links-grid {
@@ -854,7 +841,6 @@
 		gap: var(--space-xs);
 		padding: var(--space-sm) var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-full);
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);

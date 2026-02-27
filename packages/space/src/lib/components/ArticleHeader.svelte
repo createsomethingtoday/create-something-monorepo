@@ -120,7 +120,6 @@
 <style>
 	.ascii-hero {
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		overflow: hidden;
 	}
@@ -152,7 +151,6 @@
 		display: inline-block;
 		padding: 0.5rem 1rem;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-body-sm);
 		font-weight: 500;
@@ -183,7 +181,6 @@
 	.metadata-row {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
-		border-top: 1px solid var(--color-border-default);
 		padding-top: 1.5rem;
 	}
 
@@ -206,7 +203,6 @@
 		padding: 0.25rem 0.5rem;
 		font-size: var(--text-caption);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-tertiary);
 	}

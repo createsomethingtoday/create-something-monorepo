@@ -499,7 +499,6 @@
 <style>
   .ascii-container {
     background: var(--color-bg-pure);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg);
   }
 
@@ -529,7 +528,6 @@
 
   .form-card {
     background: var(--color-hover);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-xl);
   }
 
@@ -542,7 +540,6 @@
   .form-input,
   .form-select {
     background: var(--color-overlay);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-md);
     color: var(--color-fg-primary);
   }
@@ -581,7 +578,6 @@
 
   .result-card {
     background: var(--color-hover);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-xl);
   }
 
@@ -738,13 +734,11 @@
   /* Missing class definitions - migrated to Canon */
   .recommendation-box {
     background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-md);
   }
 
   .debug-box {
     background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-md);
   }
 
@@ -755,7 +749,6 @@
 
   .framework-card {
     background: var(--color-hover);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-xl);
   }
 

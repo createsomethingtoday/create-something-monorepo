@@ -302,7 +302,6 @@
 	.tabs {
 		display: flex;
 		gap: var(--space-sm);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.tab {
@@ -337,8 +336,6 @@
 	/* Skeleton Loading */
 	.skeleton-card {
 		padding: var(--space-md);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 	}
@@ -374,8 +371,6 @@
 	.submission-card {
 		width: 100%;
 		padding: var(--space-md);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		text-align: left;
 		transition: all var(--duration-standard) var(--ease-standard);
@@ -428,8 +423,6 @@
 	/* Detail Card */
 	.detail-card {
 		padding: var(--space-lg);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		display: flex;
 		flex-direction: column;
@@ -538,7 +531,6 @@
 	/* Empty Detail */
 	.empty-detail {
 		padding: var(--space-2xl);
-		background: var(--color-bg-elevated);
 		border: 1px dashed var(--color-border-default);
 		border-radius: var(--radius-lg);
 		text-align: center;

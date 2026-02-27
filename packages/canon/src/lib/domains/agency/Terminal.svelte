@@ -293,7 +293,6 @@ Contact Create Something:
 
 	.terminal-header {
 		background: var(--color-bg-surface);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.traffic-light {
@@ -346,7 +345,6 @@ Contact Create Something:
 
 	.terminal-footer {
 		background: var(--color-bg-surface);
-		border-top: 1px solid var(--color-border-default);
 		font-size: var(--text-caption);
 		color: var(--color-fg-subtle);
 	}

@@ -248,7 +248,6 @@
 		gap: var(--space-sm);
 		padding: var(--space-lg);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		cursor: pointer;
 		transition: all var(--duration-standard) var(--ease-standard);
@@ -319,7 +318,6 @@
 		width: 100%;
 		padding: var(--space-md);
 		background: transparent;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-primary);
 		font-size: var(--text-body);

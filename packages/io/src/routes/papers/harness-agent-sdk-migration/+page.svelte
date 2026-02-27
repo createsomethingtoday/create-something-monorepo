@@ -871,7 +871,6 @@ await db.deployments.create({
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 		padding-bottom: var(--space-sm);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.subsection-heading {
@@ -921,7 +920,6 @@ await db.deployments.create({
 
 	.metric-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		text-align: center;
 	}
@@ -951,7 +949,6 @@ await db.deployments.create({
 	.data-table td {
 		padding: var(--space-sm);
 		text-align: left;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.data-table th {
@@ -966,7 +963,6 @@ await db.deployments.create({
 
 	:global(.code-block) {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		padding: var(--space-md);
 		overflow-x: auto;
@@ -986,7 +982,6 @@ await db.deployments.create({
 
 	.callout-box {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		border-left: 3px solid var(--color-info);
 	}

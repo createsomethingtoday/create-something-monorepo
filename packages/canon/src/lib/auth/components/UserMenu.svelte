@@ -197,8 +197,6 @@
 		top: calc(100% + var(--space-xs));
 		right: 0;
 		min-width: 220px;
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		box-shadow: var(--shadow-lg);
 		padding: var(--space-xs);

@@ -692,7 +692,6 @@
 
 	.demo-container {
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		overflow: hidden;
 	}
@@ -727,7 +726,6 @@
 
 	.controls-section {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-lg);
 		margin-bottom: var(--space-xl);
@@ -747,7 +745,6 @@
 	.upload-button {
 		padding: var(--space-sm) var(--space-md);
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-secondary);
 		cursor: pointer;
@@ -782,7 +779,6 @@
 	.animation-control button {
 		padding: var(--space-xs) var(--space-sm);
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-secondary);
 		cursor: pointer;
@@ -823,7 +819,6 @@
 
 	.technique-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		padding: var(--space-md);
 	}

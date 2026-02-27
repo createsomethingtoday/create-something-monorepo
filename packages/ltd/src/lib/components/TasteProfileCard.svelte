@@ -202,13 +202,11 @@
 		flex-wrap: wrap;
 		margin-top: var(--space-sm);
 		padding-top: var(--space-sm);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.focus-tag {
 		font-size: var(--text-caption);
 		padding: 0.25rem 0.5rem;
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-subtle);
 		color: var(--color-fg-secondary);
 	}
@@ -218,7 +216,6 @@
 		gap: var(--space-md);
 		margin-top: var(--space-sm);
 		padding-top: var(--space-sm);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.stat {
@@ -242,7 +239,6 @@
 	.profile-footer {
 		margin-top: var(--space-sm);
 		padding-top: var(--space-sm);
-		border-top: 1px solid var(--color-border-default);
 		text-align: center;
 	}
 

@@ -103,7 +103,6 @@
 		flex-direction: column;
 		gap: var(--space-md);
 		padding: var(--space-2xl);
-		background: var(--color-bg-elevated);
 		border: 2px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		cursor: pointer;
@@ -200,7 +199,6 @@
 		gap: var(--space-lg);
 		flex-wrap: wrap;
 		padding-top: var(--space-sm);
-		border-top: 1px solid var(--color-border-default);
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
 	}

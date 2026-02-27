@@ -202,7 +202,6 @@
 		gap: var(--space-xs);
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		position: relative;
 	}
@@ -267,7 +266,6 @@
 	.textarea {
 		padding: var(--space-sm) var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		font-size: var(--text-body);
 		color: var(--color-fg-primary);
@@ -345,13 +343,11 @@
 		justify-content: space-between;
 		gap: var(--space-md);
 		padding-top: var(--space-md);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.back-button {
 		padding: var(--space-sm) var(--space-md);
 		background: transparent;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);

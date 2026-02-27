@@ -165,11 +165,9 @@
 		gap: var(--space-md);
 		padding: var(--space-sm);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 	}
 
 	.skeleton--card {
-		border: 1px solid var(--color-border-default);
 	}
 
 	/* Screen reader only */

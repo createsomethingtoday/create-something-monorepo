@@ -348,7 +348,6 @@
   /* Product Card — shared base */
   .product-card {
     padding: 1.25rem 1.5rem;
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg, 12px);
     display: flex;
     flex-direction: column;
@@ -376,7 +375,6 @@
   /* Client Card — distinct treatment */
   .client-card {
     padding: 1.25rem 1.5rem;
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg, 12px);
     display: flex;
     flex-direction: column;
@@ -502,7 +500,6 @@
     background: rgba(255, 255, 255, 0.04);
     padding: 0.2rem 0.6rem;
     border-radius: var(--radius-sm, 4px);
-    border: 1px solid var(--color-border-default);
   }
 
   /* CTA */

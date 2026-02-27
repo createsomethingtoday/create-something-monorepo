@@ -271,7 +271,6 @@
 		gap: var(--space-xs);
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		cursor: pointer;
 		text-align: left;

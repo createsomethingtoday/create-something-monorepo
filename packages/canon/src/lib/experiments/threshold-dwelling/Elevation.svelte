@@ -220,7 +220,6 @@
 		align-items: center;
 		margin-top: var(--space-md, 1.5rem);
 		padding-top: var(--space-sm, 1rem);
-		border-top: 1px solid var(--color-border-default);
 		font-family: var(--font-sans, system-ui, sans-serif);
 	}
 

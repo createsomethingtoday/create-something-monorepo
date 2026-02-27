@@ -186,12 +186,10 @@ ${metrics && metrics.length ? `### Key Metrics\n${metrics.map(m => `- ${m}`).joi
 	/* Preserve agency-specific card styles */
 	:global(.prose-agency .card-surface) {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
 	:global(.prose-agency .section-border) {
-		border-top: 1px solid var(--color-border-default);
 		padding-top: var(--space-xl);
 	}
 </style>

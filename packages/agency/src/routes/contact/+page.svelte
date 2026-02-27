@@ -255,7 +255,6 @@
 
   .contact-option {
     padding: var(--space-6, 2rem);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg, 12px);
   }
 
@@ -305,7 +304,6 @@
   .form-input {
     padding: 0.75rem 1rem;
     background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-md, 8px);
     color: var(--color-fg-primary);
     font-size: var(--text-body);

@@ -583,7 +583,6 @@ gen.end(response, { input: 150, output: 500 });`}</code></pre>
 	}
 
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -612,7 +611,6 @@ gen.end(response, { input: 150, output: 500 });`}</code></pre>
 
 	.abstract-section {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-lg);
 	}
@@ -655,7 +653,6 @@ gen.end(response, { input: 150, output: 500 });`}</code></pre>
 
 	.metric-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
@@ -687,7 +684,6 @@ gen.end(response, { input: 150, output: 500 });`}</code></pre>
 	.metric-table {
 		border-collapse: collapse;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		overflow: hidden;
 	}
@@ -706,7 +702,6 @@ gen.end(response, { input: 150, output: 500 });`}</code></pre>
 
 	.metric-table td {
 		padding: var(--space-md);
-		border-bottom: 1px solid var(--color-border-default);
 		color: var(--color-fg-tertiary);
 	}
 
@@ -724,7 +719,6 @@ gen.end(response, { input: 150, output: 500 });`}</code></pre>
 
 	.code-block {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 		overflow-x: auto;

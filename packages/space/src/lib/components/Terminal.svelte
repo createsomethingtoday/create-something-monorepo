@@ -340,13 +340,11 @@ Contact Create Something:
 <style>
 	.terminal-container {
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
 	.terminal-header {
 		background: var(--color-bg-pure);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.path-display {
@@ -361,7 +359,6 @@ Contact Create Something:
 
 	.suggestion-bar {
 		background: var(--color-hover);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.suggestion-content {

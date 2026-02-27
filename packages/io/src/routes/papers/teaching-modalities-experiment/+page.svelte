@@ -801,7 +801,6 @@
 	   =========================================== */
 	.demo-container {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-subtle);
 		border-radius: var(--radius-lg);
 		padding: 1.5rem;
 	}
@@ -888,8 +887,6 @@
 		align-items: center;
 		gap: 0.5rem;
 		padding: 0.5rem 1rem;
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-subtle);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);
@@ -955,7 +952,6 @@
 		display: block;
 		padding: 1.25rem;
 		background: var(--color-bg-base);
-		border: 1px solid var(--color-border-subtle);
 		border-radius: var(--radius-md);
 		text-decoration: none;
 		transition: all 0.2s;
@@ -1080,7 +1076,6 @@
 	.engagement-card {
 		padding: 1.25rem;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-subtle);
 		border-radius: var(--radius-lg);
 	}
 
@@ -1137,7 +1132,6 @@
 	}
 
 	.hypothesis-table thead tr {
-		border-bottom: 1px solid var(--color-border-subtle);
 	}
 
 	.hypothesis-table tbody tr {
@@ -1181,7 +1175,6 @@
 		gap: 0.75rem;
 		padding: 1rem;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-subtle);
 		border-radius: var(--radius-md);
 		text-decoration: none;
 		color: var(--color-fg-primary);
@@ -1190,7 +1183,6 @@
 
 	.link-card:hover:not(.muted) {
 		border-color: var(--color-border-emphasis);
-		background: var(--color-bg-elevated);
 	}
 
 	.link-card.muted {
@@ -1211,7 +1203,6 @@
 		left: 0;
 		right: 0;
 		background: var(--color-bg-surface);
-		border-top: 1px solid var(--color-border-subtle);
 		padding: 1.5rem;
 		z-index: 1000;
 		box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
@@ -1260,12 +1251,10 @@
 
 	.consent-btn.decline {
 		background: transparent;
-		border: 1px solid var(--color-border-subtle);
 		color: var(--color-fg-secondary);
 	}
 
 	.consent-btn.decline:hover {
-		background: var(--color-bg-elevated);
 		color: var(--color-fg-primary);
 	}
 
@@ -1286,7 +1275,6 @@
 	.privacy-status {
 		padding: 1rem;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-subtle);
 		border-radius: var(--radius-md);
 	}
 
@@ -1309,8 +1297,6 @@
 		gap: 0.25rem;
 		margin-left: auto;
 		padding: 0.25rem 0.5rem;
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-subtle);
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-muted);
 		font-size: 0.75rem;
@@ -1337,7 +1323,6 @@
 		gap: 0.25rem;
 		padding: 0.125rem 0.5rem;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-subtle);
 		border-radius: var(--radius-full);
 		font-size: 0.7rem;
 	}

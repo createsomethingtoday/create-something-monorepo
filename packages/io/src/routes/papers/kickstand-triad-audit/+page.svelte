@@ -482,7 +482,6 @@
 	}
 
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -528,7 +527,6 @@
 	/* Metric Cards */
 	.metric-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -564,7 +562,6 @@
 	}
 
 	.table-row {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.table-cell-emphasis {
@@ -644,7 +641,6 @@
 	/* Info Cards */
 	.info-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -661,7 +657,6 @@
 	/* Code */
 	.code-block {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-body-sm);
 	}
@@ -684,7 +679,6 @@
 	/* Quote Box */
 	.quote-box {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 

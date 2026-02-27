@@ -126,9 +126,7 @@
 		align-items: flex-start;
 		gap: var(--space-sm);
 		padding: var(--space-sm) var(--space-md);
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-md);
-		border: 1px solid var(--color-border-default);
 		box-shadow: var(--shadow-lg);
 		overflow: hidden;
 		min-width: 300px;

@@ -108,8 +108,6 @@
 		flex-direction: column;
 		gap: var(--space-md);
 		padding: var(--space-xl);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 

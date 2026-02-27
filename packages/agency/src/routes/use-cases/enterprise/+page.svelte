@@ -488,7 +488,6 @@
 	/* The Problem */
 	.problem-section {
 		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
 		text-align: center;
 	}
 	
@@ -512,7 +511,6 @@
 	.failure-card {
 		padding: var(--space-5, 1.5rem);
 		border-radius: var(--radius-lg, 12px);
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-pure);
 		box-shadow: var(--glass-shine-soft);
 		text-align: left;
@@ -559,7 +557,6 @@
 	/* Services — What the Judgment Layer Includes */
 	.services-section {
 		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
 	}
 	
 	.services-grid {
@@ -571,7 +568,6 @@
 	.service-card {
 		padding: var(--space-5, 1.5rem);
 		border-radius: var(--radius-lg, 12px);
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-pure);
 		box-shadow: var(--glass-shine-soft);
 		display: flex;
@@ -620,7 +616,6 @@
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-primary);
 		font-style: italic;
-		border-top: 1px solid var(--color-border-default);
 		padding-top: var(--space-3, 0.75rem);
 		margin: 0;
 	}
@@ -628,7 +623,6 @@
 	/* Three-Tier Framework */
 	.framework-section {
 		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
 	}
 	
 	.tier-grid {
@@ -641,7 +635,6 @@
 	.tier-card {
 		padding: var(--space-5, 1.5rem);
 		border-radius: var(--radius-lg, 12px);
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-pure);
 		box-shadow: var(--glass-shine-soft);
 		transition: 
@@ -733,7 +726,6 @@
 	/* Pricing */
 	.pricing-section {
 		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
 	}
 	
 	.pricing-grid {
@@ -746,7 +738,6 @@
 	.pricing-card {
 		position: relative;
 		border-radius: var(--radius-lg, 12px);
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-pure);
 		box-shadow: var(--glass-shine-soft);
 		overflow: hidden;
@@ -839,7 +830,6 @@
 		color: var(--color-fg-muted);
 		margin-bottom: var(--space-5, 1.5rem);
 		padding-bottom: var(--space-4, 1rem);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 	
 	.pricing-features {
@@ -883,7 +873,6 @@
 	/* Who This Is For */
 	.audience-section {
 		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
 	}
 	
 	.audience-grid {
@@ -896,7 +885,6 @@
 	
 	.audience-card {
 		padding: var(--space-5, 1.5rem);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg, 12px);
 		transition: border-color var(--duration-micro, 200ms) var(--ease-standard);
 	}
@@ -915,7 +903,6 @@
 	/* CTA */
 	.cta-section {
 		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
 		text-align: center;
 	}
 	

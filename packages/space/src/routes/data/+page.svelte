@@ -109,7 +109,6 @@
 	.dataset-status {
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
-		background: var(--color-bg-elevated);
 		padding: 0.125rem 0.5rem;
 		border-radius: var(--radius-full);
 	}

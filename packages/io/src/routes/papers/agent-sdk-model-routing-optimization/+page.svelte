@@ -540,7 +540,6 @@ class ProviderResult:
 		flex-direction: column;
 		gap: var(--space-sm);
 		padding-bottom: var(--space-lg);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.section-title {
@@ -604,7 +603,6 @@ class ProviderResult:
 	.data-table td {
 		padding: var(--space-xs) var(--space-sm);
 		text-align: left;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.data-table th {
@@ -625,7 +623,6 @@ class ProviderResult:
 	/* Code blocks */
 	.code-block {
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		overflow-x: auto;
 	}

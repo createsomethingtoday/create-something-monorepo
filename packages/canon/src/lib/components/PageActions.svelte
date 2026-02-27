@@ -150,7 +150,6 @@
 		height: 32px;
 		padding: 0;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-muted);
 		cursor: pointer;
@@ -181,8 +180,6 @@
 		z-index: var(--z-dropdown, 20);
 		min-width: 200px;
 		padding: var(--space-xs);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		box-shadow: var(--shadow-lg);
 		animation: menuIn var(--duration-micro) var(--ease-standard);

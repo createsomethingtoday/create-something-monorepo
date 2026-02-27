@@ -267,7 +267,6 @@
 		align-items: flex-start;
 		margin-bottom: var(--space-md);
 		padding-bottom: var(--space-sm);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.header h1 {
@@ -299,9 +298,7 @@
 	.panel {
 		display: flex;
 		flex-direction: column;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
-		background: var(--color-bg-elevated);
 		overflow: hidden;
 	}
 
@@ -311,7 +308,6 @@
 		justify-content: space-between;
 		align-items: center;
 		padding: var(--space-sm);
-		border-bottom: 1px solid var(--color-border-default);
 		background: var(--color-bg-pure);
 	}
 
@@ -361,7 +357,6 @@
 		display: flex;
 		gap: var(--space-xs);
 		padding: var(--space-sm);
-		border-top: 1px solid var(--color-border-default);
 		background: var(--color-bg-pure);
 	}
 
@@ -397,7 +392,6 @@
 	.btn-nav {
 		background: var(--color-hover);
 		color: var(--color-fg-primary);
-		border: 1px solid var(--color-border-default);
 	}
 
 	.btn-secondary:hover:not(:disabled),
@@ -416,7 +410,6 @@
 	}
 
 	.section {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.section-content {
@@ -562,9 +555,7 @@
 	.completion {
 		margin-top: var(--space-lg);
 		padding: var(--space-lg);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
-		background: var(--color-bg-elevated);
 		text-align: center;
 	}
 

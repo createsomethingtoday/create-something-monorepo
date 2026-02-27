@@ -565,7 +565,6 @@
 
   .analysis-card {
     background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-md);
     padding: var(--space-md);
     text-decoration: none;
@@ -610,7 +609,6 @@
     color: var(--color-fg-muted);
     margin-top: var(--space-sm);
     padding-top: var(--space-sm);
-    border-top: 1px solid var(--color-border-default);
   }
 
   .analysis-card:hover .card-action {
@@ -667,7 +665,6 @@
     font-size: var(--text-caption);
     color: var(--color-fg-muted);
     padding-top: var(--space-sm);
-    border-top: 1px solid var(--color-border-default);
   }
 
   .insights-link-card:hover .insights-link-action {

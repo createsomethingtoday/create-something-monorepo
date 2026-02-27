@@ -84,7 +84,6 @@
 		padding: var(--space-md);
 		border-radius: var(--radius-lg);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		text-decoration: none;
 		color: inherit;
 		transition: all var(--duration-micro) var(--ease-standard);
@@ -109,7 +108,6 @@
 		display: inline-block;
 		padding: 0.25rem 0.75rem;
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
@@ -194,7 +192,6 @@
 		align-items: center;
 		gap: var(--space-xs);
 		padding-top: var(--space-sm);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.explore-link {

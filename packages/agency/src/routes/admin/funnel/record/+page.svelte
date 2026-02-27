@@ -257,7 +257,6 @@
 		color: var(--color-fg-secondary);
 		margin: 0 0 var(--space-xs) 0;
 		padding-bottom: var(--space-xs);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.section-help {
@@ -289,7 +288,6 @@
 	.field textarea {
 		padding: var(--space-sm);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-primary);
 		font-size: var(--text-body);
@@ -316,7 +314,6 @@
 		display: flex;
 		justify-content: flex-end;
 		padding-top: var(--space-lg);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.submit-btn {

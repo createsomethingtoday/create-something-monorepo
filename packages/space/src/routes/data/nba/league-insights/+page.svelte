@@ -310,7 +310,6 @@
 
 	.stat-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 		display: flex;
@@ -352,7 +351,6 @@
 
 	.balance-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 	}
@@ -403,7 +401,6 @@
 
 	.bar-track {
 		height: 8px;
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-full);
 		overflow: hidden;
 	}

@@ -74,13 +74,9 @@
 
 	/* Variants */
 	.card-standard {
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 	}
 
 	.card-elevated {
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		box-shadow: var(--shadow-xl);
 	}
 

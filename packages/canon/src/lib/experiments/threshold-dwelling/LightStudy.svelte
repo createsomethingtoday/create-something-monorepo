@@ -482,7 +482,6 @@
 
 	.control-btn {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		color: var(--color-fg-tertiary);
 		font-size: var(--text-caption);
 		padding: 0.25rem 0.5rem;

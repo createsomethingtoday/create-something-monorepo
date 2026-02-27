@@ -766,7 +766,6 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 		padding: var(--space-sm) var(--space-md);
 		background: var(--color-bg-surface);
 		color: var(--color-fg-secondary);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		cursor: pointer;
 		transition: all var(--duration-micro) var(--ease-standard);
@@ -780,7 +779,6 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 	/* Demo Frame - Tufte: minimal chrome, data first */
 	.demo-frame {
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		padding: var(--space-sm);
 		margin: var(--space-sm) 0;
@@ -804,10 +802,8 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 	.query-input-inline {
 		flex: 1;
 		padding: var(--space-xs) var(--space-sm);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xs) 0 0 var(--radius-xs);
 		font-size: var(--text-body-sm);
-		background: var(--color-bg-elevated);
 		color: var(--color-fg-primary);
 		transition: border-color var(--duration-fast) var(--ease-out);
 	}
@@ -876,7 +872,6 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 		font-size: 10px;
 		padding: 2px 6px;
 		background: transparent;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xs);
 		color: var(--color-fg-muted);
 		cursor: pointer;
@@ -927,9 +922,7 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 	/* Reasoning panel */
 	.reasoning-panel {
 		margin-top: var(--space-sm);
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-sm);
-		border: 1px solid var(--color-border-default);
 		overflow: hidden;
 	}
 
@@ -939,7 +932,6 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 		align-items: center;
 		padding: var(--space-xs) var(--space-sm);
 		background: var(--color-bg-surface);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.reasoning-label {
@@ -952,7 +944,6 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 		font-size: var(--text-caption);
 		padding: 2px var(--space-xs);
 		background: transparent;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xs);
 		color: var(--color-fg-muted);
 		cursor: pointer;
@@ -1029,7 +1020,6 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 		align-items: baseline;
 		margin-bottom: var(--space-xs);
 		padding-bottom: var(--space-xs);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.results-title {
@@ -1065,7 +1055,6 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 
 	.impl-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		padding: var(--space-sm) var(--space-md);
 	}
@@ -1108,7 +1097,6 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 		padding: var(--space-sm) var(--space-md);
 		background: transparent;
 		color: var(--color-fg-muted);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		font-size: var(--text-body-sm);
 		cursor: pointer;
@@ -1130,7 +1118,6 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 
 	.metric-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		padding: var(--space-sm) var(--space-md);
 	}
@@ -1156,7 +1143,6 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 
 	.engineering-block {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		padding: var(--space-md);
 		margin-top: var(--space-sm);
@@ -1219,7 +1205,6 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 
 	.cost-item {
 		padding: var(--space-sm);
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-xs);
 	}
 
@@ -1263,7 +1248,6 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 
 	/* Code Block */
 	.code-block {
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-xs);
 		padding: var(--space-sm);
 		overflow-x: auto;
@@ -1288,7 +1272,6 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 		grid-template-columns: 1fr 120px 60px;
 		gap: var(--space-sm);
 		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-xs);
 	}
 
@@ -1347,7 +1330,6 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 		grid-template-columns: 140px 100px 60px 1fr;
 		gap: var(--space-sm);
 		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-xs);
 		font-size: var(--text-caption);
 		align-items: center;
@@ -1402,7 +1384,6 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 		grid-template-columns: 180px 140px 1fr;
 		gap: var(--space-sm);
 		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-xs);
 		font-size: var(--text-caption);
 		border-left: 3px solid transparent;
@@ -1443,7 +1424,6 @@ Estimated cost reduction: 80% for cache hits`}</code></pre>
 		grid-template-columns: 1fr 100px 100px 100px;
 		gap: var(--space-sm);
 		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-xs);
 		font-size: var(--text-caption);
 	}

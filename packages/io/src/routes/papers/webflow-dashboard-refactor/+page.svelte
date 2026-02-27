@@ -674,7 +674,6 @@ export const GET: RequestHandler = async ({ platform }) => {
 
 	/* Header */
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -718,7 +717,6 @@ export const GET: RequestHandler = async ({ platform }) => {
 	/* Quote Box */
 	.quote-box {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -735,7 +733,6 @@ export const GET: RequestHandler = async ({ platform }) => {
 	/* Code Blocks */
 	.code-block {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-body-sm);
 		overflow-x: auto;
@@ -789,7 +786,6 @@ export const GET: RequestHandler = async ({ platform }) => {
 	/* Info Cards */
 	.info-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -810,7 +806,6 @@ export const GET: RequestHandler = async ({ platform }) => {
 
 	/* Tables */
 	.table-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.table-cell {
@@ -821,7 +816,6 @@ export const GET: RequestHandler = async ({ platform }) => {
 	}
 
 	.table-row {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	/* References */

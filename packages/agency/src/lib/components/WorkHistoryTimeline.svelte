@@ -67,7 +67,6 @@
 
 	/* SVG milestone timeline: make it responsive */
 	.milestones {
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg, 14px);
 		background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent);
 		overflow: hidden;
@@ -137,7 +136,6 @@
 	.timeline-body {
 		min-width: 0;
 		padding: var(--space-4, 1rem);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg, 14px);
 		background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent);
 	}

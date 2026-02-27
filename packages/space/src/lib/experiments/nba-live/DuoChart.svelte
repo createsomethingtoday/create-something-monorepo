@@ -165,7 +165,6 @@
 <style>
 	.duo-chart {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 	}
@@ -228,7 +227,6 @@
 		gap: var(--space-md);
 		margin-top: var(--space-md);
 		padding-top: var(--space-sm);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.legend-item {

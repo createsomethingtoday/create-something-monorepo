@@ -220,8 +220,6 @@
   input[type='email'] {
     width: 100%;
     padding: var(--space-sm) var(--space-md);
-    background: var(--color-bg-elevated);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-md);
     color: var(--color-fg-primary);
     font-size: var(--text-body);

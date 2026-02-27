@@ -550,7 +550,6 @@ if (name === 'productType' && value === 'digital') {
 	}
 
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -594,7 +593,6 @@ if (name === 'productType' && value === 'digital') {
 
 	.metric-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -618,7 +616,6 @@ if (name === 'productType' && value === 'digital') {
 
 	.quote-block {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-secondary);
 	}
@@ -657,7 +654,6 @@ if (name === 'productType' && value === 'digital') {
 	}
 
 	.data-table tbody tr {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.data-table td {
@@ -670,7 +666,6 @@ if (name === 'productType' && value === 'digital') {
 
 	.before-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -700,8 +695,6 @@ if (name === 'productType' && value === 'digital') {
 	}
 
 	.input-mock {
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		padding: 0.25rem 0.5rem;
 	}
@@ -712,7 +705,6 @@ if (name === 'productType' && value === 'digital') {
 
 	.code-block {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		overflow-x: auto;
 	}
@@ -758,7 +750,6 @@ if (name === 'productType' && value === 'digital') {
 
 	.conclusion-box {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 

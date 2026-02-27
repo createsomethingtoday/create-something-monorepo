@@ -786,7 +786,6 @@ cs-003: Session management
 
 	/* Header */
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -830,7 +829,6 @@ cs-003: Session management
 	/* Quote Box */
 	.quote-box {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -853,7 +851,6 @@ cs-003: Session management
 	/* Code Blocks */
 	:global(.code-block) {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-body-sm);
 		overflow-x: auto;
@@ -930,7 +927,6 @@ cs-003: Session management
 	/* Info Cards */
 	.info-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -946,7 +942,6 @@ cs-003: Session management
 
 	/* Tables */
 	.table-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.table-cell {
@@ -957,7 +952,6 @@ cs-003: Session management
 	}
 
 	.table-row {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	/* References */

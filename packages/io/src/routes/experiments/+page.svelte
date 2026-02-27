@@ -284,7 +284,6 @@
 		width: 100%;
 		padding: var(--space-sm) var(--space-sm) var(--space-sm) 2.5rem;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-primary);
 		transition: border-color var(--duration-standard) var(--ease-standard);
@@ -330,7 +329,6 @@
 		transition: all var(--duration-standard) var(--ease-standard);
 		background: var(--color-bg-surface);
 		color: var(--color-fg-tertiary);
-		border: 1px solid var(--color-border-default);
 	}
 
 	.filter-chip:hover {
@@ -351,7 +349,6 @@
 		gap: 0.25rem;
 		padding: 0.25rem;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 

@@ -676,7 +676,6 @@ codex exec --full-auto --model gpt-4o "Apply voice audit..."
 	.paper-header {
 		margin-bottom: var(--space-2xl);
 		padding-bottom: var(--space-xl);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-title {
@@ -713,7 +712,6 @@ codex exec --full-auto --model gpt-4o "Apply voice audit..."
 	.tag {
 		padding: var(--space-xs) var(--space-sm);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-caption);
 		color: var(--color-fg-tertiary);
@@ -816,7 +814,6 @@ codex exec --full-auto --model gpt-4o "Apply voice audit..."
 	.comparison-table td,
 	.layers-table td {
 		padding: var(--space-sm);
-		border-bottom: 1px solid var(--color-border-default);
 		color: var(--color-fg-secondary);
 	}
 
@@ -842,7 +839,6 @@ codex exec --full-auto --model gpt-4o "Apply voice audit..."
 	code {
 		padding: 2px 6px;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		font-size: 0.9em;
 		font-family: monospace;
@@ -859,7 +855,6 @@ codex exec --full-auto --model gpt-4o "Apply voice audit..."
 	.use-case {
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 
@@ -892,7 +887,6 @@ codex exec --full-auto --model gpt-4o "Apply voice audit..."
 
 	.code-block {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		padding: var(--space-md);
 		overflow-x: auto;
@@ -916,14 +910,12 @@ codex exec --full-auto --model gpt-4o "Apply voice audit..."
 	.cost-card {
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		text-align: center;
 	}
 
 	.cost-card-highlight {
 		border-color: var(--color-border-emphasis);
-		background: var(--color-bg-elevated);
 	}
 
 	.cost-title {
@@ -950,20 +942,17 @@ codex exec --full-auto --model gpt-4o "Apply voice audit..."
 		margin: var(--space-lg) 0;
 		padding: var(--space-lg);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 
 	.stack-layer {
 		padding: var(--space-md);
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 	}
 
 	.stack-layer-highlight {
 		border-color: var(--color-border-emphasis);
-		background: var(--color-bg-elevated);
 	}
 
 	.layer-name {

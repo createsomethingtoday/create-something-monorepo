@@ -458,21 +458,18 @@
 	/* Feature Cards */
 	.feature-card {
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
 	/* Philosophy Card */
 	.philosophy-card {
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
 	/* Pricing Cards */
 	.pricing-card {
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 

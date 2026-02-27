@@ -588,7 +588,6 @@ if (publishedTemplates + delistedTemplates >= 5 || isWhitelisted) {
 	}
 
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -629,7 +628,6 @@ if (publishedTemplates + delistedTemplates >= 5 || isWhitelisted) {
 
 	.metric-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -656,7 +654,6 @@ if (publishedTemplates + delistedTemplates >= 5 || isWhitelisted) {
 
 	.code-block {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-body-sm);
 		overflow-x: auto;
@@ -720,7 +717,6 @@ if (publishedTemplates + delistedTemplates >= 5 || isWhitelisted) {
 	}
 
 	.table-row {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.table-cell-emphasis {
@@ -729,7 +725,6 @@ if (publishedTemplates + delistedTemplates >= 5 || isWhitelisted) {
 
 	.info-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -744,7 +739,6 @@ if (publishedTemplates + delistedTemplates >= 5 || isWhitelisted) {
 
 	.quote-box {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 

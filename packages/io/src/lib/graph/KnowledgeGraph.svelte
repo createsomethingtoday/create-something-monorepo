@@ -247,7 +247,6 @@
 		width: 100%;
 		height: 100%;
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 </style>

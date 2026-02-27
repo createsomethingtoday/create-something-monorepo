@@ -95,7 +95,6 @@
 	.image-placeholder {
 		position: absolute;
 		inset: 0;
-		background: var(--color-bg-elevated);
 	}
 
 	.hero-image {

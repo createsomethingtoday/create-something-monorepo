@@ -273,7 +273,6 @@
 <style>
 	.correlation-chart {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 	}
@@ -328,7 +327,6 @@
 	.chart-insight {
 		margin-top: var(--space-md);
 		padding-top: var(--space-sm);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.chart-insight p {

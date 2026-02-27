@@ -601,7 +601,6 @@
 	.studio-header {
 		margin-bottom: var(--space-xl);
 		padding-bottom: var(--space-lg);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.header-meta {
@@ -644,7 +643,6 @@
 		margin: var(--space-lg) 0;
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 
@@ -709,7 +707,6 @@
 	.demo-button {
 		padding: var(--space-sm) var(--space-md);
 		background: transparent;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);
@@ -736,7 +733,6 @@
 	/* SVG Workspace */
 	.svg-workspace {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 	}
@@ -766,7 +762,6 @@
 	.control-button {
 		padding: var(--space-xs) var(--space-sm);
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-secondary);
 		font-size: var(--text-caption);
@@ -811,7 +806,6 @@
 	/* Conditioning Section */
 	.conditioning-section {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 	}
@@ -849,7 +843,6 @@
 	/* Presets Section */
 	.presets-section {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 	}
@@ -899,7 +892,6 @@
 	/* Result Section */
 	.result-section {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 	}
@@ -925,7 +917,6 @@
 		align-items: center;
 		padding: var(--space-sm) var(--space-md);
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-primary);
 		font-size: var(--text-body-sm);
@@ -961,7 +952,6 @@
 
 	.comparison-item {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 	}
@@ -983,7 +973,6 @@
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
 		padding: var(--space-xs) 0;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.comparison-item li:last-child {
@@ -1006,7 +995,6 @@
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-full);
 	}
 

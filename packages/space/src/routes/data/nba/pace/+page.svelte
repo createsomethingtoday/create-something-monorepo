@@ -283,7 +283,6 @@
 		gap: var(--space-lg);
 		padding: var(--space-lg);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -348,7 +347,6 @@
 		gap: var(--space-sm);
 		padding: var(--space-lg);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -487,7 +485,6 @@
 		justify-content: space-between;
 		align-items: center;
 		padding-bottom: var(--space-sm);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.card-header .team-name {
@@ -530,7 +527,6 @@
 
 	.efficiency-indicator {
 		padding-top: var(--space-sm);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.indicator {

@@ -248,7 +248,6 @@
 <style>
 	.network-container {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 	}
@@ -278,7 +277,6 @@
 		justify-content: center;
 		gap: var(--space-lg);
 		padding-top: var(--space-sm);
-		border-top: 1px solid var(--color-border-default);
 		margin-top: var(--space-sm);
 	}
 

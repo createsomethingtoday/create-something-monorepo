@@ -345,7 +345,6 @@ bd sync
 	}
 
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -374,7 +373,6 @@ bd sync
 
 	.abstract-section {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-lg);
 	}
@@ -408,7 +406,6 @@ bd sync
 
 	.comparison-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -418,7 +415,6 @@ bd sync
 
 	.code-block {
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 		overflow-x: auto;
@@ -438,7 +434,6 @@ bd sync
 	.metric-table {
 		border-collapse: collapse;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		overflow: hidden;
 	}
@@ -457,7 +452,6 @@ bd sync
 
 	.metric-table td {
 		padding: var(--space-md);
-		border-bottom: 1px solid var(--color-border-default);
 		color: var(--color-fg-tertiary);
 	}
 

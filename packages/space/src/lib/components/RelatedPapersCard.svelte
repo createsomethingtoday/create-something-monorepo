@@ -46,9 +46,7 @@
 	.related-papers {
 		margin-top: var(--space-xl);
 		padding: var(--space-lg);
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-lg);
-		border: 1px solid var(--color-border-default);
 	}
 
 	.section-title {
@@ -75,7 +73,6 @@
 		flex-direction: column;
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		text-decoration: none;
 		transition:

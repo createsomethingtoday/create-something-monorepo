@@ -216,7 +216,6 @@
 		color: var(--color-fg-secondary);
 		margin: 0 0 var(--space-md) 0;
 		padding-bottom: var(--space-xs);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.metrics-grid {
@@ -304,7 +303,6 @@
 	td {
 		padding: var(--space-sm);
 		text-align: left;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	th {
@@ -340,7 +338,6 @@
 	.action-button {
 		padding: var(--space-sm) var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-primary);
 		text-decoration: none;

@@ -497,7 +497,6 @@ const result = content.filter(...);`}</pre>
 	/* ASCII Container */
 	.ascii-container {
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -527,7 +526,6 @@ const result = content.filter(...);`}</pre>
 	/* Cards */
 	.content-card {
 		background: var(--color-hover);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xl);
 	}
 
@@ -539,7 +537,6 @@ const result = content.filter(...);`}</pre>
 
 	.editor-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xl);
 		padding: var(--space-md);
 	}
@@ -648,7 +645,6 @@ const result = content.filter(...);`}</pre>
 		justify-content: space-between;
 		margin-bottom: var(--space-md);
 		padding-bottom: var(--space-sm);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.editor-title {
@@ -736,7 +732,6 @@ const result = content.filter(...);`}</pre>
 		width: 100%;
 		padding: var(--space-sm);
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-primary);
 		font-family: 'IBM Plex Mono', 'Courier New', monospace;
@@ -764,7 +759,6 @@ const result = content.filter(...);`}</pre>
 		padding: 0.5rem 1rem;
 		background: var(--color-hover);
 		color: var(--color-fg-secondary);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-body-sm);
 		cursor: pointer;
@@ -885,7 +879,6 @@ const result = content.filter(...);`}</pre>
 	.reflection-toggle {
 		padding: var(--space-sm) var(--space-md);
 		background: var(--color-hover);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-primary);
 		cursor: pointer;
@@ -900,7 +893,6 @@ const result = content.filter(...);`}</pre>
 	.reflection-content {
 		margin-top: var(--space-md);
 		padding-top: var(--space-md);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.reflection-list {
@@ -990,7 +982,6 @@ const result = content.filter(...);`}</pre>
 	.action-button-secondary {
 		background: var(--color-hover);
 		color: var(--color-fg-primary);
-		border: 1px solid var(--color-border-default);
 	}
 
 	.action-button-secondary:hover {

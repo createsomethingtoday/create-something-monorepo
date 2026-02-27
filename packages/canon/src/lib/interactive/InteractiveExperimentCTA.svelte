@@ -97,7 +97,6 @@
 <style>
 	.interactive-experiment-cta {
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 

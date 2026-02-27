@@ -513,7 +513,6 @@
 		font-size: var(--text-caption, 10px);
 		color: var(--color-fg-subtle);
 		background: none;
-		border: 1px solid var(--color-border-default);
 		padding: 0.25rem 0.5rem;
 		cursor: pointer;
 		letter-spacing: var(--tracking-wider, 0.05em);

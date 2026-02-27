@@ -25,7 +25,6 @@
 
 <style>
 	.card {
-		border: 1px solid var(--color-border-default);
 	}
 
 	.order-index,

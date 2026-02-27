@@ -343,7 +343,6 @@
 		gap: 0.125rem;
 		padding: var(--space-xs) var(--space-sm);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 	}
 

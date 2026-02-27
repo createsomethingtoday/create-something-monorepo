@@ -256,7 +256,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--color-bg-elevated);
     border-radius: var(--radius-md);
   }
 
@@ -280,7 +279,6 @@
   .tool-status {
     font-size: var(--text-caption);
     color: var(--color-fg-muted);
-    background: var(--color-bg-elevated);
     padding: 0.125rem 0.5rem;
     border-radius: var(--radius-full);
   }
@@ -344,7 +342,6 @@
   .ecosystem-card {
     display: block;
     padding: var(--space-lg);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg);
     text-align: left;
     transition: all var(--duration-micro) var(--ease-standard);

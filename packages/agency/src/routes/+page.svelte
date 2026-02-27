@@ -876,7 +876,6 @@
 
   .offering-card {
     background: var(--color-bg-pure);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-xl, 16px);
     padding: var(--space-6, 2rem);
     display: flex;
@@ -1035,7 +1034,6 @@
     flex-direction: column;
     border-radius: var(--radius-xl, 16px);
     background: var(--color-bg-pure);
-    border: 1px solid var(--color-border-default);
     box-shadow: var(--glass-shine-soft);
     overflow: visible;
     flex: 1;
@@ -1220,7 +1218,6 @@
 
   .audience-card {
     padding: var(--space-6, 2rem) var(--space-5, 1.5rem);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg, 12px);
     background: var(--color-bg-pure);
     box-shadow: var(--glass-shine-soft);

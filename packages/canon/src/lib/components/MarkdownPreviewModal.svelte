@@ -146,7 +146,6 @@
 		justify-content: space-between;
 		gap: var(--space-sm);
 		padding: var(--space-md) var(--space-lg);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.title {
@@ -168,7 +167,6 @@
 		gap: var(--space-xs);
 		padding: var(--space-xs) var(--space-sm);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);
@@ -230,7 +228,6 @@
 		margin: 0;
 		padding: var(--space-md);
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-primary);
 		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New',

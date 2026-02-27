@@ -363,7 +363,6 @@
 		padding: var(--space-md);
 		background: var(--color-bg-subtle);
 		border-radius: var(--radius-lg);
-		border: 1px solid var(--color-border-default);
 	}
 
 	.status-banner.healthy {
@@ -422,7 +421,6 @@
 	.stat-card {
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		text-align: center;
 	}
@@ -467,7 +465,6 @@
 		align-items: center;
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 
@@ -527,7 +524,6 @@
 	.agent-card {
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -612,7 +608,6 @@
 		gap: var(--space-sm);
 		padding: var(--space-sm) var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 
@@ -704,7 +699,6 @@
 		display: flex;
 		gap: var(--space-md);
 		padding: var(--space-sm) 0;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.incident-time {
@@ -740,7 +734,6 @@
 	.arch-card {
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 

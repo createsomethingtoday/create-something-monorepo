@@ -79,7 +79,6 @@
     z-index: 9999;
     padding: var(--space-sm) var(--space-md);
     background: var(--color-bg-surface);
-    border-top: 1px solid var(--color-border-default);
   }
 
   .consent-content {

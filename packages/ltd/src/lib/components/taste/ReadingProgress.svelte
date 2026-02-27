@@ -239,7 +239,6 @@
 	.progress-compact {
 		padding: var(--space-sm);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -317,7 +316,6 @@
 	.summary-card {
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -361,7 +359,6 @@
 		font-size: var(--text-caption);
 		padding: 0.25rem 0.5rem;
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-tertiary);
 	}
@@ -384,7 +381,6 @@
 		gap: var(--space-sm);
 		padding: var(--space-sm);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 
@@ -423,7 +419,6 @@
 	.channels-section {
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -506,7 +501,6 @@
 	.depth-section {
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -564,7 +558,6 @@
 
 	.legend-color.viewed {
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 	}
 
 	.legend-color.studied {

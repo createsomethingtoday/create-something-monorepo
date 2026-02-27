@@ -125,8 +125,6 @@
 	:global(.slide-code pre) {
 		width: 100%;
 		padding: var(--space-lg);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		overflow-x: auto;
 		margin: 0;
@@ -181,8 +179,6 @@
 		white-space: pre;
 		margin: 0;
 		padding: var(--space-lg);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		overflow-x: auto;
 		max-width: 100%;

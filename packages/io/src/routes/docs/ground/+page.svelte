@@ -257,7 +257,6 @@ claude mcp add --scope user --transport stdio ground -- npx @createsomething/gro
 		font-size: var(--text-h2);
 		color: var(--color-fg-primary);
 		margin-bottom: var(--space-md);
-		border-bottom: 1px solid var(--color-border-default);
 		padding-bottom: var(--space-sm);
 	}
 
@@ -287,7 +286,6 @@ claude mcp add --scope user --transport stdio ground -- npx @createsomething/gro
 	}
 
 	pre {
-		background: var(--color-bg-elevated);
 		padding: var(--space-md);
 		border-radius: var(--radius-md);
 		overflow-x: auto;
@@ -302,7 +300,6 @@ claude mcp add --scope user --transport stdio ground -- npx @createsomething/gro
 	.install-button {
 		display: inline-block;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		padding: var(--space-sm) var(--space-md);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-primary);
@@ -328,7 +325,6 @@ claude mcp add --scope user --transport stdio ground -- npx @createsomething/gro
 		grid-template-columns: 280px 1fr;
 		gap: var(--space-md);
 		padding: var(--space-sm);
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-sm);
 	}
 

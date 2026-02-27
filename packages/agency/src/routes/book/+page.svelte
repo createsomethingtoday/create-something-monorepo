@@ -387,7 +387,6 @@
 		font-weight: var(--font-medium);
 		background: var(--color-bg-surface);
 		color: var(--color-fg-muted);
-		border: 1px solid var(--color-border-default);
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
@@ -471,7 +470,6 @@
 
 	.lane-intake {
 		padding: var(--space-md);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		background: var(--color-bg-surface);
 	}
@@ -499,7 +497,6 @@
 		gap: var(--space-sm);
 		align-items: flex-start;
 		padding: var(--space-sm);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		cursor: pointer;
 		transition:
@@ -537,7 +534,6 @@
 	.booking-footer {
 		text-align: center;
 		padding-top: var(--space-lg);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.fallback-text {

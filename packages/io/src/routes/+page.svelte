@@ -126,7 +126,6 @@
 	.ecosystem-card {
 		display: block;
 		padding: var(--space-lg);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		text-align: left;
 		transition: all var(--duration-micro) var(--ease-standard);

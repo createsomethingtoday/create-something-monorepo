@@ -250,7 +250,6 @@
 	/* Header */
 	.header-section {
 		padding: var(--space-xl) 0 var(--space-lg);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.eyebrow {
@@ -303,7 +302,6 @@
 	/* Channels */
 	.channels-section {
 		padding: var(--space-lg) 0;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.section-title {
@@ -342,7 +340,6 @@
 		display: flex;
 		flex-direction: column;
 		padding: var(--space-sm);
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-surface);
 		transition: all var(--duration-micro) var(--ease-standard);
 		text-decoration: none;
@@ -372,7 +369,6 @@
 	/* Gallery */
 	.gallery-section {
 		padding: var(--space-lg) 0;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.section-subtitle {
@@ -401,7 +397,6 @@
 	.example-card {
 		position: relative;
 		overflow: hidden;
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-surface);
 		margin-bottom: 1rem;
 		break-inside: avoid;
@@ -472,7 +467,6 @@
 	/* Resources */
 	.resources-section {
 		padding: var(--space-lg) 0;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.resources-list {
@@ -487,7 +481,6 @@
 		justify-content: space-between;
 		gap: var(--space-sm);
 		padding: var(--space-sm);
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-surface);
 	}
 
@@ -532,7 +525,6 @@
 	/* Principles */
 	.principles-section {
 		padding: var(--space-lg) 0;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.principles-grid {
@@ -549,7 +541,6 @@
 
 	.principle-card {
 		padding: var(--space-sm);
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-surface);
 	}
 

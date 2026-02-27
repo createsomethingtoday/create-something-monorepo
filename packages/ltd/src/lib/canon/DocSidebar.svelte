@@ -95,7 +95,6 @@
 		left: 0;
 		width: 280px;
 		height: 100vh;
-		background: var(--color-bg-elevated);
 		border-right: 1px solid var(--color-border-default);
 		display: flex;
 		flex-direction: column;
@@ -135,7 +134,6 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: var(--space-md);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.sidebar-logo {
@@ -251,7 +249,6 @@
 	/* Footer */
 	.sidebar-footer {
 		padding: var(--space-md);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.footer-link {

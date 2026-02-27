@@ -144,7 +144,6 @@
 	.tabs-list {
 		display: flex;
 		gap: 2px;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	/* Tab button base */
@@ -212,7 +211,6 @@
 	}
 
 	.tabs-pills .tabs-tab.active {
-		background: var(--color-bg-elevated);
 		box-shadow: var(--shadow-sm);
 	}
 

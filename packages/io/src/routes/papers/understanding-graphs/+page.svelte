@@ -633,7 +633,6 @@ for identity verification, but it remains independent of business logic.
 
 	/* Header Styles */
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -704,7 +703,6 @@ for identity verification, but it remains independent of business logic.
 	/* Code Blocks */
 	.code-block {
 		background-color: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		overflow-x: auto;
 	}
@@ -740,7 +738,6 @@ for identity verification, but it remains independent of business logic.
 	/* Info Cards */
 	.info-card {
 		background-color: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -758,7 +755,6 @@ for identity verification, but it remains independent of business logic.
 	/* Callout Box */
 	.callout-box {
 		background-color: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -779,7 +775,6 @@ for identity verification, but it remains independent of business logic.
 	}
 
 	.comparison-table tbody tr {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.comparison-table td {
@@ -790,7 +785,6 @@ for identity verification, but it remains independent of business logic.
 	/* Validation Box */
 	.validation-box {
 		background-color: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 

@@ -288,11 +288,9 @@
     color: var(--color-fg-secondary);
     line-height: var(--leading-relaxed);
     padding: var(--space-2, 0.5rem) 0;
-    border-bottom: 1px solid var(--color-border-default);
   }
 
   .circle-list li:first-child {
-    border-top: 1px solid var(--color-border-default);
   }
 
   .circle-list li strong {

@@ -57,7 +57,6 @@
 		padding: var(--space-xl);
 		background: var(--color-bg-surface);
 		border-radius: var(--radius-lg);
-		border: 1px solid var(--color-border-default);
 	}
 
 	.icon {
@@ -111,7 +110,6 @@
 	.cta.secondary {
 		background: var(--color-bg-subtle);
 		color: var(--color-fg-primary);
-		border: 1px solid var(--color-border-default);
 	}
 
 	.cta.secondary:hover {

@@ -146,8 +146,6 @@
 	}
 
 	.article-prose :global(pre) {
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: 1.5rem;
 		margin-bottom: 1.5rem;
@@ -185,12 +183,10 @@
 		width: 100%;
 		margin-top: 2rem;
 		margin-bottom: 2rem;
-		border: 1px solid var(--color-border-default);
 	}
 
 	.article-prose :global(table) {
 		min-width: 100%;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		margin-top: 1.5rem;
 		margin-bottom: 1.5rem;
@@ -205,13 +201,11 @@
 		text-align: left;
 		color: var(--color-fg-primary);
 		font-weight: 600;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.article-prose :global(td) {
 		padding: 0.75rem 1rem;
 		color: var(--color-fg-secondary);
-		border-bottom: 1px solid var(--color-border-subtle);
 	}
 
 	.article-prose :global(hr) {

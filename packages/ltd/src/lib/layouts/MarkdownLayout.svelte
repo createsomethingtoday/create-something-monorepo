@@ -159,7 +159,6 @@ ${section ? `**Section**: ${section}\n` : ''}
 		width: 100%;
 		margin: var(--space-lg) 0;
 		border-collapse: collapse;
-		border: 1px solid var(--color-border-default);
 	}
 
 	:global(.prose-ltd th) {
@@ -173,7 +172,6 @@ ${section ? `**Section**: ${section}\n` : ''}
 
 	:global(.prose-ltd td) {
 		padding: var(--space-sm);
-		border-bottom: 1px solid var(--color-border-default);
 		color: var(--color-fg-secondary);
 	}
 

@@ -140,7 +140,6 @@ ${abstract ? `### Abstract\n${abstract}\n\n` : ''}
 	.paper-header {
 		margin-bottom: var(--space-2xl);
 		padding-bottom: var(--space-lg);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.metadata {
@@ -265,7 +264,6 @@ ${abstract ? `### Abstract\n${abstract}\n\n` : ''}
 
 	:global(.prose th),
 	:global(.prose td) {
-		border: 1px solid var(--color-border-default);
 		padding: var(--space-sm);
 		text-align: left;
 	}

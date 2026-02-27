@@ -144,7 +144,6 @@
 	.date-picker {
 		position: relative;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 	}
@@ -168,7 +167,6 @@
 		width: 2.5rem;
 		height: 2.5rem;
 		background: transparent;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-secondary);
 		cursor: pointer;
@@ -253,7 +251,6 @@
 	}
 
 	.day.selected {
-		background: var(--color-bg-elevated);
 		border-color: var(--color-border-emphasis);
 		color: var(--color-fg-primary);
 		font-weight: var(--font-semibold);

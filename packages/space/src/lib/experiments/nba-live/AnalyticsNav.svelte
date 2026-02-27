@@ -69,7 +69,6 @@
 <style>
 	.analytics-nav {
 		width: 100%;
-		border-bottom: 1px solid var(--color-border-default);
 		background: var(--color-bg-surface);
 		position: sticky;
 		top: 0;
@@ -112,7 +111,6 @@
 
 	.nav-item.active {
 		color: var(--color-data-1);
-		background: var(--color-bg-elevated);
 	}
 
 	.nav-item.active::after {

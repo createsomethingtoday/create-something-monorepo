@@ -521,7 +521,6 @@
 
   .retainer-header {
     padding: var(--space-8, 3rem) var(--space-5, 1.5rem);
-    border-bottom: 1px solid var(--color-border-default);
     text-align: center;
   }
 
@@ -661,7 +660,6 @@
 
   .timeline-card {
     padding: var(--space-6, 2rem) var(--space-5, 1.5rem);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg, 12px);
     background: var(--color-bg-pure);
     box-shadow: var(--glass-shine-soft);
@@ -719,7 +717,6 @@
 
   .faq-item {
     padding: var(--space-5, 1.5rem);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg, 12px);
     background: var(--color-bg-pure);
     box-shadow: var(--glass-shine-soft);

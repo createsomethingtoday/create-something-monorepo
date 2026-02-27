@@ -443,7 +443,6 @@
 
 	.select-field {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		color: var(--color-fg-primary);
 		font-size: var(--text-body-sm);
@@ -457,7 +456,6 @@
 
 	.btn-secondary {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		color: var(--color-fg-tertiary);
 		font-size: var(--text-body-sm);
@@ -465,7 +463,6 @@
 	}
 
 	.btn-secondary:hover:not(:disabled) {
-		background: var(--color-bg-elevated);
 		color: var(--color-fg-primary);
 	}
 
@@ -489,7 +486,6 @@
 		padding: 48px var(--space-xl);
 		text-align: center;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -523,7 +519,6 @@
 
 	.metric-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 	}
@@ -584,7 +579,6 @@
 	/* Sections */
 	.section {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 	}
@@ -607,7 +601,6 @@
 		grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
 		gap: var(--space-sm);
 		padding: var(--space-xs) 0;
-		border-bottom: 1px solid var(--color-border-default);
 		color: var(--color-fg-muted);
 		font-size: var(--text-caption);
 		text-transform: uppercase;
@@ -619,7 +612,6 @@
 		grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
 		gap: var(--space-sm);
 		padding: var(--space-sm) 0;
-		border-bottom: 1px solid var(--color-border-subtle);
 		align-items: center;
 	}
 
@@ -637,7 +629,6 @@
 			rgba(16, 185, 129, 0.2) var(--progress, 0%),
 			transparent var(--progress, 0%)
 		);
-		border: 1px solid var(--color-border-default);
 	}
 
 	/* Atlas Breakdown */
@@ -664,7 +655,6 @@
 
 	.atlas-bar {
 		height: 8px;
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-sm);
 		overflow: hidden;
 	}
@@ -696,7 +686,6 @@
 		align-items: center;
 		gap: var(--space-sm);
 		padding: var(--space-xs) 0;
-		border-bottom: 1px solid var(--color-border-subtle);
 	}
 
 	.activity-item:last-child {
@@ -764,8 +753,6 @@
 		align-items: center;
 		gap: var(--space-xs);
 		padding: var(--space-sm) var(--space-md);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);

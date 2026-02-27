@@ -302,7 +302,6 @@
 	.experiment-header {
 		margin-bottom: var(--space-2xl);
 		padding-bottom: var(--space-xl);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.header-meta {
@@ -345,7 +344,6 @@
 		margin: var(--space-xl) 0;
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 
@@ -434,7 +432,6 @@
 	.treatment {
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 
@@ -467,7 +464,6 @@
 	.phases-table td {
 		padding: var(--space-sm);
 		text-align: left;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.phases-table th {
@@ -496,7 +492,6 @@
 		line-height: 1.6;
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		overflow-x: auto;
 		margin: var(--space-sm) 0 var(--space-md) 0;
@@ -519,7 +514,6 @@
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-full);
 	}
 

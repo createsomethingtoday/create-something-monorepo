@@ -190,12 +190,10 @@
 	.query-input {
 		width: 100%;
 		padding: var(--space-xs) var(--space-sm);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-body-sm);
 		font-family: inherit;
 		resize: none;
-		background: var(--color-bg-elevated);
 		color: var(--color-fg-primary);
 	}
 
@@ -253,8 +251,6 @@
 	.example-chip {
 		font-size: var(--text-caption);
 		padding: 4px var(--space-sm);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xs);
 		cursor: pointer;
 		color: var(--color-fg-secondary);
@@ -292,7 +288,6 @@
 		font-size: var(--text-caption);
 		padding: 2px var(--space-xs);
 		background: transparent;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xs);
 		cursor: pointer;
 		color: var(--color-fg-muted);
@@ -315,7 +310,6 @@
 		gap: var(--space-xs);
 		font-size: var(--text-caption);
 		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-xs);
 		line-height: 1.4;
 		animation: stepFadeIn var(--duration-normal) var(--ease-out);

@@ -593,7 +593,6 @@ const currentPhase = spec.phases.find(p =&gt;
 	}
 
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -639,7 +638,6 @@ const currentPhase = spec.phases.find(p =&gt;
 	/* Metric Cards */
 	.metric-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -675,7 +673,6 @@ const currentPhase = spec.phases.find(p =&gt;
 	}
 
 	.table-row {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.table-cell-emphasis {
@@ -721,7 +718,6 @@ const currentPhase = spec.phases.find(p =&gt;
 	/* Info Cards */
 	.info-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -738,7 +734,6 @@ const currentPhase = spec.phases.find(p =&gt;
 	/* Code */
 	:global(.code-block) {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-body-sm);
 		overflow-x: auto;
@@ -763,7 +758,6 @@ const currentPhase = spec.phases.find(p =&gt;
 	/* Quote Box */
 	.quote-box {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -780,7 +774,6 @@ const currentPhase = spec.phases.find(p =&gt;
 	/* Demo Container */
 	.demo-container {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -829,8 +822,6 @@ const currentPhase = spec.phases.find(p =&gt;
 		align-items: center;
 		gap: 0.5rem;
 		padding: 0.5rem 1rem;
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-subtle);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);

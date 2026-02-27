@@ -295,7 +295,6 @@
 		align-items: flex-start;
 		margin-bottom: var(--space-xl);
 		padding-bottom: var(--space-lg);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 	
 	.header-content h1 {
@@ -372,7 +371,6 @@
 	
 	.queue-item {
 		background: var(--color-bg-default);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		padding: var(--space-md);
 	}
@@ -429,7 +427,6 @@
 		width: 100%;
 		min-height: 80px;
 		padding: var(--space-sm);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		font-family: inherit;
 		font-size: var(--text-body-sm);
@@ -453,7 +450,6 @@
 		padding: var(--space-xs) var(--space-sm);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-caption);
-		border: 1px solid var(--color-border-default);
 		cursor: pointer;
 		text-decoration: none;
 		display: inline-block;
@@ -492,7 +488,6 @@
 	
 	.signal-item {
 		background: var(--color-bg-default);
-		border: 1px solid var(--color-border-default);
 		border-left: 3px solid var(--urgency-color);
 		border-radius: var(--radius-sm);
 		padding: var(--space-sm);
@@ -560,7 +555,6 @@
 	
 	.relationship-item {
 		background: var(--color-bg-default);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		padding: var(--space-sm);
 	}
@@ -621,7 +615,6 @@
 	.dashboard-footer {
 		margin-top: var(--space-xl);
 		padding-top: var(--space-md);
-		border-top: 1px solid var(--color-border-default);
 		display: flex;
 		justify-content: space-between;
 		color: var(--color-fg-muted);

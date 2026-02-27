@@ -128,7 +128,6 @@
 <style>
 	/* Section */
 	.related-section {
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.section-title {
@@ -139,8 +138,6 @@
 
 	/* Card */
 	.related-card {
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		transition: all var(--duration-standard) var(--ease-standard);
 	}
@@ -153,7 +150,6 @@
 	/* Thumbnail */
 	.thumbnail-container {
 		background: var(--color-bg-pure);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.ascii-art {

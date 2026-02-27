@@ -60,7 +60,6 @@
 		height: 32px;
 		padding: 0;
 		background: transparent;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-muted);
 		cursor: pointer;

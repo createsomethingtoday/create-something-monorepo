@@ -131,7 +131,6 @@
 
 	.select-field {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		color: var(--color-fg-primary);
 		font-size: var(--text-body-sm);
@@ -145,7 +144,6 @@
 
 	.btn-secondary {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		color: var(--color-fg-tertiary);
 		font-size: var(--text-body-sm);
@@ -153,7 +151,6 @@
 	}
 
 	.btn-secondary:hover:not(:disabled) {
-		background: var(--color-bg-elevated);
 		color: var(--color-fg-primary);
 	}
 
@@ -163,7 +160,6 @@
 
 	.context-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 

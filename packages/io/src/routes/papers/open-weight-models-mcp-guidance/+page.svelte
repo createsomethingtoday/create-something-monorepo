@@ -544,7 +544,6 @@ const result = await env.AI.run("@cf/openai/gpt-oss-20b", {
 <style>
 	.paper-container {
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: 20px;
 		box-shadow: var(--shadow-md);
 		color: var(--color-fg-primary);
@@ -644,7 +643,6 @@ const result = await env.AI.run("@cf/openai/gpt-oss-20b", {
 	.metric-table {
 		border-collapse: collapse;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		overflow: hidden;
 	}
@@ -663,7 +661,6 @@ const result = await env.AI.run("@cf/openai/gpt-oss-20b", {
 
 	.metric-table td {
 		padding: var(--space-md);
-		border-bottom: 1px solid var(--color-border-default);
 		color: var(--color-fg-tertiary);
 		vertical-align: top;
 	}

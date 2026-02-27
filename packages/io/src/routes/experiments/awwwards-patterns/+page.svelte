@@ -465,7 +465,6 @@ const scroll = window.scrollY;
 	.experiment-header {
 		margin-bottom: var(--space-2xl);
 		padding-bottom: var(--space-xl);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.header-meta {
@@ -571,7 +570,6 @@ const scroll = window.scrollY;
 		margin: var(--space-lg) 0;
 		padding: var(--space-xl);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 
@@ -585,7 +583,6 @@ const scroll = window.scrollY;
 	.scale-card {
 		padding: var(--space-lg);
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		transition: all var(--duration-micro) var(--ease-standard);
 		cursor: pointer;
@@ -649,7 +646,6 @@ const scroll = window.scrollY;
 	.stagger-item {
 		padding: var(--space-md);
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		text-align: center;
 		font-size: var(--text-body-sm);
@@ -680,7 +676,6 @@ const scroll = window.scrollY;
 		transform: translateX(-50%);
 		padding: var(--space-md) var(--space-lg);
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);
@@ -715,7 +710,6 @@ const scroll = window.scrollY;
 	.cascade-item {
 		padding: var(--space-md);
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-secondary);
 		opacity: 0;
@@ -741,7 +735,6 @@ const scroll = window.scrollY;
 		line-height: 1.6;
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		overflow-x: auto;
 		margin: var(--space-sm) 0 var(--space-md) 0;
@@ -759,7 +752,6 @@ const scroll = window.scrollY;
 	.reference {
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 
@@ -809,7 +801,6 @@ const scroll = window.scrollY;
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-full);
 	}
 

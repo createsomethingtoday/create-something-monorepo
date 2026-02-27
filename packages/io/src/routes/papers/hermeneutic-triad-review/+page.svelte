@@ -856,7 +856,6 @@ export async function POST({ request }) {
 
 	/* Header */
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -900,7 +899,6 @@ export async function POST({ request }) {
 	/* Quote Box */
 	.quote-box {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -917,7 +915,6 @@ export async function POST({ request }) {
 	/* Code Blocks */
 	.code-block {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-body-sm);
 		overflow-x: auto;
@@ -962,7 +959,6 @@ export async function POST({ request }) {
 	/* Info Cards */
 	.info-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -1002,7 +998,6 @@ export async function POST({ request }) {
 	}
 
 	.table-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.table-cell {
@@ -1013,7 +1008,6 @@ export async function POST({ request }) {
 	}
 
 	.table-row {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	/* References */

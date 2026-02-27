@@ -137,7 +137,6 @@
 	.canvas-container {
 		position: relative;
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		overflow: hidden;
 	}
@@ -158,7 +157,6 @@
 		right: var(--space-sm);
 		padding: var(--space-xs) var(--space-sm);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-secondary);
 		font-size: var(--text-caption);

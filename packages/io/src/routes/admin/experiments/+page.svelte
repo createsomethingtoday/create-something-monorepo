@@ -304,8 +304,6 @@
 	.search-input {
 		flex: 1;
 		padding: var(--space-sm) var(--space-md);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		color: var(--color-fg-primary);
 		font-size: var(--text-body);
@@ -322,8 +320,6 @@
 
 	.category-select {
 		padding: var(--space-sm) var(--space-md);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		color: var(--color-fg-primary);
 		font-size: var(--text-body);
@@ -338,8 +334,6 @@
 	/* Skeleton Loading */
 	.skeleton-card {
 		padding: var(--space-lg);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 	}
@@ -374,8 +368,6 @@
 	/* Experiment Cards */
 	.experiment-card {
 		padding: var(--space-lg);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		transition: border-color var(--duration-standard) var(--ease-standard);
 	}
@@ -409,7 +401,6 @@
 	}
 
 	.badge--category {
-		background: var(--color-bg-elevated);
 		color: var(--color-fg-tertiary);
 	}
 

@@ -110,7 +110,6 @@
 		gap: var(--space-lg);
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 
@@ -152,7 +151,6 @@
 		width: 16px;
 		height: 16px;
 		border-radius: var(--radius-sm);
-		border: 1px solid var(--color-border-default);
 		flex-shrink: 0;
 	}
 

@@ -142,7 +142,6 @@
 
 	.stat-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -168,7 +167,6 @@
 
 	.skeleton {
 		animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-sm);
 	}
 
@@ -191,7 +189,6 @@
 
 	.action-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		transition: border-color var(--duration-micro) var(--ease-standard);
 	}

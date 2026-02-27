@@ -362,7 +362,6 @@
 		max-width: 32rem;
 		max-height: calc(100vh - var(--space-xl));
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xl);
 		overflow: hidden;
 		display: flex;
@@ -387,7 +386,6 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: var(--space-md);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.modal-title {
@@ -454,7 +452,6 @@
 		width: 100%;
 		padding: var(--space-xs) var(--space-sm);
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-body);
 		font-family: inherit;
@@ -587,7 +584,6 @@
 		gap: 0.25rem;
 		padding: var(--space-xs);
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		min-height: 2.5rem;
 	}
@@ -602,7 +598,6 @@
 		gap: 0.25rem;
 		padding: 0.125rem 0.5rem;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-full);
 		font-size: var(--text-caption);
 		color: var(--color-fg-secondary);
@@ -648,7 +643,6 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: var(--space-md);
-		border-top: 1px solid var(--color-border-default);
 		background: var(--color-bg-subtle);
 		gap: var(--space-sm);
 	}
@@ -685,7 +679,6 @@
 
 	.btn-secondary {
 		background: transparent;
-		border: 1px solid var(--color-border-default);
 		color: var(--color-fg-secondary);
 	}
 

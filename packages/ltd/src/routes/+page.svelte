@@ -235,7 +235,6 @@
 
   .btn-secondary {
     padding: var(--space-sm) var(--space-md);
-    border: 1px solid var(--color-border-default);
     transition: border-color var(--duration-standard) var(--ease-standard);
   }
 
@@ -429,7 +428,6 @@
   .crystal-example code {
     font-family: monospace;
     color: var(--color-fg-tertiary);
-    background: var(--color-bg-elevated);
     padding: 0.25em 0.5em;
     border-radius: var(--radius-sm);
   }
@@ -440,14 +438,12 @@
     font-weight: var(--font-medium);
     color: var(--color-fg-primary);
     padding: var(--space-sm) var(--space-md);
-    border: 1px solid var(--color-border-default);
     transition: all var(--duration-micro) var(--ease-standard);
   }
 
   .crystal-link:hover {
     transform: scale(var(--scale-micro));
     border-color: var(--color-fg-primary);
-    background: var(--color-bg-elevated);
   }
 
   .crystal-link:active {

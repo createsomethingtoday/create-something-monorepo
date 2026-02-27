@@ -157,7 +157,6 @@
 	/* Navigation bar */
 	.nav-bar {
 		background: var(--color-bg-pure);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	/* Nav CTA button */
@@ -176,7 +175,6 @@
 	/* Sort control container */
 	.sort-control {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -203,6 +201,5 @@
 	/* Page footer */
 	.page-footer {
 		background: var(--color-bg-pure);
-		border-top: 1px solid var(--color-border-default);
 	}
 </style>

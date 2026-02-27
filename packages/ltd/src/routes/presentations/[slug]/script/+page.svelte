@@ -127,7 +127,6 @@
   .header {
     max-width: 80ch;
     margin: 0 auto var(--space-xl);
-    border-bottom: 1px solid var(--color-border-default);
     padding-bottom: var(--space-lg);
   }
 
@@ -187,7 +186,6 @@
   .btn-secondary {
     background: var(--color-bg-surface);
     color: var(--color-fg-primary);
-    border: 1px solid var(--color-border-default);
   }
 
   .copy-status {
@@ -202,7 +200,6 @@
 
   .script-raw {
     background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-md);
     padding: var(--space-lg);
     overflow-x: auto;
@@ -221,7 +218,6 @@
     max-width: 80ch;
     margin: var(--space-xl) auto 0;
     padding-top: var(--space-lg);
-    border-top: 1px solid var(--color-border-default);
     text-align: center;
   }
 

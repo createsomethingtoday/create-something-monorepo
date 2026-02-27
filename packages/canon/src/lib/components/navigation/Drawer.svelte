@@ -134,8 +134,6 @@
 		bottom: 0;
 		display: flex;
 		flex-direction: column;
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		box-shadow: var(--shadow-2xl);
 	}
 
@@ -201,7 +199,6 @@
 		justify-content: space-between;
 		gap: var(--space-sm);
 		padding: var(--space-md) var(--space-lg);
-		border-bottom: 1px solid var(--color-border-default);
 		flex-shrink: 0;
 	}
 
@@ -255,7 +252,6 @@
 		justify-content: flex-end;
 		gap: var(--space-sm);
 		padding: var(--space-md) var(--space-lg);
-		border-top: 1px solid var(--color-border-default);
 		flex-shrink: 0;
 	}
 

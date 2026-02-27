@@ -176,7 +176,6 @@
 		max-width: 85vw;
 		max-height: 75vh;
 		object-fit: contain;
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-surface);
 	}
 
@@ -217,7 +216,6 @@
 		align-items: center;
 		justify-content: center;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		color: var(--color-fg-primary);
 		cursor: pointer;
 		transition: all var(--duration-micro) var(--ease-standard);
@@ -244,7 +242,6 @@
 		align-items: center;
 		justify-content: center;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		color: var(--color-fg-primary);
 		cursor: pointer;
 		transition: all var(--duration-micro) var(--ease-standard);
@@ -277,7 +274,6 @@
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		padding: var(--space-xs) var(--space-sm);
 	}
 

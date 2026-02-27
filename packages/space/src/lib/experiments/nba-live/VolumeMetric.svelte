@@ -60,7 +60,6 @@
 		font-size: var(--text-caption);
 		padding-top: var(--space-xs);
 		margin-top: var(--space-xs);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.volume-metric.significant {

@@ -136,7 +136,6 @@
 
 	.ascii-hero {
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		overflow: hidden;
 	}
@@ -160,7 +159,6 @@
 
 	.category-tag {
 		background: var(--color-hover);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-body-sm);
 		font-weight: 500;
@@ -179,7 +177,6 @@
 	}
 
 	.metadata-row {
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.metadata-item {
@@ -230,7 +227,6 @@
 	.tech-tag {
 		font-size: var(--text-caption);
 		background: var(--color-hover);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-tertiary);
 	}

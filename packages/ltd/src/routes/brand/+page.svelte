@@ -266,7 +266,6 @@
     display: flex;
     flex-direction: column;
     background: transparent;
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg);
     overflow: hidden;
     cursor: pointer;
@@ -318,7 +317,6 @@
     flex-direction: column;
     gap: 0.25rem;
     padding: var(--space-md);
-    border-top: 1px solid var(--color-border-default);
   }
 
   .asset-name {
@@ -343,7 +341,6 @@
     display: flex;
     flex-direction: column;
     background: transparent;
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg);
     overflow: hidden;
     cursor: pointer;
@@ -357,7 +354,6 @@
 
   .color-swatch {
     height: 80px;
-    border: 1px solid var(--color-border-default);
   }
 
   .color-info {
@@ -397,7 +393,6 @@
     flex-direction: column;
     gap: var(--space-sm);
     padding: var(--space-lg);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg);
   }
 

@@ -600,7 +600,6 @@
 	/* The Story — chapter-based progression */
 	.story-section {
 		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
 	}
 	
 	.story-track {
@@ -615,7 +614,6 @@
 		position: relative;
 		padding: var(--space-7, 2.5rem) var(--space-6, 2rem);
 		border-radius: var(--radius-lg, 12px);
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-pure);
 		box-shadow: var(--glass-shine-soft);
 		transition: 
@@ -698,7 +696,6 @@
 	/* Real Example — timeline card */
 	.example-section {
 		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
 	}
 	
 	.example-card {
@@ -706,7 +703,6 @@
 		margin: 0 auto;
 		padding: var(--space-8, 3rem) var(--space-6, 2rem);
 		border-radius: var(--radius-xl, 16px);
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-pure);
 		box-shadow: var(--glass-shine-soft);
 	}
@@ -782,7 +778,6 @@
 		grid-template-columns: repeat(3, 1fr);
 		gap: var(--space-4, 1rem);
 		padding-top: var(--space-6, 2rem);
-		border-top: 1px solid var(--color-border-default);
 	}
 	
 	.outcome-stat {
@@ -814,7 +809,6 @@
 	/* Who this is for */
 	.who-section {
 		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
 	}
 	
 	.who-grid {
@@ -831,7 +825,6 @@
 		gap: var(--space-3, 0.75rem);
 		padding: var(--space-4, 1rem) var(--space-5, 1.5rem);
 		border-radius: var(--radius-lg, 12px);
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-pure);
 		transition: border-color var(--duration-micro, 200ms) var(--ease-standard);
 	}
@@ -856,7 +849,6 @@
 	/* CTA */
 	.cta-section {
 		padding: var(--section-padding, 6rem) 0;
-		border-top: 1px solid var(--color-border-default);
 		text-align: center;
 	}
 	

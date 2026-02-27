@@ -26,7 +26,6 @@
 
 <style>
 	.card {
-		border: 1px solid var(--color-border-default);
 		transition: border-color var(--duration-micro) var(--ease-standard);
 		height: 100%;
 	}

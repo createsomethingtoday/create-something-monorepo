@@ -395,14 +395,12 @@
 	/* ─── Core Principle ─── */
 	.principle-section {
 		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.principle-card {
 		max-width: 44rem;
 		margin: 0 auto;
 		padding: var(--space-8, 3rem) var(--space-7, 2.5rem);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xl, 16px);
 		background: var(--color-bg-pure);
 		box-shadow: var(--glass-shine-soft);
@@ -431,7 +429,6 @@
 	/* ─── Three Disciplines ─── */
 	.disciplines-section {
 		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.disciplines-stack {
@@ -444,7 +441,6 @@
 
 	.discipline-card {
 		position: relative;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xl, 16px);
 		background: var(--color-bg-pure);
 		box-shadow: var(--glass-shine-soft);
@@ -538,8 +534,6 @@
 		font-size: var(--text-body-lg);
 		font-style: italic;
 		color: var(--color-fg-primary);
-		border-top: 1px solid var(--color-border-default);
-		border-bottom: 1px solid var(--color-border-default);
 		margin: var(--space-5, 1.5rem) 0 0;
 		background: var(--color-bg-subtle);
 	}
@@ -562,7 +556,6 @@
 
 	.discipline-outcome {
 		padding: var(--space-4, 1rem) var(--space-5, 1.5rem);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg, 12px);
 		background: var(--color-bg-surface);
 	}
@@ -586,7 +579,6 @@
 	/* ─── Process ─── */
 	.process-section {
 		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.phases-grid {
@@ -600,7 +592,6 @@
 	.phase-card {
 		position: relative;
 		padding: var(--space-6, 2rem) var(--space-5, 1.5rem);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg, 12px);
 		background: var(--color-bg-pure);
 		box-shadow: var(--glass-shine-soft);
@@ -658,14 +649,12 @@
 	/* ─── Why Three Levels ─── */
 	.why-section {
 		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.why-card {
 		max-width: 44rem;
 		margin: 0 auto;
 		padding: var(--space-8, 3rem) var(--space-7, 2.5rem);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xl, 16px);
 		background: var(--color-bg-pure);
 		box-shadow: var(--glass-shine-soft);
@@ -700,7 +689,6 @@
 	/* ─── Three-Tier Framework ─── */
 	.framework-section {
 		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.tiers-grid {
@@ -721,7 +709,6 @@
 	.tier-card {
 		flex: 1;
 		padding: var(--space-6, 2rem) var(--space-5, 1.5rem);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xl, 16px);
 		background: var(--color-bg-pure);
 		box-shadow: var(--glass-shine-soft);
@@ -769,7 +756,6 @@
 		font-size: var(--text-caption);
 		color: var(--color-fg-tertiary);
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-full, 9999px);
 		padding: 0.2rem 0.75rem;
 		font-family: var(--font-mono, monospace);
@@ -786,7 +772,6 @@
 		max-width: 44rem;
 		margin: 0 auto;
 		padding: var(--space-6, 2rem) var(--space-7, 2.5rem);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg, 12px);
 		background: var(--color-bg-surface);
 	}
@@ -801,7 +786,6 @@
 	/* ─── CTA ─── */
 	.cta-section {
 		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
-		border-top: 1px solid var(--color-border-default);
 		text-align: center;
 	}
 

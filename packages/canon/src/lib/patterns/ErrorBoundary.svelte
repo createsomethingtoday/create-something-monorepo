@@ -124,7 +124,6 @@
 		padding: var(--space-xl);
 		gap: var(--space-lg);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		max-width: 480px;
 		margin: var(--space-lg) auto;
@@ -219,7 +218,6 @@
 	.error-action--secondary {
 		background: transparent;
 		color: var(--color-fg-secondary);
-		border: 1px solid var(--color-border-default);
 	}
 
 	.error-action--secondary:hover {

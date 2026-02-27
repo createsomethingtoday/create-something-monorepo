@@ -689,7 +689,6 @@ logger.info('Processing', { id, correlationId });`}</pre>
 	}
 
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -738,7 +737,6 @@ logger.info('Processing', { id, correlationId });`}</pre>
 	/* Metrics */
 	.metric-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -760,7 +758,6 @@ logger.info('Processing', { id, correlationId });`}</pre>
 	/* Code blocks */
 	.code-block {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-body-sm);
 		overflow-x: auto;
@@ -825,7 +822,6 @@ logger.info('Processing', { id, correlationId });`}</pre>
 	}
 
 	.table-row {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.table-cell-emphasis {
@@ -847,7 +843,6 @@ logger.info('Processing', { id, correlationId });`}</pre>
 	/* Info cards */
 	.info-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -881,7 +876,6 @@ logger.info('Processing', { id, correlationId });`}</pre>
 	/* Quote box */
 	.quote-box {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 

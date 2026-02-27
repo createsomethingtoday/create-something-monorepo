@@ -80,7 +80,6 @@
 		gap: var(--space-sm);
 		padding: var(--space-sm);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		transition: border-color var(--duration-micro) var(--ease-standard);
 	}
@@ -96,7 +95,6 @@
 		flex-shrink: 0;
 		background: var(--swatch-color);
 		border-radius: var(--radius-md);
-		border: 1px solid var(--color-border-default);
 		display: flex;
 		align-items: center;
 		justify-content: center;

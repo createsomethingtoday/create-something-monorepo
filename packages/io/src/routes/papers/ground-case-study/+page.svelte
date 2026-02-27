@@ -292,7 +292,6 @@
 	}
 
 	.abstract {
-		background: var(--color-bg-elevated);
 		padding: var(--space-lg);
 		border-radius: var(--radius-lg);
 		margin-bottom: var(--space-xl);
@@ -319,7 +318,6 @@
 
 	.metric-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 		text-align: center;
@@ -354,7 +352,6 @@
 		font-size: var(--text-h2);
 		color: var(--color-fg-primary);
 		margin-bottom: var(--space-md);
-		border-bottom: 1px solid var(--color-border-default);
 		padding-bottom: var(--space-sm);
 	}
 
@@ -393,7 +390,6 @@
 	}
 
 	pre {
-		background: var(--color-bg-elevated);
 		padding: var(--space-md);
 		border-radius: var(--radius-md);
 		overflow-x: auto;
@@ -413,7 +409,6 @@
 	th, td {
 		padding: var(--space-sm);
 		text-align: left;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	th {
@@ -441,7 +436,6 @@
 
 	.comparison-row {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 	}
@@ -485,7 +479,6 @@
 	}
 
 	.cta {
-		background: var(--color-bg-elevated);
 		padding: var(--space-lg);
 		border-radius: var(--radius-lg);
 		text-align: center;

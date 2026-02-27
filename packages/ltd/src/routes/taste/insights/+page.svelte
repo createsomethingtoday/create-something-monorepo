@@ -377,7 +377,6 @@
 	/* Header */
 	.header-section {
 		padding: var(--space-lg) 0 var(--space-md);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.breadcrumb {
@@ -412,7 +411,6 @@
 
 	.error-card {
 		padding: var(--space-lg);
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-surface);
 		text-align: center;
 	}
@@ -431,7 +429,6 @@
 	/* Profile Section */
 	.profile-section {
 		padding: var(--space-lg) 0;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.profile-card {
@@ -512,7 +509,6 @@
 	.focus-tag {
 		font-size: var(--text-caption);
 		padding: 0.25rem 0.5rem;
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-subtle);
 		color: var(--color-fg-secondary);
 	}
@@ -520,7 +516,6 @@
 	/* Stats Section */
 	.stats-section {
 		padding: var(--space-lg) 0;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.stats-grid {
@@ -537,7 +532,6 @@
 
 	.stat-card {
 		padding: var(--space-sm);
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-surface);
 		text-align: center;
 	}
@@ -565,7 +559,6 @@
 	/* Channels Section */
 	.channels-section {
 		padding: var(--space-lg) 0;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.section-title {
@@ -635,7 +628,6 @@
 	/* Most Studied Section */
 	.studied-section {
 		padding: var(--space-lg) 0;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.studied-grid {
@@ -654,7 +646,6 @@
 		display: flex;
 		gap: var(--space-sm);
 		padding: var(--space-sm);
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-surface);
 	}
 
@@ -711,7 +702,6 @@
 	/* Activity Section */
 	.activity-section {
 		padding: var(--space-lg) 0;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.activity-grid {
@@ -770,12 +760,10 @@
 	/* Growth Section */
 	.growth-section {
 		padding: var(--space-lg) 0;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.growth-card {
 		padding: var(--space-md);
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-surface);
 	}
 
@@ -815,7 +803,6 @@
 
 	.growth-empty {
 		padding: var(--space-md);
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-surface);
 		text-align: center;
 		color: var(--color-fg-tertiary);
@@ -856,7 +843,6 @@
 		font-size: var(--text-body);
 		font-weight: 500;
 		padding: var(--space-sm) var(--space-md);
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-surface);
 		color: var(--color-fg-primary);
 		cursor: pointer;

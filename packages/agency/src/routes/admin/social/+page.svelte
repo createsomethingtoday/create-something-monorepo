@@ -263,7 +263,6 @@
 
 	.rhythm-day {
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		padding: var(--space-sm);
 		border-top: 3px solid var(--status-color, var(--color-fg-muted));
@@ -349,7 +348,6 @@
 
 	.stat-card {
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		padding: var(--space-md);
 		text-align: center;
@@ -381,7 +379,6 @@
 		align-items: center;
 		padding: var(--space-sm) var(--space-md);
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 
@@ -434,7 +431,6 @@
 	.api-link {
 		padding: var(--space-xs) var(--space-sm);
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		font-family: monospace;
 		font-size: var(--text-body-sm);
@@ -460,7 +456,6 @@
 		gap: var(--space-xs);
 		padding: var(--space-sm);
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 

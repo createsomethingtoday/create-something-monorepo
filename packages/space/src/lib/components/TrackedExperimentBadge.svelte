@@ -142,7 +142,6 @@
   .stats-card {
     padding: 1.5rem;
     background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg);
   }
 

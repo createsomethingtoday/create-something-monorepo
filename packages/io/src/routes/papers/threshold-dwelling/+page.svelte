@@ -1423,7 +1423,6 @@
 		letter-spacing: 0.1em;
 		margin: 0 0 var(--space-sm) 0;
 		padding-bottom: var(--space-xs);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.budget-item {
@@ -1546,7 +1545,6 @@
 		font-family: var(--font-sans, system-ui, sans-serif);
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
-		background: var(--color-bg-elevated);
 		padding: var(--space-xs) var(--space-sm);
 		border-radius: var(--radius-sm);
 		opacity: 0.7;

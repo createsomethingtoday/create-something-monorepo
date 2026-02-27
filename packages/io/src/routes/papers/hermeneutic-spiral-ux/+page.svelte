@@ -835,7 +835,6 @@ Bot: Great! Anything else I can help with?`}</pre>
 	}
 
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -876,7 +875,6 @@ Bot: Great! Anything else I can help with?`}</pre>
 
 	.metric-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -895,7 +893,6 @@ Bot: Great! Anything else I can help with?`}</pre>
 
 	.code-block {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-body-sm);
 	}
@@ -980,7 +977,6 @@ Bot: Great! Anything else I can help with?`}</pre>
 	}
 
 	.table-row {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.table-cell-emphasis {
@@ -1016,7 +1012,6 @@ Bot: Great! Anything else I can help with?`}</pre>
 
 	.info-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -1031,7 +1026,6 @@ Bot: Great! Anything else I can help with?`}</pre>
 
 	.quote-box {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 

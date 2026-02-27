@@ -247,7 +247,6 @@
 	.summary-card {
 		padding: var(--space-lg);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 
@@ -267,7 +266,6 @@
 	.data-note {
 		padding: var(--space-lg);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		margin-bottom: var(--space-xl);
 	}
@@ -281,7 +279,6 @@
 
 	.leaderboard {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		padding: var(--space-xl);
 	}

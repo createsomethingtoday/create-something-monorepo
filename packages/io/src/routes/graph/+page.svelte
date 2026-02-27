@@ -131,7 +131,6 @@
 
 	.header {
 		padding: var(--space-sm) var(--space-lg);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.title {
@@ -199,7 +198,6 @@
 		align-items: center;
 		justify-content: center;
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-secondary);
 		font-size: 16px;

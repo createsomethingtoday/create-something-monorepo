@@ -100,7 +100,6 @@
 
   .category-card {
     background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg);
     transition: border-color var(--duration-micro) var(--ease-standard);
   }

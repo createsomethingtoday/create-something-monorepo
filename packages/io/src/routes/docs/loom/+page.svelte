@@ -266,7 +266,6 @@ lm done lm-abc --evidence "commit-abc123"</code></pre>
 		font-size: var(--text-h2);
 		color: var(--color-fg-primary);
 		margin-bottom: var(--space-md);
-		border-bottom: 1px solid var(--color-border-default);
 		padding-bottom: var(--space-sm);
 	}
 
@@ -296,7 +295,6 @@ lm done lm-abc --evidence "commit-abc123"</code></pre>
 	}
 
 	pre {
-		background: var(--color-bg-elevated);
 		padding: var(--space-md);
 		border-radius: var(--radius-md);
 		overflow-x: auto;
@@ -311,7 +309,6 @@ lm done lm-abc --evidence "commit-abc123"</code></pre>
 	.install-button {
 		display: inline-block;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		padding: var(--space-sm) var(--space-md);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-primary);
@@ -335,7 +332,6 @@ lm done lm-abc --evidence "commit-abc123"</code></pre>
 	.comparison td {
 		padding: var(--space-sm);
 		text-align: left;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.comparison th {
@@ -361,7 +357,6 @@ lm done lm-abc --evidence "commit-abc123"</code></pre>
 		grid-template-columns: 220px 1fr;
 		gap: var(--space-md);
 		padding: var(--space-sm);
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-sm);
 	}
 

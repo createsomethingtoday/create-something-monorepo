@@ -150,7 +150,6 @@
 
 	.article-content :global(pre) {
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: 1.5rem;
 		margin-bottom: 1.5rem;
@@ -185,12 +184,10 @@
 		border-radius: var(--radius-lg);
 		width: 100%;
 		margin: 2rem 0;
-		border: 1px solid var(--color-border-default);
 	}
 
 	.article-content :global(table) {
 		min-width: 100%;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		margin: 1.5rem 0;
 	}
@@ -204,13 +201,11 @@
 		text-align: left;
 		color: var(--color-fg-primary);
 		font-weight: 600;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.article-content :global(td) {
 		padding: 0.75rem 1rem;
 		color: var(--color-fg-secondary);
-		border-bottom: 1px solid var(--color-border-subtle);
 	}
 
 	.article-content :global(hr) {

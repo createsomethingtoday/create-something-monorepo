@@ -813,7 +813,6 @@ const principles = [
 	}
 
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -863,7 +862,6 @@ const principles = [
 	}
 
 	.data-table tbody tr {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.data-table td {
@@ -884,7 +882,6 @@ const principles = [
 	}
 
 	.lineage-table tbody tr {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.lineage-table td {
@@ -905,7 +902,6 @@ const principles = [
 
 	.master-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 	}
@@ -940,7 +936,6 @@ const principles = [
 
 	.purpose-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 	}
@@ -975,7 +970,6 @@ const principles = [
 
 	.reading-stage {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 	}
@@ -996,7 +990,6 @@ const principles = [
 		color: var(--color-fg-tertiary);
 		font-size: var(--text-body-sm);
 		padding: var(--space-xs) 0;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.stage-list li:last-child {
@@ -1005,7 +998,6 @@ const principles = [
 
 	.conclusion-box {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 

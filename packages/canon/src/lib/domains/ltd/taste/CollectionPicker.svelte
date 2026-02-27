@@ -298,7 +298,6 @@
 		max-width: 28rem;
 		max-height: calc(100vh - var(--space-xl));
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xl);
 		overflow: hidden;
 		display: flex;
@@ -323,7 +322,6 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: var(--space-md);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.modal-title {
@@ -358,14 +356,12 @@
 		gap: var(--space-sm);
 		padding: var(--space-sm) var(--space-md);
 		background: var(--color-bg-subtle);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.preview-image {
 		width: 48px;
 		height: 48px;
 		object-fit: cover;
-		border: 1px solid var(--color-border-default);
 		flex-shrink: 0;
 	}
 
@@ -376,7 +372,6 @@
 		align-items: center;
 		justify-content: center;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		flex-shrink: 0;
 	}
 
@@ -448,7 +443,6 @@
 		margin-bottom: var(--space-sm);
 		padding: var(--space-sm);
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 
@@ -456,7 +450,6 @@
 		width: 100%;
 		padding: var(--space-xs) var(--space-sm);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-primary);
@@ -582,7 +575,6 @@
 		width: 100%;
 		padding: var(--space-xs) var(--space-sm);
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-body-sm);
 		font-family: inherit;
@@ -606,7 +598,6 @@
 		gap: var(--space-sm);
 		justify-content: flex-end;
 		padding: var(--space-md);
-		border-top: 1px solid var(--color-border-default);
 		background: var(--color-bg-subtle);
 	}
 
@@ -623,7 +614,6 @@
 
 	.btn-secondary {
 		background: transparent;
-		border: 1px solid var(--color-border-default);
 		color: var(--color-fg-secondary);
 	}
 

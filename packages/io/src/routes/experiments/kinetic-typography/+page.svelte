@@ -355,7 +355,6 @@ const weight = 400 + (600 - 400) * emphasisProgress;`}</pre>
 	.experiment-header {
 		margin-bottom: var(--space-2xl);
 		padding-bottom: var(--space-xl);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.header-meta {
@@ -398,7 +397,6 @@ const weight = 400 + (600 - 400) * emphasisProgress;`}</pre>
 		margin: var(--space-xl) auto;
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		display: block;
 		width: fit-content;
@@ -419,7 +417,6 @@ const weight = 400 + (600 - 400) * emphasisProgress;`}</pre>
 	.demo-card {
 		padding: var(--space-xl);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -534,7 +531,6 @@ const weight = 400 + (600 - 400) * emphasisProgress;`}</pre>
 	.phases-table td {
 		padding: var(--space-sm);
 		text-align: left;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.phases-table th {
@@ -563,7 +559,6 @@ const weight = 400 + (600 - 400) * emphasisProgress;`}</pre>
 		line-height: 1.6;
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		overflow-x: auto;
 		margin: var(--space-sm) 0 var(--space-md) 0;
@@ -584,7 +579,6 @@ const weight = 400 + (600 - 400) * emphasisProgress;`}</pre>
 		gap: var(--space-xs) var(--space-md);
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 
@@ -628,7 +622,6 @@ const weight = 400 + (600 - 400) * emphasisProgress;`}</pre>
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-full);
 	}
 

@@ -783,7 +783,6 @@ Partnership time: 5 minutes</pre>
 
 	/* Header */
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -827,7 +826,6 @@ Partnership time: 5 minutes</pre>
 	/* Quote Box */
 	.quote-box {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -844,7 +842,6 @@ Partnership time: 5 minutes</pre>
 	/* Code Blocks */
 	.code-block {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-body-sm);
 	}
@@ -907,7 +904,6 @@ Partnership time: 5 minutes</pre>
 	/* Info Cards */
 	.info-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 

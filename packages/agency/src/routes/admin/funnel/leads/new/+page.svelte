@@ -268,7 +268,6 @@
 		color: var(--color-fg-secondary);
 		margin: 0 0 var(--space-md) 0;
 		padding-bottom: var(--space-xs);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.fields-grid {
@@ -303,7 +302,6 @@
 	.field textarea {
 		padding: var(--space-sm);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-primary);
 		font-size: var(--text-body);
@@ -336,14 +334,12 @@
 		justify-content: flex-end;
 		gap: var(--space-md);
 		padding-top: var(--space-lg);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.cancel-btn {
 		padding: var(--space-sm) var(--space-lg);
 		background: transparent;
 		color: var(--color-fg-secondary);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		font-size: var(--text-body);
 		text-decoration: none;

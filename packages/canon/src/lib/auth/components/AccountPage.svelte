@@ -144,7 +144,6 @@
 		gap: var(--space-lg);
 		margin-bottom: var(--space-xl);
 		padding-bottom: var(--space-lg);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.avatar {
@@ -152,7 +151,6 @@
 		height: 72px;
 		border-radius: var(--radius-full);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -182,7 +180,6 @@
 
 	.account-section {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-lg);
 	}
@@ -205,7 +202,6 @@
 		justify-content: space-between;
 		align-items: center;
 		padding: var(--space-sm) 0;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.detail-row:last-child {
@@ -224,7 +220,6 @@
 
 	.detail-value.tier {
 		text-transform: capitalize;
-		background: var(--color-bg-elevated);
 		padding: var(--space-xs) var(--space-sm);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-body-sm);
@@ -240,8 +235,6 @@
 		display: flex;
 		flex-direction: column;
 		padding: var(--space-md);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		text-decoration: none;
 		transition: all var(--duration-micro) var(--ease-standard);
@@ -272,7 +265,6 @@
 		padding: var(--space-sm) var(--space-md);
 		background: transparent;
 		color: var(--color-fg-secondary);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		font-size: var(--text-body);
 		cursor: pointer;

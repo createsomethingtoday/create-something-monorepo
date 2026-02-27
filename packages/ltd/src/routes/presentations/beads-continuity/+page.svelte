@@ -325,7 +325,6 @@ bd dep add cs-bugfix discovered-from cs-feature`}</code></pre>
 	:global(.slide-content code) {
 		font-family: var(--font-mono);
 		font-size: 0.9em;
-		background: var(--color-bg-elevated);
 		padding: 0.1em 0.3em;
 		border-radius: var(--radius-sm);
 	}

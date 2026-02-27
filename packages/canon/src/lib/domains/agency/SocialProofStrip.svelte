@@ -43,9 +43,6 @@
 <style>
 	.social-proof-strip {
 		padding: var(--space-lg) var(--space-md);
-		border-top: 1px solid var(--color-border-default);
-		border-bottom: 1px solid var(--color-border-default);
-		background: var(--color-bg-elevated);
 	}
 
 	.metrics-grid {
@@ -106,7 +103,6 @@
 			justify-content: space-between;
 			text-align: left;
 			padding: var(--space-sm) var(--space-md);
-			border: 1px solid var(--color-border-default);
 		}
 
 		.metric-value {

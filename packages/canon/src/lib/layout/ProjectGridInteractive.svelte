@@ -103,7 +103,6 @@
 			position: relative;
 			width: 100%;
 			overflow: hidden;
-			background: var(--color-bg-elevated);
 			aspect-ratio: 4 / 3;
 		}
 

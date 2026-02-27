@@ -162,7 +162,6 @@
 	.hero {
 		text-align: center;
 		padding-bottom: var(--space-xl);
-		border-bottom: 1px solid var(--color-border-default);
 		margin-bottom: var(--space-xl);
 	}
 
@@ -243,7 +242,6 @@
 		display: block;
 		padding: var(--space-lg);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		text-decoration: none;
 		transition: all var(--duration-micro) var(--ease-standard);
@@ -371,7 +369,6 @@
 
 	.space-box {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		display: flex;
 		align-items: center;

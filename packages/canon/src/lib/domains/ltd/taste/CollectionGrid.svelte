@@ -258,7 +258,6 @@
 		gap: var(--space-sm);
 		margin-bottom: var(--space-md);
 		padding-bottom: var(--space-sm);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.header-content {
@@ -297,7 +296,6 @@
 		letter-spacing: 0.05em;
 		padding: 0.25rem 0.5rem;
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-muted);
 	}
@@ -365,7 +363,6 @@
 	.grid-item {
 		position: relative;
 		overflow: hidden;
-		border: 1px solid var(--color-border-default);
 		background: var(--color-bg-surface);
 		cursor: pointer;
 		transition: all var(--duration-micro) var(--ease-standard);
@@ -529,7 +526,6 @@
 		align-items: center;
 		justify-content: center;
 		background: var(--color-bg-pure);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-secondary);
 		cursor: pointer;

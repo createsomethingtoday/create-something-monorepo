@@ -741,7 +741,6 @@ Never hardcode pixel values for spacing.`}</pre>
 
 	/* Header */
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -785,7 +784,6 @@ Never hardcode pixel values for spacing.`}</pre>
 	/* Quote Box */
 	.quote-box {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -808,7 +806,6 @@ Never hardcode pixel values for spacing.`}</pre>
 	/* Code Blocks */
 	.code-block {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-body-sm);
 		overflow-x: auto;
@@ -870,7 +867,6 @@ Never hardcode pixel values for spacing.`}</pre>
 	}
 
 	.data-table tbody tr {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.data-table td {

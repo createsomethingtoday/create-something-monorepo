@@ -240,8 +240,6 @@
 		align-items: center;
 		gap: var(--space-sm);
 		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-full);
 	}
 
@@ -252,7 +250,6 @@
 		align-items: center;
 		justify-content: center;
 		background: transparent;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-full);
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body);
@@ -339,7 +336,6 @@
 	:global(.slide-content code) {
 		font-family: var(--font-mono);
 		font-size: 0.9em;
-		background: var(--color-bg-elevated);
 		padding: 0.1em 0.3em;
 		border-radius: var(--radius-sm);
 	}

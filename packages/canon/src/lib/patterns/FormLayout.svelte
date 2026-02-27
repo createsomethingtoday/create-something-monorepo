@@ -152,7 +152,6 @@
 
 	.form-layout--dividers .form-content > :global(*:not(:last-child)) {
 		padding-bottom: var(--space-md);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.form-actions {
@@ -160,6 +159,5 @@
 		gap: var(--space-sm);
 		justify-content: flex-end;
 		padding-top: var(--space-md);
-		border-top: 1px solid var(--color-border-default);
 	}
 </style>

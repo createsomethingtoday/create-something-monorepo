@@ -53,7 +53,6 @@
   /* Cards */
   .card {
     background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg);
   }
 
@@ -110,7 +109,6 @@
 
   /* Backgrounds */
   .section-bg-elevated {
-    background: var(--color-bg-elevated);
   }
 
   /* Quote Box */

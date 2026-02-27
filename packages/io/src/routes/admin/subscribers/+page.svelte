@@ -367,7 +367,6 @@
 	}
 
 	.btn-secondary {
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-lg);
 		transition: background var(--duration-micro) var(--ease-standard);
 		width: 100%;
@@ -400,7 +399,6 @@
 
 	.input-field {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		color: var(--color-fg-primary);
 		transition: border-color var(--duration-micro) var(--ease-standard);
@@ -418,7 +416,6 @@
 
 	.select-field {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		color: var(--color-fg-primary);
 		transition: border-color var(--duration-micro) var(--ease-standard);
@@ -438,14 +435,12 @@
 
 	.skeleton-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 	}
 
 	.skeleton-line {
 		height: 1.25rem;
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-sm);
 		width: 33%;
 	}
@@ -482,7 +477,6 @@
 	.btn-small-mobile {
 		flex: 1;
 		padding: var(--space-sm);
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-md);
 		font-size: var(--text-body-sm);
 		text-align: center;
@@ -510,14 +504,12 @@
 
 	/* Desktop Table */
 	.table-container {
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		overflow: hidden;
 	}
 
 	.table-header {
 		background: var(--color-bg-surface);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.table-header-cell {
@@ -590,7 +582,6 @@
 
 	.btn-small {
 		padding: 0.25rem 0.75rem;
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-caption);
 		transition: background var(--duration-micro) var(--ease-standard);

@@ -67,7 +67,6 @@
 		padding-bottom: 4rem;
 		padding-left: 1.5rem;
 		padding-right: 1.5rem;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.back-link {
@@ -107,7 +106,6 @@
 	.master-attribution {
 		margin-top: 2rem;
 		padding-top: 1.5rem;
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.master-label {
@@ -133,7 +131,6 @@
 		padding-bottom: 4rem;
 		padding-left: 1.5rem;
 		padding-right: 1.5rem;
-		border-top: 1px solid var(--color-border-default);
 		text-align: center;
 	}
 
@@ -157,7 +154,6 @@
 		padding-bottom: 4rem;
 		padding-left: 1.5rem;
 		padding-right: 1.5rem;
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	:global(.content section:first-child) {
@@ -209,9 +205,7 @@
 	/* Utility classes for content */
 	:global(.content .quote-block) {
 		padding: 1.5rem;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
-		background: var(--color-bg-elevated);
 	}
 
 	:global(.content .quote-text) {
@@ -228,10 +222,8 @@
 	}
 
 	:global(.content .principle-card) {
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		padding: 1.5rem;
-		background: var(--color-bg-elevated);
 	}
 
 	:global(.content .principle-title) {
@@ -276,7 +268,6 @@
 	}
 
 	:global(.content .card) {
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		padding: 1.5rem;
 		transition: border-color var(--duration-micro) var(--ease-standard);

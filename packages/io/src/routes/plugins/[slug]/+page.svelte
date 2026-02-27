@@ -386,7 +386,6 @@
 		display: inline-block;
 		padding: var(--space-xs) var(--space-sm);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-tertiary);
 		font-size: var(--text-body-sm);
@@ -441,7 +440,6 @@
 	/* Section Card */
 	.section-card {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-lg);
 	}
@@ -579,7 +577,6 @@
 		align-items: center;
 		gap: var(--space-sm);
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		padding: var(--space-sm) var(--space-md);
 		margin-top: var(--space-sm);
@@ -637,7 +634,6 @@
 		padding: var(--space-sm) var(--space-md);
 		background: var(--color-bg-subtle);
 		border-radius: var(--radius-md);
-		border: 1px solid var(--color-border-default);
 	}
 
 	.example-content {
@@ -672,7 +668,6 @@
 		gap: var(--space-xs);
 		padding: var(--space-md);
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		text-decoration: none;
 		transition: all var(--duration-micro) var(--ease-standard);

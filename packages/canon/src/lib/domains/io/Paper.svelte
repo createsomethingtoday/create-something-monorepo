@@ -157,7 +157,6 @@
 
 	/* Header */
 	.paper-header {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.paper-id {
@@ -202,7 +201,6 @@
 	/* Content Blocks */
 	:global(.paper-container .metric-card) {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -222,7 +220,6 @@
 	/* Code Blocks */
 	:global(.paper-container .code-block) {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		font-size: var(--text-body-sm);
 	}
@@ -258,7 +255,6 @@
 
 	:global(.paper-container .quote-box) {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -321,7 +317,6 @@
 	}
 
 	:global(.paper-container .table-row) {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	:global(.paper-container .table-cell-emphasis) {
@@ -347,7 +342,6 @@
 	/* Info Cards */
 	:global(.paper-container .info-card) {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -376,7 +370,6 @@
 
 	/* Footer */
 	.paper-footer {
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	:global(.paper-container .footer-text) {
@@ -453,7 +446,6 @@
 
 	:global(.paper-container pre) {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: 1rem;
 		overflow-x: auto;
@@ -504,6 +496,5 @@
 	:global(.paper-container td) {
 		padding: 0.5rem;
 		color: var(--color-fg-tertiary);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 </style>

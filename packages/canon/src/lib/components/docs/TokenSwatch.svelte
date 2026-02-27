@@ -31,7 +31,6 @@
 		width: 24px;
 		height: 24px;
 		border-radius: var(--radius-sm);
-		border: 1px solid var(--color-border-default);
 		flex-shrink: 0;
 	}
 

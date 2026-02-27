@@ -227,8 +227,6 @@
 <style>
 	.triad-health {
 		font-family: var(--font-mono);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		padding: 1.5rem;
 	}
@@ -284,7 +282,6 @@
 	.score-row.overall {
 		margin-top: 0.5rem;
 		padding-top: 0.75rem;
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.score-label {
@@ -321,7 +318,6 @@
 	.violations-summary {
 		margin-top: 1rem;
 		padding-top: 1rem;
-		border-top: 1px solid var(--color-border-default);
 		display: flex;
 		gap: 0.75rem;
 		flex-wrap: wrap;

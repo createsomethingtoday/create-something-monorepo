@@ -195,7 +195,6 @@
 		justify-content: space-between;
 		gap: var(--space-sm);
 		padding: var(--space-md) var(--space-lg);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.dialog-title {
@@ -261,7 +260,6 @@
 		justify-content: flex-end;
 		gap: var(--space-sm);
 		padding: var(--space-md) var(--space-lg);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	/* Reduced motion */

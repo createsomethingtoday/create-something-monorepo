@@ -329,7 +329,6 @@
   /* Retention table */
   .retention-table {
     margin: var(--space-md) 0;
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg);
     overflow: hidden;
   }
@@ -339,7 +338,6 @@
     grid-template-columns: 1fr 1fr 2fr;
     gap: var(--space-sm);
     padding: var(--space-sm) var(--space-md);
-    border-bottom: 1px solid var(--color-border-default);
     align-items: center;
   }
 
@@ -376,7 +374,6 @@
   /* Provider card */
   .provider-card {
     background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg);
     padding: var(--space-md);
     margin: var(--space-md) 0;
@@ -409,7 +406,6 @@
   /* Contact info */
   .contact-info {
     background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg);
     padding: var(--space-md);
     margin: var(--space-md) 0;

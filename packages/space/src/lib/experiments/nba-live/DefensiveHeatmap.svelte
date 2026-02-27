@@ -244,7 +244,6 @@
 <style>
 	.heatmap-container {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 	}
@@ -290,13 +289,11 @@
 		padding: var(--space-xs) var(--space-sm);
 		color: var(--color-fg-muted);
 		font-weight: 500;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.zone-table td {
 		padding: var(--space-xs) var(--space-sm);
 		color: var(--color-fg-secondary);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.zone-table tr:last-child td {
@@ -327,7 +324,6 @@
 		gap: var(--space-md);
 		margin-top: var(--space-md);
 		padding-top: var(--space-sm);
-		border-top: 1px solid var(--color-border-default);
 		align-items: center;
 	}
 

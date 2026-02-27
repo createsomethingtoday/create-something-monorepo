@@ -161,7 +161,6 @@
 <style>
 	/* Navigation Container */
 	.nav-container {
-		border-bottom: 1px solid var(--color-shell-border-default);
 		background: var(--color-shell-surface);
 	}
 
@@ -181,7 +180,6 @@
 		background-color: color-mix(in srgb, var(--color-shell-surface) 86%, transparent);
 		backdrop-filter: blur(12px);
 		-webkit-backdrop-filter: blur(12px);
-		border-bottom: 1px solid var(--color-shell-border-default);
 		box-shadow: var(--color-shell-shadow);
 	}
 
@@ -254,7 +252,6 @@
 	}
 
 	.nav-desktop {
-		border: 1px solid var(--color-shell-border-subtle);
 		background: color-mix(in srgb, var(--color-shell-surface-secondary) 88%, transparent);
 		border-radius: var(--radius-full);
 		padding: 0.25rem;
@@ -264,7 +261,6 @@
 	.nav-menu-button {
 		color: var(--color-fg-primary);
 		background: var(--color-shell-surface-tertiary);
-		border: 1px solid var(--color-shell-border-default);
 		border-radius: var(--radius-md);
 		transition:
 			color var(--duration-micro) var(--ease-standard),
@@ -284,7 +280,6 @@
 
 	/* Mobile Menu */
 	.nav-mobile-menu {
-		border: 1px solid var(--color-shell-border-default);
 		background: var(--color-shell-surface-secondary);
 		border-radius: var(--radius-lg);
 		padding-left: var(--space-sm);
@@ -316,7 +311,6 @@
 
 	/* Mobile User Section */
 	.nav-mobile-user {
-		border-top: 1px solid var(--color-border-default);
 		padding-top: var(--space-sm);
 		margin-top: var(--space-sm);
 		display: flex;

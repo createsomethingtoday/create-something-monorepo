@@ -141,7 +141,6 @@
 		width: 32px;
 		height: 32px;
 		border-radius: var(--radius-sm);
-		border: 1px solid var(--color-border-default);
 		flex-shrink: 0;
 	}
 

@@ -566,7 +566,6 @@
 	/* Additional styles for this experiment */
 	.architecture-diagram {
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -581,7 +580,6 @@
 
 	.comparison-table thead {
 		background: var(--color-bg-subtle);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.comparison-table th {
@@ -590,7 +588,6 @@
 	}
 
 	.comparison-table tbody tr {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.comparison-table tbody tr:last-child {

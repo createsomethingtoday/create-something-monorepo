@@ -151,8 +151,6 @@
 	}
 
 	.frame-container {
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		overflow-x: auto;
 		padding: 1rem;

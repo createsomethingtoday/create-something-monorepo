@@ -506,9 +506,7 @@ interface AgentActionResponse {
 	}
 
 	.review-card__header {
-		background: var(--color-bg-elevated);
 		padding: var(--space-lg);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.review-card__title {
@@ -531,8 +529,6 @@ interface AgentActionResponse {
 
 	.review-card__section {
 		padding: var(--space-lg);
-		background: var(--color-bg-elevated);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.review-card__body {

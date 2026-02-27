@@ -243,7 +243,6 @@
 		font-weight: 500;
 		color: var(--color-fg-primary);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		padding: var(--space-xs) var(--space-sm);
 		cursor: pointer;
 		transition: all var(--duration-micro) var(--ease-standard);
@@ -267,8 +266,6 @@
 	}
 
 	.modal-content {
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		max-width: 600px;
 		width: 100%;
 		max-height: 90vh;
@@ -281,7 +278,6 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: var(--space-md);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.modal-title {
@@ -336,7 +332,6 @@
 		font-size: var(--text-body);
 		color: var(--color-fg-primary);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		padding: var(--space-xs) var(--space-sm);
 		transition: border-color var(--duration-micro) var(--ease-standard);
 	}
@@ -406,7 +401,6 @@
 		font-size: var(--text-body-sm);
 		font-weight: 500;
 		padding: var(--space-xs) var(--space-md);
-		border: 1px solid var(--color-border-default);
 		cursor: pointer;
 		transition: all var(--duration-micro) var(--ease-standard);
 	}

@@ -67,8 +67,6 @@
 		align-items: center;
 		gap: var(--space-sm);
 		padding: 0 var(--space-md);
-		background: var(--color-bg-elevated);
-		border-bottom: 1px solid var(--color-border-default);
 		z-index: calc(var(--z-fixed) - 2);
 	}
 

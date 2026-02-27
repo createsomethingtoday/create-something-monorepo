@@ -67,7 +67,6 @@
 	/* Variant styles */
 	.bento-item--default {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 	}
 
 	.bento-item--default:hover {
@@ -75,8 +74,6 @@
 	}
 
 	.bento-item--elevated {
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		box-shadow: var(--shadow-md);
 	}
 
@@ -86,7 +83,6 @@
 
 	.bento-item--glass {
 		background: rgba(255, 255, 255, 0.03);
-		border: 1px solid var(--color-border-default);
 		backdrop-filter: blur(20px);
 	}
 

@@ -152,7 +152,6 @@
   .alternative-card {
     background: var(--color-hover);
     border-radius: var(--radius-sm);
-    border: 1px solid var(--color-border-default);
   }
 
   .alternative-label {
@@ -168,7 +167,6 @@
   }
 
   .feedback-section {
-    border-top: 1px solid var(--color-border-default);
   }
 
   .feedback-label {
@@ -190,7 +188,6 @@
   }
 
   .thanks-message {
-    border-top: 1px solid var(--color-border-default);
     color: var(--color-fg-tertiary);
     font-size: var(--text-caption);
   }

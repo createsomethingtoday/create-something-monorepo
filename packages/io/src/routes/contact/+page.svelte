@@ -145,8 +145,6 @@
 
 	.contact-card {
 		padding: var(--space-lg);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		transition: border-color var(--duration-standard) var(--ease-standard);
 	}

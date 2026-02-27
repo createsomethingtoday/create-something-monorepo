@@ -410,7 +410,6 @@
 	.selection-info {
 		padding: var(--space-sm) var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
@@ -419,7 +418,6 @@
 
 	.code-example {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		overflow: hidden;
 	}
@@ -442,7 +440,6 @@
 		gap: var(--space-md);
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		margin-bottom: var(--space-md);
 		min-height: 80px;
@@ -477,7 +474,6 @@
 	.benefit-card {
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 

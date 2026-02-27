@@ -93,7 +93,6 @@
 	}
 
 	.section--elevated {
-		background: var(--color-bg-elevated);
 	}
 
 	.section--subtle {

@@ -59,7 +59,6 @@
 		gap: var(--space-sm);
 		padding: var(--space-sm);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		transition: border-color var(--duration-micro) var(--ease-standard);
 	}

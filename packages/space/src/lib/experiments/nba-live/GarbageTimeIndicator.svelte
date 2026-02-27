@@ -110,8 +110,6 @@ function handleKeydown(event: KeyboardEvent) {
 		align-items: center;
 		gap: var(--space-xs);
 		padding: var(--space-xs) var(--space-sm);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		cursor: help;
 		position: relative;
@@ -166,8 +164,6 @@ function handleKeydown(event: KeyboardEvent) {
 		transform: translateX(-50%);
 		width: 280px;
 		padding: var(--space-md);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		box-shadow: var(--shadow-lg);
 		z-index: var(--z-modal);
@@ -272,7 +268,6 @@ function handleKeydown(event: KeyboardEvent) {
 
 	.reliability-bar {
 		height: 4px;
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-full);
 		overflow: hidden;
 	}

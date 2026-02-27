@@ -127,7 +127,6 @@
 		justify-content: center;
 		width: 20px;
 		height: 20px;
-		background: var(--color-bg-elevated);
 		border: 2px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		transition: all var(--duration-micro) var(--ease-standard);

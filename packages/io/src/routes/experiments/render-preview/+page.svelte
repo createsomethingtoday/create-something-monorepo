@@ -580,7 +580,6 @@
 	.experiment-header {
 		margin-bottom: var(--space-2xl);
 		padding-bottom: var(--space-xl);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.header-meta {
@@ -623,7 +622,6 @@
 		margin: var(--space-xl) 0;
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 
@@ -693,7 +691,6 @@
 		align-items: center;
 		padding: var(--space-sm) var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-primary);
 		font-size: var(--text-body-sm);
@@ -713,7 +710,6 @@
 	.demo-button {
 		padding: var(--space-sm) var(--space-md);
 		background: transparent;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);
@@ -758,7 +754,6 @@
 
 	.svg-display {
 		background: white;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		padding: var(--space-md);
 		aspect-ratio: 4/3;
@@ -781,7 +776,6 @@
 	.loading-state,
 	.empty-state {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		aspect-ratio: 4/3;
 		display: flex;
@@ -795,7 +789,6 @@
 		margin-top: var(--space-md);
 		padding: var(--space-sm) var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
@@ -811,7 +804,6 @@
 		margin-top: var(--space-lg);
 		padding: var(--space-lg);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		text-align: center;
 	}
@@ -822,7 +814,6 @@
 		align-items: center;
 		gap: var(--space-xs);
 		padding: var(--space-md) var(--space-lg);
-		background: var(--color-bg-elevated);
 		border: 2px solid var(--color-border-emphasis);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-primary);
@@ -861,7 +852,6 @@
 		margin-top: var(--space-lg);
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 
@@ -950,7 +940,6 @@
 
 	.comparison-image {
 		width: 100%;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		background: var(--color-bg-pure);
 	}
@@ -979,7 +968,6 @@
 		margin-top: var(--space-sm);
 		padding: var(--space-xs) var(--space-sm);
 		background: transparent;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);
@@ -1002,7 +990,6 @@
 	.secondary-button {
 		padding: var(--space-sm) var(--space-lg);
 		background: transparent;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);
@@ -1040,7 +1027,6 @@
 		align-items: center;
 		justify-content: center;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		font-family: var(--font-mono);
 		font-size: var(--text-body-sm);
@@ -1073,7 +1059,6 @@
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-full);
 	}
 

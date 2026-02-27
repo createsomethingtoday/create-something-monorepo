@@ -151,7 +151,6 @@
 		text-align: center;
 		padding: var(--space-xl);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 	}
 
@@ -234,7 +233,6 @@
 	/* Cards */
 	:global(.nba-card) {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		padding: var(--space-md);
 	}
@@ -245,7 +243,6 @@
 		color: var(--color-fg-primary);
 		margin-bottom: var(--space-sm);
 		padding-bottom: var(--space-sm);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	/* Stats table (Tufte: high data-ink ratio) */
@@ -260,7 +257,6 @@
 		padding: var(--space-xs) var(--space-sm);
 		color: var(--color-fg-muted);
 		font-weight: 500;
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	:global(.nba-stats-table th:last-child),
@@ -274,7 +270,6 @@
 	}
 
 	:global(.nba-stats-table tbody tr) {
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	:global(.nba-stats-table tbody tr:last-child) {

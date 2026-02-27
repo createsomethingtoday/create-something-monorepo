@@ -283,7 +283,6 @@
     margin: var(--space-sm) auto 0;
     padding: var(--space-sm);
     background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-md);
     font-family: var(--font-mono);
     font-size: 0.65rem;
@@ -336,7 +335,6 @@
   .tag {
     padding: 0.25rem 0.75rem;
     background: var(--color-hover);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-full);
     font-size: var(--text-caption);
     color: var(--color-fg-tertiary);
@@ -352,8 +350,6 @@
 
   /* Proof Sections */
   .proof-section {
-    background: var(--color-bg-elevated);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg);
     padding: var(--space-lg);
   }
@@ -415,7 +411,6 @@
 
   .evidence-card {
     background: var(--color-hover);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-md);
     padding: var(--space-sm);
   }

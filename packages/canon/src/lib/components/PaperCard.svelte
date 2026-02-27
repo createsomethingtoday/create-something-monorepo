@@ -157,7 +157,6 @@
 	/* Image Section */
 	.paper-image {
 		background: var(--color-bg-pure);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	/* ASCII Art */
@@ -214,7 +213,6 @@
 	.category-badge {
 		font-size: var(--text-caption);
 		background: var(--color-hover);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-secondary);
 	}

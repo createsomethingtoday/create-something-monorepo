@@ -460,7 +460,6 @@
 <style>
 	/* Footer Container */
 	.footer {
-		border-top: 1px solid var(--color-shell-border-default);
 		background:
 			linear-gradient(
 				180deg,
@@ -482,7 +481,6 @@
 
 	.newsletter-input {
 		background: var(--color-shell-surface-tertiary);
-		border: 1px solid var(--color-shell-border-default);
 		border-radius: var(--radius-lg);
 		color: var(--color-fg-primary);
 		transition:
@@ -551,7 +549,6 @@
 
 	/* Footer Links Section */
 	.footer-links.with-newsletter {
-		border-top: 1px solid var(--color-shell-border-subtle);
 	}
 
 	/* Brand */
@@ -589,7 +586,6 @@
 
 	.social-link {
 		background: var(--color-shell-surface-tertiary);
-		border: 1px solid var(--color-shell-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-tertiary);
 		transition:
@@ -639,7 +635,6 @@
 
 	/* Copyright & Legal */
 	.footer-copyright {
-		border-top: 1px solid var(--color-shell-border-subtle);
 	}
 
 	.copyright-text {
@@ -666,7 +661,6 @@
 
 	/* Quote */
 	.footer-quote {
-		border-top: 1px solid var(--color-shell-border-subtle);
 	}
 
 	.quote-text {

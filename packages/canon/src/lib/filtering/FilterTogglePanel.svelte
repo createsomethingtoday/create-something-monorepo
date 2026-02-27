@@ -292,7 +292,6 @@
 		font-size: var(--text-caption);
 		padding: 2px var(--space-xs);
 		background: transparent;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xs);
 		cursor: pointer;
 		color: var(--color-fg-muted);
@@ -307,7 +306,6 @@
 	.filter-group {
 		margin-bottom: var(--space-sm);
 		padding-bottom: var(--space-sm);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.filter-group:last-of-type {
@@ -504,7 +502,6 @@
 		padding: var(--space-xs) var(--space-sm);
 		margin-top: var(--space-sm);
 		background: transparent;
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xs);
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);

@@ -67,7 +67,6 @@
 		flex-direction: column;
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		overflow-y: auto;
 	}
@@ -85,7 +84,6 @@
 
 	.detail-header {
 		padding-bottom: var(--space-md);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.detail-title {
@@ -105,7 +103,6 @@
 		font-size: var(--text-caption);
 		color: var(--color-fg-secondary);
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 	}
 

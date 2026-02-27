@@ -86,7 +86,6 @@
 		gap: var(--space-xs);
 		margin-bottom: var(--space-sm);
 		padding-bottom: var(--space-sm);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.highlight-card :global(.badge-icon) {
@@ -155,7 +154,6 @@
 	/* Highlight reason */
 	.highlight-reason {
 		padding: var(--space-sm);
-		background: var(--color-bg-elevated);
 		border-radius: var(--radius-sm);
 		margin-bottom: var(--space-sm);
 	}

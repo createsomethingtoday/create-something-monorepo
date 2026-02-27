@@ -133,7 +133,6 @@
 <style>
 	.code-block {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		overflow: hidden;
 	}
@@ -144,7 +143,6 @@
 		justify-content: space-between;
 		padding: var(--space-xs) var(--space-sm);
 		background: var(--color-bg-subtle);
-		border-bottom: 1px solid var(--color-border-default);
 	}
 
 	.code-title {

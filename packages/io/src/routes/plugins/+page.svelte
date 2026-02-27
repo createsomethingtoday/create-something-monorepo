@@ -257,7 +257,6 @@
 
 	.quick-start {
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
 	}
@@ -297,7 +296,6 @@
 		align-items: center;
 		gap: var(--space-sm);
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		padding: var(--space-sm) var(--space-md);
 	}
@@ -335,7 +333,6 @@
 	.category-chip {
 		padding: var(--space-xs) var(--space-sm);
 		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-full);
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);

@@ -917,7 +917,6 @@
 
 <style>
   .header-section {
-    border-bottom: 1px solid var(--color-border-default);
   }
 
   .eyebrow {
@@ -976,7 +975,6 @@
   }
 
   .checklist-box {
-    border: 1px solid var(--color-border-default);
     font-family: monospace;
     font-size: var(--text-body-sm);
   }
@@ -1000,7 +998,6 @@
   }
 
   .test-box {
-    border: 1px solid var(--color-border-default);
   }
 
   .test-question {
@@ -1028,12 +1025,10 @@
 
   .lineage-table th {
     color: var(--color-fg-tertiary);
-    border-bottom: 1px solid var(--color-border-default);
   }
 
   .lineage-table td {
     color: var(--color-fg-secondary);
-    border-bottom: 1px solid var(--color-border-default);
   }
 
   .master-layer {
@@ -1044,7 +1039,6 @@
   }
 
   .master-divider {
-    border-top: 1px solid var(--color-border-default);
   }
 
   .master-name {
@@ -1062,7 +1056,6 @@
   }
 
   .final-note {
-    border: 1px solid var(--color-border-default);
   }
 
   .note-title {
@@ -1081,7 +1074,6 @@
   }
 
   .terminology-box {
-    border: 1px solid var(--color-border-default);
     background: var(--color-bg-surface);
     border-radius: var(--radius-lg);
   }
@@ -1138,7 +1130,6 @@
   }
 
   .recognition-box {
-    border: 1px solid var(--color-border-default);
     background: var(--color-bg-surface);
     border-radius: var(--radius-lg);
   }
@@ -1187,14 +1178,12 @@
   .transformation-table th {
     text-align: left;
     padding: var(--space-sm);
-    border-bottom: 1px solid var(--color-border-default);
     color: var(--color-fg-tertiary);
     font-weight: 600;
   }
 
   .transformation-table td {
     padding: var(--space-sm);
-    border-bottom: 1px solid var(--color-border-default);
     color: var(--color-fg-secondary);
   }
 

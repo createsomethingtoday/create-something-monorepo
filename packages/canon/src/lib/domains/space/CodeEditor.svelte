@@ -115,7 +115,6 @@
 <style>
   .code-editor {
     position: relative;
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-lg);
   }
 

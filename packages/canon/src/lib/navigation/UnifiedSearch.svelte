@@ -584,7 +584,6 @@
 		max-height: 78vh;
 		background: color-mix(in srgb, var(--color-shell-surface-tertiary) 92%, transparent);
 		backdrop-filter: blur(14px);
-		border: 1px solid var(--color-shell-border-default);
 		border-radius: var(--radius-xl, 16px);
 		box-shadow: var(--color-shell-shadow-strong);
 		display: flex;
@@ -598,7 +597,6 @@
 		align-items: center;
 		gap: var(--space-sm, 1rem);
 		padding: var(--space-sm, 1rem) var(--space-md, 1.618rem);
-		border-bottom: 1px solid var(--color-shell-border-default);
 	}
 
 	.palette-search-icon {
@@ -628,7 +626,6 @@
 		background: var(--color-shell-surface-elevated);
 		padding: 4px 8px;
 		border-radius: var(--radius-sm, 6px);
-		border: 1px solid var(--color-shell-border-default);
 	}
 
 	.palette-loading {
@@ -743,7 +740,6 @@
 		font-size: var(--text-caption, 0.75rem);
 		color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
 		background: var(--color-shell-surface-elevated);
-		border: 1px solid var(--color-shell-border-subtle);
 		padding: 2px 6px;
 		border-radius: var(--radius-sm, 6px);
 		flex-shrink: 0;
@@ -759,7 +755,6 @@
 		display: flex;
 		gap: var(--space-md, 1.618rem);
 		padding: var(--space-sm, 1rem) var(--space-md, 1.618rem);
-		border-top: 1px solid var(--color-shell-border-default);
 		background: color-mix(in srgb, var(--color-shell-surface-secondary) 90%, transparent);
 	}
 
@@ -775,7 +770,6 @@
 		font-size: var(--text-caption-xs, 0.625rem);
 		padding: 2px 6px;
 		background: var(--color-shell-surface-elevated);
-		border: 1px solid var(--color-shell-border-default);
 		border-radius: var(--radius-sm, 6px);
 	}
 
@@ -840,7 +834,6 @@
 		
 		/* Canon: elevated surface with strong border for visibility */
 		background: var(--color-shell-surface-elevated);
-		border: 1px solid var(--color-shell-border-default);
 		color: var(--color-fg-primary);
 		
 		/* Canon shadow for elevation */
@@ -882,7 +875,6 @@
 	/* Mobile close button in footer - Canon styling */
 	.palette-close-btn {
 		background: var(--color-shell-surface-elevated);
-		border: 1px solid var(--color-shell-border-default);
 		border-radius: var(--radius-md);
 		padding: var(--space-xs) var(--space-sm);
 		color: var(--color-fg-secondary);

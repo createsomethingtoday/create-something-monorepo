@@ -69,7 +69,6 @@
 		width: 32px;
 		height: 32px;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		color: var(--color-fg-secondary);
 		cursor: pointer;
@@ -87,7 +86,6 @@
 		gap: var(--space-xs);
 		padding: var(--space-xs) var(--space-sm);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		min-width: 140px;
 		justify-content: center;

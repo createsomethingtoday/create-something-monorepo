@@ -186,8 +186,6 @@
   .presentation-card {
     display: block;
     padding: 1.5rem;
-    background: var(--color-bg-elevated);
-    border: 1px solid var(--color-border-default);
     border-radius: var(--radius-md);
     text-decoration: none;
     transition: all var(--duration-micro) var(--ease-standard);

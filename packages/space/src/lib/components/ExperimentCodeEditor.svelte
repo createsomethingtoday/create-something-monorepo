@@ -239,7 +239,6 @@
     align-items: flex-start;
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid var(--color-border-default);
   }
 
   .lesson-title h3 {
@@ -275,7 +274,6 @@
   .editor-panel {
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--color-border-default);
     border-radius: 8px;
     background: var(--color-overlay);
     overflow: hidden;
@@ -307,7 +305,6 @@
     display: flex;
     gap: 0.5rem;
     padding: 0.75rem;
-    border-top: 1px solid var(--color-border-default);
     background: var(--color-overlay);
     flex-wrap: wrap;
     align-items: center;
@@ -418,7 +415,6 @@
   .kv-section {
     padding: 1rem;
     background: var(--color-overlay);
-    border: 1px solid var(--color-border-default);
     border-radius: 6px;
   }
 
@@ -466,7 +462,6 @@
     font-size: 0.875rem;
     line-height: 1.6;
     background: var(--color-overlay);
-    border: 1px solid var(--color-border-default);
     border-radius: 4px;
     overflow-x: auto;
     white-space: pre-wrap;
@@ -492,7 +487,6 @@
     gap: 0.75rem;
     padding: 0.75rem;
     background: var(--color-overlay);
-    border: 1px solid var(--color-border-default);
     border-radius: 4px;
     font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
     font-size: 0.875rem;

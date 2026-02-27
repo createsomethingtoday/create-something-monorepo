@@ -347,7 +347,6 @@
 		width: 100%;
 		padding: var(--space-sm) var(--space-sm) var(--space-sm) 2.5rem;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		color: var(--color-fg-primary);
 		transition: border-color var(--duration-standard) var(--ease-standard);
@@ -393,7 +392,6 @@
 		transition: all var(--duration-standard) var(--ease-standard);
 		background: var(--color-bg-surface);
 		color: var(--color-fg-tertiary);
-		border: 1px solid var(--color-border-default);
 	}
 
 	.filter-chip:hover {
@@ -414,7 +412,6 @@
 		gap: 0.25rem;
 		padding: 0.25rem;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 	}
 
@@ -490,7 +487,6 @@
 		font-weight: var(--font-medium);
 		color: var(--color-fg-secondary);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		transition: all var(--duration-standard) var(--ease-standard);
 	}
@@ -523,7 +519,6 @@
 		font-weight: var(--font-medium);
 		color: var(--color-fg-secondary);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		transition: all var(--duration-standard) var(--ease-standard);
 	}
@@ -573,8 +568,6 @@
 
 	.paper-card {
 		display: block;
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
 		overflow: hidden;
 		text-decoration: none;
@@ -636,7 +629,6 @@
 	.keyword {
 		padding: 0.25rem var(--space-xs);
 		background: var(--color-hover);
-		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-sm);
 		font-size: var(--text-overline);
 		color: var(--color-fg-muted);
