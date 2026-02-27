@@ -3,7 +3,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { CallToolRequestSchema, ListToolsRequestSchema, type Tool } from '@modelcontextprotocol/sdk/types.js';
-import { initLogger, type Logger, type Span } from 'braintrust';
+import { flush as braintrustFlush, initLogger, type Logger, type Span } from 'braintrust';
 
 import discoveryPacksJson from '../../config/mcp-hub/discovery-packs.json';
 import intentRoutesJson from '../../config/mcp-hub/intent-routes.json';
@@ -246,6 +246,8 @@ type HubRouteLog = {
   trace: InvocationTrace;
   metadata?: Record<string, unknown>;
 };
+
+type WaitUntilContext = Pick<ExecutionContext, 'waitUntil'>;
 
 const DOWNSTREAM_BEARER_ENV_FALLBACK: Record<string, string> = {
   'cs-telemetry': 'CS_TELEMETRY_OPERATOR_API_TOKEN',
@@ -551,7 +553,7 @@ let braintrustLogger: Logger<any> | null = null;
 let braintrustLoggerKey: string | null = null;
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
     if (request.method === 'OPTIONS') {
@@ -566,7 +568,7 @@ export default {
 
       try {
         const runtime = await getHubRuntime(env);
-        const server = buildHubServer(runtime, env);
+        const server = buildHubServer(runtime, env, ctx);
         const transport = new WebStandardStreamableHTTPServerTransport({
           sessionIdGenerator: undefined,
           enableJsonResponse: true,
@@ -929,9 +931,13 @@ function buildProxyCatalog(connectedServers: ConnectedDownstream[]): ProxyCatalo
   };
 }
 
-function buildHubServer(runtime: HubRuntime, env: Env): Server {
+function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilContext): Server {
   const rateLimitPolicy = resolveRateLimitPolicy(env);
   const quotaPolicy = resolveQuotaPolicy(env);
+  const recordHubInvocationWithCtx = (log: HubInvocationLog): Promise<void> =>
+    recordHubInvocation(env, log, executionCtx);
+  const recordHubRouteInvocationWithCtx = (log: HubRouteLog): Promise<void> =>
+    recordHubRouteInvocation(env, log, executionCtx);
   const server = new Server(
     {
       name: HUB_NAME,
@@ -974,7 +980,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           ...buildStatusPayload(runtime),
           policy: buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env),
         });
-        await recordHubInvocation(env, {
+        await recordHubInvocationWithCtx({
           accountId,
           toolName,
           success: true,
@@ -989,7 +995,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
 
       if (toolName === 'hub_list_registry') {
         const result = toJsonResult(buildRegistryPayload(registry));
-        await recordHubInvocation(env, {
+        await recordHubInvocationWithCtx({
           accountId,
           toolName,
           success: true,
@@ -1009,7 +1015,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           proxyTools: visible.toolDefinitions.map((tool) => tool.name),
           count: visible.toolDefinitions.length,
         });
-        await recordHubInvocation(env, {
+        await recordHubInvocationWithCtx({
           accountId,
           toolName,
           success: true,
@@ -1030,7 +1036,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         const serverName = stringArg(args.serverName);
         const cursor = stringArg(args.cursor);
         const limit = numberArg(args.limit, 25, 1, 100);
-        await recordHubInvocation(env, {
+        await recordHubInvocationWithCtx({
           accountId,
           toolName,
           success: true,
@@ -1052,7 +1058,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         const intent = stringArg(args.intent);
         if (!intent) {
           const errorResult = toErrorResult('"intent" is required');
-          await recordHubInvocation(env, {
+          await recordHubInvocationWithCtx({
             accountId,
             toolName,
             success: false,
@@ -1071,7 +1077,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
         const candidate = resolveIntentRouteCandidate(visible, args);
         const result = toJsonResult(candidateToRoutePayload(candidate, visible));
-        await recordHubInvocation(env, {
+        await recordHubInvocationWithCtx({
           accountId,
           toolName,
           success: candidate.source !== 'none',
@@ -1096,7 +1102,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         const proxyToolName = stringArg(args.proxyToolName);
         if (!proxyToolName) {
           const errorResult = toErrorResult('"proxyToolName" is required');
-          await recordHubInvocation(env, {
+          await recordHubInvocationWithCtx({
             accountId,
             toolName,
             success: false,
@@ -1116,7 +1122,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         if (!route || !definition) {
           const message = `Proxy tool "${proxyToolName}" is unknown or not visible for this session.`;
           const errorResult = toErrorResult(message);
-          await recordHubInvocation(env, {
+          await recordHubInvocationWithCtx({
             accountId,
             toolName,
             success: false,
@@ -1140,7 +1146,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           inputSchema: definition.inputSchema ?? { type: 'object', properties: {} },
           visible: true,
         });
-        await recordHubInvocation(env, {
+        await recordHubInvocationWithCtx({
           accountId,
           toolName,
           success: true,
@@ -1161,7 +1167,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         const intent = stringArg(args.intent);
         if (!intent) {
           const errorResult = toErrorResult('"intent" is required');
-          await recordHubInvocation(env, {
+          await recordHubInvocationWithCtx({
             accountId,
             toolName,
             success: false,
@@ -1179,7 +1185,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         if (args.args !== undefined && !isRecord(args.args)) {
           const message = '"args" must be an object';
           const errorResult = toErrorResult(message);
-          await recordHubInvocation(env, {
+          await recordHubInvocationWithCtx({
             accountId,
             toolName,
             success: false,
@@ -1201,7 +1207,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         if (!candidate.proxyToolName) {
           const message = candidate.reason || `No route found for intent "${intent}".`;
           const errorResult = toErrorResult(message);
-          await recordHubInvocation(env, {
+          await recordHubInvocationWithCtx({
             accountId,
             toolName,
             success: false,
@@ -1223,7 +1229,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         if (!route) {
           const message = `Resolved proxy tool "${candidate.proxyToolName}" is not visible for this session.`;
           const errorResult = toErrorResult(message);
-          await recordHubInvocation(env, {
+          await recordHubInvocationWithCtx({
             accountId,
             toolName,
             success: false,
@@ -1245,6 +1251,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         const executionArgs = normalizeArgs(args.args);
         return executeProxyRoute({
           env,
+          executionCtx,
           route,
           executionArgs,
           trace,
@@ -1265,7 +1272,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         const proxyToolName = stringArg(args.proxyToolName);
         if (!proxyToolName) {
           const errorResult = toErrorResult('"proxyToolName" is required');
-          await recordHubInvocation(env, {
+          await recordHubInvocationWithCtx({
             accountId,
             toolName,
             success: false,
@@ -1284,7 +1291,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         if (!route) {
           const message = `Proxy tool "${proxyToolName}" is unknown or not visible for this session.`;
           const errorResult = toErrorResult(message);
-          await recordHubInvocation(env, {
+          await recordHubInvocationWithCtx({
             accountId,
             toolName,
             success: false,
@@ -1303,7 +1310,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         if (args.args !== undefined && !isRecord(args.args)) {
           const message = '"args" must be an object';
           const errorResult = toErrorResult(message);
-          await recordHubInvocation(env, {
+          await recordHubInvocationWithCtx({
             accountId,
             toolName,
             success: false,
@@ -1322,6 +1329,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         const executionArgs = normalizeArgs(args.args);
         return executeProxyRoute({
           env,
+          executionCtx,
           route,
           executionArgs,
           trace,
@@ -1339,7 +1347,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
       if (toolName === 'hub_list_services') {
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
         const result = toJsonResult(buildDiscoveryServicesPayload(runtime, prefs, accountContext));
-        await recordHubInvocation(env, {
+        await recordHubInvocationWithCtx({
           accountId,
           toolName,
           success: true,
@@ -1365,7 +1373,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
             activeServerCount: pack.preferences.activeServers.length,
           })),
         });
-        await recordHubInvocation(env, {
+        await recordHubInvocationWithCtx({
           accountId,
           toolName,
           success: true,
@@ -1393,7 +1401,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
             if (!appliedPack) {
               const message = `Unknown discovery pack "${packId}".`;
               const errorResult = toErrorResult(message);
-              await recordHubInvocation(env, {
+              await recordHubInvocationWithCtx({
                 accountId,
                 toolName,
                 success: false,
@@ -1443,7 +1451,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           sampleVisibleProxyTools: visibleTools.slice(0, 25).map((tool) => tool.name),
           note: 'Refresh tools/list to pick up the updated discovery view.',
         });
-        await recordHubInvocation(env, {
+        await recordHubInvocationWithCtx({
           accountId,
           toolName,
           success: true,
@@ -1465,7 +1473,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
       if (toolName === 'hub_refresh_connections') {
         const refreshed = await getHubRuntime(env, { force: true });
         const result = toJsonResult(buildStatusPayload(refreshed));
-        await recordHubInvocation(env, {
+        await recordHubInvocationWithCtx({
           accountId,
           toolName,
           success: true,
@@ -1503,7 +1511,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           note: 'State persisted remotely. Proxy tool list refreshed from live downstream connections.',
         });
 
-        await recordHubInvocation(env, {
+        await recordHubInvocationWithCtx({
           accountId,
           toolName,
           success: true,
@@ -1521,7 +1529,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         const correlationId = stringArg(args.correlationId) ?? '';
         if (!correlationId) {
           const errorResult = toErrorResult('"correlationId" is required');
-          await recordHubInvocation(env, {
+          await recordHubInvocationWithCtx({
             accountId,
             toolName,
             success: false,
@@ -1537,7 +1545,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
         const limit = numberArg(args.limit, 50, 1, 200);
         const lookup = await queryTraceByCorrelation(env, correlationId, limit);
         const result = toJsonResult(lookup);
-        await recordHubInvocation(env, {
+        await recordHubInvocationWithCtx({
           accountId,
           toolName,
           success: true,
@@ -1554,7 +1562,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
 
       if (toolName === 'hub_policy_status') {
         const result = toJsonResult(buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env));
-        await recordHubInvocation(env, {
+        await recordHubInvocationWithCtx({
           accountId,
           toolName,
           success: true,
@@ -1573,7 +1581,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
           'Direct proxy tools are disabled. Use hub_execute_proxy_tool with proxyToolName + args.';
         const durationMs = Date.now() - startedAt;
         await Promise.all([
-          recordHubInvocation(env, {
+          recordHubInvocationWithCtx({
             accountId,
             toolName,
             success: false,
@@ -1589,7 +1597,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
               downstreamTool: directProxyRoute.downstreamToolName,
             },
           }),
-          recordHubRouteInvocation(env, {
+          recordHubRouteInvocationWithCtx({
             accountId,
             downstreamServer: directProxyRoute.serverName,
             downstreamTool: directProxyRoute.downstreamToolName,
@@ -1608,7 +1616,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
       }
 
       const errorResult = toErrorResult(`Unknown tool "${toolName}"`);
-      await recordHubInvocation(env, {
+      await recordHubInvocationWithCtx({
         accountId,
         toolName,
         success: false,
@@ -1623,7 +1631,7 @@ function buildHubServer(runtime: HubRuntime, env: Env): Server {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const durationMs = Date.now() - startedAt;
-      await recordHubInvocation(env, {
+      await recordHubInvocationWithCtx({
         accountId,
         toolName,
         success: false,
@@ -2003,6 +2011,7 @@ export function buildVisibleProxyRoutes(
 
 export async function executeProxyRoute(params: {
   env: Env;
+  executionCtx?: WaitUntilContext;
   route: ProxyRoute;
   executionArgs: Record<string, unknown>;
   trace: InvocationTrace;
@@ -2017,6 +2026,7 @@ export async function executeProxyRoute(params: {
 }): Promise<any> {
   const {
     env,
+    executionCtx,
     route,
     executionArgs,
     trace,
@@ -2029,6 +2039,10 @@ export async function executeProxyRoute(params: {
     entrypoint,
     entryProxyToolName,
   } = params;
+  const recordHubInvocationWithCtx = (log: HubInvocationLog): Promise<void> =>
+    recordHubInvocation(env, log, executionCtx);
+  const recordHubRouteInvocationWithCtx = (log: HubRouteLog): Promise<void> =>
+    recordHubRouteInvocation(env, log, executionCtx);
 
   if (!isRouteAllowedForSession(route, accountContext.allowedToolPrefixes)) {
     const message =
@@ -2036,7 +2050,7 @@ export async function executeProxyRoute(params: {
       'Request a new MCP session with the required toolkit profile.';
     const durationMs = Date.now() - startedAt;
     await Promise.all([
-      recordHubInvocation(env, {
+      recordHubInvocationWithCtx({
         accountId,
         toolName,
         success: false,
@@ -2056,7 +2070,7 @@ export async function executeProxyRoute(params: {
           allowedToolPrefixes: accountContext.allowedToolPrefixes ?? null,
         },
       }),
-      recordHubRouteInvocation(env, {
+      recordHubRouteInvocationWithCtx({
         accountId,
         downstreamServer: route.serverName,
         downstreamTool: route.downstreamToolName,
@@ -2084,7 +2098,7 @@ export async function executeProxyRoute(params: {
       `Retry after ${rateLimitDecision.resetAt}.`;
 
     await Promise.all([
-      recordHubInvocation(env, {
+      recordHubInvocationWithCtx({
         accountId,
         toolName,
         success: false,
@@ -2106,7 +2120,7 @@ export async function executeProxyRoute(params: {
           windowSeconds: rateLimitDecision.windowSeconds,
         },
       }),
-      recordHubRouteInvocation(env, {
+      recordHubRouteInvocationWithCtx({
         accountId,
         downstreamServer: route.serverName,
         downstreamTool: route.downstreamToolName,
@@ -2138,7 +2152,7 @@ export async function executeProxyRoute(params: {
       `Remaining ${quotaDecision.remaining}.`;
 
     await Promise.all([
-      recordHubInvocation(env, {
+      recordHubInvocationWithCtx({
         accountId,
         toolName,
         success: false,
@@ -2159,7 +2173,7 @@ export async function executeProxyRoute(params: {
           period: quotaDecision.period,
         },
       }),
-      recordHubRouteInvocation(env, {
+      recordHubRouteInvocationWithCtx({
         accountId,
         downstreamServer: route.serverName,
         downstreamTool: route.downstreamToolName,
@@ -2189,7 +2203,7 @@ export async function executeProxyRoute(params: {
     const proxiedSuccess = proxyFailure === null;
     const durationMs = Date.now() - startedAt;
     await Promise.all([
-      recordHubInvocation(env, {
+      recordHubInvocationWithCtx({
         accountId,
         toolName,
         success: proxiedSuccess,
@@ -2229,7 +2243,7 @@ export async function executeProxyRoute(params: {
               },
         },
       }),
-      recordHubRouteInvocation(env, {
+      recordHubRouteInvocationWithCtx({
         accountId,
         downstreamServer: route.serverName,
         downstreamTool: route.downstreamToolName,
@@ -2261,7 +2275,7 @@ export async function executeProxyRoute(params: {
     const proxyFailure = classifyProxyFailureMessage(message, route, entryProxyToolName, null);
     const durationMs = Date.now() - startedAt;
     await Promise.all([
-      recordHubInvocation(env, {
+      recordHubInvocationWithCtx({
         accountId,
         toolName,
         success: false,
@@ -2285,7 +2299,7 @@ export async function executeProxyRoute(params: {
           },
         },
       }),
-      recordHubRouteInvocation(env, {
+      recordHubRouteInvocationWithCtx({
         accountId,
         downstreamServer: route.serverName,
         downstreamTool: route.downstreamToolName,
@@ -3284,12 +3298,38 @@ function getBraintrustLogger(env: Env): Logger<any> | null {
   return braintrustLogger;
 }
 
-function emitHubInvocationToBraintrust(env: Env, log: HubInvocationLog): void {
+async function flushBraintrust(logger: Logger<any>): Promise<void> {
+  try {
+    await logger.flush();
+  } catch (error) {
+    console.warn(
+      `[${HUB_NAME}] braintrust logger flush failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  try {
+    await braintrustFlush();
+  } catch (error) {
+    console.warn(
+      `[${HUB_NAME}] braintrust global flush failed: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+function enqueueWithWaitUntil(task: Promise<void>, executionCtx?: WaitUntilContext): void {
+  if (executionCtx) {
+    executionCtx.waitUntil(task);
+    return;
+  }
+  void task;
+}
+
+async function emitHubInvocationToBraintrust(env: Env, log: HubInvocationLog): Promise<void> {
   const logger = getBraintrustLogger(env);
   if (!logger) return;
   const metadata = asRecord(log.metadata);
   try {
-    const maybePromise = logger.traced(
+    await logger.traced(
       (span: Span) => {
         span.log({
           input: {
@@ -3322,16 +3362,7 @@ function emitHubInvocationToBraintrust(env: Env, log: HubInvocationLog): void {
         type: 'tool',
       },
     );
-
-    if (maybePromise && typeof (maybePromise as Promise<void>).catch === 'function') {
-      void (maybePromise as Promise<void>).catch((error: unknown) => {
-        console.warn(
-          `[${HUB_NAME}] braintrust hub emit failed: ${
-            error instanceof Error ? error.message : String(error)
-          }`,
-        );
-      });
-    }
+    await flushBraintrust(logger);
   } catch (error) {
     console.warn(
       `[${HUB_NAME}] braintrust hub emit failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -3339,12 +3370,12 @@ function emitHubInvocationToBraintrust(env: Env, log: HubInvocationLog): void {
   }
 }
 
-function emitHubRouteToBraintrust(env: Env, log: HubRouteLog): void {
+async function emitHubRouteToBraintrust(env: Env, log: HubRouteLog): Promise<void> {
   const logger = getBraintrustLogger(env);
   if (!logger) return;
   const metadata = asRecord(log.metadata);
   try {
-    const maybePromise = logger.traced(
+    await logger.traced(
       (span: Span) => {
         span.log({
           input: {
@@ -3386,16 +3417,7 @@ function emitHubRouteToBraintrust(env: Env, log: HubRouteLog): void {
         type: 'tool',
       },
     );
-
-    if (maybePromise && typeof (maybePromise as Promise<void>).catch === 'function') {
-      void (maybePromise as Promise<void>).catch((error: unknown) => {
-        console.warn(
-          `[${HUB_NAME}] braintrust route emit failed: ${
-            error instanceof Error ? error.message : String(error)
-          }`,
-        );
-      });
-    }
+    await flushBraintrust(logger);
   } catch (error) {
     console.warn(
       `[${HUB_NAME}] braintrust route emit failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -3403,8 +3425,12 @@ function emitHubRouteToBraintrust(env: Env, log: HubRouteLog): void {
   }
 }
 
-async function recordHubInvocation(env: Env, log: HubInvocationLog): Promise<void> {
-  emitHubInvocationToBraintrust(env, log);
+async function recordHubInvocation(
+  env: Env,
+  log: HubInvocationLog,
+  executionCtx?: WaitUntilContext,
+): Promise<void> {
+  enqueueWithWaitUntil(emitHubInvocationToBraintrust(env, log), executionCtx);
 
   const db = env.TELEMETRY_DB;
   if (!db) return;
@@ -3553,8 +3579,12 @@ async function ensureHubRouteTable(db: D1Database): Promise<void> {
   hubRouteTableReady = true;
 }
 
-async function recordHubRouteInvocation(env: Env, log: HubRouteLog): Promise<void> {
-  emitHubRouteToBraintrust(env, log);
+async function recordHubRouteInvocation(
+  env: Env,
+  log: HubRouteLog,
+  executionCtx?: WaitUntilContext,
+): Promise<void> {
+  enqueueWithWaitUntil(emitHubRouteToBraintrust(env, log), executionCtx);
 
   const db = env.TELEMETRY_DB;
   if (!db) return;

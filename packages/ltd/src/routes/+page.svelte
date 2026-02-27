@@ -43,7 +43,7 @@
     <BlurFade delay={0.3}>
       <div class="flex flex-col sm:flex-row gap-4 justify-center items-center relative z-20">
         <ShimmerButton href="/masters">Meet the Masters</ShimmerButton>
-        <a href="/ethos" class="btn-secondary"> Our Approach </a>
+        <a href="/ethos" class="button-secondary"> Our Approach </a>
       </div>
     </BlurFade>
   </div>
@@ -95,7 +95,7 @@
       <div class="crystal-example">
         <code>harness.config.yaml</code> → Model routing, quality gates, review pipelines
       </div>
-      <a href="/patterns/crystallization" class="crystal-link"> Explore the pattern → </a>
+      <a href="/patterns/crystallization" class="button-secondary p-1"> Explore the pattern → </a>
     </div>
   </div>
 </section>
@@ -123,7 +123,7 @@
     </div>
 
     <div class="mt-12 text-center">
-      <a href="/masters" class="view-all"> View All Masters → </a>
+      <a href="/masters" class="button-secondary"> View All Masters → </a>
     </div>
   </div>
 </section>
@@ -211,14 +211,7 @@
     color: var(--color-fg-secondary);
   }
 
-  .btn-secondary {
-    padding: var(--space-sm) var(--space-md);
-    transition: border-color var(--duration-standard) var(--ease-standard);
-  }
-
-  .btn-secondary:hover {
-    border-color: var(--color-fg-primary);
-  }
+  /* Removed .btn-secondary styles as we use .button-secondary from canon */
 
   /* ==========================================================================
 	   MANIFESTO: Breathing Negative Space
@@ -336,16 +329,7 @@
     }
   }
 
-  .view-all {
-    font-size: var(--text-body-sm);
-    font-weight: var(--font-medium);
-    color: var(--color-fg-tertiary);
-    transition: color var(--duration-standard) var(--ease-standard);
-  }
-
-  .view-all:hover {
-    color: var(--color-fg-primary);
-  }
+  /* Removed .view-all styles as we use .button-secondary from canon */
 
   .ecosystem-thesis {
     font-size: var(--text-body-lg);
@@ -410,21 +394,5 @@
     border-radius: var(--radius-sm);
   }
 
-  .crystal-link {
-    display: inline-block;
-    font-size: var(--text-body-sm);
-    font-weight: var(--font-medium);
-    color: var(--color-fg-primary);
-    padding: var(--space-sm) var(--space-md);
-    transition: all var(--duration-micro) var(--ease-standard);
-  }
-
-  .crystal-link:hover {
-    transform: scale(var(--scale-micro));
-    border-color: var(--color-fg-primary);
-  }
-
-  .crystal-link:active {
-    transform: scale(var(--scale-subtle));
-  }
+  /* Removed .crystal-link styles as we use .button-secondary from canon */
 </style>

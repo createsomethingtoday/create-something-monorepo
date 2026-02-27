@@ -94,8 +94,8 @@
       <p class="subtitle">{data.meta.presentationSubtitle}</p>
     </div>
     <div class="actions">
-      <button class="btn" onclick={copyPlainText}>Copy Plain Text</button>
-      <button class="btn btn-secondary" onclick={copyMarkdown}>Copy Markdown</button>
+      <button class="button-primary" onclick={copyPlainText}>Copy Plain Text</button>
+      <button class="button-secondary" onclick={copyMarkdown}>Copy Markdown</button>
       {#if copyStatus}
         <span class="copy-status">{copyStatus}</span>
       {/if}
@@ -167,26 +167,7 @@
     flex-wrap: wrap;
   }
 
-  .btn {
-    background: var(--color-fg-primary);
-    color: var(--color-bg-pure);
-    border: none;
-    padding: var(--space-xs) var(--space-sm);
-    font-size: var(--text-body-sm);
-    font-weight: 500;
-    cursor: pointer;
-    border-radius: var(--radius-sm);
-    transition: opacity var(--duration-micro) var(--ease-standard);
-  }
-
-  .btn:hover {
-    opacity: 0.9;
-  }
-
-  .btn-secondary {
-    background: var(--color-bg-surface);
-    color: var(--color-fg-primary);
-  }
+  /* Removed local .btn and .btn-secondary styles as we use .button-primary and .button-secondary from canon */
 
   .copy-status {
     color: var(--color-success);

@@ -221,6 +221,8 @@
     width: 100%;
     padding: var(--space-sm) var(--space-md);
     border-radius: var(--radius-md);
+    background: transparent;
+    border: 1px solid var(--color-border-default);
     color: var(--color-fg-primary);
     font-size: var(--text-body);
     font-family: inherit;
