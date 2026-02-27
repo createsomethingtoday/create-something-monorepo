@@ -11,6 +11,7 @@
 import type { AuthProvider, AccountContext } from '@create-something/mcp-core';
 import { AuthError, defaultPolicy } from '@create-something/mcp-core';
 import type { D1Database } from '@create-something/mcp-core';
+import { getAccountAccess, resolveEffectiveToolAccessMode } from './storage/security.js';
 
 export type InteractionAtlasEnv = {
   /**
@@ -32,6 +33,10 @@ export type InteractionAtlasEnv = {
   ENGINE_FALLBACK_ENABLED?: string;
   OSO_FETCH_TIMEOUT_MS?: string;
   MCP_TOOL_ACCESS_MODE?: string;
+  ABUSE_GUARD_ENABLED?: string;
+  ABUSE_WINDOW_SECONDS?: string;
+  ABUSE_BLOCK_THRESHOLD?: string;
+  ABUSE_DISTINCT_TOOLS_THRESHOLD?: string;
   BRAINTRUST_PROJECT_NAME?: string;
   BRAINTRUST_PROJECT_ID?: string;
   BRAINTRUST_ENABLED?: string;
@@ -113,6 +118,13 @@ function normalizeToolAccessMode(raw: string | undefined): 'normal' | 'read_only
   return 'normal';
 }
 
+function parsePositiveInt(raw: string | undefined, fallback: number): number {
+  if (!raw) return fallback;
+  const value = Number(raw);
+  if (!Number.isFinite(value) || value <= 0) return fallback;
+  return Math.floor(value);
+}
+
 function extractCorrelationId(request: Request | null): string {
   const direct = firstHeader(request, ['x-correlation-id', 'x-request-id', 'cf-ray']);
   if (direct) return direct;
@@ -145,6 +157,19 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
     const mcpToolAccessMode = normalizeToolAccessMode(
       env?.MCP_TOOL_ACCESS_MODE ?? process.env.MCP_TOOL_ACCESS_MODE,
     );
+    const abuseGuardEnabled = env?.ABUSE_GUARD_ENABLED ?? process.env.ABUSE_GUARD_ENABLED ?? 'true';
+    const abuseWindowSeconds = parsePositiveInt(
+      env?.ABUSE_WINDOW_SECONDS ?? process.env.ABUSE_WINDOW_SECONDS,
+      300,
+    );
+    const abuseBlockThreshold = parsePositiveInt(
+      env?.ABUSE_BLOCK_THRESHOLD ?? process.env.ABUSE_BLOCK_THRESHOLD,
+      8,
+    );
+    const abuseDistinctToolsThreshold = parsePositiveInt(
+      env?.ABUSE_DISTINCT_TOOLS_THRESHOLD ?? process.env.ABUSE_DISTINCT_TOOLS_THRESHOLD,
+      2,
+    );
     const correlationId = extractCorrelationId(request);
     const braintrustProjectName =
       env?.BRAINTRUST_PROJECT_NAME ?? process.env.BRAINTRUST_PROJECT_NAME ?? process.env.BRAINTRUST_PROJECT ?? 'CREATE SOMETHING';
@@ -154,6 +179,8 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
 
     // Public, read-only access (used for the workflow viewer).
     if (!apiKey) {
+      const accountAccess = await getAccountAccess(env?.DB, 'public');
+      const effectiveToolAccessMode = resolveEffectiveToolAccessMode(mcpToolAccessMode, accountAccess.mode);
       return {
         accountId: 'public',
         tokenProvider: { getAccessToken: async () => '' },
@@ -169,7 +196,12 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
           OSO_BOOTSTRAP_POLICY: osoBootstrapPolicy,
           ENGINE_FALLBACK_ENABLED: engineFallbackEnabled,
           OSO_FETCH_TIMEOUT_MS: Number.isFinite(osoFetchTimeout ?? NaN) ? osoFetchTimeout : undefined,
-          MCP_TOOL_ACCESS_MODE: mcpToolAccessMode,
+          MCP_TOOL_ACCESS_MODE: effectiveToolAccessMode,
+          ACCOUNT_TOOL_ACCESS_MODE: accountAccess.mode,
+          ABUSE_GUARD_ENABLED: abuseGuardEnabled,
+          ABUSE_WINDOW_SECONDS: abuseWindowSeconds,
+          ABUSE_BLOCK_THRESHOLD: abuseBlockThreshold,
+          ABUSE_DISTINCT_TOOLS_THRESHOLD: abuseDistinctToolsThreshold,
           BRAINTRUST_PROJECT_NAME: braintrustProjectName,
           BRAINTRUST_PROJECT_ID: braintrustProjectId,
           BRAINTRUST_ENABLED: braintrustEnabled,
@@ -182,7 +214,8 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
           constraints: {
             allowVersionOverride: false,
             allowVersionSelectionWrite: false,
-            mcpToolAccessMode,
+            mcpToolAccessMode: effectiveToolAccessMode,
+            accountToolAccessMode: accountAccess.mode,
           },
         }),
       };
@@ -196,6 +229,8 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
     }
     const accountId = binding?.accountId ?? 'default';
     const role = binding?.role ?? 'operator';
+    const accountAccess = await getAccountAccess(env?.DB, accountId);
+    const effectiveToolAccessMode = resolveEffectiveToolAccessMode(mcpToolAccessMode, accountAccess.mode);
     const canWrite = roleCanWrite(role);
     const canApprove = roleCanApprove(role);
 
@@ -215,7 +250,12 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
         OSO_BOOTSTRAP_POLICY: osoBootstrapPolicy,
         ENGINE_FALLBACK_ENABLED: engineFallbackEnabled,
         OSO_FETCH_TIMEOUT_MS: Number.isFinite(osoFetchTimeout ?? NaN) ? osoFetchTimeout : undefined,
-        MCP_TOOL_ACCESS_MODE: mcpToolAccessMode,
+        MCP_TOOL_ACCESS_MODE: effectiveToolAccessMode,
+        ACCOUNT_TOOL_ACCESS_MODE: accountAccess.mode,
+        ABUSE_GUARD_ENABLED: abuseGuardEnabled,
+        ABUSE_WINDOW_SECONDS: abuseWindowSeconds,
+        ABUSE_BLOCK_THRESHOLD: abuseBlockThreshold,
+        ABUSE_DISTINCT_TOOLS_THRESHOLD: abuseDistinctToolsThreshold,
         BRAINTRUST_PROJECT_NAME: braintrustProjectName,
         BRAINTRUST_PROJECT_ID: braintrustProjectId,
         BRAINTRUST_ENABLED: braintrustEnabled,
@@ -230,7 +270,8 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
           allowVersionSelectionWrite: canWrite,
           allowControlPlaneWrite: canWrite,
           allowApprovalDecide: canApprove,
-          mcpToolAccessMode,
+          mcpToolAccessMode: effectiveToolAccessMode,
+          accountToolAccessMode: accountAccess.mode,
         },
       }),
     };

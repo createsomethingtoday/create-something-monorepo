@@ -11,6 +11,10 @@ account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 # OSO_BOOTSTRAP_POLICY = "true"
 # ENGINE_FALLBACK_ENABLED = "true"
 # MCP_TOOL_ACCESS_MODE = "normal" # normal | read_only | off
+# ABUSE_GUARD_ENABLED = "true"
+# ABUSE_WINDOW_SECONDS = "300"
+# ABUSE_BLOCK_THRESHOLD = "8"
+# ABUSE_DISTINCT_TOOLS_THRESHOLD = "2"
 
 # Visualization/version persistence
 [[d1_databases]]

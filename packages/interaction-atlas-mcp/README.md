@@ -130,6 +130,22 @@ printf 'normal' | wrangler secret put MCP_TOOL_ACCESS_MODE --config wrangler.tom
 wrangler deploy --config wrangler.toml
 ```
 
+### Reactive abuse guard (auto kill + report)
+
+The server can auto-switch an account to `off` when a suspicious blocked-call pattern is detected.
+
+Env controls:
+
+- `ABUSE_GUARD_ENABLED=true|false` (default `true`)
+- `ABUSE_WINDOW_SECONDS` (default `300`)
+- `ABUSE_BLOCK_THRESHOLD` (default `8`)
+- `ABUSE_DISTINCT_TOOLS_THRESHOLD` (default `2`)
+
+Reporting/control MCP tools:
+
+- `judgment_security_status_get`
+- `judgment_security_access_set`
+
 ## Ops Handoff (Role Test Checklist)
 
 Use this checklist after key rotation or environment changes.

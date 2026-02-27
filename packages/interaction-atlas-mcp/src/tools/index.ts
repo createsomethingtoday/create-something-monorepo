@@ -55,6 +55,8 @@ import {
   JudgmentPolicyEstimateSchema,
   JudgmentEngineRolloutGetSchema,
   JudgmentEngineRolloutSetSchema,
+  JudgmentSecurityStatusGetSchema,
+  JudgmentSecurityAccessSetSchema,
   JudgmentPolicyGetSchema,
   JudgmentPolicySaveSchema,
   AutomationContractGetSchema,
@@ -97,6 +99,12 @@ import {
 } from '../storage/policies.js';
 import { getEngineRollout, setEngineRollout } from '../storage/rollout.js';
 import { getEngineMetricsSummary, recordEngineEvent } from '../storage/engine-events.js';
+import {
+  evaluateAbusePatternAndMitigate,
+  getAccountAccess,
+  listRecentSecurityIncidents,
+  setAccountAccess,
+} from '../storage/security.js';
 import {
   createAutomationRun,
   decideApproval,
@@ -293,6 +301,9 @@ async function emitJudgmentDecisionTrace(
     fallbackReason: string | null;
     policyHash?: string;
     compilerVersion?: string;
+    securityActionMode?: string | null;
+    securityIncidentId?: string | null;
+    securityActionReason?: string | null;
     latencyMs: number;
   },
 ): Promise<void> {
@@ -338,6 +349,9 @@ async function emitJudgmentDecisionTrace(
             fallbackReason: event.fallbackReason,
             policyHash: event.policyHash,
             compilerVersion: event.compilerVersion,
+            securityActionMode: event.securityActionMode,
+            securityIncidentId: event.securityIncidentId,
+            securityActionReason: event.securityActionReason,
             latencyMs: event.latencyMs,
           },
         });
@@ -366,6 +380,16 @@ function boolMetadata(ctx: { metadata: Record<string, unknown> }, key: string, d
   return defaultValue;
 }
 
+function intMetadata(ctx: { metadata: Record<string, unknown> }, key: string, defaultValue: number): number {
+  const value = ctx.metadata[key];
+  if (typeof value === 'number' && Number.isFinite(value)) return Math.floor(value);
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return Math.floor(parsed);
+  }
+  return defaultValue;
+}
+
 function hybridConfigFromContext(ctx: { metadata: Record<string, unknown> }): HybridEvaluatorConfig {
   const fetchTimeoutRaw = ctx.metadata.OSO_FETCH_TIMEOUT_MS;
   const fetchTimeoutMillis = typeof fetchTimeoutRaw === 'number' ? fetchTimeoutRaw : undefined;
@@ -378,6 +402,20 @@ function hybridConfigFromContext(ctx: { metadata: Record<string, unknown> }): Hy
       bootstrapPolicy: boolMetadata(ctx, 'OSO_BOOTSTRAP_POLICY', true),
       fetchTimeoutMillis,
     },
+  };
+}
+
+function abuseMitigationConfigFromContext(ctx: { metadata: Record<string, unknown> }): {
+  enabled: boolean;
+  windowSeconds: number;
+  blockThreshold: number;
+  distinctToolThreshold: number;
+} {
+  return {
+    enabled: boolMetadata(ctx, 'ABUSE_GUARD_ENABLED', true),
+    windowSeconds: Math.max(60, intMetadata(ctx, 'ABUSE_WINDOW_SECONDS', 300)),
+    blockThreshold: Math.max(2, intMetadata(ctx, 'ABUSE_BLOCK_THRESHOLD', 8)),
+    distinctToolThreshold: Math.max(1, intMetadata(ctx, 'ABUSE_DISTINCT_TOOLS_THRESHOLD', 2)),
   };
 }
 
@@ -473,6 +511,13 @@ async function evaluateDecisionForEntity(
   );
   const final = withRollout.final;
   const polarReference = withRollout.polar;
+  let securityAction:
+    | {
+        mode: 'normal' | 'read_only' | 'off';
+        incidentId?: string;
+        reason?: string;
+      }
+    | undefined;
 
   await recordEngineEvent(db, {
     correlation_id: correlationId,
@@ -492,6 +537,22 @@ async function evaluateDecisionForEntity(
     latency_ms: Math.floor(final.latencyMs),
   });
 
+  const abuseMitigation = await evaluateAbusePatternAndMitigate(db, {
+    accountId: ctx.accountId,
+    correlationId,
+    readOnly: ctx.policy.readOnly === true,
+    currentDecision: final.decision,
+    currentToolName: args.toolName,
+    config: abuseMitigationConfigFromContext(ctx),
+  });
+  if (abuseMitigation.triggered && abuseMitigation.actionMode) {
+    securityAction = {
+      mode: abuseMitigation.actionMode,
+      incidentId: abuseMitigation.incidentId,
+      reason: abuseMitigation.reason,
+    };
+  }
+
   await emitJudgmentDecisionTrace(ctx, {
     correlationId,
     accountId: ctx.accountId,
@@ -509,6 +570,9 @@ async function evaluateDecisionForEntity(
     fallbackReason: polarReference.fallbackReason ?? null,
     policyHash: polarReference.policyHash,
     compilerVersion: polarReference.compilerVersion,
+    securityActionMode: securityAction?.mode ?? null,
+    securityIncidentId: securityAction?.incidentId ?? null,
+    securityActionReason: securityAction?.reason ?? null,
     latencyMs: Math.floor(final.latencyMs),
   });
 
@@ -546,6 +610,7 @@ async function evaluateDecisionForEntity(
     evaluationPath: final.evaluationPath,
     fallbackReason: polarReference.fallbackReason ?? null,
     latencyMs: Math.floor(final.latencyMs),
+    securityAction,
     atlasSignals: atlasSignals(args.input),
   };
 }
@@ -1525,6 +1590,98 @@ export function registerTools(server: ScopedMcpServer): void {
           fallback_rate_threshold: rollout.fallback_rate_threshold,
           updated_by: rollout.updated_by,
           updated_at: rollout.updated_at,
+        },
+      });
+    },
+    { readOnly: false },
+  );
+
+  server.tool(
+    'judgment_security_status_get',
+    'Get account tool-access mode and recent security incidents.',
+    JudgmentSecurityStatusGetSchema.shape,
+    async (params, ctx) => {
+      const input = JudgmentSecurityStatusGetSchema.parse(params);
+      const db = getDbFromMetadata(ctx);
+      const access = await getAccountAccess(db, ctx.accountId);
+      const incidents = await listRecentSecurityIncidents(db, {
+        accountId: ctx.accountId,
+        limit: input.limit ?? 10,
+      });
+
+      return jsonContent({
+        meta: {
+          authScope: 'account',
+          note: 'Response is scoped to authenticated account context.',
+        },
+        accountId: ctx.accountId,
+        access: {
+          mode: access.mode,
+          reason: access.reason,
+          incident_id: access.incident_id,
+          updated_by: access.updated_by,
+          updated_at: access.updated_at,
+          expires_at: access.expires_at,
+        },
+        incidents: incidents.map((row) => ({
+          id: row.id,
+          incident_type: row.incident_type,
+          severity: row.severity,
+          action_mode: row.action_mode,
+          reason: row.reason,
+          signal: (() => {
+            try {
+              return JSON.parse(row.signal_json);
+            } catch {
+              return null;
+            }
+          })(),
+          status: row.status,
+          correlation_id: row.correlation_id,
+          created_at: row.created_at,
+          resolved_at: row.resolved_at,
+          resolved_by: row.resolved_by,
+        })),
+      });
+    },
+    { readOnly: true },
+  );
+
+  server.tool(
+    'judgment_security_access_set',
+    'Manually set account MCP tool-access mode for incident response.',
+    JudgmentSecurityAccessSetSchema.shape,
+    async (params, ctx) => {
+      const input = JudgmentSecurityAccessSetSchema.parse(params);
+      if (!allowControlPlaneWrite(ctx)) {
+        return jsonError({
+          error: 'security_access_set_not_allowed',
+          message: 'Setting security access mode is not permitted for this caller.',
+        });
+      }
+
+      const db = getDbFromMetadata(ctx);
+      const row = await setAccountAccess(db, {
+        accountId: ctx.accountId,
+        mode: input.mode,
+        reason: input.reason,
+        updatedBy: ctx.userId ?? 'api-key',
+        expiresAt: input.expires_at ?? null,
+      });
+
+      return jsonContent({
+        meta: {
+          authScope: 'account',
+          note: 'Mutation applies within authenticated account context.',
+        },
+        accountId: ctx.accountId,
+        access: {
+          mode: row.mode,
+          reason: row.reason,
+          incident_id: row.incident_id,
+          updated_by: row.updated_by,
+          updated_at: row.updated_at,
+          expires_at: row.expires_at,
         },
       });
     },
