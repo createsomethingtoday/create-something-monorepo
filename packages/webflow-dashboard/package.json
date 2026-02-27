@@ -10,8 +10,8 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "deploy": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=webflow-dashboard",
-    "deploy:preview": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=webflow-dashboard --branch=preview"
+    "deploy": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=webflow-dashboard --commit-dirty=true",
+    "deploy:preview": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=webflow-dashboard --branch=preview --commit-dirty=true"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20251219.0",
