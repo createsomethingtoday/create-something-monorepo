@@ -9127,6 +9127,10 @@
     "composio-toolkit-slack": {
       "transport": "http",
       "url": "https://composio-toolkit-mcp.createsomething.workers.dev/mcp/slack",
+      "connect_timeout_ms": 20000,
+      "list_tools_timeout_ms": 25000,
+      "bootstrap_retry_count": 2,
+      "bootstrap_retry_delay_ms": 1000,
       "description": "Composio toolkit gateway: Slack (slack) - Slack is a channel-based messaging platform. With Slack, people can work together more effectively, connect all their software tools and services, and find the information they need to do their best work — all within a secure, enterprise-grade environment.",
       "tags": [
         "composio",
@@ -10899,6 +10903,10 @@
     "composio-toolkit-zoom": {
       "transport": "http",
       "url": "https://composio-toolkit-mcp.createsomething.workers.dev/mcp/zoom",
+      "connect_timeout_ms": 20000,
+      "list_tools_timeout_ms": 25000,
+      "bootstrap_retry_count": 2,
+      "bootstrap_retry_delay_ms": 1000,
       "description": "Composio toolkit gateway: Zoom (zoom) - Zoom is a video conferencing and online meeting platform featuring breakout rooms, screen sharing, and integrations with various enterprise tools",
       "tags": [
         "composio",

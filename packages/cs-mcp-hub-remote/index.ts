@@ -15,6 +15,10 @@ type HttpServerConfig = {
   http_headers?: StringMap;
   env_http_headers?: StringMap;
   bearer_token_env_var?: string;
+  connect_timeout_ms?: number;
+  list_tools_timeout_ms?: number;
+  bootstrap_retry_count?: number;
+  bootstrap_retry_delay_ms?: number;
   tool_call_timeout_ms?: number;
   timeout_ms?: number;
   headers?: StringMap;
@@ -619,55 +623,101 @@ async function connectSingleDownstream(
   config: HttpServerConfig,
   env: Env,
 ): Promise<ConnectedDownstream | DownstreamFailure> {
-  const client = new Client({
-    name: `${HUB_NAME}:${name}`,
-    version: HUB_VERSION,
-  });
+  const baseHeaders = resolveHttpHeaders(name, config, env);
+  const requestHeaders = { ...baseHeaders };
+  const toolCallTimeoutMs = resolveToolCallTimeoutMs(config, env);
+  const connectTimeoutMs = resolveDownstreamConnectTimeoutMs(config);
+  const listToolsTimeoutMs = resolveDownstreamListToolsTimeoutMs(config);
+  const retryCount = resolveDownstreamBootstrapRetryCount(config);
+  const retryDelayMs = resolveDownstreamBootstrapRetryDelayMs(config);
+  const totalAttempts = retryCount + 1;
 
-  try {
-    const requestInit: RequestInit = {};
-    const baseHeaders = resolveHttpHeaders(name, config, env);
-    const requestHeaders = { ...baseHeaders };
-    requestInit.headers = requestHeaders;
+  let lastError: unknown;
 
-    const toolCallTimeoutMs = resolveToolCallTimeoutMs(config, env);
-    const connectTimeoutMs = resolveDownstreamConnectTimeoutMs(config);
+  for (let attempt = 1; attempt <= totalAttempts; attempt += 1) {
+    const client = new Client({
+      name: `${HUB_NAME}:${name}`,
+      version: HUB_VERSION,
+    });
 
-    const transport = new StreamableHTTPClientTransport(new URL(config.url), { requestInit });
-    await withTimeout(
-      client.connect(transport),
-      connectTimeoutMs,
-      `Timeout connecting to downstream MCP "${name}"`,
-    );
-
-    const tools = await withTimeout(
-      listAllTools(client),
-      connectTimeoutMs,
-      `Timeout listing tools from downstream MCP "${name}"`,
-    );
-    return {
-      name,
-      config,
-      baseHeaders,
-      requestHeaders,
-      toolCallTimeoutMs,
-      callQueue: Promise.resolve(),
-      client,
-      tools,
-    };
-  } catch (error) {
     try {
-      await client.close();
-    } catch {
-      // Best-effort cleanup.
+      const transport = new StreamableHTTPClientTransport(new URL(config.url), {
+        requestInit: { headers: requestHeaders },
+      });
+      await withTimeout(
+        client.connect(transport),
+        connectTimeoutMs,
+        formatDownstreamAttemptLabel(
+          `Timeout connecting to downstream MCP "${name}"`,
+          attempt,
+          totalAttempts,
+        ),
+      );
+
+      const tools = await withTimeout(
+        listAllTools(client),
+        listToolsTimeoutMs,
+        formatDownstreamAttemptLabel(
+          `Timeout listing tools from downstream MCP "${name}"`,
+          attempt,
+          totalAttempts,
+        ),
+      );
+
+      return {
+        name,
+        config,
+        baseHeaders,
+        requestHeaders,
+        toolCallTimeoutMs,
+        callQueue: Promise.resolve(),
+        client,
+        tools,
+      };
+    } catch (error) {
+      lastError = error;
+      try {
+        await client.close();
+      } catch {
+        // Best-effort cleanup.
+      }
+
+      if (attempt < totalAttempts) {
+        await sleepMs(retryDelayMs);
+      }
     }
-    const message = error instanceof Error ? error.message : String(error);
-    return { name, error: message };
   }
+
+  const message = lastError instanceof Error ? lastError.message : String(lastError);
+  return { name, error: message };
+}
+
+function formatDownstreamAttemptLabel(base: string, attempt: number, totalAttempts: number): string {
+  if (totalAttempts <= 1) return base;
+  return `${base} (attempt ${attempt}/${totalAttempts})`;
+}
+
+function sleepMs(delayMs: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, delayMs));
+}
+
+function resolveDownstreamBootstrapRetryCount(config: HttpServerConfig): number {
+  return parsePositiveIntFromUnknown(config.bootstrap_retry_count, 1);
+}
+
+function resolveDownstreamBootstrapRetryDelayMs(config: HttpServerConfig): number {
+  return parsePositiveIntFromUnknown(config.bootstrap_retry_delay_ms, 750);
 }
 
 function resolveDownstreamConnectTimeoutMs(config: HttpServerConfig): number {
-  return parsePositiveIntFromUnknown(config.timeout_ms, 8_000);
+  return parsePositiveIntFromUnknown(config.connect_timeout_ms ?? config.timeout_ms, 8_000);
+}
+
+function resolveDownstreamListToolsTimeoutMs(config: HttpServerConfig): number {
+  return parsePositiveIntFromUnknown(
+    config.list_tools_timeout_ms ?? config.connect_timeout_ms ?? config.timeout_ms,
+    12_000,
+  );
 }
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
