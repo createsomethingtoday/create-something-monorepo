@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { fade, fly } from 'svelte/transition';
-	import { Card, CardHeader, CardTitle, CardContent, Badge } from './ui';
+	import { Badge } from './ui';
 	import Sparkline from './Sparkline.svelte';
 	import KineticNumber from './KineticNumber.svelte';
 	import { TrendingUp, TrendingDown, Minus, Trophy, Target, Zap, AlertTriangle, HelpCircle } from 'lucide-svelte';
@@ -116,72 +116,67 @@
 	}
 
 	const userCategories = $derived(() => new Set(userTemplates.map((t) => t.category)));
+	const hasMarketplaceSalesSummaryData = $derived(
+		() => summary.totalMarketplaceSales !== 0 || Boolean(summary.lastUpdated)
+	);
+	const hasUserSummaryData = $derived(() => userTemplates.length > 0);
+	const visibleSummaryItemCount = $derived(() => {
+		let count = 0;
+		if (hasMarketplaceSalesSummaryData()) count += 1; // total sales
+		if (hasUserSummaryData()) count += 2; // rank + top 50
+		if (categories.length > 0) count += 1; // categories tracked
+		return count;
+	});
 </script>
 
 <div class="marketplace-insights">
-	<!-- Summary Stats -->
-	<div class="summary-grid" in:fade={{ duration: 300 }}>
-		<Card>
-			<CardContent>
-				<div class="stat-card" in:fly={{ y: 20, duration: 400, delay: 0 }}>
-					<div class="stat-header">
-						<span class="stat-label">Total Sales (30d)</span>
-						<span class="stat-badge" title={summary.syncSchedule || 'Data refreshes weekly on Mondays at 4 PM UTC'}>Weekly Snapshot</span>
-					</div>
-					<span class="stat-value"><KineticNumber value={summary.totalMarketplaceSales} /></span>
-					<span class="stat-note">
-						across all categories
+	<!-- Summary Stats: high data-ink ratio, direct labels, minimal ornament -->
+	{#if visibleSummaryItemCount() > 0}
+		<dl class={`summary-grid summary-grid-${visibleSummaryItemCount()}`} in:fade={{ duration: 220 }}>
+			{#if hasMarketplaceSalesSummaryData()}
+				<div class="summary-item">
+					<dt class="summary-term">Total Sales (30d)</dt>
+					<dd class="summary-value"><KineticNumber value={summary.totalMarketplaceSales} /></dd>
+					<dd class="summary-support">across all categories</dd>
+					<dd class="summary-meta" title={summary.syncSchedule || 'Data refreshes weekly on Mondays at 4 PM UTC'}>
+						weekly snapshot
 						{#if summary.timeUntilNextSync}
 							· next update {summary.timeUntilNextSync}
 						{/if}
-					</span>
+					</dd>
 				</div>
-			</CardContent>
-		</Card>
+			{/if}
 
-		<Card>
-			<CardContent>
-				<div class="stat-card" in:fly={{ y: 20, duration: 400, delay: 100 }}>
-					<div class="stat-header">
-						<span class="stat-label">Your Best Rank</span>
-						<span class="stat-badge stat-badge-muted">By Revenue</span>
-					</div>
-					<span class="stat-value">
+			{#if hasUserSummaryData()}
+				<div class="summary-item">
+					<dt class="summary-term">Your Best Rank</dt>
+					<dd class="summary-value">
 						{summary.userBestRank ? `#${summary.userBestRank}` : '-'}
-					</span>
-					<span class="stat-note">
+					</dd>
+					<dd class="summary-support">
 						{summary.userBestRank ? 'out of top 50 templates' : 'not in top 50 this period'}
-					</span>
+					</dd>
+					<dd class="summary-meta">by revenue</dd>
 				</div>
-			</CardContent>
-		</Card>
 
-		<Card>
-			<CardContent>
-				<div class="stat-card" in:fly={{ y: 20, duration: 400, delay: 200 }}>
-					<div class="stat-header">
-						<span class="stat-label">Your Templates in Top 50</span>
-						<span class="stat-badge stat-badge-muted">30-Day</span>
-					</div>
-					<span class="stat-value"><KineticNumber value={userTemplates.length} /></span>
-					<span class="stat-note">in the leaderboard</span>
+				<div class="summary-item">
+					<dt class="summary-term">Your Templates in Top 50</dt>
+					<dd class="summary-value"><KineticNumber value={userTemplates.length} /></dd>
+					<dd class="summary-support">in the leaderboard</dd>
+					<dd class="summary-meta">30-day window</dd>
 				</div>
-			</CardContent>
-		</Card>
+			{/if}
 
-		<Card>
-			<CardContent>
-				<div class="stat-card" in:fly={{ y: 20, duration: 400, delay: 300 }}>
-					<div class="stat-header">
-						<span class="stat-label">Categories Tracked</span>
-						<span class="stat-badge stat-badge-muted">Active</span>
-					</div>
-					<span class="stat-value"><KineticNumber value={categories.length} /></span>
-					<span class="stat-note">with recent sales</span>
+			{#if categories.length > 0}
+				<div class="summary-item">
+					<dt class="summary-term">Categories Tracked</dt>
+					<dd class="summary-value"><KineticNumber value={categories.length} /></dd>
+					<dd class="summary-support">with recent sales</dd>
+					<dd class="summary-meta">active categories</dd>
 				</div>
-			</CardContent>
-		</Card>
-	</div>
+			{/if}
+		</dl>
+		{/if}
 
 	<!-- Insights with priority sorting -->
 	{#if insights.length > 0}
@@ -500,13 +495,89 @@
 	.summary-grid {
 		display: grid;
 		grid-template-columns: repeat(4, 1fr);
-		gap: var(--space-md);
+		gap: 0;
 		margin-bottom: var(--space-xl);
+		border-top: 1px solid var(--color-border-default);
+		border-bottom: 1px solid var(--color-border-default);
+	}
+
+	.summary-grid.summary-grid-1 {
+		grid-template-columns: 1fr;
+	}
+
+	.summary-grid.summary-grid-2 {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.summary-grid.summary-grid-3 {
+		grid-template-columns: repeat(3, 1fr);
+	}
+
+	.summary-item {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
+		padding: var(--space-md) var(--space-sm);
+		min-height: 8.5rem;
+		border-right: 1px solid var(--color-border-default);
+	}
+
+	.summary-item:last-child {
+		border-right: none;
+	}
+
+	.summary-term,
+	.summary-value,
+	.summary-support,
+	.summary-meta {
+		margin: 0;
+	}
+
+	.summary-term {
+		font-size: var(--text-caption);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-muted);
+		letter-spacing: 0.02em;
+		text-transform: uppercase;
+	}
+
+	.summary-value {
+		font-size: var(--text-h1);
+		font-weight: var(--font-semibold);
+		line-height: 1.15;
+		color: var(--color-fg-primary);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.summary-support {
+		font-size: var(--text-body-sm);
+		color: var(--color-fg-secondary);
+		line-height: 1.35;
+		margin-top: auto;
+	}
+
+	.summary-meta {
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		font-variant-numeric: tabular-nums;
 	}
 
 	@media (max-width: 1024px) {
 		.summary-grid {
 			grid-template-columns: repeat(2, 1fr);
+		}
+
+		.summary-item {
+			border-right: none;
+			border-bottom: 1px solid var(--color-border-default);
+		}
+
+		.summary-item:nth-child(odd) {
+			border-right: 1px solid var(--color-border-default);
+		}
+
+		.summary-item:nth-last-child(-n + 2) {
+			border-bottom: none;
 		}
 	}
 
@@ -514,79 +585,23 @@
 		.summary-grid {
 			grid-template-columns: 1fr;
 		}
-	}
 
-	.summary-grid :global(.card) {
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		transition: all var(--duration-micro) var(--ease-standard);
-		display: flex;
-		flex-direction: column;
-	}
+		.summary-item {
+			min-height: auto;
+			border-right: none;
+		}
 
-	.summary-grid :global(.card-content) {
-		flex: 1;
-		display: flex;
-		flex-direction: column;
-	}
+		.summary-item:not(:last-child) {
+			border-bottom: 1px solid var(--color-border-default);
+		}
 
-	.summary-grid :global(.card):hover {
-		border-color: var(--color-border-emphasis);
-		box-shadow: var(--shadow-sm);
-	}
+		.summary-item:nth-last-child(-n + 2) {
+			border-bottom: 1px solid var(--color-border-default);
+		}
 
-	.stat-card {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-xs);
-		padding: var(--space-xs) 0;
-		flex: 1;
-	}
-
-	.stat-header {
-		display: flex;
-		align-items: center;
-		gap: var(--space-xs);
-		flex-wrap: wrap;
-	}
-
-	.stat-card .stat-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		font-weight: var(--font-medium);
-		text-transform: uppercase;
-		letter-spacing: 0.02em;
-	}
-
-	.stat-badge {
-		font-size: 10px;
-		padding: 2px 6px;
-		background: var(--color-info-muted);
-		color: var(--color-info);
-		border-radius: var(--radius-sm);
-		font-weight: var(--font-medium);
-		text-transform: uppercase;
-		letter-spacing: 0.03em;
-	}
-
-	.stat-badge-muted {
-		background: var(--color-bg-subtle);
-		color: var(--color-fg-muted);
-	}
-
-	.stat-card .stat-value {
-		font-size: var(--text-h1);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		line-height: 1.2;
-		font-variant-numeric: tabular-nums;
-	}
-
-	.stat-note {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		font-style: italic;
-		margin-top: auto;
+		.summary-item:last-child {
+			border-bottom: none;
+		}
 	}
 
 	/* Tooltip styles */
