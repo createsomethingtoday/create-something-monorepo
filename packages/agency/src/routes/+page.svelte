@@ -1105,7 +1105,7 @@
   }
 
   .offering-header {
-    padding: var(--space-6, 2rem) var(--space-5, 1.5rem) var(--space-4, 1rem);
+    padding: var(--space-5, 1.5rem) var(--space-4, 1rem) var(--space-3, 0.75rem);
     text-align: center;
   }
 
@@ -1117,7 +1117,7 @@
   }
 
   .offering-body {
-    padding: 0 var(--space-5, 1.5rem) var(--space-6, 2rem);
+    padding: 0 var(--space-4, 1rem) var(--space-5, 1.5rem);
     flex: 1;
     display: flex;
     flex-direction: column;
