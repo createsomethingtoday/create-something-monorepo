@@ -19,6 +19,8 @@ Apply in this exact order:
 5. `0005_policy_activation_governance.sql`
 6. `0006_control_plane_invariants.sql`
 7. `0007_polar_artifacts.sql`
+8. `0008_judgment_event_correlation.sql`
+9. `0009_security_response.sql`
 
 ## Pre-flight checks
 

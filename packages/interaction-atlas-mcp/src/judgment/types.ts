@@ -39,6 +39,11 @@ export interface JudgmentDecision {
   evaluationPath?: 'legacy' | 'primary' | 'fallback';
   fallbackReason?: string | null;
   latencyMs?: number;
+  securityAction?: {
+    mode: 'normal' | 'read_only' | 'off';
+    incidentId?: string;
+    reason?: string;
+  };
   atlasSignals: {
     touchpoint?: string;
     aiTask?: string;
