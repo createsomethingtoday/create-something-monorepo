@@ -1,6 +1,12 @@
 <script lang="ts">
   import { SEO } from '@create-something/canon';
-  import { AnimatedGridPattern, BlurFade, ShimmerButton } from '@create-something/canon/magicui';
+  import {
+    AnimatedGridPattern,
+    BlurFade,
+    ShimmerButton,
+    BorderBeam
+  } from '@create-something/canon/magicui';
+  import HubMcpFlow from '$lib/components/HubMcpFlow.svelte';
 
   // Structured data for SEO/AEO
   const deliveryVector = {
@@ -116,11 +122,23 @@
   </div>
 </section>
 
+<!-- Flow Visualization -->
+<section class="flow-section">
+  <div class="section-container">
+    <BlurFade delay={0.3}>
+      <div class="mcp-flow-wrapper">
+        <HubMcpFlow />
+      </div>
+    </BlurFade>
+  </div>
+</section>
+
 <!-- The Retainer -->
 <section class="retainer-section">
   <div class="section-container">
     <BlurFade>
       <div class="retainer-card">
+        <BorderBeam size={300} duration={12} delay={9} />
         <div class="retainer-header">
           <div class="retainer-pricing">
             <div class="retainer-price">Constraint OS</div>
@@ -349,10 +367,20 @@
     line-height: var(--leading-relaxed);
   }
 
+  /* Flow Section */
+  .flow-section {
+    padding: 0 var(--container-padding, 1.5rem) var(--section-padding, 6rem);
+  }
+
+  .mcp-flow-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
   /* Retainer Card */
   .retainer-section {
     padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
-    border-top: 1px solid var(--color-border-default);
   }
 
   .retainer-card {
@@ -503,7 +531,6 @@
   /* Timeline */
   .timeline-section {
     padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
-    border-top: 1px solid var(--color-border-default);
   }
 
   .timeline-grid {
@@ -564,7 +591,6 @@
   /* FAQ */
   .faq-section {
     padding: var(--section-padding, 6rem) 0;
-    border-top: 1px solid var(--color-border-default);
   }
 
   .faq-grid {
@@ -613,7 +639,6 @@
   /* CTA */
   .cta-section {
     padding: var(--section-padding, 6rem) 0;
-    border-top: 1px solid var(--color-border-default);
     text-align: center;
   }
 
