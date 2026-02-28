@@ -75,6 +75,8 @@
     "mcp:hub:start": "pnpm --filter @create-something/cs-mcp-hub start",
     "mcp:hub:status": "node packages/cs-mcp-hub/dist/index.js --status",
     "mcp:hub:write-config": "node packages/cs-mcp-hub/dist/index.js --write-codex",
+    "mcp:hub:fleet:deploy": "bash scripts/cs-hub-fleet-deploy.sh",
+    "mcp:hub:fleet:verify": "bash scripts/cs-hub-fleet-verify.sh",
     "mcp:registry:validate": "tsx scripts/mcp-registry.ts validate",
     "mcp:registry:generate": "tsx scripts/mcp-registry.ts generate",
     "mcp:registry:check": "tsx scripts/mcp-registry.ts check",

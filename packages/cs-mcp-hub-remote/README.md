@@ -124,6 +124,23 @@ pnpm --filter @create-something/cs-mcp-hub-remote dev
 pnpm --filter @create-something/cs-mcp-hub-remote deploy
 ```
 
+Fleet deploy (team hubs + core hub):
+
+```bash
+pnpm mcp:hub:fleet:deploy
+pnpm mcp:hub:fleet:verify
+```
+
+Team workers included in fleet deploy:
+
+- `cs-hub-lainy`
+- `cs-hub-danny`
+- `cs-hub-august`
+- `cs-hub-filip`
+- `cs-hub-leah`
+- `cs-hub-mj`
+- `cs-mcp-hub-remote`
+
 Then point clients to:
 
 ```text

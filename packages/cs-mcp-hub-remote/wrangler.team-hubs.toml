@@ -1,0 +1,24 @@
+name = "cs-hub-template"
+main = "index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+workers_dev = false
+preview_urls = false
+
+[observability]
+enabled = true
+
+[[d1_databases]]
+binding = "TELEMETRY_DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
+
+[[kv_namespaces]]
+binding = "HUB_STATE_KV"
+id = "f77e7c97087041d29fbf0d12e5a831ee"
+preview_id = "6356c7663c334a4195243971e117565c"
+
+[vars]
+HUB_DISCOVERY_MODE = "compact"
+HUB_DISCOVERY_SHARED_PACK = "shared-auth-core"
