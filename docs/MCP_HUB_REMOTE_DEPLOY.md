@@ -1,6 +1,6 @@
 # MCP Hub Remote Deploy
 
-Deploy a single public MCP endpoint that proxies the CREATE SOMETHING MCP fleet.
+Deploy the remote runtime for the CREATE SOMETHING MCP gateway (broker-only model) as a single public MCP endpoint.
 
 ## Package
 

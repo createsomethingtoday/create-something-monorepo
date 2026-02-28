@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Remote single-endpoint MCP hub for CREATE SOMETHING",
+  "description": "Remote broker-only MCP gateway runtime for CREATE SOMETHING",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",

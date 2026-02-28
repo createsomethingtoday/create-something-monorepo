@@ -1,6 +1,6 @@
 # @create-something/cs-mcp-hub-remote
 
-Remote MCP hub that exposes one public endpoint and proxies tools from enabled downstream CREATE SOMETHING/WORKWAY MCP servers.
+Remote runtime for the CREATE SOMETHING MCP gateway, exposed as one public endpoint with broker-only downstream execution.
 
 ## Endpoints
 
@@ -12,7 +12,7 @@ Remote MCP hub that exposes one public endpoint and proxies tools from enabled d
 - Loads downstream server registry from `config/mcp-hub/registry.json`
 - Resolves enabled bundles/servers from env vars (or registry defaults)
 - Connects to downstream HTTP MCP servers
-- Exposes a broker-style interface to discover and execute downstream proxy tools
+- Enforces broker-only execution via `hub_search_proxy_tools` -> `hub_describe_proxy_tool` -> `hub_execute_proxy_tool`
 
 ## Management Tools
 
