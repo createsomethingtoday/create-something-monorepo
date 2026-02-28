@@ -1,6 +1,6 @@
 # Constraint Mapping Invitation Templates
 
-**Purpose**: Convert warm relationship into a Constraint Mapping Session
+**Purpose**: Convert warm relationship into a Policy Mapping Session
 **When to use**: After 2-3 positive exchanges, clear ICP match
 **Prerequisite**: They know who you are and have shown interest
 
@@ -13,7 +13,7 @@
 ```
 This is easier to talk through than type.
 
-Would you be up for a 20-minute Constraint Mapping Session? Not a sales pitch - we'll map your workflow bottlenecks and where governance is required.
+Would you be up for a 20-minute Policy Mapping Session? Not a sales pitch - we'll map your workflow bottlenecks and where governance is required.
 
 Here's my calendar if useful: {{calendar_link}}
 
@@ -24,7 +24,7 @@ Or just throw out a time that works.
 ```
 This is easier to talk through than type.
 
-Would you be up for a 20-minute Constraint Mapping Session? Not a sales pitch - we'll map your workflow bottlenecks and where governance is required.
+Would you be up for a 20-minute Policy Mapping Session? Not a sales pitch - we'll map your workflow bottlenecks and where governance is required.
 
 Here's my calendar if useful: createsomething.agency/book
 
@@ -67,7 +67,7 @@ createsomething.agency/book
 ```
 Based on our conversation, I think this might be relevant: {{resource_link}}
 
-If it resonates, happy to dig deeper on a Constraint Mapping Session. 20 minutes, no commitment.
+If it resonates, happy to dig deeper on a Policy Mapping Session. 20 minutes, no commitment.
 
 {{calendar_link}}
 ```
@@ -81,7 +81,7 @@ If it resonates, happy to dig deeper on a Constraint Mapping Session. 20 minutes
 ```
 You mentioned {{initiative}} is coming up in {{timeframe}}.
 
-Might be worth a quick Constraint Mapping Session before you get too deep in. We've seen a few patterns that could save you time.
+Might be worth a quick Policy Mapping Session before you get too deep in. We've seen a few patterns that could save you time.
 
 20 minutes, happy to just share what we know.
 
@@ -97,7 +97,7 @@ Might be worth a quick Constraint Mapping Session before you get too deep in. We
 ```
 I've enjoyed this exchange - feels like we're circling similar problems.
 
-Would be easier to continue over a Constraint Mapping Session. 20 minutes, no agenda beyond "what are you working on and how can we help?"
+Would be easier to continue over a Policy Mapping Session. 20 minutes, no agenda beyond "what are you working on and how can we help?"
 
 {{calendar_link}} - or suggest a time.
 ```

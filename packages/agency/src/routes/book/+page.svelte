@@ -224,14 +224,14 @@
 </script>
 
 <SEO
-	title="Book a Constraint Mapping Session"
+	title="Book a Policy Mapping Session"
 	description="Schedule a mapping session to scope Custom Workflow MCPs, Autonomy Assurance, Enterprise Extension, or system-development referral."
 	propertyName="agency"
 />
 
 <main class="booking-page">
 	<header class="booking-header">
-		<h1 class="booking-title">Book a Constraint Mapping Session</h1>
+		<h1 class="booking-title">Book a Policy Mapping Session</h1>
 		<p class="booking-subtitle">
 			Map your lane: Custom Workflow MCPs, Autonomy Assurance, Enterprise Extension, or referral.
 		</p>

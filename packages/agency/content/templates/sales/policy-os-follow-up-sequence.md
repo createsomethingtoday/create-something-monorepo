@@ -1,4 +1,4 @@
-# Constraint OS Follow-up Sequence (Post-Discovery)
+# POLICY OS Follow-up Sequence (Post-Discovery)
 
 Use this sequence after a discovery call to convert diagnosis into a concrete decision.
 
@@ -22,7 +22,7 @@ Use this sequence after a discovery call to convert diagnosis into a concrete de
 Confirm shared diagnosis and lock next action.
 
 ### Template
-Subject: Constraint OS recap + next step
+Subject: POLICY OS recap + next step
 
 Hi {{Name}},
 
@@ -72,7 +72,7 @@ Subject: confirm mapping session stakeholders
 
 Hi {{Name}},
 
-To finalize the Constraint Mapping Session, please confirm:
+To finalize the Policy Mapping Session, please confirm:
 - decision owner
 - ops/technical stakeholders
 - preferred slot this week
@@ -155,5 +155,5 @@ Best,
 
 - Every sequence ends with a named owner and date, or explicit pause condition.
 - Medium-fit sequences include documented assurance trigger criteria.
-- High-fit sequences result in a scheduled Constraint Mapping Session.
+- High-fit sequences result in a scheduled Policy Mapping Session.
 

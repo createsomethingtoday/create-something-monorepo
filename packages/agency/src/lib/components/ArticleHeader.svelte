@@ -176,9 +176,6 @@
 		color: var(--color-fg-muted);
 	}
 
-	.metadata-row {
-	}
-
 	.metadata-item {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);

@@ -45,14 +45,14 @@ This GTM strategy embodies the [Hermeneutic Circle](/canon/concepts/hermeneutic-
 - [x] Lead management (`/admin/funnel/leads/new`)
 - [x] Metrics recording (`/admin/funnel/record`)
 
-### Constraint OS Sales Assets v1 (Ops/RevOps)
+### POLICY OS Sales Assets v1 (Ops/RevOps)
 - [x] Sales asset index (`content/sales/README.md`)
-- [x] One-pager buyer brief (`content/sales/constraint-os-buyer-brief-ops-revops.md`)
+- [x] One-pager buyer brief (`content/sales/policy-os-buyer-brief-ops-revops.md`)
 - [x] Live discovery script (`content/sales/discovery-call-script.md`)
-- [x] Commercial interface spec (`content/sales/constraint-os-interface-spec.yaml`)
+- [x] Commercial interface spec (`content/sales/policy-os-interface-spec.yaml`)
 - [x] Discovery note template (`content/templates/sales/discovery-note-template.md`)
-- [x] Proposal input template (`content/templates/sales/constraint-os-proposal-input-template.md`)
-- [x] Follow-up cadence template (`content/templates/sales/constraint-os-follow-up-sequence.md`)
+- [x] Proposal input template (`content/templates/sales/policy-os-proposal-input-template.md`)
+- [x] Follow-up cadence template (`content/templates/sales/policy-os-follow-up-sequence.md`)
 
 **Standard run sequence:**
 1. Send buyer brief before or immediately after call one.
@@ -201,8 +201,8 @@ Post-proposal cadence:
 - Day 14: Decision timeline check
 - Day 21: Final follow-up or close
 
-Constraint OS sequence template:
-- `content/templates/sales/constraint-os-follow-up-sequence.md`
+POLICY OS sequence template:
+- `content/templates/sales/policy-os-follow-up-sequence.md`
 
 ### Success Criteria
 - [ ] 1 proposal sent

@@ -1,10 +1,10 @@
 version: "1.0"
-name: "Constraint OS Commercial Interface"
+name: "POLICY OS Commercial Interface"
 owner: "CREATE SOMETHING .agency"
 updated_at: "2026-02-26"
 
 message_taxonomy:
-  core_phrase: "Constraint OS for production autonomy."
+  core_phrase: "POLICY OS for production autonomy."
   client_facing_delivery_vector: "Skills + MCP"
   technical_proof_vector: "MCP + Skills"
 
@@ -32,7 +32,7 @@ one_pager_interface:
     - "outcome_contract.md"
     - "golden-task checks + runbook"
   cta:
-    name: "Constraint Mapping Session"
+    name: "Policy Mapping Session"
     expected_output:
       - pilot_scope
       - policy_boundary
@@ -55,7 +55,7 @@ call_script_interface:
     - "22-26: objection handling"
     - "26-30: close"
   close_paths:
-    high_fit: "Schedule paid Constraint Mapping Session"
+    high_fit: "Schedule paid Policy Mapping Session"
     medium_fit: "Run MCP-only wedge with explicit assurance trigger"
     low_fit: "Park or refer with re-entry condition"
 

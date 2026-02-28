@@ -19,7 +19,7 @@ import { workflowTemplateToMermaid } from '../src/workflows/mermaid.js';
 import { findMcpCatalogEntry, listMcpCatalog, resolveMcpHttpEndpointUrl } from '../src/mcps/catalog.js';
 import { introspectMcpServer } from '../src/mcps/introspect.js';
 import { mapMcpToWorkflowDefinition } from '../src/mcps/map.js';
-import { evaluateConstraintPolicyHybrid } from '@create-something/constraint-os-policy-engine';
+import { evaluateConstraintPolicyHybrid } from '@create-something/policy-os-engine';
 import type { JudgmentEstimateScenario } from '../src/judgment/types.js';
 import {
   activatePolicyVersion,

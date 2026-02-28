@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto';
 import type { CompiledConstraintPolicy, ConstraintPolicy, ContextFact } from './types.js';
 
-export const COMPILER_VERSION = 'constraint-os-polar-compiler-v1';
+export const COMPILER_VERSION = 'policy-os-polar-compiler-v1';
 
 const RUNTIME_POLICY_SOURCE = `
-# Constraint OS runtime interpreter policy.
+# POLICY OS runtime interpreter policy.
 
 tool_ok(rule_id) if req_tool(rule_id, false);
 tool_ok(rule_id) if req_tool(rule_id, true) and input_tool_name(tool_name) and cond_tool(rule_id, tool_name);

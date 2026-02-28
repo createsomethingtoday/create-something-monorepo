@@ -8,7 +8,7 @@ import {
   type ConstraintEvaluationInput,
   type ConstraintPolicy,
   type HybridEvaluatorConfig,
-} from '@create-something/constraint-os-policy-engine';
+} from '@create-something/policy-os-engine';
 import { AppServerClient } from './app-server/client.js';
 import { BUILTIN_POLICIES } from './policy/builtin.js';
 import { loadProjectPolicies } from './policy/load.js';
@@ -379,7 +379,7 @@ function hybridConfigFromEnv(): HybridEvaluatorConfig {
 function buildApprovalConstraintPolicy(policy: LoadedPolicy, kind: 'command' | 'file'): ConstraintPolicy {
   const label = kind === 'command' ? 'command approval' : 'file approval';
   return {
-    id: `${policy.id}-${kind}-constraint-os`,
+    id: `${policy.id}-${kind}-policy-os`,
     name: `${policy.label} (${label})`,
     description: `Derived from ${policy.id} for ${label}.`,
     rules: [

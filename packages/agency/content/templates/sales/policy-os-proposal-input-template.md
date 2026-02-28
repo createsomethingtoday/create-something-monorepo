@@ -1,4 +1,4 @@
-# Constraint OS Proposal Input Template
+# POLICY OS Proposal Input Template
 
 **Purpose:** Convert discovery outputs into proposal-ready scope in one pass.  
 **Use after:** `content/templates/sales/discovery-note-template.md`

@@ -96,9 +96,9 @@
 </script>
 
 <SEO
-  title="How We Work | Constraint OS for Production Autonomy"
-  description="CREATE SOMETHING .agency delivers a Constraint OS for production autonomy: Custom Workflow MCPs, Autonomy Assurance, and Enterprise Extension."
-  keywords="constraint os, custom workflow mcp, autonomy assurance, enterprise mcp, agent reliability, ai operations architecture"
+  title="How We Work | POLICY OS for Production Autonomy"
+  description="CREATE SOMETHING .agency delivers a POLICY OS for production autonomy: Custom Workflow MCPs, Autonomy Assurance, and Enterprise Extension."
+  keywords="policy os, custom workflow mcp, autonomy assurance, enterprise mcp, agent reliability, ai operations architecture"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -123,7 +123,7 @@
       <p class="hero-eyebrow">How I Work</p>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <h1 class="hero-title">Three offers. One Constraint OS.</h1>
+      <h1 class="hero-title">Three offers. One POLICY OS.</h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-subtitle">
@@ -177,7 +177,7 @@
         <BorderBeam size={300} duration={12} delay={9} />
         <div class="retainer-header">
           <div class="retainer-pricing">
-            <div class="retainer-price">Constraint OS</div>
+            <div class="retainer-price">POLICY OS</div>
             <div class="retainer-period">CREATE SOMETHING delivery model</div>
           </div>
           <p class="retainer-note">

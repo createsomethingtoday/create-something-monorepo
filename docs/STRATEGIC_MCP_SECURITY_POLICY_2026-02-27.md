@@ -64,7 +64,7 @@ Then return to strict gates after a clean measurement window.
 
 ### Oso + Polar
 
-- Policy compiler: `@create-something/constraint-os-policy-engine`
+- Policy compiler: `@create-something/policy-os-engine`
 - Primary evaluator: Oso Cloud
 - Fallback evaluator: local deterministic evaluator
 - Circuit breaker: bounded fallback during primary errors

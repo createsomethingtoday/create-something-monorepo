@@ -1,6 +1,6 @@
 # CREATE SOMETHING Agency
 
-**createsomething.agency** — Constraint OS for production autonomy
+**createsomething.agency** — POLICY OS for production autonomy
 
 We build the connectivity layer between your tools and AI.
 
@@ -15,7 +15,7 @@ Neither Claude Desktop, Claude Cowork, nor Codex can create MCP servers from wit
 - Domain expertise (understanding your business)
 - MCP protocol knowledge (auth, transports, error handling)
 - Integration experience (data mapping, security boundaries)
-- Constraint OS design (Skills + MCP with policy boundaries)
+- POLICY OS design (Skills + MCP with policy boundaries)
 
 This is what `.agency` delivers.
 
@@ -28,7 +28,7 @@ This is what `.agency` delivers.
 | **Custom Workflow MCPs** | Build trusted workflow substrate for business-critical operations. | Workflow implementation + integration contracts |
 | **Autonomy Assurance** | Add policy controls, release gates, approval rules, and incident loops. | Governed runtime behavior + reliability controls |
 | **Enterprise Extension** | Extend for high-stakes, cross-system, and compliance-heavy workflows. | Custom governance boundaries + enterprise orchestration |
-| **Constraint Mapping Session** | Paid pre-implementation mapping to scope workflow and policy boundary. | Pilot scope, policy boundary, and 30-day plan |
+| **Policy Mapping Session** | Paid pre-implementation mapping to scope workflow and policy boundary. | Pilot scope, policy boundary, and 30-day plan |
 
 ---
 
@@ -120,7 +120,7 @@ packages/agency/
 │   │   └── admin/           # Internal tools
 │   └── lib/                 # Shared utilities
 ├── content/                 # Operational content
-│   ├── sales/               # Constraint OS buyer brief, script, and interface spec
+│   ├── sales/               # POLICY OS buyer brief, script, and interface spec
 │   └── case-studies/        # MCP project documentation
 ├── docs/                    # Client documentation
 └── workers/                 # Cloudflare Workers
@@ -131,12 +131,12 @@ packages/agency/
 The active sales system is documented in:
 
 - `content/sales/README.md`
-- `content/sales/constraint-os-buyer-brief-ops-revops.md`
+- `content/sales/policy-os-buyer-brief-ops-revops.md`
 - `content/sales/discovery-call-script.md`
-- `content/sales/constraint-os-interface-spec.yaml`
+- `content/sales/policy-os-interface-spec.yaml`
 - `content/templates/sales/discovery-note-template.md`
-- `content/templates/sales/constraint-os-proposal-input-template.md`
-- `content/templates/sales/constraint-os-follow-up-sequence.md`
+- `content/templates/sales/policy-os-proposal-input-template.md`
+- `content/templates/sales/policy-os-follow-up-sequence.md`
 
 ---
 

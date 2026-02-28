@@ -1,8 +1,8 @@
-# Constraint OS Buyer Brief (Ops/RevOps)
+# POLICY OS Buyer Brief (Ops/RevOps)
 
 **Audience:** Ops and RevOps leaders  
 **Read time:** ~3 minutes  
-**Core phrase:** Constraint OS for production autonomy  
+**Core phrase:** POLICY OS for production autonomy  
 **Delivery vector language:** client-facing `Skills + MCP`; technical proof `MCP + Skills`
 
 ---
@@ -14,7 +14,7 @@ Most teams can now connect tools to AI. Very few can run autonomous workflows sa
 The bottleneck is no longer "Can we connect systems?"  
 The bottleneck is "Can we govern actions, approvals, and risk while keeping execution fast?"
 
-**Constraint OS** is the operating model that closes that gap.
+**POLICY OS** is the operating model that closes that gap.
 
 ---
 
@@ -57,7 +57,7 @@ Extend into high-stakes operations: cross-system orchestration, strict governanc
 
 ---
 
-## Operating model (how Constraint OS works)
+## Operating model (how POLICY OS works)
 
 1. Safe actions are auto-allowed.
 2. Risky actions route to an approval inbox.
@@ -82,19 +82,19 @@ These metrics are the health signal for production autonomy.
 ## Common objections (short answers)
 
 ### "We already have automations."
-Most automations fail at governance boundaries. Constraint OS adds approvals, policy control, and auditability so automation can scale safely.
+Most automations fail at governance boundaries. POLICY OS adds approvals, policy control, and auditability so automation can scale safely.
 
 ### "This sounds heavy."
 It is phased. Start with one high-value workflow, govern only the risky actions, then expand coverage with evidence.
 
 ### "Why not MCP-only?"
-MCP-only is a valid entry wedge for discovery/compliance. Constraint OS is the reliability layer that makes autonomous outcomes dependable in production.
+MCP-only is a valid entry wedge for discovery/compliance. POLICY OS is the reliability layer that makes autonomous outcomes dependable in production.
 
 ---
 
 ## Next step
 
-### Constraint Mapping Session
+### Policy Mapping Session
 
 Output from session:
 

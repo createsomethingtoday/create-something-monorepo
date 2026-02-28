@@ -1,5 +1,5 @@
 import type { D1Database } from '@create-something/mcp-core';
-import { compileConstraintPolicy } from '@create-something/constraint-os-policy-engine';
+import { compileConstraintPolicy } from '@create-something/policy-os-engine';
 import type { AtlasEntityType } from './versions.js';
 
 export type PolicyStatus = 'draft' | 'active' | 'archived';

@@ -150,9 +150,9 @@
 {/snippet}
 
 <SEO
-  title="Constraint OS for Production Autonomy | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING .agency runs a Constraint OS for production autonomy: custom workflow MCPs, Autonomy Assurance, and Enterprise Extension."
-  keywords="constraint os, custom mcp development, workflow mcp, autonomy assurance, enterprise agent reliability, mcp consulting"
+  title="POLICY OS for Production Autonomy | CREATE SOMETHING .agency"
+  description="CREATE SOMETHING .agency runs a POLICY OS for production autonomy: custom workflow MCPs, Autonomy Assurance, and Enterprise Extension."
+  keywords="policy os, custom mcp development, workflow mcp, autonomy assurance, enterprise agent reliability, mcp consulting"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -174,7 +174,7 @@
   <div class="hero-container">
     <div class="hero-content">
       <BlurFade delay={0}>
-        <h1 class="hero-title">Constraint for Production Autonomy.</h1>
+        <h1 class="hero-title">POLICY OS for Production Autonomy.</h1>
       </BlurFade>
       <BlurFade delay={0.2}>
         <p class="hero-detail">
@@ -290,7 +290,7 @@
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="section-intro">
-        One Constraint OS, three escalation lanes: Custom Workflow MCPs, Autonomy Assurance, and
+        One POLICY OS, three escalation lanes: Custom Workflow MCPs, Autonomy Assurance, and
         Enterprise Extension.
       </p>
     </BlurFade>
@@ -513,7 +513,7 @@
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="cta-subtext">
-        Book a Constraint Mapping Session and I will map your policy boundary and show what the
+        Book a Policy Mapping Session and I will map your policy boundary and show what the
         artifact bundle looks like for your workflows.
       </p>
     </BlurFade>

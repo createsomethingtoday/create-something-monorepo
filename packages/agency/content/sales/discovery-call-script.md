@@ -1,9 +1,9 @@
-# Constraint OS Discovery Call Script (Ops/RevOps)
+# POLICY OS Discovery Call Script (Ops/RevOps)
 
 **Audience:** Ops/RevOps leaders  
 **Duration:** 20–30 minutes  
-**Primary objective:** confirm fit and secure next step for a Constraint Mapping Session  
-**Message taxonomy:** core phrase "Constraint OS for production autonomy"; client-facing `Skills + MCP`; technical proof `MCP + Skills`
+**Primary objective:** confirm fit and secure next step for a Policy Mapping Session  
+**Message taxonomy:** core phrase "POLICY OS for production autonomy"; client-facing `Skills + MCP`; technical proof `MCP + Skills`
 
 ---
 
@@ -28,7 +28,7 @@ Anchor mindset:
 
 Opening:
 
-> "Thanks for making time. I want to use this call to understand where operations are breaking down, then decide whether a Constraint OS pilot is the right next step. Sound good?"
+> "Thanks for making time. I want to use this call to understand where operations are breaking down, then decide whether a POLICY OS pilot is the right next step. Sound good?"
 
 Intent prompt:
 
@@ -72,7 +72,7 @@ Then validate:
 
 If confirmed, position:
 
-> "That is exactly what Constraint OS is designed for: keep safe actions fast, gate risky actions explicitly, and keep every decision auditable."
+> "That is exactly what POLICY OS is designed for: keep safe actions fast, gate risky actions explicitly, and keep every decision auditable."
 
 ---
 
@@ -121,7 +121,7 @@ Pivot:
 ### Objection: "Why not MCP-only?"
 Response:
 
-> "MCP-only is a good wedge for discovery or compliance-constrained starts. Constraint OS is what makes autonomous outcomes reliable at production scale."
+> "MCP-only is a good wedge for discovery or compliance-constrained starts. POLICY OS is what makes autonomous outcomes reliable at production scale."
 
 Pivot:
 
@@ -144,7 +144,7 @@ Pivot:
 
 Use when pain is clear, buyer has authority, and urgency exists.
 
-> "Next step is a paid Constraint Mapping Session. You’ll get pilot scope, policy boundary, and a 30-day implementation plan."
+> "Next step is a paid Policy Mapping Session. You’ll get pilot scope, policy boundary, and a 30-day implementation plan."
 
 Commit:
 
@@ -181,7 +181,7 @@ Commit:
 
 ### 30-second positioning statement
 
-> "CREATE SOMETHING runs a Constraint OS for production autonomy. We build custom workflow MCPs, then layer governance so safe actions stay fast, risky actions are approval-gated, and every decision is auditable."
+> "CREATE SOMETHING runs a POLICY OS for production autonomy. We build custom workflow MCPs, then layer governance so safe actions stay fast, risky actions are approval-gated, and every decision is auditable."
 
 ### 2-minute "how it works in practice"
 
@@ -199,7 +199,7 @@ Commit:
 
 ### Closing language by fit
 
-1. **High fit:** "Let’s schedule the Constraint Mapping Session and lock stakeholders now."
+1. **High fit:** "Let’s schedule the Policy Mapping Session and lock stakeholders now."
 2. **Medium fit:** "Let’s scope a narrow wedge and define assurance trigger thresholds upfront."
 3. **Low fit:** "Let’s pause and re-enter when [condition] is true."
 
@@ -210,7 +210,7 @@ Commit:
 1. Send the one-pager before or immediately after call one.
 2. Use this script as a branching guide, not verbatim.
 3. Capture outputs in a standard discovery note.
-4. Execute post-call follow-up from `../templates/sales/constraint-os-follow-up-sequence.md`.
+4. Execute post-call follow-up from `../templates/sales/policy-os-follow-up-sequence.md`.
 5. Build proposals using the same artifact vocabulary.
 
 ### Discovery note template (required fields)

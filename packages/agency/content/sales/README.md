@@ -1,15 +1,15 @@
-# Constraint OS Sales Assets v1
+# POLICY OS Sales Assets v1
 
 **Primary buyer:** Ops/RevOps  
 **Primary channel:** Live discovery and mapping calls  
-**Core phrase:** Constraint OS for production autonomy
+**Core phrase:** POLICY OS for production autonomy
 
 ---
 
 ## Asset map
 
 1. **Buyer brief (send before or after first call)**
-   - `constraint-os-buyer-brief-ops-revops.md`
+   - `policy-os-buyer-brief-ops-revops.md`
    - Purpose: frame problem, outcomes, offer ladder, and CTA in under 3 minutes.
 
 2. **Discovery script (run live for 20-30 minutes)**
@@ -17,7 +17,7 @@
    - Purpose: qualify fit, map tier, handle objections, and close to a concrete next step.
 
 3. **Commercial interface spec (machine-readable source of truth)**
-   - `constraint-os-interface-spec.yaml`
+   - `policy-os-interface-spec.yaml`
    - Purpose: standardize one-pager inputs/outputs, call script branch logic, and taxonomy.
 
 4. **Discovery note (required after every call)**
@@ -25,18 +25,18 @@
    - Purpose: standardize proposal inputs in one pass.
 
 5. **Proposal input template (delivery handoff)**
-   - `../templates/sales/constraint-os-proposal-input-template.md`
+   - `../templates/sales/policy-os-proposal-input-template.md`
    - Purpose: convert discovery output into proposal scope and contract artifact implications.
 
 6. **Follow-up sequence (post-call execution)**
-   - `../templates/sales/constraint-os-follow-up-sequence.md`
+   - `../templates/sales/policy-os-follow-up-sequence.md`
    - Purpose: move high and medium fit deals to decision with clear owner and date.
 
 ---
 
 ## Message taxonomy
 
-- Core phrase: "Constraint OS for production autonomy."
+- Core phrase: "POLICY OS for production autonomy."
 - Client-facing delivery vector: `Skills + MCP`
 - Technical proof vector: `MCP + Skills`
 
@@ -59,7 +59,7 @@
 ## Fit-to-next-step policy
 
 1. **High fit**
-   - Next step: paid Constraint Mapping Session.
+   - Next step: paid Policy Mapping Session.
    - Must exit call with owner, stakeholder set, and calendar date.
 
 2. **Medium fit**

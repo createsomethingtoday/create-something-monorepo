@@ -1,4 +1,4 @@
-# Constraint OS Discovery Note Template
+# POLICY OS Discovery Note Template
 
 **Purpose:** Standardize post-call capture so proposal drafting is consistent and fast.  
 **Use with:** `content/sales/discovery-call-script.md`
@@ -25,7 +25,7 @@
 
 ---
 
-## Constraint OS qualification
+## POLICY OS qualification
 
 - workflow candidate:
 - risk class (`low|medium|high`):
@@ -63,7 +63,7 @@
 - owner:
 - due date:
 - required participants:
-- deliverable committed (for example: Constraint Mapping Session output):
+- deliverable committed (for example: Policy Mapping Session output):
 
 ---
 

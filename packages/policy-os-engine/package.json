@@ -1,7 +1,7 @@
 {
-  "name": "@create-something/constraint-os-policy-engine",
+  "name": "@create-something/policy-os-engine",
   "version": "0.1.0",
-  "description": "Shared Constraint OS policy compiler and hybrid evaluator (Oso Cloud + local fallback).",
+  "description": "Shared POLICY OS policy compiler and hybrid evaluator (Oso Cloud + local fallback).",
   "type": "module",
   "main": "dist/index.js",
   "types": "src/index.ts",

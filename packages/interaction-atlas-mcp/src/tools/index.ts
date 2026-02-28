@@ -36,7 +36,7 @@ import {
   type ConstraintEvaluationInput,
   type HybridEvaluatorConfig,
   type RolloutConfig,
-} from '@create-something/constraint-os-policy-engine';
+} from '@create-something/policy-os-engine';
 
 import {
   AtlasGetSchema,

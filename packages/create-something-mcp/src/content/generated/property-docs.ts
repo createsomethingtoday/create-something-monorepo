@@ -24681,14 +24681,14 @@ This GTM strategy embodies the [Hermeneutic Circle](/canon/concepts/hermeneutic-
 - [x] Lead management (\`/admin/funnel/leads/new\`)
 - [x] Metrics recording (\`/admin/funnel/record\`)
 
-### Constraint OS Sales Assets v1 (Ops/RevOps)
+### POLICY OS Sales Assets v1 (Ops/RevOps)
 - [x] Sales asset index (\`content/sales/README.md\`)
-- [x] One-pager buyer brief (\`content/sales/constraint-os-buyer-brief-ops-revops.md\`)
+- [x] One-pager buyer brief (\`content/sales/policy-os-buyer-brief-ops-revops.md\`)
 - [x] Live discovery script (\`content/sales/discovery-call-script.md\`)
-- [x] Commercial interface spec (\`content/sales/constraint-os-interface-spec.yaml\`)
+- [x] Commercial interface spec (\`content/sales/policy-os-interface-spec.yaml\`)
 - [x] Discovery note template (\`content/templates/sales/discovery-note-template.md\`)
-- [x] Proposal input template (\`content/templates/sales/constraint-os-proposal-input-template.md\`)
-- [x] Follow-up cadence template (\`content/templates/sales/constraint-os-follow-up-sequence.md\`)
+- [x] Proposal input template (\`content/templates/sales/policy-os-proposal-input-template.md\`)
+- [x] Follow-up cadence template (\`content/templates/sales/policy-os-follow-up-sequence.md\`)
 
 **Standard run sequence:**
 1. Send buyer brief before or immediately after call one.
@@ -24837,8 +24837,8 @@ Post-proposal cadence:
 - Day 14: Decision timeline check
 - Day 21: Final follow-up or close
 
-Constraint OS sequence template:
-- \`content/templates/sales/constraint-os-follow-up-sequence.md\`
+POLICY OS sequence template:
+- \`content/templates/sales/policy-os-follow-up-sequence.md\`
 
 ### Success Criteria
 - [ ] 1 proposal sent
@@ -25292,136 +25292,20 @@ Based on Sprint 2 baselines:
 `
   },
   {
-    id: "agency:content/sales/constraint-os-buyer-brief-ops-revops",
-    property: "agency",
-    title: "Constraint OS Buyer Brief (Ops/RevOps)",
-    description: "Constraint OS Buyer Brief (Ops/RevOps)",
-    section: "content",
-    path: "content/sales/constraint-os-buyer-brief-ops-revops.md",
-    slug: "content/sales/constraint-os-buyer-brief-ops-revops",
-    uri: "docs://agency/content/sales/constraint-os-buyer-brief-ops-revops",
-    content: `# Constraint OS Buyer Brief (Ops/RevOps)
-
-**Audience:** Ops and RevOps leaders  
-**Read time:** ~3 minutes  
-**Core phrase:** Constraint OS for production autonomy  
-**Delivery vector language:** client-facing \`Skills + MCP\`; technical proof \`MCP + Skills\`
-
----
-
-## What this solves
-
-Most teams can now connect tools to AI. Very few can run autonomous workflows safely in production.
-
-The bottleneck is no longer "Can we connect systems?"  
-The bottleneck is "Can we govern actions, approvals, and risk while keeping execution fast?"
-
-**Constraint OS** is the operating model that closes that gap.
-
----
-
-## Outcome in plain terms
-
-You get:
-
-- Fewer unsafe actions in live workflows.
-- Faster execution on safe actions.
-- Clear approvals for risky actions.
-- Auditable decision trails for operations and leadership.
-
-This is how automation scales without creating hidden operational risk.
-
----
-
-## Offer ladder (how engagements scale)
-
-### 1) Custom Workflow MCPs
-Build the workflow substrate: trusted integrations, tool contracts, and deterministic execution paths.
-
-### 2) Autonomy Assurance
-Add reliability controls: policy envelopes, release gates, approval rules, and incident loops.
-
-### 3) Enterprise Extension
-Extend into high-stakes operations: cross-system orchestration, strict governance controls, and custom trust boundaries.
-
----
-
-## What ships every engagement
-
-- \`mcp_contract.yaml\`  
-  Tool schemas, resources, auth scopes, error model.
-- \`agent_contract.yaml\`  
-  Allowed actions, approval mode, escalation triggers, budget/latency guardrails.
-- \`outcome_contract.md\`  
-  Workflow targets, success criteria, fallback/manual path, ownership boundaries.
-- Golden-task checks + runbook  
-  Regression gates, incident response, rollback path.
-
----
-
-## Operating model (how Constraint OS works)
-
-1. Safe actions are auto-allowed.
-2. Risky actions route to an approval inbox.
-3. Disallowed actions are blocked with explicit reason.
-4. Every decision is logged for audit and tuning.
-
-This keeps operational speed where risk is low, and control where risk is high.
-
----
-
-## Reliability KPIs to track
-
-- **Unreviewed risky actions prevented**
-- **Approval turnaround time**
-- **Incident rate trend**
-- **Governed workflow coverage**
-
-These metrics are the health signal for production autonomy.
-
----
-
-## Common objections (short answers)
-
-### "We already have automations."
-Most automations fail at governance boundaries. Constraint OS adds approvals, policy control, and auditability so automation can scale safely.
-
-### "This sounds heavy."
-It is phased. Start with one high-value workflow, govern only the risky actions, then expand coverage with evidence.
-
-### "Why not MCP-only?"
-MCP-only is a valid entry wedge for discovery/compliance. Constraint OS is the reliability layer that makes autonomous outcomes dependable in production.
-
----
-
-## Next step
-
-### Constraint Mapping Session
-
-Output from session:
-
-1. Pilot workflow scope.
-2. Policy boundary (auto-allow vs approval vs block).
-3. 30-day implementation plan.
-
-If the map is not convincing, do not proceed.
-`
-  },
-  {
     id: "agency:content/sales/discovery-call-script",
     property: "agency",
-    title: "Constraint OS Discovery Call Script (Ops/RevOps)",
-    description: "Constraint OS Discovery Call Script (Ops/RevOps)",
+    title: "POLICY OS Discovery Call Script (Ops/RevOps)",
+    description: "POLICY OS Discovery Call Script (Ops/RevOps)",
     section: "content",
     path: "content/sales/discovery-call-script.md",
     slug: "content/sales/discovery-call-script",
     uri: "docs://agency/content/sales/discovery-call-script",
-    content: `# Constraint OS Discovery Call Script (Ops/RevOps)
+    content: `# POLICY OS Discovery Call Script (Ops/RevOps)
 
 **Audience:** Ops/RevOps leaders  
 **Duration:** 20–30 minutes  
-**Primary objective:** confirm fit and secure next step for a Constraint Mapping Session  
-**Message taxonomy:** core phrase "Constraint OS for production autonomy"; client-facing \`Skills + MCP\`; technical proof \`MCP + Skills\`
+**Primary objective:** confirm fit and secure next step for a Policy Mapping Session  
+**Message taxonomy:** core phrase "POLICY OS for production autonomy"; client-facing \`Skills + MCP\`; technical proof \`MCP + Skills\`
 
 ---
 
@@ -25446,7 +25330,7 @@ Anchor mindset:
 
 Opening:
 
-> "Thanks for making time. I want to use this call to understand where operations are breaking down, then decide whether a Constraint OS pilot is the right next step. Sound good?"
+> "Thanks for making time. I want to use this call to understand where operations are breaking down, then decide whether a POLICY OS pilot is the right next step. Sound good?"
 
 Intent prompt:
 
@@ -25490,7 +25374,7 @@ Then validate:
 
 If confirmed, position:
 
-> "That is exactly what Constraint OS is designed for: keep safe actions fast, gate risky actions explicitly, and keep every decision auditable."
+> "That is exactly what POLICY OS is designed for: keep safe actions fast, gate risky actions explicitly, and keep every decision auditable."
 
 ---
 
@@ -25539,7 +25423,7 @@ Pivot:
 ### Objection: "Why not MCP-only?"
 Response:
 
-> "MCP-only is a good wedge for discovery or compliance-constrained starts. Constraint OS is what makes autonomous outcomes reliable at production scale."
+> "MCP-only is a good wedge for discovery or compliance-constrained starts. POLICY OS is what makes autonomous outcomes reliable at production scale."
 
 Pivot:
 
@@ -25562,7 +25446,7 @@ Pivot:
 
 Use when pain is clear, buyer has authority, and urgency exists.
 
-> "Next step is a paid Constraint Mapping Session. You’ll get pilot scope, policy boundary, and a 30-day implementation plan."
+> "Next step is a paid Policy Mapping Session. You’ll get pilot scope, policy boundary, and a 30-day implementation plan."
 
 Commit:
 
@@ -25599,7 +25483,7 @@ Commit:
 
 ### 30-second positioning statement
 
-> "CREATE SOMETHING runs a Constraint OS for production autonomy. We build custom workflow MCPs, then layer governance so safe actions stay fast, risky actions are approval-gated, and every decision is auditable."
+> "CREATE SOMETHING runs a POLICY OS for production autonomy. We build custom workflow MCPs, then layer governance so safe actions stay fast, risky actions are approval-gated, and every decision is auditable."
 
 ### 2-minute "how it works in practice"
 
@@ -25617,7 +25501,7 @@ Commit:
 
 ### Closing language by fit
 
-1. **High fit:** "Let’s schedule the Constraint Mapping Session and lock stakeholders now."
+1. **High fit:** "Let’s schedule the Policy Mapping Session and lock stakeholders now."
 2. **Medium fit:** "Let’s scope a narrow wedge and define assurance trigger thresholds upfront."
 3. **Low fit:** "Let’s pause and re-enter when [condition] is true."
 
@@ -25628,7 +25512,7 @@ Commit:
 1. Send the one-pager before or immediately after call one.
 2. Use this script as a branching guide, not verbatim.
 3. Capture outputs in a standard discovery note.
-4. Execute post-call follow-up from \`../templates/sales/constraint-os-follow-up-sequence.md\`.
+4. Execute post-call follow-up from \`../templates/sales/policy-os-follow-up-sequence.md\`.
 5. Build proposals using the same artifact vocabulary.
 
 ### Discovery note template (required fields)
@@ -25683,26 +25567,142 @@ Pass when call closes with named owner, scoped next step, and date.
 `
   },
   {
+    id: "agency:content/sales/policy-os-buyer-brief-ops-revops",
+    property: "agency",
+    title: "POLICY OS Buyer Brief (Ops/RevOps)",
+    description: "POLICY OS Buyer Brief (Ops/RevOps)",
+    section: "content",
+    path: "content/sales/policy-os-buyer-brief-ops-revops.md",
+    slug: "content/sales/policy-os-buyer-brief-ops-revops",
+    uri: "docs://agency/content/sales/policy-os-buyer-brief-ops-revops",
+    content: `# POLICY OS Buyer Brief (Ops/RevOps)
+
+**Audience:** Ops and RevOps leaders  
+**Read time:** ~3 minutes  
+**Core phrase:** POLICY OS for production autonomy  
+**Delivery vector language:** client-facing \`Skills + MCP\`; technical proof \`MCP + Skills\`
+
+---
+
+## What this solves
+
+Most teams can now connect tools to AI. Very few can run autonomous workflows safely in production.
+
+The bottleneck is no longer "Can we connect systems?"  
+The bottleneck is "Can we govern actions, approvals, and risk while keeping execution fast?"
+
+**POLICY OS** is the operating model that closes that gap.
+
+---
+
+## Outcome in plain terms
+
+You get:
+
+- Fewer unsafe actions in live workflows.
+- Faster execution on safe actions.
+- Clear approvals for risky actions.
+- Auditable decision trails for operations and leadership.
+
+This is how automation scales without creating hidden operational risk.
+
+---
+
+## Offer ladder (how engagements scale)
+
+### 1) Custom Workflow MCPs
+Build the workflow substrate: trusted integrations, tool contracts, and deterministic execution paths.
+
+### 2) Autonomy Assurance
+Add reliability controls: policy envelopes, release gates, approval rules, and incident loops.
+
+### 3) Enterprise Extension
+Extend into high-stakes operations: cross-system orchestration, strict governance controls, and custom trust boundaries.
+
+---
+
+## What ships every engagement
+
+- \`mcp_contract.yaml\`  
+  Tool schemas, resources, auth scopes, error model.
+- \`agent_contract.yaml\`  
+  Allowed actions, approval mode, escalation triggers, budget/latency guardrails.
+- \`outcome_contract.md\`  
+  Workflow targets, success criteria, fallback/manual path, ownership boundaries.
+- Golden-task checks + runbook  
+  Regression gates, incident response, rollback path.
+
+---
+
+## Operating model (how POLICY OS works)
+
+1. Safe actions are auto-allowed.
+2. Risky actions route to an approval inbox.
+3. Disallowed actions are blocked with explicit reason.
+4. Every decision is logged for audit and tuning.
+
+This keeps operational speed where risk is low, and control where risk is high.
+
+---
+
+## Reliability KPIs to track
+
+- **Unreviewed risky actions prevented**
+- **Approval turnaround time**
+- **Incident rate trend**
+- **Governed workflow coverage**
+
+These metrics are the health signal for production autonomy.
+
+---
+
+## Common objections (short answers)
+
+### "We already have automations."
+Most automations fail at governance boundaries. POLICY OS adds approvals, policy control, and auditability so automation can scale safely.
+
+### "This sounds heavy."
+It is phased. Start with one high-value workflow, govern only the risky actions, then expand coverage with evidence.
+
+### "Why not MCP-only?"
+MCP-only is a valid entry wedge for discovery/compliance. POLICY OS is the reliability layer that makes autonomous outcomes dependable in production.
+
+---
+
+## Next step
+
+### Policy Mapping Session
+
+Output from session:
+
+1. Pilot workflow scope.
+2. Policy boundary (auto-allow vs approval vs block).
+3. 30-day implementation plan.
+
+If the map is not convincing, do not proceed.
+`
+  },
+  {
     id: "agency:content/sales/README",
     property: "agency",
-    title: "Constraint OS Sales Assets v1",
-    description: "Constraint OS Sales Assets v1",
+    title: "POLICY OS Sales Assets v1",
+    description: "POLICY OS Sales Assets v1",
     section: "content",
     path: "content/sales/README.md",
     slug: "content/sales/README",
     uri: "docs://agency/content/sales/README",
-    content: `# Constraint OS Sales Assets v1
+    content: `# POLICY OS Sales Assets v1
 
 **Primary buyer:** Ops/RevOps  
 **Primary channel:** Live discovery and mapping calls  
-**Core phrase:** Constraint OS for production autonomy
+**Core phrase:** POLICY OS for production autonomy
 
 ---
 
 ## Asset map
 
 1. **Buyer brief (send before or after first call)**
-   - \`constraint-os-buyer-brief-ops-revops.md\`
+   - \`policy-os-buyer-brief-ops-revops.md\`
    - Purpose: frame problem, outcomes, offer ladder, and CTA in under 3 minutes.
 
 2. **Discovery script (run live for 20-30 minutes)**
@@ -25710,7 +25710,7 @@ Pass when call closes with named owner, scoped next step, and date.
    - Purpose: qualify fit, map tier, handle objections, and close to a concrete next step.
 
 3. **Commercial interface spec (machine-readable source of truth)**
-   - \`constraint-os-interface-spec.yaml\`
+   - \`policy-os-interface-spec.yaml\`
    - Purpose: standardize one-pager inputs/outputs, call script branch logic, and taxonomy.
 
 4. **Discovery note (required after every call)**
@@ -25718,18 +25718,18 @@ Pass when call closes with named owner, scoped next step, and date.
    - Purpose: standardize proposal inputs in one pass.
 
 5. **Proposal input template (delivery handoff)**
-   - \`../templates/sales/constraint-os-proposal-input-template.md\`
+   - \`../templates/sales/policy-os-proposal-input-template.md\`
    - Purpose: convert discovery output into proposal scope and contract artifact implications.
 
 6. **Follow-up sequence (post-call execution)**
-   - \`../templates/sales/constraint-os-follow-up-sequence.md\`
+   - \`../templates/sales/policy-os-follow-up-sequence.md\`
    - Purpose: move high and medium fit deals to decision with clear owner and date.
 
 ---
 
 ## Message taxonomy
 
-- Core phrase: "Constraint OS for production autonomy."
+- Core phrase: "POLICY OS for production autonomy."
 - Client-facing delivery vector: \`Skills + MCP\`
 - Technical proof vector: \`MCP + Skills\`
 
@@ -25752,7 +25752,7 @@ Pass when call closes with named owner, scoped next step, and date.
 ## Fit-to-next-step policy
 
 1. **High fit**
-   - Next step: paid Constraint Mapping Session.
+   - Next step: paid Policy Mapping Session.
    - Must exit call with owner, stakeholder set, and calendar date.
 
 2. **Medium fit**
@@ -27989,7 +27989,7 @@ After sending, log in funnel:
     uri: "docs://agency/content/templates/outreach/discovery-invite",
     content: `# Constraint Mapping Invitation Templates
 
-**Purpose**: Convert warm relationship into a Constraint Mapping Session
+**Purpose**: Convert warm relationship into a Policy Mapping Session
 **When to use**: After 2-3 positive exchanges, clear ICP match
 **Prerequisite**: They know who you are and have shown interest
 
@@ -28002,7 +28002,7 @@ After sending, log in funnel:
 \`\`\`
 This is easier to talk through than type.
 
-Would you be up for a 20-minute Constraint Mapping Session? Not a sales pitch - we'll map your workflow bottlenecks and where governance is required.
+Would you be up for a 20-minute Policy Mapping Session? Not a sales pitch - we'll map your workflow bottlenecks and where governance is required.
 
 Here's my calendar if useful: {{calendar_link}}
 
@@ -28013,7 +28013,7 @@ Or just throw out a time that works.
 \`\`\`
 This is easier to talk through than type.
 
-Would you be up for a 20-minute Constraint Mapping Session? Not a sales pitch - we'll map your workflow bottlenecks and where governance is required.
+Would you be up for a 20-minute Policy Mapping Session? Not a sales pitch - we'll map your workflow bottlenecks and where governance is required.
 
 Here's my calendar if useful: createsomething.agency/book
 
@@ -28056,7 +28056,7 @@ createsomething.agency/book
 \`\`\`
 Based on our conversation, I think this might be relevant: {{resource_link}}
 
-If it resonates, happy to dig deeper on a Constraint Mapping Session. 20 minutes, no commitment.
+If it resonates, happy to dig deeper on a Policy Mapping Session. 20 minutes, no commitment.
 
 {{calendar_link}}
 \`\`\`
@@ -28070,7 +28070,7 @@ If it resonates, happy to dig deeper on a Constraint Mapping Session. 20 minutes
 \`\`\`
 You mentioned {{initiative}} is coming up in {{timeframe}}.
 
-Might be worth a quick Constraint Mapping Session before you get too deep in. We've seen a few patterns that could save you time.
+Might be worth a quick Policy Mapping Session before you get too deep in. We've seen a few patterns that could save you time.
 
 20 minutes, happy to just share what we know.
 
@@ -28086,7 +28086,7 @@ Might be worth a quick Constraint Mapping Session before you get too deep in. We
 \`\`\`
 I've enjoyed this exchange - feels like we're circling similar problems.
 
-Would be easier to continue over a Constraint Mapping Session. 20 minutes, no agenda beyond "what are you working on and how can we help?"
+Would be easier to continue over a Policy Mapping Session. 20 minutes, no agenda beyond "what are you working on and how can we help?"
 
 {{calendar_link}} - or suggest a time.
 \`\`\`
@@ -28644,297 +28644,15 @@ After sending, update lead in funnel:
 `
   },
   {
-    id: "agency:content/templates/sales/constraint-os-follow-up-sequence",
-    property: "agency",
-    title: "Constraint OS Follow-up Sequence (Post-Discovery)",
-    description: "Constraint OS Follow-up Sequence (Post-Discovery)",
-    section: "content",
-    path: "content/templates/sales/constraint-os-follow-up-sequence.md",
-    slug: "content/templates/sales/constraint-os-follow-up-sequence",
-    uri: "docs://agency/content/templates/sales/constraint-os-follow-up-sequence",
-    content: `# Constraint OS Follow-up Sequence (Post-Discovery)
-
-Use this sequence after a discovery call to convert diagnosis into a concrete decision.
-
----
-
-## Required inputs before sending follow-up
-
-- buyer fit level (\`high|medium|low\`)
-- workflow candidate
-- risk class
-- required approvals
-- integration systems
-- recommended package tier
-- next-step owner and target date
-
----
-
-## Day 0 (within 4 hours): recap + decision path
-
-### Goal
-Confirm shared diagnosis and lock next action.
-
-### Template
-Subject: Constraint OS recap + next step
-
-Hi {{Name}},
-
-Thanks again for the discussion. Here is the operating summary from today:
-
-- Workflow candidate: {{workflow}}
-- Risk class: {{risk_class}}
-- Systems in scope: {{systems}}
-- Recommended path: {{tier}}
-
-Based on this, the next step is:
-- {{next_step}}
-- Owner: {{owner}}
-- Target date: {{date}}
-
-If this summary is accurate, I will proceed with the above path.
-
-Best,  
-{{sender}}
-
----
-
-## Day 2: risk and economics anchor
-
-### Goal
-Re-anchor on failure cost and governance value.
-
-### Template
-Subject: quick check on failure-cost baseline
-
-Hi {{Name}},
-
-Before we finalize scope, I want to confirm one baseline:
-what is the current cost of a failure in this workflow (cleanup time, delay, or customer impact)?
-
-This baseline is how we size the initial policy boundary and pilot target.
-
-Best,  
-{{sender}}
-
----
-
-## Day 5: path-specific follow-up
-
-### High fit
-Subject: confirm mapping session stakeholders
-
-Hi {{Name}},
-
-To finalize the Constraint Mapping Session, please confirm:
-- decision owner
-- ops/technical stakeholders
-- preferred slot this week
-
-Deliverable remains: pilot scope, policy boundary, and 30-day plan.
-
-Best,  
-{{sender}}
-
-### Medium fit
-Subject: confirm MCP wedge + assurance triggers
-
-Hi {{Name}},
-
-For the MCP-only wedge, please confirm:
-- single workflow boundary
-- trigger criteria for entering Autonomy Assurance
-- checkpoint date for trigger review
-
-Best,  
-{{sender}}
-
-### Low fit
-Subject: re-entry condition alignment
-
-Hi {{Name}},
-
-Agreed to pause for now. Please confirm the re-entry condition:
-{{reentry_condition}}
-
-When that condition is met, we can reopen with a scoped mapping call.
-
-Best,  
-{{sender}}
-
----
-
-## Day 10: timeline checkpoint
-
-### Goal
-Prevent silent stall.
-
-### Template
-Subject: timeline check
-
-Hi {{Name}},
-
-Quick timeline check: should we keep the current next-step date, or reset it?
-
-If reset, please share the new owner and date so we can keep this moving cleanly.
-
-Best,  
-{{sender}}
-
----
-
-## Day 14: close loop
-
-### Goal
-Resolve to one of three outcomes.
-
-### Template
-Subject: close loop on next step
-
-Hi {{Name}},
-
-I want to close this loop with one clear outcome:
-1. proceed now,  
-2. proceed later with a set date, or  
-3. pause indefinitely.
-
-Reply with the option and I will update our plan accordingly.
-
-Best,  
-{{sender}}
-
----
-
-## Exit criteria
-
-- Every sequence ends with a named owner and date, or explicit pause condition.
-- Medium-fit sequences include documented assurance trigger criteria.
-- High-fit sequences result in a scheduled Constraint Mapping Session.
-
-`
-  },
-  {
-    id: "agency:content/templates/sales/constraint-os-proposal-input-template",
-    property: "agency",
-    title: "Constraint OS Proposal Input Template",
-    description: "Constraint OS Proposal Input Template",
-    section: "content",
-    path: "content/templates/sales/constraint-os-proposal-input-template.md",
-    slug: "content/templates/sales/constraint-os-proposal-input-template",
-    uri: "docs://agency/content/templates/sales/constraint-os-proposal-input-template",
-    content: `# Constraint OS Proposal Input Template
-
-**Purpose:** Convert discovery outputs into proposal-ready scope in one pass.  
-**Use after:** \`content/templates/sales/discovery-note-template.md\`
-
----
-
-## Source references
-
-- discovery note path:
-- call date:
-- fit level (\`high|medium|low\`):
-- recommended tier:
-
----
-
-## Commercial summary (client language)
-
-- buyer objective:
-- workflow candidate:
-- current failure cost:
-- target outcome in 30 days:
-- why now:
-
----
-
-## Scope by offer ladder
-
-### Custom Workflow MCPs (required baseline)
-- systems in scope:
-- workflow boundaries:
-- implementation deliverables:
-
-### Autonomy Assurance (if included)
-- approval boundaries:
-- release gates:
-- incident loop expectations:
-
-### Enterprise Extension (if included)
-- high-stakes constraints:
-- trust-boundary requirements:
-- orchestration/governance requirements:
-
----
-
-## Artifact implications
-
-### \`mcp_contract.yaml\` implications
-- tools/resources to define:
-- auth scopes:
-- error/fallback model:
-
-### \`agent_contract.yaml\` implications
-- allowed actions:
-- approval-required actions:
-- blocked actions:
-- escalation triggers:
-
-### \`outcome_contract.md\` implications
-- pilot scope:
-- success criteria:
-- fallback/manual path:
-- ownership boundaries:
-
----
-
-## Reliability and risk plan
-
-- primary KPI:
-- secondary KPIs:
-- initial risk class:
-- risk mitigation commitments:
-
----
-
-## Execution plan
-
-- 30-day plan summary:
-- milestones:
-- required client stakeholders:
-- dependencies:
-
----
-
-## Commercial terms input
-
-- pricing lane:
-- timeline range:
-- support/retainer expectation:
-- assumptions:
-- exclusions:
-
----
-
-## Decision close path
-
-- proposed next step:
-- decision owner:
-- target decision date:
-- if deferred: re-entry condition and date:
-
-`
-  },
-  {
     id: "agency:content/templates/sales/discovery-note-template",
     property: "agency",
-    title: "Constraint OS Discovery Note Template",
-    description: "Constraint OS Discovery Note Template",
+    title: "POLICY OS Discovery Note Template",
+    description: "POLICY OS Discovery Note Template",
     section: "content",
     path: "content/templates/sales/discovery-note-template.md",
     slug: "content/templates/sales/discovery-note-template",
     uri: "docs://agency/content/templates/sales/discovery-note-template",
-    content: `# Constraint OS Discovery Note Template
+    content: `# POLICY OS Discovery Note Template
 
 **Purpose:** Standardize post-call capture so proposal drafting is consistent and fast.  
 **Use with:** \`content/sales/discovery-call-script.md\`
@@ -28961,7 +28679,7 @@ Best,
 
 ---
 
-## Constraint OS qualification
+## POLICY OS qualification
 
 - workflow candidate:
 - risk class (\`low|medium|high\`):
@@ -28999,7 +28717,7 @@ Best,
 - owner:
 - due date:
 - required participants:
-- deliverable committed (for example: Constraint Mapping Session output):
+- deliverable committed (for example: Policy Mapping Session output):
 
 ---
 
@@ -29926,6 +29644,288 @@ For each:
 \`\`\`
 
 **Better to pause than to fumble.**
+`
+  },
+  {
+    id: "agency:content/templates/sales/policy-os-follow-up-sequence",
+    property: "agency",
+    title: "POLICY OS Follow-up Sequence (Post-Discovery)",
+    description: "POLICY OS Follow-up Sequence (Post-Discovery)",
+    section: "content",
+    path: "content/templates/sales/policy-os-follow-up-sequence.md",
+    slug: "content/templates/sales/policy-os-follow-up-sequence",
+    uri: "docs://agency/content/templates/sales/policy-os-follow-up-sequence",
+    content: `# POLICY OS Follow-up Sequence (Post-Discovery)
+
+Use this sequence after a discovery call to convert diagnosis into a concrete decision.
+
+---
+
+## Required inputs before sending follow-up
+
+- buyer fit level (\`high|medium|low\`)
+- workflow candidate
+- risk class
+- required approvals
+- integration systems
+- recommended package tier
+- next-step owner and target date
+
+---
+
+## Day 0 (within 4 hours): recap + decision path
+
+### Goal
+Confirm shared diagnosis and lock next action.
+
+### Template
+Subject: POLICY OS recap + next step
+
+Hi {{Name}},
+
+Thanks again for the discussion. Here is the operating summary from today:
+
+- Workflow candidate: {{workflow}}
+- Risk class: {{risk_class}}
+- Systems in scope: {{systems}}
+- Recommended path: {{tier}}
+
+Based on this, the next step is:
+- {{next_step}}
+- Owner: {{owner}}
+- Target date: {{date}}
+
+If this summary is accurate, I will proceed with the above path.
+
+Best,  
+{{sender}}
+
+---
+
+## Day 2: risk and economics anchor
+
+### Goal
+Re-anchor on failure cost and governance value.
+
+### Template
+Subject: quick check on failure-cost baseline
+
+Hi {{Name}},
+
+Before we finalize scope, I want to confirm one baseline:
+what is the current cost of a failure in this workflow (cleanup time, delay, or customer impact)?
+
+This baseline is how we size the initial policy boundary and pilot target.
+
+Best,  
+{{sender}}
+
+---
+
+## Day 5: path-specific follow-up
+
+### High fit
+Subject: confirm mapping session stakeholders
+
+Hi {{Name}},
+
+To finalize the Policy Mapping Session, please confirm:
+- decision owner
+- ops/technical stakeholders
+- preferred slot this week
+
+Deliverable remains: pilot scope, policy boundary, and 30-day plan.
+
+Best,  
+{{sender}}
+
+### Medium fit
+Subject: confirm MCP wedge + assurance triggers
+
+Hi {{Name}},
+
+For the MCP-only wedge, please confirm:
+- single workflow boundary
+- trigger criteria for entering Autonomy Assurance
+- checkpoint date for trigger review
+
+Best,  
+{{sender}}
+
+### Low fit
+Subject: re-entry condition alignment
+
+Hi {{Name}},
+
+Agreed to pause for now. Please confirm the re-entry condition:
+{{reentry_condition}}
+
+When that condition is met, we can reopen with a scoped mapping call.
+
+Best,  
+{{sender}}
+
+---
+
+## Day 10: timeline checkpoint
+
+### Goal
+Prevent silent stall.
+
+### Template
+Subject: timeline check
+
+Hi {{Name}},
+
+Quick timeline check: should we keep the current next-step date, or reset it?
+
+If reset, please share the new owner and date so we can keep this moving cleanly.
+
+Best,  
+{{sender}}
+
+---
+
+## Day 14: close loop
+
+### Goal
+Resolve to one of three outcomes.
+
+### Template
+Subject: close loop on next step
+
+Hi {{Name}},
+
+I want to close this loop with one clear outcome:
+1. proceed now,  
+2. proceed later with a set date, or  
+3. pause indefinitely.
+
+Reply with the option and I will update our plan accordingly.
+
+Best,  
+{{sender}}
+
+---
+
+## Exit criteria
+
+- Every sequence ends with a named owner and date, or explicit pause condition.
+- Medium-fit sequences include documented assurance trigger criteria.
+- High-fit sequences result in a scheduled Policy Mapping Session.
+
+`
+  },
+  {
+    id: "agency:content/templates/sales/policy-os-proposal-input-template",
+    property: "agency",
+    title: "POLICY OS Proposal Input Template",
+    description: "POLICY OS Proposal Input Template",
+    section: "content",
+    path: "content/templates/sales/policy-os-proposal-input-template.md",
+    slug: "content/templates/sales/policy-os-proposal-input-template",
+    uri: "docs://agency/content/templates/sales/policy-os-proposal-input-template",
+    content: `# POLICY OS Proposal Input Template
+
+**Purpose:** Convert discovery outputs into proposal-ready scope in one pass.  
+**Use after:** \`content/templates/sales/discovery-note-template.md\`
+
+---
+
+## Source references
+
+- discovery note path:
+- call date:
+- fit level (\`high|medium|low\`):
+- recommended tier:
+
+---
+
+## Commercial summary (client language)
+
+- buyer objective:
+- workflow candidate:
+- current failure cost:
+- target outcome in 30 days:
+- why now:
+
+---
+
+## Scope by offer ladder
+
+### Custom Workflow MCPs (required baseline)
+- systems in scope:
+- workflow boundaries:
+- implementation deliverables:
+
+### Autonomy Assurance (if included)
+- approval boundaries:
+- release gates:
+- incident loop expectations:
+
+### Enterprise Extension (if included)
+- high-stakes constraints:
+- trust-boundary requirements:
+- orchestration/governance requirements:
+
+---
+
+## Artifact implications
+
+### \`mcp_contract.yaml\` implications
+- tools/resources to define:
+- auth scopes:
+- error/fallback model:
+
+### \`agent_contract.yaml\` implications
+- allowed actions:
+- approval-required actions:
+- blocked actions:
+- escalation triggers:
+
+### \`outcome_contract.md\` implications
+- pilot scope:
+- success criteria:
+- fallback/manual path:
+- ownership boundaries:
+
+---
+
+## Reliability and risk plan
+
+- primary KPI:
+- secondary KPIs:
+- initial risk class:
+- risk mitigation commitments:
+
+---
+
+## Execution plan
+
+- 30-day plan summary:
+- milestones:
+- required client stakeholders:
+- dependencies:
+
+---
+
+## Commercial terms input
+
+- pricing lane:
+- timeline range:
+- support/retainer expectation:
+- assumptions:
+- exclusions:
+
+---
+
+## Decision close path
+
+- proposed next step:
+- decision owner:
+- target decision date:
+- if deferred: re-entry condition and date:
+
 `
   },
   {
@@ -31128,7 +31128,7 @@ Status: **Partially pass with one notable layout defect.**
     uri: "docs://agency/README",
     content: `# CREATE SOMETHING Agency
 
-**createsomething.agency** — Constraint OS for production autonomy
+**createsomething.agency** — POLICY OS for production autonomy
 
 We build the connectivity layer between your tools and AI.
 
@@ -31143,7 +31143,7 @@ Neither Claude Desktop, Claude Cowork, nor Codex can create MCP servers from wit
 - Domain expertise (understanding your business)
 - MCP protocol knowledge (auth, transports, error handling)
 - Integration experience (data mapping, security boundaries)
-- Constraint OS design (Skills + MCP with policy boundaries)
+- POLICY OS design (Skills + MCP with policy boundaries)
 
 This is what \`.agency\` delivers.
 
@@ -31156,7 +31156,7 @@ This is what \`.agency\` delivers.
 | **Custom Workflow MCPs** | Build trusted workflow substrate for business-critical operations. | Workflow implementation + integration contracts |
 | **Autonomy Assurance** | Add policy controls, release gates, approval rules, and incident loops. | Governed runtime behavior + reliability controls |
 | **Enterprise Extension** | Extend for high-stakes, cross-system, and compliance-heavy workflows. | Custom governance boundaries + enterprise orchestration |
-| **Constraint Mapping Session** | Paid pre-implementation mapping to scope workflow and policy boundary. | Pilot scope, policy boundary, and 30-day plan |
+| **Policy Mapping Session** | Paid pre-implementation mapping to scope workflow and policy boundary. | Pilot scope, policy boundary, and 30-day plan |
 
 ---
 
@@ -31248,7 +31248,7 @@ packages/agency/
 │   │   └── admin/           # Internal tools
 │   └── lib/                 # Shared utilities
 ├── content/                 # Operational content
-│   ├── sales/               # Constraint OS buyer brief, script, and interface spec
+│   ├── sales/               # POLICY OS buyer brief, script, and interface spec
 │   └── case-studies/        # MCP project documentation
 ├── docs/                    # Client documentation
 └── workers/                 # Cloudflare Workers
@@ -31259,12 +31259,12 @@ packages/agency/
 The active sales system is documented in:
 
 - \`content/sales/README.md\`
-- \`content/sales/constraint-os-buyer-brief-ops-revops.md\`
+- \`content/sales/policy-os-buyer-brief-ops-revops.md\`
 - \`content/sales/discovery-call-script.md\`
-- \`content/sales/constraint-os-interface-spec.yaml\`
+- \`content/sales/policy-os-interface-spec.yaml\`
 - \`content/templates/sales/discovery-note-template.md\`
-- \`content/templates/sales/constraint-os-proposal-input-template.md\`
-- \`content/templates/sales/constraint-os-follow-up-sequence.md\`
+- \`content/templates/sales/policy-os-proposal-input-template.md\`
+- \`content/templates/sales/policy-os-follow-up-sequence.md\`
 
 ---
 

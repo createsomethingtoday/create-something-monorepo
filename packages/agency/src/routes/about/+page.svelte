@@ -6,7 +6,7 @@
 
 <SEO
   title="About | Micah Johnson — Custom Workflow MCPs"
-  description="CTO-level architecture for Constraint OS delivery: custom workflow MCPs, Autonomy Assurance, and artifact-based operations."
+  description="CTO-level architecture for POLICY OS delivery: custom workflow MCPs, Autonomy Assurance, and artifact-based operations."
   keywords="Micah Johnson, custom mcp development, workflow architecture, mcp consulting, ai operations reliability"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -49,7 +49,7 @@
       <div class="about-content">
         <h2>The approach</h2>
         <p>
-          CREATE SOMETHING .agency runs a Constraint OS for production autonomy. I build custom
+          CREATE SOMETHING .agency runs a POLICY OS for production autonomy. I build custom
           workflow MCPs, then layer Autonomy Assurance (evals, policy controls, incident loops) and
           Enterprise Extension when requirements exceed standard tooling.
         </p>
@@ -145,7 +145,7 @@
             > — Tools and experiments
           </li>
           <li>
-            <strong>.agency</strong> — Constraint OS, Autonomy Assurance, and enterprise extension
+            <strong>.agency</strong> — POLICY OS, Autonomy Assurance, and enterprise extension
             <span class="muted">(you are here)</span>
           </li>
         </ul>
@@ -288,9 +288,6 @@
     color: var(--color-fg-secondary);
     line-height: var(--leading-relaxed);
     padding: var(--space-2, 0.5rem) 0;
-  }
-
-  .circle-list li:first-child {
   }
 
   .circle-list li strong {
