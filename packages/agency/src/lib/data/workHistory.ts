@@ -154,27 +154,7 @@ export const workHistory: WorkHistoryItem[] = [
 			}
 		]
 	},
-	{
-		id: 'create-something',
-		date: 'Nov 2018 – Present',
-		role: 'Webflow & API Developer (Self-employed)',
-		org: 'CREATE SOMETHING',
-		subtitle: 'Custom development · API integrations · Automation systems',
-		bullets: [
-			{
-				label: 'Complexity',
-				text: 'Integrations live at the edges: mismatched data models, brittle auth, third-party outages, and humans who just need it to work.'
-			},
-			{
-				label: 'Abstraction Tools',
-				text: 'Webflow + custom code, API-first builds, and automation “glue” that reduces tool sprawl into a single workflow.'
-			},
-			{
-				label: 'Carry-forward (.agency)',
-				text: 'This becomes the delivery backbone: connect systems, preserve auditability, and make automation maintainable (not a pile of zaps).'
-			}
-		]
-	},
+
 	{
 		id: 'webflow-support',
 		date: 'Feb 2018 – Mar 2020',
@@ -261,6 +241,27 @@ export const workHistory: WorkHistoryItem[] = [
 		]
 	},
 	{
+		id: 'create-something',
+		date: 'Nov 2018 – Present',
+		role: 'Webflow & API Developer',
+		org: 'CREATE SOMETHING',
+		subtitle: 'Custom development · API integrations · Automation systems',
+		bullets: [
+			{
+				label: 'Complexity',
+				text: 'Integrations live at the edges: mismatched data models, brittle auth, third-party outages, and humans who just need it to work.'
+			},
+			{
+				label: 'Abstraction Tools',
+				text: 'Webflow + custom code, API-first builds, and automation “glue” that reduces tool sprawl into a single workflow.'
+			},
+			{
+				label: 'Carry-forward (.agency)',
+				text: 'This becomes the delivery backbone: connect systems, preserve auditability, and make automation maintainable (not a pile of zaps).'
+			}
+		]
+	},
+	{
 		id: 'half-dozen',
 		date: 'Jul 2024 – Present',
 		role: 'Co-Founder, Technology',
@@ -307,10 +308,10 @@ export const workHistory: WorkHistoryItem[] = [
 export const workHistoryMilestones = {
 	events: [
 		{ date: '2008', label: 'A&M', description: 'Domain systems', highlight: false },
-		{ date: '2018', label: 'Create Something', description: 'Web + APIs', highlight: true },
 		{ date: '2018', label: 'Webflow', description: 'Support → Education', highlight: false },
 		{ date: '2023', label: 'Marketplace', description: 'Ops systems', highlight: false },
 		{ date: '2024', label: 'System Architect', description: 'Data infra', highlight: true },
+		{ date: '2018', label: 'Create Something', description: 'Web + APIs', highlight: true },
 		{ date: '2025', label: 'WORKWAY', description: 'Automation infra', highlight: true }
 	],
 	orientation: 'horizontal' as const
