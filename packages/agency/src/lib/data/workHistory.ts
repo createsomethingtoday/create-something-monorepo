@@ -72,7 +72,7 @@ export const workHistory: WorkHistoryItem[] = [
 	},
 	{
 		id: 'photography-company',
-		date: 'Date needed (concurrent with equine vet tech in 2010–2012; pre-Nov 2013)',
+		date: '2011 – 2013',
 		role: 'Co-owner (Photography Company)',
 		org: 'Independent',
 		subtitle: 'Creative production pipeline · First attempt at web development as a service',
@@ -88,27 +88,6 @@ export const workHistory: WorkHistoryItem[] = [
 			{
 				label: 'Carry-forward (.agency)',
 				text: 'Service instincts: ship outcomes on deadline, communicate tradeoffs clearly, and turn craft into a system clients can trust.'
-			}
-		]
-	},
-	{
-		id: 'create-something',
-		date: 'Nov 2018 – Present',
-		role: 'Webflow & API Developer (Self-employed)',
-		org: 'CREATE SOMETHING',
-		subtitle: 'Custom development · API integrations · Automation systems',
-		bullets: [
-			{
-				label: 'Complexity',
-				text: 'Integrations live at the edges: mismatched data models, brittle auth, third-party outages, and humans who just need it to work.'
-			},
-			{
-				label: 'Abstraction Tools',
-				text: 'Webflow + custom code, API-first builds, and automation “glue” that reduces tool sprawl into a single workflow.'
-			},
-			{
-				label: 'Carry-forward (.agency)',
-				text: 'This becomes the delivery backbone: connect systems, preserve auditability, and make automation maintainable (not a pile of zaps).'
 			}
 		]
 	},
@@ -176,6 +155,27 @@ export const workHistory: WorkHistoryItem[] = [
 		]
 	},
 	{
+		id: 'create-something',
+		date: 'Nov 2018 – Present',
+		role: 'Webflow & API Developer (Self-employed)',
+		org: 'CREATE SOMETHING',
+		subtitle: 'Custom development · API integrations · Automation systems',
+		bullets: [
+			{
+				label: 'Complexity',
+				text: 'Integrations live at the edges: mismatched data models, brittle auth, third-party outages, and humans who just need it to work.'
+			},
+			{
+				label: 'Abstraction Tools',
+				text: 'Webflow + custom code, API-first builds, and automation “glue” that reduces tool sprawl into a single workflow.'
+			},
+			{
+				label: 'Carry-forward (.agency)',
+				text: 'This becomes the delivery backbone: connect systems, preserve auditability, and make automation maintainable (not a pile of zaps).'
+			}
+		]
+	},
+	{
 		id: 'webflow-support',
 		date: 'Feb 2018 – Mar 2020',
 		role: 'Customer Support Specialist & Team Manager',
@@ -196,6 +196,7 @@ export const workHistory: WorkHistoryItem[] = [
 			}
 		]
 	},
+
 	{
 		id: 'webflow-educator',
 		date: 'Mar 2020 – Apr 2021',
