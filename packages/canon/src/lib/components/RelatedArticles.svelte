@@ -126,10 +126,6 @@
 {/if}
 
 <style>
-	/* Section */
-	.related-section {
-	}
-
 	.section-title {
 		font-size: 1.875rem;
 		font-weight: var(--font-bold);

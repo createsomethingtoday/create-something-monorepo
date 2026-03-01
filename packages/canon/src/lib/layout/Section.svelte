@@ -92,9 +92,6 @@
 		background: var(--color-bg-pure);
 	}
 
-	.section--elevated {
-	}
-
 	.section--subtle {
 		background: var(--color-bg-subtle);
 	}

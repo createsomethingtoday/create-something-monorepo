@@ -9,14 +9,15 @@ const config = {
 	preprocess: [vitePreprocess(), mdsvex(mdsvexConfig)],
 
 
-	kit: {
-		adapter: adapter({
-			routes: {
-				include: ['/*'],
-				exclude: ['<all>']
-			}
-		})
-	}
-};
+		kit: {
+			adapter: adapter({
+				routes: {
+					include: ['/*'],
+					// Avoid _routes.json exclude overflow on Pages sites with many prerendered paths.
+					exclude: []
+				}
+			})
+		}
+	};
 
 export default config;

@@ -73,9 +73,6 @@
 	}
 
 	/* Variants */
-	.card-standard {
-	}
-
 	.card-elevated {
 		box-shadow: var(--shadow-xl);
 	}

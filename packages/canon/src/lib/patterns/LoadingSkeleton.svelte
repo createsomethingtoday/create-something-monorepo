@@ -167,9 +167,6 @@
 		background: var(--color-bg-surface);
 	}
 
-	.skeleton--card {
-	}
-
 	/* Screen reader only */
 	.visually-hidden {
 		position: absolute;

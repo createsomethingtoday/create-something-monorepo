@@ -10,7 +10,7 @@
  */
 
 // Identity API endpoint (single source of truth)
-export const IDENTITY_API = 'https://id.createsomething.space';
+export { IDENTITY_API } from './constants.js';
 
 // Shared types (canonical source to avoid circular dependencies)
 export {

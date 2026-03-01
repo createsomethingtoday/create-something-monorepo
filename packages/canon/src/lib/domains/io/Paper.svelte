@@ -155,10 +155,6 @@
     color: var(--color-fg-primary);
   }
 
-  /* Header */
-  .paper-header {
-  }
-
   .paper-id {
     color: var(--color-fg-muted);
     font-size: var(--text-body-sm);
@@ -316,9 +312,6 @@
     color: var(--color-fg-tertiary);
   }
 
-  :global(.paper-container .table-row) {
-  }
-
   :global(.paper-container .table-cell-emphasis) {
     color: var(--color-fg-secondary);
   }
@@ -366,10 +359,6 @@
 
   :global(.paper-container .references-list li) {
     margin-bottom: 0.5rem;
-  }
-
-  /* Footer */
-  .paper-footer {
   }
 
   :global(.paper-container .footer-text) {

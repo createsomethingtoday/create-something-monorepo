@@ -49,8 +49,8 @@
       <div class="about-content">
         <h2>The approach</h2>
         <p>
-          CREATE SOMETHING .agency runs a POLICY OS for production autonomy. I build custom
-          workflow MCPs, then layer Autonomy Assurance (evals, policy controls, incident loops) and
+          CREATE SOMETHING .agency runs a POLICY OS for production autonomy. I build custom workflow
+          MCPs, then layer Autonomy Assurance (evals, policy controls, incident loops) and
           Enterprise Extension when requirements exceed standard tooling.
         </p>
         <p>
@@ -106,9 +106,9 @@
           complexity underneath. That pattern shows up in science, creative work, client services,
           marketplace systems, and now AI integrations.
         </p>
-        <WorkHistoryTimeline />
       </div>
     </BlurFade>
+    <WorkHistoryTimeline />
   </div>
 </section>
 

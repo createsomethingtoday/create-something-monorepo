@@ -17,7 +17,7 @@
  * const result = await identityClient.magicLogin({ email, source: 'io' });
  */
 
-import { IDENTITY_API } from '../auth/index.js';
+import { IDENTITY_API } from '../auth/constants.js';
 
 // ============================================
 // Types

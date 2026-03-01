@@ -97,9 +97,6 @@
 </section>
 
 <style>
-	.research-section {
-	}
-
 	.eyebrow {
 		font-size: var(--text-body-sm);
 		font-weight: 500;
