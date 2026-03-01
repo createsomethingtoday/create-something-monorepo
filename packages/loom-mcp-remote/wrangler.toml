@@ -1,0 +1,37 @@
+name = "loom-mcp-remote"
+main = "index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+workers_dev = true
+
+[[routes]]
+pattern = "loom.mcp.createsomething.agency"
+custom_domain = true
+
+[observability]
+enabled = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "loom-mcp-remote-db"
+# Replace with real DB id after `wrangler d1 create loom-mcp-remote-db`
+database_id = "00000000-0000-0000-0000-000000000000"
+
+[[d1_databases]]
+binding = "TELEMETRY_DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
+
+[vars]
+# If set, /mcp requires Authorization: Bearer <LOOM_MCP_API_TOKEN>
+# LOOM_MCP_API_TOKEN = ""
+
+# If set, /admin/migrate requires this bearer token
+# MIGRATION_ADMIN_TOKEN = ""
+
+# Optional HMAC secret. If set, /admin/migrate requires X-Migration-Signature header.
+# MIGRATION_SIGNING_SECRET = ""
+
+# Optional default repo id assigned to new tasks when repo is omitted
+# LOOM_REPO_ID = "create-something-monorepo"

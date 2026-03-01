@@ -1365,6 +1365,31 @@ importers:
         specifier: ^7.1.10
         version: 7.3.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
+  packages/loom-mcp-remote:
+    dependencies:
+      '@create-something/mcp-core':
+        specifier: workspace:*
+        version: link:../mcp-core
+      '@modelcontextprotocol/sdk':
+        specifier: 1.25.3
+        version: 1.25.3(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@3.25.76)
+      zod:
+        specifier: ^3.23.0
+        version: 3.25.76
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.0.0
+        version: 4.20260205.0
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
+      wrangler:
+        specifier: ^4.0.0
+        version: 4.64.0(@cloudflare/workers-types@4.20260205.0)
+
   packages/ltd:
     dependencies:
       '@create-something/canon':
@@ -15391,7 +15416,7 @@ snapshots:
 
   '@sveltejs/adapter-cloudflare@6.0.1(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)))(wrangler@4.64.0(@cloudflare/workers-types@4.20260128.0))':
     dependencies:
-      '@cloudflare/workers-types': 4.20260128.0
+      '@cloudflare/workers-types': 4.20260205.0
       '@sveltejs/kit': 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@1.21.7)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
       esbuild: 0.24.2
       worktop: 0.8.0-next.18
@@ -15399,7 +15424,7 @@ snapshots:
 
   '@sveltejs/adapter-cloudflare@6.0.1(@sveltejs/kit@2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)))(wrangler@4.64.0(@cloudflare/workers-types@4.20260128.0))':
     dependencies:
-      '@cloudflare/workers-types': 4.20260128.0
+      '@cloudflare/workers-types': 4.20260205.0
       '@sveltejs/kit': 2.50.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@5.1.1(svelte@5.48.5)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)))(svelte@5.48.5)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.9)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
       esbuild: 0.24.2
       worktop: 0.8.0-next.18

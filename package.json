@@ -84,6 +84,7 @@
     "mcp:composio:sync-and-generate": "pnpm mcp:composio:sync && pnpm mcp:registry:generate",
     "create-mcp": "tsx scripts/create-mcp.ts",
     "deploy:halfdozen-dm-mcp": "cd packages/halfdozen-dm-mcp/worker && pnpm exec wrangler deploy",
+    "deploy:loom-mcp-remote": "cd packages/loom-mcp-remote && pnpm exec wrangler deploy",
     "deploy:blondish-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.blondish.toml",
     "deploy:c3-management-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.c3-management.toml",
     "deploy:cracked-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.cracked.toml",
@@ -94,7 +95,10 @@
     "deploy:lightswitch-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.lightswitch.toml",
     "deploy:phase-3-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.phase-3.toml",
     "deploy:system-studio-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.system-studio.toml",
-    "deploy:three-six-zero-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.three-six-zero.toml"
+    "deploy:three-six-zero-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.three-six-zero.toml",
+    "loom:migrate:export": "node scripts/loom/export-local-snapshot.mjs",
+    "loom:migrate:import": "node scripts/loom/import-remote-snapshot.mjs",
+    "loom:migrate:validate": "node scripts/loom/validate-remote-cutover.mjs"
   },
   "devDependencies": {
     "@iarna/toml": "^2.2.5",

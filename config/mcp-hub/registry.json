@@ -10950,6 +10950,29 @@
         "composio-developer-tools",
         "toolkit"
       ]
+    },
+    "loom-mcp": {
+      "transport": "http",
+      "url": "https://loom.mcp.createsomething.agency/mcp",
+      "description": "Remote Loom MCP for task coordination and session recovery",
+      "bearer_token_env_var": "LOOM_MCP_API_TOKEN",
+      "tags": [
+        "ops",
+        "coordination",
+        "loom",
+        "cs"
+      ],
+      "catalog": {
+        "include": true,
+        "name": "Loom",
+        "slug": "loom",
+        "category": "create-something",
+        "requiresAuth": true,
+        "authType": "bearer",
+        "transports": [
+          "http"
+        ]
+      }
     }
   },
   "bundles": {
@@ -13884,6 +13907,9 @@
       "composio-toolkit-storyblok",
       "composio-toolkit-webflow",
       "composio-toolkit-wix"
+    ],
+    "loom": [
+      "loom-mcp"
     ]
   },
   "defaults": {

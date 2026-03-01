@@ -1,7 +1,8 @@
 {
   "enabledBundles": [],
   "enabledServers": [
-    "halfdozen-dm-mcp"
+    "halfdozen-dm-mcp",
+    "loom-mcp"
   ],
   "disabledServers": [
     "composio-toolkit-airtable",
@@ -16,5 +17,5 @@
     "slack_create_something",
     "three-tier-framework"
   ],
-  "updatedAt": "2026-02-24T22:59:03.414Z"
+  "updatedAt": "2026-03-01T14:34:09.457Z"
 }
