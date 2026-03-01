@@ -157,7 +157,7 @@
     <div class="marquee-wrapper">
       <div class="marquee-fade-left"></div>
       <div class="marquee-fade-right"></div>
-      <Marquee pauseOnHover={true} duration={40} gap={24} class="stack-marquee">
+      <Marquee pauseOnHover={true} duration={40} gap={24} repeat={2} class="stack-marquee">
         {#each stackItems as item}
           <div class="stack-card">
             <span class="stack-type">{item.type}</span>
@@ -435,6 +435,7 @@
     width: 100%;
     display: flex;
     justify-content: center;
+    isolation: isolate;
   }
 
   .marquee-fade-left,
@@ -442,7 +443,7 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    width: 15%;
+    width: clamp(2.5rem, 10vw, 9rem);
     z-index: 2;
     pointer-events: none;
   }
@@ -466,7 +467,7 @@
     border-radius: var(--radius-lg, 12px);
     background: rgba(255, 255, 255, 0.02);
     box-shadow: var(--glass-shine-soft);
-    min-width: 260px;
+    min-width: clamp(210px, 30vw, 280px);
     height: 80px;
     transition: border-color var(--duration-standard) var(--ease-standard);
   }
@@ -824,6 +825,22 @@
 
     .retainer-price {
       font-size: var(--text-h1);
+    }
+
+    .marquee-fade-left,
+    .marquee-fade-right {
+      width: 2.5rem;
+    }
+
+    .stack-card {
+      min-width: 220px;
+      min-height: 76px;
+      height: auto;
+      padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
+    }
+
+    .stack-name {
+      font-size: var(--text-body-sm);
     }
   }
 </style>

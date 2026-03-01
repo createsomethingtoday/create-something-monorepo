@@ -41,13 +41,20 @@
 	class="marquee-container {className}"
 	class:vertical
 	class:pause-on-hover={pauseOnHover}
+	aria-live="off"
 	style="
 		--duration: {duration}s;
 		--gap: {gap}px;
 	"
 >
 	{#each Array(repeat) as _, i}
-		<div class="marquee-group" class:reverse>
+		<div
+			class="marquee-group"
+			class:reverse
+			data-duplicate={i > 0 ? 'true' : undefined}
+			aria-hidden={i > 0}
+			inert={i > 0}
+		>
 			{@render children?.()}
 		</div>
 	{/each}
@@ -69,6 +76,7 @@
 		flex-shrink: 0;
 		gap: var(--gap);
 		animation: marquee var(--duration) linear infinite;
+		will-change: transform;
 	}
 	
 	.marquee-container.vertical .marquee-group {
@@ -96,8 +104,20 @@
 	
 	/* Respect reduced motion preference */
 	@media (prefers-reduced-motion: reduce) {
+		.marquee-container {
+			overflow: visible;
+		}
+
 		.marquee-group {
 			animation: none;
+		}
+
+		.marquee-group[data-duplicate] {
+			display: none;
+		}
+
+		.marquee-container:not(.vertical) .marquee-group {
+			flex-wrap: wrap;
 		}
 	}
 </style>
