@@ -13,7 +13,7 @@ import { getBuiltWorkflowTemplate, getWorkflowMermaid, listWorkflowSummaries, va
 import { buildWorkflowTemplate } from '../workflows/build.js';
 import { workflowTemplateToMermaid } from '../workflows/mermaid.js';
 import { mapToolSequenceToWorkflowDefinition } from '../workflows/map.js';
-import { evaluateConstraintPolicyHybrid, evaluateConstraintPolicyWithRollout, compileConstraintPolicy, } from '@create-something/constraint-os-policy-engine';
+import { evaluateConstraintPolicyHybrid, evaluateConstraintPolicyWithRollout, compileConstraintPolicy, } from '@create-something/policy-os-engine';
 import { AtlasGetSchema, AtlasSearchSchema, WorkflowIdSchema, WorkflowMapFromToolSequenceSchema, McpCatalogListSchema, McpIntrospectSchema, McpMapSchema, VersionSelectionGetSchema, VersionSelectionSetSchema, JudgmentPolicyActivateSchema, JudgmentPolicyCompareReportGetSchema, JudgmentDashboardSummaryParamsSchema, JudgmentDashboardSummarySchema, JudgmentPolicyEstimateSchema, JudgmentEngineRolloutGetSchema, JudgmentEngineRolloutSetSchema, JudgmentSecurityStatusGetSchema, JudgmentSecurityAccessSetSchema, JudgmentSecurityIncidentResolveSchema, JudgmentSecurityIncidentReviewNextSchema, JudgmentPolicyGetSchema, JudgmentPolicySaveSchema, AutomationContractGetSchema, AutomationContractUpsertSchema, AutomationRunStartSchema, ApprovalInboxDecideSchema, } from '../schemas/index.js';
 import { findMcpCatalogEntry, listMcpCatalog, resolveMcpHttpEndpointUrl, resolveMcpHttpEndpointUrlFromUrl, } from '../mcps/catalog.js';
 import { introspectMcpServer } from '../mcps/introspect.js';

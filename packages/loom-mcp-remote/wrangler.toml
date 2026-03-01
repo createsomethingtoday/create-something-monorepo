@@ -15,8 +15,7 @@ enabled = true
 [[d1_databases]]
 binding = "DB"
 database_name = "loom-mcp-remote-db"
-# Replace with real DB id after `wrangler d1 create loom-mcp-remote-db`
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "d0aee1db-3f73-4378-b9d0-049a6bd45a6d"
 
 [[d1_databases]]
 binding = "TELEMETRY_DB"
