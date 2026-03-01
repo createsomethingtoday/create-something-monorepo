@@ -82,75 +82,6 @@
   </div>
 </section>
 
-<!-- Developer Tools -->
-<section class="products-section">
-  <div class="section-inner">
-    <BlurFade delay={0.1}>
-      <div class="section-header">
-        <h2 class="section-eyebrow">Developer Tools</h2>
-        <p class="section-desc">
-          The Subtractive Triad — audit, learn, see — packaged for your editor.
-        </p>
-      </div>
-    </BlurFade>
-    <div class="category-grid">
-      {#each devTools as product, index}
-        <BlurFade delay={0.2 + index * 0.1}>
-          <a
-            href={product.href}
-            class="product-card category-card"
-            target={isExternal(product.href) ? '_blank' : undefined}
-            rel={isExternal(product.href) ? 'noopener noreferrer' : undefined}
-          >
-            <div class="product-badge badge-oss">{product.badge}</div>
-            <h3 class="product-name">{product.title}</h3>
-            <p class="product-tagline">{product.tagline}</p>
-            <p class="product-description">{product.description}</p>
-            <div class="product-footer">
-              {#if product.npmPackage}
-                <code class="product-npm">{product.npmPackage}</code>
-              {/if}
-              <span class="product-cta">View on GitHub →</span>
-            </div>
-          </a>
-        </BlurFade>
-      {/each}
-    </div>
-  </div>
-</section>
-
-<!-- Framework & Infrastructure -->
-<section class="products-section">
-  <div class="section-inner">
-    <BlurFade delay={0.1}>
-      <div class="section-header">
-        <h2 class="section-eyebrow">Framework & Infrastructure</h2>
-        <p class="section-desc">
-          Structural components for agent systems. The frame that holds everything.
-        </p>
-      </div>
-    </BlurFade>
-    <div class="category-grid">
-      {#each framework as product, index}
-        <BlurFade delay={0.2 + index * 0.1}>
-          <a
-            href={product.href}
-            class="product-card category-card"
-            target={isExternal(product.href) ? '_blank' : undefined}
-            rel={isExternal(product.href) ? 'noopener noreferrer' : undefined}
-          >
-            <div class="product-badge badge-neutral">{product.badge}</div>
-            <h3 class="product-name">{product.title}</h3>
-            <p class="product-tagline">{product.tagline}</p>
-            <p class="product-description">{product.description}</p>
-            <span class="product-cta">View on GitHub →</span>
-          </a>
-        </BlurFade>
-      {/each}
-    </div>
-  </div>
-</section>
-
 <!-- Integration MCPs -->
 <section class="products-section">
   <div class="section-inner">
@@ -324,61 +255,54 @@
     padding: 3rem var(--container-padding, 1.5rem);
   }
 
-  /* Featured Grid — 2 col, larger cards */
-  .featured-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-4, 1rem);
-  }
-
-  /* Category Grid — 3 col for smaller cards */
-  .category-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-4, 1rem);
-  }
-
-  /* Client Grid — 2 col */
+  /* Shared Grid for all product sections */
+  .featured-grid,
+  .category-grid,
   .client-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: var(--space-4, 1rem);
   }
 
-  /* Product Card — shared base */
-  .product-card {
-    padding: 1.25rem 1.5rem;
+  /* Product Card — base */
+  .product-card,
+  .client-card {
+    padding: 1.5rem;
     border-radius: var(--radius-lg, 12px);
     display: flex;
     flex-direction: column;
-    transition:
-      border-color var(--duration-micro, 200ms) var(--ease-standard),
-      transform var(--duration-micro, 200ms) var(--ease-standard);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.05));
+    box-shadow: var(--glass-shine-soft);
     text-decoration: none;
+    transition:
+      border-color var(--duration-standard) var(--ease-standard),
+      transform var(--duration-standard) var(--ease-standard),
+      background var(--duration-standard) var(--ease-standard);
   }
 
-  .product-card:hover {
-    border-color: var(--color-border-emphasis);
+  .product-card:hover,
+  .client-card:hover {
+    border-color: rgba(96, 165, 250, 0.4);
+    background: rgba(255, 255, 255, 0.04);
     transform: translateY(-2px);
   }
 
-  /* Featured cards — slightly larger type */
-  .featured-card .product-name {
-    font-size: var(--text-h3, 1.25rem);
+  .featured-card {
+    background: linear-gradient(135deg, transparent 0%, rgba(96, 165, 250, 0.04) 100%);
+    border-color: rgba(96, 165, 250, 0.15);
   }
 
-  /* Category cards — compact */
-  .category-card .product-name {
-    font-size: var(--text-body);
-  }
-
-  /* Client Card — distinct treatment */
   .client-card {
-    padding: 1.25rem 1.5rem;
-    border-radius: var(--radius-lg, 12px);
-    display: flex;
-    flex-direction: column;
-    background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.02) 100%);
+    background: linear-gradient(135deg, transparent 0%, rgba(167, 139, 250, 0.04) 100%);
+  }
+
+  /* Typography consistency */
+  .product-name {
+    font-size: var(--text-h3, 1.25rem);
+    font-weight: var(--font-semibold);
+    color: var(--color-fg-primary);
+    margin-bottom: var(--space-1, 0.25rem);
   }
 
   .client-card-header {
@@ -420,14 +344,6 @@
   .badge-accent {
     color: var(--color-accent, #a78bfa);
     background: rgba(167, 139, 250, 0.1);
-  }
-
-  /* Product content */
-  .product-name {
-    font-size: var(--text-h3, 1.25rem);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    margin-bottom: var(--space-1, 0.25rem);
   }
 
   .product-tagline {
@@ -533,12 +449,6 @@
   }
 
   /* Responsive */
-  @media (max-width: 1024px) {
-    .category-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
   @media (max-width: 768px) {
     .hero {
       padding: 3rem var(--container-padding, 1.5rem) 2rem;
