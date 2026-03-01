@@ -643,8 +643,9 @@
 
   /* Trust Artifacts Grid */
   .artifact-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: var(--space-4, 1rem);
     max-width: 900px;
     margin: 0 auto;
@@ -653,6 +654,8 @@
   .artifact-doc-card {
     display: flex;
     flex-direction: column;
+    flex: 1 1 280px;
+    max-width: calc(33.333% - 0.67rem);
     padding: var(--space-4, 1rem) var(--space-5, 1.5rem);
     border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.05));
     border-radius: var(--radius-md, 8px);
@@ -862,9 +865,16 @@
     .retainer-columns {
       grid-template-columns: 1fr;
     }
+
+    .artifact-doc-card {
+      max-width: calc(50% - 0.5rem);
+    }
   }
 
   @media (max-width: 768px) {
+    .artifact-doc-card {
+      max-width: 100%;
+    }
     .hero {
       padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
     }
