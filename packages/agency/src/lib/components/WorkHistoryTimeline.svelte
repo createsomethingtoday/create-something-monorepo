@@ -32,10 +32,11 @@
   </BlurFade>
 
   <ol class="timeline-list">
-    {#each workHistory as item}
+    {#each workHistory as item, i}
       <BlurFade delay={0.15}>
-        <li class="timeline-item">
+        <li class="timeline-item" style="--index: {i};">
           <div class="timeline-rail" aria-hidden="true">
+            <div class="timeline-rail-line"></div>
             <div class="timeline-dot"></div>
           </div>
           <div class="timeline-body">
@@ -112,27 +113,92 @@
     justify-content: center;
   }
 
-  .timeline-rail::before {
-    content: '';
+  .timeline-rail-line {
     position: absolute;
     top: 0;
     bottom: -40px;
     width: 1px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .timeline-rail-line::before {
+    content: '';
+    position: absolute;
+    inset: 0;
     background: var(--color-border-default);
     opacity: 0.9;
   }
 
-  .timeline-item:last-child .timeline-rail::before {
+  .timeline-rail-line::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent, var(--color-fg-primary), transparent);
+    background-size: 100% 50px;
+    background-repeat: no-repeat;
+    animation: beam-drop 3s infinite linear;
+    animation-delay: calc(var(--index) * 0.4s);
+  }
+
+  .timeline-item:last-child .timeline-rail-line {
     bottom: 0;
   }
 
   .timeline-dot {
+    position: relative;
+    z-index: 1;
     width: 10px;
     height: 10px;
     border-radius: 999px;
     margin-top: 6px;
     background: var(--color-bg-subtle);
     border: 2px solid var(--color-fg-muted);
+    animation: dot-pulse 3s infinite linear;
+    animation-delay: calc(var(--index) * 0.4s);
+  }
+
+  @keyframes beam-drop {
+    0% {
+      background-position: 0 -50px;
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      background-position: 0 calc(100% + 50px);
+      opacity: 0;
+    }
+  }
+
+  @keyframes dot-pulse {
+    0%,
+    30%,
+    100% {
+      border-color: var(--color-fg-muted);
+      background: var(--color-bg-subtle);
+      box-shadow: none;
+    }
+    10%,
+    20% {
+      border-color: var(--color-fg-primary);
+      background: var(--color-fg-primary);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .timeline-rail-line::after {
+      display: none;
+    }
+    .timeline-dot {
+      animation: none;
+    }
   }
 
   .timeline-body {
