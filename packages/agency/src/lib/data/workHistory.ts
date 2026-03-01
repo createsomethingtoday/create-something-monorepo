@@ -93,7 +93,7 @@ export const workHistory: WorkHistoryItem[] = [
 	},
 	{
 		id: 'create-something',
-		date: 'Nov 2013 – Present',
+		date: 'Nov 2018 – Present',
 		role: 'Webflow & API Developer (Self-employed)',
 		org: 'CREATE SOMETHING',
 		subtitle: 'Custom development · API integrations · Automation systems',
@@ -306,7 +306,7 @@ export const workHistory: WorkHistoryItem[] = [
 export const workHistoryMilestones = {
 	events: [
 		{ date: '2008', label: 'A&M', description: 'Domain systems', highlight: false },
-		{ date: '2013', label: 'Create Something', description: 'Web + APIs', highlight: true },
+		{ date: '2018', label: 'Create Something', description: 'Web + APIs', highlight: true },
 		{ date: '2018', label: 'Webflow', description: 'Support → Education', highlight: false },
 		{ date: '2023', label: 'Marketplace', description: 'Ops systems', highlight: false },
 		{ date: '2024', label: 'System Architect', description: 'Data infra', highlight: true },
