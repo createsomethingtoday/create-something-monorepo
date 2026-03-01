@@ -740,8 +740,6 @@ Never hardcode pixel values for spacing.`}</pre>
 	}
 
 	/* Header */
-	.paper-header {
-	}
 
 	.paper-id {
 		color: var(--color-fg-muted);
@@ -866,8 +864,6 @@ Never hardcode pixel values for spacing.`}</pre>
 		color: var(--color-fg-secondary);
 	}
 
-	.data-table tbody tr {
-	}
 
 	.data-table td {
 		color: var(--color-fg-tertiary);

@@ -688,8 +688,6 @@ logger.info('Processing', { id, correlationId });`}</pre>
 		color: var(--color-fg-primary);
 	}
 
-	.paper-header {
-	}
 
 	.paper-id {
 		color: var(--color-fg-muted);
@@ -821,8 +819,6 @@ logger.info('Processing', { id, correlationId });`}</pre>
 		color: var(--color-fg-tertiary);
 	}
 
-	.table-row {
-	}
 
 	.table-cell-emphasis {
 		color: var(--color-fg-secondary);

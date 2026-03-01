@@ -592,8 +592,6 @@ const currentPhase = spec.phases.find(p =&gt;
 		color: var(--color-fg-primary);
 	}
 
-	.paper-header {
-	}
 
 	.paper-id {
 		color: var(--color-fg-muted);
@@ -672,8 +670,6 @@ const currentPhase = spec.phases.find(p =&gt;
 		color: var(--color-fg-tertiary);
 	}
 
-	.table-row {
-	}
 
 	.table-cell-emphasis {
 		color: var(--color-fg-secondary);

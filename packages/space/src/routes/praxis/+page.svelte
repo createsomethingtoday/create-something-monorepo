@@ -409,9 +409,6 @@
 		gap: 0;
 	}
 
-	.section {
-	}
-
 	.section-content {
 		padding: var(--space-sm);
 	}

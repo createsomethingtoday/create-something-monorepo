@@ -166,9 +166,6 @@
     font-size: var(--text-body-sm);
   }
 
-  .feedback-section {
-  }
-
   .feedback-label {
     color: var(--color-fg-muted);
     font-size: var(--text-caption);

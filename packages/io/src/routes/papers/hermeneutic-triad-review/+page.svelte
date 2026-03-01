@@ -855,8 +855,6 @@ export async function POST({ request }) {
 	}
 
 	/* Header */
-	.paper-header {
-	}
 
 	.paper-id {
 		color: var(--color-fg-muted);
@@ -997,8 +995,6 @@ export async function POST({ request }) {
 		overflow-x: auto;
 	}
 
-	.table-header {
-	}
 
 	.table-cell {
 		padding: 0.75rem 1rem;
@@ -1007,8 +1003,6 @@ export async function POST({ request }) {
 		font-size: var(--text-body-sm);
 	}
 
-	.table-row {
-	}
 
 	/* References */
 	.references-list {

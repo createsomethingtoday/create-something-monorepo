@@ -916,9 +916,6 @@
 </section>
 
 <style>
-  .header-section {
-  }
-
   .eyebrow {
     font-size: var(--text-body-sm);
     text-transform: uppercase;
@@ -997,9 +994,6 @@
     color: var(--color-fg-secondary);
   }
 
-  .test-box {
-  }
-
   .test-question {
     font-weight: 600;
   }
@@ -1038,9 +1032,6 @@
     color: var(--color-fg-muted);
   }
 
-  .master-divider {
-  }
-
   .master-name {
     font-weight: 600;
   }
@@ -1053,9 +1044,6 @@
   .quote-text {
     font-size: var(--text-body-sm);
     font-style: italic;
-  }
-
-  .final-note {
   }
 
   .note-title {

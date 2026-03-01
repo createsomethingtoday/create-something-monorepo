@@ -632,8 +632,6 @@ for identity verification, but it remains independent of business logic.
 	}
 
 	/* Header Styles */
-	.paper-header {
-	}
 
 	.paper-id {
 		color: var(--color-fg-muted);
@@ -774,8 +772,6 @@ for identity verification, but it remains independent of business logic.
 		text-align: left;
 	}
 
-	.comparison-table tbody tr {
-	}
 
 	.comparison-table td {
 		color: var(--color-fg-tertiary);

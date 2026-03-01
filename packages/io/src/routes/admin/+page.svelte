@@ -179,8 +179,6 @@
 		}
 	}
 
-	.section-divider {
-	}
 
 	.section-title {
 		font-size: var(--text-h3);

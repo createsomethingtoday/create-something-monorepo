@@ -758,8 +758,6 @@ features:
 		color: var(--color-fg-primary);
 	}
 
-	.paper-header {
-	}
 
 	.paper-id {
 		color: var(--color-fg-muted);
@@ -838,8 +836,6 @@ features:
 		color: var(--color-fg-tertiary);
 	}
 
-	.table-row {
-	}
 
 	.table-cell-emphasis {
 		color: var(--color-fg-secondary);

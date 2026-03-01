@@ -177,9 +177,6 @@
     color: var(--color-fg-muted);
   }
 
-  .metadata-section {
-  }
-
   .metadata-text {
     font-size: var(--text-caption);
     color: var(--color-fg-tertiary);

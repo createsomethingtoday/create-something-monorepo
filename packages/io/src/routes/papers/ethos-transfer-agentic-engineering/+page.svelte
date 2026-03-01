@@ -808,8 +808,6 @@ recede into transparent use. The methodology disappears when creating.</pre>
 	}
 
 	/* Header */
-	.paper-header {
-	}
 
 	.paper-id {
 		color: var(--color-fg-muted);
@@ -968,8 +966,6 @@ recede into transparent use. The methodology disappears when creating.</pre>
 	}
 
 	/* Tables */
-	.table-header {
-	}
 
 	.table-cell {
 		padding: 0.75rem 1rem;
@@ -978,8 +974,6 @@ recede into transparent use. The methodology disappears when creating.</pre>
 		font-size: var(--text-body-sm);
 	}
 
-	.table-row {
-	}
 
 	.table-row-highlight {
 		background: var(--color-success-muted);

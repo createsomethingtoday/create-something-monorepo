@@ -530,11 +530,7 @@
 		letter-spacing: 0.05em;
 	}
 
-	.table-body {
-	}
 
-	.table-body > * + * {
-	}
 
 	.table-row {
 		transition: background var(--duration-micro) var(--ease-standard);
@@ -611,8 +607,6 @@
 	}
 
 	/* Stats Grid - Responsive */
-	.stats-section {
-	}
 
 	.stats-grid {
 		display: grid;

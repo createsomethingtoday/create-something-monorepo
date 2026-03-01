@@ -726,11 +726,7 @@
   }
 
   /* Borders */
-  .divider-top {
-  }
 
-  .section-border {
-  }
 
   /* Lists */
   .checklist-icon {

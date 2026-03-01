@@ -582,8 +582,6 @@ gen.end(response, { input: 150, output: 500 });`}</code></pre>
 		color: var(--color-fg-primary);
 	}
 
-	.paper-header {
-	}
 
 	.paper-id {
 		color: var(--color-fg-muted);

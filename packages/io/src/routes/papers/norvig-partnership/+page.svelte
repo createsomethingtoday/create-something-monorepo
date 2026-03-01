@@ -782,8 +782,6 @@ Partnership time: 5 minutes</pre>
 	}
 
 	/* Header */
-	.paper-header {
-	}
 
 	.paper-id {
 		color: var(--color-fg-muted);

@@ -549,8 +549,6 @@ if (name === 'productType' && value === 'digital') {
 		color: var(--color-fg-primary);
 	}
 
-	.paper-header {
-	}
 
 	.paper-id {
 		color: var(--color-fg-muted);
@@ -653,8 +651,6 @@ if (name === 'productType' && value === 'digital') {
 		color: var(--color-fg-secondary);
 	}
 
-	.data-table tbody tr {
-	}
 
 	.data-table td {
 		color: var(--color-fg-tertiary);

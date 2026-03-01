@@ -785,8 +785,6 @@ cs-003: Session management
 	}
 
 	/* Header */
-	.paper-header {
-	}
 
 	.paper-id {
 		color: var(--color-fg-muted);
@@ -941,8 +939,6 @@ cs-003: Session management
 	}
 
 	/* Tables */
-	.table-header {
-	}
 
 	.table-cell {
 		padding: 0.75rem 1rem;
@@ -951,8 +947,6 @@ cs-003: Session management
 		font-size: var(--text-body-sm);
 	}
 
-	.table-row {
-	}
 
 	/* References */
 	.references-list {

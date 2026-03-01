@@ -1031,8 +1031,6 @@
 	}
 
 	/* Header */
-	.paper-header {
-	}
 
 	.paper-id {
 		color: var(--color-fg-muted);
@@ -1208,8 +1206,6 @@
 		border-bottom: 2px solid var(--color-border-default);
 	}
 
-	.table-row {
-	}
 
 	.table-cell {
 		padding: 0.75rem 1rem;

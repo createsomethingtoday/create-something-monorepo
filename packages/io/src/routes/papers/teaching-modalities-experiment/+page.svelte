@@ -1131,8 +1131,6 @@
 		padding: 0.75rem 1rem;
 	}
 
-	.hypothesis-table thead tr {
-	}
 
 	.hypothesis-table tbody tr {
 		border-bottom: 1px solid var(--color-border-muted);

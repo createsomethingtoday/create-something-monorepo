@@ -587,8 +587,6 @@
 		font-weight: 600;
 	}
 
-	.comparison-table tbody tr {
-	}
 
 	.comparison-table tbody tr:last-child {
 		background: var(--color-bg-subtle);

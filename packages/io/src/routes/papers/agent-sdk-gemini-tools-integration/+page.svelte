@@ -410,8 +410,6 @@ FILE_READ_TOOL_SCHEMA = {'{'}
 		color: var(--color-fg-primary);
 	}
 
-	.paper-header {
-	}
 
 	.paper-id {
 		color: var(--color-fg-muted);

@@ -24,9 +24,6 @@
 </div>
 
 <style>
-	.card {
-	}
-
 	.order-index,
 	.category {
 		font-size: var(--text-caption);

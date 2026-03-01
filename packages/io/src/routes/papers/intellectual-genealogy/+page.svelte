@@ -812,8 +812,6 @@ const principles = [
 		color: var(--color-fg-primary);
 	}
 
-	.paper-header {
-	}
 
 	.paper-id {
 		color: var(--color-fg-muted);
@@ -861,8 +859,6 @@ const principles = [
 		font-weight: 600;
 	}
 
-	.data-table tbody tr {
-	}
 
 	.data-table td {
 		color: var(--color-fg-tertiary);
@@ -881,8 +877,6 @@ const principles = [
 		font-weight: 600;
 	}
 
-	.lineage-table tbody tr {
-	}
 
 	.lineage-table td {
 		color: var(--color-fg-secondary);

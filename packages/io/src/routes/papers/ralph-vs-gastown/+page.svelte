@@ -806,8 +806,6 @@ gt sling worker-3 "cd /project && ./ralph.sh --prd api-prd.json"
 		color: var(--color-fg-primary);
 	}
 
-	.paper-header {
-	}
 
 	.paper-id {
 		color: var(--color-fg-muted);

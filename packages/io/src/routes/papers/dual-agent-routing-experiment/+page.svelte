@@ -718,8 +718,6 @@ Co-Authored-By: Claude Sonnet 4.5 &lt;noreply@anthropic.com&gt;</pre>
 	}
 
 	/* Header */
-	.paper-header {
-	}
 
 	.paper-id {
 		color: var(--color-fg-muted);

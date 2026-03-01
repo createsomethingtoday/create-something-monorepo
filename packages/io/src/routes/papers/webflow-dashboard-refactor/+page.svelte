@@ -673,8 +673,6 @@ export const GET: RequestHandler = async ({ platform }) => {
 	}
 
 	/* Header */
-	.paper-header {
-	}
 
 	.paper-id {
 		color: var(--color-fg-muted);
@@ -805,8 +803,6 @@ export const GET: RequestHandler = async ({ platform }) => {
 	}
 
 	/* Tables */
-	.table-header {
-	}
 
 	.table-cell {
 		padding: 0.75rem 1rem;
@@ -815,8 +811,6 @@ export const GET: RequestHandler = async ({ platform }) => {
 		font-size: var(--text-body-sm);
 	}
 
-	.table-row {
-	}
 
 	/* References */
 	.references-list {

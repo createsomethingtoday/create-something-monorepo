@@ -269,9 +269,6 @@
 		color: var(--color-fg-secondary);
 	}
 
-	:global(.nba-stats-table tbody tr) {
-	}
-
 	:global(.nba-stats-table tbody tr:last-child) {
 		border-bottom: none;
 	}
