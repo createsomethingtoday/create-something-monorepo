@@ -5,7 +5,8 @@
     BlurFade,
     BorderBeam,
     OrbitingCircles,
-    ShimmerButton
+    ShimmerButton,
+    Marquee
   } from '@create-something/canon/magicui';
   import HubMcpFlow from '$lib/components/HubMcpFlow.svelte';
   // Structured data for SEO/AEO
@@ -34,6 +35,46 @@
       price: 'Custom',
       priceDescription: 'Scoped implementation with optional ongoing support'
     }
+  ];
+
+  // Artifact Snippets for visualization
+  const artifactSnippets = [
+    {
+      name: 'mcp_contract.yaml',
+      code: 'name: "custom-workflow-mcp"\nversion: "1.0.0"\nscopes: ["read", "write"]\ntrust_boundary: "strict"'
+    },
+    {
+      name: 'agent_contract.yaml',
+      code: 'boundary: "human-in-loop"\napprovals_required: true\nescalation:\n  trigger: "confidence < 0.9"\n  action: "notify"'
+    },
+    {
+      name: 'outcome_contract.md',
+      code: '# Success Criteria\n- 99.9% Deterministic retries\n- Full state persistence\n- Zero unauthorized writes'
+    },
+    {
+      name: 'golden_tasks.yaml',
+      code: 'test_cases:\n  - name: "handle_rate_limit"\n    expected: "exponential_backoff"\n  - name: "auth_failure"\n    expected: "immediate_halt"'
+    },
+    {
+      name: 'runbook.md',
+      code: '## Incident Response\n1. Check core worker logs\n2. Verify D1 state integrity\n3. Roll back to last golden deploy'
+    },
+    {
+      name: 'policy.json',
+      code: '{\n  "effect": "Deny",\n  "action": "*",\n  "resource": "production_db",\n  "condition": "unverified"\n}'
+    }
+  ];
+
+  // Create varied rows for the Marquees
+  const row1 = [...artifactSnippets];
+  const row2 = [...artifactSnippets].reverse();
+  const row3 = [
+    artifactSnippets[2],
+    artifactSnippets[4],
+    artifactSnippets[0],
+    artifactSnippets[1],
+    artifactSnippets[5],
+    artifactSnippets[3]
   ];
 </script>
 
@@ -503,6 +544,49 @@
       </BlurFade>
     </div>
   </div>
+
+  <BlurFade delay={0.4}>
+    <div class="artifacts-visualization">
+      <div class="marquee-fade-left"></div>
+      <div class="marquee-fade-right"></div>
+
+      <Marquee pauseOnHover={true} duration={35} gap={24} class="artifact-marquee">
+        {#each row1 as artifact}
+          <div class="artifact-card">
+            <div class="artifact-header">
+              <span class="artifact-dot"></span>
+              <span class="artifact-name">{artifact.name}</span>
+            </div>
+            <pre class="artifact-code"><code>{artifact.code}</code></pre>
+          </div>
+        {/each}
+      </Marquee>
+
+      <Marquee reverse={true} pauseOnHover={true} duration={45} gap={24} class="artifact-marquee">
+        {#each row2 as artifact}
+          <div class="artifact-card">
+            <div class="artifact-header">
+              <span class="artifact-dot"></span>
+              <span class="artifact-name">{artifact.name}</span>
+            </div>
+            <pre class="artifact-code"><code>{artifact.code}</code></pre>
+          </div>
+        {/each}
+      </Marquee>
+
+      <Marquee pauseOnHover={true} duration={40} gap={24} class="artifact-marquee">
+        {#each row3 as artifact}
+          <div class="artifact-card">
+            <div class="artifact-header">
+              <span class="artifact-dot"></span>
+              <span class="artifact-name">{artifact.name}</span>
+            </div>
+            <pre class="artifact-code"><code>{artifact.code}</code></pre>
+          </div>
+        {/each}
+      </Marquee>
+    </div>
+  </BlurFade>
 </section>
 
 <!-- CTA -->
@@ -513,8 +597,8 @@
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="cta-subtext">
-        Book a Policy Mapping Session and I will map your policy boundary and show what the
-        artifact bundle looks like for your workflows.
+        Book a Policy Mapping Session and I will map your policy boundary and show what the artifact
+        bundle looks like for your workflows.
       </p>
     </BlurFade>
     <BlurFade delay={0.2}>
@@ -1326,5 +1410,93 @@
     .cta-section {
       padding: var(--layout-3, 4rem) 0;
     }
+  }
+
+  /* Artifacts Visualization */
+  .artifacts-visualization {
+    position: relative;
+    width: 100vw;
+    left: calc(-50vw + 50%);
+    margin-top: var(--space-8, 3rem);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4, 1rem);
+    overflow: hidden;
+  }
+
+  .marquee-fade-left,
+  .marquee-fade-right {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 15vw;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .marquee-fade-left {
+    left: 0;
+    background: linear-gradient(to right, var(--color-bg-pure, #000000), transparent);
+  }
+
+  .marquee-fade-right {
+    right: 0;
+    background: linear-gradient(to left, var(--color-bg-pure, #000000), transparent);
+  }
+
+  .artifact-card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-4, 1rem);
+    border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.05));
+    border-radius: var(--radius-md, 8px);
+    background: rgba(10, 10, 15, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: var(--glass-shine-soft);
+    min-width: 320px;
+    transition: border-color var(--duration-standard) var(--ease-standard);
+  }
+
+  .artifact-card:hover {
+    border-color: rgba(96, 165, 250, 0.4);
+    background: rgba(10, 10, 15, 0.8);
+  }
+
+  .artifact-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 0.5rem);
+    margin-bottom: var(--space-3, 0.75rem);
+    padding-bottom: var(--space-2, 0.5rem);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .artifact-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(96, 165, 250, 0.8);
+    box-shadow: 0 0 8px rgba(96, 165, 250, 0.4);
+  }
+
+  .artifact-name {
+    font-size: var(--text-caption);
+    font-family: var(--font-mono, monospace);
+    color: var(--color-fg-secondary);
+    letter-spacing: 0.05em;
+  }
+
+  .artifact-code {
+    margin: 0;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.75rem;
+    color: rgba(96, 165, 250, 0.7);
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+
+  :global(.artifact-marquee) {
+    --gap: 1.5rem !important;
   }
 </style>
