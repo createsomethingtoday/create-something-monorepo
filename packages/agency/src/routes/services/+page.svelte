@@ -212,14 +212,14 @@
                 <li>Need for deterministic retries/idempotency</li>
                 <li>Enterprise security or trust-boundary requirements</li>
               </ul>
-              <div class="retainer-callout">
-                <p>
-                  Notion setup and training are necessary but not sufficient for high-autonomy
-                  systems. The durable value is reliability engineering, policy governance, and
-                  extension architecture.
-                </p>
-              </div>
             </div>
+          </div>
+          <div class="retainer-callout">
+            <p>
+              Notion setup and training are necessary but not sufficient for high-autonomy systems.
+              The durable value is reliability engineering, policy governance, and extension
+              architecture.
+            </p>
           </div>
         </div>
       </div>
@@ -599,18 +599,20 @@
   }
 
   .retainer-callout {
-    margin-top: var(--space-4, 1rem);
-    padding: var(--space-4, 1rem);
-    border-left: 2px solid rgba(96, 165, 250, 0.3);
+    margin-top: var(--space-6, 2rem);
+    padding: var(--space-4, 1rem) var(--space-5, 1.5rem);
+    border: 1px solid rgba(96, 165, 250, 0.1);
     background: rgba(96, 165, 250, 0.03);
-    border-radius: 0 var(--radius-sm, 4px) var(--radius-sm, 4px) 0;
+    border-radius: var(--radius-md, 8px);
+    text-align: center;
   }
 
   .retainer-callout p {
     font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
+    color: var(--color-fg-secondary);
     line-height: var(--leading-relaxed);
-    font-style: italic;
+    max-width: 600px;
+    margin: 0 auto;
   }
 
   /* Trust Artifacts */
