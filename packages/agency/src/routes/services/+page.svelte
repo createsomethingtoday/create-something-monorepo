@@ -234,17 +234,43 @@
       <h2 class="section-heading">What Ships Every Engagement</h2>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <ul class="retainer-list artifact-list">
-        <li><strong>mcp_contract.yaml:</strong> tools, resources, auth scopes, and error model</li>
-        <li>
-          <strong>agent_contract.yaml:</strong> allowed actions, approvals, and escalation rules
-        </li>
-        <li>
-          <strong>outcome_contract.md:</strong> workflow targets, success criteria, and fallback path
-        </li>
-        <li><strong>golden_tasks.yaml:</strong> release gate checks and latest pass/fail status</li>
-        <li><strong>runbook:</strong> incident response, rollback, and ownership boundaries</li>
-      </ul>
+      <div class="artifact-grid">
+        <div class="artifact-doc-card">
+          <div class="artifact-doc-header">
+            <span class="artifact-doc-dot"></span>
+            <span class="artifact-doc-name">mcp_contract.yaml</span>
+          </div>
+          <p class="artifact-doc-desc">Tools, resources, auth scopes, and error model</p>
+        </div>
+        <div class="artifact-doc-card">
+          <div class="artifact-doc-header">
+            <span class="artifact-doc-dot"></span>
+            <span class="artifact-doc-name">agent_contract.yaml</span>
+          </div>
+          <p class="artifact-doc-desc">Allowed actions, approvals, and escalation rules</p>
+        </div>
+        <div class="artifact-doc-card">
+          <div class="artifact-doc-header">
+            <span class="artifact-doc-dot"></span>
+            <span class="artifact-doc-name">outcome_contract.md</span>
+          </div>
+          <p class="artifact-doc-desc">Workflow targets, success criteria, and fallback path</p>
+        </div>
+        <div class="artifact-doc-card">
+          <div class="artifact-doc-header">
+            <span class="artifact-doc-dot"></span>
+            <span class="artifact-doc-name">golden_tasks.yaml</span>
+          </div>
+          <p class="artifact-doc-desc">Release gate checks and latest pass/fail status</p>
+        </div>
+        <div class="artifact-doc-card">
+          <div class="artifact-doc-header">
+            <span class="artifact-doc-dot"></span>
+            <span class="artifact-doc-name">runbook.md</span>
+          </div>
+          <p class="artifact-doc-desc">Incident response, rollback, and ownership boundaries</p>
+        </div>
+      </div>
     </BlurFade>
   </div>
 </section>
@@ -615,10 +641,53 @@
     margin: 0 auto;
   }
 
-  /* Trust Artifacts */
-  .artifact-list {
-    max-width: fit-content;
+  /* Trust Artifacts Grid */
+  .artifact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-4, 1rem);
+    max-width: 900px;
     margin: 0 auto;
+  }
+
+  .artifact-doc-card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-4, 1rem) var(--space-5, 1.5rem);
+    border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.05));
+    border-radius: var(--radius-md, 8px);
+    background: rgba(255, 255, 255, 0.02);
+    box-shadow: var(--glass-shine-soft);
+    transition:
+      border-color var(--duration-standard) var(--ease-standard),
+      transform var(--duration-standard) var(--ease-standard),
+      background var(--duration-standard) var(--ease-standard);
+  }
+
+  .artifact-doc-card:hover {
+    border-color: rgba(96, 165, 250, 0.4);
+    background: rgba(255, 255, 255, 0.04);
+    transform: translateY(-2px);
+  }
+
+  .artifact-doc-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 0.5rem);
+    margin-bottom: var(--space-2, 0.5rem);
+  }
+
+  .artifact-doc-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(96, 165, 250, 0.8);
+    box-shadow: 0 0 6px rgba(96, 165, 250, 0.4);
+    flex-shrink: 0;
+  }
+
+  .artifact-doc-name {
+    font-size: var(--text-caption);
     font-family: var(
       --font-mono,
       ui-monospace,
@@ -630,17 +699,15 @@
       'Courier New',
       monospace
     );
-    gap: var(--space-3, 0.75rem);
-  }
-
-  .artifact-list strong {
-    color: rgba(96, 165, 250, 0.9);
+    color: var(--color-fg-primary);
     font-weight: 500;
+    letter-spacing: -0.01em;
   }
 
-  .artifact-list li {
+  .artifact-doc-desc {
     font-size: var(--text-body-sm);
-    letter-spacing: -0.01em;
+    color: var(--color-fg-secondary);
+    line-height: var(--leading-relaxed);
   }
 
   /* Timeline */
