@@ -79,3 +79,4 @@ venv/
 **/venv/
 **/.venv/
 .ground.merged.yml
+tmp/loom-remote-secrets-*.txt
