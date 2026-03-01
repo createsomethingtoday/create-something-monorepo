@@ -178,33 +178,33 @@
         <div class="retainer-header">
           <div class="retainer-pricing">
             <div class="retainer-price">POLICY OS</div>
-            <div class="retainer-period">CREATE SOMETHING delivery model</div>
+            <div class="retainer-period">The Operation Model</div>
           </div>
           <p class="retainer-note">
-            Start with workflow implementation. Add assurance when incident cost rises.<br />
-            Escalate to extension for enterprise constraints.
+            A framework for graduating from brittle scripts to resilient systems.<br />
+            Built to manage the expanding risk of autonomous operations.
           </p>
         </div>
         <div class="retainer-body">
           <div class="retainer-columns">
             <div class="retainer-detail">
-              <h3>Service Ladder</h3>
+              <h3>Operating Principles</h3>
               <ul class="retainer-list">
-                <li><strong>Custom Workflow MCPs:</strong> core workflow implementation</li>
+                <li><strong>Delivery Vector:</strong> {deliveryVector.clientFacingLabel}</li>
                 <li>
-                  <strong>Autonomy Assurance:</strong> evals, release gates, policy tuning, incident reviews
+                  <strong>Focus:</strong> We build reliability and boundaries; basic setup is assumed.
+                </li>
+                <li><strong>Discovery:</strong> MCP-only available as an isolated entry wedge.</li>
+                <li>
+                  <strong>Referrals:</strong> System-development-first engagements routed to partners.
                 </li>
                 <li>
-                  <strong>Enterprise Extension:</strong> custom MCP/orchestration and governance controls
+                  <strong>Ownership:</strong> Client owns all code, workflows, and operating artifacts.
                 </li>
-                <li>Delivery vector: {deliveryVector.clientFacingLabel}</li>
-                <li>MCP-only available as scoped entry wedge</li>
-                <li>System-development-first engagements routed by referral</li>
-                <li>Client owns code and operating artifacts</li>
               </ul>
             </div>
             <div class="retainer-detail">
-              <h3>Escalation Triggers</h3>
+              <h3>When to Escalate</h3>
               <ul class="retainer-list">
                 <li>Repeated automation failures or high incident cost</li>
                 <li>Cross-system workflow coupling and data drift risk</li>
