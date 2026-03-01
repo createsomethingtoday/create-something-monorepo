@@ -1,12 +1,93 @@
 import type { RequestHandler } from './$types';
-import { json, error } from '@sveltejs/kit';
+import { json } from '@sveltejs/kit';
 import Stripe from 'stripe';
 import { Resend } from 'resend';
 import { generateWelcomeEmail } from '$lib/email/welcome-template';
 import { getDBFromPlatform } from '$lib/server/d1-compat';
-import { env } from '$lib/server/env';
+import { resolveRuntimeEnv } from '$lib/server/env';
 
 const logger = { info: console.log, warn: console.warn, error: console.error, debug: console.debug };
+type RuntimeEnv = Record<string, string | undefined>;
+
+function getSessionString(
+	value: string | Stripe.Customer | Stripe.PaymentIntent | Stripe.DeletedCustomer | null | undefined
+): string | null {
+	return typeof value === 'string' ? value : null;
+}
+
+async function upsertPresaleOrder(
+	db: ReturnType<typeof getDBFromPlatform>,
+	session: Stripe.Checkout.Session,
+	eventId: string
+): Promise<void> {
+	const now = Date.now();
+	const userId =
+		session.metadata?.userId && session.metadata.userId !== 'guest' ? session.metadata.userId : null;
+	const email = session.customer_details?.email || session.customer_email || null;
+	const name = session.customer_details?.name || null;
+	const paymentIntentId = getSessionString(session.payment_intent);
+	const customerId = getSessionString(session.customer);
+	const membershipType = session.metadata?.membershipType || null;
+	const metadataJson = session.metadata ? JSON.stringify(session.metadata) : null;
+	const customerDetailsJson = session.customer_details ? JSON.stringify(session.customer_details) : null;
+	const rawSessionJson = JSON.stringify(session);
+
+	await db
+		.prepare(
+			`INSERT INTO presale_orders (
+				stripe_session_id,
+				stripe_event_id,
+				user_id,
+				email,
+				name,
+				amount_total,
+				currency,
+				payment_status,
+				membership_type,
+				stripe_customer_id,
+				stripe_payment_intent_id,
+				metadata_json,
+				customer_details_json,
+				raw_session_json,
+				created_at,
+				updated_at
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			ON CONFLICT(stripe_session_id) DO UPDATE SET
+				stripe_event_id = excluded.stripe_event_id,
+				user_id = excluded.user_id,
+				email = excluded.email,
+				name = excluded.name,
+				amount_total = excluded.amount_total,
+				currency = excluded.currency,
+				payment_status = excluded.payment_status,
+				membership_type = excluded.membership_type,
+				stripe_customer_id = excluded.stripe_customer_id,
+				stripe_payment_intent_id = excluded.stripe_payment_intent_id,
+				metadata_json = excluded.metadata_json,
+				customer_details_json = excluded.customer_details_json,
+				raw_session_json = excluded.raw_session_json,
+				updated_at = excluded.updated_at`
+		)
+		.bind(
+			session.id,
+			eventId,
+			userId,
+			email,
+			name,
+			session.amount_total ?? null,
+			session.currency ?? null,
+			session.payment_status ?? null,
+			membershipType,
+			customerId,
+			paymentIntentId,
+			metadataJson,
+			customerDetailsJson,
+			rawSessionJson,
+			now,
+			now
+		)
+		.run();
+}
 
 /**
  * POST /api/stripe/webhook
@@ -14,8 +95,11 @@ const logger = { info: console.log, warn: console.warn, error: console.error, de
  * to grant lifetime membership access
  */
 export const POST: RequestHandler = async ({ request, platform }) => {
-	const stripeKey = env('STRIPE_SECRET_KEY');
-	const webhookSecret = env('STRIPE_WEBHOOK_SECRET');
+	const runtimeEnv = resolveRuntimeEnv(
+		(platform as { env?: Record<string, string | undefined> } | undefined)?.env
+	) as RuntimeEnv;
+	const stripeKey = runtimeEnv.STRIPE_SECRET_KEY;
+	const webhookSecret = runtimeEnv.STRIPE_WEBHOOK_SECRET;
 
 	if (!stripeKey || !webhookSecret) {
 		logger.error('Stripe not configured');
@@ -57,6 +141,13 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			case 'checkout.session.completed': {
 				const session = event.data.object as Stripe.Checkout.Session;
 				logger.info('Checkout completed', { sessionId: session.id });
+				const db = getDBFromPlatform(platform);
+
+				try {
+					await upsertPresaleOrder(db, session, event.id);
+				} catch (persistErr) {
+					logger.error('Failed to persist checkout session', { error: persistErr, sessionId: session.id });
+				}
 
 				// Get user ID from metadata
 				const userId = session.metadata?.userId;
@@ -64,13 +155,10 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				if (!userId || userId === 'guest') {
 					// Guest checkout - need to create account or handle differently
 					logger.warn('Guest checkout completed', { email: session.customer_email });
-					// TODO: Create user account from email or send email with account creation link
 					break;
 				}
 
 				// Update user membership in D1
-				const db = getDBFromPlatform(platform);
-
 				await db
 					.prepare('UPDATE users SET membership = 1 WHERE id = ?')
 					.bind(userId)
@@ -80,7 +168,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 				// Send welcome email with Calendly link for discovery call
 				try {
-					const resendApiKey = env('RESEND_API_KEY');
+					const resendApiKey = runtimeEnv.RESEND_API_KEY;
 					if (!resendApiKey) {
 						logger.warn('RESEND_API_KEY not configured - skipping welcome email');
 						break;
