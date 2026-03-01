@@ -60,13 +60,6 @@
       </BlurFade>
     {/each}
   </ol>
-
-  <BlurFade delay={0.2}>
-    <p class="timeline-footnote">
-      To lock dates: I still need the photography company date range, plus dates for Boulder Digital
-      Arts and UTA Web Design.
-    </p>
-  </BlurFade>
 </div>
 
 <style>
@@ -196,12 +189,5 @@
   .timeline-bullets strong {
     color: var(--color-fg-primary);
     font-weight: var(--font-semibold);
-  }
-
-  .timeline-footnote {
-    margin-top: var(--space-6, 2rem);
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
-    line-height: var(--leading-relaxed);
   }
 </style>
