@@ -398,3 +398,51 @@ export interface ExtractDesignerMetadataInput {
   url: string;
   timeout?: number;
 }
+
+// =============================================================================
+// Designer Checklist Scoring Types
+// =============================================================================
+
+export type ChecklistResult = 'pass' | 'fail' | 'manual';
+
+export interface DesignerChecklistCheck {
+  id: string;
+  section: string;
+  requirement: string;
+  result: ChecklistResult;
+  evidence: string[];
+}
+
+export interface DesignerChecklistSummary {
+  pass: number;
+  fail: number;
+  manual: number;
+  scored: number;
+  passRate: number;
+}
+
+export interface DesignerChecklistReport {
+  evaluatedAt: string;
+  source: 'live-extraction' | 'provided-metadata';
+  metadataSummary: {
+    siteName: string;
+    sitePlan: string;
+    totalPages: number;
+    totalComponents: number;
+    unusedComponents: number;
+    totalInteractions: number;
+    totalCMSCollections: number;
+    totalCMSItems: number;
+    totalAssets: number;
+    breakpoints: string[];
+  };
+  summary: DesignerChecklistSummary;
+  checks: DesignerChecklistCheck[];
+}
+
+export interface ScoreDesignerChecklistInput {
+  url?: string;
+  timeout?: number;
+  designerMetadata?: DesignerMetadata;
+  includeManual?: boolean;
+}
