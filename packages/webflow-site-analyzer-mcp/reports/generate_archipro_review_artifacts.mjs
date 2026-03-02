@@ -30,7 +30,9 @@ const pageIssue = {
   bgVideosNoControl: pages.some((p) => (p.summary?.media?.backgroundVideosMissingControl || 0) > 0)
 };
 
-const allFormatKeys = Array.from(new Set(pages.flatMap((p) => Object.keys(p.summary?.images?.formats || {})))).sort();
+const allFormatKeys = Array.from(
+  new Set(pages.flatMap((p) => Object.keys(p.summary?.imageFormats || p.summary?.images?.formats || {})))
+).sort();
 
 function statusFromDesigner(id) {
   const c = checks.get(id);

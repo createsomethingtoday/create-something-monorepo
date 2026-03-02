@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-02T23:33:58.762Z",
+  "generatedAt": "2026-03-02T23:40:41.029Z",
   "startUrl": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/",
   "origin": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io",
   "crawlConfig": {
@@ -35,7 +35,7 @@
     "error": "Failed to fetch sitemap: 404 "
   },
   "audit404": {
-    "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/__wf_review_404_probe_24uljicvl3o__",
+    "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/__wf_review_404_probe_y8om7a6pwvq__",
     "status": 404,
     "ok": true,
     "title": "Not Found - Archipro - Webflow HTML website template",
@@ -97,6 +97,11 @@
           "missingDimensions": 8,
           "aboveFoldLazy": 3,
           "belowFoldNotLazy": 2
+        },
+        "imageFormats": {
+          "svg": 34,
+          "png": 19,
+          "jpg": 18
         },
         "forms": {
           "fields": 2,
@@ -170,6 +175,10 @@
           "aboveFoldLazy": 4,
           "belowFoldNotLazy": 0
         },
+        "imageFormats": {
+          "svg": 6,
+          "png": 47
+        },
         "forms": {
           "fields": 2,
           "missingLabels": 2
@@ -242,6 +251,11 @@
           "aboveFoldLazy": 3,
           "belowFoldNotLazy": 0
         },
+        "imageFormats": {
+          "svg": 9,
+          "jpg": 2,
+          "png": 16
+        },
         "forms": {
           "fields": 2,
           "missingLabels": 2
@@ -311,6 +325,11 @@
           "missingDimensions": 4,
           "aboveFoldLazy": 5,
           "belowFoldNotLazy": 0
+        },
+        "imageFormats": {
+          "svg": 2,
+          "png": 16,
+          "jpg": 10
         },
         "forms": {
           "fields": 2,
@@ -383,6 +402,11 @@
           "aboveFoldLazy": 2,
           "belowFoldNotLazy": 0
         },
+        "imageFormats": {
+          "svg": 8,
+          "jpg": 8,
+          "png": 15
+        },
         "forms": {
           "fields": 4,
           "missingLabels": 4
@@ -452,6 +476,10 @@
           "missingDimensions": 4,
           "aboveFoldLazy": 5,
           "belowFoldNotLazy": 0
+        },
+        "imageFormats": {
+          "svg": 2,
+          "png": 8
         },
         "forms": {
           "fields": 2,
@@ -523,6 +551,10 @@
           "aboveFoldLazy": 5,
           "belowFoldNotLazy": 0
         },
+        "imageFormats": {
+          "svg": 2,
+          "png": 8
+        },
         "forms": {
           "fields": 2,
           "missingLabels": 2
@@ -592,6 +624,11 @@
           "missingDimensions": 4,
           "aboveFoldLazy": 3,
           "belowFoldNotLazy": 0
+        },
+        "imageFormats": {
+          "svg": 2,
+          "jpg": 4,
+          "png": 4
         },
         "forms": {
           "fields": 2,
@@ -663,6 +700,10 @@
           "aboveFoldLazy": 5,
           "belowFoldNotLazy": 0
         },
+        "imageFormats": {
+          "svg": 2,
+          "png": 8
+        },
         "forms": {
           "fields": 2,
           "missingLabels": 2
@@ -732,6 +773,11 @@
           "missingDimensions": 4,
           "aboveFoldLazy": 2,
           "belowFoldNotLazy": 0
+        },
+        "imageFormats": {
+          "svg": 2,
+          "jpg": 7,
+          "png": 5
         },
         "forms": {
           "fields": 6,
@@ -803,6 +849,11 @@
           "aboveFoldLazy": 4,
           "belowFoldNotLazy": 0
         },
+        "imageFormats": {
+          "svg": 2,
+          "jpg": 9,
+          "png": 5
+        },
         "forms": {
           "fields": 4,
           "missingLabels": 4
@@ -872,6 +923,11 @@
           "missingDimensions": 4,
           "aboveFoldLazy": 2,
           "belowFoldNotLazy": 0
+        },
+        "imageFormats": {
+          "svg": 2,
+          "png": 5,
+          "jpg": 6
         },
         "forms": {
           "fields": 4,
@@ -943,6 +999,10 @@
           "aboveFoldLazy": 5,
           "belowFoldNotLazy": 0
         },
+        "imageFormats": {
+          "svg": 2,
+          "png": 8
+        },
         "forms": {
           "fields": 2,
           "missingLabels": 2
@@ -1013,6 +1073,10 @@
           "aboveFoldLazy": 9,
           "belowFoldNotLazy": 0
         },
+        "imageFormats": {
+          "svg": 2,
+          "png": 12
+        },
         "forms": {
           "fields": 2,
           "missingLabels": 2
@@ -1078,6 +1142,7 @@
           "aboveFoldLazy": 0,
           "belowFoldNotLazy": 0
         },
+        "imageFormats": {},
         "forms": {
           "fields": 0,
           "missingLabels": 0
@@ -1147,6 +1212,10 @@
           "missingDimensions": 5,
           "aboveFoldLazy": 4,
           "belowFoldNotLazy": 0
+        },
+        "imageFormats": {
+          "svg": 3,
+          "png": 15
         },
         "forms": {
           "fields": 9,
@@ -1219,6 +1288,10 @@
           "aboveFoldLazy": 9,
           "belowFoldNotLazy": 0
         },
+        "imageFormats": {
+          "svg": 14,
+          "png": 15
+        },
         "forms": {
           "fields": 8,
           "missingLabels": 4
@@ -1288,6 +1361,11 @@
           "missingDimensions": 5,
           "aboveFoldLazy": 1,
           "belowFoldNotLazy": 0
+        },
+        "imageFormats": {
+          "svg": 3,
+          "jpg": 4,
+          "png": 10
         },
         "forms": {
           "fields": 9,
@@ -1359,6 +1437,11 @@
           "aboveFoldLazy": 1,
           "belowFoldNotLazy": 1
         },
+        "imageFormats": {
+          "svg": 4,
+          "jpg": 1,
+          "png": 4
+        },
         "forms": {
           "fields": 10,
           "missingLabels": 5
@@ -1428,6 +1511,11 @@
           "missingDimensions": 6,
           "aboveFoldLazy": 1,
           "belowFoldNotLazy": 1
+        },
+        "imageFormats": {
+          "svg": 3,
+          "jpg": 1,
+          "png": 4
         },
         "forms": {
           "fields": 4,
@@ -1499,6 +1587,11 @@
           "aboveFoldLazy": 1,
           "belowFoldNotLazy": 12
         },
+        "imageFormats": {
+          "svg": 2,
+          "png": 12,
+          "jpg": 4
+        },
         "forms": {
           "fields": 2,
           "missingLabels": 2
@@ -1568,6 +1661,10 @@
           "missingDimensions": 20,
           "aboveFoldLazy": 0,
           "belowFoldNotLazy": 20
+        },
+        "imageFormats": {
+          "svg": 104,
+          "png": 5
         },
         "forms": {
           "fields": 22,
@@ -1639,6 +1736,10 @@
           "aboveFoldLazy": 5,
           "belowFoldNotLazy": 0
         },
+        "imageFormats": {
+          "svg": 2,
+          "png": 8
+        },
         "forms": {
           "fields": 2,
           "missingLabels": 2
@@ -1708,6 +1809,10 @@
           "missingDimensions": 5,
           "aboveFoldLazy": 2,
           "belowFoldNotLazy": 0
+        },
+        "imageFormats": {
+          "svg": 4,
+          "png": 4
         },
         "forms": {
           "fields": 6,
@@ -1779,6 +1884,10 @@
           "aboveFoldLazy": 1,
           "belowFoldNotLazy": 0
         },
+        "imageFormats": {
+          "svg": 2,
+          "png": 4
+        },
         "forms": {
           "fields": 2,
           "missingLabels": 2
@@ -1849,6 +1958,10 @@
           "aboveFoldLazy": 1,
           "belowFoldNotLazy": 0
         },
+        "imageFormats": {
+          "svg": 2,
+          "png": 4
+        },
         "forms": {
           "fields": 2,
           "missingLabels": 2
@@ -1915,6 +2028,11 @@
           "missingDimensions": 5,
           "aboveFoldLazy": 3,
           "belowFoldNotLazy": 0
+        },
+        "imageFormats": {
+          "svg": 2,
+          "png": 6,
+          "jpg": 5
         },
         "forms": {
           "fields": 4,
@@ -1983,6 +2101,11 @@
           "aboveFoldLazy": 3,
           "belowFoldNotLazy": 0
         },
+        "imageFormats": {
+          "svg": 2,
+          "png": 6,
+          "jpg": 5
+        },
         "forms": {
           "fields": 4,
           "missingLabels": 4
@@ -2050,6 +2173,11 @@
           "aboveFoldLazy": 3,
           "belowFoldNotLazy": 0
         },
+        "imageFormats": {
+          "svg": 2,
+          "png": 6,
+          "jpg": 5
+        },
         "forms": {
           "fields": 4,
           "missingLabels": 4
@@ -2116,6 +2244,11 @@
           "missingDimensions": 5,
           "aboveFoldLazy": 3,
           "belowFoldNotLazy": 0
+        },
+        "imageFormats": {
+          "svg": 2,
+          "png": 6,
+          "jpg": 5
         },
         "forms": {
           "fields": 4,

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-02T23:35:10.240Z",
+  "generatedAt": "2026-03-02T23:41:00.645Z",
   "template": {
     "name": "Archipro | BRIX Template",
     "previewUrl": "https://preview.webflow.com/preview/archiprotemplate-70629effe7faff236c7aca?utm_medium=preview_link&utm_source=dashboard&utm_content=archiprotemplate-70629effe7faff236c7aca&preview=896fb6bdfe0d546c91af69df27b5afe1&workflow=preview",
@@ -9,12 +9,12 @@
     "designerReportPath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/webflow-site-analyzer-mcp/reports/archipro-designer-2026-03-02.json",
     "publishedCrawlPath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/webflow-site-analyzer-mcp/reports/archipro-published-crawl-2026-03-02.json",
     "designerTestedAt": "2026-03-02T23:28:54.828Z",
-    "publishedGeneratedAt": "2026-03-02T23:33:58.762Z"
+    "publishedGeneratedAt": "2026-03-02T23:40:41.029Z"
   },
   "summary": {
     "expressChecklist": {
-      "pass": 5,
-      "fail": 10,
+      "pass": 6,
+      "fail": 9,
       "partial": 2,
       "manual": 8
     },
@@ -279,10 +279,10 @@
     {
       "id": "assets.modern_formats",
       "requirement": "Modern image formats used (WebP, AVIF, JPEG, PNG)",
-      "status": "FAIL",
+      "status": "PASS",
       "source": "published-webmcp-crawl",
       "evidence": [
-        "detectedFormats=none"
+        "detectedFormats=jpg,png,svg"
       ]
     },
     {

@@ -1,12 +1,12 @@
 # Archipro Template Review Checklist
 
-Generated: 2026-03-02T23:35:10.240Z
+Generated: 2026-03-02T23:41:00.645Z
 Preview URL: https://preview.webflow.com/preview/archiprotemplate-70629effe7faff236c7aca?utm_medium=preview_link&utm_source=dashboard&utm_content=archiprotemplate-70629effe7faff236c7aca&preview=896fb6bdfe0d546c91af69df27b5afe1&workflow=preview
 Published URL: https://archiprotemplate-70629effe7faff236c7aca.webflow.io/
 
 ## Summary
 
-- Express checklist: PASS 5, FAIL 10, PARTIAL 2, MANUAL 8
+- Express checklist: PASS 6, FAIL 9, PARTIAL 2, MANUAL 8
 - Designer strict score: 8 pass / 8 fail / 7 manual
 - Published crawl: 30 audited pages, 30 pages with at least one fail
 - Snippet: v0.2.0 with 13 tools
@@ -39,7 +39,7 @@ Published URL: https://archiprotemplate-70629effe7faff236c7aca.webflow.io/
 | pages.transition_simple | Simple CSS transitions used for hover/press | MANUAL | published-webmcp-crawl | Transition-property linting not included in this run. |
 | pages.wcag_contrast | WCAG color contrast met (default/hover/focus/active) | MANUAL | published-webmcp-crawl | Contrast calculation not included in this run. |
 | pages.cms_used_relational | CMS used for repeatable/relational content | PASS | designer-mcp | cmsTemplatePages=8; cmsCollections=8 |
-| assets.modern_formats | Modern image formats used (WebP, AVIF, JPEG, PNG) | FAIL | published-webmcp-crawl | detectedFormats=none |
+| assets.modern_formats | Modern image formats used (WebP, AVIF, JPEG, PNG) | PASS | published-webmcp-crawl | detectedFormats=jpg,png,svg |
 | responsive.multi_breakpoint_check | Responsive check run on homepage + one additional page | MANUAL | published-webmcp-crawl | No multi-viewport screenshot diff run in this report. |
 
 ## Per-Page Fail List (Published Crawl)
