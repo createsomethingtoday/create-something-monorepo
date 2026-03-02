@@ -37,7 +37,7 @@ pnpm exec wrangler deploy \
   --var HUB_DISCOVERY_MODE:compact \
   --var HUB_DISCOVERY_SHARED_PACK:shared-auth-core \
   --var HUB_DISCOVERY_DEFAULT_SERVERS:outerfields-pcn,create-something,three-tier-framework,playbook,composio-toolkit-dropbox,composio-toolkit-gmail,composio-toolkit-googledrive,composio-toolkit-googlesheets,composio-toolkit-linkedin,composio-toolkit-quickbooks,composio-toolkit-slack,composio-toolkit-youtube,composio-toolkit-zoom \
-  --var BRAINTRUST_ENABLED:false \
+  --var BRAINTRUST_ENABLED:true \
   --keep-vars
 ```
 
@@ -47,7 +47,7 @@ Notes:
 - `core` enables `create-something`, `three-tier-framework`, and `playbook`.
 - `agency` enables `outerfields-pcn`.
 
-## 3) Set Required Secret
+## 3) Set Required Secrets
 
 Set `HUB_API_TOKEN` on this worker:
 
@@ -61,6 +61,14 @@ Optional non-interactive generation:
 ```bash
 export HUB_API_TOKEN_VALUE="$(openssl rand -hex 32)"
 printf "%s" "$HUB_API_TOKEN_VALUE" | pnpm exec wrangler secret put HUB_API_TOKEN --name cs-hub-aaron-outerfields
+```
+
+Set Braintrust secrets (required for trace emission when `BRAINTRUST_ENABLED:true`):
+
+```bash
+cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/cs-mcp-hub-remote"
+pnpm exec wrangler secret put BRAINTRUST_API_KEY --name cs-hub-aaron-outerfields
+pnpm exec wrangler secret put BRAINTRUST_PROJECT_ID --name cs-hub-aaron-outerfields
 ```
 
 ## 4) Verify Production Readiness
