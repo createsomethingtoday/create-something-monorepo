@@ -3,6 +3,7 @@
 console.log('[Webflow Review] Content script loaded');
 
 const WEBFLOW_IO_SUFFIX = '.webflow.io';
+const BRIDGE_TOKEN_META_NAME = 'wf-review-bridge-token';
 
 // Detect which mode we're running in
 const isDesigner =
@@ -43,6 +44,16 @@ function getCurrentPageUrl(): string {
   return window.location.href;
 }
 
+function getSnippetBridgeToken(): string | null {
+  try {
+    const meta = document.querySelector(`meta[name="${BRIDGE_TOKEN_META_NAME}"]`);
+    const content = meta?.getAttribute('content')?.trim();
+    return content || null;
+  } catch {
+    return null;
+  }
+}
+
 type SnippetToolResult =
   | { ok: true; result: unknown }
   | { ok: false; error: string };
@@ -54,6 +65,7 @@ async function callSnippetTool(
 ): Promise<SnippetToolResult> {
   const id = crypto.randomUUID();
   const timeoutMs = opts?.timeoutMs ?? 1500;
+  const token = getSnippetBridgeToken();
 
   return await new Promise((resolve) => {
     let done = false;
@@ -86,7 +98,14 @@ async function callSnippetTool(
 
     window.addEventListener('message', onMessage);
     window.postMessage(
-      { __wf_review_snippet_v1: true, type: 'call_tool', id, tool, input },
+      {
+        __wf_review_snippet_v1: true,
+        type: 'call_tool',
+        id,
+        tool,
+        input,
+        ...(token ? { token } : {}),
+      },
       '*'
     );
   });

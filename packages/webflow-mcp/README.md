@@ -9,6 +9,7 @@ Agent-native tools for the Webflow Marketplace team. Exposes plagiarism detectio
 | Tool | Mode | Description |
 |------|------|-------------|
 | `template_review_published_url` | HTML/static audit | Consolidated published-URL review (meta, headings, links, images, forms, media, sitemap, 404 probe) |
+| `template_review_published_url_runtime` | Static + runtime merge | Same consolidated review plus snippet runtime diagnostics (IX2/IX3 availability) when provided or probeable |
 
 ### Plagiarism Detection
 
@@ -83,6 +84,9 @@ Once configured, your AI agent can use these tools:
 
 > Use template_review_published_url to review
   https://fancy-template.webflow.io and return a reviewer-ready findings bundle
+
+> Use template_review_published_url_runtime to merge static review with
+  snippet diagnostics (from extension/Playwright or a probe endpoint)
 ```
 
 ## Architecture

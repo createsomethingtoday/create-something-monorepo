@@ -13,6 +13,74 @@
 
   const VERSION = '0.2.0';
   const MESSAGE_MARKER = '__wf_review_snippet_v1';
+  const BRIDGE_TOKEN_META_NAME = 'wf-review-bridge-token';
+
+  function asObject(value) {
+    return value && typeof value === 'object' ? value : {};
+  }
+
+  function asStringArray(value) {
+    if (!Array.isArray(value)) return [];
+    return value
+      .map((item) => (typeof item === 'string' ? item.trim() : ''))
+      .filter(Boolean);
+  }
+
+  function randomBridgeToken() {
+    try {
+      if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+        return window.crypto.randomUUID().replace(/-/g, '');
+      }
+
+      if (window.crypto && typeof window.crypto.getRandomValues === 'function') {
+        const bytes = new Uint8Array(16);
+        window.crypto.getRandomValues(bytes);
+        return Array.from(bytes)
+          .map((n) => n.toString(16).padStart(2, '0'))
+          .join('');
+      }
+    } catch {
+      // ignore
+    }
+    return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 14)}`;
+  }
+
+  const reviewConfig = asObject(window.__wfReviewConfig);
+  const configuredOrigins = asStringArray(reviewConfig.allowedOrigins);
+  const BRIDGE_ALLOWED_ORIGINS =
+    configuredOrigins.length > 0
+      ? Array.from(new Set(configuredOrigins))
+      : [window.location.origin];
+
+  const BRIDGE_REQUIRE_TOKEN = reviewConfig.requireBridgeToken !== false;
+  const configuredBridgeToken =
+    typeof reviewConfig.bridgeToken === 'string' ? reviewConfig.bridgeToken.trim() : '';
+  const BRIDGE_TOKEN = configuredBridgeToken || randomBridgeToken();
+  const BRIDGE_ENABLED = !BRIDGE_REQUIRE_TOKEN || Boolean(BRIDGE_TOKEN);
+
+  function isAllowedOrigin(origin) {
+    if (!origin || typeof origin !== 'string') return false;
+    if (BRIDGE_ALLOWED_ORIGINS.includes('*')) return true;
+    return BRIDGE_ALLOWED_ORIGINS.includes(origin);
+  }
+
+  function writeBridgeTokenMeta() {
+    try {
+      if (!document || !document.head || !BRIDGE_TOKEN) return;
+
+      let meta = document.querySelector(`meta[name="${BRIDGE_TOKEN_META_NAME}"]`);
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.setAttribute('name', BRIDGE_TOKEN_META_NAME);
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute('content', BRIDGE_TOKEN);
+    } catch {
+      // ignore
+    }
+  }
+
+  writeBridgeTokenMeta();
 
   /** @type {any | null} */
   let ix2InitPayload = null;
@@ -1217,6 +1285,13 @@
     version: VERSION,
     listTools,
     callTool,
+    bridge: {
+      enabled: BRIDGE_ENABLED,
+      marker: MESSAGE_MARKER,
+      requireToken: BRIDGE_REQUIRE_TOKEN,
+      tokenMetaName: BRIDGE_TOKEN_META_NAME,
+      allowedOrigins: BRIDGE_ALLOWED_ORIGINS.slice(),
+    },
     auditAll: async ({ maxExamples = 20, includeSitemap = false } = {}) => {
       return await callTool('audit_webflow_way', { maxExamples, includeSitemap });
     },
@@ -1229,11 +1304,45 @@
     if (!data || data[MESSAGE_MARKER] !== true) return;
     if (data.type !== 'call_tool') return;
 
-    const id = data.id;
+    const id = typeof data.id === 'string' ? data.id : null;
+    const replyError = (error) => {
+      if (!id) return;
+      window.postMessage(
+        {
+          [MESSAGE_MARKER]: true,
+          type: 'tool_result',
+          id,
+          ok: false,
+          error,
+        },
+        '*'
+      );
+    };
+
+    if (!BRIDGE_ENABLED) {
+      replyError('bridge_disabled');
+      return;
+    }
+
+    if (!isAllowedOrigin(event.origin)) {
+      replyError('bridge_origin_not_allowed');
+      return;
+    }
+
+    if (BRIDGE_REQUIRE_TOKEN) {
+      const token = typeof data.token === 'string' ? data.token.trim() : '';
+      if (!token || token !== BRIDGE_TOKEN) {
+        replyError('bridge_invalid_token');
+        return;
+      }
+    }
+
+    if (!id) return;
+
     const toolName = data.tool;
     const input = data.input;
 
-    if (typeof id !== 'string' || typeof toolName !== 'string') return;
+    if (typeof toolName !== 'string') return;
 
     try {
       const result = await callTool(toolName, input);

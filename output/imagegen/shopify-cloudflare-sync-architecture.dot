@@ -1,0 +1,71 @@
+digraph G {
+  graph [
+    rankdir=LR,
+    bgcolor="#f8fafc",
+    fontname="Helvetica",
+    fontsize=16,
+    pad=0.5,
+    nodesep=0.55,
+    ranksep=1.0,
+    splines=polyline
+  ];
+
+  node [
+    shape=box,
+    style="rounded,filled",
+    color="#1f2937",
+    fillcolor="#ffffff",
+    fontname="Helvetica",
+    fontsize=12,
+    penwidth=1.2,
+    margin="0.14,0.10"
+  ];
+
+  edge [
+    color="#334155",
+    penwidth=1.4,
+    arrowsize=0.8,
+    fontname="Helvetica",
+    fontsize=10
+  ];
+
+  webhook [label="Shopify Webhooks\n(products/orders/customers)", fillcolor="#ecfeff"];
+  ingress [label="Ingress Worker\n(HMAC verify + fast ACK)", fillcolor="#e0f2fe"];
+
+  d1 [label="D1 Metadata\n(idempotency + cursors)", fillcolor="#f1f5f9"];
+  r2 [label="R2 Payload Archive\n(raw events)", fillcolor="#f1f5f9"];
+  q_ingest [label="Queue: ingest", fillcolor="#cffafe"];
+
+  consumer [label="Consumer Worker\n(normalize + route)", fillcolor="#e0f2fe"];
+  do_rate [label="Durable Object\nper-shop throttling", fillcolor="#dbeafe"];
+
+  q_air [label="Queue: outbound-airtable", fillcolor="#cffafe"];
+  q_notion [label="Queue: outbound-notion", fillcolor="#cffafe"];
+
+  airtable [label="Airtable API", fillcolor="#dcfce7"];
+  notion [label="Notion API", fillcolor="#dcfce7"];
+
+  replay [label="Workflows\nreplay + reconciliation", fillcolor="#ede9fe"];
+
+  { rank=same; d1; q_ingest; r2 }
+  { rank=same; q_air; q_notion }
+  { rank=same; airtable; notion }
+
+  webhook -> ingress;
+  ingress -> d1;
+  ingress -> q_ingest;
+  ingress -> r2;
+
+  q_ingest -> consumer;
+  consumer -> do_rate;
+
+  do_rate -> q_air;
+  do_rate -> q_notion;
+
+  q_air -> airtable;
+  q_notion -> notion;
+
+  d1 -> replay;
+  r2 -> replay;
+  replay -> q_ingest [label="replay/repair"];
+}

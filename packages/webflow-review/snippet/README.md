@@ -5,9 +5,23 @@ This snippet is inspired by the [WebMCP proposal](https://github.com/webmachinel
 ## Install (Creator)
 
 1. Webflow: **Site Settings** -> **Custom Code**
-2. Paste the contents of `webflow-review-snippet.js` into **Head Code**
+2. (Recommended) add snippet config before the snippet script:
+
+```html
+<script>
+  window.__wfReviewConfig = {
+    bridgeToken: 'replace-with-long-random-token',
+    allowedOrigins: ['https://your-site.webflow.io'],
+    requireBridgeToken: true
+  };
+</script>
+```
+
+3. Paste the contents of `webflow-review-snippet.js` into **Head Code**
    - Head is recommended so we can hook Webflow's Interactions init during bundle load.
-3. Publish the site.
+4. Publish the site.
+
+The snippet writes a `meta[name="wf-review-bridge-token"]` tag at runtime. Extension callers can read this token and include it in bridge requests.
 
 ## Use (Reviewer / Agent)
 
@@ -36,6 +50,7 @@ window.postMessage({
   __wf_review_snippet_v1: true,
   type: 'call_tool',
   id: 'unique-id',
+  token: 'replace-with-bridge-token',
   tool: 'audit_ix2',
   input: {}
 }, '*')
@@ -65,5 +80,4 @@ window.postMessage({
 ## Notes / Limitations
 
 - Interactions audits are page-scoped: some "missing selector" or "missing target" reports can be false positives if the published bundle contains interactions for other pages.
-- This is a POC surface. Tighten security (origin allowlist / handshake token) before using it beyond controlled review workflows.
-
+- Bridge security controls are enforced in-snippet: origin allowlist + handshake token.

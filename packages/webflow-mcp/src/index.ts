@@ -19,6 +19,7 @@ import { mcpToolMetadata } from '@create-something/observability/atlas';
 
 import * as plagiarism from './tools/plagiarism.js';
 import * as publishedReview from './tools/published-review.js';
+import * as runtimeReview from './tools/runtime-review.js';
 
 // Initialize Langfuse tracing
 initObservability();
@@ -73,6 +74,70 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           timeoutMs: {
             type: 'number',
             description: 'Per-request timeout in milliseconds (1000-60000, default: 15000)'
+          }
+        },
+        required: ['url']
+      }
+    },
+    {
+      name: 'template_review_published_url_runtime',
+      description: 'Published-site review plus runtime snippet diagnostics (IX2/IX3 evidence) when provided directly or via a probe endpoint.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          url: {
+            type: 'string',
+            description: 'Published URL to review (e.g., https://your-template.webflow.io)'
+          },
+          includeSitemap: {
+            type: 'boolean',
+            description: 'Fetch and parse /sitemap.xml (default: true)'
+          },
+          probe404: {
+            type: 'boolean',
+            description: 'Probe a random non-existent path for 404 behavior (default: true)'
+          },
+          maxExamples: {
+            type: 'number',
+            description: 'Maximum examples retained per finding category (1-100, default: 20)'
+          },
+          sitemapMaxUrls: {
+            type: 'number',
+            description: 'Maximum sitemap URLs to parse (1-1000, default: 200)'
+          },
+          timeoutMs: {
+            type: 'number',
+            description: 'Per-request timeout in milliseconds (1000-60000, default: 15000)'
+          },
+          snippetDiagnostics: {
+            type: 'object',
+            description: 'Optional runtime diagnostics (e.g., from extension/Playwright) to merge into this review.',
+            properties: {
+              snippet_present: { type: 'boolean' },
+              version: { type: 'string' },
+              version_ok: { type: 'boolean' },
+              smoke_ok: { type: 'boolean' },
+              ix2_available: { type: 'boolean' },
+              ix3_available: { type: 'boolean' },
+              error: { type: 'string' },
+              checked_at: { type: 'number' }
+            }
+          },
+          runtimeProbeEndpoint: {
+            type: 'string',
+            description: 'Optional HTTP endpoint that returns snippet diagnostics for {url}. If omitted, uses WEBFLOW_SNIPPET_PROBE_API when set.'
+          },
+          runtimeProbeBearerToken: {
+            type: 'string',
+            description: 'Optional bearer token for runtimeProbeEndpoint.'
+          },
+          requiredSnippetVersion: {
+            type: 'string',
+            description: 'Minimum snippet version required for pass (default: 0.2.0).'
+          },
+          requireRuntimeEvidence: {
+            type: 'boolean',
+            description: 'When true, emit warning if runtime diagnostics are unavailable.'
           }
         },
         required: ['url']
@@ -270,6 +335,29 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           maxExamples: safeArgs.maxExamples as number | undefined,
           sitemapMaxUrls: safeArgs.sitemapMaxUrls as number | undefined,
           timeoutMs: safeArgs.timeoutMs as number | undefined,
+        });
+        break;
+      case 'template_review_published_url_runtime':
+        result = await runtimeReview.reviewPublishedTemplateUrlWithRuntime({
+          url: safeArgs.url as string,
+          includeSitemap: safeArgs.includeSitemap as boolean | undefined,
+          probe404: safeArgs.probe404 as boolean | undefined,
+          maxExamples: safeArgs.maxExamples as number | undefined,
+          sitemapMaxUrls: safeArgs.sitemapMaxUrls as number | undefined,
+          timeoutMs: safeArgs.timeoutMs as number | undefined,
+          snippetDiagnostics: safeArgs.snippetDiagnostics as
+            | runtimeReview.SnippetDiagnostics
+            | undefined,
+          runtimeProbeEndpoint: safeArgs.runtimeProbeEndpoint as string | undefined,
+          runtimeProbeBearerToken: safeArgs.runtimeProbeBearerToken as
+            | string
+            | undefined,
+          requiredSnippetVersion: safeArgs.requiredSnippetVersion as
+            | string
+            | undefined,
+          requireRuntimeEvidence: safeArgs.requireRuntimeEvidence as
+            | boolean
+            | undefined,
         });
         break;
 
