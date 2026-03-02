@@ -6,7 +6,6 @@ import type {
   HubRoutingConfig,
   McpBundleRegistry,
   McpHubState,
-  McpServerConfig,
   RegistryPaths,
   ResolvedState,
   StatePatch,
@@ -159,13 +158,13 @@ export function writeCodexConfig(
 
   const existing = loadTomlObject(paths.codexConfigPath);
   const existingServersRaw = isRecord(existing.mcp_servers) ? existing.mcp_servers : {};
-  const existingServers: Record<string, unknown> = { ...existingServersRaw };
+  const existingServers: Record<string, unknown> = {};
 
-  for (const serverName of Object.keys(registry.servers).sort()) {
-    const server = registry.servers[serverName];
-    // Keep downstream servers disabled in Codex. The hub process connects to them directly.
-    const codexEntry = buildCodexEntry(server, false);
-    existingServers[serverName] = codexEntry;
+  // Preserve user-defined non-registry servers while pruning hub-managed downstream entries.
+  for (const [serverName, serverConfig] of Object.entries(existingServersRaw)) {
+    if (!registry.servers[serverName]) {
+      existingServers[serverName] = serverConfig;
+    }
   }
 
   ensureHubEntry(existingServers);
@@ -192,46 +191,6 @@ export function getEffectiveCodexPath(paths: RegistryPaths, registry: McpBundleR
     return paths.codexConfigPath;
   }
   return resolveMaybeRelative(paths.rootDir, configured, paths.codexConfigPath);
-}
-
-function buildCodexEntry(server: McpServerConfig, enabled: boolean): Record<string, unknown> {
-  if (server.transport === 'http') {
-    const entry: Record<string, unknown> = {
-      url: server.url,
-      enabled,
-    };
-
-    const staticHeaders = {
-      ...(server.http_headers ?? {}),
-      ...(server.headers ?? {}),
-    };
-    if (Object.keys(staticHeaders).length > 0) {
-      entry.http_headers = staticHeaders;
-    }
-    if (server.env_http_headers && Object.keys(server.env_http_headers).length > 0) {
-      entry.env_http_headers = { ...server.env_http_headers };
-    }
-    if (server.bearer_token_env_var) {
-      entry.bearer_token_env_var = server.bearer_token_env_var;
-    }
-    return entry;
-  }
-
-  const entry: Record<string, unknown> = {
-    command: server.command,
-    enabled,
-  };
-  if (server.args && server.args.length > 0) {
-    entry.args = [...server.args];
-  }
-  if (server.env && Object.keys(server.env).length > 0) {
-    entry.env = { ...server.env };
-  }
-  if (server.cwd) {
-    entry.cwd = server.cwd;
-  }
-
-  return entry;
 }
 
 function ensureHubEntry(servers: Record<string, unknown>): void {

@@ -121,6 +121,7 @@ By default, state changes auto-write `.codex/config.toml`. Add `--no-write-codex
 
 - `hub_write_codex_config` enforces a single-hub Codex setup:
   - `create-something-hub` is `enabled = true`
-  - downstream registry servers are written as `enabled = false`
+  - downstream registry servers are pruned from `.codex/config.toml`
+  - non-registry custom servers in `.codex/config.toml` are preserved
 - State/config updates apply immediately to file output.
 - Proxy tool availability is computed at startup; restart the hub after state changes to refresh proxied tools.
