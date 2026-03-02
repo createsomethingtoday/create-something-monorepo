@@ -253,6 +253,18 @@ export function parseInteractions(texts: string[]): ParsedInteraction[] {
       target = 'Global';
     }
 
+    const targetLower = target.toLowerCase();
+    const noisyTarget = [
+      'bring your site to life',
+      'powered by gsap',
+      'trigger on',
+      'custom event',
+      'add animations',
+      'hoverpage loadscrollcustom'
+    ].some((phrase) => targetLower.includes(phrase));
+    if (noisyTarget) continue;
+    if (target.length > 120 && !/[.#\[]/.test(target)) continue;
+
     out.push({
       trigger,
       targetElement: target,

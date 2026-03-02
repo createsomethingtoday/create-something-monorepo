@@ -37,6 +37,7 @@ import {
   recordTouchpointCount
 } from './observability.js';
 import { getWebflowPolicySnapshot, refreshWebflowPolicySnapshot } from './policy/index.js';
+import { scoreDesignerChecklist } from './checklist/designer-checklist.js';
 import type {
   TouchpointAnalysis,
   SEOAnalysis,
@@ -44,13 +45,15 @@ import type {
   ImageAnalysis,
   PerformanceMetrics,
   DesignerMetadata,
+  DesignerChecklistReport,
   AnalyzeTouchpointsInput,
   ExtractSEOInput,
   GetPageStructureInput,
   AnalyzeImagesInput,
   CaptureScreenshotInput,
   GetPerformanceInput,
-  ExtractDesignerMetadataInput
+  ExtractDesignerMetadataInput,
+  ScoreDesignerChecklistInput
 } from './types.js';
 
 // =============================================================================
@@ -473,6 +476,31 @@ async function extractDesignerMetadata(input: ExtractDesignerMetadataInput): Pro
   }
 }
 
+async function scoreDesignerChecklistTool(input: ScoreDesignerChecklistInput): Promise<DesignerChecklistReport> {
+  if (!input?.designerMetadata && !input?.url) {
+    throw new Error('Provide either `url` (for live extraction) or `designerMetadata`.');
+  }
+
+  let metadata: DesignerMetadata;
+  let source: 'live-extraction' | 'provided-metadata';
+
+  if (input.designerMetadata) {
+    metadata = input.designerMetadata;
+    source = 'provided-metadata';
+  } else {
+    metadata = await extractDesignerMetadata({
+      url: input.url as string,
+      timeout: input.timeout
+    });
+    source = 'live-extraction';
+  }
+
+  return scoreDesignerChecklist(metadata, {
+    includeManual: input.includeManual,
+    source
+  });
+}
+
 // =============================================================================
 // Tool Handlers - Intelligence Layer
 // =============================================================================
@@ -738,6 +766,31 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       }
     },
     {
+      name: 'score_designer_checklist',
+      description: 'Score Webflow Designer-focused checklist rows (strict pass/fail/manual) using extracted Designer metadata. Accepts either a live preview URL or a previously extracted designerMetadata payload.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          url: {
+            type: 'string',
+            description: 'Webflow preview URL. If provided, live extraction runs before scoring.'
+          },
+          timeout: {
+            type: 'number',
+            description: 'Optional timeout (ms) for live extraction when url is provided.'
+          },
+          includeManual: {
+            type: 'boolean',
+            description: 'Include manual/not-automated rows in output (default: true).'
+          },
+          designerMetadata: {
+            type: 'object',
+            description: 'Optional Designer metadata payload from extract_designer_metadata.'
+          }
+        }
+      }
+    },
+    {
       name: 'get_webflow_review_policy',
       description: 'Fetch and normalize Webflow Template Submission Guidelines + Grading Rubric from canonical web pages with provenance and policy version hash.',
       inputSchema: {
@@ -903,6 +956,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         break;
       case 'extract_designer_metadata':
         result = await extractDesignerMetadata(safeArgs as unknown as ExtractDesignerMetadataInput);
+        break;
+      case 'score_designer_checklist':
+        result = await scoreDesignerChecklistTool(safeArgs as unknown as ScoreDesignerChecklistInput);
         break;
       case 'get_webflow_review_policy':
         result = await getWebflowReviewPolicy(Boolean(safeArgs.refresh));

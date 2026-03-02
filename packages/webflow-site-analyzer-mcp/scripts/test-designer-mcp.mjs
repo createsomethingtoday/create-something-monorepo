@@ -71,6 +71,7 @@ async function main() {
     },
     providerStatus: null,
     designerExtraction: null,
+    checklistScore: null,
     notes: []
   };
 
@@ -102,6 +103,15 @@ async function main() {
         }
       });
       summary.designerExtraction = parseToolResult(extractionResult);
+
+      const checklistResult = await client.callTool({
+        name: 'score_designer_checklist',
+        arguments: {
+          url: previewUrl,
+          timeout: timeoutMs
+        }
+      });
+      summary.checklistScore = parseToolResult(checklistResult);
     } else {
       summary.notes.push('Skipped extract_designer_metadata (no --preview-url provided).');
     }
