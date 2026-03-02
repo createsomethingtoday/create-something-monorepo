@@ -11,6 +11,7 @@ WORKERS=(
   "cs-hub-filip"
   "cs-hub-leah"
   "cs-hub-mj"
+  "cs-hub-c3denver"
   "cs-mcp-hub-remote"
 )
 
@@ -28,6 +29,7 @@ health_url_for_worker() {
     "cs-hub-filip") echo "https://filip.mcp.createsomething.agency/health" ;;
     "cs-hub-leah") echo "https://leah.mcp.createsomething.agency/health" ;;
     "cs-hub-mj") echo "https://mj.mcp.createsomething.agency/health" ;;
+    "cs-hub-c3denver") echo "https://c3denver.mcp.createsomething.agency/health" ;;
     "cs-mcp-hub-remote") echo "https://cs-mcp-hub-remote.createsomething.workers.dev/health" ;;
     *)
       return 1

@@ -173,6 +173,11 @@ function boolFlag(text: string, patterns: RegExp[]): boolean {
   return patterns.some((pattern) => pattern.test(text));
 }
 
+function countMatches(text: string, pattern: RegExp): number {
+  const matches = text.match(pattern);
+  return matches ? matches.length : 0;
+}
+
 export async function reviewPublishedTemplateUrl(input: PublishedReviewInput): Promise<PublishedReviewResult> {
   if (!input?.url || !isHttpUrl(input.url)) {
     throw new Error('template_review_published_url requires a valid http(s) URL.');
@@ -588,6 +593,29 @@ export async function reviewPublishedTemplateUrl(input: PublishedReviewInput): P
     autoplayWithoutControls: autoplayWithoutControls.length,
   };
   checksRun.push('media');
+
+  const dataWIdCount = countMatches(html, /\bdata-w-id\s*=/gi);
+  const ix2Mentions = countMatches(html, /\bix2\b/gi);
+  const ix3Mentions = countMatches(html, /\bix3\b/gi);
+  const webflowRequireIxMentions = countMatches(
+    html,
+    /Webflow\.require\((["'])ix[23]\1\)/gi,
+  );
+
+  const interactionsLikely =
+    dataWIdCount > 0 ||
+    webflowRequireIxMentions > 0 ||
+    ix2Mentions > 0 ||
+    ix3Mentions > 0;
+
+  checks.interactionHints = {
+    interactionsLikely,
+    dataWIdCount,
+    ix2Mentions,
+    ix3Mentions,
+    webflowRequireIxMentions,
+  };
+  checksRun.push('interaction_hints');
 
   if (includeSitemap) {
     const sitemapUrl = new URL('/sitemap.xml', resolved.origin).toString();

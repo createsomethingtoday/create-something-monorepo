@@ -16,6 +16,15 @@
         "composio-toolkit-zoom"
       ],
       "maxProxyTools": null
+    },
+    "c3-denver-gmail-notion": {
+      "description": "C3 Denver scoped auth pack for Gmail and Notion only.",
+      "mode": "compact",
+      "activeServers": [
+        "composio-toolkit-gmail",
+        "composio-toolkit-notion"
+      ],
+      "maxProxyTools": 250
     }
   }
 }
