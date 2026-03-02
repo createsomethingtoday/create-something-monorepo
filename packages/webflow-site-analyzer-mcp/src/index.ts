@@ -608,6 +608,12 @@ type PublishedPageEval = {
 
 type PageAuditSummary = NonNullable<PublishedSnippetPageResult['summary']>;
 
+type ProgressReporter = (progress: number, total: number, message: string) => Promise<void>;
+
+type RunTemplateReviewOptions = {
+  reportProgress?: ProgressReporter;
+};
+
 function normalizeCrawlUrl(rawUrl: string, origin: string): string | null {
   try {
     const parsed = new URL(rawUrl, origin);
@@ -776,7 +782,12 @@ function emptyIssueCounts(): PublishedSnippetIssueCounts {
 
 async function crawlPublishedWebMcp(
   publishedUrl: string,
-  options: { timeout?: number; crawlMaxPages?: number; crawlMaxDepth?: number } = {}
+  options: {
+    timeout?: number;
+    crawlMaxPages?: number;
+    crawlMaxDepth?: number;
+    onProgress?: (processedPages: number, maxPages: number, message: string) => Promise<void>;
+  } = {}
 ): Promise<PublishedSnippetCrawlResult> {
   const manager = getProvider();
   const provider = manager.getProvider();
@@ -883,6 +894,13 @@ async function crawlPublishedWebMcp(
     }
 
     pages.push(pageResult);
+    if (options.onProgress) {
+      await options.onProgress(
+        pages.length,
+        maxPages,
+        `Published crawl: ${pages.length}/${maxPages} pages (${current.url})`
+      );
+    }
   }
 
   const issueCounts = emptyIssueCounts();
@@ -1307,7 +1325,10 @@ function unifyRows(
   return includeManual ? rows : rows.filter((row) => row.status !== 'manual');
 }
 
-async function runTemplateReviewTool(input: RunTemplateReviewInput): Promise<UnifiedTemplateReviewReport> {
+async function runTemplateReviewTool(
+  input: RunTemplateReviewInput,
+  options: RunTemplateReviewOptions = {}
+): Promise<UnifiedTemplateReviewReport> {
   if (!input?.previewUrl || !input?.publishedUrl) {
     throw new Error('`previewUrl` and `publishedUrl` are required.');
   }
@@ -1315,6 +1336,10 @@ async function runTemplateReviewTool(input: RunTemplateReviewInput): Promise<Uni
   const manager = getProvider();
   const provider = manager.getProvider();
   const includeManual = input.includeManual !== false;
+  const reportProgress = options.reportProgress;
+
+  if (reportProgress) await reportProgress(0, 100, 'Starting unified template review');
+  if (reportProgress) await reportProgress(5, 100, 'Running Designer checklist extraction');
 
   const designer = await scoreDesignerChecklistTool({
     url: input.previewUrl,
@@ -1322,11 +1347,23 @@ async function runTemplateReviewTool(input: RunTemplateReviewInput): Promise<Uni
     includeManual: true
   });
 
+  if (reportProgress) await reportProgress(35, 100, 'Designer checklist extraction complete');
+
   const published = await crawlPublishedWebMcp(input.publishedUrl, {
     timeout: input.timeout,
     crawlMaxPages: input.crawlMaxPages,
-    crawlMaxDepth: input.crawlMaxDepth
+    crawlMaxDepth: input.crawlMaxDepth,
+    onProgress: reportProgress
+      ? async (processedPages, maxPages, message) => {
+          const cappedMax = Math.max(1, maxPages);
+          const ratio = Math.min(1, processedPages / cappedMax);
+          const progress = 35 + Math.round(ratio * 55);
+          await reportProgress(progress, 100, message);
+        }
+      : undefined
   });
+
+  if (reportProgress) await reportProgress(92, 100, 'Normalizing unified checklist rows');
 
   const rows = unifyRows(designer, published, includeManual);
   const summary = rows.reduce(
@@ -1341,6 +1378,8 @@ async function runTemplateReviewTool(input: RunTemplateReviewInput): Promise<Uni
   );
   summary.automated = summary.pass + summary.fail;
   summary.humanInLoop = summary.partial + summary.manual;
+
+  if (reportProgress) await reportProgress(100, 100, 'Unified template review complete');
 
   return {
     generatedAt: new Date().toISOString(),
@@ -1492,6 +1531,34 @@ async function getWebflowReviewPolicy(refresh = false) {
     return refreshWebflowPolicySnapshot();
   }
   return getWebflowPolicySnapshot(false);
+}
+
+type RequestHandlerExtraLike = {
+  _meta?: Record<string, unknown>;
+  sendNotification?: (notification: unknown) => Promise<void>;
+};
+
+function createProgressReporter(extra?: RequestHandlerExtraLike): ProgressReporter | undefined {
+  if (!extra || typeof extra.sendNotification !== 'function') return undefined;
+  const meta = asRecord(extra._meta);
+  const progressToken = meta.progressToken;
+  if (typeof progressToken !== 'string' && typeof progressToken !== 'number') return undefined;
+
+  return async (progress: number, total: number, message: string) => {
+    try {
+      await extra.sendNotification({
+        method: 'notifications/progress',
+        params: {
+          progressToken,
+          progress: Math.max(0, progress),
+          total: Math.max(1, total),
+          message
+        }
+      });
+    } catch {
+      // Best effort only; don't fail tool execution if progress notification fails.
+    }
+  };
 }
 
 // =============================================================================
@@ -1811,7 +1878,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 }));
 
 // Handle tool calls
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
+server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
   const { name, arguments: args } = request.params;
   const safeArgs = (args || {}) as Record<string, unknown>;
 
@@ -1848,7 +1915,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         result = await scoreDesignerChecklistTool(safeArgs as unknown as ScoreDesignerChecklistInput);
         break;
       case 'run_template_review':
-        result = await runTemplateReviewTool(safeArgs as unknown as RunTemplateReviewInput);
+        result = await runTemplateReviewTool(safeArgs as unknown as RunTemplateReviewInput, {
+          reportProgress: createProgressReporter(extra as RequestHandlerExtraLike)
+        });
         break;
       case 'get_webflow_review_policy':
         result = await getWebflowReviewPolicy(Boolean(safeArgs.refresh));
