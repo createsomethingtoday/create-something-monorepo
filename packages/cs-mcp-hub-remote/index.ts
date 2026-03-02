@@ -577,7 +577,8 @@ export default {
         });
 
         await server.connect(transport);
-        return withCors(await transport.handleRequest(request));
+        const transportRequest = ensureStreamableHttpAcceptHeader(request);
+        return withCors(await transport.handleRequest(transportRequest));
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         return withCors(jsonResponse({ error: message }, 500));
@@ -636,6 +637,34 @@ export default {
     return withCors(new Response('Not found', { status: 404 }));
   },
 };
+
+function ensureStreamableHttpAcceptHeader(request: Request): Request {
+  const acceptHeader = request.headers.get('accept') ?? '';
+  const normalizedAccept = acceptHeader.toLowerCase();
+  const hasJson = normalizedAccept.includes('application/json');
+  const hasEventStream = normalizedAccept.includes('text/event-stream');
+
+  if (hasJson && hasEventStream) {
+    return request;
+  }
+
+  const headers = new Headers(request.headers);
+  const parts = acceptHeader
+    .split(',')
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+
+  if (!hasJson) {
+    parts.push('application/json');
+  }
+
+  if (!hasEventStream) {
+    parts.push('text/event-stream');
+  }
+
+  headers.set('Accept', parts.join(', '));
+  return new Request(request, { headers });
+}
 
 function authorizeRequest(request: Request, env: Env): Response | null {
   const requiredToken = readEnvString(env, 'HUB_API_TOKEN');
