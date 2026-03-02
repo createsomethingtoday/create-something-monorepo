@@ -1,0 +1,1022 @@
+{
+  "testedAt": "2026-03-02T23:28:54.828Z",
+  "previewUrl": "https://preview.webflow.com/preview/archiprotemplate-70629effe7faff236c7aca?utm_medium=preview_link&utm_source=dashboard&utm_content=archiprotemplate-70629effe7faff236c7aca&preview=896fb6bdfe0d546c91af69df27b5afe1&workflow=preview",
+  "timeoutMs": 300000,
+  "tools": {
+    "total": 18,
+    "hasExtractDesignerMetadata": true,
+    "hasProviderStatus": true
+  },
+  "providerStatus": {
+    "ok": true,
+    "data": {
+      "provider": "steel",
+      "isHealthy": true,
+      "metrics": [
+        {
+          "provider": "steel",
+          "isHealthy": true,
+          "lastCheckTime": 1772494136880,
+          "successRate": 1,
+          "averageLatencyMs": 837,
+          "failureCount": 0
+        }
+      ],
+      "sessionMetrics": {
+        "sessionsCreated": 0,
+        "sessionsClosed": 0,
+        "sessionErrors": 0,
+        "totalDurationMs": 0,
+        "averageDurationMs": 0,
+        "pageLoadsCompleted": 0,
+        "pageLoadErrors": 0
+      }
+    },
+    "rawText": "{\n  \"provider\": \"steel\",\n  \"isHealthy\": true,\n  \"metrics\": [\n    {\n      \"provider\": \"steel\",\n      \"isHealthy\": true,\n      \"lastCheckTime\": 1772494136880,\n      \"successRate\": 1,\n      \"averageLatencyMs\": 837,\n      \"failureCount\": 0\n    }\n  ],\n  \"sessionMetrics\": {\n    \"sessionsCreated\": 0,\n    \"sessionsClosed\": 0,\n    \"sessionErrors\": 0,\n    \"totalDurationMs\": 0,\n    \"averageDurationMs\": 0,\n    \"pageLoadsCompleted\": 0,\n    \"pageLoadErrors\": 0\n  }\n}"
+  },
+  "designerExtraction": {
+    "ok": true,
+    "data": {
+      "url": "https://preview.webflow.com/preview/archiprotemplate-70629effe7faff236c7aca?utm_medium=preview_link&utm_source=dashboard&utm_content=archiprotemplate-70629effe7faff236c7aca&preview=896fb6bdfe0d546c91af69df27b5afe1&workflow=preview",
+      "timestamp": "2026-03-02T23:29:49.609Z",
+      "siteName": "Archipro | BRIX Template",
+      "sitePlan": "CMS",
+      "pages": [
+        {
+          "name": "Home",
+          "type": "static",
+          "category": "static"
+        },
+        {
+          "name": "About",
+          "type": "static",
+          "category": "static"
+        },
+        {
+          "name": "Projects",
+          "type": "static",
+          "category": "static"
+        },
+        {
+          "name": "Book",
+          "type": "static",
+          "category": "static"
+        },
+        {
+          "name": "Reviews",
+          "type": "static",
+          "category": "static"
+        },
+        {
+          "name": "Services Hub Blank",
+          "type": "static",
+          "category": "static"
+        },
+        {
+          "name": "Contact",
+          "type": "static",
+          "category": "static"
+        },
+        {
+          "name": "Service Areas",
+          "type": "static",
+          "category": "static"
+        },
+        {
+          "name": "Blog",
+          "type": "static",
+          "category": "static"
+        },
+        {
+          "name": "Services",
+          "type": "static",
+          "category": "static"
+        },
+        {
+          "name": "Service Areas Template",
+          "type": "cms-template",
+          "category": "cms-template"
+        },
+        {
+          "name": "FAQs Template",
+          "type": "cms-template",
+          "category": "cms-template"
+        },
+        {
+          "name": "Reviews Template",
+          "type": "cms-template",
+          "category": "cms-template"
+        },
+        {
+          "name": "💼  Portfolios Template",
+          "type": "cms-template",
+          "category": "cms-template"
+        },
+        {
+          "name": "⚙️ Services Template",
+          "type": "cms-template",
+          "category": "cms-template"
+        },
+        {
+          "name": "👤  Teams Template",
+          "type": "cms-template",
+          "category": "cms-template"
+        },
+        {
+          "name": "📝 Blog Posts Template",
+          "type": "cms-template",
+          "category": "cms-template"
+        },
+        {
+          "name": "📝🏷️ Blog Categories Template",
+          "type": "cms-template",
+          "category": "cms-template"
+        }
+      ],
+      "totalPages": 18,
+      "styleClasses": [
+        {
+          "name": "ENHome",
+          "isGlobal": false
+        },
+        {
+          "name": "Home",
+          "isGlobal": false
+        },
+        {
+          "name": "Body (All Pages)",
+          "isGlobal": true
+        },
+        {
+          "name": "All H1 Headings",
+          "isGlobal": true
+        },
+        {
+          "name": "All H2 Headings",
+          "isGlobal": true
+        },
+        {
+          "name": "All H3 Headings",
+          "isGlobal": true
+        },
+        {
+          "name": "All H4 Headings",
+          "isGlobal": true
+        },
+        {
+          "name": "All H5 Headings",
+          "isGlobal": true
+        },
+        {
+          "name": "All H6 Headings",
+          "isGlobal": true
+        },
+        {
+          "name": "All Paragraphs",
+          "isGlobal": true
+        },
+        {
+          "name": "All Links",
+          "isGlobal": false
+        },
+        {
+          "name": "All Unordered Lists",
+          "isGlobal": true
+        },
+        {
+          "name": "All Ordered Lists",
+          "isGlobal": false
+        },
+        {
+          "name": "All Images",
+          "isGlobal": false
+        },
+        {
+          "name": "All Labels",
+          "isGlobal": false
+        },
+        {
+          "name": "All Bolds",
+          "isGlobal": false
+        },
+        {
+          "name": "All Block Quotes",
+          "isGlobal": false
+        },
+        {
+          "name": "All Figures",
+          "isGlobal": false
+        },
+        {
+          "name": "Utility Page Form",
+          "isGlobal": false
+        },
+        {
+          "name": "UTP - Nav Menu Wrapper",
+          "isGlobal": false
+        },
+        {
+          "name": "Link Content Flex",
+          "isGlobal": false
+        },
+        {
+          "name": "Is Absolute",
+          "isGlobal": false
+        },
+        {
+          "name": "PD Bottom Regular",
+          "isGlobal": false
+        },
+        {
+          "name": "MG Right 5x Extra Large",
+          "isGlobal": false
+        },
+        {
+          "name": "Toggle Button BG",
+          "isGlobal": false
+        },
+        {
+          "name": "PD Right Extra Small",
+          "isGlobal": false
+        },
+        {
+          "name": "Notification Bar Padding",
+          "isGlobal": false
+        },
+        {
+          "name": "UTP - Dropdown Icon",
+          "isGlobal": false
+        },
+        {
+          "name": "UTP - Blocks 1440px Wrapper",
+          "isGlobal": false
+        },
+        {
+          "name": "Overflow Visible",
+          "isGlobal": false
+        },
+        {
+          "name": "Logo Wrapper",
+          "isGlobal": false
+        },
+        {
+          "name": "UTP - Sidebar Top",
+          "isGlobal": false
+        },
+        {
+          "name": "PD Right 4x Extra Small",
+          "isGlobal": false
+        },
+        {
+          "name": "MG Top 5x Extra Large",
+          "isGlobal": false
+        },
+        {
+          "name": "MG Bottom Medium",
+          "isGlobal": false
+        },
+        {
+          "name": "Toggle Item Wrapper",
+          "isGlobal": false
+        },
+        {
+          "name": "Hover Rotate Card Wrapper",
+          "isGlobal": false
+        },
+        {
+          "name": "MG Top 4x Extra Large",
+          "isGlobal": false
+        },
+        {
+          "name": "PD Bottom 5x Extra Small",
+          "isGlobal": false
+        },
+        {
+          "name": "Sales Home - Hero Link Wrapper",
+          "isGlobal": false
+        },
+        {
+          "name": "Text Light",
+          "isGlobal": false
+        },
+        {
+          "name": "Inner Container",
+          "isGlobal": false
+        },
+        {
+          "name": "Center",
+          "isGlobal": false
+        }
+      ],
+      "totalClasses": 43,
+      "globalClasses": 9,
+      "customClasses": 34,
+      "components": [
+        {
+          "name": "Brix Badge",
+          "instanceCount": 33,
+          "isUnused": false
+        },
+        {
+          "name": "Cards/Accordion Content",
+          "instanceCount": 6,
+          "isUnused": false
+        },
+        {
+          "name": "Cards/Accordion V",
+          "instanceCount": 112,
+          "isUnused": false
+        },
+        {
+          "name": "Cards/Blog Card V",
+          "instanceCount": 71,
+          "isUnused": false
+        },
+        {
+          "name": "Cards/Contact Card",
+          "instanceCount": 2,
+          "isUnused": false
+        },
+        {
+          "name": "Cards/Icon Features",
+          "instanceCount": 6,
+          "isUnused": false
+        },
+        {
+          "name": "Cards/Our Office",
+          "instanceCount": 4,
+          "isUnused": false
+        },
+        {
+          "name": "Cards/Our Process",
+          "instanceCount": 3,
+          "isUnused": false
+        },
+        {
+          "name": "Cards/Portfolio Card V",
+          "instanceCount": 24,
+          "isUnused": false
+        },
+        {
+          "name": "Cards/Service Card",
+          "instanceCount": 4,
+          "isUnused": false
+        },
+        {
+          "name": "Cards/Service Card Three - V",
+          "instanceCount": 31,
+          "isUnused": false
+        },
+        {
+          "name": "Cards/Slider Card",
+          "instanceCount": 3,
+          "isUnused": false
+        },
+        {
+          "name": "Cards/Team Card",
+          "instanceCount": 2,
+          "isUnused": false
+        },
+        {
+          "name": "Cards/Testimonial V",
+          "instanceCount": 116,
+          "isUnused": false
+        },
+        {
+          "name": "Tabs/Card",
+          "instanceCount": 4,
+          "isUnused": false
+        },
+        {
+          "name": "Tabs/Tab Accordion V",
+          "instanceCount": 34,
+          "isUnused": false
+        },
+        {
+          "name": "CTA/CTA V",
+          "instanceCount": 13,
+          "isUnused": false
+        },
+        {
+          "name": "Footers/Global",
+          "instanceCount": 29,
+          "isUnused": false
+        },
+        {
+          "name": "Footers/Secondary",
+          "instanceCount": 4,
+          "isUnused": false
+        },
+        {
+          "name": "Headers/Global",
+          "instanceCount": 30,
+          "isUnused": false
+        },
+        {
+          "name": "Headers/Secondary",
+          "instanceCount": 3,
+          "isUnused": false
+        },
+        {
+          "name": "UTP Sidebar",
+          "instanceCount": 5,
+          "isUnused": false
+        },
+        {
+          "name": "Section/Background Image + Content V",
+          "instanceCount": 21,
+          "isUnused": false
+        },
+        {
+          "name": "Section/Blog Features V",
+          "instanceCount": 22,
+          "isUnused": false
+        },
+        {
+          "name": "Section/Follow Our Work Slider",
+          "instanceCount": 2,
+          "isUnused": false
+        },
+        {
+          "name": "Section/Follow Out Work",
+          "instanceCount": 2,
+          "isUnused": false
+        },
+        {
+          "name": "Section/Frequent Asked Question V",
+          "instanceCount": 22,
+          "isUnused": false
+        },
+        {
+          "name": "Section/Parallax Section V",
+          "instanceCount": 31,
+          "isUnused": false
+        },
+        {
+          "name": "Section/Tab Features",
+          "instanceCount": 1,
+          "isUnused": false
+        },
+        {
+          "name": "Section/Tab Location V",
+          "instanceCount": 21,
+          "isUnused": false
+        },
+        {
+          "name": "Section/Tab Process",
+          "instanceCount": 1,
+          "isUnused": false
+        },
+        {
+          "name": "Section/Tab Testimonial",
+          "instanceCount": 1,
+          "isUnused": false
+        },
+        {
+          "name": "Avatar/Circle",
+          "instanceCount": 10,
+          "isUnused": false
+        },
+        {
+          "name": "Avatars/Square",
+          "instanceCount": 5,
+          "isUnused": false
+        },
+        {
+          "name": "Badges/Dark Neutral - Default",
+          "instanceCount": 6,
+          "isUnused": false
+        },
+        {
+          "name": "Badges/Dark Primary - Default",
+          "instanceCount": 9,
+          "isUnused": false
+        },
+        {
+          "name": "Badges/Dark Secondary - Default",
+          "instanceCount": 6,
+          "isUnused": false
+        },
+        {
+          "name": "Badges/Dark Tertiary - Default",
+          "instanceCount": 6,
+          "isUnused": false
+        },
+        {
+          "name": "Badges/Neutral - Default",
+          "instanceCount": 6,
+          "isUnused": false
+        },
+        {
+          "name": "Badges/Primary - Default",
+          "instanceCount": 6,
+          "isUnused": false
+        },
+        {
+          "name": "Badges/Primary - Default Small",
+          "instanceCount": 4,
+          "isUnused": false
+        },
+        {
+          "name": "Badges/Secondary - Default",
+          "instanceCount": 6,
+          "isUnused": false
+        },
+        {
+          "name": "Badges/Tertiary - Default",
+          "instanceCount": 11,
+          "isUnused": false
+        },
+        {
+          "name": "Buttons/Primary - Default",
+          "instanceCount": 38,
+          "isUnused": false
+        },
+        {
+          "name": "Buttons/Primary Icon - Default",
+          "instanceCount": 4,
+          "isUnused": false
+        },
+        {
+          "name": "Buttons/Primary Number - Default",
+          "instanceCount": 7,
+          "isUnused": false
+        },
+        {
+          "name": "Buttons/Primary Small - Default",
+          "instanceCount": 1,
+          "isUnused": false
+        },
+        {
+          "name": "Buttons/Secondary - Default",
+          "instanceCount": 25,
+          "isUnused": false
+        },
+        {
+          "name": "Buttons/Secondary Icon - Default",
+          "instanceCount": 4,
+          "isUnused": false
+        },
+        {
+          "name": "Buttons/Secondary Number - Default",
+          "instanceCount": 19,
+          "isUnused": false
+        },
+        {
+          "name": "Icon/Circle - BG Secondary",
+          "instanceCount": 5006,
+          "isUnused": false
+        },
+        {
+          "name": "Links/Link - Accent",
+          "instanceCount": 6,
+          "isUnused": false
+        },
+        {
+          "name": "Links/Link - Dark",
+          "instanceCount": 53,
+          "isUnused": false
+        },
+        {
+          "name": "Links/Link - Default",
+          "instanceCount": 93,
+          "isUnused": false
+        },
+        {
+          "name": "Logos/Full - Dark",
+          "instanceCount": 4,
+          "isUnused": false
+        },
+        {
+          "name": "Logos/Full - Default",
+          "instanceCount": 4,
+          "isUnused": false
+        },
+        {
+          "name": "Logos/Icon - Dark",
+          "instanceCount": 1,
+          "isUnused": false
+        },
+        {
+          "name": "Logos/Icon - Default",
+          "instanceCount": 3,
+          "isUnused": false
+        },
+        {
+          "name": "Social Media Link",
+          "instanceCount": 55,
+          "isUnused": false
+        }
+      ],
+      "totalComponents": 59,
+      "unusedComponents": 0,
+      "interactions": [
+        {
+          "trigger": "Click",
+          "targetElement": "Global",
+          "type": "element-trigger"
+        },
+        {
+          "trigger": "Hover",
+          "targetElement": "Global",
+          "type": "element-trigger"
+        },
+        {
+          "trigger": "Page load",
+          "targetElement": "Global",
+          "type": "page-load"
+        }
+      ],
+      "totalInteractions": 3,
+      "cmsCollections": [
+        {
+          "name": "Service Areas",
+          "itemCount": 10
+        },
+        {
+          "name": "FAQs",
+          "itemCount": 5
+        },
+        {
+          "name": "Reviews",
+          "itemCount": 6
+        },
+        {
+          "name": "Portfolios",
+          "itemCount": 4
+        },
+        {
+          "name": "Services",
+          "itemCount": 15
+        },
+        {
+          "name": "Teams",
+          "itemCount": 8
+        },
+        {
+          "name": "Blog Posts",
+          "itemCount": 7
+        },
+        {
+          "name": "Blog Categories",
+          "itemCount": 3
+        }
+      ],
+      "totalCMSItems": 58,
+      "assets": [
+        {
+          "filename": "webf…o.png",
+          "type": "image"
+        },
+        {
+          "filename": "cust…s.png",
+          "type": "image"
+        },
+        {
+          "filename": "neth…e.png",
+          "type": "image"
+        },
+        {
+          "filename": "marq…e.png",
+          "type": "image"
+        },
+        {
+          "filename": "gsap…e.png",
+          "type": "image"
+        },
+        {
+          "filename": "coun…e.png",
+          "type": "image"
+        },
+        {
+          "filename": "arch…s.jpg",
+          "type": "image"
+        },
+        {
+          "filename": "arch…n.jpg",
+          "type": "image"
+        },
+        {
+          "filename": "succ…e.svg",
+          "type": "svg"
+        },
+        {
+          "filename": "6883….jpeg",
+          "type": "image"
+        },
+        {
+          "filename": "andy…e.jpg",
+          "type": "image"
+        },
+        {
+          "filename": "matt…e.jpg",
+          "type": "image"
+        },
+        {
+          "filename": "john…e.jpg",
+          "type": "image"
+        },
+        {
+          "filename": "sand…e.jpg",
+          "type": "image"
+        },
+        {
+          "filename": "lily…e.jpg",
+          "type": "image"
+        },
+        {
+          "filename": "lily…1.jpg",
+          "type": "image"
+        },
+        {
+          "filename": "soph…e.jpg",
+          "type": "image"
+        },
+        {
+          "filename": "arch…e.png",
+          "type": "image"
+        },
+        {
+          "filename": "arch…e.svg",
+          "type": "svg"
+        },
+        {
+          "filename": "arch…t.png",
+          "type": "image"
+        },
+        {
+          "filename": "arch…n.png",
+          "type": "image"
+        },
+        {
+          "filename": "arch…y.png",
+          "type": "image"
+        }
+      ],
+      "totalAssets": 22,
+      "breakpoints": [
+        "Desktop: Base breakpoint",
+        "Tablet: 991px and down",
+        "Mobile (L): 767px and down",
+        "Mobile: 479px and down",
+        "Larger breakpoints"
+      ]
+    },
+    "rawText": "{\n  \"url\": \"https://preview.webflow.com/preview/archiprotemplate-70629effe7faff236c7aca?utm_medium=preview_link&utm_source=dashboard&utm_content=archiprotemplate-70629effe7faff236c7aca&preview=896fb6bdfe0d546c91af69df27b5afe1&workflow=preview\",\n  \"timestamp\": \"2026-03-02T23:29:49.609Z\",\n  \"siteName\": \"Archipro | BRIX Template\",\n  \"sitePlan\": \"CMS\",\n  \"pages\": [\n    {\n      \"name\": \"Home\",\n      \"type\": \"static\",\n      \"category\": \"static\"\n    },\n    {\n      \"name\": \"About\",\n      \"type\": \"static\",\n      \"category\": \"static\"\n    },\n    {\n      \"name\": \"Projects\",\n      \"type\": \"static\",\n      \"category\": \"static\"\n    },\n    {\n      \"name\": \"Book\",\n      \"type\": \"static\",\n      \"category\": \"static\"\n    },\n    {\n      \"name\": \"Reviews\",\n      \"type\": \"static\",\n      \"category\": \"static\"\n    },\n    {\n      \"name\": \"Services Hub Blank\",\n      \"type\": \"static\",\n      \"category\": \"static\"\n    },\n    {\n      \"name\": \"Contact\",\n      \"type\": \"static\",\n      \"category\": \"static\"\n    },\n    {\n      \"name\": \"Service Areas\",\n      \"type\": \"static\",\n      \"category\": \"static\"\n    },\n    {\n      \"name\": \"Blog\",\n      \"type\": \"static\",\n      \"category\": \"static\"\n    },\n    {\n      \"name\": \"Services\",\n      \"type\": \"static\",\n      \"category\": \"static\"\n    },\n    {\n      \"name\": \"Service Areas Template\",\n      \"type\": \"cms-template\",\n      \"category\": \"cms-template\"\n    },\n    {\n      \"name\": \"FAQs Template\",\n      \"type\": \"cms-template\",\n      \"category\": \"cms-template\"\n    },\n    {\n      \"name\": \"Reviews Template\",\n      \"type\": \"cms-template\",\n      \"category\": \"cms-template\"\n    },\n    {\n      \"name\": \"💼  Portfolios Template\",\n      \"type\": \"cms-template\",\n      \"category\": \"cms-template\"\n    },\n    {\n      \"name\": \"⚙️ Services Template\",\n      \"type\": \"cms-template\",\n      \"category\": \"cms-template\"\n    },\n    {\n      \"name\": \"👤  Teams Template\",\n      \"type\": \"cms-template\",\n      \"category\": \"cms-template\"\n    },\n    {\n      \"name\": \"📝 Blog Posts Template\",\n      \"type\": \"cms-template\",\n      \"category\": \"cms-template\"\n    },\n    {\n      \"name\": \"📝🏷️ Blog Categories Template\",\n      \"type\": \"cms-template\",\n      \"category\": \"cms-template\"\n    }\n  ],\n  \"totalPages\": 18,\n  \"styleClasses\": [\n    {\n      \"name\": \"ENHome\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"Home\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"Body (All Pages)\",\n      \"isGlobal\": true\n    },\n    {\n      \"name\": \"All H1 Headings\",\n      \"isGlobal\": true\n    },\n    {\n      \"name\": \"All H2 Headings\",\n      \"isGlobal\": true\n    },\n    {\n      \"name\": \"All H3 Headings\",\n      \"isGlobal\": true\n    },\n    {\n      \"name\": \"All H4 Headings\",\n      \"isGlobal\": true\n    },\n    {\n      \"name\": \"All H5 Headings\",\n      \"isGlobal\": true\n    },\n    {\n      \"name\": \"All H6 Headings\",\n      \"isGlobal\": true\n    },\n    {\n      \"name\": \"All Paragraphs\",\n      \"isGlobal\": true\n    },\n    {\n      \"name\": \"All Links\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"All Unordered Lists\",\n      \"isGlobal\": true\n    },\n    {\n      \"name\": \"All Ordered Lists\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"All Images\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"All Labels\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"All Bolds\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"All Block Quotes\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"All Figures\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"Utility Page Form\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"UTP - Nav Menu Wrapper\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"Link Content Flex\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"Is Absolute\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"PD Bottom Regular\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"MG Right 5x Extra Large\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"Toggle Button BG\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"PD Right Extra Small\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"Notification Bar Padding\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"UTP - Dropdown Icon\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"UTP - Blocks 1440px Wrapper\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"Overflow Visible\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"Logo Wrapper\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"UTP - Sidebar Top\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"PD Right 4x Extra Small\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"MG Top 5x Extra Large\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"MG Bottom Medium\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"Toggle Item Wrapper\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"Hover Rotate Card Wrapper\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"MG Top 4x Extra Large\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"PD Bottom 5x Extra Small\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"Sales Home - Hero Link Wrapper\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"Text Light\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"Inner Container\",\n      \"isGlobal\": false\n    },\n    {\n      \"name\": \"Center\",\n      \"isGlobal\": false\n    }\n  ],\n  \"totalClasses\": 43,\n  \"globalClasses\": 9,\n  \"customClasses\": 34,\n  \"components\": [\n    {\n      \"name\": \"Brix Badge\",\n      \"instanceCount\": 33,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Cards/Accordion Content\",\n      \"instanceCount\": 6,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Cards/Accordion V\",\n      \"instanceCount\": 112,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Cards/Blog Card V\",\n      \"instanceCount\": 71,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Cards/Contact Card\",\n      \"instanceCount\": 2,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Cards/Icon Features\",\n      \"instanceCount\": 6,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Cards/Our Office\",\n      \"instanceCount\": 4,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Cards/Our Process\",\n      \"instanceCount\": 3,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Cards/Portfolio Card V\",\n      \"instanceCount\": 24,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Cards/Service Card\",\n      \"instanceCount\": 4,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Cards/Service Card Three - V\",\n      \"instanceCount\": 31,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Cards/Slider Card\",\n      \"instanceCount\": 3,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Cards/Team Card\",\n      \"instanceCount\": 2,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Cards/Testimonial V\",\n      \"instanceCount\": 116,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Tabs/Card\",\n      \"instanceCount\": 4,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Tabs/Tab Accordion V\",\n      \"instanceCount\": 34,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"CTA/CTA V\",\n      \"instanceCount\": 13,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Footers/Global\",\n      \"instanceCount\": 29,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Footers/Secondary\",\n      \"instanceCount\": 4,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Headers/Global\",\n      \"instanceCount\": 30,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Headers/Secondary\",\n      \"instanceCount\": 3,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"UTP Sidebar\",\n      \"instanceCount\": 5,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Section/Background Image + Content V\",\n      \"instanceCount\": 21,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Section/Blog Features V\",\n      \"instanceCount\": 22,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Section/Follow Our Work Slider\",\n      \"instanceCount\": 2,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Section/Follow Out Work\",\n      \"instanceCount\": 2,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Section/Frequent Asked Question V\",\n      \"instanceCount\": 22,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Section/Parallax Section V\",\n      \"instanceCount\": 31,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Section/Tab Features\",\n      \"instanceCount\": 1,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Section/Tab Location V\",\n      \"instanceCount\": 21,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Section/Tab Process\",\n      \"instanceCount\": 1,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Section/Tab Testimonial\",\n      \"instanceCount\": 1,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Avatar/Circle\",\n      \"instanceCount\": 10,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Avatars/Square\",\n      \"instanceCount\": 5,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Badges/Dark Neutral - Default\",\n      \"instanceCount\": 6,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Badges/Dark Primary - Default\",\n      \"instanceCount\": 9,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Badges/Dark Secondary - Default\",\n      \"instanceCount\": 6,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Badges/Dark Tertiary - Default\",\n      \"instanceCount\": 6,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Badges/Neutral - Default\",\n      \"instanceCount\": 6,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Badges/Primary - Default\",\n      \"instanceCount\": 6,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Badges/Primary - Default Small\",\n      \"instanceCount\": 4,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Badges/Secondary - Default\",\n      \"instanceCount\": 6,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Badges/Tertiary - Default\",\n      \"instanceCount\": 11,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Buttons/Primary - Default\",\n      \"instanceCount\": 38,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Buttons/Primary Icon - Default\",\n      \"instanceCount\": 4,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Buttons/Primary Number - Default\",\n      \"instanceCount\": 7,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Buttons/Primary Small - Default\",\n      \"instanceCount\": 1,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Buttons/Secondary - Default\",\n      \"instanceCount\": 25,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Buttons/Secondary Icon - Default\",\n      \"instanceCount\": 4,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Buttons/Secondary Number - Default\",\n      \"instanceCount\": 19,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Icon/Circle - BG Secondary\",\n      \"instanceCount\": 5006,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Links/Link - Accent\",\n      \"instanceCount\": 6,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Links/Link - Dark\",\n      \"instanceCount\": 53,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Links/Link - Default\",\n      \"instanceCount\": 93,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Logos/Full - Dark\",\n      \"instanceCount\": 4,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Logos/Full - Default\",\n      \"instanceCount\": 4,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Logos/Icon - Dark\",\n      \"instanceCount\": 1,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Logos/Icon - Default\",\n      \"instanceCount\": 3,\n      \"isUnused\": false\n    },\n    {\n      \"name\": \"Social Media Link\",\n      \"instanceCount\": 55,\n      \"isUnused\": false\n    }\n  ],\n  \"totalComponents\": 59,\n  \"unusedComponents\": 0,\n  \"interactions\": [\n    {\n      \"trigger\": \"Click\",\n      \"targetElement\": \"Global\",\n      \"type\": \"element-trigger\"\n    },\n    {\n      \"trigger\": \"Hover\",\n      \"targetElement\": \"Global\",\n      \"type\": \"element-trigger\"\n    },\n    {\n      \"trigger\": \"Page load\",\n      \"targetElement\": \"Global\",\n      \"type\": \"page-load\"\n    }\n  ],\n  \"totalInteractions\": 3,\n  \"cmsCollections\": [\n    {\n      \"name\": \"Service Areas\",\n      \"itemCount\": 10\n    },\n    {\n      \"name\": \"FAQs\",\n      \"itemCount\": 5\n    },\n    {\n      \"name\": \"Reviews\",\n      \"itemCount\": 6\n    },\n    {\n      \"name\": \"Portfolios\",\n      \"itemCount\": 4\n    },\n    {\n      \"name\": \"Services\",\n      \"itemCount\": 15\n    },\n    {\n      \"name\": \"Teams\",\n      \"itemCount\": 8\n    },\n    {\n      \"name\": \"Blog Posts\",\n      \"itemCount\": 7\n    },\n    {\n      \"name\": \"Blog Categories\",\n      \"itemCount\": 3\n    }\n  ],\n  \"totalCMSItems\": 58,\n  \"assets\": [\n    {\n      \"filename\": \"webf…o.png\",\n      \"type\": \"image\"\n    },\n    {\n      \"filename\": \"cust…s.png\",\n      \"type\": \"image\"\n    },\n    {\n      \"filename\": \"neth…e.png\",\n      \"type\": \"image\"\n    },\n    {\n      \"filename\": \"marq…e.png\",\n      \"type\": \"image\"\n    },\n    {\n      \"filename\": \"gsap…e.png\",\n      \"type\": \"image\"\n    },\n    {\n      \"filename\": \"coun…e.png\",\n      \"type\": \"image\"\n    },\n    {\n      \"filename\": \"arch…s.jpg\",\n      \"type\": \"image\"\n    },\n    {\n      \"filename\": \"arch…n.jpg\",\n      \"type\": \"image\"\n    },\n    {\n      \"filename\": \"succ…e.svg\",\n      \"type\": \"svg\"\n    },\n    {\n      \"filename\": \"6883….jpeg\",\n      \"type\": \"image\"\n    },\n    {\n      \"filename\": \"andy…e.jpg\",\n      \"type\": \"image\"\n    },\n    {\n      \"filename\": \"matt…e.jpg\",\n      \"type\": \"image\"\n    },\n    {\n      \"filename\": \"john…e.jpg\",\n      \"type\": \"image\"\n    },\n    {\n      \"filename\": \"sand…e.jpg\",\n      \"type\": \"image\"\n    },\n    {\n      \"filename\": \"lily…e.jpg\",\n      \"type\": \"image\"\n    },\n    {\n      \"filename\": \"lily…1.jpg\",\n      \"type\": \"image\"\n    },\n    {\n      \"filename\": \"soph…e.jpg\",\n      \"type\": \"image\"\n    },\n    {\n      \"filename\": \"arch…e.png\",\n      \"type\": \"image\"\n    },\n    {\n      \"filename\": \"arch…e.svg\",\n      \"type\": \"svg\"\n    },\n    {\n      \"filename\": \"arch…t.png\",\n      \"type\": \"image\"\n    },\n    {\n      \"filename\": \"arch…n.png\",\n      \"type\": \"image\"\n    },\n    {\n      \"filename\": \"arch…y.png\",\n      \"type\": \"image\"\n    }\n  ],\n  \"totalAssets\": 22,\n  \"breakpoints\": [\n    \"Desktop: Base breakpoint\",\n    \"Tablet: 991px and down\",\n    \"Mobile (L): 767px and down\",\n    \"Mobile: 479px and down\",\n    \"Larger breakpoints\"\n  ]\n}"
+  },
+  "checklistScore": {
+    "ok": true,
+    "data": {
+      "evaluatedAt": "2026-03-02T23:30:49.358Z",
+      "source": "live-extraction",
+      "metadataSummary": {
+        "siteName": "Archipro | BRIX Template",
+        "sitePlan": "CMS",
+        "totalPages": 18,
+        "totalComponents": 59,
+        "unusedComponents": 0,
+        "totalInteractions": 3,
+        "totalCMSCollections": 8,
+        "totalCMSItems": 58,
+        "totalAssets": 22,
+        "breakpoints": [
+          "Desktop: Base breakpoint",
+          "Tablet: 991px and down",
+          "Mobile (L): 767px and down",
+          "Mobile: 479px and down",
+          "Larger breakpoints"
+        ]
+      },
+      "summary": {
+        "pass": 8,
+        "fail": 8,
+        "manual": 7,
+        "scored": 16,
+        "passRate": 0.5
+      },
+      "checks": [
+        {
+          "id": "components.nav_footer_cta",
+          "section": "Components",
+          "requirement": "Nav, Footer, and CTA are set up as Components",
+          "result": "pass",
+          "evidence": [
+            "components=59",
+            "hasNavOrHeader=true",
+            "hasFooter=true",
+            "hasCTA=true"
+          ]
+        },
+        {
+          "id": "components.title_case_naming",
+          "section": "Components",
+          "requirement": "Component names use title-casing and human-readable naming",
+          "result": "fail",
+          "evidence": [
+            "invalidCount=12",
+            "examples=Cards/Accordion V | Cards/Blog Card V | Cards/Portfolio Card V | Cards/Service Card Three - V | Cards/Testimonial V | Tabs/Tab Accordion V | CTA/CTA V | Section/Background Image + Content V"
+          ]
+        },
+        {
+          "id": "components.unused_cleaned",
+          "section": "Components",
+          "requirement": "Unused Components are cleaned up",
+          "result": "pass",
+          "evidence": [
+            "unusedComponents=0"
+          ]
+        },
+        {
+          "id": "interactions.cleaned_unused",
+          "section": "Interactions",
+          "requirement": "Interactions are cleaned of unused animations",
+          "result": "manual",
+          "evidence": [
+            "Designer metadata currently returns interaction list but not explicit unused/deleted flags."
+          ]
+        },
+        {
+          "id": "variables.breakpoint_modes",
+          "section": "Variables",
+          "requirement": "Variable modes exist for Tablet, Mobile Landscape, and Mobile Portrait",
+          "result": "pass",
+          "evidence": [
+            "breakpoints=Desktop: Base breakpoint | Tablet: 991px and down | Mobile (L): 767px and down | Mobile: 479px and down | Larger breakpoints",
+            "tablet=true",
+            "mobileLandscape=true",
+            "mobilePortrait=true"
+          ]
+        },
+        {
+          "id": "variables.defined_reusable",
+          "section": "Variables",
+          "requirement": "Color, typography, and spacing variables are defined and reusable",
+          "result": "manual",
+          "evidence": [
+            "Variables panel data is not currently extracted by this MCP tool."
+          ]
+        },
+        {
+          "id": "variables.title_case_naming",
+          "section": "Variables",
+          "requirement": "Variables use title case, human-readable naming",
+          "result": "manual",
+          "evidence": [
+            "Variables panel data is not currently extracted by this MCP tool."
+          ]
+        },
+        {
+          "id": "styles.base_tag_selectors",
+          "section": "Styles Selector",
+          "requirement": "Base styles are applied to required HTML tags",
+          "result": "pass",
+          "evidence": [
+            "all required base tag selectors detected"
+          ]
+        },
+        {
+          "id": "styles.unused_classes_cleaned",
+          "section": "Styles Selector",
+          "requirement": "Unused styles/classes are cleaned up",
+          "result": "manual",
+          "evidence": [
+            "Class usage graph is not currently extracted from Designer metadata."
+          ]
+        },
+        {
+          "id": "styles.combo_class_depth",
+          "section": "Styles Selector",
+          "requirement": "No more than 3-4 combo classes are stacked per element",
+          "result": "manual",
+          "evidence": [
+            "Element-level combo stack depth is not extracted in current metadata payload."
+          ]
+        },
+        {
+          "id": "styles.class_naming_consistency",
+          "section": "Styles Selector",
+          "requirement": "Class naming follows one consistent format",
+          "result": "fail",
+          "evidence": [
+            "dominantPattern=title",
+            "dominantRatio=0.50",
+            "sampleSize=28"
+          ]
+        },
+        {
+          "id": "pages.title_case_naming",
+          "section": "Required Pages",
+          "requirement": "Page names use Title Case",
+          "result": "fail",
+          "evidence": [
+            "invalidCount=1",
+            "examples=FAQs Template"
+          ]
+        },
+        {
+          "id": "pages.style_guide_exists",
+          "section": "Required Pages",
+          "requirement": "Style Guide page exists",
+          "result": "fail",
+          "evidence": [
+            "found=false"
+          ]
+        },
+        {
+          "id": "pages.instructions_exists",
+          "section": "Required Pages",
+          "requirement": "Instructions page exists when advanced interactions/components are used",
+          "result": "fail",
+          "evidence": [
+            "found=false"
+          ]
+        },
+        {
+          "id": "pages.licenses_exists",
+          "section": "Required Pages",
+          "requirement": "Licenses page exists",
+          "result": "fail",
+          "evidence": [
+            "found=false"
+          ]
+        },
+        {
+          "id": "cms.collection_pages_present",
+          "section": "CMS Structure",
+          "requirement": "Collection pages are used for repeatable/relational content",
+          "result": "pass",
+          "evidence": [
+            "cmsTemplatePages=8",
+            "cmsCollections=8"
+          ]
+        },
+        {
+          "id": "cms.collections_detected",
+          "section": "CMS Structure",
+          "requirement": "CMS collections are present and detectable",
+          "result": "pass",
+          "evidence": [
+            "collections=8"
+          ]
+        },
+        {
+          "id": "cms.item_count_range",
+          "section": "CMS Structure",
+          "requirement": "Each collection has between 3 and 7 items",
+          "result": "fail",
+          "evidence": [
+            "outOfRange=Service Areas:10, Services:15, Teams:8"
+          ]
+        },
+        {
+          "id": "cms.collection_name_title_case",
+          "section": "CMS Naming",
+          "requirement": "Collection names use Title Case and readable naming",
+          "result": "fail",
+          "evidence": [
+            "invalid=FAQs"
+          ]
+        },
+        {
+          "id": "cms.collection_slug_singular",
+          "section": "CMS Naming",
+          "requirement": "Collection slugs are singular",
+          "result": "manual",
+          "evidence": [
+            "Collection slug values are not returned in current Designer metadata payload."
+          ]
+        },
+        {
+          "id": "responsive.breakpoints_present",
+          "section": "Responsive Behaviour",
+          "requirement": "Desktop, tablet, mobile landscape, and mobile portrait breakpoints are configured",
+          "result": "pass",
+          "evidence": [
+            "breakpoints=Desktop: Base breakpoint | Tablet: 991px and down | Mobile (L): 767px and down | Mobile: 479px and down | Larger breakpoints"
+          ]
+        },
+        {
+          "id": "assets.modern_image_formats",
+          "section": "Images and Assets",
+          "requirement": "Modern image formats are used (WebP/AVIF/JPEG/PNG)",
+          "result": "pass",
+          "evidence": [
+            "assets=22",
+            "hasModernFormats=true"
+          ]
+        },
+        {
+          "id": "ecommerce.settings_default",
+          "section": "Ecommerce Structure",
+          "requirement": "Ecommerce setup settings remain default (business address/shipping/tax/payment/hosting/checkout)",
+          "result": "manual",
+          "evidence": [
+            "Ecommerce setup guide state is not exposed in current Designer metadata payload."
+          ]
+        }
+      ]
+    },
+    "rawText": "{\n  \"evaluatedAt\": \"2026-03-02T23:30:49.358Z\",\n  \"source\": \"live-extraction\",\n  \"metadataSummary\": {\n    \"siteName\": \"Archipro | BRIX Template\",\n    \"sitePlan\": \"CMS\",\n    \"totalPages\": 18,\n    \"totalComponents\": 59,\n    \"unusedComponents\": 0,\n    \"totalInteractions\": 3,\n    \"totalCMSCollections\": 8,\n    \"totalCMSItems\": 58,\n    \"totalAssets\": 22,\n    \"breakpoints\": [\n      \"Desktop: Base breakpoint\",\n      \"Tablet: 991px and down\",\n      \"Mobile (L): 767px and down\",\n      \"Mobile: 479px and down\",\n      \"Larger breakpoints\"\n    ]\n  },\n  \"summary\": {\n    \"pass\": 8,\n    \"fail\": 8,\n    \"manual\": 7,\n    \"scored\": 16,\n    \"passRate\": 0.5\n  },\n  \"checks\": [\n    {\n      \"id\": \"components.nav_footer_cta\",\n      \"section\": \"Components\",\n      \"requirement\": \"Nav, Footer, and CTA are set up as Components\",\n      \"result\": \"pass\",\n      \"evidence\": [\n        \"components=59\",\n        \"hasNavOrHeader=true\",\n        \"hasFooter=true\",\n        \"hasCTA=true\"\n      ]\n    },\n    {\n      \"id\": \"components.title_case_naming\",\n      \"section\": \"Components\",\n      \"requirement\": \"Component names use title-casing and human-readable naming\",\n      \"result\": \"fail\",\n      \"evidence\": [\n        \"invalidCount=12\",\n        \"examples=Cards/Accordion V | Cards/Blog Card V | Cards/Portfolio Card V | Cards/Service Card Three - V | Cards/Testimonial V | Tabs/Tab Accordion V | CTA/CTA V | Section/Background Image + Content V\"\n      ]\n    },\n    {\n      \"id\": \"components.unused_cleaned\",\n      \"section\": \"Components\",\n      \"requirement\": \"Unused Components are cleaned up\",\n      \"result\": \"pass\",\n      \"evidence\": [\n        \"unusedComponents=0\"\n      ]\n    },\n    {\n      \"id\": \"interactions.cleaned_unused\",\n      \"section\": \"Interactions\",\n      \"requirement\": \"Interactions are cleaned of unused animations\",\n      \"result\": \"manual\",\n      \"evidence\": [\n        \"Designer metadata currently returns interaction list but not explicit unused/deleted flags.\"\n      ]\n    },\n    {\n      \"id\": \"variables.breakpoint_modes\",\n      \"section\": \"Variables\",\n      \"requirement\": \"Variable modes exist for Tablet, Mobile Landscape, and Mobile Portrait\",\n      \"result\": \"pass\",\n      \"evidence\": [\n        \"breakpoints=Desktop: Base breakpoint | Tablet: 991px and down | Mobile (L): 767px and down | Mobile: 479px and down | Larger breakpoints\",\n        \"tablet=true\",\n        \"mobileLandscape=true\",\n        \"mobilePortrait=true\"\n      ]\n    },\n    {\n      \"id\": \"variables.defined_reusable\",\n      \"section\": \"Variables\",\n      \"requirement\": \"Color, typography, and spacing variables are defined and reusable\",\n      \"result\": \"manual\",\n      \"evidence\": [\n        \"Variables panel data is not currently extracted by this MCP tool.\"\n      ]\n    },\n    {\n      \"id\": \"variables.title_case_naming\",\n      \"section\": \"Variables\",\n      \"requirement\": \"Variables use title case, human-readable naming\",\n      \"result\": \"manual\",\n      \"evidence\": [\n        \"Variables panel data is not currently extracted by this MCP tool.\"\n      ]\n    },\n    {\n      \"id\": \"styles.base_tag_selectors\",\n      \"section\": \"Styles Selector\",\n      \"requirement\": \"Base styles are applied to required HTML tags\",\n      \"result\": \"pass\",\n      \"evidence\": [\n        \"all required base tag selectors detected\"\n      ]\n    },\n    {\n      \"id\": \"styles.unused_classes_cleaned\",\n      \"section\": \"Styles Selector\",\n      \"requirement\": \"Unused styles/classes are cleaned up\",\n      \"result\": \"manual\",\n      \"evidence\": [\n        \"Class usage graph is not currently extracted from Designer metadata.\"\n      ]\n    },\n    {\n      \"id\": \"styles.combo_class_depth\",\n      \"section\": \"Styles Selector\",\n      \"requirement\": \"No more than 3-4 combo classes are stacked per element\",\n      \"result\": \"manual\",\n      \"evidence\": [\n        \"Element-level combo stack depth is not extracted in current metadata payload.\"\n      ]\n    },\n    {\n      \"id\": \"styles.class_naming_consistency\",\n      \"section\": \"Styles Selector\",\n      \"requirement\": \"Class naming follows one consistent format\",\n      \"result\": \"fail\",\n      \"evidence\": [\n        \"dominantPattern=title\",\n        \"dominantRatio=0.50\",\n        \"sampleSize=28\"\n      ]\n    },\n    {\n      \"id\": \"pages.title_case_naming\",\n      \"section\": \"Required Pages\",\n      \"requirement\": \"Page names use Title Case\",\n      \"result\": \"fail\",\n      \"evidence\": [\n        \"invalidCount=1\",\n        \"examples=FAQs Template\"\n      ]\n    },\n    {\n      \"id\": \"pages.style_guide_exists\",\n      \"section\": \"Required Pages\",\n      \"requirement\": \"Style Guide page exists\",\n      \"result\": \"fail\",\n      \"evidence\": [\n        \"found=false\"\n      ]\n    },\n    {\n      \"id\": \"pages.instructions_exists\",\n      \"section\": \"Required Pages\",\n      \"requirement\": \"Instructions page exists when advanced interactions/components are used\",\n      \"result\": \"fail\",\n      \"evidence\": [\n        \"found=false\"\n      ]\n    },\n    {\n      \"id\": \"pages.licenses_exists\",\n      \"section\": \"Required Pages\",\n      \"requirement\": \"Licenses page exists\",\n      \"result\": \"fail\",\n      \"evidence\": [\n        \"found=false\"\n      ]\n    },\n    {\n      \"id\": \"cms.collection_pages_present\",\n      \"section\": \"CMS Structure\",\n      \"requirement\": \"Collection pages are used for repeatable/relational content\",\n      \"result\": \"pass\",\n      \"evidence\": [\n        \"cmsTemplatePages=8\",\n        \"cmsCollections=8\"\n      ]\n    },\n    {\n      \"id\": \"cms.collections_detected\",\n      \"section\": \"CMS Structure\",\n      \"requirement\": \"CMS collections are present and detectable\",\n      \"result\": \"pass\",\n      \"evidence\": [\n        \"collections=8\"\n      ]\n    },\n    {\n      \"id\": \"cms.item_count_range\",\n      \"section\": \"CMS Structure\",\n      \"requirement\": \"Each collection has between 3 and 7 items\",\n      \"result\": \"fail\",\n      \"evidence\": [\n        \"outOfRange=Service Areas:10, Services:15, Teams:8\"\n      ]\n    },\n    {\n      \"id\": \"cms.collection_name_title_case\",\n      \"section\": \"CMS Naming\",\n      \"requirement\": \"Collection names use Title Case and readable naming\",\n      \"result\": \"fail\",\n      \"evidence\": [\n        \"invalid=FAQs\"\n      ]\n    },\n    {\n      \"id\": \"cms.collection_slug_singular\",\n      \"section\": \"CMS Naming\",\n      \"requirement\": \"Collection slugs are singular\",\n      \"result\": \"manual\",\n      \"evidence\": [\n        \"Collection slug values are not returned in current Designer metadata payload.\"\n      ]\n    },\n    {\n      \"id\": \"responsive.breakpoints_present\",\n      \"section\": \"Responsive Behaviour\",\n      \"requirement\": \"Desktop, tablet, mobile landscape, and mobile portrait breakpoints are configured\",\n      \"result\": \"pass\",\n      \"evidence\": [\n        \"breakpoints=Desktop: Base breakpoint | Tablet: 991px and down | Mobile (L): 767px and down | Mobile: 479px and down | Larger breakpoints\"\n      ]\n    },\n    {\n      \"id\": \"assets.modern_image_formats\",\n      \"section\": \"Images and Assets\",\n      \"requirement\": \"Modern image formats are used (WebP/AVIF/JPEG/PNG)\",\n      \"result\": \"pass\",\n      \"evidence\": [\n        \"assets=22\",\n        \"hasModernFormats=true\"\n      ]\n    },\n    {\n      \"id\": \"ecommerce.settings_default\",\n      \"section\": \"Ecommerce Structure\",\n      \"requirement\": \"Ecommerce setup settings remain default (business address/shipping/tax/payment/hosting/checkout)\",\n      \"result\": \"manual\",\n      \"evidence\": [\n        \"Ecommerce setup guide state is not exposed in current Designer metadata payload.\"\n      ]\n    }\n  ]\n}"
+  },
+  "notes": []
+}
