@@ -77,7 +77,7 @@ Downstream auth variables are read dynamically from each registry server's `env_
 
 Shared discovery packs:
 
-- `shared-auth-core`: Dropbox, Gmail, Google Drive, Google Sheets, QuickBooks, Slack, YouTube, Zoom
+- `shared-auth-core`: Dropbox, Gmail, Google Drive, Google Sheets, Notion, QuickBooks, Slack, YouTube, Zoom
 - List available packs with `hub_list_discovery_packs`
 - Apply one with `hub_set_discovery` by setting `pack`
 

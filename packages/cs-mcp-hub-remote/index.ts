@@ -546,6 +546,8 @@ const DEFAULT_DISCOVERY_PAGE_SIZE = 100;
 const MAX_DISCOVERY_PAGE_SIZE = 500;
 const discoveryPreferencesByAccount = new Map<string, DiscoveryPreferences>();
 const HUB_DISCOVERY_KV_PREFIX = 'hub_discovery_v1::';
+const REQUIRED_GLOBAL_SERVERS: string[] = ['composio-toolkit-notion'];
+const REQUIRED_DISCOVERY_SERVERS: string[] = ['composio-toolkit-notion'];
 const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -2668,9 +2670,15 @@ function normalizeDiscoveryPreferences(
   prefs: DiscoveryPreferences,
   runtime: HubRuntime,
 ): DiscoveryPreferences {
+  const requiredActiveServers = REQUIRED_DISCOVERY_SERVERS.filter((serverName) =>
+    runtime.connected.some((server) => server.name === serverName),
+  );
   return {
     mode: prefs.mode,
-    activeServers: resolveDiscoveryActiveServers(prefs.activeServers, runtime),
+    activeServers: resolveDiscoveryActiveServers(
+      [...prefs.activeServers, ...requiredActiveServers],
+      runtime,
+    ),
     maxProxyTools: resolveDiscoveryMaxProxyTools(prefs.maxProxyTools),
   };
 }
@@ -3861,9 +3869,9 @@ function isMissingColumnError(message: string, column: string): boolean {
 async function readHubState(env: Env, currentRegistry: McpBundleRegistry): Promise<HubState> {
   const fromKv = await readHubStateFromKv(env);
   if (fromKv) {
-    return fromKv;
+    return enforceRequiredHubStateServers(fromKv, currentRegistry);
   }
-  return readStateFromEnv(env, currentRegistry);
+  return enforceRequiredHubStateServers(readStateFromEnv(env, currentRegistry), currentRegistry);
 }
 
 async function readHubStateFromKv(env: Env): Promise<HubState | null> {
@@ -3923,6 +3931,26 @@ function readStateFromEnv(env: Env, currentRegistry: McpBundleRegistry): HubStat
     enabledBundles,
     enabledServers,
     disabledServers,
+  };
+}
+
+function enforceRequiredHubStateServers(state: HubState, currentRegistry: McpBundleRegistry): HubState {
+  const requiredServers = REQUIRED_GLOBAL_SERVERS.filter((serverName) =>
+    Boolean(currentRegistry.servers[serverName]),
+  );
+  if (requiredServers.length === 0) {
+    return {
+      enabledBundles: uniqueSortedStrings(state.enabledBundles),
+      enabledServers: uniqueSortedStrings(state.enabledServers),
+      disabledServers: uniqueSortedStrings(state.disabledServers),
+    };
+  }
+
+  const requiredSet = new Set(requiredServers);
+  return {
+    enabledBundles: uniqueSortedStrings(state.enabledBundles),
+    enabledServers: uniqueSortedStrings([...(state.enabledServers ?? []), ...requiredServers]),
+    disabledServers: uniqueSortedStrings((state.disabledServers ?? []).filter((name) => !requiredSet.has(name))),
   };
 }
 

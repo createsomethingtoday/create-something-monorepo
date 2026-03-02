@@ -2,7 +2,7 @@
   "version": 1,
   "packs": {
     "shared-auth-core": {
-      "description": "Shared CREATE SOMETHING auth pack for Dropbox, Gmail, Google Drive, Google Sheets, LinkedIn, QuickBooks, Slack, YouTube, and Zoom.",
+      "description": "Shared CREATE SOMETHING auth pack for Dropbox, Gmail, Google Drive, Google Sheets, LinkedIn, Notion, QuickBooks, Slack, YouTube, and Zoom.",
       "mode": "compact",
       "activeServers": [
         "composio-toolkit-dropbox",
@@ -10,6 +10,7 @@
         "composio-toolkit-googledrive",
         "composio-toolkit-googlesheets",
         "composio-toolkit-linkedin",
+        "composio-toolkit-notion",
         "composio-toolkit-quickbooks",
         "composio-toolkit-slack",
         "composio-toolkit-youtube",
