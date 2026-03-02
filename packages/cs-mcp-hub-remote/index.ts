@@ -562,6 +562,10 @@ export default {
       return withCors(new Response(null, { status: 204 }));
     }
 
+    if (isOAuthDiscoveryPath(url.pathname)) {
+      return withCors(new Response('Not found', { status: 404 }));
+    }
+
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
       const authFailure = authorizeRequest(request, env);
       if (authFailure) {
@@ -638,6 +642,15 @@ export default {
   },
 };
 
+function isOAuthDiscoveryPath(pathname: string): boolean {
+  return (
+    pathname === '/.well-known/oauth-authorization-server'
+    || pathname === '/.well-known/oauth-authorization-server/mcp'
+    || pathname === '/mcp/.well-known/oauth-authorization-server'
+    || pathname === '/mcp/.well-known/oauth-authorization-server/mcp'
+  );
+}
+
 function ensureStreamableHttpAcceptHeader(request: Request): Request {
   const acceptHeader = request.headers.get('accept') ?? '';
   const normalizedAccept = acceptHeader.toLowerCase();
@@ -687,13 +700,24 @@ function getRequestToken(request: Request): string | null {
     return queryToken;
   }
 
+  const apiKeyHeader = request.headers.get('x-api-key') ?? request.headers.get('api-key');
+  if (apiKeyHeader && apiKeyHeader.trim()) {
+    return apiKeyHeader.trim();
+  }
+
   const authHeader = request.headers.get('authorization') ?? request.headers.get('Authorization');
-  if (!authHeader) {
+  if (!authHeader || !authHeader.trim()) {
     return null;
   }
 
-  const match = authHeader.match(/^Bearer\s+(.+)$/i);
-  return match ? match[1].trim() : null;
+  const trimmedAuth = authHeader.trim();
+  const bearerMatch = trimmedAuth.match(/^Bearer\s+(.+)$/i);
+  if (bearerMatch) {
+    return bearerMatch[1].trim();
+  }
+
+  // Compatibility fallback for clients that send raw token in Authorization.
+  return trimmedAuth;
 }
 
 function timingSafeEqual(a: string, b: string): boolean {

@@ -71,7 +71,52 @@ pnpm exec wrangler secret put BRAINTRUST_API_KEY --name cs-hub-aaron-outerfields
 pnpm exec wrangler secret put BRAINTRUST_PROJECT_ID --name cs-hub-aaron-outerfields
 ```
 
-## 4) Verify Production Readiness
+## 4) Normalize Runtime State (Required)
+
+`cs-mcp-hub-remote` persists state in `HUB_STATE_KV`; previously saved state can override deploy-time env vars.
+After deploy + token setup, force the intended profile with `hub_update_state`:
+
+```bash
+curl -sS -k -X POST https://aaron-outerfields.mcp.createsomething.agency/mcp \
+  -H "Authorization: Bearer $HUB_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{
+    "jsonrpc":"2.0",
+    "id":61,
+    "method":"tools/call",
+    "params":{
+      "name":"hub_update_state",
+      "arguments":{
+        "enableBundles":["agency","core"],
+        "disableBundles":["ops"],
+        "enableServers":[
+          "outerfields-pcn",
+          "composio-toolkit-dropbox",
+          "composio-toolkit-gmail",
+          "composio-toolkit-googledrive",
+          "composio-toolkit-googlesheets",
+          "composio-toolkit-linkedin",
+          "composio-toolkit-quickbooks",
+          "composio-toolkit-slack",
+          "composio-toolkit-youtube",
+          "composio-toolkit-zoom",
+          "composio-toolkit-notion"
+        ],
+        "disableServers":[
+          "composio-toolkit-airtable",
+          "composio-toolkit-webflow",
+          "halfdozen-dm-mcp",
+          "loom-mcp",
+          "schedule-mcp",
+          "substrate-mcp"
+        ]
+      }
+    }
+  }' | jq
+```
+
+## 5) Verify Production Readiness
 
 ```bash
 dig +short aaron-outerfields.mcp.createsomething.agency
@@ -95,12 +140,14 @@ Validate MCP control plane and discovery:
 curl -sS -X POST https://aaron-outerfields.mcp.createsomething.agency/mcp \
   -H "Authorization: Bearer $HUB_API_TOKEN" \
   -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq
 
 curl -sS -X POST https://aaron-outerfields.mcp.createsomething.agency/mcp \
   -H "Authorization: Bearer $HUB_API_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"query":"outerfields","limit":10}}}' | jq
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"serverName":"outerfields-pcn","limit":10}}}' | jq
 ```
 
 Auth enforcement checks:
@@ -125,6 +172,7 @@ curl -sS -X POST https://aaron-outerfields.mcp.createsomething.agency/mcp \
   -H "Authorization: Bearer $HUB_API_TOKEN" \
   -H "x-correlation-id: $CID" \
   -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
   -d '{"jsonrpc":"2.0","id":11,"method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"query":"outerfields","limit":5}}}' | jq
 
 # 2) Execute one returned proxy tool with hub_execute_proxy_tool (use a real proxyToolName + args from step 1)
@@ -132,6 +180,7 @@ curl -sS -X POST https://aaron-outerfields.mcp.createsomething.agency/mcp \
 curl -sS -X POST https://aaron-outerfields.mcp.createsomething.agency/mcp \
   -H "Authorization: Bearer $HUB_API_TOKEN" \
   -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
   -d "{\"jsonrpc\":\"2.0\",\"id\":13,\"method\":\"tools/call\",\"params\":{\"name\":\"hub_trace_lookup\",\"arguments\":{\"correlationId\":\"$CID\",\"limit\":20}}}" | jq
 ```
 
