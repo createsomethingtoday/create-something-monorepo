@@ -1220,20 +1220,23 @@ function unifyRows(
   );
 
   const a404 = published.audit404;
+  const a404Status = asFiniteNumber((a404 as Record<string, unknown>).status);
+  const a404NavCount = asFiniteNumber((a404 as Record<string, unknown>).navCount);
+  const a404LinkCount = asFiniteNumber((a404 as Record<string, unknown>).linkCount);
   const hasHealthy404 =
     a404.ok === true &&
-    (a404 as { status?: number }).status === 404 &&
-    (a404 as { navCount?: number }).navCount > 0 &&
-    (a404 as { linkCount?: number }).linkCount > 0;
+    a404Status === 404 &&
+    a404NavCount > 0 &&
+    a404LinkCount > 0;
   pushRow(
     'pages.custom_404',
     'Page Level Checks',
     'Custom branded 404 page exists with nav and CTAs',
     hasHealthy404 ? 'pass' : 'fail',
     [
-      `status=${(a404 as { status?: number }).status ?? 'n/a'}`,
-      `navCount=${(a404 as { navCount?: number }).navCount ?? 'n/a'}`,
-      `linkCount=${(a404 as { linkCount?: number }).linkCount ?? 'n/a'}`
+      `status=${a404Status || 'n/a'}`,
+      `navCount=${a404NavCount || 'n/a'}`,
+      `linkCount=${a404LinkCount || 'n/a'}`
     ],
     ['published-webmcp-crawl'],
     0.92
