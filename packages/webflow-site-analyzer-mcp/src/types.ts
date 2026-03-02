@@ -446,3 +446,156 @@ export interface ScoreDesignerChecklistInput {
   designerMetadata?: DesignerMetadata;
   includeManual?: boolean;
 }
+
+// =============================================================================
+// Unified Template Review Types (Designer + Published WebMCP)
+// =============================================================================
+
+export type UnifiedReviewStatus = 'pass' | 'fail' | 'partial' | 'manual';
+
+export interface UnifiedReviewRow {
+  id: string;
+  section: string;
+  requirement: string;
+  status: UnifiedReviewStatus;
+  confidence: number; // 0..1 heuristic confidence
+  source: string[];
+  evidence: string[];
+  fixHint?: string;
+}
+
+export interface PublishedSnippetIssueCounts {
+  metaMissing: number;
+  missingH1: number;
+  multipleH1: number;
+  skippedHeadingLevels: number;
+  imagesMissingAlt: number;
+  linksMissingRel: number;
+  linksMissingAccessibleName: number;
+  linksEmptyHref: number;
+  linksPlaceholderHref: number;
+  imagesMissingDimensions: number;
+  imagesAboveFoldLazy: number;
+  formsMissingLabels: number;
+  autoplayWithoutControls: number;
+  backgroundVideosMissingControl: number;
+}
+
+export interface PublishedSnippetPageSummary {
+  failCount: number;
+  failReasons: string[];
+  metaMissing: string[];
+  headings: {
+    headings: number;
+    h1: number;
+    missingH1: boolean;
+    multipleH1: boolean;
+    skippedHeadingLevels: number;
+    emptyHeadings: number;
+  } | null;
+  links: {
+    links: number;
+    emptyHref: number;
+    placeholderHref: number;
+    blankTargetMissingRel: number;
+    missingAccessibleName: number;
+  } | null;
+  images: {
+    images: number;
+    missingAlt: number;
+    missingDimensions: number;
+    aboveFoldLazy: number;
+    belowFoldNotLazy: number;
+  } | null;
+  imageFormats: Record<string, number>;
+  forms: {
+    fields: number;
+    missingLabels: number;
+  } | null;
+  media: {
+    videos: number;
+    autoplayWithoutControls: number;
+    backgroundVideosMissingControl: number;
+  } | null;
+  ix2: {
+    events: number;
+    actionLists: number;
+    usedActionLists: number;
+    unusedActionLists: number;
+    missingTargets: number;
+    missingActionLists: number;
+  } | null;
+  ix3: {
+    interactions: number;
+    timelines: number;
+    missingTimelines: number;
+    deletedInteractions: number;
+    missingTargetSelectors: number;
+  } | null;
+}
+
+export interface PublishedSnippetPageResult {
+  url: string;
+  depth: number;
+  title: string | null;
+  statusCode: number | null;
+  hasSnippet: boolean;
+  snippetVersion: string | null;
+  error?: string | null;
+  summary?: PublishedSnippetPageSummary | null;
+}
+
+export interface PublishedSnippetCrawlResult {
+  startUrl: string;
+  origin: string;
+  maxPages: number;
+  maxDepth: number;
+  visitedPages: number;
+  auditedPages: number;
+  pagesWithSnippet: number;
+  failingPages: number;
+  snippetVersion: string | null;
+  snippetTools: string[];
+  sitemapStatus: { ok: boolean; count?: number; error?: string };
+  audit404:
+    | {
+        ok: boolean;
+        status: number;
+        title: string | null;
+        navCount: number;
+        linkCount: number;
+        h1Count: number;
+      }
+    | { ok: false; error: string };
+  issueCounts: PublishedSnippetIssueCounts;
+  pages: PublishedSnippetPageResult[];
+}
+
+export interface UnifiedTemplateReviewSummary {
+  pass: number;
+  fail: number;
+  partial: number;
+  manual: number;
+  automated: number;
+  humanInLoop: number;
+}
+
+export interface UnifiedTemplateReviewReport {
+  generatedAt: string;
+  provider: string;
+  previewUrl: string;
+  publishedUrl: string;
+  summary: UnifiedTemplateReviewSummary;
+  designer: DesignerChecklistReport;
+  published: PublishedSnippetCrawlResult;
+  rows: UnifiedReviewRow[];
+}
+
+export interface RunTemplateReviewInput {
+  previewUrl: string;
+  publishedUrl: string;
+  timeout?: number;
+  includeManual?: boolean;
+  crawlMaxPages?: number;
+  crawlMaxDepth?: number;
+}
