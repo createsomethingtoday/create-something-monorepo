@@ -1,0 +1,2148 @@
+{
+  "generatedAt": "2026-03-02T23:33:58.762Z",
+  "startUrl": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/",
+  "origin": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io",
+  "crawlConfig": {
+    "maxPages": 30,
+    "maxDepth": 2
+  },
+  "crawlSummary": {
+    "visitedPages": 30,
+    "pagesWithSnippet": 30,
+    "auditedPages": 30,
+    "failingPages": 30
+  },
+  "snippetInfo": {
+    "version": "0.2.0",
+    "toolCount": 13,
+    "tools": [
+      "get_site_info",
+      "get_sitemap_urls",
+      "audit_dom",
+      "audit_headings",
+      "audit_meta",
+      "audit_links",
+      "audit_images",
+      "audit_forms",
+      "audit_media",
+      "audit_404",
+      "audit_webflow_way",
+      "audit_ix2",
+      "audit_ix3"
+    ]
+  },
+  "sitemapStatus": {
+    "error": "Failed to fetch sitemap: 404 "
+  },
+  "audit404": {
+    "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/__wf_review_404_probe_24uljicvl3o__",
+    "status": 404,
+    "ok": true,
+    "title": "Not Found - Archipro - Webflow HTML website template",
+    "navCount": 2,
+    "linkCount": 60,
+    "h1Count": 1
+  },
+  "issueCounts": {
+    "metaMissing": 26,
+    "skippedHeadingLevels": 1,
+    "imagesMissingAlt": 29,
+    "linksMissingRel": 29,
+    "linksMissingAccessibleName": 29,
+    "imagesMissingDimensions": 29,
+    "imagesAboveFoldLazy": 28,
+    "formsMissingLabels": 29
+  },
+  "pages": [
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/",
+      "depth": 0,
+      "status": 200,
+      "title": "Kingdom Construction | Arlington and DFW Remodeling",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 8,
+        "failReasons": [
+          "meta_missing:og:image",
+          "skipped_heading_levels:1",
+          "images_missing_alt:4",
+          "blank_target_missing_rel:8",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:8",
+          "images_above_fold_lazy:3",
+          "forms_missing_labels:2"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 19,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 1,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 72,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 8,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 71,
+          "missingAlt": 4,
+          "missingDimensions": 8,
+          "aboveFoldLazy": 3,
+          "belowFoldNotLazy": 2
+        },
+        "forms": {
+          "fields": 2,
+          "missingLabels": 2
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1190,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 2
+        }
+      },
+      "discoveredLinks": 30
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/archive-home-internal-do-not-use",
+      "depth": 1,
+      "status": 200,
+      "title": "Kingdom Construction | Arlington and DFW Remodeling",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:title,og:description,og:image",
+          "images_missing_alt:5",
+          "blank_target_missing_rel:9",
+          "links_missing_accessible_name:12",
+          "images_missing_dimensions:14",
+          "images_above_fold_lazy:4",
+          "forms_missing_labels:2"
+        ],
+        "metaMissing": [
+          "og:title",
+          "og:description",
+          "og:image"
+        ],
+        "headings": {
+          "headings": 36,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 105,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 9,
+          "missingAccessibleName": 12
+        },
+        "images": {
+          "images": 53,
+          "missingAlt": 5,
+          "missingDimensions": 14,
+          "aboveFoldLazy": 4,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 2,
+          "missingLabels": 2
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1250,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 27
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/company-pages/about-legacy-20260214",
+      "depth": 1,
+      "status": 200,
+      "title": "About Kingdom Construction | Arlington, TX",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 9,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:4",
+          "blank_target_missing_rel:9",
+          "links_missing_accessible_name:2",
+          "links_placeholder_href:1",
+          "images_missing_dimensions:4",
+          "images_above_fold_lazy:3",
+          "forms_missing_labels:2",
+          "bg_video_missing_controls:1"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 18,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 74,
+          "emptyHref": 0,
+          "placeholderHref": 1,
+          "blankTargetMissingRel": 9,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 27,
+          "missingAlt": 4,
+          "missingDimensions": 4,
+          "aboveFoldLazy": 3,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 2,
+          "missingLabels": 2
+        },
+        "media": {
+          "videos": 1,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 1
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1178,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 2
+        }
+      },
+      "discoveredLinks": 29
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/home-pages/home-v2-legacy-20260214",
+      "depth": 1,
+      "status": 200,
+      "title": "Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:4",
+          "blank_target_missing_rel:8",
+          "links_missing_accessible_name:4",
+          "images_missing_dimensions:4",
+          "images_above_fold_lazy:5",
+          "forms_missing_labels:2"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 18,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 84,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 8,
+          "missingAccessibleName": 4
+        },
+        "images": {
+          "images": 28,
+          "missingAlt": 4,
+          "missingDimensions": 4,
+          "aboveFoldLazy": 5,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 2,
+          "missingLabels": 2
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1142,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 2
+        }
+      },
+      "discoveredLinks": 30
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/home-pages/home-v3-legacy-20260214",
+      "depth": 1,
+      "status": 200,
+      "title": "Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 8,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:8",
+          "blank_target_missing_rel:12",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:4",
+          "images_above_fold_lazy:2",
+          "forms_missing_labels:4",
+          "bg_video_missing_controls:3"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 16,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 81,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 12,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 31,
+          "missingAlt": 8,
+          "missingDimensions": 4,
+          "aboveFoldLazy": 2,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 4,
+          "missingLabels": 4
+        },
+        "media": {
+          "videos": 3,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 3
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1180,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 2
+        }
+      },
+      "discoveredLinks": 31
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/service-pages/services",
+      "depth": 1,
+      "status": 404,
+      "title": "Not Found - Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:4",
+          "blank_target_missing_rel:8",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:4",
+          "images_above_fold_lazy:5",
+          "forms_missing_labels:2"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 2,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 60,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 8,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 10,
+          "missingAlt": 4,
+          "missingDimensions": 4,
+          "aboveFoldLazy": 5,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 2,
+          "missingLabels": 2
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1254,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 26
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/services/exterior-design",
+      "depth": 1,
+      "status": 404,
+      "title": "Not Found - Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:4",
+          "blank_target_missing_rel:8",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:4",
+          "images_above_fold_lazy:5",
+          "forms_missing_labels:2"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 2,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 60,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 8,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 10,
+          "missingAlt": 4,
+          "missingDimensions": 4,
+          "aboveFoldLazy": 5,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 2,
+          "missingLabels": 2
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1254,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 26
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/portfolio-pages/projects",
+      "depth": 1,
+      "status": 200,
+      "title": "Construction Projects in DFW | Kingdom Construction",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:8",
+          "blank_target_missing_rel:8",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:4",
+          "images_above_fold_lazy:3",
+          "forms_missing_labels:2"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 6,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 63,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 8,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 10,
+          "missingAlt": 8,
+          "missingDimensions": 4,
+          "aboveFoldLazy": 3,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 2,
+          "missingLabels": 2
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1240,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 29
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/portfolio/house-architecture-design-in-los-angeles-ca",
+      "depth": 1,
+      "status": 404,
+      "title": "Not Found - Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:4",
+          "blank_target_missing_rel:8",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:4",
+          "images_above_fold_lazy:5",
+          "forms_missing_labels:2"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 2,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 60,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 8,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 10,
+          "missingAlt": 4,
+          "missingDimensions": 4,
+          "aboveFoldLazy": 5,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 2,
+          "missingLabels": 2
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1254,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 26
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/blog-pages/blog",
+      "depth": 1,
+      "status": 200,
+      "title": "Construction Tips and Guides | Kingdom Construction Blog",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:4",
+          "blank_target_missing_rel:8",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:4",
+          "images_above_fold_lazy:2",
+          "forms_missing_labels:6"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 14,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 76,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 8,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 14,
+          "missingAlt": 4,
+          "missingDimensions": 4,
+          "aboveFoldLazy": 2,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 6,
+          "missingLabels": 6
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1220,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 35
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/blog-pages/blog-v2-legacy-20260214",
+      "depth": 1,
+      "status": 200,
+      "title": "Blog V2 - Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:4",
+          "blank_target_missing_rel:8",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:4",
+          "images_above_fold_lazy:4",
+          "forms_missing_labels:4"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 13,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 76,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 8,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 16,
+          "missingAlt": 4,
+          "missingDimensions": 4,
+          "aboveFoldLazy": 4,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 4,
+          "missingLabels": 4
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1208,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 35
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/blog-pages/blog-v3-legacy-20260214",
+      "depth": 1,
+      "status": 200,
+      "title": "Blog V3 - Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:5",
+          "blank_target_missing_rel:8",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:4",
+          "images_above_fold_lazy:2",
+          "forms_missing_labels:4"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 9,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 72,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 8,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 13,
+          "missingAlt": 5,
+          "missingDimensions": 4,
+          "aboveFoldLazy": 2,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 4,
+          "missingLabels": 4
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1248,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 35
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/blog-posts/how-to-give-maintenance-to-your-wooden-furniture-the-full-guide",
+      "depth": 1,
+      "status": 404,
+      "title": "Not Found - Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:4",
+          "blank_target_missing_rel:8",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:4",
+          "images_above_fold_lazy:5",
+          "forms_missing_labels:2"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 2,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 60,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 8,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 10,
+          "missingAlt": 4,
+          "missingDimensions": 4,
+          "aboveFoldLazy": 5,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 2,
+          "missingLabels": 2
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1254,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 26
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/company-pages/team-legacy-20260214",
+      "depth": 1,
+      "status": 200,
+      "title": "Team - Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:4",
+          "blank_target_missing_rel:8",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:4",
+          "images_above_fold_lazy:9",
+          "forms_missing_labels:2"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 10,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 67,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 8,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 14,
+          "missingAlt": 4,
+          "missingDimensions": 4,
+          "aboveFoldLazy": 9,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 2,
+          "missingLabels": 2
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1244,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 33
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/team/john-carter",
+      "depth": 1,
+      "status": 200,
+      "title": "About Kingdom Construction | Arlington, TX",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 2,
+        "failReasons": [
+          "meta_missing:og:image",
+          "missing_h1"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 0,
+          "h1": 0,
+          "missingH1": true,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 0,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 0,
+          "missingAccessibleName": 0
+        },
+        "images": {
+          "images": 0,
+          "missingAlt": 0,
+          "missingDimensions": 0,
+          "aboveFoldLazy": 0,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 0,
+          "missingLabels": 0
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1292,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 5
+        }
+      },
+      "discoveredLinks": 0
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/contact-pages/contact",
+      "depth": 1,
+      "status": 200,
+      "title": "Contact Kingdom Construction | Arlington, TX",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:5",
+          "blank_target_missing_rel:9",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:5",
+          "images_above_fold_lazy:4",
+          "forms_missing_labels:4"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 11,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 65,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 9,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 18,
+          "missingAlt": 5,
+          "missingDimensions": 5,
+          "aboveFoldLazy": 4,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 9,
+          "missingLabels": 4
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1196,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 26
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/contact-pages/contact-v2-legacy-20260214",
+      "depth": 1,
+      "status": 200,
+      "title": "Contact V2 - Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 8,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:6",
+          "blank_target_missing_rel:16",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:5",
+          "images_above_fold_lazy:9",
+          "forms_missing_labels:4",
+          "bg_video_missing_controls:3"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 8,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 73,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 16,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 29,
+          "missingAlt": 6,
+          "missingDimensions": 5,
+          "aboveFoldLazy": 9,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 8,
+          "missingLabels": 4
+        },
+        "media": {
+          "videos": 3,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 3
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1214,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 26
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/contact-pages/contact-v3-legacy-20260214",
+      "depth": 1,
+      "status": 200,
+      "title": "Contact V3 - Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:5",
+          "blank_target_missing_rel:9",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:5",
+          "images_above_fold_lazy:1",
+          "forms_missing_labels:4"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 11,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 75,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 9,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 17,
+          "missingAlt": 5,
+          "missingDimensions": 5,
+          "aboveFoldLazy": 1,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 9,
+          "missingLabels": 4
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1212,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 26
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/landing-pages/book",
+      "depth": 1,
+      "status": 200,
+      "title": "Book a Construction Quote | Kingdom Construction",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:5",
+          "blank_target_missing_rel:8",
+          "links_missing_accessible_name:3",
+          "images_missing_dimensions:7",
+          "images_above_fold_lazy:1",
+          "forms_missing_labels:5"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 1,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 11,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 8,
+          "missingAccessibleName": 3
+        },
+        "images": {
+          "images": 9,
+          "missingAlt": 5,
+          "missingDimensions": 7,
+          "aboveFoldLazy": 1,
+          "belowFoldNotLazy": 1
+        },
+        "forms": {
+          "fields": 10,
+          "missingLabels": 5
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1286,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 1
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/landing-pages/coming-soon-legacy-20260214",
+      "depth": 1,
+      "status": 200,
+      "title": "Coming Soon - Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:4",
+          "blank_target_missing_rel:8",
+          "links_missing_accessible_name:3",
+          "images_missing_dimensions:6",
+          "images_above_fold_lazy:1",
+          "forms_missing_labels:4"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 1,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 11,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 8,
+          "missingAccessibleName": 3
+        },
+        "images": {
+          "images": 8,
+          "missingAlt": 4,
+          "missingDimensions": 6,
+          "aboveFoldLazy": 1,
+          "belowFoldNotLazy": 1
+        },
+        "forms": {
+          "fields": 4,
+          "missingLabels": 4
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1286,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 1
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/template-pages/start-here-legacy-20260214",
+      "depth": 1,
+      "status": 200,
+      "title": "Start Here - Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:4",
+          "blank_target_missing_rel:12",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:16",
+          "images_above_fold_lazy:1",
+          "forms_missing_labels:2"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 20,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 72,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 12,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 18,
+          "missingAlt": 4,
+          "missingDimensions": 16,
+          "aboveFoldLazy": 1,
+          "belowFoldNotLazy": 12
+        },
+        "forms": {
+          "fields": 2,
+          "missingLabels": 2
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1250,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 26
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/template-pages/styles-components-legacy-20260214",
+      "depth": 1,
+      "status": 200,
+      "title": "Styleguide - Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:85",
+          "blank_target_missing_rel:8",
+          "links_missing_accessible_name:9",
+          "links_placeholder_href:20",
+          "images_missing_dimensions:20",
+          "forms_missing_labels:18"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 6,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 164,
+          "emptyHref": 0,
+          "placeholderHref": 20,
+          "blankTargetMissingRel": 8,
+          "missingAccessibleName": 9
+        },
+        "images": {
+          "images": 109,
+          "missingAlt": 20,
+          "missingDimensions": 20,
+          "aboveFoldLazy": 0,
+          "belowFoldNotLazy": 20
+        },
+        "forms": {
+          "fields": 22,
+          "missingLabels": 18
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1270,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 3
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/404",
+      "depth": 1,
+      "status": 200,
+      "title": "Not Found - Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:4",
+          "blank_target_missing_rel:8",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:4",
+          "images_above_fold_lazy:5",
+          "forms_missing_labels:2"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 2,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 60,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 8,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 10,
+          "missingAlt": 4,
+          "missingDimensions": 4,
+          "aboveFoldLazy": 5,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 2,
+          "missingLabels": 2
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1254,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 26
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/401",
+      "depth": 1,
+      "status": 200,
+      "title": "Protected page - Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:4",
+          "blank_target_missing_rel:9",
+          "links_missing_accessible_name:3",
+          "images_missing_dimensions:5",
+          "images_above_fold_lazy:2",
+          "forms_missing_labels:3"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 1,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 42,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 9,
+          "missingAccessibleName": 3
+        },
+        "images": {
+          "images": 8,
+          "missingAlt": 4,
+          "missingDimensions": 5,
+          "aboveFoldLazy": 2,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 6,
+          "missingLabels": 3
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1266,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 26
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/template-pages/licenses-legacy-20260214",
+      "depth": 1,
+      "status": 200,
+      "title": "Licenses - Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:4",
+          "blank_target_missing_rel:12",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:4",
+          "images_above_fold_lazy:1",
+          "forms_missing_labels:2"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 3,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 66,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 12,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 6,
+          "missingAlt": 4,
+          "missingDimensions": 4,
+          "aboveFoldLazy": 1,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 2,
+          "missingLabels": 2
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1250,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 26
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/template-pages/changelog-legacy-20260214",
+      "depth": 1,
+      "status": 200,
+      "title": "Changelog - Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 7,
+        "failReasons": [
+          "meta_missing:og:image",
+          "images_missing_alt:4",
+          "blank_target_missing_rel:8",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:4",
+          "images_above_fold_lazy:1",
+          "forms_missing_labels:2"
+        ],
+        "metaMissing": [
+          "og:image"
+        ],
+        "headings": {
+          "headings": 3,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 60,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 8,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 6,
+          "missingAlt": 4,
+          "missingDimensions": 4,
+          "aboveFoldLazy": 1,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 2,
+          "missingLabels": 2
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1254,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 26
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/blog-posts/12-design-tricks-for-picking-the-perfect-home-color-palette",
+      "depth": 1,
+      "status": 200,
+      "title": "12 design tricks for picking the perfect home color palette - Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 6,
+        "failReasons": [
+          "images_missing_alt:4",
+          "blank_target_missing_rel:8",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:5",
+          "images_above_fold_lazy:3",
+          "forms_missing_labels:4"
+        ],
+        "metaMissing": [],
+        "headings": {
+          "headings": 13,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 68,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 8,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 13,
+          "missingAlt": 4,
+          "missingDimensions": 5,
+          "aboveFoldLazy": 3,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 4,
+          "missingLabels": 4
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1238,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 29
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/blog-posts/25-color-trends-designers-cant-wait-to-see-in-2026",
+      "depth": 1,
+      "status": 200,
+      "title": "25 color trends designers can't wait to see in 2026 - Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 6,
+        "failReasons": [
+          "images_missing_alt:4",
+          "blank_target_missing_rel:8",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:5",
+          "images_above_fold_lazy:3",
+          "forms_missing_labels:4"
+        ],
+        "metaMissing": [],
+        "headings": {
+          "headings": 13,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 68,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 8,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 13,
+          "missingAlt": 4,
+          "missingDimensions": 5,
+          "aboveFoldLazy": 3,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 4,
+          "missingLabels": 4
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1238,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 29
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/blog-posts/clever-diy-home-improvements-you-can-easily-do-anytime",
+      "depth": 1,
+      "status": 200,
+      "title": "Clever DIY home improvements you can easily do anytime - Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 6,
+        "failReasons": [
+          "images_missing_alt:4",
+          "blank_target_missing_rel:8",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:5",
+          "images_above_fold_lazy:3",
+          "forms_missing_labels:4"
+        ],
+        "metaMissing": [],
+        "headings": {
+          "headings": 13,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 68,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 8,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 13,
+          "missingAlt": 4,
+          "missingDimensions": 5,
+          "aboveFoldLazy": 3,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 4,
+          "missingLabels": 4
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1238,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 30
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/blog-posts/15-mind-blowing-floor-designs-to-make-your-home-look-great",
+      "depth": 1,
+      "status": 200,
+      "title": "15 mind-blowing floor designs to make your home look great - Archipro - Webflow HTML website template",
+      "hasSnippet": true,
+      "error": null,
+      "summary": {
+        "failCount": 6,
+        "failReasons": [
+          "images_missing_alt:4",
+          "blank_target_missing_rel:8",
+          "links_missing_accessible_name:2",
+          "images_missing_dimensions:5",
+          "images_above_fold_lazy:3",
+          "forms_missing_labels:4"
+        ],
+        "metaMissing": [],
+        "headings": {
+          "headings": 13,
+          "h1": 1,
+          "missingH1": false,
+          "multipleH1": false,
+          "skippedHeadingLevels": 0,
+          "emptyHeadings": 0
+        },
+        "links": {
+          "links": 68,
+          "emptyHref": 0,
+          "placeholderHref": 0,
+          "blankTargetMissingRel": 8,
+          "missingAccessibleName": 2
+        },
+        "images": {
+          "images": 13,
+          "missingAlt": 4,
+          "missingDimensions": 5,
+          "aboveFoldLazy": 3,
+          "belowFoldNotLazy": 0
+        },
+        "forms": {
+          "fields": 4,
+          "missingLabels": 4
+        },
+        "media": {
+          "videos": 0,
+          "autoplayWithoutControls": 0,
+          "backgroundVideosMissingControl": 0
+        },
+        "ix2": {
+          "events": 654,
+          "actionLists": 133,
+          "usedActionLists": 133,
+          "unusedActionLists": 0,
+          "missingTargets": 1238,
+          "missingActionLists": 0
+        },
+        "ix3": {
+          "interactions": 5,
+          "timelines": 5,
+          "missingTimelines": 0,
+          "deletedInteractions": 0,
+          "missingTargetSelectors": 4
+        }
+      },
+      "discoveredLinks": 30
+    }
+  ]
+}

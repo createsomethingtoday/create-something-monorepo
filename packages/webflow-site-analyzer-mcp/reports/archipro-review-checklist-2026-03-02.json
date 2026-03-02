@@ -1,0 +1,746 @@
+{
+  "generatedAt": "2026-03-02T23:35:10.240Z",
+  "template": {
+    "name": "Archipro | BRIX Template",
+    "previewUrl": "https://preview.webflow.com/preview/archiprotemplate-70629effe7faff236c7aca?utm_medium=preview_link&utm_source=dashboard&utm_content=archiprotemplate-70629effe7faff236c7aca&preview=896fb6bdfe0d546c91af69df27b5afe1&workflow=preview",
+    "publishedUrl": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/"
+  },
+  "dataSources": {
+    "designerReportPath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/webflow-site-analyzer-mcp/reports/archipro-designer-2026-03-02.json",
+    "publishedCrawlPath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/webflow-site-analyzer-mcp/reports/archipro-published-crawl-2026-03-02.json",
+    "designerTestedAt": "2026-03-02T23:28:54.828Z",
+    "publishedGeneratedAt": "2026-03-02T23:33:58.762Z"
+  },
+  "summary": {
+    "expressChecklist": {
+      "pass": 5,
+      "fail": 10,
+      "partial": 2,
+      "manual": 8
+    },
+    "designerScore": {
+      "pass": 8,
+      "fail": 8,
+      "manual": 7,
+      "scored": 16,
+      "passRate": 0.5
+    },
+    "publishedCrawl": {
+      "visitedPages": 30,
+      "pagesWithSnippet": 30,
+      "auditedPages": 30,
+      "failingPages": 30
+    },
+    "snippetInfo": {
+      "version": "0.2.0",
+      "toolCount": 13,
+      "tools": [
+        "get_site_info",
+        "get_sitemap_urls",
+        "audit_dom",
+        "audit_headings",
+        "audit_meta",
+        "audit_links",
+        "audit_images",
+        "audit_forms",
+        "audit_media",
+        "audit_404",
+        "audit_webflow_way",
+        "audit_ix2",
+        "audit_ix3"
+      ]
+    },
+    "sitemapStatus": {
+      "error": "Failed to fetch sitemap: 404 "
+    }
+  },
+  "expressChecklist": [
+    {
+      "id": "webflow_audit.h1_hierarchy",
+      "requirement": "One H1 per page; no skipped heading levels",
+      "status": "FAIL",
+      "source": "published-webmcp-crawl",
+      "evidence": [
+        "pagesWithHierarchyIssues=1"
+      ]
+    },
+    {
+      "id": "webflow_audit.alt_text",
+      "requirement": "No missing alt texts",
+      "status": "FAIL",
+      "source": "published-webmcp-crawl",
+      "evidence": [
+        "pagesWithMissingAlt=29"
+      ]
+    },
+    {
+      "id": "components.nav_footer_cta",
+      "requirement": "Nav, Footer, and CTAs are Components",
+      "status": "PASS",
+      "evidence": [
+        "components=59",
+        "hasNavOrHeader=true",
+        "hasFooter=true",
+        "hasCTA=true"
+      ],
+      "source": "designer-mcp"
+    },
+    {
+      "id": "components.title_case_names",
+      "requirement": "Components use title casing in names",
+      "status": "FAIL",
+      "evidence": [
+        "invalidCount=12",
+        "examples=Cards/Accordion V | Cards/Blog Card V | Cards/Portfolio Card V | Cards/Service Card Three - V | Cards/Testimonial V | Tabs/Tab Accordion V | CTA/CTA V | Section/Background Image + Content V"
+      ],
+      "source": "designer-mcp"
+    },
+    {
+      "id": "interactions.unused_cleaned",
+      "requirement": "Interactions are cleaned of unused animations",
+      "status": "PARTIAL",
+      "source": "published-webmcp + designer-mcp",
+      "evidence": [
+        "ix2UnusedActionLists(home)=0",
+        "ix2MissingTargets(home)=1190",
+        "Designer check is currently manual for strict unused/deleted state."
+      ]
+    },
+    {
+      "id": "variables.defined_reusable",
+      "requirement": "Color, typography, and spacing variables are defined and reusable",
+      "status": "MANUAL",
+      "evidence": [
+        "Variables panel data is not currently extracted by this MCP tool."
+      ],
+      "source": "designer-mcp"
+    },
+    {
+      "id": "variables.title_case",
+      "requirement": "Variables use Title Case, human-readable naming",
+      "status": "MANUAL",
+      "evidence": [
+        "Variables panel data is not currently extracted by this MCP tool."
+      ],
+      "source": "designer-mcp"
+    },
+    {
+      "id": "variables.breakpoint_modes",
+      "requirement": "Variable Modes exist for tablet/mobile landscape/portrait",
+      "status": "PASS",
+      "evidence": [
+        "breakpoints=Desktop: Base breakpoint | Tablet: 991px and down | Mobile (L): 767px and down | Mobile: 479px and down | Larger breakpoints",
+        "tablet=true",
+        "mobileLandscape=true",
+        "mobilePortrait=true"
+      ],
+      "source": "designer-mcp"
+    },
+    {
+      "id": "styles.unused_classes",
+      "requirement": "Unused styles/classes are cleaned up",
+      "status": "MANUAL",
+      "evidence": [
+        "Class usage graph is not currently extracted from Designer metadata."
+      ],
+      "source": "designer-mcp"
+    },
+    {
+      "id": "styles.base_tag_styles",
+      "requirement": "Base styles applied to HTML tags",
+      "status": "PASS",
+      "evidence": [
+        "all required base tag selectors detected"
+      ],
+      "source": "designer-mcp"
+    },
+    {
+      "id": "styles.base_uses_variables",
+      "requirement": "Variables used to define base tag styles",
+      "status": "MANUAL",
+      "source": "designer-mcp",
+      "evidence": [
+        "Variable linkage is not exposed in current metadata payload."
+      ]
+    },
+    {
+      "id": "styles.combo_depth",
+      "requirement": "No more than 3-4 combo classes per element",
+      "status": "MANUAL",
+      "evidence": [
+        "Element-level combo stack depth is not extracted in current metadata payload."
+      ],
+      "source": "designer-mcp"
+    },
+    {
+      "id": "pages.home_seo_title_formula",
+      "requirement": "Home SEO title matches required naming formula",
+      "status": "FAIL",
+      "source": "published-webmcp-crawl",
+      "evidence": [
+        "homeTitle=Kingdom Construction | Arlington and DFW Remodeling"
+      ]
+    },
+    {
+      "id": "pages.license_text_exact",
+      "requirement": "License page contains exact required intro text",
+      "status": "FAIL",
+      "source": "designer-mcp + published-webmcp-crawl",
+      "evidence": [
+        "Licenses page not detected in Designer extracted page list."
+      ]
+    },
+    {
+      "id": "pages.image_loading_strategy",
+      "requirement": "Below-the-fold lazy, essential above-fold eager",
+      "status": "FAIL",
+      "source": "published-webmcp-crawl",
+      "evidence": [
+        "pagesWithAboveFoldLazy=28"
+      ]
+    },
+    {
+      "id": "pages.videos_controls",
+      "requirement": "No autoplay without controls and large videos have controls",
+      "status": "FAIL",
+      "source": "published-webmcp-crawl",
+      "evidence": [
+        "autoplayWithoutControlsDetected=false",
+        "backgroundVideosMissingControlDetected=true"
+      ]
+    },
+    {
+      "id": "pages.meta_tags_static",
+      "requirement": "Each static page has title, description and OG tags",
+      "status": "FAIL",
+      "source": "published-webmcp-crawl",
+      "evidence": [
+        "pagesWithMissingMeta=26"
+      ]
+    },
+    {
+      "id": "pages.meta_tags_cms_dynamic",
+      "requirement": "CMS pages use dynamic SEO tags",
+      "status": "PARTIAL",
+      "source": "designer-mcp + published-webmcp-crawl",
+      "evidence": [
+        "cmsCollectionsDetected=8",
+        "Dynamic field binding cannot be confirmed from current payloads."
+      ]
+    },
+    {
+      "id": "pages.custom_404",
+      "requirement": "Custom branded 404 page with nav and CTAs",
+      "status": "PASS",
+      "source": "published-webmcp-crawl",
+      "evidence": [
+        "status=404",
+        "navCount=2",
+        "linkCount=60"
+      ]
+    },
+    {
+      "id": "pages.image_dimensions",
+      "requirement": "Images have defined width/height",
+      "status": "FAIL",
+      "source": "published-webmcp-crawl",
+      "evidence": [
+        "pagesWithMissingImageDimensions=29"
+      ]
+    },
+    {
+      "id": "pages.transition_simple",
+      "requirement": "Simple CSS transitions used for hover/press",
+      "status": "MANUAL",
+      "source": "published-webmcp-crawl",
+      "evidence": [
+        "Transition-property linting not included in this run."
+      ]
+    },
+    {
+      "id": "pages.wcag_contrast",
+      "requirement": "WCAG color contrast met (default/hover/focus/active)",
+      "status": "MANUAL",
+      "source": "published-webmcp-crawl",
+      "evidence": [
+        "Contrast calculation not included in this run."
+      ]
+    },
+    {
+      "id": "pages.cms_used_relational",
+      "requirement": "CMS used for repeatable/relational content",
+      "status": "PASS",
+      "evidence": [
+        "cmsTemplatePages=8",
+        "cmsCollections=8"
+      ],
+      "source": "designer-mcp"
+    },
+    {
+      "id": "assets.modern_formats",
+      "requirement": "Modern image formats used (WebP, AVIF, JPEG, PNG)",
+      "status": "FAIL",
+      "source": "published-webmcp-crawl",
+      "evidence": [
+        "detectedFormats=none"
+      ]
+    },
+    {
+      "id": "responsive.multi_breakpoint_check",
+      "requirement": "Responsive check run on homepage + one additional page",
+      "status": "MANUAL",
+      "source": "published-webmcp-crawl",
+      "evidence": [
+        "No multi-viewport screenshot diff run in this report."
+      ]
+    }
+  ],
+  "perPageFailures": [
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/company-pages/about-legacy-20260214",
+      "title": "About Kingdom Construction | Arlington, TX",
+      "statusCode": 200,
+      "failCount": 9,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:4",
+        "blank_target_missing_rel:9",
+        "links_missing_accessible_name:2",
+        "links_placeholder_href:1",
+        "images_missing_dimensions:4",
+        "images_above_fold_lazy:3",
+        "forms_missing_labels:2",
+        "bg_video_missing_controls:1"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/",
+      "title": "Kingdom Construction | Arlington and DFW Remodeling",
+      "statusCode": 200,
+      "failCount": 8,
+      "failReasons": [
+        "meta_missing:og:image",
+        "skipped_heading_levels:1",
+        "images_missing_alt:4",
+        "blank_target_missing_rel:8",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:8",
+        "images_above_fold_lazy:3",
+        "forms_missing_labels:2"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/contact-pages/contact-v2-legacy-20260214",
+      "title": "Contact V2 - Archipro - Webflow HTML website template",
+      "statusCode": 200,
+      "failCount": 8,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:6",
+        "blank_target_missing_rel:16",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:5",
+        "images_above_fold_lazy:9",
+        "forms_missing_labels:4",
+        "bg_video_missing_controls:3"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/home-pages/home-v3-legacy-20260214",
+      "title": "Archipro - Webflow HTML website template",
+      "statusCode": 200,
+      "failCount": 8,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:8",
+        "blank_target_missing_rel:12",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:4",
+        "images_above_fold_lazy:2",
+        "forms_missing_labels:4",
+        "bg_video_missing_controls:3"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/401",
+      "title": "Protected page - Archipro - Webflow HTML website template",
+      "statusCode": 200,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:4",
+        "blank_target_missing_rel:9",
+        "links_missing_accessible_name:3",
+        "images_missing_dimensions:5",
+        "images_above_fold_lazy:2",
+        "forms_missing_labels:3"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/404",
+      "title": "Not Found - Archipro - Webflow HTML website template",
+      "statusCode": 200,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:4",
+        "blank_target_missing_rel:8",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:4",
+        "images_above_fold_lazy:5",
+        "forms_missing_labels:2"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/archive-home-internal-do-not-use",
+      "title": "Kingdom Construction | Arlington and DFW Remodeling",
+      "statusCode": 200,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:title,og:description,og:image",
+        "images_missing_alt:5",
+        "blank_target_missing_rel:9",
+        "links_missing_accessible_name:12",
+        "images_missing_dimensions:14",
+        "images_above_fold_lazy:4",
+        "forms_missing_labels:2"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/blog-pages/blog",
+      "title": "Construction Tips and Guides | Kingdom Construction Blog",
+      "statusCode": 200,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:4",
+        "blank_target_missing_rel:8",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:4",
+        "images_above_fold_lazy:2",
+        "forms_missing_labels:6"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/blog-pages/blog-v2-legacy-20260214",
+      "title": "Blog V2 - Archipro - Webflow HTML website template",
+      "statusCode": 200,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:4",
+        "blank_target_missing_rel:8",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:4",
+        "images_above_fold_lazy:4",
+        "forms_missing_labels:4"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/blog-pages/blog-v3-legacy-20260214",
+      "title": "Blog V3 - Archipro - Webflow HTML website template",
+      "statusCode": 200,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:5",
+        "blank_target_missing_rel:8",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:4",
+        "images_above_fold_lazy:2",
+        "forms_missing_labels:4"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/blog-posts/how-to-give-maintenance-to-your-wooden-furniture-the-full-guide",
+      "title": "Not Found - Archipro - Webflow HTML website template",
+      "statusCode": 404,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:4",
+        "blank_target_missing_rel:8",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:4",
+        "images_above_fold_lazy:5",
+        "forms_missing_labels:2"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/company-pages/team-legacy-20260214",
+      "title": "Team - Archipro - Webflow HTML website template",
+      "statusCode": 200,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:4",
+        "blank_target_missing_rel:8",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:4",
+        "images_above_fold_lazy:9",
+        "forms_missing_labels:2"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/contact-pages/contact",
+      "title": "Contact Kingdom Construction | Arlington, TX",
+      "statusCode": 200,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:5",
+        "blank_target_missing_rel:9",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:5",
+        "images_above_fold_lazy:4",
+        "forms_missing_labels:4"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/contact-pages/contact-v3-legacy-20260214",
+      "title": "Contact V3 - Archipro - Webflow HTML website template",
+      "statusCode": 200,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:5",
+        "blank_target_missing_rel:9",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:5",
+        "images_above_fold_lazy:1",
+        "forms_missing_labels:4"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/home-pages/home-v2-legacy-20260214",
+      "title": "Archipro - Webflow HTML website template",
+      "statusCode": 200,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:4",
+        "blank_target_missing_rel:8",
+        "links_missing_accessible_name:4",
+        "images_missing_dimensions:4",
+        "images_above_fold_lazy:5",
+        "forms_missing_labels:2"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/landing-pages/book",
+      "title": "Book a Construction Quote | Kingdom Construction",
+      "statusCode": 200,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:5",
+        "blank_target_missing_rel:8",
+        "links_missing_accessible_name:3",
+        "images_missing_dimensions:7",
+        "images_above_fold_lazy:1",
+        "forms_missing_labels:5"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/landing-pages/coming-soon-legacy-20260214",
+      "title": "Coming Soon - Archipro - Webflow HTML website template",
+      "statusCode": 200,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:4",
+        "blank_target_missing_rel:8",
+        "links_missing_accessible_name:3",
+        "images_missing_dimensions:6",
+        "images_above_fold_lazy:1",
+        "forms_missing_labels:4"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/portfolio-pages/projects",
+      "title": "Construction Projects in DFW | Kingdom Construction",
+      "statusCode": 200,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:8",
+        "blank_target_missing_rel:8",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:4",
+        "images_above_fold_lazy:3",
+        "forms_missing_labels:2"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/portfolio/house-architecture-design-in-los-angeles-ca",
+      "title": "Not Found - Archipro - Webflow HTML website template",
+      "statusCode": 404,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:4",
+        "blank_target_missing_rel:8",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:4",
+        "images_above_fold_lazy:5",
+        "forms_missing_labels:2"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/service-pages/services",
+      "title": "Not Found - Archipro - Webflow HTML website template",
+      "statusCode": 404,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:4",
+        "blank_target_missing_rel:8",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:4",
+        "images_above_fold_lazy:5",
+        "forms_missing_labels:2"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/services/exterior-design",
+      "title": "Not Found - Archipro - Webflow HTML website template",
+      "statusCode": 404,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:4",
+        "blank_target_missing_rel:8",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:4",
+        "images_above_fold_lazy:5",
+        "forms_missing_labels:2"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/template-pages/changelog-legacy-20260214",
+      "title": "Changelog - Archipro - Webflow HTML website template",
+      "statusCode": 200,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:4",
+        "blank_target_missing_rel:8",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:4",
+        "images_above_fold_lazy:1",
+        "forms_missing_labels:2"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/template-pages/licenses-legacy-20260214",
+      "title": "Licenses - Archipro - Webflow HTML website template",
+      "statusCode": 200,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:4",
+        "blank_target_missing_rel:12",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:4",
+        "images_above_fold_lazy:1",
+        "forms_missing_labels:2"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/template-pages/start-here-legacy-20260214",
+      "title": "Start Here - Archipro - Webflow HTML website template",
+      "statusCode": 200,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:4",
+        "blank_target_missing_rel:12",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:16",
+        "images_above_fold_lazy:1",
+        "forms_missing_labels:2"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/template-pages/styles-components-legacy-20260214",
+      "title": "Styleguide - Archipro - Webflow HTML website template",
+      "statusCode": 200,
+      "failCount": 7,
+      "failReasons": [
+        "meta_missing:og:image",
+        "images_missing_alt:85",
+        "blank_target_missing_rel:8",
+        "links_missing_accessible_name:9",
+        "links_placeholder_href:20",
+        "images_missing_dimensions:20",
+        "forms_missing_labels:18"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/blog-posts/12-design-tricks-for-picking-the-perfect-home-color-palette",
+      "title": "12 design tricks for picking the perfect home color palette - Archipro - Webflow HTML website template",
+      "statusCode": 200,
+      "failCount": 6,
+      "failReasons": [
+        "images_missing_alt:4",
+        "blank_target_missing_rel:8",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:5",
+        "images_above_fold_lazy:3",
+        "forms_missing_labels:4"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/blog-posts/15-mind-blowing-floor-designs-to-make-your-home-look-great",
+      "title": "15 mind-blowing floor designs to make your home look great - Archipro - Webflow HTML website template",
+      "statusCode": 200,
+      "failCount": 6,
+      "failReasons": [
+        "images_missing_alt:4",
+        "blank_target_missing_rel:8",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:5",
+        "images_above_fold_lazy:3",
+        "forms_missing_labels:4"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/blog-posts/25-color-trends-designers-cant-wait-to-see-in-2026",
+      "title": "25 color trends designers can't wait to see in 2026 - Archipro - Webflow HTML website template",
+      "statusCode": 200,
+      "failCount": 6,
+      "failReasons": [
+        "images_missing_alt:4",
+        "blank_target_missing_rel:8",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:5",
+        "images_above_fold_lazy:3",
+        "forms_missing_labels:4"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/blog-posts/clever-diy-home-improvements-you-can-easily-do-anytime",
+      "title": "Clever DIY home improvements you can easily do anytime - Archipro - Webflow HTML website template",
+      "statusCode": 200,
+      "failCount": 6,
+      "failReasons": [
+        "images_missing_alt:4",
+        "blank_target_missing_rel:8",
+        "links_missing_accessible_name:2",
+        "images_missing_dimensions:5",
+        "images_above_fold_lazy:3",
+        "forms_missing_labels:4"
+      ]
+    },
+    {
+      "url": "https://archiprotemplate-70629effe7faff236c7aca.webflow.io/team/john-carter",
+      "title": "About Kingdom Construction | Arlington, TX",
+      "statusCode": 200,
+      "failCount": 2,
+      "failReasons": [
+        "meta_missing:og:image",
+        "missing_h1"
+      ]
+    }
+  ]
+}

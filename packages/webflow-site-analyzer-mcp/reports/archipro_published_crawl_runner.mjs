@@ -61,6 +61,7 @@ function summarizePageAudit(audit) {
     headings,
     links,
     images,
+    imageFormats: audit?.images?.formats || {},
     forms,
     media,
     ix2: audit?.interactions?.ix2?.summary || null,
