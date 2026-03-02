@@ -27,7 +27,7 @@ for worker in "${TEAM_WORKERS[@]}"; do
   if [[ "$worker" == "cs-hub-c3denver" ]]; then
     pnpm exec wrangler deploy \
       --name "$worker" \
-      --routes "c3denver.mcp.createsomething.agency/*" \
+      --custom-domain c3denver.mcp.createsomething.agency \
       --var HUB_ACCOUNT_ID:acct_c3_denver \
       --var HUB_DISCOVERY_MODE:compact \
       --var HUB_DISCOVERY_SHARED_PACK:c3-denver-gmail-notion \

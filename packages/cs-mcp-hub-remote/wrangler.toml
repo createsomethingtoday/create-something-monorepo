@@ -3,6 +3,7 @@ main = "index.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+workers_dev = true
 
 [observability]
 enabled = true
