@@ -7,6 +7,9 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { validateSession, escapeHtml } from '$lib/server/auth';
 
+const SUBMISSION_CONFIRMATION_MESSAGE =
+	"Thank you for reaching out. We've received your inquiry and a member of our team will be in touch shortly at the email address you provided. Please note that this is an automated confirmation — do not reply to this email. — Maverick X Team";
+
 interface ContactSubmission {
 	name: string;
 	email: string;
@@ -45,7 +48,7 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 			console.log('Contact submission (no DB):', data);
 			return json({
 				success: true,
-				message: 'Thank you for your inquiry. We will be in touch soon.'
+				message: SUBMISSION_CONFIRMATION_MESSAGE
 			});
 		}
 
@@ -97,7 +100,7 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 			console.warn('RESEND_API_KEY not configured - skipping email notifications');
 			return json({
 				success: true,
-				message: 'Thank you for your inquiry. We will be in touch soon.'
+				message: SUBMISSION_CONFIRMATION_MESSAGE
 			});
 		}
 
@@ -154,26 +157,27 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
     <div class="content">
       <h1 style="font-size: 24px; margin: 0 0 24px 0;">Thanks for reaching out</h1>
       <p>Hi ${escapeHtml(firstName)},</p>
-      <p>We've received your inquiry${safeCategory ? ` about ${safeCategory}` : ''} and will get back to you within 24 hours to discuss your needs.</p>
-      ${safeComment ? `
-      <div class="message-box">
-        <p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Your Message:</p>
-        <p style="color: rgba(255, 255, 255, 0.9);">${safeComment}</p>
-      </div>
-      ` : ''}
-      <p>If you have any immediate questions, feel free to reply to this email.</p>
-      <p>— Maverick X Team</p>
-    </div>
-  </div>
+	      <p>Thank you for reaching out. We've received your inquiry and a member of our team will be in touch shortly at the email address you provided.</p>
+	      ${safeComment ? `
+	      <div class="message-box">
+	        <p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Your Message:</p>
+	        <p style="color: rgba(255, 255, 255, 0.9);">${safeComment}</p>
+	      </div>
+	      ` : ''}
+	      <p>Please note that this is an automated confirmation - do not reply to this email.</p>
+	      <p>— Maverick X Team</p>
+	    </div>
+	  </div>
 </body>
 </html>`
-			})
-		});
+				})
+			});
 
-		// Send notification to sales team
+		// Send notifications to Maverick X shared inboxes; forwarding is managed internally.
 		const notificationRecipients = [
-			'calvin@maverickmetals.com',
-			'matthew@maverickmetals.com'
+			'sds@maverickx.com',
+			'info@maverickx.com',
+			'sales@maverickx.com'
 		];
 
 		const notificationPromise = fetch('https://api.resend.com/emails', {
@@ -238,7 +242,7 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 
 		return json({
 			success: true,
-			message: 'Thank you for your inquiry. We will be in touch soon.'
+			message: SUBMISSION_CONFIRMATION_MESSAGE
 		});
 	} catch (e) {
 		if ((e as { status?: number }).status) {

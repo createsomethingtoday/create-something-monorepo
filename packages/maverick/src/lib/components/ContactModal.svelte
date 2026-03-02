@@ -46,9 +46,11 @@
 	const modalDescription = $derived(content?.description ?? 'Ready to transform your industrial chemistry operations? Our technical team is here to help you optimize performance and drive results.');
 	const contactEmails = $derived(content?.emails ?? [
 		{ label: 'General Inquiries', address: 'info@maverickx.com' },
-		{ label: 'Technical Support', address: 'support@maverickx.com' },
+		{ label: 'SDS Inquiries', address: 'sds@maverickx.com' },
 		{ label: 'Sales & Partnerships', address: 'sales@maverickx.com' }
 	]);
+	const defaultSubmissionSuccessMessage =
+		"Thank you for reaching out. We've received your inquiry and a member of our team will be in touch shortly at the email address you provided. Please note that this is an automated confirmation — do not reply to this email. — Maverick X Team";
 
 	// Form state
 	let name = $state('');
@@ -62,6 +64,7 @@
 
 	let isSubmitting = $state(false);
 	let submitStatus = $state<'idle' | 'success' | 'error'>('idle');
+	let successMessage = $state(defaultSubmissionSuccessMessage);
 	let errors = $state<Record<string, string>>({});
 	let isAnimating = $state(false);
 	let categoryDropdownOpen = $state(false);
@@ -201,10 +204,9 @@
 				throw new Error('Failed to submit form');
 			}
 
+			const responseBody: { message?: string } = await response.json();
+			successMessage = responseBody.message || defaultSubmissionSuccessMessage;
 			submitStatus = 'success';
-			setTimeout(() => {
-				onClose();
-			}, 1500);
 		} catch (err) {
 			submitStatus = 'error';
 			errors = { submit: 'Failed to submit form. Please try again.' };
@@ -225,6 +227,7 @@
 		comment = '';
 		errors = {};
 		submitStatus = 'idle';
+		successMessage = defaultSubmissionSuccessMessage;
 	}
 
 	// Handle ESC key and body scroll
@@ -351,7 +354,7 @@
 						<!-- Success/Error Alert -->
 						{#if submitStatus === 'success'}
 							<div class="alert alert-success">
-								✓ Message sent successfully! We'll get back to you soon.
+								{successMessage}
 							</div>
 						{/if}
 						{#if errors.submit}

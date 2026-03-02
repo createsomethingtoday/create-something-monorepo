@@ -134,7 +134,7 @@ const seedData = {
 			description: 'Ready to transform your industrial chemistry operations? Our technical team is here to help you optimize performance and drive results.',
 			emails: [
 				{ label: 'General Inquiries', address: 'info@maverickx.com' },
-				{ label: 'Technical Support', address: 'support@maverickx.com' },
+				{ label: 'SDS Inquiries', address: 'sds@maverickx.com' },
 				{ label: 'Sales & Partnerships', address: 'sales@maverickx.com' }
 			]
 		}
