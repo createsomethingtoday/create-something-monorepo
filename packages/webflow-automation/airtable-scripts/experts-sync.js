@@ -12,6 +12,8 @@
  * - workspaceID: Workspace ID
  * - createdOn: Timestamp (determines POST vs PUT)
  * - useNewSystem: Boolean flag for new partner type system
+ * - apiKeyProduction: production API key (required when environment=production)
+ * - apiKeyAcceptance: acceptance API key (required when environment=acceptance)
  * 
  * API ENDPOINT: /api/v1/marketplace/profile
  * METHODS: POST (create), PUT (update)
@@ -26,10 +28,6 @@
 
 // Instantiate constants
 let apiKey = `Bearer`;
-const apiKeyAcceptance = 'S128Pt7AVFxjnCNySxAoH7iSK2rHu_PnXqcAzI1C93Q';
-// OLD 'CIzflnKlbB8MzVblSORkCTsPbEhzEjlxpI1oEzoMxzvpUReijrTT24va8GuP76O';
-const apiKeyProduction = 'z5PRD8X6TkEMrOmfLhQdz4wbT1VPEH4UfUINlFtqptQ';
-// OLD '3HulTcJBjCa3NDWeU1WYGq9Np4rGRVezu4BKeMIiKYhp7vI0jij7Qs829Hmgxz03';
 const baseURLAcceptance = 'https://webflowtest.com';
 const baseURLProduction = 'https://webflow.com';
 const endpoint = '/api/v1/marketplace/profile';
@@ -38,6 +36,13 @@ let requestMethod = '';
 
 // Instantiate input variables
 let inputConfig = input.config();
+const normalizeBearer = (rawKey) => {
+  const trimmed = typeof rawKey === 'string' ? rawKey.trim() : '';
+  if (!trimmed) return '';
+  return trimmed.toLowerCase().startsWith('bearer ') ? trimmed : `Bearer ${trimmed}`;
+};
+const apiKeyAcceptance = normalizeBearer(inputConfig.apiKeyAcceptance);
+const apiKeyProduction = normalizeBearer(inputConfig.apiKeyProduction);
 
 // Instantiate tables
 let expertsTable = base.getTable(`tblD1iKe1AN8Scurm`); // Experts
@@ -48,11 +53,17 @@ console.log(expertsTable.fields);
 // Set request variables based on environment
 if(inputConfig.environment === 'production'){
   // Production
-  apiKey = `${apiKey} ${apiKeyProduction}`;
+  if (!apiKeyProduction) {
+    throw new Error('Missing required input variable: apiKeyProduction');
+  }
+  apiKey = apiKeyProduction;
   requestURL = `${baseURLProduction}${endpoint}`;
 } else {
   // acceptance
-  apiKey = `${apiKey} ${apiKeyAcceptance}`;
+  if (!apiKeyAcceptance) {
+    throw new Error('Missing required input variable: apiKeyAcceptance');
+  }
+  apiKey = apiKeyAcceptance;
   requestURL = `${baseURLAcceptance}${endpoint}`;
 }
 
@@ -264,4 +275,3 @@ try {
     // Log fetch-related errors (e.g., network issues)
     console.error('Fetch error:', error);
 }
-

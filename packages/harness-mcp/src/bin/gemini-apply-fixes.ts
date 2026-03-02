@@ -2,8 +2,15 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const GEMINI_API_KEY = 'AIzaSyDQdJaHKDo6ARQ30sOrAE6wUKBMIGSYFmc';
 const GEMINI_MODEL = 'gemini-2.0-flash-exp';
+
+function getGeminiApiKey(): string {
+  const key = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY;
+  if (!key) {
+    throw new Error('Missing GEMINI_API_KEY or GOOGLE_API_KEY');
+  }
+  return key;
+}
 
 interface BeadsIssue {
   id: string;
@@ -118,8 +125,9 @@ Return the complete modified file wrapped in \`\`\`svelte code blocks.`;
   console.log(`\n🤖 Calling Gemini to apply fixes...\n`);
 
   // 7. Call Gemini API
+  const geminiApiKey = getGeminiApiKey();
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${geminiApiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -15,58 +15,69 @@ type HubOutput = {
   error?: string;
 };
 
-const HUB_CASES = [
+type HubCaseConfig = {
+  name: string;
+  url: string;
+  authTokenEnvVar: string;
+  sessionTokenEnvVar?: string;
+};
+
+function requireEnv(envVarName: string): string {
+  const value = process.env[envVarName]?.trim();
+  if (!value) {
+    throw new Error(`Missing required env var: ${envVarName}`);
+  }
+  return value;
+}
+
+const HUB_CASE_CONFIGS: HubCaseConfig[] = [
   {
-    input: {
-      name: 'lainy',
-      url: 'https://cs-hub-lainy.createsomething.workers.dev/mcp',
-      authToken: '111ebcd206e736e5ca1b3f1319025c7ccbbd120b4c9e8f9ca9befd3f7b8430a0',
-    } satisfies HubInput,
-    metadata: { suite: 'mcp-fleet', eval: 'hub_coverage_matrix' },
+    name: 'lainy',
+    url: 'https://cs-hub-lainy.createsomething.workers.dev/mcp',
+    authTokenEnvVar: 'CS_HUB_LAINY_AUTH_TOKEN',
   },
   {
-    input: {
-      name: 'danny',
-      url: 'https://cs-mcp-hub-remote.createsomething.workers.dev/mcp',
-      authToken: 'e226b5e28c0fb42023d25514d5ff6a16bd583825657921fd5fde1a23f7a9a9fb',
-      sessionToken:
-        'ms_tok_25c76df341e00893b0a4a3dac5947955d3a53782c431e4c705b4270034ad2861fe9e844e8c1115c65defde79886f4f60',
-    } satisfies HubInput,
-    metadata: { suite: 'mcp-fleet', eval: 'hub_coverage_matrix' },
+    name: 'danny',
+    url: 'https://cs-mcp-hub-remote.createsomething.workers.dev/mcp',
+    authTokenEnvVar: 'CS_HUB_DANNY_AUTH_TOKEN',
+    sessionTokenEnvVar: 'CS_HUB_DANNY_SESSION_TOKEN',
   },
   {
-    input: {
-      name: 'august',
-      url: 'https://cs-hub-august.createsomething.workers.dev/mcp',
-      authToken: 'c68ca90d9efb8fdc8204a9e037718bd9f935985846a2530ea60ace5fa4f6647b',
-    } satisfies HubInput,
-    metadata: { suite: 'mcp-fleet', eval: 'hub_coverage_matrix' },
+    name: 'august',
+    url: 'https://cs-hub-august.createsomething.workers.dev/mcp',
+    authTokenEnvVar: 'CS_HUB_AUGUST_AUTH_TOKEN',
   },
   {
-    input: {
-      name: 'filip',
-      url: 'https://cs-hub-filip.createsomething.workers.dev/mcp',
-      authToken: 'c5d5c9a1def0906c32608bd8fc29923f05be4af056ca80098e048e30f3f63874',
-    } satisfies HubInput,
-    metadata: { suite: 'mcp-fleet', eval: 'hub_coverage_matrix' },
+    name: 'filip',
+    url: 'https://cs-hub-filip.createsomething.workers.dev/mcp',
+    authTokenEnvVar: 'CS_HUB_FILIP_AUTH_TOKEN',
   },
   {
-    input: {
-      name: 'leah',
-      url: 'https://cs-hub-leah.createsomething.workers.dev/mcp',
-      authToken: '8f7816ec8a95c6dfe578f1828ff743076e4b38f7bfe21ab84594ea519b05605e',
-    } satisfies HubInput,
-    metadata: { suite: 'mcp-fleet', eval: 'hub_coverage_matrix' },
+    name: 'leah',
+    url: 'https://cs-hub-leah.createsomething.workers.dev/mcp',
+    authTokenEnvVar: 'CS_HUB_LEAH_AUTH_TOKEN',
   },
   {
-    input: {
-      name: 'mj',
-      url: 'https://cs-hub-mj.createsomething.workers.dev/mcp',
-      authToken: '795b3abbdc4d927eeefbc1a76ef6ae3735b6bc13b86e42b8728448878a9fd620',
-    } satisfies HubInput,
-    metadata: { suite: 'mcp-fleet', eval: 'hub_coverage_matrix' },
+    name: 'mj',
+    url: 'https://cs-hub-mj.createsomething.workers.dev/mcp',
+    authTokenEnvVar: 'CS_HUB_MJ_AUTH_TOKEN',
   },
 ];
+
+const HUB_CASES = HUB_CASE_CONFIGS.map((config) => {
+  const authToken = requireEnv(config.authTokenEnvVar);
+  const sessionToken = config.sessionTokenEnvVar ? process.env[config.sessionTokenEnvVar]?.trim() : undefined;
+
+  return {
+    input: {
+      name: config.name,
+      url: config.url,
+      authToken,
+      ...(sessionToken ? { sessionToken } : {}),
+    } satisfies HubInput,
+    metadata: { suite: 'mcp-fleet', eval: 'hub_coverage_matrix' },
+  };
+});
 
 function coverageScore(output: HubOutput): Score {
   return { name: 'hub_reachable', score: output.ok ? 1 : 0, metadata: { status: output.status } };

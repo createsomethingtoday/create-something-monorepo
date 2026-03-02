@@ -8,6 +8,7 @@
  * INPUT VARIABLES:
  * - workspaceSlug: Workspace slug from webhook/form (required)
  * - recordId: Airtable record ID (from action 1 - create record)
+ * - apiKey: Webflow marketplace API key (required)
  *
  * WORKFLOW:
  * 1. Validate workspace slug format
@@ -21,7 +22,6 @@
 // CONSTANTS
 // ========================
 
-const API_KEY = 'Bearer z5PRD8X6TkEMrOmfLhQdz4wbT1VPEH4UfUINlFtqptQ';
 const API_URL = 'https://webflow.com/api/v1/marketplace/profile';
 const SUBMISSIONS_TABLE = 'tblhpf95EWJPhbbYk';
 
@@ -95,6 +95,16 @@ function parseCurrency(value) {
 const config = input.config();
 const submissions = base.getTable(SUBMISSIONS_TABLE);
 const eppRecord = await submissions.selectRecordAsync(config.recordId);
+const rawApiKey = typeof config.apiKey === 'string' ? config.apiKey.trim() : '';
+const apiKey = rawApiKey.toLowerCase().startsWith('bearer ') ? rawApiKey : `Bearer ${rawApiKey}`;
+
+if (!rawApiKey) {
+  await submissions.updateRecordAsync(config.recordId, {
+    [FIELDS.STATUS]: 'Failed',
+    [FIELDS.API_RESPONSE]: JSON.stringify({ error: 'Missing required input variable: apiKey' })
+  });
+  return;
+}
 
 // ========================
 // EXTRACT & VALIDATE DATA
@@ -164,7 +174,7 @@ try {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'authorization': API_KEY
+      'authorization': apiKey
     },
     body: JSON.stringify(payload)
   });

@@ -8,8 +8,15 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const GEMINI_API_KEY = 'AIzaSyDQdJaHKDo6ARQ30sOrAE6wUKBMIGSYFmc';
 const GEMINI_MODEL = 'gemini-2.0-flash-exp';
+
+function getGeminiApiKey(): string {
+  const key = process.env.GEMINI_API_KEY ?? process.env.GOOGLE_API_KEY;
+  if (!key) {
+    throw new Error('Missing GEMINI_API_KEY or GOOGLE_API_KEY');
+  }
+  return key;
+}
 
 interface BeadsIssue {
   id: string;
@@ -64,6 +71,7 @@ function extractFilePath(description: string): string | null {
 
 export async function executeWithGeminiAPI(issueId: string, cwd: string): Promise<void> {
   console.log(`\n🤖 Executing with Gemini API (${GEMINI_MODEL})...`);
+  const geminiApiKey = getGeminiApiKey();
 
   // Read the Beads issue
   const issue = readBeadsIssue(issueId, cwd);
@@ -122,7 +130,7 @@ If no issues found, say "No voice issues detected - content follows Nicely Said 
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${geminiApiKey}`,
       {
         method: 'POST',
         headers: {
