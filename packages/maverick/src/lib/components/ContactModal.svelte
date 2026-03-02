@@ -19,6 +19,7 @@
 	 */
 
 	import { focusTrap } from '@create-something/canon/actions';
+	import { tick } from 'svelte';
 	import Icon from './Icon.svelte';
 
 	interface ContactContent {
@@ -68,6 +69,23 @@
 	let errors = $state<Record<string, string>>({});
 	let isAnimating = $state(false);
 	let categoryDropdownOpen = $state(false);
+	let modalContentEl: HTMLDivElement | null = $state(null);
+	let successAlertEl: HTMLDivElement | null = $state(null);
+
+	async function scrollToSuccessAlert() {
+		await tick();
+		if (!modalContentEl || !successAlertEl) {
+			return;
+		}
+
+		const alertTop = successAlertEl.getBoundingClientRect().top;
+		const modalTop = modalContentEl.getBoundingClientRect().top;
+		const targetScrollTop = modalContentEl.scrollTop + (alertTop - modalTop) - 24;
+		modalContentEl.scrollTo({
+			top: Math.max(targetScrollTop, 0),
+			behavior: 'smooth'
+		});
+	}
 
 	// Categories
 	const categories = [
@@ -207,6 +225,7 @@
 			const responseBody: { message?: string } = await response.json();
 			successMessage = responseBody.message || defaultSubmissionSuccessMessage;
 			submitStatus = 'success';
+			await scrollToSuccessAlert();
 		} catch (err) {
 			submitStatus = 'error';
 			errors = { submit: 'Failed to submit form. Please try again.' };
@@ -307,6 +326,7 @@
 				<div
 					class="modal-content"
 					class:is-open={isOpen}
+					bind:this={modalContentEl}
 					role="dialog"
 					aria-modal="true"
 					aria-labelledby="contact-modal-title"
@@ -353,7 +373,10 @@
 					<form class="form-container" onsubmit={handleSubmit}>
 						<!-- Success/Error Alert -->
 						{#if submitStatus === 'success'}
-							<div class="alert alert-success">
+							<div
+								class="alert alert-success"
+								bind:this={successAlertEl}
+							>
 								{successMessage}
 							</div>
 						{/if}
