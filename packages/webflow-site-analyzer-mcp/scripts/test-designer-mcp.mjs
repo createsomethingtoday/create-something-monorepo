@@ -45,10 +45,14 @@ function parseToolResult(result) {
 async function main() {
   const previewUrl = getArg('--preview-url');
   const timeoutMs = Number(getArg('--timeout-ms') || 120000);
+  const childEnv = Object.fromEntries(
+    Object.entries(process.env).filter(([, value]) => typeof value === 'string')
+  );
 
   const transport = new StdioClientTransport({
     command: 'node',
-    args: ['./dist/index.js']
+    args: ['./dist/index.js'],
+    env: childEnv
   });
 
   const client = new Client(
