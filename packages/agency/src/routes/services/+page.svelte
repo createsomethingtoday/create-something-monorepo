@@ -8,6 +8,7 @@
     Marquee
   } from '@create-something/canon/magicui';
   import HubMcpFlow from '$lib/components/HubMcpFlow.svelte';
+  import BrandLogo from '$lib/components/BrandLogo.svelte';
 
   // Structured data for SEO/AEO
   const deliveryVector = {
@@ -161,7 +162,10 @@
         {#each stackItems as item}
           <div class="stack-card">
             <span class="stack-type">{item.type}</span>
-            <span class="stack-name">{item.name}</span>
+            <div class="stack-name-group">
+              <BrandLogo name={item.name} size={18} className="text-white/70" />
+              <span class="stack-name">{item.name}</span>
+            </div>
           </div>
         {/each}
       </Marquee>
@@ -510,6 +514,12 @@
     letter-spacing: 0.1em;
     color: rgba(96, 165, 250, 0.8);
     margin-bottom: 0.25rem;
+  }
+
+  .stack-name-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 0.5rem);
   }
 
   .stack-name {
