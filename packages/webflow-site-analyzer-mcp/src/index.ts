@@ -1540,13 +1540,14 @@ type RequestHandlerExtraLike = {
 
 function createProgressReporter(extra?: RequestHandlerExtraLike): ProgressReporter | undefined {
   if (!extra || typeof extra.sendNotification !== 'function') return undefined;
+  const sendNotification = extra.sendNotification;
   const meta = asRecord(extra._meta);
   const progressToken = meta.progressToken;
   if (typeof progressToken !== 'string' && typeof progressToken !== 'number') return undefined;
 
   return async (progress: number, total: number, message: string) => {
     try {
-      await extra.sendNotification({
+      await sendNotification({
         method: 'notifications/progress',
         params: {
           progressToken,

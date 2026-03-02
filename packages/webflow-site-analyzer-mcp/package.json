@@ -20,7 +20,8 @@
     "replay": "npx tsx replay-recipe.ts",
     "review": "npx tsx review-mode.ts",
     "test:integration": "npx tsx integration-test.ts",
-    "test:designer-mcp": "node scripts/test-designer-mcp.mjs"
+    "test:designer-mcp": "node scripts/test-designer-mcp.mjs",
+    "test:template-review": "node scripts/test-template-review-mcp.mjs"
 },
   "dependencies": {
     "@create-something/observability": "workspace:*",

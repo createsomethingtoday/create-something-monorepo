@@ -45,6 +45,7 @@ function parseToolResult(result) {
 async function main() {
   const previewUrl = getArg('--preview-url');
   const timeoutMs = Number(getArg('--timeout-ms') || 120000);
+  const maxTotalTimeoutMs = Number(getArg('--max-total-timeout-ms') || 600000);
   const childEnv = Object.fromEntries(
     Object.entries(process.env).filter(([, value]) => typeof value === 'string')
   );
@@ -64,6 +65,7 @@ async function main() {
     testedAt: new Date().toISOString(),
     previewUrl: previewUrl || null,
     timeoutMs,
+    maxTotalTimeoutMs,
     tools: {
       total: 0,
       hasExtractDesignerMetadata: false,
@@ -78,6 +80,12 @@ async function main() {
   try {
     await client.connect(transport);
 
+    const requestOptions = {
+      timeout: Math.max(timeoutMs, 240000),
+      maxTotalTimeout: Math.max(maxTotalTimeoutMs, 240000),
+      resetTimeoutOnProgress: true
+    };
+
     const toolList = await client.listTools();
     const toolNames = toolList.tools.map((tool) => tool.name);
     summary.tools.total = toolNames.length;
@@ -88,29 +96,41 @@ async function main() {
       summary.notes.push('extract_designer_metadata not found in tool list');
     }
 
-    const providerStatus = await client.callTool({
-      name: 'get_provider_status',
-      arguments: {}
-    });
+    const providerStatus = await client.callTool(
+      {
+        name: 'get_provider_status',
+        arguments: {}
+      },
+      undefined,
+      requestOptions
+    );
     summary.providerStatus = parseToolResult(providerStatus);
 
     if (previewUrl) {
-      const extractionResult = await client.callTool({
-        name: 'extract_designer_metadata',
-        arguments: {
-          url: previewUrl,
-          timeout: timeoutMs
-        }
-      });
+      const extractionResult = await client.callTool(
+        {
+          name: 'extract_designer_metadata',
+          arguments: {
+            url: previewUrl,
+            timeout: timeoutMs
+          }
+        },
+        undefined,
+        requestOptions
+      );
       summary.designerExtraction = parseToolResult(extractionResult);
 
-      const checklistResult = await client.callTool({
-        name: 'score_designer_checklist',
-        arguments: {
-          url: previewUrl,
-          timeout: timeoutMs
-        }
-      });
+      const checklistResult = await client.callTool(
+        {
+          name: 'score_designer_checklist',
+          arguments: {
+            url: previewUrl,
+            timeout: timeoutMs
+          }
+        },
+        undefined,
+        requestOptions
+      );
       summary.checklistScore = parseToolResult(checklistResult);
     } else {
       summary.notes.push('Skipped extract_designer_metadata (no --preview-url provided).');
