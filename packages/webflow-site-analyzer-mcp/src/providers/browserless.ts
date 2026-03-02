@@ -12,6 +12,12 @@ import type {
   AnalyzeOptions,
   BrowserSessionMetrics
 } from '../types.js';
+import {
+  deriveSiteName,
+  parseComponents,
+  parseInteractions,
+  parseCmsCollections
+} from './designer-metadata-parsers.js';
 
 // =============================================================================
 // Configuration
@@ -352,7 +358,7 @@ export class BrowserlessProvider implements BrowserProvider {
       `;
 
       // Helper to get UI text
-      const getUIText = async (limit = 200): Promise<string[]> => {
+      const getUIText = async (limit = 400): Promise<string[]> => {
         return page.evaluate(getUITextScript(limit)) as Promise<string[]>;
       };
 
@@ -364,13 +370,35 @@ export class BrowserlessProvider implements BrowserProvider {
         await page.evaluate(`new Promise(r => setTimeout(r, ${waitMs}))`);
       };
 
+      const clickControl = async (labels: string[]): Promise<boolean> => {
+        const handles = await page.$$('button, [role="tab"], [role="button"]');
+        for (const handle of handles) {
+          const payload = await handle.evaluate((el) => ({
+            text: (el.textContent || '').trim(),
+            aria: (el.getAttribute('aria-label') || '').trim()
+          }));
+          const combined = `${payload.text} ${payload.aria}`.toLowerCase();
+          const match = labels.some((label) => combined.includes(label.toLowerCase()));
+          if (!match) continue;
+          try {
+            await handle.click();
+            await page.evaluate(`new Promise(r => setTimeout(r, 800))`);
+            return true;
+          } catch {
+            // Try next candidate
+          }
+        }
+        return false;
+      };
+
       // Get site info
-      const siteName = await page.evaluate(`
-        (function() {
-          const title = document.title || '';
-          return title.includes(' - ') ? title.split(' - ').pop() || '' : title;
-        })()
-      `) as string;
+      const pageTitle = await page.title();
+      const initialUiTexts = await getUIText(500);
+      const siteName = deriveSiteName({
+        url,
+        title: pageTitle,
+        uiTexts: initialUiTexts
+      });
 
       // Get breakpoints
       const breakpoints = await page.evaluate(`
@@ -430,15 +458,7 @@ export class BrowserlessProvider implements BrowserProvider {
 
       // ===== STYLE CLASSES (G key - Style Selectors) =====
       // First click on Design tab to ensure we're in the right context
-      const designButtons = await page.$$('button');
-      for (const btn of designButtons) {
-        const btnText = await btn.evaluate(el => el.textContent?.trim());
-        if (btnText === 'Design') {
-          await btn.click();
-          await page.evaluate(`new Promise(r => setTimeout(r, 1000))`);
-          break;
-        }
-      }
+      await clickControl(['Design']);
       
       // Press G for Style Selectors panel
       await page.keyboard.press('g');
@@ -476,66 +496,27 @@ export class BrowserlessProvider implements BrowserProvider {
       await page.keyboard.up('Shift');
       await page.evaluate(`new Promise(r => setTimeout(r, 2000))`);
       
-      const componentsText = await getUIText();
-      const components: Array<{ name: string; instanceCount: number; isUnused: boolean }> = [];
-      
-      for (const text of componentsText) {
-        const match = text.match(/^(.+?)(\d+)\s*instances?$/);
-        if (match) {
-          const name = match[1].trim();
-          const count = parseInt(match[2], 10);
-          if (!components.some(c => c.name === name)) {
-            components.push({ name, instanceCount: count, isUnused: count === 0 });
-          }
-        }
-      }
+      const componentsText = await getUIText(1200);
+      const components = parseComponents(componentsText);
 
       // ===== INTERACTIONS (H key) =====
       await pressKeyAndWait('h', 2000);
-      const interactionsText = await getUIText();
-      
-      const interactions: Array<{ trigger: string; targetElement: string; type: string }> = [];
-      for (const text of interactionsText) {
-        if (text.includes('Page load') && text.includes(' / ')) {
-          const parts = text.split('Page load');
-          if (parts[1]) {
-            const target = parts[1].trim().replace(' / <none>', '').replace('<none>', '');
-            if (target && !interactions.some(i => i.targetElement === target)) {
-              interactions.push({ trigger: 'Page load', targetElement: target, type: 'page-load' });
-            }
-          }
-        }
-      }
+      const interactionsText = await getUIText(1200);
+      const interactions = parseInteractions(interactionsText);
 
       // ===== CMS COLLECTIONS (Click CMS tab) =====
       // Find and click CMS button
-      const buttons = await page.$$('button');
-      for (const btn of buttons) {
-        const btnText = await btn.evaluate(el => el.textContent?.trim());
-        if (btnText === 'CMS') {
-          await btn.click();
-          await page.evaluate(`new Promise(r => setTimeout(r, 1500))`);
-          break;
-        }
-      }
+      await clickControl(['CMS']);
+      await page.evaluate(`new Promise(r => setTimeout(r, 1400))`);
+      await clickControl(['Collections']);
+      await page.evaluate(`new Promise(r => setTimeout(r, 1000))`);
       
-      const cmsText = await getUIText();
-      const cmsCollections: Array<{ name: string; itemCount: number }> = [];
-      
-      for (const text of cmsText) {
-        const match = text.match(/^📋(.+?)(\d+)\s*items?$/);
-        if (match) {
-          const name = match[1].trim();
-          const count = parseInt(match[2], 10);
-          if (!cmsCollections.some(c => c.name === name)) {
-            cmsCollections.push({ name, itemCount: count });
-          }
-        }
-      }
+      const cmsText = await getUIText(1200);
+      const cmsCollections = parseCmsCollections(cmsText);
 
       // ===== ASSETS (J key) =====
       await pressKeyAndWait('j', 2000);
-      const assetsText = await getUIText();
+      const assetsText = await getUIText(1200);
       
       const assets: Array<{ filename: string; type: string }> = [];
       const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'];
@@ -556,7 +537,7 @@ export class BrowserlessProvider implements BrowserProvider {
 
       // ===== SITE PLAN (from Settings) =====
       // Find and click Settings button
-      const allButtons = await page.$$('button');
+      const allButtons = await page.$$('button, [role="button"], [role="tab"]');
       let sitePlan = 'Unknown';
       for (const btn of allButtons) {
         const ariaLabel = await btn.evaluate(el => el.getAttribute('aria-label'));
