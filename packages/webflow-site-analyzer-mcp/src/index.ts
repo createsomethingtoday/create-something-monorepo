@@ -508,6 +508,849 @@ async function scoreDesignerChecklistTool(input: ScoreDesignerChecklistInput): P
   });
 }
 
+const PUBLISHED_WEBMCP_PAGE_SCRIPT = `
+(async () => {
+  const REQUIRED_LICENSE_TEXT =
+    "All graphical assets in this template are licensed for personal and commercial use. If you'd like to use a specific asset, please check the license below.";
+
+  const toInternalAbsolute = (href) => {
+    try {
+      if (!href) return null;
+      const u = new URL(href, window.location.origin);
+      if (u.origin !== window.location.origin) return null;
+      if (u.protocol === 'mailto:' || u.protocol === 'tel:' || u.protocol === 'javascript:') return null;
+      u.hash = '';
+      return u.toString();
+    } catch {
+      return null;
+    }
+  };
+
+  const title = document.title || null;
+  const links = Array.from(document.querySelectorAll('a[href]'))
+    .map((a) => a.getAttribute('href') || a.href || '')
+    .map((href) => toInternalAbsolute(href))
+    .filter(Boolean);
+
+  const dedupedLinks = Array.from(new Set(links)).slice(0, 250);
+  const pathname = window.location.pathname.toLowerCase();
+  const bodyText = (document.body?.innerText || '').slice(0, 4000);
+  const hasRequiredLicenseText = pathname.includes('license')
+    ? bodyText.includes(REQUIRED_LICENSE_TEXT)
+    : null;
+
+  const api = window.__wfReview;
+  if (!api) {
+    return {
+      url: window.location.href,
+      title,
+      hasSnippet: false,
+      snippetVersion: null,
+      tools: [],
+      links: dedupedLinks,
+      hasRequiredLicenseText
+    };
+  }
+
+  const tools = typeof api.listTools === 'function' ? api.listTools().map((t) => t.name) : [];
+
+  let audit = null;
+  let auditError = null;
+  try {
+    audit = await api.callTool('audit_webflow_way', { maxExamples: 20, includeSitemap: false });
+  } catch (err) {
+    auditError = err instanceof Error ? err.message : String(err);
+  }
+
+  let sitemap = null;
+  try {
+    sitemap = await api.callTool('get_sitemap_urls', { sitemapPath: '/sitemap.xml', maxUrls: 200 });
+  } catch (err) {
+    sitemap = { error: err instanceof Error ? err.message : String(err) };
+  }
+
+  let audit404 = null;
+  try {
+    audit404 = await api.callTool('audit_404', {});
+  } catch (err) {
+    audit404 = { error: err instanceof Error ? err.message : String(err) };
+  }
+
+  return {
+    url: window.location.href,
+    title,
+    hasSnippet: true,
+    snippetVersion: api.version ?? null,
+    tools,
+    links: dedupedLinks,
+    hasRequiredLicenseText,
+    audit,
+    auditError,
+    sitemap,
+    audit404
+  };
+})()
+`;
+
+type PublishedPageEval = {
+  url?: string;
+  title?: string | null;
+  hasSnippet?: boolean;
+  snippetVersion?: string | null;
+  tools?: string[];
+  links?: string[];
+  hasRequiredLicenseText?: boolean | null;
+  audit?: unknown;
+  auditError?: string | null;
+  sitemap?: unknown;
+  audit404?: unknown;
+};
+
+type PageAuditSummary = NonNullable<PublishedSnippetPageResult['summary']>;
+
+function normalizeCrawlUrl(rawUrl: string, origin: string): string | null {
+  try {
+    const parsed = new URL(rawUrl, origin);
+    if (parsed.origin !== origin) return null;
+    if (parsed.protocol === 'mailto:' || parsed.protocol === 'tel:' || parsed.protocol === 'javascript:') return null;
+    parsed.hash = '';
+    const path = parsed.pathname.replace(/\/$/, '') || '/';
+    return `${parsed.origin}${path}${parsed.search}`;
+  } catch {
+    return null;
+  }
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+}
+
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => String(item)).filter(Boolean);
+}
+
+function asFiniteNumber(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
+
+function summarizePublishedPageAudit(audit: unknown): PageAuditSummary {
+  const root = asRecord(audit);
+  const meta = asRecord(root.meta);
+  const headingsRoot = asRecord(root.headings);
+  const headings = asRecord(headingsRoot.summary);
+  const linksRoot = asRecord(root.links);
+  const links = asRecord(linksRoot.summary);
+  const imagesRoot = asRecord(root.images);
+  const images = asRecord(imagesRoot.summary);
+  const formsRoot = asRecord(root.forms);
+  const forms = asRecord(formsRoot.summary);
+  const mediaRoot = asRecord(root.media);
+  const media = asRecord(mediaRoot.summary);
+  const interactions = asRecord(root.interactions);
+  const ix2 = asRecord(interactions.ix2);
+  const ix3 = asRecord(interactions.ix3);
+  const ix2Summary = asRecord(ix2.summary);
+  const ix3Summary = asRecord(ix3.summary);
+  const imageFormats = asRecord(imagesRoot.formats);
+
+  const metaMissing = asStringArray(meta.missing);
+  const failReasons: string[] = [];
+
+  if (metaMissing.length > 0) failReasons.push(`meta_missing:${metaMissing.join(',')}`);
+  if (Boolean(headings.missingH1)) failReasons.push('missing_h1');
+  if (Boolean(headings.multipleH1)) failReasons.push('multiple_h1');
+  if (asFiniteNumber(headings.skippedHeadingLevels) > 0) {
+    failReasons.push(`skipped_heading_levels:${asFiniteNumber(headings.skippedHeadingLevels)}`);
+  }
+  if (asFiniteNumber(headings.emptyHeadings) > 0) {
+    failReasons.push(`empty_headings:${asFiniteNumber(headings.emptyHeadings)}`);
+  }
+  if (asFiniteNumber(images.images) > 0 && asFiniteNumber(images.missingAlt) > 0) {
+    failReasons.push(`images_missing_alt:${asFiniteNumber(images.missingAlt)}`);
+  }
+  if (asFiniteNumber(links.blankTargetMissingRel) > 0) {
+    failReasons.push(`blank_target_missing_rel:${asFiniteNumber(links.blankTargetMissingRel)}`);
+  }
+  if (asFiniteNumber(links.missingAccessibleName) > 0) {
+    failReasons.push(`links_missing_accessible_name:${asFiniteNumber(links.missingAccessibleName)}`);
+  }
+  if (asFiniteNumber(links.emptyHref) > 0) {
+    failReasons.push(`links_empty_href:${asFiniteNumber(links.emptyHref)}`);
+  }
+  if (asFiniteNumber(links.placeholderHref) > 0) {
+    failReasons.push(`links_placeholder_href:${asFiniteNumber(links.placeholderHref)}`);
+  }
+  if (asFiniteNumber(images.missingDimensions) > 0) {
+    failReasons.push(`images_missing_dimensions:${asFiniteNumber(images.missingDimensions)}`);
+  }
+  if (asFiniteNumber(images.aboveFoldLazy) > 0) {
+    failReasons.push(`images_above_fold_lazy:${asFiniteNumber(images.aboveFoldLazy)}`);
+  }
+  if (asFiniteNumber(forms.missingLabels) > 0) {
+    failReasons.push(`forms_missing_labels:${asFiniteNumber(forms.missingLabels)}`);
+  }
+  if (asFiniteNumber(media.autoplayWithoutControls) > 0) {
+    failReasons.push(`media_autoplay_without_controls:${asFiniteNumber(media.autoplayWithoutControls)}`);
+  }
+  if (asFiniteNumber(media.backgroundVideosMissingControl) > 0) {
+    failReasons.push(
+      `bg_video_missing_controls:${asFiniteNumber(media.backgroundVideosMissingControl)}`
+    );
+  }
+
+  return {
+    failCount: failReasons.length,
+    failReasons,
+    metaMissing,
+    headings: {
+      headings: asFiniteNumber(headings.headings),
+      h1: asFiniteNumber(headings.h1),
+      missingH1: Boolean(headings.missingH1),
+      multipleH1: Boolean(headings.multipleH1),
+      skippedHeadingLevels: asFiniteNumber(headings.skippedHeadingLevels),
+      emptyHeadings: asFiniteNumber(headings.emptyHeadings)
+    },
+    links: {
+      links: asFiniteNumber(links.links),
+      emptyHref: asFiniteNumber(links.emptyHref),
+      placeholderHref: asFiniteNumber(links.placeholderHref),
+      blankTargetMissingRel: asFiniteNumber(links.blankTargetMissingRel),
+      missingAccessibleName: asFiniteNumber(links.missingAccessibleName)
+    },
+    images: {
+      images: asFiniteNumber(images.images),
+      missingAlt: asFiniteNumber(images.missingAlt),
+      missingDimensions: asFiniteNumber(images.missingDimensions),
+      aboveFoldLazy: asFiniteNumber(images.aboveFoldLazy),
+      belowFoldNotLazy: asFiniteNumber(images.belowFoldNotLazy)
+    },
+    imageFormats: Object.fromEntries(
+      Object.entries(imageFormats).map(([key, value]) => [key, asFiniteNumber(value)])
+    ),
+    forms: {
+      fields: asFiniteNumber(forms.fields),
+      missingLabels: asFiniteNumber(forms.missingLabels)
+    },
+    media: {
+      videos: asFiniteNumber(media.videos),
+      autoplayWithoutControls: asFiniteNumber(media.autoplayWithoutControls),
+      backgroundVideosMissingControl: asFiniteNumber(media.backgroundVideosMissingControl)
+    },
+    ix2: {
+      events: asFiniteNumber(ix2Summary.events),
+      actionLists: asFiniteNumber(ix2Summary.actionLists),
+      usedActionLists: asFiniteNumber(ix2Summary.usedActionLists),
+      unusedActionLists: asFiniteNumber(ix2Summary.unusedActionLists),
+      missingTargets: asFiniteNumber(ix2Summary.missingTargets),
+      missingActionLists: asFiniteNumber(ix2Summary.missingActionLists)
+    },
+    ix3: {
+      interactions: asFiniteNumber(ix3Summary.interactions),
+      timelines: asFiniteNumber(ix3Summary.timelines),
+      missingTimelines: asFiniteNumber(ix3Summary.missingTimelines),
+      deletedInteractions: asFiniteNumber(ix3Summary.deletedInteractions),
+      missingTargetSelectors: asFiniteNumber(ix3Summary.missingTargetSelectors)
+    }
+  };
+}
+
+function emptyIssueCounts(): PublishedSnippetIssueCounts {
+  return {
+    metaMissing: 0,
+    missingH1: 0,
+    multipleH1: 0,
+    skippedHeadingLevels: 0,
+    imagesMissingAlt: 0,
+    linksMissingRel: 0,
+    linksMissingAccessibleName: 0,
+    linksEmptyHref: 0,
+    linksPlaceholderHref: 0,
+    imagesMissingDimensions: 0,
+    imagesAboveFoldLazy: 0,
+    formsMissingLabels: 0,
+    autoplayWithoutControls: 0,
+    backgroundVideosMissingControl: 0
+  };
+}
+
+async function crawlPublishedWebMcp(
+  publishedUrl: string,
+  options: { timeout?: number; crawlMaxPages?: number; crawlMaxDepth?: number } = {}
+): Promise<PublishedSnippetCrawlResult> {
+  const manager = getProvider();
+  const provider = manager.getProvider();
+  const timeout = options.timeout ?? 90000;
+  const maxPages = Math.min(Math.max(options.crawlMaxPages ?? 20, 1), 50);
+  const maxDepth = Math.min(Math.max(options.crawlMaxDepth ?? 2, 0), 4);
+  const origin = new URL(publishedUrl).origin;
+  const startUrl = normalizeCrawlUrl(publishedUrl, origin) || `${origin}/`;
+
+  const queue: Array<{ url: string; depth: number }> = [{ url: startUrl, depth: 0 }];
+  const seen = new Set<string>([startUrl]);
+  const pages: PublishedSnippetPageResult[] = [];
+
+  let snippetVersion: string | null = null;
+  let snippetTools: string[] = [];
+  let sitemapStatus: PublishedSnippetCrawlResult['sitemapStatus'] = {
+    ok: false,
+    error: 'Sitemap check was not executed'
+  };
+  let audit404: PublishedSnippetCrawlResult['audit404'] = {
+    ok: false,
+    error: '404 audit was not executed'
+  };
+
+  while (queue.length > 0 && pages.length < maxPages) {
+    const current = queue.shift();
+    if (!current) break;
+
+    const pageResult: PublishedSnippetPageResult = {
+      url: current.url,
+      depth: current.depth,
+      title: null,
+      statusCode: null,
+      hasSnippet: false,
+      snippetVersion: null,
+      hasRequiredLicenseText: null,
+      error: null,
+      summary: null
+    };
+
+    try {
+      const raw = await provider.analyze<PublishedPageEval>(current.url, PUBLISHED_WEBMCP_PAGE_SCRIPT, {
+        timeout,
+        waitForNavigation: false
+      });
+
+      pageResult.title = raw?.title ?? null;
+      pageResult.hasSnippet = Boolean(raw?.hasSnippet);
+      pageResult.snippetVersion = raw?.snippetVersion ?? null;
+      pageResult.hasRequiredLicenseText =
+        typeof raw?.hasRequiredLicenseText === 'boolean' ? raw.hasRequiredLicenseText : null;
+
+      if (pageResult.hasSnippet) {
+        if (!snippetVersion) snippetVersion = raw?.snippetVersion ?? null;
+        if (snippetTools.length === 0 && Array.isArray(raw?.tools)) {
+          snippetTools = raw.tools.map((tool) => String(tool));
+        }
+
+        if (sitemapStatus.error === 'Sitemap check was not executed' || sitemapStatus.ok === false) {
+          const sitemapRecord = asRecord(raw?.sitemap);
+          if (typeof sitemapRecord.error === 'string') {
+            sitemapStatus = { ok: false, error: sitemapRecord.error };
+          } else {
+            sitemapStatus = { ok: true, count: asFiniteNumber(sitemapRecord.count) };
+          }
+        }
+
+        if ((audit404 as { error?: string }).error === '404 audit was not executed') {
+          const a404Record = asRecord(raw?.audit404);
+          if (typeof a404Record.error === 'string') {
+            audit404 = { ok: false, error: a404Record.error };
+          } else {
+            audit404 = {
+              ok: Boolean(a404Record.ok),
+              status: asFiniteNumber(a404Record.status),
+              title: typeof a404Record.title === 'string' ? a404Record.title : null,
+              navCount: asFiniteNumber(a404Record.navCount),
+              linkCount: asFiniteNumber(a404Record.linkCount),
+              h1Count: asFiniteNumber(a404Record.h1Count)
+            };
+          }
+        }
+
+        if (typeof raw?.auditError === 'string' && raw.auditError) {
+          pageResult.error = raw.auditError;
+        } else {
+          pageResult.summary = summarizePublishedPageAudit(raw?.audit);
+        }
+      } else {
+        pageResult.error = 'window.__wfReview is not available on this page';
+      }
+
+      const rawLinks = Array.isArray(raw?.links) ? raw.links : [];
+      if (current.depth < maxDepth) {
+        for (const candidate of rawLinks) {
+          const normalized = normalizeCrawlUrl(String(candidate), origin);
+          if (!normalized || seen.has(normalized)) continue;
+          seen.add(normalized);
+          queue.push({ url: normalized, depth: current.depth + 1 });
+        }
+      }
+    } catch (error) {
+      pageResult.error = error instanceof Error ? error.message : String(error);
+    }
+
+    pages.push(pageResult);
+  }
+
+  const issueCounts = emptyIssueCounts();
+  for (const page of pages) {
+    if (!page.summary) continue;
+    const summary = page.summary;
+    if (summary.metaMissing.length > 0) issueCounts.metaMissing += 1;
+    if (summary.headings?.missingH1) issueCounts.missingH1 += 1;
+    if (summary.headings?.multipleH1) issueCounts.multipleH1 += 1;
+    if ((summary.headings?.skippedHeadingLevels || 0) > 0) issueCounts.skippedHeadingLevels += 1;
+    if ((summary.images?.missingAlt || 0) > 0) issueCounts.imagesMissingAlt += 1;
+    if ((summary.links?.blankTargetMissingRel || 0) > 0) issueCounts.linksMissingRel += 1;
+    if ((summary.links?.missingAccessibleName || 0) > 0) issueCounts.linksMissingAccessibleName += 1;
+    if ((summary.links?.emptyHref || 0) > 0) issueCounts.linksEmptyHref += 1;
+    if ((summary.links?.placeholderHref || 0) > 0) issueCounts.linksPlaceholderHref += 1;
+    if ((summary.images?.missingDimensions || 0) > 0) issueCounts.imagesMissingDimensions += 1;
+    if ((summary.images?.aboveFoldLazy || 0) > 0) issueCounts.imagesAboveFoldLazy += 1;
+    if ((summary.forms?.missingLabels || 0) > 0) issueCounts.formsMissingLabels += 1;
+    if ((summary.media?.autoplayWithoutControls || 0) > 0) issueCounts.autoplayWithoutControls += 1;
+    if ((summary.media?.backgroundVideosMissingControl || 0) > 0) {
+      issueCounts.backgroundVideosMissingControl += 1;
+    }
+  }
+
+  const auditedPages = pages.filter((page) => Boolean(page.summary)).length;
+  const pagesWithSnippet = pages.filter((page) => page.hasSnippet).length;
+  const failingPages = pages.filter((page) => (page.summary?.failCount || 0) > 0).length;
+
+  return {
+    startUrl,
+    origin,
+    maxPages,
+    maxDepth,
+    visitedPages: pages.length,
+    auditedPages,
+    pagesWithSnippet,
+    failingPages,
+    snippetVersion,
+    snippetTools,
+    sitemapStatus,
+    audit404,
+    issueCounts,
+    pages
+  };
+}
+
+function mapDesignerStatus(
+  designer: DesignerChecklistReport,
+  id: string
+): { status: UnifiedReviewStatus; evidence: string[]; confidence: number } {
+  const check = designer.checks.find((item) => item.id === id);
+  if (!check) {
+    return {
+      status: 'manual',
+      evidence: [`Designer check not found: ${id}`],
+      confidence: 0.2
+    };
+  }
+  if (check.result === 'pass') return { status: 'pass', evidence: check.evidence, confidence: 0.93 };
+  if (check.result === 'fail') return { status: 'fail', evidence: check.evidence, confidence: 0.93 };
+  return { status: 'manual', evidence: check.evidence, confidence: 0.2 };
+}
+
+function unifyRows(
+  designer: DesignerChecklistReport,
+  published: PublishedSnippetCrawlResult,
+  includeManual: boolean
+): UnifiedReviewRow[] {
+  const home = published.pages.find((page) => page.url === published.startUrl) || published.pages[0] || null;
+  const homeTitle = home?.title || '';
+  const formatKeys = Array.from(
+    new Set(
+      published.pages.flatMap((page) =>
+        Object.keys(page.summary?.imageFormats || {}).map((key) => key.toLowerCase())
+      )
+    )
+  ).sort();
+
+  const hasLicensePage = published.pages.some((page) => page.url.toLowerCase().includes('/license'));
+  const licensePages = published.pages.filter((page) => page.url.toLowerCase().includes('/license'));
+  const hasKnownLicenseTextResult = licensePages.some(
+    (page) => typeof page.hasRequiredLicenseText === 'boolean'
+  );
+  const hasRequiredLicenseText = licensePages.some((page) => page.hasRequiredLicenseText === true);
+
+  const rows: UnifiedReviewRow[] = [];
+  const pushRow = (
+    id: string,
+    section: string,
+    requirement: string,
+    status: UnifiedReviewStatus,
+    evidence: string[],
+    source: string[],
+    confidence: number,
+    fixHint?: string
+  ) => {
+    rows.push({ id, section, requirement, status, evidence, source, confidence, fixHint });
+  };
+
+  const dNavFooter = mapDesignerStatus(designer, 'components.nav_footer_cta');
+  const dComponentNames = mapDesignerStatus(designer, 'components.title_case_naming');
+  const dVarReusable = mapDesignerStatus(designer, 'variables.defined_reusable');
+  const dVarTitle = mapDesignerStatus(designer, 'variables.title_case_naming');
+  const dVarBreakpoints = mapDesignerStatus(designer, 'variables.breakpoint_modes');
+  const dStylesUnused = mapDesignerStatus(designer, 'styles.unused_classes_cleaned');
+  const dStylesBase = mapDesignerStatus(designer, 'styles.base_tag_selectors');
+  const dComboDepth = mapDesignerStatus(designer, 'styles.combo_class_depth');
+  const dCmsRel = mapDesignerStatus(designer, 'cms.collection_pages_present');
+
+  pushRow(
+    'webflow_audit.h1_hierarchy',
+    'Webflow Audit Panel',
+    'One H1 per page; no skipped heading levels',
+    published.issueCounts.missingH1 > 0 ||
+      published.issueCounts.multipleH1 > 0 ||
+      published.issueCounts.skippedHeadingLevels > 0
+      ? 'fail'
+      : 'pass',
+    [
+      `missingH1Pages=${published.issueCounts.missingH1}`,
+      `multipleH1Pages=${published.issueCounts.multipleH1}`,
+      `skippedHeadingLevelsPages=${published.issueCounts.skippedHeadingLevels}`
+    ],
+    ['published-webmcp-crawl'],
+    0.9,
+    'Fix heading hierarchy per page and keep a single primary H1.'
+  );
+
+  pushRow(
+    'webflow_audit.alt_text',
+    'Webflow Audit Panel',
+    'No missing alt texts',
+    published.issueCounts.imagesMissingAlt > 0 ? 'fail' : 'pass',
+    [`pagesWithMissingAlt=${published.issueCounts.imagesMissingAlt}`],
+    ['published-webmcp-crawl'],
+    0.9,
+    'Add descriptive alt text for informative images and mark decorative images appropriately.'
+  );
+
+  pushRow(
+    'components.nav_footer_cta',
+    'Components Panel',
+    'Nav, Footer and CTAs are Components',
+    dNavFooter.status,
+    dNavFooter.evidence,
+    ['designer-mcp'],
+    dNavFooter.confidence
+  );
+
+  pushRow(
+    'components.title_case_names',
+    'Components Panel',
+    'Components use title casing in names',
+    dComponentNames.status,
+    dComponentNames.evidence,
+    ['designer-mcp'],
+    dComponentNames.confidence,
+    'Rename components/variants to Title Case with concise human-readable labels.'
+  );
+
+  const ix2MissingTargets = home?.summary?.ix2?.missingTargets ?? 0;
+  const ix2Unused = home?.summary?.ix2?.unusedActionLists ?? 0;
+  const ix3MissingSelectors = home?.summary?.ix3?.missingTargetSelectors ?? 0;
+  const interactionsStatus: UnifiedReviewStatus =
+    ix2Unused > 0
+      ? 'fail'
+      : ix2MissingTargets > 0 || ix3MissingSelectors > 0
+        ? 'partial'
+        : 'pass';
+  pushRow(
+    'interactions.unused_cleaned',
+    'Interactions Panel',
+    'Interactions are cleaned of unused animations',
+    interactionsStatus,
+    [
+      `home.ix2.unusedActionLists=${ix2Unused}`,
+      `home.ix2.missingTargets=${ix2MissingTargets}`,
+      `home.ix3.missingTargetSelectors=${ix3MissingSelectors}`,
+      'Strict unused/deleted state still needs Designer panel confirmation.'
+    ],
+    ['published-webmcp-crawl', 'designer-mcp'],
+    interactionsStatus === 'partial' ? 0.6 : 0.82,
+    'Remove orphaned targets/action lists and verify in Designer Interactions panel.'
+  );
+
+  pushRow(
+    'variables.defined_reusable',
+    'Variables Panel',
+    'Color, typography, and spacing variables are defined and reusable',
+    dVarReusable.status,
+    dVarReusable.evidence,
+    ['designer-mcp'],
+    dVarReusable.confidence
+  );
+  pushRow(
+    'variables.title_case',
+    'Variables Panel',
+    'Variables use Title Case, human readable naming',
+    dVarTitle.status,
+    dVarTitle.evidence,
+    ['designer-mcp'],
+    dVarTitle.confidence
+  );
+  pushRow(
+    'variables.breakpoint_modes',
+    'Variables Panel',
+    'Variable Modes exist for tablet, mobile landscape, portrait breakpoints',
+    dVarBreakpoints.status,
+    dVarBreakpoints.evidence,
+    ['designer-mcp'],
+    dVarBreakpoints.confidence
+  );
+
+  pushRow(
+    'styles.unused_classes',
+    'Styles Selector',
+    'Unused styles/classes are cleaned up',
+    dStylesUnused.status,
+    dStylesUnused.evidence,
+    ['designer-mcp'],
+    dStylesUnused.confidence
+  );
+  pushRow(
+    'styles.base_tag_styles',
+    'Styles Selector',
+    'Base styles applied to HTML tags',
+    dStylesBase.status,
+    dStylesBase.evidence,
+    ['designer-mcp'],
+    dStylesBase.confidence
+  );
+  pushRow(
+    'styles.base_uses_variables',
+    'Styles Selector',
+    'Variables are used to define base tag styles',
+    'manual',
+    ['Variable linkage is not currently extracted by this MCP pipeline.'],
+    ['designer-mcp'],
+    0.2
+  );
+  pushRow(
+    'styles.combo_depth',
+    'Styles Selector',
+    'No more than 3-4 combo classes stacked per element',
+    dComboDepth.status,
+    dComboDepth.evidence,
+    ['designer-mcp'],
+    dComboDepth.confidence
+  );
+
+  const homeTitleCompliant =
+    homeTitle.includes(' - Webflow HTML website template') ||
+    homeTitle.includes(' - Webflow Ecommerce website template');
+  pushRow(
+    'pages.home_seo_title_formula',
+    'Page Level Checks',
+    'Home SEO title matches required naming formula',
+    homeTitleCompliant ? 'pass' : 'fail',
+    [`homeTitle=${homeTitle || 'n/a'}`],
+    ['published-webmcp-crawl'],
+    0.85,
+    'Set homepage title to "{Template Name} - Webflow HTML website template" (or Ecommerce variant).'
+  );
+
+  pushRow(
+    'pages.license_text_exact',
+    'Page Level Checks',
+    'License page includes the exact required opening text',
+    !hasLicensePage
+      ? 'fail'
+      : hasKnownLicenseTextResult
+        ? hasRequiredLicenseText
+          ? 'pass'
+          : 'fail'
+        : 'partial',
+    [
+      `licensePageFound=${hasLicensePage}`,
+      `hasKnownLicenseTextResult=${hasKnownLicenseTextResult}`,
+      `hasRequiredLicenseText=${hasRequiredLicenseText}`
+    ],
+    ['published-webmcp-crawl', 'designer-mcp'],
+    hasKnownLicenseTextResult ? 0.85 : 0.5,
+    'Ensure /licenses page exists and starts with the required exact text.'
+  );
+
+  pushRow(
+    'pages.image_loading_strategy',
+    'Page Level Checks',
+    'Below-the-fold images are lazy-loaded and above-the-fold essentials are eager',
+    published.issueCounts.imagesAboveFoldLazy > 0 ? 'fail' : 'pass',
+    [`pagesWithAboveFoldLazy=${published.issueCounts.imagesAboveFoldLazy}`],
+    ['published-webmcp-crawl'],
+    0.87,
+    'Set hero/critical images to eager and keep below-fold images lazy.'
+  );
+
+  const videoControlsFail =
+    published.issueCounts.autoplayWithoutControls > 0 ||
+    published.issueCounts.backgroundVideosMissingControl > 0;
+  pushRow(
+    'pages.videos_controls',
+    'Page Level Checks',
+    'No autoplay without controls; background videos have pause/skip controls',
+    videoControlsFail ? 'fail' : 'pass',
+    [
+      `pagesWithAutoplayWithoutControls=${published.issueCounts.autoplayWithoutControls}`,
+      `pagesWithBackgroundVideoMissingControl=${published.issueCounts.backgroundVideosMissingControl}`
+    ],
+    ['published-webmcp-crawl'],
+    0.86
+  );
+
+  pushRow(
+    'pages.meta_tags_static',
+    'Page Level Checks',
+    'Each static page has meta title, meta description and Open Graph tags',
+    published.issueCounts.metaMissing > 0 ? 'fail' : 'pass',
+    [`pagesWithMissingMeta=${published.issueCounts.metaMissing}`],
+    ['published-webmcp-crawl'],
+    0.9,
+    'Add missing Open Graph/meta tags per page, including og:image.'
+  );
+
+  pushRow(
+    'pages.meta_tags_cms_dynamic',
+    'Page Level Checks',
+    'CMS pages use dynamic SEO tags',
+    'partial',
+    [
+      `cmsCollectionsDetected=${designer.metadataSummary.totalCMSCollections}`,
+      'Dynamic field binding cannot be confirmed from current payloads.'
+    ],
+    ['designer-mcp', 'published-webmcp-crawl'],
+    0.55
+  );
+
+  const a404 = published.audit404;
+  const hasHealthy404 =
+    a404.ok === true &&
+    (a404 as { status?: number }).status === 404 &&
+    (a404 as { navCount?: number }).navCount > 0 &&
+    (a404 as { linkCount?: number }).linkCount > 0;
+  pushRow(
+    'pages.custom_404',
+    'Page Level Checks',
+    'Custom branded 404 page exists with nav and CTAs',
+    hasHealthy404 ? 'pass' : 'fail',
+    [
+      `status=${(a404 as { status?: number }).status ?? 'n/a'}`,
+      `navCount=${(a404 as { navCount?: number }).navCount ?? 'n/a'}`,
+      `linkCount=${(a404 as { linkCount?: number }).linkCount ?? 'n/a'}`
+    ],
+    ['published-webmcp-crawl'],
+    0.92
+  );
+
+  pushRow(
+    'pages.image_dimensions',
+    'Page Level Checks',
+    'Images have explicit width/height or aspect-ratio hints',
+    published.issueCounts.imagesMissingDimensions > 0 ? 'fail' : 'pass',
+    [`pagesWithMissingImageDimensions=${published.issueCounts.imagesMissingDimensions}`],
+    ['published-webmcp-crawl'],
+    0.9,
+    'Add width/height attributes or explicit aspect-ratio to image elements.'
+  );
+
+  pushRow(
+    'pages.transition_simple',
+    'Page Level Checks',
+    'Simple CSS transitions are used for hover/press states',
+    'manual',
+    ['Transition-property linting is not included in this tool yet.'],
+    ['published-webmcp-crawl'],
+    0.2
+  );
+
+  pushRow(
+    'pages.wcag_contrast',
+    'Page Level Checks',
+    'WCAG contrast is met for default/hover/focus/active states',
+    'manual',
+    ['Color contrast computation is not included in this tool yet.'],
+    ['published-webmcp-crawl'],
+    0.2
+  );
+
+  pushRow(
+    'pages.cms_used_relational',
+    'Page Level Checks',
+    'CMS is used for repeatable/relational content',
+    dCmsRel.status,
+    dCmsRel.evidence,
+    ['designer-mcp'],
+    dCmsRel.confidence
+  );
+
+  const modernFormats = ['webp', 'avif', 'jpg', 'jpeg', 'png'];
+  pushRow(
+    'assets.modern_formats',
+    'Page Level Checks',
+    'Modern image formats are used (WebP, AVIF, JPEG, PNG)',
+    formatKeys.some((format) => modernFormats.includes(format)) ? 'pass' : 'fail',
+    [`detectedFormats=${formatKeys.join(',') || 'none'}`],
+    ['published-webmcp-crawl'],
+    0.86
+  );
+
+  pushRow(
+    'responsive.multi_breakpoint_check',
+    'Page Level Checks',
+    'Responsive checks have been run on homepage and at least one additional page',
+    'manual',
+    ['This run does not include multi-viewport screenshot assertions.'],
+    ['published-webmcp-crawl'],
+    0.2
+  );
+
+  return includeManual ? rows : rows.filter((row) => row.status !== 'manual');
+}
+
+async function runTemplateReviewTool(input: RunTemplateReviewInput): Promise<UnifiedTemplateReviewReport> {
+  if (!input?.previewUrl || !input?.publishedUrl) {
+    throw new Error('`previewUrl` and `publishedUrl` are required.');
+  }
+
+  const manager = getProvider();
+  const provider = manager.getProvider();
+  const includeManual = input.includeManual !== false;
+
+  const designer = await scoreDesignerChecklistTool({
+    url: input.previewUrl,
+    timeout: input.timeout,
+    includeManual: true
+  });
+
+  const published = await crawlPublishedWebMcp(input.publishedUrl, {
+    timeout: input.timeout,
+    crawlMaxPages: input.crawlMaxPages,
+    crawlMaxDepth: input.crawlMaxDepth
+  });
+
+  const rows = unifyRows(designer, published, includeManual);
+  const summary = rows.reduce(
+    (acc, row) => {
+      if (row.status === 'pass') acc.pass += 1;
+      else if (row.status === 'fail') acc.fail += 1;
+      else if (row.status === 'partial') acc.partial += 1;
+      else acc.manual += 1;
+      return acc;
+    },
+    { pass: 0, fail: 0, partial: 0, manual: 0, automated: 0, humanInLoop: 0 }
+  );
+  summary.automated = summary.pass + summary.fail;
+  summary.humanInLoop = summary.partial + summary.manual;
+
+  return {
+    generatedAt: new Date().toISOString(),
+    provider: provider.name,
+    previewUrl: input.previewUrl,
+    publishedUrl: input.publishedUrl,
+    summary,
+    designer,
+    published,
+    rows
+  };
+}
+
 // =============================================================================
 // Tool Handlers - Intelligence Layer
 // =============================================================================
@@ -795,6 +1638,40 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
             description: 'Optional Designer metadata payload from extract_designer_metadata.'
           }
         }
+      }
+    },
+    {
+      name: 'run_template_review',
+      description: 'Unified template review run for AI-native workflows. Combines Designer checklist scoring with published-site WebMCP crawl and returns normalized pass/fail/partial/manual rows with confidence and fix hints.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          previewUrl: {
+            type: 'string',
+            description: 'Webflow preview URL for Designer extraction/scoring.'
+          },
+          publishedUrl: {
+            type: 'string',
+            description: 'Published site URL with WebMCP snippet installed.'
+          },
+          timeout: {
+            type: 'number',
+            description: 'Optional per-page timeout in milliseconds (default: 90000).'
+          },
+          includeManual: {
+            type: 'boolean',
+            description: 'Include manual rows in final output (default: true).'
+          },
+          crawlMaxPages: {
+            type: 'number',
+            description: 'Maximum published pages to crawl (default: 20, max: 50).'
+          },
+          crawlMaxDepth: {
+            type: 'number',
+            description: 'Maximum crawl depth from publishedUrl (default: 2, max: 4).'
+          }
+        },
+        required: ['previewUrl', 'publishedUrl']
       }
     },
     {

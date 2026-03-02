@@ -541,6 +541,7 @@ export interface PublishedSnippetPageResult {
   statusCode: number | null;
   hasSnippet: boolean;
   snippetVersion: string | null;
+  hasRequiredLicenseText?: boolean | null;
   error?: string | null;
   summary?: PublishedSnippetPageSummary | null;
 }
