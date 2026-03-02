@@ -4,6 +4,12 @@ Agent-native tools for the Webflow Marketplace team. Exposes plagiarism detectio
 
 ## Tools
 
+### Unified Template Review
+
+| Tool | Mode | Description |
+|------|------|-------------|
+| `template_review_published_url` | HTML/static audit | Consolidated published-URL review (meta, headings, links, images, forms, media, sitemap, 404 probe) |
+
 ### Plagiarism Detection
 
 | Tool | Algorithm | Description |
@@ -74,6 +80,9 @@ Once configured, your AI agent can use these tools:
 
 > Use plagiarism_detect_frameworks to see what JS libraries 
   https://fancy-template.webflow.io uses
+
+> Use template_review_published_url to review
+  https://fancy-template.webflow.io and return a reviewer-ready findings bundle
 ```
 
 ## Architecture

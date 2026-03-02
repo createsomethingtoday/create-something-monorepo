@@ -18,6 +18,7 @@ import { initObservability, createTrace, createSpan } from '@create-something/ob
 import { mcpToolMetadata } from '@create-something/observability/atlas';
 
 import * as plagiarism from './tools/plagiarism.js';
+import * as publishedReview from './tools/published-review.js';
 
 // Initialize Langfuse tracing
 initObservability();
@@ -40,6 +41,44 @@ const server = new Server(
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
+    // ─────────────────────────────────────────────────────────────────────────
+    // Published URL Review Tools
+    // ─────────────────────────────────────────────────────────────────────────
+    {
+      name: 'template_review_published_url',
+      description: 'Unified published-site review for a Webflow template URL. Returns consolidated SEO/headings/links/images/forms/media/sitemap/404 findings and score.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          url: {
+            type: 'string',
+            description: 'Published URL to review (e.g., https://your-template.webflow.io)'
+          },
+          includeSitemap: {
+            type: 'boolean',
+            description: 'Fetch and parse /sitemap.xml (default: true)'
+          },
+          probe404: {
+            type: 'boolean',
+            description: 'Probe a random non-existent path for 404 behavior (default: true)'
+          },
+          maxExamples: {
+            type: 'number',
+            description: 'Maximum examples retained per finding category (1-100, default: 20)'
+          },
+          sitemapMaxUrls: {
+            type: 'number',
+            description: 'Maximum sitemap URLs to parse (1-1000, default: 200)'
+          },
+          timeoutMs: {
+            type: 'number',
+            description: 'Per-request timeout in milliseconds (1000-60000, default: 15000)'
+          }
+        },
+        required: ['url']
+      }
+    },
+
     // ─────────────────────────────────────────────────────────────────────────
     // Plagiarism Detection Tools
     // ─────────────────────────────────────────────────────────────────────────
@@ -222,6 +261,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     let result: unknown;
 
     switch (name) {
+      // Published URL Review
+      case 'template_review_published_url':
+        result = await publishedReview.reviewPublishedTemplateUrl({
+          url: safeArgs.url as string,
+          includeSitemap: safeArgs.includeSitemap as boolean | undefined,
+          probe404: safeArgs.probe404 as boolean | undefined,
+          maxExamples: safeArgs.maxExamples as number | undefined,
+          sitemapMaxUrls: safeArgs.sitemapMaxUrls as number | undefined,
+          timeoutMs: safeArgs.timeoutMs as number | undefined,
+        });
+        break;
+
       // Plagiarism Detection
       case 'plagiarism_health':
         result = await plagiarism.getHealth();
