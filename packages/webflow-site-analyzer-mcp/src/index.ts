@@ -1844,6 +1844,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case 'score_designer_checklist':
         result = await scoreDesignerChecklistTool(safeArgs as unknown as ScoreDesignerChecklistInput);
         break;
+      case 'run_template_review':
+        result = await runTemplateReviewTool(safeArgs as unknown as RunTemplateReviewInput);
+        break;
       case 'get_webflow_review_policy':
         result = await getWebflowReviewPolicy(Boolean(safeArgs.refresh));
         break;
