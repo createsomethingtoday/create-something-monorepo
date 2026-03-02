@@ -105,9 +105,9 @@ try {
     };
 
     try {
-      const response = await page.goto(url, { waitUntil: 'networkidle2', timeout: 120000 });
+      const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
       pageRecord.status = response?.status?.() ?? null;
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       const evalData = await page.evaluate(async () => {
         const title = document.title || null;
