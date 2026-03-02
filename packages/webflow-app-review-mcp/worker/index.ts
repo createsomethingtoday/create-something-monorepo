@@ -12,6 +12,7 @@ import { registerTools } from '../src/tools.js';
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   TELEMETRY_DB?: D1Database;
+  MCP_ACCOUNT_ID?: string;
   MCP_API_KEY?: string;
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID?: string;
@@ -36,6 +37,7 @@ export class WebflowAppReviewMCP extends McpAgent<Env> {
         this.server,
         this.env.TELEMETRY_DB as unknown as Parameters<typeof enableTelemetry>[1],
         'webflow-app-review-mcp',
+        () => this.env.MCP_ACCOUNT_ID?.trim() || 'operator',
       );
     }
 

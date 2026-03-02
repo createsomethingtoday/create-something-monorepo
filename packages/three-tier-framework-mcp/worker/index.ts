@@ -50,6 +50,7 @@ import { CASE_STUDIES, CASE_STUDY_LIST } from '../src/framework/examples.js';
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   TELEMETRY_DB?: D1Database;
+  MCP_ACCOUNT_ID?: string;
 }
 
 // =============================================================================
@@ -119,11 +120,17 @@ export class ThreeTierFrameworkMCP extends McpAgent<Env> {
   async init() {
     // Telemetry: meter all tool calls + register health/usage resources
     if (this.env.TELEMETRY_DB) {
-      enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'three-tier-framework', undefined, {
+      enableTelemetry(
+        this.server,
+        this.env.TELEMETRY_DB as any,
+        'three-tier-framework',
+        () => this.env.MCP_ACCOUNT_ID?.trim() || 'operator',
+        {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
         projectName: 'three-tier-framework',
         projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
-      });
+        },
+      );
     }
 
     // =========================================================================

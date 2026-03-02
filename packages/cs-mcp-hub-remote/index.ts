@@ -2494,12 +2494,14 @@ export function resolveIntentRouteCandidate(
     ?? allowlistMatch?.definition.fallbackQuery
     ?? normalizedIntent.replaceAll('_', ' ');
   const serverName = explicitServerName ?? allowlistMatch?.definition.preferredServer ?? null;
-  const discovered = searchProxyTools(visible, { query, serverName, limit });
+  const discoveryFetchLimit = Math.min(Math.max(limit * 5, 20), 100);
+  const discovered = searchProxyTools(visible, { query, serverName, limit: discoveryFetchLimit });
   const tools = Array.isArray((discovered as Record<string, unknown>).tools)
     ? (discovered as Record<string, unknown>).tools as Array<Record<string, unknown>>
     : [];
+  const rankedTools = rankDiscoveryFallbackTools(tools, query).slice(0, limit);
 
-  const first = tools[0] ?? null;
+  const first = rankedTools[0] ?? null;
   if (first) {
     return {
       source: 'discovery',
@@ -2512,7 +2514,7 @@ export function resolveIntentRouteCandidate(
       reason: allowlistMatch
         ? `Allowlisted route unavailable; selected discovery fallback for intent "${intent}".`
         : `Selected discovery fallback for intent "${intent}".`,
-      alternatives: tools.map((tool) => ({
+      alternatives: rankedTools.map((tool) => ({
         proxyToolName: stringArg(tool.proxyToolName) ?? '',
         serverName: stringArg(tool.serverName) ?? '',
         downstreamToolName: stringArg(tool.downstreamToolName) ?? '',
@@ -2561,9 +2563,138 @@ function normalizeIntentKey(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 }
 
+const ROUTER_STOP_WORDS = new Set([
+  'a',
+  'an',
+  'and',
+  'for',
+  'from',
+  'i',
+  'in',
+  'is',
+  'it',
+  'me',
+  'my',
+  'of',
+  'on',
+  'or',
+  'please',
+  'that',
+  'the',
+  'to',
+  'with',
+  'you',
+]);
+
+const MIN_HEURISTIC_ALLOWLIST_SCORE = 120;
+
+function canonicalizeRouterToken(token: string): string {
+  const lower = token.trim().toLowerCase();
+  if (!lower) return '';
+  if (lower.endsWith('ies') && lower.length > 4) {
+    return `${lower.slice(0, -3)}y`;
+  }
+  if (lower.endsWith('s') && lower.length > 3 && !lower.endsWith('ss')) {
+    return lower.slice(0, -1);
+  }
+  return lower;
+}
+
+function tokenizeRouterText(value: string): string[] {
+  const normalized = normalizeIntentKey(value);
+  if (!normalized) return [];
+  const tokens = normalized
+    .split('_')
+    .map((token) => canonicalizeRouterToken(token))
+    .filter((token) => token.length > 1 && !ROUTER_STOP_WORDS.has(token));
+  return Array.from(new Set(tokens));
+}
+
+function countTokenOverlap(queryTokens: Set<string>, candidateTokens: string[]): number {
+  if (!queryTokens.size || !candidateTokens.length) return 0;
+  const unique = new Set(candidateTokens);
+  let count = 0;
+  for (const token of unique) {
+    if (queryTokens.has(token)) count += 1;
+  }
+  return count;
+}
+
+function scoreAllowlistIntentHeuristic(
+  queryTokens: Set<string>,
+  intentId: string,
+  definition: IntentRouteDefinition,
+): number {
+  if (!queryTokens.size) return 0;
+  const idTokens = tokenizeRouterText(intentId);
+  const synonymTokens = (definition.synonyms ?? []).flatMap((synonym) => tokenizeRouterText(synonym));
+  const descriptionTokens = tokenizeRouterText(definition.description ?? '');
+  const preferredServerTokens = tokenizeRouterText(definition.preferredServer ?? '');
+
+  let score = 0;
+  score += countTokenOverlap(queryTokens, idTokens) * 45;
+  score += countTokenOverlap(queryTokens, synonymTokens) * 30;
+  score += countTokenOverlap(queryTokens, descriptionTokens) * 12;
+  score += countTokenOverlap(queryTokens, preferredServerTokens) * 8;
+
+  const actionToken = idTokens[0];
+  if (actionToken && queryTokens.has(actionToken)) {
+    score += 25;
+  }
+
+  return score;
+}
+
+function isDeprecatedDescription(description: string): boolean {
+  return /\bdeprecated\b/i.test(description);
+}
+
+function rankDiscoveryFallbackTools(
+  tools: Array<Record<string, unknown>>,
+  query: string,
+): Array<Record<string, unknown>> {
+  if (!tools.length) return tools;
+  const queryTokens = new Set(tokenizeRouterText(query));
+  const scored = tools.map((tool) => {
+    const proxyToolName = stringArg(tool.proxyToolName) ?? '';
+    const serverName = stringArg(tool.serverName) ?? '';
+    const downstreamToolName = stringArg(tool.downstreamToolName) ?? '';
+    const description = stringArg(tool.description) ?? '';
+    const deprecated = isDeprecatedDescription(description);
+
+    let score = 0;
+    for (const token of queryTokens) {
+      if (proxyToolName.toLowerCase().includes(token)) score += 8;
+      if (downstreamToolName.toLowerCase().includes(token)) score += 7;
+      if (serverName.toLowerCase().includes(token)) score += 4;
+      if (description.toLowerCase().includes(token)) score += 3;
+    }
+
+    if (deprecated) {
+      score -= 60;
+    }
+
+    return {
+      tool,
+      score,
+      deprecated,
+      proxyToolName,
+    };
+  });
+
+  scored.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    if (a.deprecated !== b.deprecated) return a.deprecated ? 1 : -1;
+    return a.proxyToolName.localeCompare(b.proxyToolName);
+  });
+
+  return scored.map((entry) => entry.tool);
+}
+
 function findAllowlistIntentMatch(
   normalizedIntent: string,
 ): { intentId: string; definition: IntentRouteDefinition } | null {
+  const queryTokens = new Set(tokenizeRouterText(normalizedIntent));
   let best:
     | {
       score: number;
@@ -2580,9 +2711,11 @@ function findAllowlistIntentMatch(
 
     let score = 0;
     if (keys.some((key) => key === normalizedIntent)) {
-      score = idNorm === normalizedIntent ? 300 : 250;
+      score = idNorm === normalizedIntent ? 1000 : 900;
     } else if (keys.some((key) => key && (normalizedIntent.includes(key) || key.includes(normalizedIntent)))) {
-      score = 100;
+      score = 500;
+    } else {
+      score = scoreAllowlistIntentHeuristic(queryTokens, intentId, definition);
     }
 
     if (!best || score > best.score) {
@@ -2594,7 +2727,7 @@ function findAllowlistIntentMatch(
     }
   }
 
-  return best && best.score > 0
+  return best && best.score >= MIN_HEURISTIC_ALLOWLIST_SCORE
     ? { intentId: best.intentId, definition: best.definition }
     : null;
 }

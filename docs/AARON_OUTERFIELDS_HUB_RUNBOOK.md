@@ -63,7 +63,7 @@ export HUB_API_TOKEN_VALUE="$(openssl rand -hex 32)"
 printf "%s" "$HUB_API_TOKEN_VALUE" | pnpm exec wrangler secret put HUB_API_TOKEN --name cs-hub-aaron-outerfields
 ```
 
-Set Braintrust secrets (required for trace emission when `BRAINTRUST_ENABLED:true`):
+Set Braintrust secrets (`BRAINTRUST_API_KEY` is required for trace emission when `BRAINTRUST_ENABLED:true`; `BRAINTRUST_PROJECT_ID` is optional to pin a specific project):
 
 ```bash
 cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/cs-mcp-hub-remote"

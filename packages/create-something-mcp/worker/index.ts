@@ -39,6 +39,7 @@ import { PRODUCTS } from '../src/content/products.js';
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   TELEMETRY_DB?: D1Database;
+  MCP_ACCOUNT_ID?: string;
 }
 
 // =============================================================================
@@ -54,11 +55,17 @@ export class CreateSomethingMCP extends McpAgent<Env> {
   async init() {
     // Telemetry: meter all tool calls + register health/usage resources
     if (this.env.TELEMETRY_DB) {
-      enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'create-something', undefined, {
+      enableTelemetry(
+        this.server,
+        this.env.TELEMETRY_DB as any,
+        'create-something',
+        () => this.env.MCP_ACCOUNT_ID?.trim() || 'operator',
+        {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
         projectName: 'create-something',
         projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
-      });
+        },
+      );
     }
 
     registerResources(this.server);

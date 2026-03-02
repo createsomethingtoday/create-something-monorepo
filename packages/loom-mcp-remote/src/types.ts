@@ -9,6 +9,8 @@ export type LoomSessionStatus = 'active' | 'completed' | 'failed' | 'interrupted
 export interface Env {
   DB: D1Database;
   TELEMETRY_DB?: D1Database;
+  MCP_ACCOUNT_ID?: string;
+  LOOM_ACCOUNT_ID?: string;
   LOOM_MCP_API_TOKEN?: string;
   MIGRATION_ADMIN_TOKEN?: string;
   MIGRATION_SIGNING_SECRET?: string;

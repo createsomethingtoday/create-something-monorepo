@@ -38,6 +38,7 @@ interface Env {
   READER_OBJECT: DurableObjectNamespace;
   DB: D1Database;
   TELEMETRY_DB?: D1Database;
+  MCP_ACCOUNT_ID?: string;
   FILES: R2Bucket;
 }
 
@@ -224,11 +225,17 @@ export class SubstrateMCP extends McpAgent<Env> {
   async init() {
     // Telemetry: meter all tool calls + register health/usage resources
     if (this.env.TELEMETRY_DB) {
-      enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'substrate-mcp', undefined, {
+      enableTelemetry(
+        this.server,
+        this.env.TELEMETRY_DB as any,
+        'substrate-mcp',
+        () => this.env.MCP_ACCOUNT_ID?.trim() || 'operator',
+        {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
         projectName: 'substrate-mcp',
         projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
-      });
+        },
+      );
     }
 
     // D1 via binding — with observability tracking

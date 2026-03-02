@@ -11,6 +11,10 @@ import { jsonResponse } from './src/utils.js';
 const SERVER_NAME = 'loom-mcp';
 const SERVER_VERSION = '1.0.0';
 
+function resolveTelemetryAccountId(env: Env): string {
+  return env.LOOM_ACCOUNT_ID?.trim() || env.MCP_ACCOUNT_ID?.trim() || 'operator';
+}
+
 function parseBearerToken(request: Request): string | null {
   const auth = request.headers.get('Authorization');
   if (!auth?.startsWith('Bearer ')) return null;
@@ -42,7 +46,7 @@ function createServer(env: Env): McpServer {
   });
 
   if (env.TELEMETRY_DB) {
-    enableTelemetry(server, env.TELEMETRY_DB, SERVER_NAME, undefined, {
+    enableTelemetry(server, env.TELEMETRY_DB, SERVER_NAME, () => resolveTelemetryAccountId(env), {
       apiKey: env.BRAINTRUST_API_KEY,
       projectName: env.BRAINTRUST_PROJECT_NAME ?? SERVER_NAME,
       projectId: env.BRAINTRUST_PROJECT_ID,

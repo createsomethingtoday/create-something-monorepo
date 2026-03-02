@@ -29,7 +29,9 @@
       "synonyms": [
         "create spreadsheet",
         "new google sheet",
-        "make sheet"
+        "make sheet",
+        "create a google sheet",
+        "start spreadsheet"
       ],
       "preferredServer": "composio-toolkit-googlesheets",
       "fallbackQuery": "googlesheets create google sheet"
@@ -40,10 +42,24 @@
       "synonyms": [
         "append row",
         "update sheet",
-        "write to sheet"
+        "write to sheet",
+        "write values to sheet",
+        "add values to spreadsheet"
       ],
       "preferredServer": "composio-toolkit-googlesheets",
       "fallbackQuery": "googlesheets batch update"
+    },
+    "write_formula_to_sheet": {
+      "proxyToolName": "composio-toolkit-googlesheets__googlesheets_values_update",
+      "description": "Write formulas into specific Google Sheet cells.",
+      "synonyms": [
+        "write formula in sheet",
+        "set sheet formula",
+        "update formula cell",
+        "enter formula in google sheet"
+      ],
+      "preferredServer": "composio-toolkit-googlesheets",
+      "fallbackQuery": "googlesheets values update formula"
     },
     "read_sheet_values": {
       "proxyToolName": "composio-toolkit-googlesheets__googlesheets_values_get",

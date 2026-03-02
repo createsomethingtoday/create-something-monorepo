@@ -78,6 +78,24 @@ function createIntentRuntime() {
     downstreamToolName: 'googlesheets_batch_update',
     call: async () => ({ ok: true }),
   };
+  const createSheetRoute = {
+    proxyToolName: 'composio-toolkit-googlesheets__googlesheets_create_google_sheet1',
+    serverName: 'composio-toolkit-googlesheets',
+    downstreamToolName: 'googlesheets_create_google_sheet1',
+    call: async () => ({ ok: true }),
+  };
+  const valuesUpdateRoute = {
+    proxyToolName: 'composio-toolkit-googlesheets__googlesheets_values_update',
+    serverName: 'composio-toolkit-googlesheets',
+    downstreamToolName: 'googlesheets_values_update',
+    call: async () => ({ ok: true }),
+  };
+  const deprecatedSqlRoute = {
+    proxyToolName: 'composio-toolkit-googlesheets__googlesheets_execute_sql',
+    serverName: 'composio-toolkit-googlesheets',
+    downstreamToolName: 'googlesheets_execute_sql',
+    call: async () => ({ ok: true }),
+  };
 
   return {
     builtAt: 0,
@@ -96,14 +114,32 @@ function createIntentRuntime() {
           inputSchema: { type: 'object', properties: {} },
         },
         {
+          name: createSheetRoute.proxyToolName,
+          description: '[googlesheets] create sheet',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        {
           name: sheetRoute.proxyToolName,
-          description: '[googlesheets] batch update',
+          description: '[googlesheets] write values to range',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        {
+          name: valuesUpdateRoute.proxyToolName,
+          description: '[googlesheets] set values in range',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        {
+          name: deprecatedSqlRoute.proxyToolName,
+          description: '[googlesheets] DEPRECATED SQL executor',
           inputSchema: { type: 'object', properties: {} },
         },
       ],
       routes: new Map([
         [zoomRoute.proxyToolName, zoomRoute],
+        [createSheetRoute.proxyToolName, createSheetRoute],
         [sheetRoute.proxyToolName, sheetRoute],
+        [valuesUpdateRoute.proxyToolName, valuesUpdateRoute],
+        [deprecatedSqlRoute.proxyToolName, deprecatedSqlRoute],
       ]),
       warnings: [],
     },
@@ -221,6 +257,29 @@ test('resolveIntentRouteCandidate prefers allowlisted route when visible', () =>
   assert.equal(route.proxyToolName, 'composio-toolkit-zoom__zoom_create_a_meeting');
 });
 
+test('resolveIntentRouteCandidate uses heuristic router for natural language intents', () => {
+  const runtime = createIntentRuntime();
+  const visible = buildVisibleProxyRoutes(runtime as any, {
+    mode: 'compact',
+    activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
+    maxProxyTools: null,
+  }, {
+    accountId: 'acct_1',
+    tenantId: null,
+    userId: null,
+    sessionId: null,
+    allowedToolPrefixes: null,
+    identitySource: 'fallback',
+  });
+
+  const route = resolveIntentRouteCandidate(visible, {
+    intent: 'create a google sheet and write a formula',
+  });
+
+  assert.equal(route.source, 'allowlist');
+  assert.equal(route.proxyToolName, 'composio-toolkit-googlesheets__googlesheets_create_google_sheet1');
+});
+
 test('resolveIntentRouteCandidate falls back to discovery for unknown intents', () => {
   const runtime = createIntentRuntime();
   const visible = buildVisibleProxyRoutes(runtime as any, {
@@ -238,9 +297,34 @@ test('resolveIntentRouteCandidate falls back to discovery for unknown intents', 
 
   const route = resolveIntentRouteCandidate(visible, {
     intent: 'record workflow rows',
-    query: 'batch update',
+    query: 'batch',
     serverName: 'composio-toolkit-googlesheets',
   });
   assert.equal(route.source, 'discovery');
   assert.equal(route.proxyToolName, 'composio-toolkit-googlesheets__googlesheets_batch_update');
+});
+
+test('resolveIntentRouteCandidate de-prioritizes deprecated discovery tools', () => {
+  const runtime = createIntentRuntime();
+  const visible = buildVisibleProxyRoutes(runtime as any, {
+    mode: 'compact',
+    activeServers: ['composio-toolkit-googlesheets', 'composio-toolkit-zoom'],
+    maxProxyTools: null,
+  }, {
+    accountId: 'acct_1',
+    tenantId: null,
+    userId: null,
+    sessionId: null,
+    allowedToolPrefixes: null,
+    identitySource: 'fallback',
+  });
+
+  const route = resolveIntentRouteCandidate(visible, {
+    intent: 'workflow synchronization task',
+    query: 'write',
+    serverName: 'composio-toolkit-googlesheets',
+  });
+
+  assert.equal(route.source, 'discovery');
+  assert.notEqual(route.proxyToolName, 'composio-toolkit-googlesheets__googlesheets_execute_sql');
 });

@@ -36,6 +36,7 @@ import type { HalfDozenScenarioRunResult } from './halfdozenFleetWatchdog.js';
 interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   TELEMETRY_DB?: D1Database;
+  MCP_ACCOUNT_ID?: string;
   OPENAI_API_KEY?: string;
   BRAINTRUST_API_KEY?: string;
   BRAINTRUST_PROJECT_NAME?: string;
@@ -790,11 +791,17 @@ export class PlaybookMCP extends McpAgent<Env> {
   async init() {
     // Telemetry: meter all tool calls + register health/usage resources
     if (this.env.TELEMETRY_DB) {
-      enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'playbook', undefined, {
+      enableTelemetry(
+        this.server,
+        this.env.TELEMETRY_DB as any,
+        'playbook',
+        () => this.env.MCP_ACCOUNT_ID?.trim() || 'operator',
+        {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
         projectName: resolveBraintrustProjectName(this.env),
         projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
-      });
+        },
+      );
     }
 
     registerResources(this.server);

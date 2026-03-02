@@ -54,6 +54,7 @@ interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   DB: D1Database;
   TELEMETRY_DB?: D1Database;
+  MCP_ACCOUNT_ID?: string;
   /** Optional API key for authenticating remote MCP clients */
   MCP_API_KEY?: string;
 }
@@ -117,11 +118,17 @@ export class ScheduleMCP extends McpAgent<Env> {
   async init() {
     // Telemetry: meter all tool calls + register health/usage resources
     if (this.env.TELEMETRY_DB) {
-      enableTelemetry(this.server, this.env.TELEMETRY_DB as any, 'schedule-mcp', undefined, {
+      enableTelemetry(
+        this.server,
+        this.env.TELEMETRY_DB as any,
+        'schedule-mcp',
+        () => this.env.MCP_ACCOUNT_ID?.trim() || 'operator',
+        {
         apiKey: (this.env as any).BRAINTRUST_API_KEY,
         projectName: 'schedule-mcp',
         projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
-      });
+        },
+      );
     }
 
     // Configure Insight for Worker mode (logs to console → wrangler tail)
