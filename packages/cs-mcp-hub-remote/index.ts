@@ -17,6 +17,7 @@ type HttpServerConfig = {
   http_headers?: StringMap;
   env_http_headers?: StringMap;
   bearer_token_env_var?: string;
+  connect_timeout_ms?: number;
   tool_call_timeout_ms?: number;
   timeout_ms?: number;
   headers?: StringMap;
@@ -539,6 +540,7 @@ const sessionResolveCache = new Map<
   { value: IdentitySessionResolveResponse | null; expiresAtMs: number }
 >();
 const DEFAULT_SESSION_RESOLVE_TIMEOUT_MS = 5000;
+const DEFAULT_CONNECT_TIMEOUT_MS = 5000;
 const DEFAULT_TOOL_CALL_TIMEOUT_MS = 120_000;
 const SESSION_RESOLVE_CACHE_MS = 30000;
 const DEFAULT_DISCOVERY_MODE: DiscoveryMode = 'compact';
@@ -570,6 +572,15 @@ export default {
       const authFailure = authorizeRequest(request, env);
       if (authFailure) {
         return withCors(authFailure);
+      }
+
+      if (request.method === 'GET') {
+        const acceptHeader = (request.headers.get('accept') ?? '').toLowerCase();
+        if (!acceptHeader.includes('text/event-stream')) {
+          return withCors(
+            jsonResponse({ error: 'Not Acceptable: Client must accept text/event-stream' }, 406),
+          );
+        }
       }
 
       try {
@@ -775,23 +786,40 @@ async function buildHubRuntime(env: Env, stateResolution: StateResolution): Prom
   const failed: DownstreamFailure[] = [];
   const warnings = [...stateResolution.warnings];
 
-  for (const serverName of stateResolution.enabledServerNames) {
+  const connectionTasks = stateResolution.enabledServerNames.map(async (serverName) => {
     const config = registry.servers[serverName];
     if (!config) {
-      failed.push({ name: serverName, error: `Server "${serverName}" not found in registry` });
-      continue;
+      return {
+        kind: 'failed' as const,
+        failure: { name: serverName, error: `Server "${serverName}" not found in registry` },
+      };
     }
 
     if (config.transport !== 'http') {
-      warnings.push(`Skipping "${serverName}": remote hub only supports HTTP downstream servers`);
-      continue;
+      return {
+        kind: 'warning' as const,
+        message: `Skipping "${serverName}": remote hub only supports HTTP downstream servers`,
+      };
     }
 
     const result = await connectSingleDownstream(serverName, config, env);
     if ('client' in result) {
-      connected.push(result);
+      return { kind: 'connected' as const, connected: result };
+    }
+    return { kind: 'failed' as const, failure: result };
+  });
+
+  const connectionResults = await Promise.all(connectionTasks);
+  for (const result of connectionResults) {
+    if (result.kind === 'connected') {
+      connected.push(result.connected);
+      continue;
     } else {
-      failed.push(result);
+      if (result.kind === 'warning') {
+        warnings.push(result.message);
+      } else {
+        failed.push(result.failure);
+      }
     }
   }
 
@@ -819,6 +847,7 @@ async function connectSingleDownstream(
     name: `${HUB_NAME}:${name}`,
     version: HUB_VERSION,
   });
+  const connectTimeoutMs = resolveConnectTimeoutMs(config, env);
 
   try {
     const requestInit: RequestInit = {};
@@ -828,9 +857,17 @@ async function connectSingleDownstream(
     }
 
     const transport = new StreamableHTTPClientTransport(new URL(config.url), { requestInit });
-    await client.connect(transport);
+    await withTimeout(
+      client.connect(transport),
+      connectTimeoutMs,
+      `Connect to downstream "${name}"`,
+    );
 
-    const tools = await listAllTools(client);
+    const tools = await withTimeout(
+      listAllTools(client),
+      connectTimeoutMs,
+      `List tools from downstream "${name}"`,
+    );
     const toolCallTimeoutMs = resolveToolCallTimeoutMs(config, env);
     return { name, config, baseHeaders: headers, toolCallTimeoutMs, client, tools };
   } catch (error) {
@@ -880,6 +917,31 @@ function resolveToolCallTimeoutMs(config: HttpServerConfig, env: Env): number {
     DEFAULT_TOOL_CALL_TIMEOUT_MS,
   );
   return parsePositiveIntFromUnknown(config.tool_call_timeout_ms ?? config.timeout_ms, fallback);
+}
+
+function resolveConnectTimeoutMs(config: HttpServerConfig, env: Env): number {
+  const fallback = parsePositiveInt(
+    readEnvString(env, 'HUB_CONNECT_TIMEOUT_MS'),
+    DEFAULT_CONNECT_TIMEOUT_MS,
+  );
+  return parsePositiveIntFromUnknown(config.connect_timeout_ms, fallback);
+}
+
+async function withTimeout<T>(operation: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    timeoutHandle = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([operation, timeoutPromise]);
+  } finally {
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle);
+    }
+  }
 }
 
 async function listAllTools(client: Client): Promise<Tool[]> {
