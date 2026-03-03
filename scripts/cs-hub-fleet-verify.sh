@@ -25,7 +25,7 @@ health_url_for_worker() {
     "cs-hub-lainy") echo "https://lainy.mcp.createsomething.agency/health" ;;
     "cs-hub-danny") echo "https://danny.mcp.createsomething.agency/health" ;;
     "cs-hub-august") echo "https://august.mcp.createsomething.agency/health" ;;
-    "cs-hub-filip") echo "https://filip.mcp.createsomething.agency/health" ;;
+    "cs-hub-filip") echo "https://fillip.mcp.createsomething.agency/health" ;;
     "cs-hub-leah") echo "https://leah.mcp.createsomething.agency/health" ;;
     "cs-hub-mj") echo "https://mj.mcp.createsomething.agency/health" ;;
     "cs-mcp-hub-remote") echo "https://cs-mcp-hub-remote.createsomething.workers.dev/health" ;;
