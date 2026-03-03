@@ -43,7 +43,7 @@ HUB_DISCOVERY_SHARED_PACK = "shared-auth-core"
 # HUB_ACCOUNT_ID = "operator"
 # HUB_SESSION_RESOLVE_URL = "https://id.createsomething.space/v1/mcp/sessions/resolve"
 # HUB_SESSION_RESOLVE_TIMEOUT_MS = "5000"
-# HUB_CONNECT_TIMEOUT_MS = "5000"
+# HUB_CONNECT_TIMEOUT_MS = "4000"
 
 # Runtime cache controls.
 # HUB_REFRESH_SECONDS = "300"

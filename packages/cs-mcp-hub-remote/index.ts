@@ -540,7 +540,7 @@ const sessionResolveCache = new Map<
   { value: IdentitySessionResolveResponse | null; expiresAtMs: number }
 >();
 const DEFAULT_SESSION_RESOLVE_TIMEOUT_MS = 5000;
-const DEFAULT_CONNECT_TIMEOUT_MS = 5000;
+const DEFAULT_CONNECT_TIMEOUT_MS = 4000;
 const DEFAULT_TOOL_CALL_TIMEOUT_MS = 120_000;
 const SESSION_RESOLVE_CACHE_MS = 30000;
 const DEFAULT_DISCOVERY_MODE: DiscoveryMode = 'compact';
