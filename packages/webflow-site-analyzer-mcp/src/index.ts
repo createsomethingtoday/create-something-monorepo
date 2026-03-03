@@ -36,6 +36,13 @@ import {
   recordImageOptimizationScore,
   recordTouchpointCount
 } from './observability.js';
+import {
+  beginToolTrace,
+  endToolTraceError,
+  endToolTraceSuccess,
+  initMcpTracing,
+  shutdownMcpTracing,
+} from './mcp-tracing.js';
 import { getWebflowPolicySnapshot, refreshWebflowPolicySnapshot } from './policy/index.js';
 import { scoreDesignerChecklist } from './checklist/designer-checklist.js';
 import type {
@@ -69,6 +76,7 @@ import type {
 
 // Initialize observability
 initAnalyzerObservability();
+initMcpTracing();
 
 // Create provider manager
 let providerManager: ProviderManager | null = null;
@@ -1882,6 +1890,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
   const { name, arguments: args } = request.params;
   const safeArgs = (args || {}) as Record<string, unknown>;
+  const traceContext = beginToolTrace(name, safeArgs, extra);
 
   try {
     let result: unknown;
@@ -1960,6 +1969,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
         throw new Error(`Unknown tool: ${name}`);
     }
 
+    await endToolTraceSuccess(traceContext, result);
     return {
       content: [{
         type: 'text',
@@ -1968,6 +1978,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     };
 
   } catch (error: unknown) {
+    await endToolTraceError(traceContext, error);
     const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       content: [{
@@ -1983,15 +1994,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
 // Server Lifecycle
 // =============================================================================
 
-process.on('SIGINT', async () => {
+async function shutdownServer(): Promise<void> {
   if (providerManager) providerManager.shutdown();
   if (registry) await registry.save();
+  await shutdownMcpTracing();
+}
+
+process.on('SIGINT', async () => {
+  await shutdownServer();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-  if (providerManager) providerManager.shutdown();
-  if (registry) await registry.save();
+  await shutdownServer();
   process.exit(0);
 });
 
