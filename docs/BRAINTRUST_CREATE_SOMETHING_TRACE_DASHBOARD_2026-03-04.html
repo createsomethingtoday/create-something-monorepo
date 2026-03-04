@@ -1,0 +1,925 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CREATE SOMETHING Braintrust Trace Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Stack+Sans+Notch:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --color-bg-pure: #000000;
+        --color-bg-surface: #111111;
+        --color-bg-subtle: #1a1a1a;
+        --color-fg-primary: #ffffff;
+        --color-fg-secondary: rgba(255, 255, 255, 0.8);
+        --color-fg-tertiary: rgba(255, 255, 255, 0.6);
+        --color-fg-muted: rgba(255, 255, 255, 0.46);
+        --color-fg-subtle: rgba(255, 255, 255, 0.2);
+        --color-border-default: rgba(255, 255, 255, 0.1);
+        --color-border-strong: rgba(255, 255, 255, 0.3);
+        --color-error: #d44d4d;
+        --color-warning: #aa8844;
+        --color-info: #5082b9;
+        --color-data-1: #60a5fa;
+        --color-data-2: #22c55e;
+        --color-data-4: #fbbf24;
+        --font-sans: 'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--color-bg-pure);
+        color: var(--color-fg-primary);
+        font-family: var(--font-sans);
+      }
+
+      .page {
+        width: min(1260px, calc(100% - 2rem));
+        margin: 1.15rem auto 2rem;
+      }
+
+      .header {
+        border-top: 1px solid var(--color-border-strong);
+        border-bottom: 1px solid var(--color-border-default);
+        padding: 0.8rem 0 0.75rem;
+      }
+
+      .title {
+        margin: 0;
+        font-size: clamp(1.08rem, 1.9vw, 1.46rem);
+        letter-spacing: 0.01em;
+        line-height: 1.2;
+      }
+
+      .title .brand {
+        font-weight: 700;
+      }
+
+      .title .scope {
+        color: var(--color-fg-secondary);
+        font-weight: 500;
+      }
+
+      .subline {
+        margin-top: 0.4rem;
+        color: var(--color-fg-tertiary);
+        font-size: 0.82rem;
+        line-height: 1.5;
+      }
+
+      .meta {
+        margin-top: 0.32rem;
+        color: var(--color-fg-muted);
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        line-height: 1.45;
+      }
+
+      .lead {
+        margin-top: 0.48rem;
+        color: var(--color-fg-secondary);
+        font-size: 0.83rem;
+      }
+
+      .metrics {
+        margin-top: 0.85rem;
+        border-top: 1px solid var(--color-border-default);
+        border-bottom: 1px solid var(--color-border-default);
+        overflow-x: auto;
+      }
+
+      .metrics table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+      }
+
+      .metrics th,
+      .metrics td {
+        padding: 0.45rem 0.42rem;
+        border-right: 1px solid var(--color-border-default);
+      }
+
+      .metrics th:last-child,
+      .metrics td:last-child {
+        border-right: 0;
+      }
+
+      .metrics th {
+        font-size: 0.68rem;
+        color: var(--color-fg-tertiary);
+        font-weight: 600;
+        letter-spacing: 0.045em;
+        text-transform: uppercase;
+        text-align: left;
+      }
+
+      .metrics td {
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+      }
+
+      .metrics td.num {
+        text-align: right;
+      }
+
+      .section {
+        margin-top: 0.95rem;
+      }
+
+      .section h2 {
+        margin: 0;
+        font-size: 0.77rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--color-fg-tertiary);
+        font-weight: 600;
+      }
+
+      .table-wrap {
+        margin-top: 0.34rem;
+        border-top: 1px solid var(--color-border-default);
+        border-bottom: 1px solid var(--color-border-default);
+        overflow-x: auto;
+      }
+
+      table.data {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 840px;
+      }
+
+      table.data th,
+      table.data td {
+        padding: 0.4rem 0.44rem;
+        border-bottom: 1px solid var(--color-border-default);
+        vertical-align: top;
+        text-align: left;
+      }
+
+      table.data tr:last-child td {
+        border-bottom: 0;
+      }
+
+      table.data th {
+        color: var(--color-fg-tertiary);
+        font-size: 0.66rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        font-weight: 600;
+      }
+
+      table.data td {
+        color: var(--color-fg-secondary);
+        font-size: 0.76rem;
+        line-height: 1.4;
+      }
+
+      table.data td.num,
+      table.data th.num {
+        text-align: right;
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .mono {
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .bar {
+        position: relative;
+        width: 100%;
+        height: 0.35rem;
+        background: rgba(255, 255, 255, 0.07);
+        overflow: hidden;
+      }
+
+      .bar > span {
+        display: block;
+        height: 100%;
+      }
+
+      .bar-cat > span {
+        background: var(--color-data-1);
+      }
+
+      .bar-error > span {
+        background: var(--color-error);
+      }
+
+      .tool {
+        color: var(--color-fg-primary);
+      }
+
+      .message {
+        color: var(--color-fg-secondary);
+      }
+
+      .message code,
+      .mono-code {
+        font-family: var(--font-mono);
+        color: var(--color-fg-primary);
+        font-size: 0.71rem;
+      }
+
+      .tone-high {
+        color: #ff9f9f;
+      }
+
+      .tone-mid {
+        color: #ffd28a;
+      }
+
+      .tone-low {
+        color: #9fdea8;
+      }
+
+      .note {
+        margin-top: 0.48rem;
+        font-size: 0.7rem;
+        color: var(--color-fg-muted);
+      }
+
+      .status {
+        margin-top: 0.65rem;
+        padding: 0.45rem 0.5rem;
+        border-left: 2px solid var(--color-warning);
+        font-size: 0.74rem;
+        color: var(--color-fg-secondary);
+        display: none;
+      }
+
+      @media (max-width: 720px) {
+        .page {
+          width: calc(100% - 1rem);
+          margin-top: 0.7rem;
+        }
+
+        .subline,
+        .lead {
+          font-size: 0.78rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="header">
+        <h1 class="title">
+          <span class="brand">CREATE SOMETHING</span>
+          <span class="scope">Braintrust Trace Dashboard</span>
+        </h1>
+        <div class="subline" id="project-line"></div>
+        <div class="meta" id="meta-line"></div>
+        <div class="lead" id="lead-line"></div>
+      </header>
+
+      <section class="metrics" aria-label="Key metrics">
+        <table>
+          <thead>
+            <tr>
+              <th>Rows analyzed</th>
+              <th class="num">Error rows</th>
+              <th class="num">Error rate</th>
+              <th class="num">Top error category</th>
+              <th class="num">Top category share</th>
+              <th class="num">Max latency outlier</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="mono" id="m-rows"></td>
+              <td class="num mono" id="m-errors"></td>
+              <td class="num mono" id="m-rate"></td>
+              <td class="num" id="m-top-category"></td>
+              <td class="num mono" id="m-top-share"></td>
+              <td class="num mono" id="m-max-latency"></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="section">
+        <h2>Error Composition</h2>
+        <div class="table-wrap">
+          <table class="data" id="category-table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th class="num">Count</th>
+                <th class="num">% of errors</th>
+                <th>Density</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Top Tool Reliability (Volume + Failure)</h2>
+        <div class="table-wrap">
+          <table class="data" id="tool-table">
+            <thead>
+              <tr>
+                <th>Tool</th>
+                <th class="num">Rows</th>
+                <th class="num">Errors</th>
+                <th class="num">Error %</th>
+                <th class="num">Avg ms</th>
+                <th class="num">P95 ms</th>
+                <th class="num">Max ms</th>
+                <th>Error density</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Repeated Error Clusters</h2>
+        <div class="table-wrap">
+          <table class="data" id="cluster-table">
+            <thead>
+              <tr>
+                <th class="num">Count</th>
+                <th>Message</th>
+                <th>Tool</th>
+                <th class="num">First seen</th>
+                <th class="num">Last seen</th>
+                <th>Sample root span</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Latency Outliers</h2>
+        <div class="table-wrap">
+          <table class="data" id="latency-table">
+            <thead>
+              <tr>
+                <th class="num">Duration ms</th>
+                <th>Tool</th>
+                <th class="num">Created</th>
+                <th>Root span</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div class="status" id="status"></div>
+      <div class="note">
+        Tufte mode: minimal chrome, high data-ink ratio, direct labeling, tabular density. Source:
+        Braintrust BTQL <span class="mono-code">project_logs(project_id)</span>, sample limit 1000.
+      </div>
+    </main>
+
+    <script id="dashboard-data" type="application/json">
+{
+  "generated_at": "2026-03-04T11:31:23.274Z",
+  "project_id": "8ca0d63b-d985-4373-9906-c253bf3f52d0",
+  "sample_rows": 1000,
+  "window_start": "2026-03-01T15:55:44.047Z",
+  "window_end": "2026-03-04T11:30:22.524Z",
+  "error_rows": 71,
+  "error_rate": 7.1,
+  "categories": [
+    {
+      "category": "permission",
+      "count": 30
+    },
+    {
+      "category": "intent_routing",
+      "count": 24
+    },
+    {
+      "category": "other",
+      "count": 4
+    },
+    {
+      "category": "rate_limit",
+      "count": 4
+    },
+    {
+      "category": "validation",
+      "count": 4
+    },
+    {
+      "category": "tool_registration",
+      "count": 3
+    },
+    {
+      "category": "account_connection",
+      "count": 2
+    }
+  ],
+  "top_tools": [
+    {
+      "tool": "unknown",
+      "count": 213,
+      "errors": 19,
+      "error_rate": 8.9,
+      "avg_ms": 980.8,
+      "p95_ms": 2635,
+      "max_ms": 10771
+    },
+    {
+      "tool": "hub_execute_proxy_tool",
+      "count": 171,
+      "errors": 19,
+      "error_rate": 11.1,
+      "avg_ms": 946.7,
+      "p95_ms": 2404,
+      "max_ms": 10771
+    },
+    {
+      "tool": "hub_search_proxy_tools",
+      "count": 137,
+      "errors": 0,
+      "error_rate": 0,
+      "avg_ms": 11.9,
+      "p95_ms": 105,
+      "max_ms": 208
+    },
+    {
+      "tool": "hub_describe_proxy_tool",
+      "count": 66,
+      "errors": 2,
+      "error_rate": 3,
+      "avg_ms": 6.7,
+      "p95_ms": 6,
+      "max_ms": 141
+    },
+    {
+      "tool": "dm_composio__slack__slack_fetch_conversation_history",
+      "count": 56,
+      "errors": 0,
+      "error_rate": 0,
+      "avg_ms": 790.6,
+      "p95_ms": 974,
+      "max_ms": 1878
+    },
+    {
+      "tool": "hub_status",
+      "count": 54,
+      "errors": 0,
+      "error_rate": 0,
+      "avg_ms": 0,
+      "p95_ms": 0,
+      "max_ms": 0
+    },
+    {
+      "tool": "dm_composio__slack__slack_list_files_with_filters_in_slack",
+      "count": 48,
+      "errors": 0,
+      "error_rate": 0,
+      "avg_ms": 846.4,
+      "p95_ms": 1176,
+      "max_ms": 4095
+    },
+    {
+      "tool": "hub_list_services",
+      "count": 36,
+      "errors": 0,
+      "error_rate": 0,
+      "avg_ms": 32.8,
+      "p95_ms": 133,
+      "max_ms": 226
+    },
+    {
+      "tool": "hub_route_intent",
+      "count": 36,
+      "errors": 22,
+      "error_rate": 61.1,
+      "avg_ms": 3.4,
+      "p95_ms": 2,
+      "max_ms": 120
+    },
+    {
+      "tool": "hub_list_proxy_tools",
+      "count": 33,
+      "errors": 0,
+      "error_rate": 0,
+      "avg_ms": 32.6,
+      "p95_ms": 94,
+      "max_ms": 124
+    },
+    {
+      "tool": "hub_run_proxy_tool",
+      "count": 27,
+      "errors": 1,
+      "error_rate": 3.7,
+      "avg_ms": 1087.1,
+      "p95_ms": 2604,
+      "max_ms": 5407
+    },
+    {
+      "tool": "hub_set_discovery",
+      "count": 23,
+      "errors": 0,
+      "error_rate": 0,
+      "avg_ms": 213.3,
+      "p95_ms": 253,
+      "max_ms": 309
+    }
+  ],
+  "top_error_clusters": [
+    {
+      "tool": "unknown",
+      "message": "Forbidden. You don't have permission to access this post.",
+      "count": 8,
+      "first": "2026-03-02T16:04:52.127Z",
+      "last": "2026-03-03T19:01:33.578Z",
+      "sample_root": "60014025-c192-465d-b987-fc8bb21deb16"
+    },
+    {
+      "tool": "hub_execute_proxy_tool",
+      "message": "Forbidden. You don't have permission to access this post.",
+      "count": 8,
+      "first": "2026-03-02T16:04:52.127Z",
+      "last": "2026-03-03T19:01:33.578Z",
+      "sample_root": "f4e7bf4e-4ccf-415e-a75a-3a29558ca237"
+    },
+    {
+      "tool": "unknown",
+      "message": "{\"status\":429,\"serviceErrorCode\":101,\"code\":\"TOO_MANY_REQUESTS\",\"message\":\"Resource level throttle APPLICATION DAY limit for calls to this resource is reached.\"}",
+      "count": 2,
+      "first": "2026-03-02T16:04:51.328Z",
+      "last": "2026-03-02T16:13:05.776Z",
+      "sample_root": "f4fda70f-6b3d-45e4-8c71-a5557c951a22"
+    },
+    {
+      "tool": "hub_execute_proxy_tool",
+      "message": "{\"status\":429,\"serviceErrorCode\":101,\"code\":\"TOO_MANY_REQUESTS\",\"message\":\"Resource level throttle APPLICATION DAY limit for calls to this resource is reached.\"}",
+      "count": 2,
+      "first": "2026-03-02T16:04:51.328Z",
+      "last": "2026-03-02T16:13:05.776Z",
+      "sample_root": "2e22052b-661d-45a8-8c32-44996aeb9e41"
+    },
+    {
+      "tool": "unknown",
+      "message": "Forbidden: Viewer/Actor is unauthorized agent (serviceErrorCode: )",
+      "count": 2,
+      "first": "2026-03-02T16:06:07.022Z",
+      "last": "2026-03-02T16:13:28.825Z",
+      "sample_root": "fa59e0cb-694e-4429-8f5f-c42d58d32c08"
+    },
+    {
+      "tool": "hub_execute_proxy_tool",
+      "message": "Forbidden: Viewer/Actor is unauthorized agent (serviceErrorCode: )",
+      "count": 2,
+      "first": "2026-03-02T16:06:07.022Z",
+      "last": "2026-03-02T16:13:28.825Z",
+      "sample_root": "2390d398-91a1-477b-ab0d-696c2c2f9dac"
+    },
+    {
+      "tool": "unknown",
+      "message": "Forbidden. You don't have permission to create posts.",
+      "count": 2,
+      "first": "2026-03-02T16:06:16.094Z",
+      "last": "2026-03-02T16:13:33.145Z",
+      "sample_root": "9a6f7423-7d8e-4660-9a5e-563f78480ae2"
+    },
+    {
+      "tool": "hub_execute_proxy_tool",
+      "message": "Forbidden. You don't have permission to create posts.",
+      "count": 2,
+      "first": "2026-03-02T16:06:16.094Z",
+      "last": "2026-03-02T16:13:33.145Z",
+      "sample_root": "48b444d4-9310-42d6-bdc3-94bbd9993a42"
+    },
+    {
+      "tool": "hub_route_intent",
+      "message": "No route found for intent \"create a google sheet and write a formula\" in allowlist or discovery.",
+      "count": 2,
+      "first": "2026-03-02T20:51:52.204Z",
+      "last": "2026-03-02T21:01:55.892Z",
+      "sample_root": "3d6575c0-443e-4cd8-a7fb-3913e25bf4cb"
+    },
+    {
+      "tool": "hub_route_intent",
+      "message": "No route found for intent \"write values in sheets\" in allowlist or discovery.",
+      "count": 2,
+      "first": "2026-03-02T20:51:52.348Z",
+      "last": "2026-03-02T21:01:56.251Z",
+      "sample_root": "e12d8c78-ba00-408a-a892-592c47926b60"
+    },
+    {
+      "tool": "hub_route_intent",
+      "message": "No route found for intent \"search_spreadsheets\" in allowlist or discovery.",
+      "count": 2,
+      "first": "2026-03-02T20:51:59.767Z",
+      "last": "2026-03-02T20:58:27.473Z",
+      "sample_root": "44c2379d-4759-442b-8651-b1cf3ecf5f77"
+    },
+    {
+      "tool": "hub_describe_proxy_tool",
+      "message": "\"proxyToolName\" is required",
+      "count": 2,
+      "first": "2026-03-02T23:36:41.856Z",
+      "last": "2026-03-02T23:37:05.817Z",
+      "sample_root": "0166ee7c-085f-4be0-9d16-98c790be3b1a"
+    },
+    {
+      "tool": "dm_composio__slack__slack_list_all_users",
+      "message": "No active \"slack\" connection for entity \"default\". Reconnect via dm_composio_get_connect_link (toolkit=\"slack\") or use this URL: https://connect.composio.dev/link/lk_aTNjybFiKM_g (next_step=reconnect_toolkit_and_retry)",
+      "count": 1,
+      "first": "2026-03-02T10:14:30.076Z",
+      "last": "2026-03-02T10:14:30.076Z",
+      "sample_root": "39dc28c8-a943-4438-ad67-7a1a045c5c9a"
+    },
+    {
+      "tool": "dm_composio__slack__slack_list_all_channels",
+      "message": "No active \"slack\" connection for entity \"slack-scratchpad-audio-transcriber\". Reconnect via dm_composio_get_connect_link (toolkit=\"slack\") or use this URL: https://connect.composio.dev/link/lk_GaGjpZmshJYL (next_step=...",
+      "count": 1,
+      "first": "2026-03-02T11:43:38.727Z",
+      "last": "2026-03-02T11:43:38.727Z",
+      "sample_root": "f8096d86-0466-4bee-9f50-d45d7511227e"
+    },
+    {
+      "tool": "dm_composio_connection_status",
+      "message": "Toolkit \"youtube\" is not registered on this DM server. Registered toolkits: dropbox, googledrive, quickbooks, slack, zoom.",
+      "count": 1,
+      "first": "2026-03-02T14:01:03.533Z",
+      "last": "2026-03-02T14:01:03.533Z",
+      "sample_root": "462ec774-5157-4ffe-a98d-5c2ab018f354"
+    }
+  ],
+  "slow_outliers": [
+    {
+      "id": "dada2fa1-907b-4962-82cb-d5d043f0eeb8",
+      "root": "c06732aa-dfaa-4289-a1d2-32b765dbee89",
+      "tool": "hub_update_state",
+      "created": "2026-03-02T15:53:36.458Z",
+      "duration_ms": 252517,
+      "message": ""
+    },
+    {
+      "id": "224b2ceb-6070-43c8-947a-069f10312840",
+      "root": "564a7841-8886-437e-9d65-308b3220454c",
+      "tool": "notion_create_page",
+      "created": "2026-03-03T22:23:34.691Z",
+      "duration_ms": 27963,
+      "message": ""
+    },
+    {
+      "id": "84268063-5a36-40ec-9922-97d5d2dc2b50",
+      "root": "cb83d36e-1551-4acd-b55c-bd66e0f65c26",
+      "tool": "hub_update_state",
+      "created": "2026-03-02T15:43:43.860Z",
+      "duration_ms": 24413,
+      "message": ""
+    },
+    {
+      "id": "10314de7-8a0e-4342-8e6e-31dc6b8752bf",
+      "root": "0732a896-121d-4fd9-97ce-af67c2f95ac6",
+      "tool": "hub_refresh_connections",
+      "created": "2026-03-02T15:54:01.321Z",
+      "duration_ms": 24327,
+      "message": ""
+    },
+    {
+      "id": "d99300a5-e489-4550-b5fd-2463614b979d",
+      "root": "01271353-16f4-4669-ba4d-705d5b28f15d",
+      "tool": "hub_refresh_connections",
+      "created": "2026-03-02T20:47:40.983Z",
+      "duration_ms": 20452,
+      "message": ""
+    },
+    {
+      "id": "e5f106e2-ee9a-4518-b64c-bc3bac7d947b",
+      "root": "1675329a-8668-4e07-8a12-fd68c267ea0d",
+      "tool": "notion_search",
+      "created": "2026-03-03T22:20:56.397Z",
+      "duration_ms": 18721,
+      "message": ""
+    },
+    {
+      "id": "8db70a1c-234a-42f7-b4c4-593a1fbe4746",
+      "root": "9533a598-3b40-41cc-920c-b0b77ace477b",
+      "tool": "notion_query_database",
+      "created": "2026-03-02T14:03:02.808Z",
+      "duration_ms": 18582,
+      "message": ""
+    },
+    {
+      "id": "5e3d77a7-01f2-40e6-b221-fc21ece6b6fc",
+      "root": "729ed531-1dd3-4b4b-a20f-0d4f48168b95",
+      "tool": "hub_refresh_connections",
+      "created": "2026-03-02T20:50:53.407Z",
+      "duration_ms": 18451,
+      "message": ""
+    },
+    {
+      "id": "d01b6e64-504b-45f0-bd19-eb6f76d5ea99",
+      "root": "14593113-1c1e-4925-abe8-2bea21457da1",
+      "tool": "hub_update_state",
+      "created": "2026-03-02T15:43:02.175Z",
+      "duration_ms": 14025,
+      "message": ""
+    },
+    {
+      "id": "262c14df-3a06-44db-944f-8c7300d60e70",
+      "root": "b1a4e65d-3fd6-46f6-ae4d-57bda5847ff2",
+      "tool": "hub_refresh_connections",
+      "created": "2026-03-02T20:59:58.033Z",
+      "duration_ms": 13349,
+      "message": ""
+    }
+  ]
+}
+    </script>
+
+    <script>
+      (function () {
+        const numberFmt = new Intl.NumberFormat('en-US');
+        const pctFmt = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+        const dateFmt = new Intl.DateTimeFormat('en-US', {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+          timeZoneName: 'short'
+        });
+
+        function text(id, value) {
+          const el = document.getElementById(id);
+          if (el) el.textContent = value;
+        }
+
+        function showStatus(message) {
+          const el = document.getElementById('status');
+          if (!el) return;
+          el.style.display = 'block';
+          el.textContent = message;
+        }
+
+        function parseData() {
+          const rawNode = document.getElementById('dashboard-data');
+          if (!rawNode) return null;
+          try {
+            return JSON.parse(rawNode.textContent || '{}');
+          } catch (err) {
+            showStatus('Data parse failure: values are unavailable until JSON is valid.');
+            return null;
+          }
+        }
+
+        function asArray(v) {
+          return Array.isArray(v) ? v : [];
+        }
+
+        function toDate(s) {
+          const d = new Date(s);
+          return Number.isFinite(d.getTime()) ? dateFmt.format(d) : 'n/a';
+        }
+
+        function toNum(v) {
+          return typeof v === 'number' && Number.isFinite(v) ? v : 0;
+        }
+
+        function appendCell(tr, value, cls) {
+          const td = document.createElement('td');
+          if (cls) td.className = cls;
+          td.textContent = value;
+          tr.appendChild(td);
+          return td;
+        }
+
+        function appendBar(td, ratio, variantClass) {
+          const bar = document.createElement('div');
+          bar.className = 'bar ' + variantClass;
+          const fill = document.createElement('span');
+          const safeRatio = Math.max(0, Math.min(1, ratio || 0));
+          fill.style.width = (safeRatio * 100).toFixed(1) + '%';
+          bar.appendChild(fill);
+          td.appendChild(bar);
+        }
+
+        function rateClass(rate) {
+          if (rate >= 20) return 'tone-high';
+          if (rate >= 5) return 'tone-mid';
+          return 'tone-low';
+        }
+
+        const data = parseData();
+        if (!data) return;
+
+        const categories = asArray(data.categories);
+        const tools = asArray(data.top_tools);
+        const clusters = asArray(data.top_error_clusters);
+        const outliers = asArray(data.slow_outliers);
+
+        const sampleRows = toNum(data.sample_rows);
+        const errorRows = toNum(data.error_rows);
+        const errorRate = toNum(data.error_rate);
+        const topCategory = categories[0] || { category: 'n/a', count: 0 };
+        const secondCategory = categories[1] || { category: 'n/a', count: 0 };
+        const topShare = errorRows > 0 ? (toNum(topCategory.count) / errorRows) * 100 : 0;
+        const secondShare = errorRows > 0 ? (toNum(secondCategory.count) / errorRows) * 100 : 0;
+
+        text('project-line',
+          'Project ' + (data.project_id || 'n/a') + ' · Braintrust log snapshot'
+        );
+        text('meta-line',
+          'window=' + toDate(data.window_start) + ' → ' + toDate(data.window_end) +
+          ' | generated=' + toDate(data.generated_at)
+        );
+        text('lead-line',
+          numberFmt.format(errorRows) + ' of ' + numberFmt.format(sampleRows) +
+          ' rows are errors (' + pctFmt.format(errorRate) + '%). ' +
+          topCategory.category + ' + ' + secondCategory.category + ' account for ' +
+          pctFmt.format(topShare + secondShare) + '% of observed failures.'
+        );
+
+        const maxLatency = outliers.reduce((max, row) => Math.max(max, toNum(row.duration_ms)), 0);
+        text('m-rows', numberFmt.format(sampleRows));
+        text('m-errors', numberFmt.format(errorRows));
+        text('m-rate', pctFmt.format(errorRate) + '%');
+        text('m-top-category', topCategory.category || 'n/a');
+        text('m-top-share', pctFmt.format(topShare) + '%');
+        text('m-max-latency', numberFmt.format(maxLatency));
+
+        const catBody = document.querySelector('#category-table tbody');
+        if (catBody) {
+          const maxCount = categories.reduce((m, row) => Math.max(m, toNum(row.count)), 0) || 1;
+          categories.forEach((row) => {
+            const tr = document.createElement('tr');
+            appendCell(tr, String(row.category || 'unknown'));
+            appendCell(tr, numberFmt.format(toNum(row.count)), 'num');
+            const share = errorRows > 0 ? (toNum(row.count) / errorRows) * 100 : 0;
+            appendCell(tr, pctFmt.format(share) + '%', 'num');
+            const barTd = appendCell(tr, '');
+            appendBar(barTd, toNum(row.count) / maxCount, 'bar-cat');
+            catBody.appendChild(tr);
+          });
+        }
+
+        const toolBody = document.querySelector('#tool-table tbody');
+        if (toolBody) {
+          const visible = tools.slice(0, 10);
+          visible.forEach((row) => {
+            const tr = document.createElement('tr');
+            appendCell(tr, String(row.tool || 'unknown'), 'tool mono');
+            appendCell(tr, numberFmt.format(toNum(row.count)), 'num');
+            appendCell(tr, numberFmt.format(toNum(row.errors)), 'num');
+            const rate = toNum(row.error_rate);
+            const rateTd = appendCell(tr, pctFmt.format(rate) + '%', 'num mono ' + rateClass(rate));
+            rateTd.title = 'error rate';
+            appendCell(tr, numberFmt.format(toNum(row.avg_ms)), 'num');
+            appendCell(tr, numberFmt.format(toNum(row.p95_ms)), 'num');
+            appendCell(tr, numberFmt.format(toNum(row.max_ms)), 'num');
+            const barTd = appendCell(tr, '');
+            appendBar(barTd, rate / 100, 'bar-error');
+            toolBody.appendChild(tr);
+          });
+        }
+
+        const clusterBody = document.querySelector('#cluster-table tbody');
+        if (clusterBody) {
+          clusters.slice(0, 12).forEach((row) => {
+            const tr = document.createElement('tr');
+            appendCell(tr, numberFmt.format(toNum(row.count)), 'num');
+            appendCell(tr, String(row.message || ''), 'message');
+            appendCell(tr, String(row.tool || 'unknown'), 'mono');
+            appendCell(tr, toDate(row.first), 'num');
+            appendCell(tr, toDate(row.last), 'num');
+            appendCell(tr, String(row.sample_root || ''), 'mono');
+            clusterBody.appendChild(tr);
+          });
+        }
+
+        const latencyBody = document.querySelector('#latency-table tbody');
+        if (latencyBody) {
+          outliers.slice(0, 10).forEach((row) => {
+            const tr = document.createElement('tr');
+            appendCell(tr, numberFmt.format(toNum(row.duration_ms)), 'num mono');
+            appendCell(tr, String(row.tool || 'unknown'), 'mono');
+            appendCell(tr, toDate(row.created), 'num');
+            appendCell(tr, String(row.root || ''), 'mono');
+            latencyBody.appendChild(tr);
+          });
+        }
+
+        if (!sampleRows) {
+          showStatus('No sampled rows were found.');
+        }
+      })();
+    </script>
+  </body>
+</html>
