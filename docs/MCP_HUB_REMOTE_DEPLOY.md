@@ -152,6 +152,17 @@ After deploy, validate:
 Run strict identity + routing checks across team hubs:
 
 ```bash
+# Required for protected hub calls (choose one):
+# export HUB_API_TOKEN='...'
+# or per-worker tokens:
+# export CS_HUB_LAINY_API_TOKEN='...'
+# export CS_HUB_DANNY_API_TOKEN='...'
+# export CS_HUB_AUGUST_API_TOKEN='...'
+# export CS_HUB_FILLIP_API_TOKEN='...'
+# export CS_HUB_LEAH_API_TOKEN='...'
+# export CS_HUB_MJ_API_TOKEN='...'
+# export CS_MCP_HUB_REMOTE_API_TOKEN='...'
+
 # Option A: use an existing MCP session token
 export MCP_SESSION_TOKEN='ms_tok_...'
 export MCP_SESSION_ACCOUNT_ID='acct_...'
