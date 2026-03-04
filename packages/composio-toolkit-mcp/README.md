@@ -21,6 +21,7 @@ This package enables per-toolkit registry entries in the CREATE SOMETHING Hub:
 - `get_connect_link`
 - `toolkit_info`
 - `zoom_latest_transcript_status` (Zoom toolkit route only)
+- `zoom_list_available_transcripts` (Zoom toolkit route only)
 
 All Composio toolkit tools are exposed dynamically for that toolkit route.
 

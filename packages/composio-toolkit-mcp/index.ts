@@ -735,6 +735,274 @@ async function checkZoomTranscriptAvailability(params: {
   };
 }
 
+async function listZoomAvailableTranscripts(params: {
+  client: ComposioClient;
+  toolRoutes: ToolRoute[];
+  entityId: string;
+  args: Record<string, unknown>;
+  toolkitSlug: string;
+}): Promise<Record<string, unknown>> {
+  const { client, toolRoutes, entityId, args, toolkitSlug } = params;
+  const warnings: string[] = [];
+  const composioUserId = stringOrNull(args.composioUserId) ?? entityId;
+  const connectedAccountId = stringOrNull(args.connectedAccountId);
+
+  const connected = await client.hasActiveConnection(composioUserId, toolkitSlug).catch((error) => {
+    warnings.push(`Connection check failed: ${toErrorMessage(error)}`);
+    return false;
+  });
+  const bypassConnectionGate = Boolean(connectedAccountId && connectedAccountId.trim().length > 0);
+  if (!connected && !bypassConnectionGate) {
+    return {
+      toolkitSlug,
+      entityId,
+      composioUserId,
+      connectedAccountId,
+      connected: false,
+      status: 'not_connected',
+      transcriptCount: 0,
+      transcripts: [],
+      message:
+        'Zoom is not connected for this entity. Call get_connect_link and authenticate the Zoom account you want to query.',
+      warnings,
+    };
+  }
+  if (!connected && bypassConnectionGate) {
+    warnings.push(
+      `No active "${toolkitSlug}" connection found for composioUserId="${composioUserId}". ` +
+      `Proceeding with connectedAccountId override "${connectedAccountId}".`,
+    );
+  }
+
+  const requestedMeetingId = stringOrNull(args.meetingId);
+  const topicQuery = stringOrNull(args.topicQuery);
+  const pageSize = numberArg(args.pageSize, 30, 1, 100);
+  const maxMeetings = numberArg(args.maxMeetings, 20, 1, 100);
+  const limit = numberArg(args.limit, 100, 1, 500);
+
+  const todayUtc = new Date();
+  const defaultTo = formatUtcDate(todayUtc);
+  const defaultFrom = formatUtcDate(
+    new Date(todayUtc.getTime() - (DEFAULT_ZOOM_LOOKBACK_DAYS * 24 * 60 * 60 * 1000)),
+  );
+  const fromInput = stringOrNull(args.from);
+  const toInput = stringOrNull(args.to);
+  const parsedFrom = fromInput ? normalizeIsoDate(fromInput) : null;
+  const parsedTo = toInput ? normalizeIsoDate(toInput) : null;
+  if (fromInput && !parsedFrom) {
+    warnings.push(`Invalid "from" date "${fromInput}". Expected yyyy-mm-dd. Using default ${defaultFrom}.`);
+  }
+  if (toInput && !parsedTo) {
+    warnings.push(`Invalid "to" date "${toInput}". Expected yyyy-mm-dd. Using default ${defaultTo}.`);
+  }
+  const from = parsedFrom ?? defaultFrom;
+  const to = parsedTo ?? defaultTo;
+
+  let currentUser: Record<string, unknown> | null = null;
+  const currentUserResult = await executeToolkitToolByName({
+    client,
+    toolRoutes,
+    toolName: ZOOM_TOOL_NAMES.getCurrentUser,
+    args: {},
+    entityId: composioUserId,
+    connectedAccountId,
+  }).catch((error) => {
+    warnings.push(`Could not fetch Zoom user profile: ${toErrorMessage(error)}`);
+    return null;
+  });
+  if (currentUserResult && isExecutionSuccessful(currentUserResult)) {
+    currentUser = extractDataRecord(currentUserResult);
+  }
+
+  let meetingCandidates: Record<string, unknown>[] = [];
+  if (requestedMeetingId) {
+    meetingCandidates = [{ id: requestedMeetingId }];
+  } else {
+    const listMeetingsResult = await executeToolkitToolByName({
+      client,
+      toolRoutes,
+      toolName: ZOOM_TOOL_NAMES.listMeetings,
+      args: {
+        userId: 'me',
+        type: 'previous_meetings',
+        from,
+        to,
+        page_size: pageSize,
+      },
+      entityId: composioUserId,
+      connectedAccountId,
+    }).catch((error) => {
+      warnings.push(`Failed to list previous Zoom meetings: ${toErrorMessage(error)}`);
+      return null;
+    });
+
+    if (!listMeetingsResult) {
+      return {
+        toolkitSlug,
+        entityId,
+        composioUserId,
+        connectedAccountId,
+        connected: true,
+        status: 'meeting_lookup_failed',
+        transcriptCount: 0,
+        transcripts: [],
+        query: {
+          meetingId: requestedMeetingId,
+          from,
+          to,
+          topicQuery,
+          pageSize,
+          maxMeetings,
+          limit,
+        },
+        account: summarizeZoomUser(currentUser),
+        message: 'Could not list previous meetings from Zoom.',
+        warnings,
+      };
+    }
+
+    if (!isExecutionSuccessful(listMeetingsResult)) {
+      const lookupError = extractExecutionError(listMeetingsResult) ?? 'Unknown Zoom list_meetings error';
+      return {
+        toolkitSlug,
+        entityId,
+        composioUserId,
+        connectedAccountId,
+        connected: true,
+        status: 'meeting_lookup_failed',
+        transcriptCount: 0,
+        transcripts: [],
+        query: {
+          meetingId: requestedMeetingId,
+          from,
+          to,
+          topicQuery,
+          pageSize,
+          maxMeetings,
+          limit,
+        },
+        account: summarizeZoomUser(currentUser),
+        message: `Zoom list_meetings failed: ${lookupError}`,
+        warnings,
+      };
+    }
+
+    const rows = asRecordArray(extractDataRecord(listMeetingsResult)?.meetings);
+    const filtered = topicQuery
+      ? rows.filter((meeting) => {
+        const topic = (stringOrNull(meeting.topic) ?? '').toLowerCase();
+        return topic.includes(topicQuery.toLowerCase());
+      })
+      : rows;
+
+    filtered.sort((a, b) => {
+      const aTime = Date.parse(stringOrNull(a.start_time) ?? '') || 0;
+      const bTime = Date.parse(stringOrNull(b.start_time) ?? '') || 0;
+      return bTime - aTime;
+    });
+    meetingCandidates = filtered.slice(0, maxMeetings);
+  }
+
+  const transcripts: Array<Record<string, unknown>> = [];
+  const transcriptKeys = new Set<string>();
+  let recordingsScanned = 0;
+  const lookupAttempts: Array<Record<string, unknown>> = [];
+
+  for (const meeting of meetingCandidates) {
+    if (transcripts.length >= limit) break;
+    const meetingSummary = summarizeMeeting(meeting);
+    const lookupIds = [
+      stringOrNull(meeting.id) ?? stringOrNull(meeting.meeting_id),
+      stringOrNull(meeting.uuid),
+    ].filter((value, index, arr): value is string => Boolean(value) && arr.indexOf(value) === index);
+
+    if (lookupIds.length === 0 && requestedMeetingId) {
+      lookupIds.push(requestedMeetingId);
+    }
+
+    const recordingFiles: Record<string, unknown>[] = [];
+    for (const lookupId of lookupIds) {
+      const lookupType: 'meeting_id' | 'meeting_uuid' = lookupId.includes('=') ? 'meeting_uuid' : 'meeting_id';
+      const recordingResult = await executeToolkitToolByName({
+        client,
+        toolRoutes,
+        toolName: ZOOM_TOOL_NAMES.getMeetingRecordings,
+        args: { meetingId: lookupId },
+        entityId: composioUserId,
+        connectedAccountId,
+      }).catch((error) => {
+        const reason = toErrorMessage(error);
+        lookupAttempts.push({ meetingLookupId: lookupId, lookupType, ok: false, error: reason });
+        warnings.push(`Recording lookup failed for ${lookupType}=${lookupId}: ${reason}`);
+        return null;
+      });
+
+      if (!recordingResult) continue;
+      if (!isExecutionSuccessful(recordingResult)) {
+        const reason = extractExecutionError(recordingResult) ?? 'Unknown Zoom get_meeting_recordings error';
+        lookupAttempts.push({ meetingLookupId: lookupId, lookupType, ok: false, error: reason });
+        continue;
+      }
+
+      const data = extractDataRecord(recordingResult);
+      const files = asRecordArray(data?.recording_files);
+      recordingsScanned += files.length;
+      recordingFiles.push(...files);
+      lookupAttempts.push({
+        meetingLookupId: lookupId,
+        lookupType,
+        ok: true,
+        recordingCount: numberOrNull(data?.recording_count) ?? files.length,
+        fileCount: files.length,
+      });
+    }
+
+    const transcriptFiles = dedupeRecordingFiles(recordingFiles).filter((file) => isTranscriptFile(file));
+    for (const transcript of transcriptFiles) {
+      if (transcripts.length >= limit) break;
+      const fileSummary = summarizeRecordingFile(transcript);
+      const key = `${meetingSummary.id ?? meetingSummary.uuid ?? 'unknown'}::${fileSummary.id ?? fileSummary.downloadUrl ?? Math.random().toString(36).slice(2)}`;
+      if (transcriptKeys.has(key)) continue;
+      transcriptKeys.add(key);
+      transcripts.push({
+        meeting: meetingSummary,
+        file: fileSummary,
+      });
+    }
+  }
+
+  const status = transcripts.length > 0 ? 'transcripts_found' : 'no_transcripts_found';
+  const message = transcripts.length > 0
+    ? `Found ${transcripts.length} transcript file(s).`
+    : 'No transcript files found for the selected meetings.';
+
+  return {
+    toolkitSlug,
+    entityId,
+    composioUserId,
+    connectedAccountId,
+    connected: true,
+    status,
+    transcriptCount: transcripts.length,
+    transcripts,
+    query: {
+      meetingId: requestedMeetingId,
+      from,
+      to,
+      topicQuery,
+      pageSize,
+      maxMeetings,
+      limit,
+    },
+    account: summarizeZoomUser(currentUser),
+    meetingsScanned: meetingCandidates.length,
+    recordingsScanned,
+    lookupAttempts,
+    message,
+    warnings,
+  };
+}
+
 async function executeToolkitToolByName(params: {
   client: ComposioClient;
   toolRoutes: ToolRoute[];
