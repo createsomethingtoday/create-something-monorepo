@@ -32,6 +32,7 @@ import {
 	findCrossDomainTokenByHash,
 	markCrossDomainTokenUsed,
 	countRecentCrossDomainTokens,
+	ensureMcpAccountForUserTenant,
 	createMcpSession,
 	findMcpSessionById,
 	findMcpSessionByTokenHash,
@@ -424,11 +425,12 @@ async function handleCreateMcpSession(request: Request, env: Env): Promise<Respo
 	const toolkitProfile = normalizeToolkitProfile(body.toolkit_profile);
 	const allowedToolPrefixes = buildAllowedToolPrefixes(toolkitProfile);
 	const ttlSeconds = clampTtlSeconds(body.ttl_seconds);
+	const mcpAccount = await ensureMcpAccountForUserTenant(db, payload.sub, tenantId);
 
 	const sessionId = `ms_${generateUUID().replace(/-/g, '')}`;
 	const rawToken = `ms_tok_${generateSecureToken(48)}`;
 	const tokenHash = await hashToken(rawToken);
-	const accountId = `acct_${generateUUID().replace(/-/g, '')}`;
+	const accountId = mcpAccount.account_id;
 	const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
 
 	await createMcpSession(db, {

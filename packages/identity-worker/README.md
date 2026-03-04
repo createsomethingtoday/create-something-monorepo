@@ -62,6 +62,7 @@ Properties verify tokens by:
 
 MCP hub integration:
 1. Frontend/backend creates session via `POST /v1/mcp/sessions` with user JWT
+   - Session token (`ms_tok_*`) is ephemeral, while `account_id` is stable per `{user_id, tenant_id}`
 2. Host stores returned MCP token and calls hub endpoint
 3. Hub introspects token via `POST /v1/mcp/sessions/resolve` using `MCP_SESSION_RESOLVE_TOKEN`
 

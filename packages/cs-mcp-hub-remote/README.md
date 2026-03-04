@@ -68,6 +68,7 @@ Environment variables:
 
 - `HUB_INSTANCE_ID` (recommended): unique id for this deployed hub worker; used to namespace hub state/discovery KV keys so team hubs do not overwrite each other.
 - `HUB_API_TOKEN` (optional): if set, `/mcp` requires `Authorization: Bearer <token>`
+- `HUB_IDENTITY_MODE` (optional): `session_required` (default) or `compat`
 - `HUB_SESSION_RESOLVE_URL` (optional): identity-worker resolver endpoint (`/v1/mcp/sessions/resolve`)
 - `HUB_SESSION_RESOLVE_TOKEN` (optional): shared secret used by hub to call resolver endpoint
 - `HUB_SESSION_RESOLVE_TIMEOUT_MS` (optional): resolver call timeout, default `5000`
@@ -115,11 +116,12 @@ Account forwarding:
 
 Session-scoped identity (optional):
 
-- When session resolver env vars are configured and the caller uses bearer MCP session tokens,
-  the hub resolves `account_id`, `tenant_id`, and `allowed_tool_prefixes` from identity-worker.
-- Proxy tools are then filtered/enforced by `allowed_tool_prefixes` before execution.
-- For compatibility with existing `HUB_API_TOKEN` auth, pass session tokens in `X-MCP-Session-Token`.
-  (Or pass `HUB_API_TOKEN` as `?token=` and session token in `Authorization`.)
+- In `session_required` mode (default), callers must provide `X-MCP-Session-Token`.
+  The hub resolves `account_id`, `tenant_id`, and `allowed_tool_prefixes` from identity-worker.
+- In `session_required`, resolver configuration (`HUB_SESSION_RESOLVE_URL` + `HUB_SESSION_RESOLVE_TOKEN`) is required.
+- In `compat` mode, the hub keeps legacy fallback identity behavior and accepts session token in
+  `X-MCP-Session-Token` or bearer (when bearer is not the configured `HUB_API_TOKEN`).
+- Proxy tools are filtered/enforced by `allowed_tool_prefixes` when identity is session-resolved.
 
 ## Telemetry + Correlation
 

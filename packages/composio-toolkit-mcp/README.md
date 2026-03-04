@@ -27,7 +27,12 @@ All Composio toolkit tools are exposed dynamically for that toolkit route.
 
 ## Identity resolution
 
-Per tool call, entity id resolves in this order:
+Default (`COMPOSIO_ENTITY_RESOLUTION_MODE=header_required`):
+
+1. `x-mcp-account-id` header
+2. Missing header returns an error
+
+Compatibility mode (`COMPOSIO_ENTITY_RESOLUTION_MODE=compat`) resolves in this order:
 
 1. `x-mcp-account-id` header
 2. `Authorization: Bearer <entityId>`
@@ -42,6 +47,7 @@ Per tool call, entity id resolves in this order:
 
 - `COMPOSIO_AUTH_CONFIG_MAP` (JSON string, toolkit -> auth config id)
 - `COMPOSIO_DEFAULT_ENTITY_ID`
+- `COMPOSIO_ENTITY_RESOLUTION_MODE` (`header_required` default, or `compat`)
 - `COMPOSIO_TOOL_CACHE_SECONDS`
 
 ## Local dev

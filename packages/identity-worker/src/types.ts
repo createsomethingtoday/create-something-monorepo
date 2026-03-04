@@ -173,6 +173,14 @@ export interface McpSession {
 	updated_at: string;
 }
 
+export interface McpAccount {
+	account_id: string;
+	user_id: string;
+	tenant_id: string;
+	created_at: string;
+	updated_at: string;
+}
+
 export interface McpSessionScope {
 	id: string;
 	session_id: string;

@@ -11,6 +11,11 @@ enabled = true
 # Optional default/fallback entity id when request headers do not provide identity.
 # COMPOSIO_DEFAULT_ENTITY_ID = "demo"
 
+# Entity resolution mode:
+# - "header_required" (default): requires x-mcp-account-id
+# - "compat": allows Authorization/default fallback for legacy clients
+# COMPOSIO_ENTITY_RESOLUTION_MODE = "header_required"
+
 # Optional JSON map of toolkit -> auth config id used by get_connect_link.
 # Example: {"gmail":"ac_xxx","notion":"ac_yyy"}
 # COMPOSIO_AUTH_CONFIG_MAP = "{}"

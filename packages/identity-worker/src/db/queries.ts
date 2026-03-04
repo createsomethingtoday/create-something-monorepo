@@ -11,6 +11,7 @@ import type {
 	ApiKey,
 	CrossDomainToken,
 	McpAuthEvent,
+	McpAccount,
 	McpSession,
 	McpSessionScope,
 } from '../types';
@@ -416,6 +417,49 @@ export async function countRecentCrossDomainTokens(
 
 export async function cleanExpiredCrossDomainTokens(db: D1Database): Promise<void> {
 	await db.prepare("DELETE FROM cross_domain_tokens WHERE expires_at < datetime('now')").run();
+}
+
+export async function ensureMcpAccountForUserTenant(
+	db: D1Database,
+	userId: string,
+	tenantId: string
+): Promise<McpAccount> {
+	const existing = await db
+		.prepare(
+			`SELECT * FROM mcp_accounts
+       WHERE user_id = ? AND tenant_id = ?
+       LIMIT 1`
+		)
+		.bind(userId, tenantId)
+		.first<McpAccount>();
+
+	if (existing) {
+		return existing;
+	}
+
+	const accountId = `acct_${crypto.randomUUID().replace(/-/g, '')}`;
+	await db
+		.prepare(
+			`INSERT OR IGNORE INTO mcp_accounts (account_id, user_id, tenant_id)
+       VALUES (?, ?, ?)`
+		)
+		.bind(accountId, userId, tenantId)
+		.run();
+
+	const created = await db
+		.prepare(
+			`SELECT * FROM mcp_accounts
+       WHERE user_id = ? AND tenant_id = ?
+       LIMIT 1`
+		)
+		.bind(userId, tenantId)
+		.first<McpAccount>();
+
+	if (!created) {
+		throw new Error(`Failed to create MCP account for user ${userId} and tenant ${tenantId}`);
+	}
+
+	return created;
 }
 
 // MCP session queries

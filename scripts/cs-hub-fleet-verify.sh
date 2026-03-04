@@ -16,6 +16,7 @@ WORKERS=(
 
 REQUIRED_SECRETS=(
   "HUB_API_TOKEN"
+  "HUB_SESSION_RESOLVE_TOKEN"
   "BRAINTRUST_API_KEY"
   "BRAINTRUST_PROJECT_ID"
 )
@@ -103,27 +104,148 @@ resolve_worker_token() {
 reset_discovery_preferences() {
   local mcp_url="$1"
   local token="$2"
+  local session_token="${3:-}"
   local reset_payload='{"jsonrpc":"2.0","id":"fleet-verify-discovery-reset","method":"tools/call","params":{"name":"hub_set_discovery","arguments":{"reset":true}}}'
-  curl -sS -X POST "$mcp_url" \
-    -H "Authorization: Bearer ${token}" \
-    -H "Content-Type: application/json" \
-    -H "Accept: application/json" \
-    --data "$reset_payload" >/dev/null || true
+  local curl_args=(
+    -sS
+    -X POST "$mcp_url"
+    -H "Authorization: Bearer ${token}"
+    -H "Content-Type: application/json"
+    -H "Accept: application/json"
+    --data "$reset_payload"
+  )
+  if [[ -n "$session_token" ]]; then
+    curl_args+=(-H "X-MCP-Session-Token: ${session_token}")
+  fi
+  curl "${curl_args[@]}" >/dev/null || true
 }
 
-expected_account_id_for_worker() {
-  case "$1" in
-    "cs-hub-lainy") echo "acct_lainy" ;;
-    "cs-hub-danny") echo "acct_danny" ;;
-    "cs-hub-august") echo "acct_august" ;;
-    "cs-hub-filip") echo "acct_fillip" ;;
-    "cs-hub-leah") echo "acct_leah" ;;
-    "cs-hub-mj") echo "acct_mj" ;;
-    *)
-      echo ""
-      ;;
-  esac
+create_fleet_verify_session() {
+  local identity_base_url="${IDENTITY_BASE_URL:-https://id.createsomething.space}"
+  local identity_access_token="${IDENTITY_ACCESS_TOKEN:-}"
+  local tenant_id="${MCP_SESSION_TENANT_ID:-fleet_verify}"
+  local host="${MCP_SESSION_HOST:-fleet_verify}"
+
+  if [[ -n "${MCP_SESSION_TOKEN:-}" ]]; then
+    FLEET_VERIFY_SESSION_TOKEN="$MCP_SESSION_TOKEN"
+    FLEET_VERIFY_ACCOUNT_ID="${MCP_SESSION_ACCOUNT_ID:-}"
+    echo "session_token_source=env"
+    return 0
+  fi
+
+  if [[ -z "$identity_access_token" ]]; then
+    echo "missing MCP_SESSION_TOKEN or IDENTITY_ACCESS_TOKEN for session-based E2E checks"
+    return 1
+  fi
+
+  local create_url="${identity_base_url%/}/v1/mcp/sessions"
+  local body_file status
+  body_file="$(mktemp)"
+  status="$(
+    curl -sS -o "$body_file" -w "%{http_code}" -X POST "$create_url" \
+      -H "Authorization: Bearer ${identity_access_token}" \
+      -H "Content-Type: application/json" \
+      --data "$(jq -cn --arg tenant "$tenant_id" --arg host "$host" '{
+        tenant_id: $tenant,
+        host: $host,
+        toolkit_profile: ["notion"],
+        tool_mode: "read_write",
+        ttl_seconds: 3600
+      }')"
+  )"
+
+  if [[ "$status" != "200" ]]; then
+    echo "failed to create MCP session via identity-worker (status=${status})"
+    cat "$body_file"
+    rm -f "$body_file"
+    return 1
+  fi
+
+  FLEET_VERIFY_SESSION_TOKEN="$(jq -r '.token // empty' "$body_file")"
+  FLEET_VERIFY_ACCOUNT_ID="$(jq -r '.account_id // empty' "$body_file")"
+  rm -f "$body_file"
+
+  if [[ -z "$FLEET_VERIFY_SESSION_TOKEN" ]]; then
+    echo "identity-worker create session response missing token"
+    return 1
+  fi
+
+  echo "session_token_source=identity_worker account_id=${FLEET_VERIFY_ACCOUNT_ID:-unknown}"
+  return 0
 }
+
+check_missing_session_token_rejected() {
+  local worker="$1"
+  local mcp_url token_var_name token token_help
+  mcp_url="$(mcp_url_for_worker "$worker")"
+  token_var_name="$(token_env_var_for_worker "$worker")"
+  token="$(resolve_worker_token "$worker")"
+  token_help="${token_var_name} (or HUB_API_TOKEN)"
+
+  if [[ -z "$token" ]]; then
+    echo "missing API token for ${worker} (${token_help})"
+    failures=1
+    return
+  fi
+
+  local body_file status
+  body_file="$(mktemp)"
+  status="$(
+    curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
+      -H "Authorization: Bearer ${token}" \
+      -H "Content-Type: application/json" \
+      -H "Accept: application/json" \
+      --data '{"jsonrpc":"2.0","id":"fleet-verify-missing-session","method":"tools/call","params":{"name":"hub_status","arguments":{}}}'
+  )"
+
+  if jq -e '.result != null' "$body_file" >/dev/null 2>&1; then
+    echo "strict identity check failed for ${worker}: request without X-MCP-Session-Token unexpectedly succeeded"
+    cat "$body_file"
+    failures=1
+    rm -f "$body_file"
+    return
+  fi
+
+  if ! grep -qiE 'X-MCP-Session-Token|session_required|Unauthorized MCP session token|HUB_IDENTITY_MODE' "$body_file"; then
+    echo "strict identity check failed for ${worker}: expected session-token error message"
+    echo "status=${status}"
+    cat "$body_file"
+    failures=1
+    rm -f "$body_file"
+    return
+  fi
+
+  echo "missing_session_token=enforced"
+  rm -f "$body_file"
+}
+
+check_session_account_routing() {
+  local worker="$1"
+  local mcp_url token_var_name token token_help
+  mcp_url="$(mcp_url_for_worker "$worker")"
+  token_var_name="$(token_env_var_for_worker "$worker")"
+  token="$(resolve_worker_token "$worker")"
+  token_help="${token_var_name} (or HUB_API_TOKEN)"
+
+  if [[ -z "$token" ]]; then
+    echo "missing API token for ${worker} (${token_help})"
+    failures=1
+    return
+  fi
+
+  if [[ -z "${FLEET_VERIFY_SESSION_TOKEN:-}" ]]; then
+    echo "missing fleet verify MCP session token"
+    failures=1
+    return
+  fi
+
+  local set_payload='{"jsonrpc":"2.0","id":"fleet-verify-discovery","method":"tools/call","params":{"name":"hub_set_discovery","arguments":{"mode":"full","activeServers":["composio-toolkit-notion"]}}}'
+  curl -sS -X POST "$mcp_url" \
+    -H "Authorization: Bearer ${token}" \
+    -H "X-MCP-Session-Token: ${FLEET_VERIFY_SESSION_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -H "Accept: application/json" \
+    --data "$set_payload" >/dev/null || true
 
 check_mcp_protocol() {
   local worker="$1"
@@ -231,40 +353,12 @@ check_mcp_protocol() {
   rm -f "$init_headers" "$init_body" "$list_headers" "$list_body"
 }
 
-check_account_routing() {
-  local worker="$1"
-  local expected_account_id
-  expected_account_id="$(expected_account_id_for_worker "$worker")"
-  if [[ -z "$expected_account_id" ]]; then
-    return
-  fi
-
-  local mcp_url
-  mcp_url="$(mcp_url_for_worker "$worker")"
-  local token_var_name
-  token_var_name="$(token_env_var_for_worker "$worker")"
-  local token
-  token="$(resolve_worker_token "$worker")"
-  local token_help="${token_var_name} (or HUB_API_TOKEN)"
-
-  if [[ -z "$token" ]]; then
-    echo "missing API token for ${worker} (${token_help})"
-    failures=1
-    return
-  fi
-
-  local set_payload='{"jsonrpc":"2.0","id":"fleet-verify-discovery","method":"tools/call","params":{"name":"hub_set_discovery","arguments":{"mode":"full","activeServers":["composio-toolkit-notion"]}}}'
-  curl -sS -X POST "$mcp_url" \
-    -H "Authorization: Bearer ${token}" \
-    -H "Content-Type: application/json" \
-    -H "Accept: application/json" \
-    --data "$set_payload" >/dev/null || true
-
   local body_file status
   body_file="$(mktemp)"
   status="$(
     curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
       -H "Authorization: Bearer ${token}" \
+      -H "X-MCP-Session-Token: ${FLEET_VERIFY_SESSION_TOKEN}" \
       -H "Content-Type: application/json" \
       -H "Accept: application/json" \
       --data '{"jsonrpc":"2.0","id":"fleet-verify-account","method":"tools/call","params":{"name":"hub_execute_proxy_tool","arguments":{"proxyToolName":"composio-toolkit-notion__connection_status","args":{}}}}'
@@ -274,7 +368,7 @@ check_account_routing() {
     echo "account routing check failed for ${worker} (status=${status})"
     cat "$body_file"
     failures=1
-    reset_discovery_preferences "$mcp_url" "$token"
+    reset_discovery_preferences "$mcp_url" "$token" "$FLEET_VERIFY_SESSION_TOKEN"
     rm -f "$body_file"
     return
   fi
@@ -288,23 +382,35 @@ check_account_routing() {
     ' "$body_file"
   )"
 
-  if [[ "$actual_account_id" != "$expected_account_id" ]]; then
+  if [[ -z "$actual_account_id" ]]; then
     echo "account routing mismatch for ${worker}"
-    echo "expected=${expected_account_id}"
     echo "actual=${actual_account_id:-<empty>}"
     cat "$body_file"
     failures=1
-    reset_discovery_preferences "$mcp_url" "$token"
+    reset_discovery_preferences "$mcp_url" "$token" "$FLEET_VERIFY_SESSION_TOKEN"
+    rm -f "$body_file"
+    return
+  fi
+
+  if [[ -n "${FLEET_VERIFY_ACCOUNT_ID:-}" && "$actual_account_id" != "$FLEET_VERIFY_ACCOUNT_ID" ]]; then
+    echo "account routing mismatch for ${worker}"
+    echo "expected=${FLEET_VERIFY_ACCOUNT_ID}"
+    echo "actual=${actual_account_id}"
+    cat "$body_file"
+    failures=1
+    reset_discovery_preferences "$mcp_url" "$token" "$FLEET_VERIFY_SESSION_TOKEN"
     rm -f "$body_file"
     return
   fi
 
   echo "account_routing=ok account_id=${actual_account_id}"
-  reset_discovery_preferences "$mcp_url" "$token"
+  reset_discovery_preferences "$mcp_url" "$token" "$FLEET_VERIFY_SESSION_TOKEN"
   rm -f "$body_file"
 }
 
 failures=0
+FLEET_VERIFY_SESSION_TOKEN=""
+FLEET_VERIFY_ACCOUNT_ID=""
 cd "$HUB_DIR"
 
 echo "Checking required secrets on each worker..."
@@ -329,11 +435,13 @@ for worker in "${WORKERS[@]}"; do
   health_json="$(curl -fsS "$health_url")"
   built_at="$(echo "$health_json" | jq -r '.built_at // "unknown"')"
   auth_required="$(echo "$health_json" | jq -r '.auth_required // "false"')"
+  identity_mode="$(echo "$health_json" | jq -r '.identity_mode // "unknown"')"
   telemetry_db="$(echo "$health_json" | jq -r '.policy.quota.telemetryDbConfigured // "false"')"
   echo "built_at=${built_at}"
   echo "auth_required=${auth_required}"
+  echo "identity_mode=${identity_mode}"
   echo "telemetryDbConfigured=${telemetry_db}"
-  if [[ "$auth_required" != "true" || "$telemetry_db" != "true" ]]; then
+  if [[ "$auth_required" != "true" || "$telemetry_db" != "true" || "$identity_mode" != "session_required" ]]; then
     echo "health check failed for ${worker}"
     failures=1
   fi
@@ -375,6 +483,19 @@ for worker in "${WORKERS[@]}"; do
   echo
 done
 
+echo "Creating MCP session token for strict identity E2E..."
+if ! create_fleet_verify_session; then
+  failures=1
+fi
+echo
+
+echo "Checking strict identity enforcement (missing X-MCP-Session-Token should fail)..."
+for worker in "${WORKERS[@]}"; do
+  echo "===== STRICT ${worker} ====="
+  check_missing_session_token_rejected "$worker"
+  echo
+done
+
 echo "Checking MCP protocol endpoints (initialize + resources/list)..."
 for worker in "${WORKERS[@]}"; do
   echo "===== PROTOCOL ${worker} ====="
@@ -382,10 +503,10 @@ for worker in "${WORKERS[@]}"; do
   echo
 done
 
-echo "Checking token-only account routing on team hubs..."
+echo "Checking session-based account routing across hubs..."
 for worker in "${WORKERS[@]}"; do
   echo "===== ACCOUNT ${worker} ====="
-  check_account_routing "$worker"
+  check_session_account_routing "$worker"
   echo
 done
 

@@ -12,6 +12,7 @@ interface Env {
   COMPOSIO_API_KEY?: string;
   COMPOSIO_AUTH_CONFIG_MAP?: string;
   COMPOSIO_DEFAULT_ENTITY_ID?: string;
+  COMPOSIO_ENTITY_RESOLUTION_MODE?: string;
   COMPOSIO_TOOL_CACHE_SECONDS?: string;
   BRAINTRUST_API_KEY?: string;
   BRAINTRUST_PROJECT_ID?: string;
@@ -31,6 +32,8 @@ type ToolRoute = {
   description: string;
   inputSchema: Record<string, unknown>;
 };
+
+type EntityResolutionMode = 'header_required' | 'compat';
 
 const SERVER_NAME = 'composio-toolkit-mcp';
 const SERVER_VERSION = '0.1.0';
@@ -72,6 +75,7 @@ export default {
             composioApiKey: Boolean(env.COMPOSIO_API_KEY),
             authConfigMapEntries: Object.keys(parseAuthConfigMap(env.COMPOSIO_AUTH_CONFIG_MAP)).length,
             defaultEntity: env.COMPOSIO_DEFAULT_ENTITY_ID ?? 'default',
+            entityResolutionMode: resolveEntityResolutionMode(env),
             braintrustApiKey: Boolean(env.BRAINTRUST_API_KEY),
             braintrustProjectId: resolveBraintrustProjectId(env),
             braintrustProject: resolveBraintrustProjectName(env),
@@ -286,8 +290,8 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
   server.setRequestHandler(CallToolRequestSchema, async (toolRequest, extra) => {
     const toolName = toolRequest.params.name;
     const args = normalizeArgs(toolRequest.params.arguments);
-    const entityId = resolveEntityId(extra, request, env);
     const startedAt = Date.now();
+    let entityId = 'unknown';
 
     const emitAndReturn = async (
       result: {
@@ -326,6 +330,8 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
     };
 
     try {
+      entityId = resolveEntityId(extra, request, env);
+
       if (toolName === 'connection_status') {
         const connected = await client.hasActiveConnection(entityId, runtime.toolkitSlug);
         return emitAndReturn(toJsonResult({
@@ -444,6 +450,14 @@ async function checkZoomTranscriptAvailability(params: {
   const warnings: string[] = [];
   const composioUserId = stringOrNull(args.composioUserId) ?? entityId;
   const connectedAccountId = stringOrNull(args.connectedAccountId);
+  if (connectedAccountId) {
+    await assertConnectedAccountOwnership({
+      client,
+      entityId: composioUserId,
+      connectedAccountId,
+      toolkitSlug,
+    });
+  }
 
   const connected = await client.hasActiveConnection(composioUserId, toolkitSlug).catch((error) => {
     warnings.push(`Connection check failed: ${toErrorMessage(error)}`);
@@ -746,6 +760,14 @@ async function listZoomAvailableTranscripts(params: {
   const warnings: string[] = [];
   const composioUserId = stringOrNull(args.composioUserId) ?? entityId;
   const connectedAccountId = stringOrNull(args.connectedAccountId);
+  if (connectedAccountId) {
+    await assertConnectedAccountOwnership({
+      client,
+      entityId: composioUserId,
+      connectedAccountId,
+      toolkitSlug,
+    });
+  }
 
   const connected = await client.hasActiveConnection(composioUserId, toolkitSlug).catch((error) => {
     warnings.push(`Connection check failed: ${toErrorMessage(error)}`);
@@ -1288,6 +1310,7 @@ function booleanArg(raw: unknown, fallback: boolean): boolean {
 
 function resolveEntityId(extra: unknown, request: Request, env: Env): string {
   const requestInfo = asRecord(extra)?.requestInfo;
+  const mode = resolveEntityResolutionMode(env);
 
   const fromHeader =
     getHeaderValue(requestInfo, 'x-mcp-account-id') ??
@@ -1299,12 +1322,26 @@ function resolveEntityId(extra: unknown, request: Request, env: Env): string {
     return fromHeader.trim();
   }
 
+  if (mode === 'header_required') {
+    throw new Error(
+      'Missing x-mcp-account-id header. Set COMPOSIO_ENTITY_RESOLUTION_MODE=compat to allow legacy bearer/default fallback.',
+    );
+  }
+
   const authorization =
     getHeaderValue(requestInfo, 'authorization') ?? request.headers.get('authorization');
   const bearer = authorization ? parseBearerToken(authorization) : null;
   if (bearer) return bearer;
 
   return env.COMPOSIO_DEFAULT_ENTITY_ID?.trim() || 'default';
+}
+
+function resolveEntityResolutionMode(env: Env): EntityResolutionMode {
+  const raw = env.COMPOSIO_ENTITY_RESOLUTION_MODE?.trim().toLowerCase();
+  if (raw === 'compat') {
+    return 'compat';
+  }
+  return 'header_required';
 }
 
 function getHeaderValue(requestInfo: unknown, name: string): string | null {
@@ -1343,6 +1380,28 @@ function parseBearerToken(value: string): string | null {
   if (!match) return null;
   const token = match[1]?.trim();
   return token || null;
+}
+
+async function assertConnectedAccountOwnership(params: {
+  client: ComposioClient;
+  entityId: string;
+  connectedAccountId: string;
+  toolkitSlug?: string;
+}): Promise<void> {
+  const { client, entityId, connectedAccountId, toolkitSlug } = params;
+  const accounts = await client.getConnectedAccounts(entityId);
+  const normalizedId = connectedAccountId.trim();
+  const match = accounts.find((account) => account.connectionId === normalizedId);
+  if (!match) {
+    throw new Error(
+      `connectedAccountId "${normalizedId}" does not belong to Composio user "${entityId}".`,
+    );
+  }
+  if (toolkitSlug && match.app.toLowerCase() !== toolkitSlug.toLowerCase()) {
+    throw new Error(
+      `connectedAccountId "${normalizedId}" belongs to toolkit "${match.app}", expected "${toolkitSlug}".`,
+    );
+  }
 }
 
 function stringOrNull(value: unknown): string | null {

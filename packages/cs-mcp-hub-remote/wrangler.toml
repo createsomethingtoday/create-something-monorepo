@@ -21,6 +21,10 @@ preview_id = "6356c7663c334a4195243971e117565c"
 # Discovery defaults (used when per-account discovery prefs are not persisted in KV)
 HUB_DISCOVERY_MODE = "compact"
 HUB_DISCOVERY_SHARED_PACK = "shared-auth-core"
+# Identity resolution mode:
+# - "session_required" (default): requires X-MCP-Session-Token + resolver config
+# - "compat": keeps legacy header/bearer fallback identity behavior
+# HUB_IDENTITY_MODE = "session_required"
 # Optional Braintrust project name (falls back to "CREATE SOMETHING")
 # BRAINTRUST_PROJECT_NAME = "CREATE SOMETHING"
 # Optional explicit Braintrust project id
@@ -42,6 +46,7 @@ HUB_DISCOVERY_SHARED_PACK = "shared-auth-core"
 # HUB_DISCOVERY_MAX_PROXY_TOOLS = "200"
 # HUB_ACCOUNT_ID = "operator"
 # HUB_SESSION_RESOLVE_URL = "https://id.createsomething.space/v1/mcp/sessions/resolve"
+# HUB_SESSION_RESOLVE_TOKEN = ""
 # HUB_SESSION_RESOLVE_TIMEOUT_MS = "5000"
 # HUB_CONNECT_TIMEOUT_MS = "4000"
 # HUB_LIST_TOOLS_TIMEOUT_MS = "10000"

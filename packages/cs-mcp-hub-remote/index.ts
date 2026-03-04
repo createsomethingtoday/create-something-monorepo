@@ -241,6 +241,8 @@ type ResolvedAccountContext = {
   identitySource: 'session' | 'fallback';
 };
 
+type HubIdentityMode = 'session_required' | 'compat';
+
 type HubInvocationLog = {
   accountId: string;
   toolName: string;
@@ -272,6 +274,7 @@ const DOWNSTREAM_BEARER_ENV_FALLBACK: Record<string, string> = {
 interface Env {
   HUB_INSTANCE_ID?: string;
   HUB_API_TOKEN?: string;
+  HUB_IDENTITY_MODE?: string;
   HUB_SESSION_RESOLVE_URL?: string;
   HUB_SESSION_RESOLVE_TOKEN?: string;
   HUB_SESSION_RESOLVE_TIMEOUT_MS?: string;
@@ -702,6 +705,7 @@ export default {
               health: '/health',
             },
             auth_required: Boolean(readEnvString(env, 'HUB_API_TOKEN')),
+            identity_mode: resolveHubIdentityMode(env),
             state_storage: env.HUB_STATE_KV ? 'kv' : 'env-only',
             policy: buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env),
             downstream_auth_config: {
@@ -713,7 +717,7 @@ export default {
               ),
             },
             session_resolver: {
-              enabled: Boolean(readEnvString(env, 'HUB_SESSION_RESOLVE_URL')),
+              enabled: isSessionResolverConfigured(env),
               has_token: Boolean(readEnvString(env, 'HUB_SESSION_RESOLVE_TOKEN')),
               timeout_ms: parsePositiveInt(
                 readEnvString(env, 'HUB_SESSION_RESOLVE_TIMEOUT_MS'),
@@ -3633,35 +3637,53 @@ function extractInvocationTrace(request: unknown, extra: unknown): InvocationTra
   };
 }
 
-async function resolveAccountContext(extra: unknown, env: Env): Promise<ResolvedAccountContext> {
+export async function resolveAccountContext(extra: unknown, env: Env): Promise<ResolvedAccountContext> {
   const extraRecord = asRecord(extra);
   const authorization = getHeaderValue(extraRecord?.requestInfo, 'authorization');
-  const bearerToken = authorization ? parseBearerToken(authorization) : null;
   const sessionHeaderToken = getHeaderValue(extraRecord?.requestInfo, 'x-mcp-session-token');
+  const identityMode = resolveHubIdentityMode(env);
+
+  if (identityMode === 'session_required') {
+    if (!isSessionResolverConfigured(env)) {
+      throw new Error(
+        'HUB_IDENTITY_MODE=session_required requires HUB_SESSION_RESOLVE_URL and HUB_SESSION_RESOLVE_TOKEN.',
+      );
+    }
+    if (!sessionHeaderToken) {
+      throw new Error('Missing X-MCP-Session-Token header.');
+    }
+    return resolveSessionAccountContext(env, sessionHeaderToken);
+  }
+
+  const bearerToken = authorization ? parseBearerToken(authorization) : null;
   const staticHubToken = readEnvString(env, 'HUB_API_TOKEN');
   const bearerIsHubToken =
     bearerToken && staticHubToken ? timingSafeEqual(bearerToken, staticHubToken) : false;
   const sessionToken = sessionHeaderToken ?? (bearerToken && !bearerIsHubToken ? bearerToken : null);
 
   if (sessionToken && isSessionResolverConfigured(env)) {
-    const resolved = await resolveSessionForBearerToken(env, sessionToken);
-    const accountId = normalizeTraceValue(resolved?.account_id);
-    if (!resolved || resolved.valid !== true || !accountId) {
-      const reason = normalizeTraceValue(resolved?.reason);
-      throw new Error(reason ? `Unauthorized MCP session token: ${reason}` : 'Unauthorized MCP session token');
-    }
-
-    return {
-      accountId,
-      tenantId: normalizeTraceValue(resolved.tenant_id),
-      userId: normalizeTraceValue(resolved.user_id),
-      sessionId: normalizeTraceValue(resolved.session_id),
-      allowedToolPrefixes: parseAllowedToolPrefixes(resolved.allowed_tool_prefixes),
-      identitySource: 'session',
-    };
+    return resolveSessionAccountContext(env, sessionToken);
   }
 
   return resolveFallbackAccountContext(extra, env);
+}
+
+async function resolveSessionAccountContext(env: Env, token: string): Promise<ResolvedAccountContext> {
+  const resolved = await resolveSessionForBearerToken(env, token);
+  const accountId = normalizeTraceValue(resolved?.account_id);
+  if (!resolved || resolved.valid !== true || !accountId) {
+    const reason = normalizeTraceValue(resolved?.reason);
+    throw new Error(reason ? `Unauthorized MCP session token: ${reason}` : 'Unauthorized MCP session token');
+  }
+
+  return {
+    accountId,
+    tenantId: normalizeTraceValue(resolved.tenant_id),
+    userId: normalizeTraceValue(resolved.user_id),
+    sessionId: normalizeTraceValue(resolved.session_id),
+    allowedToolPrefixes: parseAllowedToolPrefixes(resolved.allowed_tool_prefixes),
+    identitySource: 'session',
+  };
 }
 
 function resolveFallbackAccountContext(extra: unknown, env: Env): ResolvedAccountContext {
@@ -3695,6 +3717,14 @@ function resolveFallbackAccountContext(extra: unknown, env: Env): ResolvedAccoun
 
 function isSessionResolverConfigured(env: Env): boolean {
   return Boolean(readEnvString(env, 'HUB_SESSION_RESOLVE_URL') && readEnvString(env, 'HUB_SESSION_RESOLVE_TOKEN'));
+}
+
+export function resolveHubIdentityMode(env: Env): HubIdentityMode {
+  const raw = readEnvString(env, 'HUB_IDENTITY_MODE')?.trim().toLowerCase();
+  if (raw === 'compat') {
+    return 'compat';
+  }
+  return 'session_required';
 }
 
 async function resolveSessionForBearerToken(

@@ -22,3 +22,4 @@ preview_id = "6356c7663c334a4195243971e117565c"
 [vars]
 HUB_DISCOVERY_MODE = "compact"
 HUB_DISCOVERY_SHARED_PACK = "shared-auth-core"
+HUB_IDENTITY_MODE = "session_required"
