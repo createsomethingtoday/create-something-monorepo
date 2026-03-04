@@ -65,9 +65,10 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_INSTANCE_ID:${worker}" \
       --var "HUB_ACCOUNT_ID:${account_id}" \
       --var "HUB_ENABLED_BUNDLES:agency,core" \
-      --var "HUB_ENABLED_SERVERS:${SHARED_AUTH_SERVERS_CSV},outerfields-pcn" \
+      --var "HUB_ENABLED_SERVERS:${SHARED_AUTH_SERVERS_CSV},outerfields-pcn,meetings" \
       --var "HUB_DISABLED_SERVERS:composio-toolkit-airtable,composio-toolkit-webflow,halfdozen-dm-mcp,loom-mcp,schedule-mcp,substrate-mcp" \
       --var "HUB_DISCOVERY_MODE:full" \
+      --var "HUB_CONNECT_TIMEOUT_MS:10000" \
       --var "HUB_DISCOVERY_SHARED_PACK:shared-auth-core"
   else
     pnpm exec wrangler deploy \

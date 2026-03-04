@@ -347,6 +347,13 @@ for worker in "${WORKERS[@]}"; do
     else
       echo "enabled_server_policy=mj_broader"
     fi
+
+    if ! echo "$health_json" | jq -e '.enabled_servers // [] | index("meetings")' >/dev/null; then
+      echo "expected cs-hub-mj to include meetings"
+      failures=1
+    else
+      echo "enabled_server_policy=mj_meetings_enabled"
+    fi
   fi
 
   echo
