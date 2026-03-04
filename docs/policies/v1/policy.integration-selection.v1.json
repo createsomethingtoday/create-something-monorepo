@@ -1,0 +1,27 @@
+{
+  "policy_id": "policy.integration-selection.v1",
+  "version": 1,
+  "status": "draft",
+  "default_strategy": "composio_first",
+  "use_composio_when": [
+    "commodity_connectivity",
+    "managed_oauth_and_connect_links_needed",
+    "multi_tenant_generic_actions"
+  ],
+  "use_custom_when": [
+    "deep_client_specific_workflows",
+    "custom_token_lifecycle_control_required",
+    "strategic_integration_is_differentiator"
+  ],
+  "commercial_alignment": {
+    "mcp_only": "discovery_or_compliance_wedge",
+    "agent_outcome_stack": "default_paid_offer"
+  },
+  "exception_record_required_fields": [
+    "integration_name",
+    "decision",
+    "rationale",
+    "approved_by",
+    "approved_at"
+  ]
+}

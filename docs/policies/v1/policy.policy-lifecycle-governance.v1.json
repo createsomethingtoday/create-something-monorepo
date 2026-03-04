@@ -1,0 +1,50 @@
+{
+  "policy_id": "policy.policy-lifecycle-governance.v1",
+  "version": 1,
+  "status": "draft",
+  "states": [
+    "draft",
+    "active",
+    "archived"
+  ],
+  "transitions": [
+    {
+      "from": "draft",
+      "to": "active",
+      "requires": [
+        "approval_record",
+        "change_rationale",
+        "compiled_artifact_integrity"
+      ]
+    },
+    {
+      "from": "active",
+      "to": "archived",
+      "requires": [
+        "replacement_or_deprecation_reason"
+      ]
+    },
+    {
+      "from": "active",
+      "to": "draft",
+      "label": "rollback",
+      "requires": [
+        "incident_or_gate_failure_reference"
+      ]
+    }
+  ],
+  "compiled_artifact_required_fields": [
+    "policy_engine",
+    "policy_polar",
+    "policy_hash",
+    "compiler_version",
+    "fallback_ir_json"
+  ],
+  "audit_requirements": [
+    "created_by",
+    "created_at",
+    "updated_by",
+    "updated_at",
+    "status"
+  ]
+}
