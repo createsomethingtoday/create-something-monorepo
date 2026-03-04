@@ -2,8 +2,10 @@
 	import type { PageData } from './$types';
 	import type { Asset } from '$lib/server/airtable';
 	import { goto, invalidate } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import { Header, AssetsDisplay, OverviewStats, SubmissionTracker, StatsBar, DataFreshnessIndicator } from '$lib/components';
 	import { toast } from '$lib/stores/toast';
+	import { trackEvent } from '$lib/utils/analytics';
 
 	let { data }: { data: PageData } = $props();
 
@@ -43,10 +45,13 @@
 	}
 
 	function handleViewAsset(id: string) {
+		trackEvent('dashboard_asset_opened', { asset_id: id });
 		goto(`/assets/${id}`);
 	}
 
 	async function handleEditAsset(id: string) {
+		trackEvent('dashboard_asset_edit_opened', { asset_id: id });
+
 		// Lazy load the EditAssetModal component
 		if (!EditAssetModal) {
 			const module = await import('$lib/components/EditAssetModal.svelte');
@@ -138,8 +143,18 @@
 	}
 
 	async function handleRefreshAssets() {
+		trackEvent('dashboard_assets_refreshed', { source: 'manual' });
 		invalidate('app:assets');
 	}
+
+	onMount(() => {
+		const assets = data.assets || [];
+		trackEvent('dashboard_loaded', {
+			total_assets: assets.length,
+			published_assets: assets.filter((asset) => asset.status === 'Published').length,
+			draft_assets: assets.filter((asset) => asset.status === 'Draft').length
+		});
+	});
 </script>
 
 <svelte:head>

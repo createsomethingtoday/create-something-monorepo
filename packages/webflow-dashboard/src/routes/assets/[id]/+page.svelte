@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import type { Asset } from '$lib/server/airtable';
-import { goto } from '$app/navigation';
+	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import DOMPurify from 'isomorphic-dompurify';
 	import {
 		Header,
@@ -31,6 +32,7 @@ import { goto } from '$app/navigation';
 	} from '$lib/components';
 	import EditAssetModal from '$lib/components/EditAssetModal.svelte';
 	import { toast } from '$lib/stores/toast';
+	import { trackEvent } from '$lib/utils/analytics';
 
 	// Sanitize HTML to prevent XSS
 	function sanitizeHtml(html: string | undefined): string {
@@ -78,8 +80,8 @@ import { goto } from '$app/navigation';
 	let showPerformance = $state(false);
 	let imageError = $state(false);
 	let showEditModal = $state(false);
-let isArchiving = $state(false);
-let showArchiveConfirm = $state(false);
+	let isArchiving = $state(false);
+	let showArchiveConfirm = $state(false);
 
 	// Format dates
 	function formatDate(dateStr?: string): string {
@@ -145,6 +147,12 @@ let showArchiveConfirm = $state(false);
 		const clickTime = performance.now();
 		console.log('[DEBUG:A,E] Edit button clicked', { clickTime: clickTime.toFixed(2) });
 		// #endregion
+
+		trackEvent('asset_edit_opened', {
+			asset_id: asset.id,
+			asset_status: asset.status
+		});
+
 		showEditModal = true;
 		// #region agent log
 		console.log('[DEBUG:E] showEditModal set to true', { elapsed: (performance.now() - clickTime).toFixed(2) + 'ms' });
@@ -204,11 +212,17 @@ let showArchiveConfirm = $state(false);
 
 	async function handleArchiveClick() {
 		if (isArchiving) return;
-	showArchiveConfirm = true;
-}
 
-async function confirmArchive() {
-	if (isArchiving) return;
+		trackEvent('asset_archive_confirm_opened', {
+			asset_id: asset.id,
+			asset_status: asset.status
+		});
+
+		showArchiveConfirm = true;
+	}
+
+	async function confirmArchive() {
+		if (isArchiving) return;
 		isArchiving = true;
 
 		try {
@@ -219,37 +233,74 @@ async function confirmArchive() {
 			toast.error(message);
 		} finally {
 			isArchiving = false;
-		showArchiveConfirm = false;
+			showArchiveConfirm = false;
 		}
 	}
 
-function setActiveTab(value: TabValue) {
-	if (value === 'analytics' && !canShowMetrics) return;
-	activeTab = value;
-}
+	function setActiveTab(value: TabValue) {
+		if (value === 'analytics' && !canShowMetrics) return;
+		if (value === activeTab) return;
 
-function handleTabListKeydown(event: KeyboardEvent) {
-	if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+		const previousTab = activeTab;
+		activeTab = value;
 
-	event.preventDefault();
-
-	const enabledTabs = tabOrder.filter((tab) => tab !== 'analytics' || canShowMetrics);
-	const currentIndex = enabledTabs.indexOf(activeTab as TabValue);
-
-	if (event.key === 'Home') {
-		setActiveTab(enabledTabs[0]);
-		return;
+		trackEvent('asset_tab_viewed', {
+			asset_id: asset.id,
+			tab: value,
+			previous_tab: previousTab,
+			has_metrics: canShowMetrics
+		});
 	}
 
-	if (event.key === 'End') {
-		setActiveTab(enabledTabs[enabledTabs.length - 1]);
-		return;
+	function handleTabListKeydown(event: KeyboardEvent) {
+		if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+
+		event.preventDefault();
+
+		const enabledTabs = tabOrder.filter((tab) => tab !== 'analytics' || canShowMetrics);
+		const currentIndex = enabledTabs.indexOf(activeTab as TabValue);
+
+		if (event.key === 'Home') {
+			setActiveTab(enabledTabs[0]);
+			return;
+		}
+
+		if (event.key === 'End') {
+			setActiveTab(enabledTabs[enabledTabs.length - 1]);
+			return;
+		}
+
+		const delta = event.key === 'ArrowRight' ? 1 : -1;
+		const nextIndex = (currentIndex + delta + enabledTabs.length) % enabledTabs.length;
+		setActiveTab(enabledTabs[nextIndex]);
 	}
 
-	const delta = event.key === 'ArrowRight' ? 1 : -1;
-	const nextIndex = (currentIndex + delta + enabledTabs.length) % enabledTabs.length;
-	setActiveTab(enabledTabs[nextIndex]);
-}
+	function extractHost(url: string): string | null {
+		try {
+			return new URL(url).hostname;
+		} catch {
+			return null;
+		}
+	}
+
+	function openExternalLink(url: string, source: 'preview' | 'live' | 'marketplace'): void {
+		trackEvent('asset_external_link_opened', {
+			asset_id: asset.id,
+			source,
+			destination_host: extractHost(url)
+		});
+		window.open(url, '_blank');
+	}
+
+	onMount(() => {
+		trackEvent('asset_detail_loaded', {
+			asset_id: asset.id,
+			asset_status: asset.status,
+			asset_type: asset.type,
+			initial_tab: activeTab,
+			has_metrics: canShowMetrics
+		});
+	});
 </script>
 
 <svelte:head>
