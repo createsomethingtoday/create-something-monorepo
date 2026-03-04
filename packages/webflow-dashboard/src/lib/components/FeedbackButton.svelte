@@ -149,7 +149,7 @@
 		border-radius: var(--radius-full);
 		color: var(--color-fg-primary);
 		cursor: pointer;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+		box-shadow: var(--shadow-md);
 		transition: all var(--duration-micro) var(--ease-standard);
 		z-index: 1000;
 	}
@@ -157,7 +157,12 @@
 	.feedback-trigger:hover {
 		border-color: var(--color-border-emphasis);
 		transform: translateY(-2px);
-		box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+		box-shadow: var(--shadow-lg);
+	}
+
+	.feedback-trigger:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
 	}
 
 	.beta-badge {
@@ -174,7 +179,7 @@
 	.feedback-backdrop {
 		position: fixed;
 		inset: 0;
-		background: rgba(0, 0, 0, 0.5);
+		background: var(--color-overlay-heavy);
 		z-index: 1001;
 	}
 
@@ -187,7 +192,7 @@
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xl);
-		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+		box-shadow: var(--shadow-2xl);
 		z-index: 1002;
 		overflow: hidden;
 	}
@@ -225,6 +230,11 @@
 		color: var(--color-fg-primary);
 	}
 
+	.close-btn:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
+	}
+
 	form {
 		padding: 1.25rem;
 		display: flex;
@@ -258,6 +268,11 @@
 		border-color: var(--color-border-emphasis);
 	}
 
+	.type-btn:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
+	}
+
 	.type-btn.selected {
 		background: var(--color-bg-elevated);
 		border-color: var(--type-color);
@@ -285,6 +300,11 @@
 	textarea:focus {
 		outline: none;
 		border-color: var(--color-border-emphasis);
+	}
+
+	textarea:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: -1px;
 	}
 
 	.error-text {

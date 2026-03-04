@@ -164,6 +164,11 @@
 		color: var(--color-fg-primary);
 	}
 
+	.trigger-btn:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
+	}
+
 	/* Portal dropdown - uses fixed positioning to escape overflow containers */
 	.dropdown-portal {
 		position: fixed;
@@ -171,7 +176,7 @@
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-md);
-		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+		box-shadow: var(--shadow-lg);
 		z-index: 9999;
 		overflow: hidden;
 	}
@@ -199,6 +204,11 @@
 	.dropdown-item-danger:hover {
 		background: var(--color-error-muted);
 		color: var(--color-error);
+	}
+
+	.dropdown-item:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: -2px;
 	}
 
 	.dropdown-item:disabled {
