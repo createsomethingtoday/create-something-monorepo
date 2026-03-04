@@ -122,13 +122,13 @@ Papers must follow Voice Canon:
 ```markdown
 ## Integration Patterns
 
-Beads provides several integration patterns for AI agents.
+Loom provides several integration patterns for AI agents.
 
 ### Context Survival
 Preserve work across session restarts.
 
 ### Work Extraction
-Convert findings into issues.
+Convert findings into tasks.
 ```
 
 **After (nicely said, tells a story):**
@@ -137,7 +137,7 @@ Convert findings into issues.
 
 When Claude Code sessions end—whether from context limits, crashes, or
 simply closing the terminal—work disappears. This is the fundamental
-challenge Beads solves.
+challenge Loom solves.
 
 ### Context Survival: The Core Problem
 
@@ -145,19 +145,21 @@ challenge Beads solves.
 windows fill (at ~50k tokens). Crashes happen. How do you pick up where
 you left off?
 
-**The solution:** Beads issues live in Git. When a session restarts,
-the new instance reads `.beads/issues.jsonl` and reconstructs context.
-Work survives restarts because it's persisted, not remembered.
+**The solution:** Loom persists task and session context outside the
+active chat. When a session restarts, the new instance can load state
+with `lm show`, `lm resume`, or Remote MCP tools like `loom_get` and
+`loom_get_resume_brief`. Work survives restarts because context is
+explicitly recoverable.
 
 **What this enables:**
-- Session 1: Creates issue, starts implementation
+- Session 1: Creates or claims task, starts implementation
 - [Session crashes]
-- Session 2: Reads issue, sees file modifications, continues work
+- Session 2: Reads task + resume brief, continues work
 
 **Measured impact:** In 6 months of production use, zero work items
 lost to session interruption.
 
-### Work Extraction: From Findings to Issues
+### Work Extraction: From Findings to Tasks
 
 During code review, Claude often discovers secondary work...
 ```
