@@ -125,6 +125,7 @@ create_fleet_verify_session() {
   local identity_access_token="${IDENTITY_ACCESS_TOKEN:-}"
   local tenant_id="${MCP_SESSION_TENANT_ID:-fleet_verify}"
   local host="${MCP_SESSION_HOST:-fleet_verify}"
+  local toolkit_profile_json="${MCP_SESSION_TOOLKIT_PROFILE_JSON:-[\"dropbox\",\"gmail\",\"youtube\",\"googlesheets\",\"googledrive\",\"zoom\",\"slack\",\"quickbooks\",\"linkedin\",\"notion\"]}"
 
   if [[ -n "${MCP_SESSION_TOKEN:-}" ]]; then
     FLEET_VERIFY_SESSION_TOKEN="$MCP_SESSION_TOKEN"
@@ -147,10 +148,10 @@ create_fleet_verify_session() {
       curl -sS -o "$body_file" -w "%{http_code}" -X POST "$create_url" \
         -H "Authorization: Bearer ${identity_access_token}" \
         -H "Content-Type: application/json" \
-        --data "$(jq -cn --arg tenant "$tenant_id" --arg host "${host}-${suffix}" '{
+        --data "$(jq -cn --arg tenant "$tenant_id" --arg host "${host}-${suffix}" --argjson toolkitProfile "$toolkit_profile_json" '{
           tenant_id: $tenant,
           host: $host,
-          toolkit_profile: ["notion"],
+          toolkit_profile: $toolkitProfile,
           tool_mode: "read_write",
           ttl_seconds: 3600
         }')"
@@ -373,13 +374,46 @@ check_session_account_routing() {
     return
   fi
 
-  local set_payload='{"jsonrpc":"2.0","id":"fleet-verify-discovery","method":"tools/call","params":{"name":"hub_set_discovery","arguments":{"mode":"full","activeServers":["composio-toolkit-notion"]}}}'
+  local set_payload='{"jsonrpc":"2.0","id":"fleet-verify-discovery","method":"tools/call","params":{"name":"hub_set_discovery","arguments":{"mode":"full","activeServers":[]}}}'
   curl -sS -X POST "$mcp_url" \
     -H "Authorization: Bearer ${token}" \
     -H "X-MCP-Session-Token: ${FLEET_VERIFY_SESSION_TOKEN}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json" \
     --data "$set_payload" >/dev/null || true
+
+  local probe_body_file probe_status probe_proxy_tool
+  probe_body_file="$(mktemp)"
+  probe_status="$(
+    curl -sS -o "$probe_body_file" -w "%{http_code}" -X POST "$mcp_url" \
+      -H "Authorization: Bearer ${token}" \
+      -H "X-MCP-Session-Token: ${FLEET_VERIFY_SESSION_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -H "Accept: application/json" \
+      --data '{"jsonrpc":"2.0","id":"fleet-verify-search","method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"query":"connection_status","limit":1}}}'
+  )"
+  if [[ "$probe_status" != "200" ]]; then
+    echo "probe search failed for ${worker} (status=${probe_status})"
+    cat "$probe_body_file"
+    failures=1
+    reset_discovery_preferences "$mcp_url" "$token" "$FLEET_VERIFY_SESSION_TOKEN"
+    rm -f "$probe_body_file"
+    return
+  fi
+  probe_proxy_tool="$(
+    jq -r '
+      .result.structuredContent.tools[0].proxyToolName //
+      (.result.content[0].text | fromjson? | .tools[0].proxyToolName) //
+      empty
+    ' "$probe_body_file"
+  )"
+  rm -f "$probe_body_file"
+  if [[ -z "$probe_proxy_tool" ]]; then
+    echo "probe search returned no visible proxy tool for ${worker}"
+    failures=1
+    reset_discovery_preferences "$mcp_url" "$token" "$FLEET_VERIFY_SESSION_TOKEN"
+    return
+  fi
 
   local body_file status
   body_file="$(mktemp)"
@@ -389,7 +423,18 @@ check_session_account_routing() {
       -H "X-MCP-Session-Token: ${FLEET_VERIFY_SESSION_TOKEN}" \
       -H "Content-Type: application/json" \
       -H "Accept: application/json" \
-      --data '{"jsonrpc":"2.0","id":"fleet-verify-account","method":"tools/call","params":{"name":"hub_execute_proxy_tool","arguments":{"proxyToolName":"composio-toolkit-notion__connection_status","args":{}}}}'
+      --data "$(jq -cn --arg proxyToolName "$probe_proxy_tool" '{
+        jsonrpc: "2.0",
+        id: "fleet-verify-account",
+        method: "tools/call",
+        params: {
+          name: "hub_execute_proxy_tool",
+          arguments: {
+            proxyToolName: $proxyToolName,
+            args: {}
+          }
+        }
+      }')"
   )"
 
   if [[ "$status" != "200" ]]; then

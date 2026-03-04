@@ -17,7 +17,7 @@ CREATE INDEX idx_mcp_accounts_tenant_id ON mcp_accounts(tenant_id);
 
 -- Backfill one canonical account_id per (user_id, tenant_id), preferring
 -- the most recently issued session group and then a deterministic account_id.
-INSERT INTO mcp_accounts (account_id, user_id, tenant_id, created_at, updated_at)
+INSERT OR IGNORE INTO mcp_accounts (account_id, user_id, tenant_id, created_at, updated_at)
 SELECT
   latest.account_id,
   latest.user_id,
@@ -40,5 +40,4 @@ FROM (
    AND newest.tenant_id = ms.tenant_id
    AND newest.latest_created_at = ms.created_at
   GROUP BY ms.user_id, ms.tenant_id
-) AS latest
-ON CONFLICT(user_id, tenant_id) DO NOTHING;
+) AS latest;

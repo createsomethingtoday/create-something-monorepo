@@ -39,6 +39,7 @@ join_by_comma() {
 SHARED_AUTH_SERVERS_CSV="$(join_by_comma "${SHARED_AUTH_SERVERS[@]}")"
 MJ_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},meetings"
 SESSION_RESOLVE_URL="${HUB_SESSION_RESOLVE_URL:-https://id.createsomething.space/v1/mcp/sessions/resolve}"
+SESSION_TOKEN_FOR_NORMALIZE="${MCP_SESSION_TOKEN:-}"
 
 account_id_for_worker() {
   case "$1" in
@@ -125,6 +126,10 @@ normalize_worker_state() {
     echo "missing API token for state normalization on ${worker} (${token_help})"
     return 1
   fi
+  if [[ -z "$SESSION_TOKEN_FOR_NORMALIZE" ]]; then
+    echo "missing MCP_SESSION_TOKEN for state normalization on ${worker} (strict identity mode)"
+    return 1
+  fi
 
   local set_bundles_json set_servers_json payload response_body status
   set_bundles_json='[]'
@@ -151,6 +156,7 @@ normalize_worker_state() {
   status="$(
     curl -sS -o "$response_body" -w "%{http_code}" -X POST "$mcp_url" \
       -H "Authorization: Bearer ${token}" \
+      -H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_NORMALIZE}" \
       -H "Content-Type: application/json" \
       -H "Accept: application/json" \
       --data "$payload"
