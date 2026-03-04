@@ -937,43 +937,67 @@ async function connectSingleDownstream(
   config: HttpServerConfig,
   env: Env,
 ): Promise<ConnectedDownstream | DownstreamFailure> {
-  const client = new Client({
-    name: `${HUB_NAME}:${name}`,
-    version: HUB_VERSION,
-  });
   const connectTimeoutMs = resolveConnectTimeoutMs(config, env);
   const listToolsTimeoutMs = resolveListToolsTimeoutMs(config, env);
-
-  try {
-    const requestInit: RequestInit = {};
-    const headers = resolveHttpHeaders(name, config, env);
-    if (Object.keys(headers).length > 0) {
-      requestInit.headers = headers;
-    }
-
-    const transport = new StreamableHTTPClientTransport(new URL(config.url), { requestInit });
-    await withTimeout(
-      client.connect(transport),
-      connectTimeoutMs,
-      `Connect to downstream "${name}"`,
-    );
-
-    const tools = await withTimeout(
-      listAllTools(client),
-      listToolsTimeoutMs,
-      `List tools from downstream "${name}"`,
-    );
-    const toolCallTimeoutMs = resolveToolCallTimeoutMs(config, env);
-    return { name, config, baseHeaders: headers, toolCallTimeoutMs, client, tools };
-  } catch (error) {
-    try {
-      await client.close();
-    } catch {
-      // Best-effort cleanup.
-    }
-    const message = error instanceof Error ? error.message : String(error);
-    return { name, error: message };
+  const toolCallTimeoutMs = resolveToolCallTimeoutMs(config, env);
+  const headers = resolveHttpHeaders(name, config, env);
+  const requestInit: RequestInit = {};
+  if (Object.keys(headers).length > 0) {
+    requestInit.headers = headers;
   }
+
+  const maxListToolsAttempts = 2;
+  for (let attempt = 1; attempt <= maxListToolsAttempts; attempt += 1) {
+    const client = new Client({
+      name: `${HUB_NAME}:${name}`,
+      version: HUB_VERSION,
+    });
+
+    try {
+      const transport = new StreamableHTTPClientTransport(new URL(config.url), { requestInit });
+      await withTimeout(
+        client.connect(transport),
+        connectTimeoutMs,
+        `Connect to downstream "${name}"`,
+      );
+
+      const tools = await withTimeout(
+        listAllTools(client),
+        listToolsTimeoutMs,
+        `List tools from downstream "${name}"`,
+      );
+
+      return { name, config, baseHeaders: headers, toolCallTimeoutMs, client, tools };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const shouldRetry =
+        attempt < maxListToolsAttempts && isListToolsTimeoutError(message, name);
+
+      try {
+        await client.close();
+      } catch {
+        // Best-effort cleanup.
+      }
+
+      if (shouldRetry) {
+        console.warn(
+          `[${HUB_NAME}] listTools timed out for "${name}" (attempt ${attempt}/${maxListToolsAttempts}); retrying once.`,
+        );
+        continue;
+      }
+
+      return { name, error: message };
+    }
+  }
+
+  return { name, error: `Unknown downstream bootstrap failure for "${name}"` };
+}
+
+function isListToolsTimeoutError(message: string, serverName: string): boolean {
+  return (
+    message.includes(`List tools from downstream "${serverName}"`) &&
+    message.includes('timed out after')
+  );
 }
 
 function resolveHttpHeaders(
