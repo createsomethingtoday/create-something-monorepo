@@ -15,6 +15,34 @@ import type { PageServerLoad } from './$types';
 import { isFileBasedPaper, getFileBasedPaper } from '$lib/config/fileBasedPapers';
 import { transformExperimentToPaper } from '@create-something/canon';
 
+// Load all paper markdown files at build time.
+const contentFiles = import.meta.glob('/content/papers/*.md', {
+	eager: true,
+	query: '?raw',
+	import: 'default'
+}) as Record<string, string>;
+
+/**
+ * Strip YAML frontmatter from markdown content.
+ */
+function stripFrontmatter(raw: string): string {
+	const trimmed = raw.trimStart();
+	if (!trimmed.startsWith('---')) return trimmed;
+	const endIndex = trimmed.indexOf('---', 3);
+	if (endIndex === -1) return trimmed;
+	return trimmed.slice(endIndex + 3).trimStart();
+}
+
+/**
+ * Get markdown content for a file-based paper by slug.
+ */
+function getPaperContent(slug: string): string | null {
+	const key = `/content/papers/${slug}.md`;
+	const raw = contentFiles[key];
+	if (!raw) return null;
+	return stripFrontmatter(raw);
+}
+
 export const load: PageServerLoad = async ({ params }) => {
 	const { slug } = params;
 
@@ -27,8 +55,9 @@ export const load: PageServerLoad = async ({ params }) => {
 
 		// Transform to Paper interface for consistent rendering
 		const transformedPaper = transformExperimentToPaper(paper);
+		const content = getPaperContent(slug);
 		return {
-			paper: transformedPaper,
+			paper: content ? { ...transformedPaper, content } : transformedPaper,
 			relatedPapers: [] // File-based papers don't have DB-based related papers
 		};
 	}
