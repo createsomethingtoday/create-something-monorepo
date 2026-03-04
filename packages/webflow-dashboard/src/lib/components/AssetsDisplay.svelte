@@ -507,7 +507,7 @@
 
 	.sort-summary {
 		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
+		color: var(--color-fg-muted);
 	}
 
 	.table-container {
@@ -535,6 +535,12 @@
 		color: var(--color-fg-primary);
 		text-decoration: underline;
 		text-underline-offset: 4px;
+	}
+
+	.sort-btn:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
+		border-radius: var(--radius-sm);
 	}
 
 	.show-more {

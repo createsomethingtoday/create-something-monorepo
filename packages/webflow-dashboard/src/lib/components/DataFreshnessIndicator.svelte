@@ -183,7 +183,7 @@
 		align-items: center;
 		gap: 0.25rem;
 		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
+		color: var(--color-fg-muted);
 		margin: 0.25rem 0 0;
 	}
 
@@ -283,5 +283,11 @@
 	.freshness-badge:hover {
 		border-color: var(--color-border-emphasis);
 		color: var(--color-fg-secondary);
+	}
+
+	.freshness-tooltip:focus-visible,
+	.tooltip-close:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
 	}
 </style>

@@ -172,6 +172,11 @@
 		background: var(--color-active);
 	}
 
+	.version-item:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: -2px;
+	}
+
 	.version-date {
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-muted);
