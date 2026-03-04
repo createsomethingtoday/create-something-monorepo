@@ -449,6 +449,11 @@
 		color: var(--color-fg-primary);
 	}
 
+	.key-input:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: -1px;
+	}
+
 	.generated-info {
 		display: grid;
 		grid-template-columns: 1fr 1fr;

@@ -172,7 +172,7 @@
 
 	.arrow {
 		font-size: var(--text-h2);
-		color: var(--color-fg-tertiary);
+		color: var(--color-fg-muted);
 	}
 
 	.differences {
