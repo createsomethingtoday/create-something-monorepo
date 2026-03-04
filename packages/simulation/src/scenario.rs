@@ -3,7 +3,7 @@
 //! Provides time-aware simulation scaffolding.
 //! Each vertical (dental, writer, agency) implements Scenario.
 
-use crate::{SimState, Rng};
+use crate::SimState;
 
 /// Time of day affects behavior patterns
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -64,12 +64,6 @@ impl TimeOfDay {
 
 /// Time utilities for simulation
 pub struct SimTime {
-    /// Unix timestamp in milliseconds
-    pub timestamp_ms: i64,
-    /// Hour of day (0-23)
-    pub hour: u32,
-    /// Minute of day (0-1439)
-    pub minute_of_day: u32,
     /// Day of week (0 = Sunday, 6 = Saturday)
     pub day_of_week: u32,
     /// Time of day enum
@@ -102,23 +96,10 @@ impl SimTime {
         let business_progress = time_of_day.business_progress(minute_of_day);
         
         SimTime {
-            timestamp_ms,
-            hour,
-            minute_of_day,
             day_of_week,
             time_of_day,
             business_progress,
         }
-    }
-
-    /// Is this a weekday?
-    pub fn is_weekday(&self) -> bool {
-        self.day_of_week >= 1 && self.day_of_week <= 5
-    }
-
-    /// Is this during business hours?
-    pub fn is_business_hours(&self) -> bool {
-        self.hour >= 8 && self.hour < 18
     }
 }
 

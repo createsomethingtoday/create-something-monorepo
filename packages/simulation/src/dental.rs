@@ -78,7 +78,6 @@ struct PatientJourney {
     procedure: &'static str,
     amount: u32,
     stage: JourneyStage,
-    days_in_stage: u32,
 }
 
 impl PatientJourney {
@@ -90,7 +89,6 @@ impl PatientJourney {
             procedure: rng.pick(PROCEDURES).map(|(p, _)| *p)?,
             amount: rng.pick(PROCEDURES).map(|(_, a)| *a)?,
             stage,
-            days_in_stage: rng.next_range(3) as u32,
         })
     }
     
@@ -107,11 +105,11 @@ impl Scenario for DentalScenario {
         let mut rng = Rng::seeded(seed, (timestamp_ms / 60000) as u64); // Changes every minute
         
         // Generate patient journeys at various stages
-        let journeys = generate_journeys(&mut rng, &time);
+        let journeys = generate_journeys(&mut rng);
         
         let metrics = generate_metrics(&mut rng, &time);
-        let items = generate_items_from_journeys(&mut rng, &time, &journeys);
-        let activity_log = generate_activity_log_from_journeys(&mut rng, &time, &journeys);
+        let items = generate_items_from_journeys(&mut rng, &journeys);
+        let activity_log = generate_activity_log_from_journeys(&mut rng, &journeys);
         
         SimState {
             items,
@@ -124,7 +122,7 @@ impl Scenario for DentalScenario {
 }
 
 /// Generate a realistic set of patient journeys at various stages
-fn generate_journeys(rng: &mut Rng, time: &SimTime) -> Vec<PatientJourney> {
+fn generate_journeys(rng: &mut Rng) -> Vec<PatientJourney> {
     let mut journeys = Vec::new();
     
     // New patient calls (today) - become inbox items needing callback
@@ -220,7 +218,6 @@ fn generate_journeys(rng: &mut Rng, time: &SimTime) -> Vec<PatientJourney> {
 
 fn generate_metrics(rng: &mut Rng, time: &SimTime) -> SimMetrics {
     let progress = time.business_progress;
-    let is_busy = matches!(time.time_of_day, TimeOfDay::Morning | TimeOfDay::Afternoon);
     
     // Total appointments scales with day of week (busier midweek)
     let base_appointments = match time.day_of_week {
@@ -316,11 +313,11 @@ fn generate_metrics(rng: &mut Rng, time: &SimTime) -> SimMetrics {
 }
 
 /// Generate items from patient journeys - creates logical flow
-fn generate_items_from_journeys(rng: &mut Rng, time: &SimTime, journeys: &[PatientJourney]) -> Vec<SimItem> {
+fn generate_items_from_journeys(rng: &mut Rng, journeys: &[PatientJourney]) -> Vec<SimItem> {
     let mut items = Vec::new();
     
     for journey in journeys {
-        if let Some(item) = journey_to_item(rng, time, journey) {
+        if let Some(item) = journey_to_item(rng, journey) {
             items.push(item);
         }
     }
@@ -340,7 +337,7 @@ fn generate_items_from_journeys(rng: &mut Rng, time: &SimTime, journeys: &[Patie
 }
 
 /// Convert a patient journey stage to an item
-fn journey_to_item(rng: &mut Rng, time: &SimTime, journey: &PatientJourney) -> Option<SimItem> {
+fn journey_to_item(rng: &mut Rng, journey: &PatientJourney) -> Option<SimItem> {
     let name = journey.full_name();
     let last = journey.last_name;
     let payer = journey.payer;
@@ -561,7 +558,7 @@ fn generate_noise_item(rng: &mut Rng, index: usize) -> Option<SimItem> {
 }
 
 /// Generate activity log from patient journeys - shows logical flow
-fn generate_activity_log_from_journeys(rng: &mut Rng, time: &SimTime, journeys: &[PatientJourney]) -> Vec<SimLogEntry> {
+fn generate_activity_log_from_journeys(rng: &mut Rng, journeys: &[PatientJourney]) -> Vec<SimLogEntry> {
     let mut log = Vec::new();
     
     // Generate log entries from journeys - shows the narrative
