@@ -38,6 +38,7 @@ join_by_comma() {
 
 SHARED_AUTH_SERVERS_CSV="$(join_by_comma "${SHARED_AUTH_SERVERS[@]}")"
 MJ_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},meetings"
+SESSION_RESOLVE_URL="${HUB_SESSION_RESOLVE_URL:-https://id.createsomething.space/v1/mcp/sessions/resolve}"
 
 account_id_for_worker() {
   case "$1" in
@@ -188,6 +189,8 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_ENABLED_BUNDLES:[]" \
       --var "HUB_ENABLED_SERVERS:${MJ_SERVERS_CSV}" \
       --var "HUB_DISABLED_SERVERS:outerfields-pcn,create-something,three-tier-framework,playbook,composio-toolkit-airtable,composio-toolkit-webflow,halfdozen-dm-mcp,loom-mcp,schedule-mcp,substrate-mcp" \
+      --var "HUB_IDENTITY_MODE:session_required" \
+      --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
       --var "HUB_DISCOVERY_MODE:full" \
       --var "HUB_CONNECT_TIMEOUT_MS:10000" \
       --var "HUB_LIST_TOOLS_TIMEOUT_MS:15000" \
@@ -202,6 +205,8 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_ENABLED_BUNDLES:[]" \
       --var "HUB_ENABLED_SERVERS:${SHARED_AUTH_SERVERS_CSV}" \
       --var "HUB_DISABLED_SERVERS:[]" \
+      --var "HUB_IDENTITY_MODE:session_required" \
+      --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
       --var "HUB_DISCOVERY_MODE:compact" \
       --var "HUB_CONNECT_TIMEOUT_MS:10000" \
       --var "HUB_LIST_TOOLS_TIMEOUT_MS:15000" \
@@ -216,7 +221,11 @@ done
 echo "Deploying core hub workers..."
 for worker in "${CORE_WORKERS[@]}"; do
   echo "===== DEPLOY ${worker} ====="
-  pnpm exec wrangler deploy --name "$worker" --var "HUB_INSTANCE_ID:${worker}"
+  pnpm exec wrangler deploy \
+    --name "$worker" \
+    --var "HUB_INSTANCE_ID:${worker}" \
+    --var "HUB_IDENTITY_MODE:session_required" \
+    --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}"
   echo
 done
 

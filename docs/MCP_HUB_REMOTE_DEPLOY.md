@@ -49,11 +49,12 @@ Optional runtime selection:
 - `HUB_DISCOVERY_SHARED_PACK` (named default from `config/mcp-hub/discovery-packs.json`, for example `shared-auth-core`)
 - `HUB_REFRESH_SECONDS`
 - `HUB_ACCOUNT_ID` (fallback account id for hub telemetry writes)
+- `HUB_IDENTITY_MODE` (`session_required` default, or `compat`)
 - `HUB_SESSION_RESOLVE_URL` (identity-worker resolver endpoint, e.g. `https://id.createsomething.space/v1/mcp/sessions/resolve`)
 - `HUB_SESSION_RESOLVE_TOKEN` (shared secret used to authorize resolver calls)
 - `HUB_SESSION_RESOLVE_TIMEOUT_MS` (default `5000`)
 
-When `HUB_SESSION_RESOLVE_URL` + `HUB_SESSION_RESOLVE_TOKEN` are configured and clients pass bearer MCP session tokens, the hub resolves:
+In `session_required` mode, callers must send `X-MCP-Session-Token`, and the hub resolves:
 
 - `account_id`
 - `tenant_id`
@@ -64,8 +65,9 @@ and enforces tool access by prefix before routing.
 
 Compatibility note:
 
-- If `HUB_API_TOKEN` is enabled, keep using it for gateway auth and pass MCP session tokens in `X-MCP-Session-Token`.
-- Alternate pattern: keep `HUB_API_TOKEN` in `?token=` query param and pass MCP session token in `Authorization: Bearer ...`.
+- Keep `Authorization: Bearer <HUB_API_TOKEN>` for gateway auth.
+- Pass MCP session token in `X-MCP-Session-Token`.
+- `compat` mode keeps legacy fallback identity behavior and should be temporary.
 
 State persistence:
 
@@ -144,3 +146,27 @@ After deploy, validate:
 5. `hub_execute_proxy_tool` succeeds for at least one known route.
 6. Direct call to `<server>__<tool>` returns broker-only guidance error.
 7. `hub_trace_lookup` shows both hub and routed downstream telemetry rows for broker calls.
+
+## Fleet E2E Verification
+
+Run strict identity + routing checks across team hubs:
+
+```bash
+# Option A: use an existing MCP session token
+export MCP_SESSION_TOKEN='ms_tok_...'
+export MCP_SESSION_ACCOUNT_ID='acct_...'
+
+# Option B: mint a session token via identity-worker
+export IDENTITY_ACCESS_TOKEN='eyJ...'
+export IDENTITY_BASE_URL='https://id.createsomething.space'
+export MCP_SESSION_TENANT_ID='fleet_verify'
+
+pnpm mcp:hub:fleet:verify
+```
+
+The verifier checks:
+1. Required secrets, including `HUB_SESSION_RESOLVE_TOKEN`
+2. `/health` policy and `identity_mode=session_required`
+3. Missing `X-MCP-Session-Token` is rejected
+4. MCP protocol (`initialize`, `resources/list`) stays healthy
+5. Session-based routed call returns the expected `entityId/account_id`

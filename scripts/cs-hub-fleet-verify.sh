@@ -174,88 +174,13 @@ create_fleet_verify_session() {
   return 0
 }
 
-check_missing_session_token_rejected() {
-  local worker="$1"
-  local mcp_url token_var_name token token_help
-  mcp_url="$(mcp_url_for_worker "$worker")"
-  token_var_name="$(token_env_var_for_worker "$worker")"
-  token="$(resolve_worker_token "$worker")"
-  token_help="${token_var_name} (or HUB_API_TOKEN)"
-
-  if [[ -z "$token" ]]; then
-    echo "missing API token for ${worker} (${token_help})"
-    failures=1
-    return
-  fi
-
-  local body_file status
-  body_file="$(mktemp)"
-  status="$(
-    curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
-      -H "Authorization: Bearer ${token}" \
-      -H "Content-Type: application/json" \
-      -H "Accept: application/json" \
-      --data '{"jsonrpc":"2.0","id":"fleet-verify-missing-session","method":"tools/call","params":{"name":"hub_status","arguments":{}}}'
-  )"
-
-  if jq -e '.result != null' "$body_file" >/dev/null 2>&1; then
-    echo "strict identity check failed for ${worker}: request without X-MCP-Session-Token unexpectedly succeeded"
-    cat "$body_file"
-    failures=1
-    rm -f "$body_file"
-    return
-  fi
-
-  if ! grep -qiE 'X-MCP-Session-Token|session_required|Unauthorized MCP session token|HUB_IDENTITY_MODE' "$body_file"; then
-    echo "strict identity check failed for ${worker}: expected session-token error message"
-    echo "status=${status}"
-    cat "$body_file"
-    failures=1
-    rm -f "$body_file"
-    return
-  fi
-
-  echo "missing_session_token=enforced"
-  rm -f "$body_file"
-}
-
-check_session_account_routing() {
-  local worker="$1"
-  local mcp_url token_var_name token token_help
-  mcp_url="$(mcp_url_for_worker "$worker")"
-  token_var_name="$(token_env_var_for_worker "$worker")"
-  token="$(resolve_worker_token "$worker")"
-  token_help="${token_var_name} (or HUB_API_TOKEN)"
-
-  if [[ -z "$token" ]]; then
-    echo "missing API token for ${worker} (${token_help})"
-    failures=1
-    return
-  fi
-
-  if [[ -z "${FLEET_VERIFY_SESSION_TOKEN:-}" ]]; then
-    echo "missing fleet verify MCP session token"
-    failures=1
-    return
-  fi
-
-  local set_payload='{"jsonrpc":"2.0","id":"fleet-verify-discovery","method":"tools/call","params":{"name":"hub_set_discovery","arguments":{"mode":"full","activeServers":["composio-toolkit-notion"]}}}'
-  curl -sS -X POST "$mcp_url" \
-    -H "Authorization: Bearer ${token}" \
-    -H "X-MCP-Session-Token: ${FLEET_VERIFY_SESSION_TOKEN}" \
-    -H "Content-Type: application/json" \
-    -H "Accept: application/json" \
-    --data "$set_payload" >/dev/null || true
-
 check_mcp_protocol() {
   local worker="$1"
-  local mcp_url
+  local mcp_url token_var_name token token_help
   mcp_url="$(mcp_url_for_worker "$worker")"
-  local token_var_name
   token_var_name="$(token_env_var_for_worker "$worker")"
-  local token
   token="$(resolve_worker_token "$worker")"
-  local token_help="${token_var_name} (or HUB_API_TOKEN)"
+  token_help="${token_var_name} (or HUB_API_TOKEN)"
 
   if [[ -z "$token" ]]; then
     echo "missing API token for ${worker} (${token_help})"
@@ -353,6 +278,79 @@ check_mcp_protocol() {
   rm -f "$init_headers" "$init_body" "$list_headers" "$list_body"
 }
 
+check_missing_session_token_rejected() {
+  local worker="$1"
+  local mcp_url token_var_name token token_help
+  mcp_url="$(mcp_url_for_worker "$worker")"
+  token_var_name="$(token_env_var_for_worker "$worker")"
+  token="$(resolve_worker_token "$worker")"
+  token_help="${token_var_name} (or HUB_API_TOKEN)"
+
+  if [[ -z "$token" ]]; then
+    echo "missing API token for ${worker} (${token_help})"
+    failures=1
+    return
+  fi
+
+  local body_file status
+  body_file="$(mktemp)"
+  status="$(
+    curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
+      -H "Authorization: Bearer ${token}" \
+      -H "Content-Type: application/json" \
+      -H "Accept: application/json" \
+      --data '{"jsonrpc":"2.0","id":"fleet-verify-missing-session","method":"tools/call","params":{"name":"hub_status","arguments":{}}}'
+  )"
+
+  if jq -e '.result != null and .error == null' "$body_file" >/dev/null 2>&1; then
+    echo "strict identity check failed for ${worker}: request without X-MCP-Session-Token unexpectedly succeeded"
+    cat "$body_file"
+    failures=1
+    rm -f "$body_file"
+    return
+  fi
+
+  if ! grep -qiE 'X-MCP-Session-Token|session_required|Unauthorized MCP session token|HUB_IDENTITY_MODE' "$body_file"; then
+    echo "strict identity check failed for ${worker}: expected session-token error message"
+    echo "status=${status}"
+    cat "$body_file"
+    failures=1
+    rm -f "$body_file"
+    return
+  fi
+
+  echo "missing_session_token=enforced"
+  rm -f "$body_file"
+}
+
+check_session_account_routing() {
+  local worker="$1"
+  local mcp_url token_var_name token token_help
+  mcp_url="$(mcp_url_for_worker "$worker")"
+  token_var_name="$(token_env_var_for_worker "$worker")"
+  token="$(resolve_worker_token "$worker")"
+  token_help="${token_var_name} (or HUB_API_TOKEN)"
+
+  if [[ -z "$token" ]]; then
+    echo "missing API token for ${worker} (${token_help})"
+    failures=1
+    return
+  fi
+
+  if [[ -z "${FLEET_VERIFY_SESSION_TOKEN:-}" ]]; then
+    echo "missing fleet verify MCP session token"
+    failures=1
+    return
+  fi
+
+  local set_payload='{"jsonrpc":"2.0","id":"fleet-verify-discovery","method":"tools/call","params":{"name":"hub_set_discovery","arguments":{"mode":"full","activeServers":["composio-toolkit-notion"]}}}'
+  curl -sS -X POST "$mcp_url" \
+    -H "Authorization: Bearer ${token}" \
+    -H "X-MCP-Session-Token: ${FLEET_VERIFY_SESSION_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -H "Accept: application/json" \
+    --data "$set_payload" >/dev/null || true
+
   local body_file status
   body_file="$(mktemp)"
   status="$(
@@ -441,6 +439,7 @@ for worker in "${WORKERS[@]}"; do
   echo "auth_required=${auth_required}"
   echo "identity_mode=${identity_mode}"
   echo "telemetryDbConfigured=${telemetry_db}"
+
   if [[ "$auth_required" != "true" || "$telemetry_db" != "true" || "$identity_mode" != "session_required" ]]; then
     echo "health check failed for ${worker}"
     failures=1
