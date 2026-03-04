@@ -18,54 +18,56 @@ type HubOutput = {
 type HubCaseConfig = {
   name: string;
   url: string;
-  authTokenEnvVar: string;
+  authTokenEnvVars: string[];
   sessionTokenEnvVar?: string;
 };
 
-function requireEnv(envVarName: string): string {
-  const value = process.env[envVarName]?.trim();
-  if (!value) {
-    throw new Error(`Missing required env var: ${envVarName}`);
+function requireOneEnv(envVarNames: string[]): string {
+  for (const envVarName of envVarNames) {
+    const value = process.env[envVarName]?.trim();
+    if (value) {
+      return value;
+    }
   }
-  return value;
+  throw new Error(`Missing required env var (one of): ${envVarNames.join(', ')}`);
 }
 
 const HUB_CASE_CONFIGS: HubCaseConfig[] = [
   {
     name: 'lainy',
-    url: 'https://cs-hub-lainy.createsomething.workers.dev/mcp',
-    authTokenEnvVar: 'CS_HUB_LAINY_AUTH_TOKEN',
+    url: 'https://lainy.mcp.createsomething.agency/mcp',
+    authTokenEnvVars: ['CS_HUB_LAINY_API_TOKEN', 'CS_HUB_LAINY_AUTH_TOKEN'],
   },
   {
     name: 'danny',
-    url: 'https://cs-mcp-hub-remote.createsomething.workers.dev/mcp',
-    authTokenEnvVar: 'CS_HUB_DANNY_AUTH_TOKEN',
+    url: 'https://danny.mcp.createsomething.agency/mcp',
+    authTokenEnvVars: ['CS_HUB_DANNY_API_TOKEN', 'CS_HUB_DANNY_AUTH_TOKEN'],
     sessionTokenEnvVar: 'CS_HUB_DANNY_SESSION_TOKEN',
   },
   {
     name: 'august',
-    url: 'https://cs-hub-august.createsomething.workers.dev/mcp',
-    authTokenEnvVar: 'CS_HUB_AUGUST_AUTH_TOKEN',
+    url: 'https://august.mcp.createsomething.agency/mcp',
+    authTokenEnvVars: ['CS_HUB_AUGUST_API_TOKEN', 'CS_HUB_AUGUST_AUTH_TOKEN'],
   },
   {
-    name: 'filip',
-    url: 'https://cs-hub-filip.createsomething.workers.dev/mcp',
-    authTokenEnvVar: 'CS_HUB_FILIP_AUTH_TOKEN',
+    name: 'fillip',
+    url: 'https://fillip.mcp.createsomething.agency/mcp',
+    authTokenEnvVars: ['CS_HUB_FILLIP_API_TOKEN', 'CS_HUB_FILIP_API_TOKEN', 'CS_HUB_FILIP_AUTH_TOKEN'],
   },
   {
     name: 'leah',
-    url: 'https://cs-hub-leah.createsomething.workers.dev/mcp',
-    authTokenEnvVar: 'CS_HUB_LEAH_AUTH_TOKEN',
+    url: 'https://leah.mcp.createsomething.agency/mcp',
+    authTokenEnvVars: ['CS_HUB_LEAH_API_TOKEN', 'CS_HUB_LEAH_AUTH_TOKEN'],
   },
   {
     name: 'mj',
-    url: 'https://cs-hub-mj.createsomething.workers.dev/mcp',
-    authTokenEnvVar: 'CS_HUB_MJ_AUTH_TOKEN',
+    url: 'https://mj.mcp.createsomething.agency/mcp',
+    authTokenEnvVars: ['CS_HUB_MJ_API_TOKEN', 'CS_HUB_MJ_AUTH_TOKEN'],
   },
 ];
 
 const HUB_CASES = HUB_CASE_CONFIGS.map((config) => {
-  const authToken = requireEnv(config.authTokenEnvVar);
+  const authToken = requireOneEnv(config.authTokenEnvVars);
   const sessionToken = config.sessionTokenEnvVar ? process.env[config.sessionTokenEnvVar]?.trim() : undefined;
 
   return {

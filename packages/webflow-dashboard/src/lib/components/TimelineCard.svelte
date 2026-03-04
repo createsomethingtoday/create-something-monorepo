@@ -321,20 +321,20 @@
 	}
 
 	.milestone.completed .milestone-icon {
-		background: var(--color-success-subtle);
+		background: var(--color-success-muted);
 		border-color: var(--color-success);
 		color: var(--color-success);
 	}
 
 	.milestone.current .milestone-icon {
-		background: var(--color-info-subtle);
+		background: var(--color-info-muted);
 		border-color: var(--color-info);
 		color: var(--color-info);
 		animation: pulse 2s infinite;
 	}
 
 	.milestone.rejected .milestone-icon {
-		background: var(--color-error-subtle);
+		background: var(--color-error-muted);
 		border-color: var(--color-error);
 		color: var(--color-error);
 	}
