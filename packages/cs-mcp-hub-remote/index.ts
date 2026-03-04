@@ -269,6 +269,7 @@ const DOWNSTREAM_BEARER_ENV_FALLBACK: Record<string, string> = {
 };
 
 interface Env {
+  HUB_INSTANCE_ID?: string;
   HUB_API_TOKEN?: string;
   HUB_SESSION_RESOLVE_URL?: string;
   HUB_SESSION_RESOLVE_TOKEN?: string;
@@ -303,7 +304,7 @@ interface Env {
 const HUB_NAME = 'create-something-hub-remote';
 const HUB_VERSION = '1.0.0';
 const DEFAULT_REFRESH_SECONDS = 300;
-const HUB_STATE_KV_KEY = 'hub_state_v1';
+const HUB_STATE_KV_PREFIX = 'hub_state_v1';
 
 const registry = registryJson as unknown as McpBundleRegistry;
 const discoveryPackRegistry = discoveryPacksJson as unknown as DiscoveryPackRegistry;
@@ -2968,16 +2969,17 @@ async function getDiscoveryPreferences(
   runtime: HubRuntime,
   env: Env,
 ): Promise<DiscoveryPreferences> {
-  const cached = discoveryPreferencesByAccount.get(accountId);
+  const cacheKey = buildDiscoveryCacheKey(env, accountId);
+  const cached = discoveryPreferencesByAccount.get(cacheKey);
   if (cached) {
     const normalized = normalizeDiscoveryPreferences(cached, runtime);
-    discoveryPreferencesByAccount.set(accountId, normalized);
+    discoveryPreferencesByAccount.set(cacheKey, normalized);
     return normalized;
   }
 
   const kv = env.HUB_STATE_KV;
   if (kv) {
-    const raw = await kv.get(buildDiscoveryKvKey(accountId));
+    const raw = await kv.get(buildDiscoveryKvKey(env, accountId));
     if (raw) {
       try {
         const parsed = JSON.parse(raw) as Record<string, unknown>;
@@ -2991,7 +2993,7 @@ async function getDiscoveryPreferences(
           },
           runtime,
         );
-        discoveryPreferencesByAccount.set(accountId, fromKv);
+        discoveryPreferencesByAccount.set(cacheKey, fromKv);
         return fromKv;
       } catch {
         // Ignore malformed KV payload and fall back to defaults.
@@ -3000,7 +3002,7 @@ async function getDiscoveryPreferences(
   }
 
   const defaults = buildDefaultDiscoveryPreferences(runtime, env);
-  discoveryPreferencesByAccount.set(accountId, defaults);
+  discoveryPreferencesByAccount.set(cacheKey, defaults);
   return defaults;
 }
 
@@ -3029,10 +3031,11 @@ async function persistDiscoveryPreferences(
   prefs: DiscoveryPreferences,
   env: Env,
 ): Promise<void> {
-  discoveryPreferencesByAccount.set(accountId, prefs);
+  const cacheKey = buildDiscoveryCacheKey(env, accountId);
+  discoveryPreferencesByAccount.set(cacheKey, prefs);
   const kv = env.HUB_STATE_KV;
   if (!kv) return;
-  await kv.put(buildDiscoveryKvKey(accountId), JSON.stringify(prefs));
+  await kv.put(buildDiscoveryKvKey(env, accountId), JSON.stringify(prefs));
 }
 
 async function clearDiscoveryPreferences(
@@ -3040,13 +3043,14 @@ async function clearDiscoveryPreferences(
   runtime: HubRuntime,
   env: Env,
 ): Promise<DiscoveryPreferences> {
-  discoveryPreferencesByAccount.delete(accountId);
+  const cacheKey = buildDiscoveryCacheKey(env, accountId);
+  discoveryPreferencesByAccount.delete(cacheKey);
   const kv = env.HUB_STATE_KV;
   if (kv) {
-    await kv.delete(buildDiscoveryKvKey(accountId));
+    await kv.delete(buildDiscoveryKvKey(env, accountId));
   }
   const defaults = buildDefaultDiscoveryPreferences(runtime, env);
-  discoveryPreferencesByAccount.set(accountId, defaults);
+  discoveryPreferencesByAccount.set(cacheKey, defaults);
   return defaults;
 }
 
@@ -3067,8 +3071,12 @@ function normalizeDiscoveryPreferences(
   };
 }
 
-function buildDiscoveryKvKey(accountId: string): string {
-  return `${HUB_DISCOVERY_KV_PREFIX}${accountId}`;
+function buildDiscoveryKvKey(env: Env, accountId: string): string {
+  return `${HUB_DISCOVERY_KV_PREFIX}${resolveHubInstanceId(env)}::${accountId}`;
+}
+
+function buildDiscoveryCacheKey(env: Env, accountId: string): string {
+  return `${resolveHubInstanceId(env)}::${accountId}`;
 }
 
 function parseDiscoveryMode(value: string | null | undefined): DiscoveryMode | null {
@@ -4349,7 +4357,7 @@ async function readHubStateFromKv(env: Env): Promise<HubState | null> {
   const kv = env.HUB_STATE_KV;
   if (!kv) return null;
 
-  const raw = await kv.get(HUB_STATE_KV_KEY);
+  const raw = await kv.get(buildHubStateKvKey(env));
   if (!raw) return null;
 
   try {
@@ -4375,10 +4383,11 @@ async function writeHubState(env: Env, state: HubState): Promise<Record<string, 
     throw new Error('HUB_STATE_KV binding is not configured on this hub deployment.');
   }
 
-  await kv.put(HUB_STATE_KV_KEY, JSON.stringify(state));
+  const key = buildHubStateKvKey(env);
+  await kv.put(key, JSON.stringify(state));
   return {
     persisted: true,
-    key: HUB_STATE_KV_KEY,
+    key,
     storage: 'kv',
   };
 }

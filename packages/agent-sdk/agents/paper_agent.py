@@ -1,17 +1,20 @@
 """
 Paper/Experiment Generation Agent
 
-Generates Canon-compliant Svelte pages from Beads issues.
+Generates Canon-compliant Svelte pages from Loom tasks.
 Uses intelligent routing: Sonnet for content generation, with Gemini fallback.
 """
 
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 from create_something_agents import AgentConfig, CreateSomethingAgent
 
@@ -24,7 +27,7 @@ SYSTEM_PROMPT = """You are a RESEARCH-FIRST content agent for CREATE SOMETHING.
 
 1. USE the bash tool to search: bash(command="grep -r 'topic' .claude/rules/ --include='*.md' | head -20")
 2. USE the bash tool to find files: bash(command="find . -name '*.md' -path './.claude/*' | head -20")
-3. USE the file_read tool to read what you find: file_read(path=".claude/rules/beads-patterns.md")
+3. USE the file_read tool to read what you find: file_read(path=".claude/rules/paper-content-requirements.md")
 4. ONLY THEN write content based on what you actually read
 
 **If you write content without first calling bash or file_read tools, you are doing it wrong.**
@@ -42,7 +45,7 @@ You generate papers and experiments based ONLY on verified facts from the codeba
 
 **ALWAYS:**
 - First search with bash tool, then read with file_read tool
-- Cite specific file paths (e.g., "In .claude/rules/beads-patterns.md:42...")
+- Cite specific file paths (e.g., "In .claude/rules/voice-canon.md:42...")
 - Use real function/class names from files you actually read
 - Say "Not measured" only AFTER you searched and couldn't find data
 - Document what files you examined in Methodology section
@@ -78,6 +81,20 @@ You generate papers and experiments based ONLY on verified facts from the codeba
 2. **Specificity Over Generality** — Measurable claims WITH EVIDENCE
 3. **Honesty Over Polish** — Document failures and unknowns too
 4. **Useful Over Interesting** — Implementation focus with real code
+
+## Brand Alignment (Non-Negotiable)
+
+1. **Align to the MCP-first thesis**
+   - Connectivity strategy must reflect `docs/MCP_FIRST_THESIS.md`
+   - State clearly when the work differentiates by MCP creation (not consumption)
+
+2. **Map architecture to the Three-Tier Framework**
+   - Database (Resources), Automation (Tools), Judgment (Prompts)
+   - Use `docs/THREE_TIER_FRAMEWORK.md` and `CLAUDE.md` terminology exactly
+
+3. **Stay in CREATE SOMETHING voice**
+   - Follow `.claude/rules/voice-canon.md`
+   - Lead with outcomes, then method, then implications
 
 ## CRITICAL: Tell A Story (Not Just Fill Sections)
 
@@ -142,7 +159,7 @@ Each section needs SUBSTANCE:
 **DO NOT** write sparse sections like:
 ```
 ## Integration Patterns
-Beads provides several patterns. Here are some examples.
+Loom provides several patterns. Here are some examples.
 ```
 
 **DO** write substantive sections like:
@@ -151,7 +168,7 @@ Beads provides several patterns. Here are some examples.
 
 When Claude Code sessions end—whether from context limits, crashes, or
 simply closing the terminal—work disappears. This is the fundamental
-challenge Beads solves...
+challenge Loom solves through checkpoints and resume workflows...
 
 [2-3 more paragraphs with specific examples, metrics, and implications]
 ```
@@ -177,28 +194,202 @@ class PaperConfig:
     """Configuration for paper/experiment generation."""
 
     issue_id: str
-    content_type: Literal["paper", "experiment"] = "paper"
+    content_type: Literal["paper", "experiment"] | None = None
     slug: str | None = None
     model: str | None = None  # None = auto-route
     monorepo_path: Path | None = None
 
 
+def _normalize_labels(raw_labels: Any) -> list[str]:
+    """Normalize labels from Loom MCP, lm CLI, or legacy tracker formats."""
+    if isinstance(raw_labels, list):
+        return [str(label).strip() for label in raw_labels if str(label).strip()]
+
+    if isinstance(raw_labels, str):
+        text = raw_labels.strip()
+        if not text:
+            return []
+
+        # lm show prints JSON-ish arrays, e.g. ["agency", "qa"]
+        if text.startswith("[") and text.endswith("]"):
+            try:
+                parsed = json.loads(text)
+                if isinstance(parsed, list):
+                    return [
+                        str(label).strip()
+                        for label in parsed
+                        if str(label).strip()
+                    ]
+            except json.JSONDecodeError:
+                pass
+
+        return [part.strip() for part in text.split(",") if part.strip()]
+
+    return []
+
+
+def _normalize_task(task: dict[str, Any]) -> dict[str, Any]:
+    """Normalize Loom task payload to a stable schema used by the generator."""
+    title = str(task.get("title", "")).strip()
+    description = task.get("description")
+
+    if isinstance(description, list):
+        description_text = "\n".join(str(item) for item in description).strip()
+    else:
+        description_text = str(description or "").strip()
+
+    return {
+        "id": str(task.get("id", "")).strip(),
+        "title": title,
+        "description": description_text,
+        "labels": _normalize_labels(task.get("labels", [])),
+        "status": str(task.get("status", "")).strip(),
+    }
+
+
+def _call_loom_remote_tool(
+    tool_name: str,
+    arguments: dict[str, Any],
+    *,
+    timeout_seconds: int = 15,
+) -> dict[str, Any] | None:
+    """
+    Call Loom Remote MCP via JSON-RPC tool invocation.
+
+    Env vars:
+    - LOOM_MCP_URL: defaults to production endpoint
+    - LOOM_MCP_API_TOKEN: optional bearer token
+    """
+    endpoint = os.getenv("LOOM_MCP_URL", "https://loom.mcp.createsomething.agency/mcp")
+    token = os.getenv("LOOM_MCP_API_TOKEN", "").strip()
+    if not endpoint:
+        return None
+
+    payload: dict[str, Any] = {
+        "jsonrpc": "2.0",
+        "id": f"paper-agent-{tool_name}",
+        "method": "tools/call",
+        "params": {
+            "name": tool_name,
+            "arguments": arguments,
+        },
+    }
+
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    request = Request(
+        endpoint,
+        data=json.dumps(payload).encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+
+    try:
+        with urlopen(request, timeout=timeout_seconds) as response:
+            body = response.read().decode("utf-8")
+    except (HTTPError, URLError, TimeoutError, ValueError):
+        return None
+
+    try:
+        rpc_response = json.loads(body)
+    except json.JSONDecodeError:
+        return None
+
+    result = rpc_response.get("result")
+    if not isinstance(result, dict) or result.get("isError") is True:
+        return None
+
+    content = result.get("content")
+    if isinstance(content, list) and content:
+        first = content[0]
+        if isinstance(first, dict):
+            text = first.get("text")
+            if isinstance(text, str):
+                try:
+                    parsed = json.loads(text)
+                    if isinstance(parsed, dict):
+                        return parsed
+                except json.JSONDecodeError:
+                    return {"text": text}
+
+    return result
+
+
+def _parse_lm_show_output(output: str) -> dict[str, Any] | None:
+    """Parse `lm show <id>` output into structured task data."""
+    fields: dict[str, str] = {}
+    description_lines: list[str] = []
+    in_description = False
+
+    for line in output.splitlines():
+        if in_description:
+            description_lines.append(line.rstrip())
+            continue
+
+        if line.strip() == "Description:":
+            in_description = True
+            continue
+
+        if ":" not in line:
+            continue
+
+        key, value = line.split(":", 1)
+        fields[key.strip().lower()] = value.strip()
+
+    title = fields.get("title", "")
+    if not title:
+        return None
+
+    return {
+        "id": fields.get("id", ""),
+        "title": title,
+        "description": "\n".join(description_lines).strip(),
+        "labels": _normalize_labels(fields.get("labels", "")),
+        "status": fields.get("status", ""),
+    }
+
+
 def get_issue_details(issue_id: str, monorepo: Path) -> dict | None:
-    """Fetch issue details from Beads."""
-    result = subprocess.run(
+    """
+    Fetch task details (Loom remote MCP first, local lm CLI second).
+
+    Falls back to legacy Beads lookup for backward compatibility.
+    """
+    remote_task = _call_loom_remote_tool("loom_get", {"task_id": issue_id})
+    if isinstance(remote_task, dict) and remote_task.get("id"):
+        return _normalize_task(remote_task)
+
+    lm_result = subprocess.run(
+        ["lm", "show", issue_id],
+        capture_output=True,
+        text=True,
+        cwd=monorepo,
+    )
+    if lm_result.returncode == 0:
+        parsed = _parse_lm_show_output(lm_result.stdout)
+        if parsed:
+            return parsed
+
+    legacy_bd_result = subprocess.run(
         ["bd", "show", issue_id, "--json", "--no-db"],
         capture_output=True,
         text=True,
         cwd=monorepo,
     )
-
-    if result.returncode != 0:
+    if legacy_bd_result.returncode != 0:
         return None
 
     try:
-        issues = json.loads(result.stdout)
-        # bd show returns a list, get the first issue
-        return issues[0] if isinstance(issues, list) else issues
+        issues = json.loads(legacy_bd_result.stdout)
+        issue = issues[0] if isinstance(issues, list) else issues
+        if isinstance(issue, dict):
+            return _normalize_task(issue)
+        return None
     except (json.JSONDecodeError, IndexError):
         return None
 
@@ -217,12 +408,13 @@ def generate_slug(title: str, issue_id: str) -> str:
     slug = "".join(c if c.isalnum() or c == "-" else "-" for c in slug)
     slug = "-".join(filter(None, slug.split("-")))
 
-    return slug or issue_id.replace("csm-", "")
+    return slug or issue_id.replace("csm-", "").replace("lm-", "")
 
 
 def detect_content_type(title: str, labels: list[str]) -> Literal["paper", "experiment"]:
     """Detect content type from issue."""
-    if "experiment" in labels or "experiment" in title.lower():
+    lowered_labels = [label.lower() for label in labels]
+    if any("experiment" in label for label in lowered_labels) or "experiment" in title.lower():
         return "experiment"
     return "paper"
 
@@ -231,7 +423,7 @@ def create_paper_agent(
     config: PaperConfig,
 ) -> CreateSomethingAgent:
     """
-    Create an agent for generating papers/experiments from Beads issues.
+    Create an agent for generating papers/experiments from Loom tasks.
 
     Args:
         config: Paper generation configuration
@@ -240,7 +432,7 @@ def create_paper_agent(
         Configured CreateSomethingAgent
 
     Example:
-        agent = create_paper_agent(PaperConfig(issue_id="csm-abc123"))
+        agent = create_paper_agent(PaperConfig(issue_id="lm-abc123"))
         result = await agent.run()
     """
     monorepo = config.monorepo_path or Path.cwd()
@@ -268,7 +460,7 @@ def create_paper_agent(
 
     # Build task prompt
     task = f'''
-Generate a CREATE SOMETHING {content_type} from this Beads issue.
+Generate a CREATE SOMETHING {content_type} from this Loom task.
 
 ## Issue Details
 - ID: {config.issue_id}
@@ -285,10 +477,15 @@ Call the bash tool with these commands:
 - grep -ri "{title.split()[0].lower()}" .claude/rules/ --include="*.md" | head -30
 - ls -la .claude/rules/
 - grep -ri "{title.split()[0].lower()}" packages/ --include="*.ts" --include="*.py" | head -20
+- grep -ri "three-tier\\|mcp\\|loom" docs/ --include="*.md" | head -20
 
 ### Step 2: Read files with file_read tool (REQUIRED)
 After searching, read the relevant files you found:
-- file_read(path=".claude/rules/beads-patterns.md") if about Beads
+- file_read(path=".claude/rules/paper-content-requirements.md")
+- file_read(path=".claude/rules/voice-canon.md")
+- file_read(path=".claude/rules/harness-patterns.md")
+- file_read(path="docs/MCP_FIRST_THESIS.md")
+- file_read(path="docs/THREE_TIER_FRAMEWORK.md")
 - file_read(path="CLAUDE.md") for architecture overview
 - Read any files that grep found
 
@@ -300,7 +497,7 @@ From the actual file contents:
 
 ### Step 4: Write paper citing your sources
 Every claim must reference a file you read:
-- "In .claude/rules/beads-patterns.md:42, the pattern shows..."
+- "In .claude/rules/voice-canon.md:42, the pattern shows..."
 - "CLAUDE.md documents that..."
 
 **If you skip Steps 1-2 and write without tool calls, your paper will be rejected.**
@@ -320,8 +517,9 @@ Every claim must reference a file you read:
 
 3. {"Create +page.server.ts for data fetching" if content_type == "experiment" else "Static paper - no server file needed"}
 
-4. After creating files successfully, close the Beads issue:
-   bd close {config.issue_id} --no-db
+4. After creating files successfully, mark the Loom task done:
+   - Preferred (Remote MCP): call tool `loom_complete` with task_id `{config.issue_id}` and evidence `created {route_path}`
+   - Fallback (local CLI): `lm done {config.issue_id} --evidence "created {route_path}"`
 
 {"## PAPER STRUCTURE REQUIREMENTS (MINIMUM)" if content_type == "paper" else "## EXPERIMENT STRUCTURE REQUIREMENTS (MINIMUM)"}
 
@@ -389,28 +587,28 @@ challenge that prompted our investigation.
 
 ### Finding: Git-Based Persistence
 
-We discovered that Beads stores issues in `.beads/issues.jsonl`, which
-is committed to Git. This means work survives any session interruption.
+We discovered that Loom persists task/session context and exposes
+resume checkpoints, which means work survives interruptions.
 
 ### Before/After
 | State | Sessions Lost | Work Recovery |
 |-------|---------------|---------------|
-| Before Beads | 100% | Manual reconstruction |
-| After Beads | 0% | Automatic from Git |
+| Before Loom | Manual | Ad-hoc reconstruction |
+| After Loom | Deterministic | Resume via checkpoints |
 
 ### What We Did
-- Analyzed the persistence mechanism in `packages/harness/src/beads.ts`
-- Traced the checkpoint system in `.claude/rules/beads-patterns.md:42`
-- Validated with 30-day production usage data
+- Analyzed Loom usage patterns in `packages/loom/README.md`
+- Traced checkpoint and resume guidance in `.claude/rules/harness-patterns.md`
+- Mapped controls to Database/Automation/Judgment from `docs/THREE_TIER_FRAMEWORK.md`
 
 ### Outcome
-Zero work items lost across 47 session restarts in production testing.
+Clear, reproducible restart workflows with explicit resume state.
 ```
 
 **AVOID sparse sections like:**
 ```
 ## Integration Patterns
-Beads provides several patterns. Here are examples.
+Loom provides several patterns. Here are examples.
 [list of patterns without explanation]
 ```
 
