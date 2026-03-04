@@ -26,8 +26,10 @@ Data window for baseline: latest 1,000 rows from `project_logs(project_id)` capt
 
 ## Ranked Execution Order
 
-1. EXP-01 LinkedIn permission preflight and graceful degradation
-2. EXP-02 Intent canonicalization and semantic fallback routing
-3. EXP-03 Provider 429 circuit breaker and budget-aware retry
-4. EXP-04 Control-plane cache and latency stabilization
-5. EXP-05 Tool-argument auto-repair for validation failures
+1. `lm-d02bbe3a` EXP-01 LinkedIn permission preflight and graceful degradation
+2. `lm-e728756f` EXP-02 Intent canonicalization and semantic fallback routing
+3. `lm-20131adb` EXP-03 Provider 429 circuit breaker and budget-aware retry
+4. `lm-338081a9` EXP-04 Control-plane cache and latency stabilization
+5. `lm-ba3c51f3` EXP-05 Tool-argument auto-repair for validation failures
+
+Epic: `lm-535bf0c4` Braintrust trace stabilization experiments (Mar 2026)
