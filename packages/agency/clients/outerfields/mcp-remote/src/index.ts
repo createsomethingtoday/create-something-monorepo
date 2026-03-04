@@ -174,6 +174,13 @@ function createServer(): McpServer {
 		},
 	);
 
+	server.tool(
+		'pcn_architecture',
+		`Get a high-level architecture overview of the PCN platform, including core components, data flow, infrastructure, and deployment model.`,
+		{},
+		async () => ({ content: [{ type: 'text', text: ARCHITECTURE_DOC }] }),
+	);
+
 	// =========================================================================
 	// Judgment Tier — Prompts (reusable interaction templates)
 	// =========================================================================
@@ -335,8 +342,8 @@ export default {
 				endpoint: '/mcp',
 				capabilities: {
 					resources: '2 (platform architecture, component catalog)',
-					tools: '4 (explore component, explain pattern, guide extension, deployment)',
-					prompts: '2 (platform onboarding, architecture review)',
+					tools: '5 (explore component, explain pattern, guide extension, deployment, architecture)',
+					prompts: '3 (platform onboarding, architecture review, feature design session)',
 				},
 				timestamp: new Date().toISOString(),
 			}, null, 2), {

@@ -105,6 +105,11 @@ What's the platform architecture?
 - **database-migrations**: D1 database schema updates
 - **monitoring**: Analytics and error tracking
 
+### Resources & Prompts
+- **Resource**: `pcn://architecture` (platform architecture overview)
+- **Resource**: `pcn://components` (component/pattern/guide catalog)
+- **Prompts**: `platform_onboarding`, `architecture_review`, `feature_design_session`
+
 ## Technical Details
 
 - **Server**: Cloudflare Workers (global edge, no cold starts)
