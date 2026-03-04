@@ -24,8 +24,8 @@
 		text-align: left;
 		vertical-align: middle;
 		font-weight: var(--font-semibold);
-		color: var(--color-fg-muted);
-		border-bottom: 1px solid var(--color-border-default);
+		color: var(--color-fg-secondary);
+		border-bottom: 1px solid var(--color-border-emphasis);
 	}
 
 	.table-head-inner {

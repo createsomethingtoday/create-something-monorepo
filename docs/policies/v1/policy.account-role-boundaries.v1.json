@@ -1,0 +1,48 @@
+{
+  "policy_id": "policy.account-role-boundaries.v1",
+  "version": 1,
+  "status": "draft",
+  "roles": {
+    "public": {
+      "read_only": true,
+      "can_mutate_rollout": false,
+      "can_set_access_mode": false,
+      "can_review_incidents": false,
+      "can_resolve_incidents": false
+    },
+    "auditor": {
+      "read_only": true,
+      "can_mutate_rollout": false,
+      "can_set_access_mode": false,
+      "can_review_incidents": true,
+      "can_resolve_incidents": false
+    },
+    "readonly": {
+      "read_only": true,
+      "can_mutate_rollout": false,
+      "can_set_access_mode": false,
+      "can_review_incidents": false,
+      "can_resolve_incidents": false
+    },
+    "operator": {
+      "read_only": false,
+      "can_mutate_rollout": true,
+      "can_set_access_mode": true,
+      "can_review_incidents": true,
+      "can_resolve_incidents": true
+    },
+    "admin": {
+      "read_only": false,
+      "can_mutate_rollout": true,
+      "can_set_access_mode": true,
+      "can_review_incidents": true,
+      "can_resolve_incidents": true
+    }
+  },
+  "control_plane_tools": [
+    "judgment_engine_rollout_set",
+    "judgment_security_access_set",
+    "judgment_security_incident_review_next",
+    "judgment_security_incident_resolve"
+  ]
+}

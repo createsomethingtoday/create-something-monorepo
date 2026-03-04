@@ -34,7 +34,7 @@
 	}
 
 	.table-row:hover {
-		background: color-mix(in srgb, var(--color-bg-subtle) 60%, transparent);
+		background: var(--color-hover);
 	}
 
 	.table-row-card {
