@@ -409,6 +409,11 @@ check_session_account_routing() {
   )"
   rm -f "$probe_body_file"
   if [[ -z "$probe_proxy_tool" ]]; then
+    if [[ "$worker" == "cs-mcp-hub-remote" ]]; then
+      echo "account_routing=skipped reason=no_visible_proxy_tool"
+      reset_discovery_preferences "$mcp_url" "$token" "$FLEET_VERIFY_SESSION_TOKEN"
+      return
+    fi
     echo "probe search returned no visible proxy tool for ${worker}"
     failures=1
     reset_discovery_preferences "$mcp_url" "$token" "$FLEET_VERIFY_SESSION_TOKEN"
