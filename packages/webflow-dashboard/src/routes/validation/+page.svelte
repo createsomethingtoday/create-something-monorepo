@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { Header, Button, Card, WebflowWayCard, BackNavigation } from '$lib/components';
+	import { trackEvent } from '$lib/utils/analytics';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -22,7 +24,13 @@
 			GsapValidationModal = module.default;
 		}
 		isGsapModalOpen = true;
+
+		trackEvent('validation_gsap_quick_opened');
 	}
+
+	onMount(() => {
+		trackEvent('validation_tools_opened');
+	});
 </script>
 
 <svelte:head>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import type { PageData } from './$types';
 	import type {
 		ValidationResult,
@@ -8,6 +9,7 @@
 		SortOption
 	} from '$lib/types/validation';
 	import { Header, BackNavigation, Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components';
+	import { trackEvent } from '$lib/utils/analytics';
 
 	let { data }: { data: PageData } = $props();
 
@@ -53,6 +55,18 @@
 		error = null;
 		isValidating = true;
 		result = null;
+		const startedAt = Date.now();
+
+		trackEvent('validation_run_started', {
+			validator: 'gsap',
+			target_host: (() => {
+				try {
+					return new URL(url.trim()).hostname;
+				} catch {
+					return null;
+				}
+			})()
+		});
 
 		try {
 			const response = await fetch('/api/validation/gsap', {
@@ -66,9 +80,24 @@
 				throw new Error(data.message || 'Validation failed');
 			}
 
-			result = await response.json();
+			const validationResult = (await response.json()) as ValidationResult;
+			result = validationResult;
+
+			trackEvent('validation_run_completed', {
+				validator: 'gsap',
+				duration_ms: Date.now() - startedAt,
+				passed: validationResult.passed,
+				total_pages: validationResult.summary.totalPages,
+				flagged_code_count: validationResult.issues.totalFlaggedCode
+			});
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'An error occurred';
+
+			trackEvent('validation_run_failed', {
+				validator: 'gsap',
+				duration_ms: Date.now() - startedAt,
+				error_message: error
+			});
 		} finally {
 			isValidating = false;
 		}
@@ -100,6 +129,10 @@
 				return '✓';
 		}
 	}
+
+	onMount(() => {
+		trackEvent('validation_playground_opened');
+	});
 </script>
 
 <svelte:head>
