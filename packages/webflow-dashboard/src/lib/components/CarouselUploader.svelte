@@ -455,6 +455,11 @@
 		cursor: not-allowed;
 	}
 
+	.image-remove:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
+	}
+
 	.dropzone {
 		display: flex;
 		flex-direction: column;

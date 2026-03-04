@@ -479,6 +479,12 @@
 		color: var(--color-fg-primary);
 	}
 
+	.playground-link:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
+		border-radius: var(--radius-sm);
+	}
+
 	@media (max-width: 640px) {
 		.stats-grid {
 			grid-template-columns: repeat(2, 1fr);
