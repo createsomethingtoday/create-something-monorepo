@@ -71,6 +71,38 @@ export const fileBasedPapers: FileBasedPaper[] = [
       ╰───────────────────────────────────────────╯
            No claim without evidence.
 `
+	},
+	{
+		id: 'paper-composio-three-tier-delivery',
+		slug: 'composio-three-tier-delivery',
+		title: 'Composio in the MCP Delivery System',
+		description: 'How Composio is included as internal plumbing for commodity integrations while preserving CREATE SOMETHING\'s creation moat, Three-Tier control model, and Agent Outcome Stack delivery default.',
+		excerpt_short: 'Composio is infrastructure, not positioning',
+		excerpt_long: 'This paper documents why Composio is included in our framework, how the wrap pattern keeps CREATE SOMETHING client-facing, and where each bridge component maps to Database, Automation, and Judgment. It also records the current decision status: 29/29 technical checks passed on 2026-02-10, with a canonical conditional adopt decision on 2026-02-21 pending Phase 2 pilot closure.',
+		category: 'Research',
+		tags: [
+			'Composio',
+			'MCP',
+			'Three-Tier Framework',
+			'Wrap Pattern',
+			'Agent Outcome Stack',
+			'Automation Infrastructure'
+		],
+		created_at: '2026-03-04T00:00:00Z',
+		updated_at: '2026-03-04T00:00:00Z',
+		reading_time_minutes: 12,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: ['mcp-first-thesis', 'three-tier-framework', 'subtractive-triad'],
+		route: '/papers/composio-three-tier-delivery',
+		ascii_art: `
+        ╭───────────────────────────────────────╮
+       ╱   Client sees CREATE SOMETHING MCP      ╲
+      │   Composio inside  →  Commodity CRUD     │
+      │   Margin stays in policy + outcomes      │
+      ╰───────────────────────────────────────────╯
+           Creation over consumption.
+`
 	}
 ];
 
