@@ -39,6 +39,7 @@ join_by_comma() {
 }
 
 SHARED_AUTH_SERVERS_CSV="$(join_by_comma "${SHARED_AUTH_SERVERS[@]}")"
+MJ_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},meetings"
 
 health_url_for_worker() {
   case "$1" in
@@ -97,6 +98,17 @@ resolve_worker_token() {
     token="${HUB_API_TOKEN:-}"
   fi
   echo "$token"
+}
+
+reset_discovery_preferences() {
+  local mcp_url="$1"
+  local token="$2"
+  local reset_payload='{"jsonrpc":"2.0","id":"fleet-verify-discovery-reset","method":"tools/call","params":{"name":"hub_set_discovery","arguments":{"reset":true}}}'
+  curl -sS -X POST "$mcp_url" \
+    -H "Authorization: Bearer ${token}" \
+    -H "Content-Type: application/json" \
+    -H "Accept: application/json" \
+    --data "$reset_payload" >/dev/null || true
 }
 
 expected_account_id_for_worker() {
@@ -262,6 +274,7 @@ check_account_routing() {
     echo "account routing check failed for ${worker} (status=${status})"
     cat "$body_file"
     failures=1
+    reset_discovery_preferences "$mcp_url" "$token"
     rm -f "$body_file"
     return
   fi
@@ -281,11 +294,13 @@ check_account_routing() {
     echo "actual=${actual_account_id:-<empty>}"
     cat "$body_file"
     failures=1
+    reset_discovery_preferences "$mcp_url" "$token"
     rm -f "$body_file"
     return
   fi
 
   echo "account_routing=ok account_id=${actual_account_id}"
+  reset_discovery_preferences "$mcp_url" "$token"
   rm -f "$body_file"
 }
 
@@ -341,18 +356,19 @@ for worker in "${WORKERS[@]}"; do
   fi
 
   if [[ "$worker" == "cs-hub-mj" ]]; then
-    if ! echo "$health_json" | jq -e '.enabled_servers // [] | index("outerfields-pcn")' >/dev/null; then
-      echo "expected cs-hub-mj to include broader access (missing outerfields-pcn)"
+    enabled_sorted_csv="$(
+      echo "$health_json" | jq -r '.enabled_servers // [] | sort | join(",")'
+    )"
+    expected_sorted_csv="$(
+      printf '%s\n' "$MJ_SERVERS_CSV" | tr ',' '\n' | sort | paste -sd',' -
+    )"
+    if [[ "$enabled_sorted_csv" != "$expected_sorted_csv" ]]; then
+      echo "enabled server policy mismatch for cs-hub-mj"
+      echo "expected=${expected_sorted_csv}"
+      echo "actual=${enabled_sorted_csv}"
       failures=1
     else
-      echo "enabled_server_policy=mj_broader"
-    fi
-
-    if ! echo "$health_json" | jq -e '.enabled_servers // [] | index("meetings")' >/dev/null; then
-      echo "expected cs-hub-mj to include meetings"
-      failures=1
-    else
-      echo "enabled_server_policy=mj_meetings_enabled"
+      echo "enabled_server_policy=mj_shared_auth_plus_meetings"
     fi
   fi
 

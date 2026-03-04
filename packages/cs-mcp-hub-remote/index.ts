@@ -499,6 +499,8 @@ const MANAGEMENT_TOOLS: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {
+        setBundles: { type: 'array', items: { type: 'string' } },
+        setServers: { type: 'array', items: { type: 'string' } },
         enableBundles: { type: 'array', items: { type: 'string' } },
         disableBundles: { type: 'array', items: { type: 'string' } },
         enableServers: { type: 'array', items: { type: 'string' } },
@@ -704,7 +706,10 @@ export default {
             })),
             failed_servers: runtime.failed,
             proxy_tool_count: runtime.proxies.toolDefinitions.length,
-            warnings: runtime.stateResolution.warnings.concat(runtime.proxies.warnings),
+            warnings: uniqueSortedStrings([
+              ...runtime.stateResolution.warnings,
+              ...runtime.proxies.warnings,
+            ]),
             built_at: new Date(runtime.builtAt).toISOString(),
           }),
         );
@@ -1820,6 +1825,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
       if (toolName === 'hub_update_state') {
         const writeCodexRequested = booleanArg(args.writeCodexConfig, false);
         const patch = {
+          setBundles: optionalStringArrayArg(args.setBundles, 'setBundles'),
+          setServers: optionalStringArrayArg(args.setServers, 'setServers'),
           enableBundles: stringArrayArg(args.enableBundles, 'enableBundles'),
           disableBundles: stringArrayArg(args.disableBundles, 'disableBundles'),
           enableServers: stringArrayArg(args.enableServers, 'enableServers'),
@@ -2290,6 +2297,8 @@ function maybeSweepRateLimitBuckets(nowMs: number, windowMs: number): void {
 async function applyRemoteStateUpdate(
   env: Env,
   patch: {
+    setBundles?: string[];
+    setServers?: string[];
     enableBundles: string[];
     disableBundles: string[];
     enableServers: string[];
@@ -4515,17 +4524,49 @@ function updateState(
   currentRegistry: McpBundleRegistry,
   current: HubState,
   patch: {
+    setBundles?: string[];
+    setServers?: string[];
     enableBundles?: string[];
     disableBundles?: string[];
     enableServers?: string[];
     disableServers?: string[];
   },
 ): HubState {
-  const baseline = resolveState(currentRegistry, current).state;
+  const knownBundles = new Set(Object.keys(currentRegistry.bundles));
+  const knownServers = new Set(Object.keys(currentRegistry.servers));
+  const resolvedBaseline = resolveState(currentRegistry, current).state;
+  const baseline: HubState = {
+    enabledBundles: resolvedBaseline.enabledBundles.filter((bundle) => knownBundles.has(bundle)),
+    enabledServers: resolvedBaseline.enabledServers.filter((server) => knownServers.has(server)),
+    disabledServers: resolvedBaseline.disabledServers.filter((server) => knownServers.has(server)),
+  };
 
-  const enabledBundles = new Set<string>(baseline.enabledBundles);
-  const enabledServers = new Set<string>(baseline.enabledServers);
-  const disabledServers = new Set<string>(baseline.disabledServers);
+  const unknownBundles = [
+    ...(patch.setBundles ?? []),
+    ...(patch.enableBundles ?? []),
+    ...(patch.disableBundles ?? []),
+  ].filter((bundle) => !knownBundles.has(bundle));
+
+  const unknownServers = [
+    ...(patch.setServers ?? []),
+    ...(patch.enableServers ?? []),
+    ...(patch.disableServers ?? []),
+  ].filter((server) => !knownServers.has(server));
+
+  if (unknownBundles.length > 0 || unknownServers.length > 0) {
+    const details: string[] = [];
+    if (unknownBundles.length > 0) {
+      details.push(`bundles=${uniqueSortedStrings(unknownBundles).join(',')}`);
+    }
+    if (unknownServers.length > 0) {
+      details.push(`servers=${uniqueSortedStrings(unknownServers).join(',')}`);
+    }
+    throw new Error(`Unknown hub state entries: ${details.join(' ')}`);
+  }
+
+  const enabledBundles = new Set<string>(patch.setBundles ?? baseline.enabledBundles);
+  const enabledServers = new Set<string>(patch.setServers ?? baseline.enabledServers);
+  const disabledServers = new Set<string>(patch.setServers ? [] : baseline.disabledServers);
 
   for (const bundle of patch.enableBundles ?? []) {
     enabledBundles.add(bundle);
@@ -4543,11 +4584,14 @@ function updateState(
     disabledServers.add(server);
   }
 
-  return {
-    enabledBundles: [...enabledBundles].sort(),
-    enabledServers: [...enabledServers].sort(),
-    disabledServers: [...disabledServers].sort(),
-  };
+  return enforceRequiredHubStateServers(
+    {
+      enabledBundles: [...enabledBundles].sort(),
+      enabledServers: [...enabledServers].sort(),
+      disabledServers: [...disabledServers].sort(),
+    },
+    currentRegistry,
+  );
 }
 
 function resolveState(currentRegistry: McpBundleRegistry, state: HubState): StateResolution {
