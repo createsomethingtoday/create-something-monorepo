@@ -71,7 +71,9 @@ Environment variables:
 - `HUB_SESSION_RESOLVE_URL` (optional): identity-worker resolver endpoint (`/v1/mcp/sessions/resolve`)
 - `HUB_SESSION_RESOLVE_TOKEN` (optional): shared secret used by hub to call resolver endpoint
 - `HUB_SESSION_RESOLVE_TIMEOUT_MS` (optional): resolver call timeout, default `5000`
-- `HUB_CONNECT_TIMEOUT_MS` (optional): per-downstream connect/tools bootstrap timeout in ms, default `4000`
+- `HUB_CONNECT_TIMEOUT_MS` (optional): per-downstream MCP connect timeout in ms, default `4000`
+- `HUB_LIST_TOOLS_TIMEOUT_MS` (optional): per-downstream `tools/list` bootstrap timeout in ms, default `10000`
+- `HUB_CONNECT_CONCURRENCY` (optional): max concurrent downstream bootstrap connections, default `4` (max `32`)
 - `HUB_ENABLED_BUNDLES` (optional): comma-separated or JSON array (defaults from registry)
 - `HUB_ENABLED_SERVERS` (optional): comma-separated or JSON array
 - `HUB_DISABLED_SERVERS` (optional): comma-separated or JSON array

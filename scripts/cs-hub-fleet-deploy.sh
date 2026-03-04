@@ -82,6 +82,9 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_ENABLED_SERVERS:${SHARED_AUTH_SERVERS_CSV}" \
       --var "HUB_DISABLED_SERVERS:[]" \
       --var "HUB_DISCOVERY_MODE:compact" \
+      --var "HUB_CONNECT_TIMEOUT_MS:10000" \
+      --var "HUB_LIST_TOOLS_TIMEOUT_MS:15000" \
+      --var "HUB_CONNECT_CONCURRENCY:4" \
       --var "HUB_DISCOVERY_SHARED_PACK:shared-auth-core"
   fi
   echo
