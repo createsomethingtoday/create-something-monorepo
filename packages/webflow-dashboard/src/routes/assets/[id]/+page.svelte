@@ -324,19 +324,31 @@
 				</div>
 				<div class="header-actions">
 					{#if asset.previewUrl}
-						<Button variant="outline" size="sm" onclick={() => openExternalLink(asset.previewUrl, 'preview')}>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => asset.previewUrl && openExternalLink(asset.previewUrl, 'preview')}
+						>
 							<Eye size={16} />
 							Preview
 						</Button>
 					{/if}
 					{#if asset.websiteUrl}
-						<Button variant="outline" size="sm" onclick={() => openExternalLink(asset.websiteUrl, 'live')}>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => asset.websiteUrl && openExternalLink(asset.websiteUrl, 'live')}
+						>
 							<ExternalLink size={16} />
 							View Live
 						</Button>
 					{/if}
 					{#if asset.marketplaceUrl}
-						<Button variant="outline" size="sm" onclick={() => openExternalLink(asset.marketplaceUrl, 'marketplace')}>
+						<Button
+							variant="outline"
+							size="sm"
+							onclick={() => asset.marketplaceUrl && openExternalLink(asset.marketplaceUrl, 'marketplace')}
+						>
 							<Store size={16} />
 							Marketplace
 						</Button>

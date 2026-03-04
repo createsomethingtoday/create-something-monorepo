@@ -640,8 +640,6 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				const cleanedStatus = cleanMarketplaceStatus(rawStatus) as Asset['status'];
 				const category = extractPrimaryCategory(record.fields);
 				const subcategory = extractPrimarySubcategory(record.fields);
-				const category = extractPrimaryCategory(record.fields);
-				const subcategory = extractPrimarySubcategory(record.fields);
 
 				return {
 					id: record.id,
@@ -697,6 +695,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				const carouselImages = (record.fields['🖼️Carousel Images'] as { url: string }[] | undefined)?.map(img => img.url) || [];
 				const rawStatus = record.fields['🚀Marketplace Status'] as string || 'Draft';
 				const cleanedStatus = cleanMarketplaceStatus(rawStatus) as Asset['status'];
+				const category = extractPrimaryCategory(record.fields);
+				const subcategory = extractPrimarySubcategory(record.fields);
 
 				// Read all secondary thumbnails from Airtable (supports multiple attachments)
 				const secondaryThumbnailImages = record.fields['🖼️Thumbnail Image (Secondary)'] as { url: string }[] | undefined;
