@@ -69,6 +69,8 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_DISABLED_SERVERS:composio-toolkit-airtable,composio-toolkit-webflow,halfdozen-dm-mcp,loom-mcp,schedule-mcp,substrate-mcp" \
       --var "HUB_DISCOVERY_MODE:full" \
       --var "HUB_CONNECT_TIMEOUT_MS:10000" \
+      --var "HUB_LIST_TOOLS_TIMEOUT_MS:15000" \
+      --var "HUB_CONNECT_CONCURRENCY:4" \
       --var "HUB_DISCOVERY_SHARED_PACK:shared-auth-core"
   else
     pnpm exec wrangler deploy \

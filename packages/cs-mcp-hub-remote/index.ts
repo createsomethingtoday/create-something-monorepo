@@ -24,6 +24,7 @@ type HttpServerConfig = {
   env_http_headers?: StringMap;
   bearer_token_env_var?: string;
   connect_timeout_ms?: number;
+  list_tools_timeout_ms?: number;
   tool_call_timeout_ms?: number;
   timeout_ms?: number;
   headers?: StringMap;
@@ -275,6 +276,8 @@ interface Env {
   HUB_SESSION_RESOLVE_TOKEN?: string;
   HUB_SESSION_RESOLVE_TIMEOUT_MS?: string;
   HUB_TOOL_CALL_TIMEOUT_MS?: string;
+  HUB_LIST_TOOLS_TIMEOUT_MS?: string;
+  HUB_CONNECT_CONCURRENCY?: string;
   HUB_ENABLED_BUNDLES?: string;
   HUB_ENABLED_SERVERS?: string;
   HUB_DISABLED_SERVERS?: string;
@@ -600,6 +603,9 @@ const sessionResolveCache = new Map<
 >();
 const DEFAULT_SESSION_RESOLVE_TIMEOUT_MS = 5000;
 const DEFAULT_CONNECT_TIMEOUT_MS = 4000;
+const DEFAULT_LIST_TOOLS_TIMEOUT_MS = 10000;
+const DEFAULT_CONNECT_CONCURRENCY = 4;
+const MAX_CONNECT_CONCURRENCY = 32;
 const DEFAULT_TOOL_CALL_TIMEOUT_MS = 120_000;
 const SESSION_RESOLVE_CACHE_MS = 30000;
 const DEFAULT_DISCOVERY_MODE: DiscoveryMode = 'compact';
@@ -845,7 +851,11 @@ async function buildHubRuntime(env: Env, stateResolution: StateResolution): Prom
   const failed: DownstreamFailure[] = [];
   const warnings = [...stateResolution.warnings];
 
-  const connectionTasks = stateResolution.enabledServerNames.map(async (serverName) => {
+  const connectConcurrency = resolveConnectConcurrency(env);
+  const connectionResults = await mapWithConcurrency(
+    stateResolution.enabledServerNames,
+    connectConcurrency,
+    async (serverName) => {
     const config = registry.servers[serverName];
     if (!config) {
       return {
@@ -866,9 +876,9 @@ async function buildHubRuntime(env: Env, stateResolution: StateResolution): Prom
       return { kind: 'connected' as const, connected: result };
     }
     return { kind: 'failed' as const, failure: result };
-  });
+    },
+  );
 
-  const connectionResults = await Promise.all(connectionTasks);
   for (const result of connectionResults) {
     if (result.kind === 'connected') {
       connected.push(result.connected);
@@ -897,6 +907,31 @@ async function buildHubRuntime(env: Env, stateResolution: StateResolution): Prom
   };
 }
 
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  if (items.length === 0) {
+    return [];
+  }
+
+  const boundedConcurrency = Math.max(1, Math.min(concurrency, items.length));
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+
+  const workers = Array.from({ length: boundedConcurrency }, async () => {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      results[currentIndex] = await mapper(items[currentIndex], currentIndex);
+    }
+  });
+
+  await Promise.all(workers);
+  return results;
+}
+
 async function connectSingleDownstream(
   name: string,
   config: HttpServerConfig,
@@ -907,6 +942,7 @@ async function connectSingleDownstream(
     version: HUB_VERSION,
   });
   const connectTimeoutMs = resolveConnectTimeoutMs(config, env);
+  const listToolsTimeoutMs = resolveListToolsTimeoutMs(config, env);
 
   try {
     const requestInit: RequestInit = {};
@@ -924,7 +960,7 @@ async function connectSingleDownstream(
 
     const tools = await withTimeout(
       listAllTools(client),
-      connectTimeoutMs,
+      listToolsTimeoutMs,
       `List tools from downstream "${name}"`,
     );
     const toolCallTimeoutMs = resolveToolCallTimeoutMs(config, env);
@@ -984,6 +1020,22 @@ function resolveConnectTimeoutMs(config: HttpServerConfig, env: Env): number {
     DEFAULT_CONNECT_TIMEOUT_MS,
   );
   return parsePositiveIntFromUnknown(config.connect_timeout_ms, fallback);
+}
+
+function resolveListToolsTimeoutMs(config: HttpServerConfig, env: Env): number {
+  const fallback = parsePositiveInt(
+    readEnvString(env, 'HUB_LIST_TOOLS_TIMEOUT_MS'),
+    DEFAULT_LIST_TOOLS_TIMEOUT_MS,
+  );
+  return parsePositiveIntFromUnknown(config.list_tools_timeout_ms ?? config.timeout_ms, fallback);
+}
+
+function resolveConnectConcurrency(env: Env): number {
+  const parsed = parsePositiveInt(
+    readEnvString(env, 'HUB_CONNECT_CONCURRENCY'),
+    DEFAULT_CONNECT_CONCURRENCY,
+  );
+  return Math.max(1, Math.min(parsed, MAX_CONNECT_CONCURRENCY));
 }
 
 async function withTimeout<T>(operation: Promise<T>, timeoutMs: number, label: string): Promise<T> {
