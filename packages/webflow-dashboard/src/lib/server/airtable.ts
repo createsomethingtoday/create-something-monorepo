@@ -67,6 +67,31 @@ const MARKETPLACE_TIMESTAMP_FIELD_EXCLUDES = [
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+const CREATOR_EMAIL_FIELDS_PRIORITY = [
+	'🎨📧 Creator Email',
+	'🎨📧 Creator WF Account Email',
+	'📧Emails (from 🎨Creator)',
+	'CREATOR_EMAIL'
+] as const;
+
+const CATEGORY_FIELDS_PRIORITY = [
+	'🏷️Category',
+	'🏷️Categories',
+	'📂Primary Category',
+	'📂Category',
+	'CATEGORY',
+	'Category'
+] as const;
+
+const SUBCATEGORY_FIELDS_PRIORITY = [
+	'🏷️Subcategory',
+	'🏷️Subcategories',
+	'📂Primary Subcategory',
+	'📂Subcategory',
+	'SUBCATEGORY',
+	'Subcategory'
+] as const;
+
 function parseTimestampCandidate(value: unknown): Date | null {
 	if (value instanceof Date) {
 		return Number.isNaN(value.getTime()) ? null : value;
@@ -244,6 +269,143 @@ export function cleanMarketplaceStatus(rawStatus: string): string {
 		.trim();
 }
 
+function normalizeFieldName(fieldName: string): string {
+	return fieldName.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function toStringArray(value: unknown): string[] {
+	if (typeof value === 'string') {
+		return value
+			.split(/[,;\n]/)
+			.map((item) => item.trim())
+			.filter(Boolean);
+	}
+
+	if (Array.isArray(value)) {
+		return value
+			.flatMap((item) => toStringArray(item))
+			.map((item) => item.trim())
+			.filter(Boolean);
+	}
+
+	if (value && typeof value === 'object') {
+		const record = value as Record<string, unknown>;
+		const candidates = [record.name, record.label, record.value, record.title]
+			.filter((item): item is string => typeof item === 'string')
+			.map((item) => item.trim())
+			.filter(Boolean);
+
+		return candidates;
+	}
+
+	return [];
+}
+
+function isAirtableRecordId(value: string): boolean {
+	return /^(rec|tbl|viw|fld)[A-Za-z0-9]{10,}$/.test(value);
+}
+
+function cleanCategoryToken(value: string): string | null {
+	const cleaned = value.trim().replace(/\s+/g, ' ');
+	if (!cleaned) return null;
+	if (cleaned.includes('@')) return null;
+	if (cleaned.startsWith('http://') || cleaned.startsWith('https://')) return null;
+	if (isAirtableRecordId(cleaned)) return null;
+	return cleaned;
+}
+
+function getCandidateFieldNames(
+	fields: Airtable.FieldSet,
+	priorityFields: readonly string[],
+	includesToken: 'category' | 'subcategory'
+): string[] {
+	const candidates = new Set<string>();
+
+	for (const fieldName of priorityFields) {
+		if (fieldName in fields) {
+			candidates.add(fieldName);
+		}
+	}
+
+	for (const fieldName of Object.keys(fields)) {
+		const normalized = normalizeFieldName(fieldName);
+		const hasToken = normalized.includes(includesToken);
+		if (!hasToken) continue;
+
+		if (includesToken === 'category' && normalized.includes('subcategory')) {
+			continue;
+		}
+
+		if (normalized.includes('categoryperformance') || normalized.includes('templatesinsubcategory')) {
+			continue;
+		}
+
+		candidates.add(fieldName);
+	}
+
+	return [...candidates];
+}
+
+function extractCategoryValues(
+	fields: Airtable.FieldSet,
+	priorityFields: readonly string[],
+	includesToken: 'category' | 'subcategory'
+): string[] {
+	const categories = new Set<string>();
+	const candidateFields = getCandidateFieldNames(fields, priorityFields, includesToken);
+
+	for (const fieldName of candidateFields) {
+		const rawValues = toStringArray(fields[fieldName]);
+		for (const value of rawValues) {
+			const cleaned = cleanCategoryToken(value);
+			if (!cleaned) continue;
+			categories.add(cleaned);
+		}
+	}
+
+	return [...categories];
+}
+
+function extractPrimaryCategory(fields: Airtable.FieldSet): string | undefined {
+	return extractCategoryValues(fields, CATEGORY_FIELDS_PRIORITY, 'category')[0];
+}
+
+function extractPrimarySubcategory(fields: Airtable.FieldSet): string | undefined {
+	return extractCategoryValues(fields, SUBCATEGORY_FIELDS_PRIORITY, 'subcategory')[0];
+}
+
+const EMAIL_REGEX = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+
+function extractEmails(value: unknown): string[] {
+	const values = toStringArray(value);
+	const emails = new Set<string>();
+
+	for (const entry of values) {
+		const matches = entry.match(EMAIL_REGEX) || [];
+		for (const match of matches) {
+			emails.add(match.toLowerCase());
+		}
+	}
+
+	return [...emails];
+}
+
+function extractCreatorEmailFromAsset(fields: Airtable.FieldSet): string | null {
+	for (const fieldName of CREATOR_EMAIL_FIELDS_PRIORITY) {
+		if (!(fieldName in fields)) continue;
+		const emails = extractEmails(fields[fieldName]);
+		if (emails.length > 0) return emails[0];
+	}
+
+	for (const [fieldName, value] of Object.entries(fields)) {
+		if (!normalizeFieldName(fieldName).includes('email')) continue;
+		const emails = extractEmails(value);
+		if (emails.length > 0) return emails[0];
+	}
+
+	return null;
+}
+
 // ==================== TYPES ====================
 
 export interface Asset {
@@ -253,6 +415,8 @@ export interface Asset {
 	descriptionShort?: string;
 	descriptionLongHtml?: string;
 	type: 'Template' | 'Library' | 'App';
+	category?: string;
+	subcategory?: string;
 	status: 'Draft' | 'Scheduled' | 'Upcoming' | 'Published' | 'Rejected' | 'Delisted';
 	thumbnailUrl?: string;
 	secondaryThumbnailUrl?: string; // First secondary thumbnail (backward compat)
@@ -294,6 +458,22 @@ export interface ApiKey {
 	lastUsedAt?: string;
 	scopes: string[];
 	status: 'Active' | 'Revoked' | 'Expired';
+}
+
+export interface CreatorCategorySplit {
+	assetsProcessed: number;
+	assetsWithoutCreator: number;
+	assetsWithoutCategory: number;
+	totalCreators: number;
+	creatorsWithoutCategory: number;
+	singleCategoryCreators: number;
+	multiCategoryCreators: number;
+	singleCategoryPct: number;
+	multiCategoryPct: number;
+	topCategories: Array<{
+		category: string;
+		creatorCount: number;
+	}>;
 }
 
 export interface AssetVersion {
@@ -458,12 +638,18 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			return records.map(record => {
 				const rawStatus = record.fields['🚀Marketplace Status'] as string || 'Draft';
 				const cleanedStatus = cleanMarketplaceStatus(rawStatus) as Asset['status'];
+				const category = extractPrimaryCategory(record.fields);
+				const subcategory = extractPrimarySubcategory(record.fields);
+				const category = extractPrimaryCategory(record.fields);
+				const subcategory = extractPrimarySubcategory(record.fields);
 
 				return {
 					id: record.id,
 					name: record.fields['Name'] as string || '',
 					description: record.fields['📝Description'] as string || '',
 					type: 'Template' as Asset['type'],
+					category,
+					subcategory,
 					status: cleanedStatus || 'Draft',
 					thumbnailUrl: (record.fields['🖼️Thumbnail Image'] as { url: string }[] | undefined)?.[0]?.url,
 					websiteUrl: record.fields['🔗Website URL'] as string,
@@ -523,6 +709,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					descriptionShort: record.fields['ℹ️Description (Short)'] as string || '',
 					descriptionLongHtml: record.fields['ℹ️Description (Long).html'] as string || '',
 					type: record.fields['🆎Type'] as Asset['type'] || 'Template',
+					category,
+					subcategory,
 					status: cleanedStatus,
 					thumbnailUrl: (record.fields['🖼️Thumbnail Image'] as { url: string }[] | undefined)?.[0]?.url,
 					// Return both single URL (backward compat) and full array
@@ -576,6 +764,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				const record = records[0];
 				const rawStatus = record.fields['🚀Marketplace Status'] as string || 'Draft';
 				const cleanedStatus = cleanMarketplaceStatus(rawStatus) as Asset['status'];
+				const category = extractPrimaryCategory(record.fields);
+				const subcategory = extractPrimarySubcategory(record.fields);
 
 				return {
 					id: record.id,
@@ -584,6 +774,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					descriptionShort: record.fields['ℹ️Description (Short)'] as string || '',
 					descriptionLongHtml: record.fields['ℹ️Description (Long).html'] as string || '',
 					type: record.fields['🆎Type'] as Asset['type'] || 'Template',
+					category,
+					subcategory,
 					status: cleanedStatus,
 					thumbnailUrl: (record.fields['🖼️Thumbnail Image'] as { url: string }[] | undefined)?.[0]?.url,
 					websiteUrl: record.fields['🔗Website URL'] as string,
@@ -669,6 +861,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				const record = records[0];
 				const rawStatus = record.fields['🚀Marketplace Status'] as string || 'Draft';
 				const cleanedStatus = cleanMarketplaceStatus(rawStatus) as Asset['status'];
+				const category = extractPrimaryCategory(record.fields);
+				const subcategory = extractPrimarySubcategory(record.fields);
 				const carouselImages = (record.fields['🖼️Carousel Images'] as { url: string }[] | undefined)?.map(img => img.url) || [];
 				
 				// Read all secondary thumbnails from returned record
@@ -682,6 +876,8 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					descriptionShort: record.fields['ℹ️Description (Short)'] as string || '',
 					descriptionLongHtml: record.fields['ℹ️Description (Long).html'] as string || '',
 					type: record.fields['🆎Type'] as Asset['type'] || 'Template',
+					category,
+					subcategory,
 					status: cleanedStatus,
 					thumbnailUrl: (record.fields['🖼️Thumbnail Image'] as { url: string }[] | undefined)?.[0]?.url,
 					// Return both single URL (backward compat) and full array
@@ -1196,6 +1392,86 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		},
 
 		// ==================== ANALYTICS ====================
+
+		/**
+		 * Compute creator category concentration from assets data.
+		 *
+		 * This supports the "single category vs multiple categories" business question.
+		 */
+		async getCreatorCategorySplit(): Promise<CreatorCategorySplit> {
+			const records = await base(TABLES.ASSETS)
+				.select({
+					view: VIEWS.ASSETS,
+					filterByFormula: `{🆎Type} = 'Template🏗️'`
+				})
+				.all();
+
+			const creatorsSeen = new Set<string>();
+			const creatorCategories = new Map<string, Set<string>>();
+			const categoryCreatorCounts = new Map<string, number>();
+
+			let assetsWithoutCreator = 0;
+			let assetsWithoutCategory = 0;
+
+			for (const record of records) {
+				const creatorEmail = extractCreatorEmailFromAsset(record.fields);
+				if (!creatorEmail) {
+					assetsWithoutCreator += 1;
+					continue;
+				}
+
+				creatorsSeen.add(creatorEmail);
+
+				const categories = extractCategoryValues(record.fields, CATEGORY_FIELDS_PRIORITY, 'category');
+				if (categories.length === 0) {
+					assetsWithoutCategory += 1;
+					continue;
+				}
+
+				const existingCategories = creatorCategories.get(creatorEmail) ?? new Set<string>();
+				for (const category of categories) {
+					existingCategories.add(category);
+				}
+				creatorCategories.set(creatorEmail, existingCategories);
+			}
+
+			for (const categories of creatorCategories.values()) {
+				for (const category of categories) {
+					categoryCreatorCounts.set(category, (categoryCreatorCounts.get(category) ?? 0) + 1);
+				}
+			}
+
+			const totalCreators = creatorCategories.size;
+			const singleCategoryCreators = [...creatorCategories.values()].filter(
+				(categories) => categories.size === 1
+			).length;
+			const multiCategoryCreators = [...creatorCategories.values()].filter(
+				(categories) => categories.size > 1
+			).length;
+
+			const singleCategoryPct =
+				totalCreators > 0 ? Math.round((singleCategoryCreators / totalCreators) * 1000) / 10 : 0;
+			const multiCategoryPct =
+				totalCreators > 0 ? Math.round((multiCategoryCreators / totalCreators) * 1000) / 10 : 0;
+
+			const topCategories = [...categoryCreatorCounts.entries()]
+				.sort((a, b) => b[1] - a[1])
+				.slice(0, 10)
+				.map(([category, creatorCount]) => ({ category, creatorCount }));
+
+			return {
+				assetsProcessed: records.length,
+				assetsWithoutCreator,
+				assetsWithoutCategory,
+				totalCreators,
+				creatorsWithoutCategory: Math.max(0, creatorsSeen.size - creatorCategories.size),
+				singleCategoryCreators,
+				multiCategoryCreators,
+				singleCategoryPct,
+				multiCategoryPct,
+				topCategories
+			};
+		},
 
 		/**
 		 * Get leaderboard data (top 50 templates by sales).
