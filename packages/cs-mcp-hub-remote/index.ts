@@ -3645,8 +3645,9 @@ function resolveFallbackAccountContext(extra: unknown, env: Env): ResolvedAccoun
     getHeaderValue(extraRecord?.requestInfo, 'x-tenant-id') ??
     getHeaderValue(extraRecord?.requestInfo, 'x-hub-account-id');
   const rawBearer = authorization ? parseBearerToken(authorization) : null;
-  const fromBearer =
-    rawBearer && staticHubToken && timingSafeEqual(rawBearer, staticHubToken) ? null : rawBearer;
+  // Guard against identity spoofing when gateway auth is provided by query/api-key headers.
+  // In protected mode (HUB_API_TOKEN configured), Authorization should not influence fallback account identity.
+  const fromBearer = staticHubToken ? null : rawBearer;
   const fromAuth =
     normalizeTraceValue(authInfo?.accountId) ??
     normalizeTraceValue(authInfo?.tenantId) ??
@@ -4720,7 +4721,21 @@ function withCors(response: Response): Response {
   const headers = new Headers(response.headers);
   headers.set('Access-Control-Allow-Origin', '*');
   headers.set('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept');
+  headers.set(
+    'Access-Control-Allow-Headers',
+    [
+      'Content-Type',
+      'Authorization',
+      'Accept',
+      'X-MCP-Session-Token',
+      'X-MCP-Account-ID',
+      'X-Hub-Account-ID',
+      'X-Correlation-ID',
+      'X-Request-ID',
+      'X-API-Key',
+      'API-Key',
+    ].join(', '),
+  );
 
   return new Response(response.body, {
     status: response.status,

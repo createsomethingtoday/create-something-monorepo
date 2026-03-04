@@ -30,6 +30,7 @@ cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monor
 pnpm exec wrangler deploy \
   --config wrangler.team-hubs.toml \
   --name cs-hub-aaron-outerfields \
+  --var HUB_INSTANCE_ID:cs-hub-aaron-outerfields \
   --domain aaron-outerfields.mcp.createsomething.agency \
   --var HUB_ACCOUNT_ID:acct_aaron_outerfields \
   --var HUB_ENABLED_BUNDLES:agency,core \
@@ -77,7 +78,7 @@ pnpm exec wrangler secret put BRAINTRUST_PROJECT_ID --name cs-hub-aaron-outerfie
 After deploy + token setup, force the intended profile with `hub_update_state`:
 
 ```bash
-curl -sS -k -X POST https://aaron-outerfields.mcp.createsomething.agency/mcp \
+curl -sS -X POST https://aaron-outerfields.mcp.createsomething.agency/mcp \
   -H "Authorization: Bearer $HUB_API_TOKEN" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
@@ -231,6 +232,7 @@ cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monor
 pnpm exec wrangler deploy \
   --config wrangler.team-hubs.toml \
   --name cs-hub-aaron-outerfields \
+  --var HUB_INSTANCE_ID:cs-hub-aaron-outerfields \
   --domain aaron-outerfields.mcp.createsomething.agency \
   --var HUB_DISCOVERY_MODE:full \
   --var HUB_ENABLED_BUNDLES:composio-all,agency,core,ops,observability \
@@ -244,6 +246,7 @@ pnpm exec wrangler secret put HUB_SESSION_RESOLVE_TOKEN --name cs-hub-aaron-oute
 pnpm exec wrangler deploy \
   --config wrangler.team-hubs.toml \
   --name cs-hub-aaron-outerfields \
+  --var HUB_INSTANCE_ID:cs-hub-aaron-outerfields \
   --var HUB_SESSION_RESOLVE_URL:https://id.createsomething.space/v1/mcp/sessions/resolve \
   --keep-vars
 ```
