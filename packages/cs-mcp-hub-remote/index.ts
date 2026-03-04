@@ -306,6 +306,7 @@ interface Env {
 
 const HUB_NAME = 'create-something-hub-remote';
 const HUB_VERSION = '1.0.0';
+export const HUB_OVERVIEW_RESOURCE_URI = 'ui://hub/overview';
 const DEFAULT_REFRESH_SECONDS = 300;
 const HUB_STATE_KV_PREFIX = 'hub_state_v1';
 
@@ -313,7 +314,7 @@ const registry = registryJson as unknown as McpBundleRegistry;
 const discoveryPackRegistry = discoveryPacksJson as unknown as DiscoveryPackRegistry;
 const intentRouteRegistry = intentRoutesJson as unknown as IntentRouteRegistry;
 
-const MANAGEMENT_TOOLS: Tool[] = [
+export const MANAGEMENT_TOOLS: Tool[] = [
   {
     name: 'hub_status',
     description: 'Show active downstream MCP servers, proxy tool count, and warning state.',
@@ -321,6 +322,11 @@ const MANAGEMENT_TOOLS: Tool[] = [
       type: 'object',
       properties: {},
       additionalProperties: false,
+    },
+    _meta: {
+      ui: {
+        resourceUri: HUB_OVERVIEW_RESOURCE_URI,
+      },
     },
   },
   {
@@ -353,6 +359,11 @@ const MANAGEMENT_TOOLS: Tool[] = [
         limit: { type: 'number' },
       },
       additionalProperties: false,
+    },
+    _meta: {
+      ui: {
+        resourceUri: HUB_OVERVIEW_RESOURCE_URI,
+      },
     },
   },
   {
@@ -457,6 +468,11 @@ const MANAGEMENT_TOOLS: Tool[] = [
       properties: {},
       additionalProperties: false,
     },
+    _meta: {
+      ui: {
+        resourceUri: HUB_OVERVIEW_RESOURCE_URI,
+      },
+    },
   },
   {
     name: 'hub_list_discovery_packs',
@@ -531,10 +547,15 @@ const MANAGEMENT_TOOLS: Tool[] = [
       properties: {},
       additionalProperties: false,
     },
+    _meta: {
+      ui: {
+        resourceUri: HUB_OVERVIEW_RESOURCE_URI,
+      },
+    },
   },
 ];
 
-const HUB_RESOURCES: HubResourceDefinition[] = [
+export const HUB_RESOURCES: HubResourceDefinition[] = [
   {
     uri: 'hub://status',
     name: 'Hub Status',
@@ -572,7 +593,7 @@ const HUB_RESOURCES: HubResourceDefinition[] = [
     mimeType: 'application/json',
   },
   {
-    uri: 'ui://hub/overview',
+    uri: HUB_OVERVIEW_RESOURCE_URI,
     name: 'Hub Overview',
     description: 'MCP App overview for the remote hub with key runtime metrics and quick-start guidance.',
     mimeType: 'text/html',
@@ -1285,7 +1306,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           })),
         });
       }
-      case 'ui://hub/overview': {
+      case HUB_OVERVIEW_RESOURCE_URI: {
         const { prefs, visible } = await getDiscoveryContext();
         return toHtmlResource(uri, buildHubOverviewHtml({
           runtime,
