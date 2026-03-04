@@ -21,7 +21,8 @@
 		padding: 0.5rem;
 		text-align: left;
 		vertical-align: middle;
-		font-weight: var(--font-medium);
+		font-weight: var(--font-semibold);
 		color: var(--color-fg-muted);
+		border-bottom: 1px solid var(--color-border-default);
 	}
 </style>

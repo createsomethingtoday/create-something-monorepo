@@ -17,8 +17,10 @@
 
 <style>
 	.table-cell {
-		padding: 0.5rem;
+		padding: 0.5rem 0.75rem;
 		vertical-align: middle;
-		color: var(--color-fg-primary);
+		color: var(--color-fg-muted);
+		border-bottom: 1px solid var(--color-border-default);
+		letter-spacing: -0.01em;
 	}
 </style>
