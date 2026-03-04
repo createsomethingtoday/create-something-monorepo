@@ -45,12 +45,24 @@
 	}
 
 	function handleViewAsset(id: string) {
-		trackEvent('dashboard_asset_opened', { asset_id: id });
+		const selectedAsset = (data.assets || []).find((asset) => asset.id === id);
+		trackEvent('dashboard_asset_opened', {
+			asset_id: id,
+			asset_status: selectedAsset?.status,
+			asset_category: selectedAsset?.category,
+			asset_subcategory: selectedAsset?.subcategory
+		});
 		goto(`/assets/${id}`);
 	}
 
 	async function handleEditAsset(id: string) {
-		trackEvent('dashboard_asset_edit_opened', { asset_id: id });
+		const selectedAsset = (data.assets || []).find((asset) => asset.id === id);
+		trackEvent('dashboard_asset_edit_opened', {
+			asset_id: id,
+			asset_status: selectedAsset?.status,
+			asset_category: selectedAsset?.category,
+			asset_subcategory: selectedAsset?.subcategory
+		});
 
 		// Lazy load the EditAssetModal component
 		if (!EditAssetModal) {

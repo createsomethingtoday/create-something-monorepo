@@ -297,6 +297,8 @@
 			asset_id: asset.id,
 			asset_status: asset.status,
 			asset_type: asset.type,
+			asset_category: asset.category,
+			asset_subcategory: asset.subcategory,
 			initial_tab: activeTab,
 			has_metrics: canShowMetrics
 		});

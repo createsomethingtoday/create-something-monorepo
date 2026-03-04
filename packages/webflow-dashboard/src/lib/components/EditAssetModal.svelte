@@ -276,6 +276,8 @@
 		trackEvent('asset_update_started', {
 			asset_id: asset.id,
 			asset_name: asset.name,
+			asset_category: asset.category,
+			asset_subcategory: asset.subcategory,
 			fields_changed: changedFields,
 			has_thumbnail_change: thumbnailUrl !== asset.thumbnailUrl,
 			has_secondary_change: JSON.stringify(secondaryThumbnails) !== JSON.stringify(asset.secondaryThumbnails || []),
@@ -298,6 +300,8 @@
 			trackEvent('asset_update_completed', {
 				asset_id: asset.id,
 				asset_name: asset.name,
+				asset_category: asset.category,
+				asset_subcategory: asset.subcategory,
 				fields_changed: changedFields
 			});
 
@@ -311,6 +315,8 @@
 			// Track failed update - security paper trail
 			trackEvent('asset_update_failed', {
 				asset_id: asset.id,
+				asset_category: asset.category,
+				asset_subcategory: asset.subcategory,
 				error_message: message
 			});
 		} finally {
@@ -329,7 +335,9 @@
 		// Track archive initiated - security paper trail
 		trackEvent('asset_archive_initiated', {
 			asset_id: asset.id,
-			asset_name: asset.name
+			asset_name: asset.name,
+			asset_category: asset.category,
+			asset_subcategory: asset.subcategory
 		});
 
 		isArchiving = true;
@@ -341,7 +349,9 @@
 			// Track successful archive - security paper trail
 			trackEvent('asset_archived', {
 				asset_id: asset.id,
-				asset_name: asset.name
+				asset_name: asset.name,
+				asset_category: asset.category,
+				asset_subcategory: asset.subcategory
 			});
 
 			toast.success('Asset archived successfully');
