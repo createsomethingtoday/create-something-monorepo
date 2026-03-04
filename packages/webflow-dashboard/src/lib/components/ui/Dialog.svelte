@@ -144,6 +144,7 @@
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-xl);
+		box-shadow: var(--shadow-2xl);
 		max-height: calc(100vh - var(--space-xl));
 		overflow-y: auto;
 		animation: slideIn var(--duration-standard) var(--ease-standard);

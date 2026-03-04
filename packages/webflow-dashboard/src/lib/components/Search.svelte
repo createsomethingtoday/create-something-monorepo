@@ -85,6 +85,11 @@
 		border-color: var(--color-border-emphasis);
 	}
 
+	.search-input:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: -1px;
+	}
+
 	.clear-btn {
 		position: absolute;
 		right: 0.5rem;
@@ -104,5 +109,10 @@
 
 	.clear-btn:hover {
 		color: var(--color-fg-secondary);
+	}
+
+	.clear-btn:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
 	}
 </style>

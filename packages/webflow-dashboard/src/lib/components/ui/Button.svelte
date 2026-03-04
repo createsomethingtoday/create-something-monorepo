@@ -38,7 +38,7 @@
 		white-space: nowrap;
 		font-weight: var(--font-medium);
 		border-radius: var(--radius-md);
-		border: none;
+		border: 1px solid transparent;
 		cursor: pointer;
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
@@ -66,7 +66,7 @@
 	.btn-secondary {
 		background: var(--color-bg-surface);
 		color: var(--color-fg-primary);
-		border: 1px solid var(--color-border-default);
+		border-color: var(--color-border-default);
 	}
 
 	.btn-secondary:hover:not(:disabled) {
@@ -86,7 +86,7 @@
 	.btn-outline {
 		background: transparent;
 		color: var(--color-fg-primary);
-		border: 1px solid var(--color-border-default);
+		border-color: var(--color-border-default);
 	}
 
 	.btn-outline:hover:not(:disabled) {
@@ -118,7 +118,7 @@
 	}
 
 	/* Sizes */
-	.btn:not(.btn-sm):not(.btn-lg):not(.btn-icon) {
+	.btn:not(.btn-sm):not(.btn-lg):not(.btn-icon):not(.btn-link) {
 		height: 2.25rem;
 		padding: 0.5rem 1rem;
 		font-size: var(--text-body-sm);

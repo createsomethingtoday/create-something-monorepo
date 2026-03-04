@@ -39,11 +39,13 @@
 
 	.card-elevated {
 		border-color: var(--color-border-emphasis);
+		box-shadow: var(--shadow-md);
 	}
 
 	.card-elevated:hover {
 		background: var(--color-bg-subtle);
 		border-color: var(--color-border-emphasis);
+		box-shadow: var(--shadow-lg);
 	}
 
 	.card-glass {
