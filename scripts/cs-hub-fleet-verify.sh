@@ -55,6 +55,156 @@ health_url_for_worker() {
   esac
 }
 
+mcp_url_for_worker() {
+  case "$1" in
+    "cs-hub-lainy") echo "https://lainy.mcp.createsomething.agency/mcp" ;;
+    "cs-hub-danny") echo "https://danny.mcp.createsomething.agency/mcp" ;;
+    "cs-hub-august") echo "https://august.mcp.createsomething.agency/mcp" ;;
+    "cs-hub-filip") echo "https://fillip.mcp.createsomething.agency/mcp" ;;
+    "cs-hub-leah") echo "https://leah.mcp.createsomething.agency/mcp" ;;
+    "cs-hub-mj") echo "https://mj.mcp.createsomething.agency/mcp" ;;
+    "cs-mcp-hub-remote") echo "https://cs-mcp-hub-remote.createsomething.workers.dev/mcp" ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+token_env_var_for_worker() {
+  case "$1" in
+    "cs-hub-lainy") echo "CS_HUB_LAINY_API_TOKEN" ;;
+    "cs-hub-danny") echo "CS_HUB_DANNY_API_TOKEN" ;;
+    "cs-hub-august") echo "CS_HUB_AUGUST_API_TOKEN" ;;
+    "cs-hub-filip") echo "CS_HUB_FILLIP_API_TOKEN" ;;
+    "cs-hub-leah") echo "CS_HUB_LEAH_API_TOKEN" ;;
+    "cs-hub-mj") echo "CS_HUB_MJ_API_TOKEN" ;;
+    "cs-mcp-hub-remote") echo "CS_MCP_HUB_REMOTE_API_TOKEN" ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+resolve_worker_token() {
+  local worker="$1"
+  local token_var_name
+  token_var_name="$(token_env_var_for_worker "$worker")"
+  local token="${!token_var_name:-}"
+  if [[ -z "$token" && "$worker" == "cs-hub-filip" ]]; then
+    token="${CS_HUB_FILIP_API_TOKEN:-}"
+  fi
+  if [[ -z "$token" ]]; then
+    token="${HUB_API_TOKEN:-}"
+  fi
+  echo "$token"
+}
+
+check_mcp_protocol() {
+  local worker="$1"
+  local mcp_url
+  mcp_url="$(mcp_url_for_worker "$worker")"
+  local token_var_name
+  token_var_name="$(token_env_var_for_worker "$worker")"
+  local token
+  token="$(resolve_worker_token "$worker")"
+  local token_help="${token_var_name} (or HUB_API_TOKEN)"
+
+  if [[ -z "$token" ]]; then
+    echo "missing API token for ${worker} (${token_help})"
+    failures=1
+    return
+  fi
+
+  local init_headers init_body init_status session_id
+  init_headers="$(mktemp)"
+  init_body="$(mktemp)"
+  init_status="$(
+    curl -sS -o "$init_body" -D "$init_headers" -w "%{http_code}" \
+      -X POST "$mcp_url" \
+      -H "Authorization: Bearer ${token}" \
+      -H 'Content-Type: application/json' \
+      -H 'Accept: application/json' \
+      --data '{"jsonrpc":"2.0","id":"fleet-verify-init","method":"initialize","params":{"protocolVersion":"2024-11-05","clientInfo":{"name":"cs-hub-fleet-verify","version":"1.0.0"},"capabilities":{}}}'
+  )"
+
+  if [[ "$init_status" != "200" ]]; then
+    echo "initialize failed for ${worker} (status=${init_status})"
+    cat "$init_body"
+    failures=1
+    rm -f "$init_headers" "$init_body"
+    return
+  fi
+
+  if ! jq -e '.error == null and .result != null' "$init_body" >/dev/null; then
+    echo "initialize returned JSON-RPC error for ${worker}"
+    cat "$init_body"
+    failures=1
+    rm -f "$init_headers" "$init_body"
+    return
+  fi
+
+  if ! jq -e '.result.capabilities.resources != null' "$init_body" >/dev/null; then
+    echo "initialize missing resources capability for ${worker}"
+    cat "$init_body"
+    failures=1
+    rm -f "$init_headers" "$init_body"
+    return
+  fi
+
+  session_id="$(
+    tr -d '\r' < "$init_headers" \
+      | awk -F': ' 'tolower($1) == "mcp-session-id" { print $2 }' \
+      | tail -n 1
+  )"
+
+  local list_headers list_body list_status
+  list_headers="$(mktemp)"
+  list_body="$(mktemp)"
+
+  local curl_args=(
+    -sS
+    -o "$list_body"
+    -D "$list_headers"
+    -w "%{http_code}"
+    -X POST "$mcp_url"
+    -H "Authorization: Bearer ${token}"
+    -H "Content-Type: application/json"
+    -H "Accept: application/json"
+    --data '{"jsonrpc":"2.0","id":"fleet-verify-resources-list","method":"resources/list","params":{}}'
+  )
+  if [[ -n "$session_id" ]]; then
+    curl_args+=(-H "Mcp-Session-Id: ${session_id}")
+  fi
+
+  list_status="$(curl "${curl_args[@]}")"
+  if [[ "$list_status" != "200" ]]; then
+    echo "resources/list failed for ${worker} (status=${list_status})"
+    cat "$list_body"
+    failures=1
+    rm -f "$init_headers" "$init_body" "$list_headers" "$list_body"
+    return
+  fi
+
+  if ! jq -e '.error == null and (.result.resources | type == "array")' "$list_body" >/dev/null; then
+    echo "resources/list returned JSON-RPC error for ${worker}"
+    cat "$list_body"
+    failures=1
+    rm -f "$init_headers" "$init_body" "$list_headers" "$list_body"
+    return
+  fi
+
+  if ! jq -e '.result.resources[]? | select(.uri == "hub://status")' "$list_body" >/dev/null; then
+    echo "resources/list missing expected hub://status resource for ${worker}"
+    cat "$list_body"
+    failures=1
+    rm -f "$init_headers" "$init_body" "$list_headers" "$list_body"
+    return
+  fi
+
+  echo "protocol_check=ok resources=$(jq -r '.result.resources | length' "$list_body")"
+  rm -f "$init_headers" "$init_body" "$list_headers" "$list_body"
+}
+
 failures=0
 cd "$HUB_DIR"
 
@@ -115,6 +265,13 @@ for worker in "${WORKERS[@]}"; do
     fi
   fi
 
+  echo
+done
+
+echo "Checking MCP protocol endpoints (initialize + resources/list)..."
+for worker in "${WORKERS[@]}"; do
+  echo "===== PROTOCOL ${worker} ====="
+  check_mcp_protocol "$worker"
   echo
 done
 
