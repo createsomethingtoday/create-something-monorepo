@@ -1,13 +1,13 @@
 #!/bin/bash
 # CREATE SOMETHING Paper/Experiment Generator
 #
-# Generates Canon-compliant Svelte pages from Beads issues.
+# Generates Canon-compliant Svelte pages from Loom tasks.
 # Uses intelligent routing: Gemini Flash for simple, Sonnet for complex.
 #
 # Usage:
-#   ./scripts/run-paper.sh csm-xxx              # Generate from issue
-#   ./scripts/run-paper.sh csm-xxx --dry-run    # Preview without writing
-#   ./scripts/run-paper.sh csm-xxx --model opus # Force specific model
+#   ./scripts/run-paper.sh lm-xxx              # Generate from Loom task
+#   ./scripts/run-paper.sh lm-xxx --dry-run    # Preview without writing
+#   ./scripts/run-paper.sh lm-xxx --model opus # Force specific model
 #
 # Install: cd packages/agent-sdk && uv pip install -e ".[all]"
 
@@ -51,8 +51,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ -z "$ISSUE_ID" ]; then
-    echo -e "${RED}Error: Issue ID required${NC}"
-    echo "Usage: ./scripts/run-paper.sh csm-xxx [--dry-run] [--model opus|sonnet|haiku|flash]"
+    echo -e "${RED}Error: Task ID required${NC}"
+    echo "Usage: ./scripts/run-paper.sh lm-xxx [--dry-run] [--model opus|sonnet|haiku|flash]"
     exit 1
 fi
 
@@ -75,7 +75,7 @@ fi
 
 echo -e "${BLUE}=== CREATE SOMETHING Paper/Experiment Generator ===${NC}"
 echo -e "Time: $(date -Iseconds)"
-echo -e "Issue: ${YELLOW}$ISSUE_ID${NC}"
+echo -e "Task: ${YELLOW}$ISSUE_ID${NC}"
 echo -e "Dry run: $DRY_RUN"
 [ -n "$FORCE_MODEL" ] && echo -e "Force model: $FORCE_MODEL"
 echo ""

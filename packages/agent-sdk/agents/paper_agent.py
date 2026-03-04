@@ -845,7 +845,8 @@ Route will be: {route_path}
             "css-canon",
             "voice-canon",
             "sveltekit-conventions",
-            "beads-patterns",
+            "paper-content-requirements",
+            "harness-patterns",
         ],
         max_turns=50,
     )
@@ -862,10 +863,10 @@ async def generate_from_issue(
     monorepo_path: Path | None = None,
 ) -> dict:
     """
-    Generate a paper or experiment from a Beads issue.
+    Generate a paper or experiment from a Loom task.
 
     Args:
-        issue_id: Beads issue ID (e.g., "csm-abc123")
+        issue_id: Loom task ID (e.g., "lm-abc123")
         content_type: Override detected type ("paper" or "experiment")
         model: Model to use (default: auto-route with Sonnet)
         monorepo_path: Path to monorepo root
@@ -874,7 +875,7 @@ async def generate_from_issue(
         Dict with success, output, cost_usd, model, iterations
 
     Example:
-        result = await generate_from_issue("csm-abc123")
+        result = await generate_from_issue("lm-abc123")
         print(f"Success: {result['success']}, Cost: ${result['cost_usd']:.4f}")
     """
     config = PaperConfig(

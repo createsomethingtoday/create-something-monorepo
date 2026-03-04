@@ -4607,6 +4607,14 @@ function uniqueSortedStrings(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort();
 }
 
+function resolveHubInstanceId(env: Env): string {
+  return readEnvString(env, 'HUB_INSTANCE_ID') ?? HUB_NAME;
+}
+
+function buildHubStateKvKey(env: Env): string {
+  return `${HUB_STATE_KV_PREFIX}::${resolveHubInstanceId(env)}`;
+}
+
 function readEnvString(env: Env, key: string): string | undefined {
   const value = env[key];
   return typeof value === 'string' && value.length > 0 ? value : undefined;
