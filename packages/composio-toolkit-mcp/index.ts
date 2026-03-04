@@ -176,6 +176,14 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
             type: 'string',
             description: 'Optional meeting ID or UUID to inspect directly.',
           },
+          composioUserId: {
+            type: 'string',
+            description: 'Optional Composio user ID override (for example: "dm").',
+          },
+          connectedAccountId: {
+            type: 'string',
+            description: 'Optional Composio connected account ID to force account selection.',
+          },
           from: {
             type: 'string',
             description: 'Optional UTC start date (yyyy-mm-dd) for previous meeting search.',
@@ -376,8 +384,10 @@ async function checkZoomTranscriptAvailability(params: {
 }): Promise<Record<string, unknown>> {
   const { client, toolRoutes, entityId, args, toolkitSlug } = params;
   const warnings: string[] = [];
+  const composioUserId = stringOrNull(args.composioUserId) ?? entityId;
+  const connectedAccountId = stringOrNull(args.connectedAccountId);
 
-  const connected = await client.hasActiveConnection(entityId, toolkitSlug).catch((error) => {
+  const connected = await client.hasActiveConnection(composioUserId, toolkitSlug).catch((error) => {
     warnings.push(`Connection check failed: ${toErrorMessage(error)}`);
     return false;
   });
@@ -386,6 +396,8 @@ async function checkZoomTranscriptAvailability(params: {
     return {
       toolkitSlug,
       entityId,
+      composioUserId,
+      connectedAccountId,
       connected: false,
       status: 'not_connected',
       transcriptAvailable: false,
@@ -653,11 +665,25 @@ async function executeToolkitToolByName(params: {
   toolName: string;
   args: Record<string, unknown>;
   entityId: string;
+  connectedAccountId?: string | null;
 }): Promise<Record<string, unknown>> {
-  const { client, toolRoutes, toolName, args, entityId } = params;
+  const { client, toolRoutes, toolName, args, entityId, connectedAccountId } = params;
   const route = toolRoutes.find((candidate) => candidate.toolName === toolName);
   if (!route) {
     throw new Error(`Required toolkit tool "${toolName}" is unavailable in this toolkit route.`);
+  }
+
+  if (connectedAccountId && connectedAccountId.trim().length > 0) {
+    const result = await client.getSDK().tools.execute(route.composioToolSlug, {
+      userId: entityId,
+      connectedAccountId,
+      arguments: args,
+      dangerouslySkipVersionCheck: true,
+    });
+    if (result && typeof result === 'object') {
+      return result as Record<string, unknown>;
+    }
+    return { result };
   }
 
   return client.executeTool(route.composioToolSlug, args, entityId);
