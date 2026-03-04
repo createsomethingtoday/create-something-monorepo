@@ -2,7 +2,13 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
-import { CallToolRequestSchema, ListToolsRequestSchema, type Tool } from '@modelcontextprotocol/sdk/types.js';
+import {
+  CallToolRequestSchema,
+  ListResourcesRequestSchema,
+  ListToolsRequestSchema,
+  ReadResourceRequestSchema,
+  type Tool,
+} from '@modelcontextprotocol/sdk/types.js';
 import { flush as braintrustFlush, initLogger, type Logger, type Span } from 'braintrust';
 
 import discoveryPacksJson from '../../config/mcp-hub/discovery-packs.json';
@@ -17,6 +23,7 @@ type HttpServerConfig = {
   http_headers?: StringMap;
   env_http_headers?: StringMap;
   bearer_token_env_var?: string;
+  connect_timeout_ms?: number;
   tool_call_timeout_ms?: number;
   timeout_ms?: number;
   headers?: StringMap;
@@ -201,6 +208,13 @@ type IntentRouteCandidate = {
   }>;
 };
 
+type HubResourceDefinition = {
+  uri: string;
+  name: string;
+  description: string;
+  mimeType: string;
+};
+
 type InvocationTrace = {
   requestId: string;
   correlationId: string;
@@ -255,6 +269,7 @@ const DOWNSTREAM_BEARER_ENV_FALLBACK: Record<string, string> = {
 };
 
 interface Env {
+  HUB_INSTANCE_ID?: string;
   HUB_API_TOKEN?: string;
   HUB_SESSION_RESOLVE_URL?: string;
   HUB_SESSION_RESOLVE_TOKEN?: string;
@@ -289,7 +304,7 @@ interface Env {
 const HUB_NAME = 'create-something-hub-remote';
 const HUB_VERSION = '1.0.0';
 const DEFAULT_REFRESH_SECONDS = 300;
-const HUB_STATE_KV_KEY = 'hub_state_v1';
+const HUB_STATE_KV_PREFIX = 'hub_state_v1';
 
 const registry = registryJson as unknown as McpBundleRegistry;
 const discoveryPackRegistry = discoveryPacksJson as unknown as DiscoveryPackRegistry;
@@ -514,6 +529,51 @@ const MANAGEMENT_TOOLS: Tool[] = [
   },
 ];
 
+const HUB_RESOURCES: HubResourceDefinition[] = [
+  {
+    uri: 'hub://status',
+    name: 'Hub Status',
+    description: 'Runtime status, connected downstream servers, warnings, and proxy tool coverage.',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'hub://registry',
+    name: 'Hub Registry',
+    description: 'Configured server registry and bundle definitions.',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'hub://policy',
+    name: 'Hub Policy',
+    description: 'Active rate-limit and quota policy settings for this hub runtime.',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'hub://connections',
+    name: 'Hub Connections',
+    description: 'Connection status and tool counts per downstream server.',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'hub://proxy-tools',
+    name: 'Visible Proxy Tools',
+    description: 'Proxy tools visible to the calling account/session after discovery + policy filtering.',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'hub://discovery',
+    name: 'Discovery Settings',
+    description: 'Current discovery preferences and available discovery packs for this account.',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'ui://hub/overview',
+    name: 'Hub Overview',
+    description: 'MCP App overview for the remote hub with key runtime metrics and quick-start guidance.',
+    mimeType: 'text/html',
+  },
+];
+
 let runtimeCache:
   | {
       key: string;
@@ -539,6 +599,7 @@ const sessionResolveCache = new Map<
   { value: IdentitySessionResolveResponse | null; expiresAtMs: number }
 >();
 const DEFAULT_SESSION_RESOLVE_TIMEOUT_MS = 5000;
+const DEFAULT_CONNECT_TIMEOUT_MS = 4000;
 const DEFAULT_TOOL_CALL_TIMEOUT_MS = 120_000;
 const SESSION_RESOLVE_CACHE_MS = 30000;
 const DEFAULT_DISCOVERY_MODE: DiscoveryMode = 'compact';
@@ -570,6 +631,15 @@ export default {
       const authFailure = authorizeRequest(request, env);
       if (authFailure) {
         return withCors(authFailure);
+      }
+
+      if (request.method === 'GET') {
+        const acceptHeader = (request.headers.get('accept') ?? '').toLowerCase();
+        if (!acceptHeader.includes('text/event-stream')) {
+          return withCors(
+            jsonResponse({ error: 'Not Acceptable: Client must accept text/event-stream' }, 406),
+          );
+        }
       }
 
       try {
@@ -775,23 +845,40 @@ async function buildHubRuntime(env: Env, stateResolution: StateResolution): Prom
   const failed: DownstreamFailure[] = [];
   const warnings = [...stateResolution.warnings];
 
-  for (const serverName of stateResolution.enabledServerNames) {
+  const connectionTasks = stateResolution.enabledServerNames.map(async (serverName) => {
     const config = registry.servers[serverName];
     if (!config) {
-      failed.push({ name: serverName, error: `Server "${serverName}" not found in registry` });
-      continue;
+      return {
+        kind: 'failed' as const,
+        failure: { name: serverName, error: `Server "${serverName}" not found in registry` },
+      };
     }
 
     if (config.transport !== 'http') {
-      warnings.push(`Skipping "${serverName}": remote hub only supports HTTP downstream servers`);
-      continue;
+      return {
+        kind: 'warning' as const,
+        message: `Skipping "${serverName}": remote hub only supports HTTP downstream servers`,
+      };
     }
 
     const result = await connectSingleDownstream(serverName, config, env);
     if ('client' in result) {
-      connected.push(result);
+      return { kind: 'connected' as const, connected: result };
+    }
+    return { kind: 'failed' as const, failure: result };
+  });
+
+  const connectionResults = await Promise.all(connectionTasks);
+  for (const result of connectionResults) {
+    if (result.kind === 'connected') {
+      connected.push(result.connected);
+      continue;
     } else {
-      failed.push(result);
+      if (result.kind === 'warning') {
+        warnings.push(result.message);
+      } else {
+        failed.push(result.failure);
+      }
     }
   }
 
@@ -819,6 +906,7 @@ async function connectSingleDownstream(
     name: `${HUB_NAME}:${name}`,
     version: HUB_VERSION,
   });
+  const connectTimeoutMs = resolveConnectTimeoutMs(config, env);
 
   try {
     const requestInit: RequestInit = {};
@@ -828,9 +916,17 @@ async function connectSingleDownstream(
     }
 
     const transport = new StreamableHTTPClientTransport(new URL(config.url), { requestInit });
-    await client.connect(transport);
+    await withTimeout(
+      client.connect(transport),
+      connectTimeoutMs,
+      `Connect to downstream "${name}"`,
+    );
 
-    const tools = await listAllTools(client);
+    const tools = await withTimeout(
+      listAllTools(client),
+      connectTimeoutMs,
+      `List tools from downstream "${name}"`,
+    );
     const toolCallTimeoutMs = resolveToolCallTimeoutMs(config, env);
     return { name, config, baseHeaders: headers, toolCallTimeoutMs, client, tools };
   } catch (error) {
@@ -880,6 +976,31 @@ function resolveToolCallTimeoutMs(config: HttpServerConfig, env: Env): number {
     DEFAULT_TOOL_CALL_TIMEOUT_MS,
   );
   return parsePositiveIntFromUnknown(config.tool_call_timeout_ms ?? config.timeout_ms, fallback);
+}
+
+function resolveConnectTimeoutMs(config: HttpServerConfig, env: Env): number {
+  const fallback = parsePositiveInt(
+    readEnvString(env, 'HUB_CONNECT_TIMEOUT_MS'),
+    DEFAULT_CONNECT_TIMEOUT_MS,
+  );
+  return parsePositiveIntFromUnknown(config.connect_timeout_ms, fallback);
+}
+
+async function withTimeout<T>(operation: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    timeoutHandle = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([operation, timeoutPromise]);
+  } finally {
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle);
+    }
+  }
 }
 
 async function listAllTools(client: Client): Promise<Tool[]> {
@@ -1003,6 +1124,10 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
         tools: {
           listChanged: true,
         },
+        resources: {
+          listChanged: false,
+          subscribe: false,
+        },
       },
     },
   );
@@ -1019,6 +1144,80 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
       tools: allTools.slice(boundedOffset, boundedOffset + pageSize),
       nextCursor: nextOffset < allTools.length ? encodeCursorOffset(nextOffset) : undefined,
     };
+  });
+
+  server.setRequestHandler(ListResourcesRequestSchema, async () => ({
+    resources: HUB_RESOURCES,
+  }));
+
+  server.setRequestHandler(ReadResourceRequestSchema, async (request, extra) => {
+    const uri = request.params.uri;
+    const getDiscoveryContext = async () => {
+      const accountContext = await resolveAccountContext(extra, env);
+      const prefs = await getDiscoveryPreferences(accountContext.accountId, runtime, env);
+      const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
+      return {
+        accountContext,
+        prefs,
+        visible,
+      };
+    };
+
+    switch (uri) {
+      case 'hub://status':
+        return toJsonResource(uri, {
+          ...buildStatusPayload(runtime),
+          policy: buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env),
+        });
+      case 'hub://registry':
+        return toJsonResource(uri, buildRegistryPayload(registry));
+      case 'hub://policy':
+        return toJsonResource(uri, buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env));
+      case 'hub://connections':
+        return toJsonResource(uri, {
+          enabledServerNames: runtime.stateResolution.enabledServerNames,
+          connectedServers: runtime.connected.map((server) => ({
+            name: server.name,
+            toolCount: server.tools.length,
+          })),
+          failedServers: runtime.failed,
+          builtAt: new Date(runtime.builtAt).toISOString(),
+        });
+      case 'hub://proxy-tools': {
+        const { prefs, visible } = await getDiscoveryContext();
+        return toJsonResource(uri, {
+          count: visible.toolDefinitions.length,
+          proxyTools: visible.toolDefinitions.map((tool) => tool.name),
+          discovery: prefs,
+        });
+      }
+      case 'hub://discovery': {
+        const { prefs } = await getDiscoveryContext();
+        return toJsonResource(uri, {
+          discovery: prefs,
+          packs: listDiscoveryPacks(runtime).map((pack) => ({
+            id: pack.id,
+            description: pack.description,
+            mode: pack.preferences.mode,
+            activeServers: pack.preferences.activeServers,
+            maxProxyTools: pack.preferences.maxProxyTools,
+          })),
+        });
+      }
+      case 'ui://hub/overview': {
+        const { prefs, visible } = await getDiscoveryContext();
+        return toHtmlResource(uri, buildHubOverviewHtml({
+          runtime,
+          rateLimitPolicy,
+          quotaPolicy,
+          env,
+          prefs,
+          visibleProxyToolCount: visible.toolDefinitions.length,
+        }));
+      }
+      default:
+        throw new Error(`Unknown resource "${uri}"`);
+    }
   });
 
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
@@ -2770,16 +2969,17 @@ async function getDiscoveryPreferences(
   runtime: HubRuntime,
   env: Env,
 ): Promise<DiscoveryPreferences> {
-  const cached = discoveryPreferencesByAccount.get(accountId);
+  const cacheKey = buildDiscoveryCacheKey(env, accountId);
+  const cached = discoveryPreferencesByAccount.get(cacheKey);
   if (cached) {
     const normalized = normalizeDiscoveryPreferences(cached, runtime);
-    discoveryPreferencesByAccount.set(accountId, normalized);
+    discoveryPreferencesByAccount.set(cacheKey, normalized);
     return normalized;
   }
 
   const kv = env.HUB_STATE_KV;
   if (kv) {
-    const raw = await kv.get(buildDiscoveryKvKey(accountId));
+    const raw = await kv.get(buildDiscoveryKvKey(env, accountId));
     if (raw) {
       try {
         const parsed = JSON.parse(raw) as Record<string, unknown>;
@@ -2793,7 +2993,7 @@ async function getDiscoveryPreferences(
           },
           runtime,
         );
-        discoveryPreferencesByAccount.set(accountId, fromKv);
+        discoveryPreferencesByAccount.set(cacheKey, fromKv);
         return fromKv;
       } catch {
         // Ignore malformed KV payload and fall back to defaults.
@@ -2802,7 +3002,7 @@ async function getDiscoveryPreferences(
   }
 
   const defaults = buildDefaultDiscoveryPreferences(runtime, env);
-  discoveryPreferencesByAccount.set(accountId, defaults);
+  discoveryPreferencesByAccount.set(cacheKey, defaults);
   return defaults;
 }
 
@@ -2831,10 +3031,11 @@ async function persistDiscoveryPreferences(
   prefs: DiscoveryPreferences,
   env: Env,
 ): Promise<void> {
-  discoveryPreferencesByAccount.set(accountId, prefs);
+  const cacheKey = buildDiscoveryCacheKey(env, accountId);
+  discoveryPreferencesByAccount.set(cacheKey, prefs);
   const kv = env.HUB_STATE_KV;
   if (!kv) return;
-  await kv.put(buildDiscoveryKvKey(accountId), JSON.stringify(prefs));
+  await kv.put(buildDiscoveryKvKey(env, accountId), JSON.stringify(prefs));
 }
 
 async function clearDiscoveryPreferences(
@@ -2842,13 +3043,14 @@ async function clearDiscoveryPreferences(
   runtime: HubRuntime,
   env: Env,
 ): Promise<DiscoveryPreferences> {
-  discoveryPreferencesByAccount.delete(accountId);
+  const cacheKey = buildDiscoveryCacheKey(env, accountId);
+  discoveryPreferencesByAccount.delete(cacheKey);
   const kv = env.HUB_STATE_KV;
   if (kv) {
-    await kv.delete(buildDiscoveryKvKey(accountId));
+    await kv.delete(buildDiscoveryKvKey(env, accountId));
   }
   const defaults = buildDefaultDiscoveryPreferences(runtime, env);
-  discoveryPreferencesByAccount.set(accountId, defaults);
+  discoveryPreferencesByAccount.set(cacheKey, defaults);
   return defaults;
 }
 
@@ -2869,8 +3071,12 @@ function normalizeDiscoveryPreferences(
   };
 }
 
-function buildDiscoveryKvKey(accountId: string): string {
-  return `${HUB_DISCOVERY_KV_PREFIX}${accountId}`;
+function buildDiscoveryKvKey(env: Env, accountId: string): string {
+  return `${HUB_DISCOVERY_KV_PREFIX}${resolveHubInstanceId(env)}::${accountId}`;
+}
+
+function buildDiscoveryCacheKey(env: Env, accountId: string): string {
+  return `${resolveHubInstanceId(env)}::${accountId}`;
 }
 
 function parseDiscoveryMode(value: string | null | undefined): DiscoveryMode | null {
@@ -3177,11 +3383,98 @@ function toJsonResult(payload: Record<string, unknown>) {
   };
 }
 
+function toJsonResource(uri: string, payload: unknown) {
+  return {
+    contents: [
+      {
+        uri,
+        mimeType: 'application/json',
+        text: JSON.stringify(payload, null, 2),
+      },
+    ],
+  };
+}
+
+function toHtmlResource(uri: string, html: string) {
+  return {
+    contents: [
+      {
+        uri,
+        mimeType: 'text/html',
+        text: html,
+      },
+    ],
+  };
+}
+
 function toErrorResult(message: string) {
   return {
     isError: true,
     content: [{ type: 'text' as const, text: message }],
   };
+}
+
+function buildHubOverviewHtml(params: {
+  runtime: HubRuntime;
+  rateLimitPolicy: RateLimitPolicy;
+  quotaPolicy: QuotaPolicy;
+  env: Env;
+  prefs: DiscoveryPreferences;
+  visibleProxyToolCount: number;
+}): string {
+  const { runtime, rateLimitPolicy, quotaPolicy, env, prefs, visibleProxyToolCount } = params;
+  const policy = buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env);
+  const health = {
+    hub: {
+      name: HUB_NAME,
+      version: HUB_VERSION,
+    },
+    builtAt: new Date(runtime.builtAt).toISOString(),
+    connectedServers: runtime.connected.length,
+    failedServers: runtime.failed.length,
+    totalProxyToolCount: runtime.proxies.toolDefinitions.length,
+    visibleProxyToolCount,
+    discovery: prefs,
+    policy,
+    note: 'Use hub_search_proxy_tools -> hub_describe_proxy_tool -> hub_execute_proxy_tool for brokered execution.',
+  };
+
+  const escaped = escapeHtml(JSON.stringify(health, null, 2));
+  return [
+    '<!doctype html>',
+    '<html lang="en">',
+    '<head>',
+    '  <meta charset="utf-8" />',
+    '  <meta name="viewport" content="width=device-width, initial-scale=1" />',
+    `  <title>${escapeHtml(HUB_NAME)} Overview</title>`,
+    '  <style>',
+    '    :root { color-scheme: dark; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }',
+    '    body { margin: 0; background: #0b0e14; color: #d6deeb; }',
+    '    main { max-width: 980px; margin: 0 auto; padding: 24px; }',
+    '    h1 { margin: 0 0 12px; font-size: 22px; }',
+    '    p { margin: 0 0 16px; color: #9aa4b2; }',
+    '    pre { background: #111826; border: 1px solid #25324a; border-radius: 10px; padding: 16px; overflow: auto; }',
+    '    code { font-size: 12px; line-height: 1.5; }',
+    '  </style>',
+    '</head>',
+    '<body>',
+    '  <main>',
+    `    <h1>${escapeHtml(HUB_NAME)} MCP Overview</h1>`,
+    '    <p>This MCP App snapshot is generated by the remote hub runtime.</p>',
+    `    <pre><code>${escaped}</code></pre>`,
+    '  </main>',
+    '</body>',
+    '</html>',
+  ].join('\n');
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 }
 
 function buildProxyToolName(serverName: string, downstreamToolName: string): string {
@@ -4064,7 +4357,7 @@ async function readHubStateFromKv(env: Env): Promise<HubState | null> {
   const kv = env.HUB_STATE_KV;
   if (!kv) return null;
 
-  const raw = await kv.get(HUB_STATE_KV_KEY);
+  const raw = await kv.get(buildHubStateKvKey(env));
   if (!raw) return null;
 
   try {
@@ -4090,10 +4383,11 @@ async function writeHubState(env: Env, state: HubState): Promise<Record<string, 
     throw new Error('HUB_STATE_KV binding is not configured on this hub deployment.');
   }
 
-  await kv.put(HUB_STATE_KV_KEY, JSON.stringify(state));
+  const key = buildHubStateKvKey(env);
+  await kv.put(key, JSON.stringify(state));
   return {
     persisted: true,
-    key: HUB_STATE_KV_KEY,
+    key,
     storage: 'kv',
   };
 }
@@ -4311,6 +4605,14 @@ async function closeHubRuntime(runtime: HubRuntime): Promise<void> {
 
 function uniqueSortedStrings(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))].sort();
+}
+
+function resolveHubInstanceId(env: Env): string {
+  return readEnvString(env, 'HUB_INSTANCE_ID') ?? HUB_NAME;
+}
+
+function buildHubStateKvKey(env: Env): string {
+  return `${HUB_STATE_KV_PREFIX}::${resolveHubInstanceId(env)}`;
 }
 
 function readEnvString(env: Env, key: string): string | undefined {

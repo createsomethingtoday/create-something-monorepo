@@ -7,6 +7,21 @@ Remote runtime for the CREATE SOMETHING MCP gateway, exposed as one public endpo
 - `/mcp` — Streamable HTTP MCP endpoint
 - `/health` — JSON health/status
 
+## MCP Resources
+
+This runtime now exposes MCP resources (in addition to tools):
+
+- `hub://status`
+- `hub://registry`
+- `hub://policy`
+- `hub://connections`
+- `hub://proxy-tools`
+- `hub://discovery`
+
+It also exposes one MCP App UI resource:
+
+- `ui://hub/overview`
+
 ## What It Does
 
 - Loads downstream server registry from `config/mcp-hub/registry.json`
@@ -51,10 +66,12 @@ If a client attempts a direct proxy tool call, the hub returns:
 
 Environment variables:
 
+- `HUB_INSTANCE_ID` (recommended): unique id for this deployed hub worker; used to namespace hub state/discovery KV keys so team hubs do not overwrite each other.
 - `HUB_API_TOKEN` (optional): if set, `/mcp` requires `Authorization: Bearer <token>`
 - `HUB_SESSION_RESOLVE_URL` (optional): identity-worker resolver endpoint (`/v1/mcp/sessions/resolve`)
 - `HUB_SESSION_RESOLVE_TOKEN` (optional): shared secret used by hub to call resolver endpoint
 - `HUB_SESSION_RESOLVE_TIMEOUT_MS` (optional): resolver call timeout, default `5000`
+- `HUB_CONNECT_TIMEOUT_MS` (optional): per-downstream connect/tools bootstrap timeout in ms, default `4000`
 - `HUB_ENABLED_BUNDLES` (optional): comma-separated or JSON array (defaults from registry)
 - `HUB_ENABLED_SERVERS` (optional): comma-separated or JSON array
 - `HUB_DISABLED_SERVERS` (optional): comma-separated or JSON array
