@@ -147,6 +147,11 @@
 		border-color: var(--color-border-emphasis);
 	}
 
+	input:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: -1px;
+	}
+
 	input:disabled {
 		opacity: 0.6;
 		cursor: not-allowed;

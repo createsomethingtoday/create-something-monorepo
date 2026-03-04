@@ -256,6 +256,11 @@
 		border-color: var(--color-info);
 	}
 
+	.token-input:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: -1px;
+	}
+
 	.verify-button {
 		width: 100%;
 		padding: var(--space-sm);
