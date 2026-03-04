@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CREATE SOMETHING Braintrust Trace Dashboard (Mar 4, 2026)</title>
+    <style>
+      :root {
+        --bg: #0b1320;
+        --panel: #121e31;
+        --panel-alt: #18263d;
+        --text: #edf2fb;
+        --muted: #9fb0cc;
+        --accent: #26c485;
+        --warn: #ffb703;
+        --error: #ff5d73;
+        --line: #294160;
+        --ink: #0c172a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 20% 0%, #1b3359 0%, transparent 40%),
+          radial-gradient(circle at 90% 10%, #3d1e43 0%, transparent 35%),
+          var(--bg);
+      }
+
+      .container {
+        width: min(1200px, calc(100% - 2rem));
+        margin: 1.5rem auto 3rem;
+      }
+
+      .hero {
+        background: linear-gradient(145deg, #1d2d4d 0%, #122036 70%);
+        border: 1px solid #2b4268;
+        border-radius: 16px;
+        padding: 1.25rem 1.25rem 1rem;
+        box-shadow: 0 18px 40px rgba(5, 11, 21, 0.35);
+      }
+
+      .hero h1 {
+        margin: 0;
+        font-size: clamp(1.1rem, 2vw, 1.6rem);
+        line-height: 1.25;
+      }
+
+      .hero p {
+        margin: 0.5rem 0 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      .meta {
+        margin-top: 0.8rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .chip {
+        background: #10213a;
+        border: 1px solid #314d76;
+        border-radius: 999px;
+        padding: 0.3rem 0.65rem;
+        color: #c4d2e8;
+        font-size: 0.78rem;
+      }
+
+      .cards {
+        margin-top: 1rem;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.75rem;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 0.8rem;
+      }
+
+      .card-label {
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+
+      .card-value {
+        margin-top: 0.3rem;
+        font-size: clamp(1rem, 2vw, 1.5rem);
+        font-weight: 700;
+      }
+
+      .grid {
+        margin-top: 0.9rem;
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 0.75rem;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 0.9rem;
+      }
+
+      .panel h2 {
+        margin: 0 0 0.7rem;
+        font-size: 0.95rem;
+      }
+
+      .bar-list {
+        display: grid;
+        gap: 0.5rem;
+      }
+
+      .bar-row {
+        display: grid;
+        grid-template-columns: 190px 1fr 50px;
+        align-items: center;
+        gap: 0.55rem;
+      }
+
+      .bar-row .label {
+        color: #d7e2f3;
+        font-size: 0.8rem;
+        line-height: 1.15;
+        overflow-wrap: anywhere;
+      }
+
+      .track {
+        height: 0.78rem;
+        border-radius: 999px;
+        background: #0f192b;
+        border: 1px solid #263d5e;
+        overflow: hidden;
+      }
+
+      .fill {
+        height: 100%;
+        width: 0;
+        background: linear-gradient(90deg, #64d8ad 0%, #2bbf83 70%);
+      }
+
+      .fill.error {
+        background: linear-gradient(90deg, #ff8a9a 0%, #ff5d73 75%);
+      }
+
+      .bar-value {
+        text-align: right;
+        color: #d7e2f3;
+        font-size: 0.8rem;
+      }
+
+      .table-wrap {
+        margin-top: 0.9rem;
+        background: var(--panel-alt);
+        border: 1px solid #2f486d;
+        border-radius: 12px;
+        overflow: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid #27405f;
+        padding: 0.55rem 0.65rem;
+        text-align: left;
+        vertical-align: top;
+        font-size: 0.78rem;
+      }
+
+      th {
+        color: #b9c9e2;
+        background: #10203a;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+      }
+
+      td code {
+        color: #b8ffdf;
+        font-family: "SF Mono", "Menlo", Consolas, monospace;
+        font-size: 0.74rem;
+      }
+
+      .pill {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.15rem 0.5rem;
+        font-size: 0.72rem;
+        border: 1px solid;
+      }
+
+      .pill-good {
+        color: #7ef0c1;
+        border-color: #2e8a67;
+        background: #0d3528;
+      }
+
+      .pill-warn {
+        color: #ffd591;
+        border-color: #a6670e;
+        background: #3d2806;
+      }
+
+      .pill-bad {
+        color: #ffb7c3;
+        border-color: #9c3c4f;
+        background: #3f131d;
+      }
+
+      .footer {
+        margin-top: 0.75rem;
+        color: var(--muted);
+        font-size: 0.72rem;
+      }
+
+      @media (max-width: 980px) {
+        .cards {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .container {
+          width: calc(100% - 1rem);
+          margin-top: 0.8rem;
+        }
+        .bar-row {
+          grid-template-columns: 130px 1fr 42px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <section class="hero">
+        <h1>CREATE SOMETHING Braintrust Trace Dashboard</h1>
+        <p>
+          Project ID <code>8ca0d63b-d985-4373-9906-c253bf3f52d0</code>. Snapshot of latest 1,000
+          project logs.
+        </p>
+        <div class="meta">
+          <span class="chip">Window start: <span id="window-start"></span></span>
+          <span class="chip">Window end: <span id="window-end"></span></span>
+          <span class="chip">Generated: <span id="generated-at"></span></span>
+        </div>
+      </section>
+
+      <section class="cards">
+        <article class="card">
+          <div class="card-label">Rows analyzed</div>
+          <div class="card-value" id="rows"></div>
+        </article>
+        <article class="card">
+          <div class="card-label">Error rows</div>
+          <div class="card-value" id="errors"></div>
+        </article>
+        <article class="card">
+          <div class="card-label">Error rate</div>
+          <div class="card-value" id="error-rate"></div>
+        </article>
+        <article class="card">
+          <div class="card-label">Top failure mode</div>
+          <div class="card-value" id="top-failure"></div>
+        </article>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <h2>Error Categories</h2>
+          <div class="bar-list" id="category-bars"></div>
+        </article>
+        <article class="panel">
+          <h2>Most Used Tools (with Error Rate)</h2>
+          <div class="bar-list" id="tool-bars"></div>
+        </article>
+      </section>
+
+      <section class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Repeated Error Cluster</th>
+              <th>Tool</th>
+              <th>Count</th>
+              <th>Range</th>
+              <th>Sample Root Span</th>
+            </tr>
+          </thead>
+          <tbody id="cluster-body"></tbody>
+        </table>
+      </section>
+
+      <section class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Latency Outlier (ms)</th>
+              <th>Tool</th>
+              <th>Created</th>
+              <th>Root Span</th>
+            </tr>
+          </thead>
+          <tbody id="slow-body"></tbody>
+        </table>
+      </section>
+
+      <div class="footer">
+        Notes: data sourced from Braintrust BTQL <code>project_logs(project_id)</code> with limit
+        1000. This view prioritizes recent operational regressions.
+      </div>
+    </main>
+
+    <script>
+      const data = {
+        generated_at: "2026-03-04T11:22:35.523Z",
+        project_id: "8ca0d63b-d985-4373-9906-c253bf3f52d0",
+        sample_rows: 1000,
+        window_start: "2026-03-01T13:34:13.745Z",
+        window_end: "2026-03-04T11:15:24.260Z",
+        error_rows: 73,
+        error_rate: 7.3,
+        categories: [
+          { category: "permission", count: 30 },
+          { category: "intent_routing", count: 25 },
+          { category: "tool_registration", count: 4 },
+          { category: "other", count: 4 },
+          { category: "rate_limit", count: 4 },
+          { category: "validation", count: 4 },
+          { category: "account_connection", count: 2 }
+        ],
+        top_tools: [
+          {
+            tool: "unknown",
+            count: 207,
+            errors: 19,
+            error_rate: 9.2,
+            avg_ms: 996.8,
+            p95_ms: 2635,
+            max_ms: 10771
+          },
+          {
+            tool: "hub_execute_proxy_tool",
+            count: 166,
+            errors: 20,
+            error_rate: 12,
+            avg_ms: 965.7,
+            p95_ms: 2404,
+            max_ms: 10771
+          },
+          {
+            tool: "hub_search_proxy_tools",
+            count: 138,
+            errors: 0,
+            error_rate: 0,
+            avg_ms: 10.9,
+            p95_ms: 104,
+            max_ms: 208
+          },
+          {
+            tool: "hub_describe_proxy_tool",
+            count: 66,
+            errors: 2,
+            error_rate: 3,
+            avg_ms: 6.7,
+            p95_ms: 6,
+            max_ms: 141
+          },
+          {
+            tool: "dm_composio__slack__slack_fetch_conversation_history",
+            count: 58,
+            errors: 0,
+            error_rate: 0,
+            avg_ms: 788.1,
+            p95_ms: 974,
+            max_ms: 1878
+          },
+          {
+            tool: "hub_status",
+            count: 54,
+            errors: 0,
+            error_rate: 0,
+            avg_ms: 0,
+            p95_ms: 0,
+            max_ms: 0
+          },
+          {
+            tool: "dm_composio__slack__slack_list_files_with_filters_in_slack",
+            count: 51,
+            errors: 0,
+            error_rate: 0,
+            avg_ms: 828.3,
+            p95_ms: 1176,
+            max_ms: 4095
+          },
+          {
+            tool: "hub_route_intent",
+            count: 37,
+            errors: 23,
+            error_rate: 62.2,
+            avg_ms: 3.4,
+            p95_ms: 2,
+            max_ms: 120
+          }
+        ],
+        top_error_clusters: [
+          {
+            tool: "unknown",
+            message: "Forbidden. You don't have permission to access this post.",
+            count: 8,
+            first: "2026-03-02T16:04:52.127Z",
+            last: "2026-03-03T19:01:33.578Z",
+            sample_root: "60014025-c192-465d-b987-fc8bb21deb16"
+          },
+          {
+            tool: "hub_execute_proxy_tool",
+            message: "Forbidden. You don't have permission to access this post.",
+            count: 8,
+            first: "2026-03-02T16:04:52.127Z",
+            last: "2026-03-03T19:01:33.578Z",
+            sample_root: "f4e7bf4e-4ccf-415e-a75a-3a29558ca237"
+          },
+          {
+            tool: "dm_composio_connection_status",
+            message:
+              "Toolkit \"youtube\" is not registered on this DM server. Registered toolkits: dropbox, googledrive, quickbooks, slack, zoom.",
+            count: 2,
+            first: "2026-03-01T14:03:01.639Z",
+            last: "2026-03-02T14:01:03.533Z",
+            sample_root: "93111680-0974-46a7-a0e5-15f6fcc54c87"
+          },
+          {
+            tool: "unknown",
+            message:
+              "{\"status\":429,\"serviceErrorCode\":101,\"code\":\"TOO_MANY_REQUESTS\",\"message\":\"Resource level throttle APPLICATION DAY limit for calls to this resource is reached.\"}",
+            count: 2,
+            first: "2026-03-02T16:04:51.328Z",
+            last: "2026-03-02T16:13:05.776Z",
+            sample_root: "f4fda70f-6b3d-45e4-8c71-a5557c951a22"
+          },
+          {
+            tool: "hub_execute_proxy_tool",
+            message:
+              "{\"status\":429,\"serviceErrorCode\":101,\"code\":\"TOO_MANY_REQUESTS\",\"message\":\"Resource level throttle APPLICATION DAY limit for calls to this resource is reached.\"}",
+            count: 2,
+            first: "2026-03-02T16:04:51.328Z",
+            last: "2026-03-02T16:13:05.776Z",
+            sample_root: "2e22052b-661d-45a8-8c32-44996aeb9e41"
+          },
+          {
+            tool: "unknown",
+            message: "Forbidden: Viewer/Actor is unauthorized agent (serviceErrorCode: )",
+            count: 2,
+            first: "2026-03-02T16:06:07.022Z",
+            last: "2026-03-02T16:13:28.825Z",
+            sample_root: "fa59e0cb-694e-4429-8f5f-c42d58d32c08"
+          },
+          {
+            tool: "hub_execute_proxy_tool",
+            message: "Forbidden: Viewer/Actor is unauthorized agent (serviceErrorCode: )",
+            count: 2,
+            first: "2026-03-02T16:06:07.022Z",
+            last: "2026-03-02T16:13:28.825Z",
+            sample_root: "2390d398-91a1-477b-ab0d-696c2c2f9dac"
+          },
+          {
+            tool: "unknown",
+            message: "Forbidden. You don't have permission to create posts.",
+            count: 2,
+            first: "2026-03-02T16:06:16.094Z",
+            last: "2026-03-02T16:13:33.145Z",
+            sample_root: "9a6f7423-7d8e-4660-9a5e-563f78480ae2"
+          },
+          {
+            tool: "hub_execute_proxy_tool",
+            message: "Forbidden. You don't have permission to create posts.",
+            count: 2,
+            first: "2026-03-02T16:06:16.094Z",
+            last: "2026-03-02T16:13:33.145Z",
+            sample_root: "48b444d4-9310-42d6-bdc3-94bbd9993a42"
+          },
+          {
+            tool: "hub_route_intent",
+            message:
+              "No route found for intent \"create a google sheet and write a formula\" in allowlist or discovery.",
+            count: 2,
+            first: "2026-03-02T20:51:52.204Z",
+            last: "2026-03-02T21:01:55.892Z",
+            sample_root: "3d6575c0-443e-4cd8-a7fb-3913e25bf4cb"
+          },
+          {
+            tool: "hub_route_intent",
+            message: "No route found for intent \"write values in sheets\" in allowlist or discovery.",
+            count: 2,
+            first: "2026-03-02T20:51:52.348Z",
+            last: "2026-03-02T21:01:56.251Z",
+            sample_root: "e12d8c78-ba00-408a-a892-592c47926b60"
+          },
+          {
+            tool: "hub_route_intent",
+            message: "No route found for intent \"search_spreadsheets\" in allowlist or discovery.",
+            count: 2,
+            first: "2026-03-02T20:51:59.767Z",
+            last: "2026-03-02T20:58:27.473Z",
+            sample_root: "44c2379d-4759-442b-8651-b1cf3ecf5f77"
+          },
+          {
+            tool: "hub_describe_proxy_tool",
+            message: "\"proxyToolName\" is required",
+            count: 2,
+            first: "2026-03-02T23:36:41.856Z",
+            last: "2026-03-02T23:37:05.817Z",
+            sample_root: "0166ee7c-085f-4be0-9d16-98c790be3b1a"
+          }
+        ],
+        slow_outliers: [
+          {
+            id: "dada2fa1-907b-4962-82cb-d5d043f0eeb8",
+            root: "c06732aa-dfaa-4289-a1d2-32b765dbee89",
+            tool: "hub_update_state",
+            created: "2026-03-02T15:53:36.458Z",
+            duration_ms: 252517,
+            message: ""
+          },
+          {
+            id: "224b2ceb-6070-43c8-947a-069f10312840",
+            root: "564a7841-8886-437e-9d65-308b3220454c",
+            tool: "notion_create_page",
+            created: "2026-03-03T22:23:34.691Z",
+            duration_ms: 27963,
+            message: ""
+          },
+          {
+            id: "84268063-5a36-40ec-9922-97d5d2dc2b50",
+            root: "cb83d36e-1551-4acd-b55c-bd66e0f65c26",
+            tool: "hub_update_state",
+            created: "2026-03-02T15:43:43.860Z",
+            duration_ms: 24413,
+            message: ""
+          },
+          {
+            id: "10314de7-8a0e-4342-8e6e-31dc6b8752bf",
+            root: "0732a896-121d-4fd9-97ce-af67c2f95ac6",
+            tool: "hub_refresh_connections",
+            created: "2026-03-02T15:54:01.321Z",
+            duration_ms: 24327,
+            message: ""
+          },
+          {
+            id: "d99300a5-e489-4550-b5fd-2463614b979d",
+            root: "01271353-16f4-4669-ba4d-705d5b28f15d",
+            tool: "hub_refresh_connections",
+            created: "2026-03-02T20:47:40.983Z",
+            duration_ms: 20452,
+            message: ""
+          },
+          {
+            id: "e5f106e2-ee9a-4518-b64c-bc3bac7d947b",
+            root: "1675329a-8668-4e07-8a12-fd68c267ea0d",
+            tool: "notion_search",
+            created: "2026-03-03T22:20:56.397Z",
+            duration_ms: 18721,
+            message: ""
+          },
+          {
+            id: "8db70a1c-234a-42f7-b4c4-593a1fbe4746",
+            root: "9533a598-3b40-41cc-920c-b0b77ace477b",
+            tool: "notion_query_database",
+            created: "2026-03-02T14:03:02.808Z",
+            duration_ms: 18582,
+            message: ""
+          },
+          {
+            id: "5e3d77a7-01f2-40e6-b221-fc21ece6b6fc",
+            root: "729ed531-1dd3-4b4b-a20f-0d4f48168b95",
+            tool: "hub_refresh_connections",
+            created: "2026-03-02T20:50:53.407Z",
+            duration_ms: 18451,
+            message: ""
+          }
+        ]
+      };
+
+      const fmt = new Intl.NumberFormat("en-US");
+      const fmtDate = (value) =>
+        new Date(value).toLocaleString("en-US", {
+          dateStyle: "medium",
+          timeStyle: "short",
+          timeZoneName: "short"
+        });
+
+      function setSummary() {
+        document.querySelector("#window-start").textContent = fmtDate(data.window_start);
+        document.querySelector("#window-end").textContent = fmtDate(data.window_end);
+        document.querySelector("#generated-at").textContent = fmtDate(data.generated_at);
+        document.querySelector("#rows").textContent = fmt.format(data.sample_rows);
+        document.querySelector("#errors").textContent = fmt.format(data.error_rows);
+        document.querySelector("#error-rate").textContent = `${data.error_rate}%`;
+        document.querySelector("#top-failure").textContent = data.categories[0]?.category ?? "n/a";
+      }
+
+      function renderCategoryBars() {
+        const root = document.querySelector("#category-bars");
+        const max = Math.max(...data.categories.map((c) => c.count));
+        root.innerHTML = data.categories
+          .map((row) => {
+            const width = Math.max(6, Math.round((row.count / max) * 100));
+            return `
+              <div class="bar-row">
+                <div class="label">${row.category}</div>
+                <div class="track"><div class="fill error" style="width:${width}%"></div></div>
+                <div class="bar-value">${row.count}</div>
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      function errorBadge(rate) {
+        if (rate >= 20) return '<span class="pill pill-bad">high</span>';
+        if (rate >= 5) return '<span class="pill pill-warn">medium</span>';
+        return '<span class="pill pill-good">low</span>';
+      }
+
+      function renderToolBars() {
+        const root = document.querySelector("#tool-bars");
+        const rows = data.top_tools.slice(0, 8);
+        const max = Math.max(...rows.map((c) => c.count));
+        root.innerHTML = rows
+          .map((row) => {
+            const width = Math.max(4, Math.round((row.count / max) * 100));
+            return `
+              <div class="bar-row">
+                <div class="label">${row.tool}</div>
+                <div class="track"><div class="fill" style="width:${width}%"></div></div>
+                <div class="bar-value">${row.count}</div>
+              </div>
+              <div style="margin:-0.2rem 0 0.35rem 190px;color:#a8bbd8;font-size:0.72rem;">
+                ${row.error_rate}% errors ${errorBadge(row.error_rate)}
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      function renderClusters() {
+        const root = document.querySelector("#cluster-body");
+        root.innerHTML = data.top_error_clusters
+          .map(
+            (row) => `
+            <tr>
+              <td>${row.message}</td>
+              <td><code>${row.tool}</code></td>
+              <td>${row.count}</td>
+              <td>${fmtDate(row.first)}<br>${fmtDate(row.last)}</td>
+              <td><code>${row.sample_root}</code></td>
+            </tr>
+          `
+          )
+          .join("");
+      }
+
+      function renderSlow() {
+        const root = document.querySelector("#slow-body");
+        root.innerHTML = data.slow_outliers
+          .map(
+            (row) => `
+            <tr>
+              <td>${fmt.format(row.duration_ms)}</td>
+              <td><code>${row.tool}</code></td>
+              <td>${fmtDate(row.created)}</td>
+              <td><code>${row.root}</code></td>
+            </tr>
+          `
+          )
+          .join("");
+      }
+
+      setSummary();
+      renderCategoryBars();
+      renderToolBars();
+      renderClusters();
+      renderSlow();
+    </script>
+  </body>
+</html>
