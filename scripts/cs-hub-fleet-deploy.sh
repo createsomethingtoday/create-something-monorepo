@@ -38,16 +38,32 @@ join_by_comma() {
 
 SHARED_AUTH_SERVERS_CSV="$(join_by_comma "${SHARED_AUTH_SERVERS[@]}")"
 
+account_id_for_worker() {
+  case "$1" in
+    "cs-hub-lainy") echo "acct_lainy" ;;
+    "cs-hub-danny") echo "acct_danny" ;;
+    "cs-hub-august") echo "acct_august" ;;
+    "cs-hub-filip") echo "acct_fillip" ;;
+    "cs-hub-leah") echo "acct_leah" ;;
+    "cs-hub-mj") echo "acct_mj" ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
 cd "$HUB_DIR"
 
 echo "Deploying team hub workers with hardened routing config..."
 for worker in "${TEAM_WORKERS[@]}"; do
   echo "===== DEPLOY ${worker} ====="
+  account_id="$(account_id_for_worker "$worker")"
   if [[ "$worker" == "cs-hub-mj" ]]; then
     pnpm exec wrangler deploy \
       --config "$TEAM_CONFIG" \
       --name "$worker" \
       --var "HUB_INSTANCE_ID:${worker}" \
+      --var "HUB_ACCOUNT_ID:${account_id}" \
       --var "HUB_ENABLED_BUNDLES:agency,core" \
       --var "HUB_ENABLED_SERVERS:${SHARED_AUTH_SERVERS_CSV},outerfields-pcn" \
       --var "HUB_DISABLED_SERVERS:composio-toolkit-airtable,composio-toolkit-webflow,halfdozen-dm-mcp,loom-mcp,schedule-mcp,substrate-mcp" \
@@ -58,6 +74,7 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --config "$TEAM_CONFIG" \
       --name "$worker" \
       --var "HUB_INSTANCE_ID:${worker}" \
+      --var "HUB_ACCOUNT_ID:${account_id}" \
       --var "HUB_ENABLED_BUNDLES:[]" \
       --var "HUB_ENABLED_SERVERS:${SHARED_AUTH_SERVERS_CSV}" \
       --var "HUB_DISABLED_SERVERS:[]" \

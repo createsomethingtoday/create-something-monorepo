@@ -99,6 +99,20 @@ resolve_worker_token() {
   echo "$token"
 }
 
+expected_account_id_for_worker() {
+  case "$1" in
+    "cs-hub-lainy") echo "acct_lainy" ;;
+    "cs-hub-danny") echo "acct_danny" ;;
+    "cs-hub-august") echo "acct_august" ;;
+    "cs-hub-filip") echo "acct_fillip" ;;
+    "cs-hub-leah") echo "acct_leah" ;;
+    "cs-hub-mj") echo "acct_mj" ;;
+    *)
+      echo ""
+      ;;
+  esac
+}
+
 check_mcp_protocol() {
   local worker="$1"
   local mcp_url
@@ -205,6 +219,76 @@ check_mcp_protocol() {
   rm -f "$init_headers" "$init_body" "$list_headers" "$list_body"
 }
 
+check_account_routing() {
+  local worker="$1"
+  local expected_account_id
+  expected_account_id="$(expected_account_id_for_worker "$worker")"
+  if [[ -z "$expected_account_id" ]]; then
+    return
+  fi
+
+  local mcp_url
+  mcp_url="$(mcp_url_for_worker "$worker")"
+  local token_var_name
+  token_var_name="$(token_env_var_for_worker "$worker")"
+  local token
+  token="$(resolve_worker_token "$worker")"
+  local token_help="${token_var_name} (or HUB_API_TOKEN)"
+
+  if [[ -z "$token" ]]; then
+    echo "missing API token for ${worker} (${token_help})"
+    failures=1
+    return
+  fi
+
+  local set_payload='{"jsonrpc":"2.0","id":"fleet-verify-discovery","method":"tools/call","params":{"name":"hub_set_discovery","arguments":{"mode":"full","activeServers":["composio-toolkit-notion"]}}}'
+  curl -sS -X POST "$mcp_url" \
+    -H "Authorization: Bearer ${token}" \
+    -H "Content-Type: application/json" \
+    -H "Accept: application/json" \
+    --data "$set_payload" >/dev/null || true
+
+  local body_file status
+  body_file="$(mktemp)"
+  status="$(
+    curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
+      -H "Authorization: Bearer ${token}" \
+      -H "Content-Type: application/json" \
+      -H "Accept: application/json" \
+      --data '{"jsonrpc":"2.0","id":"fleet-verify-account","method":"tools/call","params":{"name":"hub_execute_proxy_tool","arguments":{"proxyToolName":"composio-toolkit-notion__connection_status","args":{}}}}'
+  )"
+
+  if [[ "$status" != "200" ]]; then
+    echo "account routing check failed for ${worker} (status=${status})"
+    cat "$body_file"
+    failures=1
+    rm -f "$body_file"
+    return
+  fi
+
+  local actual_account_id
+  actual_account_id="$(
+    jq -r '
+      .result.content[0].text
+      | fromjson?
+      | .entityId // empty
+    ' "$body_file"
+  )"
+
+  if [[ "$actual_account_id" != "$expected_account_id" ]]; then
+    echo "account routing mismatch for ${worker}"
+    echo "expected=${expected_account_id}"
+    echo "actual=${actual_account_id:-<empty>}"
+    cat "$body_file"
+    failures=1
+    rm -f "$body_file"
+    return
+  fi
+
+  echo "account_routing=ok account_id=${actual_account_id}"
+  rm -f "$body_file"
+}
+
 failures=0
 cd "$HUB_DIR"
 
@@ -272,6 +356,13 @@ echo "Checking MCP protocol endpoints (initialize + resources/list)..."
 for worker in "${WORKERS[@]}"; do
   echo "===== PROTOCOL ${worker} ====="
   check_mcp_protocol "$worker"
+  echo
+done
+
+echo "Checking token-only account routing on team hubs..."
+for worker in "${WORKERS[@]}"; do
+  echo "===== ACCOUNT ${worker} ====="
+  check_account_routing "$worker"
   echo
 done
 
