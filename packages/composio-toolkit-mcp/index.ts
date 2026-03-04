@@ -36,6 +36,13 @@ const SERVER_NAME = 'composio-toolkit-mcp';
 const SERVER_VERSION = '0.1.0';
 const DEFAULT_CACHE_SECONDS = 300;
 const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
+const ZOOM_TRANSCRIPT_STATUS_TOOL = 'zoom_latest_transcript_status';
+const DEFAULT_ZOOM_LOOKBACK_DAYS = 7;
+const ZOOM_TOOL_NAMES = {
+  getCurrentUser: 'zoom_get_current_user',
+  listMeetings: 'zoom_list_meetings',
+  getMeetingRecordings: 'zoom_get_meeting_recordings',
+} as const;
 
 const runtimeCache = new Map<string, ToolkitRuntime>();
 const pendingRuntimeLoads = new Map<string, Promise<ToolkitRuntime>>();
@@ -125,6 +132,7 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
   const client = new ComposioClient({ apiKey: env.COMPOSIO_API_KEY! });
   const authConfigMap = parseAuthConfigMap(env.COMPOSIO_AUTH_CONFIG_MAP);
   const logger = getBraintrustLogger(env);
+  const isZoomToolkit = runtime.toolkitSlug === 'zoom';
 
   const managementTools: Tool[] = [
     {
@@ -156,6 +164,43 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
       },
     },
   ];
+  if (isZoomToolkit) {
+    managementTools.push({
+      name: ZOOM_TRANSCRIPT_STATUS_TOOL,
+      description:
+        'Check transcript availability for the latest Zoom meeting recording (or a specific meeting ID/UUID).',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          meetingId: {
+            type: 'string',
+            description: 'Optional meeting ID or UUID to inspect directly.',
+          },
+          from: {
+            type: 'string',
+            description: 'Optional UTC start date (yyyy-mm-dd) for previous meeting search.',
+          },
+          to: {
+            type: 'string',
+            description: 'Optional UTC end date (yyyy-mm-dd) for previous meeting search.',
+          },
+          topicQuery: {
+            type: 'string',
+            description: 'Optional case-insensitive topic filter when selecting the latest meeting.',
+          },
+          pageSize: {
+            type: 'number',
+            description: 'Number of previous meetings to fetch (1-100, default 30).',
+          },
+          includeRecordingFiles: {
+            type: 'boolean',
+            description: 'Include full recording file metadata in the response.',
+          },
+        },
+        additionalProperties: false,
+      },
+    });
+  }
 
   const managementNames = new Set(managementTools.map((tool) => tool.name));
   const toolRoutes = buildToolRoutes(runtime.toolDefs, managementNames);
@@ -294,6 +339,17 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
         }));
       }
 
+      if (toolName === ZOOM_TRANSCRIPT_STATUS_TOOL && isZoomToolkit) {
+        const result = await checkZoomTranscriptAvailability({
+          client,
+          toolRoutes,
+          entityId,
+          args,
+          toolkitSlug: runtime.toolkitSlug,
+        });
+        return emitAndReturn(toJsonResult(result));
+      }
+
       const route = toolRoutes.find((candidate) => candidate.toolName === toolName);
       if (!route) {
         const message = `Unknown tool "${toolName}".`;
@@ -309,6 +365,425 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
   });
 
   return server;
+}
+
+async function checkZoomTranscriptAvailability(params: {
+  client: ComposioClient;
+  toolRoutes: ToolRoute[];
+  entityId: string;
+  args: Record<string, unknown>;
+  toolkitSlug: string;
+}): Promise<Record<string, unknown>> {
+  const { client, toolRoutes, entityId, args, toolkitSlug } = params;
+  const warnings: string[] = [];
+
+  const connected = await client.hasActiveConnection(entityId, toolkitSlug).catch((error) => {
+    warnings.push(`Connection check failed: ${toErrorMessage(error)}`);
+    return false;
+  });
+
+  if (!connected) {
+    return {
+      toolkitSlug,
+      entityId,
+      connected: false,
+      status: 'not_connected',
+      transcriptAvailable: false,
+      message:
+        'Zoom is not connected for this entity. Call get_connect_link and authenticate the Zoom account you want to query.',
+      warnings,
+    };
+  }
+
+  const requestedMeetingId = stringOrNull(args.meetingId);
+  const topicQuery = stringOrNull(args.topicQuery);
+  const includeRecordingFiles = booleanArg(args.includeRecordingFiles, false);
+  const pageSize = numberArg(args.pageSize, 30, 1, 100);
+
+  const todayUtc = new Date();
+  const defaultTo = formatUtcDate(todayUtc);
+  const defaultFrom = formatUtcDate(
+    new Date(todayUtc.getTime() - (DEFAULT_ZOOM_LOOKBACK_DAYS * 24 * 60 * 60 * 1000)),
+  );
+
+  const fromInput = stringOrNull(args.from);
+  const toInput = stringOrNull(args.to);
+  const parsedFrom = fromInput ? normalizeIsoDate(fromInput) : null;
+  const parsedTo = toInput ? normalizeIsoDate(toInput) : null;
+  if (fromInput && !parsedFrom) {
+    warnings.push(`Invalid "from" date "${fromInput}". Expected yyyy-mm-dd. Using default ${defaultFrom}.`);
+  }
+  if (toInput && !parsedTo) {
+    warnings.push(`Invalid "to" date "${toInput}". Expected yyyy-mm-dd. Using default ${defaultTo}.`);
+  }
+  const from = parsedFrom ?? defaultFrom;
+  const to = parsedTo ?? defaultTo;
+
+  let currentUser: Record<string, unknown> | null = null;
+  const currentUserResult = await executeToolkitToolByName({
+    client,
+    toolRoutes,
+    toolName: ZOOM_TOOL_NAMES.getCurrentUser,
+    args: {},
+    entityId,
+  }).catch((error) => {
+    warnings.push(`Could not fetch Zoom user profile: ${toErrorMessage(error)}`);
+    return null;
+  });
+  if (currentUserResult && isExecutionSuccessful(currentUserResult)) {
+    currentUser = extractDataRecord(currentUserResult);
+  }
+
+  let selectedMeeting: Record<string, unknown> | null = null;
+  let candidatesScanned = 0;
+  if (requestedMeetingId) {
+    selectedMeeting = { id: requestedMeetingId };
+  } else {
+    const listMeetingsResult = await executeToolkitToolByName({
+      client,
+      toolRoutes,
+      toolName: ZOOM_TOOL_NAMES.listMeetings,
+      args: {
+        userId: 'me',
+        type: 'previous_meetings',
+        from,
+        to,
+        page_size: pageSize,
+      },
+      entityId,
+    }).catch((error) => {
+      warnings.push(`Failed to list previous Zoom meetings: ${toErrorMessage(error)}`);
+      return null;
+    });
+
+    if (!listMeetingsResult) {
+      return {
+        toolkitSlug,
+        entityId,
+        connected: true,
+        status: 'meeting_lookup_failed',
+        transcriptAvailable: false,
+        query: {
+          meetingId: requestedMeetingId,
+          from,
+          to,
+          topicQuery,
+          pageSize,
+        },
+        account: summarizeZoomUser(currentUser),
+        message: 'Could not list previous meetings from Zoom.',
+        warnings,
+      };
+    }
+
+    if (!isExecutionSuccessful(listMeetingsResult)) {
+      const lookupError = extractExecutionError(listMeetingsResult) ?? 'Unknown Zoom list_meetings error';
+      return {
+        toolkitSlug,
+        entityId,
+        connected: true,
+        status: 'meeting_lookup_failed',
+        transcriptAvailable: false,
+        query: {
+          meetingId: requestedMeetingId,
+          from,
+          to,
+          topicQuery,
+          pageSize,
+        },
+        account: summarizeZoomUser(currentUser),
+        message: `Zoom list_meetings failed: ${lookupError}`,
+        warnings,
+      };
+    }
+
+    const meetingRows = asRecordArray(extractDataRecord(listMeetingsResult)?.meetings);
+    const filteredMeetings = topicQuery
+      ? meetingRows.filter((meeting) => {
+        const topic = (stringOrNull(meeting.topic) ?? '').toLowerCase();
+        return topic.includes(topicQuery.toLowerCase());
+      })
+      : meetingRows;
+
+    filteredMeetings.sort((a, b) => {
+      const aTime = Date.parse(stringOrNull(a.start_time) ?? '') || 0;
+      const bTime = Date.parse(stringOrNull(b.start_time) ?? '') || 0;
+      return bTime - aTime;
+    });
+
+    candidatesScanned = filteredMeetings.length;
+    selectedMeeting = filteredMeetings[0] ?? null;
+  }
+
+  if (!selectedMeeting) {
+    return {
+      toolkitSlug,
+      entityId,
+      connected: true,
+      status: 'no_meetings_found',
+      transcriptAvailable: false,
+      query: {
+        meetingId: requestedMeetingId,
+        from,
+        to,
+        topicQuery,
+        pageSize,
+      },
+      account: summarizeZoomUser(currentUser),
+      message: topicQuery
+        ? `No previous meetings matched topic filter "${topicQuery}".`
+        : 'No previous meetings found in the selected time window.',
+      warnings,
+    };
+  }
+
+  const meetingIdForLookup =
+    stringOrNull(selectedMeeting.id) ??
+    stringOrNull(selectedMeeting.meeting_id) ??
+    requestedMeetingId;
+  const meetingUuidForLookup = stringOrNull(selectedMeeting.uuid);
+
+  const lookupAttempts: Array<Record<string, unknown>> = [];
+  let recordingFiles: Record<string, unknown>[] = [];
+  let recordingCount = 0;
+
+  const runRecordingLookup = async (lookupId: string, lookupType: 'meeting_id' | 'meeting_uuid') => {
+    const recordingResult = await executeToolkitToolByName({
+      client,
+      toolRoutes,
+      toolName: ZOOM_TOOL_NAMES.getMeetingRecordings,
+      args: { meetingId: lookupId },
+      entityId,
+    }).catch((error) => {
+      const reason = toErrorMessage(error);
+      lookupAttempts.push({
+        lookupType,
+        lookupId,
+        ok: false,
+        error: reason,
+      });
+      warnings.push(`Recording lookup failed for ${lookupType}=${lookupId}: ${reason}`);
+      return null;
+    });
+
+    if (!recordingResult) return;
+    if (!isExecutionSuccessful(recordingResult)) {
+      const reason = extractExecutionError(recordingResult) ?? 'Unknown Zoom get_meeting_recordings error';
+      lookupAttempts.push({
+        lookupType,
+        lookupId,
+        ok: false,
+        error: reason,
+      });
+      warnings.push(`Recording lookup failed for ${lookupType}=${lookupId}: ${reason}`);
+      return;
+    }
+
+    const data = extractDataRecord(recordingResult);
+    const files = asRecordArray(data?.recording_files);
+    const reportedCount = numberOrNull(data?.recording_count) ?? files.length;
+    recordingFiles = dedupeRecordingFiles(recordingFiles.concat(files));
+    recordingCount = Math.max(recordingCount, reportedCount);
+    lookupAttempts.push({
+      lookupType,
+      lookupId,
+      ok: true,
+      recordingCount: reportedCount,
+      fileCount: files.length,
+    });
+  };
+
+  if (meetingIdForLookup) {
+    await runRecordingLookup(meetingIdForLookup, 'meeting_id');
+  }
+  if (recordingFiles.length === 0 && meetingUuidForLookup && meetingUuidForLookup !== meetingIdForLookup) {
+    await runRecordingLookup(meetingUuidForLookup, 'meeting_uuid');
+  }
+
+  const transcriptFiles = recordingFiles
+    .filter((file) => isTranscriptFile(file))
+    .map((file) => summarizeRecordingFile(file));
+  const summarizedFiles = recordingFiles.map((file) => summarizeRecordingFile(file));
+  const transcriptAvailable = transcriptFiles.length > 0;
+  const recordingAvailable = recordingFiles.length > 0 || recordingCount > 0;
+
+  const status = transcriptAvailable
+    ? 'transcript_available'
+    : (recordingAvailable ? 'recording_available_transcript_pending' : 'recording_not_found');
+
+  const message = transcriptAvailable
+    ? 'Transcript file is available for the selected meeting recording.'
+    : (recordingAvailable
+      ? 'Recording exists but no transcript file is available yet.'
+      : 'No cloud recording files are available for the selected meeting yet.');
+
+  return {
+    toolkitSlug,
+    entityId,
+    connected: true,
+    status,
+    transcriptAvailable,
+    query: {
+      meetingId: requestedMeetingId,
+      from,
+      to,
+      topicQuery,
+      pageSize,
+    },
+    account: summarizeZoomUser(currentUser),
+    meeting: summarizeMeeting(selectedMeeting),
+    candidatesScanned,
+    recording: {
+      recordingAvailable,
+      recordingCount,
+      fileCount: recordingFiles.length,
+      transcriptFileCount: transcriptFiles.length,
+      transcriptFiles,
+      lookupAttempts,
+      files: includeRecordingFiles ? summarizedFiles : undefined,
+    },
+    message,
+    warnings,
+  };
+}
+
+async function executeToolkitToolByName(params: {
+  client: ComposioClient;
+  toolRoutes: ToolRoute[];
+  toolName: string;
+  args: Record<string, unknown>;
+  entityId: string;
+}): Promise<Record<string, unknown>> {
+  const { client, toolRoutes, toolName, args, entityId } = params;
+  const route = toolRoutes.find((candidate) => candidate.toolName === toolName);
+  if (!route) {
+    throw new Error(`Required toolkit tool "${toolName}" is unavailable in this toolkit route.`);
+  }
+
+  return client.executeTool(route.composioToolSlug, args, entityId);
+}
+
+function isExecutionSuccessful(result: Record<string, unknown>): boolean {
+  const successful = result.successful;
+  if (typeof successful === 'boolean') return successful;
+  return result.error === null || result.error === undefined;
+}
+
+function extractDataRecord(result: Record<string, unknown>): Record<string, unknown> | null {
+  const data = asRecord(result.data);
+  if (data) return data;
+  return asRecord(result);
+}
+
+function extractExecutionError(result: Record<string, unknown>): string | null {
+  const error = result.error;
+  if (typeof error === 'string' && error.trim().length > 0) {
+    return error.trim();
+  }
+  if (error !== null && error !== undefined) {
+    return JSON.stringify(error);
+  }
+  const message = result.message;
+  if (typeof message === 'string' && message.trim().length > 0) {
+    return message.trim();
+  }
+  return null;
+}
+
+function summarizeZoomUser(user: Record<string, unknown> | null): Record<string, unknown> | null {
+  if (!user) return null;
+  const fallbackName = [stringOrNull(user.first_name), stringOrNull(user.last_name)]
+    .filter((part): part is string => Boolean(part))
+    .join(' ')
+    .trim();
+  const displayName = stringOrNull(user.display_name) ?? (fallbackName || null);
+  return {
+    id: stringOrNull(user.id),
+    email: stringOrNull(user.email),
+    displayName,
+    accountId: stringOrNull(user.account_id),
+  };
+}
+
+function summarizeMeeting(meeting: Record<string, unknown>): Record<string, unknown> {
+  return {
+    id: stringOrNull(meeting.id) ?? stringOrNull(meeting.meeting_id),
+    uuid: stringOrNull(meeting.uuid),
+    topic: stringOrNull(meeting.topic),
+    startTime: stringOrNull(meeting.start_time),
+    timezone: stringOrNull(meeting.timezone),
+    status: stringOrNull(meeting.status),
+    hostId: stringOrNull(meeting.host_id),
+  };
+}
+
+function summarizeRecordingFile(file: Record<string, unknown>): Record<string, unknown> {
+  return {
+    id: stringOrNull(file.id) ?? stringOrNull(file.recording_id),
+    fileType: stringOrNull(file.file_type),
+    recordingType: stringOrNull(file.recording_type),
+    fileExtension: stringOrNull(file.file_extension),
+    fileSize: numberOrNull(file.file_size),
+    status: stringOrNull(file.status),
+    downloadUrl: stringOrNull(file.download_url),
+    playUrl: stringOrNull(file.play_url),
+  };
+}
+
+function isTranscriptFile(file: Record<string, unknown>): boolean {
+  const fileType = (stringOrNull(file.file_type) ?? '').toUpperCase();
+  const recordingType = (stringOrNull(file.recording_type) ?? '').toLowerCase();
+  const extension = (stringOrNull(file.file_extension) ?? '').toLowerCase();
+  const filename = (stringOrNull(file.file_name) ?? '').toLowerCase();
+
+  return (
+    fileType === 'TRANSCRIPT' ||
+    fileType === 'CC' ||
+    extension === 'vtt' ||
+    recordingType.includes('transcript') ||
+    filename.includes('transcript') ||
+    filename.endsWith('.vtt')
+  );
+}
+
+function dedupeRecordingFiles(files: Record<string, unknown>[]): Record<string, unknown>[] {
+  const byKey = new Map<string, Record<string, unknown>>();
+  for (const file of files) {
+    const key =
+      stringOrNull(file.id) ??
+      stringOrNull(file.recording_id) ??
+      stringOrNull(file.download_url) ??
+      JSON.stringify(file);
+    byKey.set(key, file);
+  }
+  return Array.from(byKey.values());
+}
+
+function formatUtcDate(value: Date): string {
+  return value.toISOString().slice(0, 10);
+}
+
+function normalizeIsoDate(value: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const parsed = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return value;
+}
+
+function asRecordArray(value: unknown): Record<string, unknown>[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => asRecord(entry))
+    .filter((entry): entry is Record<string, unknown> => Boolean(entry));
+}
+
+function numberOrNull(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  return value;
+}
+
+function toErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 function buildToolRoutes(toolDefs: ComposioToolDef[], reservedNames: Set<string>): ToolRoute[] {
@@ -425,6 +900,20 @@ function normalizeArgs(raw: unknown): Record<string, unknown> {
     return {};
   }
   return raw as Record<string, unknown>;
+}
+
+function numberArg(raw: unknown, fallback: number, min: number, max: number): number {
+  if (typeof raw !== 'number' || !Number.isFinite(raw)) {
+    return fallback;
+  }
+  return Math.max(min, Math.min(max, Math.floor(raw)));
+}
+
+function booleanArg(raw: unknown, fallback: boolean): boolean {
+  if (typeof raw !== 'boolean') {
+    return fallback;
+  }
+  return raw;
 }
 
 function resolveEntityId(extra: unknown, request: Request, env: Env): string {
