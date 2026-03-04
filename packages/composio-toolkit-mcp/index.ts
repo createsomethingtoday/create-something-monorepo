@@ -37,6 +37,7 @@ const SERVER_VERSION = '0.1.0';
 const DEFAULT_CACHE_SECONDS = 300;
 const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
 const ZOOM_TRANSCRIPT_STATUS_TOOL = 'zoom_latest_transcript_status';
+const ZOOM_LIST_TRANSCRIPTS_TOOL = 'zoom_list_available_transcripts';
 const DEFAULT_ZOOM_LOOKBACK_DAYS = 7;
 const ZOOM_TOOL_NAMES = {
   getCurrentUser: 'zoom_get_current_user',
@@ -208,6 +209,52 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
         additionalProperties: false,
       },
     });
+    managementTools.push({
+      name: ZOOM_LIST_TRANSCRIPTS_TOOL,
+      description: 'List available Zoom transcript files across previous meetings.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          meetingId: {
+            type: 'string',
+            description: 'Optional meeting ID or UUID to limit listing to one meeting.',
+          },
+          composioUserId: {
+            type: 'string',
+            description: 'Optional Composio user ID override (for example: "dm").',
+          },
+          connectedAccountId: {
+            type: 'string',
+            description: 'Optional Composio connected account ID to force account selection.',
+          },
+          from: {
+            type: 'string',
+            description: 'Optional UTC start date (yyyy-mm-dd) for previous meeting search.',
+          },
+          to: {
+            type: 'string',
+            description: 'Optional UTC end date (yyyy-mm-dd) for previous meeting search.',
+          },
+          topicQuery: {
+            type: 'string',
+            description: 'Optional case-insensitive topic filter.',
+          },
+          pageSize: {
+            type: 'number',
+            description: 'Number of meetings fetched from Zoom (1-100, default 30).',
+          },
+          maxMeetings: {
+            type: 'number',
+            description: 'Maximum meetings to inspect for transcript files (1-100, default 20).',
+          },
+          limit: {
+            type: 'number',
+            description: 'Maximum transcript files returned (1-500, default 100).',
+          },
+        },
+        additionalProperties: false,
+      },
+    });
   }
 
   const managementNames = new Set(managementTools.map((tool) => tool.name));
@@ -349,6 +396,17 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
 
       if (toolName === ZOOM_TRANSCRIPT_STATUS_TOOL && isZoomToolkit) {
         const result = await checkZoomTranscriptAvailability({
+          client,
+          toolRoutes,
+          entityId,
+          args,
+          toolkitSlug: runtime.toolkitSlug,
+        });
+        return emitAndReturn(toJsonResult(result));
+      }
+
+      if (toolName === ZOOM_LIST_TRANSCRIPTS_TOOL && isZoomToolkit) {
+        const result = await listZoomAvailableTranscripts({
           client,
           toolRoutes,
           entityId,
