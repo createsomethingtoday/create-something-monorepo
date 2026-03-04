@@ -260,6 +260,12 @@
 		border-bottom-color: var(--color-border-default);
 	}
 
+	.playground-link:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
+		border-radius: var(--radius-sm);
+	}
+
 	:global(.info-card) {
 		padding: var(--space-md);
 	}

@@ -910,7 +910,7 @@
 
 	.stat-secondary {
 		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
+		color: var(--color-fg-muted);
 		padding: 0.125rem 0.375rem;
 		background: var(--color-bg-subtle);
 		border-radius: var(--radius-sm);
@@ -928,7 +928,7 @@
 	}
 
 	.derived-stat :global(.derived-icon) {
-		color: var(--color-fg-tertiary);
+		color: var(--color-fg-muted);
 	}
 
 	.derived-label {
