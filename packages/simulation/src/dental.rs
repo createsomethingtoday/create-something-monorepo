@@ -458,7 +458,11 @@ fn journey_to_item(rng: &mut Rng, journey: &PatientJourney) -> Option<SimItem> {
             180 + rng.next_range(480) as i64,
         ),
         JourneyStage::PaymentReceived => (
-            format!("{} ${}", payer, amount - rng.next_range(200) as u32),
+            format!(
+                "{} ${}",
+                payer,
+                amount.saturating_sub(rng.next_range(200) as u32)
+            ),
             format!("Posted for {}'s {}.", last, procedure.to_lowercase()),
             "accounting",
             "payment",
