@@ -1,0 +1,32 @@
+{
+  "policy_id": "policy.tenant-tool-exposure.v1",
+  "version": 1,
+  "status": "draft",
+  "routing_defaults": {
+    "tenant": "default",
+    "allow_pending_oauth_approvals": false
+  },
+  "tenant_policy_controls": {
+    "by_server": true,
+    "by_tag": true,
+    "by_tool_prefix": true
+  },
+  "alias_route_requirements": {
+    "ordered_candidates": true,
+    "candidate_status_supported": [
+      "approved",
+      "pending",
+      "blocked"
+    ],
+    "provider_failover_enabled": true
+  },
+  "change_management": {
+    "hub_restart_required_after_inventory_changes": true,
+    "audit_fields": [
+      "tenant_id",
+      "changed_by",
+      "changed_at",
+      "change_reason"
+    ]
+  }
+}
