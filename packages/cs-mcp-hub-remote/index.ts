@@ -2,7 +2,13 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
-import { CallToolRequestSchema, ListToolsRequestSchema, type Tool } from '@modelcontextprotocol/sdk/types.js';
+import {
+  CallToolRequestSchema,
+  ListResourcesRequestSchema,
+  ListToolsRequestSchema,
+  ReadResourceRequestSchema,
+  type Tool,
+} from '@modelcontextprotocol/sdk/types.js';
 import { flush as braintrustFlush, initLogger, type Logger, type Span } from 'braintrust';
 
 import discoveryPacksJson from '../../config/mcp-hub/discovery-packs.json';
@@ -200,6 +206,13 @@ type IntentRouteCandidate = {
     downstreamToolName: string;
     description: string;
   }>;
+};
+
+type HubResourceDefinition = {
+  uri: string;
+  name: string;
+  description: string;
+  mimeType: string;
 };
 
 type InvocationTrace = {
@@ -512,6 +525,51 @@ const MANAGEMENT_TOOLS: Tool[] = [
       properties: {},
       additionalProperties: false,
     },
+  },
+];
+
+const HUB_RESOURCES: HubResourceDefinition[] = [
+  {
+    uri: 'hub://status',
+    name: 'Hub Status',
+    description: 'Runtime status, connected downstream servers, warnings, and proxy tool coverage.',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'hub://registry',
+    name: 'Hub Registry',
+    description: 'Configured server registry and bundle definitions.',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'hub://policy',
+    name: 'Hub Policy',
+    description: 'Active rate-limit and quota policy settings for this hub runtime.',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'hub://connections',
+    name: 'Hub Connections',
+    description: 'Connection status and tool counts per downstream server.',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'hub://proxy-tools',
+    name: 'Visible Proxy Tools',
+    description: 'Proxy tools visible to the calling account/session after discovery + policy filtering.',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'hub://discovery',
+    name: 'Discovery Settings',
+    description: 'Current discovery preferences and available discovery packs for this account.',
+    mimeType: 'application/json',
+  },
+  {
+    uri: 'ui://hub/overview',
+    name: 'Hub Overview',
+    description: 'MCP App overview for the remote hub with key runtime metrics and quick-start guidance.',
+    mimeType: 'text/html',
   },
 ];
 
@@ -1065,6 +1123,10 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
         tools: {
           listChanged: true,
         },
+        resources: {
+          listChanged: false,
+          subscribe: false,
+        },
       },
     },
   );
@@ -1081,6 +1143,80 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
       tools: allTools.slice(boundedOffset, boundedOffset + pageSize),
       nextCursor: nextOffset < allTools.length ? encodeCursorOffset(nextOffset) : undefined,
     };
+  });
+
+  server.setRequestHandler(ListResourcesRequestSchema, async () => ({
+    resources: HUB_RESOURCES,
+  }));
+
+  server.setRequestHandler(ReadResourceRequestSchema, async (request, extra) => {
+    const uri = request.params.uri;
+    const getDiscoveryContext = async () => {
+      const accountContext = await resolveAccountContext(extra, env);
+      const prefs = await getDiscoveryPreferences(accountContext.accountId, runtime, env);
+      const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
+      return {
+        accountContext,
+        prefs,
+        visible,
+      };
+    };
+
+    switch (uri) {
+      case 'hub://status':
+        return toJsonResource(uri, {
+          ...buildStatusPayload(runtime),
+          policy: buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env),
+        });
+      case 'hub://registry':
+        return toJsonResource(uri, buildRegistryPayload(registry));
+      case 'hub://policy':
+        return toJsonResource(uri, buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env));
+      case 'hub://connections':
+        return toJsonResource(uri, {
+          enabledServerNames: runtime.stateResolution.enabledServerNames,
+          connectedServers: runtime.connected.map((server) => ({
+            name: server.name,
+            toolCount: server.tools.length,
+          })),
+          failedServers: runtime.failed,
+          builtAt: new Date(runtime.builtAt).toISOString(),
+        });
+      case 'hub://proxy-tools': {
+        const { prefs, visible } = await getDiscoveryContext();
+        return toJsonResource(uri, {
+          count: visible.toolDefinitions.length,
+          proxyTools: visible.toolDefinitions.map((tool) => tool.name),
+          discovery: prefs,
+        });
+      }
+      case 'hub://discovery': {
+        const { prefs } = await getDiscoveryContext();
+        return toJsonResource(uri, {
+          discovery: prefs,
+          packs: listDiscoveryPacks(runtime).map((pack) => ({
+            id: pack.id,
+            description: pack.description,
+            mode: pack.preferences.mode,
+            activeServers: pack.preferences.activeServers,
+            maxProxyTools: pack.preferences.maxProxyTools,
+          })),
+        });
+      }
+      case 'ui://hub/overview': {
+        const { prefs, visible } = await getDiscoveryContext();
+        return toHtmlResource(uri, buildHubOverviewHtml({
+          runtime,
+          rateLimitPolicy,
+          quotaPolicy,
+          env,
+          prefs,
+          visibleProxyToolCount: visible.toolDefinitions.length,
+        }));
+      }
+      default:
+        throw new Error(`Unknown resource "${uri}"`);
+    }
   });
 
   server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
@@ -3239,11 +3375,98 @@ function toJsonResult(payload: Record<string, unknown>) {
   };
 }
 
+function toJsonResource(uri: string, payload: unknown) {
+  return {
+    contents: [
+      {
+        uri,
+        mimeType: 'application/json',
+        text: JSON.stringify(payload, null, 2),
+      },
+    ],
+  };
+}
+
+function toHtmlResource(uri: string, html: string) {
+  return {
+    contents: [
+      {
+        uri,
+        mimeType: 'text/html',
+        text: html,
+      },
+    ],
+  };
+}
+
 function toErrorResult(message: string) {
   return {
     isError: true,
     content: [{ type: 'text' as const, text: message }],
   };
+}
+
+function buildHubOverviewHtml(params: {
+  runtime: HubRuntime;
+  rateLimitPolicy: RateLimitPolicy;
+  quotaPolicy: QuotaPolicy;
+  env: Env;
+  prefs: DiscoveryPreferences;
+  visibleProxyToolCount: number;
+}): string {
+  const { runtime, rateLimitPolicy, quotaPolicy, env, prefs, visibleProxyToolCount } = params;
+  const policy = buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env);
+  const health = {
+    hub: {
+      name: HUB_NAME,
+      version: HUB_VERSION,
+    },
+    builtAt: new Date(runtime.builtAt).toISOString(),
+    connectedServers: runtime.connected.length,
+    failedServers: runtime.failed.length,
+    totalProxyToolCount: runtime.proxies.toolDefinitions.length,
+    visibleProxyToolCount,
+    discovery: prefs,
+    policy,
+    note: 'Use hub_search_proxy_tools -> hub_describe_proxy_tool -> hub_execute_proxy_tool for brokered execution.',
+  };
+
+  const escaped = escapeHtml(JSON.stringify(health, null, 2));
+  return [
+    '<!doctype html>',
+    '<html lang="en">',
+    '<head>',
+    '  <meta charset="utf-8" />',
+    '  <meta name="viewport" content="width=device-width, initial-scale=1" />',
+    `  <title>${escapeHtml(HUB_NAME)} Overview</title>`,
+    '  <style>',
+    '    :root { color-scheme: dark; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }',
+    '    body { margin: 0; background: #0b0e14; color: #d6deeb; }',
+    '    main { max-width: 980px; margin: 0 auto; padding: 24px; }',
+    '    h1 { margin: 0 0 12px; font-size: 22px; }',
+    '    p { margin: 0 0 16px; color: #9aa4b2; }',
+    '    pre { background: #111826; border: 1px solid #25324a; border-radius: 10px; padding: 16px; overflow: auto; }',
+    '    code { font-size: 12px; line-height: 1.5; }',
+    '  </style>',
+    '</head>',
+    '<body>',
+    '  <main>',
+    `    <h1>${escapeHtml(HUB_NAME)} MCP Overview</h1>`,
+    '    <p>This MCP App snapshot is generated by the remote hub runtime.</p>',
+    `    <pre><code>${escaped}</code></pre>`,
+    '  </main>',
+    '</body>',
+    '</html>',
+  ].join('\n');
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 }
 
 function buildProxyToolName(serverName: string, downstreamToolName: string): string {

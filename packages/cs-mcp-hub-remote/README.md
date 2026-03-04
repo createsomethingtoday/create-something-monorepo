@@ -7,6 +7,21 @@ Remote runtime for the CREATE SOMETHING MCP gateway, exposed as one public endpo
 - `/mcp` — Streamable HTTP MCP endpoint
 - `/health` — JSON health/status
 
+## MCP Resources
+
+This runtime now exposes MCP resources (in addition to tools):
+
+- `hub://status`
+- `hub://registry`
+- `hub://policy`
+- `hub://connections`
+- `hub://proxy-tools`
+- `hub://discovery`
+
+It also exposes one MCP App UI resource:
+
+- `ui://hub/overview`
+
 ## What It Does
 
 - Loads downstream server registry from `config/mcp-hub/registry.json`
