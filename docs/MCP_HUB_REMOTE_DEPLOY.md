@@ -167,6 +167,7 @@ pnpm mcp:hub:fleet:verify
 The verifier checks:
 1. Required secrets, including `HUB_SESSION_RESOLVE_TOKEN`
 2. `/health` policy and `identity_mode=session_required`
-3. Missing `X-MCP-Session-Token` is rejected
-4. MCP protocol (`initialize`, `resources/list`) stays healthy
-5. Session-based routed call returns the expected `entityId/account_id`
+3. Stable identity (`account_id`) across two sessions for same user+tenant
+4. Missing `X-MCP-Session-Token` is rejected
+5. MCP protocol (`initialize`, `resources/list`) stays healthy
+6. Session-based routed call returns the expected `entityId/account_id`

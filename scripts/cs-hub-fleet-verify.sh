@@ -138,39 +138,69 @@ create_fleet_verify_session() {
     return 1
   fi
 
-  local create_url="${identity_base_url%/}/v1/mcp/sessions"
-  local body_file status
-  body_file="$(mktemp)"
-  status="$(
-    curl -sS -o "$body_file" -w "%{http_code}" -X POST "$create_url" \
-      -H "Authorization: Bearer ${identity_access_token}" \
-      -H "Content-Type: application/json" \
-      --data "$(jq -cn --arg tenant "$tenant_id" --arg host "$host" '{
-        tenant_id: $tenant,
-        host: $host,
-        toolkit_profile: ["notion"],
-        tool_mode: "read_write",
-        ttl_seconds: 3600
-      }')"
-  )"
+  create_one_identity_session() {
+    local suffix="$1"
+    local create_url="${identity_base_url%/}/v1/mcp/sessions"
+    local body_file status
+    body_file="$(mktemp)"
+    status="$(
+      curl -sS -o "$body_file" -w "%{http_code}" -X POST "$create_url" \
+        -H "Authorization: Bearer ${identity_access_token}" \
+        -H "Content-Type: application/json" \
+        --data "$(jq -cn --arg tenant "$tenant_id" --arg host "${host}-${suffix}" '{
+          tenant_id: $tenant,
+          host: $host,
+          toolkit_profile: ["notion"],
+          tool_mode: "read_write",
+          ttl_seconds: 3600
+        }')"
+    )"
 
-  if [[ "$status" != "200" ]]; then
-    echo "failed to create MCP session via identity-worker (status=${status})"
-    cat "$body_file"
+    if [[ "$status" != "200" ]]; then
+      echo "failed to create MCP session via identity-worker (status=${status})"
+      cat "$body_file"
+      rm -f "$body_file"
+      return 1
+    fi
+
+    local token account_id session_id
+    token="$(jq -r '.token // empty' "$body_file")"
+    account_id="$(jq -r '.account_id // empty' "$body_file")"
+    session_id="$(jq -r '.session_id // empty' "$body_file")"
     rm -f "$body_file"
+
+    if [[ -z "$token" || -z "$account_id" ]]; then
+      echo "identity-worker create session response missing token/account_id"
+      return 1
+    fi
+
+    echo "${token}|${account_id}|${session_id}"
+  }
+
+  local first second
+  if ! first="$(create_one_identity_session primary)"; then
+    return 1
+  fi
+  if ! second="$(create_one_identity_session secondary)"; then
     return 1
   fi
 
-  FLEET_VERIFY_SESSION_TOKEN="$(jq -r '.token // empty' "$body_file")"
-  FLEET_VERIFY_ACCOUNT_ID="$(jq -r '.account_id // empty' "$body_file")"
-  rm -f "$body_file"
+  local first_token first_account first_session
+  local second_token second_account second_session
+  IFS='|' read -r first_token first_account first_session <<< "$first"
+  IFS='|' read -r second_token second_account second_session <<< "$second"
 
-  if [[ -z "$FLEET_VERIFY_SESSION_TOKEN" ]]; then
-    echo "identity-worker create session response missing token"
+  if [[ "$first_account" != "$second_account" ]]; then
+    echo "stable-account check failed: account_id changed for same user+tenant"
+    echo "first_account=${first_account}"
+    echo "second_account=${second_account}"
     return 1
   fi
 
-  echo "session_token_source=identity_worker account_id=${FLEET_VERIFY_ACCOUNT_ID:-unknown}"
+  FLEET_VERIFY_SESSION_TOKEN="$first_token"
+  FLEET_VERIFY_ACCOUNT_ID="$first_account"
+
+  echo "session_token_source=identity_worker account_id=${FLEET_VERIFY_ACCOUNT_ID} stability_check=ok first_session_id=${first_session:-unknown} second_session_id=${second_session:-unknown}"
   return 0
 }
 
