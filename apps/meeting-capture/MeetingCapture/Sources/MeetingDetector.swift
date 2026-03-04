@@ -9,7 +9,17 @@ import AppKit
 struct DetectedMeeting {
     let id: String
     let appName: String
+    let meetingTitle: String?
     let startTime: Date
+
+    var displayName: String {
+        meetingTitle ?? appName
+    }
+}
+
+private struct ActiveMeetingContext {
+    let appName: String
+    let meetingTitle: String?
 }
 
 final class MeetingDetectionStateMachine {
@@ -131,15 +141,16 @@ class MeetingDetector {
     }
 
     private func checkForMeetings() {
-        let detectedAppName = detectActiveMeetingAppName()
-        let transition = stateMachine.observe(isMeetingDetected: detectedAppName != nil)
+        let detectedMeeting = detectActiveMeeting()
+        let transition = stateMachine.observe(isMeetingDetected: detectedMeeting != nil)
 
         switch transition {
         case .started:
-            guard let appName = detectedAppName else { return }
+            guard let detectedMeeting else { return }
             let meeting = DetectedMeeting(
                 id: UUID().uuidString,
-                appName: appName,
+                appName: detectedMeeting.appName,
+                meetingTitle: detectedMeeting.meetingTitle,
                 startTime: Date()
             )
             activeMeeting = meeting
@@ -156,7 +167,7 @@ class MeetingDetector {
         }
     }
 
-    private func detectActiveMeetingAppName() -> String? {
+    private func detectActiveMeeting() -> ActiveMeetingContext? {
         let runningApps = NSWorkspace.shared.runningApplications
 
         for app in runningApps {
@@ -164,13 +175,22 @@ class MeetingDetector {
 
             if let appName = meetingApps[bundleId] {
                 if bundleId == "us.zoom.xos" {
-                    if isZoomInMeeting() { return appName }
+                    if isZoomInMeeting() {
+                        return ActiveMeetingContext(
+                            appName: appName,
+                            meetingTitle: activeZoomMeetingTitle()
+                        )
+                    }
                 } else if bundleId.contains("microsoft.teams") {
-                    if isTeamsInMeeting() { return appName }
+                    if let title = activeTeamsMeetingTitle() {
+                        return ActiveMeetingContext(appName: appName, meetingTitle: title)
+                    }
                 } else if bundleId == "com.google.Chrome" {
-                    if isChromeInMeet() { return "Google Meet" }
+                    if let title = activeGoogleMeetTitle() {
+                        return ActiveMeetingContext(appName: "Google Meet", meetingTitle: title)
+                    }
                 } else if app.isActive {
-                    return appName
+                    return ActiveMeetingContext(appName: appName, meetingTitle: nil)
                 }
             }
         }
@@ -215,45 +235,130 @@ class MeetingDetector {
     }
 
     private func isTeamsInMeeting() -> Bool {
-        // Check for Teams call window
+        activeTeamsMeetingTitle() != nil
+    }
+
+    private func activeTeamsMeetingTitle() -> String? {
+        // Check for Teams call window and return best title candidate.
         let script = """
         tell application "System Events"
             if exists (process "Microsoft Teams") then
                 tell process "Microsoft Teams"
                     set windowNames to name of every window
                     repeat with wName in windowNames
-                        if wName contains "Meeting" or wName contains "Call" then
-                            return true
+                        set normalized to wName as text
+                        if normalized contains "Meeting" or normalized contains "Call" then
+                            return normalized
                         end if
                     end repeat
+                    if (count of windowNames) > 0 then
+                        return item 1 of windowNames as text
+                    end if
                 end tell
             end if
-            return false
+            return ""
         end tell
         """
 
-        return runAppleScript(script) == "true"
+        let rawTitle = runAppleScript(script)
+        return sanitizeMeetingTitle(rawTitle, appName: "Microsoft Teams")
     }
 
     private func isChromeInMeet() -> Bool {
-        // Check Chrome window titles for Google Meet
+        activeGoogleMeetTitle() != nil
+    }
+
+    private func activeGoogleMeetTitle() -> String? {
+        // Check Chrome window titles for Google Meet and return best title candidate.
         let script = """
         tell application "System Events"
             if exists (process "Google Chrome") then
                 tell process "Google Chrome"
                     set windowNames to name of every window
                     repeat with wName in windowNames
-                        if wName contains "Meet -" or wName contains "Google Meet" then
-                            return true
+                        set normalized to wName as text
+                        if normalized contains "Meet -" or normalized contains "Google Meet" then
+                            return normalized
                         end if
                     end repeat
                 end tell
             end if
-            return false
+            return ""
         end tell
         """
 
-        return runAppleScript(script) == "true"
+        let rawTitle = runAppleScript(script)
+        return sanitizeMeetingTitle(rawTitle, appName: "Google Meet")
+    }
+
+    private func activeZoomMeetingTitle() -> String? {
+        // Pull active Zoom window name when available.
+        let script = """
+        tell application "System Events"
+            if exists (process "zoom.us") then
+                tell process "zoom.us"
+                    set windowNames to name of every window
+                    repeat with wName in windowNames
+                        set normalized to wName as text
+                        if normalized is not "" then
+                            return normalized
+                        end if
+                    end repeat
+                end tell
+            end if
+            return ""
+        end tell
+        """
+
+        let rawTitle = runAppleScript(script)
+        return sanitizeMeetingTitle(rawTitle, appName: "Zoom")
+    }
+
+    private func sanitizeMeetingTitle(_ rawTitle: String?, appName: String) -> String? {
+        guard var title = rawTitle?.trimmingCharacters(in: .whitespacesAndNewlines), !title.isEmpty else {
+            return nil
+        }
+
+        let suffixes = [
+            " - Google Chrome",
+            " - Google Meet",
+            " | Microsoft Teams",
+            " - Microsoft Teams",
+            " - Zoom",
+            " - Zoom Workplace",
+        ]
+
+        for suffix in suffixes where title.hasSuffix(suffix) {
+            title = String(title.dropLast(suffix.count)).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
+        if title.isEmpty {
+            return nil
+        }
+
+        let normalized = title.lowercased()
+        let genericTitles: Set<String> = [
+            appName.lowercased(),
+            "zoom",
+            "zoom meeting",
+            "zoom workplace",
+            "google meet",
+            "meet",
+            "microsoft teams",
+            "webex",
+            "facetime",
+            "slack huddle",
+            "meeting controls",
+            "manual recording",
+            "meeting",
+            "call",
+        ]
+
+        if genericTitles.contains(normalized) {
+            return nil
+        }
+
+        return title
     }
 
     private func runAppleScript(_ source: String) -> String? {

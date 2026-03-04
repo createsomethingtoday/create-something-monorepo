@@ -87,6 +87,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         let context = RecordingContext(
             meetingId: meeting.id,
             appName: meeting.appName,
+            meetingTitle: meeting.meetingTitle,
             startTime: meeting.startTime,
             origin: .automatic
         )
@@ -106,6 +107,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         let context = RecordingContext(
             meetingId: UUID().uuidString,
             appName: "Manual Recording",
+            meetingTitle: nil,
             startTime: Date(),
             origin: .manual
         )
@@ -135,6 +137,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                 self.currentMeeting = DetectedMeeting(
                     id: context.meetingId,
                     appName: context.appName,
+                    meetingTitle: context.meetingTitle,
                     startTime: context.startTime
                 )
                 self.isRecording = true
@@ -142,7 +145,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
                 self.showNotification(
                     title: "Recording Started",
-                    body: "Capturing audio from \(context.appName)"
+                    body: "Capturing audio from \(context.meetingTitle ?? context.appName)"
                 )
             }
         }

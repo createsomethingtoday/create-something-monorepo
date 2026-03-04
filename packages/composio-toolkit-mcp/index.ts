@@ -391,8 +391,9 @@ async function checkZoomTranscriptAvailability(params: {
     warnings.push(`Connection check failed: ${toErrorMessage(error)}`);
     return false;
   });
+  const bypassConnectionGate = Boolean(connectedAccountId && connectedAccountId.trim().length > 0);
 
-  if (!connected) {
+  if (!connected && !bypassConnectionGate) {
     return {
       toolkitSlug,
       entityId,
@@ -405,6 +406,12 @@ async function checkZoomTranscriptAvailability(params: {
         'Zoom is not connected for this entity. Call get_connect_link and authenticate the Zoom account you want to query.',
       warnings,
     };
+  }
+  if (!connected && bypassConnectionGate) {
+    warnings.push(
+      `No active "${toolkitSlug}" connection found for composioUserId="${composioUserId}". ` +
+      `Proceeding with connectedAccountId override "${connectedAccountId}".`,
+    );
   }
 
   const requestedMeetingId = stringOrNull(args.meetingId);
