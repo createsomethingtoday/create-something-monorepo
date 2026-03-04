@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { Header, Button, BackNavigation } from '$lib/components';
+	import { trackEvent } from '$lib/utils/analytics';
 	import MarketplaceInsights from '$lib/components/MarketplaceInsights.svelte';
 	import { AlertCircle } from 'lucide-svelte';
 	import type { PageData } from './$types';
@@ -160,8 +162,19 @@
 				...leaderboardData.summary,
 				totalMarketplaceSales: categoriesData.summary?.totalSales ?? leaderboardData.summary.totalMarketplaceSales
 			};
+
+			trackEvent('marketplace_data_loaded', {
+				leaderboard_count: leaderboardData.leaderboard.length,
+				user_template_count: leaderboardData.userTemplates.length,
+				category_rows: categoriesData.categories.length,
+				total_sales_30d: summary.totalMarketplaceSales
+			});
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load data';
+
+			trackEvent('marketplace_data_load_failed', {
+				error_message: error
+			});
 		} finally {
 			isLoading = false;
 		}
@@ -171,6 +184,12 @@
 		await fetch('/api/auth/logout', { method: 'POST' });
 		window.location.href = '/login';
 	}
+
+	onMount(() => {
+		trackEvent('marketplace_opened', {
+			has_user: Boolean(data.user?.email)
+		});
+	});
 
 </script>
 
