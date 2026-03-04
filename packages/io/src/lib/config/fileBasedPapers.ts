@@ -71,6 +71,43 @@ export const fileBasedPapers: FileBasedPaper[] = [
       ╰───────────────────────────────────────────╯
            No claim without evidence.
 `
+	},
+	{
+		id: 'paper-composio-three-tier-delivery',
+		slug: 'composio-three-tier-delivery',
+		title: 'Composio in the MCP Delivery System',
+		description: 'A decision-grade analysis of why Composio is included for commodity connectivity, how the wrap pattern protects brand and margin, and how delivery remains aligned to Database, Automation, and Judgment control boundaries.',
+		excerpt_short: 'Composio accelerates connectivity; CREATE SOMETHING retains the outcome layer',
+		excerpt_long: 'This paper formalizes the Composio inclusion policy for CREATE SOMETHING: where it fits, where it does not, and how it aligns with the MCP-first thesis and Three-Tier Framework. It maps bridge components to control models, defines red lines and graduation criteria, and records current governance status: 29/29 technical checks on 2026-02-10, conditional adopt decision on 2026-02-21, pilot closure pending.',
+		category: 'Research',
+		tags: [
+			'Composio',
+			'MCP',
+			'Three-Tier Framework',
+			'Wrap Pattern',
+			'Agent Outcome Stack',
+			'Policy as Artifact'
+		],
+		created_at: '2026-03-04T00:00:00Z',
+		updated_at: '2026-03-04T00:00:00Z',
+		reading_time_minutes: 22,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'mcp-first-thesis',
+			'three-tier-framework',
+			'rams-principle-2',
+			'subtractive-triad'
+		],
+		route: '/papers/composio-three-tier-delivery',
+		ascii_art: `
+        ╭───────────────────────────────────────╮
+       ╱   Client sees CREATE SOMETHING MCP      ╲
+      │   Composio inside  →  Commodity CRUD     │
+      │   Margin stays in policy + outcomes      │
+      ╰───────────────────────────────────────────╯
+           Creation over consumption.
+`
 	}
 ];
 
