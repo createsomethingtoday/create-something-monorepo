@@ -1,0 +1,30 @@
+{
+  "policy_id": "policy.global-access-kill-switch.v1",
+  "version": 1,
+  "status": "draft",
+  "control": {
+    "type": "env_var",
+    "name": "MCP_TOOL_ACCESS_MODE",
+    "allowed_values": [
+      "normal",
+      "read_only",
+      "off"
+    ]
+  },
+  "mode_guidance": {
+    "normal": "Standard operations.",
+    "read_only": "Containment with read visibility preserved.",
+    "off": "Emergency full stop."
+  },
+  "incident_sla": {
+    "ack_minutes": 15,
+    "containment_minutes": 30,
+    "recovery_review_required": true
+  },
+  "required_change_record_fields": [
+    "changed_by",
+    "changed_at",
+    "reason",
+    "incident_id"
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "policy_id": "policy.engine-rollout-gates.v1",
+  "version": 1,
+  "status": "draft",
+  "default_rollout": {
+    "mode": "legacy_enforce",
+    "canary_percent": 0,
+    "mismatch_threshold": 0.005,
+    "fallback_rate_threshold": 0.01
+  },
+  "promotion_sequence": [
+    {
+      "mode": "shadow",
+      "canary_percent": 10
+    },
+    {
+      "mode": "shadow",
+      "canary_percent": 25
+    },
+    {
+      "mode": "shadow",
+      "canary_percent": 50
+    },
+    {
+      "mode": "shadow",
+      "canary_percent": 100
+    },
+    {
+      "mode": "polar_enforce",
+      "canary_percent": 100
+    }
+  ],
+  "gate_profiles": {
+    "strict": {
+      "mismatch_threshold": 0.005,
+      "fallback_rate_threshold": 0.01
+    },
+    "warmup": {
+      "mismatch_threshold": 0.5,
+      "fallback_rate_threshold": 0.5
+    }
+  },
+  "auto_rollback": {
+    "enabled": true,
+    "rollback_to_mode": "legacy_enforce",
+    "rollback_canary_percent": 0,
+    "updated_by": "system:auto-rollback"
+  }
+}
