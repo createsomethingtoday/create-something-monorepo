@@ -458,11 +458,13 @@ def create_paper_agent(
         output_dir = monorepo / "packages/io/src/routes/papers" / slug
         route_path = f"/papers/{slug}"
 
+    topic_hint = title.split()[0].lower() if title.split() else "loom"
+
     # Build task prompt
     task = f'''
 Generate a CREATE SOMETHING {content_type} from this Loom task.
 
-## Issue Details
+## Task Details
 - ID: {config.issue_id}
 - Title: {title}
 - Description: {description}
@@ -474,9 +476,9 @@ Generate a CREATE SOMETHING {content_type} from this Loom task.
 
 ### Step 1: Search with bash tool (REQUIRED)
 Call the bash tool with these commands:
-- grep -ri "{title.split()[0].lower()}" .claude/rules/ --include="*.md" | head -30
+- grep -ri "{topic_hint}" .claude/rules/ --include="*.md" | head -30
 - ls -la .claude/rules/
-- grep -ri "{title.split()[0].lower()}" packages/ --include="*.ts" --include="*.py" | head -20
+- grep -ri "{topic_hint}" packages/ --include="*.ts" --include="*.py" | head -20
 - grep -ri "three-tier\\|mcp\\|loom" docs/ --include="*.md" | head -20
 
 ### Step 2: Read files with file_read tool (REQUIRED)
@@ -903,7 +905,7 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 2:
-        print("Usage: python -m agents.paper_agent <issue_id> [--type paper|experiment] [--model sonnet|opus|haiku]")
+        print("Usage: python -m agents.paper_agent <task_id> [--type paper|experiment] [--model sonnet|opus|haiku]")
         sys.exit(1)
 
     issue_id = sys.argv[1]
@@ -928,7 +930,7 @@ if __name__ == "__main__":
             i += 1
 
     async def main():
-        print(f"Generating from issue {issue_id}...")
+        print(f"Generating from Loom task {issue_id}...")
         result = await generate_from_issue(
             issue_id,
             content_type=content_type,

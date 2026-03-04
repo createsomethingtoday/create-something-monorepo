@@ -58,9 +58,9 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --config "$TEAM_CONFIG" \
       --name "$worker" \
       --var "HUB_INSTANCE_ID:${worker}" \
-      --var "HUB_ENABLED_BUNDLES:" \
+      --var "HUB_ENABLED_BUNDLES:[]" \
       --var "HUB_ENABLED_SERVERS:${SHARED_AUTH_SERVERS_CSV}" \
-      --var "HUB_DISABLED_SERVERS:" \
+      --var "HUB_DISABLED_SERVERS:[]" \
       --var "HUB_DISCOVERY_MODE:compact" \
       --var "HUB_DISCOVERY_SHARED_PACK:shared-auth-core"
   fi

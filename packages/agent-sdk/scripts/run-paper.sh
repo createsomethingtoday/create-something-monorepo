@@ -84,9 +84,7 @@ echo ""
 export ISSUE_ID DRY_RUN FORCE_MODEL MONOREPO_DIR
 python3 << 'PYTHON_SCRIPT'
 import asyncio
-import json
 import os
-import subprocess
 import sys
 from pathlib import Path
 
@@ -97,25 +95,15 @@ FORCE_MODEL = os.environ.get("FORCE_MODEL") or None
 MONOREPO = Path(os.environ.get("MONOREPO_DIR", "."))
 
 async def main():
-    """Generate paper or experiment from Beads issue."""
+    """Generate paper or experiment from Loom task."""
 
-    # 1. Read the Beads issue
-    print(f"📋 Reading Beads issue {ISSUE_ID}...")
-    result = subprocess.run(
-        ["bd", "--sandbox", "show", ISSUE_ID, "--json", "--allow-stale"],
-        capture_output=True, text=True, cwd=MONOREPO
-    )
+    # 1. Read Loom task (remote MCP first, lm CLI fallback)
+    print(f"📋 Reading Loom task {ISSUE_ID}...")
+    from agents.paper_agent import detect_content_type, generate_slug, get_issue_details
 
-    if result.returncode != 0:
-        print(f"❌ Failed to read issue: {result.stderr}")
-        return 1
-
-    try:
-        issues = json.loads(result.stdout)
-        # bd show returns a list, get the first (and only) issue
-        issue = issues[0] if isinstance(issues, list) else issues
-    except (json.JSONDecodeError, IndexError) as e:
-        print(f"❌ Failed to parse issue JSON: {result.stdout}")
+    issue = get_issue_details(ISSUE_ID, MONOREPO)
+    if not issue:
+        print("❌ Failed to read task from Loom Remote MCP or local lm CLI.")
         return 1
 
     title = issue.get("title", "")
@@ -126,25 +114,10 @@ async def main():
     print(f"   Labels: {', '.join(labels)}")
 
     # 2. Determine content type from labels/title
-    content_type = "paper"  # default
-    if "experiment" in labels or "experiment" in title.lower():
-        content_type = "experiment"
-    elif "paper" in labels or "paper" in title.lower():
-        content_type = "paper"
+    content_type = detect_content_type(title, labels)
 
     # 3. Generate slug from title
-    slug = title.lower()
-    # Remove common prefixes
-    for prefix in ["paper:", "experiment:", "create", "add"]:
-        slug = slug.replace(prefix, "")
-    # Clean up
-    slug = slug.strip()
-    slug = "-".join(slug.split())[:50]  # Max 50 chars
-    slug = "".join(c if c.isalnum() or c == "-" else "-" for c in slug)
-    slug = "-".join(filter(None, slug.split("-")))  # Remove double dashes
-
-    if not slug:
-        slug = ISSUE_ID.replace("csm-", "")
+    slug = generate_slug(title, ISSUE_ID)
 
     print(f"   Type: {content_type}")
     print(f"   Slug: {slug}")
@@ -226,13 +199,12 @@ Each section follows this narrative pattern:
 - "Many files removed" → "155 scripts → 13 active (92% reduction)"
 
 **AVOID sparse sections like:**
-"Beads provides several patterns. Here are examples."
+"Loom provides several patterns. Here are examples."
 
 **WRITE substantive sections like:**
 "When Claude Code sessions end—whether from context limits, crashes, or
 closing the terminal—work disappears. This is the fundamental challenge.
-We discovered that Beads stores issues in .beads/issues.jsonl (line 42),
-committed to Git. This means work survives session interruption..."
+Loom checkpoints and resume briefs provide deterministic continuity..."
 
 ### 4. Visual Elements (MINIMUM 3)
 Include at least 3 of: data tables, comparison cards (success/warning), quote boxes, info card grids, code blocks.
@@ -276,9 +248,9 @@ Links to endpoints and related experiments
 '''
 
     task = f'''
-Generate a CREATE SOMETHING {content_type} from this Beads issue.
+Generate a CREATE SOMETHING {content_type} from this Loom task.
 
-## Issue Details
+## Task Details
 - ID: {ISSUE_ID}
 - Title: {title}
 - Description: {description}
@@ -291,11 +263,16 @@ Generate a CREATE SOMETHING {content_type} from this Beads issue.
 Call the bash tool to search the codebase:
 - Search .claude/rules/ directory for documentation
 - Search packages/ for implementations
+- Search docs/ for strategy/framework references (MCP-first + Three-Tier)
 - Run grep commands to find relevant files
 
 ### Step 2: Read files with file_read tool (REQUIRED)
 After searching, read the files you found:
-- Read .claude/rules/*.md files for patterns
+- Read .claude/rules/paper-content-requirements.md
+- Read .claude/rules/voice-canon.md
+- Read .claude/rules/harness-patterns.md
+- Read docs/MCP_FIRST_THESIS.md
+- Read docs/THREE_TIER_FRAMEWORK.md
 - Read CLAUDE.md for architecture
 - Read actual source files
 
@@ -325,8 +302,9 @@ Every claim must cite a file you read.
 
 3. {"Create +page.server.ts for live data fetching" if content_type == "experiment" else "No server file needed for static paper"}
 
-4. After creating files, close the Beads issue:
-   bd close {ISSUE_ID} --no-db
+4. After creating files, mark the Loom task done:
+   - Preferred (Remote MCP): tool call `loom_complete` with task_id `{ISSUE_ID}` and evidence `created {route_path}`
+   - Fallback (local CLI): lm done {ISSUE_ID} --evidence "created {route_path}"
 
 ## Canon Token Reference (USE THESE EXACT NAMES)
 
@@ -416,7 +394,7 @@ Generate complete, production-ready content. No placeholders.
             task=task,
             model=model,
             max_tokens=8192,
-            system_prompt="You are a CREATE SOMETHING research agent. Use bash and file_read tools to examine the codebase before writing. Generate Canon-compliant Svelte papers grounded in actual implementation details.",
+            system_prompt="You are a CREATE SOMETHING research agent. Use bash and file_read tools to examine the codebase before writing. Enforce voice-canon principles, align with the Three-Tier Framework, and generate Canon-compliant Svelte output grounded in verified repository evidence.",
         )
 
         result = await provider.execute(provider_config)
@@ -448,7 +426,8 @@ Generate complete, production-ready content. No placeholders.
                 "css-canon",
                 "voice-canon",
                 "sveltekit-conventions",
-                "beads-patterns",
+                "paper-content-requirements",
+                "harness-patterns",
             ],
             max_turns=40,
         )

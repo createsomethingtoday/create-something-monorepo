@@ -20,6 +20,26 @@ REQUIRED_SECRETS=(
   "BRAINTRUST_PROJECT_ID"
 )
 
+SHARED_AUTH_SERVERS=(
+  "composio-toolkit-dropbox"
+  "composio-toolkit-gmail"
+  "composio-toolkit-youtube"
+  "composio-toolkit-googlesheets"
+  "composio-toolkit-googledrive"
+  "composio-toolkit-zoom"
+  "composio-toolkit-slack"
+  "composio-toolkit-quickbooks"
+  "composio-toolkit-linkedin"
+  "composio-toolkit-notion"
+)
+
+join_by_comma() {
+  local IFS=','
+  echo "$*"
+}
+
+SHARED_AUTH_SERVERS_CSV="$(join_by_comma "${SHARED_AUTH_SERVERS[@]}")"
+
 health_url_for_worker() {
   case "$1" in
     "cs-hub-lainy") echo "https://lainy.mcp.createsomething.agency/health" ;;
@@ -68,6 +88,33 @@ for worker in "${WORKERS[@]}"; do
     echo "health check failed for ${worker}"
     failures=1
   fi
+
+  if [[ "$worker" == "cs-hub-lainy" || "$worker" == "cs-hub-danny" || "$worker" == "cs-hub-august" || "$worker" == "cs-hub-filip" || "$worker" == "cs-hub-leah" ]]; then
+    enabled_sorted_csv="$(
+      echo "$health_json" | jq -r '.enabled_servers // [] | sort | join(",")'
+    )"
+    expected_sorted_csv="$(
+      printf '%s\n' "$SHARED_AUTH_SERVERS_CSV" | tr ',' '\n' | sort | paste -sd',' -
+    )"
+    if [[ "$enabled_sorted_csv" != "$expected_sorted_csv" ]]; then
+      echo "enabled server policy mismatch for ${worker}"
+      echo "expected=${expected_sorted_csv}"
+      echo "actual=${enabled_sorted_csv}"
+      failures=1
+    else
+      echo "enabled_server_policy=shared_auth_core"
+    fi
+  fi
+
+  if [[ "$worker" == "cs-hub-mj" ]]; then
+    if ! echo "$health_json" | jq -e '.enabled_servers // [] | index("outerfields-pcn")' >/dev/null; then
+      echo "expected cs-hub-mj to include broader access (missing outerfields-pcn)"
+      failures=1
+    else
+      echo "enabled_server_policy=mj_broader"
+    fi
+  fi
+
   echo
 done
 
