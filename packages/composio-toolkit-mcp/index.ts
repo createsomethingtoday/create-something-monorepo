@@ -437,7 +437,8 @@ async function checkZoomTranscriptAvailability(params: {
     toolRoutes,
     toolName: ZOOM_TOOL_NAMES.getCurrentUser,
     args: {},
-    entityId,
+    entityId: composioUserId,
+    connectedAccountId,
   }).catch((error) => {
     warnings.push(`Could not fetch Zoom user profile: ${toErrorMessage(error)}`);
     return null;
@@ -462,7 +463,8 @@ async function checkZoomTranscriptAvailability(params: {
         to,
         page_size: pageSize,
       },
-      entityId,
+      entityId: composioUserId,
+      connectedAccountId,
     }).catch((error) => {
       warnings.push(`Failed to list previous Zoom meetings: ${toErrorMessage(error)}`);
       return null;
@@ -472,6 +474,8 @@ async function checkZoomTranscriptAvailability(params: {
       return {
         toolkitSlug,
         entityId,
+        composioUserId,
+        connectedAccountId,
         connected: true,
         status: 'meeting_lookup_failed',
         transcriptAvailable: false,
@@ -493,6 +497,8 @@ async function checkZoomTranscriptAvailability(params: {
       return {
         toolkitSlug,
         entityId,
+        composioUserId,
+        connectedAccountId,
         connected: true,
         status: 'meeting_lookup_failed',
         transcriptAvailable: false,
@@ -531,6 +537,8 @@ async function checkZoomTranscriptAvailability(params: {
     return {
       toolkitSlug,
       entityId,
+      composioUserId,
+      connectedAccountId,
       connected: true,
       status: 'no_meetings_found',
       transcriptAvailable: false,
@@ -565,7 +573,8 @@ async function checkZoomTranscriptAvailability(params: {
       toolRoutes,
       toolName: ZOOM_TOOL_NAMES.getMeetingRecordings,
       args: { meetingId: lookupId },
-      entityId,
+      entityId: composioUserId,
+      connectedAccountId,
     }).catch((error) => {
       const reason = toErrorMessage(error);
       lookupAttempts.push({
@@ -632,6 +641,8 @@ async function checkZoomTranscriptAvailability(params: {
   return {
     toolkitSlug,
     entityId,
+    composioUserId,
+    connectedAccountId,
     connected: true,
     status,
     transcriptAvailable,
