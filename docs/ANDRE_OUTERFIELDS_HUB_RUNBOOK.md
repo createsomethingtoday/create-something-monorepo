@@ -34,10 +34,10 @@ pnpm exec wrangler deploy \
   --domain andre-outerfields.mcp.createsomething.agency \
   --var HUB_ACCOUNT_ID:acct_andre_outerfields \
   --var HUB_ENABLED_BUNDLES:agency,core \
-  --var HUB_ENABLED_SERVERS:outerfields-pcn,composio-toolkit-dropbox,composio-toolkit-gmail,composio-toolkit-googledrive,composio-toolkit-googlesheets,composio-toolkit-linkedin,composio-toolkit-quickbooks,composio-toolkit-slack,composio-toolkit-youtube,composio-toolkit-zoom \
+  --var HUB_ENABLED_SERVERS:outerfields-pcn,composio-toolkit-clickup,composio-toolkit-dropbox,composio-toolkit-gmail,composio-toolkit-googledrive,composio-toolkit-googlesheets,composio-toolkit-linkedin,composio-toolkit-quickbooks,composio-toolkit-slack,composio-toolkit-youtube,composio-toolkit-zoom \
   --var HUB_DISCOVERY_MODE:compact \
   --var HUB_DISCOVERY_SHARED_PACK:shared-auth-core \
-  --var HUB_DISCOVERY_DEFAULT_SERVERS:outerfields-pcn,create-something,three-tier-framework,playbook,composio-toolkit-dropbox,composio-toolkit-gmail,composio-toolkit-googledrive,composio-toolkit-googlesheets,composio-toolkit-linkedin,composio-toolkit-quickbooks,composio-toolkit-slack,composio-toolkit-youtube,composio-toolkit-zoom \
+  --var HUB_DISCOVERY_DEFAULT_SERVERS:outerfields-pcn,create-something,three-tier-framework,playbook,composio-toolkit-clickup,composio-toolkit-dropbox,composio-toolkit-gmail,composio-toolkit-googledrive,composio-toolkit-googlesheets,composio-toolkit-linkedin,composio-toolkit-quickbooks,composio-toolkit-slack,composio-toolkit-youtube,composio-toolkit-zoom \
   --var BRAINTRUST_ENABLED:true \
   --keep-vars
 ```
@@ -93,6 +93,7 @@ curl -sS -X POST https://andre-outerfields.mcp.createsomething.agency/mcp \
         "disableBundles":["ops"],
         "enableServers":[
           "outerfields-pcn",
+          "composio-toolkit-clickup",
           "composio-toolkit-dropbox",
           "composio-toolkit-gmail",
           "composio-toolkit-googledrive",
@@ -133,7 +134,7 @@ Expected from `/health`:
   - `three-tier-framework`
   - `playbook`
   - `composio-toolkit-notion` (required global server)
-  - shared-auth-core toolkits (`dropbox`, `gmail`, `googledrive`, `googlesheets`, `linkedin`, `quickbooks`, `slack`, `youtube`, `zoom`)
+  - shared-auth-core + ClickUp (`clickup`, `dropbox`, `gmail`, `googledrive`, `googlesheets`, `linkedin`, `quickbooks`, `slack`, `youtube`, `zoom`)
 
 Validate MCP control plane and discovery:
 

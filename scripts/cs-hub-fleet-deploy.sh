@@ -32,6 +32,10 @@ SHARED_AUTH_SERVERS=(
   "composio-toolkit-linkedin"
   "composio-toolkit-notion"
 )
+OUTERFIELDS_CLICKUP_SERVERS=(
+  "${SHARED_AUTH_SERVERS[@]}"
+  "composio-toolkit-clickup"
+)
 
 join_by_comma() {
   local IFS=','
@@ -39,6 +43,7 @@ join_by_comma() {
 }
 
 SHARED_AUTH_SERVERS_CSV="$(join_by_comma "${SHARED_AUTH_SERVERS[@]}")"
+OUTERFIELDS_CLICKUP_SERVERS_CSV="$(join_by_comma "${OUTERFIELDS_CLICKUP_SERVERS[@]}")"
 MJ_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},meetings"
 SESSION_RESOLVE_URL="${HUB_SESSION_RESOLVE_URL:-https://id.createsomething.space/v1/mcp/sessions/resolve}"
 SESSION_TOKEN_FOR_NORMALIZE="${MCP_SESSION_TOKEN:-}"
@@ -150,6 +155,7 @@ resolve_deploy_worker_name() {
 
 target_server_csv_for_worker() {
   case "$1" in
+    "cs-hub-aaron-outerfields"|"cs-hub-andre-outerfields") echo "$OUTERFIELDS_CLICKUP_SERVERS_CSV" ;;
     "cs-hub-mj") echo "$MJ_SERVERS_CSV" ;;
     *) echo "$SHARED_AUTH_SERVERS_CSV" ;;
   esac
