@@ -553,6 +553,9 @@ impl FormulaRegistry {
         registry.register(policy::cs_component_formula());
         registry.register(policy::cs_refactor_formula());
         registry.register(policy::cs_worker_formula());
+        registry.register(policy::cs_fleet_deploy_formula());
+        registry.register(policy::cs_fleet_verify_formula());
+        registry.register(policy::cs_mcp_gate_formula());
         
         registry
     }
@@ -654,5 +657,15 @@ checkpoint = true
         assert!(registry.get("feature").is_some());
         assert!(registry.get("bug-fix").is_some());
         assert!(registry.get("refactor").is_some());
+    }
+
+    #[test]
+    fn test_create_something_formulas() {
+        let registry = FormulaRegistry::create_something();
+        assert!(registry.get("cs-feature").is_some());
+        assert!(registry.get("cs-worker").is_some());
+        assert!(registry.get("fleet-deploy").is_some());
+        assert!(registry.get("fleet-verify").is_some());
+        assert!(registry.get("mcp-gate").is_some());
     }
 }

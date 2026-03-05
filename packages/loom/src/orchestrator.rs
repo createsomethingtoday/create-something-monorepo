@@ -7,7 +7,8 @@
 //! Philosophy: Each task gets a fresh context. No pollution between tasks.
 //! This is "weniger, aber besser" - less, but better.
 
-use std::path::PathBuf;
+use std::fs;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 use chrono::{DateTime, Utc};
@@ -161,11 +162,145 @@ pub struct ExecutionResult {
     pub started_at: DateTime<Utc>,
     pub ended_at: DateTime<Utc>,
     pub error: Option<String>,
+    pub policy_gate: Option<PolicyGateArtifact>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PolicyDecision {
+    Allow,
+    RequireHumanReview,
+    Block,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PolicyGateArtifact {
+    pub task_id: String,
+    pub has_write_intent: bool,
+    pub has_human_review_step: bool,
+    pub account_role: String,
+    pub rollout_mode: String,
+    pub gate_profile: String,
+    pub decision: PolicyDecision,
+    pub reasons: Vec<String>,
+    pub policy_sources: Vec<String>,
+    pub evaluated_at: DateTime<Utc>,
 }
 
 /// The orchestrator - runs tasks through agent backends
 pub struct Orchestrator {
     config: OrchestratorConfig,
+}
+
+fn task_has_label_prefix(task: &Task, prefix: &str) -> Option<String> {
+    task.labels
+        .iter()
+        .find_map(|label| label.strip_prefix(prefix).map(|v| v.to_string()))
+}
+
+fn detect_write_intent(task: &Task) -> bool {
+    if task.labels.iter().any(|label| {
+        matches!(
+            label.as_str(),
+            "write-intent" | "mutating" | "mutation" | "deploy" | "rollout" | "delete" | "destroy"
+        )
+    }) {
+        return true;
+    }
+
+    let title = task.title.to_lowercase();
+    let write_terms = [
+        "deploy",
+        "rollout",
+        "migrate",
+        "update production",
+        "delete",
+        "remove",
+        "rotate secret",
+    ];
+    write_terms.iter().any(|term| title.contains(term))
+}
+
+fn detect_human_review_step(task: &Task) -> bool {
+    task.labels.iter().any(|label| {
+        matches!(
+            label.as_str(),
+            "human-review" | "requires-review" | "approval" | "approved" | "reviewed"
+        )
+    })
+}
+
+fn infer_account_role(task: &Task) -> String {
+    task_has_label_prefix(task, "role:")
+        .or_else(|| std::env::var("LOOM_ACCOUNT_ROLE").ok())
+        .unwrap_or_else(|| "operator".to_string())
+        .to_lowercase()
+}
+
+fn infer_rollout_mode(task: &Task) -> String {
+    task_has_label_prefix(task, "rollout:")
+        .or_else(|| std::env::var("LOOM_ROLLOUT_MODE").ok())
+        .unwrap_or_else(|| "legacy_enforce".to_string())
+        .to_lowercase()
+}
+
+fn infer_gate_profile(task: &Task) -> String {
+    task_has_label_prefix(task, "gate-profile:")
+        .or_else(|| std::env::var("LOOM_GATE_PROFILE").ok())
+        .unwrap_or_else(|| "strict".to_string())
+        .to_lowercase()
+}
+
+fn is_read_only_role(role: &str) -> bool {
+    matches!(role, "public" | "auditor" | "readonly")
+}
+
+fn discover_policy_sources(working_dir: &Path) -> Vec<String> {
+    let candidates = [
+        "docs/policies/v1/policy.judgment-baseline.v1.json",
+        "docs/policies/v1/policy.account-role-boundaries.v1.json",
+        "docs/policies/v1/policy.engine-rollout-gates.v1.json",
+    ];
+
+    candidates
+        .iter()
+        .map(|relative| working_dir.join(relative))
+        .filter(|path| path.exists())
+        .map(|path| path.display().to_string())
+        .collect()
+}
+
+fn evaluate_policy_gate(task: &Task, working_dir: &Path) -> PolicyGateArtifact {
+    let has_write_intent = detect_write_intent(task);
+    let has_human_review_step = detect_human_review_step(task);
+    let account_role = infer_account_role(task);
+    let rollout_mode = infer_rollout_mode(task);
+    let gate_profile = infer_gate_profile(task);
+    let mut reasons = Vec::new();
+
+    let decision = if has_write_intent && is_read_only_role(&account_role) {
+        reasons.push("Public/auditor/readonly role cannot execute write-intent workflows.".to_string());
+        PolicyDecision::Block
+    } else if has_write_intent && !has_human_review_step {
+        reasons.push("Write-intent workflow is missing an explicit human-review step.".to_string());
+        PolicyDecision::RequireHumanReview
+    } else {
+        reasons.push("No restrictive policy rule matched.".to_string());
+        PolicyDecision::Allow
+    };
+
+    PolicyGateArtifact {
+        task_id: task.id.clone(),
+        has_write_intent,
+        has_human_review_step,
+        account_role,
+        rollout_mode,
+        gate_profile,
+        decision,
+        reasons,
+        policy_sources: discover_policy_sources(working_dir),
+        evaluated_at: Utc::now(),
+    }
 }
 
 impl Orchestrator {

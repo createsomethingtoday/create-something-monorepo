@@ -99,6 +99,7 @@ SWARM OPTIONS:
   --swarm                Enable parallel swarm mode (default: disabled)
   --max-agents N         Max parallel agents in swarm (default: 5)
   --min-tasks N          Min independent tasks to trigger swarm (default: 3)
+  --swarm-execution-mode <mode>  shared_cwd | isolated_worktree (default: isolated_worktree)
 
 EXAMPLES:
   harness start specs/my-project.md
@@ -178,6 +179,7 @@ async function handleStart(args: string[], cwd: string): Promise<void> {
       console.log(`\nSwarm mode: ENABLED`);
       console.log(`Max agents: ${swarmConfig.maxParallelAgents}`);
       console.log(`Min tasks: ${swarmConfig.minTasksForSwarm}`);
+      console.log(`Execution mode: ${swarmConfig.executionMode}`);
     } else {
       console.log('\nSwarm mode: DISABLED');
     }
@@ -453,6 +455,16 @@ function buildSwarmConfig(args: string[]): SwarmConfig {
   // Parse --min-tasks flag
   const minTasks = parseIntArg(args, '--min-tasks', DEFAULT_SWARM_CONFIG.minTasksForSwarm);
   config.minTasksForSwarm = minTasks;
+
+  // Parse --swarm-execution-mode flag
+  const executionMode = parseStringArg(args, '--swarm-execution-mode');
+  if (executionMode === 'shared_cwd' || executionMode === 'isolated_worktree') {
+    config.executionMode = executionMode;
+  } else if (executionMode) {
+    console.warn(
+      `Warning: Invalid --swarm-execution-mode '${executionMode}'. Using default '${DEFAULT_SWARM_CONFIG.executionMode}'.`
+    );
+  }
 
   return config;
 }

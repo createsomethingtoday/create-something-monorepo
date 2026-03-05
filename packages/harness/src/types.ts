@@ -563,6 +563,12 @@ export interface SwarmConfig {
   minTasksForSwarm: number;
   /** Aggregate interval in ms - how often to collect swarm results (default: 10000) */
   aggregateIntervalMs: number;
+  /**
+   * Execution mode for swarm workers.
+   * - shared_cwd: all workers run in the same repository directory (legacy behavior)
+   * - isolated_worktree: each worker runs in a dedicated git worktree (recommended)
+   */
+  executionMode: 'shared_cwd' | 'isolated_worktree';
 }
 
 export const DEFAULT_SWARM_CONFIG: SwarmConfig = {
@@ -570,6 +576,7 @@ export const DEFAULT_SWARM_CONFIG: SwarmConfig = {
   enabled: false,
   minTasksForSwarm: 3,
   aggregateIntervalMs: 10000,
+  executionMode: 'isolated_worktree',
 };
 
 /**

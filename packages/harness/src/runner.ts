@@ -4,7 +4,10 @@
  * Runner: Main orchestration loop for the harness.
  */
 
-import { readFile } from 'node:fs/promises';
+import { exec } from 'node:child_process';
+import { readFile, mkdir, rm } from 'node:fs/promises';
+import { join } from 'node:path';
+import { promisify } from 'node:util';
 import type {
   HarnessState,
   HarnessStatus,
@@ -88,6 +91,8 @@ import {
   formatEscalationLearning,
 } from './failure-handler.js';
 import { annotateIssueEscalation } from './beads.js';
+
+const execAsync = promisify(exec);
 
 /**
  * Type guard to check if a checkpoint has review data.
@@ -293,7 +298,9 @@ export async function runHarness(
     console.log(`  Peer Review: ${reviewerIds.join(', ')}`);
   }
   if (swarmConfig.enabled) {
-    console.log(`  Swarm Mode: ENABLED (max ${swarmConfig.maxParallelAgents} agents, min ${swarmConfig.minTasksForSwarm} tasks)`);
+    console.log(
+      `  Swarm Mode: ENABLED (max ${swarmConfig.maxParallelAgents} agents, min ${swarmConfig.minTasksForSwarm} tasks, mode ${swarmConfig.executionMode})`
+    );
   } else {
     console.log(`  Swarm Mode: DISABLED`);
   }
@@ -397,6 +404,7 @@ export async function runHarness(
           cwd: options.cwd,
           dryRun: options.dryRun,
           maxParallel: swarmConfig.maxParallelAgents,
+          executionMode: swarmConfig.executionMode,
           harnessConfig,
         }
       );
@@ -994,6 +1002,60 @@ export async function getHarnessStatus(
  * Run multiple sessions in parallel for independent tasks.
  * Uses Promise.all to execute up to maxParallel sessions concurrently.
  */
+interface SwarmWorktree {
+  path: string;
+  branch: string;
+}
+
+function quoteForShell(value: string): string {
+  return `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
+export function sanitizeIssueIdForRef(issueId: string): string {
+  const sanitized = issueId
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  return sanitized || 'issue';
+}
+
+export function buildSwarmBranchName(harnessId: string, issueId: string): string {
+  const harnessPart = sanitizeIssueIdForRef(harnessId).slice(0, 24);
+  const issuePart = sanitizeIssueIdForRef(issueId).slice(0, 40);
+  return `harness/swarm/${harnessPart}/${issuePart}`;
+}
+
+export function buildSwarmWorktreePath(repoRoot: string, issueId: string): string {
+  const issuePart = sanitizeIssueIdForRef(issueId).slice(0, 60);
+  return join(repoRoot, '.harness', 'worktrees', issuePart);
+}
+
+async function createSwarmWorktree(repoRoot: string, harnessId: string, issueId: string): Promise<SwarmWorktree> {
+  const branch = buildSwarmBranchName(harnessId, issueId);
+  const path = buildSwarmWorktreePath(repoRoot, issueId);
+  await mkdir(join(repoRoot, '.harness', 'worktrees'), { recursive: true });
+  await rm(path, { recursive: true, force: true });
+  await execAsync(
+    `git -C ${quoteForShell(repoRoot)} worktree add --force --detach ${quoteForShell(path)}`
+  );
+  await execAsync(
+    `git -C ${quoteForShell(path)} checkout -B ${quoteForShell(branch)}`
+  );
+  return { path, branch };
+}
+
+async function cleanupSwarmWorktree(repoRoot: string, worktree: SwarmWorktree): Promise<void> {
+  try {
+    await execAsync(
+      `git -C ${quoteForShell(repoRoot)} worktree remove --force ${quoteForShell(worktree.path)}`
+    );
+  } catch {
+    // Best-effort cleanup if git metadata already removed.
+  }
+  await rm(worktree.path, { recursive: true, force: true });
+}
+
 export async function runParallelSessions(
   issues: BeadsIssue[],
   harnessState: HarnessState,
@@ -1002,13 +1064,16 @@ export async function runParallelSessions(
     cwd: string;
     dryRun?: boolean;
     maxParallel?: number;
+    executionMode?: SwarmConfig['executionMode'];
     harnessConfig?: HarnessConfig;
   }
 ): Promise<SessionResult[]> {
   const maxParallel = options.maxParallel ?? DEFAULT_SWARM_CONFIG.maxParallelAgents;
+  const executionMode = options.executionMode ?? DEFAULT_SWARM_CONFIG.executionMode;
   const batchSize = Math.min(issues.length, maxParallel);
 
   console.log(`\n🐝 Starting swarm: ${batchSize} parallel agents`);
+  console.log(`   Execution mode: ${executionMode}`);
 
   // Start swarm batch tracking
   const batchId = startSwarmBatch(checkpointTracker);
@@ -1016,6 +1081,8 @@ export async function runParallelSessions(
   // Prepare session promises
   const sessionPromises = issues.slice(0, batchSize).map(async (issue, index) => {
     const agentId = `agent-${index.toString().padStart(3, '0')}`;
+    let sessionCwd = options.cwd;
+    let worktree: SwarmWorktree | null = null;
 
     // Register agent
     registerSwarmAgent(checkpointTracker, agentId, issue.id);
@@ -1023,61 +1090,73 @@ export async function runParallelSessions(
     // Mark issue as in progress
     await updateIssueStatus(issue.id, 'in_progress', options.cwd);
 
-    // Build priming context
-    const recentCommits = await getRecentCommits(options.cwd, 5);
-    const dryContext = await discoverDryContext(issue.title, options.cwd);
-    const primingContext: PrimingContext = {
-      currentIssue: issue,
-      recentCommits,
-      lastCheckpoint: null,
-      redirectNotes: [],
-      sessionGoal: `Complete: ${issue.title}\n\n${issue.description || ''}`,
-      existingPatterns: dryContext.existingPatterns,
-      relevantFiles: dryContext.relevantFiles,
-    };
-
-    // Select model for cost optimization (uses config patterns)
-    const model = selectModelForTask(issue, options.harnessConfig ?? DEFAULT_HARNESS_CONFIG);
-    console.log(`  [${agentId}] Starting [${model}]: ${issue.id} - ${issue.title.slice(0, 40)}...`);
-
     try {
-      // Run session with selected model
-      const result = await runSession(issue, primingContext, {
-        cwd: options.cwd,
-        dryRun: options.dryRun,
-        model,
-      });
-
-      // Update agent status
-      updateSwarmAgentStatus(checkpointTracker, agentId, result);
-
-      // Handle result
-      if (result.outcome === 'success') {
-        await updateIssueStatus(issue.id, 'closed', options.cwd);
-        console.log(`  [${agentId}] ✅ Completed: ${issue.id}`);
-      } else {
-        console.log(`  [${agentId}] ${getOutcomeIcon(result.outcome)} Failed: ${issue.id} - ${result.outcome}`);
+      if (!options.dryRun && executionMode === 'isolated_worktree') {
+        worktree = await createSwarmWorktree(options.cwd, harnessState.id, issue.id);
+        sessionCwd = worktree.path;
+        console.log(`  [${agentId}] Worktree: ${worktree.path}`);
       }
 
-      return result;
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      const errorResult: SessionResult = {
-        issueId: issue.id,
-        outcome: 'failure',
-        summary: 'Session crashed',
-        gitCommit: null,
-        contextUsed: 0,
-        durationMs: 0,
-        error: errorMsg,
-        model: null,
-        sessionId: null,
-        costUsd: null,
-        numTurns: null,
+      // Build priming context
+      const recentCommits = await getRecentCommits(sessionCwd, 5);
+      const dryContext = await discoverDryContext(issue.title, sessionCwd);
+      const primingContext: PrimingContext = {
+        currentIssue: issue,
+        recentCommits,
+        lastCheckpoint: null,
+        redirectNotes: [],
+        sessionGoal: `Complete: ${issue.title}\n\n${issue.description || ''}`,
+        existingPatterns: dryContext.existingPatterns,
+        relevantFiles: dryContext.relevantFiles,
       };
-      updateSwarmAgentStatus(checkpointTracker, agentId, errorResult);
-      console.log(`  [${agentId}] ❌ Error: ${issue.id} - ${errorMsg.slice(0, 50)}`);
-      return errorResult;
+
+      // Select model for cost optimization (uses config patterns)
+      const model = selectModelForTask(issue, options.harnessConfig ?? DEFAULT_HARNESS_CONFIG);
+      console.log(`  [${agentId}] Starting [${model}]: ${issue.id} - ${issue.title.slice(0, 40)}...`);
+
+      try {
+        // Run session with selected model
+        const result = await runSession(issue, primingContext, {
+          cwd: sessionCwd,
+          dryRun: options.dryRun,
+          model,
+        });
+
+        // Update agent status
+        updateSwarmAgentStatus(checkpointTracker, agentId, result);
+
+        // Handle result
+        if (result.outcome === 'success') {
+          await updateIssueStatus(issue.id, 'closed', options.cwd);
+          console.log(`  [${agentId}] ✅ Completed: ${issue.id}`);
+        } else {
+          console.log(`  [${agentId}] ${getOutcomeIcon(result.outcome)} Failed: ${issue.id} - ${result.outcome}`);
+        }
+
+        return result;
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        const errorResult: SessionResult = {
+          issueId: issue.id,
+          outcome: 'failure',
+          summary: 'Session crashed',
+          gitCommit: null,
+          contextUsed: 0,
+          durationMs: 0,
+          error: errorMsg,
+          model: null,
+          sessionId: null,
+          costUsd: null,
+          numTurns: null,
+        };
+        updateSwarmAgentStatus(checkpointTracker, agentId, errorResult);
+        console.log(`  [${agentId}] ❌ Error: ${issue.id} - ${errorMsg.slice(0, 50)}`);
+        return errorResult;
+      }
+    } finally {
+      if (worktree) {
+        await cleanupSwarmWorktree(options.cwd, worktree);
+      }
     }
   });
 

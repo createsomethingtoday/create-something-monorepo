@@ -147,6 +147,26 @@ export function validateConfig(config: Partial<HarnessConfig>): ValidationResult
     }
   }
 
+  // Swarm validation
+  if (config.swarm) {
+    const { swarm } = config;
+    if (swarm.maxParallelAgents !== undefined && swarm.maxParallelAgents < 1) {
+      errors.push('swarm.maxParallelAgents must be at least 1.');
+    }
+    if (swarm.minTasksForSwarm !== undefined && swarm.minTasksForSwarm < 1) {
+      errors.push('swarm.minTasksForSwarm must be at least 1.');
+    }
+    if (swarm.aggregateIntervalMs !== undefined && swarm.aggregateIntervalMs < 1000) {
+      errors.push('swarm.aggregateIntervalMs must be at least 1000ms.');
+    }
+    if (
+      swarm.executionMode !== undefined &&
+      !['shared_cwd', 'isolated_worktree'].includes(swarm.executionMode)
+    ) {
+      errors.push('swarm.executionMode must be shared_cwd or isolated_worktree.');
+    }
+  }
+
   // Warnings for suboptimal config
   if (config.modelRouting?.patterns) {
     const { haiku, sonnet, opus } = config.modelRouting.patterns;
@@ -290,6 +310,17 @@ export const HARNESS_CONFIG_JSON_SCHEMA = {
         scope: { type: 'array', items: { type: 'string' } },
         type: { type: 'array', items: { type: 'string' } },
         discoveryPrefix: { type: 'string' },
+      },
+    },
+    swarm: {
+      type: 'object',
+      description: 'Parallel swarm execution configuration',
+      properties: {
+        enabled: { type: 'boolean' },
+        maxParallelAgents: { type: 'integer', minimum: 1 },
+        minTasksForSwarm: { type: 'integer', minimum: 1 },
+        aggregateIntervalMs: { type: 'integer', minimum: 1000 },
+        executionMode: { type: 'string', enum: ['shared_cwd', 'isolated_worktree'] },
       },
     },
   },

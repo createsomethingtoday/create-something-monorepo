@@ -604,6 +604,187 @@ pub fn cs_worker_formula() -> Formula {
     }
 }
 
+/// Fleet deployment formula for multi-worker rollout with policy gates.
+pub fn cs_fleet_deploy_formula() -> Formula {
+    Formula {
+        name: "fleet-deploy".to_string(),
+        description: "Policy-gated MCP hub fleet deployment with post-deploy verification".to_string(),
+        quality: QualityTier::Premium,
+        agent: Some("claude-code".to_string()),
+        variables: vec![
+            Variable {
+                name: "gate_profile".to_string(),
+                description: "Gate profile (strict or warmup)".to_string(),
+                required: false,
+                default: Some("strict".to_string()),
+            },
+            Variable {
+                name: "rollout_mode".to_string(),
+                description: "Target rollout mode (shadow or polar_enforce)".to_string(),
+                required: false,
+                default: Some("shadow".to_string()),
+            },
+        ],
+        steps: vec![
+            Step {
+                id: "preflight-gates".to_string(),
+                title: "Run preflight quality gates".to_string(),
+                description: "Run typecheck and lint quality gates before deploy".to_string(),
+                agent: None,
+                labels: vec!["quality-gate".to_string()],
+                prompt: None,
+                verify: Some("pnpm mcp:gate:typecheck && pnpm mcp:gate:lint".to_string()),
+                checkpoint: true,
+                parallel: false,
+            },
+            Step {
+                id: "deploy-fleet".to_string(),
+                title: "Deploy fleet".to_string(),
+                description: "Deploy all configured fleet workers".to_string(),
+                agent: Some("claude-code".to_string()),
+                labels: vec!["deploy".to_string(), "write-intent".to_string()],
+                prompt: Some("Deploy using gate_profile={{gate_profile}} rollout_mode={{rollout_mode}} and record any policy exceptions.".to_string()),
+                verify: Some("pnpm mcp:hub:fleet:deploy".to_string()),
+                checkpoint: true,
+                parallel: false,
+            },
+            Step {
+                id: "verify-fleet".to_string(),
+                title: "Verify fleet health".to_string(),
+                description: "Run protocol and health verification after deploy".to_string(),
+                agent: None,
+                labels: vec!["verification".to_string()],
+                prompt: None,
+                verify: Some("pnpm mcp:hub:fleet:verify".to_string()),
+                checkpoint: false,
+                parallel: false,
+            },
+        ],
+        success_criteria: SuccessCriteria {
+            criteria: vec![
+                "All targeted workers deploy successfully".to_string(),
+                "Post-deploy verification passes".to_string(),
+                "Policy gate outcomes are recorded".to_string(),
+            ],
+            verify_commands: vec![
+                "pnpm mcp:hub:fleet:deploy".to_string(),
+                "pnpm mcp:hub:fleet:verify".to_string(),
+            ],
+            ground_checks: vec![],
+        },
+        labels: vec![
+            "fleet".to_string(),
+            "deploy".to_string(),
+            "policy-gated".to_string(),
+            "write-intent".to_string(),
+        ],
+        estimated_tokens: 30000,
+    }
+}
+
+/// Fleet verification formula for fan-out/fan-in health validation.
+pub fn cs_fleet_verify_formula() -> Formula {
+    Formula {
+        name: "fleet-verify".to_string(),
+        description: "Run fleet verification and collect rollout evidence".to_string(),
+        quality: QualityTier::Standard,
+        agent: Some("codex".to_string()),
+        variables: vec![
+            Variable {
+                name: "emit_eval".to_string(),
+                description: "Run Braintrust eval checks (true or false)".to_string(),
+                required: false,
+                default: Some("true".to_string()),
+            },
+        ],
+        steps: vec![
+            Step {
+                id: "verify-hub-fleet".to_string(),
+                title: "Run fleet verification".to_string(),
+                description: "Run MCP protocol and health checks across workers".to_string(),
+                agent: None,
+                labels: vec!["verification".to_string(), "read-only".to_string()],
+                prompt: None,
+                verify: Some("pnpm mcp:hub:fleet:verify".to_string()),
+                checkpoint: true,
+                parallel: false,
+            },
+            Step {
+                id: "collect-evidence".to_string(),
+                title: "Collect eval evidence".to_string(),
+                description: "Run contract/error-path checks when requested".to_string(),
+                agent: None,
+                labels: vec!["eval".to_string()],
+                prompt: Some("If emit_eval={{emit_eval}} is true, run contract/error-path eval scripts and summarize failures.".to_string()),
+                verify: Some("pnpm braintrust:eval:mcp:contract && pnpm braintrust:eval:mcp:error-path".to_string()),
+                checkpoint: false,
+                parallel: false,
+            },
+        ],
+        success_criteria: SuccessCriteria {
+            criteria: vec![
+                "Fleet verification passes".to_string(),
+                "Eval evidence captured for reviewers".to_string(),
+            ],
+            verify_commands: vec![
+                "pnpm mcp:hub:fleet:verify".to_string(),
+            ],
+            ground_checks: vec![],
+        },
+        labels: vec!["fleet".to_string(), "verify".to_string(), "read-only".to_string()],
+        estimated_tokens: 18000,
+    }
+}
+
+/// MCP quality gate formula for stage/scope quality checks.
+pub fn cs_mcp_gate_formula() -> Formula {
+    Formula {
+        name: "mcp-gate".to_string(),
+        description: "Run MCP quality gates with scoped stage control".to_string(),
+        quality: QualityTier::Standard,
+        agent: Some("codex".to_string()),
+        variables: vec![
+            Variable {
+                name: "stage".to_string(),
+                description: "Gate stage (all|typecheck|lint|test)".to_string(),
+                required: false,
+                default: Some("all".to_string()),
+            },
+            Variable {
+                name: "scope".to_string(),
+                description: "Gate scope (active|fleet|all)".to_string(),
+                required: false,
+                default: Some("active".to_string()),
+            },
+        ],
+        steps: vec![
+            Step {
+                id: "run-gate".to_string(),
+                title: "Run MCP quality gate".to_string(),
+                description: "Execute stage/scope quality gate command".to_string(),
+                agent: None,
+                labels: vec!["quality-gate".to_string()],
+                prompt: Some("Run MCP quality gate with stage={{stage}} scope={{scope}} and report failing packages only.".to_string()),
+                verify: Some("node scripts/mcp-quality-gate.mjs {{stage}} --scope={{scope}}".to_string()),
+                checkpoint: true,
+                parallel: false,
+            },
+        ],
+        success_criteria: SuccessCriteria {
+            criteria: vec![
+                "Selected MCP quality gate passes".to_string(),
+                "Failure summary is captured when gate fails".to_string(),
+            ],
+            verify_commands: vec![
+                "node scripts/mcp-quality-gate.mjs {{stage}} --scope={{scope}}".to_string(),
+            ],
+            ground_checks: vec![],
+        },
+        labels: vec!["mcp".to_string(), "quality-gate".to_string()],
+        estimated_tokens: 12000,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
