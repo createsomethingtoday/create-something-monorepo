@@ -25,9 +25,12 @@ Single identity across all properties: .space, .io, .agency, .ltd, and .learn.
 | GET | `/auth/me` | Get current user |
 | GET | `/.well-known/jwks.json` | Public keys |
 | POST | `/v1/mcp/sessions` | Create MCP session token + policy claims |
+| POST | `/v1/mcp/sessions/admin-mint` | Admin mint MCP session for mapped account (API key + policy gated) |
 | POST | `/v1/mcp/sessions/resolve` | Resolve MCP session token (hub-only) |
 | GET | `/v1/mcp/sessions/:id` | Inspect own MCP session |
 | POST | `/v1/mcp/sessions/:id/revoke` | Revoke own MCP session |
+| POST | `/v1/mcp/legacy-keys/issue` | Issue legacy bearer key (API key + policy gated) |
+| POST | `/v1/mcp/legacy-keys/:id/revoke` | Revoke legacy bearer key (API key + policy gated) |
 
 ## Stack
 
@@ -65,6 +68,15 @@ MCP hub integration:
    - Session token (`ms_tok_*`) is ephemeral, while `account_id` is stable per `{user_id, tenant_id}`
 2. Host stores returned MCP token and calls hub endpoint
 3. Hub introspects token via `POST /v1/mcp/sessions/resolve` using `MCP_SESSION_RESOLVE_TOKEN`
+
+Partner-admin integration:
+1. Agency partner API stores consent records and identity account mapping
+2. Partner API calls `POST /v1/mcp/sessions/admin-mint` with API key scope `mcp_session_admin_mint`
+3. Policy decision telemetry is written to `mcp_policy_events`
+4. Legacy exceptions (temporary) use:
+   - `POST /v1/mcp/legacy-keys/issue` (`mcp_legacy_key_issue`)
+   - `POST /v1/mcp/legacy-keys/:id/revoke` (`mcp_legacy_key_revoke`)
+5. Legacy issuance requires approved exception + sunset metadata; no plaintext key persistence in docs/artifacts
 
 ## Related
 

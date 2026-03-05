@@ -22,6 +22,8 @@ MCP_HUB_URL = "https://cs-mcp-hub-remote.createsomething.workers.dev/mcp"
 
 # Secrets (set via wrangler secret put)
 # MCP_SESSION_RESOLVE_TOKEN - shared secret used by hub for /v1/mcp/sessions/resolve
+# OSO_API_KEY - optional policy primary evaluator credential (hybrid mode uses local fallback)
+# OSO_URL - optional Oso endpoint
 
 # D1 Database - Unified identity store
 [[d1_databases]]

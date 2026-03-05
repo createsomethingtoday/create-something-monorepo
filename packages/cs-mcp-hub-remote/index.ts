@@ -278,6 +278,8 @@ interface Env {
   HUB_SESSION_RESOLVE_URL?: string;
   HUB_SESSION_RESOLVE_TOKEN?: string;
   HUB_SESSION_RESOLVE_TIMEOUT_MS?: string;
+  HUB_LEGACY_BRIDGE_ENABLED?: string;
+  HUB_LEGACY_SUNSET_AT?: string;
   HUB_TOOL_CALL_TIMEOUT_MS?: string;
   HUB_LIST_TOOLS_TIMEOUT_MS?: string;
   HUB_CONNECT_CONCURRENCY?: string;
@@ -706,6 +708,10 @@ export default {
             },
             auth_required: Boolean(readEnvString(env, 'HUB_API_TOKEN')),
             identity_mode: resolveHubIdentityMode(env),
+            legacy_bridge: {
+              enabled: readEnvString(env, 'HUB_LEGACY_BRIDGE_ENABLED') === 'true',
+              sunset_at: readEnvString(env, 'HUB_LEGACY_SUNSET_AT') ?? null,
+            },
             state_storage: env.HUB_STATE_KV ? 'kv' : 'env-only',
             policy: buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env),
             downstream_auth_config: {
