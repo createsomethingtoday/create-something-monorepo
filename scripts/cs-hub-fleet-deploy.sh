@@ -9,7 +9,7 @@ TEAM_WORKERS=(
   "cs-hub-lainy"
   "cs-hub-danny"
   "cs-hub-august"
-  "cs-hub-filip"
+  "cs-hub-fillip"
   "cs-hub-leah"
   "cs-hub-mj"
 )
@@ -72,7 +72,7 @@ account_id_for_worker() {
     "cs-hub-lainy") echo "acct_lainy" ;;
     "cs-hub-danny") echo "acct_danny" ;;
     "cs-hub-august") echo "acct_august" ;;
-    "cs-hub-filip") echo "acct_fillip" ;;
+    "cs-hub-fillip"|"cs-hub-filip") echo "acct_fillip" ;;
     "cs-hub-leah") echo "acct_leah" ;;
     "cs-hub-mj") echo "acct_mj" ;;
     *)
@@ -86,7 +86,7 @@ mcp_url_for_worker() {
     "cs-hub-lainy") echo "https://lainy.mcp.createsomething.agency/mcp" ;;
     "cs-hub-danny") echo "https://danny.mcp.createsomething.agency/mcp" ;;
     "cs-hub-august") echo "https://august.mcp.createsomething.agency/mcp" ;;
-    "cs-hub-filip") echo "https://fillip.mcp.createsomething.agency/mcp" ;;
+    "cs-hub-fillip"|"cs-hub-filip") echo "https://fillip.mcp.createsomething.agency/mcp" ;;
     "cs-hub-leah") echo "https://leah.mcp.createsomething.agency/mcp" ;;
     "cs-hub-mj") echo "https://mj.mcp.createsomething.agency/mcp" ;;
     *)
@@ -100,7 +100,7 @@ token_env_var_for_worker() {
     "cs-hub-lainy") echo "CS_HUB_LAINY_API_TOKEN" ;;
     "cs-hub-danny") echo "CS_HUB_DANNY_API_TOKEN" ;;
     "cs-hub-august") echo "CS_HUB_AUGUST_API_TOKEN" ;;
-    "cs-hub-filip") echo "CS_HUB_FILLIP_API_TOKEN" ;;
+    "cs-hub-fillip"|"cs-hub-filip") echo "CS_HUB_FILLIP_API_TOKEN" ;;
     "cs-hub-leah") echo "CS_HUB_LEAH_API_TOKEN" ;;
     "cs-hub-mj") echo "CS_HUB_MJ_API_TOKEN" ;;
     *)
@@ -114,13 +114,30 @@ resolve_worker_token() {
   local token_var_name
   token_var_name="$(token_env_var_for_worker "$worker")"
   local token="${!token_var_name:-}"
-  if [[ -z "$token" && "$worker" == "cs-hub-filip" ]]; then
+  if [[ -z "$token" && ( "$worker" == "cs-hub-fillip" || "$worker" == "cs-hub-filip" ) ]]; then
     token="${CS_HUB_FILIP_API_TOKEN:-}"
   fi
   if [[ -z "$token" ]]; then
     token="${HUB_API_TOKEN:-}"
   fi
   echo "$token"
+}
+
+resolve_deploy_worker_name() {
+  local worker="$1"
+  if [[ "$worker" != "cs-hub-fillip" ]]; then
+    echo "$worker"
+    return 0
+  fi
+  if pnpm exec wrangler secret list --name "cs-hub-fillip" >/dev/null 2>&1; then
+    echo "cs-hub-fillip"
+    return 0
+  fi
+  if pnpm exec wrangler secret list --name "cs-hub-filip" >/dev/null 2>&1; then
+    echo "cs-hub-filip"
+    return 0
+  fi
+  echo "cs-hub-fillip"
 }
 
 target_server_csv_for_worker() {
@@ -221,13 +238,17 @@ echo "Deploying team hub workers with hardened routing config..."
 echo "identity_mode=${HUB_DEPLOY_IDENTITY_MODE}"
 echo "compat_trust_client_account_headers=${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}"
 for worker in "${TEAM_WORKERS[@]}"; do
+  deploy_worker="$(resolve_deploy_worker_name "$worker")"
   echo "===== DEPLOY ${worker} ====="
+  if [[ "$deploy_worker" != "$worker" ]]; then
+    echo "deploy_target=${deploy_worker} (legacy alias)"
+  fi
   account_id="$(account_id_for_worker "$worker")"
   if [[ "$worker" == "cs-hub-mj" ]]; then
     pnpm exec wrangler deploy \
       --config "$TEAM_CONFIG" \
-      --name "$worker" \
-      --var "HUB_INSTANCE_ID:${worker}" \
+      --name "$deploy_worker" \
+      --var "HUB_INSTANCE_ID:${deploy_worker}" \
       --var "HUB_ACCOUNT_ID:${account_id}" \
       --var "HUB_ENABLED_BUNDLES:[]" \
       --var "HUB_ENABLED_SERVERS:${MJ_SERVERS_CSV}" \
@@ -243,8 +264,8 @@ for worker in "${TEAM_WORKERS[@]}"; do
   else
     pnpm exec wrangler deploy \
       --config "$TEAM_CONFIG" \
-      --name "$worker" \
-      --var "HUB_INSTANCE_ID:${worker}" \
+      --name "$deploy_worker" \
+      --var "HUB_INSTANCE_ID:${deploy_worker}" \
       --var "HUB_ACCOUNT_ID:${account_id}" \
       --var "HUB_ENABLED_BUNDLES:[]" \
       --var "HUB_ENABLED_SERVERS:${SHARED_AUTH_SERVERS_CSV}" \
