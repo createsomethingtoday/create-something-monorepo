@@ -8,6 +8,16 @@ TEAM_KEYS=(
   "LAINY"
   "DANNY"
   "AUGUST"
+  "AARON_OUTERFIELDS"
+  "FILLIP"
+  "LEAH"
+  "MJ"
+)
+
+BRIDGE_TEAM_KEYS=(
+  "LAINY"
+  "DANNY"
+  "AUGUST"
   "FILLIP"
   "LEAH"
   "MJ"
@@ -159,13 +169,16 @@ for team_key in "${TEAM_KEYS[@]}"; do
   team_token_value="$(rand_hex 32)"
   export "${token_key}=${team_token_value}"
   set_doppler_secret "$token_key" "$team_token_value"
-  if [[ "$INCLUDE_BRIDGES" == "true" ]]; then
+done
+
+if [[ "$INCLUDE_BRIDGES" == "true" ]]; then
+  for team_key in "${BRIDGE_TEAM_KEYS[@]}"; do
     bridge_password_key="$(bridge_password_env_var_for_team "$team_key")"
     bridge_password_value="$(rand_hex 24)"
     export "${bridge_password_key}=${bridge_password_value}"
     set_doppler_secret "$bridge_password_key" "$bridge_password_value"
-  fi
-done
+  done
+fi
 
 if [[ "$DRY_RUN" == "true" ]]; then
   export HUB_SESSION_RESOLVE_TOKEN="${HUB_SESSION_RESOLVE_TOKEN:-dry_run_placeholder}"

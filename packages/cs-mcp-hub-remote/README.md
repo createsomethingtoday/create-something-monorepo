@@ -174,6 +174,7 @@ Team workers included in fleet deploy:
 - `cs-hub-lainy`
 - `cs-hub-danny`
 - `cs-hub-august`
+- `cs-hub-aaron-outerfields`
 - `cs-hub-fillip`
 - `cs-hub-leah`
 - `cs-hub-mj`

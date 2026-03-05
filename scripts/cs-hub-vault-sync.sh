@@ -12,6 +12,16 @@ TEAM_KEYS=(
   "LAINY"
   "DANNY"
   "AUGUST"
+  "AARON_OUTERFIELDS"
+  "FILLIP"
+  "LEAH"
+  "MJ"
+)
+
+BRIDGE_TEAM_KEYS=(
+  "LAINY"
+  "DANNY"
+  "AUGUST"
   "FILLIP"
   "LEAH"
   "MJ"
@@ -48,6 +58,7 @@ hub_worker_for_team() {
     "LAINY") echo "cs-hub-lainy" ;;
     "DANNY") echo "cs-hub-danny" ;;
     "AUGUST") echo "cs-hub-august" ;;
+    "AARON_OUTERFIELDS") echo "cs-hub-aaron-outerfields" ;;
     "FILLIP") echo "cs-hub-fillip" ;;
     "LEAH") echo "cs-hub-leah" ;;
     "MJ") echo "cs-hub-mj" ;;
@@ -165,11 +176,13 @@ if ! require_secret BRAINTRUST_PROJECT_ID; then missing=1; fi
 for team_key in "${TEAM_KEYS[@]}"; do
   team_token_var="$(token_env_var_for_team "$team_key")"
   if ! require_secret "$team_token_var"; then missing=1; fi
-  if [[ "$INCLUDE_BRIDGES" == "true" ]]; then
+done
+if [[ "$INCLUDE_BRIDGES" == "true" ]]; then
+  for team_key in "${BRIDGE_TEAM_KEYS[@]}"; do
     team_bridge_password_var="$(bridge_password_env_var_for_team "$team_key")"
     if ! require_secret "$team_bridge_password_var"; then missing=1; fi
-  fi
-done
+  done
+fi
 
 if [[ "$missing" == "1" ]]; then
   echo "secret validation failed" >&2
@@ -200,7 +213,7 @@ put_secret "$HUB_REMOTE_CONFIG" "cs-mcp-hub-remote" "BRAINTRUST_PROJECT_ID" "$BR
 
 if [[ "$INCLUDE_BRIDGES" == "true" ]]; then
   echo "syncing notion bridge worker secrets..."
-  for team_key in "${TEAM_KEYS[@]}"; do
+  for team_key in "${BRIDGE_TEAM_KEYS[@]}"; do
     worker="$(notion_bridge_worker_for_team "$team_key")"
     token_var="$(token_env_var_for_team "$team_key")"
     bridge_password_var="$(bridge_password_env_var_for_team "$team_key")"

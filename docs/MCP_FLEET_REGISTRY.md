@@ -65,7 +65,7 @@ Active MCPs use `cs-telemetry` D1 for telemetry. Fleet-wide queries via the **CS
 | 20 | `playbook-mcp` | `playbook` | Active | `playbook.mcp.createsomething.ltd` | Yes | `cs-telemetry` |
 | 21 | `outerfields-mcp-remote` | `outerfields-pcn` | Active | `outerfields.mcp.createsomething.agency` | Yes | `cs-telemetry` |
 | 22 | `cs-telemetry-mcp` | `cs-telemetry` | Active | `cs-telemetry-mcp.createsomething.workers.dev` | — (reads telemetry) | `cs-telemetry` |
-| 23 | `webflow-app-review-mcp` | `webflow-app-review-mcp` | Planned | `webflow-app-review-mcp.<workers.dev/custom-domain>` | Yes | `cs-telemetry` |
+| 23 | `webflow-app-review-mcp` | `webflow-app-review-mcp` | Active | `webflow-app-review-mcp.createsomething.workers.dev` | Yes | `cs-telemetry` |
 
 ---
 

@@ -50,6 +50,11 @@ const HUB_CASE_CONFIGS: HubCaseConfig[] = [
     authTokenEnvVars: ['CS_HUB_AUGUST_API_TOKEN', 'CS_HUB_AUGUST_AUTH_TOKEN'],
   },
   {
+    name: 'aaron-outerfields',
+    url: 'https://aaron-outerfields.mcp.createsomething.agency/mcp',
+    authTokenEnvVars: ['CS_HUB_AARON_OUTERFIELDS_API_TOKEN', 'CS_HUB_AARON_OUTERFIELDS_AUTH_TOKEN'],
+  },
+  {
     name: 'fillip',
     url: 'https://fillip.mcp.createsomething.agency/mcp',
     authTokenEnvVars: ['CS_HUB_FILLIP_API_TOKEN', 'CS_HUB_FILIP_API_TOKEN', 'CS_HUB_FILIP_AUTH_TOKEN'],
