@@ -4,9 +4,54 @@
  * CLI commands for witness management.
  */
 
+import { spawn } from 'node:child_process';
 import { Command } from 'commander';
-import { startWitness, stopWitness, generateHealthReport, type Witness, type WitnessConfig, DEFAULT_WITNESS_CONFIG } from '../coordinator/witness.js';
+import {
+  Witness,
+  generateHealthReport,
+  loadWitnessDefaults,
+  readWitnessRuntimeState,
+  removeWitnessRuntimeState,
+  saveWitnessDefaults,
+  stopWitnessProcess,
+  writeWitnessRuntimeState,
+  type WitnessConfig,
+  validateWitnessThresholds,
+} from '../coordinator/witness.js';
 import { loadConvoy } from '../coordinator/convoy.js';
+
+function parseNumberOption(
+  value: string | undefined,
+  fallback: number,
+  name: string
+): number {
+  if (!value) return fallback;
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    throw new Error(`Invalid ${name}: ${value}`);
+  }
+  return parsed;
+}
+
+function buildDetachedWitnessArgs(convoyId: string, witnessConfig: WitnessConfig): string[] {
+  const args = [
+    'witness',
+    'start',
+    convoyId,
+    '--poll-interval',
+    String(witnessConfig.pollInterval),
+    '--stale-threshold',
+    String(witnessConfig.staleThreshold),
+    '--escalation-threshold',
+    String(witnessConfig.escalationThreshold),
+    '--termination-threshold',
+    String(witnessConfig.terminationThreshold),
+  ];
+  if (witnessConfig.epicId) {
+    args.push('--epic', witnessConfig.epicId);
+  }
+  return args;
+}
 
 /**
  * Create witness CLI command group.
@@ -20,13 +65,13 @@ export function createWitnessCommand(): Command {
     .command('start <convoyId>')
     .description('Start witness monitoring for a convoy')
     .option('--epic <id>', 'Epic ID (for faster lookup)')
-    .option('--poll-interval <seconds>', 'Seconds between health checks', String(DEFAULT_WITNESS_CONFIG.pollInterval))
-    .option('--stale-threshold <minutes>', 'Minutes without checkpoint = stale', String(DEFAULT_WITNESS_CONFIG.staleThreshold))
-    .option('--escalation-threshold <minutes>', 'Minutes without checkpoint = escalate', String(DEFAULT_WITNESS_CONFIG.escalationThreshold))
-    .option('--termination-threshold <minutes>', 'Minutes without checkpoint = terminate', String(DEFAULT_WITNESS_CONFIG.terminationThreshold))
+    .option('--poll-interval <seconds>', 'Seconds between health checks')
+    .option('--stale-threshold <minutes>', 'Minutes without checkpoint = stale')
+    .option('--escalation-threshold <minutes>', 'Minutes without checkpoint = escalate')
+    .option('--termination-threshold <minutes>', 'Minutes without checkpoint = terminate')
+    .option('--detach', 'Run witness monitor as a detached background process')
     .action(async (convoyId: string, options) => {
       try {
-        // Verify convoy exists
         const loaded = await loadConvoy(convoyId, options.epic);
         if (!loaded) {
           console.error(`Convoy ${convoyId} not found`);
@@ -34,32 +79,51 @@ export function createWitnessCommand(): Command {
         }
 
         const { convoy } = loaded;
-
-        // Validate convoy is active
         if (convoy.status !== 'active') {
           console.error(`Cannot start witness for ${convoy.status} convoy`);
           console.error(`Convoy must be active (current: ${convoy.status})`);
           process.exit(1);
         }
 
-        // Build witness config
+        const defaults = await loadWitnessDefaults();
         const witnessConfig: WitnessConfig = {
           convoyId,
           epicId: options.epic || convoy.epicId,
-          pollInterval: parseInt(options.pollInterval, 10),
-          staleThreshold: parseInt(options.staleThreshold, 10),
-          escalationThreshold: parseInt(options.escalationThreshold, 10),
-          terminationThreshold: parseInt(options.terminationThreshold, 10),
+          pollInterval: parseNumberOption(options.pollInterval, defaults.pollInterval, 'poll-interval'),
+          staleThreshold: parseNumberOption(options.staleThreshold, defaults.staleThreshold, 'stale-threshold'),
+          escalationThreshold: parseNumberOption(options.escalationThreshold, defaults.escalationThreshold, 'escalation-threshold'),
+          terminationThreshold: parseNumberOption(options.terminationThreshold, defaults.terminationThreshold, 'termination-threshold'),
         };
+        validateWitnessThresholds(witnessConfig);
 
-        // Validate thresholds
-        if (witnessConfig.staleThreshold >= witnessConfig.escalationThreshold) {
-          console.error('Error: stale-threshold must be less than escalation-threshold');
-          process.exit(1);
+        if (options.detach) {
+          const cliEntry = process.argv[1];
+          if (!cliEntry) {
+            throw new Error('Unable to determine CLI entrypoint for detach mode.');
+          }
+          const child = spawn(process.execPath, [cliEntry, ...buildDetachedWitnessArgs(convoyId, witnessConfig)], {
+            detached: true,
+            stdio: 'ignore',
+            cwd: process.cwd(),
+            env: process.env,
+          });
+          child.unref();
+          console.log(`Detached witness started for convoy ${convoyId} (pid ${child.pid ?? 'unknown'}).`);
+          return;
         }
-        if (witnessConfig.escalationThreshold >= witnessConfig.terminationThreshold) {
-          console.error('Error: escalation-threshold must be less than termination-threshold');
-          process.exit(1);
+
+        const existing = await readWitnessRuntimeState(convoyId);
+        if (existing) {
+          try {
+            process.kill(existing.pid, 0);
+            console.error(`Witness already running for ${convoyId} (pid ${existing.pid}).`);
+            process.exit(1);
+          } catch (error) {
+            const err = error as NodeJS.ErrnoException;
+            if (err.code === 'ESRCH') {
+              await removeWitnessRuntimeState(convoyId);
+            }
+          }
         }
 
         console.log(`\nStarting witness for convoy: ${convoy.name}`);
@@ -73,9 +137,34 @@ export function createWitnessCommand(): Command {
         console.log(`  Termination threshold: ${witnessConfig.terminationThreshold} min`);
         console.log('');
 
-        // Start witness (blocks until convoy completes or witness is stopped)
-        await startWitness(witnessConfig);
+        await removeWitnessRuntimeState(convoyId);
+        await writeWitnessRuntimeState({
+          convoyId,
+          epicId: witnessConfig.epicId,
+          pid: process.pid,
+          startedAt: new Date().toISOString(),
+          config: {
+            pollInterval: witnessConfig.pollInterval,
+            staleThreshold: witnessConfig.staleThreshold,
+            escalationThreshold: witnessConfig.escalationThreshold,
+            terminationThreshold: witnessConfig.terminationThreshold,
+          },
+        });
 
+        const runningWitness = new Witness(witnessConfig);
+        const onTerminate = () => {
+          runningWitness.stop();
+        };
+        process.on('SIGTERM', onTerminate);
+        process.on('SIGINT', onTerminate);
+
+        try {
+          await runningWitness.monitor();
+        } finally {
+          process.off('SIGTERM', onTerminate);
+          process.off('SIGINT', onTerminate);
+          await removeWitnessRuntimeState(convoyId);
+        }
       } catch (error) {
         console.error('Error starting witness:', error);
         process.exit(1);
@@ -87,18 +176,14 @@ export function createWitnessCommand(): Command {
     .command('stop <convoyId>')
     .description('Stop witness monitoring for a convoy')
     .option('--epic <id>', 'Epic ID (for faster lookup)')
-    .action(async (convoyId: string, options) => {
+    .action(async (convoyId: string) => {
       try {
-        // Note: In practice, this would need to track running witness instances
-        // For Phase 3, this is a placeholder
-        console.log(`Stopping witness for convoy ${convoyId}...`);
-        console.log('');
-        console.log('Note: Witness stop requires process management not yet implemented.');
-        console.log('For now, use Ctrl+C to stop a running witness.');
-
-        // TODO: Implement witness process tracking and termination
-        // This would require storing witness PIDs or using Task API for termination
-
+        const result = await stopWitnessProcess(convoyId);
+        if (!result.stopped) {
+          console.error(result.message);
+          process.exit(1);
+        }
+        console.log(result.message);
       } catch (error) {
         console.error('Error stopping witness:', error);
         process.exit(1);
@@ -112,10 +197,7 @@ export function createWitnessCommand(): Command {
     .option('--epic <id>', 'Epic ID (for faster lookup)')
     .action(async (convoyId: string, options) => {
       try {
-        // Generate health report
         const report = await generateHealthReport(convoyId, options.epic);
-
-        // Load convoy for context
         const loaded = await loadConvoy(convoyId, options.epic);
         if (!loaded) {
           console.error(`Convoy ${convoyId} not found`);
@@ -123,10 +205,17 @@ export function createWitnessCommand(): Command {
         }
 
         const { convoy } = loaded;
+        const state = await readWitnessRuntimeState(convoyId);
 
         console.log(`\n=== Witness Health Report ===`);
         console.log(`Convoy: ${convoy.name} (${convoy.id})`);
         console.log(`Status: ${convoy.status}`);
+        if (state) {
+          console.log(`Witness PID: ${state.pid}`);
+          console.log(`Witness Started: ${state.startedAt}`);
+        } else {
+          console.log(`Witness PID: not running`);
+        }
         console.log('');
 
         console.log(`--- Worker Health ---`);
@@ -142,20 +231,6 @@ export function createWitnessCommand(): Command {
             console.log(`  - ${workerId}`);
           }
         }
-
-        // Provide action recommendations
-        console.log('');
-        if (report.stale > 0) {
-          console.log('⚠️  Recommendations:');
-          console.log('  - Check worker logs for blocked tasks');
-          console.log(`  - Consider starting witness: orch witness start ${convoyId}`);
-          console.log('  - Manually nudge stale workers if needed');
-        } else if (report.healthy > 0) {
-          console.log('✓ All workers are healthy');
-        } else if (report.completed === convoy.workers.size) {
-          console.log('✓ All workers have completed');
-        }
-
       } catch (error) {
         console.error('Error checking witness status:', error);
         process.exit(1);
@@ -173,25 +248,31 @@ export function createWitnessCommand(): Command {
     .option('--termination-threshold <minutes>', 'Set default termination threshold')
     .action(async (options) => {
       try {
-        // Show current defaults
-        if (options.show || Object.keys(options).length === 0) {
+        const current = await loadWitnessDefaults();
+        const hasUpdate =
+          Boolean(options.pollInterval) ||
+          Boolean(options.staleThreshold) ||
+          Boolean(options.escalationThreshold) ||
+          Boolean(options.terminationThreshold);
+
+        if (options.show || !hasUpdate) {
           console.log('\n=== Default Witness Configuration ===');
-          console.log(`Poll interval: ${DEFAULT_WITNESS_CONFIG.pollInterval}s`);
-          console.log(`Stale threshold: ${DEFAULT_WITNESS_CONFIG.staleThreshold} min`);
-          console.log(`Escalation threshold: ${DEFAULT_WITNESS_CONFIG.escalationThreshold} min`);
-          console.log(`Termination threshold: ${DEFAULT_WITNESS_CONFIG.terminationThreshold} min`);
-          console.log('');
-          console.log('Use --poll-interval, --stale-threshold, etc. to update defaults');
+          console.log(`Poll interval: ${current.pollInterval}s`);
+          console.log(`Stale threshold: ${current.staleThreshold} min`);
+          console.log(`Escalation threshold: ${current.escalationThreshold} min`);
+          console.log(`Termination threshold: ${current.terminationThreshold} min`);
           return;
         }
 
-        // Update configuration (Phase 4: would persist to config file)
-        console.log('Note: Configuration updates not yet persisted.');
-        console.log('For now, pass options to `orch witness start` command.');
-
-        // TODO: Implement config file persistence
-        // This would save to .orchestration/config.json or similar
-
+        const updated = {
+          pollInterval: parseNumberOption(options.pollInterval, current.pollInterval, 'poll-interval'),
+          staleThreshold: parseNumberOption(options.staleThreshold, current.staleThreshold, 'stale-threshold'),
+          escalationThreshold: parseNumberOption(options.escalationThreshold, current.escalationThreshold, 'escalation-threshold'),
+          terminationThreshold: parseNumberOption(options.terminationThreshold, current.terminationThreshold, 'termination-threshold'),
+        };
+        validateWitnessThresholds(updated);
+        await saveWitnessDefaults(updated);
+        console.log('Updated witness defaults.');
       } catch (error) {
         console.error('Error managing witness config:', error);
         process.exit(1);

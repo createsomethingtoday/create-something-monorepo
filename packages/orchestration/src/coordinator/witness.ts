@@ -48,6 +48,111 @@ export const DEFAULT_WITNESS_CONFIG: Omit<WitnessConfig, 'convoyId'> = {
   terminationThreshold: 60   // Terminate at 60 min
 };
 
+const WITNESS_CONFIG_PATH = path.join('.orchestration', 'config', 'witness.json');
+const WITNESS_RUNTIME_DIR = path.join('.orchestration', 'witness');
+
+export interface WitnessRuntimeState {
+  convoyId: string;
+  epicId?: string;
+  pid: number;
+  startedAt: string;
+  config: Omit<WitnessConfig, 'convoyId' | 'epicId'>;
+}
+
+function runtimePathForConvoy(convoyId: string, cwd: string = process.cwd()): string {
+  return path.join(cwd, WITNESS_RUNTIME_DIR, `${convoyId}.json`);
+}
+
+export function validateWitnessThresholds(config: {
+  staleThreshold: number;
+  escalationThreshold: number;
+  terminationThreshold: number;
+}): void {
+  if (config.staleThreshold >= config.escalationThreshold) {
+    throw new Error('stale-threshold must be less than escalation-threshold');
+  }
+  if (config.escalationThreshold >= config.terminationThreshold) {
+    throw new Error('escalation-threshold must be less than termination-threshold');
+  }
+}
+
+export async function loadWitnessDefaults(
+  cwd: string = process.cwd()
+): Promise<Omit<WitnessConfig, 'convoyId' | 'epicId'>> {
+  const file = path.join(cwd, WITNESS_CONFIG_PATH);
+  try {
+    const content = await fs.readFile(file, 'utf-8');
+    const parsed = JSON.parse(content) as Partial<Omit<WitnessConfig, 'convoyId' | 'epicId'>>;
+    return {
+      ...DEFAULT_WITNESS_CONFIG,
+      ...parsed,
+    };
+  } catch {
+    return { ...DEFAULT_WITNESS_CONFIG };
+  }
+}
+
+export async function saveWitnessDefaults(
+  defaults: Omit<WitnessConfig, 'convoyId' | 'epicId'>,
+  cwd: string = process.cwd()
+): Promise<void> {
+  validateWitnessThresholds(defaults);
+  const file = path.join(cwd, WITNESS_CONFIG_PATH);
+  await fs.mkdir(path.dirname(file), { recursive: true });
+  await fs.writeFile(file, JSON.stringify(defaults, null, 2), 'utf-8');
+}
+
+export async function readWitnessRuntimeState(
+  convoyId: string,
+  cwd: string = process.cwd()
+): Promise<WitnessRuntimeState | null> {
+  try {
+    const content = await fs.readFile(runtimePathForConvoy(convoyId, cwd), 'utf-8');
+    return JSON.parse(content) as WitnessRuntimeState;
+  } catch {
+    return null;
+  }
+}
+
+export async function writeWitnessRuntimeState(
+  state: WitnessRuntimeState,
+  cwd: string = process.cwd()
+): Promise<void> {
+  const file = runtimePathForConvoy(state.convoyId, cwd);
+  await fs.mkdir(path.dirname(file), { recursive: true });
+  await fs.writeFile(file, JSON.stringify(state, null, 2), 'utf-8');
+}
+
+export async function removeWitnessRuntimeState(
+  convoyId: string,
+  cwd: string = process.cwd()
+): Promise<void> {
+  await fs.rm(runtimePathForConvoy(convoyId, cwd), { force: true });
+}
+
+export async function stopWitnessProcess(
+  convoyId: string,
+  cwd: string = process.cwd()
+): Promise<{ stopped: boolean; message: string }> {
+  const state = await readWitnessRuntimeState(convoyId, cwd);
+  if (!state) {
+    return { stopped: false, message: `No running witness found for convoy ${convoyId}.` };
+  }
+
+  try {
+    process.kill(state.pid, 'SIGTERM');
+    await removeWitnessRuntimeState(convoyId, cwd);
+    return { stopped: true, message: `Sent SIGTERM to witness PID ${state.pid}.` };
+  } catch (error) {
+    const err = error as NodeJS.ErrnoException;
+    if (err.code === 'ESRCH') {
+      await removeWitnessRuntimeState(convoyId, cwd);
+      return { stopped: true, message: `Witness PID ${state.pid} was already stopped.` };
+    }
+    return { stopped: false, message: `Failed to stop witness PID ${state.pid}: ${err.message}` };
+  }
+}
+
 /**
  * Witness monitoring class.
  *
@@ -389,7 +494,8 @@ export async function generateHealthReport(
   };
 
   const now = Date.now();
-  const staleThresholdMs = DEFAULT_WITNESS_CONFIG.staleThreshold * 60 * 1000;
+  const defaults = await loadWitnessDefaults();
+  const staleThresholdMs = defaults.staleThreshold * 60 * 1000;
 
   for (const [issueId, workerId] of loaded.convoy.workers.entries()) {
     try {

@@ -94,7 +94,15 @@ pub use sync::{GitSync, SyncState, SyncResult, SyncError};
 pub use verify::{Verifier, VerificationResult, CheckType, VerifyError, format_evidence};
 pub use policy::{Complexity, score_agent, route_by_label, requires_verification};
 pub use models::{ModelsConfig, ModelConfig, ModelTier, ModelFamily};
-pub use orchestrator::{Orchestrator, OrchestratorConfig, AgentBackend, ExecutionResult, send_notification};
+pub use orchestrator::{
+    Orchestrator,
+    OrchestratorConfig,
+    AgentBackend,
+    ExecutionResult,
+    PolicyDecision,
+    PolicyGateArtifact,
+    send_notification,
+};
 pub use backfill::{Backfill, BackfillOptions, BackfillResult, BackfillError, BackfillAnalytics, CommitRecord, BeadsIssue, CorrelatedRecord};
 pub use config::{LoomConfig, RepoConfig, RepoInfo, ConfigError};
 pub use priority::{Priority as PriorityCalculator, PriorityResult, ScoringFactor, CriticalPath};

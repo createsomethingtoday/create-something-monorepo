@@ -204,6 +204,20 @@ The verifier checks:
 5. MCP protocol (`initialize`, `resources/list`) stays healthy
 6. Session-based routed call returns the expected `entityId/account_id`
 
+## Vault-Managed Secret Workflow
+
+Use Doppler as the source of truth for Hub and Notion bridge delivery credentials:
+
+```bash
+# Sync existing Doppler values to Cloudflare Worker secrets
+pnpm mcp:hub:vault:sync
+
+# Rotate delivery credentials, sync, deploy, and verify
+pnpm mcp:hub:rotate:production
+```
+
+Runbook: `docs/CS_HUB_VAULT_ROTATION_WORKFLOW.md`
+
 ## Partner Auth Surfaces
 
 Agency partner APIs (Half Dozen lane):

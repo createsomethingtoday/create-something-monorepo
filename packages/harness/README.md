@@ -1,6 +1,8 @@
 # @create-something/harness
 
-Autonomous agent orchestration with Beads-based human oversight.
+Autonomous agent orchestration with Loom-first coordination (legacy Beads adapter during migration).
+
+> Control plane policy: use Loom (`lm`) for coordination. This package still contains Beads-backed adapter code while migration is in progress.
 
 ## Philosophy
 
@@ -32,10 +34,10 @@ vim specs/my-project.md
 harness start specs/my-project.md
 
 # 3. Check progress when ready
-bd progress
+lm summary
 
 # 4. Redirect if needed
-bd update cs-xyz --priority P0
+lm claim lm-xyz
 
 # 5. Resume if paused
 harness resume --harness-id <id>

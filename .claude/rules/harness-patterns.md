@@ -9,13 +9,15 @@
 > - `loom_verify_plan` for plan validation
 > 
 > See `packages/loom/README.md` for the unified API.
+>
+> Backward-compatibility examples that mention `bd` are adapter-era syntax. Prefer `lm` equivalents for new workflows.
 
 Loom runs autonomous work sessions. Here's how to use it.
 
 ```bash
-bd work cs-xyz                   # Work on an existing issue
-bd work --create "Fix button"    # Create issue and start work
-bd work --spec specs/feature.md  # Parse spec into issues and work
+lm claim lm-xyz                  # Work on an existing issue
+lm create "Fix button"           # Create issue
+lm ready --ranked                # Pull next ready work
 
 # Or use Loom directly via MCP tools:
 loom_work "Fix button" agent="cursor"  # Quick start
@@ -30,8 +32,8 @@ Loom handles the rest: picking the right model, running tests, creating checkpoi
 
 | Situation | Do This |
 |-----------|---------|
-| Single issue to fix | `bd work cs-xyz` |
-| New feature idea | `bd work --create "Add dark mode toggle"` |
+| Single issue to fix | `lm claim <id>` |
+| New feature idea | `lm create "Add dark mode toggle"` |
 | Spec file ready | `bd work --spec specs/auth.yaml` |
 | Complex work (architecture, refactors) | `run harness in the background: ultrathink` |
 | Multi-file parallel work | Use [Gastown](./gastown-patterns.md) instead |

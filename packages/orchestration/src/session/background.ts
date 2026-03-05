@@ -267,27 +267,17 @@ async function tryDirectWitnessAPI(convoy: Convoy): Promise<TaskSpawnResult> {
 
 async function tryCLIWitnessWrapper(convoy: Convoy): Promise<TaskSpawnResult> {
   try {
-    const prompt = `Monitor convoy ${convoy.id} for worker health. Use orchestration witness pattern.`;
-
+    const epicArg = convoy.epicId ? ` --epic ${convoy.epicId}` : '';
     const { stdout } = await execAsync(
-      `claude --background "${prompt}"`,
+      `orch witness start ${convoy.id}${epicArg} --detach`,
       { timeout: 5000 }
     );
 
-    const taskIdMatch = stdout.match(/task-[a-zA-Z0-9]+/);
-
-    if (taskIdMatch) {
-      return {
-        method: 'cli-wrapper',
-        success: true,
-        taskId: taskIdMatch[0]
-      };
-    }
-
+    const pidMatch = stdout.match(/pid\s+(\d+)/i);
     return {
       method: 'cli-wrapper',
-      success: false,
-      error: 'No task ID returned'
+      success: true,
+      taskId: pidMatch?.[1]
     };
   } catch (error) {
     return {
@@ -312,7 +302,7 @@ ${issue.description || ''}
 
 Protocol:
 1. Check hook: gt hook (if Gastown installed)
-2. Read issue: bd show ${issue.id}
+2. Read issue: bd list --json | jq -r '.[] | select(.id=="${issue.id}")'
 3. Execute work autonomously
 4. Run tests
 5. Commit with issue reference

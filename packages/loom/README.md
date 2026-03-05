@@ -136,6 +136,9 @@ lm formula list
 #   feature        - Implement a new feature with planning and testing
 #   bug-fix        - Diagnose and fix a bug
 #   refactor       - Refactor code with DRY verification
+#   fleet-deploy   - Policy-gated fleet deployment workflow
+#   fleet-verify   - Fleet verification and evidence collection
+#   mcp-gate       - Scoped MCP quality gate execution
 
 # Show formula details
 lm formula show feature
