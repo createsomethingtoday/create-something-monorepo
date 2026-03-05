@@ -9,7 +9,7 @@ LEGACY_TEAM_WORKERS=(
   "cs-hub-lainy-legacy"
   "cs-hub-danny-legacy"
   "cs-hub-august-legacy"
-  "cs-hub-filip-legacy"
+  "cs-hub-fillip-legacy"
   "cs-hub-leah-legacy"
   "cs-hub-mj-legacy"
 )
@@ -60,7 +60,7 @@ legacy_trust_headers_override_env_for_worker() {
     "cs-hub-lainy-legacy") echo "CS_HUB_LAINY_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS" ;;
     "cs-hub-danny-legacy") echo "CS_HUB_DANNY_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS" ;;
     "cs-hub-august-legacy") echo "CS_HUB_AUGUST_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS" ;;
-    "cs-hub-filip-legacy") echo "CS_HUB_FILLIP_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS" ;;
+    "cs-hub-fillip-legacy"|"cs-hub-filip-legacy") echo "CS_HUB_FILLIP_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS" ;;
     "cs-hub-leah-legacy") echo "CS_HUB_LEAH_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS" ;;
     "cs-hub-mj-legacy") echo "CS_HUB_MJ_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS" ;;
     *)
@@ -74,7 +74,7 @@ trust_headers_for_legacy_worker() {
   local override_var_name
   override_var_name="$(legacy_trust_headers_override_env_for_worker "$worker")"
   local override_value="${!override_var_name:-}"
-  if [[ -z "$override_value" && "$worker" == "cs-hub-filip-legacy" ]]; then
+  if [[ -z "$override_value" && ( "$worker" == "cs-hub-fillip-legacy" || "$worker" == "cs-hub-filip-legacy" ) ]]; then
     override_var_name="CS_HUB_FILIP_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS"
     override_value="${!override_var_name:-}"
   fi
@@ -90,13 +90,30 @@ account_id_for_legacy_worker() {
     "cs-hub-lainy-legacy") echo "acct_lainy" ;;
     "cs-hub-danny-legacy") echo "acct_danny" ;;
     "cs-hub-august-legacy") echo "acct_august" ;;
-    "cs-hub-filip-legacy") echo "acct_fillip" ;;
+    "cs-hub-fillip-legacy"|"cs-hub-filip-legacy") echo "acct_fillip" ;;
     "cs-hub-leah-legacy") echo "acct_leah" ;;
     "cs-hub-mj-legacy") echo "acct_mj" ;;
     *)
       return 1
       ;;
   esac
+}
+
+resolve_legacy_deploy_worker_name() {
+  local worker="$1"
+  if [[ "$worker" != "cs-hub-fillip-legacy" ]]; then
+    echo "$worker"
+    return 0
+  fi
+  if pnpm exec wrangler secret list --name "cs-hub-fillip-legacy" >/dev/null 2>&1; then
+    echo "cs-hub-fillip-legacy"
+    return 0
+  fi
+  if pnpm exec wrangler secret list --name "cs-hub-filip-legacy" >/dev/null 2>&1; then
+    echo "cs-hub-filip-legacy"
+    return 0
+  fi
+  echo "cs-hub-fillip-legacy"
 }
 
 enabled_servers_for_legacy_worker() {
@@ -115,7 +132,11 @@ echo "legacy_trust_client_account_headers_default=$(
 )"
 
 for worker in "${LEGACY_TEAM_WORKERS[@]}"; do
+  deploy_worker="$(resolve_legacy_deploy_worker_name "$worker")"
   echo "===== DEPLOY ${worker} ====="
+  if [[ "$deploy_worker" != "$worker" ]]; then
+    echo "deploy_target=${deploy_worker} (legacy alias)"
+  fi
   account_id="$(account_id_for_legacy_worker "$worker")"
   enabled_servers="$(enabled_servers_for_legacy_worker "$worker")"
   trust_headers="$(trust_headers_for_legacy_worker "$worker")"
@@ -123,8 +144,8 @@ for worker in "${LEGACY_TEAM_WORKERS[@]}"; do
 
   pnpm exec wrangler deploy \
     --config "$TEAM_CONFIG" \
-    --name "$worker" \
-    --var "HUB_INSTANCE_ID:${worker}" \
+    --name "$deploy_worker" \
+    --var "HUB_INSTANCE_ID:${deploy_worker}" \
     --var "HUB_ACCOUNT_ID:${account_id}" \
     --var "HUB_ENABLED_BUNDLES:[]" \
     --var "HUB_ENABLED_SERVERS:${enabled_servers}" \

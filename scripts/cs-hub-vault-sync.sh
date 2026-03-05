@@ -48,7 +48,7 @@ hub_worker_for_team() {
     "LAINY") echo "cs-hub-lainy" ;;
     "DANNY") echo "cs-hub-danny" ;;
     "AUGUST") echo "cs-hub-august" ;;
-    "FILLIP") echo "cs-hub-filip" ;;
+    "FILLIP") echo "cs-hub-fillip" ;;
     "LEAH") echo "cs-hub-leah" ;;
     "MJ") echo "cs-hub-mj" ;;
     *)
@@ -121,7 +121,28 @@ put_secret() {
     return 0
   fi
 
-  printf '%s' "$value" | pnpm exec wrangler secret put "$key" --name "$worker" --config "$config"
+  local target_worker="$worker"
+  case "$worker" in
+    "cs-hub-fillip")
+      if pnpm exec wrangler secret list --name "cs-hub-fillip" --config "$config" >/dev/null 2>&1; then
+        target_worker="cs-hub-fillip"
+      elif pnpm exec wrangler secret list --name "cs-hub-filip" --config "$config" >/dev/null 2>&1; then
+        target_worker="cs-hub-filip"
+      fi
+      ;;
+    "cs-hub-fillip-notion-bridge")
+      if pnpm exec wrangler secret list --name "cs-hub-fillip-notion-bridge" --config "$config" >/dev/null 2>&1; then
+        target_worker="cs-hub-fillip-notion-bridge"
+      elif pnpm exec wrangler secret list --name "cs-hub-filip-notion-bridge" --config "$config" >/dev/null 2>&1; then
+        target_worker="cs-hub-filip-notion-bridge"
+      fi
+      ;;
+  esac
+
+  if [[ "$target_worker" != "$worker" ]]; then
+    echo "secret_target=${target_worker} (legacy alias for ${worker})"
+  fi
+  printf '%s' "$value" | pnpm exec wrangler secret put "$key" --name "$target_worker" --config "$config"
 }
 
 LOAD_FROM_DOPPLER="$(normalize_bool_or_fail "$LOAD_FROM_DOPPLER")"

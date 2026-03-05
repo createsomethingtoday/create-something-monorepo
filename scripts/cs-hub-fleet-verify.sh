@@ -8,7 +8,7 @@ WORKERS=(
   "cs-hub-lainy"
   "cs-hub-danny"
   "cs-hub-august"
-  "cs-hub-filip"
+  "cs-hub-fillip"
   "cs-hub-leah"
   "cs-hub-mj"
   "cs-mcp-hub-remote"
@@ -58,7 +58,7 @@ health_url_for_worker() {
     "cs-hub-lainy") echo "https://lainy.mcp.createsomething.agency/health" ;;
     "cs-hub-danny") echo "https://danny.mcp.createsomething.agency/health" ;;
     "cs-hub-august") echo "https://august.mcp.createsomething.agency/health" ;;
-    "cs-hub-filip") echo "https://fillip.mcp.createsomething.agency/health" ;;
+    "cs-hub-fillip"|"cs-hub-filip") echo "https://fillip.mcp.createsomething.agency/health" ;;
     "cs-hub-leah") echo "https://leah.mcp.createsomething.agency/health" ;;
     "cs-hub-mj") echo "https://mj.mcp.createsomething.agency/health" ;;
     "cs-mcp-hub-remote") echo "https://cs-mcp-hub-remote.createsomething.workers.dev/health" ;;
@@ -73,7 +73,7 @@ mcp_url_for_worker() {
     "cs-hub-lainy") echo "https://lainy.mcp.createsomething.agency/mcp" ;;
     "cs-hub-danny") echo "https://danny.mcp.createsomething.agency/mcp" ;;
     "cs-hub-august") echo "https://august.mcp.createsomething.agency/mcp" ;;
-    "cs-hub-filip") echo "https://fillip.mcp.createsomething.agency/mcp" ;;
+    "cs-hub-fillip"|"cs-hub-filip") echo "https://fillip.mcp.createsomething.agency/mcp" ;;
     "cs-hub-leah") echo "https://leah.mcp.createsomething.agency/mcp" ;;
     "cs-hub-mj") echo "https://mj.mcp.createsomething.agency/mcp" ;;
     "cs-mcp-hub-remote") echo "https://cs-mcp-hub-remote.createsomething.workers.dev/mcp" ;;
@@ -88,7 +88,7 @@ token_env_var_for_worker() {
     "cs-hub-lainy") echo "CS_HUB_LAINY_API_TOKEN" ;;
     "cs-hub-danny") echo "CS_HUB_DANNY_API_TOKEN" ;;
     "cs-hub-august") echo "CS_HUB_AUGUST_API_TOKEN" ;;
-    "cs-hub-filip") echo "CS_HUB_FILLIP_API_TOKEN" ;;
+    "cs-hub-fillip"|"cs-hub-filip") echo "CS_HUB_FILLIP_API_TOKEN" ;;
     "cs-hub-leah") echo "CS_HUB_LEAH_API_TOKEN" ;;
     "cs-hub-mj") echo "CS_HUB_MJ_API_TOKEN" ;;
     "cs-mcp-hub-remote") echo "CS_MCP_HUB_REMOTE_API_TOKEN" ;;
@@ -103,7 +103,7 @@ resolve_worker_token() {
   local token_var_name
   token_var_name="$(token_env_var_for_worker "$worker")"
   local token="${!token_var_name:-}"
-  if [[ -z "$token" && "$worker" == "cs-hub-filip" ]]; then
+  if [[ -z "$token" && ( "$worker" == "cs-hub-fillip" || "$worker" == "cs-hub-filip" ) ]]; then
     token="${CS_HUB_FILIP_API_TOKEN:-}"
   fi
   if [[ -z "$token" ]]; then
@@ -117,13 +117,30 @@ expected_account_id_for_worker() {
     "cs-hub-lainy") echo "acct_lainy" ;;
     "cs-hub-danny") echo "acct_danny" ;;
     "cs-hub-august") echo "acct_august" ;;
-    "cs-hub-filip") echo "acct_fillip" ;;
+    "cs-hub-fillip"|"cs-hub-filip") echo "acct_fillip" ;;
     "cs-hub-leah") echo "acct_leah" ;;
     "cs-hub-mj") echo "acct_mj" ;;
     *)
       return 1
       ;;
   esac
+}
+
+resolve_secret_check_worker_name() {
+  local worker="$1"
+  if [[ "$worker" != "cs-hub-fillip" ]]; then
+    echo "$worker"
+    return 0
+  fi
+  if pnpm exec wrangler secret list --name "cs-hub-fillip" >/dev/null 2>&1; then
+    echo "cs-hub-fillip"
+    return 0
+  fi
+  if pnpm exec wrangler secret list --name "cs-hub-filip" >/dev/null 2>&1; then
+    echo "cs-hub-filip"
+    return 0
+  fi
+  echo "cs-hub-fillip"
 }
 
 reset_discovery_preferences() {
@@ -665,7 +682,11 @@ cd "$HUB_DIR"
 echo "Checking required secrets on each worker..."
 for worker in "${WORKERS[@]}"; do
   echo "===== SECRETS ${worker} ====="
-  secrets_json="$(pnpm exec wrangler secret list --name "$worker")"
+  secret_check_worker="$(resolve_secret_check_worker_name "$worker")"
+  if [[ "$secret_check_worker" != "$worker" ]]; then
+    echo "secret_check_target=${secret_check_worker} (legacy alias)"
+  fi
+  secrets_json="$(pnpm exec wrangler secret list --name "$secret_check_worker")"
   for secret_name in "${REQUIRED_SECRETS[@]}"; do
     if echo "$secrets_json" | jq -e --arg name "$secret_name" '.[] | select(.name == $name)' >/dev/null; then
       echo "ok: ${secret_name}"
@@ -696,7 +717,7 @@ for worker in "${WORKERS[@]}"; do
     failures=1
   fi
 
-  if [[ "$worker" == "cs-hub-lainy" || "$worker" == "cs-hub-danny" || "$worker" == "cs-hub-august" || "$worker" == "cs-hub-filip" || "$worker" == "cs-hub-leah" ]]; then
+  if [[ "$worker" == "cs-hub-lainy" || "$worker" == "cs-hub-danny" || "$worker" == "cs-hub-august" || "$worker" == "cs-hub-fillip" || "$worker" == "cs-hub-leah" ]]; then
     enabled_sorted_csv="$(
       echo "$health_json" | jq -r '.enabled_servers // [] | sort | join(",")'
     )"
