@@ -190,7 +190,7 @@ Flags are passed through to gt sling:
     
     if (hasAgentFlag) {
       // v0.2.2+: Use --agent flag with configured agent alias
-      // User should have configured: gt config agent set haiku "claude --model haiku"
+      // User should have configured: gt config agent set codex "codex exec"
       cmd = ['gt', 'sling', issueId, target, '--agent', decision.model, ...extraFlags];
       console.log(`🔧 Using: --agent ${decision.model} (Gastown v0.2.2+)`);
     } else {
