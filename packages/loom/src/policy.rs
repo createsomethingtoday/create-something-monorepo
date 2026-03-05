@@ -13,12 +13,6 @@ use crate::agents::AgentProfile;
 // Create Something Agent Profiles
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Claude Code profile (still available for compatibility).
-/// Single source of truth: default_models.toml (via AgentProfile::claude_code())
-pub fn claude_code_profile() -> AgentProfile {
-    AgentProfile::claude_code()
-}
-
 /// Cursor is best for UI work - IDE integration helps with Svelte.
 /// Single source of truth: default_models.toml (via AgentProfile::cursor())
 pub fn cursor_profile() -> AgentProfile {
