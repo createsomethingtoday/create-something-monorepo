@@ -56,7 +56,7 @@ impl QualityTier {
             QualityTier::Basic => "gemini",     // Cheapest
             QualityTier::Standard => "codex",   // Balanced
             QualityTier::Premium => "cursor",   // IDE integration
-            QualityTier::Elite => "claude-code", // Best quality
+            QualityTier::Elite => "codex",       // Best quality default in this workspace
         }
     }
     
@@ -276,7 +276,7 @@ impl Formula {
             name: "feature".to_string(),
             description: "Implement a new feature with planning and testing".to_string(),
             quality: QualityTier::Standard,
-            agent: Some("claude-code".to_string()),
+            agent: Some("codex".to_string()),
             variables: vec![
                 Variable {
                     name: "feature_name".to_string(),
@@ -296,7 +296,7 @@ impl Formula {
                     id: "plan".to_string(),
                     title: "Plan the implementation".to_string(),
                     description: "Analyze requirements, identify files to modify, plan approach".to_string(),
-                    agent: Some("claude-code".to_string()), // Planning needs best agent
+                    agent: Some("codex".to_string()), // Planning defaults to Codex
                     labels: vec!["planning".to_string()],
                     prompt: Some("Plan the implementation of {{feature_name}} in {{package}}. Identify files to modify and approach.".to_string()),
                     verify: None,
@@ -329,7 +329,7 @@ impl Formula {
                     id: "review".to_string(),
                     title: "Self-review".to_string(),
                     description: "Review changes for quality, DRY violations, Canon compliance".to_string(),
-                    agent: Some("claude-code".to_string()),
+                    agent: Some("codex".to_string()),
                     labels: vec!["review".to_string()],
                     prompt: None,
                     verify: None,
@@ -362,7 +362,7 @@ impl Formula {
             name: "bug-fix".to_string(),
             description: "Diagnose and fix a bug".to_string(),
             quality: QualityTier::Standard,
-            agent: Some("claude-code".to_string()),
+            agent: Some("codex".to_string()),
             variables: vec![
                 Variable {
                     name: "bug_description".to_string(),
@@ -387,7 +387,7 @@ impl Formula {
                     id: "diagnose".to_string(),
                     title: "Diagnose root cause".to_string(),
                     description: "Find the root cause of the bug".to_string(),
-                    agent: Some("claude-code".to_string()), // Best for analysis
+                    agent: Some("codex".to_string()), // Default analysis agent
                     labels: vec!["debugging".to_string()],
                     prompt: None,
                     verify: None,
@@ -440,7 +440,7 @@ impl Formula {
             name: "refactor".to_string(),
             description: "Refactor code with DRY verification".to_string(),
             quality: QualityTier::Premium,
-            agent: Some("claude-code".to_string()),
+            agent: Some("codex".to_string()),
             variables: vec![
                 Variable {
                     name: "target".to_string(),
@@ -471,7 +471,7 @@ impl Formula {
                     id: "plan".to_string(),
                     title: "Plan refactoring".to_string(),
                     description: "Create safe refactoring plan".to_string(),
-                    agent: Some("claude-code".to_string()),
+                    agent: Some("codex".to_string()),
                     labels: vec!["planning".to_string()],
                     prompt: None,
                     verify: None,

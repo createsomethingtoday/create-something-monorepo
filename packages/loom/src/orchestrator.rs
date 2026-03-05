@@ -1,7 +1,7 @@
 //! Autonomous Orchestrator (Ralph Pattern)
 //!
 //! Spawns fresh agent contexts for each task, supporting multiple backends:
-//! - Claude Code CLI
+//! - Codex CLI
 //! - Gemini CLI
 //!
 //! Philosophy: Each task gets a fresh context. No pollution between tasks.
@@ -40,6 +40,8 @@ pub enum OrchestratorError {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AgentBackend {
+    /// Codex CLI (`codex exec`)
+    Codex,
     /// Claude Code CLI (`claude`)
     ClaudeCode,
     /// Gemini CLI with Pro model (`gemini -m gemini-2.5-pro`)
@@ -51,6 +53,7 @@ pub enum AgentBackend {
 impl AgentBackend {
     pub fn as_str(&self) -> &'static str {
         match self {
+            AgentBackend::Codex => "codex",
             AgentBackend::ClaudeCode => "claude-code",
             AgentBackend::GeminiPro => "gemini-pro",
             AgentBackend::GeminiFlash => "gemini-flash",
@@ -60,6 +63,7 @@ impl AgentBackend {
     /// Check if this backend is available on the system
     pub fn is_available(&self) -> bool {
         match self {
+            AgentBackend::Codex => which_exists("codex"),
             AgentBackend::ClaudeCode => which_exists("claude"),
             AgentBackend::GeminiPro | AgentBackend::GeminiFlash => which_exists("gemini"),
         }
@@ -67,13 +71,13 @@ impl AgentBackend {
     
     /// Get the best backend for a task based on complexity
     pub fn for_task(task: &Task) -> Self {
-        // Complex tasks → Claude Code or Gemini Pro
+        // Complex tasks → Codex or Gemini Pro
         // Mechanical tasks → Gemini Flash
         
         let title_lower = task.title.to_lowercase();
         let labels: Vec<&str> = task.labels.iter().map(|s| s.as_str()).collect();
         
-        // High complexity indicators → Claude Code
+        // High complexity indicators → Codex
         let complex_patterns = [
             "architect", "design", "refactor", "migrate",
             "integrate", "security", "performance", "optimize",
@@ -81,13 +85,13 @@ impl AgentBackend {
         
         for pattern in &complex_patterns {
             if title_lower.contains(pattern) {
-                return AgentBackend::ClaudeCode;
+                return AgentBackend::Codex;
             }
         }
         
-        // Architecture/planning labels → Claude Code
+        // Architecture/planning labels → Codex
         if labels.contains(&"architecture") || labels.contains(&"planning") {
-            return AgentBackend::ClaudeCode;
+            return AgentBackend::Codex;
         }
         
         // Mechanical tasks → Gemini Flash
@@ -102,9 +106,9 @@ impl AgentBackend {
             }
         }
         
-        // Priority-based: critical/high → Claude Code
+        // Priority-based: critical/high → Codex
         match task.priority {
-            Priority::Critical | Priority::High => AgentBackend::ClaudeCode,
+            Priority::Critical | Priority::High => AgentBackend::Codex,
             Priority::Normal => AgentBackend::GeminiPro,
             Priority::Low => AgentBackend::GeminiFlash,
         }
@@ -143,7 +147,7 @@ impl Default for OrchestratorConfig {
         Self {
             poll_interval_secs: 5,
             max_concurrent: 1, // Serial by default (safest)
-            backends: vec![AgentBackend::ClaudeCode, AgentBackend::GeminiPro, AgentBackend::GeminiFlash],
+            backends: vec![AgentBackend::Codex, AgentBackend::GeminiPro, AgentBackend::GeminiFlash],
             working_dir: PathBuf::from("."),
             notifications: true,
             max_task_runtime_secs: 600, // 10 minutes
@@ -427,6 +431,7 @@ impl Orchestrator {
         
         // Execute based on backend
         let result = match actual_backend {
+            AgentBackend::Codex => self.run_codex(&prompt),
             AgentBackend::ClaudeCode => self.run_claude_code(&prompt),
             AgentBackend::GeminiPro => self.run_gemini(&prompt, "gemini-2.5-pro"),
             AgentBackend::GeminiFlash => self.run_gemini(&prompt, "gemini-2.5-flash"),
@@ -481,6 +486,31 @@ impl Orchestrator {
                     policy_gate: Some(policy_gate),
                 })
             }
+        }
+    }
+    
+    /// Run Codex CLI
+    fn run_codex(&self, prompt: &str) -> Result<String, OrchestratorError> {
+        let output = Command::new("codex")
+            .args([
+                "exec",
+                "--sandbox",
+                "workspace-write",
+                "--ask-for-approval",
+                "never",
+                prompt,
+            ])
+            .current_dir(&self.config.working_dir)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .output()
+            .map_err(|e| OrchestratorError::ExecutionFailed(format!("Failed to run codex: {}", e)))?;
+        
+        if output.status.success() {
+            Ok(String::from_utf8_lossy(&output.stdout).to_string())
+        } else {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            Err(OrchestratorError::ExecutionFailed(format!("Codex failed: {}", stderr)))
         }
     }
     
@@ -627,7 +657,7 @@ mod tests {
     
     #[test]
     fn test_backend_selection() {
-        // Complex task → Claude Code
+        // Complex task → Codex
         let complex_task = Task {
             id: "test-1".to_string(),
             title: "Architect the authentication system".to_string(),
@@ -645,7 +675,7 @@ mod tests {
             created_at: Utc::now(),
             updated_at: Utc::now(),
         };
-        assert_eq!(AgentBackend::for_task(&complex_task), AgentBackend::ClaudeCode);
+        assert_eq!(AgentBackend::for_task(&complex_task), AgentBackend::Codex);
         
         // Mechanical task → Gemini Flash
         let simple_task = Task {

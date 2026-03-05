@@ -2,3 +2,4 @@
 {"timestamp_start":"2026-03-05T16:20:29Z","timestamp_end":"2026-03-05T16:20:29Z","command":"pnpm mcp:hub:rotate:production","status":"failure","exit_code":0}
 {"timestamp_start":"2026-03-05T16:20:58Z","timestamp_end":"2026-03-05T16:20:58Z","command":"pnpm mcp:hub:rotate:production","status":"failure","exit_code":1,"note":"corrected_exit_capture"}
 {"timestamp_start":"2026-03-05T16:21:05Z","timestamp_end":"2026-03-05T16:21:06Z","command":"pnpm partner:policy:conformance --strict","status":"success","exit_code":0}
+{"timestamp_start":"2026-03-05T16:21:41Z","timestamp_end":"2026-03-05T16:22:33Z","command":"pnpm mcp:hub:fleet:verify","status":"failure","exit_code":1}

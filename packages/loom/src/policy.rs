@@ -4,7 +4,7 @@
 //! - SvelteKit apps with Cloudflare Workers
 //! - Ground-verified completions
 //! - Canon compliance
-//! - Multi-agent with Claude Code as primary
+//! - Multi-agent with Codex as primary
 
 use crate::work::Task;
 use crate::agents::AgentProfile;
@@ -13,7 +13,7 @@ use crate::agents::AgentProfile;
 // Create Something Agent Profiles
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Claude Code is our primary agent - best for complex, multi-step work.
+/// Claude Code profile (still available for compatibility).
 /// Single source of truth: default_models.toml (via AgentProfile::claude_code())
 pub fn claude_code_profile() -> AgentProfile {
     AgentProfile::claude_code()
@@ -63,38 +63,39 @@ impl Complexity {
         let desc_lower = task.description.as_ref()
             .map(|d| d.to_lowercase())
             .unwrap_or_default();
+        let has = |term: &str| title_lower.contains(term) || desc_lower.contains(term);
         
         // Epic indicators
-        if title_lower.contains("refactor")
-            || title_lower.contains("migrate")
-            || title_lower.contains("redesign")
+        if has("refactor")
+            || has("migrate")
+            || has("redesign")
             || task.labels.iter().any(|l| l == "epic" || l == "architecture")
         {
             return Complexity::Epic;
         }
         
         // Complex indicators
-        if title_lower.contains("implement")
-            || title_lower.contains("feature")
-            || title_lower.contains("system")
+        if has("implement")
+            || has("feature")
+            || has("system")
             || task.labels.iter().any(|l| l == "feature" || l == "planning")
         {
             return Complexity::Complex;
         }
         
         // Moderate indicators
-        if title_lower.contains("add")
-            || title_lower.contains("update")
-            || title_lower.contains("improve")
+        if has("add")
+            || has("update")
+            || has("improve")
             || task.labels.len() > 2
         {
             return Complexity::Moderate;
         }
         
         // Simple indicators
-        if title_lower.contains("fix")
-            || title_lower.contains("bug")
-            || title_lower.contains("typo")
+        if has("fix")
+            || has("bug")
+            || has("typo")
         {
             return Complexity::Simple;
         }
@@ -109,8 +110,8 @@ impl Complexity {
             Complexity::Trivial => "gemini",      // Cheap for simple work
             Complexity::Simple => "codex",        // Good for quick fixes
             Complexity::Moderate => "cursor",     // IDE helps with multi-file
-            Complexity::Complex => "claude-code", // Best for complex work
-            Complexity::Epic => "claude-code",    // Only Claude for epics
+            Complexity::Complex => "codex",       // Default primary executor
+            Complexity::Epic => "codex",          // Default primary executor
         }
     }
     
@@ -137,37 +138,37 @@ pub fn route_by_label(label: &str) -> Option<&'static str> {
         // UI/Frontend -> Cursor (IDE integration)
         "ui" | "svelte" | "frontend" | "css" | "tailwind" | "components" => Some("cursor"),
         
-        // Planning/Architecture -> Claude Code (best reasoning)
-        "planning" | "architecture" | "design" | "prd" | "spec" => Some("claude-code"),
+        // Planning/Architecture -> Codex (primary orchestrator runtime)
+        "planning" | "architecture" | "design" | "prd" | "spec" => Some("codex"),
         
         // Backend/API -> Codex (fast, good for APIs)
         "api" | "backend" | "endpoint" | "rest" | "graphql" => Some("codex"),
         
-        // Cloudflare Workers -> Claude Code (understands edge patterns)
-        "workers" | "cloudflare" | "edge" | "durable-objects" => Some("claude-code"),
+        // Cloudflare Workers -> Codex (primary orchestrator runtime)
+        "workers" | "cloudflare" | "edge" | "durable-objects" => Some("codex"),
         
         // Testing -> Codex (strong at tests)
         "test" | "testing" | "vitest" | "playwright" => Some("codex"),
         
-        // Refactoring/DRY -> Claude Code (needs understanding)
-        "refactor" | "dry" | "cleanup" | "canon" => Some("claude-code"),
+        // Refactoring/DRY -> Codex
+        "refactor" | "dry" | "cleanup" | "canon" => Some("codex"),
         
-        // Documentation -> Claude Code (best writing)
-        "docs" | "readme" | "documentation" => Some("claude-code"),
+        // Documentation -> Codex
+        "docs" | "readme" | "documentation" => Some("codex"),
         
         // Large file analysis -> Gemini (1M context)
         "analysis" | "audit" | "review" | "large" => Some("gemini"),
         
-        // Debug -> Claude Code (best at diagnosis)
-        "debug" | "debugging" | "investigate" => Some("claude-code"),
+        // Debug -> Codex
+        "debug" | "debugging" | "investigate" => Some("codex"),
         
-        // Ground verification -> Claude Code (needs to run Ground)
-        "ground" | "verify" | "evidence" => Some("claude-code"),
+        // Ground verification -> Codex
+        "ground" | "verify" | "evidence" => Some("codex"),
         
         // Package-specific routing
         "io" | "agency" | "tend" => Some("cursor"),  // UI packages
-        "loom" => Some("claude-code"),     // Rust packages (ground already matched above)
-        "webflow-mcp" | "community-mcp" => Some("claude-code"),  // MCP servers
+        "loom" => Some("codex"),     // Rust packages (ground already matched above)
+        "webflow-mcp" | "community-mcp" => Some("codex"),  // MCP servers
         
         _ => None,
     }
@@ -282,7 +283,7 @@ pub fn cs_feature_formula() -> Formula {
         name: "cs-feature".to_string(),
         description: "Create Something feature implementation with Canon compliance".to_string(),
         quality: QualityTier::Premium,
-        agent: Some("claude-code".to_string()),
+        agent: Some("codex".to_string()),
         variables: vec![
             Variable {
                 name: "feature_name".to_string(),
@@ -313,7 +314,7 @@ pub fn cs_feature_formula() -> Formula {
                 id: "plan".to_string(),
                 title: "Plan implementation".to_string(),
                 description: "Design the feature following Canon standards".to_string(),
-                agent: Some("claude-code".to_string()),
+                agent: Some("codex".to_string()),
                 labels: vec!["planning".to_string()],
                 prompt: None,
                 verify: None,
@@ -452,7 +453,7 @@ pub fn cs_refactor_formula() -> Formula {
         name: "cs-refactor".to_string(),
         description: "Refactor with Ground verification (DRY, dead code, orphans)".to_string(),
         quality: QualityTier::Premium,
-        agent: Some("claude-code".to_string()),
+        agent: Some("codex".to_string()),
         variables: vec![
             Variable {
                 name: "target".to_string(),
@@ -483,7 +484,7 @@ pub fn cs_refactor_formula() -> Formula {
                 id: "plan".to_string(),
                 title: "Plan refactoring".to_string(),
                 description: "Design safe refactoring approach".to_string(),
-                agent: Some("claude-code".to_string()),
+                agent: Some("codex".to_string()),
                 labels: vec!["planning".to_string()],
                 prompt: None,
                 verify: None,
@@ -540,7 +541,7 @@ pub fn cs_worker_formula() -> Formula {
         name: "cs-worker".to_string(),
         description: "Create a Cloudflare Worker with proper environment handling".to_string(),
         quality: QualityTier::Premium,
-        agent: Some("claude-code".to_string()),
+        agent: Some("codex".to_string()),
         variables: vec![
             Variable {
                 name: "worker_name".to_string(),
@@ -571,7 +572,7 @@ pub fn cs_worker_formula() -> Formula {
                 id: "implement".to_string(),
                 title: "Implement handler".to_string(),
                 description: "Write the worker logic".to_string(),
-                agent: Some("claude-code".to_string()),
+                agent: Some("codex".to_string()),
                 labels: vec!["workers".to_string(), "coding".to_string()],
                 prompt: None,
                 verify: Some("pnpm check".to_string()),
@@ -610,7 +611,7 @@ pub fn cs_fleet_deploy_formula() -> Formula {
         name: "fleet-deploy".to_string(),
         description: "Policy-gated MCP hub fleet deployment with post-deploy verification".to_string(),
         quality: QualityTier::Premium,
-        agent: Some("claude-code".to_string()),
+        agent: Some("codex".to_string()),
         variables: vec![
             Variable {
                 name: "gate_profile".to_string(),
@@ -641,7 +642,7 @@ pub fn cs_fleet_deploy_formula() -> Formula {
                 id: "deploy-fleet".to_string(),
                 title: "Deploy fleet".to_string(),
                 description: "Deploy all configured fleet workers".to_string(),
-                agent: Some("claude-code".to_string()),
+                agent: Some("codex".to_string()),
                 labels: vec!["deploy".to_string(), "write-intent".to_string()],
                 prompt: Some("Deploy using gate_profile={{gate_profile}} rollout_mode={{rollout_mode}} and record any policy exceptions.".to_string()),
                 verify: Some("pnpm mcp:hub:fleet:deploy".to_string()),
@@ -832,9 +833,9 @@ mod tests {
     #[test]
     fn test_label_routing() {
         assert_eq!(route_by_label("svelte"), Some("cursor"));
-        assert_eq!(route_by_label("planning"), Some("claude-code"));
+        assert_eq!(route_by_label("planning"), Some("codex"));
         assert_eq!(route_by_label("testing"), Some("codex"));
-        assert_eq!(route_by_label("workers"), Some("claude-code"));
+        assert_eq!(route_by_label("workers"), Some("codex"));
     }
     
     #[test]
@@ -848,19 +849,19 @@ mod tests {
     
     #[test]
     fn test_scoring() {
-        let claude = claude_code_profile();
+        let codex = codex_profile();
         let cursor = cursor_profile();
         
-        // Planning task should favor Claude
+        // Planning task should favor Codex
         let planning_task = make_task("Plan authentication", vec!["planning", "architecture"]);
-        let claude_score = score_agent(&claude, &planning_task);
+        let codex_score = score_agent(&codex, &planning_task);
         let cursor_score = score_agent(&cursor, &planning_task);
-        assert!(claude_score > cursor_score, "Claude should score higher for planning");
+        assert!(codex_score > cursor_score, "Codex should score higher for planning");
         
         // UI task should favor Cursor
         let ui_task = make_task("Build login form", vec!["ui", "svelte"]);
-        let claude_score = score_agent(&claude, &ui_task);
+        let codex_score = score_agent(&codex, &ui_task);
         let cursor_score = score_agent(&cursor, &ui_task);
-        assert!(cursor_score > claude_score, "Cursor should score higher for UI");
+        assert!(cursor_score > codex_score, "Cursor should score higher for UI");
     }
 }
