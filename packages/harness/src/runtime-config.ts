@@ -22,7 +22,6 @@ import { homedir } from 'node:os';
  * Matches Gas Town's built-in agent presets.
  */
 export type RuntimeProvider =
-  | 'claude'   // Claude Code CLI
   | 'codex'    // OpenAI Codex CLI
   | 'gemini'   // Google Gemini
   | 'cursor'   // Cursor IDE agent
@@ -34,7 +33,7 @@ export type RuntimeProvider =
  * Prompt injection mode for runtimes without native hooks.
  */
 export type PromptMode =
-  | 'hook'     // Use native hooks (Claude)
+  | 'hook'     // Use native hooks when supported
   | 'prime'    // Send startup prime command
   | 'inject'   // Inject mail at startup
   | 'none';    // No prompt injection
@@ -89,49 +88,6 @@ export interface SettingsConfig {
  * Built-in agent presets matching Gas Town.
  */
 export const BUILT_IN_PRESETS: Record<string, AgentPreset> = {
-  claude: {
-    name: 'claude',
-    description: 'Claude Code CLI (default)',
-    runtime: {
-      provider: 'claude',
-      command: 'claude',
-      args: [],
-      promptMode: 'hook',
-    },
-  },
-  'claude-haiku': {
-    name: 'claude-haiku',
-    description: 'Claude Code with Haiku model (~$0.001)',
-    runtime: {
-      provider: 'claude',
-      command: 'claude',
-      args: ['--model', 'haiku'],
-      promptMode: 'hook',
-      model: 'haiku',
-    },
-  },
-  'claude-sonnet': {
-    name: 'claude-sonnet',
-    description: 'Claude Code with Sonnet model (~$0.01)',
-    runtime: {
-      provider: 'claude',
-      command: 'claude',
-      args: ['--model', 'sonnet'],
-      promptMode: 'hook',
-      model: 'sonnet',
-    },
-  },
-  'claude-opus': {
-    name: 'claude-opus',
-    description: 'Claude Code with Opus model (~$0.10)',
-    runtime: {
-      provider: 'claude',
-      command: 'claude',
-      args: ['--model', 'opus'],
-      promptMode: 'hook',
-      model: 'opus',
-    },
-  },
   codex: {
     name: 'codex',
     description: 'OpenAI Codex CLI',
