@@ -8,7 +8,6 @@ import {
 	insertPartnerAccessDelivery,
 	normalizePartnerSlug,
 	parseJsonArray,
-	parseJsonObject,
 	parseToolkitList,
 	postIdentityAdmin,
 	randomId,
@@ -109,6 +108,13 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 				...(body?.metadata && typeof body.metadata === 'object' && !Array.isArray(body.metadata) ? body.metadata : {}),
 			},
 		});
+		const endpoint = resolveMcpEndpoint(mintResponse.mcp_url, env.MCP_HUB_GATEWAY_BEARER);
+		const accessHeaders: Record<string, string> = {
+			'X-MCP-Session-Token': mintResponse.token,
+		};
+		if (endpoint.gatewayBearerToken) {
+			accessHeaders.Authorization = `Bearer ${endpoint.gatewayBearerToken}`;
+		}
 
 		const deliveryChannel = body?.delivery_channel ?? 'portal';
 		const recipient = body?.recipient?.trim() || client.owner_email || null;
@@ -129,6 +135,7 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 				toolkit_profile: mintResponse.toolkit_profile,
 				allowed_tool_prefixes: mintResponse.allowed_tool_prefixes,
 				session_token_preview: tokenPreview(mintResponse.token),
+				gateway_auth_mode: endpoint.gatewayBearerToken ? 'bearer_header' : 'none',
 				policy: mintResponse.policy,
 			},
 		});
@@ -139,10 +146,8 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			identity_account_id: mintResponse.account_id,
 			access_bundle: {
 				mode: 'strict',
-				mcp_url: mintResponse.mcp_url,
-				headers: {
-					'X-MCP-Session-Token': mintResponse.token,
-				},
+				mcp_url: endpoint.url,
+				headers: accessHeaders,
 				session: {
 					session_id: mintResponse.session_id,
 					expires_at: mintResponse.expires_at,
@@ -168,3 +173,37 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 		);
 	}
 };
+
+function resolveMcpEndpoint(
+	rawUrl: string,
+	explicitGatewayBearer: string | undefined,
+): { url: string; gatewayBearerToken: string | null } {
+	const gatewayBearerFromEnv = explicitGatewayBearer?.trim() || null;
+	if (gatewayBearerFromEnv) {
+		return {
+			url: rawUrl,
+			gatewayBearerToken: gatewayBearerFromEnv,
+		};
+	}
+
+	try {
+		const parsed = new URL(rawUrl);
+		const token = parsed.searchParams.get('token')?.trim() || null;
+		if (!token) {
+			return {
+				url: rawUrl,
+				gatewayBearerToken: null,
+			};
+		}
+		parsed.searchParams.delete('token');
+		return {
+			url: parsed.toString(),
+			gatewayBearerToken: token,
+		};
+	} catch {
+		return {
+			url: rawUrl,
+			gatewayBearerToken: null,
+		};
+	}
+}

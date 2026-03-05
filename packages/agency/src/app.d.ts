@@ -54,6 +54,8 @@ declare global {
 				IDENTITY_WORKER_URL?: string;
 				IDENTITY_WORKER_SECRET?: string;
 				IDENTITY_WORKER_ADMIN_API_KEY?: string;
+				// Optional gateway bearer injected into strict MCP access bundles.
+				MCP_HUB_GATEWAY_BEARER?: string;
 				// Partner auth portal
 				PARTNER_PORTAL_ADMIN_KEY?: string;
 				// Composio runtime (partner auth + toolkit status)

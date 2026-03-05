@@ -24,7 +24,7 @@ const HOP_BY_HOP_RESPONSE_HEADERS = new Set([
 ]);
 
 type AuthResult =
-  | { ok: true; accountId: string; authMode: "basic" | "api_key" }
+  | { ok: true; accountId: string; authMode: "basic" | "api_key"; allowClientSessionToken: boolean }
   | { ok: false; status: number; error: string };
 
 export default {
@@ -39,7 +39,7 @@ export default {
     }
 
     const auth = authenticate(request, env);
-    if (!auth.ok) {
+    if (auth.ok === false) {
       return new Response(JSON.stringify({ error: auth.error }), {
         status: auth.status,
         headers: UNAUTHORIZED_HEADERS,
@@ -63,8 +63,10 @@ export default {
     upstreamHeaders.set("x-hub-account-id", auth.accountId);
 
     const sessionToken =
-      normalizeValue(request.headers.get("x-mcp-session-token")) ??
-      resolveSessionToken(auth.accountId, env.BRIDGE_SESSION_TOKENS_JSON);
+      resolveSessionToken(auth.accountId, env.BRIDGE_SESSION_TOKENS_JSON) ??
+      (auth.allowClientSessionToken
+        ? normalizeValue(request.headers.get("x-mcp-session-token"))
+        : null);
     if (sessionToken) {
       upstreamHeaders.set("x-mcp-session-token", sessionToken);
     }
@@ -113,20 +115,26 @@ function authenticate(request: Request, env: Env): AuthResult {
       return { ok: false, status: 400, error: "Missing account id (use Basic username or default)." };
     }
 
-    return { ok: true, accountId, authMode: "basic" };
+    return { ok: true, accountId, authMode: "basic", allowClientSessionToken: true };
   }
 
   const providedApiKey = extractApiKey(request);
   const expectedApiKey = normalizeValue(env.BRIDGE_API_KEY);
   if (expectedApiKey && providedApiKey && timingSafeEqual(providedApiKey, expectedApiKey)) {
+    const defaultAccountId = normalizeValue(env.BRIDGE_DEFAULT_ACCOUNT_ID);
     const accountId =
+      defaultAccountId ??
       normalizeValue(request.headers.get("x-mcp-account-id")) ??
-      normalizeValue(request.headers.get("x-account-id")) ??
-      normalizeValue(env.BRIDGE_DEFAULT_ACCOUNT_ID);
+      normalizeValue(request.headers.get("x-account-id"));
     if (!accountId) {
       return { ok: false, status: 400, error: "Missing account id header and no default account is configured." };
     }
-    return { ok: true, accountId, authMode: "api_key" };
+    return {
+      ok: true,
+      accountId,
+      authMode: "api_key",
+      allowClientSessionToken: defaultAccountId === null,
+    };
   }
 
   return {

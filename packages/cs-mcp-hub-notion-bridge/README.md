@@ -24,7 +24,8 @@ At least one mode must be configured.
 - API key:
   - Send key via `x-api-key`, `api-key`, or `Authorization: Bearer <key>`
   - Must match `BRIDGE_API_KEY`
-  - Account id comes from `x-mcp-account-id`, `x-account-id`, or `BRIDGE_DEFAULT_ACCOUNT_ID`
+  - If `BRIDGE_DEFAULT_ACCOUNT_ID` is set, that account is always used.
+  - If no default account is set, account id comes from `x-mcp-account-id` or `x-account-id`.
 
 ## Required env
 
@@ -51,6 +52,7 @@ Route is defined in `wrangler.toml` via:
 - `BRIDGE_DEFAULT_ACCOUNT_ID` (fallback account id)
 - `BRIDGE_SESSION_TOKENS_JSON` (JSON account->session-token map, for `session_required` upstream)
   - Example: `{"acct_mj":"ms_tok_abc123"}`
+  - When mapped token exists for account, it takes precedence over client-provided `x-mcp-session-token`.
 
 ## Notion setup (Basic)
 

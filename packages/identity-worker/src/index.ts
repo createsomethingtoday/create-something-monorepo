@@ -646,10 +646,32 @@ async function handleAdminMintMcpSession(request: Request, env: Env): Promise<Re
 		return json({ error: 'not_found', message: 'MCP account not found', status: 404 }, 404);
 	}
 
-	const actor = normalizeActor(body.actor) ?? auth.actor;
+	const actor = normalizeActor(body.actor);
+	if (!actor) {
+		return json({ error: 'invalid_request', message: 'actor is required', status: 400 }, 400);
+	}
 	const consentRecordId = normalizeOptionalId(body.consent_record_id);
+	if (!consentRecordId) {
+		return json({ error: 'invalid_request', message: 'consent_record_id is required', status: 400 }, 400);
+	}
 	const consentGrantedAt = parseOptionalIsoTimestamp(body.consent_granted_at);
-	const consentPresent = Boolean(consentRecordId && consentGrantedAt);
+	if (!consentGrantedAt) {
+		return json({ error: 'invalid_request', message: 'consent_granted_at is required (ISO timestamp)', status: 400 }, 400);
+	}
+	const metadata = normalizeMetadata(body.metadata);
+	const clientSlug = normalizeOptionalId(readMetadataString(metadata, 'client_slug'));
+	const workspaceAccountId = normalizeAccountId(readMetadataString(metadata, 'workspace_account_id'));
+	if (!clientSlug || !workspaceAccountId) {
+		return json(
+			{
+				error: 'invalid_request',
+				message: 'metadata.client_slug and metadata.workspace_account_id are required',
+				status: 400,
+			},
+			400,
+		);
+	}
+	const consentPresent = true;
 
 	const policyDecision = await evaluatePartnerPolicyDecision(db, env, {
 		policyId: POLICY_PARTNER_AUTH_GOVERNANCE_ID,
@@ -667,7 +689,9 @@ async function handleAdminMintMcpSession(request: Request, env: Env): Promise<Re
 		metadata: {
 			consent_record_id: consentRecordId,
 			consent_granted_at: consentGrantedAt,
-			...normalizeMetadata(body.metadata),
+			client_slug: clientSlug,
+			workspace_account_id: workspaceAccountId,
+			...metadata,
 		},
 	});
 
@@ -2093,6 +2117,11 @@ function parseOptionalIsoTimestamp(raw: string | undefined): string | null {
 function normalizeMetadata(raw: unknown): Record<string, unknown> {
 	if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
 	return raw as Record<string, unknown>;
+}
+
+function readMetadataString(metadata: Record<string, unknown>, key: string): string | undefined {
+	const value = metadata[key];
+	return typeof value === 'string' ? value : undefined;
 }
 
 function clampLegacyKeyTtlSeconds(raw: number | undefined): number {
