@@ -557,6 +557,63 @@ check_compat_account_routing() {
   echo "compat_account_routing=ok account_id=${actual_account_id}"
 }
 
+check_clickup_discovery_for_worker() {
+  local worker="$1"
+  local mcp_url token_var_name token token_help
+  mcp_url="$(mcp_url_for_worker "$worker")"
+  token_var_name="$(token_env_var_for_worker "$worker")"
+  token="$(resolve_worker_token "$worker")"
+  token_help="${token_var_name} (or HUB_API_TOKEN)"
+
+  if [[ -z "$token" ]]; then
+    echo "missing API token for ${worker} (${token_help})"
+    failures=1
+    return
+  fi
+
+  local body_file status total first_proxy
+  body_file="$(mktemp)"
+  status="$(
+    curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
+      -H "Authorization: Bearer ${token}" \
+      -H "Content-Type: application/json" \
+      -H "Accept: application/json" \
+      --data '{"jsonrpc":"2.0","id":"fleet-verify-clickup-search","method":"tools/call","params":{"name":"hub_search_proxy_tools","arguments":{"serverName":"composio-toolkit-clickup","limit":5}}}'
+  )"
+  if [[ "$status" != "200" ]]; then
+    echo "clickup discovery search failed for ${worker} (status=${status})"
+    cat "$body_file"
+    failures=1
+    rm -f "$body_file"
+    return
+  fi
+
+  total="$(
+    jq -r '
+      .result.structuredContent.total //
+      (.result.content[0].text | fromjson? | .total) //
+      0
+    ' "$body_file"
+  )"
+  first_proxy="$(
+    jq -r '
+      .result.structuredContent.tools[0].proxyToolName //
+      (.result.content[0].text | fromjson? | .tools[0].proxyToolName) //
+      empty
+    ' "$body_file"
+  )"
+  rm -f "$body_file"
+
+  if [[ "$total" -lt 1 || -z "$first_proxy" ]]; then
+    echo "clickup discovery visibility failed for ${worker}"
+    echo "total=${total}"
+    failures=1
+    return
+  fi
+
+  echo "clickup_discovery=ok total=${total} first_proxy=${first_proxy}"
+}
+
 check_session_account_routing() {
   local worker="$1"
   local mcp_url token_var_name token token_help
@@ -812,6 +869,13 @@ echo "Checking MCP protocol endpoints (initialize + resources/list)..."
 for worker in "${WORKERS[@]}"; do
   echo "===== PROTOCOL ${worker} ====="
   check_mcp_protocol "$worker"
+  echo
+done
+
+echo "Checking ClickUp discovery visibility for Outerfields hubs..."
+for worker in "cs-hub-aaron-outerfields" "cs-hub-andre-outerfields"; do
+  echo "===== CLICKUP ${worker} ====="
+  check_clickup_discovery_for_worker "$worker"
   echo
 done
 

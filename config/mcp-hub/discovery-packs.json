@@ -17,6 +17,24 @@
         "composio-toolkit-zoom"
       ],
       "maxProxyTools": null
+    },
+    "outerfields-shared-auth-clickup": {
+      "description": "Outerfields discovery pack: shared auth core plus ClickUp.",
+      "mode": "compact",
+      "activeServers": [
+        "composio-toolkit-clickup",
+        "composio-toolkit-dropbox",
+        "composio-toolkit-gmail",
+        "composio-toolkit-googledrive",
+        "composio-toolkit-googlesheets",
+        "composio-toolkit-linkedin",
+        "composio-toolkit-notion",
+        "composio-toolkit-quickbooks",
+        "composio-toolkit-slack",
+        "composio-toolkit-youtube",
+        "composio-toolkit-zoom"
+      ],
+      "maxProxyTools": null
     }
   }
 }

@@ -161,6 +161,13 @@ target_server_csv_for_worker() {
   esac
 }
 
+discovery_shared_pack_for_worker() {
+  case "$1" in
+    "cs-hub-aaron-outerfields"|"cs-hub-andre-outerfields") echo "outerfields-shared-auth-clickup" ;;
+    *) echo "shared-auth-core" ;;
+  esac
+}
+
 csv_to_json_array() {
   local csv="$1"
   if [[ -z "${csv// }" ]]; then
@@ -253,6 +260,7 @@ echo "identity_mode=${HUB_DEPLOY_IDENTITY_MODE}"
 echo "compat_trust_client_account_headers=${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}"
 for worker in "${TEAM_WORKERS[@]}"; do
   deploy_worker="$(resolve_deploy_worker_name "$worker")"
+  discovery_shared_pack="$(discovery_shared_pack_for_worker "$worker")"
   echo "===== DEPLOY ${worker} ====="
   if [[ "$deploy_worker" != "$worker" ]]; then
     echo "deploy_target=${deploy_worker} (legacy alias)"
@@ -274,7 +282,7 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_CONNECT_TIMEOUT_MS:10000" \
       --var "HUB_LIST_TOOLS_TIMEOUT_MS:15000" \
       --var "HUB_CONNECT_CONCURRENCY:4" \
-      --var "HUB_DISCOVERY_SHARED_PACK:shared-auth-core"
+      --var "HUB_DISCOVERY_SHARED_PACK:${discovery_shared_pack}"
   else
     pnpm exec wrangler deploy \
       --config "$TEAM_CONFIG" \
@@ -291,7 +299,7 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_CONNECT_TIMEOUT_MS:10000" \
       --var "HUB_LIST_TOOLS_TIMEOUT_MS:15000" \
       --var "HUB_CONNECT_CONCURRENCY:4" \
-      --var "HUB_DISCOVERY_SHARED_PACK:shared-auth-core"
+      --var "HUB_DISCOVERY_SHARED_PACK:${discovery_shared_pack}"
   fi
   echo "----- NORMALIZE STATE ${worker} -----"
   normalize_worker_state "$worker"
