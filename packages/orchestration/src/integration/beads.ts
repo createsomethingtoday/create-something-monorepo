@@ -66,8 +66,8 @@ export async function updateIssueOnCompletion(
 ): Promise<void> {
   try {
     if (outcome === 'success') {
-      // Mark issue as completed
-      await execAsync(`bd update ${issueId} --status completed`);
+      // Canonical status closure for this repo is `closed`.
+      await execAsync(`bd close ${issueId}`);
     } else {
       // Add note about failure, keep status as in_progress
       const note = `Worker ${workerId} failed: ${outcome}${error ? `\nError: ${error}` : ''}`;

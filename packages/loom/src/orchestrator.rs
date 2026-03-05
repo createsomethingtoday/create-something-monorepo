@@ -323,6 +323,33 @@ impl Orchestrator {
             .cloned()
             .collect()
     }
+
+    fn write_policy_gate_artifact(&self, artifact: &PolicyGateArtifact) -> Result<(), OrchestratorError> {
+        let dir = self.config.working_dir.join(".loom").join("policy-gates");
+        fs::create_dir_all(&dir)?;
+        let file = dir.join(format!("{}.json", artifact.task_id));
+        let json = serde_json::to_string_pretty(artifact)
+            .map_err(|e| OrchestratorError::Config(format!("Failed to serialize policy gate artifact: {}", e)))?;
+        fs::write(file, json)?;
+        Ok(())
+    }
+
+    fn record_policy_gate_in_session(
+        &self,
+        loom: &mut Loom,
+        session_id: &str,
+        artifact: &PolicyGateArtifact,
+    ) -> Result<(), OrchestratorError> {
+        let mut session = loom
+            .get_session(session_id)?
+            .ok_or_else(|| OrchestratorError::Config(format!("Session not found: {}", session_id)))?;
+
+        let json = serde_json::to_string(artifact)
+            .map_err(|e| OrchestratorError::Config(format!("Failed to serialize policy gate context: {}", e)))?;
+        session.context.custom.insert("policy_gate".to_string(), json);
+        loom.update_context(session_id, &session.context)?;
+        Ok(())
+    }
     
     /// Generate a prompt for a task
     pub fn generate_prompt(&self, task: &Task, loom: &Loom) -> String {
@@ -374,6 +401,29 @@ impl Orchestrator {
         
         // Start a session
         let session = loom.start_session(&task.id, actual_backend.as_str())?;
+
+        // Evaluate and persist policy gate artifact before execution.
+        let policy_gate = evaluate_policy_gate(task, &self.config.working_dir);
+        self.write_policy_gate_artifact(&policy_gate)?;
+        self.record_policy_gate_in_session(loom, &session.id, &policy_gate)?;
+
+        if policy_gate.decision != PolicyDecision::Allow {
+            let _ = loom.end_session(&session.id, SessionStatus::Failed);
+            let ended_at = Utc::now();
+            let duration_secs = start_instant.elapsed().as_secs_f64();
+            let reason = policy_gate.reasons.join(" ");
+            return Ok(ExecutionResult {
+                task_id: task.id.clone(),
+                backend: actual_backend,
+                success: false,
+                output: String::new(),
+                duration_secs,
+                started_at,
+                ended_at,
+                error: Some(format!("Policy gate {:?}: {}", policy_gate.decision, reason)),
+                policy_gate: Some(policy_gate),
+            });
+        }
         
         // Execute based on backend
         let result = match actual_backend {
@@ -409,6 +459,7 @@ impl Orchestrator {
                     started_at,
                     ended_at,
                     error: None,
+                    policy_gate: Some(policy_gate),
                 })
             }
             Err(e) => {
@@ -427,6 +478,7 @@ impl Orchestrator {
                     started_at,
                     ended_at,
                     error: Some(e.to_string()),
+                    policy_gate: Some(policy_gate),
                 })
             }
         }
@@ -571,6 +623,7 @@ pub fn send_notification(title: &str, message: &str) -> Result<(), std::io::Erro
 mod tests {
     use super::*;
     use crate::Status;
+    use std::path::Path;
     
     #[test]
     fn test_backend_selection() {
@@ -621,5 +674,81 @@ mod tests {
         assert!(which_exists("which"));
         // Random garbage shouldn't exist
         assert!(!which_exists("nonexistent_binary_12345"));
+    }
+
+    #[test]
+    fn test_policy_gate_blocks_readonly_write_intent() {
+        let task = Task {
+            id: "test-3".to_string(),
+            title: "Deploy hub fleet".to_string(),
+            description: None,
+            status: Status::Ready,
+            priority: Priority::High,
+            issue_type: Default::default(),
+            labels: vec!["write-intent".to_string(), "role:public".to_string()],
+            parent: None,
+            agent: None,
+            evidence: None,
+            actual_cost_usd: None,
+            repo: None,
+            close_reason: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+
+        let artifact = evaluate_policy_gate(&task, Path::new("."));
+        assert_eq!(artifact.decision, PolicyDecision::Block);
+    }
+
+    #[test]
+    fn test_policy_gate_requires_human_review_for_write_intent() {
+        let task = Task {
+            id: "test-4".to_string(),
+            title: "Rollout config update".to_string(),
+            description: None,
+            status: Status::Ready,
+            priority: Priority::Normal,
+            issue_type: Default::default(),
+            labels: vec!["write-intent".to_string()],
+            parent: None,
+            agent: None,
+            evidence: None,
+            actual_cost_usd: None,
+            repo: None,
+            close_reason: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+
+        let artifact = evaluate_policy_gate(&task, Path::new("."));
+        assert_eq!(artifact.decision, PolicyDecision::RequireHumanReview);
+    }
+
+    #[test]
+    fn test_policy_gate_allows_reviewed_write_intent() {
+        let task = Task {
+            id: "test-5".to_string(),
+            title: "Deploy after approval".to_string(),
+            description: None,
+            status: Status::Ready,
+            priority: Priority::Normal,
+            issue_type: Default::default(),
+            labels: vec![
+                "write-intent".to_string(),
+                "human-review".to_string(),
+                "role:operator".to_string(),
+            ],
+            parent: None,
+            agent: None,
+            evidence: None,
+            actual_cost_usd: None,
+            repo: None,
+            close_reason: None,
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        };
+
+        let artifact = evaluate_policy_gate(&task, Path::new("."));
+        assert_eq!(artifact.decision, PolicyDecision::Allow);
     }
 }

@@ -123,7 +123,7 @@ ${issue.metadata?.seed?.acceptance?.length ? `## Acceptance Criteria\n\n${issue.
 3. Write status updates to your signal file:
    \`.orchestration/workers/${workerId}/status.json\`
 4. On completion:
-   - Update issue status: \`bd update ${issue.id} --status completed\`
+   - Update issue status: \`bd close ${issue.id}\`
    - Write final signal with outcome
 5. On error:
    - Write error signal
