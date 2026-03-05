@@ -224,9 +224,9 @@ max_concurrent = 3
 cost_per_1k = 0.001
 
 [routing]
-default = "claude"
+default = "codex"
 # Route by task labels:
-# labels = { ui = "cursor", api = "codex", planning = "claude" }
+# labels = { ui = "cursor", api = "codex", planning = "codex" }
 "#;
             std::fs::write(&dispatch_path, default_config)?;
         }

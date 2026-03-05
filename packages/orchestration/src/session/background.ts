@@ -45,7 +45,7 @@ interface TaskSpawnResult {
  *
  * Three-tier approach (Task API not yet exposed programmatically):
  * 1. Direct Task API (future)
- * 2. CLI wrapper via claude --background (interim)
+ * 2. CLI wrapper via codex exec (interim)
  * 3. Manual Ctrl+B (current)
  */
 export async function startBackgroundConvoy(config: BackgroundConfig): Promise<void> {
@@ -195,31 +195,29 @@ async function tryCLIWrapper(
   config: Partial<WorkerConfig>
 ): Promise<TaskSpawnResult> {
   try {
-    // Attempt to spawn via claude CLI with --background flag
-    // This is theoretical - the actual CLI may not support this yet
-
     const prompt = generateWorkerPrompt(convoy, issue, workerId);
+    const escapedPrompt = JSON.stringify(prompt);
 
-    const { stdout, stderr } = await execAsync(
-      `claude --background "${prompt}"`,
+    // Spawn detached Codex execution and return the PID as task id.
+    const { stdout } = await execAsync(
+      `nohup codex exec --sandbox workspace-write --ask-for-approval never ${escapedPrompt} >/dev/null 2>&1 & echo $!`,
       { timeout: 5000 }
     );
 
-    // Check if stdout contains a task ID
-    const taskIdMatch = stdout.match(/task-[a-zA-Z0-9]+/);
+    const pid = stdout.trim();
 
-    if (taskIdMatch) {
+    if (pid.length > 0) {
       return {
         method: 'cli-wrapper',
         success: true,
-        taskId: taskIdMatch[0]
+        taskId: pid
       };
     }
 
     return {
       method: 'cli-wrapper',
       success: false,
-      error: 'No task ID returned from CLI'
+      error: 'No background process PID returned from Codex CLI wrapper'
     };
   } catch (error) {
     return {

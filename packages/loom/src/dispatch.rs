@@ -378,12 +378,12 @@ max_concurrent = 3
 cost_per_1k = 0.008
 
 [routing]
-default = "claude"
+default = "codex"
 labels = { ui = "cursor" }
 "#;
         
         let config: DispatchConfig = toml::from_str(toml).unwrap();
         assert_eq!(config.agents.len(), 2);
-        assert_eq!(config.routing.default, Some("claude".to_string()));
+        assert_eq!(config.routing.default, Some("codex".to_string()));
     }
 }
