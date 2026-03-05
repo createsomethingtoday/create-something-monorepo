@@ -1,7 +1,7 @@
 /**
  * @create-something/harness
  *
- * Model Detector: Parses model information from Claude Code output.
+ * Model Detector: Parses model information from runtime output.
  *
  * Philosophy: Model detection enables adaptive behavior.
  * Different models have different strengths—the harness should adjust.
@@ -10,7 +10,7 @@
 import type { DetectedModel, ClaudeModelFamily } from './types.js';
 
 /**
- * Parse model information from Claude Code JSON output.
+ * Parse model information from runtime JSON/text output.
  */
 export function parseModelFromOutput(output: string): DetectedModel | null {
   // Try to parse JSON output
@@ -42,8 +42,8 @@ export function parseModelId(modelId: string): DetectedModel {
   // Determine family
   let family: ClaudeModelFamily = 'unknown';
   if (normalized.includes('opus')) family = 'opus';
-  else if (normalized.includes('sonnet')) family = 'sonnet';
-  else if (normalized.includes('haiku')) family = 'haiku';
+  else if (normalized.includes('sonnet') || normalized.includes('gpt-5') || normalized.includes('codex')) family = 'sonnet';
+  else if (normalized.includes('haiku') || normalized.includes('mini') || normalized.includes('nano')) family = 'haiku';
 
   // Extract version date (format: YYYYMMDD)
   const dateMatch = modelId.match(/(\d{8})/);
@@ -51,7 +51,7 @@ export function parseModelId(modelId: string): DetectedModel {
 
   // Check if it's a "latest" alias
   const isLatest =
-    modelId === 'opus' || modelId === 'sonnet' || modelId === 'haiku';
+    modelId === 'opus' || modelId === 'sonnet' || modelId === 'haiku' || modelId === 'codex';
 
   return {
     modelId: normalized,
@@ -66,14 +66,11 @@ export function parseModelId(modelId: string): DetectedModel {
  * Extract model info from unstructured text output.
  */
 function extractModelFromText(output: string): DetectedModel | null {
-  // Look for patterns like "model": "claude-..." or Model: claude-...
+  // Look for patterns like "model": "gpt-5..." or Model: codex
   const patterns = [
     /"model":\s*"([^"]+)"/i,
     /model:\s*(\S+)/i,
-    /claude-(?:opus|sonnet|haiku)-[\d]+-[\d]+/i,
-    /claude-opus-[\d\-]+/i,
-    /claude-sonnet-[\d\-]+/i,
-    /claude-haiku-[\d\-]+/i,
+    /(?:gpt|o\d|codex)[-\w.]*/i,
   ];
 
   for (const pattern of patterns) {

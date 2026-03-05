@@ -10,6 +10,7 @@ import type { BeadsIssue } from './types.js';
 // Agent server configuration
 const AGENT_SERVER_URL = process.env.AGENT_SERVER_URL || 'http://localhost:8000';
 const AGENT_API_KEY = process.env.AGENT_API_KEY || '';
+const DEFAULT_PYTHON_MODEL = process.env.HARNESS_DEFAULT_MODEL || 'gpt-5';
 
 /**
  * Result from Python agent execution
@@ -82,7 +83,7 @@ export async function runSessionWithPython(
 	const body = {
 		task,
 		agent_type: agentType,
-		model: options.model || 'claude-sonnet-4-20250514',
+		model: options.model || DEFAULT_PYTHON_MODEL,
 		skills,
 		max_turns: options.maxTurns || 50,
 		ralph_config: options.ralphConfig,
@@ -127,7 +128,7 @@ export async function runSessionWithPython(
 		console.error('Python agent session failed:', error);
 		return {
 			outcome: 'failed',
-			model: options.model || 'claude-sonnet-4-20250514',
+			model: options.model || DEFAULT_PYTHON_MODEL,
 			costUsd: 0,
 			numTurns: 0,
 			summary: `Agent execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`,

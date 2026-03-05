@@ -90,7 +90,7 @@ function collectWorkers(cwd: string): WorkerStatus[] {
                 id: status.workerId ?? dir,
                 issueId: status.issueId ?? null,
                 status: mapStatus(status.status),
-                runtime: status.runtime ?? 'claude',
+                runtime: status.runtime ?? 'codex',
                 startedAt: status.startedAt ?? null,
                 lastActivity: status.completedAt ?? status.updatedAt ?? null,
               });
