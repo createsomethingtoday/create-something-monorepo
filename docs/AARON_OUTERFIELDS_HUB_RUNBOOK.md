@@ -6,7 +6,7 @@ Production runbook for provisioning and operating the client-isolated Hub worker
 - MCP URL: `https://aaron-outerfields.mcp.createsomething.agency/mcp`
 - Health URL: `https://aaron-outerfields.mcp.createsomething.agency/health`
 - Account fallback ID: `acct_aaron_outerfields`
-- Rollout mode: discovery-first (`Outerfields + shared-auth-core + core`)
+- Rollout mode: discovery-first (`Outerfields + shared-auth-core + clickup + core`)
 
 References:
 
@@ -36,7 +36,7 @@ pnpm exec wrangler deploy \
   --var HUB_ENABLED_BUNDLES:agency,core \
   --var HUB_ENABLED_SERVERS:outerfields-pcn,composio-toolkit-clickup,composio-toolkit-dropbox,composio-toolkit-gmail,composio-toolkit-googledrive,composio-toolkit-googlesheets,composio-toolkit-linkedin,composio-toolkit-quickbooks,composio-toolkit-slack,composio-toolkit-youtube,composio-toolkit-zoom \
   --var HUB_DISCOVERY_MODE:compact \
-  --var HUB_DISCOVERY_SHARED_PACK:shared-auth-core \
+  --var HUB_DISCOVERY_SHARED_PACK:outerfields-shared-auth-clickup \
   --var HUB_DISCOVERY_DEFAULT_SERVERS:outerfields-pcn,create-something,three-tier-framework,playbook,composio-toolkit-clickup,composio-toolkit-dropbox,composio-toolkit-gmail,composio-toolkit-googledrive,composio-toolkit-googlesheets,composio-toolkit-linkedin,composio-toolkit-quickbooks,composio-toolkit-slack,composio-toolkit-youtube,composio-toolkit-zoom \
   --var BRAINTRUST_ENABLED:true \
   --keep-vars
@@ -192,7 +192,7 @@ Expected: trace records show account attribution under `acct_aaron_outerfields` 
 
 - MCP URL: `https://aaron-outerfields.mcp.createsomething.agency/mcp`
 - Auth: `Authorization: Bearer <HUB_API_TOKEN>`
-- Profile: discovery-first (`Outerfields + shared-auth-core + core`)
+- Profile: discovery-first (`Outerfields + shared-auth-core + clickup + core`)
 - Usage: broker-only flow
   1. `hub_search_proxy_tools`
   2. `hub_describe_proxy_tool`
