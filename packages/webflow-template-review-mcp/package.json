@@ -1,0 +1,38 @@
+{
+  "name": "@create-something/webflow-template-review-mcp",
+  "version": "1.0.0",
+  "description": "Webflow Template Review MCP Server — Airtable-scoped review workflows for template Assets and Asset Versions",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "webflow-template-review-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "mcp",
+    "webflow",
+    "airtable",
+    "template-review",
+    "model-context-protocol"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/webflow-template-review-mcp"
+  }
+}
