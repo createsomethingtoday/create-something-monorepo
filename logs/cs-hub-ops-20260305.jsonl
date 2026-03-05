@@ -3,3 +3,5 @@
 {"timestamp_start":"2026-03-05T16:20:58Z","timestamp_end":"2026-03-05T16:20:58Z","command":"pnpm mcp:hub:rotate:production","status":"failure","exit_code":1,"note":"corrected_exit_capture"}
 {"timestamp_start":"2026-03-05T16:21:05Z","timestamp_end":"2026-03-05T16:21:06Z","command":"pnpm partner:policy:conformance --strict","status":"success","exit_code":0}
 {"timestamp_start":"2026-03-05T16:21:41Z","timestamp_end":"2026-03-05T16:22:33Z","command":"pnpm mcp:hub:fleet:verify","status":"failure","exit_code":1}
+{"timestamp_start":"2026-03-05T16:54:36Z","timestamp_end":"2026-03-05T16:54:36Z","command":"doppler run -- env HUB_VERIFY_IDENTITY_MODE=compat pnpm mcp:hub:fleet:verify","status":"success","exit_code":0,"note":"post-rollout-validation"}
+{"timestamp_start":"2026-03-05T16:54:36Z","timestamp_end":"2026-03-05T16:54:36Z","command":"pnpm mcp:hub:rotate:production","status":"success","exit_code":0,"note":"project=mcp config=prd identity_mode=compat"}
