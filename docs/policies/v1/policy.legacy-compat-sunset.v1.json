@@ -4,12 +4,16 @@
   "status": "draft",
   "legacy_lane": {
     "enabled_via_separate_endpoints": true,
-    "strict_hubs_unchanged": true
+    "strict_hubs_unchanged": true,
+    "compat_trust_client_account_headers_default": false
   },
   "sunset_requirements": {
     "sunset_at_required": true,
     "max_sunset_days": 90,
     "legacy_mode": "compat"
+  },
+  "override_requirements": {
+    "requires_operator_exception_approval": true
   },
   "delivery_requirements": {
     "include_expiry": true,

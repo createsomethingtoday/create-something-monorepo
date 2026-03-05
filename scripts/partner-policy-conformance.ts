@@ -19,6 +19,10 @@ const POLICY_IDS = [
 	'policy.legacy-compat-sunset.v1',
 ];
 
+function asObject(value: unknown): Record<string, unknown> | null {
+	return value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+}
+
 function main(): void {
 	const args = parseCliArgs(process.argv.slice(2));
 	const strict = args.strict !== false;
@@ -56,23 +60,39 @@ function checkPolicyArtifacts(policyId: string): CheckResult {
 	if (!existsSync(jsonPath)) {
 		ok = false;
 		details.push(`Missing JSON artifact: ${jsonPath}`);
-	} else {
-		try {
-			const parsed = JSON.parse(readFileSync(jsonPath, 'utf8')) as Record<string, unknown>;
-			if (parsed.policy_id !== policyId) {
+		} else {
+			try {
+				const parsed = JSON.parse(readFileSync(jsonPath, 'utf8')) as Record<string, unknown>;
+				if (parsed.policy_id !== policyId) {
+					ok = false;
+					details.push(`policy_id mismatch in ${jsonPath}`);
+				}
+				const status = typeof parsed.status === 'string' ? parsed.status : null;
+				if (!status || (status !== 'draft' && status !== 'active' && status !== 'deprecated')) {
+					ok = false;
+					details.push(`status missing or invalid in ${jsonPath}`);
+				}
+				if (policyId === 'policy.legacy-compat-sunset.v1') {
+					const legacyLane = asObject(parsed.legacy_lane);
+					const overrideRequirements = asObject(parsed.override_requirements);
+					if (legacyLane?.compat_trust_client_account_headers_default !== false) {
+						ok = false;
+						details.push(
+							`Expected legacy_lane.compat_trust_client_account_headers_default=false in ${jsonPath}`,
+						);
+					}
+					if (overrideRequirements?.requires_operator_exception_approval !== true) {
+						ok = false;
+						details.push(
+							`Expected override_requirements.requires_operator_exception_approval=true in ${jsonPath}`,
+						);
+					}
+				}
+			} catch (error) {
 				ok = false;
-				details.push(`policy_id mismatch in ${jsonPath}`);
+				details.push(`Invalid JSON in ${jsonPath}: ${error instanceof Error ? error.message : String(error)}`);
 			}
-			const status = typeof parsed.status === 'string' ? parsed.status : null;
-			if (!status || (status !== 'draft' && status !== 'active' && status !== 'deprecated')) {
-				ok = false;
-				details.push(`status missing or invalid in ${jsonPath}`);
-			}
-		} catch (error) {
-			ok = false;
-			details.push(`Invalid JSON in ${jsonPath}: ${error instanceof Error ? error.message : String(error)}`);
 		}
-	}
 
 	if (!existsSync(mdPath)) {
 		ok = false;
@@ -86,6 +106,15 @@ function checkPolicyArtifacts(policyId: string): CheckResult {
 		if (!content.includes('## Policy Statements')) {
 			ok = false;
 			details.push(`Missing "## Policy Statements" section in ${mdPath}`);
+		}
+		if (
+			policyId === 'policy.legacy-compat-sunset.v1' &&
+			!content.includes('HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false')
+		) {
+			ok = false;
+			details.push(
+				`Expected compat header hardening statement (HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false) in ${mdPath}`,
+			);
 		}
 	}
 

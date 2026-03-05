@@ -40,6 +40,17 @@ SHARED_AUTH_SERVERS_CSV="$(join_by_comma "${SHARED_AUTH_SERVERS[@]}")"
 MJ_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},meetings"
 SESSION_RESOLVE_URL="${HUB_SESSION_RESOLVE_URL:-https://id.createsomething.space/v1/mcp/sessions/resolve}"
 SESSION_TOKEN_FOR_NORMALIZE="${MCP_SESSION_TOKEN:-}"
+COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS="${HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:-false}"
+
+case "${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS,,}" in
+  "true"|"false")
+    COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS="${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS,,}"
+    ;;
+  *)
+    echo "invalid HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}; expected true|false" >&2
+    exit 1
+    ;;
+esac
 
 account_id_for_worker() {
   case "$1" in
@@ -183,6 +194,7 @@ normalize_worker_state() {
 cd "$HUB_DIR"
 
 echo "Deploying team hub workers with hardened routing config..."
+echo "compat_trust_client_account_headers=${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}"
 for worker in "${TEAM_WORKERS[@]}"; do
   echo "===== DEPLOY ${worker} ====="
   account_id="$(account_id_for_worker "$worker")"
@@ -196,6 +208,7 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_ENABLED_SERVERS:${MJ_SERVERS_CSV}" \
       --var "HUB_DISABLED_SERVERS:outerfields-pcn,create-something,three-tier-framework,playbook,composio-toolkit-airtable,composio-toolkit-webflow,halfdozen-dm-mcp,loom-mcp,schedule-mcp,substrate-mcp" \
       --var "HUB_IDENTITY_MODE:session_required" \
+      --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
       --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
       --var "HUB_DISCOVERY_MODE:full" \
       --var "HUB_CONNECT_TIMEOUT_MS:10000" \
@@ -212,6 +225,7 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_ENABLED_SERVERS:${SHARED_AUTH_SERVERS_CSV}" \
       --var "HUB_DISABLED_SERVERS:[]" \
       --var "HUB_IDENTITY_MODE:session_required" \
+      --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
       --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
       --var "HUB_DISCOVERY_MODE:compact" \
       --var "HUB_CONNECT_TIMEOUT_MS:10000" \
@@ -231,6 +245,7 @@ for worker in "${CORE_WORKERS[@]}"; do
     --name "$worker" \
     --var "HUB_INSTANCE_ID:${worker}" \
     --var "HUB_IDENTITY_MODE:session_required" \
+    --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
     --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}"
   echo
 done

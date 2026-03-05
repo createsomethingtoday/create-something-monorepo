@@ -75,8 +75,19 @@ Legacy bridge lane:
 - Deploy legacy bridge workers separately with `HUB_IDENTITY_MODE=compat`.
 - Use:
   - `pnpm mcp:hub:legacy:deploy`
+- Deploy scripts set `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false` by default so compat workers do not trust client-supplied account headers.
 - Set explicit sunset:
   - `HUB_LEGACY_SUNSET_AT=YYYY-MM-DDTHH:MM:SSZ`
+- Optional exception control (operator-only):
+  - Global legacy default override: `HUB_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS_DEFAULT=true|false`
+  - Per-worker override env vars:
+    - `CS_HUB_LAINY_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS`
+    - `CS_HUB_DANNY_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS`
+    - `CS_HUB_AUGUST_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS`
+    - `CS_HUB_FILLIP_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS`
+      - Alias also accepted: `CS_HUB_FILIP_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS`
+    - `CS_HUB_LEAH_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS`
+    - `CS_HUB_MJ_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS`
 - Do not switch strict hubs into compat mode.
 
 State persistence:

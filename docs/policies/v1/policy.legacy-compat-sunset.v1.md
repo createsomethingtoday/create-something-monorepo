@@ -21,6 +21,7 @@ Govern temporary legacy compatibility lanes for bearer-only MCP hosts and force 
 3. Legacy endpoints MUST be deployed separately from strict hubs.
 4. Each legacy bundle MUST carry explicit expiry and sunset metadata in delivery outputs.
 5. Legacy exceptions MUST be removable by revocation and tracked in audit records.
+6. Compat workers MUST default `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false`; any per-client override requires explicit operator exception approval.
 
 ## Enforcement Surfaces
 
@@ -36,6 +37,7 @@ Govern temporary legacy compatibility lanes for bearer-only MCP hosts and force 
 
 - `mcp_policy_events` entries for sunset policy decisions
 - Legacy worker deploy vars include `HUB_LEGACY_SUNSET_AT`
+- Legacy worker deploy vars include `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false` by default
 - Delivery bundles include `sunset_at`
 
 ## Source Anchors

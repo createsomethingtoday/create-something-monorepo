@@ -153,6 +153,22 @@ pnpm mcp:hub:fleet:deploy
 pnpm mcp:hub:fleet:verify
 ```
 
+Fleet deploy defaults:
+
+- `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false` (defensive default; override only for controlled exceptions).
+
+Legacy compat lane deploy:
+
+```bash
+pnpm mcp:hub:legacy:deploy
+```
+
+Legacy deploy defaults:
+
+- `HUB_IDENTITY_MODE=compat`
+- `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false`
+- Per-worker override env vars are supported (`CS_HUB_*_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS=true|false`) for explicit exception cases.
+
 Team workers included in fleet deploy:
 
 - `cs-hub-lainy`
