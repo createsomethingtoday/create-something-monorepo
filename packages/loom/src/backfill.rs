@@ -489,13 +489,14 @@ impl Backfill {
         let author_lower = author.to_lowercase();
         let email_lower = email.to_lowercase();
         
-        if author_lower.contains("claude") || email_lower.contains("claude") {
-            return "claude-code".to_string();
-        }
         if author_lower.contains("cursor") || email_lower.contains("cursor") {
             return "cursor".to_string();
         }
         if author_lower.contains("codex") || email_lower.contains("codex") {
+            return "codex".to_string();
+        }
+        if author_lower.contains("claude") || email_lower.contains("claude") {
+            // Legacy Claude identities are normalized to Codex in Codex-only mode.
             return "codex".to_string();
         }
         if author_lower.contains("gemini") || email_lower.contains("gemini") {
@@ -772,7 +773,7 @@ mod tests {
     fn test_infer_agent() {
         let backfill = Backfill::new(BackfillOptions::default());
         
-        assert_eq!(backfill.infer_agent("Claude", "claude@ai.com"), "claude-code");
+        assert_eq!(backfill.infer_agent("Claude", "claude@ai.com"), "codex");
         assert_eq!(backfill.infer_agent("John Doe", "john@example.com"), "human");
     }
     

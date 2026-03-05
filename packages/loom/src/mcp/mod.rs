@@ -77,7 +77,7 @@ pub fn list_tools() -> Vec<ToolDefinition> {
             "type": "object",
             "properties": {
                 "title": { "type": "string", "description": "What you're working on" },
-                "agent": { "type": "string", "description": "Your agent ID (e.g., 'claude-code', 'cursor')" },
+                "agent": { "type": "string", "description": "Your agent ID (e.g., 'codex', 'cursor')" },
                 "priority": { "type": "string", "enum": ["critical", "high", "normal", "low"], "description": "Task priority (default: normal)" },
                 "labels": { "type": "array", "items": { "type": "string" }, "description": "Optional labels for routing/filtering" }
             },

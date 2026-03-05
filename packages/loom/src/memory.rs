@@ -783,7 +783,7 @@ mod tests {
         let mut store = MemoryStore::open(&db_path).unwrap();
         
         // Start session
-        let session = store.start_session("claude-code", "task-123", Some("/tmp"), Some("feature/test")).unwrap();
+        let session = store.start_session("codex", "task-123", Some("/tmp"), Some("feature/test")).unwrap();
         assert_eq!(session.status, SessionStatus::Active);
         
         // Update context
@@ -810,7 +810,7 @@ mod tests {
         let mut store = MemoryStore::open(&db_path).unwrap();
         
         // Start session
-        let session = store.start_session("claude-code", "task-456", None, None).unwrap();
+        let session = store.start_session("codex", "task-456", None, None).unwrap();
         
         // Create checkpoint
         store.create_checkpoint(&session.id, "Mid-work checkpoint", None).unwrap();

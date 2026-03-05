@@ -25,7 +25,7 @@
 //! - Priority (select) - critical, high, normal, low
 //! - Type (select) - feature, bug, task, epic, chore
 //! - Labels (multi_select) - Task labels
-//! - Agent (select) - claude-code, human, etc.
+//! - Agent (select) - codex, human, etc.
 //! - Repository (select) - Repository identifier
 //! - Created (date) - Task creation date
 //! - Updated (date) - Last update date
@@ -490,7 +490,7 @@ mod tests {
             status: Status::Ready,
             priority: Priority::High,
             issue_type: IssueType::Bug,
-            agent: Some("claude-code".to_string()),
+            agent: Some("codex".to_string()),
             labels: vec!["agency".to_string(), "bug".to_string()],
             parent: None,
             evidence: None,
@@ -539,7 +539,7 @@ mod tests {
         // Check agent
         assert_eq!(
             props["Agent"]["select"]["name"],
-            "claude-code"
+            "codex"
         );
         
         // Check cost

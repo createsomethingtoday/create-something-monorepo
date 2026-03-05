@@ -203,11 +203,6 @@ impl Loom {
             let default_config = r#"# Loom Dispatch Configuration
 # Defines which agents are available and how to route tasks
 
-[agents.claude]
-path = "claude"
-max_concurrent = 5
-cost_per_1k = 0.015
-
 [agents.cursor]
 path = "cursor"
 max_concurrent = 2
@@ -934,7 +929,7 @@ mod tests {
         let task = loom.create("Session test").unwrap();
         
         // Start session
-        let session = loom.start_session(&task.id, "claude-code").unwrap();
+        let session = loom.start_session(&task.id, "codex").unwrap();
         assert_eq!(session.status, SessionStatus::Active);
         
         // Create checkpoint

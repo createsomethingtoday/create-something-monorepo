@@ -367,15 +367,15 @@ mod tests {
     #[test]
     fn test_config_parse() {
         let toml = r#"
-[agents.claude]
-path = "claude"
-max_concurrent = 5
-cost_per_1k = 0.015
-
 [agents.codex]
 path = "codex"
 max_concurrent = 3
 cost_per_1k = 0.008
+
+[agents.cursor]
+path = "cursor"
+max_concurrent = 2
+cost_per_1k = 0.020
 
 [routing]
 default = "codex"

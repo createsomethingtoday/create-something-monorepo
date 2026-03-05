@@ -247,7 +247,7 @@ interface ReviewerSessionResult {
 }
 
 /**
- * Execute Claude Code for review.
+ * Execute Codex for review.
  */
 async function executeReviewerSession(
   promptFile: string,
@@ -264,13 +264,21 @@ async function executeReviewerSession(
     const prefilledResponse = '{\n  "outcome":';
     const fullPrompt = `${promptContent}\n\nAssistant: ${prefilledResponse}`;
 
-    // Don't use --output-format json - we want the raw model output for parsing
-    const args = ['-p', '--dangerously-skip-permissions', '--model', model];
+    // Keep reviewer model tier as context, but do not forward legacy Claude model ids.
+    if (model) {
+      console.warn(`[Reviewer] Ignoring legacy model selector '${model}' under Codex runtime.`);
+    }
+    const args = [
+      'exec',
+      '--sandbox', 'workspace-write',
+      '--ask-for-approval', 'never',
+      '-',
+    ];
 
     let output = '';
     let errorOutput = '';
 
-    const proc = spawn('claude', args, {
+    const proc = spawn('codex', args, {
       cwd: options.cwd,
       env: { ...process.env },
       stdio: ['pipe', 'pipe', 'pipe'],

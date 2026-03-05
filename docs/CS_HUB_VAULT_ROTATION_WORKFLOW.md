@@ -90,6 +90,8 @@ This rotates per-team Hub tokens, core hub token, and per-team Notion bridge bas
 pnpm mcp:hub:rotate:production
 ```
 
+Default identity mode for this workflow is `compat` (vault token-bound account mode, no minted session token required).
+
 Flags:
 
 ```bash
@@ -97,6 +99,7 @@ pnpm mcp:hub:rotate:production --dry-run
 pnpm mcp:hub:rotate:production --skip-deploy
 pnpm mcp:hub:rotate:production --skip-verify
 pnpm mcp:hub:rotate:production --no-bridges
+HUB_DEPLOY_IDENTITY_MODE=session_required pnpm mcp:hub:rotate:production
 ```
 
 Notes:
