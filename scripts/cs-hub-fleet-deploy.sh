@@ -10,6 +10,7 @@ TEAM_WORKERS=(
   "cs-hub-danny"
   "cs-hub-august"
   "cs-hub-aaron-outerfields"
+  "cs-hub-andre-outerfields"
   "cs-hub-fillip"
   "cs-hub-leah"
   "cs-hub-mj"
@@ -74,6 +75,7 @@ account_id_for_worker() {
     "cs-hub-danny") echo "acct_danny" ;;
     "cs-hub-august") echo "acct_august" ;;
     "cs-hub-aaron-outerfields") echo "acct_aaron_outerfields" ;;
+    "cs-hub-andre-outerfields") echo "acct_andre_outerfields" ;;
     "cs-hub-fillip"|"cs-hub-filip") echo "acct_fillip" ;;
     "cs-hub-leah") echo "acct_leah" ;;
     "cs-hub-mj") echo "acct_mj" ;;
@@ -89,6 +91,7 @@ mcp_url_for_worker() {
     "cs-hub-danny") echo "https://danny.mcp.createsomething.agency/mcp" ;;
     "cs-hub-august") echo "https://august.mcp.createsomething.agency/mcp" ;;
     "cs-hub-aaron-outerfields") echo "https://aaron-outerfields.mcp.createsomething.agency/mcp" ;;
+    "cs-hub-andre-outerfields") echo "https://andre-outerfields.mcp.createsomething.agency/mcp" ;;
     "cs-hub-fillip"|"cs-hub-filip") echo "https://fillip.mcp.createsomething.agency/mcp" ;;
     "cs-hub-leah") echo "https://leah.mcp.createsomething.agency/mcp" ;;
     "cs-hub-mj") echo "https://mj.mcp.createsomething.agency/mcp" ;;
@@ -104,6 +107,7 @@ token_env_var_for_worker() {
     "cs-hub-danny") echo "CS_HUB_DANNY_API_TOKEN" ;;
     "cs-hub-august") echo "CS_HUB_AUGUST_API_TOKEN" ;;
     "cs-hub-aaron-outerfields") echo "CS_HUB_AARON_OUTERFIELDS_API_TOKEN" ;;
+    "cs-hub-andre-outerfields") echo "CS_HUB_ANDRE_OUTERFIELDS_API_TOKEN" ;;
     "cs-hub-fillip"|"cs-hub-filip") echo "CS_HUB_FILLIP_API_TOKEN" ;;
     "cs-hub-leah") echo "CS_HUB_LEAH_API_TOKEN" ;;
     "cs-hub-mj") echo "CS_HUB_MJ_API_TOKEN" ;;

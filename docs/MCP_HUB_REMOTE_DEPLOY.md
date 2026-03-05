@@ -180,6 +180,7 @@ Run strict identity + routing checks across team hubs:
 # export CS_HUB_DANNY_API_TOKEN='...'
 # export CS_HUB_AUGUST_API_TOKEN='...'
 # export CS_HUB_AARON_OUTERFIELDS_API_TOKEN='...'
+# export CS_HUB_ANDRE_OUTERFIELDS_API_TOKEN='...'
 # export CS_HUB_FILLIP_API_TOKEN='...'
 # export CS_HUB_LEAH_API_TOKEN='...'
 # export CS_HUB_MJ_API_TOKEN='...'

@@ -13,6 +13,7 @@ TEAM_KEYS=(
   "DANNY"
   "AUGUST"
   "AARON_OUTERFIELDS"
+  "ANDRE_OUTERFIELDS"
   "FILLIP"
   "LEAH"
   "MJ"
@@ -59,6 +60,7 @@ hub_worker_for_team() {
     "DANNY") echo "cs-hub-danny" ;;
     "AUGUST") echo "cs-hub-august" ;;
     "AARON_OUTERFIELDS") echo "cs-hub-aaron-outerfields" ;;
+    "ANDRE_OUTERFIELDS") echo "cs-hub-andre-outerfields" ;;
     "FILLIP") echo "cs-hub-fillip" ;;
     "LEAH") echo "cs-hub-leah" ;;
     "MJ") echo "cs-hub-mj" ;;
