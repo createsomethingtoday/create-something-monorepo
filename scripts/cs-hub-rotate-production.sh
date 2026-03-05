@@ -19,6 +19,7 @@ INCLUDE_BRIDGES="${INCLUDE_BRIDGES:-true}"
 SKIP_DEPLOY="${SKIP_DEPLOY:-false}"
 SKIP_VERIFY="${SKIP_VERIFY:-false}"
 DRY_RUN="${DRY_RUN:-false}"
+HUB_DEPLOY_IDENTITY_MODE="${HUB_DEPLOY_IDENTITY_MODE:-compat}"
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -35,6 +36,19 @@ normalize_bool_or_fail() {
     true | false) echo "$lowered" ;;
     *)
       echo "invalid boolean: ${raw} (expected true|false)" >&2
+      exit 1
+      ;;
+  esac
+}
+
+normalize_identity_mode_or_fail() {
+  local raw="${1:-}"
+  local lowered
+  lowered="$(echo "$raw" | tr '[:upper:]' '[:lower:]')"
+  case "$lowered" in
+    compat | session_required) echo "$lowered" ;;
+    *)
+      echo "invalid identity mode: ${raw} (expected compat|session_required)" >&2
       exit 1
       ;;
   esac
@@ -124,6 +138,7 @@ INCLUDE_BRIDGES="$(normalize_bool_or_fail "$INCLUDE_BRIDGES")"
 SKIP_DEPLOY="$(normalize_bool_or_fail "$SKIP_DEPLOY")"
 SKIP_VERIFY="$(normalize_bool_or_fail "$SKIP_VERIFY")"
 DRY_RUN="$(normalize_bool_or_fail "$DRY_RUN")"
+HUB_DEPLOY_IDENTITY_MODE="$(normalize_identity_mode_or_fail "$HUB_DEPLOY_IDENTITY_MODE")"
 
 require_cmd doppler
 require_cmd openssl
@@ -173,7 +188,7 @@ DOPPLER_CONFIG="$DOPPLER_CONFIG" \
 bash "$SYNC_SCRIPT"
 
 if [[ "$SKIP_DEPLOY" == "false" ]]; then
-  if [[ "$DRY_RUN" == "false" ]]; then
+  if [[ "$DRY_RUN" == "false" && "$HUB_DEPLOY_IDENTITY_MODE" == "session_required" ]]; then
     if [[ -z "${MCP_SESSION_TOKEN:-}" && -z "${IDENTITY_ACCESS_TOKEN:-}" ]]; then
       if ! doppler_secret_exists "MCP_SESSION_TOKEN" && ! doppler_secret_exists "IDENTITY_ACCESS_TOKEN"; then
         echo "warning: MCP_SESSION_TOKEN or IDENTITY_ACCESS_TOKEN not found in env or Doppler config."
@@ -181,11 +196,11 @@ if [[ "$SKIP_DEPLOY" == "false" ]]; then
       fi
     fi
   fi
-  run_doppler_command "cd \"$ROOT_DIR\" && pnpm mcp:hub:fleet:deploy"
+  run_doppler_command "cd \"$ROOT_DIR\" && HUB_DEPLOY_IDENTITY_MODE=$HUB_DEPLOY_IDENTITY_MODE pnpm mcp:hub:fleet:deploy"
 fi
 
 if [[ "$SKIP_VERIFY" == "false" ]]; then
-  run_doppler_command "cd \"$ROOT_DIR\" && pnpm mcp:hub:fleet:verify"
+  run_doppler_command "cd \"$ROOT_DIR\" && HUB_VERIFY_IDENTITY_MODE=$HUB_DEPLOY_IDENTITY_MODE pnpm mcp:hub:fleet:verify"
 fi
 
 echo "rotation workflow complete."

@@ -63,9 +63,9 @@ notion_bridge_worker_for_team() {
     "LAINY") echo "cs-hub-lainy-notion-bridge" ;;
     "DANNY") echo "cs-hub-danny-notion-bridge" ;;
     "AUGUST") echo "cs-hub-august-notion-bridge" ;;
-    "FILLIP") echo "cs-hub-filip-notion-bridge" ;;
+    "FILLIP") echo "cs-hub-fillip-notion-bridge" ;;
     "LEAH") echo "cs-hub-leah-notion-bridge" ;;
-    "MJ") echo "cs-hub-mj-notion-bridge" ;;
+    "MJ") echo "cs-mcp-hub-notion-bridge" ;;
     *)
       echo "unknown team key: $1" >&2
       exit 1

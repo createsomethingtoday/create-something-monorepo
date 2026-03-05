@@ -41,8 +41,12 @@ MJ_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},meetings"
 SESSION_RESOLVE_URL="${HUB_SESSION_RESOLVE_URL:-https://id.createsomething.space/v1/mcp/sessions/resolve}"
 SESSION_TOKEN_FOR_NORMALIZE="${MCP_SESSION_TOKEN:-}"
 COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS="${HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:-false}"
+HUB_DEPLOY_IDENTITY_MODE="${HUB_DEPLOY_IDENTITY_MODE:-compat}"
 COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS="$(
   printf '%s' "$COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS" | tr '[:upper:]' '[:lower:]'
+)"
+HUB_DEPLOY_IDENTITY_MODE="$(
+  printf '%s' "$HUB_DEPLOY_IDENTITY_MODE" | tr '[:upper:]' '[:lower:]'
 )"
 
 case "${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" in
@@ -50,6 +54,15 @@ case "${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" in
     ;;
   *)
     echo "invalid HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}; expected true|false" >&2
+    exit 1
+    ;;
+esac
+
+case "${HUB_DEPLOY_IDENTITY_MODE}" in
+  "session_required"|"compat")
+    ;;
+  *)
+    echo "invalid HUB_DEPLOY_IDENTITY_MODE=${HUB_DEPLOY_IDENTITY_MODE}; expected session_required|compat" >&2
     exit 1
     ;;
 esac
@@ -139,7 +152,7 @@ normalize_worker_state() {
     echo "missing API token for state normalization on ${worker} (${token_help})"
     return 1
   fi
-  if [[ -z "$SESSION_TOKEN_FOR_NORMALIZE" ]]; then
+  if [[ "$HUB_DEPLOY_IDENTITY_MODE" == "session_required" && -z "$SESSION_TOKEN_FOR_NORMALIZE" ]]; then
     echo "missing MCP_SESSION_TOKEN for state normalization on ${worker} (strict identity mode)"
     return 1
   fi
@@ -166,13 +179,22 @@ normalize_worker_state() {
   )"
 
   response_body="$(mktemp)"
+  local curl_args=(
+    -sS
+    -o "$response_body"
+    -w "%{http_code}"
+    -X POST "$mcp_url"
+    -H "Authorization: Bearer ${token}"
+    -H "Content-Type: application/json"
+    -H "Accept: application/json"
+  )
+  if [[ -n "$SESSION_TOKEN_FOR_NORMALIZE" ]]; then
+    curl_args+=(-H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_NORMALIZE}")
+  fi
+  curl_args+=(--data "$payload")
+
   status="$(
-    curl -sS -o "$response_body" -w "%{http_code}" -X POST "$mcp_url" \
-      -H "Authorization: Bearer ${token}" \
-      -H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_NORMALIZE}" \
-      -H "Content-Type: application/json" \
-      -H "Accept: application/json" \
-      --data "$payload"
+    curl "${curl_args[@]}"
   )"
 
   if [[ "$status" != "200" ]]; then
@@ -196,6 +218,7 @@ normalize_worker_state() {
 cd "$HUB_DIR"
 
 echo "Deploying team hub workers with hardened routing config..."
+echo "identity_mode=${HUB_DEPLOY_IDENTITY_MODE}"
 echo "compat_trust_client_account_headers=${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}"
 for worker in "${TEAM_WORKERS[@]}"; do
   echo "===== DEPLOY ${worker} ====="
@@ -209,7 +232,7 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_ENABLED_BUNDLES:[]" \
       --var "HUB_ENABLED_SERVERS:${MJ_SERVERS_CSV}" \
       --var "HUB_DISABLED_SERVERS:outerfields-pcn,create-something,three-tier-framework,playbook,composio-toolkit-airtable,composio-toolkit-webflow,halfdozen-dm-mcp,loom-mcp,schedule-mcp,substrate-mcp" \
-      --var "HUB_IDENTITY_MODE:session_required" \
+      --var "HUB_IDENTITY_MODE:${HUB_DEPLOY_IDENTITY_MODE}" \
       --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
       --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
       --var "HUB_DISCOVERY_MODE:full" \
@@ -226,7 +249,7 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_ENABLED_BUNDLES:[]" \
       --var "HUB_ENABLED_SERVERS:${SHARED_AUTH_SERVERS_CSV}" \
       --var "HUB_DISABLED_SERVERS:[]" \
-      --var "HUB_IDENTITY_MODE:session_required" \
+      --var "HUB_IDENTITY_MODE:${HUB_DEPLOY_IDENTITY_MODE}" \
       --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
       --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
       --var "HUB_DISCOVERY_MODE:compact" \
@@ -246,7 +269,7 @@ for worker in "${CORE_WORKERS[@]}"; do
   pnpm exec wrangler deploy \
     --name "$worker" \
     --var "HUB_INSTANCE_ID:${worker}" \
-    --var "HUB_IDENTITY_MODE:session_required" \
+    --var "HUB_IDENTITY_MODE:${HUB_DEPLOY_IDENTITY_MODE}" \
     --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
     --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}"
   echo

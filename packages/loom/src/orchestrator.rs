@@ -42,8 +42,6 @@ pub enum OrchestratorError {
 pub enum AgentBackend {
     /// Codex CLI (`codex exec`)
     Codex,
-    /// Claude Code CLI (`claude`)
-    ClaudeCode,
     /// Gemini CLI with Pro model (`gemini -m gemini-2.5-pro`)
     GeminiPro,
     /// Gemini CLI with Flash model (`gemini -m gemini-2.5-flash`)
@@ -54,7 +52,6 @@ impl AgentBackend {
     pub fn as_str(&self) -> &'static str {
         match self {
             AgentBackend::Codex => "codex",
-            AgentBackend::ClaudeCode => "claude-code",
             AgentBackend::GeminiPro => "gemini-pro",
             AgentBackend::GeminiFlash => "gemini-flash",
         }
@@ -64,7 +61,6 @@ impl AgentBackend {
     pub fn is_available(&self) -> bool {
         match self {
             AgentBackend::Codex => which_exists("codex"),
-            AgentBackend::ClaudeCode => which_exists("claude"),
             AgentBackend::GeminiPro | AgentBackend::GeminiFlash => which_exists("gemini"),
         }
     }
@@ -432,7 +428,6 @@ impl Orchestrator {
         // Execute based on backend
         let result = match actual_backend {
             AgentBackend::Codex => self.run_codex(&prompt),
-            AgentBackend::ClaudeCode => self.run_claude_code(&prompt),
             AgentBackend::GeminiPro => self.run_gemini(&prompt, "gemini-2.5-pro"),
             AgentBackend::GeminiFlash => self.run_gemini(&prompt, "gemini-2.5-flash"),
         };
@@ -443,7 +438,7 @@ impl Orchestrator {
         match result {
             Ok(output) => {
                 // Process exited with code 0 — treat as success.
-                // The run_claude_code/run_gemini methods return Err on non-zero exit,
+                // Backend runners return Err on non-zero exit,
                 // so reaching Ok means the process succeeded.
                 let success = true;
 
@@ -511,26 +506,6 @@ impl Orchestrator {
         } else {
             let stderr = String::from_utf8_lossy(&output.stderr);
             Err(OrchestratorError::ExecutionFailed(format!("Codex failed: {}", stderr)))
-        }
-    }
-    
-    /// Run Claude Code CLI
-    fn run_claude_code(&self, prompt: &str) -> Result<String, OrchestratorError> {
-        // Claude Code: claude --print -p "prompt"
-        // --print outputs to stdout instead of interactive mode
-        let output = Command::new("claude")
-            .args(["--print", "-p", prompt])
-            .current_dir(&self.config.working_dir)
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .output()
-            .map_err(|e| OrchestratorError::ExecutionFailed(format!("Failed to run claude: {}", e)))?;
-        
-        if output.status.success() {
-            Ok(String::from_utf8_lossy(&output.stdout).to_string())
-        } else {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            Err(OrchestratorError::ExecutionFailed(format!("Claude Code failed: {}", stderr)))
         }
     }
     

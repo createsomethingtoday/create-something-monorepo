@@ -357,79 +357,13 @@ interface ClaudeCodeResult {
 }
 
 /**
- * Allowed tools for harness sessions.
- * Explicit allowlist is safer than --dangerously-skip-permissions.
+ * Execute Codex CLI with the given prompt.
  *
- * Tool categories:
- * - Core: Read, Write, Edit, Glob, Grep
- * - Bash patterns: git, pnpm, npm, node, tsc, wrangler, bd (beads)
- * - Orchestration: Task, TodoWrite
- * - CREATE Something: Skill (for canon-maintenance, deploy, audit-canon)
- * - MCP: Cloudflare tools for infrastructure
- *
- * NOTE: Uses Claude Code 2.1.0+ wildcard syntax: Bash(command *)
- * Supports wildcards at any position: Bash(* install), Bash(git * main)
- */
-const HARNESS_ALLOWED_TOOLS = [
-  // Core file operations
-  'Read',
-  'Write',
-  'Edit',
-  'Glob',
-  'Grep',
-  'NotebookEdit',
-
-  // Bash with wildcard patterns (Claude Code 2.1.0+)
-  'Bash(git *)',        // All git commands
-  'Bash(pnpm *)',       // All pnpm commands
-  'Bash(npm *)',        // All npm commands
-  'Bash(npx *)',        // All npx commands
-  'Bash(node *)',       // Node execution
-  'Bash(tsc *)',        // TypeScript compiler
-  'Bash(wrangler *)',   // Cloudflare deployments
-  'Bash(bd *)',         // Beads CLI
-  'Bash(bv *)',         // Beads viewer
-  'Bash(grep *)',       // Search
-  'Bash(find *)',       // File discovery
-  'Bash(ls *)',         // Listing
-  'Bash(cat *)',        // Reading
-  'Bash(mkdir *)',      // Directory creation
-  'Bash(rm *)',         // Removal
-  'Bash(cp *)',         // Copy
-  'Bash(mv *)',         // Move
-  'Bash(echo *)',       // Output
-  'Bash(test *)',       // Test conditions
-
-  // Orchestration
-  'Task',
-  'TodoWrite',
-  'WebFetch',
-  'WebSearch',
-
-  // CREATE Something skills
-  'Skill',             // Invokes canon-maintenance, deploy, audit-canon, etc.
-
-  // MCP Cloudflare tools (infrastructure)
-  'mcp__cloudflare__kv_get',
-  'mcp__cloudflare__kv_put',
-  'mcp__cloudflare__kv_list',
-  'mcp__cloudflare__d1_query',
-  'mcp__cloudflare__d1_list_databases',
-  'mcp__cloudflare__r2_list_objects',
-  'mcp__cloudflare__r2_get_object',
-  'mcp__cloudflare__r2_put_object',
-  'mcp__cloudflare__worker_list',
-  'mcp__cloudflare__worker_get',
-  'mcp__cloudflare__worker_deploy',
-].join(',');
-
-/**
- * Execute Claude Code CLI with the given prompt.
- *
- * Optimizations applied:
- * 1. --allowedTools instead of --dangerously-skip-permissions (safer)
- * 2. --max-turns 100 to prevent runaway sessions
- * 3. JSON output for structured result parsing
+ * Notes:
+ * 1. Runs non-interactively via `codex exec`.
+ * 2. Uses workspace-write sandbox with no approval prompts for autonomous harness sessions.
+ * 3. Legacy Claude-specific knobs (`maxTurns`, model families, resume IDs) are accepted
+ *    in the function signature for compatibility but are not forwarded directly.
  */
 async function executeClaudeCode(
   promptFile: string,
@@ -440,28 +374,28 @@ async function executeClaudeCode(
     const { readFile } = await import('node:fs/promises');
     const promptContent = await readFile(promptFile, 'utf-8');
 
-    // Build args with optimized flags
+    // Build Codex non-interactive args.
     const args = [
-      '-p',
-      '--allowedTools', HARNESS_ALLOWED_TOOLS,
-      '--max-turns', String(options.maxTurns || 100),
-      '--output-format', 'json',
+      'exec',
+      '--sandbox', 'workspace-write',
+      '--ask-for-approval', 'never',
+      '-',
     ];
 
-    // Add session resume if specified (for continuity within same epic)
+    // Keep backward-compatible options explicit, but don't forward unsupported
+    // Claude-specific flags to Codex CLI.
     if (options.resumeSessionId) {
-      args.push('--resume', options.resumeSessionId);
+      console.warn(`[Session] Codex runtime does not support Claude-style --resume IDs (${options.resumeSessionId.slice(0, 12)}...). Starting fresh session.`);
     }
 
-    // Add model selection if specified (cost optimization)
     if (options.model) {
-      args.push('--model', options.model);
+      console.warn(`[Session] Ignoring legacy model selector '${options.model}' under Codex runtime.`);
     }
 
     let output = '';
     let errorOutput = '';
 
-    const proc = spawn('claude', args, {
+    const proc = spawn('codex', args, {
       cwd: options.cwd,
       env: { ...process.env },
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -482,12 +416,7 @@ async function executeClaudeCode(
     }
 
     // Log that we've started (visible in harness output)
-    const maxTurnsLimit = options.maxTurns || 50;
-    if (options.resumeSessionId) {
-      console.log(`  [Session] Resuming session ${options.resumeSessionId.substring(0, 12)}..., max turns: ${maxTurnsLimit}`);
-    } else {
-      console.log(`  [Session] Prompt sent (${promptContent.length} chars), max turns: ${maxTurnsLimit}...`);
-    }
+    console.log(`  [Session] Prompt sent to Codex (${promptContent.length} chars)...`);
 
     const timeoutId = setTimeout(() => {
       proc.kill('SIGTERM');
