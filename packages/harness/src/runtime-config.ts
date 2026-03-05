@@ -22,7 +22,7 @@ import { homedir } from 'node:os';
  * Matches Gas Town's built-in agent presets.
  */
 export type RuntimeProvider =
-  | 'claude'   // Claude Code CLI (default)
+  | 'claude'   // Claude Code CLI
   | 'codex'    // OpenAI Codex CLI
   | 'gemini'   // Google Gemini
   | 'cursor'   // Cursor IDE agent
@@ -189,13 +189,13 @@ export const BUILT_IN_PRESETS: Record<string, AgentPreset> = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Default runtime configuration (Claude Code).
+ * Default runtime configuration (Codex CLI).
  */
 export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
-  provider: 'claude',
-  command: 'claude',
+  provider: 'codex',
+  command: 'codex',
   args: [],
-  promptMode: 'hook',
+  promptMode: 'prime',
 };
 
 /**
@@ -204,7 +204,7 @@ export const DEFAULT_RUNTIME_CONFIG: RuntimeConfig = {
 export const DEFAULT_SETTINGS_CONFIG: SettingsConfig = {
   runtime: DEFAULT_RUNTIME_CONFIG,
   agentPresets: BUILT_IN_PRESETS,
-  defaultAgent: 'claude',
+  defaultAgent: 'codex',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -259,7 +259,7 @@ function mergeWithDefaults(config: Partial<SettingsConfig>): SettingsConfig {
       ...BUILT_IN_PRESETS,
       ...config.agentPresets,
     },
-    defaultAgent: config.defaultAgent ?? 'claude',
+    defaultAgent: config.defaultAgent ?? 'codex',
   };
 }
 
@@ -344,4 +344,3 @@ export function formatRuntime(runtime: RuntimeConfig): string {
   const model = runtime.model ? ` (${runtime.model})` : '';
   return `${cmd.join(' ')}${model}`;
 }
-
