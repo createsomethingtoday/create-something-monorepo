@@ -69,6 +69,15 @@ Compatibility note:
 - Pass MCP session token in `X-MCP-Session-Token`.
 - `compat` mode keeps legacy fallback identity behavior and should be temporary.
 
+Legacy bridge lane:
+
+- Deploy legacy bridge workers separately with `HUB_IDENTITY_MODE=compat`.
+- Use:
+  - `pnpm mcp:hub:legacy:deploy`
+- Set explicit sunset:
+  - `HUB_LEGACY_SUNSET_AT=YYYY-MM-DDTHH:MM:SSZ`
+- Do not switch strict hubs into compat mode.
+
 State persistence:
 
 - Bind `HUB_STATE_KV` in `wrangler.toml` and set namespace IDs.
@@ -182,3 +191,38 @@ The verifier checks:
 4. Missing `X-MCP-Session-Token` is rejected
 5. MCP protocol (`initialize`, `resources/list`) stays healthy
 6. Session-based routed call returns the expected `entityId/account_id`
+
+## Partner Auth Surfaces
+
+Agency partner APIs (Half Dozen lane):
+
+- `POST /api/partners/half-dozen/clients/:slug/init`
+- `POST /api/partners/half-dozen/clients/:slug/toolkits/:toolkit/connect-link`
+- `GET /api/partners/half-dozen/clients/:slug/toolkits/status`
+- `POST /api/partners/half-dozen/clients/:slug/access/mint`
+- `POST /api/partners/half-dozen/clients/:slug/legacy-key/issue`
+
+Identity admin APIs (policy-gated):
+
+- `POST /v1/mcp/sessions/admin-mint`
+- `POST /v1/mcp/legacy-keys/issue`
+- `POST /v1/mcp/legacy-keys/:id/revoke`
+
+Policy telemetry fields for admin actions:
+
+- `decision`
+- `evaluation_path`
+- `policy_hash`
+- `fallback_used`
+- `actor`
+
+## Controlled Delivery Rule
+
+Never store raw bearer/session secrets in docs or checked-in artifacts.
+
+- Delivery channels:
+  - Partner portal response
+  - Secure note / managed vault
+  - Temporary operator handoff channels with audit logs
+- Persist only references/previews in databases:
+  - `session_id`, `legacy_key_id`, `key_prefix`, `expires_at`, `sunset_at`

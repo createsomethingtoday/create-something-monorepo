@@ -65,6 +65,9 @@ importers:
 
   packages/agency:
     dependencies:
+      '@composio/core':
+        specifier: ^0.6.3
+        version: 0.6.3(ws@8.19.0)(zod@4.3.6)
       '@create-something/canon':
         specifier: workspace:*
         version: link:../canon
@@ -1123,6 +1126,10 @@ importers:
         version: 5.9.3
 
   packages/identity-worker:
+    dependencies:
+      '@create-something/policy-os-engine':
+        specifier: workspace:*
+        version: link:../policy-os-engine
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20241127.0
@@ -13287,9 +13294,27 @@ snapshots:
     transitivePeerDependencies:
       - ws
 
+  '@composio/core@0.6.3(ws@8.19.0)(zod@4.3.6)':
+    dependencies:
+      '@composio/client': 0.1.0-alpha.56
+      '@composio/json-schema-to-zod': 0.1.20(zod@4.3.6)
+      '@types/json-schema': 7.0.15
+      chalk: 4.1.2
+      openai: 6.22.0(ws@8.19.0)(zod@4.3.6)
+      pusher-js: 8.4.0
+      semver: 7.7.3
+      zod: 4.3.6
+      zod-to-json-schema: 3.25.1(zod@4.3.6)
+    transitivePeerDependencies:
+      - ws
+
   '@composio/json-schema-to-zod@0.1.20(zod@3.25.76)':
     dependencies:
       zod: 3.25.76
+
+  '@composio/json-schema-to-zod@0.1.20(zod@4.3.6)':
+    dependencies:
+      zod: 4.3.6
 
   '@cspotcode/source-map-support@0.8.1':
     dependencies:

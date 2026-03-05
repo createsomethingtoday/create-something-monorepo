@@ -1,0 +1,27 @@
+{
+  "policy_id": "policy.partner-auth-governance.v1",
+  "version": 1,
+  "status": "draft",
+  "boundary": "partner_admin_mint",
+  "rollout_defaults": {
+    "mode": "legacy_enforce",
+    "canary_percent": 0
+  },
+  "required_inputs": [
+    "account_id",
+    "consent_record_id",
+    "consent_granted_at",
+    "actor"
+  ],
+  "required_telemetry_fields": [
+    "decision",
+    "evaluation_path",
+    "policy_hash",
+    "fallback_used",
+    "actor"
+  ],
+  "deny_conditions": [
+    "missing_consent_record",
+    "missing_actor"
+  ]
+}

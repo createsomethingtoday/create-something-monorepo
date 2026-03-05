@@ -38,6 +38,7 @@
 		"wrangler": "^4.64.0"
 	},
 	"dependencies": {
+		"@composio/core": "^0.6.3",
 		"@create-something/canon": "workspace:*",
 		"@create-something/tufte": "workspace:^",
 		"lucide-svelte": "^0.562.0",

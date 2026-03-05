@@ -33,6 +33,7 @@ import {
 	markCrossDomainTokenUsed,
 	countRecentCrossDomainTokens,
 	ensureMcpAccountForUserTenant,
+	findMcpAccountById,
 	createMcpSession,
 	findMcpSessionById,
 	findMcpSessionByTokenHash,
@@ -40,8 +41,21 @@ import {
 	revokeMcpSession,
 	revokeAllMcpSessionsForUser,
 	createMcpAuthEvent,
+	createMcpLegacyKey,
+	findMcpLegacyKeyById,
+	revokeMcpLegacyKey,
+	findMcpPolicyRollout,
+	createMcpPolicyRollout,
+	createMcpPolicyEvent,
 } from './db/queries';
 import { sendVerificationEmail, sendDeletionConfirmationEmail } from './services/email';
+import {
+	evaluateConstraintPolicyWithRollout,
+	type ConstraintDecisionType,
+	type ConstraintEvaluationInput,
+	type ConstraintPolicy,
+	type RolloutConfig,
+} from '@create-something/policy-os-engine';
 
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
@@ -95,6 +109,7 @@ async function route(request: Request, env: Env, method: string, path: string): 
 
 	// MCP session router endpoints
 	if (path === '/v1/mcp/sessions' && method === 'POST') return handleCreateMcpSession(request, env);
+	if (path === '/v1/mcp/sessions/admin-mint' && method === 'POST') return handleAdminMintMcpSession(request, env);
 	if (path === '/v1/mcp/sessions/resolve' && method === 'POST') return handleResolveMcpSession(request, env);
 	if (path.startsWith('/v1/mcp/sessions/') && method === 'GET') {
 		const sessionId = path.replace('/v1/mcp/sessions/', '');
@@ -103,6 +118,11 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	if (path.startsWith('/v1/mcp/sessions/') && path.endsWith('/revoke') && method === 'POST') {
 		const sessionId = path.replace('/v1/mcp/sessions/', '').replace('/revoke', '').replace(/\/$/, '');
 		if (sessionId) return handleRevokeMcpSession(request, env, sessionId);
+	}
+	if (path === '/v1/mcp/legacy-keys/issue' && method === 'POST') return handleIssueMcpLegacyKey(request, env);
+	if (path.startsWith('/v1/mcp/legacy-keys/') && path.endsWith('/revoke') && method === 'POST') {
+		const legacyKeyId = path.replace('/v1/mcp/legacy-keys/', '').replace('/revoke', '').replace(/\/$/, '');
+		if (legacyKeyId) return handleRevokeMcpLegacyKey(request, env, legacyKeyId);
 	}
 
 	// User endpoints (protected)
@@ -407,6 +427,125 @@ interface ResolveMcpSessionBody {
 	token?: string;
 }
 
+interface AdminMintMcpSessionBody {
+	account_id?: string;
+	host?: string;
+	toolkit_profile?: string[];
+	tool_mode?: McpToolMode;
+	ttl_seconds?: number;
+	consent_record_id?: string;
+	consent_granted_at?: string;
+	actor?: string;
+	metadata?: Record<string, unknown>;
+}
+
+interface IssueMcpLegacyKeyBody {
+	account_id?: string;
+	reason?: string;
+	exception_approved_by?: string;
+	ttl_seconds?: number;
+	sunset_at?: string;
+	actor?: string;
+	metadata?: Record<string, unknown>;
+}
+
+interface DecisionTelemetry {
+	policy_id: string;
+	decision: ConstraintDecisionType;
+	evaluation_path: 'legacy' | 'primary' | 'fallback';
+	policy_hash: string | null;
+	fallback_used: boolean;
+	rollout_mode: 'legacy_enforce' | 'shadow' | 'polar_enforce';
+	canary_percent: number;
+	reason: string;
+}
+
+const POLICY_PARTNER_AUTH_GOVERNANCE_ID = 'policy.partner-auth-governance.v1';
+const POLICY_MCP_CREDENTIAL_DELIVERY_ID = 'policy.mcp-credential-delivery.v1';
+const POLICY_LEGACY_COMPAT_SUNSET_ID = 'policy.legacy-compat-sunset.v1';
+const MIN_MCP_LEGACY_KEY_TTL_SECONDS = 3600;
+const DEFAULT_MCP_LEGACY_KEY_TTL_SECONDS = 7 * 24 * 60 * 60;
+const MAX_MCP_LEGACY_KEY_TTL_SECONDS = 30 * 24 * 60 * 60;
+const MAX_LEGACY_COMPAT_SUNSET_DAYS = 90;
+
+const MCP_PARTNER_POLICIES: Record<string, ConstraintPolicy> = {
+	[POLICY_PARTNER_AUTH_GOVERNANCE_ID]: {
+		id: POLICY_PARTNER_AUTH_GOVERNANCE_ID,
+		name: 'Partner auth governance',
+		description: 'Admin mint operations require explicit consent evidence and review traceability.',
+		rules: [
+			{
+				id: 'admin_mint_block_without_consent',
+				priority: 100,
+				when: { toolNames: ['mcp_session_admin_mint'], introspectionOk: false },
+				then: { decision: 'block', reason: 'Admin mint requires consent evidence.' },
+			},
+			{
+				id: 'admin_mint_review_gate',
+				priority: 90,
+				when: { toolNames: ['mcp_session_admin_mint'], hasHumanReviewStep: false },
+				then: { decision: 'require_human_review', reason: 'Admin mint requires human review trace.' },
+			},
+			{
+				id: 'admin_mint_allow_with_consent',
+				priority: 10,
+				when: { toolNames: ['mcp_session_admin_mint'], introspectionOk: true, hasHumanReviewStep: true },
+				then: { decision: 'allow', reason: 'Consent and review evidence present.' },
+			},
+		],
+	},
+	[POLICY_MCP_CREDENTIAL_DELIVERY_ID]: {
+		id: POLICY_MCP_CREDENTIAL_DELIVERY_ID,
+		name: 'MCP credential delivery',
+		description: 'Legacy credential issuance requires approved exception evidence and review.',
+		rules: [
+			{
+				id: 'legacy_issue_block_without_exception',
+				priority: 100,
+				when: { toolNames: ['mcp_legacy_key_issue'], introspectionOk: false },
+				then: { decision: 'block', reason: 'Legacy key issuance requires approved exception.' },
+			},
+			{
+				id: 'legacy_issue_review_gate',
+				priority: 90,
+				when: { toolNames: ['mcp_legacy_key_issue'], hasHumanReviewStep: false },
+				then: { decision: 'require_human_review', reason: 'Legacy key issuance requires review trace.' },
+			},
+			{
+				id: 'legacy_issue_allow',
+				priority: 10,
+				when: { toolNames: ['mcp_legacy_key_issue'], introspectionOk: true, hasHumanReviewStep: true },
+				then: { decision: 'allow', reason: 'Approved exception and review trace present.' },
+			},
+			{
+				id: 'legacy_revoke_allow',
+				priority: 5,
+				when: { toolNames: ['mcp_legacy_key_revoke'] },
+				then: { decision: 'allow', reason: 'Legacy key revocation is always permitted for operators.' },
+			},
+		],
+	},
+	[POLICY_LEGACY_COMPAT_SUNSET_ID]: {
+		id: POLICY_LEGACY_COMPAT_SUNSET_ID,
+		name: 'Legacy compatibility sunset',
+		description: 'Legacy bearer compatibility must have bounded sunset windows.',
+		rules: [
+			{
+				id: 'legacy_sunset_block_out_of_window',
+				priority: 100,
+				when: { toolNames: ['mcp_legacy_key_issue'], introspectionOk: false },
+				then: { decision: 'block', reason: 'Legacy key sunset window exceeds policy limits.' },
+			},
+			{
+				id: 'legacy_sunset_allow',
+				priority: 10,
+				when: { toolNames: ['mcp_legacy_key_issue'], introspectionOk: true },
+				then: { decision: 'allow', reason: 'Legacy key sunset window is policy compliant.' },
+			},
+		],
+	},
+};
+
 async function handleCreateMcpSession(request: Request, env: Env): Promise<Response> {
 	const db = env.DB;
 	const payload = await authenticate(request, env);
@@ -482,6 +621,357 @@ async function handleCreateMcpSession(request: Request, env: Env): Promise<Respo
 		toolkit_profile: toolkitProfile,
 		allowed_tool_prefixes: allowedToolPrefixes,
 		required_auth: [],
+	});
+}
+
+async function handleAdminMintMcpSession(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+	const auth = await authenticateApiKeyForPermissions(request, env, ['mcp_session_admin_mint']);
+	if (!auth.ok) {
+		return json({ error: auth.error, message: auth.message, status: auth.status }, auth.status);
+	}
+
+	const body = await parseJSON<AdminMintMcpSessionBody>(request);
+	if (!body) {
+		return json({ error: 'invalid_request', message: 'Invalid JSON', status: 400 }, 400);
+	}
+
+	const accountId = normalizeAccountId(body.account_id);
+	if (!accountId) {
+		return json({ error: 'invalid_request', message: 'account_id is required', status: 400 }, 400);
+	}
+
+	const account = await findMcpAccountById(db, accountId);
+	if (!account) {
+		return json({ error: 'not_found', message: 'MCP account not found', status: 404 }, 404);
+	}
+
+	const actor = normalizeActor(body.actor) ?? auth.actor;
+	const consentRecordId = normalizeOptionalId(body.consent_record_id);
+	const consentGrantedAt = parseOptionalIsoTimestamp(body.consent_granted_at);
+	const consentPresent = Boolean(consentRecordId && consentGrantedAt);
+
+	const policyDecision = await evaluatePartnerPolicyDecision(db, env, {
+		policyId: POLICY_PARTNER_AUTH_GOVERNANCE_ID,
+		actionName: 'mcp_session_admin_mint',
+		accountId: account.account_id,
+		actor,
+		input: {
+			toolName: 'mcp_session_admin_mint',
+			accountId: account.account_id,
+			readOnly: false,
+			hasWriteIntent: true,
+			hasHumanReviewStep: consentPresent,
+			introspectionOk: consentPresent,
+		},
+		metadata: {
+			consent_record_id: consentRecordId,
+			consent_granted_at: consentGrantedAt,
+			...normalizeMetadata(body.metadata),
+		},
+	});
+
+	if (policyDecision.decision !== 'allow') {
+		return json(
+			{
+				error: 'policy_denied',
+				message: policyDecision.reason,
+				status: policyDecisionHttpStatus(policyDecision.decision),
+				policy: policyDecision,
+			},
+			policyDecisionHttpStatus(policyDecision.decision),
+		);
+	}
+
+	const host = normalizeHostName(body.host);
+	const toolMode = normalizeToolMode(body.tool_mode);
+	const toolkitProfile = normalizeToolkitProfile(body.toolkit_profile);
+	const allowedToolPrefixes = buildAllowedToolPrefixes(toolkitProfile);
+	const ttlSeconds = clampTtlSeconds(body.ttl_seconds);
+
+	const sessionId = `ms_${generateUUID().replace(/-/g, '')}`;
+	const rawToken = `ms_tok_${generateSecureToken(48)}`;
+	const tokenHash = await hashToken(rawToken);
+	const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
+
+	await createMcpSession(db, {
+		id: sessionId,
+		user_id: account.user_id,
+		tenant_id: account.tenant_id,
+		account_id: account.account_id,
+		host,
+		tool_mode: toolMode,
+		toolkit_profile_json: JSON.stringify(toolkitProfile),
+		allowed_tool_prefixes_json: JSON.stringify(allowedToolPrefixes),
+		token_hash: tokenHash,
+		expires_at: expiresAt,
+	});
+
+	await replaceMcpSessionScopes(
+		db,
+		sessionId,
+		[
+			...toolkitProfile.map((toolkit) => ({ scope_type: 'toolkit' as const, scope_value: toolkit })),
+			...allowedToolPrefixes.map((prefix) => ({ scope_type: 'tool_prefix' as const, scope_value: prefix })),
+		],
+	);
+
+	await createMcpAuthEvent(db, {
+		id: generateUUID(),
+		session_id: sessionId,
+		user_id: account.user_id,
+		event_type: 'mcp_session_admin_minted',
+		event_data_json: JSON.stringify({
+			account_id: account.account_id,
+			tenant_id: account.tenant_id,
+			host,
+			tool_mode: toolMode,
+			toolkit_profile: toolkitProfile,
+			ttl_seconds: ttlSeconds,
+			actor,
+			policy: policyDecision,
+			consent_record_id: consentRecordId,
+			consent_granted_at: consentGrantedAt,
+		}),
+	});
+
+	return json({
+		session_id: sessionId,
+		token: rawToken,
+		mcp_url: env.MCP_HUB_URL ?? DEFAULT_MCP_HUB_URL,
+		expires_at: expiresAt,
+		account_id: account.account_id,
+		tenant_id: account.tenant_id,
+		user_id: account.user_id,
+		host,
+		tool_mode: toolMode,
+		toolkit_profile: toolkitProfile,
+		allowed_tool_prefixes: allowedToolPrefixes,
+		policy: policyDecision,
+	});
+}
+
+async function handleIssueMcpLegacyKey(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+	const auth = await authenticateApiKeyForPermissions(request, env, ['mcp_legacy_key_issue']);
+	if (!auth.ok) {
+		return json({ error: auth.error, message: auth.message, status: auth.status }, auth.status);
+	}
+
+	const body = await parseJSON<IssueMcpLegacyKeyBody>(request);
+	if (!body) {
+		return json({ error: 'invalid_request', message: 'Invalid JSON', status: 400 }, 400);
+	}
+
+	const accountId = normalizeAccountId(body.account_id);
+	if (!accountId) {
+		return json({ error: 'invalid_request', message: 'account_id is required', status: 400 }, 400);
+	}
+
+	const reason = (body.reason ?? '').trim();
+	if (!reason) {
+		return json({ error: 'invalid_request', message: 'reason is required', status: 400 }, 400);
+	}
+
+	const exceptionApprovedBy = normalizeOptionalId(body.exception_approved_by);
+	const sunsetAt = parseOptionalIsoTimestamp(body.sunset_at);
+	if (!sunsetAt) {
+		return json({ error: 'invalid_request', message: 'sunset_at is required (ISO timestamp)', status: 400 }, 400);
+	}
+
+	const account = await findMcpAccountById(db, accountId);
+	if (!account) {
+		return json({ error: 'not_found', message: 'MCP account not found', status: 404 }, 404);
+	}
+
+	const actor = normalizeActor(body.actor) ?? auth.actor;
+	const ttlSeconds = clampLegacyKeyTtlSeconds(body.ttl_seconds);
+	const expiresAtDate = new Date(Date.now() + ttlSeconds * 1000);
+	const expiresAt = expiresAtDate.toISOString();
+	const sunsetDate = new Date(sunsetAt);
+	const maxSunsetDate = new Date(Date.now() + MAX_LEGACY_COMPAT_SUNSET_DAYS * 24 * 60 * 60 * 1000);
+	const sunsetInBounds =
+		Number.isFinite(sunsetDate.getTime()) &&
+		sunsetDate.getTime() > Date.now() &&
+		sunsetDate.getTime() <= maxSunsetDate.getTime() &&
+		sunsetDate.getTime() >= expiresAtDate.getTime();
+
+	const credentialPolicyDecision = await evaluatePartnerPolicyDecision(db, env, {
+		policyId: POLICY_MCP_CREDENTIAL_DELIVERY_ID,
+		actionName: 'mcp_legacy_key_issue',
+		accountId: account.account_id,
+		actor,
+		input: {
+			toolName: 'mcp_legacy_key_issue',
+			accountId: account.account_id,
+			readOnly: false,
+			hasWriteIntent: true,
+			hasHumanReviewStep: Boolean(exceptionApprovedBy),
+			introspectionOk: Boolean(exceptionApprovedBy),
+		},
+		metadata: {
+			reason,
+			exception_approved_by: exceptionApprovedBy,
+			sunset_at: sunsetAt,
+			expires_at: expiresAt,
+			ttl_seconds: ttlSeconds,
+			...normalizeMetadata(body.metadata),
+		},
+	});
+
+	const sunsetPolicyDecision = await evaluatePartnerPolicyDecision(db, env, {
+		policyId: POLICY_LEGACY_COMPAT_SUNSET_ID,
+		actionName: 'mcp_legacy_key_issue',
+		accountId: account.account_id,
+		actor,
+		input: {
+			toolName: 'mcp_legacy_key_issue',
+			accountId: account.account_id,
+			readOnly: false,
+			hasWriteIntent: true,
+			hasHumanReviewStep: true,
+			introspectionOk: sunsetInBounds,
+		},
+		metadata: {
+			sunset_at: sunsetAt,
+			expires_at: expiresAt,
+			max_sunset_days: MAX_LEGACY_COMPAT_SUNSET_DAYS,
+			...normalizeMetadata(body.metadata),
+		},
+	});
+
+	const combinedDecision = combinePolicyDecisions([credentialPolicyDecision, sunsetPolicyDecision]);
+	if (combinedDecision.decision !== 'allow') {
+		return json(
+			{
+				error: 'policy_denied',
+				message: combinedDecision.reason,
+				status: policyDecisionHttpStatus(combinedDecision.decision),
+				policies: [credentialPolicyDecision, sunsetPolicyDecision],
+			},
+			policyDecisionHttpStatus(combinedDecision.decision),
+		);
+	}
+
+	const legacyKeyId = `mlk_${generateUUID().replace(/-/g, '')}`;
+	const rawLegacyKey = `mlk_${generateSecureToken(48)}`;
+	const keyHash = await hashToken(rawLegacyKey);
+	const keyPrefix = rawLegacyKey.slice(0, 14);
+
+	await createMcpLegacyKey(db, {
+		id: legacyKeyId,
+		key_hash: keyHash,
+		key_prefix: keyPrefix,
+		tenant_id: account.tenant_id,
+		account_id: account.account_id,
+		user_id: account.user_id,
+		reason,
+		exception_approved_by: exceptionApprovedBy,
+		issued_by: actor,
+		expires_at: expiresAt,
+		sunset_at: sunsetAt,
+	});
+
+	await createMcpAuthEvent(db, {
+		id: generateUUID(),
+		session_id: null,
+		user_id: account.user_id,
+		event_type: 'mcp_legacy_key_issued',
+		event_data_json: JSON.stringify({
+			legacy_key_id: legacyKeyId,
+			key_prefix: keyPrefix,
+			account_id: account.account_id,
+			tenant_id: account.tenant_id,
+			expires_at: expiresAt,
+			sunset_at: sunsetAt,
+			reason,
+			exception_approved_by: exceptionApprovedBy,
+			actor,
+			policies: [credentialPolicyDecision, sunsetPolicyDecision],
+		}),
+	});
+
+	return json({
+		legacy_key_id: legacyKeyId,
+		legacy_key: rawLegacyKey,
+		key_prefix: keyPrefix,
+		account_id: account.account_id,
+		tenant_id: account.tenant_id,
+		expires_at: expiresAt,
+		sunset_at: sunsetAt,
+		policies: [credentialPolicyDecision, sunsetPolicyDecision],
+	});
+}
+
+async function handleRevokeMcpLegacyKey(request: Request, env: Env, legacyKeyId: string): Promise<Response> {
+	const db = env.DB;
+	const auth = await authenticateApiKeyForPermissions(request, env, ['mcp_legacy_key_revoke']);
+	if (!auth.ok) {
+		return json({ error: auth.error, message: auth.message, status: auth.status }, auth.status);
+	}
+
+	const body = (await parseJSON<{ actor?: string; metadata?: Record<string, unknown> }>(request)) ?? {};
+	const existing = await findMcpLegacyKeyById(db, legacyKeyId);
+	if (!existing) {
+		return json({ error: 'not_found', message: 'Legacy key not found', status: 404 }, 404);
+	}
+
+	const actor = normalizeActor(body.actor) ?? auth.actor;
+	const policyDecision = await evaluatePartnerPolicyDecision(db, env, {
+		policyId: POLICY_MCP_CREDENTIAL_DELIVERY_ID,
+		actionName: 'mcp_legacy_key_revoke',
+		accountId: existing.account_id,
+		actor,
+		input: {
+			toolName: 'mcp_legacy_key_revoke',
+			accountId: existing.account_id,
+			readOnly: false,
+			hasWriteIntent: true,
+			hasHumanReviewStep: true,
+			introspectionOk: true,
+		},
+		metadata: {
+			legacy_key_id: existing.id,
+			tenant_id: existing.tenant_id,
+			...normalizeMetadata(body.metadata),
+		},
+	});
+
+	if (policyDecision.decision !== 'allow') {
+		return json(
+			{
+				error: 'policy_denied',
+				message: policyDecision.reason,
+				status: policyDecisionHttpStatus(policyDecision.decision),
+				policy: policyDecision,
+			},
+			policyDecisionHttpStatus(policyDecision.decision),
+		);
+	}
+
+	const revoked = await revokeMcpLegacyKey(db, legacyKeyId);
+	await createMcpAuthEvent(db, {
+		id: generateUUID(),
+		session_id: null,
+		user_id: existing.user_id,
+		event_type: 'mcp_legacy_key_revoked',
+		event_data_json: JSON.stringify({
+			legacy_key_id: legacyKeyId,
+			account_id: existing.account_id,
+			tenant_id: existing.tenant_id,
+			actor,
+			revoked,
+			policy: policyDecision,
+		}),
+	});
+
+	return json({
+		success: revoked,
+		legacy_key_id: legacyKeyId,
+		account_id: existing.account_id,
+		tenant_id: existing.tenant_id,
+		revoked,
+		policy: policyDecision,
 	});
 }
 
@@ -1318,6 +1808,315 @@ async function handleCleanupDeletedUsers(request: Request, env: Env): Promise<Re
 }
 
 // Utilities
+
+type ApiKeyAuthResult =
+	| {
+		ok: true;
+		service: string;
+		permissions: string[];
+		actor: string;
+	}
+	| {
+		ok: false;
+		status: number;
+		error: string;
+		message: string;
+	};
+
+interface PolicyDecisionInput {
+	policyId: string;
+	actionName: string;
+	accountId: string;
+	actor: string;
+	input: ConstraintEvaluationInput;
+	metadata: Record<string, unknown>;
+}
+
+async function authenticateApiKeyForPermissions(
+	request: Request,
+	env: Env,
+	requiredPermissions: string[]
+): Promise<ApiKeyAuthResult> {
+	const apiKey = request.headers.get('X-API-Key')?.trim();
+	if (!apiKey) {
+		return { ok: false, status: 401, error: 'unauthorized', message: 'API key required' };
+	}
+
+	const keyHash = await hashToken(apiKey);
+	const storedKey = await findApiKeyByHash(env.DB, keyHash);
+	if (!storedKey) {
+		return { ok: false, status: 401, error: 'unauthorized', message: 'Invalid API key' };
+	}
+
+	const permissions = parseApiKeyPermissions(storedKey.permissions);
+	const missing = requiredPermissions.filter((permission) => !permissions.includes(permission));
+	if (missing.length > 0) {
+		return {
+			ok: false,
+			status: 403,
+			error: 'forbidden',
+			message: `Insufficient permissions. Missing: ${missing.join(', ')}`,
+		};
+	}
+
+	return {
+		ok: true,
+		service: storedKey.service,
+		permissions,
+		actor: `service:${storedKey.service}`,
+	};
+}
+
+function parseApiKeyPermissions(raw: string): string[] {
+	try {
+		const parsed = JSON.parse(raw) as unknown;
+		if (!Array.isArray(parsed)) return [];
+		return parsed.filter((value): value is string => typeof value === 'string').map((value) => value.trim()).filter(Boolean);
+	} catch {
+		return [];
+	}
+}
+
+async function evaluatePartnerPolicyDecision(
+	db: D1Database,
+	env: Env,
+	args: PolicyDecisionInput
+): Promise<DecisionTelemetry> {
+	const policy = MCP_PARTNER_POLICIES[args.policyId];
+	if (!policy) {
+		throw new Error(`Unknown partner policy: ${args.policyId}`);
+	}
+
+	const rollout = await getOrCreatePolicyRollout(db, args.policyId);
+	const hybridFallbackEnabled = parseBooleanEnv(env.MCP_POLICY_FALLBACK_ENABLED, true);
+	const osoFetchTimeoutMillis = parseIntegerEnv(env.OSO_FETCH_TIMEOUT_MILLIS, 5000, 100, 30000);
+
+	let decision: DecisionTelemetry;
+	try {
+		const withRollout = await evaluateConstraintPolicyWithRollout(
+			args.input,
+			policy,
+			{
+				mode: rollout.mode,
+				canaryPercent: rollout.canary_percent,
+			},
+			{
+				mode: 'hybrid',
+				fallbackEnabled: hybridFallbackEnabled,
+				oso: {
+					url: env.OSO_URL,
+					apiKey: env.OSO_API_KEY,
+					fetchTimeoutMillis: osoFetchTimeoutMillis,
+					bootstrapPolicy: true,
+				},
+			}
+		);
+
+		const final = withRollout.final;
+		const polarRef = withRollout.polar;
+		const fallbackUsed = polarRef.evaluationPath === 'fallback';
+
+		await createMcpPolicyEvent(db, {
+			id: generateUUID(),
+			policy_id: args.policyId,
+			action_name: args.actionName,
+			account_id: args.accountId,
+			actor: args.actor,
+			rollout_mode: rollout.mode,
+			canary_percent: rollout.canary_percent,
+			sampled_polar: withRollout.sampledPolar ? 1 : 0,
+			mismatch: withRollout.mismatch ? 1 : 0,
+			evaluation_path: final.evaluationPath,
+			fallback_used: fallbackUsed ? 1 : 0,
+			fallback_reason: polarRef.fallbackReason ?? null,
+			legacy_decision: withRollout.legacy.decision,
+			polar_decision: withRollout.polar.decision,
+			final_decision: final.decision,
+			policy_hash: polarRef.policyHash ?? null,
+			compiler_version: polarRef.compilerVersion ?? null,
+			metadata_json: JSON.stringify({
+				...args.metadata,
+				decision_reason: final.reason,
+				matched_rule_ids: final.matchedRuleIds,
+				latency_ms: Math.floor(final.latencyMs),
+			}),
+		});
+
+		decision = {
+			policy_id: args.policyId,
+			decision: final.decision,
+			evaluation_path: final.evaluationPath,
+			policy_hash: polarRef.policyHash ?? null,
+			fallback_used: fallbackUsed,
+			rollout_mode: rollout.mode,
+			canary_percent: rollout.canary_percent,
+			reason: final.reason,
+		};
+	} catch (error) {
+		const reason = error instanceof Error ? error.message : 'policy evaluation failure';
+		await createMcpPolicyEvent(db, {
+			id: generateUUID(),
+			policy_id: args.policyId,
+			action_name: args.actionName,
+			account_id: args.accountId,
+			actor: args.actor,
+			rollout_mode: rollout.mode,
+			canary_percent: rollout.canary_percent,
+			sampled_polar: 0,
+			mismatch: 0,
+			evaluation_path: 'fallback',
+			fallback_used: 1,
+			fallback_reason: reason,
+			legacy_decision: 'block',
+			polar_decision: 'block',
+			final_decision: 'block',
+			policy_hash: null,
+			compiler_version: null,
+			metadata_json: JSON.stringify({
+				...args.metadata,
+				evaluation_error: reason,
+			}),
+		});
+
+		decision = {
+			policy_id: args.policyId,
+			decision: 'block',
+			evaluation_path: 'fallback',
+			policy_hash: null,
+			fallback_used: true,
+			rollout_mode: rollout.mode,
+			canary_percent: rollout.canary_percent,
+			reason: `Policy evaluation failed: ${reason}`,
+		};
+	}
+
+	return decision;
+}
+
+async function getOrCreatePolicyRollout(
+	db: D1Database,
+	policyId: string
+): Promise<{ mode: RolloutConfig['mode']; canary_percent: number }> {
+	const existing = await findMcpPolicyRollout(db, policyId);
+	if (existing) {
+		return {
+			mode: normalizeRolloutMode(existing.mode),
+			canary_percent: normalizeCanaryPercent(existing.canary_percent),
+		};
+	}
+
+	await createMcpPolicyRollout(db, {
+		policy_id: policyId,
+		mode: 'legacy_enforce',
+		canary_percent: 0,
+		updated_by: 'system:bootstrap',
+	});
+
+	return { mode: 'legacy_enforce', canary_percent: 0 };
+}
+
+function normalizeRolloutMode(raw: string): RolloutConfig['mode'] {
+	if (raw === 'shadow' || raw === 'polar_enforce') return raw;
+	return 'legacy_enforce';
+}
+
+function normalizeCanaryPercent(raw: number): number {
+	if (!Number.isFinite(raw)) return 0;
+	return Math.max(0, Math.min(100, Math.trunc(raw)));
+}
+
+function combinePolicyDecisions(decisions: DecisionTelemetry[]): DecisionTelemetry {
+	if (decisions.length === 0) {
+		return {
+			policy_id: 'policy.none',
+			decision: 'allow',
+			evaluation_path: 'legacy',
+			policy_hash: null,
+			fallback_used: false,
+			rollout_mode: 'legacy_enforce',
+			canary_percent: 0,
+			reason: 'No policy decisions available.',
+		};
+	}
+
+	let selected = decisions[0]!;
+	for (const current of decisions.slice(1)) {
+		if (decisionRank(current.decision) < decisionRank(selected.decision)) {
+			selected = current;
+		}
+	}
+	return selected;
+}
+
+function decisionRank(decision: ConstraintDecisionType): number {
+	if (decision === 'block') return 0;
+	if (decision === 'require_human_review') return 1;
+	return 2;
+}
+
+function policyDecisionHttpStatus(decision: ConstraintDecisionType): number {
+	if (decision === 'block') return 403;
+	if (decision === 'require_human_review') return 409;
+	return 200;
+}
+
+function normalizeAccountId(raw: string | undefined): string | null {
+	if (!raw) return null;
+	const candidate = raw.trim();
+	if (!candidate) return null;
+	return candidate.replace(/[^a-zA-Z0-9._:-]/g, '').slice(0, 128);
+}
+
+function normalizeOptionalId(raw: string | undefined): string | null {
+	if (!raw) return null;
+	const candidate = raw.trim();
+	if (!candidate) return null;
+	return candidate.slice(0, 256);
+}
+
+function normalizeActor(raw: string | undefined): string | null {
+	if (!raw) return null;
+	const candidate = raw.trim();
+	if (!candidate) return null;
+	return candidate.slice(0, 256);
+}
+
+function parseOptionalIsoTimestamp(raw: string | undefined): string | null {
+	if (!raw) return null;
+	const value = raw.trim();
+	if (!value) return null;
+	const date = new Date(value);
+	if (!Number.isFinite(date.getTime())) return null;
+	return date.toISOString();
+}
+
+function normalizeMetadata(raw: unknown): Record<string, unknown> {
+	if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+	return raw as Record<string, unknown>;
+}
+
+function clampLegacyKeyTtlSeconds(raw: number | undefined): number {
+	if (!Number.isFinite(raw)) return DEFAULT_MCP_LEGACY_KEY_TTL_SECONDS;
+	const ttl = Math.trunc(Number(raw));
+	if (ttl < MIN_MCP_LEGACY_KEY_TTL_SECONDS) return MIN_MCP_LEGACY_KEY_TTL_SECONDS;
+	if (ttl > MAX_MCP_LEGACY_KEY_TTL_SECONDS) return MAX_MCP_LEGACY_KEY_TTL_SECONDS;
+	return ttl;
+}
+
+function parseBooleanEnv(raw: string | undefined, fallback: boolean): boolean {
+	if (raw === undefined) return fallback;
+	const normalized = raw.trim().toLowerCase();
+	if (normalized === 'true' || normalized === '1' || normalized === 'yes') return true;
+	if (normalized === 'false' || normalized === '0' || normalized === 'no') return false;
+	return fallback;
+}
+
+function parseIntegerEnv(raw: string | undefined, fallback: number, min: number, max: number): number {
+	if (!raw) return fallback;
+	const parsed = Number.parseInt(raw.trim(), 10);
+	if (!Number.isFinite(parsed)) return fallback;
+	return Math.max(min, Math.min(max, parsed));
+}
 
 function normalizeTenantId(raw: string | undefined): string {
 	const candidate = (raw ?? 'default').trim().toLowerCase();

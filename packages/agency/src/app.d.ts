@@ -53,6 +53,13 @@ declare global {
 				// Identity Worker (LMS provisioning)
 				IDENTITY_WORKER_URL?: string;
 				IDENTITY_WORKER_SECRET?: string;
+				IDENTITY_WORKER_ADMIN_API_KEY?: string;
+				// Partner auth portal
+				PARTNER_PORTAL_ADMIN_KEY?: string;
+				// Composio runtime (partner auth + toolkit status)
+				COMPOSIO_API_KEY?: string;
+				COMPOSIO_BASE_URL?: string;
+				COMPOSIO_AUTH_CONFIG_MAP_JSON?: string;
 				// WORKWAY Integration (AI-powered spec intake)
 				// Get API key from: https://workway.co/settings/api-keys
 				WORKWAY_API_KEY?: string;

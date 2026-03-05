@@ -14,6 +14,9 @@ import type {
 	McpAccount,
 	McpSession,
 	McpSessionScope,
+	McpLegacyKey,
+	McpPolicyRollout,
+	McpPolicyEvent,
 } from '../types';
 
 // User queries
@@ -462,6 +465,17 @@ export async function ensureMcpAccountForUserTenant(
 	return created;
 }
 
+export async function findMcpAccountById(db: D1Database, accountId: string): Promise<McpAccount | null> {
+	return db
+		.prepare(
+			`SELECT * FROM mcp_accounts
+       WHERE account_id = ?
+       LIMIT 1`
+		)
+		.bind(accountId)
+		.first<McpAccount>();
+}
+
 // MCP session queries
 export async function createMcpSession(
 	db: D1Database,
@@ -606,4 +620,154 @@ export async function listMcpAuthEvents(db: D1Database, sessionId: string): Prom
 		.bind(sessionId)
 		.all<McpAuthEvent>();
 	return result.results ?? [];
+}
+
+export async function createMcpLegacyKey(
+	db: D1Database,
+	key: {
+		id: string;
+		key_hash: string;
+		key_prefix: string;
+		tenant_id: string;
+		account_id: string;
+		user_id: string | null;
+		reason: string;
+		exception_approved_by: string | null;
+		issued_by: string;
+		expires_at: string;
+		sunset_at: string;
+	}
+): Promise<void> {
+	await db
+		.prepare(
+			`INSERT INTO mcp_legacy_keys (
+         id, key_hash, key_prefix, tenant_id, account_id, user_id,
+         reason, exception_approved_by, issued_by, expires_at, sunset_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		)
+		.bind(
+			key.id,
+			key.key_hash,
+			key.key_prefix,
+			key.tenant_id,
+			key.account_id,
+			key.user_id,
+			key.reason,
+			key.exception_approved_by,
+			key.issued_by,
+			key.expires_at,
+			key.sunset_at
+		)
+		.run();
+}
+
+export async function findMcpLegacyKeyById(db: D1Database, id: string): Promise<McpLegacyKey | null> {
+	return db
+		.prepare(
+			`SELECT * FROM mcp_legacy_keys
+       WHERE id = ?
+       LIMIT 1`
+		)
+		.bind(id)
+		.first<McpLegacyKey>();
+}
+
+export async function revokeMcpLegacyKey(db: D1Database, id: string): Promise<boolean> {
+	const result = await db
+		.prepare(
+			`UPDATE mcp_legacy_keys
+       SET revoked_at = datetime('now'), updated_at = datetime('now')
+       WHERE id = ? AND revoked_at IS NULL`
+		)
+		.bind(id)
+		.run();
+	return result.meta.changes > 0;
+}
+
+export async function findMcpPolicyRollout(
+	db: D1Database,
+	policyId: string
+): Promise<McpPolicyRollout | null> {
+	return db
+		.prepare(
+			`SELECT policy_id, mode, canary_percent, updated_by, updated_at
+       FROM mcp_policy_rollout
+       WHERE policy_id = ?
+       LIMIT 1`
+		)
+		.bind(policyId)
+		.first<McpPolicyRollout>();
+}
+
+export async function createMcpPolicyRollout(
+	db: D1Database,
+	rollout: {
+		policy_id: string;
+		mode: McpPolicyRollout['mode'];
+		canary_percent: number;
+		updated_by: string;
+	}
+): Promise<void> {
+	await db
+		.prepare(
+			`INSERT INTO mcp_policy_rollout (policy_id, mode, canary_percent, updated_by)
+       VALUES (?, ?, ?, ?)`
+		)
+		.bind(rollout.policy_id, rollout.mode, rollout.canary_percent, rollout.updated_by)
+		.run();
+}
+
+export async function createMcpPolicyEvent(
+	db: D1Database,
+	event: {
+		id: string;
+		policy_id: string;
+		action_name: string;
+		account_id: string | null;
+		actor: string | null;
+		rollout_mode: McpPolicyEvent['rollout_mode'];
+		canary_percent: number;
+		sampled_polar: number;
+		mismatch: number;
+		evaluation_path: McpPolicyEvent['evaluation_path'];
+		fallback_used: number;
+		fallback_reason: string | null;
+		legacy_decision: McpPolicyEvent['legacy_decision'];
+		polar_decision: McpPolicyEvent['polar_decision'];
+		final_decision: McpPolicyEvent['final_decision'];
+		policy_hash: string | null;
+		compiler_version: string | null;
+		metadata_json: string;
+	}
+): Promise<void> {
+	await db
+		.prepare(
+			`INSERT INTO mcp_policy_events (
+         id, policy_id, action_name, account_id, actor, rollout_mode, canary_percent,
+         sampled_polar, mismatch, evaluation_path, fallback_used, fallback_reason,
+         legacy_decision, polar_decision, final_decision, policy_hash, compiler_version,
+         metadata_json
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		)
+		.bind(
+			event.id,
+			event.policy_id,
+			event.action_name,
+			event.account_id,
+			event.actor,
+			event.rollout_mode,
+			event.canary_percent,
+			event.sampled_polar,
+			event.mismatch,
+			event.evaluation_path,
+			event.fallback_used,
+			event.fallback_reason,
+			event.legacy_decision,
+			event.polar_decision,
+			event.final_decision,
+			event.policy_hash,
+			event.compiler_version,
+			event.metadata_json
+		)
+		.run();
 }

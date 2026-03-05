@@ -13,6 +13,10 @@ export interface Env {
 	RESEND_API_KEY?: string;
 	MCP_HUB_URL?: string;
 	MCP_SESSION_RESOLVE_TOKEN?: string;
+	OSO_URL?: string;
+	OSO_API_KEY?: string;
+	OSO_FETCH_TIMEOUT_MILLIS?: string;
+	MCP_POLICY_FALLBACK_ENABLED?: string;
 }
 
 // Database models
@@ -195,5 +199,53 @@ export interface McpAuthEvent {
 	user_id: string | null;
 	event_type: string;
 	event_data_json: string;
+	created_at: string;
+}
+
+export interface McpLegacyKey {
+	id: string;
+	key_hash: string;
+	key_prefix: string;
+	tenant_id: string;
+	account_id: string;
+	user_id: string | null;
+	reason: string;
+	exception_approved_by: string | null;
+	issued_by: string;
+	expires_at: string;
+	sunset_at: string;
+	revoked_at: string | null;
+	last_used_at: string | null;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface McpPolicyRollout {
+	policy_id: string;
+	mode: 'legacy_enforce' | 'shadow' | 'polar_enforce';
+	canary_percent: number;
+	updated_by: string;
+	updated_at: string;
+}
+
+export interface McpPolicyEvent {
+	id: string;
+	policy_id: string;
+	action_name: string;
+	account_id: string | null;
+	actor: string | null;
+	rollout_mode: 'legacy_enforce' | 'shadow' | 'polar_enforce';
+	canary_percent: number;
+	sampled_polar: number;
+	mismatch: number;
+	evaluation_path: 'legacy' | 'primary' | 'fallback';
+	fallback_used: number;
+	fallback_reason: string | null;
+	legacy_decision: 'allow' | 'require_human_review' | 'block';
+	polar_decision: 'allow' | 'require_human_review' | 'block';
+	final_decision: 'allow' | 'require_human_review' | 'block';
+	policy_hash: string | null;
+	compiler_version: string | null;
+	metadata_json: string;
 	created_at: string;
 }

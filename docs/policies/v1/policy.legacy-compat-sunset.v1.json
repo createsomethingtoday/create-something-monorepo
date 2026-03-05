@@ -1,0 +1,19 @@
+{
+  "policy_id": "policy.legacy-compat-sunset.v1",
+  "version": 1,
+  "status": "draft",
+  "legacy_lane": {
+    "enabled_via_separate_endpoints": true,
+    "strict_hubs_unchanged": true
+  },
+  "sunset_requirements": {
+    "sunset_at_required": true,
+    "max_sunset_days": 90,
+    "legacy_mode": "compat"
+  },
+  "delivery_requirements": {
+    "include_expiry": true,
+    "include_sunset": true,
+    "include_exception_approver": true
+  }
+}

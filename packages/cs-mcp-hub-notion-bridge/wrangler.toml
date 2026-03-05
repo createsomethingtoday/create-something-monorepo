@@ -1,0 +1,24 @@
+name = "cs-mcp-hub-notion-bridge"
+main = "index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+
+[observability]
+enabled = true
+
+[vars]
+# Required:
+# HUB_UPSTREAM_URL = "https://mj.mcp.createsomething.agency/mcp"
+#
+# Strongly recommended secret:
+# wrangler secret put HUB_API_TOKEN
+#
+# Choose at least one bridge auth method:
+# wrangler secret put BRIDGE_BASIC_PASSWORD
+# wrangler secret put BRIDGE_API_KEY
+#
+# Account resolution:
+# BRIDGE_DEFAULT_ACCOUNT_ID = "acct_mj"
+#
+# Optional for upstream session_required mode:
+# BRIDGE_SESSION_TOKENS_JSON = "{\"acct_mj\":\"ms_tok_xxx\"}"
