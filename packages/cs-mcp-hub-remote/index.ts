@@ -3697,11 +3697,19 @@ function resolveFallbackAccountContext(extra: unknown, env: Env): ResolvedAccoun
   const authInfo = asRecord(extraRecord?.authInfo);
   const authorization = getHeaderValue(extraRecord?.requestInfo, 'authorization');
   const staticHubToken = readEnvString(env, 'HUB_API_TOKEN');
+  const trustClientHeaders = parseBooleanWithDefault(
+    readEnvString(env, 'HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS'),
+    true,
+  );
   const fromHeader =
-    getHeaderValue(extraRecord?.requestInfo, 'x-mcp-account-id') ??
-    getHeaderValue(extraRecord?.requestInfo, 'x-account-id') ??
-    getHeaderValue(extraRecord?.requestInfo, 'x-tenant-id') ??
-    getHeaderValue(extraRecord?.requestInfo, 'x-hub-account-id');
+    trustClientHeaders
+      ? (
+        getHeaderValue(extraRecord?.requestInfo, 'x-mcp-account-id') ??
+        getHeaderValue(extraRecord?.requestInfo, 'x-account-id') ??
+        getHeaderValue(extraRecord?.requestInfo, 'x-tenant-id') ??
+        getHeaderValue(extraRecord?.requestInfo, 'x-hub-account-id')
+      )
+      : null;
   const rawBearer = authorization ? parseBearerToken(authorization) : null;
   // Guard against identity spoofing when gateway auth is provided by query/api-key headers.
   // In protected mode (HUB_API_TOKEN configured), Authorization should not influence fallback account identity.
@@ -4796,6 +4804,14 @@ function buildHubStateKvKey(env: Env): string {
 function readEnvString(env: Env, key: string): string | undefined {
   const value = env[key];
   return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function parseBooleanWithDefault(raw: string | undefined, fallback: boolean): boolean {
+  if (raw === undefined) return fallback;
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === 'true' || normalized === '1' || normalized === 'yes') return true;
+  if (normalized === 'false' || normalized === '0' || normalized === 'no') return false;
+  return fallback;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {

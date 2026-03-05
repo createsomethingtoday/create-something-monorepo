@@ -91,3 +91,17 @@ test('resolveAccountContext keeps fallback behavior in compat mode', async () =>
   assert.equal(context.accountId, 'acct_fallback');
   assert.equal(context.identitySource, 'fallback');
 });
+
+test('resolveAccountContext can disable compat header account override', async () => {
+  const context = await resolveAccountContext(
+    makeExtra({ 'x-mcp-account-id': 'acct_header_override' }),
+    {
+      HUB_IDENTITY_MODE: 'compat',
+      HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS: 'false',
+      HUB_ACCOUNT_ID: 'acct_fixed',
+    } as any,
+  );
+
+  assert.equal(context.accountId, 'acct_fixed');
+  assert.equal(context.identitySource, 'fallback');
+});

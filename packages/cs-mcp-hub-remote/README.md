@@ -69,6 +69,7 @@ Environment variables:
 - `HUB_INSTANCE_ID` (recommended): unique id for this deployed hub worker; used to namespace hub state/discovery KV keys so team hubs do not overwrite each other.
 - `HUB_API_TOKEN` (optional): if set, `/mcp` requires `Authorization: Bearer <token>`
 - `HUB_IDENTITY_MODE` (optional): `session_required` (default) or `compat`
+- `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS` (optional): `true` (default). Set `false` to ignore client-provided account headers in `compat` mode and use resolver/auth/env-derived identity only.
 - `HUB_SESSION_RESOLVE_URL` (optional): identity-worker resolver endpoint (`/v1/mcp/sessions/resolve`)
 - `HUB_SESSION_RESOLVE_TOKEN` (optional): shared secret used by hub to call resolver endpoint
 - `HUB_SESSION_RESOLVE_TIMEOUT_MS` (optional): resolver call timeout, default `5000`

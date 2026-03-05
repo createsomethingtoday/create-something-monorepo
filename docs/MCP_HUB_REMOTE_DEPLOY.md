@@ -50,6 +50,7 @@ Optional runtime selection:
 - `HUB_REFRESH_SECONDS`
 - `HUB_ACCOUNT_ID` (fallback account id for hub telemetry writes)
 - `HUB_IDENTITY_MODE` (`session_required` default, or `compat`)
+- `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS` (`true` default). Set to `false` to ignore client-provided account headers in `compat` mode.
 - `HUB_SESSION_RESOLVE_URL` (identity-worker resolver endpoint, e.g. `https://id.createsomething.space/v1/mcp/sessions/resolve`)
 - `HUB_SESSION_RESOLVE_TOKEN` (shared secret used to authorize resolver calls)
 - `HUB_SESSION_RESOLVE_TIMEOUT_MS` (default `5000`)
