@@ -2,13 +2,18 @@ name = "cs-mcp-hub-notion-bridge"
 main = "index.ts"
 compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+workers_dev = false
+
+[[routes]]
+pattern = "mj-notion.mcp.createsomething.agency"
+custom_domain = true
 
 [observability]
 enabled = true
 
 [vars]
 # Required:
-# HUB_UPSTREAM_URL = "https://mj.mcp.createsomething.agency/mcp"
+HUB_UPSTREAM_URL = "https://mj.mcp.createsomething.agency/mcp"
 #
 # Strongly recommended secret:
 # wrangler secret put HUB_API_TOKEN

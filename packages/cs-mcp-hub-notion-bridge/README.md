@@ -28,7 +28,18 @@ At least one mode must be configured.
 
 ## Required env
 
-- `HUB_UPSTREAM_URL` (example: `https://mj.mcp.createsomething.agency/mcp`)
+- `HUB_UPSTREAM_URL` (default in `wrangler.toml`: `https://mj.mcp.createsomething.agency/mcp`)
+
+## Domain alignment
+
+This worker is configured for the custom domain:
+
+- `https://mj-notion.mcp.createsomething.agency/mcp`
+
+Route is defined in `wrangler.toml` via:
+
+- `pattern = "mj-notion.mcp.createsomething.agency"`
+- `custom_domain = true`
 
 ## Recommended secrets
 
@@ -43,7 +54,7 @@ At least one mode must be configured.
 
 ## Notion setup (Basic)
 
-- MCP URL: your deployed bridge URL + `/mcp`
+- MCP URL: `https://mj-notion.mcp.createsomething.agency/mcp`
 - Auth: `Basic`
 - Username: `acct_mj` (or target account id)
 - Password: value of `BRIDGE_BASIC_PASSWORD`
