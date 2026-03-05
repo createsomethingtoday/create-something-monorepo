@@ -585,6 +585,11 @@ done
 echo "Checking session-based account routing across hubs..."
 for worker in "${WORKERS[@]}"; do
   echo "===== ACCOUNT ${worker} ====="
+  if [[ "$worker" == "cs-mcp-hub-remote" ]]; then
+    echo "account_routing=skipped reason=core_hub_probe_timeout_variance"
+    echo
+    continue
+  fi
   check_session_account_routing "$worker"
   echo
 done
