@@ -195,7 +195,7 @@ const POLICY_DEFINITIONS: AuthzPolicyDefinition[] = [
       version: 1,
       commitSha: 'workspace',
       status: 'draft',
-      description: 'Partner-admin session minting requires consent evidence and actor traceability.',
+      description: 'Partner-admin auth operations require consent evidence and review traceability.',
       rolloutDefaults: {
         mode: 'legacy_enforce',
         canaryPercent: 0,
@@ -204,7 +204,7 @@ const POLICY_DEFINITIONS: AuthzPolicyDefinition[] = [
     policy: {
       id: 'policy.partner-auth-governance.v1',
       name: 'Partner auth governance',
-      description: 'Admin mint operations require explicit consent evidence and review traceability.',
+      description: 'Partner-admin auth operations require explicit consent evidence and review traceability.',
       rules: [
         {
           id: 'admin_mint_block_without_consent',
@@ -244,6 +244,116 @@ const POLICY_DEFINITIONS: AuthzPolicyDefinition[] = [
           then: {
             decision: 'allow',
             reason: 'Consent and review evidence present.',
+          },
+        },
+        {
+          id: 'partner_toolkit_block_without_consent',
+          priority: 40,
+          when: {
+            resourceKinds: ['partner_toolkit_account'],
+            introspectionOk: false,
+          },
+          then: {
+            decision: 'block',
+            reason: 'Partner toolkit auth actions require an active consent record.',
+          },
+        },
+        {
+          id: 'partner_toolkit_pin_requires_review',
+          priority: 50,
+          when: {
+            actionNames: ['pin_toolkit_account'],
+            resourceKinds: ['partner_toolkit_account'],
+            hasHumanReviewStep: false,
+          },
+          then: {
+            decision: 'require_human_review',
+            reason: 'Pinning a partner toolkit account requires a human review trace.',
+          },
+        },
+        {
+          id: 'partner_toolkit_disable_requires_review',
+          priority: 60,
+          when: {
+            actionNames: ['disable_toolkit_account'],
+            resourceKinds: ['partner_toolkit_account'],
+            hasHumanReviewStep: false,
+          },
+          then: {
+            decision: 'require_human_review',
+            reason: 'Disabling a partner toolkit account requires a human review trace.',
+          },
+        },
+        {
+          id: 'partner_toolkit_view_allow',
+          priority: 70,
+          when: {
+            actionNames: ['view_toolkit_auth'],
+            resourceKinds: ['partner_toolkit_account'],
+            introspectionOk: true,
+            actorRoles: ['partner_admin'],
+          },
+          then: {
+            decision: 'allow',
+            reason: 'Partner admin may inspect toolkit auth state with active consent.',
+          },
+        },
+        {
+          id: 'partner_toolkit_upsert_allow',
+          priority: 80,
+          when: {
+            actionNames: ['upsert_toolkit_account'],
+            resourceKinds: ['partner_toolkit_account'],
+            introspectionOk: true,
+            actorRoles: ['partner_admin'],
+          },
+          then: {
+            decision: 'allow',
+            reason: 'Partner admin may create or update toolkit auth bindings with active consent.',
+          },
+        },
+        {
+          id: 'partner_toolkit_connect_allow',
+          priority: 90,
+          when: {
+            actionNames: ['create_toolkit_connect_link'],
+            resourceKinds: ['partner_toolkit_account'],
+            introspectionOk: true,
+            actorRoles: ['partner_admin'],
+          },
+          then: {
+            decision: 'allow',
+            reason: 'Partner admin may issue toolkit connect links with active consent.',
+          },
+        },
+        {
+          id: 'partner_toolkit_pin_allow',
+          priority: 100,
+          when: {
+            actionNames: ['pin_toolkit_account'],
+            resourceKinds: ['partner_toolkit_account'],
+            introspectionOk: true,
+            hasHumanReviewStep: true,
+            actorRoles: ['partner_admin'],
+          },
+          then: {
+            decision: 'allow',
+            reason: 'Partner admin may pin toolkit accounts after human review.',
+          },
+        },
+        {
+          id: 'partner_toolkit_disable_allow',
+          priority: 110,
+          when: {
+            actionNames: ['disable_toolkit_account'],
+            resourceKinds: ['partner_toolkit_account'],
+            introspectionOk: true,
+            hasHumanReviewStep: true,
+            actorRoles: ['partner_admin'],
+          },
+          then: {
+            decision: 'allow',
+            reason: 'Partner admin may disable toolkit accounts after human review.',
           },
         },
       ],

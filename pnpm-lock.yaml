@@ -71,6 +71,9 @@ importers:
       '@create-something/canon':
         specifier: workspace:*
         version: link:../canon
+      '@create-something/mcp-authz':
+        specifier: workspace:*
+        version: link:../mcp-authz
       '@create-something/tufte':
         specifier: workspace:^
         version: link:../tufte
@@ -1022,6 +1025,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: 1.25.3
         version: 1.25.3(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@3.25.76)
+      '@openai/agents':
+        specifier: ^0.4.10
+        version: 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.19.0)(zod@3.25.76)
       agents:
         specifier: ^0.3.10
         version: 0.3.10(@cloudflare/ai-chat@0.0.6)(@cloudflare/codemode@0.0.6)(@cloudflare/workers-types@4.20260205.0)(ai@6.0.84(zod@3.25.76))(hono@4.11.7)(react@19.2.4)(zod@3.25.76)
@@ -14922,6 +14928,19 @@ snapshots:
 
   '@notionhq/client@5.9.0': {}
 
+  '@openai/agents-core@0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.19.0)(zod@3.25.76)':
+    dependencies:
+      debug: 4.4.3
+      openai: 6.22.0(ws@8.19.0)(zod@3.25.76)
+    optionalDependencies:
+      '@modelcontextprotocol/sdk': 1.25.3(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@3.25.76)
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - '@cfworker/json-schema'
+      - hono
+      - supports-color
+      - ws
+
   '@openai/agents-core@0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.19.0)(zod@4.3.6)':
     dependencies:
       debug: 4.4.3
@@ -14942,6 +14961,18 @@ snapshots:
     optionalDependencies:
       '@modelcontextprotocol/sdk': 1.25.3(@cfworker/json-schema@4.1.1)(zod@4.3.6)
       zod: 4.3.6
+    transitivePeerDependencies:
+      - '@cfworker/json-schema'
+      - hono
+      - supports-color
+      - ws
+
+  '@openai/agents-openai@0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.19.0)(zod@3.25.76)':
+    dependencies:
+      '@openai/agents-core': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.19.0)(zod@3.25.76)
+      debug: 4.4.3
+      openai: 6.22.0(ws@8.19.0)(zod@3.25.76)
+      zod: 3.25.76
     transitivePeerDependencies:
       - '@cfworker/json-schema'
       - hono
@@ -14972,6 +15003,20 @@ snapshots:
       - supports-color
       - ws
 
+  '@openai/agents-realtime@0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@3.25.76)':
+    dependencies:
+      '@openai/agents-core': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.19.0)(zod@3.25.76)
+      '@types/ws': 8.18.1
+      debug: 4.4.3
+      ws: 8.19.0
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - '@cfworker/json-schema'
+      - bufferutil
+      - hono
+      - supports-color
+      - utf-8-validate
+
   '@openai/agents-realtime@0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@4.3.6)':
     dependencies:
       '@openai/agents-core': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.19.0)(zod@4.3.6)
@@ -14999,6 +15044,22 @@ snapshots:
       - hono
       - supports-color
       - utf-8-validate
+
+  '@openai/agents@0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.19.0)(zod@3.25.76)':
+    dependencies:
+      '@openai/agents-core': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.19.0)(zod@3.25.76)
+      '@openai/agents-openai': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.19.0)(zod@3.25.76)
+      '@openai/agents-realtime': 0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(zod@3.25.76)
+      debug: 4.4.3
+      openai: 6.22.0(ws@8.19.0)(zod@3.25.76)
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - '@cfworker/json-schema'
+      - bufferutil
+      - hono
+      - supports-color
+      - utf-8-validate
+      - ws
 
   '@openai/agents@0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.19.0)(zod@4.3.6)':
     dependencies:

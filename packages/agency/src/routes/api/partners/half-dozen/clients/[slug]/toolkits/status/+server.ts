@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import {
 	HALF_DOZEN_PARTNER_KEY,
+	authorizePartnerToolkitAdminAction,
 	PartnerAuthHttpError,
 	getComposioClient,
 	getPartnerClientBySlug,
@@ -38,7 +39,7 @@ export const GET: RequestHandler = async ({ request, params, platform }) => {
 			return json({ error: 'unavailable', message: 'Database is unavailable' }, { status: 503 });
 		}
 
-		requirePartnerAdmin(request, env);
+		const actor = requirePartnerAdmin(request, env);
 		const slug = normalizePartnerSlug(params.slug);
 		if (!slug) {
 			return json({ error: 'invalid_request', message: 'Client slug is required' }, { status: 400 });
@@ -48,6 +49,15 @@ export const GET: RequestHandler = async ({ request, params, platform }) => {
 		if (!client) {
 			return json({ error: 'not_found', message: 'Partner client not found' }, { status: 404 });
 		}
+		const authz = await authorizePartnerToolkitAdminAction({
+			request,
+			env,
+			client,
+			actor,
+			actionName: 'view_toolkit_auth',
+			accessType: 'read',
+			toolkit: 'all',
+		});
 
 		const composio = getComposioClient(env);
 		const response = await composio.connectedAccounts.list({
@@ -149,6 +159,7 @@ export const GET: RequestHandler = async ({ request, params, platform }) => {
 			},
 			toolkits: toolkitStatus,
 			checked_at: new Date().toISOString(),
+			policy: authz.policy,
 		});
 	} catch (error) {
 		if (error instanceof PartnerAuthHttpError) {

@@ -23,5 +23,17 @@
   "deny_conditions": [
     "missing_consent_record",
     "missing_actor"
+  ],
+  "governed_actions": [
+    "admin_mint_session",
+    "view_toolkit_auth",
+    "upsert_toolkit_account",
+    "create_toolkit_connect_link",
+    "pin_toolkit_account",
+    "disable_toolkit_account"
+  ],
+  "review_required_actions": [
+    "pin_toolkit_account",
+    "disable_toolkit_account"
   ]
 }

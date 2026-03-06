@@ -16,6 +16,7 @@ export {
   recordAuthzDecisionEvent,
   setAuthzRollout,
 } from './storage.js';
+export type { HybridEvaluatorConfig } from '@create-something/policy-os-engine';
 export type {
   AuthorizationAccessType,
   AuthorizationAction,

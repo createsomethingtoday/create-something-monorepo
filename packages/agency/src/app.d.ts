@@ -62,6 +62,10 @@ declare global {
 				COMPOSIO_API_KEY?: string;
 				COMPOSIO_BASE_URL?: string;
 				COMPOSIO_AUTH_CONFIG_MAP_JSON?: string;
+				OSO_URL?: string;
+				OSO_API_KEY?: string;
+				OSO_FETCH_TIMEOUT_MS?: string;
+				OSO_BOOTSTRAP_POLICY?: string;
 				// WORKWAY Integration (AI-powered spec intake)
 				// Get API key from: https://workway.co/settings/api-keys
 				WORKWAY_API_KEY?: string;

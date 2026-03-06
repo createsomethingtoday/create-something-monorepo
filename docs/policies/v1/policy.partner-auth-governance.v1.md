@@ -6,11 +6,13 @@
 
 ## Purpose
 
-Define policy controls for partner-admin actions that mint MCP sessions on behalf of client workspaces.
+Define policy controls for partner-admin actions that mint MCP sessions and manage toolkit auth on behalf of client workspaces.
 
 ## Scope
 
 - Partner-boundary admin minting (`/v1/mcp/sessions/admin-mint`)
+- Partner toolkit auth account management (`/api/partners/half-dozen/clients/:slug/notion/accounts/*`)
+- Partner toolkit auth account management (`/api/partners/half-dozen/clients/:slug/toolkits/:toolkit/accounts/*`)
 - Consent and actor trace requirements
 - Hybrid rollout enforcement (`legacy_enforce -> shadow -> polar_enforce`)
 
@@ -26,6 +28,8 @@ Define policy controls for partner-admin actions that mint MCP sessions on behal
    - `actor`
 4. Rollout mode for partner governance MUST default to `legacy_enforce` until rollout gates pass.
 5. Fallback policy path MAY be used only when primary policy evaluation fails, and fallback usage MUST be auditable.
+6. Toolkit auth account viewing, upserts, and connect-link issuance MUST require an active consent record.
+7. Toolkit account pinning and disabling MUST require a human review trace (for example `X-Partner-Review-Step`).
 
 ## Enforcement Surfaces
 
@@ -35,6 +39,14 @@ Define policy controls for partner-admin actions that mint MCP sessions on behal
   - `mcp_policy_events`
 - Agency partner API:
   - `POST /api/partners/half-dozen/clients/:slug/access/mint`
+  - `GET|POST /api/partners/half-dozen/clients/:slug/notion/accounts`
+  - `POST /api/partners/half-dozen/clients/:slug/notion/accounts/:accountSlug/connect-link`
+  - `POST /api/partners/half-dozen/clients/:slug/notion/accounts/:accountSlug/pin`
+  - `POST /api/partners/half-dozen/clients/:slug/notion/accounts/:accountSlug/disable`
+  - `GET|POST /api/partners/half-dozen/clients/:slug/toolkits/:toolkit/accounts`
+  - `POST /api/partners/half-dozen/clients/:slug/toolkits/:toolkit/accounts/:accountSlug/connect-link`
+  - `POST /api/partners/half-dozen/clients/:slug/toolkits/:toolkit/accounts/:accountSlug/pin`
+  - `POST /api/partners/half-dozen/clients/:slug/toolkits/:toolkit/accounts/:accountSlug/disable`
 
 ## Evidence
 
@@ -46,4 +58,7 @@ Define policy controls for partner-admin actions that mint MCP sessions on behal
 
 - `packages/identity-worker/src/index.ts`
 - `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/access/mint/+server.ts`
+- `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/notion/accounts/+server.ts`
+- `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/toolkits/[toolkit]/accounts/+server.ts`
+- `packages/agency/src/lib/server/partner-auth.ts`
 - `packages/policy-os-engine/src/hybrid.ts`

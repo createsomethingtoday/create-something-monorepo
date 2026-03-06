@@ -105,3 +105,103 @@ test('identity admin mint policy allows consent-backed requests', async () => {
 
   assert.equal(result.final.decision, 'allow');
 });
+
+test('partner toolkit auth policy blocks account actions without consent evidence', async () => {
+  const request = {
+    actor: {
+      accountId: 'acct_1',
+      actorId: 'partner:operator',
+      role: 'partner_admin',
+      identitySource: 'partner_admin_key',
+    },
+    action: {
+      name: 'create_toolkit_connect_link',
+      writeIntent: true,
+      humanReviewStep: false,
+      introspectionOk: false,
+    },
+    resource: {
+      kind: 'partner_toolkit_account',
+      id: 'client_1:airtable:primary',
+      toolName: 'create_toolkit_connect_link',
+      accessType: 'auth_admin',
+      oauthRequired: true,
+    },
+  };
+
+  const result = await evaluateAuthorizationRequest(
+    'policy.partner-auth-governance.v1',
+    request,
+    { mode: 'legacy_enforce', canaryPercent: 0 },
+    { mode: 'legacy' },
+  );
+
+  assert.equal(result.final.decision, 'block');
+  assert.match(result.final.reason, /active consent/i);
+});
+
+test('partner toolkit auth policy requires review before disabling bindings', async () => {
+  const request = {
+    actor: {
+      accountId: 'acct_1',
+      actorId: 'partner:operator',
+      role: 'partner_admin',
+      identitySource: 'partner_admin_key',
+    },
+    action: {
+      name: 'disable_toolkit_account',
+      writeIntent: true,
+      humanReviewStep: false,
+      introspectionOk: true,
+    },
+    resource: {
+      kind: 'partner_toolkit_account',
+      id: 'client_1:airtable:primary',
+      toolName: 'disable_toolkit_account',
+      accessType: 'destructive',
+    },
+  };
+
+  const result = await evaluateAuthorizationRequest(
+    'policy.partner-auth-governance.v1',
+    request,
+    { mode: 'legacy_enforce', canaryPercent: 0 },
+    { mode: 'legacy' },
+  );
+
+  assert.equal(result.final.decision, 'require_human_review');
+  assert.match(result.final.reason, /human review/i);
+});
+
+test('partner toolkit auth policy allows reviewed pin operations with consent', async () => {
+  const request = {
+    actor: {
+      accountId: 'acct_1',
+      actorId: 'partner:operator',
+      role: 'partner_admin',
+      identitySource: 'partner_admin_key',
+    },
+    action: {
+      name: 'pin_toolkit_account',
+      writeIntent: true,
+      humanReviewStep: true,
+      introspectionOk: true,
+    },
+    resource: {
+      kind: 'partner_toolkit_account',
+      id: 'client_1:airtable:primary',
+      toolName: 'pin_toolkit_account',
+      accessType: 'write',
+    },
+  };
+
+  const result = await evaluateAuthorizationRequest(
+    'policy.partner-auth-governance.v1',
+    request,
+    { mode: 'legacy_enforce', canaryPercent: 0 },
+    { mode: 'legacy' },
+  );
+
+  assert.equal(result.final.decision, 'allow');
+  assert.match(result.final.reason, /after human review/i);
+});

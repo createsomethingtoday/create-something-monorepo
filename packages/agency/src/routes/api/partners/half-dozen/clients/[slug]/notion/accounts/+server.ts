@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import {
 	HALF_DOZEN_PARTNER_KEY,
 	PartnerAuthHttpError,
+	authorizePartnerToolkitAdminAction,
 	getComposioClient,
 	getPartnerClientBySlug,
 	normalizePartnerSlug,
@@ -29,7 +30,7 @@ export const GET: RequestHandler = async ({ request, params, platform }) => {
 			return json({ error: 'unavailable', message: 'Database is unavailable' }, { status: 503 });
 		}
 
-		requirePartnerAdmin(request, env);
+		const actor = requirePartnerAdmin(request, env);
 		const slug = normalizePartnerSlug(params.slug);
 		if (!slug) {
 			return json({ error: 'invalid_request', message: 'Client slug is required' }, { status: 400 });
@@ -39,6 +40,15 @@ export const GET: RequestHandler = async ({ request, params, platform }) => {
 		if (!client) {
 			return json({ error: 'not_found', message: 'Partner client not found' }, { status: 404 });
 		}
+		const authz = await authorizePartnerToolkitAdminAction({
+			request,
+			env,
+			client,
+			actor,
+			actionName: 'view_toolkit_auth',
+			accessType: 'read',
+			toolkit: 'notion',
+		});
 
 		const accounts = await env.DB.prepare(
 			`SELECT * FROM partner_auth_notion_accounts
@@ -86,6 +96,7 @@ export const GET: RequestHandler = async ({ request, params, platform }) => {
 				created_at: row.created_at,
 				updated_at: row.updated_at,
 			})),
+			policy: authz.policy,
 		});
 	} catch (error) {
 		if (error instanceof PartnerAuthHttpError) {
@@ -116,6 +127,15 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 		if (!client) {
 			return json({ error: 'not_found', message: 'Partner client not found' }, { status: 404 });
 		}
+		const authz = await authorizePartnerToolkitAdminAction({
+			request,
+			env,
+			client,
+			actor,
+			actionName: 'upsert_toolkit_account',
+			accessType: 'write',
+			toolkit: 'notion',
+		});
 
 		const body = (await request.json().catch(() => null)) as CreateNotionAccountBody | null;
 		const accountSlug = normalizePartnerSlug(body?.account_slug ?? '');
@@ -202,6 +222,7 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			composio_user_id: composioUserId,
 			auth_config_id: authConfigId,
 			sync_enabled: syncEnabled,
+			policy: authz.policy,
 		});
 	} catch (error) {
 		if (error instanceof PartnerAuthHttpError) {

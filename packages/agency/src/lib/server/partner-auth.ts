@@ -1,4 +1,11 @@
 import { Composio } from '@composio/core';
+import {
+	evaluateAuthorizationRequest,
+	getPolicyManifest,
+	type AuthorizationAccessType,
+	type AuthorizationDecision,
+	type HybridEvaluatorConfig,
+} from '@create-something/mcp-authz';
 
 export const HALF_DOZEN_PARTNER_KEY = 'half-dozen';
 
@@ -105,7 +112,27 @@ export interface PartnerAuthToolkitPinRow {
 	updated_at: string;
 }
 
+export type PartnerToolkitAdminActionName =
+	| 'view_toolkit_auth'
+	| 'upsert_toolkit_account'
+	| 'create_toolkit_connect_link'
+	| 'pin_toolkit_account'
+	| 'disable_toolkit_account';
+
+export interface PartnerToolkitPolicyDecision {
+	policy_id: string;
+	decision: AuthorizationDecision['decision'];
+	evaluation_path: AuthorizationDecision['evaluationPath'];
+	policy_hash: string | null;
+	fallback_used: boolean;
+	rollout_mode: AuthorizationDecision['rolloutMode'];
+	canary_percent: number;
+	reason: string;
+}
+
 type PlatformEnv = App.Platform['env'];
+
+const PARTNER_AUTH_GOVERNANCE_POLICY_ID = 'policy.partner-auth-governance.v1';
 
 let composioCache:
 	| {
@@ -194,6 +221,14 @@ export function requirePartnerAdmin(request: Request, env: PlatformEnv): string 
 	return actorHeader && actorHeader.length > 0 ? actorHeader.slice(0, 128) : 'partner_admin';
 }
 
+export function getPartnerReviewStep(request: Request): string | null {
+	const reviewHeader =
+		request.headers.get('X-Partner-Review-Step')?.trim() ??
+		request.headers.get('X-Partner-Review-Trace')?.trim() ??
+		request.headers.get('X-Partner-Approval-Ref')?.trim();
+	return reviewHeader && reviewHeader.length > 0 ? reviewHeader.slice(0, 255) : null;
+}
+
 export async function getPartnerClientBySlug(
 	db: D1Database,
 	partnerKey: string,
@@ -224,6 +259,136 @@ export async function getLatestActiveConsent(
 		)
 		.bind(partnerClientId)
 		.first<PartnerAuthConsentRow>();
+}
+
+function parseIntegerEnv(raw: string | undefined, fallback: number, min: number, max: number): number {
+	if (!raw) return fallback;
+	const parsed = Number.parseInt(raw, 10);
+	if (!Number.isFinite(parsed)) return fallback;
+	return Math.max(min, Math.min(max, parsed));
+}
+
+function parseBooleanEnv(raw: string | undefined, fallback = false): boolean {
+	if (!raw) return fallback;
+	const value = raw.trim().toLowerCase();
+	if (!value) return fallback;
+	if (['1', 'true', 'yes', 'on'].includes(value)) return true;
+	if (['0', 'false', 'no', 'off'].includes(value)) return false;
+	return fallback;
+}
+
+function partnerAuthzHybridConfig(env: PlatformEnv): HybridEvaluatorConfig {
+	const osoUrl = env.OSO_URL?.trim();
+	const osoApiKey = env.OSO_API_KEY?.trim();
+	if (!osoUrl || !osoApiKey) {
+		return { mode: 'legacy' };
+	}
+
+	return {
+		mode: 'hybrid',
+		fallbackEnabled: true,
+		oso: {
+			url: osoUrl,
+			apiKey: osoApiKey,
+			fetchTimeoutMillis: parseIntegerEnv(env.OSO_FETCH_TIMEOUT_MS, 5000, 100, 30000),
+			bootstrapPolicy: parseBooleanEnv(env.OSO_BOOTSTRAP_POLICY, false),
+		},
+	};
+}
+
+function toPartnerPolicyDecision(decision: AuthorizationDecision): PartnerToolkitPolicyDecision {
+	return {
+		policy_id: PARTNER_AUTH_GOVERNANCE_POLICY_ID,
+		decision: decision.decision,
+		evaluation_path: decision.evaluationPath,
+		policy_hash: decision.policyHash,
+		fallback_used: Boolean(decision.fallbackReason),
+		rollout_mode: decision.rolloutMode,
+		canary_percent: decision.canaryPercent,
+		reason: decision.reason,
+	};
+}
+
+export async function authorizePartnerToolkitAdminAction(params: {
+	request: Request;
+	env: PlatformEnv;
+	client: PartnerAuthClientRow;
+	actor: string;
+	actionName: PartnerToolkitAdminActionName;
+	accessType: AuthorizationAccessType;
+	toolkit: string;
+	accountSlug?: string | null;
+}): Promise<{
+	consent: PartnerAuthConsentRow | null;
+	reviewStep: string | null;
+	policy: PartnerToolkitPolicyDecision;
+}> {
+	const { request, env, client, actor, actionName, accessType, toolkit, accountSlug } = params;
+	const consent = await getLatestActiveConsent(env.DB, client.id);
+	const reviewStep = getPartnerReviewStep(request);
+	const manifest = getPolicyManifest(PARTNER_AUTH_GOVERNANCE_POLICY_ID);
+	const evaluation = await evaluateAuthorizationRequest(
+		PARTNER_AUTH_GOVERNANCE_POLICY_ID,
+		{
+			actor: {
+				accountId: client.identity_account_id ?? client.workspace_account_id,
+				tenantId: client.identity_tenant_id ?? null,
+				userId: client.identity_user_id ?? null,
+				actorId: actor,
+				role: 'partner_admin',
+				readOnly: false,
+				toolMode: 'read_write',
+				identitySource: 'partner_admin_key',
+			},
+			action: {
+				name: actionName,
+				writeIntent: accessType !== 'read',
+				humanReviewStep: Boolean(reviewStep),
+				introspectionOk: Boolean(consent),
+			},
+			resource: {
+				kind: 'partner_toolkit_account',
+				id: `${client.id}:${normalizeToolkitSlug(toolkit)}:${accountSlug ?? '*'}`,
+				toolName: actionName,
+				accessType,
+				oauthRequired: actionName === 'create_toolkit_connect_link',
+				tags: [
+					`partner:${HALF_DOZEN_PARTNER_KEY}`,
+					`toolkit:${normalizeToolkitSlug(toolkit)}`,
+					...(accountSlug ? [`account:${normalizePartnerSlug(accountSlug)}`] : []),
+				],
+				metadata: {
+					client_slug: client.slug,
+					workspace_account_id: client.workspace_account_id,
+					consent_record_id: consent?.id ?? null,
+					review_step: reviewStep,
+				},
+			},
+		},
+		{
+			mode: manifest.rolloutDefaults?.mode ?? 'legacy_enforce',
+			canaryPercent: manifest.rolloutDefaults?.canaryPercent ?? 0,
+		},
+		partnerAuthzHybridConfig(env),
+	);
+
+	const policy = toPartnerPolicyDecision(evaluation.final);
+	if (evaluation.final.decision === 'block') {
+		throw new PartnerAuthHttpError(403, 'policy_blocked', policy.reason);
+	}
+	if (evaluation.final.decision === 'require_human_review') {
+		throw new PartnerAuthHttpError(
+			409,
+			'human_review_required',
+			`${policy.reason} Add X-Partner-Review-Step with an approval or review reference and retry.`,
+		);
+	}
+
+	return {
+		consent,
+		reviewStep,
+		policy,
+	};
 }
 
 export async function insertPartnerAccessDelivery(

@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import {
 	HALF_DOZEN_PARTNER_KEY,
 	PartnerAuthHttpError,
+	authorizePartnerToolkitAdminAction,
 	getPartnerClientBySlug,
 	normalizePartnerSlug,
 	randomId,
@@ -28,6 +29,16 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 		if (!client) {
 			return json({ error: 'not_found', message: 'Partner client not found' }, { status: 404 });
 		}
+		const authz = await authorizePartnerToolkitAdminAction({
+			request,
+			env,
+			client,
+			actor,
+			actionName: 'disable_toolkit_account',
+			accessType: 'destructive',
+			toolkit: 'notion',
+			accountSlug,
+		});
 
 		const account = await env.DB.prepare(
 			`SELECT * FROM partner_auth_notion_accounts
@@ -60,6 +71,7 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			client_slug: client.slug,
 			account_slug: accountSlug,
 			status: 'disabled',
+			policy: authz.policy,
 		});
 	} catch (error) {
 		if (error instanceof PartnerAuthHttpError) {
