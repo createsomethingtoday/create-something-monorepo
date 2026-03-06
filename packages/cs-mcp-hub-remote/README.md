@@ -57,10 +57,11 @@ By default this hub runs in broker-only mode:
   1. `hub_search_proxy_tools`
   2. `hub_describe_proxy_tool`
   3. `hub_execute_proxy_tool`
+- For toolkit auth and reconnects, search for `__connection_status` or `__get_connect_link`, then execute that proxy tool with `hub_execute_proxy_tool`.
 
 If a client attempts a direct proxy tool call, the hub returns:
 
-`Direct proxy tools are disabled. Use hub_execute_proxy_tool with proxyToolName + args.`
+`Direct proxy tools are disabled. Use hub_search_proxy_tools to find the proxyToolName, then call hub_execute_proxy_tool with proxyToolName + args.`
 
 Optional direct proxy mode:
 

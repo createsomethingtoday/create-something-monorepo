@@ -376,7 +376,8 @@ export const MANAGEMENT_TOOLS: Tool[] = [
   },
   {
     name: 'hub_search_proxy_tools',
-    description: 'Search visible proxy tools with optional server filter and cursor pagination.',
+    description:
+      'Search visible proxy tools with optional server filter and cursor pagination. Use this first to find a proxyToolName, especially for brokered auth flows like __connection_status and __get_connect_link.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -412,7 +413,8 @@ export const MANAGEMENT_TOOLS: Tool[] = [
   },
   {
     name: 'hub_describe_proxy_tool',
-    description: 'Describe a visible proxy tool (schema + downstream route metadata).',
+    description:
+      'Describe a visible proxy tool (schema + downstream route metadata). Use after hub_search_proxy_tools when you need argument shape before hub_execute_proxy_tool.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -457,7 +459,8 @@ export const MANAGEMENT_TOOLS: Tool[] = [
   },
   {
     name: 'hub_execute_proxy_tool',
-    description: 'Execute a visible proxy tool by name with provided args.',
+    description:
+      'Execute a visible proxy tool by name with provided args. This is the canonical way to run downstream tools when direct proxy tools are disabled, including auth and reconnect tools like __connection_status and __get_connect_link.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -2045,7 +2048,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
       if (directProxyRoute) {
         if (!isDirectProxyToolAllowed(env, toolName)) {
           const message =
-            'Direct proxy tools are disabled. Use hub_execute_proxy_tool with proxyToolName + args.';
+            'Direct proxy tools are disabled. Use hub_search_proxy_tools to find the proxyToolName, then call hub_execute_proxy_tool with proxyToolName + args.';
           const durationMs = Date.now() - startedAt;
           await Promise.all([
             recordHubInvocationWithCtx({
@@ -3921,6 +3924,8 @@ function buildHubOverviewHtml(params: {
     discovery: prefs,
     policy,
     note: 'Use hub_search_proxy_tools -> hub_describe_proxy_tool -> hub_execute_proxy_tool for brokered execution.',
+    authNote:
+      'For toolkit auth or reconnects, search for __connection_status or __get_connect_link and execute that proxy tool via hub_execute_proxy_tool.',
   };
 
   const escaped = escapeHtml(JSON.stringify(health, null, 2));
