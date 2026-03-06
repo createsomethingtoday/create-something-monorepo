@@ -1,13 +1,14 @@
 #!/bin/bash
 # CREATE SOMETHING Paper/Experiment Generator
 #
-# Generates Canon-compliant Svelte pages from Beads issues.
+# Generates Canon-compliant Svelte pages from Loom tasks or Beads issues.
 # Uses intelligent routing: Gemini Flash for simple, Sonnet for complex.
 #
 # Usage:
-#   ./scripts/run-paper.sh csm-xxx              # Generate from issue
-#   ./scripts/run-paper.sh csm-xxx --dry-run    # Preview without writing
-#   ./scripts/run-paper.sh csm-xxx --model opus # Force specific model
+#   ./scripts/run-paper.sh lm-xxx               # Generate from Loom task
+#   ./scripts/run-paper.sh csm-xxx              # Generate from Beads issue
+#   ./scripts/run-paper.sh lm-xxx --dry-run     # Preview without writing
+#   ./scripts/run-paper.sh lm-xxx --model opus  # Force specific model
 #
 # Install: cd packages/agent-sdk && uv pip install -e ".[all]"
 
@@ -52,7 +53,7 @@ done
 
 if [ -z "$ISSUE_ID" ]; then
     echo -e "${RED}Error: Issue ID required${NC}"
-    echo "Usage: ./scripts/run-paper.sh csm-xxx [--dry-run] [--model opus|sonnet|haiku|flash]"
+    echo "Usage: ./scripts/run-paper.sh lm-xxx|csm-xxx [--dry-run] [--model opus|sonnet|haiku|flash]"
     exit 1
 fi
 
@@ -86,6 +87,7 @@ python3 << 'PYTHON_SCRIPT'
 import asyncio
 import json
 import os
+import sqlite3
 import subprocess
 import sys
 from pathlib import Path
@@ -96,40 +98,107 @@ DRY_RUN = os.environ.get("DRY_RUN", "false") == "true"
 FORCE_MODEL = os.environ.get("FORCE_MODEL") or None
 MONOREPO = Path(os.environ.get("MONOREPO_DIR", "."))
 
-async def main():
-    """Generate paper or experiment from Beads issue."""
+def detect_tracking_system(issue_id: str) -> str:
+    return "loom" if issue_id.startswith("lm-") else "beads"
 
-    # 1. Read the Beads issue
-    print(f"📋 Reading Beads issue {ISSUE_ID}...")
+def parse_labels(raw_labels):
+    if isinstance(raw_labels, list):
+        return [str(label) for label in raw_labels]
+    if isinstance(raw_labels, str):
+        try:
+            parsed = json.loads(raw_labels)
+            if isinstance(parsed, list):
+                return [str(label) for label in parsed]
+        except json.JSONDecodeError:
+            return [part.strip() for part in raw_labels.split(",") if part.strip()]
+    return []
+
+def get_beads_issue(issue_id: str):
     result = subprocess.run(
-        ["bd", "--sandbox", "show", ISSUE_ID, "--json", "--allow-stale"],
+        ["bd", "--sandbox", "show", issue_id, "--json", "--allow-stale"],
         capture_output=True, text=True, cwd=MONOREPO
     )
-
     if result.returncode != 0:
-        print(f"❌ Failed to read issue: {result.stderr}")
-        return 1
+        raise RuntimeError(result.stderr.strip() or "Unknown Beads error")
 
     try:
         issues = json.loads(result.stdout)
-        # bd show returns a list, get the first (and only) issue
         issue = issues[0] if isinstance(issues, list) else issues
-    except (json.JSONDecodeError, IndexError) as e:
-        print(f"❌ Failed to parse issue JSON: {result.stdout}")
+    except (json.JSONDecodeError, IndexError) as error:
+        raise RuntimeError(f"Failed to parse issue JSON: {result.stdout}") from error
+
+    issue["labels"] = parse_labels(issue.get("labels"))
+    return issue
+
+def get_loom_task(issue_id: str):
+    work_db = MONOREPO / ".loom" / "work.db"
+    if work_db.exists():
+        connection = sqlite3.connect(work_db)
+        connection.row_factory = sqlite3.Row
+        try:
+            row = connection.execute(
+                """
+                SELECT id, title, description, status, priority, issue_type, agent, labels,
+                       parent, evidence, repo, close_reason, created_at, updated_at
+                FROM tasks
+                WHERE id = ?
+                LIMIT 1
+                """,
+                (issue_id,),
+            ).fetchone()
+        finally:
+            connection.close()
+
+        if row is not None:
+            return {
+                "id": row["id"],
+                "title": row["title"],
+                "description": row["description"] or "",
+                "labels": parse_labels(row["labels"]),
+                "status": row["status"],
+                "priority": row["priority"],
+                "issue_type": row["issue_type"],
+            }
+
+    tasks_jsonl = MONOREPO / ".loom" / "tasks.jsonl"
+    if tasks_jsonl.exists():
+        for line in tasks_jsonl.read_text(encoding="utf8").splitlines():
+            if not line.strip():
+                continue
+            task = json.loads(line)
+            if task.get("id") == issue_id:
+                task["labels"] = parse_labels(task.get("labels"))
+                return task
+
+    raise RuntimeError(f"Could not find Loom task {issue_id}")
+
+async def main():
+    """Generate paper or experiment from Loom or Beads."""
+
+    tracking_system = detect_tracking_system(ISSUE_ID)
+    work_item_kind = "Loom task" if tracking_system == "loom" else "Beads issue"
+
+    # 1. Read the work item
+    print(f"📋 Reading {work_item_kind} {ISSUE_ID}...")
+    try:
+        issue = get_loom_task(ISSUE_ID) if tracking_system == "loom" else get_beads_issue(ISSUE_ID)
+    except RuntimeError as error:
+        print(f"❌ Failed to read {work_item_kind.lower()}: {error}")
         return 1
 
     title = issue.get("title", "")
     description = issue.get("description", "")
-    labels = issue.get("labels", [])
+    labels = parse_labels(issue.get("labels"))
 
     print(f"   Title: {title}")
     print(f"   Labels: {', '.join(labels)}")
 
     # 2. Determine content type from labels/title
     content_type = "paper"  # default
-    if "experiment" in labels or "experiment" in title.lower():
+    normalized_labels = [label.lower() for label in labels]
+    if any("experiment" in label for label in normalized_labels) or "experiment" in title.lower():
         content_type = "experiment"
-    elif "paper" in labels or "paper" in title.lower():
+    elif any("paper" in label for label in normalized_labels) or "paper" in title.lower():
         content_type = "paper"
 
     # 3. Generate slug from title
@@ -144,7 +213,7 @@ async def main():
     slug = "-".join(filter(None, slug.split("-")))  # Remove double dashes
 
     if not slug:
-        slug = ISSUE_ID.replace("csm-", "")
+        slug = ISSUE_ID.replace("csm-", "").replace("lm-", "")
 
     print(f"   Type: {content_type}")
     print(f"   Slug: {slug}")
@@ -275,10 +344,16 @@ Links to endpoints and related experiments
 ### SIZING: Minimum 400 lines, 4+ stat metrics, 3+ status cards, 1+ live endpoints.
 '''
 
-    task = f'''
-Generate a CREATE SOMETHING {content_type} from this Beads issue.
+    close_instruction = (
+        "4. Do not change Loom status automatically. Leave claiming, review labels, and completion to the publication lifecycle automation."
+        if tracking_system == "loom"
+        else f"4. After creating files, close the Beads issue:\n   bd close {ISSUE_ID} --no-db"
+    )
 
-## Issue Details
+    task = f'''
+Generate a CREATE SOMETHING {content_type} from this {work_item_kind}.
+
+## Work Item Details
 - ID: {ISSUE_ID}
 - Title: {title}
 - Description: {description}
@@ -325,8 +400,7 @@ Every claim must cite a file you read.
 
 3. {"Create +page.server.ts for live data fetching" if content_type == "experiment" else "No server file needed for static paper"}
 
-4. After creating files, close the Beads issue:
-   bd close {ISSUE_ID} --no-db
+{close_instruction}
 
 ## Canon Token Reference (USE THESE EXACT NAMES)
 

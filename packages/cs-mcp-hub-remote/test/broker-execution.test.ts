@@ -52,6 +52,7 @@ test('executeProxyRoute executes visible route and returns downstream payload', 
       userId: null,
       sessionId: null,
       allowedToolPrefixes: null,
+      toolMode: null,
       identitySource: 'fallback',
     },
     accountId: 'acct_1',
@@ -91,6 +92,7 @@ test('executeProxyRoute blocks calls outside session scope', async () => {
       userId: null,
       sessionId: 'session_1',
       allowedToolPrefixes: [],
+      toolMode: 'read_only',
       identitySource: 'session',
     },
     accountId: 'acct_1',
@@ -128,6 +130,7 @@ test('executeProxyRoute surfaces downstream failures as MCP errors', async () =>
       userId: null,
       sessionId: null,
       allowedToolPrefixes: null,
+      toolMode: null,
       identitySource: 'fallback',
     },
     accountId: 'acct_1',
@@ -143,11 +146,91 @@ test('executeProxyRoute surfaces downstream failures as MCP errors', async () =>
   assert.match((result as any).content[0].text, /Tool "server_a__alpha" failed: downstream exploded/);
 });
 
-test('executeProxyRoute converts semantic downstream scope failures into actionable auth errors', async () => {
+test('executeProxyRoute blocks mutable routes for read-only sessions before downstream execution', async () => {
+  let called = false;
+  const route = {
+    proxyToolName: 'composio-toolkit-googlesheets__googlesheets_values_update',
+    serverName: 'composio-toolkit-googlesheets',
+    downstreamToolName: 'googlesheets_values_update',
+    call: async () => {
+      called = true;
+      return { ok: true };
+    },
+  };
+
+  const result = await executeProxyRoute({
+    env: {} as any,
+    route,
+    executionArgs: { spreadsheetId: 'sheet_1' },
+    trace,
+    accountContext: {
+      accountId: 'acct_1',
+      tenantId: null,
+      userId: 'user_1',
+      sessionId: 'session_1',
+      allowedToolPrefixes: null,
+      toolMode: 'read_only',
+      identitySource: 'session',
+    },
+    accountId: 'acct_1',
+    toolName: 'hub_execute_proxy_tool',
+    startedAt: Date.now(),
+    rateLimitPolicy: disabledRateLimitPolicy,
+    quotaPolicy: disabledQuotaPolicy,
+    entrypoint: 'hub_execute_proxy_tool',
+    entryProxyToolName: route.proxyToolName,
+  });
+
+  assert.equal(called, false);
+  assert.equal((result as any).isError, true);
+  assert.match((result as any).content[0].text, /read-only .* write-intent/i);
+});
+
+test('executeProxyRoute requires human review for destructive routes', async () => {
+  let called = false;
   const route = {
     proxyToolName: 'composio-toolkit-zoom__zoom_delete_a_meeting',
     serverName: 'composio-toolkit-zoom',
     downstreamToolName: 'zoom_delete_a_meeting',
+    call: async () => {
+      called = true;
+      return { ok: true };
+    },
+  };
+
+  const result = await executeProxyRoute({
+    env: {} as any,
+    route,
+    executionArgs: { meetingId: 12345678901 },
+    trace,
+    accountContext: {
+      accountId: 'acct_1',
+      tenantId: null,
+      userId: null,
+      sessionId: 'session_1',
+      allowedToolPrefixes: null,
+      toolMode: 'read_write',
+      identitySource: 'session',
+    },
+    accountId: 'acct_1',
+    toolName: 'hub_execute_proxy_tool',
+    startedAt: Date.now(),
+    rateLimitPolicy: disabledRateLimitPolicy,
+    quotaPolicy: disabledQuotaPolicy,
+    entrypoint: 'hub_execute_proxy_tool',
+    entryProxyToolName: route.proxyToolName,
+  });
+
+  assert.equal(called, false);
+  assert.equal((result as any).isError, true);
+  assert.match((result as any).content[0].text, /require human review/i);
+});
+
+test('executeProxyRoute converts semantic downstream scope failures into actionable auth errors', async () => {
+  const route = {
+    proxyToolName: 'composio-toolkit-zoom__zoom_create_a_meeting',
+    serverName: 'composio-toolkit-zoom',
+    downstreamToolName: 'zoom_create_a_meeting',
     call: async () => ({
       content: [
         {
@@ -156,7 +239,7 @@ test('executeProxyRoute converts semantic downstream scope failures into actiona
             data: {
               code: 4711,
               message:
-                'Invalid access token, does not contain scopes:[meeting:delete:meeting:admin, meeting:delete:meeting].',
+                'Invalid access token, does not contain scopes:[meeting:write:meeting:admin, meeting:write:meeting].',
               success: false,
             },
             error: null,
@@ -169,7 +252,7 @@ test('executeProxyRoute converts semantic downstream scope failures into actiona
         data: {
           code: 4711,
           message:
-            'Invalid access token, does not contain scopes:[meeting:delete:meeting:admin, meeting:delete:meeting].',
+            'Invalid access token, does not contain scopes:[meeting:write:meeting:admin, meeting:write:meeting].',
           success: false,
         },
         error: null,
@@ -190,6 +273,7 @@ test('executeProxyRoute converts semantic downstream scope failures into actiona
       userId: null,
       sessionId: null,
       allowedToolPrefixes: null,
+      toolMode: null,
       identitySource: 'fallback',
     },
     accountId: 'acct_1',
@@ -203,6 +287,6 @@ test('executeProxyRoute converts semantic downstream scope failures into actiona
 
   assert.equal((result as any).isError, true);
   assert.match((result as any).content[0].text, /Missing OAuth scopes for toolkit "zoom"/);
-  assert.match((result as any).content[0].text, /meeting:delete:meeting:admin/);
+  assert.match((result as any).content[0].text, /meeting:write:meeting:admin/);
   assert.match((result as any).content[0].text, /composio-toolkit-zoom__get_connect_link/);
 });

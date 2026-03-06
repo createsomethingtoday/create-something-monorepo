@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  buildAuthorizedVisibleProxyRoutes,
   buildVisibleProxyRoutes,
   resolveDiscoveryPack,
   resolveIntentRouteCandidate,
@@ -146,6 +147,12 @@ function createIntentRuntime() {
   };
 }
 
+const trace = {
+  requestId: 'req_1',
+  correlationId: 'corr_1',
+  transportRequestId: 'req_1',
+};
+
 test('buildVisibleProxyRoutes applies session -> discovery -> max cap', () => {
   const runtime = createRuntime();
   const prefs = {
@@ -188,6 +195,77 @@ test('buildVisibleProxyRoutes in full mode keeps all session-allowed routes', ()
   assert.deepEqual(
     visible.toolDefinitions.map((tool) => tool.name),
     ['server_a__alpha', 'server_a__beta'],
+  );
+});
+
+test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for read-only sessions', async () => {
+  const readRoute = {
+    proxyToolName: 'composio-toolkit-googlesheets__googlesheets_get_spreadsheet',
+    serverName: 'composio-toolkit-googlesheets',
+    downstreamToolName: 'googlesheets_get_spreadsheet',
+    call: async () => ({ ok: true }),
+  };
+  const writeRoute = {
+    proxyToolName: 'composio-toolkit-googlesheets__googlesheets_values_update',
+    serverName: 'composio-toolkit-googlesheets',
+    downstreamToolName: 'googlesheets_values_update',
+    call: async () => ({ ok: true }),
+  };
+
+  const runtime = {
+    builtAt: 0,
+    stateResolution: {
+      state: { enabledBundles: [], enabledServers: [], disabledServers: [] },
+      enabledServerNames: ['composio-toolkit-googlesheets'],
+      warnings: [],
+    },
+    connected: [],
+    failed: [],
+    proxies: {
+      toolDefinitions: [
+        {
+          name: readRoute.proxyToolName,
+          description: '[googlesheets] get spreadsheet',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        {
+          name: writeRoute.proxyToolName,
+          description: '[googlesheets] update values',
+          inputSchema: { type: 'object', properties: {} },
+        },
+      ],
+      routes: new Map([
+        [readRoute.proxyToolName, readRoute],
+        [writeRoute.proxyToolName, writeRoute],
+      ]),
+      warnings: [],
+    },
+  };
+
+  const visible = await buildAuthorizedVisibleProxyRoutes({
+    runtime: runtime as any,
+    prefs: {
+      mode: 'full',
+      activeServers: ['composio-toolkit-googlesheets'],
+      maxProxyTools: null,
+    },
+    accountContext: {
+      accountId: 'acct_1',
+      tenantId: null,
+      userId: 'user_1',
+      sessionId: 'session_1',
+      allowedToolPrefixes: null,
+      toolMode: 'read_only',
+      identitySource: 'session',
+    },
+    env: {} as any,
+    trace,
+    entrypoint: 'hub_list_proxy_tools',
+  });
+
+  assert.deepEqual(
+    visible.toolDefinitions.map((tool) => tool.name),
+    ['composio-toolkit-googlesheets__googlesheets_get_spreadsheet'],
   );
 });
 

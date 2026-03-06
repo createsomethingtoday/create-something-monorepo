@@ -2591,7 +2591,7 @@ async function evaluateHubRouteAuthorization(params: {
   return evaluation;
 }
 
-async function buildAuthorizedVisibleProxyRoutes(params: {
+export async function buildAuthorizedVisibleProxyRoutes(params: {
   runtime: HubRuntime;
   prefs: DiscoveryPreferences;
   accountContext: ResolvedAccountContext;
