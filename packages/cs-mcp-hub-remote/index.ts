@@ -4056,7 +4056,8 @@ async function resolveSessionAccountContext(env: Env, token: string): Promise<Re
     userId: normalizeTraceValue(resolved.user_id),
     sessionId: normalizeTraceValue(resolved.session_id),
     toolMode: normalizeTraceValue(resolved.tool_mode),
-    allowedToolPrefixes: parseAllowedToolPrefixes(resolved.allowed_tool_prefixes),
+    allowedToolPrefixes:
+      resolved.allowed_tool_prefixes == null ? null : parseAllowedToolPrefixes(resolved.allowed_tool_prefixes),
     identitySource: 'session',
   };
 }

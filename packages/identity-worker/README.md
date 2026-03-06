@@ -71,6 +71,7 @@ MCP hub integration:
    - Session token (`ms_tok_*`) is ephemeral, while `account_id` is stable per `{user_id, tenant_id}`
 2. Host stores returned MCP token and calls hub endpoint
 3. Hub introspects token via `POST /v1/mcp/sessions/resolve` using `MCP_SESSION_RESOLVE_TOKEN`
+   - resolver accepts both MCP session tokens and issued legacy personal bearer tokens (`mlk_*`) for compat lanes
 
 Recommended production config:
 
@@ -91,6 +92,7 @@ Partner-admin integration:
    - `POST /v1/mcp/legacy-keys/issue` (`mcp_legacy_key_issue`)
    - `POST /v1/mcp/legacy-keys/:id/revoke` (`mcp_legacy_key_revoke`)
 5. Legacy issuance requires approved exception + sunset metadata; no plaintext key persistence in docs/artifacts
+6. Compat hubs can resolve those legacy bearer tokens directly when `HUB_SESSION_RESOLVE_URL` + `HUB_SESSION_RESOLVE_TOKEN` are configured
 
 ## Related
 

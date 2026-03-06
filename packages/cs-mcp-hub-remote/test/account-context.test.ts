@@ -106,6 +106,46 @@ test('resolveAccountContext can disable compat header account override', async (
   assert.equal(context.identitySource, 'fallback');
 });
 
+test('resolveAccountContext preserves unrestricted tool access for compat personal bearer tokens', async () => {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = async (): Promise<Response> =>
+    new Response(
+      JSON.stringify({
+        valid: true,
+        account_id: 'acct_personal',
+        tenant_id: 'tenant_acme',
+        user_id: 'user_legacy',
+        allowed_tool_prefixes: null,
+        auth_mode: 'legacy_key',
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+  try {
+    const context = await resolveAccountContext(
+      makeExtra({ authorization: 'Bearer mlk_personal_token' }),
+      {
+        HUB_IDENTITY_MODE: 'compat',
+        HUB_API_TOKEN: 'hub_static_token',
+        HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
+      } as any,
+    );
+
+    assert.equal(context.accountId, 'acct_personal');
+    assert.equal(context.identitySource, 'session');
+    assert.equal(context.allowedToolPrefixes, null);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('authorizeRequest accepts a resolved personal bearer token in compat mode', async () => {
   const originalFetch = globalThis.fetch;
   let capturedAuth = '';
