@@ -445,6 +445,149 @@ async function runRouterTool(
   });
 }
 
+async function runDeterministicRouter(
+  lower: string,
+  mergedArgs: Record<string, unknown>,
+  deps: OperatorNotionToolsDeps,
+): Promise<{ content: Array<{ type: 'text'; text: string }> } | null> {
+  if (mentionsAny(lower, ['list accounts', 'show accounts', 'what accounts', 'which accounts'])) {
+    return runRouterIntent('list_accounts', mergedArgs, deps);
+  }
+
+  if (mentionsAny(lower, ['status', 'active', 'connected'])) {
+    return runRouterIntent('get_status', mergedArgs, deps);
+  }
+
+  if (mentionsAny(lower, ['pin ', 'set pinned', 'use for halfdozen', 'use for blondish', 'pin workspace'])) {
+    return runRouterIntent('pin_account', mergedArgs, deps);
+  }
+
+  if (mentionsAny(lower, ['sync', 'workflow'])) {
+    return runRouterIntent('sync_guidance', mergedArgs, deps);
+  }
+
+  if (mentionsAny(lower, ['connect', 'add workspace', 'new workspace', 'api key', 'onboard'])) {
+    return runRouterIntent('wizard', mergedArgs, deps);
+  }
+
+  return null;
+}
+
+async function runRouterIntent(
+  intent: RouterIntent,
+  mergedArgs: Record<string, unknown>,
+  deps: OperatorNotionToolsDeps,
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  if (intent === 'list_accounts') {
+    return runAccountsTool('list_accounts', {}, deps);
+  }
+
+  if (intent === 'get_status') {
+    const slug = normalizeSlug(String(mergedArgs.account_slug ?? ''));
+    if (!slug) {
+      return toJsonResult({
+        ok: true,
+        action: 'router',
+        intent: 'get_status',
+        status: 'needs_input',
+        next_questions: ['Which account_slug should I check?'],
+      });
+    }
+    return runAccountsTool('get_status', { account_slug: slug }, deps);
+  }
+
+  if (intent === 'pin_account') {
+    const slug = normalizeSlug(String(mergedArgs.account_slug ?? ''));
+    const toolName = normalizePinToolName(mergedArgs.pin_tool_name, deps);
+    if (!slug || !toolName) {
+      return toJsonResult({
+        ok: true,
+        action: 'router',
+        intent: 'pin_account',
+        status: 'needs_input',
+        next_questions: [
+          'Which account_slug should be pinned?',
+          `Which pin tool should be used? (${deps.pinnedHalfdozenToolName} or ${deps.pinnedClientToolName})`,
+        ],
+      });
+    }
+    return runAccountsTool('pin_account', { account_slug: slug, tool_name: toolName }, deps);
+  }
+
+  if (intent === 'sync_guidance') {
+    return toJsonResult({
+      ok: true,
+      action: 'router',
+      intent: 'sync_guidance',
+      status: 'info',
+      message:
+        'Use operator_notion_accounts wizard to connect workspaces first. After connection, choose workflow/sync via available Notion tools.',
+      next_actions: [
+        { tool: 'operator_notion_accounts', action: 'wizard', args: mergedArgs },
+      ],
+    });
+  }
+
+  if (intent === 'wizard') {
+    return runAccountsTool('wizard', mergedArgs, deps);
+  }
+
+  return toJsonResult({
+    ok: true,
+    action: 'router',
+    intent: 'help',
+    status: 'needs_input',
+    message:
+      'I can help with: connect workspace, check account status, list accounts, and pin workspace tools. Tell me which one you want.',
+  });
+}
+
+async function inferRouterIntentWithAgent(
+  request: string,
+  context: Record<string, unknown>,
+  deps: OperatorNotionToolsDeps,
+): Promise<RouterAgentDecision | null> {
+  const apiKey = deps.routerOpenAiApiKey?.trim();
+  if (!apiKey) return null;
+  if (request.length > 1_500) return null;
+
+  const cacheKey = buildRouterCacheKey(request, context, deps);
+  const cached = getCachedRouterDecision(cacheKey);
+  if (cached) return cached;
+
+  try {
+    const agentsSdk = await loadAgentsSdk();
+    agentsSdk.setDefaultOpenAIKey(apiKey);
+
+    const model = deps.routerOpenAiModel?.trim() || ROUTER_DEFAULT_OPENAI_MODEL;
+    const timeoutMs = deps.routerOpenAiTimeoutMs ?? ROUTER_DEFAULT_TIMEOUT_MS;
+    const cacheTtlMs = deps.routerOpenAiCacheTtlMs ?? ROUTER_DEFAULT_CACHE_TTL_MS;
+
+    const agent = new agentsSdk.Agent({
+      name: 'Operator Notion Router',
+      model,
+      instructions: [
+        'You route operator requests for Notion account management.',
+        'Return only a single JSON object with keys: intent, account_slug, display_label, pin_tool_name.',
+        'Allowed intents: wizard, list_accounts, get_status, pin_account, sync_guidance, help.',
+        'If unsure, return intent=help.',
+        'Never include prose or markdown.',
+      ].join(' '),
+    });
+
+    const runner = new agentsSdk.Runner({ tracingDisabled: true });
+    const prompt = buildRouterAgentPrompt(request, context, deps);
+    const runPromise = runner.run(agent, prompt, { maxTurns: 1 }) as Promise<{ finalOutput: unknown }>;
+    const runResult = await withTimeout(runPromise, timeoutMs, 'OpenAI router timeout');
+    const decision = parseRouterAgentDecision(runResult.finalOutput, deps);
+    if (!decision) return null;
+    setCachedRouterDecision(cacheKey, decision, cacheTtlMs);
+    return decision;
+  } catch {
+    return null;
+  }
+}
+
 async function runSyncTool(
   params: Record<string, unknown>,
   deps: OperatorNotionToolsDeps,
@@ -580,7 +723,7 @@ async function syncAllAccounts(deps: OperatorNotionToolsDeps, partnerClientId: s
   const accounts = await listNotionAccounts(deps.db, partnerClientId);
   const refreshed: NotionAccountRow[] = [];
   for (const account of accounts) {
-    refreshed.push(await refreshNotionAccountState(deps.db, deps.composio, account));
+    refreshed.push(await refreshNotionAccountState(deps.db, deps.composio, account, { minIntervalMs: LIST_ACCOUNTS_REFRESH_TTL_MS }));
   }
   return refreshed;
 }
@@ -598,7 +741,14 @@ async function requireActiveAccount(
   options: { requireSyncEnabled: boolean },
 ): Promise<NotionAccountRow> {
   const account = await requireAccount(deps.db, partnerClientId, accountSlug);
-  const refreshed = await refreshNotionAccountState(deps.db, deps.composio, account);
+  if (account.status !== 'active') {
+    throw new Error(`Account "${accountSlug}" is ${account.status}.`);
+  }
+  if (options.requireSyncEnabled && !Boolean(account.sync_enabled)) {
+    throw new Error(`Account "${accountSlug}" is not enabled for sync jobs.`);
+  }
+
+  const refreshed = await refreshNotionAccountState(deps.db, deps.composio, account, { minIntervalMs: ACTIVE_ACCOUNT_REFRESH_TTL_MS });
   if (refreshed.status !== 'active') {
     throw new Error(`Account "${accountSlug}" is ${refreshed.status}.`);
   }
