@@ -2557,7 +2557,7 @@ function toHubAuthzEvent(params: {
     legacyDecision: evaluation.legacy.decision,
     polarDecision: evaluation.polar.decision,
     finalDecision: evaluation.final.decision,
-    matchedRuleIdsJson: safeJsonStringify(evaluation.final.matchedRuleIds),
+    matchedRuleIdsJson: JSON.stringify(evaluation.final.matchedRuleIds ?? []),
     reason: evaluation.final.reason,
     policyHash: evaluation.final.policyHash,
     compilerVersion: evaluation.final.compilerVersion,
@@ -2572,7 +2572,7 @@ function toHubAuthzEvent(params: {
       toolMode: accountContext.toolMode,
       identitySource: accountContext.identitySource,
       latency_ms: evaluation.final.latencyMs,
-    }),
+    }) ?? '{}',
   };
 }
 

@@ -152,7 +152,7 @@ test('authorizeRequest accepts a resolved personal bearer token in compat mode',
   let capturedToken = '';
 
   globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-    capturedAuth = String((init?.headers as Record<string, string> | undefined)?.Authorization ?? '');
+    capturedAuth = new Headers(init?.headers).get('authorization') ?? '';
     const body = JSON.parse(String(init?.body ?? '{}')) as { token?: string };
     capturedToken = body.token ?? '';
     return new Response(
@@ -176,7 +176,7 @@ test('authorizeRequest accepts a resolved personal bearer token in compat mode',
     const failure = await authorizeRequest(
       new Request('https://hub.example/mcp', {
         headers: {
-          Authorization: 'Bearer mlk_personal_token',
+          Authorization: 'Bearer mlk_personal_token_authz',
         },
       }),
       {
@@ -188,7 +188,7 @@ test('authorizeRequest accepts a resolved personal bearer token in compat mode',
 
     assert.equal(failure, null);
     assert.equal(capturedAuth, 'Bearer resolver_secret');
-    assert.equal(capturedToken, 'mlk_personal_token');
+    assert.equal(capturedToken, 'mlk_personal_token_authz');
   } finally {
     globalThis.fetch = originalFetch;
   }

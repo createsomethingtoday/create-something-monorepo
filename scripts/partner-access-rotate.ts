@@ -10,7 +10,7 @@ async function main(): Promise<void> {
 	const adminKey = requireInput(args, 'admin-key', 'PARTNER_ADMIN_KEY', 'partner admin key');
 	const slug = requireInput(args, 'slug', 'PARTNER_CLIENT_SLUG', 'partner client slug');
 	const actor = resolveInput(args, 'actor', 'PARTNER_ACTOR', 'partner_cli');
-	const mode = (resolveInput(args, 'mode', 'PARTNER_ROTATE_MODE', 'strict') as RotateMode).toLowerCase() as RotateMode;
+	const mode = (resolveInput(args, 'mode', 'PARTNER_ROTATE_MODE', 'legacy') as RotateMode).toLowerCase() as RotateMode;
 
 	if (mode !== 'strict' && mode !== 'legacy') {
 		throw new Error(`Unsupported mode "${mode}". Use strict or legacy.`);

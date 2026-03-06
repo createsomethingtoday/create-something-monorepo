@@ -228,6 +228,14 @@ set_doppler_secret() {
     "${key}=${value}" >/dev/null
 }
 
+get_doppler_secret() {
+  local key="$1"
+  doppler secrets get \
+    --project "$DOPPLER_PROJECT" \
+    --config "$DOPPLER_CONFIG" \
+    --plain "$key"
+}
+
 set_infisical_secret() {
   local key="$1"
   local value="$2"
@@ -248,6 +256,21 @@ set_infisical_secret() {
   infisical_with_auth "${set_cmd[@]}" >/dev/null
 }
 
+get_infisical_secret() {
+  local key="$1"
+  local -a get_cmd=(
+    infisical secrets get "$key"
+    --plain
+    --env="$INFISICAL_ENV"
+    --path="$INFISICAL_PATH"
+    --include-imports="$INFISICAL_INCLUDE_IMPORTS"
+  )
+  if [[ -n "$INFISICAL_PROJECT_ID" ]]; then
+    get_cmd+=(--projectId="$INFISICAL_PROJECT_ID")
+  fi
+  infisical_with_auth "${get_cmd[@]}"
+}
+
 set_vault_secret() {
   local key="$1"
   local value="$2"
@@ -256,6 +279,20 @@ set_vault_secret() {
     infisical) set_infisical_secret "$key" "$value" ;;
     env)
       echo "[${VAULT_PROVIDER}] secret ${key} left in process env only (not persisted to external vault)"
+      ;;
+  esac
+}
+
+get_vault_secret() {
+  local key="$1"
+  case "$VAULT_PROVIDER" in
+    doppler) get_doppler_secret "$key" ;;
+    infisical) get_infisical_secret "$key" ;;
+    env)
+      if [[ -z "${!key:-}" ]]; then
+        return 1
+      fi
+      printf '%s' "${!key}"
       ;;
   esac
 }
@@ -476,6 +513,14 @@ for team_key in "${TEAM_KEYS[@]}"; do
   token_key="$(token_env_var_for_team "$team_key")"
   if team_is_excluded "$team_key"; then
     echo "preserving existing ${token_key}"
+    if [[ -z "${!token_key:-}" ]]; then
+      existing_team_token="$(get_vault_secret "$token_key" 2>/dev/null || true)"
+      if [[ -z "$existing_team_token" ]]; then
+        echo "unable to preserve ${token_key}: current value not found in ${VAULT_PROVIDER} or env" >&2
+        exit 1
+      fi
+      export "${token_key}=${existing_team_token}"
+    fi
     continue
   fi
   team_token_value="$(rand_hex 32)"
