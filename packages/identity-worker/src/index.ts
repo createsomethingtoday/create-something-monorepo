@@ -11,6 +11,16 @@ import type { Env, ErrorResponse, TokenResponse, UserResponse, JWTPayload, Cross
 import { hashPassword, verifyPassword, generateUUID, hashToken, generateSecureToken } from './services/crypto';
 import { generateTokens, refreshTokens, getJWKS, validateJWT, importPublicKey } from './services/tokens';
 import {
+	type AuthorizationDecisionType,
+	type AuthorizationRequest,
+	type AuthzDecisionEventRecord,
+	type AuthzRolloutRow,
+	evaluateAuthorizationRequest,
+	getAuthzRollout,
+	getPolicyManifest,
+	recordAuthzDecisionEvent,
+} from '@create-something/mcp-authz';
+import {
 	findUserByEmail,
 	findUserById,
 	createUser,
@@ -49,13 +59,7 @@ import {
 	createMcpPolicyEvent,
 } from './db/queries';
 import { sendVerificationEmail, sendDeletionConfirmationEmail } from './services/email';
-import {
-	evaluateConstraintPolicyWithRollout,
-	type ConstraintDecisionType,
-	type ConstraintEvaluationInput,
-	type ConstraintPolicy,
-	type RolloutConfig,
-} from '@create-something/policy-os-engine';
+import type { RolloutConfig } from '@create-something/policy-os-engine';
 
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
@@ -451,100 +455,25 @@ interface IssueMcpLegacyKeyBody {
 
 interface DecisionTelemetry {
 	policy_id: string;
-	decision: ConstraintDecisionType;
+	decision: AuthorizationDecisionType;
 	evaluation_path: 'legacy' | 'primary' | 'fallback';
 	policy_hash: string | null;
 	fallback_used: boolean;
 	rollout_mode: 'legacy_enforce' | 'shadow' | 'polar_enforce';
 	canary_percent: number;
+	matched_rule_ids?: string[];
+	compiler_version?: string | null;
 	reason: string;
 }
 
 const POLICY_PARTNER_AUTH_GOVERNANCE_ID = 'policy.partner-auth-governance.v1';
 const POLICY_MCP_CREDENTIAL_DELIVERY_ID = 'policy.mcp-credential-delivery.v1';
 const POLICY_LEGACY_COMPAT_SUNSET_ID = 'policy.legacy-compat-sunset.v1';
+const POLICY_MCP_SESSION_SELF_SERVICE_ID = 'policy.mcp-session-self-service.v1';
 const MIN_MCP_LEGACY_KEY_TTL_SECONDS = 3600;
 const DEFAULT_MCP_LEGACY_KEY_TTL_SECONDS = 7 * 24 * 60 * 60;
 const MAX_MCP_LEGACY_KEY_TTL_SECONDS = 30 * 24 * 60 * 60;
 const MAX_LEGACY_COMPAT_SUNSET_DAYS = 90;
-
-const MCP_PARTNER_POLICIES: Record<string, ConstraintPolicy> = {
-	[POLICY_PARTNER_AUTH_GOVERNANCE_ID]: {
-		id: POLICY_PARTNER_AUTH_GOVERNANCE_ID,
-		name: 'Partner auth governance',
-		description: 'Admin mint operations require explicit consent evidence and review traceability.',
-		rules: [
-			{
-				id: 'admin_mint_block_without_consent',
-				priority: 100,
-				when: { toolNames: ['mcp_session_admin_mint'], introspectionOk: false },
-				then: { decision: 'block', reason: 'Admin mint requires consent evidence.' },
-			},
-			{
-				id: 'admin_mint_review_gate',
-				priority: 90,
-				when: { toolNames: ['mcp_session_admin_mint'], hasHumanReviewStep: false },
-				then: { decision: 'require_human_review', reason: 'Admin mint requires human review trace.' },
-			},
-			{
-				id: 'admin_mint_allow_with_consent',
-				priority: 10,
-				when: { toolNames: ['mcp_session_admin_mint'], introspectionOk: true, hasHumanReviewStep: true },
-				then: { decision: 'allow', reason: 'Consent and review evidence present.' },
-			},
-		],
-	},
-	[POLICY_MCP_CREDENTIAL_DELIVERY_ID]: {
-		id: POLICY_MCP_CREDENTIAL_DELIVERY_ID,
-		name: 'MCP credential delivery',
-		description: 'Legacy credential issuance requires approved exception evidence and review.',
-		rules: [
-			{
-				id: 'legacy_issue_block_without_exception',
-				priority: 100,
-				when: { toolNames: ['mcp_legacy_key_issue'], introspectionOk: false },
-				then: { decision: 'block', reason: 'Legacy key issuance requires approved exception.' },
-			},
-			{
-				id: 'legacy_issue_review_gate',
-				priority: 90,
-				when: { toolNames: ['mcp_legacy_key_issue'], hasHumanReviewStep: false },
-				then: { decision: 'require_human_review', reason: 'Legacy key issuance requires review trace.' },
-			},
-			{
-				id: 'legacy_issue_allow',
-				priority: 10,
-				when: { toolNames: ['mcp_legacy_key_issue'], introspectionOk: true, hasHumanReviewStep: true },
-				then: { decision: 'allow', reason: 'Approved exception and review trace present.' },
-			},
-			{
-				id: 'legacy_revoke_allow',
-				priority: 5,
-				when: { toolNames: ['mcp_legacy_key_revoke'] },
-				then: { decision: 'allow', reason: 'Legacy key revocation is always permitted for operators.' },
-			},
-		],
-	},
-	[POLICY_LEGACY_COMPAT_SUNSET_ID]: {
-		id: POLICY_LEGACY_COMPAT_SUNSET_ID,
-		name: 'Legacy compatibility sunset',
-		description: 'Legacy bearer compatibility must have bounded sunset windows.',
-		rules: [
-			{
-				id: 'legacy_sunset_block_out_of_window',
-				priority: 100,
-				when: { toolNames: ['mcp_legacy_key_issue'], introspectionOk: false },
-				then: { decision: 'block', reason: 'Legacy key sunset window exceeds policy limits.' },
-			},
-			{
-				id: 'legacy_sunset_allow',
-				priority: 10,
-				when: { toolNames: ['mcp_legacy_key_issue'], introspectionOk: true },
-				then: { decision: 'allow', reason: 'Legacy key sunset window is policy compliant.' },
-			},
-		],
-	},
-};
 
 async function handleCreateMcpSession(request: Request, env: Env): Promise<Response> {
 	const db = env.DB;

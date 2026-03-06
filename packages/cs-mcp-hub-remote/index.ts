@@ -1780,7 +1780,15 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
 
       if (toolName === 'hub_list_services') {
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
-        const result = toJsonResult(buildDiscoveryServicesPayload(runtime, prefs, accountContext));
+        const visible = await buildAuthorizedVisibleProxyRoutes({
+          runtime,
+          prefs,
+          accountContext,
+          env,
+          trace,
+          entrypoint: 'hub_list_services',
+        });
+        const result = toJsonResult(buildDiscoveryServicesPayload(runtime, prefs, visible));
         await recordHubInvocationWithCtx({
           accountId,
           toolName,
@@ -3369,7 +3377,7 @@ function findAllowlistIntentMatch(
 function buildDiscoveryServicesPayload(
   runtime: HubRuntime,
   prefs: DiscoveryPreferences,
-  accountContext: ResolvedAccountContext,
+  visible: VisibleProxyCatalog,
 ): Record<string, unknown> {
   const byServer = new Map<string, number>();
   for (const tool of runtime.proxies.toolDefinitions) {
@@ -3378,9 +3386,8 @@ function buildDiscoveryServicesPayload(
     byServer.set(route.serverName, (byServer.get(route.serverName) ?? 0) + 1);
   }
 
-  const visibleProxyTools = buildVisibleProxyRoutes(runtime, prefs, accountContext).toolDefinitions;
   const visibleByServer = new Map<string, number>();
-  for (const tool of visibleProxyTools) {
+  for (const tool of visible.toolDefinitions) {
     const route = runtime.proxies.routes.get(tool.name);
     if (!route) continue;
     visibleByServer.set(route.serverName, (visibleByServer.get(route.serverName) ?? 0) + 1);
@@ -3395,7 +3402,7 @@ function buildDiscoveryServicesPayload(
       activeInDiscovery: prefs.activeServers.includes(server.name),
     })),
     totalProxyToolCount: runtime.proxies.toolDefinitions.length,
-    visibleProxyToolCount: visibleProxyTools.length,
+    visibleProxyToolCount: visible.toolDefinitions.length,
   };
 }
 
@@ -4006,6 +4013,7 @@ async function resolveSessionAccountContext(env: Env, token: string): Promise<Re
     tenantId: normalizeTraceValue(resolved.tenant_id),
     userId: normalizeTraceValue(resolved.user_id),
     sessionId: normalizeTraceValue(resolved.session_id),
+    toolMode: normalizeTraceValue(resolved.tool_mode),
     allowedToolPrefixes: parseAllowedToolPrefixes(resolved.allowed_tool_prefixes),
     identitySource: 'session',
   };
@@ -4043,6 +4051,7 @@ function resolveFallbackAccountContext(extra: unknown, env: Env): ResolvedAccoun
     tenantId: normalizeTraceValue(authInfo?.tenantId) ?? null,
     userId: normalizeTraceValue(authInfo?.sub) ?? null,
     sessionId: null,
+    toolMode: null,
     allowedToolPrefixes: null,
     identitySource: 'fallback',
   };

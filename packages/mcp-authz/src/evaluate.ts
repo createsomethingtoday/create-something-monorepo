@@ -95,6 +95,7 @@ export async function evaluateAuthorizationRequest(
     manifest,
     policy,
     compiled,
+    request,
   };
 }
 

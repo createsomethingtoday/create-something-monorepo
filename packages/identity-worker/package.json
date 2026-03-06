@@ -12,6 +12,7 @@
     "db:migrate:local": "wrangler d1 migrations apply identity-db --local"
   },
   "dependencies": {
+    "@create-something/mcp-authz": "workspace:*",
     "@create-something/policy-os-engine": "workspace:*"
   },
   "devDependencies": {

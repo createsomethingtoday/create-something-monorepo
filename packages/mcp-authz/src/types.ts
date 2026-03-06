@@ -96,6 +96,7 @@ export interface AuthorizationEvaluationResult {
   manifest: PolicyManifest;
   policy: ConstraintPolicy;
   compiled: CompiledConstraintPolicy;
+  request: AuthorizationRequest;
 }
 
 export interface AuthzPolicyDefinition {
