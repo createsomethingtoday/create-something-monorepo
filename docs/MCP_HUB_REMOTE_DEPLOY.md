@@ -71,8 +71,12 @@ and enforces tool access by prefix before routing.
 
 Compatibility note:
 
-- Keep `Authorization: Bearer <HUB_API_TOKEN>` for gateway auth.
-- Pass MCP session token in `X-MCP-Session-Token`.
+- `session_required` mode:
+  - keep `Authorization: Bearer <HUB_API_TOKEN>` for gateway auth
+  - pass MCP session token in `X-MCP-Session-Token`
+- `compat` mode:
+  - shared worker token still works via `Authorization`, `X-API-Key`, or query `token`
+  - identity-issued personal bearer tokens are also accepted directly when `HUB_SESSION_RESOLVE_URL` and `HUB_SESSION_RESOLVE_TOKEN` are configured
 - `compat` mode keeps legacy fallback identity behavior and should be temporary.
 
 Recommended production posture:
@@ -194,6 +198,20 @@ enabled = true
 
 If `HUB_API_TOKEN` is configured, include the bearer token header in your MCP client.
 
+For non-Outerfields partner delivery in `compat` mode, prefer an identity-issued personal bearer token instead of distributing the shared hub token. The partner path is:
+
+```bash
+pnpm partner:access:rotate -- \
+  --mode legacy \
+  --slug <client-slug> \
+  --reason "background_agent_personal_token" \
+  --exception-approved-by <approver> \
+  --sunset-at <iso-timestamp> \
+  --delivery-channel portal
+```
+
+That returns a `legacy_key_bundle` for the client while leaving `HUB_API_TOKEN` as the worker/runtime guardrail.
+
 ## Rollout Validation Checklist
 
 After deploy, validate:
@@ -213,7 +231,7 @@ Run strict identity + routing checks across team hubs:
 ```bash
 # Required for protected hub calls (choose one):
 # export HUB_API_TOKEN='...'
-# or per-worker tokens:
+# or per-worker runtime tokens:
 # export CS_HUB_LAINY_API_TOKEN='...'
 # export CS_HUB_DANNY_API_TOKEN='...'
 # export CS_HUB_AUGUST_API_TOKEN='...'

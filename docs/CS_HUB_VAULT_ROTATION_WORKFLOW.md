@@ -1,6 +1,8 @@
 # CS Hub Vault + Rotation Workflow
 
-Use this workflow to keep Hub and Notion bridge delivery credentials in a vault (Doppler default, Infisical supported) and rotate them without storing plaintext tokens in docs.
+Use this workflow to keep Hub and Notion bridge runtime credentials in a vault (Doppler default, Infisical supported) and rotate them without storing plaintext tokens in docs.
+
+Client-facing bearer delivery is no longer the default for Half Dozen hub lanes. For non-Outerfields clients, issue identity-backed personal tokens through the partner auth APIs and keep Infisical as the source of truth for worker/runtime secrets only.
 
 ## 1) Install Vault CLIs
 
@@ -50,7 +52,7 @@ Global hub secrets:
 - `CS_MCP_HUB_REMOTE_API_TOKEN`
 - `HALFDOZEN_OPERATOR_NOTION_MCP_API_KEY`
 
-Per-team strict hub tokens:
+Per-team hub worker tokens (runtime / compat fallback only):
 
 - `CS_HUB_LAINY_API_TOKEN`
 - `CS_HUB_DANNY_API_TOKEN`
@@ -112,7 +114,7 @@ Notes:
 
 ## 5) Rotate delivery credentials and roll out
 
-This rotates per-team Hub tokens, core hub token, and per-team Notion bridge basic passwords in the selected vault provider, then syncs Worker secrets and runs deploy/verify.
+This rotates per-team Hub worker tokens, core hub token, and per-team Notion bridge basic passwords in the selected vault provider, then syncs Worker secrets and runs deploy/verify.
 
 ```bash
 pnpm mcp:hub:rotate:production
@@ -127,15 +129,18 @@ pnpm mcp:hub:rotate:production --dry-run
 pnpm mcp:hub:rotate:production --skip-deploy
 pnpm mcp:hub:rotate:production --skip-verify
 pnpm mcp:hub:rotate:production --no-bridges
+pnpm mcp:hub:rotate:production --exclude-team AARON_OUTERFIELDS --exclude-team ANDRE_OUTERFIELDS
 HUB_DEPLOY_IDENTITY_MODE=session_required pnpm mcp:hub:rotate:production
 VAULT_PROVIDER=infisical INFISICAL_ENV=prod INFISICAL_PATH=/ pnpm mcp:hub:rotate:production --dry-run
 VAULT_PROVIDER=infisical INFISICAL_PROJECT_ID="<project-id>" INFISICAL_ENV=prod pnpm mcp:hub:rotate:production
+EXCLUDE_TEAM_KEYS=AARON_OUTERFIELDS,ANDRE_OUTERFIELDS VAULT_PROVIDER=infisical INFISICAL_ENV=prod pnpm mcp:hub:rotate:production
 ```
 
 Notes:
 
 - `pnpm mcp:hub:fleet:deploy` strict normalization requires `MCP_SESSION_TOKEN` or `IDENTITY_ACCESS_TOKEN`.
 - Keep resolver token rotation (`HUB_SESSION_RESOLVE_TOKEN`) coordinated with identity-worker.
+- Use `--exclude-team` or `EXCLUDE_TEAM_KEYS` when recently delivered client tokens must be preserved. Current carve-out: `AARON_OUTERFIELDS`, `ANDRE_OUTERFIELDS`.
 
 ## 6) Production automation guidance
 
@@ -150,7 +155,27 @@ For CI/CD or production automation, avoid human `doppler login` sessions:
 - Never place plaintext bearer/basic credentials in docs, tickets, commit history, or chat logs.
 - Deliver credentials through controlled channels only (partner portal, managed vault, audited secure handoff).
 
-## 8) Migrate Doppler secrets to Infisical
+## 8) Default client delivery path
+
+For non-Outerfields Half Dozen hub clients, deliver identity-issued personal tokens instead of vault-managed shared team bearers:
+
+```bash
+pnpm partner:access:rotate -- \
+  --mode legacy \
+  --slug <client-slug> \
+  --reason "background_agent_personal_token" \
+  --exception-approved-by <approver> \
+  --sunset-at <iso-timestamp> \
+  --delivery-channel portal
+```
+
+Notes:
+
+- This returns a `legacy_key_bundle` backed by identity-worker issuance and audit tables.
+- The hub can now resolve those personal bearer tokens directly in `compat` mode when `HUB_SESSION_RESOLVE_URL` + `HUB_SESSION_RESOLVE_TOKEN` are configured.
+- Keep Outerfields on the existing static tokens until a scheduled rotation window.
+
+## 9) Migrate Doppler secrets to Infisical
 
 Use the migration script to copy one Doppler config into one Infisical env/path:
 
