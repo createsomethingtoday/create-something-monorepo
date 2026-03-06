@@ -73,6 +73,11 @@ const syncToolSchema = {
   target_page_id: z.string(),
 };
 
+const routerToolSchema = {
+  request: z.string(),
+  context: z.record(z.unknown()).optional(),
+};
+
 export function registerOperatorNotionTools(server: McpServer, deps: OperatorNotionToolsDeps): void {
   server.tool(
     deps.pinnedHalfdozenToolName,
@@ -100,6 +105,13 @@ export function registerOperatorNotionTools(server: McpServer, deps: OperatorNot
     'Preview or copy page content from one managed Notion account to another.',
     syncToolSchema,
     async (params) => runSyncTool(params, deps)
+  );
+
+  server.tool(
+    'operator_notion_router',
+    'Natural-language router for operator Notion onboarding/account actions. It asks follow-up questions when required inputs are missing.',
+    routerToolSchema,
+    async (params) => runRouterTool(params, deps)
   );
 }
 
@@ -351,6 +363,88 @@ async function runAccountsWizard(
   });
 }
 
+async function runRouterTool(
+  params: Record<string, unknown>,
+  deps: OperatorNotionToolsDeps,
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  const request = String(params.request ?? '').trim();
+  if (!request) throw new Error('request is required');
+
+  const lower = request.toLowerCase();
+  const context = isPlainObject(params.context) ? params.context : {};
+  const extractedAccountSlug = extractAccountSlug(request);
+  const extractedDisplayLabel = extractDisplayLabel(request);
+  const extractedPinTool = extractPinToolName(request, deps);
+
+  const mergedArgs: Record<string, unknown> = { ...context };
+  if (extractedAccountSlug && !mergedArgs.account_slug) mergedArgs.account_slug = extractedAccountSlug;
+  if (extractedDisplayLabel && !mergedArgs.display_label) mergedArgs.display_label = extractedDisplayLabel;
+  if (extractedPinTool && !mergedArgs.pin_tool_name) mergedArgs.pin_tool_name = extractedPinTool;
+
+  if (mentionsAny(lower, ['list accounts', 'show accounts', 'what accounts'])) {
+    return runAccountsTool('list_accounts', {}, deps);
+  }
+
+  if (mentionsAny(lower, ['status', 'active', 'connected'])) {
+    const slug = normalizeSlug(String(mergedArgs.account_slug ?? ''));
+    if (!slug) {
+      return toJsonResult({
+        ok: true,
+        action: 'router',
+        intent: 'get_status',
+        status: 'needs_input',
+        next_questions: ['Which account_slug should I check?'],
+      });
+    }
+    return runAccountsTool('get_status', { account_slug: slug }, deps);
+  }
+
+  if (mentionsAny(lower, ['pin ', 'set pinned', 'use for halfdozen', 'use for blondish'])) {
+    const slug = normalizeSlug(String(mergedArgs.account_slug ?? ''));
+    const toolName = String(mergedArgs.pin_tool_name ?? '').trim();
+    if (!slug || !toolName) {
+      return toJsonResult({
+        ok: true,
+        action: 'router',
+        intent: 'pin_account',
+        status: 'needs_input',
+        next_questions: [
+          'Which account_slug should be pinned?',
+          `Which pin tool should be used? (${deps.pinnedHalfdozenToolName} or ${deps.pinnedClientToolName})`,
+        ],
+      });
+    }
+    return runAccountsTool('pin_account', { account_slug: slug, tool_name: toolName }, deps);
+  }
+
+  if (mentionsAny(lower, ['sync', 'workflow'])) {
+    return toJsonResult({
+      ok: true,
+      action: 'router',
+      intent: 'sync_guidance',
+      status: 'info',
+      message:
+        'Use operator_notion_accounts wizard to connect workspaces first. After connection, choose workflow/sync via available Notion tools.',
+      next_actions: [
+        { tool: 'operator_notion_accounts', action: 'wizard', args: mergedArgs },
+      ],
+    });
+  }
+
+  if (mentionsAny(lower, ['connect', 'add workspace', 'new workspace', 'api key', 'onboard'])) {
+    return runAccountsTool('wizard', mergedArgs, deps);
+  }
+
+  return toJsonResult({
+    ok: true,
+    action: 'router',
+    intent: 'fallback',
+    status: 'needs_input',
+    message:
+      'I can help with: connect workspace, check account status, list accounts, and pin workspace tools. Tell me which one you want.',
+  });
+}
+
 async function runSyncTool(
   params: Record<string, unknown>,
   deps: OperatorNotionToolsDeps,
@@ -437,6 +531,37 @@ function buildAccountWizardQuestions(missing: string[], deps: OperatorNotionTool
     }
   }
   return questions;
+}
+
+function mentionsAny(lower: string, phrases: string[]): boolean {
+  return phrases.some((phrase) => lower.includes(phrase));
+}
+
+function extractAccountSlug(request: string): string | null {
+  const slugMatch = request.match(/\bslug\s*(?:is|=|:)?\s*["'`]?([a-zA-Z0-9_-]{2,64})["'`]?/i);
+  if (slugMatch?.[1]) {
+    return normalizeSlug(slugMatch[1]);
+  }
+  const workspaceMatch = request.match(/\bworkspace\s*(?:named|name|called)\s*["'`]?([a-zA-Z0-9_-]{2,64})["'`]?/i);
+  if (workspaceMatch?.[1]) {
+    return normalizeSlug(workspaceMatch[1]);
+  }
+  return null;
+}
+
+function extractDisplayLabel(request: string): string | null {
+  const labelMatch = request.match(/\b(?:display\s*name|name|label)\s*(?:is|=|:)?\s*["']([^"']{2,120})["']/i);
+  if (labelMatch?.[1]) return labelMatch[1].trim();
+  return null;
+}
+
+function extractPinToolName(request: string, deps: OperatorNotionToolsDeps): string | null {
+  const lower = request.toLowerCase();
+  if (lower.includes('halfdozen_notion') || lower.includes('half dozen')) return deps.pinnedHalfdozenToolName;
+  if (lower.includes('blondish_notion') || lower.includes('blond:ish') || lower.includes('blondish')) {
+    return deps.pinnedClientToolName;
+  }
+  return null;
 }
 
 async function requirePartnerClient(deps: OperatorNotionToolsDeps) {

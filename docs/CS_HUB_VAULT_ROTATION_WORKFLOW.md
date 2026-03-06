@@ -133,7 +133,7 @@ pnpm mcp:hub:rotate:production --exclude-team AARON_OUTERFIELDS --exclude-team A
 HUB_DEPLOY_IDENTITY_MODE=session_required pnpm mcp:hub:rotate:production
 VAULT_PROVIDER=infisical INFISICAL_ENV=prod INFISICAL_PATH=/ pnpm mcp:hub:rotate:production --dry-run
 VAULT_PROVIDER=infisical INFISICAL_PROJECT_ID="<project-id>" INFISICAL_ENV=prod pnpm mcp:hub:rotate:production
-EXCLUDE_TEAM_KEYS=AARON_OUTERFIELDS,ANDRE_OUTERFIELDS VAULT_PROVIDER=infisical INFISICAL_ENV=prod pnpm mcp:hub:rotate:production
+EXCLUDE_TEAM_KEYS=<TEAM_KEY_1>,<TEAM_KEY_2> VAULT_PROVIDER=infisical INFISICAL_ENV=prod pnpm mcp:hub:rotate:production
 ```
 
 Notes:

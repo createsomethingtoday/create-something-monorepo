@@ -13,11 +13,18 @@ export function registerInfoResources(server: McpServer): void {
           text: JSON.stringify(
             {
               description: 'Operator-managed Notion account bindings via Composio.',
-              tools: ['halfdozen_notion', 'blondish_notion', 'operator_notion_accounts', 'operator_notion_sync'],
+              tools: [
+                'halfdozen_notion',
+                'blondish_notion',
+                'operator_notion_accounts',
+                'operator_notion_sync',
+                'operator_notion_router',
+              ],
               notes: [
                 'Pinned tools resolve to configured account slugs and reject caller overrides.',
                 'operator_notion_accounts supports wizard-style onboarding (workspace naming + connect-link/API-key flow).',
                 'operator_notion_sync supports page-content preview/copy flows after connection.',
+                'operator_notion_router supports natural-language routing for onboarding and account operations.',
               ],
             },
             null,

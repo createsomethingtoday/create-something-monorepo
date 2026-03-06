@@ -119,6 +119,7 @@ export default {
               env.PINNED_CLIENT_TOOL_NAME ?? 'blondish_notion',
               'operator_notion_accounts',
               'operator_notion_sync',
+              'operator_notion_router',
             ],
             partner: {
               key: env.PARTNER_KEY ?? 'half-dozen',

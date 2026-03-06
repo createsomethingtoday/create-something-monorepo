@@ -8,6 +8,7 @@ Composio-backed Notion MCP for operator-managed account bindings.
 - `blondish_notion`
 - `operator_notion_accounts`
 - `operator_notion_sync`
+- `operator_notion_router`
 
 ## Environment
 
@@ -30,6 +31,7 @@ Default Notion auth config ID in `worker/wrangler.toml`:
 - Account metadata and pins live in the agency D1 schema introduced by `0011_partner_notion_accounts.sql`.
 - `operator_notion_accounts` now supports onboarding wizard flow (`action=wizard`) for naming workspaces + connect-link/API-key steps.
 - `operator_notion_sync` supports page-content preview/copy between managed accounts after connection.
+- `operator_notion_router` accepts natural-language prompts and routes to onboarding/account actions.
 
 ## Quality Gates
 
