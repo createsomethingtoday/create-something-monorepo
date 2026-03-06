@@ -45,4 +45,3 @@ new_sqlite_classes = ["OperatorNotionMcp"]
 # OPENAI_API_KEY
 # BRAINTRUST_API_KEY
 # BRAINTRUST_PROJECT_ID
-# Optional: BRAINTRUST_ENABLED=false (disables OpenAI agent trace export even when key is set)

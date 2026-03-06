@@ -9,7 +9,6 @@
   "dependencies": {
     "@create-something/composio-bridge": "workspace:*",
     "@create-something/mcp-core": "workspace:*",
-    "@create-something/observability": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "@openai/agents": "^0.4.10",
     "agents": "^0.3.10",

@@ -2,7 +2,6 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { Composio } from '@composio/core';
 import { D1FeedbackStore, enableTelemetry, registerFeedbackTool } from '@create-something/mcp-core';
-import { registerOpenAIAgentsBraintrustTracing } from '@create-something/observability/openai-agents';
 import { registerInfoResources } from '../src/resources.js';
 import { registerOperatorNotionTools } from '../src/tools.js';
 import { validateApiKey } from './lib/auth.js';
@@ -15,7 +14,6 @@ interface Env {
   BRAINTRUST_API_KEY?: string;
   BRAINTRUST_PROJECT_NAME?: string;
   BRAINTRUST_PROJECT_ID?: string;
-  BRAINTRUST_ENABLED?: string;
   COMPOSIO_API_KEY?: string;
   COMPOSIO_BASE_URL?: string;
   COMPOSIO_NOTION_AUTH_CONFIG_ID?: string;
@@ -44,12 +42,6 @@ function parsePositiveInt(value: string | undefined): number | undefined {
   if (!value) return undefined;
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
-}
-
-function isBraintrustRouteTracingEnabled(env: Env): boolean {
-  const enabled = env.BRAINTRUST_ENABLED?.trim().toLowerCase();
-  if (enabled === 'false' || enabled === '0' || enabled === 'off') return false;
-  return Boolean(env.BRAINTRUST_API_KEY?.trim());
 }
 
 export class OperatorNotionMcp extends McpAgent<Env> {
@@ -96,17 +88,6 @@ export class OperatorNotionMcp extends McpAgent<Env> {
       ...(this.env.COMPOSIO_BASE_URL?.trim() ? { baseURL: this.env.COMPOSIO_BASE_URL.trim() } : {}),
     });
     const dispatcher = new ComposioNotionDispatcher(this.env.COMPOSIO_API_KEY);
-    const braintrustRouteTracingEnabled = isBraintrustRouteTracingEnabled(this.env);
-    if (braintrustRouteTracingEnabled) {
-      registerOpenAIAgentsBraintrustTracing({
-        projectName: resolveBraintrustProjectName(this.env),
-        braintrust: {
-          apiKey: this.env.BRAINTRUST_API_KEY?.trim(),
-          projectId: this.env.BRAINTRUST_PROJECT_ID?.trim(),
-        },
-        tags: [SERVER_NAME, 'operator_notion_router'],
-      });
-    }
 
     registerOperatorNotionTools(this.server, {
       db: this.env.CONFIG_DB,
@@ -121,7 +102,6 @@ export class OperatorNotionMcp extends McpAgent<Env> {
       routerOpenAiModel: this.env.ROUTER_OPENAI_MODEL?.trim(),
       routerOpenAiTimeoutMs: parsePositiveInt(this.env.ROUTER_OPENAI_TIMEOUT_MS),
       routerOpenAiCacheTtlMs: parsePositiveInt(this.env.ROUTER_OPENAI_CACHE_TTL_MS),
-      routerOpenAiTracingEnabled: braintrustRouteTracingEnabled,
       getActor: () => this.currentAccountId,
     });
     registerInfoResources(this.server);
