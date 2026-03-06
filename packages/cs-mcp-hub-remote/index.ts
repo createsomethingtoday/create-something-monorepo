@@ -308,6 +308,8 @@ interface Env {
   HUB_DISCOVERY_MAX_PROXY_TOOLS?: string;
   HUB_DISCOVERY_SHARED_PACK?: string;
   HUB_DISCOVERY_PAGE_SIZE?: string;
+  HUB_ALLOW_DIRECT_PROXY_TOOLS?: string;
+  HUB_DIRECT_PROXY_ALLOWED_PREFIXES?: string;
   HUB_RATE_LIMIT_MAX_CALLS_PER_WINDOW?: string;
   HUB_RATE_LIMIT_WINDOW_SECONDS?: string;
   HUB_RATE_LIMIT_SCOPE?: string;
@@ -2022,42 +2024,60 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
 
       const directProxyRoute = runtime.proxies.routes.get(toolName) ?? null;
       if (directProxyRoute) {
-        const message =
-          'Direct proxy tools are disabled. Use hub_execute_proxy_tool with proxyToolName + args.';
-        const durationMs = Date.now() - startedAt;
-        await Promise.all([
-          recordHubInvocationWithCtx({
-            accountId,
-            toolName,
-            success: false,
-            durationMs,
-            trace,
-            errorMessage: message,
-            metadata: {
-              type: 'policy',
-              policy: 'broker_only',
-              entrypoint: 'direct_proxy_disabled',
-              proxyToolName: toolName,
+        if (!isDirectProxyToolAllowed(env, toolName)) {
+          const message =
+            'Direct proxy tools are disabled. Use hub_execute_proxy_tool with proxyToolName + args.';
+          const durationMs = Date.now() - startedAt;
+          await Promise.all([
+            recordHubInvocationWithCtx({
+              accountId,
+              toolName,
+              success: false,
+              durationMs,
+              trace,
+              errorMessage: message,
+              metadata: {
+                type: 'policy',
+                policy: 'broker_only',
+                entrypoint: 'direct_proxy_disabled',
+                proxyToolName: toolName,
+                downstreamServer: directProxyRoute.serverName,
+                downstreamTool: directProxyRoute.downstreamToolName,
+              },
+            }),
+            recordHubRouteInvocationWithCtx({
+              accountId,
               downstreamServer: directProxyRoute.serverName,
               downstreamTool: directProxyRoute.downstreamToolName,
-            },
-          }),
-          recordHubRouteInvocationWithCtx({
-            accountId,
-            downstreamServer: directProxyRoute.serverName,
-            downstreamTool: directProxyRoute.downstreamToolName,
-            success: false,
-            durationMs,
-            trace,
-            errorMessage: message,
-            metadata: {
-              proxyToolName: toolName,
-              blockedByPolicy: 'broker_only',
-              entrypoint: 'direct_proxy_disabled',
-            },
-          }),
-        ]);
-        return toErrorResult(message);
+              success: false,
+              durationMs,
+              trace,
+              errorMessage: message,
+              metadata: {
+                proxyToolName: toolName,
+                blockedByPolicy: 'broker_only',
+                entrypoint: 'direct_proxy_disabled',
+              },
+            }),
+          ]);
+          return toErrorResult(message);
+        }
+
+        return executeProxyRoute({
+          env,
+          executionCtx,
+          route: directProxyRoute,
+          executionArgs: args,
+          trace,
+          accountContext,
+          accountId,
+          toolName,
+          startedAt,
+          rateLimitPolicy,
+          quotaPolicy,
+          entrypoint: 'direct_proxy_tool',
+          entryProxyToolName: toolName,
+        });
       }
 
       const errorResult = toErrorResult(`Unknown tool "${toolName}"`);
@@ -2657,7 +2677,7 @@ export async function executeProxyRoute(params: {
   startedAt: number;
   rateLimitPolicy: RateLimitPolicy;
   quotaPolicy: QuotaPolicy;
-  entrypoint: 'hub_execute_proxy_tool' | 'hub_run_intent';
+  entrypoint: 'hub_execute_proxy_tool' | 'hub_run_intent' | 'direct_proxy_tool';
   entryProxyToolName: string;
 }): Promise<any> {
   const {
@@ -5143,6 +5163,18 @@ function parseBooleanWithDefault(raw: string | undefined, fallback: boolean): bo
   if (normalized === 'true' || normalized === '1' || normalized === 'yes') return true;
   if (normalized === 'false' || normalized === '0' || normalized === 'no') return false;
   return fallback;
+}
+
+function isDirectProxyToolAllowed(env: Env, proxyToolName: string): boolean {
+  const directProxyEnabled = parseBooleanWithDefault(
+    readEnvString(env, 'HUB_ALLOW_DIRECT_PROXY_TOOLS'),
+    false,
+  );
+  if (!directProxyEnabled) return false;
+
+  const allowedPrefixes = parseList(readEnvString(env, 'HUB_DIRECT_PROXY_ALLOWED_PREFIXES'));
+  if (!allowedPrefixes || allowedPrefixes.length === 0) return true;
+  return allowedPrefixes.some((prefix) => proxyToolName.startsWith(prefix));
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {

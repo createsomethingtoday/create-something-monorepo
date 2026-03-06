@@ -1,6 +1,6 @@
 # @create-something/cs-mcp-hub-remote
 
-Remote runtime for the CREATE SOMETHING MCP gateway, exposed as one public endpoint with broker-only downstream execution.
+Remote runtime for the CREATE SOMETHING MCP gateway, exposed as one public endpoint with broker-first downstream execution.
 
 ## Endpoints
 
@@ -47,9 +47,9 @@ It also exposes one MCP App UI resource:
 - `hub_update_state` (`writeCodexConfig` accepted for parity; ignored remotely)
 - `hub_trace_lookup`
 
-## Broker-Only Mode
+## Broker-Only Mode (Default)
 
-This hub runs in broker-only mode:
+By default this hub runs in broker-only mode:
 
 - Direct proxy tool calls like `<server>__<tool>` are not callable.
 - `tools/list` returns management tools only.
@@ -61,6 +61,11 @@ This hub runs in broker-only mode:
 If a client attempts a direct proxy tool call, the hub returns:
 
 `Direct proxy tools are disabled. Use hub_execute_proxy_tool with proxyToolName + args.`
+
+Optional direct proxy mode:
+
+- Set `HUB_ALLOW_DIRECT_PROXY_TOOLS=true` to allow direct `<server>__<tool>` calls.
+- Optionally set `HUB_DIRECT_PROXY_ALLOWED_PREFIXES` (CSV or JSON array) to restrict direct execution to specific proxy-tool name prefixes.
 
 ## Configuration
 
@@ -86,6 +91,8 @@ Environment variables:
 - `HUB_REFRESH_SECONDS` (optional): cache TTL for downstream tool catalog, default `300`
 - `HUB_CACHE_BUST` (optional): any value change forces runtime refresh
 - `HUB_ACCOUNT_ID` (optional): fallback account ID written to hub telemetry rows
+- `HUB_ALLOW_DIRECT_PROXY_TOOLS` (optional): `false` (default). Set `true` to allow direct proxy tool calls.
+- `HUB_DIRECT_PROXY_ALLOWED_PREFIXES` (optional): CSV/JSON list of proxy-tool prefixes allowed for direct execution.
 - `HUB_RATE_LIMIT_MAX_CALLS_PER_WINDOW` (optional): enable per-window proxy call limits when > 0
 - `HUB_RATE_LIMIT_WINDOW_SECONDS` (optional): rate-limit window size, default `60`
 - `HUB_RATE_LIMIT_SCOPE` (optional): `account` (default), `account_server`, or `account_server_tool`
