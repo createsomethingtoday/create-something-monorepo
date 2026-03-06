@@ -58,6 +58,20 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
+      - name: Install Rust WASM tooling
+        run: |
+          if ! command -v rustup >/dev/null; then
+            curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal
+          fi
+
+          export PATH="$HOME/.cargo/bin:$PATH"
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          rustup target add wasm32-unknown-unknown
+
+          if ! command -v wasm-pack >/dev/null; then
+            curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+          fi
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 

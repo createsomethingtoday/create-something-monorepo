@@ -72,6 +72,25 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Install Rust WASM tooling
+        if: steps.context.outputs.publishable == 'true'
+        run: |
+          if ! command -v rustup >/dev/null; then
+            curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal
+          fi
+
+          export PATH="$HOME/.cargo/bin:$PATH"
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          rustup target add wasm32-unknown-unknown
+
+          if ! command -v wasm-pack >/dev/null; then
+            curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+          fi
+
+      - name: Bootstrap publish workspace deps
+        if: steps.context.outputs.publishable == 'true'
+        run: pnpm paper-cycle:review:bootstrap
+
       - name: Validate policy artifacts
         if: steps.context.outputs.policy == 'true'
         run: pnpm policy:artifacts:check
