@@ -16,6 +16,7 @@
     "test": "pnpm --filter @create-something/mcp-core build && pnpm build && node --test test/*.test.mjs"
   },
   "dependencies": {
+    "@create-something/mcp-authz": "workspace:*",
     "@create-something/policy-os-engine": "workspace:*",
     "@create-something/mcp-core": "workspace:*",
     "@create-something/observability": "workspace:*",

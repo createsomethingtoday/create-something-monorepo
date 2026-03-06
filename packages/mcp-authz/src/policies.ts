@@ -88,6 +88,77 @@ const POLICY_DEFINITIONS: AuthzPolicyDefinition[] = [
   },
   {
     manifest: {
+      policyId: 'policy.judgment-baseline.v1',
+      version: 1,
+      commitSha: 'workspace',
+      status: 'draft',
+      description: 'Baseline hard-gate policy for Atlas workflow and MCP mapping operations.',
+      rolloutDefaults: {
+        mode: 'legacy_enforce',
+        canaryPercent: 0,
+        mismatchThreshold: 0.005,
+        fallbackRateThreshold: 0.01,
+      },
+    },
+    policy: {
+      id: 'policy.judgment-baseline.v1',
+      name: 'Judgment baseline',
+      description: 'Baseline hard-gate decision policy for workflow and MCP mapping operations.',
+      guardrails: {
+        maxReviewDelta: 2,
+        maxBlockDelta: 1,
+      },
+      rules: [
+        {
+          id: 'jr_block_readonly_write_01',
+          priority: 10,
+          when: {
+            hasWriteIntent: true,
+            accountIds: ['public'],
+          },
+          then: {
+            decision: 'block',
+            reason: 'Public read-only account cannot run write-intent path.',
+          },
+        },
+        {
+          id: 'jr_review_introspection_failure_02',
+          priority: 20,
+          when: {
+            toolNames: ['mcp_map_to_workflow'],
+            introspectionOk: false,
+          },
+          then: {
+            decision: 'require_human_review',
+            reason: 'Introspection failed; operator review required.',
+          },
+        },
+        {
+          id: 'jr_review_missing_human_step_03',
+          priority: 30,
+          when: {
+            hasWriteIntent: true,
+            hasHumanReviewStep: false,
+          },
+          then: {
+            decision: 'require_human_review',
+            reason: 'Write-intent path without explicit human review.',
+          },
+        },
+        {
+          id: 'jr_allow_default_99',
+          priority: 999,
+          when: {},
+          then: {
+            decision: 'allow',
+            reason: 'No restrictive rules matched.',
+          },
+        },
+      ],
+    },
+  },
+  {
+    manifest: {
       policyId: 'policy.mcp-session-self-service.v1',
       version: 1,
       commitSha: 'workspace',

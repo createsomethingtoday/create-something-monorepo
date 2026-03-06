@@ -21,6 +21,7 @@ function joinedRouteText(route: {
     definition?.description ?? '',
   ]
     .join(' ')
+    .replace(/[_:/.-]+/g, ' ')
     .toLowerCase();
 }
 

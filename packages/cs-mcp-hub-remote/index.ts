@@ -12,6 +12,7 @@ import {
 import {
   buildHubAuthorizationRequest,
   blockedByPolicy,
+  classifyHubRoute,
   evaluateAuthorizationRequest,
   getAuthzRollout,
   getPolicyManifest,
@@ -2491,6 +2492,7 @@ function toHubAuthzEvent(params: {
   entrypoint: string;
 }): AuthzDecisionEventRecord {
   const { accountContext, route, trace, evaluation, actionName, entrypoint } = params;
+  const classification = classifyHubRoute(route);
   return {
     id: crypto.randomUUID(),
     scopeKey: `policy:${HUB_ROUTE_AUTHZ_POLICY_ID}`,
@@ -2505,7 +2507,7 @@ function toHubAuthzEvent(params: {
     actionName,
     resourceKind: 'hub_route',
     resourceId: route.proxyToolName,
-    resourceAccessType: evaluation.request.resource.accessType ?? null,
+    resourceAccessType: classification.accessType,
     rolloutMode: evaluation.final.rolloutMode,
     canaryPercent: evaluation.final.canaryPercent,
     sampledPolar: evaluation.final.sampledPolar ? 1 : 0,
@@ -2526,6 +2528,7 @@ function toHubAuthzEvent(params: {
       proxyToolName: route.proxyToolName,
       serverName: route.serverName,
       downstreamToolName: route.downstreamToolName,
+      oauthRequired: classification.oauthRequired,
       sessionId: accountContext.sessionId,
       toolMode: accountContext.toolMode,
       identitySource: accountContext.identitySource,

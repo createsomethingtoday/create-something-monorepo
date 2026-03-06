@@ -1,4 +1,10 @@
 import type { D1Database } from '@create-something/mcp-core';
+import {
+  defaultAuthzRollout,
+  getAuthzRollout,
+  getPolicyManifest,
+  setAuthzRollout,
+} from '@create-something/mcp-authz';
 import type { AtlasEntityType } from './versions.js';
 
 export type JudgmentEngineRolloutMode = 'legacy_enforce' | 'shadow' | 'polar_enforce';
@@ -15,18 +21,45 @@ export interface JudgmentEngineRolloutRow {
   updated_at: number;
 }
 
-function nowEpochSeconds(): number {
+const ATLAS_ROLLOUT_POLICY_ID = 'policy.judgment-baseline.v1';
+
+function scopeFor(input: {
+  accountId: string;
+  entityType: AtlasEntityType;
+  entityId: string;
+}) {
+  return {
+    scopeType: 'entity' as const,
+    policyId: ATLAS_ROLLOUT_POLICY_ID,
+    accountId: input.accountId,
+    entityType: input.entityType,
+    entityId: input.entityId,
+  };
+}
+
+function toEpochSeconds(raw: number | string | null | undefined): number {
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : Math.floor(Date.now() / 1000);
+  if (typeof raw === 'string') {
+    const numeric = Number(raw);
+    if (Number.isFinite(numeric)) return numeric;
+    const date = new Date(raw);
+    if (Number.isFinite(date.getTime())) return Math.floor(date.getTime() / 1000);
+  }
   return Math.floor(Date.now() / 1000);
 }
 
-function normalizePercent(value: number): number {
-  if (!Number.isFinite(value)) return 0;
-  return Math.max(0, Math.min(100, Math.floor(value)));
-}
-
-function normalizeRate(value: number, fallback: number): number {
-  if (!Number.isFinite(value)) return fallback;
-  return Math.max(0, Math.min(1, value));
+function toRow(input: ReturnType<typeof defaultAuthzRollout>): JudgmentEngineRolloutRow {
+  return {
+    account_id: input.accountId ?? 'unknown',
+    entity_type: (input.entityType ?? 'agent') as AtlasEntityType,
+    entity_id: input.entityId ?? 'unknown',
+    mode: input.mode,
+    canary_percent: input.canaryPercent,
+    mismatch_threshold: input.mismatchThreshold,
+    fallback_rate_threshold: input.fallbackRateThreshold,
+    updated_by: input.updatedBy,
+    updated_at: input.updatedAt,
+  };
 }
 
 export function defaultRollout(
@@ -34,17 +67,7 @@ export function defaultRollout(
   entityType: AtlasEntityType,
   entityId: string,
 ): JudgmentEngineRolloutRow {
-  return {
-    account_id: accountId,
-    entity_type: entityType,
-    entity_id: entityId,
-    mode: 'legacy_enforce',
-    canary_percent: 0,
-    mismatch_threshold: 0.005,
-    fallback_rate_threshold: 0.01,
-    updated_by: 'system',
-    updated_at: nowEpochSeconds(),
-  };
+  return toRow(defaultAuthzRollout(scopeFor({ accountId, entityType, entityId }), getPolicyManifest(ATLAS_ROLLOUT_POLICY_ID)));
 }
 
 export async function getEngineRollout(
@@ -55,26 +78,53 @@ export async function getEngineRollout(
     entityId: string;
   },
 ): Promise<JudgmentEngineRolloutRow> {
-  if (!db) return defaultRollout(input.accountId, input.entityType, input.entityId);
+  const manifest = getPolicyManifest(ATLAS_ROLLOUT_POLICY_ID);
+  const rollout = await getAuthzRollout(
+    db,
+    scopeFor(input),
+    manifest,
+    {
+      readLegacyRollout: async (compatDb, scope) => {
+        if (scope.scopeType !== 'entity') return null;
+        const row = await compatDb
+          .prepare(
+            `SELECT account_id, entity_type, entity_id, mode, canary_percent, mismatch_threshold, fallback_rate_threshold, updated_by, updated_at
+             FROM judgment_engine_rollout
+             WHERE account_id = ? AND entity_type = ? AND entity_id = ?
+             LIMIT 1`,
+          )
+          .bind(scope.accountId, scope.entityType, scope.entityId)
+          .first<{
+            account_id: string;
+            entity_type: AtlasEntityType;
+            entity_id: string;
+            mode: JudgmentEngineRolloutMode;
+            canary_percent: number;
+            mismatch_threshold: number;
+            fallback_rate_threshold: number;
+            updated_by: string;
+            updated_at: number | string;
+          }>();
+        if (!row) return null;
+        return {
+          scopeKey: `entity:${row.account_id}:${row.entity_type}:${row.entity_id}:${ATLAS_ROLLOUT_POLICY_ID}`,
+          scopeType: 'entity',
+          policyId: ATLAS_ROLLOUT_POLICY_ID,
+          accountId: row.account_id,
+          entityType: row.entity_type,
+          entityId: row.entity_id,
+          mode: row.mode,
+          canaryPercent: row.canary_percent,
+          mismatchThreshold: row.mismatch_threshold,
+          fallbackRateThreshold: row.fallback_rate_threshold,
+          updatedBy: row.updated_by,
+          updatedAt: toEpochSeconds(row.updated_at),
+        };
+      },
+    },
+  );
 
-  const row = await db
-    .prepare(
-      `SELECT account_id, entity_type, entity_id, mode, canary_percent, updated_by, updated_at
-             , mismatch_threshold, fallback_rate_threshold
-       FROM judgment_engine_rollout
-       WHERE account_id = ? AND entity_type = ? AND entity_id = ?
-       LIMIT 1`,
-    )
-    .bind(input.accountId, input.entityType, input.entityId)
-    .first<JudgmentEngineRolloutRow>();
-
-  if (!row) return defaultRollout(input.accountId, input.entityType, input.entityId);
-  return {
-    ...row,
-    canary_percent: normalizePercent(row.canary_percent),
-    mismatch_threshold: normalizeRate(row.mismatch_threshold, 0.005),
-    fallback_rate_threshold: normalizeRate(row.fallback_rate_threshold, 0.01),
-  };
+  return toRow(rollout);
 }
 
 export async function setEngineRollout(
@@ -90,45 +140,50 @@ export async function setEngineRollout(
     updatedBy: string;
   },
 ): Promise<JudgmentEngineRolloutRow> {
-  const row: JudgmentEngineRolloutRow = {
-    account_id: input.accountId,
-    entity_type: input.entityType,
-    entity_id: input.entityId,
-    mode: input.mode,
-    canary_percent: normalizePercent(input.canaryPercent),
-    mismatch_threshold: normalizeRate(input.mismatchThreshold ?? 0.005, 0.005),
-    fallback_rate_threshold: normalizeRate(input.fallbackRateThreshold ?? 0.01, 0.01),
-    updated_by: input.updatedBy,
-    updated_at: nowEpochSeconds(),
-  };
+  const manifest = getPolicyManifest(ATLAS_ROLLOUT_POLICY_ID);
+  const base = defaultAuthzRollout(scopeFor(input), manifest);
+  const updated = await setAuthzRollout(
+    db,
+    {
+      ...base,
+      mode: input.mode,
+      canaryPercent: input.canaryPercent,
+      mismatchThreshold: input.mismatchThreshold ?? base.mismatchThreshold,
+      fallbackRateThreshold: input.fallbackRateThreshold ?? base.fallbackRateThreshold,
+      updatedBy: input.updatedBy,
+      updatedAt: Math.floor(Date.now() / 1000),
+    },
+    {
+      writeLegacyRollout: async (compatDb, row) => {
+        if (row.scopeType !== 'entity') return;
+        await compatDb
+          .prepare(
+            `INSERT INTO judgment_engine_rollout
+             (account_id, entity_type, entity_id, mode, canary_percent, mismatch_threshold, fallback_rate_threshold, updated_by, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON CONFLICT(account_id, entity_type, entity_id) DO UPDATE SET
+               mode = excluded.mode,
+               canary_percent = excluded.canary_percent,
+               mismatch_threshold = excluded.mismatch_threshold,
+               fallback_rate_threshold = excluded.fallback_rate_threshold,
+               updated_by = excluded.updated_by,
+               updated_at = excluded.updated_at`,
+          )
+          .bind(
+            row.accountId,
+            row.entityType,
+            row.entityId,
+            row.mode,
+            row.canaryPercent,
+            row.mismatchThreshold,
+            row.fallbackRateThreshold,
+            row.updatedBy,
+            row.updatedAt,
+          )
+          .run();
+      },
+    },
+  );
 
-  if (!db) return row;
-
-  await db
-    .prepare(
-      `INSERT INTO judgment_engine_rollout
-       (account_id, entity_type, entity_id, mode, canary_percent, mismatch_threshold, fallback_rate_threshold, updated_by, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(account_id, entity_type, entity_id) DO UPDATE SET
-         mode = excluded.mode,
-         canary_percent = excluded.canary_percent,
-         mismatch_threshold = excluded.mismatch_threshold,
-         fallback_rate_threshold = excluded.fallback_rate_threshold,
-         updated_by = excluded.updated_by,
-         updated_at = excluded.updated_at`,
-    )
-    .bind(
-      row.account_id,
-      row.entity_type,
-      row.entity_id,
-      row.mode,
-      row.canary_percent,
-      row.mismatch_threshold,
-      row.fallback_rate_threshold,
-      row.updated_by,
-      row.updated_at,
-    )
-    .run();
-
-  return row;
+  return toRow(updated);
 }

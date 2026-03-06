@@ -55,7 +55,6 @@ import {
 	findMcpLegacyKeyById,
 	revokeMcpLegacyKey,
 	findMcpPolicyRollout,
-	createMcpPolicyRollout,
 	createMcpPolicyEvent,
 } from './db/queries';
 import { sendVerificationEmail, sendDeletionConfirmationEmail } from './services/email';
@@ -494,11 +493,63 @@ async function handleCreateMcpSession(request: Request, env: Env): Promise<Respo
 	const allowedToolPrefixes = buildAllowedToolPrefixes(toolkitProfile);
 	const ttlSeconds = clampTtlSeconds(body.ttl_seconds);
 	const mcpAccount = await ensureMcpAccountForUserTenant(db, payload.sub, tenantId);
+	const accountId = mcpAccount.account_id;
+	const actor = `user:${payload.sub}`;
+	const policyDecision = await evaluatePartnerPolicyDecision(db, env, {
+		policyId: POLICY_MCP_SESSION_SELF_SERVICE_ID,
+		actionName: 'mint_session',
+		accountId,
+		actor,
+		request: {
+			actor: {
+				accountId,
+				tenantId,
+				userId: payload.sub,
+				actorId: actor,
+				role: 'user',
+				toolMode,
+			},
+			action: {
+				name: 'mint_session',
+				writeIntent: true,
+				humanReviewStep: true,
+				introspectionOk: true,
+			},
+			resource: {
+				kind: 'mcp_session',
+				id: accountId,
+				toolName: 'mcp_session_create',
+				accessType: 'write',
+				metadata: {
+					host,
+					tool_mode: toolMode,
+					toolkit_profile: toolkitProfile,
+				},
+			},
+		},
+		metadata: {
+			host,
+			tenant_id: tenantId,
+			tool_mode: toolMode,
+			toolkit_profile: toolkitProfile,
+			ttl_seconds: ttlSeconds,
+		},
+	});
+	if (policyDecision.decision !== 'allow') {
+		return json(
+			{
+				error: 'policy_denied',
+				message: policyDecision.reason,
+				status: policyDecisionHttpStatus(policyDecision.decision),
+				policy: policyDecision,
+			},
+			policyDecisionHttpStatus(policyDecision.decision),
+		);
+	}
 
 	const sessionId = `ms_${generateUUID().replace(/-/g, '')}`;
 	const rawToken = `ms_tok_${generateSecureToken(48)}`;
 	const tokenHash = await hashToken(rawToken);
-	const accountId = mcpAccount.account_id;
 	const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
 
 	await createMcpSession(db, {
@@ -534,6 +585,7 @@ async function handleCreateMcpSession(request: Request, env: Env): Promise<Respo
 			tool_mode: toolMode,
 			toolkit_profile: toolkitProfile,
 			ttl_seconds: ttlSeconds,
+			policy: policyDecision,
 		}),
 	});
 
@@ -549,6 +601,7 @@ async function handleCreateMcpSession(request: Request, env: Env): Promise<Respo
 		tool_mode: toolMode,
 		toolkit_profile: toolkitProfile,
 		allowed_tool_prefixes: allowedToolPrefixes,
+		policy: policyDecision,
 		required_auth: [],
 	});
 }
@@ -607,13 +660,26 @@ async function handleAdminMintMcpSession(request: Request, env: Env): Promise<Re
 		actionName: 'mcp_session_admin_mint',
 		accountId: account.account_id,
 		actor,
-		input: {
-			toolName: 'mcp_session_admin_mint',
-			accountId: account.account_id,
-			readOnly: false,
-			hasWriteIntent: true,
-			hasHumanReviewStep: consentPresent,
-			introspectionOk: consentPresent,
+		request: {
+			actor: {
+				accountId: account.account_id,
+				tenantId: account.tenant_id,
+				userId: account.user_id,
+				actorId: actor,
+				role: 'operator',
+			},
+			action: {
+				name: 'admin_mint_session',
+				writeIntent: true,
+				humanReviewStep: consentPresent,
+				introspectionOk: consentPresent,
+			},
+			resource: {
+				kind: 'mcp_session',
+				id: account.account_id,
+				toolName: 'mcp_session_admin_mint',
+				accessType: 'auth_admin',
+			},
 		},
 		metadata: {
 			consent_record_id: consentRecordId,
@@ -754,13 +820,26 @@ async function handleIssueMcpLegacyKey(request: Request, env: Env): Promise<Resp
 		actionName: 'mcp_legacy_key_issue',
 		accountId: account.account_id,
 		actor,
-		input: {
-			toolName: 'mcp_legacy_key_issue',
-			accountId: account.account_id,
-			readOnly: false,
-			hasWriteIntent: true,
-			hasHumanReviewStep: Boolean(exceptionApprovedBy),
-			introspectionOk: Boolean(exceptionApprovedBy),
+		request: {
+			actor: {
+				accountId: account.account_id,
+				tenantId: account.tenant_id,
+				userId: account.user_id,
+				actorId: actor,
+				role: 'operator',
+			},
+			action: {
+				name: 'issue_legacy_key',
+				writeIntent: true,
+				humanReviewStep: Boolean(exceptionApprovedBy),
+				introspectionOk: Boolean(exceptionApprovedBy),
+			},
+			resource: {
+				kind: 'legacy_key',
+				id: account.account_id,
+				toolName: 'mcp_legacy_key_issue',
+				accessType: 'auth_admin',
+			},
 		},
 		metadata: {
 			reason,
@@ -777,13 +856,26 @@ async function handleIssueMcpLegacyKey(request: Request, env: Env): Promise<Resp
 		actionName: 'mcp_legacy_key_issue',
 		accountId: account.account_id,
 		actor,
-		input: {
-			toolName: 'mcp_legacy_key_issue',
-			accountId: account.account_id,
-			readOnly: false,
-			hasWriteIntent: true,
-			hasHumanReviewStep: true,
-			introspectionOk: sunsetInBounds,
+		request: {
+			actor: {
+				accountId: account.account_id,
+				tenantId: account.tenant_id,
+				userId: account.user_id,
+				actorId: actor,
+				role: 'operator',
+			},
+			action: {
+				name: 'issue_legacy_key',
+				writeIntent: true,
+				humanReviewStep: true,
+				introspectionOk: sunsetInBounds,
+			},
+			resource: {
+				kind: 'legacy_key',
+				id: account.account_id,
+				toolName: 'mcp_legacy_key_issue',
+				accessType: 'auth_admin',
+			},
 		},
 		metadata: {
 			sunset_at: sunsetAt,
@@ -875,13 +967,26 @@ async function handleRevokeMcpLegacyKey(request: Request, env: Env, legacyKeyId:
 		actionName: 'mcp_legacy_key_revoke',
 		accountId: existing.account_id,
 		actor,
-		input: {
-			toolName: 'mcp_legacy_key_revoke',
-			accountId: existing.account_id,
-			readOnly: false,
-			hasWriteIntent: true,
-			hasHumanReviewStep: true,
-			introspectionOk: true,
+		request: {
+			actor: {
+				accountId: existing.account_id,
+				tenantId: existing.tenant_id,
+				userId: existing.user_id,
+				actorId: actor,
+				role: 'operator',
+			},
+			action: {
+				name: 'revoke_legacy_key',
+				writeIntent: true,
+				humanReviewStep: true,
+				introspectionOk: true,
+			},
+			resource: {
+				kind: 'legacy_key',
+				id: existing.id,
+				toolName: 'mcp_legacy_key_revoke',
+				accessType: 'auth_admin',
+			},
 		},
 		metadata: {
 			legacy_key_id: existing.id,
@@ -2057,6 +2162,13 @@ function normalizeRolloutMode(raw: string): RolloutConfig['mode'] {
 function normalizeCanaryPercent(raw: number): number {
 	if (!Number.isFinite(raw)) return 0;
 	return Math.max(0, Math.min(100, Math.trunc(raw)));
+}
+
+function toEpochSeconds(raw: string | null | undefined): number {
+	if (!raw) return Math.floor(Date.now() / 1000);
+	const date = new Date(raw);
+	if (!Number.isFinite(date.getTime())) return Math.floor(Date.now() / 1000);
+	return Math.floor(date.getTime() / 1000);
 }
 
 function combinePolicyDecisions(decisions: DecisionTelemetry[]): DecisionTelemetry {
