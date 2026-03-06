@@ -205,7 +205,7 @@ async function runAccountsTool(
       const accountSlug = normalizeSlug(String(args.account_slug ?? ''));
       if (!accountSlug) throw new Error('args.account_slug is required');
       const account = await requireAccount(deps.db, client.id, accountSlug);
-      const refreshed = await refreshNotionAccountState(deps.db, deps.composio, account);
+      const refreshed = await refreshNotionAccountState(deps.db, deps.composio, account, { force: true });
       return toJsonResult({ ok: true, action, account: serializeAccount(refreshed) });
     }
     case 'create_connect_link': {
@@ -345,7 +345,7 @@ async function runAccountsWizard(
   });
 
   const account = await requireAccount(deps.db, partnerClientId, accountSlug);
-  const refreshed = await refreshNotionAccountState(deps.db, deps.composio, account);
+  const refreshed = await refreshNotionAccountState(deps.db, deps.composio, account, { force: true });
 
   if (refreshed.connection_status !== 'ACTIVE') {
     const connectionRequest = await deps.composio.connectedAccounts.link(refreshed.composio_user_id, authConfigId, {});
