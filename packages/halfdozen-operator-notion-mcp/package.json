@@ -1,0 +1,26 @@
+{
+  "name": "@create-something/halfdozen-operator-notion-mcp",
+  "version": "1.0.0",
+  "description": "Composio-backed operator Notion MCP with pinned workspace tools and account management.",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test:contract": "pnpm exec tsx --test src/composio-notion.contract.test.ts"
+  },
+  "dependencies": {
+    "@composio/core": "^0.6.3",
+    "@create-something/composio-bridge": "workspace:*",
+    "@create-something/mcp-core": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "agents": "^0.3.10",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260205.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.3"
+  }
+}

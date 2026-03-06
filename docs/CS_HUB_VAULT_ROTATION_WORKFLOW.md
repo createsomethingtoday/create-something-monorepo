@@ -48,6 +48,7 @@ Global hub secrets:
 - `BRAINTRUST_PROJECT_ID`
 - `HUB_API_TOKEN` (fallback / shared)
 - `CS_MCP_HUB_REMOTE_API_TOKEN`
+- `HALFDOZEN_OPERATOR_NOTION_MCP_API_KEY`
 
 Per-team strict hub tokens:
 

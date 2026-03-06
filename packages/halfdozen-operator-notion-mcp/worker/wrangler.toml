@@ -1,0 +1,40 @@
+name = "halfdozen-operator-notion-mcp"
+main = "index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[observability]
+enabled = true
+
+[vars]
+PARTNER_KEY = "half-dozen"
+PARTNER_CLIENT_SLUG = "blondish"
+MCP_DISPLAY_NAME = "Half Dozen Operator Notion MCP"
+MCP_DESCRIPTION = "Operator-managed Notion accounts via Composio with pinned workspace tools and sync primitives."
+COMPOSIO_NOTION_AUTH_CONFIG_ID = "ac_1fYSxzK38XeT"
+PINNED_HALFDOZEN_TOOL_NAME = "halfdozen_notion"
+PINNED_CLIENT_TOOL_NAME = "blondish_notion"
+
+[[d1_databases]]
+binding = "CONFIG_DB"
+database_name = "create-something-agency"
+database_id = "00000000-0000-0000-0000-000000000000"
+
+[[d1_databases]]
+binding = "FEEDBACK_DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "OperatorNotionMcp"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["OperatorNotionMcp"]
+
+# Secrets set via vault / wrangler secret put:
+# COMPOSIO_API_KEY
+# COMPOSIO_NOTION_AUTH_CONFIG_ID
+# MCP_API_KEY

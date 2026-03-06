@@ -397,6 +397,10 @@ export CS_MCP_HUB_REMOTE_API_TOKEN="$core_gateway_token"
 set_vault_secret "HUB_API_TOKEN" "$core_gateway_token"
 set_vault_secret "CS_MCP_HUB_REMOTE_API_TOKEN" "$core_gateway_token"
 
+operator_notion_mcp_token="$(rand_hex 32)"
+export HALFDOZEN_OPERATOR_NOTION_MCP_API_KEY="$operator_notion_mcp_token"
+set_vault_secret "HALFDOZEN_OPERATOR_NOTION_MCP_API_KEY" "$operator_notion_mcp_token"
+
 for team_key in "${TEAM_KEYS[@]}"; do
   token_key="$(token_env_var_for_team "$team_key")"
   team_token_value="$(rand_hex 32)"

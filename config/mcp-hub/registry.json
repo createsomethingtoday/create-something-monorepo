@@ -10973,6 +10973,19 @@
           "http"
         ]
       }
+    },
+    "halfdozen-operator-notion-mcp": {
+      "transport": "http",
+      "url": "https://operator-notion.mcp.workway.co/mcp",
+      "bearer_token_env_var": "HALFDOZEN_OPERATOR_NOTION_MCP_API_KEY",
+      "description": "Half Dozen operator-managed Notion MCP (Composio-backed pinned tools + account sync)",
+      "tags": [
+        "halfdozen",
+        "notion",
+        "composio",
+        "operator",
+        "workway"
+      ]
     }
   },
   "bundles": {

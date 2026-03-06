@@ -45,6 +45,35 @@ export interface PartnerAuthConsentRow {
 	created_at: string;
 }
 
+export interface PartnerAuthNotionAccountRow {
+	id: string;
+	partner_client_id: string;
+	account_slug: string;
+	display_label: string | null;
+	composio_user_id: string;
+	auth_config_id: string | null;
+	connected_account_id: string | null;
+	connection_status: string;
+	status: 'active' | 'disabled' | 'revoked';
+	sync_enabled: number;
+	last_checked_at: string | null;
+	connected_at: string | null;
+	disabled_at: string | null;
+	metadata_json: string;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface PartnerAuthNotionPinRow {
+	id: string;
+	partner_client_id: string;
+	tool_name: string;
+	account_slug: string;
+	metadata_json: string;
+	created_at: string;
+	updated_at: string;
+}
+
 type PlatformEnv = App.Platform['env'];
 
 let composioCache:

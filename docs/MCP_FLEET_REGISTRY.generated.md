@@ -3,7 +3,7 @@
 > Auto-generated from `config/mcp-hub/registry.json`.
 > Regenerate with `pnpm mcp:registry:generate`.
 
-## Active (1003)
+## Active (1005)
 
 | Server | Transport | Endpoint | Tags |
 | --- | --- | --- | --- |
@@ -998,8 +998,10 @@
 | `halfdozen-gmail-sync-danny` | `http` | `https://gmail.mcp.workway.co/mcp` | `halfdozen`, `gmail`, `workway` |
 | `halfdozen-gmail-sync-fillip` | `http` | `https://fillip-gmail.mcp.workway.co/mcp` | `halfdozen`, `gmail`, `workway` |
 | `halfdozen-gmail-sync-leah` | `http` | `https://leah-gmail.mcp.workway.co/mcp` | `halfdozen`, `gmail`, `workway` |
+| `halfdozen-operator-notion-mcp` | `http` | `https://operator-notion.mcp.workway.co/mcp` | `halfdozen`, `notion`, `composio`, `operator`, `workway` |
 | `halfdozen-telemetry` | `http` | `https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp` | `observability`, `telemetry`, `workway` |
 | `halfdozen-zoom-sync` | `http` | `https://zoom.mcp.workway.co/mcp` | `halfdozen`, `zoom`, `workway` |
+| `loom-mcp` | `http` | `https://loom.mcp.createsomething.agency/mcp` | `ops`, `coordination`, `loom`, `cs` |
 | `meetings` | `http` | `https://meetings-mcp.createsomething.workers.dev/mcp` | `meetings`, `cs` |
 | `notion-halfdozen-create-something` | `http` | `https://createsomething-notion.mcp.workway.co/mcp` | `halfdozen`, `notion`, `workway` |
 | `outerfields-pcn` | `http` | `https://outerfields.mcp.createsomething.agency/mcp` | `agency`, `outerfields`, `cs` |
@@ -1127,6 +1129,7 @@
 | `halfdozen-observability` | `halfdozen-telemetry` |
 | `halfdozen-sync` | `halfdozen-gmail-sync-danny`, `halfdozen-gmail-sync-fillip`, `halfdozen-gmail-sync-leah`, `halfdozen-zoom-sync` |
 | `local-dev` | `webflow-local`, `webflow-site-analyzer-mcp`, `lsmcp` |
+| `loom` | `loom-mcp` |
 | `meetings` | `meetings` |
 | `observability` | `cs-telemetry` |
 | `ops` | `schedule-mcp`, `substrate-mcp` |
