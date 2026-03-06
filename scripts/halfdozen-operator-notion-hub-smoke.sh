@@ -3,6 +3,10 @@ set -euo pipefail
 
 HUB_URL="${HUB_URL:-https://danny.mcp.createsomething.agency/mcp}"
 INFISICAL_ENV="${INFISICAL_ENV:-prod}"
+INFISICAL_PATH="${INFISICAL_PATH:-/}"
+INFISICAL_PROJECT_ID="${INFISICAL_PROJECT_ID:-}"
+INFISICAL_INCLUDE_IMPORTS="${INFISICAL_INCLUDE_IMPORTS:-true}"
+HUB_TOKEN_SECRET_NAME="${HUB_TOKEN_SECRET_NAME:-CS_HUB_DANNY_API_TOKEN}"
 PINNED_A="${PINNED_A:-halfdozen_notion}"
 PINNED_B="${PINNED_B:-blondish_notion}"
 ACCOUNTS_TOOL="${ACCOUNTS_TOOL:-operator_notion_accounts}"
@@ -15,8 +19,8 @@ require_cmd() {
 }
 
 resolve_token() {
-  if [[ -n "${CS_HUB_DANNY_API_TOKEN:-}" ]]; then
-    echo "$CS_HUB_DANNY_API_TOKEN"
+  if [[ -n "${!HUB_TOKEN_SECRET_NAME:-}" ]]; then
+    echo "${!HUB_TOKEN_SECRET_NAME}"
     return 0
   fi
   if [[ -n "${HUB_API_TOKEN:-}" ]]; then
@@ -25,7 +29,17 @@ resolve_token() {
   fi
   if command -v infisical >/dev/null 2>&1; then
     local token
-    token="$(infisical secrets get CS_HUB_DANNY_API_TOKEN --plain --env="$INFISICAL_ENV" 2>/dev/null || true)"
+    local -a cmd=(
+      infisical secrets get "$HUB_TOKEN_SECRET_NAME"
+      --plain
+      --env="$INFISICAL_ENV"
+      --path="$INFISICAL_PATH"
+      --include-imports="$INFISICAL_INCLUDE_IMPORTS"
+    )
+    if [[ -n "$INFISICAL_PROJECT_ID" ]]; then
+      cmd+=(--projectId="$INFISICAL_PROJECT_ID")
+    fi
+    token="$("${cmd[@]}" 2>/dev/null || true)"
     if [[ -n "$token" ]]; then
       echo "$token"
       return 0
@@ -68,7 +82,7 @@ main() {
 
   local token
   if ! token="$(resolve_token)"; then
-    echo "missing CS_HUB_DANNY_API_TOKEN/HUB_API_TOKEN and unable to fetch from Infisical" >&2
+    echo "missing ${HUB_TOKEN_SECRET_NAME}/HUB_API_TOKEN and unable to fetch from Infisical" >&2
     exit 1
   fi
 

@@ -85,10 +85,18 @@ export async function evaluateConstraintPolicyPrimary(
   const queryArgs = ['rule_matches', ruleIdVar, priorityVar, decisionVar, reasonVar] as any;
   const contextFacts = [
     ['input_account_id', input.accountId],
+    ['input_action_name', input.actionName ?? ''],
+    ['input_resource_kind', input.resourceKind ?? ''],
+    ['input_access_type', input.accessType ?? ''],
+    ['input_oauth_required', Boolean(input.oauthRequired)],
+    ['input_actor_role', input.actorRole ?? ''],
+    ['input_tool_mode', input.toolMode ?? ''],
+    ['input_identity_source', input.identitySource ?? ''],
     ['input_tool_name', input.toolName],
     ['input_has_write_intent', Boolean(input.hasWriteIntent)],
     ['input_has_human_review_step', Boolean(input.hasHumanReviewStep)],
     ['input_introspection_ok', Boolean(input.introspectionOk)],
+    ...(input.resourceTags ?? []).map((tag) => ['input_resource_tag', tag] as const),
   ];
 
   const rowsRaw = (await cached.client

@@ -47,6 +47,7 @@ join_by_comma() {
 
 SHARED_AUTH_SERVERS_CSV="$(join_by_comma "${SHARED_AUTH_SERVERS[@]}")"
 OUTERFIELDS_CLICKUP_SERVERS_CSV="$(join_by_comma "${OUTERFIELDS_CLICKUP_SERVERS[@]}")"
+DANNY_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},halfdozen-operator-notion-mcp"
 MJ_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},meetings"
 VERIFY_IDENTITY_MODE="${HUB_VERIFY_IDENTITY_MODE:-compat}"
 VERIFY_IDENTITY_MODE="$(printf '%s' "$VERIFY_IDENTITY_MODE" | tr '[:upper:]' '[:lower:]')"
@@ -789,7 +790,7 @@ for worker in "${WORKERS[@]}"; do
     failures=1
   fi
 
-  if [[ "$worker" == "cs-hub-lainy" || "$worker" == "cs-hub-danny" || "$worker" == "cs-hub-august" || "$worker" == "cs-hub-fillip" || "$worker" == "cs-hub-leah" ]]; then
+  if [[ "$worker" == "cs-hub-lainy" || "$worker" == "cs-hub-august" || "$worker" == "cs-hub-fillip" || "$worker" == "cs-hub-leah" ]]; then
     enabled_sorted_csv="$(
       echo "$health_json" | jq -r '.enabled_servers // [] | sort | join(",")'
     )"
@@ -803,6 +804,23 @@ for worker in "${WORKERS[@]}"; do
       failures=1
     else
       echo "enabled_server_policy=shared_auth_core"
+    fi
+  fi
+
+  if [[ "$worker" == "cs-hub-danny" ]]; then
+    enabled_sorted_csv="$(
+      echo "$health_json" | jq -r '.enabled_servers // [] | sort | join(",")'
+    )"
+    expected_sorted_csv="$(
+      printf '%s\n' "$DANNY_SERVERS_CSV" | tr ',' '\n' | sort | paste -sd',' -
+    )"
+    if [[ "$enabled_sorted_csv" != "$expected_sorted_csv" ]]; then
+      echo "enabled server policy mismatch for cs-hub-danny"
+      echo "expected=${expected_sorted_csv}"
+      echo "actual=${enabled_sorted_csv}"
+      failures=1
+    else
+      echo "enabled_server_policy=danny_shared_auth_plus_operator_notion"
     fi
   fi
 

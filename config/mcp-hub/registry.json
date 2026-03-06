@@ -10976,7 +10976,7 @@
     },
     "halfdozen-operator-notion-mcp": {
       "transport": "http",
-      "url": "https://operator-notion.mcp.workway.co/mcp",
+      "url": "https://halfdozen-operator-notion-mcp.createsomething.workers.dev/mcp",
       "bearer_token_env_var": "HALFDOZEN_OPERATOR_NOTION_MCP_API_KEY",
       "description": "Half Dozen operator-managed Notion MCP (Composio-backed pinned tools + account sync)",
       "tags": [
@@ -11011,6 +11011,7 @@
     "halfdozen": [
       "notion-halfdozen-create-something",
       "halfdozen-dm-mcp",
+      "halfdozen-operator-notion-mcp",
       "half-dozen-youtube-sync"
     ],
     "halfdozen-sync": [

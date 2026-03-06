@@ -6,6 +6,9 @@ WRANGLER_FILE="$ROOT_DIR/packages/halfdozen-operator-notion-mcp/worker/wrangler.
 MIGRATION_FILE="$ROOT_DIR/packages/agency/migrations/0011_partner_notion_accounts.sql"
 EXPECTED_NOTION_AUTH_CONFIG_ID="${EXPECTED_NOTION_AUTH_CONFIG_ID:-ac_1fYSxzK38XeT}"
 INFISICAL_ENV="${INFISICAL_ENV:-prod}"
+INFISICAL_PATH="${INFISICAL_PATH:-/}"
+INFISICAL_PROJECT_ID="${INFISICAL_PROJECT_ID:-}"
+INFISICAL_INCLUDE_IMPORTS="${INFISICAL_INCLUDE_IMPORTS:-true}"
 PRECHECK_SKIP_REMOTE_DB="${PRECHECK_SKIP_REMOTE_DB:-false}"
 
 require_cmd() {
@@ -35,22 +38,71 @@ load_secret_if_needed() {
   fi
   if command -v infisical >/dev/null 2>&1; then
     local value
-    value="$(infisical secrets get "$name" --plain --env="$INFISICAL_ENV" 2>/dev/null || true)"
+    local -a cmd=(
+      infisical secrets get "$name"
+      --plain
+      --env="$INFISICAL_ENV"
+      --path="$INFISICAL_PATH"
+      --include-imports="$INFISICAL_INCLUDE_IMPORTS"
+    )
+    if [[ -n "$INFISICAL_PROJECT_ID" ]]; then
+      cmd+=(--projectId="$INFISICAL_PROJECT_ID")
+    fi
+    value="$("${cmd[@]}" 2>/dev/null || true)"
     if [[ -n "$value" ]]; then
       export "${name}=${value}"
     fi
   fi
 }
 
-check_secret_present() {
-  local name="$1"
-  load_secret_if_needed "$name"
-  if [[ -z "${!name:-}" ]]; then
-    echo "missing required secret: ${name}" >&2
-    return 1
+check_secret_present_with_aliases() {
+  local canonical="$1"
+  shift || true
+  local aliases=("$@")
+  local candidates=("$canonical" "${aliases[@]}")
+
+  local candidate
+  for candidate in "${candidates[@]}"; do
+    load_secret_if_needed "$candidate"
+    if [[ -n "${!candidate:-}" ]]; then
+      if [[ "$candidate" != "$canonical" && -z "${!canonical:-}" ]]; then
+        export "${canonical}=${!candidate}"
+      fi
+      if [[ "$candidate" == "$canonical" ]]; then
+        echo "ok: ${canonical} is available"
+      else
+        echo "ok: ${canonical} is available via alias ${candidate}"
+      fi
+      return 0
+    fi
+  done
+
+  if [[ "${#aliases[@]}" -gt 0 ]]; then
+    echo "missing required secret: ${canonical} (aliases tried: ${aliases[*]})" >&2
+  else
+    echo "missing required secret: ${canonical}" >&2
   fi
-  echo "ok: ${name} is available"
-  return 0
+  return 1
+}
+
+extract_config_db_field() {
+  local field="$1"
+  awk -F'=' -v wanted="$field" '
+    /^\[\[d1_databases\]\]/ { in_block=1; binding=""; value=""; next }
+    in_block && /^binding/ {
+      binding=$2
+      gsub(/"| /, "", binding)
+      next
+    }
+    in_block && $1 ~ ("^" wanted "[[:space:]]*$") {
+      value=$2
+      gsub(/"| /, "", value)
+      if (binding == "CONFIG_DB") {
+        print value
+        exit
+      }
+    }
+  ' "$WRANGLER_FILE"
 }
 
 check_wrangler_defaults() {
@@ -59,8 +111,14 @@ check_wrangler_defaults() {
     return 1
   fi
 
-  if rg -n 'database_id = "00000000-0000-0000-0000-000000000000"' "$WRANGLER_FILE" >/dev/null; then
-    echo "placeholder D1 database_id detected in $WRANGLER_FILE" >&2
+  local config_db_id
+  config_db_id="$(extract_config_db_field "database_id")"
+  if [[ -z "$config_db_id" ]]; then
+    echo "CONFIG_DB database_id is not set in $WRANGLER_FILE" >&2
+    return 1
+  fi
+  if [[ "$config_db_id" == "00000000-0000-0000-0000-000000000000" ]]; then
+    echo "placeholder CONFIG_DB database_id detected in $WRANGLER_FILE" >&2
     return 1
   fi
 
@@ -87,18 +145,30 @@ check_remote_db_migration() {
   require_cmd pnpm
   require_cmd jq
 
+  local config_db_name
+  config_db_name="$(extract_config_db_field "database_name")"
+  if [[ -z "$config_db_name" ]]; then
+    echo "CONFIG_DB database_name is not set in $WRANGLER_FILE" >&2
+    return 1
+  fi
+
   local output
-  if ! output="$(pnpm exec wrangler d1 execute create-something-agency --remote --command "SELECT name FROM sqlite_master WHERE type='table' AND name='partner_auth_notion_accounts';" --json 2>/dev/null)"; then
-    echo "failed to query create-something-agency D1. Ensure Cloudflare auth is configured (wrangler login/token)." >&2
+  if ! output="$(
+    pnpm exec wrangler d1 execute "$config_db_name" \
+      --remote \
+      --command "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('partner_auth_clients','partner_auth_notion_accounts') ORDER BY name;" \
+      --json 2>/dev/null
+  )"; then
+    echo "failed to query ${config_db_name} D1. Ensure Cloudflare auth is configured (wrangler login/token)." >&2
     return 1
   fi
 
-  if ! echo "$output" | jq -e '.[0].results[0].name == "partner_auth_notion_accounts"' >/dev/null 2>&1; then
-    echo "D1 migration 0011 not applied: table partner_auth_notion_accounts missing in create-something-agency." >&2
+  if ! echo "$output" | jq -e '([.[0].results[].name] | sort) == ["partner_auth_clients","partner_auth_notion_accounts"]' >/dev/null 2>&1; then
+    echo "D1 migrations 0010/0011 not applied on ${config_db_name}: expected tables partner_auth_clients + partner_auth_notion_accounts." >&2
     return 1
   fi
 
-  echo "ok: D1 migration table exists (partner_auth_notion_accounts)"
+  echo "ok: D1 migration tables exist (partner_auth_clients, partner_auth_notion_accounts)"
 }
 
 main() {
@@ -113,10 +183,10 @@ main() {
   local missing=0
 
   echo "checking required secrets..."
-  check_secret_present "COMPOSIO_API_KEY" || missing=1
-  check_secret_present "MCP_API_KEY" || missing=1
-  check_secret_present "HALFDOZEN_OPERATOR_NOTION_MCP_API_KEY" || missing=1
-  check_secret_present "CS_HUB_DANNY_API_TOKEN" || missing=1
+  check_secret_present_with_aliases "COMPOSIO_API_KEY" || missing=1
+  check_secret_present_with_aliases "MCP_API_KEY" "HALFDOZEN_OPERATOR_NOTION_MCP_API_KEY" || missing=1
+  check_secret_present_with_aliases "HALFDOZEN_OPERATOR_NOTION_MCP_API_KEY" "MCP_API_KEY" || missing=1
+  check_secret_present_with_aliases "CS_HUB_DANNY_API_TOKEN" "HUB_API_TOKEN" || missing=1
 
   if [[ "$missing" == "1" ]]; then
     echo "secret preflight failed" >&2

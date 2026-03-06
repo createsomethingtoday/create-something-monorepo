@@ -18,8 +18,8 @@ PINNED_CLIENT_TOOL_NAME = "blondish_notion"
 
 [[d1_databases]]
 binding = "CONFIG_DB"
-database_name = "create-something-agency"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_name = "create-something-db"
+database_id = "a74e70ae-6a94-43da-905e-b90719c8dfd2"
 
 [[d1_databases]]
 binding = "FEEDBACK_DB"

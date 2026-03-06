@@ -44,6 +44,7 @@ join_by_comma() {
 
 SHARED_AUTH_SERVERS_CSV="$(join_by_comma "${SHARED_AUTH_SERVERS[@]}")"
 OUTERFIELDS_CLICKUP_SERVERS_CSV="$(join_by_comma "${OUTERFIELDS_CLICKUP_SERVERS[@]}")"
+DANNY_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},halfdozen-operator-notion-mcp"
 MJ_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},meetings"
 SESSION_RESOLVE_URL="${HUB_SESSION_RESOLVE_URL:-https://id.createsomething.space/v1/mcp/sessions/resolve}"
 SESSION_TOKEN_FOR_NORMALIZE="${MCP_SESSION_TOKEN:-}"
@@ -155,6 +156,7 @@ resolve_deploy_worker_name() {
 
 target_server_csv_for_worker() {
   case "$1" in
+    "cs-hub-danny") echo "$DANNY_SERVERS_CSV" ;;
     "cs-hub-aaron-outerfields"|"cs-hub-andre-outerfields") echo "$OUTERFIELDS_CLICKUP_SERVERS_CSV" ;;
     "cs-hub-mj") echo "$MJ_SERVERS_CSV" ;;
     *) echo "$SHARED_AUTH_SERVERS_CSV" ;;

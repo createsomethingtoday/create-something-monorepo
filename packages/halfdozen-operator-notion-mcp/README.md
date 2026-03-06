@@ -22,6 +22,7 @@ Worker secrets / vars:
 Default Notion auth config ID in `worker/wrangler.toml`:
 
 - `COMPOSIO_NOTION_AUTH_CONFIG_ID = "ac_1fYSxzK38XeT"`
+- `CONFIG_DB` points to `create-something-db` (`a74e70ae-6a94-43da-905e-b90719c8dfd2`)
 
 ## Notes
 
@@ -37,3 +38,12 @@ Default Notion auth config ID in `worker/wrangler.toml`:
   - `pnpm mcp:halfdozen-operator-notion:preflight`
 - Danny hub smoke:
   - `pnpm mcp:halfdozen-operator-notion:smoke`
+
+### Vault-aware script options
+
+Both scripts support Infisical scoping flags:
+
+- `INFISICAL_ENV` (default `prod`)
+- `INFISICAL_PATH` (default `/`)
+- `INFISICAL_PROJECT_ID` (optional)
+- `INFISICAL_INCLUDE_IMPORTS` (default `true`)

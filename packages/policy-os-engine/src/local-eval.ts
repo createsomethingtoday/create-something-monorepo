@@ -7,6 +7,26 @@ import type {
 
 function matchesRule(rule: ConstraintRule, input: ConstraintEvaluationInput): boolean {
   const when = rule.when;
+  if (when.actionNames && when.actionNames.length > 0 && !when.actionNames.includes(input.actionName ?? '')) return false;
+  if (when.resourceKinds && when.resourceKinds.length > 0 && !when.resourceKinds.includes(input.resourceKind ?? '')) return false;
+  if (when.accessTypes && when.accessTypes.length > 0 && !when.accessTypes.includes(input.accessType ?? '')) return false;
+  if (typeof when.oauthRequired === 'boolean' && when.oauthRequired !== Boolean(input.oauthRequired)) return false;
+  if (when.actorRoles && when.actorRoles.length > 0 && !when.actorRoles.includes(input.actorRole ?? '')) return false;
+  if (when.toolModes && when.toolModes.length > 0 && !when.toolModes.includes(input.toolMode ?? '')) return false;
+  if (
+    when.identitySources &&
+    when.identitySources.length > 0 &&
+    !when.identitySources.includes(input.identitySource ?? '')
+  ) {
+    return false;
+  }
+  if (
+    when.resourceTags &&
+    when.resourceTags.length > 0 &&
+    !when.resourceTags.some((tag) => (input.resourceTags ?? []).includes(tag))
+  ) {
+    return false;
+  }
   if (when.toolNames && when.toolNames.length > 0 && !when.toolNames.includes(input.toolName)) return false;
   if (typeof when.hasWriteIntent === 'boolean' && when.hasWriteIntent !== Boolean(input.hasWriteIntent)) return false;
   if (

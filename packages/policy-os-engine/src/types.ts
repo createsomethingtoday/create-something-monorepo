@@ -1,6 +1,14 @@
 export type ConstraintDecisionType = 'allow' | 'require_human_review' | 'block';
 
 export interface ConstraintRuleWhen {
+  actionNames?: string[];
+  resourceKinds?: string[];
+  accessTypes?: string[];
+  oauthRequired?: boolean;
+  actorRoles?: string[];
+  toolModes?: string[];
+  identitySources?: string[];
+  resourceTags?: string[];
   toolNames?: string[];
   hasWriteIntent?: boolean;
   hasHumanReviewStep?: boolean;
@@ -33,6 +41,14 @@ export interface ConstraintEvaluationInput {
   toolName: string;
   accountId: string;
   readOnly: boolean;
+  actionName?: string;
+  resourceKind?: string;
+  accessType?: string;
+  oauthRequired?: boolean;
+  actorRole?: string;
+  toolMode?: string;
+  identitySource?: string;
+  resourceTags?: string[];
   hasWriteIntent?: boolean;
   hasHumanReviewStep?: boolean;
   introspectionOk?: boolean;
