@@ -31,8 +31,44 @@ export interface OperatorNotionToolsDeps {
   notionAuthConfigId?: string;
   pinnedHalfdozenToolName: string;
   pinnedClientToolName: string;
+  routerOpenAiApiKey?: string;
+  routerOpenAiModel?: string;
+  routerOpenAiTimeoutMs?: number;
+  routerOpenAiCacheTtlMs?: number;
   getActor: () => string;
 }
+
+const ACTIVE_ACCOUNT_REFRESH_TTL_MS = 60_000;
+const LIST_ACCOUNTS_REFRESH_TTL_MS = 90_000;
+const ROUTER_DEFAULT_OPENAI_MODEL = 'gpt-4.1-mini';
+const ROUTER_DEFAULT_TIMEOUT_MS = 3_000;
+const ROUTER_DEFAULT_CACHE_TTL_MS = 120_000;
+const ROUTER_CACHE_MAX_ENTRIES = 256;
+
+type RouterIntent =
+  | 'wizard'
+  | 'list_accounts'
+  | 'get_status'
+  | 'pin_account'
+  | 'sync_guidance'
+  | 'help';
+
+interface RouterAgentDecision {
+  intent: RouterIntent;
+  account_slug?: string;
+  display_label?: string;
+  pin_tool_name?: string;
+}
+
+interface RouterCacheEntry {
+  decision: RouterAgentDecision;
+  expiresAt: number;
+}
+
+type AgentsSdk = typeof import('@openai/agents');
+
+let agentsSdkPromise: Promise<AgentsSdk> | null = null;
+const routerDecisionCache = new Map<string, RouterCacheEntry>();
 
 const pinnedToolSchema = {
   action: z.enum([
@@ -77,6 +113,13 @@ const routerToolSchema = {
   request: z.string(),
   context: z.record(z.unknown()).optional(),
 };
+
+const routerAgentDecisionSchema = z.object({
+  intent: z.enum(['wizard', 'list_accounts', 'get_status', 'pin_account', 'sync_guidance', 'help']),
+  account_slug: z.string().optional(),
+  display_label: z.string().optional(),
+  pin_tool_name: z.string().optional(),
+});
 
 export function registerOperatorNotionTools(server: McpServer, deps: OperatorNotionToolsDeps): void {
   server.tool(
