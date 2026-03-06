@@ -761,6 +761,149 @@ async function requireActiveAccount(
   return refreshed;
 }
 
+function normalizePinToolName(value: unknown, deps: OperatorNotionToolsDeps): string | null {
+  const raw = String(value ?? '').trim();
+  if (!raw) return null;
+  if (raw === deps.pinnedHalfdozenToolName || raw === deps.pinnedClientToolName) return raw;
+  const lower = raw.toLowerCase();
+  if (lower === 'halfdozen' || lower === 'halfdozen_notion' || lower === 'half-dozen') {
+    return deps.pinnedHalfdozenToolName;
+  }
+  if (lower === 'blondish' || lower === 'blondish_notion' || lower === 'blond:ish') {
+    return deps.pinnedClientToolName;
+  }
+  return null;
+}
+
+async function loadAgentsSdk(): Promise<AgentsSdk> {
+  if (agentsSdkPromise) return agentsSdkPromise;
+
+  // Force browser branch under nodejs_compat before SDK module initialization.
+  const runtimeProcess = (globalThis as { process?: { browser?: boolean; type?: string } }).process;
+  if (runtimeProcess) {
+    runtimeProcess.browser = true;
+    runtimeProcess.type = runtimeProcess.type ?? 'renderer';
+  }
+
+  agentsSdkPromise = import('@openai/agents');
+  return agentsSdkPromise;
+}
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
+
+function buildRouterAgentPrompt(
+  request: string,
+  context: Record<string, unknown>,
+  deps: OperatorNotionToolsDeps,
+): string {
+  const slimContext = {
+    account_slug: normalizeSlug(String(context.account_slug ?? '')) || undefined,
+    display_label: sanitizeDisplayLabel(context.display_label),
+    pin_tool_name: normalizePinToolName(context.pin_tool_name, deps) ?? undefined,
+  };
+
+  return [
+    'Classify this operator request into one allowed intent and extract optional fields.',
+    `Pinned tools: ${deps.pinnedHalfdozenToolName}, ${deps.pinnedClientToolName}.`,
+    `Request: ${request}`,
+    `Context: ${JSON.stringify(slimContext)}`,
+    'Return JSON only.',
+  ].join('\n');
+}
+
+function parseRouterAgentDecision(output: unknown, deps: OperatorNotionToolsDeps): RouterAgentDecision | null {
+  const parsedPayload = parseJsonObjectFromUnknown(output);
+  if (!parsedPayload) return null;
+
+  const parsed = routerAgentDecisionSchema.safeParse(parsedPayload);
+  if (!parsed.success) return null;
+
+  const accountSlug = normalizeSlug(parsed.data.account_slug ?? '');
+  const displayLabel = sanitizeDisplayLabel(parsed.data.display_label);
+  const pinToolName = normalizePinToolName(parsed.data.pin_tool_name, deps);
+
+  return {
+    intent: parsed.data.intent,
+    ...(accountSlug ? { account_slug: accountSlug } : {}),
+    ...(displayLabel ? { display_label: displayLabel } : {}),
+    ...(pinToolName ? { pin_tool_name: pinToolName } : {}),
+  };
+}
+
+function parseJsonObjectFromUnknown(value: unknown): Record<string, unknown> | null {
+  if (isPlainObject(value)) return value;
+  if (typeof value !== 'string') return null;
+
+  const trimmed = stripCodeFence(value).trim();
+  const parsed = parseJsonCandidate(trimmed);
+  if (parsed) return parsed;
+
+  const jsonBlock = trimmed.match(/\{[\s\S]*\}/);
+  if (jsonBlock?.[0]) return parseJsonCandidate(jsonBlock[0]);
+  return null;
+}
+
+function stripCodeFence(value: string): string {
+  return value.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+}
+
+function parseJsonCandidate(value: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return isPlainObject(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function sanitizeDisplayLabel(value: unknown): string | undefined {
+  const label = String(value ?? '').trim();
+  if (!label) return undefined;
+  return label.slice(0, 120);
+}
+
+function buildRouterCacheKey(
+  request: string,
+  context: Record<string, unknown>,
+  deps: OperatorNotionToolsDeps,
+): string {
+  const contextKey = JSON.stringify({
+    account_slug: normalizeSlug(String(context.account_slug ?? '')) || null,
+    display_label: sanitizeDisplayLabel(context.display_label) ?? null,
+    pin_tool_name: normalizePinToolName(context.pin_tool_name, deps) ?? null,
+  });
+  const model = deps.routerOpenAiModel?.trim() || ROUTER_DEFAULT_OPENAI_MODEL;
+  return `${model}::${request.trim().toLowerCase()}::${contextKey}`;
+}
+
+function getCachedRouterDecision(key: string): RouterAgentDecision | null {
+  const cached = routerDecisionCache.get(key);
+  if (!cached) return null;
+  if (Date.now() > cached.expiresAt) {
+    routerDecisionCache.delete(key);
+    return null;
+  }
+  return cached.decision;
+}
+
+function setCachedRouterDecision(key: string, decision: RouterAgentDecision, ttlMs: number): void {
+  if (routerDecisionCache.size >= ROUTER_CACHE_MAX_ENTRIES) {
+    const oldest = routerDecisionCache.keys().next().value;
+    if (oldest) routerDecisionCache.delete(oldest);
+  }
+  routerDecisionCache.set(key, { decision, expiresAt: Date.now() + Math.max(5_000, ttlMs) });
+}
+
 function rejectControlArgs(args: Record<string, unknown>): void {
   for (const key of ['workspace', 'entity_id', 'account_id', '__dm_entity_id']) {
     if (key in args) {
