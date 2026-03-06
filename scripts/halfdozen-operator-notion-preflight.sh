@@ -129,7 +129,7 @@ check_wrangler_defaults() {
   fi
 
   local configured
-  configured="$(awk -F'=' '/^COMPOSIO_NOTION_AUTH_CONFIG_ID\s*=/{gsub(/"| /,"",$2); print $2; exit}' "$WRANGLER_FILE" || true)"
+  configured="$(awk -F'=' '/^COMPOSIO_NOTION_AUTH_CONFIG_ID[[:space:]]*=/{gsub(/"| /,"",$2); print $2; exit}' "$WRANGLER_FILE" || true)"
   if [[ -z "$configured" ]]; then
     echo "COMPOSIO_NOTION_AUTH_CONFIG_ID is not set in $WRANGLER_FILE" >&2
     return 1
