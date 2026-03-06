@@ -58,8 +58,14 @@ load_secret_if_needed() {
 check_secret_present_with_aliases() {
   local canonical="$1"
   shift || true
-  local aliases=("$@")
-  local candidates=("$canonical" "${aliases[@]}")
+  local -a aliases
+  local -a candidates
+  aliases=()
+  candidates=("$canonical")
+  if [[ "$#" -gt 0 ]]; then
+    aliases=("$@")
+    candidates+=("${aliases[@]}")
+  fi
 
   local candidate
   for candidate in "${candidates[@]}"; do

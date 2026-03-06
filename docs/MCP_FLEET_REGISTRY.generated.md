@@ -998,7 +998,7 @@
 | `halfdozen-gmail-sync-danny` | `http` | `https://gmail.mcp.workway.co/mcp` | `halfdozen`, `gmail`, `workway` |
 | `halfdozen-gmail-sync-fillip` | `http` | `https://fillip-gmail.mcp.workway.co/mcp` | `halfdozen`, `gmail`, `workway` |
 | `halfdozen-gmail-sync-leah` | `http` | `https://leah-gmail.mcp.workway.co/mcp` | `halfdozen`, `gmail`, `workway` |
-| `halfdozen-operator-notion-mcp` | `http` | `https://operator-notion.mcp.workway.co/mcp` | `halfdozen`, `notion`, `composio`, `operator`, `workway` |
+| `halfdozen-operator-notion-mcp` | `http` | `https://halfdozen-operator-notion-mcp.createsomething.workers.dev/mcp` | `halfdozen`, `notion`, `composio`, `operator`, `workway` |
 | `halfdozen-telemetry` | `http` | `https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp` | `observability`, `telemetry`, `workway` |
 | `halfdozen-zoom-sync` | `http` | `https://zoom.mcp.workway.co/mcp` | `halfdozen`, `zoom`, `workway` |
 | `loom-mcp` | `http` | `https://loom.mcp.createsomething.agency/mcp` | `ops`, `coordination`, `loom`, `cs` |
@@ -1125,7 +1125,7 @@
 | `core` | `create-something`, `three-tier-framework`, `playbook` |
 | `dormant` | `gmail-notion-mcp`, `notion-sync-mcp` |
 | `finance` | `quickbooks-notion-mcp-server` |
-| `halfdozen` | `notion-halfdozen-create-something`, `halfdozen-dm-mcp`, `half-dozen-youtube-sync` |
+| `halfdozen` | `notion-halfdozen-create-something`, `halfdozen-dm-mcp`, `halfdozen-operator-notion-mcp`, `half-dozen-youtube-sync` |
 | `halfdozen-observability` | `halfdozen-telemetry` |
 | `halfdozen-sync` | `halfdozen-gmail-sync-danny`, `halfdozen-gmail-sync-fillip`, `halfdozen-gmail-sync-leah`, `halfdozen-zoom-sync` |
 | `local-dev` | `webflow-local`, `webflow-site-analyzer-mcp`, `lsmcp` |
