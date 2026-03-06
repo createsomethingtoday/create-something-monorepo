@@ -17,7 +17,7 @@ export function registerInfoResources(server: McpServer): void {
               notes: [
                 'Pinned tools resolve to configured account slugs and reject caller overrides.',
                 'operator_notion_accounts manages connection links, pins, and account state.',
-                'operator_notion_sync currently supports page-content preview/copy flows.',
+                'operator_notion_sync supports wizard-style sync prompting plus page-content preview/copy flows.',
               ],
             },
             null,
