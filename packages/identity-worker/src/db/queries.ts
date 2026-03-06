@@ -525,8 +525,33 @@ export async function findMcpSessionByTokenHash(db: D1Database, tokenHash: strin
        WHERE token_hash = ?
        LIMIT 1`
 		)
+	.bind(tokenHash)
+	.first<McpSession>();
+}
+
+export async function findMcpLegacyKeyByTokenHash(
+	db: D1Database,
+	tokenHash: string
+): Promise<McpLegacyKey | null> {
+	return db
+		.prepare(
+			`SELECT * FROM mcp_legacy_keys
+       WHERE key_hash = ?
+       LIMIT 1`
+		)
 		.bind(tokenHash)
-		.first<McpSession>();
+		.first<McpLegacyKey>();
+}
+
+export async function markMcpLegacyKeyUsed(db: D1Database, id: string): Promise<void> {
+	await db
+		.prepare(
+			`UPDATE mcp_legacy_keys
+       SET last_used_at = datetime('now'), updated_at = datetime('now')
+       WHERE id = ?`
+		)
+		.bind(id)
+		.run();
 }
 
 export async function listMcpSessionScopes(db: D1Database, sessionId: string): Promise<McpSessionScope[]> {

@@ -37,6 +37,7 @@ INFISICAL_CLIENT_ID="${INFISICAL_CLIENT_ID:-}"
 INFISICAL_CLIENT_SECRET="${INFISICAL_CLIENT_SECRET:-}"
 INFISICAL_TOKEN="${INFISICAL_TOKEN:-}"
 INCLUDE_BRIDGES="${INCLUDE_BRIDGES:-true}"
+EXCLUDE_TEAM_KEYS="${EXCLUDE_TEAM_KEYS:-}"
 SKIP_DEPLOY="${SKIP_DEPLOY:-false}"
 SKIP_VERIFY="${SKIP_VERIFY:-false}"
 DRY_RUN="${DRY_RUN:-false}"
@@ -55,6 +56,7 @@ Options:
   --infisical-project-id <id>     Infisical project ID (optional if .infisical.json is present)
   --infisical-env <slug>          Infisical environment slug (default: prod)
   --infisical-path <path>         Infisical secret path (default: /)
+  --exclude-team <key>            Preserve an existing team token instead of rotating it (repeatable)
   --no-bridges                    Skip Notion bridge credential rotation
   --skip-deploy                   Skip deploy step
   --skip-verify                   Skip verify step
@@ -115,6 +117,66 @@ token_env_var_for_team() {
 
 bridge_password_env_var_for_team() {
   echo "CS_HUB_${1}_NOTION_BRIDGE_BASIC_PASSWORD"
+}
+
+declare -a EXCLUDED_TEAM_KEY_LIST=()
+
+normalize_team_key_or_fail() {
+  local raw="${1:-}"
+  local normalized
+  normalized="$(printf '%s' "$raw" | tr '[:lower:]' '[:upper:]' | tr '-' '_')"
+  case "$normalized" in
+    "LAINY" | "DANNY" | "AUGUST" | "C3DENVER" | "AARON_OUTERFIELDS" | "ANDRE_OUTERFIELDS" | "FILLIP" | "FILIP" | "LEAH" | "MJ")
+      if [[ "$normalized" == "FILIP" ]]; then
+        normalized="FILLIP"
+      fi
+      echo "$normalized"
+      ;;
+    *)
+      echo "invalid team key: ${raw}" >&2
+      exit 1
+      ;;
+  esac
+}
+
+append_excluded_team_key() {
+  local normalized="$1"
+  local existing
+  for existing in "${EXCLUDED_TEAM_KEY_LIST[@]}"; do
+    if [[ "$existing" == "$normalized" ]]; then
+      return 0
+    fi
+  done
+  EXCLUDED_TEAM_KEY_LIST+=("$normalized")
+}
+
+parse_excluded_team_keys() {
+  local raw="${1:-}"
+  if [[ -z "$raw" ]]; then
+    return 0
+  fi
+
+  local entry trimmed normalized
+  IFS=',' read -r -a raw_entries <<<"$raw"
+  for entry in "${raw_entries[@]}"; do
+    trimmed="$(printf '%s' "$entry" | xargs)"
+    if [[ -z "$trimmed" ]]; then
+      continue
+    fi
+    normalized="$(normalize_team_key_or_fail "$trimmed")"
+    append_excluded_team_key "$normalized"
+  done
+}
+
+team_is_excluded() {
+  local team_key="$1"
+  local excluded
+  for excluded in "${EXCLUDED_TEAM_KEY_LIST[@]}"; do
+    if [[ "$excluded" == "$team_key" ]]; then
+      return 0
+    fi
+  done
+  return 1
 }
 
 rand_hex() {
@@ -320,6 +382,10 @@ while [[ $# -gt 0 ]]; do
       INFISICAL_PATH="$2"
       shift 2
       ;;
+    --exclude-team)
+      append_excluded_team_key "$(normalize_team_key_or_fail "$2")"
+      shift 2
+      ;;
     --no-bridges)
       INCLUDE_BRIDGES="false"
       shift
@@ -355,6 +421,7 @@ SKIP_VERIFY="$(normalize_bool_or_fail "$SKIP_VERIFY")"
 DRY_RUN="$(normalize_bool_or_fail "$DRY_RUN")"
 HUB_DEPLOY_IDENTITY_MODE="$(normalize_identity_mode_or_fail "$HUB_DEPLOY_IDENTITY_MODE")"
 INFISICAL_INCLUDE_IMPORTS="$(normalize_bool_or_fail "$INFISICAL_INCLUDE_IMPORTS")"
+parse_excluded_team_keys "$EXCLUDE_TEAM_KEYS"
 
 require_cmd openssl
 require_cmd bash
@@ -390,6 +457,10 @@ case "$VAULT_PROVIDER" in
     ;;
 esac
 
+if [[ "${#EXCLUDED_TEAM_KEY_LIST[@]}" -gt 0 ]]; then
+  echo "preserving existing team tokens for: ${EXCLUDED_TEAM_KEY_LIST[*]}"
+fi
+
 # Keep fallback and core remote token aligned.
 core_gateway_token="$(rand_hex 32)"
 export HUB_API_TOKEN="$core_gateway_token"
@@ -403,6 +474,10 @@ set_vault_secret "HALFDOZEN_OPERATOR_NOTION_MCP_API_KEY" "$operator_notion_mcp_t
 
 for team_key in "${TEAM_KEYS[@]}"; do
   token_key="$(token_env_var_for_team "$team_key")"
+  if team_is_excluded "$team_key"; then
+    echo "preserving existing ${token_key}"
+    continue
+  fi
   team_token_value="$(rand_hex 32)"
   export "${token_key}=${team_token_value}"
   set_vault_secret "$token_key" "$team_token_value"
