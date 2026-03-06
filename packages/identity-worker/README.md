@@ -56,6 +56,9 @@ pnpm --filter=identity-worker deploy
 pnpm --filter=identity-worker db:migrate
 ```
 
+Cloudflare D1 uses the package-local migrations directory configured in
+[wrangler.toml](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/identity-worker/wrangler.toml#L29).
+
 ## Integration
 
 Properties verify tokens by:
@@ -68,6 +71,17 @@ MCP hub integration:
    - Session token (`ms_tok_*`) is ephemeral, while `account_id` is stable per `{user_id, tenant_id}`
 2. Host stores returned MCP token and calls hub endpoint
 3. Hub introspects token via `POST /v1/mcp/sessions/resolve` using `MCP_SESSION_RESOLVE_TOKEN`
+
+Recommended production config:
+
+- Worker secret `MCP_SESSION_RESOLVE_TOKEN`
+  - must match hub secret `HUB_SESSION_RESOLVE_TOKEN`
+- Optional Oso primary evaluator:
+  - Worker var `OSO_URL=https://cloud.osohq.com`
+  - Worker secret `OSO_API_KEY`
+  - Worker var `OSO_FETCH_TIMEOUT_MILLIS=5000`
+  - Worker var `OSO_BOOTSTRAP_POLICY=false`
+  - Worker var `MCP_POLICY_FALLBACK_ENABLED=true`
 
 Partner-admin integration:
 1. Agency partner API stores consent records and identity account mapping

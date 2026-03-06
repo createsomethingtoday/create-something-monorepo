@@ -54,6 +54,11 @@ Optional runtime selection:
 - `HUB_SESSION_RESOLVE_URL` (identity-worker resolver endpoint, e.g. `https://id.createsomething.space/v1/mcp/sessions/resolve`)
 - `HUB_SESSION_RESOLVE_TOKEN` (shared secret used to authorize resolver calls)
 - `HUB_SESSION_RESOLVE_TIMEOUT_MS` (default `5000`)
+- `OSO_URL` (Oso Cloud endpoint, for example `https://cloud.osohq.com`)
+- `OSO_API_KEY` (Oso Cloud API key; store as a Worker secret)
+- `OSO_FETCH_TIMEOUT_MS` (default `5000`)
+- `OSO_BOOTSTRAP_POLICY` (`false` recommended in production; publish policy out of band)
+- `ENGINE_FALLBACK_ENABLED` (`true` recommended so the broker retains deterministic audited fallback)
 
 In `session_required` mode, callers must send `X-MCP-Session-Token`, and the hub resolves:
 
@@ -69,6 +74,38 @@ Compatibility note:
 - Keep `Authorization: Bearer <HUB_API_TOKEN>` for gateway auth.
 - Pass MCP session token in `X-MCP-Session-Token`.
 - `compat` mode keeps legacy fallback identity behavior and should be temporary.
+
+Recommended production posture:
+
+- `HUB_IDENTITY_MODE=session_required`
+- `HUB_SESSION_RESOLVE_URL=https://id.createsomething.space/v1/mcp/sessions/resolve`
+- `HUB_SESSION_RESOLVE_TOKEN` set as a Worker secret and matched exactly with `identity-worker` `MCP_SESSION_RESOLVE_TOKEN`
+- `OSO_BOOTSTRAP_POLICY=false`
+- `ENGINE_FALLBACK_ENABLED=true`
+
+Worker secrets / vars:
+
+```bash
+cd packages/cs-mcp-hub-remote
+
+# Required when protecting the public MCP endpoint
+pnpm exec wrangler secret put HUB_API_TOKEN
+
+# Required in session_required mode
+pnpm exec wrangler secret put HUB_SESSION_RESOLVE_TOKEN
+
+# Required for Oso Cloud primary evaluation
+pnpm exec wrangler secret put OSO_API_KEY
+```
+
+Set these as Worker vars (dashboard or `wrangler.toml`):
+
+- `HUB_IDENTITY_MODE=session_required`
+- `HUB_SESSION_RESOLVE_URL=https://id.createsomething.space/v1/mcp/sessions/resolve`
+- `OSO_URL=https://cloud.osohq.com`
+- `OSO_FETCH_TIMEOUT_MS=5000`
+- `OSO_BOOTSTRAP_POLICY=false`
+- `ENGINE_FALLBACK_ENABLED=true`
 
 Legacy bridge lane:
 
@@ -127,6 +164,7 @@ Low-context intent pattern (recommended for small allowlisted workflows):
 
 `cs-mcp-hub-remote` writes hub-level records into `cs-telemetry` (`mcp_tool_invocations` and `mcp_run_counts`) via `TELEMETRY_DB`.
 It also writes hub-observed downstream route events into `mcp_hub_routes`.
+Shared authz decisions are persisted in `authz_policy_rollouts` and `authz_decision_events` in the same D1 binding.
 
 Correlation behavior:
 
@@ -257,3 +295,19 @@ Never store raw bearer/session secrets in docs or checked-in artifacts.
   - Temporary operator handoff channels with audit logs
 - Persist only references/previews in databases:
   - `session_id`, `legacy_key_id`, `key_prefix`, `expires_at`, `sunset_at`
+
+## Oso Publish Workflow
+
+Runtime defaults now assume repo-first publication, not request-path bootstrap.
+
+- Compile artifacts: `pnpm authz:compile`
+- Manual publish: run GitHub workflow `MCP Authz Policy`
+  - set `policy_id`
+  - set `dry_run=false`
+- Automatic publish on `main` requires GitHub Actions config:
+  - secret `OSO_URL`
+  - secret `OSO_API_KEY`
+  - variable `OSO_POLICY_ID`
+  - variable `OSO_PUBLISH_ENABLED=true`
+
+Current publish script handles one policy per run. To publish all active policies, run the workflow once per policy id or extend the publisher to batch them.
