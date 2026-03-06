@@ -424,58 +424,15 @@ async function runRouterTool(
   if (extractedDisplayLabel && !mergedArgs.display_label) mergedArgs.display_label = extractedDisplayLabel;
   if (extractedPinTool && !mergedArgs.pin_tool_name) mergedArgs.pin_tool_name = extractedPinTool;
 
-  if (mentionsAny(lower, ['list accounts', 'show accounts', 'what accounts'])) {
-    return runAccountsTool('list_accounts', {}, deps);
-  }
+  const deterministic = await runDeterministicRouter(lower, mergedArgs, deps);
+  if (deterministic) return deterministic;
 
-  if (mentionsAny(lower, ['status', 'active', 'connected'])) {
-    const slug = normalizeSlug(String(mergedArgs.account_slug ?? ''));
-    if (!slug) {
-      return toJsonResult({
-        ok: true,
-        action: 'router',
-        intent: 'get_status',
-        status: 'needs_input',
-        next_questions: ['Which account_slug should I check?'],
-      });
-    }
-    return runAccountsTool('get_status', { account_slug: slug }, deps);
-  }
-
-  if (mentionsAny(lower, ['pin ', 'set pinned', 'use for halfdozen', 'use for blondish'])) {
-    const slug = normalizeSlug(String(mergedArgs.account_slug ?? ''));
-    const toolName = String(mergedArgs.pin_tool_name ?? '').trim();
-    if (!slug || !toolName) {
-      return toJsonResult({
-        ok: true,
-        action: 'router',
-        intent: 'pin_account',
-        status: 'needs_input',
-        next_questions: [
-          'Which account_slug should be pinned?',
-          `Which pin tool should be used? (${deps.pinnedHalfdozenToolName} or ${deps.pinnedClientToolName})`,
-        ],
-      });
-    }
-    return runAccountsTool('pin_account', { account_slug: slug, tool_name: toolName }, deps);
-  }
-
-  if (mentionsAny(lower, ['sync', 'workflow'])) {
-    return toJsonResult({
-      ok: true,
-      action: 'router',
-      intent: 'sync_guidance',
-      status: 'info',
-      message:
-        'Use operator_notion_accounts wizard to connect workspaces first. After connection, choose workflow/sync via available Notion tools.',
-      next_actions: [
-        { tool: 'operator_notion_accounts', action: 'wizard', args: mergedArgs },
-      ],
-    });
-  }
-
-  if (mentionsAny(lower, ['connect', 'add workspace', 'new workspace', 'api key', 'onboard'])) {
-    return runAccountsTool('wizard', mergedArgs, deps);
+  const agentDecision = await inferRouterIntentWithAgent(request, mergedArgs, deps);
+  if (agentDecision) {
+    if (agentDecision.account_slug && !mergedArgs.account_slug) mergedArgs.account_slug = agentDecision.account_slug;
+    if (agentDecision.display_label && !mergedArgs.display_label) mergedArgs.display_label = agentDecision.display_label;
+    if (agentDecision.pin_tool_name && !mergedArgs.pin_tool_name) mergedArgs.pin_tool_name = agentDecision.pin_tool_name;
+    return runRouterIntent(agentDecision.intent, mergedArgs, deps);
   }
 
   return toJsonResult({
