@@ -1,0 +1,101 @@
+{
+  "policy_id": "policy.hub-route-authorization.v1",
+  "version": 1,
+  "status": "draft",
+  "engine": "polar_v1",
+  "rules": [
+    {
+      "id": "hub_discover_readonly_blocks_mutations",
+      "priority": 10,
+      "when": {
+        "actionNames": [
+          "discover"
+        ],
+        "toolModes": [
+          "read_only"
+        ],
+        "accessTypes": [
+          "write",
+          "destructive",
+          "auth_admin",
+          "control_plane"
+        ]
+      },
+      "then": {
+        "decision": "block",
+        "reason": "Read-only sessions cannot discover mutable or administrative routes."
+      }
+    },
+    {
+      "id": "hub_execute_readonly_blocks_mutations",
+      "priority": 20,
+      "when": {
+        "actionNames": [
+          "execute"
+        ],
+        "toolModes": [
+          "read_only"
+        ],
+        "accessTypes": [
+          "write",
+          "destructive",
+          "auth_admin",
+          "control_plane"
+        ]
+      },
+      "then": {
+        "decision": "block",
+        "reason": "Read-only sessions cannot execute mutable or administrative routes."
+      }
+    },
+    {
+      "id": "hub_execute_destructive_requires_review",
+      "priority": 30,
+      "when": {
+        "actionNames": [
+          "execute"
+        ],
+        "accessTypes": [
+          "destructive",
+          "control_plane"
+        ]
+      },
+      "then": {
+        "decision": "require_human_review",
+        "reason": "Destructive or control-plane proxy routes require human review."
+      }
+    },
+    {
+      "id": "hub_discover_allow",
+      "priority": 900,
+      "when": {
+        "actionNames": [
+          "discover"
+        ],
+        "resourceKinds": [
+          "hub_route"
+        ]
+      },
+      "then": {
+        "decision": "allow",
+        "reason": "Route is visible for discovery."
+      }
+    },
+    {
+      "id": "hub_execute_allow",
+      "priority": 910,
+      "when": {
+        "actionNames": [
+          "execute"
+        ],
+        "resourceKinds": [
+          "hub_route"
+        ]
+      },
+      "then": {
+        "decision": "allow",
+        "reason": "Proxy route execution is allowed."
+      }
+    }
+  ]
+}

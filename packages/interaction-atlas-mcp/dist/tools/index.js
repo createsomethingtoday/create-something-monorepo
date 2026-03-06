@@ -267,7 +267,7 @@ function hybridConfigFromContext(ctx) {
         oso: {
             url: getStringMetadata(ctx, 'OSO_URL'),
             apiKey: getStringMetadata(ctx, 'OSO_API_KEY'),
-            bootstrapPolicy: boolMetadata(ctx, 'OSO_BOOTSTRAP_POLICY', true),
+            bootstrapPolicy: boolMetadata(ctx, 'OSO_BOOTSTRAP_POLICY', false),
             fetchTimeoutMillis,
         },
     };

@@ -64,7 +64,10 @@ function detectRepo(explicitRepo) {
 
 function labelExists(repo, labelName) {
   try {
-    runGh(['api', `repos/${repo}/labels/${encodeURIComponent(labelName)}`], { parseJson: true });
+    execFileSync('gh', ['api', `repos/${repo}/labels/${encodeURIComponent(labelName)}`], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
     return true;
   } catch {
     return false;

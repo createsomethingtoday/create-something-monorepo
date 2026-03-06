@@ -1,0 +1,24 @@
+{
+  "policy_id": "policy.mcp-session-self-service.v1",
+  "version": 1,
+  "status": "draft",
+  "engine": "polar_v1",
+  "rules": [
+    {
+      "id": "self_service_mint_allow",
+      "priority": 10,
+      "when": {
+        "actionNames": [
+          "mint_session"
+        ],
+        "resourceKinds": [
+          "mcp_session"
+        ]
+      },
+      "then": {
+        "decision": "allow",
+        "reason": "Authenticated user may mint a scoped session for their account."
+      }
+    }
+  ]
+}

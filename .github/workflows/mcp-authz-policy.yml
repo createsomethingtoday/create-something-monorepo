@@ -1,0 +1,86 @@
+name: MCP Authz Policy
+
+on:
+  pull_request:
+    paths:
+      - 'packages/mcp-authz/**'
+      - 'packages/policy-os-engine/**'
+      - 'packages/cs-mcp-hub-remote/**'
+      - 'packages/identity-worker/**'
+      - 'packages/interaction-atlas-mcp/**'
+      - 'docs/policies/**'
+      - 'scripts/compile-authz-manifests.ts'
+      - 'scripts/publish-authz-policy.ts'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/mcp-authz-policy.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/mcp-authz/**'
+      - 'packages/policy-os-engine/**'
+      - 'packages/cs-mcp-hub-remote/**'
+      - 'packages/identity-worker/**'
+      - 'packages/interaction-atlas-mcp/**'
+      - 'docs/policies/**'
+      - 'scripts/compile-authz-manifests.ts'
+      - 'scripts/publish-authz-policy.ts'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/mcp-authz-policy.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  authz-policy:
+    name: Compile and Verify Authz Policy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Compile repo-first authz manifests
+        run: pnpm authz:compile
+
+      - name: Verify shared authz package
+        run: pnpm --filter @create-something/mcp-authz test
+
+      - name: Verify broker integration
+        run: pnpm --filter @create-something/cs-mcp-hub-remote test
+
+      - name: Verify Atlas integration
+        run: pnpm --filter @create-something/interaction-atlas-mcp test
+
+      - name: Verify identity integration
+        run: pnpm --filter @create-something/identity-worker test
+
+      - name: Upload authz manifest preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-authz-manifests
+          path: docs/policies/generated/
+
+      - name: Publish active policy to Oso Cloud
+        if: github.ref == 'refs/heads/main' && vars.OSO_POLICY_ID != '' && secrets.OSO_URL != '' && secrets.OSO_API_KEY != ''
+        run: pnpm authz:publish --policy-id "${{ vars.OSO_POLICY_ID }}"
+        env:
+          OSO_URL: ${{ secrets.OSO_URL }}
+          OSO_API_KEY: ${{ secrets.OSO_API_KEY }}
+          OSO_FETCH_TIMEOUT_MS: '5000'
