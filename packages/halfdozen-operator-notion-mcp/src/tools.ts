@@ -248,59 +248,120 @@ async function runAccountsTool(
   }
 }
 
+async function runAccountsWizard(
+  args: Record<string, unknown>,
+  deps: OperatorNotionToolsDeps,
+  partnerClientId: string,
+  actor: string,
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  const accountSlug = normalizeSlug(String(args.account_slug ?? ''));
+  const displayLabel = String(args.display_label ?? '').trim();
+  const authConfigId = String(args.auth_config_id ?? deps.notionAuthConfigId ?? '').trim();
+  const syncEnabled = typeof args.sync_enabled === 'boolean' ? args.sync_enabled : true;
+  const metadata = isPlainObject(args.metadata) ? args.metadata : {};
+  const pinToolName = String(args.pin_tool_name ?? '').trim();
+
+  const missing: string[] = [];
+  if (!accountSlug) missing.push('account_slug');
+  if (!displayLabel) missing.push('display_label');
+  if (!authConfigId) missing.push('auth_config_id');
+
+  if (missing.length > 0) {
+    return toJsonResult({
+      ok: true,
+      action: 'wizard',
+      status: 'needs_input',
+      next_questions: buildAccountWizardQuestions(missing, deps),
+      instructions: [
+        'Provide workspace slug and display label first.',
+        'If auth_config_id is omitted, deployment default COMPOSIO_NOTION_AUTH_CONFIG_ID is used.',
+      ],
+    });
+  }
+
+  const composioUserId = `hd_notion_${deps.partnerClientSlug.replace(/-/g, '_')}_${accountSlug.replace(/-/g, '_')}`;
+  await upsertNotionAccount(deps.db, {
+    partnerClientId,
+    accountSlug,
+    displayLabel,
+    composioUserId,
+    authConfigId,
+    syncEnabled,
+    metadata: { ...metadata, created_via: 'operator_notion_accounts_wizard' },
+  });
+
+  const account = await requireAccount(deps.db, partnerClientId, accountSlug);
+  const refreshed = await refreshNotionAccountState(deps.db, deps.composio, account);
+
+  if (refreshed.connection_status !== 'ACTIVE') {
+    const connectionRequest = await deps.composio.connectedAccounts.link(refreshed.composio_user_id, authConfigId, {});
+    await recordNotionEvent(deps.db, {
+      partnerClientId,
+      accountSlug,
+      eventType: 'wizard_connect_link_created',
+      actor,
+      metadata: { connection_request_id: connectionRequest.id ?? null, auth_config_id: authConfigId },
+    });
+    return toJsonResult({
+      ok: true,
+      action: 'wizard',
+      status: 'awaiting_connection',
+      account: serializeAccount(refreshed),
+      connect_link: connectionRequest.redirectUrl ?? null,
+      instructions: [
+        'Open connect_link and enter the Notion API key in Composio (if prompted).',
+        'After browser auth, call operator_notion_accounts with action=get_status for this account_slug until connection_status=ACTIVE.',
+      ],
+      next_actions: [
+        { tool: 'operator_notion_accounts', action: 'get_status', args: { account_slug: accountSlug } },
+      ],
+    });
+  }
+
+  let pinResult: Record<string, unknown> | null = null;
+  if (pinToolName) {
+    if (![deps.pinnedHalfdozenToolName, deps.pinnedClientToolName].includes(pinToolName)) {
+      throw new Error(`args.pin_tool_name must be one of: ${deps.pinnedHalfdozenToolName}, ${deps.pinnedClientToolName}`);
+    }
+    await setNotionPin(deps.db, {
+      partnerClientId,
+      toolName: pinToolName,
+      accountSlug: refreshed.account_slug,
+      metadata: { pinned_by: actor, via: 'wizard' },
+    });
+    await recordNotionEvent(deps.db, {
+      partnerClientId,
+      accountSlug,
+      eventType: 'wizard_tool_pinned',
+      actor,
+      metadata: { tool_name: pinToolName },
+    });
+    pinResult = { tool_name: pinToolName, account_slug: refreshed.account_slug };
+  }
+
+  return toJsonResult({
+    ok: true,
+    action: 'wizard',
+    status: 'connected',
+    account: serializeAccount(refreshed),
+    pinned: pinResult,
+    instructions: [
+      'Workspace is connected.',
+      'Operator can now choose workflows using halfdozen_notion / blondish_notion and other available Notion tools.',
+    ],
+  });
+}
+
 async function runSyncTool(
   params: Record<string, unknown>,
   deps: OperatorNotionToolsDeps,
 ): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
   const { client } = await requirePartnerClient(deps);
-  const action = String(params.action ?? 'wizard').trim() || 'wizard';
-  const mode =
-    action === 'preview_page_content' || action === 'copy_page_content'
-      ? action
-      : String(params.mode ?? '').trim();
-
-  let sourceAccountSlug = normalizeSlug(String(params.source_account_slug ?? ''));
-  let targetAccountSlug = normalizeSlug(String(params.target_account_slug ?? ''));
-  const direction = String(params.direction ?? '').trim();
+  const action = String(params.action);
+  const sourceAccountSlug = normalizeSlug(String(params.source_account_slug ?? ''));
+  const targetAccountSlug = normalizeSlug(String(params.target_account_slug ?? ''));
   const sourcePageId = String(params.source_page_id ?? '').trim();
   const targetPageId = String(params.target_page_id ?? '').trim();
-  const confirmWrite = params.confirm_write === true;
-
-  if (!sourceAccountSlug && !targetAccountSlug && direction === 'halfdozen_to_client') {
-    sourceAccountSlug = 'halfdozen';
-    targetAccountSlug = normalizeSlug(client.slug);
-  } else if (!sourceAccountSlug && !targetAccountSlug && direction === 'client_to_halfdozen') {
-    sourceAccountSlug = normalizeSlug(client.slug);
-    targetAccountSlug = 'halfdozen';
-  } else if (!sourceAccountSlug && !targetAccountSlug && action === 'wizard') {
-    sourceAccountSlug = 'halfdozen';
-    targetAccountSlug = normalizeSlug(client.slug);
-  }
-
-  if (action === 'wizard') {
-    const missing: string[] = [];
-    if (!sourceAccountSlug) missing.push('source_account_slug');
-    if (!targetAccountSlug) missing.push('target_account_slug');
-    if (!mode) missing.push('mode');
-    if (!sourcePageId) missing.push('source_page_id');
-    if (!targetPageId) missing.push('target_page_id');
-
-    const defaults = {
-      source_account_slug: sourceAccountSlug || null,
-      target_account_slug: targetAccountSlug || null,
-      mode: mode || null,
-    };
-
-    if (missing.length > 0) {
-      return toJsonResult({
-        ok: true,
-        action,
-        status: 'needs_input',
-        defaults,
-        next_questions: buildSyncWizardQuestions(missing),
-      });
-    }
-  }
 
   if (!sourceAccountSlug || !targetAccountSlug || !sourcePageId || !targetPageId) {
     throw new Error('source_account_slug, target_account_slug, source_page_id, and target_page_id are required.');
@@ -308,27 +369,18 @@ async function runSyncTool(
   if (sourceAccountSlug === targetAccountSlug) {
     throw new Error('source_account_slug and target_account_slug must differ.');
   }
-  if (mode !== 'preview_page_content' && mode !== 'copy_page_content') {
-    throw new Error('mode must be preview_page_content or copy_page_content.');
-  }
 
   const source = await requireActiveAccount(deps, client.id, sourceAccountSlug, { requireSyncEnabled: true });
   const target = await requireActiveAccount(deps, client.id, targetAccountSlug, { requireSyncEnabled: true });
 
   const preview = await buildSyncPreview(deps, source, target, sourcePageId, targetPageId);
 
-  if (mode === 'preview_page_content') {
-    return toJsonResult({ ok: true, action: mode, status: 'preview_ready', preview: preview.summary });
+  if (action === 'preview_page_content') {
+    return toJsonResult({ ok: true, action, preview: preview.summary });
   }
 
-  if (!confirmWrite) {
-    return toJsonResult({
-      ok: true,
-      action: 'wizard',
-      status: 'awaiting_confirmation',
-      preview: preview.summary,
-      confirmation_prompt: 'Set confirm_write=true to execute copy_page_content.',
-    });
+  if (action !== 'copy_page_content') {
+    throw new Error(`Unsupported operator_notion_sync action: ${action}`);
   }
 
   await deps.dispatcher.execute(
@@ -343,31 +395,7 @@ async function runSyncTool(
     metadata: preview.summary,
   });
 
-  return toJsonResult({
-    ok: true,
-    action: 'copy_page_content',
-    status: 'completed',
-    preview: preview.summary,
-    copied: true,
-  });
-}
-
-function buildSyncWizardQuestions(missing: string[]): string[] {
-  const questions: string[] = [];
-  for (const field of missing) {
-    if (field === 'source_account_slug') {
-      questions.push('Which account slug is the source? (example: halfdozen)');
-    } else if (field === 'target_account_slug') {
-      questions.push('Which account slug is the target? (example: blondish)');
-    } else if (field === 'mode') {
-      questions.push('Do you want preview_page_content or copy_page_content?');
-    } else if (field === 'source_page_id') {
-      questions.push('What is the source_page_id?');
-    } else if (field === 'target_page_id') {
-      questions.push('What is the target_page_id?');
-    }
-  }
-  return questions;
+  return toJsonResult({ ok: true, action, preview: preview.summary, copied: true });
 }
 
 async function buildSyncPreview(
@@ -394,6 +422,22 @@ async function buildSyncPreview(
   };
 
   return { summary, source_blocks: sourceBlocks };
+}
+
+function buildAccountWizardQuestions(missing: string[], deps: OperatorNotionToolsDeps): string[] {
+  const questions: string[] = [];
+  for (const field of missing) {
+    if (field === 'account_slug') {
+      questions.push('What internal workspace slug should be used? (example: halfdozen, blondish, c3)');
+    } else if (field === 'display_label') {
+      questions.push('What display name should this workspace use? (example: Half Dozen Workspace)');
+    } else if (field === 'auth_config_id') {
+      questions.push(
+        `Which Notion auth config ID should be used? (default from deployment: ${deps.notionAuthConfigId ?? 'not configured'})`,
+      );
+    }
+  }
+  return questions;
 }
 
 async function requirePartnerClient(deps: OperatorNotionToolsDeps) {
