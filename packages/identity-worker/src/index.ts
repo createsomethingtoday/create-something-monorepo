@@ -1971,6 +1971,7 @@ async function evaluatePartnerPolicyDecision(
 		},
 	);
 	const hybridFallbackEnabled = parseBooleanEnv(env.MCP_POLICY_FALLBACK_ENABLED, true);
+	const osoBootstrapPolicy = parseBooleanEnv(env.OSO_BOOTSTRAP_POLICY, false);
 	const osoFetchTimeoutMillis = parseIntegerEnv(env.OSO_FETCH_TIMEOUT_MILLIS, 5000, 100, 30000);
 
 	let decision: DecisionTelemetry;
@@ -1989,7 +1990,7 @@ async function evaluatePartnerPolicyDecision(
 					url: env.OSO_URL,
 					apiKey: env.OSO_API_KEY,
 					fetchTimeoutMillis: osoFetchTimeoutMillis,
-					bootstrapPolicy: true,
+					bootstrapPolicy: osoBootstrapPolicy,
 				},
 			}
 		);

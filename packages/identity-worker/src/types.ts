@@ -16,6 +16,7 @@ export interface Env {
 	OSO_URL?: string;
 	OSO_API_KEY?: string;
 	OSO_FETCH_TIMEOUT_MILLIS?: string;
+	OSO_BOOTSTRAP_POLICY?: string;
 	MCP_POLICY_FALLBACK_ENABLED?: string;
 }
 

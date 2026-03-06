@@ -158,7 +158,7 @@ export class InteractionAtlasAuthProvider implements AuthProvider<InteractionAtl
     const policyVersionId = env?.POLICY_VERSION_ID ?? process.env.POLICY_VERSION_ID ?? 'policy-v1';
     const osoUrl = env?.OSO_URL ?? process.env.OSO_URL;
     const osoApiKey = env?.OSO_API_KEY ?? process.env.OSO_API_KEY;
-    const osoBootstrapPolicy = env?.OSO_BOOTSTRAP_POLICY ?? process.env.OSO_BOOTSTRAP_POLICY ?? 'true';
+    const osoBootstrapPolicy = env?.OSO_BOOTSTRAP_POLICY ?? process.env.OSO_BOOTSTRAP_POLICY ?? 'false';
     const engineFallbackEnabled = env?.ENGINE_FALLBACK_ENABLED ?? process.env.ENGINE_FALLBACK_ENABLED ?? 'true';
     const osoFetchTimeoutRaw = env?.OSO_FETCH_TIMEOUT_MS ?? process.env.OSO_FETCH_TIMEOUT_MS;
     const osoFetchTimeout = osoFetchTimeoutRaw ? Number(osoFetchTimeoutRaw) : undefined;

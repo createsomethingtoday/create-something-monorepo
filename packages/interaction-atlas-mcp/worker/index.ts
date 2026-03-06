@@ -623,7 +623,7 @@ export default {
         osoUrl: _env.OSO_URL,
         osoApiKey: _env.OSO_API_KEY,
         fallbackEnabled: (_env.ENGINE_FALLBACK_ENABLED ?? 'true').toLowerCase() !== 'false',
-        bootstrapPolicy: (_env.OSO_BOOTSTRAP_POLICY ?? 'true').toLowerCase() !== 'false',
+        bootstrapPolicy: (_env.OSO_BOOTSTRAP_POLICY ?? 'false').toLowerCase() !== 'false',
       });
       const report = await saveEstimateReport(_env.DB, {
         accountId: authCtx.accountId,

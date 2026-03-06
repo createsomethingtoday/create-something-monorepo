@@ -8,7 +8,7 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test test/*.test.ts"
+    "test": "pnpm --filter @create-something/mcp-authz build && node --import tsx --test test/*.test.ts"
   },
   "dependencies": {
     "@create-something/mcp-authz": "workspace:*",

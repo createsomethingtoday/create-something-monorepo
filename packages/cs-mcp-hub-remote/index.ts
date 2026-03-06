@@ -2466,7 +2466,7 @@ function hubAuthzHybridConfig(env: Env) {
       url: readEnvString(env, 'OSO_URL'),
       apiKey: readEnvString(env, 'OSO_API_KEY'),
       fetchTimeoutMillis,
-      bootstrapPolicy: parseBooleanWithDefault(readEnvString(env, 'OSO_BOOTSTRAP_POLICY'), true),
+      bootstrapPolicy: parseBooleanWithDefault(readEnvString(env, 'OSO_BOOTSTRAP_POLICY'), false),
     },
   };
 }
