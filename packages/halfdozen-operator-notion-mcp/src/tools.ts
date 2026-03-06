@@ -464,7 +464,21 @@ async function runDeterministicRouter(
   mergedArgs: Record<string, unknown>,
   deps: OperatorNotionToolsDeps,
 ): Promise<{ content: Array<{ type: 'text'; text: string }> } | null> {
-  if (mentionsAny(lower, ['list accounts', 'show accounts', 'what accounts', 'which accounts'])) {
+  if (
+    mentionsAny(lower, [
+      'list accounts',
+      'show accounts',
+      'what accounts',
+      'which accounts',
+      'list workspaces',
+      'show workspaces',
+      'what workspaces',
+      'which workspaces',
+      'linked workspaces',
+      'workspace inventory',
+      'inventory of linked workspaces',
+    ])
+  ) {
     return runRouterIntent('list_accounts', mergedArgs, deps);
   }
 
