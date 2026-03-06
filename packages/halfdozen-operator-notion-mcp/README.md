@@ -19,6 +19,10 @@ Worker secrets / vars:
 - `MCP_API_KEY`
 - `PARTNER_KEY`
 - `PARTNER_CLIENT_SLUG`
+- `OPENAI_API_KEY` (optional, enables OpenAI-agent fallback in `operator_notion_router`)
+- `ROUTER_OPENAI_MODEL` (optional, default `gpt-4.1-mini`)
+- `ROUTER_OPENAI_TIMEOUT_MS` (optional, default `3000`)
+- `ROUTER_OPENAI_CACHE_TTL_MS` (optional, default `120000`)
 
 Default Notion auth config ID in `worker/wrangler.toml`:
 
@@ -31,7 +35,9 @@ Default Notion auth config ID in `worker/wrangler.toml`:
 - Account metadata and pins live in the agency D1 schema introduced by `0011_partner_notion_accounts.sql`.
 - `operator_notion_accounts` now supports onboarding wizard flow (`action=wizard`) for naming workspaces + connect-link/API-key steps.
 - `operator_notion_sync` supports page-content preview/copy between managed accounts after connection.
-- `operator_notion_router` accepts natural-language prompts and routes to onboarding/account actions.
+- `operator_notion_router` uses deterministic routing first, then optional OpenAI-agent fallback (timeout + in-memory cache) for ambiguous requests.
+- Account status refreshes are TTL-gated on hot paths to reduce Composio API load under frequent MCP traffic.
+- Partner client and pinned-tool bindings are short-TTL cached in-process to reduce repeated D1 reads on high-frequency pinned tool calls.
 
 ## Quality Gates
 

@@ -20,6 +20,8 @@ import {
   setSyncEnabled,
   upsertNotionAccount,
   type NotionAccountRow,
+  type NotionPinRow,
+  type PartnerClientRow,
 } from './db.js';
 
 export interface OperatorNotionToolsDeps {
@@ -44,6 +46,9 @@ const ROUTER_DEFAULT_OPENAI_MODEL = 'gpt-4.1-mini';
 const ROUTER_DEFAULT_TIMEOUT_MS = 3_000;
 const ROUTER_DEFAULT_CACHE_TTL_MS = 120_000;
 const ROUTER_CACHE_MAX_ENTRIES = 256;
+const PARTNER_CLIENT_CACHE_TTL_MS = 300_000;
+const PARTNER_PIN_CACHE_TTL_MS = 60_000;
+const PARTNER_CACHE_MAX_ENTRIES = 256;
 
 type RouterIntent =
   | 'wizard'
@@ -65,10 +70,17 @@ interface RouterCacheEntry {
   expiresAt: number;
 }
 
+interface TimedCacheEntry<T> {
+  value: T;
+  expiresAt: number;
+}
+
 type AgentsSdk = typeof import('@openai/agents');
 
 let agentsSdkPromise: Promise<AgentsSdk> | null = null;
 const routerDecisionCache = new Map<string, RouterCacheEntry>();
+const partnerClientCache = new Map<string, TimedCacheEntry<PartnerClientRow>>();
+const partnerPinCache = new Map<string, TimedCacheEntry<NotionPinRow | null>>();
 
 const pinnedToolSchema = {
   action: z.enum([
@@ -166,7 +178,7 @@ async function runPinnedTool(
 ): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
   rejectControlArgs(args);
   const { client } = await requirePartnerClient(deps);
-  const pin = await getPinForTool(deps.db, client.id, toolName);
+  const pin = await getCachedPinForTool(deps.db, client.id, toolName);
   if (!pin) {
     throw new Error(`Pinned tool "${toolName}" is not configured for client "${client.slug}".`);
   }
@@ -273,6 +285,7 @@ async function runAccountsTool(
         accountSlug: account.account_slug,
         metadata: { pinned_by: actor },
       });
+      invalidatePartnerPinCache(client.id, toolName);
       await recordNotionEvent(deps.db, {
         partnerClientId: client.id,
         accountSlug,
@@ -383,6 +396,7 @@ async function runAccountsWizard(
       accountSlug: refreshed.account_slug,
       metadata: { pinned_by: actor, via: 'wizard' },
     });
+    invalidatePartnerPinCache(partnerClientId, pinToolName);
     await recordNotionEvent(deps.db, {
       partnerClientId,
       accountSlug,
@@ -715,20 +729,40 @@ function extractPinToolName(request: string, deps: OperatorNotionToolsDeps): str
 }
 
 async function requirePartnerClient(deps: OperatorNotionToolsDeps) {
+  const cacheKey = `${deps.partnerKey}::${deps.partnerClientSlug}`;
+  const cached = getTimedCache(partnerClientCache, cacheKey);
+  if (cached) return { client: cached };
+
   const client = await getPartnerClient(deps.db, deps.partnerKey, deps.partnerClientSlug);
   if (!client) {
     throw new Error(`Partner client "${deps.partnerClientSlug}" is not configured.`);
   }
+  setTimedCache(partnerClientCache, cacheKey, client, PARTNER_CLIENT_CACHE_TTL_MS, PARTNER_CACHE_MAX_ENTRIES);
   return { client };
+}
+
+async function getCachedPinForTool(db: D1Database, partnerClientId: string, toolName: string): Promise<NotionPinRow | null> {
+  const cacheKey = `${partnerClientId}::${toolName}`;
+  const cached = getTimedCache(partnerPinCache, cacheKey);
+  if (cached !== undefined) return cached;
+
+  const pin = await getPinForTool(db, partnerClientId, toolName);
+  setTimedCache(partnerPinCache, cacheKey, pin, PARTNER_PIN_CACHE_TTL_MS, PARTNER_CACHE_MAX_ENTRIES);
+  return pin;
+}
+
+function invalidatePartnerPinCache(partnerClientId: string, toolName: string): void {
+  const cacheKey = `${partnerClientId}::${toolName}`;
+  partnerPinCache.delete(cacheKey);
 }
 
 async function syncAllAccounts(deps: OperatorNotionToolsDeps, partnerClientId: string): Promise<NotionAccountRow[]> {
   const accounts = await listNotionAccounts(deps.db, partnerClientId);
-  const refreshed: NotionAccountRow[] = [];
-  for (const account of accounts) {
-    refreshed.push(await refreshNotionAccountState(deps.db, deps.composio, account, { minIntervalMs: LIST_ACCOUNTS_REFRESH_TTL_MS }));
-  }
-  return refreshed;
+  return Promise.all(
+    accounts.map((account) =>
+      refreshNotionAccountState(deps.db, deps.composio, account, { minIntervalMs: LIST_ACCOUNTS_REFRESH_TTL_MS }),
+    ),
+  );
 }
 
 async function requireAccount(db: D1Database, partnerClientId: string, accountSlug: string): Promise<NotionAccountRow> {
@@ -873,6 +907,30 @@ function sanitizeDisplayLabel(value: unknown): string | undefined {
   const label = String(value ?? '').trim();
   if (!label) return undefined;
   return label.slice(0, 120);
+}
+
+function getTimedCache<T>(cache: Map<string, TimedCacheEntry<T>>, key: string): T | undefined {
+  const entry = cache.get(key);
+  if (!entry) return undefined;
+  if (Date.now() > entry.expiresAt) {
+    cache.delete(key);
+    return undefined;
+  }
+  return entry.value;
+}
+
+function setTimedCache<T>(
+  cache: Map<string, TimedCacheEntry<T>>,
+  key: string,
+  value: T,
+  ttlMs: number,
+  maxEntries: number,
+): void {
+  if (cache.size >= maxEntries) {
+    const oldest = cache.keys().next().value;
+    if (oldest) cache.delete(oldest);
+  }
+  cache.set(key, { value, expiresAt: Date.now() + Math.max(5_000, ttlMs) });
 }
 
 function buildRouterCacheKey(
