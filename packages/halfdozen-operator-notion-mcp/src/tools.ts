@@ -37,6 +37,7 @@ export interface OperatorNotionToolsDeps {
   routerOpenAiModel?: string;
   routerOpenAiTimeoutMs?: number;
   routerOpenAiCacheTtlMs?: number;
+  routerOpenAiTracingEnabled?: boolean;
   getActor: () => string;
 }
 
@@ -606,7 +607,7 @@ async function inferRouterIntentWithAgent(
       ].join(' '),
     });
 
-    const runner = new agentsSdk.Runner({ tracingDisabled: true });
+    const runner = new agentsSdk.Runner({ tracingDisabled: !Boolean(deps.routerOpenAiTracingEnabled) });
     const prompt = buildRouterAgentPrompt(request, context, deps);
     const runPromise = runner.run(agent, prompt, { maxTurns: 1 }) as Promise<{ finalOutput: unknown }>;
     const runResult = await withTimeout(runPromise, timeoutMs, 'OpenAI router timeout');
