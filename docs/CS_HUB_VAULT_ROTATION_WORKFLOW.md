@@ -2,14 +2,16 @@
 
 Use this workflow to keep Hub and Notion bridge delivery credentials in a vault (Doppler default, Infisical supported) and rotate them without storing plaintext tokens in docs.
 
-## 1) Install Doppler CLI
+## 1) Install Vault CLIs
 
 Local macOS install:
 
 ```bash
 brew install gnupg
 brew install dopplerhq/cli/doppler
+brew install infisical/get-cli/infisical
 doppler --version
+infisical --version
 ```
 
 Upgrade any time:
@@ -24,6 +26,9 @@ doppler update
 doppler login
 cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
 doppler setup
+infisical login --interactive
+# Optional: bind the repo to an Infisical project context
+infisical init
 ```
 
 Optional `doppler.yaml` (repo root):
@@ -34,7 +39,7 @@ setup:
     config: production
 ```
 
-## 3) Required Doppler secrets
+## 3) Required vault secrets
 
 Global hub secrets:
 
@@ -106,7 +111,7 @@ Notes:
 
 ## 5) Rotate delivery credentials and roll out
 
-This rotates per-team Hub tokens, core hub token, and per-team Notion bridge basic passwords in Doppler, then syncs Worker secrets and runs deploy/verify.
+This rotates per-team Hub tokens, core hub token, and per-team Notion bridge basic passwords in the selected vault provider, then syncs Worker secrets and runs deploy/verify.
 
 ```bash
 pnpm mcp:hub:rotate:production
@@ -122,6 +127,8 @@ pnpm mcp:hub:rotate:production --skip-deploy
 pnpm mcp:hub:rotate:production --skip-verify
 pnpm mcp:hub:rotate:production --no-bridges
 HUB_DEPLOY_IDENTITY_MODE=session_required pnpm mcp:hub:rotate:production
+VAULT_PROVIDER=infisical INFISICAL_ENV=prod INFISICAL_PATH=/ pnpm mcp:hub:rotate:production --dry-run
+VAULT_PROVIDER=infisical INFISICAL_PROJECT_ID="<project-id>" INFISICAL_ENV=prod pnpm mcp:hub:rotate:production
 ```
 
 Notes:
@@ -151,8 +158,8 @@ INFISICAL_PROJECT_ID="mcp-m1k5" \
 INFISICAL_CLIENT_ID="<machine-identity-client-id>" \
 INFISICAL_CLIENT_SECRET="<machine-identity-client-secret>" \
 pnpm mcp:hub:vault:migrate:doppler-to-infisical -- \
-  --doppler-project create-something \
-  --doppler-config production \
+  --doppler-project <doppler-project> \
+  --doppler-config <doppler-config> \
   --infisical-env prod \
   --infisical-path / \
   --verify

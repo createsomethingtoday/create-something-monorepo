@@ -216,6 +216,9 @@ pnpm mcp:hub:vault:sync
 
 # Rotate delivery credentials, sync, deploy, and verify
 pnpm mcp:hub:rotate:production
+
+# Rotate using Infisical as vault source
+VAULT_PROVIDER=infisical INFISICAL_ENV=prod pnpm mcp:hub:rotate:production
 ```
 
 Runbook: `docs/CS_HUB_VAULT_ROTATION_WORKFLOW.md`
