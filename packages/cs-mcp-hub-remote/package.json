@@ -11,6 +11,7 @@
     "test": "node --import tsx --test test/*.test.ts"
   },
   "dependencies": {
+    "@create-something/mcp-authz": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "braintrust": "^2.2.2"
   },
