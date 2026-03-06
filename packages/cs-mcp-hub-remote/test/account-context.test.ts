@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { resolveAccountContext, resolveHubIdentityMode } from '../index.ts';
+import { authorizeRequest, resolveAccountContext, resolveHubIdentityMode } from '../index.ts';
 
 function makeExtra(headers: Record<string, string>) {
   return {
@@ -104,4 +104,90 @@ test('resolveAccountContext can disable compat header account override', async (
 
   assert.equal(context.accountId, 'acct_fixed');
   assert.equal(context.identitySource, 'fallback');
+});
+
+test('authorizeRequest accepts a resolved personal bearer token in compat mode', async () => {
+  const originalFetch = globalThis.fetch;
+  let capturedAuth = '';
+  let capturedToken = '';
+
+  globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    capturedAuth = String((init?.headers as Record<string, string> | undefined)?.Authorization ?? '');
+    const body = JSON.parse(String(init?.body ?? '{}')) as { token?: string };
+    capturedToken = body.token ?? '';
+    return new Response(
+      JSON.stringify({
+        valid: true,
+        account_id: 'acct_personal',
+        tenant_id: 'tenant_acme',
+        user_id: 'user_legacy',
+        auth_mode: 'legacy_key',
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+  };
+
+  try {
+    const failure = await authorizeRequest(
+      new Request('https://hub.example/mcp', {
+        headers: {
+          Authorization: 'Bearer mlk_personal_token',
+        },
+      }),
+      {
+        HUB_API_TOKEN: 'hub_static_token',
+        HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
+      } as any,
+    );
+
+    assert.equal(failure, null);
+    assert.equal(capturedAuth, 'Bearer resolver_secret');
+    assert.equal(capturedToken, 'mlk_personal_token');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('authorizeRequest rejects an invalid personal bearer token when static auth is configured', async () => {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = async (): Promise<Response> =>
+    new Response(
+      JSON.stringify({
+        valid: false,
+        reason: 'token_not_found',
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+  try {
+    const failure = await authorizeRequest(
+      new Request('https://hub.example/mcp', {
+        headers: {
+          Authorization: 'Bearer mlk_invalid_token',
+        },
+      }),
+      {
+        HUB_API_TOKEN: 'hub_static_token',
+        HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
+      } as any,
+    );
+
+    assert.ok(failure instanceof Response);
+    assert.equal(failure.status, 401);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });

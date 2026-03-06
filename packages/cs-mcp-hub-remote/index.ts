@@ -684,7 +684,7 @@ export default {
     }
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
-      const authFailure = authorizeRequest(request, env);
+      const authFailure = await authorizeRequest(request, env);
       if (authFailure) {
         return withCors(authFailure);
       }
@@ -813,18 +813,37 @@ function ensureStreamableHttpAcceptHeader(request: Request): Request {
   return new Request(request, { headers });
 }
 
-function authorizeRequest(request: Request, env: Env): Response | null {
+export async function authorizeRequest(request: Request, env: Env): Promise<Response | null> {
   const requiredToken = readEnvString(env, 'HUB_API_TOKEN');
   if (!requiredToken) {
     return null;
   }
 
   const providedToken = getRequestToken(request);
-  if (!providedToken || !timingSafeEqual(providedToken, requiredToken)) {
+  if (providedToken && timingSafeEqual(providedToken, requiredToken)) {
+    return null;
+  }
+
+  if (!isSessionResolverConfigured(env)) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
   }
 
-  return null;
+  const sessionHeaderToken = request.headers.get('x-mcp-session-token')?.trim() ?? null;
+  const authHeader = request.headers.get('authorization') ?? request.headers.get('Authorization');
+  const bearerToken = authHeader ? parseBearerToken(authHeader) : null;
+  const bearerIsHubToken =
+    bearerToken && requiredToken ? timingSafeEqual(bearerToken, requiredToken) : false;
+  const identityToken = sessionHeaderToken ?? (bearerToken && !bearerIsHubToken ? bearerToken : null);
+  if (!identityToken) {
+    return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+
+  const resolved = await resolveSessionForBearerToken(env, identityToken);
+  if (resolved?.valid === true && normalizeTraceValue(resolved.account_id)) {
+    return null;
+  }
+
+  return jsonResponse({ error: 'Unauthorized' }, 401);
 }
 
 function getRequestToken(request: Request): string | null {
