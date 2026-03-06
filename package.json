@@ -77,6 +77,7 @@
     "mcp:gate:typecheck": "node scripts/mcp-quality-gate.mjs typecheck",
     "mcp:gate:lint": "node scripts/mcp-quality-gate.mjs lint",
     "mcp:gate:test": "node scripts/mcp-quality-gate.mjs test",
+    "mcp:apps:smoke": "tsx scripts/mcp-apps-smoke.ts",
     "mcp:hub:build": "pnpm --filter @create-something/cs-mcp-hub build",
     "mcp:hub:start": "pnpm --filter @create-something/cs-mcp-hub start",
     "mcp:hub:status": "node packages/cs-mcp-hub/dist/index.js --status",
