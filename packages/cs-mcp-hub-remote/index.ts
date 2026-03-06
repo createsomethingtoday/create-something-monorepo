@@ -163,6 +163,9 @@ type ProxyFailureDetails = {
   code: string | number | null;
   missingScopes: string[] | null;
   authRelated: boolean;
+  nextStep: string | null;
+  reconnectProxyTool: string | null;
+  toolkitSlug: string | null;
 };
 
 type DiscoveryMode = 'compact' | 'full';
@@ -333,6 +336,7 @@ interface Env {
 const HUB_NAME = 'create-something-hub-remote';
 const HUB_VERSION = '1.0.0';
 export const HUB_OVERVIEW_RESOURCE_URI = 'ui://hub/overview';
+export const HUB_AUTH_WORKFLOW_RESOURCE_URI = 'ui://hub/auth-workflow';
 const DEFAULT_REFRESH_SECONDS = 300;
 const HUB_STATE_KV_PREFIX = 'hub_state_v1';
 const HUB_ROUTE_AUTHZ_POLICY_ID = 'policy.hub-route-authorization.v1';
@@ -390,7 +394,7 @@ export const MANAGEMENT_TOOLS: Tool[] = [
     },
     _meta: {
       ui: {
-        resourceUri: HUB_OVERVIEW_RESOURCE_URI,
+        resourceUri: HUB_AUTH_WORKFLOW_RESOURCE_URI,
       },
     },
   },
@@ -422,6 +426,11 @@ export const MANAGEMENT_TOOLS: Tool[] = [
       },
       required: ['proxyToolName'],
       additionalProperties: false,
+    },
+    _meta: {
+      ui: {
+        resourceUri: HUB_AUTH_WORKFLOW_RESOURCE_URI,
+      },
     },
   },
   {
@@ -472,6 +481,11 @@ export const MANAGEMENT_TOOLS: Tool[] = [
       },
       required: ['proxyToolName'],
       additionalProperties: false,
+    },
+    _meta: {
+      ui: {
+        resourceUri: HUB_AUTH_WORKFLOW_RESOURCE_URI,
+      },
     },
   },
   {
@@ -626,6 +640,12 @@ export const HUB_RESOURCES: HubResourceDefinition[] = [
     uri: HUB_OVERVIEW_RESOURCE_URI,
     name: 'Hub Overview',
     description: 'MCP App overview for the remote hub with key runtime metrics and quick-start guidance.',
+    mimeType: 'text/html',
+  },
+  {
+    uri: HUB_AUTH_WORKFLOW_RESOURCE_URI,
+    name: 'Hub Auth Workflow',
+    description: 'Recommended brokered workflow for toolkit connection checks, connect links, retries, and reconnects.',
     mimeType: 'text/html',
   },
 ];
@@ -1378,6 +1398,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           visibleProxyToolCount: visible.toolDefinitions.length,
         }));
       }
+      case HUB_AUTH_WORKFLOW_RESOURCE_URI:
+        return toHtmlResource(uri, buildHubAuthWorkflowHtml());
       default:
         throw new Error(`Unknown resource "${uri}"`);
     }
@@ -2082,7 +2104,31 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
               },
             }),
           ]);
-          return toErrorResult(message);
+          return toErrorResult(message, {
+            next_step: 'brokered_execution_required',
+            instructions: [
+              'Call hub_search_proxy_tools to find the proxyToolName.',
+              'Optionally call hub_describe_proxy_tool if argument shape is unclear.',
+              'Call hub_execute_proxy_tool with proxyToolName + args.',
+            ],
+            example: {
+              search: {
+                name: 'hub_search_proxy_tools',
+                arguments: {
+                  serverName: directProxyRoute.serverName,
+                  query: directProxyRoute.downstreamToolName,
+                  limit: 5,
+                },
+              },
+              execute: {
+                name: 'hub_execute_proxy_tool',
+                arguments: {
+                  proxyToolName: directProxyRoute.proxyToolName,
+                  args: {},
+                },
+              },
+            },
+          });
         }
 
         return executeProxyRoute({
@@ -3008,7 +3054,16 @@ export async function executeProxyRoute(params: {
     ]);
 
     if (proxyFailure) {
-      return toErrorResult(proxyFailure.errorMessage);
+      return toErrorResult(proxyFailure.errorMessage, {
+        next_step: proxyFailure.nextStep,
+        toolkit: proxyFailure.toolkitSlug,
+        reconnect_proxy_tool: proxyFailure.reconnectProxyTool,
+        missing_scopes: proxyFailure.missingScopes,
+        auth_related: proxyFailure.authRelated,
+        retry_guidance: proxyFailure.authRelated
+          ? 'If the toolkit is disconnected or missing scopes, execute the reconnect proxy tool, present the link to the user, then retry only after the user confirms auth completed.'
+          : null,
+      });
     }
 
     return proxiedResult;
@@ -3060,7 +3115,16 @@ export async function executeProxyRoute(params: {
         },
       }),
     ]);
-    return toErrorResult(proxyFailure.errorMessage);
+    return toErrorResult(proxyFailure.errorMessage, {
+      next_step: proxyFailure.nextStep,
+      toolkit: proxyFailure.toolkitSlug,
+      reconnect_proxy_tool: proxyFailure.reconnectProxyTool,
+      missing_scopes: proxyFailure.missingScopes,
+      auth_related: proxyFailure.authRelated,
+      retry_guidance: proxyFailure.authRelated
+        ? 'If the toolkit is disconnected or missing scopes, execute the reconnect proxy tool, present the link to the user, then retry only after the user confirms auth completed.'
+        : null,
+    });
   }
 }
 
@@ -3768,6 +3832,9 @@ function classifyProxyFailureMessage(
     code,
     missingScopes: missingScopes ?? null,
     authRelated,
+    nextStep: authRelated ? 'search_and_execute_connect_link' : null,
+    reconnectProxyTool: authRelated ? reconnectProxyTool : null,
+    toolkitSlug,
   };
 }
 
@@ -3894,11 +3961,15 @@ function toHtmlResource(uri: string, html: string) {
   };
 }
 
-function toErrorResult(message: string) {
-  return {
+function toErrorResult(message: string, structuredContent?: Record<string, unknown>) {
+  const result: Record<string, unknown> = {
     isError: true,
     content: [{ type: 'text' as const, text: message }],
   };
+  if (structuredContent) {
+    result.structuredContent = structuredContent;
+  }
+  return result;
 }
 
 function buildHubOverviewHtml(params: {
@@ -3950,6 +4021,93 @@ function buildHubOverviewHtml(params: {
     '  <main>',
     `    <h1>${escapeHtml(HUB_NAME)} MCP Overview</h1>`,
     '    <p>This MCP App snapshot is generated by the remote hub runtime.</p>',
+    `    <pre><code>${escaped}</code></pre>`,
+    '  </main>',
+    '</body>',
+    '</html>',
+  ].join('\n');
+}
+
+function buildHubAuthWorkflowHtml(): string {
+  const payload = {
+    goal: 'Run downstream toolkit tools through the broker and recover cleanly when auth is missing or stale.',
+    defaultSequence: [
+      '1. Call hub_search_proxy_tools with serverName and a narrow query to find the proxyToolName.',
+      '2. Call hub_describe_proxy_tool if you need the exact argument schema.',
+      '3. Call hub_execute_proxy_tool with proxyToolName + args.',
+    ],
+    authSequence: [
+      '1. Before first toolkit use in a session, find and execute __connection_status if the task depends on external auth.',
+      '2. If disconnected, find and execute __get_connect_link.',
+      '3. Present the returned link to the user and stop.',
+      '4. Retry only after the user confirms authentication is complete.',
+    ],
+    reconnectSequence: [
+      '1. If a downstream tool returns auth failure or missing scopes, do not keep retrying the business tool.',
+      '2. Execute the toolkit reconnect proxy tool, usually <serverName>__get_connect_link, through hub_execute_proxy_tool.',
+      '3. Present the link, wait for the user to authenticate, then retry the original tool.',
+    ],
+    examples: {
+      searchStatus: {
+        name: 'hub_search_proxy_tools',
+        arguments: {
+          serverName: 'composio-toolkit-airtable',
+          query: 'connection_status',
+          limit: 5,
+        },
+      },
+      executeStatus: {
+        name: 'hub_execute_proxy_tool',
+        arguments: {
+          proxyToolName: 'composio-toolkit-airtable__connection_status',
+          args: {},
+        },
+      },
+      searchConnect: {
+        name: 'hub_search_proxy_tools',
+        arguments: {
+          serverName: 'composio-toolkit-airtable',
+          query: 'get_connect_link',
+          limit: 5,
+        },
+      },
+      executeConnect: {
+        name: 'hub_execute_proxy_tool',
+        arguments: {
+          proxyToolName: 'composio-toolkit-airtable__get_connect_link',
+          args: {},
+        },
+      },
+    },
+    reminders: [
+      'Direct proxy tools may be disabled even when they exist in the catalog.',
+      'When the hub returns a connect link, present it to the user instead of continuing silently.',
+      'Treat auth config missing errors as deployment/configuration issues, not user errors.',
+    ],
+  };
+
+  const escaped = escapeHtml(JSON.stringify(payload, null, 2));
+  return [
+    '<!doctype html>',
+    '<html lang="en">',
+    '<head>',
+    '  <meta charset="utf-8" />',
+    '  <meta name="viewport" content="width=device-width, initial-scale=1" />',
+    '  <title>Hub Auth Workflow</title>',
+    '  <style>',
+    '    :root { color-scheme: dark; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }',
+    '    body { margin: 0; background: #0b0e14; color: #d6deeb; }',
+    '    main { max-width: 980px; margin: 0 auto; padding: 24px; }',
+    '    h1 { margin: 0 0 12px; font-size: 22px; }',
+    '    p { margin: 0 0 16px; color: #9aa4b2; }',
+    '    pre { background: #111826; border: 1px solid #25324a; border-radius: 10px; padding: 16px; overflow: auto; }',
+    '    code { font-size: 12px; line-height: 1.5; }',
+    '  </style>',
+    '</head>',
+    '<body>',
+    '  <main>',
+    '    <h1>Hub Auth Workflow</h1>',
+    '    <p>Use this sequence for brokered toolkit auth, reconnects, and retries.</p>',
     `    <pre><code>${escaped}</code></pre>`,
     '  </main>',
     '</body>',

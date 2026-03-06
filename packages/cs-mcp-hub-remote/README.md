@@ -21,6 +21,7 @@ This runtime now exposes MCP resources (in addition to tools):
 It also exposes one MCP App UI resource:
 
 - `ui://hub/overview`
+- `ui://hub/auth-workflow`
 
 ## What It Does
 
@@ -58,6 +59,7 @@ By default this hub runs in broker-only mode:
   2. `hub_describe_proxy_tool`
   3. `hub_execute_proxy_tool`
 - For toolkit auth and reconnects, search for `__connection_status` or `__get_connect_link`, then execute that proxy tool with `hub_execute_proxy_tool`.
+- Present returned connect URLs to the user and stop; retry only after the user confirms auth completed.
 
 If a client attempts a direct proxy tool call, the hub returns:
 
