@@ -84,6 +84,12 @@ Blocked when:
 - Review 2 release summary
 - Post-deploy verification summary
 
+## Operational Notes
+
+- Policy-only runs MAY exercise the lifecycle end-to-end to validate governance, CI, and approval wiring without creating publishable `.io` routes.
+- Those runs still require Review 1, Review 2, human `publish-approved`, and merge through the approved PR path.
+- Policy-only runs MUST NOT create a production route deployment expectation while the governing policy artifact remains `draft`.
+
 ## Rollback Authority
 
 - Human reviewer
