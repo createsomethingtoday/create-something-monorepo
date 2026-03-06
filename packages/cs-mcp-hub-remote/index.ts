@@ -1622,7 +1622,14 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
         }
 
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
-        const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
+        const visible = await buildAuthorizedVisibleProxyRoutes({
+          runtime,
+          prefs,
+          accountContext,
+          env,
+          trace,
+          entrypoint: 'hub_run_intent',
+        });
         const candidate = resolveIntentRouteCandidate(visible, args);
         if (!candidate.proxyToolName) {
           const message = candidate.reason || `No route found for intent "${intent}".`;
@@ -1688,7 +1695,14 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
 
       if (toolName === 'hub_execute_proxy_tool' || toolName === 'hub_run_proxy_tool') {
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
-        const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
+        const visible = await buildAuthorizedVisibleProxyRoutes({
+          runtime,
+          prefs,
+          accountContext,
+          env,
+          trace,
+          entrypoint: 'hub_execute_proxy_tool',
+        });
         const proxyToolName = stringArg(args.proxyToolName);
         if (!proxyToolName) {
           const errorResult = toErrorResult('"proxyToolName" is required');
