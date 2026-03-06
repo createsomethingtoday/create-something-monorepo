@@ -7,6 +7,7 @@ import {
   REVIEW_STATUS_OPTIONS,
   REVIEW_TYPE_OPTIONS,
   TABLE_IDS,
+  VIEW_IDS,
   VISIBILITY_OPTIONS,
   isAppLikeAsset,
   validateAssetMetadataWriteKeys,
@@ -179,6 +180,33 @@ export interface AssetMetadataUpdateInput {
   [key: string]: unknown;
 }
 
+export interface RelatedAssetLinkCleanupOptions {
+  viewId?: string;
+  dryRun?: boolean;
+  archivedStatus?: string;
+  archivedNameContains?: string;
+  sampleLimit?: number;
+  linkFieldId?: string;
+  linkedStatusFieldId?: string;
+  linkedNameFieldId?: string;
+}
+
+export interface RelatedAssetLinkCleanupResult {
+  viewId: string;
+  dryRun: boolean;
+  recordsScanned: number;
+  uniqueLinkedRecordsEvaluated: number;
+  recordsWithChanges: number;
+  recordsUpdated: number;
+  linksRemoved: number;
+  sampleUpdatedRecordIds: string[];
+  removeReasons: {
+    statusMatches: number;
+    nameMatches: number;
+    statusAndNameMatches: number;
+  };
+}
+
 export interface AirtableClientOptions {
   apiKey: string;
   baseId?: string;
@@ -193,6 +221,40 @@ function defaultSleep(ms: number): Promise<void> {
 
 function escapeFormulaValue(value: string): string {
   return value.replace(/'/g, "''");
+}
+
+function normalizeForMatch(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  if (Array.isArray(value)) return value.map((item) => normalizeForMatch(item)).join(' ');
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value).trim().toLowerCase();
+}
+
+function isArchivedStatusMatch(value: unknown, archivedStatus: string): boolean {
+  return normalizeForMatch(value) === normalizeForMatch(archivedStatus);
+}
+
+function nameContainsNeedle(value: unknown, needle: string): boolean {
+  const normalizedNeedle = normalizeForMatch(needle);
+  if (!normalizedNeedle) return false;
+  return normalizeForMatch(value).includes(normalizedNeedle);
+}
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
+}
+
+function buildRecordIdFormula(recordIds: string[]): string {
+  if (recordIds.length === 0) return '';
+  if (recordIds.length === 1) {
+    return `RECORD_ID() = '${escapeFormulaValue(recordIds[0])}'`;
+  }
+  const clauses = recordIds.map((recordId) => `RECORD_ID() = '${escapeFormulaValue(recordId)}'`);
+  return `OR(${clauses.join(',')})`;
 }
 
 function toStringValue(value: unknown): string | undefined {
@@ -427,6 +489,7 @@ export class AirtableClient {
     fieldIds: readonly string[];
     limit?: number;
     filterByFormula?: string;
+    viewId?: string;
   }): Promise<AirtableRecord[]> {
     assertScopedTable(args.tableId);
 
@@ -439,6 +502,7 @@ export class AirtableClient {
       query.set('pageSize', '100');
       args.fieldIds.forEach((fieldId) => query.append('fields[]', fieldId));
       if (args.filterByFormula) query.set('filterByFormula', args.filterByFormula);
+      if (args.viewId) query.set('view', args.viewId);
       if (offset) query.set('offset', offset);
 
       const data = await this.requestJson<AirtableListResponse>(
@@ -500,6 +564,31 @@ export class AirtableClient {
       throw new AirtableClientError('AIRTABLE_EMPTY_UPDATE', 'Airtable update returned no record.');
     }
     return data.records[0];
+  }
+
+  private async updateRecords(
+    tableId: ScopedTableId,
+    records: Array<{ id: string; fields: Record<string, unknown> }>,
+  ): Promise<AirtableRecord[]> {
+    assertScopedTable(tableId);
+    if (records.length === 0) return [];
+    if (records.length > 10) {
+      throw new AirtableClientError('AIRTABLE_BATCH_LIMIT', 'Airtable update batch cannot exceed 10 records.', 400, {
+        requested: records.length,
+      });
+    }
+
+    const query = new URLSearchParams();
+    query.set('returnFieldsByFieldId', 'true');
+    query.set('typecast', 'false');
+
+    const payload = JSON.stringify({ records });
+    const data = await this.requestJson<AirtableListResponse>(
+      `/${encodeURIComponent(tableId)}`,
+      { method: 'PATCH', body: payload },
+      query,
+    );
+    return data.records;
   }
 
   async healthCheck(): Promise<{
@@ -764,6 +853,117 @@ export class AirtableClient {
   async setMarketplaceStatus(assetId: string, marketplaceStatus: string): Promise<AppReviewAsset> {
     return this.updateAssetMetadata(assetId, { marketplace_status: marketplaceStatus });
   }
+
+  async cleanupArchivedRelatedAssetLinks(
+    input: RelatedAssetLinkCleanupOptions = {},
+  ): Promise<RelatedAssetLinkCleanupResult> {
+    const viewId = input.viewId ?? VIEW_IDS.assetsDailyAssetLinkCleanup;
+    const linkFieldId = input.linkFieldId ?? FIELD_IDS.assets.relatedAssets;
+    const linkedStatusFieldId = input.linkedStatusFieldId ?? FIELD_IDS.assets.lifecycleStatus;
+    const linkedNameFieldId = input.linkedNameFieldId ?? FIELD_IDS.assets.name;
+    const archivedStatus = input.archivedStatus ?? 'Archived';
+    const archivedNameContains = input.archivedNameContains ?? 'archived';
+    const dryRun = input.dryRun ?? true;
+    const sampleLimit = Math.max(1, Math.min(100, input.sampleLimit ?? 10));
+
+    const assetRecords = await this.listRecords({
+      tableId: TABLE_IDS.assets,
+      fieldIds: [linkFieldId],
+      viewId,
+    });
+
+    const linkedRecordIds = new Set<string>();
+    for (const record of assetRecords) {
+      const links = record.fields[linkFieldId];
+      if (!Array.isArray(links)) continue;
+      for (const linkedId of links) {
+        if (typeof linkedId === 'string' && linkedId.length > 0) {
+          linkedRecordIds.add(linkedId);
+        }
+      }
+    }
+
+    const linkedInfo = new Map<string, AirtableRecord>();
+    const linkedIdChunks = chunk(Array.from(linkedRecordIds), 50);
+    for (const idChunk of linkedIdChunks) {
+      const formula = buildRecordIdFormula(idChunk);
+      if (!formula) continue;
+      const records = await this.listRecords({
+        tableId: TABLE_IDS.assets,
+        fieldIds: [linkedStatusFieldId, linkedNameFieldId],
+        filterByFormula: formula,
+      });
+      for (const record of records) {
+        linkedInfo.set(record.id, record);
+      }
+    }
+
+    const recordsToRemove = new Set<string>();
+    let statusMatches = 0;
+    let nameMatches = 0;
+    let statusAndNameMatches = 0;
+
+    for (const [recordId, record] of linkedInfo.entries()) {
+      const statusMatch = isArchivedStatusMatch(record.fields[linkedStatusFieldId], archivedStatus);
+      const nameMatch = nameContainsNeedle(record.fields[linkedNameFieldId], archivedNameContains);
+      if (!statusMatch && !nameMatch) continue;
+
+      recordsToRemove.add(recordId);
+      if (statusMatch) statusMatches += 1;
+      if (nameMatch) nameMatches += 1;
+      if (statusMatch && nameMatch) statusAndNameMatches += 1;
+    }
+
+    const updates: Array<{ id: string; fields: Record<string, unknown> }> = [];
+    let linksRemoved = 0;
+    const sampleUpdatedRecordIds: string[] = [];
+
+    for (const record of assetRecords) {
+      const currentLinks = record.fields[linkFieldId];
+      if (!Array.isArray(currentLinks) || currentLinks.length === 0) continue;
+
+      const keptLinks = currentLinks.filter(
+        (linkedId): linkedId is string =>
+          typeof linkedId === 'string' && linkedId.length > 0 && !recordsToRemove.has(linkedId),
+      );
+
+      const removedCount = currentLinks.length - keptLinks.length;
+      if (removedCount <= 0) continue;
+
+      linksRemoved += removedCount;
+      updates.push({
+        id: record.id,
+        fields: { [linkFieldId]: keptLinks },
+      });
+      if (sampleUpdatedRecordIds.length < sampleLimit) {
+        sampleUpdatedRecordIds.push(record.id);
+      }
+    }
+
+    let recordsUpdated = 0;
+    if (!dryRun && updates.length > 0) {
+      for (const updateChunk of chunk(updates, 10)) {
+        const updated = await this.updateRecords(TABLE_IDS.assets, updateChunk);
+        recordsUpdated += updated.length;
+      }
+    }
+
+    return {
+      viewId,
+      dryRun,
+      recordsScanned: assetRecords.length,
+      uniqueLinkedRecordsEvaluated: linkedInfo.size,
+      recordsWithChanges: updates.length,
+      recordsUpdated,
+      linksRemoved,
+      sampleUpdatedRecordIds,
+      removeReasons: {
+        statusMatches,
+        nameMatches,
+        statusAndNameMatches,
+      },
+    };
+  }
 }
 
 function mapWritableKeyToAssetFieldName(
@@ -840,4 +1040,3 @@ function mapWritableKeyToAssetFieldName(
       return 'promoVideoUrl';
   }
 }
-
