@@ -1,17 +1,18 @@
 """
 Paper/Experiment Generation Agent
 
-Generates Canon-compliant Svelte pages from Beads issues.
+Generates Canon-compliant Svelte pages from Loom tasks or Beads issues.
 Uses intelligent routing: Sonnet for content generation, with Gemini fallback.
 """
 
 from __future__ import annotations
 
 import json
+import sqlite3
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 from create_something_agents import AgentConfig, CreateSomethingAgent
 
@@ -183,7 +184,28 @@ class PaperConfig:
     monorepo_path: Path | None = None
 
 
-def get_issue_details(issue_id: str, monorepo: Path) -> dict | None:
+def detect_tracking_system(issue_id: str) -> Literal["loom", "beads"]:
+    """Infer whether a work item belongs to Loom or Beads."""
+    return "loom" if issue_id.startswith("lm-") else "beads"
+
+
+def parse_labels(raw_labels: Any) -> list[str]:
+    """Normalize labels from Loom/Beads stores."""
+    if isinstance(raw_labels, list):
+        return [str(label) for label in raw_labels]
+
+    if isinstance(raw_labels, str):
+        try:
+            parsed = json.loads(raw_labels)
+            if isinstance(parsed, list):
+                return [str(label) for label in parsed]
+        except json.JSONDecodeError:
+            return [part.strip() for part in raw_labels.split(",") if part.strip()]
+
+    return []
+
+
+def get_beads_issue_details(issue_id: str, monorepo: Path) -> dict | None:
     """Fetch issue details from Beads."""
     result = subprocess.run(
         ["bd", "show", issue_id, "--json", "--no-db"],
@@ -203,6 +225,64 @@ def get_issue_details(issue_id: str, monorepo: Path) -> dict | None:
         return None
 
 
+def get_loom_task_details(issue_id: str, monorepo: Path) -> dict | None:
+    """Fetch task details directly from Loom storage."""
+    work_db = monorepo / ".loom" / "work.db"
+    if work_db.exists():
+        connection = sqlite3.connect(work_db)
+        connection.row_factory = sqlite3.Row
+        try:
+            row = connection.execute(
+                """
+                SELECT id, title, description, status, priority, issue_type, agent, labels,
+                       parent, evidence, repo, close_reason, created_at, updated_at
+                FROM tasks
+                WHERE id = ?
+                LIMIT 1
+                """,
+                (issue_id,),
+            ).fetchone()
+        finally:
+            connection.close()
+
+        if row is not None:
+            return {
+                "id": row["id"],
+                "title": row["title"],
+                "description": row["description"] or "",
+                "status": row["status"],
+                "priority": row["priority"],
+                "issue_type": row["issue_type"],
+                "agent": row["agent"],
+                "labels": parse_labels(row["labels"]),
+                "parent": row["parent"],
+                "evidence": row["evidence"],
+                "repo": row["repo"],
+                "close_reason": row["close_reason"],
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"],
+            }
+
+    tasks_jsonl = monorepo / ".loom" / "tasks.jsonl"
+    if tasks_jsonl.exists():
+        for line in tasks_jsonl.read_text(encoding="utf8").splitlines():
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            if row.get("id") == issue_id:
+                row["labels"] = parse_labels(row.get("labels"))
+                return row
+
+    return None
+
+
+def get_issue_details(issue_id: str, monorepo: Path) -> dict | None:
+    """Fetch work item details from Loom or Beads."""
+    if detect_tracking_system(issue_id) == "loom":
+        return get_loom_task_details(issue_id, monorepo)
+    return get_beads_issue_details(issue_id, monorepo)
+
+
 def generate_slug(title: str, issue_id: str) -> str:
     """Generate URL-safe slug from title."""
     slug = title.lower()
@@ -217,12 +297,13 @@ def generate_slug(title: str, issue_id: str) -> str:
     slug = "".join(c if c.isalnum() or c == "-" else "-" for c in slug)
     slug = "-".join(filter(None, slug.split("-")))
 
-    return slug or issue_id.replace("csm-", "")
+    return slug or issue_id.replace("csm-", "").replace("lm-", "")
 
 
 def detect_content_type(title: str, labels: list[str]) -> Literal["paper", "experiment"]:
     """Detect content type from issue."""
-    if "experiment" in labels or "experiment" in title.lower():
+    normalized_labels = [label.lower() for label in labels]
+    if any("experiment" in label for label in normalized_labels) or "experiment" in title.lower():
         return "experiment"
     return "paper"
 
@@ -231,7 +312,7 @@ def create_paper_agent(
     config: PaperConfig,
 ) -> CreateSomethingAgent:
     """
-    Create an agent for generating papers/experiments from Beads issues.
+    Create an agent for generating papers/experiments from Loom tasks or Beads issues.
 
     Args:
         config: Paper generation configuration
@@ -240,10 +321,12 @@ def create_paper_agent(
         Configured CreateSomethingAgent
 
     Example:
-        agent = create_paper_agent(PaperConfig(issue_id="csm-abc123"))
+        agent = create_paper_agent(PaperConfig(issue_id="lm-abc123"))
         result = await agent.run()
     """
     monorepo = config.monorepo_path or Path.cwd()
+    tracking_system = detect_tracking_system(config.issue_id)
+    work_item_kind = "Loom task" if tracking_system == "loom" else "Beads issue"
 
     # Fetch issue details
     issue = get_issue_details(config.issue_id, monorepo)
@@ -266,11 +349,17 @@ def create_paper_agent(
         output_dir = monorepo / "packages/io/src/routes/papers" / slug
         route_path = f"/papers/{slug}"
 
+    close_instruction = (
+        "4. Do not change Loom status automatically. Leave claiming, review labels, and completion to the publication lifecycle automation."
+        if tracking_system == "loom"
+        else f"4. After creating files successfully, close the Beads issue:\n   bd close {config.issue_id} --no-db"
+    )
+
     # Build task prompt
     task = f'''
-Generate a CREATE SOMETHING {content_type} from this Beads issue.
+Generate a CREATE SOMETHING {content_type} from this {work_item_kind}.
 
-## Issue Details
+## Work Item Details
 - ID: {config.issue_id}
 - Title: {title}
 - Description: {description}
@@ -320,8 +409,7 @@ Every claim must reference a file you read:
 
 3. {"Create +page.server.ts for data fetching" if content_type == "experiment" else "Static paper - no server file needed"}
 
-4. After creating files successfully, close the Beads issue:
-   bd close {config.issue_id} --no-db
+{close_instruction}
 
 {"## PAPER STRUCTURE REQUIREMENTS (MINIMUM)" if content_type == "paper" else "## EXPERIMENT STRUCTURE REQUIREMENTS (MINIMUM)"}
 
@@ -664,10 +752,10 @@ async def generate_from_issue(
     monorepo_path: Path | None = None,
 ) -> dict:
     """
-    Generate a paper or experiment from a Beads issue.
+    Generate a paper or experiment from a Loom task or Beads issue.
 
     Args:
-        issue_id: Beads issue ID (e.g., "csm-abc123")
+        issue_id: Loom task or Beads issue ID (e.g., "lm-abc123" or "csm-abc123")
         content_type: Override detected type ("paper" or "experiment")
         model: Model to use (default: auto-route with Sonnet)
         monorepo_path: Path to monorepo root
@@ -676,7 +764,7 @@ async def generate_from_issue(
         Dict with success, output, cost_usd, model, iterations
 
     Example:
-        result = await generate_from_issue("csm-abc123")
+        result = await generate_from_issue("lm-abc123")
         print(f"Success: {result['success']}, Cost: ${result['cost_usd']:.4f}")
     """
     config = PaperConfig(

@@ -3,8 +3,8 @@
 > **"Weniger, aber besser"** - Dieter Rams
 > *Less, but better*
 
-**Version:** 1.0
-**Date:** November 21, 2025
+**Version:** 1.1
+**Date:** March 6, 2026
 **Status:** Canonical
 
 ---
@@ -553,6 +553,85 @@ When migrating implementations:
 4. **Validate across devices** (mobile, tablet, desktop)
 5. **Check touch targets** (44px minimum)
 
+### 6.3 Paper / Experiment / Policy Lifecycle
+
+**Artifact Classes:**
+
+- `paper` — Research-first publication for `.io`
+- `experiment` — `.io` experiment write-up or interactive route published from `.io`
+- `policy` — Governance artifact under `docs/policies/v1`
+
+**Given:** The work must remain connected
+**Context:** Paper, experiment, and policy development/review/deployment
+**Constraint:** Use a state-based promotion model, never a commit-count trigger
+**Rationale:** Commits measure activity, not readiness. Publication must follow explicit evidence and approval.
+
+**IO-First Publication Rule:**
+
+- `.io` is the first publication surface for papers and experiments
+- `.space` may link executable experiments later, but does not own the initial approval cycle
+- Policy artifacts are reviewed in-repo and remain `draft` until explicitly promoted under `policy.policy-lifecycle-governance.v1`
+
+**Required Lifecycle:**
+
+```
+Loom task
+→ Draft PR
+→ Review 1
+→ Improvement pass
+→ Review 2
+→ Human applies publish-approved
+→ Merge to main
+→ Deploy
+→ Post-deploy verification
+```
+
+**Source of Truth:**
+
+- Loom is the canonical work tracker
+- One Loom task maps to one branch and one PR
+- Review state lives in Loom/PR labels, not in a separate policy state machine
+
+**Required Labels:**
+
+- `paper-cycle`
+- `experiment-cycle`
+- `policy-cycle`
+- `ready-review-1`
+- `ready-review-2`
+- `publish-approved`
+- `deployed`
+
+**Review Rule:**
+
+- All `.io` publication work requires two review passes before human approval
+- Review 1 may generate findings and required fixes
+- Review 2 confirms fixes, evidence, and release readiness
+- A PR without `publish-approved` MUST NOT be treated as production-ready
+
+**Evidence Rule:**
+
+Each publication candidate must keep these artifacts connected to the task:
+
+1. Loom task ID
+2. Draft PR URL
+3. Review 1 report
+4. Review 2 release summary
+5. Post-deploy verification summary (after merge)
+
+**Deployment Rule:**
+
+- Preview deployment is allowed for `.io` papers and experiments after draft PR creation and quality checks
+- Production publication happens only from merge to `main`
+- Policy-only changes do not trigger production publication while the policy remains `draft`
+- Commit count MUST NOT be used as a deploy trigger, review trigger, or promotion trigger
+
+**Rollback Rule:**
+
+- Rollback authority remains human-controlled
+- Use the last known-good deployed state or revert commit
+- Record rollback rationale and incident reference in Loom and in the relevant policy artifact when policy enforcement is involved
+
 ---
 
 ## 7. Ecosystem Identity
@@ -685,6 +764,11 @@ All standards derive from Rams' principles:
   - Added touch target accessibility requirements
   - Documented acceptable interpretations
   - Established hermeneutic validation process
+- **1.1** (March 6, 2026) - Added IO-first paper / experiment / policy lifecycle
+  - Added artifact classes for `paper`, `experiment`, and `policy`
+  - Standardized Loom-to-PR mapping and double-review requirement
+  - Defined evidence, publication, and rollback rules
+  - Explicitly prohibited commit-count deployment triggers
 
 ---
 

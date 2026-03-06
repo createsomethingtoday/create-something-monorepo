@@ -62,6 +62,7 @@ export async function recordEngineEvent(
 ): Promise<void> {
   if (!db) return;
   const id = eventId(input.account_id, input.entity_type, input.entity_id, input.tool_name);
+  const createdAt = Math.floor(Date.now() / 1000);
 
   await recordAuthzDecisionEvent(
     db,
@@ -107,7 +108,7 @@ export async function recordEngineEvent(
             .prepare(
               `INSERT INTO judgment_engine_events
                (id, correlation_id, account_id, entity_type, entity_id, tool_name, rollout_mode, canary_percent, sampled_polar, mismatch, evaluation_path, fallback_used, legacy_decision, polar_decision, final_decision, latency_ms, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch())`,
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             )
             .bind(
               event.id,
@@ -126,6 +127,7 @@ export async function recordEngineEvent(
               event.polarDecision,
               event.finalDecision,
               input.latency_ms,
+              createdAt,
             )
             .run();
         } catch (error) {
@@ -137,7 +139,7 @@ export async function recordEngineEvent(
             .prepare(
               `INSERT INTO judgment_engine_events
                (id, account_id, entity_type, entity_id, tool_name, rollout_mode, canary_percent, sampled_polar, mismatch, evaluation_path, fallback_used, legacy_decision, polar_decision, final_decision, latency_ms, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, unixepoch())`,
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             )
             .bind(
               event.id,
@@ -155,6 +157,7 @@ export async function recordEngineEvent(
               event.polarDecision,
               event.finalDecision,
               input.latency_ms,
+              createdAt,
             )
             .run();
         }

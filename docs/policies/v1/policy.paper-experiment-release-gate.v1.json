@@ -1,0 +1,78 @@
+{
+  "policy_id": "policy.paper-experiment-release-gate.v1",
+  "version": 1,
+  "status": "draft",
+  "artifact_classes": [
+    "paper",
+    "experiment",
+    "policy"
+  ],
+  "source_of_truth": {
+    "task_system": "loom",
+    "task_to_branch_to_pr": "1:1:1",
+    "review_state_storage": "labels"
+  },
+  "review_labels": [
+    "paper-cycle",
+    "experiment-cycle",
+    "policy-cycle",
+    "ready-review-1",
+    "ready-review-2",
+    "publish-approved",
+    "deployed"
+  ],
+  "preview_eligibility": {
+    "requires": [
+      "loom_cycle_label",
+      "draft_pr",
+      "quality_checks_passed"
+    ],
+    "artifact_classes": [
+      "paper",
+      "experiment"
+    ],
+    "blocks": [
+      "policy_artifact_only",
+      "ambiguous_branch_or_pr_ownership",
+      "dirty_repo_state"
+    ]
+  },
+  "production_eligibility": {
+    "requires": [
+      "review_1_complete",
+      "review_2_complete",
+      "publish_approved_label",
+      "merged_to_main",
+      "post_merge_deploy_path_defined"
+    ],
+    "blocks": [
+      "draft_pr",
+      "missing_release_evidence",
+      "policy_draft_auto_publish",
+      "direct_push_without_approved_pr"
+    ]
+  },
+  "required_evidence": [
+    "loom_task_id",
+    "pr_url",
+    "review_1_report",
+    "review_2_release_summary",
+    "post_deploy_verification_summary"
+  ],
+  "rollback_authority": {
+    "allowed_roles": [
+      "human_reviewer",
+      "operator",
+      "admin"
+    ],
+    "requires": [
+      "rollback_rationale",
+      "incident_reference"
+    ]
+  },
+  "prohibited_triggers": [
+    "commit_count",
+    "elapsed_time_since_last_deploy",
+    "unreviewed_policy_draft_merge"
+  ]
+}

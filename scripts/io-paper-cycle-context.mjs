@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 
 const LOOM_LABELS = [
   'paper-cycle',
@@ -89,21 +90,7 @@ function readFilesFromStdin() {
   if (process.stdin.isTTY) {
     return [];
   }
-  return uniqueSorted(
-    Buffer.from(fsReadAll(process.stdin)).toString('utf8').split(/\r?\n/u),
-  );
-}
-
-function fsReadAll(stream) {
-  const chunks = [];
-  let chunk;
-  while ((chunk = stream.read()) !== null) {
-    chunks.push(chunk);
-  }
-  if (chunks.length > 0) {
-    return Buffer.concat(chunks.map((part) => Buffer.isBuffer(part) ? part : Buffer.from(part)));
-  }
-  return Buffer.alloc(0);
+  return uniqueSorted(readFileSync(0, 'utf8').split(/\r?\n/u));
 }
 
 function gitDiffFiles(base, head, rangeMode) {

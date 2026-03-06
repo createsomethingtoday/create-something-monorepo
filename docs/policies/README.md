@@ -13,6 +13,7 @@ First-wave policies scaffolded here:
 5. `policy.tenant-tool-exposure.v1`
 6. `policy.integration-selection.v1`
 7. `policy.policy-lifecycle-governance.v1`
+8. `policy.paper-experiment-release-gate.v1`
 
 Each policy has:
 
