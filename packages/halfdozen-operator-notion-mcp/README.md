@@ -28,7 +28,8 @@ Default Notion auth config ID in `worker/wrangler.toml`:
 
 - Pinned tools resolve through `partner_auth_notion_pins` and reject caller account overrides.
 - Account metadata and pins live in the agency D1 schema introduced by `0011_partner_notion_accounts.sql`.
-- `operator_notion_sync` now supports wizard-style prompting (`action=wizard`) plus page-content preview/copy between managed accounts.
+- `operator_notion_accounts` now supports onboarding wizard flow (`action=wizard`) for naming workspaces + connect-link/API-key steps.
+- `operator_notion_sync` supports page-content preview/copy between managed accounts after connection.
 
 ## Quality Gates
 

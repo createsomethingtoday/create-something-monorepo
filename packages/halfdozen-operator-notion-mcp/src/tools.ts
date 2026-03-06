@@ -14,7 +14,6 @@ import {
   listNotionPins,
   normalizeSlug,
   parseJsonObject,
-  randomId,
   recordNotionEvent,
   refreshNotionAccountState,
   setNotionPin,

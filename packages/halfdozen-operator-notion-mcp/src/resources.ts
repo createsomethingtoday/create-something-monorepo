@@ -16,8 +16,8 @@ export function registerInfoResources(server: McpServer): void {
               tools: ['halfdozen_notion', 'blondish_notion', 'operator_notion_accounts', 'operator_notion_sync'],
               notes: [
                 'Pinned tools resolve to configured account slugs and reject caller overrides.',
-                'operator_notion_accounts manages connection links, pins, and account state.',
-                'operator_notion_sync supports wizard-style sync prompting plus page-content preview/copy flows.',
+                'operator_notion_accounts supports wizard-style onboarding (workspace naming + connect-link/API-key flow).',
+                'operator_notion_sync supports page-content preview/copy flows after connection.',
               ],
             },
             null,
