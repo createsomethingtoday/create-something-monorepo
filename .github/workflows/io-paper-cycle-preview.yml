@@ -78,6 +78,9 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Bootstrap review workspace deps
+        run: pnpm paper-cycle:review:bootstrap
+
       - name: Workspace check
         run: pnpm check
 
