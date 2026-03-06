@@ -12,6 +12,7 @@ PARTNER_KEY = "half-dozen"
 PARTNER_CLIENT_SLUG = "blondish"
 MCP_DISPLAY_NAME = "Half Dozen Operator Notion MCP"
 MCP_DESCRIPTION = "Operator-managed Notion accounts via Composio with pinned workspace tools and sync primitives."
+BRAINTRUST_PROJECT_NAME = "CREATE SOMETHING"
 COMPOSIO_NOTION_AUTH_CONFIG_ID = "ac_1fYSxzK38XeT"
 PINNED_HALFDOZEN_TOOL_NAME = "halfdozen_notion"
 PINNED_CLIENT_TOOL_NAME = "blondish_notion"
@@ -42,3 +43,6 @@ new_sqlite_classes = ["OperatorNotionMcp"]
 # COMPOSIO_NOTION_AUTH_CONFIG_ID
 # MCP_API_KEY
 # OPENAI_API_KEY
+# BRAINTRUST_API_KEY
+# BRAINTRUST_PROJECT_ID
+# Optional: BRAINTRUST_ENABLED=false (disables OpenAI agent trace export even when key is set)
