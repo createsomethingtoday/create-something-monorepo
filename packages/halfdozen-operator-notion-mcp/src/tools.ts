@@ -552,6 +552,10 @@ function extractAccountSlug(request: string): string | null {
 function extractDisplayLabel(request: string): string | null {
   const labelMatch = request.match(/\b(?:display\s*name|name|label)\s*(?:is|=|:)?\s*["']([^"']{2,120})["']/i);
   if (labelMatch?.[1]) return labelMatch[1].trim();
+  const unquotedDisplayName = request.match(/\bdisplay\s*name\s*(?:is|=|:)?\s*([a-zA-Z0-9][a-zA-Z0-9 _:-]{1,120})/i);
+  if (unquotedDisplayName?.[1]) {
+    return unquotedDisplayName[1].trim().replace(/[.,;!?]+$/, '');
+  }
   return null;
 }
 
