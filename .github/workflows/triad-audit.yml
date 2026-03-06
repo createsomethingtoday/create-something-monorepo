@@ -59,7 +59,7 @@ jobs:
       - name: Get PR diff
         id: diff
         run: |
-          git fetch --no-tags --prune --depth=1 origin "${{ github.event.pull_request.base.ref }}"
+          git fetch --no-tags --prune origin "${{ github.event.pull_request.base.ref }}"
           git diff --no-color "origin/${{ github.event.pull_request.base.ref }}"...HEAD > pr_diff.txt
           echo "diff_size=$(wc -l < pr_diff.txt | tr -d ' ')" >> $GITHUB_OUTPUT
 
