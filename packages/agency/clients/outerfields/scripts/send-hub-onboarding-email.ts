@@ -9,9 +9,15 @@
  * Usage:
  *   pnpm tsx packages/agency/clients/outerfields/scripts/send-hub-onboarding-email.ts \
  *     --to micah@createsomething.io \
+ *     --aaron-token mlk_... \
+ *     --andre-token mlk_... \
  *     --draft
  *
  * Optional environment overrides for live sends:
+ *   AARON_OUTERFIELDS_PERSONAL_TOKEN=...
+ *   ANDRE_OUTERFIELDS_PERSONAL_TOKEN=...
+ *
+ * Backward-compatible fallback:
  *   CS_HUB_AARON_OUTERFIELDS_API_TOKEN=...
  *   CS_HUB_ANDRE_OUTERFIELDS_API_TOKEN=...
  */
@@ -99,10 +105,17 @@ function maybeReadDopplerSecret(secretName: string): string | null {
   return null;
 }
 
-function getToken(secretName: string): string {
-  const fromEnv = process.env[secretName]?.trim();
-  if (fromEnv) return fromEnv;
-  return maybeReadDopplerSecret(secretName) ?? REDACTED_PLACEHOLDER;
+function resolveDeliveryToken(argsFlag: string, preferredEnvName: string, legacySecretName: string): string {
+  const fromArg = readArg(argsFlag)?.trim();
+  if (fromArg) return fromArg;
+
+  const fromPreferredEnv = process.env[preferredEnvName]?.trim();
+  if (fromPreferredEnv) return fromPreferredEnv;
+
+  const fromLegacyEnv = process.env[legacySecretName]?.trim();
+  if (fromLegacyEnv) return fromLegacyEnv;
+
+  return maybeReadDopplerSecret(legacySecretName) ?? REDACTED_PLACEHOLDER;
 }
 
 function renderAccessCard(label: string, url: string, token: string): string {
@@ -113,7 +126,7 @@ function renderAccessCard(label: string, url: string, token: string): string {
     <p style="margin: 0 0 12px 0; color: #ffffff; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; word-break: break-all;">${escapeHtml(
       url
     )}</p>
-    <p style="margin: 0 0 6px 0; color: rgba(255,255,255,0.7); font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">Bearer Token</p>
+    <p style="margin: 0 0 6px 0; color: rgba(255,255,255,0.7); font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;">Personal Bearer Token</p>
     <p style="margin: 0; color: #ffffff; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; word-break: break-all;">${escapeHtml(
       token
     )}</p>
@@ -189,7 +202,7 @@ ${draftNotice}
       <h2 style="color: #ffffff; font-size: 18px; margin: 0 0 12px 0;">What an MCP does</h2>
       ${renderBulletRows([
         '<strong style="color:#ffffff;">It connects an AI app to real tools.</strong> That means less copy-and-paste between tabs.',
-        '<strong style="color:#ffffff;">It keeps access scoped.</strong> Each person gets their own private hub and bearer token.',
+        '<strong style="color:#ffffff;">It keeps access scoped.</strong> Each person gets their own private hub and personal bearer token.',
         '<strong style="color:#ffffff;">It works with the host you prefer.</strong> Codex, Claude Desktop, or another host that supports remote MCP servers.'
       ])}
 
@@ -197,7 +210,7 @@ ${draftNotice}
 
       <h2 style="color: #ffffff; font-size: 18px; margin: 0 0 12px 0;">What we are delivering now</h2>
       ${renderBulletRows([
-        '<strong style="color:#ffffff;">Private MCP access for Aaron and Andre.</strong> Each of you has your own hub URL and token.',
+        '<strong style="color:#ffffff;">Private MCP access for Aaron and Andre.</strong> Each of you has your own hub URL and personal bearer token.',
         '<strong style="color:#ffffff;">The hosted tooling layer.</strong> We manage the MCP setup, reliability, and updates on our side.',
         '<strong style="color:#ffffff;">Shared tool support.</strong> Your hubs are set up for workflows across OUTERFIELDS tools and connected services like ClickUp, Google Workspace, Slack, Dropbox, and more. We can finish any remaining account connections with you during onboarding.',
         '<strong style="color:#ffffff;">Onboarding support.</strong> If you want help live, we can walk through setup together.'
@@ -209,7 +222,7 @@ ${draftNotice}
       <p style="margin: 0 0 12px 0; color: rgba(255,255,255,0.82);">I&apos;m including both access blocks below so your team has them in one place.</p>
       ${renderAccessCard('Aaron', AARON_URL, aaronToken)}
       ${renderAccessCard('Andre', ANDRE_URL, andreToken)}
-      <p style="margin-top: 12px; color: rgba(255,255,255,0.68); font-size: 14px;">Keep the bearer tokens private. If one is ever shared in the wrong place, reply and we will rotate it.</p>
+      <p style="margin-top: 12px; color: rgba(255,255,255,0.68); font-size: 14px;">Keep the personal bearer tokens private. If one is ever shared in the wrong place, reply and we will rotate it.</p>
 
       ${sectionDivider()}
 
@@ -217,7 +230,7 @@ ${draftNotice}
       ${renderNumberedRows([
         '<strong style="color:#ffffff;">Pick one AI host.</strong> Start with Codex, Claude Desktop, or another host you already feel comfortable using.',
         '<strong style="color:#ffffff;">Add your MCP server.</strong> Paste in your MCP URL and label it something simple like "Outerfields."',
-        '<strong style="color:#ffffff;">Authenticate.</strong> When the app asks for authorization, use your bearer token.',
+        '<strong style="color:#ffffff;">Authenticate.</strong> When the app asks for authorization, use your personal bearer token.',
         '<strong style="color:#ffffff;">Test it.</strong> A good first prompt is: "What tools do you have access to in this Outerfields MCP?"'
       ])}
 
@@ -282,19 +295,19 @@ YOUR SETUP DETAILS
 ------------------
 Aaron
 MCP URL: ${AARON_URL}
-Bearer Token: ${aaronToken}
+Personal Bearer Token: ${aaronToken}
 
 Andre
 MCP URL: ${ANDRE_URL}
-Bearer Token: ${andreToken}
+Personal Bearer Token: ${andreToken}
 
-Keep the bearer tokens private. If one is ever shared in the wrong place, reply and we will rotate it.
+Keep the personal bearer tokens private. If one is ever shared in the wrong place, reply and we will rotate it.
 
 HOW TO CONNECT IT
 -----------------
 1. Pick one AI host: Codex, Claude Desktop, or another host you already like.
 2. Add your MCP server and paste your MCP URL.
-3. When the app asks for authorization, use your bearer token.
+3. When the app asks for authorization, use your personal bearer token.
 4. Test it with a simple prompt like: "What tools do you have access to in this Outerfields MCP?"
 
 GUIDES AND SUPPORT
@@ -330,8 +343,16 @@ async function sendEmail(): Promise<void> {
   const cc = readListArg('--cc');
   const draft = boolArg('--draft');
 
-  const aaronToken = getToken('CS_HUB_AARON_OUTERFIELDS_API_TOKEN');
-  const andreToken = getToken('CS_HUB_ANDRE_OUTERFIELDS_API_TOKEN');
+  const aaronToken = resolveDeliveryToken(
+    '--aaron-token',
+    'AARON_OUTERFIELDS_PERSONAL_TOKEN',
+    'CS_HUB_AARON_OUTERFIELDS_API_TOKEN'
+  );
+  const andreToken = resolveDeliveryToken(
+    '--andre-token',
+    'ANDRE_OUTERFIELDS_PERSONAL_TOKEN',
+    'CS_HUB_ANDRE_OUTERFIELDS_API_TOKEN'
+  );
 
   const subject = draft
     ? '[DRAFT v6] Your OUTERFIELDS MCP access is ready'
