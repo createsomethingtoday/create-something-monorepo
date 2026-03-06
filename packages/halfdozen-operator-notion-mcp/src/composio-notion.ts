@@ -172,8 +172,9 @@ export function resolveRouteForAction(action: PinnedNotionAction, tools: Composi
       continue;
     }
 
-    if (preferredSlugs.includes(tool.slug)) {
-      score += 100;
+    const preferenceIndex = preferredSlugs.indexOf(tool.slug);
+    if (preferenceIndex >= 0) {
+      score += (preferredSlugs.length - preferenceIndex) * 100;
     }
 
     if (score > 0 && (!best || score > best.score)) {
@@ -241,6 +242,9 @@ export function adaptArgsForRoute(
     }
     if ('filter_value' in properties && typeof args.filter_value !== 'string') {
       args.filter_value = 'database';
+    }
+    if ('fetch_type' in properties && typeof args.fetch_type !== 'string') {
+      args.fetch_type = 'database';
     }
   }
   if ('properties' in properties && isPlainObject(args.properties)) {
