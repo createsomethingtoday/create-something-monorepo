@@ -55,6 +55,7 @@ const pinnedToolSchema = {
 
 const accountToolSchema = {
   action: z.enum([
+    'wizard',
     'list_accounts',
     'get_status',
     'create_connect_link',
@@ -66,14 +67,11 @@ const accountToolSchema = {
 };
 
 const syncToolSchema = {
-  action: z.enum(['wizard', 'preview_page_content', 'copy_page_content']).default('wizard'),
-  mode: z.enum(['preview_page_content', 'copy_page_content']).optional(),
-  direction: z.enum(['halfdozen_to_client', 'client_to_halfdozen']).optional(),
-  source_account_slug: z.string().optional(),
-  target_account_slug: z.string().optional(),
-  source_page_id: z.string().optional(),
-  target_page_id: z.string().optional(),
-  confirm_write: z.boolean().optional(),
+  action: z.enum(['preview_page_content', 'copy_page_content']),
+  source_account_slug: z.string(),
+  target_account_slug: z.string(),
+  source_page_id: z.string(),
+  target_page_id: z.string(),
 };
 
 export function registerOperatorNotionTools(server: McpServer, deps: OperatorNotionToolsDeps): void {
@@ -93,14 +91,14 @@ export function registerOperatorNotionTools(server: McpServer, deps: OperatorNot
 
   server.tool(
     'operator_notion_accounts',
-    'Manage operator-bound Notion accounts: list, connect, pin, disable, and control sync availability.',
+    'Manage operator-bound Notion accounts, including a guided onboarding wizard for naming workspaces and connect-link/API-key flow.',
     accountToolSchema,
     async (params) => runAccountsTool(params.action as string, params.args as Record<string, unknown>, deps)
   );
 
   server.tool(
     'operator_notion_sync',
-    'Guided sync helper for managed Notion accounts. Supports wizard prompts, dry-run preview, and explicit copy confirmation.',
+    'Preview or copy page content from one managed Notion account to another.',
     syncToolSchema,
     async (params) => runSyncTool(params, deps)
   );
@@ -141,6 +139,9 @@ async function runAccountsTool(
   const actor = deps.getActor();
 
   switch (action) {
+    case 'wizard': {
+      return runAccountsWizard(args, deps, client.id, actor);
+    }
     case 'list_accounts': {
       const accounts = await syncAllAccounts(deps, client.id);
       const pins = await listNotionPins(deps.db, client.id);
