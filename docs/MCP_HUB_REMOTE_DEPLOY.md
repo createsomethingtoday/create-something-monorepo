@@ -198,7 +198,7 @@ enabled = true
 
 If `HUB_API_TOKEN` is configured, include the bearer token header in your MCP client.
 
-For non-Outerfields partner delivery in `compat` mode, prefer an identity-issued personal bearer token instead of distributing the shared hub token. The partner path is:
+For partner delivery in `compat` mode, prefer an identity-issued personal bearer token instead of distributing the shared hub token. The partner path is:
 
 ```bash
 pnpm partner:access:rotate -- \

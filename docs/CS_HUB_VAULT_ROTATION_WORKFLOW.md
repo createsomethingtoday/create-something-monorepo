@@ -2,7 +2,7 @@
 
 Use this workflow to keep Hub and Notion bridge runtime credentials in a vault (Doppler default, Infisical supported) and rotate them without storing plaintext tokens in docs.
 
-Client-facing bearer delivery is no longer the default for Half Dozen hub lanes. For non-Outerfields clients, issue identity-backed personal tokens through the partner auth APIs and keep Infisical as the source of truth for worker/runtime secrets only.
+Client-facing bearer delivery is no longer the default for Half Dozen hub lanes. Issue identity-backed personal tokens through the partner auth APIs and keep Infisical as the source of truth for worker/runtime secrets only.
 
 ## 1) Install Vault CLIs
 
@@ -140,7 +140,7 @@ Notes:
 
 - `pnpm mcp:hub:fleet:deploy` strict normalization requires `MCP_SESSION_TOKEN` or `IDENTITY_ACCESS_TOKEN`.
 - Keep resolver token rotation (`HUB_SESSION_RESOLVE_TOKEN`) coordinated with identity-worker.
-- Use `--exclude-team` or `EXCLUDE_TEAM_KEYS` when recently delivered client tokens must be preserved. Current carve-out: `AARON_OUTERFIELDS`, `ANDRE_OUTERFIELDS`.
+- Use `--exclude-team` or `EXCLUDE_TEAM_KEYS` only when you intentionally need to defer a worker-token rotation for a specific team.
 
 ## 6) Production automation guidance
 
@@ -157,7 +157,7 @@ For CI/CD or production automation, avoid human `doppler login` sessions:
 
 ## 8) Default client delivery path
 
-For non-Outerfields Half Dozen hub clients, deliver identity-issued personal tokens instead of vault-managed shared team bearers:
+For Half Dozen hub clients, deliver identity-issued personal tokens instead of vault-managed shared team bearers:
 
 ```bash
 pnpm partner:access:rotate -- \
@@ -173,7 +173,7 @@ Notes:
 
 - This returns a `legacy_key_bundle` backed by identity-worker issuance and audit tables.
 - The hub can now resolve those personal bearer tokens directly in `compat` mode when `HUB_SESSION_RESOLVE_URL` + `HUB_SESSION_RESOLVE_TOKEN` are configured.
-- Keep Outerfields on the existing static tokens until a scheduled rotation window.
+- Existing shared team bearers remain valid in `compat` mode until you rotate them out, but new client handoff should use the identity-issued personal token.
 
 ## 9) Migrate Doppler secrets to Infisical
 

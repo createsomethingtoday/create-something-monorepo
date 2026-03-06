@@ -191,12 +191,23 @@ Expected: trace records show account attribution under `acct_aaron_outerfields` 
 ## 6) Client Handoff Payload
 
 - MCP URL: `https://aaron-outerfields.mcp.createsomething.agency/mcp`
-- Auth: `Authorization: Bearer <HUB_API_TOKEN>`
+- Auth: `Authorization: Bearer <identity-issued personal token>`
 - Profile: discovery-first (`Outerfields + shared-auth-core + clickup + core`)
 - Usage: broker-only flow
   1. `hub_search_proxy_tools`
   2. `hub_describe_proxy_tool`
   3. `hub_execute_proxy_tool`
+
+Issue the client bearer through the partner auth flow instead of distributing the worker secret:
+
+```bash
+pnpm partner:access:rotate -- --mode legacy --slug <aaron-outerfields-client-slug> --reason "background_agent_personal_token" --exception-approved-by <approver> --sunset-at <iso-timestamp> --delivery-channel portal
+```
+
+Notes:
+
+- `HUB_API_TOKEN` remains the operator/runtime secret for deploy, health, and state-normalization tasks.
+- Existing shared worker bearers still authenticate in `compat` mode until you rotate them out.
 
 ## 7) Rollback
 
