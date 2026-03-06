@@ -47,6 +47,8 @@ import {
 	createMcpSession,
 	findMcpSessionById,
 	findMcpSessionByTokenHash,
+	findMcpLegacyKeyByTokenHash,
+	markMcpLegacyKeyUsed,
 	replaceMcpSessionScopes,
 	revokeMcpSession,
 	revokeAllMcpSessionsForUser,
@@ -1047,60 +1049,127 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 
 	const tokenHash = await hashToken(body.token);
 	const session = await findMcpSessionByTokenHash(db, tokenHash);
-	if (!session) {
-		return json({ valid: false, reason: 'session_not_found' });
-	}
+	if (session) {
+		const now = Date.now();
+		const expired = new Date(session.expires_at).getTime() <= now;
+		const revoked = Boolean(session.revoked_at);
+		if (expired || revoked) {
+			await createMcpAuthEvent(db, {
+				id: generateUUID(),
+				session_id: session.id,
+				user_id: session.user_id,
+				event_type: 'mcp_session_resolve_rejected',
+				event_data_json: JSON.stringify({
+					reason: revoked ? 'revoked' : 'expired',
+					expires_at: session.expires_at,
+					revoked_at: session.revoked_at,
+				}),
+			});
+			return json({
+				valid: false,
+				reason: revoked ? 'revoked' : 'expired',
+				session_id: session.id,
+				expires_at: session.expires_at,
+				revoked_at: session.revoked_at,
+			});
+		}
 
-	const now = Date.now();
-	const expired = new Date(session.expires_at).getTime() <= now;
-	const revoked = Boolean(session.revoked_at);
-	if (expired || revoked) {
+		const toolkitProfile = parseStringArray(session.toolkit_profile_json);
+		const allowedToolPrefixes = parseStringArray(session.allowed_tool_prefixes_json);
+
 		await createMcpAuthEvent(db, {
 			id: generateUUID(),
 			session_id: session.id,
 			user_id: session.user_id,
-			event_type: 'mcp_session_resolve_rejected',
+			event_type: 'mcp_session_resolved',
 			event_data_json: JSON.stringify({
+				account_id: session.account_id,
+				tenant_id: session.tenant_id,
+			}),
+		});
+
+		return json({
+			valid: true,
+			session_id: session.id,
+			account_id: session.account_id,
+			tenant_id: session.tenant_id,
+			user_id: session.user_id,
+			host: session.host,
+			tool_mode: session.tool_mode,
+			expires_at: session.expires_at,
+			allowed_tool_prefixes: allowedToolPrefixes,
+			toolkit_profile: toolkitProfile,
+			allow_pending_oauth_approvals: false,
+			auth_mode: 'session',
+		});
+	}
+
+	const legacyKey = await findMcpLegacyKeyByTokenHash(db, tokenHash);
+	if (!legacyKey) {
+		return json({ valid: false, reason: 'token_not_found' });
+	}
+
+	const now = Date.now();
+	const expired = new Date(legacyKey.expires_at).getTime() <= now;
+	const revoked = Boolean(legacyKey.revoked_at);
+	if (expired || revoked) {
+		await createMcpAuthEvent(db, {
+			id: generateUUID(),
+			session_id: null,
+			user_id: legacyKey.user_id,
+			event_type: 'mcp_legacy_key_resolve_rejected',
+			event_data_json: JSON.stringify({
+				legacy_key_id: legacyKey.id,
+				account_id: legacyKey.account_id,
+				tenant_id: legacyKey.tenant_id,
 				reason: revoked ? 'revoked' : 'expired',
-				expires_at: session.expires_at,
-				revoked_at: session.revoked_at,
+				expires_at: legacyKey.expires_at,
+				revoked_at: legacyKey.revoked_at,
+				sunset_at: legacyKey.sunset_at,
 			}),
 		});
 		return json({
 			valid: false,
 			reason: revoked ? 'revoked' : 'expired',
-			session_id: session.id,
-			expires_at: session.expires_at,
-			revoked_at: session.revoked_at,
+			legacy_key_id: legacyKey.id,
+			account_id: legacyKey.account_id,
+			tenant_id: legacyKey.tenant_id,
+			expires_at: legacyKey.expires_at,
+			revoked_at: legacyKey.revoked_at,
+			sunset_at: legacyKey.sunset_at,
 		});
 	}
 
-	const toolkitProfile = parseStringArray(session.toolkit_profile_json);
-	const allowedToolPrefixes = parseStringArray(session.allowed_tool_prefixes_json);
-
+	await markMcpLegacyKeyUsed(db, legacyKey.id);
 	await createMcpAuthEvent(db, {
 		id: generateUUID(),
-		session_id: session.id,
-		user_id: session.user_id,
-		event_type: 'mcp_session_resolved',
+		session_id: null,
+		user_id: legacyKey.user_id,
+		event_type: 'mcp_legacy_key_resolved',
 		event_data_json: JSON.stringify({
-			account_id: session.account_id,
-			tenant_id: session.tenant_id,
+			legacy_key_id: legacyKey.id,
+			account_id: legacyKey.account_id,
+			tenant_id: legacyKey.tenant_id,
+			key_prefix: legacyKey.key_prefix,
+			sunset_at: legacyKey.sunset_at,
 		}),
 	});
 
 	return json({
 		valid: true,
-		session_id: session.id,
-		account_id: session.account_id,
-		tenant_id: session.tenant_id,
-		user_id: session.user_id,
-		host: session.host,
-		tool_mode: session.tool_mode,
-		expires_at: session.expires_at,
-		allowed_tool_prefixes: allowedToolPrefixes,
-		toolkit_profile: toolkitProfile,
+		session_id: null,
+		account_id: legacyKey.account_id,
+		tenant_id: legacyKey.tenant_id,
+		user_id: legacyKey.user_id,
+		host: null,
+		tool_mode: 'read_write',
+		expires_at: legacyKey.expires_at,
+		allowed_tool_prefixes: null,
+		toolkit_profile: [],
 		allow_pending_oauth_approvals: false,
+		legacy_key_id: legacyKey.id,
+		sunset_at: legacyKey.sunset_at,
+		auth_mode: 'legacy_key',
 	});
 }
 
