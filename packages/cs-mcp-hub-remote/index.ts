@@ -1286,7 +1286,14 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
     const getDiscoveryContext = async () => {
       const accountContext = await resolveAccountContext(extra, env);
       const prefs = await getDiscoveryPreferences(accountContext.accountId, runtime, env);
-      const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
+      const visible = await buildAuthorizedVisibleProxyRoutes({
+        runtime,
+        prefs,
+        accountContext,
+        env,
+        trace: extractInvocationTrace(request, extra),
+        entrypoint: `resource:${uri}`,
+      });
       return {
         accountContext,
         prefs,
@@ -1395,7 +1402,14 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
 
       if (toolName === 'hub_list_proxy_tools') {
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
-        const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
+        const visible = await buildAuthorizedVisibleProxyRoutes({
+          runtime,
+          prefs,
+          accountContext,
+          env,
+          trace,
+          entrypoint: 'hub_list_proxy_tools',
+        });
         const result = toJsonResult({
           proxyTools: visible.toolDefinitions.map((tool) => tool.name),
           count: visible.toolDefinitions.length,
@@ -1415,7 +1429,14 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
 
       if (toolName === 'hub_search_proxy_tools') {
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
-        const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
+        const visible = await buildAuthorizedVisibleProxyRoutes({
+          runtime,
+          prefs,
+          accountContext,
+          env,
+          trace,
+          entrypoint: 'hub_search_proxy_tools',
+        });
         const result = toJsonResult(searchProxyTools(visible, args));
         const query = stringArg(args.query);
         const serverName = stringArg(args.serverName);
@@ -1459,7 +1480,14 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
         }
 
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
-        const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
+        const visible = await buildAuthorizedVisibleProxyRoutes({
+          runtime,
+          prefs,
+          accountContext,
+          env,
+          trace,
+          entrypoint: 'hub_route_intent',
+        });
         const candidate = resolveIntentRouteCandidate(visible, args);
         const result = toJsonResult(candidateToRoutePayload(candidate, visible));
         await recordHubInvocationWithCtx({
@@ -1483,7 +1511,14 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
 
       if (toolName === 'hub_describe_proxy_tool' || toolName === 'hub_get_proxy_tool') {
         const prefs = await getDiscoveryPreferences(accountId, runtime, env);
-        const visible = buildVisibleProxyRoutes(runtime, prefs, accountContext);
+        const visible = await buildAuthorizedVisibleProxyRoutes({
+          runtime,
+          prefs,
+          accountContext,
+          env,
+          trace,
+          entrypoint: 'hub_describe_proxy_tool',
+        });
         const proxyToolName = stringArg(args.proxyToolName);
         if (!proxyToolName) {
           const errorResult = toErrorResult('"proxyToolName" is required');
@@ -2398,6 +2433,193 @@ export function buildVisibleProxyRoutes(
   };
 }
 
+function hubAuthzHybridConfig(env: Env) {
+  const fetchTimeoutRaw = readEnvString(env, 'OSO_FETCH_TIMEOUT_MS');
+  const fetchTimeoutMillis = fetchTimeoutRaw ? parsePositiveInt(fetchTimeoutRaw, 5000) : undefined;
+  return {
+    mode: 'hybrid' as const,
+    fallbackEnabled: parseBooleanWithDefault(readEnvString(env, 'ENGINE_FALLBACK_ENABLED'), true),
+    oso: {
+      url: readEnvString(env, 'OSO_URL'),
+      apiKey: readEnvString(env, 'OSO_API_KEY'),
+      fetchTimeoutMillis,
+      bootstrapPolicy: parseBooleanWithDefault(readEnvString(env, 'OSO_BOOTSTRAP_POLICY'), true),
+    },
+  };
+}
+
+async function getHubRouteAuthzRollout(env: Env): Promise<AuthzRolloutRow> {
+  const manifest = getPolicyManifest(HUB_ROUTE_AUTHZ_POLICY_ID);
+  return getAuthzRollout(
+    env.TELEMETRY_DB,
+    {
+      scopeType: 'policy',
+      policyId: HUB_ROUTE_AUTHZ_POLICY_ID,
+    },
+    manifest,
+  );
+}
+
+function toHubAuthzEvent(params: {
+  accountContext: ResolvedAccountContext;
+  route: ProxyRoute;
+  trace: InvocationTrace;
+  evaluation: Awaited<ReturnType<typeof evaluateAuthorizationRequest>>;
+  actionName: 'discover' | 'execute';
+  entrypoint: string;
+}): AuthzDecisionEventRecord {
+  const { accountContext, route, trace, evaluation, actionName, entrypoint } = params;
+  return {
+    id: crypto.randomUUID(),
+    scopeKey: `policy:${HUB_ROUTE_AUTHZ_POLICY_ID}`,
+    scopeType: 'policy',
+    policyId: evaluation.final.policyId,
+    accountId: accountContext.accountId,
+    tenantId: accountContext.tenantId,
+    entityType: null,
+    entityId: null,
+    actorId: accountContext.userId ?? accountContext.accountId,
+    actorRole: null,
+    actionName,
+    resourceKind: 'hub_route',
+    resourceId: route.proxyToolName,
+    resourceAccessType: evaluation.request.resource.accessType ?? null,
+    rolloutMode: evaluation.final.rolloutMode,
+    canaryPercent: evaluation.final.canaryPercent,
+    sampledPolar: evaluation.final.sampledPolar ? 1 : 0,
+    mismatch: evaluation.final.mismatch ? 1 : 0,
+    evaluationPath: evaluation.final.evaluationPath,
+    fallbackUsed: evaluation.polar.evaluationPath === 'fallback' ? 1 : 0,
+    fallbackReason: evaluation.polar.fallbackReason,
+    legacyDecision: evaluation.legacy.decision,
+    polarDecision: evaluation.polar.decision,
+    finalDecision: evaluation.final.decision,
+    matchedRuleIdsJson: safeJsonStringify(evaluation.final.matchedRuleIds),
+    reason: evaluation.final.reason,
+    policyHash: evaluation.final.policyHash,
+    compilerVersion: evaluation.final.compilerVersion,
+    correlationId: trace.correlationId,
+    metadataJson: safeJsonStringify({
+      entrypoint,
+      proxyToolName: route.proxyToolName,
+      serverName: route.serverName,
+      downstreamToolName: route.downstreamToolName,
+      sessionId: accountContext.sessionId,
+      toolMode: accountContext.toolMode,
+      identitySource: accountContext.identitySource,
+      latency_ms: evaluation.final.latencyMs,
+    }),
+  };
+}
+
+async function evaluateHubRouteAuthorization(params: {
+  env: Env;
+  accountContext: ResolvedAccountContext;
+  route: ProxyRoute;
+  definition?: Tool;
+  trace: InvocationTrace;
+  rollout: AuthzRolloutRow;
+  actionName: 'discover' | 'execute';
+  entrypoint: string;
+  recordDecision?: boolean;
+}): Promise<Awaited<ReturnType<typeof evaluateAuthorizationRequest>>> {
+  const { env, accountContext, route, definition, trace, rollout, actionName, entrypoint, recordDecision = true } = params;
+  const request = buildHubAuthorizationRequest({
+    accountId: accountContext.accountId,
+    tenantId: accountContext.tenantId,
+    userId: accountContext.userId,
+    sessionId: accountContext.sessionId,
+    readOnly: accountContext.toolMode === 'read_only',
+    toolMode: accountContext.toolMode,
+    identitySource: accountContext.identitySource,
+    proxyToolName: route.proxyToolName,
+    serverName: route.serverName,
+    downstreamToolName: route.downstreamToolName,
+    actionName,
+    definition,
+  });
+
+  const evaluation = await evaluateAuthorizationRequest(
+    HUB_ROUTE_AUTHZ_POLICY_ID,
+    request,
+    {
+      mode: rollout.mode,
+      canaryPercent: rollout.canaryPercent,
+    },
+    hubAuthzHybridConfig(env),
+  );
+
+  if (recordDecision) {
+    await recordAuthzDecisionEvent(
+      env.TELEMETRY_DB,
+      toHubAuthzEvent({
+        accountContext,
+        route,
+        trace,
+        evaluation,
+        actionName,
+        entrypoint,
+      }),
+    );
+  }
+
+  return evaluation;
+}
+
+async function buildAuthorizedVisibleProxyRoutes(params: {
+  runtime: HubRuntime;
+  prefs: DiscoveryPreferences;
+  accountContext: ResolvedAccountContext;
+  env: Env;
+  trace: InvocationTrace;
+  entrypoint: string;
+}): Promise<VisibleProxyCatalog> {
+  const base = buildVisibleProxyRoutes(params.runtime, params.prefs, params.accountContext);
+  if (base.toolDefinitions.length === 0) {
+    return base;
+  }
+
+  const rollout = await getHubRouteAuthzRollout(params.env);
+  const allowed: Array<{ tool: Tool; route: ProxyRoute }> = [];
+
+  for (const tool of base.toolDefinitions) {
+    const route = base.routes.get(tool.name);
+    if (!route) continue;
+    const evaluation = await evaluateHubRouteAuthorization({
+      env: params.env,
+      accountContext: params.accountContext,
+      route,
+      definition: tool,
+      trace: params.trace,
+      rollout,
+      actionName: 'discover',
+      entrypoint: params.entrypoint,
+      recordDecision: false,
+    });
+    if (evaluation.final.decision === 'allow') {
+      allowed.push({ tool, route });
+    } else {
+      await recordAuthzDecisionEvent(
+        params.env.TELEMETRY_DB,
+        toHubAuthzEvent({
+          accountContext: params.accountContext,
+          route,
+          trace: params.trace,
+          evaluation,
+          actionName: 'discover',
+          entrypoint: params.entrypoint,
+        }),
+      );
+    }
+  }
+
+  return {
+    toolDefinitions: allowed.map((entry) => entry.tool),
+    routes: new Map(allowed.map((entry) => [entry.route.proxyToolName, entry.route])),
+    definitionByName: new Map(allowed.map((entry) => [entry.tool.name, entry.tool])),
+  };
+}
+
 export async function executeProxyRoute(params: {
   env: Env;
   executionCtx?: WaitUntilContext;
@@ -2476,6 +2698,70 @@ export async function executeProxyRoute(params: {
         },
       }),
     ]);
+    return toErrorResult(message);
+  }
+
+  const definition: Tool = {
+    name: route.proxyToolName,
+    description: '',
+    inputSchema: { type: 'object', properties: {} },
+  };
+  const authzEvaluation = await evaluateHubRouteAuthorization({
+    env,
+    accountContext,
+    route,
+    definition,
+    trace,
+    rollout: await getHubRouteAuthzRollout(env),
+    actionName: 'execute',
+    entrypoint,
+  });
+  if (authzEvaluation.final.decision !== 'allow') {
+    const durationMs = Date.now() - startedAt;
+    const message = requiresHumanReview(authzEvaluation.final)
+      ? `${authzEvaluation.final.reason} Review policy=${authzEvaluation.final.policyId}.`
+      : `${authzEvaluation.final.reason} Blocked by policy=${blockedByPolicy(authzEvaluation.final)}.`;
+    const policyMode = requiresHumanReview(authzEvaluation.final) ? 'authz_review' : 'authz_block';
+
+    await Promise.all([
+      recordHubInvocationWithCtx({
+        accountId,
+        toolName,
+        success: false,
+        durationMs,
+        trace,
+        errorMessage: message,
+        metadata: {
+          type: 'policy',
+          policy: policyMode,
+          entrypoint,
+          proxyToolName: entryProxyToolName,
+          downstreamServer: route.serverName,
+          downstreamTool: route.downstreamToolName,
+          policyId: authzEvaluation.final.policyId,
+          policyHash: authzEvaluation.final.policyHash,
+          evaluationPath: authzEvaluation.final.evaluationPath,
+          fallbackReason: authzEvaluation.final.fallbackReason,
+          matchedRuleIds: authzEvaluation.final.matchedRuleIds,
+        },
+      }),
+      recordHubRouteInvocationWithCtx({
+        accountId,
+        downstreamServer: route.serverName,
+        downstreamTool: route.downstreamToolName,
+        success: false,
+        durationMs,
+        trace,
+        errorMessage: message,
+        metadata: {
+          proxyToolName: entryProxyToolName,
+          blockedByPolicy: authzEvaluation.final.policyId,
+          requiresHumanReview: requiresHumanReview(authzEvaluation.final),
+          evaluationPath: authzEvaluation.final.evaluationPath,
+        },
+      }),
+    ]);
+
     return toErrorResult(message);
   }
 
