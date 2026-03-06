@@ -1,6 +1,17 @@
 name: MCP Authz Policy
 
 on:
+  workflow_dispatch:
+    inputs:
+      policy_id:
+        description: Policy id to publish to Oso Cloud.
+        required: false
+        type: string
+      dry_run:
+        description: Preview the publish without calling Oso Cloud.
+        required: false
+        default: true
+        type: boolean
   pull_request:
     paths:
       - 'packages/mcp-authz/**'
@@ -78,9 +89,22 @@ jobs:
           path: docs/policies/generated/
 
       - name: Publish active policy to Oso Cloud
-        if: github.ref == 'refs/heads/main' && vars.OSO_POLICY_ID != '' && secrets.OSO_URL != '' && secrets.OSO_API_KEY != ''
-        run: pnpm authz:publish --policy-id "${{ vars.OSO_POLICY_ID }}"
+        if: |
+          (
+            github.event_name == 'workflow_dispatch' &&
+            inputs.policy_id != '' &&
+            secrets.OSO_URL != '' &&
+            secrets.OSO_API_KEY != ''
+          ) || (
+            github.ref == 'refs/heads/main' &&
+            vars.OSO_PUBLISH_ENABLED == 'true' &&
+            vars.OSO_POLICY_ID != '' &&
+            secrets.OSO_URL != '' &&
+            secrets.OSO_API_KEY != ''
+          )
+        run: pnpm authz:publish --policy-id "${{ github.event.inputs.policy_id || vars.OSO_POLICY_ID }}"
         env:
           OSO_URL: ${{ secrets.OSO_URL }}
           OSO_API_KEY: ${{ secrets.OSO_API_KEY }}
           OSO_FETCH_TIMEOUT_MS: '5000'
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}

@@ -30,6 +30,7 @@ MCP_HUB_URL = "https://cs-mcp-hub-remote.createsomething.workers.dev/mcp"
 binding = "DB"
 database_name = "identity-db"
 database_id = "f3c1ec56-0ca1-4f8c-89ef-881682ef391a"
+migrations_dir = "migrations"
 
 # R2 Bucket - User avatars
 [[r2_buckets]]
