@@ -66,11 +66,14 @@ const accountToolSchema = {
 };
 
 const syncToolSchema = {
-  action: z.enum(['preview_page_content', 'copy_page_content']),
-  source_account_slug: z.string(),
-  target_account_slug: z.string(),
-  source_page_id: z.string(),
-  target_page_id: z.string(),
+  action: z.enum(['wizard', 'preview_page_content', 'copy_page_content']).default('wizard'),
+  mode: z.enum(['preview_page_content', 'copy_page_content']).optional(),
+  direction: z.enum(['halfdozen_to_client', 'client_to_halfdozen']).optional(),
+  source_account_slug: z.string().optional(),
+  target_account_slug: z.string().optional(),
+  source_page_id: z.string().optional(),
+  target_page_id: z.string().optional(),
+  confirm_write: z.boolean().optional(),
 };
 
 export function registerOperatorNotionTools(server: McpServer, deps: OperatorNotionToolsDeps): void {
@@ -97,7 +100,7 @@ export function registerOperatorNotionTools(server: McpServer, deps: OperatorNot
 
   server.tool(
     'operator_notion_sync',
-    'Preview or copy page content from one managed Notion account to another.',
+    'Guided sync helper for managed Notion accounts. Supports wizard prompts, dry-run preview, and explicit copy confirmation.',
     syncToolSchema,
     async (params) => runSyncTool(params, deps)
   );
@@ -249,11 +252,54 @@ async function runSyncTool(
   deps: OperatorNotionToolsDeps,
 ): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
   const { client } = await requirePartnerClient(deps);
-  const action = String(params.action);
-  const sourceAccountSlug = normalizeSlug(String(params.source_account_slug ?? ''));
-  const targetAccountSlug = normalizeSlug(String(params.target_account_slug ?? ''));
+  const action = String(params.action ?? 'wizard').trim() || 'wizard';
+  const mode =
+    action === 'preview_page_content' || action === 'copy_page_content'
+      ? action
+      : String(params.mode ?? '').trim();
+
+  let sourceAccountSlug = normalizeSlug(String(params.source_account_slug ?? ''));
+  let targetAccountSlug = normalizeSlug(String(params.target_account_slug ?? ''));
+  const direction = String(params.direction ?? '').trim();
   const sourcePageId = String(params.source_page_id ?? '').trim();
   const targetPageId = String(params.target_page_id ?? '').trim();
+  const confirmWrite = params.confirm_write === true;
+
+  if (!sourceAccountSlug && !targetAccountSlug && direction === 'halfdozen_to_client') {
+    sourceAccountSlug = 'halfdozen';
+    targetAccountSlug = normalizeSlug(client.slug);
+  } else if (!sourceAccountSlug && !targetAccountSlug && direction === 'client_to_halfdozen') {
+    sourceAccountSlug = normalizeSlug(client.slug);
+    targetAccountSlug = 'halfdozen';
+  } else if (!sourceAccountSlug && !targetAccountSlug && action === 'wizard') {
+    sourceAccountSlug = 'halfdozen';
+    targetAccountSlug = normalizeSlug(client.slug);
+  }
+
+  if (action === 'wizard') {
+    const missing: string[] = [];
+    if (!sourceAccountSlug) missing.push('source_account_slug');
+    if (!targetAccountSlug) missing.push('target_account_slug');
+    if (!mode) missing.push('mode');
+    if (!sourcePageId) missing.push('source_page_id');
+    if (!targetPageId) missing.push('target_page_id');
+
+    const defaults = {
+      source_account_slug: sourceAccountSlug || null,
+      target_account_slug: targetAccountSlug || null,
+      mode: mode || null,
+    };
+
+    if (missing.length > 0) {
+      return toJsonResult({
+        ok: true,
+        action,
+        status: 'needs_input',
+        defaults,
+        next_questions: buildSyncWizardQuestions(missing),
+      });
+    }
+  }
 
   if (!sourceAccountSlug || !targetAccountSlug || !sourcePageId || !targetPageId) {
     throw new Error('source_account_slug, target_account_slug, source_page_id, and target_page_id are required.');
@@ -261,14 +307,83 @@ async function runSyncTool(
   if (sourceAccountSlug === targetAccountSlug) {
     throw new Error('source_account_slug and target_account_slug must differ.');
   }
+  if (mode !== 'preview_page_content' && mode !== 'copy_page_content') {
+    throw new Error('mode must be preview_page_content or copy_page_content.');
+  }
 
   const source = await requireActiveAccount(deps, client.id, sourceAccountSlug, { requireSyncEnabled: true });
   const target = await requireActiveAccount(deps, client.id, targetAccountSlug, { requireSyncEnabled: true });
 
+  const preview = await buildSyncPreview(deps, source, target, sourcePageId, targetPageId);
+
+  if (mode === 'preview_page_content') {
+    return toJsonResult({ ok: true, action: mode, status: 'preview_ready', preview: preview.summary });
+  }
+
+  if (!confirmWrite) {
+    return toJsonResult({
+      ok: true,
+      action: 'wizard',
+      status: 'awaiting_confirmation',
+      preview: preview.summary,
+      confirmation_prompt: 'Set confirm_write=true to execute copy_page_content.',
+    });
+  }
+
+  await deps.dispatcher.execute(
+    'append_blocks',
+    { page_id: targetPageId, children: preview.source_blocks },
+    target.composio_user_id,
+  );
+  await recordNotionEvent(deps.db, {
+    partnerClientId: client.id,
+    eventType: 'sync_executed',
+    actor: deps.getActor(),
+    metadata: preview.summary,
+  });
+
+  return toJsonResult({
+    ok: true,
+    action: 'copy_page_content',
+    status: 'completed',
+    preview: preview.summary,
+    copied: true,
+  });
+}
+
+function buildSyncWizardQuestions(missing: string[]): string[] {
+  const questions: string[] = [];
+  for (const field of missing) {
+    if (field === 'source_account_slug') {
+      questions.push('Which account slug is the source? (example: halfdozen)');
+    } else if (field === 'target_account_slug') {
+      questions.push('Which account slug is the target? (example: blondish)');
+    } else if (field === 'mode') {
+      questions.push('Do you want preview_page_content or copy_page_content?');
+    } else if (field === 'source_page_id') {
+      questions.push('What is the source_page_id?');
+    } else if (field === 'target_page_id') {
+      questions.push('What is the target_page_id?');
+    }
+  }
+  return questions;
+}
+
+async function buildSyncPreview(
+  deps: OperatorNotionToolsDeps,
+  source: NotionAccountRow,
+  target: NotionAccountRow,
+  sourcePageId: string,
+  targetPageId: string,
+): Promise<{
+  summary: Record<string, unknown>;
+  source_blocks: unknown[];
+}> {
   const page = await deps.dispatcher.execute('get_page', { page_id: sourcePageId }, source.composio_user_id);
   const blocks = await deps.dispatcher.execute('list_block_children', { block_id: sourcePageId }, source.composio_user_id);
   const sourceBlocks = Array.isArray(blocks.results) ? blocks.results : [];
-  const preview = {
+
+  const summary = {
     source_account_slug: source.account_slug,
     target_account_slug: target.account_slug,
     source_page_id: sourcePageId,
@@ -277,23 +392,7 @@ async function runSyncTool(
     page_title: extractPageTitle(page),
   };
 
-  if (action === 'preview_page_content') {
-    return toJsonResult({ ok: true, action, preview });
-  }
-
-  if (action !== 'copy_page_content') {
-    throw new Error(`Unsupported operator_notion_sync action: ${action}`);
-  }
-
-  await deps.dispatcher.execute('append_blocks', { page_id: targetPageId, children: sourceBlocks }, target.composio_user_id);
-  await recordNotionEvent(deps.db, {
-    partnerClientId: client.id,
-    eventType: 'sync_executed',
-    actor: deps.getActor(),
-    metadata: preview,
-  });
-
-  return toJsonResult({ ok: true, action, preview, copied: true });
+  return { summary, source_blocks: sourceBlocks };
 }
 
 async function requirePartnerClient(deps: OperatorNotionToolsDeps) {
