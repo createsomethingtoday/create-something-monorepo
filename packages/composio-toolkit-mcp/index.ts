@@ -11,6 +11,7 @@ import {
 interface Env {
   COMPOSIO_API_KEY?: string;
   COMPOSIO_AUTH_CONFIG_MAP?: string;
+  COMPOSIO_AIRTABLE_AUTH_CONFIG_ID?: string;
   COMPOSIO_DEFAULT_ENTITY_ID?: string;
   COMPOSIO_ENTITY_RESOLUTION_MODE?: string;
   COMPOSIO_TOOL_CACHE_SECONDS?: string;
@@ -73,7 +74,7 @@ export default {
           },
           configured: {
             composioApiKey: Boolean(env.COMPOSIO_API_KEY),
-            authConfigMapEntries: Object.keys(parseAuthConfigMap(env.COMPOSIO_AUTH_CONFIG_MAP)).length,
+            authConfigMapEntries: Object.keys(buildAuthConfigMap(env)).length,
             defaultEntity: env.COMPOSIO_DEFAULT_ENTITY_ID ?? 'default',
             entityResolutionMode: resolveEntityResolutionMode(env),
             braintrustApiKey: Boolean(env.BRAINTRUST_API_KEY),
@@ -135,7 +136,7 @@ export default {
 
 function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request): Server {
   const client = new ComposioClient({ apiKey: env.COMPOSIO_API_KEY! });
-  const authConfigMap = parseAuthConfigMap(env.COMPOSIO_AUTH_CONFIG_MAP);
+  const authConfigMap = buildAuthConfigMap(env);
   const logger = getBraintrustLogger(env);
   const isZoomToolkit = runtime.toolkitSlug === 'zoom';
 
@@ -1431,6 +1432,15 @@ function parseAuthConfigMap(raw: string | undefined): Record<string, string> {
   } catch {
     return {};
   }
+}
+
+function buildAuthConfigMap(env: Env): Record<string, string> {
+  const authConfigMap = parseAuthConfigMap(env.COMPOSIO_AUTH_CONFIG_MAP);
+  const airtableAuthConfigId = env.COMPOSIO_AIRTABLE_AUTH_CONFIG_ID?.trim();
+  if (airtableAuthConfigId) {
+    authConfigMap.airtable = airtableAuthConfigId;
+  }
+  return authConfigMap;
 }
 
 function parsePositiveInt(raw: string | undefined, fallback: number): number {
