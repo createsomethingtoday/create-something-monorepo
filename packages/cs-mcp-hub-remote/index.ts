@@ -9,6 +9,17 @@ import {
   ReadResourceRequestSchema,
   type Tool,
 } from '@modelcontextprotocol/sdk/types.js';
+import {
+  buildHubAuthorizationRequest,
+  blockedByPolicy,
+  evaluateAuthorizationRequest,
+  getAuthzRollout,
+  getPolicyManifest,
+  recordAuthzDecisionEvent,
+  requiresHumanReview,
+  type AuthzDecisionEventRecord,
+  type AuthzRolloutRow,
+} from '@create-something/mcp-authz';
 import { flush as braintrustFlush, initLogger, type Logger, type Span } from 'braintrust';
 
 import discoveryPacksJson from '../../config/mcp-hub/discovery-packs.json';
@@ -228,6 +239,7 @@ type IdentitySessionResolveResponse = {
   account_id?: string;
   tenant_id?: string;
   user_id?: string;
+  tool_mode?: string;
   allowed_tool_prefixes?: unknown;
   reason?: string;
 };
@@ -237,6 +249,7 @@ type ResolvedAccountContext = {
   tenantId: string | null;
   userId: string | null;
   sessionId: string | null;
+  toolMode: string | null;
   allowedToolPrefixes: string[] | null;
   identitySource: 'session' | 'fallback';
 };
@@ -300,6 +313,11 @@ interface Env {
   HUB_RATE_LIMIT_EXEMPT_SERVERS?: string;
   HUB_QUOTA_MAX_PROXY_CALLS_PER_PERIOD?: string;
   HUB_QUOTA_EXEMPT_SERVERS?: string;
+  OSO_URL?: string;
+  OSO_API_KEY?: string;
+  OSO_FETCH_TIMEOUT_MS?: string;
+  OSO_BOOTSTRAP_POLICY?: string;
+  ENGINE_FALLBACK_ENABLED?: string;
   BRAINTRUST_API_KEY?: string;
   BRAINTRUST_PROJECT_NAME?: string;
   BRAINTRUST_PROJECT_ID?: string;
@@ -314,6 +332,7 @@ const HUB_VERSION = '1.0.0';
 export const HUB_OVERVIEW_RESOURCE_URI = 'ui://hub/overview';
 const DEFAULT_REFRESH_SECONDS = 300;
 const HUB_STATE_KV_PREFIX = 'hub_state_v1';
+const HUB_ROUTE_AUTHZ_POLICY_ID = 'policy.hub-route-authorization.v1';
 
 const registry = registryJson as unknown as McpBundleRegistry;
 const discoveryPackRegistry = discoveryPacksJson as unknown as DiscoveryPackRegistry;
