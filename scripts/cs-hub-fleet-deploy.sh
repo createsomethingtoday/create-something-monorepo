@@ -170,6 +170,20 @@ discovery_shared_pack_for_worker() {
   esac
 }
 
+direct_proxy_enabled_for_worker() {
+  case "$1" in
+    "cs-hub-danny") echo "true" ;;
+    *) echo "false" ;;
+  esac
+}
+
+direct_proxy_prefixes_for_worker() {
+  case "$1" in
+    "cs-hub-danny") echo "halfdozen-operator-notion-mcp__" ;;
+    *) echo "" ;;
+  esac
+}
+
 csv_to_json_array() {
   local csv="$1"
   if [[ -z "${csv// }" ]]; then
@@ -263,6 +277,8 @@ echo "compat_trust_client_account_headers=${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}
 for worker in "${TEAM_WORKERS[@]}"; do
   deploy_worker="$(resolve_deploy_worker_name "$worker")"
   discovery_shared_pack="$(discovery_shared_pack_for_worker "$worker")"
+  direct_proxy_enabled="$(direct_proxy_enabled_for_worker "$worker")"
+  direct_proxy_prefixes="$(direct_proxy_prefixes_for_worker "$worker")"
   echo "===== DEPLOY ${worker} ====="
   if [[ "$deploy_worker" != "$worker" ]]; then
     echo "deploy_target=${deploy_worker} (legacy alias)"
@@ -284,6 +300,8 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_CONNECT_TIMEOUT_MS:10000" \
       --var "HUB_LIST_TOOLS_TIMEOUT_MS:15000" \
       --var "HUB_CONNECT_CONCURRENCY:4" \
+      --var "HUB_ALLOW_DIRECT_PROXY_TOOLS:${direct_proxy_enabled}" \
+      --var "HUB_DIRECT_PROXY_ALLOWED_PREFIXES:${direct_proxy_prefixes}" \
       --var "HUB_DISCOVERY_SHARED_PACK:${discovery_shared_pack}"
   else
     pnpm exec wrangler deploy \
@@ -301,6 +319,8 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_CONNECT_TIMEOUT_MS:10000" \
       --var "HUB_LIST_TOOLS_TIMEOUT_MS:15000" \
       --var "HUB_CONNECT_CONCURRENCY:4" \
+      --var "HUB_ALLOW_DIRECT_PROXY_TOOLS:${direct_proxy_enabled}" \
+      --var "HUB_DIRECT_PROXY_ALLOWED_PREFIXES:${direct_proxy_prefixes}" \
       --var "HUB_DISCOVERY_SHARED_PACK:${discovery_shared_pack}"
   fi
   echo "----- NORMALIZE STATE ${worker} -----"
