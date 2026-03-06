@@ -56,6 +56,13 @@ interface ConnectLinkResolution {
   status: string | null;
   link: string | null;
   error: string | null;
+  existingConnectedAccountId?: string | null;
+  existingConnections?: Array<{
+    connectionId: string;
+    status: string;
+    rawStatus: string | null;
+    createdAt: string | null;
+  }>;
 }
 
 const MANAGEMENT_TOOL_NAMES = new Set([
@@ -64,7 +71,13 @@ const MANAGEMENT_TOOL_NAMES = new Set([
   'dm_composio_get_connect_link',
 ]);
 
-const CONTROL_ARG_KEYS = new Set(['entity_id', 'account_id', '__dm_entity_id']);
+const CONTROL_ARG_KEYS = new Set([
+  'entity_id',
+  'account_id',
+  '__dm_entity_id',
+  'connected_account_id',
+  'connectedAccountId',
+]);
 
 export async function registerComposioProxyTools(
   server: McpServer,
@@ -98,13 +111,26 @@ export async function registerComposioProxyTools(
           );
         }
 
-        const forwardedArgs = stripControlArgs(params);
-
         try {
+          const connectedAccountId = pickConnectedAccountId(params);
+          if (connectedAccountId) {
+            await assertConnectedAccountOwnership(deps.composioClient, entityId, route.toolkit, connectedAccountId);
+          } else {
+            const activeConnections = await deps.composioClient.getConnectedAccountsForToolkit(entityId, route.toolkit);
+            const activeCount = activeConnections.filter((account) => account.status === 'active').length;
+            if (activeCount > 1) {
+              throw new Error(
+                `Toolkit "${route.toolkit}" has ${activeCount} active connections for entity "${entityId}". Pass connected_account_id to disambiguate execution.`
+              );
+            }
+          }
+          const forwardedArgs = stripControlArgs(params);
+
           const result = await deps.composioClient.executeTool(
             route.composioToolSlug,
             forwardedArgs,
-            entityId
+            entityId,
+            connectedAccountId ?? undefined
           );
           return toJsonResult({
             toolkit: route.toolkit,
@@ -303,10 +329,27 @@ function registerManagementTools(
       }
 
       const statuses = await Promise.all(
-        scopeToolkits.map(async (toolkit) => ({
-          toolkit,
-          connected: await deps.composioClient.hasActiveConnection(entityId, toolkit),
-        }))
+        scopeToolkits.map(async (toolkit) => {
+          const connections = await deps.composioClient.getConnectedAccountsForToolkit(entityId, toolkit);
+          const activeConnections = connections.filter((account) => account.status === 'active');
+          const pendingConnections = connections.filter((account) => account.status === 'pending');
+          return {
+            toolkit,
+            connected: activeConnections.length > 0,
+            connection_count: connections.length,
+            active_connection_count: activeConnections.length,
+            pending_connection_count: pendingConnections.length,
+            ambiguous: activeConnections.length > 1,
+            recommended_connected_account_id:
+              activeConnections[0]?.connectionId ?? pendingConnections[0]?.connectionId ?? null,
+            connections: connections.map((account) => ({
+              connectionId: account.connectionId,
+              status: account.status,
+              rawStatus: account.rawStatus ?? null,
+              createdAt: account.createdAt ?? null,
+            })),
+          };
+        })
       );
 
       return toJsonResult({
@@ -323,6 +366,7 @@ function registerManagementTools(
         'Get a one-time Composio OAuth link for a toolkit for the current entity (requires COMPOSIO_AUTH_CONFIG_MAP).',
       inputSchema: entitySchema.extend({
         toolkit: z.string(),
+        force_new: z.boolean().optional(),
       }),
     },
     async (params, extra) => {
@@ -365,7 +409,8 @@ function registerManagementTools(
         deps.composioClient,
         authConfigMap,
         entityId,
-        toolkit
+        toolkit,
+        params.force_new === true
       );
 
       if (link.error) {
@@ -376,11 +421,10 @@ function registerManagementTools(
           requestId: link.requestId,
           status: link.status,
           link: link.link,
+          existing_connected_account_id: link.existingConnectedAccountId ?? null,
+          existing_connections: link.existingConnections ?? [],
           error: link.error,
-          message:
-            link.link && link.link.length > 0
-              ? 'Present this URL to the user. After auth, call dm_composio_connection_status again.'
-              : 'No redirect URL returned by Composio. Retry dm_composio_connection_status.',
+          message: buildConnectLinkMessage(entityId, toolkit, link),
         });
       }
 
@@ -391,10 +435,9 @@ function registerManagementTools(
         requestId: link.requestId,
         status: link.status,
         link: link.link,
-        message:
-          link.link && link.link.length > 0
-            ? 'Present this URL to the user. After auth, call dm_composio_connection_status again.'
-            : 'No redirect URL returned by Composio. Retry dm_composio_connection_status.',
+        existing_connected_account_id: link.existingConnectedAccountId ?? null,
+        existing_connections: link.existingConnections ?? [],
+        message: buildConnectLinkMessage(entityId, toolkit, link),
       });
     }
   );
@@ -474,7 +517,8 @@ async function resolveConnectLink(
   composioClient: ComposioClient,
   authConfigMap: Record<string, string>,
   entityId: string,
-  toolkit: string
+  toolkit: string,
+  forceNew = false,
 ): Promise<ConnectLinkResolution> {
   const authConfigId = authConfigMap[toolkit];
   if (!authConfigId) {
@@ -488,6 +532,42 @@ async function resolveConnectLink(
   }
 
   try {
+    const existingConnections = await composioClient.getConnectedAccountsForToolkit(entityId, toolkit);
+    const activeConnections = existingConnections.filter((account) => account.status === 'active');
+    const pendingConnections = existingConnections.filter((account) => account.status === 'pending');
+    const summarizedConnections = existingConnections.map((account) => ({
+      connectionId: account.connectionId,
+      status: account.status,
+      rawStatus: account.rawStatus ?? null,
+      createdAt: account.createdAt ?? null,
+    }));
+
+    if (activeConnections.length > 0) {
+      return {
+        authConfigId,
+        requestId: activeConnections[0]?.connectionId ?? null,
+        status: 'ACTIVE',
+        link: null,
+        existingConnectedAccountId: activeConnections[0]?.connectionId ?? null,
+        existingConnections: summarizedConnections,
+        error: activeConnections.length > 1
+          ? `Toolkit "${toolkit}" already has ${activeConnections.length} active connections for entity "${entityId}".`
+          : null,
+      };
+    }
+
+    if (!forceNew && pendingConnections.length > 0) {
+      return {
+        authConfigId,
+        requestId: pendingConnections[0]?.connectionId ?? null,
+        status: 'PENDING',
+        link: null,
+        existingConnectedAccountId: pendingConnections[0]?.connectionId ?? null,
+        existingConnections: summarizedConnections,
+        error: `Toolkit "${toolkit}" already has ${pendingConnections.length} pending connection request(s) for entity "${entityId}".`,
+      };
+    }
+
     const connectionRequest = await composioClient
       .getSDK()
       .connectedAccounts.link(entityId, authConfigId);
@@ -499,6 +579,8 @@ async function resolveConnectLink(
       requestId: stringOrNull(state?.id),
       status: rawStatus ? rawStatus.toUpperCase() : null,
       link: stringOrNull(state?.redirectUrl),
+      existingConnectedAccountId: null,
+      existingConnections: summarizedConnections,
       error: null,
     };
   } catch (error) {
@@ -510,6 +592,23 @@ async function resolveConnectLink(
       error: `Failed to create connect link: ${describeError(error)}`,
     };
   }
+}
+
+function buildConnectLinkMessage(
+  entityId: string,
+  toolkit: string,
+  link: ConnectLinkResolution
+): string {
+  if (link.link && link.link.length > 0) {
+    return 'Present this URL to the user. After auth, call dm_composio_connection_status again.';
+  }
+  if (link.status === 'ACTIVE') {
+    return `Toolkit "${toolkit}" is already connected for entity "${entityId}".`;
+  }
+  if (link.status === 'PENDING') {
+    return `Toolkit "${toolkit}" already has a pending connection for entity "${entityId}". Complete that flow or rerun with force_new after cleaning up stale requests.`;
+  }
+  return 'No redirect URL returned by Composio. Retry dm_composio_connection_status.';
 }
 
 function buildRoute(
@@ -544,6 +643,8 @@ function toInputSchema(tool: ComposioToolDef): z.ZodObject<any> {
   shape.entity_id = z.string().optional();
   shape.account_id = z.string().optional();
   shape.__dm_entity_id = z.string().optional();
+  shape.connected_account_id = z.string().optional();
+  shape.connectedAccountId = z.string().optional();
 
   return z.object(shape).passthrough();
 }
@@ -643,6 +744,33 @@ function stripControlArgs(params: Record<string, unknown>): Record<string, unkno
     out[key] = value;
   }
   return out;
+}
+
+function pickConnectedAccountId(params: Record<string, unknown>): string | null {
+  const candidate = params.connected_account_id ?? params.connectedAccountId;
+  if (typeof candidate !== 'string') return null;
+  const trimmed = candidate.trim();
+  return trimmed || null;
+}
+
+async function assertConnectedAccountOwnership(
+  composioClient: ComposioClient,
+  entityId: string,
+  toolkit: string,
+  connectedAccountId: string
+): Promise<void> {
+  const connections = await composioClient.getConnectedAccountsForToolkit(entityId, toolkit);
+  const match = connections.find((account) => account.connectionId === connectedAccountId);
+  if (!match) {
+    throw new Error(
+      `connected_account_id "${connectedAccountId}" does not belong to toolkit "${toolkit}" for entity "${entityId}".`
+    );
+  }
+  if (match.status !== 'active') {
+    throw new Error(
+      `connected_account_id "${connectedAccountId}" is "${match.status}" for toolkit "${toolkit}" and entity "${entityId}". Pass an active connection ID.`
+    );
+  }
 }
 
 function getHeaderValue(requestInfo: unknown, name: string): string | null {

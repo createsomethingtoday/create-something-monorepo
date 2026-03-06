@@ -25,6 +25,12 @@ This package enables per-toolkit registry entries in the CREATE SOMETHING Hub:
 
 All Composio toolkit tools are exposed dynamically for that toolkit route.
 
+## Connection behavior
+
+- `connection_status` now returns per-toolkit connection details, including duplicate active accounts and a recommended `connectedAccountId`.
+- `get_connect_link` is idempotent against existing active connections and, by default, against pending requests. Use `forceNew: true` only when you intentionally want a fresh link after cleaning up stale pending requests.
+- All toolkit tools accept optional `connectedAccountId` to pin execution when multiple active connected accounts exist for the same entity/toolkit.
+
 ## Identity resolution
 
 Default (`COMPOSIO_ENTITY_RESOLUTION_MODE=header_required`):

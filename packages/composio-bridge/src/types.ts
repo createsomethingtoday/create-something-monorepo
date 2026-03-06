@@ -339,6 +339,9 @@ export interface ComposioAccount {
 
   /** When the connection was created */
   createdAt?: string;
+
+  /** Optional raw provider status for debugging and UI surfacing. */
+  rawStatus?: string;
 }
 
 // =============================================================================

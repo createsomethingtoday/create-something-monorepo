@@ -248,16 +248,19 @@ export class ComposioClient {
    * @param toolSlug  - The tool identifier (e.g., 'SLACK_SEND_MESSAGE')
    * @param params    - Parameters for the tool call
    * @param userId    - Composio user/entity ID (maps from mcp-core's accountId)
+   * @param connectedAccountId - Optional explicit Composio connected account ID
    */
   async executeTool(
     toolSlug: string,
     params: Record<string, unknown>,
     userId?: string,
+    connectedAccountId?: string,
   ): Promise<Record<string, unknown>> {
     try {
       const result = await this.runWithPolicy(
         () => this.composio.tools.execute(toolSlug, {
           userId: userId ?? 'default',
+          ...(connectedAccountId ? { connectedAccountId } : {}),
           arguments: params,
           dangerouslySkipVersionCheck: true,
         }),
@@ -307,6 +310,7 @@ export class ComposioClient {
         entityId: String(account.userId ?? account.entityId ?? userId),
         status: mapConnectionStatus(account.status),
         createdAt: account.createdAt ? String(account.createdAt) : undefined,
+        rawStatus: account.status ? String(account.status) : undefined,
       }));
     } catch (error) {
       throw toBridgeError(
@@ -325,6 +329,20 @@ export class ComposioClient {
     return accounts.some(
       (a) => a.app.toLowerCase() === toolkit.toLowerCase() && a.status === 'active',
     );
+  }
+
+  /**
+   * Get connected accounts for one toolkit/app for a given user/entity.
+   */
+  async getConnectedAccountsForToolkit(
+    userId: string,
+    toolkit: string,
+  ): Promise<ComposioAccount[]> {
+    const normalizedToolkit = toolkit.trim().toLowerCase();
+    const accounts = await this.getConnectedAccounts(userId);
+    return accounts
+      .filter((account) => account.app.toLowerCase() === normalizedToolkit)
+      .sort(compareComposioAccountsNewestFirst);
   }
 
   // ===========================================================================
@@ -408,6 +426,12 @@ function mapConnectionStatus(
   if (s === 'expired') return 'expired';
   if (s === 'revoked' || s === 'disconnected') return 'revoked';
   return 'pending';
+}
+
+function compareComposioAccountsNewestFirst(a: ComposioAccount, b: ComposioAccount): number {
+  const aTime = Date.parse(a.createdAt ?? '') || 0;
+  const bTime = Date.parse(b.createdAt ?? '') || 0;
+  return bTime - aTime;
 }
 
 /**

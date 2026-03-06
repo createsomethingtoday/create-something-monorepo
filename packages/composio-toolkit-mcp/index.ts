@@ -156,7 +156,13 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
         'Get a one-time OAuth link for the current toolkit/entity using COMPOSIO_AUTH_CONFIG_MAP entry.',
       inputSchema: {
         type: 'object',
-        properties: {},
+        properties: {
+          forceNew: {
+            type: 'boolean',
+            description:
+              'Start a fresh auth flow even if a pending connection already exists. Ignored when an active connection already exists.',
+          },
+        },
         additionalProperties: false,
       },
     },
@@ -334,13 +340,32 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
       entityId = resolveEntityId(extra, request, env);
 
       if (toolName === 'connection_status') {
-        const connected = await client.hasActiveConnection(entityId, runtime.toolkitSlug);
+        const connections = await client.getConnectedAccountsForToolkit(entityId, runtime.toolkitSlug);
+        const activeConnections = connections.filter((account) => account.status === 'active');
+        const pendingConnections = connections.filter((account) => account.status === 'pending');
+        const connected = activeConnections.length > 0;
         return emitAndReturn(toJsonResult({
           toolkitSlug: runtime.toolkitSlug,
           entityId,
           connected,
+          connectionCount: connections.length,
+          activeConnectionCount: activeConnections.length,
+          pendingConnectionCount: pendingConnections.length,
+          ambiguous: activeConnections.length > 1,
+          recommendedConnectedAccountId:
+            activeConnections[0]?.connectionId ?? pendingConnections[0]?.connectionId ?? null,
+          connections: connections.map((account) => ({
+            connectionId: account.connectionId,
+            status: account.status,
+            rawStatus: account.rawStatus ?? null,
+            createdAt: account.createdAt ?? null,
+          })),
           message: connected
-            ? `Toolkit "${runtime.toolkitSlug}" is connected for entity "${entityId}".`
+            ? activeConnections.length > 1
+              ? `Toolkit "${runtime.toolkitSlug}" has ${activeConnections.length} active connections for entity "${entityId}". Use connectedAccountId to pin execution or clean up duplicates in Composio.`
+              : `Toolkit "${runtime.toolkitSlug}" is connected for entity "${entityId}".`
+            : pendingConnections.length > 0
+              ? `Toolkit "${runtime.toolkitSlug}" has a pending connection for entity "${entityId}". Complete that flow or call get_connect_link with forceNew=true after cleaning up stale requests.`
             : `Toolkit "${runtime.toolkitSlug}" is not connected. Call get_connect_link and present the URL to the user.`,
         }));
       }
@@ -354,6 +379,57 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
             link: null,
             message:
               'No auth config ID found for this toolkit. Add it to COMPOSIO_AUTH_CONFIG_MAP and redeploy.',
+          }));
+        }
+
+        const forceNew = args.forceNew === true;
+        const existingConnections = await client.getConnectedAccountsForToolkit(entityId, runtime.toolkitSlug);
+        const activeConnections = existingConnections.filter((account) => account.status === 'active');
+        const pendingConnections = existingConnections.filter((account) => account.status === 'pending');
+
+        if (activeConnections.length > 0) {
+          return emitAndReturn(toJsonResult({
+            toolkitSlug: runtime.toolkitSlug,
+            entityId,
+            authConfigId,
+            alreadyConnected: true,
+            link: null,
+            status: 'ACTIVE',
+            requestId: activeConnections[0]?.connectionId ?? null,
+            activeConnectionCount: activeConnections.length,
+            pendingConnectionCount: pendingConnections.length,
+            ambiguous: activeConnections.length > 1,
+            recommendedConnectedAccountId: activeConnections[0]?.connectionId ?? null,
+            existingConnections: existingConnections.map((account) => ({
+              connectionId: account.connectionId,
+              status: account.status,
+              rawStatus: account.rawStatus ?? null,
+              createdAt: account.createdAt ?? null,
+            })),
+            message: activeConnections.length > 1
+              ? `Toolkit "${runtime.toolkitSlug}" already has ${activeConnections.length} active connections for entity "${entityId}". Refusing to create another link; clean up duplicates or pass connectedAccountId during execution.`
+              : `Toolkit "${runtime.toolkitSlug}" is already connected for entity "${entityId}".`,
+          }));
+        }
+
+        if (!forceNew && pendingConnections.length > 0) {
+          return emitAndReturn(toJsonResult({
+            toolkitSlug: runtime.toolkitSlug,
+            entityId,
+            authConfigId,
+            pendingExisting: true,
+            link: null,
+            status: 'PENDING',
+            requestId: pendingConnections[0]?.connectionId ?? null,
+            pendingConnectionCount: pendingConnections.length,
+            recommendedConnectedAccountId: pendingConnections[0]?.connectionId ?? null,
+            existingConnections: existingConnections.map((account) => ({
+              connectionId: account.connectionId,
+              status: account.status,
+              rawStatus: account.rawStatus ?? null,
+              createdAt: account.createdAt ?? null,
+            })),
+            message: `Toolkit "${runtime.toolkitSlug}" already has ${pendingConnections.length} pending connection request(s) for entity "${entityId}". Complete the existing flow or pass forceNew=true after cleaning up stale requests.`,
           }));
         }
 
@@ -429,7 +505,30 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
         return emitAndReturn(toErrorResult(message), undefined, message);
       }
 
-      const result = await client.executeTool(route.composioToolSlug, args, entityId);
+      const connectedAccountId = stringOrNull(args.connectedAccountId);
+      if (connectedAccountId) {
+        await assertConnectedAccountOwnership({
+          client,
+          entityId,
+          connectedAccountId,
+          toolkitSlug: runtime.toolkitSlug,
+        });
+      } else {
+        const activeConnections = await client.getConnectedAccountsForToolkit(entityId, runtime.toolkitSlug);
+        const activeCount = activeConnections.filter((account) => account.status === 'active').length;
+        if (activeCount > 1) {
+          throw new Error(
+            `Toolkit "${runtime.toolkitSlug}" has ${activeCount} active connections for entity "${entityId}". Pass connectedAccountId to disambiguate execution.`,
+          );
+        }
+      }
+
+      const result = await client.executeTool(
+        route.composioToolSlug,
+        stripConnectedAccountArg(args),
+        entityId,
+        connectedAccountId ?? undefined,
+      );
       return emitAndReturn(toJsonResult(result), route.composioToolSlug);
     } catch (error) {
       const message = error instanceof Error ? error.message : `Tool "${toolName}" failed: ${String(error)}`;
@@ -1193,7 +1292,14 @@ function buildToolRoutes(toolDefs: ComposioToolDef[], reservedNames: Set<string>
       description: tool.description || `${tool.name} via Composio`,
       inputSchema: {
         type: 'object',
-        properties: tool.parameters.properties ?? {},
+        properties: {
+          ...(tool.parameters.properties ?? {}),
+          connectedAccountId: {
+            type: 'string',
+            description:
+              'Optional Composio connected account ID. Use this when multiple active connections exist for the same toolkit/entity.',
+          },
+        },
         required: tool.parameters.required ?? [],
         additionalProperties: true,
       },
@@ -1403,12 +1509,26 @@ async function assertConnectedAccountOwnership(params: {
       `connectedAccountId "${normalizedId}" belongs to toolkit "${match.app}", expected "${toolkitSlug}".`,
     );
   }
+  if (match.status !== 'active') {
+    throw new Error(
+      `connectedAccountId "${normalizedId}" is "${match.status}" for Composio user "${entityId}". Pass an active connection ID.`,
+    );
+  }
 }
 
 function stringOrNull(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return trimmed || null;
+}
+
+function stripConnectedAccountArg(args: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(args)) {
+    if (key === 'connectedAccountId') continue;
+    out[key] = value;
+  }
+  return out;
 }
 
 function parseAuthConfigMap(raw: string | undefined): Record<string, string> {
