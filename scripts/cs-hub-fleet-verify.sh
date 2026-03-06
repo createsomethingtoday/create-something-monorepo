@@ -8,6 +8,7 @@ WORKERS=(
   "cs-hub-lainy"
   "cs-hub-danny"
   "cs-hub-august"
+  "cs-hub-c3denver"
   "cs-hub-aaron-outerfields"
   "cs-hub-andre-outerfields"
   "cs-hub-fillip"
@@ -49,6 +50,7 @@ SHARED_AUTH_SERVERS_CSV="$(join_by_comma "${SHARED_AUTH_SERVERS[@]}")"
 OUTERFIELDS_CLICKUP_SERVERS_CSV="$(join_by_comma "${OUTERFIELDS_CLICKUP_SERVERS[@]}")"
 DANNY_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},halfdozen-operator-notion-mcp"
 MJ_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},meetings"
+MJ_SERVERS_CSV="composio-toolkit-airtable,${MJ_SERVERS_CSV}"
 VERIFY_IDENTITY_MODE="${HUB_VERIFY_IDENTITY_MODE:-compat}"
 VERIFY_IDENTITY_MODE="$(printf '%s' "$VERIFY_IDENTITY_MODE" | tr '[:upper:]' '[:lower:]')"
 
@@ -66,6 +68,7 @@ health_url_for_worker() {
     "cs-hub-lainy") echo "https://lainy.mcp.createsomething.agency/health" ;;
     "cs-hub-danny") echo "https://danny.mcp.createsomething.agency/health" ;;
     "cs-hub-august") echo "https://august.mcp.createsomething.agency/health" ;;
+    "cs-hub-c3denver") echo "https://c3denver.mcp.createsomething.agency/health" ;;
     "cs-hub-aaron-outerfields") echo "https://aaron-outerfields.mcp.createsomething.agency/health" ;;
     "cs-hub-andre-outerfields") echo "https://andre-outerfields.mcp.createsomething.agency/health" ;;
     "cs-hub-fillip"|"cs-hub-filip") echo "https://fillip.mcp.createsomething.agency/health" ;;
@@ -83,6 +86,7 @@ mcp_url_for_worker() {
     "cs-hub-lainy") echo "https://lainy.mcp.createsomething.agency/mcp" ;;
     "cs-hub-danny") echo "https://danny.mcp.createsomething.agency/mcp" ;;
     "cs-hub-august") echo "https://august.mcp.createsomething.agency/mcp" ;;
+    "cs-hub-c3denver") echo "https://c3denver.mcp.createsomething.agency/mcp" ;;
     "cs-hub-aaron-outerfields") echo "https://aaron-outerfields.mcp.createsomething.agency/mcp" ;;
     "cs-hub-andre-outerfields") echo "https://andre-outerfields.mcp.createsomething.agency/mcp" ;;
     "cs-hub-fillip"|"cs-hub-filip") echo "https://fillip.mcp.createsomething.agency/mcp" ;;
@@ -100,6 +104,7 @@ token_env_var_for_worker() {
     "cs-hub-lainy") echo "CS_HUB_LAINY_API_TOKEN" ;;
     "cs-hub-danny") echo "CS_HUB_DANNY_API_TOKEN" ;;
     "cs-hub-august") echo "CS_HUB_AUGUST_API_TOKEN" ;;
+    "cs-hub-c3denver") echo "CS_HUB_C3DENVER_API_TOKEN" ;;
     "cs-hub-aaron-outerfields") echo "CS_HUB_AARON_OUTERFIELDS_API_TOKEN" ;;
     "cs-hub-andre-outerfields") echo "CS_HUB_ANDRE_OUTERFIELDS_API_TOKEN" ;;
     "cs-hub-fillip"|"cs-hub-filip") echo "CS_HUB_FILLIP_API_TOKEN" ;;
@@ -131,6 +136,7 @@ expected_account_id_for_worker() {
     "cs-hub-lainy") echo "acct_lainy" ;;
     "cs-hub-danny") echo "acct_danny" ;;
     "cs-hub-august") echo "acct_august" ;;
+    "cs-hub-c3denver") echo "acct_c3_denver" ;;
     "cs-hub-aaron-outerfields") echo "acct_aaron_outerfields" ;;
     "cs-hub-andre-outerfields") echo "acct_andre_outerfields" ;;
     "cs-hub-fillip"|"cs-hub-filip") echo "acct_fillip" ;;

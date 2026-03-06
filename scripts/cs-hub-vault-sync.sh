@@ -136,7 +136,16 @@ load_secrets_from_doppler() {
   )"
   while IFS=$'\t' read -r key value; do
     export "${key}=${value}"
-  done < <(printf '%s' "$payload" | jq -r 'to_entries[] | [.key, (.value | tostring)] | @tsv')
+  done < <(
+    printf '%s' "$payload" | jq -r '
+      if type == "array" then
+        .[] | select(.key != null) | [.key, (.value | tostring)]
+      else
+        to_entries[] | [.key, (.value | tostring)]
+      end
+      | @tsv
+    '
+  )
 }
 
 load_secrets_from_infisical() {
@@ -210,7 +219,16 @@ load_secrets_from_infisical() {
 
   while IFS=$'\t' read -r key value; do
     export "${key}=${value}"
-  done < <(printf '%s' "$payload" | jq -r 'to_entries[] | [.key, (.value | tostring)] | @tsv')
+  done < <(
+    printf '%s' "$payload" | jq -r '
+      if type == "array" then
+        .[] | select(.key != null) | [.key, (.value | tostring)]
+      else
+        to_entries[] | [.key, (.value | tostring)]
+      end
+      | @tsv
+    '
+  )
 }
 
 require_secret() {
