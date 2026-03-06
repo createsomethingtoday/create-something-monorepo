@@ -24,6 +24,10 @@ interface Env {
   MCP_DESCRIPTION?: string;
   PINNED_HALFDOZEN_TOOL_NAME?: string;
   PINNED_CLIENT_TOOL_NAME?: string;
+  OPENAI_API_KEY?: string;
+  ROUTER_OPENAI_MODEL?: string;
+  ROUTER_OPENAI_TIMEOUT_MS?: string;
+  ROUTER_OPENAI_CACHE_TTL_MS?: string;
 }
 
 const SERVER_NAME = 'halfdozen-operator-notion-mcp';
@@ -32,6 +36,12 @@ const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
 function resolveBraintrustProjectName(env: Env): string {
   const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
   return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+}
+
+function parsePositiveInt(value: string | undefined): number | undefined {
+  if (!value) return undefined;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 }
 
 export class OperatorNotionMcp extends McpAgent<Env> {
@@ -88,6 +98,10 @@ export class OperatorNotionMcp extends McpAgent<Env> {
       notionAuthConfigId: this.env.COMPOSIO_NOTION_AUTH_CONFIG_ID?.trim(),
       pinnedHalfdozenToolName: this.env.PINNED_HALFDOZEN_TOOL_NAME?.trim() || 'halfdozen_notion',
       pinnedClientToolName: this.env.PINNED_CLIENT_TOOL_NAME?.trim() || 'blondish_notion',
+      routerOpenAiApiKey: this.env.OPENAI_API_KEY?.trim(),
+      routerOpenAiModel: this.env.ROUTER_OPENAI_MODEL?.trim(),
+      routerOpenAiTimeoutMs: parsePositiveInt(this.env.ROUTER_OPENAI_TIMEOUT_MS),
+      routerOpenAiCacheTtlMs: parsePositiveInt(this.env.ROUTER_OPENAI_CACHE_TTL_MS),
       getActor: () => this.currentAccountId,
     });
     registerInfoResources(this.server);

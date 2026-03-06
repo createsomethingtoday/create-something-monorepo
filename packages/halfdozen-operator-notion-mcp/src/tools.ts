@@ -529,7 +529,10 @@ async function runRouterIntent(
   }
 
   if (intent === 'wizard') {
-    return runAccountsTool('wizard', mergedArgs, deps);
+    const wizardArgs: Record<string, unknown> = { ...mergedArgs };
+    const pinToolName = normalizePinToolName(wizardArgs.pin_tool_name, deps);
+    if (pinToolName) wizardArgs.pin_tool_name = pinToolName;
+    return runAccountsTool('wizard', wizardArgs, deps);
   }
 
   return toJsonResult({

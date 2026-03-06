@@ -292,7 +292,19 @@ export async function refreshNotionAccountState(
   db: D1Database,
   composio: Composio,
   account: NotionAccountRow,
+  options?: {
+    force?: boolean;
+    minIntervalMs?: number;
+  },
 ): Promise<NotionAccountRow> {
+  const minIntervalMs = options?.minIntervalMs ?? 0;
+  if (!options?.force && minIntervalMs > 0) {
+    const lastCheckedMs = parseDbTimestamp(account.last_checked_at);
+    if (lastCheckedMs !== null && Date.now() - lastCheckedMs < minIntervalMs) {
+      return account;
+    }
+  }
+
   const response = await composio.connectedAccounts.list({ userIds: [account.composio_user_id] });
   const items = Array.isArray((response as { items?: unknown[] }).items)
     ? (response as { items: unknown[] }).items
@@ -329,4 +341,15 @@ export async function refreshNotionAccountState(
     last_checked_at: new Date().toISOString(),
     connected_at: connectedAt,
   };
+}
+
+function parseDbTimestamp(value: string | null): number | null {
+  if (!value) return null;
+
+  const isoCandidate = value.includes('T') ? value : `${value.replace(' ', 'T')}Z`;
+  const isoMs = Date.parse(isoCandidate);
+  if (!Number.isNaN(isoMs)) return isoMs;
+
+  const fallbackMs = Date.parse(value);
+  return Number.isNaN(fallbackMs) ? null : fallbackMs;
 }
