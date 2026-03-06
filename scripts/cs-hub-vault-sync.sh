@@ -12,6 +12,7 @@ TEAM_KEYS=(
   "LAINY"
   "DANNY"
   "AUGUST"
+  "C3DENVER"
   "AARON_OUTERFIELDS"
   "ANDRE_OUTERFIELDS"
   "FILLIP"
@@ -30,7 +31,17 @@ BRIDGE_TEAM_KEYS=(
 
 DOPPLER_PROJECT="${DOPPLER_PROJECT:-create-something}"
 DOPPLER_CONFIG="${DOPPLER_CONFIG:-production}"
-LOAD_FROM_DOPPLER="${LOAD_FROM_DOPPLER:-true}"
+VAULT_PROVIDER="${VAULT_PROVIDER:-doppler}"
+LOAD_FROM_VAULT="${LOAD_FROM_VAULT:-${LOAD_FROM_DOPPLER:-true}}"
+INFISICAL_PROJECT_ID="${INFISICAL_PROJECT_ID:-}"
+INFISICAL_ENV="${INFISICAL_ENV:-prod}"
+INFISICAL_PATH="${INFISICAL_PATH:-/}"
+INFISICAL_INCLUDE_IMPORTS="${INFISICAL_INCLUDE_IMPORTS:-true}"
+INFISICAL_API_URL="${INFISICAL_API_URL:-https://app.infisical.com}"
+INFISICAL_ORGANIZATION_SLUG="${INFISICAL_ORGANIZATION_SLUG:-}"
+INFISICAL_CLIENT_ID="${INFISICAL_CLIENT_ID:-}"
+INFISICAL_CLIENT_SECRET="${INFISICAL_CLIENT_SECRET:-}"
+INFISICAL_TOKEN="${INFISICAL_TOKEN:-}"
 INCLUDE_BRIDGES="${INCLUDE_BRIDGES:-true}"
 DRY_RUN="${DRY_RUN:-false}"
 
@@ -54,11 +65,25 @@ normalize_bool_or_fail() {
   esac
 }
 
+normalize_provider_or_fail() {
+  local raw="${1:-}"
+  local lowered
+  lowered="$(echo "$raw" | tr '[:upper:]' '[:lower:]')"
+  case "$lowered" in
+    doppler | infisical | env) echo "$lowered" ;;
+    *)
+      echo "invalid VAULT_PROVIDER: ${raw} (expected doppler|infisical|env)" >&2
+      exit 1
+      ;;
+  esac
+}
+
 hub_worker_for_team() {
   case "$1" in
     "LAINY") echo "cs-hub-lainy" ;;
     "DANNY") echo "cs-hub-danny" ;;
     "AUGUST") echo "cs-hub-august" ;;
+    "C3DENVER") echo "cs-hub-c3denver" ;;
     "AARON_OUTERFIELDS") echo "cs-hub-aaron-outerfields" ;;
     "ANDRE_OUTERFIELDS") echo "cs-hub-andre-outerfields" ;;
     "FILLIP") echo "cs-hub-fillip" ;;
@@ -113,6 +138,80 @@ load_secrets_from_doppler() {
   done < <(printf '%s' "$payload" | jq -r 'to_entries[] | [.key, (.value | tostring)] | @tsv')
 }
 
+load_secrets_from_infisical() {
+  local token="${INFISICAL_TOKEN:-}"
+
+  if [[ -z "$token" ]] && [[ -n "${INFISICAL_CLIENT_ID:-}" || -n "${INFISICAL_CLIENT_SECRET:-}" ]]; then
+    if [[ -z "${INFISICAL_CLIENT_ID:-}" || -z "${INFISICAL_CLIENT_SECRET:-}" ]]; then
+      echo "for Universal Auth, both INFISICAL_CLIENT_ID and INFISICAL_CLIENT_SECRET are required" >&2
+      exit 1
+    fi
+    require_cmd curl
+    local auth_url="${INFISICAL_API_URL%/}/api/v1/auth/universal-auth/login"
+    local auth_payload
+    if [[ -n "$INFISICAL_ORGANIZATION_SLUG" ]]; then
+      auth_payload="$(jq -cn \
+        --arg clientId "$INFISICAL_CLIENT_ID" \
+        --arg clientSecret "$INFISICAL_CLIENT_SECRET" \
+        --arg organizationSlug "$INFISICAL_ORGANIZATION_SLUG" \
+        '{clientId: $clientId, clientSecret: $clientSecret, organizationSlug: $organizationSlug}')"
+    else
+      auth_payload="$(jq -cn \
+        --arg clientId "$INFISICAL_CLIENT_ID" \
+        --arg clientSecret "$INFISICAL_CLIENT_SECRET" \
+        '{clientId: $clientId, clientSecret: $clientSecret}')"
+    fi
+    token="$(
+      curl -fsS "$auth_url" \
+        --request POST \
+        --header "Content-Type: application/json" \
+        --data "$auth_payload" | jq -r '.accessToken // empty'
+    )"
+    if [[ -z "$token" ]]; then
+      echo "failed to mint INFISICAL_TOKEN via Universal Auth" >&2
+      exit 1
+    fi
+  fi
+
+  local scope
+  scope="env=${INFISICAL_ENV} path=${INFISICAL_PATH}"
+  if [[ -n "$INFISICAL_PROJECT_ID" ]]; then
+    scope="${scope} projectId=${INFISICAL_PROJECT_ID}"
+  else
+    scope="${scope} projectId=<from infisical config/session>"
+  fi
+  echo "loading secrets from Infisical ${scope}"
+
+  local -a export_cmd=(
+    infisical export
+    --format=json
+    --env="$INFISICAL_ENV"
+    --path="$INFISICAL_PATH"
+    --include-imports="$INFISICAL_INCLUDE_IMPORTS"
+  )
+  if [[ -n "$INFISICAL_PROJECT_ID" ]]; then
+    export_cmd+=(--projectId="$INFISICAL_PROJECT_ID")
+  fi
+
+  local payload
+  if [[ -n "$token" ]]; then
+    payload="$(
+      INFISICAL_API_URL="$INFISICAL_API_URL" \
+      INFISICAL_TOKEN="$token" \
+      "${export_cmd[@]}"
+    )"
+  else
+    payload="$(
+      INFISICAL_API_URL="$INFISICAL_API_URL" \
+      "${export_cmd[@]}"
+    )"
+  fi
+
+  while IFS=$'\t' read -r key value; do
+    export "${key}=${value}"
+  done < <(printf '%s' "$payload" | jq -r 'to_entries[] | [.key, (.value | tostring)] | @tsv')
+}
+
 require_secret() {
   local name="$1"
   local value="${!name:-}"
@@ -158,16 +257,31 @@ put_secret() {
   printf '%s' "$value" | pnpm exec wrangler secret put "$key" --name "$target_worker" --config "$config"
 }
 
-LOAD_FROM_DOPPLER="$(normalize_bool_or_fail "$LOAD_FROM_DOPPLER")"
+VAULT_PROVIDER="$(normalize_provider_or_fail "$VAULT_PROVIDER")"
+LOAD_FROM_VAULT="$(normalize_bool_or_fail "$LOAD_FROM_VAULT")"
+INFISICAL_INCLUDE_IMPORTS="$(normalize_bool_or_fail "$INFISICAL_INCLUDE_IMPORTS")"
 INCLUDE_BRIDGES="$(normalize_bool_or_fail "$INCLUDE_BRIDGES")"
 DRY_RUN="$(normalize_bool_or_fail "$DRY_RUN")"
 
 require_cmd pnpm
 require_cmd jq
 
-if [[ "$LOAD_FROM_DOPPLER" == "true" ]]; then
-  require_cmd doppler
-  load_secrets_from_doppler
+if [[ "$LOAD_FROM_VAULT" == "true" ]]; then
+  case "$VAULT_PROVIDER" in
+    doppler)
+      require_cmd doppler
+      load_secrets_from_doppler
+      ;;
+    infisical)
+      require_cmd infisical
+      load_secrets_from_infisical
+      ;;
+    env)
+      echo "VAULT_PROVIDER=env; skipping vault pull and using existing process environment"
+      ;;
+  esac
+else
+  echo "LOAD_FROM_VAULT=false; using existing process environment"
 fi
 
 echo "validating required secrets..."

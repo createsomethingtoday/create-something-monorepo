@@ -1,6 +1,6 @@
 # CS Hub Vault + Rotation Workflow
 
-Use this workflow to keep Hub and Notion bridge delivery credentials in Doppler and rotate them without storing plaintext tokens in docs.
+Use this workflow to keep Hub and Notion bridge delivery credentials in a vault (Doppler default, Infisical supported) and rotate them without storing plaintext tokens in docs.
 
 ## 1) Install Doppler CLI
 
@@ -49,6 +49,7 @@ Per-team strict hub tokens:
 - `CS_HUB_LAINY_API_TOKEN`
 - `CS_HUB_DANNY_API_TOKEN`
 - `CS_HUB_AUGUST_API_TOKEN`
+- `CS_HUB_C3DENVER_API_TOKEN`
 - `CS_HUB_AARON_OUTERFIELDS_API_TOKEN`
 - `CS_HUB_ANDRE_OUTERFIELDS_API_TOKEN`
 - `CS_HUB_FILLIP_API_TOKEN`
@@ -81,8 +82,27 @@ Useful options:
 ```bash
 DRY_RUN=true pnpm mcp:hub:vault:sync
 INCLUDE_BRIDGES=false pnpm mcp:hub:vault:sync
-LOAD_FROM_DOPPLER=false pnpm mcp:hub:vault:sync
+LOAD_FROM_VAULT=false pnpm mcp:hub:vault:sync
+LOAD_FROM_DOPPLER=false pnpm mcp:hub:vault:sync  # backward compatible alias
+VAULT_PROVIDER=env pnpm mcp:hub:vault:sync
 ```
+
+Infisical pilot (Machine Identity / Universal Auth):
+
+```bash
+VAULT_PROVIDER=infisical \
+INFISICAL_PROJECT_ID="<project-id>" \
+INFISICAL_ENV=prod \
+INFISICAL_CLIENT_ID="<machine-identity-client-id>" \
+INFISICAL_CLIENT_SECRET="<machine-identity-client-secret>" \
+pnpm mcp:hub:vault:sync
+```
+
+Notes:
+
+- `INFISICAL_PROJECT_ID` is optional if your local Infisical session/config already scopes a project.
+- For self-hosted or regional domains, set `INFISICAL_API_URL`.
+- The Infisical path requires the `infisical` CLI installed locally/in CI.
 
 ## 5) Rotate delivery credentials and roll out
 
@@ -115,8 +135,37 @@ For CI/CD or production automation, avoid human `doppler login` sessions:
 
 - use Doppler Service Tokens, or
 - use Doppler OIDC login (`doppler oidc login ...`) for short-lived auth.
+- for Infisical, use Machine Identity Universal Auth (`INFISICAL_CLIENT_ID` + `INFISICAL_CLIENT_SECRET`) instead of interactive login.
 
 ## 7) Delivery policy alignment
 
 - Never place plaintext bearer/basic credentials in docs, tickets, commit history, or chat logs.
 - Deliver credentials through controlled channels only (partner portal, managed vault, audited secure handoff).
+
+## 8) Migrate Doppler secrets to Infisical
+
+Use the migration script to copy one Doppler config into one Infisical env/path:
+
+```bash
+INFISICAL_PROJECT_ID="mcp-m1k5" \
+INFISICAL_CLIENT_ID="<machine-identity-client-id>" \
+INFISICAL_CLIENT_SECRET="<machine-identity-client-secret>" \
+pnpm mcp:hub:vault:migrate:doppler-to-infisical -- \
+  --doppler-project create-something \
+  --doppler-config production \
+  --infisical-env prod \
+  --infisical-path / \
+  --verify
+```
+
+Dry run:
+
+```bash
+pnpm mcp:hub:vault:migrate:doppler-to-infisical -- --dry-run
+```
+
+Notes:
+
+- By default, runtime metadata vars (`DOPPLER_PROJECT`, `DOPPLER_CONFIG`, `DOPPLER_ENVIRONMENT`) are excluded.
+- Add `--include-doppler-runtime-vars` if you explicitly want those copied.
+- Repeat once per Doppler config (`dev`, `staging`, `production`) and map to matching Infisical envs.

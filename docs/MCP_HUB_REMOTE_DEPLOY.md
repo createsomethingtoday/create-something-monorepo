@@ -208,10 +208,10 @@ The verifier checks:
 
 ## Vault-Managed Secret Workflow
 
-Use Doppler as the source of truth for Hub and Notion bridge delivery credentials:
+Use a vault as the source of truth for Hub and Notion bridge delivery credentials (Doppler default, Infisical supported for pilot):
 
 ```bash
-# Sync existing Doppler values to Cloudflare Worker secrets
+# Sync current vault values to Cloudflare Worker secrets
 pnpm mcp:hub:vault:sync
 
 # Rotate delivery credentials, sync, deploy, and verify

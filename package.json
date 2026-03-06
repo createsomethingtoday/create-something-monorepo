@@ -79,6 +79,7 @@
     "mcp:hub:fleet:verify": "bash scripts/cs-hub-fleet-verify.sh",
     "mcp:hub:legacy:deploy": "bash scripts/cs-hub-legacy-bridge-deploy.sh",
     "mcp:hub:vault:sync": "bash scripts/cs-hub-vault-sync.sh",
+    "mcp:hub:vault:migrate:doppler-to-infisical": "bash scripts/migrate-doppler-to-infisical.sh",
     "mcp:hub:rotate:production": "bash scripts/cs-hub-rotate-production.sh",
     "mcp:registry:validate": "tsx scripts/mcp-registry.ts validate",
     "mcp:registry:generate": "tsx scripts/mcp-registry.ts generate",
