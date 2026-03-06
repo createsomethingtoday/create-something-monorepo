@@ -1781,7 +1781,7 @@ interface PolicyDecisionInput {
 	actionName: string;
 	accountId: string;
 	actor: string;
-	input: ConstraintEvaluationInput;
+	request: AuthorizationRequest;
 	metadata: Record<string, unknown>;
 }
 
@@ -1835,23 +1835,47 @@ async function evaluatePartnerPolicyDecision(
 	env: Env,
 	args: PolicyDecisionInput
 ): Promise<DecisionTelemetry> {
-	const policy = MCP_PARTNER_POLICIES[args.policyId];
-	if (!policy) {
-		throw new Error(`Unknown partner policy: ${args.policyId}`);
-	}
-
-	const rollout = await getOrCreatePolicyRollout(db, args.policyId);
+	const manifest = getPolicyManifest(args.policyId);
+	const rollout = await getAuthzRollout(
+		db,
+		{
+			scopeType: 'policy',
+			policyId: args.policyId,
+		},
+		manifest,
+		{
+			readLegacyRollout: async (compatDb, scope) => {
+				if (scope.scopeType !== 'policy') return null;
+				const existing = await findMcpPolicyRollout(compatDb as D1Database, scope.policyId);
+				if (!existing) return null;
+				return {
+					scopeKey: `policy:${scope.policyId}`,
+					scopeType: 'policy',
+					policyId: scope.policyId,
+					accountId: args.accountId,
+					entityType: null,
+					entityId: null,
+					mode: normalizeRolloutMode(existing.mode),
+					canaryPercent: normalizeCanaryPercent(existing.canary_percent),
+					mismatchThreshold: 0.005,
+					fallbackRateThreshold: 0.01,
+					updatedBy: existing.updated_by,
+					updatedAt: toEpochSeconds(existing.updated_at),
+				};
+			},
+		},
+	);
 	const hybridFallbackEnabled = parseBooleanEnv(env.MCP_POLICY_FALLBACK_ENABLED, true);
 	const osoFetchTimeoutMillis = parseIntegerEnv(env.OSO_FETCH_TIMEOUT_MILLIS, 5000, 100, 30000);
 
 	let decision: DecisionTelemetry;
 	try {
-		const withRollout = await evaluateConstraintPolicyWithRollout(
-			args.input,
-			policy,
+		const evaluation = await evaluateAuthorizationRequest(
+			args.policyId,
+			args.request,
 			{
 				mode: rollout.mode,
-				canaryPercent: rollout.canary_percent,
+				canaryPercent: rollout.canaryPercent,
 			},
 			{
 				mode: 'hybrid',
@@ -1865,35 +1889,74 @@ async function evaluatePartnerPolicyDecision(
 			}
 		);
 
-		const final = withRollout.final;
-		const polarRef = withRollout.polar;
+		const final = evaluation.final;
+		const polarRef = evaluation.polar;
 		const fallbackUsed = polarRef.evaluationPath === 'fallback';
 
-		await createMcpPolicyEvent(db, {
-			id: generateUUID(),
-			policy_id: args.policyId,
-			action_name: args.actionName,
-			account_id: args.accountId,
-			actor: args.actor,
-			rollout_mode: rollout.mode,
-			canary_percent: rollout.canary_percent,
-			sampled_polar: withRollout.sampledPolar ? 1 : 0,
-			mismatch: withRollout.mismatch ? 1 : 0,
-			evaluation_path: final.evaluationPath,
-			fallback_used: fallbackUsed ? 1 : 0,
-			fallback_reason: polarRef.fallbackReason ?? null,
-			legacy_decision: withRollout.legacy.decision,
-			polar_decision: withRollout.polar.decision,
-			final_decision: final.decision,
-			policy_hash: polarRef.policyHash ?? null,
-			compiler_version: polarRef.compilerVersion ?? null,
-			metadata_json: JSON.stringify({
-				...args.metadata,
-				decision_reason: final.reason,
-				matched_rule_ids: final.matchedRuleIds,
-				latency_ms: Math.floor(final.latencyMs),
-			}),
-		});
+		await recordAuthzDecisionEvent(
+			db,
+			{
+				id: generateUUID(),
+				scopeKey: `policy:${args.policyId}`,
+				scopeType: 'policy',
+				policyId: args.policyId,
+				accountId: args.accountId,
+				tenantId: args.request.actor.tenantId ?? null,
+				entityType: null,
+				entityId: null,
+				actorId: args.actor,
+				actorRole: args.request.actor.role ?? null,
+				actionName: args.actionName,
+				resourceKind: args.request.resource.kind,
+				resourceId: args.request.resource.id ?? null,
+				resourceAccessType: args.request.resource.accessType ?? null,
+				rolloutMode: rollout.mode,
+				canaryPercent: rollout.canaryPercent,
+				sampledPolar: evaluation.final.sampledPolar ? 1 : 0,
+				mismatch: evaluation.final.mismatch ? 1 : 0,
+				evaluationPath: final.evaluationPath,
+				fallbackUsed: fallbackUsed ? 1 : 0,
+				fallbackReason: polarRef.fallbackReason ?? null,
+				legacyDecision: evaluation.legacy.decision,
+				polarDecision: evaluation.polar.decision,
+				finalDecision: final.decision,
+				matchedRuleIdsJson: JSON.stringify(final.matchedRuleIds),
+				reason: final.reason,
+				policyHash: polarRef.policyHash ?? null,
+				compilerVersion: polarRef.compilerVersion ?? null,
+				correlationId: null,
+				metadataJson: JSON.stringify({
+					...args.metadata,
+					decision_reason: final.reason,
+					matched_rule_ids: final.matchedRuleIds,
+					latency_ms: Math.floor(final.latencyMs),
+				}),
+			},
+			{
+				writeLegacyEvent: async (compatDb, event) => {
+					await createMcpPolicyEvent(compatDb as D1Database, {
+						id: event.id,
+						policy_id: event.policyId,
+						action_name: event.actionName,
+						account_id: event.accountId,
+						actor: event.actorId,
+						rollout_mode: event.rolloutMode,
+						canary_percent: event.canaryPercent,
+						sampled_polar: event.sampledPolar,
+						mismatch: event.mismatch,
+						evaluation_path: event.evaluationPath,
+						fallback_used: event.fallbackUsed,
+						fallback_reason: event.fallbackReason,
+						legacy_decision: event.legacyDecision,
+						polar_decision: event.polarDecision,
+						final_decision: event.finalDecision,
+						policy_hash: event.policyHash,
+						compiler_version: event.compilerVersion,
+						metadata_json: event.metadataJson,
+					});
+				},
+			},
+		);
 
 		decision = {
 			policy_id: args.policyId,
@@ -1902,33 +1965,71 @@ async function evaluatePartnerPolicyDecision(
 			policy_hash: polarRef.policyHash ?? null,
 			fallback_used: fallbackUsed,
 			rollout_mode: rollout.mode,
-			canary_percent: rollout.canary_percent,
+			canary_percent: rollout.canaryPercent,
+			matched_rule_ids: final.matchedRuleIds,
+			compiler_version: polarRef.compilerVersion ?? null,
 			reason: final.reason,
 		};
 	} catch (error) {
 		const reason = error instanceof Error ? error.message : 'policy evaluation failure';
-		await createMcpPolicyEvent(db, {
+		const failureEvent: AuthzDecisionEventRecord = {
 			id: generateUUID(),
-			policy_id: args.policyId,
-			action_name: args.actionName,
-			account_id: args.accountId,
-			actor: args.actor,
-			rollout_mode: rollout.mode,
-			canary_percent: rollout.canary_percent,
-			sampled_polar: 0,
+			scopeKey: `policy:${args.policyId}`,
+			scopeType: 'policy',
+			policyId: args.policyId,
+			accountId: args.accountId,
+			tenantId: args.request.actor.tenantId ?? null,
+			entityType: null,
+			entityId: null,
+			actorId: args.actor,
+			actorRole: args.request.actor.role ?? null,
+			actionName: args.actionName,
+			resourceKind: args.request.resource.kind,
+			resourceId: args.request.resource.id ?? null,
+			resourceAccessType: args.request.resource.accessType ?? null,
+			rolloutMode: rollout.mode,
+			canaryPercent: rollout.canaryPercent,
+			sampledPolar: 0,
 			mismatch: 0,
-			evaluation_path: 'fallback',
-			fallback_used: 1,
-			fallback_reason: reason,
-			legacy_decision: 'block',
-			polar_decision: 'block',
-			final_decision: 'block',
-			policy_hash: null,
-			compiler_version: null,
-			metadata_json: JSON.stringify({
+			evaluationPath: 'fallback',
+			fallbackUsed: 1,
+			fallbackReason: reason,
+			legacyDecision: 'block',
+			polarDecision: 'block',
+			finalDecision: 'block',
+			matchedRuleIdsJson: JSON.stringify(['policy_evaluation_failure']),
+			reason: `Policy evaluation failed: ${reason}`,
+			policyHash: null,
+			compilerVersion: null,
+			correlationId: null,
+			metadataJson: JSON.stringify({
 				...args.metadata,
 				evaluation_error: reason,
 			}),
+		};
+		await recordAuthzDecisionEvent(db, failureEvent, {
+			writeLegacyEvent: async (compatDb, event) => {
+				await createMcpPolicyEvent(compatDb as D1Database, {
+					id: event.id,
+					policy_id: event.policyId,
+					action_name: event.actionName,
+					account_id: event.accountId,
+					actor: event.actorId,
+					rollout_mode: event.rolloutMode,
+					canary_percent: event.canaryPercent,
+					sampled_polar: event.sampledPolar,
+					mismatch: event.mismatch,
+					evaluation_path: event.evaluationPath,
+					fallback_used: event.fallbackUsed,
+					fallback_reason: event.fallbackReason,
+					legacy_decision: event.legacyDecision,
+					polar_decision: event.polarDecision,
+					final_decision: event.finalDecision,
+					policy_hash: event.policyHash,
+					compiler_version: event.compilerVersion,
+					metadata_json: event.metadataJson,
+				});
+			},
 		});
 
 		decision = {
@@ -1938,34 +2039,14 @@ async function evaluatePartnerPolicyDecision(
 			policy_hash: null,
 			fallback_used: true,
 			rollout_mode: rollout.mode,
-			canary_percent: rollout.canary_percent,
+			canary_percent: rollout.canaryPercent,
+			matched_rule_ids: ['policy_evaluation_failure'],
+			compiler_version: null,
 			reason: `Policy evaluation failed: ${reason}`,
 		};
 	}
 
 	return decision;
-}
-
-async function getOrCreatePolicyRollout(
-	db: D1Database,
-	policyId: string
-): Promise<{ mode: RolloutConfig['mode']; canary_percent: number }> {
-	const existing = await findMcpPolicyRollout(db, policyId);
-	if (existing) {
-		return {
-			mode: normalizeRolloutMode(existing.mode),
-			canary_percent: normalizeCanaryPercent(existing.canary_percent),
-		};
-	}
-
-	await createMcpPolicyRollout(db, {
-		policy_id: policyId,
-		mode: 'legacy_enforce',
-		canary_percent: 0,
-		updated_by: 'system:bootstrap',
-	});
-
-	return { mode: 'legacy_enforce', canary_percent: 0 };
 }
 
 function normalizeRolloutMode(raw: string): RolloutConfig['mode'] {
@@ -2001,13 +2082,13 @@ function combinePolicyDecisions(decisions: DecisionTelemetry[]): DecisionTelemet
 	return selected;
 }
 
-function decisionRank(decision: ConstraintDecisionType): number {
+function decisionRank(decision: AuthorizationDecisionType): number {
 	if (decision === 'block') return 0;
 	if (decision === 'require_human_review') return 1;
 	return 2;
 }
 
-function policyDecisionHttpStatus(decision: ConstraintDecisionType): number {
+function policyDecisionHttpStatus(decision: AuthorizationDecisionType): number {
 	if (decision === 'block') return 403;
 	if (decision === 'require_human_review') return 409;
 	return 200;
