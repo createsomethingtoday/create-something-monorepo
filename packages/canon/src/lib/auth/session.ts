@@ -662,13 +662,13 @@ function getDomainFromHostname(hostname: string, isProduction: boolean): string 
 export async function handleLogout(
 	request: Request,
 	cookies: CookiesAPI,
-	platform?: { env?: { ENVIRONMENT?: string } & Record<string, string | undefined> }
+	platform?: { env?: Record<string, unknown> & { ENVIRONMENT?: string } }
 ): Promise<Response> {
 	try {
 		const isProduction = platform?.env?.ENVIRONMENT === 'production';
 		const url = new URL(request.url);
 		const domain = getDomainFromHostname(url.hostname, isProduction);
-		const authProvider = getAuth0Config(platform?.env);
+		const authProvider = getAuth0Config(platform?.env as Record<string, string | undefined> | undefined);
 
 		// Get refresh token to revoke at Identity Worker
 		const refreshToken = getRefreshTokenFromRequest(request);
