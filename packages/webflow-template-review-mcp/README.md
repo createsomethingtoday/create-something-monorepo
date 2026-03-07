@@ -48,6 +48,8 @@ Optional:
 - `template_review_get_asset`
 - `template_review_list_versions`
 - `template_review_get_version`
+- `template_review_list_releases`
+- `template_review_complete_publishing`
 - `template_review_update_asset_metadata`
 - `template_review_update_version_review`
 - `template_review_request_changes`

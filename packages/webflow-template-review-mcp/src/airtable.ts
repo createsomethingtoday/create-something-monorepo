@@ -608,14 +608,20 @@ export class AirtableClient {
     }
 
     const releaseLocalDate = input.release_date_local ?? currentLocalDate(input.time_zone ?? 'UTC');
-    const resolvedRelease =
+    const releaseRecord =
       input.release_record_id !== undefined
         ? (await this.getRecord(TABLE_IDS.assetReleases, input.release_record_id))
         : null;
 
+    if (input.release_record_id !== undefined && !releaseRecord) {
+      throw new AirtableClientError('RELEASE_NOT_FOUND', 'Asset Release record not found.', 404, {
+        release_record_id: input.release_record_id,
+      });
+    }
+
     const release =
-      resolvedRelease !== null
-        ? mapRelease(resolvedRelease)
+      releaseRecord !== null
+        ? mapRelease(releaseRecord)
         : await this.findReleaseByLocalDate(releaseLocalDate);
 
     const checklist = currentVersion.publishingChecklist;

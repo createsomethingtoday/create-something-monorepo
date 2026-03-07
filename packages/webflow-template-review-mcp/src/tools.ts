@@ -167,6 +167,48 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
   );
 
   server.tool(
+    'template_review_complete_publishing',
+    'Complete the publishing checklist for a template version and attach a release using either a record id or a local-date lookup.',
+    {
+      version_id: z.string().min(1),
+      release_record_id: z.string().optional(),
+      release_date_local: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+      time_zone: z.string().optional(),
+      approve_version: z.boolean().optional(),
+      mrp_id_overwrite: z.string().optional(),
+    },
+    async ({ version_id, release_record_id, release_date_local, time_zone, approve_version, mrp_id_overwrite }) => {
+      try {
+        if (!release_record_id && !release_date_local && !time_zone) {
+          throw new AirtableClientError(
+            'MISSING_RELEASE_SELECTOR',
+            'Provide release_record_id, release_date_local, or time_zone so the publishing workflow can resolve a release.',
+            400,
+          );
+        }
+
+        const result = await getClient().completePublishing(version_id, {
+          release_record_id,
+          release_date_local,
+          time_zone,
+          approve_version,
+          mrp_id_overwrite,
+        });
+
+        return asSuccess({
+          updated_version: result.updatedVersion,
+          updated_asset: result.updatedAsset,
+          resolved_release: result.resolvedRelease,
+          resolved_local_date: result.resolvedLocalDate,
+          support: TEMPLATE_REVIEW_FIELD_MAP.writeSupport.publishingCompletion,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
     'template_review_update_asset_metadata',
     'Update confirmed writable template asset fields.',
     {
