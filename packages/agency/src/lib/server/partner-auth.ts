@@ -244,6 +244,46 @@ export async function getPartnerClientBySlug(
 		.first<PartnerAuthClientRow>();
 }
 
+export async function listPartnerClients(
+	db: D1Database,
+	partnerKey: string,
+	options: { limit?: number; search?: string } = {}
+): Promise<PartnerAuthClientRow[]> {
+	const limit = Math.max(1, Math.min(250, options.limit ?? 100));
+	const search = options.search?.trim();
+	if (search) {
+		const pattern = `%${search.toLowerCase()}%`;
+		const result = await db
+			.prepare(
+				`SELECT * FROM partner_auth_clients
+         WHERE partner_key = ?
+           AND (
+             lower(slug) LIKE ?
+             OR lower(COALESCE(display_name, '')) LIKE ?
+             OR lower(COALESCE(owner_email, '')) LIKE ?
+             OR lower(COALESCE(identity_user_id, '')) LIKE ?
+             OR lower(COALESCE(identity_account_id, '')) LIKE ?
+           )
+         ORDER BY updated_at DESC
+         LIMIT ?`
+			)
+			.bind(partnerKey, pattern, pattern, pattern, pattern, pattern, limit)
+			.all<PartnerAuthClientRow>();
+		return result.results ?? [];
+	}
+
+	const result = await db
+		.prepare(
+			`SELECT * FROM partner_auth_clients
+       WHERE partner_key = ?
+       ORDER BY updated_at DESC
+       LIMIT ?`
+		)
+		.bind(partnerKey, limit)
+		.all<PartnerAuthClientRow>();
+	return result.results ?? [];
+}
+
 export async function getLatestActiveConsent(
 	db: D1Database,
 	partnerClientId: string

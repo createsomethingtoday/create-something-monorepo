@@ -59,6 +59,8 @@
 				<a href="/admin/security" aria-current="page">Overview</a>
 				<a href="/admin/security/bearer-tokens">Bearer Governance</a>
 				<a href="/admin/security/contracts">Contracts</a>
+				<a href="/admin/security/commercial">Commercial</a>
+				<a href="/admin/security/partners">Partners</a>
 			</nav>
 		</header>
 
@@ -97,6 +99,14 @@
 			<a href="/admin/security/contracts" class="action-card">
 				<h2>Contracts</h2>
 				<p>Set explicit contract authority for users, accounts, and tenants. Contract state overrides Stripe timing noise.</p>
+			</a>
+			<a href="/admin/security/commercial" class="action-card">
+				<h2>Commercial State</h2>
+				<p>Inspect raw Stripe-backed customer, subscription, and invoice posture feeding billing enforcement.</p>
+			</a>
+			<a href="/admin/security/partners" class="action-card">
+				<h2>Partner Mappings</h2>
+				<p>Inspect partner client status, Auth0 subject mapping, workspace account mapping, and required toolkits.</p>
 			</a>
 		</section>
 
