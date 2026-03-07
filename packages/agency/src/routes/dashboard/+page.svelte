@@ -1,7 +1,11 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
+	import { invalidateAll } from '$app/navigation';
 
 	let { data } = $props();
+	let policyBusy = $state(false);
+	let policyMessage = $state('');
+	let policyError = $state('');
 
 	function formatDate(value: string | null | undefined): string {
 		if (!value) return 'Not set';
@@ -34,13 +38,35 @@
 	}
 
 	function tokenStatusLabel(): string {
+		if (!data.entitlement.accountId || !data.entitlement.tenantId) return 'Not provisioned yet';
 		if (!data.access.tokenAvailable) return 'Unavailable';
 		return data.access.token?.active ? 'Token active' : 'No token issued';
 	}
 
 	function passwordStatusLabel(): string {
+		if (!data.entitlement.accountId || !data.entitlement.tenantId) return 'Not provisioned yet';
 		if (!data.access.password.available) return 'Unavailable';
 		return data.access.password.hasPassword ? 'Password set' : 'Password not set';
+	}
+
+	async function acceptPolicy() {
+		policyBusy = true;
+		policyMessage = '';
+		policyError = '';
+
+		try {
+			const response = await fetch('/api/me/mcp-policy-acceptance', { method: 'POST' });
+			const payload = (await response.json().catch(() => ({}))) as { message?: string };
+			if (!response.ok) {
+				throw new Error(payload.message ?? 'Failed to accept policy');
+			}
+			policyMessage = payload.message ?? 'Policy accepted.';
+			await invalidateAll();
+		} catch (error) {
+			policyError = error instanceof Error ? error.message : 'Failed to accept policy';
+		} finally {
+			policyBusy = false;
+		}
 	}
 </script>
 
@@ -77,7 +103,13 @@
 			<span class="summary-label">Bearer Token</span>
 			<span class="summary-value">{tokenStatusLabel()}</span>
 			<span class="summary-note">
-				{data.access.token?.token_prefix ? `Prefix ${data.access.token.token_prefix}` : 'Create or manage in MCP Access'}
+				{#if data.access.token?.token_prefix}
+					{`Prefix ${data.access.token.token_prefix}`}
+				{:else if !data.entitlement.accountId || !data.entitlement.tenantId}
+					Accept policy to initialize this account
+				{:else}
+					Create or manage in MCP Access
+				{/if}
 			</span>
 		</div>
 
@@ -107,7 +139,12 @@
 				<a href="/mcp-access" class="action-link">Manage token</a>
 			</div>
 
-			{#if data.access.tokenAvailable}
+			{#if !data.entitlement.accountId || !data.entitlement.tenantId}
+				<p class="empty-state">
+					This account has not been provisioned for MCP credentials yet. Accept the access policy below to
+					initialize your linked account and tenant.
+				</p>
+			{:else if data.access.tokenAvailable}
 				{#if data.access.token}
 					<div class="detail-grid">
 						<div>
@@ -188,6 +225,11 @@
 						flow. It does not change your portal login or your bearer token.
 					</p>
 				</div>
+			{:else if !data.entitlement.accountId || !data.entitlement.tenantId}
+				<p class="empty-state">
+					ChatGPT connection setup will appear after this account is provisioned. Accept the access policy
+					first to create the linked account context.
+				</p>
 			{:else}
 				<p class="empty-state">
 					Password state is currently unavailable: {data.access.password.error ?? 'Unable to reach the identity service.'}
@@ -205,6 +247,27 @@
 				</div>
 				<span class="timestamp">Updated {formatDateTime(data.entitlement.updatedAt)}</span>
 			</div>
+
+			{#if data.overview.accessReason === 'policy_acceptance_required'}
+				<div class="note-panel note-panel-strong">
+					<p>
+						Access is currently blocked only because the `.agency` access policy has not been accepted for
+						this account yet.
+					</p>
+					<div class="inline-actions">
+						<button type="button" class="primary-button" disabled={policyBusy} onclick={acceptPolicy}>
+							{policyBusy ? 'Accepting…' : 'Accept Access Policy'}
+						</button>
+						<a href="/security" class="action-link">Review security model</a>
+					</div>
+					{#if policyMessage}
+						<p class="feedback-success">{policyMessage}</p>
+					{/if}
+					{#if policyError}
+						<p class="feedback-error">{policyError}</p>
+					{/if}
+				</div>
+			{/if}
 
 			<div class="check-grid">
 				{#each Object.entries(data.entitlement.decision.checks) as [key, value]}
@@ -514,10 +577,51 @@
 		margin-top: var(--space-lg);
 	}
 
+	.note-panel-strong {
+		background: rgba(255, 255, 255, 0.05);
+		border-color: rgba(255, 255, 255, 0.14);
+	}
+
 	.note-panel p,
 	.empty-state {
 		margin: 0;
 		line-height: 1.6;
+	}
+
+	.inline-actions {
+		display: flex;
+		align-items: center;
+		gap: var(--space-md);
+		margin-top: var(--space-md);
+		flex-wrap: wrap;
+	}
+
+	.primary-button {
+		border: 0;
+		border-radius: 999px;
+		padding: 0.8rem 1.25rem;
+		background: var(--color-fg-primary);
+		color: var(--color-bg-primary, #000);
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.primary-button:disabled {
+		opacity: 0.65;
+		cursor: default;
+	}
+
+	.feedback-success,
+	.feedback-error {
+		margin-top: var(--space-sm);
+	}
+
+	.feedback-success {
+		color: #8de8a5;
+	}
+
+	.feedback-error {
+		color: #ff8a80;
 	}
 
 	@media (max-width: 1100px) {
