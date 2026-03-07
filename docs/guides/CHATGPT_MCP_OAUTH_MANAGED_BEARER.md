@@ -59,6 +59,15 @@ The Hub remains the MCP resource server at `/mcp`.
 4. UI may reveal a managed bearer token only at explicit issuance or regeneration time.
 5. ChatGPT-facing OAuth support must not degrade the current bearer-token experience for existing MCP clients.
 
+## Identity Rules
+
+1. The `.agency` portal login continues to be Auth0.
+2. The interactive password entered on the OAuth authorize page is an `identity-worker` credential, not an Auth0 password.
+3. That OAuth login password is separate from the managed bearer token and separate from the Auth0 session.
+4. `.agency` should show the linked MCP email and account or tenant context for the OAuth login credential.
+5. `.agency` should allow the entitled user to set or rotate that password without revealing any previously stored plaintext password.
+6. If the system generates a temporary password, it may be revealed only once at issuance or reset time.
+
 ## Operational Rules
 
 1. Existing `compat` bearer clients must continue to authenticate without OAuth changes.
@@ -66,6 +75,7 @@ The Hub remains the MCP resource server at `/mcp`.
 3. Production rollout is incomplete unless:
    - OAuth discovery works from the Hub custom domain
    - token exchange returns a managed bearer token recognized by the resolver
+   - the entitled user can manage the OAuth login password from `.agency`
    - ChatGPT can complete MCP connection setup end-to-end
    - revoke/regenerate in `.agency` immediately affects ChatGPT access
 
@@ -76,4 +86,5 @@ The Hub remains the MCP resource server at `/mcp`.
 - `packages/identity-worker/README.md`
 - `docs/policies/v1/policy.mcp-credential-delivery.v1.md`
 - `docs/policies/v1/policy.user-bearer-token-governance.v1.md`
+- `docs/policies/v1/policy.mcp-oauth-password-governance.v1.md`
 - `docs/MCP_HUB_REMOTE_DEPLOY.md`

@@ -44,6 +44,8 @@ Define the production policy for user-facing bearer tokens issued through `.agen
 14. OAuth delivery MUST preserve current hub bearer semantics so that existing bearer-token clients continue to function without OAuth migration.
 15. OAuth delivery for third-party hosts MUST NOT depend on custom headers such as `X-MCP-Session-Token`; bearer authorization remains the portable host contract.
 16. Shared runtime guardrail tokens such as `HUB_API_TOKEN` MUST NOT be exposed as user-facing OAuth artifacts.
+17. The password a user enters on the OAuth authorize page is a separate `identity-worker` login secret and MUST NOT be treated as the bearer token itself.
+18. `.agency` SHOULD expose that MCP OAuth password as a managed self-service control linked to the same entitled email, account, and tenant context used for bearer-token governance.
 
 ## Required Legal Alignment
 
@@ -72,6 +74,7 @@ The following artifacts MUST remain aligned with this policy before production l
   - `GET|POST /api/me/mcp-token`
   - `POST /api/me/mcp-token/regenerate`
   - `POST /api/me/mcp-token/revoke`
+  - `MCP Access > MCP OAuth Password` set or rotate controls
   - `GET|POST /api/admin/mcp-entitlements`
   - `GET|POST /api/admin/contracts`
   - `GET /api/internal/mcp-entitlements/check`
@@ -103,6 +106,7 @@ The following artifacts MUST remain aligned with this policy before production l
 - Admin-visible last-used and incident-response metadata
 - OAuth app setup traces showing the delivered access token resolves through the same managed bearer path
 - Revoke/regenerate actions immediately invalidating OAuth-delivered host access
+- Password set or rotate actions for the OAuth login remaining auditable and distinct from bearer-token lifecycle events
 
 ## Source Anchors
 
@@ -115,3 +119,4 @@ The following artifacts MUST remain aligned with this policy before production l
 - `docs/policies/v1/policy.mcp-credential-delivery.v1.md`
 - `docs/policies/v1/policy.partner-auth-governance.v1.md`
 - `docs/guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md`
+- `docs/policies/v1/policy.mcp-oauth-password-governance.v1.md`

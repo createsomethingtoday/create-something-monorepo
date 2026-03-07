@@ -12,7 +12,8 @@
     "plaintext_display": "issue_or_regenerate_only",
     "oauth_delivery_allowed": true,
     "oauth_access_token_may_equal_managed_bearer": true,
-    "oauth_requires_portable_bearer_auth": true
+    "oauth_requires_portable_bearer_auth": true,
+    "oauth_login_password_separate_from_bearer": true
   },
   "authorization_requirements": {
     "live_check_per_request": true,
@@ -32,7 +33,8 @@
     "revocation_required": true,
     "regeneration_required": true,
     "regeneration_invalidates_previous_token": true,
-    "compromise_response_required": true
+    "compromise_response_required": true,
+    "oauth_password_rotation_independent_from_bearer_rotation": true
   },
   "audit_requirements": [
     "token_id",

@@ -1,6 +1,5 @@
 import { compileConstraintPolicy } from './compile.js';
 import { evaluateConstraintPolicyLocal } from './local-eval.js';
-import { evaluateConstraintPolicyPrimary } from './oso-primary.js';
 import { shouldSampleCanary } from './rollout.js';
 import type {
   CompiledConstraintPolicy,
@@ -23,6 +22,11 @@ const BREAKER_OPEN_MS = 30_000;
 
 function nowMs(): number {
   return Date.now();
+}
+
+async function loadPrimaryEvaluator() {
+  const module = await import('./oso-primary.js');
+  return module.evaluateConstraintPolicyPrimary;
 }
 
 function toFallbackResult(
@@ -61,6 +65,7 @@ export async function evaluateConstraintPolicyHybrid(
 
   if (!breakerOpen) {
     try {
+      const evaluateConstraintPolicyPrimary = await loadPrimaryEvaluator();
       const primary = await evaluateConstraintPolicyPrimary(input, compiled, {
         ...config.oso,
       });

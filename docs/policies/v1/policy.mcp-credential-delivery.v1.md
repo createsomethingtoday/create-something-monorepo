@@ -37,6 +37,8 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 13. OAuth delivery MUST NOT require replacing the existing direct bearer-token experience for current MCP clients.
 14. OAuth discovery, authorization, token, registration, and OIDC endpoints MUST NOT expose or deliver shared worker/runtime guardrail tokens such as `HUB_API_TOKEN`.
 15. Any UI that surfaces managed bearer credentials MUST only reveal plaintext at issuance or regeneration time, while keeping revoke and regenerate controls continuously available.
+16. The interactive password used by `identity-worker` OAuth login MUST be governed as a separate credential from the managed bearer token and from the Auth0 portal session.
+17. `.agency` MUST provide a self-service surface for entitled users to set or rotate that OAuth login password without exposing previously stored plaintext password material.
 
 ## Enforcement Surfaces
 
@@ -64,6 +66,10 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 - Hub discovery surfaces:
   - `GET /.well-known/oauth-authorization-server`
   - `GET /mcp/.well-known/oauth-authorization-server`
+- Portal-managed MCP OAuth password surfaces:
+  - `.agency` `MCP Access`
+  - authenticated password set/rotate API for entitled users
+  - `identity-worker` password verification on `/oauth/authorize`
 - Vault/sync automation:
   - `scripts/cs-hub-vault-sync.sh`
   - `scripts/cs-hub-rotate-production.sh`
@@ -81,6 +87,7 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 - `agency_contract_state` records used as explicit contract authority
 - Secret scan of operator docs (no raw bearer artifacts)
 - OAuth discovery responses and token-exchange traces showing managed bearer delivery without leaking `HUB_API_TOKEN`
+- Portal audit records showing MCP OAuth password set or rotation without plaintext persistence
 - UI audit events for token reveal, regenerate, and revoke actions
 - Vault audit trails for create/update operations
 - Migration verification output (`missing=0`, `mismatched=0`) for provider cutover
@@ -98,3 +105,4 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 - `scripts/migrate-doppler-to-infisical.sh`
 - `docs/CS_HUB_VAULT_ROTATION_WORKFLOW.md`
 - `docs/guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md`
+- `docs/policies/v1/policy.mcp-oauth-password-governance.v1.md`

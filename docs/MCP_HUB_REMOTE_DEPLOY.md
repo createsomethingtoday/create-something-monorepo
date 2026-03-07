@@ -212,6 +212,8 @@ Required behavior:
 3. The Hub continues to authorize the request through its existing bearer-token and resolver logic.
 4. Existing bearer-token clients must continue working without OAuth changes.
 5. `HUB_API_TOKEN` remains a runtime guardrail only and must never be surfaced as a user-facing OAuth credential.
+6. The password used on the OAuth authorize page is a separate `identity-worker` login credential that should be managed from `.agency`, not treated as the bearer token itself.
+7. `.agency` should expose the linked email and MCP account context for that OAuth login credential and allow the entitled user to set or rotate it.
 
 Required discovery surfaces:
 
