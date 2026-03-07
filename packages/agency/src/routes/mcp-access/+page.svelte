@@ -38,6 +38,17 @@
 		};
 		message?: string;
 	};
+	type AccessAssignment = {
+		laneKey: string;
+		displayName: string;
+		hubUrl: string;
+		bridgeUrl: string;
+		bridgeUsername: string;
+		credentialSource: string;
+		accountId: string | null;
+		tenantId: string | null;
+		workspaceAccountId: string | null;
+	} | null;
 
 	type HostId = 'codex' | 'claude' | 'cursor';
 
@@ -69,6 +80,7 @@
 	let newPassword = $state('');
 	let confirmPassword = $state('');
 	let selectedHost = $state<HostId>('codex');
+	const assignment = $derived(data.assignment as AccessAssignment);
 
 	const activeHost = $derived(hostOptions.find((host) => host.id === selectedHost) ?? hostOptions[0]);
 	const tokenModeLabel = $derived(token?.tool_mode === 'read_write' ? 'Read + write' : 'Read only');
@@ -138,6 +150,18 @@ bearer_token = "${tokenValue}"`);
 		{ label: 'Tenant ID', value: data.entitlement.tenantId ?? 'Not linked' },
 		{ label: 'Access Reason', value: data.entitlement.decision.reason.replace(/_/g, ' ') },
 	]);
+	const assignmentFacts = $derived(
+		assignment
+			? [
+					{ label: 'Lane', value: assignment.displayName },
+					{ label: 'Hub URL', value: assignment.hubUrl },
+					{ label: 'Notion Bridge', value: assignment.bridgeUrl },
+					{ label: 'Bridge Username', value: assignment.bridgeUsername },
+					{ label: 'Workspace Account', value: assignment.workspaceAccountId ?? assignment.accountId ?? 'Not linked' },
+					{ label: 'Credential Source', value: assignment.credentialSource },
+				]
+			: [],
+	);
 
 	async function loadToken() {
 		const response = await fetch('/api/me/mcp-token');
@@ -374,6 +398,15 @@ bearer_token = "${tokenValue}"`);
 	>
 		<FactList items={identityFacts} />
 	</ReportSection>
+
+	{#if assignmentFacts.length > 0}
+		<ReportSection
+			title="Assigned MCP Access"
+			description="These are the lane-specific endpoints and account assignments linked to your `.agency` identity. Live bearer tokens and bridge passwords remain in the vault/private operator handoff and are not rendered here."
+		>
+			<FactList items={assignmentFacts} />
+		</ReportSection>
+	{/if}
 
 	<ReportSection
 		title="Host Setup"
