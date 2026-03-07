@@ -6,7 +6,8 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
-		"build": "vite build",
+		"clean:build-tmp": "node -e \"const fs=require('fs'); fs.rmSync('.svelte-kit/output',{recursive:true,force:true});\"",
+		"build": "pnpm clean:build-tmp && svelte-kit sync && vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
