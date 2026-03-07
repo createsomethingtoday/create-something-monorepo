@@ -75,6 +75,7 @@ MCP hub integration:
 2. Host stores returned MCP token and calls hub endpoint
 3. Hub introspects token via `POST /v1/mcp/sessions/resolve` using `MCP_SESSION_RESOLVE_TOKEN`
    - resolver accepts MCP session tokens, managed `.agency` bearer tokens, and issued legacy personal bearer tokens (`mlk_*`) for compat lanes
+4. Managed `.agency` bearer tokens are only considered valid when `.agency` confirms live entitlement state for the Auth0 subject and mapped account
 
 Recommended production config:
 
@@ -86,6 +87,9 @@ Recommended production config:
   - Worker var `OSO_FETCH_TIMEOUT_MILLIS=5000`
   - Worker var `OSO_BOOTSTRAP_POLICY=false`
   - Worker var `MCP_POLICY_FALLBACK_ENABLED=true`
+- Required for managed `.agency` bearer token issue + resolve:
+  - Worker var `AGENCY_INTERNAL_API_URL=https://createsomething.agency`
+  - Worker secret `AGENCY_INTERNAL_API_KEY`
 
 Partner-admin integration:
 1. Agency partner API stores consent records and identity account mapping

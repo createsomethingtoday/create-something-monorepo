@@ -50,7 +50,6 @@ Optional runtime selection:
 - `HUB_REFRESH_SECONDS`
 - `HUB_ACCOUNT_ID` (fallback account id for hub telemetry writes)
 - `HUB_IDENTITY_MODE` (`session_required` default, or `compat`)
-- `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS` (`true` default). Set to `false` to ignore client-provided account headers in `compat` mode.
 - `HUB_SESSION_RESOLVE_URL` (identity-worker resolver endpoint, e.g. `https://id.createsomething.space/v1/mcp/sessions/resolve`)
 - `HUB_SESSION_RESOLVE_TOKEN` (shared secret used to authorize resolver calls)
 - `HUB_SESSION_RESOLVE_TIMEOUT_MS` (default `5000`)
@@ -77,7 +76,7 @@ Compatibility note:
 - `compat` mode:
   - shared worker token still works via `Authorization`, `X-API-Key`, or query `token`
   - identity-issued personal bearer tokens are also accepted directly when `HUB_SESSION_RESOLVE_URL` and `HUB_SESSION_RESOLVE_TOKEN` are configured
-- `compat` mode keeps legacy fallback identity behavior and should be temporary.
+- `compat` mode no longer trusts client-supplied account headers; identity must come from the resolver, gateway auth, or explicit worker fallback configuration.
 
 Recommended production posture:
 
@@ -119,16 +118,6 @@ Legacy bridge lane:
 - Deploy scripts set `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS=false` by default so compat workers do not trust client-supplied account headers.
 - Set explicit sunset:
   - `HUB_LEGACY_SUNSET_AT=YYYY-MM-DDTHH:MM:SSZ`
-- Optional exception control (operator-only):
-  - Global legacy default override: `HUB_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS_DEFAULT=true|false`
-  - Per-worker override env vars:
-    - `CS_HUB_LAINY_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS`
-    - `CS_HUB_DANNY_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS`
-    - `CS_HUB_AUGUST_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS`
-    - `CS_HUB_FILLIP_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS`
-      - Alias also accepted: `CS_HUB_FILIP_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS`
-    - `CS_HUB_LEAH_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS`
-    - `CS_HUB_MJ_LEGACY_TRUST_CLIENT_ACCOUNT_HEADERS`
 - Do not switch strict hubs into compat mode.
 - C3 Denver runs on the primary team-hub fleet path, not the legacy bridge lane. Its canonical account mapping is `acct_c3_denver`.
 
