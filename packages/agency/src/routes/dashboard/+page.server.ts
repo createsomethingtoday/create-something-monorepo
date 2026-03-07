@@ -2,6 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { ensureAgencyMcpEntitlement } from '$lib/server/mcp-token';
 import { getSettledValue, loadManagedTokenSnapshot, loadPasswordSnapshot } from '$lib/server/access-state';
+import { resolveMcpAccessAssignment } from '$lib/server/mcp-access-assignments';
 
 interface CommercialStateRow {
 	service_tier: string | null;
@@ -129,6 +130,12 @@ export const load: PageServerLoad = async ({ parent, platform }) => {
 		available: false,
 		error: 'Password state is temporarily unavailable',
 	});
+	const assignment = resolveMcpAccessAssignment({
+		email: user.email,
+		accountId: entitlement.account_id,
+		tenantId: entitlement.tenant_id,
+		workspaceAccountId: entitlement.workspace_account_id,
+	});
 
 	return {
 		user,
@@ -155,5 +162,6 @@ export const load: PageServerLoad = async ({ parent, platform }) => {
 		commercial: commercial ?? null,
 		contract: contract ?? null,
 		partner: partner ?? null,
+		assignment,
 	};
 };

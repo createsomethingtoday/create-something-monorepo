@@ -5,9 +5,21 @@
 	import { FactList, ReportSection, ReportShell, SummaryItem } from '$lib/components/access';
 
 	let { data } = $props();
+	type AccessAssignment = {
+		laneKey: string;
+		displayName: string;
+		hubUrl: string;
+		bridgeUrl: string;
+		bridgeUsername: string;
+		credentialSource: string;
+		accountId: string | null;
+		tenantId: string | null;
+		workspaceAccountId: string | null;
+	} | null;
 	let policyBusy = $state(false);
 	let policyMessage = $state('');
 	let policyError = $state('');
+	const assignment = $derived(data.assignment as AccessAssignment);
 
 	function formatDateTime(value: string | null | undefined): string {
 		if (!value) return 'Not set';
@@ -100,6 +112,18 @@
 				]
 			: [],
 	);
+	const assignmentFacts = $derived(
+		assignment
+			? [
+					{ label: 'Lane', value: assignment.displayName },
+					{ label: 'Hub URL', value: assignment.hubUrl },
+					{ label: 'Notion Bridge', value: assignment.bridgeUrl },
+					{ label: 'Bridge Username', value: assignment.bridgeUsername },
+					{ label: 'Workspace Account', value: assignment.workspaceAccountId ?? assignment.accountId ?? 'Not linked' },
+					{ label: 'Credential Source', value: assignment.credentialSource },
+				]
+			: [],
+	);
 
 	async function acceptPolicy() {
 		policyBusy = true;
@@ -161,6 +185,9 @@
 			value={data.entitlement.accountId ?? 'Not linked'}
 			note={data.entitlement.tenantId ?? 'No tenant linked'}
 		/>
+		{#if assignment}
+			<SummaryItem label="Assigned Lane" value={assignment.displayName} note={assignment.bridgeUsername} />
+		{/if}
 	</svelte:fragment>
 
 	<ReportSection title="Access Eligibility" description="Live entitlement checks for managed `.agency` access.">
@@ -200,6 +227,17 @@
 	>
 		<FactList items={identityFacts} />
 	</ReportSection>
+
+	{#if assignmentFacts.length > 0}
+		<ReportSection
+			title="Assigned MCP Access"
+			description="Lane-specific MCP and Notion bridge assignments linked to this `.agency` identity. Secrets remain in vault and are not shown here."
+			href="/mcp-access"
+			actionLabel="Open MCP Access"
+		>
+			<FactList items={assignmentFacts} />
+		</ReportSection>
+	{/if}
 
 	<ReportSection
 		title="Personal Bearer Token"
