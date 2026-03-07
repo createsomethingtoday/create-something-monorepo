@@ -147,8 +147,8 @@
 
 <SEO
 	title="Enterprise Judgment Operations | CREATE SOMETHING .agency"
-	description="Enterprise operating model for Agent Outcome Stack. Skills + MCP delivery with policy operations, orchestration, and ongoing reliability controls."
-	keywords="enterprise mcp operations, judgment layer, agent outcome stack, policy operations, ai governance"
+	description="Reliability and control for teams already running automation. Add policy operations, orchestration, and ongoing safeguards once the workflow wedge is live."
+	keywords="enterprise automation reliability, workflow controls, policy operations, ai governance, mcp wedge"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -162,13 +162,13 @@
 				<p class="hero-eyebrow">The Judgment Layer</p>
 			</BlurFade>
 			<BlurFade delay={0.1}>
-				<h1 class="hero-title">Connections without intelligence are just&nbsp;pipes.</h1>
+				<h1 class="hero-title">Reliability is what turns automation into operations.</h1>
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					For teams already running MCPs, this is the operating layer that keeps outcomes reliable.
-					We run Judgment operations inside the Agent Outcome Stack: prompt optimization, policy control,
-					approval/escalation logic, and ongoing reliability oversight.
+					For teams already running MCPs or cross-system workflows, this is the control layer that
+					keeps outcomes reliable. We add prompt optimization, policy controls, approval and
+					escalation logic, and ongoing operational oversight.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
@@ -226,10 +226,10 @@
 		<BlurFade>
 			<h2 class="section-heading">What the Judgment Layer Includes</h2>
 		</BlurFade>
-		<BlurFade delay={0.1}>
-			<p class="section-intro">
-				Managed intelligence for every stage of your automation lifecycle.
-			</p>
+			<BlurFade delay={0.1}>
+				<p class="section-intro">
+					Operational controls for every stage of the workflow lifecycle.
+				</p>
 		</BlurFade>
 
 		<div class="services-grid">
@@ -294,7 +294,7 @@
 			</BlurFade>
 			<BlurFade delay={0.1}>
 				<p class="section-intro">
-					Operating envelopes for the Outcome Stack. MCP-only remains an entry wedge for discovery and compliance-constrained rollouts.
+					Operating envelopes for teams with automation already in motion. MCP remains the entry wedge for constrained starts and compliance-sensitive rollouts.
 				</p>
 			</BlurFade>
 
@@ -355,11 +355,11 @@
 <section class="cta-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="cta-heading">Your connections deserve intelligence.</h2>
+			<h2 class="cta-heading">Your workflows need a control layer.</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
-				Run governed, outcome-focused automation with clear policies and direct operational ownership.
+				Run governed automation with clear policies, direct operational ownership, and reliability controls that hold up in production.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
