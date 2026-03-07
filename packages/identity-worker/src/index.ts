@@ -122,6 +122,12 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	if (path === '/v1/mcp/sessions' && method === 'POST') return handleCreateMcpSession(request, env);
 	if (path === '/v1/mcp/sessions/admin-mint' && method === 'POST') return handleAdminMintMcpSession(request, env);
 	if (path === '/v1/mcp/sessions/resolve' && method === 'POST') return handleResolveMcpSession(request, env);
+	if (path === '/v1/mcp/long-lived-tokens/admin-issue' && method === 'POST') {
+		return handleAdminIssueMcpLongLivedToken(request, env);
+	}
+	if (path === '/v1/mcp/long-lived-tokens/admin-get' && method === 'POST') {
+		return handleAdminGetMcpLongLivedToken(request, env);
+	}
 	if (path.startsWith('/v1/mcp/sessions/') && method === 'GET') {
 		const sessionId = path.replace('/v1/mcp/sessions/', '');
 		if (sessionId) return handleGetMcpSession(request, env, sessionId);
@@ -131,6 +137,10 @@ async function route(request: Request, env: Env, method: string, path: string): 
 		if (sessionId) return handleRevokeMcpSession(request, env, sessionId);
 	}
 	if (path === '/v1/mcp/legacy-keys/issue' && method === 'POST') return handleIssueMcpLegacyKey(request, env);
+	if (path.startsWith('/v1/mcp/long-lived-tokens/') && path.endsWith('/revoke') && method === 'POST') {
+		const tokenId = path.replace('/v1/mcp/long-lived-tokens/', '').replace('/revoke', '').replace(/\/$/, '');
+		if (tokenId) return handleRevokeMcpLongLivedToken(request, env, tokenId);
+	}
 	if (path.startsWith('/v1/mcp/legacy-keys/') && path.endsWith('/revoke') && method === 'POST') {
 		const legacyKeyId = path.replace('/v1/mcp/legacy-keys/', '').replace('/revoke', '').replace(/\/$/, '');
 		if (legacyKeyId) return handleRevokeMcpLegacyKey(request, env, legacyKeyId);
