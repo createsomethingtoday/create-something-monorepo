@@ -41,10 +41,10 @@
 	};
 
 	let { data } = $props();
-	const summary = data.summary as Summary;
-	const denied = data.recentDeniedEntitlements as DeniedEntitlement[];
-	const contracts = data.recentContracts as Contract[];
-	const commercial = data.recentCommercialAccounts as CommercialAccount[];
+	const summary = $derived(data.summary as Summary);
+	const denied = $derived(data.recentDeniedEntitlements as DeniedEntitlement[]);
+	const contracts = $derived(data.recentContracts as Contract[]);
+	const commercial = $derived(data.recentCommercialAccounts as CommercialAccount[]);
 </script>
 
 <SEO title="Security Operations" description="Operator dashboard for bearer governance, contracts, and commercial state." propertyName="agency" noindex={true} />
