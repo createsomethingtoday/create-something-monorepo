@@ -5,9 +5,10 @@
 	"type": "module",
 	"license": "MIT",
 	"scripts": {
+		"clean:package-tmp": "node -e \"const fs=require('fs'); fs.rmSync('.svelte-kit/__package__',{recursive:true,force:true}); fs.rmSync('.svelte-kit/__package_types_tmp__',{recursive:true,force:true});\"",
 		"dev": "vite dev",
-		"build": "svelte-kit sync && svelte-package && publint",
-		"package": "svelte-kit sync && svelte-package && publint",
+		"build": "pnpm clean:package-tmp && svelte-kit sync && svelte-package && publint",
+		"package": "pnpm clean:package-tmp && svelte-kit sync && svelte-package && publint",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "pnpm --filter @create-something/tufte package && pnpm package && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
