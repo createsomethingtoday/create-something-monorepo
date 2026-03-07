@@ -192,10 +192,36 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
       reject_reason: z.string().optional(),
       rejection_feedback: z.string().optional(),
     },
-    async () => {
+    async ({
+      version_id,
+      review_owner,
+      review_status,
+      quality_rating,
+      improvement_areas,
+      review_feedback,
+      review_checklist,
+      publishing_checklist,
+      release_date,
+      mrp_id_overwrite,
+      reject_reason,
+      rejection_feedback,
+    }) => {
       try {
-        await getClient().pendingVersionMutation('template_review_update_version_review');
-        return asSuccess({});
+        return asSuccess({
+          updated_version: await getClient().updateVersionReview(version_id, {
+            review_owner,
+            review_status,
+            quality_rating,
+            improvement_areas,
+            review_feedback,
+            review_checklist,
+            publishing_checklist,
+            release_date,
+            mrp_id_overwrite,
+            reject_reason,
+            rejection_feedback,
+          }),
+        });
       } catch (error) {
         return asError(error);
       }
@@ -211,10 +237,15 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
       review_status: z.string().optional(),
       improvement_areas: z.array(z.string()).optional(),
     },
-    async () => {
+    async ({ version_id, review_feedback, review_status, improvement_areas }) => {
       try {
-        await getClient().pendingVersionMutation('template_review_request_changes');
-        return asSuccess({});
+        return asSuccess({
+          updated_version: await getClient().updateVersionReview(version_id, {
+            review_status: review_status ?? '📤Changes Requested',
+            review_feedback,
+            improvement_areas,
+          }),
+        });
       } catch (error) {
         return asError(error);
       }
@@ -230,10 +261,16 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
       mrp_id_overwrite: z.string().optional(),
       publishing_checklist: z.unknown().optional(),
     },
-    async () => {
+    async ({ version_id, release_date, mrp_id_overwrite, publishing_checklist }) => {
       try {
-        await getClient().pendingVersionMutation('template_review_approve_version');
-        return asSuccess({});
+        return asSuccess({
+          updated_version: await getClient().updateVersionReview(version_id, {
+            review_status: '✅Approved',
+            release_date,
+            mrp_id_overwrite,
+            publishing_checklist,
+          }),
+        });
       } catch (error) {
         return asError(error);
       }
@@ -248,10 +285,15 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
       reject_reason: z.string(),
       rejection_feedback: z.string(),
     },
-    async () => {
+    async ({ version_id, reject_reason, rejection_feedback }) => {
       try {
-        await getClient().pendingVersionMutation('template_review_reject_version');
-        return asSuccess({});
+        return asSuccess({
+          updated_version: await getClient().updateVersionReview(version_id, {
+            review_status: '❌Rejected',
+            reject_reason,
+            rejection_feedback,
+          }),
+        });
       } catch (error) {
         return asError(error);
       }

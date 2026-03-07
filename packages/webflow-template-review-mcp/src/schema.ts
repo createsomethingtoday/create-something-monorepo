@@ -30,26 +30,27 @@ export const CONFIRMED_ASSET_FIELDS = {
 } as const;
 
 export const CONFIRMED_VERSION_FIELDS = {
-  assetId: 'Asset ID',
-  versionNumber: 'Version Number',
-  createdAt: 'Created At',
-  createdBy: 'Created By',
-  changes: 'Changes',
-  snapshot: 'Snapshot',
+  assetLink: '👛Asset',
+  assetRecordId: '⚙️👛Asset Record ID',
+  versionNumber: 'ℹ️Version #',
+  submissionDatetime: '📅Submission Datetime',
+  createdBy: 'Created by',
+  reviewOwner: '📝Reviewer',
+  reviewStatus: '📝Review Status',
+  qualityRating: '✨ Quality Rating',
+  improvementAreas: '✨Improvement Areas',
+  reviewFeedback: '📝Review Feedback',
+  reviewChecklist: '📝Review Checklist',
+  publishingChecklist: '🚀Publishing Checklist',
+  releaseDate: '🚀Release Date',
+  decisionDate: '📅Decision Made Datetime',
+  rejectReason: '🚩Rejection Reason',
+  rejectionFeedback: '🚩Rejection Feedback',
+  mrpIdOverwrite: '👀ℹ️MRP ID (Override)',
 } as const;
 
 export const PENDING_VERSION_FIELDS = {
-  reviewOwner: 'pending_verification',
-  reviewStatus: 'pending_verification',
-  qualityRating: 'pending_verification',
-  improvementAreas: 'pending_verification',
-  reviewFeedback: 'pending_verification',
-  reviewChecklist: 'pending_verification',
-  publishingChecklist: 'pending_verification',
-  releaseDate: 'pending_verification',
-  mrpIdOverwrite: 'pending_verification',
-  rejectReason: 'pending_verification',
-  rejectionFeedback: 'pending_verification',
+  createdAt: 'pending_verification',
 } as const;
 
 export const PENDING_ASSET_FIELDS = {
@@ -79,7 +80,12 @@ export const REVIEW_STATUS_OPTIONS = [
   '☠️Archived',
 ] as const;
 
-export const QUALITY_RATING_OPTIONS = ['1', '2', '3', '4', '5'] as const;
+export const QUALITY_RATING_OPTIONS = [
+  '❌Low quality',
+  '⚠️Satisfactory',
+  '✅Good',
+  '🥇Exceptional',
+] as const;
 
 export const HOTSPOT_GROUPS = {
   blue: [
@@ -155,7 +161,19 @@ export const TEMPLATE_REVIEW_FIELD_MAP = {
       'thumbnail_image_secondary_urls',
       'carousel_image_urls',
     ],
-    versionReview: 'pending_field_mapping',
+    versionReview: [
+      'review_owner',
+      'review_status',
+      'quality_rating',
+      'improvement_areas',
+      'review_feedback',
+      'review_checklist',
+      'publishing_checklist',
+      'release_date',
+      'mrp_id_overwrite',
+      'reject_reason',
+      'rejection_feedback',
+    ],
   },
 } as const;
 

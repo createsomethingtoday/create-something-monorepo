@@ -2,13 +2,17 @@ import {
   CONFIRMED_ASSET_FIELDS,
   CONFIRMED_VERSION_FIELDS,
   DEFAULT_AIRTABLE_BASE_ID,
+  QUALITY_RATING_OPTIONS,
   REVIEW_STATUS_OPTIONS,
   TABLE_IDS,
-  TEMPLATE_REVIEW_FIELD_MAP,
   isTemplateLikeAsset,
 } from './schema.js';
 
-const VERSION_ASSET_ID_ROLLUP_FIELD_ID = 'fldknoYakli2sqznT';
+type CollaboratorRef = {
+  id: string;
+  email?: string;
+  name?: string;
+};
 
 export class AirtableClientError extends Error {
   code: string;
@@ -54,12 +58,36 @@ export interface TemplateReviewAsset extends TemplateReviewQueueItem {
 export interface TemplateReviewVersion {
   versionId: string;
   assetId?: string;
+  reviewOwner?: CollaboratorRef | null;
+  reviewStatus?: string;
+  qualityRating?: string;
+  improvementAreas?: string[];
+  reviewFeedback?: string;
+  reviewChecklist?: string;
+  publishingChecklist?: string;
+  releaseDate?: string;
+  decisionDate?: string;
+  rejectReason?: string;
+  rejectionFeedback?: string;
+  mrpIdOverwrite?: string;
   versionNumber?: number;
   createdAt?: string;
   createdBy?: string;
-  changes?: string;
-  snapshot?: unknown;
   rawFields: Record<string, unknown>;
+}
+
+export interface VersionReviewUpdateInput {
+  review_owner?: unknown;
+  review_status?: string;
+  quality_rating?: string;
+  improvement_areas?: string[];
+  review_feedback?: string;
+  review_checklist?: unknown;
+  publishing_checklist?: unknown;
+  release_date?: string;
+  mrp_id_overwrite?: string;
+  reject_reason?: string;
+  rejection_feedback?: string;
 }
 
 export interface TemplateAssetMetadataUpdateInput {
@@ -126,6 +154,39 @@ function numberValue(value: unknown): number | undefined {
   return undefined;
 }
 
+function collaboratorValue(value: unknown): CollaboratorRef | null {
+  if (!value) return null;
+  if (Array.isArray(value)) return collaboratorValue(value[0]);
+  if (typeof value !== 'object') return null;
+  const raw = value as Record<string, unknown>;
+  if (typeof raw.id !== 'string') return null;
+  return {
+    id: raw.id,
+    ...(typeof raw.email === 'string' ? { email: raw.email } : {}),
+    ...(typeof raw.name === 'string' ? { name: raw.name } : {}),
+  };
+}
+
+function collaboratorLabel(value: unknown): string | undefined {
+  const collaborator = collaboratorValue(value);
+  return collaborator?.name ?? collaborator?.email ?? collaborator?.id;
+}
+
+function coerceLongText(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) return value.map((item) => (typeof item === 'string' ? item : JSON.stringify(item))).join('\n');
+  if (value && typeof value === 'object') return JSON.stringify(value, null, 2);
+  return String(value ?? '');
+}
+
+function toIsoDate(value: string): string {
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) {
+    throw new AirtableClientError('INVALID_DATETIME', `Invalid datetime: ${value}`, 400);
+  }
+  return new Date(parsed).toISOString();
+}
+
 function mapAsset(record: AirtableRecord): TemplateReviewAsset {
   const fields = record.fields;
   return {
@@ -156,12 +217,24 @@ function mapAsset(record: AirtableRecord): TemplateReviewAsset {
 function mapVersion(record: AirtableRecord): TemplateReviewVersion {
   return {
     versionId: record.id,
-    assetId: firstString(record.fields[CONFIRMED_VERSION_FIELDS.assetId]),
+    assetId:
+      firstString(record.fields[CONFIRMED_VERSION_FIELDS.assetRecordId]) ??
+      firstString(record.fields[CONFIRMED_VERSION_FIELDS.assetLink]),
+    reviewOwner: collaboratorValue(record.fields[CONFIRMED_VERSION_FIELDS.reviewOwner]),
+    reviewStatus: firstString(record.fields[CONFIRMED_VERSION_FIELDS.reviewStatus]),
+    qualityRating: firstString(record.fields[CONFIRMED_VERSION_FIELDS.qualityRating]),
+    improvementAreas: stringArray(record.fields[CONFIRMED_VERSION_FIELDS.improvementAreas]),
+    reviewFeedback: firstString(record.fields[CONFIRMED_VERSION_FIELDS.reviewFeedback]),
+    reviewChecklist: firstString(record.fields[CONFIRMED_VERSION_FIELDS.reviewChecklist]),
+    publishingChecklist: firstString(record.fields[CONFIRMED_VERSION_FIELDS.publishingChecklist]),
+    releaseDate: firstString(record.fields[CONFIRMED_VERSION_FIELDS.releaseDate]),
+    decisionDate: firstString(record.fields[CONFIRMED_VERSION_FIELDS.decisionDate]),
+    rejectReason: firstString(record.fields[CONFIRMED_VERSION_FIELDS.rejectReason]),
+    rejectionFeedback: firstString(record.fields[CONFIRMED_VERSION_FIELDS.rejectionFeedback]),
+    mrpIdOverwrite: firstString(record.fields[CONFIRMED_VERSION_FIELDS.mrpIdOverwrite]),
     versionNumber: numberValue(record.fields[CONFIRMED_VERSION_FIELDS.versionNumber]),
-    createdAt: firstString(record.fields[CONFIRMED_VERSION_FIELDS.createdAt]) ?? record.createdTime,
-    createdBy: firstString(record.fields[CONFIRMED_VERSION_FIELDS.createdBy]),
-    changes: firstString(record.fields[CONFIRMED_VERSION_FIELDS.changes]),
-    snapshot: record.fields[CONFIRMED_VERSION_FIELDS.snapshot],
+    createdAt: firstString(record.fields[CONFIRMED_VERSION_FIELDS.submissionDatetime]) ?? record.createdTime,
+    createdBy: collaboratorLabel(record.fields[CONFIRMED_VERSION_FIELDS.createdBy]),
     rawFields: record.fields,
   };
 }
@@ -276,7 +349,7 @@ export class AirtableClient {
   }
 
   async listVersionsForAsset(assetId: string, limit = 100): Promise<TemplateReviewVersion[]> {
-    const formula = `{${VERSION_ASSET_ID_ROLLUP_FIELD_ID}} = '${escapeFormulaValue(assetId)}'`;
+    const formula = `{${CONFIRMED_VERSION_FIELDS.assetRecordId}} = '${escapeFormulaValue(assetId)}'`;
     const records = await this.listRecords({
       tableId: TABLE_IDS.assetVersions,
       limit,
@@ -290,6 +363,64 @@ export class AirtableClient {
   async getVersionById(versionId: string): Promise<TemplateReviewVersion | null> {
     const record = await this.getRecord(TABLE_IDS.assetVersions, versionId);
     return record ? mapVersion(record) : null;
+  }
+
+  async updateVersionReview(versionId: string, input: VersionReviewUpdateInput): Promise<TemplateReviewVersion> {
+    const fields: Record<string, unknown> = {};
+
+    if (input.review_owner !== undefined) {
+      if (input.review_owner === null) {
+        fields[CONFIRMED_VERSION_FIELDS.reviewOwner] = null;
+      } else if (typeof input.review_owner === 'string') {
+        fields[CONFIRMED_VERSION_FIELDS.reviewOwner] = { id: input.review_owner };
+      } else if (
+        input.review_owner &&
+        typeof input.review_owner === 'object' &&
+        typeof (input.review_owner as { id?: unknown }).id === 'string'
+      ) {
+        fields[CONFIRMED_VERSION_FIELDS.reviewOwner] = { id: (input.review_owner as { id: string }).id };
+      } else {
+        throw new AirtableClientError('INVALID_REVIEW_OWNER', 'review_owner must be null, a collaborator id string, or an object with an id.', 400);
+      }
+    }
+
+    if (input.review_status !== undefined) {
+      if (!(REVIEW_STATUS_OPTIONS as readonly string[]).includes(input.review_status)) {
+        throw new AirtableClientError('INVALID_REVIEW_STATUS', 'Unsupported review status.', 400, {
+          value: input.review_status,
+          allowed: REVIEW_STATUS_OPTIONS,
+        });
+      }
+      fields[CONFIRMED_VERSION_FIELDS.reviewStatus] = input.review_status;
+    }
+
+    if (input.quality_rating !== undefined) {
+      if (!(QUALITY_RATING_OPTIONS as readonly string[]).includes(input.quality_rating)) {
+        throw new AirtableClientError('INVALID_QUALITY_RATING', 'Unsupported quality rating.', 400, {
+          value: input.quality_rating,
+          allowed: QUALITY_RATING_OPTIONS,
+        });
+      }
+      fields[CONFIRMED_VERSION_FIELDS.qualityRating] = input.quality_rating;
+    }
+
+    if (input.improvement_areas !== undefined) fields[CONFIRMED_VERSION_FIELDS.improvementAreas] = input.improvement_areas;
+    if (input.review_feedback !== undefined) fields[CONFIRMED_VERSION_FIELDS.reviewFeedback] = input.review_feedback;
+    if (input.review_checklist !== undefined) fields[CONFIRMED_VERSION_FIELDS.reviewChecklist] = coerceLongText(input.review_checklist);
+    if (input.publishing_checklist !== undefined) {
+      fields[CONFIRMED_VERSION_FIELDS.publishingChecklist] = coerceLongText(input.publishing_checklist);
+    }
+    if (input.release_date !== undefined) fields[CONFIRMED_VERSION_FIELDS.releaseDate] = toIsoDate(input.release_date);
+    if (input.mrp_id_overwrite !== undefined) fields[CONFIRMED_VERSION_FIELDS.mrpIdOverwrite] = input.mrp_id_overwrite;
+    if (input.reject_reason !== undefined) fields[CONFIRMED_VERSION_FIELDS.rejectReason] = input.reject_reason;
+    if (input.rejection_feedback !== undefined) fields[CONFIRMED_VERSION_FIELDS.rejectionFeedback] = input.rejection_feedback;
+
+    if (Object.keys(fields).length === 0) {
+      throw new AirtableClientError('NO_MUTATION_FIELDS', 'No version review fields were provided.', 400);
+    }
+
+    const updated = await this.updateRecord(TABLE_IDS.assetVersions, versionId, fields);
+    return mapVersion(updated);
   }
 
   async updateAssetMetadata(assetId: string, input: TemplateAssetMetadataUpdateInput): Promise<TemplateReviewAsset> {
@@ -321,14 +452,4 @@ export class AirtableClient {
     return mapAsset(updated);
   }
 
-  async pendingVersionMutation(toolName: string): Promise<never> {
-    throw new AirtableClientError(
-      'PENDING_FIELD_MAPPING',
-      `${toolName} is scaffolded but blocked until template version field mappings are verified in Airtable.`,
-      501,
-      {
-        fieldMap: TEMPLATE_REVIEW_FIELD_MAP.pending.versions,
-      },
-    );
-  }
 }
