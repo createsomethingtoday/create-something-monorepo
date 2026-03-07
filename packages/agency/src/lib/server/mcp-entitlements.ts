@@ -263,7 +263,7 @@ export async function reconcileAgencyMcpEntitlement(
 					input.authSubject
 				)
 				.run();
-			return existing;
+			return findAgencyMcpEntitlementByAuthSubject(db, input.authSubject);
 		}
 
 		return upsertAgencyMcpEntitlement(db, {

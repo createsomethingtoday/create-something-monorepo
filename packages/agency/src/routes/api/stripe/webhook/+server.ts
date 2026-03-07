@@ -661,7 +661,11 @@ async function upsertCommercialStateFromInvoice(
 
 	const customerEmail = normalizeEmail(invoice.customer_email);
 	const stripeCustomerId = normalizeIdentifier(invoice.customer);
-	const stripeSubscriptionId = normalizeIdentifier(invoice.subscription);
+	const stripeSubscriptionId = normalizeIdentifier(
+		typeof invoice.parent === 'object' && invoice.parent && 'subscription_details' in invoice.parent
+			? invoice.parent.subscription_details?.subscription
+			: null
+	);
 
 	await upsertAgencyCommercialAccount(db, {
 		normalizedEmail: customerEmail,
