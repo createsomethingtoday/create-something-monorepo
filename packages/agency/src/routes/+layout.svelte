@@ -4,7 +4,7 @@
 	import { UnifiedSearch } from '@create-something/canon/navigation';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
-	import { afterNavigate, disableScrollHandling, onNavigate } from '$app/navigation';
+	import { afterNavigate, disableScrollHandling, goto, onNavigate } from '$app/navigation';
 
 	let { children, data } = $props();
 
@@ -104,6 +104,16 @@
 		setTimeout(scrollToTop, 50);
 	});
 
+	async function handleLogout() {
+		try {
+			const response = await fetch('/api/auth/logout', { method: 'POST' });
+			const payload = (await response.json().catch(() => null)) as { logoutUrl?: string } | null;
+			window.location.assign(payload?.logoutUrl || '/login');
+		} catch {
+			goto('/login');
+		}
+	}
+
 </script>
 
 <LayoutSEO property="agency" />
@@ -127,7 +137,10 @@
 		fixed={true}
 		ctaLabel="Book Mapping Session"
 		ctaHref="/book"
-		showLogin={false}
+		user={data.user}
+		onLogout={handleLogout}
+		showLogin={true}
+		accountHref="/account"
 	/>
 
 	<main id="main-content" class="pt-[72px]">

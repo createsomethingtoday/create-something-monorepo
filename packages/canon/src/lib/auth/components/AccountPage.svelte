@@ -39,10 +39,11 @@
 	async function handleLogout() {
 		isLoggingOut = true;
 		try {
-			await fetch(logoutEndpoint, { method: 'POST' });
-			goto('/');
+			const response = await fetch(logoutEndpoint, { method: 'POST' });
+			const payload = (await response.json().catch(() => null)) as { logoutUrl?: string } | null;
+			window.location.assign(payload?.logoutUrl || '/login');
 		} catch {
-			goto('/');
+			goto('/login');
 		}
 	}
 </script>

@@ -80,6 +80,16 @@ export function buildAuth0AuthorizeUrl(params: {
 	return url.toString();
 }
 
+export function buildAuth0LogoutUrl(params: {
+	config: Auth0Config;
+	returnTo: string;
+}): string {
+	const url = new URL(`https://${params.config.domain}/v2/logout`);
+	url.searchParams.set('client_id', params.config.clientId);
+	url.searchParams.set('returnTo', params.returnTo);
+	return url.toString();
+}
+
 function shouldSendAudience(config: Auth0Config): boolean {
 	if (!config.audience) return false;
 

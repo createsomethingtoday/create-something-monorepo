@@ -30,7 +30,12 @@ import {
 	type AuthHooksConfig,
 	type JWK,
 } from './types.js';
-import { getAuth0Config, refreshAuth0Tokens, revokeAuth0RefreshToken } from './auth0.js';
+import {
+	getAuth0Config,
+	refreshAuth0Tokens,
+	revokeAuth0RefreshToken,
+	buildAuth0LogoutUrl,
+} from './auth0.js';
 
 // Re-export for backwards compatibility
 export { SESSION_CONFIG };
@@ -683,7 +688,14 @@ export async function handleLogout(
 		// Clear JWT cookies
 		clearSessionCookies(cookies, isProduction ?? true, domain);
 
-		return new Response(JSON.stringify({ success: true }), {
+		const logoutUrl = authProvider
+			? buildAuth0LogoutUrl({
+					config: authProvider,
+					returnTo: `${url.origin}/login`,
+				})
+			: `${url.origin}/login`;
+
+		return new Response(JSON.stringify({ success: true, logoutUrl }), {
 			status: 200,
 			headers: {
 				'Content-Type': 'application/json',

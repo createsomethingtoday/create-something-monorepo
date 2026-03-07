@@ -92,6 +92,7 @@ export {
 export {
 	getAuth0Config,
 	buildAuth0AuthorizeUrl,
+	buildAuth0LogoutUrl,
 	exchangeAuth0Code,
 	refreshAuth0Tokens,
 	revokeAuth0RefreshToken,

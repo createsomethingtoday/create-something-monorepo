@@ -591,7 +591,7 @@ export function createLoginPageLoader(options: LoginPageLoaderOptions) {
 		const user = await session.getUser();
 		if (user) {
 			const redirectTo = url.searchParams.get('redirect') || '/';
-			redirect(302, redirectTo);
+			throw redirect(302, redirectTo);
 		}
 
 		return {
