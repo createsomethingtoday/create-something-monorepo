@@ -1996,7 +1996,7 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 			host: 'agency_bearer',
 			tool_mode: longLivedToken.tool_mode,
 			expires_at: null,
-			allowed_tool_prefixes: parseStringArray(longLivedToken.allowed_tool_prefixes_json),
+			allowed_tool_prefixes: parseAllowedToolPrefixesOrNull(longLivedToken.allowed_tool_prefixes_json),
 			toolkit_profile: parseStringArray(longLivedToken.toolkit_profile_json),
 			allow_pending_oauth_approvals: false,
 			long_lived_token_id: longLivedToken.id,
@@ -3330,6 +3330,11 @@ function parseStringArray(raw: string): string[] {
 	} catch {
 		return [];
 	}
+}
+
+function parseAllowedToolPrefixesOrNull(raw: string): string[] | null {
+	const values = parseStringArray(raw);
+	return values.length > 0 ? values : null;
 }
 
 function isMcpResolveAuthorized(
