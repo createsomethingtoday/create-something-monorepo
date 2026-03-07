@@ -1,5 +1,6 @@
 import {
   CONFIRMED_ASSET_FIELDS,
+  CONFIRMED_RELEASE_FIELDS,
   CONFIRMED_WRITE_FIELD_IDS,
   CONFIRMED_VERSION_FIELDS,
   DEFAULT_AIRTABLE_BASE_ID,
@@ -77,6 +78,14 @@ export interface TemplateReviewVersion {
   versionNumber?: number;
   createdAt?: string;
   createdBy?: string;
+  rawFields: Record<string, unknown>;
+}
+
+export interface TemplateReviewRelease {
+  releaseId: string;
+  releaseName: string;
+  status?: string;
+  releaseOwner?: CollaboratorRef | null;
   rawFields: Record<string, unknown>;
 }
 
@@ -243,6 +252,16 @@ function mapVersion(record: AirtableRecord): TemplateReviewVersion {
   };
 }
 
+function mapRelease(record: AirtableRecord): TemplateReviewRelease {
+  return {
+    releaseId: record.id,
+    releaseName: firstString(record.fields[CONFIRMED_RELEASE_FIELDS.releaseName]) ?? record.id,
+    status: firstString(record.fields[CONFIRMED_RELEASE_FIELDS.status]),
+    releaseOwner: collaboratorValue(record.fields[CONFIRMED_RELEASE_FIELDS.releaseOwner]),
+    rawFields: record.fields,
+  };
+}
+
 export class AirtableClient {
   private apiKey: string;
   private baseId: string;
@@ -367,6 +386,17 @@ export class AirtableClient {
   async getVersionById(versionId: string): Promise<TemplateReviewVersion | null> {
     const record = await this.getRecord(TABLE_IDS.assetVersions, versionId);
     return record ? mapVersion(record) : null;
+  }
+
+  async listReleases(limit = 100): Promise<TemplateReviewRelease[]> {
+    const records = await this.listRecords({
+      tableId: TABLE_IDS.assetReleases,
+      fieldNames: Object.values(CONFIRMED_RELEASE_FIELDS),
+      limit,
+      sortField: CONFIRMED_RELEASE_FIELDS.releaseName,
+      sortDirection: 'desc',
+    });
+    return records.map((record) => mapRelease(record));
   }
 
   async updateVersionReview(versionId: string, input: VersionReviewUpdateInput): Promise<TemplateReviewVersion> {

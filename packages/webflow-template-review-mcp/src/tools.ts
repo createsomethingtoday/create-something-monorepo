@@ -151,6 +151,22 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
   );
 
   server.tool(
+    'template_review_list_releases',
+    'List available Asset Release records reviewers can link to approved template versions.',
+    {
+      limit: z.number().int().min(1).max(500).optional(),
+    },
+    async ({ limit }) => {
+      try {
+        const releases = await getClient().listReleases(limit ?? 100);
+        return asSuccess({ count: releases.length, releases });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
     'template_review_update_asset_metadata',
     'Update confirmed writable template asset fields.',
     {

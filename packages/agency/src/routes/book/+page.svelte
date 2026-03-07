@@ -22,27 +22,27 @@
 
 	type BookingStep = 'date' | 'time' | 'details' | 'confirm';
 	type ServiceLane =
-		| 'custom_workflow_mcps'
-		| 'autonomy_assurance'
+		| 'workflow_infrastructure'
+		| 'reliability_and_control'
 		| 'enterprise_extension'
 		| 'system_development_referral'
 		| 'not_sure';
 
 	const laneOptions: Array<{ value: ServiceLane; label: string; description: string }> = [
 		{
-			value: 'custom_workflow_mcps',
-			label: 'Custom Workflow MCPs',
-			description: 'Custom workflow implementation for high-value business operations.'
+			value: 'workflow_infrastructure',
+			label: 'Critical Workflow',
+			description: 'A high-value workflow that needs a safer starting wedge.'
 		},
 		{
-			value: 'autonomy_assurance',
-			label: 'Autonomy Assurance',
-			description: 'Evals, policy gates, and incident controls for reliability.'
+			value: 'reliability_and_control',
+			label: 'Reliability and Control',
+			description: 'Evals, policy gates, and incident controls for production automation.'
 		},
 		{
 			value: 'enterprise_extension',
-			label: 'Enterprise Extension',
-			description: 'Custom MCP/orchestration for high-stakes cross-system workflows.'
+			label: 'Enterprise Constraints',
+			description: 'Cross-system orchestration with stricter governance and operational controls.'
 		},
 		{
 			value: 'system_development_referral',
@@ -224,16 +224,16 @@
 </script>
 
 <SEO
-	title="Book a Policy Mapping Session"
-	description="Schedule a mapping session to scope Custom Workflow MCPs, Autonomy Assurance, Enterprise Extension, or system-development referral."
+	title="Book a Workflow Mapping Session"
+	description="Schedule a workflow mapping session to identify the highest-risk workflow, the safest starting wedge, and the right level of reliability control."
 	propertyName="agency"
 />
 
 <main class="booking-page">
 	<header class="booking-header">
-		<h1 class="booking-title">Book a Policy Mapping Session</h1>
+		<h1 class="booking-title">Book a Workflow Mapping Session</h1>
 		<p class="booking-subtitle">
-			Map your lane: Custom Workflow MCPs, Autonomy Assurance, Enterprise Extension, or referral.
+			Bring the workflow with the most drag or risk. We’ll map the safest starting wedge together.
 		</p>
 	</header>
 
@@ -289,8 +289,8 @@
 			<section class="step-content">
 				<h2 class="step-title">Your details and lane</h2>
 				<div class="lane-intake" role="radiogroup" aria-labelledby="lane-intake-title">
-					<p id="lane-intake-title" class="lane-intake-title">Which lane do you think you need?</p>
-					<p class="lane-intake-helper">This only helps us prep. We can re-scope together on the call.</p>
+					<p id="lane-intake-title" class="lane-intake-title">Which kind of workflow needs attention first?</p>
+					<p class="lane-intake-helper">This only helps me prep. Most engagements start with one scoped MCP implementation.</p>
 					<div class="lane-options">
 						{#each laneOptions as lane}
 							<label class="lane-option" class:selected={selectedLane === lane.value}>

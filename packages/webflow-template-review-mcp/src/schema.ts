@@ -3,6 +3,13 @@ export const DEFAULT_AIRTABLE_BASE_ID = 'appMoIgXMTTTNIc3p';
 export const TABLE_IDS = {
   assets: 'tblRwzpWoLgE9MrUm',
   assetVersions: 'tblHxZ2hgSFLZxsZu',
+  assetReleases: '🚀Asset Releases',
+} as const;
+
+export const CONFIRMED_RELEASE_FIELDS = {
+  releaseName: 'Release Name',
+  releaseOwner: 'Release Owner',
+  status: 'Status',
 } as const;
 
 export const CONFIRMED_ASSET_FIELDS = {
@@ -151,6 +158,7 @@ export const TEMPLATE_REVIEW_FIELD_MAP = {
   confirmed: {
     assets: CONFIRMED_ASSET_FIELDS,
     versions: CONFIRMED_VERSION_FIELDS,
+    releases: CONFIRMED_RELEASE_FIELDS,
   },
   confirmedWriteFieldIds: CONFIRMED_WRITE_FIELD_IDS,
   pending: {

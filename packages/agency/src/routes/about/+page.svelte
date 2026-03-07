@@ -5,9 +5,9 @@
 </script>
 
 <SEO
-  title="About | Micah Johnson — Custom Workflow MCPs"
-  description="CTO-level architecture for POLICY OS delivery: custom workflow MCPs, Autonomy Assurance, and artifact-based operations."
-  keywords="Micah Johnson, custom mcp development, workflow architecture, mcp consulting, ai operations reliability"
+  title="About | Micah Johnson — Workflow Infrastructure"
+  description="I build workflow infrastructure for technical operators: cross-system logic, reliability controls, trust boundaries, and production-safe automation."
+  keywords="Micah Johnson, workflow infrastructure, production automation, technical operators, cross-system architecture, automation reliability"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -30,13 +30,12 @@
       <p class="hero-eyebrow">About</p>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <h1 class="hero-title">I build operating systems for autonomy.</h1>
+      <h1 class="hero-title">I build workflow infrastructure for technical operators.</h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-detail">
-        I started by connecting business tools to AI — Salesforce, HubSpot, Notion, Procore, and
-        custom systems. That work clarified where value compounds: not at basic connectivity, but at
-        reliability, governance, and system design for real operations.
+        I work on the part most teams under-scope: cross-system logic, reliability controls, trust
+        boundaries, and the operating artifacts that make automation safe in production.
       </p>
     </BlurFade>
   </div>
@@ -49,9 +48,10 @@
       <div class="about-content">
         <h2>The approach</h2>
         <p>
-          CREATE SOMETHING .agency runs a POLICY OS for production autonomy. I build custom workflow
-          MCPs, then layer Autonomy Assurance (evals, policy controls, incident loops) and
-          Enterprise Extension when requirements exceed standard tooling.
+          CREATE SOMETHING .agency helps CTOs and engineering leaders make important workflows
+          reliable. Most engagements start with a scoped MCP implementation for one critical
+          workflow, then expand into reliability controls and enterprise extension only when the
+          operating risk justifies it.
         </p>
         <p>
           My methodology is the Subtractive Triad: before building anything new, I audit your
@@ -73,12 +73,13 @@
         <p>
           Micah Johnson. System Architect on the Marketplace Team at Webflow — building internal
           tools, onboarding systems, and platform infrastructure serving millions of users. Focused
-          on technical architecture for production agent systems.
+          on technical architecture for production workflows and agent systems.
         </p>
         <p>
           I have deployed production integrations connecting tools like Salesforce, HubSpot, Notion,
           Slack, Procore, and custom internal systems to AI. That building experience informs where
-          to trust native tooling and where to design custom control layers.
+          to trust native tooling, where to start with MCP, and where to design custom control
+          layers.
         </p>
         <p>Based in Texas. Working with businesses across the US.</p>
         <p>
@@ -145,7 +146,7 @@
             > — Tools and experiments
           </li>
           <li>
-            <strong>.agency</strong> — POLICY OS, Autonomy Assurance, and enterprise extension
+            <strong>.agency</strong> — Workflow infrastructure, reliability controls, and enterprise extension
             <span class="muted">(you are here)</span>
           </li>
         </ul>
@@ -182,7 +183,7 @@
 <section class="cta-section">
   <div class="section-container">
     <BlurFade delay={0.1}>
-      <h2 class="cta-heading">Need trust you can inspect?</h2>
+      <h2 class="cta-heading">Need a workflow you can trust?</h2>
     </BlurFade>
     <BlurFade delay={0.2}>
       <div class="cta-actions">

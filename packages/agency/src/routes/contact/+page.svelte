@@ -47,9 +47,9 @@
 </script>
 
 <SEO
-  title="Start Your AgentOps Lane | CREATE SOMETHING .agency"
-  description="Book a Policy Mapping Session or send your workflow details. We'll map whether you need Custom Workflow MCPs, Autonomy Assurance, Enterprise Extension, or a system-development referral."
-  keywords="custom workflow mcp, autonomy assurance, enterprise extension, mcp architecture, ai workflow reliability"
+  title="Start With the Right Workflow | CREATE SOMETHING .agency"
+  description="Book a workflow mapping session or send your workflow details. We’ll identify the safest starting wedge, the right level of reliability control, and whether enterprise extension is needed."
+  keywords="workflow mapping, production automation, reliability controls, enterprise workflows, custom mcp, automation risk"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -72,12 +72,12 @@
       <p class="hero-eyebrow">Contact</p>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <h1 class="hero-title">Start with the right lane.</h1>
+      <h1 class="hero-title">Start with the right workflow.</h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-detail">
-        Book a Policy Mapping Session or send your workflow details. We scope your operating
-        lane, then extend only where needed.
+        Book a workflow mapping session or send your workflow details. We’ll scope the safest
+        starting wedge, then extend only where the risk justifies it.
       </p>
     </BlurFade>
   </div>
@@ -86,13 +86,13 @@
 <!-- Contact Options -->
 <section class="contact-section">
   <div class="contact-container">
-    <!-- Book a Policy Mapping Session -->
+    <!-- Book a Workflow Mapping Session -->
     <BlurFade delay={0.1}>
       <div class="contact-option">
-        <h2>Book a Policy Mapping Session</h2>
+        <h2>Book a Workflow Mapping Session</h2>
         <p>
           20-minute mapping session. We map your tools, workflow bottlenecks, and risk profile to
-          place you in the right lane.
+          identify the right starting wedge.
         </p>
         <div class="cal-button">
           <SavvyCalButton variant="primary" size="lg" />
@@ -133,11 +133,11 @@
 
           <div class="form-field">
             <label for="message" class="form-label"
-              >Which lane or workflow needs attention first?</label
+              >Which workflow needs attention first?</label
             >
             <p class="form-helper">
-              Tell us your stack, constraints, and bottleneck. We'll map it to Custom MCPs,
-              Assurance, Extension, or referral.
+              Tell us your stack, constraints, and bottleneck. We’ll map it to a scoped MCP wedge,
+              reliability controls, enterprise extension, or referral.
             </p>
             <textarea
               id="message"
@@ -145,7 +145,7 @@
               required
               rows="4"
               class="form-input form-textarea"
-              placeholder="e.g., HubSpot + Notion + Slack. We need evals and approval-safe automation before expanding autonomous workflows."
+              placeholder="e.g., HubSpot + Notion + Slack. This workflow breaks at handoff, and we need a safer MCP-based starting point before expanding automation."
             ></textarea>
           </div>
 
