@@ -729,18 +729,27 @@ async function findAgencyCommercialStateByEmail(
 		return null;
 	}
 
-	return db
-		.prepare(
-			`SELECT * FROM agency_commercial_accounts
+	try {
+		return await db
+			.prepare(
+				`SELECT * FROM agency_commercial_accounts
        WHERE normalized_email = ?
        ORDER BY
          billing_active DESC,
          contract_active DESC,
          updated_at DESC
        LIMIT 1`
-		)
-		.bind(normalizedEmail)
-		.first<AgencyCommercialStateRow>();
+			)
+			.bind(normalizedEmail)
+			.first<AgencyCommercialStateRow>();
+	} catch (error) {
+		if (isMissingD1TableError(error, 'agency_commercial_accounts')) {
+			console.warn('agency_commercial_accounts table is unavailable; continuing without commercial state');
+			return null;
+		}
+
+		throw error;
+	}
 }
 
 async function findAgencyContractState(
@@ -751,9 +760,10 @@ async function findAgencyContractState(
 	tenantId: string | null
 ): Promise<AgencyContractStateRow | null> {
 	const normalizedEmail = normalizeEmail(authEmail);
-	const result = await db
-		.prepare(
-			`SELECT * FROM agency_contract_state
+	try {
+		const result = await db
+			.prepare(
+				`SELECT * FROM agency_contract_state
        WHERE (auth_subject IS NOT NULL AND auth_subject = ?)
           OR (? IS NOT NULL AND normalized_email = ?)
           OR (? IS NOT NULL AND account_id = ? AND (? IS NULL OR tenant_id = ?))
@@ -763,10 +773,26 @@ async function findAgencyContractState(
          policy_accepted DESC,
          updated_at DESC
        LIMIT 1`
-		)
-		.bind(authSubject, normalizedEmail, normalizedEmail, accountId, accountId, tenantId, tenantId)
-		.first<AgencyContractStateRow>();
-	return result;
+			)
+			.bind(authSubject, normalizedEmail, normalizedEmail, accountId, accountId, tenantId, tenantId)
+			.first<AgencyContractStateRow>();
+		return result;
+	} catch (error) {
+		if (isMissingD1TableError(error, 'agency_contract_state')) {
+			console.warn('agency_contract_state table is unavailable; continuing without contract state');
+			return null;
+		}
+
+		throw error;
+	}
+}
+
+function isMissingD1TableError(error: unknown, tableName: string): boolean {
+	if (!(error instanceof Error)) {
+		return false;
+	}
+
+	return error.message.includes('D1_ERROR') && error.message.includes(`no such table: ${tableName}`);
 }
 
 function deriveEntitlementDenialReason(input: {

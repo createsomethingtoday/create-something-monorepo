@@ -22,6 +22,18 @@ const POLICY_DEFINITIONS: AuthzPolicyDefinition[] = [
       description: 'Fine-grained broker policy for route discovery and proxy execution.',
       rules: [
         {
+          id: 'hub_route_block_unresolved_context',
+          priority: 5,
+          when: {
+            resourceKinds: ['hub_route'],
+            introspectionOk: false,
+          },
+          then: {
+            decision: 'block',
+            reason: 'Protected remote hub routes require resolved actor and tenant context before discovery or execution.',
+          },
+        },
+        {
           id: 'hub_discover_readonly_blocks_mutations',
           priority: 10,
           when: {
@@ -65,6 +77,7 @@ const POLICY_DEFINITIONS: AuthzPolicyDefinition[] = [
           when: {
             actionNames: ['discover'],
             resourceKinds: ['hub_route'],
+            introspectionOk: true,
           },
           then: {
             decision: 'allow',
@@ -77,6 +90,7 @@ const POLICY_DEFINITIONS: AuthzPolicyDefinition[] = [
           when: {
             actionNames: ['execute'],
             resourceKinds: ['hub_route'],
+            introspectionOk: true,
           },
           then: {
             decision: 'allow',

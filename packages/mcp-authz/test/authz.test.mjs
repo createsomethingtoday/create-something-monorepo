@@ -75,6 +75,31 @@ test('hub route auth requires human review for destructive execution', async () 
   assert.match(result.final.reason, /human review/i);
 });
 
+test('hub route auth blocks unresolved protected route context', async () => {
+  const request = buildHubAuthorizationRequest({
+    accountId: 'acct_1',
+    tenantId: null,
+    sessionId: 'session_1',
+    toolMode: 'read_write',
+    identitySource: 'session',
+    introspectionOk: false,
+    proxyToolName: 'composio-toolkit-zoom__zoom_create_a_meeting',
+    serverName: 'composio-toolkit-zoom',
+    downstreamToolName: 'zoom_create_a_meeting',
+    actionName: 'execute',
+  });
+
+  const result = await evaluateAuthorizationRequest(
+    'policy.hub-route-authorization.v1',
+    request,
+    { mode: 'legacy_enforce', canaryPercent: 0 },
+    { mode: 'legacy' },
+  );
+
+  assert.equal(result.final.decision, 'block');
+  assert.match(result.final.reason, /resolved actor and tenant context/i);
+});
+
 test('identity admin mint policy allows consent-backed requests', async () => {
   const request = {
     actor: {

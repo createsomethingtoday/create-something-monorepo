@@ -251,7 +251,7 @@ test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for read-only 
     },
     accountContext: {
       accountId: 'acct_1',
-      tenantId: null,
+      tenantId: 'tenant_acme',
       userId: 'user_1',
       sessionId: 'session_1',
       allowedToolPrefixes: null,

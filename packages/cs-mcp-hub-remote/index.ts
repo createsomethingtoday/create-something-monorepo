@@ -2661,6 +2661,25 @@ function toHubAuthzEvent(params: {
   };
 }
 
+function hasProtectedHubActorContext(env: Env, accountContext: ResolvedAccountContext): boolean {
+  const protectedRemoteExecution =
+    resolveHubIdentityMode(env) === 'session_required' || Boolean(readEnvString(env, 'HUB_API_TOKEN'));
+
+  if (!protectedRemoteExecution) {
+    return true;
+  }
+
+  if (accountContext.identitySource !== 'session') {
+    return false;
+  }
+
+  if (!accountContext.accountId || !accountContext.tenantId) {
+    return false;
+  }
+
+  return true;
+}
+
 async function evaluateHubRouteAuthorization(params: {
   env: Env;
   accountContext: ResolvedAccountContext;
@@ -2681,6 +2700,7 @@ async function evaluateHubRouteAuthorization(params: {
     readOnly: accountContext.toolMode === 'read_only',
     toolMode: accountContext.toolMode,
     identitySource: accountContext.identitySource,
+    introspectionOk: hasProtectedHubActorContext(env, accountContext),
     proxyToolName: route.proxyToolName,
     serverName: route.serverName,
     downstreamToolName: route.downstreamToolName,

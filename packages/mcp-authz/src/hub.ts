@@ -69,6 +69,7 @@ export function buildHubAuthorizationRequest(input: {
   readOnly?: boolean;
   toolMode?: string | null;
   identitySource?: string | null;
+  introspectionOk?: boolean;
   proxyToolName: string;
   serverName: string;
   downstreamToolName: string;
@@ -99,7 +100,7 @@ export function buildHubAuthorizationRequest(input: {
       name: input.actionName,
       writeIntent: input.actionName === 'execute' && classification.accessType !== 'read',
       humanReviewStep: false,
-      introspectionOk: true,
+      introspectionOk: input.introspectionOk ?? true,
     },
     resource: {
       kind: 'hub_route',

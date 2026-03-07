@@ -42,7 +42,7 @@ test('executeProxyRoute executes visible route and returns downstream payload', 
   };
 
   const result = await executeProxyRoute({
-    env: {} as any,
+    env: { HUB_IDENTITY_MODE: 'compat' } as any,
     route,
     executionArgs: { foo: 'bar' },
     trace,
@@ -88,7 +88,7 @@ test('executeProxyRoute blocks calls outside session scope', async () => {
     trace,
     accountContext: {
       accountId: 'acct_1',
-      tenantId: null,
+      tenantId: 'tenant_acme',
       userId: null,
       sessionId: 'session_1',
       allowedToolPrefixes: [],
@@ -120,7 +120,7 @@ test('executeProxyRoute surfaces downstream failures as MCP errors', async () =>
   };
 
   const result = await executeProxyRoute({
-    env: {} as any,
+    env: { HUB_IDENTITY_MODE: 'compat' } as any,
     route,
     executionArgs: {},
     trace,
@@ -165,7 +165,7 @@ test('executeProxyRoute blocks mutable routes for read-only sessions before down
     trace,
     accountContext: {
       accountId: 'acct_1',
-      tenantId: null,
+      tenantId: 'tenant_acme',
       userId: 'user_1',
       sessionId: 'session_1',
       allowedToolPrefixes: null,
@@ -205,7 +205,7 @@ test('executeProxyRoute requires human review for destructive routes', async () 
     trace,
     accountContext: {
       accountId: 'acct_1',
-      tenantId: null,
+      tenantId: 'tenant_acme',
       userId: null,
       sessionId: 'session_1',
       allowedToolPrefixes: null,
@@ -263,7 +263,7 @@ test('executeProxyRoute converts semantic downstream scope failures into actiona
   };
 
   const result = await executeProxyRoute({
-    env: {} as any,
+    env: { HUB_IDENTITY_MODE: 'compat' } as any,
     route,
     executionArgs: { meetingId: 12345678901 },
     trace,
