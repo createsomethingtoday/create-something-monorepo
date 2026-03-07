@@ -4065,26 +4065,37 @@ function buildHubOverviewHtml(params: {
 }
 
 function buildHubAuthWorkflowHtml(): string {
-  const payload = {
-    goal: 'Run downstream toolkit tools through the broker and recover cleanly when auth is missing or stale.',
-    defaultSequence: [
-      '1. Call hub_search_proxy_tools with serverName and a narrow query to find the proxyToolName.',
-      '2. Call hub_describe_proxy_tool if you need the exact argument schema.',
-      '3. Call hub_execute_proxy_tool with proxyToolName + args.',
-    ],
-    authSequence: [
-      '1. Before first toolkit use in a session, find and execute __connection_status if the task depends on external auth.',
-      '2. If disconnected, find and execute __get_connect_link.',
-      '3. Present the returned link to the user and stop.',
-      '4. Retry only after the user confirms authentication is complete.',
-    ],
-    reconnectSequence: [
-      '1. If a downstream tool returns auth failure or missing scopes, do not keep retrying the business tool.',
-      '2. Execute the toolkit reconnect proxy tool, usually <serverName>__get_connect_link, through hub_execute_proxy_tool.',
-      '3. Present the link, wait for the user to authenticate, then retry the original tool.',
-    ],
-    examples: {
-      searchStatus: {
+  const defaultSequence = [
+    'Search for the right proxy tool with hub_search_proxy_tools.',
+    'Describe it with hub_describe_proxy_tool if you need the exact schema.',
+    'Execute it with hub_execute_proxy_tool using proxyToolName + args.',
+  ];
+  const authSequence = [
+    'Before first toolkit use, run __connection_status if the task depends on external auth.',
+    'If disconnected, run __get_connect_link.',
+    'Show the returned link to the user and stop.',
+    'Retry only after the user confirms auth is complete.',
+  ];
+  const reconnectSequence = [
+    'If a downstream tool returns auth failure or missing scopes, stop retrying the business tool.',
+    'Run the reconnect proxy tool, usually <serverName>__get_connect_link, through hub_execute_proxy_tool.',
+    'Show the link, wait for the user to authenticate, then retry the original tool.',
+  ];
+  const reminders = [
+    'Direct proxy tools may be disabled even when they exist in the catalog.',
+    'When the hub returns a connect link, present it to the user instead of continuing silently.',
+    'Treat auth config missing errors as deployment/configuration issues, not user errors.',
+  ];
+
+  const renderList = (items: string[], ordered = false) => {
+    const tag = ordered ? 'ol' : 'ul';
+    const rendered = items.map((item) => `        <li>${escapeHtml(item)}</li>`).join('\n');
+    return [`      <${tag}>`, rendered, `      </${tag}>`].join('\n');
+  };
+
+  const searchStatusExample = escapeHtml(
+    JSON.stringify(
+      {
         name: 'hub_search_proxy_tools',
         arguments: {
           serverName: 'composio-toolkit-airtable',
@@ -4092,37 +4103,37 @@ function buildHubAuthWorkflowHtml(): string {
           limit: 5,
         },
       },
-      executeStatus: {
+      null,
+      2,
+    ),
+  );
+  const executeStatusExample = escapeHtml(
+    JSON.stringify(
+      {
         name: 'hub_execute_proxy_tool',
         arguments: {
           proxyToolName: 'composio-toolkit-airtable__connection_status',
           args: {},
         },
       },
-      searchConnect: {
-        name: 'hub_search_proxy_tools',
-        arguments: {
-          serverName: 'composio-toolkit-airtable',
-          query: 'get_connect_link',
-          limit: 5,
-        },
-      },
-      executeConnect: {
+      null,
+      2,
+    ),
+  );
+  const executeConnectExample = escapeHtml(
+    JSON.stringify(
+      {
         name: 'hub_execute_proxy_tool',
         arguments: {
           proxyToolName: 'composio-toolkit-airtable__get_connect_link',
           args: {},
         },
       },
-    },
-    reminders: [
-      'Direct proxy tools may be disabled even when they exist in the catalog.',
-      'When the hub returns a connect link, present it to the user instead of continuing silently.',
-      'Treat auth config missing errors as deployment/configuration issues, not user errors.',
-    ],
-  };
+      null,
+      2,
+    ),
+  );
 
-  const escaped = escapeHtml(JSON.stringify(payload, null, 2));
   return [
     '<!doctype html>',
     '<html lang="en">',
@@ -4131,20 +4142,63 @@ function buildHubAuthWorkflowHtml(): string {
     '  <meta name="viewport" content="width=device-width, initial-scale=1" />',
     '  <title>Hub Auth Workflow</title>',
     '  <style>',
-    '    :root { color-scheme: dark; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }',
+    '    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }',
     '    body { margin: 0; background: #0b0e14; color: #d6deeb; }',
     '    main { max-width: 980px; margin: 0 auto; padding: 24px; }',
-    '    h1 { margin: 0 0 12px; font-size: 22px; }',
-    '    p { margin: 0 0 16px; color: #9aa4b2; }',
-    '    pre { background: #111826; border: 1px solid #25324a; border-radius: 10px; padding: 16px; overflow: auto; }',
-    '    code { font-size: 12px; line-height: 1.5; }',
+    '    h1 { margin: 0 0 8px; font-size: 22px; }',
+    '    h2 { margin: 0 0 10px; font-size: 15px; }',
+    '    p { margin: 0 0 16px; color: #9aa4b2; line-height: 1.55; }',
+    '    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 20px; }',
+    '    .card { background: #111826; border: 1px solid #25324a; border-radius: 12px; padding: 16px; }',
+    '    .callout { margin-top: 16px; background: #0f1724; border: 1px solid #25324a; border-radius: 12px; padding: 14px 16px; }',
+    '    ol, ul { margin: 0; padding-left: 20px; color: #d6deeb; }',
+    '    li { margin: 0 0 8px; line-height: 1.5; }',
+    '    pre { margin: 10px 0 0; background: #0b1220; border: 1px solid #25324a; border-radius: 10px; padding: 14px; overflow: auto; }',
+    '    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.5; }',
+    '    .eyebrow { color: #7dd3fc; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }',
     '  </style>',
     '</head>',
     '<body>',
     '  <main>',
+    '    <div class="eyebrow">Brokered Toolkit Execution</div>',
     '    <h1>Hub Auth Workflow</h1>',
-    '    <p>Use this sequence for brokered toolkit auth, reconnects, and retries.</p>',
-    `    <pre><code>${escaped}</code></pre>`,
+    '    <p>Use this sequence for brokered toolkit auth, reconnects, and retries. The goal is to find the right proxy tool, check auth only when needed, and avoid looping on downstream failures.</p>',
+    '    <div class="grid">',
+    '      <section class="card">',
+    '        <h2>Default Sequence</h2>',
+             renderList(defaultSequence, true),
+    '      </section>',
+    '      <section class="card">',
+    '        <h2>Auth Check</h2>',
+             renderList(authSequence, true),
+    '      </section>',
+    '      <section class="card">',
+    '        <h2>Reconnect</h2>',
+             renderList(reconnectSequence, true),
+    '      </section>',
+    '      <section class="card">',
+    '        <h2>Reminders</h2>',
+             renderList(reminders),
+    '      </section>',
+    '    </div>',
+    '    <div class="grid">',
+    '      <section class="card">',
+    '        <h2>Find Auth Status</h2>',
+    `        <pre><code>${searchStatusExample}</code></pre>`,
+    '      </section>',
+    '      <section class="card">',
+    '        <h2>Check Status</h2>',
+    `        <pre><code>${executeStatusExample}</code></pre>`,
+    '      </section>',
+    '      <section class="card">',
+    '        <h2>Start Reconnect</h2>',
+    `        <pre><code>${executeConnectExample}</code></pre>`,
+    '      </section>',
+    '    </div>',
+    '    <div class="callout">',
+    '      <h2>When This Adds Value</h2>',
+    '      <p>This is useful when the model needs a reminder about the broker flow. It is not a substitute for the live tool list. If it becomes noisy, the cleaner option is to stop auto-attaching this resource to routine tool calls.</p>',
+    '    </div>',
     '  </main>',
     '</body>',
     '</html>',
