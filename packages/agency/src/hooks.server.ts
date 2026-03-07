@@ -31,7 +31,7 @@ const redirectHandle: Handle = async ({ event, resolve }) => {
 };
 
 const authHandle = createAuthHooks({
-	protectedPaths: ['/account', '/dashboard', '/admin'],
+	protectedPaths: ['/account', '/dashboard', '/admin', '/mcp-access'],
 	loginPath: '/login',
 	includeRedirect: true,
 }) as Handle;

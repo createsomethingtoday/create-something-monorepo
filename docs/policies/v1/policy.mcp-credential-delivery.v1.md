@@ -25,12 +25,13 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 5. Delivery must be recorded with channel, actor, recipient, and artifact reference.
 6. Revocation actions MUST remain available regardless of legacy/sunset state.
 7. Production credential sync/rotation MUST use Infisical for runtime secrets. Doppler MAY exist only as a one-time migration source.
-8. Vault migration cutover MUST include:
+8. Managed bearer-token issuance for partner-linked users MUST reconcile against current `partner_auth_clients` status and active consent before issuance or request-time allow.
+9. Vault migration cutover MUST include:
    - a dry-run import
    - an executed import
    - verification results showing no missing or mismatched keys before production sync
-9. CI/CD and unattended automation MUST use non-interactive Infisical machine identity auth; interactive login is prohibited for production automation.
-10. Vault sync/rotation executions MUST produce auditable run context (`provider`, `source project/config`, `target env/path`, `dry_run`, `result`) without exposing plaintext secret values.
+10. CI/CD and unattended automation MUST use non-interactive Infisical machine identity auth; interactive login is prohibited for production automation.
+11. Vault sync/rotation executions MUST produce auditable run context (`provider`, `source project/config`, `target env/path`, `dry_run`, `result`) without exposing plaintext secret values.
 
 ## Enforcement Surfaces
 
@@ -61,6 +62,7 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 - `mcp_policy_events` decisions for issue/revoke actions
 - `partner_access_deliveries` rows with non-secret metadata
 - `agency_mcp_entitlements` rows and operator mutation history
+- `partner_auth_clients` and `partner_auth_consents` records used for entitlement reconciliation
 - Secret scan of operator docs (no raw bearer artifacts)
 - Vault audit trails for create/update operations
 - Migration verification output (`missing=0`, `mismatched=0`) for provider cutover

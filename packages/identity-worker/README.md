@@ -76,6 +76,7 @@ MCP hub integration:
 3. Hub introspects token via `POST /v1/mcp/sessions/resolve` using `MCP_SESSION_RESOLVE_TOKEN`
    - resolver accepts MCP session tokens, managed `.agency` bearer tokens, and issued legacy personal bearer tokens (`mlk_*`) for compat lanes
 4. Managed `.agency` bearer tokens are only considered valid when `.agency` confirms live entitlement state for the Auth0 subject and mapped account
+   - current `.agency` reconciliation uses partner client status, mapped identity/account records, and active consent state before returning allow/deny
 
 Recommended production config:
 

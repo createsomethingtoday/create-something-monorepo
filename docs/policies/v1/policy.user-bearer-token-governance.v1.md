@@ -31,6 +31,7 @@ Define the production policy for user-facing bearer tokens issued through `.agen
    - required policy acceptance
    - required contract status
    - billing status
+   - where applicable, partner client lifecycle state and active consent state
 6. Bearer tokens MUST be issued by `.agency`; Auth0 remains the identity provider and MUST NOT be exposed as the external bearer-token artifact for host portability.
 7. Bearer tokens MUST be opaque, high-entropy secrets stored only in protected form server-side; plaintext tokens MUST be shown only at issuance or regeneration time.
 8. Every authenticated bearer-token request MUST produce auditable metadata sufficient to attribute activity to a user and organization context.
@@ -80,6 +81,7 @@ The following artifacts MUST remain aligned with this policy before production l
 - Request-time authorization decision logs
 - Org membership and entitlement checks in access telemetry
 - Operator-reviewed entitlement registry updates
+- Partner client status and consent records reconciled into allow/deny state
 - Legal acceptance records linked to the user and organization
 - Billing and contract state checks linked to allow/deny decisions
 - Admin-visible last-used and incident-response metadata
