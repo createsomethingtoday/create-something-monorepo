@@ -153,6 +153,58 @@ pnpm --filter=agency exec tsc --noEmit
 pnpm --filter=agency build && wrangler pages deploy packages/agency/.svelte-kit/cloudflare --project-name=create-something-agency
 ```
 
+## Auth0 And Infisical
+
+`.agency` now treats Auth0 as the identity source of truth. Browser login flows redirect through Auth0 Universal Login, the Auth0 callback is handled at `/auth/callback`, and server-side session validation accepts Auth0-issued tokens through the shared Canon auth layer.
+
+Required Pages secrets:
+
+```bash
+AUTH0_DOMAIN
+AUTH0_CLIENT_ID
+AUTH0_CLIENT_SECRET
+AUTH0_ISSUER_BASE_URL
+AUTH0_JWKS_URL
+```
+
+Optional Pages secrets:
+
+```bash
+AUTH0_AUDIENCE
+AUTH0_SCOPE
+AUTH0_CLAIMS_NAMESPACE
+```
+
+Recommended Infisical path:
+
+```bash
+/agency/auth
+```
+
+Sync Auth0 secrets from Infisical into the Cloudflare Pages project:
+
+```bash
+pnpm agency:auth0:sync
+```
+
+Useful overrides:
+
+```bash
+PROJECT_NAME=create-something-agency
+INFISICAL_ENV=prod
+INFISICAL_PATH=/agency/auth
+INFISICAL_PROJECT_ID=<optional>
+DRY_RUN=true
+```
+
+After syncing secrets, deploy normally:
+
+```bash
+pnpm --filter @create-something/canon package
+pnpm --filter @create-something/agency build
+pnpm --filter @create-something/agency deploy
+```
+
 ---
 
 ## Related

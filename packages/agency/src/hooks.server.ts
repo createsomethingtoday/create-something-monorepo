@@ -1,4 +1,6 @@
 import { redirect, type Handle } from '@sveltejs/kit';
+import { sequence } from '@sveltejs/kit/hooks';
+import { createAuthHooks } from '@create-something/canon/auth';
 
 /**
  * Redirects for deprecated routes (post-MCP pivot)
@@ -10,7 +12,7 @@ const deprecatedRedirects: Record<string, string> = {
 	'/discover': '/'
 };
 
-export const handle: Handle = async ({ event, resolve }) => {
+const redirectHandle: Handle = async ({ event, resolve }) => {
 	const path = event.url.pathname;
 
 	// Check exact matches first
@@ -27,3 +29,11 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	return resolve(event);
 };
+
+const authHandle = createAuthHooks({
+	protectedPaths: ['/account', '/dashboard', '/admin'],
+	loginPath: '/login',
+	includeRedirect: true,
+});
+
+export const handle = sequence(redirectHandle, authHandle);

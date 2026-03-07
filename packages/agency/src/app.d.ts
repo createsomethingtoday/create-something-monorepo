@@ -14,9 +14,9 @@ declare global {
 			user?: {
 				id: string;
 				email: string;
-				username: string;
-				role: string;
-				tier?: 'free' | 'pro' | 'agency';
+				tier: 'free' | 'pro' | 'agency';
+				source: 'workway' | 'templates' | 'io' | 'space' | 'lms' | 'auth0';
+				analytics_opt_out?: boolean;
 			};
 		}
 		// interface PageData {}
