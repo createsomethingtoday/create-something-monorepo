@@ -5,14 +5,15 @@
 	"version": "1.0.0",
 	"type": "module",
 	"scripts": {
+		"prebuild": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package",
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
-		"deploy": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=create-something-space",
-		"deploy:preview": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=create-something-space --branch=preview",
+		"deploy": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a wrangler pages deploy .svelte-kit/cloudflare --project-name=create-something-space --commit-dirty=true",
+		"deploy:preview": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a wrangler pages deploy .svelte-kit/cloudflare --project-name=create-something-space --branch=preview --commit-dirty=true",
 		"cf-typegen": "wrangler types",
 		"migrate:papers": "tsx scripts/migrate-papers.ts",
 		"migrate:papers:prod": "MIGRATION_URL=https://createsomething.space/api/migrate/sync-papers tsx scripts/migrate-papers.ts"
