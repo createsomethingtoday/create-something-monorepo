@@ -45,6 +45,20 @@ Recommended promotion sequence:
 - `auditor` and `readonly`: read-only posture.
 - `operator` and `admin`: write and approval-capable.
 
+### 4) Execution governance controls
+
+For shared remote Hub execution, the following controls are part of the runtime security model, not optional metadata:
+
+- actor-context resolution
+- route classification
+- tenant-scoped route authorization
+- quota enforcement
+- rate-limit enforcement
+- retry/backoff policy
+- trace and audit emission
+
+Protected remote execution MUST fail closed when required actor, tenant, authorization, quota, or access-mode inputs cannot be resolved.
+
 ## Gate Policy
 
 Default strict promotion gates:
@@ -60,6 +74,20 @@ Temporary warm-up gates may be used for entities with historical noise in the cu
 
 Then return to strict gates after a clean measurement window.
 
+## Required Execution Order For Shared Remote Hub Calls
+
+For brokered downstream execution, the required control order is:
+
+1. resolve actor context
+2. classify route
+3. evaluate authorization
+4. enforce quota and rate limits
+5. apply retry/backoff policy
+6. execute downstream call
+7. emit telemetry and trace records
+
+This order should govern shared remote Hub execution even while rollout mode remains in `shadow`.
+
 ## Integration Mapping
 
 ### Oso + Polar
@@ -73,6 +101,7 @@ Then return to strict gates after a clean measurement window.
 
 - `judgment_engine_events` captures rollout mode, sampled path, fallback, mismatch, decision, latency.
 - Dashboard `engineHealth` reports p50/p95 latency, parity, fallback rate, decision mix, KPI projections.
+- Shared remote Hub telemetry should additionally capture route classification, quota/rate-limit outcome, retry behavior, and correlation across hub and downstream execution.
 
 ### Braintrust
 
@@ -104,6 +133,17 @@ As of 2026-02-27:
 - `public/agent/inbox-triage`: `polar_enforce` (100%), strict gates.
 - `default/agent/fleet-watchdog`: `shadow` (10%), strict gates.
 - `public/agent/fleet-watchdog`: `shadow` (10%), warm-up gates due prior fallback-heavy history.
+
+## Alignment Notes
+
+This policy should be read together with:
+
+- `policy.hub-route-authorization.v1`
+- `policy.tenant-tool-exposure.v1`
+- `docs/HUB_EXECUTION_GOVERNANCE_PLAN.md`
+- `docs/REMOTE_MCP_IDENTITY_STANDARD.md`
+
+Those documents define the fail-closed execution posture and tenant-aware identity requirements for shared remote MCP execution.
 
 ## Review Cadence
 
