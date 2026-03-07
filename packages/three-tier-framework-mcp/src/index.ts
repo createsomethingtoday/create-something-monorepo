@@ -3,13 +3,13 @@
 /**
  * Three-Tier Framework MCP Server
  *
- * The Three-Tier Framework (Database, Automation, Judgment) exposed as an MCP server.
+ * The Three-Tier Framework (Database, Rules, Policy) exposed as an MCP server.
  * First server in the CREATE SOMETHING monorepo to use all three MCP primitives.
  *
  * Architecture (the server demonstrates its own thesis):
  * - Database Tier (Resources): Framework definitions, mappings, reference data
- * - Automation Tier (Tools): Classification, debugging heuristic, analysis
- * - Judgment Tier (Prompts): Architecture review templates, design guidance
+ * - Rules Tier (Tools): Classification, debugging heuristic, analysis
+ * - Policy Tier (Prompts): Architecture review templates, design guidance
  *
  * The recursive property: This server IS the framework it describes,
  * served through the very primitives the framework maps to tiers.
@@ -41,8 +41,8 @@ const server = new Server(
   {
     capabilities: {
       resources: {},  // Database tier — application-controlled
-      tools: {},      // Automation tier — model-controlled
-      prompts: {}     // Judgment tier — user-controlled
+      tools: {},      // Rules tier — model-controlled
+      prompts: {}     // Policy tier — user-controlled
     }
   }
 );
@@ -64,4 +64,4 @@ const transport = new StdioServerTransport();
 server.connect(transport);
 
 console.error('Three-Tier Framework MCP server running on stdio');
-console.error('Capabilities: Resources (Database) + Tools (Automation) + Prompts (Judgment)');
+console.error('Capabilities: Resources (Database) + Tools (Rules) + Prompts (Policy)');

@@ -157,7 +157,7 @@ export function registerPrompts(server: Server): void {
               role: 'user' as const,
               content: {
                 type: 'text' as const,
-                text: `${FRAMEWORK_CONTEXT}\n\n${POLICY_CONTEXT}\n\n---\n\nAudit the policy artifacts in this system:\n\n**System**: ${systemDescription}\n\nFor each constraint or policy you identify:\n1. **Classification**: Is it mutable, immutable, or contextual?\n2. **Current tier**: Where does it currently live (Database, Automation, Judgment)?\n3. **Should it move?**: Based on the policy-as-artifact model, where should it be stored, transformed, and evaluated?\n4. **Versioning**: Is it versioned? Should it be?\n5. **Insight**: Is the policy selection traced? Can you audit why this policy was chosen?`
+                text: `${FRAMEWORK_CONTEXT}\n\n${POLICY_CONTEXT}\n\n---\n\nAudit the policy artifacts in this system:\n\n**System**: ${systemDescription}\n\nFor each constraint or policy you identify:\n1. **Classification**: Is it mutable, immutable, or contextual?\n2. **Current tier**: Where does it currently live (Database, Rules, Policy)?\n3. **Should it move?**: Based on the policy-as-artifact model, where should it be stored, transformed, and evaluated?\n4. **Versioning**: Is it versioned? Should it be?\n5. **Insight**: Is the policy selection traced? Can you audit why this policy was chosen?`
               }
             }
           ]

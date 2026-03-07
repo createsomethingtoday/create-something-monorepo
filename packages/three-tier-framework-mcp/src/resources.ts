@@ -25,7 +25,7 @@ export function registerResources(server: Server): void {
       {
         uriTemplate: 'framework://definitions/{tier}',
         name: 'Tier Definition',
-        description: 'Individual tier definition. Valid tiers: database, automation, judgment.',
+        description: 'Individual tier definition. Valid tiers: database, rules, policy.',
         mimeType: 'application/json'
       }
     ]
@@ -37,7 +37,7 @@ export function registerResources(server: Server): void {
       {
         uri: 'framework://definitions',
         name: 'All Tier Definitions',
-        description: 'All three tier definitions (Database, Automation, Judgment) as structured JSON.',
+        description: 'All three tier definitions (Database, Rules, Policy) as structured JSON.',
         mimeType: 'application/json'
       },
       {
@@ -67,7 +67,7 @@ export function registerResources(server: Server): void {
       {
         uri: 'framework://sampling',
         name: 'Sampling Feedback Loop',
-        description: 'The recursive property: how MCP sampling allows Automation to request Judgment.',
+        description: 'The recursive property: how MCP sampling allows Rules to request Policy.',
         mimeType: 'application/json'
       },
       {

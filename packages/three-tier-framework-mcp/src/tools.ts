@@ -1,8 +1,8 @@
 /**
- * Three-Tier Framework — Tool Handlers (Automation Tier)
+ * Three-Tier Framework — Tool Handlers (Rules Tier)
  * 
  * Model-controlled functions that agents invoke during reasoning.
- * MCP Tools primitive — the Automation tier of this server.
+ * MCP Tools primitive — the Rules tier of this server.
  */
 
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -23,7 +23,7 @@ export function registerTools(server: Server): void {
     tools: [
       {
         name: 'classify_component',
-        description: 'Classify a component or service into framework tier(s) (Database, Automation, Judgment) with confidence scores and rationale. Use this to understand where a piece of your system fits in the Three-Tier Framework.',
+        description: 'Classify a component or service into framework tier(s) (Database, Rules, Policy) with confidence scores and rationale. Use this to understand where a piece of your system fits in the Three-Tier Framework.',
         inputSchema: {
           type: 'object' as const,
           properties: {
@@ -41,7 +41,7 @@ export function registerTools(server: Server): void {
       },
       {
         name: 'debug_system',
-        description: 'Apply the Three-Tier causality heuristic to debug a system failure. Returns an ordered diagnostic checklist: (1) Database — is data there? (2) Automation — did execution work? (3) Judgment — was policy correct?',
+        description: 'Apply the Three-Tier causality heuristic to debug a system failure. Returns an ordered diagnostic checklist: (1) Database — is data there? (2) Rules — did execution work? (3) Policy — was governance correct?',
         inputSchema: {
           type: 'object' as const,
           properties: {
