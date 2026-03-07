@@ -6,7 +6,7 @@ export const TABLE_IDS = {
 } as const;
 
 export const CONFIRMED_ASSET_FIELDS = {
-  type: '🆎Type',
+  type: '⚙️🆎Type (Text)',
   name: 'Name',
   description: '📝Description',
   descriptionShort: 'ℹ️Description (Short)',
