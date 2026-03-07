@@ -18,7 +18,8 @@ First-wave policies scaffolded here:
 10. `policy.tenant-tool-exposure.v1`
 11. `policy.integration-selection.v1`
 12. `policy.policy-lifecycle-governance.v1`
-8. `policy.paper-experiment-release-gate.v1`
+13. `policy.paper-experiment-release-gate.v1`
+14. `policy.user-bearer-token-governance.v1`
 
 Each policy has:
 

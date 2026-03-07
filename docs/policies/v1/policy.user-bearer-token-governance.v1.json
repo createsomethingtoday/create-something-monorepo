@@ -1,0 +1,52 @@
+{
+  "policy_id": "policy.user-bearer-token-governance.v1",
+  "version": 1,
+  "status": "draft",
+  "token_model": {
+    "type": "long_lived_user_bearer_token",
+    "one_active_token_per_user": true,
+    "shared_team_tokens_allowed": false,
+    "issuer": "agency",
+    "identity_provider": "auth0",
+    "token_format": "opaque",
+    "plaintext_display": "issue_or_regenerate_only"
+  },
+  "authorization_requirements": {
+    "live_check_per_request": true,
+    "required_checks": [
+      "token_status",
+      "user_status",
+      "organization_membership",
+      "organization_context",
+      "service_entitlement",
+      "policy_acceptance",
+      "contract_status",
+      "billing_status"
+    ],
+    "fail_closed": true
+  },
+  "lifecycle_controls": {
+    "revocation_required": true,
+    "regeneration_required": true,
+    "regeneration_invalidates_previous_token": true,
+    "compromise_response_required": true
+  },
+  "audit_requirements": [
+    "token_id",
+    "user_id",
+    "organization_id",
+    "service_key",
+    "decision",
+    "ip",
+    "user_agent",
+    "created_at"
+  ],
+  "legal_alignment_required": true,
+  "required_legal_artifacts": [
+    "terms_or_msa",
+    "security_policy",
+    "acceptable_use_for_agents_and_third_party_hosts",
+    "onboarding_disclosure",
+    "incident_response_language"
+  ]
+}

@@ -81,4 +81,16 @@
     <priority>0.3</priority>
     <lastmod>2026-02-04</lastmod>
   </url>
+  <url>
+    <loc>https://createsomething.agency/security</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <lastmod>2026-03-06</lastmod>
+  </url>
+  <url>
+    <loc>https://createsomething.agency/bearer-token-policy</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+    <lastmod>2026-03-06</lastmod>
+  </url>
 </urlset>
