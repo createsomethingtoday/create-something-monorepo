@@ -544,6 +544,125 @@ export async function findMcpLegacyKeyByTokenHash(
 		.first<McpLegacyKey>();
 }
 
+export async function upsertMcpLongLivedToken(
+	db: D1Database,
+	token: {
+		id: string;
+		auth_subject: string;
+		auth_email: string | null;
+		tenant_id: string;
+		account_id: string;
+		tool_mode: 'read_only' | 'read_write';
+		toolkit_profile_json: string;
+		allowed_tool_prefixes_json: string;
+		token_hash: string;
+		token_prefix: string;
+		issued_by: string;
+		metadata_json: string;
+	}
+): Promise<void> {
+	await db
+		.prepare(
+			`INSERT INTO mcp_long_lived_tokens (
+         id, auth_subject, auth_email, tenant_id, account_id, tool_mode,
+         toolkit_profile_json, allowed_tool_prefixes_json, token_hash, token_prefix,
+         issued_by, metadata_json, revoked_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
+       ON CONFLICT(auth_subject) DO UPDATE SET
+         id = excluded.id,
+         auth_email = excluded.auth_email,
+         tenant_id = excluded.tenant_id,
+         account_id = excluded.account_id,
+         tool_mode = excluded.tool_mode,
+         toolkit_profile_json = excluded.toolkit_profile_json,
+         allowed_tool_prefixes_json = excluded.allowed_tool_prefixes_json,
+         token_hash = excluded.token_hash,
+         token_prefix = excluded.token_prefix,
+         issued_by = excluded.issued_by,
+         metadata_json = excluded.metadata_json,
+         revoked_at = NULL,
+         last_used_at = NULL,
+         updated_at = datetime('now')`
+		)
+		.bind(
+			token.id,
+			token.auth_subject,
+			token.auth_email,
+			token.tenant_id,
+			token.account_id,
+			token.tool_mode,
+			token.toolkit_profile_json,
+			token.allowed_tool_prefixes_json,
+			token.token_hash,
+			token.token_prefix,
+			token.issued_by,
+			token.metadata_json,
+		)
+		.run();
+}
+
+export async function findMcpLongLivedTokenByAuthSubject(
+	db: D1Database,
+	authSubject: string
+): Promise<McpLongLivedToken | null> {
+	return db
+		.prepare(
+			`SELECT * FROM mcp_long_lived_tokens
+       WHERE auth_subject = ?
+       LIMIT 1`
+		)
+		.bind(authSubject)
+		.first<McpLongLivedToken>();
+}
+
+export async function findMcpLongLivedTokenById(db: D1Database, id: string): Promise<McpLongLivedToken | null> {
+	return db
+		.prepare(
+			`SELECT * FROM mcp_long_lived_tokens
+       WHERE id = ?
+       LIMIT 1`
+		)
+		.bind(id)
+		.first<McpLongLivedToken>();
+}
+
+export async function findMcpLongLivedTokenByTokenHash(
+	db: D1Database,
+	tokenHash: string
+): Promise<McpLongLivedToken | null> {
+	return db
+		.prepare(
+			`SELECT * FROM mcp_long_lived_tokens
+       WHERE token_hash = ?
+       LIMIT 1`
+		)
+		.bind(tokenHash)
+		.first<McpLongLivedToken>();
+}
+
+export async function markMcpLongLivedTokenUsed(db: D1Database, id: string): Promise<void> {
+	await db
+		.prepare(
+			`UPDATE mcp_long_lived_tokens
+       SET last_used_at = datetime('now'), updated_at = datetime('now')
+       WHERE id = ?`
+		)
+		.bind(id)
+		.run();
+}
+
+export async function revokeMcpLongLivedToken(db: D1Database, id: string): Promise<boolean> {
+	const result = await db
+		.prepare(
+			`UPDATE mcp_long_lived_tokens
+       SET revoked_at = datetime('now'), updated_at = datetime('now')
+       WHERE id = ? AND revoked_at IS NULL`
+		)
+		.bind(id)
+		.run();
+	return result.meta.changes > 0;
+}
+
 export async function markMcpLegacyKeyUsed(db: D1Database, id: string): Promise<void> {
 	await db
 		.prepare(

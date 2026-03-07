@@ -157,6 +157,19 @@ pnpm --filter=agency build && wrangler pages deploy packages/agency/.svelte-kit/
 
 `.agency` now treats Auth0 as the identity source of truth. Browser login flows redirect through Auth0 Universal Login, the Auth0 callback is handled at `/auth/callback`, and server-side session validation accepts Auth0-issued tokens through the shared Canon auth layer.
 
+Tenant export uses `a0deploy`, not `auth0`. The repo-level export wrapper is:
+
+```bash
+cp auth0/config.example.json auth0/config.json
+pnpm auth0:export
+```
+
+The export wrapper expects `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, and `AUTH0_CLIENT_SECRET` in your environment, then runs:
+
+```bash
+a0deploy export -c auth0/config.json -f yaml -o auth0/export
+```
+
 Required Pages secrets:
 
 ```bash

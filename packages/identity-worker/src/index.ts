@@ -48,7 +48,11 @@ import {
 	findMcpSessionById,
 	findMcpSessionByTokenHash,
 	findMcpLegacyKeyByTokenHash,
+	findMcpLongLivedTokenByAuthSubject,
+	findMcpLongLivedTokenById,
+	findMcpLongLivedTokenByTokenHash,
 	markMcpLegacyKeyUsed,
+	markMcpLongLivedTokenUsed,
 	replaceMcpSessionScopes,
 	revokeMcpSession,
 	revokeAllMcpSessionsForUser,
@@ -56,6 +60,8 @@ import {
 	createMcpLegacyKey,
 	findMcpLegacyKeyById,
 	revokeMcpLegacyKey,
+	revokeMcpLongLivedToken,
+	upsertMcpLongLivedToken,
 	findMcpPolicyRollout,
 	createMcpPolicyEvent,
 } from './db/queries';
@@ -454,6 +460,21 @@ interface IssueMcpLegacyKeyBody {
 	metadata?: Record<string, unknown>;
 }
 
+interface AdminIssueMcpLongLivedTokenBody {
+	auth_subject?: string;
+	auth_email?: string;
+	tenant_id?: string;
+	account_id?: string;
+	toolkit_profile?: string[];
+	tool_mode?: McpToolMode;
+	actor?: string;
+	metadata?: Record<string, unknown>;
+}
+
+interface AdminGetMcpLongLivedTokenBody {
+	auth_subject?: string;
+}
+
 interface DecisionTelemetry {
 	policy_id: string;
 	decision: AuthorizationDecisionType;
@@ -471,6 +492,7 @@ const POLICY_PARTNER_AUTH_GOVERNANCE_ID = 'policy.partner-auth-governance.v1';
 const POLICY_MCP_CREDENTIAL_DELIVERY_ID = 'policy.mcp-credential-delivery.v1';
 const POLICY_LEGACY_COMPAT_SUNSET_ID = 'policy.legacy-compat-sunset.v1';
 const POLICY_MCP_SESSION_SELF_SERVICE_ID = 'policy.mcp-session-self-service.v1';
+const POLICY_USER_BEARER_TOKEN_GOVERNANCE_ID = 'policy.user-bearer-token-governance.v1';
 const MIN_MCP_LEGACY_KEY_TTL_SECONDS = 3600;
 const DEFAULT_MCP_LEGACY_KEY_TTL_SECONDS = 7 * 24 * 60 * 60;
 const MAX_MCP_LEGACY_KEY_TTL_SECONDS = 30 * 24 * 60 * 60;
