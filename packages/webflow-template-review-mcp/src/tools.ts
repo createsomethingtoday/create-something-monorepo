@@ -176,6 +176,25 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
   );
 
   server.tool(
+    'template_review_update_asset_publishing',
+    'Update confirmed asset-side publishing override fields for a template.',
+    {
+      asset_id: z.string().min(1),
+      mrp_id_overwrite: z.string().optional(),
+    },
+    async ({ asset_id, mrp_id_overwrite }) => {
+      try {
+        const updated = await getClient().updateAssetPublishing(asset_id, {
+          mrp_id_overwrite,
+        });
+        return asSuccess({ updated_asset: updated, support: TEMPLATE_REVIEW_FIELD_MAP.writeSupport.assetPublishing });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
     'template_review_update_version_review',
     'Update template version review fields that are confirmed writable in Airtable.',
     {

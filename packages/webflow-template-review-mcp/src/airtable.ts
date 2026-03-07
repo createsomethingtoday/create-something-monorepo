@@ -44,6 +44,7 @@ export interface TemplateReviewAsset extends TemplateReviewQueueItem {
   descriptionShort?: string;
   descriptionLongHtml?: string;
   mrpId?: string;
+  mrpIdOverride?: string;
   thumbnailImageUrl?: string;
   secondaryThumbnailUrls?: string[];
   carouselImageUrls?: string[];
@@ -101,6 +102,10 @@ export interface TemplateAssetMetadataUpdateInput {
   thumbnail_image_url?: string | null;
   thumbnail_image_secondary_urls?: string[];
   carousel_image_urls?: string[];
+}
+
+export interface TemplateAssetPublishingUpdateInput {
+  mrp_id_overwrite?: string;
 }
 
 export interface AirtableClientOptions {
@@ -197,6 +202,7 @@ function mapAsset(record: AirtableRecord): TemplateReviewAsset {
     descriptionShort: firstString(fields[CONFIRMED_ASSET_FIELDS.descriptionShort]),
     descriptionLongHtml: firstString(fields[CONFIRMED_ASSET_FIELDS.descriptionLongHtml]),
     mrpId: firstString(fields[CONFIRMED_ASSET_FIELDS.mrpId]),
+    mrpIdOverride: firstString(fields[CONFIRMED_ASSET_FIELDS.mrpIdOverride]),
     websiteUrl: firstString(fields[CONFIRMED_ASSET_FIELDS.websiteUrl]),
     previewSiteUrl: firstString(fields[CONFIRMED_ASSET_FIELDS.previewSiteUrl]),
     marketplaceStatus: firstString(fields[CONFIRMED_ASSET_FIELDS.marketplaceStatus]),
@@ -463,6 +469,21 @@ export class AirtableClient {
 
     if (Object.keys(fields).length === 0) {
       throw new AirtableClientError('NO_MUTATION_FIELDS', 'No confirmed asset metadata fields were provided.', 400);
+    }
+
+    const updated = await this.updateRecord(TABLE_IDS.assets, assetId, fields);
+    if (!isTemplateLikeAsset(updated.fields)) {
+      throw new AirtableClientError('OUT_OF_SCOPE_ASSET', 'Updated asset is outside template-review scope.', 403);
+    }
+    return mapAsset(updated);
+  }
+
+  async updateAssetPublishing(assetId: string, input: TemplateAssetPublishingUpdateInput): Promise<TemplateReviewAsset> {
+    const fields: Record<string, unknown> = {};
+    if (input.mrp_id_overwrite !== undefined) fields[CONFIRMED_ASSET_FIELDS.mrpIdOverride] = input.mrp_id_overwrite;
+
+    if (Object.keys(fields).length === 0) {
+      throw new AirtableClientError('NO_MUTATION_FIELDS', 'No confirmed asset publishing fields were provided.', 400);
     }
 
     const updated = await this.updateRecord(TABLE_IDS.assets, assetId, fields);

@@ -28,6 +28,7 @@ export const CONFIRMED_ASSET_FIELDS = {
   decisionDate: '🚀📅Decision Date',
   priceString: '🥞💲Template Price String (🏗️ only)',
   mrpId: 'ℹ️MRP ID',
+  mrpIdOverride: 'fldNI0oPuODQcIZlo',
 } as const;
 
 export const CONFIRMED_VERSION_FIELDS = {
@@ -161,6 +162,9 @@ export const TEMPLATE_REVIEW_FIELD_MAP = {
       'thumbnail_image_url',
       'thumbnail_image_secondary_urls',
       'carousel_image_urls',
+    ],
+    assetPublishing: [
+      'mrp_id_overwrite',
     ],
     versionReview: [
       'review_owner',
