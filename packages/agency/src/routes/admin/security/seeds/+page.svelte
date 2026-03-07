@@ -59,6 +59,8 @@
 	let busy = $state(false);
 	let successMessage = $state('');
 	let errorMessage = $state('');
+	let importText = $state(`auth_email,account_id,tenant_id,workspace_account_id,service_tier,managed_bearer_allowed,org_membership_active,service_entitled,policy_accepted,contract_active,billing_active,status,invited_at,metadata_json
+operator@exampleclient.com,acct_example_client,tenant_example_client,acct_example_client,agency,1,1,1,0,1,1,seeded,2026-03-07T19:30:00Z,"{""source"":""client_onboarding_batch_1""}"`);
 
 	function selectSeed(seed: Seed) {
 		form = {
@@ -120,6 +122,37 @@
 			await invalidateAll();
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Failed to save seed';
+		} finally {
+			busy = false;
+		}
+	}
+
+	async function importSeeds() {
+		busy = true;
+		successMessage = '';
+		errorMessage = '';
+
+		try {
+			const response = await fetch('/api/admin/identity-seeds', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ import_text: importText }),
+			});
+			const payload = (await response.json().catch(() => ({}))) as {
+				message?: string;
+				imported_count?: number;
+				error_count?: number;
+				errors?: string[];
+			};
+			if (!response.ok) {
+				throw new Error(payload.message ?? payload.errors?.join('\n') ?? 'Failed to import identity seeds');
+			}
+
+			successMessage = `Imported ${payload.imported_count ?? 0} seed${payload.imported_count === 1 ? '' : 's'}${payload.error_count ? ` with ${payload.error_count} row warning${payload.error_count === 1 ? '' : 's'}.` : '.'}`;
+			errorMessage = payload.errors?.length ? payload.errors.join('\n') : '';
+			await invalidateAll();
+		} catch (error) {
+			errorMessage = error instanceof Error ? error.message : 'Failed to import seeds';
 		} finally {
 			busy = false;
 		}
@@ -207,6 +240,23 @@
 				{/if}
 			</section>
 
+			<section class="panel form-panel">
+				<div class="panel-header">
+					<h2>Bulk Import</h2>
+					<a href="/docs/examples/agency-user-seed.csv">Example CSV</a>
+				</div>
+				<p class="muted import-copy">Paste the documented CSV or TSV columns here. Existing seeded emails are updated in place; new rows are inserted.</p>
+				<label class="metadata-field">
+					Seed Import Text
+					<textarea bind:value={importText} rows="10" spellcheck="false"></textarea>
+				</label>
+				<div class="actions">
+					<button disabled={busy} type="button" onclick={importSeeds}>
+						{busy ? 'Importing…' : 'Import batch'}
+					</button>
+				</div>
+			</section>
+
 			<section class="panel">
 				<div class="panel-header">
 					<h2>Seed Registry</h2>
@@ -287,7 +337,7 @@
 	}
 	.grid {
 		display: grid;
-		grid-template-columns: 26rem minmax(0, 1fr);
+		grid-template-columns: 26rem 26rem minmax(0, 1fr);
 		gap: 1.25rem;
 	}
 	.panel {
@@ -387,6 +437,10 @@
 	}
 	.error {
 		color: #ff8a80;
+		white-space: pre-wrap;
+	}
+	.import-copy {
+		margin-top: 0.75rem;
 	}
 	@media (max-width: 980px) {
 		.grid,
