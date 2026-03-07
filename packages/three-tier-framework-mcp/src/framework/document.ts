@@ -5,7 +5,7 @@
  * framework://full resource URI.
  */
 
-export const FRAMEWORK_DOCUMENT = `# The Three-Tier Framework: Database, Automation, Judgment
+export const FRAMEWORK_DOCUMENT = `# The Three-Tier Framework: Database, Rules, Policy
 
 **A structural model for agent systems, realized through Model Context Protocol**
 
@@ -374,7 +374,7 @@ NIST's taxonomy focuses on human-AI activities from a usability perspective. Thi
 
 ## Conclusion
 
-The three-tier framework—Database, Automation, Judgment—provides a structural model for reasoning about agent systems. MCP encapsulates it naturally through its primitives (Resources, Tools, Prompts) and control model distinctions (application-controlled, model-controlled, user-controlled).
+The three-tier framework—Database, Rules, Policy—provides a structural model for reasoning about agent systems. MCP encapsulates it naturally through its primitives (Resources, Tools, Prompts) and control model distinctions (application-controlled, model-controlled, user-controlled).
 
 Four cross-cutting concerns span the tiers: Touchpoints (interface surface), Artifacts (boundary contracts), Orchestration (procedural flow), and Insight (perceptual membrane). These are not tiers—they don't do work the way tiers do—but they are essential to how the system operates.
 

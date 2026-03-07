@@ -1,6 +1,6 @@
 # CREATE SOMETHING Agency
 
-**createsomething.agency** — POLICY OS for production autonomy
+**createsomething.agency** — production-safe workflow infrastructure for technical operators
 
 We build the connectivity layer between your tools and AI.
 
@@ -15,7 +15,7 @@ Neither Claude Desktop, Claude Cowork, nor Codex can create MCP servers from wit
 - Domain expertise (understanding your business)
 - MCP protocol knowledge (auth, transports, error handling)
 - Integration experience (data mapping, security boundaries)
-- POLICY OS design (Skills + MCP with policy boundaries)
+- Workflow control design (Skills + MCP with trust boundaries)
 
 This is what `.agency` delivers.
 
@@ -25,10 +25,10 @@ This is what `.agency` delivers.
 
 | Offer | Description | Typical Output |
 |-------|-------------|----------------|
-| **Custom Workflow MCPs** | Build trusted workflow substrate for business-critical operations. | Workflow implementation + integration contracts |
-| **Autonomy Assurance** | Add policy controls, release gates, approval rules, and incident loops. | Governed runtime behavior + reliability controls |
+| **Workflow Infrastructure** | Build trusted workflow substrate for business-critical operations. | Workflow implementation + integration contracts |
+| **Reliability and Control Layer** | Add policy controls, release gates, approval rules, and incident loops. | Governed runtime behavior + reliability controls |
 | **Enterprise Extension** | Extend for high-stakes, cross-system, and compliance-heavy workflows. | Custom governance boundaries + enterprise orchestration |
-| **Policy Mapping Session** | Paid pre-implementation mapping to scope workflow and policy boundary. | Pilot scope, policy boundary, and 30-day plan |
+| **Workflow Mapping Session** | Paid pre-implementation mapping to scope workflow and trust boundary. | Pilot scope, trust boundary, and 30-day plan |
 
 ---
 
@@ -46,8 +46,8 @@ This is what `.agency` delivers.
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Entry point**: Custom Workflow MCPs that connect your systems with trusted action paths  
-**Expansion**: Assurance and Extension based on risk and workflow complexity
+**Entry point**: a scoped MCP wedge that connects one important workflow with trusted action paths  
+**Expansion**: Reliability and Control plus Enterprise Extension based on risk and workflow complexity
 
 ---
 
@@ -120,7 +120,7 @@ packages/agency/
 │   │   └── admin/           # Internal tools
 │   └── lib/                 # Shared utilities
 ├── content/                 # Operational content
-│   ├── sales/               # POLICY OS buyer brief, script, and interface spec
+│   ├── sales/               # workflow infrastructure buyer brief, script, and interface spec
 │   └── case-studies/        # MCP project documentation
 ├── docs/                    # Client documentation
 └── workers/                 # Cloudflare Workers

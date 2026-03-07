@@ -142,8 +142,8 @@
         <BorderBeam size={150} duration={8} colorFrom={primaryBeam} colorTo={secondaryBeam} />
         <div class="flow-kicker">Decides</div>
         <div class="hub-lockup">
-          <span class="policy-title">POLICY OS</span>
-          <span class="hub-sub">Autonomy boundary</span>
+          <span class="policy-title">Control Layer</span>
+          <span class="hub-sub">Trust boundary</span>
         </div>
         <div class="decision-row">
           {#each decisionStates as decision}

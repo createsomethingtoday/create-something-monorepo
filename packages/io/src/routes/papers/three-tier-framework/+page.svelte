@@ -1,6 +1,6 @@
 <script lang="ts">
 	/**
-	 * The Three-Tier Framework: Database, Automation, Judgment
+	 * The Three-Tier Framework: Database, Rules, Policy
 	 *
 	 * A structural model for agent systems, realized through
 	 * Model Context Protocol.
@@ -9,9 +9,9 @@
 </script>
 
 <SEO
-	title="The Three-Tier Framework: Database, Automation, Judgment"
+	title="The Three-Tier Framework: Database, Rules, Policy"
 	description="A structural model for agent systems, realized through Model Context Protocol. Three tiers map to MCP's primitives via control model distinctions."
-	keywords="Three-Tier Framework, MCP, Model Context Protocol, Agent Systems, Database, Automation, Judgment, Policy as Artifact"
+	keywords="Three-Tier Framework, MCP, Model Context Protocol, Agent Systems, Database, Rules, Policy, Policy as Artifact"
 	ogType="article"
 	articleSection="Research"
 	publishedTime="2026-02-05T00:00:00Z"
@@ -943,7 +943,7 @@
 			<h2 class="section-heading">XI. Conclusion</h2>
 			<div class="space-y-4 leading-relaxed body-text">
 				<p>
-					The three-tier framework—Database, Automation, Judgment—provides a structural model for
+					The three-tier framework—Database, Rules, Policy—provides a structural model for
 					reasoning about agent systems. MCP encapsulates it naturally through its primitives (Resources,
 					Tools, Prompts) and control model distinctions (application-controlled, model-controlled,
 					user-controlled).
