@@ -62,11 +62,11 @@ We don't play pricing games. Our rates are what they are. We'd rather scope diff
 
 ## Service Tiers
 
-### Discovery Sprint
+### Workflow Mapping Session
 
-**Purpose**: Understand the problem, define the solution, de-risk the project
+**Purpose**: Map one workflow, define its trust boundary, and de-risk implementation
 **Duration**: 1-2 weeks
-**Deliverable**: Discovery report with recommendations, scope, and estimate
+**Deliverable**: Pilot scope, policy boundary, implementation roadmap, and fixed-price recommendation
 
 | Complexity | Price | When to Use |
 |------------|-------|-------------|
@@ -78,11 +78,12 @@ We don't play pricing games. Our rates are what they are. We'd rather scope diff
 - Stakeholder interviews (up to 5)
 - Technical assessment
 - Workflow mapping
+- Policy-boundary definition (`auto-allow`, `approval-required`, `block`)
 - Solution architecture
-- Implementation roadmap
+- 30-day implementation roadmap
 - Fixed-price estimate for next phase
 
-**Value Proposition**: "Spend $10K to know exactly what you're building and what it will cost. No surprises."
+**Value Proposition**: "Spend $10K to define one workflow clearly enough to implement it with the right trust boundary and no ambiguity about next steps."
 
 ---
 

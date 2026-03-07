@@ -8,9 +8,13 @@ Use this sequence after a discovery call to convert diagnosis into a concrete de
 
 - buyer fit level (`high|medium|low`)
 - workflow candidate
+- business objective
+- current failure cost
 - risk class
 - required approvals
 - integration systems
+- workflow owner
+- policy boundary
 - recommended package tier
 - next-step owner and target date
 
@@ -29,8 +33,11 @@ Hi {{Name}},
 Thanks again for the discussion. Here is the operating summary from today:
 
 - Workflow candidate: {{workflow}}
+- Business objective: {{business_objective}}
+- Current failure cost: {{failure_cost}}
 - Risk class: {{risk_class}}
 - Systems in scope: {{systems}}
+- Workflow owner: {{workflow_owner}}
 - Recommended path: {{tier}}
 
 Based on this, the next step is:
@@ -79,6 +86,11 @@ To finalize the Workflow Mapping Session, please confirm:
 
 Deliverable remains: pilot scope, trust boundary, and 30-day plan.
 
+Please also confirm the actions that currently fall into:
+- auto-allow
+- approval-required
+- block
+
 Best,  
 {{sender}}
 
@@ -91,6 +103,8 @@ For the MCP-only wedge, please confirm:
 - single workflow boundary
 - trigger criteria for entering the Reliability and Control Layer
 - checkpoint date for trigger review
+
+If runtime tracing is in scope, we can add Braintrust as observability support after the wedge is defined.
 
 Best,  
 {{sender}}
