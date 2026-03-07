@@ -28,7 +28,7 @@ export const CONFIRMED_ASSET_FIELDS = {
   decisionDate: '🚀📅Decision Date',
   priceString: '🥞💲Template Price String (🏗️ only)',
   mrpId: 'ℹ️MRP ID',
-  mrpIdOverride: 'fldNI0oPuODQcIZlo',
+  mrpIdOverride: '👀ℹ️MRP ID (Override)',
 } as const;
 
 export const CONFIRMED_VERSION_FIELDS = {
@@ -44,12 +44,21 @@ export const CONFIRMED_VERSION_FIELDS = {
   reviewFeedback: '📝Review Feedback',
   reviewChecklist: '📝Review Checklist',
   publishingChecklist: '🚀Publishing Checklist',
-  release: 'fld3CQjSWa9lVBLgT',
+  release: '🚀Release',
   releaseDate: '🚀Release Date',
   decisionDate: '📅Decision Made Datetime',
   rejectReason: '🚩Rejection Reason',
   rejectionFeedback: '🚩Rejection Feedback',
   mrpIdOverwrite: '👀ℹ️MRP ID (Override)',
+} as const;
+
+export const CONFIRMED_WRITE_FIELD_IDS = {
+  assets: {
+    mrpIdOverride: 'fldNI0oPuODQcIZlo',
+  },
+  versions: {
+    release: 'fld3CQjSWa9lVBLgT',
+  },
 } as const;
 
 export const PENDING_VERSION_FIELDS = {
@@ -143,6 +152,7 @@ export const TEMPLATE_REVIEW_FIELD_MAP = {
     assets: CONFIRMED_ASSET_FIELDS,
     versions: CONFIRMED_VERSION_FIELDS,
   },
+  confirmedWriteFieldIds: CONFIRMED_WRITE_FIELD_IDS,
   pending: {
     assets: PENDING_ASSET_FIELDS,
     versions: PENDING_VERSION_FIELDS,

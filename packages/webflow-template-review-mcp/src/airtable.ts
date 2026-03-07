@@ -1,5 +1,6 @@
 import {
   CONFIRMED_ASSET_FIELDS,
+  CONFIRMED_WRITE_FIELD_IDS,
   CONFIRMED_VERSION_FIELDS,
   DEFAULT_AIRTABLE_BASE_ID,
   QUALITY_RATING_OPTIONS,
@@ -381,6 +382,7 @@ export class AirtableClient {
           airtableField: CONFIRMED_VERSION_FIELDS.releaseDate,
           useInstead: 'release_record_id',
           writableField: CONFIRMED_VERSION_FIELDS.release,
+          writableFieldId: CONFIRMED_WRITE_FIELD_IDS.versions.release,
         },
       );
     }
@@ -437,7 +439,7 @@ export class AirtableClient {
       fields[CONFIRMED_VERSION_FIELDS.publishingChecklist] = coerceLongText(input.publishing_checklist);
     }
     if (input.release_record_id !== undefined) {
-      fields[CONFIRMED_VERSION_FIELDS.release] = input.release_record_id ? [input.release_record_id] : [];
+      fields[CONFIRMED_WRITE_FIELD_IDS.versions.release] = input.release_record_id ? [input.release_record_id] : [];
     }
     if (input.mrp_id_overwrite !== undefined) fields[CONFIRMED_VERSION_FIELDS.mrpIdOverwrite] = input.mrp_id_overwrite;
     if (input.reject_reason !== undefined) fields[CONFIRMED_VERSION_FIELDS.rejectReason] = input.reject_reason;
@@ -482,7 +484,9 @@ export class AirtableClient {
 
   async updateAssetPublishing(assetId: string, input: TemplateAssetPublishingUpdateInput): Promise<TemplateReviewAsset> {
     const fields: Record<string, unknown> = {};
-    if (input.mrp_id_overwrite !== undefined) fields[CONFIRMED_ASSET_FIELDS.mrpIdOverride] = input.mrp_id_overwrite;
+    if (input.mrp_id_overwrite !== undefined) {
+      fields[CONFIRMED_WRITE_FIELD_IDS.assets.mrpIdOverride] = input.mrp_id_overwrite;
+    }
 
     if (Object.keys(fields).length === 0) {
       throw new AirtableClientError('NO_MUTATION_FIELDS', 'No confirmed asset publishing fields were provided.', 400);
