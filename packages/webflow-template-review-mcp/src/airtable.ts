@@ -172,7 +172,7 @@ export class AirtableClient {
   constructor(options: AirtableClientOptions) {
     this.apiKey = options.apiKey;
     this.baseId = options.baseId ?? DEFAULT_AIRTABLE_BASE_ID;
-    this.fetchFn = options.fetchFn ?? fetch;
+    this.fetchFn = options.fetchFn ?? ((input, init) => fetch(input, init));
   }
 
   private async request(path: string, init?: RequestInit): Promise<Response> {

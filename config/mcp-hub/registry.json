@@ -10986,6 +10986,31 @@
         "operator",
         "workway"
       ]
+    },
+    "webflow-template-review-mcp": {
+      "transport": "http",
+      "url": "https://webflow-template-review-mcp.createsomething.workers.dev/mcp",
+      "bearer_token_env_var": "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY",
+      "description": "Webflow Template Review MCP for template asset and version workflows",
+      "tags": [
+        "webflow",
+        "review",
+        "airtable",
+        "templates",
+        "cs"
+      ],
+      "catalog": {
+        "include": true,
+        "name": "Webflow Template Review",
+        "slug": "webflow-template-review",
+        "category": "create-something",
+        "requiresAuth": true,
+        "authType": "bearer",
+        "transports": [
+          "http",
+          "sse"
+        ]
+      }
     }
   },
   "bundles": {

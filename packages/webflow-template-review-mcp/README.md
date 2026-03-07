@@ -27,6 +27,19 @@ Phase 1 is intentionally conservative:
 Worker boundary bearer auth:
 
 - Header: `Authorization: Bearer <MCP_API_KEY>`
+- `MCP_API_KEY` is required in all environments.
+- If `MCP_API_KEY` is missing, `/mcp` and `/sse` return `503` with `MISCONFIGURED`.
+
+## Secrets / Vars
+
+Required:
+
+- `AIRTABLE_API_KEY` (Airtable PAT)
+- `MCP_API_KEY` (worker boundary bearer token)
+
+Optional:
+
+- `AIRTABLE_BASE_ID` (defaults to `appMoIgXMTTTNIc3p`)
 
 ## Tools
 
@@ -56,4 +69,13 @@ cd packages/webflow-template-review-mcp/worker
 pnpm install
 pnpm dev
 pnpm deploy
+```
+
+## Token Rotation
+
+Rotate shared bearer token:
+
+```bash
+cd packages/webflow-template-review-mcp/worker
+pnpm exec wrangler secret put MCP_API_KEY
 ```
