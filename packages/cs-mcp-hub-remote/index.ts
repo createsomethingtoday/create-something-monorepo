@@ -4230,19 +4230,6 @@ function resolveFallbackAccountContext(extra: unknown, env: Env): ResolvedAccoun
   const authInfo = asRecord(extraRecord?.authInfo);
   const authorization = getHeaderValue(extraRecord?.requestInfo, 'authorization');
   const staticHubToken = readEnvString(env, 'HUB_API_TOKEN');
-  const trustClientHeaders = parseBooleanWithDefault(
-    readEnvString(env, 'HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS'),
-    true,
-  );
-  const fromHeader =
-    trustClientHeaders
-      ? (
-        getHeaderValue(extraRecord?.requestInfo, 'x-mcp-account-id') ??
-        getHeaderValue(extraRecord?.requestInfo, 'x-account-id') ??
-        getHeaderValue(extraRecord?.requestInfo, 'x-tenant-id') ??
-        getHeaderValue(extraRecord?.requestInfo, 'x-hub-account-id')
-      )
-      : null;
   const rawBearer = authorization ? parseBearerToken(authorization) : null;
   // Guard against identity spoofing when gateway auth is provided by query/api-key headers.
   // In protected mode (HUB_API_TOKEN configured), Authorization should not influence fallback account identity.
@@ -4253,7 +4240,7 @@ function resolveFallbackAccountContext(extra: unknown, env: Env): ResolvedAccoun
     normalizeTraceValue(authInfo?.clientId) ??
     normalizeTraceValue(authInfo?.sub);
   return {
-    accountId: fromHeader ?? fromBearer ?? fromAuth ?? readEnvString(env, 'HUB_ACCOUNT_ID') ?? 'operator',
+    accountId: fromBearer ?? fromAuth ?? readEnvString(env, 'HUB_ACCOUNT_ID') ?? 'operator',
     tenantId: normalizeTraceValue(authInfo?.tenantId) ?? null,
     userId: normalizeTraceValue(authInfo?.sub) ?? null,
     sessionId: null,

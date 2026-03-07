@@ -485,6 +485,14 @@ interface AdminGetMcpLongLivedTokenBody {
 	auth_subject?: string;
 }
 
+interface AgencyEntitlementDecision {
+	allowed: boolean;
+	reason?: string;
+	account_id?: string | null;
+	tenant_id?: string | null;
+	checks?: Record<string, boolean>;
+}
+
 interface DecisionTelemetry {
 	policy_id: string;
 	decision: AuthorizationDecisionType;
@@ -834,6 +842,22 @@ async function handleAdminIssueMcpLongLivedToken(request: Request, env: Env): Pr
 	const allowedToolPrefixes = buildAllowedToolPrefixes(toolkitProfile);
 	const accountId = normalizeAccountId(body.account_id) ?? existing?.account_id ?? `acct_${generateUUID().replace(/-/g, '')}`;
 	const metadata = normalizeMetadata(body.metadata);
+	const entitlement = await checkAgencyManagedBearerEntitlement(env, {
+		authSubject,
+		accountId,
+		tenantId,
+	});
+	if (!entitlement.allowed) {
+		return json(
+			{
+				error: 'entitlement_denied',
+				message: entitlement.reason ?? 'Managed bearer access is not currently entitled',
+				status: 403,
+				entitlement,
+			},
+			403,
+		);
+	}
 
 	const policyDecision = await evaluatePartnerPolicyDecision(db, env, {
 		policyId: POLICY_USER_BEARER_TOKEN_GOVERNANCE_ID,
@@ -864,6 +888,7 @@ async function handleAdminIssueMcpLongLivedToken(request: Request, env: Env): Pr
 					auth_subject: authSubject,
 					tool_mode: toolMode,
 					toolkit_profile: toolkitProfile,
+					entitlement_reason: entitlement.reason ?? 'allowed',
 				},
 			},
 		},
@@ -874,6 +899,7 @@ async function handleAdminIssueMcpLongLivedToken(request: Request, env: Env): Pr
 			account_id: accountId,
 			tool_mode: toolMode,
 			toolkit_profile: toolkitProfile,
+			entitlement_reason: entitlement.reason ?? 'allowed',
 			...metadata,
 		},
 	});
@@ -1422,6 +1448,35 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 			});
 		}
 
+		const entitlement = await checkAgencyManagedBearerEntitlement(env, {
+			authSubject: longLivedToken.auth_subject,
+			accountId: longLivedToken.account_id,
+			tenantId: longLivedToken.tenant_id,
+		});
+		if (!entitlement.allowed) {
+			await createMcpAuthEvent(db, {
+				id: generateUUID(),
+				session_id: null,
+				user_id: longLivedToken.auth_subject,
+				event_type: 'mcp_long_lived_token_resolve_rejected',
+				event_data_json: JSON.stringify({
+					token_id: longLivedToken.id,
+					account_id: longLivedToken.account_id,
+					tenant_id: longLivedToken.tenant_id,
+					reason: entitlement.reason ?? 'entitlement_denied',
+					entitlement,
+				}),
+			});
+			return json({
+				valid: false,
+				reason: entitlement.reason ?? 'entitlement_denied',
+				token_id: longLivedToken.id,
+				account_id: longLivedToken.account_id,
+				tenant_id: longLivedToken.tenant_id,
+				auth_mode: 'managed_bearer',
+			});
+		}
+
 		await markMcpLongLivedTokenUsed(db, longLivedToken.id);
 		await createMcpAuthEvent(db, {
 			id: generateUUID(),
@@ -1515,6 +1570,52 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 		sunset_at: legacyKey.sunset_at,
 		auth_mode: 'legacy_key',
 	});
+}
+
+async function checkAgencyManagedBearerEntitlement(
+	env: Env,
+	input: {
+		authSubject: string;
+		accountId: string;
+		tenantId: string;
+	}
+): Promise<AgencyEntitlementDecision> {
+	const baseUrl = env.AGENCY_INTERNAL_API_URL?.trim()?.replace(/\/+$/, '');
+	const apiKey = env.AGENCY_INTERNAL_API_KEY?.trim();
+	if (!baseUrl || !apiKey) {
+		return {
+			allowed: false,
+			reason: 'agency_entitlement_not_configured',
+		};
+	}
+
+	try {
+		const response = await fetch(`${baseUrl}/api/internal/mcp-entitlements/check`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'X-API-Key': apiKey,
+			},
+			body: JSON.stringify({
+				auth_subject: input.authSubject,
+				account_id: input.accountId,
+				tenant_id: input.tenantId,
+			}),
+		});
+		const payload = (await response.json().catch(() => null)) as AgencyEntitlementDecision | null;
+		if (!response.ok || !payload) {
+			return {
+				allowed: false,
+				reason: payload?.reason ?? `agency_entitlement_http_${response.status}`,
+			};
+		}
+		return payload;
+	} catch (error) {
+		return {
+			allowed: false,
+			reason: error instanceof Error ? `agency_entitlement_error:${error.name}` : 'agency_entitlement_error',
+		};
+	}
 }
 
 async function handleGetMcpSession(request: Request, env: Env, sessionId: string): Promise<Response> {
