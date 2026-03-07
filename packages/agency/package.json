@@ -38,7 +38,7 @@
 		"wrangler": "^4.64.0"
 	},
 	"dependencies": {
-		"@composio/core": "^0.6.3",
+		"@composio/core": "^0.6.4",
 		"@create-something/canon": "workspace:*",
 		"@create-something/mcp-authz": "workspace:*",
 		"@create-something/tufte": "workspace:^",

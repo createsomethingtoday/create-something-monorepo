@@ -11,7 +11,7 @@
     "test:contract": "pnpm exec tsx --test src/composio-notion.contract.test.ts"
   },
   "dependencies": {
-    "@composio/core": "^0.6.3",
+    "@composio/core": "^0.6.4",
     "@create-something/composio-bridge": "workspace:*",
     "@create-something/mcp-core": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.3",

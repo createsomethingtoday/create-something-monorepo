@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@create-something/mcp-core": "workspace:*",
-    "@composio/core": "^0.6.3",
+    "@composio/core": "^0.6.4",
     "zod": "^3.23.0"
   },
   "devDependencies": {
