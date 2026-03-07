@@ -1,4 +1,4 @@
-# POLICY OS Discovery Note Template
+# Workflow Infrastructure Discovery Note Template
 
 **Purpose:** Standardize post-call capture so proposal drafting is consistent and fast.  
 **Use with:** `content/sales/discovery-call-script.md`
@@ -25,7 +25,7 @@
 
 ---
 
-## POLICY OS qualification
+## Workflow qualification
 
 - workflow candidate:
 - risk class (`low|medium|high`):
@@ -39,8 +39,8 @@
 ## Package recommendation
 
 - recommended tier:
-  - `Custom Workflow MCPs`
-  - `Autonomy Assurance`
+  - `Workflow Infrastructure`
+  - `Reliability and Control Layer`
   - `Enterprise Extension`
 - rationale:
 - if MCP-only wedge recommended, list assurance trigger criteria:
@@ -63,7 +63,7 @@
 - owner:
 - due date:
 - required participants:
-- deliverable committed (for example: Policy Mapping Session output):
+- deliverable committed (for example: Workflow Mapping Session output):
 
 ---
 

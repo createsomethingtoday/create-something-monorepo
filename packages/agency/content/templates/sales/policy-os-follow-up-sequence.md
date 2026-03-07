@@ -1,4 +1,4 @@
-# POLICY OS Follow-up Sequence (Post-Discovery)
+# Workflow Infrastructure Follow-up Sequence (Post-Discovery)
 
 Use this sequence after a discovery call to convert diagnosis into a concrete decision.
 
@@ -22,7 +22,7 @@ Use this sequence after a discovery call to convert diagnosis into a concrete de
 Confirm shared diagnosis and lock next action.
 
 ### Template
-Subject: POLICY OS recap + next step
+Subject: workflow recap + next step
 
 Hi {{Name}},
 
@@ -72,24 +72,24 @@ Subject: confirm mapping session stakeholders
 
 Hi {{Name}},
 
-To finalize the Policy Mapping Session, please confirm:
+To finalize the Workflow Mapping Session, please confirm:
 - decision owner
 - ops/technical stakeholders
 - preferred slot this week
 
-Deliverable remains: pilot scope, policy boundary, and 30-day plan.
+Deliverable remains: pilot scope, trust boundary, and 30-day plan.
 
 Best,  
 {{sender}}
 
 ### Medium fit
-Subject: confirm MCP wedge + assurance triggers
+Subject: confirm MCP wedge + reliability triggers
 
 Hi {{Name}},
 
 For the MCP-only wedge, please confirm:
 - single workflow boundary
-- trigger criteria for entering Autonomy Assurance
+- trigger criteria for entering the Reliability and Control Layer
 - checkpoint date for trigger review
 
 Best,  
@@ -155,5 +155,4 @@ Best,
 
 - Every sequence ends with a named owner and date, or explicit pause condition.
 - Medium-fit sequences include documented assurance trigger criteria.
-- High-fit sequences result in a scheduled Policy Mapping Session.
-
+- High-fit sequences result in a scheduled Workflow Mapping Session.

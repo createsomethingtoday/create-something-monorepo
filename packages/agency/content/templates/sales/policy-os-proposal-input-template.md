@@ -1,4 +1,4 @@
-# POLICY OS Proposal Input Template
+# Workflow Infrastructure Proposal Input Template
 
 **Purpose:** Convert discovery outputs into proposal-ready scope in one pass.  
 **Use after:** `content/templates/sales/discovery-note-template.md`
@@ -26,12 +26,12 @@
 
 ## Scope by offer ladder
 
-### Custom Workflow MCPs (required baseline)
+### Workflow Infrastructure (required baseline)
 - systems in scope:
 - workflow boundaries:
 - implementation deliverables:
 
-### Autonomy Assurance (if included)
+### Reliability and Control Layer (if included)
 - approval boundaries:
 - release gates:
 - incident loop expectations:
@@ -98,4 +98,3 @@
 - decision owner:
 - target decision date:
 - if deferred: re-entry condition and date:
-

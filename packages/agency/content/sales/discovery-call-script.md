@@ -1,9 +1,9 @@
-# POLICY OS Discovery Call Script (Ops/RevOps)
+# Workflow Infrastructure Discovery Call Script (Ops/RevOps)
 
 **Audience:** Ops/RevOps leaders  
 **Duration:** 20–30 minutes  
-**Primary objective:** confirm fit and secure next step for a Policy Mapping Session  
-**Message taxonomy:** core phrase "POLICY OS for production autonomy"; client-facing `Skills + MCP`; technical proof `MCP + Skills`
+**Primary objective:** confirm fit and secure next step for a Workflow Mapping Session  
+**Message taxonomy:** core phrase "Production-safe workflow infrastructure"; client-facing `Skills + MCP`; technical proof `MCP + Skills`
 
 ---
 
@@ -28,7 +28,7 @@ Anchor mindset:
 
 Opening:
 
-> "Thanks for making time. I want to use this call to understand where operations are breaking down, then decide whether a POLICY OS pilot is the right next step. Sound good?"
+> "Thanks for making time. I want to use this call to understand where the workflow is breaking down, then decide whether a scoped workflow wedge is the right next step. Sound good?"
 
 Intent prompt:
 
@@ -72,7 +72,7 @@ Then validate:
 
 If confirmed, position:
 
-> "That is exactly what POLICY OS is designed for: keep safe actions fast, gate risky actions explicitly, and keep every decision auditable."
+> "That is exactly what this model is designed for: keep safe actions fast, gate risky actions explicitly, and keep every decision auditable."
 
 ---
 
@@ -80,11 +80,11 @@ If confirmed, position:
 
 Map problem to delivery tier:
 
-1. **Custom Workflow MCPs**
+1. **Workflow Infrastructure**
 - build trusted workflow substrate
 - normalize tool contracts and execution paths
 
-2. **Autonomy Assurance**
+2. **Reliability and Control Layer**
 - policy controls, release gates, approval rules, incident loops
 - default path for production-risk workflows
 
@@ -121,7 +121,7 @@ Pivot:
 ### Objection: "Why not MCP-only?"
 Response:
 
-> "MCP-only is a good wedge for discovery or compliance-constrained starts. POLICY OS is what makes autonomous outcomes reliable at production scale."
+> "MCP-only is a good wedge for discovery or compliance-constrained starts. The control layer is what makes automation reliable at production scale."
 
 Pivot:
 
@@ -144,7 +144,7 @@ Pivot:
 
 Use when pain is clear, buyer has authority, and urgency exists.
 
-> "Next step is a paid Policy Mapping Session. You’ll get pilot scope, policy boundary, and a 30-day implementation plan."
+> "Next step is a paid Workflow Mapping Session. You’ll get pilot scope, trust boundary, and a 30-day implementation plan."
 
 Commit:
 
@@ -156,7 +156,7 @@ Commit:
 
 Use when value is likely but authority, budget, or urgency is partial.
 
-> "We can start with a scoped MCP-only wedge and define explicit triggers for moving into Autonomy Assurance."
+> "We can start with a scoped MCP-only wedge and define explicit triggers for moving into the Reliability and Control Layer."
 
 Commit:
 
@@ -181,7 +181,7 @@ Commit:
 
 ### 30-second positioning statement
 
-> "CREATE SOMETHING runs a POLICY OS for production autonomy. We build custom workflow MCPs, then layer governance so safe actions stay fast, risky actions are approval-gated, and every decision is auditable."
+> "CREATE SOMETHING builds production-safe workflow infrastructure. We usually start with a scoped MCP wedge, then layer governance so safe actions stay fast, risky actions are approval-gated, and every decision is auditable."
 
 ### 2-minute "how it works in practice"
 
@@ -199,7 +199,7 @@ Commit:
 
 ### Closing language by fit
 
-1. **High fit:** "Let’s schedule the Policy Mapping Session and lock stakeholders now."
+1. **High fit:** "Let’s schedule the Workflow Mapping Session and lock stakeholders now."
 2. **Medium fit:** "Let’s scope a narrow wedge and define assurance trigger thresholds upfront."
 3. **Low fit:** "Let’s pause and re-enter when [condition] is true."
 

@@ -1,8 +1,8 @@
-# POLICY OS Sales Assets v1
+# Workflow Infrastructure Sales Assets v1
 
 **Primary buyer:** Ops/RevOps  
 **Primary channel:** Live discovery and mapping calls  
-**Core phrase:** POLICY OS for production autonomy
+**Core phrase:** Production-safe workflow infrastructure
 
 ---
 
@@ -36,7 +36,7 @@
 
 ## Message taxonomy
 
-- Core phrase: "POLICY OS for production autonomy."
+- Core phrase: "Production-safe workflow infrastructure."
 - Client-facing delivery vector: `Skills + MCP`
 - Technical proof vector: `MCP + Skills`
 
@@ -59,7 +59,7 @@
 ## Fit-to-next-step policy
 
 1. **High fit**
-   - Next step: paid Policy Mapping Session.
+   - Next step: paid Workflow Mapping Session.
    - Must exit call with owner, stakeholder set, and calendar date.
 
 2. **Medium fit**
