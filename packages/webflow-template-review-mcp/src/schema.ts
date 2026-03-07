@@ -185,6 +185,13 @@ export const TEMPLATE_REVIEW_FIELD_MAP = {
     assetPublishing: [
       'mrp_id_overwrite',
     ],
+    publishingCompletion: [
+      'release_record_id',
+      'release_date_local',
+      'time_zone',
+      'approve_version',
+      'mrp_id_overwrite',
+    ],
     versionReview: [
       'review_owner',
       'review_status',

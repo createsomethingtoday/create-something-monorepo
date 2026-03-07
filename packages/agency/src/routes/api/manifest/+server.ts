@@ -38,27 +38,27 @@ interface ContentItem {
  */
 const SERVICES: ContentItem[] = [
 	{
-		slug: 'custom-workflow-mcps',
-		title: 'Custom Workflow MCPs',
-		description: 'CREATE SOMETHING builds custom workflow MCPs for business-critical operations with clear trust boundaries.',
+		slug: 'workflow-infrastructure',
+		title: 'Workflow Infrastructure',
+		description: 'CREATE SOMETHING builds production-safe workflow infrastructure for business-critical operations with clear trust boundaries.',
 		category: 'service'
 	},
 	{
-		slug: 'autonomy-assurance',
-		title: 'Autonomy Assurance',
-		description: 'CREATE SOMETHING .agency provides evals, release gates, policy controls, and incident loops for autonomous operations.',
+		slug: 'reliability-and-control-layer',
+		title: 'Reliability and Control Layer',
+		description: 'CREATE SOMETHING .agency provides evals, release gates, policy controls, and incident loops for production automation.',
 		category: 'service'
 	},
 	{
 		slug: 'enterprise-extension',
 		title: 'Enterprise Extension',
-		description: 'Custom MCP and orchestration for high-stakes, cross-system, and compliance-heavy workflows.',
+		description: 'Custom orchestration for high-stakes, cross-system, and compliance-heavy workflows.',
 		category: 'service'
 	},
 	{
 		slug: 'mcp-only-discovery',
 		title: 'MCP-only (Discovery/Compliance)',
-		description: 'Scoped entry wedge for read-only or limited-scope connectivity when teams need trust setup before autonomous workflows.',
+		description: 'Scoped entry wedge for read-only or limited-scope connectivity when teams need a safe workflow starting point before broader automation.',
 		category: 'service'
 	}
 ];

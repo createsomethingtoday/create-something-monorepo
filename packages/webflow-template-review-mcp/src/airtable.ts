@@ -89,6 +89,14 @@ export interface TemplateReviewRelease {
   rawFields: Record<string, unknown>;
 }
 
+export interface CompletePublishingInput {
+  release_record_id?: string;
+  release_date_local?: string;
+  time_zone?: string;
+  approve_version?: boolean;
+  mrp_id_overwrite?: string;
+}
+
 export interface VersionReviewUpdateInput {
   review_owner?: unknown;
   review_status?: string;
@@ -195,6 +203,20 @@ function coerceLongText(value: unknown): string {
   if (Array.isArray(value)) return value.map((item) => (typeof item === 'string' ? item : JSON.stringify(item))).join('\n');
   if (value && typeof value === 'object') return JSON.stringify(value, null, 2);
   return String(value ?? '');
+}
+
+function currentLocalDate(timeZone: string): string {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  return formatter.format(new Date());
+}
+
+function markChecklistComplete(value: string): string {
+  return value.replace(/(^|\n)(\s*)\[ \]/g, '$1$2[x]');
 }
 
 function mapAsset(record: AirtableRecord): TemplateReviewAsset {
@@ -399,6 +421,38 @@ export class AirtableClient {
     return records.map((record) => mapRelease(record));
   }
 
+  async findReleaseByLocalDate(localDate: string): Promise<TemplateReviewRelease> {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(localDate)) {
+      throw new AirtableClientError('INVALID_LOCAL_DATE', 'release_date_local must use YYYY-MM-DD format.', 400, {
+        value: localDate,
+      });
+    }
+
+    const records = await this.listRecords({
+      tableId: TABLE_IDS.assetReleases,
+      fieldNames: Object.values(CONFIRMED_RELEASE_FIELDS),
+      limit: 5,
+      filterByFormula: `LEFT({${CONFIRMED_RELEASE_FIELDS.releaseName}}, 10) = '${escapeFormulaValue(localDate)}'`,
+      sortField: CONFIRMED_RELEASE_FIELDS.releaseName,
+      sortDirection: 'desc',
+    });
+
+    if (records.length === 0) {
+      throw new AirtableClientError('RELEASE_NOT_FOUND', 'No Asset Release record matched the requested local date.', 404, {
+        release_date_local: localDate,
+      });
+    }
+
+    if (records.length > 1) {
+      throw new AirtableClientError('AMBIGUOUS_RELEASE_DATE', 'Multiple Asset Release records matched the requested local date.', 409, {
+        release_date_local: localDate,
+        release_ids: records.map((record) => record.id),
+      });
+    }
+
+    return mapRelease(records[0]);
+  }
+
   async updateVersionReview(versionId: string, input: VersionReviewUpdateInput): Promise<TemplateReviewVersion> {
     const fields: Record<string, unknown> = {};
 
@@ -527,6 +581,67 @@ export class AirtableClient {
       throw new AirtableClientError('OUT_OF_SCOPE_ASSET', 'Updated asset is outside template-review scope.', 403);
     }
     return mapAsset(updated);
+  }
+
+  async completePublishing(versionId: string, input: CompletePublishingInput): Promise<{
+    updatedVersion: TemplateReviewVersion;
+    updatedAsset: TemplateReviewAsset | null;
+    resolvedRelease: TemplateReviewRelease;
+    resolvedLocalDate: string;
+  }> {
+    const currentVersion = await this.getVersionById(versionId);
+    if (!currentVersion) {
+      throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, { version_id: versionId });
+    }
+    if (!currentVersion.assetId) {
+      throw new AirtableClientError('VERSION_ASSET_ID_MISSING', 'Template version is missing its asset linkage.', 500, {
+        version_id: versionId,
+      });
+    }
+
+    const currentAsset = await this.getAssetById(currentVersion.assetId);
+    if (!currentAsset) {
+      throw new AirtableClientError('ASSET_NOT_FOUND_OR_OUT_OF_SCOPE', 'Template asset not found in template-review scope.', 404, {
+        asset_id: currentVersion.assetId,
+        version_id: versionId,
+      });
+    }
+
+    const releaseLocalDate = input.release_date_local ?? currentLocalDate(input.time_zone ?? 'UTC');
+    const resolvedRelease =
+      input.release_record_id !== undefined
+        ? (await this.getRecord(TABLE_IDS.assetReleases, input.release_record_id))
+        : null;
+
+    const release =
+      resolvedRelease !== null
+        ? mapRelease(resolvedRelease)
+        : await this.findReleaseByLocalDate(releaseLocalDate);
+
+    const checklist = currentVersion.publishingChecklist;
+    if (!checklist) {
+      throw new AirtableClientError('PUBLISHING_CHECKLIST_MISSING', 'Template version has no publishing checklist to complete.', 409, {
+        version_id: versionId,
+      });
+    }
+
+    const updatedVersion = await this.updateVersionReview(versionId, {
+      publishing_checklist: markChecklistComplete(checklist),
+      release_record_id: release.releaseId,
+      ...(input.approve_version ? { review_status: '✅Approved' } : {}),
+    });
+
+    const updatedAsset =
+      input.mrp_id_overwrite !== undefined
+        ? await this.updateAssetPublishing(currentAsset.assetId, { mrp_id_overwrite: input.mrp_id_overwrite })
+        : currentAsset;
+
+    return {
+      updatedVersion,
+      updatedAsset,
+      resolvedRelease: release,
+      resolvedLocalDate: releaseLocalDate,
+    };
   }
 
 }

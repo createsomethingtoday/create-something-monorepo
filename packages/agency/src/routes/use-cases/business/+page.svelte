@@ -11,10 +11,10 @@
 	const chapters = [
 		{
 			number: '01',
-			title: 'Start with one outcome stack',
+			title: 'Start with one critical workflow',
 			paragraphs: [
 				'Pick your biggest pain point. The report you build every Monday. The data you copy between systems. The emails you sort by hand.',
-				`We start with an Outcome Stack using ${deliveryVector.clientFacingLabel}: custom MCP server + Codex setup + policy + runbook. 2\u20134 weeks. $2,000\u2013$5,000. You own the code.`,
+				`We start with a scoped workflow wedge using ${deliveryVector.clientFacingLabel}: MCP connectivity, setup, policy, and runbook for one high-value workflow. 2\u20134 weeks. $2,000\u2013$5,000. You own the code.`,
 				'Now your AI agent can read your CRM, update your project tracker, draft your emails \u2014 using your actual data, not generic responses.'
 			]
 		},
@@ -29,10 +29,10 @@
 		},
 		{
 			number: '03',
-			title: 'Make it intelligent',
+			title: 'Make it reliable',
 			paragraphs: [
-				'Connections are pipes. Intelligence is what flows through them.',
-				'The Judgment Layer: we tune your agents monthly. Optimize prompts. Update policies as your business changes. Monitor performance. Catch edge cases before they become problems.',
+				'Connections are only the start. Reliability is what makes them usable in real operations.',
+				'The control layer: we tune your agents monthly. Optimize prompts. Update policies as your business changes. Monitor performance. Catch edge cases before they become problems.',
 				'Your automation gets smarter every month. $1,500\u2013$3,500/mo.'
 			]
 		}
@@ -41,7 +41,7 @@
 	const timeline = [
 		{
 			label: 'Month 1',
-			detail: 'Built Outcome Stack for HubSpot pipeline ($3,000): MCP endpoint, Codex setup, approval policy, and runbook.',
+			detail: 'Built a workflow wedge for a HubSpot pipeline ($3,000): MCP endpoint, Codex setup, approval policy, and runbook.',
 			result: 'Saves 5 hrs/week.'
 		},
 		{
@@ -126,8 +126,8 @@
 
 <SEO
 	title="Your tools don't talk to each other. We fix that. | CREATE SOMETHING"
-	description="We deploy business skills on top of secure MCP connectivity so your team gets outcomes, not prompt babysitting. We deliver Agent Outcome Stack with Skills + MCP: custom connectivity, policy, and runbook."
-	keywords="MCP server, small business automation, AI integration, tool connectivity, HubSpot automation, Notion integration, Claude MCP, ops automation, SMB AI"
+	description="We help small teams turn one painful workflow into a reliable system, starting with a scoped MCP wedge and expanding only when the workflow proves out."
+	keywords="small business automation, workflow integration, custom mcp, HubSpot automation, Notion integration, ops automation, SMB AI"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -155,15 +155,16 @@
 			</BlurFade>
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
-					We deploy business skills on top of secure MCP connectivity so your team gets outcomes, not prompt babysitting.
-					Every day you copy data between HubSpot and Notion, format reports nobody asked for, and post Slack updates you assembled by hand.
-					That's why we ship Agent Outcome Stack with {deliveryVector.clientFacingLabel} as the front-door delivery vector.
+					We turn one painful workflow into a reliable system instead of asking your team to keep
+					bridging the gap by hand. Every day you copy data between HubSpot and Notion, format
+					reports nobody asked for, and post Slack updates you assembled manually. That is why we
+					start with {deliveryVector.clientFacingLabel} as the lowest-risk wedge.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
 				<div class="hero-cta">
 					<ShimmerButton href="/services">
-						Get Your Outcome Stack
+						Map Your Workflow
 					</ShimmerButton>
 					<a href="/" class="hero-link">&larr; Back to home</a>
 				</div>
@@ -348,18 +349,18 @@
 <section class="cta-section">
 	<div class="section-container">
 		<BlurFade>
-			<h2 class="cta-heading">Start with one&nbsp;outcome stack.</h2>
+			<h2 class="cta-heading">Start with one&nbsp;workflow.</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
-				Pick the workflow that wastes the most time. We'll deliver your first Outcome Stack
-				in 2–4&nbsp;weeks. You own the code and runbook. Delivery vector is {deliveryVector.canonicalPhrase}, and technical proof surfaces use {deliveryVector.technicalLabel}. If you need discovery or compliance-only, we can scope MCP-only as the entry wedge.
+				Pick the workflow that wastes the most time. We&apos;ll deliver your first scoped workflow
+				wedge in 2–4&nbsp;weeks. You own the code and runbook. Delivery vector is {deliveryVector.canonicalPhrase}, and technical proof surfaces use {deliveryVector.technicalLabel}. If you need discovery or compliance-only, we can scope MCP-only as the entry wedge.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<div class="cta-actions">
 				<ShimmerButton href="/services">
-					Get Your Outcome Stack
+					Map Your Workflow
 				</ShimmerButton>
 				<a href="/services" class="cta-link">See all services &rarr;</a>
 				<a href="/book" class="cta-link cta-link-secondary">Have questions? Book a mapping session</a>

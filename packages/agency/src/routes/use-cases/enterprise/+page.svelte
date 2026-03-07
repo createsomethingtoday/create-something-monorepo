@@ -94,7 +94,7 @@
 
 	const plans = [
 		{
-			name: 'Outcome Stack Core',
+			name: 'Workflow Control Core',
 			price: '$1,500–$2,000',
 			period: '/mo',
 			scope: '1–2 workflows in operation',
@@ -107,7 +107,7 @@
 			featured: false
 		},
 		{
-			name: 'Outcome Stack Growth',
+			name: 'Workflow Control Growth',
 			price: '$2,000–$3,000',
 			period: '/mo',
 			scope: '3–5 workflows in operation',
