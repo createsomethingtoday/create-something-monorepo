@@ -43,6 +43,11 @@ const DEFAULT_BRAINTRUST_PROJECT_NAME = 'CREATE SOMETHING';
 const ZOOM_TRANSCRIPT_STATUS_TOOL = 'zoom_latest_transcript_status';
 const ZOOM_LIST_TRANSCRIPTS_TOOL = 'zoom_list_available_transcripts';
 const DEFAULT_ZOOM_LOOKBACK_DAYS = 7;
+const GMAIL_MARK_READ_BY_QUERY_TOOL = 'gmail_mark_read_by_query';
+const DEFAULT_GMAIL_QUERY = 'is:unread';
+const DEFAULT_GMAIL_PAGE_SIZE = 100;
+const DEFAULT_GMAIL_BATCH_SIZE = 500;
+const DEFAULT_GMAIL_MAX_MESSAGES = 5000;
 const ZOOM_TOOL_NAMES = {
   getCurrentUser: 'zoom_get_current_user',
   listMeetings: 'zoom_list_meetings',
@@ -176,6 +181,7 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
       },
     },
   ];
+  const isGmailToolkit = runtime.toolkitSlug === 'gmail';
   if (isZoomToolkit) {
     managementTools.push({
       name: ZOOM_TRANSCRIPT_STATUS_TOOL,
@@ -261,6 +267,44 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
           limit: {
             type: 'number',
             description: 'Maximum transcript files returned (1-500, default 100).',
+          },
+        },
+        additionalProperties: false,
+      },
+    });
+  }
+  if (isGmailToolkit) {
+    managementTools.push({
+      name: GMAIL_MARK_READ_BY_QUERY_TOOL,
+      description:
+        'Resolve a Gmail search query to message IDs, then mark those messages as read by removing the UNREAD label in batches.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          query: {
+            type: 'string',
+            description: `Gmail search query to mark as read (default: ${DEFAULT_GMAIL_QUERY}).`,
+          },
+          pageSize: {
+            type: 'number',
+            description: 'How many matching messages to fetch per page (1-500, default 100).',
+          },
+          batchSize: {
+            type: 'number',
+            description: 'How many message IDs to update per batch (1-1000, default 500).',
+          },
+          maxMessages: {
+            type: 'number',
+            description: 'Safety cap on total matched messages processed (1-10000, default 5000).',
+          },
+          dryRun: {
+            type: 'boolean',
+            description: 'If true, only collect matching message IDs and return the plan without modifying Gmail.',
+          },
+          connectedAccountId: {
+            type: 'string',
+            description:
+              'Optional Composio connected account ID. Use this when multiple active Gmail connections exist for the same entity.',
           },
         },
         additionalProperties: false,
@@ -490,6 +534,17 @@ function buildToolkitServer(runtime: ToolkitRuntime, env: Env, request: Request)
 
       if (toolName === ZOOM_LIST_TRANSCRIPTS_TOOL && isZoomToolkit) {
         const result = await listZoomAvailableTranscripts({
+          client,
+          toolRoutes,
+          entityId,
+          args,
+          toolkitSlug: runtime.toolkitSlug,
+        });
+        return emitAndReturn(toJsonResult(result));
+      }
+
+      if (toolName === GMAIL_MARK_READ_BY_QUERY_TOOL && isGmailToolkit) {
+        const result = await markGmailMessagesReadByQuery({
           client,
           toolRoutes,
           entityId,
@@ -1155,6 +1210,191 @@ async function executeToolkitToolByName(params: {
   return client.executeTool(route.composioToolSlug, args, entityId);
 }
 
+async function markGmailMessagesReadByQuery(params: {
+  client: ComposioClient;
+  toolRoutes: ToolRoute[];
+  entityId: string;
+  args: Record<string, unknown>;
+  toolkitSlug: string;
+}): Promise<Record<string, unknown>> {
+  const { client, toolRoutes, entityId, args, toolkitSlug } = params;
+  const warnings: string[] = [];
+  const query = stringOrNull(args.query) ?? DEFAULT_GMAIL_QUERY;
+  const pageSize = numberArg(args.pageSize, DEFAULT_GMAIL_PAGE_SIZE, 1, 500);
+  const batchSize = numberArg(args.batchSize, DEFAULT_GMAIL_BATCH_SIZE, 1, 1000);
+  const maxMessages = numberArg(args.maxMessages, DEFAULT_GMAIL_MAX_MESSAGES, 1, 10000);
+  const dryRun = booleanArg(args.dryRun, false);
+  const connectedAccountId = stringOrNull(args.connectedAccountId);
+
+  if (connectedAccountId) {
+    await assertConnectedAccountOwnership({
+      client,
+      entityId,
+      connectedAccountId,
+      toolkitSlug,
+    });
+  } else {
+    const activeConnections = await client.getConnectedAccountsForToolkit(entityId, toolkitSlug);
+    const activeCount = activeConnections.filter((account) => account.status === 'active').length;
+    if (activeCount > 1) {
+      throw new Error(
+        `Toolkit "${toolkitSlug}" has ${activeCount} active connections for entity "${entityId}". Pass connectedAccountId to disambiguate execution.`,
+      );
+    }
+  }
+
+  const connected = await client.hasActiveConnection(entityId, toolkitSlug).catch((error) => {
+    warnings.push(`Connection check failed: ${toErrorMessage(error)}`);
+    return false;
+  });
+  const bypassConnectionGate = Boolean(connectedAccountId && connectedAccountId.trim().length > 0);
+  if (!connected && !bypassConnectionGate) {
+    return {
+      toolkitSlug,
+      entityId,
+      query,
+      connected: false,
+      updated: false,
+      matchedMessageCount: 0,
+      message:
+        'Gmail is not connected for this entity. Call get_connect_link and authenticate the Gmail account you want to update.',
+      warnings,
+    };
+  }
+
+  const fetchRoute = findGmailFetchRoute(toolRoutes);
+  const markReadRoute = findGmailMarkReadRoute(toolRoutes);
+  if (!fetchRoute) {
+    throw new Error(
+      'Could not find a Gmail fetch/search route for this toolkit. Expected a route like gmail_fetch_emails.',
+    );
+  }
+  if (!markReadRoute) {
+    throw new Error(
+      'Could not find a Gmail batch modify route for this toolkit. Expected a route that accepts message IDs plus removeLabelIds.',
+    );
+  }
+
+  const collectedIds: string[] = [];
+  const seenIds = new Set<string>();
+  const seenPageTokens = new Set<string>();
+  let nextPageToken: string | null = null;
+  let pagesFetched = 0;
+  let fetchResultSizeEstimate: number | null = null;
+
+  while (collectedIds.length < maxMessages) {
+    const fetchArgs = buildGmailFetchArgs(fetchRoute, {
+      query,
+      pageSize,
+      pageToken: nextPageToken,
+    });
+    const fetchResult = await executeToolkitToolByName({
+      client,
+      toolRoutes,
+      toolName: fetchRoute.toolName,
+      args: fetchArgs,
+      entityId,
+      connectedAccountId,
+    });
+    pagesFetched += 1;
+
+    const pageIds = extractGmailMessageIds(fetchResult);
+    for (const id of pageIds) {
+      if (seenIds.has(id)) continue;
+      seenIds.add(id);
+      collectedIds.push(id);
+      if (collectedIds.length >= maxMessages) break;
+    }
+
+    fetchResultSizeEstimate ??= extractResultSizeEstimate(fetchResult);
+    nextPageToken = extractNextPageToken(fetchResult);
+    if (!nextPageToken) break;
+    if (seenPageTokens.has(nextPageToken)) {
+      warnings.push(`Stopping pagination after repeated page token "${nextPageToken}".`);
+      break;
+    }
+    seenPageTokens.add(nextPageToken);
+  }
+
+  if (collectedIds.length === 0) {
+    return {
+      toolkitSlug,
+      entityId,
+      query,
+      connected: true,
+      fetchRoute: fetchRoute.toolName,
+      updateRoute: markReadRoute.toolName,
+      dryRun,
+      pagesFetched,
+      matchedMessageCount: 0,
+      resultSizeEstimate: fetchResultSizeEstimate,
+      message: 'No matching Gmail messages found for the query.',
+      warnings,
+    };
+  }
+
+  if (dryRun) {
+    return {
+      toolkitSlug,
+      entityId,
+      query,
+      connected: true,
+      fetchRoute: fetchRoute.toolName,
+      updateRoute: markReadRoute.toolName,
+      dryRun: true,
+      pagesFetched,
+      matchedMessageCount: collectedIds.length,
+      resultSizeEstimate: fetchResultSizeEstimate,
+      messageIds: collectedIds,
+      message: `Found ${collectedIds.length} Gmail message(s) that would be marked read.`,
+      warnings,
+    };
+  }
+
+  const batches = chunkStrings(collectedIds, batchSize);
+  const batchResults: Array<Record<string, unknown>> = [];
+  for (const batch of batches) {
+    const updateArgs = buildGmailMarkReadArgs(markReadRoute, batch);
+    const batchResult = await executeToolkitToolByName({
+      client,
+      toolRoutes,
+      toolName: markReadRoute.toolName,
+      args: updateArgs,
+      entityId,
+      connectedAccountId,
+    });
+    batchResults.push({
+      batchSize: batch.length,
+      success: isExecutionSuccessful(batchResult),
+      error: extractExecutionError(batchResult),
+      data: extractDataRecord(batchResult) ?? batchResult,
+    });
+  }
+
+  const failedBatches = batchResults.filter((result) => result.success !== true);
+  return {
+    toolkitSlug,
+    entityId,
+    query,
+    connected: true,
+    fetchRoute: fetchRoute.toolName,
+    updateRoute: markReadRoute.toolName,
+    dryRun: false,
+    pagesFetched,
+    matchedMessageCount: collectedIds.length,
+    resultSizeEstimate: fetchResultSizeEstimate,
+    batchCount: batches.length,
+    updatedMessageCount: collectedIds.length,
+    batches: batchResults,
+    updated: failedBatches.length === 0,
+    message:
+      failedBatches.length === 0
+        ? `Marked ${collectedIds.length} Gmail message(s) as read for query "${query}".`
+        : `Attempted to mark ${collectedIds.length} Gmail message(s) as read, but ${failedBatches.length} batch(es) failed.`,
+    warnings,
+  };
+}
+
 function isExecutionSuccessful(result: Record<string, unknown>): boolean {
   const successful = result.successful;
   if (typeof successful === 'boolean') return successful;
@@ -1272,6 +1512,192 @@ function asRecordArray(value: unknown): Record<string, unknown>[] {
 function numberOrNull(value: unknown): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value)) return null;
   return value;
+}
+
+function findGmailFetchRoute(toolRoutes: ToolRoute[]): ToolRoute | null {
+  const exactCandidates = [
+    'gmail_fetch_emails',
+    'gmail_fetch_messages',
+    'gmail_list_emails',
+    'gmail_list_messages',
+    'gmail_search_emails',
+    'gmail_search_messages',
+  ];
+  for (const candidate of exactCandidates) {
+    const match = toolRoutes.find((route) => route.toolName === candidate);
+    if (match) return match;
+  }
+
+  return toolRoutes.find((route) => {
+    const name = route.toolName;
+    if (!name.startsWith('gmail_')) return false;
+    if (!/(fetch|list|search)/.test(name)) return false;
+    if (!/(emails|messages)/.test(name)) return false;
+    const properties = getRouteProperties(route);
+    return hasAnyProperty(properties, ['query', 'q']);
+  }) ?? null;
+}
+
+function findGmailMarkReadRoute(toolRoutes: ToolRoute[]): ToolRoute | null {
+  const exactCandidates = [
+    'gmail_batch_modify_emails',
+    'gmail_batch_modify_messages',
+    'gmail_batch_update_emails',
+    'gmail_batch_update_messages',
+    'gmail_modify_email_labels',
+    'gmail_modify_message_labels',
+  ];
+  for (const candidate of exactCandidates) {
+    const match = toolRoutes.find((route) => route.toolName === candidate);
+    if (match) return match;
+  }
+
+  return toolRoutes.find((route) => {
+    const name = route.toolName;
+    if (!name.startsWith('gmail_')) return false;
+    if (!/(batch|modify|update)/.test(name)) return false;
+    if (!/(emails|messages|labels)/.test(name)) return false;
+    const properties = getRouteProperties(route);
+    return (
+      hasAnyProperty(properties, ['messageIds', 'message_ids', 'ids', 'emailIds', 'email_ids']) &&
+      hasAnyProperty(properties, ['removeLabelIds', 'remove_label_ids', 'labelsToRemove', 'labels_to_remove'])
+    );
+  }) ?? null;
+}
+
+function buildGmailFetchArgs(
+  route: ToolRoute,
+  options: { query: string; pageSize: number; pageToken: string | null },
+): Record<string, unknown> {
+  const properties = getRouteProperties(route);
+  const args: Record<string, unknown> = {};
+  assignFirstKnownProperty(args, properties, ['query', 'q'], options.query);
+  assignFirstKnownProperty(args, properties, ['maxResults', 'max_results', 'limit', 'pageSize', 'page_size'], options.pageSize);
+  if (options.pageToken) {
+    assignFirstKnownProperty(args, properties, ['pageToken', 'page_token', 'cursor', 'nextPageToken'], options.pageToken);
+  }
+  return args;
+}
+
+function buildGmailMarkReadArgs(route: ToolRoute, messageIds: string[]): Record<string, unknown> {
+  const properties = getRouteProperties(route);
+  const args: Record<string, unknown> = {};
+
+  if (
+    !assignFirstKnownProperty(
+      args,
+      properties,
+      ['messageIds', 'message_ids', 'ids', 'emailIds', 'email_ids'],
+      messageIds,
+    )
+  ) {
+    throw new Error(`Gmail update route "${route.toolName}" does not expose a message ID array field.`);
+  }
+
+  if (
+    !assignFirstKnownProperty(
+      args,
+      properties,
+      ['removeLabelIds', 'remove_label_ids', 'labelsToRemove', 'labels_to_remove'],
+      ['UNREAD'],
+    )
+  ) {
+    throw new Error(`Gmail update route "${route.toolName}" does not expose a remove-label field.`);
+  }
+
+  assignFirstKnownProperty(args, properties, ['addLabelIds', 'add_label_ids', 'labelsToAdd', 'labels_to_add'], []);
+  return args;
+}
+
+function extractGmailMessageIds(result: Record<string, unknown>): string[] {
+  const seen = new Set<string>();
+  const ids: string[] = [];
+
+  const visit = (value: unknown, depth: number): void => {
+    if (depth > 4 || value === null || value === undefined) return;
+    if (Array.isArray(value)) {
+      for (const entry of value) visit(entry, depth + 1);
+      return;
+    }
+
+    const record = asRecord(value);
+    if (!record) return;
+
+    const directId = stringOrNull(record.messageId) ?? stringOrNull(record.id);
+    if (directId && !seen.has(directId)) {
+      seen.add(directId);
+      ids.push(directId);
+    }
+
+    for (const key of ['messages', 'emails', 'items', 'results', 'data']) {
+      if (key in record) visit(record[key], depth + 1);
+    }
+  };
+
+  visit(result, 0);
+  return ids;
+}
+
+function extractNextPageToken(result: Record<string, unknown>): string | null {
+  const candidates: unknown[] = [
+    result.nextPageToken,
+    result.next_page_token,
+    asRecord(result.data)?.nextPageToken,
+    asRecord(result.data)?.next_page_token,
+    asRecord(result.meta)?.nextPageToken,
+    asRecord(result.meta)?.next_page_token,
+  ];
+  for (const candidate of candidates) {
+    const token = stringOrNull(candidate);
+    if (token) return token;
+  }
+  return null;
+}
+
+function extractResultSizeEstimate(result: Record<string, unknown>): number | null {
+  const candidates: unknown[] = [
+    result.resultSizeEstimate,
+    result.result_size_estimate,
+    asRecord(result.data)?.resultSizeEstimate,
+    asRecord(result.data)?.result_size_estimate,
+    asRecord(result.meta)?.resultSizeEstimate,
+    asRecord(result.meta)?.result_size_estimate,
+  ];
+  for (const candidate of candidates) {
+    const count = numberOrNull(candidate);
+    if (count !== null) return count;
+  }
+  return null;
+}
+
+function chunkStrings(values: string[], size: number): string[][] {
+  const chunks: string[][] = [];
+  for (let index = 0; index < values.length; index += size) {
+    chunks.push(values.slice(index, index + size));
+  }
+  return chunks;
+}
+
+function getRouteProperties(route: ToolRoute): Record<string, unknown> {
+  return asRecord(route.inputSchema.properties) ?? {};
+}
+
+function hasAnyProperty(properties: Record<string, unknown>, candidates: string[]): boolean {
+  return candidates.some((candidate) => candidate in properties);
+}
+
+function assignFirstKnownProperty(
+  target: Record<string, unknown>,
+  properties: Record<string, unknown>,
+  candidates: string[],
+  value: unknown,
+): boolean {
+  for (const candidate of candidates) {
+    if (!(candidate in properties)) continue;
+    target[candidate] = value;
+    return true;
+  }
+  return false;
 }
 
 function toErrorMessage(error: unknown): string {
