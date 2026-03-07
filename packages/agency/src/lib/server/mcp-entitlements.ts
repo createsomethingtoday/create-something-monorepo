@@ -32,6 +32,23 @@ export interface AgencyMcpEntitlementDecision {
 	};
 }
 
+export interface AgencyMcpEntitlementUpdateInput {
+	authSubject: string;
+	authEmail?: string | null;
+	accountId?: string | null;
+	tenantId?: string | null;
+	workspaceAccountId?: string | null;
+	serviceTier?: string | null;
+	managedBearerAllowed?: boolean;
+	orgMembershipActive?: boolean;
+	serviceEntitled?: boolean;
+	policyAccepted?: boolean;
+	contractActive?: boolean;
+	billingActive?: boolean;
+	denialReason?: string | null;
+	metadata?: Record<string, unknown>;
+}
+
 function toFlag(value: number | null | undefined): boolean {
 	return value === 1;
 }
@@ -84,6 +101,94 @@ export async function upsertAgencyMcpEntitlement(
 		.run();
 
 	return (await findAgencyMcpEntitlementByAuthSubject(db, input.authSubject))!;
+}
+
+export async function listAgencyMcpEntitlements(
+	db: D1Database,
+	options: { limit?: number; search?: string } = {}
+): Promise<AgencyMcpEntitlementRow[]> {
+	const limit = Math.max(1, Math.min(250, options.limit ?? 100));
+	const search = options.search?.trim();
+	if (search) {
+		const pattern = `%${search.toLowerCase()}%`;
+		const result = await db
+			.prepare(
+				`SELECT * FROM agency_mcp_entitlements
+         WHERE lower(auth_subject) LIKE ?
+            OR lower(COALESCE(auth_email, '')) LIKE ?
+            OR lower(COALESCE(account_id, '')) LIKE ?
+            OR lower(COALESCE(tenant_id, '')) LIKE ?
+         ORDER BY updated_at DESC
+         LIMIT ?`
+			)
+			.bind(pattern, pattern, pattern, pattern, limit)
+			.all<AgencyMcpEntitlementRow>();
+		return result.results ?? [];
+	}
+
+	const result = await db
+		.prepare(
+			`SELECT * FROM agency_mcp_entitlements
+       ORDER BY updated_at DESC
+       LIMIT ?`
+		)
+		.bind(limit)
+		.all<AgencyMcpEntitlementRow>();
+	return result.results ?? [];
+}
+
+export async function updateAgencyMcpEntitlement(
+	db: D1Database,
+	input: AgencyMcpEntitlementUpdateInput
+): Promise<AgencyMcpEntitlementRow | null> {
+	const existing = await findAgencyMcpEntitlementByAuthSubject(db, input.authSubject);
+	if (!existing) {
+		return null;
+	}
+
+	const mergedMetadata = {
+		...safeParseMetadata(existing.metadata_json),
+		...(input.metadata ?? {}),
+	};
+
+	await db
+		.prepare(
+			`UPDATE agency_mcp_entitlements
+       SET auth_email = ?,
+           account_id = ?,
+           tenant_id = ?,
+           workspace_account_id = ?,
+           service_tier = ?,
+           managed_bearer_allowed = ?,
+           org_membership_active = ?,
+           service_entitled = ?,
+           policy_accepted = ?,
+           contract_active = ?,
+           billing_active = ?,
+           denial_reason = ?,
+           metadata_json = ?,
+           updated_at = datetime('now')
+       WHERE auth_subject = ?`
+		)
+		.bind(
+			input.authEmail ?? existing.auth_email,
+			input.accountId ?? existing.account_id,
+			input.tenantId ?? existing.tenant_id,
+			input.workspaceAccountId ?? existing.workspace_account_id,
+			input.serviceTier ?? existing.service_tier,
+			booleanToInt(input.managedBearerAllowed, existing.managed_bearer_allowed),
+			booleanToInt(input.orgMembershipActive, existing.org_membership_active),
+			booleanToInt(input.serviceEntitled, existing.service_entitled),
+			booleanToInt(input.policyAccepted, existing.policy_accepted),
+			booleanToInt(input.contractActive, existing.contract_active),
+			booleanToInt(input.billingActive, existing.billing_active),
+			input.denialReason === undefined ? existing.denial_reason : input.denialReason,
+			JSON.stringify(mergedMetadata),
+			input.authSubject
+		)
+		.run();
+
+	return findAgencyMcpEntitlementByAuthSubject(db, input.authSubject);
 }
 
 export function evaluateAgencyMcpEntitlement(
@@ -151,6 +256,22 @@ export function evaluateAgencyMcpEntitlement(
 		tenant_id: row.tenant_id,
 		checks,
 	};
+}
+
+function safeParseMetadata(raw: string): Record<string, unknown> {
+	try {
+		const parsed = JSON.parse(raw) as unknown;
+		if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+			return parsed as Record<string, unknown>;
+		}
+	} catch {
+		// ignore malformed metadata and replace it on next write
+	}
+	return {};
+}
+
+function booleanToInt(input: boolean | undefined, fallback: number): number {
+	return input === undefined ? fallback : input ? 1 : 0;
 }
 
 export function constantTimeEqual(left: string, right: string): boolean {
