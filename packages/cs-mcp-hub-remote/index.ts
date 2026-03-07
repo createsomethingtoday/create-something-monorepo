@@ -4228,7 +4228,15 @@ async function resolveSessionAccountContext(env: Env, token: string): Promise<Re
 function resolveFallbackAccountContext(extra: unknown, env: Env): ResolvedAccountContext {
   const extraRecord = asRecord(extra);
   const authInfo = asRecord(extraRecord?.authInfo);
+  const trustClientAccountHeaders = parseBooleanWithDefault(
+    readEnvString(env, 'HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS'),
+    true,
+  );
   const authorization = getHeaderValue(extraRecord?.requestInfo, 'authorization');
+  const accountHeader = trustClientAccountHeaders
+    ? getHeaderValue(extraRecord?.requestInfo, 'x-mcp-account-id') ??
+      getHeaderValue(extraRecord?.requestInfo, 'x-hub-account-id')
+    : null;
   const staticHubToken = readEnvString(env, 'HUB_API_TOKEN');
   const rawBearer = authorization ? parseBearerToken(authorization) : null;
   // Guard against identity spoofing when gateway auth is provided by query/api-key headers.
@@ -4240,7 +4248,8 @@ function resolveFallbackAccountContext(extra: unknown, env: Env): ResolvedAccoun
     normalizeTraceValue(authInfo?.clientId) ??
     normalizeTraceValue(authInfo?.sub);
   return {
-    accountId: fromBearer ?? fromAuth ?? readEnvString(env, 'HUB_ACCOUNT_ID') ?? 'operator',
+    accountId:
+      accountHeader ?? fromBearer ?? fromAuth ?? readEnvString(env, 'HUB_ACCOUNT_ID') ?? 'operator',
     tenantId: normalizeTraceValue(authInfo?.tenantId) ?? null,
     userId: normalizeTraceValue(authInfo?.sub) ?? null,
     sessionId: null,
