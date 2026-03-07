@@ -10,6 +10,8 @@ Current example:
 - `exampleco-golden-task-checks.md`
 - `exampleco-runbook.md`
 - `halfdozen-mcp-onboarding-example.md`
+- `halfdozen-current-mcp-onboarding-pack.md`
+- `halfdozen-current-mcp-onboarding-checklist.md`
 
 Source:
 

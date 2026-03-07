@@ -42,6 +42,8 @@ Reference example:
 - `examples/exampleco-golden-task-checks.md`
 - `examples/exampleco-runbook.md`
 - `examples/halfdozen-mcp-onboarding-example.md`
+- `examples/halfdozen-current-mcp-onboarding-pack.md`
+- `examples/halfdozen-current-mcp-onboarding-checklist.md`
 
 Important:
 
