@@ -2,7 +2,7 @@
 
 Use this workflow to keep Hub and Notion bridge runtime credentials in Infisical and rotate them without storing plaintext tokens in docs.
 
-Client-facing bearer delivery is no longer the default for Half Dozen hub lanes. Issue identity-backed personal tokens through the partner auth APIs and keep Infisical as the source of truth for worker/runtime secrets only.
+Client-facing bearer delivery is no longer the default for Half Dozen hub lanes. Issue identity-backed personal tokens through the partner auth APIs and keep Infisical as the source of truth for worker/runtime secrets only. After managed-token migration, Infisical may still store the same plaintext bearer value for runtime compatibility, but token governance moves to `identity-db.mcp_long_lived_tokens`.
 
 ## 1) Install Vault CLI
 
@@ -34,7 +34,7 @@ Global hub secrets:
 - `CS_MCP_HUB_REMOTE_API_TOKEN`
 - `HALFDOZEN_OPERATOR_NOTION_MCP_API_KEY`
 
-Per-team hub worker tokens (runtime / compat fallback only):
+Per-team hub worker tokens (runtime / compat fallback only, or migrated plaintext values mirrored from the managed-token registry):
 
 - `CS_HUB_LAINY_API_TOKEN`
 - `CS_HUB_DANNY_API_TOKEN`
@@ -123,6 +123,25 @@ Notes:
 - Keep resolver token rotation (`HUB_SESSION_RESOLVE_TOKEN`) coordinated with identity-worker.
 - Use `--exclude-team` or `EXCLUDE_TEAM_KEYS` only when you intentionally need to defer a worker-token rotation for a specific team.
 
+## 5a) Adopt existing compat bearer tokens into managed governance
+
+Use this path when a user already has a working vault-backed bearer token and you want `.agency` and `identity-worker` to govern that same credential without forcing a rotation.
+
+Prerequisites:
+
+- one canonical Auth0 subject for the user
+- one canonical `.agency` account and tenant mapping
+- one active `.agency` entitlement row for that subject
+
+Migration rules:
+
+- Import the existing plaintext bearer value into `identity-db.mcp_long_lived_tokens`.
+- Preserve the same plaintext value in Infisical only when runtime compatibility still depends on it.
+- Clean up stale legacy entitlement rows and stale legacy token rows for the same email after verification.
+- Treat `identity-db.mcp_long_lived_tokens` as the source of truth after migration.
+
+This path is appropriate for current compat users such as existing MCP operators and seeded client accounts that already have bearer material in Infisical.
+
 ## 6) Production automation guidance
 
 For CI/CD or production automation, use Infisical Machine Identity Universal Auth (`INFISICAL_CLIENT_ID` + `INFISICAL_CLIENT_SECRET`) instead of interactive login.
@@ -150,7 +169,7 @@ Notes:
 
 - This returns a `legacy_key_bundle` backed by identity-worker issuance and audit tables.
 - The hub can now resolve those personal bearer tokens directly in `compat` mode when `HUB_SESSION_RESOLVE_URL` + `HUB_SESSION_RESOLVE_TOKEN` are configured.
-- Existing shared team bearers remain valid in `compat` mode until you rotate them out, but they are no longer the target delivery model.
+- Existing shared team bearers remain valid in `compat` mode until you either rotate them out or adopt them into the managed-token registry, but they are no longer the target delivery model.
 
 ## 9) Migrate Doppler secrets to Infisical
 

@@ -48,6 +48,9 @@ Define the production policy for user-facing bearer tokens issued through `.agen
 18. `.agency` SHOULD expose that MCP OAuth password as a managed self-service control linked to the same entitled email, account, and tenant context used for bearer-token governance.
 19. The OAuth authorization code MAY be implemented as a signed self-contained token minted by `identity-worker` rather than as a database-stored opaque code, provided it remains bound to the OAuth request context required for exchange.
 20. When signed authorization codes are used, the signed claims MUST at minimum bind `client_id`, `redirect_uri`, issuer, expiry, and any PKCE challenge material required for token exchange.
+21. Existing vault-backed compat bearer tokens MAY be adopted into the managed-token system without rotating the plaintext token, but only after the user is reconciled to one canonical Auth0 subject and one canonical `.agency` entitlement row.
+22. After adoption, `identity-worker.mcp_long_lived_tokens` becomes the authoritative registry for bearer-token status, last use, revoke, and regenerate behavior; vault storage is runtime support only and MUST NOT be treated as the governance source of truth.
+23. Duplicate entitlement rows or duplicate token rows for the same user email under different subjects MUST be removed or deactivated during migration so bearer resolution remains canonical.
 
 ## Required Legal Alignment
 
@@ -110,6 +113,8 @@ The following artifacts MUST remain aligned with this policy before production l
 - OAuth authorization traces showing the authorization code is a signed `identity-worker` artifact bound to client and redirect context
 - Revoke/regenerate actions immediately invalidating OAuth-delivered host access
 - Password set or rotate actions for the OAuth login remaining auditable and distinct from bearer-token lifecycle events
+- Migration records showing canonical Auth0 subject binding for users adopted from compat vault tokens
+- Verification output confirming one active managed token row and no stale legacy token row for each migrated user
 
 ## Source Anchors
 

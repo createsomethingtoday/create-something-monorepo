@@ -41,6 +41,9 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 17. `.agency` MUST provide a self-service surface for entitled users to set or rotate that OAuth login password without exposing previously stored plaintext password material.
 18. The OAuth authorization code issued during host onboarding MAY be a signed `identity-worker` token instead of a database-persisted opaque code.
 19. If signed authorization codes are used, token exchange MUST validate the signed code against the original OAuth request context, including `client_id`, `redirect_uri`, issuer, expiry, and any PKCE challenge material carried by the authorization flow.
+20. Existing compat bearer tokens stored in an approved runtime vault MAY be migrated into `mcp_long_lived_tokens` without rotating the plaintext token, provided the credential is rebound to one canonical Auth0 subject and one canonical `.agency` account/tenant mapping.
+21. After managed-token migration, `mcp_long_lived_tokens` becomes the source of truth for token state, while Infisical or another approved vault MAY continue storing the same plaintext value only for runtime compatibility.
+22. Credential-delivery migration MUST include duplicate-subject cleanup so that stale entitlement rows, stale token rows, and stale legacy aliases no longer resolve for the same email or account.
 
 ## Enforcement Surfaces
 
@@ -93,6 +96,8 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 - Portal audit records showing MCP OAuth password set or rotation without plaintext persistence
 - UI audit events for token reveal, regenerate, and revoke actions
 - Vault audit trails for create/update operations
+- Managed-token migration records showing canonical subject binding before or during import
+- Verification output confirming one active token row and one active entitlement row per migrated email
 - Migration verification output (`missing=0`, `mismatched=0`) for provider cutover
 - Sync/rotation command logs showing provider selection and non-secret execution context
 
