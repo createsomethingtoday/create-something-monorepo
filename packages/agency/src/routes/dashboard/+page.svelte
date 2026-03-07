@@ -2,181 +2,290 @@
 	import { SEO } from '@create-something/canon';
 
 	let { data } = $props();
-	const metrics = $derived.by(() => data.metrics);
-	const user = $derived.by(() => data.user);
 
-	// Format currency
-	function formatCurrency(amount: number): string {
-		return new Intl.NumberFormat('en-US', {
-			style: 'currency',
-			currency: 'USD',
-			minimumFractionDigits: 0,
-		}).format(amount);
+	function formatDate(value: string | null | undefined): string {
+		if (!value) return 'Not set';
+		return new Date(value).toLocaleString('en-US', {
+			month: 'short',
+			day: 'numeric',
+			year: 'numeric',
+		});
 	}
 
-	// Format time ago
-	function timeAgo(isoString: string): string {
-		const date = new Date(isoString);
-		const now = new Date();
-		const diffMs = now.getTime() - date.getTime();
-		const diffMins = Math.floor(diffMs / (1000 * 60));
-
-		if (diffMins < 1) return 'just now';
-		if (diffMins < 60) return `${diffMins}m ago`;
-		const diffHours = Math.floor(diffMins / 60);
-		if (diffHours < 24) return `${diffHours}h ago`;
-		const diffDays = Math.floor(diffHours / 24);
-		return `${diffDays}d ago`;
+	function formatDateTime(value: string | null | undefined): string {
+		if (!value) return 'Not set';
+		return new Date(value).toLocaleString('en-US', {
+			month: 'short',
+			day: 'numeric',
+			year: 'numeric',
+			hour: 'numeric',
+			minute: '2-digit',
+		});
 	}
 
-	// Status badge color
-	function statusColor(status: string): string {
-		return status === 'success' ? 'var(--color-success)' : 'var(--color-error)';
+	function statusLabel(value: boolean): string {
+		return value ? 'Active' : 'Needs review';
 	}
+
+	function humanizeReason(reason: string): string {
+		return reason
+			.replace(/_/g, ' ')
+			.replace(/\b\w/g, (char) => char.toUpperCase());
+	}
+
+	function humanizeAction(category: string, action: string): string {
+		return `${category}: ${action}`.replace(/_/g, ' ');
+	}
+
+	function pathFromUrl(input: string): string {
+		try {
+			const url = new URL(input);
+			return url.pathname;
+		} catch {
+			return input;
+		}
+	}
+
+	function barHeight(count: number, max: number): number {
+		if (max <= 0) return 8;
+		return Math.max(8, Math.round((count / max) * 100));
+	}
+
+	const maxDailyEvents = $derived.by(() =>
+		Math.max(...(data.activity.daily.map((item: { events: number }) => item.events) || [0]))
+	);
 </script>
 
 <SEO
 	title="Dashboard | CREATE SOMETHING AGENCY"
-	description="Your agent activity dashboard - see recovered revenue, execution metrics, and daily analytics."
+	description="Live access, contract, connection, and usage state for your CREATE SOMETHING AGENCY account."
 	propertyName="agency"
 />
 
 <div class="dashboard">
-	<!-- Header -->
 	<header class="dashboard-header">
-		<div class="header-content">
+		<div>
+			<p class="eyebrow">Live Account State</p>
 			<h1 class="dashboard-title">Dashboard</h1>
 			<p class="dashboard-subtitle">
-				Your agents have been busy. Here's what they've done.
+				This view is now tied to your real `.agency` session, entitlement state, connected partner accounts,
+				and property activity. Workflow execution telemetry is shown only when an integrated system actually
+				emits it.
 			</p>
 		</div>
-		<div class="period-selector">
-			<span class="period-label">Last 30 days</span>
+		<div class="identity-chip">
+			<span class="identity-label">Signed in as</span>
+			<strong>{data.user.email}</strong>
 		</div>
 	</header>
 
-	<!-- Summary Cards -->
 	<section class="summary-grid">
-		<div class="summary-card highlight">
-			<span class="summary-label">Revenue Recovered</span>
-			<span class="summary-value">{formatCurrency(metrics.summary.revenueRecovered)}</span>
-			<span class="summary-note">From no-show recovery + upsells</span>
+		<div class="summary-card summary-card-primary">
+			<span class="summary-label">Access Status</span>
+			<span class="summary-value">{statusLabel(data.overview.accessAllowed)}</span>
+			<span class="summary-note">{humanizeReason(data.overview.accessReason)}</span>
 		</div>
 
 		<div class="summary-card">
-			<span class="summary-label">Total Executions</span>
-			<span class="summary-value">{metrics.summary.totalExecutions.toLocaleString()}</span>
-			<span class="summary-note">Workflows triggered</span>
+			<span class="summary-label">Service Tier</span>
+			<span class="summary-value">{data.overview.serviceTier}</span>
+			<span class="summary-note">From entitlement + commercial state</span>
 		</div>
 
 		<div class="summary-card">
-			<span class="summary-label">Success Rate</span>
-			<span class="summary-value">{metrics.summary.successRate}%</span>
-			<span class="summary-note">Completed successfully</span>
+			<span class="summary-label">Connected Accounts</span>
+			<span class="summary-value">{data.overview.connectedAccounts}</span>
+			<span class="summary-note">Toolkit + Notion bindings</span>
 		</div>
 
 		<div class="summary-card">
-			<span class="summary-label">Hours Automated</span>
-			<span class="summary-value">{metrics.summary.hoursAutomated}</span>
-			<span class="summary-note">Manual work saved</span>
+			<span class="summary-label">Sessions · 30d</span>
+			<span class="summary-value">{data.overview.totalSessions}</span>
+			<span class="summary-note">{data.overview.totalPageViews} page views in `.agency`</span>
 		</div>
 	</section>
 
-	<!-- Main Content Grid -->
 	<div class="content-grid">
-		<!-- Agent Performance -->
-		<section class="agents-section">
-			<h2 class="section-title">Agent Performance</h2>
+		<section class="panel">
+			<div class="panel-header">
+				<h2>Entitlement Checks</h2>
+				<span class="timestamp">Updated {formatDateTime(data.entitlement.updatedAt)}</span>
+			</div>
 
-			<div class="agents-list">
-				{#each metrics.byAgent as agent}
-					<div class="agent-card">
-						<div class="agent-header">
-							<h3 class="agent-name">{agent.name}</h3>
-							<span class="agent-last-run">{timeAgo(agent.lastRun)}</span>
-						</div>
-
-						<div class="agent-metrics">
-							<div class="agent-metric">
-								<span class="metric-value">{agent.executions}</span>
-								<span class="metric-label">Executions</span>
-							</div>
-							<div class="agent-metric">
-								<span class="metric-value">{agent.successRate}%</span>
-								<span class="metric-label">Success</span>
-							</div>
-							{#if agent.revenueRecovered}
-								<div class="agent-metric highlight">
-									<span class="metric-value">{formatCurrency(agent.revenueRecovered)}</span>
-									<span class="metric-label">Recovered</span>
-								</div>
-							{/if}
-							{#if agent.conversions}
-								<div class="agent-metric">
-									<span class="metric-value">{agent.conversions}</span>
-									<span class="metric-label">Conversions</span>
-								</div>
-							{/if}
-							{#if agent.verificationsCompleted}
-								<div class="agent-metric">
-									<span class="metric-value">{agent.verificationsCompleted}</span>
-									<span class="metric-label">Verified</span>
-								</div>
-							{/if}
-							{#if agent.reviewsGenerated}
-								<div class="agent-metric">
-									<span class="metric-value">{agent.reviewsGenerated}</span>
-									<span class="metric-label">Reviews</span>
-								</div>
-							{/if}
-						</div>
+			<div class="check-grid">
+				{#each Object.entries(data.entitlement.decision.checks) as [key, value]}
+					<div class="check-row">
+						<span>{humanizeReason(key)}</span>
+						<strong class:ok={value} class:bad={!value}>{value ? 'Pass' : 'Fail'}</strong>
 					</div>
 				{/each}
+			</div>
+
+			<div class="detail-grid">
+				<div>
+					<span class="detail-label">Account ID</span>
+					<strong>{data.entitlement.accountId ?? 'Not linked'}</strong>
+				</div>
+				<div>
+					<span class="detail-label">Tenant ID</span>
+					<strong>{data.entitlement.tenantId ?? 'Not linked'}</strong>
+				</div>
 			</div>
 		</section>
 
-		<!-- Recent Activity -->
-		<section class="activity-section">
-			<h2 class="section-title">Recent Activity</h2>
-
-			<div class="activity-list">
-				{#each metrics.recentActivity as activity}
-					<div class="activity-item">
-						<div class="activity-status" style="background-color: {statusColor(activity.status)}"></div>
-						<div class="activity-content">
-							<p class="activity-agent">{activity.agentName}</p>
-							<p class="activity-outcome">{activity.outcome}</p>
-						</div>
-						<span class="activity-time">{timeAgo(activity.timestamp)}</span>
-					</div>
-				{/each}
+		<section class="panel">
+			<div class="panel-header">
+				<h2>Commercial State</h2>
 			</div>
+
+			{#if data.commercial || data.contract}
+				<div class="detail-grid">
+					<div>
+						<span class="detail-label">Subscription</span>
+						<strong>{data.commercial?.subscription_status ?? 'Not set'}</strong>
+					</div>
+					<div>
+						<span class="detail-label">Billing</span>
+						<strong>{data.commercial?.billing_active ? 'Active' : 'Inactive'}</strong>
+					</div>
+					<div>
+						<span class="detail-label">Contract</span>
+						<strong>{data.contract?.contract_status ?? 'Not set'}</strong>
+					</div>
+					<div>
+						<span class="detail-label">Period End</span>
+						<strong>{formatDate(data.commercial?.current_period_end)}</strong>
+					</div>
+					<div>
+						<span class="detail-label">Policy Accepted</span>
+						<strong>{data.entitlement.decision.checks.policy_accepted ? 'Yes' : 'No'}</strong>
+					</div>
+					<div>
+						<span class="detail-label">Contract Ref</span>
+						<strong>{data.contract?.contract_reference ?? 'Not set'}</strong>
+					</div>
+				</div>
+			{:else}
+				<p class="empty-state">
+					No contract or billing record is linked to this identity yet. Access can still exist through the
+					agency entitlement registry.
+				</p>
+			{/if}
+		</section>
+
+		<section class="panel">
+			<div class="panel-header">
+				<h2>Partner Connection</h2>
+			</div>
+
+			{#if data.partner}
+				<div class="detail-grid">
+					<div>
+						<span class="detail-label">Client</span>
+						<strong>{data.partner.slug}</strong>
+					</div>
+					<div>
+						<span class="detail-label">Partner</span>
+						<strong>{data.partner.partner_key}</strong>
+					</div>
+					<div>
+						<span class="detail-label">Status</span>
+						<strong>{data.partner.status}</strong>
+					</div>
+					<div>
+						<span class="detail-label">Consent</span>
+						<strong>{data.partner.consent_active ? 'Active' : 'Missing'}</strong>
+					</div>
+					<div>
+						<span class="detail-label">Toolkit Accounts</span>
+						<strong>{data.partner.toolkit_accounts}</strong>
+					</div>
+					<div>
+						<span class="detail-label">Notion Accounts</span>
+						<strong>{data.partner.notion_accounts}</strong>
+					</div>
+				</div>
+			{:else}
+				<p class="empty-state">
+					No partner-managed client workspace is linked to this Auth0 identity yet.
+				</p>
+			{/if}
+		</section>
+
+		<section class="panel">
+			<div class="panel-header">
+				<h2>Recent Activity</h2>
+				<span class="timestamp">Last 30 days</span>
+			</div>
+
+			{#if data.activity.recentEvents.length > 0}
+				<div class="activity-list">
+					{#each data.activity.recentEvents as event}
+						<div class="activity-row">
+							<div>
+								<p class="activity-title">{humanizeAction(event.category, event.action)}</p>
+								<p class="activity-meta">{pathFromUrl(event.url)}{event.target ? ` · ${event.target}` : ''}</p>
+							</div>
+							<span class="activity-time">{formatDateTime(event.created_at)}</span>
+						</div>
+					{/each}
+				</div>
+			{:else}
+				<p class="empty-state">
+					No `.agency` activity has been written for this account yet.
+				</p>
+			{/if}
 		</section>
 	</div>
 
-	<!-- Daily Trend (Simple sparkline representation) -->
-	<section class="trend-section">
-		<h2 class="section-title">Daily Revenue Trend</h2>
-		<div class="trend-chart">
-			{#each metrics.dailyTrend as day}
-				<div class="trend-bar-container">
-					<div
-						class="trend-bar"
-						style="height: {(day.revenue / 520) * 100}%"
-						title="{day.date}: {formatCurrency(day.revenue)}"
-					></div>
-					<span class="trend-label">{day.date.slice(-2)}</span>
-				</div>
-			{/each}
-		</div>
-	</section>
+	<div class="content-grid">
+		<section class="panel">
+			<div class="panel-header">
+				<h2>Top Pages</h2>
+			</div>
 
-	<!-- WORKWAY Attribution -->
-	<footer class="dashboard-footer">
-		<p class="footer-note">
-			Powered by <a href="https://workway.co" target="_blank" rel="noopener">WORKWAY</a>
-		</p>
-	</footer>
+			{#if data.activity.topPages.length > 0}
+				<div class="list-rows">
+					{#each data.activity.topPages as page}
+						<div class="list-row">
+							<span>{pathFromUrl(page.url)}</span>
+							<strong>{page.views} views</strong>
+						</div>
+					{/each}
+				</div>
+			{:else}
+				<p class="empty-state">
+					No page-view analytics are associated with this user yet.
+				</p>
+			{/if}
+		</section>
+
+		<section class="panel">
+			<div class="panel-header">
+				<h2>Usage Trend</h2>
+				<span class="timestamp">{data.overview.totalInteractions} interactions · 30d</span>
+			</div>
+
+			{#if data.activity.daily.length > 0}
+				<div class="trend-chart">
+					{#each data.activity.daily as day}
+						<div class="trend-column">
+							<div
+								class="trend-bar"
+								style={`height:${barHeight(day.events, maxDailyEvents)}%`}
+								title={`${day.date}: ${day.events} events`}
+							></div>
+							<span class="trend-label">{day.date.slice(5)}</span>
+						</div>
+					{/each}
+				</div>
+			{:else}
+				<p class="empty-state">
+					No daily activity has been recorded yet.
+				</p>
+			{/if}
+		</section>
+	</div>
 </div>
 
 <style>
@@ -186,283 +295,225 @@
 		padding: var(--space-xl);
 	}
 
-	/* Header */
 	.dashboard-header {
 		display: flex;
 		justify-content: space-between;
 		align-items: flex-start;
+		gap: var(--space-lg);
 		margin-bottom: var(--space-xl);
+	}
+
+	.eyebrow {
+		font-size: var(--text-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--color-fg-muted);
+		margin-bottom: var(--space-xs);
 	}
 
 	.dashboard-title {
 		font-size: var(--text-h1);
 		font-weight: var(--font-bold);
 		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
+		margin: 0 0 var(--space-xs) 0;
 	}
 
 	.dashboard-subtitle {
-		font-size: var(--text-body);
+		max-width: 48rem;
+		color: var(--color-fg-muted);
+		line-height: 1.7;
+	}
+
+	.identity-chip {
+		background: var(--color-bg-surface);
+		border-radius: var(--radius-lg);
+		padding: var(--space-md) var(--space-lg);
+		min-width: 14rem;
+	}
+
+	.identity-label,
+	.detail-label,
+	.summary-label,
+	.timestamp {
+		display: block;
+		font-size: var(--text-caption);
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
 		color: var(--color-fg-muted);
 	}
 
-	.period-selector {
-		padding: var(--space-sm) var(--space-md);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
-	}
-
-	.period-label {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-	}
-
-	/* Summary Grid */
 	.summary-grid {
 		display: grid;
-		grid-template-columns: repeat(4, 1fr);
+		grid-template-columns: repeat(4, minmax(0, 1fr));
 		gap: var(--space-md);
 		margin-bottom: var(--space-xl);
 	}
 
 	.summary-card {
-		padding: var(--space-lg);
 		background: var(--color-bg-surface);
 		border-radius: var(--radius-lg);
+		padding: var(--space-lg);
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-xs);
 	}
 
-	.summary-card.highlight {
+	.summary-card-primary {
 		background: var(--color-fg-primary);
 		color: var(--color-bg-primary);
 	}
 
-	.summary-card.highlight .summary-label,
-	.summary-card.highlight .summary-note {
-		color: var(--color-bg-primary);
-		opacity: 0.8;
-	}
-
-	.summary-label {
-		display: block;
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		margin-bottom: var(--space-xs);
+	.summary-card-primary .summary-label,
+	.summary-card-primary .summary-note {
+		color: rgba(255, 255, 255, 0.72);
 	}
 
 	.summary-value {
-		display: block;
 		font-size: var(--text-h2);
 		font-weight: var(--font-bold);
-		margin-bottom: var(--space-xs);
 	}
 
 	.summary-note {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-tertiary);
+		color: var(--color-fg-secondary);
+		line-height: 1.6;
 	}
 
-	/* Content Grid */
 	.content-grid {
 		display: grid;
-		grid-template-columns: 2fr 1fr;
-		gap: var(--space-xl);
-		margin-bottom: var(--space-xl);
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--space-lg);
+		margin-bottom: var(--space-lg);
 	}
 
-	.section-title {
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-md);
-	}
-
-	/* Agents Section */
-	.agents-list {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-md);
-	}
-
-	.agent-card {
-		padding: var(--space-md);
+	.panel {
 		background: var(--color-bg-surface);
-		border-radius: var(--radius-md);
+		border-radius: var(--radius-lg);
+		padding: var(--space-lg);
 	}
 
-	.agent-header {
+	.panel-header {
 		display: flex;
 		justify-content: space-between;
-		align-items: center;
+		align-items: baseline;
+		gap: var(--space-md);
 		margin-bottom: var(--space-md);
 	}
 
-	.agent-name {
-		font-size: var(--text-body);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-	}
-
-	.agent-last-run {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-	}
-
-	.agent-metrics {
-		display: flex;
-		gap: var(--space-lg);
-	}
-
-	.agent-metric {
-		display: flex;
-		flex-direction: column;
-	}
-
-	.agent-metric .metric-value {
+	.panel-header h2 {
+		margin: 0;
 		font-size: var(--text-body-lg);
-		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
 	}
 
-	.agent-metric.highlight .metric-value {
-		color: var(--color-success, #22c55e);
-	}
-
-	.agent-metric .metric-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-	}
-
-	/* Activity Section */
+	.check-grid,
+	.list-rows,
 	.activity-list {
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-sm);
 	}
 
-	.activity-item {
+	.check-row,
+	.list-row,
+	.activity-row {
 		display: flex;
-		align-items: flex-start;
-		gap: var(--space-sm);
-		padding: var(--space-sm);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-sm);
+		justify-content: space-between;
+		gap: var(--space-md);
+		padding: var(--space-sm) 0;
+		border-bottom: 1px solid var(--color-border-default);
 	}
 
-	.activity-status {
-		width: 8px;
-		height: 8px;
-		border-radius: 50%;
-		margin-top: 6px;
-		flex-shrink: 0;
+	.check-row:last-child,
+	.list-row:last-child,
+	.activity-row:last-child {
+		border-bottom: none;
 	}
 
-	.activity-content {
-		flex: 1;
-		min-width: 0;
+	.ok {
+		color: var(--color-success);
 	}
 
-	.activity-agent {
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
+	.bad {
+		color: var(--color-error);
+	}
+
+	.detail-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--space-md);
+		margin-top: var(--space-md);
+	}
+
+	.detail-grid strong,
+	.check-row strong,
+	.list-row strong,
+	.identity-chip strong {
 		color: var(--color-fg-primary);
 	}
 
-	.activity-outcome {
-		font-size: var(--text-caption);
-		color: var(--color-fg-tertiary);
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	.activity-time {
-		font-size: var(--text-caption);
+	.empty-state {
 		color: var(--color-fg-muted);
-		white-space: nowrap;
+		line-height: 1.7;
 	}
 
-	/* Trend Section */
-	.trend-section {
-		padding: var(--space-lg);
-		background: var(--color-bg-surface);
-		border-radius: var(--radius-lg);
-		margin-bottom: var(--space-xl);
+	.activity-title,
+	.activity-meta {
+		margin: 0;
+	}
+
+	.activity-title {
+		color: var(--color-fg-primary);
+		text-transform: capitalize;
+	}
+
+	.activity-meta,
+	.activity-time {
+		color: var(--color-fg-muted);
+		font-size: var(--text-body-sm);
 	}
 
 	.trend-chart {
-		display: flex;
-		align-items: flex-end;
-		justify-content: space-between;
-		height: 120px;
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(2.25rem, 1fr));
 		gap: var(--space-sm);
+		align-items: end;
+		min-height: 15rem;
+		padding-top: var(--space-md);
 	}
 
-	.trend-bar-container {
-		flex: 1;
+	.trend-column {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+		gap: var(--space-xs);
 		height: 100%;
+		justify-content: end;
 	}
 
 	.trend-bar {
 		width: 100%;
 		background: var(--color-fg-primary);
-		border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-		min-height: 4px;
-		transition: height var(--duration-standard) var(--ease-standard);
+		border-radius: var(--radius-sm);
+		opacity: 0.92;
 	}
 
 	.trend-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		margin-top: var(--space-xs);
-	}
-
-	/* Footer */
-	.dashboard-footer {
-		text-align: center;
-		padding-top: var(--space-lg);
-	}
-
-	.footer-note {
-		font-size: var(--text-body-sm);
+		font-size: 0.7rem;
 		color: var(--color-fg-muted);
 	}
 
-	.footer-note a {
-		color: var(--color-fg-secondary);
-	}
-
-	/* Responsive */
-	@media (max-width: 1024px) {
-		.summary-grid {
-			grid-template-columns: repeat(2, 1fr);
-		}
-
-		.content-grid {
+	@media (max-width: 960px) {
+		.dashboard-header,
+		.content-grid,
+		.summary-grid,
+		.detail-grid {
 			grid-template-columns: 1fr;
-		}
-	}
-
-	@media (max-width: 640px) {
-		.dashboard {
-			padding: var(--space-md);
+			display: grid;
 		}
 
 		.dashboard-header {
+			display: flex;
 			flex-direction: column;
-			gap: var(--space-md);
-		}
-
-		.summary-grid {
-			grid-template-columns: 1fr;
-		}
-
-		.agent-metrics {
-			flex-wrap: wrap;
 		}
 	}
 </style>
