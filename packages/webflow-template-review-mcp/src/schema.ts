@@ -169,8 +169,6 @@ export const TEMPLATE_REVIEW_FIELD_MAP = {
       'review_feedback',
       'review_checklist',
       'publishing_checklist',
-      'release_date',
-      'mrp_id_overwrite',
       'reject_reason',
       'rejection_feedback',
     ],

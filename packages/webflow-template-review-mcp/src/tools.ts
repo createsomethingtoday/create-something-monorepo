@@ -177,7 +177,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
 
   server.tool(
     'template_review_update_version_review',
-    'Scaffolded version review mutation endpoint. Returns a pending-mapping error until Airtable field IDs are verified.',
+    'Update template version review fields that are confirmed writable in Airtable.',
     {
       version_id: z.string().min(1),
       review_owner: z.unknown().optional(),
@@ -230,7 +230,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
 
   server.tool(
     'template_review_request_changes',
-    'Scaffolded request-changes action wrapper.',
+    'Set a template version to changes-requested and attach review feedback.',
     {
       version_id: z.string().min(1),
       review_feedback: z.string(),
@@ -254,7 +254,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
 
   server.tool(
     'template_review_approve_version',
-    'Scaffolded approve-version action wrapper.',
+    'Approve a template version and optionally update publishing checklist metadata.',
     {
       version_id: z.string().min(1),
       release_date: z.string().optional(),
@@ -279,7 +279,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
 
   server.tool(
     'template_review_reject_version',
-    'Scaffolded reject-version action wrapper.',
+    'Reject a template version with reason and reviewer feedback.',
     {
       version_id: z.string().min(1),
       reject_reason: z.string(),

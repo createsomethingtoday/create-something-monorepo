@@ -48,6 +48,7 @@ OUTERFIELDS_CLICKUP_SERVERS_CSV="$(join_by_comma "${OUTERFIELDS_CLICKUP_SERVERS[
 DANNY_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},halfdozen-operator-notion-mcp"
 MJ_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},meetings"
 MJ_SERVERS_CSV="composio-toolkit-airtable,${MJ_SERVERS_CSV}"
+MJ_DISCOVERY_DEFAULT_SERVERS_CSV="composio-toolkit-airtable,composio-toolkit-exa,composio-toolkit-notion"
 MJ_SERVERS_CSV="${MJ_SERVERS_CSV},webflow-template-review-mcp"
 C3DENVER_SERVERS_CSV="composio-toolkit-airtable,composio-toolkit-gmail,composio-toolkit-notion"
 SESSION_RESOLVE_URL="${HUB_SESSION_RESOLVE_URL:-https://id.createsomething.space/v1/mcp/sessions/resolve}"
@@ -305,6 +306,7 @@ for worker in "${TEAM_WORKERS[@]}"; do
       --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:${COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS}" \
       --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
       --var "HUB_DISCOVERY_MODE:full" \
+      --var "HUB_DISCOVERY_DEFAULT_SERVERS:${MJ_DISCOVERY_DEFAULT_SERVERS_CSV}" \
       --var "HUB_CONNECT_TIMEOUT_MS:10000" \
       --var "HUB_LIST_TOOLS_TIMEOUT_MS:15000" \
       --var "HUB_CONNECT_CONCURRENCY:4" \
