@@ -188,19 +188,18 @@ enabled = true
 
 If `HUB_API_TOKEN` is configured, include the bearer token header in your MCP client.
 
-For partner delivery in `compat` mode, prefer an identity-issued personal bearer token instead of distributing the shared hub token. The partner path is:
+For partner delivery, prefer a managed `.agency` bearer token instead of distributing the shared hub token. The partner path is:
 
 ```bash
 pnpm partner:access:rotate -- \
-  --mode legacy \
+  --mode managed \
   --slug <client-slug> \
-  --reason "background_agent_personal_token" \
-  --exception-approved-by <approver> \
-  --sunset-at <iso-timestamp> \
   --delivery-channel portal
 ```
 
-That returns a `legacy_key_bundle` for the client while leaving `HUB_API_TOKEN` as the worker/runtime guardrail.
+That returns a `managed_bearer_bundle` for the client while leaving `HUB_API_TOKEN` as the worker/runtime guardrail.
+
+Use `--mode legacy` only for exception-governed fallback delivery.
 
 ## Rollout Validation Checklist
 

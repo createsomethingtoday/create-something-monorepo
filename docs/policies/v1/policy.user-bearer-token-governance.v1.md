@@ -60,7 +60,10 @@ The following artifacts MUST remain aligned with this policy before production l
   - `GET|POST /api/me/mcp-token`
   - `POST /api/me/mcp-token/regenerate`
   - `POST /api/me/mcp-token/revoke`
+  - `GET|POST /api/admin/mcp-entitlements`
+  - `GET /api/internal/mcp-entitlements/check`
   - `Account > MCP Bearer Token`
+  - `Admin > Security > Bearer Tokens`
   - legal acceptance and consent capture
   - org membership and entitlement display
 - MCP hub / gateway:
@@ -76,6 +79,7 @@ The following artifacts MUST remain aligned with this policy before production l
 - Token issuance/regeneration/revocation audit events
 - Request-time authorization decision logs
 - Org membership and entitlement checks in access telemetry
+- Operator-reviewed entitlement registry updates
 - Legal acceptance records linked to the user and organization
 - Billing and contract state checks linked to allow/deny decisions
 - Admin-visible last-used and incident-response metadata
@@ -84,6 +88,9 @@ The following artifacts MUST remain aligned with this policy before production l
 
 - `packages/identity-worker/src/index.ts`
 - `packages/identity-worker/README.md`
+- `packages/agency/src/lib/server/mcp-entitlements.ts`
+- `packages/agency/src/routes/api/admin/mcp-entitlements/+server.ts`
+- `packages/agency/src/routes/api/internal/mcp-entitlements/check/+server.ts`
 - `docs/policies/v1/policy.mcp-session-self-service.v1.md`
 - `docs/policies/v1/policy.mcp-credential-delivery.v1.md`
 - `docs/policies/v1/policy.partner-auth-governance.v1.md`

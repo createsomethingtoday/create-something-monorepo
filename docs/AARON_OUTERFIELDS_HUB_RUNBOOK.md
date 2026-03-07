@@ -186,7 +186,7 @@ curl -sS -X POST https://aaron-outerfields.mcp.createsomething.agency/mcp \
   -d "{\"jsonrpc\":\"2.0\",\"id\":13,\"method\":\"tools/call\",\"params\":{\"name\":\"hub_trace_lookup\",\"arguments\":{\"correlationId\":\"$CID\",\"limit\":20}}}" | jq
 ```
 
-Expected: trace records show account attribution under `acct_aaron_outerfields` unless overridden by `x-mcp-account-id`.
+Expected: trace records show account attribution under `acct_aaron_outerfields`. Client-supplied `x-mcp-account-id` overrides are no longer trusted on the hub fallback path.
 
 ## 6) Client Handoff Payload
 
@@ -201,13 +201,14 @@ Expected: trace records show account attribution under `acct_aaron_outerfields` 
 Issue the client bearer through the partner auth flow instead of distributing the worker secret:
 
 ```bash
-pnpm partner:access:rotate -- --mode legacy --slug <aaron-outerfields-client-slug> --reason "background_agent_personal_token" --exception-approved-by <approver> --sunset-at <iso-timestamp> --delivery-channel portal
+pnpm partner:access:rotate -- --mode managed --slug <aaron-outerfields-client-slug> --delivery-channel portal
 ```
 
 Notes:
 
 - `HUB_API_TOKEN` remains the operator/runtime secret for deploy, health, and state-normalization tasks.
 - Existing shared worker bearers still authenticate in `compat` mode until you rotate them out.
+- Use `--mode legacy` only when a reviewed exception requires a sunset-bound fallback token.
 
 ## 7) Rollback
 

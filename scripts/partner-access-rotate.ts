@@ -2,7 +2,7 @@
 
 import { nowIso, parseCliArgs, parseCsv, postJson, printJson, requireInput, resolveInput } from './partner-cli-utils';
 
-type RotateMode = 'strict' | 'legacy';
+type RotateMode = 'strict' | 'managed' | 'legacy';
 
 async function main(): Promise<void> {
 	const args = parseCliArgs(process.argv.slice(2));
@@ -10,15 +10,17 @@ async function main(): Promise<void> {
 	const adminKey = requireInput(args, 'admin-key', 'PARTNER_ADMIN_KEY', 'partner admin key');
 	const slug = requireInput(args, 'slug', 'PARTNER_CLIENT_SLUG', 'partner client slug');
 	const actor = resolveInput(args, 'actor', 'PARTNER_ACTOR', 'partner_cli');
-	const mode = (resolveInput(args, 'mode', 'PARTNER_ROTATE_MODE', 'legacy') as RotateMode).toLowerCase() as RotateMode;
+	const mode = (resolveInput(args, 'mode', 'PARTNER_ROTATE_MODE', 'managed') as RotateMode).toLowerCase() as RotateMode;
 
-	if (mode !== 'strict' && mode !== 'legacy') {
-		throw new Error(`Unsupported mode "${mode}". Use strict or legacy.`);
+	if (mode !== 'strict' && mode !== 'managed' && mode !== 'legacy') {
+		throw new Error(`Unsupported mode "${mode}". Use strict, managed, or legacy.`);
 	}
 
 	const response =
 		mode === 'strict'
 			? await rotateStrict(baseUrl, adminKey, actor!, slug, args)
+			: mode === 'managed'
+				? await rotateManaged(baseUrl, adminKey, actor!, slug, args)
 			: await rotateLegacy(baseUrl, adminKey, actor!, slug, args);
 
 	printJson({
@@ -31,6 +33,36 @@ async function main(): Promise<void> {
 		},
 		response,
 	});
+}
+
+async function rotateManaged(
+	baseUrl: string,
+	adminKey: string,
+	actor: string,
+	slug: string,
+	args: Record<string, string | boolean>,
+): Promise<Record<string, unknown>> {
+	const toolkitProfile = parseCsv(resolveInput(args, 'toolkit-profile', 'PARTNER_TOOLKIT_PROFILE'));
+	const metadataJson = resolveInput(args, 'metadata-json', 'PARTNER_ACCESS_METADATA_JSON');
+	const metadata = metadataJson ? safeParseJson(metadataJson) : undefined;
+
+	return postJson<Record<string, unknown>>(
+		`${baseUrl.replace(/\/+$/, '')}/api/partners/half-dozen/clients/${encodeURIComponent(slug)}/bearer-token/issue`,
+		{
+			'X-Partner-Admin-Key': adminKey,
+			'X-Partner-Actor': actor,
+		},
+		{
+			tool_mode: resolveInput(args, 'tool-mode', 'PARTNER_MINT_TOOL_MODE'),
+			toolkit_profile: toolkitProfile.length > 0 ? toolkitProfile : undefined,
+			delivery_channel: resolveInput(args, 'delivery-channel', 'PARTNER_DELIVERY_CHANNEL'),
+			recipient: resolveInput(args, 'recipient', 'PARTNER_DELIVERY_RECIPIENT'),
+			metadata: {
+				rotation_reason: resolveInput(args, 'rotation-reason', 'PARTNER_ROTATION_REASON', 'managed_bearer_rotation'),
+				...(metadata ?? {}),
+			},
+		},
+	);
 }
 
 async function rotateStrict(
