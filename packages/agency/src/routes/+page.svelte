@@ -12,17 +12,17 @@
   // Structured data for SEO/AEO
   const services = [
     {
-      name: 'Custom Workflow MCPs',
+      name: 'Workflow Infrastructure',
       description:
-        'CREATE SOMETHING builds custom MCP workflows for business-critical operations that generic automations cannot handle reliably.',
+        'Production-safe workflow infrastructure for business-critical operations that generic automations cannot handle reliably.',
       type: 'Implementation Sprint',
       price: 'Custom',
       priceDescription: 'Scoped build with optional ongoing support'
     },
     {
-      name: 'Autonomy Assurance',
+      name: 'Reliability and Control Layer',
       description:
-        'CREATE SOMETHING .agency adds evals, policy gates, release checks, and incident loops so autonomy scales safely.',
+        'CREATE SOMETHING .agency adds evals, policy gates, release checks, and incident loops so automation scales safely.',
       type: 'Add-on Retainer',
       price: 'Custom',
       priceDescription: 'Monthly reliability and governance layer'
@@ -30,7 +30,7 @@
     {
       name: 'Enterprise Extension',
       description:
-        'Custom MCP and orchestration for cross-system, high-stakes, and compliance-heavy workflows.',
+        'Custom orchestration for cross-system, high-stakes, and compliance-heavy workflows.',
       type: 'Project + Managed',
       price: 'Custom',
       priceDescription: 'Scoped implementation with optional ongoing support'
@@ -191,9 +191,9 @@
 {/snippet}
 
 <SEO
-  title="POLICY OS for Production Autonomy | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING .agency runs a POLICY OS for production autonomy: custom workflow MCPs, Autonomy Assurance, and Enterprise Extension."
-  keywords="policy os, custom mcp development, workflow mcp, autonomy assurance, enterprise agent reliability, mcp consulting"
+  title="Production-Safe Workflow Infrastructure | CREATE SOMETHING .agency"
+  description="CREATE SOMETHING .agency helps CTOs and engineering leaders reduce integration drag, control automation risk, and ship reliable cross-system workflows."
+  keywords="workflow infrastructure, production automation, technical operators, enterprise workflow architecture, automation reliability, custom mcp"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -215,12 +215,12 @@
   <div class="hero-container">
     <div class="hero-content">
       <BlurFade delay={0}>
-        <h1 class="hero-title">POLICY OS for Production Autonomy.</h1>
+        <h1 class="hero-title">Production-safe automation for teams that cannot afford brittle workflows.</h1>
       </BlurFade>
       <BlurFade delay={0.2}>
         <p class="hero-detail">
-          I build custom workflow MCPs, then run Autonomy Assurance so agent behavior stays reliable
-          as your workflows scale.
+          I help CTOs and engineering leaders reduce integration drag, control automation risk, and
+          ship reliable cross-system workflows.
         </p>
       </BlurFade>
       <BlurFade delay={0.25}>
@@ -331,7 +331,7 @@
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="section-intro">
-        One POLICY OS, three escalation lanes: Custom Workflow MCPs, Autonomy Assurance, and
+        Three escalation lanes: Workflow Infrastructure, Reliability and Control Layer, and
         Enterprise Extension.
       </p>
     </BlurFade>
@@ -345,10 +345,10 @@
           </div>
           <div class="funnel-step-content">
             <span class="funnel-step-label">Lane 1</span>
-            <h3>Custom Workflow MCPs</h3>
+            <h3>Workflow Infrastructure</h3>
             <p>
-              I build the custom integration and workflow logic for the operations that matter most,
-              with clear boundaries and production-ready behavior.
+              I build the integration and workflow logic for the operations that matter most, with
+              clear trust boundaries and production-ready behavior.
             </p>
           </div>
         </div>
@@ -362,10 +362,10 @@
           </div>
           <div class="funnel-step-content">
             <span class="funnel-step-label">Lane 2</span>
-            <h3>Autonomy Assurance</h3>
+            <h3>Reliability and Control Layer</h3>
             <p>
-              I add evals, release gates, policy rules, and incident reviews so agent behavior stays
-              reliable as autonomy expands.
+              I add evals, release gates, policy rules, and incident reviews so automation stays
+              reliable as workflow scope expands.
             </p>
           </div>
         </div>
@@ -380,8 +380,8 @@
             <span class="funnel-step-label">Lane 3</span>
             <h3>Enterprise Extension</h3>
             <p>
-              For high-stakes workflows, I build custom MCP and orchestration layers across systems,
-              with governance and traceability that native automation cannot yet provide.
+              For high-stakes workflows, I build orchestration layers across systems, with
+              governance and traceability that native automation cannot yet provide.
             </p>
           </div>
         </div>
@@ -398,7 +398,8 @@
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="section-intro">
-        Start with custom MCPs, add assurance as risk grows, and extend for enterprise constraints.
+        Start with workflow infrastructure, add reliability controls as risk grows, and extend for
+        enterprise constraints.
       </p>
     </BlurFade>
 
@@ -406,11 +407,12 @@
       <BlurFade delay={0.15}>
         <div class="offering-card">
           <div class="offering-header">
-            <h3 class="offering-name">Custom Workflow MCPs</h3>
+            <h3 class="offering-name">Workflow Infrastructure</h3>
           </div>
           <div class="offering-body">
             <p class="offering-description">
-              Custom MCPs designed specifically for your business rules and trust boundaries.
+              Workflow infrastructure designed specifically for your business rules and trust
+              boundaries.
             </p>
             <div class="offering-deliverables">
               <span class="deliverables-label">Includes</span>
@@ -429,11 +431,11 @@
         <div class="offering-card offering-featured">
           <span class="offering-badge">The real product</span>
           <div class="offering-header">
-            <h3 class="offering-name">Autonomy Assurance</h3>
+            <h3 class="offering-name">Reliability and Control Layer</h3>
           </div>
           <div class="offering-body">
             <p class="offering-description">
-              The reliability layer for autonomous operations. Evals, release checks, and policy
+              The reliability layer for production automation. Evals, release checks, and policy
               controls.
             </p>
             <div class="offering-deliverables">
@@ -488,20 +490,20 @@
           velocity.
         </p>
         <p class="problem-text">
-          The hard gap remains custom workflow logic, reliability controls, and cross-system
+          The hard gap remains workflow-specific logic, reliability controls, and cross-system
           orchestration. That is where .agency compounds value.
         </p>
         <div class="mcp-flow-wrapper">
           <HubMcpFlow />
         </div>
         <p class="mcp-flow-caption">
-          Hub MCP routes execution. POLICY OS decides what runs autonomously.
+          Hub MCP routes execution. Reliability controls decide what can run safely.
         </p>
         <p class="problem-text">
           When a client primarily needs full system development and team onboarding, I refer that
           engagement to Half Dozen directly.
         </p>
-        <p class="problem-punchline">Constraints are the product. Autonomy is the outcome.</p>
+        <p class="problem-punchline">Reliable workflows are the product. Operational leverage is the outcome.</p>
       </div>
     </BlurFade>
   </div>

@@ -41,9 +41,9 @@
 
 	// Quick access items for unified search
 	const quickAccessItems = [
-		{ id: 'nav-services', label: 'How I Work', description: 'Custom MCPs, Assurance, Extension', href: '/services', icon: '🔨', keywords: ['custom mcp', 'workflow', 'assurance', 'pricing', 'services'] },
+		{ id: 'nav-services', label: 'How I Work', description: 'Workflow infrastructure, reliability, enterprise extension', href: '/services', icon: '🔨', keywords: ['workflow infrastructure', 'reliability', 'automation', 'pricing', 'services'] },
 		{ id: 'nav-products', label: 'What I\'ve Built', description: 'Artifact-backed production workflows', href: '/products', icon: '📦', keywords: ['portfolio', 'tools', 'integrations'] },
-		{ id: 'nav-book', label: 'Book Mapping Session', description: 'Map fit and policy boundary', href: '/book', icon: '📞', keywords: ['contact', 'hire', 'start', 'book', 'mapping', 'session'] },
+		{ id: 'nav-book', label: 'Book Mapping Session', description: 'Map workflow risk and operational fit', href: '/book', icon: '📞', keywords: ['contact', 'hire', 'start', 'book', 'mapping', 'session'] },
 		{ id: 'nav-space', label: 'Go to .space', description: 'MCP experiments', href: 'https://createsomething.space', icon: '🧪', keywords: ['explore', 'try', 'interactive'] },
 		{ id: 'nav-io', label: 'Go to .io', description: 'MCP patterns for builders', href: 'https://createsomething.io', icon: '📖', keywords: ['papers', 'research', 'learn'] },
 		{ id: 'nav-ltd', label: 'Go to .ltd', description: 'Philosophy of automation', href: 'https://createsomething.ltd', icon: '📜', keywords: ['canon', 'principles', 'foundation'] },
@@ -134,7 +134,7 @@
 	<Footer
 		mode="agency"
 		showNewsletter={false}
-		aboutText="Custom workflow MCPs with reliability, policy, and enterprise extension for production autonomous workflows."
+		aboutText="Production-safe workflow infrastructure for technical operators who need reliable automation, clear trust boundaries, and enterprise extension when workflows get risky."
 		quickLinks={[
 			{ label: 'How I Work', href: '/services' },
 			{ label: 'What I\'ve Built', href: '/products' },
