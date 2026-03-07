@@ -62,7 +62,7 @@ interface AgencyPartnerEntitlementSource {
 	active_consent_id: string | null;
 }
 
-interface AgencyCommercialStateRow {
+export interface AgencyCommercialStateRow {
 	id: string;
 	normalized_email: string | null;
 	stripe_customer_id: string | null;
@@ -212,6 +212,36 @@ export async function listAgencyContractState(
 		.prepare('SELECT * FROM agency_contract_state ORDER BY updated_at DESC LIMIT ?')
 		.bind(limit)
 		.all<AgencyContractStateRow>();
+	return result.results ?? [];
+}
+
+export async function listAgencyCommercialState(
+	db: D1Database,
+	options: { limit?: number; search?: string } = {}
+): Promise<AgencyCommercialStateRow[]> {
+	const limit = Math.max(1, Math.min(250, options.limit ?? 100));
+	const search = options.search?.trim();
+	if (search) {
+		const pattern = `%${search.toLowerCase()}%`;
+		const result = await db
+			.prepare(
+				`SELECT * FROM agency_commercial_accounts
+         WHERE lower(COALESCE(normalized_email, '')) LIKE ?
+            OR lower(COALESCE(stripe_customer_id, '')) LIKE ?
+            OR lower(COALESCE(stripe_subscription_id, '')) LIKE ?
+            OR lower(COALESCE(product_id, '')) LIKE ?
+         ORDER BY updated_at DESC
+         LIMIT ?`
+			)
+			.bind(pattern, pattern, pattern, pattern, limit)
+			.all<AgencyCommercialStateRow>();
+		return result.results ?? [];
+	}
+
+	const result = await db
+		.prepare('SELECT * FROM agency_commercial_accounts ORDER BY updated_at DESC LIMIT ?')
+		.bind(limit)
+		.all<AgencyCommercialStateRow>();
 	return result.results ?? [];
 }
 

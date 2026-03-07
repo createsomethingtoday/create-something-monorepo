@@ -130,6 +130,7 @@
 			<h1>Contract Ledger</h1>
 			<p>Explicit contract authority for managed bearer access. Use this to override Stripe timing and define legal/commercial posture per user, account, or tenant.</p>
 			<nav class="subnav">
+				<a href="/admin/security">Overview</a>
 				<a href="/admin/security/bearer-tokens">Bearer Governance</a>
 				<a href="/admin/security/contracts" aria-current="page">Contracts</a>
 			</nav>
