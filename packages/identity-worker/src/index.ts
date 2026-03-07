@@ -578,6 +578,197 @@ const DEFAULT_MCP_LEGACY_KEY_TTL_SECONDS = 7 * 24 * 60 * 60;
 const MAX_MCP_LEGACY_KEY_TTL_SECONDS = 30 * 24 * 60 * 60;
 const MAX_LEGACY_COMPAT_SUNSET_DAYS = 90;
 
+async function handleOAuthRegister(request: Request, _env: Env): Promise<Response> {
+	const body = await parseJSON<OAuthRegisterBody>(request);
+	const clientName = normalizeOptionalId(body?.client_name) ?? 'chatgpt-mcp-client';
+	const clientId = `oauth_${slugify(clientName)}_${generateUUID().replace(/-/g, '').slice(0, 12)}`;
+	const redirectUris = Array.isArray(body?.redirect_uris)
+		? body!.redirect_uris.filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+		: [];
+	return json({
+		client_id: clientId,
+		client_name: clientName,
+		redirect_uris: redirectUris,
+		token_endpoint_auth_method: body?.token_endpoint_auth_method ?? 'none',
+		grant_types: body?.grant_types ?? ['authorization_code'],
+		response_types: body?.response_types ?? ['code'],
+		scope: body?.scope ?? 'openid mcp',
+	});
+}
+
+async function handleOAuthAuthorizePage(request: Request, env: Env): Promise<Response> {
+	const params = new URL(request.url).searchParams;
+	const validationError = validateOAuthAuthorizeRequest(params);
+	if (validationError) {
+		return oauthErrorResponse(validationError, 400);
+	}
+
+	const html = renderOAuthAuthorizePage(params, env);
+	return new Response(html, {
+		status: 200,
+		headers: {
+			'Content-Type': 'text/html; charset=utf-8',
+			'Cache-Control': 'no-store',
+		},
+	});
+}
+
+async function handleOAuthAuthorize(request: Request, env: Env): Promise<Response> {
+	const form = await request.formData();
+	const responseType = String(form.get('response_type') ?? '');
+	const clientId = String(form.get('client_id') ?? '');
+	const redirectUri = String(form.get('redirect_uri') ?? '');
+	const state = String(form.get('state') ?? '');
+	const scope = normalizeScope(String(form.get('scope') ?? 'openid mcp'));
+	const resource = normalizeOAuthResource(String(form.get('resource') ?? env.MCP_HUB_URL ?? DEFAULT_OAUTH_RESOURCE));
+	const codeChallenge = normalizeOptionalId(String(form.get('code_challenge') ?? ''));
+	const codeChallengeMethod = normalizeCodeChallengeMethod(String(form.get('code_challenge_method') ?? ''));
+	const email = String(form.get('email') ?? '').trim().toLowerCase();
+	const password = String(form.get('password') ?? '');
+	const tenantId = normalizeNullableId(form.get('tenant_id'));
+	const accountId = normalizeNullableId(form.get('account_id'));
+	const toolMode = normalizeToolModeNullable(form.get('tool_mode'));
+	const toolkitProfile = normalizeToolkitProfileString(form.get('toolkit_profile'));
+
+	const params = new URLSearchParams({
+		response_type: responseType,
+		client_id: clientId,
+		redirect_uri: redirectUri,
+		state,
+		scope,
+		resource,
+		...(codeChallenge ? { code_challenge: codeChallenge } : {}),
+		...(codeChallengeMethod ? { code_challenge_method: codeChallengeMethod } : {}),
+		...(tenantId ? { tenant_id: tenantId } : {}),
+		...(accountId ? { account_id: accountId } : {}),
+		...(toolMode ? { tool_mode: toolMode } : {}),
+		...(toolkitProfile.length > 0 ? { toolkit_profile: toolkitProfile.join(',') } : {}),
+	});
+	const validationError = validateOAuthAuthorizeRequest(params);
+	if (validationError) {
+		return oauthErrorResponse(validationError, 400);
+	}
+
+	const user = await findUserByEmail(env.DB, email);
+	if (!user || user.deleted_at) {
+		return renderOAuthAuthorizeError(params, env, 'Invalid email or password.');
+	}
+
+	const valid = await verifyPassword(password, user.password_hash);
+	if (!valid) {
+		return renderOAuthAuthorizeError(params, env, 'Invalid email or password.');
+	}
+
+	const now = Math.floor(Date.now() / 1000);
+	const code = await createSignedToken(env.DB, {
+		sub: user.id,
+		email: user.email,
+		tier: user.tier,
+		source: user.source,
+		iss: getOauthIssuer(new URL(request.url), env),
+		aud: ['oauth'],
+		iat: now,
+		exp: now + OAUTH_AUTHORIZATION_CODE_TTL_SECONDS,
+		kind: 'oauth_authorization_code',
+		client_id: clientId,
+		redirect_uri: redirectUri,
+		scope,
+		resource,
+		...(codeChallenge ? { code_challenge: codeChallenge } : {}),
+		...(codeChallengeMethod ? { code_challenge_method: codeChallengeMethod } : {}),
+		...(tenantId ? { tenant_id: tenantId } : {}),
+		...(accountId ? { account_id: accountId } : {}),
+		...(toolMode ? { tool_mode: toolMode } : {}),
+		...(toolkitProfile.length > 0 ? { toolkit_profile: toolkitProfile } : {}),
+	} satisfies OAuthAuthorizationCodeClaims);
+
+	const redirect = new URL(redirectUri);
+	redirect.searchParams.set('code', code);
+	if (state) redirect.searchParams.set('state', state);
+
+	return Response.redirect(redirect.toString(), 302);
+}
+
+async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
+	const body = await parseOAuthTokenBody(request);
+	if (!body) {
+		return oauthErrorResponse('invalid_request', 400, 'Unable to parse token request.');
+	}
+	if (body.grant_type !== 'authorization_code') {
+		return oauthErrorResponse('unsupported_grant_type', 400, 'Only authorization_code is supported.');
+	}
+	if (!body.code || !body.client_id || !body.redirect_uri) {
+		return oauthErrorResponse('invalid_request', 400, 'code, client_id, and redirect_uri are required.');
+	}
+
+	const claims = await validateOAuthAuthorizationCode(body.code, env);
+	if (!claims) {
+		return oauthErrorResponse('invalid_grant', 400, 'Invalid or expired authorization code.');
+	}
+	if (claims.client_id !== body.client_id || claims.redirect_uri !== body.redirect_uri) {
+		return oauthErrorResponse('invalid_grant', 400, 'Authorization code does not match client_id or redirect_uri.');
+	}
+	if (claims.code_challenge && !verifyPkce(body.code_verifier, claims.code_challenge, claims.code_challenge_method)) {
+		return oauthErrorResponse('invalid_grant', 400, 'Invalid code_verifier.');
+	}
+
+	const user = await findUserById(env.DB, claims.sub);
+	if (!user) {
+		return oauthErrorResponse('invalid_grant', 400, 'User no longer exists.');
+	}
+
+	const issued = await issueManagedBearerToken(env, {
+		authSubject: user.id,
+		authEmail: user.email,
+		tenantId: claims.tenant_id ?? null,
+		accountId: claims.account_id ?? null,
+		toolMode: claims.tool_mode,
+		toolkitProfile: Array.isArray(claims.toolkit_profile) ? claims.toolkit_profile : [],
+		actor: `oauth:${user.id}`,
+		actorRole: 'user',
+		actionName: 'issue_user_bearer_token_oauth',
+		metadata: {
+			issued_via: 'oauth_token_exchange',
+			client_id: claims.client_id,
+			redirect_uri: claims.redirect_uri,
+			resource: claims.resource,
+			scope: claims.scope,
+		},
+	});
+	if (!issued.ok) {
+		return oauthErrorResponse('access_denied', issued.status, issued.message);
+	}
+
+	return json({
+		access_token: issued.token,
+		token_type: 'Bearer',
+		expires_in: OAUTH_MANAGED_BEARER_EXPIRES_IN,
+		scope: claims.scope,
+		resource: claims.resource,
+	});
+}
+
+async function handleOAuthUserInfo(request: Request, env: Env): Promise<Response> {
+	const auth = request.headers.get('Authorization');
+	const token = auth?.match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
+	if (!token) {
+		return oauthErrorResponse('invalid_token', 401, 'Bearer token required.');
+	}
+
+	const tokenHash = await hashToken(token);
+	const managedToken = await findMcpLongLivedTokenByTokenHash(env.DB, tokenHash);
+	if (!managedToken || managedToken.revoked_at) {
+		return oauthErrorResponse('invalid_token', 401, 'Managed bearer token not found.');
+	}
+
+	const user = await findUserById(env.DB, managedToken.auth_subject);
+	return json({
+		sub: managedToken.auth_subject,
+		email: user?.email ?? managedToken.auth_email,
+		email_verified: Boolean(user?.email_verified ?? false),
+	});
+}
+
 async function handleCreateMcpSession(request: Request, env: Env): Promise<Response> {
 	const db = env.DB;
 	const payload = await authenticate(request, env);
