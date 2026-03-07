@@ -731,7 +731,7 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 	if (claims.client_id !== body.client_id || claims.redirect_uri !== body.redirect_uri) {
 		return oauthErrorResponse('invalid_grant', 400, 'Authorization code does not match client_id or redirect_uri.');
 	}
-	if (claims.code_challenge && !verifyPkce(body.code_verifier, claims.code_challenge, claims.code_challenge_method)) {
+	if (claims.code_challenge && !(await verifyPkce(body.code_verifier, claims.code_challenge, claims.code_challenge_method))) {
 		return oauthErrorResponse('invalid_grant', 400, 'Invalid code_verifier.');
 	}
 
@@ -3212,6 +3212,229 @@ function constantTimeEqual(a: string, b: string): boolean {
 		mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
 	}
 	return mismatch === 0;
+}
+
+function buildOAuthAuthorizationServerMetadata(url: URL, env: Env) {
+	const issuer = getOauthIssuer(url, env);
+	return {
+		issuer,
+		authorization_endpoint: `${issuer}/oauth/authorize`,
+		token_endpoint: `${issuer}/oauth/token`,
+		registration_endpoint: `${issuer}/oauth/register`,
+		userinfo_endpoint: `${issuer}/oauth/userinfo`,
+		jwks_uri: `${issuer}/.well-known/jwks.json`,
+		scopes_supported: ['openid', 'profile', 'email', 'mcp'],
+		response_types_supported: ['code'],
+		grant_types_supported: ['authorization_code'],
+		token_endpoint_auth_methods_supported: ['none', 'client_secret_post'],
+		code_challenge_methods_supported: ['S256', 'plain'],
+	};
+}
+
+function buildOpenIdConfigurationMetadata(url: URL, env: Env) {
+	const issuer = getOauthIssuer(url, env);
+	return {
+		issuer,
+		authorization_endpoint: `${issuer}/oauth/authorize`,
+		token_endpoint: `${issuer}/oauth/token`,
+		userinfo_endpoint: `${issuer}/oauth/userinfo`,
+		registration_endpoint: `${issuer}/oauth/register`,
+		jwks_uri: `${issuer}/.well-known/jwks.json`,
+		response_types_supported: ['code'],
+		grant_types_supported: ['authorization_code'],
+		subject_types_supported: ['public'],
+		id_token_signing_alg_values_supported: ['ES256'],
+		scopes_supported: ['openid', 'profile', 'email', 'mcp'],
+		token_endpoint_auth_methods_supported: ['none', 'client_secret_post'],
+		code_challenge_methods_supported: ['S256', 'plain'],
+		claims_supported: ['sub', 'email', 'email_verified'],
+	};
+}
+
+function getOauthIssuer(url: URL, env: Env): string {
+	return normalizeUrlOrigin(url.origin);
+}
+
+function normalizeUrlOrigin(origin: string): string {
+	return origin.replace(/\/+$/, '');
+}
+
+function validateOAuthAuthorizeRequest(params: URLSearchParams): string | null {
+	if (params.get('response_type') !== 'code') return 'unsupported_response_type';
+	if (!params.get('client_id')) return 'invalid_client';
+	const redirectUri = params.get('redirect_uri');
+	if (!redirectUri || !isValidHttpUrl(redirectUri)) return 'invalid_redirect_uri';
+	const resource = params.get('resource');
+	if (resource && !isValidHttpUrl(resource)) return 'invalid_target';
+	return null;
+}
+
+function renderOAuthAuthorizePage(params: URLSearchParams, env: Env, errorMessage?: string): string {
+	const hidden = Array.from(params.entries())
+		.map(([key, value]) => `<input type="hidden" name="${escapeHtml(key)}" value="${escapeHtml(value)}" />`)
+		.join('\n');
+	return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Authorize CREATE SOMETHING MCP</title>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, sans-serif; background: #111827; color: #f9fafb; margin: 0; padding: 32px; }
+    .card { max-width: 520px; margin: 0 auto; background: #1f2937; border-radius: 16px; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+    h1 { font-size: 1.5rem; margin: 0 0 8px; }
+    p { color: #d1d5db; line-height: 1.5; }
+    label { display: block; margin-top: 16px; font-weight: 600; }
+    input { width: 100%; box-sizing: border-box; margin-top: 8px; border: 1px solid #374151; background: #111827; color: #f9fafb; border-radius: 10px; padding: 12px; }
+    button { margin-top: 20px; width: 100%; border: 0; border-radius: 10px; background: #2563eb; color: #fff; padding: 12px 16px; font-weight: 700; cursor: pointer; }
+    .meta { margin-top: 12px; font-size: .9rem; color: #9ca3af; }
+    .error { margin-top: 12px; background: #7f1d1d; color: #fecaca; border-radius: 10px; padding: 12px; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Authorize MCP Access</h1>
+    <p>Sign in to CREATE SOMETHING to connect this MCP app. The resulting access token is your managed MCP bearer token and remains subject to live entitlement checks.</p>
+    ${errorMessage ? `<div class="error">${escapeHtml(errorMessage)}</div>` : ''}
+    <form method="post" action="/oauth/authorize">
+      ${hidden}
+      <label>Email<input type="email" name="email" autocomplete="username" required /></label>
+      <label>Password<input type="password" name="password" autocomplete="current-password" required /></label>
+      <button type="submit">Authorize</button>
+    </form>
+    <div class="meta">Hub: ${escapeHtml(env.MCP_HUB_URL ?? DEFAULT_OAUTH_RESOURCE)}</div>
+  </main>
+</body>
+</html>`;
+}
+
+function renderOAuthAuthorizeError(params: URLSearchParams, env: Env, errorMessage: string): Response {
+	return new Response(renderOAuthAuthorizePage(params, env, errorMessage), {
+		status: 401,
+		headers: {
+			'Content-Type': 'text/html; charset=utf-8',
+			'Cache-Control': 'no-store',
+		},
+	});
+}
+
+async function parseOAuthTokenBody(request: Request): Promise<OAuthTokenBody | null> {
+	const contentType = request.headers.get('content-type')?.toLowerCase() ?? '';
+	if (contentType.includes('application/x-www-form-urlencoded')) {
+		const text = await request.text();
+		const params = new URLSearchParams(text);
+		return {
+			grant_type: params.get('grant_type') ?? undefined,
+			code: params.get('code') ?? undefined,
+			redirect_uri: params.get('redirect_uri') ?? undefined,
+			client_id: params.get('client_id') ?? undefined,
+			client_secret: params.get('client_secret') ?? undefined,
+			code_verifier: params.get('code_verifier') ?? undefined,
+			resource: params.get('resource') ?? undefined,
+		};
+	}
+	return parseJSON<OAuthTokenBody>(request);
+}
+
+async function validateOAuthAuthorizationCode(code: string, env: Env): Promise<OAuthAuthorizationCodeClaims | null> {
+	const jwks = await getJWKS(env.DB);
+	for (const jwk of jwks.keys) {
+		const publicKey = await importPublicKey(jwk);
+		const payload = (await validateJWT(code, publicKey)) as OAuthAuthorizationCodeClaims | null;
+		if (payload?.kind === 'oauth_authorization_code') {
+			return payload;
+		}
+	}
+	return null;
+}
+
+function normalizeScope(raw: string): string {
+	return raw
+		.split(/\s+/)
+		.map((value) => value.trim())
+		.filter(Boolean)
+		.filter((value, index, all) => all.indexOf(value) === index)
+		.join(' ');
+}
+
+function normalizeOAuthResource(raw: string): string {
+	return isValidHttpUrl(raw) ? raw : DEFAULT_OAUTH_RESOURCE;
+}
+
+function normalizeToolkitProfileString(raw: FormDataEntryValue | null): string[] {
+	if (typeof raw !== 'string' || !raw.trim()) return [];
+	return raw.split(',').map((value) => value.trim()).filter(Boolean);
+}
+
+function normalizeNullableId(raw: FormDataEntryValue | null): string | null {
+	if (typeof raw !== 'string') return null;
+	return normalizeOptionalId(raw) ?? null;
+}
+
+function normalizeNullableString(raw: string | null | undefined): string | null {
+	const value = raw?.trim();
+	return value ? value : null;
+}
+
+function normalizeToolModeNullable(raw: FormDataEntryValue | null): McpToolMode | undefined {
+	if (typeof raw !== 'string') return undefined;
+	if (raw === 'read_only' || raw === 'read_write') return raw;
+	return undefined;
+}
+
+function normalizeCodeChallengeMethod(raw: string): OauthCodeChallengeMethod | undefined {
+	if (raw === 'S256' || raw === 'plain') return raw;
+	return undefined;
+}
+
+async function verifyPkce(
+	codeVerifier: string | undefined,
+	codeChallenge: string,
+	method: OauthCodeChallengeMethod | undefined,
+): Promise<boolean> {
+	if (!codeVerifier) return false;
+	if (!method || method === 'plain') return codeVerifier === codeChallenge;
+	return (await sha256Base64Url(codeVerifier)) === codeChallenge;
+}
+
+async function sha256Base64Url(input: string): Promise<string> {
+	const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+	return Buffer.from(new Uint8Array(digest)).toString('base64url');
+}
+
+function oauthErrorResponse(error: string, status: number, description?: string): Response {
+	return json(
+		{
+			error,
+			...(description ? { error_description: description } : {}),
+		},
+		status,
+		{
+			'Cache-Control': 'no-store',
+		},
+	);
+}
+
+function isValidHttpUrl(value: string): boolean {
+	try {
+		const parsed = new URL(value);
+		return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+	} catch {
+		return false;
+	}
+}
+
+function slugify(value: string): string {
+	return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'client';
+}
+
+function escapeHtml(value: string): string {
+	return value
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;');
 }
 
 async function authenticate(request: Request, env: Env): Promise<JWTPayload | null> {
