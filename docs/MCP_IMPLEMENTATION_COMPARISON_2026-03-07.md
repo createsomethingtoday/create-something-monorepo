@@ -230,6 +230,175 @@ But the next implementation threshold is no longer optional if the goal is a tru
 4. Keep the Composio wrap pattern and resist exposing provider-branded commodity MCPs directly to clients unless there is a deliberate GTM reason.
 5. Continue using the three-tier framework as a real implementation constraint, not just a messaging layer.
 
+## Recommended Plan
+
+### Priority order
+
+1. **Make brokered discovery the default for broad connector surfaces**
+2. **Add real gateway execution governance**
+3. **Standardize auth and tenant context end-to-end**
+4. **Codify when eager registration is still allowed**
+5. **Harden async and long-running execution paths**
+
+### Phase 1: Fix the biggest scaling mismatch
+
+**Recommendation**
+
+Shift broad Composio-backed surfaces away from direct end-user catalog registration and behind the Hub broker path by default.
+
+**Why**
+
+- This is the clearest mismatch between repo practice and current market direction.
+- It reduces tool sprawl, improves model selection quality, and creates a clean place for policy enforcement.
+- It matches the existing Hub shape instead of requiring a new architecture.
+
+**Concrete repo direction**
+
+- Treat `hub_search_proxy_tools` + `hub_describe_proxy_tool` + `hub_execute_proxy_tool` as the canonical flow for large catalogs.
+- Keep direct eager registration only for small bounded surfaces such as focused client MCPs or narrow product-specific toolsets.
+- Add an explicit threshold rule for when a package must use the broker path.
+
+**Suggested policy**
+
+- `0-25 tools`: direct registration acceptable
+- `26-75 tools`: direct registration only with documented justification
+- `75+ tools`: brokered discovery required
+
+### Phase 2: Put governance in the execution path, not just the docs
+
+**Recommendation**
+
+Add centralized execution middleware at the Hub layer for:
+
+- retry/backoff
+- quota and rate-limit enforcement
+- standardized auth and permission failures
+- trace correlation
+- write/destructive action review hooks
+
+**Why**
+
+- The Hub already has policy surface area, but the docs still describe quota/retry/rate-limit as incomplete.
+- Market expectations are converging on gateways as governance planes, not only routing layers.
+- This closes the gap between architectural intent and production readiness.
+
+**Concrete repo direction**
+
+- Extend Hub execution so downstream calls pass through a uniform policy runtime before invocation.
+- Reuse the route classification already present in [packages/mcp-authz/src/hub.ts](../packages/mcp-authz/src/hub.ts).
+- Make rate-limit and quota controls first-class operational settings, not passive metadata.
+
+**Suggested enforcement order**
+
+1. classify route
+2. resolve tenant/account/user context
+3. evaluate authz
+4. enforce quota/rate-limit
+5. apply retry/backoff policy
+6. execute downstream call
+7. emit trace + usage event
+
+### Phase 3: Normalize remote identity as a platform primitive
+
+**Recommendation**
+
+Standardize one remote identity story across Hub, agency bearer tokens, and remote MCP deployments:
+
+- bearer token for client access
+- OAuth for delegated third-party/tool access
+- tenant-aware actor context on every request
+
+**Why**
+
+- The external ecosystem is stabilizing around OAuth/bearer expectations for HTTP MCP.
+- Your docs already support this direction.
+- Fragmented auth stories are where multi-tenant MCP stacks become brittle.
+
+**Concrete repo direction**
+
+- Make `accountId`, `tenantId`, `userId`, and access mode part of the required context shape for remote Hub execution.
+- Ensure all remote MCPs use the same interpretation of bearer subject and tenant scoping.
+- Keep OAuth handling at the resource/tool boundary, not embedded inconsistently inside individual MCPs.
+
+### Phase 4: Formalize the wrap rule
+
+**Recommendation**
+
+Write and enforce a simple decision rule for connector packaging:
+
+- commodity app connectivity -> Composio behind house MCP
+- deep workflow or client-specific domain integration -> custom MCP
+- direct provider-branded MCP exposure -> exception path only
+
+**Why**
+
+- This is one of the repo's strongest differentiators.
+- Public MCP distribution patterns increasingly optimize for convenience; your moat depends on not collapsing into that default.
+- The recommendation needs to be explicit enough that future packages do not drift.
+
+**Concrete repo direction**
+
+- Add a short normative rule to the relevant architecture docs.
+- Require new MCP proposals to state why they are `wrapped`, `custom`, or `direct`.
+- Treat `direct` as a GTM or operator exception, not an implementation default.
+
+### Phase 5: Separate interactive and async planes more sharply
+
+**Recommendation**
+
+Keep interactive Hub calls fast and policy-heavy, and push long-running sync, export, and fan-out workflows into explicit async control planes.
+
+**Why**
+
+- This matches the repo's own Cloudflare guidance.
+- It reduces coupling between gateway latency and connector complexity.
+- It creates a better fit for quotas, retries, and durability guarantees.
+
+**Concrete repo direction**
+
+- Interactive Worker path for brokered discovery and short tool calls
+- Durable Objects for locks, idempotency keys, and session/coordination state
+- Queues or Workflows for sync jobs, retries, exports, and bulk writes
+
+## What I Recommend You Do Next
+
+If the goal is to improve competitive positioning and production readiness quickly, the next three moves should be:
+
+1. **Set a catalog exposure rule now**
+   - Declare that broad connector MCPs must use the Hub broker path above a fixed tool-count threshold.
+2. **Implement Hub execution middleware next**
+   - Close the quota/retry/rate-limit gap before adding more broad connector surfaces.
+3. **Unify remote identity semantics**
+   - Make bearer subject and tenant scoping consistent across Hub, agency, and remote Worker MCPs.
+
+## What Not To Do
+
+- Do not keep adding broad eager-registered connector MCPs while the Hub governance layer is still partial.
+- Do not expose provider-branded commodity MCPs directly just because the ecosystem now makes that easy.
+- Do not treat auth, quota, and retry as per-package concerns once a gateway exists.
+- Do not collapse the three-tier model into a tools-only production shape unless a client surface explicitly requires that simplification.
+
+## Suggested Decision Rule
+
+Use this default rule when deciding how to ship a new MCP surface:
+
+| Condition | Recommendation |
+|-----------|----------------|
+| Narrow domain MCP, bounded toolset, clear operator/user audience | Direct MCP surface acceptable |
+| Commodity SaaS integration needed for many customers | Wrap with Composio behind house MCP |
+| Broad multi-provider catalog or large toolkit surface | Route through Hub broker by default |
+| Client-specific workflow, schema, or auth | Build custom MCP |
+
+## Recommended Follow-Up Docs
+
+To turn this into an operating rule set, the highest-value follow-up documents would be:
+
+1. `docs/MCP_CATALOG_EXPOSURE_POLICY.md`
+2. `docs/HUB_EXECUTION_GOVERNANCE_PLAN.md`
+3. `docs/REMOTE_MCP_IDENTITY_STANDARD.md`
+
+These should convert the recommendation from strategy into build constraints.
+
 ## Source Notes
 
 Research date: **March 7, 2026**
