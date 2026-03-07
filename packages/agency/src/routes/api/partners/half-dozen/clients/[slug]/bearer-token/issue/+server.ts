@@ -13,7 +13,7 @@ import {
 	requirePartnerAdmin,
 	tokenPreview,
 } from '$lib/server/partner-auth';
-import { upsertAgencyMcpEntitlement } from '$lib/server/mcp-entitlements';
+import { reconcileAgencyMcpEntitlement } from '$lib/server/mcp-entitlements';
 
 interface IssueBearerTokenRequestBody {
 	toolkit_profile?: string[];
@@ -81,20 +81,13 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			body?.metadata && typeof body.metadata === 'object' && !Array.isArray(body.metadata) ? body.metadata : {};
 		const clientMetadata = parseJsonObject(client.metadata_json);
 
-		await upsertAgencyMcpEntitlement(env.DB, {
+		await reconcileAgencyMcpEntitlement(env.DB, {
 			authSubject: client.identity_user_id,
 			authEmail: client.owner_email,
 			accountId: client.identity_account_id,
 			tenantId: client.identity_tenant_id,
 			workspaceAccountId: client.workspace_account_id,
 			serviceTier: 'agency',
-			metadata: {
-				partner_key: HALF_DOZEN_PARTNER_KEY,
-				client_slug: client.slug,
-				partner_status: client.status,
-				partner_metadata: clientMetadata,
-				last_updated_by: actor,
-			},
 		});
 
 		const issued = await postIdentityAdmin<IssueManagedTokenResponse>(env, '/v1/mcp/long-lived-tokens/admin-issue', {

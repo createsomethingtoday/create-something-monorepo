@@ -14,6 +14,7 @@ import {
 	randomId,
 	requirePartnerAdmin,
 } from '$lib/server/partner-auth';
+import { reconcileAgencyMcpEntitlement } from '$lib/server/mcp-entitlements';
 
 interface InitClientRequestBody {
 	display_name?: string;
@@ -164,6 +165,16 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 		const updated = await getPartnerClientBySlug(env.DB, HALF_DOZEN_PARTNER_KEY, slug);
 		if (!updated) {
 			return json({ error: 'internal_error', message: 'Failed to load updated partner client' }, { status: 500 });
+		}
+		if (updated.identity_user_id) {
+			await reconcileAgencyMcpEntitlement(env.DB, {
+				authSubject: updated.identity_user_id,
+				authEmail: updated.owner_email,
+				accountId: updated.identity_account_id ?? updated.workspace_account_id,
+				tenantId: updated.identity_tenant_id ?? slug,
+				workspaceAccountId: updated.workspace_account_id,
+				serviceTier: 'agency',
+			});
 		}
 
 		return json({
