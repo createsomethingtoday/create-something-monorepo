@@ -4,6 +4,7 @@ import type { SessionManagerOptions } from '@create-something/canon/auth';
 import {
 	evaluateAgencyMcpEntitlement,
 	findAgencyMcpEntitlementByAuthSubject,
+	reconcileAgencyMcpEntitlement,
 	upsertAgencyMcpEntitlement,
 	type AgencyMcpEntitlementDecision,
 	type AgencyMcpEntitlementRow,
@@ -52,19 +53,28 @@ export async function ensureAgencyMcpEntitlement(input: {
 		throw error(503, 'Database is unavailable');
 	}
 
-	const row = await upsertAgencyMcpEntitlement(db, {
-		authSubject: input.user.id,
-		authEmail: input.user.email,
-		accountId: input.accountId ?? null,
-		tenantId: input.tenantId ?? null,
-		workspaceAccountId: input.accountId ?? null,
-		serviceTier: input.user.tier ?? 'agency',
-		metadata: {
-			session_source: 'auth0',
-			user_source: input.user.source ?? 'auth0',
-			...(input.metadata ?? {}),
-		},
-	});
+	const row =
+		(await reconcileAgencyMcpEntitlement(db, {
+			authSubject: input.user.id,
+			authEmail: input.user.email,
+			accountId: input.accountId ?? null,
+			tenantId: input.tenantId ?? null,
+			workspaceAccountId: input.accountId ?? null,
+			serviceTier: input.user.tier ?? 'agency',
+		})) ??
+		(await upsertAgencyMcpEntitlement(db, {
+			authSubject: input.user.id,
+			authEmail: input.user.email,
+			accountId: input.accountId ?? null,
+			tenantId: input.tenantId ?? null,
+			workspaceAccountId: input.accountId ?? null,
+			serviceTier: input.user.tier ?? 'agency',
+			metadata: {
+				session_source: 'auth0',
+				user_source: input.user.source ?? 'auth0',
+				...(input.metadata ?? {}),
+			},
+		}));
 
 	return {
 		row,
@@ -86,7 +96,13 @@ export async function getAgencyMcpEntitlementDecision(input: {
 		throw error(503, 'Database is unavailable');
 	}
 
-	const row = await findAgencyMcpEntitlementByAuthSubject(db, input.authSubject);
+	const row =
+		(await reconcileAgencyMcpEntitlement(db, {
+			authSubject: input.authSubject,
+			accountId: input.accountId ?? null,
+			tenantId: input.tenantId ?? null,
+		})) ??
+		(await findAgencyMcpEntitlementByAuthSubject(db, input.authSubject));
 	return evaluateAgencyMcpEntitlement(row, {
 		accountId: input.accountId ?? null,
 		tenantId: input.tenantId ?? null,
