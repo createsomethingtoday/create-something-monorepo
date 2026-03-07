@@ -27,6 +27,7 @@ export const CONFIRMED_ASSET_FIELDS = {
   publishedDate: '📅Published Date',
   decisionDate: '🚀📅Decision Date',
   priceString: '🥞💲Template Price String (🏗️ only)',
+  mrpId: 'ℹ️MRP ID',
 } as const;
 
 export const CONFIRMED_VERSION_FIELDS = {

@@ -43,6 +43,7 @@ export interface TemplateReviewAsset extends TemplateReviewQueueItem {
   description?: string;
   descriptionShort?: string;
   descriptionLongHtml?: string;
+  mrpId?: string;
   thumbnailImageUrl?: string;
   secondaryThumbnailUrls?: string[];
   carouselImageUrls?: string[];
@@ -195,6 +196,7 @@ function mapAsset(record: AirtableRecord): TemplateReviewAsset {
     description: firstString(fields[CONFIRMED_ASSET_FIELDS.description]),
     descriptionShort: firstString(fields[CONFIRMED_ASSET_FIELDS.descriptionShort]),
     descriptionLongHtml: firstString(fields[CONFIRMED_ASSET_FIELDS.descriptionLongHtml]),
+    mrpId: firstString(fields[CONFIRMED_ASSET_FIELDS.mrpId]),
     websiteUrl: firstString(fields[CONFIRMED_ASSET_FIELDS.websiteUrl]),
     previewSiteUrl: firstString(fields[CONFIRMED_ASSET_FIELDS.previewSiteUrl]),
     marketplaceStatus: firstString(fields[CONFIRMED_ASSET_FIELDS.marketplaceStatus]),
@@ -367,6 +369,24 @@ export class AirtableClient {
 
   async updateVersionReview(versionId: string, input: VersionReviewUpdateInput): Promise<TemplateReviewVersion> {
     const fields: Record<string, unknown> = {};
+
+    if (input.release_date !== undefined) {
+      throw new AirtableClientError(
+        'UNSUPPORTED_WRITE_FIELD',
+        'release_date is exposed on template versions but is not directly writable via the current Airtable contract.',
+        501,
+        { field: 'release_date', airtableField: CONFIRMED_VERSION_FIELDS.releaseDate },
+      );
+    }
+
+    if (input.mrp_id_overwrite !== undefined) {
+      throw new AirtableClientError(
+        'UNSUPPORTED_WRITE_FIELD',
+        'mrp_id_overwrite appears to belong to asset-level publishing overrides and is not yet wired for template review mutations.',
+        501,
+        { field: 'mrp_id_overwrite', suspectedScope: 'asset' },
+      );
+    }
 
     if (input.review_owner !== undefined) {
       if (input.review_owner === null) {

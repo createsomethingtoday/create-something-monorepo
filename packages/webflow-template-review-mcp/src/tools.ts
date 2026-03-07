@@ -254,7 +254,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
 
   server.tool(
     'template_review_approve_version',
-    'Approve a template version and optionally update publishing checklist metadata.',
+    'Approve a template version and optionally update confirmed publishing checklist metadata.',
     {
       version_id: z.string().min(1),
       release_date: z.string().optional(),
