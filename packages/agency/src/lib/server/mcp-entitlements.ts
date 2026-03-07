@@ -62,6 +62,23 @@ interface AgencyPartnerEntitlementSource {
 	active_consent_id: string | null;
 }
 
+interface AgencyCommercialStateRow {
+	id: string;
+	normalized_email: string | null;
+	stripe_customer_id: string | null;
+	stripe_subscription_id: string | null;
+	product_id: string | null;
+	service_tier: string | null;
+	subscription_status: string | null;
+	contract_active: number;
+	billing_active: number;
+	current_period_end: string | null;
+	last_invoice_status: string | null;
+	metadata_json: string;
+	created_at: string;
+	updated_at: string;
+}
+
 function toFlag(value: number | null | undefined): boolean {
 	return value === 1;
 }
@@ -223,8 +240,29 @@ export async function reconcileAgencyMcpEntitlement(
 	}
 
 	const source = await findAgencyPartnerEntitlementSource(db, input.authSubject, input.authEmail ?? existing?.auth_email ?? null);
+	const commercial = await findAgencyCommercialStateByEmail(db, input.authEmail ?? existing?.auth_email ?? null);
 	if (!source) {
+		const contractActive = commercial ? commercial.contract_active === 1 : existing?.contract_active === 1;
+		const billingActive = commercial ? commercial.billing_active === 1 : existing?.billing_active === 1;
+		const commerciallyAllowed = contractActive && billingActive;
+
 		if (existing) {
+			await db
+				.prepare(
+					`UPDATE agency_mcp_entitlements
+           SET contract_active = ?,
+               billing_active = ?,
+               denial_reason = ?,
+               updated_at = datetime('now')
+           WHERE auth_subject = ?`
+				)
+				.bind(
+					contractActive ? 1 : 0,
+					billingActive ? 1 : 0,
+					commerciallyAllowed ? existing.denial_reason : deriveCommercialDenialReason(contractActive, billingActive),
+					input.authSubject
+				)
+				.run();
 			return existing;
 		}
 
@@ -236,15 +274,47 @@ export async function reconcileAgencyMcpEntitlement(
 			workspaceAccountId: input.workspaceAccountId ?? input.accountId ?? null,
 			serviceTier: input.serviceTier ?? 'agency',
 			metadata: {
-				source: 'session_bootstrap',
+				source: commercial ? 'stripe_commercial_state' : 'session_bootstrap',
 				manual_override: false,
+				stripe_customer_id: commercial?.stripe_customer_id ?? null,
+				stripe_subscription_id: commercial?.stripe_subscription_id ?? null,
+				subscription_status: commercial?.subscription_status ?? null,
+				product_id: commercial?.product_id ?? null,
 			},
+		}).then(async () => {
+			await db
+				.prepare(
+					`UPDATE agency_mcp_entitlements
+           SET managed_bearer_allowed = ?,
+               org_membership_active = ?,
+               service_entitled = ?,
+               policy_accepted = 1,
+               contract_active = ?,
+               billing_active = ?,
+               denial_reason = ?,
+               updated_at = datetime('now')
+           WHERE auth_subject = ?`
+				)
+				.bind(
+					commerciallyAllowed ? 1 : 0,
+					commerciallyAllowed ? 1 : 0,
+					commerciallyAllowed ? 1 : 0,
+					contractActive ? 1 : 0,
+					billingActive ? 1 : 0,
+					deriveCommercialDenialReason(contractActive, billingActive),
+					input.authSubject
+				)
+				.run();
+			return findAgencyMcpEntitlementByAuthSubject(db, input.authSubject);
 		});
 	}
 
 	const hasAccess = source.status === 'active';
 	const policyAccepted = Boolean(source.active_consent_id);
-	const denialReason = derivePartnerDenialReason(source.status, policyAccepted);
+	const contractActive = commercial ? commercial.contract_active === 1 : hasAccess;
+	const billingActive = commercial ? commercial.billing_active === 1 : hasAccess;
+	const denialReason =
+		derivePartnerDenialReason(source.status, policyAccepted) ?? deriveCommercialDenialReason(contractActive, billingActive);
 
 	return upsertAgencyMcpEntitlement(db, {
 		authSubject: input.authSubject,
@@ -253,16 +323,20 @@ export async function reconcileAgencyMcpEntitlement(
 		tenantId: source.identity_tenant_id ?? input.tenantId ?? existing?.tenant_id ?? source.slug,
 		workspaceAccountId: source.workspace_account_id,
 		serviceTier: input.serviceTier ?? 'agency',
-		metadata: {
-			manual_override: false,
-			source: 'partner_auth_client',
-			partner_client_id: source.partner_client_id,
-			partner_key: source.partner_key,
-			client_slug: source.slug,
-			partner_status: source.status,
-			active_consent_id: source.active_consent_id,
-		},
-	}).then(async (row) => {
+			metadata: {
+				manual_override: false,
+				source: commercial ? 'partner_auth_client+stripe' : 'partner_auth_client',
+				partner_client_id: source.partner_client_id,
+				partner_key: source.partner_key,
+				client_slug: source.slug,
+				partner_status: source.status,
+				active_consent_id: source.active_consent_id,
+				stripe_customer_id: commercial?.stripe_customer_id ?? null,
+				stripe_subscription_id: commercial?.stripe_subscription_id ?? null,
+				subscription_status: commercial?.subscription_status ?? null,
+				product_id: commercial?.product_id ?? null,
+			},
+		}).then(async (row) => {
 		await db
 			.prepare(
 				`UPDATE agency_mcp_entitlements
@@ -281,8 +355,8 @@ export async function reconcileAgencyMcpEntitlement(
 				hasAccess ? 1 : 0,
 				hasAccess ? 1 : 0,
 				policyAccepted ? 1 : 0,
-				hasAccess ? 1 : 0,
-				hasAccess ? 1 : 0,
+				contractActive ? 1 : 0,
+				billingActive ? 1 : 0,
 				denialReason,
 				input.authSubject
 			)
@@ -458,6 +532,39 @@ function derivePartnerDenialReason(
 		default:
 			return 'client_ineligible';
 	}
+}
+
+async function findAgencyCommercialStateByEmail(
+	db: D1Database,
+	authEmail: string | null
+): Promise<AgencyCommercialStateRow | null> {
+	const normalizedEmail = authEmail?.trim().toLowerCase() ?? null;
+	if (!normalizedEmail) {
+		return null;
+	}
+
+	return db
+		.prepare(
+			`SELECT * FROM agency_commercial_accounts
+       WHERE normalized_email = ?
+       ORDER BY
+         billing_active DESC,
+         contract_active DESC,
+         updated_at DESC
+       LIMIT 1`
+		)
+		.bind(normalizedEmail)
+		.first<AgencyCommercialStateRow>();
+}
+
+function deriveCommercialDenialReason(contractActive: boolean, billingActive: boolean): string | null {
+	if (!contractActive) {
+		return 'contract_inactive';
+	}
+	if (!billingActive) {
+		return 'billing_inactive';
+	}
+	return null;
 }
 
 export function constantTimeEqual(left: string, right: string): boolean {
