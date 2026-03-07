@@ -105,7 +105,7 @@ export const HOTSPOT_GROUPS = {
     'approve_version',
     'open_admin',
     'publishing_checklist',
-    'release_date',
+    'release_record_id',
     'mrp_id_overwrite',
     'thumbnail_download',
   ],

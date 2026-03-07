@@ -187,14 +187,6 @@ function coerceLongText(value: unknown): string {
   return String(value ?? '');
 }
 
-function toIsoDate(value: string): string {
-  const parsed = Date.parse(value);
-  if (Number.isNaN(parsed)) {
-    throw new AirtableClientError('INVALID_DATETIME', `Invalid datetime: ${value}`, 400);
-  }
-  return new Date(parsed).toISOString();
-}
-
 function mapAsset(record: AirtableRecord): TemplateReviewAsset {
   const fields = record.fields;
   return {

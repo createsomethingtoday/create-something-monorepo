@@ -30,15 +30,16 @@
 
   const services = [
     {
-      name: 'Custom Workflow MCPs',
-      description: 'Custom workflow MCP implementation for business-critical operations.',
+      name: 'Workflow Infrastructure',
+      description:
+        'Production-safe workflow infrastructure for cross-system operations, automation, and AI execution.',
       type: 'Implementation Sprint',
       price: 'Custom',
       priceDescription: 'Scoped build'
     },
     {
-      name: 'Autonomy Assurance',
-      description: `Operational reliability layer delivered with ${deliveryVector.clientFacingLabel}: evals, policy controls, release gates, and incident loops.`,
+      name: 'Reliability and Control Layer',
+      description: `Operational safeguards delivered with ${deliveryVector.clientFacingLabel}: evals, policy controls, release gates, and incident loops.`,
       type: 'Add-on Retainer',
       price: 'Custom',
       priceDescription: 'Monthly'
@@ -46,7 +47,7 @@
     {
       name: 'Enterprise Extension',
       description:
-        'Custom MCP and orchestration for high-stakes, cross-system, and compliance-heavy workflows.',
+        'Custom orchestration and governance for high-stakes, cross-system, and compliance-heavy workflows.',
       type: 'Project + Managed',
       price: 'Custom',
       priceDescription: 'Scoped implementation'
@@ -57,7 +58,7 @@
     {
       question: 'What is your primary service?',
       answer:
-        'Custom Workflow MCPs for production business workflows. Assurance and Enterprise Extension are layered as complexity and risk increase.'
+        'Workflow Infrastructure for production business workflows. Reliability and Control Layer and Enterprise Extension are added as workflow complexity and operational risk increase.'
     },
     {
       question: 'Do you build full business systems and run onboarding?',
@@ -67,12 +68,12 @@
     {
       question: 'What does .agency own?',
       answer:
-        '.agency owns custom workflow MCP design, reliability controls, policy boundaries, and enterprise extension architecture.'
+        '.agency owns workflow infrastructure design, reliability controls, trust boundaries, and enterprise extension architecture.'
     },
     {
-      question: 'When should we add Autonomy Assurance?',
+      question: 'When should we add the Reliability and Control Layer?',
       answer:
-        'Add it when failures become expensive, workflows become autonomous, or multiple systems must stay in sync. Assurance is the reliability gate before scale.'
+        'Add it when failures become expensive, workflows become autonomous, or multiple systems must stay in sync. It is the reliability gate before scale.'
     },
     {
       question: 'When do we need Enterprise Extension?',
@@ -97,9 +98,9 @@
 </script>
 
 <SEO
-  title="How We Work | POLICY OS for Production Autonomy"
-  description="CREATE SOMETHING .agency delivers a POLICY OS for production autonomy: Custom Workflow MCPs, Autonomy Assurance, and Enterprise Extension."
-  keywords="policy os, custom workflow mcp, autonomy assurance, enterprise mcp, agent reliability, ai operations architecture"
+  title="How We Work | Production-Safe Workflow Infrastructure"
+  description="CREATE SOMETHING .agency builds production-safe workflow infrastructure for technical operators: reliability controls, trust boundaries, and enterprise automation architecture."
+  keywords="workflow infrastructure, production automation, technical operators, agent reliability, enterprise automation architecture, custom mcp"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -124,12 +125,14 @@
       <p class="hero-eyebrow">How I Work</p>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <h1 class="hero-title">Three offers. One POLICY OS.</h1>
+      <h1 class="hero-title">Production-safe automation for teams that cannot afford brittle workflows.</h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-subtitle">
-        Start with Custom Workflow MCPs. Add Autonomy Assurance when failure cost rises. Escalate to
-        Enterprise Extension for cross-system, high-stakes operations.
+        We help CTOs and engineering leaders reduce integration drag, control automation risk, and
+        ship reliable cross-system workflows. Start with Workflow Infrastructure. Add the
+        Reliability and Control Layer when failure cost rises. Escalate to Enterprise Extension for
+        high-stakes operations.
       </p>
     </BlurFade>
   </div>
@@ -143,7 +146,7 @@
         <HubMcpFlow />
       </div>
       <p class="mcp-flow-caption">
-        Hub MCP routes execution. POLICY OS decides what runs autonomously.
+        Hub MCP routes execution. Reliability controls decide what can run safely.
       </p>
     </BlurFade>
   </div>
@@ -184,12 +187,12 @@
         <BorderBeam size={300} duration={12} delay={9} />
         <div class="retainer-header">
           <div class="retainer-pricing">
-            <div class="retainer-price">POLICY OS</div>
-            <div class="retainer-period">The Operation Model</div>
+            <div class="retainer-price">Workflow Infrastructure</div>
+            <div class="retainer-period">The operating model for reliable automation</div>
           </div>
           <p class="retainer-note">
-            A framework for graduating from brittle scripts to resilient systems.<br />
-            Built to manage the expanding risk of autonomous operations.
+            A model for moving from brittle scripts and one-off glue code to resilient systems.<br />
+            Built for teams carrying real execution and incident risk.
           </p>
         </div>
         <div class="retainer-body">
@@ -199,7 +202,8 @@
               <ul class="retainer-list">
                 <li><strong>Delivery Vector:</strong> {deliveryVector.clientFacingLabel}</li>
                 <li>
-                  <strong>Focus:</strong> We build reliability and boundaries; basic setup is assumed.
+                  <strong>Focus:</strong> We remove integration drag and build reliable boundaries;
+                  basic setup is assumed.
                 </li>
                 <li><strong>Discovery:</strong> MCP-only available as an isolated entry wedge.</li>
                 <li>
@@ -223,9 +227,9 @@
           </div>
           <div class="retainer-callout">
             <p>
-              Notion setup and training are necessary but not sufficient for high-autonomy systems.
-              The durable value is reliability engineering, policy governance, and extension
-              architecture.
+              Tool setup and onboarding are necessary but not sufficient for production automation.
+              The durable value is in reliability engineering, trust boundaries, and extension
+              architecture that lowers operational risk over time.
             </p>
           </div>
         </div>
@@ -291,23 +295,23 @@
 
     <div class="timeline-grid">
       <BlurFade delay={0.1}>
-        <div class="timeline-card">
-          <span class="timeline-label">Phase 1</span>
-          <h3>Workflow Build</h3>
+          <div class="timeline-card">
+            <span class="timeline-label">Phase 1</span>
+          <h3>Workflow Infrastructure</h3>
           <p>
-            Implement the highest-value custom workflow MCPs with clear trust boundaries and
+            Implement the highest-value cross-system workflows with clear trust boundaries and
             production behavior.
           </p>
         </div>
       </BlurFade>
 
       <BlurFade delay={0.2}>
-        <div class="timeline-card">
-          <span class="timeline-label">Phase 2</span>
-          <h3>Assurance</h3>
+          <div class="timeline-card">
+            <span class="timeline-label">Phase 2</span>
+          <h3>Reliability and Control</h3>
           <p>
             .agency adds eval coverage, release checks, policy envelopes, and incident loops as
-            automation scope and risk increase.
+            automation scope, business criticality, and risk increase.
           </p>
         </div>
       </BlurFade>
@@ -350,11 +354,11 @@
 <section class="cta-section">
   <div class="section-container">
     <BlurFade>
-      <h2 class="cta-heading">Map your constraint surface.</h2>
+      <h2 class="cta-heading">Map your workflow risk surface.</h2>
     </BlurFade>
     <BlurFade delay={0.1}>
       <p class="cta-subtext">
-        We’ll define your operating boundaries, failure modes, and escalation path before
+        We’ll define your trust boundaries, failure modes, and escalation path before
         implementation.
       </p>
     </BlurFade>
