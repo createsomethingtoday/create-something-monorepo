@@ -715,6 +715,18 @@ export default {
       );
     }
 
+    if (isOAuthProtectedResourcePath(url.pathname)) {
+      return withCors(
+        new Response(JSON.stringify(buildHubOAuthProtectedResourceMetadata(url, env)), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'public, max-age=300',
+          },
+        }),
+      );
+    }
+
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
       const authFailure = await authorizeRequest(request, env);
       if (authFailure) {
@@ -817,6 +829,15 @@ function isOAuthDiscoveryPath(pathname: string): boolean {
   );
 }
 
+function isOAuthProtectedResourcePath(pathname: string): boolean {
+  return (
+    pathname === '/.well-known/oauth-protected-resource'
+    || pathname === '/.well-known/oauth-protected-resource/mcp'
+    || pathname === '/mcp/.well-known/oauth-protected-resource'
+    || pathname === '/mcp/.well-known/oauth-protected-resource/mcp'
+  );
+}
+
 export function buildHubOAuthAuthorizationServerMetadata(url: URL, env: Env): Record<string, unknown> {
   const issuer = normalizeHubOAuthIssuer(readEnvString(env, 'OAUTH_ISSUER_URL') ?? 'https://id.createsomething.space');
   const resource = `${url.origin}/mcp`;
@@ -834,6 +855,17 @@ export function buildHubOAuthAuthorizationServerMetadata(url: URL, env: Env): Re
     code_challenge_methods_supported: ['S256', 'plain'],
     resource,
     mcp_resource: resource,
+  };
+}
+
+export function buildHubOAuthProtectedResourceMetadata(url: URL, env: Env): Record<string, unknown> {
+  const issuer = normalizeHubOAuthIssuer(readEnvString(env, 'OAUTH_ISSUER_URL') ?? 'https://id.createsomething.space');
+  const resource = `${url.origin}/mcp`;
+  return {
+    resource,
+    authorization_servers: [issuer],
+    bearer_methods_supported: ['header'],
+    scopes_supported: ['openid', 'profile', 'email', 'mcp'],
   };
 }
 
@@ -870,6 +902,10 @@ function ensureStreamableHttpAcceptHeader(request: Request): Request {
 }
 
 export async function authorizeRequest(request: Request, env: Env): Promise<Response | null> {
+  const protectedResourceMetadataUrl = `${new URL(request.url).origin}/mcp/.well-known/oauth-protected-resource`;
+  const unauthorizedHeaders = {
+    'WWW-Authenticate': `Bearer realm="create-something-hub", resource_metadata="${protectedResourceMetadataUrl}"`,
+  };
   const requiredToken = readEnvString(env, 'HUB_API_TOKEN');
   if (!requiredToken) {
     return null;
@@ -881,7 +917,7 @@ export async function authorizeRequest(request: Request, env: Env): Promise<Resp
   }
 
   if (!isSessionResolverConfigured(env)) {
-    return jsonResponse({ error: 'Unauthorized' }, 401);
+    return jsonResponse({ error: 'Unauthorized' }, 401, unauthorizedHeaders);
   }
 
   const sessionHeaderToken = request.headers.get('x-mcp-session-token')?.trim() ?? null;
@@ -891,7 +927,7 @@ export async function authorizeRequest(request: Request, env: Env): Promise<Resp
     bearerToken && requiredToken ? timingSafeEqual(bearerToken, requiredToken) : false;
   const identityToken = sessionHeaderToken ?? (bearerToken && !bearerIsHubToken ? bearerToken : null);
   if (!identityToken) {
-    return jsonResponse({ error: 'Unauthorized' }, 401);
+    return jsonResponse({ error: 'Unauthorized' }, 401, unauthorizedHeaders);
   }
 
   const resolved = await resolveSessionForBearerToken(env, identityToken);
@@ -899,7 +935,7 @@ export async function authorizeRequest(request: Request, env: Env): Promise<Resp
     return null;
   }
 
-  return jsonResponse({ error: 'Unauthorized' }, 401);
+  return jsonResponse({ error: 'Unauthorized' }, 401, unauthorizedHeaders);
 }
 
 function getRequestToken(request: Request): string | null {
