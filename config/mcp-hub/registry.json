@@ -642,6 +642,8 @@
     "composio-toolkit-airtable": {
       "transport": "http",
       "url": "https://composio-toolkit-mcp.createsomething.workers.dev/mcp/airtable",
+      "catalog_exposure_mode": "brokered",
+      "estimated_tool_count": 29,
       "description": "Composio toolkit gateway: Airtable (airtable) - Airtable merges spreadsheet functionality with database power, enabling teams to organize projects, track tasks, and collaborate through customizable views, automation, and integrations for data management",
       "tags": [
         "composio",
@@ -3349,6 +3351,8 @@
     "composio-toolkit-dropbox": {
       "transport": "http",
       "url": "https://composio-toolkit-mcp.createsomething.workers.dev/mcp/dropbox",
+      "catalog_exposure_mode": "brokered",
+      "estimated_tool_count": 192,
       "description": "Composio toolkit gateway: Dropbox (dropbox) - Dropbox is a cloud storage service offering file syncing, sharing, and collaboration across devices with version control and robust integrations",
       "tags": [
         "composio",
@@ -3767,6 +3771,8 @@
     "composio-toolkit-exa": {
       "transport": "http",
       "url": "https://composio-toolkit-mcp.createsomething.workers.dev/mcp/exa",
+      "catalog_exposure_mode": "brokered",
+      "estimated_tool_count": 21,
       "description": "Composio toolkit gateway: Exa (exa) - Exa focuses on data extraction and search, helping teams gather, analyze, and visualize information from websites, APIs, or internal databases",
       "tags": [
         "composio",
@@ -4531,6 +4537,8 @@
     "composio-toolkit-gmail": {
       "transport": "http",
       "url": "https://composio-toolkit-mcp.createsomething.workers.dev/mcp/gmail",
+      "catalog_exposure_mode": "brokered",
+      "estimated_tool_count": 63,
       "description": "Composio toolkit gateway: Gmail (gmail) - Gmail is Google’s email service, featuring spam protection, search functions, and seamless integration with other G Suite apps for productivity",
       "tags": [
         "composio",
@@ -4695,6 +4703,8 @@
     "composio-toolkit-googledrive": {
       "transport": "http",
       "url": "https://composio-toolkit-mcp.createsomething.workers.dev/mcp/googledrive",
+      "catalog_exposure_mode": "brokered",
+      "estimated_tool_count": 130,
       "description": "Composio toolkit gateway: Google Drive (googledrive) - Google Drive is a cloud storage solution for uploading, sharing, and collaborating on files across devices, with robust search and offline access",
       "tags": [
         "composio",
@@ -4726,6 +4736,8 @@
     "composio-toolkit-googlesheets": {
       "transport": "http",
       "url": "https://composio-toolkit-mcp.createsomething.workers.dev/mcp/googlesheets",
+      "catalog_exposure_mode": "brokered",
+      "estimated_tool_count": 49,
       "description": "Composio toolkit gateway: Google Sheets (googlesheets) - Google Sheets is a cloud-based spreadsheet tool enabling real-time collaboration, data analysis, and integration with other Google Workspace apps",
       "tags": [
         "composio",
@@ -5953,6 +5965,8 @@
     "composio-toolkit-linkedin": {
       "transport": "http",
       "url": "https://composio-toolkit-mcp.createsomething.workers.dev/mcp/linkedin",
+      "catalog_exposure_mode": "brokered",
+      "estimated_tool_count": 27,
       "description": "Composio toolkit gateway: LinkedIn (linkedin) - LinkedIn is a professional networking platform enabling job seekers, companies, and thought leaders to connect, share content, and discover business opportunities",
       "tags": [
         "composio",
@@ -6896,6 +6910,8 @@
     "composio-toolkit-notion": {
       "transport": "http",
       "url": "https://composio-toolkit-mcp.createsomething.workers.dev/mcp/notion",
+      "catalog_exposure_mode": "brokered",
+      "estimated_tool_count": 50,
       "description": "Composio toolkit gateway: Notion (notion) - Notion centralizes notes, docs, wikis, and tasks in a unified workspace, letting teams build custom workflows for collaboration and knowledge management",
       "tags": [
         "composio",
@@ -7924,6 +7940,8 @@
     "composio-toolkit-quickbooks": {
       "transport": "http",
       "url": "https://composio-toolkit-mcp.createsomething.workers.dev/mcp/quickbooks",
+      "catalog_exposure_mode": "brokered",
+      "estimated_tool_count": 108,
       "description": "Composio toolkit gateway: QuickBooks (quickbooks) - Quickbooks is a cloud-based accounting software that helps you manage your finances, track your income and expenses, and get insights into your business",
       "tags": [
         "composio",
@@ -9127,6 +9145,8 @@
     "composio-toolkit-slack": {
       "transport": "http",
       "url": "https://composio-toolkit-mcp.createsomething.workers.dev/mcp/slack",
+      "catalog_exposure_mode": "brokered",
+      "estimated_tool_count": 156,
       "description": "Composio toolkit gateway: Slack (slack) - Slack is a channel-based messaging platform. With Slack, people can work together more effectively, connect all their software tools and services, and find the information they need to do their best work — all within a secure, enterprise-grade environment.",
       "tags": [
         "composio",
@@ -10735,6 +10755,8 @@
     "composio-toolkit-youtube": {
       "transport": "http",
       "url": "https://composio-toolkit-mcp.createsomething.workers.dev/mcp/youtube",
+      "catalog_exposure_mode": "brokered",
+      "estimated_tool_count": 54,
       "description": "Composio toolkit gateway: YouTube (youtube) - YouTube is a video-sharing platform with user-generated content, live streaming, and monetization opportunities, widely used for marketing, education, and entertainment",
       "tags": [
         "composio",
@@ -10899,6 +10921,8 @@
     "composio-toolkit-zoom": {
       "transport": "http",
       "url": "https://composio-toolkit-mcp.createsomething.workers.dev/mcp/zoom",
+      "catalog_exposure_mode": "brokered",
+      "estimated_tool_count": 80,
       "description": "Composio toolkit gateway: Zoom (zoom) - Zoom is a video conferencing and online meeting platform featuring breakout rooms, screen sharing, and integrations with various enterprise tools",
       "tags": [
         "composio",

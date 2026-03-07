@@ -5,6 +5,8 @@
 **Primary objective:** confirm fit and secure next step for a Workflow Mapping Session  
 **Message taxonomy:** core phrase "Production-safe workflow infrastructure"; client-facing `Skills + MCP`; technical proof `MCP + Skills`
 
+**Operator standard:** discovery is workflow diagnosis and policy-boundary mapping, not app-intake alone
+
 ---
 
 ## 0) Before the call (5 minutes)
@@ -20,6 +22,7 @@ Anchor mindset:
 
 - diagnose before prescribing
 - map risk and workflow economics
+- map the trust boundary, not just the integration list
 - close to a concrete next action
 
 ---
@@ -33,6 +36,11 @@ Opening:
 Intent prompt:
 
 > "What prompted this conversation now?"
+
+Guardrail:
+
+- if the buyer starts with app names, convert back to workflow language:
+  > "What business process are those systems supporting, and where does it break today?"
 
 ---
 
@@ -52,11 +60,16 @@ Use these in sequence:
 4. **Cross-system coupling**
 > "What systems must stay in sync for this workflow to work end-to-end?"
 
+5. **Business objective**
+> "If we fixed one workflow in the next 30 days, what business result would matter most?"
+
 Follow-up probes:
 
 - "What did you already try?"
 - "Where does work drift between systems?"
 - "What breaks first when volume spikes?"
+- "What is the cost of one bad failure?"
+- "Who owns this workflow day to day?"
 
 ---
 
@@ -96,6 +109,10 @@ Live mapping line:
 
 > "Based on your current risk and coupling, you likely start at [tier] with an assurance posture of [approval mode]."
 
+Policy boundary check:
+
+> "Before we talk implementation, let’s sort actions into what can auto-run, what needs approval, and what should be blocked."
+
 ---
 
 ## 5) Minute 22–26: objection handling with pivots
@@ -126,6 +143,15 @@ Response:
 Pivot:
 
 > "Do you want connectivity only, or governed execution with measurable reliability?"
+
+### Objection: "Can Braintrust handle the policy?"
+Response:
+
+> "Braintrust helps us trace, evaluate, and tune runtime behavior. It is not the approval or policy enforcement layer. The policy boundary still has to be designed explicitly."
+
+Pivot:
+
+> "Which actions do you need to auto-allow, review, or block?"
 
 ### Objection: price resistance
 Response:
@@ -212,13 +238,17 @@ Commit:
 3. Capture outputs in a standard discovery note.
 4. Execute post-call follow-up from `../templates/sales/policy-os-follow-up-sequence.md`.
 5. Build proposals using the same artifact vocabulary.
+6. For high-fit work, send the Workflow Mapping Session agenda before the paid session.
 
 ### Discovery note template (required fields)
 
 - workflow candidate
+- business objective
+- current failure cost
 - risk class (`low|medium|high`)
 - required approvals
 - integration systems
+- policy boundary (`auto-allow|approval-required|block`)
 - recommended package tier
 - buyer authority level
 - next step owner and date

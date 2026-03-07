@@ -392,15 +392,19 @@ function renderFleetDoc(data: Registry): string {
   for (const lifecycle of ['active', 'dormant', 'local'] as const) {
     const rows = byLifecycle[lifecycle];
     lines.push(`## ${titleCase(lifecycle)} (${rows.length})`, '');
-    lines.push('| Server | Transport | Endpoint | Tags |');
-    lines.push('| --- | --- | --- | --- |');
+    lines.push('| Server | Transport | Endpoint | Exposure | Est. Tools | Tags |');
+    lines.push('| --- | --- | --- | --- | --- | --- |');
     for (const row of rows) {
       const endpoint =
         row.server.transport === 'http'
           ? `\`${row.server.url}\``
           : `\`${row.server.command}${row.server.args?.length ? ` ${row.server.args.join(' ')}` : ''}\``;
+      const exposure = row.server.catalog_exposure_mode ?? inferCatalogExposureMode(row.name, row.server);
+      const estimatedToolCount = inferEstimatedToolCount(row.name, row.server);
       const tags = row.server.tags?.length ? row.server.tags.map((tag) => `\`${tag}\``).join(', ') : '—';
-      lines.push(`| \`${row.name}\` | \`${row.server.transport}\` | ${endpoint} | ${tags} |`);
+      lines.push(
+        `| \`${row.name}\` | \`${row.server.transport}\` | ${endpoint} | \`${exposure}\` | \`${estimatedToolCount}\` | ${tags} |`,
+      );
     }
     lines.push('');
   }

@@ -16,19 +16,31 @@
    - `discovery-call-script.md`
    - Purpose: qualify fit, map tier, handle objections, and close to a concrete next step.
 
-3. **Commercial interface spec (machine-readable source of truth)**
+3. **Discovery policy and standards**
+   - `discovery-policy.md`
+   - Purpose: define what discovery must produce, what shortcuts are prohibited, and how to route into policy/control work.
+
+4. **Operator runbook**
+   - `discovery-runbook.md`
+   - Purpose: run workflow-first discovery consistently and convert calls into package-routing decisions.
+
+5. **Commercial interface spec (machine-readable source of truth)**
    - `policy-os-interface-spec.yaml`
    - Purpose: standardize one-pager inputs/outputs, call script branch logic, and taxonomy.
 
-4. **Discovery note (required after every call)**
+6. **Discovery note (required after every call)**
    - `../templates/sales/discovery-note-template.md`
    - Purpose: standardize proposal inputs in one pass.
 
-5. **Proposal input template (delivery handoff)**
+7. **Client-facing Workflow Mapping Session agenda**
+   - `../templates/sales/workflow-mapping-session-agenda.md`
+   - Purpose: align stakeholders on session inputs, structure, and outputs before the paid mapping session.
+
+8. **Proposal input template (delivery handoff)**
    - `../templates/sales/policy-os-proposal-input-template.md`
    - Purpose: convert discovery output into proposal scope and contract artifact implications.
 
-6. **Follow-up sequence (post-call execution)**
+9. **Follow-up sequence (post-call execution)**
    - `../templates/sales/policy-os-follow-up-sequence.md`
    - Purpose: move high and medium fit deals to decision with clear owner and date.
 
@@ -45,11 +57,13 @@
 ## Operating flow
 
 1. Send one-pager.
-2. Run discovery script as a branching guide.
-3. Capture discovery note.
-4. Assign fit (`high|medium|low`) and select close path.
-5. Execute follow-up sequence and lock next action.
-6. Build proposal using:
+2. Review `discovery-policy.md` and run `discovery-runbook.md`.
+3. Run discovery script as a branching guide.
+4. Capture discovery note.
+5. Assign fit (`high|medium|low`) and select close path.
+6. For high-fit work, send `workflow-mapping-session-agenda.md`.
+7. Execute follow-up sequence and lock next action.
+8. Build proposal using:
    - `mcp_contract.yaml`
    - `agent_contract.yaml`
    - `outcome_contract.md`
@@ -75,5 +89,7 @@
 ## Usage discipline
 
 - Use script language blocks as defaults, then adapt to buyer wording.
+- Do not reduce discovery to "what do you want to connect?"
 - Do not skip risk-classification in the note template.
 - Do not produce proposals with missing approval boundaries.
+- Do not position Braintrust as the policy control plane; it is observability and eval infrastructure.

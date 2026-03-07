@@ -133,8 +133,11 @@ The active sales system is documented in:
 - `content/sales/README.md`
 - `content/sales/policy-os-buyer-brief-ops-revops.md`
 - `content/sales/discovery-call-script.md`
+- `content/sales/discovery-policy.md`
+- `content/sales/discovery-runbook.md`
 - `content/sales/policy-os-interface-spec.yaml`
 - `content/templates/sales/discovery-note-template.md`
+- `content/templates/sales/workflow-mapping-session-agenda.md`
 - `content/templates/sales/policy-os-proposal-input-template.md`
 - `content/templates/sales/policy-os-follow-up-sequence.md`
 

@@ -45,7 +45,13 @@ export const POST: RequestHandler = async ({ cookies, platform }) => {
 			accountId,
 			tenantId,
 			workspaceAccountId: row.workspace_account_id ?? accountId,
+			serviceTier: 'agency',
+			managedBearerAllowed: true,
+			orgMembershipActive: true,
+			serviceEntitled: true,
 			policyAccepted: true,
+			contractActive: true,
+			billingActive: true,
 			denialReason: null,
 			metadata: {
 				policy_accepted_at: new Date().toISOString(),

@@ -91,6 +91,19 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "requiresAuth": false
   },
   {
+    "name": "Webflow Template Review",
+    "slug": "webflow-template-review",
+    "url": "https://webflow-template-review-mcp.createsomething.workers.dev",
+    "description": "Webflow Template Review MCP for template asset and version workflows",
+    "category": "create-something",
+    "transports": [
+      "http",
+      "sse"
+    ],
+    "requiresAuth": true,
+    "authType": "bearer"
+  },
+  {
     "name": "Gmail Sync",
     "slug": "gmail-sync",
     "url": "https://gmail.mcp.workway.co",

@@ -19,6 +19,7 @@
 ## Problem summary
 
 - triggering event:
+- business objective in next 30 days:
 - current workflow pain (1-2 sentences):
 - current workaround:
 - quantified impact (time/cost/risk):
@@ -33,6 +34,12 @@
 - integration systems in scope:
 - failure hotspots:
 - human gate boundaries (existing/missing):
+- policy boundary:
+  - auto-allow:
+  - approval-required:
+  - block:
+- fallback/manual path:
+- workflow owner:
 
 ---
 
@@ -44,6 +51,7 @@
   - `Enterprise Extension`
 - rationale:
 - if MCP-only wedge recommended, list assurance trigger criteria:
+- if Braintrust or eval tooling is discussed, note it as observability only:
 
 ---
 
@@ -73,3 +81,4 @@
 - `agent_contract.yaml` implications:
 - `outcome_contract.md` implications:
 - primary reliability KPI for pilot:
+- release-gate conditions:
