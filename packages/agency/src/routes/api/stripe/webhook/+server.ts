@@ -7,7 +7,7 @@
 
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
-import { createStripeClient, HANDLED_WEBHOOK_EVENTS } from '$lib/services/stripe';
+import { createStripeClient, getProductIdByStripePriceId, HANDLED_WEBHOOK_EVENTS } from '$lib/services/stripe';
 import { createPersistentLogger, createLogger, type Logger } from '@create-something/canon/utils';
 import type Stripe from 'stripe';
 
@@ -62,11 +62,11 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 			case 'customer.subscription.created':
 			case 'customer.subscription.updated':
-				await handleSubscriptionUpdate(event.data.object as Stripe.Subscription, platform, logger);
+				await handleSubscriptionUpdate(event.data.object as Stripe.Subscription, platform, logger, stripe);
 				break;
 
 			case 'customer.subscription.deleted':
-				await handleSubscriptionCanceled(event.data.object as Stripe.Subscription, platform, logger);
+				await handleSubscriptionCanceled(event.data.object as Stripe.Subscription, platform, logger, stripe);
 				break;
 
 			case 'invoice.paid':
@@ -157,6 +157,8 @@ async function handleCheckoutComplete(
 			await sendFulfillmentEmail(customerEmail, productId, downloadToken, platform, logger);
 		}
 	}
+
+	await upsertCommercialStateFromCheckout(session, platform, logger);
 }
 
 /**
@@ -231,7 +233,8 @@ async function sendFulfillmentEmail(
 async function handleSubscriptionUpdate(
 	subscription: Stripe.Subscription,
 	platform: App.Platform | undefined,
-	logger: Logger
+	logger: Logger,
+	stripe: Stripe
 ) {
 	logger.info('Subscription updated', {
 		subscriptionId: subscription.id,
@@ -259,6 +262,8 @@ async function handleSubscriptionUpdate(
 			{ expirationTtl: 60 * 60 * 24 * 30 } // 30 days
 		);
 	}
+
+	await upsertCommercialStateFromSubscription(subscription, platform, logger, stripe);
 }
 
 /**
@@ -267,7 +272,8 @@ async function handleSubscriptionUpdate(
 async function handleSubscriptionCanceled(
 	subscription: Stripe.Subscription,
 	platform: App.Platform | undefined,
-	logger: Logger
+	logger: Logger,
+	stripe: Stripe
 ) {
 	logger.info('Subscription canceled', {
 		subscriptionId: subscription.id,
@@ -289,6 +295,8 @@ async function handleSubscriptionCanceled(
 			{ expirationTtl: 60 * 60 * 24 * 30 } // Keep for 30 days for reference
 		);
 	}
+
+	await upsertCommercialStateFromSubscription(subscription, platform, logger, stripe, { forceCanceled: true });
 
 }
 
@@ -517,7 +525,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice, platform: App.Platform
 		customerId: invoice.customer
 	});
 
-	// Could log to analytics or trigger fulfillment
+	await upsertCommercialStateFromInvoice(invoice, platform, logger, { billingActive: true, lastInvoiceStatus: 'paid' });
 }
 
 /**
@@ -544,7 +552,263 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice, platform: App.Platfo
 	// Stripe's hosted invoice URL allows customer to retry payment
 	const paymentUrl = invoice.hosted_invoice_url ?? null;
 
+	await upsertCommercialStateFromInvoice(invoice, platform, logger, {
+		billingActive: false,
+		lastInvoiceStatus: 'payment_failed',
+	});
+
 	await sendDunningEmail(customerEmail, amountDue, currency, paymentUrl, platform, logger);
+}
+
+async function upsertCommercialStateFromCheckout(
+	session: Stripe.Checkout.Session,
+	platform: App.Platform | undefined,
+	logger: Logger
+) {
+	const db = platform?.env?.DB;
+	if (!db) return;
+
+	const customerEmail = normalizeEmail(session.customer_email || session.customer_details?.email);
+	const stripeCustomerId = normalizeIdentifier(session.customer);
+	const productId = normalizeProductId(session.metadata?.product_id);
+	if (!customerEmail && !stripeCustomerId) {
+		return;
+	}
+
+	const mode = session.mode;
+	const billingActive = mode === 'subscription';
+	const contractActive = mode === 'subscription';
+
+	await upsertAgencyCommercialAccount(db, {
+		normalizedEmail: customerEmail,
+		stripeCustomerId,
+		productId,
+		serviceTier: deriveServiceTier(productId),
+		subscriptionStatus: mode === 'subscription' ? 'checkout_completed' : 'one_time_purchase',
+		contractActive,
+		billingActive,
+		lastInvoiceStatus: null,
+		metadata: {
+			source: 'stripe_checkout_session',
+			checkout_session_id: session.id,
+			mode,
+		},
+	});
+
+	logger.info('Commercial state updated from checkout', {
+		customerEmail,
+		stripeCustomerId,
+		productId,
+		mode,
+	});
+}
+
+async function upsertCommercialStateFromSubscription(
+	subscription: Stripe.Subscription,
+	platform: App.Platform | undefined,
+	logger: Logger,
+	stripe: Stripe,
+	options: { forceCanceled?: boolean } = {}
+) {
+	const db = platform?.env?.DB;
+	if (!db) return;
+
+	const stripeCustomerId = normalizeIdentifier(subscription.customer);
+	const customerEmail = await resolveStripeCustomerEmail(subscription.customer, stripe);
+	const priceId = subscription.items?.data?.[0]?.price?.id ?? null;
+	const productId = priceId ? getProductIdByStripePriceId(priceId) : null;
+	const active =
+		!options.forceCanceled &&
+		['trialing', 'active'].includes(subscription.status);
+	const currentPeriodEnd = subscription.items?.data?.[0]?.current_period_end
+		? new Date(subscription.items.data[0]!.current_period_end * 1000).toISOString()
+		: null;
+
+	await upsertAgencyCommercialAccount(db, {
+		normalizedEmail: customerEmail,
+		stripeCustomerId,
+		stripeSubscriptionId: subscription.id,
+		productId,
+		serviceTier: deriveServiceTier(productId),
+		subscriptionStatus: options.forceCanceled ? 'canceled' : subscription.status,
+		contractActive: active,
+		billingActive: active,
+		currentPeriodEnd,
+		lastInvoiceStatus: null,
+		metadata: {
+			source: 'stripe_subscription',
+			cancel_at_period_end: subscription.cancel_at_period_end,
+		},
+	});
+
+	logger.info('Commercial state updated from subscription', {
+		stripeCustomerId,
+		customerEmail,
+		subscriptionId: subscription.id,
+		status: options.forceCanceled ? 'canceled' : subscription.status,
+		productId,
+	});
+}
+
+async function upsertCommercialStateFromInvoice(
+	invoice: Stripe.Invoice,
+	platform: App.Platform | undefined,
+	logger: Logger,
+	input: { billingActive: boolean; lastInvoiceStatus: string }
+) {
+	const db = platform?.env?.DB;
+	if (!db) return;
+
+	const customerEmail = normalizeEmail(invoice.customer_email);
+	const stripeCustomerId = normalizeIdentifier(invoice.customer);
+	const stripeSubscriptionId = normalizeIdentifier(invoice.subscription);
+
+	await upsertAgencyCommercialAccount(db, {
+		normalizedEmail: customerEmail,
+		stripeCustomerId,
+		stripeSubscriptionId,
+		contractActive: input.billingActive,
+		billingActive: input.billingActive,
+		lastInvoiceStatus: input.lastInvoiceStatus,
+		metadata: {
+			source: 'stripe_invoice',
+			invoice_id: invoice.id,
+			hosted_invoice_url: invoice.hosted_invoice_url ?? null,
+		},
+	});
+
+	logger.info('Commercial state updated from invoice', {
+		customerEmail,
+		stripeCustomerId,
+		subscriptionId: stripeSubscriptionId,
+		lastInvoiceStatus: input.lastInvoiceStatus,
+	});
+}
+
+async function upsertAgencyCommercialAccount(
+	db: D1Database,
+	input: {
+		normalizedEmail?: string | null;
+		stripeCustomerId?: string | null;
+		stripeSubscriptionId?: string | null;
+		productId?: string | null;
+		serviceTier?: string | null;
+		subscriptionStatus?: string | null;
+		contractActive: boolean;
+		billingActive: boolean;
+		currentPeriodEnd?: string | null;
+		lastInvoiceStatus?: string | null;
+		metadata?: Record<string, unknown>;
+	}
+) {
+	const identity = input.stripeCustomerId ?? input.normalizedEmail;
+	if (!identity) return;
+
+	await db
+		.prepare(
+			`INSERT INTO agency_commercial_accounts (
+         id, normalized_email, stripe_customer_id, stripe_subscription_id, product_id, service_tier,
+         subscription_status, contract_active, billing_active, current_period_end, last_invoice_status, metadata_json
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(stripe_customer_id) DO UPDATE SET
+         normalized_email = COALESCE(excluded.normalized_email, agency_commercial_accounts.normalized_email),
+         stripe_subscription_id = COALESCE(excluded.stripe_subscription_id, agency_commercial_accounts.stripe_subscription_id),
+         product_id = COALESCE(excluded.product_id, agency_commercial_accounts.product_id),
+         service_tier = COALESCE(excluded.service_tier, agency_commercial_accounts.service_tier),
+         subscription_status = COALESCE(excluded.subscription_status, agency_commercial_accounts.subscription_status),
+         contract_active = excluded.contract_active,
+         billing_active = excluded.billing_active,
+         current_period_end = COALESCE(excluded.current_period_end, agency_commercial_accounts.current_period_end),
+         last_invoice_status = COALESCE(excluded.last_invoice_status, agency_commercial_accounts.last_invoice_status),
+         metadata_json = excluded.metadata_json,
+         updated_at = datetime('now')`
+		)
+		.bind(
+			`comm_${crypto.randomUUID().replace(/-/g, '')}`,
+			input.normalizedEmail ?? null,
+			input.stripeCustomerId ?? null,
+			input.stripeSubscriptionId ?? null,
+			input.productId ?? null,
+			input.serviceTier ?? null,
+			input.subscriptionStatus ?? null,
+			input.contractActive ? 1 : 0,
+			input.billingActive ? 1 : 0,
+			input.currentPeriodEnd ?? null,
+			input.lastInvoiceStatus ?? null,
+			JSON.stringify(input.metadata ?? {})
+		)
+		.run()
+		.catch(async (error) => {
+			if (!input.normalizedEmail || input.stripeCustomerId) {
+				throw error;
+			}
+
+			await db
+				.prepare(
+					`INSERT INTO agency_commercial_accounts (
+             id, normalized_email, stripe_subscription_id, product_id, service_tier,
+             subscription_status, contract_active, billing_active, current_period_end, last_invoice_status, metadata_json
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+				)
+				.bind(
+					`comm_${crypto.randomUUID().replace(/-/g, '')}`,
+					input.normalizedEmail,
+					input.stripeSubscriptionId ?? null,
+					input.productId ?? null,
+					input.serviceTier ?? null,
+					input.subscriptionStatus ?? null,
+					input.contractActive ? 1 : 0,
+					input.billingActive ? 1 : 0,
+					input.currentPeriodEnd ?? null,
+					input.lastInvoiceStatus ?? null,
+					JSON.stringify(input.metadata ?? {})
+				)
+				.run();
+		});
+}
+
+async function resolveStripeCustomerEmail(customer: string | Stripe.Customer | Stripe.DeletedCustomer | null, stripe: Stripe) {
+	if (!customer) return null;
+	if (typeof customer !== 'string') {
+		return normalizeEmail('email' in customer ? customer.email : null);
+	}
+
+	try {
+		const resolved = await stripe.customers.retrieve(customer);
+		if (typeof resolved === 'string' || ('deleted' in resolved && resolved.deleted)) {
+			return null;
+		}
+		return normalizeEmail(resolved.email);
+	} catch {
+		return null;
+	}
+}
+
+function normalizeEmail(raw: string | null | undefined): string | null {
+	if (!raw) return null;
+	const value = raw.trim().toLowerCase();
+	return value.length > 0 ? value : null;
+}
+
+function normalizeIdentifier(raw: string | Stripe.Customer | Stripe.Subscription | Stripe.DeletedCustomer | null | undefined): string | null {
+	if (typeof raw !== 'string') return null;
+	const value = raw.trim();
+	return value.length > 0 ? value : null;
+}
+
+function normalizeProductId(raw: string | undefined): string | null {
+	if (!raw) return null;
+	const value = raw.trim();
+	return value.length > 0 ? value : null;
+}
+
+function deriveServiceTier(productId: string | null): string | null {
+	if (!productId) return null;
+	if (productId.includes('team')) return 'team';
+	if (productId.includes('org')) return 'org';
+	if (productId.includes('solo')) return 'solo';
+	if (productId.includes('vertical-templates')) return 'agency';
+	return productId;
 }
 
 /**
