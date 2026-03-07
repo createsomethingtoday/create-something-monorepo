@@ -369,11 +369,13 @@
   :global(.paper-container .footer-link) {
     color: var(--color-fg-tertiary);
     font-size: var(--text-body-sm);
+    text-decoration: none;
     transition: color var(--duration-micro) var(--ease-standard);
   }
 
   :global(.paper-container .footer-link:hover) {
     color: var(--color-fg-primary);
+    text-decoration: none;
   }
 
   /* Content Typography - Global Styles */
