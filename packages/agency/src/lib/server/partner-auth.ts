@@ -396,7 +396,7 @@ export async function insertPartnerAccessDelivery(
 	input: {
 		id: string;
 		partnerClientId: string;
-		deliveryType: 'strict_session_bundle' | 'legacy_key_bundle';
+		deliveryType: 'strict_session_bundle' | 'legacy_key_bundle' | 'managed_bearer_bundle';
 		deliveryChannel: 'portal' | 'secure_note' | 'email' | 'manual';
 		deliveredBy: string;
 		recipient: string | null;

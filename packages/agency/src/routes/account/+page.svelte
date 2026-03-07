@@ -19,15 +19,18 @@
 		active: boolean;
 	} | null;
 
-	let token: ManagedToken = null;
-	let busy = false;
-	let issuedToken = '';
-	let errorMessage = '';
-	let successMessage = '';
+	type TokenPayload = { token?: ManagedToken; message?: string };
+	type ActionPayload = { token?: string; message?: string };
+
+	let token = $state<ManagedToken>(null);
+	let busy = $state(false);
+	let issuedToken = $state('');
+	let errorMessage = $state('');
+	let successMessage = $state('');
 
 	async function loadToken() {
 		const response = await fetch('/api/me/mcp-token');
-		const payload = await response.json().catch(() => ({}));
+		const payload = (await response.json().catch(() => ({}))) as TokenPayload;
 		if (!response.ok) {
 			throw new Error(payload.message ?? 'Failed to load MCP token state');
 		}
@@ -52,7 +55,7 @@
 				headers: options.body ? { 'Content-Type': 'application/json' } : undefined,
 				body: options.body ? JSON.stringify(options.body) : undefined,
 			});
-			const payload = await response.json().catch(() => ({}));
+			const payload = (await response.json().catch(() => ({}))) as ActionPayload;
 			if (!response.ok) {
 				throw new Error(payload.message ?? 'Request failed');
 			}

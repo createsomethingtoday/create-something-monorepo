@@ -134,7 +134,7 @@ For CI/CD or production automation, use Infisical Machine Identity Universal Aut
 
 ## 8) Default client delivery path
 
-For Half Dozen hub clients, deliver identity-issued personal tokens instead of vault-managed shared team bearers:
+For Half Dozen hub clients, prefer `.agency` managed bearer tokens for customer-facing access. Use identity-issued legacy personal tokens only for temporary migration or exception cases:
 
 ```bash
 pnpm partner:access:rotate -- \
@@ -150,7 +150,7 @@ Notes:
 
 - This returns a `legacy_key_bundle` backed by identity-worker issuance and audit tables.
 - The hub can now resolve those personal bearer tokens directly in `compat` mode when `HUB_SESSION_RESOLVE_URL` + `HUB_SESSION_RESOLVE_TOKEN` are configured.
-- Existing shared team bearers remain valid in `compat` mode until you rotate them out, but new client handoff should use the identity-issued personal token.
+- Existing shared team bearers remain valid in `compat` mode until you rotate them out, but they are no longer the target delivery model.
 
 ## 9) Migrate Doppler secrets to Infisical
 

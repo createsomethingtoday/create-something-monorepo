@@ -52,12 +52,15 @@ The following artifacts MUST remain aligned with this policy before production l
 ## Enforcement Surfaces
 
 - Identity worker:
-  - `POST /v1/mcp/long-lived-tokens`
-  - `POST /v1/mcp/long-lived-tokens/regenerate`
-  - `POST /v1/mcp/long-lived-tokens/revoke`
+  - `POST /v1/mcp/long-lived-tokens/admin-issue`
+  - `POST /v1/mcp/long-lived-tokens/admin-get`
+  - `POST /v1/mcp/long-lived-tokens/:id/revoke`
   - token resolve/introspection path used by MCP hub
 - `.agency` app:
-  - `Settings > Bearer Token`
+  - `GET|POST /api/me/mcp-token`
+  - `POST /api/me/mcp-token/regenerate`
+  - `POST /api/me/mcp-token/revoke`
+  - `Account > MCP Bearer Token`
   - legal acceptance and consent capture
   - org membership and entitlement display
 - MCP hub / gateway:
