@@ -125,7 +125,7 @@
       <p class="hero-eyebrow">How I Work</p>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <h1 class="hero-title">Production-grade automation for connected systems.</h1>
+      <h1 class="hero-title">Connected systems.</h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-subtitle">
