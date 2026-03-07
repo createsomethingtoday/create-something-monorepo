@@ -1,5 +1,5 @@
 <script lang="ts">
-	export type FactItem = { label: string; value: string };
+	type FactItem = { label: string; value: string };
 	export let items: FactItem[] = [];
 </script>
 

@@ -24,32 +24,38 @@
    - `discovery-runbook.md`
    - Purpose: run workflow-first discovery consistently and convert calls into package-routing decisions.
 
-5. **Commercial interface spec (machine-readable source of truth)**
+5. **Operator checklist**
+   - `operator-checklist.md`
+   - Purpose: single internal checklist covering the full path from first contact to release readiness.
+
+6. **Commercial interface spec (machine-readable source of truth)**
    - `policy-os-interface-spec.yaml`
    - Purpose: standardize one-pager inputs/outputs, call script branch logic, and taxonomy.
 
-6. **Discovery note (required after every call)**
+7. **Discovery note (required after every call)**
    - `../templates/sales/discovery-note-template.md`
    - Purpose: standardize proposal inputs in one pass.
 
-7. **Client-facing Workflow Mapping Session agenda**
+8. **Client-facing Workflow Mapping Session agenda**
    - `../templates/sales/workflow-mapping-session-agenda.md`
    - Purpose: align stakeholders on session inputs, structure, and outputs before the paid mapping session.
 
-8. **Delivery artifact templates**
+9. **Delivery artifact templates**
    - `../templates/delivery/README.md`
    - `../templates/delivery/mcp_contract.yaml`
    - `../templates/delivery/agent_contract.yaml`
    - `../templates/delivery/outcome_contract.md`
    - `../templates/delivery/golden-task-checks.md`
    - `../templates/delivery/runbook.md`
+   - `../templates/delivery/halfdozen-mcp-onboarding-pack.md`
+   - `../templates/delivery/halfdozen-mcp-onboarding-checklist.md`
    - Purpose: convert workflow mapping outputs into implementation-ready artifact drafts.
 
-9. **Proposal input template (delivery handoff)**
+10. **Proposal input template (delivery handoff)**
    - `../templates/sales/policy-os-proposal-input-template.md`
    - Purpose: convert discovery output into proposal scope and contract artifact implications.
 
-10. **Follow-up sequence (post-call execution)**
+11. **Follow-up sequence (post-call execution)**
    - `../templates/sales/policy-os-follow-up-sequence.md`
    - Purpose: move high and medium fit deals to decision with clear owner and date.
 
@@ -66,7 +72,7 @@
 ## Operating flow
 
 1. Send one-pager.
-2. Review `discovery-policy.md` and run `discovery-runbook.md`.
+2. Review `discovery-policy.md`, `discovery-runbook.md`, and `operator-checklist.md`.
 3. Run discovery script as a branching guide.
 4. Capture discovery note.
 5. Assign fit (`high|medium|low`) and select close path.

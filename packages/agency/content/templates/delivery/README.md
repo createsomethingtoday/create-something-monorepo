@@ -19,6 +19,12 @@ Defines the must-pass scenarios that prove the workflow behaves correctly before
 5. `runbook.md`
 Defines operator procedures for approvals, exceptions, fallback, containment, and recovery.
 
+6. `halfdozen-mcp-onboarding-pack.md`
+Internal onboarding template for the Half Dozen team using governed MCPs.
+
+7. `halfdozen-mcp-onboarding-checklist.md`
+Operator checklist for running a Half Dozen MCP onboarding session.
+
 Recommended sequence:
 
 1. Complete `discovery-note-template.md`
@@ -26,6 +32,7 @@ Recommended sequence:
 3. Draft these three artifacts from the approved workflow map
 4. Draft golden-task checks and runbook from the same workflow map
 5. Review the full artifact set before implementation
+6. Use the Half Dozen onboarding pack when the audience is the internal Half Dozen team
 
 Reference example:
 
@@ -34,6 +41,7 @@ Reference example:
 - `examples/exampleco-outcome_contract.md`
 - `examples/exampleco-golden-task-checks.md`
 - `examples/exampleco-runbook.md`
+- `examples/halfdozen-mcp-onboarding-example.md`
 
 Important:
 

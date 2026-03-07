@@ -135,6 +135,7 @@ The active sales system is documented in:
 - `content/sales/discovery-call-script.md`
 - `content/sales/discovery-policy.md`
 - `content/sales/discovery-runbook.md`
+- `content/sales/operator-checklist.md`
 - `content/sales/policy-os-interface-spec.yaml`
 - `content/templates/sales/discovery-note-template.md`
 - `content/templates/sales/workflow-mapping-session-agenda.md`

@@ -9,6 +9,7 @@ Current example:
 - `exampleco-outcome_contract.md`
 - `exampleco-golden-task-checks.md`
 - `exampleco-runbook.md`
+- `halfdozen-mcp-onboarding-example.md`
 
 Source:
 
