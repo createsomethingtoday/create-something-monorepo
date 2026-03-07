@@ -8,7 +8,7 @@ CREATE TABLE agency_contract_state (
   normalized_email TEXT,
   account_id TEXT,
   tenant_id TEXT,
-  contract_reference TEXT NOT NULL,
+  contract_reference TEXT NOT NULL UNIQUE,
   contract_status TEXT NOT NULL CHECK (contract_status IN ('draft', 'pending', 'active', 'paused', 'expired', 'terminated')),
   contract_active INTEGER NOT NULL DEFAULT 0,
   service_entitled INTEGER NOT NULL DEFAULT 0,

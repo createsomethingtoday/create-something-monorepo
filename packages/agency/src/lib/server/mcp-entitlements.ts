@@ -79,6 +79,24 @@ interface AgencyCommercialStateRow {
 	updated_at: string;
 }
 
+export interface AgencyContractStateRow {
+	id: string;
+	auth_subject: string | null;
+	normalized_email: string | null;
+	account_id: string | null;
+	tenant_id: string | null;
+	contract_reference: string;
+	contract_status: 'draft' | 'pending' | 'active' | 'paused' | 'expired' | 'terminated';
+	contract_active: number;
+	service_entitled: number;
+	policy_accepted: number;
+	effective_at: string | null;
+	expires_at: string | null;
+	metadata_json: string;
+	created_at: string;
+	updated_at: string;
+}
+
 function toFlag(value: number | null | undefined): boolean {
 	return value === 1;
 }
@@ -167,6 +185,92 @@ export async function listAgencyMcpEntitlements(
 	return result.results ?? [];
 }
 
+export async function listAgencyContractState(
+	db: D1Database,
+	options: { limit?: number; search?: string } = {}
+): Promise<AgencyContractStateRow[]> {
+	const limit = Math.max(1, Math.min(250, options.limit ?? 100));
+	const search = options.search?.trim();
+	if (search) {
+		const pattern = `%${search.toLowerCase()}%`;
+		const result = await db
+			.prepare(
+				`SELECT * FROM agency_contract_state
+         WHERE lower(COALESCE(auth_subject, '')) LIKE ?
+            OR lower(COALESCE(normalized_email, '')) LIKE ?
+            OR lower(COALESCE(account_id, '')) LIKE ?
+            OR lower(contract_reference) LIKE ?
+         ORDER BY updated_at DESC
+         LIMIT ?`
+			)
+			.bind(pattern, pattern, pattern, pattern, limit)
+			.all<AgencyContractStateRow>();
+		return result.results ?? [];
+	}
+
+	const result = await db
+		.prepare('SELECT * FROM agency_contract_state ORDER BY updated_at DESC LIMIT ?')
+		.bind(limit)
+		.all<AgencyContractStateRow>();
+	return result.results ?? [];
+}
+
+export async function upsertAgencyContractState(
+	db: D1Database,
+	input: {
+		authSubject?: string | null;
+		authEmail?: string | null;
+		accountId?: string | null;
+		tenantId?: string | null;
+		contractReference: string;
+		contractStatus: AgencyContractStateRow['contract_status'];
+		contractActive: boolean;
+		serviceEntitled: boolean;
+		policyAccepted: boolean;
+		effectiveAt?: string | null;
+		expiresAt?: string | null;
+		metadata?: Record<string, unknown>;
+	}
+): Promise<void> {
+	const normalizedEmail = normalizeEmail(input.authEmail);
+	await db
+		.prepare(
+			`INSERT INTO agency_contract_state (
+         id, auth_subject, normalized_email, account_id, tenant_id, contract_reference, contract_status,
+         contract_active, service_entitled, policy_accepted, effective_at, expires_at, metadata_json
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(contract_reference) DO UPDATE SET
+         auth_subject = COALESCE(excluded.auth_subject, agency_contract_state.auth_subject),
+         normalized_email = COALESCE(excluded.normalized_email, agency_contract_state.normalized_email),
+         account_id = COALESCE(excluded.account_id, agency_contract_state.account_id),
+         tenant_id = COALESCE(excluded.tenant_id, agency_contract_state.tenant_id),
+         contract_status = excluded.contract_status,
+         contract_active = excluded.contract_active,
+         service_entitled = excluded.service_entitled,
+         policy_accepted = excluded.policy_accepted,
+         effective_at = COALESCE(excluded.effective_at, agency_contract_state.effective_at),
+         expires_at = COALESCE(excluded.expires_at, agency_contract_state.expires_at),
+         metadata_json = excluded.metadata_json,
+         updated_at = datetime('now')`
+		)
+		.bind(
+			`contract_${crypto.randomUUID().replace(/-/g, '')}`,
+			input.authSubject ?? null,
+			normalizedEmail,
+			input.accountId ?? null,
+			input.tenantId ?? null,
+			input.contractReference,
+			input.contractStatus,
+			input.contractActive ? 1 : 0,
+			input.serviceEntitled ? 1 : 0,
+			input.policyAccepted ? 1 : 0,
+			input.effectiveAt ?? null,
+			input.expiresAt ?? null,
+			JSON.stringify(input.metadata ?? {})
+		)
+		.run();
+}
+
 export async function updateAgencyMcpEntitlement(
 	db: D1Database,
 	input: AgencyMcpEntitlementUpdateInput
@@ -240,10 +344,19 @@ export async function reconcileAgencyMcpEntitlement(
 	}
 
 	const source = await findAgencyPartnerEntitlementSource(db, input.authSubject, input.authEmail ?? existing?.auth_email ?? null);
+	const contract = await findAgencyContractState(
+		db,
+		input.authSubject,
+		input.authEmail ?? existing?.auth_email ?? null,
+		input.accountId ?? existing?.account_id ?? null,
+		input.tenantId ?? existing?.tenant_id ?? null
+	);
 	const commercial = await findAgencyCommercialStateByEmail(db, input.authEmail ?? existing?.auth_email ?? null);
 	if (!source) {
-		const contractActive = commercial ? commercial.contract_active === 1 : existing?.contract_active === 1;
+		const contractActive = contract ? contract.contract_active === 1 : commercial ? commercial.contract_active === 1 : existing?.contract_active === 1;
 		const billingActive = commercial ? commercial.billing_active === 1 : existing?.billing_active === 1;
+		const serviceEntitled = contract ? contract.service_entitled === 1 : existing?.service_entitled === 1;
+		const policyAccepted = contract ? contract.policy_accepted === 1 : existing?.policy_accepted === 1;
 		const commerciallyAllowed = contractActive && billingActive;
 
 		if (existing) {
@@ -252,6 +365,8 @@ export async function reconcileAgencyMcpEntitlement(
 					`UPDATE agency_mcp_entitlements
            SET contract_active = ?,
                billing_active = ?,
+               service_entitled = ?,
+               policy_accepted = ?,
                denial_reason = ?,
                updated_at = datetime('now')
            WHERE auth_subject = ?`
@@ -259,7 +374,15 @@ export async function reconcileAgencyMcpEntitlement(
 				.bind(
 					contractActive ? 1 : 0,
 					billingActive ? 1 : 0,
-					commerciallyAllowed ? existing.denial_reason : deriveCommercialDenialReason(contractActive, billingActive),
+					serviceEntitled ? 1 : 0,
+					policyAccepted ? 1 : 0,
+					deriveEntitlementDenialReason({
+						contractActive,
+						billingActive,
+						serviceEntitled,
+						policyAccepted,
+						statusReason: null,
+					}),
 					input.authSubject
 				)
 				.run();
@@ -276,6 +399,8 @@ export async function reconcileAgencyMcpEntitlement(
 			metadata: {
 				source: commercial ? 'stripe_commercial_state' : 'session_bootstrap',
 				manual_override: false,
+				contract_reference: contract?.contract_reference ?? null,
+				contract_status: contract?.contract_status ?? null,
 				stripe_customer_id: commercial?.stripe_customer_id ?? null,
 				stripe_subscription_id: commercial?.stripe_subscription_id ?? null,
 				subscription_status: commercial?.subscription_status ?? null,
@@ -284,11 +409,11 @@ export async function reconcileAgencyMcpEntitlement(
 		}).then(async () => {
 			await db
 				.prepare(
-					`UPDATE agency_mcp_entitlements
+				`UPDATE agency_mcp_entitlements
            SET managed_bearer_allowed = ?,
                org_membership_active = ?,
                service_entitled = ?,
-               policy_accepted = 1,
+               policy_accepted = ?,
                contract_active = ?,
                billing_active = ?,
                denial_reason = ?,
@@ -296,12 +421,19 @@ export async function reconcileAgencyMcpEntitlement(
            WHERE auth_subject = ?`
 				)
 				.bind(
-					commerciallyAllowed ? 1 : 0,
-					commerciallyAllowed ? 1 : 0,
-					commerciallyAllowed ? 1 : 0,
+					commerciallyAllowed && serviceEntitled && policyAccepted ? 1 : 0,
+					commerciallyAllowed && serviceEntitled ? 1 : 0,
+					serviceEntitled ? 1 : 0,
+					policyAccepted ? 1 : 0,
 					contractActive ? 1 : 0,
 					billingActive ? 1 : 0,
-					deriveCommercialDenialReason(contractActive, billingActive),
+					deriveEntitlementDenialReason({
+						contractActive,
+						billingActive,
+						serviceEntitled,
+						policyAccepted,
+						statusReason: null,
+					}),
 					input.authSubject
 				)
 				.run();
@@ -310,11 +442,18 @@ export async function reconcileAgencyMcpEntitlement(
 	}
 
 	const hasAccess = source.status === 'active';
-	const policyAccepted = Boolean(source.active_consent_id);
-	const contractActive = commercial ? commercial.contract_active === 1 : hasAccess;
+	const policyAccepted = contract ? contract.policy_accepted === 1 : Boolean(source.active_consent_id);
+	const contractActive = contract ? contract.contract_active === 1 : commercial ? commercial.contract_active === 1 : hasAccess;
 	const billingActive = commercial ? commercial.billing_active === 1 : hasAccess;
-	const denialReason =
-		derivePartnerDenialReason(source.status, policyAccepted) ?? deriveCommercialDenialReason(contractActive, billingActive);
+	const serviceEntitled = contract ? contract.service_entitled === 1 : hasAccess;
+	const statusReason = derivePartnerDenialReason(source.status, policyAccepted);
+	const denialReason = deriveEntitlementDenialReason({
+		contractActive,
+		billingActive,
+		serviceEntitled,
+		policyAccepted,
+		statusReason,
+	});
 
 	return upsertAgencyMcpEntitlement(db, {
 		authSubject: input.authSubject,
@@ -331,6 +470,8 @@ export async function reconcileAgencyMcpEntitlement(
 				client_slug: source.slug,
 				partner_status: source.status,
 				active_consent_id: source.active_consent_id,
+				contract_reference: contract?.contract_reference ?? null,
+				contract_status: contract?.contract_status ?? null,
 				stripe_customer_id: commercial?.stripe_customer_id ?? null,
 				stripe_subscription_id: commercial?.stripe_subscription_id ?? null,
 				subscription_status: commercial?.subscription_status ?? null,
@@ -351,9 +492,9 @@ export async function reconcileAgencyMcpEntitlement(
          WHERE auth_subject = ?`
 			)
 			.bind(
+				hasAccess && contractActive && billingActive && serviceEntitled && policyAccepted ? 1 : 0,
 				hasAccess ? 1 : 0,
-				hasAccess ? 1 : 0,
-				hasAccess ? 1 : 0,
+				serviceEntitled ? 1 : 0,
 				policyAccepted ? 1 : 0,
 				contractActive ? 1 : 0,
 				billingActive ? 1 : 0,
@@ -515,9 +656,6 @@ function derivePartnerDenialReason(
 	status: AgencyPartnerEntitlementSource['status'],
 	policyAccepted: boolean
 ): string | null {
-	if (!policyAccepted) {
-		return 'policy_acceptance_required';
-	}
 	switch (status) {
 		case 'active':
 			return null;
@@ -557,14 +695,61 @@ async function findAgencyCommercialStateByEmail(
 		.first<AgencyCommercialStateRow>();
 }
 
-function deriveCommercialDenialReason(contractActive: boolean, billingActive: boolean): string | null {
-	if (!contractActive) {
+async function findAgencyContractState(
+	db: D1Database,
+	authSubject: string,
+	authEmail: string | null,
+	accountId: string | null,
+	tenantId: string | null
+): Promise<AgencyContractStateRow | null> {
+	const normalizedEmail = normalizeEmail(authEmail);
+	const result = await db
+		.prepare(
+			`SELECT * FROM agency_contract_state
+       WHERE (auth_subject IS NOT NULL AND auth_subject = ?)
+          OR (? IS NOT NULL AND normalized_email = ?)
+          OR (? IS NOT NULL AND account_id = ? AND (? IS NULL OR tenant_id = ?))
+       ORDER BY
+         contract_active DESC,
+         service_entitled DESC,
+         policy_accepted DESC,
+         updated_at DESC
+       LIMIT 1`
+		)
+		.bind(authSubject, normalizedEmail, normalizedEmail, accountId, accountId, tenantId, tenantId)
+		.first<AgencyContractStateRow>();
+	return result;
+}
+
+function deriveEntitlementDenialReason(input: {
+	contractActive: boolean;
+	billingActive: boolean;
+	serviceEntitled: boolean;
+	policyAccepted: boolean;
+	statusReason: string | null;
+}): string | null {
+	if (input.statusReason) {
+		return input.statusReason;
+	}
+	if (!input.policyAccepted) {
+		return 'policy_acceptance_required';
+	}
+	if (!input.serviceEntitled) {
+		return 'service_not_entitled';
+	}
+	if (!input.contractActive) {
 		return 'contract_inactive';
 	}
-	if (!billingActive) {
+	if (!input.billingActive) {
 		return 'billing_inactive';
 	}
 	return null;
+}
+
+function normalizeEmail(raw: string | null | undefined): string | null {
+	if (!raw) return null;
+	const value = raw.trim().toLowerCase();
+	return value.length > 0 ? value : null;
 }
 
 export function constantTimeEqual(left: string, right: string): boolean {

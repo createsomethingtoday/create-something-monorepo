@@ -48,6 +48,7 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
   - `POST /api/partners/half-dozen/clients/:slug/bearer-token/issue`
   - `POST /api/partners/half-dozen/clients/:slug/legacy-key/issue`
   - `POST /api/admin/mcp-entitlements`
+  - `POST /api/admin/contracts`
   - `partner_access_deliveries`
 - Vault/sync automation:
   - `scripts/cs-hub-vault-sync.sh`
@@ -63,6 +64,7 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 - `partner_access_deliveries` rows with non-secret metadata
 - `agency_mcp_entitlements` rows and operator mutation history
 - `partner_auth_clients` and `partner_auth_consents` records used for entitlement reconciliation
+- `agency_contract_state` records used as explicit contract authority
 - Secret scan of operator docs (no raw bearer artifacts)
 - Vault audit trails for create/update operations
 - Migration verification output (`missing=0`, `mismatched=0`) for provider cutover

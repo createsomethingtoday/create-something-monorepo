@@ -62,6 +62,7 @@ The following artifacts MUST remain aligned with this policy before production l
   - `POST /api/me/mcp-token/regenerate`
   - `POST /api/me/mcp-token/revoke`
   - `GET|POST /api/admin/mcp-entitlements`
+  - `GET|POST /api/admin/contracts`
   - `GET /api/internal/mcp-entitlements/check`
   - `Account > MCP Bearer Token`
   - `Admin > Security > Bearer Tokens`
@@ -82,6 +83,7 @@ The following artifacts MUST remain aligned with this policy before production l
 - Org membership and entitlement checks in access telemetry
 - Operator-reviewed entitlement registry updates
 - Partner client status and consent records reconciled into allow/deny state
+- Explicit contract ledger records linked to user/account/tenant context
 - Legal acceptance records linked to the user and organization
 - Billing and contract state checks linked to allow/deny decisions
 - Admin-visible last-used and incident-response metadata
