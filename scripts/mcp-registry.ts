@@ -84,8 +84,8 @@ const GENERATED_FLEET_DOC_PATH = resolve(ROOT, 'docs/MCP_FLEET_REGISTRY.generate
 
 const command = (process.argv[2] ?? 'check').trim().toLowerCase();
 
-if (!['check', 'generate', 'validate'].includes(command)) {
-  console.error('Usage: tsx scripts/mcp-registry.ts [check|generate|validate]');
+if (!['annotate-exposure', 'check', 'generate', 'validate'].includes(command)) {
+  console.error('Usage: tsx scripts/mcp-registry.ts [annotate-exposure|check|generate|validate]');
   process.exit(2);
 }
 
@@ -122,6 +122,19 @@ if (command === 'generate') {
   writeFileSync(GENERATED_FLEET_DOC_PATH, generatedFleetDoc, 'utf8');
   console.log(`Wrote ${relativeToRoot(GENERATED_CATALOG_PATH)}`);
   console.log(`Wrote ${relativeToRoot(GENERATED_FLEET_DOC_PATH)}`);
+  process.exit(0);
+}
+
+if (command === 'annotate-exposure') {
+  const { nextRegistry, updatedServers } = annotateExposureMetadata(registry);
+  writeFileSync(REGISTRY_PATH, `${JSON.stringify(nextRegistry, null, 2)}\n`, 'utf8');
+  console.log(`Wrote ${relativeToRoot(REGISTRY_PATH)}`);
+  console.log(`Annotated ${updatedServers.length} server(s) with explicit exposure metadata.`);
+  if (updatedServers.length > 0) {
+    for (const serverName of updatedServers) {
+      console.log(`- ${serverName}`);
+    }
+  }
   process.exit(0);
 }
 
@@ -270,6 +283,39 @@ function validateCatalogExposurePolicy(
       `server ${serverName}: broad connector surfaces should not be marked direct at large-catalog scale`,
     );
   }
+}
+
+function annotateExposureMetadata(data: Registry): { nextRegistry: Registry; updatedServers: string[] } {
+  const nextServers: Record<string, RegistryServer> = {};
+  const updatedServers: string[] = [];
+
+  for (const [serverName, server] of Object.entries(data.servers)) {
+    const nextServer: RegistryServer = {
+      ...server,
+      catalog_exposure_mode: server.catalog_exposure_mode ?? inferCatalogExposureMode(serverName, server),
+      estimated_tool_count:
+        typeof server.estimated_tool_count === 'number' && Number.isFinite(server.estimated_tool_count)
+          ? Math.max(0, Math.trunc(server.estimated_tool_count))
+          : inferEstimatedToolCount(serverName, server),
+    };
+
+    nextServers[serverName] = nextServer;
+
+    if (
+      nextServer.catalog_exposure_mode !== server.catalog_exposure_mode ||
+      nextServer.estimated_tool_count !== server.estimated_tool_count
+    ) {
+      updatedServers.push(serverName);
+    }
+  }
+
+  return {
+    nextRegistry: {
+      ...data,
+      servers: nextServers,
+    },
+    updatedServers,
+  };
 }
 
 function inferCatalogExposureMode(serverName: string, server: RegistryServer): CatalogExposureMode {
