@@ -6,6 +6,10 @@ OUTPUT_DIR="${OUTPUT_DIR:-auth0/export}"
 FORMAT="${FORMAT:-yaml}"
 CONFIG_FILE="${CONFIG_FILE:-auth0/config.json}"
 EXAMPLE_CONFIG="auth0/config.example.json"
+INFISICAL_ENV="${INFISICAL_ENV:-prod}"
+INFISICAL_PATH="${INFISICAL_PATH:-/agency/auth}"
+INFISICAL_PROJECT_ID="${INFISICAL_PROJECT_ID:-}"
+INFISICAL_INCLUDE_IMPORTS="${INFISICAL_INCLUDE_IMPORTS:-true}"
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -32,6 +36,32 @@ load_env_file() {
   fi
 }
 
+have_auth0_credentials() {
+  [[ -n "${AUTH0_DOMAIN:-}" && -n "${AUTH0_CLIENT_ID:-}" && -n "${AUTH0_CLIENT_SECRET:-}" ]]
+}
+
+load_infisical_env() {
+  require_cmd infisical
+
+  local -a export_cmd=(
+    infisical export
+    --format=dotenv
+    --env="$INFISICAL_ENV"
+    --path="$INFISICAL_PATH"
+    --include-imports="$INFISICAL_INCLUDE_IMPORTS"
+  )
+
+  if [[ -n "$INFISICAL_PROJECT_ID" ]]; then
+    export_cmd+=(--projectId="$INFISICAL_PROJECT_ID")
+  fi
+
+  local tmp_env
+  tmp_env="$(mktemp)"
+  "${export_cmd[@]}" >"$tmp_env"
+  load_env_file "$tmp_env"
+  rm -f "$tmp_env"
+}
+
 ensure_config_file() {
   if [[ -f "$CONFIG_FILE" ]]; then
     return 0
@@ -56,6 +86,10 @@ main() {
   cd "$ROOT_DIR"
   load_env_file "$ROOT_DIR/.env"
   load_env_file "$ROOT_DIR/.env.local"
+
+  if ! have_auth0_credentials; then
+    load_infisical_env
+  fi
 
   require_env AUTH0_DOMAIN
   require_env AUTH0_CLIENT_ID
