@@ -79,6 +79,27 @@ export interface AgencyCommercialStateRow {
 	updated_at: string;
 }
 
+export interface AgencyIdentitySeedRow {
+	normalized_email: string;
+	auth_subject: string | null;
+	account_id: string;
+	tenant_id: string;
+	workspace_account_id: string | null;
+	service_tier: string;
+	managed_bearer_allowed: number;
+	org_membership_active: number;
+	service_entitled: number;
+	policy_accepted: number;
+	contract_active: number;
+	billing_active: number;
+	status: string;
+	invited_at: string | null;
+	bound_at: string | null;
+	metadata_json: string;
+	created_at: string;
+	updated_at: string;
+}
+
 export interface AgencyContractStateRow {
 	id: string;
 	auth_subject: string | null;
@@ -389,6 +410,59 @@ export async function reconcileAgencyMcpEntitlement(
 	const existingMetadata = existing ? safeParseMetadata(existing.metadata_json) : {};
 	if (existingMetadata.manual_override === true && existing) {
 		return existing;
+	}
+
+	const seed = await findAgencyIdentitySeedByEmail(db, input.authEmail ?? existing?.auth_email ?? null);
+	if (seed) {
+		await upsertAgencyMcpEntitlement(db, {
+			authSubject: input.authSubject,
+			authEmail: input.authEmail ?? existing?.auth_email ?? seed.normalized_email,
+			accountId: seed.account_id,
+			tenantId: seed.tenant_id,
+			workspaceAccountId: seed.workspace_account_id ?? seed.account_id,
+			serviceTier: seed.service_tier,
+			metadata: {
+				manual_override: false,
+				source: 'identity_seed',
+				seed_status: seed.status,
+				seed_invited_at: seed.invited_at,
+				...safeParseMetadata(seed.metadata_json),
+			},
+		});
+
+		await db
+			.prepare(
+				`UPDATE agency_mcp_entitlements
+         SET managed_bearer_allowed = ?,
+             org_membership_active = ?,
+             service_entitled = ?,
+             policy_accepted = ?,
+             contract_active = ?,
+             billing_active = ?,
+             denial_reason = ?,
+             updated_at = datetime('now')
+         WHERE auth_subject = ?`
+			)
+			.bind(
+				seed.managed_bearer_allowed,
+				seed.org_membership_active,
+				seed.service_entitled,
+				seed.policy_accepted,
+				seed.contract_active,
+				seed.billing_active,
+				deriveEntitlementDenialReason({
+					contractActive: seed.contract_active === 1,
+					billingActive: seed.billing_active === 1,
+					serviceEntitled: seed.service_entitled === 1,
+					policyAccepted: seed.policy_accepted === 1,
+					statusReason: null,
+				}),
+				input.authSubject
+			)
+			.run();
+
+		await bindAgencyIdentitySeed(db, seed.normalized_email, input.authSubject);
+		return findAgencyMcpEntitlementByAuthSubject(db, input.authSubject);
 	}
 
 	const source = await findAgencyPartnerEntitlementSource(db, input.authSubject, input.authEmail ?? existing?.auth_email ?? null);
@@ -756,6 +830,59 @@ async function findAgencyCommercialStateByEmail(
 		if (isMissingD1TableError(error, 'agency_commercial_accounts')) {
 			console.warn('agency_commercial_accounts table is unavailable; continuing without commercial state');
 			return null;
+		}
+
+		throw error;
+	}
+}
+
+async function findAgencyIdentitySeedByEmail(
+	db: D1Database,
+	authEmail: string | null
+): Promise<AgencyIdentitySeedRow | null> {
+	const normalizedEmail = normalizeEmail(authEmail);
+	if (!normalizedEmail) {
+		return null;
+	}
+
+	try {
+		return await db
+			.prepare(
+				`SELECT * FROM agency_identity_seeds
+       WHERE normalized_email = ?
+       LIMIT 1`
+			)
+			.bind(normalizedEmail)
+			.first<AgencyIdentitySeedRow>();
+	} catch (error) {
+		if (isMissingD1TableError(error, 'agency_identity_seeds')) {
+			return null;
+		}
+
+		throw error;
+	}
+}
+
+async function bindAgencyIdentitySeed(
+	db: D1Database,
+	normalizedEmail: string,
+	authSubject: string
+): Promise<void> {
+	try {
+		await db
+			.prepare(
+				`UPDATE agency_identity_seeds
+       SET auth_subject = ?,
+           status = 'bound',
+           bound_at = COALESCE(bound_at, datetime('now')),
+           updated_at = datetime('now')
+       WHERE normalized_email = ?`
+			)
+			.bind(authSubject, normalizedEmail)
+			.run();
+	} catch (error) {
+		if (isMissingD1TableError(error, 'agency_identity_seeds')) {
+			return;
 		}
 
 		throw error;

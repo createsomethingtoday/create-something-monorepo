@@ -1,0 +1,3 @@
+auth_email,account_id,tenant_id,workspace_account_id,service_tier,managed_bearer_allowed,org_membership_active,service_entitled,policy_accepted,contract_active,billing_active,status,invited_at,metadata_json
+micah@createsomething.io,acct_mj,tenant_createsomething_io,acct_mj,agency,1,1,1,0,1,1,seeded,2026-03-07T19:30:00Z,"{""source"":""manual_seed"",""notes"":""Internal account""}"
+operator@exampleclient.com,acct_example_client,tenant_example_client,acct_example_client,agency,1,1,1,0,1,1,seeded,2026-03-07T19:30:00Z,"{""source"":""client_onboarding_batch_1""}"
