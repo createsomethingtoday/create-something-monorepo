@@ -82,6 +82,7 @@ declare global {
 				AUTH0_ISSUER_BASE_URL?: string;
 				AUTH0_JWKS_URL?: string;
 				AUTH0_CLAIMS_NAMESPACE?: string;
+				AGENCY_INTERNAL_API_KEY?: string;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;

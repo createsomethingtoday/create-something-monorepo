@@ -1,6 +1,13 @@
 import { error } from '@sveltejs/kit';
 import { createSessionManager, getAuth0Config, getDomainConfig } from '@create-something/canon/auth';
 import type { SessionManagerOptions } from '@create-something/canon/auth';
+import {
+	evaluateAgencyMcpEntitlement,
+	findAgencyMcpEntitlementByAuthSubject,
+	upsertAgencyMcpEntitlement,
+	type AgencyMcpEntitlementDecision,
+	type AgencyMcpEntitlementRow,
+} from '$lib/server/mcp-entitlements';
 
 type AgencyPlatform = App.Platform | undefined;
 
@@ -31,4 +38,57 @@ export async function requireAgencySessionUser(input: {
 	}
 
 	return user as AgencySessionUser;
+}
+
+export async function ensureAgencyMcpEntitlement(input: {
+	platform: AgencyPlatform;
+	user: AgencySessionUser;
+	accountId?: string | null;
+	tenantId?: string | null;
+	metadata?: Record<string, unknown>;
+}): Promise<{ row: AgencyMcpEntitlementRow; decision: AgencyMcpEntitlementDecision }> {
+	const db = input.platform?.env?.DB;
+	if (!db) {
+		throw error(503, 'Database is unavailable');
+	}
+
+	const row = await upsertAgencyMcpEntitlement(db, {
+		authSubject: input.user.id,
+		authEmail: input.user.email,
+		accountId: input.accountId ?? null,
+		tenantId: input.tenantId ?? null,
+		workspaceAccountId: input.accountId ?? null,
+		serviceTier: input.user.tier ?? 'agency',
+		metadata: {
+			session_source: 'auth0',
+			user_source: input.user.source ?? 'auth0',
+			...(input.metadata ?? {}),
+		},
+	});
+
+	return {
+		row,
+		decision: evaluateAgencyMcpEntitlement(row, {
+			accountId: input.accountId ?? null,
+			tenantId: input.tenantId ?? null,
+		}),
+	};
+}
+
+export async function getAgencyMcpEntitlementDecision(input: {
+	platform: AgencyPlatform;
+	authSubject: string;
+	accountId?: string | null;
+	tenantId?: string | null;
+}): Promise<AgencyMcpEntitlementDecision> {
+	const db = input.platform?.env?.DB;
+	if (!db) {
+		throw error(503, 'Database is unavailable');
+	}
+
+	const row = await findAgencyMcpEntitlementByAuthSubject(db, input.authSubject);
+	return evaluateAgencyMcpEntitlement(row, {
+		accountId: input.accountId ?? null,
+		tenantId: input.tenantId ?? null,
+	});
 }

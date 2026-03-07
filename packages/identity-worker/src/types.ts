@@ -18,6 +18,8 @@ export interface Env {
 	OSO_FETCH_TIMEOUT_MILLIS?: string;
 	OSO_BOOTSTRAP_POLICY?: string;
 	MCP_POLICY_FALLBACK_ENABLED?: string;
+	AGENCY_INTERNAL_API_URL?: string;
+	AGENCY_INTERNAL_API_KEY?: string;
 }
 
 // Database models

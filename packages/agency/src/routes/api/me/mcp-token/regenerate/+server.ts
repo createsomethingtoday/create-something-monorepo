@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { PartnerAuthHttpError, postIdentityAdmin } from '$lib/server/partner-auth';
-import { requireAgencySessionUser } from '$lib/server/mcp-token';
+import { ensureAgencyMcpEntitlement, requireAgencySessionUser } from '$lib/server/mcp-token';
 
 interface RegenerateBody {
 	tenant_id?: string;
@@ -31,16 +31,37 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 
 		const user = await requireAgencySessionUser({ cookies, platform });
 		const body = (await request.json().catch(() => null)) as RegenerateBody | null;
+		const entitlement = await ensureAgencyMcpEntitlement({
+			platform,
+			user,
+			accountId: body?.account_id,
+			tenantId: body?.tenant_id,
+			metadata: {
+				managed_bearer_request: 'regenerate',
+			},
+		});
+		if (!entitlement.decision.allowed) {
+			return json(
+				{
+					error: 'entitlement_denied',
+					message: entitlement.decision.reason,
+					entitlement: entitlement.decision,
+				},
+				{ status: 403 },
+			);
+		}
+
 		const issued = await postIdentityAdmin<IssueManagedTokenResponse>(env, '/v1/mcp/long-lived-tokens/admin-issue', {
 			auth_subject: user.id,
 			auth_email: user.email,
-			tenant_id: body?.tenant_id,
-			account_id: body?.account_id,
+			tenant_id: entitlement.row.tenant_id ?? body?.tenant_id,
+			account_id: entitlement.row.account_id ?? body?.account_id,
 			toolkit_profile: body?.toolkit_profile,
 			tool_mode: body?.tool_mode,
 			actor: `agency:${user.id}`,
 			metadata: {
 				issued_via: 'agency_api_regenerate',
+				entitlement_reason: entitlement.decision.reason,
 				...(body?.metadata && typeof body.metadata === 'object' && !Array.isArray(body.metadata) ? body.metadata : {}),
 			},
 		});
