@@ -78,6 +78,15 @@ export function getStripePrice(productId: string): StripePriceConfig | undefined
 	return STRIPE_PRICES[productId];
 }
 
+export function getProductIdByStripePriceId(priceId: string): string | null {
+	for (const [productId, config] of Object.entries(STRIPE_PRICES)) {
+		if (config.priceId === priceId) {
+			return productId;
+		}
+	}
+	return null;
+}
+
 /**
  * Check if a product has Stripe pricing configured
  */
