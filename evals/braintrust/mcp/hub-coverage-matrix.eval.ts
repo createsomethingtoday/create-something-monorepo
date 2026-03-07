@@ -3,11 +3,13 @@ import { Eval, type Score } from 'braintrust';
 type HubInput = {
   name: string;
   url: string;
-  authToken: string;
+  authToken?: string;
   sessionToken?: string;
 };
 
 type HubOutput = {
+  skipped?: boolean;
+  reason?: string;
   status: number | null;
   ok: boolean;
   toolCount: number;
@@ -22,14 +24,14 @@ type HubCaseConfig = {
   sessionTokenEnvVar?: string;
 };
 
-function requireOneEnv(envVarNames: string[]): string {
+function readOneEnv(envVarNames: string[]): string | undefined {
   for (const envVarName of envVarNames) {
     const value = process.env[envVarName]?.trim();
     if (value) {
       return value;
     }
   }
-  throw new Error(`Missing required env var (one of): ${envVarNames.join(', ')}`);
+  return undefined;
 }
 
 const HUB_CASE_CONFIGS: HubCaseConfig[] = [
@@ -77,7 +79,7 @@ const HUB_CASE_CONFIGS: HubCaseConfig[] = [
 ];
 
 const HUB_CASES = HUB_CASE_CONFIGS.map((config) => {
-  const authToken = requireOneEnv(config.authTokenEnvVars);
+  const authToken = readOneEnv(config.authTokenEnvVars);
   const sessionToken = config.sessionTokenEnvVar ? process.env[config.sessionTokenEnvVar]?.trim() : undefined;
 
   return {
@@ -92,14 +94,23 @@ const HUB_CASES = HUB_CASE_CONFIGS.map((config) => {
 });
 
 function coverageScore(output: HubOutput): Score {
+  if (output.skipped) {
+    return { name: 'hub_reachable', score: null, metadata: { reason: output.reason } };
+  }
   return { name: 'hub_reachable', score: output.ok ? 1 : 0, metadata: { status: output.status } };
 }
 
 function toolsScore(output: HubOutput): Score {
+  if (output.skipped) {
+    return { name: 'tools_available', score: null, metadata: { reason: output.reason } };
+  }
   return { name: 'tools_available', score: output.toolCount > 0 ? 1 : 0, metadata: { toolCount: output.toolCount } };
 }
 
 function latencyScore(output: HubOutput): Score {
+  if (output.skipped) {
+    return { name: 'latency_budget', score: null, metadata: { reason: output.reason } };
+  }
   const score = output.durationMs <= 1200 ? 1 : output.durationMs <= 3000 ? 0.5 : 0;
   return { name: 'latency_budget', score, metadata: { durationMs: output.durationMs, thresholdMs: 1200 } };
 }
@@ -108,6 +119,17 @@ void Eval<HubInput, HubOutput>('create-something-mcp-fleet', {
   experimentName: 'hub_coverage_matrix',
   data: HUB_CASES,
   task: async (input): Promise<HubOutput> => {
+    if (!input.authToken) {
+      return {
+        skipped: true,
+        reason: `Missing required env var (one of): ${HUB_CASE_CONFIGS.find((config) => config.name === input.name)?.authTokenEnvVars.join(', ') ?? 'unknown'}`,
+        status: null,
+        ok: false,
+        toolCount: 0,
+        durationMs: 0,
+      };
+    }
+
     const started = Date.now();
     try {
       const headers: Record<string, string> = {
