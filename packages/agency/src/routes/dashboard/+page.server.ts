@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { ensureAgencyMcpEntitlement } from '$lib/server/mcp-token';
-import { postIdentityAdmin, PartnerAuthHttpError } from '$lib/server/partner-auth';
+import { getSettledValue, loadManagedTokenSnapshot, loadPasswordSnapshot } from '$lib/server/access-state';
 
 interface CommercialStateRow {
 	service_tier: string | null;
@@ -29,127 +29,6 @@ interface PartnerSummaryRow {
 	consent_active: number;
 	toolkit_accounts: number;
 	notion_accounts: number;
-}
-
-interface TokenMetadataResponse {
-	token: {
-		id: string;
-		auth_subject: string;
-		auth_email: string | null;
-		account_id: string;
-		tenant_id: string;
-		token_prefix: string;
-		tool_mode: 'read_only' | 'read_write';
-		toolkit_profile: string[];
-		allowed_tool_prefixes: string[];
-		last_used_at: string | null;
-		revoked_at: string | null;
-		created_at: string;
-		updated_at: string;
-		active: boolean;
-	} | null;
-}
-
-interface PasswordUserResponse {
-	user: {
-		id: string;
-		email: string;
-		email_verified: boolean;
-	} | null;
-	has_password: boolean;
-}
-
-function getSettledValue<T>(result: PromiseSettledResult<T>, fallback: T): T {
-	if (result.status === 'fulfilled') {
-		return result.value;
-	}
-
-	console.error('Dashboard loader dependency failed:', result.reason);
-	return fallback;
-}
-
-async function loadTokenSnapshot(platform: App.Platform | undefined, authSubject: string) {
-	const env = platform?.env;
-	if (!env) {
-		return {
-			token: null,
-			available: false,
-			error: 'Platform env is unavailable',
-		};
-	}
-
-	try {
-		const payload = await postIdentityAdmin<TokenMetadataResponse>(env, '/v1/mcp/long-lived-tokens/admin-get', {
-			auth_subject: authSubject,
-		});
-		return {
-			token: payload.token,
-			available: true,
-			error: null,
-		};
-	} catch (error) {
-		if (error instanceof PartnerAuthHttpError) {
-			return {
-				token: null,
-				available: false,
-				error: error.message,
-			};
-		}
-
-		return {
-			token: null,
-			available: false,
-			error: error instanceof Error ? error.message : 'Failed to load token state',
-		};
-	}
-}
-
-async function loadPasswordSnapshot(platform: App.Platform | undefined, email: string) {
-	const env = platform?.env;
-	if (!env) {
-		return {
-			hasPassword: false,
-			email: null,
-			emailVerified: false,
-			identityUserExists: false,
-			available: false,
-			error: 'Platform env is unavailable',
-		};
-	}
-
-	try {
-		const payload = await postIdentityAdmin<PasswordUserResponse>(env, '/v1/auth/password/admin-get', {
-			email,
-		});
-		return {
-			hasPassword: payload.has_password,
-			email: payload.user?.email ?? email,
-			emailVerified: payload.user?.email_verified ?? false,
-			identityUserExists: Boolean(payload.user),
-			available: true,
-			error: null,
-		};
-	} catch (error) {
-		if (error instanceof PartnerAuthHttpError) {
-			return {
-				hasPassword: false,
-				email,
-				emailVerified: false,
-				identityUserExists: false,
-				available: false,
-				error: error.message,
-			};
-		}
-
-		return {
-			hasPassword: false,
-			email,
-			emailVerified: false,
-			identityUserExists: false,
-			available: false,
-			error: error instanceof Error ? error.message : 'Failed to load password state',
-		};
-	}
 }
 
 export const load: PageServerLoad = async ({ parent, platform }) => {
@@ -230,7 +109,7 @@ export const load: PageServerLoad = async ({ parent, platform }) => {
 			)
 			.bind(user.id, normalizedEmail)
 			.first<PartnerSummaryRow>(),
-		loadTokenSnapshot(platform, user.id),
+		loadManagedTokenSnapshot(platform, user.id),
 		loadPasswordSnapshot(platform, user.email),
 	]);
 

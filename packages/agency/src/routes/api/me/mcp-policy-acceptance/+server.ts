@@ -2,29 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { ensureAgencyMcpEntitlement, requireAgencySessionUser } from '$lib/server/mcp-token';
 import { updateAgencyMcpEntitlement } from '$lib/server/mcp-entitlements';
-
-function normalizeIdentifier(value: string): string {
-	return value
-		.trim()
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, '_')
-		.replace(/^_+|_+$/g, '')
-		.slice(0, 48);
-}
-
-function deriveAccountId(user: { id: string; email: string }, existing: string | null): string {
-	if (existing) return existing;
-	const emailPart = normalizeIdentifier(user.email.split('@')[0] ?? '');
-	const subjectPart = normalizeIdentifier(user.id).slice(-16);
-	return `acct_${emailPart || subjectPart || 'agency_user'}`;
-}
-
-function deriveTenantId(user: { id: string; email: string }, existing: string | null): string {
-	if (existing) return existing;
-	const emailDomain = normalizeIdentifier(user.email.split('@')[1] ?? '');
-	const subjectPart = normalizeIdentifier(user.id).slice(-12);
-	return `tenant_${emailDomain || subjectPart || 'agency'}`;
-}
+import { resolveCanonicalAgencyIdentity } from '$lib/server/agency-identity';
 
 export const POST: RequestHandler = async ({ cookies, platform }) => {
 	try {
@@ -35,16 +13,14 @@ export const POST: RequestHandler = async ({ cookies, platform }) => {
 
 		const user = await requireAgencySessionUser({ cookies, platform });
 		const { row } = await ensureAgencyMcpEntitlement({ platform, user });
-
-		const accountId = deriveAccountId(user, row.account_id);
-		const tenantId = deriveTenantId(user, row.tenant_id);
+		const canonicalIdentity = resolveCanonicalAgencyIdentity(user, row);
 
 		const updated = await updateAgencyMcpEntitlement(db, {
 			authSubject: user.id,
 			authEmail: user.email,
-			accountId,
-			tenantId,
-			workspaceAccountId: row.workspace_account_id ?? accountId,
+			accountId: canonicalIdentity.accountId,
+			tenantId: canonicalIdentity.tenantId,
+			workspaceAccountId: canonicalIdentity.workspaceAccountId,
 			serviceTier: 'agency',
 			managedBearerAllowed: true,
 			orgMembershipActive: true,

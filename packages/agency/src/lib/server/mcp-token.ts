@@ -9,6 +9,7 @@ import {
 	type AgencyMcpEntitlementDecision,
 	type AgencyMcpEntitlementRow,
 } from '$lib/server/mcp-entitlements';
+import { canonicalizeAgencyEntitlementIdentity, resolveCanonicalAgencyIdentity } from '$lib/server/agency-identity';
 
 type AgencyPlatform = App.Platform | undefined;
 
@@ -51,21 +52,23 @@ export async function ensureAgencyMcpEntitlement(input: {
 		throw error(503, 'Database is unavailable');
 	}
 
+	const canonicalIdentity = resolveCanonicalAgencyIdentity(input.user);
+
 	const row =
 		(await reconcileAgencyMcpEntitlement(db, {
 			authSubject: input.user.id,
 			authEmail: input.user.email,
-			accountId: input.accountId ?? null,
-			tenantId: input.tenantId ?? null,
-			workspaceAccountId: input.accountId ?? null,
+			accountId: input.accountId ?? canonicalIdentity.accountId,
+			tenantId: input.tenantId ?? canonicalIdentity.tenantId,
+			workspaceAccountId: input.accountId ?? canonicalIdentity.workspaceAccountId,
 			serviceTier: input.user.tier ?? 'agency',
 		})) ??
 		(await upsertAgencyMcpEntitlement(db, {
 			authSubject: input.user.id,
 			authEmail: input.user.email,
-			accountId: input.accountId ?? null,
-			tenantId: input.tenantId ?? null,
-			workspaceAccountId: input.accountId ?? null,
+			accountId: input.accountId ?? canonicalIdentity.accountId,
+			tenantId: input.tenantId ?? canonicalIdentity.tenantId,
+			workspaceAccountId: input.accountId ?? canonicalIdentity.workspaceAccountId,
 			serviceTier: input.user.tier ?? 'agency',
 			metadata: {
 				session_source: 'auth0',
@@ -74,11 +77,13 @@ export async function ensureAgencyMcpEntitlement(input: {
 			},
 		}));
 
+	const canonicalRow = await canonicalizeAgencyEntitlementIdentity(db, input.user, row);
+
 	return {
-		row,
-		decision: evaluateAgencyMcpEntitlement(row, {
-			accountId: input.accountId ?? null,
-			tenantId: input.tenantId ?? null,
+		row: canonicalRow,
+		decision: evaluateAgencyMcpEntitlement(canonicalRow, {
+			accountId: input.accountId ?? canonicalIdentity.accountId,
+			tenantId: input.tenantId ?? canonicalIdentity.tenantId,
 		}),
 	};
 }

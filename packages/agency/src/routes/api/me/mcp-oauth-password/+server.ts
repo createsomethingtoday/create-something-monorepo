@@ -6,8 +6,10 @@ import {
 	evaluateAgencyMcpEntitlement,
 	findAgencyMcpEntitlementByEmail,
 	reconcileAgencyMcpEntitlement,
+	updateAgencyMcpEntitlement,
 	type AgencyMcpEntitlementRow,
 } from '$lib/server/mcp-entitlements';
+import { resolveCanonicalAgencyIdentity } from '$lib/server/agency-identity';
 
 interface PasswordUserResponse {
 	user: {
@@ -45,13 +47,40 @@ async function resolveEntitledContext(platform: App.Platform | undefined, authSu
 	const db = platform?.env?.DB;
 	if (!db) return null;
 
-	return (
+	const row =
 		(await findAgencyMcpEntitlementByEmail(db, authEmail)) ??
 		(await reconcileAgencyMcpEntitlement(db, {
 			authSubject,
 			authEmail,
+			accountId: resolveCanonicalAgencyIdentity({ id: authSubject, email: authEmail }).accountId,
+			tenantId: resolveCanonicalAgencyIdentity({ id: authSubject, email: authEmail }).tenantId,
 			serviceTier: 'agency',
-		}))
+		}));
+
+	if (!row) return null;
+
+	const canonicalIdentity = resolveCanonicalAgencyIdentity({ id: authSubject, email: authEmail }, row);
+	if (
+		row.account_id === canonicalIdentity.accountId &&
+		row.tenant_id === canonicalIdentity.tenantId &&
+		(row.workspace_account_id ?? canonicalIdentity.workspaceAccountId) === canonicalIdentity.workspaceAccountId
+	) {
+		return row;
+	}
+
+	return (
+		(await updateAgencyMcpEntitlement(db, {
+			authSubject,
+			authEmail,
+			accountId: canonicalIdentity.accountId,
+			tenantId: canonicalIdentity.tenantId,
+			workspaceAccountId: canonicalIdentity.workspaceAccountId,
+			serviceTier: row.service_tier,
+			metadata: {
+				canonical_identity_applied: true,
+				canonical_identity_source: 'agency_identity_overrides',
+			},
+		})) ?? row
 	);
 }
 

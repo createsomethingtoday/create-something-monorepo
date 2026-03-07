@@ -411,7 +411,12 @@ export async function reconcileAgencyMcpEntitlement(
 			await db
 				.prepare(
 					`UPDATE agency_mcp_entitlements
-           SET contract_active = ?,
+           SET auth_email = ?,
+               account_id = COALESCE(?, account_id),
+               tenant_id = COALESCE(?, tenant_id),
+               workspace_account_id = COALESCE(?, workspace_account_id),
+               service_tier = COALESCE(?, service_tier),
+               contract_active = ?,
                billing_active = ?,
                service_entitled = ?,
                policy_accepted = ?,
@@ -420,6 +425,11 @@ export async function reconcileAgencyMcpEntitlement(
            WHERE auth_subject = ?`
 				)
 				.bind(
+					input.authEmail ?? existing.auth_email,
+					input.accountId ?? existing.account_id,
+					input.tenantId ?? existing.tenant_id,
+					input.workspaceAccountId ?? existing.workspace_account_id,
+					input.serviceTier ?? existing.service_tier,
 					contractActive ? 1 : 0,
 					billingActive ? 1 : 0,
 					serviceEntitled ? 1 : 0,

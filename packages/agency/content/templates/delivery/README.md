@@ -20,6 +20,12 @@ Recommended sequence:
 3. Draft these three artifacts from the approved workflow map
 4. Add golden-task checks and runbook after artifact review
 
+Reference example:
+
+- `examples/exampleco-mcp_contract.yaml`
+- `examples/exampleco-agent_contract.yaml`
+- `examples/exampleco-outcome_contract.md`
+
 Important:
 
 - `mcp_contract.yaml` is for connectivity and tool surface
