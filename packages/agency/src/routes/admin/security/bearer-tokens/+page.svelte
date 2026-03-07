@@ -122,6 +122,10 @@
 			<p class="eyebrow">Operator Surface</p>
 			<h1>Managed Bearer Governance</h1>
 			<p>Live entitlement state for `.agency` bearer tokens. Auth0 proves identity. This table controls whether that identity remains entitled to use MCP access.</p>
+			<nav class="subnav">
+				<a href="/admin/security/bearer-tokens" aria-current="page">Bearer Governance</a>
+				<a href="/admin/security/contracts">Contracts</a>
+			</nav>
 		</header>
 
 		<div class="toolbar">
@@ -197,6 +201,9 @@
 	.hero { margin-bottom: 2rem; }
 	.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; color: rgba(255,255,255,0.6); }
 	.hero p { max-width: 70ch; color: rgba(255,255,255,0.75); }
+	.subnav { display: flex; gap: 1rem; margin-top: 1rem; }
+	.subnav a { color: inherit; text-decoration: none; padding-bottom: 0.25rem; border-bottom: 1px solid transparent; }
+	.subnav a[aria-current='page'] { border-color: rgba(255,255,255,0.5); }
 	.toolbar { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
 	.toolbar input, td input { width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.03); color: inherit; padding: 0.75rem 0.9rem; }
 	.toolbar button, td button { border: 0; border-radius: 999px; padding: 0.75rem 1rem; font: inherit; font-weight: 600; background: #f3f1e8; color: #111; }
