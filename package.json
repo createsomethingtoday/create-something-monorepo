@@ -73,6 +73,7 @@
     "ground": "pnpm ground:imports && pnpm ground:components && pnpm ground:experiments && pnpm ground:duplicates",
     "authz:compile": "tsx scripts/compile-authz-manifests.ts",
     "authz:publish": "tsx scripts/publish-authz-policy.ts",
+    "mcp:oauth:verify": "tsx scripts/verify-mcp-oauth-discovery.ts",
     "mcp:gate": "node scripts/mcp-quality-gate.mjs",
     "mcp:gate:typecheck": "node scripts/mcp-quality-gate.mjs typecheck",
     "mcp:gate:lint": "node scripts/mcp-quality-gate.mjs lint",

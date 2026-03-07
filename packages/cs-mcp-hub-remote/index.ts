@@ -10,6 +10,12 @@ import {
   type Tool,
 } from '@modelcontextprotocol/sdk/types.js';
 import {
+  buildOAuthAuthorizationServerMetadata,
+  buildOAuthProtectedResourceMetadata,
+  isOAuthAuthorizationServerPath,
+  isOAuthProtectedResourcePath,
+} from '../mcp-core/src/oauth-discovery.ts';
+import {
   buildHubAuthorizationRequest,
   blockedByPolicy,
   classifyHubRoute,
@@ -703,7 +709,7 @@ export default {
       return withCors(new Response(null, { status: 204 }));
     }
 
-    if (isOAuthDiscoveryPath(url.pathname)) {
+    if (isOAuthAuthorizationServerPath(url.pathname)) {
       return withCors(
         new Response(JSON.stringify(buildHubOAuthAuthorizationServerMetadata(url, env)), {
           status: 200,
@@ -820,53 +826,14 @@ export default {
   },
 };
 
-function isOAuthDiscoveryPath(pathname: string): boolean {
-  return (
-    pathname === '/.well-known/oauth-authorization-server'
-    || pathname === '/.well-known/oauth-authorization-server/mcp'
-    || pathname === '/mcp/.well-known/oauth-authorization-server'
-    || pathname === '/mcp/.well-known/oauth-authorization-server/mcp'
-  );
-}
-
-function isOAuthProtectedResourcePath(pathname: string): boolean {
-  return (
-    pathname === '/.well-known/oauth-protected-resource'
-    || pathname === '/.well-known/oauth-protected-resource/mcp'
-    || pathname === '/mcp/.well-known/oauth-protected-resource'
-    || pathname === '/mcp/.well-known/oauth-protected-resource/mcp'
-  );
-}
-
 export function buildHubOAuthAuthorizationServerMetadata(url: URL, env: Env): Record<string, unknown> {
   const issuer = normalizeHubOAuthIssuer(readEnvString(env, 'OAUTH_ISSUER_URL') ?? 'https://id.createsomething.space');
-  const resource = `${url.origin}/mcp`;
-  return {
-    issuer,
-    authorization_endpoint: `${issuer}/oauth/authorize`,
-    token_endpoint: `${issuer}/oauth/token`,
-    registration_endpoint: `${issuer}/oauth/register`,
-    userinfo_endpoint: `${issuer}/oauth/userinfo`,
-    jwks_uri: `${issuer}/.well-known/jwks.json`,
-    scopes_supported: ['openid', 'profile', 'email', 'mcp'],
-    response_types_supported: ['code'],
-    grant_types_supported: ['authorization_code'],
-    token_endpoint_auth_methods_supported: ['none', 'client_secret_post'],
-    code_challenge_methods_supported: ['S256', 'plain'],
-    resource,
-    mcp_resource: resource,
-  };
+  return buildOAuthAuthorizationServerMetadata(url.origin, { issuer, resourcePath: '/mcp' });
 }
 
 export function buildHubOAuthProtectedResourceMetadata(url: URL, env: Env): Record<string, unknown> {
   const issuer = normalizeHubOAuthIssuer(readEnvString(env, 'OAUTH_ISSUER_URL') ?? 'https://id.createsomething.space');
-  const resource = `${url.origin}/mcp`;
-  return {
-    resource,
-    authorization_servers: [issuer],
-    bearer_methods_supported: ['header'],
-    scopes_supported: ['openid', 'profile', 'email', 'mcp'],
-  };
+  return buildOAuthProtectedResourceMetadata(url.origin, { issuer, resourcePath: '/mcp' });
 }
 
 function normalizeHubOAuthIssuer(value: string): string {
@@ -5436,12 +5403,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function jsonResponse(data: unknown, status = 200): Response {
+function jsonResponse(data: unknown, status = 200, initHeaders?: HeadersInit): Response {
+  const headers = new Headers(initHeaders);
+  if (!headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
   return new Response(JSON.stringify(data, null, 2), {
     status,
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
   });
 }
 

@@ -46,6 +46,8 @@ Define the production policy for user-facing bearer tokens issued through `.agen
 16. Shared runtime guardrail tokens such as `HUB_API_TOKEN` MUST NOT be exposed as user-facing OAuth artifacts.
 17. The password a user enters on the OAuth authorize page is a separate `identity-worker` login secret and MUST NOT be treated as the bearer token itself.
 18. `.agency` SHOULD expose that MCP OAuth password as a managed self-service control linked to the same entitled email, account, and tenant context used for bearer-token governance.
+19. The OAuth authorization code MAY be implemented as a signed self-contained token minted by `identity-worker` rather than as a database-stored opaque code, provided it remains bound to the OAuth request context required for exchange.
+20. When signed authorization codes are used, the signed claims MUST at minimum bind `client_id`, `redirect_uri`, issuer, expiry, and any PKCE challenge material required for token exchange.
 
 ## Required Legal Alignment
 
@@ -105,6 +107,7 @@ The following artifacts MUST remain aligned with this policy before production l
 - Billing and contract state checks linked to allow/deny decisions
 - Admin-visible last-used and incident-response metadata
 - OAuth app setup traces showing the delivered access token resolves through the same managed bearer path
+- OAuth authorization traces showing the authorization code is a signed `identity-worker` artifact bound to client and redirect context
 - Revoke/regenerate actions immediately invalidating OAuth-delivered host access
 - Password set or rotate actions for the OAuth login remaining auditable and distinct from bearer-token lifecycle events
 

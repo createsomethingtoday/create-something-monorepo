@@ -877,35 +877,46 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 		return oauthErrorResponse('invalid_grant', 400, 'User no longer exists.');
 	}
 
-	const issued = await issueManagedBearerToken(env, {
-		authSubject: user.id,
-		authEmail: user.email,
-		tenantId: claims.tenant_id ?? null,
-		accountId: claims.account_id ?? null,
-		toolMode: claims.tool_mode,
-		toolkitProfile: Array.isArray(claims.toolkit_profile) ? claims.toolkit_profile : [],
-		actor: `oauth:${user.id}`,
-		actorRole: 'user',
-		actionName: 'issue_user_bearer_token_oauth',
-		metadata: {
-			issued_via: 'oauth_token_exchange',
-			client_id: claims.client_id,
-			redirect_uri: claims.redirect_uri,
-			resource: claims.resource,
-			scope: claims.scope,
-		},
-	});
-	if (!issued.ok) {
-		return oauthErrorResponse('access_denied', issued.status, issued.message);
-	}
+	try {
+		const issued = await issueManagedBearerToken(env, {
+			authSubject: user.id,
+			authEmail: user.email,
+			tenantId: claims.tenant_id ?? null,
+			accountId: claims.account_id ?? null,
+			toolMode: claims.tool_mode,
+			toolkitProfile: Array.isArray(claims.toolkit_profile) ? claims.toolkit_profile : [],
+			actor: `oauth:${user.id}`,
+			actorRole: 'user',
+			actionName: 'issue_user_bearer_token_oauth',
+			metadata: {
+				issued_via: 'oauth_token_exchange',
+				client_id: claims.client_id,
+				redirect_uri: claims.redirect_uri,
+				resource: claims.resource,
+				scope: claims.scope,
+			},
+		});
+		if (!issued.ok) {
+			return oauthErrorResponse('access_denied', issued.status, issued.message);
+		}
 
-	return json({
-		access_token: issued.token,
-		token_type: 'Bearer',
-		expires_in: OAUTH_MANAGED_BEARER_EXPIRES_IN,
-		scope: claims.scope,
-		resource: claims.resource,
-	});
+		return json({
+			access_token: issued.token,
+			token_type: 'Bearer',
+			expires_in: OAUTH_MANAGED_BEARER_EXPIRES_IN,
+			scope: claims.scope,
+			resource: claims.resource,
+		});
+	} catch (error) {
+		const description = error instanceof Error ? error.message : 'token_exchange_failed';
+		console.error('OAuth token exchange failed:', {
+			error: description,
+			user_id: user.id,
+			client_id: claims.client_id,
+			resource: claims.resource,
+		});
+		return oauthErrorResponse('server_error', 500, description);
+	}
 }
 
 async function handleOAuthUserInfo(request: Request, env: Env): Promise<Response> {
@@ -3410,28 +3421,165 @@ function renderOAuthAuthorizePage(params: URLSearchParams, env: Env, errorMessag
 	const hidden = Array.from(params.entries())
 		.map(([key, value]) => `<input type="hidden" name="${escapeHtml(key)}" value="${escapeHtml(value)}" />`)
 		.join('\n');
+	const hubUrl = escapeHtml(env.MCP_HUB_URL ?? DEFAULT_OAUTH_RESOURCE);
 	return `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <style>@import url('https://fonts.googleapis.com/css2?family=Stack+Sans+Notch:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');</style>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2307162b'/%3E%3Cpath d='M20 20h24v24H20z' fill='none' stroke='%23f4efe3' stroke-width='4'/%3E%3C/svg%3E" />
   <title>Authorize CREATE SOMETHING MCP</title>
   <style>
-    body { font-family: ui-sans-serif, system-ui, sans-serif; background: #111827; color: #f9fafb; margin: 0; padding: 32px; }
-    .card { max-width: 520px; margin: 0 auto; background: #1f2937; border-radius: 16px; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,.35); }
-    h1 { font-size: 1.5rem; margin: 0 0 8px; }
-    p { color: #d1d5db; line-height: 1.5; }
-    label { display: block; margin-top: 16px; font-weight: 600; }
-    input { width: 100%; box-sizing: border-box; margin-top: 8px; border: 1px solid #374151; background: #111827; color: #f9fafb; border-radius: 10px; padding: 12px; }
-    button { margin-top: 20px; width: 100%; border: 0; border-radius: 10px; background: #2563eb; color: #fff; padding: 12px 16px; font-weight: 700; cursor: pointer; }
-    .meta { margin-top: 12px; font-size: .9rem; color: #9ca3af; }
-    .error { margin-top: 12px; background: #7f1d1d; color: #fecaca; border-radius: 10px; padding: 12px; }
+    :root {
+      color-scheme: dark;
+      --bg-1: #050608;
+      --bg-2: #101215;
+      --card: rgba(15, 16, 20, 0.92);
+      --card-border: rgba(244, 239, 227, 0.09);
+      --text: #f4efe3;
+      --muted: rgba(244, 239, 227, 0.66);
+      --input: rgba(8, 10, 14, 0.92);
+      --input-border: rgba(244, 239, 227, 0.12);
+      --accent: #f4efe3;
+      --accent-ink: #081121;
+      --danger-bg: rgba(135, 34, 54, 0.26);
+      --danger-border: rgba(255, 143, 166, 0.22);
+      --danger-text: #ffd7df;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      color: var(--text);
+      margin: 0;
+      min-height: 100vh;
+      padding: 32px;
+      background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.04), transparent 24%),
+        linear-gradient(180deg, var(--bg-2), var(--bg-1));
+      display: grid;
+      place-items: center;
+    }
+    .shell {
+      width: 100%;
+      max-width: 980px;
+      display: grid;
+      gap: 24px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: rgba(244, 239, 227, 0.88);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+    }
+    .mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid rgba(244, 239, 227, 0.18);
+      background: rgba(255, 255, 255, 0.02);
+      display: grid;
+      place-items: center;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+    }
+    .mark::before {
+      content: "";
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--accent);
+      display: block;
+    }
+    .card {
+      width: 100%;
+      max-width: 620px;
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: 0 28px 80px rgba(0,0,0,.38);
+      backdrop-filter: blur(10px);
+    }
+    .eyebrow {
+      margin: 0 0 12px;
+      color: rgba(244, 239, 227, 0.64);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.74rem;
+    }
+    h1 {
+      font-family: 'Stack Sans Notch', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-size: clamp(2rem, 4vw, 2.7rem);
+      line-height: 1.02;
+      letter-spacing: -0.03em;
+      margin: 0 0 12px;
+    }
+    p { color: var(--muted); line-height: 1.65; margin: 0; }
+    .lede { max-width: 52ch; }
+    label { display: block; margin-top: 18px; font-weight: 600; font-size: 0.96rem; }
+    input {
+      width: 100%;
+      margin-top: 8px;
+      border: 1px solid var(--input-border);
+      background: var(--input);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 14px 16px;
+      font: inherit;
+      outline: none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    input:focus {
+      border-color: rgba(244, 239, 227, 0.42);
+      box-shadow: 0 0 0 3px rgba(244, 239, 227, 0.08);
+    }
+    button {
+      margin-top: 22px;
+      width: 100%;
+      border: 0;
+      border-radius: 999px;
+      background: var(--accent);
+      color: var(--accent-ink);
+      padding: 14px 18px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .meta {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      font-size: .92rem;
+      color: rgba(244, 239, 227, 0.58);
+      overflow-wrap: anywhere;
+    }
+    .error {
+      margin: 18px 0 0;
+      background: var(--danger-bg);
+      border: 1px solid var(--danger-border);
+      color: var(--danger-text);
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+    @media (max-width: 640px) {
+      body { padding: 18px; }
+      .card { padding: 22px; border-radius: 22px; }
+    }
   </style>
 </head>
 <body>
-  <main class="card">
+  <div class="shell">
+    <div class="brand">
+      <div class="mark" aria-hidden="true"></div>
+      <div>CREATE SOMETHING</div>
+    </div>
+    <main class="card">
+    <p class="eyebrow">Managed MCP Access</p>
     <h1>Authorize MCP Access</h1>
-    <p>Sign in to CREATE SOMETHING to connect this MCP app. The resulting access token is your managed MCP bearer token and remains subject to live entitlement checks.</p>
+    <p class="lede">Sign in to CREATE SOMETHING to connect this MCP app. The resulting access token is your managed MCP bearer token and remains subject to live entitlement checks.</p>
     ${errorMessage ? `<div class="error">${escapeHtml(errorMessage)}</div>` : ''}
     <form method="post" action="/oauth/authorize">
       ${hidden}
@@ -3439,8 +3587,9 @@ function renderOAuthAuthorizePage(params: URLSearchParams, env: Env, errorMessag
       <label>Password<input type="password" name="password" autocomplete="current-password" required /></label>
       <button type="submit">Authorize</button>
     </form>
-    <div class="meta">Hub: ${escapeHtml(env.MCP_HUB_URL ?? DEFAULT_OAUTH_RESOURCE)}</div>
+    <div class="meta">Hub: ${hubUrl}</div>
   </main>
+  </div>
 </body>
 </html>`;
 }

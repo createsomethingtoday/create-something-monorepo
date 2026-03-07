@@ -39,6 +39,8 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 15. Any UI that surfaces managed bearer credentials MUST only reveal plaintext at issuance or regeneration time, while keeping revoke and regenerate controls continuously available.
 16. The interactive password used by `identity-worker` OAuth login MUST be governed as a separate credential from the managed bearer token and from the Auth0 portal session.
 17. `.agency` MUST provide a self-service surface for entitled users to set or rotate that OAuth login password without exposing previously stored plaintext password material.
+18. The OAuth authorization code issued during host onboarding MAY be a signed `identity-worker` token instead of a database-persisted opaque code.
+19. If signed authorization codes are used, token exchange MUST validate the signed code against the original OAuth request context, including `client_id`, `redirect_uri`, issuer, expiry, and any PKCE challenge material carried by the authorization flow.
 
 ## Enforcement Surfaces
 
@@ -87,6 +89,7 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 - `agency_contract_state` records used as explicit contract authority
 - Secret scan of operator docs (no raw bearer artifacts)
 - OAuth discovery responses and token-exchange traces showing managed bearer delivery without leaking `HUB_API_TOKEN`
+- OAuth authorize and token-exchange traces showing signed authorization-code issuance by `identity-worker`
 - Portal audit records showing MCP OAuth password set or rotation without plaintext persistence
 - UI audit events for token reveal, regenerate, and revoke actions
 - Vault audit trails for create/update operations

@@ -10,6 +10,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./oauth-discovery": {
+      "types": "./dist/oauth-discovery.d.ts",
+      "default": "./dist/oauth-discovery.js"
+    },
     "./providers/*": {
       "types": "./dist/providers/*.d.ts",
       "default": "./dist/providers/*.js"

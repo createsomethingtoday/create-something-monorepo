@@ -1183,6 +1183,32 @@ function generateMarkdownReport(results) {
   return markdown;
 }
 __name(generateMarkdownReport, "generateMarkdownReport");
+function normalizePublishedSiteUrl(value) {
+  if (typeof value !== "string") {
+    throw new Error("Published URL is required");
+  }
+  const trimmed = value.trim();
+  const matched = trimmed.match(/https:\/\/[a-z0-9-]+\.webflow\.io(?:\/[^\s]*)?/i);
+  const candidate = matched ? matched[0] : trimmed;
+  let parsed;
+  try {
+    parsed = new URL(candidate);
+  } catch {
+    throw new Error("Invalid URL provided");
+  }
+  if (parsed.protocol !== "https:") {
+    throw new Error("Published URL must start with https://");
+  }
+  if (!parsed.hostname.toLowerCase().endsWith(".webflow.io")) {
+    throw new Error("Published URL must use a .webflow.io hostname");
+  }
+  parsed.hash = "";
+  if (!parsed.pathname) {
+    parsed.pathname = "/";
+  }
+  return parsed.toString();
+}
+__name(normalizePublishedSiteUrl, "normalizePublishedSiteUrl");
 
 // cloudflare-worker/lib/cors.js
 var ALLOWED_ORIGINS = [
@@ -1224,29 +1250,31 @@ var GsapValidationWorkflow = class extends WorkflowEntrypoint {
     __name(this, "GsapValidationWorkflow");
   }
   async run(event, step) {
-    const { url, maxDepth = 1, maxPages = 12 } = event.params;
+    const { url, maxDepth = 10, maxPages = 1000 } = event.params;
     const crawlResults = await step.do("crawl website", {
       retries: {
         limit: 3,
         delay: "2 seconds",
         backoff: "exponential"
       },
-      timeout: "30 seconds"
+      timeout: "5 minutes"
     }, async () => {
       const results = await crawlWebsite(url, {
         maxDepth,
         maxPages,
-        timeout: 25e3
+        timeout: 24e4
       });
       return {
         pages: results.pages || [],
         siteMap: results.siteMap || {},
-        crawlStats: results.crawlStats || {}
+        crawlStats: results.crawlStats || {},
+        partial: Boolean(results.partial),
+        error: results.error || null
       };
     });
     const pageResults = [];
     const pages = crawlResults.pages;
-    const batchSize = 5;
+    const batchSize = 10;
     for (let i = 0; i < pages.length; i += batchSize) {
       const batch = pages.slice(i, Math.min(i + batchSize, pages.length));
       const batchResults = await step.do(`validate pages ${i}-${i + batch.length - 1}`, {
@@ -1255,7 +1283,7 @@ var GsapValidationWorkflow = class extends WorkflowEntrypoint {
           delay: "1 second",
           backoff: "linear"
         },
-        timeout: "60 seconds"
+        timeout: "2 minutes"
       }, async () => {
         const results = [];
         for (const page of batch) {
@@ -1322,24 +1350,7 @@ var GsapValidationWorkflow = class extends WorkflowEntrypoint {
       pageResults.push(...batchResults);
     }
     const finalResults = await step.do("aggregate results", async () => {
-      const siteResults = summarizeCrawlPageResults(pageResults, pages.length);
-      const overallPassed = siteResults.failedCount === 0 && siteResults.analyzedCount === siteResults.pageCount && siteResults.pageCount > 0;
-      const markdown = generateMarkdownReport({
-        url,
-        siteResults,
-        pageResults,
-        crawlStats: crawlResults.crawlStats
-      });
-      return {
-        url,
-        success: true,
-        passed: overallPassed,
-        siteResults,
-        pageResults,
-        siteMap: crawlResults.siteMap,
-        crawlStats: crawlResults.crawlStats,
-        markdown
-      };
+      return finalizeCrawlResponse(url, pageResults, crawlResults, crawlResults.siteMap);
     });
     return finalResults;
   }
@@ -1435,12 +1446,12 @@ var worker_default = {
   }
 };
 async function handleSinglePageValidation(requestData, env, ctx, corsHeaders) {
-  const urlToValidate = requestData.url || "";
+  let urlToValidate = requestData.url || "";
   const customPatterns = requestData.customPatterns || [];
   try {
-    new URL(urlToValidate);
-  } catch {
-    return new Response(JSON.stringify({ error: "Invalid URL provided" }), {
+    urlToValidate = normalizePublishedSiteUrl(urlToValidate);
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message || "Invalid URL provided" }), {
       status: 400,
       headers: {
         "Content-Type": "application/json",
@@ -1450,6 +1461,9 @@ async function handleSinglePageValidation(requestData, env, ctx, corsHeaders) {
   }
   try {
     const response = await fetch(urlToValidate);
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
+    }
     const html = await response.text();
     const validationResults = validateGsapUsage(html, urlToValidate, customPatterns);
     return new Response(JSON.stringify(validationResults), {
@@ -1474,14 +1488,15 @@ async function handleSinglePageValidation(requestData, env, ctx, corsHeaders) {
 }
 __name(handleSinglePageValidation, "handleSinglePageValidation");
 async function handleWebsiteCrawl(requestData, env, ctx, corsHeaders) {
-  const urlToValidate = requestData.url || "";
-  const maxDepth = requestData.maxDepth || 1;
-  const maxPages = requestData.maxPages || 12;
+  let urlToValidate = requestData.url || "";
+  const maxDepth = requestData.maxDepth || 10;
+  const maxPages = requestData.maxPages || 250;
   const instanceId = requestData.instanceId;
+  const runAsync = requestData.async === true;
   try {
-    new URL(urlToValidate);
-  } catch {
-    return new Response(JSON.stringify({ error: "Invalid URL provided" }), {
+    urlToValidate = normalizePublishedSiteUrl(urlToValidate);
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message || "Invalid URL provided" }), {
       status: 400,
       headers: {
         "Content-Type": "application/json",
@@ -1538,6 +1553,37 @@ async function handleWebsiteCrawl(requestData, env, ctx, corsHeaders) {
         });
       }
     }
+    if (runAsync) {
+      if (!env.GSAP_WORKFLOW) {
+        return new Response(JSON.stringify({
+          error: "Workflows not available"
+        }), {
+          status: 404,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders
+          }
+        });
+      }
+      const instance = await env.GSAP_WORKFLOW.create({
+        params: {
+          url: urlToValidate,
+          maxDepth,
+          maxPages
+        }
+      });
+      return new Response(JSON.stringify({
+        success: true,
+        status: "queued",
+        instanceId: instance.id
+      }), {
+        status: 202,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders
+        }
+      });
+    }
     return await handleWebsiteCrawlSync(requestData, env, ctx, corsHeaders);
   } catch (error) {
     console.error("Worker error:", error);
@@ -1570,15 +1616,53 @@ function summarizeCrawlPageResults(pageResults, pageCount) {
   };
 }
 __name(summarizeCrawlPageResults, "summarizeCrawlPageResults");
+function finalizeCrawlResponse(url, pageResults, crawlResults, siteMap) {
+  const pageCount = Array.isArray(crawlResults?.pages) ? crawlResults.pages.length : 0;
+  const siteResults = summarizeCrawlPageResults(pageResults, pageCount);
+  const crawlStats = {
+    ...(crawlResults?.crawlStats || {}),
+    partial: Boolean(crawlResults?.partial),
+    truncatedByPageLimit: Boolean(crawlResults?.crawlStats?.maxPages) && pageCount >= crawlResults.crawlStats.maxPages
+  };
+  const incomplete = crawlStats.partial || crawlStats.truncatedByPageLimit;
+  const error = crawlResults?.error || (crawlStats.truncatedByPageLimit ? "Validation stopped before the full project could be analyzed. Increase maxPages and retry." : void 0);
+  const results = {
+    url,
+    success: true,
+    passed: siteResults.failedCount === 0 && siteResults.analyzedCount === siteResults.pageCount && siteResults.pageCount > 0 && !incomplete,
+    siteResults: {
+      ...siteResults,
+      incomplete
+    },
+    pageResults,
+    siteMap: siteMap || crawlResults?.siteMap,
+    crawlStats,
+    ...(error ? { error } : {})
+  };
+  results.markdown = generateMarkdownReport(results);
+  return results;
+}
+__name(finalizeCrawlResponse, "finalizeCrawlResponse");
 async function handleWebsiteCrawlSync(requestData, env, ctx, corsHeaders) {
-  const urlToValidate = requestData.url || "";
-  const maxDepth = requestData.maxDepth || 1;
-  const maxPages = requestData.maxPages || 12;
+  let urlToValidate = requestData.url || "";
+  const maxDepth = requestData.maxDepth || 10;
+  const maxPages = requestData.maxPages || 1000;
+  try {
+    urlToValidate = normalizePublishedSiteUrl(urlToValidate);
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message || "Invalid URL provided" }), {
+      status: 400,
+      headers: {
+        "Content-Type": "application/json",
+        ...corsHeaders
+      }
+    });
+  }
   try {
     const crawlResults = await crawlWebsite(urlToValidate, {
       maxDepth,
       maxPages,
-      timeout: 25e3
+      timeout: 24e4
     });
     const pages = crawlResults.pages || [];
     const pageResults = [];
@@ -1593,6 +1677,9 @@ async function handleWebsiteCrawlSync(requestData, env, ctx, corsHeaders) {
           continue;
         }
         const response = await fetch(page.url);
+        if (!response.ok) {
+          throw new Error(`HTTP error: ${response.status}`);
+        }
         const html = await response.text();
         const validationResult = await validateGsapUsage(html, page.url);
         pageResults.push({
@@ -1612,17 +1699,7 @@ async function handleWebsiteCrawlSync(requestData, env, ctx, corsHeaders) {
         });
       }
     }
-    const siteResults = summarizeCrawlPageResults(pageResults, pages.length);
-    const results = {
-      url: urlToValidate,
-      success: true,
-      passed: siteResults.failedCount === 0 && siteResults.analyzedCount === siteResults.pageCount && siteResults.pageCount > 0,
-      siteResults,
-      pageResults,
-      siteMap: crawlResults.siteMap,
-      crawlStats: crawlResults.crawlStats
-    };
-    results.markdown = generateMarkdownReport(results);
+    const results = finalizeCrawlResponse(urlToValidate, pageResults, crawlResults, crawlResults.siteMap);
     return new Response(JSON.stringify(results), {
       status: 200,
       headers: {
@@ -1645,13 +1722,13 @@ async function handleWebsiteCrawlSync(requestData, env, ctx, corsHeaders) {
 }
 __name(handleWebsiteCrawlSync, "handleWebsiteCrawlSync");
 async function handleGsapValidation(requestData, env, ctx, corsHeaders) {
-  const urlToValidate = requestData.url || "";
-  const maxDepth = requestData.maxDepth || 1;
-  const maxPages = requestData.maxPages || 50;
+  let urlToValidate = requestData.url || "";
+  const maxDepth = requestData.maxDepth || 10;
+  const maxPages = requestData.maxPages || 1000;
   try {
-    new URL(urlToValidate);
-  } catch {
-    return new Response(JSON.stringify({ error: "Invalid URL provided" }), {
+    urlToValidate = normalizePublishedSiteUrl(urlToValidate);
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message || "Invalid URL provided" }), {
       status: 400,
       headers: {
         "Content-Type": "application/json",
@@ -1677,7 +1754,9 @@ async function handleGsapValidation(requestData, env, ctx, corsHeaders) {
     });
     results.totalPagesFound = crawlResults.pages.length;
     results.crawlMethod = "multi-page";
+    results.crawlIncomplete = Boolean(crawlResults.partial) || Boolean(crawlResults.crawlStats?.maxPages) && crawlResults.pages.length >= crawlResults.crawlStats.maxPages;
     const pagesToValidate = crawlResults.pages.filter((page) => !page.error);
+    results.failedPages += crawlResults.pages.length - pagesToValidate.length;
     const PAGE_BATCH_SIZE = 5;
     const pageBatches = [];
     for (let i = 0; i < pagesToValidate.length; i += PAGE_BATCH_SIZE) {
@@ -1687,6 +1766,9 @@ async function handleGsapValidation(requestData, env, ctx, corsHeaders) {
       const pagePromises = batch.map(async (page) => {
         try {
           const response = await fetch(page.url);
+          if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`);
+          }
           const html = await response.text();
           const validationResults = await validateGsapUsage(html, page.url);
           results.validatedPages++;
@@ -1721,6 +1803,9 @@ async function handleGsapValidation(requestData, env, ctx, corsHeaders) {
     try {
       results.crawlMethod = "single-page-fallback";
       const response = await fetch(urlToValidate);
+      if (!response.ok) {
+        throw new Error(`HTTP error: ${response.status}`);
+      }
       const html = await response.text();
       const validationResults = await validateGsapUsage(html, urlToValidate);
       results.totalPagesFound = 1;
@@ -1747,7 +1832,7 @@ async function handleGsapValidation(requestData, env, ctx, corsHeaders) {
     }
   }
   results.passRate = results.validatedPages > 0 ? Math.round(results.passedPages / results.validatedPages * 100) : 0;
-  results.passed = results.failedPages === 0 && results.validatedPages > 0;
+  results.passed = results.failedPages === 0 && results.validatedPages > 0 && !results.crawlIncomplete;
   results.markdown = generateMarkdownReport(results);
   return new Response(JSON.stringify(results), {
     status: 200,

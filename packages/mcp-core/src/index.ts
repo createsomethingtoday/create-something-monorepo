@@ -64,6 +64,13 @@ export { defaultPolicy } from './context.js';
 // =============================================================================
 
 export type { AuthProvider } from './auth.js';
+export {
+  buildOAuthAuthorizationServerMetadata,
+  buildOAuthProtectedResourceMetadata,
+  isOAuthAuthorizationServerPath,
+  isOAuthProtectedResourcePath,
+} from './oauth-discovery.js';
+export type { OAuthDiscoveryOptions } from './oauth-discovery.js';
 
 // =============================================================================
 // Server (Automation tier)

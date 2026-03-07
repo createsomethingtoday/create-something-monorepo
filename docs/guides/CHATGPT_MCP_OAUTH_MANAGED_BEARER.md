@@ -11,9 +11,10 @@ OAuth in this model does not imply short-lived Hub-only session tokens.
 ## Required Model
 
 1. ChatGPT signs in through an OAuth/OIDC surface exposed by `identity-worker`.
-2. The OAuth token exchange returns the user's managed long-lived MCP bearer token as the `access_token`.
-3. ChatGPT calls the Hub MCP endpoint with `Authorization: Bearer <managed bearer token>`.
-4. Hub authorization logic remains unchanged:
+2. `identity-worker` may mint the OAuth authorization code as a signed token that carries the authorize-request context needed for exchange.
+3. The OAuth token exchange returns the user's managed long-lived MCP bearer token as the `access_token`.
+4. ChatGPT calls the Hub MCP endpoint with `Authorization: Bearer <managed bearer token>`.
+5. Hub authorization logic remains unchanged:
    - shared `HUB_API_TOKEN` continues to work for existing clients
    - managed user bearer tokens continue to resolve through `HUB_SESSION_RESOLVE_URL`
    - legacy compatibility behavior remains governed separately by policy
@@ -55,9 +56,10 @@ The Hub remains the MCP resource server at `/mcp`.
 
 1. The OAuth-delivered access token must be the same managed bearer token already governed by `.agency` and `identity-worker`.
 2. Managed bearer tokens must remain revocable, regenerable, auditable, and subject to live request-time authorization checks.
-3. OAuth discovery and registration must never surface the shared hub runtime token.
-4. UI may reveal a managed bearer token only at explicit issuance or regeneration time.
-5. ChatGPT-facing OAuth support must not degrade the current bearer-token experience for existing MCP clients.
+3. Signed authorization codes are valid in this model; they do not need to be database-persisted opaque codes if they are bound to the original OAuth request context.
+4. OAuth discovery and registration must never surface the shared hub runtime token.
+5. UI may reveal a managed bearer token only at explicit issuance or regeneration time.
+6. ChatGPT-facing OAuth support must not degrade the current bearer-token experience for existing MCP clients.
 
 ## Identity Rules
 
