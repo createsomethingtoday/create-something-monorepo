@@ -2,7 +2,7 @@ import type { PaperMeta } from '../types';
 
 export const meta: PaperMeta = {
 	slug: 'three-tier-framework',
-	title: 'The Three-Tier Framework: Database, Automation, Judgment',
+	title: 'The Three-Tier Framework: Database, Rules, Policy',
 	subtitle: 'A structural model for agent systems, realized through Model Context Protocol',
 	description:
 		'A hierarchical ontology identifying three tiers connected by typed Artifacts and spanning four cross-cutting concerns, with MCP as natural encapsulation.',
@@ -16,8 +16,8 @@ export const meta: PaperMeta = {
 		'Model Context Protocol',
 		'Agent Systems',
 		'Database',
-		'Automation',
-		'Judgment',
+		'Rules',
+		'Policy',
 		'Policy as Artifact',
 		'Sampling',
 		'Embodied Cognition',

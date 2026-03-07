@@ -292,18 +292,18 @@ The protocol provides: obligation to pull, two-pull semantics, deviation/concess
 
 ### Causality
 
-The framework captures dependency: Database feeds Automation feeds Judgment. You cannot have judgment without process, cannot have process without substrate. This is not just organization—it's a debugging heuristic.
+The framework captures dependency: Database feeds Rules feeds Policy. You cannot have policy without process, cannot have process without substrate. This is not just organization—it is a debugging heuristic.
 
 When a system fails, ask:
 1. Did the Database layer fail to provide data?
-2. Did Automation execute incorrectly?
-3. Did Judgment apply wrong policy?
+2. Did Rules execute incorrectly?
+3. Did Policy apply the wrong governance?
 
 ### Blurriness
 
-The boundaries between tiers are elastic, not rigid. An agent with tools and skills running in the background is already making judgments—the policy is embedded in how it decides which tool to call. The three tiers are a spectrum, with boundaries getting blurry as agents get more capable.
+The boundaries between tiers are elastic, not rigid. An agent with tools and skills running in the background is already applying rules and making judgments. Policy is embedded in how it decides which tool to call. The three tiers are a spectrum, with boundaries getting blurry as agents get more capable.
 
-This blurriness is a feature, not a bug. It reflects the reality that sophisticated automation contains embedded judgment, and that judgment requires automation to act. The sampling mechanism makes this explicit: a tool can request judgment, collapsing the boundary between Automation and Judgment for that moment.
+This blurriness is a feature, not a bug. It reflects the reality that sophisticated rule execution contains embedded judgment, and that policy requires rules to act. The sampling mechanism makes this explicit: a tool can request policy guidance, collapsing the boundary between Rules and Policy for that moment.
 
 ### Brittleness vs. Variety
 
@@ -322,14 +322,14 @@ For a unified stack approach using Cloudflare:
 | Framework Element | Cloudflare Service |
 |-------------------|-------------------|
 | Database Layer | D1, KV, R2, Durable Objects |
-| Automation Layer | Workers, Workflows, Queues |
-| Judgment Layer | Workers AI, External LLM APIs |
+| Rules Layer | Workers, Workflows, Queues |
+| Policy Layer | Workers AI, External LLM APIs |
 | Touchpoints | Worker endpoints, MCP servers |
 | Orchestration | Workers (procedural), Workflows |
 | Insight | Logpush, Analytics, custom tracing |
 | Artifacts | JSON schemas, structured outputs |
 
-This provides type-safety from Database through Judgment, with MCP servers as the Touchpoint surface.
+This provides type-safety from Database through Policy, with MCP servers as the Touchpoint surface.
 
 ---
 
@@ -356,8 +356,8 @@ NIST's taxonomy focuses on human-AI activities from a usability perspective. Thi
 ### Workflow Automation (WORKWAY)
 
 - Database: Procore projects, RFIs, daily logs, submittals
-- Automation: AI skills (draft RFI, summarize logs, review submittals)
-- Judgment: Policy definitions, human approval gates, trust boundaries
+- Rules: AI skills (draft RFI, summarize logs, review submittals)
+- Policy: Policy definitions, human approval gates, trust boundaries
 - Orchestration: Workflow triggers, webhook handlers, notification dispatchers
 - Insight: Execution traces, approval audit logs, confidence scores
 - Touchpoints: MCP server endpoints for Procore, Slack, email
@@ -366,8 +366,8 @@ NIST's taxonomy focuses on human-AI activities from a usability perspective. Thi
 ### Custom MCP Development (CREATE SOMETHING)
 
 - Database: Client systems (Salesforce, HubSpot, internal tools)
-- Automation: Custom MCP servers connecting systems to agents
-- Judgment: Agent policy, skill constraints, trust boundaries
+- Rules: Custom MCP servers connecting systems to agents
+- Policy: Agent policy, skill constraints, trust boundaries
 - Orchestration: Connection flows, OAuth handlers, request routing
 - Insight: Agent observability, decision traces, HITL surfaces
 - Touchpoints: MCP server URIs, OAuth surfaces
@@ -377,14 +377,14 @@ NIST's taxonomy focuses on human-AI activities from a usability perspective. Thi
 
 ## Conclusion
 
-The three-tier framework—Database, Automation, Judgment—provides a structural model for reasoning about agent systems. MCP encapsulates it naturally through its primitives (Resources, Tools, Prompts) and control model distinctions (application-controlled, model-controlled, user-controlled).
+The three-tier framework—Database, Rules, Policy—provides a structural model for reasoning about agent systems. MCP encapsulates it naturally through its primitives (Resources, Tools, Prompts) and control model distinctions (application-controlled, model-controlled, user-controlled).
 
 Four cross-cutting concerns span the tiers: Touchpoints (interface surface), Artifacts (boundary contracts), Orchestration (procedural flow), and Insight (perceptual membrane). These are not tiers—they don't do work the way tiers do—but they are essential to how the system operates.
 
-The framework is not a simple hierarchy. MCP's sampling mechanism reveals the recursive property: Automation can request Judgment, closing the loop. The tool encounters the world and asks for judgment. This mirrors embodied cognition—the body doesn't just execute; it participates in thinking.
+The framework is not a simple hierarchy. MCP's sampling mechanism reveals the recursive property: Rules can request Policy, closing the loop. The tool encounters the world and asks for guidance. This mirrors embodied cognition—the body does not just execute. It participates in thinking.
 
-The policy-as-artifact insight extends this further: the constraints that govern agent behavior are not external scaffolding but data flowing through the tiers. Policy can be versioned, selected contextually, and modified reflexively—always under human oversight at the Judgment layer. Multi-agent coordination becomes policy-passing: agents share not just tasks but behavioral constraints.
+The policy-as-artifact insight extends this further: the constraints that govern agent behavior are not external scaffolding but data flowing through the tiers. Policy can be versioned, selected contextually, and modified reflexively, always under human oversight at the Policy layer. Multi-agent coordination becomes policy-passing: agents share not just tasks but behavioral constraints.
 
-Artifacts flow between tiers as typed boundary contracts. Touchpoints span all tiers as the interaction surface. Orchestration sequences procedural work. Insight makes the system legible to itself and to humans. Sampling allows lower tiers to reach back up when they need judgment. And policy itself participates in this flow.
+Artifacts flow between tiers as typed boundary contracts. Touchpoints span all tiers as the interaction surface. Orchestration sequences procedural work. Insight makes the system legible to itself and to humans. Sampling allows lower tiers to reach back up when they need policy guidance. And policy itself participates in this flow.
 
 This is not an abstraction imposed on systems—it is the shape that MCP already assumes. The framework names it.
