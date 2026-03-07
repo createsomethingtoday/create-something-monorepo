@@ -1,6 +1,5 @@
 export { compileConstraintPolicy, getRuntimePolicySource, hashPolicySource, COMPILER_VERSION } from './compile.js';
 export { evaluateConstraintPolicyLocal } from './local-eval.js';
-export { evaluateConstraintPolicyPrimary } from './oso-primary.js';
 export { evaluateConstraintPolicyHybrid, evaluateConstraintPolicyWithRollout } from './hybrid.js';
 export { deterministicPercent, shouldSampleCanary } from './rollout.js';
 

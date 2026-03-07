@@ -7,7 +7,7 @@
  * Canon: One identity, many manifestations.
  */
 
-import type { Env, ErrorResponse, TokenResponse, UserResponse, JWTPayload, CrossDomainToken } from './types';
+import type { Env, ErrorResponse, TokenResponse, UserResponse, JWTPayload, CrossDomainToken, User } from './types';
 import { hashPassword, verifyPassword, generateUUID, hashToken, generateSecureToken } from './services/crypto';
 import { createSignedToken, generateTokens, refreshTokens, getJWKS, validateJWT, importPublicKey } from './services/tokens';
 import {
@@ -122,6 +122,8 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	if (path === '/oauth/authorize' && method === 'POST') return handleOAuthAuthorize(request, env);
 	if (path === '/oauth/token' && method === 'POST') return handleOAuthToken(request, env);
 	if (path === '/oauth/userinfo' && method === 'GET') return handleOAuthUserInfo(request, env);
+	if (path === '/v1/auth/password/admin-get' && method === 'POST') return handleAdminGetPasswordUser(request, env);
+	if (path === '/v1/auth/password/admin-upsert' && method === 'POST') return handleAdminUpsertPasswordUser(request, env);
 
 	// Auth endpoints
 	if (path === '/v1/auth/signup' && method === 'POST') return handleSignup(request, env);
@@ -349,6 +351,126 @@ async function handleLogout(request: Request, env: Env): Promise<Response> {
 	return json({ success: true });
 }
 
+async function handleAdminGetPasswordUser(request: Request, env: Env): Promise<Response> {
+	const auth = await authenticateApiKeyForPermissions(request, env, ['mcp_long_lived_token_issue']);
+	if (!auth.ok) {
+		return json({ error: auth.error, message: auth.message, status: auth.status }, auth.status);
+	}
+
+	const body = await parseJSON<AdminGetPasswordUserBody>(request);
+	const email = body?.email?.trim().toLowerCase();
+	if (!email || !isValidEmail(email)) {
+		return json({ error: 'invalid_request', message: 'Valid email is required', status: 400 }, 400);
+	}
+
+	const user = await findUserByEmail(env.DB, email);
+	if (!user) {
+		return json({
+			user: null,
+			has_password: false,
+		});
+	}
+
+	return json({
+		user: {
+			id: user.id,
+			email: user.email,
+			email_verified: Boolean(user.email_verified),
+			name: user.name,
+			tier: user.tier,
+			source: user.source,
+			deleted_at: user.deleted_at,
+		},
+		has_password: Boolean(user.password_hash),
+	});
+}
+
+async function handleAdminUpsertPasswordUser(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+	const auth = await authenticateApiKeyForPermissions(request, env, ['mcp_long_lived_token_issue']);
+	if (!auth.ok) {
+		return json({ error: auth.error, message: auth.message, status: auth.status }, auth.status);
+	}
+
+	const body = await parseJSON<AdminUpsertPasswordUserBody>(request);
+	const email = body?.email?.trim().toLowerCase();
+	const password = body?.password ?? '';
+	if (!email || !isValidEmail(email)) {
+		return json({ error: 'invalid_request', message: 'Valid email is required', status: 400 }, 400);
+	}
+	if (password.length < 12) {
+		return json(
+			{ error: 'weak_password', message: 'Password must be at least 12 characters', status: 400 },
+			400,
+		);
+	}
+
+	const userIdHint = normalizeOptionalId(body?.user_id);
+	const source = body?.source ?? 'space';
+	const tier = body?.tier ?? 'agency';
+	const emailVerified = body?.email_verified !== false;
+	const passwordHash = await hashPassword(password);
+	const existing = await findUserByEmail(db, email);
+	let user: User | null = existing;
+
+	if (existing) {
+		const updated = await updateUserPassword(db, existing.id, passwordHash);
+		if (!updated) {
+			return json({ error: 'update_failed', message: 'Failed to update password', status: 500 }, 500);
+		}
+		user = await updateUser(db, existing.id, {
+			email_verified: emailVerified ? 1 : existing.email_verified,
+			tier,
+		});
+		await revokeAllUserTokens(db, existing.id);
+		await revokeAllMcpSessionsForUser(db, existing.id);
+		await createMcpAuthEvent(db, {
+			id: generateUUID(),
+			session_id: null,
+			user_id: existing.id,
+			event_type: 'oauth_password_rotated',
+			event_data_json: JSON.stringify({
+				auth_email: email,
+				actor: auth.actor,
+			}),
+		});
+	} else {
+		const created = await createUser(db, {
+			id: userIdHint ?? generateUUID(),
+			email,
+			password_hash: passwordHash,
+			name: normalizeNullableString(body?.name) ?? undefined,
+			source,
+		});
+		user = await updateUser(db, created.id, {
+			email_verified: emailVerified ? 1 : created.email_verified,
+			tier,
+		});
+		await createMcpAuthEvent(db, {
+			id: generateUUID(),
+			session_id: null,
+			user_id: created.id,
+			event_type: 'oauth_password_initialized',
+			event_data_json: JSON.stringify({
+				auth_email: email,
+				actor: auth.actor,
+			}),
+		});
+	}
+
+	return json({
+		user: {
+			id: user?.id ?? existing?.id ?? userIdHint ?? null,
+			email,
+			email_verified: Boolean(user?.email_verified ?? emailVerified),
+			name: user?.name ?? normalizeNullableString(body?.name) ?? null,
+			tier: user?.tier ?? tier,
+			source: user?.source ?? source,
+		},
+		has_password: true,
+	});
+}
+
 // Cross-Domain SSO Handlers
 
 const VALID_TARGETS: CrossDomainToken['target'][] = ['ltd', 'io', 'space', 'agency'];
@@ -519,6 +641,20 @@ interface AdminIssueMcpLongLivedTokenBody {
 
 interface AdminGetMcpLongLivedTokenBody {
 	auth_subject?: string;
+}
+
+interface AdminGetPasswordUserBody {
+	email?: string;
+}
+
+interface AdminUpsertPasswordUserBody {
+	email?: string;
+	password?: string;
+	user_id?: string;
+	name?: string;
+	source?: User['source'];
+	tier?: User['tier'];
+	email_verified?: boolean;
 }
 
 interface AdminMcpAuditFeedBody {

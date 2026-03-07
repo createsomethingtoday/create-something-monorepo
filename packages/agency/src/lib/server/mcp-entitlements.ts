@@ -111,6 +111,24 @@ export async function findAgencyMcpEntitlementByAuthSubject(
 		.first<AgencyMcpEntitlementRow>();
 }
 
+export async function findAgencyMcpEntitlementByEmail(
+	db: D1Database,
+	authEmail: string
+): Promise<AgencyMcpEntitlementRow | null> {
+	const normalizedEmail = normalizeEmail(authEmail);
+	if (!normalizedEmail) return null;
+
+	return db
+		.prepare(
+			`SELECT * FROM agency_mcp_entitlements
+       WHERE lower(COALESCE(auth_email, '')) = ?
+       ORDER BY updated_at DESC
+       LIMIT 1`
+		)
+		.bind(normalizedEmail)
+		.first<AgencyMcpEntitlementRow>();
+}
+
 export async function upsertAgencyMcpEntitlement(
 	db: D1Database,
 	input: {

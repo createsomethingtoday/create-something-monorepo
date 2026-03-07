@@ -24,6 +24,20 @@
 		allowed_tool_prefixes?: string[];
 		toolkit_profile?: string[];
 	};
+	type OAuthPasswordPayload = {
+		email: string | null;
+		auth_subject: string | null;
+		account_id: string | null;
+		tenant_id: string | null;
+		has_password: boolean;
+		email_verified: boolean;
+		identity_user_exists: boolean;
+		entitlement?: {
+			allowed: boolean;
+			reason: string;
+		};
+		message?: string;
+	};
 
 	type HostId = 'codex' | 'claude' | 'cursor';
 
@@ -39,6 +53,12 @@
 	let errorMessage = $state('');
 	let successMessage = $state('');
 	let copiedState = $state('');
+	let passwordBusy = $state(false);
+	let passwordError = $state('');
+	let passwordSuccess = $state('');
+	let oauthPassword = $state<OAuthPasswordPayload | null>(null);
+	let newPassword = $state('');
+	let confirmPassword = $state('');
 	let selectedHost = $state<HostId>('codex');
 
 	const activeHost = $derived(hostOptions.find((host) => host.id === selectedHost) ?? hostOptions[0]);
@@ -78,6 +98,12 @@ bearer_token = "${tokenValue}"`);
 	const activeSnippet = $derived(
 		selectedHost === 'codex' ? codexSnippet : selectedHost === 'claude' ? claudeSnippet : cursorSnippet
 	);
+	const passwordActionLabel = $derived(oauthPassword?.has_password ? 'Rotate password' : 'Set password');
+	const oauthLoginStatus = $derived(
+		oauthPassword?.has_password
+			? 'A password is already initialized for ChatGPT OAuth login.'
+			: 'No MCP OAuth password is initialized yet.'
+	);
 
 	async function loadToken() {
 		const response = await fetch('/api/me/mcp-token');
@@ -86,6 +112,15 @@ bearer_token = "${tokenValue}"`);
 			throw new Error(payload.message ?? 'Failed to load MCP token state');
 		}
 		token = payload.token ?? null;
+	}
+
+	async function loadOAuthPassword() {
+		const response = await fetch('/api/me/mcp-oauth-password');
+		const payload = (await response.json().catch(() => ({}))) as OAuthPasswordPayload & { message?: string };
+		if (!response.ok) {
+			throw new Error(payload.message ?? 'Failed to load MCP OAuth password state');
+		}
+		oauthPassword = payload;
 	}
 
 	async function runAction(
@@ -132,9 +167,44 @@ bearer_token = "${tokenValue}"`);
 		}
 	}
 
+	async function updateOAuthPassword() {
+		passwordBusy = true;
+		passwordError = '';
+		passwordSuccess = '';
+
+		try {
+			if (newPassword.length < 12) {
+				throw new Error('Password must be at least 12 characters.');
+			}
+			if (newPassword !== confirmPassword) {
+				throw new Error('Passwords do not match.');
+			}
+
+			const response = await fetch('/api/me/mcp-oauth-password', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ password: newPassword })
+			});
+			const payload = (await response.json().catch(() => ({}))) as OAuthPasswordPayload & {
+				message?: string;
+			};
+			if (!response.ok) {
+				throw new Error(payload.message ?? 'Failed to update MCP OAuth password');
+			}
+			oauthPassword = payload;
+			passwordSuccess = payload.message ?? 'MCP OAuth password updated.';
+			newPassword = '';
+			confirmPassword = '';
+		} catch (error) {
+			passwordError = error instanceof Error ? error.message : 'Failed to update password';
+		} finally {
+			passwordBusy = false;
+		}
+	}
+
 	onMount(async () => {
 		try {
-			await loadToken();
+			await Promise.all([loadToken(), loadOAuthPassword()]);
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Failed to load token state';
 		}
@@ -221,6 +291,69 @@ bearer_token = "${tokenValue}"`);
 				{/if}
 				{#if copiedState}
 					<p class="muted-feedback">{copiedState}</p>
+				{/if}
+			</article>
+
+			<article class="card token-card">
+				<div class="card-header">
+					<div>
+						<h2>MCP OAuth Password</h2>
+						<p>
+							This is the password you type into the ChatGPT OAuth authorize page. It is separate from
+							your Auth0 portal login and separate from your bearer token.
+						</p>
+					</div>
+					<a href="/security" class="inline-link">Identity model</a>
+				</div>
+
+				<div class="metadata-grid">
+					<div><span>Email</span><strong>{oauthPassword?.email ?? data.user?.email ?? 'Unavailable'}</strong></div>
+					<div><span>Account</span><strong>{oauthPassword?.account_id ?? 'Unlinked'}</strong></div>
+					<div><span>Tenant</span><strong>{oauthPassword?.tenant_id ?? 'Unlinked'}</strong></div>
+					<div><span>Status</span><strong>{oauthLoginStatus}</strong></div>
+				</div>
+
+				<div class="note-panel">
+					<p>
+						Use this email address on the ChatGPT authorize screen. Stored passwords are never re-shown.
+						Setting or rotating this password does not rotate your bearer token.
+					</p>
+				</div>
+
+				<div class="form-stack">
+					<label>
+						New password
+						<input
+							type="password"
+							bind:value={newPassword}
+							autocomplete="new-password"
+							minlength="12"
+							placeholder="Minimum 12 characters"
+						/>
+					</label>
+					<label>
+						Confirm password
+						<input
+							type="password"
+							bind:value={confirmPassword}
+							autocomplete="new-password"
+							minlength="12"
+							placeholder="Re-enter password"
+						/>
+					</label>
+				</div>
+
+				<div class="actions">
+					<button disabled={passwordBusy} onclick={updateOAuthPassword}>
+						{passwordActionLabel}
+					</button>
+				</div>
+
+				{#if passwordSuccess}
+					<p class="success">{passwordSuccess}</p>
+				{/if}
+				{#if passwordError}
+					<p class="error">{passwordError}</p>
 				{/if}
 			</article>
 
@@ -425,6 +558,28 @@ bearer_token = "${tokenValue}"`);
 		flex-wrap: wrap;
 		gap: 0.75rem;
 		margin-top: 1.5rem;
+	}
+
+	.form-stack {
+		display: grid;
+		gap: 1rem;
+		margin-top: 1.5rem;
+	}
+
+	.form-stack label {
+		display: grid;
+		gap: 0.45rem;
+		font-size: 0.92rem;
+		color: rgba(255, 255, 255, 0.82);
+	}
+
+	.form-stack input {
+		border-radius: 14px;
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		background: rgba(8, 10, 12, 0.72);
+		color: #fff;
+		padding: 0.9rem 1rem;
+		font: inherit;
 	}
 
 	button,

@@ -9,6 +9,10 @@
     ".": {
       "types": "./src/index.ts",
       "import": "./dist/index.js"
+    },
+    "./oso-primary": {
+      "types": "./src/oso-primary.ts",
+      "import": "./dist/oso-primary.js"
     }
   },
   "files": [
