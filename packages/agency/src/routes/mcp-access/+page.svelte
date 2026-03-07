@@ -224,8 +224,9 @@ bearer_token = "${tokenValue}"`);
 			<p class="eyebrow">Operator Access</p>
 			<h1>MCP Access</h1>
 			<p class="lede">
-				Sign in with Auth0, manage one personal bearer token, and use it in approved hosts without exposing
-				system-side runtime secrets.
+				Your `.agency` credentials live in three separate lanes: Auth0 signs you into the portal, the bearer
+				token connects MCP hosts like Codex or Claude, and the ChatGPT connection password is used only on the
+				ChatGPT authorize screen.
 			</p>
 		</header>
 
@@ -234,7 +235,7 @@ bearer_token = "${tokenValue}"`);
 				<div class="card-header">
 					<div>
 						<h2>Personal Bearer Token</h2>
-						<p>One active token per authenticated user. Raw token material is shown only on creation or regeneration.</p>
+						<p>One active token per authenticated user. This is the credential you paste into an MCP host. Raw token material is shown only on creation or regeneration.</p>
 					</div>
 					<a href="/security" class="inline-link">Security model</a>
 				</div>
@@ -297,10 +298,10 @@ bearer_token = "${tokenValue}"`);
 			<article class="card token-card">
 				<div class="card-header">
 					<div>
-						<h2>MCP OAuth Password</h2>
+						<h2>ChatGPT Connection Password</h2>
 						<p>
-							This is the password you type into the ChatGPT OAuth authorize page. It is separate from
-							your Auth0 portal login and separate from your bearer token.
+							This is the password you type into the ChatGPT authorize page. It is only for the ChatGPT
+							connection flow. It is separate from your Auth0 portal login and separate from your bearer token.
 						</p>
 					</div>
 					<a href="/security" class="inline-link">Identity model</a>
@@ -316,7 +317,8 @@ bearer_token = "${tokenValue}"`);
 				<div class="note-panel">
 					<p>
 						Use this email address on the ChatGPT authorize screen. Stored passwords are never re-shown.
-						Setting or rotating this password does not rotate your bearer token.
+						Setting or rotating this password does not rotate your bearer token and does not change your
+						Auth0 portal login.
 					</p>
 				</div>
 

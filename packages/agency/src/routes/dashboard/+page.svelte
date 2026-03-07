@@ -56,8 +56,8 @@
 			<p class="eyebrow">Access Center</p>
 			<h1 class="dashboard-title">Dashboard</h1>
 			<p class="dashboard-subtitle">
-				This page should answer the operational questions first: whether this identity is entitled, whether a
-				personal bearer token exists, and whether the ChatGPT authorize password has been initialized.
+				This page answers three separate questions: can this account access `.agency`, has a personal MCP token
+				been issued, and has the ChatGPT connection password been set.
 			</p>
 		</div>
 		<div class="identity-chip">
@@ -82,7 +82,7 @@
 		</div>
 
 		<div class="summary-card">
-			<span class="summary-label">ChatGPT Password</span>
+			<span class="summary-label">ChatGPT Connection</span>
 			<span class="summary-value">{passwordStatusLabel()}</span>
 			<span class="summary-note">{data.access.password.email ?? data.user.email}</span>
 		</div>
@@ -100,8 +100,8 @@
 				<div>
 					<h2>Personal Bearer Token</h2>
 					<p class="panel-copy">
-						Your portable MCP credential. The raw token is never shown here after issuance, only its status
-						and metadata.
+						This is the token you paste into Codex, Claude, Cursor, or another approved MCP host. Your portal
+						login does not replace it.
 					</p>
 				</div>
 				<a href="/mcp-access" class="action-link">Manage token</a>
@@ -151,10 +151,10 @@
 		<section class="panel panel-emphasis">
 			<div class="panel-header">
 				<div>
-					<h2>ChatGPT OAuth Password</h2>
+					<h2>ChatGPT Connection Password</h2>
 					<p class="panel-copy">
-						This is the password used on the ChatGPT authorize screen. It is separate from Auth0 login and
-						separate from the bearer token.
+						This is the password you type into the ChatGPT authorize screen when connecting ChatGPT to your
+						`.agency` access. It is not your Auth0 portal password and it is not your bearer token.
 					</p>
 				</div>
 				<a href="/mcp-access" class="action-link">
@@ -184,8 +184,8 @@
 
 				<div class="note-panel">
 					<p>
-						Stored passwords are never re-shown. Setting or rotating this password does not rotate your bearer
-						token.
+						Stored passwords are never re-shown. Changing this password affects only the ChatGPT connection
+						flow. It does not change your portal login or your bearer token.
 					</p>
 				</div>
 			{:else}
@@ -201,7 +201,7 @@
 			<div class="panel-header">
 				<div>
 					<h2>Access Eligibility</h2>
-					<p class="panel-copy">These checks determine whether this identity can use managed `.agency` access.</p>
+					<p class="panel-copy">These checks determine whether this signed-in user is allowed to use managed `.agency` access.</p>
 				</div>
 				<span class="timestamp">Updated {formatDateTime(data.entitlement.updatedAt)}</span>
 			</div>
@@ -220,7 +220,7 @@
 			<div class="panel-header">
 				<div>
 					<h2>Identity Mapping</h2>
-					<p class="panel-copy">This is how the signed-in Auth0 user is connected to the underlying `.agency` account.</p>
+					<p class="panel-copy">This shows how your Auth0 portal login maps to the underlying `.agency` account and tenant.</p>
 				</div>
 			</div>
 
@@ -250,7 +250,7 @@
 			<div class="panel-header">
 				<div>
 					<h2>Partner Connection</h2>
-					<p class="panel-copy">Workspace and integration context for this identity, when a partner-managed client is linked.</p>
+					<p class="panel-copy">Workspace and integration context, when this identity is linked to a partner-managed client.</p>
 				</div>
 			</div>
 
@@ -290,7 +290,7 @@
 			<div class="panel-header">
 				<div>
 					<h2>Commercial State</h2>
-					<p class="panel-copy">Billing and contract state matter here only when they affect access decisions.</p>
+					<p class="panel-copy">Billing and contract state matter here only when they explain why access is active or blocked.</p>
 				</div>
 			</div>
 
