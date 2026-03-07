@@ -17,28 +17,47 @@
 		updated_at: string;
 		decision: { allowed: boolean; reason: string };
 	};
+	type EntitlementsPayload = { entitlements: Entitlement[]; message?: string };
+	type MutationPayload = { entitlement?: Entitlement; message?: string };
+	type ToggleField =
+		| 'managed_bearer_allowed'
+		| 'org_membership_active'
+		| 'service_entitled'
+		| 'policy_accepted'
+		| 'contract_active'
+		| 'billing_active';
+	const toggleFields: Array<{ field: ToggleField; label: string }> = [
+		{ field: 'managed_bearer_allowed', label: 'Bearer' },
+		{ field: 'org_membership_active', label: 'Org' },
+		{ field: 'service_entitled', label: 'Service' },
+		{ field: 'policy_accepted', label: 'Policy' },
+		{ field: 'contract_active', label: 'Contract' },
+		{ field: 'billing_active', label: 'Billing' },
+	];
 
 	let { data } = $props();
-	let entitlements = $state<Entitlement[]>(data.entitlements as Entitlement[]);
+	let entitlements = $state<Entitlement[]>([]);
 	let search = $state('');
 	let busySubject = $state('');
 	let message = $state('');
 	let errorMessage = $state('');
 
+	$effect(() => {
+		entitlements = data.entitlements as Entitlement[];
+	});
+
 	async function reload() {
 		const params = new URLSearchParams();
 		if (search.trim()) params.set('search', search.trim());
 		const response = await fetch(`/api/admin/mcp-entitlements?${params.toString()}`);
-		const payload = await response.json();
+		const payload = (await response.json()) as EntitlementsPayload;
 		if (!response.ok) {
 			throw new Error(payload.message ?? 'Failed to load entitlements');
 		}
-		entitlements = payload.entitlements as Entitlement[];
+		entitlements = payload.entitlements;
 	}
 
-	async function toggle(subject: string, field: keyof Pick<Entitlement,
-		'managed_bearer_allowed' | 'org_membership_active' | 'service_entitled' | 'policy_accepted' | 'contract_active' | 'billing_active'
-	>) {
+	async function toggle(subject: string, field: ToggleField) {
 		const current = entitlements.find((row) => row.auth_subject === subject);
 		if (!current) return;
 
@@ -55,7 +74,7 @@
 					denial_reason: current.denial_reason,
 				}),
 			});
-			const payload = await response.json();
+			const payload = (await response.json()) as MutationPayload;
 			if (!response.ok) {
 				throw new Error(payload.message ?? 'Failed to update entitlement');
 			}
@@ -81,7 +100,7 @@
 					denial_reason: denialReason.trim() || null,
 				}),
 			});
-			const payload = await response.json();
+			const payload = (await response.json()) as MutationPayload;
 			if (!response.ok) {
 				throw new Error(payload.message ?? 'Failed to update denial reason');
 			}
@@ -142,19 +161,12 @@
 								</span>
 							</td>
 							<td class="checks">
-								{#each [
-									['managed_bearer_allowed', 'Bearer'],
-									['org_membership_active', 'Org'],
-									['service_entitled', 'Service'],
-									['policy_accepted', 'Policy'],
-									['contract_active', 'Contract'],
-									['billing_active', 'Billing']
-								] as [field, label]}
+								{#each toggleFields as { field, label }}
 									<button
-										class:check-on={row[field as keyof Entitlement] === 1}
-										class:check-off={row[field as keyof Entitlement] !== 1}
+										class:check-on={row[field] === 1}
+										class:check-off={row[field] !== 1}
 										disabled={busySubject === row.auth_subject}
-										onclick={() => toggle(row.auth_subject, field as keyof Pick<Entitlement, 'managed_bearer_allowed' | 'org_membership_active' | 'service_entitled' | 'policy_accepted' | 'contract_active' | 'billing_active'>)}
+										onclick={() => toggle(row.auth_subject, field)}
 									>
 										{label}
 									</button>
