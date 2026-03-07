@@ -34,7 +34,41 @@ The goal is that team members can answer:
 
 ---
 
-## 3. Per-MCP operating notes
+## 3. Team hub lanes
+
+The Half Dozen team is split across named hub lanes. These are the primary remote MCP entry points for team-specific hub access.
+
+| Team | Hub URL | Auth mode |
+|------|---------|-----------|
+| `Lainy` | `https://lainy.mcp.createsomething.agency/mcp` | Bearer token |
+| `Danny` | `https://danny.mcp.createsomething.agency/mcp` | Bearer token |
+| `August` | `https://august.mcp.createsomething.agency/mcp` | Bearer token |
+| `Fillip` | `https://fillip.mcp.createsomething.agency/mcp` | Bearer token |
+| `Leah` | `https://leah.mcp.createsomething.agency/mcp` | Bearer token |
+| `MJ` | `https://mj.mcp.createsomething.agency/mcp` | Bearer token |
+
+### Notion bridge lanes
+
+These companion Notion bridge endpoints are team-specific and use Basic Auth.
+
+| Team | Bridge URL | Username | Auth mode |
+|------|------------|----------|-----------|
+| `Lainy` | `https://lainy-notion.mcp.createsomething.agency/mcp` | `acct_lainy` | Basic Auth |
+| `Danny` | `https://danny-notion.mcp.createsomething.agency/mcp` | `acct_danny` | Basic Auth |
+| `August` | `https://august-notion.mcp.createsomething.agency/mcp` | `acct_august` | Basic Auth |
+| `Fillip` | `https://fillip-notion.mcp.createsomething.agency/mcp` | `acct_fillip` | Basic Auth |
+| `Leah` | `https://leah-notion.mcp.createsomething.agency/mcp` | `acct_leah` | Basic Auth |
+| `MJ` | `https://mj-notion.mcp.createsomething.agency/mcp` | `acct_mj` | Basic Auth |
+
+Credential handling rule:
+
+- do not store live bearer tokens or bridge passwords in repo docs
+- retrieve them from the approved secret store or private operator handoff
+- rotate and reissue outside the onboarding docs when needed
+
+---
+
+## 4. Per-MCP operating notes
 
 ### `halfdozen-notion-mcp`
 
@@ -96,13 +130,14 @@ The goal is that team members can answer:
 
 ---
 
-## 4. Team-wide policy framing
+## 5. Team-wide policy framing
 
 ### Auto-allow
 
 - reading status, resources, schemas, and search results
 - draft generation and non-destructive analysis
 - health and observability queries
+- connecting to the correct named hub lane when credentials have already been provisioned
 
 ### Approval-required or operator-gated
 
@@ -110,6 +145,8 @@ The goal is that team members can answer:
 - writes to canonical client systems when review is required
 - onboarding/account-connection changes
 - high-volume or bulk syncs that affect shared operating records
+- issuing or rotating team hub credentials
+- changing bridge credentials or lane assignments
 
 ### Blocked
 
@@ -117,10 +154,11 @@ The goal is that team members can answer:
 - writing into the wrong workspace or system on ambiguous context
 - bypassing allow-list or account-pinning controls
 - asking non-operator users to perform admin-only auth/session maintenance
+- sharing live bearer tokens or bridge passwords in public or repo-tracked docs
 
 ---
 
-## 5. Braintrust positioning
+## 6. Braintrust positioning
 
 When Braintrust is part of the discussion:
 
@@ -130,22 +168,25 @@ When Braintrust is part of the discussion:
 
 ---
 
-## 6. Live onboarding agenda for the Half Dozen team
+## 7. Live onboarding agenda for the Half Dozen team
 
 ### Part 1. Fleet overview
 
 - introduce each MCP and the workflow it supports
 - show the MCP inventory table
+- show the team hub lane matrix and which lane each person should use
 
 ### Part 2. Policy boundary
 
 - explain auto-allow, approval-required, and blocked actions
 - give one real example from Notion, one from sync, and one from telemetry
+- explain that credentials are provisioned privately and are not to be copied into shared docs
 
 ### Part 3. Failure handling
 
 - show the fallback owner for each MCP family
 - explain when to stop instead of improvising
+- explain what to do when a team member cannot authenticate to their assigned hub or bridge lane
 
 ### Part 4. Evidence
 
@@ -154,9 +195,10 @@ When Braintrust is part of the discussion:
 
 ---
 
-## 7. Completion criteria
+## 8. Completion criteria
 
 - the team can map each MCP to the correct workflow
 - the team can identify at least one safe action, one gated action, and one blocked action for each MCP they use
 - the team knows which MCPs are operator-only in parts of their workflow
 - the team knows the fallback and escalation path
+- the team knows which named hub lane and Notion bridge lane they should use
