@@ -45,7 +45,7 @@
 	const tokenModeLabel = $derived(token?.tool_mode === 'read_write' ? 'Read + write' : 'Read only');
 	const productState = $derived(
 		token
-			? 'Today this access is positioned around Braintrust-backed `.agency` delivery. Stripe billing and formal policy controls are being rolled into the same entitlement path.'
+			? 'This token remains valid only while Stripe-backed billing and `.agency` policy controls keep the account entitled. Observability systems such as Braintrust are operational support, not the paid product gate.'
 			: 'Once issued, this token becomes your single portable credential for approved `.agency` MCP access.'
 	);
 	const tokenValue = $derived(revealedToken || 'PASTE_YOUR_BEARER_TOKEN_HERE');
@@ -302,7 +302,7 @@ bearer_token = "${tokenValue}"`);
 				<pre><code>{activeSnippet}</code></pre>
 
 				<p class="footnote">
-					`.agency` is the user-facing credential broker. Auth0 proves identity. Runtime secrets and service keys remain in managed infrastructure such as Infisical. Stripe billing and policy enforcement are being rolled into the same entitlement path.
+					`.agency` is the user-facing credential broker. Auth0 proves identity. Runtime secrets and service keys remain in managed infrastructure such as Infisical. Stripe billing state and policy acceptance are the product-side controls that keep paid MCP access active.
 				</p>
 			</article>
 		</div>
