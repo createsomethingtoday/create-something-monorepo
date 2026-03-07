@@ -90,6 +90,20 @@ export {
 // Server-side validation (KV-cached JWKS)
 // validateToken is the canonical cryptographic validation function
 export {
+	getAuth0Config,
+	buildAuth0AuthorizeUrl,
+	exchangeAuth0Code,
+	refreshAuth0Tokens,
+	revokeAuth0RefreshToken,
+	generateAuthState,
+	setAuth0StateCookies,
+	consumeAuth0StateCookies,
+	type Auth0Config,
+	type Auth0EnvLike,
+	type Auth0TokenResponse,
+} from './auth0.js';
+
+export {
 	validateToken,
 	validateToken as validateTokenWithKV,
 	requireAuth as requireAuthFromRequest,

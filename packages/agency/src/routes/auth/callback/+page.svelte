@@ -4,14 +4,14 @@
 </script>
 
 <SEO
-	title="Verifying"
-	description="Verifying your login"
+	title="Signing In"
+	description="Completing your Auth0 sign-in"
 	propertyName="agency"
 	noindex={true}
 />
 
 <div class="callback-container">
-	<p>Verifying your login...</p>
+	<p>Completing your sign-in...</p>
 </div>
 
 <style>

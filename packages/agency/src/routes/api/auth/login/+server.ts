@@ -1,33 +1,46 @@
-import { json } from '@sveltejs/kit';
+import { redirect, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getDomainConfig, handleIdentityResponse } from '@create-something/canon/auth';
-import { identityClient, getIdentityErrorMessage } from '@create-something/canon/api';
-import { catchApiError, createLogger } from '@create-something/canon/utils';
-import { loginSchema, parseBody } from '@create-something/canon/validation';
+import {
+	buildAuth0AuthorizeUrl,
+	generateAuthState,
+	getAuth0Config,
+	getDomainConfig,
+	setAuth0StateCookies,
+} from '@create-something/canon/auth';
 
-const logger = createLogger('LoginAPI');
-
-export const POST: RequestHandler = catchApiError('Login', async ({ request, cookies, platform }) => {
-	const parseResult = await parseBody(request, loginSchema);
-	if (!parseResult.success) {
-		return json({ success: false, error: parseResult.error }, { status: 400 });
+export const GET: RequestHandler = async ({ url, cookies, platform, request }) => {
+	const config = getAuth0Config(platform?.env);
+	if (!config) {
+		return json({ error: 'Auth0 is not configured' }, { status: 503 });
 	}
 
-	const { email, password } = parseResult.data;
-
-	logger.info('Login attempt', { email });
-
-	const result = await identityClient.login({ email, password });
-
-	if (!result.success) {
-		logger.warn('Login failed', { email, error: result.error });
-		return json(
-			{ error: getIdentityErrorMessage(result, 'Invalid credentials') },
-			{ status: result.status }
-		);
-	}
-
-	logger.info('Login successful', { email, userId: result.data.user.id });
+	const state = generateAuthState();
+	const redirectTo = url.searchParams.get('redirect') || '/';
+	const screenHint = url.searchParams.get('screen_hint') === 'signup' ? 'signup' : 'login';
 	const domainConfig = getDomainConfig(platform?.env?.ENVIRONMENT);
-	return handleIdentityResponse(cookies, result.data, domainConfig);
-});
+	const callbackUrl = new URL('/auth/callback', request.url).toString();
+
+	setAuth0StateCookies(cookies, {
+		state,
+		redirectTo,
+		isProduction: domainConfig.isProduction,
+		domain: domainConfig.domain,
+	});
+
+	redirect(
+		302,
+		buildAuth0AuthorizeUrl({
+			config,
+			redirectUri: callbackUrl,
+			state,
+			screenHint,
+		})
+	);
+};
+
+export const POST: RequestHandler = async () => {
+	return json(
+		{ error: 'Email/password login has been replaced by Auth0. Use GET /api/auth/login.' },
+		{ status: 405 }
+	);
+};

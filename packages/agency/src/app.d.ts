@@ -73,6 +73,15 @@ declare global {
 				// Optional: Override API URL (defaults to workway-api-gateway.half-dozen.workers.dev)
 				// Set to api.workway.co once DNS route is configured
 				WORKWAY_API_URL?: string;
+				// Auth0 identity
+				AUTH0_DOMAIN?: string;
+				AUTH0_CLIENT_ID?: string;
+				AUTH0_CLIENT_SECRET?: string;
+				AUTH0_AUDIENCE?: string;
+				AUTH0_SCOPE?: string;
+				AUTH0_ISSUER_BASE_URL?: string;
+				AUTH0_JWKS_URL?: string;
+				AUTH0_CLAIMS_NAMESPACE?: string;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;

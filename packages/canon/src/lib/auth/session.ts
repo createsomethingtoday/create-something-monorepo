@@ -18,6 +18,7 @@ import {
 // Import types from shared types module to avoid circular dependencies
 import {
 	SESSION_CONFIG,
+	type Auth0ProviderConfig,
 	type TokenResponse,
 	type JWTPayload,
 	type User,
@@ -28,6 +29,7 @@ import {
 	type AuthHooksConfig,
 	type JWK,
 } from './types.js';
+import { getAuth0Config, refreshAuth0Tokens, revokeAuth0RefreshToken } from './auth0.js';
 
 // Re-export for backwards compatibility
 export { SESSION_CONFIG };
@@ -99,12 +101,45 @@ export function getUserFromToken(token: string): User | null {
 	const payload = decodeJWT(token);
 	if (!payload) return null;
 
+	const source = extractSource(payload);
+	const tier = extractTier(payload);
+	const email = typeof payload.email === 'string' ? payload.email : null;
+	if (!email) return null;
+
 	return {
 		id: payload.sub,
-		email: payload.email,
-		tier: payload.tier,
-		source: payload.source,
+		email,
+		tier,
+		source,
 	};
+}
+
+function extractTier(payload: JWTPayload): User['tier'] {
+	if (payload.tier === 'free' || payload.tier === 'pro' || payload.tier === 'agency') {
+		return payload.tier;
+	}
+
+	for (const [key, value] of Object.entries(payload)) {
+		if (key.endsWith('/tier') && (value === 'free' || value === 'pro' || value === 'agency')) {
+			return value;
+		}
+	}
+
+	return 'free';
+}
+
+function extractSource(payload: JWTPayload): User['source'] {
+	if (
+		payload.source === 'workway' ||
+		payload.source === 'templates' ||
+		payload.source === 'io' ||
+		payload.source === 'space' ||
+		payload.source === 'lms'
+	) {
+		return payload.source;
+	}
+
+	return 'space';
 }
 
 // =============================================================================
@@ -129,7 +164,41 @@ export function getUserFromToken(token: string): User | null {
  * }
  * ```
  */
-export async function refreshTokens(refreshToken: string): Promise<RefreshResult> {
+export async function refreshTokens(
+	refreshToken: string,
+	authProvider?: SessionManagerOptions['authProvider']
+): Promise<RefreshResult> {
+	if (authProvider?.type === 'auth0') {
+		try {
+			const tokenResponse = await refreshAuth0Tokens({
+				config: authProvider as Auth0ProviderConfig,
+				refreshToken,
+			});
+
+			if (!tokenResponse.id_token || !tokenResponse.refresh_token) {
+				return {
+					success: false,
+					error: tokenResponse.error_description || tokenResponse.error || 'refresh_failed',
+				};
+			}
+
+			return {
+				success: true,
+				tokens: {
+					access_token: tokenResponse.id_token,
+					refresh_token: tokenResponse.refresh_token,
+					token_type: 'Bearer',
+					expires_in: tokenResponse.expires_in ?? COOKIE_CONFIG.ACCESS_TOKEN_MAX_AGE,
+				},
+			};
+		} catch (error) {
+			return {
+				success: false,
+				error: error instanceof Error ? error.message : 'network_error',
+			};
+		}
+	}
+
 	try {
 		const response = await fetch(`${SESSION_CONFIG.IDENTITY_ENDPOINT}/v1/auth/refresh`, {
 			method: 'POST',
@@ -163,7 +232,17 @@ export async function refreshTokens(refreshToken: string): Promise<RefreshResult
 /**
  * Logout by revoking refresh token at Identity worker
  */
-export async function revokeSession(refreshToken: string): Promise<boolean> {
+export async function revokeSession(
+	refreshToken: string,
+	authProvider?: SessionManagerOptions['authProvider']
+): Promise<boolean> {
+	if (authProvider?.type === 'auth0') {
+		return revokeAuth0RefreshToken({
+			config: authProvider as Auth0ProviderConfig,
+			refreshToken,
+		});
+	}
+
 	try {
 		const response = await fetch(`${SESSION_CONFIG.IDENTITY_ENDPOINT}/v1/auth/logout`, {
 			method: 'POST',
@@ -216,7 +295,7 @@ export type CookiesAPI = {
  * ```
  */
 export function createSessionManager(cookies: CookiesAPI, options: SessionManagerOptions = {}) {
-	const { isProduction = true, domain, onAnalyticsEvent } = options;
+	const { isProduction = true, domain, onAnalyticsEvent, authProvider } = options;
 
 	return {
 		/**
@@ -302,7 +381,7 @@ export function createSessionManager(cookies: CookiesAPI, options: SessionManage
 			const session = getSessionCookies(cookies);
 			if (!session.refreshToken) return false;
 
-			const result = await refreshTokens(session.refreshToken);
+			const result = await refreshTokens(session.refreshToken, authProvider);
 
 			if (result.success && result.tokens) {
 				setSessionCookies(
@@ -371,7 +450,7 @@ export function createSessionManager(cookies: CookiesAPI, options: SessionManage
 
 			// Revoke at identity worker
 			if (session.refreshToken) {
-				await revokeSession(session.refreshToken);
+				await revokeSession(session.refreshToken, authProvider);
 			}
 
 			// Clear cookies
@@ -505,10 +584,12 @@ export function createAuthHooks(config: AuthHooksConfig = {}): Handle {
 		const { cookies, url, locals } = event;
 
 		// Get session and attempt to get user (with auto-refresh)
+		const authProvider = getAuth0Config((event.platform?.env ?? undefined) as Record<string, string | undefined> | undefined);
 		const sessionManager = createSessionManager(cookies, {
 			isProduction,
 			domain,
 			onAnalyticsEvent,
+			authProvider: authProvider ?? undefined,
 		});
 
 		const user = await sessionManager.getUser();
@@ -581,17 +662,18 @@ function getDomainFromHostname(hostname: string, isProduction: boolean): string 
 export async function handleLogout(
 	request: Request,
 	cookies: CookiesAPI,
-	platform?: { env?: { ENVIRONMENT?: string } }
+	platform?: { env?: { ENVIRONMENT?: string } & Record<string, string | undefined> }
 ): Promise<Response> {
 	try {
 		const isProduction = platform?.env?.ENVIRONMENT === 'production';
 		const url = new URL(request.url);
 		const domain = getDomainFromHostname(url.hostname, isProduction);
+		const authProvider = getAuth0Config(platform?.env);
 
 		// Get refresh token to revoke at Identity Worker
 		const refreshToken = getRefreshTokenFromRequest(request);
 		if (refreshToken) {
-			await revokeSession(refreshToken);
+			await revokeSession(refreshToken, authProvider);
 		}
 
 		// Clear JWT cookies

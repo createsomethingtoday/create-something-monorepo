@@ -8,6 +8,7 @@
 import type { Cookies } from '@sveltejs/kit';
 import { json } from '@sveltejs/kit';
 import { setSessionCookies } from './cookies.js';
+import { getAuth0Config } from './auth0.js';
 import type { TokenResponse, User } from './types.js';
 import { generateCorrelationId, logError } from '../utils/index.js';
 import type { ApiResponse } from '../types/index.js';
@@ -476,6 +477,7 @@ interface D1PreparedStatement {
  */
 export function createAccountPageLoader() {
 	return async ({ parent, cookies }: {
+		platform?: { env?: Record<string, string | undefined> };
 		parent: () => Promise<{ user?: { id: string; analytics_opt_out?: boolean } }>;
 		cookies: Cookies;
 	}) => {
@@ -575,13 +577,15 @@ export function createLoginPageLoader(options: LoginPageLoaderOptions) {
 	return async ({ url, cookies, platform }: {
 		url: URL;
 		cookies: Cookies;
-		platform?: { env?: { ENVIRONMENT?: string } };
+		platform?: { env?: Record<string, string | undefined> };
 	}) => {
 		const { createSessionManager } = await import('./session.js');
+		const authProvider = getAuth0Config(platform?.env);
 		
 		const session = createSessionManager(cookies, {
 			isProduction: platform?.env?.ENVIRONMENT === 'production',
-			domain: productionDomain
+			domain: productionDomain,
+			authProvider: authProvider ?? undefined,
 		});
 
 		const user = await session.getUser();
@@ -591,7 +595,8 @@ export function createLoginPageLoader(options: LoginPageLoaderOptions) {
 		}
 
 		return {
-			redirectTo: url.searchParams.get('redirect') || '/'
+			redirectTo: url.searchParams.get('redirect') || '/',
+			error: url.searchParams.get('error') || null
 		};
 	};
 }
@@ -615,13 +620,15 @@ export function createLayoutServerLoader(options: LayoutServerLoaderOptions) {
 	return async ({ url, cookies, platform }: {
 		url: URL;
 		cookies: Cookies;
-		platform?: { env?: { ENVIRONMENT?: string } };
+		platform?: { env?: Record<string, string | undefined> };
 	}) => {
 		const { createSessionManager } = await import('./session.js');
+		const authProvider = getAuth0Config(platform?.env);
 		
 		const session = createSessionManager(cookies, {
 			isProduction: platform?.env?.ENVIRONMENT === 'production',
-			domain: productionDomain
+			domain: productionDomain,
+			authProvider: authProvider ?? undefined,
 		});
 
 		const user = await session.getUser();

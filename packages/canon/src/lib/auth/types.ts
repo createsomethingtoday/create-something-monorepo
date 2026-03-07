@@ -21,6 +21,22 @@ export const SESSION_CONFIG = {
 	JWKS_CACHE_TTL: 3600,
 } as const;
 
+export interface AuthProviderConfig {
+	type: 'identity-worker' | 'auth0';
+}
+
+export interface Auth0ProviderConfig extends AuthProviderConfig {
+	type: 'auth0';
+	domain: string;
+	clientId: string;
+	clientSecret?: string;
+	audience?: string;
+	scope: string;
+	issuer: string;
+	jwksUrl: string;
+	claimsNamespace: string;
+}
+
 // =============================================================================
 // TYPES
 // =============================================================================
@@ -51,13 +67,15 @@ export interface ErrorResponse {
 
 export interface JWTPayload {
 	sub: string;
-	email: string;
-	tier: 'free' | 'pro' | 'agency';
-	source: 'workway' | 'templates' | 'io' | 'space' | 'lms';
+	email?: string;
+	tier?: 'free' | 'pro' | 'agency';
+	source?: 'workway' | 'templates' | 'io' | 'space' | 'lms' | 'auth0';
 	iss: string;
-	aud: string[];
+	aud: string[] | string;
 	iat: number;
 	exp: number;
+	name?: string;
+	[key: string]: unknown;
 }
 
 export interface User {
@@ -93,9 +111,11 @@ export interface SessionAnalyticsEvent {
 /** JWK (JSON Web Key) structure for ES256 public keys */
 export interface JWK {
 	kty: string;
-	crv: string;
-	x: string;
-	y: string;
+	crv?: string;
+	x?: string;
+	y?: string;
+	n?: string;
+	e?: string;
 	kid: string;
 	alg: string;
 	use: string;
@@ -124,6 +144,8 @@ export interface SessionManagerOptions {
 	domain?: string;
 	/** Analytics event emitter */
 	onAnalyticsEvent?: (event: SessionAnalyticsEvent) => void;
+	/** Auth provider override */
+	authProvider?: AuthProviderConfig | Auth0ProviderConfig;
 }
 
 /**
@@ -140,4 +162,12 @@ export interface KVLike {
 export interface AuthEnv {
 	/** KV namespace for caching JWKS (optional - falls back to module cache) */
 	AUTH_CACHE?: KVLike;
+	AUTH0_DOMAIN?: string;
+	AUTH0_CLIENT_ID?: string;
+	AUTH0_CLIENT_SECRET?: string;
+	AUTH0_AUDIENCE?: string;
+	AUTH0_SCOPE?: string;
+	AUTH0_ISSUER_BASE_URL?: string;
+	AUTH0_JWKS_URL?: string;
+	AUTH0_CLAIMS_NAMESPACE?: string;
 }

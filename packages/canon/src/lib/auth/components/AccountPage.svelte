@@ -29,11 +29,11 @@
 	};
 
 	const propertyUrls: Record<string, string> = {
-		ltd: '/api/auth/cross-domain?target=ltd&redirect=/account',
-		io: '/api/auth/cross-domain?target=io&redirect=/account',
-		space: '/api/auth/cross-domain?target=space&redirect=/account',
-		agency: '/api/auth/cross-domain?target=agency&redirect=/account',
-		lms: '/api/auth/cross-domain?target=lms&redirect=/account'
+		ltd: 'https://createsomething.ltd/login?redirect=/account',
+		io: 'https://createsomething.io/login?redirect=/account',
+		space: 'https://createsomething.space/login?redirect=/account',
+		agency: 'https://createsomething.agency/login?redirect=/account',
+		lms: 'https://learn.createsomething.space/login?redirect=/account'
 	};
 
 	async function handleLogout() {

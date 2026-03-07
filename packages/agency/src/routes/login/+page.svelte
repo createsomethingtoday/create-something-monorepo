@@ -1,107 +1,26 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
-	import { LoginForm, SignupForm, MagicLinkForm } from '@create-something/canon/auth';
-	import { goto, invalidateAll } from '$app/navigation';
-
-	interface AuthResponse {
-		success?: boolean;
-		error?: string;
-	}
+	import { goto } from '$app/navigation';
 
 	let { data } = $props();
+	const redirectTo = $derived(data.redirectTo || '/');
+	const loginHref = $derived(`/api/auth/login?redirect=${encodeURIComponent(redirectTo)}`);
+	const signupHref = $derived(`/api/auth/signup?redirect=${encodeURIComponent(redirectTo)}`);
+	const errorParam = $derived(data.error || null);
 
-	type AuthMode = 'login' | 'signup' | 'magic';
-	let mode: AuthMode = $state('login');
-	let isLoading = $state(false);
-	let error: string | null = $state(null);
+	const errorMessages: Record<string, string> = {
+		access_denied: 'Access was denied during sign-in.',
+		invalid_state: 'The sign-in session could not be verified. Please try again.',
+		missing_callback_params: 'The sign-in response was incomplete. Please try again.',
+		token_exchange_failed: 'Token exchange failed. Please try again.',
+	};
 
-	async function handleLogin(credentials: { email: string; password: string }): Promise<boolean> {
-		isLoading = true;
-		error = null;
+	const error = $derived(
+		errorParam ? errorMessages[errorParam] || 'Authentication failed. Please try again.' : null
+	);
 
-		try {
-			const response = await fetch('/api/auth/login', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(credentials)
-			});
-
-			const result = (await response.json()) as AuthResponse;
-
-			if (!response.ok) {
-				error = result.error || 'Login failed';
-				return false;
-			}
-
-			// Invalidate all load functions to refresh user state
-			await invalidateAll();
-			const redirectTo = data.redirectTo || '/';
-			goto(redirectTo);
-			return true;
-		} catch {
-			error = 'An unexpected error occurred';
-			return false;
-		} finally {
-			isLoading = false;
-		}
-	}
-
-	async function handleSignup(credentials: { email: string; password: string; name?: string }): Promise<boolean> {
-		isLoading = true;
-		error = null;
-
-		try {
-			const response = await fetch('/api/auth/signup', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ ...credentials, source: 'agency' })
-			});
-
-			const result = (await response.json()) as AuthResponse;
-
-			if (!response.ok) {
-				error = result.error || 'Signup failed';
-				return false;
-			}
-
-			// Invalidate all load functions to refresh user state
-			await invalidateAll();
-			const redirectTo = data.redirectTo || '/';
-			goto(redirectTo);
-			return true;
-		} catch {
-			error = 'An unexpected error occurred';
-			return false;
-		} finally {
-			isLoading = false;
-		}
-	}
-
-	async function handleMagicLink(email: string): Promise<boolean> {
-		isLoading = true;
-		error = null;
-
-		try {
-			const response = await fetch('/api/auth/magic-login', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ email, source: 'agency' })
-			});
-
-			const result = (await response.json()) as AuthResponse;
-
-			if (!response.ok) {
-				error = result.error || 'Failed to send magic link';
-				return false;
-			}
-
-			return true;
-		} catch {
-			error = 'An unexpected error occurred';
-			return false;
-		} finally {
-			isLoading = false;
-		}
+	function continueTo(href: string) {
+		goto(href, { invalidateAll: false });
 	}
 </script>
 
@@ -115,53 +34,30 @@
 <div class="auth-container">
 	<div class="auth-card">
 		<div class="auth-header">
-			<h1>
-				{#if mode === 'login'}
-					Sign in
-				{:else if mode === 'signup'}
-					Create account
-				{:else}
-					Passwordless sign in
-				{/if}
-			</h1>
+			<h1>Sign in to `.agency`</h1>
 			<p class="auth-subtitle">
-				{#if mode === 'login'}
-					Welcome back to CREATE SOMETHING
-				{:else if mode === 'signup'}
-					Join our client portal
-				{:else}
-					We'll send you a magic link
-				{/if}
+				Identity is now managed through Auth0. Use your managed account to access the client portal,
+				bearer-token controls, and MCP surfaces.
 			</p>
 		</div>
 
-		{#if mode === 'login'}
-			<LoginForm
-				onSubmit={handleLogin}
-				onSwitchToSignup={() => (mode = 'signup')}
-				onSwitchToMagicLink={() => (mode = 'magic')}
-				{isLoading}
-				{error}
-				showMagicLinkOption={true}
-				showSignupLink={true}
-			/>
-		{:else if mode === 'signup'}
-			<SignupForm
-				onSubmit={handleSignup}
-				onSwitchToLogin={() => (mode = 'login')}
-				onSwitchToMagicLink={() => (mode = 'magic')}
-				{isLoading}
-				{error}
-				source="agency"
-			/>
-		{:else}
-			<MagicLinkForm
-				onSubmit={handleMagicLink}
-				onSwitchToLogin={() => (mode = 'login')}
-				{isLoading}
-				{error}
-			/>
+		{#if error}
+			<div class="error-message" role="alert">{error}</div>
 		{/if}
+
+		<div class="auth-actions">
+			<button class="primary-action" type="button" onclick={() => continueTo(loginHref)}>
+				Continue with Auth0
+			</button>
+			<button class="secondary-action" type="button" onclick={() => continueTo(signupHref)}>
+				Create account
+			</button>
+		</div>
+
+		<p class="auth-footnote">
+			If you already have an authorized organization account, use the same email you use for client access.
+			New account creation is still subject to policy, contract, and billing activation.
+		</p>
 	</div>
 </div>
 
@@ -176,7 +72,7 @@
 
 	.auth-card {
 		width: 100%;
-		max-width: var(--content-width-xl);
+		max-width: 36rem;
 		background: var(--color-bg-surface);
 		border-radius: var(--radius-lg);
 		padding: var(--space-xl);
@@ -198,5 +94,51 @@
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-tertiary);
 		margin: 0;
+		line-height: 1.7;
+	}
+
+	.error-message {
+		background: var(--color-error-muted);
+		border: 1px solid var(--color-error-border);
+		color: var(--color-error);
+		padding: var(--space-sm);
+		border-radius: var(--radius-md);
+		font-size: var(--text-body-sm);
+		margin-bottom: var(--space-md);
+	}
+
+	.auth-actions {
+		display: grid;
+		gap: var(--space-md);
+	}
+
+	.primary-action,
+	.secondary-action {
+		width: 100%;
+		padding: var(--space-sm) var(--space-md);
+		border-radius: var(--radius-full);
+		font-size: var(--text-body);
+		font-weight: 600;
+		min-height: 48px;
+		cursor: pointer;
+	}
+
+	.primary-action {
+		background: var(--color-fg-primary);
+		color: var(--color-bg-pure);
+		border: none;
+	}
+
+	.secondary-action {
+		background: transparent;
+		color: var(--color-fg-primary);
+		border: 1px solid var(--color-border-default);
+	}
+
+	.auth-footnote {
+		margin: var(--space-lg) 0 0;
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-body-sm);
+		line-height: 1.7;
 	}
 </style>

@@ -19,6 +19,7 @@ import {
 	type AuthEnv,
 } from './types.js';
 import { COOKIE_CONFIG, parseCookieHeader } from './cookies.js';
+import { getAuth0Config } from './auth0.js';
 
 // Re-export types for backwards compatibility
 export type { KVLike, AuthEnv };
@@ -33,11 +34,10 @@ interface CachedJWKS {
 // CONSTANTS
 // =============================================================================
 
-const JWKS_KV_KEY = 'identity:jwks';
 const JWKS_KV_TTL = SESSION_CONFIG.JWKS_CACHE_TTL; // seconds
 
 // Module-level fallback cache (used when KV is not available)
-let moduleCache: CachedJWKS | null = null;
+const moduleCache = new Map<string, CachedJWKS>();
 
 // =============================================================================
 // JWKS FETCHING (with KV caching)
@@ -52,17 +52,18 @@ let moduleCache: CachedJWKS | null = null;
  * 3. Fetch from Identity Worker if cache miss/expired
  * 4. Update both KV and module cache on successful fetch
  */
-async function fetchJWKS(env?: AuthEnv): Promise<JWK[]> {
+async function fetchJWKS(jwksUrl: string, env?: AuthEnv): Promise<JWK[]> {
 	const now = Date.now();
 	const ttlMs = JWKS_KV_TTL * 1000;
+	const cacheKey = `identity:jwks:${jwksUrl}`;
 
 	// Try KV cache first
 	if (env?.AUTH_CACHE) {
 		try {
-			const cached = await env.AUTH_CACHE.get(JWKS_KV_KEY, 'json') as CachedJWKS | null;
+			const cached = await env.AUTH_CACHE.get(cacheKey, 'json') as CachedJWKS | null;
 			if (cached && now - cached.fetchedAt < ttlMs) {
 				// Also update module cache for faster subsequent calls
-				moduleCache = cached;
+				moduleCache.set(cacheKey, cached);
 				return cached.keys;
 			}
 		} catch {
@@ -71,28 +72,29 @@ async function fetchJWKS(env?: AuthEnv): Promise<JWK[]> {
 	}
 
 	// Try module cache
-	if (moduleCache && now - moduleCache.fetchedAt < ttlMs) {
-		return moduleCache.keys;
+	const cachedModuleEntry = moduleCache.get(cacheKey);
+	if (cachedModuleEntry && now - cachedModuleEntry.fetchedAt < ttlMs) {
+		return cachedModuleEntry.keys;
 	}
 
 	// Fetch from Identity Worker
 	try {
-		const response = await fetch(`${SESSION_CONFIG.IDENTITY_ENDPOINT}/.well-known/jwks.json`);
+		const response = await fetch(jwksUrl);
 		if (!response.ok) {
 			console.error('Failed to fetch JWKS:', response.status);
-			return moduleCache?.keys ?? [];
+			return cachedModuleEntry?.keys ?? [];
 		}
 
 		const data = await response.json() as { keys: JWK[] };
 		const cached: CachedJWKS = { keys: data.keys, fetchedAt: now };
 
 		// Update module cache
-		moduleCache = cached;
+		moduleCache.set(cacheKey, cached);
 
 		// Update KV cache (fire and forget)
 		if (env?.AUTH_CACHE) {
 			try {
-				await env.AUTH_CACHE.put(JWKS_KV_KEY, JSON.stringify(cached), {
+				await env.AUTH_CACHE.put(cacheKey, JSON.stringify(cached), {
 					expirationTtl: JWKS_KV_TTL,
 				});
 			} catch {
@@ -103,13 +105,90 @@ async function fetchJWKS(env?: AuthEnv): Promise<JWK[]> {
 		return data.keys;
 	} catch (error) {
 		console.error('JWKS fetch error:', error);
-		return moduleCache?.keys ?? [];
+		return cachedModuleEntry?.keys ?? [];
 	}
 }
 
 // =============================================================================
 // TOKEN EXTRACTION
 // =============================================================================
+
+function parseJwtPayload(token: string): JWTPayload | null {
+	try {
+		const [, payloadB64] = token.split('.');
+		if (!payloadB64) return null;
+		return JSON.parse(atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'))) as JWTPayload;
+	} catch {
+		return null;
+	}
+}
+
+function getJwtProvider(payload: JWTPayload, env?: AuthEnv): { issuer: string; audience?: string; jwksUrl: string; claimsNamespace?: string } {
+	const auth0Config = getAuth0Config(env);
+	if (auth0Config && payload.iss === auth0Config.issuer) {
+		return {
+			issuer: auth0Config.issuer,
+			audience: auth0Config.clientId,
+			jwksUrl: auth0Config.jwksUrl,
+			claimsNamespace: auth0Config.claimsNamespace,
+		};
+	}
+
+	return {
+		issuer: SESSION_CONFIG.IDENTITY_ENDPOINT,
+		jwksUrl: `${SESSION_CONFIG.IDENTITY_ENDPOINT}/.well-known/jwks.json`,
+	};
+}
+
+function getVerificationAlgorithm(alg: string): AlgorithmIdentifier | RsaHashedImportParams | EcKeyImportParams {
+	if (alg === 'RS256') {
+		return { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' };
+	}
+
+	return { name: 'ECDSA', namedCurve: 'P-256' };
+}
+
+function getVerificationParams(alg: string): AlgorithmIdentifier | EcdsaParams {
+	if (alg === 'RS256') {
+		return { name: 'RSASSA-PKCS1-v1_5' };
+	}
+
+	return { name: 'ECDSA', hash: 'SHA-256' };
+}
+
+function extractUserFromPayload(payload: JWTPayload, env?: AuthEnv): User | null {
+	const auth0Config = getAuth0Config(env);
+	const namespace = auth0Config?.claimsNamespace;
+	const namespacePrefix = namespace ? `${namespace}/` : null;
+
+	const tierValue =
+		payload.tier ??
+		(namespacePrefix ? payload[`${namespacePrefix}tier`] : undefined);
+	const sourceValue =
+		payload.source ??
+		(namespacePrefix ? payload[`${namespacePrefix}source`] : undefined);
+
+	const tier: User['tier'] = tierValue === 'pro' || tierValue === 'agency' ? tierValue : 'free';
+	const source: User['source'] =
+		sourceValue === 'workway' ||
+		sourceValue === 'templates' ||
+		sourceValue === 'io' ||
+		sourceValue === 'space' ||
+		sourceValue === 'lms'
+			? sourceValue
+			: 'space';
+
+	if (typeof payload.email !== 'string' || !payload.email) {
+		return null;
+	}
+
+	return {
+		id: payload.sub,
+		email: payload.email,
+		tier,
+		source,
+	};
+}
 
 /**
  * Extract access token from a Request object
@@ -221,18 +300,28 @@ export async function validateToken(token: string, env?: AuthEnv): Promise<User 
 		const kid = header.kid;
 
 		// Verify algorithm
-		if (header.alg !== 'ES256') return null;
+		if (header.alg !== 'ES256' && header.alg !== 'RS256') return null;
+
+		const payload = parseJwtPayload(token);
+		if (!payload) return null;
+		const provider = getJwtProvider(payload, env);
+		if (payload.iss !== provider.issuer) return null;
+
+		const audience = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
+		if (provider.audience && !audience.includes(provider.audience)) return null;
 
 		// Get public key from JWKS (with KV caching)
-		const keys = await fetchJWKS(env);
+		const keys = await fetchJWKS(provider.jwksUrl, env);
 		const jwk = keys.find((k) => k.kid === kid);
 		if (!jwk) return null;
 
 		// Import public key
 		const publicKey = await crypto.subtle.importKey(
 			'jwk',
-			{ kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y },
-			{ name: 'ECDSA', namedCurve: 'P-256' },
+			header.alg === 'RS256'
+				? { kty: jwk.kty, n: jwk.n, e: jwk.e, alg: jwk.alg }
+				: { kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y, alg: jwk.alg },
+			getVerificationAlgorithm(header.alg),
 			true,
 			['verify']
 		);
@@ -242,7 +331,7 @@ export async function validateToken(token: string, env?: AuthEnv): Promise<User 
 		const signature = base64UrlDecode(signatureB64);
 
 		const valid = await crypto.subtle.verify(
-			{ name: 'ECDSA', hash: 'SHA-256' },
+			getVerificationParams(header.alg),
 			publicKey,
 			signature,
 			data
@@ -250,24 +339,11 @@ export async function validateToken(token: string, env?: AuthEnv): Promise<User 
 
 		if (!valid) return null;
 
-		// Parse and validate payload
-		const payload = JSON.parse(
-			atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'))
-		) as JWTPayload;
-
 		// Check expiration
 		const now = Math.floor(Date.now() / 1000);
 		if (payload.exp < now) return null;
 
-		// Check issuer
-		if (payload.iss !== SESSION_CONFIG.IDENTITY_ENDPOINT) return null;
-
-		return {
-			id: payload.sub,
-			email: payload.email,
-			tier: payload.tier,
-			source: payload.source,
-		};
+		return extractUserFromPayload(payload, env);
 	} catch {
 		return null;
 	}
@@ -381,13 +457,7 @@ export async function getOptionalUser(request: Request, env?: AuthEnv): Promise<
  * @param env - Optional environment with AUTH_CACHE KV namespace
  */
 export async function clearJWKSCache(env?: AuthEnv): Promise<void> {
-	moduleCache = null;
+	moduleCache.clear();
 
-	if (env?.AUTH_CACHE) {
-		try {
-			await env.AUTH_CACHE.delete(JWKS_KV_KEY);
-		} catch {
-			// Ignore delete failures
-		}
-	}
+	void env;
 }
