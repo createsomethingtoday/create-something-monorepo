@@ -9,7 +9,7 @@
 
 import type { Env, ErrorResponse, TokenResponse, UserResponse, JWTPayload, CrossDomainToken } from './types';
 import { hashPassword, verifyPassword, generateUUID, hashToken, generateSecureToken } from './services/crypto';
-import { generateTokens, refreshTokens, getJWKS, validateJWT, importPublicKey } from './services/tokens';
+import { createSignedToken, generateTokens, refreshTokens, getJWKS, validateJWT, importPublicKey } from './services/tokens';
 import {
 	type AuthorizationDecisionType,
 	type AuthorizationRequest,
@@ -440,6 +440,21 @@ const DEFAULT_MCP_SESSION_TTL_SECONDS = 86400;
 const MAX_MCP_SESSION_TTL_SECONDS = 604800;
 
 type McpToolMode = 'read_only' | 'read_write';
+type OauthCodeChallengeMethod = 'S256' | 'plain';
+
+interface OAuthAuthorizationCodeClaims extends JWTPayload {
+	kind: 'oauth_authorization_code';
+	client_id: string;
+	redirect_uri: string;
+	scope: string;
+	resource: string;
+	code_challenge?: string;
+	code_challenge_method?: OauthCodeChallengeMethod;
+	account_id?: string | null;
+	tenant_id?: string | null;
+	tool_mode?: McpToolMode;
+	toolkit_profile?: string[];
+}
 
 interface CreateMcpSessionBody {
 	tenant_id?: string;
@@ -495,6 +510,25 @@ interface AdminMcpAuditFeedBody {
 	search?: string;
 }
 
+interface OAuthTokenBody {
+	grant_type?: string;
+	code?: string;
+	redirect_uri?: string;
+	client_id?: string;
+	client_secret?: string;
+	code_verifier?: string;
+	resource?: string;
+}
+
+interface OAuthRegisterBody {
+	client_name?: string;
+	redirect_uris?: string[];
+	token_endpoint_auth_method?: string;
+	grant_types?: string[];
+	response_types?: string[];
+	scope?: string;
+}
+
 interface AgencyEntitlementDecision {
 	allowed: boolean;
 	reason?: string;
@@ -521,6 +555,9 @@ const POLICY_MCP_CREDENTIAL_DELIVERY_ID = 'policy.mcp-credential-delivery.v1';
 const POLICY_LEGACY_COMPAT_SUNSET_ID = 'policy.legacy-compat-sunset.v1';
 const POLICY_MCP_SESSION_SELF_SERVICE_ID = 'policy.mcp-session-self-service.v1';
 const POLICY_USER_BEARER_TOKEN_GOVERNANCE_ID = 'policy.user-bearer-token-governance.v1';
+const DEFAULT_OAUTH_RESOURCE = DEFAULT_MCP_HUB_URL;
+const OAUTH_AUTHORIZATION_CODE_TTL_SECONDS = 300;
+const OAUTH_MANAGED_BEARER_EXPIRES_IN = 31536000;
 const MIN_MCP_LEGACY_KEY_TTL_SECONDS = 3600;
 const DEFAULT_MCP_LEGACY_KEY_TTL_SECONDS = 7 * 24 * 60 * 60;
 const MAX_MCP_LEGACY_KEY_TTL_SECONDS = 30 * 24 * 60 * 60;
