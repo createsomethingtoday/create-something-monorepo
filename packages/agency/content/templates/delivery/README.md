@@ -13,18 +13,27 @@ Defines allowed actions, approval boundaries, escalation triggers, and runtime g
 3. `outcome_contract.md`
 Defines pilot scope, success criteria, ownership boundaries, fallback path, and rollout expectations.
 
+4. `golden-task-checks.md`
+Defines the must-pass scenarios that prove the workflow behaves correctly before release.
+
+5. `runbook.md`
+Defines operator procedures for approvals, exceptions, fallback, containment, and recovery.
+
 Recommended sequence:
 
 1. Complete `discovery-note-template.md`
 2. Complete `policy-os-proposal-input-template.md`
 3. Draft these three artifacts from the approved workflow map
-4. Add golden-task checks and runbook after artifact review
+4. Draft golden-task checks and runbook from the same workflow map
+5. Review the full artifact set before implementation
 
 Reference example:
 
 - `examples/exampleco-mcp_contract.yaml`
 - `examples/exampleco-agent_contract.yaml`
 - `examples/exampleco-outcome_contract.md`
+- `examples/exampleco-golden-task-checks.md`
+- `examples/exampleco-runbook.md`
 
 Important:
 

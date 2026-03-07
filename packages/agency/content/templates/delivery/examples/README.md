@@ -7,6 +7,8 @@ Current example:
 - `exampleco-mcp_contract.yaml`
 - `exampleco-agent_contract.yaml`
 - `exampleco-outcome_contract.md`
+- `exampleco-golden-task-checks.md`
+- `exampleco-runbook.md`
 
 Source:
 

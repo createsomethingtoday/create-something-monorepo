@@ -41,6 +41,8 @@
    - `../templates/delivery/mcp_contract.yaml`
    - `../templates/delivery/agent_contract.yaml`
    - `../templates/delivery/outcome_contract.md`
+   - `../templates/delivery/golden-task-checks.md`
+   - `../templates/delivery/runbook.md`
    - Purpose: convert workflow mapping outputs into implementation-ready artifact drafts.
 
 9. **Proposal input template (delivery handoff)**
