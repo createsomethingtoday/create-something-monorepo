@@ -804,6 +804,260 @@ async function handleAdminMintMcpSession(request: Request, env: Env): Promise<Re
 	});
 }
 
+async function handleAdminIssueMcpLongLivedToken(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+	const auth = await authenticateApiKeyForPermissions(request, env, ['mcp_long_lived_token_issue']);
+	if (!auth.ok) {
+		return json({ error: auth.error, message: auth.message, status: auth.status }, auth.status);
+	}
+
+	const body = await parseJSON<AdminIssueMcpLongLivedTokenBody>(request);
+	if (!body) {
+		return json({ error: 'invalid_request', message: 'Invalid JSON', status: 400 }, 400);
+	}
+
+	const authSubject = normalizeOptionalId(body.auth_subject);
+	if (!authSubject) {
+		return json({ error: 'invalid_request', message: 'auth_subject is required', status: 400 }, 400);
+	}
+
+	const actor = normalizeActor(body.actor) ?? auth.actor;
+	const existing = await findMcpLongLivedTokenByAuthSubject(db, authSubject);
+	const tenantId = normalizeTenantId(body.tenant_id ?? existing?.tenant_id ?? authSubject);
+	const toolMode = normalizeToolMode(body.tool_mode ?? (existing?.tool_mode as McpToolMode | undefined));
+	const toolkitProfile =
+		body.toolkit_profile !== undefined
+			? normalizeToolkitProfile(body.toolkit_profile)
+			: existing
+				? parseStringArray(existing.toolkit_profile_json)
+				: [];
+	const allowedToolPrefixes = buildAllowedToolPrefixes(toolkitProfile);
+	const accountId = normalizeAccountId(body.account_id) ?? existing?.account_id ?? `acct_${generateUUID().replace(/-/g, '')}`;
+	const metadata = normalizeMetadata(body.metadata);
+
+	const policyDecision = await evaluatePartnerPolicyDecision(db, env, {
+		policyId: POLICY_USER_BEARER_TOKEN_GOVERNANCE_ID,
+		actionName: 'issue_user_bearer_token',
+		accountId,
+		actor,
+		request: {
+			actor: {
+				accountId,
+				tenantId,
+				userId: authSubject,
+				actorId: actor,
+				role: 'operator',
+				toolMode,
+			},
+			action: {
+				name: 'issue_user_bearer_token',
+				writeIntent: true,
+				humanReviewStep: true,
+				introspectionOk: true,
+			},
+			resource: {
+				kind: 'managed_bearer_token',
+				id: accountId,
+				toolName: 'mcp_long_lived_token_issue',
+				accessType: 'auth_admin',
+				metadata: {
+					auth_subject: authSubject,
+					tool_mode: toolMode,
+					toolkit_profile: toolkitProfile,
+				},
+			},
+		},
+		metadata: {
+			auth_subject: authSubject,
+			auth_email: body.auth_email ?? existing?.auth_email ?? null,
+			tenant_id: tenantId,
+			account_id: accountId,
+			tool_mode: toolMode,
+			toolkit_profile: toolkitProfile,
+			...metadata,
+		},
+	});
+	if (policyDecision.decision !== 'allow') {
+		return json(
+			{
+				error: 'policy_denied',
+				message: policyDecision.reason,
+				status: policyDecisionHttpStatus(policyDecision.decision),
+				policy: policyDecision,
+			},
+			policyDecisionHttpStatus(policyDecision.decision),
+		);
+	}
+
+	const tokenId = `mlt_${generateUUID().replace(/-/g, '')}`;
+	const rawToken = `mcpu_${generateSecureToken(48)}`;
+	const tokenHash = await hashToken(rawToken);
+	const tokenPrefix = rawToken.slice(0, 14);
+
+	await upsertMcpLongLivedToken(db, {
+		id: tokenId,
+		auth_subject: authSubject,
+		auth_email: normalizeOptionalId(body.auth_email) ?? existing?.auth_email ?? null,
+		tenant_id: tenantId,
+		account_id: accountId,
+		tool_mode: toolMode,
+		toolkit_profile_json: JSON.stringify(toolkitProfile),
+		allowed_tool_prefixes_json: JSON.stringify(allowedToolPrefixes),
+		token_hash: tokenHash,
+		token_prefix: tokenPrefix,
+		issued_by: actor,
+		metadata_json: JSON.stringify(metadata),
+	});
+
+	await createMcpAuthEvent(db, {
+		id: generateUUID(),
+		session_id: null,
+		user_id: authSubject,
+		event_type: existing ? 'mcp_long_lived_token_regenerated' : 'mcp_long_lived_token_issued',
+		event_data_json: JSON.stringify({
+			token_id: tokenId,
+			account_id: accountId,
+			tenant_id: tenantId,
+			auth_subject: authSubject,
+			token_prefix: tokenPrefix,
+			policy: policyDecision,
+		}),
+	});
+
+	return json({
+		token_id: tokenId,
+		token: rawToken,
+		token_prefix: tokenPrefix,
+		account_id: accountId,
+		tenant_id: tenantId,
+		auth_subject: authSubject,
+		auth_email: normalizeOptionalId(body.auth_email) ?? existing?.auth_email ?? null,
+		tool_mode: toolMode,
+		toolkit_profile: toolkitProfile,
+		allowed_tool_prefixes: allowedToolPrefixes,
+		policy: policyDecision,
+	});
+}
+
+async function handleAdminGetMcpLongLivedToken(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+	const auth = await authenticateApiKeyForPermissions(request, env, ['mcp_long_lived_token_issue']);
+	if (!auth.ok) {
+		return json({ error: auth.error, message: auth.message, status: auth.status }, auth.status);
+	}
+
+	const body = await parseJSON<AdminGetMcpLongLivedTokenBody>(request);
+	const authSubject = normalizeOptionalId(body?.auth_subject);
+	if (!authSubject) {
+		return json({ error: 'invalid_request', message: 'auth_subject is required', status: 400 }, 400);
+	}
+
+	const token = await findMcpLongLivedTokenByAuthSubject(db, authSubject);
+	if (!token) {
+		return json({ token: null });
+	}
+
+	return json({
+		token: {
+			id: token.id,
+			auth_subject: token.auth_subject,
+			auth_email: token.auth_email,
+			account_id: token.account_id,
+			tenant_id: token.tenant_id,
+			token_prefix: token.token_prefix,
+			tool_mode: token.tool_mode,
+			toolkit_profile: parseStringArray(token.toolkit_profile_json),
+			allowed_tool_prefixes: parseStringArray(token.allowed_tool_prefixes_json),
+			last_used_at: token.last_used_at,
+			revoked_at: token.revoked_at,
+			created_at: token.created_at,
+			updated_at: token.updated_at,
+			active: token.revoked_at === null,
+		},
+	});
+}
+
+async function handleRevokeMcpLongLivedToken(request: Request, env: Env, tokenId: string): Promise<Response> {
+	const db = env.DB;
+	const auth = await authenticateApiKeyForPermissions(request, env, ['mcp_long_lived_token_revoke']);
+	if (!auth.ok) {
+		return json({ error: auth.error, message: auth.message, status: auth.status }, auth.status);
+	}
+
+	const existing = await findMcpLongLivedTokenById(db, tokenId);
+	if (!existing) {
+		return json({ error: 'not_found', message: 'Managed bearer token not found', status: 404 }, 404);
+	}
+
+	const actor = auth.actor;
+	const policyDecision = await evaluatePartnerPolicyDecision(db, env, {
+		policyId: POLICY_USER_BEARER_TOKEN_GOVERNANCE_ID,
+		actionName: 'revoke_user_bearer_token',
+		accountId: existing.account_id,
+		actor,
+		request: {
+			actor: {
+				accountId: existing.account_id,
+				tenantId: existing.tenant_id,
+				userId: existing.auth_subject,
+				actorId: actor,
+				role: 'operator',
+				toolMode: existing.tool_mode,
+			},
+			action: {
+				name: 'revoke_user_bearer_token',
+				writeIntent: true,
+				humanReviewStep: true,
+				introspectionOk: true,
+			},
+			resource: {
+				kind: 'managed_bearer_token',
+				id: existing.id,
+				toolName: 'mcp_long_lived_token_revoke',
+				accessType: 'auth_admin',
+			},
+		},
+		metadata: {
+			auth_subject: existing.auth_subject,
+			account_id: existing.account_id,
+			tenant_id: existing.tenant_id,
+		},
+	});
+	if (policyDecision.decision !== 'allow') {
+		return json(
+			{
+				error: 'policy_denied',
+				message: policyDecision.reason,
+				status: policyDecisionHttpStatus(policyDecision.decision),
+				policy: policyDecision,
+			},
+			policyDecisionHttpStatus(policyDecision.decision),
+		);
+	}
+
+	const revoked = await revokeMcpLongLivedToken(db, tokenId);
+	await createMcpAuthEvent(db, {
+		id: generateUUID(),
+		session_id: null,
+		user_id: existing.auth_subject,
+		event_type: 'mcp_long_lived_token_revoked',
+		event_data_json: JSON.stringify({
+			token_id: tokenId,
+			account_id: existing.account_id,
+			tenant_id: existing.tenant_id,
+			revoked,
+			policy: policyDecision,
+		}),
+	});
+
+	return json({
+		success: revoked,
+		token_id: tokenId,
+		revoked,
+		policy: policyDecision,
+	});
+}
+
 async function handleIssueMcpLegacyKey(request: Request, env: Env): Promise<Response> {
 	const db = env.DB;
 	const auth = await authenticateApiKeyForPermissions(request, env, ['mcp_legacy_key_issue']);
@@ -1138,7 +1392,65 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 
 	const legacyKey = await findMcpLegacyKeyByTokenHash(db, tokenHash);
 	if (!legacyKey) {
-		return json({ valid: false, reason: 'token_not_found' });
+		const longLivedToken = await findMcpLongLivedTokenByTokenHash(db, tokenHash);
+		if (!longLivedToken) {
+			return json({ valid: false, reason: 'token_not_found' });
+		}
+
+		const revoked = Boolean(longLivedToken.revoked_at);
+		if (revoked) {
+			await createMcpAuthEvent(db, {
+				id: generateUUID(),
+				session_id: null,
+				user_id: longLivedToken.auth_subject,
+				event_type: 'mcp_long_lived_token_resolve_rejected',
+				event_data_json: JSON.stringify({
+					token_id: longLivedToken.id,
+					account_id: longLivedToken.account_id,
+					tenant_id: longLivedToken.tenant_id,
+					reason: 'revoked',
+					revoked_at: longLivedToken.revoked_at,
+				}),
+			});
+			return json({
+				valid: false,
+				reason: 'revoked',
+				token_id: longLivedToken.id,
+				account_id: longLivedToken.account_id,
+				tenant_id: longLivedToken.tenant_id,
+				revoked_at: longLivedToken.revoked_at,
+			});
+		}
+
+		await markMcpLongLivedTokenUsed(db, longLivedToken.id);
+		await createMcpAuthEvent(db, {
+			id: generateUUID(),
+			session_id: null,
+			user_id: longLivedToken.auth_subject,
+			event_type: 'mcp_long_lived_token_resolved',
+			event_data_json: JSON.stringify({
+				token_id: longLivedToken.id,
+				account_id: longLivedToken.account_id,
+				tenant_id: longLivedToken.tenant_id,
+				token_prefix: longLivedToken.token_prefix,
+			}),
+		});
+
+		return json({
+			valid: true,
+			session_id: null,
+			account_id: longLivedToken.account_id,
+			tenant_id: longLivedToken.tenant_id,
+			user_id: longLivedToken.auth_subject,
+			host: 'agency_bearer',
+			tool_mode: longLivedToken.tool_mode,
+			expires_at: null,
+			allowed_tool_prefixes: parseStringArray(longLivedToken.allowed_tool_prefixes_json),
+			toolkit_profile: parseStringArray(longLivedToken.toolkit_profile_json),
+			allow_pending_oauth_approvals: false,
+			long_lived_token_id: longLivedToken.id,
+			auth_mode: 'managed_bearer',
+		});
 	}
 
 	const now = Date.now();
