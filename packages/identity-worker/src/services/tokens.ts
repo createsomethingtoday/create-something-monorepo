@@ -46,7 +46,7 @@ export async function generateTokens(
 		exp: now + ACCESS_TOKEN_TTL,
 	};
 
-	const accessToken = await signJWT(payload, signingKey);
+	const accessToken = await signJWT(payload as unknown as Record<string, unknown>, signingKey);
 
 	// Generate refresh token (opaque)
 	const refreshToken = generateSecureToken(48);
@@ -74,7 +74,7 @@ export async function createSignedToken(
 	payload: JWTPayload & Record<string, unknown>
 ): Promise<string> {
 	const signingKey = await getOrCreateSigningKey(db);
-	return signJWT(payload, signingKey);
+	return signJWT(payload as unknown as Record<string, unknown>, signingKey);
 }
 
 /**
@@ -128,7 +128,7 @@ export async function refreshTokens(
 		exp: now + ACCESS_TOKEN_TTL,
 	};
 
-	const accessToken = await signJWT(payload, signingKey);
+	const accessToken = await signJWT(payload as unknown as Record<string, unknown>, signingKey);
 
 	// New refresh token in same family
 	const newRefreshToken = generateSecureToken(48);

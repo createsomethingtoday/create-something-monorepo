@@ -456,6 +456,7 @@ const MAX_MCP_SESSION_TTL_SECONDS = 604800;
 
 type McpToolMode = 'read_only' | 'read_write';
 type OauthCodeChallengeMethod = 'S256' | 'plain';
+type FormEntryValue = string | File;
 
 interface OAuthAuthorizationCodeClaims extends JWTPayload {
 	kind: 'oauth_authorization_code';
@@ -1256,7 +1257,7 @@ async function issueManagedBearerToken(
 		},
 		metadata: {
 			auth_subject: input.authSubject,
-			auth_email: normalizeOptionalId(input.authEmail) ?? existing?.auth_email ?? null,
+			auth_email: normalizeNullableString(input.authEmail) ?? existing?.auth_email ?? null,
 			tenant_id: tenantId,
 			account_id: accountId,
 			tool_mode: toolMode,
@@ -1283,7 +1284,7 @@ async function issueManagedBearerToken(
 	await upsertMcpLongLivedToken(db, {
 		id: tokenId,
 		auth_subject: input.authSubject,
-		auth_email: normalizeOptionalId(input.authEmail) ?? existing?.auth_email ?? null,
+		auth_email: normalizeNullableString(input.authEmail) ?? existing?.auth_email ?? null,
 		tenant_id: tenantId,
 		account_id: accountId,
 		tool_mode: toolMode,
@@ -1319,7 +1320,7 @@ async function issueManagedBearerToken(
 		accountId,
 		tenantId,
 		authSubject: input.authSubject,
-		authEmail: normalizeOptionalId(input.authEmail) ?? existing?.auth_email ?? null,
+		authEmail: normalizeNullableString(input.authEmail) ?? existing?.auth_email ?? null,
 		toolMode,
 		toolkitProfile,
 		allowedToolPrefixes,
@@ -3361,12 +3362,12 @@ function normalizeOAuthResource(raw: string): string {
 	return isValidHttpUrl(raw) ? raw : DEFAULT_OAUTH_RESOURCE;
 }
 
-function normalizeToolkitProfileString(raw: FormDataEntryValue | null): string[] {
+function normalizeToolkitProfileString(raw: FormEntryValue | null): string[] {
 	if (typeof raw !== 'string' || !raw.trim()) return [];
 	return raw.split(',').map((value) => value.trim()).filter(Boolean);
 }
 
-function normalizeNullableId(raw: FormDataEntryValue | null): string | null {
+function normalizeNullableId(raw: FormEntryValue | null): string | null {
 	if (typeof raw !== 'string') return null;
 	return normalizeOptionalId(raw) ?? null;
 }
@@ -3376,7 +3377,7 @@ function normalizeNullableString(raw: string | null | undefined): string | null 
 	return value ? value : null;
 }
 
-function normalizeToolModeNullable(raw: FormDataEntryValue | null): McpToolMode | undefined {
+function normalizeToolModeNullable(raw: FormEntryValue | null): McpToolMode | undefined {
 	if (typeof raw !== 'string') return undefined;
 	if (raw === 'read_only' || raw === 'read_write') return raw;
 	return undefined;
