@@ -261,7 +261,6 @@ export class AirtableClient {
   async listAssetQueue(limit = 100): Promise<TemplateReviewQueueItem[]> {
     const records = await this.listRecords({
       tableId: TABLE_IDS.assets,
-      fieldNames: Object.values(CONFIRMED_ASSET_FIELDS),
       limit,
       filterByFormula: `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
     });
