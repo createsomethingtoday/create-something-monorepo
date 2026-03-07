@@ -215,12 +215,13 @@
   <div class="hero-container">
     <div class="hero-content">
       <BlurFade delay={0}>
-        <h1 class="hero-title">Production-safe automation for teams that cannot afford brittle workflows.</h1>
+        <h1 class="hero-title">Production-grade automation for connected systems.</h1>
       </BlurFade>
       <BlurFade delay={0.2}>
         <p class="hero-detail">
-          I help CTOs and engineering leaders reduce integration drag, control automation risk, and
-          ship reliable cross-system workflows.
+          I help CTOs and engineering leaders orchestrate the tools their teams already rely on,
+          add control layers around AI execution, and ship cross-system workflows that stay
+          reliable in production.
         </p>
       </BlurFade>
       <BlurFade delay={0.25}>
@@ -689,6 +690,7 @@
     font-size: clamp(2.75rem, 5vw + 1.5rem, 5rem);
     font-weight: var(--font-bold);
     color: var(--color-fg-primary);
+    max-width: 11ch;
     margin-bottom: var(--space-6, 2rem);
     line-height: 1.15;
     letter-spacing: var(--tracking-tighter, -0.025em);

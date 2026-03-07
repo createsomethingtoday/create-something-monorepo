@@ -125,14 +125,14 @@
       <p class="hero-eyebrow">How I Work</p>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <h1 class="hero-title">Production-safe automation for teams that cannot afford brittle workflows.</h1>
+      <h1 class="hero-title">Production-grade automation for connected systems.</h1>
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-subtitle">
-        We help CTOs and engineering leaders reduce integration drag, control automation risk, and
-        ship reliable cross-system workflows. Start with Workflow Infrastructure. Add the
-        Reliability and Control Layer when failure cost rises. Escalate to Enterprise Extension for
-        high-stakes operations.
+        We help CTOs and engineering leaders orchestrate the tools their teams already rely on,
+        add control layers around AI execution, and keep cross-system work reliable in production.
+        Start with Workflow Infrastructure. Add the Reliability and Control Layer when failure cost
+        rises. Escalate to Enterprise Extension for high-stakes operations.
       </p>
     </BlurFade>
   </div>
@@ -427,7 +427,10 @@
     font-size: var(--text-display);
     font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
+    max-width: 11ch;
     margin-bottom: var(--space-5, 1.5rem);
+    margin-left: auto;
+    margin-right: auto;
     line-height: 1.1;
     letter-spacing: var(--tracking-tighter, -0.025em);
   }
