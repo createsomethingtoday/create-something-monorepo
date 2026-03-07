@@ -358,14 +358,7 @@ export function createSessionManager(cookies: CookiesAPI, options: SessionManage
 			const payload = decodeJWT(session.accessToken);
 
 			return {
-				user: payload
-					? {
-							id: payload.sub,
-							email: payload.email,
-							tier: payload.tier,
-							source: payload.source,
-						}
-					: null,
+				user: payload ? getUserFromToken(session.accessToken) : null,
 				expiresAt: payload?.exp ?? null,
 				isAuthenticated: !!payload && !isTokenExpired(session.accessToken),
 			};
@@ -677,7 +670,7 @@ export async function handleLogout(
 		const isProduction = platform?.env?.ENVIRONMENT === 'production';
 		const url = new URL(request.url);
 		const domain = getDomainFromHostname(url.hostname, isProduction);
-		const authProvider = getAuth0Config(platform?.env as Record<string, string | undefined> | undefined);
+			const authProvider = getAuth0Config(platform?.env as Record<string, string | undefined> | undefined) ?? undefined;
 
 		// Get refresh token to revoke at Identity Worker
 		const refreshToken = getRefreshTokenFromRequest(request);

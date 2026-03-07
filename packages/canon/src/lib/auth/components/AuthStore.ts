@@ -14,7 +14,7 @@ import {
 	SESSION_CONFIG,
 	type User,
 	type TokenResponse,
-	decodeJWT,
+	getUserFromToken,
 	isTokenExpired,
 	refreshTokens,
 	revokeSession,
@@ -145,14 +145,7 @@ export function createAuthStore(config: AuthStoreConfig = {}) {
 	}
 
 	function extractUser(accessToken: string): User | null {
-		const payload = decodeJWT(accessToken);
-		if (!payload) return null;
-		return {
-			id: payload.sub,
-			email: payload.email,
-			tier: payload.tier,
-			source: payload.source,
-		};
+		return getUserFromToken(accessToken);
 	}
 
 	// ==========================================================================
