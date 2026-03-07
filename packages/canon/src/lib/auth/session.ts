@@ -12,6 +12,7 @@ import {
 	getSessionCookies,
 	clearSessionCookies,
 	getRefreshTokenFromRequest,
+	COOKIE_CONFIG,
 	type CookieOptions,
 } from './cookies.js';
 
@@ -582,9 +583,12 @@ export function createAuthHooks(config: AuthHooksConfig = {}): Handle {
 
 	return async ({ event, resolve }) => {
 		const { cookies, url, locals } = event;
+		const platformEnv = (
+			event as { platform?: { env?: Record<string, string | undefined> } }
+		).platform?.env;
 
 		// Get session and attempt to get user (with auto-refresh)
-		const authProvider = getAuth0Config((event.platform?.env ?? undefined) as Record<string, string | undefined> | undefined);
+		const authProvider = getAuth0Config(platformEnv);
 		const sessionManager = createSessionManager(cookies, {
 			isProduction,
 			domain,

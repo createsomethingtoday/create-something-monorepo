@@ -1,15 +1,7 @@
 import type { Cookies } from '@sveltejs/kit';
+import type { Auth0ProviderConfig } from './types.js';
 
-export interface Auth0Config {
-	domain: string;
-	clientId: string;
-	clientSecret?: string;
-	audience?: string;
-	scope: string;
-	issuer: string;
-	jwksUrl: string;
-	claimsNamespace: string;
-}
+export type Auth0Config = Omit<Auth0ProviderConfig, 'type'>;
 
 export interface Auth0EnvLike {
 	AUTH0_DOMAIN?: string;
@@ -42,7 +34,7 @@ function normalizeDomain(value: string): string {
 	return value.replace(/^https?:\/\//, '').replace(/\/+$/, '');
 }
 
-export function getAuth0Config(env?: Auth0EnvLike | null): Auth0Config | null {
+export function getAuth0Config(env?: Auth0EnvLike | null): Auth0ProviderConfig | null {
 	if (!env?.AUTH0_DOMAIN || !env.AUTH0_CLIENT_ID) return null;
 
 	const domain = normalizeDomain(env.AUTH0_DOMAIN);
@@ -50,6 +42,7 @@ export function getAuth0Config(env?: Auth0EnvLike | null): Auth0Config | null {
 	const jwksUrl = env.AUTH0_JWKS_URL ?? `${issuer}/.well-known/jwks.json`;
 
 	return {
+		type: 'auth0',
 		domain,
 		clientId: env.AUTH0_CLIENT_ID,
 		clientSecret: env.AUTH0_CLIENT_SECRET,

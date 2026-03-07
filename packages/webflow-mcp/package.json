@@ -8,6 +8,7 @@
     "webflow-mcp": "dist/index.js"
   },
   "scripts": {
+    "prebuild": "pnpm --filter @create-something/observability build",
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
