@@ -291,6 +291,7 @@ const DOWNSTREAM_BEARER_ENV_FALLBACK: Record<string, string> = {
 interface Env {
   HUB_INSTANCE_ID?: string;
   HUB_API_TOKEN?: string;
+  OAUTH_ISSUER_URL?: string;
   HUB_IDENTITY_MODE?: string;
   HUB_SESSION_RESOLVE_URL?: string;
   HUB_SESSION_RESOLVE_TOKEN?: string;
@@ -703,7 +704,15 @@ export default {
     }
 
     if (isOAuthDiscoveryPath(url.pathname)) {
-      return withCors(new Response('Not found', { status: 404 }));
+      return withCors(
+        new Response(JSON.stringify(buildHubOAuthAuthorizationServerMetadata(url, env)), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'public, max-age=300',
+          },
+        }),
+      );
     }
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
@@ -806,6 +815,30 @@ function isOAuthDiscoveryPath(pathname: string): boolean {
     || pathname === '/mcp/.well-known/oauth-authorization-server'
     || pathname === '/mcp/.well-known/oauth-authorization-server/mcp'
   );
+}
+
+export function buildHubOAuthAuthorizationServerMetadata(url: URL, env: Env): Record<string, unknown> {
+  const issuer = normalizeHubOAuthIssuer(readEnvString(env, 'OAUTH_ISSUER_URL') ?? 'https://id.createsomething.space');
+  const resource = `${url.origin}/mcp`;
+  return {
+    issuer,
+    authorization_endpoint: `${issuer}/oauth/authorize`,
+    token_endpoint: `${issuer}/oauth/token`,
+    registration_endpoint: `${issuer}/oauth/register`,
+    userinfo_endpoint: `${issuer}/oauth/userinfo`,
+    jwks_uri: `${issuer}/.well-known/jwks.json`,
+    scopes_supported: ['openid', 'profile', 'email', 'mcp'],
+    response_types_supported: ['code'],
+    grant_types_supported: ['authorization_code'],
+    token_endpoint_auth_methods_supported: ['none', 'client_secret_post'],
+    code_challenge_methods_supported: ['S256', 'plain'],
+    resource,
+    mcp_resource: resource,
+  };
+}
+
+function normalizeHubOAuthIssuer(value: string): string {
+  return value.replace(/\/+$/, '');
 }
 
 function ensureStreamableHttpAcceptHeader(request: Request): Request {
