@@ -122,30 +122,6 @@ bridge_api_key_env_var_for_team() {
   echo "CS_HUB_${1}_NOTION_BRIDGE_API_KEY"
 }
 
-load_secrets_from_doppler() {
-  echo "loading secrets from Doppler project=${DOPPLER_PROJECT} config=${DOPPLER_CONFIG}"
-  local payload
-  payload="$(
-    doppler secrets download \
-      --no-file \
-      --format json \
-      --project "$DOPPLER_PROJECT" \
-      --config "$DOPPLER_CONFIG"
-  )"
-  while IFS=$'\t' read -r key value; do
-    export "${key}=${value}"
-  done < <(
-    printf '%s' "$payload" | jq -r '
-      if type == "array" then
-        .[] | select(.key != null) | [.key, (.value | tostring)]
-      else
-        to_entries[] | [.key, (.value | tostring)]
-      end
-      | @tsv
-    '
-  )
-}
-
 load_secrets_from_infisical() {
   local token="${INFISICAL_TOKEN:-}"
 

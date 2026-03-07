@@ -211,27 +211,6 @@ login_infisical_if_needed() {
   fi
 }
 
-set_doppler_secret() {
-  local key="$1"
-  local value="$2"
-  if [[ "$DRY_RUN" == "true" ]]; then
-    echo "[dry-run] doppler secrets set ${key}=<redacted>"
-    return 0
-  fi
-  doppler secrets set \
-    --project "$DOPPLER_PROJECT" \
-    --config "$DOPPLER_CONFIG" \
-    "${key}=${value}" >/dev/null
-}
-
-get_doppler_secret() {
-  local key="$1"
-  doppler secrets get \
-    --project "$DOPPLER_PROJECT" \
-    --config "$DOPPLER_CONFIG" \
-    --plain "$key"
-}
-
 set_infisical_secret() {
   local key="$1"
   local value="$2"
@@ -291,18 +270,6 @@ get_vault_secret() {
   esac
 }
 
-run_doppler_command() {
-  local cmd="$1"
-  if [[ "$DRY_RUN" == "true" ]]; then
-    echo "[dry-run] doppler run --project ${DOPPLER_PROJECT} --config ${DOPPLER_CONFIG} --command \"${cmd}\""
-    return 0
-  fi
-  doppler run \
-    --project "$DOPPLER_PROJECT" \
-    --config "$DOPPLER_CONFIG" \
-    --command "$cmd"
-}
-
 run_infisical_command() {
   local cmd="$1"
   if [[ "$DRY_RUN" == "true" ]]; then
@@ -341,14 +308,6 @@ run_vault_command() {
     infisical) run_infisical_command "$cmd" ;;
     env) run_env_command "$cmd" ;;
   esac
-}
-
-doppler_secret_exists() {
-  local key="$1"
-  doppler secrets get \
-    --project "$DOPPLER_PROJECT" \
-    --config "$DOPPLER_CONFIG" \
-    --plain "$key" >/dev/null 2>&1
 }
 
 infisical_secret_exists() {
