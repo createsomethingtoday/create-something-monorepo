@@ -8,6 +8,8 @@ import {
   isTemplateLikeAsset,
 } from './schema.js';
 
+const VERSION_ASSET_ID_ROLLUP_FIELD_ID = 'fldknoYakli2sqznT';
+
 export class AirtableClientError extends Error {
   code: string;
   status?: number;
@@ -274,15 +276,15 @@ export class AirtableClient {
   }
 
   async listVersionsForAsset(assetId: string, limit = 100): Promise<TemplateReviewVersion[]> {
-    const formula = `{${CONFIRMED_VERSION_FIELDS.assetId}} = '${escapeFormulaValue(assetId)}'`;
+    const formula = `{${VERSION_ASSET_ID_ROLLUP_FIELD_ID}} = '${escapeFormulaValue(assetId)}'`;
     const records = await this.listRecords({
       tableId: TABLE_IDS.assetVersions,
       limit,
       filterByFormula: formula,
-      sortField: CONFIRMED_VERSION_FIELDS.versionNumber,
-      sortDirection: 'desc',
     });
-    return records.map((record) => mapVersion(record));
+    return records
+      .map((record) => mapVersion(record))
+      .sort((a, b) => (b.versionNumber ?? 0) - (a.versionNumber ?? 0));
   }
 
   async getVersionById(versionId: string): Promise<TemplateReviewVersion | null> {
