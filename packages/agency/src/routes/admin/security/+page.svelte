@@ -61,6 +61,7 @@
 				<a href="/admin/security/contracts">Contracts</a>
 				<a href="/admin/security/commercial">Commercial</a>
 				<a href="/admin/security/partners">Partners</a>
+				<a href="/admin/security/audit">Audit</a>
 			</nav>
 		</header>
 
@@ -107,6 +108,10 @@
 			<a href="/admin/security/partners" class="action-card">
 				<h2>Partner Mappings</h2>
 				<p>Inspect partner client status, Auth0 subject mapping, workspace account mapping, and required toolkits.</p>
+			</a>
+			<a href="/admin/security/audit" class="action-card">
+				<h2>Audit Explorer</h2>
+				<p>Inspect partner delivery artifacts, identity auth events, and policy decisions from the broker path.</p>
 			</a>
 		</section>
 
