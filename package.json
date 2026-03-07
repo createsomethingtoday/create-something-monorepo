@@ -118,6 +118,7 @@
     "deploy:three-six-zero-notion-mcp": "cd packages/halfdozen-notion-mcp/worker && pnpm exec wrangler deploy --config wrangler.three-six-zero.toml",
     "agency:auth0:seed": "bash scripts/agency-auth0-seed-infisical.sh",
     "agency:auth0:sync": "bash scripts/agency-pages-sync-auth0-from-infisical.sh",
+    "auth0:export": "bash scripts/auth0-export.sh",
     "loom:migrate:export": "node scripts/loom/export-local-snapshot.mjs",
     "loom:migrate:import": "node scripts/loom/import-remote-snapshot.mjs",
     "loom:migrate:validate": "node scripts/loom/validate-remote-cutover.mjs"

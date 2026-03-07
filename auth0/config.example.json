@@ -1,0 +1,9 @@
+{
+  "AUTH0_DOMAIN": "your-tenant.us.auth0.com",
+  "AUTH0_CLIENT_ID": "your-machine-to-machine-client-id",
+  "AUTH0_CLIENT_SECRET": "your-machine-to-machine-client-secret",
+  "AUTH0_ALLOW_DELETE": false,
+  "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
+    "AUTH0_DOMAIN": "your-tenant.us.auth0.com"
+  }
+}

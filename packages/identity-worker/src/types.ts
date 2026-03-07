@@ -221,6 +221,25 @@ export interface McpLegacyKey {
 	updated_at: string;
 }
 
+export interface McpLongLivedToken {
+	id: string;
+	auth_subject: string;
+	auth_email: string | null;
+	tenant_id: string;
+	account_id: string;
+	tool_mode: 'read_only' | 'read_write';
+	toolkit_profile_json: string;
+	allowed_tool_prefixes_json: string;
+	token_hash: string;
+	token_prefix: string;
+	issued_by: string;
+	metadata_json: string;
+	last_used_at: string | null;
+	revoked_at: string | null;
+	created_at: string;
+	updated_at: string;
+}
+
 export interface McpPolicyRollout {
 	policy_id: string;
 	mode: 'legacy_enforce' | 'shadow' | 'polar_enforce';

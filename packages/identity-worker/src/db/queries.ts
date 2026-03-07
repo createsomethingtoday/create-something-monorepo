@@ -15,6 +15,7 @@ import type {
 	McpSession,
 	McpSessionScope,
 	McpLegacyKey,
+	McpLongLivedToken,
 	McpPolicyRollout,
 	McpPolicyEvent,
 } from '../types';
