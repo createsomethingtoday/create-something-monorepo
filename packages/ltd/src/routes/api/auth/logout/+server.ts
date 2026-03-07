@@ -7,7 +7,9 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 		cookies,
 		platform
 			? {
-					env: platform.env as Record<string, unknown> & { ENVIRONMENT?: string | undefined }
+					env: platform.env as unknown as Record<string, unknown> & {
+						ENVIRONMENT?: string | undefined;
+					}
 				}
 			: undefined
 	);

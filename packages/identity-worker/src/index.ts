@@ -107,6 +107,21 @@ async function route(request: Request, env: Env, method: string, path: string): 
 		const jwks = await getJWKS(env.DB);
 		return json(jwks, 200, { 'Cache-Control': 'public, max-age=3600' });
 	}
+	if (path === '/.well-known/oauth-authorization-server' && method === 'GET') {
+		return json(buildOAuthAuthorizationServerMetadata(new URL(request.url), env), 200, {
+			'Cache-Control': 'public, max-age=300',
+		});
+	}
+	if (path === '/.well-known/openid-configuration' && method === 'GET') {
+		return json(buildOpenIdConfigurationMetadata(new URL(request.url), env), 200, {
+			'Cache-Control': 'public, max-age=300',
+		});
+	}
+	if (path === '/oauth/register' && method === 'POST') return handleOAuthRegister(request, env);
+	if (path === '/oauth/authorize' && method === 'GET') return handleOAuthAuthorizePage(request, env);
+	if (path === '/oauth/authorize' && method === 'POST') return handleOAuthAuthorize(request, env);
+	if (path === '/oauth/token' && method === 'POST') return handleOAuthToken(request, env);
+	if (path === '/oauth/userinfo' && method === 'GET') return handleOAuthUserInfo(request, env);
 
 	// Auth endpoints
 	if (path === '/v1/auth/signup' && method === 'POST') return handleSignup(request, env);
