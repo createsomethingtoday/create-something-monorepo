@@ -16,7 +16,12 @@ const config = {
 					// Avoid _routes.json exclude overflow on Pages sites with many prerendered paths.
 					exclude: []
 				}
-			})
+			}),
+			alias: {
+				// Resolve workspace packages from source so app builds do not depend on generated dist files.
+				'@create-something/mcp-authz': '../mcp-authz/src/index.ts',
+				'@create-something/policy-os-engine': '../policy-os-engine/src/index.ts'
+			}
 		}
 	};
 
