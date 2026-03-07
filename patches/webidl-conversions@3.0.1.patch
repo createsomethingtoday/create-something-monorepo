@@ -1,0 +1,15 @@
+diff --git a/lib/index.js b/lib/index.js
+index 1d5e4ecf7ea23555217352218f86d7d7904f9e40..6b39cc0f0bbddfa36c8cb916ba7d100ad4ea45f6 100644
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -64,7 +64,7 @@ function createNumberConversion(bitLength, typeOpts) {
+         if (!typeOpts.unsigned && x >= moduloBound) {
+             return x - moduloVal;
+         } else if (typeOpts.unsigned) {
+             if (x < 0) {
+               x += moduloVal;
+-            } else if (x === -0) { // don't return negative zero
++            } else if (Object.is(x, -0)) { // don't return negative zero
+               return 0;
+             }
+         }

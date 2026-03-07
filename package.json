@@ -148,6 +148,9 @@
     "onlyBuiltDependencies": [
       "esbuild"
     ],
+    "patchedDependencies": {
+      "webidl-conversions@3.0.1": "patches/webidl-conversions@3.0.1.patch"
+    },
     "overrides": {
       "undici": ">=7.18.2",
       "@types/node": "24.10.9",
