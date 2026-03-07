@@ -207,6 +207,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
       review_checklist: z.unknown().optional(),
       publishing_checklist: z.unknown().optional(),
       release_date: z.string().optional(),
+      release_record_id: z.string().optional(),
       mrp_id_overwrite: z.string().optional(),
       reject_reason: z.string().optional(),
       rejection_feedback: z.string().optional(),
@@ -221,6 +222,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
       review_checklist,
       publishing_checklist,
       release_date,
+      release_record_id,
       mrp_id_overwrite,
       reject_reason,
       rejection_feedback,
@@ -236,6 +238,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
             review_checklist,
             publishing_checklist,
             release_date,
+            release_record_id,
             mrp_id_overwrite,
             reject_reason,
             rejection_feedback,
@@ -277,15 +280,17 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
     {
       version_id: z.string().min(1),
       release_date: z.string().optional(),
+      release_record_id: z.string().optional(),
       mrp_id_overwrite: z.string().optional(),
       publishing_checklist: z.unknown().optional(),
     },
-    async ({ version_id, release_date, mrp_id_overwrite, publishing_checklist }) => {
+    async ({ version_id, release_date, release_record_id, mrp_id_overwrite, publishing_checklist }) => {
       try {
         return asSuccess({
           updated_version: await getClient().updateVersionReview(version_id, {
             review_status: '✅Approved',
             release_date,
+            release_record_id,
             mrp_id_overwrite,
             publishing_checklist,
           }),

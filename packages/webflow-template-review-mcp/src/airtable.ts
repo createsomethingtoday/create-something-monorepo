@@ -60,6 +60,7 @@ export interface TemplateReviewAsset extends TemplateReviewQueueItem {
 export interface TemplateReviewVersion {
   versionId: string;
   assetId?: string;
+  releaseId?: string;
   reviewOwner?: CollaboratorRef | null;
   reviewStatus?: string;
   qualityRating?: string;
@@ -87,6 +88,7 @@ export interface VersionReviewUpdateInput {
   review_checklist?: unknown;
   publishing_checklist?: unknown;
   release_date?: string;
+  release_record_id?: string;
   mrp_id_overwrite?: string;
   reject_reason?: string;
   rejection_feedback?: string;
@@ -228,6 +230,7 @@ function mapVersion(record: AirtableRecord): TemplateReviewVersion {
     assetId:
       firstString(record.fields[CONFIRMED_VERSION_FIELDS.assetRecordId]) ??
       firstString(record.fields[CONFIRMED_VERSION_FIELDS.assetLink]),
+    releaseId: firstString(record.fields[CONFIRMED_VERSION_FIELDS.release]),
     reviewOwner: collaboratorValue(record.fields[CONFIRMED_VERSION_FIELDS.reviewOwner]),
     reviewStatus: firstString(record.fields[CONFIRMED_VERSION_FIELDS.reviewStatus]),
     qualityRating: firstString(record.fields[CONFIRMED_VERSION_FIELDS.qualityRating]),
@@ -379,9 +382,14 @@ export class AirtableClient {
     if (input.release_date !== undefined) {
       throw new AirtableClientError(
         'UNSUPPORTED_WRITE_FIELD',
-        'release_date is exposed on template versions but is not directly writable via the current Airtable contract.',
+        'release_date is a read-only rollup on template versions. Use release_record_id to link a 🚀Release record instead.',
         501,
-        { field: 'release_date', airtableField: CONFIRMED_VERSION_FIELDS.releaseDate },
+        {
+          field: 'release_date',
+          airtableField: CONFIRMED_VERSION_FIELDS.releaseDate,
+          useInstead: 'release_record_id',
+          writableField: CONFIRMED_VERSION_FIELDS.release,
+        },
       );
     }
 
@@ -436,7 +444,9 @@ export class AirtableClient {
     if (input.publishing_checklist !== undefined) {
       fields[CONFIRMED_VERSION_FIELDS.publishingChecklist] = coerceLongText(input.publishing_checklist);
     }
-    if (input.release_date !== undefined) fields[CONFIRMED_VERSION_FIELDS.releaseDate] = toIsoDate(input.release_date);
+    if (input.release_record_id !== undefined) {
+      fields[CONFIRMED_VERSION_FIELDS.release] = input.release_record_id ? [input.release_record_id] : [];
+    }
     if (input.mrp_id_overwrite !== undefined) fields[CONFIRMED_VERSION_FIELDS.mrpIdOverwrite] = input.mrp_id_overwrite;
     if (input.reject_reason !== undefined) fields[CONFIRMED_VERSION_FIELDS.rejectReason] = input.reject_reason;
     if (input.rejection_feedback !== undefined) fields[CONFIRMED_VERSION_FIELDS.rejectionFeedback] = input.rejection_feedback;
