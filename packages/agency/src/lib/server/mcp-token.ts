@@ -25,9 +25,7 @@ export async function requireAgencySessionUser(input: {
 }): Promise<AgencySessionUser> {
 	const domainConfig = getDomainConfig(input.platform?.env?.ENVIRONMENT);
 	const auth0Config = getAuth0Config(input.platform?.env as Record<string, string | undefined> | undefined);
-	const authProvider: SessionManagerOptions['authProvider'] = auth0Config
-		? { type: 'auth0', ...auth0Config }
-		: undefined;
+	const authProvider: SessionManagerOptions['authProvider'] = auth0Config ?? undefined;
 	const sessionManager = createSessionManager(input.cookies, {
 		isProduction: input.platform?.env?.ENVIRONMENT === 'production',
 		domain: domainConfig.domain,

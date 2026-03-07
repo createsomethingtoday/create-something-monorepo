@@ -69,6 +69,14 @@ export async function generateTokens(
 	};
 }
 
+export async function createSignedToken(
+	db: D1Database,
+	payload: JWTPayload & Record<string, unknown>
+): Promise<string> {
+	const signingKey = await getOrCreateSigningKey(db);
+	return signJWT(payload, signingKey);
+}
+
 /**
  * Refresh tokens using a valid refresh token
  *
@@ -255,7 +263,7 @@ async function getOrCreateSigningKey(db: D1Database): Promise<SigningKey> {
 	return key;
 }
 
-async function signJWT(payload: JWTPayload, signingKey: SigningKey): Promise<string> {
+async function signJWT(payload: Record<string, unknown>, signingKey: SigningKey): Promise<string> {
 	const header = { alg: 'ES256', typ: 'JWT', kid: signingKey.id };
 
 	const headerB64 = base64UrlEncode(JSON.stringify(header));
