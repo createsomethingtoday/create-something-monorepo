@@ -552,6 +552,29 @@ interface AgencyEntitlementDecision {
 	checks?: Record<string, boolean>;
 }
 
+type ManagedBearerIssueResult =
+	| {
+		ok: true;
+		tokenId: string;
+		token: string;
+		tokenPrefix: string;
+		accountId: string;
+		tenantId: string;
+		authSubject: string;
+		authEmail: string | null;
+		toolMode: McpToolMode;
+		toolkitProfile: string[];
+		allowedToolPrefixes: string[];
+		policyDecision: DecisionTelemetry;
+	}
+	| {
+		ok: false;
+		status: number;
+		error: string;
+		message: string;
+		detail?: Record<string, unknown>;
+	};
+
 interface DecisionTelemetry {
 	policy_id: string;
 	decision: AuthorizationDecisionType;
@@ -1066,7 +1089,6 @@ async function handleAdminMintMcpSession(request: Request, env: Env): Promise<Re
 }
 
 async function handleAdminIssueMcpLongLivedToken(request: Request, env: Env): Promise<Response> {
-	const db = env.DB;
 	const auth = await authenticateApiKeyForPermissions(request, env, ['mcp_long_lived_token_issue']);
 	if (!auth.ok) {
 		return json({ error: auth.error, message: auth.message, status: auth.status }, auth.status);
@@ -1082,139 +1104,34 @@ async function handleAdminIssueMcpLongLivedToken(request: Request, env: Env): Pr
 		return json({ error: 'invalid_request', message: 'auth_subject is required', status: 400 }, 400);
 	}
 
-	const actor = normalizeActor(body.actor) ?? auth.actor;
-	const existing = await findMcpLongLivedTokenByAuthSubject(db, authSubject);
-	const tenantId = normalizeTenantId(body.tenant_id ?? existing?.tenant_id ?? authSubject);
-	const toolMode = normalizeToolMode(body.tool_mode ?? (existing?.tool_mode as McpToolMode | undefined));
-	const toolkitProfile =
-		body.toolkit_profile !== undefined
-			? normalizeToolkitProfile(body.toolkit_profile)
-			: existing
-				? parseStringArray(existing.toolkit_profile_json)
-				: [];
-	const allowedToolPrefixes = buildAllowedToolPrefixes(toolkitProfile);
-	const accountId = normalizeAccountId(body.account_id) ?? existing?.account_id ?? `acct_${generateUUID().replace(/-/g, '')}`;
-	const metadata = normalizeMetadata(body.metadata);
-	const entitlement = await checkAgencyManagedBearerEntitlement(env, {
+	const issued = await issueManagedBearerToken(env, {
 		authSubject,
-		accountId,
-		tenantId,
-	});
-	if (!entitlement.allowed) {
-		return json(
-			{
-				error: 'entitlement_denied',
-				message: entitlement.reason ?? 'Managed bearer access is not currently entitled',
-				status: 403,
-				entitlement,
-			},
-			403,
-		);
-	}
-
-	const policyDecision = await evaluatePartnerPolicyDecision(db, env, {
-		policyId: POLICY_USER_BEARER_TOKEN_GOVERNANCE_ID,
+		authEmail: body.auth_email ?? null,
+		tenantId: body.tenant_id ?? null,
+		accountId: body.account_id ?? null,
+		toolkitProfile: body.toolkit_profile,
+		toolMode: body.tool_mode,
+		actor: normalizeActor(body.actor) ?? auth.actor,
+		actorRole: 'operator',
 		actionName: 'issue_user_bearer_token',
-		accountId,
-		actor,
-		request: {
-			actor: {
-				accountId,
-				tenantId,
-				userId: authSubject,
-				actorId: actor,
-				role: 'operator',
-				toolMode,
-			},
-			action: {
-				name: 'issue_user_bearer_token',
-				writeIntent: true,
-				humanReviewStep: true,
-				introspectionOk: true,
-			},
-			resource: {
-				kind: 'managed_bearer_token',
-				id: accountId,
-				toolName: 'mcp_long_lived_token_issue',
-				accessType: 'auth_admin',
-				metadata: {
-					auth_subject: authSubject,
-					tool_mode: toolMode,
-					toolkit_profile: toolkitProfile,
-					entitlement_reason: entitlement.reason ?? 'allowed',
-				},
-			},
-		},
-		metadata: {
-			auth_subject: authSubject,
-			auth_email: body.auth_email ?? existing?.auth_email ?? null,
-			tenant_id: tenantId,
-			account_id: accountId,
-			tool_mode: toolMode,
-			toolkit_profile: toolkitProfile,
-			entitlement_reason: entitlement.reason ?? 'allowed',
-			...metadata,
-		},
+		metadata: normalizeMetadata(body.metadata),
 	});
-	if (policyDecision.decision !== 'allow') {
-		return json(
-			{
-				error: 'policy_denied',
-				message: policyDecision.reason,
-				status: policyDecisionHttpStatus(policyDecision.decision),
-				policy: policyDecision,
-			},
-			policyDecisionHttpStatus(policyDecision.decision),
-		);
+	if (!issued.ok) {
+		return json({ error: issued.error, message: issued.message, status: issued.status, ...(issued.detail ?? {}) }, issued.status);
 	}
-
-	const tokenId = `mlt_${generateUUID().replace(/-/g, '')}`;
-	const rawToken = `mcpu_${generateSecureToken(48)}`;
-	const tokenHash = await hashToken(rawToken);
-	const tokenPrefix = rawToken.slice(0, 14);
-
-	await upsertMcpLongLivedToken(db, {
-		id: tokenId,
-		auth_subject: authSubject,
-		auth_email: normalizeOptionalId(body.auth_email) ?? existing?.auth_email ?? null,
-		tenant_id: tenantId,
-		account_id: accountId,
-		tool_mode: toolMode,
-		toolkit_profile_json: JSON.stringify(toolkitProfile),
-		allowed_tool_prefixes_json: JSON.stringify(allowedToolPrefixes),
-		token_hash: tokenHash,
-		token_prefix: tokenPrefix,
-		issued_by: actor,
-		metadata_json: JSON.stringify(metadata),
-	});
-
-	await createMcpAuthEvent(db, {
-		id: generateUUID(),
-		session_id: null,
-		user_id: authSubject,
-		event_type: existing ? 'mcp_long_lived_token_regenerated' : 'mcp_long_lived_token_issued',
-		event_data_json: JSON.stringify({
-			token_id: tokenId,
-			account_id: accountId,
-			tenant_id: tenantId,
-			auth_subject: authSubject,
-			token_prefix: tokenPrefix,
-			policy: policyDecision,
-		}),
-	});
 
 	return json({
-		token_id: tokenId,
-		token: rawToken,
-		token_prefix: tokenPrefix,
-		account_id: accountId,
-		tenant_id: tenantId,
-		auth_subject: authSubject,
-		auth_email: normalizeOptionalId(body.auth_email) ?? existing?.auth_email ?? null,
-		tool_mode: toolMode,
-		toolkit_profile: toolkitProfile,
-		allowed_tool_prefixes: allowedToolPrefixes,
-		policy: policyDecision,
+		token_id: issued.tokenId,
+		token: issued.token,
+		token_prefix: issued.tokenPrefix,
+		account_id: issued.accountId,
+		tenant_id: issued.tenantId,
+		auth_subject: issued.authSubject,
+		auth_email: issued.authEmail,
+		tool_mode: issued.toolMode,
+		toolkit_profile: issued.toolkitProfile,
+		allowed_tool_prefixes: issued.allowedToolPrefixes,
+		policy: issued.policyDecision,
 	});
 }
 
