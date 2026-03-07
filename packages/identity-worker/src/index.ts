@@ -57,6 +57,7 @@ import {
 	revokeMcpSession,
 	revokeAllMcpSessionsForUser,
 	createMcpAuthEvent,
+	listRecentMcpAuthEvents,
 	createMcpLegacyKey,
 	findMcpLegacyKeyById,
 	revokeMcpLegacyKey,
@@ -64,6 +65,7 @@ import {
 	upsertMcpLongLivedToken,
 	findMcpPolicyRollout,
 	createMcpPolicyEvent,
+	listRecentMcpPolicyEvents,
 } from './db/queries';
 import { sendVerificationEmail, sendDeletionConfirmationEmail } from './services/email';
 import type { RolloutConfig } from '@create-something/policy-os-engine';
@@ -127,6 +129,9 @@ async function route(request: Request, env: Env, method: string, path: string): 
 	}
 	if (path === '/v1/mcp/long-lived-tokens/admin-get' && method === 'POST') {
 		return handleAdminGetMcpLongLivedToken(request, env);
+	}
+	if (path === '/v1/mcp/audit/admin-feed' && method === 'POST') {
+		return handleAdminMcpAuditFeed(request, env);
 	}
 	if (path.startsWith('/v1/mcp/sessions/') && method === 'GET') {
 		const sessionId = path.replace('/v1/mcp/sessions/', '');
@@ -483,6 +488,11 @@ interface AdminIssueMcpLongLivedTokenBody {
 
 interface AdminGetMcpLongLivedTokenBody {
 	auth_subject?: string;
+}
+
+interface AdminMcpAuditFeedBody {
+	limit?: number;
+	search?: string;
 }
 
 interface AgencyEntitlementDecision {
@@ -1000,6 +1010,30 @@ async function handleAdminGetMcpLongLivedToken(request: Request, env: Env): Prom
 			updated_at: token.updated_at,
 			active: token.revoked_at === null,
 		},
+	});
+}
+
+async function handleAdminMcpAuditFeed(request: Request, env: Env): Promise<Response> {
+	const db = env.DB;
+	const auth = await authenticateApiKeyForPermissions(request, env, ['mcp_long_lived_token_issue']);
+	if (!auth.ok) {
+		return json({ error: auth.error, message: auth.message, status: auth.status }, auth.status);
+	}
+
+	const body = await parseJSON<AdminMcpAuditFeedBody>(request);
+	const limit =
+		typeof body?.limit === 'number' && Number.isFinite(body.limit)
+			? Math.max(1, Math.min(250, body.limit))
+			: 50;
+	const search = typeof body?.search === 'string' ? body.search : null;
+	const [authEvents, policyEvents] = await Promise.all([
+		listRecentMcpAuthEvents(db, limit, search),
+		listRecentMcpPolicyEvents(db, limit, search),
+	]);
+
+	return json({
+		auth_events: authEvents,
+		policy_events: policyEvents,
 	});
 }
 

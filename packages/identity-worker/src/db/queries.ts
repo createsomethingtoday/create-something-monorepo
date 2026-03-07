@@ -767,6 +767,40 @@ export async function listMcpAuthEvents(db: D1Database, sessionId: string): Prom
 	return result.results ?? [];
 }
 
+export async function listRecentMcpAuthEvents(
+	db: D1Database,
+	limit: number,
+	search?: string | null
+): Promise<McpAuthEvent[]> {
+	const normalizedLimit = Math.max(1, Math.min(250, limit));
+	const query = search?.trim().toLowerCase();
+	if (query) {
+		const pattern = `%${query}%`;
+		const result = await db
+			.prepare(
+				`SELECT * FROM mcp_auth_events
+         WHERE lower(COALESCE(user_id, '')) LIKE ?
+            OR lower(event_type) LIKE ?
+            OR lower(COALESCE(event_data_json, '')) LIKE ?
+         ORDER BY created_at DESC
+         LIMIT ?`
+			)
+			.bind(pattern, pattern, pattern, normalizedLimit)
+			.all<McpAuthEvent>();
+		return result.results ?? [];
+	}
+
+	const result = await db
+		.prepare(
+			`SELECT * FROM mcp_auth_events
+       ORDER BY created_at DESC
+       LIMIT ?`
+		)
+		.bind(normalizedLimit)
+		.all<McpAuthEvent>();
+	return result.results ?? [];
+}
+
 export async function createMcpLegacyKey(
 	db: D1Database,
 	key: {
@@ -915,4 +949,40 @@ export async function createMcpPolicyEvent(
 			event.metadata_json
 		)
 		.run();
+}
+
+export async function listRecentMcpPolicyEvents(
+	db: D1Database,
+	limit: number,
+	search?: string | null
+): Promise<McpPolicyEvent[]> {
+	const normalizedLimit = Math.max(1, Math.min(250, limit));
+	const query = search?.trim().toLowerCase();
+	if (query) {
+		const pattern = `%${query}%`;
+		const result = await db
+			.prepare(
+				`SELECT * FROM mcp_policy_events
+         WHERE lower(policy_id) LIKE ?
+            OR lower(action_name) LIKE ?
+            OR lower(COALESCE(account_id, '')) LIKE ?
+            OR lower(COALESCE(actor, '')) LIKE ?
+            OR lower(COALESCE(metadata_json, '')) LIKE ?
+         ORDER BY created_at DESC
+         LIMIT ?`
+			)
+			.bind(pattern, pattern, pattern, pattern, pattern, normalizedLimit)
+			.all<McpPolicyEvent>();
+		return result.results ?? [];
+	}
+
+	const result = await db
+		.prepare(
+			`SELECT * FROM mcp_policy_events
+       ORDER BY created_at DESC
+       LIMIT ?`
+		)
+		.bind(normalizedLimit)
+		.all<McpPolicyEvent>();
+	return result.results ?? [];
 }
