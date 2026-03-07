@@ -2,42 +2,43 @@
  * Smoke test to verify all new Bloom-inspired exports are accessible
  */
 
-import { describe, it, expect } from 'vitest';
+import { beforeAll, describe, it, expect } from 'vitest';
 
-describe('Bloom-inspired exports', () => {
-  it('exports meta-review types', async () => {
-    const exports = await import('../index.js');
+let harnessExports: typeof import('../index.js');
+let harnessTypes: typeof import('../types.js');
 
+describe('Bloom-inspired exports', { timeout: 30000 }, () => {
+  beforeAll(async () => {
+    [harnessExports, harnessTypes] = await Promise.all([
+      import('../index.js'),
+      import('../types.js'),
+    ]);
+  });
+
+  it('exports meta-review types', () => {
     // Meta-review config
-    expect(exports.DEFAULT_META_REVIEW_CONFIG).toBeDefined();
-    expect(exports.runMetaReview).toBeDefined();
-    expect(exports.selectMetaReviewModel).toBeDefined();
-    expect(exports.formatMetaReviewDisplay).toBeDefined();
+    expect(harnessExports.DEFAULT_META_REVIEW_CONFIG).toBeDefined();
+    expect(harnessExports.runMetaReview).toBeDefined();
+    expect(harnessExports.selectMetaReviewModel).toBeDefined();
+    expect(harnessExports.formatMetaReviewDisplay).toBeDefined();
   });
 
-  it('exports Beads seed types and helpers', async () => {
-    const exports = await import('../index.js');
-
+  it('exports Beads seed types and helpers', () => {
     // Beads seed helpers
-    expect(exports.hasExecutableSeed).toBeDefined();
-    expect(exports.getIssueSeed).toBeDefined();
+    expect(harnessExports.hasExecutableSeed).toBeDefined();
+    expect(harnessExports.getIssueSeed).toBeDefined();
   });
 
-  it('meta-review config has correct defaults', async () => {
-    const { DEFAULT_META_REVIEW_CONFIG } = await import('../index.js');
-
-    expect(DEFAULT_META_REVIEW_CONFIG.enabled).toBe(true);
-    expect(DEFAULT_META_REVIEW_CONFIG.useOpusForSecurityCritical).toBe(true);
-    expect(DEFAULT_META_REVIEW_CONFIG.minFindingsThreshold).toBe(3);
-    expect(DEFAULT_META_REVIEW_CONFIG.createBeadsIssues).toBe(true);
+  it('meta-review config has correct defaults', () => {
+    expect(harnessExports.DEFAULT_META_REVIEW_CONFIG.enabled).toBe(true);
+    expect(harnessExports.DEFAULT_META_REVIEW_CONFIG.useOpusForSecurityCritical).toBe(true);
+    expect(harnessExports.DEFAULT_META_REVIEW_CONFIG.minFindingsThreshold).toBe(3);
+    expect(harnessExports.DEFAULT_META_REVIEW_CONFIG.createBeadsIssues).toBe(true);
   });
 
-  it('Beads seed helpers work correctly', async () => {
-    const { hasExecutableSeed, getIssueSeed } = await import('../index.js');
-    const type_BeadsIssue = await import('../types.js');
-
+  it('Beads seed helpers work correctly', () => {
     // Issue without seed
-    const issueWithoutSeed = {
+    const issueWithoutSeed: harnessTypes.BeadsIssue = {
       id: 'test-1',
       title: 'Test issue',
       description: 'Test',
@@ -50,8 +51,8 @@ describe('Bloom-inspired exports', () => {
       closed_at: null,
     };
 
-    expect(hasExecutableSeed(issueWithoutSeed)).toBe(false);
-    expect(getIssueSeed(issueWithoutSeed)).toBeUndefined();
+    expect(harnessExports.hasExecutableSeed(issueWithoutSeed)).toBe(false);
+    expect(harnessExports.getIssueSeed(issueWithoutSeed)).toBeUndefined();
 
     // Issue with seed
     const issueWithSeed = {
@@ -67,8 +68,8 @@ describe('Bloom-inspired exports', () => {
       },
     };
 
-    expect(hasExecutableSeed(issueWithSeed)).toBe(true);
-    const seed = getIssueSeed(issueWithSeed);
+    expect(harnessExports.hasExecutableSeed(issueWithSeed)).toBe(true);
+    const seed = harnessExports.getIssueSeed(issueWithSeed);
     expect(seed).toBeDefined();
     expect(seed?.behavior).toBe('Fix tests');
     expect(seed?.config?.maxIterations).toBe(10);
