@@ -20,10 +20,26 @@ This package enables per-toolkit registry entries in the CREATE SOMETHING Hub:
 - `connection_status`
 - `get_connect_link`
 - `toolkit_info`
+- `gmail_mark_read_by_query` (Gmail toolkit route only)
 - `zoom_latest_transcript_status` (Zoom toolkit route only)
 - `zoom_list_available_transcripts` (Zoom toolkit route only)
 
 All Composio toolkit tools are exposed dynamically for that toolkit route.
+
+### Gmail helper workflow
+
+`gmail_mark_read_by_query` removes the `UNREAD` label for every message matching a Gmail search query. It hides the two-step fetch-IDs-then-batch-modify flow behind one tool call.
+
+Example:
+
+```json
+{
+  "query": "is:unread in:inbox",
+  "dryRun": false
+}
+```
+
+Use `dryRun: true` to inspect matched message IDs before updating Gmail.
 
 ## Connection behavior
 

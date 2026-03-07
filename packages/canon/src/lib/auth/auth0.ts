@@ -75,9 +75,17 @@ export function buildAuth0AuthorizeUrl(params: {
 	url.searchParams.set('redirect_uri', params.redirectUri);
 	url.searchParams.set('scope', params.config.scope);
 	url.searchParams.set('state', params.state);
-	if (params.config.audience) url.searchParams.set('audience', params.config.audience);
+	if (shouldSendAudience(params.config)) url.searchParams.set('audience', params.config.audience!);
 	if (params.screenHint === 'signup') url.searchParams.set('screen_hint', 'signup');
 	return url.toString();
+}
+
+function shouldSendAudience(config: Auth0Config): boolean {
+	if (!config.audience) return false;
+
+	// Browser sign-in for the property session only needs an ID token. Treat the Management API
+	// audience as a misconfiguration so login still works when that secret drifts into Pages.
+	return config.audience !== `https://${config.domain}/api/v2/`;
 }
 
 export async function exchangeAuth0Code(params: {

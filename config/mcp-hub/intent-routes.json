@@ -93,6 +93,18 @@
       ],
       "preferredServer": "composio-toolkit-gmail",
       "fallbackQuery": "gmail fetch emails"
+    },
+    "mark_gmail_read_by_query": {
+      "proxyToolName": "composio-toolkit-gmail__gmail_mark_read_by_query",
+      "description": "Mark Gmail messages as read by resolving a Gmail search query and removing the UNREAD label in batches.",
+      "synonyms": [
+        "mark unread emails as read",
+        "clear unread gmail",
+        "mark gmail messages read",
+        "read all unread email"
+      ],
+      "preferredServer": "composio-toolkit-gmail",
+      "fallbackQuery": "gmail mark read by query"
     }
   }
 }

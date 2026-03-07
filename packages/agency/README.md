@@ -189,6 +189,8 @@ AUTH0_CLAIMS_NAMESPACE
 AUTH0_REDIRECT_URI
 ```
 
+Do not point `AUTH0_AUDIENCE` at the Auth0 Management API (`https://<tenant>/api/v2/`) for browser sign-in. `.agency` only needs the ID token for the property session; the Management API audience is a machine-to-machine setting and can break Universal Login flows.
+
 If Auth0 login is fronted by a custom domain, preview hostname, or proxy that differs from the incoming Worker request host, set:
 
 ```bash
