@@ -4,6 +4,7 @@ import {
 	constantTimeEqual,
 	evaluateAgencyMcpEntitlement,
 	findAgencyMcpEntitlementByAuthSubject,
+	reconcileAgencyMcpEntitlement,
 } from '$lib/server/mcp-entitlements';
 
 interface EntitlementCheckBody {
@@ -37,7 +38,12 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		return json({ error: 'invalid_request', message: 'auth_subject is required' }, { status: 400 });
 	}
 
-	const row = await findAgencyMcpEntitlementByAuthSubject(env.DB, authSubject);
+	const row =
+		(await reconcileAgencyMcpEntitlement(env.DB, {
+			authSubject,
+			accountId: body?.account_id?.trim() || null,
+			tenantId: body?.tenant_id?.trim() || null,
+		})) ?? (await findAgencyMcpEntitlementByAuthSubject(env.DB, authSubject));
 	const decision = evaluateAgencyMcpEntitlement(row, {
 		accountId: body?.account_id?.trim() || null,
 		tenantId: body?.tenant_id?.trim() || null,

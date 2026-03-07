@@ -7,7 +7,6 @@ import {
 	insertPartnerAccessDelivery,
 	normalizePartnerSlug,
 	parseJsonArray,
-	parseJsonObject,
 	postIdentityAdmin,
 	randomId,
 	requirePartnerAdmin,
@@ -79,7 +78,6 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 				: parseJsonArray(client.required_toolkits_json);
 		const metadata =
 			body?.metadata && typeof body.metadata === 'object' && !Array.isArray(body.metadata) ? body.metadata : {};
-		const clientMetadata = parseJsonObject(client.metadata_json);
 
 		await reconcileAgencyMcpEntitlement(env.DB, {
 			authSubject: client.identity_user_id,
