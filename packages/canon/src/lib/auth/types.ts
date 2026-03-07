@@ -82,7 +82,7 @@ export interface User {
 	id: string;
 	email: string;
 	tier: 'free' | 'pro' | 'agency';
-	source: 'workway' | 'templates' | 'io' | 'space' | 'lms';
+	source: 'workway' | 'templates' | 'io' | 'space' | 'lms' | 'auth0';
 	analytics_opt_out?: boolean;
 }
 

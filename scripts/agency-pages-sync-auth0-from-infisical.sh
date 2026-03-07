@@ -46,6 +46,19 @@ load_infisical_payload() {
   "${export_cmd[@]}"
 }
 
+get_secret_value() {
+  local payload="$1"
+  local key="$2"
+
+  printf '%s' "$payload" | jq -r --arg key "$key" '
+    if type == "array" then
+      map(select(.key == $key)) | .[0].value // empty
+    else
+      .[$key] // empty
+    end
+  '
+}
+
 put_secret() {
   local key="$1"
   local value="$2"
@@ -69,7 +82,7 @@ main() {
   local key
   for key in "${REQUIRED_KEYS[@]}"; do
     local value
-    value="$(printf '%s' "$payload" | jq -r --arg key "$key" '.[$key] // empty')"
+    value="$(get_secret_value "$payload" "$key")"
     if [[ -z "$value" ]]; then
       echo "missing required Infisical secret: ${key} (env=${INFISICAL_ENV} path=${INFISICAL_PATH})" >&2
       exit 1
@@ -79,7 +92,7 @@ main() {
 
   for key in "${OPTIONAL_KEYS[@]}"; do
     local value
-    value="$(printf '%s' "$payload" | jq -r --arg key "$key" '.[$key] // empty')"
+    value="$(get_secret_value "$payload" "$key")"
     if [[ -n "$value" ]]; then
       put_secret "$key" "$value"
     fi

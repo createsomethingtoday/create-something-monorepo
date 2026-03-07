@@ -34,6 +34,6 @@ const authHandle = createAuthHooks({
 	protectedPaths: ['/account', '/dashboard', '/admin'],
 	loginPath: '/login',
 	includeRedirect: true,
-});
+}) as Handle;
 
 export const handle = sequence(redirectHandle, authHandle);

@@ -181,6 +181,17 @@ Recommended Infisical path:
 /agency/auth
 ```
 
+Seed Auth0 tenant values into Infisical:
+
+```bash
+AUTH0_DOMAIN=...
+AUTH0_CLIENT_ID=...
+AUTH0_CLIENT_SECRET=...
+AUTH0_ISSUER_BASE_URL=...
+AUTH0_JWKS_URL=...
+pnpm agency:auth0:seed
+```
+
 Sync Auth0 secrets from Infisical into the Cloudflare Pages project:
 
 ```bash
@@ -195,6 +206,7 @@ INFISICAL_ENV=prod
 INFISICAL_PATH=/agency/auth
 INFISICAL_PROJECT_ID=<optional>
 DRY_RUN=true
+CLOUDFLARE_ACCOUNT_ID=<required when Wrangler has multiple accounts>
 ```
 
 After syncing secrets, deploy normally:
