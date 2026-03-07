@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
+import { defineConfig, type PluginOption } from 'vite';
 
 export default defineConfig({
 	resolve: {
@@ -9,7 +9,7 @@ export default defineConfig({
 			'@composio/core': fileURLToPath(new URL('./node_modules/@composio/core/dist/index.mjs', import.meta.url))
 		}
 	},
-	plugins: [sveltekit()],
+	plugins: [sveltekit() as unknown as PluginOption],
 	build: {
 		chunkSizeWarningLimit: 1200
 	}

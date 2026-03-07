@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
+	import { invalidateAll } from '$app/navigation';
 
 	let { data } = $props();
 
@@ -10,12 +11,119 @@
 		tenant_id: string;
 		workspace_account_id: string | null;
 		service_tier: string;
+		managed_bearer_allowed: number;
+		org_membership_active: number;
+		service_entitled: number;
 		policy_accepted: number;
+		contract_active: number;
+		billing_active: number;
 		status: string;
 		updated_at: string;
 	};
 
+	type SeedPayload = {
+		auth_email: string;
+		account_id: string;
+		tenant_id: string;
+		workspace_account_id: string;
+		service_tier: string;
+		status: string;
+		policy_accepted: boolean;
+		managed_bearer_allowed: boolean;
+		org_membership_active: boolean;
+		service_entitled: boolean;
+		contract_active: boolean;
+		billing_active: boolean;
+		metadata_json: string;
+	};
+
 	const seeds = $derived(data.seeds as Seed[]);
+
+	const emptyForm = (): SeedPayload => ({
+		auth_email: '',
+		account_id: '',
+		tenant_id: '',
+		workspace_account_id: '',
+		service_tier: 'agency',
+		status: 'seeded',
+		policy_accepted: false,
+		managed_bearer_allowed: true,
+		org_membership_active: true,
+		service_entitled: true,
+		contract_active: true,
+		billing_active: true,
+		metadata_json: '{}',
+	});
+
+	let form = $state<SeedPayload>(emptyForm());
+	let busy = $state(false);
+	let successMessage = $state('');
+	let errorMessage = $state('');
+
+	function selectSeed(seed: Seed) {
+		form = {
+			auth_email: seed.normalized_email,
+			account_id: seed.account_id,
+			tenant_id: seed.tenant_id,
+			workspace_account_id: seed.workspace_account_id ?? seed.account_id,
+			service_tier: seed.service_tier,
+			status: seed.status,
+			policy_accepted: seed.policy_accepted === 1,
+			managed_bearer_allowed: seed.managed_bearer_allowed === 1,
+			org_membership_active: seed.org_membership_active === 1,
+			service_entitled: seed.service_entitled === 1,
+			contract_active: seed.contract_active === 1,
+			billing_active: seed.billing_active === 1,
+			metadata_json: '{}',
+		};
+		successMessage = '';
+		errorMessage = '';
+	}
+
+	function resetForm() {
+		form = emptyForm();
+		successMessage = '';
+		errorMessage = '';
+	}
+
+	async function saveSeed() {
+		busy = true;
+		successMessage = '';
+		errorMessage = '';
+
+		try {
+			const metadata = JSON.parse(form.metadata_json || '{}') as Record<string, unknown>;
+			const response = await fetch('/api/admin/identity-seeds', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					auth_email: form.auth_email,
+					account_id: form.account_id,
+					tenant_id: form.tenant_id,
+					workspace_account_id: form.workspace_account_id || form.account_id,
+					service_tier: form.service_tier,
+					status: form.status,
+					policy_accepted: form.policy_accepted,
+					managed_bearer_allowed: form.managed_bearer_allowed,
+					org_membership_active: form.org_membership_active,
+					service_entitled: form.service_entitled,
+					contract_active: form.contract_active,
+					billing_active: form.billing_active,
+					metadata,
+				}),
+			});
+			const payload = (await response.json().catch(() => ({}))) as { message?: string };
+			if (!response.ok) {
+				throw new Error(payload.message ?? 'Failed to save identity seed');
+			}
+			successMessage = 'Seed saved.';
+			await invalidateAll();
+		} catch (error) {
+			errorMessage = error instanceof Error ? error.message : 'Failed to save seed';
+		} finally {
+			busy = false;
+		}
+	}
 </script>
 
 <SEO title="Seeded Users" description="Inspect seeded identity mappings for invited .agency users." propertyName="agency" noindex={true} />
@@ -37,38 +145,101 @@
 			</nav>
 		</header>
 
-		<section class="panel">
-			<div class="panel-header">
-				<h2>Seed Registry</h2>
-				<a href="/docs/AGENCY_USER_PROVISIONING_POLICY.md">Policy</a>
-			</div>
-			<div class="table-wrap">
-				<table>
-					<thead>
-						<tr><th>Email</th><th>Account</th><th>Tenant</th><th>Subject</th><th>Status</th><th>Policy</th></tr>
-					</thead>
-					<tbody>
-						{#if seeds.length === 0}
-							<tr><td colspan="6" class="empty">No seeded users found.</td></tr>
-						{:else}
-							{#each seeds as row}
-								<tr>
-									<td>
-										<div>{row.normalized_email}</div>
-										<div class="muted">{row.updated_at}</div>
-									</td>
-									<td class="mono">{row.account_id}</td>
-									<td class="mono">{row.tenant_id}</td>
-									<td class="mono">{row.auth_subject ?? 'Unbound'}</td>
-									<td>{row.auth_subject ? 'bound' : row.status}</td>
-									<td>{row.policy_accepted === 1 ? 'accepted' : 'pending'}</td>
-								</tr>
-							{/each}
-						{/if}
-					</tbody>
-				</table>
-			</div>
-		</section>
+		<div class="grid">
+			<section class="panel form-panel">
+				<div class="panel-header">
+					<h2>Create or Update Seed</h2>
+					<button class="link-button" type="button" onclick={resetForm}>Reset</button>
+				</div>
+
+				<div class="form-grid">
+					<label>
+						Email
+						<input bind:value={form.auth_email} type="email" placeholder="operator@example.com" />
+					</label>
+					<label>
+						Account ID
+						<input bind:value={form.account_id} type="text" placeholder="acct_example" />
+					</label>
+					<label>
+						Tenant ID
+						<input bind:value={form.tenant_id} type="text" placeholder="tenant_example" />
+					</label>
+					<label>
+						Workspace Account ID
+						<input bind:value={form.workspace_account_id} type="text" placeholder="acct_example" />
+					</label>
+					<label>
+						Service Tier
+						<input bind:value={form.service_tier} type="text" />
+					</label>
+					<label>
+						Status
+						<input bind:value={form.status} type="text" />
+					</label>
+				</div>
+
+				<div class="toggle-grid">
+					<label><input bind:checked={form.managed_bearer_allowed} type="checkbox" /> Managed bearer allowed</label>
+					<label><input bind:checked={form.org_membership_active} type="checkbox" /> Org membership active</label>
+					<label><input bind:checked={form.service_entitled} type="checkbox" /> Service entitled</label>
+					<label><input bind:checked={form.policy_accepted} type="checkbox" /> Policy accepted</label>
+					<label><input bind:checked={form.contract_active} type="checkbox" /> Contract active</label>
+					<label><input bind:checked={form.billing_active} type="checkbox" /> Billing active</label>
+				</div>
+
+				<label class="metadata-field">
+					Metadata JSON
+					<textarea bind:value={form.metadata_json} rows="5" spellcheck="false"></textarea>
+				</label>
+
+				<div class="actions">
+					<button disabled={busy} type="button" onclick={saveSeed}>
+						{busy ? 'Saving…' : 'Save seed'}
+					</button>
+				</div>
+
+				{#if successMessage}
+					<p class="success">{successMessage}</p>
+				{/if}
+				{#if errorMessage}
+					<p class="error">{errorMessage}</p>
+				{/if}
+			</section>
+
+			<section class="panel">
+				<div class="panel-header">
+					<h2>Seed Registry</h2>
+					<a href="/docs/AGENCY_USER_PROVISIONING_POLICY.md">Policy</a>
+				</div>
+				<div class="table-wrap">
+					<table>
+						<thead>
+							<tr><th>Email</th><th>Account</th><th>Tenant</th><th>Subject</th><th>Status</th><th>Policy</th></tr>
+						</thead>
+						<tbody>
+							{#if seeds.length === 0}
+								<tr><td colspan="6" class="empty">No seeded users found.</td></tr>
+							{:else}
+								{#each seeds as row}
+									<tr class="seed-row" onclick={() => selectSeed(row)}>
+										<td>
+											<div>{row.normalized_email}</div>
+											<div class="muted">{row.updated_at}</div>
+										</td>
+										<td class="mono">{row.account_id}</td>
+										<td class="mono">{row.tenant_id}</td>
+										<td class="mono">{row.auth_subject ?? 'Unbound'}</td>
+										<td>{row.auth_subject ? 'bound' : row.status}</td>
+										<td>{row.policy_accepted === 1 ? 'accepted' : 'pending'}</td>
+									</tr>
+								{/each}
+							{/if}
+						</tbody>
+					</table>
+				</div>
+			</section>
+		</div>
 	</div>
 </section>
 
@@ -77,7 +248,7 @@
 		padding: 2rem 1.5rem 4rem;
 	}
 	.shell-inner {
-		max-width: 1200px;
+		max-width: 1280px;
 		margin: 0 auto;
 	}
 	.hero {
@@ -102,9 +273,22 @@
 		margin-top: 1rem;
 	}
 	.subnav a,
-	.panel-header a {
+	.panel-header a,
+	.link-button {
 		color: var(--color-fg-primary, #fff);
 		text-decoration: none;
+	}
+	.link-button {
+		background: transparent;
+		border: 0;
+		cursor: pointer;
+		padding: 0;
+		font: inherit;
+	}
+	.grid {
+		display: grid;
+		grid-template-columns: 26rem minmax(0, 1fr);
+		gap: 1.25rem;
 	}
 	.panel {
 		border: 1px solid rgba(255,255,255,0.1);
@@ -116,6 +300,60 @@
 		justify-content: space-between;
 		align-items: baseline;
 		gap: 1rem;
+	}
+	.form-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.85rem;
+		margin-top: 1rem;
+	}
+	label {
+		display: grid;
+		gap: 0.4rem;
+		font-size: 0.92rem;
+	}
+	input,
+	textarea {
+		border-radius: 12px;
+		border: 1px solid rgba(255,255,255,0.14);
+		background: rgba(255,255,255,0.03);
+		color: #fff;
+		padding: 0.8rem 0.9rem;
+		font: inherit;
+	}
+	.metadata-field,
+	.form-panel {
+		min-width: 0;
+	}
+	.metadata-field {
+		margin-top: 1rem;
+	}
+	.toggle-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.75rem;
+		margin-top: 1rem;
+	}
+	.toggle-grid label {
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+	}
+	.actions {
+		margin-top: 1rem;
+	}
+	button {
+		border: 1px solid rgba(255,255,255,0.14);
+		border-radius: 999px;
+		padding: 0.75rem 1rem;
+		background: rgba(255,255,255,0.95);
+		color: #111;
+		font: inherit;
+		cursor: pointer;
+	}
+	button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
 	}
 	.table-wrap {
 		overflow-x: auto;
@@ -131,11 +369,30 @@
 		border-bottom: 1px solid rgba(255,255,255,0.08);
 		vertical-align: top;
 	}
+	.seed-row {
+		cursor: pointer;
+	}
+	.seed-row:hover {
+		background: rgba(255,255,255,0.03);
+	}
 	.mono {
 		font-family: inherit;
 		word-break: break-word;
 	}
 	.empty {
 		color: var(--color-fg-secondary, rgba(255,255,255,0.72));
+	}
+	.success {
+		color: #8de8a5;
+	}
+	.error {
+		color: #ff8a80;
+	}
+	@media (max-width: 980px) {
+		.grid,
+		.form-grid,
+		.toggle-grid {
+			grid-template-columns: 1fr;
+		}
 	}
 </style>
