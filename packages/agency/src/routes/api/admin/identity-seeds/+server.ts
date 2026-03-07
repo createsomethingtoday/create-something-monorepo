@@ -20,6 +20,7 @@ interface UpsertBody {
 	invited_at?: string | null;
 	bound_at?: string | null;
 	metadata?: Record<string, unknown>;
+	import_text?: string;
 }
 
 export const GET: RequestHandler = async ({ url, cookies, platform }) => {
@@ -50,6 +51,78 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 		}
 
 		const body = (await request.json().catch(() => null)) as UpsertBody | null;
+		if (body?.import_text?.trim()) {
+			const parsedRows = parseDelimitedSeedText(body.import_text);
+			if (parsedRows.length === 0) {
+				return json({ error: 'invalid_request', message: 'Import text does not contain any rows' }, { status: 400 });
+			}
+
+			const imported: Array<{ auth_email: string; account_id: string; tenant_id: string }> = [];
+			const errors: string[] = [];
+
+			for (const [index, row] of parsedRows.entries()) {
+				try {
+					const authEmail = row.auth_email?.trim();
+					const accountId = row.account_id?.trim();
+					const tenantId = row.tenant_id?.trim();
+					if (!authEmail || !accountId || !tenantId) {
+						throw new Error('auth_email, account_id, and tenant_id are required');
+					}
+
+					const metadata = parseMetadata(row.metadata_json);
+					const seed = await upsertAgencyIdentitySeed(db, {
+						authEmail,
+						authSubject: nullable(row.auth_subject),
+						accountId,
+						tenantId,
+						workspaceAccountId: nullable(row.workspace_account_id) ?? accountId,
+						serviceTier: row.service_tier?.trim() || 'agency',
+						managedBearerAllowed: parseBoolean(row.managed_bearer_allowed, true),
+						orgMembershipActive: parseBoolean(row.org_membership_active, true),
+						serviceEntitled: parseBoolean(row.service_entitled, true),
+						policyAccepted: parseBoolean(row.policy_accepted, false),
+						contractActive: parseBoolean(row.contract_active, true),
+						billingActive: parseBoolean(row.billing_active, true),
+						status: row.status?.trim() || 'seeded',
+						invitedAt: nullable(row.invited_at),
+						boundAt: nullable(row.bound_at),
+						metadata: {
+							operator_email: operator.email,
+							updated_via: 'agency_identity_seed_admin_bulk_import',
+							import_row: index + 2,
+							...metadata,
+						},
+					});
+
+					if (!seed) {
+						throw new Error('Identity seed store is unavailable');
+					}
+
+					imported.push({
+						auth_email: authEmail.toLowerCase(),
+						account_id: accountId,
+						tenant_id: tenantId,
+					});
+				} catch (error) {
+					errors.push(`Row ${index + 2}: ${error instanceof Error ? error.message : 'Unexpected error'}`);
+				}
+			}
+
+			if (imported.length === 0) {
+				return json(
+					{ error: 'invalid_request', message: 'No rows were imported', errors },
+					{ status: 400 }
+				);
+			}
+
+			return json({
+				imported,
+				imported_count: imported.length,
+				error_count: errors.length,
+				errors,
+			});
+		}
+
 		if (!body?.auth_email?.trim() || !body.account_id?.trim() || !body.tenant_id?.trim()) {
 			return json(
 				{ error: 'invalid_request', message: 'auth_email, account_id, and tenant_id are required' },
@@ -99,4 +172,79 @@ function handleError(error: unknown) {
 		{ error: 'internal_error', message: error instanceof Error ? error.message : 'Unexpected error' },
 		{ status: 500 }
 	);
+}
+
+function parseDelimitedSeedText(source: string): Array<Record<string, string>> {
+	const lines = source
+		.split(/\r?\n/)
+		.map((line) => line.trimEnd())
+		.filter((line) => line.trim().length > 0);
+
+	if (lines.length < 2) {
+		return [];
+	}
+
+	const delimiter = lines[0].includes('\t') ? '\t' : ',';
+	const headers = parseDelimitedLine(lines[0], delimiter).map((value) => value.trim());
+
+	return lines.slice(1).map((line) => {
+		const values = parseDelimitedLine(line, delimiter);
+		return headers.reduce<Record<string, string>>((record, header, index) => {
+			record[header] = values[index] ?? '';
+			return record;
+		}, {});
+	});
+}
+
+function parseDelimitedLine(line: string, delimiter: string): string[] {
+	const values: string[] = [];
+	let current = '';
+	let quoted = false;
+
+	for (let index = 0; index < line.length; index += 1) {
+		const char = line[index];
+		if (char === '"') {
+			if (quoted && line[index + 1] === '"') {
+				current += '"';
+				index += 1;
+			} else {
+				quoted = !quoted;
+			}
+			continue;
+		}
+
+		if (char === delimiter && !quoted) {
+			values.push(current);
+			current = '';
+			continue;
+		}
+
+		current += char;
+	}
+
+	values.push(current);
+	return values;
+}
+
+function parseBoolean(value: string | undefined, fallback: boolean): boolean {
+	if (!value?.trim()) return fallback;
+	return ['1', 'true', 'yes', 'y'].includes(value.trim().toLowerCase());
+}
+
+function nullable(value: string | null | undefined): string | null {
+	const normalized = value?.trim();
+	return normalized ? normalized : null;
+}
+
+function parseMetadata(raw: string | undefined): Record<string, unknown> {
+	if (!raw?.trim()) {
+		return {};
+	}
+
+	const parsed = JSON.parse(raw) as unknown;
+	if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+		throw new Error('metadata_json must be a JSON object');
+	}
+
+	return parsed as Record<string, unknown>;
 }
