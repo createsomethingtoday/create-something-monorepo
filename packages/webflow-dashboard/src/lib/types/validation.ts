@@ -22,21 +22,28 @@ export interface WorkerResponse {
 		analyzedCount: number;
 		passedCount: number;
 		failedCount: number;
+		requestFailureCount?: number;
+		validationFailureCount?: number;
+		passRate?: number;
 	};
 	pageResults: WorkerPageResult[];
 	crawlStats?: CrawlStats;
+	error?: string;
+	message?: string;
 }
 
 export interface WorkerPageResult {
 	url: string;
-	title: string;
+	title?: string;
+	success?: boolean;
 	passed: boolean;
 	flaggedCodeCount: number;
-	summary: {
+	error?: string;
+	summary?: {
 		securityRiskCount: number;
 		validGsapCount: number;
 	};
-	details: {
+	details?: {
 		flaggedCode: FlaggedCode[];
 		securityRisks?: SecurityRisk[];
 	};

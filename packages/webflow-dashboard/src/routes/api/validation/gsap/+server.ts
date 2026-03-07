@@ -23,6 +23,7 @@ interface ValidationRequest {
 }
 
 const WORKER_URL = 'https://gsap-validation-worker.createsomething.workers.dev/crawlWebsite';
+const WORKER_TIMEOUT_MS = 30_000;
 
 export const POST: RequestHandler = async ({ request, locals, platform }) => {
 	const debugLogs = platform?.env?.DEBUG_LOGS === 'true';
@@ -50,19 +51,27 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 
 	try {
 		debugLog(`[Validation] Validating URL: ${url}`);
+		const abortController = new AbortController();
+		const timeoutId = setTimeout(() => abortController.abort(), WORKER_TIMEOUT_MS);
 
 		// Call the external GSAP validation worker
-		const response = await fetch(WORKER_URL, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({
-				url,
-				maxDepth: 1,
-				maxPages: 50
-			})
-		});
+		let response: Response;
+		try {
+			response = await fetch(WORKER_URL, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					url,
+					maxDepth: 1,
+					maxPages: 50
+				}),
+				signal: abortController.signal
+			});
+		} finally {
+			clearTimeout(timeoutId);
+		}
 
 		if (!response.ok) {
 			console.error(`[Validation] Worker error: ${response.status} ${response.statusText}`);
@@ -82,21 +91,47 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		}
 
 		const workerData = (await response.json()) as WorkerResponse;
+		const pageResults = Array.isArray(workerData.pageResults) ? workerData.pageResults : [];
+		const analyzedCount =
+			workerData.siteResults?.analyzedCount ?? pageResults.filter((page) => page.success !== false).length;
+		const passedCount =
+			workerData.siteResults?.passedCount ??
+			pageResults.filter((page) => page.success !== false && page.passed).length;
+		const requestFailureCount =
+			workerData.siteResults?.requestFailureCount ??
+			pageResults.filter((page) => page.success === false).length;
+		const validationFailureCount =
+			workerData.siteResults?.validationFailureCount ??
+			pageResults.filter((page) => page.success !== false && !page.passed).length;
+		const failedCount =
+			workerData.siteResults?.failedCount ?? requestFailureCount + validationFailureCount;
+		const totalPages = workerData.siteResults?.pageCount ?? pageResults.length;
+		const normalizedSuccess =
+			workerData.success === true &&
+			(!workerData.error || workerData.error.length === 0) &&
+			totalPages > 0;
+		const normalizedPassed =
+			normalizedSuccess &&
+			failedCount === 0 &&
+			analyzedCount === totalPages &&
+			totalPages > 0;
 
-		const pageResults = workerData.pageResults || [];
-		const passedCount = workerData.siteResults?.passedCount ?? pageResults.filter((p) => p.passed).length;
-		const failedCount = workerData.siteResults?.failedCount ?? pageResults.filter((p) => !p.passed).length;
-		const totalPages = pageResults.length;
+		if (!normalizedSuccess) {
+			throw error(
+				502,
+				workerData.error || workerData.message || 'Validation service returned an invalid response.'
+			);
+		}
 
 		// Process and format the validation results
 		const result: ValidationResult = {
 			url: workerData.url,
-			success: workerData.success,
-			passed: workerData.passed,
+			success: normalizedSuccess,
+			passed: normalizedPassed,
 			timestamp: new Date().toISOString(),
 			summary: {
 				totalPages,
-				analyzedPages: totalPages,
+				analyzedPages: analyzedCount,
 				passedPages: passedCount,
 				failedPages: failedCount,
 				passRate: totalPages > 0 ? Math.round((passedCount / totalPages) * 100) : 0
@@ -119,8 +154,8 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 			pageResults: pageResults.map(
 				(page): PageResult => ({
 					url: page.url,
-					title: page.title,
-					passed: page.passed,
+					title: page.title || page.url,
+					passed: page.success !== false && page.passed,
 					flaggedCodeCount: page.flaggedCodeCount || 0,
 					securityRiskCount: page.summary?.securityRiskCount || 0,
 					validGsapCount: page.summary?.validGsapCount || 0,
@@ -140,6 +175,10 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 
 		return json(result);
 	} catch (err) {
+		if (err instanceof DOMException && err.name === 'AbortError') {
+			throw error(504, 'Validation timed out. Please try again.');
+		}
+
 		// Re-throw SvelteKit errors
 		if (err && typeof err === 'object' && 'status' in err) {
 			throw err;

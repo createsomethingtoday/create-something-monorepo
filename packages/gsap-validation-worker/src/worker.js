@@ -1322,18 +1322,11 @@ var GsapValidationWorkflow = class extends WorkflowEntrypoint {
       pageResults.push(...batchResults);
     }
     const finalResults = await step.do("aggregate results", async () => {
-      const passedCount = pageResults.filter((p) => p.passed).length;
-      const failedCount = pageResults.filter((p) => !p.passed && p.success).length;
-      const analyzedCount = pageResults.filter((p) => p.success).length;
-      const overallPassed = failedCount === 0 && analyzedCount > 0;
+      const siteResults = summarizeCrawlPageResults(pageResults, pages.length);
+      const overallPassed = siteResults.failedCount === 0 && siteResults.analyzedCount === siteResults.pageCount && siteResults.pageCount > 0;
       const markdown = generateMarkdownReport({
         url,
-        siteResults: {
-          pageCount: pages.length,
-          analyzedCount,
-          passedCount,
-          failedCount
-        },
+        siteResults,
         pageResults,
         crawlStats: crawlResults.crawlStats
       });
@@ -1341,12 +1334,7 @@ var GsapValidationWorkflow = class extends WorkflowEntrypoint {
         url,
         success: true,
         passed: overallPassed,
-        siteResults: {
-          pageCount: pages.length,
-          analyzedCount,
-          passedCount,
-          failedCount
-        },
+        siteResults,
         pageResults,
         siteMap: crawlResults.siteMap,
         crawlStats: crawlResults.crawlStats,
@@ -1565,6 +1553,23 @@ async function handleWebsiteCrawl(requestData, env, ctx, corsHeaders) {
   }
 }
 __name(handleWebsiteCrawl, "handleWebsiteCrawl");
+function summarizeCrawlPageResults(pageResults, pageCount) {
+  const analyzedCount = pageResults.filter((page) => page.success).length;
+  const passedCount = pageResults.filter((page) => page.success && page.passed).length;
+  const requestFailureCount = pageResults.filter((page) => !page.success).length;
+  const validationFailureCount = pageResults.filter((page) => page.success && !page.passed).length;
+  const failedCount = requestFailureCount + validationFailureCount;
+  return {
+    pageCount,
+    analyzedCount,
+    passedCount,
+    failedCount,
+    requestFailureCount,
+    validationFailureCount,
+    passRate: pageCount > 0 ? Math.round(passedCount / pageCount * 100) : 0
+  };
+}
+__name(summarizeCrawlPageResults, "summarizeCrawlPageResults");
 async function handleWebsiteCrawlSync(requestData, env, ctx, corsHeaders) {
   const urlToValidate = requestData.url || "";
   const maxDepth = requestData.maxDepth || 1;
@@ -1607,16 +1612,11 @@ async function handleWebsiteCrawlSync(requestData, env, ctx, corsHeaders) {
         });
       }
     }
-    const siteResults = {
-      pageCount: pages.length,
-      analyzedCount: pageResults.filter((p) => p.success).length,
-      passedCount: pageResults.filter((p) => p.success && p.passed).length,
-      failedCount: pageResults.filter((p) => p.success && !p.passed).length
-    };
+    const siteResults = summarizeCrawlPageResults(pageResults, pages.length);
     const results = {
       url: urlToValidate,
       success: true,
-      passed: siteResults.failedCount === 0,
+      passed: siteResults.failedCount === 0 && siteResults.analyzedCount === siteResults.pageCount && siteResults.pageCount > 0,
       siteResults,
       pageResults,
       siteMap: crawlResults.siteMap,

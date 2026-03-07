@@ -5,6 +5,7 @@
   "description": "GSAP validation worker for Webflow template compliance checking",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "test:live": "node scripts/repro-live-worker.mjs"
   }
 }
