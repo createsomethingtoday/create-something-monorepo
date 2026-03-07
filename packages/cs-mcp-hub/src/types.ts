@@ -15,10 +15,30 @@ export type ServerCatalogConfig = {
 };
 
 export type ServerLifecycle = 'active' | 'dormant' | 'local';
+export type CatalogExposureMode = 'direct' | 'brokered' | 'exception_direct';
 
 export type ServerMetadata = {
   lifecycle?: ServerLifecycle;
   package_path?: string;
+  /**
+   * Declares how this server's tool catalog should be exposed to agents.
+   * Large or variable connector surfaces should use brokered discovery.
+   */
+  catalog_exposure_mode?: CatalogExposureMode;
+  /**
+   * Approximate tool count used for registry validation and exposure policy checks.
+   */
+  estimated_tool_count?: number;
+  /**
+   * Required when using exception_direct exposure mode, or when direct exposure
+   * is justified for mid-size surfaces.
+   */
+  exposure_exception_reason?: string;
+  /**
+   * Required when using exception_direct exposure mode, or when direct exposure
+   * is justified for mid-size surfaces.
+   */
+  exposure_review_owner?: string;
   /**
    * Preferred per-server timeout override (milliseconds) for downstream tool calls.
    */

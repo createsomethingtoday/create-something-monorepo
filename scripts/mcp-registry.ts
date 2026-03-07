@@ -7,6 +7,7 @@ type CatalogCategory = 'create-something' | 'workway';
 type CatalogAuthType = 'bearer' | 'oauth';
 type CatalogTransport = 'http' | 'sse';
 type ServerLifecycle = 'active' | 'dormant' | 'local';
+type CatalogExposureMode = 'direct' | 'brokered' | 'exception_direct';
 
 type CatalogConfig = {
   include: boolean;
@@ -25,6 +26,10 @@ type BaseServer = {
   tags?: string[];
   lifecycle?: ServerLifecycle;
   package_path?: string;
+  catalog_exposure_mode?: CatalogExposureMode;
+  estimated_tool_count?: number;
+  exposure_exception_reason?: string;
+  exposure_review_owner?: string;
   catalog?: CatalogConfig;
 };
 
@@ -191,6 +196,8 @@ function validateRegistry(data: Registry): string[] {
       }
       catalogSlugs.add(slug);
     }
+
+    validateCatalogExposurePolicy(serverName, server, errors);
   }
 
   for (const [bundleName, members] of Object.entries(data.bundles ?? {})) {
@@ -224,6 +231,70 @@ function validateRegistry(data: Registry): string[] {
   }
 
   return errors;
+}
+
+function validateCatalogExposurePolicy(
+  serverName: string,
+  server: RegistryServer,
+  errors: string[],
+): void {
+  const exposureMode = server.catalog_exposure_mode ?? inferCatalogExposureMode(serverName, server);
+  const estimatedToolCount = inferEstimatedToolCount(serverName, server);
+  const reason = server.exposure_exception_reason?.trim();
+  const owner = server.exposure_review_owner?.trim();
+
+  if (estimatedToolCount >= 75 && exposureMode === 'direct') {
+    errors.push(
+      `server ${serverName}: direct catalog exposure is not allowed for estimated_tool_count >= 75; use brokered or exception_direct`,
+    );
+  }
+
+  if (estimatedToolCount >= 26 && estimatedToolCount <= 75 && exposureMode === 'direct') {
+    if (!reason || !owner) {
+      errors.push(
+        `server ${serverName}: direct catalog exposure for estimated_tool_count 26-75 requires exposure_exception_reason and exposure_review_owner`,
+      );
+    }
+  }
+
+  if (exposureMode === 'exception_direct') {
+    if (!reason || !owner) {
+      errors.push(
+        `server ${serverName}: exception_direct exposure requires exposure_exception_reason and exposure_review_owner`,
+      );
+    }
+  }
+
+  if (isBroadConnectorSurface(serverName, server) && exposureMode === 'direct' && estimatedToolCount >= 75) {
+    errors.push(
+      `server ${serverName}: broad connector surfaces should not be marked direct at large-catalog scale`,
+    );
+  }
+}
+
+function inferCatalogExposureMode(serverName: string, server: RegistryServer): CatalogExposureMode {
+  if (isBroadConnectorSurface(serverName, server)) {
+    return 'brokered';
+  }
+  return 'direct';
+}
+
+function inferEstimatedToolCount(serverName: string, server: RegistryServer): number {
+  if (typeof server.estimated_tool_count === 'number' && Number.isFinite(server.estimated_tool_count)) {
+    return Math.max(0, Math.trunc(server.estimated_tool_count));
+  }
+  if (isBroadConnectorSurface(serverName, server)) {
+    return 100;
+  }
+  return 0;
+}
+
+function isBroadConnectorSurface(serverName: string, server: RegistryServer): boolean {
+  if (serverName.startsWith('composio-toolkit-')) {
+    return true;
+  }
+  const tags = server.tags ?? [];
+  return tags.includes('toolkit') || (tags.includes('composio') && tags.length >= 2);
 }
 
 function buildCatalogEntries(data: Registry): GeneratedCatalogEntry[] {

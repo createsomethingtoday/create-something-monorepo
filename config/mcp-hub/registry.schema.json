@@ -126,6 +126,20 @@
         "package_path": {
           "type": "string"
         },
+        "catalog_exposure_mode": {
+          "type": "string",
+          "enum": ["direct", "brokered", "exception_direct"]
+        },
+        "estimated_tool_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "exposure_exception_reason": {
+          "type": "string"
+        },
+        "exposure_review_owner": {
+          "type": "string"
+        },
         "catalog": {
           "$ref": "#/$defs/catalog"
         }
@@ -172,6 +186,20 @@
         "package_path": {
           "type": "string"
         },
+        "catalog_exposure_mode": {
+          "type": "string",
+          "enum": ["direct", "brokered", "exception_direct"]
+        },
+        "estimated_tool_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "exposure_exception_reason": {
+          "type": "string"
+        },
+        "exposure_review_owner": {
+          "type": "string"
+        },
         "catalog": {
           "$ref": "#/$defs/catalog"
         }
@@ -215,6 +243,20 @@
           "enum": ["active", "dormant", "local"]
         },
         "package_path": {
+          "type": "string"
+        },
+        "catalog_exposure_mode": {
+          "type": "string",
+          "enum": ["direct", "brokered", "exception_direct"]
+        },
+        "estimated_tool_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "exposure_exception_reason": {
+          "type": "string"
+        },
+        "exposure_review_owner": {
           "type": "string"
         },
         "catalog": {
