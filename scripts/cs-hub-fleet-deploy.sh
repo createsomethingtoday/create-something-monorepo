@@ -48,6 +48,7 @@ OUTERFIELDS_CLICKUP_SERVERS_CSV="$(join_by_comma "${OUTERFIELDS_CLICKUP_SERVERS[
 DANNY_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},halfdozen-operator-notion-mcp"
 MJ_SERVERS_CSV="${SHARED_AUTH_SERVERS_CSV},meetings"
 MJ_SERVERS_CSV="composio-toolkit-airtable,${MJ_SERVERS_CSV}"
+MJ_SERVERS_CSV="${MJ_SERVERS_CSV},composio-toolkit-exa"
 MJ_DISCOVERY_DEFAULT_SERVERS_CSV="composio-toolkit-airtable,composio-toolkit-exa,composio-toolkit-notion"
 MJ_SERVERS_CSV="${MJ_SERVERS_CSV},webflow-template-review-mcp"
 C3DENVER_SERVERS_CSV="composio-toolkit-airtable,composio-toolkit-gmail,composio-toolkit-notion"
