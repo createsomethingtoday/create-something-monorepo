@@ -140,6 +140,10 @@ The active sales system is documented in:
 - `content/templates/sales/workflow-mapping-session-agenda.md`
 - `content/templates/sales/policy-os-proposal-input-template.md`
 - `content/templates/sales/policy-os-follow-up-sequence.md`
+- `content/templates/delivery/README.md`
+- `content/templates/delivery/mcp_contract.yaml`
+- `content/templates/delivery/agent_contract.yaml`
+- `content/templates/delivery/outcome_contract.md`
 
 ---
 

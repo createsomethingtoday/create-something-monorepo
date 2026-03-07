@@ -1,0 +1,101 @@
+version: "0.1"
+artifact: "agent_contract"
+status: "draft"
+
+client:
+  name: "CLIENT_NAME"
+  workflow_name: "PRIMARY_WORKFLOW_NAME"
+  workflow_owner: "WORKFLOW_OWNER"
+
+purpose:
+  business_objective: "WHAT BUSINESS RESULT THE AGENT IS ALLOWED TO HELP PRODUCE"
+  operator_outcome: "WHAT THE HUMAN TEAM SHOULD EXPERIENCE"
+
+runtime_profile:
+  delivery_vector: "Skills + MCP"
+  execution_mode: "copilot|approval_gated|semi_autonomous|autonomous"
+  environment: "staging|production"
+
+action_policy:
+  auto_allow:
+    - action: "READ_OR_LOW_RISK_ACTION"
+      rationale: "WHY THIS CAN RUN WITHOUT REVIEW"
+  approval_required:
+    - action: "RISKY_WRITE_OR_SEND_ACTION"
+      rationale: "WHY HUMAN REVIEW IS REQUIRED"
+      approval_inbox: "WHERE APPROVAL HAPPENS"
+  block:
+    - action: "DISALLOWED_ACTION"
+      rationale: "WHY THIS MUST NEVER EXECUTE"
+
+escalation:
+  triggers:
+    - "POLICY_AMBIGUITY"
+    - "MISSING_REQUIRED_CONTEXT"
+    - "HIGH_RISK_EXCEPTION"
+  behavior:
+    - "STOP AND REQUEST HUMAN REVIEW"
+    - "EMIT STRUCTURED REASON"
+  escalation_owner: "HUMAN_OWNER"
+
+guardrails:
+  budget:
+    max_tool_calls_per_run: 10
+    max_duration_minutes: 15
+  latency:
+    soft_limit_ms: 8000
+  data_handling:
+    pii_allowed: false
+    redact_before_output: true
+  unsafe_defaults:
+    - "NO DESTRUCTIVE ACTION WITHOUT EXPLICIT REVIEW"
+    - "NO WRITE ACTION WHEN SOURCE STATE IS STALE"
+
+decision_rules:
+  use_latest_source_of_truth: true
+  require_human_review_on_write: true
+  require_human_review_when_introspection_fails: true
+  fallback_decision: "block|approval_required"
+
+inputs_required:
+  - "WORKFLOW_CONTEXT"
+  - "SYSTEM_STATE"
+  - "REQUIRED_IDENTIFIERS"
+
+outputs_expected:
+  - "DECISION"
+  - "RATIONALE"
+  - "AUDIT_FIELDS"
+  - "NEXT_ACTION"
+
+manual_fallback:
+  path: "HOW THE HUMAN TEAM COMPLETES THE WORK WITHOUT THE AGENT"
+  owner: "FALLBACK_OWNER"
+  success_condition: "HOW TO KNOW FALLBACK COMPLETED SUCCESSFULLY"
+
+observability:
+  traces_enabled: true
+  evals_enabled: true
+  providers:
+    - name: "Braintrust"
+      role: "observability_and_evals"
+  required_audit_fields:
+    - "decision"
+    - "matched_policy_class"
+    - "approver_id"
+    - "correlation_id"
+
+release_gates:
+  pre_prod:
+    - "GOLDEN TASK SET PASSES"
+    - "APPROVAL PATH VERIFIED"
+    - "BLOCKED ACTIONS TESTED"
+  production:
+    - "WORKFLOW OWNER SIGNOFF"
+    - "ROLLBACK PATH CONFIRMED"
+    - "TRACE VISIBILITY CONFIRMED"
+
+ownership:
+  policy_owner: "ROLE_OR_NAME"
+  workflow_owner: "ROLE_OR_NAME"
+  technical_owner: "ROLE_OR_NAME"

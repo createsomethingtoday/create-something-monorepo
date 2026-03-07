@@ -36,11 +36,18 @@
    - `../templates/sales/workflow-mapping-session-agenda.md`
    - Purpose: align stakeholders on session inputs, structure, and outputs before the paid mapping session.
 
-8. **Proposal input template (delivery handoff)**
+8. **Delivery artifact templates**
+   - `../templates/delivery/README.md`
+   - `../templates/delivery/mcp_contract.yaml`
+   - `../templates/delivery/agent_contract.yaml`
+   - `../templates/delivery/outcome_contract.md`
+   - Purpose: convert workflow mapping outputs into implementation-ready artifact drafts.
+
+9. **Proposal input template (delivery handoff)**
    - `../templates/sales/policy-os-proposal-input-template.md`
    - Purpose: convert discovery output into proposal scope and contract artifact implications.
 
-9. **Follow-up sequence (post-call execution)**
+10. **Follow-up sequence (post-call execution)**
    - `../templates/sales/policy-os-follow-up-sequence.md`
    - Purpose: move high and medium fit deals to decision with clear owner and date.
 
@@ -67,6 +74,7 @@
    - `mcp_contract.yaml`
    - `agent_contract.yaml`
    - `outcome_contract.md`
+9. After the Workflow Mapping Session, instantiate the delivery templates before implementation starts.
 
 ---
 
