@@ -9,8 +9,10 @@
     "orch": "./dist/bin/orch.js"
   },
   "scripts": {
+    "prebuild": "pnpm --filter @create-something/harness build",
     "build": "tsc",
     "dev": "tsc --watch",
+    "pretest": "pnpm --filter @create-something/harness build",
     "test": "vitest run",
     "test:watch": "vitest --watch"
   },

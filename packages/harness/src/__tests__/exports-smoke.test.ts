@@ -5,7 +5,6 @@
 import { describe, it, expect } from 'vitest';
 
 const harnessExportsPromise = import('../index.js');
-const harnessTypesPromise = import('../types.js');
 
 describe('Bloom-inspired exports', () => {
   it(
@@ -44,13 +43,10 @@ describe('Bloom-inspired exports', () => {
   });
 
   it('Beads seed helpers work correctly', async () => {
-    const [harnessExports, harnessTypes] = await Promise.all([
-      harnessExportsPromise,
-      harnessTypesPromise,
-    ]);
+    const harnessExports = await harnessExportsPromise;
 
     // Issue without seed
-    const issueWithoutSeed: harnessTypes.BeadsIssue = {
+    const issueWithoutSeed: import('../types.js').BeadsIssue = {
       id: 'test-1',
       title: 'Test issue',
       description: 'Test',
