@@ -48,6 +48,8 @@ export const load = async ({ url, cookies, platform, request }) => {
 		);
 	}
 
+	// For Auth0-backed property sessions, the cookie stores the identity JWT (`id_token`).
+	// This token carries the user claims our shared session manager reads for portal auth.
 	setSessionCookies(
 		cookies,
 		{

@@ -25,9 +25,7 @@ BRIDGE_TEAM_KEYS=(
   "MJ"
 )
 
-DOPPLER_PROJECT="${DOPPLER_PROJECT:-create-something}"
-DOPPLER_CONFIG="${DOPPLER_CONFIG:-production}"
-VAULT_PROVIDER="${VAULT_PROVIDER:-doppler}"
+VAULT_PROVIDER="${VAULT_PROVIDER:-infisical}"
 INFISICAL_PROJECT_ID="${INFISICAL_PROJECT_ID:-}"
 INFISICAL_ENV="${INFISICAL_ENV:-prod}"
 INFISICAL_PATH="${INFISICAL_PATH:-/}"
@@ -49,9 +47,7 @@ Usage:
   bash scripts/cs-hub-rotate-production.sh [options]
 
 Options:
-  --project <name>                Doppler project (default: create-something)
-  --config <name>                 Doppler config (default: production)
-  --provider <name>               Vault provider: doppler|infisical|env (default: doppler)
+  --provider <name>               Vault provider: infisical|env (default: infisical)
   --vault-provider <name>         Alias for --provider
   --infisical-project-id <id>     Infisical project ID (optional if .infisical.json is present)
   --infisical-env <slug>          Infisical environment slug (default: prod)
@@ -103,9 +99,9 @@ normalize_provider_or_fail() {
   local lowered
   lowered="$(echo "$raw" | tr '[:upper:]' '[:lower:]')"
   case "$lowered" in
-    doppler | infisical | env) echo "$lowered" ;;
+    infisical | env) echo "$lowered" ;;
     *)
-      echo "invalid VAULT_PROVIDER: ${raw} (expected doppler|infisical|env)" >&2
+      echo "invalid VAULT_PROVIDER: ${raw} (expected infisical|env)" >&2
       exit 1
       ;;
   esac
@@ -275,7 +271,6 @@ set_vault_secret() {
   local key="$1"
   local value="$2"
   case "$VAULT_PROVIDER" in
-    doppler) set_doppler_secret "$key" "$value" ;;
     infisical) set_infisical_secret "$key" "$value" ;;
     env)
       echo "[${VAULT_PROVIDER}] secret ${key} left in process env only (not persisted to external vault)"
@@ -286,7 +281,6 @@ set_vault_secret() {
 get_vault_secret() {
   local key="$1"
   case "$VAULT_PROVIDER" in
-    doppler) get_doppler_secret "$key" ;;
     infisical) get_infisical_secret "$key" ;;
     env)
       if [[ -z "${!key:-}" ]]; then
@@ -344,7 +338,6 @@ run_env_command() {
 run_vault_command() {
   local cmd="$1"
   case "$VAULT_PROVIDER" in
-    doppler) run_doppler_command "$cmd" ;;
     infisical) run_infisical_command "$cmd" ;;
     env) run_env_command "$cmd" ;;
   esac
@@ -387,7 +380,6 @@ infisical_secret_exists() {
 vault_secret_exists() {
   local key="$1"
   case "$VAULT_PROVIDER" in
-    doppler) doppler_secret_exists "$key" ;;
     infisical) infisical_secret_exists "$key" ;;
     env) [[ -n "${!key:-}" ]] ;;
   esac
@@ -395,14 +387,6 @@ vault_secret_exists() {
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --project)
-      DOPPLER_PROJECT="$2"
-      shift 2
-      ;;
-    --config)
-      DOPPLER_CONFIG="$2"
-      shift 2
-      ;;
     --provider | --vault-provider)
       VAULT_PROVIDER="$2"
       shift 2
@@ -465,9 +449,6 @@ require_cmd bash
 require_cmd pnpm
 require_cmd jq
 case "$VAULT_PROVIDER" in
-  doppler)
-    require_cmd doppler
-    ;;
   infisical)
     require_cmd infisical
     if [[ "$DRY_RUN" == "false" ]]; then
@@ -479,9 +460,6 @@ case "$VAULT_PROVIDER" in
 esac
 
 case "$VAULT_PROVIDER" in
-  doppler)
-    echo "rotating delivery credentials in Doppler project=${DOPPLER_PROJECT} config=${DOPPLER_CONFIG}"
-    ;;
   infisical)
     if [[ -n "$INFISICAL_PROJECT_ID" ]]; then
       echo "rotating delivery credentials in Infisical projectId=${INFISICAL_PROJECT_ID} env=${INFISICAL_ENV} path=${INFISICAL_PATH}"
@@ -549,12 +527,9 @@ if [[ "$DRY_RUN" == "true" || "$VAULT_PROVIDER" == "env" ]]; then
   load_from_vault_for_sync="false"
 fi
 LOAD_FROM_VAULT="$load_from_vault_for_sync" \
-LOAD_FROM_DOPPLER="$load_from_vault_for_sync" \
 VAULT_PROVIDER="$VAULT_PROVIDER" \
 INCLUDE_BRIDGES="$INCLUDE_BRIDGES" \
 DRY_RUN="$DRY_RUN" \
-DOPPLER_PROJECT="$DOPPLER_PROJECT" \
-DOPPLER_CONFIG="$DOPPLER_CONFIG" \
 INFISICAL_PROJECT_ID="$INFISICAL_PROJECT_ID" \
 INFISICAL_ENV="$INFISICAL_ENV" \
 INFISICAL_PATH="$INFISICAL_PATH" \

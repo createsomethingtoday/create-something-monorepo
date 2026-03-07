@@ -29,10 +29,8 @@ BRIDGE_TEAM_KEYS=(
   "MJ"
 )
 
-DOPPLER_PROJECT="${DOPPLER_PROJECT:-create-something}"
-DOPPLER_CONFIG="${DOPPLER_CONFIG:-production}"
-VAULT_PROVIDER="${VAULT_PROVIDER:-doppler}"
-LOAD_FROM_VAULT="${LOAD_FROM_VAULT:-${LOAD_FROM_DOPPLER:-true}}"
+VAULT_PROVIDER="${VAULT_PROVIDER:-infisical}"
+LOAD_FROM_VAULT="${LOAD_FROM_VAULT:-true}"
 INFISICAL_PROJECT_ID="${INFISICAL_PROJECT_ID:-}"
 INFISICAL_ENV="${INFISICAL_ENV:-prod}"
 INFISICAL_PATH="${INFISICAL_PATH:-/}"
@@ -71,9 +69,9 @@ normalize_provider_or_fail() {
   local lowered
   lowered="$(echo "$raw" | tr '[:upper:]' '[:lower:]')"
   case "$lowered" in
-    doppler | infisical | env) echo "$lowered" ;;
+    infisical | env) echo "$lowered" ;;
     *)
-      echo "invalid VAULT_PROVIDER: ${raw} (expected doppler|infisical|env)" >&2
+      echo "invalid VAULT_PROVIDER: ${raw} (expected infisical|env)" >&2
       exit 1
       ;;
   esac
@@ -287,10 +285,6 @@ require_cmd jq
 
 if [[ "$LOAD_FROM_VAULT" == "true" ]]; then
   case "$VAULT_PROVIDER" in
-    doppler)
-      require_cmd doppler
-      load_secrets_from_doppler
-      ;;
     infisical)
       require_cmd infisical
       load_secrets_from_infisical

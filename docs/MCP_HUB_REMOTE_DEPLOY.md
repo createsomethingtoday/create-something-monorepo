@@ -266,7 +266,7 @@ The verifier checks:
 
 ## Vault-Managed Secret Workflow
 
-Use a vault as the source of truth for Hub and Notion bridge delivery credentials (Doppler default, Infisical supported for pilot):
+Use Infisical as the source of truth for Hub and Notion bridge delivery credentials:
 
 ```bash
 # Sync current vault values to Cloudflare Worker secrets
@@ -275,7 +275,7 @@ pnpm mcp:hub:vault:sync
 # Rotate delivery credentials, sync, deploy, and verify
 pnpm mcp:hub:rotate:production
 
-# Rotate using Infisical as vault source
+# Rotate using Infisical
 VAULT_PROVIDER=infisical INFISICAL_ENV=prod pnpm mcp:hub:rotate:production
 ```
 

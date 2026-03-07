@@ -27,6 +27,9 @@ Single identity across all properties: .space, .io, .agency, .ltd, and .learn.
 | POST | `/v1/mcp/sessions` | Create MCP session token + policy claims |
 | POST | `/v1/mcp/sessions/admin-mint` | Admin mint MCP session for mapped account (API key + policy gated) |
 | POST | `/v1/mcp/sessions/resolve` | Resolve MCP session token (hub-only) |
+| POST | `/v1/mcp/long-lived-tokens/admin-issue` | Issue or regenerate a managed bearer token (API key + policy gated) |
+| POST | `/v1/mcp/long-lived-tokens/admin-get` | Inspect managed bearer token metadata by auth subject (API key gated) |
+| POST | `/v1/mcp/long-lived-tokens/:id/revoke` | Revoke managed bearer token (API key + policy gated) |
 | GET | `/v1/mcp/sessions/:id` | Inspect own MCP session |
 | POST | `/v1/mcp/sessions/:id/revoke` | Revoke own MCP session |
 | POST | `/v1/mcp/legacy-keys/issue` | Issue legacy bearer key (API key + policy gated) |
@@ -71,7 +74,7 @@ MCP hub integration:
    - Session token (`ms_tok_*`) is ephemeral, while `account_id` is stable per `{user_id, tenant_id}`
 2. Host stores returned MCP token and calls hub endpoint
 3. Hub introspects token via `POST /v1/mcp/sessions/resolve` using `MCP_SESSION_RESOLVE_TOKEN`
-   - resolver accepts both MCP session tokens and issued legacy personal bearer tokens (`mlk_*`) for compat lanes
+   - resolver accepts MCP session tokens, managed `.agency` bearer tokens, and issued legacy personal bearer tokens (`mlk_*`) for compat lanes
 
 Recommended production config:
 

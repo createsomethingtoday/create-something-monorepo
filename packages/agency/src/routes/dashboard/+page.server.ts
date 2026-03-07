@@ -2,15 +2,17 @@
  * Dashboard Server - Protected Route
  *
  * Loads agent metrics and activity for authenticated users.
- * Auth via WORKWAY IDENTITY layer.
+ * Auth via the shared Auth0-backed CREATE SOMETHING session layer.
  */
 
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals, fetch }) => {
+export const load: PageServerLoad = async ({ parent, fetch }) => {
+	const { user } = await parent();
+
 	// Auth check - redirects if not authenticated
-	if (!locals.user) {
+	if (!user) {
 		throw redirect(303, '/login?redirect=/dashboard');
 	}
 
@@ -113,7 +115,7 @@ export const load: PageServerLoad = async ({ locals, fetch }) => {
 	};
 
 	return {
-		user: locals.user,
+		user,
 		metrics: agentMetrics,
 	};
 };

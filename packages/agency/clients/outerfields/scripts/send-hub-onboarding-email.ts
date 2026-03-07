@@ -22,7 +22,6 @@
  *   CS_HUB_ANDRE_OUTERFIELDS_API_TOKEN=...
  */
 
-import { execFileSync } from 'child_process';
 import { existsSync, readFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
@@ -80,31 +79,6 @@ function maskToken(value: string): string {
   return `${value.slice(0, 8)}...${value.slice(-8)}`;
 }
 
-function maybeReadDopplerSecret(secretName: string): string | null {
-  const scopes: Array<{ project: string; config: string }> = [
-    { project: 'mcp', config: 'prd' },
-    { project: 'create-something', config: 'production' }
-  ];
-
-  for (const scope of scopes) {
-    try {
-      const value = execFileSync(
-        'doppler',
-        ['secrets', 'get', secretName, '--plain', '--project', scope.project, '--config', scope.config],
-        {
-          encoding: 'utf-8',
-          stdio: ['ignore', 'pipe', 'ignore']
-        }
-      ).trim();
-      if (value) return value;
-    } catch {
-      // Try next scope.
-    }
-  }
-
-  return null;
-}
-
 function resolveDeliveryToken(argsFlag: string, preferredEnvName: string, legacySecretName: string): string {
   const fromArg = readArg(argsFlag)?.trim();
   if (fromArg) return fromArg;
@@ -115,7 +89,7 @@ function resolveDeliveryToken(argsFlag: string, preferredEnvName: string, legacy
   const fromLegacyEnv = process.env[legacySecretName]?.trim();
   if (fromLegacyEnv) return fromLegacyEnv;
 
-  return maybeReadDopplerSecret(legacySecretName) ?? REDACTED_PLACEHOLDER;
+  return REDACTED_PLACEHOLDER;
 }
 
 function renderAccessCard(label: string, url: string, token: string): string {

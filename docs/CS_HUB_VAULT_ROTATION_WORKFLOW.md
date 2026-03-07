@@ -1,44 +1,26 @@
 # CS Hub Vault + Rotation Workflow
 
-Use this workflow to keep Hub and Notion bridge runtime credentials in a vault (Doppler default, Infisical supported) and rotate them without storing plaintext tokens in docs.
+Use this workflow to keep Hub and Notion bridge runtime credentials in Infisical and rotate them without storing plaintext tokens in docs.
 
 Client-facing bearer delivery is no longer the default for Half Dozen hub lanes. Issue identity-backed personal tokens through the partner auth APIs and keep Infisical as the source of truth for worker/runtime secrets only.
 
-## 1) Install Vault CLIs
+## 1) Install Vault CLI
 
 Local macOS install:
 
 ```bash
 brew install gnupg
-brew install dopplerhq/cli/doppler
 brew install infisical/get-cli/infisical
-doppler --version
 infisical --version
-```
-
-Upgrade any time:
-
-```bash
-doppler update
 ```
 
 ## 2) Authenticate and scope the project
 
 ```bash
-doppler login
 cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
-doppler setup
 infisical login --interactive
 # Optional: bind the repo to an Infisical project context
 infisical init
-```
-
-Optional `doppler.yaml` (repo root):
-
-```yaml
-setup:
-  - project: create-something
-    config: production
 ```
 
 ## 3) Required vault secrets
@@ -91,11 +73,10 @@ Useful options:
 DRY_RUN=true pnpm mcp:hub:vault:sync
 INCLUDE_BRIDGES=false pnpm mcp:hub:vault:sync
 LOAD_FROM_VAULT=false pnpm mcp:hub:vault:sync
-LOAD_FROM_DOPPLER=false pnpm mcp:hub:vault:sync  # backward compatible alias
 VAULT_PROVIDER=env pnpm mcp:hub:vault:sync
 ```
 
-Infisical pilot (Machine Identity / Universal Auth):
+Infisical machine identity:
 
 ```bash
 VAULT_PROVIDER=infisical \
@@ -114,7 +95,7 @@ Notes:
 
 ## 5) Rotate delivery credentials and roll out
 
-This rotates per-team Hub worker tokens, core hub token, and per-team Notion bridge basic passwords in the selected vault provider, then syncs Worker secrets and runs deploy/verify.
+This rotates per-team Hub worker tokens, core hub token, and per-team Notion bridge basic passwords in Infisical, then syncs Worker secrets and runs deploy/verify.
 
 ```bash
 pnpm mcp:hub:rotate:production
@@ -144,11 +125,7 @@ Notes:
 
 ## 6) Production automation guidance
 
-For CI/CD or production automation, avoid human `doppler login` sessions:
-
-- use Doppler Service Tokens, or
-- use Doppler OIDC login (`doppler oidc login ...`) for short-lived auth.
-- for Infisical, use Machine Identity Universal Auth (`INFISICAL_CLIENT_ID` + `INFISICAL_CLIENT_SECRET`) instead of interactive login.
+For CI/CD or production automation, use Infisical Machine Identity Universal Auth (`INFISICAL_CLIENT_ID` + `INFISICAL_CLIENT_SECRET`) instead of interactive login.
 
 ## 7) Delivery policy alignment
 

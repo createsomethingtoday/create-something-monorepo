@@ -13,7 +13,7 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 - Legacy bridge bearer key issuance/revocation
 - Strict session bundle delivery records
 - Secret handling and audit controls
-- Vault provider governance and migration controls for runtime Worker secrets
+- Infisical governance and migration controls for runtime Worker secrets
 
 ## Policy Statements
 
@@ -22,12 +22,12 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 3. Plaintext secrets MUST NOT be persisted in docs, migration artifacts, or delivery audit tables.
 4. Delivery must be recorded with channel, actor, recipient, and artifact reference.
 5. Revocation actions MUST remain available regardless of legacy/sunset state.
-6. Production credential sync/rotation MUST use an approved vault provider (`doppler` or `infisical`) and provider choice MUST be explicit in automation context.
+6. Production credential sync/rotation MUST use Infisical for runtime secrets. Doppler MAY exist only as a one-time migration source.
 7. Vault migration cutover MUST include:
    - a dry-run import
    - an executed import
    - verification results showing no missing or mismatched keys before production sync
-8. CI/CD and unattended automation MUST use non-interactive machine auth (Doppler service token/OIDC or Infisical machine identity token); interactive login is prohibited for production automation.
+8. CI/CD and unattended automation MUST use non-interactive Infisical machine identity auth; interactive login is prohibited for production automation.
 9. Vault sync/rotation executions MUST produce auditable run context (`provider`, `source project/config`, `target env/path`, `dry_run`, `result`) without exposing plaintext secret values.
 
 ## Enforcement Surfaces
@@ -65,4 +65,3 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 - `scripts/cs-hub-rotate-production.sh`
 - `scripts/migrate-doppler-to-infisical.sh`
 - `docs/CS_HUB_VAULT_ROTATION_WORKFLOW.md`
-- `docs/DM_HUB_CLIENT_ONBOARDING.md`
