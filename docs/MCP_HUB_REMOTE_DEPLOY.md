@@ -201,6 +201,33 @@ That returns a `managed_bearer_bundle` for the client while leaving `HUB_API_TOK
 
 Use `--mode legacy` only for exception-governed fallback delivery.
 
+## ChatGPT OAuth Rule
+
+For ChatGPT and other hosts that require OAuth app onboarding, use OAuth as the delivery layer for the existing managed long-lived bearer token.
+
+Required behavior:
+
+1. `identity-worker` is the OAuth authority.
+2. OAuth token exchange returns the user's managed bearer token as `access_token`.
+3. The Hub continues to authorize the request through its existing bearer-token and resolver logic.
+4. Existing bearer-token clients must continue working without OAuth changes.
+5. `HUB_API_TOKEN` remains a runtime guardrail only and must never be surfaced as a user-facing OAuth credential.
+
+Required discovery surfaces:
+
+- Hub custom domain:
+  - `GET /.well-known/oauth-authorization-server`
+  - `GET /mcp/.well-known/oauth-authorization-server`
+- Identity worker:
+  - `GET /.well-known/oauth-authorization-server`
+  - `GET /.well-known/openid-configuration`
+  - `GET|POST /oauth/authorize`
+  - `POST /oauth/token`
+  - `POST /oauth/register` when dynamic registration is required
+  - `GET /oauth/userinfo` when OIDC support is enabled
+
+Do not require ChatGPT to send `X-MCP-Session-Token`. Session tokens remain valid for first-party flows, but ChatGPT compatibility should use `Authorization: Bearer <managed bearer>`.
+
 ## Rollout Validation Checklist
 
 After deploy, validate:
@@ -212,6 +239,9 @@ After deploy, validate:
 5. `hub_execute_proxy_tool` succeeds for at least one known route.
 6. Direct call to `<server>__<tool>` returns broker-only guidance error.
 7. `hub_trace_lookup` shows both hub and routed downstream telemetry rows for broker calls.
+8. Hub OAuth discovery endpoints resolve successfully from the custom domain.
+9. OAuth token exchange yields a managed bearer token that the resolver accepts at `/mcp`.
+10. Revoking or regenerating the managed bearer token immediately breaks and then restores host access as expected.
 
 ## Fleet E2E Verification
 

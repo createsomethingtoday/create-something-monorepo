@@ -12,6 +12,7 @@ Define the production policy for user-facing bearer tokens issued through `.agen
 
 - One active bearer token per authenticated user
 - Long-lived token issuance and regeneration through `.agency`
+- OAuth-based onboarding for hosts that require OAuth while still using the same long-lived managed bearer token
 - Live entitlement enforcement across organization, contract, policy, and billing state
 - Audit, revocation, regeneration, and incident response controls
 - Legal and product disclosure requirements for customer-facing use
@@ -39,6 +40,10 @@ Define the production policy for user-facing bearer tokens issued through `.agen
 10. Regeneration and revocation MUST remain available regardless of billing, sunset, or host state so that compromised tokens can always be terminated.
 11. Bearer-token access MUST fail closed when legal or commercial prerequisites are no longer satisfied.
 12. Customer-facing legal terms, security language, and operational documentation MUST disclose that bearer tokens are high-trust credentials, long-lived, revocable, continuously governed, and unsuitable for sharing.
+13. For hosts that require OAuth, CREATE SOMETHING MAY deliver the managed bearer token through an OAuth facade; in that case the OAuth `access_token` MAY itself be long-lived because it is the governed managed bearer artifact.
+14. OAuth delivery MUST preserve current hub bearer semantics so that existing bearer-token clients continue to function without OAuth migration.
+15. OAuth delivery for third-party hosts MUST NOT depend on custom headers such as `X-MCP-Session-Token`; bearer authorization remains the portable host contract.
+16. Shared runtime guardrail tokens such as `HUB_API_TOKEN` MUST NOT be exposed as user-facing OAuth artifacts.
 
 ## Required Legal Alignment
 
@@ -53,6 +58,12 @@ The following artifacts MUST remain aligned with this policy before production l
 ## Enforcement Surfaces
 
 - Identity worker:
+  - `/.well-known/oauth-authorization-server`
+  - `/.well-known/openid-configuration`
+  - `/oauth/authorize`
+  - `/oauth/token`
+  - `/oauth/register`
+  - `/oauth/userinfo`
   - `POST /v1/mcp/long-lived-tokens/admin-issue`
   - `POST /v1/mcp/long-lived-tokens/admin-get`
   - `POST /v1/mcp/long-lived-tokens/:id/revoke`
@@ -66,9 +77,12 @@ The following artifacts MUST remain aligned with this policy before production l
   - `GET /api/internal/mcp-entitlements/check`
   - `Account > MCP Bearer Token`
   - `Admin > Security > Bearer Tokens`
+  - OAuth app onboarding and disclosure surfaces for third-party hosts
   - legal acceptance and consent capture
   - org membership and entitlement display
 - MCP hub / gateway:
+  - `GET /.well-known/oauth-authorization-server`
+  - `GET /mcp/.well-known/oauth-authorization-server`
   - request-time org resolution
   - request-time entitlement enforcement
   - audit/event emission
@@ -87,6 +101,8 @@ The following artifacts MUST remain aligned with this policy before production l
 - Legal acceptance records linked to the user and organization
 - Billing and contract state checks linked to allow/deny decisions
 - Admin-visible last-used and incident-response metadata
+- OAuth app setup traces showing the delivered access token resolves through the same managed bearer path
+- Revoke/regenerate actions immediately invalidating OAuth-delivered host access
 
 ## Source Anchors
 
@@ -98,3 +114,4 @@ The following artifacts MUST remain aligned with this policy before production l
 - `docs/policies/v1/policy.mcp-session-self-service.v1.md`
 - `docs/policies/v1/policy.mcp-credential-delivery.v1.md`
 - `docs/policies/v1/policy.partner-auth-governance.v1.md`
+- `docs/guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md`

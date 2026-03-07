@@ -11,6 +11,7 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 ## Scope
 
 - Managed bearer-token delivery for authenticated `.agency` users and partner-mapped users
+- OAuth-facade delivery for hosts that require OAuth but should still receive managed bearer credentials
 - Legacy bridge bearer key issuance/revocation
 - Strict session bundle delivery records
 - Secret handling and audit controls
@@ -32,10 +33,20 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
    - verification results showing no missing or mismatched keys before production sync
 10. CI/CD and unattended automation MUST use non-interactive Infisical machine identity auth; interactive login is prohibited for production automation.
 11. Vault sync/rotation executions MUST produce auditable run context (`provider`, `source project/config`, `target env/path`, `dry_run`, `result`) without exposing plaintext secret values.
+12. When a third-party host requires OAuth, OAuth MAY be used as the credential-delivery mechanism for `managed_bearer_bundle`; in that case the delivered OAuth `access_token` MUST be the same managed bearer artifact already governed by `.agency` and `identity-worker`.
+13. OAuth delivery MUST NOT require replacing the existing direct bearer-token experience for current MCP clients.
+14. OAuth discovery, authorization, token, registration, and OIDC endpoints MUST NOT expose or deliver shared worker/runtime guardrail tokens such as `HUB_API_TOKEN`.
+15. Any UI that surfaces managed bearer credentials MUST only reveal plaintext at issuance or regeneration time, while keeping revoke and regenerate controls continuously available.
 
 ## Enforcement Surfaces
 
 - Identity worker:
+  - `/.well-known/oauth-authorization-server`
+  - `/.well-known/openid-configuration`
+  - `/oauth/authorize`
+  - `/oauth/token`
+  - `/oauth/register`
+  - `/oauth/userinfo`
   - `POST /v1/mcp/long-lived-tokens/admin-issue`
   - `POST /v1/mcp/long-lived-tokens/:id/revoke`
   - `POST /v1/mcp/legacy-keys/issue`
@@ -50,6 +61,9 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
   - `POST /api/admin/mcp-entitlements`
   - `POST /api/admin/contracts`
   - `partner_access_deliveries`
+- Hub discovery surfaces:
+  - `GET /.well-known/oauth-authorization-server`
+  - `GET /mcp/.well-known/oauth-authorization-server`
 - Vault/sync automation:
   - `scripts/cs-hub-vault-sync.sh`
   - `scripts/cs-hub-rotate-production.sh`
@@ -66,6 +80,8 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 - `partner_auth_clients` and `partner_auth_consents` records used for entitlement reconciliation
 - `agency_contract_state` records used as explicit contract authority
 - Secret scan of operator docs (no raw bearer artifacts)
+- OAuth discovery responses and token-exchange traces showing managed bearer delivery without leaking `HUB_API_TOKEN`
+- UI audit events for token reveal, regenerate, and revoke actions
 - Vault audit trails for create/update operations
 - Migration verification output (`missing=0`, `mismatched=0`) for provider cutover
 - Sync/rotation command logs showing provider selection and non-secret execution context
@@ -73,6 +89,7 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 ## Source Anchors
 
 - `packages/identity-worker/src/index.ts`
+- `packages/identity-worker/README.md`
 - `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/bearer-token/issue/+server.ts`
 - `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/legacy-key/issue/+server.ts`
 - `packages/agency/src/routes/api/admin/mcp-entitlements/+server.ts`
@@ -80,3 +97,4 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 - `scripts/cs-hub-rotate-production.sh`
 - `scripts/migrate-doppler-to-infisical.sh`
 - `docs/CS_HUB_VAULT_ROTATION_WORKFLOW.md`
+- `docs/guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md`

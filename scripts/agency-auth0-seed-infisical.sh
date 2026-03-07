@@ -28,6 +28,31 @@ require_cmd() {
   fi
 }
 
+detect_root_path_drift() {
+  if [[ "$INFISICAL_PATH" == "/" ]]; then
+    return 0
+  fi
+
+  local root_payload
+  root_payload="$(infisical export --format=json --env="$INFISICAL_ENV" --path="/" --include-imports=true ${INFISICAL_PROJECT_ID:+--projectId="$INFISICAL_PROJECT_ID"})"
+
+  local root_keys
+  root_keys="$(printf '%s' "$root_payload" | jq -r '
+    if type == "array" then
+      map(select(.key | startswith("AUTH0_"))) | map(.key) | unique | .[]
+    else
+      to_entries | map(select(.key | startswith("AUTH0_"))) | map(.key) | unique | .[]
+    end
+  ' 2>/dev/null || true)"
+
+  if [[ -n "$root_keys" ]]; then
+    echo "Auth0 secrets exist at Infisical root path '/' while canonical path is '${INFISICAL_PATH}'." >&2
+    echo "Remove the root-path copies before seeding to avoid path drift:" >&2
+    printf '%s\n' "$root_keys" >&2
+    exit 1
+  fi
+}
+
 put_secret() {
   local key="$1"
   local value="$2"
@@ -52,6 +77,8 @@ put_secret() {
 
 main() {
   require_cmd infisical
+  require_cmd jq
+  detect_root_path_drift
 
   local key
   for key in "${REQUIRED_KEYS[@]}"; do

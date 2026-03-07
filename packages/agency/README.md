@@ -203,6 +203,8 @@ Recommended Infisical path:
 /agency/auth
 ```
 
+Auth0 secrets must live only under `/agency/auth`. Do not store duplicate `AUTH0_*` keys at the Infisical root path `/`; the seed/sync scripts now fail closed when root-path drift is present.
+
 Seed Auth0 tenant values into Infisical:
 
 ```bash

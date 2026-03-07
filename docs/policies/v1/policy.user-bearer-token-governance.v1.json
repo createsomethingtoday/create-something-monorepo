@@ -9,7 +9,10 @@
     "issuer": "agency",
     "identity_provider": "auth0",
     "token_format": "opaque",
-    "plaintext_display": "issue_or_regenerate_only"
+    "plaintext_display": "issue_or_regenerate_only",
+    "oauth_delivery_allowed": true,
+    "oauth_access_token_may_equal_managed_bearer": true,
+    "oauth_requires_portable_bearer_auth": true
   },
   "authorization_requirements": {
     "live_check_per_request": true,

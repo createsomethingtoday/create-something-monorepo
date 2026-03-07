@@ -31,6 +31,43 @@ require_cmd() {
   fi
 }
 
+detect_root_path_drift() {
+  if [[ "$INFISICAL_PATH" == "/" ]]; then
+    return 0
+  fi
+
+  local root_payload
+  local -a export_cmd=(
+    infisical export
+    --format=json
+    --env="$INFISICAL_ENV"
+    --path="/"
+    --include-imports="$INFISICAL_INCLUDE_IMPORTS"
+  )
+
+  if [[ -n "$INFISICAL_PROJECT_ID" ]]; then
+    export_cmd+=(--projectId="$INFISICAL_PROJECT_ID")
+  fi
+
+  root_payload="$("${export_cmd[@]}")"
+
+  local root_keys
+  root_keys="$(printf '%s' "$root_payload" | jq -r '
+    if type == "array" then
+      map(select(.key | startswith("AUTH0_"))) | map(.key) | unique | .[]
+    else
+      to_entries | map(select(.key | startswith("AUTH0_"))) | map(.key) | unique | .[]
+    end
+  ' 2>/dev/null || true)"
+
+  if [[ -n "$root_keys" ]]; then
+    echo "Auth0 secrets exist at Infisical root path '/' while canonical path is '${INFISICAL_PATH}'." >&2
+    echo "Remove the root-path copies before syncing to Pages to avoid path drift:" >&2
+    printf '%s\n' "$root_keys" >&2
+    exit 1
+  fi
+}
+
 load_infisical_payload() {
   local -a export_cmd=(
     infisical export
@@ -76,6 +113,7 @@ main() {
   require_cmd infisical
   require_cmd jq
   require_cmd pnpm
+  detect_root_path_drift
 
   local payload
   payload="$(load_infisical_payload)"
