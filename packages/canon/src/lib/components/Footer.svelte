@@ -588,6 +588,7 @@
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-md);
     color: var(--color-fg-tertiary);
+    text-decoration: none;
     transition:
       all var(--duration-micro) var(--ease-standard),
       transform var(--duration-micro) var(--ease-standard);
@@ -597,6 +598,7 @@
     background: transparent;
     border-color: var(--color-border-emphasis);
     color: var(--color-fg-primary);
+    text-decoration: none;
     transform: translateY(-1px);
   }
 
@@ -611,6 +613,7 @@
   .footer-link {
     font-size: var(--text-body-sm);
     color: var(--color-fg-tertiary);
+    text-decoration: none;
     transition:
       color var(--duration-micro) var(--ease-standard),
       background var(--duration-micro) var(--ease-standard);
@@ -621,6 +624,7 @@
   .footer-link:hover,
   .footer-link.active {
     color: var(--color-fg-primary);
+    text-decoration: none;
   }
 
   .link-label {
@@ -646,11 +650,13 @@
 
   .legal-link {
     color: var(--color-fg-muted);
+    text-decoration: none;
     transition: color var(--duration-micro) var(--ease-standard);
   }
 
   .legal-link:hover {
     color: var(--color-fg-primary);
+    text-decoration: none;
   }
 
   .legal-separator {
