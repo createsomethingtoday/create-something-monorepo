@@ -8,6 +8,8 @@
 		activeContracts: number;
 		inactiveBilling: number;
 		activeBilling: number;
+		seededUsers: number;
+		unboundSeeds: number;
 	};
 
 	type DeniedEntitlement = {
@@ -40,11 +42,21 @@
 		updated_at: string;
 	};
 
+	type IdentitySeed = {
+		normalized_email: string;
+		auth_subject: string | null;
+		account_id: string;
+		tenant_id: string;
+		status: string;
+		updated_at: string;
+	};
+
 	let { data } = $props();
 	const summary = $derived(data.summary as Summary);
 	const denied = $derived(data.recentDeniedEntitlements as DeniedEntitlement[]);
 	const contracts = $derived(data.recentContracts as Contract[]);
 	const commercial = $derived(data.recentCommercialAccounts as CommercialAccount[]);
+	const seeds = $derived(data.recentIdentitySeeds as IdentitySeed[]);
 </script>
 
 <SEO title="Security Operations" description="Operator dashboard for bearer governance, contracts, and commercial state." propertyName="agency" noindex={true} />
@@ -61,6 +73,7 @@
 				<a href="/admin/security/contracts">Contracts</a>
 				<a href="/admin/security/commercial">Commercial</a>
 				<a href="/admin/security/partners">Partners</a>
+				<a href="/admin/security/seeds">Seeds</a>
 				<a href="/admin/security/audit">Audit</a>
 			</nav>
 		</header>
@@ -90,6 +103,14 @@
 				<span class="label">Billing Attention</span>
 				<strong class="bad">{summary.inactiveBilling}</strong>
 			</article>
+			<article class="stat-card">
+				<span class="label">Seeded Users</span>
+				<strong>{summary.seededUsers}</strong>
+			</article>
+			<article class="stat-card">
+				<span class="label">Unbound Seeds</span>
+				<strong>{summary.unboundSeeds}</strong>
+			</article>
 		</section>
 
 		<section class="actions">
@@ -108,6 +129,10 @@
 			<a href="/admin/security/partners" class="action-card">
 				<h2>Partner Mappings</h2>
 				<p>Inspect partner client status, Auth0 subject mapping, workspace account mapping, and required toolkits.</p>
+			</a>
+			<a href="/admin/security/seeds" class="action-card">
+				<h2>Seeded Users</h2>
+				<p>Seed invite mappings by email before first login, then inspect subject binding after first Auth0 sign-in.</p>
 			</a>
 			<a href="/admin/security/audit" class="action-card">
 				<h2>Audit Explorer</h2>
@@ -168,6 +193,36 @@
 										</td>
 										<td>{row.contract_status}</td>
 										<td class="muted">{row.normalized_email ?? row.auth_subject ?? row.account_id ?? 'unmapped'}</td>
+									</tr>
+								{/each}
+							{/if}
+						</tbody>
+					</table>
+				</div>
+			</section>
+
+			<section class="panel full">
+				<div class="panel-header">
+					<h2>Recent Identity Seeds</h2>
+					<a href="/admin/security/seeds">Open</a>
+				</div>
+				<div class="table-wrap">
+					<table>
+						<thead>
+							<tr><th>Email</th><th>Mapping</th><th>Status</th></tr>
+						</thead>
+						<tbody>
+							{#if seeds.length === 0}
+								<tr><td colspan="3" class="empty">No seeded users yet.</td></tr>
+							{:else}
+								{#each seeds as row}
+									<tr>
+										<td>
+											<div>{row.normalized_email}</div>
+											<div class="muted">{row.updated_at}</div>
+										</td>
+										<td class="muted">{row.account_id} / {row.tenant_id}</td>
+										<td>{row.auth_subject ? 'bound' : row.status}</td>
 									</tr>
 								{/each}
 							{/if}

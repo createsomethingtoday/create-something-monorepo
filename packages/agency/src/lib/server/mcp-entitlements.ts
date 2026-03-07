@@ -100,6 +100,25 @@ export interface AgencyIdentitySeedRow {
 	updated_at: string;
 }
 
+export interface AgencyIdentitySeedUpsertInput {
+	authEmail: string;
+	authSubject?: string | null;
+	accountId: string;
+	tenantId: string;
+	workspaceAccountId?: string | null;
+	serviceTier?: string | null;
+	managedBearerAllowed?: boolean;
+	orgMembershipActive?: boolean;
+	serviceEntitled?: boolean;
+	policyAccepted?: boolean;
+	contractActive?: boolean;
+	billingActive?: boolean;
+	status?: string;
+	invitedAt?: string | null;
+	boundAt?: string | null;
+	metadata?: Record<string, unknown>;
+}
+
 export interface AgencyContractStateRow {
 	id: string;
 	auth_subject: string | null;
@@ -282,6 +301,119 @@ export async function listAgencyCommercialState(
 		.bind(limit)
 		.all<AgencyCommercialStateRow>();
 	return result.results ?? [];
+}
+
+export async function listAgencyIdentitySeeds(
+	db: D1Database,
+	options: { limit?: number; search?: string } = {}
+): Promise<AgencyIdentitySeedRow[]> {
+	const limit = Math.max(1, Math.min(250, options.limit ?? 100));
+	const search = options.search?.trim().toLowerCase();
+
+	try {
+		if (search) {
+			const pattern = `%${search}%`;
+			const result = await db
+				.prepare(
+					`SELECT * FROM agency_identity_seeds
+         WHERE normalized_email LIKE ?
+            OR account_id LIKE ?
+            OR tenant_id LIKE ?
+            OR COALESCE(auth_subject, '') LIKE ?
+         ORDER BY updated_at DESC
+         LIMIT ?`
+				)
+				.bind(pattern, pattern, pattern, pattern, limit)
+				.all<AgencyIdentitySeedRow>();
+			return result.results ?? [];
+		}
+
+		const result = await db
+			.prepare(
+				`SELECT * FROM agency_identity_seeds
+         ORDER BY updated_at DESC
+         LIMIT ?`
+			)
+			.bind(limit)
+			.all<AgencyIdentitySeedRow>();
+		return result.results ?? [];
+	} catch (error) {
+		if (isMissingD1TableError(error, 'agency_identity_seeds')) {
+			return [];
+		}
+		throw error;
+	}
+}
+
+export async function upsertAgencyIdentitySeed(
+	db: D1Database,
+	input: AgencyIdentitySeedUpsertInput
+): Promise<AgencyIdentitySeedRow | null> {
+	const normalizedEmail = normalizeEmail(input.authEmail);
+	if (!normalizedEmail) {
+		return null;
+	}
+
+	try {
+		await db
+			.prepare(
+				`INSERT INTO agency_identity_seeds (
+         normalized_email, auth_subject, account_id, tenant_id, workspace_account_id, service_tier,
+         managed_bearer_allowed, org_membership_active, service_entitled, policy_accepted,
+         contract_active, billing_active, status, invited_at, bound_at, metadata_json
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(normalized_email) DO UPDATE SET
+         auth_subject = COALESCE(excluded.auth_subject, agency_identity_seeds.auth_subject),
+         account_id = excluded.account_id,
+         tenant_id = excluded.tenant_id,
+         workspace_account_id = excluded.workspace_account_id,
+         service_tier = excluded.service_tier,
+         managed_bearer_allowed = excluded.managed_bearer_allowed,
+         org_membership_active = excluded.org_membership_active,
+         service_entitled = excluded.service_entitled,
+         policy_accepted = excluded.policy_accepted,
+         contract_active = excluded.contract_active,
+         billing_active = excluded.billing_active,
+         status = excluded.status,
+         invited_at = COALESCE(excluded.invited_at, agency_identity_seeds.invited_at),
+         bound_at = COALESCE(excluded.bound_at, agency_identity_seeds.bound_at),
+         metadata_json = excluded.metadata_json,
+         updated_at = datetime('now')`
+			)
+			.bind(
+				normalizedEmail,
+				input.authSubject ?? null,
+				input.accountId,
+				input.tenantId,
+				input.workspaceAccountId ?? input.accountId,
+				input.serviceTier ?? 'agency',
+				input.managedBearerAllowed === false ? 0 : 1,
+				input.orgMembershipActive === false ? 0 : 1,
+				input.serviceEntitled === false ? 0 : 1,
+				input.policyAccepted === true ? 1 : 0,
+				input.contractActive === false ? 0 : 1,
+				input.billingActive === false ? 0 : 1,
+				input.status ?? 'seeded',
+				input.invitedAt ?? null,
+				input.boundAt ?? null,
+				JSON.stringify(input.metadata ?? {})
+			)
+			.run();
+
+		return await db
+			.prepare(
+				`SELECT * FROM agency_identity_seeds
+       WHERE normalized_email = ?
+       LIMIT 1`
+			)
+			.bind(normalizedEmail)
+			.first<AgencyIdentitySeedRow>();
+	} catch (error) {
+		if (isMissingD1TableError(error, 'agency_identity_seeds')) {
+			return null;
+		}
+		throw error;
+	}
 }
 
 export async function upsertAgencyContractState(

@@ -16,6 +16,30 @@ const EMAIL_OVERRIDES: Record<string, { accountId: string; tenantId: string }> =
 		accountId: 'acct_mj',
 		tenantId: 'tenant_createsomething_io',
 	},
+	'dm@halfdozen.co': {
+		accountId: 'acct_danny',
+		tenantId: 'tenant_halfdozen_co',
+	},
+	'danny@halfdozen.co': {
+		accountId: 'acct_danny',
+		tenantId: 'tenant_halfdozen_co',
+	},
+	'leah@halfdozen.co': {
+		accountId: 'acct_leah',
+		tenantId: 'tenant_halfdozen_co',
+	},
+	'fillip@halfdozen.co': {
+		accountId: 'acct_fillip',
+		tenantId: 'tenant_halfdozen_co',
+	},
+	'august@halfdozen.co': {
+		accountId: 'acct_august',
+		tenantId: 'tenant_halfdozen_co',
+	},
+	'lainy@halfdozen.co': {
+		accountId: 'acct_lainy',
+		tenantId: 'tenant_halfdozen_co',
+	},
 };
 
 function normalizeIdentifier(value: string): string {

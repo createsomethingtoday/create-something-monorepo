@@ -1,5 +1,6 @@
 import {
 	evaluateAgencyMcpEntitlement,
+	listAgencyIdentitySeeds,
 	listAgencyCommercialState,
 	listAgencyContractState,
 	listAgencyMcpEntitlements,
@@ -10,10 +11,11 @@ export const load = async ({ cookies, platform }) => {
 	const operator = await requireAgencyOperator({ cookies, platform });
 	const db = platform!.env.DB;
 
-	const [entitlements, contracts, commercial] = await Promise.all([
+	const [entitlements, contracts, commercial, identitySeeds] = await Promise.all([
 		listAgencyMcpEntitlements(db, { limit: 200 }),
 		listAgencyContractState(db, { limit: 100 }),
 		listAgencyCommercialState(db, { limit: 100 }),
+		listAgencyIdentitySeeds(db, { limit: 100 }),
 	]);
 
 	const evaluated = entitlements.map((row) => ({
@@ -39,9 +41,12 @@ export const load = async ({ cookies, platform }) => {
 			activeContracts: contracts.filter((row) => row.contract_active === 1).length,
 			inactiveBilling: commercial.filter((row) => row.billing_active !== 1).length,
 			activeBilling: commercial.filter((row) => row.billing_active === 1).length,
+			seededUsers: identitySeeds.length,
+			unboundSeeds: identitySeeds.filter((row) => !row.auth_subject).length,
 		},
 		recentDeniedEntitlements: evaluated.filter((row) => !row.decision.allowed).slice(0, 10),
 		recentContracts: contracts.slice(0, 10),
 		recentCommercialAccounts: commercial.slice(0, 10),
+		recentIdentitySeeds: identitySeeds.slice(0, 10),
 	};
 };
