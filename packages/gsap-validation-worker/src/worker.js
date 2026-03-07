@@ -1250,7 +1250,8 @@ var GsapValidationWorkflow = class extends WorkflowEntrypoint {
     __name(this, "GsapValidationWorkflow");
   }
   async run(event, step) {
-    const { url, maxDepth = 10, maxPages = 1000 } = event.params;
+    const params = event?.params || event?.payload || event || {};
+    const { url, maxDepth = 10, maxPages = 1000 } = params;
     const crawlResults = await step.do("crawl website", {
       retries: {
         limit: 3,
