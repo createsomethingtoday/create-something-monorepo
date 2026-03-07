@@ -20,6 +20,7 @@ export interface Auth0EnvLike {
 	AUTH0_ISSUER_BASE_URL?: string;
 	AUTH0_JWKS_URL?: string;
 	AUTH0_CLAIMS_NAMESPACE?: string;
+	AUTH0_REDIRECT_URI?: string;
 }
 
 export interface Auth0TokenResponse {
@@ -58,6 +59,15 @@ export function getAuth0Config(env?: Auth0EnvLike | null): Auth0Config | null {
 		jwksUrl,
 		claimsNamespace: (env.AUTH0_CLAIMS_NAMESPACE ?? DEFAULT_NAMESPACE).replace(/\/+$/, '')
 	};
+}
+
+export function resolveAuth0RedirectUri(requestUrl: string, env?: Auth0EnvLike | null): string {
+	const explicit = env?.AUTH0_REDIRECT_URI?.trim();
+	if (explicit) {
+		return explicit.replace(/\/+$/, '');
+	}
+
+	return new URL('/auth/callback', requestUrl).toString();
 }
 
 export function buildAuth0AuthorizeUrl(params: {

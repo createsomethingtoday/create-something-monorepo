@@ -186,7 +186,16 @@ Optional Pages secrets:
 AUTH0_AUDIENCE
 AUTH0_SCOPE
 AUTH0_CLAIMS_NAMESPACE
+AUTH0_REDIRECT_URI
 ```
+
+If Auth0 login is fronted by a custom domain, preview hostname, or proxy that differs from the incoming Worker request host, set:
+
+```bash
+AUTH0_REDIRECT_URI=https://createsomething.agency/auth/callback
+```
+
+and add that exact URL to the Auth0 application's Allowed Callback URLs.
 
 Recommended Infisical path:
 

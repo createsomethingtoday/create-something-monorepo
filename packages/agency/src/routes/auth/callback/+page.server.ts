@@ -34,7 +34,7 @@ export const load = async ({ url, cookies, platform, request }) => {
 		throw redirect(302, '/login?error=invalid_state');
 	}
 
-	const callbackUrl = new URL('/auth/callback', request.url).toString();
+	const callbackUrl = resolveAuth0RedirectUri(request.url, platform?.env);
 	const tokenResponse = await exchangeAuth0Code({
 		config,
 		code,
@@ -62,3 +62,11 @@ export const load = async ({ url, cookies, platform, request }) => {
 
 	throw redirect(302, stored.redirectTo || '/');
 };
+
+function resolveAuth0RedirectUri(requestUrl: string, env?: App.Platform['env']) {
+	const explicit = env?.AUTH0_REDIRECT_URI?.trim();
+	if (explicit) {
+		return explicit.replace(/\/+$/, '');
+	}
+	return new URL('/auth/callback', requestUrl).toString();
+}

@@ -95,6 +95,7 @@ export {
 	exchangeAuth0Code,
 	refreshAuth0Tokens,
 	revokeAuth0RefreshToken,
+	resolveAuth0RedirectUri,
 	generateAuthState,
 	setAuth0StateCookies,
 	consumeAuth0StateCookies,

@@ -18,7 +18,7 @@ export const GET: RequestHandler = async ({ url, cookies, platform, request }) =
 	const redirectTo = url.searchParams.get('redirect') || '/';
 	const screenHint = url.searchParams.get('screen_hint') === 'signup' ? 'signup' : 'login';
 	const domainConfig = getDomainConfig(platform?.env?.ENVIRONMENT);
-	const callbackUrl = new URL('/auth/callback', request.url).toString();
+	const callbackUrl = resolveAuth0RedirectUri(request.url, platform?.env);
 
 	setAuth0StateCookies(cookies, {
 		state,
@@ -37,6 +37,14 @@ export const GET: RequestHandler = async ({ url, cookies, platform, request }) =
 		})
 	);
 };
+
+function resolveAuth0RedirectUri(requestUrl: string, env?: App.Platform['env']) {
+	const explicit = env?.AUTH0_REDIRECT_URI?.trim();
+	if (explicit) {
+		return explicit.replace(/\/+$/, '');
+	}
+	return new URL('/auth/callback', requestUrl).toString();
+}
 
 export const POST: RequestHandler = async () => {
 	return json(
