@@ -1173,6 +1173,160 @@ async function handleAdminGetMcpLongLivedToken(request: Request, env: Env): Prom
 	});
 }
 
+async function issueManagedBearerToken(
+	env: Env,
+	input: {
+		authSubject: string;
+		authEmail?: string | null;
+		tenantId?: string | null;
+		accountId?: string | null;
+		toolkitProfile?: string[];
+		toolMode?: McpToolMode;
+		actor: string;
+		actorRole: 'operator' | 'user';
+		actionName: string;
+		metadata?: Record<string, unknown>;
+	}
+): Promise<ManagedBearerIssueResult> {
+	const db = env.DB;
+	const existing = await findMcpLongLivedTokenByAuthSubject(db, input.authSubject);
+	const requestedTenantId = normalizeNullableString(input.tenantId);
+	const requestedAccountId = normalizeNullableString(input.accountId);
+	const entitlement = await checkAgencyManagedBearerEntitlement(env, {
+		authSubject: input.authSubject,
+		accountId: requestedAccountId ?? existing?.account_id ?? null,
+		tenantId: requestedTenantId ?? existing?.tenant_id ?? null,
+	});
+	if (!entitlement.allowed) {
+		return {
+			ok: false,
+			status: 403,
+			error: 'entitlement_denied',
+			message: entitlement.reason ?? 'Managed bearer access is not currently entitled',
+			detail: { entitlement },
+		};
+	}
+
+	const tenantId = normalizeTenantId(requestedTenantId ?? entitlement.tenant_id ?? existing?.tenant_id ?? input.authSubject);
+	const accountId =
+		normalizeAccountId(requestedAccountId ?? entitlement.account_id ?? existing?.account_id ?? undefined)
+		?? `acct_${generateUUID().replace(/-/g, '')}`;
+	const toolMode = normalizeToolMode(input.toolMode ?? (existing?.tool_mode as McpToolMode | undefined));
+	const toolkitProfile =
+		input.toolkitProfile !== undefined
+			? normalizeToolkitProfile(input.toolkitProfile)
+			: existing
+				? parseStringArray(existing.toolkit_profile_json)
+				: [];
+	const allowedToolPrefixes = buildAllowedToolPrefixes(toolkitProfile);
+	const metadata = normalizeMetadata(input.metadata);
+
+	const policyDecision = await evaluatePartnerPolicyDecision(db, env, {
+		policyId: POLICY_USER_BEARER_TOKEN_GOVERNANCE_ID,
+		actionName: input.actionName,
+		accountId,
+		actor: input.actor,
+		request: {
+			actor: {
+				accountId,
+				tenantId,
+				userId: input.authSubject,
+				actorId: input.actor,
+				role: input.actorRole,
+				toolMode,
+			},
+			action: {
+				name: input.actionName,
+				writeIntent: true,
+				humanReviewStep: true,
+				introspectionOk: true,
+			},
+			resource: {
+				kind: 'managed_bearer_token',
+				id: accountId,
+				toolName: 'mcp_long_lived_token_issue',
+				accessType: input.actorRole === 'operator' ? 'auth_admin' : 'write',
+				metadata: {
+					auth_subject: input.authSubject,
+					tool_mode: toolMode,
+					toolkit_profile: toolkitProfile,
+					entitlement_reason: entitlement.reason ?? 'allowed',
+				},
+			},
+		},
+		metadata: {
+			auth_subject: input.authSubject,
+			auth_email: normalizeOptionalId(input.authEmail) ?? existing?.auth_email ?? null,
+			tenant_id: tenantId,
+			account_id: accountId,
+			tool_mode: toolMode,
+			toolkit_profile: toolkitProfile,
+			entitlement_reason: entitlement.reason ?? 'allowed',
+			...metadata,
+		},
+	});
+	if (policyDecision.decision !== 'allow') {
+		return {
+			ok: false,
+			status: policyDecisionHttpStatus(policyDecision.decision),
+			error: 'policy_denied',
+			message: policyDecision.reason,
+			detail: { policy: policyDecision },
+		};
+	}
+
+	const tokenId = `mlt_${generateUUID().replace(/-/g, '')}`;
+	const rawToken = `mcpu_${generateSecureToken(48)}`;
+	const tokenHash = await hashToken(rawToken);
+	const tokenPrefix = rawToken.slice(0, 14);
+
+	await upsertMcpLongLivedToken(db, {
+		id: tokenId,
+		auth_subject: input.authSubject,
+		auth_email: normalizeOptionalId(input.authEmail) ?? existing?.auth_email ?? null,
+		tenant_id: tenantId,
+		account_id: accountId,
+		tool_mode: toolMode,
+		toolkit_profile_json: JSON.stringify(toolkitProfile),
+		allowed_tool_prefixes_json: JSON.stringify(allowedToolPrefixes),
+		token_hash: tokenHash,
+		token_prefix: tokenPrefix,
+		issued_by: input.actor,
+		metadata_json: JSON.stringify(metadata),
+	});
+
+	await createMcpAuthEvent(db, {
+		id: generateUUID(),
+		session_id: null,
+		user_id: input.authSubject,
+		event_type: existing ? 'mcp_long_lived_token_regenerated' : 'mcp_long_lived_token_issued',
+		event_data_json: JSON.stringify({
+			token_id: tokenId,
+			account_id: accountId,
+			tenant_id: tenantId,
+			auth_subject: input.authSubject,
+			token_prefix: tokenPrefix,
+			policy: policyDecision,
+			issued_via: metadata.issued_via ?? null,
+		}),
+	});
+
+	return {
+		ok: true,
+		tokenId,
+		token: rawToken,
+		tokenPrefix: tokenPrefix,
+		accountId,
+		tenantId,
+		authSubject: input.authSubject,
+		authEmail: normalizeOptionalId(input.authEmail) ?? existing?.auth_email ?? null,
+		toolMode,
+		toolkitProfile,
+		allowedToolPrefixes,
+		policyDecision,
+	};
+}
+
 async function handleAdminMcpAuditFeed(request: Request, env: Env): Promise<Response> {
 	const db = env.DB;
 	const auth = await authenticateApiKeyForPermissions(request, env, ['mcp_long_lived_token_issue']);
@@ -1770,8 +1924,8 @@ async function checkAgencyManagedBearerEntitlement(
 	env: Env,
 	input: {
 		authSubject: string;
-		accountId: string;
-		tenantId: string;
+		accountId?: string | null;
+		tenantId?: string | null;
 	}
 ): Promise<AgencyEntitlementDecision> {
 	const baseUrl = env.AGENCY_INTERNAL_API_URL?.trim()?.replace(/\/+$/, '');
@@ -1792,8 +1946,8 @@ async function checkAgencyManagedBearerEntitlement(
 			},
 			body: JSON.stringify({
 				auth_subject: input.authSubject,
-				account_id: input.accountId,
-				tenant_id: input.tenantId,
+				account_id: input.accountId ?? null,
+				tenant_id: input.tenantId ?? null,
 			}),
 		});
 		const payload = (await response.json().catch(() => null)) as AgencyEntitlementDecision | null;
