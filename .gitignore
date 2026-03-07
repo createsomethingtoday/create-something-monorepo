@@ -14,6 +14,8 @@ docs/policies/generated/
 .env
 .env.*
 !.env.example
+auth0/config.json
+auth0/export/
 
 # OS
 .DS_Store

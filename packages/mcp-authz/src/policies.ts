@@ -361,6 +361,50 @@ const POLICY_DEFINITIONS: AuthzPolicyDefinition[] = [
   },
   {
     manifest: {
+      policyId: 'policy.user-bearer-token-governance.v1',
+      version: 1,
+      commitSha: 'workspace',
+      status: 'draft',
+      description: 'Managed long-lived user bearer tokens for .agency-issued MCP access.',
+      rolloutDefaults: {
+        mode: 'legacy_enforce',
+        canaryPercent: 0,
+      },
+    },
+    policy: {
+      id: 'policy.user-bearer-token-governance.v1',
+      name: 'User bearer token governance',
+      description: 'Managed bearer tokens are issued and revoked through governed service paths.',
+      rules: [
+        {
+          id: 'user_bearer_issue_allow',
+          priority: 10,
+          when: {
+            actionNames: ['issue_user_bearer_token'],
+            resourceKinds: ['managed_bearer_token'],
+          },
+          then: {
+            decision: 'allow',
+            reason: 'Governed service path may issue a managed bearer token.',
+          },
+        },
+        {
+          id: 'user_bearer_revoke_allow',
+          priority: 20,
+          when: {
+            actionNames: ['revoke_user_bearer_token'],
+            resourceKinds: ['managed_bearer_token'],
+          },
+          then: {
+            decision: 'allow',
+            reason: 'Governed service path may revoke a managed bearer token.',
+          },
+        },
+      ],
+    },
+  },
+  {
+    manifest: {
       policyId: 'policy.mcp-credential-delivery.v1',
       version: 1,
       commitSha: 'workspace',
