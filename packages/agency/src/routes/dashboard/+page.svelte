@@ -132,7 +132,7 @@
 						</div>
 						<div>
 							<span class="detail-label">Allowed Tool Prefixes</span>
-							<strong>{data.access.token.allowed_tool_prefixes.length || 0}</strong>
+							<strong>{data.access.token.allowed_tool_prefixes?.length ?? 0}</strong>
 						</div>
 					</div>
 				{:else}

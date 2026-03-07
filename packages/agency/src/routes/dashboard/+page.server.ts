@@ -59,6 +59,15 @@ interface PasswordUserResponse {
 	has_password: boolean;
 }
 
+function getSettledValue<T>(result: PromiseSettledResult<T>, fallback: T): T {
+	if (result.status === 'fulfilled') {
+		return result.value;
+	}
+
+	console.error('Dashboard loader dependency failed:', result.reason);
+	return fallback;
+}
+
 async function loadTokenSnapshot(platform: App.Platform | undefined, authSubject: string) {
 	const env = platform?.env;
 	if (!env) {
@@ -162,7 +171,8 @@ export const load: PageServerLoad = async ({ parent, platform }) => {
 
 	const normalizedEmail = user.email.toLowerCase();
 
-	const [commercial, contract, partner, tokenSnapshot, passwordSnapshot] = await Promise.all([
+	const [commercialResult, contractResult, partnerResult, tokenSnapshotResult, passwordSnapshotResult] =
+		await Promise.allSettled([
 		db
 			.prepare(
 				`SELECT service_tier, subscription_status, contract_active, billing_active,
@@ -223,6 +233,23 @@ export const load: PageServerLoad = async ({ parent, platform }) => {
 		loadTokenSnapshot(platform, user.id),
 		loadPasswordSnapshot(platform, user.email),
 	]);
+
+	const commercial = getSettledValue(commercialResult, null);
+	const contract = getSettledValue(contractResult, null);
+	const partner = getSettledValue(partnerResult, null);
+	const tokenSnapshot = getSettledValue(tokenSnapshotResult, {
+		token: null,
+		available: false,
+		error: 'Token state is temporarily unavailable',
+	});
+	const passwordSnapshot = getSettledValue(passwordSnapshotResult, {
+		hasPassword: false,
+		email: user.email,
+		emailVerified: false,
+		identityUserExists: false,
+		available: false,
+		error: 'Password state is temporarily unavailable',
+	});
 
 	return {
 		user,
