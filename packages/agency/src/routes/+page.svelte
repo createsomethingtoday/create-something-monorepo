@@ -494,6 +494,9 @@
         <div class="mcp-flow-wrapper">
           <HubMcpFlow />
         </div>
+        <p class="mcp-flow-caption">
+          Hub MCP routes execution. POLICY OS decides what runs autonomously.
+        </p>
         <p class="problem-text">
           When a client primarily needs full system development and team onboarding, I refer that
           engagement to Half Dozen directly.
@@ -1082,6 +1085,16 @@
     width: 100%;
     display: flex;
     justify-content: center;
+  }
+
+  .mcp-flow-caption {
+    margin-top: calc(var(--space-6, 2rem) * -0.35);
+    font-size: var(--text-body-sm, 0.875rem);
+    line-height: 1.6;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
   }
 
   .problem-punchline {

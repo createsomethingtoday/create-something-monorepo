@@ -13,37 +13,46 @@
     width: number;
     height: number;
     hub: { x: number; y: number };
+    policy: { x: number; y: number };
     initiators: FlowNode[];
     services: FlowNode[];
   };
 
+  const decisionStates = [
+    { id: 'allow', label: 'Allow', tone: 'allow' },
+    { id: 'review', label: 'Review', tone: 'review' },
+    { id: 'block', label: 'Block', tone: 'block' }
+  ] as const;
+
   const DESKTOP_LAYOUT: FlowLayout = {
     width: 800,
-    height: 400,
-    hub: { x: 400, y: 200 },
+    height: 430,
+    hub: { x: 400, y: 150 },
+    policy: { x: 400, y: 275 },
     initiators: [
-      { id: 'ai', name: 'Client LLM', x: 100, y: 100, curvature: 40 },
-      { id: 'slack', name: 'Slack Agent', x: 100, y: 300, curvature: 40 }
+      { id: 'ai', name: 'Client LLM', x: 110, y: 110, curvature: 36 },
+      { id: 'slack', name: 'Slack Agent', x: 110, y: 320, curvature: 44 }
     ],
     services: [
-      { id: 'notion', name: 'Notion Sync', x: 700, y: 80, curvature: -40 },
-      { id: 'db', name: 'Cloudflare D1', x: 700, y: 200, curvature: -40 },
-      { id: 'custom', name: 'Custom Workflow', x: 700, y: 320, curvature: -40 }
+      { id: 'notion', name: 'Notion Sync', x: 690, y: 90, curvature: -46 },
+      { id: 'db', name: 'Cloudflare D1', x: 690, y: 215, curvature: -24 },
+      { id: 'custom', name: 'Custom Workflow', x: 690, y: 340, curvature: -46 }
     ]
   };
 
   const COMPACT_LAYOUT: FlowLayout = {
     width: 320,
-    height: 520,
-    hub: { x: 160, y: 240 },
+    height: 610,
+    hub: { x: 160, y: 188 },
+    policy: { x: 160, y: 332 },
     initiators: [
-      { id: 'ai', name: 'Client LLM', x: 96, y: 88, curvature: 44 },
-      { id: 'slack', name: 'Slack Agent', x: 224, y: 136, curvature: 44 }
+      { id: 'ai', name: 'Client LLM', x: 96, y: 78, curvature: 52 },
+      { id: 'slack', name: 'Slack Agent', x: 224, y: 78, curvature: 52 }
     ],
     services: [
-      { id: 'notion', name: 'Notion Sync', x: 92, y: 394, curvature: -44 },
-      { id: 'db', name: 'Cloudflare D1', x: 160, y: 468, curvature: -24 },
-      { id: 'custom', name: 'Custom Workflow', x: 228, y: 394, curvature: -44 }
+      { id: 'notion', name: 'Notion Sync', x: 92, y: 504, curvature: -50 },
+      { id: 'db', name: 'Cloudflare D1', x: 160, y: 568, curvature: -24 },
+      { id: 'custom', name: 'Custom Workflow', x: 228, y: 504, curvature: -50 }
     ]
   };
 
@@ -77,16 +86,29 @@
       />
     {/each}
 
-    <!-- Center to Right (Hub to Services) -->
+    <!-- Hub to Policy -->
+    <AnimatedBeam
+      fromX={layout.hub.x}
+      fromY={layout.hub.y}
+      toX={layout.policy.x}
+      toY={layout.policy.y}
+      duration={2}
+      delay={0.9}
+      pathWidth={2.25}
+      gradientStartColor={primaryBeam}
+      gradientStopColor="rgba(255, 255, 255, 0.8)"
+    />
+
+    <!-- Policy to Services -->
     {#each layout.services as serv, i}
       <AnimatedBeam
-        fromX={layout.hub.x}
-        fromY={layout.hub.y}
+        fromX={layout.policy.x}
+        fromY={layout.policy.y}
         toX={serv.x}
         toY={serv.y}
         curvature={serv.curvature}
-        duration={3}
-        delay={1.5 + i * 0.4}
+        duration={2.6}
+        delay={1.45 + i * 0.3}
         pathWidth={2}
         gradientStartColor={primaryBeam}
         gradientStopColor={secondaryBeam}
@@ -105,19 +127,35 @@
     {/each}
 
     <!-- Central Hub MCP (Column 2) -->
-    <BlurFade delay={1}>
+    <BlurFade delay={0.8}>
       <div class="node hub-node" style="left: {layout.hub.x}px; top: {layout.hub.y}px;">
-        <BorderBeam size={120} duration={8} colorFrom={primaryBeam} colorTo={secondaryBeam} />
+        <div class="flow-kicker">Routes</div>
         <div class="hub-lockup">
           <span class="hub-title">Hub MCP</span>
-          <span class="hub-sub">Policy OS</span>
+          <span class="hub-sub">Tenant, alias, proxy</span>
+        </div>
+      </div>
+    </BlurFade>
+
+    <BlurFade delay={1.15}>
+      <div class="node policy-node" style="left: {layout.policy.x}px; top: {layout.policy.y}px;">
+        <BorderBeam size={150} duration={8} colorFrom={primaryBeam} colorTo={secondaryBeam} />
+        <div class="flow-kicker">Decides</div>
+        <div class="hub-lockup">
+          <span class="policy-title">POLICY OS</span>
+          <span class="hub-sub">Autonomy boundary</span>
+        </div>
+        <div class="decision-row">
+          {#each decisionStates as decision}
+            <span class="decision-pill {decision.tone}">{decision.label}</span>
+          {/each}
         </div>
       </div>
     </BlurFade>
 
     <!-- Target Services (Column 3) -->
     {#each layout.services as serv, i}
-      <BlurFade delay={1.5 + i * 0.2}>
+      <BlurFade delay={1.55 + i * 0.16}>
         <div class="node service-node" style="left: {serv.x}px; top: {serv.y}px;">
           {serv.name}
         </div>
@@ -177,17 +215,54 @@
 
   /* Central Node */
   .hub-node {
-    width: 140px;
-    height: 140px;
-    background: rgba(10, 10, 12, 0.95);
-    border: 1px solid rgba(96, 165, 250, 0.3);
+    width: 168px;
+    min-height: 96px;
+    padding: 1rem 1.25rem;
+    background: rgba(10, 10, 12, 0.92);
+    border: 1px solid rgba(96, 165, 250, 0.22);
     border-radius: var(--radius-2xl, 24px);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     box-shadow:
-      0 0 40px rgba(96, 165, 250, 0.15),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      0 0 30px rgba(96, 165, 250, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
     text-align: center;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .policy-node {
+    width: 188px;
+    min-height: 132px;
+    padding: 1rem 1rem 0.95rem;
+    background:
+      linear-gradient(180deg, rgba(11, 15, 26, 0.96), rgba(9, 11, 16, 0.94)),
+      rgba(10, 10, 12, 0.95);
+    border: 1px solid rgba(96, 165, 250, 0.26);
+    border-radius: var(--radius-2xl, 24px);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow:
+      0 0 44px rgba(96, 165, 250, 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    text-align: center;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .flow-kicker {
+    font-size: 0.625rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.38);
+  }
+
+  .policy-title {
+    font-weight: var(--font-bold, 700);
+    font-size: 1.25rem;
+    color: var(--color-fg-primary, #ffffff);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
   }
 
   .hub-lockup {
@@ -210,6 +285,41 @@
     text-transform: uppercase;
   }
 
+  .decision-row {
+    display: flex;
+    justify-content: center;
+    gap: 0.38rem;
+    flex-wrap: wrap;
+  }
+
+  .decision-pill {
+    padding: 0.26rem 0.52rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.64rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .decision-pill.allow {
+    color: rgba(110, 231, 183, 0.96);
+    border-color: rgba(52, 211, 153, 0.26);
+    background: rgba(6, 78, 59, 0.26);
+  }
+
+  .decision-pill.review {
+    color: rgba(253, 224, 71, 0.95);
+    border-color: rgba(250, 204, 21, 0.22);
+    background: rgba(113, 63, 18, 0.22);
+  }
+
+  .decision-pill.block {
+    color: rgba(251, 146, 146, 0.95);
+    border-color: rgba(248, 113, 113, 0.22);
+    background: rgba(127, 29, 29, 0.22);
+  }
+
   .mcp-viz-container.compact {
     padding: var(--space-6, 2rem) var(--space-3, 0.75rem);
   }
@@ -225,11 +335,36 @@
   }
 
   .mcp-viz-container.compact .hub-node {
-    width: 132px;
-    height: 132px;
+    width: 148px;
+    min-height: 90px;
+    padding: 0.85rem 0.9rem;
+  }
+
+  .mcp-viz-container.compact .policy-node {
+    width: 166px;
+    min-height: 124px;
+    padding: 0.85rem 0.85rem 0.8rem;
   }
 
   .mcp-viz-container.compact .hub-title {
-    font-size: 1.375rem;
+    font-size: 1.2rem;
+  }
+
+  .mcp-viz-container.compact .policy-title {
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+  }
+
+  .mcp-viz-container.compact .hub-sub {
+    font-size: 0.7rem;
+  }
+
+  .mcp-viz-container.compact .decision-row {
+    gap: 0.3rem;
+  }
+
+  .mcp-viz-container.compact .decision-pill {
+    font-size: 0.58rem;
+    padding: 0.22rem 0.45rem;
   }
 </style>

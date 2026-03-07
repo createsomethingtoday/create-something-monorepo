@@ -142,6 +142,9 @@
       <div class="mcp-flow-wrapper">
         <HubMcpFlow />
       </div>
+      <p class="mcp-flow-caption">
+        Hub MCP routes execution. POLICY OS decides what runs autonomously.
+      </p>
     </BlurFade>
   </div>
 </section>
@@ -442,6 +445,16 @@
     width: 100%;
     display: flex;
     justify-content: center;
+  }
+
+  .mcp-flow-caption {
+    margin-top: var(--space-4, 1rem);
+    font-size: var(--text-body-sm, 0.875rem);
+    line-height: 1.6;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-fg-muted);
+    text-align: center;
   }
 
   /* Stack Marquee */
