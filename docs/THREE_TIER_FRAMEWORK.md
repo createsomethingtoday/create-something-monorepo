@@ -1,4 +1,4 @@
-# The Three-Tier Framework: Database, Automation, Judgment
+# The Three-Tier Framework: Database, Rules, Policy
 
 **A structural model for agent systems, realized through Model Context Protocol**
 
@@ -10,13 +10,13 @@
 
 ## Abstract
 
-This framework proposes a hierarchical ontology for understanding and building agent systems. It identifies three distinct tiers—Database, Automation, and Judgment—connected by typed Artifacts and spanning four cross-cutting concerns: Touchpoints, Artifacts, Orchestration, and Insight.
+This framework proposes a hierarchical ontology for understanding and building agent systems. It identifies three distinct tiers—Database, Rules, and Policy—connected by typed Artifacts and spanning four cross-cutting concerns: Touchpoints, Artifacts, Orchestration, and Insight.
 
 The Model Context Protocol (MCP) encapsulates this structure naturally: its three primitives (Resources, Tools, Prompts) map directly to the three tiers. More precisely, MCP's **control model distinctions**—application-controlled, model-controlled, user-controlled—produce the tier separations. The *who decides* and the *what kind of work* converge.
 
-Critically, the framework is not a simple stack. MCP's **sampling** mechanism reveals a recursive property: Automation can request Judgment, creating a feedback loop. This mirrors embodied cognition—the body doesn't just execute commands; it participates in thinking by encountering the world and asking for judgment.
+Critically, the framework is not a simple stack. MCP's **sampling** mechanism reveals a recursive property: Rules can request Policy, creating a feedback loop. This mirrors embodied cognition—the body doesn't just execute commands; it participates in thinking by encountering the world and asking for policy guidance.
 
-The framework's most significant implication: **policy itself is an artifact**. System prompts, constraints, and behavioral rules flow through the same tiers as any other data—stored in Database, transformed by Automation, evaluated by Judgment. This enables versioned constraints, context-driven policy selection, and reflexive self-modification under human oversight.
+The framework's most significant implication: **policy itself is an artifact**. System prompts, constraints, and behavioral rules flow through the same tiers as any other data—stored in Database, transformed by Rules, evaluated by Policy. This enables versioned constraints, context-driven policy selection, and reflexive self-modification under human oversight.
 
 ---
 
@@ -36,21 +36,21 @@ The framework's most significant implication: **policy itself is an artifact**. 
 
 In MCP terms, this is the **Resources** primitive—content and data that agents can read and reference.
 
-### Automation Layer
+### Rules Layer
 
-**What happens.** The agentic layer where LLM-driven functions execute. This includes tools, skills, and the harness that constrains agent behavior. Automation is specifically *model-controlled*—the LLM decides when to invoke tools during its reasoning process.
+**What happens.** The execution layer where model-driven rules, tools, skills, and harnesses operate. This is where the system turns available state into action. The Rules layer is specifically *model-controlled*—the LLM decides when to invoke tools during its reasoning process.
 
-The "harness" and "ethos" of an agent belong here—not as external observation, but as constitutive rules that define what the agent can and cannot do.
+The "harness" and constitutive rules of an agent belong here—not as external observation, but as the operational logic that defines what the agent can and cannot do.
 
-**Control model: Model-controlled.** The LLM decides when to invoke tools during its reasoning process. The agent is in the driver's seat for action selection. This distinguishes Automation from Orchestration (procedural, application-controlled flow).
+**Control model: Model-controlled.** The LLM decides when to invoke tools during its reasoning process. The agent is in the driver's seat for action selection. This distinguishes Rules from Orchestration (procedural, application-controlled flow).
 
 In MCP terms, this is the **Tools** primitive—functions that agents can invoke to take action.
 
-### Judgment Layer
+### Policy Layer
 
 **What should happen.** The policy layer where constraints, weights, and human oversight determine quality and priority. This is where decisions get made about correctness, relevance, and appropriate action.
 
-Human judgment and algorithmic evaluation occupy the same functional role here. Both are asking: given this input, what is the right output? Policy defines the boundaries; the Insight concern (cross-cutting) makes the application of that policy legible.
+Human judgment and algorithmic evaluation occupy the same functional role here. Both are asking: given this input, what policy should govern the output? Policy defines the boundaries; the Insight concern (cross-cutting) makes the application of that policy legible.
 
 **Control model: User-controlled.** The human explicitly selects guidance artifacts, constraints, and policy language. This is not automatic—it requires intentional choice about how the system should behave.
 
@@ -92,15 +92,15 @@ The Model Context Protocol defines three server primitives, each with a distinct
 | **Tools** | Model-controlled | The LLM decides when to invoke functions during reasoning |
 | **Prompts** | User-controlled | The human explicitly selects guidance artifacts to steer interaction |
 
-MCP also defines **Sampling**—a mechanism that allows Tools to request LLM access back through the Client. This creates the feedback loop where Automation can invoke Judgment.
+MCP also defines **Sampling**—a mechanism that allows Tools to request LLM access back through the Client. This creates the feedback loop where Rules can invoke Policy.
 
 This control model distinction is the key. MCP's designers separated primitives by *who decides*. The framework separates tiers by *what kind of work* they do. They converge because the **who** and the **what** are correlated:
 
 | MCP Primitive | Control Model | Framework Tier | Rationale |
 |---------------|---------------|----------------|-----------|
 | **Resources** | Application-controlled | Database | Data decisions are infrastructure concerns—what exists and when to surface it |
-| **Tools** | Model-controlled | Automation | Action decisions are agent reasoning—what happens and when to execute |
-| **Prompts** | User-controlled | Judgment | Policy and guidance decisions are human oversight—what should happen and why |
+| **Tools** | Model-controlled | Rules | Action decisions are model-applied rules—what happens and when to execute |
+| **Prompts** | User-controlled | Policy | Policy and guidance decisions are human oversight—what should happen and why |
 
 The mapping is not accidental. MCP's control model distinctions naturally produce the tier separations:
 
@@ -109,9 +109,9 @@ The mapping is not accidental. MCP's control model distinctions naturally produc
 When building on MCP, you are instantiating this framework directly:
 
 - Workers exposing **Resources** → Database Layer (application-controlled data)
-- Workers exposing **Tools** → Automation Layer (model-controlled actions)
-- **Prompts** and skill definitions → Judgment Layer (user-controlled guidance)
-- **Sampling** requests → Feedback loop (Automation requesting Judgment)
+- Workers exposing **Tools** → Rules Layer (model-controlled actions)
+- **Prompts** and skill definitions → Policy Layer (user-controlled guidance)
+- **Sampling** requests → Feedback loop (Rules requesting Policy)
 - MCP server endpoints → Touchpoints
 - JSON schemas and structured outputs → Artifacts
 
@@ -127,19 +127,19 @@ The control models form a hierarchy of decision-making authority:
 
 This hierarchy explains why the tiers exist:
 
-1. **Users set boundaries** — Through prompt selection, users define the operating constraints. This is the Judgment layer: policy, ethics, acceptable outcomes.
+1. **Users set boundaries** — Through prompt selection, users define the operating constraints. This is the Policy layer: policy, ethics, acceptable outcomes.
 
-2. **Models act within boundaries** — The agent reasons and selects tools, but only within the space the user has defined. This is the Automation layer: execution, skill invocation, agentic work.
+2. **Models act within boundaries** — The agent reasons and selects tools, but only within the space the user has defined. This is the Rules layer: execution, skill invocation, agentic work.
 
 3. **Applications provide substrate** — The infrastructure makes data available (or not), independent of what the model wants. This is the Database layer: state, records, content that exists.
 
 The hierarchy also explains failure modes:
 
-- **Judgment failures**: Wrong prompt selected, poor constraints, misaligned ethos → agent acts correctly but produces wrong outcomes
-- **Automation failures**: Tool errors, skill bugs, agent mistakes → agent has right constraints but execution fails
+- **Policy failures**: Wrong prompt selected, poor constraints, misaligned ethos → agent acts correctly but produces wrong outcomes
+- **Rules failures**: Tool errors, skill bugs, agent mistakes → agent has right constraints but execution fails
 - **Database failures**: Missing data, stale state, unavailable resources → agent can't act because substrate is broken
 
-Debugging follows the hierarchy: check Database first (is data there?), then Automation (did execution work?), then Judgment (was policy correct?).
+Debugging follows the hierarchy: check Database first (is data there?), then Rules (did execution work?), then Policy (was governance correct?).
 
 ---
 
@@ -149,17 +149,17 @@ The framework is not a simple stack. MCP's **sampling** mechanism reveals that t
 
 ### What Sampling Does
 
-Sampling allows a Tool (MCP server) to request LLM access back through the Client. The tool says: "I need judgment to complete my work." The client proxies that request up to the LLM and returns the result.
+Sampling allows a Tool (MCP server) to request LLM access back through the Client. The tool says: "I need policy guidance to complete my work." The client proxies that request up to the LLM and returns the result.
 
 ![Sampling Feedback Loop](designs/three-tier-sampling-loop.png)
 
 ### The Flow
 
-1. **User** selects prompts, constraints (Judgment layer)
-2. **Agent** reasons and decides to call a tool (Automation layer)
-3. **Tool** executes, but needs LLM judgment to complete its work
+1. **User** selects prompts, constraints (Policy layer)
+2. **Agent** reasons and decides to call a tool (Rules layer)
+3. **Tool** executes, but needs LLM policy guidance to complete its work
 4. **Tool** sends sampling request back to client
-5. **Client** proxies request to LLM (Judgment layer)
+5. **Client** proxies request to LLM (Policy layer)
 6. **LLM** returns result to client
 7. **Client** forwards result to tool
 8. **Tool** completes and returns to agent
@@ -168,13 +168,13 @@ The tool doesn't need its own LLM configuration—it piggybacks on the client's.
 
 ### Why This Matters Architecturally
 
-Without sampling, every tool that needs judgment must:
+Without sampling, every tool that needs policy guidance must:
 - Configure its own LLM access
 - Manage its own API keys and rate limits
 - Bear its own inference costs
 - Duplicate context that the main agent already has
 
-With sampling, the tool delegates judgment back to the system that called it. The client becomes a shared resource for reasoning.
+With sampling, the tool delegates policy selection back to the system that called it. The client becomes a shared resource for reasoning.
 
 ### Embodied Cognition Parallel
 
@@ -184,11 +184,11 @@ This recursive property mirrors what phenomenologists observed about human cogni
 
 **Merleau-Ponty**: Perception shapes thought as much as thought shapes action. The sensorimotor system doesn't just receive commands; it participates in cognition.
 
-**The parallel**: In the three-tier framework, Automation (the body/tools) doesn't just execute commands from Judgment. Through sampling, Automation can request Judgment. The tool encounters something in the world (Database) and needs judgment to proceed—so it asks.
+**The parallel**: In the three-tier framework, Rules (the body/tools) do not just execute commands from Policy. Through sampling, Rules can request Policy. The tool encounters something in the world (Database) and needs policy guidance to proceed, so it asks.
 
-This is why the intuition that "something is above Judgment" is both right and wrong:
+This is why the intuition that "something is above Policy" is both right and wrong:
 - **Wrong** because there's no fourth layer
-- **Right** because the system is recursive—Judgment sits "above" itself through the feedback loop
+- **Right** because the system is recursive—Policy sits "above" itself through the feedback loop
 
 ### Implications for Design
 
@@ -196,7 +196,7 @@ This is why the intuition that "something is above Judgment" is both right and w
 
 **Cost distribution**: The main client bears LLM costs, but tools can contribute specialized context. This is more efficient than each tool paying for its own inference.
 
-**Trust boundaries**: The client controls what sampling requests it honors. A tool can ask for LLM access, but the client decides whether to grant it. This maintains the user-controlled property of Judgment while allowing Automation to participate.
+**Trust boundaries**: The client controls what sampling requests it honors. A tool can ask for LLM access, but the client decides whether to grant it. This maintains the user-controlled property of Policy while allowing Rules to participate.
 
 ---
 
@@ -219,8 +219,8 @@ The tiers operate on policy just as they operate on any artifact:
 | Tier | Policy Operation |
 |------|------------------|
 | **Database** | Stores policy versions (prompts, constraints, ethos as versioned data) |
-| **Automation** | Transforms/requests policy (tool asks "give me the strict constraints" via sampling) |
-| **Judgment** | Evaluates which policy to apply (selects constraints appropriate to context) |
+| **Rules** | Transforms/requests policy (tool asks "give me the strict constraints" via sampling) |
+| **Policy** | Evaluates which policy to apply (selects constraints appropriate to context) |
 
 ### What This Enables
 
@@ -230,7 +230,7 @@ The tiers operate on policy just as they operate on any artifact:
 
 **Graduated trust**: Different operations invoke different constraint levels. Read operations get permissive policy. Write operations get restrictive policy. Delete operations require human approval policy. Policy isn't uniform—it's contextual.
 
-**Self-modification through the loop**: The system can observe its own policy, request modifications through sampling, and apply new constraints. This isn't unconstrained self-modification—the Judgment layer (user-controlled) still decides what modifications to honor.
+**Self-modification through the loop**: The system can observe its own policy, request modifications through sampling, and apply new constraints. This isn't unconstrained self-modification—the Policy layer (user-controlled) still decides what modifications to honor.
 
 ### Multi-Agent Coordination
 
@@ -238,7 +238,7 @@ When multiple agents coordinate (via systems like Beads, Loom, or Agent Mail), t
 
 **Agent A** (financial analysis) → passes policy artifact: "PII handling required" → **Agent B** (data processing) → applies received constraints, processes under financial compliance policy → **Agent C** (reporting)
 
-The coordination layer isn't a fourth tier above Judgment. It's artifact-passing at the Judgment level. Agents share:
+The coordination layer isn't a fourth tier above Policy. It's artifact-passing at the Policy level. Agents share:
 
 - **Task artifacts**: what to do
 - **Context artifacts**: what's known
@@ -260,7 +260,7 @@ With Insight:
 - Constraint changes are logged with context
 - The system perceives itself modifying itself
 
-This is the reflexive loop that embodied cognition predicts: the body (Automation) doesn't just act—it perceives its own acting. The system doesn't just apply constraints—it watches itself choosing constraints.
+This is the reflexive loop that embodied cognition predicts: the body (Rules) does not just act. It perceives its own acting. The system does not just apply constraints. It watches itself choosing constraints.
 
 ### The Risk
 
@@ -268,7 +268,7 @@ Self-modifying policy introduces risk. A system that can request looser constrai
 
 Mitigations:
 
-1. **User-controlled ceiling**: Judgment layer (Prompts) remains user-controlled. The system can request policy changes, but humans define what's requestable.
+1. **User-controlled ceiling**: Policy layer (Prompts) remains user-controlled. The system can request policy changes, but humans define what is requestable.
 
 2. **Policy immutability tiers**: Some constraints are mutable (formatting preferences), some are immutable (safety boundaries). Store them differently in Database.
 
@@ -276,11 +276,11 @@ Mitigations:
 
 The framework doesn't solve this risk—it names it and provides the vocabulary to reason about it.
 
-### The Andon Protocol: Boundary Between Automation and Judgment
+### The Andon Protocol: Boundary Between Rules and Policy
 
-When Automation encounters ambiguity, conflicting data, or a situation outside its authority, it must escalate to Judgment. The **Andon Protocol** is the pattern for that handoff—grounded in Toyota's Andon (pull, two-pull semantics, obligation to escalate, Kaizen) and German/aerospace Deviation and Concession (permission before acting vs. disposition after the fact).
+When Rules encounter ambiguity, conflicting data, or a situation outside their authority, they must escalate to Policy. The **Andon Protocol** is the pattern for that handoff—grounded in Toyota's Andon (pull, two-pull semantics, obligation to escalate, Kaizen) and German/aerospace Deviation and Concession (permission before acting vs. disposition after the fact).
 
-The agent *pulls* rather than guessing or asking constantly: it creates an **Andon object** (type: alert | stop | deviation | concession; question, context, proposed action, confidence) that flows to the Judgment layer. Resolutions are persisted and reused as precedent (Kaizen), so the harness improves over time.
+The agent *pulls* rather than guessing or asking constantly: it creates an **Andon object** (type: alert | stop | deviation | concession; question, context, proposed action, confidence) that flows to the Policy layer. Resolutions are persisted and reused as precedent (Kaizen), so the harness improves over time.
 
 The protocol provides: obligation to pull, two-pull semantics, deviation/concession distinction, resolution authority hierarchy (L0–L4), Automated Jidoka (machine detection alongside agent self-assessment), dynamic thresholds (cost-based resolution equation), Harness Evolution (Kaizen that modifies constraints), and Semantic Precedent (vector-based resolution matching). v3.0 is designed for non-deterministic, multi-agent, self-modifying systems. MCP tools include `andon_pull`, `andon_deviate`, `andon_concede`, `andon_resolve`, `andon_batch`, `andon_precedent`, `andon_metrics`, `andon_propose_kaizen`. Cloudflare: D1, Vectorize, Queues, Workers.
 
