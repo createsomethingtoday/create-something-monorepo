@@ -1,44 +1,74 @@
 <script lang="ts">
   import { AnimatedBeam, BlurFade, BorderBeam } from '@create-something/canon/magicui';
 
-  // Define SVG coordinate space for accurate path routing that scales responsively
-  const SVG_WIDTH = 800;
-  const SVG_HEIGHT = 400;
+  type FlowNode = {
+    id: string;
+    name: string;
+    x: number;
+    y: number;
+    curvature: number;
+  };
 
-  // Central Hub coordinates
-  const hubX = 400;
-  const hubY = 200;
+  type FlowLayout = {
+    width: number;
+    height: number;
+    hub: { x: number; y: number };
+    initiators: FlowNode[];
+    services: FlowNode[];
+  };
 
-  // Column 1: Initiators
-  const initiators = [
-    { id: 'ai', name: 'Client LLM', x: 100, y: 100 },
-    { id: 'slack', name: 'Slack Agent', x: 100, y: 300 }
-  ];
+  const DESKTOP_LAYOUT: FlowLayout = {
+    width: 800,
+    height: 400,
+    hub: { x: 400, y: 200 },
+    initiators: [
+      { id: 'ai', name: 'Client LLM', x: 100, y: 100, curvature: 40 },
+      { id: 'slack', name: 'Slack Agent', x: 100, y: 300, curvature: 40 }
+    ],
+    services: [
+      { id: 'notion', name: 'Notion Sync', x: 700, y: 80, curvature: -40 },
+      { id: 'db', name: 'Cloudflare D1', x: 700, y: 200, curvature: -40 },
+      { id: 'custom', name: 'Custom Workflow', x: 700, y: 320, curvature: -40 }
+    ]
+  };
 
-  // Column 3: Target Services
-  const services = [
-    { id: 'notion', name: 'Notion Sync', x: 700, y: 80 },
-    { id: 'db', name: 'Cloudflare D1', x: 700, y: 200 },
-    { id: 'custom', name: 'Custom Workflow', x: 700, y: 320 }
-  ];
+  const COMPACT_LAYOUT: FlowLayout = {
+    width: 320,
+    height: 520,
+    hub: { x: 160, y: 240 },
+    initiators: [
+      { id: 'ai', name: 'Client LLM', x: 96, y: 88, curvature: 44 },
+      { id: 'slack', name: 'Slack Agent', x: 224, y: 136, curvature: 44 }
+    ],
+    services: [
+      { id: 'notion', name: 'Notion Sync', x: 92, y: 394, curvature: -44 },
+      { id: 'db', name: 'Cloudflare D1', x: 160, y: 468, curvature: -24 },
+      { id: 'custom', name: 'Custom Workflow', x: 228, y: 394, curvature: -44 }
+    ]
+  };
+
+  let containerWidth = $state(DESKTOP_LAYOUT.width);
+
+  const isCompact = $derived(containerWidth < 700);
+  const layout = $derived(isCompact ? COMPACT_LAYOUT : DESKTOP_LAYOUT);
 
   // Theme colors fitting canon/agency
   const primaryBeam = 'rgba(96, 165, 250, 0.9)'; // Blue
   const secondaryBeam = 'rgba(167, 139, 250, 0.4)'; // Purple
 </script>
 
-<div class="mcp-viz-container">
-  <div class="mcp-grid-box" style="width: {SVG_WIDTH}px; height: {SVG_HEIGHT}px;">
+<div class="mcp-viz-container" bind:clientWidth={containerWidth} class:compact={isCompact}>
+  <div class="mcp-grid-box" style="width: {layout.width}px; height: {layout.height}px;">
     <!-- 1. The Animated Beams -->
 
     <!-- Left to Center (Initiators to Hub) -->
-    {#each initiators as init, i}
+    {#each layout.initiators as init, i}
       <AnimatedBeam
         fromX={init.x}
         fromY={init.y}
-        toX={hubX}
-        toY={hubY}
-        curvature={40}
+        toX={layout.hub.x}
+        toY={layout.hub.y}
+        curvature={init.curvature}
         duration={3}
         delay={i * 0.5}
         pathWidth={2}
@@ -48,13 +78,13 @@
     {/each}
 
     <!-- Center to Right (Hub to Services) -->
-    {#each services as serv, i}
+    {#each layout.services as serv, i}
       <AnimatedBeam
-        fromX={hubX}
-        fromY={hubY}
+        fromX={layout.hub.x}
+        fromY={layout.hub.y}
         toX={serv.x}
         toY={serv.y}
-        curvature={-40}
+        curvature={serv.curvature}
         duration={3}
         delay={1.5 + i * 0.4}
         pathWidth={2}
@@ -66,7 +96,7 @@
     <!-- 2. The Nodes Rendering -->
 
     <!-- Initiators (Column 1) -->
-    {#each initiators as init, i}
+    {#each layout.initiators as init, i}
       <BlurFade delay={0.2 + i * 0.2}>
         <div class="node initiator-node" style="left: {init.x}px; top: {init.y}px;">
           {init.name}
@@ -76,17 +106,17 @@
 
     <!-- Central Hub MCP (Column 2) -->
     <BlurFade delay={1}>
-      <div class="node hub-node" style="left: {hubX}px; top: {hubY}px;">
+      <div class="node hub-node" style="left: {layout.hub.x}px; top: {layout.hub.y}px;">
         <BorderBeam size={120} duration={8} colorFrom={primaryBeam} colorTo={secondaryBeam} />
         <div class="hub-lockup">
           <span class="hub-title">Hub MCP</span>
-          <span class="hub-sub">Constraint Layer</span>
+          <span class="hub-sub">Policy OS</span>
         </div>
       </div>
     </BlurFade>
 
     <!-- Target Services (Column 3) -->
-    {#each services as serv, i}
+    {#each layout.services as serv, i}
       <BlurFade delay={1.5 + i * 0.2}>
         <div class="node service-node" style="left: {serv.x}px; top: {serv.y}px;">
           {serv.name}
@@ -111,9 +141,8 @@
 
   .mcp-grid-box {
     position: relative;
-    /* Scale appropriately on smaller screens while retaining exact SVG beam coordinates */
-    transform: scale(min(1, calc((100vw - 3rem) / 850)));
-    transform-origin: center;
+    width: 100%;
+    flex: 0 0 auto;
   }
 
   /* Base node styles */
@@ -179,5 +208,28 @@
     color: var(--color-fg-muted, rgba(255, 255, 255, 0.46));
     letter-spacing: 0.05em;
     text-transform: uppercase;
+  }
+
+  .mcp-viz-container.compact {
+    padding: var(--space-6, 2rem) var(--space-3, 0.75rem);
+  }
+
+  .mcp-viz-container.compact .initiator-node,
+  .mcp-viz-container.compact .service-node {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8125rem;
+    white-space: normal;
+    line-height: 1.25;
+    text-align: center;
+    max-width: 8.5rem;
+  }
+
+  .mcp-viz-container.compact .hub-node {
+    width: 132px;
+    height: 132px;
+  }
+
+  .mcp-viz-container.compact .hub-title {
+    font-size: 1.375rem;
   }
 </style>

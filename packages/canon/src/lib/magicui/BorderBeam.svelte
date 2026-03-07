@@ -89,4 +89,12 @@
 			offset-distance: 100%;
 		}
 	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.border-beam::after {
+			animation: none;
+			offset-distance: 25%;
+			opacity: 0.55;
+		}
+	}
 </style>
