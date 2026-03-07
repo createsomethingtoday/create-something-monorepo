@@ -91,6 +91,62 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
   );
 
   server.tool(
+    'template_review_search_assets',
+    'Search template assets by name so reviewers can find a specific submission without reading a broad queue slice.',
+    {
+      query: z.string().min(1),
+      mode: z.enum(['contains', 'exact']).optional(),
+      limit: z.number().int().min(1).max(100).optional(),
+    },
+    async ({ query, mode, limit }) => {
+      try {
+        const records = await getClient().searchAssetsByName(query, {
+          mode,
+          limit: limit ?? 25,
+        });
+        return asSuccess({
+          query,
+          mode: mode ?? 'contains',
+          count: records.length,
+          records,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_search_versions',
+    'Search template Asset Versions by asset name so reviewers can locate review cycles for a specific submission directly.',
+    {
+      query: z.string().min(1),
+      mode: z.enum(['contains', 'exact']).optional(),
+      asset_limit: z.number().int().min(1).max(50).optional(),
+      versions_per_asset_limit: z.number().int().min(1).max(100).optional(),
+    },
+    async ({ query, mode, asset_limit, versions_per_asset_limit }) => {
+      try {
+        const matches = await getClient().searchVersionsByAssetName(query, {
+          mode,
+          assetLimit: asset_limit ?? 10,
+          versionsPerAssetLimit: versions_per_asset_limit ?? 25,
+        });
+
+        return asSuccess({
+          query,
+          mode: mode ?? 'contains',
+          asset_count: matches.length,
+          version_count: matches.reduce((total, match) => total + match.versions.length, 0),
+          matches,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
     'template_review_get_asset',
     'Get one template review payload by asset_id, including version history.',
     {

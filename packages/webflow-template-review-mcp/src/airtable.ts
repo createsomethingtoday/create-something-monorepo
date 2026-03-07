@@ -41,6 +41,8 @@ export interface TemplateReviewQueueItem {
   submittedDate?: string;
 }
 
+export type TemplateReviewAssetSearchMode = 'contains' | 'exact';
+
 export interface TemplateReviewAsset extends TemplateReviewQueueItem {
   description?: string;
   descriptionShort?: string;
@@ -87,6 +89,11 @@ export interface TemplateReviewRelease {
   status?: string;
   releaseOwner?: CollaboratorRef | null;
   rawFields: Record<string, unknown>;
+}
+
+export interface TemplateReviewVersionSearchResult {
+  asset: TemplateReviewAsset;
+  versions: TemplateReviewVersion[];
 }
 
 export interface CompletePublishingInput {
@@ -142,6 +149,10 @@ interface AirtableRecord {
 
 function escapeFormulaValue(value: string): string {
   return value.replace(/'/g, "''");
+}
+
+function escapeFormulaStringValue(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
 function firstString(value: unknown): string | undefined {
@@ -385,6 +396,56 @@ export class AirtableClient {
       filterByFormula: `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
     });
     return records.filter((record) => isTemplateLikeAsset(record.fields)).map((record) => mapAsset(record));
+  }
+
+  async searchAssetsByName(
+    query: string,
+    options?: { limit?: number; mode?: TemplateReviewAssetSearchMode },
+  ): Promise<TemplateReviewAsset[]> {
+    const normalizedQuery = query.trim();
+    if (!normalizedQuery) {
+      throw new AirtableClientError('INVALID_SEARCH_QUERY', 'query must be a non-empty string.', 400);
+    }
+
+    const mode = options?.mode ?? 'contains';
+    const exactFormula = `{${CONFIRMED_ASSET_FIELDS.name}} = '${escapeFormulaValue(normalizedQuery)}'`;
+    const containsFormula = `FIND(LOWER("${escapeFormulaStringValue(normalizedQuery)}"), LOWER({${CONFIRMED_ASSET_FIELDS.name}})) > 0`;
+    const formula = `AND({${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️', ${mode === 'exact' ? exactFormula : containsFormula})`;
+
+    const records = await this.listRecords({
+      tableId: TABLE_IDS.assets,
+      limit: options?.limit ?? 25,
+      filterByFormula: formula,
+      sortField: CONFIRMED_ASSET_FIELDS.name,
+      sortDirection: 'asc',
+    });
+
+    return records.filter((record) => isTemplateLikeAsset(record.fields)).map((record) => mapAsset(record));
+  }
+
+  async searchVersionsByAssetName(
+    query: string,
+    options?: {
+      mode?: TemplateReviewAssetSearchMode;
+      assetLimit?: number;
+      versionsPerAssetLimit?: number;
+    },
+  ): Promise<TemplateReviewVersionSearchResult[]> {
+    const assetLimit = options?.assetLimit ?? 10;
+    const versionsPerAssetLimit = options?.versionsPerAssetLimit ?? 25;
+    const assets = await this.searchAssetsByName(query, {
+      mode: options?.mode,
+      limit: assetLimit,
+    });
+
+    const groupedResults = await Promise.all(
+      assets.map(async (asset) => ({
+        asset,
+        versions: await this.listVersionsForAsset(asset.assetId, versionsPerAssetLimit),
+      })),
+    );
+
+    return groupedResults.filter((result) => result.versions.length > 0);
   }
 
   async getAssetById(assetId: string): Promise<TemplateReviewAsset | null> {

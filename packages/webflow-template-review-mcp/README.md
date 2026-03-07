@@ -45,6 +45,8 @@ Optional:
 
 - `template_review_health`
 - `template_review_list_queue`
+- `template_review_search_assets`
+- `template_review_search_versions`
 - `template_review_get_asset`
 - `template_review_list_versions`
 - `template_review_get_version`
