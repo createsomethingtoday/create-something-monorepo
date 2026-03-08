@@ -15,34 +15,33 @@
 <style>
 	.fact-list {
 		display: grid;
-		gap: 0.85rem;
+		gap: 0;
+		border-top: 1px solid rgba(255, 255, 255, 0.08);
 	}
 
 	.fact-row {
 		display: grid;
-		grid-template-columns: 11rem minmax(0, 1fr);
-		gap: 1rem;
-		padding-bottom: 0.55rem;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-	}
-
-	.fact-row:last-child {
-		border-bottom: 0;
+		grid-template-columns: minmax(8rem, 10rem) minmax(0, 1fr);
+		gap: 1.15rem;
+		padding: 0.7rem 0;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+		align-items: baseline;
 	}
 
 	dt {
-		font-size: 0.8rem;
-		letter-spacing: 0.08em;
+		font-size: 0.72rem;
+		letter-spacing: 0.12em;
 		text-transform: uppercase;
 		color: var(--color-fg-muted);
 	}
 
 	dd {
 		margin: 0;
-		font-size: 1rem;
-		font-weight: 600;
+		font-size: 0.98rem;
+		font-weight: 520;
 		line-height: 1.4;
 		word-break: break-word;
+		font-variant-numeric: tabular-nums;
 	}
 
 	@media (max-width: 700px) {

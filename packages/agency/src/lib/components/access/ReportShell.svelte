@@ -13,7 +13,9 @@
 			{#if eyebrow}
 				<p class="eyebrow">{eyebrow}</p>
 			{/if}
-			<h1>{title}</h1>
+			<div class="title-row">
+				<h1>{title}</h1>
+			</div>
 			{#if lede}
 				<p class="lede">{lede}</p>
 			{/if}
@@ -44,31 +46,41 @@
 
 <style>
 	.report-shell {
-		max-width: 1120px;
+		max-width: 1180px;
 		margin: 0 auto;
-		padding: 2.5rem 2rem 4rem;
+		padding: 2.2rem 1.5rem 3.5rem;
 	}
 
 	.masthead {
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) 20rem;
-		gap: 3rem;
+		grid-template-columns: minmax(0, 46rem) minmax(16rem, 20rem);
+		gap: 2.25rem;
 		align-items: start;
-		margin-bottom: 2.5rem;
+		margin-bottom: 1.5rem;
+		padding-bottom: 1.1rem;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 	}
 
 	.eyebrow,
 	.identity-label {
-		font-size: 0.8rem;
-		letter-spacing: 0.08em;
+		font-size: 0.72rem;
+		letter-spacing: 0.14em;
 		text-transform: uppercase;
 		color: var(--color-fg-muted);
 	}
 
+	.title-row {
+		display: flex;
+		align-items: end;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
 	h1 {
-		margin: 0 0 0.5rem;
-		font-size: clamp(2.8rem, 6vw, 4.25rem);
-		line-height: 0.95;
+		margin: 0 0 0.35rem;
+		font-size: clamp(2.4rem, 5vw, 3.55rem);
+		line-height: 0.94;
+		letter-spacing: -0.04em;
 	}
 
 	.lede,
@@ -77,40 +89,41 @@
 	}
 
 	.lede {
-		max-width: 42rem;
-		line-height: 1.6;
-		font-size: 1rem;
+		max-width: 38rem;
+		line-height: 1.72;
+		font-size: 0.98rem;
 		margin: 0;
 	}
 
 	.identity-note {
-		border-top: 1px solid rgba(255, 255, 255, 0.12);
-		padding-top: 1rem;
+		padding-top: 0.1rem;
 		display: grid;
-		gap: 0.5rem;
+		gap: 0.45rem;
+		align-content: start;
 	}
 
 	.identity-value {
-		font-size: 1.25rem;
-		font-weight: 600;
+		font-size: 1.1rem;
+		font-weight: 550;
 		word-break: break-word;
+		line-height: 1.25;
+		font-variant-numeric: tabular-nums;
 	}
 
 	.summary-strip {
 		display: grid;
-		grid-template-columns: repeat(4, minmax(0, 1fr));
-		gap: 1.5rem;
-		padding: 1rem 0 2rem;
-		border-top: 1px solid rgba(255, 255, 255, 0.08);
+		grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+		gap: 0;
+		padding: 0.15rem 0 1.45rem;
 		border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-		margin-bottom: 2rem;
+		margin-bottom: 1.3rem;
 	}
 
 	.report-grid {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		column-gap: 3rem;
-		row-gap: 2rem;
+		column-gap: 2.25rem;
+		row-gap: 1.5rem;
 	}
 
 	@media (max-width: 900px) {
@@ -122,6 +135,10 @@
 		.summary-strip,
 		.report-grid {
 			grid-template-columns: 1fr;
+		}
+
+		.masthead {
+			gap: 1.25rem;
 		}
 	}
 </style>

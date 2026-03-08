@@ -24,8 +24,8 @@
 
 <style>
 	.report-section {
-		border-top: 1px solid rgba(255, 255, 255, 0.12);
-		padding-top: 1rem;
+		border-top: 1px solid rgba(255, 255, 255, 0.1);
+		padding-top: 0.9rem;
 		min-width: 0;
 	}
 
@@ -34,7 +34,7 @@
 	}
 
 	.section-head {
-		margin-bottom: 1rem;
+		margin-bottom: 0.95rem;
 	}
 
 	.section-head-inline {
@@ -45,20 +45,26 @@
 	}
 
 	h2 {
-		margin: 0 0 0.4rem;
-		font-size: 1.15rem;
+		margin: 0 0 0.28rem;
+		font-size: 1.02rem;
+		line-height: 1.25;
 	}
 
 	p {
 		margin: 0;
-		line-height: 1.5;
+		line-height: 1.62;
+		font-size: 0.92rem;
 		color: var(--color-fg-muted);
+		max-width: 38rem;
 	}
 
 	a {
 		color: var(--color-fg-primary);
 		text-decoration: underline;
 		text-underline-offset: 0.18em;
+		font-size: 0.82rem;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
 	}
 	@media (max-width: 700px) {
 		.section-head-inline {
