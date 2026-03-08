@@ -586,6 +586,7 @@ interface OAuthAuthorizationCodeClaims extends JWTPayload {
 	redirect_uri: string;
 	scope: string;
 	resource: string;
+	nonce?: string;
 	code_challenge?: string;
 	code_challenge_method?: OauthCodeChallengeMethod;
 	account_id?: string | null;
@@ -733,6 +734,7 @@ const POLICY_USER_BEARER_TOKEN_GOVERNANCE_ID = 'policy.user-bearer-token-governa
 const DEFAULT_OAUTH_RESOURCE = DEFAULT_MCP_HUB_URL;
 const OAUTH_AUTHORIZATION_CODE_TTL_SECONDS = 300;
 const OAUTH_MANAGED_BEARER_EXPIRES_IN = 31536000;
+const OAUTH_ID_TOKEN_TTL_SECONDS = 3600;
 const MIN_MCP_LEGACY_KEY_TTL_SECONDS = 3600;
 const DEFAULT_MCP_LEGACY_KEY_TTL_SECONDS = 7 * 24 * 60 * 60;
 const MAX_MCP_LEGACY_KEY_TTL_SECONDS = 30 * 24 * 60 * 60;
@@ -781,6 +783,7 @@ async function handleOAuthAuthorize(request: Request, env: Env): Promise<Respons
 	const state = String(form.get('state') ?? '');
 	const scope = normalizeScope(String(form.get('scope') ?? 'openid mcp'));
 	const resource = normalizeOAuthResource(String(form.get('resource') ?? env.MCP_HUB_URL ?? DEFAULT_OAUTH_RESOURCE));
+	const nonce = normalizeNullableString(String(form.get('nonce') ?? ''));
 	const codeChallenge = normalizeOptionalId(String(form.get('code_challenge') ?? ''));
 	const codeChallengeMethod = normalizeCodeChallengeMethod(String(form.get('code_challenge_method') ?? ''));
 	const email = String(form.get('email') ?? '').trim().toLowerCase();
@@ -797,6 +800,7 @@ async function handleOAuthAuthorize(request: Request, env: Env): Promise<Respons
 		state,
 		scope,
 		resource,
+		...(nonce ? { nonce } : {}),
 		...(codeChallenge ? { code_challenge: codeChallenge } : {}),
 		...(codeChallengeMethod ? { code_challenge_method: codeChallengeMethod } : {}),
 		...(tenantId ? { tenant_id: tenantId } : {}),
@@ -834,6 +838,7 @@ async function handleOAuthAuthorize(request: Request, env: Env): Promise<Respons
 		redirect_uri: redirectUri,
 		scope,
 		resource,
+		...(nonce ? { nonce } : {}),
 		...(codeChallenge ? { code_challenge: codeChallenge } : {}),
 		...(codeChallengeMethod ? { code_challenge_method: codeChallengeMethod } : {}),
 		...(tenantId ? { tenant_id: tenantId } : {}),
@@ -900,13 +905,35 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 			return oauthErrorResponse('access_denied', issued.status, issued.message);
 		}
 
-		return json({
+		const responseBody: Record<string, unknown> = {
 			access_token: issued.token,
 			token_type: 'Bearer',
 			expires_in: OAUTH_MANAGED_BEARER_EXPIRES_IN,
 			scope: claims.scope,
 			resource: claims.resource,
-		});
+		};
+
+		if (scopeIncludes(claims.scope, 'openid')) {
+			const now = Math.floor(Date.now() / 1000);
+			const idToken = await createSignedToken(env.DB, {
+				sub: user.id,
+				email: user.email,
+				tier: user.tier,
+				source: user.source,
+				iss: getOauthIssuer(new URL(request.url), env),
+				aud: [claims.client_id],
+				iat: now,
+				exp: now + OAUTH_ID_TOKEN_TTL_SECONDS,
+				...(scopeIncludes(claims.scope, 'email')
+					? { email: user.email, email_verified: Boolean(user.email_verified) }
+					: {}),
+				...(scopeIncludes(claims.scope, 'profile') && user.name ? { name: user.name } : {}),
+				...(claims.nonce ? { nonce: claims.nonce } : {}),
+			});
+			responseBody.id_token = idToken;
+		}
+
+		return json(responseBody);
 	} catch (error) {
 		const description = error instanceof Error ? error.message : 'token_exchange_failed';
 		console.error('OAuth token exchange failed:', {
@@ -3646,6 +3673,14 @@ function normalizeScope(raw: string): string {
 		.filter(Boolean)
 		.filter((value, index, all) => all.indexOf(value) === index)
 		.join(' ');
+}
+
+function scopeIncludes(scope: string, expected: string): boolean {
+	return scope
+		.split(/\s+/)
+		.map((value) => value.trim())
+		.filter(Boolean)
+		.includes(expected);
 }
 
 function normalizeOAuthResource(raw: string): string {
