@@ -702,6 +702,7 @@
 		align-items: center;
 		gap: var(--space-sm);
 		flex-wrap: wrap;
+		justify-content: flex-end;
 	}
 
 	:global(.tabs-container) {
@@ -714,6 +715,16 @@
 		background: var(--color-bg-subtle);
 		border-radius: var(--radius-md);
 		padding: var(--space-xs);
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+
+	:global(.asset-tabs-list::-webkit-scrollbar) {
+		display: none;
+	}
+
+	:global(.asset-tabs-list button) {
+		flex: 0 0 auto;
 	}
 
 	.archive-dialog-content {
@@ -731,6 +742,7 @@
 		display: flex;
 		justify-content: flex-end;
 		gap: var(--space-sm);
+		flex-wrap: wrap;
 	}
 
 	.overview-grid {
@@ -757,6 +769,7 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: var(--space-md);
+		flex-wrap: wrap;
 	}
 
 	.details-grid {
@@ -864,6 +877,7 @@
 		display: flex;
 		justify-content: space-between;
 		gap: var(--space-sm);
+		flex-wrap: wrap;
 	}
 
 	.stat-item {
@@ -941,6 +955,94 @@
 		font-weight: var(--font-medium);
 		color: var(--color-fg-primary);
 		font-variant-numeric: tabular-nums;
+	}
+
+	@media (max-width: 768px) {
+		.main-content {
+			padding: var(--space-md);
+		}
+
+		.detail-header {
+			margin-bottom: var(--space-md);
+		}
+
+		.header-info,
+		.header-actions {
+			width: 100%;
+		}
+
+		.header-actions {
+			justify-content: stretch;
+		}
+
+		.header-actions :global(button) {
+			flex: 1 1 12rem;
+			min-height: 2.5rem;
+		}
+
+		:global(.asset-tabs-list) {
+			width: 100%;
+		}
+
+		:global(.tab-content) {
+			outline-offset: 0;
+		}
+
+		.card-header-flex :global(button) {
+			width: 100%;
+		}
+
+		.archive-dialog-actions :global(button) {
+			flex: 1 1 12rem;
+		}
+	}
+
+	@media (max-width: 640px) {
+		.asset-title {
+			font-size: var(--text-h3);
+			word-break: break-word;
+		}
+
+		.detail-header {
+			gap: var(--space-sm);
+		}
+
+		.details-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.quick-stats {
+			flex-direction: column;
+		}
+
+		.stat-item {
+			align-items: flex-start;
+			padding: var(--space-sm);
+			border: 1px solid var(--color-border-default);
+			border-radius: var(--radius-md);
+			background: var(--color-bg-subtle);
+		}
+
+		.stat-header {
+			flex-wrap: wrap;
+		}
+
+		.stat-number {
+			font-size: var(--text-body);
+		}
+
+		.derived-stat {
+			justify-content: flex-start;
+			flex-wrap: wrap;
+		}
+
+		.archive-dialog-actions {
+			flex-direction: column;
+		}
+
+		.archive-dialog-actions :global(button) {
+			width: 100%;
+		}
 	}
 
 </style>

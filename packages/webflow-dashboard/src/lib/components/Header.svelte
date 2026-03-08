@@ -31,14 +31,29 @@
 <header class="header">
 	<div class="header-content">
 		<div class="header-left">
-			<a href="/dashboard" class="logo">
-				<svg class="webflow-logo" width="38" height="24" viewBox="0 0 1080 674" fill="none" xmlns="http://www.w3.org/2000/svg">
-					<path fill-rule="evenodd" clip-rule="evenodd" d="M1080 0L735.386 673.684H411.696L555.916 394.481H549.445C430.464 548.934 252.942 650.61 0 673.684V398.344C0 398.344 161.813 388.787 256.939 288.776H0V0.0053214H288.771V237.515L295.253 237.489L413.255 0.0053214H631.645V236.009L638.126 235.999L760.556 0H1080Z" fill="currentColor"/>
-				</svg>
-				<span class="logo-text">Asset Dashboard</span>
-			</a>
+			<div class="header-brand-row">
+				<a href="/dashboard" class="logo">
+					<svg class="webflow-logo" width="38" height="24" viewBox="0 0 1080 674" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path fill-rule="evenodd" clip-rule="evenodd" d="M1080 0L735.386 673.684H411.696L555.916 394.481H549.445C430.464 548.934 252.942 650.61 0 673.684V398.344C0 398.344 161.813 388.787 256.939 288.776H0V0.0053214H288.771V237.515L295.253 237.489L413.255 0.0053214H631.645V236.009L638.126 235.999L760.556 0H1080Z" fill="currentColor"/>
+					</svg>
+					<span class="logo-text">Asset Dashboard</span>
+				</a>
 
-			<nav class="nav-links">
+				<div class="header-right">
+					<DarkModeToggle />
+					{#if onProfileClick}
+						<Button variant="secondary" onclick={onProfileClick}>
+							<UserCircle size={20} />
+							<span class="profile-text">Profile</span>
+						</Button>
+					{/if}
+					{#if onLogout}
+						<Button variant="secondary" onclick={onLogout}>Logout</Button>
+					{/if}
+				</div>
+			</div>
+
+			<nav class="nav-links" aria-label="Primary navigation">
 				{#each navItems as item}
 					<a
 						href={item.href}
@@ -54,19 +69,6 @@
 				<div class="search-desktop">
 					<Search {onSearch} />
 				</div>
-			{/if}
-		</div>
-
-		<div class="header-right">
-			<DarkModeToggle />
-		{#if onProfileClick}
-			<Button variant="secondary" onclick={onProfileClick}>
-				<UserCircle size={20} />
-				<span class="profile-text">Profile</span>
-			</Button>
-		{/if}
-			{#if onLogout}
-				<Button variant="secondary" onclick={onLogout}>Logout</Button>
 			{/if}
 		</div>
 	</div>
@@ -89,16 +91,25 @@
 		margin: 0 auto;
 		padding: var(--space-sm) var(--space-md);
 		display: flex;
-		align-items: center;
+		align-items: flex-start;
 		justify-content: space-between;
-		flex-wrap: wrap;
 		gap: var(--space-sm);
 	}
 
 	.header-left {
 		display: flex;
-		align-items: center;
+		flex: 1;
+		flex-direction: column;
 		gap: var(--space-md);
+		min-width: 0;
+	}
+
+	.header-brand-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-sm);
+		flex-wrap: wrap;
 	}
 
 	.logo {
@@ -120,22 +131,26 @@
 	}
 
 	.nav-links {
-		display: none;
+		display: flex;
 		align-items: center;
 		gap: var(--space-xs);
+		width: 100%;
+		overflow-x: auto;
+		padding-bottom: 0.125rem;
+		scrollbar-width: none;
 	}
 
-	@media (min-width: 768px) {
-		.nav-links {
-			display: flex;
-		}
+	.nav-links::-webkit-scrollbar {
+		display: none;
 	}
 
 	.nav-link {
+		flex: 0 0 auto;
 		padding: var(--space-xs) var(--space-sm);
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
 		text-decoration: none;
+		white-space: nowrap;
 		border-bottom: 1px solid transparent;
 		transition:
 			color var(--duration-micro) var(--ease-standard),
@@ -160,7 +175,8 @@
 
 	.search-desktop {
 		display: none;
-		width: 18rem;
+		width: 100%;
+		max-width: 22rem;
 	}
 
 	.search-mobile {
@@ -182,6 +198,8 @@
 		display: flex;
 		align-items: center;
 		gap: var(--space-sm);
+		flex-wrap: wrap;
+		justify-content: flex-end;
 	}
 
 	.profile-text {
@@ -191,6 +209,40 @@
 	@media (min-width: 640px) {
 		.profile-text {
 			display: inline;
+		}
+	}
+
+	@media (max-width: 767px) {
+		.header-content {
+			padding-bottom: var(--space-xs);
+		}
+
+		.header-right :global(button) {
+			min-height: 2.5rem;
+		}
+	}
+
+	@media (min-width: 768px) {
+		.header-content {
+			align-items: center;
+		}
+
+		.header-left {
+			flex-direction: row;
+			align-items: center;
+			flex-wrap: wrap;
+		}
+
+		.header-brand-row {
+			flex-wrap: nowrap;
+		}
+
+		.search-desktop {
+			display: block;
+		}
+
+		.search-mobile {
+			display: none;
 		}
 	}
 </style>

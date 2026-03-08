@@ -134,7 +134,7 @@
 	input {
 		width: 100%;
 		padding: 0.75rem 1rem;
-		font-size: var(--text-body);
+		font-size: 1rem;
 		color: var(--color-fg-primary);
 		background: var(--color-bg-subtle);
 		border: 1px solid var(--color-border-default);
@@ -217,5 +217,31 @@
 		color: var(--color-fg-muted);
 		text-align: center;
 		margin: var(--space-lg) 0 0;
+	}
+
+	@media (max-width: 640px) {
+		.container {
+			align-items: flex-start;
+			padding: var(--space-md);
+		}
+
+		.login-card {
+			margin: auto 0;
+			padding: var(--space-md);
+			border-radius: var(--radius-lg);
+		}
+
+		h1 {
+			font-size: var(--text-h3);
+		}
+
+		.subtitle {
+			margin-bottom: var(--space-md);
+		}
+
+		.submit-button,
+		input {
+			min-height: 2.75rem;
+		}
 	}
 </style>

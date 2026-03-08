@@ -68,7 +68,7 @@
 		width: 100%;
 		height: 2.25rem;
 		padding: 0.5rem 2rem 0.5rem 2.25rem;
-		font-size: var(--text-body-sm);
+		font-size: 1rem;
 		color: var(--color-fg-primary);
 		background: var(--color-bg-subtle);
 		border: 1px solid var(--color-border-default);
@@ -114,5 +114,11 @@
 	.clear-btn:focus-visible {
 		outline: 2px solid var(--color-focus);
 		outline-offset: 2px;
+	}
+
+	@media (min-width: 768px) {
+		.search-input {
+			font-size: var(--text-body-sm);
+		}
 	}
 </style>

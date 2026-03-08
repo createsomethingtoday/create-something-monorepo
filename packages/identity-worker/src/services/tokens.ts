@@ -163,7 +163,7 @@ export async function validateJWT(
 
 		// Verify signature
 		const data = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
-		const signature = base64UrlDecode(signatureB64);
+		const signature = joseToDerSignature(base64UrlDecode(signatureB64));
 
 		const valid = await crypto.subtle.verify(
 			{ name: 'ECDSA', hash: 'SHA-256' },
@@ -281,9 +281,101 @@ async function signJWT(payload: Record<string, unknown>, signingKey: SigningKey)
 
 	const signature = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, privateKey, data);
 
-	const signatureB64 = base64UrlEncode(new Uint8Array(signature));
+	const signatureB64 = base64UrlEncode(derToJoseSignature(new Uint8Array(signature), 64));
 
 	return `${headerB64}.${payloadB64}.${signatureB64}`;
+}
+
+function derToJoseSignature(der: Uint8Array, outputLength: number): Uint8Array {
+	if (der[0] !== 0x30) {
+		throw new Error('Invalid DER signature');
+	}
+
+	let offset = 2;
+	if ((der[1] & 0x80) !== 0) {
+		const lengthBytes = der[1] & 0x7f;
+		offset = 2 + lengthBytes;
+	}
+
+	if (der[offset] !== 0x02) {
+		throw new Error('Invalid DER signature');
+	}
+	const rLength = der[offset + 1];
+	const r = der.slice(offset + 2, offset + 2 + rLength);
+	offset = offset + 2 + rLength;
+
+	if (der[offset] !== 0x02) {
+		throw new Error('Invalid DER signature');
+	}
+	const sLength = der[offset + 1];
+	const s = der.slice(offset + 2, offset + 2 + sLength);
+
+	const jose = new Uint8Array(outputLength);
+	const half = outputLength / 2;
+	jose.set(trimAndPadSignaturePart(r, half), 0);
+	jose.set(trimAndPadSignaturePart(s, half), half);
+	return jose;
+}
+
+function joseToDerSignature(jose: Uint8Array): Uint8Array {
+	if (jose.length % 2 !== 0) {
+		throw new Error('Invalid JOSE signature length');
+	}
+
+	const half = jose.length / 2;
+	const r = jose.slice(0, half);
+	const s = jose.slice(half);
+	const derR = encodeDerInteger(r);
+	const derS = encodeDerInteger(s);
+	const totalLength = derR.length + derS.length;
+
+	if (totalLength < 128) {
+		const out = new Uint8Array(2 + totalLength);
+		out[0] = 0x30;
+		out[1] = totalLength;
+		out.set(derR, 2);
+		out.set(derS, 2 + derR.length);
+		return out;
+	}
+
+	const out = new Uint8Array(3 + totalLength);
+	out[0] = 0x30;
+	out[1] = 0x81;
+	out[2] = totalLength;
+	out.set(derR, 3);
+	out.set(derS, 3 + derR.length);
+	return out;
+}
+
+function trimAndPadSignaturePart(part: Uint8Array, size: number): Uint8Array {
+	let trimmed = part;
+	while (trimmed.length > 0 && trimmed[0] === 0x00) {
+		trimmed = trimmed.slice(1);
+	}
+	if (trimmed.length > size) {
+		throw new Error('Invalid ECDSA signature component');
+	}
+	const out = new Uint8Array(size);
+	out.set(trimmed, size - trimmed.length);
+	return out;
+}
+
+function encodeDerInteger(part: Uint8Array): Uint8Array {
+	let trimmed = part;
+	while (trimmed.length > 1 && trimmed[0] === 0x00) {
+		trimmed = trimmed.slice(1);
+	}
+	if ((trimmed[0] ?? 0) & 0x80) {
+		const prefixed = new Uint8Array(trimmed.length + 1);
+		prefixed[0] = 0x00;
+		prefixed.set(trimmed, 1);
+		trimmed = prefixed;
+	}
+	const out = new Uint8Array(2 + trimmed.length);
+	out[0] = 0x02;
+	out[1] = trimmed.length;
+	out.set(trimmed, 2);
+	return out;
 }
 
 function base64UrlEncode(input: string | Uint8Array): string {

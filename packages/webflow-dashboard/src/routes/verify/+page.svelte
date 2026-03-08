@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { CheckCircle2, Lock, XCircle } from 'lucide-svelte';
 	import WebflowLogo from '$lib/components/WebflowLogo.svelte';
@@ -34,6 +33,34 @@
 		errorMessage = serverError;
 	});
 
+	async function waitForAuthenticatedSession(maxAttempts = 5, delayMs = 250): Promise<boolean> {
+		for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+			try {
+				const response = await fetch('/api/auth/check-session', {
+					method: 'GET',
+					cache: 'no-store',
+					credentials: 'include'
+				});
+
+				if (response.ok) {
+					return true;
+				}
+			} catch {
+				// Ignore transient network failures and retry.
+			}
+
+			if (attempt < maxAttempts - 1) {
+				await new Promise((resolve) => setTimeout(resolve, delayMs));
+			}
+		}
+
+		return false;
+	}
+
+	function navigateToDashboard() {
+		window.location.assign('/dashboard');
+	}
+
 	// Client-side verification fallback for manual token entry
 	async function verifyToken(token: string) {
 		status = 'verifying';
@@ -42,6 +69,7 @@
 		try {
 			const response = await fetch('/api/auth/verify-token', {
 				method: 'POST',
+				credentials: 'include',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ token })
 			});
@@ -49,11 +77,19 @@
 			const responseData = await response.json();
 
 			if (response.ok) {
+				const sessionReady = await waitForAuthenticatedSession();
+
+				if (!sessionReady) {
+					status = 'error';
+					errorMessage =
+						'Verification succeeded, but your session was not established. Please try again in your mobile browser.';
+					return;
+				}
+
 				status = 'success';
-				// Redirect to dashboard after brief success message
 				setTimeout(() => {
-					goto('/dashboard');
-				}, 1500);
+					navigateToDashboard();
+				}, 750);
 			} else {
 				status = 'error';
 				const errorData = responseData as { error?: string };
@@ -242,7 +278,7 @@
 		border-radius: var(--radius-md);
 		color: var(--color-fg-primary);
 		font-family: monospace;
-		font-size: var(--text-body-sm);
+		font-size: 1rem;
 		text-align: center;
 		transition: border-color var(--duration-micro) var(--ease-standard);
 	}
@@ -281,5 +317,27 @@
 	.verify-button:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
+	}
+
+	@media (max-width: 640px) {
+		.container {
+			align-items: flex-start;
+			padding: var(--space-md);
+		}
+
+		.verify-card {
+			margin: auto 0;
+			padding: var(--space-md);
+			border-radius: var(--radius-lg);
+		}
+
+		h1 {
+			font-size: var(--text-h3);
+		}
+
+		.token-input,
+		.verify-button {
+			min-height: 2.75rem;
+		}
 	}
 </style>
