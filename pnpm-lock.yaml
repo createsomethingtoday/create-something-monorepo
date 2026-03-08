@@ -9,11 +9,6 @@ overrides:
   '@types/node': 24.10.9
   '@modelcontextprotocol/sdk': 1.25.3
 
-patchedDependencies:
-  webidl-conversions@3.0.1:
-    hash: wjcrequ6dsggk2e4jkffk7mfdu
-    path: patches/webidl-conversions@3.0.1.patch
-
 importers:
 
   .:
@@ -23037,7 +23032,7 @@ snapshots:
 
   webgl-sdf-generator@1.1.1: {}
 
-  webidl-conversions@3.0.1(patch_hash=wjcrequ6dsggk2e4jkffk7mfdu): {}
+  webidl-conversions@3.0.1: {}
 
   webidl-conversions@4.0.2: {}
 
@@ -23200,7 +23195,7 @@ snapshots:
   whatwg-url@5.0.0:
     dependencies:
       tr46: 0.0.3
-      webidl-conversions: 3.0.1(patch_hash=wjcrequ6dsggk2e4jkffk7mfdu)
+      webidl-conversions: 3.0.1
 
   whatwg-url@7.1.0:
     dependencies:
