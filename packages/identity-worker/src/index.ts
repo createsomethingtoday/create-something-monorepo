@@ -907,7 +907,7 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 
 		const responseBody: Record<string, unknown> = {
 			access_token: issued.token,
-			token_type: 'Bearer',
+			token_type: 'bearer',
 			expires_in: OAUTH_MANAGED_BEARER_EXPIRES_IN,
 			scope: claims.scope,
 			resource: claims.resource,
@@ -917,11 +917,8 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 			const now = Math.floor(Date.now() / 1000);
 			const idToken = await createSignedToken(env.DB, {
 				sub: user.id,
-				email: user.email,
-				tier: user.tier,
-				source: user.source,
 				iss: getOauthIssuer(new URL(request.url), env),
-				aud: [claims.client_id],
+				aud: claims.client_id,
 				iat: now,
 				exp: now + OAUTH_ID_TOKEN_TTL_SECONDS,
 				...(scopeIncludes(claims.scope, 'email')

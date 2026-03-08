@@ -71,10 +71,10 @@ export async function generateTokens(
 
 export async function createSignedToken(
 	db: D1Database,
-	payload: JWTPayload & Record<string, unknown>
+	payload: Record<string, unknown>
 ): Promise<string> {
 	const signingKey = await getOrCreateSigningKey(db);
-	return signJWT(payload as unknown as Record<string, unknown>, signingKey);
+	return signJWT(payload, signingKey);
 }
 
 /**
