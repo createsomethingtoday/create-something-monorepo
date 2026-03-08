@@ -163,14 +163,20 @@ export async function validateJWT(
 
 		// Verify signature
 		const data = new TextEncoder().encode(`${headerB64}.${payloadB64}`);
-		const signature = joseToDerSignature(base64UrlDecode(signatureB64));
-
-		const valid = await crypto.subtle.verify(
-			{ name: 'ECDSA', hash: 'SHA-256' },
-			publicKey,
-			signature,
-			data
-		);
+		const joseSignature = base64UrlDecode(signatureB64);
+		const valid =
+			await crypto.subtle.verify(
+				{ name: 'ECDSA', hash: 'SHA-256' },
+				publicKey,
+				joseSignature,
+				data
+			)
+			|| await crypto.subtle.verify(
+				{ name: 'ECDSA', hash: 'SHA-256' },
+				publicKey,
+				joseToDerSignature(joseSignature),
+				data
+			);
 
 		if (!valid) return null;
 
@@ -281,12 +287,17 @@ async function signJWT(payload: Record<string, unknown>, signingKey: SigningKey)
 
 	const signature = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, privateKey, data);
 
-	const signatureB64 = base64UrlEncode(derToJoseSignature(new Uint8Array(signature), 64));
+	const runtimeSignature = new Uint8Array(signature);
+	const joseSignature = normalizeRuntimeSignatureToJose(runtimeSignature, 64);
+	const signatureB64 = base64UrlEncode(joseSignature);
 
 	return `${headerB64}.${payloadB64}.${signatureB64}`;
 }
 
 function derToJoseSignature(der: Uint8Array, outputLength: number): Uint8Array {
+	if (der.length === outputLength) {
+		return der;
+	}
 	if (der[0] !== 0x30) {
 		throw new Error('Invalid DER signature');
 	}
@@ -345,6 +356,13 @@ function joseToDerSignature(jose: Uint8Array): Uint8Array {
 	out.set(derR, 3);
 	out.set(derS, 3 + derR.length);
 	return out;
+}
+
+function normalizeRuntimeSignatureToJose(signature: Uint8Array, outputLength: number): Uint8Array {
+	if (signature.length === outputLength) {
+		return signature;
+	}
+	return derToJoseSignature(signature, outputLength);
 }
 
 function trimAndPadSignaturePart(part: Uint8Array, size: number): Uint8Array {

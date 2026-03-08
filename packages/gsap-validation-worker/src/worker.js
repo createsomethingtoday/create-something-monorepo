@@ -1216,15 +1216,19 @@ var ALLOWED_ORIGINS = [
   "https://webflow.com",
   "https://www.webflow.com",
   "https://gsap-validator.vercel.app",
-  "https://wf.createsomething.io",
-  "https://webflow-dashboard.pages.dev"
+  "https://wf.createsomething.io"
+];
+var ALLOWED_ORIGIN_PATTERNS = [
+  /^https:\/\/[a-z0-9-]+\.webflow\.io$/i,
+  /^https:\/\/[a-z0-9-]+\.webflow-dashboard\.pages\.dev$/i
 ];
 function handleCors(request) {
   const origin = request.headers.get("Origin");
-  const isAllowedOrigin = ALLOWED_ORIGINS.includes(origin) || !origin;
+  const requestedHeaders = request.headers.get("Access-Control-Request-Headers");
+  const isAllowedOrigin = !origin || ALLOWED_ORIGINS.includes(origin) || ALLOWED_ORIGIN_PATTERNS.some((pattern) => pattern.test(origin));
   const corsHeaders = {
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Headers": requestedHeaders && requestedHeaders.trim() !== "" ? requestedHeaders : "Content-Type, Authorization, X-Correlation-Id",
     "Access-Control-Max-Age": "86400"
   };
   if (isAllowedOrigin) {
@@ -1413,7 +1417,18 @@ var worker_default = {
           }
         });
       }
-      const requestData = await request.json();
+      let requestData;
+      try {
+        requestData = await request.json();
+      } catch (error) {
+        return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders
+          }
+        });
+      }
       if (path === "/validateGsap" || path === "/api/gsapValidation") {
         return await handleGsapValidation(requestData, env, ctx, corsHeaders);
       }

@@ -930,7 +930,10 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 			responseBody.id_token = idToken;
 		}
 
-		return json(responseBody);
+		return json(responseBody, 200, {
+			'Cache-Control': 'no-store',
+			Pragma: 'no-cache',
+		});
 	} catch (error) {
 		const description = error instanceof Error ? error.message : 'token_exchange_failed';
 		console.error('OAuth token exchange failed:', {
@@ -3734,6 +3737,7 @@ function oauthErrorResponse(error: string, status: number, description?: string)
 		status,
 		{
 			'Cache-Control': 'no-store',
+			Pragma: 'no-cache',
 		},
 	);
 }
