@@ -58,18 +58,20 @@
 
 	type HostId = 'codex' | 'claude' | 'cursor';
 
-	const hostOptions: Array<{ id: HostId; label: string; urlExample: string }> = [
-		{ id: 'codex', label: 'Codex', urlExample: 'https://YOUR-MCP-URL/mcp' },
-		{ id: 'claude', label: 'Claude Desktop', urlExample: 'https://YOUR-MCP-URL/mcp' },
-		{ id: 'cursor', label: 'Cursor', urlExample: 'https://YOUR-MCP-URL/mcp' },
+	const hostOptions: Array<{ id: HostId; label: string }> = [
+		{ id: 'codex', label: 'Codex' },
+		{ id: 'claude', label: 'Claude Desktop' },
+		{ id: 'cursor', label: 'Cursor' },
 	];
+	const fallbackHostUrl = 'https://YOUR-MCP-URL/mcp';
 
 	let token = $state<ManagedToken>(data.access.token ?? null);
 	let busy = $state(false);
 	let revealedToken = $state('');
 	let errorMessage = $state(data.access.tokenAvailable ? '' : (data.access.tokenError ?? ''));
 	let successMessage = $state('');
-	let copiedState = $state('');
+	let tokenCopiedState = $state('');
+	let snippetCopiedState = $state('');
 	let passwordBusy = $state(false);
 	let passwordError = $state(data.access.password.available ? '' : (data.access.password.error ?? ''));
 	let passwordSuccess = $state('');
@@ -89,6 +91,7 @@
 	const assignment = $derived(data.assignment as AccessAssignment);
 
 	const activeHost = $derived(hostOptions.find((host) => host.id === selectedHost) ?? hostOptions[0]);
+	const activeHostUrl = $derived(assignment?.hubUrl ?? fallbackHostUrl);
 	const tokenModeLabel = $derived(token?.tool_mode === 'read_write' ? 'Read + write' : 'Read only');
 	const tokenStatus = $derived(
 		!data.entitlement.accountId || !data.entitlement.tenantId
@@ -107,13 +110,13 @@
 	const tokenValue = $derived(revealedToken || 'PASTE_YOUR_BEARER_TOKEN_HERE');
 	const codexSnippet = $derived(`\
 [mcp_servers.create_something]
-url = "${activeHost.urlExample}"
+url = "${activeHostUrl}"
 bearer_token = "${tokenValue}"`);
 	const claudeSnippet = $derived(`\
 {
   "mcpServers": {
     "create-something": {
-      "url": "${activeHost.urlExample}",
+      "url": "${activeHostUrl}",
       "headers": {
         "Authorization": "Bearer ${tokenValue}"
       }
@@ -124,7 +127,7 @@ bearer_token = "${tokenValue}"`);
 {
   "mcpServers": {
     "create-something": {
-      "url": "${activeHost.urlExample}",
+      "url": "${activeHostUrl}",
       "headers": {
         "Authorization": "Bearer ${tokenValue}"
       }
@@ -218,7 +221,8 @@ bearer_token = "${tokenValue}"`);
 		busy = true;
 		errorMessage = '';
 		successMessage = '';
-		copiedState = '';
+		tokenCopiedState = '';
+		snippetCopiedState = '';
 		if (url !== '/api/me/mcp-token') {
 			revealedToken = '';
 		}
@@ -245,12 +249,28 @@ bearer_token = "${tokenValue}"`);
 		}
 	}
 
-	async function copyText(value: string, label: string) {
+	async function copyText(
+		value: string,
+		label: string,
+		target: 'token' | 'snippet' = 'token',
+	) {
 		try {
 			await navigator.clipboard.writeText(value);
-			copiedState = `${label} copied.`;
+			if (target === 'token') {
+				tokenCopiedState = `${label} copied.`;
+				snippetCopiedState = '';
+			} else {
+				snippetCopiedState = `${label} copied.`;
+				tokenCopiedState = '';
+			}
 		} catch {
-			copiedState = `Copy failed for ${label}.`;
+			if (target === 'token') {
+				tokenCopiedState = `Copy failed for ${label}.`;
+				snippetCopiedState = '';
+			} else {
+				snippetCopiedState = `Copy failed for ${label}.`;
+				tokenCopiedState = '';
+			}
 		}
 	}
 
@@ -400,8 +420,8 @@ bearer_token = "${tokenValue}"`);
 			{#if errorMessage}
 				<p class="feedback error">{errorMessage}</p>
 			{/if}
-			{#if copiedState}
-				<p class="feedback">{copiedState}</p>
+			{#if tokenCopiedState}
+				<p class="feedback">{tokenCopiedState}</p>
 			{/if}
 		</div>
 	</ReportSection>
@@ -461,38 +481,37 @@ bearer_token = "${tokenValue}"`);
 		title="Host Setup"
 		description="Apply the same bearer token to approved hosts. Replace the placeholder MCP URL with the account-specific endpoint."
 		fullWidth={true}
-	>
-		<div class="host-setup">
-			<div class="host-controls">
-				<div class="host-tabs" role="tablist" aria-label="Host setup examples">
-					{#each hostOptions as host}
-						<button
-							type="button"
-							role="tab"
-							aria-selected={selectedHost === host.id}
-							class:active={selectedHost === host.id}
-							class="host-tab secondary"
-							onclick={() => {
-								selectedHost = host.id;
-								copiedState = '';
-							}}
-						>
-							{host.label}
+		>
+			<div class="host-setup">
+				<div class="host-controls">
+					<div class="host-tabs" role="group" aria-label="Host setup examples">
+						{#each hostOptions as host}
+							<button
+								type="button"
+								aria-pressed={selectedHost === host.id}
+								class:active={selectedHost === host.id}
+								class="host-tab secondary"
+								onclick={() => {
+									selectedHost = host.id;
+									snippetCopiedState = '';
+								}}
+							>
+								{host.label}
 						</button>
 					{/each}
 				</div>
 
-				<div class="host-table">
-					<div class="instruction-row">
-						<span>Host</span>
-						<strong>{activeHost.label}</strong>
-					</div>
-					<div class="instruction-row">
-						<span>MCP URL</span>
-						<strong>{activeHost.urlExample}</strong>
-					</div>
-					<div class="instruction-row">
-						<span>Bearer token</span>
+					<div class="host-table">
+						<div class="instruction-row">
+							<span>Host</span>
+							<strong>{activeHost.label}</strong>
+						</div>
+						<div class="instruction-row">
+							<span>MCP URL</span>
+							<strong>{activeHostUrl}</strong>
+						</div>
+						<div class="instruction-row">
+							<span>Bearer token</span>
 						<strong>{revealedToken ? 'Fresh value in snippet below' : 'Insert your current token'}</strong>
 					</div>
 				</div>
@@ -508,12 +527,15 @@ bearer_token = "${tokenValue}"`);
 						<h3>{activeHost.label} configuration</h3>
 						<p>Copy the template, then replace the MCP URL placeholder with the provisioned endpoint.</p>
 					</div>
-					<button class="secondary small" type="button" onclick={() => copyText(activeSnippet, `${activeHost.label} snippet`)}>
+					<button class="secondary small" type="button" onclick={() => copyText(activeSnippet, `${activeHost.label} snippet`, 'snippet')}>
 						Copy snippet
 					</button>
 				</div>
 
 				<pre><code>{activeSnippet}</code></pre>
+				{#if snippetCopiedState}
+					<p class="feedback">{snippetCopiedState}</p>
+				{/if}
 			</div>
 		</div>
 	</ReportSection>
