@@ -1,9 +1,10 @@
 (function () {
   const WORKER_URL = "https://gsap-validation-worker.createsomething.workers.dev/crawlWebsite";
-  const START_TIMEOUT_MS = 30000;
-  const POLL_TIMEOUT_MS = 15000;
+  const START_TIMEOUT_MS = 45000;
+  const POLL_TIMEOUT_MS = 30000;
   const POLL_INTERVAL_MS = 5000;
   const MAX_RETRIES = 3;
+  const POLL_RETRIES = 3;
   const RETRYABLE_STATUS = new Set([502, 503, 504]);
   const VALIDATION_OPTIONS = {
     maxDepth: 10,
@@ -262,7 +263,29 @@
         throw timeoutError;
       }
 
-      const data = await postWorker({ url: url, instanceId: instanceId }, POLL_TIMEOUT_MS);
+      let data = null;
+      let lastError = null;
+      for (let attempt = 1; attempt <= POLL_RETRIES; attempt += 1) {
+        try {
+          data = await postWorker({ url: url, instanceId: instanceId }, POLL_TIMEOUT_MS);
+          lastError = null;
+          break;
+        } catch (error) {
+          lastError = error;
+          const retryable = error && (error.name === "AbortError" || error instanceof TypeError || RETRYABLE_STATUS.has(error.status));
+          if (!retryable || attempt === POLL_RETRIES) {
+            throw error;
+          }
+          if (typeof onProgress === "function") {
+            onProgress("running", "Still waiting for the full-project validation. Retrying status check...");
+          }
+          await sleep(1000 * attempt);
+        }
+      }
+
+      if (lastError) {
+        throw lastError;
+      }
 
       if (data && data.success === true && Array.isArray(data.pageResults)) {
         return data;
@@ -358,7 +381,11 @@
     show(state.progress, "Starting full-project validation...");
 
     try {
-      const workerData = await runWorkerValidation(validated.value, function (status) {
+      const workerData = await runWorkerValidation(validated.value, function (status, customMessage) {
+        if (customMessage) {
+          show(state.progress, customMessage);
+          return;
+        }
         if (status === "queued") {
           show(state.progress, "Validation queued. Preparing the full-project crawl...");
           return;
