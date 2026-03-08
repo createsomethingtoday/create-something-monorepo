@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
-	import { FactList, ReportSection, ReportShell, SummaryItem } from '$lib/components/access';
+	import {
+		CredentialMatrix,
+		FactList,
+		ReportSection,
+		ReportShell,
+		SummaryItem,
+	} from '$lib/components/access';
 
 	let { data } = $props();
 
@@ -162,6 +168,29 @@ bearer_token = "${tokenValue}"`);
 				]
 			: [],
 	);
+	const credentialRows = $derived([
+		{
+			lane: 'Portal sign-in',
+			credential: 'Auth0',
+			use: 'Authenticates the web session for `.agency`.',
+			status: 'Session active',
+			note: 'Never reused as the bearer token or ChatGPT authorize password.',
+		},
+		{
+			lane: 'MCP host',
+			credential: token?.token_prefix ? `Bearer ${token.token_prefix}…` : 'Bearer token',
+			use: 'Used in Codex, Claude Desktop, Cursor, and other approved MCP hosts.',
+			status: tokenStatus,
+			note: revealedToken ? 'Fresh token is currently revealed once for copy.' : 'Only creation or regeneration reveals the full token.',
+		},
+		{
+			lane: 'ChatGPT authorize',
+			credential: oauthPassword?.email ?? data.user.email,
+			use: 'Typed only into the ChatGPT authorization screen.',
+			status: passwordStatus,
+			note: 'Separate secret path from portal login and bearer token usage.',
+		},
+	]);
 
 	async function loadToken() {
 		const response = await fetch('/api/me/mcp-token');
@@ -253,6 +282,7 @@ bearer_token = "${tokenValue}"`);
 			passwordSuccess = payload.message ?? 'ChatGPT connection password updated.';
 			newPassword = '';
 			confirmPassword = '';
+			await loadOAuthPassword();
 		} catch (error) {
 			passwordError = error instanceof Error ? error.message : 'Failed to update password';
 		} finally {
@@ -271,7 +301,7 @@ bearer_token = "${tokenValue}"`);
 <ReportShell
 	eyebrow="Operator Access"
 	title="MCP Access"
-	lede="Your `.agency` credentials live in three separate lanes: Auth0 signs you into the portal, the bearer token connects MCP hosts like Codex or Claude, and the ChatGPT connection password is used only on the ChatGPT authorize screen."
+	lede="A compact operator report for `.agency` credentials. Review the identity lane first, then act on the bearer token or ChatGPT authorize password without confusing those credentials with portal sign-in."
 	sideLabel="Signed in as"
 	sideValue={data.user.email}
 	sideMeta={`Account ${data.entitlement.accountId ?? 'Not linked'} · Tenant ${data.entitlement.tenantId ?? 'Not linked'}`}
@@ -279,122 +309,24 @@ bearer_token = "${tokenValue}"`);
 	<svelte:fragment slot="summary">
 		<SummaryItem label="Bearer Token" value={tokenStatus} note={token?.token_prefix ? `Prefix ${token.token_prefix}` : 'Managed bearer token'} />
 		<SummaryItem label="ChatGPT Password" value={passwordStatus} note={oauthPassword?.email ?? data.user.email} />
-		<SummaryItem label="Identity Mapping" value={data.entitlement.accountId ?? 'Not linked'} note={data.entitlement.tenantId ?? 'No tenant linked'} />
-		<SummaryItem
-			label="Portal Identity"
-			value="Auth0"
-			note="Portal login stays separate from token issuance and ChatGPT authorization."
-		/>
+		<SummaryItem label="Linked Account" value={data.entitlement.accountId ?? 'Not linked'} note={data.entitlement.tenantId ?? 'No tenant linked'} />
+		<SummaryItem label="Portal Identity" value="Auth0" note="Web session boundary only" />
+		{#if assignment}
+			<SummaryItem label="Assigned Lane" value={assignment.displayName} note={assignment.bridgeUsername} />
+		{/if}
 	</svelte:fragment>
 
 	<ReportSection
-		title="Personal Bearer Token"
-		description="One active token per authenticated user. This is the credential you paste into an MCP host. Raw token material is shown only on creation or regeneration."
-		href="/security"
-		actionLabel="Security model"
+		title="Credential Lanes"
+		description="Three credentials exist on purpose. Keep portal sign-in, MCP host access, and ChatGPT authorization separate."
+		fullWidth={true}
 	>
-		<FactList items={tokenFacts} />
-
-		<div class="actions">
-			<button disabled={busy || !!token} onclick={() => runAction('/api/me/mcp-token', 'MCP token created and ready to copy.')}>
-				Create token
-			</button>
-			<button
-				disabled={busy}
-				class="secondary"
-				onclick={() =>
-					runAction(
-						'/api/me/mcp-token/regenerate',
-						'MCP token regenerated. Existing hosts using the previous token will stop working.',
-					)}
-			>
-				Regenerate + Reveal
-			</button>
-			<button
-				disabled={busy || !token}
-				class="secondary"
-				onclick={() => runAction('/api/me/mcp-token/revoke', 'MCP token revoked.')}
-			>
-				Revoke
-			</button>
-		</div>
-
-		{#if revealedToken}
-			<div class="reveal-panel">
-				<div class="panel-head">
-					<div>
-						<h3>Token revealed</h3>
-						<p>Copy this now. The current token cannot be re-shown later without regeneration.</p>
-					</div>
-					<button class="secondary small" type="button" onclick={() => copyText(revealedToken, 'Bearer token')}>
-						Copy token
-					</button>
-				</div>
-				<code>{revealedToken}</code>
-			</div>
-		{:else if token}
-			<p class="note-copy">Current token exists but is not re-readable. Regenerate it if you need to reveal a fresh value for a new host.</p>
-		{/if}
-
-		{#if successMessage}
-			<p class="feedback success">{successMessage}</p>
-		{/if}
-		{#if errorMessage}
-			<p class="feedback error">{errorMessage}</p>
-		{/if}
-		{#if copiedState}
-			<p class="feedback">{copiedState}</p>
-		{/if}
-	</ReportSection>
-
-	<ReportSection
-		title="ChatGPT Connection Password"
-		description="This is the password you type into the ChatGPT authorize page. It is separate from your Auth0 portal login and separate from your bearer token."
-		href="/security"
-		actionLabel="Identity model"
-	>
-		<FactList items={passwordFacts} />
-
-		<div class="form-stack">
-			<label>
-				New password
-				<input
-					type="password"
-					bind:value={newPassword}
-					autocomplete="new-password"
-					minlength="12"
-					placeholder="Minimum 12 characters"
-				/>
-			</label>
-			<label>
-				Confirm password
-				<input
-					type="password"
-					bind:value={confirmPassword}
-					autocomplete="new-password"
-					minlength="12"
-					placeholder="Re-enter password"
-				/>
-			</label>
-		</div>
-
-		<div class="actions">
-			<button disabled={passwordBusy} onclick={updateOAuthPassword}>
-				{passwordActionLabel}
-			</button>
-		</div>
-
-		{#if passwordSuccess}
-			<p class="feedback success">{passwordSuccess}</p>
-		{/if}
-		{#if passwordError}
-			<p class="feedback error">{passwordError}</p>
-		{/if}
+		<CredentialMatrix rows={credentialRows} />
 	</ReportSection>
 
 	<ReportSection
 		title="Identity Mapping"
-		description="This is the canonical `.agency` identity context used for entitlement, token issuance, and ChatGPT password setup."
+		description="This canonical `.agency` identity determines entitlement, token issuance, and ChatGPT password setup."
 	>
 		<FactList items={identityFacts} />
 	</ReportSection>
@@ -402,89 +334,256 @@ bearer_token = "${tokenValue}"`);
 	{#if assignmentFacts.length > 0}
 		<ReportSection
 			title="Assigned MCP Access"
-			description="These are the lane-specific endpoints and account assignments linked to your `.agency` identity. Live bearer tokens and bridge passwords remain in the vault/private operator handoff and are not rendered here."
+			description="Lane assignment and bridge endpoints linked to this identity. Vault-held secrets remain out of band."
 		>
 			<FactList items={assignmentFacts} />
 		</ReportSection>
 	{/if}
 
 	<ReportSection
+		title="Personal Bearer Token"
+		description="Use this token in approved MCP hosts. It is long-lived, personal, and only revealed on creation or regeneration."
+		href="/security"
+		actionLabel="Security model"
+	>
+		<div class="section-stack">
+			<FactList items={tokenFacts} />
+
+			<div class="annotation-block">
+				<p>One active token per authenticated user. Existing hosts stop working immediately after regeneration or revocation.</p>
+			</div>
+
+			<div class="actions">
+				<button disabled={busy || !!token} onclick={() => runAction('/api/me/mcp-token', 'MCP token created and ready to copy.')}>
+					Create token
+				</button>
+				<button
+					disabled={busy}
+					class="secondary"
+					onclick={() =>
+						runAction(
+							'/api/me/mcp-token/regenerate',
+							'MCP token regenerated. Existing hosts using the previous token will stop working.',
+						)}
+				>
+					Regenerate + reveal
+				</button>
+				<button
+					disabled={busy || !token}
+					class="secondary"
+					onclick={() => runAction('/api/me/mcp-token/revoke', 'MCP token revoked.')}
+				>
+					Revoke
+				</button>
+			</div>
+
+			{#if revealedToken}
+				<div class="reveal-panel">
+					<div class="panel-head">
+						<div>
+							<h3>Fresh token</h3>
+							<p>Copy it now. The raw value will not be shown again unless you regenerate.</p>
+						</div>
+						<button class="secondary small" type="button" onclick={() => copyText(revealedToken, 'Bearer token')}>
+							Copy token
+						</button>
+					</div>
+					<code>{revealedToken}</code>
+				</div>
+			{:else if token}
+				<p class="annotation-copy">A token exists but is no longer readable. Regenerate only when a new host needs a fresh secret.</p>
+			{/if}
+
+			{#if successMessage}
+				<p class="feedback success">{successMessage}</p>
+			{/if}
+			{#if errorMessage}
+				<p class="feedback error">{errorMessage}</p>
+			{/if}
+			{#if copiedState}
+				<p class="feedback">{copiedState}</p>
+			{/if}
+		</div>
+	</ReportSection>
+
+	<ReportSection
+		title="ChatGPT Connection Password"
+		description="Used only on the ChatGPT authorize screen. This credential is separate from both portal sign-in and bearer-token access."
+		href="/security"
+		actionLabel="Identity model"
+	>
+		<div class="section-stack">
+			<FactList items={passwordFacts} />
+
+			<div class="annotation-block">
+				<p>Rotate this secret when ChatGPT access changes hands. It does not affect existing portal sessions or bearer-token hosts.</p>
+			</div>
+
+			<div class="form-stack">
+				<label>
+					New password
+					<input
+						type="password"
+						bind:value={newPassword}
+						autocomplete="new-password"
+						minlength="12"
+						placeholder="Minimum 12 characters"
+					/>
+				</label>
+				<label>
+					Confirm password
+					<input
+						type="password"
+						bind:value={confirmPassword}
+						autocomplete="new-password"
+						minlength="12"
+						placeholder="Re-enter password"
+					/>
+				</label>
+			</div>
+
+			<div class="actions">
+				<button disabled={passwordBusy} onclick={updateOAuthPassword}>
+					{passwordActionLabel}
+				</button>
+			</div>
+
+			{#if passwordSuccess}
+				<p class="feedback success">{passwordSuccess}</p>
+			{/if}
+			{#if passwordError}
+				<p class="feedback error">{passwordError}</p>
+			{/if}
+		</div>
+	</ReportSection>
+
+	<ReportSection
 		title="Host Setup"
-		description="Use the same personal token in approved hosts. Replace the MCP URL with the endpoint provisioned for your account."
+		description="Apply the same bearer token to approved hosts. Replace the placeholder MCP URL with the account-specific endpoint."
 		fullWidth={true}
 	>
-		<div class="host-tabs">
-			{#each hostOptions as host}
-				<button
-					type="button"
-					class:active={selectedHost === host.id}
-					class="host-tab secondary"
-					onclick={() => {
-						selectedHost = host.id;
-						copiedState = '';
-					}}
-				>
-					{host.label}
-				</button>
-			{/each}
-		</div>
+		<div class="host-setup">
+			<div class="host-controls">
+				<div class="host-tabs" role="tablist" aria-label="Host setup examples">
+					{#each hostOptions as host}
+						<button
+							type="button"
+							role="tab"
+							aria-selected={selectedHost === host.id}
+							class:active={selectedHost === host.id}
+							class="host-tab secondary"
+							onclick={() => {
+								selectedHost = host.id;
+								copiedState = '';
+							}}
+						>
+							{host.label}
+						</button>
+					{/each}
+				</div>
 
-		<div class="snippet-meta">
-			<div>
-				<span>MCP URL placeholder</span>
-				<strong>{activeHost.urlExample}</strong>
+				<div class="host-table">
+					<div class="instruction-row">
+						<span>Host</span>
+						<strong>{activeHost.label}</strong>
+					</div>
+					<div class="instruction-row">
+						<span>MCP URL</span>
+						<strong>{activeHost.urlExample}</strong>
+					</div>
+					<div class="instruction-row">
+						<span>Bearer token</span>
+						<strong>{revealedToken ? 'Fresh value in snippet below' : 'Insert your current token'}</strong>
+					</div>
+				</div>
+
+				<p class="annotation-copy">
+					Auth0 remains the portal identity boundary. The snippet below configures only the MCP host connection.
+				</p>
 			</div>
-			<button class="secondary small" type="button" onclick={() => copyText(activeSnippet, `${activeHost.label} snippet`)}>
-				Copy snippet
-			</button>
+
+			<div class="snippet-panel">
+				<div class="panel-head">
+					<div>
+						<h3>{activeHost.label} configuration</h3>
+						<p>Copy the template, then replace the MCP URL placeholder with the provisioned endpoint.</p>
+					</div>
+					<button class="secondary small" type="button" onclick={() => copyText(activeSnippet, `${activeHost.label} snippet`)}>
+						Copy snippet
+					</button>
+				</div>
+
+				<pre><code>{activeSnippet}</code></pre>
+			</div>
 		</div>
-
-		<pre><code>{activeSnippet}</code></pre>
-
-		<p class="note-copy">
-			`.agency` is the credential broker. Auth0 proves who you are. The bearer token connects MCP hosts. The
-			ChatGPT connection password is used only on the ChatGPT authorize screen.
-		</p>
 	</ReportSection>
 </ReportShell>
 
 <style>
+	.section-stack {
+		display: grid;
+		gap: 0.9rem;
+	}
+
+	.annotation-block,
+	.reveal-panel,
+	.snippet-panel,
+	.host-table {
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		background: rgba(255, 255, 255, 0.015);
+	}
+
+	.annotation-block {
+		padding: 0.75rem 0.85rem;
+	}
+
+	.annotation-block p,
+	.annotation-copy {
+		margin: 0;
+		color: var(--color-fg-muted);
+		font-size: 0.82rem;
+		line-height: 1.6;
+	}
+
 	.actions,
 	.host-tabs {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.75rem;
-		margin-top: 1.5rem;
+		gap: 0.55rem;
 	}
 
 	.form-stack {
 		display: grid;
-		gap: 1rem;
-		margin-top: 1.5rem;
+		gap: 0.85rem;
 	}
 
 	.form-stack label {
 		display: grid;
-		gap: 0.45rem;
-		font-size: 0.92rem;
-		color: rgba(255, 255, 255, 0.82);
+		gap: 0.38rem;
+		font-size: 0.76rem;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--color-fg-muted);
 	}
 
 	.form-stack input {
-		border-radius: 14px;
 		border: 1px solid rgba(255, 255, 255, 0.12);
-		background: rgba(8, 10, 12, 0.72);
+		background: rgba(8, 10, 12, 0.55);
 		color: #fff;
-		padding: 0.9rem 1rem;
+		padding: 0.82rem 0.9rem;
 		font: inherit;
+		text-transform: none;
+		letter-spacing: normal;
 	}
 
 	button {
 		border: 1px solid rgba(255, 255, 255, 0.18);
-		border-radius: 999px;
-		padding: 0.82rem 1.2rem;
+		padding: 0.62rem 0.85rem;
 		font: inherit;
-		background: rgba(255, 255, 255, 0.95);
+		font-size: 0.82rem;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		background: rgba(255, 255, 255, 0.92);
 		color: #111;
 		cursor: pointer;
 	}
@@ -495,8 +594,8 @@ bearer_token = "${tokenValue}"`);
 	}
 
 	.small {
-		padding: 0.62rem 0.95rem;
-		font-size: 0.92rem;
+		padding: 0.52rem 0.72rem;
+		font-size: 0.72rem;
 	}
 
 	button:disabled {
@@ -505,60 +604,56 @@ bearer_token = "${tokenValue}"`);
 	}
 
 	.host-tab.active {
-		background: rgba(255, 255, 255, 0.95);
+		background: rgba(255, 255, 255, 0.92);
 		color: #111;
 	}
 
 	.reveal-panel,
-	pre,
-	.snippet-meta,
-	.note-copy {
-		margin-top: 1rem;
+	.snippet-panel {
+		padding: 0.9rem 1rem;
 	}
 
-	.reveal-panel,
-	pre {
-		padding: 1rem;
-		border: 1px solid rgba(255, 255, 255, 0.08);
-		background: rgba(255, 255, 255, 0.03);
-		overflow-x: auto;
-	}
-
-	.panel-head,
-	.snippet-meta {
+	.panel-head {
 		display: flex;
 		align-items: start;
 		justify-content: space-between;
 		gap: 1rem;
+		margin-bottom: 0.65rem;
 	}
 
-	h3 {
-		margin: 0 0 0.25rem;
-	}
-
-	.panel-head p,
-	.note-copy,
-	.snippet-meta span {
+	.panel-head h3 {
 		margin: 0;
+		font-size: 0.94rem;
+	}
+
+	.panel-head p {
+		margin: 0.22rem 0 0;
 		color: var(--color-fg-muted);
+		font-size: 0.8rem;
+		line-height: 1.55;
 	}
 
-	.snippet-meta strong {
-		display: block;
-		margin-top: 0.25rem;
-		word-break: break-word;
-	}
-
+	code,
 	pre {
-		white-space: pre-wrap;
+		font-family: var(--font-mono, monospace);
+		font-size: 0.86rem;
 	}
 
 	code {
-		font-family: inherit;
+		display: block;
+		overflow-wrap: anywhere;
+		color: #f5f5f5;
+	}
+
+	pre {
+		margin: 0;
+		overflow-x: auto;
+		color: #f5f5f5;
 	}
 
 	.feedback {
-		margin-top: 0.8rem;
+		margin: 0;
+		font-size: 0.8rem;
 	}
 
 	.feedback.success {
@@ -569,10 +664,60 @@ bearer_token = "${tokenValue}"`);
 		color: #ff8a80;
 	}
 
+	.host-setup {
+		display: grid;
+		grid-template-columns: minmax(0, 20rem) minmax(0, 1fr);
+		gap: 1.25rem;
+		align-items: start;
+	}
+
+	.host-controls {
+		display: grid;
+		gap: 0.8rem;
+	}
+
+	.host-table {
+		border-top: 1px solid rgba(255, 255, 255, 0.08);
+	}
+
+	.instruction-row {
+		display: grid;
+		grid-template-columns: minmax(6rem, 7rem) minmax(0, 1fr);
+		gap: 1rem;
+		padding: 0.68rem 0.8rem;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+		align-items: baseline;
+	}
+
+	.instruction-row span {
+		font-size: 0.72rem;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--color-fg-muted);
+	}
+
+	.instruction-row strong {
+		font-size: 0.9rem;
+		font-weight: 520;
+		line-height: 1.45;
+		word-break: break-word;
+		font-variant-numeric: tabular-nums;
+	}
+
+	@media (max-width: 860px) {
+		.host-setup {
+			grid-template-columns: 1fr;
+		}
+	}
+
 	@media (max-width: 700px) {
-		.panel-head,
-		.snippet-meta {
+		.panel-head {
 			display: grid;
+		}
+
+		.instruction-row {
+			grid-template-columns: 1fr;
+			gap: 0.25rem;
 		}
 	}
 </style>

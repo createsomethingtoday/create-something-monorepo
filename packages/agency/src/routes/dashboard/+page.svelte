@@ -155,7 +155,7 @@
 <ReportShell
 	eyebrow="Access Center"
 	title="Dashboard"
-	lede="A compact account report for `.agency` access. It answers four questions: whether this identity is entitled, whether an MCP token exists, whether the ChatGPT connection password is set, and which account and tenant those credentials belong to."
+	lede="A compact access report for `.agency`. Start with the entitlement decision, then review the identity, token, password, lane assignment, and commercial records that explain why access is active or blocked."
 	sideLabel="Signed in as"
 	sideValue={data.user.email}
 	sideMeta={`Updated ${formatDateTime(data.entitlement.updatedAt)}`}
@@ -176,7 +176,7 @@
 					: 'Managed in MCP Access'}
 		/>
 		<SummaryItem
-			label="ChatGPT Connection"
+			label="ChatGPT Password"
 			value={passwordStatusLabel()}
 			note={data.access.password.email ?? data.user.email}
 		/>
@@ -190,40 +190,56 @@
 		{/if}
 	</svelte:fragment>
 
-	<ReportSection title="Access Eligibility" description="Live entitlement checks for managed `.agency` access.">
-		{#if data.overview.accessReason === 'policy_acceptance_required'}
-			<div class="callout">
-				<p>Access is blocked only because the `.agency` access policy has not been accepted for this account.</p>
-				<div class="callout-actions">
-					<button type="button" class="action-button" disabled={policyBusy} onclick={acceptPolicy}>
-						{policyBusy ? 'Accepting…' : 'Accept Access Policy'}
-					</button>
-					<a href="/security">Review security model</a>
-				</div>
-				{#if policyMessage}
-					<p class="feedback success">{policyMessage}</p>
+	<ReportSection
+		title="Access Eligibility"
+		description="Live entitlement checks for managed `.agency` access. This is the audit trail for the current decision."
+		fullWidth={true}
+	>
+		<div class="eligibility-grid">
+			<div class="eligibility-main">
+				{#if data.overview.accessReason === 'policy_acceptance_required'}
+					<div class="inline-callout">
+						<div>
+							<strong>Policy acceptance required.</strong>
+							<p>Access is blocked only because the `.agency` access policy has not yet been accepted for this account.</p>
+						</div>
+						<div class="callout-actions">
+							<button type="button" class="action-button" disabled={policyBusy} onclick={acceptPolicy}>
+								{policyBusy ? 'Accepting…' : 'Accept access policy'}
+							</button>
+							<a href="/security">Review security model</a>
+						</div>
+						{#if policyMessage}
+							<p class="feedback success">{policyMessage}</p>
+						{/if}
+						{#if policyError}
+							<p class="feedback error">{policyError}</p>
+						{/if}
+					</div>
 				{/if}
-				{#if policyError}
-					<p class="feedback error">{policyError}</p>
-				{/if}
-			</div>
-		{/if}
 
-		<HighDensityTable
-			items={entitlementItems}
-			labelKey="label"
-			countKey="count"
-			badgeKey="badge"
-			limit={6}
-			showRank={false}
-			showPercentage={false}
-			emptyMessage="No entitlement checks available"
-		/>
+				<HighDensityTable
+					items={entitlementItems}
+					labelKey="label"
+					countKey="count"
+					badgeKey="badge"
+					limit={6}
+					showRank={false}
+					showPercentage={false}
+					emptyMessage="No entitlement checks available"
+				/>
+			</div>
+
+			<div class="annotation-column">
+				<p>The entitlement row is authoritative. Supporting records below explain the decision, but they do not replace the check set above.</p>
+				<p>Where policy acceptance is the only failing check, access can be restored immediately from this page.</p>
+			</div>
+		</div>
 	</ReportSection>
 
 	<ReportSection
 		title="Identity Mapping"
-		description="How your Auth0 portal identity maps to the underlying `.agency` account."
+		description="How the Auth0 portal identity maps to the underlying `.agency` account."
 	>
 		<FactList items={identityFacts} />
 	</ReportSection>
@@ -231,7 +247,7 @@
 	{#if assignmentFacts.length > 0}
 		<ReportSection
 			title="Assigned MCP Access"
-			description="Lane-specific MCP and Notion bridge assignments linked to this `.agency` identity. Secrets remain in vault and are not shown here."
+			description="Lane-specific MCP and Notion bridge assignments linked to this identity."
 			href="/mcp-access"
 			actionLabel="Open MCP Access"
 		>
@@ -241,7 +257,7 @@
 
 	<ReportSection
 		title="Personal Bearer Token"
-		description="The token you paste into Codex, Claude, Cursor, or another approved MCP host."
+		description="The token used in Codex, Claude, Cursor, and other approved MCP hosts."
 		href="/mcp-access"
 		actionLabel="Manage token"
 	>
@@ -258,7 +274,7 @@
 
 	<ReportSection
 		title="ChatGPT Connection Password"
-		description="The password used only on the ChatGPT authorize screen. It is separate from your portal login."
+		description="The password used only on the ChatGPT authorize screen."
 		href="/mcp-access"
 		actionLabel={data.access.password.hasPassword ? 'Rotate password' : 'Set password'}
 	>
@@ -273,7 +289,7 @@
 
 	<ReportSection
 		title="Partner Connection"
-		description="Workspace and integration context when this identity is linked to a partner-managed client."
+		description="Workspace and partner context when this identity is linked to a managed client."
 	>
 		{#if data.partner}
 			<FactList items={partnerFacts} />
@@ -284,7 +300,7 @@
 
 	<ReportSection
 		title="Commercial State"
-		description="Billing and contract context, only when it explains why access is active or blocked."
+		description="Billing and contract records used when access eligibility depends on commercial standing."
 	>
 		{#if data.commercial || data.contract}
 			<FactList items={commercialFacts} />
@@ -296,32 +312,59 @@
 
 <style>
 	.empty-copy,
-	.callout p {
+	.inline-callout p,
+	.annotation-column p {
 		color: var(--color-fg-muted);
 	}
 
-	.callout {
-		margin: 0 0 1rem;
-		padding: 0.9rem 1rem;
-		border-left: 2px solid rgba(255, 255, 255, 0.35);
-		background: rgba(255, 255, 255, 0.025);
+	.eligibility-grid {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(15rem, 18rem);
+		gap: 1.2rem;
+		align-items: start;
+	}
+
+	.eligibility-main {
+		display: grid;
+		gap: 0.9rem;
+	}
+
+	.inline-callout {
+		display: grid;
+		gap: 0.7rem;
+		padding: 0.8rem 0.95rem;
+		border: 1px solid rgba(255, 255, 255, 0.08);
+		background: rgba(255, 255, 255, 0.02);
+	}
+
+	.inline-callout strong {
+		display: block;
+		font-size: 0.88rem;
+		font-weight: 560;
+	}
+
+	.inline-callout p {
+		margin: 0.22rem 0 0;
+		font-size: 0.82rem;
+		line-height: 1.6;
 	}
 
 	.callout-actions {
 		display: flex;
 		align-items: center;
-		gap: 1rem;
+		gap: 0.7rem;
 		flex-wrap: wrap;
-		margin-top: 0.75rem;
 	}
 
 	.action-button {
 		border: 1px solid rgba(255, 255, 255, 0.18);
-		background: rgba(255, 255, 255, 0.95);
+		background: rgba(255, 255, 255, 0.92);
 		color: #111;
-		border-radius: 999px;
-		padding: 0.7rem 1rem;
+		padding: 0.6rem 0.82rem;
 		font: inherit;
+		font-size: 0.78rem;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
 		cursor: pointer;
 	}
 
@@ -334,10 +377,20 @@
 		color: var(--color-fg-primary);
 		text-decoration: underline;
 		text-underline-offset: 0.18em;
+		font-size: 0.8rem;
+	}
+
+	.annotation-column {
+		display: grid;
+		gap: 0.75rem;
+		padding-top: 0.15rem;
+		font-size: 0.82rem;
+		line-height: 1.62;
 	}
 
 	.feedback {
-		margin-top: 0.65rem;
+		margin: 0;
+		font-size: 0.8rem;
 	}
 
 	.feedback.success {
@@ -351,17 +404,22 @@
 	:global(.table .badge) {
 		text-transform: uppercase;
 		letter-spacing: 0.08em;
-		border-radius: 999px;
-		padding: 0.08rem 0.45rem;
+		padding: 0;
+		border-radius: 0;
+		background: transparent;
 	}
 
 	:global(.table .badge.pass) {
-		background: rgba(110, 231, 183, 0.12);
 		color: #8de8a5;
 	}
 
 	:global(.table .badge.fail) {
-		background: rgba(255, 138, 128, 0.12);
 		color: #ff8a80;
+	}
+
+	@media (max-width: 860px) {
+		.eligibility-grid {
+			grid-template-columns: 1fr;
+		}
 	}
 </style>
