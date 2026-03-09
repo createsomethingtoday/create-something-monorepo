@@ -15,6 +15,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
+    "lint": "pnpm run typecheck",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit"
   },

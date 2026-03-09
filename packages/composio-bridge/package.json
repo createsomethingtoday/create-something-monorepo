@@ -14,6 +14,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
+    "lint": "pnpm run typecheck",
     "typecheck": "tsc --noEmit",
     "eval:workers": "npx tsx eval/workers-compat.ts",
     "eval:latency": "npx tsx eval/latency-bench.ts",

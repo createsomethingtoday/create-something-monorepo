@@ -11,6 +11,7 @@
     "build:content": "tsx scripts/build-content.ts",
     "build": "npm run build:content && tsc",
     "dev": "tsc --watch",
+    "lint": "pnpm run typecheck",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit"
   },
