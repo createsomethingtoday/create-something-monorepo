@@ -37,6 +37,7 @@ Read in this order when you need broad repo context:
 
 ### Agent execution, observability, and UI legibility
 
+- [guides/AGENT_LEGIBILITY_CONTRACT.md](./guides/AGENT_LEGIBILITY_CONTRACT.md)
 - [guides/CODING_AGENT_HARNESS_PATTERN.md](./guides/CODING_AGENT_HARNESS_PATTERN.md)
 - [OPENAI_AGENT_SDK_HALFDOZEN_SMOKE.md](./OPENAI_AGENT_SDK_HALFDOZEN_SMOKE.md)
 - [guides/OBSERVABILITY_SETUP.md](./guides/OBSERVABILITY_SETUP.md)
@@ -104,6 +105,7 @@ docs/
   [guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md](./guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md)
 
 - **Working on agent reliability or visibility**:
+  [guides/AGENT_LEGIBILITY_CONTRACT.md](./guides/AGENT_LEGIBILITY_CONTRACT.md),
   [guides/CODING_AGENT_HARNESS_PATTERN.md](./guides/CODING_AGENT_HARNESS_PATTERN.md),
   [guides/OBSERVABILITY_SETUP.md](./guides/OBSERVABILITY_SETUP.md),
   [guides/UI_PREVIEW_SYSTEM.md](./guides/UI_PREVIEW_SYSTEM.md),

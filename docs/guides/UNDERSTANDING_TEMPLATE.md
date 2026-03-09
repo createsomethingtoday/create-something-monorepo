@@ -35,6 +35,17 @@ src/
 2. **[file path]** — [What key concept this explains]
 3. **[file path]** — [What pattern this demonstrates]
 
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `[file or doc]` |
+| Boot command | `[command]` |
+| Smoke command | `[command]` |
+| Validation surfaces | `[tests, logs, traces, /health, preview, screenshots]` |
+| UI validation path | `[route, preview command, component target, or none]` |
+| Escalation rule | `[when the agent must stop and hand off]` |
+
 ## Key Concepts
 
 | Concept | Definition | Where to Find |
