@@ -129,6 +129,8 @@ main() {
   : "${MCP_ONLY_WRITE_ARGS_JSON:='{\"spreadsheet_id\":\"demo\",\"range\":\"Sheet1!A1\",\"value_input_option\":\"RAW\",\"values\":[[\"test\"]]}'}"
   : "${MCP_ONLY_TOOLKIT_PROFILE_JSON:=[]}"
   : "${POLICY_OS_TOOLKIT_PROFILE_JSON:=[\"slack\"]}"
+  : "${POLICY_OS_DENY_EXPECTED_REASON:=billing_inactive}"
+  : "${POLICY_OS_DENY_TOOLKIT_PROFILE_JSON:=[\"slack\"]}"
 
   require_env AGENCY_INTERNAL_API_KEY
   require_env IDENTITY_API_KEY
@@ -349,6 +351,103 @@ main() {
   fi
   echo "policy_os paid_discovery=ok"
   rm -f "$body_file"
+
+  print_section "Step 8: staged commercial deny"
+  if [[ -n "${POLICY_OS_DENY_AUTH_SUBJECT:-}" ]]; then
+    local policy_os_deny_session_token deny_snapshot_expr
+    require_env POLICY_OS_DENY_ACCOUNT_ID
+    require_env POLICY_OS_DENY_TENANT_ID
+
+    payload="$(jq -cn \
+      --arg auth_subject "$POLICY_OS_DENY_AUTH_SUBJECT" \
+      --arg account_id "$POLICY_OS_DENY_ACCOUNT_ID" \
+      --arg tenant_id "$POLICY_OS_DENY_TENANT_ID" \
+      '{auth_subject: $auth_subject, account_id: $account_id, tenant_id: $tenant_id}'
+    )"
+    readarray -t result < <(post_json "POST" "${AGENCY_BASE_URL%/}/api/internal/mcp-entitlements/check" "Authorization: Bearer ${AGENCY_INTERNAL_API_KEY}" "$payload")
+    status="${result[0]}"
+    body_file="${result[1]}"
+    [[ "$status" == "200" ]] || { echo "agency entitlement check failed for deny actor (status=${status})" >&2; cat "$body_file" >&2; exit 1; }
+    assert_json_true "$body_file" '.allowed == false'
+    assert_json_eq "$body_file" '.reason' "$POLICY_OS_DENY_EXPECTED_REASON"
+    assert_json_true "$body_file" '.service_tier == "policy_os_trial" or .service_tier == "policy_os_core"'
+    rm -f "$body_file"
+    echo "deny actor entitlement=${POLICY_OS_DENY_EXPECTED_REASON}"
+
+    if [[ -n "${POLICY_OS_DENY_SESSION_TOKEN:-}" ]]; then
+      policy_os_deny_session_token="$POLICY_OS_DENY_SESSION_TOKEN"
+      echo "using provided deny actor session token"
+    else
+      policy_os_deny_session_token="$(mint_session "$POLICY_OS_DENY_ACCOUNT_ID" "$POLICY_OS_DENY_TOOLKIT_PROFILE_JSON" "consent_policy_os_live_verify_deny_actor")"
+      echo "minted deny actor session token"
+    fi
+
+    payload="$(jq -cn --arg token "$policy_os_deny_session_token" '{token: $token}')"
+    readarray -t result < <(post_json "POST" "${IDENTITY_BASE_URL%/}/v1/mcp/sessions/resolve" "Authorization: Bearer ${IDENTITY_API_KEY}" "$payload")
+    status="${result[0]}"
+    body_file="${result[1]}"
+    [[ "$status" == "200" ]] || { echo "identity resolve failed for deny actor (status=${status})" >&2; cat "$body_file" >&2; exit 1; }
+    assert_json_true "$body_file" '.valid == true'
+    assert_json_eq "$body_file" '.account_id' "$POLICY_OS_DENY_ACCOUNT_ID"
+    assert_json_true "$body_file" '.entitlement_snapshot != null'
+    case "$POLICY_OS_DENY_EXPECTED_REASON" in
+      billing_inactive)
+        deny_snapshot_expr='.entitlement_snapshot.billing_active == false'
+        ;;
+      contract_inactive)
+        deny_snapshot_expr='.entitlement_snapshot.contract_active == false'
+        ;;
+      policy_acceptance_required)
+        deny_snapshot_expr='.entitlement_snapshot.policy_accepted == false'
+        ;;
+      service_not_entitled)
+        deny_snapshot_expr='.entitlement_snapshot.service_entitled == false'
+        ;;
+      *)
+        echo "unsupported POLICY_OS_DENY_EXPECTED_REASON=${POLICY_OS_DENY_EXPECTED_REASON}" >&2
+        exit 1
+        ;;
+    esac
+    assert_json_true "$body_file" "$deny_snapshot_expr"
+    rm -f "$body_file"
+    echo "deny actor resolve=ok"
+
+    payload="$(jq -cn \
+      --arg serverName "$PAID_DISCOVERY_SERVER_NAME" \
+      --arg query "$PAID_DISCOVERY_QUERY" \
+      '{
+        jsonrpc: "2.0",
+        id: "policy-os-commercial-deny",
+        method: "tools/call",
+        params: {
+          name: "hub_search_proxy_tools",
+          arguments: {
+            serverName: $serverName,
+            query: $query,
+            limit: 10
+          }
+        }
+      }'
+    )"
+    readarray -t result < <(call_hub "$policy_os_deny_session_token" "$payload")
+    status="${result[0]}"
+    body_file="${result[1]}"
+    [[ "$status" == "200" ]] || { echo "hub staged deny check failed (status=${status})" >&2; cat "$body_file" >&2; exit 1; }
+    if jq -e '.error == null and .result != null' "$body_file" >/dev/null 2>&1; then
+      echo "staged commercial deny unexpectedly succeeded" >&2
+      cat "$body_file" >&2
+      exit 1
+    fi
+    if ! grep -qiE "$POLICY_OS_DENY_EXPECTED_REASON|billing|contract|policy acceptance|service entitlement" "$body_file"; then
+      echo "staged commercial deny did not surface the expected commercial gate" >&2
+      cat "$body_file" >&2
+      exit 1
+    fi
+    echo "deny actor commercial_gate=blocked"
+    rm -f "$body_file"
+  else
+    echo "staged commercial deny=skipped"
+  fi
 
   print_section "Complete"
   echo "policy_os_live_verification=ok"

@@ -36,6 +36,8 @@ pnpm policy:os:verify:live
 
 The script follows the same checks as this runbook and uses the environment variables below. The manual `curl` flow remains the fallback when you need to debug one step in isolation.
 
+If you also set the optional `POLICY_OS_DENY_*` variables, the script verifies the staged commercial-deny lane automatically.
+
 ## Environment
 
 Set these before running the checks:
@@ -56,6 +58,12 @@ export MCP_ONLY_TENANT_ID="tenant_mcp_only_example"
 export POLICY_OS_AUTH_SUBJECT="auth0|policy-os-user"
 export POLICY_OS_ACCOUNT_ID="acct_policy_os_example"
 export POLICY_OS_TENANT_ID="tenant_policy_os_example"
+
+# Optional staged commercial-deny actor
+export POLICY_OS_DENY_AUTH_SUBJECT="auth0|policy-os-denied-user"
+export POLICY_OS_DENY_ACCOUNT_ID="acct_policy_os_denied_example"
+export POLICY_OS_DENY_TENANT_ID="tenant_policy_os_denied_example"
+export POLICY_OS_DENY_EXPECTED_REASON="billing_inactive"
 ```
 
 If you are testing a named client hub instead of the shared default endpoint, point `HUB_BASE_URL` at that client host.
@@ -426,6 +434,13 @@ Expected staged failure examples:
 - `reason: "policy_acceptance_required"`
 
 Then resolve the same actor through `identity-worker` and call the hub again. The paid route should be denied on commercial grounds.
+
+The scripted path uses:
+
+- `POLICY_OS_DENY_AUTH_SUBJECT`
+- `POLICY_OS_DENY_ACCOUNT_ID`
+- `POLICY_OS_DENY_TENANT_ID`
+- `POLICY_OS_DENY_EXPECTED_REASON`
 
 ## Step 9: Capture evidence
 
