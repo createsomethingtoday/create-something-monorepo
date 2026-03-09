@@ -212,9 +212,10 @@
 		flex-direction: column;
 		gap: var(--space-sm);
 		padding: var(--space-md);
-		background: var(--color-bg-subtle);
+		background: var(--color-bg-surface);
 		border-radius: var(--radius-lg);
-		border: 1px solid var(--color-border-default);
+		border: 1px solid var(--color-shell-border-default);
+		box-shadow: var(--shadow-sm);
 	}
 
 	.form-field {
@@ -242,7 +243,7 @@
 		align-items: center;
 		gap: var(--space-sm);
 		padding: var(--space-md);
-		background: var(--color-info-muted);
+		background: color-mix(in srgb, var(--color-info-muted) 18%, var(--color-bg-surface));
 		border: 1px solid var(--color-info-border);
 		border-radius: var(--radius-lg);
 	}
@@ -294,6 +295,7 @@
 		padding: var(--space-md);
 		border-radius: var(--radius-lg);
 		border: 1px solid;
+		box-shadow: var(--shadow-sm);
 	}
 
 	.results-header.passed {
@@ -307,8 +309,10 @@
 	}
 
 	.results-title h3 {
-		font-size: var(--text-body-lg);
+		font-family: var(--font-heading);
+		font-size: var(--text-h2);
 		font-weight: var(--font-semibold);
+		letter-spacing: 0.01em;
 		color: var(--color-fg-primary);
 		margin: 0;
 	}
@@ -322,7 +326,7 @@
 
 	.status-badge {
 		padding: var(--space-xs) var(--space-sm);
-		border-radius: var(--radius-md);
+		border-radius: 999px;
 		font-size: var(--text-caption);
 		font-weight: var(--font-semibold);
 		background: var(--color-error);
@@ -342,9 +346,10 @@
 	.stat {
 		text-align: center;
 		padding: var(--space-sm);
-		background: var(--color-bg-subtle);
+		background: var(--color-bg-surface);
 		border-radius: var(--radius-md);
-		border: 1px solid var(--color-border-default);
+		border: 1px solid var(--color-shell-border-default);
+		box-shadow: var(--shadow-sm);
 	}
 
 	.stat.passed {
@@ -364,8 +369,10 @@
 	}
 
 	.stat-value {
-		font-size: var(--text-h3);
+		font-family: var(--font-heading);
+		font-size: var(--text-h2);
 		font-weight: var(--font-semibold);
+		letter-spacing: 0.01em;
 		color: var(--color-fg-primary);
 	}
 
@@ -377,15 +384,18 @@
 	.issues-summary,
 	.recommendations-section {
 		padding: var(--space-md);
-		background: var(--color-bg-subtle);
+		background: var(--color-bg-surface);
 		border-radius: var(--radius-lg);
-		border: 1px solid var(--color-border-default);
+		border: 1px solid var(--color-shell-border-default);
+		box-shadow: var(--shadow-sm);
 	}
 
 	.issues-summary h4,
 	.recommendations-section h4 {
-		font-size: var(--text-body-sm);
+		font-family: var(--font-heading);
+		font-size: var(--text-body-lg);
 		font-weight: var(--font-semibold);
+		letter-spacing: 0.01em;
 		color: var(--color-fg-primary);
 		margin: 0 0 var(--space-sm) 0;
 	}
@@ -402,8 +412,10 @@
 	}
 
 	.issue-value {
-		font-size: var(--text-h3);
-		font-weight: var(--font-bold);
+		font-family: var(--font-heading);
+		font-size: var(--text-h2);
+		font-weight: var(--font-semibold);
+		letter-spacing: 0.01em;
 		color: var(--color-error);
 	}
 
@@ -427,7 +439,7 @@
 		align-items: center;
 		gap: var(--space-sm);
 		padding: var(--space-xs) var(--space-sm);
-		border-radius: var(--radius-sm);
+		border-radius: var(--radius-md);
 		border-left: 3px solid;
 	}
 
@@ -465,18 +477,18 @@
 		align-items: center;
 		justify-content: space-between;
 		padding-top: var(--space-sm);
-		border-top: 1px solid var(--color-border-default);
+		border-top: 1px solid var(--color-shell-border-default);
 	}
 
 	.playground-link {
-		color: var(--color-fg-secondary);
+		color: var(--color-info);
 		font-size: var(--text-body-sm);
 		text-decoration: none;
 		transition: color var(--duration-micro) var(--ease-standard);
 	}
 
 	.playground-link:hover {
-		color: var(--color-fg-primary);
+		color: #0055d4;
 	}
 
 	.playground-link:focus-visible {

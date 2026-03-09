@@ -205,10 +205,11 @@
 			<BackNavigation />
 
 			<!-- Header -->
-			<div class="page-header">
+			<div class="page-header page-intro">
 				<div class="header-content">
-					<h1 class="page-title">Marketplace Insights</h1>
-					<p class="page-subtitle">
+					<span class="page-eyebrow page-intro__eyebrow">Marketplace Intelligence</span>
+					<h1 class="page-title page-intro__title">Marketplace Insights</h1>
+					<p class="page-subtitle page-intro__subtitle">
 						Weekly marketplace snapshot with 30-day performance data
 					</p>
 						{#if summary.lastUpdated}
@@ -300,26 +301,6 @@
 	.content-wrapper {
 		max-width: 80rem;
 		margin: 0 auto;
-	}
-
-	.page-header {
-		margin-bottom: var(--space-lg);
-		padding-bottom: var(--space-md);
-		border-bottom: 1px solid var(--color-border-default);
-	}
-
-	.page-title {
-		font-size: var(--text-h1);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin: 0 0 var(--space-xs);
-	}
-
-	.page-subtitle {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-		margin: 0 0 var(--space-sm);
-		max-width: 62ch;
 	}
 
 	.sync-info-container {
@@ -446,10 +427,11 @@
 	}
 
 	.data-scope-notice {
-		padding: var(--space-sm) var(--space-md);
-		border: 1px solid var(--color-border-default);
-		border-left: 3px solid var(--color-border-emphasis);
+		padding: var(--space-md);
+		border: 1px solid var(--color-shell-border-default);
 		border-radius: var(--radius-md);
+		background: var(--color-bg-surface);
+		box-shadow: var(--shadow-sm);
 		margin-bottom: var(--space-lg);
 	}
 
@@ -463,6 +445,7 @@
 	.notice-title {
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-semibold);
+		letter-spacing: 0.01em;
 		color: var(--color-fg-primary);
 		margin: 0;
 	}

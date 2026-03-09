@@ -248,8 +248,9 @@
 		gap: var(--space-sm);
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-info-border);
+		border: 1px solid var(--color-shell-border-default);
 		border-radius: var(--radius-lg);
+		box-shadow: var(--shadow-sm);
 	}
 
 	.tool-header {
@@ -269,8 +270,9 @@
 	}
 
 	.tool-icon.webflow-way {
-		background: var(--color-info-muted);
+		background: color-mix(in srgb, var(--color-info-muted) 28%, transparent);
 		color: var(--color-info);
+		border: 1px solid var(--color-info-border);
 	}
 
 	.tool-title-group {
@@ -280,8 +282,10 @@
 	}
 
 	.tool-title {
-		font-size: var(--text-body-lg);
+		font-family: var(--font-heading);
+		font-size: var(--text-h2);
 		font-weight: var(--font-semibold);
+		letter-spacing: 0.01em;
 		color: var(--color-fg-primary);
 		margin: 0;
 	}
@@ -303,7 +307,7 @@
 		align-items: flex-start;
 		gap: var(--space-sm);
 		padding: var(--space-sm);
-		background: var(--color-info-muted);
+		background: color-mix(in srgb, var(--color-info-muted) 18%, var(--color-bg-surface));
 		border: 1px solid var(--color-info-border);
 		border-radius: var(--radius-md);
 	}
@@ -366,7 +370,7 @@
 		gap: var(--space-sm);
 		margin-top: auto;
 		padding-top: var(--space-sm);
-		border-top: 1px solid var(--color-border-default);
+		border-top: 1px solid var(--color-shell-border-default);
 	}
 
 	:global(.tool-button) {
@@ -395,15 +399,19 @@
 	}
 
 	.guide-heading {
-		font-size: var(--text-body-lg);
+		font-family: var(--font-heading);
+		font-size: var(--text-h2);
 		font-weight: var(--font-semibold);
+		letter-spacing: 0.01em;
 		color: var(--color-fg-primary);
 		margin: 0;
 	}
 
 	.guide-subheading {
-		font-size: var(--text-body);
+		font-family: var(--font-heading);
+		font-size: var(--text-body-lg);
 		font-weight: var(--font-medium);
+		letter-spacing: 0.01em;
 		color: var(--color-fg-primary);
 		margin: 0 0 var(--space-xs);
 	}
@@ -438,7 +446,7 @@
 	}
 
 	.guide-callout.info {
-		background: var(--color-info-muted);
+		background: color-mix(in srgb, var(--color-info-muted) 18%, var(--color-bg-surface));
 		border: 1px solid var(--color-info-border);
 		color: var(--color-info);
 	}
@@ -457,7 +465,8 @@
 
 	.code-preview {
 		padding: var(--space-sm);
-		background: var(--color-bg-subtle);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-shell-border-default);
 		border-radius: var(--radius-md);
 		font-family: monospace;
 		font-size: var(--text-caption);
@@ -481,6 +490,6 @@
 		justify-content: flex-end;
 		gap: var(--space-sm);
 		padding-top: var(--space-sm);
-		border-top: 1px solid var(--color-border-default);
+		border-top: 1px solid var(--color-shell-border-default);
 	}
 </style>

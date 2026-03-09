@@ -180,6 +180,42 @@ a:hover {
 	color: #ffffff;
 }
 
+.page-intro {
+	margin-bottom: var(--space-lg);
+	padding-bottom: var(--space-md);
+	border-bottom: 1px solid var(--color-shell-border-default);
+}
+
+.page-intro__eyebrow {
+	display: inline-flex;
+	align-items: center;
+	margin-bottom: 0.75rem;
+	padding: 0.32rem 0.72rem;
+	border-radius: 999px;
+	background: var(--color-info-muted);
+	color: var(--color-info);
+	font-size: var(--text-caption);
+	font-weight: var(--font-semibold);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.page-intro__title {
+	font-family: var(--font-heading);
+	font-size: var(--text-h1);
+	font-weight: var(--font-semibold);
+	letter-spacing: 0.01em;
+	color: var(--color-fg-primary);
+	margin: 0 0 var(--space-xs);
+}
+
+.page-intro__subtitle {
+	font-size: var(--text-body);
+	color: var(--color-fg-secondary);
+	margin: 0;
+	max-width: 62ch;
+}
+
 /* Focus styles */
 :focus-visible {
 	outline: 3px solid color-mix(in srgb, var(--color-focus) 28%, transparent);

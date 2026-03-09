@@ -45,10 +45,11 @@
 		<BackNavigation />
 
 			<!-- Header -->
-			<div class="page-header">
+			<div class="page-header page-intro">
 				<div class="header-content">
-					<h1 class="page-title">Validation Tools</h1>
-					<p class="page-subtitle">
+					<span class="page-eyebrow page-intro__eyebrow">Preflight Checks</span>
+					<h1 class="page-title page-intro__title">Validation Tools</h1>
+					<p class="page-subtitle page-intro__subtitle">
 						Test and validate your templates before submission to ensure marketplace compliance
 					</p>
 				</div>
@@ -136,36 +137,17 @@
 		margin: 0 auto;
 	}
 
-	.page-header {
-		margin-bottom: var(--space-lg);
-		padding-bottom: var(--space-md);
-		border-bottom: 1px solid var(--color-border-default);
-	}
-
-	.page-title {
-		font-size: var(--text-h1);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin: 0 0 var(--space-xs);
-	}
-
-	.page-subtitle {
-		font-size: var(--text-body);
-		color: var(--color-fg-secondary);
-		margin: 0;
-	}
-
 	.tools-section {
 		margin-bottom: var(--space-xl);
 	}
 
 	.section-title {
-		font-size: var(--text-body);
-		font-weight: var(--font-medium);
+		font-family: var(--font-heading);
+		font-size: var(--text-h2);
+		font-weight: var(--font-semibold);
+		letter-spacing: 0.01em;
 		color: var(--color-fg-primary);
 		margin: 0 0 var(--space-md);
-		padding-top: var(--space-sm);
-		border-top: 1px solid var(--color-border-default);
 	}
 
 	.tools-grid {
@@ -179,6 +161,8 @@
 		flex-direction: column;
 		gap: var(--space-sm);
 		padding: var(--space-md);
+		border-color: var(--color-shell-border-default);
+		box-shadow: var(--shadow-sm);
 	}
 
 	.tool-header {
@@ -189,17 +173,19 @@
 	}
 
 	.tool-title {
-		font-size: var(--text-body);
+		font-family: var(--font-heading);
+		font-size: var(--text-body-lg);
 		font-weight: var(--font-semibold);
+		letter-spacing: 0.01em;
 		color: var(--color-fg-primary);
 		margin: 0;
 	}
 
 	.tool-kicker {
 		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
+		color: var(--color-info);
 		text-transform: uppercase;
-		letter-spacing: 0.02em;
+		letter-spacing: 0.08em;
 	}
 
 	.tool-description {
@@ -229,7 +215,7 @@
 		content: '•';
 		position: absolute;
 		left: 0;
-		color: var(--color-fg-muted);
+		color: var(--color-info);
 	}
 
 	.tool-actions {
@@ -248,16 +234,14 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		color: var(--color-fg-secondary);
+		color: var(--color-info);
 		font-size: var(--text-body-sm);
 		text-decoration: none;
-		border-bottom: 1px solid transparent;
 		transition: color var(--duration-micro) var(--ease-standard);
 	}
 
 	.playground-link:hover {
-		color: var(--color-fg-primary);
-		border-bottom-color: var(--color-border-default);
+		color: #0055d4;
 	}
 
 	.playground-link:focus-visible {
@@ -268,11 +252,15 @@
 
 	:global(.info-card) {
 		padding: var(--space-md);
+		border-color: var(--color-shell-border-default);
+		box-shadow: var(--shadow-sm);
 	}
 
 	.info-title {
-		font-size: var(--text-body);
+		font-family: var(--font-heading);
+		font-size: var(--text-body-lg);
 		font-weight: var(--font-semibold);
+		letter-spacing: 0.01em;
 		color: var(--color-fg-primary);
 		margin: 0 0 var(--space-sm);
 	}
@@ -299,9 +287,9 @@
 		display: grid;
 		gap: var(--space-xs);
 		padding: var(--space-sm) var(--space-md);
-		border: 1px solid var(--color-border-default);
-		border-left: 3px solid var(--color-border-emphasis);
+		border: 1px solid var(--color-info-border);
 		border-radius: var(--radius-md);
+		background: color-mix(in srgb, var(--color-info-muted) 18%, var(--color-bg-surface));
 	}
 
 	.tip-title {
