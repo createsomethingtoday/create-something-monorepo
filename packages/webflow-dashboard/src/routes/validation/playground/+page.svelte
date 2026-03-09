@@ -140,7 +140,7 @@
 </svelte:head>
 
 <div class="playground">
-	<Header userEmail={data.user?.email} onLogout={handleLogout} />
+	<Header onLogout={handleLogout} />
 
 	<main class="main-content">
 		<div class="content-wrapper">

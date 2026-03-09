@@ -5,10 +5,8 @@
   import { UserCircle } from 'lucide-svelte';
 
   interface Props {
-    userEmail?: string;
     onLogout?: () => void;
     onProfileClick?: () => void;
-    showSearch?: boolean;
   }
 
   let { onLogout, onProfileClick }: Props = $props();

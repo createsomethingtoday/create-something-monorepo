@@ -198,7 +198,7 @@
 </svelte:head>
 
 <div class="marketplace-page">
-	<Header userEmail={data.user?.email} onLogout={handleLogout} />
+	<Header onLogout={handleLogout} />
 
 	<main class="main-content">
 		<div class="content-wrapper">

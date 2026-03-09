@@ -5,7 +5,6 @@
 		submissionStore,
 		SUBMISSION_LIMIT,
 		formatTimeUntil,
-		getStatusMessage,
 		type SubmissionState
 	} from '$lib/stores/submission';
 	import { onMount, onDestroy } from 'svelte';
@@ -23,7 +22,24 @@
 	let isTooltipOpen = $state(false);
 	let storeData = $state<SubmissionState | null>(null);
 	let countdownInterval: ReturnType<typeof setInterval> | null = null;
+	let countdownStartedAt = $state<number | null>(null);
+	let initialTimeUntilNextSlot = $state<number | null>(null);
 	let displayedTimeUntilSlot = $state<string>('');
+
+	function syncDisplayedTimeUntilSlot(): void {
+		if (
+			initialTimeUntilNextSlot === null ||
+			initialTimeUntilNextSlot <= 0 ||
+			countdownStartedAt === null
+		) {
+			displayedTimeUntilSlot = '';
+			return;
+		}
+
+		const elapsedMs = Date.now() - countdownStartedAt;
+		const remainingMs = Math.max(0, initialTimeUntilNextSlot - elapsedMs);
+		displayedTimeUntilSlot = formatTimeUntil(remainingMs);
+	}
 
 	// Initialize store with assets and optionally fetch external data
 	onMount(() => {
@@ -35,20 +51,21 @@
 		// Subscribe to store updates
 		const unsubscribe = submissionStore.subscribe((data) => {
 			storeData = data;
-			// Update countdown display
+
 			if (data.timeUntilNextSlot !== null && data.timeUntilNextSlot > 0) {
-				displayedTimeUntilSlot = formatTimeUntil(data.timeUntilNextSlot);
+				initialTimeUntilNextSlot = data.timeUntilNextSlot;
+				countdownStartedAt = Date.now();
+				syncDisplayedTimeUntilSlot();
+			} else {
+				initialTimeUntilNextSlot = null;
+				countdownStartedAt = null;
+				displayedTimeUntilSlot = '';
 			}
 		});
 
-		// Start countdown interval for real-time updates
 		countdownInterval = setInterval(() => {
-			const currentData = storeData;
-			if (currentData && currentData.timeUntilNextSlot !== null && currentData.timeUntilNextSlot > 0) {
-				const newTime = Math.max(0, currentData.timeUntilNextSlot - 1000);
-				displayedTimeUntilSlot = formatTimeUntil(newTime);
-			}
-		}, 60000); // Update every minute
+			syncDisplayedTimeUntilSlot();
+		}, 1000);
 
 		return unsubscribe;
 	});
@@ -65,7 +82,7 @@
 	});
 
 	// Get submission data from store with fallback
-	const submissionData = $derived(() => {
+	const submissionData = $derived.by(() => {
 		if (!storeData) {
 			return {
 				submissions: [],
@@ -122,6 +139,16 @@
 		isTooltipOpen = !isTooltipOpen;
 	}
 
+	function closeTooltip() {
+		isTooltipOpen = false;
+	}
+
+	function handleTooltipKeydown(event: KeyboardEvent) {
+		if (event.key === 'Escape') {
+			closeTooltip();
+		}
+	}
+
 	async function handleRefresh() {
 		if (userEmail) {
 			await submissionStore.forceRefresh(userEmail);
@@ -130,7 +157,7 @@
 	}
 
 	function getBadgeVariant(): 'success' | 'warning' | 'error' | 'default' {
-		const data = submissionData();
+		const data = submissionData;
 		if (data.isWhitelisted) return 'default';
 		if (data.isAtLimit) return 'error';
 		if (data.warningLevel === 'caution') return 'warning';
@@ -138,7 +165,7 @@
 	}
 
 	function getStatusText(): string {
-		const data = submissionData();
+		const data = submissionData;
 		if (data.isWhitelisted) return 'Unlimited';
 		if (data.isAtLimit) return 'Limit Reached';
 		if (data.warningLevel === 'caution') return 'Near Limit';
@@ -149,29 +176,29 @@
 {#if variant === 'compact'}
 	<div class="compact-tracker">
 		<button type="button" class="tracker-button" onclick={toggleTooltip}>
-			{#if submissionData().isLoading}
+			{#if submissionData.isLoading}
 				<Badge variant="default">
 					<span class="loading-pulse">Loading...</span>
 				</Badge>
 			{:else}
 					<Badge variant={getBadgeVariant()}>
-						{#if submissionData().isWhitelisted}
+						{#if submissionData.isWhitelisted}
 							<span class="whitelist-icon">
 								<CheckCircle2 size={12} />
 							</span>
 							Unlimited
 						{:else}
-							{submissionData().assetsSubmitted30}/{SUBMISSION_LIMIT} this month
+							{submissionData.assetsSubmitted30}/{SUBMISSION_LIMIT} this month
 					{/if}
 				</Badge>
 			{/if}
-			{#if submissionData().isAtLimit && submissionData().nextExpiryDate && !submissionData().isWhitelisted}
+			{#if submissionData.isAtLimit && submissionData.nextExpiryDate && !submissionData.isWhitelisted}
 				<span class="next-date">
 					<Clock size={12} />
-					{displayedTimeUntilSlot || formatTimeUntil(submissionData().timeUntilNextSlot)}
+					{displayedTimeUntilSlot || formatTimeUntil(submissionData.timeUntilNextSlot)}
 				</span>
 			{/if}
-			{#if submissionData().isDevMode}
+			{#if submissionData.isDevMode}
 				<span class="dev-indicator" title="Development mode - using local calculation">DEV</span>
 			{/if}
 		</button>
@@ -180,7 +207,7 @@
 			<!-- svelte-ignore a11y_click_events_have_key_events -->
 			<!-- svelte-ignore a11y_no_static_element_interactions -->
 			<div class="tooltip-overlay" onclick={() => (isTooltipOpen = false)}></div>
-			<div class="tooltip-content" class:warning={submissionData().warningLevel === 'caution'} class:critical={submissionData().isAtLimit && !submissionData().isWhitelisted}>
+			<div class="tooltip-content" class:warning={submissionData.warningLevel === 'caution'} class:critical={submissionData.isAtLimit && !submissionData.isWhitelisted}>
 				<div class="tooltip-header">
 					<h4>Submission Status</h4>
 					<Badge variant={getBadgeVariant()}>
@@ -188,22 +215,22 @@
 					</Badge>
 				</div>
 
-			{#if submissionData().isDevMode}
+			{#if submissionData.isDevMode}
 				<div class="dev-mode-banner">
 					<Shield size={14} />
 					Development mode - external API skipped due to CORS
 				</div>
 			{/if}
 
-			{#if submissionData().hasError}
+			{#if submissionData.hasError}
 				<div class="error-banner">
 					<AlertCircle size={14} />
-					{submissionData().message || 'Server unavailable'}
+					{submissionData.message || 'Server unavailable'}
 					<button type="button" class="retry-button" onclick={handleRefresh}>Retry</button>
 				</div>
 			{/if}
 
-			{#if submissionData().isWhitelisted}
+			{#if submissionData.isWhitelisted}
 				<div class="whitelist-banner">
 					<CheckCircle2 size={14} />
 					Whitelisted account - no submission limits
@@ -213,31 +240,31 @@
 				<div class="tooltip-stats">
 					<div class="stat-row">
 						<span>Published:</span>
-						<span class="stat-value">{submissionData().publishedCount}</span>
+						<span class="stat-value">{submissionData.publishedCount}</span>
 					</div>
 					<div class="stat-row">
 						<span>Total Submitted:</span>
-						<span class="stat-value">{submissionData().totalSubmitted}</span>
+						<span class="stat-value">{submissionData.totalSubmitted}</span>
 					</div>
 					<div class="stat-row">
 						<span>This Month:</span>
-						<span class="stat-value" class:warning={submissionData().warningLevel === 'caution'} class:critical={submissionData().isAtLimit}>
-							{submissionData().assetsSubmitted30}/{SUBMISSION_LIMIT}
+						<span class="stat-value" class:warning={submissionData.warningLevel === 'caution'} class:critical={submissionData.isAtLimit}>
+							{submissionData.assetsSubmitted30}/{SUBMISSION_LIMIT}
 						</span>
 					</div>
 					<div class="stat-row">
 						<span>Remaining:</span>
-						<span class="stat-value" class:warning={submissionData().warningLevel === 'caution'} class:critical={submissionData().isAtLimit}>
-							{submissionData().isWhitelisted ? '∞' : submissionData().remainingSubmissions}
+						<span class="stat-value" class:warning={submissionData.warningLevel === 'caution'} class:critical={submissionData.isAtLimit}>
+							{submissionData.isWhitelisted ? '∞' : submissionData.remainingSubmissions}
 						</span>
 					</div>
 				</div>
 
-				{#if submissionData().submissions.length > 0}
+				{#if submissionData.submissions.length > 0}
 					<div class="submissions-list">
 						<h5>Active Submissions</h5>
 						<div class="submissions-scroll">
-							{#each submissionData().submissions.slice(0, 6) as submission}
+							{#each submissionData.submissions.slice(0, 6) as submission}
 								<div class="submission-item">
 									<div class="submission-name">
 										<div class="submission-dot" style="background: {submission.daysUntilExpiry <= 7 ? 'var(--color-warning)' : 'var(--color-data-1)'}"></div>
@@ -252,16 +279,16 @@
 					</div>
 				{/if}
 
-			{#if submissionData().nextExpiryDate && submissionData().isAtLimit && !submissionData().isWhitelisted}
+			{#if submissionData.nextExpiryDate && submissionData.isAtLimit && !submissionData.isWhitelisted}
 				<div class="next-slot">
 					<Clock size={14} />
-					Next slot: {formatDate(submissionData().nextExpiryDate)} ({displayedTimeUntilSlot || formatTimeUntil(submissionData().timeUntilNextSlot)})
+					Next slot: {formatDate(submissionData.nextExpiryDate)} ({displayedTimeUntilSlot || formatTimeUntil(submissionData.timeUntilNextSlot)})
 				</div>
 			{/if}
 
 				<div class="tooltip-footer">
 					<span class="data-source">
-						Data: {submissionData().dataSource === 'external' ? 'Server' : 'Local'}
+						Data: {submissionData.dataSource === 'external' ? 'Server' : 'Local'}
 					</span>
 				<button type="button" class="refresh-link" onclick={handleRefresh}>
 					<RefreshCw size={12} />
@@ -272,13 +299,13 @@
 		{/if}
 	</div>
 {:else}
-	<div class="card-wrapper" class:warning-card={submissionData().warningLevel === 'caution'} class:critical-card={submissionData().isAtLimit && !submissionData().isWhitelisted}>
+	<div class="card-wrapper" class:warning-card={submissionData.warningLevel === 'caution'} class:critical-card={submissionData.isAtLimit && !submissionData.isWhitelisted}>
 	<Card>
 		<CardHeader>
 			<div class="card-header-content">
 				<CardTitle>Submission Status</CardTitle>
 				<div class="header-badges">
-					{#if submissionData().isDevMode}
+					{#if submissionData.isDevMode}
 						<Badge variant="default">DEV</Badge>
 					{/if}
 					<Badge variant={getBadgeVariant()}>
@@ -288,7 +315,7 @@
 			</div>
 		</CardHeader>
 		<CardContent>
-			{#if submissionData().isLoading}
+			{#if submissionData.isLoading}
 				<div class="loading-state">
 					<div class="skeleton-grid">
 						<div class="skeleton-item"></div>
@@ -298,58 +325,58 @@
 					</div>
 				</div>
 			{:else}
-			{#if submissionData().hasError}
+			{#if submissionData.hasError}
 				<div class="error-banner-full">
 					<div class="error-content">
 						<AlertCircle size={16} />
-						<span>{submissionData().message || 'Server unavailable - using local data'}</span>
+						<span>{submissionData.message || 'Server unavailable - using local data'}</span>
 					</div>
 					<Button variant="outline" size="sm" onclick={handleRefresh}>Retry</Button>
 				</div>
 			{/if}
 
-			{#if submissionData().isWhitelisted}
+			{#if submissionData.isWhitelisted}
 				<div class="whitelist-banner-full">
 					<CheckCircle2 size={16} />
 					<span>Your account is whitelisted - no submission limits apply</span>
 				</div>
 			{/if}
 
-			{#if submissionData().warningLevel === 'caution' && !submissionData().isWhitelisted}
+			{#if submissionData.warningLevel === 'caution' && !submissionData.isWhitelisted}
 				<div class="warning-banner">
 					<AlertTriangle size={16} />
-					<span>Approaching submission limit - {submissionData().remainingSubmissions} slots remaining</span>
+					<span>Approaching submission limit - {submissionData.remainingSubmissions} slots remaining</span>
 				</div>
 			{/if}
 
 				<div class="status-grid">
 					<div class="status-item">
 						<span class="status-label">Published Templates</span>
-						<span class="status-value">{submissionData().publishedCount}</span>
+						<span class="status-value">{submissionData.publishedCount}</span>
 					</div>
 					<div class="status-item">
 						<span class="status-label">This Month</span>
-						<span class="status-value" class:warning={submissionData().warningLevel === 'caution'} class:critical={submissionData().isAtLimit}>
-							{submissionData().assetsSubmitted30}/{SUBMISSION_LIMIT}
+						<span class="status-value" class:warning={submissionData.warningLevel === 'caution'} class:critical={submissionData.isAtLimit}>
+							{submissionData.assetsSubmitted30}/{SUBMISSION_LIMIT}
 						</span>
 					</div>
 					<div class="status-item">
 						<span class="status-label">Total Submitted</span>
-						<span class="status-value">{submissionData().totalSubmitted}</span>
+						<span class="status-value">{submissionData.totalSubmitted}</span>
 					</div>
 					<div class="status-item">
 						<span class="status-label">Remaining</span>
-						<span class="status-value" class:warning={submissionData().warningLevel === 'caution'} class:critical={submissionData().isAtLimit}>
-							{submissionData().isWhitelisted ? '∞' : submissionData().remainingSubmissions}
+						<span class="status-value" class:warning={submissionData.warningLevel === 'caution'} class:critical={submissionData.isAtLimit}>
+							{submissionData.isWhitelisted ? '∞' : submissionData.remainingSubmissions}
 						</span>
 					</div>
 				</div>
 
-				{#if submissionData().submissions.length > 0}
+				{#if submissionData.submissions.length > 0}
 					<div class="active-submissions">
 						<h4>Active Submissions (30-day window)</h4>
 						<div class="submissions-full-list">
-							{#each submissionData().submissions as submission}
+							{#each submissionData.submissions as submission}
 								<div class="submission-row">
 									<div class="submission-name-full">
 										<div class="submission-dot" style="background: {submission.daysUntilExpiry <= 7 ? 'var(--color-warning)' : 'var(--color-data-1)'}"></div>
@@ -369,21 +396,21 @@
 					</div>
 				{/if}
 
-			{#if submissionData().nextExpiryDate && submissionData().isAtLimit && !submissionData().isWhitelisted}
+			{#if submissionData.nextExpiryDate && submissionData.isAtLimit && !submissionData.isWhitelisted}
 				<div class="next-slot-full">
 					<Clock size={16} />
 					<div class="next-slot-info">
 						<span class="next-slot-label">Next slot available</span>
-						<span class="next-slot-date">{formatDate(submissionData().nextExpiryDate)}</span>
-						<span class="next-slot-countdown">({displayedTimeUntilSlot || formatTimeUntil(submissionData().timeUntilNextSlot)})</span>
+						<span class="next-slot-date">{formatDate(submissionData.nextExpiryDate)}</span>
+						<span class="next-slot-countdown">({displayedTimeUntilSlot || formatTimeUntil(submissionData.timeUntilNextSlot)})</span>
 					</div>
 				</div>
 			{/if}
 
 				<div class="card-footer">
 					<span class="data-source-full">
-						{submissionData().dataSource === 'external' ? 'Synced with server' : 'Local calculation'}
-						{#if submissionData().isDevMode}
+						{submissionData.dataSource === 'external' ? 'Synced with server' : 'Local calculation'}
+						{#if submissionData.isDevMode}
 							(Dev mode)
 						{/if}
 					</span>

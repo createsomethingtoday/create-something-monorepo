@@ -182,7 +182,7 @@ a {
 }
 
 a:hover {
-  color: #0055d4;
+  color: color-mix(in srgb, var(--color-info) 82%, var(--color-fg-primary));
 }
 
 ::selection {
@@ -289,7 +289,7 @@ a:hover {
   border-radius: 999px;
   outline: none;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 1px 0 var(--glass-border-light),
     var(--shadow-sm);
   transition:
     border-color var(--duration-micro) var(--ease-standard),

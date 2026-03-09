@@ -80,10 +80,10 @@
     border-radius: 999px;
     overflow: hidden;
     background: linear-gradient(180deg, var(--glass-bg-medium) 0%, var(--glass-bg-subtle) 100%);
-    border: 1px solid rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--glass-border-subtle);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.18),
-      0 6px 16px rgba(8, 8, 8, 0.04);
+      inset 0 1px 0 var(--glass-border-light),
+      var(--shadow-sm);
     transition:
       border-color var(--duration-micro) var(--ease-standard),
       box-shadow var(--duration-micro) var(--ease-standard),
@@ -93,9 +93,9 @@
   .search-wrapper:focus-within {
     border-color: var(--color-info-border);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.22),
+      inset 0 1px 0 var(--glass-border-medium),
       0 0 0 4px var(--color-info-muted),
-      0 12px 28px rgba(20, 110, 245, 0.12);
+      var(--shadow-md);
   }
 
   :global(.search-icon) {
@@ -154,7 +154,7 @@
 
   .clear-btn:hover {
     color: var(--color-fg-primary);
-    background: rgba(8, 8, 8, 0.05);
+    background: var(--color-hover);
   }
 
   .clear-btn:focus-visible {

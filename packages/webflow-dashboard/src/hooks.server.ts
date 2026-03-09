@@ -42,7 +42,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 		const isTrusted = isTrustedRequestOrigin(
 			event.request,
 			event.url.origin,
-			event.platform?.env.CSRF_TRUSTED_ORIGINS
+			event.platform?.env.CSRF_TRUSTED_ORIGINS,
+			event.platform?.env.ENVIRONMENT
 		);
 
 		if (!isTrusted) {

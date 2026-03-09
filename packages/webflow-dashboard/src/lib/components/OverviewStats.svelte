@@ -12,7 +12,7 @@
 	let { assets }: Props = $props();
 
 	// Calculate stats by status
-	const statusBreakdown = $derived(() => {
+	const statusBreakdown = $derived.by(() => {
 		const breakdown: Record<string, { count: number; viewers: number; purchases: number; revenue: number }> = {};
 
 		for (const asset of assets) {
@@ -30,7 +30,7 @@
 	});
 
 	// Calculate totals
-	const totals = $derived(() => {
+	const totals = $derived.by(() => {
 		let viewers = 0;
 		let purchases = 0;
 		let revenue = 0;
@@ -50,8 +50,8 @@
 	// Status order for display
 	const statusOrder = ['Published', 'Scheduled', 'Upcoming', 'Delisted', 'Rejected'];
 
-	const sortedStatuses = $derived(() => {
-		return statusOrder.filter((status) => statusBreakdown()[status]?.count > 0);
+	const sortedStatuses = $derived.by(() => {
+		return statusOrder.filter((status) => statusBreakdown[status]?.count > 0);
 	});
 
 	// Calculate percentage for visual bar
@@ -73,7 +73,7 @@
 
 <div class="overview-stats">
 	<!-- Performance Summary -->
-	{#if totals().viewers > 0 || totals().purchases > 0 || totals().revenue > 0}
+	{#if totals.viewers > 0 || totals.purchases > 0 || totals.revenue > 0}
 		<div>
 			<Card>
 				<CardHeader>
@@ -86,21 +86,21 @@
 				<div class="performance-grid">
 					<div class="performance-item">
 						<div class="performance-content">
-							<span class="performance-value"><KineticNumber value={totals().viewers} /></span>
+							<span class="performance-value"><KineticNumber value={totals.viewers} /></span>
 							<span class="performance-label">Total Viewers</span>
 						</div>
 					</div>
 
 					<div class="performance-item">
 						<div class="performance-content">
-							<span class="performance-value"><KineticNumber value={totals().purchases} /></span>
+							<span class="performance-value"><KineticNumber value={totals.purchases} /></span>
 							<span class="performance-label">Total Purchases</span>
 						</div>
 					</div>
 
 					<div class="performance-item">
 						<div class="performance-content">
-							<span class="performance-value"><KineticNumber value={totals().revenue} prefix="$" /></span>
+							<span class="performance-value"><KineticNumber value={totals.revenue} prefix="$" /></span>
 							<span class="performance-label">Total Revenue</span>
 						</div>
 					</div>
@@ -111,7 +111,7 @@
 	{/if}
 
 	<!-- Status Distribution -->
-	{#if sortedStatuses().length > 0}
+	{#if sortedStatuses.length > 0}
 		<div>
 			<Card>
 				<CardHeader>
@@ -119,8 +119,8 @@
 				</CardHeader>
 				<CardContent>
 				<div class="distribution-list">
-					{#each sortedStatuses() as status}
-						{@const data = statusBreakdown()[status]}
+					{#each sortedStatuses as status}
+						{@const data = statusBreakdown[status]}
 						{@const percentage = getPercentage(data.count)}
 						<div class="distribution-item">
 							<div class="distribution-header">

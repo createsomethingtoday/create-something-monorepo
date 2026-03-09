@@ -84,7 +84,8 @@ export function getSourceOrigin(request: Request): string | null {
 export function isTrustedRequestOrigin(
 	request: Request,
 	requestOrigin: string,
-	extraTrustedOriginsCsv?: string
+	extraTrustedOriginsCsv?: string,
+	environment?: string
 ): boolean {
 	const sourceOrigin = getSourceOrigin(request);
 	if (!sourceOrigin) return false;
@@ -101,7 +102,7 @@ export function isTrustedRequestOrigin(
 		const parsed = new URL(sourceOrigin);
 
 		if (isLocalDevHost(parsed.hostname)) {
-			return true;
+			return (environment ?? 'production') !== 'production';
 		}
 
 		if (parsed.protocol !== 'https:') {

@@ -310,7 +310,7 @@
 </svelte:head>
 
 <div class="detail-page">
-	<Header userEmail={data.user?.email} onLogout={handleLogout} showSearch={false} />
+	<Header onLogout={handleLogout} />
 
 	<main class="main-content">
 		<div class="content-wrapper">

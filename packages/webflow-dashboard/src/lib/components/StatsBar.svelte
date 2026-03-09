@@ -52,7 +52,7 @@
 	});
 
 	// Calculate core metrics
-	const metrics = $derived(() => {
+	const metrics = $derived.by(() => {
 		const published = assets.filter((a) => a.status === 'Published');
 		const pending = assets.filter((a) => ['Upcoming', 'Scheduled'].includes(a.status));
 
@@ -99,17 +99,17 @@
 
 <div class="stats-bar">
 	<div class="stat-group templates">
-		<span class="stat-main">{metrics().publishedCount}</span>
+		<span class="stat-main">{metrics.publishedCount}</span>
 		<span class="stat-label">published</span>
-		{#if metrics().pendingCount > 0}
-			<span class="stat-secondary">+{metrics().pendingCount} pending</span>
+		{#if metrics.pendingCount > 0}
+			<span class="stat-secondary">+{metrics.pendingCount} pending</span>
 		{/if}
 	</div>
 
 	<div class="stat-divider"></div>
 
 	<div class="stat-group viewers">
-		<span class="stat-main">{formatNumber(metrics().totalViewers)}</span>
+		<span class="stat-main">{formatNumber(metrics.totalViewers)}</span>
 		<span class="stat-label">viewers</span>
 		{#if historyLoaded && viewersTrend.length >= 2}
 			<Sparkline data={viewersTrend} color="var(--color-info)" showTrend />
@@ -119,18 +119,18 @@
 	<div class="stat-divider"></div>
 
 	<div class="stat-group purchases">
-		<span class="stat-main">{formatNumber(metrics().totalPurchases)}</span>
+		<span class="stat-main">{formatNumber(metrics.totalPurchases)}</span>
 		<span class="stat-label">purchases</span>
 		<DataFreshnessIndicator variant="tooltip" />
 		<span class="stat-secondary conversion">
-			{metrics().conversionRate.toFixed(1)}% conv
+			{metrics.conversionRate.toFixed(1)}% conv
 		</span>
 	</div>
 
 	<div class="stat-divider"></div>
 
 	<div class="stat-group revenue">
-		<span class="stat-main">{formatCurrency(metrics().totalRevenue)}</span>
+		<span class="stat-main">{formatCurrency(metrics.totalRevenue)}</span>
 		<span class="stat-label">revenue</span>
 		<DataFreshnessIndicator variant="tooltip" />
 		{#if historyLoaded && revenueTrend.length >= 2}
@@ -138,10 +138,10 @@
 		{/if}
 	</div>
 
-	{#if metrics().avgRevenue > 0}
+	{#if metrics.avgRevenue > 0}
 		<div class="stat-divider"></div>
 		<div class="stat-group avg">
-			<span class="stat-main">{formatCurrency(metrics().avgRevenue)}</span>
+			<span class="stat-main">{formatCurrency(metrics.avgRevenue)}</span>
 			<span class="stat-label">avg/template</span>
 		</div>
 	{/if}
