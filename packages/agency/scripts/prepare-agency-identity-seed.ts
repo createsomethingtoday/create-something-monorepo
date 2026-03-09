@@ -7,6 +7,7 @@
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { normalizeAgencyServiceTier } from '../src/lib/server/mcp-entitlements';
 
 type SeedRow = Record<string, string>;
 
@@ -71,7 +72,7 @@ function buildUpsert(row: SeedRow, index: number): string {
   ${sql(row.account_id.trim())},
   ${sql(row.tenant_id.trim())},
   ${sql((row.workspace_account_id || row.account_id).trim())},
-  ${sql((row.service_tier || 'agency').trim())},
+  ${sql(normalizeAgencyServiceTier(row.service_tier))},
   ${flag(row.managed_bearer_allowed, true)},
   ${flag(row.org_membership_active, true)},
   ${flag(row.service_entitled, true)},

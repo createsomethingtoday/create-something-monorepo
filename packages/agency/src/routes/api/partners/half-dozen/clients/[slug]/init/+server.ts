@@ -14,7 +14,7 @@ import {
 	randomId,
 	requirePartnerAdmin,
 } from '$lib/server/partner-auth';
-import { reconcileAgencyMcpEntitlement } from '$lib/server/mcp-entitlements';
+import { normalizeAgencyServiceTier, reconcileAgencyMcpEntitlement } from '$lib/server/mcp-entitlements';
 
 interface InitClientRequestBody {
 	display_name?: string;
@@ -173,7 +173,7 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 				accountId: updated.identity_account_id ?? updated.workspace_account_id,
 				tenantId: updated.identity_tenant_id ?? slug,
 				workspaceAccountId: updated.workspace_account_id,
-				serviceTier: 'agency',
+				serviceTier: 'mcp_only',
 			});
 		}
 

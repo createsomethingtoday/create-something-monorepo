@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import {
+	buildAgencyEntitlementSnapshot,
 	constantTimeEqual,
 	evaluateAgencyMcpEntitlement,
 	findAgencyMcpEntitlementByAuthSubject,
@@ -48,6 +49,11 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		accountId: body?.account_id?.trim() || null,
 		tenantId: body?.tenant_id?.trim() || null,
 	});
+	const snapshot = buildAgencyEntitlementSnapshot(row, decision);
 
-	return json(decision);
+	return json({
+		...decision,
+		service_tier: snapshot.service_tier,
+		entitlement_snapshot: snapshot,
+	});
 };

@@ -85,7 +85,7 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 			accountId: client.identity_account_id,
 			tenantId: client.identity_tenant_id,
 			workspaceAccountId: client.workspace_account_id,
-			serviceTier: 'agency',
+			serviceTier: 'mcp_only',
 		});
 
 		const issued = await postIdentityAdmin<IssueManagedTokenResponse>(env, '/v1/mcp/long-lived-tokens/admin-issue', {

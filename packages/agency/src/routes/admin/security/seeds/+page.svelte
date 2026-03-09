@@ -44,7 +44,7 @@
 		account_id: '',
 		tenant_id: '',
 		workspace_account_id: '',
-		service_tier: 'agency',
+		service_tier: 'mcp_only',
 		status: 'seeded',
 		policy_accepted: false,
 		managed_bearer_allowed: true,
@@ -60,7 +60,7 @@
 	let successMessage = $state('');
 	let errorMessage = $state('');
 	let importText = $state(`auth_email,account_id,tenant_id,workspace_account_id,service_tier,managed_bearer_allowed,org_membership_active,service_entitled,policy_accepted,contract_active,billing_active,status,invited_at,metadata_json
-operator@exampleclient.com,acct_example_client,tenant_example_client,acct_example_client,agency,1,1,1,0,1,1,seeded,2026-03-07T19:30:00Z,"{""source"":""client_onboarding_batch_1""}"`);
+operator@exampleclient.com,acct_example_client,tenant_example_client,acct_example_client,mcp_only,1,1,1,0,1,1,seeded,2026-03-07T19:30:00Z,"{""source"":""client_onboarding_batch_1""}"`);
 
 	function selectSeed(seed: Seed) {
 		form = {
