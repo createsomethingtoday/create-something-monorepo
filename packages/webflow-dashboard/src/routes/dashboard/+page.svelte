@@ -201,7 +201,6 @@
       <section class="overview-section">
         <div class="page-header page-intro page-intro--dashboard">
           <div class="header-text">
-            <span class="page-eyebrow page-intro__eyebrow">Creator Hub</span>
             <h1 class="page-title page-intro__title">Your Webflow template portfolio</h1>
             <p class="page-subtitle page-intro__subtitle">
               Track published assets, upcoming submissions, and marketplace signals in one place.
