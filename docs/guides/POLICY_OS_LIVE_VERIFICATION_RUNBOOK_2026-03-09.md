@@ -38,6 +38,16 @@ The script follows the same checks as this runbook and uses the environment vari
 
 If you also set the optional `POLICY_OS_DENY_*` variables, the script verifies the staged commercial-deny lane automatically.
 
+The deploy workflow can also run this automatically after hub deploys when these GitHub settings are populated:
+
+- repo variable: `POLICY_OS_LIVE_VERIFY_ENABLED=true`
+- repo variables: `AGENCY_BASE_URL`, `IDENTITY_BASE_URL`, `POLICY_OS_HUB_BASE_URL`
+- repo secrets: `AGENCY_INTERNAL_API_KEY`, `IDENTITY_API_KEY`, `HUB_API_TOKEN`
+- repo secrets: `MCP_ONLY_AUTH_SUBJECT`, `MCP_ONLY_ACCOUNT_ID`, `MCP_ONLY_TENANT_ID`
+- repo secrets: `POLICY_OS_AUTH_SUBJECT`, `POLICY_OS_ACCOUNT_ID`, `POLICY_OS_TENANT_ID`
+- optional repo secrets: `POLICY_OS_DENY_AUTH_SUBJECT`, `POLICY_OS_DENY_ACCOUNT_ID`, `POLICY_OS_DENY_TENANT_ID`
+- optional repo variable: `POLICY_OS_DENY_EXPECTED_REASON`
+
 ## Environment
 
 Set these before running the checks:
