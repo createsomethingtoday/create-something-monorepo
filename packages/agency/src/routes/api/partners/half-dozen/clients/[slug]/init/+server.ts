@@ -14,7 +14,7 @@ import {
 	randomId,
 	requirePartnerAdmin,
 } from '$lib/server/partner-auth';
-import { normalizeAgencyServiceTier, reconcileAgencyMcpEntitlement } from '$lib/server/mcp-entitlements';
+import { reconcileAgencyMcpEntitlement } from '$lib/server/mcp-entitlements';
 
 interface InitClientRequestBody {
 	display_name?: string;

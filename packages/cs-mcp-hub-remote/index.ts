@@ -251,6 +251,8 @@ type IdentitySessionResolveResponse = {
   user_id?: string;
   tool_mode?: string;
   allowed_tool_prefixes?: unknown;
+  service_tier?: string | null;
+  entitlement_snapshot?: Record<string, unknown> | null;
   reason?: string;
 };
 
@@ -261,6 +263,8 @@ type ResolvedAccountContext = {
   sessionId: string | null;
   toolMode: string | null;
   allowedToolPrefixes: string[] | null;
+  serviceTier: string | null;
+  entitlementSnapshot: Record<string, unknown> | null;
   identitySource: 'session' | 'fallback';
 };
 
@@ -2655,6 +2659,8 @@ function toHubAuthzEvent(params: {
       oauthRequired: classification.oauthRequired,
       sessionId: accountContext.sessionId,
       toolMode: accountContext.toolMode,
+      serviceTier: accountContext.serviceTier,
+      entitlementSnapshot: accountContext.entitlementSnapshot,
       identitySource: accountContext.identitySource,
       latency_ms: evaluation.final.latencyMs,
     }) ?? '{}',
@@ -2706,6 +2712,10 @@ async function evaluateHubRouteAuthorization(params: {
     downstreamToolName: route.downstreamToolName,
     actionName,
     definition,
+    context: {
+      serviceTier: accountContext.serviceTier,
+      entitlementSnapshot: accountContext.entitlementSnapshot,
+    },
   });
 
   const evaluation = await evaluateAuthorizationRequest(
@@ -4332,6 +4342,8 @@ async function resolveSessionAccountContext(env: Env, token: string): Promise<Re
     allowedToolPrefixes:
       resolved.allowed_tool_prefixes == null ? null : parseAllowedToolPrefixes(resolved.allowed_tool_prefixes),
     identitySource: 'session',
+    serviceTier: normalizeTraceValue(resolved.service_tier),
+    entitlementSnapshot: asRecord(resolved.entitlement_snapshot),
   };
 }
 
@@ -4365,6 +4377,8 @@ function resolveFallbackAccountContext(extra: unknown, env: Env): ResolvedAccoun
     sessionId: null,
     toolMode: null,
     allowedToolPrefixes: null,
+    serviceTier: null,
+    entitlementSnapshot: null,
     identitySource: 'fallback',
   };
 }

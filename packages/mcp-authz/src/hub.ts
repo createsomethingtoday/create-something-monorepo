@@ -75,6 +75,7 @@ export function buildHubAuthorizationRequest(input: {
   downstreamToolName: string;
   actionName: 'discover' | 'execute';
   definition?: ToolLike;
+  context?: Record<string, unknown>;
 }): AuthorizationRequest {
   const classification = classifyHubRoute(
     {
@@ -115,5 +116,6 @@ export function buildHubAuthorizationRequest(input: {
         description: input.definition?.description ?? null,
       },
     },
+    context: input.context,
   };
 }

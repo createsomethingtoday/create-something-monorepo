@@ -82,13 +82,15 @@ export async function ensureAgencyMcpEntitlement(input: {
 
 	const canonicalRow = await canonicalizeAgencyEntitlementIdentity(db, input.user, row);
 
+	const decision = evaluateAgencyMcpEntitlement(canonicalRow, {
+		accountId: input.accountId ?? canonicalIdentity.accountId,
+		tenantId: input.tenantId ?? canonicalIdentity.tenantId,
+	});
+
 	return {
 		row: canonicalRow,
-		decision: evaluateAgencyMcpEntitlement(canonicalRow, {
-			accountId: input.accountId ?? canonicalIdentity.accountId,
-			tenantId: input.tenantId ?? canonicalIdentity.tenantId,
-		}),
-		snapshot: buildAgencyEntitlementSnapshot(canonicalRow),
+		decision,
+		snapshot: buildAgencyEntitlementSnapshot(canonicalRow, decision),
 	};
 }
 

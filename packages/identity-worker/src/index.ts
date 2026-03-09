@@ -702,6 +702,23 @@ interface AgencyEntitlementDecision {
 	reason?: string;
 	account_id?: string | null;
 	tenant_id?: string | null;
+	service_tier?: 'mcp_only' | 'policy_os_trial' | 'policy_os_core' | null;
+	entitlement_snapshot?: {
+		service_tier: 'mcp_only' | 'policy_os_trial' | 'policy_os_core';
+		managed_bearer_allowed: boolean;
+		org_membership_active: boolean;
+		service_entitled: boolean;
+		policy_accepted: boolean;
+		contract_active: boolean;
+		billing_active: boolean;
+		approved_exception?: {
+			present: boolean;
+			type: string | null;
+			allowed_scope: string | null;
+			graduation_target: string | null;
+			review_by: string | null;
+		};
+	} | null;
 	checks?: Record<string, boolean>;
 }
 
@@ -1980,6 +1997,12 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 		const toolkitProfile = parseStringArray(session.toolkit_profile_json);
 		const allowedToolPrefixes = parseStringArray(session.allowed_tool_prefixes_json);
 
+		const entitlement = await checkAgencyManagedBearerEntitlement(env, {
+			authSubject: session.user_id,
+			accountId: session.account_id,
+			tenantId: session.tenant_id,
+		});
+
 		await createMcpAuthEvent(db, {
 			id: generateUUID(),
 			session_id: session.id,
@@ -2004,6 +2027,8 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 			toolkit_profile: toolkitProfile,
 			allow_pending_oauth_approvals: false,
 			auth_mode: 'session',
+			service_tier: entitlement.service_tier ?? null,
+			entitlement_snapshot: entitlement.entitlement_snapshot ?? null,
 		});
 	}
 
@@ -2065,6 +2090,8 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 				account_id: longLivedToken.account_id,
 				tenant_id: longLivedToken.tenant_id,
 				auth_mode: 'managed_bearer',
+				service_tier: entitlement.service_tier ?? null,
+				entitlement_snapshot: entitlement.entitlement_snapshot ?? null,
 			});
 		}
 
@@ -2096,6 +2123,8 @@ async function handleResolveMcpSession(request: Request, env: Env): Promise<Resp
 			allow_pending_oauth_approvals: false,
 			long_lived_token_id: longLivedToken.id,
 			auth_mode: 'managed_bearer',
+			service_tier: entitlement.service_tier ?? null,
+			entitlement_snapshot: entitlement.entitlement_snapshot ?? null,
 		});
 	}
 
