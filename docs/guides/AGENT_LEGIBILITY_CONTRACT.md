@@ -207,6 +207,8 @@ For opted-in packages, the check also enforces:
 - `UNDERSTANDING.md` must exist
 - `UNDERSTANDING.md` must include the core package-reading section
 - `UNDERSTANDING.md` cannot still contain obvious template placeholder text
+- documented entry-point paths in the contract must exist
+- documented `pnpm` / `npm` boot and smoke scripts must exist in the relevant `package.json`
 
 A matching GitHub Actions workflow exists at:
 

@@ -80,33 +80,28 @@ function printUsage() {
   node scripts/agent-legibility-check.mjs [--target path1,path2] [--format text|json]`);
 }
 
-function discoverTargetsFromPackageMetadata() {
+function listOptedInPackageDirs() {
   if (!existsSync(PACKAGES_DIR)) {
     return [];
   }
 
-  const packageDirs = readdirSync(PACKAGES_DIR, { withFileTypes: true })
+  return readdirSync(PACKAGES_DIR, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name)
-    .sort((a, b) => a.localeCompare(b));
+    .sort((a, b) => a.localeCompare(b))
+    .filter((dirName) => {
+      const packageJsonPath = path.join(PACKAGES_DIR, dirName, 'package.json');
+      if (!existsSync(packageJsonPath)) {
+        return false;
+      }
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+      return Boolean(packageJson.createSomething?.agentLegibilityContract);
+    });
+}
 
-  const targets = [];
-
-  for (const dirName of packageDirs) {
-    const packageJsonPath = path.join(PACKAGES_DIR, dirName, 'package.json');
-    if (!existsSync(packageJsonPath)) {
-      continue;
-    }
-
-    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
-    if (!packageJson.createSomething?.agentLegibilityContract) {
-      continue;
-    }
-
-    targets.push(normalizePath(path.join('packages', dirName, 'README.md')));
-  }
-
-  return targets;
+function discoverTargetsFromPackageMetadata() {
+  return listOptedInPackageDirs().map((dirName) =>
+    normalizePath(path.join('packages', dirName, 'README.md')));
 }
 
 function findMetadataDrift() {
@@ -149,29 +144,10 @@ function findMetadataDrift() {
 }
 
 function findUnderstandingDrift() {
-  if (!existsSync(PACKAGES_DIR)) {
-    return [];
-  }
-
-  const packageDirs = readdirSync(PACKAGES_DIR, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name)
-    .sort((a, b) => a.localeCompare(b));
-
   const drift = [];
 
-  for (const dirName of packageDirs) {
-    const packageJsonPath = path.join(PACKAGES_DIR, dirName, 'package.json');
+  for (const dirName of listOptedInPackageDirs()) {
     const understandingPath = path.join(PACKAGES_DIR, dirName, 'UNDERSTANDING.md');
-
-    if (!existsSync(packageJsonPath)) {
-      continue;
-    }
-
-    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
-    if (!packageJson.createSomething?.agentLegibilityContract) {
-      continue;
-    }
 
     const relUnderstandingPath = normalizePath(path.join('packages', dirName, 'UNDERSTANDING.md'));
 
@@ -213,6 +189,147 @@ function findUnderstandingDrift() {
   return drift;
 }
 
+function getPackageJsonAt(packageDir) {
+  const packageJsonPath = path.join(packageDir, 'package.json');
+  if (!existsSync(packageJsonPath)) {
+    return null;
+  }
+  return JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+}
+
+function findPackageDirByPackageName(packageName) {
+  for (const dirName of readdirSync(PACKAGES_DIR, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)) {
+    const candidateDir = path.join(PACKAGES_DIR, dirName);
+    const packageJson = getPackageJsonAt(candidateDir);
+    if (packageJson?.name === packageName) {
+      return candidateDir;
+    }
+  }
+
+  return null;
+}
+
+function resolvePackageDirFromFilter(filterValue) {
+  const normalized = filterValue.replace(/^["']|["']$/g, '');
+
+  if (normalized.startsWith('@create-something/')) {
+    return findPackageDirByPackageName(normalized) ?? path.join(PACKAGES_DIR, normalized.slice('@create-something/'.length));
+  }
+
+  if (normalized.startsWith('packages/')) {
+    return path.join(REPO_ROOT, normalized);
+  }
+
+  return path.join(PACKAGES_DIR, normalized);
+}
+
+function extractContractRow(content, field) {
+  const pattern = new RegExp(`\\|\\s*${field.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}\\s*\\|([^\\n]+)`);
+  const match = content.match(pattern);
+  return match ? match[1].trim() : '';
+}
+
+function extractInlineCode(value) {
+  return Array.from(value.matchAll(/`([^`]+)`/g), (match) => match[1].trim());
+}
+
+function validateEntryPoints(relPath, content) {
+  const details = [];
+  const packageDir = path.dirname(path.join(REPO_ROOT, relPath));
+  const entryPointValue = extractContractRow(content, 'Entry point');
+
+  for (const codePath of extractInlineCode(entryPointValue)) {
+    const fullPath = codePath.startsWith('packages/')
+      ? path.join(REPO_ROOT, codePath)
+      : path.join(packageDir, codePath);
+
+    if (!existsSync(fullPath)) {
+      details.push(`Documented entry point does not exist: "${codePath}".`);
+    }
+  }
+
+  return details;
+}
+
+function validateScriptCommand(command, packageDir, packageLabel) {
+  const details = [];
+  const segments = command.split('&&').map((segment) => segment.trim()).filter(Boolean);
+  let currentDir = packageDir;
+
+  for (const segment of segments) {
+    const cdMatch = segment.match(/^cd\s+(.+)$/);
+    if (cdMatch) {
+      const target = cdMatch[1].trim();
+      currentDir = path.isAbsolute(target)
+        ? target
+        : path.resolve(REPO_ROOT, target);
+      continue;
+    }
+
+    const runMatch = segment.match(/^(pnpm|npm)\s+(.+)$/);
+    if (!runMatch) {
+      continue;
+    }
+
+    const tool = runMatch[1];
+    const tokens = runMatch[2].split(/\s+/).filter(Boolean);
+    let scriptName = null;
+    let targetDir = currentDir;
+
+    for (let i = 0; i < tokens.length; i += 1) {
+      const token = tokens[i];
+
+      if (token === '--filter' && tokens[i + 1]) {
+        targetDir = resolvePackageDirFromFilter(tokens[i + 1]);
+        i += 1;
+        continue;
+      }
+
+      if (token.startsWith('--filter=')) {
+        targetDir = resolvePackageDirFromFilter(token.slice('--filter='.length));
+        continue;
+      }
+
+      if (token === 'run' && tokens[i + 1]) {
+        scriptName = tokens[i + 1];
+        break;
+      }
+
+      if (!token.startsWith('-') && !['exec', 'dlx'].includes(token)) {
+        scriptName = token;
+        break;
+      }
+    }
+
+    if (!scriptName || scriptName === 'node' || scriptName === 'echo' || scriptName === 'curl') {
+      continue;
+    }
+
+    const packageJson = getPackageJsonAt(targetDir);
+    if (!packageJson?.scripts || typeof packageJson.scripts[scriptName] !== 'string') {
+      details.push(`Documented ${packageLabel} references missing script "${scriptName}" in ${normalizePath(path.relative(REPO_ROOT, targetDir)) || '.'}.`);
+    }
+  }
+
+  return details;
+}
+
+function validateDocumentedCommands(relPath, content) {
+  const details = [];
+  const packageDir = path.dirname(path.join(REPO_ROOT, relPath));
+
+  for (const field of ['Boot command', 'Smoke command']) {
+    const value = extractContractRow(content, field);
+    for (const command of extractInlineCode(value)) {
+      details.push(...validateScriptCommand(command, packageDir, field.toLowerCase()));
+    }
+  }
+
+  return details;
+}
+
 function validateTarget(relPath) {
   const fullPath = path.join(REPO_ROOT, relPath);
   const details = [];
@@ -233,6 +350,9 @@ function validateTarget(relPath) {
       details.push(`Missing contract field row: "${field}".`);
     }
   }
+
+  details.push(...validateEntryPoints(relPath, content));
+  details.push(...validateDocumentedCommands(relPath, content));
 
   return {
     target: relPath,
