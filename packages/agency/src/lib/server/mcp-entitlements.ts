@@ -32,6 +32,25 @@ export interface AgencyMcpEntitlementDecision {
 	};
 }
 
+export type AgencyCanonicalServiceTier = 'mcp_only' | 'policy_os_trial' | 'policy_os_core';
+
+export interface AgencyEntitlementSnapshot {
+	service_tier: AgencyCanonicalServiceTier;
+	managed_bearer_allowed: boolean;
+	org_membership_active: boolean;
+	service_entitled: boolean;
+	policy_accepted: boolean;
+	contract_active: boolean;
+	billing_active: boolean;
+	approved_exception: {
+		present: boolean;
+		type: string | null;
+		allowed_scope: string | null;
+		graduation_target: string | null;
+		review_by: string | null;
+	};
+}
+
 export interface AgencyMcpEntitlementUpdateInput {
 	authSubject: string;
 	authEmail?: string | null;
@@ -141,6 +160,77 @@ function toFlag(value: number | null | undefined): boolean {
 	return value === 1;
 }
 
+export function normalizeAgencyServiceTier(
+	value: string | null | undefined,
+	fallback: AgencyCanonicalServiceTier = 'mcp_only'
+): AgencyCanonicalServiceTier {
+	const normalized = value?.trim().toLowerCase();
+	if (!normalized) return fallback;
+
+	if (
+		normalized === 'mcp_only' ||
+		normalized === 'mcp-only' ||
+		normalized === 'free' ||
+		normalized === 'agency' ||
+		normalized === 'vertical-templates'
+	) {
+		return 'mcp_only';
+	}
+
+	if (
+		normalized === 'policy_os_trial' ||
+		normalized === 'policy-os-trial' ||
+		normalized === 'trial' ||
+		normalized === 'pilot' ||
+		normalized === 'solo' ||
+		normalized === 'pro'
+	) {
+		return 'policy_os_trial';
+	}
+
+	if (
+		normalized === 'policy_os_core' ||
+		normalized === 'policy-os-core' ||
+		normalized === 'core' ||
+		normalized === 'team' ||
+		normalized === 'org'
+	) {
+		return 'policy_os_core';
+	}
+
+	return fallback;
+}
+
+export function buildAgencyEntitlementSnapshot(
+	row: AgencyMcpEntitlementRow | null,
+	decision?: AgencyMcpEntitlementDecision | null
+): AgencyEntitlementSnapshot {
+	const metadata = row ? safeParseMetadata(row.metadata_json) : {};
+	const approvedException = asObject(metadata.approved_exception) ?? asObject(metadata.exception);
+
+	return {
+		service_tier: normalizeAgencyServiceTier(row?.service_tier),
+		managed_bearer_allowed: decision?.checks.managed_bearer_allowed ?? toFlag(row?.managed_bearer_allowed),
+		org_membership_active: decision?.checks.org_membership_active ?? toFlag(row?.org_membership_active),
+		service_entitled: decision?.checks.service_entitled ?? toFlag(row?.service_entitled),
+		policy_accepted: decision?.checks.policy_accepted ?? toFlag(row?.policy_accepted),
+		contract_active: decision?.checks.contract_active ?? toFlag(row?.contract_active),
+		billing_active: decision?.checks.billing_active ?? toFlag(row?.billing_active),
+		approved_exception: {
+			present: Boolean(approvedException),
+			type: typeof approvedException?.exception_type === 'string' ? approvedException.exception_type : null,
+			allowed_scope:
+				typeof approvedException?.allowed_scope === 'string' ? approvedException.allowed_scope : null,
+			graduation_target:
+				typeof approvedException?.graduation_target === 'string' ? approvedException.graduation_target : null,
+			review_by:
+				typeof approvedException?.expiration_or_review_date === 'string'
+					? approvedException.expiration_or_review_date
+					: null,
+		},
+	};
+}
+
 export async function findAgencyMcpEntitlementByAuthSubject(
 	db: D1Database,
 	authSubject: string
@@ -201,7 +291,7 @@ export async function upsertAgencyMcpEntitlement(
 			input.accountId ?? null,
 			input.tenantId ?? null,
 			input.workspaceAccountId ?? null,
-			input.serviceTier ?? 'agency',
+			normalizeAgencyServiceTier(input.serviceTier),
 			JSON.stringify(input.metadata ?? {})
 		)
 		.run();
@@ -386,7 +476,7 @@ export async function upsertAgencyIdentitySeed(
 				input.accountId,
 				input.tenantId,
 				input.workspaceAccountId ?? input.accountId,
-				input.serviceTier ?? 'agency',
+				normalizeAgencyServiceTier(input.serviceTier),
 				input.managedBearerAllowed === false ? 0 : 1,
 				input.orgMembershipActive === false ? 0 : 1,
 				input.serviceEntitled === false ? 0 : 1,
@@ -511,7 +601,7 @@ export async function updateAgencyMcpEntitlement(
 			input.accountId ?? existing.account_id,
 			input.tenantId ?? existing.tenant_id,
 			input.workspaceAccountId ?? existing.workspace_account_id,
-			input.serviceTier ?? existing.service_tier,
+			normalizeAgencyServiceTier(input.serviceTier ?? existing.service_tier),
 			booleanToInt(input.managedBearerAllowed, existing.managed_bearer_allowed),
 			booleanToInt(input.orgMembershipActive, existing.org_membership_active),
 			booleanToInt(input.serviceEntitled, existing.service_entitled),
@@ -635,7 +725,7 @@ export async function reconcileAgencyMcpEntitlement(
 					input.accountId ?? existing.account_id,
 					input.tenantId ?? existing.tenant_id,
 					input.workspaceAccountId ?? existing.workspace_account_id,
-					input.serviceTier ?? existing.service_tier,
+					normalizeAgencyServiceTier(input.serviceTier ?? existing.service_tier),
 					contractActive ? 1 : 0,
 					billingActive ? 1 : 0,
 					serviceEntitled ? 1 : 0,
@@ -659,7 +749,7 @@ export async function reconcileAgencyMcpEntitlement(
 			accountId: input.accountId ?? null,
 			tenantId: input.tenantId ?? null,
 			workspaceAccountId: input.workspaceAccountId ?? input.accountId ?? null,
-			serviceTier: input.serviceTier ?? 'agency',
+			serviceTier: normalizeAgencyServiceTier(input.serviceTier),
 			metadata: {
 				source: commercial ? 'stripe_commercial_state' : 'session_bootstrap',
 				manual_override: false,
@@ -725,7 +815,7 @@ export async function reconcileAgencyMcpEntitlement(
 		accountId: source.identity_account_id ?? input.accountId ?? existing?.account_id ?? source.workspace_account_id,
 		tenantId: source.identity_tenant_id ?? input.tenantId ?? existing?.tenant_id ?? source.slug,
 		workspaceAccountId: source.workspace_account_id,
-		serviceTier: input.serviceTier ?? 'agency',
+		serviceTier: normalizeAgencyServiceTier(input.serviceTier),
 			metadata: {
 				manual_override: false,
 				source: commercial ? 'partner_auth_client+stripe' : 'partner_auth_client',
@@ -848,6 +938,11 @@ function safeParseMetadata(raw: string): Record<string, unknown> {
 		// ignore malformed metadata and replace it on next write
 	}
 	return {};
+}
+
+function asObject(value: unknown): Record<string, unknown> | null {
+	if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+	return value as Record<string, unknown>;
 }
 
 function booleanToInt(input: boolean | undefined, fallback: number): number {

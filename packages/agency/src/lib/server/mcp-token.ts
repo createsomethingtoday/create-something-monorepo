@@ -2,11 +2,14 @@ import { error } from '@sveltejs/kit';
 import { createSessionManager, getAuth0Config, getDomainConfig } from '@create-something/canon/auth';
 import type { SessionManagerOptions } from '@create-something/canon/auth';
 import {
+	buildAgencyEntitlementSnapshot,
 	evaluateAgencyMcpEntitlement,
 	findAgencyMcpEntitlementByAuthSubject,
+	normalizeAgencyServiceTier,
 	reconcileAgencyMcpEntitlement,
 	upsertAgencyMcpEntitlement,
 	type AgencyMcpEntitlementDecision,
+	type AgencyEntitlementSnapshot,
 	type AgencyMcpEntitlementRow,
 } from '$lib/server/mcp-entitlements';
 import { canonicalizeAgencyEntitlementIdentity, resolveCanonicalAgencyIdentity } from '$lib/server/agency-identity';
@@ -46,7 +49,7 @@ export async function ensureAgencyMcpEntitlement(input: {
 	accountId?: string | null;
 	tenantId?: string | null;
 	metadata?: Record<string, unknown>;
-}): Promise<{ row: AgencyMcpEntitlementRow; decision: AgencyMcpEntitlementDecision }> {
+}): Promise<{ row: AgencyMcpEntitlementRow; decision: AgencyMcpEntitlementDecision; snapshot: AgencyEntitlementSnapshot }> {
 	const db = input.platform?.env?.DB;
 	if (!db) {
 		throw error(503, 'Database is unavailable');
@@ -61,7 +64,7 @@ export async function ensureAgencyMcpEntitlement(input: {
 			accountId: input.accountId ?? canonicalIdentity.accountId,
 			tenantId: input.tenantId ?? canonicalIdentity.tenantId,
 			workspaceAccountId: input.accountId ?? canonicalIdentity.workspaceAccountId,
-			serviceTier: input.user.tier ?? 'agency',
+			serviceTier: normalizeAgencyServiceTier(input.user.tier),
 		})) ??
 		(await upsertAgencyMcpEntitlement(db, {
 			authSubject: input.user.id,
@@ -69,7 +72,7 @@ export async function ensureAgencyMcpEntitlement(input: {
 			accountId: input.accountId ?? canonicalIdentity.accountId,
 			tenantId: input.tenantId ?? canonicalIdentity.tenantId,
 			workspaceAccountId: input.accountId ?? canonicalIdentity.workspaceAccountId,
-			serviceTier: input.user.tier ?? 'agency',
+			serviceTier: normalizeAgencyServiceTier(input.user.tier),
 			metadata: {
 				session_source: 'auth0',
 				user_source: input.user.source ?? 'auth0',
@@ -85,6 +88,7 @@ export async function ensureAgencyMcpEntitlement(input: {
 			accountId: input.accountId ?? canonicalIdentity.accountId,
 			tenantId: input.tenantId ?? canonicalIdentity.tenantId,
 		}),
+		snapshot: buildAgencyEntitlementSnapshot(canonicalRow),
 	};
 }
 

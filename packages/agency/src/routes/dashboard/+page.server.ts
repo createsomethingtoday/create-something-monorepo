@@ -3,6 +3,7 @@ import type { PageServerLoad } from './$types';
 import { ensureAgencyMcpEntitlement } from '$lib/server/mcp-token';
 import { getSettledValue, loadManagedTokenSnapshot, loadPasswordSnapshot } from '$lib/server/access-state';
 import { resolveMcpAccessAssignment } from '$lib/server/mcp-access-assignments';
+import { normalizeAgencyServiceTier } from '$lib/server/mcp-entitlements';
 
 interface CommercialStateRow {
 	service_tier: string | null;
@@ -142,7 +143,7 @@ export const load: PageServerLoad = async ({ parent, platform }) => {
 		overview: {
 			accessAllowed: decision.allowed,
 			accessReason: decision.reason,
-			serviceTier: commercial?.service_tier ?? entitlement.service_tier ?? 'agency',
+			serviceTier: normalizeAgencyServiceTier(commercial?.service_tier ?? entitlement.service_tier),
 			connectedAccounts: (partner?.toolkit_accounts ?? 0) + (partner?.notion_accounts ?? 0),
 			tokenActive: Boolean(tokenSnapshot.token?.active),
 			hasChatGptPassword: passwordSnapshot.hasPassword,

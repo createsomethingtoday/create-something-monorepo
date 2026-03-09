@@ -10,6 +10,7 @@ import { json, error } from '@sveltejs/kit';
 import { createStripeClient, getProductIdByStripePriceId, HANDLED_WEBHOOK_EVENTS } from '$lib/services/stripe';
 import { createPersistentLogger, createLogger, type Logger } from '@create-something/canon/utils';
 import type Stripe from 'stripe';
+import { normalizeAgencyServiceTier } from '$lib/server/mcp-entitlements';
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	// Create persistent logger for agent-queryable error tracking
@@ -808,11 +809,7 @@ function normalizeProductId(raw: string | undefined): string | null {
 
 function deriveServiceTier(productId: string | null): string | null {
 	if (!productId) return null;
-	if (productId.includes('team')) return 'team';
-	if (productId.includes('org')) return 'org';
-	if (productId.includes('solo')) return 'solo';
-	if (productId.includes('vertical-templates')) return 'agency';
-	return productId;
+	return normalizeAgencyServiceTier(productId);
 }
 
 /**

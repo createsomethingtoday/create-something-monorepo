@@ -1,6 +1,10 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { listAgencyIdentitySeeds, upsertAgencyIdentitySeed } from '$lib/server/mcp-entitlements';
+import {
+	listAgencyIdentitySeeds,
+	normalizeAgencyServiceTier,
+	upsertAgencyIdentitySeed,
+} from '$lib/server/mcp-entitlements';
 import { requireAgencyOperator } from '$lib/server/operator-auth';
 
 interface UpsertBody {
@@ -76,7 +80,7 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 						accountId,
 						tenantId,
 						workspaceAccountId: nullable(row.workspace_account_id) ?? accountId,
-						serviceTier: row.service_tier?.trim() || 'agency',
+						serviceTier: normalizeAgencyServiceTier(row.service_tier),
 						managedBearerAllowed: parseBoolean(row.managed_bearer_allowed, true),
 						orgMembershipActive: parseBoolean(row.org_membership_active, true),
 						serviceEntitled: parseBoolean(row.service_entitled, true),
@@ -136,7 +140,7 @@ export const POST: RequestHandler = async ({ request, cookies, platform }) => {
 			accountId: body.account_id,
 			tenantId: body.tenant_id,
 			workspaceAccountId: body.workspace_account_id ?? body.account_id,
-			serviceTier: body.service_tier ?? 'agency',
+			serviceTier: normalizeAgencyServiceTier(body.service_tier),
 			managedBearerAllowed: body.managed_bearer_allowed,
 			orgMembershipActive: body.org_membership_active,
 			serviceEntitled: body.service_entitled,

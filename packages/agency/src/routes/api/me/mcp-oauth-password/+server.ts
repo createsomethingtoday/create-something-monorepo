@@ -54,7 +54,7 @@ async function resolveEntitledContext(platform: App.Platform | undefined, authSu
 			authEmail,
 			accountId: resolveCanonicalAgencyIdentity({ id: authSubject, email: authEmail }).accountId,
 			tenantId: resolveCanonicalAgencyIdentity({ id: authSubject, email: authEmail }).tenantId,
-			serviceTier: 'agency',
+			serviceTier: 'mcp_only',
 		}));
 
 	if (!row) return null;

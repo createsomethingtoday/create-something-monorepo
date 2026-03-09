@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { ensureAgencyMcpEntitlement, requireAgencySessionUser } from '$lib/server/mcp-token';
-import { updateAgencyMcpEntitlement } from '$lib/server/mcp-entitlements';
+import { normalizeAgencyServiceTier, updateAgencyMcpEntitlement } from '$lib/server/mcp-entitlements';
 import { resolveCanonicalAgencyIdentity } from '$lib/server/agency-identity';
 
 export const POST: RequestHandler = async ({ cookies, platform }) => {
@@ -21,7 +21,7 @@ export const POST: RequestHandler = async ({ cookies, platform }) => {
 			accountId: canonicalIdentity.accountId,
 			tenantId: canonicalIdentity.tenantId,
 			workspaceAccountId: canonicalIdentity.workspaceAccountId,
-			serviceTier: 'agency',
+			serviceTier: normalizeAgencyServiceTier(row.service_tier),
 			managedBearerAllowed: true,
 			orgMembershipActive: true,
 			serviceEntitled: true,
