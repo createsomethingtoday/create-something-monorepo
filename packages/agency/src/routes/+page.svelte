@@ -5,10 +5,10 @@
     BlurFade,
     BorderBeam,
     OrbitingCircles,
-    ShimmerButton,
-    Marquee
+    ShimmerButton
   } from '@create-something/canon/magicui';
   import HubMcpFlow from '$lib/components/HubMcpFlow.svelte';
+  import ArtifactSystemStrip from '$lib/components/ArtifactSystemStrip.svelte';
   // Structured data for SEO/AEO
   const services = [
     {
@@ -37,45 +37,6 @@
     }
   ];
 
-  // Artifact Snippets for visualization
-  const artifactSnippets = [
-    {
-      name: 'mcp_contract.yaml',
-      code: 'name: "custom-workflow-mcp"\nversion: "1.0.0"\nscopes: ["read", "write"]\ntrust_boundary: "strict"'
-    },
-    {
-      name: 'agent_contract.yaml',
-      code: 'boundary: "human-in-loop"\napprovals_required: true\nescalation:\n  trigger: "confidence < 0.9"\n  action: "notify"'
-    },
-    {
-      name: 'outcome_contract.md',
-      code: '# Success Criteria\n- 99.9% Deterministic retries\n- Full state persistence\n- Zero unauthorized writes'
-    },
-    {
-      name: 'golden_tasks.yaml',
-      code: 'test_cases:\n  - name: "handle_rate_limit"\n    expected: "exponential_backoff"\n  - name: "auth_failure"\n    expected: "immediate_halt"'
-    },
-    {
-      name: 'runbook.md',
-      code: '## Incident Response\n1. Check core worker logs\n2. Verify D1 state integrity\n3. Roll back to last golden deploy'
-    },
-    {
-      name: 'policy.json',
-      code: '{\n  "effect": "Deny",\n  "action": "*",\n  "resource": "production_db",\n  "condition": "unverified"\n}'
-    }
-  ];
-
-  // Create varied rows for the Marquees
-  const row1 = [...artifactSnippets];
-  const row2 = [...artifactSnippets].reverse();
-  const row3 = [
-    artifactSnippets[2],
-    artifactSnippets[4],
-    artifactSnippets[0],
-    artifactSnippets[1],
-    artifactSnippets[5],
-    artifactSnippets[3]
-  ];
 </script>
 
 <!-- SVG Icon Snippets -->
@@ -220,8 +181,8 @@
       <BlurFade delay={0.2}>
         <p class="hero-detail">
           I help CTOs and engineering leaders orchestrate the tools their teams already rely on,
-          add control layers around AI execution, and ship cross-system workflows that stay
-          reliable in production.
+          add a Control Layer around AI execution, and ship cross-system workflows that stay
+          reliable when the stakes become operational.
         </p>
       </BlurFade>
       <BlurFade delay={0.25}>
@@ -485,26 +446,32 @@
       <h2 class="section-heading">The Model</h2>
     </BlurFade>
     <BlurFade delay={0.1}>
-      <div class="problem-statements">
-        <p class="problem-text">
-          Native agent features are getting easier to adopt. That is good for teams and good for
-          velocity.
-        </p>
-        <p class="problem-text">
-          The hard gap remains workflow-specific logic, reliability controls, and cross-system
-          orchestration. That is where .agency compounds value.
-        </p>
+      <div class="problem-statements model-grid">
+        <div class="model-copy">
+          <p class="problem-text">
+            Native agent features are getting easier to adopt. That is good for teams and good for
+            velocity.
+          </p>
+          <p class="problem-text">
+            The hard gap remains workflow-specific logic, approval boundaries, and live blocked
+            states. That is where `.agency` compounds value.
+          </p>
+          <ul class="control-outcomes">
+            <li>Safe actions run automatically once the workflow and tenant are in good standing.</li>
+            <li>Risky actions route to approval instead of silently becoming manual cleanup.</li>
+            <li>Disallowed actions stop with a reason buyers and operators can both understand.</li>
+          </ul>
+          <p class="problem-text">
+            When a client primarily needs full system development and team onboarding, I refer that
+            engagement to Half Dozen directly.
+          </p>
+          <p class="problem-punchline">
+            Reliable workflows are the product. Operational leverage is the outcome.
+          </p>
+        </div>
         <div class="mcp-flow-wrapper">
           <HubMcpFlow />
         </div>
-        <p class="mcp-flow-caption">
-          Hub MCP routes execution. Reliability controls decide what can run safely.
-        </p>
-        <p class="problem-text">
-          When a client primarily needs full system development and team onboarding, I refer that
-          engagement to Half Dozen directly.
-        </p>
-        <p class="problem-punchline">Reliable workflows are the product. Operational leverage is the outcome.</p>
       </div>
     </BlurFade>
   </div>
@@ -514,85 +481,12 @@
 <section class="audience-section">
   <div class="section-container">
     <BlurFade>
-      <h2 class="section-heading">Trust Artifacts</h2>
+      <ArtifactSystemStrip
+        title="What makes the Control Layer durable"
+        description="The buyer promise is backed by explicit contracts, runbooks, and release evidence, not by founder memory or hidden prompts."
+      />
     </BlurFade>
-
-    <div class="audience-grid">
-      <BlurFade delay={0.1}>
-        <div class="audience-card">
-          <h3>Contract Pack</h3>
-          <p>
-            Every engagement ships with <code>mcp_contract.yaml</code>,
-            <code>agent_contract.yaml</code>, and <code>outcome_contract.md</code> so scope, behavior,
-            and outcomes are explicit.
-          </p>
-        </div>
-      </BlurFade>
-
-      <BlurFade delay={0.2}>
-        <div class="audience-card">
-          <h3>Release Evidence</h3>
-          <p>
-            Golden task definitions and pass/fail results are documented before release. Reliability
-            is gated by evidence, not intuition.
-          </p>
-        </div>
-      </BlurFade>
-
-      <BlurFade delay={0.3}>
-        <div class="audience-card">
-          <h3>Operations Runbook</h3>
-          <p>
-            Approval paths, escalation triggers, rollback steps, and ownership boundaries are
-            delivered as operating artifacts your team can run.
-          </p>
-        </div>
-      </BlurFade>
-    </div>
   </div>
-
-  <BlurFade delay={0.4}>
-    <div class="artifacts-visualization">
-      <div class="marquee-fade-left"></div>
-      <div class="marquee-fade-right"></div>
-
-      <Marquee pauseOnHover={true} duration={35} gap={24} class="artifact-marquee">
-        {#each row1 as artifact}
-          <div class="artifact-card">
-            <div class="artifact-header">
-              <span class="artifact-dot"></span>
-              <span class="artifact-name">{artifact.name}</span>
-            </div>
-            <pre class="artifact-code"><code>{artifact.code}</code></pre>
-          </div>
-        {/each}
-      </Marquee>
-
-      <Marquee reverse={true} pauseOnHover={true} duration={45} gap={24} class="artifact-marquee">
-        {#each row2 as artifact}
-          <div class="artifact-card">
-            <div class="artifact-header">
-              <span class="artifact-dot"></span>
-              <span class="artifact-name">{artifact.name}</span>
-            </div>
-            <pre class="artifact-code"><code>{artifact.code}</code></pre>
-          </div>
-        {/each}
-      </Marquee>
-
-      <Marquee pauseOnHover={true} duration={40} gap={24} class="artifact-marquee">
-        {#each row3 as artifact}
-          <div class="artifact-card">
-            <div class="artifact-header">
-              <span class="artifact-dot"></span>
-              <span class="artifact-name">{artifact.name}</span>
-            </div>
-            <pre class="artifact-code"><code>{artifact.code}</code></pre>
-          </div>
-        {/each}
-      </Marquee>
-    </div>
-  </BlurFade>
 </section>
 
 <!-- CTA -->
@@ -1070,7 +964,7 @@
   }
 
   .problem-statements {
-    max-width: var(--content-width-md, 640px);
+    max-width: var(--content-width-xl, 1200px);
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -1081,33 +975,54 @@
     font-size: clamp(1.25rem, 3vw + 0.5rem, 1.75rem);
     line-height: var(--leading-relaxed);
     color: rgba(255, 255, 255, 0.7);
-    text-align: center;
+    text-align: left;
   }
 
   .mcp-flow-wrapper {
-    margin: var(--space-8, 3rem) 0;
+    margin: 0;
     width: 100%;
     display: flex;
     justify-content: center;
-  }
-
-  .mcp-flow-caption {
-    margin-top: calc(var(--space-6, 2rem) * -0.35);
-    font-size: var(--text-body-sm, 0.875rem);
-    line-height: 1.6;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.5);
-    text-align: center;
   }
 
   .problem-punchline {
     font-size: clamp(1.5rem, 4vw + 0.5rem, 2.5rem);
     font-weight: var(--font-bold);
     color: #ffffff;
-    text-align: center;
-    margin-top: var(--space-4, 1rem);
+    text-align: left;
+    margin-top: var(--space-2, 0.5rem);
     letter-spacing: var(--tracking-tight);
+  }
+
+  .model-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    gap: clamp(1.5rem, 4vw, 3rem);
+    align-items: center;
+  }
+
+  .model-copy {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .control-outcomes {
+    display: grid;
+    gap: 0.85rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .control-outcomes li {
+    padding: 1rem 1.1rem;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+      rgba(255, 255, 255, 0.02);
+    color: rgba(255, 255, 255, 0.82);
+    line-height: 1.6;
   }
   /* What You Get — Offerings */
   .offerings-section {
@@ -1277,9 +1192,9 @@
   }
 
   .problem-statements {
-    max-width: var(--content-width-sm);
+    max-width: var(--content-width-xl);
     margin: 0 auto;
-    text-align: center;
+    text-align: left;
   }
 
   .problem-text {
@@ -1295,8 +1210,8 @@
     color: var(--color-fg-primary);
     line-height: 1.28;
     letter-spacing: var(--tracking-tight, -0.01em);
-    max-width: 32ch;
-    margin: var(--space-8, 3rem) auto 0;
+    max-width: 24ch;
+    margin: 0;
   }
 
   /* Audience / Built For */
@@ -1304,50 +1219,19 @@
     padding: var(--section-padding, 6rem) 0;
   }
 
-  .audience-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-4, 1rem);
-    align-items: stretch;
-  }
+  @media (max-width: 900px) {
+    .model-grid {
+      grid-template-columns: 1fr;
+    }
 
-  /* BlurFade wrappers stretch for equal height */
-  .audience-grid > :global(*) {
-    display: flex;
-    flex-direction: column;
-  }
+    .problem-text,
+    .problem-punchline {
+      text-align: center;
+    }
 
-  .audience-card {
-    padding: var(--space-6, 2rem) var(--space-5, 1.5rem);
-    border-radius: var(--radius-lg, 12px);
-    background: var(--color-bg-pure);
-    box-shadow: var(--glass-shine-soft);
-    transition:
-      border-color var(--duration-standard) var(--ease-standard),
-      box-shadow var(--duration-standard) var(--ease-standard),
-      transform var(--duration-bounce) var(--ease-bounce);
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-  }
-
-  .audience-card:hover {
-    border-color: var(--color-border-emphasis);
-    box-shadow: var(--glass-shine-standard), var(--glass-outer-sm);
-    transform: translateY(-2px);
-  }
-
-  .audience-card h3 {
-    font-size: var(--text-body-lg);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    margin-bottom: var(--space-3, 0.75rem);
-  }
-
-  .audience-card p {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
+    .problem-punchline {
+      margin: 0 auto;
+    }
   }
 
   /* CTA */
@@ -1416,10 +1300,6 @@
       order: -1;
     }
 
-    .audience-grid {
-      grid-template-columns: 1fr;
-    }
-
     .process-section,
     .offerings-section,
     .problem-section,
@@ -1427,93 +1307,5 @@
     .cta-section {
       padding: var(--layout-3, 4rem) 0;
     }
-  }
-
-  /* Artifacts Visualization */
-  .artifacts-visualization {
-    position: relative;
-    width: 100vw;
-    left: calc(-50vw + 50%);
-    margin-top: var(--space-8, 3rem);
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4, 1rem);
-    overflow: hidden;
-  }
-
-  .marquee-fade-left,
-  .marquee-fade-right {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 15vw;
-    z-index: 2;
-    pointer-events: none;
-  }
-
-  .marquee-fade-left {
-    left: 0;
-    background: linear-gradient(to right, var(--color-bg-pure, #000000), transparent);
-  }
-
-  .marquee-fade-right {
-    right: 0;
-    background: linear-gradient(to left, var(--color-bg-pure, #000000), transparent);
-  }
-
-  .artifact-card {
-    display: flex;
-    flex-direction: column;
-    padding: var(--space-4, 1rem);
-    border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.05));
-    border-radius: var(--radius-md, 8px);
-    background: rgba(10, 10, 15, 0.6);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: var(--glass-shine-soft);
-    min-width: 320px;
-    transition: border-color var(--duration-standard) var(--ease-standard);
-  }
-
-  .artifact-card:hover {
-    border-color: rgba(96, 165, 250, 0.4);
-    background: rgba(10, 10, 15, 0.8);
-  }
-
-  .artifact-header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2, 0.5rem);
-    margin-bottom: var(--space-3, 0.75rem);
-    padding-bottom: var(--space-2, 0.5rem);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .artifact-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: rgba(96, 165, 250, 0.8);
-    box-shadow: 0 0 8px rgba(96, 165, 250, 0.4);
-  }
-
-  .artifact-name {
-    font-size: var(--text-caption);
-    font-family: var(--font-mono, monospace);
-    color: var(--color-fg-secondary);
-    letter-spacing: 0.05em;
-  }
-
-  .artifact-code {
-    margin: 0;
-    font-family: var(--font-mono, monospace);
-    font-size: 0.75rem;
-    color: rgba(96, 165, 250, 0.7);
-    line-height: 1.5;
-    white-space: pre-wrap;
-  }
-
-  :global(.artifact-marquee) {
-    --gap: 1.5rem !important;
   }
 </style>

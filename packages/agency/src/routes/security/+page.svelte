@@ -1,48 +1,65 @@
 <script lang="ts">
   import { SEO } from '@create-something/canon';
+  import ControlStackDiagram from '$lib/components/ControlStackDiagram.svelte';
+  import BlockedStatePanel from '$lib/components/BlockedStatePanel.svelte';
 
   const layers = [
     {
-      title: 'Identity',
-      text: 'Auth0 provides the user identity boundary. Portable bearer tokens are issued by .agency, not exported directly from Auth0.'
+      title: 'Identity boundary',
+      text: 'Auth0 establishes the person or tenant boundary. `.agency` does not treat a bearer token as a replacement for identity.'
     },
     {
-      title: 'Authorization',
-      text: 'Every request is checked against organization membership, service entitlements, policy acceptance, contract status, and billing state.'
+      title: 'Live entitlement',
+      text: 'Every request is checked against organization membership, service entitlement, contract standing, billing state, and policy acceptance.'
     },
     {
-      title: 'Secrets',
-      text: 'System-side runtime secrets remain in managed secret infrastructure such as Infisical. User bearer tokens are treated as high-trust credentials and protected separately.'
+      title: 'Credential separation',
+      text: 'Portal sign-in, managed bearer tokens, and hosted product credentials remain distinct so compromise or revocation can be handled deliberately.'
     },
     {
-      title: 'Operations',
-      text: 'Revocation, regeneration, audit logs, anomaly review, and rate controls are part of the standing operating model, not optional support procedures.'
+      title: 'Operational control',
+      text: 'Revocation, regeneration, anomaly review, and audit trails are part of the standing operating model, not an optional support add-on.'
     }
   ];
 </script>
 
 <SEO
   title="Security"
-  description="How CREATE SOMETHING .agency manages identity, bearer-token governance, entitlement checks, secrets, and operational controls for production automation."
+  description="How CREATE SOMETHING .agency turns identity, entitlement, blocked states, and audit trails into governed execution for production automation."
   propertyName="agency"
 />
 
-<section class="hero pt-32 pb-16 px-6">
+<section class="hero">
   <div class="shell-inner">
-    <div class="eyebrow animate-reveal">Trust Surface</div>
+    <div class="eyebrow animate-reveal">Proof Surface</div>
     <div class="copy animate-reveal">
       <h1 class="page-title">Security</h1>
       <p class="lede">
-        `.agency` is designed around identity separation, live authorization, controlled secret handling,
-        and operational revocation. The point is not just to issue credentials. The point is to keep
-        automation governable after credentials exist.
+        The Control Layer is what turns credentials into governable runtime behavior. A token can
+        exist and access can still stop. That is intentional. Identity, entitlement, commercial
+        state, and policy all participate in the final decision.
       </p>
-      <p class="date-text">Last updated: March 6, 2026</p>
+      <p class="date-text">Last updated: March 9, 2026</p>
     </div>
   </div>
 </section>
 
-<section class="pb-24 px-6">
+<section class="section-shell">
+  <div class="shell-inner">
+    <ControlStackDiagram
+      title="How `.agency` enforces governable automation"
+      description="Each request passes through an explicit chain. That is why approval requirements, blocked states, and recovery paths stay legible instead of hiding inside prompt behavior."
+    />
+  </div>
+</section>
+
+<section class="section-shell">
+  <div class="shell-inner">
+    <BlockedStatePanel />
+  </div>
+</section>
+
+<section class="section-shell">
   <div class="shell-inner security-grid">
     {#each layers as layer}
       <article class="security-card">
@@ -52,26 +69,25 @@
     {/each}
 
     <article class="security-card full-span">
-      <h2>Bearer Token Risk Management</h2>
+      <h2>Bearer token risk management</h2>
       <p>
-        `.agency` supports one long-lived bearer token per authenticated user. This simplicity is balanced
-        by compensating controls: opaque token format, protected server-side storage, request-time
-        entitlement enforcement, immediate revoke and regenerate paths, and auditability for both issuance
-        and downstream use.
+        `.agency` issues one managed bearer token per authenticated user for approved hosts and
+        background agents. The token is portable, but authorization remains conditional at request
+        time through live entitlement and policy checks.
       </p>
       <p>
-        If a token is suspected to be compromised, CREATE SOMETHING may revoke it immediately and require
-        re-issuance before further host or agent access is restored.
+        If compromise is suspected, CREATE SOMETHING can revoke or regenerate access immediately
+        without waiting for a token expiry window.
       </p>
     </article>
 
     <article class="security-card full-span">
-      <h2>Commercial and Legal Gating</h2>
+      <h2>Why commercial and legal state belongs in the access decision</h2>
       <p>
-        Access is not determined by token validity alone. `.agency` may deny access where contract status,
-        required policy acceptance, or billing standing is not current, even if a token has not expired.
-        This keeps legal and commercial state inside the access decision rather than leaving it as a
-        disconnected back-office concern.
+        Access is not determined by token validity alone. `.agency` can deny execution when
+        contract status, billing standing, or required policy acceptance is not current. This keeps
+        back-office reality tied to runtime behavior instead of leaving a governance gap between the
+        agreement and the workflow.
       </p>
       <p>
         For security inquiries, contact <a href="mailto:legal@createsomething.io">legal@createsomething.io</a>.
@@ -81,6 +97,14 @@
 </section>
 
 <style>
+  .hero {
+    padding: 8rem 1.5rem 3rem;
+  }
+
+  .section-shell {
+    padding: 0 1.5rem 4rem;
+  }
+
   .eyebrow {
     color: var(--color-fg-tertiary);
     text-transform: uppercase;
@@ -90,7 +114,7 @@
   }
 
   .copy {
-    max-width: 56rem;
+    max-width: 62rem;
   }
 
   .page-title {
@@ -103,7 +127,7 @@
   .lede {
     font-size: var(--text-body-lg);
     color: var(--color-fg-secondary);
-    max-width: 54rem;
+    max-width: 58rem;
     line-height: 1.7;
   }
 
@@ -122,10 +146,11 @@
   .security-card {
     border: 1px solid rgba(255, 255, 255, 0.08);
     background:
-      radial-gradient(circle at top left, rgba(251, 191, 36, 0.08), transparent 40%),
+      radial-gradient(circle at top left, rgba(45, 212, 191, 0.09), transparent 45%),
       linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015)),
       rgba(0, 0, 0, 0.5);
     padding: 1.5rem;
+    border-radius: 20px;
     backdrop-filter: blur(8px);
   }
 

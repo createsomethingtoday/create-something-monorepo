@@ -7,7 +7,8 @@
     BorderBeam,
     Marquee
   } from '@create-something/canon/magicui';
-  import HubMcpFlow from '$lib/components/HubMcpFlow.svelte';
+  import GovernedExecutionFlow from '$lib/components/GovernedExecutionFlow.svelte';
+  import ArtifactSystemStrip from '$lib/components/ArtifactSystemStrip.svelte';
   import BrandLogo from '$lib/components/BrandLogo.svelte';
 
   // Structured data for SEO/AEO
@@ -142,12 +143,10 @@
 <section class="flow-section">
   <div class="section-container">
     <BlurFade delay={0.3}>
-      <div class="mcp-flow-wrapper">
-        <HubMcpFlow />
-      </div>
-      <p class="mcp-flow-caption">
-        Hub MCP routes execution. Reliability controls decide what can run safely.
-      </p>
+      <GovernedExecutionFlow
+        title="Where the Control Layer fits"
+        description="Workflow Infrastructure creates the route. The Control Layer decides whether the route can run fast, needs review, or should stop."
+      />
     </BlurFade>
   </div>
 </section>
@@ -186,50 +185,52 @@
       <div class="retainer-card">
         <BorderBeam size={300} duration={12} delay={9} />
         <div class="retainer-header">
-          <div class="retainer-pricing">
-            <div class="retainer-price">Workflow Infrastructure</div>
-            <div class="retainer-period">The operating model for reliable automation</div>
+          <div class="retainer-pricing offer-bridge">
+            <div class="retainer-price">Offer Ladder</div>
+            <div class="retainer-period">From wedge to governed execution</div>
           </div>
           <p class="retainer-note">
-            A model for moving from brittle scripts and one-off glue code to resilient systems.<br />
-            Built for teams carrying real execution and incident risk.
+            Start with one workflow. Add the Control Layer when failures become expensive. Escalate
+            to Enterprise Extension when governance and orchestration requirements widen.
           </p>
         </div>
         <div class="retainer-body">
-          <div class="retainer-columns">
-            <div class="retainer-detail">
-              <h3>Operating Principles</h3>
+          <div class="progression-grid">
+            <article class="progression-card wedge-card">
+              <span class="progression-tag">Entry wedge</span>
+              <h3>MCP-only</h3>
+              <p>Use this when discovery or compliance means the client team will operate the agent.</p>
               <ul class="retainer-list">
-                <li><strong>Delivery Vector:</strong> {deliveryVector.clientFacingLabel}</li>
-                <li>
-                  <strong>Focus:</strong> We remove integration drag and build reliable boundaries;
-                  basic setup is assumed.
-                </li>
-                <li><strong>Discovery:</strong> MCP-only available as an isolated entry wedge.</li>
-                <li>
-                  <strong>Referrals:</strong> System-development-first engagements routed to partners.
-                </li>
-                <li>
-                  <strong>Ownership:</strong> Client owns all code, workflows, and operating artifacts.
-                </li>
+                <li>Connectivity validation</li>
+                <li>Scoped host setup</li>
+                <li>Read-only or constrained rollout</li>
               </ul>
-            </div>
-            <div class="retainer-detail">
-              <h3>When to Escalate</h3>
+            </article>
+            <article class="progression-card highlighted-card">
+              <span class="progression-tag">Branded layer</span>
+              <h3>Control Layer</h3>
+              <p>The governed middle that makes <strong>{deliveryVector.clientFacingLabel}</strong> safe to run in production.</p>
               <ul class="retainer-list">
-                <li>Repeated automation failures or high incident cost</li>
-                <li>Cross-system workflow coupling and data drift risk</li>
-                <li>Regulated or high-stakes operations requiring auditability</li>
-                <li>Need for deterministic retries/idempotency</li>
-                <li>Enterprise security or trust-boundary requirements</li>
+                <li>Approval and block boundaries</li>
+                <li>Reason-coded access and blocked states</li>
+                <li>Evals, release gates, and incident loops</li>
               </ul>
-            </div>
+            </article>
+            <article class="progression-card">
+              <span class="progression-tag">High-stakes scale</span>
+              <h3>Enterprise Extension</h3>
+              <p>Apply when cross-system orchestration, auditability, and deterministic recovery all matter at once.</p>
+              <ul class="retainer-list">
+                <li>Custom trust boundaries</li>
+                <li>Cross-system orchestration</li>
+                <li>Deterministic retries and auditability</li>
+              </ul>
+            </article>
           </div>
           <div class="retainer-callout">
             <p>
-              Tool setup and onboarding are necessary but not sufficient for production automation.
-              The durable value is in reliability engineering, trust boundaries, and extension
-              architecture that lowers operational risk over time.
+              Discovery can start with MCP-only, but the Control Layer is where execution becomes a
+              managed product instead of a loose integration.
             </p>
           </div>
         </div>
@@ -242,46 +243,10 @@
 <section class="retainer-section">
   <div class="section-container">
     <BlurFade>
-      <h2 class="section-heading">What Ships Every Engagement</h2>
-    </BlurFade>
-    <BlurFade delay={0.1}>
-      <div class="artifact-grid">
-        <div class="artifact-doc-card">
-          <div class="artifact-doc-header">
-            <span class="artifact-doc-dot"></span>
-            <span class="artifact-doc-name">mcp_contract.yaml</span>
-          </div>
-          <p class="artifact-doc-desc">Tools, resources, auth scopes, and error model</p>
-        </div>
-        <div class="artifact-doc-card">
-          <div class="artifact-doc-header">
-            <span class="artifact-doc-dot"></span>
-            <span class="artifact-doc-name">agent_contract.yaml</span>
-          </div>
-          <p class="artifact-doc-desc">Allowed actions, approvals, and escalation rules</p>
-        </div>
-        <div class="artifact-doc-card">
-          <div class="artifact-doc-header">
-            <span class="artifact-doc-dot"></span>
-            <span class="artifact-doc-name">outcome_contract.md</span>
-          </div>
-          <p class="artifact-doc-desc">Workflow targets, success criteria, and fallback path</p>
-        </div>
-        <div class="artifact-doc-card">
-          <div class="artifact-doc-header">
-            <span class="artifact-doc-dot"></span>
-            <span class="artifact-doc-name">golden_tasks.yaml</span>
-          </div>
-          <p class="artifact-doc-desc">Release gate checks and latest pass/fail status</p>
-        </div>
-        <div class="artifact-doc-card">
-          <div class="artifact-doc-header">
-            <span class="artifact-doc-dot"></span>
-            <span class="artifact-doc-name">runbook.md</span>
-          </div>
-          <p class="artifact-doc-desc">Incident response, rollback, and ownership boundaries</p>
-        </div>
-      </div>
+      <ArtifactSystemStrip
+        title="What ships with every governed engagement"
+        description="The Control Layer is not a promise in a sales call. It is a set of artifacts your team can inspect, run, and inherit."
+      />
     </BlurFade>
   </div>
 </section>
@@ -448,22 +413,6 @@
     padding: 0 var(--container-padding, 1.5rem) var(--section-padding, 6rem);
   }
 
-  .mcp-flow-wrapper {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-  }
-
-  .mcp-flow-caption {
-    margin-top: var(--space-4, 1rem);
-    font-size: var(--text-body-sm, 0.875rem);
-    line-height: 1.6;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--color-fg-muted);
-    text-align: center;
-  }
-
   /* Stack Marquee */
   .stack-section {
     padding: var(--space-8, 3rem) 0 var(--section-padding, 6rem);
@@ -554,7 +503,7 @@
   }
 
   .retainer-card {
-    max-width: 800px;
+    max-width: 1080px;
     margin: 0 auto;
     border: 1px solid rgba(96, 165, 250, 0.3);
     border-radius: var(--radius-xl, 16px);
@@ -611,19 +560,58 @@
     padding: var(--space-6, 2rem) var(--space-5, 1.5rem);
   }
 
-  .retainer-columns {
+  .progression-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-6, 2rem);
   }
 
-  .retainer-detail h3 {
-    font-size: var(--text-caption);
-    font-weight: var(--font-semibold);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+  .progression-card {
+    padding: 1.25rem;
+    border-radius: var(--radius-lg, 12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015)),
+      rgba(255, 255, 255, 0.02);
+  }
+
+  .highlighted-card {
+    border-color: rgba(45, 212, 191, 0.2);
+    background:
+      radial-gradient(circle at top left, rgba(45, 212, 191, 0.14), transparent 50%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)),
+      rgba(4, 8, 15, 0.86);
+    box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.08);
+  }
+
+  .wedge-card {
+    border-style: dashed;
+  }
+
+  .progression-card h3 {
+    font-size: var(--text-h4);
+    color: var(--color-fg-primary);
+    margin: 0 0 var(--space-3, 0.75rem);
+  }
+
+  .progression-card p {
+    color: var(--color-fg-secondary);
+    line-height: var(--leading-relaxed);
+    margin: 0 0 var(--space-4, 1rem);
+  }
+
+  .progression-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.24rem 0.58rem;
+    margin-bottom: var(--space-4, 1rem);
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
     color: var(--color-fg-muted);
-    margin-bottom: var(--space-3, 0.75rem);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
   }
 
   .retainer-list {
@@ -669,78 +657,6 @@
     line-height: var(--leading-relaxed);
     max-width: 600px;
     margin: 0 auto;
-  }
-
-  /* Trust Artifacts Grid */
-  .artifact-grid {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: var(--space-4, 1rem);
-    max-width: 900px;
-    margin: 0 auto;
-  }
-
-  .artifact-doc-card {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 280px;
-    max-width: calc(33.333% - 0.67rem);
-    padding: var(--space-4, 1rem) var(--space-5, 1.5rem);
-    border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.05));
-    border-radius: var(--radius-md, 8px);
-    background: rgba(255, 255, 255, 0.02);
-    box-shadow: var(--glass-shine-soft);
-    transition:
-      border-color var(--duration-standard) var(--ease-standard),
-      transform var(--duration-standard) var(--ease-standard),
-      background var(--duration-standard) var(--ease-standard);
-  }
-
-  .artifact-doc-card:hover {
-    border-color: rgba(96, 165, 250, 0.4);
-    background: rgba(255, 255, 255, 0.04);
-    transform: translateY(-2px);
-  }
-
-  .artifact-doc-header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2, 0.5rem);
-    margin-bottom: var(--space-2, 0.5rem);
-  }
-
-  .artifact-doc-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: rgba(96, 165, 250, 0.8);
-    box-shadow: 0 0 6px rgba(96, 165, 250, 0.4);
-    flex-shrink: 0;
-  }
-
-  .artifact-doc-name {
-    font-size: var(--text-caption);
-    font-family: var(
-      --font-mono,
-      ui-monospace,
-      SFMono-Regular,
-      Menlo,
-      Monaco,
-      Consolas,
-      'Liberation Mono',
-      'Courier New',
-      monospace
-    );
-    color: var(--color-fg-primary);
-    font-weight: 500;
-    letter-spacing: -0.01em;
-  }
-
-  .artifact-doc-desc {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
   }
 
   /* Timeline */
@@ -892,19 +808,13 @@
 
   /* Responsive */
   @media (max-width: 1024px) {
-    .retainer-columns {
+    .progression-grid {
       grid-template-columns: 1fr;
     }
 
-    .artifact-doc-card {
-      max-width: calc(50% - 0.5rem);
-    }
   }
 
   @media (max-width: 768px) {
-    .artifact-doc-card {
-      max-width: 100%;
-    }
     .hero {
       padding: var(--layout-3, 4rem) var(--container-padding, 1.5rem);
     }
