@@ -16,6 +16,17 @@ This package demonstrates the intersection of **agentic engineering** and **data
 pnpm add @create-something/tufte
 ```
 
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `README.md`, `UNDERSTANDING.md`, `src/routes/+page.svelte` |
+| Boot command | `cd packages/tufte && pnpm dev` |
+| Smoke command | `cd packages/tufte && pnpm check` |
+| Validation surfaces | `svelte-check` output, local dev page at `/`, component rendering in the demo route, optional `pnpm preview` for packaged output |
+| UI validation path | run `pnpm dev` and inspect the local demo route `/`; use `pnpm preview` after `pnpm build` when validating packaged output |
+| Escalation rule | stop if a visual change cannot be verified on the demo route or if component behavior depends on presentation states not represented in the local examples |
+
 ## Components
 
 ### Sparkline

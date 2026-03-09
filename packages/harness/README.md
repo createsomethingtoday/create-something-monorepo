@@ -54,6 +54,17 @@ harness start specs/my-project.md
 lm summary
 ```
 
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `README.md`, `UNDERSTANDING.md`, `src/runner.ts` |
+| Boot command | `cd packages/harness && pnpm build && harness start specs/my-project.md` |
+| Smoke command | `cd packages/harness && pnpm test` |
+| Validation surfaces | test output, checkpoint artifacts, review findings, git worktree state |
+| UI validation path | none |
+| Escalation rule | stop if the worker cannot validate completion through gates or review, or if policy/authority boundaries appear during execution |
+
 ## Default harness loop
 
 The intended loop is closer to the harness-engineering pattern described by OpenAI than to a one-shot codegen workflow.

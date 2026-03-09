@@ -80,6 +80,17 @@ Trace a concept across all properties (Story Mode).
 
 Health check endpoint.
 
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `README.md`, `src/index.ts`, `wrangler.toml` |
+| Boot command | `cd packages/search && pnpm dev` |
+| Smoke command | `cd packages/search && curl http://localhost:8787/health` |
+| Validation surfaces | `/health`, Worker logs, endpoint responses for `/search`, `/related/:id`, and `/story/:concept` |
+| UI validation path | none |
+| Escalation rule | stop if `/health` is green but semantic results are clearly inconsistent with indexed content or if Vectorize/Workers AI dependencies cannot be reproduced locally |
+
 ## Setup
 
 ### 1. Create Vectorize Index

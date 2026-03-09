@@ -24,6 +24,17 @@ Typical loop:
 4. save checkpoint context
 5. continue the execution or review loop
 
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `README.md`, `src/index.ts` |
+| Boot command | `cd packages/harness-mcp && pnpm build && node dist/index.js` |
+| Smoke command | `cd packages/harness-mcp && echo '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}' | node dist/index.js` |
+| Validation surfaces | MCP `tools/list` output, direct tool-call responses, local git state, quality-gate results, observability traces when configured |
+| UI validation path | none |
+| Escalation rule | stop if MCP tool output conflicts with the underlying repo state or if a required harness operation cannot be validated through direct tool calls |
+
 ## Features
 
 - **Task operations**: issue/task lookup and updates
