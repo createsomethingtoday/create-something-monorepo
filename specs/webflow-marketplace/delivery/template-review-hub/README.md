@@ -37,10 +37,16 @@ Operator procedures for approvals, exceptions, fallback, containment, and recove
 7. `reviewer-playbook.md`
 Day-to-day reviewer instructions for using the Hub during template review.
 
-8. `checklist-map.md`
+8. `team-walkthrough.md`
+Brief for the Tuesday team walkthrough covering scope, demo flow, pilot posture, and meeting decisions.
+
+9. `pilot-kickoff-checklist.md`
+Readiness checklist for the Monday reviewer alpha, including safety, connectivity, and feedback capture.
+
+10. `checklist-map.md`
 Condensed operational map of the current objective review coverage as `auto`, `partial`, or `manual`.
 
-9. `launch-scorecard.md`
+11. `launch-scorecard.md`
 Pilot and launch metrics for adoption, quality, governance, and reliability.
 
 ## Reading order
@@ -49,11 +55,13 @@ Pilot and launch metrics for adoption, quality, governance, and reliability.
 2. `outcome_contract.md`
 3. `reviewer-playbook.md`
 4. `runbook.md`
-5. `golden-task-checks.md`
-6. `mcp_contract.yaml`
-7. `agent_contract.yaml`
-8. `checklist-map.md`
-9. `launch-scorecard.md`
+5. `pilot-kickoff-checklist.md`
+6. `team-walkthrough.md`
+7. `golden-task-checks.md`
+8. `mcp_contract.yaml`
+9. `agent_contract.yaml`
+10. `checklist-map.md`
+11. `launch-scorecard.md`
 
 ## Related source material
 

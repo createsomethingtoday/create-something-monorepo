@@ -6,6 +6,7 @@
 ## Executive Summary
 
 - The repo already makes the commercial answer clear: the default paid delivery is not `MCP-only`. It is **Agent Outcome Stack**: custom MCP + policy artifacts + runbooks + managed judgment loop + monthly tuning.
+- The payment boundary should be explicit: `MCP-only` is the free wedge by default, and the first paid product begins at **Policy OS Trial**.
 - For this client, the initial concierge project should be sold as a **managed monthly pilot**, not as:
   - a cheap per-seat copilot license
   - a commodity chatbot subscription
@@ -46,6 +47,37 @@ This memo uses `Policy OS` as shorthand for the business layer the repo already 
 - monthly tuning and review cadence
 
 That inference is grounded in repo strategy, not a literal existing packaging page.
+
+## Payment Rule
+
+Use this commercial rule unless a named exception is approved:
+
+- `MCP-only` is free
+- `Policy OS Trial` is the first paid product
+- `Policy OS Core` is the recurring paid operating layer
+
+Why:
+
+- this protects the wedge
+- it reflects current market reality that many clients still need Codex and MCP onboarding before they can productively adopt governed execution
+- it keeps payment aligned with governance ownership
+- it avoids asking buyers to pay before CREATE SOMETHING is taking on the real policy and operating burden
+
+## Exception Rule
+
+Strategic free wedges are allowed when they are intentionally used to open a larger governed relationship.
+
+Paid `MCP-only` exceptions are also allowed, but only when the setup or advisory burden is unusually heavy relative to a normal education-and-trust wedge.
+
+Conditions:
+
+1. the wedge must stay bounded
+2. the free work must be treated as an introduction, not an indefinite support model
+3. the intended graduation path must already be identified
+
+Named example:
+
+- Outerfields MCP delivered free as an introduction to the Half Dozen system team, with the explicit goal of graduating the relationship into `Policy OS Trial`
 
 ## Market Anchors From EXA Research
 
@@ -111,7 +143,7 @@ Source:
 
 ## Recommended Packaging
 
-## Offer Name
+### Offer Name
 
 **Policy OS Trial: Concierge Pilot**
 
@@ -123,7 +155,7 @@ Internal commercial family:
 
 **Agent Outcome Stack**
 
-## Recommended Price
+### Recommended Price
 
 **$9,500/month**
 
