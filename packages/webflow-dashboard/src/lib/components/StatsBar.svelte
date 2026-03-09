@@ -167,26 +167,26 @@
     flex-shrink: 0;
   }
 
-	.stat-main {
-		font-family: var(--font-heading);
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		letter-spacing: 0.02em;
-		font-variant-numeric: tabular-nums;
-	}
+  .stat-main {
+    font-family: var(--font-heading);
+    font-size: var(--text-body-lg);
+    font-weight: var(--font-semibold);
+    color: var(--color-fg-primary);
+    letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
+  }
 
-	.stat-label {
-		font-size: var(--text-caption);
-		color: var(--color-fg-secondary);
-		opacity: 0.78;
-	}
+  .stat-label {
+    font-size: var(--text-caption);
+    color: var(--color-fg-secondary);
+    opacity: 0.78;
+  }
 
-	.stat-secondary {
-		font-size: var(--text-caption);
-		color: var(--color-fg-secondary);
-		opacity: 0.64;
-	}
+  .stat-secondary {
+    font-size: var(--text-caption);
+    color: var(--color-fg-secondary);
+    opacity: 0.64;
+  }
 
   .stat-secondary.conversion {
     font-variant-numeric: tabular-nums;
@@ -199,7 +199,7 @@
     flex-shrink: 0;
   }
 
-	@media (max-width: 768px) {
+  @media (max-width: 768px) {
     .stats-bar {
       flex-wrap: wrap;
       gap: var(--space-sm);
