@@ -184,16 +184,7 @@
 </svelte:head>
 
 <div class="dashboard">
-  <Header
-    userEmail={data.user?.email}
-    onLogout={handleLogout}
-    onProfileClick={handleProfileClick}
-    onSearch={handleSearch}
-    searchValue={searchTerm}
-    searchPlaceholder="Filter assets by name, type, or status"
-    searchAriaLabel="Filter dashboard assets"
-    searchScopeLabel="Asset filter"
-  />
+  <Header onLogout={handleLogout} onProfileClick={handleProfileClick} />
 
   <main class="main-content">
     <div class="content-wrapper">
@@ -291,20 +282,20 @@
   .overview-section {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
-    margin-bottom: var(--space-xl);
+    gap: 1.25rem;
+    margin-bottom: calc(var(--space-xl) + var(--space-sm));
   }
 
   .page-header {
     display: flex;
-    align-items: flex-start;
+    align-items: end;
     justify-content: space-between;
-    gap: var(--space-md);
+    gap: 1.25rem;
   }
 
   .header-text {
     flex: 1;
-    max-width: 40rem;
+    max-width: 46rem;
   }
 
   .page-subtitle :global(*) {
@@ -321,7 +312,6 @@
   .summary-toggle-row {
     display: flex;
     justify-content: flex-end;
-    margin-top: calc(var(--space-sm) * -0.25);
   }
 
   :global(.summary-toggle svg) {

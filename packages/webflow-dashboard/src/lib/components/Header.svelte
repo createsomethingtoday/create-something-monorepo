@@ -1,7 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { Button } from './ui';
-  import Search from './Search.svelte';
   import DarkModeToggle from './DarkModeToggle.svelte';
   import { UserCircle } from 'lucide-svelte';
 
@@ -9,25 +8,10 @@
     userEmail?: string;
     onLogout?: () => void;
     onProfileClick?: () => void;
-    onSearch?: (term: string) => void;
     showSearch?: boolean;
-    searchValue?: string;
-    searchPlaceholder?: string;
-    searchAriaLabel?: string;
-    searchScopeLabel?: string;
   }
 
-  let {
-    userEmail,
-    onLogout,
-    onProfileClick,
-    onSearch,
-    showSearch = true,
-    searchValue = '',
-    searchPlaceholder = 'Search templates...',
-    searchAriaLabel = 'Search templates',
-    searchScopeLabel
-  }: Props = $props();
+  let { onLogout, onProfileClick }: Props = $props();
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard' },
@@ -59,9 +43,6 @@
             </svg>
             <span class="logo-text">Asset Dashboard</span>
           </a>
-          {#if userEmail}
-            <span class="user-chip">{userEmail}</span>
-          {/if}
         </div>
 
         <nav class="nav-links" aria-label="Primary navigation">
@@ -80,20 +61,6 @@
             </a>
           {/each}
         </nav>
-
-        {#if showSearch && onSearch}
-          <div class="search-slot">
-            {#if searchScopeLabel}
-              <span class="search-scope">{searchScopeLabel}</span>
-            {/if}
-            <Search
-              {onSearch}
-              value={searchValue}
-              placeholder={searchPlaceholder}
-              ariaLabel={searchAriaLabel}
-            />
-          </div>
-        {/if}
       </div>
 
       <div class="header-right">
@@ -139,11 +106,10 @@
 
   .nav-cluster {
     display: grid;
-    grid-template-columns: auto auto minmax(15rem, 20rem);
+    grid-template-columns: auto auto;
     align-items: center;
     justify-content: start;
     column-gap: 0.625rem;
-    row-gap: 0.5rem;
     min-width: 0;
     padding: 0.375rem;
     border: 1px solid var(--color-shell-border-subtle);
@@ -157,7 +123,6 @@
   .brand-lockup {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
     padding-left: 0.125rem;
     min-width: 0;
   }
@@ -190,20 +155,6 @@
     color: var(--color-fg-primary);
   }
 
-  .user-chip {
-    display: none;
-    max-width: 14rem;
-    overflow: hidden;
-    padding: 0.35rem 0.7rem;
-    text-overflow: ellipsis;
-    border-radius: 999px;
-    border: 1px solid var(--color-shell-border-subtle);
-    background: transparent;
-    color: var(--color-fg-muted);
-    font-size: var(--text-caption);
-    white-space: nowrap;
-  }
-
   .nav-links {
     display: flex;
     align-items: center;
@@ -216,31 +167,6 @@
     scrollbar-width: none;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
     min-width: 0;
-  }
-
-  .search-slot {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    min-width: 0;
-    width: 100%;
-    justify-self: end;
-  }
-
-  .search-scope {
-    display: inline-flex;
-    align-items: center;
-    flex: 0 0 auto;
-    padding: 0.38rem 0.65rem;
-    border-radius: 999px;
-    background: var(--color-info-soft-bg);
-    border: 1px solid var(--color-info-soft-border);
-    color: var(--color-info-soft-text);
-    font-size: 0.68rem;
-    font-weight: var(--font-semibold);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    white-space: nowrap;
   }
 
   .nav-links::-webkit-scrollbar {
@@ -309,23 +235,6 @@
     display: inline;
   }
 
-  @media (min-width: 1080px) {
-    .user-chip {
-      display: inline-flex;
-    }
-  }
-
-  @media (max-width: 1240px) {
-    .nav-cluster {
-      grid-template-columns: auto auto;
-    }
-
-    .search-slot {
-      grid-column: 1 / -1;
-      justify-self: stretch;
-    }
-  }
-
   @media (max-width: 767px) {
     .header-content {
       padding-block: var(--space-sm);
@@ -353,19 +262,8 @@
       display: none;
     }
 
-    .search-slot {
-      min-width: 0;
-      grid-column: auto;
-    }
-
     .header-right :global(.header-action) {
       padding-inline: 0.75rem;
-    }
-  }
-
-  @media (max-width: 1100px) {
-    .search-scope {
-      display: none;
     }
   }
 </style>
