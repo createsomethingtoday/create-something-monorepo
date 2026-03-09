@@ -1,127 +1,163 @@
 <script lang="ts">
-	import { Search as SearchIcon, X } from 'lucide-svelte';
+  import { Search as SearchIcon, X } from 'lucide-svelte';
+  import { onDestroy } from 'svelte';
 
-	interface Props {
-		onSearch?: (term: string) => void;
-		placeholder?: string;
-	}
+  interface Props {
+    onSearch?: (term: string) => void;
+    placeholder?: string;
+    value?: string;
+  }
 
-	let {
-		onSearch,
-		placeholder = 'Search templates...'
-	}: Props = $props();
+  let { onSearch, placeholder = 'Search templates...', value = '' }: Props = $props();
 
-	let searchTerm = $state('');
-	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  let draftValue = $state('');
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-	function handleInput(event: Event) {
-		const target = event.target as HTMLInputElement;
-		searchTerm = target.value;
+  $effect(() => {
+    draftValue = value;
+  });
 
-		// Debounce search
-		if (debounceTimer) {
-			clearTimeout(debounceTimer);
-		}
-		debounceTimer = setTimeout(() => {
-			onSearch?.(searchTerm);
-		}, 300);
-	}
+  function handleInput(event: Event) {
+    const target = event.target as HTMLInputElement;
+    draftValue = target.value;
 
-	function handleClear() {
-		searchTerm = '';
-		onSearch?.('');
-	}
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+
+    debounceTimer = setTimeout(() => {
+      onSearch?.(draftValue);
+    }, 300);
+  }
+
+  function handleClear() {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+      debounceTimer = null;
+    }
+
+    draftValue = '';
+    onSearch?.('');
+  }
+
+  onDestroy(() => {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+  });
 </script>
 
 <div class="search-wrapper">
-	<SearchIcon class="search-icon" size={16} />
-	<input
-		type="text"
-		class="search-input"
-		{placeholder}
-		value={searchTerm}
-		oninput={handleInput}
-	/>
-	{#if searchTerm}
-		<button type="button" class="clear-btn" onclick={handleClear} aria-label="Clear search">
-			<X size={14} />
-		</button>
-	{/if}
+  <SearchIcon class="search-icon" size={16} />
+  <input
+    type="search"
+    class="search-input"
+    {placeholder}
+    value={draftValue}
+    oninput={handleInput}
+    autocomplete="off"
+  />
+  {#if draftValue}
+    <button type="button" class="clear-btn" onclick={handleClear} aria-label="Clear search">
+      <X size={14} />
+    </button>
+  {/if}
 </div>
 
 <style>
-	.search-wrapper {
-		position: relative;
-		display: flex;
-		align-items: center;
-		width: 100%;
-	}
+  .search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border-radius: 999px;
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--glass-bg-medium) 0%, var(--glass-bg-subtle) 100%);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      0 6px 16px rgba(8, 8, 8, 0.04);
+    transition:
+      border-color var(--duration-micro) var(--ease-standard),
+      box-shadow var(--duration-micro) var(--ease-standard),
+      background-color var(--duration-micro) var(--ease-standard);
+  }
 
-	:global(.search-icon) {
-		position: absolute;
-		left: 0.75rem;
-		color: var(--color-info);
-		pointer-events: none;
-	}
+  .search-wrapper:focus-within {
+    border-color: var(--color-info-border);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.22),
+      0 0 0 4px var(--color-info-muted),
+      0 12px 28px rgba(20, 110, 245, 0.12);
+  }
 
-	.search-input {
-		width: 100%;
-		height: 2.75rem;
-		padding: 0.5rem 2.25rem 0.5rem 2.5rem;
-		font-size: 1rem;
-		color: var(--color-fg-primary);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-shell-border-default);
-		border-radius: 999px;
-		outline: none;
-		box-shadow: var(--shadow-sm);
-		transition:
-			border-color var(--duration-micro) var(--ease-standard),
-			box-shadow var(--duration-micro) var(--ease-standard);
-	}
+  :global(.search-icon) {
+    position: absolute;
+    left: 0.875rem;
+    color: var(--color-fg-muted);
+    pointer-events: none;
+    transition: color var(--duration-micro) var(--ease-standard);
+  }
 
-	.search-input::placeholder {
-		color: var(--color-fg-muted);
-	}
+  .search-wrapper:focus-within :global(.search-icon) {
+    color: var(--color-info);
+  }
 
-	.search-input:focus {
-		border-color: var(--color-info);
-		box-shadow: 0 0 0 4px var(--color-info-muted);
-	}
+  .search-input {
+    width: 100%;
+    height: 2.75rem;
+    padding: 0.5rem 2.5rem 0.5rem 2.75rem;
+    font-size: 1rem;
+    color: var(--color-fg-primary);
+    background: transparent;
+    border: none;
+    outline: none;
+  }
 
-	.search-input:focus-visible {
-		outline: none;
-	}
+  .search-input::placeholder {
+    color: var(--color-fg-muted);
+  }
 
-	.clear-btn {
-		position: absolute;
-		right: 0.5rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 1.5rem;
-		height: 1.5rem;
-		padding: 0;
-		color: var(--color-fg-muted);
-		background: transparent;
-		border: none;
-		border-radius: var(--radius-sm);
-		cursor: pointer;
-		transition: color var(--duration-micro) var(--ease-standard);
-	}
+  .search-input:focus {
+    box-shadow: none;
+  }
 
-	.clear-btn:hover {
-		color: var(--color-fg-primary);
-	}
+  .search-input:focus-visible {
+    outline: none;
+  }
 
-	.clear-btn:focus-visible {
-		outline: none;
-		box-shadow: 0 0 0 4px var(--color-info-muted);
-	}
+  .clear-btn {
+    position: absolute;
+    right: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    color: var(--color-fg-muted);
+    background: transparent;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    transition:
+      color var(--duration-micro) var(--ease-standard),
+      background-color var(--duration-micro) var(--ease-standard);
+  }
 
-	@media (min-width: 768px) {
-		.search-input {
-			font-size: var(--text-body-sm);
-		}
-	}
+  .clear-btn:hover {
+    color: var(--color-fg-primary);
+    background: rgba(8, 8, 8, 0.05);
+  }
+
+  .clear-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--color-info-muted);
+  }
+
+  @media (min-width: 768px) {
+    .search-input {
+      font-size: var(--text-body-sm);
+    }
+  }
 </style>

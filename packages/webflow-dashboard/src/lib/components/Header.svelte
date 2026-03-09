@@ -1,311 +1,316 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import { Button } from './ui';
-	import Search from './Search.svelte';
-	import DarkModeToggle from './DarkModeToggle.svelte';
-	import { UserCircle } from 'lucide-svelte';
+  import { page } from '$app/stores';
+  import { Button } from './ui';
+  import Search from './Search.svelte';
+  import DarkModeToggle from './DarkModeToggle.svelte';
+  import { UserCircle } from 'lucide-svelte';
 
-	interface Props {
-		userEmail?: string;
-		onLogout?: () => void;
-		onProfileClick?: () => void;
-		onSearch?: (term: string) => void;
-		showSearch?: boolean;
-	}
+  interface Props {
+    userEmail?: string;
+    onLogout?: () => void;
+    onProfileClick?: () => void;
+    onSearch?: (term: string) => void;
+    showSearch?: boolean;
+    searchValue?: string;
+  }
 
-	let {
-		userEmail,
-		onLogout,
-		onProfileClick,
-		onSearch,
-		showSearch = true
-	}: Props = $props();
+  let {
+    userEmail,
+    onLogout,
+    onProfileClick,
+    onSearch,
+    showSearch = true,
+    searchValue = ''
+  }: Props = $props();
 
-	const navItems = [
-		{ href: '/dashboard', label: 'Dashboard' },
-		{ href: '/marketplace', label: 'Marketplace' },
-		{ href: '/validation', label: 'Validation' }
-	];
+  const navItems = [
+    { href: '/dashboard', label: 'Dashboard' },
+    { href: '/marketplace', label: 'Marketplace' },
+    { href: '/validation', label: 'Validation' }
+  ];
 </script>
 
 <header class="header">
-	<div class="header-content">
-		<div class="header-main">
-			<div class="nav-cluster">
-				<div class="brand-lockup">
-				<a href="/dashboard" class="logo">
-					<svg class="webflow-logo" width="38" height="24" viewBox="0 0 1080 674" fill="none" xmlns="http://www.w3.org/2000/svg">
-						<path fill-rule="evenodd" clip-rule="evenodd" d="M1080 0L735.386 673.684H411.696L555.916 394.481H549.445C430.464 548.934 252.942 650.61 0 673.684V398.344C0 398.344 161.813 388.787 256.939 288.776H0V0.0053214H288.771V237.515L295.253 237.489L413.255 0.0053214H631.645V236.009L638.126 235.999L760.556 0H1080Z" fill="currentColor"/>
-					</svg>
-					<span class="logo-text">Asset Dashboard</span>
-				</a>
-					{#if userEmail}
-						<span class="user-chip">{userEmail}</span>
-					{/if}
-				</div>
+  <div class="header-content">
+    <div class="header-main">
+      <div class="nav-cluster">
+        <div class="brand-lockup">
+          <a href="/dashboard" class="logo">
+            <svg
+              class="webflow-logo"
+              width="38"
+              height="24"
+              viewBox="0 0 1080 674"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                fill-rule="evenodd"
+                clip-rule="evenodd"
+                d="M1080 0L735.386 673.684H411.696L555.916 394.481H549.445C430.464 548.934 252.942 650.61 0 673.684V398.344C0 398.344 161.813 388.787 256.939 288.776H0V0.0053214H288.771V237.515L295.253 237.489L413.255 0.0053214H631.645V236.009L638.126 235.999L760.556 0H1080Z"
+                fill="currentColor"
+              />
+            </svg>
+            <span class="logo-text">Asset Dashboard</span>
+          </a>
+          {#if userEmail}
+            <span class="user-chip">{userEmail}</span>
+          {/if}
+        </div>
 
-				<nav class="nav-links" aria-label="Primary navigation">
-				{#each navItems as item}
-					<a
-						href={item.href}
-						class="nav-link"
-						class:active={$page.url.pathname === item.href || $page.url.pathname.startsWith(item.href + '/')}
-						aria-current={$page.url.pathname === item.href || $page.url.pathname.startsWith(item.href + '/') ? 'page' : undefined}
-					>
-						{item.label}
-					</a>
-				{/each}
-				</nav>
-			</div>
+        <nav class="nav-links" aria-label="Primary navigation">
+          {#each navItems as item}
+            <a
+              href={item.href}
+              class="nav-link"
+              class:active={$page.url.pathname === item.href ||
+                $page.url.pathname.startsWith(item.href + '/')}
+              aria-current={$page.url.pathname === item.href ||
+              $page.url.pathname.startsWith(item.href + '/')
+                ? 'page'
+                : undefined}
+            >
+              {item.label}
+            </a>
+          {/each}
+        </nav>
 
-			<div class="utility-cluster">
-				{#if showSearch}
-					<div class="search-desktop">
-						<Search {onSearch} />
-					</div>
-				{/if}
+        {#if showSearch && onSearch}
+          <div class="search-slot">
+            <Search {onSearch} value={searchValue} />
+          </div>
+        {/if}
+      </div>
 
-				<div class="header-right">
-					<DarkModeToggle />
-					{#if onProfileClick}
-						<Button variant="ghost" class="header-action" onclick={onProfileClick}>
-							<UserCircle size={18} />
-							<span class="profile-text">Profile</span>
-						</Button>
-					{/if}
-					{#if onLogout}
-						<Button variant="ghost" class="header-action" onclick={onLogout}>Logout</Button>
-					{/if}
-				</div>
-			</div>
-		</div>
-	</div>
-
-	{#if showSearch}
-		<div class="search-mobile">
-			<Search {onSearch} />
-		</div>
-	{/if}
+      <div class="header-right">
+        <DarkModeToggle />
+        {#if onProfileClick}
+          <Button variant="ghost" class="header-action" onclick={onProfileClick}>
+            <UserCircle size={18} />
+            <span class="profile-text">Profile</span>
+          </Button>
+        {/if}
+        {#if onLogout}
+          <Button variant="ghost" class="header-action" onclick={onLogout}>Logout</Button>
+        {/if}
+      </div>
+    </div>
+  </div>
 </header>
 
 <style>
-	.header {
-		position: sticky;
-		top: 0;
-		z-index: 100;
-		border-bottom: 1px solid var(--color-shell-border-default);
-		background: var(--color-shell-surface);
-		box-shadow: var(--color-shell-shadow);
-	}
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid var(--color-shell-border-default);
+    background: var(--color-shell-surface);
+    box-shadow: var(--color-shell-shadow);
+    backdrop-filter: blur(18px);
+  }
 
-	.header-content {
-		max-width: 82rem;
-		margin: 0 auto;
-		padding: 0.875rem var(--space-md);
-	}
+  .header-content {
+    max-width: 82rem;
+    margin: 0 auto;
+    padding: 0.75rem var(--space-md);
+  }
 
-	.header-main {
-		display: flex;
-		flex: 1;
-		align-items: center;
-		justify-content: space-between;
-		gap: var(--space-md);
-		min-width: 0;
-	}
+  .header-main {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    min-width: 0;
+  }
 
-	.nav-cluster {
-		display: flex;
-		align-items: center;
-		gap: 0.875rem;
-		min-width: 0;
-	}
+  .nav-cluster {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    min-width: 0;
+    padding: 0.375rem;
+    border: 1px solid var(--color-shell-border-subtle);
+    border-radius: 1.5rem;
+    background: linear-gradient(180deg, var(--glass-bg-medium) 0%, var(--glass-bg-subtle) 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      var(--shadow-sm);
+  }
 
-	.brand-lockup {
-		display: flex;
-		align-items: center;
-		gap: var(--space-sm);
-		flex-wrap: wrap;
-	}
+  .brand-lockup {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+    padding-left: 0.125rem;
+  }
 
-	.logo {
-		display: flex;
-		align-items: center;
-		gap: var(--space-sm);
-		padding: 0.45rem 0.9rem;
-		border-radius: 999px;
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-shell-border-default);
-		box-shadow: var(--shadow-sm);
-		text-decoration: none;
-		color: var(--color-info);
-		flex-shrink: 0;
-	}
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+    background: var(--glass-bg-strong);
+    border: 1px solid var(--color-shell-border-default);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      0 4px 14px rgba(8, 8, 8, 0.05);
+    text-decoration: none;
+    color: var(--color-info);
+    flex-shrink: 0;
+  }
 
-	.webflow-logo {
-		flex-shrink: 0;
-	}
+  .webflow-logo {
+    flex-shrink: 0;
+  }
 
-	.logo-text {
-		font-family: var(--font-heading);
-		font-size: var(--text-body);
-		font-weight: var(--font-semibold);
-		letter-spacing: 0.01em;
-		color: var(--color-fg-primary);
-	}
+  .logo-text {
+    font-family: var(--font-heading);
+    font-size: var(--text-body);
+    font-weight: var(--font-semibold);
+    letter-spacing: 0.01em;
+    color: var(--color-fg-primary);
+  }
 
-	.user-chip {
-		display: none;
-		padding: 0.25rem 0.625rem;
-		border-radius: 999px;
-		border: 1px solid var(--color-shell-border-default);
-		background: var(--color-bg-surface);
-		color: var(--color-fg-muted);
-		font-size: var(--text-caption);
-		white-space: nowrap;
-	}
+  .user-chip {
+    display: none;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-shell-border-subtle);
+    background: transparent;
+    color: var(--color-fg-muted);
+    font-size: var(--text-caption);
+    white-space: nowrap;
+  }
 
-	.nav-links {
-		display: flex;
-		align-items: center;
-		gap: 0.25rem;
-		padding: 0.25rem;
-		border: 1px solid var(--color-shell-border-default);
-		border-radius: 999px;
-		background: var(--color-bg-surface);
-		overflow-x: auto;
-		scrollbar-width: none;
-		box-shadow: var(--shadow-sm);
-	}
+  .nav-links {
+    display: flex;
+    align-items: center;
+    flex: 0 1 auto;
+    gap: 0.25rem;
+    padding: 0.2rem;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    border-radius: 999px;
+    background: rgba(8, 8, 8, 0.03);
+    overflow-x: auto;
+    scrollbar-width: none;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  }
 
-	.nav-links::-webkit-scrollbar {
-		display: none;
-	}
+  .search-slot {
+    flex: 1 1 16rem;
+    min-width: 14rem;
+    max-width: 24rem;
+  }
 
-	.nav-link {
-		flex: 0 0 auto;
-		padding: 0.625rem 1rem;
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
-		color: var(--color-fg-muted);
-		text-decoration: none;
-		white-space: nowrap;
-		border: 1px solid transparent;
-		border-radius: 999px;
-		transition:
-			color var(--duration-micro) var(--ease-standard),
-			background-color var(--duration-micro) var(--ease-standard),
-			border-color var(--duration-micro) var(--ease-standard),
-			box-shadow var(--duration-micro) var(--ease-standard);
-	}
+  .nav-links::-webkit-scrollbar {
+    display: none;
+  }
 
-	.nav-link:hover {
-		color: var(--color-fg-primary);
-		background: var(--color-bg-subtle);
-	}
+  .nav-link {
+    flex: 0 0 auto;
+    padding: 0.65rem 1rem;
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-medium);
+    color: var(--color-fg-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    transition:
+      color var(--duration-micro) var(--ease-standard),
+      background-color var(--duration-micro) var(--ease-standard),
+      border-color var(--duration-micro) var(--ease-standard),
+      box-shadow var(--duration-micro) var(--ease-standard);
+  }
 
-	.nav-link.active {
-		color: #ffffff;
-		background: var(--color-info);
-		border-color: var(--color-info);
-		box-shadow: none;
-	}
+  .nav-link:hover {
+    color: var(--color-fg-primary);
+    background: var(--color-bg-subtle);
+  }
 
-	.nav-link:focus-visible {
-		outline: none;
-		box-shadow: 0 0 0 4px var(--color-info-muted);
-	}
+  .nav-link.active {
+    color: #ffffff;
+    background: var(--color-info);
+    border-color: var(--color-info);
+    box-shadow: 0 8px 18px rgba(20, 110, 245, 0.22);
+  }
 
-	.search-desktop {
-		display: block;
-		width: min(22rem, 100%);
-	}
+  .nav-link:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px var(--color-info-muted);
+  }
 
-	.search-mobile {
-		display: block;
-		width: 100%;
-		padding: 0 var(--space-md) 0.875rem;
-	}
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    flex-shrink: 0;
+  }
 
-	.utility-cluster {
-		display: flex;
-		align-items: center;
-		justify-content: flex-end;
-		gap: 0.75rem;
-		flex: 1;
-		min-width: 0;
-	}
+  .header-right :global(.header-action) {
+    height: 2.5rem;
+    padding-inline: 0.9rem;
+    color: var(--color-fg-secondary);
+    background: var(--glass-bg-medium);
+    border: 1px solid var(--color-shell-border-default);
+    box-shadow: none;
+  }
 
-	.header-right {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		justify-content: flex-end;
-		flex-shrink: 0;
-	}
+  .header-right :global(.header-action:hover:not(:disabled)) {
+    background: var(--glass-bg-strong);
+    border-color: var(--color-shell-border-strong);
+    transform: none;
+  }
 
-	.header-right :global(.header-action) {
-		height: 2.5rem;
-		padding-inline: 0.9rem;
-		color: var(--color-fg-secondary);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-shell-border-default);
-		box-shadow: none;
-	}
+  .profile-text {
+    display: inline;
+  }
 
-	.header-right :global(.header-action:hover:not(:disabled)) {
-		background: var(--color-bg-subtle);
-		border-color: var(--color-shell-border-strong);
-		transform: none;
-	}
+  @media (min-width: 900px) {
+    .user-chip {
+      display: inline-flex;
+    }
+  }
 
-	.profile-text {
-		display: inline;
-	}
+  @media (max-width: 767px) {
+    .header-content {
+      padding-block: var(--space-sm);
+    }
 
-	@media (min-width: 900px) {
-		.user-chip {
-			display: inline-flex;
-		}
-	}
+    .header-main {
+      gap: 0.75rem;
+      align-items: stretch;
+    }
 
-	@media (max-width: 767px) {
-		.header-content {
-			padding-bottom: var(--space-sm);
-		}
+    .nav-cluster {
+      align-items: stretch;
+      padding: 0.5rem;
+      border-radius: 1.25rem;
+    }
 
-		.header-main {
-			flex-direction: column;
-			align-items: stretch;
-			gap: 0.75rem;
-		}
+    .brand-lockup,
+    .header-right {
+      justify-content: space-between;
+    }
 
-		.nav-cluster,
-		.utility-cluster {
-			flex-direction: column;
-			align-items: stretch;
-		}
+    .profile-text {
+      display: none;
+    }
 
-		.brand-lockup,
-		.header-right {
-			justify-content: space-between;
-		}
+    .search-slot {
+      flex-basis: 100%;
+      max-width: none;
+      min-width: 0;
+    }
 
-		.search-desktop {
-			display: none;
-		}
-
-		.profile-text {
-			display: none;
-		}
-
-		.header-right :global(.header-action) {
-			padding-inline: 0.75rem;
-		}
-	}
-
-	@media (min-width: 768px) {
-		.search-mobile {
-			display: none;
-		}
-	}
+    .header-right :global(.header-action) {
+      padding-inline: 0.75rem;
+    }
+  }
 </style>

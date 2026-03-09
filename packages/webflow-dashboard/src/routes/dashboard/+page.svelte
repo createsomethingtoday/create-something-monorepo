@@ -1,327 +1,384 @@
 <script lang="ts">
-	import type { PageData } from './$types';
-	import type { Asset } from '$lib/server/airtable';
-	import { goto, invalidate } from '$app/navigation';
-	import { onMount } from 'svelte';
-	import { Header, AssetsDisplay, OverviewStats, SubmissionTracker, StatsBar, DataFreshnessIndicator } from '$lib/components';
-	import { toast } from '$lib/stores/toast';
-	import { trackEvent } from '$lib/utils/analytics';
+  import type { PageData } from './$types';
+  import type { Asset } from '$lib/server/airtable';
+  import { goto, invalidate } from '$app/navigation';
+  import { onMount } from 'svelte';
+  import { ChevronDown, ChevronUp } from 'lucide-svelte';
+  import {
+    Header,
+    Button,
+    AssetsDisplay,
+    OverviewStats,
+    SubmissionTracker,
+    StatsBar,
+    DataFreshnessIndicator
+  } from '$lib/components';
+  import { toast } from '$lib/stores/toast';
+  import { trackEvent } from '$lib/utils/analytics';
 
-	let { data }: { data: PageData } = $props();
+  let { data }: { data: PageData } = $props();
 
-	let searchTerm = $state('');
-	let isProfileOpen = $state(false);
-	let isEditModalOpen = $state(false);
-	let isLoadingEditAsset = $state(false);
-	let currentEditingAsset = $state<Asset | null>(null);
-	
-	// Lazy-loaded modal components
-	// NOTE: Svelte 5 dynamic component typing is a bit different; keep this permissive for lazy-loading.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let EditProfileModal = $state<any>(null);
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let EditAssetModal = $state<any>(null);
+  let searchTerm = $state('');
+  let isProfileOpen = $state(false);
+  let isEditModalOpen = $state(false);
+  let isLoadingEditAsset = $state(false);
+  let currentEditingAsset = $state<Asset | null>(null);
+  let showDetailedSummary = $state(false);
 
-	async function handleLogout() {
-		await fetch('/api/auth/logout', { method: 'POST' });
-		window.location.href = '/login';
-	}
+  // Lazy-loaded modal components
+  // NOTE: Svelte 5 dynamic component typing is a bit different; keep this permissive for lazy-loading.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let EditProfileModal = $state<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let EditAssetModal = $state<any>(null);
 
-	function handleSearch(term: string) {
-		searchTerm = term;
-	}
+  async function handleLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    window.location.href = '/login';
+  }
 
-	async function handleProfileClick() {
-		// Lazy load the EditProfileModal component
-		if (!EditProfileModal) {
-			const module = await import('$lib/components/EditProfileModal.svelte');
-			EditProfileModal = module.default;
-		}
-		isProfileOpen = true;
-	}
+  function handleSearch(term: string) {
+    searchTerm = term;
+  }
 
-	function handleProfileClose() {
-		isProfileOpen = false;
-	}
+  async function handleProfileClick() {
+    // Lazy load the EditProfileModal component
+    if (!EditProfileModal) {
+      const module = await import('$lib/components/EditProfileModal.svelte');
+      EditProfileModal = module.default;
+    }
+    isProfileOpen = true;
+  }
 
-	function handleViewAsset(id: string) {
-		const selectedAsset = (data.assets || []).find((asset) => asset.id === id);
-		trackEvent('dashboard_asset_opened', {
-			asset_id: id,
-			asset_status: selectedAsset?.status,
-			asset_category: selectedAsset?.category,
-			asset_subcategory: selectedAsset?.subcategory
-		});
-		goto(`/assets/${id}`);
-	}
+  function handleProfileClose() {
+    isProfileOpen = false;
+  }
 
-	async function handleEditAsset(id: string) {
-		const selectedAsset = (data.assets || []).find((asset) => asset.id === id);
-		trackEvent('dashboard_asset_edit_opened', {
-			asset_id: id,
-			asset_status: selectedAsset?.status,
-			asset_category: selectedAsset?.category,
-			asset_subcategory: selectedAsset?.subcategory
-		});
+  function handleViewAsset(id: string) {
+    const selectedAsset = (data.assets || []).find((asset) => asset.id === id);
+    trackEvent('dashboard_asset_opened', {
+      asset_id: id,
+      asset_status: selectedAsset?.status,
+      asset_category: selectedAsset?.category,
+      asset_subcategory: selectedAsset?.subcategory
+    });
+    goto(`/assets/${id}`);
+  }
 
-		// Lazy load the EditAssetModal component
-		if (!EditAssetModal) {
-			const module = await import('$lib/components/EditAssetModal.svelte');
-			EditAssetModal = module.default;
-		}
+  async function handleEditAsset(id: string) {
+    const selectedAsset = (data.assets || []).find((asset) => asset.id === id);
+    trackEvent('dashboard_asset_edit_opened', {
+      asset_id: id,
+      asset_status: selectedAsset?.status,
+      asset_category: selectedAsset?.category,
+      asset_subcategory: selectedAsset?.subcategory
+    });
 
-		isLoadingEditAsset = true;
-		try {
-			// Fetch full asset details (includes short + long description fields)
-			const response = await fetch(`/api/assets/${id}`);
-			if (!response.ok) {
-				// If forbidden, fetch debug payload (same session/cookies) to help troubleshoot Airtable ownership matching
-				if (response.status === 403) {
-					try {
-						const dbgRes = await fetch(`/api/assets/${id}?debug=1`);
-						const dbgJson = await dbgRes.json();
-						// eslint-disable-next-line no-console
-						console.error('[EditAssetModal][OwnershipDebug]', dbgJson);
-						toast.error('Permission denied loading asset details. Debug info logged to console.');
-					} catch (e) {
-						// eslint-disable-next-line no-console
-						console.error('[EditAssetModal][OwnershipDebug] Failed to load debug info', e);
-					}
-				}
+    // Lazy load the EditAssetModal component
+    if (!EditAssetModal) {
+      const module = await import('$lib/components/EditAssetModal.svelte');
+      EditAssetModal = module.default;
+    }
 
-				const errorData = (await response.json().catch(() => ({}))) as { message?: string };
-				throw new Error(errorData.message || 'Failed to load asset details');
-			}
-			const result = (await response.json()) as { asset: Asset };
-			currentEditingAsset = result.asset;
-			isEditModalOpen = true;
-		} catch (err) {
-			const message = err instanceof Error ? err.message : 'Failed to load asset details';
-			toast.error(message);
-			currentEditingAsset = null;
-			isEditModalOpen = false;
-		} finally {
-			isLoadingEditAsset = false;
-		}
-	}
+    isLoadingEditAsset = true;
+    try {
+      // Fetch full asset details (includes short + long description fields)
+      const response = await fetch(`/api/assets/${id}`);
+      if (!response.ok) {
+        // If forbidden, fetch debug payload (same session/cookies) to help troubleshoot Airtable ownership matching
+        if (response.status === 403) {
+          try {
+            const dbgRes = await fetch(`/api/assets/${id}?debug=1`);
+            const dbgJson = await dbgRes.json();
+            // eslint-disable-next-line no-console
+            console.error('[EditAssetModal][OwnershipDebug]', dbgJson);
+            toast.error('Permission denied loading asset details. Debug info logged to console.');
+          } catch (e) {
+            // eslint-disable-next-line no-console
+            console.error('[EditAssetModal][OwnershipDebug] Failed to load debug info', e);
+          }
+        }
 
-	function handleEditClose() {
-		isEditModalOpen = false;
-		currentEditingAsset = null;
-	}
+        const errorData = (await response.json().catch(() => ({}))) as { message?: string };
+        throw new Error(errorData.message || 'Failed to load asset details');
+      }
+      const result = (await response.json()) as { asset: Asset };
+      currentEditingAsset = result.asset;
+      isEditModalOpen = true;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to load asset details';
+      toast.error(message);
+      currentEditingAsset = null;
+      isEditModalOpen = false;
+    } finally {
+      isLoadingEditAsset = false;
+    }
+  }
 
-	async function handleEditSave(updateData: {
-		name?: string;
-		descriptionShort?: string;
-		descriptionLongHtml?: string;
-		websiteUrl?: string;
-		previewUrl?: string;
-		thumbnailUrl?: string | null;
-		secondaryThumbnailUrl?: string | null;
-		carouselImages?: string[];
-	}): Promise<void> {
-		if (!currentEditingAsset) return;
+  function handleEditClose() {
+    isEditModalOpen = false;
+    currentEditingAsset = null;
+  }
 
-		const response = await fetch(`/api/assets/${currentEditingAsset.id}`, {
-			method: 'PUT',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(updateData)
-		});
+  async function handleEditSave(updateData: {
+    name?: string;
+    descriptionShort?: string;
+    descriptionLongHtml?: string;
+    websiteUrl?: string;
+    previewUrl?: string;
+    thumbnailUrl?: string | null;
+    secondaryThumbnailUrl?: string | null;
+    carouselImages?: string[];
+  }): Promise<void> {
+    if (!currentEditingAsset) return;
 
-		if (!response.ok) {
-			const errorData = (await response.json()) as { message?: string };
-			throw new Error(errorData.message || 'Failed to update asset');
-		}
+    const response = await fetch(`/api/assets/${currentEditingAsset.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updateData)
+    });
 
-		toast.success('Asset updated successfully');
-		handleEditClose();
-		await handleRefreshAssets();
-	}
+    if (!response.ok) {
+      const errorData = (await response.json()) as { message?: string };
+      throw new Error(errorData.message || 'Failed to update asset');
+    }
 
-	async function handleArchiveAsset(id: string) {
-		try {
-			const response = await fetch(`/api/assets/${id}/archive`, { method: 'POST' });
-			if (response.ok) {
-				toast.success('Asset archived successfully');
-				// Await invalidate to ensure data refresh completes
-				await invalidate('app:assets');
-			} else {
-				const errorData = (await response.json()) as { message?: string };
-				toast.error(errorData.message || 'Failed to archive asset');
-			}
-		} catch {
-			toast.error('Failed to archive asset');
-		}
-	}
+    toast.success('Asset updated successfully');
+    handleEditClose();
+    await handleRefreshAssets();
+  }
 
-	async function handleRefreshAssets() {
-		trackEvent('dashboard_assets_refreshed', { source: 'manual' });
-		invalidate('app:assets');
-	}
+  async function handleArchiveAsset(id: string) {
+    try {
+      const response = await fetch(`/api/assets/${id}/archive`, { method: 'POST' });
+      if (response.ok) {
+        toast.success('Asset archived successfully');
+        // Await invalidate to ensure data refresh completes
+        await invalidate('app:assets');
+      } else {
+        const errorData = (await response.json()) as { message?: string };
+        toast.error(errorData.message || 'Failed to archive asset');
+      }
+    } catch {
+      toast.error('Failed to archive asset');
+    }
+  }
 
-	onMount(() => {
-		const assets = data.assets || [];
-		trackEvent('dashboard_loaded', {
-			total_assets: assets.length,
-			published_assets: assets.filter((asset) => asset.status === 'Published').length,
-			draft_assets: assets.filter((asset) => asset.status === 'Draft').length
-		});
-	});
+  async function handleRefreshAssets() {
+    trackEvent('dashboard_assets_refreshed', { source: 'manual' });
+    invalidate('app:assets');
+  }
+
+  onMount(() => {
+    const assets = data.assets || [];
+    trackEvent('dashboard_loaded', {
+      total_assets: assets.length,
+      published_assets: assets.filter((asset) => asset.status === 'Published').length,
+      draft_assets: assets.filter((asset) => asset.status === 'Draft').length
+    });
+  });
 </script>
 
 <svelte:head>
-	<title>Dashboard | Webflow Asset Dashboard</title>
+  <title>Dashboard | Webflow Asset Dashboard</title>
 </svelte:head>
 
 <div class="dashboard">
-	<Header
-		userEmail={data.user?.email}
-		onLogout={handleLogout}
-		onProfileClick={handleProfileClick}
-		onSearch={handleSearch}
-	/>
+  <Header
+    userEmail={data.user?.email}
+    onLogout={handleLogout}
+    onProfileClick={handleProfileClick}
+    onSearch={handleSearch}
+    searchValue={searchTerm}
+  />
 
-	<main class="main-content">
-		<div class="content-wrapper">
-			<!-- Overview Section - Tufte: High density, minimal chrome -->
-			<section class="overview-section">
-				<div class="page-header page-intro">
-					<div class="header-text">
-						<span class="page-eyebrow page-intro__eyebrow">Creator Hub</span>
-						<h1 class="page-title page-intro__title">Your Webflow template portfolio</h1>
-						<p class="page-subtitle page-intro__subtitle">
-							Track published assets, upcoming submissions, and marketplace signals in one place.
-							<DataFreshnessIndicator variant="tooltip" />
-						</p>
-					</div>
-					<SubmissionTracker assets={data.assets || []} variant="compact" userEmail={data.user?.email} />
-				</div>
+  <main class="main-content">
+    <div class="content-wrapper">
+      <!-- Overview Section - Tufte: High density, minimal chrome -->
+      <section class="overview-section">
+        <div class="page-header page-intro page-intro--dashboard">
+          <div class="header-text">
+            <span class="page-eyebrow page-intro__eyebrow">Creator Hub</span>
+            <h1 class="page-title page-intro__title">Your Webflow template portfolio</h1>
+            <p class="page-subtitle page-intro__subtitle">
+              Track published assets, upcoming submissions, and marketplace signals in one place.
+              <DataFreshnessIndicator variant="tooltip" />
+            </p>
+          </div>
+          <SubmissionTracker
+            assets={data.assets || []}
+            variant="compact"
+            userEmail={data.user?.email}
+          />
+        </div>
 
-				<!-- Tufte: Single-line high-density metrics bar -->
-				<StatsBar assets={data.assets || []} />
+        <!-- Tufte: Single-line high-density metrics bar -->
+        <StatsBar assets={data.assets || []} />
 
-				<!-- Detailed breakdown in compact grid -->
-				<div class="dashboard-grid">
-					<div class="stats-column">
-						<OverviewStats assets={data.assets || []} />
-					</div>
-				</div>
-			</section>
+        <div class="summary-toggle-row">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            class="summary-toggle"
+            aria-expanded={showDetailedSummary}
+            aria-controls="detailed-summary"
+            onclick={() => (showDetailedSummary = !showDetailedSummary)}
+          >
+            {#if showDetailedSummary}
+              <ChevronUp size={16} />
+              Hide detailed summary
+            {:else}
+              <ChevronDown size={16} />
+              Show detailed summary
+            {/if}
+          </Button>
+        </div>
 
-			<!-- Assets Section -->
-			<section class="assets-section">
-				<AssetsDisplay
-					assets={data.assets || []}
-					{searchTerm}
-					onView={handleViewAsset}
-					onEdit={handleEditAsset}
-					onArchive={handleArchiveAsset}
-					onRefresh={handleRefreshAssets}
-				/>
-			</section>
-		</div>
-	</main>
+        {#if showDetailedSummary}
+          <!-- Detailed breakdown in compact grid -->
+          <div class="dashboard-grid" id="detailed-summary">
+            <div class="stats-column">
+              <OverviewStats assets={data.assets || []} />
+            </div>
+          </div>
+        {/if}
+      </section>
 
-	{#if isProfileOpen && EditProfileModal}
-		{@const ProfileModal = EditProfileModal}
-		<ProfileModal onClose={handleProfileClose} />
-	{/if}
+      <!-- Assets Section -->
+      <section class="assets-section">
+        <AssetsDisplay
+          assets={data.assets || []}
+          {searchTerm}
+          onSearch={handleSearch}
+          onView={handleViewAsset}
+          onEdit={handleEditAsset}
+          onArchive={handleArchiveAsset}
+          onRefresh={handleRefreshAssets}
+        />
+      </section>
+    </div>
+  </main>
 
-	{#if isEditModalOpen && currentEditingAsset && EditAssetModal}
-		{@const AssetModal = EditAssetModal}
-		<AssetModal
-			asset={currentEditingAsset}
-			onClose={handleEditClose}
-			onSave={handleEditSave}
-		/>
-	{/if}
+  {#if isProfileOpen && EditProfileModal}
+    {@const ProfileModal = EditProfileModal}
+    <ProfileModal onClose={handleProfileClose} />
+  {/if}
+
+  {#if isEditModalOpen && currentEditingAsset && EditAssetModal}
+    {@const AssetModal = EditAssetModal}
+    <AssetModal asset={currentEditingAsset} onClose={handleEditClose} onSave={handleEditSave} />
+  {/if}
 </div>
 
 <style>
-	.dashboard {
-		min-height: 100vh;
-		background: var(--color-bg-pure);
-	}
+  .dashboard {
+    min-height: 100vh;
+    background: var(--color-bg-pure);
+  }
 
-	.main-content {
-		padding: var(--space-lg) var(--space-md);
-	}
+  .main-content {
+    padding: var(--space-lg) var(--space-md);
+  }
 
-	.content-wrapper {
-		max-width: 80rem;
-		margin: 0 auto;
-	}
+  .content-wrapper {
+    max-width: 80rem;
+    margin: 0 auto;
+  }
 
-	.overview-section {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-md);
-		margin-bottom: var(--space-xl);
-	}
+  .overview-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+  }
 
-	.page-header {
-		display: flex;
-		align-items: flex-start;
-		justify-content: space-between;
-		gap: var(--space-md);
-	}
+  .page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-md);
+  }
 
-	.header-text {
-		flex: 1;
-		max-width: 40rem;
-	}
+  .header-text {
+    flex: 1;
+    max-width: 40rem;
+  }
 
-	.page-subtitle :global(*) {
-		display: inline-flex;
-		vertical-align: middle;
-	}
+  .page-subtitle :global(*) {
+    display: inline-flex;
+    vertical-align: middle;
+  }
 
-	.dashboard-grid {
-		display: grid;
-		grid-template-columns: 1fr;
-		gap: var(--space-md);
-	}
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
 
-	.stats-column {
-		display: flex;
-		flex-direction: column;
-	}
+  .summary-toggle-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: calc(var(--space-sm) * -0.25);
+  }
 
-	.assets-section {
-		margin-bottom: var(--space-xl);
-	}
+  :global(.summary-toggle svg) {
+    flex-shrink: 0;
+  }
 
-	@media (max-width: 640px) {
-		.main-content {
-			padding: var(--space-md);
-		}
+  :global(.summary-toggle) {
+    gap: 0.45rem;
+  }
 
-		.overview-section {
-			gap: var(--space-sm);
-			margin-bottom: var(--space-lg);
-		}
+  .stats-column {
+    display: flex;
+    flex-direction: column;
+  }
 
-		.page-header {
-			flex-direction: column;
-			align-items: stretch;
-			gap: var(--space-sm);
-		}
+  .assets-section {
+    margin-bottom: var(--space-xl);
+  }
 
-		.page-title {
-			font-size: var(--text-h3);
-		}
+  @media (max-width: 640px) {
+    .main-content {
+      padding: var(--space-md);
+    }
 
-		.assets-section {
-			margin-bottom: var(--space-lg);
-		}
+    .overview-section {
+      gap: var(--space-sm);
+      margin-bottom: var(--space-lg);
+    }
 
-		:global(.compact-tracker) {
-			width: 100%;
-		}
+    .page-header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--space-sm);
+    }
 
-		:global(.tracker-button) {
-			width: 100%;
-			justify-content: center;
-		}
-	}
+    .summary-toggle-row {
+      justify-content: stretch;
+    }
+
+    :global(.summary-toggle) {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .page-title {
+      font-size: var(--text-h3);
+    }
+
+    .assets-section {
+      margin-bottom: var(--space-lg);
+    }
+
+    :global(.compact-tracker) {
+      width: 100%;
+    }
+
+    :global(.tracker-button) {
+      width: 100%;
+      justify-content: center;
+    }
+  }
 </style>
