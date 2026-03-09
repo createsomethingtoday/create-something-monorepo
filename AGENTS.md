@@ -1,189 +1,118 @@
 # Agent Principles & Workflow
 
-This project uses **lm** (loom) for agent-native issue tracking and coordination. Run `lm init` to get started.
+This repository uses **Loom** (`lm`) for agent-native coordination.
 
-## Strategic Context: The Creation Moat
-
-**MCP consumption is commoditized. MCP creation is not.**
-
-CREATE SOMETHING builds the connectivity layer between tools and AI. All properties serve this thesis:
-
-| Property | Focus |
-|----------|-------|
-| **.ltd** | Philosophy of automation infrastructure |
-| **.io** | MCP patterns for builders |
-| **.space** | MCP integration experiments |
-| **.agency** | Custom MCP development for clients |
-
-See `docs/MCP_FIRST_THESIS.md` for full strategic context.
-
-### Framework Alignment: The Three-Tier Model
-
-All work in this codebase maps to the Three-Tier Framework (Database, Automation, Judgment). When building or modifying systems, identify which tier each component serves:
-
-| Tier | MCP Primitive | Control Model | Examples in This Repo |
-|------|---------------|---------------|-----------------------|
-| **Database** | Resources | Application-controlled | D1 databases, KV stores, Procore data, R2 storage |
-| **Automation** | Tools | Model-controlled | MCP server tools, Workers, Skills |
-| **Judgment** | Prompts | User-controlled | System prompts, CLAUDE.md policy, skill constraints |
-
-**Integration connectivity**: For MCPs that need app connectivity (Gmail, Notion, Slack, etc.), prefer Composio via `@create-something/composio-bridge` unless the integration is deep or client-specific. See `docs/COMPOSIO_PATTERNS.md`.
-
-**When debugging agent systems**, follow the causality heuristic:
-1. **Database** — Is the data available and correct?
-2. **Automation** — Did execution complete successfully?
-3. **Judgment** — Was the right policy applied?
-
-**When coordinating agents**, remember that policy is an artifact. Pass policy artifacts alongside task artifacts — agents share not just what to do, but how to behave.
-
-See `docs/THREE_TIER_FRAMEWORK.md` for the full framework including sampling feedback loops and policy-as-artifact implications.
-
----
-
-## Guiding Principle: The Work Must Remain Connected
-
-The central discipline of our agent workflow is ensuring that all work remains connected to the whole. Stranded local changes, untracked tasks, and un-pushed commits represent a disconnection from the project's shared reality. They obscure the true state of the work.
-
-The following workflow is designed to enforce this principle. Each step is an act of reconnection.
-
-## Quick Reference
+Start here:
 
 ```bash
-lm ready              # Find available work
-lm ready --ranked     # Robot-priority with scores
-lm show <id>          # View issue details
-lm claim <id>         # Claim work
-lm done <id>          # Complete work
-lm sync               # Sync with git
+lm init
+lm ready
+lm claim <id>
 ```
 
-## Session Completion: "Landing the Plane"
+## What this repo is
 
-Ending a work session is a critical process of reconnection. The goal is to leave the project in a perfectly clear and understandable state for the next contributor (whether human or agent).
+CREATE SOMETHING builds the connectivity and control layer between tools and AI.
 
-### The Workflow of Reconnection
+- **Core thesis**: MCP consumption is commoditized. MCP creation is not.
+- **Framework**: all work maps to **Database / Automation / Judgment**
+- **Operating rule**: policy is an artifact, not just a prompt
 
-1.  **File issues for remaining work**
-    *   **Principle:** Remove obscurity.
-    *   **Rationale:** All discovered tasks must be captured in the shared `loom` system. Ideas or follow-ups that exist only in a local context are disconnected and will be lost.
+Read these first:
 
-2.  **Run quality gates**
-    *   **Principle:** Serve the whole.
-    *   **Rationale:** Tests, linters, and builds ensure that your changes integrate correctly with the entire system. A change that breaks another part of the system is a form of disconnection.
-    *   **Commands:**
-        ```bash
-        pnpm check              # TypeScript - catches invalid imports
-        pnpm lint               # ESLint - catches canon violations
-        pnpm test               # Vitest - catches regressions
-        ```
+- `docs/README.md` — documentation map
+- `docs/MCP_FIRST_THESIS.md` — strategic thesis and packaging
+- `docs/THREE_TIER_FRAMEWORK.md` — Database / Automation / Judgment model
 
-3.  **Update issue status**
-    *   **Principle:** Remove obscurity.
-    *   **Rationale:** The `loom` system must accurately reflect the state of the work. Closing finished tasks and updating progress removes ambiguity about what has been done and what remains.
+## How to navigate
 
-4.  **Push to remote**
-    *   **Principle:** The work must remain connected.
-    *   **Rationale:** This is the most critical act of reconnection. Work that exists only on your local machine is stranded. It is invisible to the rest of the project and effectively does not exist. You must push your changes and verify they are integrated with the remote.
-    *   **Workflow:**
-        ```bash
-        git pull --rebase
-        lm sync
-        git push
-        git status  # MUST show "up to date with origin"
-        ```
+Treat this file as a map, not an encyclopedia.
 
-5.  **Clean up**
-    *   **Principle:** "Less, but better."
-    *   **Rationale:** Remove unnecessary artifacts from your session, such as temporary stashes or remote branches. This reduces clutter and leaves a clean environment for the next session.
+When you need:
 
-6.  **Hand off**
-    *   **Principle:** Make the work understandable.
-    *   **Rationale:** Provide clear context for the next contributor. This reconnects your completed work with the future of the project, ensuring a smooth continuation of the hermeneutic circle.
+- **Strategy / positioning**: `docs/MCP_FIRST_THESIS.md`, `docs/AGENCY_CODEX_VECTOR_STRATEGY.md`
+- **Architecture / governance**: `docs/THREE_TIER_FRAMEWORK.md`, `docs/MCP_HUB_CONTROL_PLANE.md`, `docs/HUB_EXECUTION_GOVERNANCE_PLAN.md`
+- **Policy artifacts**: `docs/policies/README.md`
+- **Operational runbooks**: runbooks in `docs/` and `docs/guides/`
+- **Historical context / decisions**: `docs/internal/`
 
-### Core Disciplines
+## Working model
 
--   **Work is only complete when it is pushed.**
-    *   **Rationale:** An un-pushed change is a disconnected artifact. Connection is achieved only when the work is integrated with the `origin`.
+Before changing anything, identify which tier the work serves:
 
--   **The agent must complete the push.**
-    *   **Rationale:** To remove ambiguity, the agent responsible for the work is also responsible for reconnecting it. Handing off a push is a transfer of responsibility that can lead to disconnection.
+| Tier | MCP Primitive | Repo examples |
+|------|---------------|---------------|
+| **Database** | Resources | D1, KV, R2, app data, policy/check artifacts |
+| **Automation** | Tools | MCP servers, workers, harnesses, skills |
+| **Judgment** | Prompts | policy packs, approval rules, escalation behavior |
 
--   **If a push fails, you must resolve it.**
-    *   **Rationale:** A failed push is a clear signal of disconnection. You must diagnose the conflict (e.g., merge conflicts, failed checks) and resolve it to successfully reconnect your work to the whole.
+Debug in this order:
 
-## Grounding Discipline: Verify Before Use
+1. **Database**: is the data correct and available?
+2. **Automation**: did the execution path succeed?
+3. **Judgment**: was the right policy applied?
 
-The enemy of good work is hallucination. When you reference code that doesn't exist, you create disconnection—broken imports, undefined functions, phantom APIs.
+When coordinating agents, pass **policy artifacts** alongside task artifacts.
 
-### The Verify-Then-Use Protocol
+## Default repo workflow
 
-Before using any symbol (function, component, type, constant) from this codebase:
+1. Find or create tracked work in Loom.
+2. Verify symbols and import paths before using them.
+3. Run the relevant quality gates.
+4. Update Loom status.
+5. Push the work so it remains connected to the whole.
 
-1.  **Verify it exists** — Use `pnpm exports <package> <symbol>` or `Grep`/`Read` to confirm
-2.  **Verify the import path** — Check `package.json` exports or the actual file path
-3.  **If uncertain, say "unknown"** — Never guess. "I need to verify this exists" is always acceptable.
+Core commands:
 
 ```bash
-# Quick verification commands
-pnpm exports                    # List all packages
-pnpm exports components         # List exports from @create-something/components  
-pnpm exports components Button  # Check if Button exists
+lm ready
+lm ready --ranked
+lm show <id>
+lm claim <id>
+lm done <id>
+lm sync
+
+pnpm check
+pnpm lint
+pnpm test
 ```
 
-### When Retrieval Returns Fragments
+## Grounding discipline
 
-Semantic search may return conceptually related documents that don't contain the actual API you need. When this happens:
+Do not guess code symbols, import paths, or public exports.
 
--   **Do not extrapolate** from examples to guess the real API
--   **Read the actual source file** — `src/lib/index.ts` or equivalent
--   **Check the package.json exports** — This is the authoritative source of what's public
+Use:
 
-### Failure Mode
-
-```typescript
-// BAD: Guessed from partial context
-import { NonExistentThing } from '@create-something/components';
-
-// GOOD: Verified by reading src/lib/index.ts
-import { Button, Card } from '@create-something/components';
+```bash
+pnpm exports
+pnpm exports <package>
+pnpm exports <package> <symbol>
 ```
 
-**Principle:** It is better to admit uncertainty than to create disconnection through hallucination.
+If retrieval returns fragments, read the actual source or `package.json` exports.
 
-### External Library Docs: Context7
+## External docs
 
-For third-party libraries/frameworks (SvelteKit, Cloudflare Workers, Wrangler, Hono, Vitest, Stripe, Supabase, etc.), prefer **Context7 MCP** to pull **up-to-date, version-specific docs/examples** into context.
+For third-party libraries, prefer **Context7** instead of memory:
 
-- Add `use context7` when you need docs, setup/configuration steps, API usage, or code generation.
-- If you know the library ID, pin it directly: `use library /vercel/next.js`.
-- Mention versions explicitly when relevant: "Next.js 14 middleware ... use context7".
-- When unsure about a library ID, run `resolve-library-id` first instead of guessing.
+- resolve the library ID first if needed
+- fetch version-specific docs/examples
+- do not guess unstable APIs
 
-**Tools available via MCP:**
-- `resolve-library-id` — map a library name to a Context7 library ID
-- `query-docs` — fetch relevant docs/examples for a specific library ID and task
+Common library IDs used here:
 
-**Common library IDs for this monorepo:**
-| Library | Context7 ID |
-|---------|-------------|
-| SvelteKit | `/sveltejs/kit` |
-| Cloudflare Workers SDK / Wrangler | `/cloudflare/workers-sdk` |
-| Cloudflare Docs (D1, KV, Pages) | `/cloudflare/cloudflare-docs` |
-| Hono | `/honojs/hono` |
-| Vitest | `/vitest-dev/vitest` |
-| TypeScript | `/microsoft/typescript` |
-| Zod | `/colinhacks/zod` |
+- SvelteKit: `/sveltejs/kit`
+- Cloudflare Workers SDK: `/cloudflare/workers-sdk`
+- Cloudflare Docs: `/cloudflare/cloudflare-docs`
+- Hono: `/honojs/hono`
+- Vitest: `/vitest-dev/vitest`
+- TypeScript: `/microsoft/typescript`
+- Zod: `/colinhacks/zod`
 
-## Tool Preferences
+## Tool preference
 
-When working in this codebase, prefer these tools over manual approaches:
+- **Code verification**: `ground analyze`, `ground find-duplicates`
+- **Task coordination**: `lm`
+- **Priority ranking**: `lm ready --ranked`
 
-| Need | CLI | MCP (if available) |
-|------|-----|-----|
-| Code verification | `ground analyze`, `ground find-duplicates` | `ground_*` tools |
-| Task coordination | `lm ready`, `lm create`, `lm done` | `loom_*` tools |
-| Priority ranking | `lm ready --ranked` | `loom_priority` |
-
-**Use CLI or MCP** - both work. CLI is always available; MCP is convenient in IDEs that support it.
-
-**Loom replaces Beads**: Loom (`lm`) now handles both issue tracking and agent coordination. It includes robot-priority ranking, sessions, cost tracking, and crash recovery. Use `lm` for all task management.
+Loom replaces Beads in this repository. Use `lm` for task management and coordination.
