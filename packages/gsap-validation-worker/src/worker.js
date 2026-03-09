@@ -1219,6 +1219,7 @@ var ALLOWED_ORIGINS = [
   "https://wf.createsomething.io"
 ];
 var ALLOWED_ORIGIN_PATTERNS = [
+  /^https:\/\/([a-z0-9-]+\.)*webflow\.com$/i,
   /^https:\/\/[a-z0-9-]+\.webflow\.io$/i,
   /^https:\/\/[a-z0-9-]+\.webflow-dashboard\.pages\.dev$/i
 ];
@@ -1229,7 +1230,8 @@ function handleCors(request) {
   const corsHeaders = {
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": requestedHeaders && requestedHeaders.trim() !== "" ? requestedHeaders : "Content-Type, Authorization, X-Correlation-Id",
-    "Access-Control-Max-Age": "86400"
+    "Access-Control-Max-Age": "86400",
+    "Vary": "Origin, Access-Control-Request-Headers"
   };
   if (isAllowedOrigin) {
     corsHeaders["Access-Control-Allow-Origin"] = origin || "*";
