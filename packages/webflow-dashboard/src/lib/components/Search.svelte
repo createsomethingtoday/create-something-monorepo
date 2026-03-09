@@ -60,21 +60,24 @@
 	:global(.search-icon) {
 		position: absolute;
 		left: 0.75rem;
-		color: var(--color-fg-muted);
+		color: var(--color-info);
 		pointer-events: none;
 	}
 
 	.search-input {
 		width: 100%;
-		height: 2.25rem;
-		padding: 0.5rem 2rem 0.5rem 2.25rem;
+		height: 2.75rem;
+		padding: 0.5rem 2.25rem 0.5rem 2.5rem;
 		font-size: 1rem;
 		color: var(--color-fg-primary);
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-shell-border-default);
+		border-radius: 999px;
 		outline: none;
-		transition: border-color var(--duration-micro) var(--ease-standard);
+		box-shadow: var(--shadow-sm);
+		transition:
+			border-color var(--duration-micro) var(--ease-standard),
+			box-shadow var(--duration-micro) var(--ease-standard);
 	}
 
 	.search-input::placeholder {
@@ -82,12 +85,12 @@
 	}
 
 	.search-input:focus {
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-info);
+		box-shadow: 0 0 0 4px var(--color-info-muted);
 	}
 
 	.search-input:focus-visible {
-		outline: 2px solid var(--color-focus);
-		outline-offset: -1px;
+		outline: none;
 	}
 
 	.clear-btn {
@@ -108,12 +111,12 @@
 	}
 
 	.clear-btn:hover {
-		color: var(--color-fg-secondary);
+		color: var(--color-fg-primary);
 	}
 
 	.clear-btn:focus-visible {
-		outline: 2px solid var(--color-focus);
-		outline-offset: 2px;
+		outline: none;
+		box-shadow: 0 0 0 4px var(--color-info-muted);
 	}
 
 	@media (min-width: 768px) {

@@ -17,8 +17,10 @@
 
 <style>
 	.card-title {
+		font-family: var(--font-heading);
 		font-size: var(--text-body-lg);
 		font-weight: var(--font-semibold);
+		letter-spacing: 0.01em;
 		color: var(--color-fg-primary);
 		line-height: 1.2;
 		margin: 0;

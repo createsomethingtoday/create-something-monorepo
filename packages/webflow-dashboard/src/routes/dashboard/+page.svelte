@@ -187,8 +187,12 @@
 			<section class="overview-section">
 				<div class="page-header">
 					<div class="header-text">
-						<h1 class="page-title">Welcome back</h1>
-						<p class="page-subtitle">Your Webflow templates at a glance. <DataFreshnessIndicator variant="tooltip" /></p>
+						<span class="page-eyebrow">Creator Hub</span>
+						<h1 class="page-title">Your Webflow template portfolio</h1>
+						<p class="page-subtitle">
+							Track published assets, upcoming submissions, and marketplace signals in one place.
+							<DataFreshnessIndicator variant="tooltip" />
+						</p>
 					</div>
 					<SubmissionTracker assets={data.assets || []} variant="compact" userEmail={data.user?.email} />
 				</div>
@@ -264,11 +268,29 @@
 
 	.header-text {
 		flex: 1;
+		max-width: 40rem;
+	}
+
+	.page-eyebrow {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
+		margin-bottom: 0.5rem;
+		padding: 0.3rem 0.65rem;
+		border-radius: 999px;
+		background: var(--color-info-muted);
+		color: var(--color-info);
+		font-size: var(--text-caption);
+		font-weight: var(--font-semibold);
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
 	}
 
 	.page-title {
+		font-family: var(--font-heading);
 		font-size: var(--text-h2);
 		font-weight: var(--font-semibold);
+		letter-spacing: 0.01em;
 		color: var(--color-fg-primary);
 		margin: 0;
 	}

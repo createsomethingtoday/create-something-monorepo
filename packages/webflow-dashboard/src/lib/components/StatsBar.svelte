@@ -152,10 +152,11 @@
 		display: flex;
 		align-items: center;
 		gap: var(--space-md);
-		padding: var(--space-sm) var(--space-md);
+		padding: 1rem 1.25rem;
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
+		border: 1px solid var(--color-shell-border-default);
 		border-radius: var(--radius-md);
+		box-shadow: var(--shadow-sm);
 		overflow-x: auto;
 	}
 
@@ -167,9 +168,11 @@
 	}
 
 	.stat-main {
+		font-family: var(--font-heading);
 		font-size: var(--text-body-lg);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
+		letter-spacing: 0.01em;
 		font-variant-numeric: tabular-nums;
 	}
 
@@ -190,7 +193,7 @@
 	.stat-divider {
 		width: 1px;
 		height: 1.5rem;
-		background: var(--color-border-default);
+		background: var(--color-shell-border-default);
 		flex-shrink: 0;
 	}
 

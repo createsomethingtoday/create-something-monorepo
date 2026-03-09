@@ -422,8 +422,10 @@
 	}
 
 	.section-title {
+		font-family: var(--font-heading);
 		font-size: var(--text-h2);
 		font-weight: var(--font-semibold);
+		letter-spacing: 0.01em;
 		color: var(--color-fg-primary);
 		margin: 0;
 	}
@@ -460,32 +462,38 @@
 		align-items: center;
 		justify-content: center;
 		border-radius: var(--radius-md);
+		border: 1px solid transparent;
 		font-size: var(--text-body);
 	}
 
 	.status-icon.status-scheduled {
 		background: var(--color-info-muted);
 		color: var(--color-info);
+		border-color: var(--color-info-border);
 	}
 
 	.status-icon.status-published {
 		background: var(--color-success-muted);
 		color: var(--color-success);
+		border-color: var(--color-success-border);
 	}
 
 	.status-icon.status-upcoming {
 		background: color-mix(in srgb, var(--color-data-3) 20%, transparent);
 		color: var(--color-data-3);
+		border-color: var(--color-data-3-border);
 	}
 
 	.status-icon.status-delisted {
 		background: var(--color-warning-muted);
 		color: var(--color-warning);
+		border-color: var(--color-warning-border);
 	}
 
 	.status-icon.status-rejected {
 		background: var(--color-error-muted);
 		color: var(--color-error);
+		border-color: var(--color-error-border);
 	}
 
 	.status-meta {
@@ -494,8 +502,10 @@
 	}
 
 	.status-title {
+		font-family: var(--font-heading);
 		font-size: var(--text-body-lg);
 		font-weight: var(--font-semibold);
+		letter-spacing: 0.01em;
 		color: var(--color-fg-primary);
 		margin: 0;
 	}
@@ -532,7 +542,7 @@
 	}
 
 	.sort-btn.active {
-		color: var(--color-fg-primary);
+		color: var(--color-info);
 		text-decoration: underline;
 		text-underline-offset: 4px;
 	}
@@ -547,12 +557,12 @@
 		display: flex;
 		justify-content: center;
 		padding: var(--space-md);
-		border-top: 1px solid var(--color-border-default);
+		border-top: 1px solid var(--color-shell-border-default);
 	}
 
 	.totals-row {
-		border-top: 2px solid var(--color-border-emphasis);
-		background: var(--color-bg-subtle);
+		border-top: 2px solid var(--color-info-border);
+		background: color-mix(in srgb, var(--color-info-muted) 35%, var(--color-bg-surface));
 	}
 
 	.totals-icon {
@@ -563,7 +573,8 @@
 		justify-content: center;
 		background: var(--color-bg-surface);
 		border-radius: var(--radius-sm);
-		color: var(--color-fg-muted);
+		border: 1px solid var(--color-shell-border-default);
+		color: var(--color-info);
 	}
 
 	.empty-state {
@@ -611,10 +622,11 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-sm);
-		border: 1px solid var(--color-border-default);
+		border: 1px solid var(--color-shell-border-default);
 		border-radius: var(--radius-md);
 		padding: var(--space-sm);
 		background: var(--color-bg-surface);
+		box-shadow: var(--shadow-sm);
 	}
 
 	.mobile-header-row {

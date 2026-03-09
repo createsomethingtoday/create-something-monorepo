@@ -26,6 +26,6 @@
 
 <style>
 	.webflow-logo {
-		color: var(--color-fg-primary);
+		color: var(--color-info);
 	}
 </style>

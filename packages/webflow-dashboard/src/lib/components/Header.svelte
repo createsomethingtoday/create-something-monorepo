@@ -82,8 +82,12 @@
 
 <style>
 	.header {
-		border-bottom: 1px solid var(--color-border-default);
-		background: var(--color-bg-pure);
+		position: sticky;
+		top: 0;
+		z-index: 100;
+		border-bottom: 1px solid var(--color-shell-border-default);
+		background: var(--color-shell-surface);
+		box-shadow: var(--color-shell-shadow);
 	}
 
 	.header-content {
@@ -116,8 +120,13 @@
 		display: flex;
 		align-items: center;
 		gap: var(--space-sm);
+		padding: 0.45rem 0.9rem;
+		border-radius: 999px;
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-shell-border-default);
+		box-shadow: var(--shadow-sm);
 		text-decoration: none;
-		color: var(--color-fg-primary);
+		color: var(--color-info);
 	}
 
 	.webflow-logo {
@@ -125,15 +134,17 @@
 	}
 
 	.logo-text {
-		font-size: var(--text-body-lg);
+		font-family: var(--font-heading);
+		font-size: var(--text-body);
 		font-weight: var(--font-semibold);
+		letter-spacing: 0.01em;
 		color: var(--color-fg-primary);
 	}
 
 	.nav-links {
 		display: flex;
 		align-items: center;
-		gap: var(--space-xs);
+		gap: 0.5rem;
 		width: 100%;
 		overflow-x: auto;
 		padding-bottom: 0.125rem;
@@ -146,37 +157,43 @@
 
 	.nav-link {
 		flex: 0 0 auto;
-		padding: var(--space-xs) var(--space-sm);
+		padding: 0.5rem 0.9rem;
 		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
+		font-weight: var(--font-medium);
+		color: var(--color-fg-muted);
 		text-decoration: none;
 		white-space: nowrap;
-		border-bottom: 1px solid transparent;
+		border: 1px solid transparent;
+		border-radius: 999px;
 		transition:
 			color var(--duration-micro) var(--ease-standard),
-			border-color var(--duration-micro) var(--ease-standard);
+			background-color var(--duration-micro) var(--ease-standard),
+			border-color var(--duration-micro) var(--ease-standard),
+			box-shadow var(--duration-micro) var(--ease-standard);
 	}
 
 	.nav-link:hover {
 		color: var(--color-fg-primary);
-		border-bottom-color: var(--color-border-default);
+		background: var(--color-bg-subtle);
+		border-color: var(--color-shell-border-default);
 	}
 
 	.nav-link.active {
-		color: var(--color-fg-primary);
-		border-bottom-color: var(--color-border-emphasis);
+		color: #ffffff;
+		background: var(--color-info);
+		border-color: var(--color-info);
+		box-shadow: 0 8px 18px rgba(20, 110, 245, 0.16);
 	}
 
 	.nav-link:focus-visible {
-		outline: 2px solid var(--color-focus);
-		outline-offset: 2px;
-		border-radius: var(--radius-sm);
+		outline: none;
+		box-shadow: 0 0 0 4px var(--color-info-muted);
 	}
 
 	.search-desktop {
 		display: none;
 		width: 100%;
-		max-width: 22rem;
+		max-width: 25rem;
 	}
 
 	.search-mobile {

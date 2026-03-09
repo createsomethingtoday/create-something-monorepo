@@ -190,9 +190,10 @@
 		max-width: 400px;
 		padding: var(--space-lg);
 		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
+		border: 1px solid var(--color-shell-border-default);
 		border-radius: var(--radius-xl);
 		text-align: center;
+		box-shadow: var(--shadow-lg);
 	}
 
 	.logo {
@@ -221,8 +222,10 @@
 	}
 
 	h1 {
+		font-family: var(--font-heading);
 		font-size: var(--text-h2);
 		font-weight: var(--font-semibold);
+		letter-spacing: 0.01em;
 		color: var(--color-fg-primary);
 		margin: 0;
 	}
@@ -259,7 +262,7 @@
 	}
 
 	.retry-link:hover {
-		opacity: 0.8;
+		color: #0055d4;
 	}
 
 	.token-form {
@@ -273,14 +276,17 @@
 	.token-input {
 		width: 100%;
 		padding: var(--space-sm);
-		background: var(--color-bg-elevated);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-shell-border-default);
+		border-radius: 999px;
+		box-shadow: var(--shadow-sm);
 		color: var(--color-fg-primary);
 		font-family: monospace;
 		font-size: 1rem;
 		text-align: center;
-		transition: border-color var(--duration-micro) var(--ease-standard);
+		transition:
+			border-color var(--duration-micro) var(--ease-standard),
+			box-shadow var(--duration-micro) var(--ease-standard);
 	}
 
 	.token-input::placeholder {
@@ -290,28 +296,32 @@
 	.token-input:focus {
 		outline: none;
 		border-color: var(--color-info);
+		box-shadow: 0 0 0 4px var(--color-info-muted);
 	}
 
 	.token-input:focus-visible {
-		outline: 2px solid var(--color-focus);
-		outline-offset: -1px;
+		outline: none;
 	}
 
 	.verify-button {
 		width: 100%;
 		padding: var(--space-sm);
-		background: var(--color-fg-primary);
-		border: none;
-		border-radius: var(--radius-md);
-		color: var(--color-bg-pure);
+		background: var(--color-info);
+		border: 1px solid var(--color-info);
+		border-radius: 999px;
+		color: #ffffff;
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-medium);
+		box-shadow: 0 8px 18px rgba(20, 110, 245, 0.16);
 		cursor: pointer;
-		transition: opacity var(--duration-micro) var(--ease-standard);
+		transition:
+			transform var(--duration-micro) var(--ease-standard),
+			background-color var(--duration-micro) var(--ease-standard);
 	}
 
 	.verify-button:hover:not(:disabled) {
-		opacity: 0.9;
+		background: #0055d4;
+		transform: translateY(-1px);
 	}
 
 	.verify-button:disabled {

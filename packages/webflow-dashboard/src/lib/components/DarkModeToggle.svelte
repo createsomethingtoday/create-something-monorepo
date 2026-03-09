@@ -2,8 +2,7 @@
 	import { browser } from '$app/environment';
 	import { Sun, Moon } from 'lucide-svelte';
 
-	// Default to dark mode (dark is default, no attribute needed)
-	let isDark = $state(true);
+	let isDark = $state(false);
 
 	// Initialize from localStorage or system preference
 	$effect(() => {
@@ -22,11 +21,9 @@
 	function updateTheme() {
 		if (browser) {
 			if (isDark) {
-				// Dark mode is default - remove attribute
-				document.documentElement.removeAttribute('data-theme');
+				document.documentElement.setAttribute('data-theme', 'dark');
 			} else {
-				// Light mode - set data-theme attribute
-				document.documentElement.setAttribute('data-theme', 'light');
+				document.documentElement.removeAttribute('data-theme');
 			}
 			localStorage.setItem('theme', isDark ? 'dark' : 'light');
 		}
@@ -60,20 +57,22 @@
 		height: 2.25rem;
 		padding: 0;
 		color: var(--color-fg-secondary);
-		background: transparent;
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
+		background: var(--color-bg-surface);
+		border: 1px solid var(--color-shell-border-default);
+		border-radius: 999px;
+		box-shadow: var(--shadow-sm);
 		cursor: pointer;
 		transition: all var(--duration-micro) var(--ease-standard);
 	}
 
 	.toggle-btn:hover {
 		color: var(--color-fg-primary);
-		border-color: var(--color-border-emphasis);
+		border-color: var(--color-info-border);
+		transform: translateY(-1px);
 	}
 
 	.toggle-btn:focus-visible {
-		outline: 2px solid var(--color-focus);
-		outline-offset: 2px;
+		outline: none;
+		box-shadow: 0 0 0 4px var(--color-info-muted);
 	}
 </style>

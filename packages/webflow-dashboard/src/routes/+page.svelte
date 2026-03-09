@@ -1,4 +1,6 @@
 <script lang="ts">
+	import WebflowLogo from '$lib/components/WebflowLogo.svelte';
+
 	const loadingPhrases = [
 		'Preparing your dashboard...',
 		'Syncing session details...',
@@ -11,7 +13,9 @@
 </svelte:head>
 
 <main class="container">
-	<div class="brand-mark" aria-hidden="true">W</div>
+	<div class="brand-mark" aria-hidden="true">
+		<WebflowLogo width={72} height={44} />
+	</div>
 	<h1>Webflow Asset Dashboard</h1>
 	<p class="subtitle" aria-live="polite">Connecting your workspace</p>
 	<ul class="loading-steps" aria-hidden="true">
@@ -34,21 +38,16 @@
 	}
 
 	.brand-mark {
-		width: 3rem;
-		height: 3rem;
-		border-radius: var(--radius-lg);
 		display: grid;
 		place-items: center;
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-semibold);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		color: var(--color-fg-primary);
+		padding: 0.25rem 0;
 	}
 
 	h1 {
+		font-family: var(--font-heading);
 		font-size: var(--text-h1);
 		font-weight: var(--font-semibold);
+		letter-spacing: 0.01em;
 		color: var(--color-fg-primary);
 		margin: 0;
 		text-align: center;
