@@ -209,6 +209,7 @@ For opted-in packages, the check also enforces:
 - `UNDERSTANDING.md` cannot still contain obvious template placeholder text
 - documented entry-point paths in the contract must exist
 - documented `pnpm` / `npm` boot and smoke scripts must exist in the relevant `package.json`
+- for packages with `src/routes`, documented backticked UI validation paths must map to real routes
 
 A matching GitHub Actions workflow exists at:
 

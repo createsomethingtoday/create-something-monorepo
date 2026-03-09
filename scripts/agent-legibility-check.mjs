@@ -330,6 +330,60 @@ function validateDocumentedCommands(relPath, content) {
   return details;
 }
 
+function routeExists(packageDir, routePath) {
+  const routesDir = path.join(packageDir, 'src', 'routes');
+  if (!existsSync(routesDir)) {
+    return null;
+  }
+
+  const trimmed = routePath.replace(/\/+$/, '') || '/';
+  const segments = trimmed === '/' ? [] : trimmed.slice(1).split('/').filter(Boolean);
+  const routeDir = path.join(routesDir, ...segments);
+  const routeFiles = [
+    '+page.svelte',
+    '+page.ts',
+    '+page.server.ts',
+    '+server.ts',
+    '+layout.svelte',
+    '+layout.ts',
+  ];
+
+  if (segments.length === 0) {
+    return routeFiles.some((file) => existsSync(path.join(routesDir, file)));
+  }
+
+  if (!existsSync(routeDir)) {
+    return false;
+  }
+
+  return routeFiles.some((file) => existsSync(path.join(routeDir, file)));
+}
+
+function validateUiValidationPaths(relPath, content) {
+  const details = [];
+  const packageDir = path.dirname(path.join(REPO_ROOT, relPath));
+  const routesDir = path.join(packageDir, 'src', 'routes');
+
+  if (!existsSync(routesDir)) {
+    return details;
+  }
+
+  const value = extractContractRow(content, 'UI validation path');
+  if (!value || value.toLowerCase().includes('none')) {
+    return details;
+  }
+
+  const routePaths = extractInlineCode(value).filter((item) => item.startsWith('/'));
+  for (const routePath of routePaths) {
+    const exists = routeExists(packageDir, routePath);
+    if (exists === false) {
+      details.push(`Documented UI validation path does not map to a route in src/routes: "${routePath}".`);
+    }
+  }
+
+  return details;
+}
+
 function validateTarget(relPath) {
   const fullPath = path.join(REPO_ROOT, relPath);
   const details = [];
@@ -353,6 +407,7 @@ function validateTarget(relPath) {
 
   details.push(...validateEntryPoints(relPath, content));
   details.push(...validateDocumentedCommands(relPath, content));
+  details.push(...validateUiValidationPaths(relPath, content));
 
   return {
     target: relPath,

@@ -7,6 +7,14 @@
 
 > This is the **canonical document** for the Marketplace Agentic Architecture exploration. All other files in this directory are supporting detail.
 
+## Delivery Pack
+
+The current delivery-ready handoff for the Webflow Marketplace template review Hub lives in:
+
+- `specs/webflow-marketplace/delivery/template-review-hub/`
+
+Use that folder when the goal is operational delivery to the Marketplace team rather than broader architecture exploration.
+
 ---
 
 ## Table of Contents

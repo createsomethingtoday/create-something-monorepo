@@ -1,0 +1,121 @@
+version: "0.1"
+artifact: "agent_contract"
+status: "working_draft"
+
+client:
+  name: "Webflow Marketplace team"
+  workflow_name: "template_review_hub_lane"
+  workflow_owner: "Marketplace review lead"
+
+purpose:
+  business_objective: "Reduce objective review effort and improve consistency without removing human ownership of template decisions."
+  operator_outcome: "Reviewers spend less time re-checking deterministic items and more time on design judgment, with explicit policy support for risky actions."
+
+runtime_profile:
+  delivery_vector: "Skills + MCP"
+  execution_mode: "approval_gated"
+  environment: "pilot"
+
+action_policy:
+  auto_allow:
+    - action: "Read queue state, asset context, version history, field maps, and release information."
+      rationale: "These are evidence-gathering actions and do not change reviewer or creator state."
+    - action: "Run template analysis, checklist scoring, and plagiarism/originality checks."
+      rationale: "These actions support reviewer judgment and are safe when presented as evidence rather than final decisions."
+    - action: "Draft reviewer-facing feedback suggestions."
+      rationale: "Drafting is reversible and remains subject to reviewer validation."
+  approval_required:
+    - action: "Set review status, request changes, approve a version, reject a version, or complete publishing metadata."
+      rationale: "These are state-changing review actions and must remain explicitly reviewer-owned."
+      approval_inbox: "Assigned reviewer or Marketplace review queue"
+  block:
+    - action: "Send creator-facing communication autonomously."
+      rationale: "Human reviewers issue every creator-facing decision and message."
+    - action: "Mutate Hub control-plane settings from the reviewer lane."
+      rationale: "Control-plane mutation is operator-only and outside reviewer scope."
+    - action: "Execute destructive or out-of-scope actions not required for template review."
+      rationale: "The reviewer lane is limited to governed template review operations."
+
+escalation:
+  triggers:
+    - "POLICY_AMBIGUITY"
+    - "MISSING_REQUIRED_CONTEXT"
+    - "FIELD_MAPPING_UNVERIFIED"
+    - "LOW_CONFIDENCE_RECOMMENDATION"
+    - "SOURCE_STATE_MISMATCH"
+    - "WRITE_PATH_FAILURE"
+  behavior:
+    - "STOP AND REQUEST HUMAN REVIEW"
+    - "RETURN STRUCTURED REASON AND MANUAL NEXT STEP"
+  escalation_owner: "Marketplace review lead"
+
+guardrails:
+  budget:
+    max_tool_calls_per_run: 12
+    max_duration_minutes: 20
+  latency:
+    soft_limit_ms: 15000
+  data_handling:
+    pii_allowed: false
+    redact_before_output: true
+  unsafe_defaults:
+    - "NO CREATOR-FACING DECISION WITHOUT EXPLICIT REVIEWER ACTION"
+    - "NO WRITE ACTION WHEN FIELD MAPPING OR POLICY STATE IS UNRESOLVED"
+    - "NO APPROVAL OR REJECTION BASED SOLELY ON LOW-CONFIDENCE ANALYSIS"
+
+decision_rules:
+  use_latest_source_of_truth: true
+  require_human_review_on_write: true
+  require_human_review_when_introspection_fails: true
+  fallback_decision: "approval_required"
+
+inputs_required:
+  - "asset_id or version_id"
+  - "preview and published site context when available"
+  - "current review status"
+  - "reviewer identity"
+
+outputs_expected:
+  - "RECOMMENDATION"
+  - "RATIONALE"
+  - "EVIDENCE"
+  - "DRAFT_FEEDBACK"
+  - "NEXT_ACTION"
+  - "AUDIT_FIELDS"
+
+manual_fallback:
+  path: "Reviewer validates evidence manually, updates Airtable directly when necessary, and records exceptions through the pilot runbook."
+  owner: "Assigned reviewer"
+  success_condition: "The template decision is completed safely without bypassing approval, policy, or reviewer judgment."
+
+observability:
+  traces_enabled: true
+  evals_enabled: true
+  providers:
+    - name: "Braintrust"
+      role: "observability_and_evals"
+    - name: "cs-telemetry"
+      role: "operational_tracing"
+  required_audit_fields:
+    - "decision"
+    - "matched_policy_class"
+    - "asset_id"
+    - "version_id"
+    - "reviewer_id"
+    - "correlation_id"
+
+release_gates:
+  pre_prod:
+    - "Golden tasks pass for clean read-only review flow"
+    - "Golden tasks pass for approval-gated request changes, approval, and rejection flows"
+    - "Blocked actions tested successfully"
+    - "Manual fallback rehearsed"
+  production:
+    - "Marketplace review lead signoff"
+    - "Senior Systems Architect signoff"
+    - "Trace visibility confirmed for recommendation, write, and escalation paths"
+
+ownership:
+  policy_owner: "Senior Systems Architect"
+  workflow_owner: "Marketplace review lead"
+  technical_owner: "Senior Systems Architect"

@@ -24,5 +24,5 @@ This package is the end-user conversation product. It is distinct from:
 | Boot command | `pnpm --filter @create-something/concierge-chat dev` |
 | Smoke command | `pnpm --filter @create-something/concierge-chat check` |
 | Validation surfaces | Svelte typecheck output, route rendering, widget registry compilation |
-| UI validation path | `/`, `/chat`, `/chat/demo-intake`, `/chat/demo-intake/profile`, `/chat/demo-intake/handoff` |
+| UI validation path | `/`, `/chat`, `/chat/[threadId]`, `/chat/[threadId]/profile`, `/chat/[threadId]/handoff` |
 | Escalation rule | stop if a new widget requires arbitrary executable UI or if a workflow needs real persistence/auth without an agreed data contract |
