@@ -14,18 +14,21 @@ function createRuntime() {
     proxyToolName: 'server_a__alpha',
     serverName: 'server_a',
     downstreamToolName: 'alpha',
+    serverTags: [],
     call: async () => ({ ok: true }),
   };
   const routeA2 = {
     proxyToolName: 'server_a__beta',
     serverName: 'server_a',
     downstreamToolName: 'beta',
+    serverTags: [],
     call: async () => ({ ok: true }),
   };
   const routeB1 = {
     proxyToolName: 'server_b__gamma',
     serverName: 'server_b',
     downstreamToolName: 'gamma',
+    serverTags: [],
     call: async () => ({ ok: true }),
   };
 
@@ -71,30 +74,35 @@ function createIntentRuntime() {
     proxyToolName: 'composio-toolkit-zoom__zoom_create_a_meeting',
     serverName: 'composio-toolkit-zoom',
     downstreamToolName: 'zoom_create_a_meeting',
+    serverTags: [],
     call: async () => ({ ok: true }),
   };
   const sheetRoute = {
     proxyToolName: 'composio-toolkit-googlesheets__googlesheets_batch_update',
     serverName: 'composio-toolkit-googlesheets',
     downstreamToolName: 'googlesheets_batch_update',
+    serverTags: [],
     call: async () => ({ ok: true }),
   };
   const createSheetRoute = {
     proxyToolName: 'composio-toolkit-googlesheets__googlesheets_create_google_sheet1',
     serverName: 'composio-toolkit-googlesheets',
     downstreamToolName: 'googlesheets_create_google_sheet1',
+    serverTags: [],
     call: async () => ({ ok: true }),
   };
   const valuesUpdateRoute = {
     proxyToolName: 'composio-toolkit-googlesheets__googlesheets_values_update',
     serverName: 'composio-toolkit-googlesheets',
     downstreamToolName: 'googlesheets_values_update',
+    serverTags: [],
     call: async () => ({ ok: true }),
   };
   const deprecatedSqlRoute = {
     proxyToolName: 'composio-toolkit-googlesheets__googlesheets_execute_sql',
     serverName: 'composio-toolkit-googlesheets',
     downstreamToolName: 'googlesheets_execute_sql',
+    serverTags: [],
     call: async () => ({ ok: true }),
   };
 
@@ -203,12 +211,14 @@ test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for read-only 
     proxyToolName: 'composio-toolkit-googlesheets__googlesheets_get_spreadsheet',
     serverName: 'composio-toolkit-googlesheets',
     downstreamToolName: 'googlesheets_get_spreadsheet',
+    serverTags: [],
     call: async () => ({ ok: true }),
   };
   const writeRoute = {
     proxyToolName: 'composio-toolkit-googlesheets__googlesheets_values_update',
     serverName: 'composio-toolkit-googlesheets',
     downstreamToolName: 'googlesheets_values_update',
+    serverTags: [],
     call: async () => ({ ok: true }),
   };
 
@@ -267,6 +277,70 @@ test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for read-only 
     visible.toolDefinitions.map((tool) => tool.name),
     ['composio-toolkit-googlesheets__googlesheets_get_spreadsheet'],
   );
+});
+
+test('buildAuthorizedVisibleProxyRoutes blocks policy_os_only discovery for mcp-only access', async () => {
+  const houseRoute = {
+    proxyToolName: 'create-something__house_policy_tool',
+    serverName: 'create-something',
+    downstreamToolName: 'house_policy_tool',
+    serverTags: ['cs', 'policy_os_only'],
+    call: async () => ({ ok: true }),
+  };
+
+  const runtime = {
+    builtAt: 0,
+    stateResolution: {
+      state: { enabledBundles: [], enabledServers: [], disabledServers: [] },
+      enabledServerNames: ['create-something'],
+      warnings: [],
+    },
+    connected: [],
+    failed: [],
+    proxies: {
+      toolDefinitions: [
+        {
+          name: houseRoute.proxyToolName,
+          description: '[create-something] house policy tool',
+          inputSchema: { type: 'object', properties: {} },
+        },
+      ],
+      routes: new Map([[houseRoute.proxyToolName, houseRoute]]),
+      warnings: [],
+    },
+  };
+
+  const visible = await buildAuthorizedVisibleProxyRoutes({
+    runtime: runtime as any,
+    prefs: {
+      mode: 'full',
+      activeServers: ['create-something'],
+      maxProxyTools: null,
+    },
+    accountContext: {
+      accountId: 'acct_1',
+      tenantId: 'tenant_acme',
+      userId: 'user_1',
+      sessionId: 'session_1',
+      allowedToolPrefixes: null,
+      toolMode: 'read_write',
+      serviceTier: 'mcp_only',
+      entitlementSnapshot: {
+        service_tier: 'mcp_only',
+        service_entitled: true,
+        policy_accepted: true,
+        contract_active: true,
+        billing_active: true,
+        approved_exception: { present: false },
+      },
+      identitySource: 'session',
+    },
+    env: {} as any,
+    trace,
+    entrypoint: 'hub_list_proxy_tools',
+  });
+
+  assert.deepEqual(visible.toolDefinitions.map((tool) => tool.name), []);
 });
 
 test('searchProxyTools only searches visible routes', () => {

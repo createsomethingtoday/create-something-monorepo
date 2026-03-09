@@ -8,7 +8,8 @@
       "tags": [
         "core",
         "content",
-        "cs"
+        "cs",
+        "policy_os_only"
       ],
       "catalog": {
         "include": true,
@@ -31,7 +32,8 @@
       "tags": [
         "core",
         "framework",
-        "cs"
+        "cs",
+        "policy_os_only"
       ],
       "catalog": {
         "include": true,
@@ -54,7 +56,8 @@
       "tags": [
         "core",
         "workflow",
-        "cs"
+        "cs",
+        "policy_os_only"
       ],
       "catalog": {
         "include": true,
@@ -78,7 +81,8 @@
       "tags": [
         "observability",
         "telemetry",
-        "cs"
+        "cs",
+        "policy_os_only"
       ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
@@ -90,7 +94,8 @@
       "tags": [
         "ops",
         "scheduling",
-        "cs"
+        "cs",
+        "policy_os_only"
       ],
       "catalog": {
         "include": true,
@@ -113,7 +118,8 @@
       "tags": [
         "ops",
         "automation",
-        "cs"
+        "cs",
+        "policy_os_only"
       ],
       "catalog": {
         "include": true,

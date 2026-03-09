@@ -30,6 +30,18 @@ test('hub route classification distinguishes destructive proxy routes', () => {
   assert.ok(classification.tags.includes('oauth_required'));
 });
 
+test('hub route classification preserves registry policy_os_only tags', () => {
+  const classification = classifyHubRoute({
+    proxyToolName: 'create-something__house_policy_tool',
+    serverName: 'create-something',
+    downstreamToolName: 'house_policy_tool',
+    serverTags: ['cs', 'policy_os_only'],
+  });
+
+  assert.ok(classification.tags.includes('policy_os_only'));
+  assert.ok(classification.tags.includes('cs'));
+});
+
 test('hub route auth blocks mutation discovery for read-only sessions', async () => {
   const request = buildHubAuthorizationRequest({
     accountId: 'acct_1',
@@ -203,6 +215,42 @@ test('service-tier policy allows paid policy os execution when commercial gates 
   );
 
   assert.equal(result.final.decision, 'allow');
+});
+
+test('service-tier policy blocks policy-os-only discovery for mcp-only access', async () => {
+  const request = buildHubAuthorizationRequest({
+    accountId: 'acct_1',
+    tenantId: 'tenant_1',
+    sessionId: 'session_1',
+    toolMode: 'read_write',
+    identitySource: 'session',
+    proxyToolName: 'create-something__house_policy_tool',
+    serverName: 'create-something',
+    downstreamToolName: 'house_policy_tool',
+    serverTags: ['cs', 'policy_os_only'],
+    actionName: 'discover',
+    context: {
+      serviceTier: 'mcp_only',
+      entitlementSnapshot: {
+        service_tier: 'mcp_only',
+        service_entitled: true,
+        policy_accepted: true,
+        contract_active: true,
+        billing_active: true,
+        approved_exception: { present: false },
+      },
+    },
+  });
+
+  const result = await evaluateAuthorizationRequest(
+    'policy.service-tier-entitlement.v1',
+    request,
+    { mode: 'legacy_enforce', canaryPercent: 0 },
+    { mode: 'legacy' },
+  );
+
+  assert.equal(result.final.decision, 'block');
+  assert.match(result.final.reason, /policy os-only product surfaces/i);
 });
 
 test('identity admin mint policy allows consent-backed requests', async () => {

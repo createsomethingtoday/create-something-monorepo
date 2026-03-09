@@ -103,6 +103,7 @@ type ProxyRoute = {
   proxyToolName: string;
   serverName: string;
   downstreamToolName: string;
+  serverTags: string[];
   call: (args: Record<string, unknown>, trace: InvocationTrace, accountId: string) => Promise<any>;
 };
 
@@ -1311,6 +1312,7 @@ function buildProxyCatalog(connectedServers: ConnectedDownstream[]): ProxyCatalo
         proxyToolName: proxyName,
         serverName: server.name,
         downstreamToolName: tool.name,
+        serverTags: [...(server.config.tags ?? [])],
         call: (args, trace, accountId) =>
           callDownstreamToolWithTrace(server, tool.name, args, trace, accountId),
       });
@@ -2724,6 +2726,7 @@ async function evaluateHubRouteAuthorization(params: {
     proxyToolName: route.proxyToolName,
     serverName: route.serverName,
     downstreamToolName: route.downstreamToolName,
+    serverTags: route.serverTags,
     actionName,
     definition,
     context: {

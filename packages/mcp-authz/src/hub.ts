@@ -29,6 +29,7 @@ export function classifyHubRoute(route: {
   proxyToolName: string;
   serverName: string;
   downstreamToolName: string;
+  serverTags?: string[] | null;
 }, definition?: ToolLike): {
   accessType: AuthorizationAccessType;
   oauthRequired: boolean;
@@ -55,9 +56,10 @@ export function classifyHubRoute(route: {
     route.serverName,
     accessType,
     oauthRequired ? 'oauth_required' : 'oauth_not_required',
+    ...((route.serverTags ?? []).filter((tag) => typeof tag === 'string' && tag.length > 0)),
   ];
 
-  return { accessType, oauthRequired, tags };
+  return { accessType, oauthRequired, tags: [...new Set(tags)] };
 }
 
 export function buildHubAuthorizationRequest(input: {
@@ -73,6 +75,7 @@ export function buildHubAuthorizationRequest(input: {
   proxyToolName: string;
   serverName: string;
   downstreamToolName: string;
+  serverTags?: string[] | null;
   actionName: 'discover' | 'execute';
   definition?: ToolLike;
   context?: Record<string, unknown>;
@@ -82,6 +85,7 @@ export function buildHubAuthorizationRequest(input: {
       proxyToolName: input.proxyToolName,
       serverName: input.serverName,
       downstreamToolName: input.downstreamToolName,
+      serverTags: input.serverTags ?? null,
     },
     input.definition,
   );
