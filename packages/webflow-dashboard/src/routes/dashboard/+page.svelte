@@ -190,6 +190,9 @@
     onProfileClick={handleProfileClick}
     onSearch={handleSearch}
     searchValue={searchTerm}
+    searchPlaceholder="Filter assets by name, type, or status"
+    searchAriaLabel="Filter dashboard assets"
+    searchScopeLabel="Asset filter"
   />
 
   <main class="main-content">

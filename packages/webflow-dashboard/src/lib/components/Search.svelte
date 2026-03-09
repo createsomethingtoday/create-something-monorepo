@@ -6,9 +6,15 @@
     onSearch?: (term: string) => void;
     placeholder?: string;
     value?: string;
+    ariaLabel?: string;
   }
 
-  let { onSearch, placeholder = 'Search templates...', value = '' }: Props = $props();
+  let {
+    onSearch,
+    placeholder = 'Search templates...',
+    value = '',
+    ariaLabel = 'Search'
+  }: Props = $props();
 
   let draftValue = $state('');
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -56,6 +62,7 @@
     value={draftValue}
     oninput={handleInput}
     autocomplete="off"
+    aria-label={ariaLabel}
   />
   {#if draftValue}
     <button type="button" class="clear-btn" onclick={handleClear} aria-label="Clear search">

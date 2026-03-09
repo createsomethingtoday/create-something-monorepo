@@ -12,6 +12,9 @@
     onSearch?: (term: string) => void;
     showSearch?: boolean;
     searchValue?: string;
+    searchPlaceholder?: string;
+    searchAriaLabel?: string;
+    searchScopeLabel?: string;
   }
 
   let {
@@ -20,7 +23,10 @@
     onProfileClick,
     onSearch,
     showSearch = true,
-    searchValue = ''
+    searchValue = '',
+    searchPlaceholder = 'Search templates...',
+    searchAriaLabel = 'Search templates',
+    searchScopeLabel
   }: Props = $props();
 
   const navItems = [
@@ -77,7 +83,15 @@
 
         {#if showSearch && onSearch}
           <div class="search-slot">
-            <Search {onSearch} value={searchValue} />
+            {#if searchScopeLabel}
+              <span class="search-scope">{searchScopeLabel}</span>
+            {/if}
+            <Search
+              {onSearch}
+              value={searchValue}
+              placeholder={searchPlaceholder}
+              ariaLabel={searchAriaLabel}
+            />
           </div>
         {/if}
       </div>
@@ -202,9 +216,28 @@
   }
 
   .search-slot {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     flex: 1 1 16rem;
     min-width: 14rem;
     max-width: 24rem;
+  }
+
+  .search-scope {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    padding: 0.38rem 0.65rem;
+    border-radius: 999px;
+    background: rgba(20, 110, 245, 0.08);
+    border: 1px solid rgba(20, 110, 245, 0.14);
+    color: var(--color-info);
+    font-size: 0.68rem;
+    font-weight: var(--font-semibold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
   }
 
   .nav-links::-webkit-scrollbar {
@@ -311,6 +344,12 @@
 
     .header-right :global(.header-action) {
       padding-inline: 0.75rem;
+    }
+  }
+
+  @media (max-width: 1100px) {
+    .search-scope {
+      display: none;
     }
   }
 </style>
