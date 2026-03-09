@@ -17,6 +17,11 @@ function normalizeToolMode(request: AuthorizationRequest): string | null {
 }
 
 function toConstraintInput(request: AuthorizationRequest) {
+  const entitlementSnapshot =
+    request.context && typeof request.context.entitlementSnapshot === 'object' && request.context.entitlementSnapshot
+      ? (request.context.entitlementSnapshot as Record<string, unknown>)
+      : null;
+
   return {
     toolName:
       request.resource.toolName ??
@@ -29,6 +34,9 @@ function toConstraintInput(request: AuthorizationRequest) {
     resourceKind: request.resource.kind,
     accessType: request.resource.accessType ?? undefined,
     oauthRequired: request.resource.oauthRequired,
+    serviceTier:
+      (typeof request.context?.serviceTier === 'string' ? request.context.serviceTier : undefined) ??
+      (typeof entitlementSnapshot?.service_tier === 'string' ? entitlementSnapshot.service_tier : undefined),
     actorRole: request.actor.role ?? undefined,
     toolMode: normalizeToolMode(request) ?? undefined,
     identitySource: request.actor.identitySource ?? undefined,
@@ -36,6 +44,18 @@ function toConstraintInput(request: AuthorizationRequest) {
     hasWriteIntent: request.action.writeIntent,
     hasHumanReviewStep: request.action.humanReviewStep,
     introspectionOk: request.action.introspectionOk,
+    serviceEntitled:
+      typeof entitlementSnapshot?.service_entitled === 'boolean' ? entitlementSnapshot.service_entitled : undefined,
+    policyAccepted:
+      typeof entitlementSnapshot?.policy_accepted === 'boolean' ? entitlementSnapshot.policy_accepted : undefined,
+    contractActive:
+      typeof entitlementSnapshot?.contract_active === 'boolean' ? entitlementSnapshot.contract_active : undefined,
+    billingActive:
+      typeof entitlementSnapshot?.billing_active === 'boolean' ? entitlementSnapshot.billing_active : undefined,
+    approvedExceptionPresent:
+      typeof entitlementSnapshot?.approved_exception === 'object' && entitlementSnapshot.approved_exception
+        ? Boolean((entitlementSnapshot.approved_exception as Record<string, unknown>).present)
+        : undefined,
   };
 }
 

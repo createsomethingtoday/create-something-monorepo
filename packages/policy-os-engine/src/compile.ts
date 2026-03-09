@@ -20,6 +20,10 @@ oauth_required_ok(rule_id) if req_oauth_required(rule_id, false);
 oauth_required_ok(rule_id) if
   req_oauth_required(rule_id, true) and input_oauth_required(oauth_required) and cond_oauth_required(rule_id, oauth_required);
 
+service_tier_ok(rule_id) if req_service_tier(rule_id, false);
+service_tier_ok(rule_id) if
+  req_service_tier(rule_id, true) and input_service_tier(service_tier) and cond_service_tier(rule_id, service_tier);
+
 actor_role_ok(rule_id) if req_actor_role(rule_id, false);
 actor_role_ok(rule_id) if req_actor_role(rule_id, true) and input_actor_role(actor_role) and cond_actor_role(rule_id, actor_role);
 
@@ -52,6 +56,36 @@ introspection_ok_cond(rule_id) if
   input_introspection_ok(introspection_ok) and
   cond_introspection_ok(rule_id, introspection_ok);
 
+service_entitled_ok(rule_id) if req_service_entitled(rule_id, false);
+service_entitled_ok(rule_id) if
+  req_service_entitled(rule_id, true) and
+  input_service_entitled(service_entitled) and
+  cond_service_entitled(rule_id, service_entitled);
+
+policy_accepted_ok(rule_id) if req_policy_accepted(rule_id, false);
+policy_accepted_ok(rule_id) if
+  req_policy_accepted(rule_id, true) and
+  input_policy_accepted(policy_accepted) and
+  cond_policy_accepted(rule_id, policy_accepted);
+
+contract_active_ok(rule_id) if req_contract_active(rule_id, false);
+contract_active_ok(rule_id) if
+  req_contract_active(rule_id, true) and
+  input_contract_active(contract_active) and
+  cond_contract_active(rule_id, contract_active);
+
+billing_active_ok(rule_id) if req_billing_active(rule_id, false);
+billing_active_ok(rule_id) if
+  req_billing_active(rule_id, true) and
+  input_billing_active(billing_active) and
+  cond_billing_active(rule_id, billing_active);
+
+approved_exception_ok(rule_id) if req_approved_exception_present(rule_id, false);
+approved_exception_ok(rule_id) if
+  req_approved_exception_present(rule_id, true) and
+  input_approved_exception_present(approved_exception_present) and
+  cond_approved_exception_present(rule_id, approved_exception_present);
+
 account_ok(rule_id) if req_account_id(rule_id, false);
 account_ok(rule_id) if req_account_id(rule_id, true) and input_account_id(account_id) and cond_account_id(rule_id, account_id);
 
@@ -61,6 +95,7 @@ rule_matches(rule_id, priority, decision, reason) if
   resource_kind_ok(rule_id) and
   access_type_ok(rule_id) and
   oauth_required_ok(rule_id) and
+  service_tier_ok(rule_id) and
   actor_role_ok(rule_id) and
   tool_mode_ok(rule_id) and
   identity_source_ok(rule_id) and
@@ -69,6 +104,11 @@ rule_matches(rule_id, priority, decision, reason) if
   write_ok(rule_id) and
   human_review_ok(rule_id) and
   introspection_ok_cond(rule_id) and
+  service_entitled_ok(rule_id) and
+  policy_accepted_ok(rule_id) and
+  contract_active_ok(rule_id) and
+  billing_active_ok(rule_id) and
+  approved_exception_ok(rule_id) and
   account_ok(rule_id);
 `;
 
@@ -97,6 +137,7 @@ function ruleFacts(policy: ConstraintPolicy): { lines: string[]; contextFacts: C
     const hasResourceKindCond = Boolean(rule.when.resourceKinds && rule.when.resourceKinds.length > 0);
     const hasAccessTypeCond = Boolean(rule.when.accessTypes && rule.when.accessTypes.length > 0);
     const hasOauthRequiredCond = typeof rule.when.oauthRequired === 'boolean';
+    const hasServiceTierCond = Boolean(rule.when.serviceTiers && rule.when.serviceTiers.length > 0);
     const hasActorRoleCond = Boolean(rule.when.actorRoles && rule.when.actorRoles.length > 0);
     const hasToolModeCond = Boolean(rule.when.toolModes && rule.when.toolModes.length > 0);
     const hasIdentitySourceCond = Boolean(rule.when.identitySources && rule.when.identitySources.length > 0);
@@ -105,6 +146,11 @@ function ruleFacts(policy: ConstraintPolicy): { lines: string[]; contextFacts: C
     const hasWriteCond = typeof rule.when.hasWriteIntent === 'boolean';
     const hasHumanReviewCond = typeof rule.when.hasHumanReviewStep === 'boolean';
     const hasIntrospectionCond = typeof rule.when.introspectionOk === 'boolean';
+    const hasServiceEntitledCond = typeof rule.when.serviceEntitled === 'boolean';
+    const hasPolicyAcceptedCond = typeof rule.when.policyAccepted === 'boolean';
+    const hasContractActiveCond = typeof rule.when.contractActive === 'boolean';
+    const hasBillingActiveCond = typeof rule.when.billingActive === 'boolean';
+    const hasApprovedExceptionCond = typeof rule.when.approvedExceptionPresent === 'boolean';
     const hasAccountCond = Boolean(rule.when.accountIds && rule.when.accountIds.length > 0);
 
     lines.push(
@@ -119,6 +165,8 @@ function ruleFacts(policy: ConstraintPolicy): { lines: string[]; contextFacts: C
     contextFacts.push(['req_access_type', rule.id, hasAccessTypeCond]);
     lines.push(`req_oauth_required(${quotePolar(rule.id)}, ${String(hasOauthRequiredCond)});`);
     contextFacts.push(['req_oauth_required', rule.id, hasOauthRequiredCond]);
+    lines.push(`req_service_tier(${quotePolar(rule.id)}, ${String(hasServiceTierCond)});`);
+    contextFacts.push(['req_service_tier', rule.id, hasServiceTierCond]);
     lines.push(`req_actor_role(${quotePolar(rule.id)}, ${String(hasActorRoleCond)});`);
     contextFacts.push(['req_actor_role', rule.id, hasActorRoleCond]);
     lines.push(`req_tool_mode(${quotePolar(rule.id)}, ${String(hasToolModeCond)});`);
@@ -135,6 +183,16 @@ function ruleFacts(policy: ConstraintPolicy): { lines: string[]; contextFacts: C
     contextFacts.push(['req_has_human_review_step', rule.id, hasHumanReviewCond]);
     lines.push(`req_introspection_ok(${quotePolar(rule.id)}, ${String(hasIntrospectionCond)});`);
     contextFacts.push(['req_introspection_ok', rule.id, hasIntrospectionCond]);
+    lines.push(`req_service_entitled(${quotePolar(rule.id)}, ${String(hasServiceEntitledCond)});`);
+    contextFacts.push(['req_service_entitled', rule.id, hasServiceEntitledCond]);
+    lines.push(`req_policy_accepted(${quotePolar(rule.id)}, ${String(hasPolicyAcceptedCond)});`);
+    contextFacts.push(['req_policy_accepted', rule.id, hasPolicyAcceptedCond]);
+    lines.push(`req_contract_active(${quotePolar(rule.id)}, ${String(hasContractActiveCond)});`);
+    contextFacts.push(['req_contract_active', rule.id, hasContractActiveCond]);
+    lines.push(`req_billing_active(${quotePolar(rule.id)}, ${String(hasBillingActiveCond)});`);
+    contextFacts.push(['req_billing_active', rule.id, hasBillingActiveCond]);
+    lines.push(`req_approved_exception_present(${quotePolar(rule.id)}, ${String(hasApprovedExceptionCond)});`);
+    contextFacts.push(['req_approved_exception_present', rule.id, hasApprovedExceptionCond]);
     lines.push(`req_account_id(${quotePolar(rule.id)}, ${String(hasAccountCond)});`);
     contextFacts.push(['req_account_id', rule.id, hasAccountCond]);
 
@@ -165,6 +223,14 @@ function ruleFacts(policy: ConstraintPolicy): { lines: string[]; contextFacts: C
     if (typeof rule.when.oauthRequired === 'boolean') {
       lines.push(`cond_oauth_required(${quotePolar(rule.id)}, ${String(rule.when.oauthRequired)});`);
       contextFacts.push(['cond_oauth_required', rule.id, rule.when.oauthRequired]);
+    }
+
+    if (rule.when.serviceTiers && rule.when.serviceTiers.length > 0) {
+      const serviceTiers = [...rule.when.serviceTiers].sort();
+      for (const serviceTier of serviceTiers) {
+        lines.push(`cond_service_tier(${quotePolar(rule.id)}, ${quotePolar(serviceTier)});`);
+        contextFacts.push(['cond_service_tier', rule.id, serviceTier]);
+      }
     }
 
     if (rule.when.actorRoles && rule.when.actorRoles.length > 0) {
@@ -220,6 +286,33 @@ function ruleFacts(policy: ConstraintPolicy): { lines: string[]; contextFacts: C
     if (typeof rule.when.introspectionOk === 'boolean') {
       lines.push(`cond_introspection_ok(${quotePolar(rule.id)}, ${String(rule.when.introspectionOk)});`);
       contextFacts.push(['cond_introspection_ok', rule.id, rule.when.introspectionOk]);
+    }
+
+    if (typeof rule.when.serviceEntitled === 'boolean') {
+      lines.push(`cond_service_entitled(${quotePolar(rule.id)}, ${String(rule.when.serviceEntitled)});`);
+      contextFacts.push(['cond_service_entitled', rule.id, rule.when.serviceEntitled]);
+    }
+
+    if (typeof rule.when.policyAccepted === 'boolean') {
+      lines.push(`cond_policy_accepted(${quotePolar(rule.id)}, ${String(rule.when.policyAccepted)});`);
+      contextFacts.push(['cond_policy_accepted', rule.id, rule.when.policyAccepted]);
+    }
+
+    if (typeof rule.when.contractActive === 'boolean') {
+      lines.push(`cond_contract_active(${quotePolar(rule.id)}, ${String(rule.when.contractActive)});`);
+      contextFacts.push(['cond_contract_active', rule.id, rule.when.contractActive]);
+    }
+
+    if (typeof rule.when.billingActive === 'boolean') {
+      lines.push(`cond_billing_active(${quotePolar(rule.id)}, ${String(rule.when.billingActive)});`);
+      contextFacts.push(['cond_billing_active', rule.id, rule.when.billingActive]);
+    }
+
+    if (typeof rule.when.approvedExceptionPresent === 'boolean') {
+      lines.push(
+        `cond_approved_exception_present(${quotePolar(rule.id)}, ${String(rule.when.approvedExceptionPresent)});`,
+      );
+      contextFacts.push(['cond_approved_exception_present', rule.id, rule.when.approvedExceptionPresent]);
     }
 
     if (rule.when.accountIds && rule.when.accountIds.length > 0) {

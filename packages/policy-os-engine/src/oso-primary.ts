@@ -89,6 +89,7 @@ export async function evaluateConstraintPolicyPrimary(
     ['input_resource_kind', input.resourceKind ?? ''],
     ['input_access_type', input.accessType ?? ''],
     ['input_oauth_required', Boolean(input.oauthRequired)],
+    ['input_service_tier', input.serviceTier ?? ''],
     ['input_actor_role', input.actorRole ?? ''],
     ['input_tool_mode', input.toolMode ?? ''],
     ['input_identity_source', input.identitySource ?? ''],
@@ -96,6 +97,11 @@ export async function evaluateConstraintPolicyPrimary(
     ['input_has_write_intent', Boolean(input.hasWriteIntent)],
     ['input_has_human_review_step', Boolean(input.hasHumanReviewStep)],
     ['input_introspection_ok', Boolean(input.introspectionOk)],
+    ['input_service_entitled', Boolean(input.serviceEntitled)],
+    ['input_policy_accepted', Boolean(input.policyAccepted)],
+    ['input_contract_active', Boolean(input.contractActive)],
+    ['input_billing_active', Boolean(input.billingActive)],
+    ['input_approved_exception_present', Boolean(input.approvedExceptionPresent)],
     ...(input.resourceTags ?? []).map((tag) => ['input_resource_tag', tag] as const),
   ];
 

@@ -18,7 +18,7 @@
     "build": "tsc",
     "check": "tsc --noEmit",
     "prepare": "pnpm build",
-    "test": "pnpm build && node --test test/*.test.mjs"
+    "test": "pnpm --filter @create-something/policy-os-engine build && pnpm build && node --test test/*.test.mjs"
   },
   "dependencies": {
     "@create-something/policy-os-engine": "workspace:*"

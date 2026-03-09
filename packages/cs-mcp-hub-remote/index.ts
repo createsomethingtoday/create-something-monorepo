@@ -351,6 +351,7 @@ export const HUB_AUTH_WORKFLOW_RESOURCE_URI = 'ui://hub/auth-workflow';
 const DEFAULT_REFRESH_SECONDS = 300;
 const HUB_STATE_KV_PREFIX = 'hub_state_v1';
 const HUB_ROUTE_AUTHZ_POLICY_ID = 'policy.hub-route-authorization.v1';
+const SERVICE_TIER_AUTHZ_POLICY_ID = 'policy.service-tier-entitlement.v1';
 
 const registry = registryJson as unknown as McpBundleRegistry;
 const discoveryPackRegistry = discoveryPacksJson as unknown as DiscoveryPackRegistry;
@@ -2611,7 +2612,20 @@ async function getHubRouteAuthzRollout(env: Env): Promise<AuthzRolloutRow> {
   );
 }
 
+async function getServiceTierAuthzRollout(env: Env): Promise<AuthzRolloutRow> {
+  const manifest = getPolicyManifest(SERVICE_TIER_AUTHZ_POLICY_ID);
+  return getAuthzRollout(
+    env.TELEMETRY_DB,
+    {
+      scopeType: 'policy',
+      policyId: SERVICE_TIER_AUTHZ_POLICY_ID,
+    },
+    manifest,
+  );
+}
+
 function toHubAuthzEvent(params: {
+  policyId: string;
   accountContext: ResolvedAccountContext;
   route: ProxyRoute;
   trace: InvocationTrace;
@@ -2619,11 +2633,11 @@ function toHubAuthzEvent(params: {
   actionName: 'discover' | 'execute';
   entrypoint: string;
 }): AuthzDecisionEventRecord {
-  const { accountContext, route, trace, evaluation, actionName, entrypoint } = params;
+  const { policyId, accountContext, route, trace, evaluation, actionName, entrypoint } = params;
   const classification = classifyHubRoute(route);
   return {
     id: crypto.randomUUID(),
-    scopeKey: `policy:${HUB_ROUTE_AUTHZ_POLICY_ID}`,
+    scopeKey: `policy:${policyId}`,
     scopeType: 'policy',
     policyId: evaluation.final.policyId,
     accountId: accountContext.accountId,
@@ -2718,6 +2732,33 @@ async function evaluateHubRouteAuthorization(params: {
     },
   });
 
+  const serviceTierRollout = await getServiceTierAuthzRollout(env);
+  const serviceTierEvaluation = await evaluateAuthorizationRequest(
+    SERVICE_TIER_AUTHZ_POLICY_ID,
+    request,
+    {
+      mode: serviceTierRollout.mode,
+      canaryPercent: serviceTierRollout.canaryPercent,
+    },
+    hubAuthzHybridConfig(env),
+  );
+
+  if (recordDecision && serviceTierEvaluation.final.decision !== 'allow') {
+    await recordAuthzDecisionEvent(
+      env.TELEMETRY_DB,
+      toHubAuthzEvent({
+        policyId: SERVICE_TIER_AUTHZ_POLICY_ID,
+        accountContext,
+        route,
+        trace,
+        evaluation: serviceTierEvaluation,
+        actionName,
+        entrypoint,
+      }),
+    );
+    return serviceTierEvaluation;
+  }
+
   const evaluation = await evaluateAuthorizationRequest(
     HUB_ROUTE_AUTHZ_POLICY_ID,
     request,
@@ -2732,6 +2773,7 @@ async function evaluateHubRouteAuthorization(params: {
     await recordAuthzDecisionEvent(
       env.TELEMETRY_DB,
       toHubAuthzEvent({
+        policyId: HUB_ROUTE_AUTHZ_POLICY_ID,
         accountContext,
         route,
         trace,
@@ -2781,6 +2823,7 @@ export async function buildAuthorizedVisibleProxyRoutes(params: {
       await recordAuthzDecisionEvent(
         params.env.TELEMETRY_DB,
         toHubAuthzEvent({
+          policyId: evaluation.final.policyId,
           accountContext: params.accountContext,
           route,
           trace: params.trace,

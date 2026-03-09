@@ -11,6 +11,7 @@ function matchesRule(rule: ConstraintRule, input: ConstraintEvaluationInput): bo
   if (when.resourceKinds && when.resourceKinds.length > 0 && !when.resourceKinds.includes(input.resourceKind ?? '')) return false;
   if (when.accessTypes && when.accessTypes.length > 0 && !when.accessTypes.includes(input.accessType ?? '')) return false;
   if (typeof when.oauthRequired === 'boolean' && when.oauthRequired !== Boolean(input.oauthRequired)) return false;
+  if (when.serviceTiers && when.serviceTiers.length > 0 && !when.serviceTiers.includes(input.serviceTier ?? '')) return false;
   if (when.actorRoles && when.actorRoles.length > 0 && !when.actorRoles.includes(input.actorRole ?? '')) return false;
   if (when.toolModes && when.toolModes.length > 0 && !when.toolModes.includes(input.toolMode ?? '')) return false;
   if (
@@ -36,6 +37,16 @@ function matchesRule(rule: ConstraintRule, input: ConstraintEvaluationInput): bo
     return false;
   }
   if (typeof when.introspectionOk === 'boolean' && when.introspectionOk !== Boolean(input.introspectionOk)) return false;
+  if (typeof when.serviceEntitled === 'boolean' && when.serviceEntitled !== Boolean(input.serviceEntitled)) return false;
+  if (typeof when.policyAccepted === 'boolean' && when.policyAccepted !== Boolean(input.policyAccepted)) return false;
+  if (typeof when.contractActive === 'boolean' && when.contractActive !== Boolean(input.contractActive)) return false;
+  if (typeof when.billingActive === 'boolean' && when.billingActive !== Boolean(input.billingActive)) return false;
+  if (
+    typeof when.approvedExceptionPresent === 'boolean' &&
+    when.approvedExceptionPresent !== Boolean(input.approvedExceptionPresent)
+  ) {
+    return false;
+  }
   if (when.accountIds && when.accountIds.length > 0 && !when.accountIds.includes(input.accountId)) return false;
   return true;
 }

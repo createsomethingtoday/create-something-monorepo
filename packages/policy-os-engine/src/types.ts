@@ -5,6 +5,7 @@ export interface ConstraintRuleWhen {
   resourceKinds?: string[];
   accessTypes?: string[];
   oauthRequired?: boolean;
+  serviceTiers?: string[];
   actorRoles?: string[];
   toolModes?: string[];
   identitySources?: string[];
@@ -13,6 +14,11 @@ export interface ConstraintRuleWhen {
   hasWriteIntent?: boolean;
   hasHumanReviewStep?: boolean;
   introspectionOk?: boolean;
+  serviceEntitled?: boolean;
+  policyAccepted?: boolean;
+  contractActive?: boolean;
+  billingActive?: boolean;
+  approvedExceptionPresent?: boolean;
   accountIds?: string[];
 }
 
@@ -45,6 +51,7 @@ export interface ConstraintEvaluationInput {
   resourceKind?: string;
   accessType?: string;
   oauthRequired?: boolean;
+  serviceTier?: string;
   actorRole?: string;
   toolMode?: string;
   identitySource?: string;
@@ -52,6 +59,11 @@ export interface ConstraintEvaluationInput {
   hasWriteIntent?: boolean;
   hasHumanReviewStep?: boolean;
   introspectionOk?: boolean;
+  serviceEntitled?: boolean;
+  policyAccepted?: boolean;
+  contractActive?: boolean;
+  billingActive?: boolean;
+  approvedExceptionPresent?: boolean;
 }
 
 export interface ConstraintEvaluationResult {
