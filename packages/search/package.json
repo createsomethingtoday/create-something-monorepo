@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Unified search across CREATE SOMETHING properties - the full story, at your fingertips",
   "private": true,
+  "createSomething": {
+    "agentLegibilityContract": true
+  },
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",

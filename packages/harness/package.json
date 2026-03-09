@@ -40,6 +40,9 @@
     "typescript": "^5.7.2",
     "vitest": "^2.1.9"
   },
+  "createSomething": {
+    "agentLegibilityContract": true
+  },
   "keywords": [
     "harness",
     "agents",

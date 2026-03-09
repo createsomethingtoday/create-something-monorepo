@@ -3,6 +3,9 @@
 	"description": "The Workbench — live tools for building, testing, and analyzing automation infrastructure",
 	"private": true,
 	"version": "1.0.0",
+	"createSomething": {
+		"agentLegibilityContract": true
+	},
 	"type": "module",
 	"scripts": {
 		"prebuild": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package",

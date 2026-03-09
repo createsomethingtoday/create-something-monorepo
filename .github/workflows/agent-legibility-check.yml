@@ -3,13 +3,8 @@ name: Agent Legibility Check
 on:
   pull_request:
     paths:
-      - 'packages/create-something-mcp/README.md'
-      - 'packages/harness/README.md'
-      - 'packages/harness-mcp/README.md'
-      - 'packages/search/README.md'
-      - 'packages/space/README.md'
-      - 'packages/substrate-mcp/README.md'
-      - 'packages/tufte/README.md'
+      - 'packages/*/README.md'
+      - 'packages/*/package.json'
       - 'docs/guides/AGENT_LEGIBILITY_CONTRACT.md'
       - 'scripts/agent-legibility-check.mjs'
       - 'package.json'
@@ -19,13 +14,8 @@ on:
     branches:
       - main
     paths:
-      - 'packages/create-something-mcp/README.md'
-      - 'packages/harness/README.md'
-      - 'packages/harness-mcp/README.md'
-      - 'packages/search/README.md'
-      - 'packages/space/README.md'
-      - 'packages/substrate-mcp/README.md'
-      - 'packages/tufte/README.md'
+      - 'packages/*/README.md'
+      - 'packages/*/package.json'
       - 'docs/guides/AGENT_LEGIBILITY_CONTRACT.md'
       - 'scripts/agent-legibility-check.mjs'
       - 'package.json'

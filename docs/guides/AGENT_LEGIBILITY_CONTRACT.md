@@ -172,13 +172,13 @@ A package is not agent-legible enough until an agent can answer:
 
 ## Mechanical check
 
-The repository now includes a narrow enforcement script for representative packages:
+The repository now includes an enforcement script for packages that opt into the contract:
 
 ```bash
 pnpm agent:legibility:check
 ```
 
-Current default scope:
+Current default scope is discovered from package metadata:
 
 - `packages/create-something-mcp/README.md`
 - `packages/harness/README.md`
@@ -188,11 +188,26 @@ Current default scope:
 - `packages/substrate-mcp/README.md`
 - `packages/tufte/README.md`
 
+Packages opt in by setting this field in `package.json`:
+
+```json
+{
+  "createSomething": {
+    "agentLegibilityContract": true
+  }
+}
+```
+
 Use `--target` to check a custom comma-separated list of files while expanding coverage.
 
 A matching GitHub Actions workflow exists at:
 
 - `.github/workflows/agent-legibility-check.yml`
+
+The workflow watches:
+
+- `packages/*/README.md`
+- `packages/*/package.json`
 
 ## Example
 

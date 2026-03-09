@@ -3,6 +3,9 @@
 	"version": "1.0.0",
 	"description": "Agentic visualization components embodying Edward Tufte's principles for displaying quantitative information",
 	"type": "module",
+	"createSomething": {
+		"agentLegibilityContract": true
+	},
 	"license": "MIT",
 	"scripts": {
 		"dev": "vite dev",

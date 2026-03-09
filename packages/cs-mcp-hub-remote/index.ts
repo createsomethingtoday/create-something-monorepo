@@ -14,7 +14,7 @@ import {
   buildOAuthProtectedResourceMetadata,
   isOAuthAuthorizationServerPath,
   isOAuthProtectedResourcePath,
-} from '@create-something/mcp-core/oauth-discovery';
+} from '../mcp-core/src/oauth-discovery.js';
 import {
   buildHubAuthorizationRequest,
   blockedByPolicy,

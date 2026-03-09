@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 
 const REPO_ROOT = process.cwd();
@@ -13,17 +13,7 @@ const REQUIRED_FIELDS = [
   'Escalation rule',
 ];
 
-// Start with the representative packages that already adopted the contract.
-// Expand this list as coverage grows.
-const DEFAULT_TARGETS = [
-  'packages/create-something-mcp/README.md',
-  'packages/harness/README.md',
-  'packages/harness-mcp/README.md',
-  'packages/search/README.md',
-  'packages/space/README.md',
-  'packages/substrate-mcp/README.md',
-  'packages/tufte/README.md',
-];
+const PACKAGES_DIR = path.join(REPO_ROOT, 'packages');
 
 function normalizePath(relPath) {
   return relPath.split(path.sep).join('/').replace(/^\.\//, '');
@@ -31,7 +21,7 @@ function normalizePath(relPath) {
 
 function parseArgs(argv) {
   const args = {
-    targets: [...DEFAULT_TARGETS],
+    targets: [],
     format: 'text',
   };
 
@@ -70,6 +60,35 @@ function parseArgs(argv) {
 function printUsage() {
   console.log(`Usage:
   node scripts/agent-legibility-check.mjs [--target path1,path2] [--format text|json]`);
+}
+
+function discoverTargetsFromPackageMetadata() {
+  if (!existsSync(PACKAGES_DIR)) {
+    return [];
+  }
+
+  const packageDirs = readdirSync(PACKAGES_DIR, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort((a, b) => a.localeCompare(b));
+
+  const targets = [];
+
+  for (const dirName of packageDirs) {
+    const packageJsonPath = path.join(PACKAGES_DIR, dirName, 'package.json');
+    if (!existsSync(packageJsonPath)) {
+      continue;
+    }
+
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+    if (!packageJson.createSomething?.agentLegibilityContract) {
+      continue;
+    }
+
+    targets.push(normalizePath(path.join('packages', dirName, 'README.md')));
+  }
+
+  return targets;
 }
 
 function validateTarget(relPath) {
@@ -119,6 +138,9 @@ function printText(results) {
 
 function main() {
   const args = parseArgs(process.argv);
+  if (args.targets.length === 0) {
+    args.targets = discoverTargetsFromPackageMetadata();
+  }
   const results = args.targets.map(validateTarget);
   const passed = results.every((result) => result.ok);
 

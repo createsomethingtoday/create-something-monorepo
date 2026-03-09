@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "The CREATE SOMETHING Content MCP — a single entry point to all philosophy, research, design system, and practices across properties",
   "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true
+  },
   "main": "dist/index.js",
   "bin": {
     "create-something-mcp": "dist/index.js"

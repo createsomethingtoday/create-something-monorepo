@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "description": "MCP server for CREATE SOMETHING harness protocol",
+  "createSomething": {
+    "agentLegibilityContract": true
+  },
   "main": "dist/index.js",
   "bin": {
     "harness-mcp": "./dist/index.js",
