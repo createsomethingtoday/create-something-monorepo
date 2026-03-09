@@ -319,7 +319,10 @@ export async function listAgencyMcpEntitlements(
 			)
 			.bind(pattern, pattern, pattern, pattern, limit)
 			.all<AgencyMcpEntitlementRow>();
-		return result.results ?? [];
+		return (result.results ?? []).map((row) => ({
+			...row,
+			service_tier: normalizeAgencyServiceTier(row.service_tier),
+		}));
 	}
 
 	const result = await db
@@ -330,7 +333,10 @@ export async function listAgencyMcpEntitlements(
 		)
 		.bind(limit)
 		.all<AgencyMcpEntitlementRow>();
-	return result.results ?? [];
+	return (result.results ?? []).map((row) => ({
+		...row,
+		service_tier: normalizeAgencyServiceTier(row.service_tier),
+	}));
 }
 
 export async function listAgencyContractState(
@@ -383,14 +389,20 @@ export async function listAgencyCommercialState(
 			)
 			.bind(pattern, pattern, pattern, pattern, limit)
 			.all<AgencyCommercialStateRow>();
-		return result.results ?? [];
+		return (result.results ?? []).map((row) => ({
+			...row,
+			service_tier: normalizeAgencyServiceTier(row.service_tier),
+		}));
 	}
 
 	const result = await db
 		.prepare('SELECT * FROM agency_commercial_accounts ORDER BY updated_at DESC LIMIT ?')
 		.bind(limit)
 		.all<AgencyCommercialStateRow>();
-	return result.results ?? [];
+	return (result.results ?? []).map((row) => ({
+		...row,
+		service_tier: normalizeAgencyServiceTier(row.service_tier),
+	}));
 }
 
 export async function listAgencyIdentitySeeds(
@@ -415,7 +427,10 @@ export async function listAgencyIdentitySeeds(
 				)
 				.bind(pattern, pattern, pattern, pattern, limit)
 				.all<AgencyIdentitySeedRow>();
-			return result.results ?? [];
+			return (result.results ?? []).map((row) => ({
+				...row,
+				service_tier: normalizeAgencyServiceTier(row.service_tier),
+			}));
 		}
 
 		const result = await db
@@ -426,7 +441,10 @@ export async function listAgencyIdentitySeeds(
 			)
 			.bind(limit)
 			.all<AgencyIdentitySeedRow>();
-		return result.results ?? [];
+		return (result.results ?? []).map((row) => ({
+			...row,
+			service_tier: normalizeAgencyServiceTier(row.service_tier),
+		}));
 	} catch (error) {
 		if (isMissingD1TableError(error, 'agency_identity_seeds')) {
 			return [];
