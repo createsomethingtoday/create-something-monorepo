@@ -20,7 +20,7 @@
     "build:space": "pnpm --filter @create-something/space build",
     "build:agency": "pnpm --filter @create-something/agency build",
     "check": "pnpm --recursive run check",
-    "lint": "pnpm --recursive run lint",
+    "lint": "node scripts/workspace-lint.mjs",
     "format": "prettier --write \"packages/**/*.{js,ts,svelte,json,css,md}\"",
     "test": "pnpm --recursive run test",
     "braintrust:eval": "pnpm exec braintrust eval",

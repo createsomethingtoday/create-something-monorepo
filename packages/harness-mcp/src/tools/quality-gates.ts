@@ -20,15 +20,15 @@ export function runQualityGate(
       ? `pnpm --filter=${options.package} exec tsc --noEmit`
       : 'tsc --noEmit',
     lint: options?.package
-      ? `pnpm --filter=${options.package} exec eslint src/`
-      : 'eslint src/'
+      ? `pnpm lint -- --package=${options.package}`
+      : 'pnpm lint'
   };
 
   let command = commands[gate];
 
   // Auto-fix for lint
   if (gate === 'lint' && options?.autoFix) {
-    command += ' --fix';
+    command += ' -- --fix';
   }
 
   const result = execCommand(command, cwd);

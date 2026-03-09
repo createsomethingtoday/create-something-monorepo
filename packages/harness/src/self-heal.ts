@@ -43,9 +43,13 @@ function getGateCommand(
       return `pnpm ${filter} exec tsc --noEmit`.trim();
     case 'lint':
       if (isFix) {
-        return `pnpm ${filter} exec eslint --fix .`.trim();
+        return packageFilter
+          ? `pnpm lint -- --package=${packageFilter} --fix`
+          : 'pnpm lint -- --fix';
       }
-      return `pnpm ${filter} exec eslint .`.trim();
+      return packageFilter
+        ? `pnpm lint -- --package=${packageFilter}`
+        : 'pnpm lint';
     case 'build':
       return `pnpm ${filter} build`.trim();
   }
