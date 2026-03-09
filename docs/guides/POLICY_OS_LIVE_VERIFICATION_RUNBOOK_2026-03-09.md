@@ -26,6 +26,16 @@ Use this after:
   - `identity-worker` admin session or managed-bearer issuance
   - the hub runtime guardrail token
 
+## Preferred Execution Path
+
+Use the repo script first:
+
+```bash
+pnpm policy:os:verify:live
+```
+
+The script follows the same checks as this runbook and uses the environment variables below. The manual `curl` flow remains the fallback when you need to debug one step in isolation.
+
 ## Environment
 
 Set these before running the checks:
