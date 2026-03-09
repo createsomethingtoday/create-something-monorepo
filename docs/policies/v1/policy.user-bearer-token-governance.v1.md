@@ -33,25 +33,26 @@ Define the production policy for user-facing bearer tokens issued through `.agen
    - required contract status
    - billing status
    - where applicable, partner client lifecycle state and active consent state
-6. Bearer tokens MUST be issued by `.agency`; Auth0 remains the identity provider and MUST NOT be exposed as the external bearer-token artifact for host portability.
-7. Bearer tokens MUST be opaque, high-entropy secrets stored only in protected form server-side; plaintext tokens MUST be shown only at issuance or regeneration time.
-8. Every authenticated bearer-token request MUST produce auditable metadata sufficient to attribute activity to a user and organization context.
-9. `.agency` MUST provide immediate revocation and immediate regeneration paths.
-10. Regeneration and revocation MUST remain available regardless of billing, sunset, or host state so that compromised tokens can always be terminated.
-11. Bearer-token access MUST fail closed when legal or commercial prerequisites are no longer satisfied.
-12. Customer-facing legal terms, security language, and operational documentation MUST disclose that bearer tokens are high-trust credentials, long-lived, revocable, continuously governed, and unsuitable for sharing.
-13. For hosts that require OAuth, CREATE SOMETHING MAY deliver the managed bearer token through an OAuth facade; in that case the OAuth `access_token` MAY itself be long-lived because it is the governed managed bearer artifact.
-14. OAuth delivery MUST preserve current hub bearer semantics so that existing bearer-token clients continue to function without OAuth migration.
-15. OAuth delivery for third-party hosts MUST NOT depend on custom headers such as `X-MCP-Session-Token`; bearer authorization remains the portable host contract.
-16. Shared runtime guardrail tokens such as `HUB_API_TOKEN` MUST NOT be exposed as user-facing OAuth artifacts.
-17. The password a user enters on the OAuth authorize page is a separate `identity-worker` login secret and MUST NOT be treated as the bearer token itself.
-18. `.agency` SHOULD expose that MCP OAuth password as a managed self-service control linked to the same entitled email, account, and tenant context used for bearer-token governance.
-19. The OAuth authorization code MAY be implemented as a signed self-contained token minted by `identity-worker` rather than as a database-stored opaque code, provided it remains bound to the OAuth request context required for exchange.
-20. When signed authorization codes are used, the signed claims MUST at minimum bind `client_id`, `redirect_uri`, issuer, expiry, and any PKCE challenge material required for token exchange.
-21. Existing vault-backed compat bearer tokens MAY be adopted into the managed-token system without rotating the plaintext token, but only after the user is reconciled to one canonical Auth0 subject and one canonical `.agency` entitlement row.
-22. After adoption, `identity-worker.mcp_long_lived_tokens` becomes the authoritative registry for bearer-token status, last use, revoke, and regenerate behavior; vault storage is runtime support only and MUST NOT be treated as the governance source of truth.
-23. Duplicate entitlement rows or duplicate token rows for the same user email under different subjects MUST be removed or deactivated during migration so bearer resolution remains canonical.
-24. Auth0 delete/recreate incidents for the same normalized email MUST be governed by [`policy.auth0-subject-rebind-governance.v1`](./policy.auth0-subject-rebind-governance.v1.md); bearer access continuity should preserve MCP account context while revoking stale old-subject credentials.
+6. Service-tier gating for free `MCP-only` versus paid `Policy OS` access MUST follow [`policy.service-tier-entitlement.v1`](./policy.service-tier-entitlement.v1.md) when bearer-backed requests reach paid or governed product surfaces.
+7. Bearer tokens MUST be issued by `.agency`; Auth0 remains the identity provider and MUST NOT be exposed as the external bearer-token artifact for host portability.
+8. Bearer tokens MUST be opaque, high-entropy secrets stored only in protected form server-side; plaintext tokens MUST be shown only at issuance or regeneration time.
+9. Every authenticated bearer-token request MUST produce auditable metadata sufficient to attribute activity to a user and organization context.
+10. `.agency` MUST provide immediate revocation and immediate regeneration paths.
+11. Regeneration and revocation MUST remain available regardless of billing, sunset, or host state so that compromised tokens can always be terminated.
+12. Bearer-token access MUST fail closed when legal or commercial prerequisites are no longer satisfied.
+13. Customer-facing legal terms, security language, and operational documentation MUST disclose that bearer tokens are high-trust credentials, long-lived, revocable, continuously governed, and unsuitable for sharing.
+14. For hosts that require OAuth, CREATE SOMETHING MAY deliver the managed bearer token through an OAuth facade; in that case the OAuth `access_token` MAY itself be long-lived because it is the governed managed bearer artifact.
+15. OAuth delivery MUST preserve current hub bearer semantics so that existing bearer-token clients continue to function without OAuth migration.
+16. OAuth delivery for third-party hosts MUST NOT depend on custom headers such as `X-MCP-Session-Token`; bearer authorization remains the portable host contract.
+17. Shared runtime guardrail tokens such as `HUB_API_TOKEN` MUST NOT be exposed as user-facing OAuth artifacts.
+18. The password a user enters on the OAuth authorize page is a separate `identity-worker` login secret and MUST NOT be treated as the bearer token itself.
+19. `.agency` SHOULD expose that MCP OAuth password as a managed self-service control linked to the same entitled email, account, and tenant context used for bearer-token governance.
+20. The OAuth authorization code MAY be implemented as a signed self-contained token minted by `identity-worker` rather than as a database-stored opaque code, provided it remains bound to the OAuth request context required for exchange.
+21. When signed authorization codes are used, the signed claims MUST at minimum bind `client_id`, `redirect_uri`, issuer, expiry, and any PKCE challenge material required for token exchange.
+22. Existing vault-backed compat bearer tokens MAY be adopted into the managed-token system without rotating the plaintext token, but only after the user is reconciled to one canonical Auth0 subject and one canonical `.agency` entitlement row.
+23. After adoption, `identity-worker.mcp_long_lived_tokens` becomes the authoritative registry for bearer-token status, last use, revoke, and regenerate behavior; vault storage is runtime support only and MUST NOT be treated as the governance source of truth.
+24. Duplicate entitlement rows or duplicate token rows for the same user email under different subjects MUST be removed or deactivated during migration so bearer resolution remains canonical.
+25. Auth0 delete/recreate incidents for the same normalized email MUST be governed by [`policy.auth0-subject-rebind-governance.v1`](./policy.auth0-subject-rebind-governance.v1.md); bearer access continuity should preserve MCP account context while revoking stale old-subject credentials.
 
 ## Required Legal Alignment
 
@@ -127,6 +128,7 @@ The following artifacts MUST remain aligned with this policy before production l
 - `docs/policies/v1/policy.mcp-session-self-service.v1.md`
 - `docs/policies/v1/policy.mcp-credential-delivery.v1.md`
 - `docs/policies/v1/policy.partner-auth-governance.v1.md`
+- `docs/policies/v1/policy.service-tier-entitlement.v1.md`
 - `docs/guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md`
 - `docs/policies/v1/policy.mcp-oauth-password-governance.v1.md`
 - `docs/policies/v1/policy.auth0-subject-rebind-governance.v1.md`

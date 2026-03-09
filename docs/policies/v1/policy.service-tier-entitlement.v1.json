@@ -1,0 +1,56 @@
+{
+  "policy_id": "policy.service-tier-entitlement.v1",
+  "version": 1,
+  "status": "draft",
+  "service_tiers": [
+    "mcp_only",
+    "policy_os_trial",
+    "policy_os_core"
+  ],
+  "required_checks": [
+    "service_tier",
+    "service_entitled",
+    "policy_accepted",
+    "contract_active",
+    "billing_active",
+    "org_membership_active"
+  ],
+  "tier_defaults": {
+    "mcp_only": {
+      "free_by_default": true,
+      "policy_os_capabilities_allowed": false,
+      "scope": "narrow"
+    },
+    "policy_os_trial": {
+      "paid": true,
+      "requires_commercial_gates": true,
+      "scope": "governed_trial"
+    },
+    "policy_os_core": {
+      "paid": true,
+      "requires_commercial_gates": true,
+      "scope": "governed_recurring"
+    }
+  },
+  "exception_model": {
+    "hardcoded_client_logic_prohibited": true,
+    "required_fields": [
+      "exception_type",
+      "approved_by",
+      "approved_at",
+      "reason",
+      "allowed_scope",
+      "expiration_or_review_date",
+      "graduation_target"
+    ]
+  },
+  "reason_codes": [
+    "service_tier_not_allowed",
+    "service_not_entitled",
+    "policy_acceptance_required",
+    "contract_inactive",
+    "billing_inactive",
+    "org_membership_inactive",
+    "approved_exception_required"
+  ]
+}
