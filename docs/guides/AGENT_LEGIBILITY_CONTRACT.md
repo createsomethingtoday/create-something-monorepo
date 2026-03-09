@@ -121,7 +121,6 @@ Suggested format:
 | UI validation path | none |
 | Escalation rule | stop if `/health` is green but the primary workflow still fails |
 ```
-```
 
 ## Tier-aware guidance
 
