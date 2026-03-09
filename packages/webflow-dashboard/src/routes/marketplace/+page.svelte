@@ -207,7 +207,6 @@
       <!-- Header -->
       <div class="page-header page-intro">
         <div class="header-content">
-          <span class="page-eyebrow page-intro__eyebrow">Marketplace Intelligence</span>
           <h1 class="page-title page-intro__title">Marketplace Insights</h1>
           <p class="page-subtitle page-intro__subtitle">
             Weekly marketplace snapshot with 30-day performance data

@@ -47,7 +47,6 @@
       <!-- Header -->
       <div class="page-header page-intro">
         <div class="header-content">
-          <span class="page-eyebrow page-intro__eyebrow">Preflight Checks</span>
           <h1 class="page-title page-intro__title">Validation Tools</h1>
           <p class="page-subtitle page-intro__subtitle">
             Test and validate your templates before submission to ensure marketplace compliance
