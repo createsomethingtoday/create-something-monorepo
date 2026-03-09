@@ -1,0 +1,52 @@
+# {{NAME}} MCP
+
+{{DESCRIPTION}}
+
+{{PROFILE_SUMMARY}}
+
+## Framework Tier
+
+| Tier | MCP Primitive | Role in This Server |
+|------|---------------|---------------------|
+| **Database** | Resources | {{PROFILE_DATABASE_ROLE}} |
+| **Automation** | Tools | {{PROFILE_AUTOMATION_ROLE}} |
+| **Judgment** | Prompts | {{PROFILE_JUDGMENT_ROLE}} |
+
+## Entry Points
+
+- `src/index.ts` — stdio entry point
+- `src/server.ts` — shared scoped MCP server wiring
+- `worker/index.ts` — Cloudflare Worker entry point with `/health`
+
+## Local Development
+
+```bash
+pnpm --filter=@create-something/{{PACKAGE_NAME}} build
+pnpm --filter=@create-something/{{PACKAGE_NAME}} start
+```
+
+## Worker Development
+
+```bash
+cd packages/{{PACKAGE_NAME}}/worker
+npm install
+npm run dev
+```
+
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `README.md`, `src/server.ts`, `worker/index.ts` |
+| Boot command | `pnpm --filter=@create-something/{{PACKAGE_NAME}} build && pnpm --filter=@create-something/{{PACKAGE_NAME}} start` for stdio, or `cd packages/{{PACKAGE_NAME}}/worker && npm run dev` for the Worker runtime |
+| Smoke command | `pnpm --filter=@create-something/{{PACKAGE_NAME}} typecheck && pnpm --filter=@create-something/{{PACKAGE_NAME}} build` |
+| Validation surfaces | typecheck output, stdio startup, Worker `/health`, Worker logs, representative MCP tool/resource/prompt invocation |
+| UI validation path | none |
+| Escalation rule | Stop if local stdio behavior and Worker behavior diverge, or if required account auth and bindings cannot be reproduced from checked-in configuration and available secrets. |
+
+## Next Customization Pass
+
+- Replace the placeholder description and tier wording with domain-specific language.
+- Rename the example tools, resources, and prompts to match the target integration.
+- Tighten the contract once real health checks, traces, or review surfaces exist.
+- Revisit this starter copy if the `{{PROFILE_LABEL}}` profile is the wrong fit for the actual MCP.

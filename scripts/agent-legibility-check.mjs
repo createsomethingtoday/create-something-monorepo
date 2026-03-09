@@ -12,6 +12,24 @@ const REQUIRED_FIELDS = [
   'UI validation path',
   'Escalation rule',
 ];
+const UNDERSTANDING_PLACEHOLDERS = [
+  '# Understanding: [Package Name]',
+  '> **[One-sentence purpose statement]**',
+  '**Mode of Being**: [.ltd / .io / .space / .agency / foundation]',
+  '[2-3 sentences on how this package relates to the hermeneutic workflow]',
+  '| `[package]` | [What understanding this enables] |',
+  '| `[package/property]` | [How this aids their understanding] |',
+  '├── [dir]/     → [What this contains and why]',
+  '└── [file]     → [Critical file purpose]',
+  '1. **[file path]** — [Why this is the entry point]',
+  '| [Term] | [Brief explanation] | `[file]` |',
+  '- [Broader concept or pattern this exemplifies]',
+  '| [Common operation] | `[file or command]` |',
+  '*Last validated: [YYYY-MM-DD]*',
+  'Replace this paragraph with the package\'s actual role',
+  '| `[domain dependency]` | `[what live system or dataset this MCP makes legible]` |',
+  '| `[downstream package or property]` | `[how this MCP makes that domain legible]` |',
+];
 
 const PACKAGES_DIR = path.join(REPO_ROOT, 'packages');
 
@@ -130,6 +148,71 @@ function findMetadataDrift() {
   return drift;
 }
 
+function findUnderstandingDrift() {
+  if (!existsSync(PACKAGES_DIR)) {
+    return [];
+  }
+
+  const packageDirs = readdirSync(PACKAGES_DIR, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort((a, b) => a.localeCompare(b));
+
+  const drift = [];
+
+  for (const dirName of packageDirs) {
+    const packageJsonPath = path.join(PACKAGES_DIR, dirName, 'package.json');
+    const understandingPath = path.join(PACKAGES_DIR, dirName, 'UNDERSTANDING.md');
+
+    if (!existsSync(packageJsonPath)) {
+      continue;
+    }
+
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+    if (!packageJson.createSomething?.agentLegibilityContract) {
+      continue;
+    }
+
+    const relUnderstandingPath = normalizePath(path.join('packages', dirName, 'UNDERSTANDING.md'));
+
+    if (!existsSync(understandingPath)) {
+      drift.push({
+        target: relUnderstandingPath,
+        ok: false,
+        details: ['Opted-in package is missing UNDERSTANDING.md.'],
+      });
+      continue;
+    }
+
+    const understanding = readFileSync(understandingPath, 'utf8');
+    const details = [];
+
+    if (!understanding.includes('# Understanding:')) {
+      details.push('Missing top-level understanding heading.');
+    }
+
+    if (!understanding.includes('## To Understand This Package, Read')) {
+      details.push('Missing "## To Understand This Package, Read" section.');
+    }
+
+    for (const placeholder of UNDERSTANDING_PLACEHOLDERS) {
+      if (understanding.includes(placeholder)) {
+        details.push(`Contains template placeholder text: "${placeholder}".`);
+      }
+    }
+
+    if (details.length > 0) {
+      drift.push({
+        target: relUnderstandingPath,
+        ok: false,
+        details,
+      });
+    }
+  }
+
+  return drift;
+}
+
 function validateTarget(relPath) {
   const fullPath = path.join(REPO_ROOT, relPath);
   const details = [];
@@ -183,6 +266,7 @@ function main() {
   const results = [
     ...args.targets.map(validateTarget),
     ...findMetadataDrift(),
+    ...findUnderstandingDrift(),
   ];
   const passed = results.every((result) => result.ok);
 

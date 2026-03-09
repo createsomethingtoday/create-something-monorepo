@@ -202,6 +202,12 @@ Use `--target` to check a custom comma-separated list of files while expanding c
 
 The check also fails if a package `README.md` contains `## Agent Legibility Contract` but the sibling `package.json` does not opt in. This keeps documentation and enforcement aligned during review.
 
+For opted-in packages, the check also enforces:
+
+- `UNDERSTANDING.md` must exist
+- `UNDERSTANDING.md` must include the core package-reading section
+- `UNDERSTANDING.md` cannot still contain obvious template placeholder text
+
 A matching GitHub Actions workflow exists at:
 
 - `.github/workflows/agent-legibility-check.yml`

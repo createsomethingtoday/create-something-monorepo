@@ -1,6 +1,24 @@
 import { execCommand, findMonorepoRoot } from '../utils.js';
 import type { QualityGateResult } from '../types.js';
 
+function buildLintCommand(packageName?: string, autoFix?: boolean): string {
+  const args = ['pnpm', '-w', 'lint'];
+
+  if (packageName || autoFix) {
+    args.push('--');
+  }
+
+  if (packageName) {
+    args.push(`--package=${packageName}`);
+  }
+
+  if (autoFix) {
+    args.push('--fix');
+  }
+
+  return args.join(' ');
+}
+
 export function runQualityGate(
   gate: 'tests' | 'typecheck' | 'lint',
   options?: {
@@ -19,17 +37,10 @@ export function runQualityGate(
     typecheck: options?.package
       ? `pnpm --filter=${options.package} exec tsc --noEmit`
       : 'tsc --noEmit',
-    lint: options?.package
-      ? `pnpm lint -- --package=${options.package}`
-      : 'pnpm lint'
+    lint: buildLintCommand(options?.package, options?.autoFix)
   };
 
-  let command = commands[gate];
-
-  // Auto-fix for lint
-  if (gate === 'lint' && options?.autoFix) {
-    command += ' -- --fix';
-  }
+  const command = commands[gate];
 
   const result = execCommand(command, cwd);
 

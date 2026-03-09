@@ -1,0 +1,63 @@
+{
+  "policy_id": "policy.client-hub-user-experience.v1",
+  "version": 1,
+  "status": "draft",
+  "portal_defaults": {
+    "canonical_portal": ".agency",
+    "dedicated_client_shell_allowed": true,
+    "provider_brand_hidden_by_default": true,
+    "workspace_or_tenant_centric_labels_required": true
+  },
+  "required_user_surfaces": [
+    "access_overview",
+    "mcp_access",
+    "connections",
+    "security_model"
+  ],
+  "optional_product_surfaces": [
+    "hosted_concierge_chat"
+  ],
+  "onboarding_sequence": [
+    "access_eligibility",
+    "identity_mapping",
+    "credential_delivery",
+    "toolkit_connection_status",
+    "host_setup",
+    "security_and_support"
+  ],
+  "self_service_actions": [
+    "policy_acceptance",
+    "managed_bearer_issue",
+    "managed_bearer_revoke",
+    "managed_bearer_regenerate",
+    "mcp_oauth_password_set",
+    "mcp_oauth_password_rotate",
+    "view_connection_status",
+    "launch_connect_link",
+    "copy_host_snippet"
+  ],
+  "operator_only_actions": [
+    "entitlement_override",
+    "tenant_routing_mutation",
+    "toolkit_account_pin",
+    "toolkit_account_disable",
+    "partner_admin_mint",
+    "legacy_credential_issue",
+    "control_plane_mutation"
+  ],
+  "blocked_state_requirements": {
+    "explicit_reason_code_required": true,
+    "generic_access_denied_prohibited": true
+  },
+  "dui_controls": {
+    "curated_ui_resources_only": true,
+    "raw_model_generated_executable_ui_prohibited": true,
+    "schema_driven_ui_allowed_when_rendered_by_approved_components": true,
+    "server_tool_gating_required_for_mutations": true
+  },
+  "hosted_product_controls": {
+    "separate_from_agency_control_plane": true,
+    "separate_from_mcp_app_dui_resources": true,
+    "progressive_profile_governance_required": true
+  }
+}

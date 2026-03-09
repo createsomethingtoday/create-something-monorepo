@@ -56,7 +56,7 @@ src/
 | **Redirect** | Control-plane change while a run is active |
 | **Escalation** | Explicit handoff when policy or authority is unclear |
 
-## Read this package in this order
+## To Understand This Package, Read
 
 1. `src/runner.ts` — main orchestration loop and swarm worktree flow
 2. `src/session.ts` — runtime invocation and execution details

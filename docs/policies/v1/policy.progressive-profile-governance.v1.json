@@ -1,0 +1,38 @@
+{
+  "policy_id": "policy.progressive-profile-governance.v1",
+  "version": 1,
+  "status": "draft",
+  "field_lifecycle": [
+    "candidate",
+    "inferred",
+    "confirmed",
+    "rejected"
+  ],
+  "default_confidence_thresholds": {
+    "candidate_max": 0.69,
+    "inferred_min": 0.7,
+    "high_confidence_prefill_min": 0.9
+  },
+  "sensitive_field_classes": [
+    "identity",
+    "contact",
+    "consent",
+    "billing",
+    "credential",
+    "regulated",
+    "external_write_key"
+  ],
+  "required_controls": {
+    "provenance_required": true,
+    "approved_widget_registry_required": true,
+    "raw_generated_executable_ui_prohibited": true,
+    "confirmed_fields_not_silently_overwritten": true
+  },
+  "handoff_triggers": [
+    "user_requested_human",
+    "repeated_low_confidence",
+    "conflicting_evidence",
+    "policy_requires_review",
+    "regulated_or_destructive_path"
+  ]
+}

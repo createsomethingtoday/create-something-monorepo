@@ -6,17 +6,43 @@
 ## Quick Start
 
 1. Copy the scaffold
-2. Replace placeholders
-3. Add legibility contract + README
-4. Add to workspace + install
-5. Apply telemetry migration (if new D1)
-6. Deploy
+2. Let `create-mcp` infer a profile from the package name, or pass `--profile` to override
+3. Replace placeholders
+4. Add legibility contract + README
+5. Add to workspace + install
+6. Apply telemetry migration (if new D1)
+7. Deploy
+
+## Scaffold Profiles
+
+`create-mcp` supports three documentation profiles:
+
+- `generic` — default for general-purpose MCPs
+- `content` — for content/indexing/search MCPs
+- `operational` — for live-state, workflow, or data-plane MCPs
+
+Example:
+
+```bash
+pnpm create-mcp create-something-mcp --profile content
+pnpm create-mcp substrate-mcp --profile operational
+pnpm create-mcp playbook-mcp --dry-run
+```
+
+If `--profile` is omitted, `create-mcp` infers a conservative default from the package name:
+
+- names like `content`, `playbook`, `atlas`, or `framework` lean `content`
+- names like `substrate`, `sync`, `schedule`, `preview`, `review`, `webflow`, `notion`, or other live-system integrations lean `operational`
+- everything else stays `generic`
+
+Use `--dry-run` to preview the inferred profile, target directory, and generated file list without writing anything to `packages/`.
 
 ## 1. Directory Structure
 
 ```
 packages/{name}-mcp/
-├── README.md              # Entry point + Agent Legibility Contract
+├── README.md              # Scaffolded entry point + starter Agent Legibility Contract
+├── UNDERSTANDING.md       # Scaffolded dependency/context map for agents
 ├── src/
 │   ├── resources.ts        # Database tier — MCP Resources
 │   ├── tools.ts            # Automation tier — MCP Tools
@@ -76,6 +102,13 @@ The package `README.md` should include a concrete `Agent Legibility Contract` se
 - escalation rule
 
 Use [guides/AGENT_LEGIBILITY_CONTRACT.md](./guides/AGENT_LEGIBILITY_CONTRACT.md) and [guides/UNDERSTANDING_TEMPLATE.md](./guides/UNDERSTANDING_TEMPLATE.md) as the canonical shape.
+
+The `create-mcp` scaffold now emits:
+
+- a starter `README.md` with this contract
+- a starter `UNDERSTANDING.md` with dependency and structure placeholders
+
+Replace the placeholder wording in both files before treating the package as complete. If the selected scaffold profile does not match the package you are building, regenerate with a closer profile or rewrite both docs before landing the package.
 
 ## 4. `worker/wrangler.toml`
 
@@ -222,6 +255,7 @@ Add the new MCP to `docs/MCP_FLEET_REGISTRY.md`.
 - [ ] `worker/wrangler.toml` — correct account, DO class, telemetry D1
 - [ ] `package.json` — `createSomething.agentLegibilityContract` set to `true`
 - [ ] `README.md` — includes `Agent Legibility Contract`
+- [ ] `UNDERSTANDING.md` — explains dependencies, structure, and critical entry points
 - [ ] `worker/package.json` — includes `@create-something/mcp-core`
 - [ ] `worker/index.ts` — `enableTelemetry` called before tool registration
 - [ ] `pnpm-workspace.yaml` — worker directory added

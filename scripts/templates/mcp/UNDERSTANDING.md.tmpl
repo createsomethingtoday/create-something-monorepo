@@ -1,0 +1,88 @@
+# Understanding: @create-something/{{PACKAGE_NAME}}
+
+> **{{DESCRIPTION}}**
+
+## Ontological Position
+
+**Mode of Being**: {{PROFILE_MODE_OF_BEING}}
+
+{{PROFILE_ONTOLOGY}}
+
+## Depends On (Understanding-Critical)
+
+| Dependency | Why It Matters |
+|------------|----------------|
+| `@create-something/mcp-core` | Scoped server primitives, transport helpers, and shared MCP infrastructure |
+| `@modelcontextprotocol/sdk` | MCP protocol surface and server implementation |
+| `zod` | Boundary validation for tool inputs and prompt arguments |
+{{PROFILE_DEPENDS_ON_EXTRA}}
+
+## Enables Understanding Of
+
+| Consumer | What This Package Clarifies |
+|----------|----------------------------|
+{{PROFILE_ENABLES_UNDERSTANDING}}
+
+## Internal Structure
+
+```text
+src/
+├── index.ts                 → stdio entry point
+├── server.ts                → shared scoped MCP server
+├── auth.ts                  → account/auth resolution
+├── tools/                   → automation tier handlers
+├── resources/               → database tier handlers
+├── prompts/                 → judgment tier handlers
+├── schemas/                 → validation contracts
+└── orchestration/           → auth/bootstrap helpers
+
+worker/
+├── index.ts                 → Cloudflare Worker entry point with /health
+└── wrangler.toml            → deployment bindings and runtime config
+```
+
+## To Understand This Package, Read
+
+1. **`README.md`** — package overview and Agent Legibility Contract
+2. **`src/server.ts`** — how scoped primitives are wired together
+3. **`src/tools/index.ts`** — automation surface exposed to models
+4. **`worker/index.ts`** — HTTP/Worker runtime and `/health`
+
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `README.md`, `UNDERSTANDING.md`, `src/server.ts`, `worker/index.ts` |
+| Boot command | `pnpm --filter=@create-something/{{PACKAGE_NAME}} build && pnpm --filter=@create-something/{{PACKAGE_NAME}} start` for stdio, or `cd packages/{{PACKAGE_NAME}}/worker && npm run dev` for the Worker runtime |
+| Smoke command | `pnpm --filter=@create-something/{{PACKAGE_NAME}} typecheck && pnpm --filter=@create-something/{{PACKAGE_NAME}} build` |
+| Validation surfaces | {{PROFILE_VALIDATION_SURFACES}} |
+| UI validation path | none |
+| Escalation rule | {{PROFILE_ESCALATION}} |
+
+## Key Concepts
+
+| Concept | Definition | Where to Find |
+|---------|------------|---------------|
+| Scoped MCP server | Server instance that resolves account context before primitive execution | `src/server.ts` |
+| Resource | Application-controlled context surface | `src/resources/index.ts` |
+| Tool | Model-invoked action surface | `src/tools/index.ts` |
+| Prompt | User-selected judgment surface | `src/prompts/index.ts` |
+
+## This Package Helps You Understand
+
+- How this domain is exposed through the Three-Tier Framework
+- Where account scoping and policy enforcement enter the MCP execution path
+- Which validation surfaces an agent should trust before escalating
+
+## Common Tasks
+
+| Task | Start Here |
+|------|------------|
+| Add a new tool | `src/tools/index.ts` |
+| Add a new resource | `src/resources/index.ts` |
+| Add a new prompt | `src/prompts/index.ts` |
+| Debug Worker runtime | `worker/index.ts` and `worker/wrangler.toml` |
+
+---
+
+*Last validated: {{DATE}}*
