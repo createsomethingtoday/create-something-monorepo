@@ -176,6 +176,19 @@
       return page.success === false;
     });
     if (firstRequestFailure) {
+      const failedUrl = firstRequestFailure.url || "";
+      const failedUrlHtml = failedUrl
+        ? '<br><strong>Broken URL:</strong> <a href="' + failedUrl + '" target="_blank" rel="noopener noreferrer">' + failedUrl + "</a>"
+        : "";
+
+      if (firstRequestFailure.error === "HTTP error: 404") {
+        if (summary.raw && summary.raw.url && failedUrl === summary.raw.url) {
+          return "The published template URL returned 404 and could not be validated." + failedUrlHtml + "<br><br><strong>What to fix:</strong> Confirm the published site is live at this exact URL and republish if needed.";
+        }
+
+        return "Validation found a broken page link in the template." + failedUrlHtml + "<br><br><strong>What to fix:</strong> Update or remove the broken internal link, then republish the template and validate again.";
+      }
+
       return "Validation could not complete for all pages.<br><br><strong>First failure:</strong> " + (firstRequestFailure.error || "A page could not be analyzed.");
     }
 
