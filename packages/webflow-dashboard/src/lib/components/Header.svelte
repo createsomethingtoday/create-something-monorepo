@@ -130,20 +130,20 @@
   }
 
   .header-main {
-    display: flex;
-    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: space-between;
     gap: var(--space-md);
     min-width: 0;
   }
 
   .nav-cluster {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto auto minmax(15rem, 20rem);
     align-items: center;
-    flex: 1;
-    flex-wrap: wrap;
-    gap: 0.75rem;
+    justify-content: start;
+    column-gap: 0.625rem;
+    row-gap: 0.5rem;
     min-width: 0;
     padding: 0.375rem;
     border: 1px solid var(--color-shell-border-subtle);
@@ -157,9 +157,9 @@
   .brand-lockup {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
-    flex-wrap: wrap;
+    gap: 0.5rem;
     padding-left: 0.125rem;
+    min-width: 0;
   }
 
   .logo {
@@ -192,7 +192,10 @@
 
   .user-chip {
     display: none;
+    max-width: 14rem;
+    overflow: hidden;
     padding: 0.35rem 0.7rem;
+    text-overflow: ellipsis;
     border-radius: 999px;
     border: 1px solid var(--color-shell-border-subtle);
     background: transparent;
@@ -204,7 +207,6 @@
   .nav-links {
     display: flex;
     align-items: center;
-    flex: 0 1 auto;
     gap: 0.25rem;
     padding: 0.2rem;
     border: 1px solid rgba(0, 0, 0, 0.04);
@@ -213,15 +215,16 @@
     overflow-x: auto;
     scrollbar-width: none;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    min-width: 0;
   }
 
   .search-slot {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    flex: 1 1 16rem;
-    min-width: 14rem;
-    max-width: 24rem;
+    min-width: 0;
+    width: 100%;
+    justify-self: end;
   }
 
   .search-scope {
@@ -284,6 +287,7 @@
     gap: 0.5rem;
     justify-content: flex-end;
     flex-shrink: 0;
+    padding-left: 0.25rem;
   }
 
   .header-right :global(.header-action) {
@@ -305,9 +309,20 @@
     display: inline;
   }
 
-  @media (min-width: 900px) {
+  @media (min-width: 1080px) {
     .user-chip {
       display: inline-flex;
+    }
+  }
+
+  @media (max-width: 1240px) {
+    .nav-cluster {
+      grid-template-columns: auto auto;
+    }
+
+    .search-slot {
+      grid-column: 1 / -1;
+      justify-self: stretch;
     }
   }
 
@@ -317,11 +332,13 @@
     }
 
     .header-main {
+      grid-template-columns: 1fr;
       gap: 0.75rem;
       align-items: stretch;
     }
 
     .nav-cluster {
+      grid-template-columns: 1fr;
       align-items: stretch;
       padding: 0.5rem;
       border-radius: 1.25rem;
@@ -337,9 +354,8 @@
     }
 
     .search-slot {
-      flex-basis: 100%;
-      max-width: none;
       min-width: 0;
+      grid-column: auto;
     }
 
     .header-right :global(.header-action) {
