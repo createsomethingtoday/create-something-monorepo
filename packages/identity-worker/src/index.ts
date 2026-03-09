@@ -595,6 +595,20 @@ interface OAuthAuthorizationCodeClaims extends JWTPayload {
 	toolkit_profile?: string[];
 }
 
+interface OAuthRefreshTokenClaims extends JWTPayload {
+	kind: 'oauth_refresh_token';
+	client_id: string;
+	scope: string;
+	resource: string;
+	email: string;
+	tier: User['tier'];
+	source: User['source'];
+	account_id?: string | null;
+	tenant_id?: string | null;
+	tool_mode?: McpToolMode;
+	toolkit_profile?: string[];
+}
+
 interface CreateMcpSessionBody {
 	tenant_id?: string;
 	host?: string;
@@ -666,6 +680,7 @@ interface AdminMcpAuditFeedBody {
 interface OAuthTokenBody {
 	grant_type?: string;
 	code?: string;
+	refresh_token?: string;
 	redirect_uri?: string;
 	client_id?: string;
 	client_secret?: string;
@@ -735,6 +750,7 @@ const DEFAULT_OAUTH_RESOURCE = DEFAULT_MCP_HUB_URL;
 const OAUTH_AUTHORIZATION_CODE_TTL_SECONDS = 300;
 const OAUTH_MANAGED_BEARER_EXPIRES_IN = 31536000;
 const OAUTH_ID_TOKEN_TTL_SECONDS = 3600;
+const OAUTH_REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
 const MIN_MCP_LEGACY_KEY_TTL_SECONDS = 3600;
 const DEFAULT_MCP_LEGACY_KEY_TTL_SECONDS = 7 * 24 * 60 * 60;
 const MAX_MCP_LEGACY_KEY_TTL_SECONDS = 30 * 24 * 60 * 60;
@@ -752,9 +768,9 @@ async function handleOAuthRegister(request: Request, _env: Env): Promise<Respons
 		client_name: clientName,
 		redirect_uris: redirectUris,
 		token_endpoint_auth_method: body?.token_endpoint_auth_method ?? 'none',
-		grant_types: body?.grant_types ?? ['authorization_code'],
+		grant_types: body?.grant_types ?? ['authorization_code', 'refresh_token'],
 		response_types: body?.response_types ?? ['code'],
-		scope: body?.scope ?? 'openid mcp',
+		scope: body?.scope ?? 'openid profile email mcp offline_access',
 	});
 }
 
@@ -859,22 +875,50 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 	if (!body) {
 		return oauthErrorResponse('invalid_request', 400, 'Unable to parse token request.');
 	}
-	if (body.grant_type !== 'authorization_code') {
-		return oauthErrorResponse('unsupported_grant_type', 400, 'Only authorization_code is supported.');
-	}
-	if (!body.code || !body.client_id || !body.redirect_uri) {
-		return oauthErrorResponse('invalid_request', 400, 'code, client_id, and redirect_uri are required.');
+	if (!body.client_id) {
+		return oauthErrorResponse('invalid_request', 400, 'client_id is required.');
 	}
 
-	const claims = await validateOAuthAuthorizationCode(body.code, env);
-	if (!claims) {
-		return oauthErrorResponse('invalid_grant', 400, 'Invalid or expired authorization code.');
-	}
-	if (claims.client_id !== body.client_id || claims.redirect_uri !== body.redirect_uri) {
-		return oauthErrorResponse('invalid_grant', 400, 'Authorization code does not match client_id or redirect_uri.');
-	}
-	if (claims.code_challenge && !(await verifyPkce(body.code_verifier, claims.code_challenge, claims.code_challenge_method))) {
-		return oauthErrorResponse('invalid_grant', 400, 'Invalid code_verifier.');
+	type OAuthExchangeClaims = Pick<
+		OAuthAuthorizationCodeClaims,
+		'sub' | 'client_id' | 'scope' | 'resource' | 'account_id' | 'tenant_id' | 'tool_mode' | 'toolkit_profile' | 'nonce'
+	>;
+
+	let claims: OAuthExchangeClaims | null = null;
+	if (body.grant_type === 'authorization_code') {
+		if (!body.code || !body.redirect_uri) {
+			return oauthErrorResponse('invalid_request', 400, 'code, client_id, and redirect_uri are required.');
+		}
+
+		const authorizationCodeClaims = await validateOAuthAuthorizationCode(body.code, env);
+		if (!authorizationCodeClaims) {
+			return oauthErrorResponse('invalid_grant', 400, 'Invalid or expired authorization code.');
+		}
+		if (authorizationCodeClaims.client_id !== body.client_id || authorizationCodeClaims.redirect_uri !== body.redirect_uri) {
+			return oauthErrorResponse('invalid_grant', 400, 'Authorization code does not match client_id or redirect_uri.');
+		}
+		if (
+			authorizationCodeClaims.code_challenge
+			&& !(await verifyPkce(body.code_verifier, authorizationCodeClaims.code_challenge, authorizationCodeClaims.code_challenge_method))
+		) {
+			return oauthErrorResponse('invalid_grant', 400, 'Invalid code_verifier.');
+		}
+		claims = authorizationCodeClaims;
+	} else if (body.grant_type === 'refresh_token') {
+		if (!body.refresh_token) {
+			return oauthErrorResponse('invalid_request', 400, 'refresh_token and client_id are required.');
+		}
+
+		const refreshTokenClaims = await validateOAuthRefreshToken(body.refresh_token, env);
+		if (!refreshTokenClaims) {
+			return oauthErrorResponse('invalid_grant', 400, 'Invalid or expired refresh token.');
+		}
+		if (refreshTokenClaims.client_id !== body.client_id) {
+			return oauthErrorResponse('invalid_grant', 400, 'Refresh token does not match client_id.');
+		}
+		claims = refreshTokenClaims;
+	} else {
+		return oauthErrorResponse('unsupported_grant_type', 400, 'Supported grant_types are authorization_code and refresh_token.');
 	}
 
 	const user = await findUserById(env.DB, claims.sub);
@@ -896,9 +940,9 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 			metadata: {
 				issued_via: 'oauth_token_exchange',
 				client_id: claims.client_id,
-				redirect_uri: claims.redirect_uri,
 				resource: claims.resource,
 				scope: claims.scope,
+				...('redirect_uri' in claims && claims.redirect_uri ? { redirect_uri: claims.redirect_uri } : {}),
 			},
 		});
 		if (!issued.ok) {
@@ -907,7 +951,7 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 
 		const responseBody: Record<string, unknown> = {
 			access_token: issued.token,
-			token_type: 'bearer',
+			token_type: 'Bearer',
 			expires_in: OAUTH_MANAGED_BEARER_EXPIRES_IN,
 			scope: claims.scope,
 			resource: claims.resource,
@@ -928,6 +972,30 @@ async function handleOAuthToken(request: Request, env: Env): Promise<Response> {
 				...(claims.nonce ? { nonce: claims.nonce } : {}),
 			});
 			responseBody.id_token = idToken;
+		}
+		if (scopeIncludes(claims.scope, 'offline_access')) {
+			const now = Math.floor(Date.now() / 1000);
+			const refreshToken = await createSignedToken(env.DB, {
+				sub: user.id,
+				iss: getOauthIssuer(new URL(request.url), env),
+				aud: ['oauth'],
+				iat: now,
+				exp: now + OAUTH_REFRESH_TOKEN_TTL_SECONDS,
+				kind: 'oauth_refresh_token',
+				email: user.email,
+				tier: user.tier,
+				source: user.source,
+				client_id: claims.client_id,
+				scope: claims.scope,
+				resource: claims.resource,
+				...(claims.tenant_id ? { tenant_id: claims.tenant_id } : {}),
+				...(claims.account_id ? { account_id: claims.account_id } : {}),
+				...(claims.tool_mode ? { tool_mode: claims.tool_mode } : {}),
+				...(Array.isArray(claims.toolkit_profile) && claims.toolkit_profile.length > 0
+					? { toolkit_profile: claims.toolkit_profile }
+					: {}),
+			} satisfies OAuthRefreshTokenClaims);
+			responseBody.refresh_token = refreshToken;
 		}
 
 		return json(responseBody, 200, {
@@ -3403,9 +3471,9 @@ function buildOAuthAuthorizationServerMetadata(url: URL, env: Env) {
 		registration_endpoint: `${issuer}/oauth/register`,
 		userinfo_endpoint: `${issuer}/oauth/userinfo`,
 		jwks_uri: `${issuer}/.well-known/jwks.json`,
-		scopes_supported: ['openid', 'profile', 'email', 'mcp'],
+		scopes_supported: ['openid', 'profile', 'email', 'mcp', 'offline_access'],
 		response_types_supported: ['code'],
-		grant_types_supported: ['authorization_code'],
+		grant_types_supported: ['authorization_code', 'refresh_token'],
 		token_endpoint_auth_methods_supported: ['none', 'client_secret_post'],
 		code_challenge_methods_supported: ['S256', 'plain'],
 	};
@@ -3421,13 +3489,13 @@ function buildOpenIdConfigurationMetadata(url: URL, env: Env) {
 		registration_endpoint: `${issuer}/oauth/register`,
 		jwks_uri: `${issuer}/.well-known/jwks.json`,
 		response_types_supported: ['code'],
-		grant_types_supported: ['authorization_code'],
+		grant_types_supported: ['authorization_code', 'refresh_token'],
 		subject_types_supported: ['public'],
 		id_token_signing_alg_values_supported: ['ES256'],
-		scopes_supported: ['openid', 'profile', 'email', 'mcp'],
+		scopes_supported: ['openid', 'profile', 'email', 'mcp', 'offline_access'],
 		token_endpoint_auth_methods_supported: ['none', 'client_secret_post'],
 		code_challenge_methods_supported: ['S256', 'plain'],
-		claims_supported: ['sub', 'email', 'email_verified'],
+		claims_supported: ['sub', 'email', 'email_verified', 'name', 'nonce'],
 	};
 }
 
@@ -3644,6 +3712,7 @@ async function parseOAuthTokenBody(request: Request): Promise<OAuthTokenBody | n
 		return {
 			grant_type: params.get('grant_type') ?? undefined,
 			code: params.get('code') ?? undefined,
+			refresh_token: params.get('refresh_token') ?? undefined,
 			redirect_uri: params.get('redirect_uri') ?? undefined,
 			client_id: params.get('client_id') ?? undefined,
 			client_secret: params.get('client_secret') ?? undefined,
@@ -3660,6 +3729,18 @@ async function validateOAuthAuthorizationCode(code: string, env: Env): Promise<O
 		const publicKey = await importPublicKey(jwk);
 		const payload = (await validateJWT(code, publicKey)) as OAuthAuthorizationCodeClaims | null;
 		if (payload?.kind === 'oauth_authorization_code') {
+			return payload;
+		}
+	}
+	return null;
+}
+
+async function validateOAuthRefreshToken(token: string, env: Env): Promise<OAuthRefreshTokenClaims | null> {
+	const jwks = await getJWKS(env.DB);
+	for (const jwk of jwks.keys) {
+		const publicKey = await importPublicKey(jwk);
+		const payload = (await validateJWT(token, publicKey)) as OAuthRefreshTokenClaims | null;
+		if (payload?.kind === 'oauth_refresh_token') {
 			return payload;
 		}
 	}
