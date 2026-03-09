@@ -1,297 +1,188 @@
 # @create-something/harness
 
-Autonomous agent orchestration with Loom-first coordination (legacy Beads adapter during migration).
+Autonomous agent orchestration for CREATE SOMETHING.
 
-> Control plane policy: use Loom (`lm`) for coordination. This package still contains Beads-backed adapter code while migration is in progress.
+The current target runtime is **Codex-first** with **Loom** as the control plane. Legacy Beads-backed code still exists in the package, but the intended operating model is:
+
+1. claim tracked work in Loom
+2. run the task in an isolated worktree
+3. validate with quality gates and app-specific checks
+4. run self-review and agent-review loops
+5. escalate uncertainty through judgment artifacts instead of guessing
 
 ## Philosophy
 
-The harness runs autonomously. Humans engage through **progress reports**—reactive steering rather than proactive management.
+Humans steer. Agents execute.
 
-> *Zuhandenheit*: The harness recedes into transparent operation. When working, you don't think about the harness—you review progress and redirect when needed.
+The harness exists to make coding agents reliable by giving them structure:
 
-## Installation
+- tracked work
+- reproducible isolation
+- review loops
+- explicit escalation boundaries
+- persistent context for pause/resume
 
-```bash
-pnpm add @create-something/harness
-```
+When it is working, humans spend less time coding by hand and more time shaping the environment, constraints, and acceptance criteria.
 
-Or use directly from the monorepo:
+## Current direction
+
+This package is in transition from older Beads and Claude-oriented terminology toward a Loom and Codex-native workflow.
+
+Read this package as:
+
+- **execution substrate** for long-running coding agents
+- **review loop** for self-correction and agent-to-agent feedback
+- **worktree manager** for parallel isolation
+- **checkpoint system** for recoverability and handoff
+
+## Quick start
+
+From the monorepo:
 
 ```bash
 cd packages/harness
 pnpm build
-node dist/cli.js start specs/my-project.md
+harness start specs/my-project.md
 ```
 
-## Quick Start
+Recommended operator loop:
 
 ```bash
-# 1. Write a spec (markdown PRD)
-vim specs/my-project.md
-
-# 2. Start the harness
+lm ready
+lm claim <id>
 harness start specs/my-project.md
-
-# 3. Check progress when ready
 lm summary
-
-# 4. Redirect if needed
-lm claim lm-xyz
-
-# 5. Resume if paused
-harness resume --harness-id <id>
 ```
+
+## Default harness loop
+
+The intended loop is closer to the harness-engineering pattern described by OpenAI than to a one-shot codegen workflow.
+
+### 1. Intake and routing
+
+- claim or create tracked work in Loom
+- gather repo context and prior checkpoints
+- choose execution mode and model/runtime defaults
+
+### 2. Isolated execution
+
+- create a dedicated git worktree per task or swarm worker
+- run the agent in that worktree
+- let the agent inspect code, run tools, and gather evidence directly
+
+### 3. Validation
+
+- run local quality gates
+- run task-specific smoke checks
+- inspect traces, logs, or UI surfaces when available
+
+### 4. Review loop
+
+- self-review the diff locally
+- run additional agent reviewers for security, architecture, and quality
+- extract new follow-up work if a finding is real
+
+### 5. Escalation and checkpointing
+
+- if the agent is uncertain, emit a judgment artifact instead of improvising
+- persist checkpoint context so the task can resume cleanly
+- return control to a human only when judgment is required
+
+## Why worktrees matter
+
+The harness supports isolated worktrees so multiple agents can work in parallel without contaminating each other.
+
+This is the default recommended execution mode for swarm or background runs because it improves:
+
+- reproducibility
+- reviewability
+- cleanup
+- safety when multiple agents are active
+
+## Review model
+
+The harness is built around short execution loops with repeated review, not one giant run followed by manual cleanup.
+
+Typical review layers:
+
+- **self-review**: the worker checks its own diff before claiming completion
+- **quality-gate review**: tests, typecheck, lint, build, smoke checks
+- **agent review**: focused reviewers for security, architecture, quality
+- **human review**: only when policy, ambiguity, or business judgment requires it
+
+## Spec inputs
+
+The harness accepts structured work descriptions and execution specs.
+
+- Markdown specs are supported
+- YAML specs are preferred when you need explicit dependencies, files, and acceptance criteria
+
+The goal is not just to tell the agent what to build. The goal is to give the harness enough structure to validate whether the work is actually done.
 
 ## Commands
 
 ```bash
-harness start <spec-file>        # Start from markdown PRD
-harness pause                    # Pause after current session
-harness resume --harness-id <id> # Resume from last checkpoint
-harness status                   # Show current state
+harness start <spec-file>
+harness pause
+harness resume --harness-id <id>
+harness status
 ```
 
-### Options
+Common options:
 
 ```bash
---checkpoint-every N    # Checkpoint every N sessions (default: 3)
---max-hours M           # Checkpoint every M hours (default: 4)
---reviewers <list>      # Peer reviewers: security,architecture,quality
---model <model>         # Default model: opus, sonnet, haiku
---dry-run               # Preview without executing
+--checkpoint-every N
+--max-hours M
+--reviewers <list>
+--model <model>
+--dry-run
+--swarm-execution-mode isolated_worktree
 ```
 
-## Agent SDK Integration
+## Runtime expectations
 
-The harness uses explicit tool permissions via `--allowedTools`:
+The package has older Claude-facing language in parts of the source, but current runtime configuration already includes Codex-oriented behavior.
 
-```typescript
-const HARNESS_ALLOWED_TOOLS = [
-  // Core file operations
-  'Read', 'Write', 'Edit', 'Glob', 'Grep', 'NotebookEdit',
+Treat the stable concepts as:
 
-  // Bash with wildcard patterns (Claude Code 2.1.0+)
-  'Bash(git *)', 'Bash(pnpm *)', 'Bash(npm *)', 'Bash(npx *)',
-  'Bash(node *)', 'Bash(tsc *)', 'Bash(wrangler *)',
-  'Bash(bd *)', 'Bash(bv *)',  // Beads CLI
+- task orchestration
+- execution isolation
+- review pipelines
+- checkpoint recovery
+- judgment-aware escalation
 
-  // Orchestration
-  'Task', 'TodoWrite', 'WebFetch', 'WebSearch',
+Treat runtime-specific flags and older naming as transitional details unless the source explicitly requires them.
 
-  // CREATE Something
-  'Skill',
+## Checkpointing
 
-  // MCP Cloudflare
-  'mcp__cloudflare__kv_*', 'mcp__cloudflare__d1_*',
-  'mcp__cloudflare__r2_*', 'mcp__cloudflare__worker_*',
-];
-```
+Checkpoints are the boundary between long-running autonomy and recoverable control.
 
-**Security improvement**: Replaces `--dangerously-skip-permissions` with explicit allowlist.
+A good checkpoint captures:
 
-**Wildcard syntax** (Claude Code 2.1.0+): Supports wildcards at any position: `Bash(* install)`, `Bash(git * main)`.
+- current task state
+- files touched
+- decisions made
+- blockers encountered
+- validation status
+- review findings
 
-**Runaway prevention**: `--max-turns 100` prevents infinite loops.
+This allows the next run to resume from a real artifact instead of reconstructing context from memory.
 
-## Claude Code 2.1.0+ Features
+## Relationship to the Judgment Layer
 
-The harness leverages several new Claude Code capabilities:
+The harness belongs to the **Automation** tier.
 
-### Hooks Support
+It should not decide policy by itself. When uncertainty or authority boundaries appear, it should hand off to **Judgment** artifacts and operators rather than silently guessing.
 
-The harness agent uses PreToolUse hooks for workflow automation:
+See also:
 
-- **Auto-sync before close**: Automatically runs `bd sync` before `bd close` commands
-- **Commit message validation**: Ensures git commits include issue references `[cs-xxx]`
-- **Scoped to agent lifecycle**: Hooks only apply during harness sessions
+- `../../docs/THREE_TIER_FRAMEWORK.md`
+- `../../docs/guides/JUDGMENT_LAYER_DOGFOOD_PLAYBOOK.md`
 
-### Skill Hot-Reload
+## What to read next
 
-Skills in `.claude/skills/` reload automatically without restart:
-
-- Faster iteration on harness workflow improvements
-- Test new priming strategies without session interruption
-- Create project-specific skills that load immediately
-
-### Improved Session Persistence
-
-Better recovery from failures:
-
-- Fixed 409 conflicts during checkpoint creation
-- Files and skills properly discovered on `--resume`
-- Subagents correctly inherit model configuration
-
-### Security Improvements
-
-- Sensitive data (OAuth tokens, API keys) no longer exposed in debug logs
-- Wildcard bash permissions for cleaner security policy
-- Better permission prompt reduction for complex commands
-
-## Spec Format
-
-Write a markdown PRD. The harness parses `## Features` into Beads issues:
-
-```markdown
-# My Project
-
-## Overview
-Build a user dashboard with authentication.
-
-## Features
-
-### Phase 1: Authentication
-- Login with email/password
-- Magic link option
-- Session management
-
-### Phase 2: Dashboard
-- Overview stats
-- Recent activity feed
-```
-
-Each `### Phase N:` becomes a Beads issue with inferred dependencies.
-
-## Peer Review Pipeline
-
-The harness runs peer reviewers at checkpoint boundaries:
-
-```bash
-harness start specs/project.md --reviewers security,architecture,quality
-```
-
-| Reviewer | Focus | Model | Cost |
-|----------|-------|-------|------|
-| **Security** | Vulnerabilities, injection, auth issues | Haiku | ~$0.001 |
-| **Architecture** | DRY violations, coupling, structural quality | Opus | ~$0.10 |
-| **Quality** | Error handling, edge cases, test coverage | Sonnet | ~$0.01 |
-
-**Model routing philosophy**: Security uses pattern detection (Haiku). Architecture requires deep reasoning (Opus). Quality balances both (Sonnet).
-
-Reviews run in parallel. Critical findings can block advancement (configurable via `canBlock`).
-
-### Prompt Engineering (Anthropic Best Practices)
-
-Reviewers use advanced prompt engineering for accuracy:
-
-- **Prefilled responses**: Forces JSON structure, eliminates parsing failures
-- **Quote-based findings**: Architecture reviewer requires verbatim code quotes to prevent hallucinations
-- **Chain-of-thought**: Opus reviewers show reasoning steps in `<thinking>` tags before conclusions
-- **XML structure**: Test output wrapped in tags for better content extraction
-
-**Expected accuracy**: 99% parsing success, 5% false positive rate (down from 15%).
-
-## How It Works
-
-1. **Initialize**: Parse spec → create Beads issues → create git branch
-2. **Loop**: Select highest-priority issue → prime context → run Claude Code session
-3. **Checkpoint**: After N sessions, create progress report and run peer reviews
-4. **Redirect**: Watch for human changes (priority updates, new urgent issues)
-5. **Complete**: All issues done, or human paused for review
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    HARNESS RUNNER                        │
-│                                                          │
-│  Spec Parser ──► Issue Creation ──► Session Loop         │
-│                                                          │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │  Session 1 ──► Session 2 ──► Session 3 ──► ...  │    │
-│  │      │             │             │               │    │
-│  │      ▼             ▼             ▼               │    │
-│  │  Checkpoint    Checkpoint    Checkpoint          │    │
-│  │      │             │             │               │    │
-│  │      ▼             ▼             ▼               │    │
-│  │  Peer Review   Peer Review   Peer Review         │    │
-│  └─────────────────────────────────────────────────┘    │
-│                                                          │
-└──────────────────────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────┐
-│              BEADS (Human Interface)                     │
-│                                                          │
-│  bd progress - Review checkpoints                        │
-│  bd update   - Redirect priorities                       │
-│  bd create   - Inject work                               │
-└─────────────────────────────────────────────────────────┘
-```
-
-## Redirecting
-
-The harness watches Beads for changes between sessions:
-
-```bash
-bd update <id> --priority P0      # Make urgent (jumps to front)
-bd create "Fix X" --priority P0   # Inject urgent work
-bd close <id>                     # Stop work on issue
-```
-
-## Failure Handling
-
-Configurable strategies per failure type:
-
-| Failure Type | Default Action | Rationale |
-|--------------|----------------|-----------|
-| `context_overflow` | skip | Task too large, retrying won't help |
-| `timeout` | retry | May be transient |
-| `partial` | skip | Some work done, move on |
-| `failure` | retry | Worth another attempt |
-
-After 3 consecutive failures, the harness pauses for human review.
-
-## Cost Tracking
-
-Sessions capture cost metrics from JSON output:
-
-```typescript
-interface SessionResult {
-  issueId: string;
-  outcome: 'success' | 'partial' | 'failure' | 'timeout';
-  sessionId: string | null;   // For --resume support
-  costUsd: number | null;     // Per-session cost
-  numTurns: number | null;    // Efficiency metric
-}
-```
-
-Typical costs: CSS fix ~$0.02, component refactor ~$0.03-0.05.
-
-## Checkpoints
-
-Progress reports are Beads issues with:
-- Summary of completed/failed/in-progress work
-- Confidence score
-- Git commit hash
-- Peer review findings
-- Redirect notes
-
-View with `bd progress` or `bd show <checkpoint-id>`.
-
-## Dynamic Confidence Thresholds
-
-The harness adjusts pause thresholds based on detected model capabilities:
-
-| Model | Threshold | Rationale |
-|-------|-----------|-----------|
-| Opus | 60% | More capable, can be trusted at lower confidence |
-| Sonnet | 70% | Standard threshold (default) |
-| Haiku | 80% | Less capable, requires higher confidence |
-| Unknown | 70% | Conservative fallback |
-
-**Philosophy**: Different models have different capabilities. Opus can be trusted to recover from failures more effectively than Haiku. The harness automatically detects which model is running and adjusts accordingly.
-
-**Implementation**: Model detection happens via Claude Code JSON output. Each session's `model` field is parsed (e.g., `"claude-sonnet-4-5-20250929"`) and mapped to a family (`opus`, `sonnet`, `haiku`). The checkpoint system then uses family-specific thresholds when deciding whether to pause for low confidence.
-
-**Verification**: Run `pnpm exec tsx verify-dynamic-thresholds.ts` to test threshold logic.
-
-## References
-
-- [Paper: Harness Agent SDK Migration](https://createsomething.io/papers/harness-agent-sdk-migration)
-- [Harness Patterns](../../.claude/rules/harness-patterns.md)
-- [Beads Patterns](../../.claude/rules/beads-patterns.md)
-
-## License
-
-MIT
+- `UNDERSTANDING.md` for a package-level conceptual map
+- `src/runner.ts` for orchestration and worktree execution
+- `src/session.ts` for runtime spawning
+- `src/review-pipeline.ts` and `src/reviewer.ts` for review loops
+- `src/checkpoint.ts` for persistence and recoverability

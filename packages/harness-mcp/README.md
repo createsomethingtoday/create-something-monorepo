@@ -1,16 +1,38 @@
 # Harness MCP Server
 
-MCP server that exposes CREATE SOMETHING harness protocol to any agentic tool.
+MCP server for exposing harness-oriented operations to coding agents and operator tools.
+
+This package should be understood as the tool surface around the harness loop, not as a Beads adapter. Its role is to let agents inspect task state, run quality gates, checkpoint context, and operate within a tracked execution workflow.
+
+## What it exposes
+
+- task and issue inspection
+- quality gates
+- git status and diffs
+- checkpoints
+- canon and quick-reference rules
+
+## Intended use
+
+Use this server when an agent needs structured access to harness operations during a coding run.
+
+Typical loop:
+
+1. inspect tracked work
+2. inspect repo state
+3. run or rerun validation
+4. save checkpoint context
+5. continue the execution or review loop
 
 ## Features
 
-- **Beads operations**: get_issue, list_issues, update_issue, close_issue, get_priority
-- **Quality gates**: run_quality_gate (tests/typecheck/lint), run_all_gates
-- **Git operations**: get_git_status, get_diff, commit_with_issue
-- **Checkpoints**: save_checkpoint, load_checkpoint, list_checkpoints
-- **Canon rules**: get_canon_rules, get_quick_reference
+- **Task operations**: issue/task lookup and updates
+- **Quality gates**: tests, typecheck, lint
+- **Git operations**: status, diff, commit helpers
+- **Checkpoint operations**: save, load, list
+- **Canon operations**: style and reference guidance
 
-> **Note**: Plagiarism detection tools have moved to `packages/webflow-mcp`
+> Note: some tool names and internal plumbing still reflect older naming. Prefer the harness workflow semantics over the legacy naming.
 
 ## Installation
 
@@ -22,81 +44,37 @@ pnpm build
 
 ## Configuration
 
-### Claude Code
+Add the server as a local stdio MCP endpoint in your client of choice.
 
-Add to `.claude/mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "harness": {
-      "command": "node",
-      "args": ["/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/harness-mcp/dist/index.js"]
-    }
-  }
-}
-```
-
-### Gemini CLI
-
-Add the harness MCP server from the monorepo root:
+Example local command:
 
 ```bash
-gemini mcp add harness node "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/harness-mcp/dist/index.js"
+node /Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/harness-mcp/dist/index.js
 ```
 
-Verify it's configured:
+## Direct testing
 
 ```bash
-gemini mcp list
-# Should show: ✓ harness: node ... (stdio) - Connected
-```
-
-## Usage
-
-### With Claude Code
-
-Claude Code automatically discovers MCP tools. You can reference them in conversation.
-
-### With Gemini CLI
-
-```bash
-# Start Gemini CLI with Flash model
-gemini -m gemini-2.0-flash-exp
-
-# The harness MCP tools are automatically available
-# Example prompt:
-> Use get_priority to find the highest priority issue, then work on it using the harness workflow
-
-# Non-interactive mode
-gemini -m gemini-2.0-flash-exp "Get issue csm-psf94 and update status to in-progress"
-```
-
-### Direct Testing
-
-```bash
-# Test MCP server directly
 echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | node dist/index.js
-
-# Test get_issue
-echo '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"get_issue","arguments":{"issueId":"cs-5jz5r"}}}' | node dist/index.js
 ```
 
 ## Architecture
 
+```text
+harness-mcp
+  ↓
+agent runtime / operator client
+  ↓
+task inspection + validation + checkpoint tools
+  ↓
+git state / quality gates / harness context
 ```
-harness-mcp (stdio MCP server)
-    ↓ exposes tools
-Claude Code / Gemini CLI / Any MCP client
-    ↓ calls tools
-Beads (bd commands)
-Git (git commands)
-Quality gates (pnpm, tsc, eslint)
-Checkpoints (.orchestration/)
-```
 
-## Philosophy
+## Relationship to the harness
 
-This MCP server embodies tool-independence: the harness protocol is declarative and tool-agnostic. Any agentic system (Claude Code, Gemini CLI, future tools) can execute harness workflows identically.
+`@create-something/harness` is the orchestrator.
 
-**Zuhandenheit**: When working correctly, you don't think about which tool you're using—you think about the work. The infrastructure recedes.
+`@create-something/harness-mcp` is the tool surface that makes parts of that workflow accessible to agent runtimes and MCP-aware clients.
+
+Use the harness when you need the full execution loop.
+Use harness-mcp when you need callable operations inside that loop.
