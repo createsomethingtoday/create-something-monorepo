@@ -1,313 +1,314 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { Header, Button, Card, WebflowWayCard, BackNavigation } from '$lib/components';
-	import { trackEvent } from '$lib/utils/analytics';
-	import type { PageData } from './$types';
+  import { onMount } from 'svelte';
+  import { Header, Button, Card, WebflowWayCard, BackNavigation } from '$lib/components';
+  import { trackEvent } from '$lib/utils/analytics';
+  import type { PageData } from './$types';
 
-	let { data }: { data: PageData } = $props();
+  let { data }: { data: PageData } = $props();
 
-	let isGsapModalOpen = $state(false);
-	
-	// Lazy-loaded modal component
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	let GsapValidationModal = $state<any>(null);
+  let isGsapModalOpen = $state(false);
 
-	async function handleLogout() {
-		await fetch('/api/auth/logout', { method: 'POST' });
-		window.location.href = '/login';
-	}
+  // Lazy-loaded modal component
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let GsapValidationModal = $state<any>(null);
 
-	async function handleOpenGsapValidator() {
-		// Lazy load the GsapValidationModal component
-		if (!GsapValidationModal) {
-			const module = await import('$lib/components/GsapValidationModal.svelte');
-			GsapValidationModal = module.default;
-		}
-		isGsapModalOpen = true;
+  async function handleLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    window.location.href = '/login';
+  }
 
-		trackEvent('validation_gsap_quick_opened');
-	}
+  async function handleOpenGsapValidator() {
+    // Lazy load the GsapValidationModal component
+    if (!GsapValidationModal) {
+      const module = await import('$lib/components/GsapValidationModal.svelte');
+      GsapValidationModal = module.default;
+    }
+    isGsapModalOpen = true;
 
-	onMount(() => {
-		trackEvent('validation_tools_opened');
-	});
+    trackEvent('validation_gsap_quick_opened');
+  }
+
+  onMount(() => {
+    trackEvent('validation_tools_opened');
+  });
 </script>
 
 <svelte:head>
-	<title>Validation Tools | Webflow Asset Dashboard</title>
+  <title>Validation Tools | Webflow Asset Dashboard</title>
 </svelte:head>
 
 <div class="validation-page">
-	<Header onLogout={handleLogout} />
+  <Header onLogout={handleLogout} />
 
-	<main class="main-content">
-		<div class="content-wrapper">
-		<BackNavigation />
+  <main class="main-content">
+    <div class="content-wrapper">
+      <BackNavigation />
 
-			<!-- Header -->
-			<div class="page-header page-intro">
-				<div class="header-content">
-					<span class="page-eyebrow page-intro__eyebrow">Preflight Checks</span>
-					<h1 class="page-title page-intro__title">Validation Tools</h1>
-					<p class="page-subtitle page-intro__subtitle">
-						Test and validate your templates before submission to ensure marketplace compliance
-					</p>
-				</div>
-			</div>
+      <!-- Header -->
+      <div class="page-header page-intro">
+        <div class="header-content">
+          <span class="page-eyebrow page-intro__eyebrow">Preflight Checks</span>
+          <h1 class="page-title page-intro__title">Validation Tools</h1>
+          <p class="page-subtitle page-intro__subtitle">
+            Test and validate your templates before submission to ensure marketplace compliance
+          </p>
+        </div>
+      </div>
 
-			<!-- Validation Tools Grid -->
-			<div class="tools-section">
-				<h2 class="section-title">Available Validation Tools</h2>
-				<div class="tools-grid">
-				<!-- GSAP Validator Card -->
-				<Card class="tool-card">
-					<div class="tool-header">
-						<h3 class="tool-title">GSAP Validator</h3>
-						<span class="tool-kicker">Local check</span>
-					</div>
-					<p class="tool-description">
-						Test your templates for GSAP compliance before submission. Crawls up to 50 pages and checks for custom code patterns.
-					</p>
-					<ul class="tool-features">
-						<li>Crawls up to 50 pages automatically</li>
-						<li>Detects flagged code and security risks</li>
-						<li>Provides smart recommendations</li>
-					</ul>
-					<div class="tool-actions">
-						<Button variant="secondary" onclick={handleOpenGsapValidator} class="tool-button">Quick Validate</Button>
-						<a href="/validation/playground" class="playground-link">
-							Open Full Playground
-						</a>
-					</div>
-				</Card>
+      <!-- Validation Tools Grid -->
+      <div class="tools-section">
+        <h2 class="section-title">Available Validation Tools</h2>
+        <div class="tools-grid">
+          <!-- GSAP Validator Card -->
+          <Card class="tool-card">
+            <div class="tool-header">
+              <h3 class="tool-title">GSAP Validator</h3>
+              <span class="tool-kicker">Local check</span>
+            </div>
+            <p class="tool-description">
+              Test your templates for GSAP compliance before submission. Crawls up to 50 pages and
+              checks for custom code patterns.
+            </p>
+            <ul class="tool-features">
+              <li>Crawls up to 50 pages automatically</li>
+              <li>Detects flagged code and security risks</li>
+              <li>Provides smart recommendations</li>
+            </ul>
+            <div class="tool-actions">
+              <Button variant="secondary" onclick={handleOpenGsapValidator} class="tool-button"
+                >Quick Validate</Button
+              >
+              <a href="/validation/playground" class="playground-link"> Open Full Playground </a>
+            </div>
+          </Card>
 
-			<!-- Webflow Way Validator Card -->
-			<WebflowWayCard userEmail={data.user?.email} />
-				</div>
-			</div>
+          <!-- Webflow Way Validator Card -->
+          <WebflowWayCard userEmail={data.user?.email} />
+        </div>
+      </div>
 
-			<!-- Info Section -->
-			<Card class="info-card">
-				<h3 class="info-title">Why Validate?</h3>
-				<div class="info-content">
-					<p>
-						Validation tools help ensure your templates meet Webflow marketplace standards before submission.
-						Running these checks can:
-					</p>
-					<ul>
-						<li>Catch potential issues early in development</li>
-						<li>Reduce submission review time</li>
-						<li>Ensure compliance with marketplace guidelines</li>
-						<li>Improve template quality and user experience</li>
-					</ul>
-				<div class="tip-box">
-					<p class="tip-title">Best Practice</p>
-					<p class="tip-text">
-						Run all available validation tools before submitting your template to the marketplace.
-						This keeps review cycles shorter and reduces avoidable rejections.
-					</p>
-				</div>
-				</div>
-			</Card>
-		</div>
-	</main>
+      <!-- Info Section -->
+      <Card class="info-card">
+        <h3 class="info-title">Why Validate?</h3>
+        <div class="info-content">
+          <p>
+            Validation tools help ensure your templates meet Webflow marketplace standards before
+            submission. Running these checks can:
+          </p>
+          <ul>
+            <li>Catch potential issues early in development</li>
+            <li>Reduce submission review time</li>
+            <li>Ensure compliance with marketplace guidelines</li>
+            <li>Improve template quality and user experience</li>
+          </ul>
+          <div class="tip-box">
+            <p class="tip-title">Best Practice</p>
+            <p class="tip-text">
+              Run all available validation tools before submitting your template to the marketplace.
+              This keeps review cycles shorter and reduces avoidable rejections.
+            </p>
+          </div>
+        </div>
+      </Card>
+    </div>
+  </main>
 </div>
 
 <!-- GSAP Validation Modal -->
 {#if isGsapModalOpen && GsapValidationModal}
-	<GsapValidationModal
-		isOpen={isGsapModalOpen}
-		onClose={() => isGsapModalOpen = false}
-		userEmail={data.user?.email}
-	/>
+  <GsapValidationModal
+    isOpen={isGsapModalOpen}
+    onClose={() => (isGsapModalOpen = false)}
+    userEmail={data.user?.email}
+  />
 {/if}
 
 <style>
-	.validation-page {
-		min-height: 100vh;
-		background: var(--color-bg-pure);
-	}
+  .validation-page {
+    min-height: 100vh;
+    background: var(--color-bg-pure);
+  }
 
-	.main-content {
-		padding: var(--space-lg) var(--space-md);
-	}
+  .main-content {
+    padding: var(--space-lg) var(--space-md);
+  }
 
-	.content-wrapper {
-		max-width: 80rem;
-		margin: 0 auto;
-	}
+  .content-wrapper {
+    max-width: 80rem;
+    margin: 0 auto;
+  }
 
-	.tools-section {
-		margin-bottom: var(--space-xl);
-	}
+  .tools-section {
+    margin-bottom: var(--space-xl);
+  }
 
-	.section-title {
-		font-family: var(--font-heading);
-		font-size: var(--text-h2);
-		font-weight: var(--font-semibold);
-		letter-spacing: 0.01em;
-		color: var(--color-fg-primary);
-		margin: 0 0 var(--space-md);
-	}
+  .section-title {
+    font-family: var(--font-heading);
+    font-size: var(--text-h2);
+    font-weight: var(--font-semibold);
+    letter-spacing: 0.01em;
+    color: var(--color-fg-primary);
+    margin: 0 0 var(--space-md);
+  }
 
-	.tools-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-		gap: var(--space-md);
-	}
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-md);
+  }
 
-	:global(.tool-card) {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-sm);
-		padding: var(--space-md);
-		border-color: var(--color-shell-border-default);
-		box-shadow: var(--shadow-sm);
-	}
+  :global(.tool-card) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    border-color: var(--color-shell-border-default);
+    box-shadow: var(--shadow-sm);
+  }
 
-	.tool-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: var(--space-xs);
-	}
+  .tool-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-xs);
+  }
 
-	.tool-title {
-		font-family: var(--font-heading);
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-semibold);
-		letter-spacing: 0.01em;
-		color: var(--color-fg-primary);
-		margin: 0;
-	}
+  .tool-title {
+    font-family: var(--font-heading);
+    font-size: var(--text-body-lg);
+    font-weight: var(--font-semibold);
+    letter-spacing: 0.01em;
+    color: var(--color-fg-primary);
+    margin: 0;
+  }
 
-	.tool-kicker {
-		font-size: var(--text-caption);
-		color: var(--color-info);
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-	}
+  .tool-kicker {
+    font-size: var(--text-caption);
+    color: var(--color-info);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
 
-	.tool-description {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		margin: 0;
-		line-height: 1.5;
-	}
+  .tool-description {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-secondary);
+    margin: 0;
+    line-height: 1.5;
+  }
 
-	.tool-features {
-		list-style: none;
-		padding: 0;
-		margin: var(--space-xs) 0;
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-xs);
-	}
+  .tool-features {
+    list-style: none;
+    padding: 0;
+    margin: var(--space-xs) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
 
-	.tool-features li {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-		padding-left: var(--space-sm);
-		position: relative;
-	}
+  .tool-features li {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-secondary);
+    padding-left: var(--space-sm);
+    position: relative;
+  }
 
-	.tool-features li::before {
-		content: '•';
-		position: absolute;
-		left: 0;
-		color: var(--color-info);
-	}
+  .tool-features li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: var(--color-info);
+  }
 
-	.tool-actions {
-		display: flex;
-		flex-direction: column;
-		gap: var(--space-sm);
-		margin-top: auto;
-	}
+  .tool-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    margin-top: auto;
+  }
 
-	:global(.tool-button) {
-		justify-content: center;
-		gap: var(--space-xs);
-	}
+  :global(.tool-button) {
+    justify-content: center;
+    gap: var(--space-xs);
+  }
 
-	.playground-link {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: var(--color-info);
-		font-size: var(--text-body-sm);
-		text-decoration: none;
-		transition: color var(--duration-micro) var(--ease-standard);
-	}
+  .playground-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-info);
+    font-size: var(--text-body-sm);
+    text-decoration: none;
+    transition: color var(--duration-micro) var(--ease-standard);
+  }
 
-	.playground-link:hover {
-		color: #0055d4;
-	}
+  .playground-link:hover {
+    color: #0055d4;
+  }
 
-	.playground-link:focus-visible {
-		outline: 2px solid var(--color-focus);
-		outline-offset: 2px;
-		border-radius: var(--radius-sm);
-	}
+  .playground-link:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
 
-	:global(.info-card) {
-		padding: var(--space-md);
-		border-color: var(--color-shell-border-default);
-		box-shadow: var(--shadow-sm);
-	}
+  :global(.info-card) {
+    padding: var(--space-md);
+    border-color: var(--color-shell-border-default);
+    box-shadow: var(--shadow-sm);
+  }
 
-	.info-title {
-		font-family: var(--font-heading);
-		font-size: var(--text-body-lg);
-		font-weight: var(--font-semibold);
-		letter-spacing: 0.01em;
-		color: var(--color-fg-primary);
-		margin: 0 0 var(--space-sm);
-	}
+  .info-title {
+    font-family: var(--font-heading);
+    font-size: var(--text-body-lg);
+    font-weight: var(--font-semibold);
+    letter-spacing: 0.01em;
+    color: var(--color-fg-primary);
+    margin: 0 0 var(--space-sm);
+  }
 
-	.info-content {
-		font-size: var(--text-body-sm);
-		color: var(--color-fg-secondary);
-	}
+  .info-content {
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-secondary);
+  }
 
-	.info-content p {
-		margin: 0 0 var(--space-sm);
-	}
+  .info-content p {
+    margin: 0 0 var(--space-sm);
+  }
 
-	.info-content ul {
-		margin: 0 0 var(--space-md);
-		padding-left: var(--space-md);
-	}
+  .info-content ul {
+    margin: 0 0 var(--space-md);
+    padding-left: var(--space-md);
+  }
 
-	.info-content li {
-		margin-bottom: var(--space-xs);
-	}
+  .info-content li {
+    margin-bottom: var(--space-xs);
+  }
 
-	.tip-box {
-		display: grid;
-		gap: var(--space-xs);
-		padding: var(--space-sm) var(--space-md);
-		border: 1px solid var(--color-info-border);
-		border-radius: var(--radius-md);
-		background: color-mix(in srgb, var(--color-info-muted) 18%, var(--color-bg-surface));
-	}
+  .tip-box {
+    display: grid;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--color-info-border);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--color-info-muted) 18%, var(--color-bg-surface));
+  }
 
-	.tip-title {
-		font-weight: var(--font-medium);
-		color: var(--color-fg-primary);
-		margin: 0;
-		font-size: var(--text-body-sm);
-	}
+  .tip-title {
+    font-weight: var(--font-medium);
+    color: var(--color-fg-primary);
+    margin: 0;
+    font-size: var(--text-body-sm);
+  }
 
-	.tip-text {
-		font-size: var(--text-caption);
-		color: var(--color-fg-secondary);
-		margin: 0;
-	}
+  .tip-text {
+    font-size: var(--text-caption);
+    color: var(--color-fg-secondary);
+    margin: 0;
+  }
 
-	@media (max-width: 640px) {
-		.tools-grid {
-			grid-template-columns: 1fr;
-		}
-	}
+  @media (max-width: 640px) {
+    .tools-grid {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>

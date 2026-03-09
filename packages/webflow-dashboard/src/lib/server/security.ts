@@ -1,50 +1,50 @@
 const TRUSTED_DOMAIN_SUFFIXES = ['webflow.com', 'webflow.io', 'createsomething.io'] as const;
 
 function parseCsv(raw: string | undefined): string[] {
-	if (!raw) return [];
-	return raw
-		.split(',')
-		.map((value) => value.trim())
-		.filter((value) => value.length > 0);
+  if (!raw) return [];
+  return raw
+    .split(',')
+    .map((value) => value.trim())
+    .filter((value) => value.length > 0);
 }
 
 function normalizeEmail(email: string): string {
-	return email.trim().toLowerCase();
+  return email.trim().toLowerCase();
 }
 
 function isDomainOrSubdomain(hostname: string, domain: string): boolean {
-	return hostname === domain || hostname.endsWith(`.${domain}`);
+  return hostname === domain || hostname.endsWith(`.${domain}`);
 }
 
 function isLocalDevHost(hostname: string): boolean {
-	return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
 }
 
 function parseOrigin(value: string | null): string | null {
-	if (!value) return null;
-	try {
-		return new URL(value).origin;
-	} catch {
-		return null;
-	}
+  if (!value) return null;
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
 }
 
 function getProvidedSecret(request: Request): string | null {
-	const authHeader = request.headers.get('authorization');
-	if (authHeader?.toLowerCase().startsWith('bearer ')) {
-		const token = authHeader.slice(7).trim();
-		return token || null;
-	}
+  const authHeader = request.headers.get('authorization');
+  if (authHeader?.toLowerCase().startsWith('bearer ')) {
+    const token = authHeader.slice(7).trim();
+    return token || null;
+  }
 
-	const headerSecret = request.headers.get('x-cron-secret')?.trim();
-	if (headerSecret) return headerSecret;
+  const headerSecret = request.headers.get('x-cron-secret')?.trim();
+  if (headerSecret) return headerSecret;
 
-	const url = new URL(request.url);
-	const querySecret = url.searchParams.get('cron_secret')?.trim();
-	if (querySecret) return querySecret;
+  const url = new URL(request.url);
+  const querySecret = url.searchParams.get('cron_secret')?.trim();
+  if (querySecret) return querySecret;
 
-	const queryToken = url.searchParams.get('token')?.trim();
-	return queryToken || null;
+  const queryToken = url.searchParams.get('token')?.trim();
+  return queryToken || null;
 }
 
 /**
@@ -53,66 +53,68 @@ function getProvidedSecret(request: Request): string | null {
  * the allowlist is not configured.
  */
 export function hasAdminAccess(
-	email: string | undefined,
-	options: {
-		adminEmailsCsv?: string;
-		environment?: string;
-	} = {}
+  email: string | undefined,
+  options: {
+    adminEmailsCsv?: string;
+    environment?: string;
+  } = {}
 ): boolean {
-	if (!email) return false;
+  if (!email) return false;
 
-	const adminEmails = new Set(parseCsv(options.adminEmailsCsv).map(normalizeEmail));
-	if (adminEmails.size === 0) {
-		return (options.environment ?? 'production') !== 'production';
-	}
+  const adminEmails = new Set(parseCsv(options.adminEmailsCsv).map(normalizeEmail));
+  if (adminEmails.size === 0) {
+    return (options.environment ?? 'production') !== 'production';
+  }
 
-	return adminEmails.has(normalizeEmail(email));
+  return adminEmails.has(normalizeEmail(email));
 }
 
 /**
  * Extract source origin from Origin header or Referer header.
  */
 export function getSourceOrigin(request: Request): string | null {
-	const originHeader = parseOrigin(request.headers.get('origin'));
-	if (originHeader) return originHeader;
-	return parseOrigin(request.headers.get('referer'));
+  const originHeader = parseOrigin(request.headers.get('origin'));
+  if (originHeader) return originHeader;
+  return parseOrigin(request.headers.get('referer'));
 }
 
 /**
  * Validates that a request originated from an allowed origin.
  */
 export function isTrustedRequestOrigin(
-	request: Request,
-	requestOrigin: string,
-	extraTrustedOriginsCsv?: string,
-	environment?: string
+  request: Request,
+  requestOrigin: string,
+  extraTrustedOriginsCsv?: string,
+  environment?: string
 ): boolean {
-	const sourceOrigin = getSourceOrigin(request);
-	if (!sourceOrigin) return false;
+  const sourceOrigin = getSourceOrigin(request);
+  if (!sourceOrigin) return false;
 
-	const extraOrigins = new Set(
-		parseCsv(extraTrustedOriginsCsv).map((value) => parseOrigin(value)).filter(Boolean) as string[]
-	);
+  const extraOrigins = new Set(
+    parseCsv(extraTrustedOriginsCsv)
+      .map((value) => parseOrigin(value))
+      .filter(Boolean) as string[]
+  );
 
-	if (sourceOrigin === requestOrigin || extraOrigins.has(sourceOrigin)) {
-		return true;
-	}
+  if (sourceOrigin === requestOrigin || extraOrigins.has(sourceOrigin)) {
+    return true;
+  }
 
-	try {
-		const parsed = new URL(sourceOrigin);
+  try {
+    const parsed = new URL(sourceOrigin);
 
-		if (isLocalDevHost(parsed.hostname)) {
-			return (environment ?? 'production') !== 'production';
-		}
+    if (isLocalDevHost(parsed.hostname)) {
+      return (environment ?? 'production') !== 'production';
+    }
 
-		if (parsed.protocol !== 'https:') {
-			return false;
-		}
+    if (parsed.protocol !== 'https:') {
+      return false;
+    }
 
-		return TRUSTED_DOMAIN_SUFFIXES.some((domain) => isDomainOrSubdomain(parsed.hostname, domain));
-	} catch {
-		return false;
-	}
+    return TRUSTED_DOMAIN_SUFFIXES.some((domain) => isDomainOrSubdomain(parsed.hostname, domain));
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -120,14 +122,14 @@ export function isTrustedRequestOrigin(
  * If no secret is configured, only non-production environments are allowed.
  */
 export function isAuthorizedCronRequest(
-	request: Request,
-	cronSecret: string | undefined,
-	environment: string | undefined
+  request: Request,
+  cronSecret: string | undefined,
+  environment: string | undefined
 ): boolean {
-	if (cronSecret) {
-		const provided = getProvidedSecret(request);
-		return provided === cronSecret;
-	}
+  if (cronSecret) {
+    const provided = getProvidedSecret(request);
+    return provided === cronSecret;
+  }
 
-	return (environment ?? 'production') !== 'production';
+  return (environment ?? 'production') !== 'production';
 }
