@@ -469,9 +469,10 @@
 
   .section-title {
     font-family: var(--font-heading);
-    font-size: clamp(1.55rem, 2vw, 1.85rem);
+    font-size: clamp(1.35rem, 1.35vw + 1rem, 1.65rem);
     font-weight: var(--font-semibold);
-    letter-spacing: 0.01em;
+    letter-spacing: 0.02em;
+    line-height: 1.12;
     color: var(--color-fg-primary);
     margin: 0;
   }
@@ -479,7 +480,8 @@
   .section-description {
     margin: 0;
     font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
+    color: var(--color-fg-secondary);
+    opacity: 0.8;
   }
 
   .section-actions {
@@ -566,21 +568,23 @@
 
   .status-title {
     font-family: var(--font-heading);
-    font-size: var(--text-body-lg);
+    font-size: var(--text-body);
     font-weight: var(--font-semibold);
-    letter-spacing: 0.01em;
+    letter-spacing: 0.02em;
     color: var(--color-fg-primary);
     margin: 0;
   }
 
   .status-count {
     font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
+    color: var(--color-fg-secondary);
+    opacity: 0.78;
   }
 
   .sort-summary {
     font-size: var(--text-caption);
-    color: var(--color-fg-muted);
+    color: var(--color-fg-secondary);
+    opacity: 0.72;
   }
 
   @media (max-width: 900px) {
