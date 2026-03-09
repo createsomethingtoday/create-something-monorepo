@@ -40,6 +40,7 @@
     "graph:analyze": "tsx scripts/build-knowledge-graph/analyze.ts",
     "graph:analyze:create": "tsx scripts/build-knowledge-graph/analyze.ts --create",
     "exports": "tsx scripts/list-exports.ts",
+    "agent:legibility:check": "node scripts/agent-legibility-check.mjs",
     "policy:artifacts:check": "node scripts/policy-artifact-check.mjs",
     "paper-cycle:context": "node scripts/io-paper-cycle-context.mjs",
     "paper-cycle:labels:sync": "node scripts/io-paper-cycle-labels.mjs",

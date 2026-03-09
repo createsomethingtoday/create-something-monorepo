@@ -170,6 +170,23 @@ A package is not agent-legible enough until an agent can answer:
 4. What evidence do I inspect after I change it?
 5. When do I stop and escalate?
 
+## Mechanical check
+
+The repository now includes a narrow enforcement script for representative packages:
+
+```bash
+pnpm agent:legibility:check
+```
+
+Current default scope:
+
+- `packages/harness/README.md`
+- `packages/harness-mcp/README.md`
+- `packages/search/README.md`
+- `packages/tufte/README.md`
+
+Use `--target` to check a custom comma-separated list of files while expanding coverage.
+
 ## Example
 
 ```md
