@@ -1,8 +1,8 @@
 /**
  * @create-something/harness
  *
- * Autonomous agent harness with Beads-based human oversight.
- * Runs Claude Code sessions in a loop with progress reports and reactive redirection.
+ * Autonomous agent harness for Loom-tracked work.
+ * Runs agent sessions in a loop with checkpoints, review passes, and reactive redirection.
  *
  * Philosophy: The harness recedes into transparent operation.
  * Humans engage through progress reports—reactive steering rather than proactive management.
@@ -55,7 +55,7 @@ export type {
   ReviewedCheckpoint,
   // Discovery source taxonomy (upstream from VC)
   DiscoverySource,
-  // Beads seed types (Bloom-inspired)
+  // Executable issue-seed types (legacy Beads-backed naming)
   BeadsIssueSeed,
   // Agent context types (upstream from VC - nondeterministic idempotence)
   AgentContext,
@@ -102,7 +102,7 @@ export {
   // Discovery source taxonomy
   DISCOVERY_LABELS,
   getDiscoveryLabel,
-  // Beads seed helpers (Bloom-inspired)
+  // Executable issue-seed helpers (legacy Beads-backed naming)
   hasExecutableSeed,
   getIssueSeed,
   // Agent context
@@ -126,7 +126,7 @@ export {
   generateYamlFromMarkdown,
 } from './spec-parser.js';
 
-// Beads Integration
+// Issue-tracker integration (legacy Beads-backed adapter)
 export {
   readAllIssues,
   getOpenIssues,
@@ -309,7 +309,7 @@ export {
   DEFAULT_META_REVIEW_CONFIG,
 } from './meta-review.js';
 
-// Peer Review - Beads Integration
+// Peer review issue creation (legacy Beads-backed adapter)
 export {
   createReviewIssue,
   createFindingIssues,

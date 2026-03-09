@@ -11,6 +11,7 @@
     "render": "remotion render",
     "render:still": "remotion still",
     "preview": "remotion preview",
+    "lint": "pnpm run typecheck",
     "typecheck": "tsc --noEmit",
     "generate-voiceover": "npx ts-node scripts/generate-voiceover.ts",
     "generate-sounds": "npx tsx scripts/generate-sounds.ts"

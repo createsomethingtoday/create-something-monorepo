@@ -291,8 +291,8 @@ export class CorrelationAnalyzer {
     const recs: string[] = [];
     
     // High lift rules
-    if (topPredictors.length > 0) {
-      const top = topPredictors[0];
+    const [top] = topPredictors;
+    if (top) {
       recs.push(
         `Rule "${top.ruleName}" has ${(top.lift).toFixed(1)}x rejection lift. ` +
         `Consider auto-flagging submissions with this finding.`

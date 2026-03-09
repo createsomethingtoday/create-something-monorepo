@@ -197,6 +197,17 @@ pnpm --filter=substrate-mcp build
 pnpm --filter=substrate-mcp start
 ```
 
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `README.md`, `src/index.ts` |
+| Boot command | `pnpm --filter=substrate-mcp dev` for local iteration, or `pnpm --filter=substrate-mcp start` after `pnpm --filter=substrate-mcp build` for the compiled stdio server |
+| Smoke command | `pnpm --filter=substrate-mcp typecheck && pnpm --filter=substrate-mcp build` |
+| Validation surfaces | typecheck output, stdio startup, Cloudflare-backed tool responses, dashboard views at `/dashboard` and `/dashboard/{workspace_id}`, D1 audit log rows, R2 file metadata |
+| UI validation path | `/dashboard` for fleet state or `/dashboard/{workspace_id}` for a single workspace trust view |
+| Escalation rule | Stop if MCP responses and dashboard state diverge, or if auth, D1, or R2 behavior depends on secrets or Cloudflare bindings that are unavailable in the current local environment. |
+
 ## MCP Primitives
 
 ### Tools (Automation Tier) — 22 tools

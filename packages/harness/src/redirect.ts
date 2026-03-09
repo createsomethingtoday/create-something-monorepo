@@ -1,14 +1,14 @@
 /**
  * @create-something/harness
  *
- * Redirect Detector: Watches Beads for human-initiated changes.
+ * Redirect Detector: Watches tracked work for human-initiated changes.
  */
 
 import type { BeadsIssue, Redirect } from './types.js';
 import { readAllIssues, getOpenIssues, checkForPauseRequest } from './beads.js';
 
 /**
- * Snapshot of Beads state for change detection.
+ * Snapshot of tracked-work state for change detection.
  */
 export interface BeadsSnapshot {
   timestamp: string;
@@ -23,7 +23,7 @@ interface IssueSnapshot {
 }
 
 /**
- * Take a snapshot of current Beads state.
+ * Take a snapshot of current tracked-work state.
  */
 export async function takeSnapshot(repoRoot?: string): Promise<BeadsSnapshot> {
   const issues = await readAllIssues(repoRoot);

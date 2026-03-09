@@ -5,6 +5,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "lint": "pnpm run typecheck",
     "typecheck": "pnpm --dir worker exec tsc --noEmit",
     "check": "pnpm typecheck",
     "dev": "pnpm --dir worker dev",

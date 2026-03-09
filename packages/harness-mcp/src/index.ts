@@ -30,10 +30,10 @@ const server = new Server(
 // List available tools
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
-    // Beads operations
+    // Tracked issue operations (legacy Beads-backed adapter)
     {
       name: 'get_issue',
-      description: 'Get a Beads issue by ID',
+      description: 'Get a tracked issue by ID',
       inputSchema: {
         type: 'object',
         properties: {
@@ -44,7 +44,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'list_issues',
-      description: 'List Beads issues with optional filters',
+      description: 'List tracked issues with optional filters',
       inputSchema: {
         type: 'object',
         properties: {
@@ -75,7 +75,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'update_issue',
-      description: 'Update a Beads issue',
+      description: 'Update a tracked issue',
       inputSchema: {
         type: 'object',
         properties: {
@@ -105,7 +105,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     },
     {
       name: 'close_issue',
-      description: 'Close a Beads issue',
+      description: 'Close a tracked issue',
       inputSchema: {
         type: 'object',
         properties: {

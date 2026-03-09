@@ -1,7 +1,7 @@
 /**
  * @create-something/harness
  *
- * Session Spawner: Runs Claude Code sessions with priming context.
+ * Session Spawner: Runs agent sessions with priming context.
  */
 
 import { spawn, exec } from 'node:child_process';

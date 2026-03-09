@@ -1,7 +1,7 @@
 {
   "name": "@create-something/harness",
   "version": "0.1.0",
-  "description": "Autonomous agent harness with Beads-based human oversight. Runs Claude Code sessions in a loop with progress reports and reactive redirection.",
+  "description": "Autonomous agent harness for Loom-tracked work. Runs agent sessions in loops with checkpoints, review passes, and reactive redirection.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -41,11 +41,11 @@
     "vitest": "^2.1.9"
   },
   "keywords": [
-    "claude-code",
     "harness",
     "agents",
-    "beads",
-    "automation"
+    "automation",
+    "codex",
+    "loom"
   ],
   "license": "MIT",
   "dependencies": {

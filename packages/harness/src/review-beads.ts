@@ -1,8 +1,8 @@
 /**
  * @create-something/harness
  *
- * Review Beads Integration: Store review findings in Beads issues.
- * Philosophy: Findings become trackable issues for human review and resolution.
+ * Review issue adapter: store review findings as tracked issues.
+ * Philosophy: findings become tracked work for review and resolution.
  */
 
 import type { ReviewAggregation, ReviewFinding } from './types.js';

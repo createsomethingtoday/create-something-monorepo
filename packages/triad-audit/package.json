@@ -20,6 +20,7 @@
   "scripts": {
     "build": "tsup src/index.ts src/cli.ts src/mcp-server.ts src/feedback-cli.ts --format esm --dts --clean",
     "dev": "tsup src/index.ts src/cli.ts src/mcp-server.ts src/feedback-cli.ts --format esm --dts --watch",
+    "lint": "pnpm run typecheck",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "pnpm build"
   },

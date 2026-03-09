@@ -7,11 +7,13 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
+    "lint": "pnpm run typecheck",
     "typecheck": "tsc --noEmit",
     "test": "pnpm --filter @create-something/mcp-authz build && node --import tsx --test test/*.test.ts"
   },
   "dependencies": {
     "@create-something/mcp-authz": "workspace:*",
+    "@create-something/mcp-core": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "braintrust": "^2.2.2"
   },

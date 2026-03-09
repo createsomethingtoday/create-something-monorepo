@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "lint": "pnpm run typecheck",
     "typecheck": "tsc --noEmit",
     "test": "vitest --run --passWithNoTests",
     "webflow:share": "npx webflow library share",

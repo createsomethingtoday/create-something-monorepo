@@ -201,7 +201,7 @@ export async function initializeHarness(
     harnessId,
     cwd
   );
-  console.log(`Created ${featureMap.size} issues in Beads.\n`);
+  console.log(`Created ${featureMap.size} tracked feature issues.\n`);
 
   const harnessState: HarnessState = {
     id: harnessId,
@@ -344,7 +344,7 @@ export async function runHarness(
       harnessState.status = 'paused';
       harnessState.pauseReason = redirectCheck.pauseReason;
       console.log(`\n⏸ Harness paused: ${redirectCheck.pauseReason}`);
-      console.log(`\nTo resume: bd work --resume ${harnessState.id}`);
+      console.log(`\nTo resume: harness resume --harness-id ${harnessState.id}`);
       break;
     }
 

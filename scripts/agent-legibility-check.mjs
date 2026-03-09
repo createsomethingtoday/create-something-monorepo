@@ -16,9 +16,12 @@ const REQUIRED_FIELDS = [
 // Start with the representative packages that already adopted the contract.
 // Expand this list as coverage grows.
 const DEFAULT_TARGETS = [
+  'packages/create-something-mcp/README.md',
   'packages/harness/README.md',
   'packages/harness-mcp/README.md',
   'packages/search/README.md',
+  'packages/space/README.md',
+  'packages/substrate-mcp/README.md',
   'packages/tufte/README.md',
 ];
 

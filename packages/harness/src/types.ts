@@ -2,7 +2,7 @@
  * @create-something/harness
  *
  * Types for the autonomous agent harness.
- * Beads-based human oversight with progress reports and reactive redirection.
+ * Loom-tracked oversight with checkpoints, progress reports, and reactive redirection.
  */
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -60,7 +60,7 @@ export interface DependencyGraph {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Beads Integration
+// Tracked issue integration (legacy Beads-backed naming)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -81,7 +81,7 @@ export type DiscoverySource =
 
 /**
  * Label constants for discovered work taxonomy.
- * Maps DiscoverySource to Beads labels.
+ * Maps DiscoverySource to issue-tracker labels.
  */
 export const DISCOVERY_LABELS: Record<DiscoverySource, string> = {
   blocker: 'harness:blocker',
@@ -92,14 +92,14 @@ export const DISCOVERY_LABELS: Record<DiscoverySource, string> = {
 } as const;
 
 /**
- * Get the Beads label for a discovery source.
+ * Get the issue-tracker label for a discovery source.
  */
 export function getDiscoveryLabel(source: DiscoverySource): string {
   return DISCOVERY_LABELS[source];
 }
 
 /**
- * Executable seed for Beads issues (Bloom-inspired pattern).
+ * Executable seed for tracked issues (Bloom-inspired pattern).
  *
  * Seeds make issues executable - they contain all the context needed
  * for Ralph/harness to directly consume and execute the issue.
@@ -171,7 +171,7 @@ export function hasExecutableSeed(issue: BeadsIssue): boolean {
 }
 
 /**
- * Get the seed from a Beads issue.
+ * Get the seed from a tracked issue.
  */
 export function getIssueSeed(issue: BeadsIssue): BeadsIssueSeed | undefined {
   return issue.metadata?.seed as BeadsIssueSeed | undefined;

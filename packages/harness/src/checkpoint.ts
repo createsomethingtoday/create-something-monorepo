@@ -1,7 +1,7 @@
 /**
  * @create-something/harness
  *
- * Checkpoint Generator: Creates progress reports as Beads issues.
+ * Checkpoint Generator: Creates progress reports as tracked checkpoint artifacts.
  */
 
 import type {

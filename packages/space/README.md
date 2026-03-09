@@ -86,6 +86,19 @@ pnpm --filter=space build && wrangler pages deploy packages/space/.svelte-kit/cl
 
 ---
 
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `README.md`, `src/routes`, `src/lib` |
+| Boot command | `pnpm --filter=space dev` |
+| Smoke command | `pnpm --filter=space check && pnpm --filter=space build` |
+| Validation surfaces | `svelte-check` output, build output, local route rendering, browser screenshots, Worker-backed API responses for `/api/code/run`, `/api/praxis/run`, `/api/motion/analyze`, and `/api/motion/extract` |
+| UI validation path | Start with `/playground`, then validate the narrow route affected by the change: `/praxis`, `/motion`, `/data`, or `/discover` |
+| Escalation rule | Stop if the visual issue depends on deployed Cloudflare Workers, Puppeteer extraction, or remote data feeds that cannot be reproduced from the local route and API surface. |
+
+---
+
 ## Related
 
 - [The MCP-First Thesis](../../docs/MCP_FIRST_THESIS.md) — Strategic context

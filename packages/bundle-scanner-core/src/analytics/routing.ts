@@ -160,8 +160,17 @@ export class ReviewRouter {
     // Sort by score (highest first)
     scored.sort((a, b) => b.score - a.score);
     
-    const best = scored[0];
-    const alternatives = scored.slice(1, 4).map(s => s.reviewer.id);
+    const [best, ...rest] = scored;
+    if (!best) {
+      return {
+        reviewerId: '',
+        reviewerName: '',
+        confidence: 0,
+        reasons: ['No scored reviewers available for this submission'],
+        alternativeReviewers: []
+      };
+    }
+    const alternatives = rest.slice(0, 3).map(s => s.reviewer.id);
     
     return {
       reviewerId: best.reviewer.id,

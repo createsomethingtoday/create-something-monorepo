@@ -11,6 +11,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
+    "lint": "pnpm run typecheck",
     "typecheck": "tsc --noEmit",
     "watch-session": "npx tsx watch-session.ts",
     "test:notion": "npx tsx scripts/test-notion.ts",

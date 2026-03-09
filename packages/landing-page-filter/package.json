@@ -12,6 +12,7 @@
     "build:featured": "node scripts/build.js featured",
     "build:nest": "node scripts/build.js nest",
     "build:seo": "node scripts/build.js seo",
+    "lint": "pnpm run typecheck",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

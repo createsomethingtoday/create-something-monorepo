@@ -26,6 +26,7 @@
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --clean",
     "dev": "tsup src/index.ts --format esm --dts --watch",
+    "lint": "pnpm run typecheck",
     "typecheck": "tsc --noEmit",
     "test": "vitest --run --passWithNoTests",
     "test:coverage": "vitest --coverage"

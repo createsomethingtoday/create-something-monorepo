@@ -62,7 +62,7 @@ async function main(): Promise<void> {
 
 function printHelp(): void {
   console.log(`
-CREATE SOMETHING Harness - Autonomous agent orchestration with Beads oversight
+CREATE SOMETHING Harness - Autonomous agent orchestration with Loom-tracked work
 
 USAGE:
   harness <command> [options]
@@ -111,8 +111,8 @@ EXAMPLES:
 WORKFLOW:
   1. Write a markdown PRD spec
   2. Run 'harness start <spec>'
-  3. Check progress with 'bd progress'
-  4. Redirect with 'bd update <id> --priority P0' if needed
+  3. Check progress with 'lm summary'
+  4. Redirect by updating tracked work or priorities in Loom
   5. Pause/resume as needed
 
 PHILOSOPHY:
@@ -221,7 +221,7 @@ async function handleStatus(args: string[], cwd: string): Promise<void> {
 
 async function handleStop(args: string[], cwd: string): Promise<void> {
   console.log('Stop command not yet implemented.');
-  console.log('Use Ctrl+C to stop the harness, or create a pause issue.');
+  console.log('Use Ctrl+C to stop the harness, or use the pause workflow.');
 }
 
 /**
@@ -326,11 +326,11 @@ ${fullContext ? '\n🔎 Full Context Mode: ENABLED (deep context retrieval)' : '
 `);
 
   if (dryRun) {
-    console.log('[DRY RUN] Would mark in_progress and spawn Claude Code session');
+    console.log('[DRY RUN] Would mark in_progress and spawn an agent session');
     if (fullContext) {
       console.log('[DRY RUN] Full context mode would search:');
       console.log('  - .claude/rules/ for relevant patterns');
-      console.log('  - Beads history for similar past issues');
+      console.log('  - tracked issue history for similar past work');
       console.log('  - Monorepo for related code patterns');
       console.log('  - .io papers for relevant research');
     }
@@ -349,8 +349,8 @@ ${fullContext ? '\n🔎 Full Context Mode: ENABLED (deep context retrieval)' : '
     console.log(`   Found ${fullContextPriming.split('\n').length} lines of context\n`);
   }
 
-  // Spawn Claude Code session
-  console.log(`→ Spawning Claude Code session with ${model}...\n`);
+  // Spawn agent session
+  console.log(`→ Spawning agent session with ${model}...\n`);
 
   const primingContext = {
     currentIssue: issue,
@@ -475,7 +475,7 @@ function buildSwarmConfig(args: string[]): SwarmConfig {
  * Philosophy: Like RoboDev's "minimum viable prompt" approach, let the agent
  * find context instead of requiring the user to specify it. This searches:
  * 1. .claude/rules/ for relevant patterns
- * 2. Beads history for similar past issues
+ * 2. Historical tracked work for similar past issues
  * 3. Monorepo for related code patterns
  * 4. .io papers for relevant research
  */
@@ -499,7 +499,7 @@ async function gatherFullContext(issue: BeadsIssue, cwd: string): Promise<string
     lines.push('');
   }
 
-  // 2. Search Beads history for similar issues
+  // 2. Search historical tracked work for similar issues
   const historyContext = await searchBeadsHistory(title, description, cwd);
   if (historyContext) {
     lines.push('### Similar Past Issues');
@@ -588,7 +588,7 @@ async function searchRulesForContext(
 }
 
 /**
- * Search Beads history for similar issues.
+ * Search historical tracked work for similar issues.
  */
 async function searchBeadsHistory(
   title: string,

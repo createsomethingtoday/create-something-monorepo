@@ -180,12 +180,19 @@ pnpm agent:legibility:check
 
 Current default scope:
 
+- `packages/create-something-mcp/README.md`
 - `packages/harness/README.md`
 - `packages/harness-mcp/README.md`
 - `packages/search/README.md`
+- `packages/space/README.md`
+- `packages/substrate-mcp/README.md`
 - `packages/tufte/README.md`
 
 Use `--target` to check a custom comma-separated list of files while expanding coverage.
+
+A matching GitHub Actions workflow exists at:
+
+- `.github/workflows/agent-legibility-check.yml`
 
 ## Example
 

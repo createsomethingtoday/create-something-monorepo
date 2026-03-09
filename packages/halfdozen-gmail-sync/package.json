@@ -16,6 +16,7 @@
     "search": "npx tsx src/index.ts search",
     "test:connection": "npx tsx src/index.ts test",
     "mcp": "npx tsx src/mcp/server.ts",
+    "lint": "pnpm run typecheck",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

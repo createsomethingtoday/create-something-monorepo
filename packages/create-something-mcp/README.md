@@ -123,6 +123,17 @@ npm run tail     # Tail production logs
 
 Worker deploys include telemetry via `@create-something/mcp-core` and the `TELEMETRY_DB` D1 binding (`cs-telemetry`). Tool invocations and run counts are written to fleet telemetry tables (`mcp_tool_invocations`, `mcp_run_counts`).
 
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | `README.md`, `src/index.ts`, `worker/src/index.ts` |
+| Boot command | `pnpm --filter=@create-something/mcp build && node packages/create-something-mcp/dist/index.js` for local stdio, or `cd packages/create-something-mcp/worker && npm run dev` for the Worker runtime |
+| Smoke command | `pnpm --filter=@create-something/mcp typecheck && pnpm --filter=@create-something/mcp build` |
+| Validation surfaces | typecheck output, content build artifacts in `src/content/generated/`, stdio startup, Worker logs via `npm run tail`, telemetry rows in `mcp_tool_invocations` and `mcp_run_counts` |
+| UI validation path | none |
+| Escalation rule | Stop if the remote Worker behavior, telemetry, or embedded content output disagrees with local stdio behavior and the mismatch cannot be reproduced from the checked-in content pipeline. |
+
 ## Content Pipeline
 
 Content is extracted from the monorepo's source files and compiled into JSON:

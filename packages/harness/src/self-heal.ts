@@ -29,7 +29,7 @@ const exec = promisify(execCallback);
  * Commands for each quality gate type.
  * Designed for pnpm monorepo with optional package filter.
  */
-function getGateCommand(
+export function getGateCommand(
   gate: QualityGateType,
   packageFilter?: string,
   isFix = false
@@ -42,14 +42,19 @@ function getGateCommand(
     case 'typecheck':
       return `pnpm ${filter} exec tsc --noEmit`.trim();
     case 'lint':
-      if (isFix) {
-        return packageFilter
-          ? `pnpm lint -- --package=${packageFilter} --fix`
-          : 'pnpm lint -- --fix';
+      {
+        const args = ['pnpm', '-w', 'lint'];
+        if (packageFilter || isFix) {
+          args.push('--');
+        }
+        if (packageFilter) {
+          args.push(`--package=${packageFilter}`);
+        }
+        if (isFix) {
+          args.push('--fix');
+        }
+        return args.join(' ');
       }
-      return packageFilter
-        ? `pnpm lint -- --package=${packageFilter}`
-        : 'pnpm lint';
     case 'build':
       return `pnpm ${filter} build`.trim();
   }
