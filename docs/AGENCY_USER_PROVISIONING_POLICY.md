@@ -16,6 +16,7 @@ Seed `.agency` users before invite, then bind them to their Auth0 subject as soo
 8. After subject binding or token migration, stale legacy entitlement rows and stale legacy token rows MUST be removed so one email resolves to one canonical subject.
 9. Internal aliases or exceptions, such as `micah@createsomething.io -> acct_mj`, must live in one canonical resolver and not be reimplemented route-by-route.
 10. Self-provisioning is acceptable only for controlled internal/testing lanes. Client-facing access should be seeded first.
+11. If Auth0 subject churn occurs after delete/recreate for the same normalized email, remediation MUST follow [`policy.auth0-subject-rebind-governance.v1`](./policies/v1/policy.auth0-subject-rebind-governance.v1.md) and the linked operator runbook instead of treating the user as a new MCP account.
 
 ## Seed Manifest
 
@@ -80,6 +81,16 @@ For existing bearer holders already represented in Infisical or another approved
 6. Remove stale pre-Auth0 or legacy-subject token rows and entitlement rows after verification.
 
 This migration path avoids unnecessary token rotation while bringing visibility and governance into the managed-token model.
+
+## Subject Rebind Incident
+
+When a previously mapped user returns with the same normalized email but a different Auth0 subject:
+
+1. Preserve the canonical `.agency` account context instead of inventing a new MCP account.
+2. Rebind the new subject to the preserved mapping.
+3. Revoke or deactivate old subject-bound managed bearer artifacts.
+4. Update stale delegated partner mappings before partner-admin issuance continues.
+5. Follow [`AUTH0_SUBJECT_REBIND_RUNBOOK`](./AUTH0_SUBJECT_REBIND_RUNBOOK.md) for operator steps and evidence capture.
 
 ## Seed Script
 

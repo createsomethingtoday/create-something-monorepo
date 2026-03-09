@@ -44,6 +44,7 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 20. Existing compat bearer tokens stored in an approved runtime vault MAY be migrated into `mcp_long_lived_tokens` without rotating the plaintext token, provided the credential is rebound to one canonical Auth0 subject and one canonical `.agency` account/tenant mapping.
 21. After managed-token migration, `mcp_long_lived_tokens` becomes the source of truth for token state, while Infisical or another approved vault MAY continue storing the same plaintext value only for runtime compatibility.
 22. Credential-delivery migration MUST include duplicate-subject cleanup so that stale entitlement rows, stale token rows, and stale legacy aliases no longer resolve for the same email or account.
+23. Auth0 delete/recreate incidents for the same normalized email MUST follow [`policy.auth0-subject-rebind-governance.v1`](./policy.auth0-subject-rebind-governance.v1.md) so delivery artifacts preserve canonical account context while stale old-subject credentials are revoked or deactivated.
 
 ## Enforcement Surfaces
 
@@ -114,3 +115,4 @@ Codify how MCP credentials are issued, rotated, revoked, vault-sourced, and deli
 - `docs/CS_HUB_VAULT_ROTATION_WORKFLOW.md`
 - `docs/guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md`
 - `docs/policies/v1/policy.mcp-oauth-password-governance.v1.md`
+- `docs/policies/v1/policy.auth0-subject-rebind-governance.v1.md`

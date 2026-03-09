@@ -51,6 +51,7 @@ Define the production policy for user-facing bearer tokens issued through `.agen
 21. Existing vault-backed compat bearer tokens MAY be adopted into the managed-token system without rotating the plaintext token, but only after the user is reconciled to one canonical Auth0 subject and one canonical `.agency` entitlement row.
 22. After adoption, `identity-worker.mcp_long_lived_tokens` becomes the authoritative registry for bearer-token status, last use, revoke, and regenerate behavior; vault storage is runtime support only and MUST NOT be treated as the governance source of truth.
 23. Duplicate entitlement rows or duplicate token rows for the same user email under different subjects MUST be removed or deactivated during migration so bearer resolution remains canonical.
+24. Auth0 delete/recreate incidents for the same normalized email MUST be governed by [`policy.auth0-subject-rebind-governance.v1`](./policy.auth0-subject-rebind-governance.v1.md); bearer access continuity should preserve MCP account context while revoking stale old-subject credentials.
 
 ## Required Legal Alignment
 
@@ -128,3 +129,4 @@ The following artifacts MUST remain aligned with this policy before production l
 - `docs/policies/v1/policy.partner-auth-governance.v1.md`
 - `docs/guides/CHATGPT_MCP_OAUTH_MANAGED_BEARER.md`
 - `docs/policies/v1/policy.mcp-oauth-password-governance.v1.md`
+- `docs/policies/v1/policy.auth0-subject-rebind-governance.v1.md`

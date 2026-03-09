@@ -20,6 +20,7 @@ First-wave policies scaffolded here:
 12. `policy.policy-lifecycle-governance.v1`
 13. `policy.paper-experiment-release-gate.v1`
 14. `policy.user-bearer-token-governance.v1`
+15. `policy.auth0-subject-rebind-governance.v1`
 
 Each policy has:
 
