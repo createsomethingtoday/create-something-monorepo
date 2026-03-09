@@ -2746,19 +2746,21 @@ async function evaluateHubRouteAuthorization(params: {
     hubAuthzHybridConfig(env),
   );
 
-  if (recordDecision && serviceTierEvaluation.final.decision !== 'allow') {
-    await recordAuthzDecisionEvent(
-      env.TELEMETRY_DB,
-      toHubAuthzEvent({
-        policyId: SERVICE_TIER_AUTHZ_POLICY_ID,
-        accountContext,
-        route,
-        trace,
-        evaluation: serviceTierEvaluation,
-        actionName,
-        entrypoint,
-      }),
-    );
+  if (serviceTierEvaluation.final.decision !== 'allow') {
+    if (recordDecision) {
+      await recordAuthzDecisionEvent(
+        env.TELEMETRY_DB,
+        toHubAuthzEvent({
+          policyId: SERVICE_TIER_AUTHZ_POLICY_ID,
+          accountContext,
+          route,
+          trace,
+          evaluation: serviceTierEvaluation,
+          actionName,
+          entrypoint,
+        }),
+      );
+    }
     return serviceTierEvaluation;
   }
 
