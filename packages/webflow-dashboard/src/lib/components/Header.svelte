@@ -233,9 +233,9 @@
     flex: 0 0 auto;
     padding: 0.38rem 0.65rem;
     border-radius: 999px;
-    background: rgba(20, 110, 245, 0.08);
-    border: 1px solid rgba(20, 110, 245, 0.14);
-    color: var(--color-info);
+    background: var(--color-info-soft-bg);
+    border: 1px solid var(--color-info-soft-border);
+    color: var(--color-info-soft-text);
     font-size: 0.68rem;
     font-weight: var(--font-semibold);
     letter-spacing: 0.08em;

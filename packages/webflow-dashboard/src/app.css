@@ -44,6 +44,10 @@
   --color-info: #146ef5;
   --color-info-muted: #cee2ff;
   --color-info-border: #9dc4ff;
+  --color-info-soft-bg: #eef4ff;
+  --color-info-soft-border: #bfd3f6;
+  --color-info-soft-text: #1d3f75;
+  --color-info-soft-wash: rgba(20, 110, 245, 0.08);
 
   --color-hover: #f0f0f0;
   --color-active: #cee2ff;
@@ -114,6 +118,10 @@
   --color-hover: rgba(255, 255, 255, 0.06);
   --color-active: rgba(20, 110, 245, 0.22);
   --color-focus: #6ca7ff;
+  --color-info-soft-bg: rgba(157, 196, 255, 0.12);
+  --color-info-soft-border: rgba(157, 196, 255, 0.4);
+  --color-info-soft-text: #dbe8ff;
+  --color-info-soft-wash: rgba(157, 196, 255, 0.08);
 
   --glass-bg-subtle: rgba(23, 23, 23, 0.92);
   --glass-bg-light: rgba(23, 23, 23, 0.95);
@@ -194,8 +202,9 @@ a:hover {
   margin-bottom: 0.75rem;
   padding: 0.32rem 0.72rem;
   border-radius: 999px;
-  background: var(--color-info-muted);
-  color: var(--color-info);
+  background: var(--color-info-soft-bg);
+  border: 1px solid var(--color-info-soft-border);
+  color: var(--color-info-soft-text);
   font-size: var(--text-caption);
   font-weight: var(--font-semibold);
   letter-spacing: 0.08em;
