@@ -91,6 +91,45 @@ function discoverTargetsFromPackageMetadata() {
   return targets;
 }
 
+function findMetadataDrift() {
+  if (!existsSync(PACKAGES_DIR)) {
+    return [];
+  }
+
+  const packageDirs = readdirSync(PACKAGES_DIR, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort((a, b) => a.localeCompare(b));
+
+  const drift = [];
+
+  for (const dirName of packageDirs) {
+    const packageJsonPath = path.join(PACKAGES_DIR, dirName, 'package.json');
+    const readmePath = path.join(PACKAGES_DIR, dirName, 'README.md');
+
+    if (!existsSync(packageJsonPath) || !existsSync(readmePath)) {
+      continue;
+    }
+
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+    const readme = readFileSync(readmePath, 'utf8');
+    const hasContractSection = readme.includes('## Agent Legibility Contract');
+    const optedIn = Boolean(packageJson.createSomething?.agentLegibilityContract);
+
+    if (hasContractSection && !optedIn) {
+      drift.push({
+        target: normalizePath(path.join('packages', dirName, 'package.json')),
+        ok: false,
+        details: [
+          'Package README includes "## Agent Legibility Contract" but package.json is not opted into createSomething.agentLegibilityContract.',
+        ],
+      });
+    }
+  }
+
+  return drift;
+}
+
 function validateTarget(relPath) {
   const fullPath = path.join(REPO_ROOT, relPath);
   const details = [];
@@ -141,7 +180,10 @@ function main() {
   if (args.targets.length === 0) {
     args.targets = discoverTargetsFromPackageMetadata();
   }
-  const results = args.targets.map(validateTarget);
+  const results = [
+    ...args.targets.map(validateTarget),
+    ...findMetadataDrift(),
+  ];
   const passed = results.every((result) => result.ok);
 
   if (args.format === 'json') {

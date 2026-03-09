@@ -200,6 +200,8 @@ Packages opt in by setting this field in `package.json`:
 
 Use `--target` to check a custom comma-separated list of files while expanding coverage.
 
+The check also fails if a package `README.md` contains `## Agent Legibility Contract` but the sibling `package.json` does not opt in. This keeps documentation and enforcement aligned during review.
+
 A matching GitHub Actions workflow exists at:
 
 - `.github/workflows/agent-legibility-check.yml`

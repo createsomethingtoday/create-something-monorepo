@@ -7,14 +7,16 @@
 
 1. Copy the scaffold
 2. Replace placeholders
-3. Add to workspace + install
-4. Apply telemetry migration (if new D1)
-5. Deploy
+3. Add legibility contract + README
+4. Add to workspace + install
+5. Apply telemetry migration (if new D1)
+6. Deploy
 
 ## 1. Directory Structure
 
 ```
 packages/{name}-mcp/
+├── README.md              # Entry point + Agent Legibility Contract
 ├── src/
 │   ├── resources.ts        # Database tier — MCP Resources
 │   ├── tools.ts            # Automation tier — MCP Tools
@@ -52,7 +54,30 @@ packages/{name}-mcp/
 }
 ```
 
-## 3. `worker/wrangler.toml`
+## 3. Package metadata + README contract
+
+The package-level `package.json` should opt into agent legibility enforcement:
+
+```json
+{
+  "createSomething": {
+    "agentLegibilityContract": true
+  }
+}
+```
+
+The package `README.md` should include a concrete `Agent Legibility Contract` section covering:
+
+- entry point
+- boot command
+- smoke command
+- validation surfaces
+- UI validation path
+- escalation rule
+
+Use [guides/AGENT_LEGIBILITY_CONTRACT.md](./guides/AGENT_LEGIBILITY_CONTRACT.md) and [guides/UNDERSTANDING_TEMPLATE.md](./guides/UNDERSTANDING_TEMPLATE.md) as the canonical shape.
+
+## 4. `worker/wrangler.toml`
 
 ```toml
 name = "{name}-mcp"
@@ -88,7 +113,7 @@ database_id = "{telemetry_db_id}"
 # Add your own D1/KV/R2 bindings below as needed
 ```
 
-## 4. `worker/index.ts`
+## 5. `worker/index.ts`
 
 ```typescript
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -148,7 +173,7 @@ export default {
 };
 ```
 
-## 5. Workspace Registration
+## 6. Workspace Registration
 
 Add to `pnpm-workspace.yaml`:
 
@@ -162,7 +187,7 @@ Then install:
 pnpm install --no-frozen-lockfile
 ```
 
-## 6. Telemetry Migration
+## 7. Telemetry Migration
 
 If this is the first MCP on a new account/D1, apply the telemetry migration:
 
@@ -171,14 +196,14 @@ CLOUDFLARE_ACCOUNT_ID={account_id} npx wrangler d1 execute {telemetry_db_name} \
   --remote --file=migrations/cs-telemetry/0001_telemetry_tables.sql
 ```
 
-## 7. Deploy
+## 8. Deploy
 
 ```bash
 cd packages/{name}-mcp/worker
 CLOUDFLARE_ACCOUNT_ID={account_id} npx wrangler deploy
 ```
 
-## 8. Add to Cursor MCP Config
+## 9. Add to Cursor MCP Config
 
 ```json
 // ~/.cursor/mcp.json
@@ -188,13 +213,15 @@ CLOUDFLARE_ACCOUNT_ID={account_id} npx wrangler deploy
 }
 ```
 
-## 9. Update Fleet Registry
+## 10. Update Fleet Registry
 
 Add the new MCP to `docs/MCP_FLEET_REGISTRY.md`.
 
 ## Checklist
 
 - [ ] `worker/wrangler.toml` — correct account, DO class, telemetry D1
+- [ ] `package.json` — `createSomething.agentLegibilityContract` set to `true`
+- [ ] `README.md` — includes `Agent Legibility Contract`
 - [ ] `worker/package.json` — includes `@create-something/mcp-core`
 - [ ] `worker/index.ts` — `enableTelemetry` called before tool registration
 - [ ] `pnpm-workspace.yaml` — worker directory added
