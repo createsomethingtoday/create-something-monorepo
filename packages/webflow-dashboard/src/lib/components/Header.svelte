@@ -133,11 +133,9 @@
     gap: var(--space-sm);
     padding: 0.5rem 0.9rem;
     border-radius: 999px;
-    background: var(--glass-bg-strong);
-    border: 1px solid var(--color-shell-border-default);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.2),
-      0 4px 14px rgba(8, 8, 8, 0.05);
+    background: transparent;
+    border: none;
+    box-shadow: none;
     text-decoration: none;
     color: var(--color-info);
     flex-shrink: 0;
@@ -160,12 +158,12 @@
     align-items: center;
     gap: 0.25rem;
     padding: 0.2rem;
-    border: 1px solid rgba(0, 0, 0, 0.04);
+    border: none;
     border-radius: 999px;
-    background: rgba(8, 8, 8, 0.03);
+    background: transparent;
     overflow-x: auto;
     scrollbar-width: none;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    box-shadow: none;
     min-width: 0;
   }
 
