@@ -1,48 +1,77 @@
 /**
- * Design Tokens - Canon + Maverick X
+ * Webflow component tokens aligned to Canon semantics.
  *
- * These tokens translate the CREATE SOMETHING Canon (golden ratio spacing,
- * semantic colors) and Maverick X brand colors into JavaScript objects
- * for use with Webflow inline styles.
+ * This file is the JavaScript token bridge for React/Webflow components that
+ * cannot consume Canon CSS variables directly. Base tokens should follow Canon
+ * naming and values. Legacy accent variants remain available for compatibility
+ * with older Webflow components until Canon parity work is complete.
  */
 
-// Brand color variants
+// Legacy accent variants kept for compatibility with existing Webflow components.
 export type BrandVariant = 'default' | 'lithx' | 'petrox' | 'dme';
 
+const accentTokens = {
+  default: {
+    primary: '#3B82F6',
+    light: '#60a5fa',
+    dark: '#2563eb',
+  },
+  lithx: {
+    primary: '#00C2A8',
+    light: '#33D1BC',
+    dark: '#00917E',
+  },
+  petrox: {
+    primary: '#FF7A00',
+    light: '#FF9433',
+    dark: '#E66900',
+  },
+  dme: {
+    primary: '#06B6D4',
+    light: '#22D3EE',
+    dark: '#0891B2',
+  },
+} as const;
+
 export const tokens = {
-  // ===========================================
-  // Colors - Canon Foundation
-  // ===========================================
+  // Canon semantic colors
   colors: {
-    // Background hierarchy
     bgPure: '#000000',
     bgElevated: '#0a0a0a',
     bgSurface: '#111111',
     bgSubtle: '#1a1a1a',
 
-    // Foreground hierarchy
     fgPrimary: '#ffffff',
     fgSecondary: 'rgba(255, 255, 255, 0.8)',
     fgTertiary: 'rgba(255, 255, 255, 0.6)',
-    fgMuted: 'rgba(255, 255, 255, 0.4)',
+    fgMuted: 'rgba(255, 255, 255, 0.46)',
     fgSubtle: 'rgba(255, 255, 255, 0.2)',
 
-    // Borders
     borderDefault: 'rgba(255, 255, 255, 0.1)',
     borderEmphasis: 'rgba(255, 255, 255, 0.2)',
     borderStrong: 'rgba(255, 255, 255, 0.3)',
 
-    // Interactive states
     hover: 'rgba(255, 255, 255, 0.05)',
     active: 'rgba(255, 255, 255, 0.1)',
+    focus: 'rgba(255, 255, 255, 0.5)',
+    overlay: 'rgba(0, 0, 0, 0.5)',
+    overlayHeavy: 'rgba(0, 0, 0, 0.7)',
 
-    // Semantic
+    // Semantic feedback colors
     success: '#44aa44',
-    error: '#cc4444',
+    successMuted: 'rgba(68, 170, 68, 0.2)',
+    successBorder: 'rgba(68, 170, 68, 0.3)',
+    error: '#d44d4d',
+    errorMuted: 'rgba(212, 77, 77, 0.2)',
+    errorBorder: 'rgba(212, 77, 77, 0.3)',
     warning: '#aa8844',
-    info: '#4477aa',
+    warningMuted: 'rgba(170, 136, 68, 0.2)',
+    warningBorder: 'rgba(170, 136, 68, 0.3)',
+    info: '#5082b9',
+    infoMuted: 'rgba(80, 130, 185, 0.2)',
+    infoBorder: 'rgba(80, 130, 185, 0.3)',
 
-    // Grayscale (Maverick X)
+    // Compatibility palettes used by older Webflow components.
     gray: {
       50: '#ebebeb',
       75: '#adadad',
@@ -53,7 +82,6 @@ export const tokens = {
       500: '#212121',
     },
 
-    // White scale (Maverick X)
     white: {
       50: '#fdfdfd',
       75: '#f5f5f5',
@@ -65,35 +93,11 @@ export const tokens = {
     },
   },
 
-  // ===========================================
-  // Brand Accent Colors
-  // ===========================================
-  brand: {
-    default: {
-      primary: '#3B82F6',
-      light: '#60a5fa',
-      dark: '#2563eb',
-    },
-    lithx: {
-      primary: '#00C2A8',
-      light: '#33D1BC',
-      dark: '#00917E',
-    },
-    petrox: {
-      primary: '#FF7A00',
-      light: '#FF9433',
-      dark: '#E66900',
-    },
-    dme: {
-      primary: '#06B6D4',
-      light: '#22D3EE',
-      dark: '#0891B2',
-    },
-  },
+  // Legacy accent colors. New Canon components should prefer semantic colors.
+  accents: accentTokens,
+  brand: accentTokens,
 
-  // ===========================================
-  // Spacing - Golden Ratio (φ = 1.618)
-  // ===========================================
+  // Canon spacing scale
   spacing: {
     xs: '0.5rem',      // 8px
     sm: '1rem',        // 16px
@@ -103,9 +107,7 @@ export const tokens = {
     '2xl': '6.854rem', // 110px
   },
 
-  // ===========================================
-  // Typography
-  // ===========================================
+  // Canon typography
   typography: {
     fontFamily: {
       sans: 'Inter, system-ui, -apple-system, sans-serif',
@@ -140,9 +142,7 @@ export const tokens = {
     },
   },
 
-  // ===========================================
-  // Border Radius
-  // ===========================================
+  // Canon radius tokens
   radii: {
     none: '0',
     sm: '6px',
@@ -153,9 +153,7 @@ export const tokens = {
     full: '9999px',
   },
 
-  // ===========================================
-  // Shadows
-  // ===========================================
+  // Shadow scale used in current Webflow components
   shadows: {
     sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
     md: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
@@ -165,9 +163,7 @@ export const tokens = {
     glass: '0 8px 32px rgba(0, 0, 0, 0.12)',
   },
 
-  // ===========================================
-  // Animation
-  // ===========================================
+  // Motion tokens
   animation: {
     duration: {
       micro: '200ms',
@@ -182,9 +178,7 @@ export const tokens = {
     },
   },
 
-  // ===========================================
-  // Breakpoints (for reference)
-  // ===========================================
+  // Breakpoints for responsive inline styles
   breakpoints: {
     sm: '480px',
     md: '768px',
@@ -198,7 +192,7 @@ export const tokens = {
  * Get brand colors for a variant
  */
 export function getBrandColors(variant: BrandVariant = 'default') {
-  return tokens.brand[variant];
+  return tokens.accents[variant];
 }
 
 /**

@@ -1,5 +1,5 @@
 {
-  "name": "Maverick X Components",
+  "name": "CREATE SOMETHING Canon Components",
   "components": "./src/**/*.webflow.@(js|jsx|mjs|ts|tsx)",
   "telemetry": {
     "global": {
@@ -12,8 +12,8 @@
     "components": [
       "**/*.webflow.@(js|jsx|mjs|ts|tsx)"
     ],
-    "name": "Maverick X Components",
-    "description": "Maverick X design system components - heroes, cards, forms, stats displays, and layout elements with LithX/PetroX/DME brand variants.",
-    "id": "maverick-x-components"
+    "name": "CREATE SOMETHING Canon Components",
+    "description": "Canon-first Webflow component library for CREATE SOMETHING. Current library includes foundational UI, layout, and section components while Canon parity work continues.",
+    "id": "create-something-canon-components"
   }
 }

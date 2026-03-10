@@ -1,6 +1,11 @@
-# Maverick X Webflow Components
+# CREATE SOMETHING Canon Webflow Components
 
-React component library for Webflow, adapted from the Maverick X design system.
+React component library for Webflow positioned around Canon parity.
+
+The package currently contains a mix of:
+- Canon-parity exports already present in Webflow
+- compatibility components carried forward from earlier Maverick-derived work
+- section-level components that are useful in Webflow but are not Canon parity targets
 
 ## Installation
 
@@ -17,7 +22,54 @@ npx webflow library share
 
 This will prompt for Workspace authentication and upload the component library.
 
-## Components
+## Parity Status
+
+Current Canon parity by exported component name:
+
+| Canon component | Status | Notes |
+|---|---|---|
+| `Button` | `ported` | Present in the Webflow library |
+| `Footer` | `ported with cleanup remaining` | Present, but implementation still carries older branding assumptions |
+| `Select` | `ported` | Present in the Webflow library |
+| `Navigation` | `ported` | Canon navigation now exists separately from legacy `Header` |
+| `Heading` | `ported` | Canon fluid heading scales are available in Webflow |
+| `Card` | `ported` | Canon surface card is separate from legacy `GlassCard` |
+| `TextField` | `ported` | Canon text input now exists separately from legacy `Field` |
+| `TextArea` | `ported` | Canon multiline field now exists separately from legacy `Field` |
+| `Tabs` | `ported` | Canon tabs primitive now exists separately from `Solutions` |
+| `Dialog` | `ported` | Canon dialog is now available for Webflow preview composition |
+
+Phase 1 delivered:
+- package metadata and docs reframed around Canon
+- token layer normalized toward Canon semantics
+- shared primitives added for new React/Webflow ports
+- `Navigation`, `Heading`, `Card`, `TextField`, `TextArea`, `Tabs`, and `Dialog` shipped
+
+Legacy or non-Canon surfaces currently in the library:
+- `GlassCard`
+- `IconCard`
+- `Field`
+- `StatsDisplay`
+- `HeroSection`
+- `KineticHero`
+- `ProductShowcase`
+- `Solutions`
+- `ProcessSteps`
+- `IconCardGrid`
+- `Header`
+
+Canon exports now available in the Webflow package:
+- `Heading`
+- `Card`
+- `TextField`
+- `TextArea`
+- `Tabs`
+- `Dialog`
+- `Navigation`
+
+## Current Components
+
+The current package contains both Canon exports and compatibility exports. The lists below are grouped by what is already present in the Webflow library, not by parity status.
 
 ### Core (Group: Core)
 
@@ -62,14 +114,16 @@ This will prompt for Workspace authentication and upload the component library.
 | **Header** | Site navigation | `logo`, `navItems` (JSON), `ctaText` |
 | **Footer** | Site footer | `logo`, `columns` (JSON), `socialLinks` (JSON) |
 
-## Brand Variants
+## Accent Variants
 
-All components support brand color variants:
+Some current components still expose older accent variants from the pre-Canon library:
 
-- `default` - Blue (#3B82F6)
-- `lithx` - Teal (#00C2A8) - Mining
-- `petrox` - Orange (#FF7A00) - Oil & Gas
-- `dme` - Cyan (#06B6D4) - Water Treatment
+- `default`
+- `lithx`
+- `petrox`
+- `dme`
+
+These remain for compatibility while the package is moved toward Canon-first component parity.
 
 ## JSON Data Formats
 
@@ -177,45 +231,44 @@ Platforms: `linkedin`, `twitter`, `youtube`, `instagram`, `facebook`
 
 ## Design Tokens
 
-The library uses Canon design tokens for consistent styling:
+The library uses a token layer that is being normalized toward Canon semantics:
 
 - **Colors**: Dark theme with semantic foreground/background hierarchy
 - **Spacing**: Golden ratio (φ = 1.618) based spacing scale
 - **Typography**: Inter and Inter Tight font families
-- **Border Radius**: `0` for all structural elements (Maverick X aesthetic)
+- **Border Radius**: current components often keep hard edges from earlier work; this is being normalized during Canon parity work
 - **Shadows**: Consistent shadow hierarchy
 - **Animation**: 200ms (micro), 300ms (standard), 500ms (complex)
 
-### Maverick X Design Principles
+### Positioning
 
-This library adheres to the Maverick X design system:
+This package should now be read as:
 
-1. **No border radius** on structural elements (buttons, cards, inputs, containers)
-2. **Shine effect** on Button hover (gradient sweep animation)
-3. **Light/Dark modes** for Button (`light` prop for use on dark backgrounds)
-4. **Brand color variants** via `variant` prop across all components
-5. **Industrial color palette** - Grayscale (g-50 to g-500) and White scale (w-50 to w-500)
-6. **Product brands** - lithx (teal), petrox (orange), dme (cyan)
+1. A Webflow delivery surface for Canon-aligned components
+2. A compatibility home for earlier Webflow React components that are still useful
+3. A package in transition until Canon primitive parity is complete
 
 ### Webflow-Specific Adaptations
 
-These adaptations preserve Maverick X design while accommodating Webflow constraints:
+These adaptations reflect current Webflow implementation constraints:
 
 | Original | Webflow Adaptation | Reason |
 |----------|-------------------|--------|
 | Tailwind classes | Inline `CSSProperties` | Webflow requires inline styles |
 | Framer Motion | CSS `@keyframes` | Framer Motion unavailable in Webflow |
 | No default data | Default demo data | Webflow Designer needs visible preview |
-| No class prefix | `mavx-` prefix | Prevents CSS collisions in Webflow |
+| Existing legacy class prefix | `mavx-` prefix in older components | Compatibility; will be reduced over time |
 | GSAP ScrollTrigger | Static (add Webflow Interactions) | GSAP unavailable; use native Interactions |
 
-### Logo Animation Custom Code
+### Legacy Header Note
 
-The original Maverick X site animates the logo between home and internal pages. To replicate this in Webflow, add this custom code to your site's `<head>`:
+The current `Header` component is a legacy compatibility surface rather than Canon `Navigation`. It still carries older logo animation behavior and naming assumptions.
+
+If you need that behavior during the transition, add this custom code to your site's `<head>`:
 
 ```html
 <script>
-// Maverick X Logo Animation
+// Legacy header logo animation
 // Tracks navigation between home and internal pages
 (function() {
   const isHome = window.location.pathname === '/' || window.location.pathname === '/home';
@@ -235,7 +288,7 @@ The original Maverick X site animates the logo between home and internal pages. 
 </script>
 ```
 
-Then in your Header component settings:
+Then in the current `Header` component settings:
 - **Home page**: `logoExpanded: true`, `animateLogo: true`
 - **Internal pages**: `logoExpanded: false`, `animateLogo: false`
 
@@ -271,6 +324,6 @@ Each component has:
 - `ComponentName.tsx` - React implementation
 - `ComponentName.webflow.tsx` - Webflow declaration
 
-## Credits
+## Status
 
-Adapted from the Maverick X Next.js application by CREATE SOMETHING.
+This package is usable today, but it should not yet be described as full Canon parity. The current milestone is to complete the Phase 1 Canon foundation and then retire or relabel the remaining non-Canon surfaces more explicitly.

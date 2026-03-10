@@ -1,7 +1,7 @@
 {
   "name": "@create-something/webflow-components",
   "version": "0.1.0",
-  "description": "Webflow code components library adapted from Maverick X",
+  "description": "Canon-first React code components library for Webflow",
   "private": true,
   "type": "module",
   "main": "src/index.ts",

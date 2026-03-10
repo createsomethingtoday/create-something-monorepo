@@ -1,29 +1,61 @@
 /**
- * Maverick X Webflow Components
+ * CREATE SOMETHING Canon Webflow Components
  *
- * A library of React components for Webflow, adapted from the Maverick X design system.
+ * React components for Webflow with Canon-first positioning. Some existing
+ * exports remain compatibility surfaces while Canon parity work is in progress.
  */
 
 // Tokens
 export * from './styles/tokens';
+export * from './components/primitives';
 
 // Core Components
 export { Button } from './components/core/Button';
 export type { ButtonProps } from './components/core/Button';
 
-// Card Components
+// Typography Components
+export { Heading } from './components/typography/Heading';
+export type {
+  HeadingAlign,
+  HeadingLevel,
+  HeadingProps,
+  HeadingScale,
+} from './components/typography/Heading';
+
+// Canon Surfaces
+export { Card } from './components/surfaces/Card';
+export type { CardPadding, CardProps, CardRadius, CardVariant } from './components/surfaces/Card';
+
+// Legacy compatibility card components
 export { GlassCard } from './components/cards/GlassCard';
 export type { GlassCardProps, GlassVariant } from './components/cards/GlassCard';
 
 export { IconCard } from './components/cards/IconCard';
 export type { IconCardProps, IconCardVariant } from './components/cards/IconCard';
 
-// Form Components
+// Canon Form Components
+export { TextField } from './components/form/TextField';
+export type { TextFieldProps, TextFieldSize, TextFieldType } from './components/form/TextField';
+
+export { TextArea } from './components/form/TextArea';
+export type { TextAreaProps } from './components/form/TextArea';
+
+// Legacy compatibility form components
 export { Field } from './components/forms/Field';
 export type { FieldProps } from './components/forms/Field';
 
 export { Select } from './components/forms/Select';
 export type { SelectProps, SelectItem } from './components/forms/Select';
+
+// Canon Navigation + Feedback Components
+export { Tabs } from './components/navigation/Tabs';
+export type { TabItem, TabsProps, TabsSize, TabsVariant } from './components/navigation/Tabs';
+
+export { Navigation } from './components/navigation/Navigation';
+export type { NavigationLink, NavigationProps } from './components/navigation/Navigation';
+
+export { Dialog } from './components/feedback/Dialog';
+export type { DialogProps, DialogSize } from './components/feedback/Dialog';
 
 // Data Components
 export { StatsDisplay } from './components/data/StatsDisplay';
@@ -48,9 +80,10 @@ export type { ProcessStepsProps, ProcessStep } from './components/sections/Proce
 export { IconCardGrid } from './components/sections/IconCardGrid';
 export type { IconCardGridProps, IconCardGridItem } from './components/sections/IconCardGrid';
 
-// Layout Components
+// Legacy compatibility layout components
 export { Header } from './components/layout/Header';
 export type { HeaderProps, NavItem } from './components/layout/Header';
 
+// Canon parity component with implementation cleanup still pending
 export { Footer } from './components/layout/Footer';
 export type { FooterProps, FooterColumn, SocialLink } from './components/layout/Footer';
