@@ -76,6 +76,16 @@
       slides: 17,
       duration: '20 min',
       tags: ['Philosophy', 'Product', 'Heidegger', 'Claude Code', 'Cloudflare']
+    },
+    {
+      slug: 'hub',
+      title: 'HUB',
+      subtitle: 'The Governed MCP Surface',
+      description:
+        'Explain how CREATE SOMETHING Hub governs discovery, execution, and tenant-aware tool exposure between the user, Codex, and downstream MCPs.',
+      slides: 12,
+      duration: '10 min',
+      tags: ['Hub', 'MCP', 'Codex', 'Policy']
     }
   ];
 </script>

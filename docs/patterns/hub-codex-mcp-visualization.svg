@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="980" viewBox="0 0 1600 980" role="img" aria-labelledby="title desc">
+  <title id="title">CREATE SOMETHING Hub in Codex visualization</title>
+  <desc id="desc">Monochrome CREATE SOMETHING diagram showing the MCP user, Codex host and agent, the CREATE SOMETHING Hub governance layer, and downstream MCP surfaces controlled by policy artifacts.</desc>
+  <defs>
+    <linearGradient id="panelGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#171717" />
+      <stop offset="100%" stop-color="#0a0a0a" />
+    </linearGradient>
+    <linearGradient id="hubGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#262626" />
+      <stop offset="50%" stop-color="#171717" />
+      <stop offset="100%" stop-color="#262626" />
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#000000" flood-opacity="0.45" />
+    </filter>
+    <style>
+      .bg { fill: #000000; }
+      .frame { fill: none; stroke: #262626; stroke-width: 1.5; }
+      .panel { fill: url(#panelGlow); stroke: #404040; stroke-width: 1.5; }
+      .hub { fill: url(#hubGlow); stroke: #ffffff; stroke-width: 1.5; }
+      .card { fill: #0a0a0a; stroke: #404040; stroke-width: 1.25; }
+      .card-soft { fill: #111111; stroke: #262626; stroke-width: 1; }
+      .rule { stroke: #525252; stroke-width: 1; }
+      .flow { stroke: #d4d4d4; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .flow-muted { stroke: #737373; stroke-width: 1.5; fill: none; marker-end: url(#arrowMuted); }
+      .guard { stroke: #a3a3a3; stroke-width: 1.5; fill: none; stroke-dasharray: 8 8; }
+      .label { fill: #ffffff; font-family: "Stack Sans Notch", "Helvetica Neue", Arial, sans-serif; }
+      .mono { fill: #a3a3a3; font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace; }
+      .title { font-size: 56px; font-weight: 600; letter-spacing: 1.5px; }
+      .subtitle { font-size: 18px; font-weight: 400; letter-spacing: 3px; text-transform: uppercase; }
+      .section { font-size: 22px; font-weight: 600; letter-spacing: 1.5px; }
+      .body { font-size: 18px; font-weight: 400; }
+      .small { font-size: 15px; font-weight: 400; }
+      .micro { font-size: 13px; font-weight: 400; letter-spacing: 1.2px; text-transform: uppercase; }
+      .line { stroke: #171717; stroke-width: 1; }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#d4d4d4" />
+    </marker>
+    <marker id="arrowMuted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#737373" />
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1600" height="980" />
+  <rect class="frame" x="28" y="28" width="1544" height="924" rx="26" />
+
+  <text class="label subtitle" x="72" y="94">CREATE SOMETHING // HOUSE SURFACE</text>
+  <text class="label title" x="72" y="154">Hub, Codex, and the MCP User</text>
+  <text class="mono body" x="74" y="192">Policy governs exposure. Hub governs execution. Commodity connectors stay behind the surface.</text>
+
+  <line class="line" x1="72" y1="232" x2="1528" y2="232" />
+
+  <rect class="panel" x="72" y="282" width="300" height="510" rx="28" filter="url(#softShadow)" />
+  <text class="label section" x="104" y="332">MCP User</text>
+  <text class="mono micro" x="104" y="358">USER-CONTROLLED POLICY ENTRY</text>
+
+  <rect class="card-soft" x="104" y="390" width="236" height="88" rx="16" />
+  <text class="label body" x="124" y="425">Chooses the task</text>
+  <text class="mono small" x="124" y="452">“Find, classify, execute, review.”</text>
+
+  <rect class="card-soft" x="104" y="500" width="236" height="100" rx="16" />
+  <text class="label body" x="124" y="535">Selects constraints</text>
+  <text class="mono small" x="124" y="562">Read-only, write-capable, or</text>
+  <text class="mono small" x="124" y="584">review-required behavior.</text>
+
+  <rect class="card-soft" x="104" y="622" width="236" height="118" rx="16" />
+  <text class="label body" x="124" y="657">Sees the house surface</text>
+  <text class="mono small" x="124" y="684">Tenant context, reason codes,</text>
+  <text class="mono small" x="124" y="706">approved recovery paths.</text>
+
+  <rect class="panel" x="436" y="282" width="388" height="510" rx="28" filter="url(#softShadow)" />
+  <text class="label section" x="468" y="332">Codex</text>
+  <text class="mono micro" x="468" y="358">CLIENT + MODEL-CONTROLLED TOOL USE</text>
+
+  <rect class="card" x="468" y="392" width="324" height="116" rx="18" />
+  <text class="label body" x="492" y="428">Codex host</text>
+  <text class="mono small" x="492" y="455">Maintains MCP session, lists tools,</text>
+  <text class="mono small" x="492" y="477">reads resources, forwards calls.</text>
+
+  <rect class="card" x="468" y="532" width="324" height="132" rx="18" />
+  <text class="label body" x="492" y="568">Codex agent</text>
+  <text class="mono small" x="492" y="595">Decides when to search, describe,</text>
+  <text class="mono small" x="492" y="617">and invoke Hub proxy tools.</text>
+  <text class="mono small" x="492" y="639">Operates inside selected policy.</text>
+
+  <rect class="card-soft" x="468" y="688" width="324" height="72" rx="18" />
+  <text class="mono small" x="492" y="730">MCP primitives align here: resources, tools, prompts.</text>
+
+  <rect class="hub" x="888" y="268" width="640" height="540" rx="34" filter="url(#softShadow)" />
+  <text class="label section" x="924" y="324">CREATE SOMETHING Hub</text>
+  <text class="mono micro" x="924" y="350">AUTOMATION LAYER // GOVERNED BROKER + HOUSE MCP SURFACE</text>
+
+  <rect class="card" x="924" y="388" width="268" height="126" rx="18" />
+  <text class="label body" x="948" y="424">Discovery + exposure</text>
+  <text class="mono small" x="948" y="451">`hub_search_proxy_tools`</text>
+  <text class="mono small" x="948" y="473">Tenant filters by server, tags,</text>
+  <text class="mono small" x="948" y="495">tool prefixes, OAuth state.</text>
+
+  <rect class="card" x="1218" y="388" width="274" height="126" rx="18" />
+  <text class="label body" x="1242" y="424">Execution governance</text>
+  <text class="mono small" x="1242" y="451">actor context → route class → authz</text>
+  <text class="mono small" x="1242" y="473">quota / rate-limit → retry → trace</text>
+
+  <rect class="card" x="924" y="538" width="568" height="114" rx="18" />
+  <text class="label body" x="948" y="574">Management surface</text>
+  <text class="mono small" x="948" y="601">Registry, state, routing, discovery packs, policy status, refresh, trace lookup.</text>
+  <text class="mono small" x="948" y="623">One gateway in Codex instead of a flat list of many MCP servers.</text>
+
+  <rect class="card-soft" x="924" y="678" width="568" height="94" rx="18" />
+  <text class="mono small" x="948" y="715">House rule: provider plumbing stays behind the CREATE SOMETHING surface.</text>
+  <text class="mono small" x="948" y="737">The user sees a governed route, not raw connector sprawl.</text>
+
+  <rect class="panel" x="72" y="830" width="1456" height="96" rx="24" />
+  <text class="label section" x="104" y="878">Downstream MCP and policy substrate</text>
+  <text class="mono body" x="104" y="906">Registry + routing + state + policy artifacts decide what exists, what is visible, and what is allowed to execute.</text>
+
+  <rect class="card-soft" x="964" y="846" width="192" height="58" rx="14" />
+  <text class="mono small" x="989" y="881">Registry / bundles</text>
+  <rect class="card-soft" x="1176" y="846" width="156" height="58" rx="14" />
+  <text class="mono small" x="1204" y="881">Tenant routing</text>
+  <rect class="card-soft" x="1350" y="846" width="146" height="58" rx="14" />
+  <text class="mono small" x="1378" y="881">Policy artifacts</text>
+
+  <path class="flow" d="M 340 552 C 386 552, 408 552, 456 552" />
+  <path class="flow" d="M 792 598 C 846 598, 858 598, 916 598" />
+  <path class="flow-muted" d="M 1058 652 C 1058 742, 1058 770, 1058 844" />
+  <path class="flow-muted" d="M 1288 652 C 1288 742, 1288 770, 1288 844" />
+  <path class="flow-muted" d="M 1422 652 C 1422 742, 1422 770, 1422 844" />
+
+  <path class="guard" d="M 904 372 L 1506 372" />
+  <text class="mono micro" x="926" y="366">POLICY GATES BEFORE INVENTORY AND BEFORE EXECUTION</text>
+
+  <path class="guard" d="M 1210 520 L 1210 786" />
+  <text class="mono micro" transform="rotate(-90 1230 738)" x="1230" y="738">FAIL CLOSED ON MISSING CONTEXT</text>
+
+  <text class="mono micro" x="1120" y="960">Derived from `packages/cs-mcp-hub` + `docs/policies/v1` + Hub governance docs</text>
+</svg>

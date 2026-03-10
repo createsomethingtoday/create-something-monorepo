@@ -38,6 +38,10 @@ const presentations: Record<string, { title: string; subtitle: string }> = {
 		title: 'WORKWAY',
 		subtitle: 'Workflow Automation for Developers'
 	},
+	hub: {
+		title: 'HUB',
+		subtitle: 'The governed MCP surface'
+	},
 	'developer-onboarding': {
 		title: 'Developer Onboarding',
 		subtitle: 'WORKWAY Platform'
