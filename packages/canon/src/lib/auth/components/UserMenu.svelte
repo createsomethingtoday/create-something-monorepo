@@ -198,10 +198,23 @@
 		right: 0;
 		min-width: 220px;
 		border-radius: var(--radius-lg);
-		box-shadow: var(--shadow-lg);
+		background-color: var(--glass-bg-medium);
+		backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+		-webkit-backdrop-filter: blur(var(--glass-blur-lg)) var(--glass-saturate-lg);
+		border: 1px solid var(--glass-border-medium);
+		box-shadow: var(--glass-shadow-md);
 		padding: var(--space-xs);
 		z-index: 50;
+		overflow: hidden;
 		animation: fadeIn var(--duration-micro) var(--ease-standard);
+	}
+
+	.dropdown::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background: var(--liquid-glass-highlight-subtle);
+		pointer-events: none;
 	}
 
 	@keyframes fadeIn {
@@ -216,6 +229,8 @@
 	}
 
 	.user-info {
+		position: relative;
+		z-index: 1;
 		padding: var(--space-sm);
 		display: flex;
 		flex-direction: column;
@@ -241,12 +256,16 @@
 	}
 
 	.divider {
+		position: relative;
+		z-index: 1;
 		height: 1px;
-		background: var(--color-border-default);
+		background: var(--glass-border-light);
 		margin: var(--space-xs) 0;
 	}
 
 	.menu-item {
+		position: relative;
+		z-index: 1;
 		display: flex;
 		align-items: center;
 		gap: var(--space-sm);
@@ -278,5 +297,18 @@
 
 	.menu-item.logout:hover {
 		background: var(--color-error-muted);
+	}
+
+	@media (prefers-reduced-transparency: reduce) {
+		.dropdown {
+			backdrop-filter: none;
+			-webkit-backdrop-filter: none;
+			background-color: var(--color-bg-surface);
+			border-color: var(--color-border-emphasis);
+		}
+
+		.dropdown::before {
+			display: none;
+		}
 	}
 </style>
