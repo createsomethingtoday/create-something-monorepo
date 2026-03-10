@@ -5,6 +5,7 @@
 	"version": "1.0.0",
 	"type": "module",
 	"scripts": {
+		"prebuild": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package",
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
