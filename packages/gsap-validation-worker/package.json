@@ -4,8 +4,8 @@
   "private": true,
   "description": "GSAP validation worker for Webflow template compliance checking",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
+    "dev": "node ../../scripts/run-wrangler.mjs dev",
+    "deploy": "node ../../scripts/run-wrangler.mjs deploy",
     "test:live": "node scripts/repro-live-worker.mjs"
   }
 }

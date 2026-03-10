@@ -3,10 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "db:migrate": "wrangler d1 migrations apply gmail-notion-mcp-runs --remote",
-    "db:migrate:local": "wrangler d1 migrations apply gmail-notion-mcp-runs --local"
+    "dev": "node ../../../scripts/run-wrangler.mjs dev",
+    "deploy": "node ../../../scripts/run-wrangler.mjs deploy",
+    "db:migrate": "node ../../../scripts/run-wrangler.mjs d1 migrations apply gmail-notion-mcp-runs --remote",
+    "db:migrate:local": "node ../../../scripts/run-wrangler.mjs d1 migrations apply gmail-notion-mcp-runs --local"
   },
   "dependencies": {
     "@create-something/composio-bridge": "workspace:*",

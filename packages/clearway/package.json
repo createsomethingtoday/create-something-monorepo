@@ -11,10 +11,10 @@
     "test:watch": "vitest",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
-    "deploy": "pnpm build && pnpm build:embed && wrangler pages deploy .svelte-kit/cloudflare --project-name=clearway",
-    "db:migrate": "wrangler d1 migrations apply clearway-db",
-    "db:migrate:local": "wrangler d1 migrations apply clearway-db --local",
-    "types": "wrangler types"
+    "deploy": "pnpm build && pnpm build:embed && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=clearway",
+    "db:migrate": "node ../../scripts/run-wrangler.mjs d1 migrations apply clearway-db",
+    "db:migrate:local": "node ../../scripts/run-wrangler.mjs d1 migrations apply clearway-db --local",
+    "types": "node ../../scripts/run-wrangler.mjs types"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241127.0",

@@ -11,11 +11,11 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
-		"deploy": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=notion-agent",
-		"deploy:preview": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=notion-agent --branch=preview",
-		"cf-typegen": "wrangler types",
-		"db:migrate": "wrangler d1 migrations apply notion-agent-db --local",
-		"db:migrate:prod": "wrangler d1 migrations apply notion-agent-db"
+		"deploy": "pnpm build && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=notion-agent",
+		"deploy:preview": "pnpm build && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=notion-agent --branch=preview",
+		"cf-typegen": "node ../../scripts/run-wrangler.mjs types",
+		"db:migrate": "node ../../scripts/run-wrangler.mjs d1 migrations apply notion-agent-db --local",
+		"db:migrate:prod": "node ../../scripts/run-wrangler.mjs d1 migrations apply notion-agent-db"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20251128.0",

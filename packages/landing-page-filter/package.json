@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler pages dev public --port 8788",
-    "deploy": "wrangler pages deploy public --project-name=landing-page-filter",
+    "dev": "node ../../scripts/run-wrangler.mjs pages dev public --port 8788",
+    "deploy": "node ../../scripts/run-wrangler.mjs pages deploy public --project-name=landing-page-filter",
     "build:scripts": "node scripts/build.js all",
     "build:analytics": "node scripts/build.js analytics",
     "build:free": "node scripts/build.js free",

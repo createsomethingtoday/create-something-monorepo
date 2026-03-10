@@ -6,10 +6,10 @@
   "description": "Run Moltbot personal AI assistant in a Cloudflare Sandbox",
   "scripts": {
     "build": "vite build",
-    "deploy": "npm run build && wrangler deploy",
+    "deploy": "npm run build && node ../../scripts/run-wrangler.mjs deploy",
     "dev": "vite dev",
-    "start": "wrangler dev",
-    "types": "wrangler types",
+    "start": "node ../../scripts/run-wrangler.mjs dev",
+    "types": "node ../../scripts/run-wrangler.mjs types",
     "lint": "pnpm run typecheck",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

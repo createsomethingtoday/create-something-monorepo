@@ -9,10 +9,10 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
-    "types": "wrangler types",
-    "db:migrate": "wrangler d1 migrations apply maverick-db",
-    "db:migrate:local": "wrangler d1 migrations apply maverick-db --local",
-    "deploy": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=maverick-admin"
+    "types": "node ../../scripts/run-wrangler.mjs types",
+    "db:migrate": "node ../../scripts/run-wrangler.mjs d1 migrations apply maverick-db",
+    "db:migrate:local": "node ../../scripts/run-wrangler.mjs d1 migrations apply maverick-db --local",
+    "deploy": "pnpm build && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=maverick-admin"
   },
   "devDependencies": {
     "@sveltejs/adapter-cloudflare": "^4.7.2",

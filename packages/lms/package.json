@@ -10,8 +10,8 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
-    "deploy": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=createsomething-lms",
-    "deploy:preview": "pnpm build && wrangler pages deploy .svelte-kit/cloudflare --project-name=createsomething-lms --branch=preview"
+    "deploy": "pnpm build && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=createsomething-lms",
+    "deploy:preview": "pnpm build && node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=createsomething-lms --branch=preview"
   },
   "dependencies": {
     "@create-something/canon": "workspace:*",

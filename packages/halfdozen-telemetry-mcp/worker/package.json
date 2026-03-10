@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "dev": "node ../../../scripts/run-wrangler.mjs dev",
+    "deploy": "node ../../../scripts/run-wrangler.mjs deploy"
   },
   "dependencies": {
     "@create-something/mcp-core": "workspace:*",

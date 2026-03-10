@@ -9,9 +9,9 @@
     "deploy:orchestrator": "pnpm --filter=@create-something/webflow-review-orchestrator deploy",
     "deploy:queue": "pnpm --filter=@create-something/webflow-review-queue-consumer deploy",
     "deploy:all": "pnpm deploy:orchestrator && pnpm deploy:queue",
-    "db:migrate": "wrangler d1 migrations apply webflow-review-db",
-    "db:migrate:local": "wrangler d1 migrations apply webflow-review-db --local",
-    "db:query": "wrangler d1 execute webflow-review-db --command",
+    "db:migrate": "node ../../scripts/run-wrangler.mjs d1 migrations apply webflow-review-db",
+    "db:migrate:local": "node ../../scripts/run-wrangler.mjs d1 migrations apply webflow-review-db --local",
+    "db:query": "node ../../scripts/run-wrangler.mjs d1 execute webflow-review-db --command",
     "setup": "node scripts/setup.js"
   },
   "keywords": [

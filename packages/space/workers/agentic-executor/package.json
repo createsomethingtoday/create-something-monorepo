@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "tail": "wrangler tail",
-    "types": "wrangler types"
+    "dev": "node ../../../../scripts/run-wrangler.mjs dev",
+    "deploy": "node ../../../../scripts/run-wrangler.mjs deploy",
+    "tail": "node ../../../../scripts/run-wrangler.mjs tail",
+    "types": "node ../../../../scripts/run-wrangler.mjs types"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",

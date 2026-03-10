@@ -5,8 +5,8 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "wrangler dev --config wrangler.toml",
-    "deploy": "wrangler deploy --config wrangler.toml"
+    "dev": "node ../../../../../scripts/run-wrangler.mjs dev --config wrangler.toml",
+    "deploy": "node ../../../../../scripts/run-wrangler.mjs deploy --config wrangler.toml"
   },
   "keywords": [
     "mcp",
