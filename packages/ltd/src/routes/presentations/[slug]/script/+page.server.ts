@@ -42,6 +42,10 @@ const presentations: Record<string, { title: string; subtitle: string }> = {
 		title: 'HUB',
 		subtitle: 'The governed MCP surface'
 	},
+	'abundance-system': {
+		title: 'ABUNDANCE',
+		subtitle: 'The nurse staffing system, explained simply'
+	},
 	'developer-onboarding': {
 		title: 'Developer Onboarding',
 		subtitle: 'WORKWAY Platform'

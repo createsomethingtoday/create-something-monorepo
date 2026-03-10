@@ -86,6 +86,16 @@
       slides: 12,
       duration: '10 min',
       tags: ['Hub', 'MCP', 'Codex', 'Policy']
+    },
+    {
+      slug: 'abundance-system',
+      title: 'ABUNDANCE',
+      subtitle: 'Nurse Staffing, Explained Simply',
+      description:
+        'A client-facing walkthrough of how Abundance captures profile data, ranks matches, and uses policy controls to keep nurse staffing workflows legible and safe.',
+      slides: 12,
+      duration: '15 min',
+      tags: ['Healthcare', 'Matching', 'Concierge', 'Policy']
     }
   ];
 </script>
