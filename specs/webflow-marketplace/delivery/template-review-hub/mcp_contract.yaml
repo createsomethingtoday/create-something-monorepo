@@ -9,9 +9,12 @@ client:
   workflow_owner: "Marketplace review lead"
 
 scope:
-  objective: "Reduce objective checklist time and improve consistency in template review by delivering one governed MCP Hub lane for reviewers."
-  workflow_boundary: "Starts when a template submission enters the review queue and ends when the reviewer validates the evidence, finalizes feedback, and issues the decision."
+  objective: "Reduce objective checklist time and improve consistency in template review by delivering a governed Phase A MCP Hub lane for reviewers."
+  workflow_boundary: "Phase A starts when a template submission enters the review queue and ends when the reviewer validates template-review context and completes any required official state change manually outside the Hub."
   out_of_scope:
+    - "Preview and published-site analysis through Hub-connected analysis MCPs until those servers are enabled in the live reviewer Hub"
+    - "Originality or plagiarism analysis through Hub-connected analysis MCPs until those servers are enabled in the live reviewer Hub"
+    - "Approval-gated write execution from reviewer Hubs during Phase A"
     - "Subjective design judgment and final taste decisions"
     - "Autonomous creator-facing communication"
     - "Direct control-plane mutation by reviewers"
@@ -30,13 +33,13 @@ systems:
       notes: "House entrypoint, broker, and governance surface for reviewer workflows."
     - name: "webflow-template-review-mcp"
       role: "workflow"
-      notes: "Queue, asset, version, and release operations for template review."
+      notes: "Queue, asset, version, and release operations for template review. This is the only confirmed live reviewer-Hub downstream in Phase A."
     - name: "webflow-site-analyzer-mcp"
       role: "analysis"
-      notes: "Preview/published-site analysis, checklist scoring, and unified template review runs."
-    - name: "webflow-mcp"
+      notes: "Planned Phase B analysis server. Not yet required for authoritative Phase A rollout."
+    - name: "webflow-local"
       role: "analysis"
-      notes: "Plagiarism detection and framework analysis."
+      notes: "Planned Phase B analysis server backing webflow-local runtime tools. Not yet required for authoritative Phase A rollout."
     - name: "Composio"
       role: "integration"
       notes: "Optional connectivity and auth plumbing behind the house Hub. Not a reviewer-facing surface in this pilot."
@@ -63,21 +66,6 @@ resources:
     freshness_requirement: "near_realtime"
     access: "read"
     pii: false
-  - uri: "webflow-preview://submissions/{version_id}"
-    name: "preview_site"
-    description: "Preview URL and related extraction context for Designer-focused analysis."
-    source_system: "Webflow preview and published sites"
-    freshness_requirement: "realtime"
-    access: "read"
-    pii: false
-  - uri: "webflow-site://published/{asset_id}"
-    name: "published_site"
-    description: "Published site URL and related evidence used for live-site review checks."
-    source_system: "Webflow preview and published sites"
-    freshness_requirement: "realtime"
-    access: "read"
-    pii: false
-
 tools:
   - name: "template_review_list_queue"
     description: "List template submissions ready for review."
@@ -116,112 +104,36 @@ tools:
     idempotency_expectation: "Pure read operation."
     fallback_behavior: "Open the asset directly in Airtable if Hub read path fails."
 
-  - name: "run_template_review"
-    description: "Run the unified template review across preview and published URLs and normalize findings into pass, fail, partial, and manual rows."
-    action_type: "read"
+  - name: "phase_b_review_analysis"
+    description: "Deferred Phase B capability for preview/published-site analysis and originality checks after the analysis servers are enabled in the live reviewer Hub."
+    action_type: "deferred"
     systems_touched:
-      - "Webflow preview and published sites"
       - "webflow-site-analyzer-mcp"
-    approval_mode: "auto_allow"
-    auth_scopes:
-      - "review.analysis.read"
+      - "webflow-local"
+    approval_mode: "not_available_in_phase_a"
     input_schema_summary:
-      required:
-        - "previewUrl"
-        - "publishedUrl"
-      optional:
-        - "timeout"
-        - "includeManual"
-        - "crawlMaxPages"
-        - "crawlMaxDepth"
-    output_contract:
-      success_shape: "Returns normalized checklist results, evidence, confidence, and fix hints."
-      error_shape: "Returns structured analysis or extraction failure with correlation id."
-    idempotency_expectation: "Pure read operation; may repeat analysis work."
-    fallback_behavior: "Use narrower analysis tools or manual review if unified run fails."
-
-  - name: "plagiarism_confidence"
-    description: "Estimate plagiarism probability or originality risk for a template pair or URL pair."
-    action_type: "read"
-    systems_touched:
-      - "webflow-mcp"
-    approval_mode: "auto_allow"
-    auth_scopes:
-      - "review.originality.read"
-    input_schema_summary:
-      required:
-        - "templateA"
-        - "templateB"
+      required: []
       optional: []
     output_contract:
-      success_shape: "Returns confidence estimate, evidence path, and supporting similarity context."
-      error_shape: "Returns structured comparison failure."
-    idempotency_expectation: "Pure read operation."
-    fallback_behavior: "Reviewer flags originality concern manually if tool path is unavailable."
+      success_shape: "N/A in Phase A."
+      error_shape: "N/A in Phase A."
+    idempotency_expectation: "N/A in Phase A."
+    fallback_behavior: "Reviewer performs analysis manually until Phase B is enabled."
 
-  - name: "template_review_request_changes"
-    description: "Update a version to changes requested and attach reviewer feedback."
-    action_type: "update"
+  - name: "phase_a_review_state_changes"
+    description: "Official review-state changes remain manual in Airtable during Phase A."
+    action_type: "manual"
     systems_touched:
       - "Airtable Marketplace Assets"
-    approval_mode: "approval_required"
-    auth_scopes:
-      - "review.version.write"
+    approval_mode: "manual_only_in_phase_a"
     input_schema_summary:
-      required:
-        - "version_id"
-        - "review_feedback"
-      optional:
-        - "review_status"
-        - "improvement_areas"
-    output_contract:
-      success_shape: "Returns updated version record with review feedback applied."
-      error_shape: "Returns validation, mapping, or Airtable update failure."
-    idempotency_expectation: "Repeat updates overwrite the same review fields."
-    fallback_behavior: "Reviewer completes the update directly in Airtable when write path is unavailable."
-
-  - name: "template_review_approve_version"
-    description: "Approve a version and update confirmed publishing metadata."
-    action_type: "update"
-    systems_touched:
-      - "Airtable Marketplace Assets"
-    approval_mode: "approval_required"
-    auth_scopes:
-      - "review.version.write"
-      - "review.release.write"
-    input_schema_summary:
-      required:
-        - "version_id"
-      optional:
-        - "release_date"
-        - "release_record_id"
-        - "mrp_id_overwrite"
-        - "publishing_checklist"
-    output_contract:
-      success_shape: "Returns updated approved version record."
-      error_shape: "Returns validation, mapping, or publishing failure."
-    idempotency_expectation: "Repeat approval attempts should preserve approved state without destructive side effects."
-    fallback_behavior: "Reviewer completes approval manually in Airtable and release workflow if needed."
-
-  - name: "template_review_reject_version"
-    description: "Reject a version with explicit reason and reviewer feedback."
-    action_type: "update"
-    systems_touched:
-      - "Airtable Marketplace Assets"
-    approval_mode: "approval_required"
-    auth_scopes:
-      - "review.version.write"
-    input_schema_summary:
-      required:
-        - "version_id"
-        - "reject_reason"
-        - "rejection_feedback"
+      required: []
       optional: []
     output_contract:
-      success_shape: "Returns updated rejected version record."
-      error_shape: "Returns validation, mapping, or update failure."
-    idempotency_expectation: "Repeat rejection attempts overwrite the same review fields."
-    fallback_behavior: "Reviewer records rejection manually in Airtable if write path is unavailable."
+      success_shape: "N/A in Phase A."
+      error_shape: "N/A in Phase A."
+    idempotency_expectation: "N/A in Phase A."
+    fallback_behavior: "Reviewer records request changes, approval, rejection, and publishing completion directly in Airtable."
 
 prompts:
   - name: "template_review_reviewer_mode"
@@ -231,10 +143,11 @@ prompts:
 auth:
   identity_source: "AUTH0"
   account_model: "per_user"
-  production_write_access: true
+  production_write_access: false
   auth_notes:
     - "Reviewers should authenticate through the house Hub surface rather than direct downstream MCP endpoints."
     - "Composio-backed auth may support selected connector plumbing behind the Hub but should not become the reviewer-facing delivery abstraction."
+    - "Phase A reviewer Hubs are read-only evidence lanes with manual Airtable fallback for official review-state changes."
 
 policy_integration:
   control_surface: "agent_contract.yaml"
@@ -280,3 +193,4 @@ acceptance:
     - "Manual fallback path verified"
     - "Reviewer playbook reviewed with pilot reviewers"
     - "Trace visibility confirmed for reads, writes, and escalations"
+    - "Phase B analysis servers enabled and verified before any contract expansion beyond Phase A"

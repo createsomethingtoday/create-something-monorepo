@@ -11,17 +11,25 @@ This delivery packages the current CREATE SOMETHING Webflow review work into one
 
 The Marketplace team should experience this as one governed reviewer workflow, not as several separate internal MCP projects.
 
+For the first reviewer rollout, that workflow should be delivered through **reviewer-specific Hub surfaces** rather than one shared write-capable Hub.
+
 The delivered lane combines:
 
 - queue and Airtable review context from `webflow-template-review-mcp`
+- reviewer-specific Hub policy records for the first five reviewers
+- manual Airtable fallback for official review-state changes during Phase A
+
+Planned but not authoritative for Phase A:
+
 - preview and published-site analysis from `webflow-site-analyzer-mcp`
-- plagiarism and framework checks from `webflow-mcp`
+- plagiarism and framework checks from `webflow-local`
 - policy-gated write actions through the Hub
 - reviewer-controlled feedback drafting and decision validation
 
 ## What the team gets
 
-- one reviewer lane in the MCP Hub
+- one reviewer workflow in the MCP Hub
+- five reviewer-specific Hub surfaces for the initial pilot cohort
 - a defined operator and reviewer workflow
 - policy boundaries for read, write, and blocked actions
 - pilot validation scenarios and fallback procedures
@@ -41,6 +49,7 @@ The delivery should be presented as:
 - an initial implementation
 - a reviewer alpha for template review
 - a governed pilot that proves adoption, trust, and operational usefulness
+- a reviewer-specific rollout that preserves attribution and narrows write risk
 
 It should not be presented as:
 
@@ -60,3 +69,4 @@ It should not be presented as:
 2. Prove the lane reduces time spent on objective checklist work.
 3. Keep all creator-facing decisions explicitly human-owned.
 4. Produce enough evidence to decide whether broader rollout is justified.
+5. Keep reviewer attribution and write-path scope narrow enough for a five-reviewer pilot.

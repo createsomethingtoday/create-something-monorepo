@@ -12,6 +12,8 @@ Use this session to align the Marketplace team on what is being delivered in the
 
 The delivery is a reviewer-facing Hub lane that packages the current Webflow review surfaces into one operational workflow for template review.
 
+For alpha, that workflow is delivered through reviewer-specific Hub surfaces for the first five reviewers rather than one shared write-capable reviewer Hub.
+
 Included in this delivery:
 
 - queue and asset context from `webflow-template-review-mcp`
@@ -19,6 +21,7 @@ Included in this delivery:
 - originality and plagiarism checks from `webflow-mcp`
 - policy-aware action boundaries through the `CREATE SOMETHING MCP Hub`
 - reviewer guidance, pilot runbook, and launch checks
+- reviewer-specific rollout controls for the pilot cohort
 
 Not included in this delivery:
 
@@ -88,6 +91,7 @@ Current limitations to call out:
 - write-path confidence depends on correct Airtable mappings
 - preview or published evidence gaps can force manual fallback
 - reviewer trust is still a deliverable, not an assumption
+- write enablement will be phased by action, not turned on all at once for every reviewer
 
 ## 7. What feedback the team should give
 
@@ -117,3 +121,4 @@ The alpha is working if:
 3. Confirm who owns daily alpha issue triage.
 4. Confirm what conditions would pause or narrow the pilot.
 5. Confirm the date for the first post-alpha calibration review.
+6. Confirm when each reviewer-specific Hub is allowed to move from read-only to write-enabled.

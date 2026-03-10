@@ -32,9 +32,8 @@ Pilot posture:
 
 - queue entries can be loaded
 - asset and version context can be loaded
-- preview and published URLs can be resolved where expected
-- template analysis runs complete and return structured findings
-- plagiarism/originality checks can be called when needed
+- Phase A reviewer-visible template-review-context tools are confirmed
+- any analysis or originality capability not yet connected is treated as out of scope for Phase A
 
 ### Action safety
 
@@ -61,6 +60,7 @@ Confirm the pilot group has access to:
 - `checklist-map.md`
 - `launch-scorecard.md`
 - `team-walkthrough.md`
+- `reviewer-hub-policy-records.yaml`
 
 ## 5. First-day pilot flow
 

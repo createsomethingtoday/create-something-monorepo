@@ -49,6 +49,18 @@ Condensed operational map of the current objective review coverage as `auto`, `p
 11. `launch-scorecard.md`
 Pilot and launch metrics for adoption, quality, governance, and reliability.
 
+12. `reviewer-hub-rollout-spec.md`
+Concrete rollout plan for five reviewer-specific Hubs, including mapping, tool exposure, write gates, and containment rules.
+
+13. `reviewer-hub-implementation-checklist.md`
+Operator checklist for Hub identity, discovery, trace validation, rate limits, quotas, and phased write enablement.
+
+14. `reviewer-hub-runtime-posture.md`
+Exact Hub server, discovery, and rollout posture for the five reviewer-specific Hub surfaces.
+
+15. `reviewer-hub-policy-records.yaml`
+Five separate reviewer-specific policy records for the authoritative Phase A rollout.
+
 ## Reading order
 
 1. `delivery-package.md`
@@ -62,6 +74,10 @@ Pilot and launch metrics for adoption, quality, governance, and reliability.
 9. `agent_contract.yaml`
 10. `checklist-map.md`
 11. `launch-scorecard.md`
+12. `reviewer-hub-rollout-spec.md`
+13. `reviewer-hub-implementation-checklist.md`
+14. `reviewer-hub-runtime-posture.md`
+15. `reviewer-hub-policy-records.yaml`
 
 ## Related source material
 
