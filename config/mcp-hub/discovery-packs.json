@@ -35,6 +35,14 @@
         "composio-toolkit-zoom"
       ],
       "maxProxyTools": null
+    },
+    "webflow-marketplace-review-phase-a": {
+      "description": "Phase A reviewer pack for Webflow Marketplace template review. Read-only template review context only.",
+      "mode": "compact",
+      "activeServers": [
+        "webflow-template-review-mcp"
+      ],
+      "maxProxyTools": 12
     }
   }
 }

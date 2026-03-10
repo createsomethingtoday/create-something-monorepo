@@ -61,6 +61,9 @@ Exact Hub server, discovery, and rollout posture for the five reviewer-specific 
 15. `reviewer-hub-policy-records.yaml`
 Five separate reviewer-specific policy records for the authoritative Phase A rollout.
 
+16. `reviewer-hub-phase-a-operator-runbook.md`
+Exact deploy, normalize, and verify path for the five Phase A reviewer Hub surfaces.
+
 ## Reading order
 
 1. `delivery-package.md`
@@ -78,6 +81,7 @@ Five separate reviewer-specific policy records for the authoritative Phase A rol
 13. `reviewer-hub-implementation-checklist.md`
 14. `reviewer-hub-runtime-posture.md`
 15. `reviewer-hub-policy-records.yaml`
+16. `reviewer-hub-phase-a-operator-runbook.md`
 
 ## Related source material
 
