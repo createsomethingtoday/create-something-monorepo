@@ -53,7 +53,7 @@ const SCHEMA_STATEMENTS = [
 
 export async function initSchema(db: D1Database): Promise<void> {
   for (const statement of SCHEMA_STATEMENTS) {
-    await db.exec(statement);
+    await db.prepare(statement).run();
   }
 }
 
