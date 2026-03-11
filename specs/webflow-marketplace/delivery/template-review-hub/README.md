@@ -64,6 +64,9 @@ Five separate reviewer-specific policy records for the authoritative Phase A rol
 16. `reviewer-hub-phase-a-operator-runbook.md`
 Exact deploy, normalize, and verify path for the five Phase A reviewer Hub surfaces.
 
+17. `onboarding-skills.md`
+Skill-led onboarding sequence for reviewers and operators, including what is included now versus gated for later rollout phases.
+
 ## Reading order
 
 1. `delivery-package.md`
@@ -82,6 +85,7 @@ Exact deploy, normalize, and verify path for the five Phase A reviewer Hub surfa
 14. `reviewer-hub-runtime-posture.md`
 15. `reviewer-hub-policy-records.yaml`
 16. `reviewer-hub-phase-a-operator-runbook.md`
+17. `onboarding-skills.md`
 
 ## Related source material
 

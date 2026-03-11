@@ -17,6 +17,7 @@ The delivered lane combines:
 
 - queue and Airtable review context from `webflow-template-review-mcp`
 - reviewer-specific Hub policy records for the first five reviewers
+- skill-led onboarding for reviewer and operator use of the Hub lane
 - manual Airtable fallback for official review-state changes during Phase A
 
 Planned but not authoritative for Phase A:
@@ -31,6 +32,7 @@ Planned but not authoritative for Phase A:
 - one reviewer workflow in the MCP Hub
 - five reviewer-specific Hub surfaces for the initial pilot cohort
 - a defined operator and reviewer workflow
+- a skill-led onboarding path that matches the current live-safe runtime
 - policy boundaries for read, write, and blocked actions
 - pilot validation scenarios and fallback procedures
 - rollout metrics for deciding whether the lane should become default
