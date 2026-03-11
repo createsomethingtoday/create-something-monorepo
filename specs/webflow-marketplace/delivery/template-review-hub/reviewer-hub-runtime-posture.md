@@ -180,6 +180,11 @@ Reviewer self-assignment is already allowed as a narrow write:
 
 - `webflow-template-review-mcp__template_review_assign_self`
 
+For host integrations and smoke checks, note the read envelope for reviewer context:
+
+- `template_review_get_review_context` returns the normalized payload under `data.context`
+- `currentReviewer`, `reviewOwner`, and `isAssignedToCurrentReviewer` are fields on `data.context`, not top-level `data`
+
 Keep these out of reviewer use until:
 
 - reviewer identity is visible in traces

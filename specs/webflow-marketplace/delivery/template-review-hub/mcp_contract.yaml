@@ -115,7 +115,7 @@ tools:
         - "version_id"
       optional: []
     output_contract:
-      success_shape: "Returns reviewer-facing fields, current reviewer identity, and capability flags for the selected version."
+      success_shape: "Returns { ok: true, data: { context: ... } } where reviewer-facing fields, current reviewer identity, and capability flags are nested under data.context."
       error_shape: "Returns not-found or Airtable failure error."
     idempotency_expectation: "Pure read operation."
     fallback_behavior: "Open the version directly in Airtable if Hub read path fails."
