@@ -124,6 +124,8 @@ load_secrets_from_infisical
 missing=0
 require_secret "HUB_API_TOKEN" || missing=1
 require_secret "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" || missing=1
+require_secret "BRAINTRUST_API_KEY" || missing=1
+require_secret "BRAINTRUST_PROJECT_ID" || missing=1
 
 if [[ "$missing" == "1" ]]; then
   echo "reviewer hub secret validation failed" >&2
@@ -135,6 +137,8 @@ for entry in "${REVIEWERS[@]}"; do
   echo "syncing ${worker}"
   put_versioned_secret "$worker" "HUB_API_TOKEN" "$HUB_API_TOKEN"
   put_versioned_secret "$worker" "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" "$WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY"
+  put_versioned_secret "$worker" "BRAINTRUST_API_KEY" "$BRAINTRUST_API_KEY"
+  put_versioned_secret "$worker" "BRAINTRUST_PROJECT_ID" "$BRAINTRUST_PROJECT_ID"
 done
 
 echo "webflow reviewer hub vault sync complete."
