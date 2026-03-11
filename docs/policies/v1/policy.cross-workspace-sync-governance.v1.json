@@ -1,0 +1,30 @@
+{
+  "policy_id": "policy.cross-workspace-sync-governance.v1",
+  "version": 1,
+  "status": "draft",
+  "required_sync_definition_fields": [
+    "source_system",
+    "destination_system",
+    "allowed_record_class",
+    "allowed_content_classes",
+    "approved_runtime_connection_refs",
+    "approved_destination_ids"
+  ],
+  "runtime_requirements": {
+    "dedicated_job_surface_required": true,
+    "operator_managed_runtime_credentials_required": true,
+    "personal_bearer_for_unattended_runtime_prohibited": true,
+    "sync_ledger_required": true,
+    "human_review_required_for_mapping_changes": true,
+    "replay_support_required": true,
+    "dead_letter_or_equivalent_required": true
+  },
+  "notion_requirements": {
+    "respect_api_content_limits": true,
+    "chunk_long_form_content": true,
+    "batched_append_required": true
+  },
+  "service_tier_rules": {
+    "mcp_only_autonomous_cross_workspace_write_allowed": false
+  }
+}

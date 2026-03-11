@@ -30,6 +30,8 @@ Define policy controls for partner-admin actions that mint MCP sessions and mana
 5. Fallback policy path MAY be used only when primary policy evaluation fails, and fallback usage MUST be auditable.
 6. Toolkit auth account viewing, upserts, and connect-link issuance MUST require an active consent record.
 7. Toolkit account pinning and disabling MUST require a human review trace (for example `X-Partner-Review-Step`).
+8. Unattended partner-managed automation MUST execute against operator-approved pinned toolkit accounts or equivalent governed runtime credentials. Personal end-user bearer tokens MUST NOT be repurposed as background job credentials.
+9. Background job executions MUST record workflow or job identity in addition to actor trace metadata.
 
 ## Enforcement Surfaces
 
@@ -53,6 +55,7 @@ Define policy controls for partner-admin actions that mint MCP sessions and mana
 - Decision events in `mcp_policy_events`
 - Consent linkage in admin mint payloads and partner consent records
 - Delivery audit records in `partner_access_deliveries`
+- workflow or job traces showing pinned account and runtime identity selection
 
 ## Source Anchors
 
@@ -60,5 +63,6 @@ Define policy controls for partner-admin actions that mint MCP sessions and mana
 - `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/access/mint/+server.ts`
 - `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/notion/accounts/+server.ts`
 - `packages/agency/src/routes/api/partners/half-dozen/clients/[slug]/toolkits/[toolkit]/accounts/+server.ts`
+- `docs/policies/v1/policy.cross-workspace-sync-governance.v1.md`
 - `packages/agency/src/lib/server/partner-auth.ts`
 - `packages/policy-os-engine/src/hybrid.ts`

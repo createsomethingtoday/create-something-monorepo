@@ -41,6 +41,7 @@ load_secret_if_needed() {
     local -a cmd=(
       infisical secrets get "$name"
       --plain
+      --silent
       --env="$INFISICAL_ENV"
       --path="$INFISICAL_PATH"
       --include-imports="$INFISICAL_INCLUDE_IMPORTS"

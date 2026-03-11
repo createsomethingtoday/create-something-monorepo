@@ -9,7 +9,11 @@
   "tenant_policy_controls": {
     "by_server": true,
     "by_tag": true,
-    "by_tool_prefix": true
+    "by_tool_prefix": true,
+    "by_target_scope": true
+  },
+  "workflow_sync_preferences": {
+    "prefer_dedicated_workflow_routes": true
   },
   "alias_route_requirements": {
     "ordered_candidates": true,

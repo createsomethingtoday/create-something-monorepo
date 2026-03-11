@@ -43,6 +43,7 @@ Define how service tier, commercial state, policy acceptance, and approved excep
 10. Revocation, regeneration, incident response, and security containment actions MUST remain available regardless of commercial state.
 11. Deny decisions produced by service-tier entitlement policy MUST return explicit machine-readable reason codes suitable for customer-facing UX and operator troubleshooting.
 12. Pricing strategy, proposal language, and funnel copy MUST NOT be encoded directly in runtime policy; only enforceable entitlement and exception state belongs in runtime evaluation.
+13. Autonomous cross-workspace sync jobs that write into client-managed systems are paid governed capabilities and MUST default to `policy_os_trial` or `policy_os_core`, not `mcp_only`.
 
 ## Tier Expectations
 
@@ -56,6 +57,7 @@ Define how service tier, commercial state, policy acceptance, and approved excep
   - read-only or tightly constrained tool scope
   - bounded discovery surface
   - no Policy OS-only product features
+  - no autonomous cross-workspace write jobs
 - Commercial expectation:
   - free by default
   - paid exception only for unusually heavy setup or advisory
@@ -70,6 +72,7 @@ Define how service tier, commercial state, policy acceptance, and approved excep
   - governed workflow execution
   - paid hosted product surfaces for the contracted workflow
   - explicit write approval behavior where required
+  - autonomous sync jobs only for the specifically contracted workflow
 
 ### `policy_os_core`
 
@@ -81,6 +84,7 @@ Define how service tier, commercial state, policy acceptance, and approved excep
   - paid governed execution
   - recurring review and operations controls
   - only the expanded surfaces explicitly provisioned for the account
+  - recurring autonomous sync and replay controls where explicitly provisioned
 
 ## Approved Exception Model
 
@@ -136,6 +140,7 @@ Named client examples such as Outerfields MUST live in entitlement metadata or a
 - `docs/POLICY_OS_TRIAL_PACKAGING_MEMO_2026-03-09.md`
 - `docs/FUNNEL_AND_DISCOVERY_STRATEGY_2026-03-09.md`
 - `docs/LOW_COST_HUB_CREATION_STANDARD_2026-03-09.md`
+- `docs/policies/v1/policy.cross-workspace-sync-governance.v1.md`
 - `docs/policies/v1/policy.user-bearer-token-governance.v1.md`
 - `docs/policies/v1/policy.mcp-credential-delivery.v1.md`
 - `docs/policies/v1/policy.hub-route-authorization.v1.md`

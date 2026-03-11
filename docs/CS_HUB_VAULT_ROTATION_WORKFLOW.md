@@ -10,8 +10,22 @@ Local macOS install:
 
 ```bash
 brew install gnupg
-brew install infisical/get-cli/infisical
+brew install infisical
 infisical --version
+```
+
+If `infisical` is already installed via npm/nvm rather than Homebrew, update that install instead of Homebrew:
+
+```bash
+npm install -g @infisical/cli@latest
+infisical --version
+```
+
+To confirm which install owns the active binary:
+
+```bash
+command -v infisical
+ls -l "$(command -v infisical)"
 ```
 
 ## 2) Authenticate and scope the project

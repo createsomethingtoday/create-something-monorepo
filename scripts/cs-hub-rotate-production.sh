@@ -236,6 +236,7 @@ get_infisical_secret() {
   local -a get_cmd=(
     infisical secrets get "$key"
     --plain
+    --silent
     --env="$INFISICAL_ENV"
     --path="$INFISICAL_PATH"
     --include-imports="$INFISICAL_INCLUDE_IMPORTS"

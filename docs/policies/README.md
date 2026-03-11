@@ -24,6 +24,7 @@ First-wave policies scaffolded here:
 16. `policy.client-hub-user-experience.v1`
 17. `policy.progressive-profile-governance.v1`
 18. `policy.service-tier-entitlement.v1`
+19. `policy.cross-workspace-sync-governance.v1`
 
 Each policy has:
 

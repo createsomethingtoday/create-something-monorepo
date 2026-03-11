@@ -13,6 +13,7 @@ Standardize when to use Composio-based connectivity versus custom MCP integratio
 - New integration planning and design reviews
 - Multi-tenant default integrations
 - Strategic client-specific integrations
+- Scheduled or recurring sync jobs that move content across workspace boundaries
 
 ## Policy Statements
 
@@ -29,6 +30,7 @@ Standardize when to use Composio-based connectivity versus custom MCP integratio
 9. New integration proposals MUST record both:
    - packaging choice (`wrapped`, `custom`, or exception `direct`)
    - catalog exposure mode (`direct`, `brokered`, or approved exception)
+10. Scheduled or recurring cross-workspace syncs that read internal or partner-managed data and write into a client-owned system MUST use a custom Worker, Queue, or Workflow control plane rather than exposing a broad provider write surface directly to the client.
 
 ## Enforcement Surfaces
 
@@ -37,6 +39,7 @@ Standardize when to use Composio-based connectivity versus custom MCP integratio
 - Hub/server registration metadata
 - MCP registry validation for large-catalog surfaces
 - catalog exposure review for Composio-backed surfaces
+- async job design review for Worker, Queue, or Workflow-based syncs
 
 ## Evidence
 
@@ -48,4 +51,5 @@ Standardize when to use Composio-based connectivity versus custom MCP integratio
 
 - `docs/COMPOSIO_PATTERNS.md`
 - `docs/MCP_CATALOG_EXPOSURE_POLICY.md`
+- `docs/policies/v1/policy.cross-workspace-sync-governance.v1.md`
 - `packages/composio-bridge/`

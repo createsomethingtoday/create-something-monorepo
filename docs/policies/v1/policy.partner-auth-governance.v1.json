@@ -11,7 +11,8 @@
     "account_id",
     "consent_record_id",
     "consent_granted_at",
-    "actor"
+    "actor",
+    "workflow_job_id"
   ],
   "required_telemetry_fields": [
     "decision",
@@ -22,7 +23,9 @@
   ],
   "deny_conditions": [
     "missing_consent_record",
-    "missing_actor"
+    "missing_actor",
+    "unpinned_toolkit_account_for_automation",
+    "personal_bearer_used_for_automation"
   ],
   "governed_actions": [
     "admin_mint_session",
@@ -30,7 +33,8 @@
     "upsert_toolkit_account",
     "create_toolkit_connect_link",
     "pin_toolkit_account",
-    "disable_toolkit_account"
+    "disable_toolkit_account",
+    "run_partner_workflow_job"
   ],
   "review_required_actions": [
     "pin_toolkit_account",

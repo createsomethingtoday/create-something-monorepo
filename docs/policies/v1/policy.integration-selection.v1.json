@@ -10,9 +10,13 @@
   ],
   "use_custom_when": [
     "deep_client_specific_workflows",
+    "scheduled_cross_workspace_syncs",
     "custom_token_lifecycle_control_required",
     "strategic_integration_is_differentiator"
   ],
+  "runtime_preferences": {
+    "scheduled_cross_workspace_syncs": "worker_queue_or_workflow"
+  },
   "commercial_alignment": {
     "mcp_only": "discovery_or_compliance_wedge",
     "agent_outcome_stack": "default_paid_offer"

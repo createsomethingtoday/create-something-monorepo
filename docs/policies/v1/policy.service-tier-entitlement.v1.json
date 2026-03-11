@@ -19,17 +19,20 @@
     "mcp_only": {
       "free_by_default": true,
       "policy_os_capabilities_allowed": false,
-      "scope": "narrow"
+      "scope": "narrow",
+      "autonomous_cross_workspace_syncs_allowed": false
     },
     "policy_os_trial": {
       "paid": true,
       "requires_commercial_gates": true,
-      "scope": "governed_trial"
+      "scope": "governed_trial",
+      "autonomous_cross_workspace_syncs_allowed": true
     },
     "policy_os_core": {
       "paid": true,
       "requires_commercial_gates": true,
-      "scope": "governed_recurring"
+      "scope": "governed_recurring",
+      "autonomous_cross_workspace_syncs_allowed": true
     }
   },
   "exception_model": {
@@ -51,6 +54,7 @@
     "contract_inactive",
     "billing_inactive",
     "org_membership_inactive",
-    "approved_exception_required"
+    "approved_exception_required",
+    "autonomous_sync_not_allowed"
   ]
 }

@@ -1,0 +1,70 @@
+version: "0.1"
+artifact: "reviewer_hub_policy_records"
+status: "working_draft"
+date: "2026-03-10"
+
+policy_intent:
+  summary: "Reviewer-specific Hub policy records for the two-reviewer app-review Phase A rollout."
+  authoritative_scope: "Phase A only"
+  rollout_mode: "read_only_evidence_lane"
+  notes:
+    - "These records are reviewer-specific, not one shared reviewer template."
+    - "Phase A allows only read and context tools from webflow-app-review-mcp."
+    - "Official review-state writes remain manual until reviewer-attributed traces and write gates are proven."
+    - "The current app-review MCP worker uses a shared bearer token and therefore cannot by itself prove reviewer identity."
+
+shared_phase_a_policy:
+  discovery:
+    mode: "compact"
+    active_servers:
+      - "webflow-app-review-mcp"
+    max_proxy_tools: 8
+  allowed_proxy_tools:
+    - "webflow-app-review-mcp__app_review_health"
+    - "webflow-app-review-mcp__app_review_list_queue"
+    - "webflow-app-review-mcp__app_review_get_asset"
+    - "webflow-app-review-mcp__app_review_list_versions"
+    - "webflow-app-review-mcp__app_review_get_version"
+    - "webflow-app-review-mcp__app_review_get_field_map"
+  blocked_proxy_tools:
+    - "webflow-app-review-mcp__app_review_update_version_review"
+    - "webflow-app-review-mcp__app_review_set_marketplace_status"
+    - "webflow-app-review-mcp__app_review_update_asset_metadata"
+  allowed_resources:
+    - "app-review://field-map"
+    - "app-review://status-options"
+    - "app-review://queue-snapshot"
+  allowed_prompts:
+    - "app_review_decision_support"
+    - "app_review_feedback_refiner"
+  required_trace_fields:
+    - "workflow_id"
+    - "asset_id"
+    - "version_id"
+    - "decision"
+    - "matched_policy_class"
+    - "reviewer_id"
+    - "correlation_id"
+  fallback_mode: "manual_airtable"
+
+reviewers:
+  - reviewer_name: "Pablo Miranda"
+    hub_slug: "wf-app-review-pablo"
+    account_model: "per_user"
+    approval_owner: "Pablo Miranda"
+    access_mode: "read_only"
+    policy_record_id: "wf_app_review_pablo_phase_a"
+
+  - reviewer_name: "Shea Sisco"
+    hub_slug: "wf-app-review-shea"
+    account_model: "per_user"
+    approval_owner: "Shea Sisco"
+    access_mode: "read_only"
+    policy_record_id: "wf_app_review_shea_phase_a"
+
+phase_b_prerequisites:
+  - "reviewer-attributed trace verification for app_review_update_version_review"
+  - "manual fallback drill completed"
+  - "Hub authz layer proves reviewer identity independent of shared MCP bearer token"
+  - "Marketplace review lead signoff"
+  - "Senior Systems Architect signoff"

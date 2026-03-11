@@ -1,0 +1,20 @@
+{
+  "name": "@create-something/halfdozen-zoom-transcript-sync",
+  "version": "0.1.0",
+  "description": "Scheduled Cloudflare Worker that syncs Zoom meeting transcripts into the Half Dozen Internal LLM Notion database.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node ../../scripts/run-wrangler.mjs dev",
+    "deploy": "node ../../scripts/run-wrangler.mjs deploy",
+    "tail": "node ../../scripts/run-wrangler.mjs tail",
+    "types": "node ../../scripts/run-wrangler.mjs types",
+    "check": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20251128.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.64.0"
+  }
+}

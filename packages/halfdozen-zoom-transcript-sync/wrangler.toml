@@ -1,0 +1,42 @@
+name = "halfdozen-zoom-transcript-sync"
+main = "src/index.ts"
+compatibility_date = "2026-03-10"
+compatibility_flags = ["nodejs_compat"]
+account_id = "5c3e9cf4d55ce171b844fad0931607f9"
+
+[observability]
+enabled = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "halfdozen-zoom-transcript-sync"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+[[queues.producers]]
+queue = "halfdozen-zoom-transcript-sync"
+binding = "SYNC_QUEUE"
+
+[[queues.consumers]]
+queue = "halfdozen-zoom-transcript-sync"
+max_batch_size = 1
+max_retries = 3
+dead_letter_queue = "halfdozen-zoom-transcript-sync-dlq"
+
+# Optional cron trigger once the runtime is configured.
+# [triggers]
+# crons = ["0 * * * *"]
+
+# Secrets / vars to configure before deploy:
+# SYNC_API_KEY
+# ZOOM_ACCESS_TOKEN
+# or: ZOOM_CLIENT_ID / ZOOM_CLIENT_SECRET / ZOOM_ACCOUNT_ID
+# or: ZOOM_CLIENT_ID / ZOOM_CLIENT_SECRET / ZOOM_REFRESH_TOKEN / ZOOM_REDIRECT_URI
+# NOTION_DATABASE_ID
+# For direct Notion writes:
+# NOTION_API_KEY
+# For Hub-backed Notion writes:
+# NOTION_HUB_URL
+# NOTION_HUB_API_TOKEN
+# NOTION_HUB_PROXY_TOOL
+# Optional governance metadata:
+# NOTION_RUNTIME_CONNECTION_REF
