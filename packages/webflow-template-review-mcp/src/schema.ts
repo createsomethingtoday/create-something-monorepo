@@ -64,6 +64,8 @@ export const CONFIRMED_WRITE_FIELD_IDS = {
     mrpIdOverride: 'fldNI0oPuODQcIZlo',
   },
   versions: {
+    reviewStatus: 'flde8Huk5NRIdm2wZ',
+    reviewFeedback: 'fldHxIGHMHn4xb9U4',
     release: 'fld3CQjSWa9lVBLgT',
   },
 } as const;

@@ -11,7 +11,7 @@ Remote MCP server for Webflow Template Review workflows, scoped to Airtable `Ass
 - Data policy:
   - templates-only filtering (`🆎Type = Template🏗️` in v1)
   - read/write for confirmed template asset fields
-  - version review mutations are exposed but return explicit mapping errors until Airtable field IDs are verified
+  - reviewer assignment and bounded version-review writes use confirmed field mappings for `📝Review Status`, `📝Review Feedback`, and release linkage
 
 ## Current Status
 
@@ -20,7 +20,9 @@ Phase 1 is intentionally conservative:
 - confirmed asset reads and updates are supported
 - queue and version inspection are supported
 - field-map and hotspot resources are supported
-- version mutation helpers (`approve`, `reject`, `request changes`) are scaffolded but blocked on verified field mappings
+- reviewer assignment helpers are active
+- version review helpers (`request changes`, `approve`, `reject`, `update version review`) are implemented against confirmed reviewer/status field mappings
+- some broader write surfaces still depend on remaining field verification and policy rollout
 
 ## Auth
 

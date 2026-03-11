@@ -23,7 +23,13 @@
     "notion-halfdozen-create-something": {
       "type": "http",
       "url": "https://createsomething-notion.mcp.workway.co/mcp"
+    },
+    "wf-template-review-eric": {
+      "type": "http",
+      "url": "https://wf-template-review-eric.mcp.createsomething.agency/mcp",
+      "headers": {
+        "Authorization": "Bearer 067ae7ead747098d98ace498d78af3ce0b8d5cf251abcb597a03702f5286cf41"
+      }
     }
   }
 }
-
