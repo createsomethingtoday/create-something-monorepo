@@ -71,6 +71,7 @@
 		data.access.token
 			? [
 					{ label: 'Status', value: data.access.token.active ? 'Active' : 'Inactive' },
+					{ label: 'Bound Host', value: data.access.token.bound_host ?? assignment?.laneKey ?? 'Unbound' },
 					{ label: 'Prefix', value: data.access.token.token_prefix },
 					{
 						label: 'Access Mode',
@@ -116,6 +117,7 @@
 		assignment
 			? [
 					{ label: 'Lane', value: assignment.displayName },
+					{ label: 'Lane Key', value: assignment.laneKey },
 					{ label: 'Hub URL', value: assignment.hubUrl },
 					{ label: 'Notion Bridge', value: assignment.bridgeUrl },
 					{ label: 'Bridge Username', value: assignment.bridgeUsername },

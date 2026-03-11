@@ -10,7 +10,8 @@
     "by_server": true,
     "by_tag": true,
     "by_tool_prefix": true,
-    "by_target_scope": true
+    "by_target_scope": true,
+    "named_lane_allowlists_required": true
   },
   "workflow_sync_preferences": {
     "prefer_dedicated_workflow_routes": true
@@ -32,5 +33,20 @@
       "changed_at",
       "change_reason"
     ]
+  },
+  "named_lane_baseline": {
+    "default_deny": true,
+    "blondish_allow_servers": [
+      "notion-halfdozen-blondish",
+      "composio-toolkit-gmail",
+      "composio-toolkit-exa"
+    ],
+    "c3_management_allow_servers": [
+      "notion-halfdozen-c3-management",
+      "composio-toolkit-gmail",
+      "composio-toolkit-exa"
+    ],
+    "telemetry_required": true,
+    "braintrust_required": true
   }
 }

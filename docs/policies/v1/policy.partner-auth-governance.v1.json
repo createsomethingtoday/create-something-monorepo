@@ -21,6 +21,14 @@
     "fallback_used",
     "actor"
   ],
+  "named_lane_controls": {
+    "data_driven_lane_records_required": true,
+    "lane_scoped_issue_routes_required": true,
+    "explicit_allowed_tool_prefixes_supported": true,
+    "bound_host_required_for_named_lane_credentials": true,
+    "telemetry_required": true,
+    "braintrust_required": true
+  },
   "deny_conditions": [
     "missing_consent_record",
     "missing_actor",
@@ -39,5 +47,10 @@
   "review_required_actions": [
     "pin_toolkit_account",
     "disable_toolkit_account"
+  ],
+  "lane_scoped_routes": [
+    "/api/partners/half-dozen/clients/:slug/lanes/:laneSlug/init",
+    "/api/partners/half-dozen/clients/:slug/lanes/:laneSlug/access/mint",
+    "/api/partners/half-dozen/clients/:slug/lanes/:laneSlug/bearer-token/issue"
   ]
 }

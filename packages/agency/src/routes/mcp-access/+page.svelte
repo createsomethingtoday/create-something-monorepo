@@ -14,6 +14,7 @@
 		id: string;
 		account_id: string;
 		tenant_id: string;
+		bound_host: string | null;
 		token_prefix: string;
 		tool_mode: 'read_only' | 'read_write';
 		toolkit_profile: string[];
@@ -142,6 +143,7 @@ bearer_token = "${tokenValue}"`);
 		{ label: 'Status', value: tokenStatus },
 		{ label: 'Account', value: token?.account_id ?? data.entitlement.accountId ?? 'Not linked' },
 		{ label: 'Tenant', value: token?.tenant_id ?? data.entitlement.tenantId ?? 'Not linked' },
+		{ label: 'Bound Host', value: token?.bound_host ?? assignment?.laneKey ?? 'Unbound' },
 		{ label: 'Prefix', value: token?.token_prefix ?? 'Not issued' },
 		{ label: 'Access Mode', value: token ? tokenModeLabel : 'Not issued' },
 		{ label: 'Last Used', value: token?.last_used_at ?? 'Never' },
@@ -163,6 +165,7 @@ bearer_token = "${tokenValue}"`);
 		assignment
 			? [
 					{ label: 'Lane', value: assignment.displayName },
+					{ label: 'Lane Key', value: assignment.laneKey },
 					{ label: 'Hub URL', value: assignment.hubUrl },
 					{ label: 'Notion Bridge', value: assignment.bridgeUrl },
 					{ label: 'Bridge Username', value: assignment.bridgeUsername },
@@ -184,7 +187,11 @@ bearer_token = "${tokenValue}"`);
 			credential: token?.token_prefix ? `Bearer ${token.token_prefix}…` : 'Bearer token',
 			use: 'Used in Codex, Claude Desktop, Cursor, and other approved MCP hosts.',
 			status: tokenStatus,
-			note: revealedToken ? 'Fresh token is currently revealed once for copy.' : 'Only creation or regeneration reveals the full token.',
+			note: token?.bound_host
+				? `Bound to ${token.bound_host}. ${revealedToken ? 'Fresh token is currently revealed once for copy.' : 'Only creation or regeneration reveals the full token.'}`
+				: revealedToken
+					? 'Fresh token is currently revealed once for copy.'
+					: 'Only creation or regeneration reveals the full token.',
 		},
 		{
 			lane: 'ChatGPT authorize',

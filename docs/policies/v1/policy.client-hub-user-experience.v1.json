@@ -6,7 +6,10 @@
     "canonical_portal": ".agency",
     "dedicated_client_shell_allowed": true,
     "provider_brand_hidden_by_default": true,
-    "workspace_or_tenant_centric_labels_required": true
+    "workspace_or_tenant_centric_labels_required": true,
+    "transparent_named_lane_required": true,
+    "named_lane_pattern": "<person-slug>-<client-slug>",
+    "host_bound_named_lane_credentials_required": true
   },
   "required_user_surfaces": [
     "access_overview",
@@ -59,5 +62,9 @@
     "separate_from_agency_control_plane": true,
     "separate_from_mcp_app_dui_resources": true,
     "progressive_profile_governance_required": true
+  },
+  "observability_baseline": {
+    "telemetry_required_for_named_lanes": true,
+    "braintrust_required_for_named_lanes": true
   }
 }
