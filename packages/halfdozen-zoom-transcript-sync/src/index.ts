@@ -119,6 +119,12 @@ export default {
         const errorMessage = error instanceof Error ? error.message : String(error);
         console.error(`Transcript sync failed for ${message.body.dedupKey}:`, errorMessage);
 
+        if (errorMessage.startsWith('Meeting sync lock is busy')) {
+          await env.SYNC_QUEUE.send(message.body, { delaySeconds: 60 });
+          message.ack();
+          continue;
+        }
+
         if (message.attempts < 3) {
           message.retry({ delaySeconds: message.attempts * 60 });
         } else {
