@@ -61,6 +61,11 @@ Per-team hub worker tokens (runtime / compat fallback only, or migrated plaintex
 - `CS_HUB_LEAH_API_TOKEN`
 - `CS_HUB_MJ_API_TOKEN`
 
+Named-lane hub worker tokens:
+
+- `CS_HUB_VIV_BLONDISH_API_TOKEN`
+- `CS_HUB_MORGAN_YOUNG_C3_MANAGEMENT_API_TOKEN`
+
 Webflow reviewer Hub worker tokens:
 
 - `CS_HUB_WF_TEMPLATE_REVIEW_NATALIA_API_TOKEN`

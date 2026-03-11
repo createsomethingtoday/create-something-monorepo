@@ -216,23 +216,25 @@
                 Track published assets, upcoming submissions, and marketplace signals in one place.
                 <DataFreshnessIndicator variant="tooltip" />
               </p>
-              <div class="portfolio-evidence" aria-label="Portfolio summary">
-                <span><strong>{publishedCount}</strong> published</span>
-                <span><strong>{delistedCount}</strong> delisted</span>
-                {#if scheduledCount > 0}
-                  <span><strong>{scheduledCount}</strong> scheduled</span>
-                {/if}
-                {#if rejectedCount > 0}
-                  <span><strong>{rejectedCount}</strong> rejected</span>
-                {/if}
-                <span><strong>{(data.assets || []).length}</strong> total assets</span>
-              </div>
-              <div class="quick-actions">
-                <Button variant="default" size="sm" onclick={handleReviewAssets}>Review assets</Button>
-                <Button variant="secondary" size="sm" onclick={handleOpenValidation}>Open validation</Button>
-                <Button variant="outline" size="sm" onclick={handleExploreMarketplace}
-                  >Explore marketplace</Button
-                >
+              <div class="intro-support">
+                <div class="portfolio-evidence" aria-label="Portfolio summary">
+                  <span><strong>{publishedCount}</strong> published</span>
+                  <span><strong>{delistedCount}</strong> delisted</span>
+                  {#if scheduledCount > 0}
+                    <span><strong>{scheduledCount}</strong> scheduled</span>
+                  {/if}
+                  {#if rejectedCount > 0}
+                    <span><strong>{rejectedCount}</strong> rejected</span>
+                  {/if}
+                  <span><strong>{(data.assets || []).length}</strong> total assets</span>
+                </div>
+                <div class="quick-actions">
+                  <Button variant="default" size="sm" onclick={handleReviewAssets}>Review assets</Button>
+                  <Button variant="secondary" size="sm" onclick={handleOpenValidation}>Open validation</Button>
+                  <Button variant="outline" size="sm" onclick={handleExploreMarketplace}
+                    >Explore marketplace</Button
+                  >
+                </div>
               </div>
             </div>
           </div>
@@ -298,8 +300,10 @@
   }
 
   .header-text {
-    flex: 1;
-    max-width: 42rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+    max-width: 39rem;
   }
 
   .page-subtitle :global(*) {
@@ -312,7 +316,6 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem 1rem;
-    margin-top: 0.7rem;
     color: var(--color-fg-secondary);
     font-size: var(--text-body-sm);
   }
@@ -329,19 +332,31 @@
 
   .overview-top {
     display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(22rem, 0.95fr);
+    grid-template-columns: minmax(0, 1.15fr) minmax(23rem, 0.95fr);
     gap: var(--space-md);
+    align-items: stretch;
+  }
+
+  .intro-support {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.85rem;
+    margin-top: 1rem;
+    padding-top: 0.95rem;
+    border-top: 1px solid var(--color-shell-border-default);
+    max-width: 34rem;
   }
 
   .quick-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
-    margin-top: 1rem;
   }
 
   .submission-column {
     min-width: 0;
+    display: flex;
   }
 
   .dashboard-summary-grid {
@@ -357,6 +372,11 @@
   @media (max-width: 900px) {
     .overview-top {
       grid-template-columns: 1fr;
+    }
+
+    .header-text,
+    .intro-support {
+      max-width: none;
     }
   }
 

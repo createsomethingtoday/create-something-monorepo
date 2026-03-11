@@ -20,6 +20,11 @@ TEAM_KEYS=(
   "MJ"
 )
 
+NAMED_LANE_KEYS=(
+  "VIV_BLONDISH"
+  "MORGAN_YOUNG_C3_MANAGEMENT"
+)
+
 BRIDGE_TEAM_KEYS=(
   "LAINY"
   "DANNY"
@@ -96,6 +101,17 @@ hub_worker_for_team() {
   esac
 }
 
+hub_worker_for_named_lane() {
+  case "$1" in
+    "VIV_BLONDISH") echo "cs-hub-viv-blondish" ;;
+    "MORGAN_YOUNG_C3_MANAGEMENT") echo "cs-hub-morgan-young-c3-management" ;;
+    *)
+      echo "unknown named lane key: $1" >&2
+      exit 1
+      ;;
+  esac
+}
+
 notion_bridge_worker_for_team() {
   case "$1" in
     "LAINY") echo "cs-hub-lainy-notion-bridge" ;;
@@ -112,6 +128,10 @@ notion_bridge_worker_for_team() {
 }
 
 token_env_var_for_team() {
+  echo "CS_HUB_${1}_API_TOKEN"
+}
+
+token_env_var_for_named_lane() {
   echo "CS_HUB_${1}_API_TOKEN"
 }
 
@@ -284,6 +304,10 @@ for team_key in "${TEAM_KEYS[@]}"; do
   team_token_var="$(token_env_var_for_team "$team_key")"
   if ! require_secret "$team_token_var"; then missing=1; fi
 done
+for lane_key in "${NAMED_LANE_KEYS[@]}"; do
+  lane_token_var="$(token_env_var_for_named_lane "$lane_key")"
+  if ! require_secret "$lane_token_var"; then missing=1; fi
+done
 if [[ "$INCLUDE_BRIDGES" == "true" ]]; then
   for team_key in "${BRIDGE_TEAM_KEYS[@]}"; do
     team_bridge_password_var="$(bridge_password_env_var_for_team "$team_key")"
@@ -309,6 +333,17 @@ for team_key in "${TEAM_KEYS[@]}"; do
   if [[ "$team_key" == "MJ" && -n "$WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" ]]; then
     put_secret "$HUB_TEAM_CONFIG" "$worker" "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" "$WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY"
   fi
+done
+
+echo "syncing named-lane hub worker secrets..."
+for lane_key in "${NAMED_LANE_KEYS[@]}"; do
+  worker="$(hub_worker_for_named_lane "$lane_key")"
+  token_var="$(token_env_var_for_named_lane "$lane_key")"
+  token_value="${!token_var}"
+  put_secret "$HUB_TEAM_CONFIG" "$worker" "HUB_API_TOKEN" "$token_value"
+  put_secret "$HUB_TEAM_CONFIG" "$worker" "HUB_SESSION_RESOLVE_TOKEN" "$HUB_SESSION_RESOLVE_TOKEN"
+  put_secret "$HUB_TEAM_CONFIG" "$worker" "BRAINTRUST_API_KEY" "$BRAINTRUST_API_KEY"
+  put_secret "$HUB_TEAM_CONFIG" "$worker" "BRAINTRUST_PROJECT_ID" "$BRAINTRUST_PROJECT_ID"
 done
 
 echo "syncing core hub worker secrets..."
