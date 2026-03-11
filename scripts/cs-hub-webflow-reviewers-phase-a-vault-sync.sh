@@ -122,10 +122,7 @@ require_cmd infisical
 load_secrets_from_infisical
 
 missing=0
-for entry in "${REVIEWERS[@]}"; do
-  IFS='|' read -r team_key _ <<<"$entry"
-  require_secret "CS_HUB_${team_key}_API_TOKEN" || missing=1
-done
+require_secret "HUB_API_TOKEN" || missing=1
 require_secret "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" || missing=1
 
 if [[ "$missing" == "1" ]]; then
@@ -134,11 +131,9 @@ if [[ "$missing" == "1" ]]; then
 fi
 
 for entry in "${REVIEWERS[@]}"; do
-  IFS='|' read -r team_key worker <<<"$entry"
-  token_var="CS_HUB_${team_key}_API_TOKEN"
-  token_value="${!token_var}"
+  IFS='|' read -r _ worker <<<"$entry"
   echo "syncing ${worker}"
-  put_versioned_secret "$worker" "HUB_API_TOKEN" "$token_value"
+  put_versioned_secret "$worker" "HUB_API_TOKEN" "$HUB_API_TOKEN"
   put_versioned_secret "$worker" "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" "$WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY"
 done
 
