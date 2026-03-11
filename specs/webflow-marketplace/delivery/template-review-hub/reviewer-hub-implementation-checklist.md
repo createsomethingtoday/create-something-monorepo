@@ -101,24 +101,24 @@ Before enabling reviewer-safe writes, verify and record the exact Airtable field
 
 Confirmed mapping:
 
-- reviewer feedback field id: `flde8Huk5NRIdm2wZ`
+- reviewer feedback field id: `fldHxIGHMHn4xb9U4`
+- `📝Review Status` field id: `flde8Huk5NRIdm2wZ`
 
 Implementation requirements:
 
-- confirm the Airtable field id for `📝Review Status`
 - confirm whether draft feedback uses a distinct Airtable field or reuses the main feedback field
 - confirm the Airtable field id and allowed value set for `improvement_areas` if that field is included
 - fail closed if any required field mapping is missing or ambiguous
-- expose the resolved field mapping through `template_review_get_field_map` for operator verification
+- expose the resolved field mapping through `template_review_get_field_map` for operator verification where supported; the current live field map confirms names and statuses but not these specific field ids
 
 Recommended write mapping posture:
 
 - `template_review_request_changes`
-  - write reviewer feedback to `flde8Huk5NRIdm2wZ`
+  - write reviewer feedback to `fldHxIGHMHn4xb9U4`
   - optionally write `improvement_areas` if mapped and validated
-  - set `📝Review Status` to the single allowlisted changes-requested state
+  - set `📝Review Status` through `flde8Huk5NRIdm2wZ` to the single allowlisted changes-requested state
 - `template_review_set_review_status`
-  - update only the mapped `📝Review Status` field
+  - update only `flde8Huk5NRIdm2wZ`
   - reject any status outside the server allowlist
 - `template_review_save_draft_feedback`
   - write only draft-safe feedback fields
@@ -251,7 +251,7 @@ If this affects more than one reviewer Hub, revert all five to read-only and tri
 5. Turn on rate limits and quotas.
 6. Run discovery and execution authz checks with a reviewer session.
 7. Confirm trace visibility in `cs-telemetry`.
-8. Confirm field mappings, including `flde8Huk5NRIdm2wZ` for reviewer feedback.
+8. Confirm field mappings, including `fldHxIGHMHn4xb9U4` for reviewer feedback and `flde8Huk5NRIdm2wZ` for `📝Review Status`.
 9. Enable `request_changes` for one reviewer Hub first.
 10. Review traces and Airtable result.
 11. Enable `set_review_status`, then `save_draft_feedback`, only after clean results.
@@ -265,7 +265,7 @@ Before broader rollout, operators should be able to hand the workflow owner:
 - the active server set per Hub
 - the visible tool list per Hub
 - the enabled write actions per Hub
-- the confirmed Airtable field mapping set, including reviewer feedback field id `flde8Huk5NRIdm2wZ`
+- the confirmed Airtable field mapping set, including reviewer feedback field id `fldHxIGHMHn4xb9U4` and `📝Review Status` field id `flde8Huk5NRIdm2wZ`
 - one trace example per write action
 - one fallback example
 - the current rollback procedure
