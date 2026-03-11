@@ -166,3 +166,119 @@ If the issue is broader:
 - retain `webflow-app-review-mcp` only
 - disable reviewer writes and fall back to full manual Airtable handling
 - treat any reviewer-state mutation mismatch as a stop condition
+
+## 12. Exact command set
+
+### 12.1 Configure reviewer mapping on `webflow-app-review-mcp`
+
+First replace the placeholder Airtable collaborator ids in:
+
+- [webflow-app-review-reviewer-directory.example.json](/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/examples/webflow-app-review-reviewer-directory.example.json)
+
+Then set the secret on the deployed app-review worker:
+
+```bash
+cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/webflow-app-review-mcp/worker"
+
+pnpm exec wrangler secret put REVIEWER_DIRECTORY_JSON <<'JSON'
+{
+  "acct_wf_pablo": {
+    "airtableCollaboratorId": "usr_replace_pablo",
+    "email": "pablo.miranda@webflow.com",
+    "name": "Pablo Miranda",
+    "lane": "wf-app-review-pablo"
+  },
+  "acct_wf_shea": {
+    "airtableCollaboratorId": "usr_replace_shea",
+    "email": "shea.sisco@webflow.com",
+    "name": "Shea Sisco",
+    "lane": "wf-app-review-shea"
+  }
+}
+JSON
+```
+
+If needed, rotate or set the other worker secrets as well:
+
+```bash
+cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/webflow-app-review-mcp/worker"
+pnpm exec wrangler secret put AIRTABLE_API_KEY
+pnpm exec wrangler secret put MCP_API_KEY
+```
+
+### 12.2 Export hub deploy environment
+
+```bash
+cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
+
+export HUB_API_TOKEN="replace-with-hub-runtime-token"
+export SESSION_TOKEN_FOR_NORMALIZE="replace-with-valid-session-token"
+export SESSION_TOKEN_FOR_VERIFY="${SESSION_TOKEN_FOR_NORMALIZE}"
+export SESSION_RESOLVE_URL="https://id.createsomething.space/v1/mcp/sessions/resolve"
+
+# Optional rollout tuning
+export DISCOVERY_MAX_PROXY_TOOLS="8"
+export RATE_LIMIT_MAX_CALLS="120"
+export RATE_LIMIT_WINDOW_SECONDS="60"
+export QUOTA_MAX_PROXY_CALLS_PER_PERIOD="10000"
+```
+
+### 12.3 Deploy the two per-user Hub URLs
+
+Deploy only:
+
+```bash
+./scripts/cs-hub-webflow-app-reviewers-phase-a-deploy.sh deploy
+```
+
+Deploy and normalize:
+
+```bash
+SKIP_VERIFY=1 ./scripts/cs-hub-webflow-app-reviewers-phase-a-deploy.sh all
+```
+
+Full deploy, normalize, and verify:
+
+```bash
+./scripts/cs-hub-webflow-app-reviewers-phase-a-deploy.sh all
+```
+
+Or step through one phase at a time:
+
+```bash
+./scripts/cs-hub-webflow-app-reviewers-phase-a-deploy.sh deploy
+./scripts/cs-hub-webflow-app-reviewers-phase-a-deploy.sh normalize
+./scripts/cs-hub-webflow-app-reviewers-phase-a-deploy.sh verify
+```
+
+### 12.4 Manual verification for hidden write tools
+
+After deploy, verify that reviewer discovery stays read-only:
+
+```bash
+curl -sS -X POST "https://wf-app-review-pablo.mcp.createsomething.agency/mcp" \
+  -H "Authorization: Bearer ${HUB_API_TOKEN}" \
+  -H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_VERIFY}" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{
+    "jsonrpc":"2.0",
+    "id":"app-review-hidden-writes",
+    "method":"tools/call",
+    "params":{
+      "name":"hub_search_proxy_tools",
+      "arguments":{
+        "serverName":"webflow-app-review-mcp",
+        "query":"update status metadata",
+        "limit":20
+      }
+    }
+  }' | jq .
+```
+
+Expected:
+
+- read tools are visible
+- `app_review_update_version_review` is not visible in Phase A
+- `app_review_set_marketplace_status` is not visible in Phase A
+- `app_review_update_asset_metadata` is not visible in Phase A

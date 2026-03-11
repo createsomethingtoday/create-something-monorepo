@@ -89,7 +89,7 @@ resources:
     pii: false
 tools:
   - name: "template_review_list_queue"
-    description: "List template submissions ready for review."
+    description: "List compact queue summaries for template submissions ready for review."
     action_type: "read"
     systems_touched:
       - "Airtable Marketplace Assets"
@@ -104,13 +104,13 @@ tools:
         - "assigned"
         - "sort"
     output_contract:
-      success_shape: "Returns normalized queue records with assignableVersionId, review ownership, reviewer-facing capability flags, and reviewer-safe defaults for ready_to_review + unassigned + submittedDate_desc when filters are omitted."
+      success_shape: "Returns compact normalized queue records with assignableVersionId, review ownership, reviewer-facing capability flags, and reviewer-safe defaults for ready_to_review + unassigned + submittedDate_desc when filters are omitted. Queue responses exclude bulky asset-detail fields such as long descriptions, HTML bodies, and image arrays; hosts should use get_asset, get_version, or get_review_context for detailed inspection."
       error_shape: "Returns structured Airtable or scope error."
     idempotency_expectation: "Pure read operation."
     fallback_behavior: "Use Airtable queue view manually if Hub read path fails."
 
   - name: "template_review_my_queue"
-    description: "List queue items already assigned to the currently authenticated reviewer."
+    description: "List compact queue summaries already assigned to the currently authenticated reviewer."
     action_type: "read"
     systems_touched:
       - "Airtable Marketplace Assets"
@@ -124,7 +124,7 @@ tools:
         - "status"
         - "sort"
     output_contract:
-      success_shape: "Returns normalized queue records filtered to items assigned to the current reviewer."
+      success_shape: "Returns compact normalized queue records filtered to items assigned to the current reviewer. Queue responses exclude bulky asset-detail fields such as long descriptions, HTML bodies, and image arrays; hosts should use get_asset, get_version, or get_review_context for detailed inspection."
       error_shape: "Returns reviewer identity unavailable or Airtable failure error."
     idempotency_expectation: "Pure read operation."
     fallback_behavior: "Use Airtable filtered by reviewer if Hub read path fails."
