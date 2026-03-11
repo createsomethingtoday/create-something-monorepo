@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { getStatusColorTheme } from '$lib/utils/status-presentation';
+
 	interface Props {
 		status: string;
 		size?: 'sm' | 'default' | 'lg';
@@ -20,41 +22,7 @@
 	// Clean emoji prefixes from status
 	const cleanedStatus = $derived(cleanStatus(status));
 
-	const statusConfig: Record<string, { bg: string; text: string; border: string }> = {
-		Scheduled: {
-			bg: 'var(--color-info-muted)',
-			text: 'var(--color-info)',
-			border: 'var(--color-info-border)'
-		},
-		Published: {
-			bg: 'var(--color-success-muted)',
-			text: 'var(--color-success)',
-			border: 'var(--color-success-border)'
-		},
-		Upcoming: {
-			bg: 'var(--color-data-3-muted)',
-			text: 'var(--color-data-3)',
-			border: 'var(--color-data-3-border)'
-		},
-		Delisted: {
-			bg: 'var(--color-warning-muted)',
-			text: 'var(--color-warning)',
-			border: 'var(--color-warning-border)'
-		},
-		Rejected: {
-			bg: 'var(--color-error-muted)',
-			text: 'var(--color-error)',
-			border: 'var(--color-error-border)'
-		}
-	};
-
-	const config = $derived(
-		statusConfig[cleanedStatus] || {
-		bg: 'var(--color-bg-subtle)',
-		text: 'var(--color-fg-secondary)',
-		border: 'var(--color-border-default)'
-		}
-	);
+	const config = $derived(getStatusColorTheme(cleanedStatus));
 
 	const sizeClasses: Record<string, string> = {
 		sm: 'badge-sm',

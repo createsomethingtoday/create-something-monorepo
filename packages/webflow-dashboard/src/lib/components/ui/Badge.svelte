@@ -47,19 +47,19 @@
 
   .badge-success {
     background: color-mix(in srgb, var(--color-success-muted) 35%, transparent);
-    color: var(--color-success);
+    color: var(--color-success-ink);
     border-color: var(--color-success-border);
   }
 
   .badge-warning {
     background: color-mix(in srgb, var(--color-warning-muted) 35%, transparent);
-    color: var(--color-warning);
+    color: var(--color-warning-ink);
     border-color: var(--color-warning-border);
   }
 
   .badge-error {
     background: color-mix(in srgb, var(--color-error-muted) 35%, transparent);
-    color: var(--color-error);
+    color: var(--color-error-ink);
     border-color: var(--color-error-border);
   }
 

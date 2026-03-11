@@ -61,20 +61,24 @@
   --color-shell-shadow-strong: 0 6px 18px rgba(8, 8, 8, 0.05);
 
   --color-success: #00d722;
+  --color-success-ink: #0a7a23;
   --color-success-muted: rgba(0, 215, 34, 0.12);
   --color-success-border: rgba(0, 215, 34, 0.3);
   --color-error: #ee1d36;
+  --color-error-ink: #b42318;
   --color-error-muted: rgba(238, 29, 54, 0.12);
   --color-error-border: rgba(238, 29, 54, 0.28);
   --color-warning: #ffae13;
+  --color-warning-ink: #9a5b00;
   --color-warning-muted: rgba(255, 174, 19, 0.14);
   --color-warning-border: rgba(255, 174, 19, 0.3);
   --color-info: #146ef5;
+  --color-info-ink: #0f4db8;
   --color-info-muted: #cee2ff;
   --color-info-border: #9dc4ff;
   --color-info-soft-bg: #eef4ff;
   --color-info-soft-border: #bfd3f6;
-  --color-info-soft-text: #1d3f75;
+  --color-info-soft-text: #18448c;
   --color-info-soft-wash: rgba(20, 110, 245, 0.08);
 
   --color-hover: #f5f5f5;
@@ -101,6 +105,7 @@
   --color-data-2: #00d722;
   --color-data-2-muted: rgba(0, 215, 34, 0.16);
   --color-data-3: #7a3dff;
+  --color-data-3-ink: #5d29c8;
   --color-data-3-muted: rgba(122, 61, 255, 0.14);
   --color-data-3-border: rgba(122, 61, 255, 0.26);
   --color-data-4: #ff6b00;
@@ -149,6 +154,11 @@
   --color-hover: rgba(255, 255, 255, 0.06);
   --color-active: rgba(20, 110, 245, 0.22);
   --color-focus: #6ca7ff;
+  --color-success-ink: #65f08a;
+  --color-error-ink: #ff8a80;
+  --color-warning-ink: #ffd27d;
+  --color-info-ink: #9dc4ff;
+  --color-data-3-ink: #c9adff;
   --color-info-soft-bg: rgba(157, 196, 255, 0.12);
   --color-info-soft-border: rgba(157, 196, 255, 0.4);
   --color-info-soft-text: #dbe8ff;
