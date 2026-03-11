@@ -113,6 +113,9 @@
   --shadow-sm: 0 4px 12px rgba(8, 8, 8, 0.04);
   --shadow-md: 0 10px 24px rgba(8, 8, 8, 0.06);
   --shadow-lg: 0 16px 32px rgba(8, 8, 8, 0.08);
+
+  --layout-content-max-width: 76rem;
+  --layout-header-max-width: 78rem;
 }
 
 [data-theme='dark'] {
@@ -219,31 +222,32 @@ a:hover {
 }
 
 .page-intro {
-  margin-bottom: var(--space-lg);
-  padding-bottom: var(--space-md);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
   border-bottom: 1px solid var(--color-shell-border-default);
 }
 
 .page-intro__title {
   font-family: var(--font-heading);
-  font-size: var(--text-h1);
+  font-size: clamp(1.9rem, 2vw + 1rem, 2.5rem);
   font-weight: var(--font-semibold);
   letter-spacing: 0.01em;
   color: var(--color-fg-primary);
-  margin: 0 0 var(--space-xs);
+  margin: 0 0 0.35rem;
 }
 
 .page-intro__subtitle {
-  font-size: var(--text-body);
+  font-size: var(--text-body-sm);
   color: var(--color-fg-secondary);
   margin: 0;
-  max-width: 62ch;
+  max-width: 60ch;
+  line-height: 1.55;
 }
 
 .page-intro--dashboard .page-intro__title {
-  font-size: clamp(1.9rem, 2.35vw, 2.6rem);
+  font-size: clamp(2rem, 2.1vw + 1rem, 2.7rem);
   line-height: 1.08;
-  max-width: 18ch;
+  max-width: 16ch;
 }
 
 .page-intro--dashboard .page-intro__subtitle {
