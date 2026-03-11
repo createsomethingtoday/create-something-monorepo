@@ -8,11 +8,22 @@
 import { loadFont as loadSpaceGrotesk } from '@remotion/google-fonts/SpaceGrotesk';
 import { loadFont as loadSpaceMono } from '@remotion/google-fonts/SpaceMono';
 
-// Load Space Grotesk with all weights
-const { fontFamily: spaceGroteskFamily } = loadSpaceGrotesk();
+const fontLoadOptions = {
+  subsets: ['latin'] as string[],
+  ignoreTooManyRequestsWarning: true,
+};
+
+// Load only the weights the composition actually uses.
+const { fontFamily: spaceGroteskFamily } = loadSpaceGrotesk('normal', {
+  ...fontLoadOptions,
+  weights: ['400', '500', '700'],
+});
 
 // Load Space Mono for data/technical content
-const { fontFamily: spaceMonoFamily } = loadSpaceMono();
+const { fontFamily: spaceMonoFamily } = loadSpaceMono('normal', {
+  ...fontLoadOptions,
+  weights: ['400', '700'],
+});
 
 // Export font families for use in components
 export const fonts = {
