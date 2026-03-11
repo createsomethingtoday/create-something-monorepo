@@ -47,6 +47,7 @@ Global hub secrets:
 - `HUB_API_TOKEN` (fallback / shared)
 - `CS_MCP_HUB_REMOTE_API_TOKEN`
 - `HALFDOZEN_OPERATOR_NOTION_MCP_API_KEY`
+- `WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY`
 
 Per-team hub worker tokens (runtime / compat fallback only, or migrated plaintext values mirrored from the managed-token registry):
 

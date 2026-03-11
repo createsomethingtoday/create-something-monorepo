@@ -81,19 +81,20 @@ require_secret() {
   fi
 }
 
-put_bearer_token() {
+put_versioned_secret() {
   local worker="$1"
-  local value="$2"
+  local key="$2"
+  local value="$3"
 
   if [[ "$DRY_RUN" == "true" ]]; then
-    echo "[dry-run] wrangler versions secret put HUB_API_TOKEN --name ${worker} --config ${HUB_TEAM_CONFIG}"
+    echo "[dry-run] wrangler versions secret put ${key} --name ${worker} --config ${HUB_TEAM_CONFIG}"
     echo "[dry-run] wrangler versions deploy --name ${worker} --config ${HUB_TEAM_CONFIG} --version-id <new-version> --percentage 100"
     return 0
   fi
 
   local output version_id
   output="$(
-    printf '%s' "$value" | node "$WRANGLER_RUNNER" --cwd packages/cs-mcp-hub-remote versions secret put HUB_API_TOKEN --name "$worker" --config "$HUB_TEAM_CONFIG" --message "sync reviewer bearer token"
+    printf '%s' "$value" | node "$WRANGLER_RUNNER" --cwd packages/cs-mcp-hub-remote versions secret put "$key" --name "$worker" --config "$HUB_TEAM_CONFIG" --message "sync reviewer runtime secret ${key}"
   )"
   printf '%s\n' "$output"
   version_id="$(printf '%s\n' "$output" | grep -Eo '[0-9a-f]{8}-[0-9a-f-]{27}' | tail -n1)"
@@ -125,6 +126,7 @@ for entry in "${REVIEWERS[@]}"; do
   IFS='|' read -r team_key _ <<<"$entry"
   require_secret "CS_HUB_${team_key}_API_TOKEN" || missing=1
 done
+require_secret "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" || missing=1
 
 if [[ "$missing" == "1" ]]; then
   echo "reviewer hub secret validation failed" >&2
@@ -136,7 +138,8 @@ for entry in "${REVIEWERS[@]}"; do
   token_var="CS_HUB_${team_key}_API_TOKEN"
   token_value="${!token_var}"
   echo "syncing ${worker}"
-  put_bearer_token "$worker" "$token_value"
+  put_versioned_secret "$worker" "HUB_API_TOKEN" "$token_value"
+  put_versioned_secret "$worker" "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" "$WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY"
 done
 
 echo "webflow reviewer hub vault sync complete."
