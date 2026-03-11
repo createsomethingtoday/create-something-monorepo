@@ -87,13 +87,44 @@ Remove these tools from reviewer-facing discovery during alpha:
 Only these write tools should be candidates for later enablement:
 
 - `webflow-template-review-mcp__template_review_request_changes`
+- `webflow-template-review-mcp__template_review_set_review_status`
+- `webflow-template-review-mcp__template_review_save_draft_feedback`
 - `webflow-template-review-mcp__template_review_approve_version`
 - `webflow-template-review-mcp__template_review_reject_version`
 - `webflow-template-review-mcp__template_review_complete_publishing`
 
 Everything else should remain read-only for reviewers.
 
-## 7. Set reviewer Hubs to read-only first
+## 7. Confirm Airtable field mappings before reviewer writes
+
+Before enabling reviewer-safe writes, verify and record the exact Airtable field IDs used by the narrow routes.
+
+Confirmed mapping:
+
+- reviewer feedback field id: `flde8Huk5NRIdm2wZ`
+
+Implementation requirements:
+
+- confirm the Airtable field id for `📝Review Status`
+- confirm whether draft feedback uses a distinct Airtable field or reuses the main feedback field
+- confirm the Airtable field id and allowed value set for `improvement_areas` if that field is included
+- fail closed if any required field mapping is missing or ambiguous
+- expose the resolved field mapping through `template_review_get_field_map` for operator verification
+
+Recommended write mapping posture:
+
+- `template_review_request_changes`
+  - write reviewer feedback to `flde8Huk5NRIdm2wZ`
+  - optionally write `improvement_areas` if mapped and validated
+  - set `📝Review Status` to the single allowlisted changes-requested state
+- `template_review_set_review_status`
+  - update only the mapped `📝Review Status` field
+  - reject any status outside the server allowlist
+- `template_review_save_draft_feedback`
+  - write only draft-safe feedback fields
+  - do not mutate official decision state
+
+## 8. Set reviewer Hubs to read-only first
 
 Before any write enablement:
 
@@ -103,7 +134,7 @@ Before any write enablement:
 
 The Hub policy and authz layer already support this model. Treat that as a hard requirement, not an optional UX preference.
 
-## 8. Enable rate limits and quotas before writes
+## 9. Enable rate limits and quotas before writes
 
 The live Hub currently has both disabled. Turn on at least minimal controls before reviewer write rollout.
 
@@ -122,7 +153,7 @@ Suggested initial posture:
 
 If you need more granularity later, move to `account_server` or `account_server_tool`.
 
-## 9. Verify policy enforcement in discovery and execution
+## 10. Verify policy enforcement in discovery and execution
 
 For each reviewer Hub, confirm:
 
@@ -134,7 +165,7 @@ For each reviewer Hub, confirm:
 
 This should be validated in runtime behavior, not just by reading policy docs.
 
-## 10. Verify telemetry and trace fields
+## 11. Verify telemetry and trace fields
 
 For every write-path test, confirm the Hub trace contains:
 
@@ -157,14 +188,16 @@ For the reviewer rollout specifically, also confirm that you can derive or recor
 
 If the Hub trace cannot support reviewer-attributed write review, keep reviewer Hubs read-only.
 
-## 11. Write-enable sequence
+## 12. Write-enable sequence
 
 Enable writes in this order:
 
 1. `request_changes`
-2. `approve_version`
-3. `reject_version`
-4. `complete_publishing`
+2. `set_review_status`
+3. `save_draft_feedback`
+4. `approve_version`
+5. `reject_version`
+6. `complete_publishing`
 
 Do not enable the next action until the earlier action passes:
 
@@ -175,7 +208,7 @@ Do not enable the next action until the earlier action passes:
 
 Publishing completion should be last because it couples review state with release resolution.
 
-## 12. Runtime verification checklist
+## 13. Runtime verification checklist
 
 Before write enablement for each reviewer Hub:
 
@@ -196,7 +229,7 @@ After write enablement for each action:
 - unsupported fields fail closed
 - rollback to read-only mode is documented and fast
 
-## 13. Operational stop conditions
+## 14. Operational stop conditions
 
 Revert a reviewer Hub to read-only immediately if:
 
@@ -209,7 +242,7 @@ Revert a reviewer Hub to read-only immediately if:
 
 If this affects more than one reviewer Hub, revert all five to read-only and triage centrally.
 
-## 14. Suggested operator workflow
+## 15. Suggested operator workflow
 
 1. Create the five reviewer-specific Hub surfaces.
 2. Put all five in read-only mode.
@@ -218,11 +251,13 @@ If this affects more than one reviewer Hub, revert all five to read-only and tri
 5. Turn on rate limits and quotas.
 6. Run discovery and execution authz checks with a reviewer session.
 7. Confirm trace visibility in `cs-telemetry`.
-8. Enable `request_changes` for one reviewer Hub first.
-9. Review traces and Airtable result.
-10. Expand action-by-action and reviewer-by-reviewer only after clean results.
+8. Confirm field mappings, including `flde8Huk5NRIdm2wZ` for reviewer feedback.
+9. Enable `request_changes` for one reviewer Hub first.
+10. Review traces and Airtable result.
+11. Enable `set_review_status`, then `save_draft_feedback`, only after clean results.
+12. Expand action-by-action and reviewer-by-reviewer only after clean results.
 
-## 15. Deliverable output for signoff
+## 16. Deliverable output for signoff
 
 Before broader rollout, operators should be able to hand the workflow owner:
 
@@ -230,6 +265,7 @@ Before broader rollout, operators should be able to hand the workflow owner:
 - the active server set per Hub
 - the visible tool list per Hub
 - the enabled write actions per Hub
+- the confirmed Airtable field mapping set, including reviewer feedback field id `flde8Huk5NRIdm2wZ`
 - one trace example per write action
 - one fallback example
 - the current rollback procedure
