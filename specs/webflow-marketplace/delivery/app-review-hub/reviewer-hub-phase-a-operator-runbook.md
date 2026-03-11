@@ -60,7 +60,9 @@ Required reviewer mapping input for `webflow-app-review-mcp`:
 
 - set `REVIEWER_DIRECTORY_JSON` on the deployed `webflow-app-review-mcp` worker
 - use [webflow-app-review-reviewer-directory.example.json](/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/examples/webflow-app-review-reviewer-directory.example.json) as the template
-- replace `usr_replace_pablo` and `usr_replace_shea` with the real Airtable collaborator ids before deploy
+- current Airtable collaborator ids:
+  - Pablo Miranda: `usrngNLDtuR9yYZei`
+  - Shea Sisco: `usrEt5sK6Jf0JdLO5`
 
 Suggested command:
 
@@ -183,13 +185,13 @@ cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monor
 pnpm exec wrangler secret put REVIEWER_DIRECTORY_JSON <<'JSON'
 {
   "acct_wf_pablo": {
-    "airtableCollaboratorId": "usr_replace_pablo",
+    "airtableCollaboratorId": "usrngNLDtuR9yYZei",
     "email": "pablo.miranda@webflow.com",
     "name": "Pablo Miranda",
     "lane": "wf-app-review-pablo"
   },
   "acct_wf_shea": {
-    "airtableCollaboratorId": "usr_replace_shea",
+    "airtableCollaboratorId": "usrEt5sK6Jf0JdLO5",
     "email": "shea.sisco@webflow.com",
     "name": "Shea Sisco",
     "lane": "wf-app-review-shea"
