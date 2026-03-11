@@ -90,6 +90,7 @@
     "policy:os:verify:live": "bash scripts/policy-os-live-verify.sh",
     "mcp:hub:legacy:deploy": "bash scripts/cs-hub-legacy-bridge-deploy.sh",
     "mcp:hub:vault:sync": "bash scripts/cs-hub-vault-sync.sh",
+    "mcp:hub:webflow-app-reviewers:vault:sync": "bash scripts/cs-hub-webflow-app-reviewers-phase-a-vault-sync.sh",
     "mcp:hub:vault:migrate:doppler-to-infisical": "bash scripts/migrate-doppler-to-infisical.sh",
     "mcp:hub:rotate:production": "bash scripts/cs-hub-rotate-production.sh",
     "mcp:halfdozen-operator-notion:preflight": "bash scripts/halfdozen-operator-notion-preflight.sh",

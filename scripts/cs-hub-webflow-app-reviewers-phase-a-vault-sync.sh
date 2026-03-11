@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+HUB_REMOTE_DIR="$ROOT_DIR/packages/cs-mcp-hub-remote"
+HUB_TEAM_CONFIG="$HUB_REMOTE_DIR/wrangler.team-hubs.toml"
+WRANGLER_RUNNER="$ROOT_DIR/scripts/run-wrangler.mjs"
+
+INFISICAL_PROJECT_ID="${INFISICAL_PROJECT_ID:-}"
+INFISICAL_ENV="${INFISICAL_ENV:-prod}"
+INFISICAL_PATH="${INFISICAL_PATH:-/}"
+INFISICAL_INCLUDE_IMPORTS="${INFISICAL_INCLUDE_IMPORTS:-true}"
+DRY_RUN="${DRY_RUN:-false}"
+
+REVIEWERS=(
+  "WF_APP_REVIEW_PABLO|cs-hub-wf-app-review-pablo"
+  "WF_APP_REVIEW_SHEA|cs-hub-wf-app-review-shea"
+)
+
+require_cmd() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    echo "missing required command: $1" >&2
+    exit 1
+  fi
+}
+
+normalize_bool_or_fail() {
+  local raw="${1:-}"
+  local lowered
+  lowered="$(echo "$raw" | tr '[:upper:]' '[:lower:]')"
+  case "$lowered" in
+    true | false) echo "$lowered" ;;
+    *)
+      echo "invalid boolean: ${raw} (expected true|false)" >&2
+      exit 1
+      ;;
+  esac
+}
+
+load_secrets_from_infisical() {
+  local -a export_cmd=(
+    infisical export
+    --format=json
+    --env="$INFISICAL_ENV"
+    --path="$INFISICAL_PATH"
+    --include-imports="$INFISICAL_INCLUDE_IMPORTS"
+  )
+  if [[ -n "$INFISICAL_PROJECT_ID" ]]; then
+    export_cmd+=(--projectId="$INFISICAL_PROJECT_ID")
+  fi
+
+  local payload
+  payload="$("${export_cmd[@]}")"
+
+  while IFS=$'\t' read -r key value; do
+    export "${key}=${value}"
+  done < <(
+    printf '%s' "$payload" | jq -r '
+      if type == "array" then
+        .[] | select(.key != null) | [.key, (.value | tostring)]
+      else
+        to_entries[] | [.key, (.value | tostring)]
+      end
+      | @tsv
+    '
+  )
+
+  unset CLOUDFLARE_API_TOKEN
+  unset CLOUDFLARE_PAGES_API_TOKEN
+  unset CLOUDFLARE_ACCOUNT_ID
+}
+
+require_secret() {
+  local name="$1"
+  if [[ -z "${!name:-}" ]]; then
+    echo "missing required secret: ${name}" >&2
+    return 1
+  fi
+}
+
+put_versioned_secret() {
+  local worker="$1"
+  local key="$2"
+  local value="$3"
+
+  if [[ "$DRY_RUN" == "true" ]]; then
+    echo "[dry-run] wrangler versions secret put ${key} --name ${worker} --config ${HUB_TEAM_CONFIG}"
+    echo "[dry-run] wrangler versions deploy --name ${worker} --config ${HUB_TEAM_CONFIG} --version-id <new-version> --percentage 100"
+    return 0
+  fi
+
+  local output version_id
+  output="$(
+    printf '%s' "$value" | node "$WRANGLER_RUNNER" --cwd packages/cs-mcp-hub-remote versions secret put "$key" --name "$worker" --config "$HUB_TEAM_CONFIG" --message "sync app-review reviewer runtime secret ${key}"
+  )"
+  printf '%s\n' "$output"
+  version_id="$(printf '%s\n' "$output" | grep -Eo '[0-9a-f]{8}-[0-9a-f-]{27}' | tail -n1)"
+  if [[ -z "$version_id" ]]; then
+    echo "failed to parse version id for ${worker}" >&2
+    exit 1
+  fi
+
+  node "$WRANGLER_RUNNER" --cwd packages/cs-mcp-hub-remote versions deploy \
+    --name "$worker" \
+    --config "$HUB_TEAM_CONFIG" \
+    --version-id "$version_id" \
+    --percentage 100 \
+    --message "deploy app-review reviewer runtime secrets" \
+    --yes
+}
+
+INFISICAL_INCLUDE_IMPORTS="$(normalize_bool_or_fail "$INFISICAL_INCLUDE_IMPORTS")"
+DRY_RUN="$(normalize_bool_or_fail "$DRY_RUN")"
+
+require_cmd jq
+require_cmd infisical
+
+load_secrets_from_infisical
+
+missing=0
+require_secret "HUB_SESSION_RESOLVE_TOKEN" || missing=1
+require_secret "WEBFLOW_APP_REVIEW_MCP_API_KEY" || missing=1
+require_secret "BRAINTRUST_API_KEY" || missing=1
+require_secret "BRAINTRUST_PROJECT_ID" || missing=1
+require_secret "CS_HUB_WF_APP_REVIEW_PABLO_API_TOKEN" || missing=1
+require_secret "CS_HUB_WF_APP_REVIEW_SHEA_API_TOKEN" || missing=1
+
+if [[ "$missing" == "1" ]]; then
+  echo "app-review reviewer hub secret validation failed" >&2
+  exit 1
+fi
+
+for entry in "${REVIEWERS[@]}"; do
+  IFS='|' read -r reviewer_key worker <<<"$entry"
+  reviewer_token_var="CS_HUB_${reviewer_key}_API_TOKEN"
+  echo "syncing ${worker}"
+  put_versioned_secret "$worker" "HUB_API_TOKEN" "${!reviewer_token_var}"
+  put_versioned_secret "$worker" "HUB_SESSION_RESOLVE_TOKEN" "$HUB_SESSION_RESOLVE_TOKEN"
+  put_versioned_secret "$worker" "WEBFLOW_APP_REVIEW_MCP_API_KEY" "$WEBFLOW_APP_REVIEW_MCP_API_KEY"
+  put_versioned_secret "$worker" "BRAINTRUST_API_KEY" "$BRAINTRUST_API_KEY"
+  put_versioned_secret "$worker" "BRAINTRUST_PROJECT_ID" "$BRAINTRUST_PROJECT_ID"
+done
+
+echo "webflow app-review reviewer hub vault sync complete."

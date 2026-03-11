@@ -44,9 +44,14 @@ Required locally:
 
 Required environment:
 
-- `HUB_API_TOKEN`
 - `SESSION_TOKEN_FOR_NORMALIZE`
 - `SESSION_RESOLVE_URL` if not using the default in the script
+
+Reviewer hub auth:
+
+- `CS_HUB_WF_APP_REVIEW_PABLO_API_TOKEN`
+- `CS_HUB_WF_APP_REVIEW_SHEA_API_TOKEN`
+- if those are not exported locally, the deploy script can resolve them from Infisical
 
 Optional environment:
 
@@ -221,7 +226,8 @@ pnpm exec wrangler secret put MCP_API_KEY
 ```bash
 cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
 
-export HUB_API_TOKEN="replace-with-hub-runtime-token"
+export CS_HUB_WF_APP_REVIEW_PABLO_API_TOKEN="replace-with-pablo-hub-token"
+export CS_HUB_WF_APP_REVIEW_SHEA_API_TOKEN="replace-with-shea-hub-token"
 export SESSION_TOKEN_FOR_NORMALIZE="replace-with-valid-session-token"
 export SESSION_TOKEN_FOR_VERIFY="${SESSION_TOKEN_FOR_NORMALIZE}"
 export SESSION_RESOLVE_URL="https://id.createsomething.space/v1/mcp/sessions/resolve"
@@ -267,7 +273,7 @@ After deploy, verify that reviewer discovery stays read-only:
 
 ```bash
 curl -sS -X POST "https://wf-app-review-pablo.mcp.createsomething.agency/mcp" \
-  -H "Authorization: Bearer ${HUB_API_TOKEN}" \
+  -H "Authorization: Bearer ${CS_HUB_WF_APP_REVIEW_PABLO_API_TOKEN}" \
   -H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_VERIFY}" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \

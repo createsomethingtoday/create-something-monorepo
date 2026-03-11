@@ -141,7 +141,8 @@ Export environment:
 ```bash
 cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"
 
-export HUB_API_TOKEN="replace-with-hub-runtime-token"
+export CS_HUB_WF_APP_REVIEW_PABLO_API_TOKEN="replace-with-pablo-hub-token"
+export CS_HUB_WF_APP_REVIEW_SHEA_API_TOKEN="replace-with-shea-hub-token"
 export SESSION_TOKEN_FOR_NORMALIZE="replace-with-valid-session-token"
 export SESSION_TOKEN_FOR_VERIFY="${SESSION_TOKEN_FOR_NORMALIZE}"
 export SESSION_RESOLVE_URL="https://id.createsomething.space/v1/mcp/sessions/resolve"

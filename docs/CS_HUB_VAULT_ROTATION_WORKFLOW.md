@@ -68,6 +68,12 @@ Webflow reviewer Hub worker tokens:
 - `CS_HUB_WF_TEMPLATE_REVIEW_ERIC_API_TOKEN`
 - `CS_HUB_WF_TEMPLATE_REVIEW_VICKI_API_TOKEN`
 - `CS_HUB_WF_TEMPLATE_REVIEW_MARIANA_API_TOKEN`
+- `CS_HUB_WF_APP_REVIEW_PABLO_API_TOKEN`
+- `CS_HUB_WF_APP_REVIEW_SHEA_API_TOKEN`
+
+Webflow app-review MCP upstream token:
+
+- `WEBFLOW_APP_REVIEW_MCP_API_KEY`
 
 Per-team Notion bridge basic auth passwords:
 
@@ -97,6 +103,13 @@ DRY_RUN=true pnpm mcp:hub:vault:sync
 INCLUDE_BRIDGES=false pnpm mcp:hub:vault:sync
 LOAD_FROM_VAULT=false pnpm mcp:hub:vault:sync
 VAULT_PROVIDER=env pnpm mcp:hub:vault:sync
+```
+
+Reviewer-hub specific sync helpers:
+
+```bash
+pnpm mcp:hub:webflow-app-reviewers:vault:sync
+DRY_RUN=true pnpm mcp:hub:webflow-app-reviewers:vault:sync
 ```
 
 Infisical machine identity:
