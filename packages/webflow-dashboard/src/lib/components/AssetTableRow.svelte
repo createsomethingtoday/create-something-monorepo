@@ -263,8 +263,8 @@
 		color: var(--color-fg-muted);
 	}
 
-	.action-cell,
-	.more-cell {
+	:global(.action-cell),
+	:global(.more-cell) {
 		white-space: nowrap;
 	}
 
