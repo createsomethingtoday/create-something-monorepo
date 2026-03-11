@@ -85,7 +85,10 @@ Use this only after reviewer attribution and trace requirements are verified in 
 Phase B should still default to a narrow review surface:
 
 - all Phase A read tools
-- `webflow-app-review-mcp__app_review_update_version_review`
+- `webflow-app-review-mcp__app_review_request_changes`
+- `webflow-app-review-mcp__app_review_approve_version`
+- `webflow-app-review-mcp__app_review_reject_version`
+- `webflow-app-review-mcp__app_review_update_version_review` only if broader update semantics are still required
 - optionally `webflow-app-review-mcp__app_review_set_marketplace_status` after separate validation
 
 Do not expose general metadata mutation tools if the reviewer workflow only needs review-state actions.
@@ -120,7 +123,10 @@ Do not widen discovery to expose broad mutation tools.
 
 The only reviewer-facing write actions that may be enabled later are:
 
-- `webflow-app-review-mcp__app_review_update_version_review`
+- `webflow-app-review-mcp__app_review_request_changes`
+- `webflow-app-review-mcp__app_review_approve_version`
+- `webflow-app-review-mcp__app_review_reject_version`
+- `webflow-app-review-mcp__app_review_update_version_review` only if broader update semantics are still required
 - `webflow-app-review-mcp__app_review_set_marketplace_status`
 
 Keep these out of reviewer use until:
@@ -136,7 +142,13 @@ Hide these from reviewer-facing discovery in both Phase A and Phase B:
 
 - `webflow-app-review-mcp__app_review_update_asset_metadata`
 
-This tool is too broad for the current reviewer playbook and should remain operator-only unless the policy pack is explicitly expanded.
+Keep the broad metadata route operator-only unless the policy pack is explicitly expanded.
+
+In Phase A, also keep the narrow reviewer decision verbs hidden until reviewer identity and trace continuity are proven:
+
+- `webflow-app-review-mcp__app_review_request_changes`
+- `webflow-app-review-mcp__app_review_approve_version`
+- `webflow-app-review-mcp__app_review_reject_version`
 
 ## 9. Policy posture
 
@@ -186,10 +198,11 @@ Reason:
 3. Confirm write tools are not visible in reviewer discovery.
 4. Confirm reviewer sessions are read-only and actor-resolved.
 5. Turn on Hub rate limits and quotas.
-6. Enable `app_review_update_version_review` for one reviewer only after trace validation.
+6. Enable `app_review_request_changes` for one reviewer only after trace validation.
 7. Validate Airtable writes and rollback behavior.
-8. Expand to the second reviewer.
-9. Consider `app_review_set_marketplace_status` only after clean evidence.
+8. Enable `app_review_approve_version`, then `app_review_reject_version`, only after clean results.
+9. Expand to the second reviewer.
+10. Consider `app_review_set_marketplace_status` only after clean evidence.
 
 ## 13. Stop conditions
 

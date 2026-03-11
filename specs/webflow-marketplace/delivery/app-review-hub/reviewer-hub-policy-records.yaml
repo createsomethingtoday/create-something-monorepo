@@ -30,6 +30,9 @@ shared_phase_a_policy:
     - "webflow-app-review-mcp__app_review_update_version_review"
     - "webflow-app-review-mcp__app_review_set_marketplace_status"
     - "webflow-app-review-mcp__app_review_update_asset_metadata"
+    - "webflow-app-review-mcp__app_review_request_changes"
+    - "webflow-app-review-mcp__app_review_approve_version"
+    - "webflow-app-review-mcp__app_review_reject_version"
   allowed_resources:
     - "app-review://field-map"
     - "app-review://status-options"
@@ -65,7 +68,9 @@ reviewers:
     policy_record_id: "wf_app_review_shea_phase_a"
 
 phase_b_prerequisites:
-  - "reviewer-attributed trace verification for app_review_update_version_review"
+  - "reviewer-attributed trace verification for app_review_request_changes"
+  - "reviewer-attributed trace verification for app_review_approve_version"
+  - "reviewer-attributed trace verification for app_review_reject_version"
   - "manual fallback drill completed"
   - "Hub authz layer proves reviewer identity independent of shared MCP bearer token"
   - "Marketplace review lead signoff"

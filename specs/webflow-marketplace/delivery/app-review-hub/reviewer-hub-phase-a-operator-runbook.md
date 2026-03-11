@@ -143,6 +143,12 @@ Phase A reviewer Hubs should expose app-review context tools only:
 
 Do not enable reviewer mutation tools in Phase A. Keep version-review updates, Marketplace status changes, and asset metadata changes out of reviewer discovery.
 
+Also keep the narrow reviewer decision verbs hidden in Phase A:
+
+- `app_review_request_changes`
+- `app_review_approve_version`
+- `app_review_reject_version`
+
 ## 10. Known boundary
 
 This runbook is intentionally Phase A only.
@@ -153,6 +159,8 @@ The deployed app-review worker can now resolve reviewer identity from Hub accoun
 - approval-gated write posture
 - fallback drill evidence
 - explicit write enablement signoff
+
+When write rollout begins, prefer the narrow decision verbs before exposing the broader `app_review_update_version_review` route.
 
 ## 11. Rollback
 

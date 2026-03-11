@@ -66,7 +66,10 @@ If you override, note why during pilot so the workflow can improve.
 
 These actions remain reviewer-owned:
 
-- changing version review state
+- requesting changes on a version
+- approving a version
+- rejecting a version
+- changing version review state where broader update semantics are explicitly allowed
 - changing Marketplace status
 
 Treat every write action as a deliberate reviewer action, not an automatic follow-through from the recommendation.

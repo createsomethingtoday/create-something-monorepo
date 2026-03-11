@@ -27,7 +27,7 @@ Use it for:
   - `webflow-app-review-mcp`
 - policy boundary:
   - auto-allow: reads, queue context, field-map lookup, recommendation drafting, feedback refinement
-  - approval-required: version review state changes, Marketplace status changes
+  - approval-required: narrow reviewer decision writes (`request_changes`, `approve_version`, `reject_version`), broader version review state changes, Marketplace status changes
   - block: broad asset metadata editing from reviewer lane, creator-facing sends, reviewer-lane control-plane actions
 
 ## 3. Roles
@@ -48,7 +48,7 @@ Use it for:
 
 ### Approval-required path
 
-1. reviewer decides to update version review state or Marketplace status
+1. reviewer decides to request changes, approve, reject, update version review state, or change Marketplace status
 2. action is treated as explicit reviewer-owned state change
 3. Hub executes the write path only after reviewer intent is clear
 4. audit event is written
