@@ -407,7 +407,7 @@ export const CloseScene: React.FC = () => {
                   }}
                 >
                   {metric.value}
-                  {metric.suffix ?? ''}
+                  {'suffix' in metric ? metric.suffix : ''}
                 </div>
               </div>
             ))}

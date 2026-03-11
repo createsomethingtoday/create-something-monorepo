@@ -186,7 +186,7 @@ export const StatsScene: React.FC = () => {
                   value={stat.value}
                   startFrame={stats.countStart + index * 6}
                   duration={stats.countDuration}
-                  suffix={stat.suffix}
+                  suffix={'suffix' in stat ? stat.suffix : undefined}
                 />
               </div>
 
