@@ -102,6 +102,10 @@ Add write guardrails only after reviewer-attributed traces and fallback drills a
 
 The skills above are delivered as Codex-native skills under `$CODEX_HOME/skills`.
 
+The repo-tracked export lives under:
+
+- [packages/dotfiles/codex/skills](/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/codex/skills)
+
 The source material for those skills is:
 
 - [reviewer-playbook.md](./reviewer-playbook.md)
