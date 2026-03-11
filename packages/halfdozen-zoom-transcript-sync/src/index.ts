@@ -32,13 +32,17 @@ export default {
         ok: true,
         worker: 'halfdozen-zoom-transcript-sync',
         notion_write_mode: resolveWriteMode(env),
-        notion_database_id: env.NOTION_DATABASE_ID,
-        notion_runtime_connection_ref: env.NOTION_RUNTIME_CONNECTION_REF ?? null,
+        notion_database_configured: Boolean(env.NOTION_DATABASE_ID?.trim()),
+        notion_runtime_connection_configured: Boolean(env.NOTION_RUNTIME_CONNECTION_REF?.trim()),
+        sync_api_key_configured: Boolean(env.SYNC_API_KEY?.trim()),
         zoom_auth_mode: resolveZoomAuthMode(env),
       });
     }
 
     if (url.pathname === '/status') {
+      const authError = requireApiKey(request, env);
+      if (authError) return authError;
+
       const limit = parsePositiveInt(url.searchParams.get('limit'), 10);
       const status = url.searchParams.get('status')?.trim() || undefined;
       const [runs, ledger] = await Promise.all([

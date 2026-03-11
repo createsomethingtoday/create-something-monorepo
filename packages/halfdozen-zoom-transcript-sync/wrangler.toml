@@ -3,6 +3,7 @@ main = "src/index.ts"
 compatibility_date = "2026-03-10"
 compatibility_flags = ["nodejs_compat"]
 account_id = "5c3e9cf4d55ce171b844fad0931607f9"
+workers_dev = true
 
 [observability]
 enabled = true
@@ -10,7 +11,7 @@ enabled = true
 [[d1_databases]]
 binding = "DB"
 database_name = "halfdozen-zoom-transcript-sync"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "685613a0-05da-4d0c-a932-579d51db7fb8"
 
 [[queues.producers]]
 queue = "halfdozen-zoom-transcript-sync"
@@ -22,9 +23,20 @@ max_batch_size = 1
 max_retries = 3
 dead_letter_queue = "halfdozen-zoom-transcript-sync-dlq"
 
-# Optional cron trigger once the runtime is configured.
-# [triggers]
-# crons = ["0 * * * *"]
+[triggers]
+crons = ["0 * * * *"]
+
+[vars]
+NOTION_DATABASE_ID = "27a01918-7ac5-80b7-97fe-c563c98afbbc"
+NOTION_WRITE_MODE = "hub"
+NOTION_HUB_URL = "https://danny.mcp.createsomething.agency/mcp"
+NOTION_HUB_PROXY_TOOL = "halfdozen-operator-notion-mcp__halfdozen_notion"
+NOTION_DEFAULT_STATUS = "Active"
+NOTION_DEFAULT_SOURCE = "Zoom"
+NOTION_DEFAULT_TYPE = "Meeting"
+ZOOM_LOOKBACK_DAYS = "14"
+ZOOM_PAGE_SIZE = "100"
+ZOOM_USER_ID = "all"
 
 # Secrets / vars to configure before deploy:
 # SYNC_API_KEY
@@ -38,5 +50,5 @@ dead_letter_queue = "halfdozen-zoom-transcript-sync-dlq"
 # NOTION_HUB_URL
 # NOTION_HUB_API_TOKEN
 # NOTION_HUB_PROXY_TOOL
-# Optional governance metadata:
+# Optional governance metadata set as a secret if needed:
 # NOTION_RUNTIME_CONNECTION_REF

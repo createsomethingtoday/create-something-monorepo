@@ -11,6 +11,7 @@ This package uses:
 - scheduled discovery
 - Queue-backed transcript processing
 - D1 meeting ledger keyed by canonical Zoom meeting identity
+- account-wide recording discovery for Server-to-Server Zoom apps
 - Notion page-body transcript writes aligned to the live `Internal LLM [HD]` format
 
 ## Runtime modes
@@ -25,7 +26,7 @@ Notion writes support two transport modes:
 ## HTTP surface
 
 - `GET /health` — public health/config summary
-- `GET /status` — recent runs and recent ledger rows
+- `GET /status` — recent runs and recent ledger rows, requires `SYNC_API_KEY`
 - `POST /scan` — manual discovery trigger, requires `SYNC_API_KEY`
 - `POST /replay/:dedupKey` — replay a failed or stale transcript job, requires `SYNC_API_KEY`
 

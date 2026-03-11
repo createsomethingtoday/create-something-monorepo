@@ -10,6 +10,11 @@ interface ZoomRecordingListResponse {
   next_page_token?: string;
 }
 
+interface ZoomUserListResponse {
+  users?: ZoomUser[];
+  next_page_token?: string;
+}
+
 interface ZoomMeeting {
   id?: string | number;
   uuid?: string;
@@ -17,6 +22,11 @@ interface ZoomMeeting {
   start_time?: string;
   host_id?: string;
   recording_files?: ZoomRecordingFile[];
+}
+
+interface ZoomUser {
+  id?: string;
+  email?: string;
 }
 
 interface ZoomRecordingFile {
@@ -32,52 +42,54 @@ interface ZoomRecordingFile {
 export async function listTranscriptCandidates(env: Env): Promise<ZoomDiscoveryResult> {
   const pageSize = parsePositiveInt(env.ZOOM_PAGE_SIZE, DEFAULT_PAGE_SIZE);
   const lookbackDays = parsePositiveInt(env.ZOOM_LOOKBACK_DAYS, DEFAULT_LOOKBACK_DAYS);
-  const userId = env.ZOOM_USER_ID?.trim() || 'me';
   const to = formatDate(new Date());
   const from = formatDate(new Date(Date.now() - lookbackDays * 24 * 60 * 60 * 1000));
 
-  const candidates: TranscriptCandidate[] = [];
+  const candidates = new Map<string, TranscriptCandidate>();
   let meetingsScanned = 0;
   let transcriptFilesScanned = 0;
-  let nextPageToken = '';
 
-  do {
-    const params = new URLSearchParams({
-      from,
-      to,
-      page_size: String(pageSize),
-    });
+  for (const userId of await resolveZoomUserIds(env)) {
+    let nextPageToken = '';
 
-    if (nextPageToken) {
-      params.set('next_page_token', nextPageToken);
-    }
+    do {
+      const params = new URLSearchParams({
+        from,
+        to,
+        page_size: String(pageSize),
+      });
 
-    const payload = await zoomApiFetch<ZoomRecordingListResponse>(
-      env,
-      `/users/${encodeURIComponent(userId)}/recordings?${params.toString()}`,
-    );
-
-    const meetings = Array.isArray(payload.meetings) ? payload.meetings : [];
-    meetingsScanned += meetings.length;
-
-    for (const meeting of meetings) {
-      const transcriptFiles = dedupeRecordingFiles(meeting.recording_files ?? []).filter(isTranscriptFile);
-      transcriptFilesScanned += transcriptFiles.length;
-
-      for (const file of transcriptFiles) {
-        const downloadUrl = file.download_url?.trim();
-        if (!downloadUrl) continue;
-
-        const candidate = await buildTranscriptCandidate(meeting, file, downloadUrl);
-        candidates.push(candidate);
+      if (nextPageToken) {
+        params.set('next_page_token', nextPageToken);
       }
-    }
 
-    nextPageToken = payload.next_page_token?.trim() || '';
-  } while (nextPageToken);
+      const payload = await zoomApiFetch<ZoomRecordingListResponse>(
+        env,
+        `/users/${encodeURIComponent(userId)}/recordings?${params.toString()}`,
+      );
+
+      const meetings = Array.isArray(payload.meetings) ? payload.meetings : [];
+      meetingsScanned += meetings.length;
+
+      for (const meeting of meetings) {
+        const transcriptFiles = dedupeRecordingFiles(meeting.recording_files ?? []).filter(isTranscriptFile);
+        transcriptFilesScanned += transcriptFiles.length;
+
+        for (const file of transcriptFiles) {
+          const downloadUrl = file.download_url?.trim();
+          if (!downloadUrl) continue;
+
+          const candidate = await buildTranscriptCandidate(meeting, file, downloadUrl);
+          candidates.set(candidate.dedupKey, candidate);
+        }
+      }
+
+      nextPageToken = payload.next_page_token?.trim() || '';
+    } while (nextPageToken);
+  }
 
   return {
-    candidates,
+    candidates: Array.from(candidates.values()),
     meetingsScanned,
     transcriptFilesScanned,
     from,
@@ -127,6 +139,52 @@ export function buildCanonicalMeetingSourceUrl(meetingId: string | null, origina
 function parsePositiveInt(raw: string | undefined, fallback: number): number {
   const parsed = Number.parseInt(raw ?? '', 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+async function resolveZoomUserIds(env: Env): Promise<string[]> {
+  const configured = env.ZOOM_USER_ID?.trim();
+  if (configured && configured.toLowerCase() !== 'all') {
+    return configured
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+  }
+
+  if (!env.ZOOM_ACCOUNT_ID?.trim()) {
+    return ['me'];
+  }
+
+  const users = await listZoomUsers(env);
+  return users.length > 0 ? users : ['me'];
+}
+
+async function listZoomUsers(env: Env): Promise<string[]> {
+  const userIds: string[] = [];
+  let nextPageToken = '';
+
+  do {
+    const params = new URLSearchParams({
+      page_size: '300',
+      status: 'active',
+    });
+
+    if (nextPageToken) {
+      params.set('next_page_token', nextPageToken);
+    }
+
+    const payload = await zoomApiFetch<ZoomUserListResponse>(env, `/users?${params.toString()}`);
+    const users = Array.isArray(payload.users) ? payload.users : [];
+    for (const user of users) {
+      const id = user.id?.trim() || user.email?.trim() || '';
+      if (id) {
+        userIds.push(id);
+      }
+    }
+
+    nextPageToken = payload.next_page_token?.trim() || '';
+  } while (nextPageToken);
+
+  return Array.from(new Set(userIds));
 }
 
 async function buildTranscriptCandidate(
