@@ -34,7 +34,7 @@ NOTION_HUB_PROXY_TOOL = "halfdozen-operator-notion-mcp__halfdozen_notion"
 NOTION_DEFAULT_STATUS = "Active"
 NOTION_DEFAULT_SOURCE = "Zoom"
 NOTION_DEFAULT_TYPE = "Meeting"
-ZOOM_LOOKBACK_DAYS = "14"
+ZOOM_LOOKBACK_DAYS = "3"
 ZOOM_PAGE_SIZE = "100"
 
 # Secrets / vars to configure before deploy:

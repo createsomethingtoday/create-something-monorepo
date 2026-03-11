@@ -2,7 +2,7 @@ import type { Env, ParsedTranscript, TranscriptCandidate, TranscriptSegment, Zoo
 
 const ZOOM_OAUTH_URL = 'https://zoom.us/oauth/token';
 const ZOOM_API_BASE = 'https://api.zoom.us/v2';
-const DEFAULT_LOOKBACK_DAYS = 14;
+const DEFAULT_LOOKBACK_DAYS = 3;
 const DEFAULT_PAGE_SIZE = 100;
 
 interface ZoomRecordingListResponse {
