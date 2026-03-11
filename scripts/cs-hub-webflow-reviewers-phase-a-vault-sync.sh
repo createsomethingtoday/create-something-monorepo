@@ -79,15 +79,32 @@ require_secret() {
 
 put_secret() {
   local worker="$1"
-  local key="$2"
-  local value="$3"
+  local payload_file="$2"
 
   if [[ "$DRY_RUN" == "true" ]]; then
-    echo "[dry-run] wrangler secret put ${key} --name ${worker} --config ${HUB_TEAM_CONFIG}"
+    echo "[dry-run] wrangler versions secret bulk ${payload_file} --name ${worker} --config ${HUB_TEAM_CONFIG}"
+    echo "[dry-run] wrangler versions deploy --name ${worker} --config ${HUB_TEAM_CONFIG} --version-id <new-version> --percentage 100"
     return 0
   fi
 
-  printf '%s' "$value" | node "$WRANGLER_RUNNER" --cwd packages/cs-mcp-hub-remote secret put "$key" --name "$worker" --config "$HUB_TEAM_CONFIG"
+  local output version_id
+  output="$(
+    node "$WRANGLER_RUNNER" --cwd packages/cs-mcp-hub-remote versions secret bulk "$payload_file" --name "$worker" --config "$HUB_TEAM_CONFIG" --message "sync reviewer runtime secrets"
+  )"
+  printf '%s\n' "$output"
+  version_id="$(printf '%s\n' "$output" | grep -Eo '[0-9a-f]{8}-[0-9a-f-]{27}' | tail -n1)"
+  if [[ -z "$version_id" ]]; then
+    echo "failed to parse version id for ${worker}" >&2
+    exit 1
+  fi
+
+  node "$WRANGLER_RUNNER" --cwd packages/cs-mcp-hub-remote versions deploy \
+    --name "$worker" \
+    --config "$HUB_TEAM_CONFIG" \
+    --version-id "$version_id" \
+    --percentage 100 \
+    --message "deploy reviewer runtime secrets" \
+    --yes
 }
 
 INFISICAL_INCLUDE_IMPORTS="$(normalize_bool_or_fail "$INFISICAL_INCLUDE_IMPORTS")"
@@ -118,10 +135,20 @@ for entry in "${REVIEWERS[@]}"; do
   token_var="CS_HUB_${team_key}_API_TOKEN"
   token_value="${!token_var}"
   echo "syncing ${worker}"
-  put_secret "$worker" "HUB_API_TOKEN" "$token_value"
-  put_secret "$worker" "HUB_SESSION_RESOLVE_TOKEN" "$HUB_SESSION_RESOLVE_TOKEN"
-  put_secret "$worker" "BRAINTRUST_API_KEY" "$BRAINTRUST_API_KEY"
-  put_secret "$worker" "BRAINTRUST_PROJECT_ID" "$BRAINTRUST_PROJECT_ID"
+  payload_file="$(mktemp)"
+  jq -n \
+    --arg hub_api_token "$token_value" \
+    --arg resolve_token "$HUB_SESSION_RESOLVE_TOKEN" \
+    --arg braintrust_api_key "$BRAINTRUST_API_KEY" \
+    --arg braintrust_project_id "$BRAINTRUST_PROJECT_ID" \
+    '{
+      HUB_API_TOKEN: $hub_api_token,
+      HUB_SESSION_RESOLVE_TOKEN: $resolve_token,
+      BRAINTRUST_API_KEY: $braintrust_api_key,
+      BRAINTRUST_PROJECT_ID: $braintrust_project_id
+    }' > "$payload_file"
+  put_secret "$worker" "$payload_file"
+  rm -f "$payload_file"
 done
 
 echo "webflow reviewer hub vault sync complete."
