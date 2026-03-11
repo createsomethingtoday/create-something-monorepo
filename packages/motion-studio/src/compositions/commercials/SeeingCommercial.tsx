@@ -203,7 +203,7 @@ const PhilosophyScene: React.FC<{ palette: typeof voxPresets[keyof typeof voxPre
 const TriadScene: React.FC<{ palette: typeof voxPresets[keyof typeof voxPresets] }> = ({ palette }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  
+
   const triad = [
     {
       icon: RefreshCw,
@@ -227,101 +227,241 @@ const TriadScene: React.FC<{ palette: typeof voxPresets[keyof typeof voxPresets]
       delay: 160,
     },
   ];
-  
+
+  const beatStarts = [18, 102, 186] as const;
+  const currentIndex = frame < beatStarts[1] ? 0 : frame < beatStarts[2] ? 1 : 2;
+  const current = triad[currentIndex];
+  const Icon = current.icon;
+
+  const stageReveal = spring({
+    fps,
+    frame: frame - beatStarts[currentIndex],
+    config: { damping: 18, mass: 0.7, stiffness: 100 },
+  });
+
+  const headerReveal = spring({
+    fps,
+    frame: frame - 2,
+    config: { damping: 20, mass: 0.8, stiffness: 90 },
+  });
+
   return (
     <AbsoluteFill
       style={{
         backgroundColor: palette.background,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
         padding: spacing[12],
+        overflow: 'hidden',
       }}
     >
       <div
         style={{
+          position: 'absolute',
+          inset: 0,
+          background:
+            'radial-gradient(circle at 72% 48%, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 24%, transparent 54%), radial-gradient(circle at 24% 72%, rgba(255,255,255,0.04) 0%, transparent 36%)',
+        }}
+      />
+
+      <div
+        style={{
+          position: 'absolute',
+          top: spacing[10],
+          left: spacing[12],
+          right: spacing[12],
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           fontFamily: typography.fontFamily.mono,
           fontSize: typography.fontSize.caption,
           color: palette.muted,
           letterSpacing: typography.letterSpacing.wider,
           textTransform: 'uppercase',
-          marginBottom: spacing[10],
+          opacity: headerReveal,
         }}
       >
-        The Subtractive Triad
+        <span>The Subtractive Triad</span>
+        <span>{`0${currentIndex + 1} / 03`}</span>
       </div>
-      
-      <div style={{ display: 'flex', gap: spacing[8], justifyContent: 'center' }}>
-        {triad.map((item, i) => {
-          const localFrame = frame - item.delay;
-          const progress = spring({
-            fps,
-            frame: localFrame,
-            config: { damping: 18, mass: 0.5, stiffness: 100 },
-          });
-          
-          const Icon = item.icon;
-          
-          return (
+
+      <div
+        style={{
+          position: 'absolute',
+          top: 140,
+          bottom: 120,
+          left: '50%',
+          width: 1,
+          background: `linear-gradient(180deg, transparent 0%, ${palette.foreground}10 14%, ${palette.foreground}1f 50%, ${palette.foreground}10 86%, transparent 100%)`,
+        }}
+      />
+
+      <div
+        style={{
+          height: '100%',
+          display: 'flex',
+          gap: spacing[8],
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: spacing[5],
+            paddingLeft: spacing[6],
+            opacity: stageReveal,
+            transform: `translateX(${interpolate(stageReveal, [0, 1], [-60, 0])}px)`,
+          }}
+        >
+          <div
+            style={{
+              width: 92,
+              height: 92,
+              borderRadius: '50%',
+              border: `1px solid ${palette.foreground}22`,
+              backgroundColor: `${palette.foreground}08`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Icon size={44} strokeWidth={1.5} color={palette.foreground} />
+          </div>
+
+          <div
+            style={{
+              fontFamily: typography.fontFamily.sans,
+              fontSize: '5rem',
+              fontWeight: typography.fontWeight.bold,
+              lineHeight: 0.94,
+              letterSpacing: '-0.05em',
+              color: palette.foreground,
+              maxWidth: 760,
+            }}
+          >
+            {current.question}
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: spacing[3],
+            }}
+          >
             <div
-              key={i}
               style={{
-                width: 340,
-                padding: spacing[6],
+                padding: '12px 16px',
+                borderRadius: 999,
+                border: `1px solid ${palette.foreground}16`,
                 backgroundColor: `${palette.foreground}05`,
-                border: `1px solid ${palette.foreground}10`,
-                borderRadius: 8,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                textAlign: 'center',
-                gap: spacing[3],
-                opacity: Math.max(0, progress),
-                transform: `translateY(${interpolate(progress, [0, 1], [40, 0])}px)`,
+                fontFamily: typography.fontFamily.mono,
+                fontSize: typography.fontSize.sm,
+                letterSpacing: typography.letterSpacing.wide,
+                textTransform: 'uppercase',
+                color: palette.muted,
               }}
             >
-              <Icon size={40} strokeWidth={1.5} color={palette.foreground} />
-              
-              <div
-                style={{
-                  fontFamily: typography.fontFamily.sans,
-                  fontSize: typography.fontSize.h3,
-                  fontWeight: typography.fontWeight.bold,
-                  color: palette.foreground,
-                }}
-              >
-                {item.name}
-              </div>
-              
-              <div
-                style={{
-                  fontFamily: typography.fontFamily.sans,
-                  fontSize: typography.fontSize.bodyLg,
-                  color: palette.muted,
-                  fontStyle: 'italic',
-                }}
-              >
-                {item.question}
-              </div>
-              
-              <div
-                style={{
-                  fontFamily: typography.fontFamily.mono,
-                  fontSize: typography.fontSize.sm,
-                  color: palette.foreground,
-                  letterSpacing: typography.letterSpacing.wide,
-                  textTransform: 'uppercase',
-                  marginTop: spacing[2],
-                }}
-              >
-                Action: {item.action}
-              </div>
+              Action
             </div>
-          );
-        })}
+            <div
+              style={{
+                fontFamily: typography.fontFamily.sans,
+                fontSize: '2.2rem',
+                fontWeight: typography.fontWeight.semibold,
+                color: palette.foreground,
+              }}
+            >
+              {current.action}
+            </div>
+          </div>
+
+          <div
+            style={{
+              fontFamily: typography.fontFamily.sans,
+              fontSize: typography.fontSize.bodyLg,
+              lineHeight: 1.45,
+              color: palette.muted,
+              maxWidth: 580,
+            }}
+          >
+            Ask the questions in order. Unify repeated work, remove anything that
+            does not earn its existence, and reconnect the remainder to the whole.
+          </div>
+        </div>
+
+        <div
+          style={{
+            width: 440,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: spacing[4],
+            paddingRight: spacing[2],
+          }}
+        >
+          {triad.map((item, index) => {
+            const isActive = index === currentIndex;
+            const distance = Math.abs(index - currentIndex);
+
+            return (
+              <div
+                key={item.name}
+                style={{
+                  padding: '24px 24px 22px',
+                  borderRadius: 16,
+                  backgroundColor: isActive ? `${palette.foreground}08` : `${palette.foreground}03`,
+                  border: `1px solid ${isActive ? `${palette.foreground}18` : `${palette.foreground}0d`}`,
+                  opacity: isActive ? 1 : 0.56 - distance * 0.08,
+                  transform: `translateX(${isActive ? 0 : distance * 16}px) scale(${isActive ? 1 : 0.97})`,
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: spacing[3],
+                    fontFamily: typography.fontFamily.mono,
+                    fontSize: typography.fontSize.sm,
+                    color: isActive ? palette.foreground : palette.muted,
+                    letterSpacing: typography.letterSpacing.wide,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  <span>{item.name}</span>
+                  <span>{`0${index + 1}`}</span>
+                </div>
+
+                <div
+                  style={{
+                    fontFamily: typography.fontFamily.sans,
+                    fontSize: typography.fontSize.bodyLg,
+                    fontWeight: typography.fontWeight.semibold,
+                    color: palette.foreground,
+                    marginBottom: spacing[2],
+                  }}
+                >
+                  {item.action}
+                </div>
+
+                <div
+                  style={{
+                    fontFamily: typography.fontFamily.sans,
+                    fontSize: typography.fontSize.body,
+                    lineHeight: 1.4,
+                    color: palette.muted,
+                  }}
+                >
+                  {item.question}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
-      
+
       <FilmGrain intensity={0.05} animated />
       <Vignette intensity={0.2} size={50} />
     </AbsoluteFill>
