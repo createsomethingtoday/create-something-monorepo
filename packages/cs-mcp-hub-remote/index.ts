@@ -1421,7 +1421,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
         const { prefs } = await getDiscoveryContext();
         return toJsonResource(uri, {
           discovery: prefs,
-          packs: listDiscoveryPacks(runtime).map((pack) => ({
+          packs: listDiscoveryPacks(runtime, env).map((pack) => ({
             id: pack.id,
             description: pack.description,
             mode: pack.preferences.mode,
@@ -1896,7 +1896,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
       }
 
       if (toolName === 'hub_list_discovery_packs') {
-        const packs = listDiscoveryPacks(runtime);
+        const packs = listDiscoveryPacks(runtime, env);
         const result = toJsonResult({
           packs: packs.map((pack) => ({
             id: pack.id,
@@ -3692,13 +3692,17 @@ function buildDefaultDiscoveryPreferences(runtime: HubRuntime, env: Env): Discov
   }, runtime, env);
 }
 
-function getRequiredGlobalServers(currentRegistry: McpBundleRegistry, env: Env): string[] {
-  const configured = parseList(readEnvString(env, 'HUB_REQUIRED_GLOBAL_SERVERS')) ?? DEFAULT_REQUIRED_GLOBAL_SERVERS;
+function getRequiredGlobalServers(currentRegistry: McpBundleRegistry, env?: Env): string[] {
+  const configured = env
+    ? parseList(readEnvString(env, 'HUB_REQUIRED_GLOBAL_SERVERS')) ?? DEFAULT_REQUIRED_GLOBAL_SERVERS
+    : DEFAULT_REQUIRED_GLOBAL_SERVERS;
   return configured.filter((serverName) => Boolean(currentRegistry.servers[serverName]));
 }
 
-function getRequiredDiscoveryServers(runtime: HubRuntime, env: Env): string[] {
-  const configured = parseList(readEnvString(env, 'HUB_REQUIRED_DISCOVERY_SERVERS')) ?? DEFAULT_REQUIRED_DISCOVERY_SERVERS;
+function getRequiredDiscoveryServers(runtime: HubRuntime, env?: Env): string[] {
+  const configured = env
+    ? parseList(readEnvString(env, 'HUB_REQUIRED_DISCOVERY_SERVERS')) ?? DEFAULT_REQUIRED_DISCOVERY_SERVERS
+    : DEFAULT_REQUIRED_DISCOVERY_SERVERS;
   return configured.filter((serverName) =>
     runtime.connected.some((server) => server.name === serverName),
   );
@@ -3735,7 +3739,7 @@ async function clearDiscoveryPreferences(
 function normalizeDiscoveryPreferences(
   prefs: DiscoveryPreferences,
   runtime: HubRuntime,
-  env: Env,
+  env?: Env,
 ): DiscoveryPreferences {
   const requiredActiveServers = getRequiredDiscoveryServers(runtime, env);
   return {
@@ -3781,14 +3785,14 @@ function resolveDiscoveryPageSize(env: Env): number {
   return Math.min(Math.max(parsed, 1), MAX_DISCOVERY_PAGE_SIZE);
 }
 
-function listDiscoveryPacks(runtime: HubRuntime): ResolvedDiscoveryPack[] {
+function listDiscoveryPacks(runtime: HubRuntime, env?: Env): ResolvedDiscoveryPack[] {
   return Object.entries(discoveryPackRegistry.packs ?? {})
     .map(([packId, definition]) => resolveDiscoveryPackDefinition(packId, definition, runtime, env))
     .filter((pack): pack is ResolvedDiscoveryPack => pack !== null)
     .sort((a, b) => a.id.localeCompare(b.id));
 }
 
-export function resolveDiscoveryPack(packId: string, runtime: HubRuntime, env: Env): ResolvedDiscoveryPack | null {
+export function resolveDiscoveryPack(packId: string, runtime: HubRuntime, env?: Env): ResolvedDiscoveryPack | null {
   const key = packId.trim();
   if (!key) return null;
   const definition = discoveryPackRegistry.packs?.[key];
@@ -3800,7 +3804,7 @@ function resolveDiscoveryPackDefinition(
   packId: string,
   definition: DiscoveryPackDefinition | undefined,
   runtime: HubRuntime,
-  env: Env,
+  env?: Env,
 ): ResolvedDiscoveryPack | null {
   if (!definition) return null;
   const mode = parseDiscoveryMode(typeof definition.mode === 'string' ? definition.mode : null) ?? DEFAULT_DISCOVERY_MODE;
