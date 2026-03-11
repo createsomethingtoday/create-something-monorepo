@@ -4,6 +4,7 @@
   import DataFreshnessIndicator from './DataFreshnessIndicator.svelte';
   import type { Asset } from '$lib/server/airtable';
   import { sortAssetStatuses } from '$lib/utils/asset-actions';
+  import { getStatusColorTheme } from '$lib/utils/status-presentation';
 
   interface Props {
     assets: Asset[];
@@ -60,16 +61,6 @@
     if (total === 0) return 0;
     return Math.round((count / total) * 100);
   }
-
-  // Status colors for the bar
-  const statusColors: Record<string, string> = {
-    Published: 'var(--color-success)',
-    Scheduled: 'var(--color-info)',
-    Upcoming: 'var(--color-data-3)',
-    Draft: 'var(--color-info)',
-    Delisted: 'var(--color-warning)',
-    Rejected: 'var(--color-error)'
-  };
 
   function getStatusLabel(status: string, count: number): string {
     return `${status} ${count}`;
@@ -132,10 +123,12 @@
             {#each sortedStatuses as status}
               {@const data = statusBreakdown[status]}
               {@const percentage = getPercentage(data.count)}
+              {@const theme = getStatusColorTheme(status)}
               <div class="distribution-item">
                 <div class="distribution-meta">
-                  <span class="distribution-label" style="--status-color: {statusColors[status] ||
-                    'var(--color-fg-muted)'}">{getStatusLabel(status, data.count)}</span>
+                  <span class="distribution-label" style="--status-color: {theme.accent}"
+                    >{getStatusLabel(status, data.count)}</span
+                  >
                   <span class="distribution-count"
                     >{data.count === 1 ? '1 template' : `${data.count} templates`}</span
                   >
@@ -144,8 +137,7 @@
                   <div class="distribution-bar" aria-hidden="true">
                     <div
                       class="distribution-fill"
-                      style="width: {percentage}%; background-color: {statusColors[status] ||
-                        'var(--color-fg-muted)'}"
+                      style="width: {percentage}%; background-color: {theme.accent}"
                     ></div>
                   </div>
                   <span class="distribution-percentage">{percentage}%</span>

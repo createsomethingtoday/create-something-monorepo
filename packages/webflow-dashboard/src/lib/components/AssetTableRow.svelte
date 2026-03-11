@@ -4,6 +4,12 @@
 	import type { Asset } from '$lib/server/airtable';
 	import type { AssetActionDescriptor } from '$lib/utils/asset-actions';
 	import { getAssetActionConfig, normalizeAssetStatus } from '$lib/utils/asset-actions';
+	import {
+		formatCompactCurrency,
+		formatCompactNumber,
+		formatNumericDate,
+		formatShortDate
+	} from '$lib/utils/format';
 
 	interface Props {
 		asset: Asset;
@@ -35,35 +41,6 @@
 		return (asset.cumulativeRevenue || 0) / asset.cumulativePurchases;
 	});
 
-	function formatDate(dateStr?: string): string {
-		if (!dateStr) return '—';
-		try {
-			return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-		} catch {
-			return '—';
-		}
-	}
-
-	function formatNumber(num?: number): string {
-		if (num === undefined || num === null) return '0';
-		if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-		return num.toLocaleString();
-	}
-
-	function formatCurrency(num?: number): string {
-		if (num === undefined || num === null) return '$0';
-		if (num >= 1000) return `$${(num / 1000).toFixed(1)}K`;
-		return `$${num.toLocaleString()}`;
-	}
-
-	function formatMetricDate(dateStr?: string): string {
-		if (!dateStr) return '';
-		try {
-			return new Date(dateStr).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: '2-digit' });
-		} catch {
-			return '';
-		}
-	}
 </script>
 
 <TableRow class="asset-table-row">
@@ -98,9 +75,9 @@
 	</TableCell>
 	<TableCell>
 		<div class="date-stack">
-			<span class="date">{formatDate(asset.submittedDate)}</span>
+			<span class="date">{formatShortDate(asset.submittedDate)}</span>
 			{#if asset.submittedDate}
-				<span class="date-sub">{formatMetricDate(asset.submittedDate)}</span>
+				<span class="date-sub">{formatNumericDate(asset.submittedDate)}</span>
 			{/if}
 		</div>
 	</TableCell>
@@ -111,11 +88,11 @@
 		{@const cr = conversionRate()}
 		{@const aov = avgOrderValue()}
 		<TableCell class="text-center">
-			<span class="metric tabular">{showMetrics ? formatNumber(asset.uniqueViewers) : '—'}</span>
+			<span class="metric tabular">{showMetrics ? formatCompactNumber(asset.uniqueViewers) : '—'}</span>
 		</TableCell>
 		<TableCell class="text-center">
 			<div class="metric-stack">
-				<span class="metric tabular">{showMetrics ? formatNumber(asset.cumulativePurchases) : '—'}</span>
+				<span class="metric tabular">{showMetrics ? formatCompactNumber(asset.cumulativePurchases) : '—'}</span>
 				{#if cr !== null}
 					<span class="metric-sub">{cr.toFixed(1)}%</span>
 				{/if}
@@ -123,7 +100,7 @@
 		</TableCell>
 		<TableCell class="text-center">
 			<div class="metric-stack">
-				<span class="metric tabular">{showMetrics ? formatCurrency(asset.cumulativeRevenue) : '—'}</span>
+				<span class="metric tabular">{showMetrics ? formatCompactCurrency(asset.cumulativeRevenue) : '—'}</span>
 				{#if aov !== null}
 					<span class="metric-sub">${aov.toFixed(0)}/ea</span>
 				{/if}
