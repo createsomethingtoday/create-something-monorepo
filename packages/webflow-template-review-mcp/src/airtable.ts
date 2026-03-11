@@ -51,7 +51,10 @@ export interface TemplateReviewQueueItem {
   isReadyToReview?: boolean;
   isUnassigned?: boolean;
   canAssign?: boolean;
+  canReview?: boolean;
+  canPublish?: boolean;
   isAssignedToCurrentReviewer?: boolean;
+  isBlockedByOtherReviewer?: boolean;
 }
 
 export type TemplateReviewAssetSearchMode = 'contains' | 'exact';
@@ -102,6 +105,7 @@ export interface TemplateReviewQueueQuery {
   assigned?: TemplateReviewQueueAssignmentFilter;
   sort?: TemplateReviewQueueSort;
   currentReviewer?: CollaboratorRef | null;
+  onlyAssignedToCurrentReviewer?: boolean;
 }
 
 export interface TemplateReviewContext {
@@ -503,6 +507,7 @@ export class AirtableClient {
             reviewOwner?.id &&
             query.currentReviewer.id === reviewOwner.id,
         );
+        const isBlockedByOtherReviewer = Boolean(reviewOwner?.id && !isAssignedToCurrentReviewer);
         const normalizedStatus = normalizeQueueStatus(asset, currentVersion);
         return {
           ...asset,
@@ -512,7 +517,10 @@ export class AirtableClient {
           isReadyToReview: normalizedStatus === 'ready_to_review',
           isUnassigned: !reviewOwner,
           canAssign: Boolean(currentVersion?.versionId && query.currentReviewer?.id && !reviewOwner),
+          canReview: Boolean(!reviewOwner || isAssignedToCurrentReviewer),
+          canPublish: normalizedStatus === 'approved',
           isAssignedToCurrentReviewer,
+          isBlockedByOtherReviewer,
         } satisfies TemplateReviewQueueItem;
       }),
     );
@@ -521,6 +529,7 @@ export class AirtableClient {
       if (query.status && item.normalizedStatus !== query.status) return false;
       if (query.assigned === 'assigned' && item.isUnassigned) return false;
       if (query.assigned === 'unassigned' && !item.isUnassigned) return false;
+      if (query.onlyAssignedToCurrentReviewer && !item.isAssignedToCurrentReviewer) return false;
       return true;
     });
 
@@ -732,6 +741,36 @@ export class AirtableClient {
 
   async assignVersionReviewer(versionId: string, input: AssignReviewerInput): Promise<TemplateReviewVersion> {
     return this.updateVersionReview(versionId, { review_owner: input.review_owner });
+  }
+
+  async unassignVersionReviewer(versionId: string, currentReviewer?: CollaboratorRef | null): Promise<TemplateReviewVersion> {
+    const version = await this.getVersionById(versionId);
+    if (!version) {
+      throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, { version_id: versionId });
+    }
+    if (!currentReviewer?.id) {
+      throw new AirtableClientError(
+        'REVIEWER_IDENTITY_UNAVAILABLE',
+        'Current reviewer identity is not configured for this MCP runtime.',
+        503,
+      );
+    }
+    if (!version.reviewOwner?.id) {
+      return version;
+    }
+    if (version.reviewOwner.id !== currentReviewer.id) {
+      throw new AirtableClientError(
+        'REVIEWER_ASSIGNMENT_CONFLICT',
+        'Version is assigned to a different reviewer and cannot be unassigned from this lane.',
+        409,
+        {
+          version_id: versionId,
+          current_reviewer_id: currentReviewer.id,
+          assigned_reviewer_id: version.reviewOwner.id,
+        },
+      );
+    }
+    return this.assignVersionReviewer(versionId, { review_owner: null });
   }
 
   async getReviewContext(versionId: string, currentReviewer?: CollaboratorRef | null): Promise<TemplateReviewContext> {

@@ -99,12 +99,57 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       try {
         const queue = await getClient().listAssetQueueDetailed({
           limit: limit ?? 100,
-          status,
-          assigned,
-          sort,
+          status: status ?? 'ready_to_review',
+          assigned: assigned ?? 'unassigned',
+          sort: sort ?? 'submittedDate_desc',
           currentReviewer: currentReviewerAsCollaborator(getReviewer),
         });
-        return asSuccess({ count: queue.items.length, sortApplied: queue.sortApplied, items: queue.items });
+        return asSuccess({
+          count: queue.items.length,
+          sortApplied: queue.sortApplied,
+          statusApplied: status ?? 'ready_to_review',
+          assignedApplied: assigned ?? 'unassigned',
+          items: queue.items,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_my_queue',
+    'List template review queue items currently assigned to the authenticated reviewer.',
+    {
+      status: z.enum(['ready_to_review', 'in_review', 'changes_requested', 'approved', 'published']).optional(),
+      sort: z.enum(['submittedDate_desc', 'submittedDate_asc', 'decisionDate_desc', 'decisionDate_asc']).optional(),
+      limit: z.number().int().min(1).max(500).optional(),
+    },
+    async ({ limit, status, sort }) => {
+      try {
+        const currentReviewer = currentReviewerAsCollaborator(getReviewer);
+        if (!currentReviewer?.id) {
+          throw new AirtableClientError(
+            'REVIEWER_IDENTITY_UNAVAILABLE',
+            'Current reviewer identity is not configured for this MCP runtime.',
+            503,
+          );
+        }
+        const queue = await getClient().listAssetQueueDetailed({
+          limit: limit ?? 100,
+          status,
+          assigned: 'assigned',
+          sort: sort ?? 'submittedDate_desc',
+          currentReviewer,
+          onlyAssignedToCurrentReviewer: true,
+        });
+        return asSuccess({
+          count: queue.items.length,
+          sortApplied: queue.sortApplied,
+          statusApplied: status ?? null,
+          assignedApplied: 'assigned_to_current_reviewer',
+          items: queue.items,
+        });
       } catch (error) {
         return asError(error);
       }
@@ -353,6 +398,43 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
           },
           updated_version: await getClient().assignVersionReviewer(version_id, {
             review_owner: { id: reviewer.airtableCollaboratorId },
+          }),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_unassign_self',
+    'Clear the 📝Reviewer field only when the selected template Asset Version is currently assigned to the authenticated reviewer.',
+    {
+      version_id: z.string().min(1),
+    },
+    async ({ version_id }) => {
+      try {
+        const reviewer = getReviewer();
+        if (!reviewer) {
+          throw new AirtableClientError(
+            'REVIEWER_IDENTITY_UNAVAILABLE',
+            'Current reviewer identity is not configured for this MCP runtime.',
+            503,
+          );
+        }
+
+        return asSuccess({
+          reviewer: {
+            accountId: reviewer.accountId,
+            airtableCollaboratorId: reviewer.airtableCollaboratorId,
+            email: reviewer.email,
+            name: reviewer.name,
+            lane: reviewer.lane,
+          },
+          updated_version: await getClient().unassignVersionReviewer(version_id, {
+            id: reviewer.airtableCollaboratorId,
+            ...(reviewer.email ? { email: reviewer.email } : {}),
+            ...(reviewer.name ? { name: reviewer.name } : {}),
           }),
         });
       } catch (error) {
