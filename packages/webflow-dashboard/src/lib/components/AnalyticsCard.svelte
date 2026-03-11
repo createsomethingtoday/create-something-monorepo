@@ -15,6 +15,7 @@
 	import Sparkline from './Sparkline.svelte';
 	import KineticNumber from './KineticNumber.svelte';
 	import DataFreshnessIndicator from './DataFreshnessIndicator.svelte';
+	import { formatWholeCurrency } from '$lib/utils/format';
 	import {
 		Users,
 		ShoppingCart,
@@ -69,17 +70,6 @@
 		}
 		historyLoaded = true;
 	});
-
-	// Format numbers
-	function formatNumber(num?: number): string {
-		if (num === undefined || num === null) return '0';
-		return num.toLocaleString();
-	}
-
-	function formatCurrency(num?: number): string {
-		if (num === undefined || num === null) return '$0';
-		return `$${num.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-	}
 
 	function formatPercent(num?: number): string {
 		if (num === undefined || num === null) return '0%';
@@ -163,7 +153,7 @@
 							<span class="metric-label">Revenue</span>
 						</div>
 						<div class="metric-value">
-							{formatCurrency(asset.cumulativeRevenue)}
+							{formatWholeCurrency(asset.cumulativeRevenue)}
 						</div>
 						{#if historyLoaded && revenueTrend.length >= 2}
 							<div class="metric-trend">
@@ -208,7 +198,7 @@
 						</div>
 						<div class="insight-content">
 							<span class="insight-label">Avg Order Value</span>
-							<span class="insight-value">{formatCurrency(avgOrderValue())}</span>
+							<span class="insight-value">{formatWholeCurrency(avgOrderValue())}</span>
 							<span class="insight-description">Per purchase</span>
 						</div>
 					</div>
@@ -219,7 +209,7 @@
 						</div>
 						<div class="insight-content">
 							<span class="insight-label">Revenue per Viewer</span>
-							<span class="insight-value">{formatCurrency(revenuePerViewer())}</span>
+							<span class="insight-value">{formatWholeCurrency(revenuePerViewer())}</span>
 							<span class="insight-description">Lifetime value indicator</span>
 						</div>
 					</div>
