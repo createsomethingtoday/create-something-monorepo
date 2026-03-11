@@ -265,6 +265,30 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
   );
 
   server.tool(
+    'template_review_assign_reviewer',
+    'Assign or clear the 📝Reviewer collaborator on a template Asset Version without changing any other review fields.',
+    {
+      version_id: z.string().min(1),
+      review_owner: z.union([
+        z.string().min(1).describe('Airtable collaborator id for the reviewer.'),
+        z.object({ id: z.string().min(1) }),
+        z.null(),
+      ]),
+    },
+    async ({ version_id, review_owner }) => {
+      try {
+        return asSuccess({
+          updated_version: await getClient().assignVersionReviewer(version_id, {
+            review_owner,
+          }),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
     'template_review_update_asset_metadata',
     'Update confirmed writable template asset fields.',
     {

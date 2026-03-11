@@ -192,6 +192,9 @@ export const TEMPLATE_REVIEW_FIELD_MAP = {
       'approve_version',
       'mrp_id_overwrite',
     ],
+    reviewerAssignment: [
+      'review_owner',
+    ],
     versionReview: [
       'review_owner',
       'review_status',

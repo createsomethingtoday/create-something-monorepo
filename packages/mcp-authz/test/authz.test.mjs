@@ -42,6 +42,16 @@ test('hub route classification preserves registry policy_os_only tags', () => {
   assert.ok(classification.tags.includes('cs'));
 });
 
+test('hub route classification treats reviewer assignment as write access', () => {
+  const classification = classifyHubRoute({
+    proxyToolName: 'webflow-template-review-mcp__template_review_assign_reviewer',
+    serverName: 'webflow-template-review-mcp',
+    downstreamToolName: 'template_review_assign_reviewer',
+  });
+
+  assert.equal(classification.accessType, 'write');
+});
+
 test('hub route auth blocks mutation discovery for read-only sessions', async () => {
   const request = buildHubAuthorizationRequest({
     accountId: 'acct_1',

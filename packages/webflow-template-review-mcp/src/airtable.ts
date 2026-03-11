@@ -119,6 +119,10 @@ export interface VersionReviewUpdateInput {
   rejection_feedback?: string;
 }
 
+export interface AssignReviewerInput {
+  review_owner: unknown;
+}
+
 export interface TemplateAssetMetadataUpdateInput {
   template_name?: string;
   description?: string;
@@ -596,6 +600,10 @@ export class AirtableClient {
 
     const updated = await this.updateRecord(TABLE_IDS.assetVersions, versionId, fields);
     return mapVersion(updated);
+  }
+
+  async assignVersionReviewer(versionId: string, input: AssignReviewerInput): Promise<TemplateReviewVersion> {
+    return this.updateVersionReview(versionId, { review_owner: input.review_owner });
   }
 
   async updateAssetMetadata(assetId: string, input: TemplateAssetMetadataUpdateInput): Promise<TemplateReviewAsset> {
