@@ -8,7 +8,6 @@ import { DEFAULT_AIRTABLE_BASE_ID, TABLE_IDS } from '../src/schema.js';
 import { registerPrompts } from '../src/prompts.js';
 import { registerResources } from '../src/resources.js';
 import { parseReviewerDirectory, getReviewerProfileForAccount } from '../src/reviewer-directory.js';
-import { getRequestContext, runWithRequestContext } from '../src/request-context.js';
 import { registerTools } from '../src/tools.js';
 
 interface Env {
@@ -21,6 +20,10 @@ interface Env {
   REVIEWER_DIRECTORY_JSON?: string;
 }
 
+type RequestProps = {
+  accountId?: string;
+};
+
 export function validateApiKey(request: Request, env: Env): Response | null {
   if (!env.MCP_API_KEY) {
     return misconfiguredResponse('MCP_API_KEY is not configured for this deployment.');
@@ -28,7 +31,7 @@ export function validateApiKey(request: Request, env: Env): Response | null {
   return validateBearerToken(request, env.MCP_API_KEY);
 }
 
-export class WebflowTemplateReviewMCP extends McpAgent<Env> {
+export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProps> {
   server = new McpServer({
     name: 'webflow-template-review-mcp',
     version: '1.0.0',
@@ -55,7 +58,7 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env> {
     };
 
     const reviewerDirectory = parseReviewerDirectory(this.env.REVIEWER_DIRECTORY_JSON);
-    const getReviewer = () => getReviewerProfileForAccount(reviewerDirectory, getRequestContext().accountId);
+    const getReviewer = () => getReviewerProfileForAccount(reviewerDirectory, this.props?.accountId ?? null);
 
     registerResources(this.server, getClient, getReviewer);
     registerTools(this.server, getClient, getReviewer);
@@ -84,12 +87,22 @@ export default {
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
       const accountId = request.headers.get('x-mcp-account-id') ?? request.headers.get('x-hub-account-id');
-      return runWithRequestContext({ accountId }, () => WebflowTemplateReviewMCP.serve('/mcp').fetch(request, env, ctx));
+      return WebflowTemplateReviewMCP.serve('/mcp').fetch(request, env, {
+        ...ctx,
+        props: {
+          ...(accountId ? { accountId } : {}),
+        },
+      });
     }
 
     if (url.pathname === '/sse' || url.pathname.startsWith('/sse/')) {
       const accountId = request.headers.get('x-mcp-account-id') ?? request.headers.get('x-hub-account-id');
-      return runWithRequestContext({ accountId }, () => WebflowTemplateReviewMCP.serve('/sse').fetch(request, env, ctx));
+      return WebflowTemplateReviewMCP.serve('/sse').fetch(request, env, {
+        ...ctx,
+        props: {
+          ...(accountId ? { accountId } : {}),
+        },
+      });
     }
 
     if (url.pathname === '/' || url.pathname === '/health') {
