@@ -14,7 +14,8 @@ function isObject(value: unknown): value is Record<string, unknown> {
 
 function parseReviewerProfile(accountId: string, value: unknown): ReviewerProfile | null {
   if (!isObject(value)) return null;
-  const airtableCollaboratorId = typeof value.airtableCollaboratorId === 'string' ? value.airtableCollaboratorId.trim() : '';
+  const airtableCollaboratorId =
+    typeof value.airtableCollaboratorId === 'string' ? value.airtableCollaboratorId.trim() : '';
   if (!airtableCollaboratorId) return null;
   return {
     accountId,
@@ -47,7 +48,10 @@ export function parseReviewerDirectory(raw?: string | null): ReviewerDirectory {
   return directory;
 }
 
-export function getReviewerProfileForAccount(directory: ReviewerDirectory, accountId?: string | null): ReviewerProfile | null {
+export function getReviewerProfileForAccount(
+  directory: ReviewerDirectory,
+  accountId?: string | null,
+): ReviewerProfile | null {
   if (!accountId) return null;
   return directory.get(accountId) ?? null;
 }

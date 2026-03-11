@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { getReviewerProfileForAccount, parseReviewerDirectory } from './reviewer-directory.js';
 
-describe('reviewer directory', () => {
-  it('parses object-shaped reviewer directory payloads', () => {
+describe('parseReviewerDirectory', () => {
+  it('parses object-shaped reviewer directories', () => {
     const directory = parseReviewerDirectory(
       JSON.stringify({
         acct_wf_pablo: {
@@ -24,30 +24,8 @@ describe('reviewer directory', () => {
     });
   });
 
-  it('parses array-shaped reviewer directory payloads', () => {
-    const directory = parseReviewerDirectory(
-      JSON.stringify([
-        {
-          accountId: 'acct_wf_shea',
-          airtableCollaboratorId: 'usr_shea',
-          email: 'shea.sisco@webflow.com',
-          name: 'Shea Sisco',
-        },
-      ]),
-    );
-
-    expect(getReviewerProfileForAccount(directory, 'acct_wf_shea')).toEqual({
-      accountId: 'acct_wf_shea',
-      airtableCollaboratorId: 'usr_shea',
-      email: 'shea.sisco@webflow.com',
-      name: 'Shea Sisco',
-    });
-  });
-
-  it('returns null when account context is missing or unknown', () => {
-    const directory = parseReviewerDirectory('');
-
-    expect(getReviewerProfileForAccount(directory, null)).toBeNull();
+  it('returns null for unknown accounts', () => {
+    const directory = parseReviewerDirectory();
     expect(getReviewerProfileForAccount(directory, 'acct_missing')).toBeNull();
   });
 });

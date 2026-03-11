@@ -224,11 +224,12 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       try {
         const client = getClient();
         await requireAppVersion(client, params.version_id);
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
 
         const mutation = cleanObject({
           review_status: params.review_status,
           review_type: params.review_type,
-          reviewer: params.reviewer as CollaboratorRef | null | undefined,
+          reviewer: params.reviewer === undefined ? actingReviewer ?? undefined : (params.reviewer as CollaboratorRef | null),
           rejection_reason: params.rejection_reason,
           review_feedback: params.review_feedback,
           submission_datetime_override: params.submission_datetime_override,
@@ -241,7 +242,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
         const updated = await client.updateVersionReview(params.version_id, mutation);
         return asSuccess({
           reviewer: getReviewer(),
-          acting_reviewer: currentReviewerAsCollaborator(getReviewer),
+          acting_reviewer: actingReviewer,
           updated_version: updated,
         });
       } catch (error) {
