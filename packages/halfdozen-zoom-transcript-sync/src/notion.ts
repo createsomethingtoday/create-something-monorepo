@@ -44,6 +44,9 @@ export async function syncTranscriptToNotion(
 
   if (!existing) {
     const page = await notion.createPage(properties);
+    if (!page || typeof page.id !== 'string') {
+      throw new Error(`Unexpected create_page response: ${safeJson(page)}`);
+    }
     if (transcriptBlocks.length > 0) {
       await appendBatchedBlocks(notion, page.id, transcriptBlocks);
     }
@@ -392,6 +395,14 @@ function normalizeComparableText(text: string): string {
 
 function notionUrl(pageId: string): string {
   return `https://www.notion.so/${pageId.replace(/-/g, '')}`;
+}
+
+function safeJson(value: unknown): string {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
 }
 
 class DirectNotionTransport implements NotionTransport {
