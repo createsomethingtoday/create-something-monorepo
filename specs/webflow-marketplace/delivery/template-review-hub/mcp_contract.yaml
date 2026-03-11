@@ -10,11 +10,11 @@ client:
 
 scope:
   objective: "Reduce objective checklist time and improve consistency in template review by delivering a governed Phase A MCP Hub lane for reviewers."
-  workflow_boundary: "Phase A starts when a template submission enters the review queue and ends when the reviewer validates template-review context, may assign the Asset Version to themselves, and completes any broader official state change manually outside the Hub."
+  workflow_boundary: "Phase A starts when a template submission enters the review queue and ends when the reviewer validates template-review context, may assign the Asset Version to themselves, may record bounded reviewer feedback and controlled 📝Review Status updates, and completes any broader official decision outside the Hub."
   out_of_scope:
     - "Preview and published-site analysis through Hub-connected analysis MCPs until those servers are enabled in the live reviewer Hub"
     - "Originality or plagiarism analysis through Hub-connected analysis MCPs until those servers are enabled in the live reviewer Hub"
-    - "Approval-gated write execution beyond reviewer self-assignment from reviewer Hubs during Phase A"
+    - "Broad Airtable mutation beyond explicit reviewer-safe write verbs during Phase A"
     - "Subjective design judgment and final taste decisions"
     - "Autonomous creator-facing communication"
     - "Direct control-plane mutation by reviewers"
@@ -202,6 +202,66 @@ tools:
     idempotency_expectation: "Pure read operation."
     fallback_behavior: "Open the asset directly in Airtable if Hub read path fails."
 
+  - name: "template_review_request_changes"
+    description: "Record reviewer feedback and move the selected Asset Version into the approved changes-requested review state."
+    action_type: "write"
+    systems_touched:
+      - "Airtable Marketplace Assets"
+    approval_mode: "approval_required_narrow_write"
+    auth_scopes:
+      - "review.feedback.write"
+      - "review.status.write"
+    input_schema_summary:
+      required:
+        - "version_id"
+        - "review_feedback"
+      optional:
+        - "improvement_areas"
+    output_contract:
+      success_shape: "Returns the updated version with reviewer feedback persisted, optional improvement areas saved, and 📝Review Status moved to the allowlisted changes-requested state."
+      error_shape: "Returns reviewer identity unavailable, assignment conflict, invalid input, not-found, policy deny, or Airtable failure error."
+    idempotency_expectation: "Idempotent when the selected version already contains the same reviewer feedback payload and changes-requested status."
+    fallback_behavior: "Reviewer records request-changes feedback manually in Airtable if the narrow write path fails."
+
+  - name: "template_review_set_review_status"
+    description: "Update only the 📝Review Status field for the selected Asset Version using allowlisted reviewer workflow states."
+    action_type: "write"
+    systems_touched:
+      - "Airtable Marketplace Assets"
+    approval_mode: "approval_required_narrow_write"
+    auth_scopes:
+      - "review.status.write"
+    input_schema_summary:
+      required:
+        - "version_id"
+        - "review_status"
+      optional: []
+    output_contract:
+      success_shape: "Returns the updated version with only 📝Review Status changed, preserving current reviewer ownership and bounded workflow semantics."
+      error_shape: "Returns reviewer identity unavailable, assignment conflict, invalid status transition, not-found, policy deny, or Airtable failure error."
+    idempotency_expectation: "Idempotent when the selected version already has the requested allowlisted review status."
+    fallback_behavior: "Reviewer updates 📝Review Status manually in Airtable if the narrow write path fails."
+
+  - name: "template_review_save_draft_feedback"
+    description: "Persist draft reviewer feedback fields without changing the official decision state."
+    action_type: "write"
+    systems_touched:
+      - "Airtable Marketplace Assets"
+    approval_mode: "approval_required_narrow_write"
+    auth_scopes:
+      - "review.feedback.write"
+    input_schema_summary:
+      required:
+        - "version_id"
+      optional:
+        - "review_feedback_draft"
+        - "improvement_areas"
+    output_contract:
+      success_shape: "Returns the updated version with draft reviewer feedback fields saved while leaving official decision state unchanged."
+      error_shape: "Returns reviewer identity unavailable, assignment conflict, invalid input, not-found, policy deny, or Airtable failure error."
+    idempotency_expectation: "Idempotent when the same draft feedback payload is already stored."
+    fallback_behavior: "Reviewer stores draft notes outside the Hub if the narrow draft-save path fails."
+
   - name: "phase_b_review_analysis"
     description: "Deferred Phase B capability for preview/published-site analysis and originality checks after the analysis servers are enabled in the live reviewer Hub."
     action_type: "deferred"
@@ -219,7 +279,7 @@ tools:
     fallback_behavior: "Reviewer performs analysis manually until Phase B is enabled."
 
   - name: "phase_a_review_state_changes"
-    description: "Official review-state changes beyond reviewer self-assignment remain manual in Airtable during Phase A."
+    description: "Broad official review-state changes beyond explicit reviewer-safe verbs remain manual in Airtable during Phase A."
     action_type: "manual"
     systems_touched:
       - "Airtable Marketplace Assets"
@@ -231,7 +291,7 @@ tools:
       success_shape: "N/A in Phase A."
       error_shape: "N/A in Phase A."
     idempotency_expectation: "N/A in Phase A."
-    fallback_behavior: "Reviewer records request changes, approval, rejection, and publishing completion directly in Airtable."
+    fallback_behavior: "Reviewer handles approval, rejection, publishing completion, and any unsupported review-field mutation directly in Airtable."
 
 prompts:
   - name: "template_review_reviewer_mode"
@@ -244,11 +304,11 @@ prompts:
 auth:
   identity_source: "AUTH0"
   account_model: "per_user"
-  production_write_access: "narrow_assignment_only"
+  production_write_access: "narrow_reviewer_workflow_writes"
   auth_notes:
     - "Reviewers should authenticate through the house Hub surface rather than direct downstream MCP endpoints."
     - "Composio-backed auth may support selected connector plumbing behind the Hub but should not become the reviewer-facing delivery abstraction."
-    - "Phase A reviewer Hubs support narrow reviewer self-assignment and otherwise retain manual Airtable fallback for official review-state changes."
+    - "Phase A reviewer Hubs support narrow reviewer assignment, bounded feedback writes, and controlled 📝Review Status updates while retaining manual Airtable fallback for broader official state changes."
 
 policy_integration:
   control_surface: "agent_contract.yaml"
