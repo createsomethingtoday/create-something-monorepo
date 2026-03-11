@@ -6,6 +6,7 @@ import { misconfiguredResponse, validateBearerToken } from '../src/auth.js';
 import { AirtableClient } from '../src/airtable.js';
 import { DEFAULT_AIRTABLE_BASE_ID } from '../src/schema.js';
 import { registerPrompts } from '../src/prompts.js';
+import { parseReviewerDirectory, getReviewerProfileForAccount } from '../src/reviewer-directory.js';
 import { registerResources } from '../src/resources.js';
 import { registerTools } from '../src/tools.js';
 
@@ -16,7 +17,12 @@ interface Env {
   MCP_API_KEY?: string;
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID?: string;
+  REVIEWER_DIRECTORY_JSON?: string;
 }
+
+type RequestProps = {
+  accountId?: string;
+};
 
 export function validateApiKey(request: Request, env: Env): Response | null {
   if (!env.MCP_API_KEY) {
@@ -25,7 +31,7 @@ export function validateApiKey(request: Request, env: Env): Response | null {
   return validateBearerToken(request, env.MCP_API_KEY);
 }
 
-export class WebflowAppReviewMCP extends McpAgent<Env> {
+export class WebflowAppReviewMCP extends McpAgent<Env, unknown, RequestProps> {
   server = new McpServer({
     name: 'webflow-app-review-mcp',
     version: '1.0.0',
@@ -51,8 +57,11 @@ export class WebflowAppReviewMCP extends McpAgent<Env> {
       });
     };
 
-    registerResources(this.server, getClient);
-    registerTools(this.server, getClient);
+    const reviewerDirectory = parseReviewerDirectory(this.env.REVIEWER_DIRECTORY_JSON);
+    const getReviewer = () => getReviewerProfileForAccount(reviewerDirectory, this.props?.accountId ?? null);
+
+    registerResources(this.server, getClient, getReviewer);
+    registerTools(this.server, getClient, getReviewer);
     registerPrompts(this.server);
   }
 }
@@ -77,11 +86,23 @@ export default {
     }
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
-      return WebflowAppReviewMCP.serve('/mcp').fetch(request, env, ctx);
+      const accountId = request.headers.get('x-mcp-account-id') ?? request.headers.get('x-hub-account-id');
+      return WebflowAppReviewMCP.serve('/mcp').fetch(request, env, {
+        ...ctx,
+        props: {
+          ...(accountId ? { accountId } : {}),
+        },
+      });
     }
 
     if (url.pathname === '/sse' || url.pathname.startsWith('/sse/')) {
-      return WebflowAppReviewMCP.serve('/sse').fetch(request, env, ctx);
+      const accountId = request.headers.get('x-mcp-account-id') ?? request.headers.get('x-hub-account-id');
+      return WebflowAppReviewMCP.serve('/sse').fetch(request, env, {
+        ...ctx,
+        props: {
+          ...(accountId ? { accountId } : {}),
+        },
+      });
     }
 
     if (url.pathname === '/' || url.pathname === '/health') {

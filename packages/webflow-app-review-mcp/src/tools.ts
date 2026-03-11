@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import type { AirtableClient, AppReviewVersion, CollaboratorRef } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
+import type { ReviewerProfile } from './reviewer-directory.js';
 import {
   APP_REVIEW_FIELD_MAP,
   CAPABILITIES_OPTIONS,
@@ -15,6 +16,7 @@ import {
 } from './schema.js';
 
 type ClientFactory = () => AirtableClient;
+type ReviewerFactory = () => ReviewerProfile | null;
 
 const collaboratorRefSchema = z.object({
   id: z.string().min(1),
@@ -92,7 +94,17 @@ function cleanObject<T extends Record<string, unknown>>(value: T): T {
   return Object.fromEntries(entries) as T;
 }
 
-export function registerTools(server: McpServer, getClient: ClientFactory): void {
+function currentReviewerAsCollaborator(getReviewer: ReviewerFactory) {
+  const reviewer = getReviewer();
+  if (!reviewer) return null;
+  return {
+    id: reviewer.airtableCollaboratorId,
+    ...(reviewer.email ? { email: reviewer.email } : {}),
+    ...(reviewer.name ? { name: reviewer.name } : {}),
+  };
+}
+
+export function registerTools(server: McpServer, getClient: ClientFactory, getReviewer: ReviewerFactory = () => null): void {
   server.tool(
     'app_review_health',
     'Runtime health check for Webflow App Review MCP and Airtable connectivity.',
@@ -103,6 +115,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
         return asSuccess({
           ...health,
           auth: 'Bearer token required at worker boundary.',
+          reviewerIdentity: getReviewer(),
         });
       } catch (error) {
         return asError(error);
@@ -226,7 +239,11 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
         }
 
         const updated = await client.updateVersionReview(params.version_id, mutation);
-        return asSuccess({ updated_version: updated });
+        return asSuccess({
+          reviewer: getReviewer(),
+          acting_reviewer: currentReviewerAsCollaborator(getReviewer),
+          updated_version: updated,
+        });
       } catch (error) {
         return asError(error);
       }
@@ -373,6 +390,8 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
         }
 
         return asSuccess({
+          reviewer: getReviewer(),
+          acting_reviewer: currentReviewerAsCollaborator(getReviewer),
           updated_asset: updatedAsset,
           routed_updates: routedUpdates,
         });
@@ -394,7 +413,11 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
         const client = getClient();
         await requireAppAsset(client, params.asset_id);
         const updated = await client.setMarketplaceStatus(params.asset_id, params.marketplace_status);
-        return asSuccess({ updated_asset: updated });
+        return asSuccess({
+          reviewer: getReviewer(),
+          acting_reviewer: currentReviewerAsCollaborator(getReviewer),
+          updated_asset: updated,
+        });
       } catch (error) {
         return asError(error);
       }

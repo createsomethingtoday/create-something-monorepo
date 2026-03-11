@@ -33,6 +33,7 @@ Required:
 Optional:
 
 - `AIRTABLE_BASE_ID` (defaults to `appMoIgXMTTTNIc3p`)
+- `REVIEWER_DIRECTORY_JSON` (JSON map from hub `account_id` to reviewer identity, used by reviewer resources and write attribution payloads)
 
 ## Tools
 
@@ -51,6 +52,8 @@ Optional:
 - `app-review://field-map`
 - `app-review://status-options`
 - `app-review://queue-snapshot`
+- `app-review://reviewer-me`
+- `app-review://reviewer-workflow`
 
 ## Prompts
 
