@@ -186,15 +186,6 @@
     gap: var(--space-xs);
   }
 
-  .tool-title {
-    font-family: var(--font-heading);
-    font-size: var(--text-body-lg);
-    font-weight: var(--font-semibold);
-    letter-spacing: 0.01em;
-    color: var(--color-fg-primary);
-    margin: 0;
-  }
-
   .tool-kicker {
     font-size: var(--text-caption);
     color: var(--color-info);
@@ -209,36 +200,6 @@
     line-height: 1.5;
   }
 
-  .tool-features {
-    list-style: none;
-    padding: 0;
-    margin: var(--space-xs) 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-  }
-
-  .tool-features li {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
-    padding-left: var(--space-sm);
-    position: relative;
-  }
-
-  .tool-features li::before {
-    content: '•';
-    position: absolute;
-    left: 0;
-    color: var(--color-info);
-  }
-
-  .tool-actions {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    margin-top: auto;
-  }
-
   .primary-tool-actions {
     display: flex;
     flex-wrap: wrap;
@@ -248,26 +209,6 @@
   :global(.tool-button) {
     justify-content: center;
     gap: var(--space-xs);
-  }
-
-  .playground-link {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-info);
-    font-size: var(--text-body-sm);
-    text-decoration: none;
-    transition: color var(--duration-micro) var(--ease-standard);
-  }
-
-  .playground-link:hover {
-    color: #0055d4;
-  }
-
-  .playground-link:focus-visible {
-    outline: 2px solid var(--color-focus);
-    outline-offset: 2px;
-    border-radius: var(--radius-sm);
   }
 
   :global(.info-card) {
