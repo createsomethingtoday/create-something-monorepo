@@ -65,14 +65,16 @@ Visible tools should be limited to:
 - `webflow-template-review-mcp__template_review_get_asset`
 - `webflow-template-review-mcp__template_review_list_versions`
 - `webflow-template-review-mcp__template_review_get_version`
+- `webflow-template-review-mcp__template_review_get_review_context`
 - `webflow-template-review-mcp__template_review_list_releases`
 - `webflow-template-review-mcp__template_review_get_field_map`
+- `webflow-template-review-mcp__template_review_assign_self`
 
-Do not expose write tools in Phase A.
+Do not expose broad write tools in Phase A. The only permitted mutation is reviewer self-assignment on the Asset Version.
 
 ### Reviewer action
 
-Reads only. All state changes remain manual in Airtable.
+Reads plus narrow self-assignment. Broader review-state changes remain manual in Airtable.
 
 ## 5. Phase B: full reviewer lane posture
 
@@ -173,6 +175,10 @@ The only write actions that may be enabled later are:
 - `webflow-template-review-mcp__template_review_approve_version`
 - `webflow-template-review-mcp__template_review_reject_version`
 - `webflow-template-review-mcp__template_review_complete_publishing`
+
+Reviewer self-assignment is already allowed as a narrow write:
+
+- `webflow-template-review-mcp__template_review_assign_self`
 
 Keep these out of reviewer use until:
 

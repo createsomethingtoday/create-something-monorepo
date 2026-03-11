@@ -10,11 +10,11 @@ client:
 
 scope:
   objective: "Reduce objective checklist time and improve consistency in template review by delivering a governed Phase A MCP Hub lane for reviewers."
-  workflow_boundary: "Phase A starts when a template submission enters the review queue and ends when the reviewer validates template-review context and completes any required official state change manually outside the Hub."
+  workflow_boundary: "Phase A starts when a template submission enters the review queue and ends when the reviewer validates template-review context, may assign the Asset Version to themselves, and completes any broader official state change manually outside the Hub."
   out_of_scope:
     - "Preview and published-site analysis through Hub-connected analysis MCPs until those servers are enabled in the live reviewer Hub"
     - "Originality or plagiarism analysis through Hub-connected analysis MCPs until those servers are enabled in the live reviewer Hub"
-    - "Approval-gated write execution from reviewer Hubs during Phase A"
+    - "Approval-gated write execution beyond reviewer self-assignment from reviewer Hubs during Phase A"
     - "Subjective design judgment and final taste decisions"
     - "Autonomous creator-facing communication"
     - "Direct control-plane mutation by reviewers"
@@ -66,6 +66,20 @@ resources:
     freshness_requirement: "near_realtime"
     access: "read"
     pii: false
+  - uri: "template-review://reviewer-me"
+    name: "template_review_reviewer_identity"
+    description: "Current reviewer identity resolved by the MCP runtime for self-assignment."
+    source_system: "CREATE SOMETHING MCP Hub"
+    freshness_requirement: "request_scoped"
+    access: "read"
+    pii: true
+  - uri: "template-review://reviewer-workflow"
+    name: "template_review_reviewer_workflow"
+    description: "Host-neutral workflow guidance for locating and self-assigning a reviewable template version."
+    source_system: "CREATE SOMETHING MCP Hub"
+    freshness_requirement: "static"
+    access: "read"
+    pii: false
 tools:
   - name: "template_review_list_queue"
     description: "List template submissions ready for review."
@@ -79,11 +93,50 @@ tools:
       required: []
       optional:
         - "limit"
+        - "status"
+        - "assigned"
+        - "sort"
     output_contract:
-      success_shape: "Returns queue records with review-relevant asset metadata."
+      success_shape: "Returns normalized queue records with assignableVersionId, review ownership, and reviewer-facing capability flags."
       error_shape: "Returns structured Airtable or scope error."
     idempotency_expectation: "Pure read operation."
     fallback_behavior: "Use Airtable queue view manually if Hub read path fails."
+
+  - name: "template_review_get_review_context"
+    description: "Read the normalized reviewer context for one template version."
+    action_type: "read"
+    systems_touched:
+      - "Airtable Marketplace Assets"
+    approval_mode: "auto_allow"
+    auth_scopes:
+      - "review.version.read"
+    input_schema_summary:
+      required:
+        - "version_id"
+      optional: []
+    output_contract:
+      success_shape: "Returns reviewer-facing fields, current reviewer identity, and capability flags for the selected version."
+      error_shape: "Returns not-found or Airtable failure error."
+    idempotency_expectation: "Pure read operation."
+    fallback_behavior: "Open the version directly in Airtable if Hub read path fails."
+
+  - name: "template_review_assign_self"
+    description: "Assign the currently authenticated reviewer to a template Asset Version."
+    action_type: "write"
+    systems_touched:
+      - "Airtable Marketplace Assets"
+    approval_mode: "auto_allow_narrow_write"
+    auth_scopes:
+      - "review.assignment.write"
+    input_schema_summary:
+      required:
+        - "version_id"
+      optional: []
+    output_contract:
+      success_shape: "Returns the updated version with 📝Reviewer set to the current reviewer."
+      error_shape: "Returns reviewer identity unavailable, not-found, or Airtable failure error."
+    idempotency_expectation: "Idempotent when the selected version is already assigned to the current reviewer."
+    fallback_behavior: "Reviewer manually assigns themselves in Airtable if the narrow write path fails."
 
   - name: "template_review_get_asset"
     description: "Read one template asset and associated versions."
@@ -121,7 +174,7 @@ tools:
     fallback_behavior: "Reviewer performs analysis manually until Phase B is enabled."
 
   - name: "phase_a_review_state_changes"
-    description: "Official review-state changes remain manual in Airtable during Phase A."
+    description: "Official review-state changes beyond reviewer self-assignment remain manual in Airtable during Phase A."
     action_type: "manual"
     systems_touched:
       - "Airtable Marketplace Assets"
@@ -143,11 +196,11 @@ prompts:
 auth:
   identity_source: "AUTH0"
   account_model: "per_user"
-  production_write_access: false
+  production_write_access: "narrow_assignment_only"
   auth_notes:
     - "Reviewers should authenticate through the house Hub surface rather than direct downstream MCP endpoints."
     - "Composio-backed auth may support selected connector plumbing behind the Hub but should not become the reviewer-facing delivery abstraction."
-    - "Phase A reviewer Hubs are read-only evidence lanes with manual Airtable fallback for official review-state changes."
+    - "Phase A reviewer Hubs support narrow reviewer self-assignment and otherwise retain manual Airtable fallback for official review-state changes."
 
 policy_integration:
   control_surface: "agent_contract.yaml"
@@ -164,7 +217,7 @@ error_model:
     - "PREVIEW_UNAVAILABLE"
     - "POLICY_AMBIGUITY"
   operator_visible_errors:
-    - "Template review write path requires human review or manual Airtable fallback."
+    - "Template review write path requires human review or manual Airtable fallback, except for reviewer self-assignment."
     - "Analysis incomplete; reviewer validation required."
     - "Current evidence is insufficient to support an automated recommendation."
   audit_fields:

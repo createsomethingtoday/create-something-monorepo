@@ -40,6 +40,7 @@ Required:
 Optional:
 
 - `AIRTABLE_BASE_ID` (defaults to `appMoIgXMTTTNIc3p`)
+- `REVIEWER_DIRECTORY_JSON` (JSON map from hub `account_id` to reviewer identity, used by `template_review_assign_self` and reviewer resources)
 
 ## Tools
 
@@ -50,9 +51,11 @@ Optional:
 - `template_review_get_asset`
 - `template_review_list_versions`
 - `template_review_get_version`
+- `template_review_get_review_context`
 - `template_review_list_releases`
 - `template_review_complete_publishing`
 - `template_review_assign_reviewer`
+- `template_review_assign_self`
 - `template_review_update_asset_metadata`
 - `template_review_update_version_review`
 - `template_review_request_changes`
@@ -66,6 +69,8 @@ Optional:
 - `template-review://status-options`
 - `template-review://queue-snapshot`
 - `template-review://hotspot-groups`
+- `template-review://reviewer-me`
+- `template-review://reviewer-workflow`
 
 ## Worker
 

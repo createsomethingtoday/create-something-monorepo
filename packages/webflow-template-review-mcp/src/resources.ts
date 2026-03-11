@@ -2,8 +2,10 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 import type { AirtableClient } from './airtable.js';
 import { HOTSPOT_GROUPS, TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
+import type { ReviewerProfile } from './reviewer-directory.js';
 
 type ClientFactory = () => AirtableClient;
+type ReviewerFactory = () => ReviewerProfile | null;
 
 function asJsonResource(uri: URL, value: unknown) {
   return {
@@ -17,7 +19,7 @@ function asJsonResource(uri: URL, value: unknown) {
   };
 }
 
-export function registerResources(server: McpServer, getClient: ClientFactory): void {
+export function registerResources(server: McpServer, getClient: ClientFactory, getReviewer: ReviewerFactory = () => null): void {
   server.resource(
     'template-review-field-map',
     'template-review://field-map',
@@ -46,11 +48,21 @@ export function registerResources(server: McpServer, getClient: ClientFactory): 
       mimeType: 'application/json',
     },
     async (uri: URL) => {
-      const queue = await getClient().listAssetQueue(100);
+      const queue = await getClient().listAssetQueueDetailed({
+        limit: 100,
+        currentReviewer: getReviewer()
+          ? {
+              id: getReviewer()!.airtableCollaboratorId,
+              email: getReviewer()!.email,
+              name: getReviewer()!.name,
+            }
+          : null,
+      });
       return asJsonResource(uri, {
-        count: queue.length,
+        count: queue.items.length,
         generatedAt: new Date().toISOString(),
-        records: queue,
+        sortApplied: queue.sortApplied,
+        records: queue.items,
       });
     },
   );
@@ -63,5 +75,40 @@ export function registerResources(server: McpServer, getClient: ClientFactory): 
       mimeType: 'application/json',
     },
     async (uri: URL) => asJsonResource(uri, HOTSPOT_GROUPS),
+  );
+
+  server.resource(
+    'template-review-reviewer-me',
+    'template-review://reviewer-me',
+    {
+      description: 'Current reviewer identity as resolved by the MCP runtime.',
+      mimeType: 'application/json',
+    },
+    async (uri: URL) =>
+      asJsonResource(uri, {
+        reviewer: getReviewer(),
+      }),
+  );
+
+  server.resource(
+    'template-review-reviewer-workflow',
+    'template-review://reviewer-workflow',
+    {
+      description: 'Recommended reviewer workflow for locating and self-assigning a reviewable template version.',
+      mimeType: 'application/json',
+    },
+    async (uri: URL) =>
+      asJsonResource(uri, {
+        steps: [
+          'Call template_review_list_queue with status=ready_to_review and assigned=unassigned.',
+          'Pick a queue row and use assignableVersionId as the assignment target.',
+          'Call template_review_assign_self with that version_id.',
+          'Call template_review_get_review_context with the same version_id.',
+        ],
+        notes: {
+          assignmentTarget: 'Asset Version',
+          queuePrimaryAction: 'assign_self',
+        },
+      }),
   );
 }

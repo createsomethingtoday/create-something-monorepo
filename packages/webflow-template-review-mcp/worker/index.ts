@@ -7,6 +7,8 @@ import { AirtableClient } from '../src/airtable.js';
 import { DEFAULT_AIRTABLE_BASE_ID, TABLE_IDS } from '../src/schema.js';
 import { registerPrompts } from '../src/prompts.js';
 import { registerResources } from '../src/resources.js';
+import { parseReviewerDirectory, getReviewerProfileForAccount } from '../src/reviewer-directory.js';
+import { getRequestContext, runWithRequestContext } from '../src/request-context.js';
 import { registerTools } from '../src/tools.js';
 
 interface Env {
@@ -16,6 +18,7 @@ interface Env {
   MCP_API_KEY?: string;
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID?: string;
+  REVIEWER_DIRECTORY_JSON?: string;
 }
 
 export function validateApiKey(request: Request, env: Env): Response | null {
@@ -51,8 +54,11 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env> {
       });
     };
 
-    registerResources(this.server, getClient);
-    registerTools(this.server, getClient);
+    const reviewerDirectory = parseReviewerDirectory(this.env.REVIEWER_DIRECTORY_JSON);
+    const getReviewer = () => getReviewerProfileForAccount(reviewerDirectory, getRequestContext().accountId);
+
+    registerResources(this.server, getClient, getReviewer);
+    registerTools(this.server, getClient, getReviewer);
     registerPrompts(this.server);
   }
 }
@@ -77,11 +83,13 @@ export default {
     }
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
-      return WebflowTemplateReviewMCP.serve('/mcp').fetch(request, env, ctx);
+      const accountId = request.headers.get('x-mcp-account-id') ?? request.headers.get('x-hub-account-id');
+      return runWithRequestContext({ accountId }, () => WebflowTemplateReviewMCP.serve('/mcp').fetch(request, env, ctx));
     }
 
     if (url.pathname === '/sse' || url.pathname.startsWith('/sse/')) {
-      return WebflowTemplateReviewMCP.serve('/sse').fetch(request, env, ctx);
+      const accountId = request.headers.get('x-mcp-account-id') ?? request.headers.get('x-hub-account-id');
+      return runWithRequestContext({ accountId }, () => WebflowTemplateReviewMCP.serve('/sse').fetch(request, env, ctx));
     }
 
     if (url.pathname === '/' || url.pathname === '/health') {

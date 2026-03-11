@@ -4,8 +4,10 @@ import { z } from 'zod';
 import type { AirtableClient } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
 import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
+import type { ReviewerProfile } from './reviewer-directory.js';
 
 type ClientFactory = () => AirtableClient;
+type ReviewerFactory = () => ReviewerProfile | null;
 
 function jsonContent(value: unknown, isError = false) {
   return {
@@ -59,7 +61,17 @@ function asError(error: unknown) {
   );
 }
 
-export function registerTools(server: McpServer, getClient: ClientFactory): void {
+function currentReviewerAsCollaborator(getReviewer: ReviewerFactory) {
+  const reviewer = getReviewer();
+  if (!reviewer) return null;
+  return {
+    id: reviewer.airtableCollaboratorId,
+    ...(reviewer.email ? { email: reviewer.email } : {}),
+    ...(reviewer.name ? { name: reviewer.name } : {}),
+  };
+}
+
+export function registerTools(server: McpServer, getClient: ClientFactory, getReviewer: ReviewerFactory = () => null): void {
   server.tool(
     'template_review_health',
     'Runtime health check for Webflow Template Review MCP and Airtable connectivity.',
@@ -78,12 +90,21 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
     'template_review_list_queue',
     'List template review queue using confirmed template Airtable fields.',
     {
+      status: z.enum(['ready_to_review', 'in_review', 'changes_requested', 'approved', 'published']).optional(),
+      assigned: z.enum(['any', 'assigned', 'unassigned']).optional(),
+      sort: z.enum(['submittedDate_desc', 'submittedDate_asc', 'decisionDate_desc', 'decisionDate_asc']).optional(),
       limit: z.number().int().min(1).max(500).optional(),
     },
-    async ({ limit }) => {
+    async ({ limit, status, assigned, sort }) => {
       try {
-        const queue = await getClient().listAssetQueue(limit ?? 100);
-        return asSuccess({ count: queue.length, records: queue });
+        const queue = await getClient().listAssetQueueDetailed({
+          limit: limit ?? 100,
+          status,
+          assigned,
+          sort,
+          currentReviewer: currentReviewerAsCollaborator(getReviewer),
+        });
+        return asSuccess({ count: queue.items.length, sortApplied: queue.sortApplied, items: queue.items });
       } catch (error) {
         return asError(error);
       }
@@ -207,6 +228,23 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
   );
 
   server.tool(
+    'template_review_get_review_context',
+    'Get the normalized review context for one template version, including reviewer-facing fields and capability flags.',
+    {
+      version_id: z.string().min(1),
+    },
+    async ({ version_id }) => {
+      try {
+        return asSuccess({
+          context: await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer)),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
     'template_review_list_releases',
     'List available Asset Release records reviewers can link to approved template versions.',
     {
@@ -280,6 +318,41 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
         return asSuccess({
           updated_version: await getClient().assignVersionReviewer(version_id, {
             review_owner,
+          }),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_assign_self',
+    'Assign the current reviewer to a template Asset Version using runtime reviewer identity mapped from the hub account.',
+    {
+      version_id: z.string().min(1),
+    },
+    async ({ version_id }) => {
+      try {
+        const reviewer = getReviewer();
+        if (!reviewer) {
+          throw new AirtableClientError(
+            'REVIEWER_IDENTITY_UNAVAILABLE',
+            'Current reviewer identity is not configured for this MCP runtime.',
+            503,
+          );
+        }
+
+        return asSuccess({
+          reviewer: {
+            accountId: reviewer.accountId,
+            airtableCollaboratorId: reviewer.airtableCollaboratorId,
+            email: reviewer.email,
+            name: reviewer.name,
+            lane: reviewer.lane,
+          },
+          updated_version: await getClient().assignVersionReviewer(version_id, {
+            review_owner: { id: reviewer.airtableCollaboratorId },
           }),
         });
       } catch (error) {

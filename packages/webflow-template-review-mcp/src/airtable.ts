@@ -16,6 +16,10 @@ type CollaboratorRef = {
   name?: string;
 };
 
+export type TemplateReviewQueueStatus = 'ready_to_review' | 'in_review' | 'changes_requested' | 'approved' | 'published';
+export type TemplateReviewQueueAssignmentFilter = 'any' | 'assigned' | 'unassigned';
+export type TemplateReviewQueueSort = 'submittedDate_desc' | 'submittedDate_asc' | 'decisionDate_desc' | 'decisionDate_asc';
+
 export class AirtableClientError extends Error {
   code: string;
   status?: number;
@@ -39,6 +43,15 @@ export interface TemplateReviewQueueItem {
   websiteUrl?: string;
   previewSiteUrl?: string;
   submittedDate?: string;
+  marketplaceStatus?: string;
+  decisionDate?: string;
+  assignableVersionId?: string;
+  reviewOwner?: CollaboratorRef | null;
+  normalizedStatus?: TemplateReviewQueueStatus | null;
+  isReadyToReview?: boolean;
+  isUnassigned?: boolean;
+  canAssign?: boolean;
+  isAssignedToCurrentReviewer?: boolean;
 }
 
 export type TemplateReviewAssetSearchMode = 'contains' | 'exact';
@@ -81,6 +94,34 @@ export interface TemplateReviewVersion {
   createdAt?: string;
   createdBy?: string;
   rawFields: Record<string, unknown>;
+}
+
+export interface TemplateReviewQueueQuery {
+  limit?: number;
+  status?: TemplateReviewQueueStatus;
+  assigned?: TemplateReviewQueueAssignmentFilter;
+  sort?: TemplateReviewQueueSort;
+  currentReviewer?: CollaboratorRef | null;
+}
+
+export interface TemplateReviewContext {
+  versionId: string;
+  assetId?: string;
+  templateName?: string;
+  reviewOwner?: CollaboratorRef | null;
+  reviewStatus?: string;
+  qualityRating?: string;
+  improvementAreas?: string[];
+  reviewFeedback?: string;
+  reviewChecklist?: string;
+  publishingChecklist?: string;
+  canAssign: boolean;
+  canReview: boolean;
+  canPublish: boolean;
+  isAssignedToCurrentReviewer: boolean;
+  currentReviewer?: CollaboratorRef | null;
+  asset?: TemplateReviewAsset | null;
+  version: TemplateReviewVersion;
 }
 
 export interface TemplateReviewRelease {
@@ -263,6 +304,49 @@ function mapAsset(record: AirtableRecord): TemplateReviewAsset {
   };
 }
 
+function normalizeQueueStatus(asset: TemplateReviewAsset, version?: TemplateReviewVersion | null): TemplateReviewQueueStatus | null {
+  const candidates = [
+    version?.reviewStatus,
+    asset.latestReviewStatus,
+    asset.marketplaceStatus,
+  ].filter((value): value is string => Boolean(value));
+
+  for (const candidate of candidates) {
+    if (/ready/i.test(candidate)) return 'ready_to_review';
+    if (/in review/i.test(candidate)) return 'in_review';
+    if (/changes requested|response to review/i.test(candidate)) return 'changes_requested';
+    if (/approved/i.test(candidate)) return 'approved';
+    if (/published|live/i.test(candidate)) return 'published';
+  }
+
+  return null;
+}
+
+function compareIsoDates(a?: string, b?: string): number {
+  const left = a ? Date.parse(a) : Number.NaN;
+  const right = b ? Date.parse(b) : Number.NaN;
+  const leftValue = Number.isFinite(left) ? left : -Infinity;
+  const rightValue = Number.isFinite(right) ? right : -Infinity;
+  return leftValue - rightValue;
+}
+
+function sortQueueItems(items: TemplateReviewQueueItem[], sort: TemplateReviewQueueSort): TemplateReviewQueueItem[] {
+  const cloned = [...items];
+  cloned.sort((left, right) => {
+    switch (sort) {
+      case 'submittedDate_asc':
+        return compareIsoDates(left.submittedDate, right.submittedDate);
+      case 'submittedDate_desc':
+        return compareIsoDates(right.submittedDate, left.submittedDate);
+      case 'decisionDate_asc':
+        return compareIsoDates(left.decisionDate, right.decisionDate);
+      case 'decisionDate_desc':
+        return compareIsoDates(right.decisionDate, left.decisionDate);
+    }
+  });
+  return cloned;
+}
+
 function mapVersion(record: AirtableRecord): TemplateReviewVersion {
   return {
     versionId: record.id,
@@ -400,6 +484,50 @@ export class AirtableClient {
       filterByFormula: `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
     });
     return records.filter((record) => isTemplateLikeAsset(record.fields)).map((record) => mapAsset(record));
+  }
+
+  async listAssetQueueDetailed(query: TemplateReviewQueueQuery = {}): Promise<{
+    sortApplied: TemplateReviewQueueSort;
+    items: TemplateReviewQueueItem[];
+  }> {
+    const limit = query.limit ?? 100;
+    const sort = query.sort ?? 'submittedDate_desc';
+    const assets = await this.listAssetQueue(limit);
+    const items = await Promise.all(
+      assets.map(async (asset) => {
+        const versions = await this.listVersionsForAsset(asset.assetId, 25);
+        const currentVersion = versions[0] ?? null;
+        const reviewOwner = currentVersion?.reviewOwner ?? null;
+        const isAssignedToCurrentReviewer = Boolean(
+          query.currentReviewer?.id &&
+            reviewOwner?.id &&
+            query.currentReviewer.id === reviewOwner.id,
+        );
+        const normalizedStatus = normalizeQueueStatus(asset, currentVersion);
+        return {
+          ...asset,
+          assignableVersionId: currentVersion?.versionId,
+          reviewOwner,
+          normalizedStatus,
+          isReadyToReview: normalizedStatus === 'ready_to_review',
+          isUnassigned: !reviewOwner,
+          canAssign: Boolean(currentVersion?.versionId && query.currentReviewer?.id && !reviewOwner),
+          isAssignedToCurrentReviewer,
+        } satisfies TemplateReviewQueueItem;
+      }),
+    );
+
+    const filtered = items.filter((item) => {
+      if (query.status && item.normalizedStatus !== query.status) return false;
+      if (query.assigned === 'assigned' && item.isUnassigned) return false;
+      if (query.assigned === 'unassigned' && !item.isUnassigned) return false;
+      return true;
+    });
+
+    return {
+      sortApplied: sort,
+      items: sortQueueItems(filtered, sort),
+    };
   }
 
   async searchAssetsByName(
@@ -604,6 +732,40 @@ export class AirtableClient {
 
   async assignVersionReviewer(versionId: string, input: AssignReviewerInput): Promise<TemplateReviewVersion> {
     return this.updateVersionReview(versionId, { review_owner: input.review_owner });
+  }
+
+  async getReviewContext(versionId: string, currentReviewer?: CollaboratorRef | null): Promise<TemplateReviewContext> {
+    const version = await this.getVersionById(versionId);
+    if (!version) {
+      throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, { version_id: versionId });
+    }
+
+    const asset = version.assetId ? await this.getAssetById(version.assetId) : null;
+    const isAssignedToCurrentReviewer = Boolean(
+      currentReviewer?.id &&
+        version.reviewOwner?.id &&
+        currentReviewer.id === version.reviewOwner.id,
+    );
+
+    return {
+      versionId: version.versionId,
+      assetId: version.assetId,
+      templateName: asset?.templateName,
+      reviewOwner: version.reviewOwner ?? null,
+      reviewStatus: version.reviewStatus,
+      qualityRating: version.qualityRating,
+      improvementAreas: version.improvementAreas,
+      reviewFeedback: version.reviewFeedback,
+      reviewChecklist: version.reviewChecklist,
+      publishingChecklist: version.publishingChecklist,
+      canAssign: Boolean(currentReviewer?.id && !version.reviewOwner),
+      canReview: !version.reviewOwner || isAssignedToCurrentReviewer,
+      canPublish: version.reviewStatus === '✅Approved',
+      isAssignedToCurrentReviewer,
+      currentReviewer: currentReviewer ?? null,
+      asset,
+      version,
+    };
   }
 
   async updateAssetMetadata(assetId: string, input: TemplateAssetMetadataUpdateInput): Promise<TemplateReviewAsset> {
