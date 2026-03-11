@@ -53,6 +53,9 @@ Define the production policy for user-facing bearer tokens issued through `.agen
 23. After adoption, `identity-worker.mcp_long_lived_tokens` becomes the authoritative registry for bearer-token status, last use, revoke, and regenerate behavior; vault storage is runtime support only and MUST NOT be treated as the governance source of truth.
 24. Duplicate entitlement rows or duplicate token rows for the same user email under different subjects MUST be removed or deactivated during migration so bearer resolution remains canonical.
 25. Auth0 delete/recreate incidents for the same normalized email MUST be governed by [`policy.auth0-subject-rebind-governance.v1`](./policy.auth0-subject-rebind-governance.v1.md); bearer access continuity should preserve MCP account context while revoking stale old-subject credentials.
+26. Managed bearer issuance and regeneration MUST support explicit `allowed_tool_prefixes` for non-Composio or reviewer-specific lanes whose visible tool surface cannot be derived from `toolkit_profile` alone.
+27. When explicit `allowed_tool_prefixes` are used, the issued token record MUST persist them as first-class governed scope data and the resolver MUST return the same effective prefix set transparently at request time.
+28. Managed bearer delivery UIs and APIs SHOULD surface the effective `allowed_tool_prefixes` alongside `toolkit_profile` so operators can verify the actor-visible lane without relying on inferred behavior.
 
 ## Required Legal Alignment
 
@@ -111,6 +114,7 @@ The following artifacts MUST remain aligned with this policy before production l
 - Legal acceptance records linked to the user and organization
 - Billing and contract state checks linked to allow/deny decisions
 - Admin-visible last-used and incident-response metadata
+- managed bearer metadata showing the effective `allowed_tool_prefixes`
 - OAuth app setup traces showing the delivered access token resolves through the same managed bearer path
 - OAuth authorization traces showing the authorization code is a signed `identity-worker` artifact bound to client and redirect context
 - Revoke/regenerate actions immediately invalidating OAuth-delivered host access

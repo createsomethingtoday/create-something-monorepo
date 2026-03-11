@@ -3,14 +3,12 @@
   import type { Asset } from '$lib/server/airtable';
   import { goto, invalidate } from '$app/navigation';
   import { onMount } from 'svelte';
-  import { ChevronDown, ChevronUp } from 'lucide-svelte';
   import {
     Header,
     Button,
     AssetsDisplay,
     OverviewStats,
     SubmissionTracker,
-    StatsBar,
     DataFreshnessIndicator
   } from '$lib/components';
   import { toast } from '$lib/stores/toast';
@@ -23,7 +21,6 @@
   let isEditModalOpen = $state(false);
   let isLoadingEditAsset = $state(false);
   let currentEditingAsset = $state<Asset | null>(null);
-  let showDetailedSummary = $state(false);
 
   // Lazy-loaded modal components
   // NOTE: Svelte 5 dynamic component typing is a bit different; keep this permissive for lazy-loading.
@@ -169,6 +166,21 @@
     invalidate('app:assets');
   }
 
+  function handleReviewAssets() {
+    trackEvent('dashboard_quick_action_clicked', { action: 'review_assets' });
+    document.getElementById('asset-portfolio')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function handleOpenValidation() {
+    trackEvent('dashboard_quick_action_clicked', { action: 'open_validation' });
+    goto('/validation');
+  }
+
+  function handleExploreMarketplace() {
+    trackEvent('dashboard_quick_action_clicked', { action: 'explore_marketplace' });
+    goto('/marketplace');
+  }
+
   onMount(() => {
     const assets = data.assets || [];
     trackEvent('dashboard_loaded', {
@@ -188,58 +200,35 @@
 
   <main class="main-content">
     <div class="content-wrapper">
-      <!-- Overview Section - Tufte: High density, minimal chrome -->
       <section class="overview-section">
-        <div class="page-header page-intro page-intro--dashboard">
-          <div class="header-text">
-            <h1 class="page-title page-intro__title">Your Webflow template portfolio</h1>
-            <p class="page-subtitle page-intro__subtitle">
-              Track published assets, upcoming submissions, and marketplace signals in one place.
-              <DataFreshnessIndicator variant="tooltip" />
-            </p>
-          </div>
-          <SubmissionTracker
-            assets={data.assets || []}
-            variant="compact"
-            userEmail={data.user?.email}
-          />
-        </div>
-
-        <!-- Tufte: Single-line high-density metrics bar -->
-        <StatsBar assets={data.assets || []} />
-
-        <div class="summary-toggle-row">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            class="summary-toggle"
-            aria-expanded={showDetailedSummary}
-            aria-controls="detailed-summary"
-            onclick={() => (showDetailedSummary = !showDetailedSummary)}
-          >
-            {#if showDetailedSummary}
-              <ChevronUp size={16} />
-              Hide detailed summary
-            {:else}
-              <ChevronDown size={16} />
-              Show detailed summary
-            {/if}
-          </Button>
-        </div>
-
-        {#if showDetailedSummary}
-          <!-- Detailed breakdown in compact grid -->
-          <div class="dashboard-grid" id="detailed-summary">
-            <div class="stats-column">
-              <OverviewStats assets={data.assets || []} />
+        <div class="overview-top">
+          <div class="page-header page-intro page-intro--dashboard">
+            <div class="header-text">
+              <h1 class="page-title page-intro__title">Your Webflow template portfolio</h1>
+              <p class="page-subtitle page-intro__subtitle">
+                Track published assets, upcoming submissions, and marketplace signals in one place.
+                <DataFreshnessIndicator variant="tooltip" />
+              </p>
+              <div class="quick-actions">
+                <Button variant="default" onclick={handleReviewAssets}>Review assets</Button>
+                <Button variant="secondary" onclick={handleOpenValidation}>Open validation</Button>
+                <Button variant="outline" onclick={handleExploreMarketplace}
+                  >Explore marketplace</Button
+                >
+              </div>
             </div>
           </div>
-        {/if}
+          <div class="submission-column">
+            <SubmissionTracker assets={data.assets || []} userEmail={data.user?.email} />
+          </div>
+        </div>
+
+        <div class="dashboard-summary-grid">
+          <OverviewStats assets={data.assets || []} />
+        </div>
       </section>
 
-      <!-- Assets Section -->
-      <section class="assets-section">
+      <section class="assets-section" id="asset-portfolio">
         <AssetsDisplay
           assets={data.assets || []}
           {searchTerm}
@@ -275,27 +264,24 @@
   }
 
   .content-wrapper {
-    max-width: 80rem;
+    max-width: var(--layout-content-max-width);
     margin: 0 auto;
   }
 
   .overview-section {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
-    margin-bottom: calc(var(--space-xl) + var(--space-sm));
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
   }
 
   .page-header {
-    display: flex;
-    align-items: end;
-    justify-content: space-between;
-    gap: 1.25rem;
+    margin: 0;
   }
 
   .header-text {
     flex: 1;
-    max-width: 46rem;
+    max-width: 42rem;
   }
 
   .page-subtitle :global(*) {
@@ -303,32 +289,36 @@
     vertical-align: middle;
   }
 
-  .dashboard-grid {
+  .overview-top {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1.3fr) minmax(20rem, 0.9fr);
     gap: var(--space-md);
   }
 
-  .summary-toggle-row {
+  .quick-actions {
     display: flex;
-    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: var(--space-md);
   }
 
-  :global(.summary-toggle svg) {
-    flex-shrink: 0;
+  .submission-column {
+    min-width: 0;
   }
 
-  :global(.summary-toggle) {
-    gap: 0.45rem;
-  }
-
-  .stats-column {
-    display: flex;
-    flex-direction: column;
+  .dashboard-summary-grid {
+    display: grid;
+    grid-template-columns: 1fr;
   }
 
   .assets-section {
     margin-bottom: var(--space-xl);
+  }
+
+  @media (max-width: 900px) {
+    .overview-top {
+      grid-template-columns: 1fr;
+    }
   }
 
   @media (max-width: 640px) {
@@ -342,18 +332,11 @@
     }
 
     .page-header {
-      flex-direction: column;
-      align-items: stretch;
-      gap: var(--space-sm);
+      padding-bottom: 0;
     }
 
-    .summary-toggle-row {
-      justify-content: stretch;
-    }
-
-    :global(.summary-toggle) {
+    .quick-actions :global(button) {
       width: 100%;
-      justify-content: center;
     }
 
     .page-title {
@@ -362,15 +345,6 @@
 
     .assets-section {
       margin-bottom: var(--space-lg);
-    }
-
-    :global(.compact-tracker) {
-      width: 100%;
-    }
-
-    :global(.tracker-button) {
-      width: 100%;
-      justify-content: center;
     }
   }
 </style>

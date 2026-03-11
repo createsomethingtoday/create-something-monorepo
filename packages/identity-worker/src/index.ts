@@ -613,6 +613,7 @@ interface CreateMcpSessionBody {
 	tenant_id?: string;
 	host?: string;
 	toolkit_profile?: string[];
+	allowed_tool_prefixes?: string[];
 	tool_mode?: McpToolMode;
 	ttl_seconds?: number;
 }
@@ -625,6 +626,7 @@ interface AdminMintMcpSessionBody {
 	account_id?: string;
 	host?: string;
 	toolkit_profile?: string[];
+	allowed_tool_prefixes?: string[];
 	tool_mode?: McpToolMode;
 	ttl_seconds?: number;
 	consent_record_id?: string;
@@ -649,6 +651,7 @@ interface AdminIssueMcpLongLivedTokenBody {
 	tenant_id?: string;
 	account_id?: string;
 	toolkit_profile?: string[];
+	allowed_tool_prefixes?: string[];
 	tool_mode?: McpToolMode;
 	actor?: string;
 	metadata?: Record<string, unknown>;
@@ -1068,7 +1071,7 @@ async function handleCreateMcpSession(request: Request, env: Env): Promise<Respo
 	const host = normalizeHostName(body.host);
 	const toolMode = normalizeToolMode(body.tool_mode);
 	const toolkitProfile = normalizeToolkitProfile(body.toolkit_profile);
-	const allowedToolPrefixes = buildAllowedToolPrefixes(toolkitProfile);
+	const allowedToolPrefixes = resolveAllowedToolPrefixes(body.allowed_tool_prefixes, toolkitProfile);
 	const ttlSeconds = clampTtlSeconds(body.ttl_seconds);
 	const mcpAccount = await ensureMcpAccountForUserTenant(db, payload.sub, tenantId);
 	const accountId = mcpAccount.account_id;
@@ -1102,6 +1105,7 @@ async function handleCreateMcpSession(request: Request, env: Env): Promise<Respo
 					host,
 					tool_mode: toolMode,
 					toolkit_profile: toolkitProfile,
+					allowed_tool_prefixes: allowedToolPrefixes,
 				},
 			},
 		},
@@ -1110,6 +1114,7 @@ async function handleCreateMcpSession(request: Request, env: Env): Promise<Respo
 			tenant_id: tenantId,
 			tool_mode: toolMode,
 			toolkit_profile: toolkitProfile,
+			allowed_tool_prefixes: allowedToolPrefixes,
 			ttl_seconds: ttlSeconds,
 		},
 	});
@@ -1162,6 +1167,7 @@ async function handleCreateMcpSession(request: Request, env: Env): Promise<Respo
 			tenant_id: tenantId,
 			tool_mode: toolMode,
 			toolkit_profile: toolkitProfile,
+			allowed_tool_prefixes: allowedToolPrefixes,
 			ttl_seconds: ttlSeconds,
 			policy: policyDecision,
 		}),
@@ -1283,7 +1289,7 @@ async function handleAdminMintMcpSession(request: Request, env: Env): Promise<Re
 	const host = normalizeHostName(body.host);
 	const toolMode = normalizeToolMode(body.tool_mode);
 	const toolkitProfile = normalizeToolkitProfile(body.toolkit_profile);
-	const allowedToolPrefixes = buildAllowedToolPrefixes(toolkitProfile);
+	const allowedToolPrefixes = resolveAllowedToolPrefixes(body.allowed_tool_prefixes, toolkitProfile);
 	const ttlSeconds = clampTtlSeconds(body.ttl_seconds);
 
 	const sessionId = `ms_${generateUUID().replace(/-/g, '')}`;
@@ -1324,6 +1330,7 @@ async function handleAdminMintMcpSession(request: Request, env: Env): Promise<Re
 			host,
 			tool_mode: toolMode,
 			toolkit_profile: toolkitProfile,
+			allowed_tool_prefixes: allowedToolPrefixes,
 			ttl_seconds: ttlSeconds,
 			actor,
 			policy: policyDecision,
@@ -1370,6 +1377,7 @@ async function handleAdminIssueMcpLongLivedToken(request: Request, env: Env): Pr
 		tenantId: body.tenant_id ?? null,
 		accountId: body.account_id ?? null,
 		toolkitProfile: body.toolkit_profile,
+		allowedToolPrefixes: body.allowed_tool_prefixes,
 		toolMode: body.tool_mode,
 		actor: normalizeActor(body.actor) ?? auth.actor,
 		actorRole: 'operator',
@@ -1441,6 +1449,7 @@ async function issueManagedBearerToken(
 		tenantId?: string | null;
 		accountId?: string | null;
 		toolkitProfile?: string[];
+		allowedToolPrefixes?: string[];
 		toolMode?: McpToolMode;
 		actor: string;
 		actorRole: 'operator' | 'user';
@@ -1478,7 +1487,12 @@ async function issueManagedBearerToken(
 			: existing
 				? parseStringArray(existing.toolkit_profile_json)
 				: [];
-	const allowedToolPrefixes = buildAllowedToolPrefixes(toolkitProfile);
+	const allowedToolPrefixes =
+		input.allowedToolPrefixes !== undefined
+			? normalizeAllowedToolPrefixes(input.allowedToolPrefixes)
+			: existing
+				? parseAllowedToolPrefixesOrNull(existing.allowed_tool_prefixes_json) ?? buildAllowedToolPrefixes(toolkitProfile)
+				: buildAllowedToolPrefixes(toolkitProfile);
 	const metadata = normalizeMetadata(input.metadata);
 
 	const policyDecision = await evaluatePartnerPolicyDecision(db, env, {
@@ -1510,6 +1524,7 @@ async function issueManagedBearerToken(
 					auth_subject: input.authSubject,
 					tool_mode: toolMode,
 					toolkit_profile: toolkitProfile,
+					allowed_tool_prefixes: allowedToolPrefixes,
 					entitlement_reason: entitlement.reason ?? 'allowed',
 				},
 			},
@@ -1521,6 +1536,7 @@ async function issueManagedBearerToken(
 			account_id: accountId,
 			tool_mode: toolMode,
 			toolkit_profile: toolkitProfile,
+			allowed_tool_prefixes: allowedToolPrefixes,
 			entitlement_reason: entitlement.reason ?? 'allowed',
 			...metadata,
 		},
@@ -1568,6 +1584,7 @@ async function issueManagedBearerToken(
 			token_prefix: tokenPrefix,
 			policy: policyDecision,
 			issued_via: metadata.issued_via ?? null,
+			allowed_tool_prefixes: allowedToolPrefixes,
 		}),
 	});
 
@@ -3433,6 +3450,20 @@ function normalizeToolkitProfile(raw: string[] | undefined): string[] {
 
 function buildAllowedToolPrefixes(toolkits: string[]): string[] {
 	return toolkits.map((toolkit) => `composio-toolkit-${toolkit}__`);
+}
+
+function normalizeAllowedToolPrefixes(raw: string[] | undefined): string[] {
+	if (!Array.isArray(raw)) return [];
+	const normalized = raw
+		.filter((value): value is string => typeof value === 'string')
+		.map((value) => value.trim())
+		.filter(Boolean);
+	return [...new Set(normalized)].slice(0, 500);
+}
+
+function resolveAllowedToolPrefixes(rawPrefixes: string[] | undefined, toolkitProfile: string[]): string[] {
+	const explicit = normalizeAllowedToolPrefixes(rawPrefixes);
+	return explicit.length > 0 ? explicit : buildAllowedToolPrefixes(toolkitProfile);
 }
 
 function clampTtlSeconds(raw: number | undefined): number {

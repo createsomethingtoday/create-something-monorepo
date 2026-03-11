@@ -88,6 +88,10 @@ Not from arbitrary client-supplied account headers.
 
 Protected tool execution must not proceed without normalized actor context.
 
+### Rule 4a: Explicit tool prefixes are first-class identity scope
+
+For non-toolkit lanes such as reviewer-specific Hub surfaces, the resolved actor context MUST be allowed to carry explicit `allowedToolPrefixes` that are not inferred from a generic toolkit profile. Resolver outputs and issuance APIs should treat these prefixes as governed scope data, not as incidental metadata.
+
 ### Rule 5: Tenant context is first-class
 
 Authorization and entitlement checks must evaluate against the resolved tenant context, not just the user identity.
@@ -103,6 +107,7 @@ Expected behavior:
 - gateway auth still applies
 - session token resolves actor context
 - tool access may be constrained by resolved prefixes or policy
+- explicit `allowedToolPrefixes` may be required when the lane is a curated reviewer or custom Hub surface rather than a toolkit-derived surface
 
 ### Managed bearer mode
 
@@ -113,6 +118,7 @@ Expected behavior:
 - one active bearer token per entitled user
 - request-time entitlement checks remain live
 - token remains governed by contract, policy, and billing state where applicable
+- resolver output for the token must expose the effective `allowedToolPrefixes` transparently when a curated lane depends on them
 
 ### OAuth compatibility mode
 
@@ -184,3 +190,4 @@ This standard should govern:
 2. Remove remaining trust in client-supplied account headers on protected remote paths.
 3. Ensure OAuth host compatibility reuses the managed bearer model instead of creating a parallel token model.
 4. Make tenant-aware actor context mandatory for Hub-governed execution.
+5. Treat explicit `allowedToolPrefixes` as a scalable first-class scope mechanism for non-Composio lanes.

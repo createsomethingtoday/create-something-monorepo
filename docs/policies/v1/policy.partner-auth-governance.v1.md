@@ -32,6 +32,8 @@ Define policy controls for partner-admin actions that mint MCP sessions and mana
 7. Toolkit account pinning and disabling MUST require a human review trace (for example `X-Partner-Review-Step`).
 8. Unattended partner-managed automation MUST execute against operator-approved pinned toolkit accounts or equivalent governed runtime credentials. Personal end-user bearer tokens MUST NOT be repurposed as background job credentials.
 9. Background job executions MUST record workflow or job identity in addition to actor trace metadata.
+10. Partner-admin issuance flows MUST support explicit `allowed_tool_prefixes` for reviewer or custom hub lanes whose runtime surface cannot be expressed as a toolkit-only profile.
+11. When partner-admin issuance uses explicit `allowed_tool_prefixes`, the delivery artifact and audit metadata MUST expose the effective prefix set so reviewers and operators can verify the lane transparently.
 
 ## Enforcement Surfaces
 

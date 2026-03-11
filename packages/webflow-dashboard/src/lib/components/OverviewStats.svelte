@@ -4,6 +4,7 @@
   import KineticNumber from './KineticNumber.svelte';
   import DataFreshnessIndicator from './DataFreshnessIndicator.svelte';
   import type { Asset } from '$lib/server/airtable';
+  import { sortAssetStatuses } from '$lib/utils/asset-actions';
 
   interface Props {
     assets: Asset[];
@@ -50,11 +51,8 @@
     return { viewers, purchases, revenue };
   });
 
-  // Status order for display
-  const statusOrder = ['Published', 'Scheduled', 'Upcoming', 'Delisted', 'Rejected'];
-
   const sortedStatuses = $derived.by(() => {
-    return statusOrder.filter((status) => statusBreakdown[status]?.count > 0);
+    return sortAssetStatuses(Object.keys(statusBreakdown)).filter((status) => statusBreakdown[status]?.count > 0);
   });
 
   // Calculate percentage for visual bar
@@ -160,8 +158,8 @@
 
 <style>
   .overview-stats {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-md);
   }
 
@@ -196,10 +194,10 @@
   }
 
   .performance-item:hover {
-    background: var(--color-bg-subtle);
-    border-color: var(--color-info-border);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+    background: color-mix(in srgb, var(--color-bg-subtle) 86%, var(--color-bg-surface));
+    border-color: var(--color-shell-border-strong);
+    transform: none;
+    box-shadow: var(--shadow-sm);
   }
 
   .performance-content {
@@ -291,6 +289,12 @@
     font-weight: var(--font-semibold);
     letter-spacing: 0.02em;
     color: var(--color-fg-primary);
+  }
+
+  @media (max-width: 900px) {
+    .overview-stats {
+      grid-template-columns: 1fr;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {

@@ -15,6 +15,9 @@
   import DataFreshnessIndicator from './DataFreshnessIndicator.svelte';
   import Search from './Search.svelte';
   import type { Asset } from '$lib/server/airtable';
+  import type { AssetActionDescriptor } from '$lib/utils/asset-actions';
+  import { getAssetActionConfig, normalizeAssetStatus, sortAssetStatuses } from '$lib/utils/asset-actions';
+  import { trackEvent } from '$lib/utils/analytics';
   import {
     BarChart3,
     Package,
@@ -47,17 +50,13 @@
     direction: 'desc'
   });
 
-  // Status order for display
-  const statusOrder = ['Scheduled', 'Published', 'Upcoming', 'Delisted', 'Rejected'];
-
-  // Status icons and colors
-  // Using typeof for lucide icon components (Svelte 5 compatible)
   const statusConfig: Record<string, { icon: typeof CalendarClock; bgClass: string }> = {
     Scheduled: { icon: CalendarClock, bgClass: 'status-scheduled' },
     Published: { icon: CheckCircle2, bgClass: 'status-published' },
     Upcoming: { icon: Rocket, bgClass: 'status-upcoming' },
     Delisted: { icon: AlertTriangle, bgClass: 'status-delisted' },
-    Rejected: { icon: XCircle, bgClass: 'status-rejected' }
+    Rejected: { icon: XCircle, bgClass: 'status-rejected' },
+    Draft: { icon: CalendarClock, bgClass: 'status-scheduled' }
   };
 
   // Filter assets by search term
@@ -111,7 +110,7 @@
 
   // Get sorted status keys
   const sortedStatuses = $derived.by(() => {
-    return statusOrder.filter((status) => groupedAssets[status]?.length > 0);
+    return sortAssetStatuses(Object.keys(groupedAssets)).filter((status) => groupedAssets[status]?.length > 0);
   });
 
   function toggleStatus(status: string) {
@@ -162,6 +161,26 @@
     onSearch?.('');
   }
 
+  function runPrimaryAction(asset: Asset, action: AssetActionDescriptor) {
+    trackEvent('dashboard_asset_primary_action_clicked', {
+      asset_id: asset.id,
+      asset_status: asset.status,
+      action: action.key
+    });
+
+    if (action.handler === 'view') {
+      onView?.(asset.id);
+      return;
+    }
+
+    if (action.handler === 'edit') {
+      onEdit?.(asset.id);
+      return;
+    }
+
+    onArchive?.(asset.id);
+  }
+
   function getSortLabel() {
     const fieldMap: Record<string, string> = {
       name: 'Name',
@@ -174,9 +193,6 @@
     return `${fieldMap[sortConfig.key] ?? sortConfig.key} (${directionLabel})`;
   }
 
-  function isArchivedStatus(status: string): boolean {
-    return status.toLowerCase().includes('delisted');
-  }
 </script>
 
 <div class="assets-display">
@@ -195,12 +211,12 @@
         />
       </div>
       <Button
-        variant={showPerformance ? 'default' : 'outline'}
+        variant={showPerformance ? 'secondary' : 'outline'}
         size="sm"
         onclick={() => (showPerformance = !showPerformance)}
       >
         <BarChart3 size={16} />
-        {showPerformance ? 'Hide' : 'Show'} Performance
+        {showPerformance ? 'Hide' : 'Show'} Performance columns
       </Button>
     </div>
   </div>
@@ -243,7 +259,8 @@
       {@const statusAssets = groupedAssets[status] || []}
       {@const visibleAssets = getVisibleAssets(status)}
       {@const config = statusConfig[status]}
-      {@const showTotals = showPerformance && !['Upcoming', 'Rejected'].includes(status)}
+      {@const normalizedStatus = normalizeAssetStatus(status)}
+      {@const showTotals = showPerformance && !['Upcoming', 'Rejected'].includes(normalizedStatus)}
       {@const totals = showTotals ? calculateTotals(visibleAssets) : null}
 
       <section class="status-section">
@@ -335,12 +352,20 @@
                       </div>
                     </TableHead>
                   {/if}
-                  <TableHead class="w-12"></TableHead>
+                  <TableHead class="text-center action-head">Next step</TableHead>
+                  <TableHead class="w-12 text-center action-head">More</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {#each visibleAssets as asset (asset.id)}
-                  <AssetTableRow {asset} {showPerformance} {onView} {onEdit} {onArchive} />
+                  <AssetTableRow
+                    {asset}
+                    {showPerformance}
+                    onPrimaryAction={runPrimaryAction}
+                    {onView}
+                    {onEdit}
+                    {onArchive}
+                  />
                 {/each}
                 {#if totals}
                   <TableRow class="totals-row">
@@ -362,6 +387,7 @@
                       ><strong>${totals.revenue.toLocaleString()}</strong></TableCell
                     >
                     <TableCell></TableCell>
+                    <TableCell></TableCell>
                   </TableRow>
                 {/if}
               </TableBody>
@@ -370,6 +396,7 @@
 
           <div class="mobile-cards">
             {#each visibleAssets as asset (asset.id)}
+              {@const actionConfig = getAssetActionConfig(asset.status)}
               <article class="asset-card-mobile">
                 <div class="mobile-header-row">
                   <div class="mobile-asset-meta">
@@ -388,7 +415,8 @@
                         : 'N/A'}
                     </span>
                   </div>
-                  {#if showPerformance && !['Upcoming', 'Rejected'].includes(asset.status)}
+                  {#if showPerformance &&
+                    !['Upcoming', 'Rejected'].includes(normalizeAssetStatus(asset.status))}
                     <div>
                       <span class="mobile-label">Viewers</span>
                       <span class="mobile-value"
@@ -411,21 +439,27 @@
                 </div>
 
                 <div class="mobile-actions">
-                  {#if onView}
-                    <Button size="sm" variant="outline" onclick={() => onView(asset.id)}
-                      >View</Button
+                  <Button
+                    size="sm"
+                    variant={actionConfig.primary.handler === 'edit' ? 'default' : 'secondary'}
+                    onclick={() => runPrimaryAction(asset, actionConfig.primary)}
+                  >
+                    {actionConfig.primary.label}
+                  </Button>
+                  {#each actionConfig.secondary as action}
+                    <Button
+                      size="sm"
+                      variant={action.handler === 'archive' ? 'destructive' : 'outline'}
+                      onclick={() =>
+                        action.handler === 'view'
+                          ? onView?.(asset.id)
+                          : action.handler === 'edit'
+                            ? onEdit?.(asset.id)
+                            : onArchive?.(asset.id)}
                     >
-                  {/if}
-                  {#if onEdit}
-                    <Button size="sm" variant="secondary" onclick={() => onEdit(asset.id)}
-                      >Edit</Button
-                    >
-                  {/if}
-                  {#if onArchive && !isArchivedStatus(asset.status)}
-                    <Button size="sm" variant="destructive" onclick={() => onArchive(asset.id)}
-                      >Archive</Button
-                    >
-                  {/if}
+                      {action.label}
+                    </Button>
+                  {/each}
                 </div>
               </article>
             {/each}
@@ -505,6 +539,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: var(--space-sm);
   }
 
   .revenue-header {
@@ -512,6 +547,10 @@
     align-items: center;
     justify-content: center;
     gap: 0.25rem;
+  }
+
+  .action-head {
+    white-space: nowrap;
   }
 
   .status-info {
@@ -611,6 +650,7 @@
 
     .section-search {
       width: 100%;
+      min-width: 0;
     }
   }
 

@@ -1,33 +1,25 @@
 <script lang="ts">
-	import { TableRow, TableCell } from './ui';
+	import { Button, TableCell, TableRow } from './ui';
 	import ActionsDropdown from './ActionsDropdown.svelte';
 	import type { Asset } from '$lib/server/airtable';
+	import type { AssetActionDescriptor } from '$lib/utils/asset-actions';
+	import { getAssetActionConfig, normalizeAssetStatus } from '$lib/utils/asset-actions';
 
 	interface Props {
 		asset: Asset;
 		showPerformance?: boolean;
+		onPrimaryAction?: (asset: Asset, action: AssetActionDescriptor) => void;
 		onView?: (id: string) => void;
 		onEdit?: (id: string) => void;
 		onArchive?: (id: string) => Promise<void>;
 	}
 
-	let { asset, showPerformance = false, onView, onEdit, onArchive }: Props = $props();
+	let { asset, showPerformance = false, onPrimaryAction, onView, onEdit, onArchive }: Props = $props();
 
 	let imageError = $state(false);
 
-	function cleanStatus(value: string): string {
-		return value
-			.replace(/^\d*️⃣/u, '')
-			.replace(/🆕/u, '')
-			.replace(/📅/u, '')
-			.replace(/🚀/u, '')
-			.replace(/☠️/u, '')
-			.replace(/❌/u, '')
-			.trim();
-	}
-
-	// Clean status for display logic
-	const cleanedStatus = $derived(cleanStatus(asset.status));
+	const actionConfig = $derived(getAssetActionConfig(asset.status));
+	const cleanedStatus = $derived(normalizeAssetStatus(asset.status));
 	const showMetrics = $derived(!['Upcoming', 'Rejected'].includes(cleanedStatus));
 
 	// Tufte: Show relationships, not just numbers
@@ -65,23 +57,32 @@
 	}
 </script>
 
-<TableRow>
+<TableRow class="asset-table-row">
 	<TableCell>
-		{#if asset.thumbnailUrl && !imageError}
-			<img
-				src={asset.thumbnailUrl}
-				alt={asset.name}
-				class="thumbnail"
-				onerror={() => (imageError = true)}
-			/>
-		{:else}
-			<div class="thumbnail-placeholder">
-				<span>{asset.name.charAt(0).toUpperCase()}</span>
-			</div>
-		{/if}
+		<button
+			type="button"
+			class="asset-thumbnail-link"
+			onclick={() => onView?.(asset.id)}
+			aria-label={`Open ${asset.name}`}
+		>
+			{#if asset.thumbnailUrl && !imageError}
+				<img
+					src={asset.thumbnailUrl}
+					alt={asset.name}
+					class="thumbnail"
+					onerror={() => (imageError = true)}
+				/>
+			{:else}
+				<div class="thumbnail-placeholder">
+					<span>{asset.name.charAt(0).toUpperCase()}</span>
+				</div>
+			{/if}
+		</button>
 	</TableCell>
 	<TableCell>
-		<span class="asset-name">{asset.name}</span>
+		<button type="button" class="asset-name-link" onclick={() => onView?.(asset.id)}>
+			<span class="asset-name">{asset.name}</span>
+		</button>
 	</TableCell>
 	<TableCell>
 		<span class="date">{formatDate(asset.submittedDate)}</span>
@@ -113,9 +114,20 @@
 		</TableCell>
 	{/if}
 	<TableCell>
+		<Button
+			variant={actionConfig.primary.handler === 'edit' ? 'default' : 'secondary'}
+			size="sm"
+			class="primary-action-button"
+			onclick={() => onPrimaryAction?.(asset, actionConfig.primary)}
+		>
+			{actionConfig.primary.label}
+		</Button>
+	</TableCell>
+	<TableCell>
 		<ActionsDropdown
 			assetId={asset.id}
 			status={asset.status}
+			actions={actionConfig.secondary}
 			{onView}
 			{onEdit}
 			{onArchive}
@@ -124,6 +136,27 @@
 </TableRow>
 
 <style>
+	.asset-thumbnail-link,
+	.asset-name-link {
+		display: inline-flex;
+		align-items: center;
+		padding: 0;
+		background: transparent;
+		border: none;
+		cursor: pointer;
+		text-align: left;
+	}
+
+	.asset-thumbnail-link {
+		border-radius: var(--radius-sm);
+	}
+
+	.asset-thumbnail-link:focus-visible,
+	.asset-name-link:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
+	}
+
 	.thumbnail {
 		width: 35px;
 		height: 45px;
@@ -148,6 +181,10 @@
 	.asset-name {
 		font-weight: var(--font-medium);
 		color: var(--color-fg-primary);
+	}
+
+	.asset-name-link:hover .asset-name {
+		color: var(--color-info);
 	}
 
 	.date,
@@ -176,5 +213,9 @@
 		font-size: var(--text-caption);
 		color: var(--color-fg-muted);
 		font-variant-numeric: tabular-nums;
+	}
+
+	:global(.primary-action-button) {
+		min-width: 8rem;
 	}
 </style>

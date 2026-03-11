@@ -1,16 +1,18 @@
 <script lang="ts">
-	import { Button } from './ui';
-	import { MoreVertical, Eye, Pencil, Archive } from 'lucide-svelte';
+	import { Archive, Eye, MoreVertical, Pencil } from 'lucide-svelte';
+	import { trackEvent } from '$lib/utils/analytics';
+	import type { AssetActionDescriptor } from '$lib/utils/asset-actions';
 
 	interface Props {
 		assetId: string;
 		status: string;
+		actions?: AssetActionDescriptor[];
 		onView?: (id: string) => void;
 		onEdit?: (id: string) => void;
 		onArchive?: (id: string) => Promise<void>;
 	}
 
-	let { assetId, status, onView, onEdit, onArchive }: Props = $props();
+	let { assetId, status, actions = [], onView, onEdit, onArchive }: Props = $props();
 
 	let isOpen = $state(false);
 	let isArchiving = $state(false);
@@ -42,12 +44,22 @@
 		isOpen = false;
 	}
 
-	function handleView() {
+	function trackOverflowAction(action: string) {
+		trackEvent('dashboard_asset_overflow_action_clicked', {
+			asset_id: assetId,
+			asset_status: status,
+			action
+		});
+	}
+
+	function handleView(label = 'view_details') {
+		trackOverflowAction(label);
 		onView?.(assetId);
 		isOpen = false;
 	}
 
 	function handleEdit() {
+		trackOverflowAction('edit');
 		onEdit?.(assetId);
 		isOpen = false;
 	}
@@ -56,27 +68,13 @@
 		if (isArchiving) return;
 		isArchiving = true;
 		try {
+			trackOverflowAction('archive');
 			await onArchive?.(assetId);
 			isOpen = false;
 		} finally {
 			isArchiving = false;
 		}
 	}
-
-	function cleanStatus(value: string): string {
-		return value
-			.replace(/^\d*️⃣/u, '')
-			.replace(/🆕/u, '')
-			.replace(/📅/u, '')
-			.replace(/🚀/u, '')
-			.replace(/☠️/u, '')
-			.replace(/❌/u, '')
-			.trim();
-	}
-
-	const cleanedStatus = $derived(cleanStatus(status));
-	const canEdit = $derived(['Published', 'Upcoming', 'Scheduled'].includes(cleanedStatus));
-	const canArchive = $derived(!cleanedStatus.includes('Delisted'));
 
 	$effect(() => {
 		if (isOpen) {
@@ -92,18 +90,21 @@
 	});
 </script>
 
-<div class="actions-container">
-	<button
-		type="button"
-		class="trigger-btn"
-		bind:this={triggerRef}
-		onclick={toggle}
-		aria-haspopup="true"
-		aria-expanded={isOpen}
-	>
-		<MoreVertical size={20} />
-	</button>
-</div>
+{#if actions.length > 0}
+	<div class="actions-container">
+		<button
+			type="button"
+			class="trigger-btn"
+			bind:this={triggerRef}
+			onclick={toggle}
+			aria-haspopup="true"
+			aria-expanded={isOpen}
+			aria-label="More asset actions"
+		>
+			<MoreVertical size={20} />
+		</button>
+	</div>
+{/if}
 
 {#if isOpen}
 	<div
@@ -112,30 +113,30 @@
 		style="top: {dropdownPosition.top}px; right: {dropdownPosition.right}px;"
 		role="menu"
 	>
-		<button type="button" class="dropdown-item" onclick={handleView} role="menuitem">
-			<Eye size={16} />
-			View Details
-		</button>
-
-		{#if canEdit}
-			<button type="button" class="dropdown-item" onclick={handleEdit} role="menuitem">
-				<Pencil size={16} />
-				Edit
-			</button>
-		{/if}
-
-		{#if canArchive}
+		{#each actions as action}
 			<button
 				type="button"
-				class="dropdown-item dropdown-item-danger"
-				onclick={handleArchive}
-				disabled={isArchiving}
+				class="dropdown-item"
+				class:dropdown-item-danger={action.handler === 'archive'}
+				onclick={() =>
+					action.handler === 'view'
+						? handleView(action.label.toLowerCase().replace(/\s+/g, '_'))
+						: action.handler === 'edit'
+							? handleEdit()
+							: handleArchive()}
+				disabled={action.handler === 'archive' && isArchiving}
 				role="menuitem"
 			>
-				<Archive size={16} />
-				{isArchiving ? 'Archiving...' : 'Archive'}
+				{#if action.handler === 'view'}
+					<Eye size={16} />
+				{:else if action.handler === 'edit'}
+					<Pencil size={16} />
+				{:else}
+					<Archive size={16} />
+				{/if}
+				{action.handler === 'archive' && isArchiving ? 'Archiving...' : action.label}
 			</button>
-		{/if}
+		{/each}
 	</div>
 {/if}
 

@@ -20,6 +20,9 @@ Define the baseline self-service policy for minting scoped MCP sessions.
 2. Self-service session mint decisions MUST be logged to shared authz telemetry.
 3. Rollout state MUST come from repo-derived policy manifests plus shared rollout storage.
 4. Fallback paths MUST remain auditable with evaluation path and fallback reason metadata.
+5. Session minting MUST support explicit `allowed_tool_prefixes` for non-toolkit lanes whose visible MCP surface cannot be derived from a generic toolkit profile.
+6. When both `toolkit_profile` and explicit `allowed_tool_prefixes` are present, the resolved prefix set MUST be deterministic, auditable, and stable across mint, resolve, and revoke flows.
+7. Session minting MUST fail closed when the requested access surface is ambiguous, stale, or wider than the policy-approved lane for the actor.
 
 ## Enforcement Surfaces
 
@@ -32,6 +35,7 @@ Define the baseline self-service policy for minting scoped MCP sessions.
 - `authz_policy_rollouts`
 - `authz_decision_events`
 - Legacy MCP auth events for compatibility during cutover
+- session records showing the issued `allowed_tool_prefixes`
 
 ## Source Anchors
 
