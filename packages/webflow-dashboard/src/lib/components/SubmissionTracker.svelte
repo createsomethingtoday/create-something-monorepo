@@ -342,22 +342,24 @@
         <div class="card-header-content">
           <div class="submission-heading">
             <CardTitle>Submission Status</CardTitle>
-            <p class="submission-summary">
-              <strong>{submissionData.publishedCount}</strong> published
-              <span aria-hidden="true">·</span>
-              <strong>{submissionData.assetsSubmitted30}/{SUBMISSION_LIMIT}</strong> used this month
-              <span aria-hidden="true">·</span>
-              <strong>{submissionData.isWhitelisted ? '∞' : submissionData.remainingSubmissions}</strong>
-              remaining
-            </p>
-          </div>
-          <div class="header-badges">
-            {#if submissionData.isDevMode}
-              <Badge variant="default">DEV</Badge>
-            {/if}
-            <Badge variant={getBadgeVariant()}>
-              {getStatusText()}
-            </Badge>
+            <div class="submission-meta-row">
+              <p class="submission-summary">
+                <strong>{submissionData.publishedCount}</strong> published
+                <span aria-hidden="true">·</span>
+                <strong>{submissionData.assetsSubmitted30}/{SUBMISSION_LIMIT}</strong> used this month
+                <span aria-hidden="true">·</span>
+                <strong>{submissionData.isWhitelisted ? '∞' : submissionData.remainingSubmissions}</strong>
+                remaining
+              </p>
+              <div class="header-badges">
+                {#if submissionData.isDevMode}
+                  <Badge variant="default">DEV</Badge>
+                {/if}
+                <Badge variant={getBadgeVariant()}>
+                  {getStatusText()}
+                </Badge>
+              </div>
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -767,8 +769,7 @@
   /* Full variant styles */
   .card-header-content {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    align-items: flex-start;
     width: 100%;
   }
 
@@ -776,6 +777,15 @@
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
+    width: 100%;
+  }
+
+  .submission-meta-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
   }
 
   .submission-summary {
@@ -797,6 +807,8 @@
   .header-badges {
     display: flex;
     gap: var(--space-xs);
+    align-items: center;
+    flex-shrink: 0;
   }
 
   .loading-state {
