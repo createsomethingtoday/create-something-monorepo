@@ -77,19 +77,19 @@ require_secret() {
   fi
 }
 
-put_secret() {
+put_bearer_token() {
   local worker="$1"
-  local payload_file="$2"
+  local value="$2"
 
   if [[ "$DRY_RUN" == "true" ]]; then
-    echo "[dry-run] wrangler versions secret bulk ${payload_file} --name ${worker} --config ${HUB_TEAM_CONFIG}"
+    echo "[dry-run] wrangler versions secret put HUB_API_TOKEN --name ${worker} --config ${HUB_TEAM_CONFIG}"
     echo "[dry-run] wrangler versions deploy --name ${worker} --config ${HUB_TEAM_CONFIG} --version-id <new-version> --percentage 100"
     return 0
   fi
 
   local output version_id
   output="$(
-    node "$WRANGLER_RUNNER" --cwd packages/cs-mcp-hub-remote versions secret bulk "$payload_file" --name "$worker" --config "$HUB_TEAM_CONFIG" --message "sync reviewer runtime secrets"
+    printf '%s' "$value" | node "$WRANGLER_RUNNER" --cwd packages/cs-mcp-hub-remote versions secret put HUB_API_TOKEN --name "$worker" --config "$HUB_TEAM_CONFIG" --message "sync reviewer bearer token"
   )"
   printf '%s\n' "$output"
   version_id="$(printf '%s\n' "$output" | grep -Eo '[0-9a-f]{8}-[0-9a-f-]{27}' | tail -n1)"
@@ -117,9 +117,6 @@ require_cmd infisical
 load_secrets_from_infisical
 
 missing=0
-require_secret HUB_SESSION_RESOLVE_TOKEN || missing=1
-require_secret BRAINTRUST_API_KEY || missing=1
-require_secret BRAINTRUST_PROJECT_ID || missing=1
 for entry in "${REVIEWERS[@]}"; do
   IFS='|' read -r team_key _ <<<"$entry"
   require_secret "CS_HUB_${team_key}_API_TOKEN" || missing=1
@@ -135,20 +132,7 @@ for entry in "${REVIEWERS[@]}"; do
   token_var="CS_HUB_${team_key}_API_TOKEN"
   token_value="${!token_var}"
   echo "syncing ${worker}"
-  payload_file="$(mktemp)"
-  jq -n \
-    --arg hub_api_token "$token_value" \
-    --arg resolve_token "$HUB_SESSION_RESOLVE_TOKEN" \
-    --arg braintrust_api_key "$BRAINTRUST_API_KEY" \
-    --arg braintrust_project_id "$BRAINTRUST_PROJECT_ID" \
-    '{
-      HUB_API_TOKEN: $hub_api_token,
-      HUB_SESSION_RESOLVE_TOKEN: $resolve_token,
-      BRAINTRUST_API_KEY: $braintrust_api_key,
-      BRAINTRUST_PROJECT_ID: $braintrust_project_id
-    }' > "$payload_file"
-  put_secret "$worker" "$payload_file"
-  rm -f "$payload_file"
+  put_bearer_token "$worker" "$token_value"
 done
 
 echo "webflow reviewer hub vault sync complete."
