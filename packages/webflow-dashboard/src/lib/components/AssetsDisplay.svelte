@@ -349,10 +349,8 @@
                       </div>
                     </TableHead>
                   {/if}
-                  <TableHead class="text-center action-head">
-                    <span class="sr-only">Primary action</span>
-                  </TableHead>
-                  <TableHead class="w-12 text-center action-head">More</TableHead>
+                  <TableHead class="action-head">Action</TableHead>
+                  <TableHead class="w-12 more-head">More</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -366,7 +364,7 @@
                     {onArchive}
                   />
                 {/each}
-                  {#if totals}
+                {#if totals}
                   <TableRow class="totals-row">
                     <TableCell>
                       <div class="totals-icon">
@@ -385,8 +383,8 @@
                     <TableCell class="text-center"
                       ><strong>${totals.revenue.toLocaleString()}</strong></TableCell
                     >
-                    <TableCell></TableCell>
-                    <TableCell></TableCell>
+                    <TableCell class="action-cell"></TableCell>
+                    <TableCell class="more-cell"></TableCell>
                   </TableRow>
                 {/if}
               </TableBody>
@@ -836,8 +834,14 @@
   }
 
   :global(.desktop-table th.action-head),
-  :global(.desktop-table td:last-child),
-  :global(.desktop-table td:nth-last-child(2)) {
+  :global(.desktop-table td.action-cell) {
+    width: 7rem;
+    text-align: left;
+  }
+
+  :global(.desktop-table th.more-head),
+  :global(.desktop-table td.more-cell) {
+    width: 3.5rem;
     text-align: center;
   }
 </style>

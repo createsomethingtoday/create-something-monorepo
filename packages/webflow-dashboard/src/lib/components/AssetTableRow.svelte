@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { Button, TableCell, TableRow } from './ui';
+	import { TableCell, TableRow } from './ui';
 	import ActionsDropdown from './ActionsDropdown.svelte';
-	import { Eye, Pencil } from 'lucide-svelte';
 	import type { Asset } from '$lib/server/airtable';
 	import type { AssetActionDescriptor } from '$lib/utils/asset-actions';
 	import { getAssetActionConfig, normalizeAssetStatus } from '$lib/utils/asset-actions';
@@ -55,10 +54,6 @@
 		if (num === undefined || num === null) return '$0';
 		if (num >= 1000) return `$${(num / 1000).toFixed(1)}K`;
 		return `$${num.toLocaleString()}`;
-	}
-
-	function getPrimaryActionAriaLabel(action: AssetActionDescriptor): string {
-		return `${action.label}: ${asset.name}`;
 	}
 
 	function formatMetricDate(dateStr?: string): string {
@@ -135,23 +130,17 @@
 			</div>
 		</TableCell>
 	{/if}
-	<TableCell>
-		<Button
-			variant="ghost"
-			size="icon"
-			class="primary-action-button"
+	<TableCell class="action-cell">
+		<button
+			type="button"
+			class="primary-action-link"
 			onclick={() => onPrimaryAction?.(asset, actionConfig.primary)}
-			aria-label={getPrimaryActionAriaLabel(actionConfig.primary)}
-			title={actionConfig.primary.label}
+			aria-label={`${actionConfig.primary.label}: ${asset.name}`}
 		>
-			{#if actionConfig.primary.handler === 'edit'}
-				<Pencil size={16} />
-			{:else}
-				<Eye size={16} />
-			{/if}
-		</Button>
+			{actionConfig.primary.label}
+		</button>
 	</TableCell>
-	<TableCell>
+	<TableCell class="more-cell">
 		<ActionsDropdown
 			assetId={asset.id}
 			status={asset.status}
@@ -166,6 +155,7 @@
 <style>
 	.asset-thumbnail-link,
 	.asset-name-link {
+		display: inline-flex;
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 0.15rem;
@@ -173,7 +163,6 @@
 	}
 
 	.asset-name-link {
-		display: inline-flex;
 		padding: 0;
 		background: transparent;
 		border: none;
@@ -274,17 +263,32 @@
 		color: var(--color-fg-muted);
 	}
 
-	:global(.primary-action-button) {
-		width: 2.25rem;
-		height: 2.25rem;
-		color: var(--color-fg-secondary);
-		border: 1px solid var(--color-shell-border-default);
-		background: var(--color-bg-surface);
+	.action-cell,
+	.more-cell {
+		white-space: nowrap;
 	}
 
-	:global(.primary-action-button:hover:not(:disabled)) {
-		color: var(--color-fg-primary);
-		border-color: var(--color-shell-border-strong);
-		background: var(--color-bg-subtle);
+	.primary-action-link {
+		display: inline-flex;
+		align-items: center;
+		padding: 0;
+		background: transparent;
+		border: none;
+		color: var(--color-info);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-medium);
+		cursor: pointer;
+		text-decoration: underline;
+		text-underline-offset: 0.22rem;
+	}
+
+	.primary-action-link:hover {
+		color: color-mix(in srgb, var(--color-info) 82%, var(--color-fg-primary));
+	}
+
+	.primary-action-link:focus-visible {
+		outline: 2px solid var(--color-focus);
+		outline-offset: 2px;
+		border-radius: var(--radius-sm);
 	}
 </style>
