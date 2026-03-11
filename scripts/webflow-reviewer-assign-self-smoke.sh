@@ -126,7 +126,7 @@ smoke_reviewer() {
   fi
 
   echo "== ${reviewer} =="
-  local refresh_resp assign_resp context_resp revert_resp
+  local refresh_resp assign_resp context_resp my_queue_resp unassign_resp
   refresh_resp="$(mcp_call "$hub_url" "$token" "hub_refresh_connections" '{}')"
   assert_no_rpc_error "$refresh_resp" "hub_refresh_connections ${reviewer}"
 
@@ -136,18 +136,23 @@ smoke_reviewer() {
   context_resp="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$(jq -cn --arg version_id "$version_id" '{proxyToolName:"webflow-template-review-mcp__template_review_get_review_context",args:{version_id:$version_id}}')")"
   assert_no_rpc_error "$context_resp" "get_review_context ${reviewer}"
 
-  revert_resp="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$(jq -cn --arg version_id "$version_id" '{proxyToolName:"webflow-template-review-mcp__template_review_assign_reviewer",args:{version_id:$version_id,review_owner:null}}')")"
-  assert_no_rpc_error "$revert_resp" "assign_reviewer(null) ${reviewer}"
+  my_queue_resp="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$(jq -cn --arg version_id "$version_id" '{proxyToolName:"webflow-template-review-mcp__template_review_my_queue",args:{limit:10}}')")"
+  assert_no_rpc_error "$my_queue_resp" "my_queue ${reviewer}"
 
-  local assign_ok assign_owner context_ok context_current context_owner context_assigned revert_ok revert_owner
+  unassign_resp="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$(jq -cn --arg version_id "$version_id" '{proxyToolName:"webflow-template-review-mcp__template_review_unassign_self",args:{version_id:$version_id}}')")"
+  assert_no_rpc_error "$unassign_resp" "unassign_self ${reviewer}"
+
+  local assign_ok assign_owner context_ok context_current context_owner context_assigned my_queue_ok my_queue_has_version unassign_ok unassign_owner
   assign_ok="$(echo "$assign_resp" | payload_json | jq -r '.ok // false')"
   assign_owner="$(echo "$assign_resp" | payload_json | jq -r '.data.updated_version.reviewOwner.email // "null"')"
   context_ok="$(echo "$context_resp" | payload_json | jq -r '.ok // false')"
   context_current="$(echo "$context_resp" | payload_json | jq -r '.data.context.currentReviewer.email // "null"')"
   context_owner="$(echo "$context_resp" | payload_json | jq -r '.data.context.reviewOwner.email // "null"')"
   context_assigned="$(echo "$context_resp" | payload_json | jq -r '.data.context.isAssignedToCurrentReviewer // false')"
-  revert_ok="$(echo "$revert_resp" | payload_json | jq -r '.ok // false')"
-  revert_owner="$(echo "$revert_resp" | payload_json | jq -r '.data.updated_version.reviewOwner.email // "null"')"
+  my_queue_ok="$(echo "$my_queue_resp" | payload_json | jq -r '.ok // false')"
+  my_queue_has_version="$(echo "$my_queue_resp" | payload_json | jq -r --arg version_id "$version_id" '([.data.items[].assignableVersionId] | index($version_id)) != null')"
+  unassign_ok="$(echo "$unassign_resp" | payload_json | jq -r '.ok // false')"
+  unassign_owner="$(echo "$unassign_resp" | payload_json | jq -r '.data.updated_version.reviewOwner.email // "null"')"
 
   if [[ "$assign_ok" != "true" || "$assign_owner" != "$expected_email" ]]; then
     echo "assign_self validation failed for ${reviewer}" >&2
@@ -159,15 +164,21 @@ smoke_reviewer() {
     echo "$context_resp" | jq .
     exit 1
   fi
-  if [[ "$revert_ok" != "true" || "$revert_owner" != "null" ]]; then
-    echo "revert validation failed for ${reviewer}" >&2
-    echo "$revert_resp" | jq .
+  if [[ "$my_queue_ok" != "true" || "$my_queue_has_version" != "true" ]]; then
+    echo "my_queue validation failed for ${reviewer}" >&2
+    echo "$my_queue_resp" | jq .
+    exit 1
+  fi
+  if [[ "$unassign_ok" != "true" || "$unassign_owner" != "null" ]]; then
+    echo "unassign_self validation failed for ${reviewer}" >&2
+    echo "$unassign_resp" | jq .
     exit 1
   fi
 
   echo "assign_self=ok owner=${assign_owner}"
   echo "get_review_context=ok current=${context_current} assigned=${context_assigned}"
-  echo "revert=ok owner=${revert_owner}"
+  echo "my_queue=ok has_version=${my_queue_has_version}"
+  echo "unassign_self=ok owner=${unassign_owner}"
 }
 
 main() {
@@ -186,7 +197,7 @@ main() {
     smoke_reviewer "$reviewer"
   done
 
-  echo "webflow reviewer assign-self smoke passed"
+  echo "webflow reviewer assignment workflow smoke passed"
 }
 
 main "$@"
