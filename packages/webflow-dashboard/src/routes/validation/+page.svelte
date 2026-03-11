@@ -28,6 +28,13 @@
     trackEvent('validation_gsap_quick_opened');
   }
 
+  function handleOpenPlayground() {
+    trackEvent('validation_playground_entry_clicked', {
+      source: 'validation_primary_action'
+    });
+    window.location.href = '/validation/playground';
+  }
+
   onMount(() => {
     trackEvent('validation_tools_opened');
   });
@@ -54,39 +61,34 @@
         </div>
       </div>
 
-      <!-- Validation Tools Grid -->
-      <div class="tools-section">
-        <h2 class="section-title">Available Validation Tools</h2>
-        <div class="tools-grid">
-          <!-- GSAP Validator Card -->
-          <Card class="tool-card">
-            <div class="tool-header">
-              <h3 class="tool-title">GSAP Validator</h3>
-              <span class="tool-kicker">Local check</span>
-            </div>
+      <Card class="primary-tool-card">
+        <div class="tool-header">
+          <div>
+            <h2 class="section-title">Start with the fastest check</h2>
             <p class="tool-description">
-              Test your templates for GSAP compliance before submission. Crawls up to 50 pages and
-              checks for custom code patterns.
+              Run the GSAP validator when you need a quick submission read, then move to the full
+              playground when you need page-by-page inspection.
             </p>
-            <ul class="tool-features">
-              <li>Crawls up to 50 pages automatically</li>
-              <li>Detects flagged code and security risks</li>
-              <li>Provides smart recommendations</li>
-            </ul>
-            <div class="tool-actions">
-              <Button variant="secondary" onclick={handleOpenGsapValidator} class="tool-button"
-                >Quick Validate</Button
-              >
-              <a href="/validation/playground" class="playground-link"> Open Full Playground </a>
-            </div>
-          </Card>
+          </div>
+          <span class="tool-kicker">Primary workflow</span>
+        </div>
+        <div class="primary-tool-actions">
+          <Button variant="default" onclick={handleOpenGsapValidator} class="tool-button"
+            >Quick Validate</Button
+          >
+          <Button variant="outline" onclick={handleOpenPlayground} class="tool-button"
+            >Open Full Playground</Button
+          >
+        </div>
+      </Card>
 
-          <!-- Webflow Way Validator Card -->
+      <div class="tools-section">
+        <h2 class="section-title section-title--secondary">Other Validation Tools</h2>
+        <div class="tools-grid">
           <WebflowWayCard userEmail={data.user?.email} />
         </div>
       </div>
 
-      <!-- Info Section -->
       <Card class="info-card">
         <h3 class="info-title">Why Validate?</h3>
         <div class="info-content">
@@ -133,12 +135,15 @@
   }
 
   .content-wrapper {
-    max-width: 80rem;
+    max-width: var(--layout-content-max-width);
     margin: 0 auto;
   }
 
-  .tools-section {
-    margin-bottom: var(--space-xl);
+  .primary-tool-card {
+    display: grid;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    margin-bottom: var(--space-lg);
   }
 
   .section-title {
@@ -148,6 +153,15 @@
     letter-spacing: 0.01em;
     color: var(--color-fg-primary);
     margin: 0 0 var(--space-md);
+  }
+
+  .section-title--secondary {
+    margin-bottom: var(--space-sm);
+    font-size: var(--text-body-lg);
+  }
+
+  .tools-section {
+    margin-bottom: var(--space-lg);
   }
 
   .tools-grid {
@@ -223,6 +237,12 @@
     flex-direction: column;
     gap: var(--space-sm);
     margin-top: auto;
+  }
+
+  .primary-tool-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
   }
 
   :global(.tool-button) {
@@ -308,6 +328,10 @@
   @media (max-width: 640px) {
     .tools-grid {
       grid-template-columns: 1fr;
+    }
+
+    .primary-tool-actions {
+      flex-direction: column;
     }
   }
 </style>

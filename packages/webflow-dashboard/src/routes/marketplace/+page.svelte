@@ -248,15 +248,13 @@
         </div>
       </div>
 
-      <!-- Data Scope Notice -->
       <aside class="data-scope-notice" aria-label="Data scope">
         <div class="notice-content">
           <p class="notice-title">About this data</p>
           <p class="notice-text">
-            These insights show <strong>templates with recent sales activity</strong> in the 30-day window,
-            not the total marketplace inventory. Template counts per category reflect active sellers only.
-            The Webflow marketplace has 7,000+ total templates, but this view focuses on performance metrics
-            for templates generating sales.
+            This view tracks <strong>categories and templates with recent sales activity</strong>, not
+            the full marketplace inventory, so the fastest path is to filter down to your portfolio
+            categories first.
           </p>
         </div>
       </aside>
@@ -298,7 +296,7 @@
   }
 
   .content-wrapper {
-    max-width: 80rem;
+    max-width: var(--layout-content-max-width);
     margin: 0 auto;
   }
 
@@ -426,12 +424,12 @@
   }
 
   .data-scope-notice {
-    padding: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
     border: 1px solid var(--color-shell-border-default);
     border-radius: var(--radius-md);
     background: var(--color-bg-surface);
     box-shadow: var(--shadow-sm);
-    margin-bottom: var(--space-lg);
+    margin-bottom: var(--space-md);
   }
 
   .notice-content {
