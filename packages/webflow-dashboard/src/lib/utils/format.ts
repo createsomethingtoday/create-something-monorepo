@@ -47,6 +47,11 @@ export function formatCompactNumber(num?: number | null): string {
   return num.toLocaleString();
 }
 
+export function formatWholeNumber(num?: number | null, fallback = 'N/A'): string {
+  if (num === undefined || num === null) return fallback;
+  return num.toLocaleString();
+}
+
 export function formatCompactCurrency(num?: number | null): string {
   if (num === undefined || num === null) return '$0';
   if (Math.abs(num) >= 1000000) return `$${(num / 1000000).toFixed(1)}M`;

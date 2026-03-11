@@ -36,8 +36,9 @@
   import {
     formatCompactCurrency,
     formatCompactNumber,
+    formatLongDate,
     formatNumericDate,
-    formatShortDate
+    formatWholeNumber
   } from '$lib/utils/format';
 
   // Sanitize HTML to prevent XSS
@@ -340,9 +341,9 @@
               {/if}
             </p>
             <div class="detail-evidence" aria-label="Asset summary">
-              <span><strong>{formatMetricDate(asset.submittedDate)}</strong> submitted</span>
+              <span><strong>{formatNumericDate(asset.submittedDate)}</strong> submitted</span>
               {#if asset.publishedDate}
-                <span><strong>{formatMetricDate(asset.publishedDate)}</strong> published</span>
+                <span><strong>{formatNumericDate(asset.publishedDate)}</strong> published</span>
               {/if}
               {#if asset.priceString}
                 <span><strong>{asset.priceString}</strong> price</span>
@@ -351,9 +352,9 @@
                 <span><strong>{asset.qualityScore}</strong> quality score</span>
               {/if}
               {#if canShowMetrics && showPerformance}
-                <span><strong>{formatNumber(asset.uniqueViewers)}</strong> viewers</span>
-                <span><strong>{formatNumber(asset.cumulativePurchases)}</strong> purchases</span>
-                <span><strong>{formatCurrency(asset.cumulativeRevenue)}</strong> revenue</span>
+                <span><strong>{formatCompactNumber(asset.uniqueViewers)}</strong> viewers</span>
+                <span><strong>{formatCompactNumber(asset.cumulativePurchases)}</strong> purchases</span>
+                <span><strong>{formatCompactCurrency(asset.cumulativeRevenue)}</strong> revenue</span>
               {/if}
             </div>
           </div>
@@ -483,11 +484,11 @@
                     </div>
                     <div class="detail-item">
                       <span class="detail-label">Submitted Date</span>
-                      <span class="detail-value">{formatDate(asset.submittedDate)}</span>
+                      <span class="detail-value">{formatLongDate(asset.submittedDate)}</span>
                     </div>
                     <div class="detail-item">
                       <span class="detail-label">Published Date</span>
-                      <span class="detail-value">{formatDate(asset.publishedDate)}</span>
+                      <span class="detail-value">{formatLongDate(asset.publishedDate)}</span>
                     </div>
                     {#if asset.qualityScore}
                       <div class="detail-item">
@@ -507,19 +508,19 @@
                         <span class="detail-label detail-label--with-freshness"
                           >Unique Viewers <DataFreshnessIndicator variant="tooltip" /></span
                         >
-                        <span class="detail-value">{formatNumber(asset.uniqueViewers)}</span>
+                        <span class="detail-value">{formatWholeNumber(asset.uniqueViewers)}</span>
                       </div>
                       <div class="detail-item">
                         <span class="detail-label detail-label--with-freshness"
                           >Total Purchases <DataFreshnessIndicator variant="tooltip" /></span
                         >
-                        <span class="detail-value">{formatNumber(asset.cumulativePurchases)}</span>
+                        <span class="detail-value">{formatWholeNumber(asset.cumulativePurchases)}</span>
                       </div>
                       <div class="detail-item">
                         <span class="detail-label detail-label--with-freshness"
                           >Total Revenue <DataFreshnessIndicator variant="tooltip" /></span
                         >
-                        <span class="detail-value">{formatCurrency(asset.cumulativeRevenue)}</span>
+                        <span class="detail-value">{formatCompactCurrency(asset.cumulativeRevenue)}</span>
                       </div>
                     {/if}
                   </div>
@@ -613,7 +614,7 @@
                       <div class="stat-item viewers">
                         <div class="stat-header">
                           <Users size={14} class="stat-icon" />
-                          <span class="stat-number">{formatNumber(asset.uniqueViewers)}</span>
+                          <span class="stat-number">{formatWholeNumber(asset.uniqueViewers)}</span>
                         </div>
                         <span class="stat-label">Viewers</span>
                         {#if viewersTrend().length > 0}
@@ -623,7 +624,7 @@
                       <div class="stat-item purchases">
                         <div class="stat-header">
                           <ShoppingCart size={14} class="stat-icon" />
-                          <span class="stat-number">{formatNumber(asset.cumulativePurchases)}</span>
+                          <span class="stat-number">{formatWholeNumber(asset.cumulativePurchases)}</span>
                           <DataFreshnessIndicator variant="tooltip" />
                         </div>
                         <span class="stat-label">Purchases</span>
@@ -634,7 +635,7 @@
                       <div class="stat-item revenue">
                         <div class="stat-header">
                           <DollarSign size={14} class="stat-icon" />
-                          <span class="stat-number">{formatCurrency(asset.cumulativeRevenue)}</span>
+                          <span class="stat-number">{formatCompactCurrency(asset.cumulativeRevenue)}</span>
                           <DataFreshnessIndicator variant="tooltip" />
                         </div>
                         <span class="stat-label">Revenue</span>
@@ -647,7 +648,7 @@
                       <div class="derived-stat">
                         <TrendingUp size={14} class="derived-icon" />
                         <span class="derived-label">Avg Order:</span>
-                        <span class="derived-value">{formatCurrency(avgOrderValue() ?? 0)}</span>
+                        <span class="derived-value">{formatCompactCurrency(avgOrderValue() ?? 0)}</span>
                       </div>
                     {/if}
                   </CardContent>

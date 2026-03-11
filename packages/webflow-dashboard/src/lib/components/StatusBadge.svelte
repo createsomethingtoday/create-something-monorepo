@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { normalizeAssetStatus } from '$lib/utils/asset-actions';
 	import { getStatusColorTheme } from '$lib/utils/status-presentation';
 
 	interface Props {
@@ -8,19 +9,7 @@
 
 	let { status, size = 'default' }: Props = $props();
 
-	function cleanStatus(value: string): string {
-		return value
-			.replace(/^\d*️⃣/u, '')
-			.replace(/🆕/u, '')
-			.replace(/📅/u, '')
-			.replace(/🚀/u, '')
-			.replace(/☠️/u, '')
-			.replace(/❌/u, '')
-			.trim();
-	}
-
-	// Clean emoji prefixes from status
-	const cleanedStatus = $derived(cleanStatus(status));
+	const cleanedStatus = $derived(normalizeAssetStatus(status));
 
 	const config = $derived(getStatusColorTheme(cleanedStatus));
 
