@@ -33,6 +33,12 @@
   import EditAssetModal from '$lib/components/EditAssetModal.svelte';
   import { toast } from '$lib/stores/toast';
   import { trackEvent } from '$lib/utils/analytics';
+  import {
+    formatCompactCurrency,
+    formatCompactNumber,
+    formatNumericDate,
+    formatShortDate
+  } from '$lib/utils/format';
 
   // Sanitize HTML to prevent XSS
   function sanitizeHtml(html: string | undefined): string {
@@ -100,40 +106,6 @@
   let showEditModal = $state(false);
   let isArchiving = $state(false);
   let showArchiveConfirm = $state(false);
-
-  // Format dates
-  function formatDate(dateStr?: string): string {
-    if (!dateStr) return 'N/A';
-    try {
-      return new Date(dateStr).toLocaleDateString();
-    } catch {
-      return 'N/A';
-    }
-  }
-
-  // Format numbers
-  function formatNumber(num?: number): string {
-    if (num === undefined || num === null) return 'N/A';
-    return num.toLocaleString();
-  }
-
-  function formatCurrency(num?: number): string {
-    if (num === undefined || num === null) return '$0';
-    return `$${num.toLocaleString()}`;
-  }
-
-  function formatMetricDate(dateStr?: string): string {
-    if (!dateStr) return '—';
-    try {
-      return new Date(dateStr).toLocaleDateString('en-US', {
-        month: 'numeric',
-        day: 'numeric',
-        year: '2-digit'
-      });
-    } catch {
-      return '—';
-    }
-  }
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });

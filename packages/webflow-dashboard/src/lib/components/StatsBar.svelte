@@ -12,6 +12,7 @@
   import Sparkline from './Sparkline.svelte';
   import DataFreshnessIndicator from './DataFreshnessIndicator.svelte';
   import type { Asset } from '$lib/server/airtable';
+  import { formatCompactCurrency, formatCompactNumber } from '$lib/utils/format';
 
   interface Props {
     assets: Asset[];
@@ -84,17 +85,6 @@
     };
   });
 
-  function formatNumber(n: number): string {
-    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
-    if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
-    return n.toLocaleString();
-  }
-
-  function formatCurrency(n: number): string {
-    if (n >= 1000000) return `$${(n / 1000000).toFixed(1)}M`;
-    if (n >= 1000) return `$${(n / 1000).toFixed(1)}K`;
-    return `$${n.toLocaleString()}`;
-  }
 </script>
 
 <div class="stats-bar">
@@ -109,7 +99,7 @@
   <div class="stat-divider"></div>
 
   <div class="stat-group viewers">
-    <span class="stat-main">{formatNumber(metrics.totalViewers)}</span>
+    <span class="stat-main">{formatCompactNumber(metrics.totalViewers)}</span>
     <span class="stat-label">viewers</span>
     {#if historyLoaded && viewersTrend.length >= 2}
       <Sparkline data={viewersTrend} color="var(--color-info)" showTrend />
@@ -119,7 +109,7 @@
   <div class="stat-divider"></div>
 
   <div class="stat-group purchases">
-    <span class="stat-main">{formatNumber(metrics.totalPurchases)}</span>
+    <span class="stat-main">{formatCompactNumber(metrics.totalPurchases)}</span>
     <span class="stat-label">purchases</span>
     <DataFreshnessIndicator variant="tooltip" />
     <span class="stat-secondary conversion">
@@ -130,7 +120,7 @@
   <div class="stat-divider"></div>
 
   <div class="stat-group revenue">
-    <span class="stat-main">{formatCurrency(metrics.totalRevenue)}</span>
+    <span class="stat-main">{formatCompactCurrency(metrics.totalRevenue)}</span>
     <span class="stat-label">revenue</span>
     <DataFreshnessIndicator variant="tooltip" />
     {#if historyLoaded && revenueTrend.length >= 2}
@@ -141,7 +131,7 @@
   {#if metrics.avgRevenue > 0}
     <div class="stat-divider"></div>
     <div class="stat-group avg">
-      <span class="stat-main">{formatCurrency(metrics.avgRevenue)}</span>
+      <span class="stat-main">{formatCompactCurrency(metrics.avgRevenue)}</span>
       <span class="stat-label">avg/template</span>
     </div>
   {/if}
