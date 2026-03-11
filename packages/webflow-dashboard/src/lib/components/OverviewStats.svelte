@@ -67,6 +67,7 @@
     Published: 'var(--color-success)',
     Scheduled: 'var(--color-info)',
     Upcoming: 'var(--color-data-3)',
+    Draft: 'var(--color-info)',
     Delisted: 'var(--color-warning)',
     Rejected: 'var(--color-error)'
   };

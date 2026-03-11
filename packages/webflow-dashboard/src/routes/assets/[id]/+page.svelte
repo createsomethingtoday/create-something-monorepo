@@ -90,7 +90,7 @@
   // - Rejected assets: Show Timeline (shows feedback)
   function getDefaultTab(status: string): string {
     if (['Draft', 'Upcoming', 'Scheduled'].includes(status)) return 'timeline';
-    if (status === 'Rejected') return 'timeline';
+    if (status === 'Rejected') return 'overview';
     return 'overview';
   }
 
@@ -337,11 +337,24 @@
     <div class="content-wrapper">
       <BackNavigation />
 
-      <!-- Header Section -->
-      <div class="detail-header">
+      <div class="detail-header page-intro">
         <div class="header-info">
-          <h1 class="asset-title">{asset.name}</h1>
-          <StatusBadge status={asset.status} size="lg" />
+          <div class="header-copy">
+            <p class="detail-kicker">Asset detail</p>
+            <div class="title-row">
+              <h1 class="asset-title">{asset.name}</h1>
+              <StatusBadge status={asset.status} size="lg" />
+            </div>
+            <p class="detail-subtitle">
+              {asset.type}
+              {#if asset.category}
+                · {asset.category}
+              {/if}
+              {#if asset.subcategory}
+                · {asset.subcategory}
+              {/if}
+            </p>
+          </div>
         </div>
         <div class="header-actions">
           {#if asset.previewUrl}
@@ -712,28 +725,51 @@
   }
 
   .content-wrapper {
-    max-width: 80rem;
+    max-width: var(--layout-content-max-width);
     margin: 0 auto;
   }
 
   .detail-header {
-    display: flex;
-    align-items: flex-start;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
     justify-content: space-between;
     gap: var(--space-md);
-    margin-bottom: var(--space-lg);
-    flex-wrap: wrap;
   }
 
   .header-info {
     display: flex;
+    min-width: 0;
+  }
+
+  .header-copy {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .detail-kicker {
+    margin: 0;
+    font-size: var(--text-caption);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-fg-muted);
+  }
+
+  .title-row {
+    display: flex;
     align-items: center;
-    gap: var(--space-md);
+    gap: var(--space-sm);
     flex-wrap: wrap;
   }
 
+  .detail-subtitle {
+    margin: 0;
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-secondary);
+  }
+
   .asset-title {
-    font-size: var(--text-h2);
+    font-size: clamp(1.75rem, 1.8vw + 1rem, 2.35rem);
     font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
     margin: 0;
@@ -1005,7 +1041,8 @@
     }
 
     .detail-header {
-      margin-bottom: var(--space-md);
+      grid-template-columns: 1fr;
+      align-items: stretch;
     }
 
     .header-info,
