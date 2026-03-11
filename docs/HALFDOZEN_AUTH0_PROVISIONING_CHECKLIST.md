@@ -20,11 +20,14 @@ Shared tenant:
 
 1. Seed identity rows into `.agency`.
 2. Create or invite the corresponding Auth0 users.
-3. Have each user complete first login through `.agency`.
-4. Confirm the first login binds the seed row to the Auth0 `sub`.
-5. Confirm the dashboard shows the expected account, tenant, and hub lane.
-6. Set or rotate the ChatGPT connection password if needed.
-7. Issue a managed bearer token only when the user actually needs host access.
+3. Either:
+   - have each user complete first login through `.agency`, or
+   - bind the known Auth0 subject directly if white-glove onboarding is being used and the canonical subject is already available.
+4. Confirm the seed row is bound to the canonical Auth0 `sub`.
+5. If white-glove onboarding is being used, the operator MAY issue the managed bearer token once entitlement and subject-binding prerequisites are satisfied, even before the user has personally logged into `.agency`.
+6. Confirm the dashboard shows the expected account, tenant, and hub lane once the user enters `.agency`.
+7. Set or rotate the ChatGPT connection password if needed.
+8. Use `.agency` as the follow-on surface for revoke, regenerate, password rotation, and ongoing access visibility.
 
 ## Seed command
 
@@ -42,10 +45,11 @@ Then apply the SQL to the `.agency` D1 database using the normal Wrangler workfl
 - `dm@halfdozen.co` is intentionally mapped to `acct_danny`.
 - Do not store live bearer tokens, Basic Auth passwords, or Auth0 temporary passwords in repo-tracked files.
 - Auth0 is the portal identity boundary. `.agency` remains the entitlement and MCP credential broker.
+- White-glove initial bearer handoff is allowed when the credential is already governed and the Auth0 subject is canonical, but runtime worker guardrail tokens are never customer delivery artifacts.
 
 ## Verification
 
-After each user logs in, verify:
+After subject binding and, if applicable, first portal login, verify:
 
 - `/dashboard` shows the expected `account_id` and `tenant_id`
 - `/mcp-access` shows the correct lane assignment and bridge username

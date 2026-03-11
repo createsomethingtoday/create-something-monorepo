@@ -286,7 +286,7 @@ The verifier checks:
 
 ## Vault-Managed Secret Workflow
 
-Use Infisical as the source of truth for Hub and Notion bridge delivery credentials:
+Use Infisical as the source of truth for Hub and Notion bridge runtime secrets, including dedicated named-lane worker tokens:
 
 ```bash
 # Sync current vault values to Cloudflare Worker secrets
@@ -300,6 +300,13 @@ VAULT_PROVIDER=infisical INFISICAL_ENV=prod pnpm mcp:hub:rotate:production
 ```
 
 Runbook: `docs/CS_HUB_VAULT_ROTATION_WORKFLOW.md`
+
+Named-lane runtime baseline:
+
+- each dedicated client lane keeps its own worker `HUB_API_TOKEN` mirrored from Infisical
+- examples include `CS_HUB_VIV_BLONDISH_API_TOKEN` and `CS_HUB_MORGAN_YOUNG_C3_MANAGEMENT_API_TOKEN`
+- these values are operator/runtime secrets for deploy, health, and state normalization only
+- they are not the customer-delivered managed bearer tokens issued through `.agency`
 
 ## Partner Auth Surfaces
 

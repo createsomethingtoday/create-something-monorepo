@@ -134,9 +134,9 @@ Notes:
 - For self-hosted or regional domains, set `INFISICAL_API_URL`.
 - The Infisical path requires the `infisical` CLI installed locally/in CI.
 
-## 5) Rotate delivery credentials and roll out
+## 5) Rotate runtime credentials and roll out
 
-This rotates per-team Hub worker tokens, core hub token, and per-team Notion bridge basic passwords in Infisical, then syncs Worker secrets and runs deploy/verify.
+This rotates per-team Hub worker tokens, named-lane Hub worker tokens, the core hub token, and per-team Notion bridge basic passwords in Infisical, then syncs Worker secrets and runs deploy/verify.
 
 ```bash
 pnpm mcp:hub:rotate:production
@@ -163,6 +163,7 @@ Notes:
 - `pnpm mcp:hub:fleet:deploy` strict normalization requires `MCP_SESSION_TOKEN` or `IDENTITY_ACCESS_TOKEN`.
 - Keep resolver token rotation (`HUB_SESSION_RESOLVE_TOKEN`) coordinated with identity-worker.
 - Use `--exclude-team` or `EXCLUDE_TEAM_KEYS` only when you intentionally need to defer a worker-token rotation for a specific team.
+- Named-lane worker tokens such as `CS_HUB_VIV_BLONDISH_API_TOKEN` and `CS_HUB_MORGAN_YOUNG_C3_MANAGEMENT_API_TOKEN` are runtime/operator secrets bound to the dedicated client Hub workers, not customer-facing bearer artifacts.
 
 ## 5a) Adopt existing compat bearer tokens into managed governance
 
@@ -191,6 +192,8 @@ For CI/CD or production automation, use Infisical Machine Identity Universal Aut
 
 - Never place plaintext bearer/basic credentials in docs, tickets, commit history, or chat logs.
 - Deliver credentials through controlled channels only (partner portal, managed vault, audited secure handoff).
+- Infisical remains the source of truth for worker/runtime secrets, including dedicated named-lane `HUB_API_TOKEN` values.
+- Customer-facing white-glove onboarding may reference a managed bearer or approved legacy credential, but it must not reuse or expose these runtime Hub worker tokens.
 
 ## 8) Default client delivery path
 

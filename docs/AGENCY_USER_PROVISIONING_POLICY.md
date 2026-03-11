@@ -17,6 +17,9 @@ Seed `.agency` users before invite, then bind them to their Auth0 subject as soo
 9. Internal aliases or exceptions, such as `micah@createsomething.io -> acct_mj`, must live in one canonical resolver and not be reimplemented route-by-route.
 10. Self-provisioning is acceptable only for controlled internal/testing lanes. Client-facing access should be seeded first.
 11. If Auth0 subject churn occurs after delete/recreate for the same normalized email, remediation MUST follow [`policy.auth0-subject-rebind-governance.v1`](./policies/v1/policy.auth0-subject-rebind-governance.v1.md) and the linked operator runbook instead of treating the user as a new MCP account.
+12. White-glove onboarding MAY deliver an already-governed customer credential before first portal login, but only after the canonical Auth0 subject, account mapping, entitlement state, and any credential-specific prerequisites are in place.
+13. White-glove onboarding MUST NOT rely on runtime worker guardrail tokens, bootstrap secrets, or other operator-only credentials as customer-facing artifacts.
+14. After white-glove initial delivery, `.agency` remains the canonical follow-on surface for revoke, regenerate, password rotation, and ongoing credential visibility unless an approved dedicated client shell replaces that surface.
 
 ## Seed Manifest
 
@@ -68,6 +71,7 @@ When the Auth0 subject is already known before or after first login:
 2. `.agency` entitlement rows SHOULD be reconciled to that subject immediately.
 3. Any older entitlement rows for the same email but a different subject SHOULD be deactivated or removed.
 4. The bound subject becomes the only valid source for downstream token issuance and dashboard resolution.
+5. Once this canonical binding exists, operator-assisted white-glove credential delivery MAY proceed if the selected credential type is otherwise allowed.
 
 ## Compat Token Migration
 

@@ -393,8 +393,10 @@ export const TransformScene: React.FC = () => {
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
+                  justifyContent: 'center',
                   gap: interpolate(layoutProgress, [0, 1], [8, 10]),
                   padding: 8,
+                  minHeight: '100%',
                 }}
               >
                 {cards.map((card, index) => {
@@ -412,7 +414,7 @@ export const TransformScene: React.FC = () => {
                       embodiment={1}
                       viewport="mobile"
                       tufteLevel={cardTufteProgress}
-                      scale={0.74}
+                      scale={1}
                     />
                   );
                 })}

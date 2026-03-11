@@ -32,6 +32,7 @@ Accepted patterns:
 - managed bearer token
 - MCP session token in first-party controlled flows
 - OAuth-delivered bearer token where host compatibility requires OAuth onboarding
+- operator-delivered managed bearer onboarding for approved white-glove customer setup, provided the credential still resolves through the same governed bearer model
 
 ### 2. Runtime actor context
 
@@ -119,6 +120,8 @@ Expected behavior:
 - request-time entitlement checks remain live
 - token remains governed by contract, policy, and billing state where applicable
 - resolver output for the token must expose the effective `allowedToolPrefixes` transparently when a curated lane depends on them
+- initial delivery may happen either through `.agency` self-service or a governed white-glove operator handoff
+- follow-on revoke, regenerate, password rotation, and connection management should resolve to `.agency` unless a dedicated approved client shell replaces that surface
 
 ### OAuth compatibility mode
 
@@ -128,6 +131,17 @@ Expected behavior:
 
 - OAuth exchange ultimately yields access under the CREATE SOMETHING bearer-governed model
 - host compatibility does not create a second independent identity system
+
+## Onboarding Rule
+
+White-glove onboarding is an approved delivery path for initial client access, but it does not create a separate identity model.
+
+Required behavior:
+
+- the delivered credential must still be a governed managed bearer or other explicitly approved credential type
+- canonical Auth0 subject binding must exist when that credential type requires it
+- operator-only runtime bootstrap tokens must never be treated as customer credentials
+- ongoing lifecycle actions should remain in `.agency` unless an explicitly approved client shell is the system of record
 
 ## Required Resolution Outputs
 
