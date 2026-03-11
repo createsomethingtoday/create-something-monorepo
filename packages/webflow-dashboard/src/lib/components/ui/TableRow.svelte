@@ -30,11 +30,18 @@
 <style>
 	.table-row {
 		border-bottom: 1px solid var(--color-border-default);
-		transition: background-color var(--duration-micro) var(--ease-standard);
+		transition:
+			background-color var(--duration-micro) var(--ease-standard),
+			box-shadow var(--duration-micro) var(--ease-standard);
 	}
 
 	.table-row:hover {
-		background: var(--color-hover);
+		background: color-mix(in srgb, var(--color-hover) 70%, var(--color-bg-surface));
+	}
+
+	.table-row:focus-within {
+		background: color-mix(in srgb, var(--color-info-muted) 55%, var(--color-bg-surface));
+		box-shadow: inset 0 0 0 1px var(--color-info-border);
 	}
 
 	.table-row-card {

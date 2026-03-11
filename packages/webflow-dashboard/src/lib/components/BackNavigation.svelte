@@ -19,7 +19,7 @@
 		display: inline-flex;
 		align-items: center;
 		gap: var(--space-xs);
-		margin-bottom: var(--space-md);
+		margin-bottom: var(--space-sm);
 		color: var(--color-fg-secondary);
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-medium);

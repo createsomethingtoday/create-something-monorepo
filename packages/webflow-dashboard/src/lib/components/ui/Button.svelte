@@ -57,21 +57,21 @@
 
 	.btn:focus-visible {
 		outline: none;
-		box-shadow: 0 0 0 4px var(--color-info-muted);
+		box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-focus) 22%, transparent);
 	}
 
 	/* Variants */
 	.btn-default {
-		background: var(--color-info);
+		background: color-mix(in srgb, var(--color-info) 92%, #ffffff);
 		color: #ffffff;
-		border-color: var(--color-info);
+		border-color: color-mix(in srgb, var(--color-info) 82%, #ffffff);
 	}
 
 	.btn-default:hover:not(:disabled) {
-		background: #0055d4;
-		border-color: #0055d4;
+		background: color-mix(in srgb, var(--color-info) 96%, #000000 4%);
+		border-color: color-mix(in srgb, var(--color-info) 88%, #000000 12%);
 		transform: translateY(-1px);
-		box-shadow: 0 8px 18px rgba(20, 110, 245, 0.18);
+		box-shadow: 0 6px 14px rgba(20, 110, 245, 0.14);
 	}
 
 	.btn-secondary {
@@ -82,7 +82,7 @@
 
 	.btn-secondary:hover:not(:disabled) {
 		background: var(--color-bg-subtle);
-		border-color: var(--color-info-border);
+		border-color: var(--color-shell-border-strong);
 		transform: translateY(-1px);
 	}
 
@@ -105,7 +105,7 @@
 
 	.btn-outline:hover:not(:disabled) {
 		background: var(--color-bg-subtle);
-		border-color: var(--color-info-border);
+		border-color: var(--color-shell-border-strong);
 	}
 
 	.btn-ghost {
@@ -122,7 +122,7 @@
 
 	.btn-link {
 		background: transparent;
-		color: var(--color-info);
+		color: var(--color-fg-secondary);
 		text-decoration: none;
 		border-color: transparent;
 		box-shadow: none;
@@ -131,7 +131,7 @@
 	}
 
 	.btn-link:hover:not(:disabled) {
-		color: #0055d4;
+		color: var(--color-fg-primary);
 	}
 
 	/* Sizes */

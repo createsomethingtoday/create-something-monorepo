@@ -89,7 +89,7 @@
   }
 
   .header-content {
-    max-width: 82rem;
+    max-width: var(--layout-header-max-width);
     margin: 0 auto;
     padding: 0.75rem var(--space-md);
   }
@@ -111,7 +111,7 @@
     min-width: 0;
     padding: 0.375rem;
     border: 1px solid var(--color-shell-border-subtle);
-    border-radius: 1.5rem;
+    border-radius: 1.25rem;
     background: linear-gradient(180deg, var(--glass-bg-medium) 0%, var(--glass-bg-subtle) 100%);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.28),
@@ -192,10 +192,10 @@
   }
 
   .nav-link.active {
-    color: #ffffff;
-    background: var(--color-info);
-    border-color: var(--color-info);
-    box-shadow: 0 8px 18px rgba(20, 110, 245, 0.22);
+    color: var(--color-fg-primary);
+    background: var(--color-active);
+    border-color: var(--color-info-border);
+    box-shadow: none;
   }
 
   .nav-link:focus-visible {

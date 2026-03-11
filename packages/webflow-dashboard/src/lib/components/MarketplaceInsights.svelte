@@ -5,6 +5,7 @@
   import Sparkline from './Sparkline.svelte';
   import KineticNumber from './KineticNumber.svelte';
   import { HelpCircle } from 'lucide-svelte';
+  import { trackEvent } from '$lib/utils/analytics';
 
   interface LeaderboardEntry {
     templateName: string;
@@ -205,6 +206,7 @@
   }
 
   function clearFilters() {
+    trackEvent('marketplace_filters_cleared');
     searchQuery = '';
     categoryFilter = 'all';
     competitionFilter = 'all';
@@ -212,6 +214,8 @@
   }
 
   function setViewMode(mode: 'table' | 'grid') {
+    if (mode === viewMode) return;
+    trackEvent('marketplace_view_mode_changed', { view_mode: mode });
     viewMode = mode;
 
     if (mode === 'table' && !tableSortableKeys.includes(sortKey)) {
@@ -296,6 +300,13 @@
     if (categories.length > 0) count += 1; // categories tracked
     return count;
   });
+
+  function toggleUserPortfolioFilter() {
+    userCategoryFilter = userCategoryFilter === 'user' ? 'all' : 'user';
+    trackEvent('marketplace_portfolio_filter_toggled', {
+      filter_state: userCategoryFilter
+    });
+  }
 </script>
 
 <div class="marketplace-insights">
@@ -353,98 +364,6 @@
     </dl>
   {/if}
 
-  <!-- Insights with priority sorting -->
-  {#if insights.length > 0}
-    <section class="insights-section">
-      <h3 class="section-title">
-        Market Insights
-        <span class="insight-count">{insights.length}</span>
-      </h3>
-      <div class="insights-list">
-        {#each sortedInsights() as insight}
-          <div class="insight-item insight-{insight.type}">
-            <div class="insight-content">
-              <span class="insight-label">{insight.type}</span>
-              <span class="insight-message">{insight.message}</span>
-            </div>
-          </div>
-        {/each}
-      </div>
-    </section>
-  {/if}
-
-  <!-- Top Performers with Sparkline Trends -->
-  {#if leaderboard.length > 0}
-    <section class="leaderboard-section">
-      <h3 class="section-title">
-        Top Performers This Month
-        <span class="section-subtitle">Rolling 30-day window</span>
-      </h3>
-      <div class="leaderboard-grid">
-        {#each leaderboard.slice(0, 5) as template, index}
-          {@const hasTemplateTrend =
-            Array.isArray(template.trendData) && template.trendData.length >= 2}
-          <div
-            class="leaderboard-card"
-            class:user-template={template.isUserTemplate}
-            style="--index: {index}"
-          >
-            <div class="leaderboard-header">
-              <div class="rank-badge rank-{index + 1}">
-                #{index + 1}
-              </div>
-              {#if template.isUserTemplate}
-                <Badge variant="default">Your Template</Badge>
-              {/if}
-            </div>
-            <div class="leaderboard-content">
-              <p class="template-name">{template.templateName}</p>
-              <p class="template-category">{template.category}</p>
-
-              <!-- Sales metrics with sparkline -->
-              <div class="template-metrics">
-                <div class="metric-row">
-                  <span class="metric-label">Sales (30d)</span>
-                  <span class="metric-value">{template.totalSales30d.toLocaleString()}</span>
-                </div>
-                {#if template.isUserTemplate && template.totalRevenue30d}
-                  <div class="metric-row">
-                    <span class="metric-label">Revenue</span>
-                    <span class="metric-value revenue"
-                      >${template.totalRevenue30d.toLocaleString()}</span
-                    >
-                  </div>
-                {/if}
-              </div>
-
-              <!-- Sparkline trend visualization -->
-              <div class="sparkline-container">
-                {#if hasTemplateTrend}
-                  <Sparkline
-                    data={template.trendData ?? []}
-                    width={80}
-                    height={24}
-                    color={template.isUserTemplate
-                      ? 'var(--color-info)'
-                      : 'var(--color-fg-secondary)'}
-                    showTrend
-                    filled
-                  />
-                  <span class="trend-label">30d trend</span>
-                {:else}
-                  <span class="trend-unavailable">Trend unavailable</span>
-                {/if}
-              </div>
-            </div>
-            <div class="leaderboard-footer">
-              <Badge variant="outline">Rank #{index + 1}</Badge>
-            </div>
-          </div>
-        {/each}
-      </div>
-    </section>
-  {/if}
-
   <!-- Category Performance Table with Trend Indicators -->
   {#if categories.length > 0}
     <section class="categories-section">
@@ -470,6 +389,18 @@
 
       <div class="categories-controls">
         <div class="filter-controls">
+          {#if userTemplates.length > 0}
+            <button
+              class="portfolio-shortcut"
+              class:active={userCategoryFilter === 'user'}
+              type="button"
+              onclick={toggleUserPortfolioFilter}
+            >
+              {userCategoryFilter === 'user'
+                ? 'Showing your portfolio categories'
+                : 'Your portfolio categories'}
+            </button>
+          {/if}
           <input
             class="control-input"
             type="search"
@@ -742,6 +673,96 @@
       {/if}
     </section>
   {/if}
+
+  <!-- Insights with priority sorting -->
+  {#if insights.length > 0}
+    <section class="insights-section">
+      <h3 class="section-title">
+        Market Insights
+        <span class="insight-count">{insights.length}</span>
+      </h3>
+      <div class="insights-list">
+        {#each sortedInsights() as insight}
+          <div class="insight-item insight-{insight.type}">
+            <div class="insight-content">
+              <span class="insight-label">{insight.type}</span>
+              <span class="insight-message">{insight.message}</span>
+            </div>
+          </div>
+        {/each}
+      </div>
+    </section>
+  {/if}
+
+  <!-- Top Performers with Sparkline Trends -->
+  {#if leaderboard.length > 0}
+    <section class="leaderboard-section">
+      <h3 class="section-title">
+        Top Performers This Month
+        <span class="section-subtitle">Rolling 30-day window</span>
+      </h3>
+      <div class="leaderboard-grid">
+        {#each leaderboard.slice(0, 5) as template, index}
+          {@const hasTemplateTrend =
+            Array.isArray(template.trendData) && template.trendData.length >= 2}
+          <div
+            class="leaderboard-card"
+            class:user-template={template.isUserTemplate}
+            style="--index: {index}"
+          >
+            <div class="leaderboard-header">
+              <div class="rank-badge rank-{index + 1}">
+                #{index + 1}
+              </div>
+              {#if template.isUserTemplate}
+                <Badge variant="default">Your Template</Badge>
+              {/if}
+            </div>
+            <div class="leaderboard-content">
+              <p class="template-name">{template.templateName}</p>
+              <p class="template-category">{template.category}</p>
+
+              <div class="template-metrics">
+                <div class="metric-row">
+                  <span class="metric-label">Sales (30d)</span>
+                  <span class="metric-value">{template.totalSales30d.toLocaleString()}</span>
+                </div>
+                {#if template.isUserTemplate && template.totalRevenue30d}
+                  <div class="metric-row">
+                    <span class="metric-label">Revenue</span>
+                    <span class="metric-value revenue"
+                      >${template.totalRevenue30d.toLocaleString()}</span
+                    >
+                  </div>
+                {/if}
+              </div>
+
+              <div class="sparkline-container">
+                {#if hasTemplateTrend}
+                  <Sparkline
+                    data={template.trendData ?? []}
+                    width={80}
+                    height={24}
+                    color={template.isUserTemplate
+                      ? 'var(--color-info)'
+                      : 'var(--color-fg-secondary)'}
+                    showTrend
+                    filled
+                  />
+                  <span class="trend-label">30d trend</span>
+                {:else}
+                  <span class="trend-unavailable">Trend unavailable</span>
+                {/if}
+              </div>
+            </div>
+            <div class="leaderboard-footer">
+              <Badge variant="outline">Rank #{index + 1}</Badge>
+            </div>
+          </div>
+        {/each}
+      </div>
+    </section>
+  {/if}
 </div>
 
 <style>
@@ -914,6 +935,54 @@
   /* Insights */
   .insights-section,
   .leaderboard-section,
+  .categories-section {
+    order: 1;
+  }
+
+  .insights-section {
+    order: 2;
+  }
+
+  .leaderboard-section {
+    order: 3;
+  }
+
+  .categories-controls {
+    display: grid;
+    gap: var(--space-sm);
+  }
+
+  .portfolio-shortcut {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.5rem;
+    padding: 0.5rem 0.95rem;
+    border: 1px solid var(--color-info-border);
+    border-radius: 999px;
+    background: var(--color-info-soft-bg);
+    color: var(--color-info-soft-text);
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-medium);
+    cursor: pointer;
+    transition:
+      background-color var(--duration-micro) var(--ease-standard),
+      border-color var(--duration-micro) var(--ease-standard),
+      color var(--duration-micro) var(--ease-standard);
+  }
+
+  .portfolio-shortcut:hover,
+  .portfolio-shortcut.active {
+    border-color: var(--color-info);
+    background: color-mix(in srgb, var(--color-info-soft-bg) 70%, var(--color-bg-surface));
+    color: var(--color-fg-primary);
+  }
+
+  .portfolio-shortcut:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
   .categories-section {
     padding: var(--space-md);
     border: 1px solid var(--color-shell-border-default);
