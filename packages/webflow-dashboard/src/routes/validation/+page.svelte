@@ -139,7 +139,7 @@
     margin: 0 auto;
   }
 
-  .primary-tool-card {
+  :global(.primary-tool-card) {
     display: grid;
     gap: var(--space-md);
     padding: var(--space-md);

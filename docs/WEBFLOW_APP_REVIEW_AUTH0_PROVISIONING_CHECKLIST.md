@@ -2,7 +2,7 @@
 
 ## Goal
 
-Provision the two Webflow Marketplace app reviewers into `.agency`, create the corresponding Auth0 users, and verify first-login identity binding for the Phase A reviewer rollout.
+Provision the two Webflow Marketplace app reviewers into `.agency`, create the corresponding Auth0 users, and verify first-login identity binding for the Phase A app-review rollout.
 
 ## Reviewers
 
@@ -50,13 +50,13 @@ Required environment:
 Dry run first:
 
 ```bash
-DRY_RUN=true MANIFEST_FILE="specs/webflow-marketplace/delivery/app-review-hub/auth0-reviewer-user-manifest.json" AUTH0_CONNECTION="<your-db-or-passwordless-connection>" scripts/auth0-create-reviewer-users.sh
+DRY_RUN=true AUTH0_CONNECTION="<your-db-or-passwordless-connection>" scripts/auth0-create-reviewer-users.sh
 ```
 
 Create the users:
 
 ```bash
-MANIFEST_FILE="specs/webflow-marketplace/delivery/app-review-hub/auth0-reviewer-user-manifest.json" AUTH0_CONNECTION="<your-db-or-passwordless-connection>" scripts/auth0-create-reviewer-users.sh
+AUTH0_CONNECTION="<your-db-or-passwordless-connection>" scripts/auth0-create-reviewer-users.sh
 ```
 
 Notes:
@@ -81,7 +81,6 @@ Before enabling any write path, confirm:
 
 - reviewer-specific Hub posture is applied
 - `webflow-app-review-mcp` is the only required active server for Phase A
-- `webflow-app-review-mcp` has `REVIEWER_DIRECTORY_JSON` configured with the real Airtable collaborator ids for Pablo and Shea
 - rate limits and quotas are enabled before write rollout
 - traces include reviewer identity and `correlation_id`
 - manual fallback is rehearsed
@@ -92,4 +91,3 @@ Before enabling any write path, confirm:
 - per-reviewer account ids should remain distinct
 - the intended Auth0 connection is the correct reviewer login boundary
 - reviewer-to-Hub slug binding happens outside Auth0 only if the app metadata is insufficient
-- reviewer emails are assumed to be `pablo.miranda@webflow.com` and `shea.sisco@webflow.com`; confirm before production invite
