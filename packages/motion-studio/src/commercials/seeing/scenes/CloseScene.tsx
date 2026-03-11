@@ -1,97 +1,131 @@
 /**
- * CloseScene - Final branding and URL
- * 
- * URL, tagline, logo. Silence. Hold.
+ * CloseScene - Final product-first branding and URL.
  */
 import React from 'react';
-import { AbsoluteFill, Sequence } from 'remotion';
-import { KineticHeadline, MotionTransition } from '../../shared/primitives';
+import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
 import { colors, typography } from '../../../styles';
 import { SPEC } from '../spec';
 
 export const CloseScene: React.FC = () => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
   const scene = SPEC.scenes.close;
-  
+
+  const heroSpring = spring({
+    frame,
+    fps,
+    config: { damping: 18, stiffness: 90, mass: 0.9 },
+  });
+
+  const urlSpring = spring({
+    frame: frame - 12,
+    fps,
+    config: { damping: 20, stiffness: 120, mass: 0.85 },
+  });
+
   return (
-    <AbsoluteFill>
-      {/* Centered content container */}
-      <AbsoluteFill
+    <AbsoluteFill
+      style={{
+        padding: '100px 110px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          color: colors.neutral[500],
+          fontFamily: typography.fontFamily.mono,
+          fontSize: '0.9rem',
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+        }}
+      >
+        <span>Seeing</span>
+        <span>Learn to See</span>
+      </div>
+
+      <div
         style={{
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 32,
+          gap: 22,
+          opacity: heroSpring,
+          transform: `translateY(${interpolate(heroSpring, [0, 1], [34, 0])}px)`,
         }}
       >
-        {/* URL */}
-        <Sequence from={0} durationInFrames={120}>
-          <MotionTransition type="slide-up" startFrame={0} duration={15}>
-            <div
-              style={{
-                fontFamily: typography.fontFamily.mono,
-                fontSize: '1.5rem',
-                color: colors.neutral[400],
-                letterSpacing: '0.02em',
-              }}
-            >
-              {scene.url}
-            </div>
-          </MotionTransition>
-        </Sequence>
-        
-        {/* Tagline */}
-        <Sequence from={20} durationInFrames={100}>
-          <MotionTransition type="scale-in" startFrame={0} duration={12}>
-            <KineticHeadline
-              text={scene.tagline}
-              entrance="none"
-              exit="none"
-              startFrame={0}
-              holdFrames={100}
-              size="subhead"
-              color={colors.neutral[300]}
-            />
-          </MotionTransition>
-        </Sequence>
-        
-        {/* Logo */}
-        <Sequence from={40} durationInFrames={80}>
-          <MotionTransition type="scale-in" startFrame={0} duration={15}>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 8,
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: typography.fontFamily.sans,
-                  fontSize: '3.5rem',
-                  fontWeight: 700,
-                  color: colors.neutral[50],
-                  letterSpacing: '-0.02em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                CREATE SOMETHING
-              </div>
-              <div
-                style={{
-                  fontFamily: typography.fontFamily.mono,
-                  fontSize: '1.25rem',
-                  color: colors.neutral[500],
-                  letterSpacing: '0.1em',
-                }}
-              >
-                .learn
-              </div>
-            </div>
-          </MotionTransition>
-        </Sequence>
-      </AbsoluteFill>
+        <div
+          style={{
+            fontFamily: typography.fontFamily.sans,
+            fontSize: '7rem',
+            fontWeight: 700,
+            lineHeight: 0.92,
+            letterSpacing: '-0.06em',
+            color: colors.neutral[50],
+            textTransform: 'uppercase',
+          }}
+        >
+          Seeing
+        </div>
+        <div
+          style={{
+            width: 180,
+            height: 1,
+            backgroundColor: colors.neutral[800],
+          }}
+        />
+        <div
+          style={{
+            fontFamily: typography.fontFamily.sans,
+            fontSize: '2rem',
+            fontWeight: 500,
+            color: colors.neutral[300],
+            maxWidth: 620,
+          }}
+        >
+          {scene.tagline}
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: 'space-between',
+        }}
+      >
+        <div
+          style={{
+            opacity: urlSpring,
+            transform: `translateY(${interpolate(urlSpring, [0, 1], [24, 0])}px)`,
+            padding: '18px 22px',
+            borderRadius: 18,
+            backgroundColor: 'rgba(255,255,255,0.04)',
+            border: `1px solid ${colors.neutral[800]}`,
+            fontFamily: typography.fontFamily.mono,
+            fontSize: '1.15rem',
+            letterSpacing: '0.04em',
+            color: colors.neutral[300],
+          }}
+        >
+          {scene.url}
+        </div>
+
+        <div
+          style={{
+            fontFamily: typography.fontFamily.mono,
+            fontSize: '0.92rem',
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
+            color: colors.neutral[600],
+          }}
+        >
+          Create Something .learn
+        </div>
+      </div>
     </AbsoluteFill>
   );
 };
