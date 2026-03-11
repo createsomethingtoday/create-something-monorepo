@@ -80,6 +80,13 @@ resources:
     freshness_requirement: "static"
     access: "read"
     pii: false
+  - uri: "template-review://host-playbook"
+    name: "template_review_host_playbook"
+    description: "Runtime playbook for MCP hosts to drive queue, assignment, resume, and release flows without Airtable-specific prompt logic."
+    source_system: "CREATE SOMETHING MCP Hub"
+    freshness_requirement: "static"
+    access: "read"
+    pii: false
 tools:
   - name: "template_review_list_queue"
     description: "List template submissions ready for review."
@@ -230,6 +237,9 @@ prompts:
   - name: "template_review_reviewer_mode"
     purpose: "Guide the reviewer lane to gather evidence conservatively, separate objective findings from manual judgment, and escalate on uncertainty."
     usage: "Selected when running the governed template review workflow through the Hub."
+  - name: "template_review_host_playbook"
+    purpose: "Guide generic MCP hosts toward the default reviewer queue -> assign -> review -> my_queue -> unassign flow."
+    usage: "Use together with template-review://host-playbook when a host needs workflow instructions instead of raw Airtable semantics."
 
 auth:
   identity_source: "AUTH0"
