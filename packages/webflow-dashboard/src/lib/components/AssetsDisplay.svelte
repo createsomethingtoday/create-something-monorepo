@@ -268,18 +268,19 @@
           <div class="status-info">
             <div class="status-icon {config?.bgClass || ''}">
               {#if config?.icon}
-                <config.icon size={18} />
+                <config.icon size={15} />
               {:else}
                 <span>•</span>
               {/if}
             </div>
             <div class="status-meta">
-              <h3 class="status-title">{status}</h3>
-              <span class="status-count">
-                {statusAssets.length}
-                {statusAssets.length === 1 ? 'asset' : 'assets'}
-              </span>
-              <span class="sort-summary">Sorted by {getSortLabel()}</span>
+              <div class="status-line">
+                <h3 class="status-title">{status}</h3>
+                <span class="status-count">
+                  {statusAssets.length} {statusAssets.length === 1 ? 'asset' : 'assets'}
+                </span>
+              </div>
+              <span class="sort-summary">Submitted date, descending</span>
             </div>
           </div>
           <StatusBadge {status} />
@@ -555,19 +556,20 @@
 
   .status-info {
     display: flex;
-    align-items: center;
-    gap: var(--space-sm);
+    align-items: baseline;
+    gap: 0.65rem;
   }
 
   .status-icon {
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 1.5rem;
+    height: 1.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius-md);
-    border: 1px solid transparent;
-    font-size: var(--text-body);
+    border-radius: 999px;
+    border: none;
+    font-size: var(--text-caption);
+    flex-shrink: 0;
   }
 
   .status-icon.status-scheduled {
@@ -603,27 +605,36 @@
   .status-meta {
     display: flex;
     flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .status-line {
+    display: flex;
+    align-items: baseline;
+    gap: 0.65rem;
+    flex-wrap: wrap;
   }
 
   .status-title {
     font-family: var(--font-heading);
-    font-size: var(--text-body);
+    font-size: 1.05rem;
     font-weight: var(--font-semibold);
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
     color: var(--color-fg-primary);
     margin: 0;
   }
 
   .status-count {
-    font-size: var(--text-body-sm);
+    font-size: var(--text-body);
     color: var(--color-fg-secondary);
     opacity: 0.78;
   }
 
   .sort-summary {
     font-size: var(--text-caption);
-    color: var(--color-fg-secondary);
-    opacity: 0.72;
+    color: var(--color-fg-muted);
+    opacity: 0.9;
+    font-variant-numeric: tabular-nums;
   }
 
   @media (max-width: 900px) {
