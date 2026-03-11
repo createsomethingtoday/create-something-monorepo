@@ -776,7 +776,7 @@
   .submission-heading {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.4rem;
     width: 100%;
   }
 
@@ -794,8 +794,9 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 0.35rem 0.5rem;
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
+    font-size: 0.98rem;
+    color: var(--color-fg-tertiary);
+    line-height: 1.45;
   }
 
   .submission-summary strong {
@@ -809,6 +810,11 @@
     gap: var(--space-xs);
     align-items: center;
     flex-shrink: 0;
+  }
+
+  .header-badges :global(.badge) {
+    font-size: 0.77rem;
+    letter-spacing: 0.02em;
   }
 
   .loading-state {
@@ -889,7 +895,7 @@
     font-size: var(--text-caption);
     color: var(--color-fg-muted);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
   }
 
   .status-value {
@@ -897,6 +903,7 @@
     font-weight: var(--font-semibold);
     color: var(--color-fg-primary);
     font-variant-numeric: tabular-nums;
+    line-height: 1.05;
   }
 
   .status-value.warning {
@@ -1007,6 +1014,7 @@
   .data-source-full {
     font-size: var(--text-caption);
     color: var(--color-fg-muted);
+    letter-spacing: 0.01em;
   }
 
   .refresh-button {
