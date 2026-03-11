@@ -41,6 +41,10 @@ Define policy controls for partner-admin actions that mint MCP sessions, issue m
 15. Lane-scoped bearer and strict-session issuance MUST deny when client identity mapping, active consent, or lane identity subject binding is missing, even if the named lane itself is already provisioned.
 16. Vault-backed worker/runtime tokens used to bootstrap or verify named lanes are operator-only controls and MUST NOT be repurposed as customer-delivered bearer artifacts.
 17. Telemetry and Braintrust tracing are mandatory baseline observability controls for partner-managed named lanes.
+18. Operator-assisted white-glove onboarding is an approved partner-governed pathway for initial customer access delivery when a named lane or client hub is being set up directly with the customer.
+19. White-glove onboarding MAY deliver a managed bearer credential or an approved legacy credential before the customer has logged into `.agency`, but the governing partner route MUST still record actor trace, recipient, delivery channel, effective scope, and the follow-on self-service surface.
+20. White-glove onboarding MUST NOT bypass the policy prerequisites for the selected credential type. If consent, exception approval, or subject binding is required for that credential, the handoff MUST remain blocked until those prerequisites are satisfied.
+21. `.agency` remains the canonical self-service surface after white-glove delivery for revoke, regenerate, password rotation, connection management, and ongoing access visibility.
 
 ## Enforcement Surfaces
 
@@ -72,6 +76,7 @@ Define policy controls for partner-admin actions that mint MCP sessions, issue m
 - Delivery audit records in `partner_access_deliveries`
 - workflow or job traces showing pinned account and runtime identity selection
 - lane audit records showing lane slug, host key, and effective prefix set
+- white-glove delivery records showing the onboarding handoff channel, recipient, and designated follow-on self-service surface
 - deny records showing issuance blocked for missing identity mapping, missing active consent, or missing lane identity subject
 - resolver and hub traces showing host-bound credential enforcement
 
