@@ -36,8 +36,11 @@ Define policy controls for partner-admin actions that mint MCP sessions, issue m
 10. Partner-admin issuance flows MUST support explicit `allowed_tool_prefixes` for reviewer or custom hub lanes whose runtime surface cannot be expressed as a toolkit-only profile.
 11. When partner-admin issuance uses explicit `allowed_tool_prefixes`, the delivery artifact and audit metadata MUST expose the effective prefix set so reviewers and operators can verify the lane transparently.
 12. Named teammate lanes MUST be data-driven records, not hardcoded operator aliases. The canonical lane slug, public URL, and host key MUST remain aligned.
-13. Lane-scoped bearer and strict-session issuance MUST derive the effective `allowed_tool_prefixes` from the named lane record and MUST bind the credential to the lane host.
-14. Telemetry and Braintrust tracing are mandatory baseline observability controls for partner-managed named lanes.
+13. Lane initialization MAY occur before identity mapping is complete so infrastructure, URL, and routing can be provisioned ahead of customer onboarding.
+14. Lane-scoped bearer and strict-session issuance MUST derive the effective `allowed_tool_prefixes` from the named lane record and MUST bind the credential to the lane host.
+15. Lane-scoped bearer and strict-session issuance MUST deny when client identity mapping, active consent, or lane identity subject binding is missing, even if the named lane itself is already provisioned.
+16. Vault-backed worker/runtime tokens used to bootstrap or verify named lanes are operator-only controls and MUST NOT be repurposed as customer-delivered bearer artifacts.
+17. Telemetry and Braintrust tracing are mandatory baseline observability controls for partner-managed named lanes.
 
 ## Enforcement Surfaces
 
@@ -69,6 +72,7 @@ Define policy controls for partner-admin actions that mint MCP sessions, issue m
 - Delivery audit records in `partner_access_deliveries`
 - workflow or job traces showing pinned account and runtime identity selection
 - lane audit records showing lane slug, host key, and effective prefix set
+- deny records showing issuance blocked for missing identity mapping, missing active consent, or missing lane identity subject
 - resolver and hub traces showing host-bound credential enforcement
 
 ## Source Anchors
