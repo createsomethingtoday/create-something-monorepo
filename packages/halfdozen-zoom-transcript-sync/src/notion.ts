@@ -492,7 +492,7 @@ class HubNotionTransport implements NotionTransport {
   createPage(properties: Record<string, unknown>): Promise<PageObject> {
     return this.call<PageObject>('create_page', {
       database_id: this.databaseId,
-      properties,
+      properties: toComposioPropertyList(properties),
     });
   }
 
@@ -565,4 +565,41 @@ class HubNotionTransport implements NotionTransport {
     const parsed = JSON.parse(text) as Record<string, any>;
     return (parsed.data?.data ?? parsed.data ?? parsed) as T;
   }
+}
+
+function toComposioPropertyList(properties: Record<string, unknown>): Array<{ name: string; type: string; value: string }> {
+  const rows: Array<{ name: string; type: string; value: string }> = [];
+
+  for (const [name, property] of Object.entries(properties)) {
+    if (!property || typeof property !== 'object') continue;
+
+    const typed = property as Record<string, any>;
+    if (Array.isArray(typed.title)) {
+      const value = typed.title.map((entry) => entry?.text?.content ?? entry?.plain_text ?? '').join('').trim();
+      if (value) rows.push({ name, type: 'title', value });
+      continue;
+    }
+
+    if (typed.date?.start) {
+      rows.push({ name, type: 'date', value: String(typed.date.start) });
+      continue;
+    }
+
+    if (typed.select?.name) {
+      rows.push({ name, type: 'select', value: String(typed.select.name) });
+      continue;
+    }
+
+    if (typeof typed.url === 'string' && typed.url.trim()) {
+      rows.push({ name, type: 'url', value: typed.url.trim() });
+      continue;
+    }
+
+    if (Array.isArray(typed.rich_text)) {
+      const value = typed.rich_text.map((entry) => entry?.text?.content ?? entry?.plain_text ?? '').join('').trim();
+      if (value) rows.push({ name, type: 'rich_text', value });
+    }
+  }
+
+  return rows;
 }

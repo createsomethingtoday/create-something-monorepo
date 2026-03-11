@@ -67,6 +67,10 @@ load_secrets_from_infisical() {
       | @tsv
     '
   )
+
+  unset CLOUDFLARE_API_TOKEN
+  unset CLOUDFLARE_PAGES_API_TOKEN
+  unset CLOUDFLARE_ACCOUNT_ID
 }
 
 require_secret() {
