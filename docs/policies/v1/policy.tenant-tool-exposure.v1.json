@@ -47,6 +47,12 @@
       "composio-toolkit-exa"
     ],
     "telemetry_required": true,
-    "braintrust_required": true
+    "braintrust_required": true,
+    "account_attribution_required": true,
+    "required_trace_fields": [
+      "account_id",
+      "tenant_id",
+      "lane_slug_or_bound_host"
+    ]
   }
 }
