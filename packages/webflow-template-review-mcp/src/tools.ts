@@ -88,7 +88,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
 
   server.tool(
     'template_review_list_queue',
-    'List template review queue using confirmed template Airtable fields.',
+    'List compact template review queue summaries using confirmed template Airtable fields.',
     {
       status: z.enum(['ready_to_review', 'in_review', 'changes_requested', 'approved', 'published']).optional(),
       assigned: z.enum(['any', 'assigned', 'unassigned']).optional(),
@@ -119,7 +119,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
 
   server.tool(
     'template_review_my_queue',
-    'List template review queue items currently assigned to the authenticated reviewer.',
+    'List compact template review queue summaries currently assigned to the authenticated reviewer.',
     {
       status: z.enum(['ready_to_review', 'in_review', 'changes_requested', 'approved', 'published']).optional(),
       sort: z.enum(['submittedDate_desc', 'submittedDate_asc', 'decisionDate_desc', 'decisionDate_asc']).optional(),

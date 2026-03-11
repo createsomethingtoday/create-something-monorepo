@@ -39,12 +39,14 @@ export interface TemplateReviewQueueItem {
   templateName: string;
   latestReviewStatus?: string;
   latestReviewFeedback?: string;
+  latestReviewDate?: string;
   qualityRating?: string;
   websiteUrl?: string;
   previewSiteUrl?: string;
   submittedDate?: string;
   marketplaceStatus?: string;
   decisionDate?: string;
+  priceString?: string;
   assignableVersionId?: string;
   reviewOwner?: CollaboratorRef | null;
   normalizedStatus?: TemplateReviewQueueStatus | null;
@@ -308,6 +310,41 @@ function mapAsset(record: AirtableRecord): TemplateReviewAsset {
   };
 }
 
+function toQueueItem(asset: TemplateReviewAsset, version?: TemplateReviewVersion | null, query: TemplateReviewQueueQuery = {}): TemplateReviewQueueItem {
+  const reviewOwner = version?.reviewOwner ?? null;
+  const isAssignedToCurrentReviewer = Boolean(
+    query.currentReviewer?.id &&
+      reviewOwner?.id &&
+      query.currentReviewer.id === reviewOwner.id,
+  );
+  const normalizedStatus = normalizeQueueStatus(asset, version);
+
+  return {
+    assetId: asset.assetId,
+    templateName: asset.templateName,
+    latestReviewStatus: asset.latestReviewStatus,
+    latestReviewFeedback: asset.latestReviewFeedback,
+    latestReviewDate: asset.latestReviewDate,
+    qualityRating: asset.qualityRating,
+    websiteUrl: asset.websiteUrl,
+    previewSiteUrl: asset.previewSiteUrl,
+    submittedDate: asset.submittedDate,
+    marketplaceStatus: asset.marketplaceStatus,
+    decisionDate: asset.decisionDate,
+    priceString: asset.priceString,
+    assignableVersionId: version?.versionId,
+    reviewOwner,
+    normalizedStatus,
+    isReadyToReview: normalizedStatus === 'ready_to_review',
+    isUnassigned: !reviewOwner,
+    canAssign: Boolean(version?.versionId && query.currentReviewer?.id && !reviewOwner),
+    canReview: Boolean(!reviewOwner || isAssignedToCurrentReviewer),
+    canPublish: normalizedStatus === 'approved',
+    isAssignedToCurrentReviewer,
+    isBlockedByOtherReviewer: Boolean(reviewOwner?.id && !isAssignedToCurrentReviewer),
+  };
+}
+
 function normalizeQueueStatus(asset: TemplateReviewAsset, version?: TemplateReviewVersion | null): TemplateReviewQueueStatus | null {
   const candidates = [
     version?.reviewStatus,
@@ -501,27 +538,7 @@ export class AirtableClient {
       assets.map(async (asset) => {
         const versions = await this.listVersionsForAsset(asset.assetId, 25);
         const currentVersion = versions[0] ?? null;
-        const reviewOwner = currentVersion?.reviewOwner ?? null;
-        const isAssignedToCurrentReviewer = Boolean(
-          query.currentReviewer?.id &&
-            reviewOwner?.id &&
-            query.currentReviewer.id === reviewOwner.id,
-        );
-        const isBlockedByOtherReviewer = Boolean(reviewOwner?.id && !isAssignedToCurrentReviewer);
-        const normalizedStatus = normalizeQueueStatus(asset, currentVersion);
-        return {
-          ...asset,
-          assignableVersionId: currentVersion?.versionId,
-          reviewOwner,
-          normalizedStatus,
-          isReadyToReview: normalizedStatus === 'ready_to_review',
-          isUnassigned: !reviewOwner,
-          canAssign: Boolean(currentVersion?.versionId && query.currentReviewer?.id && !reviewOwner),
-          canReview: Boolean(!reviewOwner || isAssignedToCurrentReviewer),
-          canPublish: normalizedStatus === 'approved',
-          isAssignedToCurrentReviewer,
-          isBlockedByOtherReviewer,
-        } satisfies TemplateReviewQueueItem;
+        return toQueueItem(asset, currentVersion, query);
       }),
     );
 

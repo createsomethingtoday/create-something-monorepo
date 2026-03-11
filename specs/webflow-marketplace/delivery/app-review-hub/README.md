@@ -44,6 +44,9 @@ Operator procedures for exception handling, fallback, containment, and recovery.
 6. `auth0-reviewer-user-manifest.json`
 Auth0 invite manifest for the two-reviewer app-review pilot.
 
+7. `reviewer-hub-phase-a-operator-runbook.md`
+Exact deploy, normalize, and verify path for the two Phase A reviewer Hub surfaces.
+
 ## Reading order
 
 1. `reviewer-hub-rollout-spec.md`
@@ -62,5 +65,6 @@ Auth0 invite manifest for the two-reviewer app-review pilot.
 - `docs/WEBFLOW_APP_REVIEW_AUTH0_PROVISIONING_CHECKLIST.md`
 - `docs/examples/webflow-app-review-user-seed.csv`
 - `specs/webflow-marketplace/delivery/app-review-hub/auth0-reviewer-user-manifest.json`
+- `specs/webflow-marketplace/delivery/app-review-hub/reviewer-hub-phase-a-operator-runbook.md`
 - `specs/webflow-marketplace/use-cases.md`
 - `specs/webflow-marketplace/volume-analysis.md`
