@@ -69,6 +69,28 @@ The codebase app-review MCP currently exposes these tools:
 - `app-review://field-map`
 - `app-review://status-options`
 - `app-review://queue-snapshot`
+- `app-review://reviewer-me`
+- `app-review://reviewer-workflow`
+
+## 4a. Confirmed reviewer field inventory
+
+Reviewer input from Pablo Miranda on `2026-03-11` confirms the current workflow depends on:
+
+- summary state fields: Marketplace status, latest review status, days in current review stage
+- version fields: Version #, Review Type, Reviewer, Review Status, Submission Datetime, Rejection Reason, Review Feedback
+- app context: app capabilities, client ID, app ID, visibility status, relationships status
+- descriptive metadata: app name, notes, credentials, descriptions, install URL, workspace dashboard URL
+- category, imagery, payments, and URL fields used as review context
+
+Reference:
+
+- `confirmed-field-inventory.md`
+
+Operational implication:
+
+- the current schema appears broad enough for reviewer context
+- the main rollout blocker is not missing Airtable fields
+- the main rollout blocker remains reviewer identity, authz posture, and staged write enablement
 
 ## 5. Tool exposure policy
 
