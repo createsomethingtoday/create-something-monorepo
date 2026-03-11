@@ -285,6 +285,19 @@
         <Card>
           <div class="table-container desktop-table">
             <Table>
+              <colgroup>
+                <col class="thumb-col" />
+                <col class="name-col" />
+                <col class="submitted-col" />
+                <col class="type-col" />
+                {#if showPerformance}
+                  <col class="metric-col" />
+                  <col class="metric-col" />
+                  <col class="metric-col" />
+                {/if}
+                <col class="action-col" />
+                <col class="more-col" />
+              </colgroup>
               <TableHeader>
                 <TableRow>
                   <TableHead class="w-12"></TableHead>
@@ -312,7 +325,7 @@
                   </TableHead>
                   <TableHead>Type</TableHead>
                   {#if showPerformance}
-                    <TableHead class="text-center">
+                  <TableHead align="right">
                       <button
                         type="button"
                         class="sort-btn"
@@ -323,7 +336,7 @@
                         Viewers{getSortIndicator('uniqueViewers')}
                       </button>
                     </TableHead>
-                    <TableHead class="text-center">
+                    <TableHead align="right">
                       <button
                         type="button"
                         class="sort-btn"
@@ -334,7 +347,7 @@
                         Purchases{getSortIndicator('cumulativePurchases')}
                       </button>
                     </TableHead>
-                    <TableHead class="text-center">
+                    <TableHead align="right">
                       <div class="revenue-header">
                         <button
                           type="button"
@@ -350,7 +363,7 @@
                     </TableHead>
                   {/if}
                   <TableHead class="action-head">Action</TableHead>
-                  <TableHead class="w-12 more-head">More</TableHead>
+                  <TableHead align="center" class="w-12 more-head">More</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -659,6 +672,34 @@
     overflow-x: auto;
   }
 
+  :global(.desktop-table col.thumb-col) {
+    width: 4.25rem;
+  }
+
+  :global(.desktop-table col.name-col) {
+    width: 44%;
+  }
+
+  :global(.desktop-table col.submitted-col) {
+    width: 14%;
+  }
+
+  :global(.desktop-table col.type-col) {
+    width: 12%;
+  }
+
+  :global(.desktop-table col.metric-col) {
+    width: 10%;
+  }
+
+  :global(.desktop-table col.action-col) {
+    width: 7rem;
+  }
+
+  :global(.desktop-table col.more-col) {
+    width: 3.5rem;
+  }
+
   .sort-btn {
     display: inline-flex;
     align-items: center;
@@ -827,12 +868,7 @@
     }
   }
 
-  :global(.text-center) {
-    text-align: center;
-  }
-
-  :global(.desktop-table td.text-center),
-  :global(.desktop-table th.text-center) {
+  :global(.desktop-table td.text-center) {
     text-align: right;
   }
 

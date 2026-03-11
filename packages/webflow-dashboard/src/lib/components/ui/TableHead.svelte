@@ -3,13 +3,14 @@
 	import type { HTMLThAttributes } from 'svelte/elements';
 
 	interface Props extends HTMLThAttributes {
+		align?: 'left' | 'center' | 'right';
 		children?: Snippet;
 	}
 
-	let { class: className = '', children, ...restProps }: Props = $props();
+	let { align = 'left', class: className = '', children, ...restProps }: Props = $props();
 </script>
 
-<th class="table-head {className}" {...restProps}>
+<th class="table-head align-{align} {className}" {...restProps}>
 	<div class="table-head-inner">
 		{#if children}
 			{@render children()}
@@ -36,11 +37,28 @@
 		align-items: center;
 		gap: 0.25rem;
 		height: 100%;
+		width: 100%;
 		padding: 0.15rem 0.45rem;
 		border-radius: var(--radius-sm, 4px);
 		transition:
 			background 150ms ease,
 			color 150ms ease;
+	}
+
+	.table-head.align-center {
+		text-align: center;
+	}
+
+	.table-head.align-right {
+		text-align: right;
+	}
+
+	.table-head.align-center .table-head-inner {
+		justify-content: center;
+	}
+
+	.table-head.align-right .table-head-inner {
+		justify-content: flex-end;
 	}
 
 	.table-head:hover .table-head-inner {
