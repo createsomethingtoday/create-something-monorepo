@@ -17,6 +17,7 @@ export const DemonstrationScene: React.FC = () => {
       style={{
         padding: '100px 110px',
         display: 'flex',
+        flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         gap: 56,

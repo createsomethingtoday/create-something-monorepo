@@ -31,6 +31,7 @@ const QuestionPanel: React.FC<{
       style={{
         padding: '100px 120px',
         display: 'flex',
+        flexDirection: 'row',
         gap: 48,
       }}
     >

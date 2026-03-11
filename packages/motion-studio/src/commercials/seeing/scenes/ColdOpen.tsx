@@ -29,6 +29,7 @@ export const ColdOpen: React.FC = () => {
       style={{
         padding: '110px 110px 90px',
         display: 'flex',
+        flexDirection: 'row',
         alignItems: 'stretch',
         justifyContent: 'space-between',
         gap: 48,

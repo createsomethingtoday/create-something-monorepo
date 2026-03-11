@@ -112,6 +112,7 @@ export const StatsScene: React.FC = () => {
         style={{
           padding: '0 120px',
           display: 'flex',
+          flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
           gap: 24,
