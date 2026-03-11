@@ -43,6 +43,14 @@
         "webflow-template-review-mcp"
       ],
       "maxProxyTools": 12
+    },
+    "webflow-marketplace-app-review-phase-a": {
+      "description": "Phase A reviewer pack for Webflow Marketplace app review. Read-only app review context only.",
+      "mode": "compact",
+      "activeServers": [
+        "webflow-app-review-mcp"
+      ],
+      "maxProxyTools": 8
     }
   }
 }

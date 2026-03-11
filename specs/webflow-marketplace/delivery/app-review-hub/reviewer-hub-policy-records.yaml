@@ -49,6 +49,7 @@ shared_phase_a_policy:
 
 reviewers:
   - reviewer_name: "Pablo Miranda"
+    reviewer_email: "pablo.miranda@webflow.com"
     hub_slug: "wf-app-review-pablo"
     account_model: "per_user"
     approval_owner: "Pablo Miranda"
@@ -56,6 +57,7 @@ reviewers:
     policy_record_id: "wf_app_review_pablo_phase_a"
 
   - reviewer_name: "Shea Sisco"
+    reviewer_email: "shea.sisco@webflow.com"
     hub_slug: "wf-app-review-shea"
     account_model: "per_user"
     approval_owner: "Shea Sisco"

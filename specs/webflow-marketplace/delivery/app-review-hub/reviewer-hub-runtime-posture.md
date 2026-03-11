@@ -30,10 +30,10 @@ That means the only safe exact runtime posture today is an **app-review read-onl
 
 Use one reviewer-specific Hub surface or account-scoped Hub posture per reviewer:
 
-| Reviewer | Hub slug |
-| --- | --- |
-| Pablo Miranda | `wf-app-review-pablo` |
-| Shea Sisco | `wf-app-review-shea` |
+| Reviewer | Email | Hub slug |
+| --- | --- | --- |
+| Pablo Miranda | `pablo.miranda@webflow.com` | `wf-app-review-pablo` |
+| Shea Sisco | `shea.sisco@webflow.com` | `wf-app-review-shea` |
 
 If these are implemented as separate custom-domain Hubs, keep the same posture across both. If they are implemented as one remote runtime with per-account state, persist discovery preferences separately per reviewer account.
 

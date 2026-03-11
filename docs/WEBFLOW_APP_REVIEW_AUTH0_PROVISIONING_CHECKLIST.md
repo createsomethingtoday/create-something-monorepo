@@ -50,13 +50,13 @@ Required environment:
 Dry run first:
 
 ```bash
-DRY_RUN=true AUTH0_CONNECTION="<your-db-or-passwordless-connection>" scripts/auth0-create-reviewer-users.sh specs/webflow-marketplace/delivery/app-review-hub/auth0-reviewer-user-manifest.json
+DRY_RUN=true MANIFEST_FILE="specs/webflow-marketplace/delivery/app-review-hub/auth0-reviewer-user-manifest.json" AUTH0_CONNECTION="<your-db-or-passwordless-connection>" scripts/auth0-create-reviewer-users.sh
 ```
 
 Create the users:
 
 ```bash
-AUTH0_CONNECTION="<your-db-or-passwordless-connection>" scripts/auth0-create-reviewer-users.sh specs/webflow-marketplace/delivery/app-review-hub/auth0-reviewer-user-manifest.json
+MANIFEST_FILE="specs/webflow-marketplace/delivery/app-review-hub/auth0-reviewer-user-manifest.json" AUTH0_CONNECTION="<your-db-or-passwordless-connection>" scripts/auth0-create-reviewer-users.sh
 ```
 
 Notes:

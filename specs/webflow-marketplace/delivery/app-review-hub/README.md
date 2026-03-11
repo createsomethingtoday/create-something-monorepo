@@ -41,6 +41,9 @@ Day-to-day instructions for app reviewers using the Hub lane.
 5. `runbook.md`
 Operator procedures for exception handling, fallback, containment, and recovery.
 
+6. `auth0-reviewer-user-manifest.json`
+Auth0 invite manifest for the two-reviewer app-review pilot.
+
 ## Reading order
 
 1. `reviewer-hub-rollout-spec.md`
@@ -56,5 +59,8 @@ Operator procedures for exception handling, fallback, containment, and recovery.
 - `packages/webflow-app-review-mcp/src/prompts.ts`
 - `packages/webflow-app-review-mcp/src/resources.ts`
 - `packages/webflow-app-review-mcp/worker/index.ts`
+- `docs/WEBFLOW_APP_REVIEW_AUTH0_PROVISIONING_CHECKLIST.md`
+- `docs/examples/webflow-app-review-user-seed.csv`
+- `specs/webflow-marketplace/delivery/app-review-hub/auth0-reviewer-user-manifest.json`
 - `specs/webflow-marketplace/use-cases.md`
 - `specs/webflow-marketplace/volume-analysis.md`

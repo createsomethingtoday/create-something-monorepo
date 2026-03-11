@@ -33,10 +33,10 @@ This does not mean two different workflows. It means one workflow delivered thro
 
 The current repo data points to these app reviewers:
 
-| Reviewer | Recommended Hub slug | Primary approval owner | Evidence |
-| --- | --- | --- | --- |
-| Pablo Miranda | `wf-app-review-pablo` | Pablo Miranda | App reviews concentrated with Pablo in marketplace volume analysis |
-| Shea Sisco | `wf-app-review-shea` | Shea Sisco | Secondary app reviewer in marketplace volume analysis |
+| Reviewer | Email | Recommended Hub slug | Primary approval owner | Evidence |
+| --- | --- | --- | --- | --- |
+| Pablo Miranda | `pablo.miranda@webflow.com` | `wf-app-review-pablo` | Pablo Miranda | App reviews concentrated with Pablo in marketplace volume analysis |
+| Shea Sisco | `shea.sisco@webflow.com` | `wf-app-review-shea` | Shea Sisco | Secondary app reviewer in marketplace volume analysis |
 
 If a different pilot pair should be used, update this document and the policy records before rollout.
 
