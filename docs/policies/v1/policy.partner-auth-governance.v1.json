@@ -27,13 +27,18 @@
     "explicit_allowed_tool_prefixes_supported": true,
     "bound_host_required_for_named_lane_credentials": true,
     "telemetry_required": true,
-    "braintrust_required": true
+    "braintrust_required": true,
+    "white_glove_initial_delivery_allowed": true,
+    "white_glove_follow_on_self_service_required": true,
+    "runtime_bootstrap_tokens_customer_delivery_prohibited": true
   },
   "deny_conditions": [
     "missing_consent_record",
     "missing_actor",
     "unpinned_toolkit_account_for_automation",
-    "personal_bearer_used_for_automation"
+    "personal_bearer_used_for_automation",
+    "missing_required_subject_binding_for_selected_credential_type",
+    "missing_exception_approval_for_selected_credential_type"
   ],
   "governed_actions": [
     "admin_mint_session",
@@ -52,5 +57,13 @@
     "/api/partners/half-dozen/clients/:slug/lanes/:laneSlug/init",
     "/api/partners/half-dozen/clients/:slug/lanes/:laneSlug/access/mint",
     "/api/partners/half-dozen/clients/:slug/lanes/:laneSlug/bearer-token/issue"
+  ],
+  "white_glove_delivery_audit_fields": [
+    "delivery_channel",
+    "recipient",
+    "initial_delivery_mode",
+    "follow_on_management_surface",
+    "allowed_tool_prefixes",
+    "bound_host"
   ]
 }

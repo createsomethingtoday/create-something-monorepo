@@ -9,7 +9,9 @@
     "workspace_or_tenant_centric_labels_required": true,
     "transparent_named_lane_required": true,
     "named_lane_pattern": "<person-slug>-<client-slug>",
-    "host_bound_named_lane_credentials_required": true
+    "host_bound_named_lane_credentials_required": true,
+    "white_glove_initial_delivery_allowed": true,
+    "white_glove_follow_on_self_service_surface": ".agency"
   },
   "required_user_surfaces": [
     "access_overview",
@@ -46,11 +48,19 @@
     "toolkit_account_disable",
     "partner_admin_mint",
     "legacy_credential_issue",
+    "runtime_bootstrap_secret_rotation",
+    "runtime_bootstrap_secret_sync",
     "control_plane_mutation"
   ],
   "blocked_state_requirements": {
     "explicit_reason_code_required": true,
     "generic_access_denied_prohibited": true
+  },
+  "white_glove_onboarding_requirements": {
+    "operator_delivered_initial_bearer_allowed": true,
+    "must_distinguish_initial_handoff_from_self_service": true,
+    "must_route_ongoing_management_back_to_agency": true,
+    "runtime_bootstrap_tokens_customer_visible_prohibited": true
   },
   "dui_controls": {
     "curated_ui_resources_only": true,
